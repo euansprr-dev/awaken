@@ -1,0 +1,144 @@
+# Creature studio P3: the Hollows on a plain platform in the sky (day, then night for their glow) and the Tidewater
+# filmed from inside a clear water box (day and night). Judge silhouettes, textures and glow with nothing in the way.
+# Run by the integrator.
+world studio creative 777
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 220 ~ 0 15
+cmd fill ~-9 ~-1 ~-3 ~9 ~-1 ~16 minecraft:smooth_stone
+cmd fill ~-9 ~ ~-3 ~9 ~10 ~16 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 20
+look 0 12
+cmd summon awaken:chime_cricket ~ ~ ~3 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_day_chime_cricket
+cmd tp @e[type=awaken:chime_cricket] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:wickling ~ ~ ~3 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_day_wickling
+cmd tp @e[type=awaken:wickling] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:drip_lurker ~ ~ ~4 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_day_drip_lurker
+cmd tp @e[type=awaken:drip_lurker] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:hushling ~ ~ ~4 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_day_hushling
+cmd tp @e[type=awaken:hushling] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:thousandfoot ~ ~ ~8 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_day_thousandfoot
+cmd tp @e[type=awaken:thousandfoot] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd time set 18000
+wait 30
+cmd summon awaken:chime_cricket ~ ~ ~3 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_night_chime_cricket
+cmd tp @e[type=awaken:chime_cricket] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:wickling ~ ~ ~3 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_night_wickling
+cmd tp @e[type=awaken:wickling] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:drip_lurker ~ ~ ~4 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_night_drip_lurker
+cmd tp @e[type=awaken:drip_lurker] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:hushling ~ ~ ~4 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_night_hushling
+cmd tp @e[type=awaken:hushling] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:thousandfoot ~ ~ ~8 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_night_thousandfoot
+cmd tp @e[type=awaken:thousandfoot] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd time set 6000
+cmd tp @s ~60 ~ ~ 0 0
+cmd fill ~-10 ~-2 ~-4 ~10 ~10 ~20 minecraft:glass
+cmd fill ~-9 ~-1 ~-3 ~9 ~9 ~19 minecraft:water
+cmd fill ~-9 ~-2 ~-3 ~9 ~-2 ~19 minecraft:sand
+cmd kill @e[type=!minecraft:player,distance=..60]
+# vanilla's underwater view widens the longer you stay under
+wait 300
+look 0 0
+cmd summon awaken:glimmerfin ~ ~0.6 ~3 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_water_day_glimmerfin
+cmd tp @e[type=awaken:glimmerfin] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:breathbell ~ ~0.6 ~4 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_water_day_breathbell
+cmd tp @e[type=awaken:breathbell] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:brook_otter ~ ~0.6 ~3 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_water_day_brook_otter
+cmd tp @e[type=awaken:brook_otter] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:tidesteed ~ ~0.6 ~6 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_water_day_tidesteed
+cmd tp @e[type=awaken:tidesteed] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:lantern_maw ~ ~0.6 ~9 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_water_day_lantern_maw
+cmd tp @e[type=awaken:lantern_maw] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd time set 18000
+wait 30
+cmd summon awaken:glimmerfin ~ ~0.6 ~3 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_water_night_glimmerfin
+cmd tp @e[type=awaken:glimmerfin] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:breathbell ~ ~0.6 ~4 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_water_night_breathbell
+cmd tp @e[type=awaken:breathbell] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+cmd summon awaken:lantern_maw ~ ~0.6 ~9 {NoAI:1b,Rotation:[160f,0f],PersistenceRequired:1b}
+wait 25
+shot studio3_water_night_lantern_maw
+cmd tp @e[type=awaken:lantern_maw] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..40]
+wait 10
+quit
