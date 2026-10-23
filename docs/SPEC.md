@@ -382,6 +382,9 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
   while a screen is open); 10 ticks between cards; warnings and priority ≥ 9 pre-empt.
 - Pending decisions persist per player (max 12) until answered, withdrawn or past their ttl; on login they come back
   folded (tracker and Status), never as cards.
+- Optional offers (Directives) never card over the world: `Signal.offerQuietly` sends a toast and the decision waits
+  folded. Cards are for decisions that matter now (gates, extraction, Echo binding, travel, the Stillpoint).
+- A lesson step just reached outranks standing reminders on the one-line tracker for five minutes.
 - Toasts are 160 wide and vanilla height (32), or 43 when the detail needs a second line (a level-road step); at most 3
   of ours; a burst merges into "N new things". Cards sit right of the
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
