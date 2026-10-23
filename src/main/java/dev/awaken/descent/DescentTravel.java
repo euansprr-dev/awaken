@@ -216,8 +216,13 @@ public final class DescentTravel {
 
     private static void sealed(ServerPlayer player, Strata.Access access, int target) {
         long now = player.level().getGameTime();
-        // push back up out of the pit
-        player.setDeltaMovement(player.getDeltaMovement().x * 0.2, 0.55, player.getDeltaMovement().z * 0.2);
+        // throw the player back out over the rim, away from the pit's centre
+        int depth = Strata.depthAt(player.level().dimension(), player.blockPosition());
+        BlockPos pit = Layout.world(Math.max(1, depth), Layout.pit(Strata.formOf(Math.max(1, depth))));
+        double dx = player.getX() - (pit.getX() + 0.5), dz = player.getZ() - (pit.getZ() + 0.5);
+        double len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 0.3) { dx = 1; dz = 0; len = 1; }
+        player.setDeltaMovement(dx / len * 0.55, 0.6, dz / len * 0.55);
         player.syncVelocity = true;
         Long cd = SEALED_COOLDOWN.get(player.getUUID());
         if (cd != null && now < cd) return;

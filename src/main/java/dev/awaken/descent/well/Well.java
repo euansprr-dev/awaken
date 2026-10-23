@@ -67,6 +67,8 @@ public final class Well {
         CompletableFuture.supplyAsync(() -> pick(sites, gen, rs, overworld), Util.backgroundExecutor())
                 .thenAcceptAsync(site -> {
                     data.state = WellData.CHOSEN;
+                    data.spawnX = spawn.getX();
+                    data.spawnZ = spawn.getZ();
                     data.x = site.getX();
                     data.z = site.getZ();
                     data.y = site.getY();

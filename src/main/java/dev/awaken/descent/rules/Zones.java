@@ -434,7 +434,6 @@ public final class Zones {
             if (s == null) continue;
             s.snapTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, p.getYRot(), 0);
             s.mirror(p);
-            DescentSpawner.flag(s, 0);
             level.addFreshEntity(s);
             ps.shadow = s.getUUID();
             level.sendParticles(ParticleTypes.LARGE_SMOKE, s.getX(), s.getY() + 1, s.getZ(), 20, 0.3, 0.6, 0.3, 0.02);

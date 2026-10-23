@@ -58,6 +58,7 @@ public final class DescentModule {
     private DescentModule() {}
 
     private static WellData well;
+    private static final java.util.Set<java.util.UUID> WELL_NOTICED = new java.util.HashSet<>();
 
     public static void init(IEventBus modBus) {
         DescentContent.init(modBus);
@@ -154,8 +155,17 @@ public final class DescentModule {
         if (Well.inShaft(w, sp.getX(), sp.getY(), sp.getZ())) {
             sp.resetFallDistance();
             DescentTravel.enterWell(sp);
-        } else if (sp.tickCount % 200 == 0 && sp.blockPosition().distSqr(w.center()) < 28 * 28) {
-            sp.level().playSound(null, w.x, w.y - 8, w.z, DescentContent.SND_WELL.get(), SoundSource.AMBIENT, 0.8F, 0.7F);
+        } else if (sp.tickCount % 20 == 0 && sp.blockPosition().distSqr(w.center()) < 28 * 28) {
+            if (sp.tickCount % 200 == 0) {
+                sp.level().playSound(null, w.x, w.y - 8, w.z, DescentContent.SND_WELL.get(), SoundSource.AMBIENT, 0.8F, 0.7F);
+            }
+            if (DescentSync.data(sp).visited.isEmpty() && WELL_NOTICED.add(sp.getUUID())) {
+                Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The Well"))
+                        .body(Component.literal("A Precursor ring around a shaft with no bottom you can see. Far below, faint lights."))
+                        .row(Component.literal("Down"), Component.literal("Jump in, or use the lift on the rim"))
+                        .footer(Component.literal("The Descent · stratum 1 is open to everyone"))
+                        .ttl(20 * 10).build());
+            }
         }
     }
 

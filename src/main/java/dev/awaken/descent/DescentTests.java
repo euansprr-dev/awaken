@@ -50,6 +50,27 @@ final class DescentTests {
         AwakenTests.register("descent_endless_rules", 40, DescentTests::endless);
         AwakenTests.register("descent_dream_view", 40, DescentTests::dreamView);
         AwakenTests.register("descent_data_loads", 40, DescentTests::dataLoads);
+        AwakenTests.register("descent_well_builds", 1200, DescentTests::wellBuilds);
+    }
+
+    /** The Well is placed once and built at server start: wait for it, then check its shape. */
+    private static void wellBuilds(GameTestHelper h) {
+        var server = h.getLevel().getServer();
+        h.succeedWhen(() -> {
+            dev.awaken.descent.well.WellData d = dev.awaken.descent.well.WellData.get(server);
+            h.assertTrue(d.built(), "the Well is not built yet");
+            var level = server.overworld();
+            double dist = Math.sqrt(Math.pow(d.x - d.spawnX, 2) + Math.pow(d.z - d.spawnZ, 2));
+            h.assertTrue(dist >= Well.MIN_DISTANCE && dist <= Well.MAX_DISTANCE, "the Well is " + Math.round(dist) + " blocks from spawn");
+            h.assertTrue(level.getBlockState(new BlockPos(d.x, d.y - 20, d.z)).isAir(), "the shaft is not open");
+            h.assertTrue(level.getBlockState(new BlockPos(d.x + Well.RING_INNER + 1, d.y - 20, d.z)).is(DescentContent.WELL_STONE.get())
+                    || level.getBlockState(new BlockPos(d.x + Well.RING_INNER + 1, d.y - 20, d.z)).is(DescentContent.WELL_GLYPH.get()),
+                    "the shaft is not lined");
+            h.assertTrue(level.getBlockState(new BlockPos(d.x + Well.RING_INNER + 3, d.y + 1, d.z)).is(DescentContent.WELL_LIFT.get()), "no lift on the rim");
+            h.assertTrue(level.getBlockState(new BlockPos(d.x, d.bottom, d.z)).is(net.minecraft.world.level.block.Blocks.WATER), "no pool at the bottom");
+            h.assertTrue(Well.inShaft(d, d.x + 0.5, d.y - 10, d.z + 0.5) && !Well.inShaft(d, d.x + 10.5, d.y - 10, d.z + 0.5),
+                    "shaft detection");
+        });
     }
 
     /**
