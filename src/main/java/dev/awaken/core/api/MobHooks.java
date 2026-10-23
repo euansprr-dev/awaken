@@ -26,6 +26,9 @@ public final class MobHooks {
 
         /** A named boss (e.g. "awaken:bell_warden"). */
         LivingEntity spawnBoss(ServerLevel level, String bossId, BlockPos pos, int contentLevel, String gateId);
+
+        /** Whether this is a peaceful overworld creature (ambient or grazing) that powers' waves shouldn't hurt unprovoked. */
+        default boolean peaceful(net.minecraft.world.entity.Entity e) { return false; }
     }
 
     private static Spawner spawner = new Fallback();
@@ -40,6 +43,10 @@ public final class MobHooks {
 
     public static LivingEntity spawnBoss(ServerLevel level, String bossId, BlockPos pos, int contentLevel, String gateId) {
         return spawner.spawnBoss(level, bossId, pos, contentLevel, gateId);
+    }
+
+    public static boolean peaceful(net.minecraft.world.entity.Entity e) {
+        return spawner.peaceful(e);
     }
 
     /** Applies SPEC section 2 scaling to any living entity and tags its role. */

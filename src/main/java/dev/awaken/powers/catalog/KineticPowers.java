@@ -133,6 +133,7 @@ final class KineticPowers {
             Combat.knockFrom(e, at, 0.6, 0.55);
             if (c.is(2)) Combat.stun(e, 20);
         }
+        for (LivingEntity e : Combat.bystandersAround(c.player, at.add(0, 0.5, 0), radius)) Combat.knockFrom(e, at, 0.45, 0.4);
         BlockState below = c.level.getBlockState(Moves.below(c.player));
         if (!below.isAir()) Fx.burstRing(c.level, at.add(0, 0.1, 0), new BlockParticleOption(ParticleTypes.BLOCK, below), 28, 0.5 * c.v.radius());
         Fx.burstRing(c.level, at.add(0, 0.2, 0), ParticleTypes.CLOUD, 20, 0.35 * c.v.radius());
@@ -291,6 +292,9 @@ final class KineticPowers {
                 rr.hit.add(e.getId());
                 c.hurt(e, dmg, null);
                 Combat.knockFrom(e, origin, 1.4, 0.35);
+            }
+            for (LivingEntity e : Combat.bystandersInCone(c.player, origin, dir, front, half)) {
+                if (rr.hit.add(e.getId())) Combat.knockFrom(e, origin, 0.9, 0.3);
             }
             int points = (int) (half / 6) + 3;
             for (int i = -points; i <= points; i++) {
