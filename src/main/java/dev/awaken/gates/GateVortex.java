@@ -1,5 +1,7 @@
 package dev.awaken.gates;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * The surface gate's shape and look, as pure maths shared by the server (footprint, structure), the client renderer
  * ({@code gates.client.GateVortexRenderer}) and the offline preview (a GameTest exports frames of it for
@@ -225,6 +227,20 @@ public final class GateVortex {
      * and the funnel recedes away from it).
      */
     public static void emitSurface(Look l, float time, int side, Sink out) {
+        emitSurface(l, time, side, out, out);
+    }
+
+    /** Only the dark heart (see {@link #emitSurface(Look, float, int, Sink, Sink)}). */
+    public static void emitHeart(Look l, float time, int side, Sink heart) {
+        emitSurface(l, time, side, null, heart);
+    }
+
+    /**
+     * As above, with the dark heart sent to its own sink (null skips that part): the world renderer draws the heart
+     * first and lets it write depth, so clouds and other late translucent layers stay behind the opening instead of
+     * showing through it.
+     */
+    public static void emitSurface(Look l, float time, int side, @Nullable Sink out, @Nullable Sink heart) {
         Size sz = l.size();
         float sc = scale(l, time);
         if (sc <= 0.01F || l.fade <= 0.01F) return;
@@ -238,11 +254,14 @@ public final class GateVortex {
         // forming: the heart shows first, the arms and rim follow
         float openArms = l.mode == FORMING ? smooth(0.25F, 0.8F, l.open) : 1F;
 
+        if (heart != null) {
+            // 2. the dark heart
+            radial(heart, rx, ry, 0, 10, -0.05F * side, depth, HEART, 0.79F, withAlpha(p.heart, 0.93F * fade), 1F, 1F);
+        }
+        if (out == null) return;
         // 1. glow halo behind everything (outer part of the grid)
         int glow = withAlpha(mix(p.glow, WARN_RED, 0.35F * warnPulse), (0.42F + 0.2F * warnPulse) * fade);
         radial(out, rx, ry, 9, RINGS.length - 1, -0.09F * side, depth, HALO, 1.6F, glow, 1F, 1F);
-        // 2. the dark heart
-        radial(out, rx, ry, 0, 10, -0.05F * side, depth, HEART, 0.79F, withAlpha(p.heart, 0.93F * fade), 1F, 1F);
         // 3. spiral arms: a logarithmic spiral turning, so the arms flow inward
         float armsA = 0.95F * fade * openArms;
         band(out, rx, ry, 1, 13, 0F, depth, ARMS_V0, ARMS_V1, 1F, 0.62F, turn, broken ? 0.09F : 0F, time,

@@ -1,0 +1,61 @@
+# The gate vortex by day with clouds behind it: the dark heart must hide them (it writes depth before the glow).
+# Run by the integrator.
+world structstudio creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -32 150 -8 31 150 55 minecraft:smooth_stone
+cmd fill -32 151 -8 31 158 55 minecraft:air
+cmd fill -32 159 -8 31 166 55 minecraft:air
+cmd fill -32 167 -8 31 174 55 minecraft:air
+cmd fill -32 175 -8 31 182 55 minecraft:air
+cmd fill -32 183 -8 31 190 55 minecraft:air
+wait 10
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase E open
+wait 60
+look 0 -6
+cmd time set 6000
+wait 40
+shot vd_e_day
+cmd tp @s 0.5 151 40.5 180 0
+look 180 -6
+wait 40
+shot vd_e_day_back
+cmd time set 18000
+wait 30
+shot vd_e_night_back
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase S open
+wait 60
+cmd tp @s 0.5 151 -11.5 0 0
+look 0 -16
+cmd time set 6000
+wait 40
+shot vd_s_day
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase B forming
+wait 20
+cmd tp @s 0.5 151 -5.5 0 0
+look 0 -10
+wait 30
+shot vd_b_forming_day
+wait 60
+shot vd_b_formed_day
+quit
