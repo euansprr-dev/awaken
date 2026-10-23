@@ -1,0 +1,346 @@
+{
+ "summary": {
+  "careful": {
+   "D": {
+    "median": 4.2,
+    "p10": 3.0,
+    "p90": 5.9,
+    "reached": 1.0
+   },
+   "C": {
+    "median": 12.8,
+    "p10": 11.0,
+    "p90": 14.9,
+    "reached": 1.0
+   },
+   "B": {
+    "median": 27.7,
+    "p10": 25.4,
+    "p90": 30.4,
+    "reached": 1.0
+   },
+   "A": {
+    "median": 47.7,
+    "p10": 45.2,
+    "p90": 50.7,
+    "reached": 1.0
+   },
+   "S": {
+    "median": 76.3,
+    "p10": 73.0,
+    "p90": 80.1,
+    "reached": 1.0
+   },
+   "Sovereign": {
+    "median": 117.5,
+    "p10": 113.6,
+    "p90": 121.7,
+    "reached": 1.0
+   },
+   "level_gap_min_by_band": {
+    "E": 23.5,
+    "D": 30.6,
+    "C": 39.6,
+    "B": 43.0,
+    "A": 53.6,
+    "S": 67.3
+   },
+   "deaths_per_10_gates": 1.08
+  },
+  "balanced": {
+   "D": {
+    "median": 3.5,
+    "p10": 2.6,
+    "p90": 5.1,
+    "reached": 1.0
+   },
+   "C": {
+    "median": 10.6,
+    "p10": 8.9,
+    "p90": 12.5,
+    "reached": 1.0
+   },
+   "B": {
+    "median": 23.1,
+    "p10": 20.5,
+    "p90": 25.6,
+    "reached": 1.0
+   },
+   "A": {
+    "median": 39.9,
+    "p10": 37.1,
+    "p90": 43.3,
+    "reached": 1.0
+   },
+   "S": {
+    "median": 64.7,
+    "p10": 61.1,
+    "p90": 68.5,
+    "reached": 1.0
+   },
+   "Sovereign": {
+    "median": 102.5,
+    "p10": 98.3,
+    "p90": 106.6,
+    "reached": 1.0
+   },
+   "level_gap_min_by_band": {
+    "E": 20.0,
+    "D": 24.2,
+    "C": 32.9,
+    "B": 35.5,
+    "A": 43.8,
+    "S": 59.3
+   },
+   "deaths_per_10_gates": 1.77
+  },
+  "greedy": {
+   "D": {
+    "median": 4.5,
+    "p10": 3.4,
+    "p90": 5.8,
+    "reached": 1.0
+   },
+   "C": {
+    "median": 11.1,
+    "p10": 8.6,
+    "p90": 14.0,
+    "reached": 1.0
+   },
+   "B": {
+    "median": 24.4,
+    "p10": 20.2,
+    "p90": 28.8,
+    "reached": 1.0
+   },
+   "A": {
+    "median": 42.4,
+    "p10": 36.5,
+    "p90": 48.5,
+    "reached": 1.0
+   },
+   "S": {
+    "median": 69.5,
+    "p10": 61.3,
+    "p90": 77.3,
+    "reached": 1.0
+   },
+   "Sovereign": {
+    "median": 112.8,
+    "p10": 103.6,
+    "p90": 125.7,
+    "reached": 1.0
+   },
+   "level_gap_min_by_band": {
+    "E": 20.6,
+    "D": 36.5,
+    "C": 53.3,
+    "B": 57.6,
+    "A": 70.3,
+    "S": 88.7
+   },
+   "deaths_per_10_gates": 7.02
+  },
+  "builder": {
+   "D": {
+    "median": 3.9,
+    "p10": 2.8,
+    "p90": 6.1,
+    "reached": 1.0
+   },
+   "C": {
+    "median": 11.6,
+    "p10": 9.5,
+    "p90": 14.1,
+    "reached": 1.0
+   },
+   "B": {
+    "median": 24.6,
+    "p10": 22.1,
+    "p90": 27.7,
+    "reached": 1.0
+   },
+   "A": {
+    "median": 42.1,
+    "p10": 39.2,
+    "p90": 45.8,
+    "reached": 1.0
+   },
+   "S": {
+    "median": 67.3,
+    "p10": 64.1,
+    "p90": 71.5,
+    "reached": 1.0
+   },
+   "Sovereign": {
+    "median": 105.3,
+    "p10": 100.8,
+    "p90": 110.1,
+    "reached": 1.0
+   },
+   "level_gap_min_by_band": {
+    "E": 22.6,
+    "D": 25.5,
+    "C": 34.0,
+    "B": 36.6,
+    "A": 45.6,
+    "S": 58.1
+   },
+   "deaths_per_10_gates": 1.93
+  }
+ },
+ "target_checks": [
+  {
+   "rank": "D",
+   "target": [
+    2.5,
+    4.5
+   ],
+   "balanced_median": 3.5,
+   "pass": true
+  },
+  {
+   "rank": "C",
+   "target": [
+    8,
+    13
+   ],
+   "balanced_median": 10.6,
+   "pass": true
+  },
+  {
+   "rank": "B",
+   "target": [
+    18,
+    28
+   ],
+   "balanced_median": 23.1,
+   "pass": true
+  },
+  {
+   "rank": "A",
+   "target": [
+    32,
+    48
+   ],
+   "balanced_median": 39.9,
+   "pass": true
+  },
+  {
+   "rank": "S",
+   "target": [
+    52,
+    78
+   ],
+   "balanced_median": 64.7,
+   "pass": true
+  },
+  {
+   "rank": "Sovereign",
+   "target": [
+    85,
+    120
+   ],
+   "balanced_median": 102.5,
+   "pass": true
+  }
+ ],
+ "push_ev_C_on_level": [
+  {
+   "stop_at": 1,
+   "levels_per_hour": 1.39,
+   "death_rate": 0.035,
+   "vs_best": 0.59
+  },
+  {
+   "stop_at": 2,
+   "levels_per_hour": 1.85,
+   "death_rate": 0.092,
+   "vs_best": 0.78
+  },
+  {
+   "stop_at": 3,
+   "levels_per_hour": 2.18,
+   "death_rate": 0.182,
+   "vs_best": 0.92
+  },
+  {
+   "stop_at": 4,
+   "levels_per_hour": 2.36,
+   "death_rate": 0.324,
+   "vs_best": 1.0
+  },
+  {
+   "stop_at": 5,
+   "levels_per_hour": 2.31,
+   "death_rate": 0.523,
+   "vs_best": 0.98
+  },
+  {
+   "stop_at": 6,
+   "levels_per_hour": 1.89,
+   "death_rate": 0.765,
+   "vs_best": 0.8
+  },
+  {
+   "stop_at": 7,
+   "levels_per_hour": 1.26,
+   "death_rate": 0.961,
+   "vs_best": 0.53
+  }
+ ],
+ "push_ev_C_underlevelled": [
+  {
+   "stop_at": 1,
+   "levels_per_hour": 1.83,
+   "death_rate": 0.057,
+   "vs_best": 0.7
+  },
+  {
+   "stop_at": 2,
+   "levels_per_hour": 2.34,
+   "death_rate": 0.151,
+   "vs_best": 0.9
+  },
+  {
+   "stop_at": 3,
+   "levels_per_hour": 2.61,
+   "death_rate": 0.286,
+   "vs_best": 1.0
+  },
+  {
+   "stop_at": 4,
+   "levels_per_hour": 2.56,
+   "death_rate": 0.493,
+   "vs_best": 0.98
+  },
+  {
+   "stop_at": 5,
+   "levels_per_hour": 2.15,
+   "death_rate": 0.732,
+   "vs_best": 0.82
+  },
+  {
+   "stop_at": 6,
+   "levels_per_hour": 1.38,
+   "death_rate": 0.952,
+   "vs_best": 0.53
+  },
+  {
+   "stop_at": 7,
+   "levels_per_hour": 1.2,
+   "death_rate": 0.992,
+   "vs_best": 0.46
+  }
+ ],
+ "xp_curve": {
+  "1": 150,
+  "5": 988,
+  "10": 2597,
+  "25": 9638,
+  "45": 22520,
+  "70": 42682,
+  "100": 71550,
+  "135": 110525
+ }
+}

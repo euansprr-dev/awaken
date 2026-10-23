@@ -1,0 +1,1694 @@
+<meta charset="utf-8">
+<title>Awaken Design Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a long design bible. Sticky contents rail on the left at desktop width, one reading column (~68ch) on the right.
+   Signal windows (the in-game UI) are the one loud element; everything around them stays quiet. */
+:root {
+  --ground: #f1f3f7;      /* morning mist */
+  --panel: #ffffff;
+  --panel-2: #e8ecf3;
+  --ink: #151a26;
+  --muted: #5a6476;
+  --rule: #d6dce6;
+  --lantern: #a8620a;     /* amber lantern, darkened for contrast on mist */
+  --lantern-soft: #f6e3c6;
+  --signal: #1d5f9e;      /* the Signal's glow colour */
+  --signal-glass: #0f1724;
+  --signal-ink: #e9f2ff;
+  --signal-edge: #7fc3ff;
+  --good: #1f8a5b;
+  --warn: #9a6a00;
+  --bad: #b8433d;
+  --chip-verified: #dff3e9;
+  --chip-research: #e2ecfb;
+  --chip-hyp: #fbefd9;
+  --chip-prop: #ece6fb;
+  --chip-ill: #eceef2;
+  --f-display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --step--1: 0.86rem;
+  --step-0: 1rem;
+  --step-1: 1.2rem;
+  --step-2: 1.5rem;
+  --step-3: 2rem;
+  --step-4: 2.8rem;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0c0f17; --panel: #121826; --panel-2: #182033; --ink: #e5e9f1; --muted: #98a3b6; --rule: #253047;
+    --lantern: #f2a541; --lantern-soft: #3a2a12; --signal: #8fcaff; --signal-glass: #0a1120; --signal-ink: #e9f2ff; --signal-edge: #7fc3ff;
+    --good: #58c896; --warn: #f0c04e; --bad: #f07a72;
+    --chip-verified: #143428; --chip-research: #152745; --chip-hyp: #3a2b10; --chip-prop: #2a2145; --chip-ill: #222a39;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0c0f17; --panel: #121826; --panel-2: #182033; --ink: #e5e9f1; --muted: #98a3b6; --rule: #253047;
+  --lantern: #f2a541; --lantern-soft: #3a2a12; --signal: #8fcaff; --signal-glass: #0a1120; --signal-ink: #e9f2ff; --signal-edge: #7fc3ff;
+  --good: #58c896; --warn: #f0c04e; --bad: #f07a72;
+  --chip-verified: #143428; --chip-research: #152745; --chip-hyp: #3a2b10; --chip-prop: #2a2145; --chip-ill: #222a39;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
+body {
+  background: var(--ground); color: var(--ink);
+  font-family: var(--f-body); font-size: 17px; line-height: 1.62;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--signal); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--lantern); outline-offset: 3px; border-radius: 3px; }
+h1, h2, h3, h4 { font-family: var(--f-display); line-height: 1.15; text-wrap: balance; margin: 0; letter-spacing: 0.01em; }
+h2 { font-size: var(--step-3); font-weight: 600; }
+h3 { font-size: var(--step-2); font-weight: 600; margin-top: 2.2rem; }
+h4 { font-size: var(--step-1); font-weight: 600; margin-top: 1.6rem; }
+p { margin: 0.7rem 0; }
+ul, ol { padding-left: 1.25rem; margin: 0.6rem 0; }
+li { margin: 0.25rem 0; }
+code, .mono { font-family: var(--f-mono); font-size: 0.86em; }
+strong { font-weight: 700; }
+.eyebrow { font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.14em; font-size: var(--step--1); color: var(--lantern); font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: var(--step--1); }
+
+.shell { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 48px; padding-block: 32px 96px; }
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; font-size: var(--step--1); padding-right: 6px; }
+.rail .brand { font-family: var(--f-display); font-weight: 700; font-size: 1.35rem; letter-spacing: 0.22em; }
+.rail nav { display: grid; gap: 2px; margin-top: 18px; }
+.rail nav a { color: var(--muted); text-decoration: none; padding: 4px 8px; border-radius: 4px; display: block; }
+.rail nav a:hover { color: var(--ink); background: var(--panel-2); }
+.rail nav a.sub { padding-left: 22px; font-size: 0.82rem; }
+.rail nav a.on { color: var(--ink); background: var(--panel-2); }
+.mobile-toc { display: none; }
+main { min-width: 0; }
+.col { max-width: 72ch; }
+section.chapter { padding-top: 56px; border-top: 1px solid var(--rule); margin-top: 56px; }
+section.chapter:first-of-type { border-top: 0; margin-top: 0; padding-top: 8px; }
+.chapter > header { display: grid; gap: 6px; margin-bottom: 18px; }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 36px; align-items: center; }
+.hero h1 { font-size: clamp(2.6rem, 6vw, 4.6rem); font-weight: 700; letter-spacing: 0.16em; line-height: 1; }
+.hero .tag { font-family: var(--f-display); font-size: var(--step-2); font-weight: 500; margin-top: 10px; }
+.hero p.lede { font-size: 1.12rem; max-width: 56ch; }
+.compass { width: 100%; max-width: 440px; height: auto; display: block; margin: 0 auto; }
+
+/* Signal window (in-game UI mockup) */
+.signal {
+  position: relative; background: var(--signal-glass); color: var(--signal-ink);
+  border: 1px solid color-mix(in srgb, var(--signal-edge) 55%, transparent);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.25), 0 0 28px color-mix(in srgb, var(--signal-edge) 22%, transparent), inset 0 0 40px color-mix(in srgb, var(--signal-edge) 8%, transparent);
+  padding: 16px 18px 14px; font-family: var(--f-display); max-width: 420px;
+}
+.signal::before, .signal::after { content: ""; position: absolute; width: 14px; height: 14px; border-color: var(--signal-edge); border-style: solid; }
+.signal::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.signal::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+.signal .sg-head { display: flex; justify-content: space-between; gap: 12px; font-size: 0.78rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--signal-edge); border-bottom: 1px solid color-mix(in srgb, var(--signal-edge) 30%, transparent); padding-bottom: 8px; margin-bottom: 10px; }
+.signal .sg-title { font-size: 1.25rem; font-weight: 600; letter-spacing: 0.04em; }
+.signal .sg-body { font-family: var(--f-body); font-size: 0.95rem; line-height: 1.5; color: color-mix(in srgb, var(--signal-ink) 86%, transparent); margin-top: 6px; }
+.signal .sg-row { display: flex; justify-content: space-between; gap: 10px; font-size: 0.92rem; padding: 3px 0; border-bottom: 1px dashed color-mix(in srgb, var(--signal-edge) 18%, transparent); }
+.signal .sg-row:last-child { border-bottom: 0; }
+.signal .sg-row b { font-weight: 600; color: #fff; }
+.signal .sg-foot { margin-top: 10px; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--signal-edge); }
+.signal .nty { color: #ffcf7a; font-weight: 600; letter-spacing: 0.12em; }
+.signal .rank { display: inline-grid; place-items: center; width: 2.1em; height: 2.1em; border: 1px solid var(--signal-edge); font-weight: 700; }
+.signal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; margin: 18px 0; }
+.signal-grid .signal { max-width: none; }
+
+/* Chips for evidence status */
+.chip { display: inline-block; font-family: var(--f-display); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 7px; border-radius: 3px; vertical-align: 2px; color: var(--ink); font-weight: 600; white-space: nowrap; }
+.chip.v { background: var(--chip-verified); }
+.chip.r { background: var(--chip-research); }
+.chip.h { background: var(--chip-hyp); }
+.chip.p { background: var(--chip-prop); }
+.chip.i { background: var(--chip-ill); }
+.legend-chips { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: var(--step--1); color: var(--muted); align-items: center; }
+
+/* Tables */
+.tbl { overflow-x: auto; margin: 14px 0 18px; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--f-display); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--panel-2); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl.wide table { min-width: 860px; }
+.verdict { font-family: var(--f-display); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.verdict.keep { color: var(--good); } .verdict.extend { color: var(--signal); } .verdict.replace { color: var(--bad); } .verdict.inv { color: var(--warn); }
+
+/* Blocks */
+.callout { border-left: 3px solid var(--lantern); background: var(--panel); padding: 12px 16px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+.callout.quiet { border-left-color: var(--rule); }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; min-width: 0; }
+.card h4 { margin-top: 0; }
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+.dir { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+.dir .card .k { font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.78rem; color: var(--lantern); font-weight: 700; }
+.dir .card .n { font-family: var(--f-display); font-size: 1.35rem; font-weight: 600; margin: 2px 0 6px; }
+dl.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 10px 0; }
+dl.kv dt { font-family: var(--f-display); font-weight: 600; font-size: 0.86rem; letter-spacing: 0.04em; color: var(--muted); text-transform: uppercase; padding-top: 2px; }
+dl.kv dd { margin: 0; }
+.contract { font-family: var(--f-mono); font-size: 0.8rem; line-height: 1.55; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; overflow-x: auto; white-space: pre; margin: 12px 0 18px; }
+details.more { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); margin: 12px 0; }
+details.more > summary { cursor: pointer; padding: 10px 14px; font-family: var(--f-display); font-weight: 600; letter-spacing: 0.03em; }
+details.more > div { padding: 0 16px 14px; }
+.timeline { display: grid; gap: 0; margin: 16px 0; border-left: 2px solid var(--rule); }
+.timeline .t { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: 12px; padding: 8px 0 8px 14px; position: relative; }
+.timeline .t::before { content: ""; position: absolute; left: -6px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--ground); border: 2px solid var(--lantern); }
+.timeline .t .when { font-family: var(--f-mono); font-size: 0.82rem; color: var(--muted); padding-top: 2px; }
+.timeline .t.concept::before { background: var(--lantern); }
+.walk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin: 14px 0 22px; background: var(--panel); }
+.walk > div { padding: 14px 16px; min-width: 0; }
+.walk > div + div { border-left: 1px solid var(--rule); }
+.walk .lab { font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.75rem; font-weight: 700; color: var(--muted); }
+.walk .after .lab { color: var(--lantern); }
+.walk ol { padding-left: 1.1rem; font-size: 0.95rem; }
+.walk .why { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--rule); font-size: 0.93rem; background: var(--panel-2); }
+.figure { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; margin: 16px 0; overflow-x: auto; }
+.figure figcaption { font-size: var(--step--1); color: var(--muted); margin-top: 8px; }
+.figure svg text { font-family: var(--f-body); }
+pre.mermaid { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+
+/* Gate generator */
+.gen { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; margin: 16px 0; }
+.gen .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+button.btn { font-family: var(--f-display); font-weight: 600; letter-spacing: 0.06em; font-size: 0.92rem; padding: 8px 16px; border-radius: 4px; border: 1px solid var(--lantern); background: var(--lantern); color: var(--ground); cursor: pointer; }
+button.btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+button.btn:hover { filter: brightness(1.08); }
+select.sel { font: inherit; font-size: 0.92rem; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); }
+.trace { font-family: var(--f-mono); font-size: 0.78rem; line-height: 1.6; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; min-height: 220px; overflow-x: auto; }
+.trace .rule { color: var(--muted); }
+.history { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.history span { font-family: var(--f-mono); font-size: 0.72rem; padding: 2px 6px; border: 1px solid var(--rule); border-radius: 3px; color: var(--muted); }
+
+.decisions { counter-reset: d; display: grid; gap: 12px; }
+.decisions .d { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px 14px 56px; position: relative; }
+.decisions .d::before { counter-increment: d; content: counter(d); position: absolute; left: 16px; top: 13px; font-family: var(--f-display); font-weight: 700; font-size: 1.3rem; color: var(--lantern); }
+.decisions .d h4 { margin: 0 0 4px; }
+.rec { font-family: var(--f-display); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.05em; color: var(--lantern); text-transform: uppercase; }
+
+@media (max-width: 980px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 20px 72px; }
+  .rail { display: none; }
+  .mobile-toc { display: block; margin-bottom: 18px; }
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .gen { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .grid-2, .grid-3, .walk { grid-template-columns: minmax(0, 1fr); }
+  .walk > div + div { border-left: 0; border-top: 1px solid var(--rule); }
+  dl.kv { grid-template-columns: minmax(0, 1fr); }
+  dl.kv dt { padding-top: 8px; }
+}
+</style>
+
+<div class="shell">
+  <aside class="rail" aria-label="Contents">
+    <div class="brand">AWAKEN</div>
+    <div class="muted small">Design plan · 23 Oct 2026</div>
+    <nav id="rail-nav">
+      <a href="#top">The pitch</a>
+      <a href="#understand">1 · What you're asking for</a>
+      <a href="#audit">2 · What exists today</a>
+      <a href="#options">3 · Options and the pick</a>
+      <a href="#game">4a · The game</a>
+      <a class="sub" href="#g-shape">One home, four directions</a>
+      <a class="sub" href="#g-direction">Direction without a quest tree</a>
+      <a class="sub" href="#g-signal">The Signal, stats, ranks</a>
+      <a class="sub" href="#g-gates">Gates</a>
+      <a class="sub" href="#g-deep">The Descent</a>
+      <a class="sub" href="#g-powers">Powers and Paths</a>
+      <a class="sub" href="#g-truths">Truths, Titles, Latents</a>
+      <a class="sub" href="#g-dream">The Lucidium (dreams)</a>
+      <a class="sub" href="#g-veil">The Veil (astral)</a>
+      <a class="sub" href="#g-above">The Above (sci-fi)</a>
+      <a class="sub" href="#g-hearth">Hearth, town, Echoes</a>
+      <a class="sub" href="#g-story">Story and tone</a>
+      <a class="sub" href="#g-first">The first hour</a>
+      <a class="sub" href="#g-rules">Death, difficulty, friends</a>
+      <a href="#build">4b · How it's built</a>
+      <a href="#demo">5 · See it working</a>
+      <a href="#ship">6 · Proving it and shipping it</a>
+      <a href="#decide">7 · Decisions for you</a>
+    </nav>
+  </aside>
+
+  <main>
+    <details class="mobile-toc more">
+      <summary>Contents</summary>
+      <div id="mobile-nav"></div>
+    </details>
+
+    <!-- ============ HERO ============ -->
+    <section class="chapter" id="top">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Minecraft Java mod · working title</div>
+          <h1>AWAKEN</h1>
+          <div class="tag">One home. Four directions. No ceiling.</div>
+          <p class="lede">You start as the weakest person in the world. A gate opens on the horizon, you walk into it, and you die. Then something called the Signal asks if you accept, and Minecraft becomes a different game: gates to clear, a pit with no bottom under your home, dreams you can wake up inside, a body you can step out of, and old machines that remember who built them.</p>
+          <p class="muted">This page is the full plan: what I think you're really after, what exists today, the options, the whole game, how it gets built, working demos, how we prove it's fun, and the decisions only you can make. Nothing has been built or installed. It stops here for your approval.</p>
+          <div class="legend-chips" style="margin-top:14px">
+            <span><span class="chip v">Verified</span> checked on your machine or in files</span>
+            <span><span class="chip r">Research</span> from a cited source</span>
+            <span><span class="chip h">Hypothesis</span> needs a test</span>
+            <span><span class="chip p">Proposal</span> my design</span>
+            <span><span class="chip i">Illustrative</span> example output</span>
+          </div>
+        </div>
+        <svg class="compass" viewBox="0 0 440 440" role="img" aria-labelledby="cmp-t cmp-d">
+          <title id="cmp-t">One home, four directions</title>
+          <desc id="cmp-d">The Hearth in the centre. Down leads to the Deep, In to the Lucidium, Out to the Veil, Up to the Above.</desc>
+          <defs>
+            <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="var(--lantern)" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="var(--lantern)" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="220" cy="220" r="196" fill="none" stroke="var(--rule)" stroke-width="1"/>
+          <circle cx="220" cy="220" r="128" fill="none" stroke="var(--rule)" stroke-width="1" stroke-dasharray="3 6"/>
+          <line x1="220" y1="30" x2="220" y2="410" stroke="var(--rule)" stroke-width="1"/>
+          <line x1="30" y1="220" x2="410" y2="220" stroke="var(--rule)" stroke-width="1"/>
+          <circle cx="220" cy="220" r="70" fill="url(#glow)"/>
+          <rect x="196" y="196" width="48" height="48" fill="var(--panel)" stroke="var(--lantern)" stroke-width="2" transform="rotate(45 220 220)"/>
+          <text x="220" y="226" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-weight="700" font-size="13" letter-spacing="2" fill="var(--ink)">HEARTH</text>
+          <g font-family="Chakra Petch, sans-serif" fill="var(--ink)" text-anchor="middle">
+            <text x="220" y="64" font-size="12" letter-spacing="3" fill="var(--lantern)" font-weight="700">UP</text>
+            <text x="220" y="84" font-size="17" font-weight="600">The Above</text>
+            <text x="220" y="102" font-size="11.5" fill="var(--muted)">machines · sky ruins · the Halo</text>
+            <text x="220" y="352" font-size="12" letter-spacing="3" fill="var(--lantern)" font-weight="700">DOWN</text>
+            <text x="220" y="372" font-size="17" font-weight="600">The Deep</text>
+            <text x="220" y="390" font-size="11.5" fill="var(--muted)">gates · the Descent</text>
+            <text x="92" y="200" font-size="12" letter-spacing="3" fill="var(--lantern)" font-weight="700">IN</text>
+            <text x="92" y="220" font-size="17" font-weight="600">Lucidium</text>
+            <text x="92" y="238" font-size="11.5" fill="var(--muted)">dreams you shape</text>
+            <text x="348" y="200" font-size="12" letter-spacing="3" fill="var(--lantern)" font-weight="700">OUT</text>
+            <text x="348" y="220" font-size="17" font-weight="600">The Veil</text>
+            <text x="348" y="238" font-size="11.5" fill="var(--muted)">leave your body</text>
+          </g>
+        </svg>
+      </div>
+      <div class="signal-grid" style="margin-top:28px">
+        <div class="signal" aria-label="Example Signal window">
+          <div class="sg-head"><span>◇ Signal</span><span>Day 1 · 00:24</span></div>
+          <div class="sg-title">You have met the conditions.</div>
+          <div class="sg-body">You died inside a gate and kept thinking. Few do. Will you accept?</div>
+          <div class="sg-foot">[ Accept ]&nbsp;&nbsp;&nbsp;[ Accept ]</div>
+        </div>
+        <div class="signal">
+          <div class="sg-head"><span>◇ Gate detected</span><span>1,140 m · NE</span></div>
+          <div class="sg-row"><span>Rank</span><b><span class="rank">C</span></b></div>
+          <div class="sg-row"><span>Breaks in</span><b>2 days</b></div>
+          <div class="sg-row"><span>Omen</span><b>Salt, and machine oil</b></div>
+          <div class="sg-foot">Scout it from the Veil to learn more</div>
+        </div>
+        <div class="signal">
+          <div class="sg-head"><span>◇ Truth</span><span>declared</span></div>
+          <div class="sg-title">“I do not retreat.”</div>
+          <div class="sg-body">Clear five floors in a row without extracting early.</div>
+          <div class="sg-row"><span>Progress</span><b>3 / 5</b></div>
+          <div class="sg-foot"><span class="nty">Not true yet</span></div>
+        </div>
+      </div>
+      <p class="small muted">These are illustrative mockups of the in-game interface, drawn in HTML. The real windows get their own look test, critic loop and side-by-side review before anything is final.</p>
+    </section>
+
+    <!-- ============ 1. UNDERSTANDING ============ -->
+    <section class="chapter" id="understand">
+      <header><div class="eyebrow">Section 1</div><h2>What you're asking for</h2></header>
+      <div class="col">
+        <p><strong>How I read it:</strong> you want Minecraft to feel like being the main character of your own Solo Leveling arc. You start weak, get chosen, go deeper, come home visibly stronger, and keep finding things nobody told you about. The pull comes from the world itself: a light on the horizon, a door that hums when you're ready, a dream that showed you a place. It never comes from a list.</p>
+      </div>
+
+      <h3>The brief, separated out</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Part</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td><strong>The job</strong></td><td>Turn a fresh Minecraft install into a long, directed game you want to come back to, played mostly solo in 30 to 90 minute sessions on your MacBook, with friends possible later.</td></tr>
+          <tr><td><strong>The pain</strong></td><td>Vanilla goes flat once you have gear and a house. Quest-book packs turn direction into chores. Kitchen-sink packs need a wiki and fifty tutorials. Dungeons are static and you loot them once. Power mods are toys with no stakes. <span class="chip h">Hypothesis</span> checked against player sentiment in Section 2.</td></tr>
+          <tr><td><strong>What you want to feel</strong></td><td>Always a next thing you <em>want</em> to do. Growth you can see and show off. Every gate different. Secrets found by accident. Learning by playing. Powers that feel incredible.</td></tr>
+          <tr><td><strong>Ideas you offered</strong> (to test, not assume)</td><td>Superpowers, sci-fi, astral projection, lucid dreaming, the Solo Leveling vibe, dungeons that go deeper and deeper, a home base in an open world.</td></tr>
+          <tr><td><strong>Must keep</strong></td><td>It is still Minecraft: blocks, survival, building, crafting, vanilla dimensions. Fun beats realism. Simple to pick up.</td></tr>
+          <tr><td><strong>From what I know about you</strong></td><td>120 fps on your M4 is non-negotiable to you. You reject generic, template or “AI-looking” work. You found dispatch screens and Sims-style micromanagement boring. You want to play the hero yourself, with unique movement, against a clock, with drills that grind stats. You want to come back to a home where people visibly recognise you. You keep your time under your own control, so there is no login pressure. <span class="chip v">Verified</span> from your memories, the HALFTONE and Dungeon City files and your Cosmo profile.</td></tr>
+          <tr><td><strong>Unknowns</strong></td><td>Solo or with friends from day one. Private or published. How harsh death should be. How long the full arc should be. Which Minecraft version (you downloaded 26.3 today). These are in <a href="#decide">Section 7</a>.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Built around you</h3>
+      <div class="col">
+        <p>You asked me to use everything I know about you. Here's what I used and where it shows up. All of it is meant to be subtle. None of it preaches.</p>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>What I found</th><th>Where it lands in the game</th></tr></thead>
+        <tbody>
+          <tr><td>Minecraft was your childhood game, and you already use render distance as a metaphor for how perception shapes reality.</td><td>In the Veil, your Awareness <em>is</em> your render distance. Beyond it the spirit world is fog, and it grows as you do.</td></tr>
+          <tr><td>“In a dream we create and perceive our world simultaneously.” You keep dream notes, and you have a note titled Lucidium.</td><td>Dreams build themselves where you look and change behind you. Once you're lucid, holding intent on a blank wall makes a door appear. The dream realm is called the Lucidium if you're happy to lend it the name.</td></tr>
+          <tr><td>You meditate daily, and you've felt “infinite peace and infinite void” with monks in Chiang Mai.</td><td>The Stillpoint: a quiet void above a sea of clouds at dawn, with a temple platform. It's where you meditate, spend points and step out of your body.</td></tr>
+          <tr><td>Your Personal Philosophy guide: define your future self, mark traits “Not true yet,” then live into them.</td><td>Truths. You declare who you're becoming. Each one says <span class="nty" style="color:var(--lantern)">NOT TRUE YET</span> until your actions make it true, then it grants a permanent power.</td></tr>
+          <tr><td>Your life story runs in eras: Addiction, Destruction, Rebirth, Alignment.</td><td>The prologue is a rebirth: you die in your first gate and come back chosen. The acts are Awakening, Alignment and Sovereign.</td></tr>
+          <tr><td>8,000+ hours of Fortnite, with a training routine.</td><td>Architect powers: place a wall, ramp or floor in one keypress mid-fight. Training Grounds have time trials, personal bests and ghosts of your best runs.</td></tr>
+          <tr><td>Dungeon City (June): an unranked adventurer goes through a gate, beats a boss, then returns to the city to upgrade and be visibly recognised. Its references were Diablo, PoE, Monster Hunter, Hades, Warframe, RE4's case and Spelunky.</td><td>Ranks with public Reassessments, a town that reacts to your rank, bosses you break apart for parts, a Satchel of carried loot you have to get out, and exosuit Frames.</td></tr>
+          <tr><td>HALFTONE and Field Ops: speedster time-slow, flight, beams, playing the hero against a clock; districts regain colour with Hope.</td><td>Flow (time-slow), Beam, Flight and gate timers are headline powers and systems. Land near a gate goes grey and gets its colour back when you clear it.</td></tr>
+          <tr><td>You want to “serve and end suffering,” and you value control of your own time.</td><td>The endgame is about freeing what the Deep has trapped, not only conquering it. Nothing runs on real-world time: no dailies that punish you, no streaks, no FOMO, and every session ends cleanly at home.</td></tr>
+          <tr><td>Visuals you love: fog lifting into a clear sky over a sea of clouds, an amber lantern, temples, mountain dawns.</td><td>The Stillpoint, the Frost Monastery gate theme, the colour script of the Above, and the amber of the Hearth.</td></tr>
+          <tr><td>Your voice is warm, funny and direct. You love Invincible's tone: bright, funny and sincere, then suddenly brutal.</td><td>The Signal is terse and a little dry. The world is bright and sincere until a gate turns brutal.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>What good looks like</h3>
+      <p class="col">Words like “fun,” “direction” and “immersive” get turned into things we can watch happen in a playtest.</p>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Quality</th><th>Strong result</th><th>Weak result</th><th>Unacceptable</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Direction</strong></td><td>Asked at a random moment, you can name what you'll do next and why, in one sentence, at least 9 times in 10.</td><td>You can, but only after opening a menu.</td><td>You open a list to find something to do, or you wander bored.</td></tr>
+          <tr><td><strong>Low tutorial load</strong></td><td>No wiki or recipe lookups in your first 5 hours. After hour one, at most one new system per hour, each learned by using it.</td><td>Tooltips do the teaching.</td><td>A guidebook or a video is needed.</td></tr>
+          <tr><td><strong>Discovery</strong></td><td>At least one “wait, what?” moment an hour. At least 40% of abilities and titles are found by accident or from a hint.</td><td>Secrets exist, but the UI lists them.</td><td>Everything is visible from minute one.</td></tr>
+          <tr><td><strong>Variation</strong></td><td>After 20 gates, a gate can still surprise you. No two gates in a row share a theme or layout.</td><td>Themes rotate but feel samey.</td><td>You can predict the next room.</td></tr>
+          <tr><td><strong>Growth</strong></td><td>Something new to use or show off at least every 20 minutes. Rank-ups feel like events. The town notices you.</td><td>Numbers go up quietly.</td><td>An hour with nothing new.</td></tr>
+          <tr><td><strong>Survival that stays fun</strong></td><td>A death costs you a run, never an evening.</td><td>Long corpse runs.</td><td>Hours lost to a bug, a crash or a lag spike.</td></tr>
+          <tr><td><strong>Feel</strong></td><td>110+ fps median and no hitch over 50 ms during a full gate fight on your M4.</td><td>A steady 60 fps.</td><td>Stutter when you enter a gate.</td></tr>
+          <tr><td><strong>Your time</strong></td><td>Any session can end cleanly at home within 30 to 90 minutes. Being away costs nothing.</td><td>A soft nudge to log in.</td><td>Real-time dailies, streaks, FOMO.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>The outcome contract</h3>
+      <dl class="kv col">
+        <dt>Usefulness</dt><dd>Deciding what to do next becomes effortless, and growth is felt, not just tracked.</dd>
+        <dt>Correctness</dt><dd>Rules are readable and fair. Every number the Signal shows is the real number. Every death can be explained by what you saw.</dd>
+        <dt>Effort removed</dt><dd>Wiki lookups, recipe hunting, long walks back (waypoints and lifts), inventory chores (your Echoes haul and sort), and grinding the same thing.</dd>
+        <dt>Responsiveness</dt><dd>Entering a gate takes under 2 seconds because it was built before you arrived. Your first fight comes within 60 seconds of entering, and your first level-up within 5 minutes of a new world.</dd>
+        <dt>Control</dt><dd><em>Automatic:</em> stat growth, Echoes doing chores. <em>Suggested:</em> Directives, Truths, your Path. <em>Your call:</em> where points go, which gate, push or extract, which Truths you declare, which Path you take.</dd>
+        <dt>Reliability</dt><dd>A crash never loses progress. A gate that fails to build rerolls quietly before you ever see it. A dream that isn't ready becomes a normal night's sleep.</dd>
+        <dt>Cost</dt><dd>Free to play solo. No servers, no AI services, nothing recurring. The real cost is build time (Section 6).</dd>
+      </dl>
+
+      <h3>Non-goals and things that must not break</h3>
+      <div class="grid-2">
+        <div class="card"><h4>Not doing (for now)</h4><ul>
+          <li>AI chat NPCs. They need a network connection and cost per conversation, they don't behave the same twice, and they risk the “AI-looking” feel.</li>
+          <li>Flying ships made of moving blocks. Huge engineering risk, low payoff.</li>
+          <li>Procedural nemesis rivals. WB holds a patent on that system, so our rival is authored.</li>
+          <li>PvP balance, Bedrock Edition, or working with every mod ever made.</li>
+          <li>Replacing vanilla mobs, biomes or progression.</li>
+        </ul></div>
+        <div class="card"><h4>Must not regress</h4><ul>
+          <li>Vanilla building, redstone, farming, exploring, enchanting. Our Level is separate from vanilla XP.</li>
+          <li>The Nether and the End stay as they are, and the mod adds to them.</li>
+          <li>Performance mods (Sodium and friends) keep working.</li>
+          <li>Your test worlds survive mod updates. Saves are versioned and backed up automatically.</li>
+        </ul></div>
+      </div>
+    </section>
+
+    <!-- ============ 2. AUDIT ============ -->
+    <section class="chapter" id="audit">
+      <header><div class="eyebrow">Section 2</div><h2>What exists today</h2></header>
+      <div class="col">
+        <p>There's no code yet, so this audit covers three things: your setup, vanilla Minecraft, and the closest existing mods. It looks for where the fun disappears in each.</p>
+      </div>
+
+      <h3>Your setup <span class="chip v">Verified</span></h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Item</th><th>Found</th><th>Means</th></tr></thead>
+        <tbody>
+          <tr><td>Machine</td><td>M4 MacBook Pro 14", 10-core GPU, 16 GB RAM, 120 Hz built-in screen plus a 4K 120 Hz external (from your memory files)</td><td>A strong CPU, but 16 GB is shared with your other apps. Plan for a 4 to 6 GB game heap and a strict particle and entity budget.</td></tr>
+          <tr><td>Minecraft</td><td>Official launcher installed and opened today. Versions 26.3 and 26.4-snapshot-5 downloaded. No mod loader, no mods folder, no saves.</td><td>A clean slate. Nothing to migrate.</td></tr>
+          <tr><td>Java</td><td>JDK 26 at <code>/usr/bin/java</code>. No Gradle.</td><td>The build toolchain (Gradle plus a loader dev kit) needs installing. That's a download of roughly 1 to 2 GB, and I'd put it on your MEDIA SSD with your OK.</td></tr>
+          <tr><td>Disk</td><td>The internal disk was about 95% full in September. Projects live on the external MEDIA SSD.</td><td>The repo, Gradle cache and test worlds go on MEDIA.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>The closest products, component by component</h3>
+      <p class="col">Research ran on 23 Oct 2026. Reddit couldn't be reached, so player sentiment comes from reviews, mod pages, forks and add-ons. Sources are linked in each row.</p>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Product or part</th><th>What it actually does</th><th>Evidence</th><th>What that means</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Vanilla survival</strong> (26.3)</td><td>Gather, craft, build. Advancements were added in 1.12 to “help guide” players.</td><td><span class="chip r">Research</span> <a href="https://minecraft.wiki/w/Toast_notification">minecraft.wiki</a></td><td>Goals run out once you have gear and a house. Nothing in the world asks for you.</td><td><span class="verdict keep">Keep</span>, and give gathering a reason (the Hearth, machines)</td></tr>
+          <tr><td><strong>Vanilla XP and enchanting</strong></td><td>XP is the enchanting currency.</td><td><span class="chip v">Verified</span> game knowledge</td><td>Taking XP over for levelling would break enchanting.</td><td><span class="verdict keep">Keep separate</span>. Our Level is its own number.</td></tr>
+          <tr><td><strong>Vault Hunters 3</strong>, the closest product (5.94M downloads, updated 30 Jul 2026)</td><td>Feed an altar, which makes a crystal, which opens a timed procedural vault with an objective. Vault XP buys skills. Research unlocks the pack's other mods. Collect 25 artifacts to reach the final vault.</td><td><span class="chip r">Research</span> <a href="https://www.curseforge.com/minecraft/modpacks/vault-hunters-1-18-2">CurseForge</a>, <a href="https://blog.curseforge.com/minecraft-vault-hunters-modpack-frequently-asked-questions/">FAQ, May 2026</a>, reviews <a href="https://moddex.gg/modpack/vault-hunters-1-18-2/reviews/986">Apr 2024</a> and <a href="https://moddex.gg/modpack/vault-hunters-1-18-2/reviews/988">Jun 2024</a></td><td>Players love co-op vault runs. The complaints: grindy early and mid game. No sense of progress after 40 to 50 hours. Base recipes cost vault gems that never get cheaper (one reviewer spent about six hours on a single drawer). Research costs scale with team size, which punishes friends who join late. The endgame artifact drop is about 1% per 25 levels, pure luck. Item loss on death is the setting players most often turn down.</td><td><span class="verdict extend">Extend</span> the vault loop. <span class="verdict replace">Replace</span> its economy: costs that fall, progress per player, an endgame earned by skill, loss presets from day one.</td></tr>
+          <tr><td><strong>Solo Leveling mods</strong> (Reawakening: 2.4M + 157K downloads; Cromta's: 1.2M)</td><td>They replay the canon: a random rank on awakening, overworld gates that expire in about 20 minutes, dungeon breaks, red gates, a timed daily quest, a job change at level 40, Arise, a 20-floor castle.</td><td><span class="chip r">Research</span> <a href="https://www.curseforge.com/minecraft/search?search=solo+leveling">CurseForge search, 23 Oct 2026</a>, <a href="https://modrinth.com/mod/YdsLXFph">Modrinth</a></td><td>The demand is proven. But once you know the story there's nothing left to discover, the original names carry legal risk, and the packs bundle 130 to 180 mods.</td><td><span class="verdict replace">Replace</span> with an original world and names. Keep the beats fans love, and stage them properly.</td></tr>
+          <tr><td><strong>Quest-book packs</strong> (FTB Quests)</td><td>Direction by checklist. In practice the book is an in-game wiki.</td><td><span class="chip r">Research</span> forum snippets (May 2024) and <a href="https://moddex.gg/reviews?page=14">reviews</a>. The praised exception is SkyFactory 3's one-line goal: “fly.”</td><td>Direction exists, but it reads as chores. Take the book away and its information has to live in the world instead.</td><td><span class="verdict replace">Replace</span> with Spine, Pressure, Pull and Whisper, plus the Codex board.</td></tr>
+          <tr><td><strong>Power and magic mods</strong> (Iron's Spells 6.1M, Ars Nouveau 4.1M, Origins 3.1M, Hex Casting 593K, Fisk's)</td><td>Origins gives every identity a drawback. Hex Casting's Great Spells differ per world, so no wiki can spoil them.</td><td><span class="chip r">Research</span> <a href="https://modrinth.com/mod/origins">Origins</a>, <a href="https://modrinth.com/mod/hex-casting">Hex Casting</a>, <a href="https://modrinth.com/mod/irons-spells-n-spellbooks">Iron's</a></td><td>A huge audience, but powers often come without stakes, or are learned from a book.</td><td><span class="verdict extend">Extend</span>: powers with drawbacks, and Latent conditions that change per world.</td></tr>
+          <tr><td><strong>Lucid-dream mods</strong></td><td>A 10% chance on sleep. You float around and press R to wake.</td><td><span class="chip r">Research</span> <a href="https://modrinth.com/project/HngWyv83">Modrinth</a></td><td>The niche is wide open.</td><td><span class="verdict replace">Replace</span></td></tr>
+          <tr><td><strong>Library ecosystem on 26.3</strong></td><td>GeckoLib and Player Animation Library are current (MIT). Veil, Lodestone, Epic Fight and Create stop at 1.21.1.</td><td><span class="chip r">Research</span> Modrinth API, 23 Oct 2026</td><td>Effects get built on vanilla's own render pipeline.</td><td><span class="verdict inv">Investigate</span> with a rendering spike in M0</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Five sessions, traced to where the fun drops</h3>
+      <p class="col">Since nothing is built, these trace today's experience through each step and mark where it goes wrong. The same five cases come back in <a href="#demo">Section 5</a> with the proposed version.</p>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Case</th><th>What you do</th><th>What the game gives back</th><th>Where the fun drops</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1. An ordinary evening</strong><br><span class="small muted">vanilla 26.3, day 12</span></td><td>Log in. House built, iron gear, a few diamonds. Look for something to do.</td><td>A tree of vague advancements. You go mining for 40 minutes.</td><td>Deciding what to do next. Nothing pulls you anywhere.</td></tr>
+          <tr><td><strong>2. The disappointment</strong><br><span class="small muted">a quest-book pack with 150+ mods</span></td><td>Open the book. “Craft 16 casings.”</td><td>A recipe viewer, then a wiki, then a machine from another mod, then 40 minutes of crafting.</td><td>Direction exists but it's chores, and the knowledge lives outside the game.</td></tr>
+          <tr><td><strong>3. A strong existing case</strong><br><span class="small muted">a Vault Hunters vault run</span></td><td>Altar, crystal, a 25-minute timed vault with an objective, loot, get out.</td><td>A great run, especially with friends.</td><td>Back at base. Gem-priced recipes, then a flat stretch around hour 40, then an endgame that comes down to luck.</td></tr>
+          <tr><td><strong>4. The ambiguous case</strong><br><span class="small muted">you just want to build tonight</span></td><td>Spend the evening on your base.</td><td>In Solo Leveling mods, gates expire and break in real time. In vanilla, building goes nowhere.</td><td>The game either ignores non-combat play or punishes it.</td></tr>
+          <tr><td><strong>5. The failure</strong><br><span class="small muted">you die deep, or the game crashes</span></td><td>Die on floor 5, or crash mid-dungeon.</td><td>Item loss on death by default, a corpse run, sometimes a damaged inventory.</td><td>A whole evening, gone.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted col">These are traced from the research above and from game knowledge. They aren't recorded sessions. The first step in Section 6 is for you to play a real baseline session, so we stop relying on my reading.</p>
+
+      <h3>Why the fun drops: root causes</h3>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Symptom</th><th>Likely cause</th><th>Supports it</th><th>Argues against it</th><th>Smallest test</th><th>Impact if fixed</th></tr></thead>
+        <tbody>
+          <tr><td>Bored once you have gear and a house</td><td>No goals that renew and grow with you</td><td>Vanilla's structure. Vault Hunters exists to fill this gap.</td><td>Some players build happily forever</td><td>M1 slice: after one session, do you want a second? Compare with your vanilla baseline.</td><td>High</td></tr>
+          <tr><td>Quest books feel like chores</td><td>Goals are imposed and countable, and the information arrives as a checklist</td><td>Player complaints. SkyFactory's “fly” is the one quest people praise.</td><td>Completionists like lists</td><td>Run the same goals as Directives (three at most, expiring) versus as a list view, and see which you pick up</td><td>High</td></tr>
+          <tr><td>Packs need a wiki</td><td>Too many unrelated systems with recipes that cross between mods</td><td>Simple Sink keeps early recipes vanilla for exactly this reason. Vault Hunters' research slowly widens choice.</td><td>Create is complex and still loved, because it's physical and you can watch it work</td><td>Count wiki lookups in the first five hours. Rule: every system can be seen and touched.</td><td>High</td></tr>
+          <tr><td>The mid game goes flat</td><td>Rewards scale smoothly, and no new verbs arrive</td><td>Vault Hunters reviews at 40 to 50 hours. Solo Leveling: Arise reviews. <strong>Our own simulator</strong>: level-ups thin out to about 60 minutes apart by S-rank.</td><td>Slower levels may be fine if other rewards keep landing</td><td>Simulate a second reward rhythm (cores, titles, Truths), then playtest it</td><td>High</td></tr>
+          <tr><td>Dungeons get stale</td><td>Variety comes from more content, not from systems that interact</td><td>Arise Overdrive's “handful of maps.” BotW's multiplicative design.</td><td>The number of themes might matter more than interactions</td><td>Surprise rating after 20 gates: four themes with interacting forces versus eight themes without</td><td>Medium-high</td></tr>
+          <tr><td>Powers feel like toys</td><td>No stakes, no drawbacks, and flight skips the world</td><td>Origins' drawbacks. Player complaints about elytra.</td><td>Pure power fantasy may be the point</td><td>Playtest when flight unlocks and how much it costs</td><td>Medium</td></tr>
+          <tr><td>Death ruins the evening</td><td>Item loss and crashes</td><td>Vault Hunters' item loss is its most turned-down setting</td><td>Hardcore fans want the sting</td><td>Loss presets, plus kill-the-server-mid-run tests</td><td>High</td></tr>
+          <tr><td>Spirit and dream mechanics feel arbitrary</td><td>Hidden rules, or no depth at all</td><td>Critics of Beyond: Two Souls' ghost. Shallow dream mods.</td><td>Mystery can be part of the appeal</td><td>Can you predict what your spirit can touch after five minutes in the Veil?</td><td>Medium</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout quiet col"><strong>What kind of problem this is.</strong> Most of these come from how the loop is designed, not from isolated bugs. Some are source problems (not enough content, or the wrong content), some are processing problems (how gates and dreams get generated), and some are policy problems (pacing, what death costs). The design in Section 4 goes after the loop first, because fixing pacing or adding content can't rescue a loop that has no pull.</div>
+    </section>
+
+    <!-- ============ 3. OPTIONS ============ -->
+    <section class="chapter" id="options">
+      <header><div class="eyebrow">Section 3</div><h2>Options and the pick</h2></header>
+      <div class="grid-3">
+        <div class="card"><h4>A · Curate a modpack</h4><p class="small">Combine existing mods (a Solo Leveling mod, dungeon mods, Iron's Spells, Origins, Create) on 1.21.1, glue them with scripts and add a light custom director.</p><p class="small"><strong>Effort:</strong> 2 to 4 weeks.<br><strong>Ceiling:</strong> low to medium.</p></div>
+        <div class="card" style="border-color:var(--lantern)"><h4>B · One cohesive mod <span class="rec">Recommended</span></h4><p class="small">AWAKEN as one mod on NeoForge 26.x with a few MIT libraries. Content lives in data files, so new gates and powers are quick to add. It runs alongside vanilla and performance mods.</p><p class="small"><strong>Effort:</strong> about 6 weeks to a playable slice, 10 to 14 months for the full scope.<br><strong>Ceiling:</strong> high.</p></div>
+        <div class="card"><h4>C · Total conversion</h4><p class="small">A custom renderer, replaced worldgen, AI-driven NPCs and generated story, ships made of moving blocks, an MMO server.</p><p class="small"><strong>Effort:</strong> years.<br><strong>Ceiling:</strong> the biggest on paper.</p></div>
+      </div>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Compared on</th><th>A · Modpack</th><th>B · Cohesive mod</th><th>C · Total conversion</th></tr></thead>
+        <tbody>
+          <tr><td>Feels like one game</td><td>No. Every mod brings its own interface, art and rules.</td><td>Yes</td><td>Yes, but stops feeling like Minecraft</td></tr>
+          <tr><td>Can do the mechanics made for you (dreams built from your day, Truths, Awareness)</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+          <tr><td>Learnable without a wiki</td><td>Poor</td><td>Designed for it</td><td>Depends</td></tr>
+          <tr><td>Discovery</td><td>Low. Canon names, wiki-able.</td><td>High. Original, with per-world secrets.</td><td>High</td></tr>
+          <tr><td>120 fps on your M4</td><td>At risk (130+ mods, 16 GB)</td><td>Budgeted from day one</td><td>At risk (custom renderer)</td></tr>
+          <tr><td>Mac render future</td><td>Stuck on OpenGL 4.1 (1.21.1)</td><td>Vulkan path via MoltenVK on 26.x</td><td>A renderer of our own to maintain</td></tr>
+          <tr><td>Running cost</td><td>None</td><td>None</td><td>Per-conversation AI costs, needs to be online</td></tr>
+          <tr><td>Maintenance</td><td>Breaks whenever any mod updates</td><td>Ours to port at the checkpoints we choose</td><td>Heavy</td></tr>
+          <tr><td>Biggest risk</td><td>Never stops feeling like a kitchen sink</td><td>The amount of content to make, and version churn</td><td>Never finishing</td></tr>
+        </tbody>
+      </table></div>
+      <div class="col">
+        <p><strong>Why B.</strong> A can't deliver the core of your brief: one coherent game, original discovery, mechanics made for you. It also inherits the Vault Hunters traps. C spends years on things you didn't ask for, and puts “still Minecraft” and 120 fps at risk. B gives almost all of C's experience with a fraction of the risk, and it can borrow C's ideas later as experiments once they've earned a place.</p>
+        <p><strong>What would change my mind.</strong></p>
+        <ul>
+          <li>If the M1 slice shows the gate loop isn't fun, we stop and rework the loop before making any more content.</li>
+          <li>If you want Create or Iron's Spells in the same world, the base moves to NeoForge 1.21.1. That's high confidence it ships, but it has no Vulkan path.</li>
+          <li>If co-op with friends becomes the priority, multiplayer hardening moves up to M2.</li>
+        </ul>
+      </div>
+      <h3>Opportunities beyond your original ideas</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Opportunity</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Prepare earlier</strong></td><td>A gate's interior is built in the background when the gate appears, and tonight's dream is planned at dusk. You never wait at a door.</td></tr>
+          <tr><td><strong>Reuse your own world</strong></td><td>Dreams are made from places you've actually been, and your house turns up in them, wrong. Content that costs nothing and is personal by definition.</td></tr>
+          <tr><td><strong>Remove chores outright</strong></td><td>Echoes haul, sort, farm and guard. Waypoints and the Deep Lift remove the walking.</td></tr>
+          <tr><td><strong>A better decision, not more information</strong></td><td>A gate card shows three facts (rank, timer, omen). Scouting from the Veil is the optional way to learn everything.</td></tr>
+          <tr><td><strong>Variety from systems</strong></td><td>Five forces interact with each other and with modifiers, so combinations surprise you even when the rooms are familiar (the Five Forces table in Section 4).</td></tr>
+          <tr><td><strong>Use what 26.3 just added</strong></td><td>Vanilla post-effect chains are now first-class (<code>/posteffect</code>), and biomes can carry their own sky and fog. Every gate theme gets its own atmosphere without a rendering library.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ============ 4. THE GAME ============ -->
+    <section class="chapter" id="game">
+      <header><div class="eyebrow">Section 4 · Part A</div><h2>The game</h2></header>
+      <div class="col">
+        <p>Everything below is <span class="chip p">Proposal</span> unless marked otherwise. It's a lot. The trick that keeps it learnable is that you meet one idea at a time, and every idea plugs into the same loop: go out, come home stronger.</p>
+      </div>
+
+      <h3>Five pillars</h3>
+      <p class="col">Every feature has to serve at least two of these, or it gets cut.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Pillar</th><th>What it means in play</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Main character energy</strong></td><td>You are the one who awakened. Numbers you can see, ranks that are events, a town that notices, powers that feel ridiculous by the end.</td></tr>
+          <tr><td><strong>Pulled, not pushed</strong></td><td>The world gives you wants: a light on the horizon, a sealed door, a dream. The Signal suggests things. It never hands you chores.</td></tr>
+          <tr><td><strong>Every door is different</strong></td><td>Gates, depths and dreams are built from parts, so the next one can always surprise you.</td></tr>
+          <tr><td><strong>Learn by touching</strong></td><td>One new idea at a time, taught by the thing itself. If something needs a wiki, it's broken.</td></tr>
+          <tr><td><strong>Awareness is power</strong></td><td>What you perceive becomes real. You see more in the Veil, create what you see in the Lucidium, and become what you declare through Truths.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="g-shape">One home, four directions</h3>
+      <div class="col">
+        <p>The whole mod hangs on one simple map. The Hearth is your home in the normal world. Four directions lead out of it. Each one is a different kind of play, and each feeds the others, so you're never “done” with one.</p>
+      </div>
+      <div class="dir">
+        <div class="card"><div class="k">Centre</div><div class="n">The Hearth</div><p>Your base, which grows into a town. Survival, building, crafting, trophies, recognition. Gates open in the land around it.</p></div>
+        <div class="card"><div class="k">Down</div><div class="n">The Deep</div><p>Gates (15 to 25 minute dungeon runs) and the Descent, an endless pit under your home. Combat, loot, risk.</p></div>
+        <div class="card"><div class="k">In</div><div class="n">The Lucidium</div><p>Sleep and you may dream. Dreams are built from your day. Become lucid to shape them, train, face nightmares and receive visions.</p></div>
+        <div class="card"><div class="k">Out</div><div class="n">The Veil</div><p>Meditate and step out of your body. See hidden things, scout gates, talk to the dead. Later, possess creatures.</p></div>
+        <div class="card"><div class="k">Up</div><div class="n">The Above</div><p>Precursor machines, sky ruins, and an orbital station called the Halo. Tech that ties every direction together.</p></div>
+      </div>
+      <div class="tbl wide"><table>
+        <thead><tr><th>From</th><th>Gives you</th><th>Which helps</th></tr></thead>
+        <tbody>
+          <tr><td>Deep</td><td>Essence, Power Cores, boss parts, Echoes</td><td>Building Above machines, crafting gear, Hearth trophies</td></tr>
+          <tr><td>Lucidium</td><td>Double skill XP while training, visions of real secrets, Truth progress, dream blueprints</td><td>Getting stronger without risk, finding hidden places in the Waking world and the Deep</td></tr>
+          <tr><td>Veil</td><td>Gate previews, glowing ores and hidden rooms, spirit lore, ley lines to ruins</td><td>Choosing gates well, finding the Above's ruins, the story</td></tr>
+          <tr><td>Above</td><td>Waypoints, the Deep Lift, gate scanners and stabilisers, Frames, a Clone Vat, a Dream Recorder</td><td>Less walking, safer pushes, farming the gates you love, replaying dreams</td></tr>
+          <tr><td>Hearth</td><td>Safety, room bonuses, respawn, Echo barracks, recognition</td><td>Everything. It's where every run ends.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>The loops</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Scale</th><th>Loop</th></tr></thead>
+        <tbody>
+          <tr><td><strong>30 seconds</strong></td><td>Fight and move: dash, slow time, beam, slam, place a wall. Hit-stop, screen shake and sound make every hit land.</td></tr>
+          <tr><td><strong>15 minutes</strong></td><td>One gate: enter, clear a floor, reach a Rest Shrine, then choose to <em>extract</em> with what you're carrying or <em>push</em> deeper for more.</td></tr>
+          <tr><td><strong>One session</strong> (30 to 90 min)</td><td>Wake up. Check the horizon. Scout or prepare if you like. Run one to three gates. Come home. Spend points, slot cores, declare Truths, build. Sleep and maybe dream. End on the Day's End card, which tells you what's waiting next time.</td></tr>
+          <tr><td><strong>The arc</strong> (about 100 hours)</td><td>Rank trials from E up to Sovereign, three acts, records in the Descent, your Path, the truth about the Signal.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 id="g-direction">Direction without a quest tree</h3>
+      <div class="col">
+        <p>This is the heart of your brief. There's no quest book. Direction comes from four layers that work together. Each is small on its own.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card"><h4>Spine</h4><p>One line, always visible in the Signal: <em>“Next rank: D. Reassessment at Level 10. You're Level 7.”</em> It's the only goal you ever need to follow, and it never depends on finding a secret.</p></div>
+        <div class="card"><h4>Pressure</h4><p>Gates have timers counted in days you actually play, never real-world days. Ignore one and it breaks: monsters and a roaming Gate Lord spill out, and the land around it goes grey until you clear it. Breaks are events with better loot, not punishments. Breaks near home always warn you a day ahead.</p></div>
+        <div class="card"><h4>Pull</h4><p>Wants placed where you can see them: pillars of light on the horizon coloured by rank, a sealed Precursor door near spawn that hums once you're strong enough, a red pillar you can't survive yet, an empty core slot, the glow far down the Well.</p></div>
+        <div class="card"><h4>Whisper</h4><p>Directives from the Signal: at most three at once, picked for the moment, optional, and they expire quietly so they never pile up. Hidden Directives appear only when you do something unusual. <em>“You haven't used Flow in three days. Clear a floor with only Flow and your fists. +1 AGI.”</em></p></div>
+      </div>
+      <div class="callout"><strong>The Codex is a mystery board, not a list.</strong> Rumours from spirits, visions from dreams and logs from ruins pin themselves to a board and link up as you learn more, like the rumour map in Outer Wilds. Things you've heard of but not found show as a question mark. Nothing undiscovered is ever listed.</div>
+
+      <h3 id="g-signal">The Signal, stats and ranks</h3>
+      <div class="grid-2">
+        <div>
+          <p><strong>The Signal</strong> is the in-game system that chose you. Its windows are pale glass with a thin edge and a soft chime. Its voice is terse, a little mysterious, now and then dry. It has seven window types: Notice, Gate, Directive, Truth, Warning, Reassessment and Revelation.</p>
+          <ul>
+            <li>One window at a time. During combat they shrink to a small toast and queue up.</li>
+            <li>Every window has at most one action.</li>
+            <li>The status screen has four tabs and no more: Status, Truths, Codex, Gate Map.</li>
+          </ul>
+          <p><strong>Six stats</strong>, three points per level, plus a point from each Daily Regimen and some Truths:</p>
+          <div class="tbl"><table>
+            <tbody>
+              <tr><td><strong>STR</strong></td><td>Damage, carry weight, Kinetic powers</td></tr>
+              <tr><td><strong>AGI</strong></td><td>Speed, attack speed, how long Flow lasts</td></tr>
+              <tr><td><strong>VIT</strong></td><td>Health, regeneration, resistances</td></tr>
+              <tr><td><strong>INT</strong></td><td>Energy pool, Energy and Tech power strength</td></tr>
+              <tr><td><strong>PER</strong></td><td>Crits, spotting traps and secrets, how much a gate's omen tells you</td></tr>
+              <tr><td><strong>SPI</strong></td><td>Spirit: cord length and time in the Veil, dream lucidity, how many Echoes you can hold</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="signal" style="max-width:none">
+          <div class="sg-head"><span>◇ Status</span><span>Day 41</span></div>
+          <div class="sg-row"><span>Name</span><b>Euan</b></div>
+          <div class="sg-row"><span>Level</span><b>38</b></div>
+          <div class="sg-row"><span>Rank</span><b><span class="rank">C</span></b></div>
+          <div class="sg-row"><span>Path</span><b>Redline</b></div>
+          <div class="sg-row"><span>Title</span><b>Fell Further</b></div>
+          <div class="sg-row"><span>STR · AGI · VIT</span><b>41 · 77 · 38</b></div>
+          <div class="sg-row"><span>INT · PER · SPI</span><b>29 · 46 · 52</b></div>
+          <div class="sg-row"><span>Points to spend</span><b>6</b></div>
+          <div class="sg-row"><span>Echoes</span><b>9 / 12</b></div>
+          <div class="sg-foot">Next rank: B · Reassessment at Level 45</div>
+        </div>
+      </div>
+      <h4>Ranks and Reassessment</h4>
+      <p class="col">E, D, C, B, A, S, then Sovereign, then Ascension tiers after the story. Hitting the level lets you take the trial: a short handcrafted challenge at the Spire in town. <strong>D:</strong> survive three waves. <strong>C:</strong> the Second Awakening, where your Path is revealed. <strong>B:</strong> a boss duel. <strong>A:</strong> a timed descent. <strong>S:</strong> fight a Sovereign's echo. Each rank-up brings a celebration in town, your name on the Spire board, a new tier of gates, a new stratum of the Descent, a Hearth upgrade, and an aura that grows with you (you can turn it off). This is the “become visibly recognised” beat from Dungeon City.</p>
+      <h4>Two reward rhythms</h4>
+      <p class="col">The simulator in Section 5 turned up a real problem. With the rank pacing on target, level-ups land about every 20 minutes early on but stretch to about an hour apart by S-rank. That's the flat mid-game Vault Hunters players complain about. So levels are only the first rhythm. The second guarantees something new <em>to use or show off</em> at least every 20 minutes: a Power Core (pity-timed, so a dry streak can't last), a Title, a Truth coming true, a new depth record, a trophy for the Hall, a scanned machine. The Director tracks time since your last “new thing” and tilts drops and Directives toward one when it's been too long. <span class="chip h">Hypothesis</span> to test in M2.</p>
+
+      <h3 id="g-gates">Gates</h3>
+      <div class="col">
+        <p>Gates are the main loop. They're short and varied, and they're always out there.</p>
+        <ul>
+          <li><strong>Where they come from.</strong> A pacing director keeps one to four gates open near you, 300 to 1,500 blocks away: 70% at your rank, 20% below and 10% above. You can see them from far away as light pillars coloured by rank: white E, green D, blue C, violet B, amber A, crimson S, black and gold Sovereign.</li>
+          <li><strong>The gate card.</strong> Walk up to a gate and you see its rank, when it breaks and a one-line omen hinting at what's inside (“It smells of salt and machine oil”). Higher PER tells you more. Scouting from the Veil tells you everything.</li>
+          <li><strong>Built before you arrive.</strong> The inside is generated in the background when the gate appears, so walking in is instant.</li>
+          <li><strong>Inside.</strong> Three to six floors made of handbuilt rooms joined by a layout grammar. Each floor ends at a Rest Shrine (extract here) and a Seal (go deeper). The last floor is the Gate Lord.</li>
+          <li><strong>Push or extract.</strong> Kill XP lands as you go. Floor loot rides in your <em>Satchel</em> and only becomes yours when you extract at a Shrine or kill the boss. Die and you lose what's in the Satchel, keep your gear, and get <em>Fracture</em>, a short debuff that resting at home clears. The simulator in Section 5 shows this stays a real decision.</li>
+          <li><strong>The gate wakes up.</strong> There's no hard death timer inside. Stay on one floor too long and the gate notices you, sending stronger waves and eventually its Warden. That's pressure without a cliff, borrowed from Spelunky's ghost and Risk of Rain's rising difficulty. <span class="chip r">Research</span></li>
+          <li><strong>Failure still pays.</strong> If you die, kill XP you already earned stays, and you take home <em>Insight</em>: the boss's tells and weak points go in your Codex. The next attempt is smarter even when it isn't stronger.</li>
+          <li><strong>Bosses</strong> have phases and clear tells. They have parts you can break off for materials, the Monster Hunter way. Each one has a signature move you can sometimes take as a Power Core.</li>
+        </ul>
+      </div>
+      <div class="grid-2">
+        <div class="card"><h4>Themes (8 at launch, 15+ later)</h4><p class="small">Bell Crypt · Fungal Hollow · Drowned Archive · Clockwork Foundry · Glass Desert · Frost Monastery (a temple above the clouds) · Hive · Mirror Palace · Precursor Lab · Ember Mines · Overgrown Temple · Sky Archipelago (gravity flips between islands) · Lantern Night Market (a friendly gate) · Nightmare (a dream leak) · Abyssal Shrine</p></div>
+        <div class="card"><h4>Layouts</h4><p class="small">Labyrinth · Spiral Tower (you go up) · Shaft (you go down) · Hub and Spokes · Arena Chain · Stealth Halls · Puzzle Vault · Open Cavern</p></div>
+        <div class="card"><h4>Modifiers (0 to 3, by rank)</h4><p class="small">Lightless · Low Gravity · Volatile (mobs explode) · Swarm · Elite Pack · Silence (sound draws the Listeners) · Flooding · Haunted (Veil creatures) · Mirror (your shadow hunts you) · Collapse Timer · No Regen · Glass (everyone deals double) · Fortune (double loot, more danger) · Echoing (the dead get up once)</p></div>
+        <div class="card"><h4>Twists (rare, about 1 gate in 7)</h4><p class="small"><strong>Double Gate:</strong> a hidden second dungeon past the boss, with rules you have to figure out. <strong>Red Gate:</strong> the exit seals until the boss dies, and time runs differently. <strong>Hollow Gate:</strong> no monsters, but something follows you. <strong>Treasure Gate:</strong> a loot-carrier that runs. <strong>Inverted:</strong> you possess one of the Gate Lord's minions. <strong>Friendly:</strong> a market, a puzzle, a spirit who needs help. <strong>Echo Gate:</strong> race the ghost of your own past run. <strong>Gate within a Gate.</strong></p></div>
+      </div>
+      <h4>Five Forces: variety from systems, not just more rooms</h4>
+      <p class="col">Players got bored of Solo Leveling: Arise because it had a handful of maps and the same enemies. Breath of the Wild avoided that by letting a few elements interact everywhere. AWAKEN has five forces. Every power, modifier, mob and machine carries one or two, and they react the same way wherever they meet. That's where accidental discoveries come from. <span class="chip r">Research</span></p>
+      <div class="tbl wide"><table>
+        <thead><tr><th>When</th><th>meets</th><th>you get</th></tr></thead>
+        <tbody>
+          <tr><td>Heat (Beam, Ember mobs)</td><td>Spores (Fungal Hollow)</td><td>A chain explosion through the room</td></tr>
+          <tr><td>Charge (lightning, Precursor tech)</td><td>Water (Flooding, the Drowned Choir)</td><td>Everything standing in water is stunned, you included</td></tr>
+          <tr><td>Gravity (Gravity Well, Telekinesis)</td><td>Volatile mobs</td><td>Pull them together and they blow each other up</td></tr>
+          <tr><td>Spirit (Veil, Echoes)</td><td>Mirror surfaces</td><td>Your spirit walks through mirrors into hidden rooms</td></tr>
+          <tr><td>Heat</td><td>Frost (the Monastery)</td><td>Steam: blinds enemies, and you can hide in it while sneaking</td></tr>
+          <tr><td>Charge</td><td>Your Echoes</td><td>Overcharged Echoes hit twice as hard and expire</td></tr>
+          <tr><td>Gravity</td><td>Architect walls</td><td>Throw your own wall as a battering ram</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col small muted">With 15 themes, 8 layouts, up to 3 of 14 modifiers, 8 twists and 20 bosses, there are about ten million combinations. That number doesn't matter much. What matters is the director's rules: no theme repeated within three gates, no layout within two, and a pity timer that guarantees a twist. You can roll gates with those rules in the <a href="#demo-gen">gate generator</a>.</p>
+
+      <h3 id="g-deep">The Descent</h3>
+      <div class="col">
+        <p>Near spawn there's <strong>the Well</strong>: a huge pit at a Precursor site. Look down on day one and you see faint lights, far below. That's the long-term spine of the Deep. Gates are short runs. The Descent is the question of how deep you can go. It's built as a chain of strata, each its own world with its own generator, creatures, look and one rule that changes how you play.</p>
+      </div>
+      <div class="tbl wide"><table>
+        <thead><tr><th class="num">#</th><th>Stratum</th><th>Its rule</th><th>Opens at</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>The Rim: roots, glowing moss</td><td>None. You learn the Descent here.</td><td>E</td></tr>
+          <tr><td class="num">2</td><td>The Hanging Gardens: vertical, vines</td><td>Wind gusts push you off ledges</td><td>D</td></tr>
+          <tr><td class="num">3</td><td>The Drowned Choir: flooded halls, singing</td><td>The water rises every five minutes</td><td>D</td></tr>
+          <tr><td class="num">4</td><td>The Bone Orchard: giant ribs</td><td>The dead get up once</td><td>C</td></tr>
+          <tr><td class="num">5</td><td>The Silent Halls</td><td>Sound draws the Listeners, so sneaking matters</td><td>C</td></tr>
+          <tr><td class="num">6</td><td>The Precursor Foundry</td><td>Machines wake when you power them</td><td>B</td></tr>
+          <tr><td class="num">7</td><td>The Inverted Sea</td><td>Gravity flips with the tides</td><td>B</td></tr>
+          <tr><td class="num">8</td><td>The Dreaming Stratum</td><td>Rooms change when you're not looking</td><td>A</td></tr>
+          <tr><td class="num">9</td><td>The Hollow Court</td><td>Your own shadow fights you</td><td>S</td></tr>
+          <tr><td class="num">10</td><td>The Seed</td><td>The bottom. The truth.</td><td>Sovereign</td></tr>
+          <tr><td class="num">∞</td><td>The Endless</td><td>Generated strata with stacking rules. Your personal depth record.</td><td>After the story</td></tr>
+        </tbody>
+      </table></div>
+      <ul class="col">
+        <li><strong>Camps.</strong> Light a Waystone in each stratum for a checkpoint and fast travel.</li>
+        <li><strong>The Strain of climbing.</strong> Inspired by Made in Abyss: climbing back up past strata on foot costs temporary stats, more the deeper you were. The Deep Lift, a big Above machine you build at home, removes it. That's a home project with a huge payoff.</li>
+        <li><strong>Dying deep</strong> leaves a Grave Echo holding your Satchel where you fell. Get back to it and you get your loot back. This souls-style risk only exists in the Descent, never in gates.</li>
+      </ul>
+
+      <h3 id="g-powers">Powers and Paths</h3>
+      <div class="col">
+        <p>Four power slots, one Ultimate and one Movement slot. Default keys are <code>Z X C V</code>, <code>R</code> and <code>Left Alt</code>, all rebindable. You have an energy pool from INT, plus cooldowns. Powers come from four places:</p>
+        <ol>
+          <li><strong>Power Cores</strong> drop from Gate Lords and elites. Each is one ability with a random variant (<em>Beam: Prism</em> splits into three). This is the main loot excitement.</li>
+          <li><strong>Your Path</strong>, chosen at C-rank, gives a signature ability and a look.</li>
+          <li><strong>Truths</strong> you made true.</li>
+          <li><strong>Latent abilities</strong> you trip over by accident.</li>
+        </ol>
+      </div>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Family</th><th>Examples</th><th>The fantasy</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Kinetic</strong></td><td>Ground Slam, Leap, Haymaker, Terrain Rip (tear up a chunk of ground and throw it), Shockwave, Brace</td><td>Punch a mob into the sky, Invincible style</td></tr>
+          <tr><td><strong>Velocity</strong></td><td>Dash, <strong>Flow</strong> (the world slows to 25% while you don't), Afterimage, Wall-run, Water-run, Lightning Step</td><td>Your Redline speedster, finally in a world built for it</td></tr>
+          <tr><td><strong>Flight and gravity</strong></td><td>Hover, Flight (an A-rank reward), Gravity Well, Telekinesis, Meteor Dive</td><td>Lift mobs and blocks and throw them</td></tr>
+          <tr><td><strong>Energy</strong></td><td>Beam (hands or eyes, channelled), Nova, Barrier, Charged Shot, Overload</td><td>The beam fight you wanted in Field Ops</td></tr>
+          <tr><td><strong>Shadow</strong></td><td>Bind (raise a fallen elite as an Echo), Shadow Step, Cloak, Echo Swap, Legion</td><td>The shadow army fantasy, with its own words</td></tr>
+          <tr><td><strong>Mind</strong></td><td>Danger Sense (see attacks before they happen), Dominate, Read Intent, Decoy</td><td>Knowing what's coming</td></tr>
+          <tr><td><strong>Architect</strong></td><td>Instant Wall, Ramp, Floor and Cone in one keypress; Rampart; Spire; Collapse (bring a structure down on enemies)</td><td>Fortnite build-fights in a block game, where they belong</td></tr>
+          <tr><td><strong>Tech</strong></td><td>Grapple, Jet Burst, Drone, Turret, Railgun, Nanite Skin</td><td>Exosuit Frames, Warframe style</td></tr>
+          <tr><td><strong>Spirit</strong></td><td>Aura, Spirit Palm, Mend, Third Eye, Cord Lash</td><td>A calm power that hits very hard</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout quiet"><strong>Keeping flight fun.</strong> Flight usually ruins Minecraft exploration. Here, Hover comes early but is short. Real flight is an A-rank reward. Gates have ceilings, the Deep has “pressure” that drains energy as you fly, and flight costs energy everywhere. By the time you can fly freely over the overworld, gates and the Descent are where the challenge lives, and flying home is the payoff.</div>
+      <h4>Your Path (the Second Awakening at C-rank)</h4>
+      <p class="col">The Signal reads how you've actually played: kills by power family, time in the Veil, lucidity, blocks built, Echoes raised, machines built. It offers your top three Paths, each with the evidence in your own numbers (“You struck 1,204 foes bare-handed”). A hidden fourth appears if you met a secret condition. You choose. It can be changed later through a costly ritual.</p>
+      <p class="col small"><strong>Launch six:</strong> Shadowbinder (Echo army) · Redline (speedster) · Prism (beams and flight) · Architect (build-combat) · Seer (Veil and precognition) · Warden (protector, shields others). <strong>Later six:</strong> Stormbreaker · Dreamwalker (dream powers leak into the waking world) · Engineer (Frames and drones) · and three hidden ones: Monk (unarmed, Stillpoint mastery), Hollow (the dark Path, powered by the Deep) and Wanderer (you refused the Signal).</p>
+
+      <h3 id="g-truths">Truths, Titles and Latents: the layer you find by accident</h3>
+      <div class="grid-3">
+        <div class="card"><h4>Truths</h4><p>At your awakening and at every rank, the Signal offers Truths, short statements about who you're becoming. Declare up to three. Each shows <strong style="color:var(--lantern)">NOT TRUE YET</strong> until your actions match it, then it becomes true and grants a permanent perk. The Signal also notices patterns and offers new ones: <em>“You have never fled a fight. A new Truth is available.”</em></p></div>
+        <div class="card"><h4>Titles</h4><p>Earned by feats, often surprising ones. Equip one for its perk. <em>Fell Further</em> (survive a 200-block fall). <em>Unwitnessed</em> (clear a gate without taking a hit). <em>Wolf Friend</em> (tame ten wolves). <em>Gatebreaker</em> (clear a gate before its omen reveals itself).</p></div>
+        <div class="card"><h4>Latents</h4><p>Hidden abilities with no hint at all. Sprint for two minutes on an empty stomach and get Second Wind. Meditate on a peak above the clouds at dawn and get Clarity. Stand in a thunderstorm holding copper and get Stormcall. Sleep in the Deep and become a Deep Dreamer.</p></div>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>Example Truth</th><th>Becomes true when</th><th>Grants</th></tr></thead>
+        <tbody>
+          <tr><td>“I do not retreat.”</td><td>You clear five floors in a row without extracting early</td><td>+15% damage while above half health</td></tr>
+          <tr><td>“I see what others miss.”</td><td>You find ten secrets</td><td>Secrets glow from further away</td></tr>
+          <tr><td>“I protect what's mine.”</td><td>You hold the Hearth through three breaks</td><td>A Hearth shield during breaks</td></tr>
+          <tr><td>“I move like water.”</td><td>You chain ten dashes without touching the ground</td><td>Flow lasts 30% longer</td></tr>
+          <tr><td>“Nothing can touch me.”</td><td>You take no damage on a boss floor</td><td>Cheat death once per gate</td></tr>
+          <tr><td>“I keep my word.”</td><td>You finish every Directive you accept for seven play-days</td><td>A fourth Directive slot, better rewards</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col small muted">The Codex records Titles and Latents only after you earn them, and shows counts like “Latents found: 7 / ??”. Target: at least 40% of abilities and titles are found this way.</p>
+
+      <h3 id="g-dream">The Lucidium: dreams you can wake up inside</h3>
+      <div class="col">
+        <ul>
+          <li><strong>Dreaming.</strong> Sleep and there's a chance you dream. It's higher with more SPI, a better bed and a Sanctuary room. Hold sneak while you sleep for a dreamless night. Your time stays yours.</li>
+          <li><strong>Built from your day.</strong> All day the mod quietly snapshots about ten memorable moments: where you nearly died, a boss arena, your house, a view you stopped to look at, the mob you killed most. The dream stitches them together, wrongly. Your house floats next to the boss room. The colours are off. Doors lead somewhere else. You literally dream of your own world.</li>
+          <li><strong>Becoming lucid.</strong> Lucidity runs from 0 to 100. These are real lucid-dreaming techniques, turned into controls: <span class="chip r">Research</span>
+            <ul>
+              <li><em>Reality check</em> (one key: look at your hands). In a dream your hand flickers, sign text scrambles and clocks spin. Every check raises lucidity.</li>
+              <li><em>Dream signs.</em> Recurring oddities, like a mob with no shadow. Spotting one raises lucidity.</li>
+              <li><em>Set an intention</em> at the bed before sleeping (“I will find the door”). This is MILD.</li>
+              <li><em>Wake and go back to sleep.</em> Set an alarm block to wake you mid-night, then sleep again for a big lucidity bonus. This is WBTB.</li>
+              <li><em>Recall.</em> Writing in your Dream Journal raises your Recall stat, and Recall predicts lucidity.</li>
+            </ul>
+            In a 2017 study, people who combined these went lucid in 17% of attempts within a week, and about 46% when they fell asleep within five minutes. The game is far more generous, but the verbs are the real ones.</li>
+          <li><strong>Perceive and create.</strong> Rooms you aren't looking at can change. Once lucid, hold intent on a blank wall and a door, stair or bridge forms from the places you've been. At mastery you can fly and summon.</li>
+          <li><strong>What it's for.</strong> Training (skills used in dreams level twice as fast, and your Path's mentor duels you). Visions (a dream shows a real place in your world with a secret, and you go find it awake). Nightmares (picked from a set of authored nightmares by what you've died to most this week; beat one and that fear is gone for good). Truth progress. Dream Residue for crafting.</li>
+          <li><strong>Waking up.</strong> A dream lasts three to eight minutes, or ends when you die in it. Dying there costs nothing but leaves you a little shaken. Then a clean morning.</li>
+          <li><strong>Later.</strong> Re-enter a dream from your journal. Start lucid at high SPI. Share dreams with friends who sleep in the same Sanctuary.</li>
+        </ul>
+      </div>
+
+      <h3 id="g-veil">The Veil: stepping out of your body</h3>
+      <div class="col">
+        <ul>
+          <li><strong>The first time is an accident.</strong> On your first near-death in a gate, you briefly see yourself from outside. After that, meditate (sneak plus Focus, still for ten seconds) somewhere quiet or in the Stillpoint.</li>
+          <li><strong>Leaving.</strong> A ripple, a low hum, and you rise. Your body stays behind, meditating, and it's vulnerable. If it gets hit you get a Warning and can snap back. That makes a safe meditation room at home matter.</li>
+          <li><strong>Spirit form.</strong> Fly freely and pass through blocks, up to your cord's length (SPI: 32 blocks at first, 512+ later) and for as long as your Focus holds.</li>
+          <li><strong>One readable rule:</strong> you can pass through anything, and you can only touch what glows blue. Critics found the ghost in Beyond: Two Souls arbitrary because its limits were never explained. This rule can be learned in five minutes and never breaks. <span class="chip r">Research</span></li>
+          <li><strong>Awareness is your render distance.</strong> At low Awareness the spirit world past a few chunks is fog. It opens up as PER and SPI grow.</li>
+          <li><strong>What you see.</strong> Ores and hidden rooms glowing faintly. The spirits of fallen Awakened, with their stories and hints. Ley lines leading to ruins. Every mob's rank. And gate interiors: drift into a gate's mouth as a spirit and you preview its boss and modifiers.</li>
+          <li><strong>What you can do.</strong> Talk to spirits. Work ghost levers in Veil puzzles. Possess animals (C-rank), then mobs (A-rank; yes, you can possess a creeper). Enter Veil Gates, dungeons only a spirit can walk.</li>
+          <li><strong>The danger.</strong> Cord-Eaters hunt spirits. If they cut your cord, you wake with Spirit Shock.</li>
+          <li><strong>With friends,</strong> spirit sight never reveals other players' bases, and the server checks it, so it can't become an x-ray cheat.</li>
+        </ul>
+      </div>
+      <div class="callout"><strong>The Stillpoint.</strong> Your meditation hub: a calm void above a sea of clouds at dawn, with a temple platform. Time runs ten times slower there. Spend points, declare Truths, read the Codex. One door leads Out into the Veil. If you're asleep, another leads In to the Lucidium.</div>
+
+      <h3 id="g-above">The Above: the machines that remember</h3>
+      <div class="col">
+        <ul>
+          <li><strong>Precursor ruins:</strong> sealed vaults on the surface, sky platforms above Y 250 you can see from the ground, ocean labs, desert monoliths.</li>
+          <li><strong>Salvage, scan, build.</strong> Find a broken machine, read it with the Scanner, and it goes in your Codex. Build it at home from three to five parts the build screen shows you. There's no tech tree screen and no wiki.</li>
+          <li><strong>One kind of power.</strong> Essence, stored in cells. Machines draw from the Hearth's reactor within range. No pipe puzzles.</li>
+        </ul>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>Machine</th><th>Why you want it</th></tr></thead>
+        <tbody>
+          <tr><td>Gate Scanner</td><td>Shows the gates in range and their omens from home</td></tr>
+          <tr><td>Gate Stabiliser</td><td>Holds a gate past its timer, or farms a gate type you love</td></tr>
+          <tr><td>Waypoint Pylons</td><td>Fast travel between home, camps and scanned ruins</td></tr>
+          <tr><td>Deep Lift</td><td>Rides between your Descent camps and removes the Strain of climbing</td></tr>
+          <tr><td>Frame Forge</td><td>Exosuit Frames with module slots</td></tr>
+          <tr><td>Clone Vat</td><td>Once per day, die and wake in a clone with your Satchel intact</td></tr>
+          <tr><td>Dream Recorder</td><td>Replay a dream from your journal</td></tr>
+          <tr><td>Signal Relay</td><td>A fourth Directive slot and better Directives</td></tr>
+          <tr><td>Observatory, then Launch Ring</td><td>Reveals the Halo, then takes you there</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col"><strong>The Halo</strong> is a Precursor station in orbit and appears late in Act II. It's its own world: low gravity, your planet turning below, fog lifting off a clear sky. Its archive holds the truth about the Signal.</p>
+
+      <h3 id="g-hearth">The Hearth, the town and your Echoes</h3>
+      <div class="col">
+        <ul>
+          <li><strong>The Anchor.</strong> Craft it from your first boss's essence. It defines your base.</li>
+          <li><strong>Rooms are detected from what's in them.</strong> No menus. Bed, meditation mat and quiet make a Sanctuary (better dreams). Anvil, forge and rack make an Armory (gear upgrades). Boss trophies make a Trophy Hall (a passive bonus per trophy, and something to show off). Machines make a Workshop. Role pads make Barracks.</li>
+          <li><strong>Costs that fall.</strong> Vault Hunters' sharpest complaint was base recipes priced in dungeon currency that never got cheaper. Here, Hearth upgrades mostly cost overworld materials plus a little essence, and every rank-up makes older upgrades cheaper. Home is never a tax on adventuring. <span class="chip r">Research</span></li>
+          <li><strong>The town grows by itself</strong> as you rank up. A Blacksmith, a Scout, an Archivist, a Healer and your Rival arrive. They react to your rank and offer services and rumours. You never assign anyone to anything.</li>
+          <li><strong>Echoes do your chores.</strong> Fallen elites can be bound as Echoes. They fight beside you, and at home each one stands on a role pad: Guard, Haul (sorts loot into chests), Farm, Mine, Train. The shadow army does the boring parts so you can do the fun ones.</li>
+          <li><strong>Colour comes back.</strong> A gate greys the land around it. Clearing it brings the colour back. That's your HALFTONE “districts regain colour with Hope” idea, given a new home.</li>
+        </ul>
+      </div>
+      <div class="grid-2">
+        <div class="card"><h4>Daily Regimen</h4><p>Each in-game morning, never each real day, the Signal offers three quick drills tuned to your Path: sprint 1,000 blocks, two minutes of Flow, a lap of the Training Grounds, a short meditation. Do them for a stat point. Skip them and nothing happens, unless you turn on Hardline.</p></div>
+        <div class="card"><h4>Training Grounds</h4><p>Movement time trials, combat drills and flight rings at home, with personal bests and a ghost of your best run. Your Fortnite routine, given a place to live.</p></div>
+      </div>
+
+      <h3 id="g-story">Story and tone</h3>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Act</th><th>Ranks</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Prologue: Rebirth</strong></td><td>Unranked</td><td>A gate opens near spawn. You go in, it goes wrong, and you die. You wake in the Stillpoint, and the Signal asks if you accept. (Both buttons say Accept.)</td></tr>
+          <tr><td><strong>Act I: Awakening</strong></td><td>E to C</td><td>Learn the loop. The Well. First dreams. Your first accidental step into the Veil. The sealed door near spawn starts to hum. It ends with the Second Awakening and your Path.</td></tr>
+          <tr><td><strong>Act II: Alignment</strong></td><td>C to A</td><td>All four directions open. Spirits, dreams and Precursor archives give three accounts of the Precursors, and they don't agree. Your Rival, another Awakened who is always a step ahead, turns up at set story beats. Breaks get worse. You find the Halo.</td></tr>
+          <tr><td><strong>Act III: Sovereign</strong></td><td>A to Sovereign</td><td>The Hollow Court: eight Sovereigns of the Deep, each a direction gone wrong. The truth, if you piece it together, is that the Signal is you, from the bottom of the Seed, sending instructions back through the Dream. You choose an ending: become the Signal (New Game+), break it (gates turn calm and can be farmed), or wake up.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col">The tone is Invincible's: bright, funny and sincere, then suddenly brutal. No cutscene runs longer than 20 seconds. The story arrives through Signal Revelations, spirits, dreams, ruin logs and your Rival, so you can learn the truth in any order. The Rival is fully authored with set beats, which keeps it clear of the Nemesis patent.</p>
+
+      <h3 id="g-first">The first hour, minute by minute</h3>
+      <p class="col">The first hour is handcrafted. Filled dots are the moments a new idea arrives: five in the first hour, then about one per hour after that.</p>
+      <div class="timeline">
+        <div class="t"><div class="when">0:00</div><div>A new world. A Signal window flickers and fails: <code>[ERROR] … candidate found</code>. Then normal Minecraft.</div></div>
+        <div class="t"><div class="when">0:03</div><div>While you punch a tree, a white pillar of light rises on the horizon.</div></div>
+        <div class="t concept"><div class="when">0:05</div><div><strong>Stats.</strong> Your first kill gives your first Level Up window. Three points, six stats, one line of explanation.</div></div>
+        <div class="t concept"><div class="when">0:10</div><div><strong>Gates.</strong> You reach the pillar and the gate card shows its rank, timer and omen. You walk in.</div></div>
+        <div class="t concept"><div class="when">0:14</div><div><strong>Power Cores.</strong> The Bell Crypt's first elite drops Dash. One line: “Press Z.” Floor 2 ends at a Shrine and the Signal says, in one sentence, that you can carry your loot out or keep going.</div></div>
+        <div class="t"><div class="when">0:24</div><div>The Bell Warden. Halfway through, the statues move. You die. It's scripted and meant to be unfair.</div></div>
+        <div class="t"><div class="when">0:25</div><div>The Stillpoint: a void, a sea of clouds, dawn. “You have met the conditions. Will you accept?” You wake at the gate's mouth. This one time, your loot is kept.</div></div>
+        <div class="t concept"><div class="when">0:32</div><div><strong>The Hearth.</strong> The Warden's essence crafts the Anchor. Place it, and home exists.</div></div>
+        <div class="t concept"><div class="when">0:42</div><div><strong>Dreams.</strong> Your first night. You dream of the crypt and your hut, stitched together wrong. If you stare at your hands long enough, a line appears: “Reality check.”</div></div>
+        <div class="t"><div class="when">0:52</div><div>Morning. Your first Regimen. Two new pillars on the horizon, and one of them is green.</div></div>
+        <div class="t"><div class="when">0:60</div><div>The Spine says: Next rank D, Level 10, you're Level 6. You know exactly what you want to do tomorrow.</div></div>
+      </div>
+      <p class="col small muted">After the first hour: the Veil arrives by accident around hours 3 to 5. Truths start at D-rank. Machines start whenever you first find a ruin, which depends on where you explore. Your Path comes at C-rank, around hour 10.</p>
+
+      <h3 id="g-rules">Death, difficulty and friends</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Mode</th><th>On death</th></tr></thead>
+        <tbody>
+          <tr><td>Story</td><td>You keep half your Satchel. No Fracture.</td></tr>
+          <tr><td><strong>Hunter (default)</strong></td><td>You lose your Satchel and keep your gear. Eight minutes of Fracture.</td></tr>
+          <tr><td>Hardline</td><td>Grave Echoes everywhere. Skipping the Regimen opens a Penalty Zone: a survival trial in a desert at night. Breaks hit harder.</td></tr>
+          <tr><td>Hardcore</td><td>Vanilla hardcore rules, with the mod.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col"><strong>Story length setting:</strong> about 50, 100 or 150 hours to Sovereign. <strong>Friends:</strong> party gates for up to four (everyone gets their own loot rolls), shared dreams, Veil co-op (one of you guards the bodies), and a shared or separate Hearth. It's solo-first, but the server is in charge of everything from day one, so co-op doesn't need a rewrite later.</p>
+    </section>
+
+    <!-- ============ 4B / 5. BUILD ============ -->
+    <section class="chapter" id="build">
+      <header><div class="eyebrow">Section 4 · Part B</div><h2>How it's built</h2></header>
+      <div class="col"><p>The tech decisions below come from a research pass on 23 Oct 2026. Sources are mostly the Mojang version manifest, minecraft.wiki, the NeoForge and Fabric docs, GitHub and the Modrinth API. minecraft.net timed out, so Mojang facts come from the wiki and the manifests.</p></div>
+
+      <h3>Stack decisions</h3>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Decision</th><th>Pick</th><th>Why</th><th>Confidence</th><th>Would change if</th></tr></thead>
+        <tbody>
+          <tr><td>Minecraft version</td><td>Develop on <strong>26.3</strong>, move to 26.4 once NeoForge is stable on it, and pin the version we ship on around Mar 2027.</td><td>26.3 came out 15 Sep 2026 and is what you downloaded. Since 26.1 the game ships unobfuscated. Java Edition is moving to Vulkan, which runs on your Mac through MoltenVK, and 26.4 snapshots already prefer it. Code written for 1.21.1 predates both changes. <span class="chip r">Research</span></td><td>Medium</td><td>You want Create, Iron's or Epic Fight in the same world. Those stop at 1.21.1.</td></tr>
+          <tr><td>Loader</td><td><strong>NeoForge</strong> first. Loader-neutral shared code (MultiLoader-Template has a 26.3 branch) so Fabric can come later.</td><td>A richer API (data attachments, events), and where the big content mods live. NeoForge 26.3.0.95 is stable. <span class="chip r">Research</span></td><td>Medium-high</td><td>Your friends are all on Fabric</td></tr>
+          <tr><td>Libraries</td><td><strong>GeckoLib</strong> for mob and boss models and <strong>Player Animation Library</strong> for power animations. Both MIT and both on 26.3.</td><td>Both current, permissive licences. Better Combat is All Rights Reserved, and Epic Fight is GPL and stuck on 1.21.1, so we write our own combat feel. <span class="chip r">Research</span></td><td>High</td><td>—</td></tr>
+          <tr><td>Gate instances</td><td><strong>One pocket dimension</strong> divided into a grid of cells aligned to 512-block region files. A custom chunk generator stamps room templates from each gate's seed. Each cell's biome carries the theme's sky and fog.</td><td>No runtime-dimension hacks (the NeoForge library Infiniverse lags versions). One ticking world, simple saves, and cleanup by deleting whole region files. Since 1.21.11, sky and fog can vary per biome. This is the same pattern Compact Machines uses. <span class="chip r">Research</span></td><td>Medium-high</td><td>The spike shows chunk-stamping throughput is too slow</td></tr>
+          <tr><td>Descent strata</td><td>Ten <strong>static dimensions</strong> declared in data, each with its own generator. The Endless uses pocket cells.</td><td>Static dimensions need no runtime registration. World height caps at 4,064 blocks, so infinite depth is a chain of strata linked by drops.</td><td>High</td><td>—</td></tr>
+          <tr><td>Dreams</td><td>A Lucidium pocket dimension. Each dream's cell is generated from a <em>dream plan</em> built at dusk.</td><td>The plan makes generation deterministic, and building it before bedtime keeps falling asleep instant.</td><td>Medium</td><td>Snapshot stamping turns out too costly</td></tr>
+          <tr><td>Veil</td><td>The real server player <em>becomes</em> the spirit, under our own movement rules. A <strong>Body</strong> entity with your skin and gear stays behind and holds a chunk ticket.</td><td>A client-only free camera (how Freecam works) can't load chunks or interact where you are. Making the real player the spirit keeps the server in charge. <span class="chip r">Research</span> plus <span class="chip h">Hypothesis</span></td><td>Medium</td><td>The M0 spike finds a blocker with chunk tickets</td></tr>
+          <tr><td>Visual effects</td><td>Vanilla post-effect chains, render pipelines and NeoForge render events, behind a thin <strong>render layer</strong> of our own. No raw OpenGL, no compute shaders.</td><td>OpenGL will eventually be removed. macOS OpenGL stops at 4.1 (no compute). Veil and Lodestone aren't on 26.x. Iris shader packs appear to be OpenGL-only, so nothing may depend on them.</td><td>Medium</td><td>Mojang's GPU layer exposes something better</td></tr>
+          <tr><td>Player state and content</td><td>NeoForge <strong>data attachments</strong> (saved, kept on death, synced), <strong>payloads</strong> with StreamCodec, and all content as <strong>datapack JSON registries</strong>.</td><td>Documented for 26.1+. Data-driven content means a new gate theme or power is a data file plus art, not new code.</td><td>High</td><td>—</td></tr>
+          <tr><td>Companion mods</td><td>Tested with Sodium, Lithium, FerriteCore, ImmediatelyFast and EntityCulling, all on 26.3.</td><td>Your 120 fps target. C2ME is Fabric-only and ModernFix lags behind.</td><td>High</td><td>—</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Module map</h3>
+      <pre class="mermaid">
+flowchart LR
+  subgraph CORE["Core"]
+    SIG["Signal UI<br/>windows · status · codex"]
+    PROF["Player profile<br/>attachment, versioned"]
+    DIR["Director<br/>pacing · gates · directives"]
+    CONT["Content registries<br/>datapack JSON, validated"]
+  end
+  subgraph DOWN["Down"]
+    GATE["Gates<br/>spawn · cells · runs · claims"]
+    DESC["Descent<br/>10 strata · camps · Endless"]
+  end
+  subgraph IN["In"]
+    JOUR["Day Journal<br/>snapshots"]
+    DREAM["Lucidium<br/>plan · lucidity · intent"]
+  end
+  subgraph OUT["Out"]
+    VEIL["Veil<br/>spirit · body · awareness"]
+  end
+  subgraph UP["Up"]
+    TECH["Machines<br/>scan · build · essence"]
+  end
+  HEARTH["Hearth · town · Echoes"]
+  POW["Powers · Five Forces · combat feel"]
+  REND["Render layer<br/>post effects · pillars · sky"]
+  CONT --> DIR & GATE & DESC & DREAM & POW & TECH
+  DIR --> GATE
+  DIR --> SIG
+  PROF <--> SIG
+  GATE --> PROF
+  JOUR --> DREAM
+  VEIL -->|scout| GATE
+  TECH -->|lift, scanner| DESC & GATE
+  HEARTH <--> PROF
+  POW --> REND
+  GATE --> REND
+  DREAM --> REND
+  VEIL --> REND
+      </pre>
+
+      <h3>Behaviour contracts</h3>
+      <p class="col">Each core system has a contract: what triggers it, what it reads, what it does, what it produces, what it's allowed to change, where that's saved, and what happens when it fails.</p>
+      <details class="more" open><summary>Gate spawn</summary><div>
+<div class="contract">Trigger    Director tick, once per in-game hour per active player
+Inputs     player rank and level · gates already open nearby · world seed
+           biome at candidate spot · last 3 themes, last 2 layouts
+           twist pity count · content version
+Process    1 rank: 70% yours, 20% below, 10% above
+           2 theme: fits the biome and rank, not one of the last 3
+           3 layout: not one of the last 2
+           4 modifiers: within the rank's budget, no duplicates
+           5 twist: 1 in 8, guaranteed by the 12th gate without one
+           6 boss  7 reserve a free cell  8 queue chunk generation, ≤3 ms/tick
+Output     GateRecord { id, seed, contentVersion, rank, theme, layout,
+           modifiers[], twist, boss, pos, cell, breaksOnPlayDay,
+           state = BUILDING }
+May change world SavedData; the gate cell's chunks
+Saves to   world/data/awaken_gates
+On failure build error or timeout → FAILED, cell released, reroll with a
+           new seed (3 tries max), logged. You never see a broken gate.</div></div></details>
+      <details class="more"><summary>Gate run and reward claim</summary><div>
+<div class="contract">Trigger    you step through a READY or OPEN gate
+Inputs     GateRecord · your profile · party members present
+Process    teleport to the cell entrance · run state per player
+           { gateId, floor, satchel[], kills, startedAt }
+           kill XP is granted live · floor loot goes to the Satchel
+           gate pressure rises with time spent on a floor
+Claim      at a Shrine or on boss death:
+           claimId = gateId : floor : playerId
+           1 write claim(claimId, PENDING) with the Satchel contents
+           2 move items from Satchel to inventory (overflow → Hearth chest)
+           3 grant floor XP  4 mark claim DONE  5 then show the Notice
+           any step can be replayed safely: a DONE claimId is skipped
+Death      Satchel cleared (Hunter mode) · gear kept · Insight added
+           Fracture applied · respawn at Hearth
+Disconnect state saved per floor; you log back in where you were
+Lost cell  if your cell has no record on login → safe return to the Hearth
+           with the Satchel kept, and a Notice that says what happened</div></div></details>
+      <details class="more"><summary>Directive (the Whisper)</summary><div>
+<div class="contract">Trigger    each in-game morning, or a notable event (first time doing X,
+           a long gap since your last new thing)
+Inputs     profile counters · active Directives (≤3) · last 5 days' offers
+           where you are · rank · variety floor
+Process    fixed rule tables with weights and a seeded roll. Filter by
+           context. Drop anything offered in the last 5 days. At least 1 in 4
+           offers must be something you haven't done lately.
+Output     at most one new Directive { id, text, condition, reward,
+           expiresInPlayDays }
+You        accept (it joins the Status screen) or ignore (it fades)
+On failure nothing valid → no offer. An empty slot is fine.</div></div></details>
+      <details class="more"><summary>Path offer (Second Awakening)</summary><div>
+<div class="contract">Trigger    passing the C-rank Reassessment
+Inputs     behaviour counters, normalised per hour played · hidden
+           conditions (e.g. never used a weapon)
+Process    score each Path from its counters · top 3, plus a hidden Path
+           if its condition was met
+Output     cards { path, score band, evidence[] } where every evidence line
+           quotes a real counter ("You struck 1,204 foes bare-handed")
+You        choose one. Changeable later through a costly ritual.
+Never      invent a reason. A Path with no real evidence isn't offered.</div></div></details>
+      <details class="more"><summary>Veil projection</summary><div>
+<div class="contract">Trigger    sneak + Focus held 10 s while still, not in combat
+Process    spawn Body (your skin and gear, chunk ticket, takes damage)
+           the player becomes the spirit: no-clip movement, server-checked
+           range = cord length (SPI) · time = Focus pool
+           ore and secret glow sent only within Awareness radius
+Allowed    move, look, talk to spirits, use blue-tagged Veil objects,
+           possess (from C), scout a gate's mouth
+Not        open real containers, break or place real blocks, attack
+           players, see other players' bases in multiplayer
+Body hit   Warning window + snap-back offered · if the body dies, you die
+           there as normal
+Logout     you're returned to the Body before saving. The body is the
+           source of truth.</div></div></details>
+      <details class="more"><summary>Dream build</summary><div>
+<div class="contract">Trigger    dusk (plan) and a successful sleep (enter)
+Inputs     today's Day Journal (≤10 snapshots) · older picks (≤64 kept)
+           nightmare choice from your death counts · visions due
+           intention set at the bed · lucidity modifiers
+Process    choose 4–8 fragments · link them as a graph · distort palettes
+           write a DreamPlan for a Lucidium cell · chunks generate from the
+           plan · rooms out of sight for 6 s+ can swap
+Output     a dream instance for 3–8 minutes
+On failure plan not ready → a normal night's sleep ("You slept deeply").
+           Sleep is never blocked.</div></div></details>
+      <details class="more"><summary>Power cast</summary><div>
+<div class="contract">Trigger    power key
+Client     plays the animation and predicts movement powers (Dash, Flow)
+           immediately so they feel instant
+Server     checks cooldown, energy, line of sight · applies effects and the
+           Five Forces · corrects the client if they disagree
+Feel       hit-stop 40–80 ms on heavy hits · camera shake (can be off)
+           sound plus a particle budget scaled by distance
+Never      a power changes blocks inside a protected Hearth unless you own it</div></div></details>
+
+      <h3>Context, priority and stale results</h3>
+      <ul class="col">
+        <li><strong>Priority when things conflict:</strong> server safety rules, then your explicit choices (settings, declared Truths, accepted Directives), then story state, then the Director's suggestions.</li>
+        <li><strong>Frozen when it should be:</strong> a gate's contents are fixed at creation (seed plus content version), so what the Veil showed you is what's inside. Path offers are frozen once shown.</li>
+        <li><strong>Fresh when it should be:</strong> the Director re-reads your state every tick it runs, and Directives re-check their conditions live.</li>
+        <li><strong>Late results:</strong> a dream plan for a night you don't sleep is thrown away. Gate builds are bound to their gate id, so a build finishing after a break can't reopen the gate. A content update rebuilds gates nobody has entered and leaves entered ones on their old version.</li>
+      </ul>
+
+      <h3>Invariants</h3>
+      <div class="grid-2">
+        <div class="card"><ul>
+          <li>A reward is granted at most once per claim id.</li>
+          <li>Loot moves from the Satchel and is never copied.</li>
+          <li>A spirit never changes a real block except blue-tagged Veil objects.</li>
+          <li>No cell is cleaned up while a player or Echo is inside.</li>
+          <li>What the Veil showed you about a gate is what's in it.</li>
+        </ul></div>
+        <div class="card"><ul>
+          <li>Never more than three Directives. Nothing runs on real-world time.</li>
+          <li>Every number the Signal shows is the server's number.</li>
+          <li>Path and Truth explanations quote only real counters.</li>
+          <li>Something you do to one enemy never changes another enemy's stats (the patent rule below).</li>
+          <li>Your world is backed up before any mod version change.</li>
+        </ul></div>
+      </div>
+
+      <h3>Data and state</h3>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Thing</th><th>Kind</th><th>Lives in</th><th>Lifecycle</th></tr></thead>
+        <tbody>
+          <tr><td>Player profile: level, XP, stats, rank, Path, Truths, Titles, Latents, cores, Satchel, counters</td><td>Canonical</td><td>Data attachment on the player, kept on death, schema version stamped</td><td>Migrated forward on load. Backed up with the world.</td></tr>
+          <tr><td>Gate registry</td><td>Canonical</td><td>World SavedData</td><td>BUILDING, READY, ACTIVE or OPEN, then CLEARED, BROKEN or EXPIRED, then RELEASED</td></tr>
+          <tr><td>Gate interiors</td><td>Derived (rebuildable from seed and content version)</td><td>Cells in the gate dimension</td><td>Region files deleted once a cell is released and empty</td></tr>
+          <tr><td>Hearth, camps, waypoints, story flags, Rival beats</td><td>Canonical</td><td>World SavedData</td><td>Lives as long as the world</td></tr>
+          <tr><td>Day Journal snapshots</td><td>Canonical, small</td><td>Per-player files in the world folder</td><td>10 per day, 64 kept, oldest dropped. Never includes another player's base.</td></tr>
+          <tr><td>Dream plan and dream cell</td><td>Derived</td><td>Lucidium cells</td><td>Thrown away on waking</td></tr>
+          <tr><td>Codex view</td><td>Derived from your discovery set</td><td>Client</td><td>Rebuilt any time</td></tr>
+          <tr><td>Content: themes, rooms, modifiers, bosses, powers, Truths, Titles, Latents, Directives</td><td>Source</td><td>Datapack JSON, validated at load</td><td>Versioned. Gates remember the version they were built with.</td></tr>
+          <tr><td>Playtest log</td><td>Derived, local only</td><td><code>world/awaken/playtest.jsonl</code></td><td>Opt-in. Delete it any time.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Failure register</h3>
+      <p class="col">Ordered by priority. P0 means it can lose your progress.</p>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Failure</th><th>Detect</th><th>Contain</th><th>You see</th><th>Recover</th><th>Regression test</th><th>P</th></tr></thead>
+        <tbody>
+          <tr><td>Crash mid-claim</td><td>A PENDING claim found on load</td><td>Claim ids</td><td>Nothing lost. Sometimes a “Recovered your loot” Notice.</td><td>Replay or skip the claim</td><td>Kill the server at each claim step</td><td>P0</td></tr>
+          <tr><td>Old save after an update</td><td>Schema version check</td><td>Automatic backup, then migrations</td><td>Nothing</td><td>Restore the backup</td><td>Fixture saves for every version</td><td>P0</td></tr>
+          <tr><td>Stuck in a missing gate</td><td>Your cell has no record on login</td><td>Occupied cells are never deleted</td><td>“The gate collapsed behind you. Your Satchel came with you.”</td><td>Safe return to the Hearth</td><td>Delete the record, then log in</td><td>P0</td></tr>
+          <tr><td>Lag spike while a gate builds</td><td>Tick-time monitor</td><td>3 ms/tick budget, chunk work on worker threads</td><td>Nothing</td><td>Automatic throttling</td><td>Three gates build during a fight, p99 tick under 50 ms</td><td>P0</td></tr>
+          <tr><td>Body killed while projecting</td><td>Body damage event</td><td>Warning first, snap-back offered</td><td>Warning, then a normal death if ignored</td><td>Normal respawn</td><td>GameTest</td><td>P1</td></tr>
+          <tr><td>Spirit used as an exploit</td><td>Server validates every interaction</td><td>Only blue-tagged objects. In multiplayer, no glow on other players' land.</td><td>Nothing</td><td>—</td><td>Interaction-rejection tests</td><td>P1</td></tr>
+          <tr><td>Echo swarm drops fps</td><td>Entity budget</td><td>Cap at 12 bodies, merge the rest into a swarm entity</td><td>A swarm cloud</td><td>—</td><td>Bench: 30 Echoes plus 40 mobs</td><td>P1</td></tr>
+          <tr><td>Effects break on Vulkan or OpenGL on Mac</td><td>Capability check at startup</td><td>A simpler fallback effect</td><td>A plainer effect, never a crash</td><td>—</td><td>Run both backends in M0 and at every milestone</td><td>P1</td></tr>
+          <tr><td>Disk bloat from cells</td><td>Cell count and disk size</td><td>Cells aligned to region files</td><td>Nothing</td><td>Release sweep</td><td>500 gates, disk stays bounded</td><td>P1</td></tr>
+          <tr><td>Malformed content file</td><td>Schema validation at load</td><td>Skip the entry, log file and field</td><td>A toast in debug mode</td><td>Fix the file</td><td>Malformed fixtures</td><td>P1</td></tr>
+          <tr><td>Dream not ready</td><td>No plan at sleep</td><td>—</td><td>“You slept deeply.”</td><td>—</td><td>GameTest</td><td>P2</td></tr>
+          <tr><td>Other mods add structures to our dimensions</td><td>Biome tags</td><td>Exclude them</td><td>—</td><td>—</td><td>Test with popular structure mods</td><td>P2</td></tr>
+          <tr><td>Away for weeks</td><td>—</td><td>Timers count play-days only</td><td>Everything where you left it</td><td>—</td><td>Time-skip test</td><td>P2</td></tr>
+          <tr><td>Two players claim one boss</td><td>Per-player claim ids</td><td>Everyone gets their own roll</td><td>Your own loot</td><td>—</td><td>GameTest</td><td>P2</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="callout"><strong>Patent-safe rules.</strong> WB's Nemesis patent (US 10,926,179, granted 2021, estimated to expire in 2036) may cover more than Nemesis. In plain terms: an event between you and one hostile NPC changes a <em>different</em> hostile NPC's stats, and the game shows you the change. Something like “you died, so other monsters got stronger” could fall inside it. So:
+        <ul>
+          <li>Something you do to one enemy never changes another enemy's stats.</li>
+          <li>Consequences go into world state instead: a gate's rank, grey land, timers, loot, the Director's spawn budget.</li>
+          <li>The Rival is authored and moves on story beats tied to <em>your</em> rank.</li>
+          <li>Nightmares are picked from authored templates using your own death counts.</li>
+          <li>No ranked factions that reshuffle, and no cross-player vendettas.</li>
+        </ul>
+        Before anything is published: a freedom-to-operate opinion from a patent attorney. This isn't legal advice. <span class="chip r">Research</span> <a href="https://patents.google.com/patent/US10926179B2/en">Google Patents</a>, <a href="https://www.finnegan.com/en/insights/articles/will-101-be-a-nemesis-to-warner-brothers-patent.html">Finnegan, Jul 2021</a></div>
+
+      <h3>AI, privacy and ownership</h3>
+      <div class="grid-2">
+        <div class="card"><h4>No language model in the game</h4><p>That keeps it offline, free and consistent. Two systems make judgement calls: the Director and the Path and Truth offers. Both are fixed rules with seeded randomness, and both explain themselves only from real counters. <code>/awaken why</code> prints the last ten decisions and what they were based on. The only “learning” is novelty memory plus which gates you enter or skip, with a variety floor so it can't trap you in a rut. You can reset it. Rules and content are versioned.</p></div>
+        <div class="card"><h4>Privacy and ownership</h4><p>Everything stays on your Mac. The mod makes no network calls. The playtest log is opt-in and local. In multiplayer the server enforces spirit rules (the client is never trusted), and Day Journal snapshots never capture another player's base. There are no credentials anywhere.</p></div>
+      </div>
+
+      <h3>Performance budget</h3>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Measure</th><th>Budget</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Client frame, full gate fight</td><td class="num">p50 ≥ 110 fps · p99 ≤ 16 ms</td><td>An 8.33 ms frame at 120 Hz. Sodium on, render distance 12, built-in display. Measured before promising anything.</td></tr>
+          <tr><td>Hitch when entering a gate</td><td class="num">none over 50 ms</td><td>Cold or warm, because the cell was pre-built</td></tr>
+          <tr><td>Server tick</td><td class="num">p95 ≤ 25 ms · p99 ≤ 40 ms</td><td>The limit for 20 ticks a second is 50 ms</td></tr>
+          <tr><td>Gate build on the main thread</td><td class="num">≤ 3 ms per tick</td><td>READY within 60 s of appearing</td></tr>
+          <tr><td>Active entities in a fight</td><td class="num">≤ 60</td><td>Mobs plus Echoes. Echoes past 12 merge into a swarm.</td></tr>
+          <tr><td>Particles</td><td class="num">≤ 4,000 per frame</td><td>Fewer with distance</td></tr>
+          <tr><td>Memory</td><td class="num">4 to 6 GB heap</td><td>Of your 16 GB</td></tr>
+          <tr><td>Disk</td><td class="num">&lt; 2 GB per 100 gates</td><td>Released cells are deleted</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col"><strong>Seeing problems:</strong> an AWAKEN page in F3 (build queue, our systems' tick cost, entity budget, current gate). <code>/awaken trace gate &lt;id&gt;</code> prints a gate's record, seed and the Director's choices so any gate can be rebuilt exactly. A bench world runs a scripted fight and writes p50 and p99 frame and tick times to a file, and that file goes in every milestone report.</p>
+      <p class="col"><strong>Cost:</strong> the toolchain is a 1 to 2 GB download to your MEDIA SSD, with your OK. Nothing recurs when you play solo. A server for friends later would cost roughly $10 to $25 a month from a host (my estimate, not checked). The real cost is build time (Section 6).</p>
+    </section>
+
+    <!-- ============ 6. DEMOS ============ -->
+    <section class="chapter" id="demo">
+      <header><div class="eyebrow">Section 5</div><h2>See it working</h2></header>
+      <div class="col"><p>Three working demos and one set of mockups. Each says what it does and doesn't prove. None of them proves the game is fun. Only you playing it can do that.</p></div>
+
+      <h3>The Signal at the moments that matter <span class="chip i">Illustrative</span></h3>
+      <div class="signal-grid">
+        <div class="signal"><div class="sg-head"><span>◇ Notice</span><span>Floor 4</span></div>
+          <div class="sg-title">Level up ×2</div>
+          <div class="sg-row"><span>Level</span><b>37 → 39</b></div>
+          <div class="sg-row"><span>Points to spend</span><b>+6</b></div>
+          <div class="sg-foot">Spend them at a Shrine or at home</div></div>
+        <div class="signal"><div class="sg-head"><span>◇ Directive</span><span>1 of 3</span></div>
+          <div class="sg-title">Clear a floor using only Flow and your fists.</div>
+          <div class="sg-row"><span>Reward</span><b>+1 AGI</b></div>
+          <div class="sg-row"><span>Fades in</span><b>2 play-days</b></div>
+          <div class="sg-foot">[ Accept ]</div></div>
+        <div class="signal" style="border-color:#ff8a7a"><div class="sg-head" style="color:#ff9d8f"><span>◇ Warning</span><span>Veil</span></div>
+          <div class="sg-title">Your body is under attack.</div>
+          <div class="sg-body">A zombie found you meditating. Three hearts lost.</div>
+          <div class="sg-foot" style="color:#ff9d8f">[ Return ] · hold Focus to stay</div></div>
+        <div class="signal"><div class="sg-head"><span>◇ Second Awakening</span><span>C-rank</span></div>
+          <div class="sg-row"><span><b>Redline</b></span><span>41% of your fight time was in Flow</span></div>
+          <div class="sg-row"><span><b>Architect</b></span><span>4,120 blocks placed mid-fight</span></div>
+          <div class="sg-row"><span><b>Shadowbinder</b></span><span>63 Echoes bound</span></div>
+          <div class="sg-row"><span><b>???</b></span><span>A fourth Path is listening</span></div>
+          <div class="sg-foot">Choose who you become</div></div>
+        <div class="signal"><div class="sg-head"><span>◇ Truth</span><span>now true</span></div>
+          <div class="sg-title">“I move like water.”</div>
+          <div class="sg-body">Ten dashes without touching the ground. Flow now lasts 30% longer.</div>
+          <div class="sg-foot"><span style="color:#8ff0c0">True</span></div></div>
+        <div class="signal"><div class="sg-head"><span>◇ Day's End</span><span>Day 41</span></div>
+          <div class="sg-row"><span>Today</span><b>+3 levels · 2 gates</b></div>
+          <div class="sg-row"><span>Best moment</span><b>Foundry floor 5, no hits</b></div>
+          <div class="sg-row"><span>Waiting</span><b>B pillar breaks in 2 play-days</b></div>
+          <div class="sg-row"><span>Unsolved</span><b>The waterfall from your dream</b></div>
+          <div class="sg-foot">[ Sleep ] · [ Keep playing ]</div></div>
+      </div>
+      <p class="small muted col">The Day's End card is how every session gets a clean ending and a reason to come back that doesn't depend on the clock.</p>
+
+      <h3 id="demo-gen">Gate generator <span class="chip p">Working demo</span></h3>
+      <div class="col"><p>This runs the actual Director rules from the gate-spawn contract: rank weights, theme and layout no-repeat rules, the modifier budget, twist odds with a pity timer, and modifier combinations from the Five Forces. Each roll shows the card you'd see and the trace of why each choice was made. That trace is exactly what <code>/awaken trace gate</code> would print in the game.</p>
+      <p class="small muted"><strong>Proves:</strong> the rules produce varied, legal gates that never repeat back to back. <strong>Doesn't prove:</strong> that the gates are fun, or how the rooms look.</p></div>
+      <div class="gen">
+        <div>
+          <div class="controls">
+            <label for="gen-rank" class="small muted">Your rank</label>
+            <select id="gen-rank" class="sel">
+              <option value="0">E</option><option value="1">D</option><option value="2" selected>C</option><option value="3">B</option><option value="4">A</option><option value="5">S</option>
+            </select>
+            <button class="btn" id="gen-roll" type="button">Open a gate</button>
+            <button class="btn ghost" id="gen-ten" type="button">Roll 20</button>
+            <button class="btn ghost" id="gen-reset" type="button">Reset</button>
+          </div>
+          <div id="gen-card"></div>
+          <div class="history" id="gen-history" aria-label="Recent gates"></div>
+          <p class="small muted" id="gen-stats"></p>
+        </div>
+        <div class="trace" id="gen-trace" aria-live="polite"></div>
+      </div>
+
+      <h3>Pacing simulator <span class="chip p">Working prototype</span></h3>
+      <div class="col">
+        <p><a href="prototypes/pacing_sim.py">prototypes/pacing_sim.py</a> simulates 300 players of each of four kinds, from a fresh world to Sovereign. <strong>Careful</strong> players extract early. <strong>Balanced</strong> players push to about floor 3. <strong>Greedy</strong> players push to floor 6 every time. <strong>Builders</strong> spend 60% more time at home. It models home time, the optional Regimen, rank trials, gate floors, deaths, the Satchel and Fracture.</p>
+        <p class="small muted"><strong>Proves:</strong> one set of numbers can hit every pacing target for very different players, and the push-or-extract choice stays a real decision. <strong>Doesn't prove:</strong> fun, feel, or that real players behave like these four. Its first run failed: late ranks came twice as fast as the targets, and pushing deeper always paid off. The tuning that fixed that is in the file.</p>
+      </div>
+      <figure class="figure" id="fig-ranks"><figcaption>Hours to reach each rank. The shaded band is the target. Dots are medians and lines span the 10th to 90th percentile. All four player types land in or near every band. Greedy players are slower, because dying costs time.</figcaption></figure>
+      <div class="grid-2">
+        <figure class="figure" id="fig-push" style="margin:0"><figcaption>Levels per hour if you always plan to stop at floor N, for a C-rank gate. The labels show how often you die. On-level, floors 3 to 5 all land within 8% of the best, which makes it a real choice. Under-levelled, the best stop moves earlier, to floor 3.</figcaption></figure>
+        <figure class="figure" id="fig-gaps" style="margin:0"><figcaption>Median minutes between level-up moments, balanced player, by rank band. This is the problem the simulator found: by S-rank, level-ups are about an hour apart. The dashed line is the 20-minute promise that the second reward rhythm has to keep.</figcaption></figure>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>Finding</th><th>What it means for the design</th></tr></thead>
+        <tbody>
+          <tr><td>Balanced player: D at 3.5 h, C 10.6 h, B 23.1 h, A 39.9 h, S 64.7 h, Sovereign 102.5 h. All inside the targets.</td><td>The arc is about 100 hours. A 50-hour setting is a single multiplier.</td></tr>
+          <tr><td>Greedy players die on 7 of every 10 gates and reach Sovereign about 10 hours <em>later</em> than balanced players.</td><td>Greed is punished, but only gently. Good.</td></tr>
+          <tr><td>Builders reach Sovereign only about 3 hours behind.</td><td>A building-heavy evening doesn't hold you back. That's case 4.</td></tr>
+          <tr><td>Level-up moments stretch from about 20 minutes apart to about 60 by S-rank.</td><td>The second reward rhythm is required, not optional.</td></tr>
+          <tr><td>The first hour isn't simulated.</td><td>It's handcrafted (see the minute-by-minute) and gets measured in M1.</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Before and after, same five cases</h3>
+      <p class="col small muted">The “after” columns describe proposed behaviour that isn't built yet. <span class="chip i">Illustrative</span></p>
+
+      <h4>1. An ordinary evening, 45 minutes</h4>
+      <div class="walk">
+        <div><div class="lab">Today · vanilla</div><ol>
+          <li>Log in to your day-12 world.</li>
+          <li>Open the advancements and see vague goals.</li>
+          <li>Decide to go mining.</li>
+          <li>Strip mine for 40 minutes.</li>
+          <li>Log off, not sure whether that was fun.</li>
+        </ol></div>
+        <div class="after"><div class="lab">With AWAKEN</div><ol>
+          <li>You load in at the Hearth. Last session's Day's End card says: a C pillar to the northeast breaks in 2 play-days, and there's a waterfall from your dream.</li>
+          <li>The Director has kept two gates open near you. Nothing happened while you were away.</li>
+          <li>Two minutes in the Veil scouting the C gate: Clockwork Foundry, Mirror modifier, a boss with a weak core.</li>
+          <li>22 minutes inside. You push to floor 4 and extract. +2 levels and a Power Core, Beam: Prism.</li>
+          <li>At home, spend the points and slot Prism. Your Echoes have already sorted the loot.</li>
+          <li>Sleep. You dream of the Foundry fused with your house. A reality check makes you lucid for a minute.</li>
+          <li>Day's End: “Tomorrow: the waterfall.” Close the game.</li>
+        </ol></div>
+        <div class="why"><strong>Why it's less work:</strong> no menu to find a goal. The evening had a beginning, a middle and an end, and the next one is already waiting.</div>
+      </div>
+
+      <h4>2. The disappointment: from a quest book to a want</h4>
+      <div class="walk">
+        <div><div class="lab">Today · quest-book pack</div><ol>
+          <li>The quest says: craft 16 casings.</li>
+          <li>Recipe viewer, then a wiki, then a machine from another mod.</li>
+          <li>40 minutes of crafting chores.</li>
+          <li>The quest ticks off. You feel nothing.</li>
+        </ol></div>
+        <div class="after"><div class="lab">With AWAKEN</div><ol>
+          <li>Climbing back from stratum 3 cost you Strain twice this week. You want the Deep Lift.</li>
+          <li>Last week the Scanner read a broken lift in a ruin into your Codex.</li>
+          <li>The build screen shows five parts. You have three. Two come from a Foundry boss.</li>
+          <li>One gate run, then build it. Now you ride between your camps.</li>
+        </ol></div>
+        <div class="why"><strong>Why it's less work:</strong> the want came from the world (the climb hurt), the information is in the game (the Codex), and the work is a gate run rather than a crafting session.</div>
+      </div>
+
+      <h4>3. A strong existing case, kept strong</h4>
+      <div class="walk">
+        <div><div class="lab">Today · a Vault Hunters-style run</div><ol>
+          <li>A great timed vault run.</li>
+          <li>Back home, recipes priced in gems that never get cheaper.</li>
+          <li>Hours 40 to 50 feel flat.</li>
+          <li>The endgame is a 1% artifact roll.</li>
+        </ol></div>
+        <div class="after"><div class="lab">With AWAKEN</div><ol>
+          <li>The run stays just as tense: push or extract, and the gate wakes up if you dawdle.</li>
+          <li>Home costs fall with every rank.</li>
+          <li>Something new lands at least every 20 minutes. The Director watches the gap.</li>
+          <li>The endgame is depth records, Sovereign trials and Ascension, all won by skill. Rare drops have pity timers.</li>
+          <li>Friends who join late progress at their own pace, with their own loot.</li>
+        </ol></div>
+        <div class="why"><strong>What's preserved:</strong> the run itself, which is the part players love. <strong>What changes:</strong> the economy and pacing around it.</div>
+      </div>
+
+      <h4>4. The ambiguous case: you just want to build tonight</h4>
+      <div class="walk">
+        <div><div class="lab">Today</div><ol>
+          <li>In Solo Leveling mods, gates expire and break in real time while you build.</li>
+          <li>In vanilla, building doesn't move anything else forward.</li>
+        </ol></div>
+        <div class="after"><div class="lab">With AWAKEN</div><ol>
+          <li>Gate timers count play-days, and any break near home warns you a day ahead.</li>
+          <li>You build a Sanctuary. It's detected automatically, and your dreams get better.</li>
+          <li>You hang two trophies. The Hall bonus grows, and the Blacksmith comments on the Warden's skull.</li>
+          <li>Your Echoes haul and farm. Some XP still lands: about a fifth of a level per stint at home.</li>
+          <li>An Architect Directive shows up: “Build a Rampart taller than the Spire.”</li>
+        </ol></div>
+        <div class="why"><strong>Why it's better:</strong> building counts as progress, and nothing punishes you for a quiet night.</div>
+      </div>
+
+      <h4>5. The failure case: you die deep, or the game crashes</h4>
+      <div class="walk">
+        <div><div class="lab">Today</div><ol>
+          <li>Item loss by default.</li>
+          <li>A long corpse run.</li>
+          <li>Sometimes a damaged inventory after a crash.</li>
+          <li>The evening is gone.</li>
+        </ol></div>
+        <div class="after"><div class="lab">With AWAKEN</div><ol>
+          <li><strong>Death:</strong> the Satchel is lost. Your gear and the kill XP you earned stay. Insight on the boss goes in the Codex. Eight minutes of Fracture, which rest at home clears.</li>
+          <li><strong>Later:</strong> the Clone Vat saves your Satchel once a day.</li>
+          <li><strong>Crash mid-claim:</strong> on load, the pending claim replays. “Recovered your loot.”</li>
+          <li><strong>Gate gone after an update:</strong> a safe return home with the Satchel kept, and a Notice saying why.</li>
+        </ol></div>
+        <div class="why"><strong>Why it's better:</strong> you lose a run, never an evening, and the game always tells you what happened.</div>
+      </div>
+
+      <h3>System flows</h3>
+      <div class="grid-2">
+        <div style="min-width:0">
+          <p class="small muted">One session, from loading in to the Day's End card.</p>
+          <pre class="mermaid">
+flowchart TD
+  A["Load in at the Hearth"] --> B{"What pulls you?"}
+  B -->|"pillar on the horizon"| G["Gate"]
+  B -->|"the Well"| D["Descent"]
+  B -->|"a vision or a rumour"| X["Explore the world"]
+  B -->|"a project"| H["Build at home"]
+  G -.->|"optional"| V["Scout from the Veil"]
+  V -.-> G
+  G --> F{"Shrine: push or extract?"}
+  F -->|"push"| G
+  F -->|"extract"| R["Home: points, cores, Truths"]
+  D --> R
+  X --> R
+  H --> R
+  R --> S{"Sleep?"}
+  S -->|"dream"| L["Lucidium"]
+  S -->|"no"| B
+  L --> E["Day's End card"]
+          </pre>
+        </div>
+        <div style="min-width:0">
+          <p class="small muted">A gate's lifecycle. Every state is saved.</p>
+          <pre class="mermaid">
+stateDiagram-v2
+  [*] --> BUILDING
+  BUILDING --> READY: cell built
+  BUILDING --> FAILED: error or timeout
+  FAILED --> [*]: reroll, 3 tries max
+  READY --> ACTIVE: someone enters
+  ACTIVE --> OPEN: everyone left
+  OPEN --> ACTIVE: re-enter
+  READY --> BROKEN: break day reached
+  OPEN --> BROKEN: break day reached
+  ACTIVE --> CLEARED: Gate Lord down
+  BROKEN --> CLEARED: Gate Lord down outside
+  CLEARED --> RELEASED: nobody inside
+  RELEASED --> [*]: region file deleted
+          </pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 7. SHIP ============ -->
+    <section class="chapter" id="ship">
+      <header><div class="eyebrow">Section 6</div><h2>Proving it and shipping it</h2></header>
+      <h3>Baseline first</h3>
+      <div class="col">
+        <p>Before any code: you play 45 minutes of vanilla 26.3 (and optionally 45 minutes of a Solo Leveling mod) and fill in the same short sheet we'll use for AWAKEN. That turns my reading of “where the fun drops” into real numbers we have to beat. If your vanilla session already scores high on direction, then direction isn't the problem, and the plan changes.</p>
+      </div>
+      <h3>How we'll know it's working</h3>
+      <div class="col"><p>From M1 there's an opt-in <strong>playtest mode</strong>. Every 15 minutes a small corner prompt asks “What are you doing next?” (type a few words or skip) and “Fun right now?” (press 1 to 5). Events go to a local log, and after each session a script writes a one-page report: a timeline, your answers, deaths, time in menus and performance. Nothing leaves your Mac.</p></div>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Measure</th><th>How</th><th>Gate to pass</th><th>Why this number</th></tr></thead>
+        <tbody>
+          <tr><td>Next-step clarity</td><td>Share of 15-minute prompts answered with a concrete want</td><td class="num">≥ 80% at M1 · ≥ 90% at M3</td><td>The strong result from Section 1</td></tr>
+          <tr><td>Lookups</td><td>You note any wiki or recipe search</td><td class="num">0 in the first 5 hours</td><td>No fifty tutorials</td></tr>
+          <tr><td>New ideas per hour</td><td>First-time concept windows in the log</td><td class="num">≤ 5 in hour 1 · ≤ 1 per hour after</td><td>One thing at a time</td></tr>
+          <tr><td>Surprise</td><td>“Did anything surprise you?” on the Day's End card</td><td class="num">≥ 1 per hour</td><td>Discovery</td></tr>
+          <tr><td>Want another session</td><td>1 to 5 at session end</td><td class="num">≥ 4, two sessions in a row</td><td>The real test of fun</td></tr>
+          <tr><td>Time in menus</td><td>From the log</td><td class="num">&lt; 10% of a session</td><td>No busywork</td></tr>
+          <tr><td>Unfair deaths</td><td>You flag a death as unfair with one key</td><td class="num">≤ 1 in 10</td><td>Readable rules</td></tr>
+          <tr><td>Time between new things</td><td>From the log</td><td class="num">p90 ≤ 25 min</td><td>The second reward rhythm</td></tr>
+          <tr><td>Variety</td><td>After 20 gates: “Could you have predicted this one?”</td><td class="num">≤ 2 of 20 yes</td><td>Every door is different</td></tr>
+          <tr><td>Performance</td><td>Bench world on your Mac</td><td class="num">p50 ≥ 110 fps · p99 ≤ 16 ms · no 50 ms hitch</td><td>Your 120 fps rule</td></tr>
+          <tr><td>Progress loss</td><td>Kill-the-server tests at every step</td><td class="num">0</td><td>Never lose an evening</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col small muted">These stay separate on purpose. A fast gate entry doesn't make the game fun, and a high fun score doesn't excuse a dropped frame.</p>
+
+      <h3>Test layers</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Layer</th><th>What it covers</th></tr></thead>
+        <tbody>
+          <tr><td>Logic tests (seconds)</td><td>Director, gate generator, pacing, claim rules, Path scoring. Seeded, so variation across seeds gets reported, never just the best example.</td></tr>
+          <tr><td>NeoForge GameTests (headless server)</td><td>Gate building, claims with the server killed at every step, migrations from fixture saves, Veil interaction rejections, body snap-back, dream fallback.</td></tr>
+          <tr><td>Content validation</td><td>Every JSON file is schema-checked at build time and at load. A malformed-file fixture suite.</td></tr>
+          <tr><td>Performance bench</td><td>A scripted fight world, run on OpenGL and on Vulkan on your Mac, at every milestone.</td></tr>
+          <tr><td>Your critic loop</td><td>For UI, effects and mobs: your 10-step process. A fresh critic each pass, loop to at least 8/10, a rejection log, an adversarial critic, and side-by-side look tests before anything is final.</td></tr>
+          <tr><td>Agent walkthroughs</td><td>Useful for catching bugs. Labelled as such and never counted as user testing.</td></tr>
+          <tr><td>You</td><td>The only judge of fun.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col small"><strong>Held-out checks:</strong> gate pacing is tuned on themes 1 to 4, and variety is judged on themes 5 to 8, which were never used in tuning. The five cases from Section 2 become standing regression scenarios. Every confirmed bug gets its own GameTest.</p>
+
+      <h3>Milestones</h3>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Milestone</th><th>What's in it</th><th>Exit gate</th><th class="num">Rough time</th></tr></thead>
+        <tbody>
+          <tr><td><strong>M0 · Foundation</strong></td><td>Toolchain on MEDIA (needs your OK). An empty mod loading on 26.3. Three spikes: gate-cell stamping speed, the Veil body plus chunk ticket, and one post-effect on OpenGL and on Vulkan on your Mac. A performance baseline, and your baseline session.</td><td>All three spikes pass, or we switch to their named fallbacks</td><td class="num">1–2 wk</td></tr>
+          <tr><td><strong>M1 · First Gate</strong> (vertical slice)</td><td>Signal UI, Level and stats, E and D gates (2 themes, 3 layouts, 5 modifiers, 2 bosses), cells, the Satchel and claims, four powers (Dash, Flow, Beam, Slam), the Hearth Anchor, the prologue, Day's End, playtest mode.</td><td>Two sessions at 4/5 or higher. Clarity ≥ 80%. Zero lookups. Perf budget met. Zero loss in kill tests.</td><td class="num">4–6 wk</td></tr>
+          <tr><td><strong>M2 · The Loop</strong></td><td>Ranks E to C with Reassessments, the Director and Directives, 4 themes, 12 modifiers, 4 bosses, Five Forces v1, Power Cores with pity, Echoes v1, the Regimen, Training Grounds, the second reward rhythm.</td><td>New-thing gap p90 ≤ 25 min. Variety check passes.</td><td class="num">5–7 wk</td></tr>
+          <tr><td><strong>M3 · In and Out</strong></td><td>Lucidium v1, Veil v1, the Stillpoint, Truths v1, the Codex board, the first batch of Latents.</td><td>You can predict the Veil rule within 5 minutes. Lucid within 3 tries on average. Sleep is never blocked.</td><td class="num">6–8 wk</td></tr>
+          <tr><td><strong>M4 · Deeper</strong></td><td>Strata 1 to 5, camps, Strain, the Grave Echo, the Second Awakening with 6 Paths.</td><td>Push or extract is a real decision in playtests</td><td class="num">5–7 wk</td></tr>
+          <tr><td><strong>M5 · Up</strong></td><td>Ruins, the Scanner, 8 machines, Frames, the Deep Lift, Waypoints, the Clone Vat.</td><td>Machines feel wanted, never like chores</td><td class="num">5–7 wk</td></tr>
+          <tr><td><strong>M6 · Look and feel</strong></td><td>Runs alongside from M2: look tests, your critic loop, audio.</td><td>≥ 8/10 on every critic track</td><td class="num">ongoing</td></tr>
+          <tr><td><strong>M7 · Acts II and III</strong></td><td>Strata 6 to 10, the Halo, the Hollow Court, the Rival, the endings. 15 themes, 20 bosses, 12 Paths.</td><td>Story readable in any order. Endings land.</td><td class="num">8–12 wk</td></tr>
+          <tr><td><strong>M8 · Friends and forever</strong></td><td>Multiplayer hardening, the Endless, Ascension, a Gate Forge for building your own gates.</td><td>Four-player party gate stable at budget</td><td class="num">4–6 wk</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col"><strong>Effort:</strong> with Claude building and you directing and playtesting, the playable slice takes about 6 to 8 weeks including M0. The full scope takes roughly 10 to 14 months at a steady pace. That estimate is uncertain. The biggest swing factors are art and animation reaching your bar, Minecraft's three drops a year, and how much playtest time you have before your 1 Dec launch.</p>
+
+      <h3>Rollout and rollback</h3>
+      <ul class="col">
+        <li>A git repo on MEDIA with one branch per milestone. The main branch is always playable.</li>
+        <li>Feature flags in the config for each direction (dreams, Veil, Descent, tech), so a broken system can be switched off without touching your world.</li>
+        <li>An automatic world backup before any mod version change. Saves and content are versioned, and the previous build is always kept.</li>
+        <li>Playtest builds run on a test world until a milestone passes. Your main world only gets passed builds.</li>
+        <li><strong>Go/no-go checkpoints:</strong> end of M0 (spikes), end of M1 (is it fun?), end of M3 (are the spiritual layers fun?), end of M5 (a scope check: continue into the Acts, or polish what exists).</li>
+        <li><strong>Rollback triggers:</strong> any lost progress, a bench p50 under 90 fps, fun at 3/5 or below for two sessions running, or a spike that fails with no fallback.</li>
+      </ul>
+
+      <h3>Risks</h3>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>The core loop isn't fun</td><td>Medium</td><td>Very high</td><td>The M1 slice comes before anything else, with a stop rule</td></tr>
+          <tr><td>Version churn, three drops a year</td><td>High</td><td>Medium</td><td>Pin a version. Thin layers for rendering, input and worldgen. Port only at checkpoints we choose.</td></tr>
+          <tr><td>Rendering on Mac during the OpenGL-to-Vulkan move</td><td>Medium</td><td>High</td><td>An M0 spike on both backends. Fallback effects.</td></tr>
+          <tr><td>Art misses your bar, or looks AI-made</td><td>Medium</td><td>High</td><td>Look tests, your critic loop, a vanilla-adjacent style, handmade work where it counts</td></tr>
+          <tr><td>Scope creep</td><td>High</td><td>High</td><td>The pillars test, milestone gates, content kept in data</td></tr>
+          <tr><td>Your time before 1 Dec</td><td>High</td><td>Medium</td><td>The slice needs about two short playtests. The session report keeps feedback asynchronous.</td></tr>
+          <tr><td>Patent or IP exposure if published</td><td>Low if private, medium if public</td><td>High</td><td>Original names, the patent-safe rules, counsel before publishing</td></tr>
+          <tr><td>Performance with every system running</td><td>Medium</td><td>High</td><td>A budget per system, the bench at every milestone</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Stress-testing this plan</h3>
+      <div class="tbl wide"><table>
+        <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+        <tbody>
+          <tr><td>Is this solving your real frustration or an internal metric?</td><td>The gates are “do you want another session” and “can you name your next move.” They aren't feature counts.</td></tr>
+          <tr><td>Does it remove decisions, or just move them?</td><td>Directives are capped and they expire. Scouting is optional. The risk is the Status screen growing into a menu maze, so it's capped at four tabs.</td></tr>
+          <tr><td>Could something simpler deliver most of it?</td><td>Partly, yes. M1 alone (gates, the Signal, powers, the Hearth) is most of the Solo Leveling fantasy. That's why it comes first, and why everything after it has to earn its place at a checkpoint.</td></tr>
+          <tr><td>What would prove this plan wrong?</td><td>A high direction score in your vanilla baseline means direction isn't the problem. High clarity but low fun in M1 points to combat feel, not structure, and the next six weeks would go into feel.</td></tr>
+          <tr><td>What happens when the system is unsure or stale?</td><td>The Director offers nothing rather than a bad Directive. Dreams fall back to sleep. Gates reroll before you see them. Stale builds are discarded by gate id.</td></tr>
+          <tr><td>Can you inspect, correct and trust it?</td><td><code>/awaken why</code>, <code>trace gate</code>, the Codex, versioned saves, feature flags, automatic backups.</td></tr>
+          <tr><td>Can we prove it's better without breaking what works?</td><td>Vanilla is untouched, performance mods keep working, and every milestone is compared with your baseline.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="col small"><strong>What this check changed:</strong> the Regimen moved to in-game days with no streaks. Procedural nemesis rivals, moving ships and AI NPCs were cut. The second reward rhythm, the Five Forces, loss presets from day one and falling home costs were added.</p>
+    </section>
+
+    <!-- ============ 8. DECISIONS ============ -->
+    <section class="chapter" id="decide">
+      <header><div class="eyebrow">Section 7</div><h2>Decisions for you</h2></header>
+      <p class="col">Only the calls that are yours. Everything else has a sensible default above.</p>
+      <div class="decisions">
+        <div class="d"><h4>Approve the direction and the first build</h4><p>AWAKEN as designed, built as one cohesive mod, starting with M0 (spikes and toolchain) and M1 (the First Gate slice).</p><div class="rec">Recommend: yes</div></div>
+        <div class="d"><h4>Minecraft version</h4><p>NeoForge on 26.3, moving to 26.4 and pinned around Mar 2027. That's the modern Mac render path, unobfuscated, and what you downloaded. The alternative is NeoForge 1.21.1, but only if you want Create, Iron's Spells or Epic Fight in the same world.</p><div class="rec">Recommend: 26.3</div></div>
+        <div class="d"><h4>Solo first, or co-op from the start?</h4><p>Solo first, with the server in charge from day one so co-op doesn't need a rewrite. Hardening moves earlier if your friends want in.</p><div class="rec">Recommend: solo first</div></div>
+        <div class="d"><h4>Can the dream realm be called the Lucidium?</h4><p>It's the title of an empty note in your book folder. Lend it to the game, or keep it for the book and I'll name the realm something else.</p><div class="rec">Your call</div></div>
+        <div class="d"><h4>Default difficulty and story length</h4><p>Hunter mode by default (lose the Satchel, keep your gear). About 100 hours to Sovereign, with a 50-hour setting available.</p><div class="rec">Recommend: Hunter, 100 h</div></div>
+        <div class="d"><h4>Private or published?</h4><p>Private changes nothing now. Published raises the polish bar and needs a patent attorney's opinion plus a licence review before release. The names are already original.</p><div class="rec">Recommend: private for now</div></div>
+        <div class="d"><h4>OK to install the toolchain at M0?</h4><p>Gradle, the NeoForge dev kit and Minecraft's dev assets, about 1 to 2 GB, on your MEDIA SSD. Nothing goes on the internal disk.</p><div class="rec">Needs your OK before M0</div></div>
+        <div class="d"><h4>Art direction</h4><p>Decided by a side-by-side look test in M1: vanilla-plus textures in AWAKEN's palette, against a more stylised look. Run through your critic loop, never judged from a mockup.</p><div class="rec">Recommend: look test in M1</div></div>
+      </div>
+      <p class="col muted" style="margin-top:22px">Nothing has been built or installed. Once you've answered these, M0 starts.</p>
+    </section>
+  </main>
+</div>
+<script>
+(function () {
+  /* ---------- contents: mobile copy + active section ---------- */
+  var rail = document.getElementById("rail-nav");
+  var mob = document.getElementById("mobile-nav");
+  if (rail && mob) {
+    var nav = rail.cloneNode(true);
+    nav.removeAttribute("id");
+    nav.style.display = "grid";
+    nav.style.gap = "2px";
+    mob.appendChild(nav);
+    nav.querySelectorAll("a").forEach(function (a) {
+      a.style.color = "var(--muted)"; a.style.textDecoration = "none"; a.style.padding = "3px 0";
+      if (a.classList.contains("sub")) a.style.paddingLeft = "14px";
+      a.addEventListener("click", function () { mob.parentElement.open = false; });
+    });
+  }
+  if ("IntersectionObserver" in window && rail) {
+    var links = {};
+    rail.querySelectorAll("a").forEach(function (a) { links[a.getAttribute("href").slice(1)] = a; });
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && links[e.target.id]) {
+          Object.keys(links).forEach(function (k) { links[k].classList.remove("on"); });
+          links[e.target.id].classList.add("on");
+        }
+      });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    Object.keys(links).forEach(function (id) { var el = document.getElementById(id); if (el) obs.observe(el); });
+  }
+
+  /* ---------- gate generator: the Director's spawn rules ---------- */
+  var RANKS = ["E", "D", "C", "B", "A", "S"];
+  var PILLAR = ["#f4f6fb", "#5fd08f", "#6fb3ff", "#b48cff", "#f2a541", "#ff5a6a"]; // drawn on the Signal's dark glass in both themes
+  var THEMES = [
+    { n: "Bell Crypt", o: "Bells ring under your feet", min: 0, b: "the Bell Warden", f: ["Spirit"] },
+    { n: "Fungal Hollow", o: "The air tastes sweet and wet", min: 0, b: "Mother of Spores", f: ["Spores"] },
+    { n: "Ember Mines", o: "Warm stone, cold wind", min: 0, b: "the Ember Tyrant", f: ["Heat"] },
+    { n: "Drowned Archive", o: "Salt, and the smell of old paper", min: 1, b: "the Drowned Archivist", f: ["Water"] },
+    { n: "Clockwork Foundry", o: "Salt, and machine oil", min: 1, b: "the Gearwright Colossus", f: ["Charge"] },
+    { n: "Glass Desert", o: "Your reflection blinks first", min: 1, b: "the Glass Serpent", f: ["Heat"] },
+    { n: "Hive", o: "A hum you feel in your teeth", min: 0, b: "the Hive Regent", f: ["Spores"] },
+    { n: "Overgrown Temple", o: "Incense and wet roots", min: 0, b: "the Root Saint", f: ["Spirit"] },
+    { n: "Lantern Night Market", o: "Music, and someone haggling", min: 1, b: "the Lantern Broker", f: [], friendly: true },
+    { n: "Frost Monastery", o: "Chanting above a sea of clouds", min: 2, b: "the Abbot of Frost", f: ["Frost"] },
+    { n: "Mirror Palace", o: "Footsteps that match yours", min: 2, b: "the Mirror Knight", f: ["Mirror"] },
+    { n: "Precursor Lab", o: "A voice counting down in no language", min: 2, b: "Unit Zero", f: ["Charge"] },
+    { n: "Nightmare", o: "You've been here before. You haven't.", min: 2, b: "the Sleeper", f: ["Spirit"] },
+    { n: "Sky Archipelago", o: "The ground is much too far below", min: 3, b: "the Sky Leviathan", f: ["Gravity"] },
+    { n: "Abyssal Shrine", o: "Nothing. No sound at all.", min: 4, b: "the Hollow Herald", f: ["Spirit", "Gravity"] }
+  ];
+  var LAYOUTS = ["Labyrinth", "Spiral Tower", "Shaft", "Hub and Spokes", "Arena Chain", "Stealth Halls", "Puzzle Vault", "Open Cavern"];
+  var MODS = [
+    { n: "Lightless", c: 1 }, { n: "Low Gravity", c: 1, f: "Gravity" }, { n: "Volatile", c: 1, f: "Volatile" },
+    { n: "Swarm", c: 1 }, { n: "Elite Pack", c: 2 }, { n: "Silence", c: 1 }, { n: "Flooding", c: 1, f: "Water" },
+    { n: "Haunted", c: 1, f: "Spirit" }, { n: "Mirror", c: 2, f: "Mirror" }, { n: "Collapse Timer", c: 2 },
+    { n: "No Regen", c: 2 }, { n: "Glass", c: 2 }, { n: "Fortune", c: 1 }, { n: "Echoing", c: 1 }
+  ];
+  var BUDGET = [1, 2, 3, 4, 5, 6], MAXMODS = [1, 1, 2, 2, 3, 3];
+  var TWISTS = [
+    { n: "Double Gate", w: 2, d: "a hidden second dungeon past the boss" },
+    { n: "Red Gate", w: 2, d: "the exit seals until the boss dies" },
+    { n: "Hollow Gate", w: 1, d: "no monsters, but something follows you" },
+    { n: "Treasure Gate", w: 2, d: "a loot-carrier that runs" },
+    { n: "Inverted", w: 1, d: "you possess one of the Gate Lord's minions" },
+    { n: "Friendly", w: 1, d: "a spirit who needs your help" },
+    { n: "Echo Gate", w: 1, d: "race the ghost of your own past run" },
+    { n: "Gate within a Gate", w: 1, d: "a smaller gate opens on floor 2" }
+  ];
+  var COMBOS = [
+    [["Heat", "Spores"], "Heat meets Spores: one spark chains through the room"],
+    [["Charge", "Water"], "Charge meets Water: everything standing in water is stunned, you too"],
+    [["Gravity", "Volatile"], "Gravity meets Volatile: pull them together and they detonate each other"],
+    [["Spirit", "Mirror"], "Spirit meets Mirror: your spirit can walk through the mirrors"],
+    [["Heat", "Frost"], "Heat meets Frost: steam blinds them and hides you"],
+    [["Lightless", "Silence"], "Lightless with Silence: the Listeners hunt by sound in the dark"],
+    [["Glass", "Mirror"], "Glass with Mirror: your shadow hits as hard as you do"]
+  ];
+  var DIRS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function pickW(items, w, r) { var tot = 0, i; for (i = 0; i < items.length; i++) tot += w(items[i]); var x = r * tot; for (i = 0; i < items.length; i++) { x -= w(items[i]); if (x <= 0) return items[i]; } return items[items.length - 1]; }
+
+  var master, st;
+  function reset() {
+    master = mulberry32(20261023);
+    st = { lastThemes: [], lastLayouts: [], sinceTwist: 0, count: 0, twists: 0, seen: {}, repeats: 0, hist: [] };
+  }
+
+  function roll(playerRank) {
+    var seed = Math.floor(master() * 4294967296) >>> 0;
+    var rng = mulberry32(seed);
+    var tr = [];
+    var r = rng(), g = playerRank, why;
+    if (r < 0.7) why = "your rank (70%)";
+    else if (r < 0.9) { g = Math.max(0, playerRank - 1); why = playerRank > 0 ? "one below (20%)" : "your rank (nothing below E)"; }
+    else { g = Math.min(5, playerRank + 1); why = playerRank < 5 ? "one above (10%)" : "your rank (nothing above S)"; }
+    tr.push(["rank", "roll " + r.toFixed(2) + " → " + why + " → " + RANKS[g]]);
+
+    var eligible = [], keep = 3;
+    while (!eligible.length && keep >= 0) { var recent = st.lastThemes.slice(0, keep); eligible = THEMES.filter(function (t) { return t.min <= g && recent.indexOf(t.n) < 0; }); keep--; }
+    var theme = pickW(eligible, function (t) { return t.friendly ? 0.35 : 1; }, rng());
+    tr.push(["theme", eligible.length + " fit rank " + RANKS[g] + (st.lastThemes.length ? ", skipped last " + st.lastThemes.length + " (" + st.lastThemes.join(", ") + ")" : "") + " → " + theme.n]);
+
+    var lays = LAYOUTS.filter(function (l) { return st.lastLayouts.indexOf(l) < 0; });
+    var layout = lays[Math.floor(rng() * lays.length)];
+    tr.push(["layout", lays.length + " allowed" + (st.lastLayouts.length ? ", skipped " + st.lastLayouts.join(", ") : "") + " → " + layout]);
+
+    var mods = [];
+    if (theme.friendly) tr.push(["modifiers", "friendly gate → none"]);
+    else {
+      var budget = BUDGET[g], want = MAXMODS[g] - (rng() < 0.25 ? 1 : 0), pool = MODS.slice(), spent = 0;
+      while (mods.length < want && pool.length) {
+        var i = Math.floor(rng() * pool.length), m = pool.splice(i, 1)[0];
+        if (spent + m.c <= budget) { mods.push(m); spent += m.c; }
+      }
+      tr.push(["modifiers", "budget " + budget + ", up to " + want + " → " + (mods.length ? mods.map(function (m) { return m.n + " (" + m.c + ")"; }).join(", ") : "none") + ", spent " + spent]);
+    }
+
+    var twist = null, tr2;
+    if (st.sinceTwist >= 11) { twist = pickW(TWISTS, function (t) { return t.w; }, rng()); tr2 = "pity timer: 11 gates without one → forced"; }
+    else { var tw = rng(); if (tw < 0.125) { twist = pickW(TWISTS, function (t) { return t.w; }, rng()); tr2 = "roll " + tw.toFixed(3) + " < 0.125"; } else tr2 = "roll " + tw.toFixed(3) + " ≥ 0.125 · " + (st.sinceTwist + 1) + " since the last"; }
+    tr.push(["twist", tr2 + " → " + (twist ? twist.n : "none")]);
+
+    var floors = Math.min(6, 3 + Math.floor(g / 2) + (rng() < 0.5 ? 1 : 0));
+    var days = Math.max(1, 4 - Math.floor(g / 2) + Math.floor(rng() * 2));
+    var dist = 300 + Math.floor(rng() * 1200), dir = DIRS[Math.floor(rng() * 8)];
+    tr.push(["shape", floors + " floors, breaks in " + days + " play-day" + (days > 1 ? "s" : "") + ", " + dist.toLocaleString() + " m " + dir]);
+
+    var tags = {}; theme.f.forEach(function (x) { tags[x] = 1; }); mods.forEach(function (m) { tags[m.n] = 1; if (m.f) tags[m.f] = 1; });
+    var combos = COMBOS.filter(function (c) { return tags[c[0][0]] && tags[c[0][1]]; }).map(function (c) { return c[1]; });
+    tr.push(["forces", combos.length ? combos.length + " interaction" + (combos.length > 1 ? "s" : "") : "no special interactions"]);
+
+    if (st.hist.length && (st.hist[0].theme === theme.n || st.hist[0].layout === layout)) st.repeats++;
+    st.lastThemes.unshift(theme.n); st.lastThemes = st.lastThemes.slice(0, 3);
+    st.lastLayouts.unshift(layout); st.lastLayouts = st.lastLayouts.slice(0, 2);
+    st.sinceTwist = twist ? 0 : st.sinceTwist + 1;
+    st.count++; if (twist) st.twists++; st.seen[theme.n] = 1;
+    var gate = { seed: seed, g: g, theme: theme.n, omen: theme.o, boss: theme.b, layout: layout, mods: mods, twist: twist, floors: floors, days: days, dist: dist, dir: dir, combos: combos, tr: tr };
+    st.hist.unshift(gate); st.hist = st.hist.slice(0, 14);
+    return gate;
+  }
+
+  function render(gate) {
+    var card = document.getElementById("gen-card");
+    var hex = ("00000000" + gate.seed.toString(16)).slice(-8);
+    var html = '<div class="signal" style="max-width:none">' +
+      '<div class="sg-head"><span>◇ Gate detected</span><span>' + gate.dist.toLocaleString() + " m · " + gate.dir + "</span></div>" +
+      '<div class="sg-title"><span class="rank" style="border-color:' + PILLAR[gate.g] + ";color:" + PILLAR[gate.g] + '">' + RANKS[gate.g] + "</span>&nbsp; " + esc(gate.theme) + "</div>" +
+      '<div class="sg-row" style="margin-top:8px"><span>Omen</span><b>' + esc(gate.omen) + "</b></div>" +
+      '<div class="sg-row"><span>Breaks in</span><b>' + gate.days + " play-day" + (gate.days > 1 ? "s" : "") + "</b></div>" +
+      '<div class="sg-row"><span>Layout</span><b>' + esc(gate.layout) + " · " + gate.floors + " floors</b></div>" +
+      '<div class="sg-row"><span>Modifiers</span><b>' + (gate.mods.length ? gate.mods.map(function (m) { return esc(m.n); }).join(", ") : "None") + "</b></div>" +
+      '<div class="sg-row"><span>Gate Lord</span><b>' + esc(gate.boss) + "</b></div>" +
+      '<div class="sg-row"><span>Twist</span><b>' + (gate.twist ? '<span class="nty">' + esc(gate.twist.n) + "</span>: " + esc(gate.twist.d) : "None") + "</b></div>" +
+      (gate.combos.length ? '<div class="sg-body" style="margin-top:8px">' + gate.combos.map(esc).join("<br>") + "</div>" : "") +
+      '<div class="sg-foot">seed ' + hex + " · layout, modifiers and twist show only after scouting</div></div>";
+    card.innerHTML = html;
+    var t = document.getElementById("gen-trace");
+    t.innerHTML = '<div class="rule">/awaken trace gate ' + hex + "</div>" + gate.tr.map(function (x) { return '<div><span class="rule">' + x[0].padEnd(10, " ").replace(/ /g, "&nbsp;") + "</span>" + esc(x[1]) + "</div>"; }).join("") +
+      '<div class="rule" style="margin-top:8px">invariants: no theme from the last 3 · no layout from the last 2 · modifiers within budget · twist at least every 12</div>';
+    document.getElementById("gen-history").innerHTML = st.hist.map(function (h) { return "<span>" + RANKS[h.g] + " · " + esc(h.theme) + (h.twist ? " ★" : "") + "</span>"; }).join("");
+    document.getElementById("gen-stats").textContent = st.count + " gates · " + st.twists + " twists · " + Object.keys(st.seen).length + " of " + THEMES.length + " themes seen · back-to-back repeats: " + st.repeats;
+  }
+
+  function rankSel() { return parseInt(document.getElementById("gen-rank").value, 10) || 0; }
+  if (document.getElementById("gen-card")) {
+    reset();
+    render(roll(rankSel()));
+    document.getElementById("gen-roll").addEventListener("click", function () { render(roll(rankSel())); });
+    document.getElementById("gen-ten").addEventListener("click", function () { var g; for (var i = 0; i < 20; i++) g = roll(rankSel()); render(g); });
+    document.getElementById("gen-reset").addEventListener("click", function () { reset(); render(roll(rankSel())); });
+  }
+
+  /* ---------- charts from prototypes/pacing_results.json ---------- */
+  var SIM = {"ranks":{"careful":{"D":[3.0,4.2,5.9],"C":[11.0,12.8,14.9],"B":[25.4,27.7,30.4],"A":[45.2,47.7,50.7],"S":[73.0,76.3,80.1],"Sovereign":[113.6,117.5,121.7]},"balanced":{"D":[2.6,3.5,5.1],"C":[8.9,10.6,12.5],"B":[20.5,23.1,25.6],"A":[37.1,39.9,43.3],"S":[61.1,64.7,68.5],"Sovereign":[98.3,102.5,106.6]},"greedy":{"D":[3.4,4.5,5.8],"C":[8.6,11.1,14.0],"B":[20.2,24.4,28.8],"A":[36.5,42.4,48.5],"S":[61.3,69.5,77.3],"Sovereign":[103.6,112.8,125.7]},"builder":{"D":[2.8,3.9,6.1],"C":[9.5,11.6,14.1],"B":[22.1,24.6,27.7],"A":[39.2,42.1,45.8],"S":[64.1,67.3,71.5],"Sovereign":[100.8,105.3,110.1]}},"gaps":{"balanced":{"E":20.0,"D":24.2,"C":32.9,"B":35.5,"A":43.8,"S":59.3}},"push_on":[[1,1.39,0.035,0.59],[2,1.85,0.092,0.78],[3,2.18,0.182,0.92],[4,2.36,0.324,1.0],[5,2.31,0.523,0.98],[6,1.89,0.765,0.8],[7,1.26,0.961,0.53]],"push_under":[[1,1.83,0.057,0.7],[2,2.34,0.151,0.9],[3,2.61,0.286,1.0],[4,2.56,0.493,0.98],[5,2.15,0.732,0.82],[6,1.38,0.952,0.53],[7,1.2,0.992,0.46]],"targets":{"D":[2.5,4.5],"C":[8,13],"B":[18,28],"A":[32,48],"S":[52,78],"Sovereign":[85,120]}};
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
+  function svgIn(fig, w, h, label) { var s = el("svg", { viewBox: "0 0 " + w + " " + h, role: "img", "aria-label": label, style: "width:100%;height:auto;display:block;min-width:" + Math.min(w, 520) + "px" }); fig.insertBefore(s, fig.firstChild); return s; }
+
+  var fr = document.getElementById("fig-ranks");
+  if (fr) {
+    var W = 720, H = 320, L = 52, R = 16, T = 34, B = 40, ranks = ["D", "C", "B", "A", "S", "Sovereign"], ymax = 130;
+    var s = svgIn(fr, W, H, "Hours to reach each rank for four player types against target bands");
+    var cw = (W - L - R) / ranks.length, y = function (v) { return T + (H - T - B) * (1 - v / ymax); };
+    [0, 25, 50, 75, 100, 125].forEach(function (v) {
+      el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), style: "stroke:var(--rule);stroke-width:1" }, s);
+      el("text", { x: L - 8, y: y(v) + 4, "text-anchor": "end", style: "fill:var(--muted);font-size:11px" }, s, v + " h");
+    });
+    var series = [["careful", "Careful", "var(--muted)", -0.27], ["balanced", "Balanced", "var(--signal)", -0.09], ["builder", "Builder", "var(--lantern)", 0.09], ["greedy", "Greedy", "var(--bad)", 0.27]];
+    ranks.forEach(function (rk, i) {
+      var cx = L + cw * (i + 0.5), t = SIM.targets[rk];
+      el("rect", { x: cx - cw * 0.42, width: cw * 0.84, y: y(t[1]), height: y(t[0]) - y(t[1]), rx: 3, style: "fill:var(--lantern);opacity:0.14" }, s);
+      el("text", { x: cx, y: H - B + 18, "text-anchor": "middle", style: "fill:var(--ink);font-size:12px;font-weight:700" }, s, rk);
+      series.forEach(function (se) {
+        var d = SIM.ranks[se[0]][rk], x = cx + se[3] * cw;
+        el("line", { x1: x, x2: x, y1: y(d[2]), y2: y(d[0]), style: "stroke:" + se[2] + ";stroke-width:2;stroke-linecap:round" }, s);
+        el("circle", { cx: x, cy: y(d[1]), r: se[0] === "balanced" ? 4.5 : 3.5, style: "fill:" + se[2] + ";stroke:var(--panel);stroke-width:1.5" }, s);
+      });
+    });
+    var lx = L;
+    series.forEach(function (se) { el("circle", { cx: lx + 5, cy: 14, r: 4, style: "fill:" + se[2] }, s); el("text", { x: lx + 14, y: 18, style: "fill:var(--ink);font-size:12px" }, s, se[1]); lx += 96; });
+    el("rect", { x: lx, y: 8, width: 14, height: 12, rx: 2, style: "fill:var(--lantern);opacity:0.25" }, s); el("text", { x: lx + 20, y: 18, style: "fill:var(--ink);font-size:12px" }, s, "Target band");
+  }
+
+  var fp = document.getElementById("fig-push");
+  if (fp) {
+    var W2 = 420, H2 = 280, L2 = 40, R2 = 14, T2 = 34, B2 = 36, ymax2 = 3;
+    var s2 = svgIn(fp, W2, H2, "Levels per hour by planned stopping floor");
+    var x2 = function (f) { return L2 + (W2 - L2 - R2) * (f - 1) / 6; }, y2 = function (v) { return T2 + (H2 - T2 - B2) * (1 - v / ymax2); };
+    [0, 1, 2, 3].forEach(function (v) { el("line", { x1: L2, x2: W2 - R2, y1: y2(v), y2: y2(v), style: "stroke:var(--rule)" }, s2); el("text", { x: L2 - 6, y: y2(v) + 4, "text-anchor": "end", style: "fill:var(--muted);font-size:11px" }, s2, v); });
+    for (var f = 1; f <= 7; f++) el("text", { x: x2(f), y: H2 - B2 + 16, "text-anchor": "middle", style: "fill:var(--muted);font-size:11px" }, s2, "F" + f);
+    el("text", { x: (L2 + W2) / 2, y: H2 - 4, "text-anchor": "middle", style: "fill:var(--muted);font-size:11px" }, s2, "planned stopping floor");
+    [["push_on", "On-level (L35)", "var(--signal)", -12], ["push_under", "Under-levelled (L28)", "var(--lantern)", 16]].forEach(function (se, k) {
+      var pts = SIM[se[0]], best = pts.reduce(function (a, b) { return b[1] > a[1] ? b : a; });
+      el("polyline", { points: pts.map(function (p) { return x2(p[0]) + "," + y2(p[1]); }).join(" "), style: "fill:none;stroke:" + se[2] + ";stroke-width:2.2" }, s2);
+      pts.forEach(function (p) {
+        el("circle", { cx: x2(p[0]), cy: y2(p[1]), r: p === best ? 5.5 : 3.2, style: "fill:" + (p === best ? "var(--panel)" : se[2]) + ";stroke:" + se[2] + ";stroke-width:2" }, s2);
+        el("text", { x: x2(p[0]), y: y2(p[1]) + se[3], "text-anchor": "middle", style: "fill:" + se[2] + ";font-size:9.5px" }, s2, Math.round(p[2] * 100) + "%");
+      });
+      el("line", { x1: L2 + k * 190, x2: L2 + k * 190 + 16, y1: 14, y2: 14, style: "stroke:" + se[2] + ";stroke-width:2.5" }, s2);
+      el("text", { x: L2 + k * 190 + 22, y: 18, style: "fill:var(--ink);font-size:11.5px" }, s2, se[1]);
+    });
+  }
+
+  var fg = document.getElementById("fig-gaps");
+  if (fg) {
+    var W3 = 420, H3 = 280, L3 = 40, R3 = 14, T3 = 24, B3 = 36, ymax3 = 70, bands = ["E", "D", "C", "B", "A", "S"];
+    var s3 = svgIn(fg, W3, H3, "Median minutes between level-ups by rank band");
+    var bw = (W3 - L3 - R3) / bands.length, y3 = function (v) { return T3 + (H3 - T3 - B3) * (1 - v / ymax3); };
+    [0, 20, 40, 60].forEach(function (v) { el("line", { x1: L3, x2: W3 - R3, y1: y3(v), y2: y3(v), style: "stroke:var(--rule)" }, s3); el("text", { x: L3 - 6, y: y3(v) + 4, "text-anchor": "end", style: "fill:var(--muted);font-size:11px" }, s3, v); });
+    bands.forEach(function (b, i) {
+      var v = SIM.gaps.balanced[b], x = L3 + bw * i + bw * 0.18, w = bw * 0.64, over = v > 25;
+      el("rect", { x: x, y: y3(v), width: w, height: y3(0) - y3(v), rx: 2, style: "fill:" + (over ? "var(--bad)" : "var(--signal)") + ";opacity:" + (over ? 0.75 : 0.9) }, s3);
+      el("text", { x: x + w / 2, y: y3(v) - 5, "text-anchor": "middle", style: "fill:var(--ink);font-size:11px;font-weight:700" }, s3, Math.round(v));
+      el("text", { x: x + w / 2, y: H3 - B3 + 16, "text-anchor": "middle", style: "fill:var(--muted);font-size:11px" }, s3, b);
+    });
+    el("line", { x1: L3, x2: W3 - R3, y1: y3(20), y2: y3(20), style: "stroke:var(--lantern);stroke-width:2;stroke-dasharray:6 4" }, s3);
+    el("text", { x: W3 - R3, y: y3(20) - 6, "text-anchor": "end", style: "fill:var(--lantern);font-size:11px;font-weight:700" }, s3, "20 min promise");
+    el("text", { x: (L3 + W3) / 2, y: H3 - 4, "text-anchor": "middle", style: "fill:var(--muted);font-size:11px" }, s3, "minutes between level-ups, by rank band");
+  }
+})();
+</script>

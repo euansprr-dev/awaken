@@ -1,0 +1,54 @@
+# AWAKEN — engineering guide
+
+A NeoForge mod for Minecraft Java **26.3** (NeoForge 26.3.0.95, Java 25). Mod id `awaken`, base package `dev.awaken`.
+Design: `docs/plan.html` (player-facing plan) and `docs/SPEC.md` (implementation spec, the source of truth).
+
+## Build and test
+- Always build through the watchdog script: `tools/gradle.sh <timeout-seconds> <gradle args>`.
+  It sets `JAVA_HOME` (JDK 25 on the MEDIA SSD), `GRADLE_USER_HOME=/Volumes/MEDIA/.gradle-home`, logs to `logs/`.
+  - Compile + jar: `tools/gradle.sh 900 build`
+  - GameTests (headless server, no window, no sound): `tools/gradle.sh 1200 runGameTestServer`
+- Never launch the game client (`runClient`) without asking the owner first: it steals focus and plays sound on his Mac.
+- The project lives on the external SSD. Don't write big files to the internal disk.
+
+## Verifying APIs (important)
+26.3 is NOT 1.21.1. Many names changed (`ResourceLocation` → `Identifier`, `hurt` → `hurtServer`, ValueInput/ValueOutput
+saves, render states, data-driven dimension attributes, SDL3 input...). Before using any Minecraft or NeoForge API:
+1. Check the cheat sheets in `docs/api/` (core, client, worldgen, entities).
+2. Grep the real sources: `/Volumes/MEDIA/Awaken/.ref/src` (Minecraft + NeoForge patches),
+   `/Volumes/MEDIA/Awaken/.ref/neo` (NeoForge API), `/Volumes/MEDIA/Awaken/.ref/assets` (vanilla assets + data JSON).
+   (`.ref/` is gitignored; in a worktree use these absolute paths.)
+Never guess a signature. A compile error costs more than a grep.
+
+## Layout
+```
+src/main/java/dev/awaken/
+  Awaken.java            mod entry: calls every XxxModule.init(modBus)
+  AwakenClient.java      client entry: calls every XxxClient.init(modBus)
+  core/ signal/ progression/ powers/ mobs/ gates/ descent/ lucidium/ veil/ above/ hearth/ story/ world/
+src/main/resources/      assets/awaken/... and data/awaken/... (namespaced file names per module)
+src/main/merge/<module>/ shared JSON contributions (lang en_us.json, sounds.json, tags) merged at build time
+src/main/templates/      neoforge.mods.toml
+docs/                    plan.html, SPEC.md, api/*.md, BUILD-LOG.md
+tools/                   gradle.sh, sim/ (pacing simulator), art/ (texture + sound generators)
+```
+
+## Module rules
+- Each module owns its package and registers its own DeferredRegisters, attachments, payloads (its own
+  `RegisterPayloadHandlersEvent` listener), client renderers, commands (`/awaken <module> ...`) and GameTests.
+- Only touch your module's package, your own resource files, and `src/main/merge/<module>/`.
+- Cross-module calls go through the public API classes in SPEC §12. Keep those signatures stable.
+- Content numbers and behaviour come from `docs/SPEC.md`. If you must decide something new, add it to SPEC in the same commit.
+
+## Code style
+- Java 25, records for data, `final` classes where sensible, no reflection hacks, no mixins unless unavoidable
+  (if needed: `src/main/resources/awaken.mixins.json`, coordinate first).
+- Codecs for everything saved; `StreamCodec` for everything sent. Version every saved structure (`schemaVersion`).
+- Server is authoritative. Client code lives in `...client` subpackages or `XxxClient` classes, never referenced from
+  common code paths that run on a dedicated server.
+- Performance budgets: SPEC header. No per-tick allocations in hot paths; spread heavy work across ticks.
+- Comments: short, explain why. Match surrounding code.
+
+## Commits
+Small, focused commits on the current branch. End every commit message with:
+`Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`

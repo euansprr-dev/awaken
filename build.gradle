@@ -151,6 +151,47 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     from "src/main/templates"
     into "build/generated/sources/modMetadata"
 }
+// Shared JSON files (lang, sounds.json, tags) can't be owned by one module, so each module writes its part to
+// src/main/merge/<module>/<resource path>. This task merges them: objects merge by key (duplicate keys fail the build),
+// tag files ({"values": [...]}) merge their value lists.
+var mergeResources = tasks.register("mergeResources") {
+    def mergeSrc = file("src/main/merge")
+    def mergeOut = layout.buildDirectory.dir("generated/merged").get().asFile
+    inputs.dir(mergeSrc)
+    outputs.dir(mergeOut)
+    doLast {
+        mergeOut.deleteDir()
+        def merged = new TreeMap<String, Object>()
+        def owners = [:]
+        mergeSrc.listFiles().findAll { it.isDirectory() }.sort { it.name }.each { moduleDir ->
+            moduleDir.eachFileRecurse(groovy.io.FileType.FILES) { f ->
+                if (!f.name.endsWith(".json")) return
+                def rel = moduleDir.toPath().relativize(f.toPath()).toString()
+                def parsed = new groovy.json.JsonSlurper().parse(f, "UTF-8")
+                if (!merged.containsKey(rel)) { merged[rel] = parsed; owners[rel] = moduleDir.name; return }
+                def into = merged[rel]
+                if (into instanceof Map && into.containsKey("values") && parsed instanceof Map && parsed.containsKey("values")) {
+                    into["values"] = (into["values"] + parsed["values"]).unique()
+                } else if (into instanceof Map && parsed instanceof Map) {
+                    parsed.each { k, v ->
+                        if (into.containsKey(k)) throw new GradleException("Duplicate key '${k}' in ${rel} (modules ${owners[rel]} and ${moduleDir.name})")
+                        into[k] = v
+                    }
+                } else {
+                    throw new GradleException("Cannot merge ${rel}")
+                }
+            }
+        }
+        merged.each { rel, json ->
+            def out = new File(mergeOut, rel)
+            out.parentFile.mkdirs()
+            out.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(json)), "UTF-8")
+        }
+    }
+}
+sourceSets.main.resources.srcDir mergeResources
+neoForge.ideSyncTask mergeResources
+
 // Include the output of "generateModMetadata" as an input directory for the build
 // this works with both building through Gradle and the IDE.
 sourceSets.main.resources.srcDir generateModMetadata

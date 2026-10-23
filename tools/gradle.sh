@@ -2,6 +2,7 @@
 # Runs Gradle with the cache on the MEDIA SSD, a watchdog timeout and a log file.
 # Usage: tools/gradle.sh <timeout-seconds> <gradle args...>
 export GRADLE_USER_HOME=/Volumes/MEDIA/.gradle-home
+export JAVA_HOME=/Volumes/MEDIA/.jdks/jdk-25.0.5+8/Contents/Home
 cd "$(dirname "$0")/.."
 mkdir -p logs
 T=$1; shift
