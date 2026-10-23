@@ -73,7 +73,8 @@ final class FaunaTests {
     static final int UP = 65;
 
     static final List<String> MODIFIERS = List.of("fauna_greenwild", "fauna_greenwild_woods", "fauna_sunscorch", "fauna_frostwild",
-            "fauna_frostwild_taiga", "fauna_caves");
+            "fauna_frostwild_taiga", "fauna_caves", "fauna_mire", "fauna_canopy", "fauna_duskwood", "fauna_blossom", "fauna_blossom_meadow",
+            "fauna_crag", "fauna_spore");
 
     static void register() {
         AwakenTests.register("fauna_category_and_bestiary", 20, h -> {
@@ -82,7 +83,7 @@ final class FaunaTests {
             h.assertTrue(c.getSerializedName().equals("awaken:fauna") && c.getMaxInstancesPerChunk() == 16, "16 per player");
             h.assertTrue(c.isFriendly() && !c.isPersistent() && c.getDespawnDistance() == 128, "friendly, despawns like monsters");
             List<MobDef> fauna = Bestiary.fauna();
-            h.assertTrue(fauna.size() == 12, "twelve overworld creatures, have " + fauna.size());
+            h.assertTrue(fauna.size() == 34, "34 overworld creatures (12 from P1, 22 from P2), have " + fauna.size());
             Map<FaunaRole, Integer> roles = new EnumMap<>(FaunaRole.class);
             Map<Theme, Set<FaunaRole>> families = new EnumMap<>(Theme.class);
             for (MobDef d : fauna) {
@@ -96,8 +97,8 @@ final class FaunaTests {
                 h.assertTrue(d.talent != dev.awaken.mobs.def.FaunaTalent.NONE, d.id + " has a talent (a purpose)");
                 h.assertTrue(d.theme.isWild(), d.id + " belongs to a biome family");
             }
-            h.assertTrue(roles.get(FaunaRole.AMBIENT) == 4 && roles.get(FaunaRole.NEUTRAL) == 3 && roles.get(FaunaRole.HUNTER) == 2
-                    && roles.get(FaunaRole.BEAST) == 3, "4 ambient, 3 neutral, 2 hunters, 3 beasts: " + roles);
+            h.assertTrue(roles.get(FaunaRole.AMBIENT) == 13 && roles.get(FaunaRole.NEUTRAL) == 8 && roles.get(FaunaRole.HUNTER) == 4
+                    && roles.get(FaunaRole.BEAST) == 9, "13 ambient, 8 neutral, 4 hunters, 9 beasts: " + roles);
             for (Theme t : List.of(Theme.GREENWILD, Theme.SUNSCORCH, Theme.FROSTWILD)) {
                 Set<FaunaRole> r = families.get(t);
                 h.assertTrue(r != null && r.contains(FaunaRole.AMBIENT) && r.contains(FaunaRole.NEUTRAL) && r.contains(FaunaRole.BEAST),
@@ -487,7 +488,7 @@ final class FaunaTests {
 
     // ---- helpers ---------------------------------------------------------------------------------------------------
 
-    private static void assertSpawns(GameTestHelper h, Holder<Biome> biome, String... ids) {
+    static void assertSpawns(GameTestHelper h, Holder<Biome> biome, String... ids) {
         var entry = biome.value().getAttributes().get(net.minecraft.world.attribute.EnvironmentAttributes.NATURAL_MOB_SPAWNS);
         h.assertTrue(entry != null && entry.argument() instanceof MobSpawnSettings, biome.getRegisteredName() + " has natural spawns");
         MobSpawnSettings s = (MobSpawnSettings) entry.argument();
@@ -503,22 +504,22 @@ final class FaunaTests {
 
     /** The rules' answer for one creature here, judged against p (null = it may spawn). */
     @SuppressWarnings("unchecked")
-    private static String why(ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p) {
+    static String why(ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p) {
         EntityType<Mob> type = (EntityType<Mob>) (EntityType<?>) MobTypes.type(id);
         return FaunaRules.verdict(type, level, EntitySpawnReason.NATURAL, pos, rnd, p, true);
     }
 
-    private static void allows(GameTestHelper h, ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p, String what) {
+    static void allows(GameTestHelper h, ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p, String what) {
         String v = why(level, id, pos, rnd, p);
         h.assertTrue(v == null, what + " (refused: " + v + ")");
     }
 
-    private static void denies(GameTestHelper h, ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p, String what) {
+    static void denies(GameTestHelper h, ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p, String what) {
         h.assertTrue(why(level, id, pos, rnd, p) != null, what);
     }
 
     /** The light engine trails block changes by a few ticks; wait until the sealed room is dark and the lit one bright. */
-    private static void lightSettled(GameTestHelper h, ServerLevel level, BlockPos dark, BlockPos lit) {
+    static void lightSettled(GameTestHelper h, ServerLevel level, BlockPos dark, BlockPos lit) {
         h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.SKY, dark) == 0
                 && level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, dark) == 0, "the sealed room is dark");
         h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, lit) >= 10
@@ -526,14 +527,14 @@ final class FaunaTests {
     }
 
     /** Grass under pos, air at pos and above. */
-    private static void ground(ServerLevel level, BlockPos pos) {
+    static void ground(ServerLevel level, BlockPos pos) {
         level.setBlock(pos.below(), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
         level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
         level.setBlock(pos.above(), Blocks.AIR.defaultBlockState(), 3);
     }
 
     /** A sealed stone room around a two-high space at pos (grass floor), lit by glowstone in the wall if asked. */
-    private static void box(ServerLevel level, BlockPos pos, boolean lit) {
+    static void box(ServerLevel level, BlockPos pos, boolean lit) {
         for (int dx = -2; dx <= 2; dx++) for (int dy = -1; dy <= 3; dy++) for (int dz = -2; dz <= 2; dz++) {
             boolean shell = Math.abs(dx) == 2 || Math.abs(dz) == 2 || dy == -1 || dy == 3;
             level.setBlock(pos.offset(dx, dy, dz), shell ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
@@ -543,12 +544,12 @@ final class FaunaTests {
     }
 
     /** Isolated tests start from an empty patch: creatures left by earlier tests would count against the caps. */
-    private static void clearFauna(ServerLevel level, ServerPlayer p) {
+    static void clearFauna(ServerLevel level, ServerPlayer p) {
         for (FaunaMob m : List.copyOf(FaunaCensus.in(level))) if (m.distanceToSqr(p) < 200 * 200) m.discard();
     }
 
     /** Awakens without the reveal burst (so tests count only their own creatures). */
-    private static void awaken(ServerPlayer p) {
+    static void awaken(ServerPlayer p) {
         Progression.awaken(p);
         p.setData(FaunaModule.STATE.get(), p.getData(FaunaModule.STATE.get()).done());
     }
