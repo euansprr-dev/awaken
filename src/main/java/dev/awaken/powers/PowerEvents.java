@@ -67,12 +67,22 @@ final class PowerEvents {
     private static void onServerTick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
         Scheduler.tick(server);
-        Bolts.tick();
-        FlyingBlocks.tick();
-        Zones.tick();
+        guard("bolts", Bolts::tick);
+        guard("flying blocks", FlyingBlocks::tick);
+        guard("zones", Zones::tick);
         if (server.getTickCount() % 10 == 0) {
             Allies.expire(server.overworld().getGameTime());
-            for (ServerLevel level : server.getAllLevels()) TerrainLedger.tick(level);
+            for (ServerLevel level : server.getAllLevels()) guard("terrain ledger", () -> TerrainLedger.tick(level));
+        }
+    }
+
+    /** A broken effect must never take the server tick down with it. */
+    private static void guard(String what, Runnable r) {
+        try {
+            r.run();
+        } catch (RuntimeException e) {
+            Casting.errors++;
+            dev.awaken.Awaken.LOG.error("Powers: {} failed this tick", what, e);
         }
     }
 

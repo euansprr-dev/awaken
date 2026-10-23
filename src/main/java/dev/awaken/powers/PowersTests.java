@@ -251,8 +251,14 @@ final class PowersTests {
             h.setBlock(w, Blocks.WATER);
             ServerPlayer sp = player(h, new BlockPos(-2, 1, 0));
             Zombie z = h.spawn(EntityTypes.ZOMBIE, w);
+            Forces.tag(z, Forces.Tag.WATER); // a Flooding gate tags its mobs; also keeps the test steady while it bobs
             h.runAfterDelay(5, () -> {
-                Combat.hurtFrom(sp, null, z, 1f, Forces.Force.CHARGE, true);
+                float hp = z.getHealth();
+                long before = Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS);
+                boolean hit = Combat.hurtFrom(sp, null, z, 1f, Forces.Force.CHARGE, true);
+                h.assertTrue(hit && z.getHealth() < hp, "the charge landed (hit=" + hit + ", hp " + hp + " -> " + z.getHealth()
+                        + ", alive=" + z.isAlive() + ", invul=" + z.isInvulnerable() + ", cd=" + z.damageCooldownTime + ")");
+                h.assertTrue(Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS) > before, "reaction counted (wet=" + z.isInWater() + ")");
                 h.assertTrue(z.hasEffect(PowerContent.STUNNED), "a zombie standing in water is stunned by charge");
                 h.succeed();
             });
@@ -270,6 +276,60 @@ final class PowersTests {
             Casting.endAll(sp, Running.Why.CANCELLED);
             h.assertTrue(!sp.getPostEffects().contains(Moves.FX_FLOW), "post effect cleared when flow ends");
             h.assertTrue(!TimeSlow.active(), "zone removed");
+            h.succeed();
+        });
+    }
+
+    // ---- the smoke test runs alone: its area powers would otherwise hit other tests' mobs ------------------------------
+
+    private static net.neoforged.neoforge.registries.DeferredHolder<java.util.function.Consumer<GameTestHelper>, java.util.function.Consumer<GameTestHelper>> SMOKE;
+
+    static void registerIsolated(net.neoforged.bus.api.IEventBus modBus) {
+        SMOKE = AwakenTests.FUNCTIONS.register("powers_cast_every_power", () -> PowersTests::castEveryPower);
+        modBus.addListener(net.neoforged.neoforge.event.RegisterGameTestsEvent.class, e -> {
+            var env = e.registerEnvironment(dev.awaken.Awaken.id("powers_isolated"));
+            e.registerTest(dev.awaken.Awaken.id("powers_cast_every_power"), new net.minecraft.gametest.framework.FunctionGameTestInstance(SMOKE.key(),
+                    new net.minecraft.gametest.framework.TestData<>(env, net.minecraft.resources.Identifier.withDefaultNamespace("empty"), 200, 0, true)));
+        });
+    }
+
+    /** Casts every power once on a fake player with a zombie in front: nothing may throw, nothing may linger. */
+    static void castEveryPower(GameTestHelper h) {
+        floor(h, 6);
+        ServerPlayer sp = player(h, new BlockPos(-3, 1, 0));
+        Set<String> fine = Set.of("no_target", "blocked", "no_summon", "no_constructs", "too_heavy", "too_strong", "no_ground");
+        int errorsBefore = Casting.errors;
+        int cast = 0;
+        for (PowerType t : PowerRegistry.all()) {
+            if (t.isPassive()) continue;
+            Powers.learn(sp, t.id, 0);
+            Powers.resetCooldowns(sp);
+            Powers.fillEnergy(sp);
+            Zombie z = h.spawn(EntityTypes.ZOMBIE, new BlockPos(0, 1, 0));
+            Vec3 to = z.getEyePosition().subtract(sp.getEyePosition());
+            float yRot = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+            PowerType.Result r = Casting.cast(sp, t, 0, false, yRot, 0f);
+            h.assertTrue(r.ok() || fine.contains(r.reason()), t + " failed to cast: " + r.reason());
+            if (r.ok()) cast++;
+            for (int i = 0; i < 30; i++) {
+                if (i == 12) Casting.release(sp, t);
+                Casting.tickPlayer(sp);
+            }
+            Casting.endAll(sp, Running.Why.CANCELLED);
+            z.discard();
+            for (var e : h.getLevel().getEntitiesOfClass(dev.awaken.powers.content.PowerSummon.class, sp.getBoundingBox().inflate(48),
+                    e -> e.getOwner() == sp)) e.discard();
+        }
+        for (int i = 0; i < 20; i++) Casting.tickPlayer(sp); // passives
+        int errors = Casting.errors - errorsBefore;
+        int count = cast;
+        h.assertTrue(errors == 0, errors + " power behaviours threw (see the log)");
+        h.assertTrue(count >= 45, "most powers should cast in the open with a target in front, only " + count + " did");
+        h.assertTrue(sp.getPostEffects().stream().noneMatch(Moves.ALL_FX::contains), "no post effect outlives its power");
+        h.assertTrue(!TimeSlow.active(), "time slow cleared");
+        // let delayed hits, bolts and thrown blocks play out, then make sure none of them threw either
+        h.runAfterDelay(60, () -> {
+            h.assertTrue(Casting.errors == errorsBefore, (Casting.errors - errorsBefore) + " delayed power effects threw (see the log)");
             h.succeed();
         });
     }

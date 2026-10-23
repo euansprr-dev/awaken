@@ -33,6 +33,7 @@ public final class Scheduler {
             try {
                 t.run().run();
             } catch (RuntimeException e) {
+                Casting.errors++;
                 dev.awaken.Awaken.LOG.error("Delayed power task failed", e);
             }
         }

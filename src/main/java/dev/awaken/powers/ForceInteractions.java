@@ -136,6 +136,9 @@ public final class ForceInteractions {
         depth++;
         try {
             apply(r, level, target, player, event.getInflictedDamage(), src.getEntity());
+        } catch (RuntimeException e) {
+            Casting.errors++;
+            dev.awaken.Awaken.LOG.error("Force reaction {} failed", r, e);
         } finally {
             depth--;
         }

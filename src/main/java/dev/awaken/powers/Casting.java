@@ -92,6 +92,7 @@ public final class Casting {
         try {
             r = type.behaviour.cast(c);
         } catch (RuntimeException e) {
+            errors++;
             dev.awaken.Awaken.LOG.error("Power {} failed to cast", id, e);
             return PowerType.Result.fail("error");
         }
@@ -202,21 +203,31 @@ public final class Casting {
         if (r.why == null) r.why = why;
         try {
             if (r.onEnd != null) r.onEnd.end(r, r.why);
-        } finally {
-            if (r.channel) {
-                Loadout l = Powers.loadout(player);
-                Loadout.Owned o = l.get(r.c.type.id.toString());
-                if (o != null) startCooldown(player, l, r.c.type, o, st);
-            }
-            Powers.markDirty(player);
+        } catch (RuntimeException e) {
+            errors++;
+            dev.awaken.Awaken.LOG.error("Power {} failed while ending", r.key, e);
         }
+        if (r.channel) {
+            Loadout l = Powers.loadout(player);
+            Loadout.Owned o = l.get(r.c.type.id.toString());
+            if (o != null) startCooldown(player, l, r.c.type, o, st);
+        }
+        Powers.markDirty(player);
     }
+
+    /** Behaviour exceptions caught so far (GameTests assert this stays put). */
+    static int errors;
 
     /** Ends every running power (death, logout, world change). Cleans up modifiers and post effects. */
     public static void endAll(ServerPlayer player, Running.Why why) {
         PowerState st = PowerState.peek(player);
         if (st == null) return;
-        for (Running r : List.copyOf(st.running)) finish(player, st, r, why);
+        // an end callback may start a follow-up effect (a throw after a lift): end those too
+        for (int pass = 0; pass < 4 && !st.running.isEmpty(); pass++) {
+            List<Running> batch = List.copyOf(st.running);
+            st.running.clear();
+            for (Running r : batch) finish(player, st, r, why);
+        }
         st.running.clear();
     }
 
@@ -251,10 +262,16 @@ public final class Casting {
             for (Loadout.Owned o : l.owned.values()) {
                 PowerType t = PowerRegistry.get(o.id());
                 if (t != null && t.passive != null) {
-                    t.passive.tick(new Cast(player, t, o.variant(), o.level(), -1, false, player.getYRot(), player.getXRot()));
+                    try {
+                        t.passive.tick(new Cast(player, t, o.variant(), o.level(), -1, false, player.getYRot(), player.getXRot()));
+                    } catch (RuntimeException e) {
+                        errors++;
+                        dev.awaken.Awaken.LOG.error("Passive {} failed", o.id(), e);
+                    }
                 }
             }
         }
+        if (now % 200 == 0 && !l.cooldowns.isEmpty()) l.cooldowns.values().removeIf(cd -> cd.end() < now);
 
         // airborne dash chains end on landing
         boolean ground = player.onGround() || player.isInWater();
@@ -292,6 +309,7 @@ public final class Casting {
                 try {
                     if (r.onTick != null) r.onTick.tick(r);
                 } catch (RuntimeException e) {
+                    errors++;
                     dev.awaken.Awaken.LOG.error("Power {} failed while running", r.key, e);
                     r.stop(Running.Why.CANCELLED);
                 }

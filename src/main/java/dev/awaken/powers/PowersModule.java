@@ -46,6 +46,7 @@ public final class PowersModule {
         });
         PowersCommands.register();
         PowersTests.register();
+        PowersTests.registerIsolated(modBus);
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
