@@ -117,13 +117,21 @@ class Looks:
         opaque = kind == 1 and a.min() > 0.9
         if ns == "minecraft":
             em = S._emission(name)
+            if "copper_lantern" in path or path in ("lava_cauldron",):
+                em = 15
+            if "copper_torch" in path:
+                em = 14
+            if path.startswith("cave_vines") and "berries=true" in props:
+                em = 14
+            if path == "sea_pickle":
+                em = 3 + 3 * int(dict(kv.split("=") for kv in props.split(",") if "=" in kv).get("pickles", "1"))
             if path == "light":
                 em = int(dict(kv.split("=") for kv in props.split(",") if "=" in kv).get("level", "15"))
             if path.endswith("candle") and "lit=true" not in props:
                 em = 0
             if path in ("waxed_copper_bulb", "copper_bulb") and "lit=false" in props:
                 em = 0
-            bright = S._full_bright(name)
+            bright = S._full_bright(name) or "copper_lantern" in path
         else:
             em = OUR_LIGHT.get(path, S.our_light(path))
             bright = path in ("gate_sky", "gate_cloud", "gate_mirror", "gate_signal_lamp", "gate_royal_jelly", "gate_paper_lantern", "rest_shrine") or em >= 12

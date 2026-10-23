@@ -496,7 +496,7 @@ public final class InteriorTests {
         }
         sb.append("],\"start\":").append(f.start).append(",\"end\":").append(f.end).append(",\"cams\":[");
         boolean fc = true;
-        for (String spot : f.bossFloor ? List.of("start", "ante", "lord") : List.of("start", "piece", "shrine")) {
+        for (String spot : f.bossFloor ? List.of("start", "ante", "lord") : List.of("start", "piece", "small", "shrine")) {
             double[] v = Interiors.view(f, spot);
             if (v == null) continue;
             if (!fc) sb.append(',');

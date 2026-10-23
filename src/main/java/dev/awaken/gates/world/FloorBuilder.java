@@ -530,7 +530,7 @@ final class FloorBuilder {
                 }
                 if (pool.isEmpty() || !takesPiece(r)) continue;
                 boolean big = r.area() >= 2;
-                if (!big && Hash.unit(r.seed, 41, 7) >= 0.4) continue;
+                if (!big && Hash.unit(r.seed, 41, 7) >= 0.3) continue;
                 SetPiece pick = null;
                 for (int k = 0; k < pool.size() && pick == null; k++) {
                     SetPiece p = pool.get(Math.floorMod(turn + k, pool.size()));

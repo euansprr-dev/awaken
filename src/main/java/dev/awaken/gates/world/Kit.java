@@ -127,8 +127,8 @@ public record Kit(
             case GLASS_DESERT -> kit("minecraft:smooth_sandstone", "minecraft:chiseled_sandstone", "awaken:gate_sun_tile",
                     "minecraft:smooth_sandstone", "minecraft:chiseled_sandstone", "minecraft:smooth_sandstone_stairs",
                     "minecraft:cut_sandstone", "minecraft:cut_sandstone", "awaken:gate_sun_tile",
-                    "minecraft:glowstone", "minecraft:end_rod[facing=down]", "minecraft:end_rod[facing=down]",
-                    "minecraft:air", "minecraft:glowstone", "minecraft:sand",
+                    "minecraft:glowstone", "minecraft:end_rod[facing=down]", "minecraft:lantern[hanging=true]",
+                    "minecraft:iron_chain[axis=y]", "minecraft:glowstone", "minecraft:sand",
                     INSETS | SKYLIGHT);
             // resin and comb, brood cells glowing in the walls, honey hanging from the ceiling
             case HIVE -> kit("minecraft:resin_bricks", "awaken:gate_brood_cell", "minecraft:honeycomb_block",

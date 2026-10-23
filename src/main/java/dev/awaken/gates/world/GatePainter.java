@@ -680,7 +680,7 @@ public final class GatePainter {
             }
             if (!lightless && headroom >= 4) {
                 int part = chandelierOffset(x, z);
-                if (part >= 0 && !k.has(Kit.SKYLIGHT) && !k.has(Kit.SKY)) chandelier(bx, bz, part, walk, ceil);
+                if (part >= 0 && !k.has(Kit.SKY)) chandelier(bx, bz, part, walk, ceil);
             }
             if (nearFeature) return;
             if (brazier(bx, bz, x, z, walk)) return;

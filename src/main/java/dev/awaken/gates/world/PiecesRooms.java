@@ -50,7 +50,7 @@ final class PiecesRooms {
             case WIND_SHRINE -> d < 2.0 || windPillar(dx, dz, r);
             case VOID_RIFT -> false;
             case MONOLITHS -> monolith(r, dx, dz) > 0;
-            default -> false;
+            default -> PiecesSmall.blocks(r, x, z);
         };
     }
 
@@ -65,7 +65,7 @@ final class PiecesRooms {
             case VOID_RIFT -> d < 4.6 ? -3 : KEEP;
             case BURIED_COLONNADE -> dune(r, x, z) ? 1 : KEEP;
             case GLASS_GARDEN -> drift(r, dx, dz) ? 1 : KEEP;
-            default -> KEEP;
+            default -> PiecesSmall.floorDelta(r, x, z);
         };
     }
 
@@ -142,7 +142,7 @@ final class PiecesRooms {
             case WIND_SHRINE -> windShrine(c, bx, bz, x, z, dx, dz, walk, ceil);
             case VOID_RIFT -> voidRift(c, bx, bz, x, z, dx, dz, walk, ceil, fo);
             case MONOLITHS -> monoliths(c, bx, bz, x, z, dx, dz, walk, ceil);
-            default -> false;
+            default -> PiecesSmall.paint(c, bx, bz, x, z, walk, ceil, fo);
         };
     }
 
@@ -547,6 +547,9 @@ final class PiecesRooms {
         int len = ax ? r.x1() - r.x0() : r.z1() - r.z0();
         boolean belt = Math.abs(across - 3.0) < 1.0 && along >= 1 && along <= len - 1;
         boolean claimed = false;
+        // bulbs set in the floor along both sides of the belt
+        if (!c.lightless && Math.abs(Math.abs(across - 3.0) - 1.5) < 0.6 && Math.floorMod(along, 4) == 2 && along >= 1 && along <= len - 1)
+            c.set(bx, walk - 1, bz, s("minecraft:waxed_copper_bulb[lit=true]"));
         if (belt) {
             c.set(bx, walk - 1, bz, free(r, x, z) ? GatePainter.axis(GatesRegistry.CONVEYOR.get().defaultBlockState(), ax ? "x" : "z")
                     : s("minecraft:waxed_copper_grate"));
@@ -776,6 +779,11 @@ final class PiecesRooms {
             if (!c.lightless && Hash.unit(r.seed, x, z * 11) < 0.12) {
                 int len = 1 + (int) (Hash.unit(r.seed, z, x) * 3);
                 for (int i = 1; i <= len; i++) c.set(bx, ceil - depth - i, bz, s(i == len ? "minecraft:cave_vines[berries=true]" : "minecraft:cave_vines_plant[berries=true]"));
+            }
+            // lanterns the pilgrims hung from the lowest boughs
+            if (!c.lightless && ringPoint(dx, dz, canopy * 0.85, 10, 0, 0.5)) {
+                c.set(bx, ceil - depth - 1, bz, GatePainter.chain());
+                c.set(bx, ceil - depth - 2, bz, s("minecraft:lantern[hanging=true]"));
             }
             claimed = true;
         }
@@ -1253,6 +1261,12 @@ final class PiecesRooms {
             c.set(bx, walk - 1, bz, GatesRegistry.VOID_GLASS.get().defaultBlockState());
             if (d > 3.6) c.set(bx, walk, bz, s("minecraft:crying_obsidian"));
             return true;
+        }
+        // four soul lanterns hang over the rim, the only light the rift allows
+        if (!c.lightless && ringPoint(dx, dz, 6.5, 4, 0.5, 0.5) && ceil - walk > 7) {
+            int y = ceil - 4;
+            for (int yy = ceil - 1; yy > y; yy--) c.set(bx, yy, bz, GatePainter.chain());
+            c.set(bx, y, bz, s("minecraft:soul_lantern[hanging=true]"));
         }
         if (d >= 4.6 && d < 5.4) {
             c.set(bx, walk - 1, bz, s("minecraft:crying_obsidian"));

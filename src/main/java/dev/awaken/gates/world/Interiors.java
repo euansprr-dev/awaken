@@ -38,7 +38,7 @@ public final class Interiors {
                 .then(Commands.literal("enter").executes(Interiors::enter))
                 .then(Commands.literal("goto").then(Commands.argument("spot", StringArgumentType.word())
                         .suggests((c, b) -> {
-                            for (String s : List.of("start", "piece", "shrine", "ante", "lord")) b.suggest(s);
+                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord")) b.suggest(s);
                             return b.buildFuture();
                         })
                         .executes(c -> go(c, StringArgumentType.getString(c, "spot"))))))));
@@ -101,6 +101,17 @@ public final class Interiors {
                 if (r == null) return null;
                 Room.Door d = r.pathIn != null ? r.pathIn : r.doors.get(0);
                 return lookFrom(f, r, d, 3, -1, r.centerX(), f.baseY + r.dy + 4.0, r.centerZ());
+            }
+            case "small" -> {
+                // a single room's piece, the theme's second small one if the floor has it
+                r = null;
+                for (Room o : f.rooms) {
+                    if (o.piece == null || o.piece.arena || o.area() > 1) continue;
+                    if (r == null || (o.piece.ordinal() > r.piece.ordinal())) r = o;
+                }
+                if (r == null) return null;
+                Room.Door d = r.pathIn != null ? r.pathIn : r.doors.get(0);
+                return lookFrom(f, r, d, 1, 0, r.centerX(), f.baseY + r.dy + 2.5, r.centerZ());
             }
             case "shrine" -> {
                 Room end = f.room(f.end);

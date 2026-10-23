@@ -13,49 +13,64 @@ public enum SetPiece {
     BELL_LOFT(Theme.BELL_CRYPT, 2, 9, Room.Shape.ROUND),
     OSSUARY_AISLES(Theme.BELL_CRYPT, 2, 7, Room.Shape.RECT),
     SARCOPHAGI(Theme.BELL_CRYPT, 1, 7, Room.Shape.RECT),
+    CANDLE_VIGIL(Theme.BELL_CRYPT, 1, 8, Room.Shape.RECT),
     // Fungal Hollow: a grove of giant caps, a glowing spore pool
     MUSHROOM_GROVE(Theme.FUNGAL_HOLLOW, 2, 9, Room.Shape.ROUND),
     SPORE_POOL(Theme.FUNGAL_HOLLOW, 1, 7, Room.Shape.ROUND),
+    TOADSTOOL_RING(Theme.FUNGAL_HOLLOW, 1, 7, Room.Shape.ROUND),
     // Ember Mines: a timbered gallery with its rails and ore face, a forge over a lava channel
     MINE_GALLERY(Theme.EMBER_MINES, 1, 7, Room.Shape.RECT),
     LAVA_FORGE(Theme.EMBER_MINES, 2, 9, Room.Shape.RECT),
+    CAVE_IN(Theme.EMBER_MINES, 1, 7, Room.Shape.RECT),
     // Drowned Archive: shelves standing in the flood, a sunken reading room
     FLOODED_STACKS(Theme.DROWNED_ARCHIVE, 2, 9, Room.Shape.RECT),
     READING_ROOM(Theme.DROWNED_ARCHIVE, 1, 7, Room.Shape.RECT),
+    SUNKEN_DESKS(Theme.DROWNED_ARCHIVE, 1, 7, Room.Shape.RECT),
     // Clockwork Foundry: the gear wall, the conveyor line, the boiler
     GEAR_WALL(Theme.CLOCKWORK_FOUNDRY, 1, 7, Room.Shape.RECT),
     CONVEYOR(Theme.CLOCKWORK_FOUNDRY, 2, 9, Room.Shape.RECT),
     BOILER(Theme.CLOCKWORK_FOUNDRY, 2, 9, Room.Shape.ROUND),
+    PRESS_LINE(Theme.CLOCKWORK_FOUNDRY, 1, 8, Room.Shape.RECT),
     // Glass Desert: crystals out of the drifts, a colonnade half under the sand
     GLASS_GARDEN(Theme.GLASS_DESERT, 1, 7, Room.Shape.ROUND),
     BURIED_COLONNADE(Theme.GLASS_DESERT, 2, 9, Room.Shape.RECT),
+    OBELISKS(Theme.GLASS_DESERT, 1, 8, Room.Shape.RECT),
     // Hive: the brood comb, honey pools
     BROOD_COMB(Theme.HIVE, 2, 9, Room.Shape.ROUND),
     HONEY_POOLS(Theme.HIVE, 1, 7, Room.Shape.OCTAGON),
+    WAX_PILLARS(Theme.HIVE, 1, 7, Room.Shape.RECT),
     // Overgrown Temple: a tree that split the temple, a reflecting pool
     ROOT_TREE(Theme.OVERGROWN_TEMPLE, 2, 9, Room.Shape.ROUND),
     REFLECTING_POOL(Theme.OVERGROWN_TEMPLE, 1, 7, Room.Shape.RECT),
+    IDOLS(Theme.OVERGROWN_TEMPLE, 1, 7, Room.Shape.RECT),
     // Lantern Night Market: a street of stalls, a tree hung with lanterns
     MARKET_STALLS(Theme.LANTERN_NIGHT_MARKET, 1, 7, Room.Shape.RECT),
     LANTERN_TREE(Theme.LANTERN_NIGHT_MARKET, 2, 9, Room.Shape.ROUND),
+    TEA_HOUSE(Theme.LANTERN_NIGHT_MARKET, 1, 7, Room.Shape.RECT),
     // Frost Monastery: the cloister round a frozen garden, the choir
     CLOISTER(Theme.FROST_MONASTERY, 2, 9, Room.Shape.RECT),
     CHOIR(Theme.FROST_MONASTERY, 1, 7, Room.Shape.RECT),
+    ICE_GARDEN(Theme.FROST_MONASTERY, 1, 7, Room.Shape.ROUND),
     // Mirror Palace: the reflecting hall (a ring of mirrors), the maze of glass
     MIRROR_HALL(Theme.MIRROR_PALACE, 1, 7, Room.Shape.OCTAGON),
     MIRROR_MAZE(Theme.MIRROR_PALACE, 2, 9, Room.Shape.RECT),
+    CRYSTAL_CHANDELIER(Theme.MIRROR_PALACE, 1, 8, Room.Shape.OCTAGON),
     // Precursor Lab: specimen tanks, the server hall
     TANKS(Theme.PRECURSOR_LAB, 1, 7, Room.Shape.RECT),
     SERVER_HALL(Theme.PRECURSOR_LAB, 2, 9, Room.Shape.RECT),
+    CONTROL_ROOM(Theme.PRECURSOR_LAB, 1, 7, Room.Shape.RECT),
     // Nightmare: the table you are too small for, the upside-down room
     GIANT_TABLE(Theme.NIGHTMARE, 2, 9, Room.Shape.RECT),
     WRONG_ROOM(Theme.NIGHTMARE, 1, 7, Room.Shape.RECT),
+    STAIRS_NOWHERE(Theme.NIGHTMARE, 1, 8, Room.Shape.RECT),
     // Sky Archipelago: floating islands with their trees and bridges, a wind shrine
     FLOATING_ISLES(Theme.SKY_ARCHIPELAGO, 1, 7, Room.Shape.ISLANDS),
     WIND_SHRINE(Theme.SKY_ARCHIPELAGO, 2, 9, Room.Shape.ROUND),
+    CLOUD_BANK(Theme.SKY_ARCHIPELAGO, 1, 7, Room.Shape.ISLANDS),
     // Abyssal Shrine: a rift into the void, unlit monoliths
     VOID_RIFT(Theme.ABYSSAL_SHRINE, 2, 9, Room.Shape.ROUND),
     MONOLITHS(Theme.ABYSSAL_SHRINE, 1, 7, Room.Shape.ROUND),
+    SCULK_BLOOM(Theme.ABYSSAL_SHRINE, 1, 7, Room.Shape.ROUND),
 
     // ---- the Lords' arenas (one per Lord; built for its moves) ------------------------------------------------------
     ARENA_BELL(Theme.BELL_CRYPT),
