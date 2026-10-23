@@ -472,5 +472,43 @@ Plan v2 · Hunter gear (details in docs/modules/gear.md):
   materials to these tags from their own merge folders. E-tier is craftable from first-hour creature drops.
 - Level road `hunter_gear_e/d/c/b` at 3, 13, 22, 42. Now line priority 25, only for an upgrade.
 
+Plan v2 · power targeting and visuals (details in docs/modules/powers.md, power-fx.md):
+- One rule for every damaging power (`powers/Combat`): a foe is a Monster, anything targeting you or your allies, a
+  creature you last hurt, an angry neutral or an `Enemy` that isn't a peaceful overworld creature; never a villager-like
+  `Npc`, your Echoes or tamed pets. Bystanders are pushed, never hurt. Reach is measured to the target's box, so big
+  bodies are hit at their edge; cones get slack for wide bodies. Knockback resistance never cuts a power's push below 30%.
+  GameTests line up a mixed crowd for every damaging power (`-PpowerAudit` runs them all).
+- Power visuals are client-built from compact events (`awaken:power_fx`); the server sends no particle spam for powers.
+  Client settings `powerEffects` (FULL/REDUCED/MINIMAL), `castAnimations`, `screenFlashes`; effects thin past 24 blocks
+  and aren't built past 72; one effect spawns at most 220 sprites. An effect flagged REACH shows the true hit volume.
+
+Plan v2 · hero bodies and voices (details in docs/modules/heroes.md):
+- Named beasts are modelled near true size (entity scale 1.0–1.8) on their own rigs; collision boxes unchanged. A
+  beast's death takes 36 ticks (the fall); loot and counters still happen on death. Each signature move, phase change
+  and provocation opens with the beast's roar.
+- Overworld creatures speak with their own sounds; ambient intervals 900/600/420/360 ticks (ambient, neutral, hunter,
+  beast), volumes 0.45/0.8/0.9/1.5. All mod sounds are stored at 44.1 or 48 kHz (a GameTest checks).
+
+Plan v2 · audio (details in docs/modules/audio.md):
+- Music cues play through vanilla's music manager (Music slider, Now Playing toast). Stage cues: awakening (once),
+  rank-up (5 min), gate broke (10 min); ordinary cues: beast (15), gate forming (20), shrine (8), lair (15); 3 minutes
+  between any two (stage cues excepted); ordinary cues never play over a song.
+- Gate tracks play 3 : 1 against the biome's vanilla music, 3–10 minutes apart; Descent 2 : 1, 5–15 minutes; the Abyssal
+  Shrine is silent. Loudness: music −19 ± 2 dBFS RMS / −1 dBTP, UI −24 ± 3 / −3, ambience −28 ± 3 / −6.
+- The System's sounds share one glass voice in D major pentatonic; the toast chime yields to a specific System sound.
+
+Plan v2 · overworld structures (details in docs/modules/structures.md):
+- One visual language: three families (gates, Precursor ruins, lairs), each with its own light and palette.
+- A surface gate is a vortex (ellipse radii by rank) drawn by a block entity renderer on an invisible anchor core over a
+  pad and crater ring; placement checks the rank's footprint. Looks: forming, open, about to break, broken, calm,
+  spent; Red Gates red-rimmed. The hum is two loops with a 48-block falloff, pitch by rank. Old gates and Wells are
+  rebuilt in place when loaded.
+- Ruin sizes: vault 23×24×23, monolith 17×46×17, ocean lab 31×22×31, sky platform 49×26×49; pieces carry a blueprint
+  version. The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
+- The Gate Map shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
+
+Plan v2 · first launch: vanilla's "experimental settings" prompt (shown because the mod adds worldgen) is answered for
+the player (client config `skipExperimentalWarning`, default on).
+
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
