@@ -22,6 +22,8 @@ public final class Offers {
     private static final Map<UUID, Map<String, Pending>> PENDING = new HashMap<>();
 
     static void init() {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+                (net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> forget(e.getEntity().getUUID()));
         Signal.onAction(PREFIX, (player, action, accepted) -> {
             String key = action.substring(Math.min(action.length(), PREFIX.length() + 1));
             Map<String, Pending> mine = PENDING.get(player.getUUID());

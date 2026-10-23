@@ -158,6 +158,46 @@ final class HearthTests {
             h.succeed();
         });
 
+        AwakenTests.register("hearth_bind_summon_duty", 100, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            ServerLevel level = h.getLevel();
+            BlockPos at = h.absolutePos(new BlockPos(0, 1, 0));
+            sp.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+            Progression.awaken(sp);
+            Zombie elite = spawnZombie(level, at.north(2));
+            elite.setData(dev.awaken.core.api.CoreApi.MOB_ROLE.get(), new dev.awaken.core.api.MobRole(
+                    dev.awaken.core.api.MobRole.Role.ELITE, 5, "", java.util.Optional.empty(), ""));
+            Echoes.Lingering l = Echoes.linger(sp, elite, "ELITE", 5);
+            elite.discard();
+            h.assertTrue(Echoes.bindAttempt(sp, l, 0.0) == Echoes.BindResult.BOUND, "a sure roll binds");
+            var hp = HearthService.player(sp);
+            h.assertTrue(hp.echoes.size() == 1 && hp.echoes.get(0).field(), "bound into the field army");
+            Echoes.summonField(sp);
+            List<LivingEntity> out = Echoes.fieldEntities(sp);
+            h.assertTrue(out.size() == 1, "summoned one Echo, got " + out.size());
+            LivingEntity e = out.get(0);
+            h.assertTrue(e instanceof Zombie && Echoes.isEcho(e) && Echoes.link(e).owner().equals(sp.getUUID()), "a zombie copy linked to its owner");
+            h.assertTrue(e.getExistingData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()).map(r -> r.role() == dev.awaken.core.api.MobRole.Role.ECHO).orElse(false),
+                    "role ECHO");
+            h.assertTrue(dev.awaken.core.Forces.has(e, dev.awaken.core.Forces.Tag.ECHO), "tagged ECHO");
+            h.assertTrue(Hearth.ownedEchoes(sp).contains(e), "Hearth.ownedEchoes sees it");
+            Echoes.dismissField(sp, true);
+            h.assertTrue(Echoes.fieldEntities(sp).isEmpty() && !hp.fieldOut, "dismissed");
+
+            // Send it home onto a Guard pad: it walks out of the roster's field list and onto the pad.
+            UUID id = hp.echoes.get(0).id();
+            hp.replace(hp.echoes.get(0).withField(false));
+            HearthRecord home = new HearthRecord(sp.getUUID(), "test", at.east(3), HearthService.OVERWORLD);
+            home.pads.put(at.south(2), EchoRole.GUARD);
+            Duty.upkeep(sp, level, home, level.getGameTime());
+            var worker = Echoes.live(level.getServer(), id);
+            h.assertTrue(worker != null && Echoes.link(worker).duty(), "the Echo works the pad");
+            h.assertTrue(worker.blockPosition().closerThan(at.south(2), 2.5), "standing on its pad");
+            Duty.releaseAll(level, home);
+            h.assertTrue(Echoes.live(level.getServer(), id) == null, "released from duty");
+            h.succeed();
+        });
+
         AwakenTests.register("hearth_room_detection", 200, h -> {
             ServerLevel level = h.getLevel();
             BlockPos base = h.absolutePos(new BlockPos(1, 1, 1));

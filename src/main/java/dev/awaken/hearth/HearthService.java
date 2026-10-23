@@ -452,11 +452,14 @@ public final class HearthService {
 
         // 2. Upkeep, once a second, spread across Hearths by owner hash so they don't all run on the same tick.
         int tick = server.getTickCount();
-        for (HearthRecord h : d.snapshot()) {
-            if ((tick + (h.owner.hashCode() & 15)) % 20 != 0) continue;
-            upkeep(server, overworld, h, now);
-        }
+        DUE.clear();
+        for (HearthRecord h : d.all()) if ((tick + (h.owner.hashCode() & 15)) % 20 == 0) DUE.add(h);
+        for (int i = 0; i < DUE.size(); i++) upkeep(server, overworld, DUE.get(i), now);
+        DUE.clear();
     }
+
+    /** Reused every tick so upkeep never allocates (and Hearths removed during upkeep don't break the loop). */
+    private static final List<HearthRecord> DUE = new ArrayList<>();
 
     private static void upkeep(MinecraftServer server, ServerLevel level, HearthRecord h, long now) {
         boolean loaded = level.isPositionEntityTicking(h.pos);

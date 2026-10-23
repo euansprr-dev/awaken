@@ -615,6 +615,7 @@ public final class Trials {
 
     static boolean tryStartPenalty(ServerPlayer sp) {
         if (inTrial(sp) || sp.level().dimension() != Level.OVERWORLD || GateHooks.inGate(sp) || sp.isSleeping()) return false;
+        if (sp.getLastHurtByMobTimestamp() > 0 && sp.tickCount - sp.getLastHurtByMobTimestamp() < 200) return false;
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Penalty Zone"))
                 .body(Component.literal("You skipped yesterday's Regimen on Hardline. Survive four minutes.")).priority(8).ttl(20 * 6).build());
         return start(sp, Kind.PENALTY, Progression.rank(sp), true);

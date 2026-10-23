@@ -265,7 +265,7 @@ public final class Echoes {
             w.body(Component.literal("It's yours now, and it remembers how to fight. Tap B to call your Echoes, tap again to send them away. Hold B to choose who marches."));
         }
         Signal.send(sp, w.priority(4).ttl(20 * 10).build());
-        if (field && hp.fieldOut) summonOne(sp, r);
+        if (field && hp.fieldOut && summonOne(sp, r) != null) recordPeak(sp);
         HearthService.hearthOf(sp).ifPresent(h -> Duty.reassign(sp, HearthService.levelOf(level.getServer(), h), h));
         HearthViews.refresh(sp);
         return BindResult.BOUND;
