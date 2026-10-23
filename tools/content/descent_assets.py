@@ -200,7 +200,8 @@ def biome(s):
 def worldgen():
     for n, s in STRATA.items():
         write(f"{RES}/data/awaken/dimension_type/stratum_{n}.json", dimension_type(s["light"], s["tint"]))
-        write(f"{RES}/data/awaken/worldgen/biome/stratum_{n}.json", biome(s))
+        # each stratum's own track (docs/modules/audio.md); the old vanilla pick stays in STRATA for reference
+        write(f"{RES}/data/awaken/worldgen/biome/stratum_{n}.json", biome(dict(s, music=f"awaken:music.descent.{n}")))
         write(f"{RES}/data/awaken/dimension/stratum_{n}.json", {
             "type": f"awaken:stratum_{n}",
             "generator": {"type": "awaken:stratum", "stratum": n,

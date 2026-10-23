@@ -11,6 +11,18 @@ DATA = os.path.join(RES, "data/awaken")
 ASSETS = os.path.join(RES, "assets/awaken")
 
 
+def merged(path, generated):
+    """The generated entries over what's already in the file: other builders add keys here (the gate hum, its subtitle)
+    and a regeneration must keep them."""
+    try:
+        with open(path) as f:
+            existing = json.load(f)
+    except (OSError, ValueError):
+        existing = {}
+    existing.update(generated)
+    return existing
+
+
 def write(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
@@ -104,6 +116,8 @@ def biome(fog, start, end, parts, amb, mus, water):
 def worldgen(lang):
     biomes = []
     for tid, (name, fog, start, end, parts, amb, mus, water) in THEMES.items():
+        # each theme's own track (its sound event mixes in the old vanilla music 3:1; docs/modules/audio.md)
+        mus = music("awaken:music.gate." + tid, 3600, 12000) if mus else None
         write(os.path.join(DATA, "worldgen/biome/gate_%s.json" % tid), biome(fog, start, end, parts, amb, mus, water))
         biomes.append("awaken:gate_" + tid)
         lang["biome.awaken.gate_" + tid] = name
@@ -256,7 +270,8 @@ def sounds(lang):
     add("gate.alarm", "An alarm bell", {"name": "minecraft:block/bell/bell_use01", "pitch": 1.4, "attenuation_distance": 48})
     add("gate.collapse", "Stone falls", {"name": "minecraft:block/trial_spawner/break1", "pitch": 0.5}, {"name": "minecraft:block/vault/break1", "pitch": 0.5})
     add("gate.cleared", "The gate falls quiet", {"name": "minecraft:block/beacon/power1", "pitch": 0.8}, {"name": "minecraft:block/respawn_anchor/set_spawn1", "pitch": 1.2})
-    add("gate.hum", "A gate hums", {"name": "minecraft:block/beacon/ambient", "pitch": 0.7})
+    # heard from 48 blocks: the hum swells as you approach a gate (structures)
+    add("gate.hum", "A gate hums", {"name": "minecraft:block/beacon/ambient", "pitch": 0.7, "attenuation_distance": 48})
     add("gate.ambient.bell", "Bells under the floor", {"name": "minecraft:block/bell/resonate", "pitch": 0.5, "volume": 0.4},
         {"name": "minecraft:block/bell/bell_use02", "pitch": 0.45, "volume": 0.3})
     add("gate.ambient.gears", "Gears grind", {"name": "minecraft:block/grindstone/grindstone1", "pitch": 0.6, "volume": 0.4},
@@ -271,7 +286,7 @@ def sounds(lang):
     add("gate.ambient.glass", "Glass rings", {"name": "minecraft:block/amethyst/shimmer", "pitch": 0.8, "volume": 0.4})
     add("gate.ambient.wind", "Wind far below", {"name": "minecraft:ambient/nether/soulsand_valley/wind1", "pitch": 1.2, "volume": 0.4},
         {"name": "minecraft:ambient/nether/soulsand_valley/wind3", "pitch": 1.1, "volume": 0.4})
-    write(os.path.join(MERGE, "assets/awaken/sounds.json"), s)
+    write(os.path.join(MERGE, "assets/awaken/sounds.json"), merged(os.path.join(MERGE, "assets/awaken/sounds.json"), s))
 
 
 def gui(lang):
@@ -293,7 +308,8 @@ def main():
     entities(lang)
     sounds(lang)
     gui(lang)
-    write(os.path.join(MERGE, "assets/awaken/lang/en_us.json"), dict(sorted(lang.items())))
+    write(os.path.join(MERGE, "assets/awaken/lang/en_us.json"),
+          dict(sorted(merged(os.path.join(MERGE, "assets/awaken/lang/en_us.json"), lang).items())))
     print("gates content written:", len(lang), "lang keys")
 
 
