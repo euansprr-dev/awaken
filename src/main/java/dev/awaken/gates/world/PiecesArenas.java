@@ -20,7 +20,7 @@ final class PiecesArenas {
     static boolean blocks(Room r, int x, int z) {
         double dx = dx(r, x), dz = dz(r, z), R = radius(r);
         return switch (r.piece) {
-            case ARENA_BELL -> ringPoint(dx, dz, R * 0.6, 8, 0.5, 1.0);
+            case ARENA_BELL -> ringPoint(dx, dz, R * 0.6, 8, 0.5, 1.5);
             case ARENA_SPORES -> ringPoint(dx, dz, R * 0.58, 6, 0.5, 1.0);
             case ARENA_EMBER -> ringPoint(dx, dz, R * 0.45, 6, 0.5, 1.0);
             case ARENA_ARCHIVE -> ringPoint(dx, dz, R * 0.55, 8, 0.5, 1.0);
@@ -173,13 +173,25 @@ final class PiecesArenas {
                     c.lightless ? null : s("minecraft:pearlescent_froglight"));
             claimed = true;
         }
-        if (ringPoint(dx, dz, R * 0.6, 8, 0.5, 1.0) && free(r, x, z)) {
+        if (ringPoint(dx, dz, R * 0.6, 8, 0.5, 1.5) && free(r, x, z)) {
+            // a robed statue on a plinth: the plus-shaped body, shoulders, a hooded head holding up a soul lantern
+            int k = spoke(dx, dz, 8, 0.5);
+            double a = (k + 0.5) * Math.PI / 4;
+            double sx = Math.floor(Math.cos(a) * R * 0.6) + 0.5, sz = Math.floor(Math.sin(a) * R * 0.6) + 0.5;
+            double lx = dx - sx, lz = dz - sz;
+            boolean centre = Math.abs(lx) < 0.5 && Math.abs(lz) < 0.5, cross = Math.abs(lx) < 0.5 || Math.abs(lz) < 0.5;
             c.set(bx, walk, bz, c.k.trim());
-            c.set(bx, walk + 1, bz, s("minecraft:deepslate_tiles"));
-            c.set(bx, walk + 2, bz, s("minecraft:deepslate_tiles"));
-            c.set(bx, walk + 3, bz, s("minecraft:polished_deepslate"));
-            c.set(bx, walk + 4, bz, s("minecraft:chiseled_deepslate"));
-            if (!c.lightless && Math.floorMod(x + z, 2) == 0) c.set(bx, walk + 5, bz, s("minecraft:soul_lantern[hanging=false]"));
+            if (cross) {
+                for (int y = walk + 1; y <= walk + 3; y++) c.set(bx, y, bz, s("minecraft:deepslate_tiles"));
+                if (centre) {
+                    c.set(bx, walk + 4, bz, s("minecraft:polished_deepslate"));
+                    c.set(bx, walk + 5, bz, s("minecraft:chiseled_deepslate"));
+                    if (!c.lightless) c.set(bx, walk + 6, bz, s("minecraft:soul_lantern[hanging=false]"));
+                } else {
+                    int face = Math.abs(lx) > Math.abs(lz) ? (lx > 0 ? 1 : 3) : (lz > 0 ? 2 : 0);
+                    c.set(bx, walk + 4, bz, GatePainter.facing(s("minecraft:polished_deepslate_stairs[half=bottom]"), (face + 2) % 4));
+                }
+            } else c.set(bx, walk + 1, bz, s("minecraft:polished_deepslate_slab[type=bottom]"));
             return true;
         }
         return rimLights(c, bx, bz, dx, dz, walk, ceil, R * 0.82, 12, s("minecraft:soul_lantern[hanging=true]")) || claimed;

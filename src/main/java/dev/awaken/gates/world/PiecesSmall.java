@@ -368,7 +368,7 @@ final class PiecesSmall {
     static boolean cloudBank(GatePainter.Ctx c, int bx, int bz, int x, int z, double dx, double dz, int walk, int ceil, int fo) {
         Room r = c.r;
         double n = Hash.fbm(r.seed ^ 0xC10BL, x, z, 3);
-        int mid = c.floorY + 3;
+        int mid = Math.min(ceil - 2, c.floorY + 6); // clouds drifting through overhead, not at eye height
         if (n > 0.62 && Math.hypot(dx, dz) > 2.5 && mid + 1 < ceil) {
             c.set(bx, mid, bz, GatesRegistry.CLOUD.get().defaultBlockState());
             if (n > 0.72) c.set(bx, mid + 1, bz, GatesRegistry.CLOUD.get().defaultBlockState());

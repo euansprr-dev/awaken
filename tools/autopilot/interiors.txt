@@ -6,7 +6,7 @@
 # Commands it relies on (game master):
 #   /awaken gate open <rank> <theme>     a gate of that theme 18-30 blocks away (forms in a few seconds; gates stand 96+ apart)
 #   /awaken gate interior enter          walk into the newest standing gate (yours first)
-#   /awaken gate interior goto <start|piece|shrine|ante|lord>
+#   /awaken gate interior goto <start|piece|small|shrine|ante|lord>
 #                                        inside a gate: stand where that place reads best, facing it (ante and lord go to the
 #                                        Lord's floor; stepping into the arena wakes the Lord)
 #   /awaken gate leave                   out again, Satchel kept
@@ -36,6 +36,9 @@ shot interiors_01_bell_crypt_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_02_bell_crypt_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_02b_bell_crypt_small
 cmd awaken gate interior goto shrine
 wait 60
 shot interiors_03_bell_crypt_shrine
@@ -59,6 +62,9 @@ shot interiors_06_fungal_hollow_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_07_fungal_hollow_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_07b_fungal_hollow_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_08_fungal_hollow_lord
@@ -76,6 +82,9 @@ shot interiors_09_ember_mines_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_10_ember_mines_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_10b_ember_mines_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_11_ember_mines_lord
@@ -93,6 +102,9 @@ shot interiors_12_hive_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_13_hive_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_13b_hive_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_14_hive_lord
@@ -110,6 +122,9 @@ shot interiors_15_overgrown_temple_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_16_overgrown_temple_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_16b_overgrown_temple_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_17_overgrown_temple_lord
@@ -127,6 +142,9 @@ shot interiors_18_drowned_archive_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_19_drowned_archive_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_19b_drowned_archive_small
 cmd awaken gate interior goto shrine
 wait 60
 shot interiors_20_drowned_archive_shrine
@@ -147,6 +165,9 @@ shot interiors_22_clockwork_foundry_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_23_clockwork_foundry_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_23b_clockwork_foundry_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_24_clockwork_foundry_lord
@@ -164,6 +185,9 @@ shot interiors_25_glass_desert_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_26_glass_desert_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_26b_glass_desert_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_27_glass_desert_lord
@@ -181,6 +205,9 @@ shot interiors_28_night_market_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_29_night_market_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_29b_night_market_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_30_night_market_lord
@@ -198,6 +225,9 @@ shot interiors_31_frost_monastery_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_32_frost_monastery_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_32b_frost_monastery_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_33_frost_monastery_lord
@@ -215,6 +245,9 @@ shot interiors_34_mirror_palace_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_35_mirror_palace_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_35b_mirror_palace_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_36_mirror_palace_lord
@@ -232,6 +265,9 @@ shot interiors_37_precursor_lab_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_38_precursor_lab_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_38b_precursor_lab_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_39_precursor_lab_lord
@@ -249,6 +285,9 @@ shot interiors_40_nightmare_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_41_nightmare_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_41b_nightmare_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_42_nightmare_lord
@@ -266,6 +305,9 @@ shot interiors_43_sky_archipelago_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_44_sky_archipelago_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_44b_sky_archipelago_small
 cmd awaken gate interior goto lord
 wait 160
 shot interiors_45_sky_archipelago_lord
@@ -283,6 +325,9 @@ shot interiors_46_abyssal_shrine_start
 cmd awaken gate interior goto piece
 wait 80
 shot interiors_47_abyssal_shrine_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_47b_abyssal_shrine_small
 cmd awaken gate interior goto shrine
 wait 60
 shot interiors_48_abyssal_shrine_shrine

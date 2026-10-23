@@ -521,6 +521,7 @@ final class FloorBuilder {
          */
         void pieces() {
             List<SetPiece> pool = SetPiece.roomPieces(theme);
+            java.util.Set<SetPiece> usedBig = java.util.EnumSet.noneOf(SetPiece.class);
             int turn = (int) Math.floorMod(Hash.of(seed, 61, floor), 997L);
             for (Room r : rooms) {
                 if (r.type == Room.Type.BOSS) {
@@ -535,19 +536,16 @@ final class FloorBuilder {
                 for (int k = 0; k < pool.size() && pick == null; k++) {
                     SetPiece p = pool.get(Math.floorMod(turn + k, pool.size()));
                     if (p.minArea > r.area() || p.minHeight > r.height) continue;
-                    if (big && p.minArea < 2 && hasBig(pool, r)) continue; // big rooms take the big pieces
+                    if (big && p.minArea < 2) continue;              // big rooms take the big pieces...
+                    if (big && usedBig.contains(p)) continue;         // ...each once a floor; the rest keep their own shapes
                     pick = p;
                 }
+                if (pick != null && big) usedBig.add(pick);
                 if (pick == null) continue;
                 turn++;
                 r.piece = pick;
                 if (pick.shape != null) r.shape = pick.shape;
             }
-        }
-
-        private boolean hasBig(List<SetPiece> pool, Room r) {
-            for (SetPiece p : pool) if (p.minArea >= 2 && p.minArea <= r.area() && p.minHeight <= r.height) return true;
-            return false;
         }
 
         private boolean takesPiece(Room r) {
