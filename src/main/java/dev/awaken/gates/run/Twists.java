@@ -501,6 +501,11 @@ public final class Twists {
         if (lord != null) {
             if (f.area == 0) g.boss = java.util.Optional.of(lord.getUUID());
             else g.annexBoss = java.util.Optional.of(lord.getUUID());
+        } else {
+            // the Lord can't take form (Peaceful): the gate yields rather than locking you in forever
+            DirectorLog.log(p, "gate", "the Lord of gate " + g.id + " couldn't appear; the gate yields");
+            Runs.lordDefeated(level, g, f, null, p);
+            return;
         }
         if (r.normals > 0) Rooms.spawnGroup(level, g, f, r, r.id, r.normals, 0, 4);
         GateRegistry.get(level.getServer()).setDirty();

@@ -72,6 +72,8 @@ final class GateTests {
                     layouts.add(p.layout().name());
                 }
             }
+            Director.Roll a = Director.roll(777, Rank.C, new GateMemory(), null, null), b = Director.roll(777, Rank.C, new GateMemory(), null, null);
+            h.assertTrue(a.plan().equals(b.plan()) && a.trace().equals(b.trace()), "same seed and memory → same gate and trace");
             h.succeed();
         });
 
@@ -304,6 +306,45 @@ final class GateTests {
             GateTestAccess.fill(empty, plan, cell);
             h.assertTrue(empty.getBlockState(new BlockPos(-40 * 16, f.baseY, -40 * 16)).isAir(), "chunks outside a cell stay void");
             h.succeed();
+        });
+
+        AwakenTests.register("gates_build_break_hold", 900, h -> {
+            var level = h.getLevel();
+            var server = level.getServer();
+            BlockPos base = h.absolutePos(BlockPos.ZERO).offset(14, 0, 14);
+            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, base.getX(), base.getZ()) - 1;
+            BlockPos ground = new BlockPos(base.getX(), y, base.getZ());
+            GatePlan plan = testPlan(2024, Rank.E, Theme.BELL_CRYPT, Layout.LABYRINTH, Twist.NONE);
+            GateRecord g = GateService.create(server, GateRegistry.get(server).nextId(), plan, ground, 0, Optional.empty(), 2, List.of("test"), false);
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            h.startSequence()
+                    .thenWaitUntil(() -> h.assertTrue(g.state == GateState.READY, "gate became READY, was " + g.state))
+                    .thenExecute(() -> {
+                        BlockPos core = g.pos.above(3);
+                        h.assertTrue(level.getBlockState(core).is(GatesRegistry.CORE.get()), "surface core placed");
+                        h.assertTrue(dev.awaken.gates.run.Interactions.structureAt(server, core) == g, "the core belongs to its gate");
+                        h.assertTrue(Gates.gateAt(level, g.pos).map(i -> i.id() == g.id).orElse(false), "Gates.gateAt finds it");
+                        h.assertTrue(Gates.preview(server, g.id).map(pv -> pv.theme() == Theme.BELL_CRYPT).orElse(false), "preview shows the plan");
+                        GateCard.send(p, g);
+                        Breaks.breakGate(server, g);
+                        h.assertTrue(g.state == GateState.BROKEN, "the gate broke");
+                    })
+                    .thenWaitUntil(() -> h.assertTrue(g.lord.isPresent(), "a Gate Lord came out"))
+                    .thenExecute(() -> {
+                        var lord = level.getEntity(g.lord.get());
+                        h.assertTrue(lord instanceof net.minecraft.world.entity.LivingEntity, "the Lord is in the world");
+                        h.assertTrue(level.getBlockState(g.pos.above(3)).getValue(dev.awaken.gates.block.GateBlocks.Core.BROKEN), "the core shows the break");
+                        h.assertTrue(lord.getData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()).role() == dev.awaken.core.api.MobRole.Role.BREAK, "BREAK role");
+                        lord.kill(level);
+                    })
+                    .thenWaitUntil(() -> h.assertTrue(g.state == GateState.RELEASED, "holding the break releases the gate, was " + g.state))
+                    .thenWaitUntil(() -> h.assertFalse(level.getBlockState(g.pos.above(3)).is(GatesRegistry.CORE.get()), "the structure comes down"))
+                    .thenExecute(() -> {
+                        for (var e : level.getEntitiesOfClass(net.minecraft.world.entity.Entity.class, new net.minecraft.world.phys.AABB(g.pos).inflate(48),
+                                e -> !(e instanceof ServerPlayer))) e.discard();
+                        h.assertTrue(GateRegistry.get(server).releasedCells().contains(g.cell), "its cell waits for cleanup");
+                    })
+                    .thenSucceed();
         });
 
         AwakenTests.register("gates_overworld_structure", 40, h -> {

@@ -120,7 +120,7 @@ public final class Pressure {
     /** An open spot in the player's room (or a neighbouring one) a few blocks away; never inside a safe room. */
     static BlockPos spotNear(ServerLevel level, GateRecord g, FloorLayout f, ServerPlayer target, int minDist) {
         Where w = Where.at(level.getServer(), target.blockPosition());
-        if (w == null || w.room() == null || w.floor() != f) return null;
+        if (w == null || w.room() == null || w.floor() == null || w.floor().area != f.area || w.floor().floor != f.floor) return null;
         List<Room> candidates = new ArrayList<>();
         if (!w.room().type.safe()) candidates.add(w.room());
         for (Room.Door d : w.room().doors) {

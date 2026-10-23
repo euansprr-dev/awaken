@@ -60,7 +60,6 @@ final class GateEvents {
 
     private static void onServerTick(ServerTickEvent.Post e) {
         MinecraftServer server = e.getServer();
-        if (server.getLevel(GatesRegistry.GATES) == null && server.getTickCount() % 200 != 0) return;
         GateService.tickBuilds(server);
         GateService.tickRemovals(server);
         Director.tick(server);
