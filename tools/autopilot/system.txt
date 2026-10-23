@@ -1,0 +1,70 @@
+# System v2 tour (docs/modules/system-ui.md): the Now tracker, a toast, a merged burst, a choice card, a story line
+# beside the card, an answer, a gate card, a choice folded into the tracker, and the Status screen,
+# at GUI scale 0 (auto: 378x246 on the owner's Mac) and then 2.
+# Run by the integrator: tools/autopilot.sh tools/autopilot/system.txt  (opens a client window).
+world autopilot_system creative 1234
+waitworld
+cmd time set day
+look 0 10
+gui 0
+cmd awaken admin awaken
+wait 120
+
+# --- GUI scale 0 (auto) ---
+cmd awaken signal demo now
+wait 60
+shot sys_auto_01_tracker
+cmd awaken signal demo toast
+wait 30
+shot sys_auto_02_toast
+cmd awaken signal demo burst
+wait 40
+shot sys_auto_03_burst_merged
+wait 160
+cmd awaken signal demo choice
+wait 30
+shot sys_auto_04_choice_card
+cmd awaken signal demo story
+wait 30
+shot sys_auto_05_story_beside_card
+key accept
+wait 30
+shot sys_auto_06_answered
+wait 200
+cmd awaken signal demo panel
+wait 20
+shot sys_auto_07_gate_card
+key dismiss
+wait 20
+cmd awaken signal demo legacy
+wait 20
+shot sys_auto_08_fallback_labels
+wait 420
+shot sys_auto_09_folded_in_tracker
+screen status
+shot sys_auto_10_status
+screen close
+
+# --- GUI scale 2 ---
+gui 2
+wait 20
+shot sys_gui2_01_tracker_folded
+cmd awaken signal demo toast
+wait 30
+shot sys_gui2_02_toast
+wait 140
+cmd awaken signal demo choice
+wait 30
+shot sys_gui2_03_choice_card
+cmd awaken signal demo story
+wait 30
+shot sys_gui2_04_story_beside_card
+key dismiss
+wait 200
+cmd awaken signal demo panel
+wait 20
+shot sys_gui2_05_gate_card
+screen status
+shot sys_gui2_06_status
+screen close
+quit

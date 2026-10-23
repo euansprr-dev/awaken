@@ -42,6 +42,13 @@ public final class Glass {
         g.horizontalLine(x + 1, x + w - 2, y + 1, a(edge, 0.10f * alpha));
     }
 
+    /** A compact System v2 card: glass, a faint edge and a solid accent bar on the left. */
+    public static void card(GuiGraphicsExtractor g, int x, int y, int w, int h, int accent, float alpha) {
+        g.fillGradient(x, y, x + w, y + h, a(GLASS_TOP, 0.90f * alpha), a(GLASS, 0.90f * alpha));
+        g.outline(x, y, w, h, a(accent, 0.35f * alpha));
+        g.fill(x, y, x + 2, y + h, a(accent, alpha));
+    }
+
     /** Horizontal progress bar. */
     public static void bar(GuiGraphicsExtractor g, int x, int y, int w, int h, double fraction, int colour, float alpha) {
         g.fill(x, y, x + w, y + h, a(0x0A1020, 0.9f * alpha));
