@@ -1603,9 +1603,100 @@ def preview(outdir, only=None):
     print(os.path.join(outdir, "fauna2_views.png"))
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Lair look: the GameTest fauna_lair_styles_build writes each built lair to run/fauna_lairs/; this draws them.
+
+BLOCK_TEX = "/Volumes/MEDIA/Awaken/.ref/assets/assets/minecraft/textures/block"
+TINTS = {"grass_block": "#79c05a", "oak_leaves": "#59ae30", "jungle_leaves": "#30bb0b", "dark_oak_leaves": "#59ae30", "vine": "#59ae30",
+         "fern": "#79c05a", "lily_pad": "#208030", "bush": "#79c05a", "big_dripleaf": "#79c05a"}
+FIXED = {"water": "#3f76e4", "snow": "#f8fcff", "snow_block": "#f0f6fa", "glass": "#c8e4ec", "cobweb": "#e8e8ee", "lantern": "#e8a040",
+         "soul_lantern": "#5ad8e8", "sweet_berry_bush": "#3a6a2a", "shroomlight": "#f0a050", "spore_blossom": "#e070b0",
+         "pink_petals": "#f0a8d0", "leaf_litter": "#a0703a", "firefly_bush": "#4a6a2a", "glow_lichen": "#7ad8b0", "skeleton_skull": "#d8d8d0",
+         "spruce_fence": "#6a4a2a", "stone_brick_wall": "#7a7a7a", "red_mushroom": "#c03030", "brown_mushroom": "#9a6a48", "bamboo": "#6aa83a",
+         "dead_bush": "#8a6a3a", "flowering_azalea": "#6a8a3a", "azalea": "#5a7a32", "pink_tulip": "#e898c0", "allium": "#b070d8",
+         "smooth_sandstone": "#e0d4a0", "smooth_red_sandstone": "#b85a20", "orange_stained_glass": "#e8902a", "yellow_stained_glass": "#f0d850"}
+_COL = {}
+
+
+def block_colour(name, face):
+    key = (name, face)
+    if key in _COL:
+        return _COL[key]
+    from PIL import Image
+    col = None
+    if name in FIXED:
+        col = rgba(FIXED[name])
+    else:
+        cands = ([name + "_top"] if face == "top" else []) + [name, name.replace("_block", ""), name + "_side", name + "_front"]
+        if name.endswith("_log"):
+            cands = ([name + "_top"] if face == "top" else []) + [name]
+        if name == "grass_block":
+            cands = ["grass_block_top"] if face == "top" else ["dirt"]
+        if name == "mycelium":
+            cands = ["mycelium_top"] if face == "top" else ["mycelium_side"]
+        if name == "podzol":
+            cands = ["podzol_top"] if face == "top" else ["podzol_side"]
+        for c in cands:
+            path = os.path.join(BLOCK_TEX, c + ".png")
+            if os.path.exists(path):
+                im = Image.open(path).convert("RGBA").resize((1, 1), Image.BOX)
+                col = im.getpixel((0, 0))
+                break
+        if col is None:
+            col = (200, 0, 200, 255)
+        tint = TINTS.get(name)
+        if tint is not None and not (name == "grass_block" and face != "top"):
+            t = rgba(tint)
+            col = (col[0] * t[0] // 255, col[1] * t[1] // 255, col[2] * t[2] // 255, 255)
+    _COL[key] = col[:3] + (255,)
+    return _COL[key]
+
+
+def render_lair(data, scale=9):
+    from PIL import Image, ImageDraw
+    blocks = data["blocks"]
+    W, H = 64 * scale, 52 * scale
+    img = Image.new("RGBA", (W, H), (150, 170, 190, 255))
+    dr = ImageDraw.Draw(img)
+    ox, oy = W // 2, int(H * 0.62)
+    occ = {(b[0], b[1], b[2]) for b in blocks}
+
+    def iso(x, y, z):
+        return (ox + (x - z) * scale, oy + (x + z) * scale * 0.5 - y * scale)
+    small = {"snow", "pink_petals", "leaf_litter", "moss_carpet", "pale_moss_carpet", "lily_pad", "glow_lichen"}
+    for x, y, z, name in sorted(blocks, key=lambda b: (b[0] + b[2], b[1])):
+        h = 0.15 if name in small else 1.0
+        top = [iso(x, y + h, z), iso(x + 1, y + h, z), iso(x + 1, y + h, z + 1), iso(x, y + h, z + 1)]
+        left = [iso(x, y + h, z + 1), iso(x + 1, y + h, z + 1), iso(x + 1, y, z + 1), iso(x, y, z + 1)]
+        right = [iso(x + 1, y + h, z), iso(x + 1, y + h, z + 1), iso(x + 1, y, z + 1), iso(x + 1, y, z)]
+        if (x, y + 1, z) not in occ or h < 1:
+            dr.polygon(top, fill=block_colour(name, "top"))
+        if (x, y, z + 1) not in occ:
+            dr.polygon(left, fill=shade(block_colour(name, "side"), 0.78))
+        if (x + 1, y, z) not in occ:
+            dr.polygon(right, fill=shade(block_colour(name, "side"), 0.62))
+    dx, dy, dz = data["den"]
+    px, py = iso(dx + 0.5, dy, dz + 0.5)
+    dr.ellipse((px - 4, py - 4, px + 4, py + 4), outline=(255, 40, 40, 255), width=2)
+    dr.text((8, 8), f"{data['style']} ({data['variant']})  den ring in red", fill=(20, 20, 30, 255))
+    return img
+
+
+def lairs(outdir, src=os.path.join(ROOT, "run/fauna_lairs")):
+    from PIL import Image
+    os.makedirs(outdir, exist_ok=True)
+    files = sorted(f for f in os.listdir(src) if f.endswith(".json"))
+    ims = [render_lair(json.load(open(os.path.join(src, f)))) for f in files]
+    for f, im in zip(files, ims):
+        im.save(os.path.join(outdir, "lair_" + f[:-5] + ".png"))
+    print(len(ims), "lairs drawn to", outdir)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "content":
         content()
+    elif len(sys.argv) > 1 and sys.argv[1] == "lairs":
+        lairs(sys.argv[2] if len(sys.argv) > 2 else "/tmp/fauna2_lairs")
     elif len(sys.argv) > 1 and sys.argv[1] == "preview":
         preview(sys.argv[2] if len(sys.argv) > 2 else "/tmp/fauna2_preview", sys.argv[3:] or None)
     else:
