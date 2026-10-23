@@ -42,13 +42,7 @@ public final class Recalibrate {
         Profile p = Progression.profile(player);
         int points = refund(stats(p));
         if (points <= 0) return 0;
-        for (Stat s : Stat.values()) {
-            int over = p.stat(s) - Stat.START;
-            if (over > 0) Progression.addStat(player, s, -over);
-        }
-        RewardHooks.apply(player, new Reward(0, points, Optional.empty(), 0, Optional.empty(), Optional.empty(), 0, List.of()),
-                Progression.XpSource.COMMAND);
-        Progression.applyAttributes(player);
+        Progression.respec(player);
         Progression.count(player, Above.RECALIBRATIONS, 1);
         Progression.markDirty(player);
         return points;

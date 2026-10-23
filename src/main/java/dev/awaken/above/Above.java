@@ -112,6 +112,17 @@ public final class Above {
 
     // ---- Clone Vat ------------------------------------------------------------------------------------------------
 
+    /** Counter holding (play-day + 1) of the last time a powered Signal Relay near the Hearth was seen. */
+    public static final String RELAY_LINK = "awaken:relay_linked_day";
+
+    /** Called from AboveModule.init: a linked Signal Relay grants +1 Directive slot for seven play-days. */
+    static void registerRelaySlot() {
+        Progression.addDirectiveSlotSource(p -> {
+            long day = Progression.profile(p).counter(RELAY_LINK) - 1;
+            return day >= 0 && dev.awaken.core.PlayDays.current(p.level().getServer()) - day <= 7;
+        });
+    }
+
     /**
      * Death hook for other modules. If this player has a bound, grown Clone Vat and hasn't used it this play-day,
      * consumes the save and returns true: the player wakes in the Vat and the caller should keep the Satchel / Deep

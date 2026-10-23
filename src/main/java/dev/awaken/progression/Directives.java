@@ -24,7 +24,8 @@ public final class Directives {
 
     public static final String ACTION = "directive";
 
-    static int slots(ServerPlayer player) {
+    /** Active Directive slots for this player (3 + perks + runtime sources such as a linked Signal Relay). */
+    public static int slots(ServerPlayer player) {
         return 3 + (int) Progression.perk(player, Perks.EXTRA_DIRECTIVE_SLOT) + Progression.extraDirectiveSlots(player);
     }
 

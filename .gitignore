@@ -41,7 +41,7 @@ repo/
 
 ### AWAKEN ###
 .ref/
-logs/
+/logs/
 *.log
 .claude/worktrees/
 

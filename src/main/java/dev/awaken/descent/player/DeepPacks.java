@@ -90,6 +90,12 @@ public final class DeepPacks {
         List<ItemStack> all = pack.takeAll();
         DescentSync.packChanged(player);
         if (all.isEmpty()) return;
+        if (dev.awaken.above.Above.consumeCloneSave(player)) {
+            // The Clone Vat grew a body for you: everything you carried comes back with it.
+            d.pendingReturn.addAll(all);
+            dev.awaken.signal.Signal.toast(player, net.minecraft.network.chat.Component.literal("The Clone Vat kept your Deep Pack"));
+            return;
+        }
         AwakenConfig.Difficulty diff = DescentModule.difficulty();
         DeathRules.Split split = DeathRules.split(diff, all);
         d.pendingReturn.addAll(split.kept());

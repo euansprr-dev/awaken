@@ -1,5 +1,5 @@
 {
-  "trigger": "flag:awaken:story/halo_reached",
+  "trigger": "trigger:halo_found",
   "title": "Up",
   "body": "They went up to get away from it. It came with them. It always does."
 }

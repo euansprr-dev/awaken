@@ -33,7 +33,7 @@ REVELATIONS = {
                     "You knew it was a dream and you stayed. In here, what you look at becomes real. Out there too, slower."),
     "first_ruin": ("counter:awaken:machines_scanned>=1", "The ones before",
                    "They built me. They also left. Read what they wrote. Don't believe all of it."),
-    "halo_found": ("flag:awaken:story/halo_reached", "Up",
+    "halo_found": ("trigger:halo_found", "Up",
                    "They went up to get away from it. It came with them. It always does."),
     "first_sovereign": ("counter:awaken:sovereigns_defeated>=1", "A keeper falls",
                         "That one carried hunger for a thousand years so nobody else had to. You set it down. Now somebody has to carry it, or feel it."),
