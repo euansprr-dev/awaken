@@ -1,4 +1,8 @@
-# AWAKEN v2 — brief for builders ("The Awakened World", first-hour slice)
+# AWAKEN v2 — brief for builders ("The Awakened World")
+
+**Status:** P1 (the first-hour slice) is merged: System v2 (`docs/modules/system-ui.md`), onboarding and the level road
+(`docs/modules/onboarding.md`), overworld creatures (`docs/modules/fauna.md`), anomalies (`docs/modules/anomalies.md`).
+You are now building **P2/P3** (the living world, the road to 50). Read the module docs of anything you extend.
 
 The owner played build 1 and said: the overworld feels like vanilla, the start is "go find iron", the first dungeon
 kills you after the prologue, the pop-ups are huge and confusing, and he never knows what to do next. He approved
@@ -39,7 +43,9 @@ Read `docs/BUILDER-BRIEF.md` too (rules, assets toolkit, quality bar). Everythin
   `AwakenTests.registerIsolated` so they run in their own batch.
 - Never schedule from inside a scheduled GameTest callback; use `startSequence()` / `succeedWhen`.
 - Neighbouring chunks may not be entity-ticking in tests: keep test mobs inside one chunk.
-- Run the full suite at least 3 times before you report: flaky tests are failures.
+- One fully green run of the whole suite on your final code is enough; the integrator re-runs it after merging.
+  Tests that wait for chunks or time of day must not depend on what other tests leave behind (see the fauna and
+  anomaly tests for patterns: switch natural spawning off, filter by distance, generous wait budgets).
 
 ## Boundaries for v2
 Write only inside the paths your prompt lists. Shared files you may append to: your module's `src/main/merge/<folder>/`
@@ -49,4 +55,4 @@ request in your report. Commit small steps on your branch with the trailer
 SPEC-worthy decisions at the end of it (the integrator folds them into SPEC).
 
 ## Report (under 400 words)
-What's complete, what's partial and why, test results (all GameTests, 3 runs), autopilot script path, requests.
+What's complete, what's partial and why, test results, autopilot script path, requests.
