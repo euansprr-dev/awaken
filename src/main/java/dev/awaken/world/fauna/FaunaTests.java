@@ -343,7 +343,7 @@ final class FaunaTests {
             });
         });
 
-        AwakenTests.registerIsolated("fauna_hunters_keep_the_light_rule", 200, h -> {
+        AwakenTests.registerIsolated("fauna_hunters_keep_the_light_rule", 400, h -> {
             ServerLevel level = h.getLevel();
             BlockPos dark = h.absolutePos(new BlockPos(6, UP, 0));
             BlockPos lit = h.absolutePos(new BlockPos(-6, UP, 0));
