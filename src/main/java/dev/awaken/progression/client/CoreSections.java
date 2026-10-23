@@ -10,12 +10,13 @@ import dev.awaken.progression.content.Content;
 import dev.awaken.progression.content.Defs;
 import dev.awaken.progression.net.ProgressionPayloads;
 import dev.awaken.signal.client.Glass;
+import dev.awaken.signal.client.Ui;
+import dev.awaken.signal.client.UiSection;
 import dev.awaken.signal.net.SignalPayloads;
+import dev.awaken.signal.ui.SignalText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.ArrayList;
@@ -23,7 +24,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** The Status screen sections owned by progression. */
+/**
+ * The Status screen sections owned by progression. All of them lay out with {@link Ui}: text wraps to the width, rows
+ * collapse to one column when narrow, and glossary words explain themselves on hover.
+ */
 final class CoreSections {
     private CoreSections() {}
 
@@ -38,10 +42,6 @@ final class CoreSections {
 
     static void send(String kind, String arg) {
         ClientPacketDistributor.sendToServer(new ProgressionPayloads.StatusAction(kind, arg));
-    }
-
-    static List<FormattedCharSequence> wrap(String s, int w) {
-        return font().split(Component.literal(s), w);
     }
 
     static void register() {
@@ -60,139 +60,128 @@ final class CoreSections {
         CodexEntries.addSource(CoreSections::insightEntries);
     }
 
+    private static String plural(long n, String word) {
+        return n + " " + word + (n == 1 ? "" : "s");
+    }
+
     // ---- Status tab -------------------------------------------------------------------------------------------------
 
-    static final class Spine implements StatusSections.Section {
+    /** Who you are and what's next: level progress, points to spend, the way to the next rank, today's tally. */
+    static final class Spine extends UiSection {
         public String title() { return "STATUS"; }
         public int order() { return 0; }
-        public int height(int w) { return 58; }
 
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
+        @Override
+        protected void build(Ui ui) {
             Profile p = profile();
-            Font f = font();
             var mc = Minecraft.getInstance();
-            String name = mc.player == null ? "" : mc.player.getName().getString();
-            g.text(f, name, x, y, Glass.a(Glass.TITLE, 1f), true);
-            int cx = x + f.width(name) + 8;
-            cx += Glass.chip(g, f, p.rank().label + "-rank", cx, y - 2, p.rank().colour) + 4;
-            int pcx = cx;
+            Ui.Flow head = ui.flow();
+            head.text(mc.player == null ? "" : mc.player.getName().getString(), Glass.TITLE);
+            head.chip(p.rank().label + "-rank", p.rank().colour);
             var path = p.path().map(Content.PATHS::get).orElse(null);
-            if (path != null) pcx += Glass.chip(g, f, path.name(), pcx, y - 2, path.colour()) + 4;
+            if (path != null) head.chip(path.name(), path.colour());
             var title = p.title().map(Content.TITLES::get).orElse(null);
-            if (title != null) Glass.chip(g, f, "“" + title.name() + "”", pcx, y - 2, Glass.AMBER);
+            if (title != null) head.chip("“" + title.name() + "”", Glass.AMBER);
+            head.end();
 
-            g.text(f, "Level " + p.level(), x, y + 14, Glass.a(Glass.TEXT, 1f), false);
-            String xp = String.format("%,.0f / %,.0f", p.xp(), Curve.xpToNext(p.level()));
-            g.text(f, xp, x + w - f.width(xp), y + 14, Glass.a(Glass.LABEL, 1f), false);
-            Glass.bar(g, x, y + 25, w, 4, p.xp() / Curve.xpToNext(p.level()), Glass.EDGE, 1f);
-
+            if (!p.awakened()) {
+                ui.text("You have not awakened. Something in the world is waiting for you to notice it.", Glass.LABEL);
+                return;
+            }
+            double need = Curve.xpToNext(p.level());
+            ui.pair("Level " + p.level(), String.format("%,.0f / %,.0f XP", p.xp(), need), Glass.TEXT, Glass.LABEL);
+            ui.bar(p.xp() / need, Glass.EDGE);
+            long toGo = (long) Math.ceil(Math.max(0, need - p.xp()));
+            ui.text("◇ " + String.format("%,d", toGo) + " XP to level " + (p.level() + 1) + ".", Glass.TEXT);
+            if (p.unspent() > 0) {
+                ui.text("◇ " + plural(p.unspent(), "stat point") + " to spend: press + next to a stat below.", Glass.LANTERN);
+            }
             Rank next = p.rank().next();
-            String spine;
-            if (!p.awakened()) spine = "You have not awakened.";
-            else if (next == null) spine = "There is no rank above yours.";
-            else if (p.reassessmentReady()) spine = "Reassessment available · take the trial for " + next.label + "-rank";
-            else spine = "Next rank: " + next.label + " · Reassessment at Level " + next.levelRequired + " (you're " + p.level() + ")";
-            g.text(f, "◇ " + spine, x, y + 35, Glass.a(p.reassessmentReady() ? Glass.LANTERN : Glass.TEXT, 1f), false);
-
-            List<String> flags = new ArrayList<>();
+            if (next == null) ui.text("◇ There is no rank above yours.", Glass.TEXT);
+            else if (p.reassessmentReady()) {
+                ui.text("◇ Reassessment ready: take the " + next.label + "-rank trial at the Spire in your town or at a Reassessment Monolith.", Glass.LANTERN);
+            } else {
+                int left = Math.max(0, next.levelRequired - p.level());
+                ui.text("◇ Next rank: " + next.label + " at level " + next.levelRequired + " (" + plural(left, "level") + " to go), then pass its Reassessment.", Glass.TEXT);
+            }
             var level = mc.level;
             if (level != null && p.fractureUntil() > level.getGameTime()) {
-                flags.add("Fractured " + (p.fractureUntil() - level.getGameTime()) / 1200 + "m · rest at your Hearth");
+                long min = Math.max(1, (p.fractureUntil() - level.getGameTime() + 1199) / 1200);
+                ui.text("◇ Fractured for " + min + " min: about 15% weaker. Rest at your Hearth or meditate to heal faster.", Glass.WARN);
             }
-            if (!flags.isEmpty()) g.text(f, String.join("   ", flags), x, y + 47, Glass.a(Glass.WARN, 1f), false);
+            Profile.DayLog d = p.day();
+            if (d.day() >= 0 && (d.kills() > 0 || d.gates() > 0 || p.level() > d.levelStart())) {
+                String today = "Today: level " + d.levelStart() + (p.level() > d.levelStart() ? " → " + p.level() : "")
+                        + " · " + plural(d.kills(), "kill") + " · " + plural(d.gates(), "gate")
+                        + (d.best().isBlank() ? "" : " · best: " + d.best());
+                ui.text(today, Glass.LABEL);
+            }
         }
     }
 
-    static final class Stats implements StatusSections.Section {
+    static final class Stats extends UiSection {
         public String title() { return "STATS"; }
         public int order() { return 10; }
-        public int height(int w) { return 3 * 16 + 14; }
 
         private static final String[] HINT = {"melee, Kinetic", "speed, Flow", "health, resistance", "energy, Energy/Tech",
                 "crits, secrets, omens", "Veil, dreams, Echoes"};
+        private static final int ROW = 16;
 
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
+        @Override
+        protected void build(Ui ui) {
             Profile p = profile();
-            Font f = font();
-            int col = w / 2;
+            boolean spend = p.unspent() > 0;
+            int cols = ui.width >= 300 ? 2 : 1;
+            int colW = ui.width / cols;
+            int rows = (Stat.values().length + cols - 1) / cols;
+            int y0 = ui.y();
             for (Stat s : Stat.values()) {
                 int i = s.ordinal();
-                int sx = x + (i % 2) * col, sy = y + (i / 2) * 16;
-                g.text(f, s.name(), sx, sy + 3, Glass.a(Glass.LABEL, 1f), false);
-                g.text(f, String.valueOf(p.stat(s)), sx + 26, sy + 3, Glass.a(Glass.TITLE, 1f), true);
-                g.text(f, HINT[i], sx + 50, sy + 3, Glass.a(Glass.LABEL, 0.55f), false);
-                if (p.unspent() > 0) {
-                    int bx = sx + col - 20;
-                    Glass.button(g, f, "+", bx, sy, 14, 13, Glass.inside(mx, my, bx, sy, 14, 13), true, Glass.EDGE);
-                }
+                int sx = ui.x + (i % cols) * colW, sy = y0 + (i / cols) * ROW;
+                ui.textAt(s.name(), sx, sy + 3, 26, Glass.LABEL, false);
+                ui.textAt(String.valueOf(p.stat(s)), sx + 26, sy + 3, 24, Glass.TITLE, true);
+                int hintW = colW - 52 - (spend ? 24 : 4);
+                if (hintW > 20) ui.textAt(HINT[i], sx + 52, sy + 3, hintW, Glass.a(Glass.LABEL, 0.65f), false);
+                if (spend && ui.buttonAt("+", sx + colW - 20, sy, 14, 13, Glass.EDGE, true)) send("spend", s.name());
             }
-            String pts = p.unspent() > 0 ? p.unspent() + " point" + (p.unspent() == 1 ? "" : "s") + " to spend" : "No points to spend";
-            g.text(f, pts, x, y + 3 * 16 + 3, Glass.a(p.unspent() > 0 ? Glass.LANTERN : Glass.LABEL, 1f), false);
-        }
-
-        public boolean click(double mx, double my, int x, int y, int w) {
-            if (profile().unspent() <= 0) return false;
-            int col = w / 2;
-            for (Stat s : Stat.values()) {
-                int i = s.ordinal();
-                int sx = x + (i % 2) * col, sy = y + (i / 2) * 16;
-                if (Glass.inside(mx, my, sx + col - 20, sy, 14, 13)) {
-                    send("spend", s.name());
-                    return true;
-                }
-            }
-            return false;
+            ui.gap(rows * ROW);
+            ui.text(spend ? plural(p.unspent(), "point") + " to spend" : "No points to spend", spend ? Glass.LANTERN : Glass.LABEL);
         }
     }
 
-    static final class DirectivesSection implements StatusSections.Section {
+    static final class DirectivesSection extends UiSection {
         public String title() { return "DIRECTIVES"; }
         public int order() { return 20; }
 
-        public int height(int w) {
-            int n = profile().directives().size();
-            return n == 0 ? 12 : n * 30;
-        }
-
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
+        @Override
+        protected void build(Ui ui) {
             Profile p = profile();
-            Font f = font();
             if (p.directives().isEmpty()) {
-                g.text(f, "The Signal has nothing to suggest right now.", x, y, Glass.a(Glass.LABEL, 1f), false);
+                ui.text("Nothing offered right now. New Directives come with the morning or after something notable.", Glass.LABEL);
                 return;
             }
             long today = clientPlayDay();
-            for (Profile.DirectiveState d : p.directives()) {
+            List<Profile.DirectiveState> list = List.copyOf(p.directives());
+            for (int i = 0; i < list.size(); i++) {
+                Profile.DirectiveState d = list.get(i);
                 var def = Content.DIRECTIVES.get(d.id());
-                String text = def == null ? d.id() : def.text();
-                g.text(f, text, x, y, Glass.a(Glass.TITLE, 1f), false);
+                ui.text(def == null ? d.id() : def.text(), Glass.TITLE);
                 long left = Math.max(0, d.expiresDay() - today + 1);
+                String meta = (def == null ? "" : "Reward: " + Rewards.describe(def.reward()) + " · ") + "fades in " + plural(left, "play-day");
+                ui.text(meta, Glass.LABEL, 4, false);
                 if (d.accepted()) {
-                    Glass.bar(g, x, y + 12, w - 90, 4, Directives.progress(p, d), Glass.GOOD, 1f);
-                    g.text(f, "fades in " + left + "d", x + w - 84, y + 10, Glass.a(Glass.LABEL, 1f), false);
+                    ui.gap(1);
+                    ui.bar(Directives.progress(p, d), Glass.GOOD);
                 } else {
-                    Glass.button(g, f, "Accept", x, y + 10, 50, 13, Glass.inside(mx, my, x, y + 10, 50, 13), true, Glass.GOOD);
-                    Glass.button(g, f, "Dismiss", x + 54, y + 10, 52, 13, Glass.inside(mx, my, x + 54, y + 10, 52, 13), true, Glass.LABEL);
+                    ui.gap(1);
+                    Ui.Flow row = ui.flow();
+                    String action = Directives.ACTION + ":" + d.id();
+                    if (row.button("Accept", Glass.GOOD, true)) ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(action, true));
+                    if (row.button("Dismiss", Glass.LABEL, true)) ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(action, false));
+                    row.end();
                 }
-                y += 30;
+                if (i < list.size() - 1) ui.rule();
             }
-        }
-
-        public boolean click(double mx, double my, int x, int y, int w) {
-            for (Profile.DirectiveState d : profile().directives()) {
-                if (!d.accepted()) {
-                    if (Glass.inside(mx, my, x, y + 10, 50, 13)) {
-                        ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(Directives.ACTION + ":" + d.id(), true));
-                        return true;
-                    }
-                    if (Glass.inside(mx, my, x + 54, y + 10, 52, 13)) {
-                        ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(Directives.ACTION + ":" + d.id(), false));
-                        return true;
-                    }
-                }
-                y += 30;
-            }
-            return false;
         }
     }
 
@@ -202,25 +191,24 @@ final class CoreSections {
         return Math.max(0, profile().day().day());
     }
 
-    static final class RegimenSection implements StatusSections.Section {
+    static final class RegimenSection extends UiSection {
         public String title() { return "DAILY REGIMEN"; }
         public int order() { return 25; }
         public boolean visible() { return !profile().regimen().drills().isEmpty(); }
-        public int height(int w) { return profile().regimen().drills().size() * 12; }
 
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
+        @Override
+        protected void build(Ui ui) {
             var r = profile().regimen();
             for (String id : r.drills()) {
                 var def = Content.DRILLS.get(id);
                 boolean done = r.done().contains(id);
-                g.text(font(), (done ? "✓ " : "· ") + (def == null ? id : def.text()), x, y, Glass.a(done ? Glass.GOOD : Glass.TEXT, 1f), false);
-                y += 12;
+                ui.text((done ? "✓ " : "· ") + (def == null ? id : def.text()), done ? Glass.GOOD : Glass.TEXT);
             }
         }
     }
 
-    /** Lifetime records from the counters, two columns, only what you've actually done. */
-    static final class Records implements StatusSections.Section {
+    /** Lifetime records from the counters, two columns when there's room, only what you've actually done. */
+    static final class Records extends UiSection {
         private record Row(String label, String counter) {}
 
         private static final List<Row> ROWS = List.of(
@@ -263,38 +251,32 @@ final class CoreSections {
         public String title() { return "RECORDS"; }
         public int order() { return 900; }
         public boolean visible() { return !lines().isEmpty(); }
-        public int height(int w) { return (lines().size() + 1) / 2 * 12; }
 
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
+        @Override
+        protected void build(Ui ui) {
             List<String[]> l = lines();
-            int col = w / 2;
+            int cols = ui.width >= 280 ? 2 : 1;
+            int colW = ui.width / cols;
+            int y0 = ui.y();
+            Font f = ui.font();
             for (int i = 0; i < l.size(); i++) {
-                int cx = x + (i % 2) * col, cy = y + (i / 2) * 12;
+                int cx = ui.x + (i % cols) * colW, cy = y0 + (i / cols) * 11;
                 String v = l.get(i)[1];
-                g.text(font(), l.get(i)[0], cx, cy, Glass.a(Glass.LABEL, 1f), false);
-                g.text(font(), v, cx + col - 8 - font().width(v), cy, Glass.a(Glass.TEXT, 1f), false);
+                int vw = f.width(v);
+                int right = cx + colW - (cols > 1 && i % cols == 0 ? 10 : 0);
+                ui.textAt(l.get(i)[0], cx, cy, right - cx - vw - 6, Glass.LABEL, false);
+                ui.textAt(v, right - vw, cy, vw, Glass.TEXT, false);
             }
+            ui.gap((l.size() + cols - 1) / cols * 11);
         }
     }
 
     // ---- Truths tab -------------------------------------------------------------------------------------------------
 
-    static final class PathChoice implements StatusSections.Section {
+    static final class PathChoice extends UiSection {
         public String title() { return "SECOND AWAKENING · CHOOSE WHO YOU BECOME"; }
         public int order() { return 0; }
         public boolean visible() { return !profile().pathsOffered().isEmpty(); }
-
-        public int height(int w) {
-            int h = 0;
-            for (String id : profile().pathsOffered()) h += cardHeight(id, w);
-            return h;
-        }
-
-        private static int cardHeight(String id, int w) {
-            var d = Content.PATHS.get(id);
-            if (d == null) return 0;
-            return 16 + wrap(d.description(), w - 80).size() * 10 + evidence(d).size() * 10 + 12;
-        }
 
         static List<String> evidence(Defs.PathDef d) {
             Profile p = profile();
@@ -306,41 +288,27 @@ final class CoreSections {
             return out;
         }
 
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
-            Font f = font();
-            for (String id : profile().pathsOffered()) {
-                var d = Content.PATHS.get(id);
+        @Override
+        protected void build(Ui ui) {
+            List<String> ids = List.copyOf(profile().pathsOffered());
+            for (int i = 0; i < ids.size(); i++) {
+                var d = Content.PATHS.get(ids.get(i));
                 if (d == null) continue;
-                int h = cardHeight(id, w);
-                Glass.panel(g, x, y, w, h - 6, d.colour(), 1f);
-                g.text(f, d.name(), x + 8, y + 5, Glass.a(d.colour(), 1f), true);
-                int ty = y + 17;
-                for (var line : wrap(d.description(), w - 80)) {
-                    g.text(f, line, x + 8, ty, Glass.a(Glass.TEXT, 1f), false);
-                    ty += 10;
-                }
-                for (String ev : evidence(d)) {
-                    g.text(f, "· " + ev, x + 8, ty, Glass.a(Glass.LABEL, 1f), false);
-                    ty += 10;
-                }
-                Glass.button(g, f, "Choose", x + w - 62, y + 5, 54, 14, Glass.inside(mx, my, x + w - 62, y + 5, 54, 14), true, d.colour());
-                y += h;
+                int top = ui.y();
+                ui.text(d.name(), d.colour(), 6, true);
+                ui.text(d.description(), Glass.TEXT, 6, false);
+                for (String ev : evidence(d)) ui.text("· " + ev, Glass.LABEL, 6, false);
+                ui.gap(2);
+                Ui.Flow row = ui.flow();
+                if (row.button("Choose " + d.name(), d.colour(), true)) send("path", ids.get(i));
+                row.end();
+                if (ui.drawing()) ui.g().fill(ui.x, top, ui.x + 2, ui.y() - 3, Glass.a(d.colour(), 0.9f));
+                if (i < ids.size() - 1) ui.rule();
             }
-        }
-
-        public boolean click(double mx, double my, int x, int y, int w) {
-            for (String id : profile().pathsOffered()) {
-                if (Glass.inside(mx, my, x + w - 62, y + 5, 54, 14)) {
-                    send("path", id);
-                    return true;
-                }
-                y += cardHeight(id, w);
-            }
-            return false;
         }
     }
 
-    static final class TruthList implements StatusSections.Section {
+    static final class TruthList extends UiSection {
         enum Kind { DECLARED, OFFERED, TRUE }
 
         private final Kind kind;
@@ -352,16 +320,16 @@ final class CoreSections {
         List<String> ids() {
             Profile p = profile();
             return switch (kind) {
-                case DECLARED -> p.truthsDeclared();
-                case OFFERED -> p.truthsOffered();
+                case DECLARED -> List.copyOf(p.truthsDeclared());
+                case OFFERED -> List.copyOf(p.truthsOffered());
                 case TRUE -> new ArrayList<>(p.truthsTrue());
             };
         }
 
         public String title() {
             return switch (kind) {
-                case DECLARED -> "DECLARED · " + profile().truthsDeclared().size() + " / 3";
-                case OFFERED -> "WAITING TO BE DECLARED";
+                case DECLARED -> "DECLARED TRUTHS · " + profile().truthsDeclared().size() + " / 3";
+                case OFFERED -> "TRUTHS WAITING TO BE DECLARED";
                 case TRUE -> "TRUE";
             };
         }
@@ -370,123 +338,92 @@ final class CoreSections {
 
         public boolean visible() { return kind != Kind.OFFERED || !ids().isEmpty(); }
 
-        public int height(int w) {
-            int n = ids().size();
-            if (n == 0) return 12;
-            return n * (kind == Kind.DECLARED ? 32 : 24);
-        }
-
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
-            Font f = font();
+        @Override
+        protected void build(Ui ui) {
             Profile p = profile();
             List<String> ids = ids();
             if (ids.isEmpty()) {
-                String msg = kind == Kind.DECLARED ? "Declare who you're becoming from the Truths waiting below."
-                        : "None yet. Live one of your declared Truths.";
-                g.text(f, msg, x, y, Glass.a(Glass.LABEL, 1f), false);
+                ui.text(kind == Kind.DECLARED ? "Declare who you're becoming from the Truths waiting below. Each one shows what it gives."
+                        : "None yet. Live one of your declared Truths.", Glass.LABEL);
                 return;
             }
-            for (String id : ids) {
+            for (int i = 0; i < ids.size(); i++) {
+                String id = ids.get(i);
                 var d = Content.TRUTHS.get(id);
-                String text = d == null ? id : "“" + d.text() + "”";
-                g.text(f, text, x, y, Glass.a(kind == Kind.TRUE ? Glass.GOOD : Glass.TITLE, 1f), true);
+                ui.text(d == null ? id : "“" + d.text() + "”", kind == Kind.TRUE ? Glass.GOOD : Glass.TITLE, 0, true);
+                if (d != null && kind != Kind.TRUE) d.hint().ifPresent(h -> ui.text(h, Glass.LABEL, 4, false));
+                if (d != null) {
+                    ui.text((kind == Kind.TRUE ? "Granted: " : "Reward: ") + Rewards.describe(d.reward()), kind == Kind.TRUE ? Glass.LABEL : Glass.AMBER, 4, false);
+                }
                 switch (kind) {
                     case DECLARED -> {
-                        g.text(f, "NOT TRUE YET", x + w - f.width("NOT TRUE YET"), y, Glass.a(Glass.AMBER, 1f), false);
-                        if (d != null) {
-                            { final int yy = y; d.hint().ifPresent(h -> g.text(f, h, x, yy + 11, Glass.a(Glass.LABEL, 1f), false)); }
-                            Glass.bar(g, x, y + 22, w - 70, 3, d.condition().progress(p, null), Glass.AMBER, 1f);
-                        }
-                        Glass.button(g, f, "Withdraw", x + w - 62, y + 18, 62, 12, Glass.inside(mx, my, x + w - 62, y + 18, 62, 12), true, Glass.LABEL);
+                        if (d != null) ui.bar(d.condition().progress(p, null), Glass.AMBER);
+                        Ui.Flow row = ui.flow();
+                        row.chip("NOT TRUE YET", Glass.AMBER);
+                        if (row.button("Withdraw", Glass.LABEL, true)) send("undeclare", id);
+                        row.end();
                     }
                     case OFFERED -> {
-                        if (d != null) { final int yy = y; d.hint().ifPresent(h -> g.text(f, h, x, yy + 11, Glass.a(Glass.LABEL, 1f), false)); }
                         boolean can = p.truthsDeclared().size() < 3;
-                        Glass.button(g, f, "Declare", x + w - 56, y, 56, 13, Glass.inside(mx, my, x + w - 56, y, 56, 13), can, Glass.AMBER);
+                        Ui.Flow row = ui.flow();
+                        if (row.button("Declare", Glass.AMBER, can)) send("declare", id);
+                        if (!can) row.text("3 of 3 declared: withdraw one first", Glass.LABEL);
+                        row.end();
                     }
-                    case TRUE -> g.text(f, "TRUE", x + w - f.width("TRUE"), y, Glass.a(Glass.GOOD, 1f), false);
+                    case TRUE -> {
+                        Ui.Flow row = ui.flow();
+                        row.chip("TRUE", Glass.GOOD);
+                        row.end();
+                    }
                 }
-                y += kind == Kind.DECLARED ? 32 : 24;
+                if (i < ids.size() - 1) ui.rule();
             }
-        }
-
-        public boolean click(double mx, double my, int x, int y, int w) {
-            for (String id : ids()) {
-                if (kind == Kind.DECLARED && Glass.inside(mx, my, x + w - 62, y + 18, 62, 12)) {
-                    send("undeclare", id);
-                    return true;
-                }
-                if (kind == Kind.OFFERED && Glass.inside(mx, my, x + w - 56, y, 56, 13) && profile().truthsDeclared().size() < 3) {
-                    send("declare", id);
-                    return true;
-                }
-                y += kind == Kind.DECLARED ? 32 : 24;
-            }
-            return false;
         }
     }
 
-    static final class Titles implements StatusSections.Section {
+    static final class Titles extends UiSection {
         public String title() { return "TITLES · " + profile().titles().size(); }
         public int order() { return 40; }
 
-        public int height(int w) {
-            int n = profile().titles().size();
-            return n == 0 ? 12 : n * 22;
-        }
-
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
-            Font f = font();
+        @Override
+        protected void build(Ui ui) {
             Profile p = profile();
             if (p.titles().isEmpty()) {
-                g.text(f, "Titles are earned by feats. You'll know when it happens.", x, y, Glass.a(Glass.LABEL, 1f), false);
+                ui.text("Titles are earned by feats. You'll know when it happens.", Glass.LABEL);
                 return;
             }
-            for (String id : p.titles()) {
+            for (String id : List.copyOf(p.titles())) {
                 var d = Content.TITLES.get(id);
                 boolean equipped = p.title().map(id::equals).orElse(false);
-                g.text(f, d == null ? id : d.name(), x, y, Glass.a(equipped ? Glass.AMBER : Glass.TITLE, 1f), true);
-                if (d != null) g.text(f, d.description(), x, y + 10, Glass.a(Glass.LABEL, 1f), false);
-                Glass.button(g, f, equipped ? "Equipped" : "Equip", x + w - 60, y, 60, 13,
-                        Glass.inside(mx, my, x + w - 60, y, 60, 13), !equipped, Glass.AMBER);
-                y += 22;
-            }
-        }
-
-        public boolean click(double mx, double my, int x, int y, int w) {
-            Profile p = profile();
-            for (String id : p.titles()) {
-                if (Glass.inside(mx, my, x + w - 60, y, 60, 13) && !p.title().map(id::equals).orElse(false)) {
-                    send("title", id);
-                    return true;
+                ui.text(d == null ? id : d.name(), equipped ? Glass.AMBER : Glass.TITLE, 0, true);
+                if (d != null) {
+                    ui.text(d.description(), Glass.LABEL, 4, false);
+                    if (!d.perks().isEmpty()) ui.text("Gives: " + Rewards.perks(d.perks()), Glass.TEXT, 4, false);
                 }
-                y += 22;
+                Ui.Flow row = ui.flow();
+                if (row.button(equipped ? "Equipped" : "Equip", Glass.AMBER, !equipped)) send("title", id);
+                row.end();
+                ui.gap(2);
             }
-            return false;
         }
     }
 
-    static final class Latents implements StatusSections.Section {
+    static final class Latents extends UiSection {
         public String title() { return "LATENTS FOUND · " + profile().latents().size() + " / ??"; }
         public int order() { return 50; }
 
-        public int height(int w) {
-            int n = profile().latents().size();
-            return n == 0 ? 12 : n * 22;
-        }
-
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
-            Font f = font();
+        @Override
+        protected void build(Ui ui) {
             Profile p = profile();
             if (p.latents().isEmpty()) {
-                g.text(f, "Something in you is asleep. Do unusual things.", x, y, Glass.a(Glass.LABEL, 1f), false);
+                ui.text("Something in you is asleep. Do unusual things.", Glass.LABEL);
                 return;
             }
-            for (String id : p.latents()) {
+            for (String id : List.copyOf(p.latents())) {
                 var d = Content.LATENTS.get(id);
-                g.text(f, d == null ? id : d.name(), x, y, Glass.a(Glass.VIOLET, 1f), true);
-                if (d != null) g.text(f, d.description(), x, y + 10, Glass.a(Glass.LABEL, 1f), false);
-                y += 22;
+                ui.text(d == null ? id : d.name(), Glass.VIOLET, 0, true);
+                if (d != null) ui.text(d.description(), Glass.LABEL, 4, false);
+                ui.gap(2);
             }
         }
     }
@@ -508,17 +445,15 @@ final class CoreSections {
     }
 
     static String pretty(String id) {
-        String s = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-        s = s.replace('_', ' ');
-        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+        return Ui.pretty(id);
     }
 
     /**
-     * The mystery board: cards grouped by category in columns, threads between linked cards. Cards the player has only
-     * heard of show as "?".
+     * The mystery board: cards grouped by category, as many columns as fit, threads between linked cards. Cards the
+     * player has only heard of show as "?". Hover a card for its full text.
      */
-    static final class CodexBoard implements StatusSections.Section {
-        private static final int CARD_W = 128, CARD_H = 34, GAP = 8;
+    static final class CodexBoard extends UiSection {
+        private static final int MIN_CARD_W = 110, CARD_H = 34, GAP = 8;
 
         public String title() { return "THE BOARD"; }
         public int order() { return 0; }
@@ -531,60 +466,56 @@ final class CoreSections {
 
         public boolean visible() { return !CodexEntries.all().isEmpty(); }
 
-        public int height(int w) {
-            int cols = Math.max(1, w / (CARD_W + GAP));
-            int rows = 0;
-            for (var list : grouped().values()) rows += 1 + (list.size() + cols - 1) / cols;
-            return rows * (CARD_H + GAP);
-        }
-
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
-            Font f = font();
-            int cols = Math.max(1, w / (CARD_W + GAP));
+        @Override
+        protected void build(Ui ui) {
+            Font f = ui.font();
+            int cols = Math.max(1, (ui.width + GAP) / (MIN_CARD_W + GAP));
+            int cardW = (ui.width - (cols - 1) * GAP) / cols;
             Map<String, int[]> pos = new HashMap<>();
             List<CodexEntries.Entry> all = new ArrayList<>();
-            int cy = y;
             for (var e : grouped().entrySet()) {
-                g.text(f, e.getKey().toUpperCase(), x, cy + CARD_H - 10, Glass.a(Glass.LANTERN, 1f), false);
-                cy += CARD_H + GAP - 20;
+                ui.text(e.getKey().toUpperCase(java.util.Locale.ROOT), Glass.LANTERN);
+                ui.gap(2);
+                int y0 = ui.y();
                 int i = 0;
                 for (var entry : e.getValue()) {
-                    int cx = x + (i % cols) * (CARD_W + GAP);
-                    int ry = cy + (i / cols) * (CARD_H + GAP);
-                    pos.put(entry.id(), new int[]{cx, ry});
+                    pos.put(entry.id(), new int[]{ui.x + (i % cols) * (cardW + GAP), y0 + (i / cols) * (CARD_H + GAP)});
                     all.add(entry);
                     i++;
                 }
-                cy += ((e.getValue().size() + cols - 1) / cols) * (CARD_H + GAP) + 20;
+                ui.gap(((e.getValue().size() + cols - 1) / cols) * (CARD_H + GAP) + 4);
             }
-            // threads first, under the cards
-            for (var entry : all) {
+            if (!ui.drawing()) return;
+            var g = ui.g();
+            for (var entry : all) { // threads first, under the cards
                 int[] a = pos.get(entry.id());
                 for (String link : entry.links()) {
                     int[] b = pos.get(link);
-                    if (b == null) continue;
-                    line(g, a[0] + CARD_W / 2, a[1] + CARD_H / 2, b[0] + CARD_W / 2, b[1] + CARD_H / 2, Glass.a(Glass.LANTERN, 0.45f));
+                    if (b != null) line(g, a[0] + cardW / 2, a[1] + CARD_H / 2, b[0] + cardW / 2, b[1] + CARD_H / 2, Glass.a(Glass.LANTERN, 0.45f));
                 }
             }
             for (var entry : all) {
                 int[] a = pos.get(entry.id());
-                boolean hover = Glass.inside(mx, my, a[0], a[1], CARD_W, CARD_H);
-                Glass.panel(g, a[0], a[1], CARD_W, CARD_H, entry.found() ? Glass.EDGE : Glass.LABEL, hover ? 1f : 0.85f);
-                g.text(f, entry.found() ? entry.title() : "?", a[0] + 5, a[1] + 4, Glass.a(entry.found() ? Glass.TITLE : Glass.LABEL, 1f), false);
-                var body = wrap(entry.found() ? entry.body() : entry.title(), CARD_W - 10);
+                boolean hover = ui.hover(a[0], a[1], cardW, CARD_H);
+                Glass.panel(g, a[0], a[1], cardW, CARD_H, entry.found() ? Glass.EDGE : Glass.LABEL, hover ? 1f : 0.85f);
+                String head = entry.found() ? entry.title() : "?";
+                ui.textAt(head, a[0] + 5, a[1] + 4, cardW - 10, Glass.a(entry.found() ? Glass.TITLE : Glass.LABEL, 1f), false);
+                String text = entry.found() ? entry.body() : entry.title();
+                var body = SignalText.wrapAtMost(text, cardW - 10, 2, f::width);
                 int ty = a[1] + 15;
-                for (int k = 0; k < Math.min(2, body.size()); k++) {
-                    g.text(f, body.get(k), a[0] + 5, ty, Glass.a(Glass.LABEL, 1f), false);
+                for (String l : body) {
+                    g.text(f, l, a[0] + 5, ty, Glass.a(Glass.LABEL, 1f), false);
                     ty += 9;
                 }
-                if (hover && body.size() > 2) {
-                    g.setTooltipForNextFrame(f, Component.literal(entry.body()), mx, my);
+                boolean cut = SignalText.wrap(text, cardW - 10, f::width).size() > 2 || f.width(head) > cardW - 10;
+                if (hover && cut) {
+                    g.setTooltipForNextFrame(f, f.split(Component.literal(head + "\n" + text), 220), ui.mouseX(), ui.mouseY());
                 }
             }
         }
 
         /** A simple stepped line (GUI has no diagonal primitive). */
-        private static void line(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, int col) {
+        private static void line(net.minecraft.client.gui.GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, int col) {
             int mxp = (x0 + x1) / 2;
             g.horizontalLine(Math.min(x0, mxp), Math.max(x0, mxp), y0, col);
             g.verticalLine(mxp, Math.min(y0, y1), Math.max(y0, y1), col);

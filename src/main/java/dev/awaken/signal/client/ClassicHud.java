@@ -24,11 +24,11 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 /**
- * Draws Signal windows. One window at a time, top centre, typing in. In combat they collapse to toasts in the top-right
+ * The CLASSIC System window (systemStyle = CLASSIC, kept for rollback). One window at a time, top centre, typing in. In combat they collapse to toasts in the top-right
  * corner; windows with an action (or high priority) wait for the fight to end.
  */
-public final class SignalHud {
-    private SignalHud() {}
+public final class ClassicHud {
+    private ClassicHud() {}
 
     private static final int OPEN_TICKS = 5;
     private static final int CLOSE_TICKS = 6;

@@ -57,6 +57,19 @@ public final class AwakenConfig {
         public static final ModConfigSpec.BooleanValue AURA = C
                 .comment("Show your rank aura.")
                 .define("aura", true);
+
+        /** How the System speaks: V2 = toasts, choice cards, story lines (default); CLASSIC = the old big window. */
+        public enum SystemStyle { V2, CLASSIC }
+
+        public static final ModConfigSpec.EnumValue<SystemStyle> SYSTEM_STYLE = C
+                .comment("V2: small toasts, choice cards and story lines. CLASSIC: the old centre window (rollback).")
+                .defineEnum("systemStyle", SystemStyle.V2);
+        public static final ModConfigSpec.BooleanValue NOW_TRACKER = C
+                .comment("Show the Now tracker: one line in the top-left corner with something you could do next.")
+                .define("nowTracker", true);
+        public static final ModConfigSpec.DoubleValue SYSTEM_SCALE = C
+                .comment("Size of System cards, story lines and the Now tracker (toasts stay vanilla-sized).")
+                .defineInRange("systemScale", 1.0, 0.75, 1.5);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}
