@@ -473,9 +473,10 @@ Plan v2 · Hunter gear (details in docs/modules/gear.md):
 - Level road `hunter_gear_e/d/c/b` at 3, 13, 22, 42. Now line priority 25, only for an upgrade.
 
 Plan v2 · power targeting and visuals (details in docs/modules/powers.md, power-fx.md):
-- One rule for every damaging power (`powers/Combat`): a foe is a Monster, anything targeting you or your allies, a
-  creature you last hurt, an angry neutral or an `Enemy` that isn't a peaceful overworld creature; never a villager-like
-  `Npc`, your Echoes or tamed pets. Bystanders are pushed, never hurt. Reach is measured to the target's box, so big
+- One rule for every area power (`powers/Combat`): a foe is anything targeting you or your allies, a creature you last
+  hurt, an angry neutral or an `Enemy` (monsters, slimes, ghasts) that isn't a peaceful overworld creature; never a
+  villager-like `Npc`, your Echoes or tamed pets. Aimed powers hit whatever you aim at that isn't on your side.
+  Bystanders in an area are pushed, never hurt. Reach is measured to the target's box, so big
   bodies are hit at their edge; cones get slack for wide bodies. Knockback resistance never cuts a power's push below 30%.
   GameTests line up a mixed crowd for every damaging power (`-PpowerAudit` runs them all).
 - Power visuals are client-built from compact events (`awaken:power_fx`); the server sends no particle spam for powers.
