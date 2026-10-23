@@ -105,7 +105,11 @@ final class Stars {
         double side = r.nextBoolean() ? 1 : -1;
         double px = -dz / len * side, pz = dx / len * side;
         double y = Math.min(level.getMaxY() - 4, to.y + HEIGHT);
-        return new Vec3(to.x + px * 45 - dx / len * 10, y, to.z + pz * 45 - dz / len * 10);
+        // start where entities tick (a small simulation distance, or a test plot), or the light never shows
+        for (double side45 = 45, back = 10; ; side45 /= 2, back /= 2) {
+            Vec3 at = new Vec3(to.x + px * side45 - dx / len * back, y, to.z + pz * side45 - dz / len * back);
+            if (side45 < 6 || level.isPositionEntityTicking(BlockPos.containing(at.x, to.y, at.z))) return at;
+        }
     }
 
     /** Whether this entity is the falling light of a star still on its way down. */
