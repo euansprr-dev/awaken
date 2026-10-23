@@ -209,6 +209,21 @@ public final class Lessons {
 
     // ---- the Now tracker ----------------------------------------------------------------------------------------------
 
+    /** A lesson step just reached outranks standing reminders (a waiting trial, points to spend) for five minutes. */
+    static final int FRESH_TICKS = 6000, FRESH_BOOST = 30;
+    private record Fresh(String nowId, long since) {}
+    private static final java.util.Map<java.util.UUID, Fresh> FRESH = new java.util.HashMap<>();
+
+    private static int freshPriority(ServerPlayer player, String nowId, int base) {
+        long now = player.level().getGameTime();
+        Fresh f = FRESH.get(player.getUUID());
+        if (f == null || !f.nowId().equals(nowId)) {
+            f = new Fresh(nowId, now);
+            FRESH.put(player.getUUID(), f);
+        }
+        return now - f.since() < FRESH_TICKS ? base + FRESH_BOOST : base;
+    }
+
     private static List<NowHooks.Suggestion> suggest(ServerPlayer player) {
         Profile p = Progression.profile(player);
         if (!p.awakened()) return List.of();
@@ -223,7 +238,7 @@ public final class Lessons {
             Step s = l.steps().get(i);
             if (s.priority() > best && s.showNow().test(player) && !s.done().test(player)) {
                 best = s.priority();
-                lesson = NowHooks.Suggestion.of(e.nowId()[i], s.priority(), s.now());
+                lesson = NowHooks.Suggestion.of(e.nowId()[i], freshPriority(player, e.nowId()[i], s.priority()), s.now());
             }
         }
         NowHooks.Suggestion goal = openGoal(player, p);
