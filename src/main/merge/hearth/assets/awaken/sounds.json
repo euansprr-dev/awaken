@@ -58,7 +58,7 @@
   "hearth.request_complete": {
     "subtitle": "subtitles.awaken.hearth.request_complete",
     "sounds": [
-      { "name": "minecraft:block.bell.use", "type": "event", "pitch": 1.5, "volume": 0.7 }
+      { "name": "awaken:ui.request_delivered", "type": "event" }
     ]
   },
   "hearth.core_fuse": {
