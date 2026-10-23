@@ -491,7 +491,10 @@ final class FloorBuilder {
                 }
                 r.height = Math.min(r.height, 27 - r.dy);
             }
-            if (plan.contentVersion() >= 2) pieces();
+            if (plan.contentVersion() >= 2) {
+                pieces();
+                if (!friendly && !hollow) deeperTypes();
+            }
             for (Room r : rooms) {
                 if (!(friendly || (hollow && r.type != Room.Type.BOSS))) spawns(r);
                 features(r);
@@ -689,6 +692,43 @@ final class FloorBuilder {
             return Math.min(hgt, 27 - r.dy);
         }
 
+        // ---- P3 tuning (content version 2): deeper floors push back harder ----------------------------------------
+        // Numbers from tools/sim/pacing_sim.py (docs/modules/gates.md "Tuning"): the balanced player dies 1-3 times in
+        // ten gates at D, C and B, and planning one floor deeper pays best around floors 3 to 5.
+
+        /** Extra monsters per room on floor f (1-based): one more from the third floor, another from the fifth. */
+        static int depthMonsters(int floor) {
+            return (floor >= 3 ? 1 : 0) + (floor >= 5 ? 1 : 0);
+        }
+
+        /** Extra chance (on top of version 1's rolls) that a plain room on this floor holds an elite. */
+        static double extraElite(int rank, int floor) {
+            return Math.max(0, 0.04 * (floor - 1) + 0.01 * rank - 0.02);
+        }
+
+        /** Version 2's room types: plain rooms turn elite more often deeper down (per-room hash: rnd is untouched). */
+        void deeperTypes() {
+            if (bossFloor) return;
+            double extra = extraElite(rank, floor);
+            for (Room r : rooms) {
+                if (r.type == Room.Type.NORMAL && r.id != start && r.id != end && Hash.unit(r.seed, 91, floor) < extra) r.type = Room.Type.ELITE;
+            }
+        }
+
+        void deeper(Room r) {
+            int more = depthMonsters(floor);
+            switch (r.type) {
+                case NORMAL, HALL, HUB, CAVERN -> r.normals += r.normals > 1 ? more : 0;
+                case ELITE, KEY -> r.normals += more;
+                case ARENA -> {
+                    r.normals += more;
+                    r.wave2Normals += more;
+                    if (floor >= 3) r.wave2Elites += 1;
+                }
+                default -> {}
+            }
+        }
+
         void spawns(Room r) {
             int base;
             switch (r.type) {
@@ -708,6 +748,7 @@ final class FloorBuilder {
                 case BOSS -> r.normals = 2;
                 default -> {}
             }
+            if (plan.contentVersion() >= 2) deeper(r);
             if (plan.has(Modifier.SWARM)) {
                 r.normals = (int) Math.ceil(r.normals * 1.6);
                 r.wave2Normals = (int) Math.ceil(r.wave2Normals * 1.6);

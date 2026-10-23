@@ -117,6 +117,9 @@ final class PiecesArenas {
         if (d <= 2.3) c.set(bx, walk - 1, bz, c.k.medallion());
         else if (d < 3.0) c.set(bx, walk - 1, bz, c.k.band());
         else if (!c.lightless && ring(dx, dz, 3.5, 0.5) && ringPoint(dx, dz, 3.5, 8, 0, 0.5)) c.set(bx, walk - 1, bz, c.k.sconce());
+        // dim themes light their Lord from above with a light you can't see (a mapmaker's spotlight)
+        if (!c.lightless && c.k.sconce().getLightEmission() < 14 && Math.abs(dx) < 0.6 && Math.abs(dz) < 0.6)
+            c.set(bx, walk + 5, bz, s("minecraft:light[level=15]"));
     }
 
     /** A crown of lights hanging from the apex over the Lord. */
@@ -162,7 +165,7 @@ final class PiecesArenas {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
         boolean claimed = false;
-        if (d > 3.0 && (ring(dx, dz, R * 0.3, 0.5) || ring(dx, dz, R * 0.52, 0.5) || ring(dx, dz, R * 0.75, 0.5))) c.set(bx, walk - 1, bz, c.k.band());
+        if (d > 4.2 && (ring(dx, dz, R * 0.3, 0.5) || ring(dx, dz, R * 0.52, 0.5) || ring(dx, dz, R * 0.75, 0.5))) c.set(bx, walk - 1, bz, c.k.band());
         double lip = Math.min(5.2, R * 0.24);
         int tall = 9;
         if (d <= lip + 0.6) {
@@ -190,7 +193,7 @@ final class PiecesArenas {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
         boolean claimed = false;
-        if (d > 3.0 && Hash.noise(r.seed, x, z, 4) < 0.45) c.set(bx, walk - 1, bz, s("minecraft:moss_block"));
+        if (d > 4.2 && Hash.noise(r.seed, x, z, 4) < 0.45) c.set(bx, walk - 1, bz, s("minecraft:moss_block"));
         // the six caps: find the nearest one
         int k = spoke(dx, dz, 6, 0.5);
         double a = (k + 0.5) * Math.PI / 3;
@@ -241,7 +244,7 @@ final class PiecesArenas {
         // seams of glowing ore running out from the centre
         double a = Math.atan2(dz, dx);
         double off = a - Math.round(a / (Math.PI / 4)) * (Math.PI / 4);
-        if (d > 3.0 && d < R * 0.68 && Math.abs(off) * d < 0.55) c.set(bx, walk - 1, bz, GatesRegistry.EMBER_ORE.get().defaultBlockState());
+        if (d > 4.5 && d < R * 0.68 && Math.abs(off) * d < 0.55) c.set(bx, walk - 1, bz, GatesRegistry.EMBER_ORE.get().defaultBlockState());
         if (ringPoint(dx, dz, R * 0.45, 6, 0.5, 1.0) && free(r, x, z)) {
             for (int y = walk; y < Math.min(ceil - 1, walk + 7); y++) c.set(bx, y, bz, y == walk ? s("minecraft:polished_blackstone") : s("minecraft:polished_basalt[axis=y]"));
             c.set(bx, Math.min(ceil - 1, walk + 7), bz, s("minecraft:gilded_blackstone"));
@@ -286,7 +289,7 @@ final class PiecesArenas {
     static boolean gears(GatePainter.Ctx c, int bx, int bz, int x, int z, double dx, double dz, int walk, int ceil) {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
-        if (d > 3 && (ring(dx, dz, R * 0.3, 0.5) || ring(dx, dz, R * 0.72, 0.5))) c.set(bx, walk - 1, bz, s("minecraft:waxed_copper_grate"));
+        if (d > 4.2 && (ring(dx, dz, R * 0.3, 0.5) || ring(dx, dz, R * 0.72, 0.5))) c.set(bx, walk - 1, bz, s("minecraft:waxed_copper_grate"));
         if (ringPoint(dx, dz, R * 0.55, 6, 0.5, 0.5) && free(r, x, z)) {
             c.set(bx, walk, bz, s("minecraft:iron_block"));
             for (int y = walk + 1; y < walk + 5; y++) c.set(bx, y, bz, y == walk + 3 && !c.lightless ? s("minecraft:waxed_copper_bulb[lit=true]") : s("minecraft:waxed_cut_copper"));
@@ -318,7 +321,7 @@ final class PiecesArenas {
     static boolean glass(GatePainter.Ctx c, int bx, int bz, int x, int z, double dx, double dz, int walk, int ceil, int fo) {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
-        if (d > 3.0) c.set(bx, walk - 1, bz, ring(dx, dz, R * 0.3, 0.6) ? s("minecraft:cut_sandstone") : s("minecraft:sand"));
+        if (d > 4.2) c.set(bx, walk - 1, bz, ring(dx, dz, R * 0.3, 0.6) ? s("minecraft:cut_sandstone") : s("minecraft:sand"));
         if (ringPoint(dx, dz, R * 0.55, 6, 0.5, 1.0) && free(r, x, z)) {
             int k = spoke(dx, dz, 6, 0.5);
             int h = 4 + (k * 3 + (int) Math.floorMod(Math.round(dx + dz), 3L)) % 4;
@@ -394,12 +397,14 @@ final class PiecesArenas {
         if (rootPillar(r, dx, dz) && free(r, x, z)) {
             for (int y = walk; y < ceil; y++) {
                 int rel = y - walk;
-                c.set(bx, y, bz, rel == 0 ? GatesRegistry.JADE.get().defaultBlockState() : Hash.unit(r.seed, x + rel, z) < 0.35 ? s("minecraft:mangrove_roots")
+                c.set(bx, y, bz, rel == 0 ? GatesRegistry.JADE.get().defaultBlockState()
+                        : rel == 2 && !c.lightless && Math.floorMod(x + z, 2) == 0 ? s("minecraft:verdant_froglight") // a lamp in the root cage
+                        : Hash.unit(r.seed, x + rel, z) < 0.35 ? s("minecraft:mangrove_roots")
                         : rel % 4 == 2 ? s("minecraft:chiseled_stone_bricks") : s("minecraft:mossy_stone_bricks"));
             }
             return true;
         }
-        if (d > 3 && Hash.noise(r.seed, x, z, 3) < 0.3) c.set(bx, walk - 1, bz, s("minecraft:moss_block"));
+        if (d > 4.2 && Hash.noise(r.seed, x, z, 3) < 0.3) c.set(bx, walk - 1, bz, s("minecraft:moss_block"));
         boolean claimed = false;
         if (d > R * 0.4 && d < R && ceil - walk > 10) {
             c.set(bx, ceil - 1, bz, s("minecraft:jungle_leaves[persistent=true]"));
@@ -410,7 +415,8 @@ final class PiecesArenas {
             }
             claimed = true;
         }
-        return crown(c, bx, bz, dx, dz, ceil, 3.0, 7, s("minecraft:stripped_jungle_log[axis=y]"), s("minecraft:lantern[hanging=true]")) || claimed;
+        return crown(c, bx, bz, dx, dz, ceil, 3.0, 7, s("minecraft:stripped_jungle_log[axis=y]"), s("minecraft:lantern[hanging=true]"))
+                || rimLights(c, bx, bz, dx, dz, walk, ceil, R * 0.9, 12, s("minecraft:lantern[hanging=true]")) || claimed;
     }
 
     static boolean marketCounter(Room r, double dx, double dz) {
@@ -425,7 +431,7 @@ final class PiecesArenas {
     static boolean market(GatePainter.Ctx c, int bx, int bz, int x, int z, double dx, double dz, int walk, int ceil) {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
-        if (d > 3 && d < R * 0.35) c.set(bx, walk - 1, bz, s(((int) Math.floor(d) % 2 == 0) ? "minecraft:red_wool" : "minecraft:yellow_wool"));
+        if (d > 4.2 && d < R * 0.35) c.set(bx, walk - 1, bz, s(((int) Math.floor(d) % 2 == 0) ? "minecraft:red_wool" : "minecraft:yellow_wool"));
         if (marketCounter(r, dx, dz) && free(r, x, z)) {
             c.set(bx, walk, bz, s("minecraft:spruce_planks"));
             double g = Hash.unit(r.seed, x, z);
@@ -509,7 +515,7 @@ final class PiecesArenas {
     static boolean mirror(GatePainter.Ctx c, int bx, int bz, int x, int z, double dx, double dz, int walk, int ceil) {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
-        if (d > 3 && spokeLine(dx, dz, 8) && d < R * 0.6) c.set(bx, walk - 1, bz, s("minecraft:chiseled_quartz_block"));
+        if (d > 4.2 && spokeLine(dx, dz, 8) && d < R * 0.6) c.set(bx, walk - 1, bz, s("minecraft:chiseled_quartz_block"));
         if (mirrorArc(r, dx, dz) && free(r, x, z)) {
             c.set(bx, walk, bz, s("minecraft:chiseled_quartz_block"));
             for (int y = walk + 1; y < walk + 5; y++) c.set(bx, y, bz, GatesRegistry.MIRROR.get().defaultBlockState());
@@ -538,7 +544,7 @@ final class PiecesArenas {
     static boolean lab(GatePainter.Ctx c, int bx, int bz, int x, int z, double dx, double dz, int walk, int ceil) {
         Room r = c.r;
         double R = radius(r), d = Math.hypot(dx, dz);
-        if (d > 3) {
+        if (d > 4.2) {
             if (Math.floorMod((int) Math.floor(d), 4) == 0) c.set(bx, walk - 1, bz, s("minecraft:cyan_concrete"));
             if (d > R * 0.88) c.set(bx, walk - 1, bz, s(Math.floorMod((int) Math.floor(Math.atan2(dz, dx) * R / 1.5), 2) == 0 ? "minecraft:yellow_concrete" : "minecraft:black_concrete"));
         }
@@ -595,15 +601,16 @@ final class PiecesArenas {
             int k = spoke(dx, dz, 10, 0);
             int y = walk + 4 + (k * 3) % 6;
             if (y < ceil - 2) {
-                String[] things = {"minecraft:bookshelf", "minecraft:crafting_table", "minecraft:oak_planks", "minecraft:white_wool", "minecraft:jukebox",
-                        "minecraft:bookshelf", "minecraft:red_wool", "minecraft:oak_stairs[half=top]", "minecraft:note_block", "minecraft:pumpkin"};
-                c.set(bx, y, bz, s(things[k]));
-                if (k % 3 == 0) c.set(bx, y + 1, bz, s("minecraft:oak_slab[type=bottom]"));
+                String[] things = {"minecraft:bookshelf", "minecraft:crafting_table", "minecraft:oak_planks", "minecraft:white_wool", "minecraft:jack_o_lantern",
+                        "minecraft:bookshelf", "minecraft:red_wool", "minecraft:oak_stairs[half=top]", "minecraft:note_block", "minecraft:jack_o_lantern"};
+                c.set(bx, y, bz, s(c.lightless && things[k].endsWith("lantern") ? "minecraft:carved_pumpkin" : things[k]));
+                if (k % 3 == 0) c.set(bx, y + 1, bz, c.lightless ? s("minecraft:oak_slab[type=bottom]") : s("minecraft:lantern[hanging=false]"));
                 return true;
             }
         }
         if (Hash.unit(r.seed, x * 13, z) < 0.04) c.set(bx, ceil, bz, s("minecraft:crying_obsidian"));
-        return false;
+        // night lights left on: soul lanterns hanging at odd heights all round the room
+        return rimLights(c, bx, bz, dx, dz, walk, ceil, R * 0.82, 10, s("minecraft:soul_lantern[hanging=true]"));
     }
 
     /**
@@ -617,7 +624,7 @@ final class PiecesArenas {
             return true;
         }
         double R = radius(r), d = Math.hypot(dx, dz);
-        if (d > 3 && Hash.unit(r.seed, x, z) < 0.08) c.set(bx, walk, bz, s("minecraft:short_grass"));
+        if (d > 4.2 && Hash.unit(r.seed, x, z) < 0.08) c.set(bx, walk, bz, s("minecraft:short_grass"));
         if (!c.lightless && d > R * 0.5 && d < R * 0.95 && Hash.unit(r.seed, x * 3, z) < 0.01) {
             c.set(bx, walk, bz, s("minecraft:birch_fence"));
             c.set(bx, walk + 1, bz, s("minecraft:lantern[hanging=false]"));
@@ -651,6 +658,7 @@ final class PiecesArenas {
             return true;
         }
         c.set(bx, ceil, bz, GatesRegistry.VOID_GLASS.get().defaultBlockState());
-        return false;
+        // a few soul lanterns on long chains: just enough to see the monoliths' edges
+        return rimLights(c, bx, bz, dx, dz, walk, ceil, R * 0.85, 6, s("minecraft:soul_lantern[hanging=true]"));
     }
 }

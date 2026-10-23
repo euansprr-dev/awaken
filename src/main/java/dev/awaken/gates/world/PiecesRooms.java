@@ -669,7 +669,9 @@ final class PiecesRooms {
         if (fo == 1) c.set(bx, walk - 1, bz, s("minecraft:sand"));
         if (col > 0) {
             int top = col == 2 ? walk + 1 + (int) (Hash.unit(r.seed, x, z) * 3) : ceil - 1;
-            c.set(bx, walk, bz, s("minecraft:cut_sandstone"));
+            // every other column stands on a sun tile that still holds the heat
+            boolean sun = !c.lightless && Math.floorMod((alongX(r) ? x : z) - 2, 10) == 0;
+            c.set(bx, walk, bz, sun ? GatesRegistry.SUN_TILE.get().defaultBlockState() : s("minecraft:cut_sandstone"));
             for (int y = walk + 1; y < top; y++) c.set(bx, y, bz, s("minecraft:smooth_sandstone"));
             c.set(bx, top, bz, col == 2 ? s("minecraft:sandstone_slab[type=bottom]") : s("minecraft:chiseled_sandstone"));
             return true;

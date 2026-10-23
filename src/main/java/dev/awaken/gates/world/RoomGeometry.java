@@ -118,7 +118,9 @@ public final class RoomGeometry {
         if (!inRect(r, x, z)) return false;
         double u = u(r, x), v = v(r, z);
         return switch (r.shape) {
-            case RECT, PILLARED, PIT, TERRACE, SHAFT, ISLANDS -> true;
+            case RECT, PILLARED, PIT, TERRACE, SHAFT -> true;
+            // the Sky Leviathan's islands float in a round sky, so its corners stay inside its arena radius
+            case ISLANDS -> r.piece != SetPiece.ARENA_SKY || u * u + v * v <= 1.04 || onDoorAxis(r, x, z, 2);
             case OCTAGON -> Math.abs(u) + Math.abs(v) <= 1.55;
             case ROUND -> u * u + v * v <= 1.04 || onDoorAxis(r, x, z, 2);
             case CROSS -> Math.abs(u) <= 0.45 || Math.abs(v) <= 0.45;

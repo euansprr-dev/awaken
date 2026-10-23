@@ -73,6 +73,18 @@ class Looks:
             return i
         np = _np()
         S = self.S
+        if name == "__cap__":
+            # the cut surface of a cut-away plan: flat dark grey, so walls read as walls from above
+            arr = np.zeros((6, 16, 16, 4), np.float32)
+            arr[..., :3] = 0.16
+            arr[..., 3] = 1.0
+            i = len(self.keys)
+            self.keys.append(key)
+            self.index[key] = i
+            for lst, v in ((self.tex, arr), (self.kind, 1), (self.box, (0, 1, 0, 1, 0, 1)), (self.emit, 0), (self.opaque, True),
+                           (self.bright, True), (self.translucent, False)):
+                lst.append(v)
+            return i
         shape, faces = S.block_look(name, props)
         ns, path = S._split(name)
         arr = np.zeros((6, 16, 16, 4), np.float32)
@@ -97,12 +109,16 @@ class Looks:
             kind, box = 2, (0.06, 0.88, 0.19, 0.81, 0.19, 0.81)
         if path == "gate_bell":
             kind, box = 2, (0.25, 0.9, 0.25, 0.75, 0.25, 0.75)
+        if path in ("light", "structure_void", "barrier"):
+            kind = 0  # invisible: a light the game draws as nothing
         a = arr[..., 3]
         partial = ((a > 0.12) & (a < 0.88)).mean()
         translucent = kind in (1, 2) and partial > 0.25
         opaque = kind == 1 and a.min() > 0.9
         if ns == "minecraft":
             em = S._emission(name)
+            if path == "light":
+                em = int(dict(kv.split("=") for kv in props.split(",") if "=" in kv).get("level", "15"))
             if path.endswith("candle") and "lit=true" not in props:
                 em = 0
             if path in ("waxed_copper_bulb", "copper_bulb") and "lit=false" in props:
@@ -110,7 +126,7 @@ class Looks:
             bright = S._full_bright(name)
         else:
             em = OUR_LIGHT.get(path, S.our_light(path))
-            bright = path in ("gate_sky", "gate_signal_lamp", "gate_royal_jelly", "gate_paper_lantern", "rest_shrine") or em >= 12
+            bright = path in ("gate_sky", "gate_cloud", "gate_mirror", "gate_signal_lamp", "gate_royal_jelly", "gate_paper_lantern", "rest_shrine") or em >= 12
         i = len(self.keys)
         self.keys.append(key)
         self.index[key] = i
@@ -183,6 +199,12 @@ class Volume:
         v.g = g.copy()
         v.light = light
         k = max(0, y_abs - self.y0 + 1)
+        if 0 < k < v.g.shape[1]:
+            cap = self.looks.id("__cap__", "")
+            self.looks.finish()
+            top = v.g[:, k - 1, :]
+            cut = (v.g[:, k, :] > 0) & (top > 0)
+            top[cut] = cap
         v.g[:, k:, :] = 0
         return v
 
@@ -235,7 +257,7 @@ def raycast(vol, origins, dirs, fog_rgb, fog_start, fog_end, max_steps=420):
         if idx.size == 0:
             break
         gid = vol.g[vx, vy, vz]
-        solid = gid > 0
+        solid = L.K[gid] > 0
         if solid.any():
             hit_i = idx[solid]
             _shade_hits(vol, hit_i, gid[solid], o, d, t, tmax, vox, last_axis, col, trans, dist, first, fog_rgb, fog_start, fog_end)
@@ -1084,11 +1106,11 @@ BLOCKS = {
     "gate_paper_lantern": ("Paper Lantern", "lantern", None),
     "gate_rime_brick": ("Rime Brick", "cube", "pickaxe"),
     "gate_frost_window": ("Frosted Window", "translucent", None),
-    "gate_mirror": ("Mirror", "glow", "pickaxe"),
+    "gate_mirror": ("Mirror", "bright", "pickaxe"),
     "gate_lab_panel": ("Lab Panel", "glow", "pickaxe"),
     "gate_lab_rack": ("Machine Rack", "rack", "pickaxe"),
     "gate_dream_paper": ("Dream Wallpaper", "cube", None),
-    "gate_cloud": ("Cloudbank", "cube", None),
+    "gate_cloud": ("Cloudbank", "bright", None),
     "gate_sky": ("Painted Sky", "bright", None),
     "gate_void_glass": ("Void Glass", "glow", "pickaxe"),
     "gate_signal_lamp": ("Signal Lamp", "bright", "pickaxe"),

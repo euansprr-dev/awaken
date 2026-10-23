@@ -2,8 +2,7 @@
   "parent": "minecraft:block/block",
   "textures": {
     "particle": "awaken:block/gate_mirror",
-    "base": "awaken:block/gate_mirror",
-    "glow": "awaken:block/gate_mirror_glow"
+    "all": "awaken:block/gate_mirror"
   },
   "elements": [
     {
@@ -19,70 +18,31 @@
       ],
       "faces": {
         "down": {
-          "texture": "#base",
+          "texture": "#all",
           "cullface": "down"
         },
         "up": {
-          "texture": "#base",
+          "texture": "#all",
           "cullface": "up"
         },
         "north": {
-          "texture": "#base",
+          "texture": "#all",
           "cullface": "north"
         },
         "south": {
-          "texture": "#base",
+          "texture": "#all",
           "cullface": "south"
         },
         "west": {
-          "texture": "#base",
+          "texture": "#all",
           "cullface": "west"
         },
         "east": {
-          "texture": "#base",
-          "cullface": "east"
-        }
-      }
-    },
-    {
-      "from": [
-        0,
-        0,
-        0
-      ],
-      "to": [
-        16,
-        16,
-        16
-      ],
-      "faces": {
-        "down": {
-          "texture": "#glow",
-          "cullface": "down"
-        },
-        "up": {
-          "texture": "#glow",
-          "cullface": "up"
-        },
-        "north": {
-          "texture": "#glow",
-          "cullface": "north"
-        },
-        "south": {
-          "texture": "#glow",
-          "cullface": "south"
-        },
-        "west": {
-          "texture": "#glow",
-          "cullface": "west"
-        },
-        "east": {
-          "texture": "#glow",
+          "texture": "#all",
           "cullface": "east"
         }
       },
-      "light_emission": 15,
-      "shade_direction_override": "up"
+      "light_emission": 15
     }
   ]
 }

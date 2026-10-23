@@ -36,6 +36,52 @@ public final class InteriorTests {
     private InteriorTests() {}
 
     static void register() {
+        registerArenaTest();
+        // The P3 targets hold: the gates the game builds today are the gates tools/sim/pacing_sim.py was run on
+        // (tools/sim/gate_tuning.json), and that run met its targets (tools/sim/pacing_results.json "gate_checks").
+        // Changing floors, room counts, elites or modifiers fails this until the export is copied and the sim re-run.
+        AwakenTests.register("gates_tuning_matches_sim", 600, h -> {
+            String json = tuningJson(240);
+            try {
+                Files.writeString(Path.of("gate_tuning.json"), json);
+            } catch (IOException ex) {
+                Awaken.LOG.warn("[gates] could not write gate_tuning.json: {}", ex.toString());
+            }
+            Path simDir = Path.of("..", "tools", "sim");
+            if (!Files.isDirectory(simDir)) {
+                Awaken.LOG.warn("[gates] tools/sim not found from {}: tuning check skipped", Path.of("").toAbsolutePath());
+                h.succeed();
+                return;
+            }
+            try {
+                var live = com.google.gson.JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("ranks");
+                var sim = com.google.gson.JsonParser.parseString(Files.readString(simDir.resolve("gate_tuning.json"))).getAsJsonObject().getAsJsonObject("ranks");
+                for (String rank : List.of("D", "C", "B")) {
+                    var a = live.getAsJsonObject(rank);
+                    var b = sim.getAsJsonObject(rank);
+                    h.assertTrue(a.get("floors").equals(b.get("floors")), rank + ": floors per gate changed since the sim ran: " + a.get("floors") + " vs " + b.get("floors"));
+                    h.assertTrue(a.get("mods").equals(b.get("mods")), rank + ": modifiers rolled changed since the sim ran");
+                    h.assertTrue(a.get("twists").equals(b.get("twists")), rank + ": twists rolled changed since the sim ran");
+                    for (String what : List.of("path", "side", "elites")) {
+                        var la = a.getAsJsonObject("v2").getAsJsonArray(what);
+                        var lb = b.getAsJsonObject("v2").getAsJsonArray(what);
+                        for (int i = 0; i < la.size(); i++) {
+                            boolean na = la.get(i).isJsonNull(), nb = lb.get(i).isJsonNull();
+                            h.assertTrue(na == nb && (na || Math.abs(la.get(i).getAsDouble() - lb.get(i).getAsDouble()) < 0.05),
+                                    rank + ": " + what + " on floor " + (i + 1) + " is " + la.get(i) + ", the sim ran on " + lb.get(i));
+                        }
+                    }
+                }
+                var results = com.google.gson.JsonParser.parseString(Files.readString(simDir.resolve("pacing_results.json"))).getAsJsonObject();
+                var checks = results.getAsJsonArray("gate_checks");
+                h.assertTrue(checks != null && checks.size() >= 6, "the sim recorded its gate checks");
+                for (var c : checks) h.assertTrue(c.getAsJsonObject().get("pass").getAsBoolean(), "sim target missed: " + c);
+                for (var c : results.getAsJsonArray("target_checks")) h.assertTrue(c.getAsJsonObject().get("pass").getAsBoolean(), "sim pacing target missed: " + c);
+            } catch (IOException ex) {
+                h.fail("could not read the sim's files: " + ex);
+            }
+            h.succeed();
+        });
         AwakenTests.register("gates_interior_dumps", 400, h -> {
             for (Theme t : Theme.values()) {
                 GatePlan plan = showcasePlan(t);
@@ -109,6 +155,181 @@ public final class InteriorTests {
             Awaken.LOG.info("[gates] interior build budget\n{}", report);
             h.succeed();
         });
+    }
+
+    /**
+     * Every Lord fits the arena built for it: spawned for real (mobs module) to read its size and arena radius, then
+     * checked against the painted arena: clear room round its spot (with a block to spare, more above flyers), every
+     * spot a player can stand on inside its arena radius (+3), most of the floor round it open, its medallion lit.
+     */
+    static void registerArenaTest() {
+        AwakenTests.registerIsolated("gates_interior_arenas_fit_lords", 200, h -> {
+            var level = h.getLevel();
+            BlockPos at = h.absolutePos(new BlockPos(1, 60, 1));
+            StringBuilder report = new StringBuilder();
+            for (Theme t : Theme.values()) {
+                GatePlan plan = plan(0xA7E7AL + t.ordinal(), Rank.C, t, Layout.LABYRINTH, Twist.NONE);
+                GateLayout l = GateTestAccess.build(plan);
+                FloorLayout f = l.main.get(l.main.size() - 1);
+                Room r = f.room(f.end);
+                h.assertTrue(r.type == Room.Type.BOSS && r.piece == SetPiece.arenaFor(t), t.id + ": the boss room carries its Lord's arena");
+                h.assertTrue(r.gw >= 3 && r.gh >= 3 && r.height >= 17, t.id + ": arena keeps the mobs module's size (3x3 slots, 17 high)");
+                var lord = dev.awaken.core.api.MobHooks.spawnBoss(level, t.bossId(), at, 35, "");
+                h.assertTrue(lord != null, t.id + ": the Lord spawns");
+                // its size with its scale attribute (the cached bounding box only catches up on its first tick)
+                var dims = lord.getType().getDimensions().scale(lord.getScale());
+                double w = Math.max(lord.getBbWidth(), dims.width()), hgt = Math.max(lord.getBbHeight(), dims.height());
+                int home = lord instanceof net.minecraft.world.entity.Mob m && m.hasHome() ? m.getHomeRadius() : 22;
+                boolean flyer = lord.isNoGravity();
+                lord.discard();
+                Map<Long, BlockState> b = paintRoom(l, f, r, 21);
+                int walkY = f.baseY + r.dy;
+                double scx = r.centerX() + 0.5, scz = r.centerZ() + 0.5;
+                // the Lord's box at its spot, one block to spare round it and above (three over a flyer)
+                int half = (int) Math.ceil(w / 2 + 1), up = (int) Math.ceil(hgt + (flyer ? 3 : 1));
+                for (int x = (int) Math.floor(scx - half); x <= (int) Math.floor(scx + half); x++)
+                    for (int z = (int) Math.floor(scz - half); z <= (int) Math.floor(scz + half); z++)
+                        for (int y = walkY; y < walkY + up; y++)
+                            h.assertTrue(passable(b.get(key(x, y, z))), t.id + ": " + b.get(key(x, y, z)) + " in the Lord's space at " + x + "," + (y - walkY) + "," + z
+                                    + " (lord " + String.format(Locale.ROOT, "%.1fx%.1f", w, hgt) + ")");
+                // every column a player can stand on is inside the Lord's arena (it ignores targets outside it)
+                double far = 0;
+                int open = 0, disc = 0;
+                for (int x = r.x0(); x <= r.x1(); x++) {
+                    for (int z = r.z0(); z <= r.z1(); z++) {
+                        double d = Math.hypot(x + 0.5 - scx, z + 0.5 - scz);
+                        boolean stand = false;
+                        for (int y = walkY - 4; y <= walkY + 2 && !stand; y++)
+                            stand = standable(b.get(key(x, y - 1, z))) && passable(b.get(key(x, y, z))) && passable(b.get(key(x, y + 1, z)));
+                        if (stand) far = Math.max(far, d);
+                        if (d <= 10) {
+                            disc++;
+                            if (stand) open++;
+                        }
+                    }
+                }
+                if (!t.friendly) h.assertTrue(far <= home + 3, t.id + ": a player can stand " + String.format(Locale.ROOT, "%.1f", far) + " from the Lord, its arena is " + home);
+                h.assertTrue(open >= disc * 0.6, t.id + ": " + open + " of " + disc + " columns within 10 of the Lord are open floor");
+                int lit = light(b, r.centerX(), walkY + 1, r.centerZ(), walkY - 4, walkY + 26);
+                h.assertTrue(lit >= 9, t.id + ": the Lord's spot is lit (" + lit + ")");
+                report.append(String.format(Locale.ROOT, "%s: lord %.1fx%.1f%s, arena %d, farthest stand %.1f, open %d/%d, light %d%n",
+                        t.id, w, hgt, flyer ? " (flies)" : "", home, far, open, disc, lit));
+            }
+            Awaken.LOG.info("[gates] arenas\n{}", report);
+            h.succeed();
+        });
+    }
+
+    /** Block light at a spot: a flood fill from every emitter in the painted map, stopped by full blocks. */
+    static int light(Map<Long, BlockState> b, int sx, int sy, int sz, int yMin, int yMax) {
+        int best = 0;
+        for (var e : b.entrySet()) {
+            int em = e.getValue().getLightEmission();
+            if (em <= best) continue;
+            long k = e.getKey();
+            int x = (int) (k >> 40) & 0xFFFFF, y = (int) (k >> 20) & 0xFFFFF, z = (int) k & 0xFFFFF;
+            if (x >= 0x80000) x -= 0x100000;
+            if (z >= 0x80000) z -= 0x100000;
+            int manhattan = Math.abs(x - sx) + Math.abs(y - sy) + Math.abs(z - sz);
+            if (em - manhattan <= best) continue;
+            // walk it properly: BFS from this emitter, limited to its reach
+            ArrayDeque<int[]> q = new ArrayDeque<>();
+            Map<Long, Integer> seen = new HashMap<>();
+            q.add(new int[]{x, y, z, em});
+            seen.put(k, em);
+            while (!q.isEmpty()) {
+                int[] c = q.poll();
+                if (c[0] == sx && c[1] == sy && c[2] == sz) {
+                    best = Math.max(best, c[3]);
+                    break;
+                }
+                if (c[3] <= 1) continue;
+                int[][] n = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+                for (int[] d : n) {
+                    int nx = c[0] + d[0], ny = c[1] + d[1], nz = c[2] + d[2];
+                    if (ny < yMin || ny > yMax) continue;
+                    long nk = key(nx, ny, nz);
+                    BlockState st = b.get(nk);
+                    if (st != null && st.canOcclude()) continue;
+                    if (seen.getOrDefault(nk, 0) >= c[3] - 1) continue;
+                    seen.put(nk, c[3] - 1);
+                    q.add(new int[]{nx, ny, nz, c[3] - 1});
+                }
+            }
+        }
+        return best;
+    }
+
+    /**
+     * What the Director actually rolls, measured: per rank, the floors, modifiers and twists, and per floor the monsters
+     * on the critical path and in the side rooms (elites weighted {@link #ELITE_WEIGHT}), for content versions 1 and 2.
+     * Written to run/gate_tuning.json; tools/sim/pacing_sim.py reads it (a copy lives in tools/sim/gate_tuning.json).
+     */
+    public static final double ELITE_WEIGHT = 3.0;
+
+    static String tuningJson(int samples) {
+        StringBuilder sb = new StringBuilder("{\"elite_weight\":").append(ELITE_WEIGHT).append(",\"samples\":").append(samples).append(",\"ranks\":{");
+        boolean firstRank = true;
+        for (Rank rank : Rank.values()) {
+            dev.awaken.gates.run.GateMemory mem = new dev.awaken.gates.run.GateMemory();
+            Map<Integer, Integer> floors = new java.util.TreeMap<>();
+            Map<String, Integer> mods = new java.util.TreeMap<>(), twists = new java.util.TreeMap<>(), layouts = new java.util.TreeMap<>();
+            double[][] path = new double[3][7], side = new double[3][7], elites = new double[3][7], rooms = new double[3][7];
+            int[][] n = new int[3][7];
+            for (int i = 0; i < samples; i++) {
+                var roll = dev.awaken.gates.Director.roll(0x7E57L + i * 104729L + rank.ordinal() * 7919L, rank, mem, rank, null);
+                GatePlan p = roll.plan();
+                floors.merge(p.floors(), 1, Integer::sum);
+                for (Modifier m : p.modifiers()) mods.merge(m.name(), 1, Integer::sum);
+                twists.merge(p.twist().name(), 1, Integer::sum);
+                layouts.merge(p.layout().name(), 1, Integer::sum);
+                for (int v = 1; v <= 2; v++) {
+                    GateLayout l = GateTestAccess.build(p.rebuilt(v));
+                    for (FloorLayout f : l.main) {
+                        // ordinary floors only: the Lord's floor is a short approach and the Lord (the sim's own term)
+                        if (f.floor > 6 || f.bossFloor) continue;
+                        java.util.Set<Integer> onPath = new java.util.HashSet<>(f.criticalPath());
+                        for (Room r : f.rooms) {
+                            double units = r.normals + r.wave2Normals + ELITE_WEIGHT * (r.elites + r.wave2Elites);
+                            if (r.type == Room.Type.CAVERN) units *= 0.6; // zones wake one by one; about 60% of them hold monsters
+                            if (onPath.contains(r.id)) path[v][f.floor] += units;
+                            else side[v][f.floor] += units;
+                            elites[v][f.floor] += r.elites + r.wave2Elites;
+                            rooms[v][f.floor] += 1;
+                        }
+                        n[v][f.floor]++;
+                    }
+                }
+            }
+            if (!firstRank) sb.append(',');
+            firstRank = false;
+            sb.append('"').append(rank.label).append("\":{\"floors\":").append(jsonMap(floors)).append(",\"mods\":").append(jsonMap(mods))
+                    .append(",\"twists\":").append(jsonMap(twists)).append(",\"layouts\":").append(jsonMap(layouts));
+            for (int v = 1; v <= 2; v++) {
+                sb.append(",\"v").append(v).append("\":{");
+                for (String what : List.of("path", "side", "elites", "rooms")) {
+                    double[] arr = what.equals("path") ? path[v] : what.equals("side") ? side[v] : what.equals("elites") ? elites[v] : rooms[v];
+                    sb.append('"').append(what).append("\":[");
+                    for (int f = 1; f <= 6; f++) {
+                        if (f > 1) sb.append(',');
+                        sb.append(n[v][f] == 0 ? "null" : String.format(Locale.ROOT, "%.2f", arr[f] / n[v][f]));
+                    }
+                    sb.append(what.equals("rooms") ? "]" : "],");
+                }
+                sb.append('}');
+            }
+            sb.append('}');
+        }
+        return sb.append("}}").toString();
+    }
+
+    private static String jsonMap(Map<?, Integer> m) {
+        StringBuilder sb = new StringBuilder("{");
+        for (var e : m.entrySet()) {
+            if (sb.length() > 1) sb.append(',');
+            sb.append('"').append(e.getKey()).append("\":").append(e.getValue());
+        }
+        return sb.append('}').toString();
     }
 
     // ---- plans ------------------------------------------------------------------------------------------------------

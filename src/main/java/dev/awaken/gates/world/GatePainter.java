@@ -211,7 +211,8 @@ public final class GatePainter {
                 int hRel = r.height;
                 for (int y = top + 1; y <= yHi; y++) {
                     int rel = y - floorY;
-                    BlockState s = rel <= hRel + 1 ? (rel == hRel - 1 && k.has(Kit.INSETS) ? cornice((d.side + 2) % 4) : p.wall()) : p.fill();
+                    BlockState s = rel > hRel + 1 ? p.fill() : k.has(Kit.SKY) ? GatesRegistry.SKY.get().defaultBlockState()
+                            : rel == hRel - 1 && k.has(Kit.INSETS) ? cornice((d.side + 2) % 4) : p.wall();
                     set(bx, y, bz, s);
                 }
             } else solidColumn(bx, bz, top + 1, yHi);
@@ -368,6 +369,7 @@ public final class GatePainter {
                 if (g != null) return g;
             }
             if (rel <= doorRel + RoomGeometry.DOOR_HEIGHT) return k.has(Kit.INSETS) ? k.pilaster() : p.pillar();
+            if (k.has(Kit.SKY)) return rel > h + 1 ? p.fill() : rel == doorRel + RoomGeometry.DOOR_HEIGHT + 1 ? k.capital() : GatesRegistry.SKY.get().defaultBlockState();
             if (!k.has(Kit.INSETS)) return rel > h + 1 ? p.fill() : p.wall();
             if (rel == h - 1 || rel == lintel) return k.capital();
             if (rel >= h) return rel > h + 1 ? p.fill() : p.wall();
@@ -623,7 +625,7 @@ public final class GatePainter {
         int chandelierOffset(int x, int z) {
             int cx = r.centerX(), cz = r.centerZ();
             int best = chandelierPart(x - cx, z - cz);
-            if (best >= 0 || dim || r.area() < 2) return best;
+            if (best >= 0 || r.dark || r.area() < 2) return best;
             int sx = Math.floorDiv(x, 16) * 16 + 8, sz = Math.floorDiv(z, 16) * 16 + 8;
             if (sx == cx && sz == cz) return -1;
             if (!RoomGeometry.inside(r, sx, sz) || RoomGeometry.blocked(r, sx, sz)) return -1;
@@ -681,6 +683,7 @@ public final class GatePainter {
                 if (part >= 0 && !k.has(Kit.SKYLIGHT) && !k.has(Kit.SKY)) chandelier(bx, bz, part, walk, ceil);
             }
             if (nearFeature) return;
+            if (brazier(bx, bz, x, z, walk)) return;
             boolean axis = RoomGeometry.onDoorAxis(r, x, z, 1);
             if (onRunner(x, z)) {
                 if (k.has(Kit.RAILS)) set(bx, walk, bz, rail(x, z));
@@ -727,6 +730,26 @@ public final class GatePainter {
                 }
                 default -> {}
             }
+        }
+
+        /**
+         * The antechamber's braziers: a fire either side of the arena's doors, so the last room before the Lord says
+         * where the Lord is. Soul fire in the cold themes.
+         */
+        boolean brazier(int bx, int bz, int x, int z, int walk) {
+            if (r.type != Room.Type.ANTE || r.pathOut == null || lightless) return false;
+            Room.Door d = r.pathOut;
+            if (x < d.gx * 16 || x >= d.gx * 16 + 16 || z < d.gz * 16 || z >= d.gz * 16 + 16) return false;
+            int lat = RoomGeometry.lateral(d, x, z);
+            if (RoomGeometry.depth(d, x, z) != RoomGeometry.INSET || (lat != RoomGeometry.DOOR_LO - 2 && lat != RoomGeometry.DOOR_HI + 2)) return false;
+            boolean soul = theme == Theme.BELL_CRYPT || theme == Theme.ABYSSAL_SHRINE || theme == Theme.FROST_MONASTERY || theme == Theme.NIGHTMARE;
+            // soul fire never spreads; the warm themes burn a cauldron of lava, which can't set a wooden hall alight
+            set(bx, walk, bz, k.capital());
+            if (soul) {
+                set(bx, walk + 1, bz, state("minecraft:soul_soil"));
+                set(bx, walk + 2, bz, state("minecraft:soul_fire"));
+            } else set(bx, walk + 1, bz, state("minecraft:lava_cauldron"));
+            return true;
         }
 
         /** Beams cross flat-ceilinged rooms in line with the pilasters, just under the ceiling. */

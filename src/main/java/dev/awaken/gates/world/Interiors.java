@@ -109,19 +109,23 @@ public final class Interiors {
                 r = f.room(path.get(path.size() - 2));
                 Room.Door d = r.doorTo(end.id);
                 if (d == null) return null;
+                // where you walk in, facing the blue door
+                if (r.pathIn != null) return lookFrom(f, r, r.pathIn, 2, 0, d.centerX(), f.baseY + d.y + 2.0, d.centerZ());
                 return lookFrom(f, r, d, -5, 0, d.centerX(), f.baseY + d.y + 2.0, d.centerZ());
             }
             case "ante" -> {
                 r = null;
                 for (Room o : f.rooms) if (o.type == Room.Type.ANTE) r = o;
                 if (r == null || r.pathOut == null) return null;
+                if (r.pathIn != null) return lookFrom(f, r, r.pathIn, 2, 0, r.pathOut.centerX(), f.baseY + r.pathOut.y + 2.5, r.pathOut.centerZ());
                 return lookFrom(f, r, r.pathOut, -5, 0, r.pathOut.centerX(), f.baseY + r.pathOut.y + 2.5, r.pathOut.centerZ());
             }
             case "lord" -> {
                 r = f.room(f.end);
                 if (r.doors.isEmpty()) return null;
                 Room.Door d = r.doors.get(0);
-                return lookFrom(f, r, d, 4, 0, r.centerX(), f.baseY + r.dy + 5.0, r.centerZ());
+                // just through the doors: the Lord on its lit medallion, the arena opening round it
+                return lookFrom(f, r, d, 1, 0, r.centerX(), f.baseY + r.dy + 4.0, r.centerZ());
             }
             default -> {
                 return null;
