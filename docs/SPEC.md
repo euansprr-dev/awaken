@@ -411,6 +411,17 @@ Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - Twelve family materials (`<family>_<thing>`) and the beasts' parts join the Hunter gear tags (E hides, cores and
   bindings; D cores) from `src/main/merge/fauna/`.
 
+Plan v2 · water, caves and mounts (details in docs/modules/fauna.md, P3):
+- Two more families, the Tidewater (5) and the Hollows (5): 44 overworld creatures in all, with two more named beasts
+  (the Lantern Maw, lair the Sunken Shrine on the sea floor; the Thousandfoot, lair the Crystal Nest in rock; lair
+  placements SEABED and CAVE, spacing 96, separation 40).
+- Water creatures have their own spawn category `awaken:fauna_water` (10 per player; role caps 7/3/0/1), so they never
+  take vanilla fish or squid slots. Cave creatures share `awaken:fauna` but need a roof; Hollows hunters keep the light rule.
+- Mounts (Frost Stag, Dune Ray, Tidesteed) from level 11: trust by sneaking and feeding the favourite food (3–4 feeds),
+  then the Hunter's Bridle (level 11 recipe); the Hunter's Whistle (level 13 recipe) calls the mount from 160 blocks
+  (10 s cooldown), sneak-use sends it home. One bonded mount per player; the bond is saved on both sides (schema 1);
+  bonded mounts never despawn.
+
 Plan v2 · anomalies (details in docs/modules/anomalies.md):
 - One anomaly at a time per player, after 6–12 minutes of outdoor play (3–6 after awakening), ×1.5 faster at night;
   paused in gates, outside the overworld, asleep, at home (inside a Hearth's radius) and in the first 2 minutes.
