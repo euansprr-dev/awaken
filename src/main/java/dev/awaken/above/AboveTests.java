@@ -255,6 +255,45 @@ final class AboveTests {
             h.succeed();
         });
 
+        AwakenTests.register("above_halo_station_generates", 200, h -> {
+            var regs = h.getLevel().registryAccess();
+            h.assertTrue(regs.lookupOrThrow(net.minecraft.core.registries.Registries.DIMENSION_TYPE)
+                    .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION_TYPE, dev.awaken.Awaken.id("halo"))).isPresent(),
+                    "awaken:halo dimension type loaded");
+            h.assertTrue(regs.lookupOrThrow(net.minecraft.core.registries.Registries.BIOME)
+                    .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BIOME, dev.awaken.Awaken.id("halo_orbit"))).isPresent(),
+                    "awaken:halo_orbit biome loaded");
+            var orbit = regs.lookupOrThrow(net.minecraft.core.registries.Registries.BIOME)
+                    .getOrThrow(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BIOME, dev.awaken.Awaken.id("halo_orbit")));
+            var gen = new dev.awaken.above.halo.HaloChunkGenerator(new net.minecraft.world.level.biome.FixedBiomeSource(orbit));
+            var rs = h.getLevel().getChunkSource().randomState();
+            var column = gen.getBaseColumn(HaloLayout.ARRIVAL.getX(), HaloLayout.ARRIVAL.getZ(), h.getLevel(), rs);
+            h.assertTrue(column.getBlock(HaloLayout.FLOOR).isSolid(), "generator column has the station floor");
+            h.assertTrue(column.getBlock(HaloLayout.FLOOR + 1).isAir(), "generator column is open above the floor");
+            h.assertTrue(gen.getBaseHeight(500, 500, net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, h.getLevel(), rs)
+                    == h.getLevel().getMinY(), "void outside the station");
+            var halo = h.getLevel().getServer().getLevel(dev.awaken.above.halo.Halo.LEVEL);
+            if (halo == null) {
+                // The GameTest server builds only the vanilla dimensions (FLAT_ALL_DIMENSIONS without datapack stems).
+                h.succeed();
+                return;
+            }
+            BlockPos pad = HaloLayout.PAD;
+            halo.getChunk(pad.getX() >> 4, pad.getZ() >> 4);
+            h.assertTrue(halo.getBlockState(pad).is(AboveBlocks.RETURN_PAD.get()), "return pad generated");
+            h.assertTrue(halo.getBlockState(new BlockPos(7, HaloLayout.FLOOR + 1, 0)).is(AboveBlocks.LOG_TERMINAL.get()), "archive terminal generated");
+            h.assertTrue(halo.getBlockState(HaloLayout.ARRIVAL.below()).isSolid(), "arrival floor generated");
+            for (HaloLayout.Cache c : HaloLayout.CACHES) {
+                halo.getChunk(c.pos().getX() >> 4, c.pos().getZ() >> 4);
+                h.assertTrue(halo.getBlockEntity(c.pos()) instanceof net.minecraft.world.RandomizableContainer rc && rc.getLootTable() != null,
+                        "loot cache at " + c.pos());
+            }
+            BlockPos machine = new BlockPos(26, HaloLayout.FLOOR + 1, 26);
+            halo.getChunk(machine.getX() >> 4, machine.getZ() >> 4);
+            h.assertTrue(halo.getBlockState(machine).is(AboveBlocks.BROKEN_MACHINE.get()), "a machine to scan on the ring");
+            h.succeed();
+        });
+
         AwakenTests.register("above_data_codec_and_halo_layout", 20, h -> {
             AboveData d = new AboveData();
             d.learnAll();

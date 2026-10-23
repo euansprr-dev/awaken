@@ -29,8 +29,24 @@ public final class ClientAbove {
         gateMarks = List.of();
     }
 
+    private static List<CodexEntries.Entry> cached = List.of();
+    private static Object cachedData, cachedLogs;
+    private static boolean cachedReached;
+
     /** Only what the player has found: blueprints scanned, logs read, ruins found, the Halo once it has been seen. */
     static List<CodexEntries.Entry> codex() {
+        var mc = Minecraft.getInstance();
+        boolean reached = mc.player != null && Progression.profile(mc.player).counter("awaken:story/halo_reached") > 0;
+        Object logs = PrecursorLogs.all();
+        if (cachedData == data && cachedLogs == logs && cachedReached == reached) return cached;
+        cached = List.copyOf(build(reached));
+        cachedData = data;
+        cachedLogs = logs;
+        cachedReached = reached;
+        return cached;
+    }
+
+    private static List<CodexEntries.Entry> build(boolean reached) {
         List<CodexEntries.Entry> out = new ArrayList<>();
         AboveData d = data;
         String reactor = "above/bp/" + MachineType.REACTOR.id;
@@ -71,8 +87,6 @@ public final class ClientAbove {
             out.add(new CodexEntries.Entry("above/ruin/" + i, "Ruins", k == null ? "Precursor ruin" : k.displayName,
                     "Found at " + r.center().getX() + ", " + r.center().getZ() + ". A Waypoint Pylon can take you back.", true, List.of()));
         }
-        var mc = Minecraft.getInstance();
-        boolean reached = mc.player != null && Progression.profile(mc.player).counter("awaken:story/halo_reached") > 0;
         if (d.haloSeen() || reached) {
             out.add(new CodexEntries.Entry("above/halo", "The Above", "The Halo",
                     reached ? "The Ascendants' station in orbit. Their archive is there. So is the view."
