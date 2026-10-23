@@ -707,7 +707,11 @@ def build_sounds():
             entries.append(e)
         key = f"fauna.{cid}.{kind}"
         ev = {"sounds": entries}
-        if kind != "step":
+        if kind == "step":
+            # one shared line, like vanilla's "Footsteps" for every mob
+            ev["subtitle"] = "subtitles.awaken.fauna.step"
+            lang["subtitles.awaken.fauna.step"] = "Footsteps"
+        else:
             ev["subtitle"] = "subtitles.awaken." + key
             name = nm.get(cid, cid)
             if kind == "roar":
