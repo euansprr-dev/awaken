@@ -146,7 +146,7 @@ final class MobsTests {
             h.assertTrue(boss.bar() != null && boss.bar().isVisible(), "visible bar");
             h.assertTrue(boss.def().phases.size() == 3, "three phases");
             boss.setHealth(boss.getMaxHealth() * 0.5F);
-            h.runAfterDelay(4, () -> {
+            h.runAfterDelay(8, () -> {
                 h.assertTrue(boss.phase() == 1, "phase two below 66% (was " + boss.phase() + ")");
                 h.assertTrue(Math.abs(boss.bar().getProgress() - 0.5F) < 0.05F, "bar follows health");
                 boss.discard();

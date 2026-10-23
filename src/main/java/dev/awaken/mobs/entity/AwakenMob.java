@@ -322,8 +322,8 @@ public class AwakenMob extends Monster {
         if (tickCount % 20 == 0) {
             syncForceTags();
             if (d.has(Trait.MIMIC)) updateMimic(level);
-            if (bar != null) bar.setProgress(getHealth() / getMaxHealth());
         }
+        if (bar != null && (tickCount & 3) == 0) bar.setProgress(getHealth() / getMaxHealth());
         if (flag(F_DECOY) && --decoyTicks <= 0) {
             poof(level);
             return;
