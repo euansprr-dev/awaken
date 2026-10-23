@@ -284,7 +284,7 @@ Each named beast has a lair, a small structure placed by world generation: `awak
 
 Placement (`LairStructure.findSite`): the candidate chunk and up to 11 more spots within six chunks of it; the cheap
 biome test first (near sea level, or at the surface for the peaks), then dry ground (shallow bog up to 2 deep for the
-Mire Mother, built at the water line), a slope limit across the floor (6-9 blocks, 16 for the Stonehorn), the floor
+Mire Mother, built at the water line), a slope limit across the floor (4-7 blocks, 16 for the Stonehorn), the floor
 at the mean height. The floor disc is flattened by the beardifier (NeoForge `PieceBeardifierModifier`, BEARD_THIN on
 the floor only) and built of mud, gravel, stone, moss or sand so trees don't grow through it; the ring outside follows
 the terrain column by column. Rare by design: about one candidate per 1,500-2,500 blocks of world, and only where the
