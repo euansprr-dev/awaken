@@ -49,6 +49,38 @@ final class DescentTests {
         AwakenTests.register("descent_rule_timers", 40, DescentTests::timers);
         AwakenTests.register("descent_endless_rules", 40, DescentTests::endless);
         AwakenTests.register("descent_dream_view", 40, DescentTests::dreamView);
+        AwakenTests.register("descent_data_loads", 40, DescentTests::dataLoads);
+    }
+
+    /**
+     * The GameTest server never creates datapack dimensions, so decode ours here: every stratum's dimension JSON must
+     * parse into our generator, and their dimension types and biomes must be registered.
+     */
+    private static void dataLoads(GameTestHelper h) {
+        var server = h.getLevel().getServer();
+        var ops = net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE, server.registryAccess());
+        for (int n = 0; n <= Strata.COUNT; n++) {
+            String name = n == 0 ? "endless" : "stratum_" + n;
+            var id = dev.awaken.Awaken.id("dimension/" + name + ".json");
+            var res = server.getResourceManager().getResource(id);
+            h.assertTrue(res.isPresent(), "missing " + id);
+            try (var reader = res.get().openAsReader()) {
+                var json = com.google.gson.JsonParser.parseReader(reader);
+                var stem = net.minecraft.world.level.dimension.LevelStem.CODEC.parse(ops, json).getOrThrow();
+                h.assertTrue(stem.generator() instanceof dev.awaken.descent.world.StratumGenerator gen && gen.stratum() == n,
+                        name + " does not use the stratum generator");
+                h.assertTrue(stem.type().value().minY() == Layout.MIN_Y && stem.type().value().height() == Layout.HEIGHT,
+                        name + " has the wrong height");
+            } catch (Exception e) {
+                h.fail(name + ": " + e.getMessage());
+            }
+            if (n > 0) {
+                var biome = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BIOME, dev.awaken.Awaken.id(name));
+                h.assertTrue(server.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BIOME).get(biome).isPresent(),
+                        "biome " + name + " is not registered");
+            }
+        }
+        h.succeed();
     }
 
     // ---- worldgen ---------------------------------------------------------------------------------------------------
@@ -126,16 +158,26 @@ final class DescentTests {
             double yS = Layout.ENTRY_Y - 1 - pitch * (k + a);
             if (yS < floor + 2) break;
             double th = Layout.THETA0 + a * Math.PI * 2;
+            // the footing a player would take: any column across the ramp, closest to where they were
             int found = Integer.MIN_VALUE;
-            for (double rr = t.helixR(yS) - w + 1; rr <= t.helixR(yS) && found == Integer.MIN_VALUE; rr += 1.0) {
+            for (double rr = t.helixR(yS) - w + 1; rr <= t.helixR(yS); rr += 1.0) {
                 int x = (int) Math.floor(Math.cos(th) * rr), z = (int) Math.floor(Math.sin(th) * rr);
                 BlockState[] col = t.singleColumn(x, z);
-                for (int y = (int) Math.floor(yS) + 1; y >= (int) Math.floor(yS) - 3; y--) {
-                    if (walkable(col, y)) { found = y; break; }
+                for (int y = (int) Math.floor(yS) + 2; y >= (int) Math.floor(yS) - 3; y--) {
+                    if (walkable(col, y) && (found == Integer.MIN_VALUE || Math.abs(y - last) < Math.abs(found - last))) found = y;
                 }
             }
             h.assertTrue(found != Integer.MIN_VALUE, "form " + form + ": the spiral has no footing at turn " + k + " angle " + String.format("%.2f", a));
-            h.assertTrue(last - found <= 2 && found - last <= 2, "form " + form + ": the spiral jumps " + (last - found) + " blocks at turn " + k);
+            if (!(last - found <= 2 && found - last <= 2)) {
+                StringBuilder dbg = new StringBuilder();
+                double rr = t.helixR(yS) - w / 2.0;
+                int x = (int) Math.floor(Math.cos(th) * rr), z = (int) Math.floor(Math.sin(th) * rr);
+                BlockState[] col = t.singleColumn(x, z);
+                for (int y = (int) yS + 3; y >= (int) yS - 5; y--) dbg.append(y).append('=').append(col[y].getBlock().getDescriptionId().replace("block.", "")).append(' ');
+                h.fail("form " + form + ": the spiral jumps " + (last - found) + " blocks at turn " + k
+                        + " (from y " + last + " to " + found + ", surface " + String.format("%.1f", yS) + ", angle " + String.format("%.3f", a)
+                        + ") at " + x + "," + z + ": " + dbg);
+            }
             last = found;
             samples++;
         }
