@@ -75,10 +75,11 @@ public class FaunaMob extends AwakenMob {
      * Each named beast's signature move: its wind-up opens with the beast's roar or cry (on top of the telegraph), so
      * the big one always reads before it lands. The hero bodies give these their own wind-up and strike clips.
      */
-    public static final java.util.Map<String, String> SIGNATURES = java.util.Map.of(
-            "briar_sow", "Bramble Charge", "dune_wyrm", "Surface", "old_antler", "Antler Rush", "mire_mother", "Tongue Lash",
-            "plumed_coil", "Coil Strike", "weaver_queen", "Pounce", "empress_moth", "Wingbeat", "stonehorn", "Ram Charge",
-            "mycelord", "Cap Slam");
+    public static final java.util.Map<String, String> SIGNATURES = java.util.Map.ofEntries(
+            java.util.Map.entry("briar_sow", "Bramble Charge"), java.util.Map.entry("dune_wyrm", "Surface"), java.util.Map.entry("old_antler", "Antler Rush"),
+            java.util.Map.entry("mire_mother", "Tongue Lash"), java.util.Map.entry("plumed_coil", "Coil Strike"), java.util.Map.entry("weaver_queen", "Pounce"),
+            java.util.Map.entry("empress_moth", "Wingbeat"), java.util.Map.entry("stonehorn", "Ram Charge"), java.util.Map.entry("mycelord", "Cap Slam"),
+            java.util.Map.entry("lantern_maw", "Maw Lunge"), java.util.Map.entry("thousandfoot", "Coil Strike")); // P3
 
     // Server state. No field initialisers: registerGoals runs inside the super constructor.
     int scareTicks;

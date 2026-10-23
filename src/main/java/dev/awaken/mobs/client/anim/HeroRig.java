@@ -91,6 +91,10 @@ public final class HeroRig {
                 HeroRig r = parse(src);
                 m.put(r.id, r);
             }
+            for (String[] src : Fauna3Data.SOURCES) { // P3 bodies (tools/art/specs/fauna3.py)
+                HeroRig r = parse(src);
+                m.put(r.id, r);
+            }
             all = java.util.Collections.unmodifiableMap(m);
         }
         return all;

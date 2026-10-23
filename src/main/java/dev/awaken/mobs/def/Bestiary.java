@@ -22,6 +22,8 @@ public final class Bestiary {
         DeepBestiary.define(all);
         FaunaBestiary.define(all);
         WildBestiary.define(all);
+        WaterBestiary.define(all);
+        CaveBestiary.define(all);
         Map<String, MobDef> map = new LinkedHashMap<>();
         for (MobDef d : all) {
             if (map.put(d.id, d) != null) throw new IllegalStateException("Duplicate mob id " + d.id);

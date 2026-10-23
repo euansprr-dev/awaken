@@ -5,6 +5,12 @@
       "name": "AWAKEN_FAUNA",
       "constructor": "(Ljava/lang/String;Ljava/lang/String;IZZI)V",
       "parameters": ["awaken:fauna", "AWF", 16, true, false, 128]
+    },
+    {
+      "enum": "net/minecraft/world/entity/MobCategory",
+      "name": "AWAKEN_FAUNA_WATER",
+      "constructor": "(Ljava/lang/String;Ljava/lang/String;IZZI)V",
+      "parameters": ["awaken:fauna_water", "AWW", 10, true, false, 64]
     }
   ]
 }
