@@ -45,9 +45,11 @@ import org.jspecify.annotations.Nullable;
 import java.util.function.Supplier;
 
 /**
- * The Awakened layer's creatures (plan v2 section 4.2): natural spawning in three biome families through NeoForge
- * biome modifiers and spawn placements under their own category and cap, the awakening reveal, first sightings
- * (discovery XP, toasts, the Codex), named beasts and their registry, and the Now tracker line for a beast nearby.
+ * The Awakened layer's creatures (plan v2 section 4.2): natural spawning in nine biome families (three from P1, six
+ * from P2) through NeoForge biome modifiers and spawn placements under their own category and cap, the awakening
+ * reveal, first sightings (discovery XP, toasts, the Codex), named beasts and their registry, their lairs (placed by
+ * world generation, {@link Lairs}), the families' crafting materials ({@link FaunaItems}), and the Now tracker lines
+ * for a beast nearby or a lair heard of.
  * The creatures themselves are in the mobs module ({@code mobs.def.FaunaBestiary}, {@code mobs.entity.FaunaMob}).
  * See docs/modules/fauna.md.
  */
@@ -68,19 +70,27 @@ public final class FaunaModule {
         Awaken.LOG.info("[fauna] {} overworld creatures", Bestiary.fauna().size());
         ATTACHMENTS.register(modBus);
         RULES.register(modBus);
+        FaunaItems.init(modBus);
+        dev.awaken.world.fauna.lair.LairWorldgen.init(modBus);
         modBus.addListener(FaunaModule::placements);
         modBus.addListener(FaunaNet::register);
         FaunaHooks.install(new Hooks());
         Progression.onAwakened(Reveal::onAwakened);
+        Progression.onLevelReached(Lairs::onLevel);
         NowHooks.register(FaunaNow::suggest);
         var bus = NeoForge.EVENT_BUS;
-        bus.addListener((ServerTickEvent.Post e) -> Sightings.tick(e.getServer()));
+        bus.addListener((ServerTickEvent.Post e) -> {
+            Sightings.tick(e.getServer());
+            Lairs.tick(e.getServer());
+        });
+        bus.addListener(Lairs::onChunkLoad);
         bus.addListener(FaunaModule::onLogin);
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> Sightings.forget(e.getEntity().getUUID()));
         bus.addListener(FaunaModule::onDimension);
         bus.addListener((ServerStoppedEvent e) -> {
             FaunaCensus.clear();
             Sightings.clear();
+            Lairs.clear();
         });
         FaunaCommands.register();
         FaunaTests.register();
@@ -137,14 +147,17 @@ public final class FaunaModule {
         public void beastSeen(NamedBeast beast) {
             if (!(beast.level() instanceof ServerLevel level)) return;
             BlockPos at = beast.blockPosition();
+            boolean lair = Lairs.isLairBeast(level.getServer(), beast.getUUID());
             boolean fresh = BeastRegistry.get(level.getServer()).seen(beast.getUUID(), beast.def().id,
-                    level.dimension().identifier().toString(), at, level.getGameTime());
-            if (fresh) announce(level, beast);
+                    level.dimension().identifier().toString(), at, level.getGameTime(), lair);
+            if (fresh) announce(level, beast, lair);
         }
 
         @Override
         public void beastGone(NamedBeast beast) {
-            if (beast.level() instanceof ServerLevel level) BeastRegistry.get(level.getServer()).gone(beast.getUUID());
+            if (!(beast.level() instanceof ServerLevel level)) return;
+            BeastRegistry.get(level.getServer()).gone(beast.getUUID());
+            Lairs.beastGone(level, beast.getUUID());
         }
 
         @Override
@@ -165,12 +178,13 @@ public final class FaunaModule {
         @Override
         public void beastAngered(NamedBeast beast, ServerPlayer player) {
             if (!Sightings.hasSeen(player, beast.def().id)) Sightings.discover(player, beast.def());
+            Lairs.hear(player, beast.def());
             DirectorLog.log(player, "fauna", beast.def().id + " turned on you");
         }
     }
 
     /** A new named beast: the nearest awakened player senses it (the Now tracker then points at it). */
-    private static void announce(ServerLevel level, NamedBeast beast) {
+    private static void announce(ServerLevel level, NamedBeast beast, boolean lair) {
         ServerPlayer near = null;
         double best = 128 * 128;
         for (ServerPlayer p : level.players()) {
@@ -182,7 +196,7 @@ public final class FaunaModule {
         }
         if (near == null) return;
         MobDef d = beast.def();
-        Signal.send(near, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name + " is near").withColor(d.glow))
+        Signal.send(near, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name + (lair ? " waits in its lair" : " is near")).withColor(d.glow))
                 .body(Component.literal("A named beast holds this ground. It warns before it fights."))
                 .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).build());
         DirectorLog.log(near, "fauna", "a named beast appeared: " + d.id + " at " + beast.blockPosition().toShortString());

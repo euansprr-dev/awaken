@@ -19,24 +19,27 @@ import java.util.UUID;
 /**
  * Where the world's named beasts roam (one per region, the Mowzie's Mobs pattern), saved with the overworld so the
  * Now tracker can point at a beast whose chunk isn't loaded, and so beasts stay rare: a cooldown between new beasts,
- * a minimum spacing, and a world-wide ceiling. An entry is removed when its beast dies or is discarded.
+ * a minimum spacing, and a world-wide ceiling. An entry is removed when its beast dies or is discarded. Beasts waiting
+ * in their lairs (P2) are listed too, flagged: they keep roaming beasts away (the spacing) but never use up the roaming
+ * cooldown or the ceiling.
  */
 public final class BeastRegistry extends SavedData {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
     /** Game ticks between two new beasts in one world (30 minutes). */
     public static final long COOLDOWN = 20L * 60 * 30;
     /** No new beast within this many blocks of a known one. */
     public static final int SPACING = 384;
-    /** Living beasts the world remembers at most. */
+    /** Living roaming beasts the world remembers at most (lair beasts aside). */
     public static final int MAX = 12;
 
-    public record Entry(UUID id, String def, String dimension, BlockPos pos, long seen) {
+    public record Entry(UUID id, String def, String dimension, BlockPos pos, long seen, boolean lair) {
         public static final Codec<Entry> CODEC = RecordCodecBuilder.create(i -> i.group(
                 UUIDUtil.CODEC.fieldOf("id").forGetter(Entry::id),
                 Codec.STRING.fieldOf("def").forGetter(Entry::def),
                 Codec.STRING.fieldOf("dimension").forGetter(Entry::dimension),
                 BlockPos.CODEC.fieldOf("pos").forGetter(Entry::pos),
-                Codec.LONG.optionalFieldOf("seen", 0L).forGetter(Entry::seen)
+                Codec.LONG.optionalFieldOf("seen", 0L).forGetter(Entry::seen),
+                Codec.BOOL.optionalFieldOf("lair", false).forGetter(Entry::lair)
         ).apply(i, Entry::new));
     }
 
@@ -66,11 +69,18 @@ public final class BeastRegistry extends SavedData {
 
     /** True the first time this beast reports (a new beast). Positions are saved when they moved a few blocks. */
     public boolean seen(UUID id, String def, String dimension, BlockPos pos, long now) {
+        return seen(id, def, dimension, pos, now, false);
+    }
+
+    /** As above; a beast that waits in its lair doesn't start the roaming cooldown. */
+    public boolean seen(UUID id, String def, String dimension, BlockPos pos, long now, boolean lair) {
         Entry old = byId.get(id);
-        byId.put(id, new Entry(id, def, dimension, pos.immutable(), now));
+        byId.put(id, new Entry(id, def, dimension, pos.immutable(), now, lair));
         if (old == null) {
-            lastSpawn = now;
-            pendingUntil = 0;
+            if (!lair) {
+                lastSpawn = now;
+                pendingUntil = 0;
+            }
             setDirty();
             return true;
         }
@@ -82,9 +92,20 @@ public final class BeastRegistry extends SavedData {
         if (byId.remove(id) != null) setDirty();
     }
 
+    public boolean has(UUID id) {
+        return byId.containsKey(id);
+    }
+
+    /** Roaming beasts alive (lair beasts aside). */
+    public int roaming() {
+        int n = 0;
+        for (Entry e : byId.values()) if (!e.lair()) n++;
+        return n;
+    }
+
     /** Whether a new beast may spawn at pos now: cooldown passed, nothing pending, none within the spacing, room left. */
     public boolean roomFor(String dimension, BlockPos pos, long now) {
-        if (now < pendingUntil || now - lastSpawn < COOLDOWN || byId.size() >= MAX) return false;
+        if (now < pendingUntil || now - lastSpawn < COOLDOWN || roaming() >= MAX) return false;
         long s2 = (long) SPACING * SPACING;
         for (Entry e : byId.values()) {
             if (!e.dimension().equals(dimension)) continue;

@@ -42,8 +42,9 @@ import java.util.Set;
 
 /**
  * {@code /awaken fauna} (creatures you have met) and the admin tools: {@code census}, {@code goto <family>},
- * {@code reveal}, {@code summon <id> [level]}, {@code lineup} (every creature in a row, for screenshots) and
- * {@code beasts [reset]}.
+ * {@code reveal}, {@code summon <id> [level]}, {@code lineup [all|p1|p2|<family>]} (creatures in a row, for
+ * screenshots), {@code beasts [reset]}, {@code why <id>}, and the lairs: {@code lair list|goto <beast>|place <beast>|
+ * hear <beast>|why|reset}.
  */
 final class FaunaCommands {
     private FaunaCommands() {}
@@ -64,7 +65,10 @@ final class FaunaCommands {
                     .then(Commands.argument("id", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(ids(), b))
                             .executes(c -> summon(c, -1))
                             .then(Commands.argument("level", IntegerArgumentType.integer(0, 400)).executes(c -> summon(c, IntegerArgumentType.getInteger(c, "level"))))));
-            fauna.then(Commands.literal("lineup").requires(AwakenCommands.admin()).executes(FaunaCommands::lineup));
+            fauna.then(Commands.literal("lineup").requires(AwakenCommands.admin()).executes(c -> lineup(c, "all"))
+                    .then(Commands.argument("which", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(lineups(), b))
+                            .executes(c -> lineup(c, StringArgumentType.getString(c, "which")))));
+            fauna.then(LairCommands.build());
             fauna.then(Commands.literal("why").requires(AwakenCommands.admin())
                     .then(Commands.argument("id", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(ids(), b))
                             .executes(FaunaCommands::why)));
@@ -78,8 +82,21 @@ final class FaunaCommands {
         });
     }
 
-    private static List<String> families() {
-        return List.of("greenwild", "sunscorch", "frostwild");
+    static List<String> families() {
+        List<String> out = new ArrayList<>();
+        for (Theme t : Theme.values()) if (t.isWild()) out.add(t.name().toLowerCase(Locale.ROOT));
+        return out;
+    }
+
+    static Theme family(String name) {
+        for (Theme t : Theme.values()) if (t.isWild() && t.name().equalsIgnoreCase(name)) return t;
+        return null;
+    }
+
+    private static List<String> lineups() {
+        List<String> out = new ArrayList<>(List.of("all", "p1", "p2"));
+        out.addAll(families());
+        return out;
     }
 
     private static List<String> ids() {
@@ -117,12 +134,7 @@ final class FaunaCommands {
     private static int gotoFamily(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         ServerPlayer sp = c.getSource().getPlayerOrException();
         String name = StringArgumentType.getString(c, "family");
-        Theme theme = switch (name.toLowerCase(Locale.ROOT)) {
-            case "greenwild" -> Theme.GREENWILD;
-            case "sunscorch" -> Theme.SUNSCORCH;
-            case "frostwild" -> Theme.FROSTWILD;
-            default -> null;
-        };
+        Theme theme = family(name);
         if (theme == null) {
             c.getSource().sendFailure(Component.literal("Families: " + families()));
             return 0;
@@ -174,20 +186,27 @@ final class FaunaCommands {
         return 1;
     }
 
-    /** Every overworld creature in a row in front of you, standing still, for screenshots. */
-    private static int lineup(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+    /** Creatures in a row in front of you (all, P1's, P2's or one family's), standing still, for screenshots. */
+    private static int lineup(CommandContext<CommandSourceStack> c, String which) throws CommandSyntaxException {
         ServerPlayer sp = c.getSource().getPlayerOrException();
         ServerLevel level = sp.level();
         float yaw = sp.getYRot() * Mth.DEG_TO_RAD;
         Vec3 fwd = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
         Vec3 side = new Vec3(fwd.z, 0, -fwd.x);
-        List<MobDef> all = Bestiary.fauna();
-        double offset = -(all.size() - 1) * 1.6;
+        Theme only = family(which);
+        List<MobDef> all = new ArrayList<>();
+        for (MobDef d : Bestiary.fauna()) {
+            boolean p1 = d.theme.ordinal() <= Theme.FROSTWILD.ordinal();
+            if (only != null ? d.theme == only : which.equals("p1") ? p1 : !which.equals("p2") || !p1) all.add(d);
+        }
+        double total = 0;
+        for (MobDef d : all) total += gap(d) + 0.2;
+        double offset = -total * 0.5;
         int n = 0;
         for (MobDef d : all) {
-            double gap = d.fauna == FaunaRole.BEAST ? 2.6 : 1.6;
+            double gap = gap(d);
             offset += gap * 0.5;
-            Vec3 p = sp.position().add(fwd.scale(d.fauna == FaunaRole.BEAST ? 12 : 8)).add(side.scale(offset));
+            Vec3 p = sp.position().add(fwd.scale(d.fauna == FaunaRole.BEAST ? 8 + d.scale * 1.5 : 8)).add(side.scale(offset));
             offset += gap * 0.5 + 0.2;
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(p.x), Mth.floor(p.z));
             AwakenMob m = Mobs.spawn(level, d, new Vec3(p.x, d.flies() ? y + 1.0 : y, p.z), 1,
@@ -205,6 +224,11 @@ final class FaunaCommands {
         int count = n;
         c.getSource().sendSuccess(() -> Component.literal("Lined up " + count + " creatures"), false);
         return n;
+    }
+
+    /** Room a creature needs in the line-up (its width at its scale). */
+    private static double gap(MobDef d) {
+        return Math.max(1.6, d.width * d.scale + 0.8);
     }
 
     /** Would this creature spawn where you stand, and if not, why not (spawn rules only; vanilla's 24-block gap aside). */

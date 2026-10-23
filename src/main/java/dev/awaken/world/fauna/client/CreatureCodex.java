@@ -30,6 +30,10 @@ final class CreatureCodex {
             if (!seen(p, d)) continue;
             StringBuilder body = new StringBuilder(d.signature).append(".\n").append(role(d.fauna)).append("\nLives in ").append(where(d.theme)).append('.');
             if (p.counter("awaken:discovered/beast_felled/" + d.id) > 0) body.append("\nYou have felled it.");
+            if (d.fauna == FaunaRole.BEAST) {
+                if (p.counter("awaken:discovered/lair/" + d.id) > 0) body.append("\nYou have found its lair.");
+                else if (p.counter("awaken:lair_heard/" + d.id) > 0) body.append("\nYou have heard where its lair is (see the tracker).");
+            }
             List<String> links = new ArrayList<>();
             if (d.fauna == FaunaRole.BEAST) {
                 for (MobDef o : Bestiary.fauna()) if (o != d && o.theme == d.theme && seen(p, o)) links.add(id(o));
@@ -61,6 +65,12 @@ final class CreatureCodex {
             case GREENWILD -> "the Greenwild: forests, plains, meadows";
             case SUNSCORCH -> "the Sunscorch: deserts, savannas, badlands";
             case FROSTWILD -> "the Frostwild: taigas, snowy plains, groves";
+            case MIRE -> "the Mire: swamps and mangrove swamps";
+            case CANOPY -> "the Canopy: jungles and bamboo jungles";
+            case DUSKWOOD -> "Duskwood: dark forests and the pale garden";
+            case BLOSSOM -> "Blossomwood: cherry groves, flower and birch forests";
+            case CRAG -> "the Crags: peaks, windswept hills, stony shores";
+            case SPORE -> "Sporewild: the mushroom fields";
             default -> t.display;
         };
     }

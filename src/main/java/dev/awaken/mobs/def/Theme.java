@@ -4,7 +4,7 @@ import dev.awaken.progression.Rank;
 
 /**
  * Where a creature belongs: the 15 gate themes (ids exactly as in docs/plan.html's gate generator), the ten Descent
- * strata, the Veil, the Lucidium, the nightmare templates and the overworld's three biome families. The ramp names
+ * strata, the Veil, the Lucidium, the nightmare templates and the overworld's biome families (three from P1, six from P2). The ramp names
  * match tools/art/pixelart.py so textures generated for a theme share its colours.
  */
 public enum Theme {
@@ -42,7 +42,14 @@ public enum Theme {
     // The Awakened layer: overworld creatures by biome family (spawned by the world module, docs/modules/fauna.md).
     GREENWILD("awaken:greenwild", "Greenwild", Rank.E, 0xC8DCB0, 0xFFD27A, BoltKind.THORN),
     SUNSCORCH("awaken:sunscorch", "Sunscorch", Rank.E, 0xF2DCB0, 0xFFE9A0, BoltKind.GLASS),
-    FROSTWILD("awaken:frostwild", "Frostwild", Rank.E, 0xDCE8F4, 0x9FE8FF, BoltKind.FROST);
+    FROSTWILD("awaken:frostwild", "Frostwild", Rank.E, 0xDCE8F4, 0x9FE8FF, BoltKind.FROST),
+    // P2: the rest of the land (docs/modules/fauna.md, "P2")
+    MIRE("awaken:mire", "The Mire", Rank.E, 0xB8C8A0, 0xB8FF6A, BoltKind.SPORE),
+    CANOPY("awaken:canopy", "The Canopy", Rank.E, 0xA8D8A0, 0x5CF0FF, BoltKind.THORN),
+    DUSKWOOD("awaken:duskwood", "Duskwood", Rank.E, 0xB4ACC4, 0xD8C8FF, BoltKind.SPIRIT),
+    BLOSSOM("awaken:blossom", "Blossomwood", Rank.E, 0xF4D8E8, 0xFFB8E0, BoltKind.HONEY),
+    CRAG("awaken:crag", "The Crags", Rank.E, 0xD0D0D4, 0xA8D8FF, BoltKind.PLAIN),
+    SPORE("awaken:spore", "Sporewild", Rank.E, 0xD8C0D8, 0xFF9AE0, BoltKind.SPORE);
 
     public final String id;
     public final String display;
