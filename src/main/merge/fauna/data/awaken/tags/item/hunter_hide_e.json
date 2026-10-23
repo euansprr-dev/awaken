@@ -1,0 +1,16 @@
+{
+  "values": [
+    {
+      "id": "awaken:mire_hide",
+      "required": false
+    },
+    {
+      "id": "awaken:canopy_scale",
+      "required": false
+    },
+    {
+      "id": "awaken:blossom_fur",
+      "required": false
+    }
+  ]
+}

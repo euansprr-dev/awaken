@@ -1,0 +1,16 @@
+{
+  "values": [
+    {
+      "id": "awaken:dusk_feather",
+      "required": false
+    },
+    {
+      "id": "awaken:crag_feather",
+      "required": false
+    },
+    {
+      "id": "awaken:spore_gel",
+      "required": false
+    }
+  ]
+}

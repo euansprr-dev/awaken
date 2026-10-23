@@ -1,0 +1,28 @@
+{
+  "values": [
+    {
+      "id": "awaken:toadstone",
+      "required": false
+    },
+    {
+      "id": "awaken:coil_plume",
+      "required": false
+    },
+    {
+      "id": "awaken:queen_silk",
+      "required": false
+    },
+    {
+      "id": "awaken:empress_scale",
+      "required": false
+    },
+    {
+      "id": "awaken:stonehorn_shard",
+      "required": false
+    },
+    {
+      "id": "awaken:mycel_heart",
+      "required": false
+    }
+  ]
+}

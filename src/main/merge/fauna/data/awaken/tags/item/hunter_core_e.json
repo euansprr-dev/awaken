@@ -1,0 +1,12 @@
+{
+  "values": [
+    {
+      "id": "awaken:crag_horn",
+      "required": false
+    },
+    {
+      "id": "awaken:dusk_shell",
+      "required": false
+    }
+  ]
+}
