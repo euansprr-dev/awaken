@@ -25,7 +25,7 @@ public final class Directives {
     public static final String ACTION = "directive";
 
     static int slots(ServerPlayer player) {
-        return 3 + (int) Progression.perk(player, Perks.EXTRA_DIRECTIVE_SLOT);
+        return 3 + (int) Progression.perk(player, Perks.EXTRA_DIRECTIVE_SLOT) + Progression.extraDirectiveSlots(player);
     }
 
     /** Each in-game morning, and after long gaps without anything new. */

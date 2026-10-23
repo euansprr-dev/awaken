@@ -459,6 +459,36 @@ public final class Progression {
         return true;
     }
 
+    // ---- respec and directive slots (used by the Above's Recalibrator and Signal Relay) ----------------------------
+
+    /** Refunds every spent stat point and resets stats to {@link Stat#START}. Returns points refunded. */
+    public static int respec(ServerPlayer player) {
+        Profile p = profile(player);
+        int refund = 0;
+        for (Stat s : Stat.values()) {
+            refund += Math.max(0, p.stats[s.ordinal()] - Stat.START);
+            p.stats[s.ordinal()] = Stat.START;
+        }
+        p.unspent += refund;
+        applyAttributes(player);
+        evaluate(player, Counters.STATS);
+        markDirty(player);
+        return refund;
+    }
+
+    private static final List<java.util.function.Predicate<ServerPlayer>> EXTRA_DIRECTIVE_SLOTS = new ArrayList<>();
+
+    /** A module can grant +1 Directive slot while its condition holds (e.g. near a Signal Relay). */
+    public static void addDirectiveSlotSource(java.util.function.Predicate<ServerPlayer> source) {
+        EXTRA_DIRECTIVE_SLOTS.add(source);
+    }
+
+    static int extraDirectiveSlots(ServerPlayer player) {
+        int n = 0;
+        for (var s : EXTRA_DIRECTIVE_SLOTS) if (s.test(player)) n++;
+        return n;
+    }
+
     // ---- misc -------------------------------------------------------------------------------------------------------
 
     public static void addInsight(ServerPlayer player, String bossId) {

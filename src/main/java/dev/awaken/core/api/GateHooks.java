@@ -27,6 +27,8 @@ public final class GateHooks {
         boolean stabilise(ServerLevel level, String id, int days);
         /** Whether this entity is inside a gate cell. */
         boolean inGate(net.minecraft.world.entity.Entity e);
+        /** Open a scripted gate near a position (story prologue). Returns the gate id, or empty if gates are unavailable. */
+        Optional<String> openScripted(ServerPlayer player, String theme, int rank, BlockPos near, int floors);
     }
 
     private static Access access = new Access() {
@@ -35,6 +37,7 @@ public final class GateHooks {
         @Override public void markScouted(ServerPlayer player, String id) {}
         @Override public boolean stabilise(ServerLevel level, String id, int days) { return false; }
         @Override public boolean inGate(net.minecraft.world.entity.Entity e) { return false; }
+        @Override public Optional<String> openScripted(ServerPlayer player, String theme, int rank, BlockPos near, int floors) { return Optional.empty(); }
     };
 
     public static void install(Access a) { access = a; }
@@ -44,4 +47,5 @@ public final class GateHooks {
     public static void markScouted(ServerPlayer player, String id) { access.markScouted(player, id); }
     public static boolean stabilise(ServerLevel level, String id, int days) { return access.stabilise(level, id, days); }
     public static boolean inGate(net.minecraft.world.entity.Entity e) { return access.inGate(e); }
+    public static Optional<String> openScripted(ServerPlayer p, String theme, int rank, BlockPos near, int floors) { return access.openScripted(p, theme, rank, near, floors); }
 }
