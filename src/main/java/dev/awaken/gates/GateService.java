@@ -163,6 +163,7 @@ public final class GateService {
                 it.remove();
                 Awaken.LOG.debug("[gates] gate {} ready ({} ticks)", g.id, t - b.started);
                 GatePayloads.syncBeaconsAround(server, g.pos);
+                dev.awaken.core.audio.AudioCues.playNear(server.overworld(), g.pos, 640, dev.awaken.core.audio.Cue.GATE_FORMING);
                 continue;
             }
             if (t - b.started > BUILD_TIMEOUT) {

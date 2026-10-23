@@ -98,6 +98,7 @@ public final class Breaks {
         g.spillPending = true;
         PENDING.add(g.id);
         over.playSound(null, g.pos, GatesRegistry.SND_BREAK.get(), SoundSource.HOSTILE, 4F, 0.6F);
+        dev.awaken.core.audio.AudioCues.playNear(over, g.pos, 640, dev.awaken.core.audio.Cue.GATE_BROKE);
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if (p.level() != over || p.blockPosition().distSqr(g.pos) > 1500.0 * 1500) continue;
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("A gate broke open"))

@@ -40,5 +40,6 @@ public final class AwakenClient {
         StoryClient.init(modBus);
         WorldClient.init(modBus);
         dev.awaken.gear.client.GearClient.init(modBus);
+        dev.awaken.core.audio.client.AudioClient.init(modBus);
     }
 }

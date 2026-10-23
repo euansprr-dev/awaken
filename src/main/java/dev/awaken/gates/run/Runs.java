@@ -256,6 +256,7 @@ public final class Runs {
         Modifiers.allowHeal(p);
         p.heal(heal);
         p.level().playSound(null, p.blockPosition(), GatesRegistry.SND_SHRINE.get(), SoundSource.PLAYERS, 1F, 1F);
+        dev.awaken.core.audio.AudioCues.play(p, dev.awaken.core.audio.Cue.SHRINE);
         boolean red = g.plan.is(Twist.RED_GATE) && !g.bossDead;
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Floor " + f.floor + " cleared"))
                 .row("Satchel XP", "+" + Math.round(bonus) + "  (carrying " + Math.round(run.satchelXp) + ")")

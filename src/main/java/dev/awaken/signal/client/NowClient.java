@@ -27,6 +27,7 @@ public final class NowClient {
         if (!id.equals(topId)) {
             topId = id;
             changedAt = ticks;
+            dev.awaken.core.audio.client.AudioUi.nowChanged(now.top().map(NowHooks.Suggestion::priority).orElse(0));
         }
         current = now;
     }
