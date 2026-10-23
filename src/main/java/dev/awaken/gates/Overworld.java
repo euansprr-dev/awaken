@@ -2,6 +2,7 @@ package dev.awaken.gates;
 
 import dev.awaken.gates.block.GateBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -78,6 +79,45 @@ public final class Overworld {
     /** Ground under a column (top solid, non-liquid block). */
     public static int groundY(ServerLevel level, int x, int z) {
         return level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+    }
+
+    /**
+     * Nobody built here: no block entities (chests, furnaces, beds' owners), no crafted building blocks, and not
+     * inside anyone's Hearth. A gate never carves into a base or a village.
+     */
+    public static boolean untouched(ServerLevel level, BlockPos pos, int axis) {
+        if (dev.awaken.core.api.HearthHooks.nearest(level, pos, 64).isPresent()) return false;
+        for (int a = -3; a <= 3; a++) {
+            for (int b = -3; b <= 3; b++) {
+                for (int y = 0; y <= 7; y++) {
+                    BlockPos p = at(pos, axis, a, y, b);
+                    if (level.getBlockEntity(p) != null) return false;
+                    BlockState s = level.getBlockState(p);
+                    if (s.is(BlockTags.PLANKS) || s.is(BlockTags.WOOL) || s.is(BlockTags.BEDS) || s.is(BlockTags.DOORS)
+                            || s.is(BlockTags.TRAPDOORS) || s.is(BlockTags.FENCES) || s.is(BlockTags.FENCE_GATES)
+                            || s.is(BlockTags.WALLS) || s.is(BlockTags.STAIRS) || s.is(BlockTags.SLABS) || s.is(BlockTags.WOOL_CARPETS)
+                            || s.is(net.neoforged.neoforge.common.Tags.BlockItems.GLASS_BLOCKS.block()) || s.is(net.minecraft.world.level.block.Blocks.BRICKS)
+                            || s.is(net.minecraft.world.level.block.Blocks.TORCH) || s.is(net.minecraft.world.level.block.Blocks.WALL_TORCH)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /** The nearest spot within 24 blocks of {@code center} (same axis) that is good dry ground nobody built on. */
+    public static java.util.Optional<BlockPos> clearSpotNear(ServerLevel level, BlockPos center, int axis) {
+        for (int r = 0; r <= 24; r += 8) {
+            for (int i = 0; i < (r == 0 ? 1 : 8); i++) {
+                double ang = Math.PI / 4 * i;
+                int x = center.getX() + (int) Math.round(Math.cos(ang) * r), z = center.getZ() + (int) Math.round(Math.sin(ang) * r);
+                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                BlockPos ground = new BlockPos(x, groundY(level, x, z), z);
+                if (goodGround(level, ground) && untouched(level, ground, axis)) return java.util.Optional.of(ground);
+            }
+        }
+        return java.util.Optional.empty();
     }
 
     /** A good spot: dry, solid, not a tree top. */

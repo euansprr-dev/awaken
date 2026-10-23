@@ -50,6 +50,9 @@ public class HollowFollower extends Monster implements SkinOwner {
         boolean watched = false;
         for (ServerPlayer p : sl.players()) {
             if (p.isSpectator() || !p.isAlive()) continue;
+            // only whoever is still on this floor of this gate (not a teammate a floor below, not someone done here)
+            var run = dev.awaken.gates.run.Runs.run(p);
+            if (run.gateId != gateId || run.area != area || run.floor != floor || run.clearedFloor(area, floor)) continue;
             double d = p.distanceToSqr(this);
             if (d > 64 * 64) continue;
             if (seenBy(sl, p)) watched = true;

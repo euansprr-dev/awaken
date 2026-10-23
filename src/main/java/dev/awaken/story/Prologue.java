@@ -201,6 +201,7 @@ final class Prologue {
         s.prologue = StoryProgress.Prologue.DONE;
         s.seen.add("revelation:prologue_accept");
         sync(p);
+        StoryModule.sendSeen(p); // the Codex shows the acceptance right away, not after a relog
         ServerLevel overworld = p.level().getServer().overworld();
         p.teleportTo(overworld, s.returnX, s.returnY, s.returnZ, Set.<Relative>of(), p.getYRot(), 0, true);
         p.setHealth(p.getMaxHealth());

@@ -75,14 +75,24 @@ final class GateEvents {
     }
 
     private static void onStarted(ServerStartedEvent e) {
-        GateMobs.clear();
+        resetStatics();
         GateService.onStarted(e.getServer());
     }
 
     private static void onStopped(ServerStoppedEvent e) {
         GateService.onStopped(e.getServer());
+        resetStatics();
+    }
+
+    /** Singleplayer opens another world in the same JVM: no per-world state may survive in statics. */
+    private static void resetStatics() {
         GateMobs.clear();
         Breaks.clear();
+        GateCard.resetAll();
+        dev.awaken.gates.run.Hud.resetAll();
+        dev.awaken.gates.run.Interactions.resetAll();
+        dev.awaken.gates.run.Modifiers.resetAll();
+        dev.awaken.gates.run.Twists.resetAll();
     }
 
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
@@ -134,7 +144,18 @@ final class GateEvents {
     }
 
     private static void onJoin(EntityJoinLevelEvent e) {
-        if (e.getLevel().isClientSide() || !GateService.isGateLevel(e.getLevel())) return;
+        if (e.getLevel().isClientSide()) return;
+        if (e.loadedFromDisk() && e.getLevel().dimension() == Level.OVERWORLD && e.getLevel() instanceof ServerLevel sl
+                && Breaks.strayLord(sl.getServer(), e.getEntity())) {
+            e.setCanceled(true);
+            return;
+        }
+        if (!GateService.isGateLevel(e.getLevel())) return;
+        // an Inverted puppet saved with its chunk (server stop) is only a statue now: its player gets a fresh one
+        if (e.loadedFromDisk() && e.getEntity().getPersistentData().getBooleanOr("awaken_gate_puppet", false)) {
+            e.setCanceled(true);
+            return;
+        }
         if (e.loadedFromDisk()) GateMobs.onLoad(e.getEntity());
     }
 

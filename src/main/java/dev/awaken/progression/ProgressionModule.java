@@ -286,7 +286,9 @@ public final class ProgressionModule {
             double resist = Math.min(0.35, vit * 0.005);
             if (event.getSource().is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION)) resist += Progression.perk(sp, Perks.EXPLOSION_RESIST);
             event.setAmount((float) (event.getAmount() * Math.max(0.2, 1 - resist)));
-            Progression.count(sp, Counters.DAMAGE_TAKEN, Math.max(1, Math.round(event.getAmount())));
+            // count what the hit could take from you (a /kill or the void is "infinite" damage, not progress)
+            float taken = Math.min(event.getAmount(), sp.getHealth() + sp.getAbsorptionAmount());
+            Progression.count(sp, Counters.DAMAGE_TAKEN, Math.max(1, Math.round(taken)));
             return;
         }
         if (event.getSource().getEntity() instanceof ServerPlayer attacker) {

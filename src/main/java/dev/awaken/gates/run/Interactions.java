@@ -42,12 +42,25 @@ public final class Interactions {
     private static final Map<UUID, Long> COOLDOWN = new HashMap<>();
     private static final List<Runnable> QUEUE = new ArrayList<>();
 
+    /** Server start/stop: cooldowns are game times of the old world, queued answers belong to it. */
+    public static void resetAll() {
+        COOLDOWN.clear();
+        QUEUE.clear();
+    }
+
     private static boolean cooled(ServerPlayer p, int ticks) {
         long now = GateService.now(p.level().getServer());
         Long last = COOLDOWN.get(p.getUUID());
         if (last != null && now - last < ticks) return false;
         COOLDOWN.put(p.getUUID(), now);
         return true;
+    }
+
+    /** Queues an action for the end of the tick; it is skipped if the player left in the meantime (no claims after the save). */
+    private static void queue(ServerPlayer p, Runnable r) {
+        QUEUE.add(() -> {
+            if (!p.isRemoved() && !p.hasDisconnected()) r.run();
+        });
     }
 
     static void flush() {
@@ -73,7 +86,7 @@ public final class Interactions {
             }));
             return;
         }
-        QUEUE.add(() -> Runs.enter(p, g));
+        queue(p, () -> Runs.enter(p, g));
     }
 
     /** The gate whose surface structure contains this block. */
@@ -92,9 +105,9 @@ public final class Interactions {
         GateRecord g = Runs.gateOf(p);
         if (g == null) return;
         switch (kind) {
-            case EXIT -> QUEUE.add(() -> Runs.exitPortal(p));
-            case RIFT, INNER -> QUEUE.add(() -> Twists.enterAnnex(p, g));
-            case RETURN -> QUEUE.add(() -> Twists.returnFromInner(p, g));
+            case EXIT -> queue(p, () -> Runs.exitPortal(p));
+            case RIFT, INNER -> queue(p, () -> Twists.enterAnnex(p, g));
+            case RETURN -> queue(p, () -> Twists.returnFromInner(p, g));
         }
     }
 
@@ -124,7 +137,7 @@ public final class Interactions {
 
     public static void useSeal(ServerPlayer p, BlockPos pos) {
         if (!cooled(p, 20)) return;
-        QUEUE.add(() -> Runs.descend(p));
+        queue(p, () -> Runs.descend(p));
     }
 
     public static void openCache(ServerPlayer p, BlockPos pos, BlockState state) {
@@ -215,11 +228,11 @@ public final class Interactions {
                     Signal.toast(p, Component.literal("Stand by the shrine to extract."));
                     return;
                 }
-                QUEUE.add(() -> Runs.extract(p, false));
+                queue(p, () -> Runs.extract(p, false));
             }
             case ACTION + ":retreat" -> {
                 if (run.area != 0 || run.floor != 1) return;
-                QUEUE.add(() -> {
+                queue(p, () -> {
                     run.satchel.clear();
                     run.satchelXp = 0;
                     Progression.setCounter(p, dev.awaken.progression.Counters.FLOOR_STREAK_NO_EARLY_EXTRACT, 0);

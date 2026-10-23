@@ -48,6 +48,12 @@ public final class GateRecord {
     /** How many runs each player has started here (claim ids stay unique across re-entries). */
     public final Map<UUID, Integer> entries = new HashMap<>();
     public long clearedAt = -1;
+    /** Floors whose clear bonus each player was already paid ("uuid area:floor"): a re-entered gate never pays twice. */
+    public final Set<String> floorsPaid = new LinkedHashSet<>();
+    /** Broken, but the spill wave and the Lord haven't come out yet (survives a restart). */
+    public boolean spillPending;
+    /** Broken and its roaming Lord fell: the gate only waits to be released. */
+    public boolean breakHeld;
 
     public GateRecord(int id, GatePlan plan, BlockPos pos, int axis, int cell, long createdDay, long breaksOnPlayDay,
                       GateState state, Optional<UUID> owner) {
@@ -136,8 +142,11 @@ public final class GateRecord {
                     g.nearHearth, g.bossDead, g.annexBossDead, g.boss, g.annexBoss, g.lord, g.clearedAt)),
             Codec.unboundedMap(Codec.STRING, FloorState.CODEC).fieldOf("floors").forGetter(g -> Map.copyOf(g.floors)),
             Codec.unboundedMap(Codec.STRING, Codec.LONG.listOf()).optionalFieldOf("echo", Map.of()).forGetter(g -> Map.copyOf(g.echoPaths)),
-            Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.INT).optionalFieldOf("entries", Map.of()).forGetter(g -> Map.copyOf(g.entries))
-    ).apply(i, (h, f, floors, echo, entries) -> {
+            Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.INT).optionalFieldOf("entries", Map.of()).forGetter(g -> Map.copyOf(g.entries)),
+            Codec.STRING.listOf().optionalFieldOf("floors_paid", List.of()).forGetter(g -> List.copyOf(g.floorsPaid)),
+            Codec.BOOL.optionalFieldOf("spill_pending", false).forGetter(g -> g.spillPending),
+            Codec.BOOL.optionalFieldOf("break_held", false).forGetter(g -> g.breakHeld)
+    ).apply(i, (h, f, floors, echo, entries, paid, spill, held) -> {
         GateRecord g = new GateRecord(h.id, h.plan, h.pos, h.axis, h.cell, h.createdDay, h.breaks, h.state, h.owner);
         g.party.addAll(h.party);
         g.inside.addAll(h.inside);
@@ -156,6 +165,9 @@ public final class GateRecord {
         g.floors.putAll(floors);
         echo.forEach((k, v) -> g.echoPaths.put(k, new ArrayList<>(v)));
         g.entries.putAll(entries);
+        g.floorsPaid.addAll(paid);
+        g.spillPending = spill;
+        g.breakHeld = held;
         return g;
     }));
 }

@@ -95,6 +95,8 @@ public final class SignalHud {
         if (current != null) {
             current.age++;
             boolean hasAction = current.w.action().isPresent();
+            // Y means nothing on an info window: drop it here so it can't answer the next window before it's read
+            if (!hasAction) while (AwakenKeys.ACCEPT.consumeClick()) {}
             if (current.closingAt < 0) {
                 if (hasAction && AwakenKeys.ACCEPT.consumeClick()) answer(true);
                 else if (AwakenKeys.DISMISS.consumeClick()) {

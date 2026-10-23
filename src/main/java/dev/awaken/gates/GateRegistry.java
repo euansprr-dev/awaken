@@ -114,11 +114,17 @@ public final class GateRegistry extends SavedData {
 
     /** Drops RELEASED records whose cells are already free (keeps the file small). */
     public void prune() {
-        gates.values().removeIf(g -> g.state == GateState.RELEASED && !releasedCells.contains(g.cell));
+        // keep released gates whose frame still has to come down: the removal needs the record
+        gates.values().removeIf(g -> g.state == GateState.RELEASED && !g.structurePlaced && !releasedCells.contains(g.cell));
         setDirty();
     }
 
     // ---- cells ------------------------------------------------------------------------------------------------------
+
+    /** Whether a cell can be allocated (4096 cells; released ones return to the free list after cleanup). */
+    public boolean hasFreeCell() {
+        return !freeCells.isEmpty() || nextCell < Cells.MAX_CELLS;
+    }
 
     public int allocateCell() {
         setDirty();

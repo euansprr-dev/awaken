@@ -125,6 +125,16 @@ public final class Twists {
     private static final Map<UUID, List<Long>> SAMPLES = new HashMap<>();
     private static final Set<Integer> ECHOES_SEEN = new HashSet<>();
 
+    /** Server start/stop: nothing carries over to another world. */
+    public static void resetAll() {
+        GHOSTS.clear();
+        PUPPETS.clear();
+        FOLLOWERS.clear();
+        HOARDERS.clear();
+        SAMPLES.clear();
+        ECHOES_SEEN.clear();
+    }
+
     static EchoGhost ghostOf(ServerPlayer p) {
         UUID id = GHOSTS.get(p.getUUID());
         if (id == null) return null;
@@ -210,7 +220,7 @@ public final class Twists {
             if (ghost != null) {
                 if (!ghost.arrived()) {
                     Signal.toast(p, Component.literal("You beat your echo here."));
-                    for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0)) Satchel.add(run.satchel, s);
+                    for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0)) Runs.satchelOrDrop(p, run, s);
                     level.playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 1.4F);
                 } else Signal.toast(p, Component.literal("Your echo got here first."));
             }
@@ -224,7 +234,7 @@ public final class Twists {
         }
         if (g.plan.layout() == dev.awaken.gates.content.Layout.STEALTH_HALLS && f.area == 0 && !g.floor(f.area, f.floor).alarm && !g.plan.friendly()) {
             Signal.toast(p, Component.literal("Unseen. The halls pay those who pass unheard."));
-            for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0)) Satchel.add(run.satchel, s);
+            for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0)) Runs.satchelOrDrop(p, run, s);
         }
         String fk = floorKey(g, f.area, f.floor);
         UUID follower = FOLLOWERS.get(fk);
@@ -477,9 +487,13 @@ public final class Twists {
                 return;
             }
         }
-        if (victim instanceof GateHoarder && attacker.getRandom().nextInt(2) == 0) {
+        // only a hit that lands (real damage, not inside its hurt frames), and only a handful per Hoarder
+        if (victim instanceof GateHoarder h && e.getAmount() >= 1F && h.hurtTime == 0 && h.shardsShed < GateHoarder.MAX_SHED
+                && attacker.getRandom().nextInt(2) == 0) {
+            h.shardsShed++;
             ItemStack shard = new ItemStack(CoreApi.ESSENCE_SHARD.get(), 1);
-            Runs.satchelAdd(attacker, shard);
+            ItemStack left = Runs.satchelAdd(attacker, shard);
+            if (!left.isEmpty()) level.addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(level, victim.getX(), victim.getY() + 0.5, victim.getZ(), left));
             level.playSound(null, victim.blockPosition(), SoundEvents.CHAIN_HIT, SoundSource.HOSTILE, 0.8F, 1.6F);
         }
     }
@@ -638,7 +652,7 @@ public final class Twists {
         }
         fs.spiritDone = true;
         Rooms.unsealShrine(level, g, f);
-        for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0.5)) Satchel.add(run.satchel, s);
+        for (ItemStack s : Loot.cache(g.plan.rank(), f.theme, p.getRandom(), false, 0.5)) Runs.satchelOrDrop(p, run, s);
         level.sendParticles(ParticleTypes.SOUL, spirit.getX(), spirit.getY() + 0.5, spirit.getZ(), 30, 0.4, 0.8, 0.4, 0.03);
         level.playSound(null, spirit.blockPosition(), SoundEvents.ALLAY_ITEM_GIVEN, SoundSource.NEUTRAL, 1F, 1F);
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The spirit can rest"))

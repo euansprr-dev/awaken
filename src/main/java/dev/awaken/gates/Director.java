@@ -234,6 +234,10 @@ public final class Director {
             DirectorLog.log(p, "gate", "no dry ground found around you → try again later");
             return null;
         }
+        if (!reg.hasFreeCell()) {
+            DirectorLog.log(p, "gate", "no free gate cell (all 4096 in use); no gate this time");
+            return null;
+        }
         GateMemory mem = p.getData(GatesRegistry.MEMORY.get());
         int id = reg.nextId();
         long seed = Hash.mix(over.getSeed() ^ Hash.of(id, mem.gatesRolled, p.getUUID().hashCode()));

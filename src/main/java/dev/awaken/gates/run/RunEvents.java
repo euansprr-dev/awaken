@@ -52,6 +52,8 @@ public final class RunEvents {
     public static void onLogout(ServerPlayer p) {
         Twists.discardGhost(p);
         Modifiers.forget(p.getUUID());
+        RunState run = Runs.run(p);
+        if (run.active()) run.leftAt = dev.awaken.gates.GateService.now(p.level().getServer()); // saved with the player
     }
 
     public static void onRespawn(ServerPlayer p) {

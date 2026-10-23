@@ -62,10 +62,14 @@ final class Court {
         if (role.bossId().isEmpty()) return;
         String boss = role.bossId().get();
         StoryContent.Sovereign sov = StoryContent.SOVEREIGNS.get(net.minecraft.resources.Identifier.tryParse(boss));
+        // a Sovereign set free by a fight, not one removed by a command, the void or a despawn
+        LivingEntity credit = e.getKillCredit();
+        boolean earned = credit instanceof ServerPlayer
+                || (credit != null && MobRole.of(credit).role() == MobRole.Role.ECHO);
         for (ServerPlayer p : e.level().getServer().getPlayerList().getPlayers()) {
             if (p.level() != e.level() || p.distanceTo(e) > 96) continue;
             StoryProgress s = Prologue.progress(p);
-            if (sov != null && s.sovereignsDefeated.add(boss)) {
+            if (sov != null && earned && s.sovereignsDefeated.add(boss)) {
                 Progression.count(p, "awaken:sovereigns_defeated");
                 Progression.markNewThing(p, "sovereign");
                 Progression.bestMoment(p, sov.name() + " set down what they carried");

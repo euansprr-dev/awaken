@@ -70,8 +70,18 @@ public final class Modifiers {
         AttributeInstance grav = e.getAttribute(Attributes.GRAVITY);
         AttributeInstance fall = e.getAttribute(Attributes.SAFE_FALL_DISTANCE);
         if (on) {
-            if (grav != null) grav.addOrUpdateTransientModifier(new AttributeModifier(LOW_GRAVITY, -0.6, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-            if (fall != null) fall.addOrUpdateTransientModifier(new AttributeModifier(LOW_GRAVITY_FALL, 8, AttributeModifier.Operation.ADD_VALUE));
+            var g = new AttributeModifier(LOW_GRAVITY, -0.6, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+            var fl = new AttributeModifier(LOW_GRAVITY_FALL, 8, AttributeModifier.Operation.ADD_VALUE);
+            // monsters keep it through a reload (saved); players get it back from the run tick and lose it on the way out
+            boolean keep = !(e instanceof net.minecraft.world.entity.player.Player);
+            if (grav != null) {
+                if (keep) grav.addOrReplacePermanentModifier(g);
+                else grav.addOrUpdateTransientModifier(g);
+            }
+            if (fall != null) {
+                if (keep) fall.addOrReplacePermanentModifier(fl);
+                else fall.addOrUpdateTransientModifier(fl);
+            }
         } else {
             if (grav != null) grav.removeModifier(LOW_GRAVITY);
             if (fall != null) fall.removeModifier(LOW_GRAVITY_FALL);
@@ -84,7 +94,7 @@ public final class Modifiers {
         if (g.plan.has(Modifier.SWARM)) {
             AttributeInstance hp = e.getAttribute(Attributes.MAX_HEALTH);
             if (hp != null) {
-                hp.addOrUpdateTransientModifier(new AttributeModifier(SWARM_HEALTH, -0.3, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+                hp.addOrReplacePermanentModifier(new AttributeModifier(SWARM_HEALTH, -0.3, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
                 e.setHealth(e.getMaxHealth());
             }
         }
@@ -201,6 +211,7 @@ public final class Modifiers {
     }
 
     static void tickPending(MinecraftServer server) {
+        tickWater(server); // Flooding fills on its own clock, not only when a burst or a rise is pending
         if (PENDING.isEmpty()) return;
         long now = GateService.now(server);
         List<Pending> due = new ArrayList<>();
@@ -212,7 +223,6 @@ public final class Modifiers {
             return false;
         });
         for (Pending pd : due) pd.run.run();
-        tickWater(server);
     }
 
     /** Test hook: runs every scheduled effect now, due or not. */
@@ -340,6 +350,16 @@ public final class Modifiers {
     // ---- Flooding ---------------------------------------------------------------------------------------------------
 
     private static final ArrayDeque<BlockPos> WATER = new ArrayDeque<>();
+
+    /** Server start/stop: pending bursts and queued water hold the old world's levels; gate ids restart per world. */
+    public static void resetAll() {
+        HEAL_OK.clear();
+        PENDING.clear();
+        SHADE_FLOOR.clear();
+        LISTENER_AT.clear();
+        LAST.clear();
+        WATER.clear();
+    }
     private static final int WATER_PER_TICK = 256;
 
     private static void flood(ServerLevel level, GateRecord g, FloorLayout f, FloorState fs, List<ServerPlayer> players, long now) {

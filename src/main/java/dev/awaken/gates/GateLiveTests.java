@@ -59,7 +59,7 @@ import java.util.Set;
  * Live smoke tests for the twists and modifiers: a gate stands in the test level (its floors painted in place), a mock
  * player walks in, and each rule is checked where it acts. Every test runs inside one tick and resets the test level.
  */
-final class GateLiveTests {
+public final class GateLiveTests {
     private GateLiveTests() {}
 
     static void register() {
@@ -405,13 +405,13 @@ final class GateLiveTests {
 
     // ---- helpers ----------------------------------------------------------------------------------------------------
 
-    static GatePlan plan(long seed, Theme theme, Layout layout, Twist twist, int annexRule, Modifier... mods) {
+    public static GatePlan plan(long seed, Theme theme, Layout layout, Twist twist, int annexRule, Modifier... mods) {
         Theme annex = theme == Theme.HIVE ? Theme.BELL_CRYPT : Theme.HIVE;
         return new GatePlan(seed, GatePlan.CONTENT_VERSION, Rank.E, theme, layout, List.of(mods), twist, 3, theme.bossId(), annex, annexRule);
     }
 
     /** A READY gate in a fresh cell of the test level with the given (area, floor) pairs painted. */
-    static GateRecord standUp(GameTestHelper h, GatePlan plan, int... areaFloors) {
+    public static GateRecord standUp(GameTestHelper h, GatePlan plan, int... areaFloors) {
         ServerLevel level = h.getLevel();
         GateRegistry reg = GateRegistry.get(level.getServer());
         int cell = reg.allocateCell();
@@ -423,7 +423,7 @@ final class GateLiveTests {
         return g;
     }
 
-    static void paintFloor(ServerLevel level, GateRecord g, int area, int floor) {
+    public static void paintFloor(ServerLevel level, GateRecord g, int area, int floor) {
         GateLayout l = GateLayout.of(g.plan);
         FloorLayout f = l.floor(area, floor);
         for (int gx = -1; gx <= f.w; gx++) {
@@ -437,13 +437,13 @@ final class GateLiveTests {
         }
     }
 
-    static ServerPlayer player(GameTestHelper h) {
+    public static ServerPlayer player(GameTestHelper h) {
         ServerPlayer p = h.makeMockServerPlayerInLevel();
         Progression.awaken(p);
         return p;
     }
 
-    static Room biggestCombat(FloorLayout f) {
+    public static Room biggestCombat(FloorLayout f) {
         Room best = null;
         for (int id : f.criticalPath()) {
             Room r = f.room(id);
@@ -456,19 +456,19 @@ final class GateLiveTests {
         return best;
     }
 
-    static void put(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
+    public static void put(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
         int[] spot = r.spawnSpots.get(0);
         BlockPos at = GateService.roomFloor(g, f, r, spot[0], spot[1]);
         p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), 0, 0, true);
     }
 
-    static AABB cellBox(ServerLevel level, GateRecord g) {
+    public static AABB cellBox(ServerLevel level, GateRecord g) {
         int x0 = Cells.originX(g.cell), z0 = Cells.originZ(g.cell);
         return new AABB(x0 - 16, level.getMinY(), z0 - 16, x0 + 528, level.getMaxY() + 1, z0 + 528);
     }
 
     /** Ends the run, clears the gates' monsters and forgets their cells; always resets the test level. */
-    static void teardown(ServerLevel level, ServerPlayer p, GateRecord... gates) {
+    public static void teardown(ServerLevel level, ServerPlayer p, GateRecord... gates) {
         try {
             if (p != null && Runs.run(p).active()) Gates.forceExtract(p, false);
             for (GateRecord g : gates) {

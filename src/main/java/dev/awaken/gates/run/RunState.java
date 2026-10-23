@@ -26,6 +26,8 @@ public final class RunState {
     public int kills;
     public long startedAt;
     public long floorStartedAt;
+    /** Game time the player logged out mid-run (-1 = online): the floor clock is moved on by the time away. */
+    public long leftAt = -1;
     public float damageFloor;
     public float damageRun;
     public double killXpFloor;
@@ -88,11 +90,13 @@ public final class RunState {
             Head.CODEC.fieldOf("head").forGetter(r -> new Head(SCHEMA, r.gateId, r.area, r.floor, r.startedAt, r.floorStartedAt,
                     r.kills, r.cheatDeathUsed, r.lanterns, r.scoutedAtEntry, r.floorsCleared, r.runIndex)),
             Body.CODEC.fieldOf("body").forGetter(r -> new Body(r.satchel.stream().filter(s -> !s.isEmpty()).map(ItemStack::copy).toList(),
-                    r.satchelXp, r.damageFloor, r.damageRun, r.killXpFloor, List.copyOf(r.cleared)))
+                    r.satchelXp, r.damageFloor, r.damageRun, r.killXpFloor, List.copyOf(r.cleared))),
+            Codec.LONG.optionalFieldOf("left_at", -1L).forGetter(r -> r.leftAt)
     ).apply(i, RunState::fromParts));
 
-    private static RunState fromParts(Head h, Body b) {
+    private static RunState fromParts(Head h, Body b, long leftAt) {
         RunState r = new RunState();
+        r.leftAt = leftAt;
         r.gateId = h.gateId;
         r.area = h.area;
         r.floor = h.floor;

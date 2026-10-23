@@ -12,6 +12,18 @@ final class ProgressionTests {
     private ProgressionTests() {}
 
     static void register() {
+        // An instant-kill hit (a command, the void) must count what it could take, not 2 billion.
+        AwakenTests.register("progression_damage_counter_capped", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.connection.markClientLoaded(); // otherwise a fresh player cannot be hurt
+            Progression.awaken(p);
+            long before = Progression.profile(p).counter(Counters.DAMAGE_TAKEN);
+            p.hurtServer(h.getLevel(), p.damageSources().generic(), 1_000_000F);
+            long added = Progression.profile(p).counter(Counters.DAMAGE_TAKEN) - before;
+            h.assertTrue(added > 0 && added <= 21, "counted what the hit could take, added " + added);
+            h.succeed();
+        });
         AwakenTests.register("progression_curve_matches_sim", 20, h -> {
             // Values from tools/sim/pacing_results.json xp_curve: 1 -> 150, 10 -> 2597, 45 -> 22520, 135 -> 110525
             h.assertTrue(Math.round(Curve.xpToNext(1)) == 150, "xpToNext(1) should be 150, was " + Curve.xpToNext(1));

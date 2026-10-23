@@ -89,7 +89,8 @@ final class Beats {
     /** Progression "new thing" moments that have their own line. */
     static void onNewThing(ServerPlayer p, String what) {
         StoryProgress s = Prologue.progress(p);
-        switch (what) {
+        String kind = what.indexOf(' ') > 0 ? what.substring(0, what.indexOf(' ')) : what; // "power Haymaker" -> "power"
+        switch (kind) {
             case "power" -> lineOnce(p, s, "first_power", true);
             case "title" -> lineOnce(p, s, "first_title", true);
             case "latent" -> lineOnce(p, s, "first_latent", true);

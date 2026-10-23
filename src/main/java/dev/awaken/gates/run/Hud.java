@@ -22,6 +22,11 @@ public final class Hud {
 
     private static final Set<UUID> SOON = new HashSet<>();
 
+    /** Server start/stop: nothing carries over to another world. */
+    public static void resetAll() {
+        SOON.clear();
+    }
+
     public static void sendSoon(ServerPlayer p) {
         SOON.add(p.getUUID());
     }

@@ -42,7 +42,8 @@ public final class Pressure {
     }
 
     static boolean applies(GateRecord g) {
-        return !g.plan.friendly() && !g.plan.is(Twist.HOLLOW_GATE);
+        // the story's first gate teaches the floors without the clock
+        return !g.plan.friendly() && !g.plan.is(Twist.HOLLOW_GATE) && !g.scripted;
     }
 
     /** 0 calm, 1 stirring, 2 waves, 3 the Warden is here. */

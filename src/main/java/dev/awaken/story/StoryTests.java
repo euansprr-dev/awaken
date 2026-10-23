@@ -21,6 +21,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 
 /** GameTests for story logic. */
@@ -97,6 +98,30 @@ final class StoryTests {
                         GateService.release(server, g);
                     })
                     .thenSucceed();
+        });
+
+        // A Sovereign is set free by a fight, not by a command or the void.
+        AwakenTests.register("story_sovereign_needs_a_fight", 40, h -> {
+            ServerLevel level = h.getLevel();
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            StoryProgress s = Prologue.progress(p);
+            String roots = "awaken:sovereign_roots";
+            var removed = net.minecraft.world.entity.EntityTypes.ZOMBIE.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+            var fought = net.minecraft.world.entity.EntityTypes.ZOMBIE.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+            h.assertTrue(removed != null && fought != null, "stand-ins");
+            for (var z : List.of(removed, fought)) {
+                z.snapTo(p.getX() + 2, p.getY(), p.getZ(), 0, 0);
+                z.setData(dev.awaken.core.api.CoreApi.MOB_ROLE.get(), new MobRole(MobRole.Role.BOSS, 10, "", Optional.of(roots), ""));
+                level.addFreshEntity(z);
+            }
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(removed, level.damageSources().genericKill()));
+            h.assertFalse(s.sovereignsDefeated.contains(roots), "removed by a command: not set free");
+            fought.setLastHurtByPlayer(p, 100);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(fought, p.damageSources().playerAttack(p)));
+            h.assertTrue(s.sovereignsDefeated.contains(roots), "set free in a fight");
+            removed.discard();
+            fought.discard();
+            h.succeed();
         });
 
         // New Game+: each Ascension tier makes monsters sturdier and XP richer; allies stay as they are.

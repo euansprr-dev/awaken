@@ -60,6 +60,8 @@ public final class Rooms {
     public static final String LORD_TAG = "awaken_gate_friendly_lord";
     /** Hard cap on live gate monsters per gate (SPEC: ≤ 60 active combat entities overall). */
     public static final int GATE_CAP = 40;
+    /** Arena waves may go over GATE_CAP up to the SPEC budget: an arena seals you in, its waves must come. */
+    static final int ARENA_CAP = 60;
 
     static Theme themeOf(GateRecord g, FloorLayout f) {
         return f.theme;
@@ -74,8 +76,11 @@ public final class Rooms {
 
     /** Spawns one gate monster, tracked in its room (room -1 = floor-wide: waves, wardens, listeners). */
     public static LivingEntity spawn(ServerLevel level, GateRecord g, FloorLayout f, int roomKey, MobRole.Role role, BlockPos pos) {
-        if (GateMobs.inGate(g.id) >= GATE_CAP && role != MobRole.Role.BOSS) return null;
-        int lv = Progression.contentLevel(g.plan.rank());
+        Room home = roomKey >= 0 && roomKey < 256 ? f.room(roomKey) : null;
+        int cap = home != null && home.type == Room.Type.ARENA ? ARENA_CAP : GATE_CAP;
+        if (GateMobs.inGate(g.id) >= cap && role != MobRole.Role.BOSS) return null;
+        // the story's first gate is fought at level 1 with ordinary gear and one power: content level 0, softened below
+        int lv = g.scripted ? 0 : Progression.contentLevel(g.plan.rank());
         LivingEntity e;
         if (role == MobRole.Role.BOSS) {
             String boss = f.area == 1 && g.plan.is(Twist.GATE_WITHIN) ? null : g.plan.boss();
@@ -85,9 +90,20 @@ public final class Rooms {
             e = MobHooks.spawnThemed(level, themeOf(g, f).themeId(), role, pos, lv, tags(g, f), g.key());
         }
         if (e == null) return null;
+        if (g.scripted) firstGate(e, role);
         GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
         Modifiers.onSpawn(g, e);
         return e;
+    }
+
+    /** First-gate tuning: a Lord you can beat with iron and one power (about 190 health), monsters a little softer. */
+    private static void firstGate(LivingEntity e, MobRole.Role role) {
+        double hp = role == MobRole.Role.BOSS ? -0.55 : -0.3;
+        var h = e.getAttribute(Attributes.MAX_HEALTH);
+        if (h != null) h.addOrReplacePermanentModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_first_gate_health"), hp, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        var d = e.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (d != null) d.addOrReplacePermanentModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_first_gate_damage"), -0.25, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        e.setHealth(e.getMaxHealth());
     }
 
     /** World positions of open floor spots in a room, best first. */
@@ -127,7 +143,10 @@ public final class Rooms {
             }
             return;
         }
-        if (!fs.triggered.add(key)) return;
+        if (!fs.triggered.add(key)) {
+            if (!fs.locked.contains(r.id)) resealUnfinished(level, p, g, f, r, fs);
+            return;
+        }
         GateRegistry.get(level.getServer()).setDirty();
         switch (r.type) {
             case ARENA -> {
@@ -151,6 +170,38 @@ public final class Rooms {
         }
     }
 
+    /**
+     * Walking back into a fight everyone left (death, extract, logout): the bars came down when the gate emptied, so
+     * they go up again. A Lord that is gone altogether (nothing tracked in its room) takes form again.
+     */
+    private static void resealUnfinished(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r, FloorState fs) {
+        if (r.type == Room.Type.ARENA && !fs.clearedRooms.contains(r.id)) {
+            lock(level, g, f, r, true);
+            Signal.toast(p, Component.literal("The arena seals."));
+            if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) emptied(level, g, f, r);
+        } else if (r.type == Room.Type.BOSS && !(g.plan.friendly() && f.area == 0) && !(f.area == 0 ? g.bossDead : g.annexBossDead)) {
+            lock(level, g, f, r, true);
+            if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) Twists.bossArena(level, p, g, f, r);
+        }
+    }
+
+    /** Nobody is inside any more: every barred room opens (it seals again when someone walks back in). */
+    static void unsealAll(ServerLevel level, GateRecord g) {
+        GateLayout l = GateLayout.of(g.plan);
+        for (var e : g.floors.entrySet()) {
+            FloorState fs = e.getValue();
+            if (fs.locked.isEmpty()) continue;
+            String[] af = e.getKey().split(":");
+            FloorLayout f = l.floor(Integer.parseInt(af[0]), Integer.parseInt(af[1]));
+            if (f == null) continue;
+            for (int id : List.copyOf(fs.locked)) {
+                Room r = f.room(id);
+                if (r != null) lock(level, g, f, r, false);
+                else fs.locked.remove(id);
+            }
+        }
+    }
+
     /** First time anyone sets foot on a floor: things that should already be there when you arrive. */
     static void floorFirstEntered(ServerLevel level, GateRecord g, FloorLayout f) {
         FloorState fs = g.floor(f.area, f.floor);
@@ -162,7 +213,7 @@ public final class Rooms {
                     for (int i = 0; i < r.normals + r.elites; i++) {
                         LivingEntity e = spawn(level, g, f, r.id, i < r.elites ? MobRole.Role.ELITE : MobRole.Role.NORMAL, spots.get(i % spots.size()));
                         var fr = e == null ? null : e.getAttribute(Attributes.FOLLOW_RANGE);
-                        if (fr != null) fr.addOrUpdateTransientModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_sentry"), -0.45, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+                        if (fr != null) fr.addOrReplacePermanentModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_sentry"), -0.45, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
                     }
                 }
             }
@@ -197,10 +248,12 @@ public final class Rooms {
             int wave = fs.waves.getOrDefault(r.id, 1);
             if (wave == 1 && r.wave2Normals + r.wave2Elites > 0) {
                 fs.waves.put(r.id, 2);
-                spawnGroup(level, g, f, r, r.id, r.wave2Normals, r.wave2Elites, 5);
-                broadcast(level, g, f, Component.literal("Second wave."));
                 GateRegistry.get(level.getServer()).setDirty();
-                return;
+                // a wave that couldn't take form counts as beaten: never leave a sealed arena with nothing to fight
+                if (spawnGroup(level, g, f, r, r.id, r.wave2Normals, r.wave2Elites, 5) > 0) {
+                    broadcast(level, g, f, Component.literal("Second wave."));
+                    return;
+                }
             }
             lock(level, g, f, r, false);
         }

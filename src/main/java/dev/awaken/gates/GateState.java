@@ -19,7 +19,7 @@ public enum GateState {
             case BUILDING -> EnumSet.of(READY, RELEASED);
             case READY -> EnumSet.of(ACTIVE, BROKEN, RELEASED);
             case ACTIVE -> EnumSet.of(OPEN, CLEARED, BROKEN);
-            case OPEN -> EnumSet.of(ACTIVE, BROKEN, RELEASED);
+            case OPEN -> EnumSet.of(ACTIVE, CLEARED, BROKEN, RELEASED);
             case CLEARED -> EnumSet.of(RELEASED);
             case BROKEN -> EnumSet.of(RELEASED);
             case RELEASED -> EnumSet.noneOf(GateState.class);

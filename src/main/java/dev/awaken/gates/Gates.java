@@ -141,7 +141,7 @@ public final class Gates {
     /** As {@link #openScripted(ServerPlayer, GatePlan)}, standing on the ground at {@code near}'s x/z, facing the player. */
     public static int openScripted(ServerPlayer p, GatePlan plan, BlockPos near) {
         MinecraftServer s = p.level().getServer();
-        if (GateService.gateLevel(s) == null) return -1;
+        if (GateService.gateLevel(s) == null || !GateRegistry.get(s).hasFreeCell()) return -1;
         ServerLevel over = s.overworld();
         BlockPos ground = over.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(near.getX(), 0, near.getZ())).below();
         GateRegistry reg = GateRegistry.get(s);

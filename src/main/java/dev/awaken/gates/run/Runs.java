@@ -227,6 +227,15 @@ public final class Runs {
         if (run.clearedFloor(f.area, f.floor)) return;
         MinecraftServer server = p.level().getServer();
         run.cleared.add(f.area + ":" + f.floor);
+        if (!g.floorsPaid.add(p.getUUID() + " " + f.area + ":" + f.floor)) {
+            // walked back through a floor you already cleared: the shrine is open and mends you, it pays nothing twice
+            GateRegistry.get(server).setDirty();
+            Modifiers.allowHeal(p);
+            p.heal(p.getMaxHealth() * 0.3F);
+            Signal.toast(p, Component.literal("Floor " + f.floor + " · already cleared. The shrine is open."));
+            return;
+        }
+        GateRegistry.get(server).setDirty();
         run.floorsCleared++;
         double reward = floorReward(p, g, f.area, f.floor);
         double bonus = reward * (1 - Curve.KILL_SHARE);
@@ -354,6 +363,8 @@ public final class Runs {
         if (g != null) {
             g.inside.remove(p.getUUID());
             if (g.inside.isEmpty()) {
+                ServerLevel gl = GateService.gateLevel(server);
+                if (gl != null) Rooms.unsealAll(gl, g);
                 if (g.state == GateState.ACTIVE) GateService.setState(server, g, GateState.OPEN);
                 else if (g.state == GateState.CLEARED) GateService.release(server, g);
             }
@@ -401,6 +412,8 @@ public final class Runs {
             g.bossDead = true;
             g.clearedAt = now(server);
             GateService.setState(server, g, GateState.CLEARED);
+            // it fell with nobody inside (fire, poison, a burst): nobody will walk out to release it
+            if (g.inside.isEmpty()) dev.awaken.core.Later.run(server, 1, () -> GateService.release(server, g));
         } else {
             if (g.annexBossDead) return;
             g.annexBossDead = true;
@@ -560,7 +573,18 @@ public final class Runs {
             } else {
                 g.inside.add(p.getUUID());
                 GateRegistry.get(server).setDirty();
+                // the floor's clock stood still while you were away: no backlog of pressure waves on return
+                if (run.leftAt >= 0) {
+                    long away = Math.max(0, now(server) - run.leftAt);
+                    run.floorStartedAt += away;
+                    run.leftAt = -1;
+                }
                 Modifiers.applyTo(p, g);
+                // the Inverted disguise doesn't survive a logout (puppets are never saved): put it back on
+                if (g.plan.is(Twist.INVERTED)) {
+                    FloorLayout f = GateLayout.of(g.plan).floor(run.area, run.floor);
+                    if (f != null) Twists.spawnPuppet(p, g, f);
+                }
                 Hud.send(p);
             }
         } else if (GateService.inGate(p) && !p.isCreative() && !p.isSpectator()) {
@@ -643,6 +667,13 @@ public final class Runs {
     }
 
     /** Public API: put loot straight into the Satchel. Returns what didn't fit (empty if all of it did). */
+    /** Into the Satchel; whatever doesn't fit drops at the player's feet instead of vanishing. */
+    static void satchelOrDrop(ServerPlayer p, RunState run, ItemStack stack) {
+        Satchel.add(run.satchel, stack);
+        if (!stack.isEmpty()) p.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
+        Hud.sendSoon(p);
+    }
+
     public static ItemStack satchelAdd(ServerPlayer p, ItemStack stack) {
         RunState run = run(p);
         if (!run.active()) return stack;

@@ -27,6 +27,11 @@ public final class GateCard {
     public static final int RANGE = 24, RESET = 48;
     private static final Map<UUID, Integer> SHOWN = new HashMap<>();
 
+    /** Server start/stop: nothing carries over to another world. */
+    static void resetAll() {
+        SHOWN.clear();
+    }
+
     static void reset(ServerPlayer p) {
         SHOWN.remove(p.getUUID());
     }

@@ -25,6 +25,9 @@ import net.minecraft.world.level.Level;
  */
 public class GateHoarder extends Zombie {
     public int gateId = -1;
+    /** Shards knocked loose by hits so far (it only lives 90 s; a handful is the tease, the hoard is the prize). */
+    public int shardsShed;
+    public static final int MAX_SHED = 6;
     public int area, floor;
     public long spottedAt = -1;
 

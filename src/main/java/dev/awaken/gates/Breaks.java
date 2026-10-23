@@ -95,6 +95,7 @@ public final class Breaks {
         GateRegistry.get(server).setDirty();
         ServerLevel over = server.overworld();
         over.getChunkSource().addTicketWithRadius(GatesRegistry.BREAK_TICKET.get(), ChunkPos.containing(g.pos), 2);
+        g.spillPending = true;
         PENDING.add(g.id);
         over.playSound(null, g.pos, GatesRegistry.SND_BREAK.get(), SoundSource.HOSTILE, 4F, 0.6F);
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -118,12 +119,31 @@ public final class Breaks {
                 ChunkPos cp = ChunkPos.containing(g.pos);
                 if (!over.getChunkSource().hasChunk(cp.x(), cp.z())) return false;
                 spill(over, g);
+                g.spillPending = false;
                 return true;
             });
         }
         if (server.getTickCount() % 20 != 0) return;
-        for (GateRecord g : reg.all()) {
-            if (g.state != GateState.BROKEN || g.lord.isEmpty()) continue;
+        for (GateRecord g : List.copyOf(reg.all())) {
+            if (g.state != GateState.BROKEN) continue;
+            if (g.breakHeld) {
+                // the Lord fell but the release was refused (someone stood in the cell): try again
+                if (server.getTickCount() % 100 == 0) GateService.release(server, g);
+                continue;
+            }
+            if (g.spillPending) {
+                // a restart dropped the queued spill: queue it again
+                if (!PENDING.contains(g.id)) {
+                    over.getChunkSource().addTicketWithRadius(GatesRegistry.BREAK_TICKET.get(), ChunkPos.containing(g.pos), 2);
+                    PENDING.add(g.id);
+                }
+                continue;
+            }
+            if (g.lord.isEmpty()) {
+                // no Lord on record (it couldn't take form): bring one out once its home area is loaded
+                if (server.getTickCount() % 200 == 0 && areaLoaded(over, g.pos)) spawnLord(over, g);
+                continue;
+            }
             Entity e = over.getEntity(g.lord.get());
             ServerBossEvent bar = BARS.computeIfAbsent(g.id, k -> {
                 ServerBossEvent b = new ServerBossEvent(UUID.randomUUID(), Component.literal(lordName(g)), BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.NOTCHED_10);
@@ -137,14 +157,47 @@ public final class Breaks {
                     if (in && !bar.getPlayers().contains(p)) bar.addPlayer(p);
                     else if (!in && bar.getPlayers().contains(p)) bar.removePlayer(p);
                 }
-            } else if (e == null && over.getChunkSource().hasChunk(ChunkPos.containing(g.pos).x(), ChunkPos.containing(g.pos).z())
-                    && server.getTickCount() % 600 == 0 && over.getEntitiesOfClass(LivingEntity.class,
-                    new net.minecraft.world.phys.AABB(g.pos).inflate(128), x -> x.getUUID().equals(g.lord.get())).isEmpty()) {
-                // the Lord vanished without dying (despawned, removed): it comes back to the gate
-                g.lord = java.util.Optional.empty();
-                spawnLord(over, g);
+                MISSES.remove(g.id);
+            } else if (e == null && server.getTickCount() % 200 == 0 && areaLoaded(over, g.pos)) {
+                // the Lord vanished without dying (removed). Entity sections load after chunks, so only after three
+                // checks in a row with its whole home area loaded; a stray copy that loads later is discarded on join.
+                if (MISSES.merge(g.id, 1, Integer::sum) >= 3) {
+                    MISSES.remove(g.id);
+                    g.lord = java.util.Optional.empty();
+                    spawnLord(over, g);
+                }
+            } else if (e != null) {
+                MISSES.remove(g.id);
             }
         }
+    }
+
+    private static final Map<Integer, Integer> MISSES = new HashMap<>();
+
+    /** The Lord's home area (it roams within 40 blocks of the gate) is loaded and ticking entities. */
+    private static boolean areaLoaded(ServerLevel level, BlockPos pos) {
+        for (int dx = -48; dx <= 48; dx += 48) {
+            for (int dz = -48; dz <= 48; dz += 48) {
+                if (!level.isPositionEntityTicking(pos.offset(dx, 0, dz))) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * A break Lord loaded from disk that its gate no longer claims (a duplicate, or its gate is gone): discard it so a
+     * broken gate never has two Lords and a released gate leaves no unkillable leftovers.
+     */
+    static boolean strayLord(MinecraftServer server, Entity e) {
+        MobRole role = MobRole.of(e);
+        if (role.role() != MobRole.Role.BREAK || role.gateId().isEmpty()) return false;
+        GateRecord g;
+        try {
+            g = GateRegistry.get(server).gate(Integer.parseInt(role.gateId()));
+        } catch (NumberFormatException ex) {
+            return false;
+        }
+        return g == null || g.state != GateState.BROKEN || g.breakHeld || (g.lord.isPresent() && !g.lord.get().equals(e.getUUID()));
     }
 
     static String lordName(GateRecord g) {
@@ -207,6 +260,7 @@ public final class Breaks {
         }
         level.addFreshEntity(new ItemEntity(level, lord.getX(), lord.getY() + 0.5, lord.getZ(), new ItemStack(CoreApi.LORD_HEART.get())));
         g.lord = java.util.Optional.empty();
+        g.breakHeld = true;
         g.trace.add("break held" + (killer != null ? " by " + killer.getGameProfile().name() : ""));
         GateService.release(server, g);
         GatePayloads.syncBeaconsAround(server, g.pos);
@@ -242,5 +296,6 @@ public final class Breaks {
         for (ServerBossEvent b : BARS.values()) b.removeAllPlayers();
         BARS.clear();
         PENDING.clear();
+        MISSES.clear();
     }
 }
