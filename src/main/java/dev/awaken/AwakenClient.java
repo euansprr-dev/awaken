@@ -1,0 +1,42 @@
+package dev.awaken;
+
+import dev.awaken.above.client.AboveClient;
+import dev.awaken.core.client.CoreClient;
+import dev.awaken.descent.client.DescentClient;
+import dev.awaken.gates.client.GatesClient;
+import dev.awaken.hearth.client.HearthClient;
+import dev.awaken.lucidium.client.LucidiumClient;
+import dev.awaken.mobs.client.MobsClient;
+import dev.awaken.powers.client.PowersClient;
+import dev.awaken.progression.client.ProgressionClient;
+import dev.awaken.signal.client.SignalClient;
+import dev.awaken.story.client.StoryClient;
+import dev.awaken.veil.client.VeilClient;
+import dev.awaken.world.client.WorldClient;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.gui.ConfigurationScreen;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+
+/** Client entry: never loaded on a dedicated server. */
+@Mod(value = Awaken.MODID, dist = Dist.CLIENT)
+public final class AwakenClient {
+    public AwakenClient(IEventBus modBus, ModContainer container) {
+        container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        CoreClient.init(modBus);
+        SignalClient.init(modBus);
+        ProgressionClient.init(modBus);
+        PowersClient.init(modBus);
+        MobsClient.init(modBus);
+        GatesClient.init(modBus);
+        DescentClient.init(modBus);
+        LucidiumClient.init(modBus);
+        VeilClient.init(modBus);
+        AboveClient.init(modBus);
+        HearthClient.init(modBus);
+        StoryClient.init(modBus);
+        WorldClient.init(modBus);
+    }
+}

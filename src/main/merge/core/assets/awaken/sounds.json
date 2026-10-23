@@ -1,0 +1,57 @@
+{
+  "signal.chime": {
+    "subtitle": "subtitles.awaken.signal.chime",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "pitch": 1.6,
+        "volume": 0.6
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "pitch": 1.6,
+        "volume": 0.6
+      }
+    ]
+  },
+  "signal.open": {
+    "subtitle": "subtitles.awaken.signal.open",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/shimmer",
+        "pitch": 1.3,
+        "volume": 0.7
+      }
+    ]
+  },
+  "signal.warning": {
+    "subtitle": "subtitles.awaken.signal.warning",
+    "sounds": [
+      {
+        "name": "minecraft:block/note_block/bit",
+        "pitch": 0.6,
+        "volume": 0.8
+      }
+    ]
+  },
+  "level_up": {
+    "subtitle": "subtitles.awaken.level_up",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/power_select",
+        "pitch": 1.4,
+        "volume": 0.8
+      }
+    ]
+  },
+  "rank_up": {
+    "subtitle": "subtitles.awaken.rank_up",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/activate",
+        "pitch": 0.8,
+        "volume": 1.0
+      }
+    ]
+  }
+}
