@@ -1,0 +1,32 @@
+{
+  "has_fixed_time": true,
+  "has_skylight": true,
+  "has_ceiling": true,
+  "has_ender_dragon_fight": false,
+  "coordinate_scale": 1.0,
+  "min_y": 0,
+  "height": 256,
+  "logical_height": 256,
+  "infiniburn": "#minecraft:infiniburn_overworld",
+  "ambient_light": 0.0,
+  "monster_spawn_light_level": 0,
+  "monster_spawn_block_light_limit": 0,
+  "skybox": "overworld",
+  "attributes": {
+    "minecraft:visual/sky_color": "#0b1026",
+    "minecraft:visual/fog_color": "#121828",
+    "minecraft:visual/cloud_color": "#00000000",
+    "minecraft:visual/sun_angle": 180.0,
+    "minecraft:visual/moon_angle": 0.0,
+    "minecraft:visual/star_brightness": 0.85,
+    "minecraft:visual/sky_light_color": "#7a7aff",
+    "minecraft:visual/sky_light_factor": 0.3,
+    "minecraft:gameplay/sky_light_level": 4.0,
+    "minecraft:gameplay/bed_rule": {
+      "can_sleep": "never",
+      "can_set_spawn": "never"
+    },
+    "minecraft:gameplay/respawn_anchor_works": false,
+    "minecraft:gameplay/can_start_raid": false
+  }
+}
