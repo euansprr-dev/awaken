@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "awaken:block/rest_shrine_side",
+    "top": "awaken:block/rest_shrine_top",
+    "bottom": "awaken:block/gate_frame"
+  }
+}

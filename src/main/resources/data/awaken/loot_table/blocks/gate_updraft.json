@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:gate_updraft"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/gate_updraft"
+}

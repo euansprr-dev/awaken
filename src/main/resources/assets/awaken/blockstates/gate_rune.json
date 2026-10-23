@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/gate_rune_off"
+    },
+    "lit=true": {
+      "model": "awaken:block/gate_rune_on"
+    }
+  }
+}

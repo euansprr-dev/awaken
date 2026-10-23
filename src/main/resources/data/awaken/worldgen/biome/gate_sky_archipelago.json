@@ -1,0 +1,63 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0.0,
+  "effects": {
+    "water_color": "#4a9ff0"
+  },
+  "attributes": {
+    "minecraft:visual/fog_color": "#bfe0ff",
+    "minecraft:visual/sky_color": "#bfe0ff",
+    "minecraft:visual/fog_start_distance": 12.0,
+    "minecraft:visual/fog_end_distance": 96.0,
+    "minecraft:visual/water_fog_color": "#050f1a",
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {
+          "ambient": [],
+          "axolotls": [],
+          "creature": [],
+          "misc": [],
+          "monster": [],
+          "underground_water_creature": [],
+          "water_ambient": [],
+          "water_creature": []
+        }
+      }
+    },
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:cloud"
+          },
+          "probability": 0.002
+        },
+        {
+          "particle": {
+            "type": "minecraft:white_ash"
+          },
+          "probability": 0.004
+        }
+      ]
+    },
+    "minecraft:audio/ambient_sounds": {
+      "additions": {
+        "sound": "awaken:gate.ambient.wind",
+        "tick_chance": 0.006
+      }
+    },
+    "minecraft:audio/background_music": {
+      "default": {
+        "sound": "minecraft:music.overworld.meadow",
+        "min_delay": 12000,
+        "max_delay": 24000
+      }
+    }
+  },
+  "carvers": [],
+  "features": []
+}

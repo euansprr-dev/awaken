@@ -1,0 +1,95 @@
+package dev.awaken.gates;
+
+import dev.awaken.core.PlayDays;
+import dev.awaken.gates.content.GatePlan;
+import dev.awaken.gates.content.Modifier;
+import dev.awaken.progression.Progression;
+import dev.awaken.progression.Stat;
+import dev.awaken.signal.Signal;
+import dev.awaken.signal.SignalWindow;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * The gate card (SPEC section 7): within 24 blocks of a gate you see its rank, when it breaks and its omen. PER 20 adds
+ * the layout, PER 40 the modifiers, PER 60 the floor count; a gate scouted from the Veil shows everything.
+ */
+public final class GateCard {
+    private GateCard() {}
+
+    public static final int RANGE = 24, RESET = 48;
+    private static final Map<UUID, Integer> SHOWN = new HashMap<>();
+
+    static void reset(ServerPlayer p) {
+        SHOWN.remove(p.getUUID());
+    }
+
+    static void tick(MinecraftServer server) {
+        if (server.getTickCount() % 20 != 7) return;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            if (p.level().dimension() != Level.OVERWORLD) continue;
+            Integer shown = SHOWN.get(p.getUUID());
+            GateRecord near = null;
+            double best = Double.MAX_VALUE;
+            for (GateRecord g : GateRegistry.get(server).near(p.blockPosition(), RESET, false)) {
+                if (!g.structurePlaced) continue;
+                double d = g.pos.distSqr(p.blockPosition());
+                if (shown != null && shown == g.id) {
+                    if (d > RESET * RESET) SHOWN.remove(p.getUUID());
+                }
+                if (d < best) {
+                    best = d;
+                    near = g;
+                }
+            }
+            if (near == null) {
+                SHOWN.remove(p.getUUID());
+                continue;
+            }
+            if (best > RANGE * RANGE || (shown != null && shown == near.id)) continue;
+            SHOWN.put(p.getUUID(), near.id);
+            send(p, near);
+        }
+    }
+
+    public static void send(ServerPlayer p, GateRecord g) {
+        GatePlan plan = g.plan;
+        long today = PlayDays.current(p.level().getServer());
+        int per = Progression.stat(p, Stat.PER);
+        boolean scouted = Gates.isScouted(p, g.id);
+        var w = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(plan.rank().label + "-rank gate")
+                .withColor(plan.rank().colour));
+        switch (g.state) {
+            case BROKEN -> w.body(Component.literal("Broken open. Its Lord walks the land.").withStyle(ChatFormatting.RED));
+            case CLEARED -> w.body(Component.literal("Spent. Whatever lived here is gone."));
+            case BUILDING -> w.body(Component.literal("Still forming."));
+            default -> {}
+        }
+        if (g.state.standing()) {
+            long in = g.breaksIn(today);
+            w.row("Breaks in", g.scripted ? "never" : in == 0 ? "today" : in + " play-day" + (in > 1 ? "s" : ""));
+        }
+        w.row("Omen", plan.theme().omen);
+        if (scouted) w.row("Theme", plan.theme().displayName);
+        if (per >= 20 || scouted) w.row("Layout", plan.layout().displayName);
+        if (per >= 40 || scouted) {
+            w.row("Modifiers", plan.modifiers().isEmpty() ? "None" : String.join(", ", plan.modifiers().stream().map((Modifier m) -> m.displayName).toList()));
+        }
+        if (per >= 60 || scouted) w.row("Floors", Integer.toString(plan.floors()));
+        if (scouted) {
+            w.row("Gate Lord", dev.awaken.gates.run.Rooms.capital(plan.theme().bossName));
+            w.row("Twist", plan.twist() == dev.awaken.gates.content.Twist.NONE ? "None" : plan.twist().displayName + ": " + plan.twist().description);
+            if (!plan.combos().isEmpty()) w.body(Component.literal(String.join("\n", plan.combos())));
+        }
+        w.footer(Component.literal(g.state.enterable() ? (scouted ? "Scouted · walk in to enter" : "Walk in to enter · scout it from the Veil to learn more")
+                : ""));
+        Signal.send(p, w.ttl(20 * 9).priority(3).build());
+    }
+}

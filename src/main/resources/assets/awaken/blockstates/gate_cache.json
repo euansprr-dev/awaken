@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "open=false": {
+      "model": "awaken:block/gate_cache"
+    },
+    "open=true": {
+      "model": "awaken:block/gate_cache_open"
+    }
+  }
+}

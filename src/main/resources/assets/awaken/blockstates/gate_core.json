@@ -1,0 +1,46 @@
+{
+  "variants": {
+    "broken=false,rank=0": {
+      "model": "awaken:block/gate_core_e"
+    },
+    "broken=true,rank=0": {
+      "model": "awaken:block/gate_core_broken"
+    },
+    "broken=false,rank=1": {
+      "model": "awaken:block/gate_core_d"
+    },
+    "broken=true,rank=1": {
+      "model": "awaken:block/gate_core_broken"
+    },
+    "broken=false,rank=2": {
+      "model": "awaken:block/gate_core_c"
+    },
+    "broken=true,rank=2": {
+      "model": "awaken:block/gate_core_broken"
+    },
+    "broken=false,rank=3": {
+      "model": "awaken:block/gate_core_b"
+    },
+    "broken=true,rank=3": {
+      "model": "awaken:block/gate_core_broken"
+    },
+    "broken=false,rank=4": {
+      "model": "awaken:block/gate_core_a"
+    },
+    "broken=true,rank=4": {
+      "model": "awaken:block/gate_core_broken"
+    },
+    "broken=false,rank=5": {
+      "model": "awaken:block/gate_core_s"
+    },
+    "broken=true,rank=5": {
+      "model": "awaken:block/gate_core_broken"
+    },
+    "broken=false,rank=6": {
+      "model": "awaken:block/gate_core_sovereign"
+    },
+    "broken=true,rank=6": {
+      "model": "awaken:block/gate_core_broken"
+    }
+  }
+}
