@@ -26,6 +26,7 @@ public final class AwakenClient {
     public AwakenClient(IEventBus modBus, ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         CoreClient.init(modBus);
+        dev.awaken.core.client.dev.Autopilot.init(); // inert unless -Dawaken.autopilot is set
         SignalClient.init(modBus);
         ProgressionClient.init(modBus);
         PowersClient.init(modBus);

@@ -1,0 +1,20 @@
+# Smoke tour: a fresh creative world, the HUD, a Signal window, the Status screen at two GUI scales.
+world autopilot creative 1234
+waitworld
+gui 0
+look 0 10
+shot 01_world_auto
+cmd awaken admin awaken
+wait 60
+shot 02_awakened_auto
+screen status
+shot 03_status_auto
+screen close
+gui 2
+screen status
+shot 04_status_gui2
+screen close
+cmd awaken gate open E bell_crypt
+wait 200
+shot 05_gate_open
+quit

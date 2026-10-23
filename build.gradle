@@ -53,6 +53,14 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // Development only: plays a script (run-autopilot/script.txt) in its own game folder and takes screenshots.
+        // tools/autopilot.sh writes the script and runs this.
+        autopilot {
+            client()
+            gameDirectory = project.file('run-autopilot')
+            systemProperty 'awaken.autopilot', project.file('run-autopilot/script.txt').absolutePath
+        }
+
         server {
             server()
             programArgument '--nogui'
