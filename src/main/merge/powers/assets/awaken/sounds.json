@@ -1,0 +1,702 @@
+{
+  "power.fail": {
+    "subtitle": "subtitles.awaken.power.fail",
+    "sounds": [
+      {
+        "name": "minecraft:block.note_block.bass",
+        "type": "event",
+        "pitch": 0.5,
+        "volume": 0.5
+      }
+    ]
+  },
+  "power.learn": {
+    "subtitle": "subtitles.awaken.power.learn",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.8
+      }
+    ]
+  },
+  "power.slam": {
+    "subtitle": "subtitles.awaken.power.slam",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_ground_heavy",
+        "type": "event",
+        "pitch": 0.9,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.whoosh": {
+    "subtitle": "subtitles.awaken.power.whoosh",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.wind_burst",
+        "type": "event",
+        "pitch": 1.5,
+        "volume": 0.6
+      },
+      {
+        "name": "minecraft:item.trident.riptide_1",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.4
+      }
+    ]
+  },
+  "power.punch": {
+    "subtitle": "subtitles.awaken.power.punch",
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.attack.strong",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:item.mace.smash_ground",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.charge_up": {
+    "subtitle": "subtitles.awaken.power.charge_up",
+    "sounds": [
+      {
+        "name": "minecraft:block.respawn_anchor.charge",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.7
+      }
+    ]
+  },
+  "power.rip": {
+    "subtitle": "subtitles.awaken.power.rip",
+    "sounds": [
+      {
+        "name": "minecraft:block.rooted_dirt.break",
+        "type": "event",
+        "pitch": 0.5,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.gravel.break",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.impact": {
+    "subtitle": "subtitles.awaken.power.impact",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_ground",
+        "type": "event",
+        "pitch": 1.0,
+        "volume": 0.9
+      }
+    ]
+  },
+  "power.shockwave": {
+    "subtitle": "subtitles.awaken.power.shockwave",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wind_charge.wind_burst",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.brace": {
+    "subtitle": "subtitles.awaken.power.brace",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.3
+      }
+    ]
+  },
+  "power.thunder": {
+    "subtitle": "subtitles.awaken.power.thunder",
+    "sounds": [
+      {
+        "name": "minecraft:entity.lightning_bolt.thunder",
+        "type": "event",
+        "pitch": 1.0,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.zap": {
+    "subtitle": "subtitles.awaken.power.zap",
+    "sounds": [
+      {
+        "name": "minecraft:entity.lightning_bolt.impact",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.7
+      }
+    ]
+  },
+  "power.flow_start": {
+    "subtitle": "subtitles.awaken.power.flow_start",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event",
+        "pitch": 2.0,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:item.trident.riptide_2",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 0.5
+      }
+    ]
+  },
+  "power.flow_end": {
+    "subtitle": "subtitles.awaken.power.flow_end",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.deactivate",
+        "type": "event",
+        "pitch": 2.0,
+        "volume": 0.7
+      }
+    ]
+  },
+  "power.hover": {
+    "subtitle": "subtitles.awaken.power.hover",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.jump",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.7
+      }
+    ]
+  },
+  "power.gravity": {
+    "subtitle": "subtitles.awaken.power.gravity",
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.heartbeat",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event",
+        "pitch": 0.5,
+        "volume": 0.8
+      }
+    ]
+  },
+  "power.throw": {
+    "subtitle": "subtitles.awaken.power.throw",
+    "sounds": [
+      {
+        "name": "minecraft:entity.breeze.shoot",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.beam": {
+    "subtitle": "subtitles.awaken.power.beam",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event",
+        "pitch": 1.8,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block.conduit.ambient.short",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.nova": {
+    "subtitle": "subtitles.awaken.power.nova",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event",
+        "pitch": 2.0,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.barrier": {
+    "subtitle": "subtitles.awaken.power.barrier",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.7
+      },
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.barrier_break": {
+    "subtitle": "subtitles.awaken.power.barrier_break",
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.shot": {
+    "subtitle": "subtitles.awaken.power.shot",
+    "sounds": [
+      {
+        "name": "minecraft:entity.shulker.shoot",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:entity.blaze.shoot",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.4
+      }
+    ]
+  },
+  "power.overload": {
+    "subtitle": "subtitles.awaken.power.overload",
+    "sounds": [
+      {
+        "name": "minecraft:block.respawn_anchor.charge",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:entity.warden.sonic_charge",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.shadow": {
+    "subtitle": "subtitles.awaken.power.shadow",
+    "sounds": [
+      {
+        "name": "minecraft:entity.enderman.teleport",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 0.8
+      }
+    ]
+  },
+  "power.cloak": {
+    "subtitle": "subtitles.awaken.power.cloak",
+    "sounds": [
+      {
+        "name": "minecraft:entity.illusioner.prepare_blindness",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.9
+      }
+    ]
+  },
+  "power.summon": {
+    "subtitle": "subtitles.awaken.power.summon",
+    "sounds": [
+      {
+        "name": "minecraft:entity.evoker.prepare_summon",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.9
+      }
+    ]
+  },
+  "power.mind": {
+    "subtitle": "subtitles.awaken.power.mind",
+    "sounds": [
+      {
+        "name": "minecraft:entity.illusioner.cast_spell",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.9
+      }
+    ]
+  },
+  "power.pop": {
+    "subtitle": "subtitles.awaken.power.pop",
+    "sounds": [
+      {
+        "name": "minecraft:entity.illusioner.mirror_move",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:entity.firework_rocket.blast",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.5
+      }
+    ]
+  },
+  "power.build": {
+    "subtitle": "subtitles.awaken.power.build",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.place",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.stone.place",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.collapse": {
+    "subtitle": "subtitles.awaken.power.collapse",
+    "sounds": [
+      {
+        "name": "minecraft:block.heavy_core.fall",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:entity.zombie.attack_iron_door",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.construct_fade": {
+    "subtitle": "subtitles.awaken.power.construct_fade",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.break",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.5
+      }
+    ]
+  },
+  "power.grapple": {
+    "subtitle": "subtitles.awaken.power.grapple",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.shoot",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:entity.fishing_bobber.retrieve",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.8
+      }
+    ]
+  },
+  "power.jet": {
+    "subtitle": "subtitles.awaken.power.jet",
+    "sounds": [
+      {
+        "name": "minecraft:entity.firework_rocket.launch",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.drone_shot": {
+    "subtitle": "subtitles.awaken.power.drone_shot",
+    "sounds": [
+      {
+        "name": "minecraft:entity.blaze.shoot",
+        "type": "event",
+        "pitch": 2.0,
+        "volume": 0.4
+      }
+    ]
+  },
+  "power.rail": {
+    "subtitle": "subtitles.awaken.power.rail",
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.sonic_boom",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.8
+      }
+    ]
+  },
+  "power.nanite": {
+    "subtitle": "subtitles.awaken.power.nanite",
+    "sounds": [
+      {
+        "name": "minecraft:item.armor.equip_netherite",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.copper.place",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.spirit": {
+    "subtitle": "subtitles.awaken.power.spirit",
+    "sounds": [
+      {
+        "name": "minecraft:particle.soul_escape",
+        "type": "event",
+        "pitch": 1.0,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 0.8
+      }
+    ]
+  },
+  "power.heal": {
+    "subtitle": "subtitles.awaken.power.heal",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:entity.player.levelup",
+        "type": "event",
+        "pitch": 2.0,
+        "volume": 0.2
+      }
+    ]
+  },
+  "power.eye": {
+    "subtitle": "subtitles.awaken.power.eye",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.6
+      },
+      {
+        "name": "minecraft:entity.ender_eye.launch",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.6
+      }
+    ]
+  },
+  "power.lash": {
+    "subtitle": "subtitles.awaken.power.lash",
+    "sounds": [
+      {
+        "name": "minecraft:item.trident.throw",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:entity.fishing_bobber.retrieve",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.8
+      }
+    ]
+  },
+  "power.ward": {
+    "subtitle": "subtitles.awaken.power.ward",
+    "sounds": [
+      {
+        "name": "minecraft:block.conduit.activate",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.void": {
+    "subtitle": "subtitles.awaken.power.void",
+    "sounds": [
+      {
+        "name": "minecraft:entity.warden.heartbeat",
+        "type": "event",
+        "pitch": 0.5,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:particle.soul_escape",
+        "type": "event",
+        "pitch": 0.5,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.dream": {
+    "subtitle": "subtitles.awaken.power.dream",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.chorus_flower.grow",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.8
+      }
+    ]
+  },
+  "power.frost": {
+    "subtitle": "subtitles.awaken.power.frost",
+    "sounds": [
+      {
+        "name": "minecraft:block.powder_snow.break",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.4
+      }
+    ]
+  },
+  "power.ember": {
+    "subtitle": "subtitles.awaken.power.ember",
+    "sounds": [
+      {
+        "name": "minecraft:item.firecharge.use",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block.fire.ambient",
+        "type": "event",
+        "pitch": 1.0,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.steam": {
+    "subtitle": "subtitles.awaken.power.steam",
+    "sounds": [
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.blast": {
+    "subtitle": "subtitles.awaken.power.blast",
+    "sounds": [
+      {
+        "name": "minecraft:entity.generic.explode",
+        "type": "event",
+        "pitch": 1.0,
+        "volume": 0.9
+      }
+    ]
+  },
+  "power.stun": {
+    "subtitle": "subtitles.awaken.power.stun",
+    "sounds": [
+      {
+        "name": "minecraft:entity.lightning_bolt.impact",
+        "type": "event",
+        "pitch": 2.0,
+        "volume": 0.5
+      }
+    ]
+  },
+  "power.shatter": {
+    "subtitle": "subtitles.awaken.power.shatter",
+    "sounds": [
+      {
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "pitch": 1.0,
+        "volume": 1.0
+      }
+    ]
+  },
+  "power.danger": {
+    "subtitle": "subtitles.awaken.power.danger",
+    "sounds": [
+      {
+        "name": "minecraft:block.note_block.bit",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.4
+      }
+    ]
+  }
+}

@@ -57,12 +57,14 @@ public final class PowerContent {
             p -> p.stacksTo(16).rarity(Rarity.RARE).component(CORE_DATA.get(), PowerCoreData.EMPTY));
 
     public static final DeferredBlock<ConstructBlock> CONSTRUCT = BLOCKS.registerBlock("construct", ConstructBlock::new,
-            p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(0.6f, 6.0f).sound(SoundType.AMETHYST).noLootTable()
-                    .lightLevel(s -> 7).pushReaction(PushReaction.IMMOVEABLE).isValidSpawn((s, l, pos, t) -> false));
+            p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(0.6f, 6.0f).sound(SoundType.AMETHYST).noLootTable().noOcclusion()
+                    .lightLevel(s -> 7).pushReaction(PushReaction.IMMOVEABLE).isValidSpawn((s, l, pos, t) -> false)
+                    .isRedstoneConductor((s, l, pos) -> false).isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false));
 
     public static final DeferredBlock<ConstructBlock> DREAM_CONSTRUCT = BLOCKS.registerBlock("dream_construct", ConstructBlock::new,
-            p -> p.mapColor(MapColor.COLOR_PINK).strength(0.6f, 6.0f).sound(SoundType.AMETHYST).noLootTable()
-                    .lightLevel(s -> 9).pushReaction(PushReaction.IMMOVEABLE).isValidSpawn((s, l, pos, t) -> false));
+            p -> p.mapColor(MapColor.COLOR_PINK).strength(0.6f, 6.0f).sound(SoundType.AMETHYST).noLootTable().noOcclusion()
+                    .lightLevel(s -> 9).pushReaction(PushReaction.IMMOVEABLE).isValidSpawn((s, l, pos, t) -> false)
+                    .isRedstoneConductor((s, l, pos) -> false).isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false));
 
     public static final DeferredHolder<EntityType<?>, EntityType<ShadowSoldier>> SHADOW_SOLDIER = ENTITIES.registerEntityType(
             "shadow_soldier", ShadowSoldier::new, MobCategory.MISC,

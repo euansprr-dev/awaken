@@ -59,6 +59,12 @@ public final class ConstructBlock extends Block {
         return false;
     }
 
+    /** Hard light is see-through: hide the faces between two constructs like glass does. */
+    @Override
+    protected boolean skipRendering(BlockState state, BlockState neighbor, net.minecraft.core.Direction direction) {
+        return (neighbor.is(this) && !neighbor.getValue(SLAB) && !state.getValue(SLAB)) || super.skipRendering(state, neighbor, direction);
+    }
+
     /** The state and first delay for a construct that should live {@code ticks} ticks. */
     public BlockState stateFor(boolean slab, int ticks) {
         int stagesLeft = Math.max(1, Math.min(4, (ticks + STAGE - 1) / STAGE));

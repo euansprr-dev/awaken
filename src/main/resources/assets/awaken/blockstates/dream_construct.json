@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "age=0,slab=false": {
+      "model": "awaken:block/dream_construct_0"
+    },
+    "age=0,slab=true": {
+      "model": "awaken:block/dream_construct_slab_0"
+    },
+    "age=1,slab=false": {
+      "model": "awaken:block/dream_construct_1"
+    },
+    "age=1,slab=true": {
+      "model": "awaken:block/dream_construct_slab_1"
+    },
+    "age=2,slab=false": {
+      "model": "awaken:block/dream_construct_2"
+    },
+    "age=2,slab=true": {
+      "model": "awaken:block/dream_construct_slab_2"
+    },
+    "age=3,slab=false": {
+      "model": "awaken:block/dream_construct_3"
+    },
+    "age=3,slab=true": {
+      "model": "awaken:block/dream_construct_slab_3"
+    }
+  }
+}

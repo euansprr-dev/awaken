@@ -57,7 +57,8 @@ public final class Constructs {
         ServerLevel level = player.level();
         if (!mayChange(player, pos)) return false;
         if (!level.getBlockState(pos).isAir()) return false;
-        return level.getEntitiesOfClass(Player.class, new AABB(pos)).isEmpty();
+        // never build inside anything living: walls form around a mob instead of trapping it
+        return level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, new AABB(pos), e -> e.isAlive() && !e.isSpectator()).isEmpty();
     }
 
     /** Places constructs at every free position. Returns how many went down. */
