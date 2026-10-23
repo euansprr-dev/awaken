@@ -301,7 +301,8 @@ final class FaunaTests {
                     EntityType<Mob> moss = (EntityType<Mob>) (EntityType<?>) MobTypes.type("mossback");
                     h.assertTrue(SpawnPlacements.isSpawnPositionOk(moss, level, start), "the patch is a valid spawn position");
                     h.assertTrue(level.getNearestPlayer(start.getX() + 0.5, start.getY(), start.getZ() + 0.5, 128.0, false) == p, "the test player is the nearest");
-                    h.assertTrue(FaunaRules.check(moss, level, EntitySpawnReason.NATURAL, start, RandomSource.create(3L)), "the rules allow a mossback here by day");
+                    String why = FaunaRules.verdict(moss, level, EntitySpawnReason.NATURAL, start, RandomSource.create(3L), null, false);
+                    h.assertTrue(why == null, "the rules allow a mossback here by day, but: " + why);
                     for (int i = 0; i < 80 && spawned.size() < 6; i++) {
                         NaturalSpawner.spawnCategoryForPosition(MobTypes.FAUNA, level, start);
                         // only what spawned here: elsewhere in the test world it may be night, and night hunters spawn there
@@ -369,15 +370,19 @@ final class FaunaTests {
             p.setYRot(0.0F);
             p.setXRot(0.0F);
             p.setYHeadRot(0.0F);
+            // creatures other tests left nearby would take the look's ray budget before ours, and their walls our view
+            clearFauna(level, p);
+            BlockPos at = h.absolutePos(new BlockPos(0, UP, 0));
+            for (int dx = -4; dx <= 8; dx++) for (int dz = -10; dz <= 12; dz++) ground(level, at.offset(dx, 0, dz));
             List<AwakenMob> made = new ArrayList<>();
             try {
-                BlockPos at = h.absolutePos(new BlockPos(0, UP, 0));
                 MobDef moss = Bestiary.get("mossback");
                 AwakenMob seen = Mobs.spawn(level, moss, Vec3.atBottomCenterOf(at.south(6)), 1, new MobRole(MobRole.Role.NORMAL, 1, moss.theme.id, Optional.empty(), ""), Set.of());
                 seen.setNoAi(true);
                 made.add(seen);
                 h.assertTrue(Sightings.check(p) == null, "not awakened: nothing is discovered yet");
                 awaken(p);
+                for (FaunaMob m : List.copyOf(FaunaCensus.in(level))) if (!made.contains(m) && m.distanceToSqr(p) < 200 * 200) m.discard();
                 double xp = Progression.profile(p).xp();
                 int lv = Progression.profile(p).level();
                 h.assertTrue(Sightings.check(p) == moss, "the mossback in front of the player is discovered");
@@ -526,10 +531,13 @@ final class FaunaTests {
     }
 
     /** Grass under pos, air at pos and above. */
+    /**
+     * Grass with open sky over it. Tests build high above the test plot, where the framework doesn't clean up, and
+     * plots are reused: another test's sealed room or wall may still stand here.
+     */
     private static void ground(ServerLevel level, BlockPos pos) {
         level.setBlock(pos.below(), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
-        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-        level.setBlock(pos.above(), Blocks.AIR.defaultBlockState(), 3);
+        for (int y = 0; y <= 6; y++) level.setBlock(pos.above(y), Blocks.AIR.defaultBlockState(), 3);
     }
 
     /** A sealed stone room around a two-high space at pos (grass floor), lit by glowstone in the wall if asked. */

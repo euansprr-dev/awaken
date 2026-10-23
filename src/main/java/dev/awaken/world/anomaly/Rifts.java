@@ -295,11 +295,15 @@ final class Rifts {
             int d = min + r.nextInt(max - min + 1);
             int x = center.getX() + (int) Math.round(Math.cos(ang) * d), z = center.getZ() + (int) Math.round(Math.sin(ang) * d);
             if (!level.hasChunkAt(x, z)) continue;
-            BlockPos feet = Spots.surface(level, x, z).above();
-            if (Math.abs(feet.getY() - center.getY() - 1) > 4) continue;
-            BlockState floor = level.getBlockState(feet.below()), at = level.getBlockState(feet), head = level.getBlockState(feet.above());
-            if (!floor.getFluidState().isEmpty() || !at.getFluidState().isEmpty() || at.is(BlockTags.BLOCKS_MOTION) || head.is(BlockTags.BLOCKS_MOTION)) continue;
-            return feet;
+            // stand on the ground near the tear's own height, not the column's top (an overhang or a canopy above
+            // would otherwise put every spot out of reach)
+            for (int dy = 4; dy >= -4; dy--) {
+                BlockPos feet = new BlockPos(x, center.getY() + 1 + dy, z);
+                BlockState floor = level.getBlockState(feet.below()), at = level.getBlockState(feet), head = level.getBlockState(feet.above());
+                if (!floor.is(BlockTags.BLOCKS_MOTION_NO_LEAVES) || !floor.getFluidState().isEmpty()) continue;
+                if (!at.getFluidState().isEmpty() || at.is(BlockTags.BLOCKS_MOTION) || head.is(BlockTags.BLOCKS_MOTION)) continue;
+                return feet;
+            }
         }
         return null;
     }
