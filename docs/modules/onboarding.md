@@ -71,20 +71,21 @@ anything else 0.25 of a level. World kills, ores and blocks are tapered by `1 / 
 (vanilla mobs are content level 0; AWAKEN mobs use their `MobRole` content level). Discoveries (`Progression.discover`)
 are first-time only and not budgeted. Regimen pays a tenth of a level (was a quarter: a morning comes every 20 minutes).
 
-Gate floor shares (`Rank.share`, used by `Curve.floorReward`): E .28 (was .81), D .16 (.39), C .08 (.25), B .07 (.23),
-A .30 (.18), S .25 (.12), Sovereign .25 (.12).
+Gate floor shares (`Rank.share`, used by `Curve.floorReward`): E .28 (was .81), D .16 (.39), C .065 (.25), B .22 (.23),
+A .60 (.18), S .55 (.12), Sovereign .50 (.12). C is the long middle; from B on, gates pay more per level so the climb
+from 50 to 135 takes ~45 hours.
 
 ## Simulator results (`python3 tools/sim/pacing_sim.py`, 300 runs per player type, seed 42; `tools/sim/pacing_results.json`)
 
-Targets (balanced player): level 5 in 45–60 min, 10 in 3–4 h, 25 in 15–20 h, 50 in 55–60 h; level 3–4 at 30 min,
-5–6 at 60 min. **All pass.**
+Targets (balanced player): level 5 in 45–60 min, 10 in 3–4 h, 25 in 15–20 h, 50 in 55–60 h, 135 in 95–105 h; level
+3–4 at 30 min, 5–6 at 60 min. **All pass.**
 
 | Player | Lv at 30 / 60 min | Lv 5 | Lv 10 | Lv 25 | Lv 50 | Lv 70 | Lv 135 | deaths / 10 gates |
 |---|---|---|---|---|---|---|---|---|
-| balanced | 3 / 5 | 47 min | 3.6 h | 16.8 h | 56.4 h | 93 h | 145 h | 1.7 |
-| careful | 2 / 5 | 50 min | 4.1 h | 19.6 h | 64.4 h | 107 h | 170 h | 1.0 |
-| greedy | 3 / 5 | 46 min | 3.4 h | 17.6 h | 63.9 h | 104 h | 156 h | 6.8 |
-| builder | 2 / 5 | 48 min | 3.7 h | 17.3 h | 57.8 h | 95 h | 150 h | 1.9 |
+| balanced | 3 / 5 | 47 min | 3.6 h | 17.0 h | 56.0 h | 73 h | 101 h | 1.7 |
+| careful | 2 / 5 | 50 min | 4.0 h | 19.5 h | 63.1 h | 85 h | 120 h | 1.0 |
+| greedy | 3 / 5 | 46 min | 3.3 h | 17.1 h | 62.1 h | 78 h | 104 h | 6.7 |
+| builder | 2 / 5 | 49 min | 3.7 h | 17.5 h | 57.0 h | 76 h | 105 h | 1.9 |
 
 First power at minute 8 for everyone. A mob farm (60 kills every 10 minutes, nothing else) pays 0.8 levels/h at level
 3, 0.5 at 10, 0.28 at 25, 0.16 at 50. Push-EV on a C gate still peaks at floor 4 (the extract-or-push choice holds).
@@ -96,9 +97,9 @@ Assumed for other modules (their builders should match or tell me): a first sigh
 first hour, ~140 over the game; an anomaly every ~9 outdoor minutes, a rift tear paying `0.3 × Curve.floorReward(rank, 1)`
 (use `Progression.XpSource.ANOMALY`); dreams ~0.1 level on 35% of play-days.
 
-**Owner decision needed:** with level 50 at ~56 h, level 135 (the Seed's requirement) lands at ~145 h for the balanced
-player, not the plan's "~100-hour story". Raising A/S/Sovereign shares already pulls it in from ~180 h. Hitting 100 h
-needs either a faster climb after 70 (gates there would pay ~2× more per level than at 50) or a lower Seed level.
+**Endgame pacing (resolved 2026-10-23):** level 135 used to land at ~145 h. B now pays .22 and A/S/Sovereign .60/.55/.50
+(C drops to .065 to keep level 50 at ~56 h), so the balanced player reaches 135 at ~101 h, matching the ~100-hour story.
+The Seed's level requirement is unchanged.
 
 ## How to try it
 
@@ -128,7 +129,7 @@ not at awakening; no XP test expectation changed.
 
 ## SPEC-worthy decisions (for the integrator)
 
-1. §2: `Rank.share` E .28, D .16, C .08, B .07, A .30, S .25, Sovereign .25; Regimen = 0.1 × xpToNext(L) + 1 point.
+1. §2: `Rank.share` E .28, D .16, C .065, B .22, A .60, S .55, Sovereign .50; Regimen = 0.1 × xpToNext(L) + 1 point.
 2. §4.3 replaced: home XP = kill 4% × min(2, hp/20), ore 1%, block 0.05% of a level, each through diminishing returns
    per source (tally with a 10-min time constant; full below budget, then budget/tally; budgets kill .15, ore .06,
    build .03, other .25 per 10 min), tapered 1/(1 + levels above content level / 10). Discoveries are uncapped.

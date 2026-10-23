@@ -20,11 +20,12 @@ RANKS = ["E", "D", "C", "B", "A", "S", "Sovereign"]
 RANK_LEVEL = {"D": 10, "C": 25, "B": 45, "A": 70, "S": 100, "Sovereign": 135}
 # JAVA Rank.contentLevel: level a gate of each rank is tuned around.
 RANK_MID = {"E": 5, "D": 17, "C": 35, "B": 57, "A": 85, "S": 118, "Sovereign": 150}
-# JAVA Rank.share: share of a level (at RANK_MID) one cleared floor 1 pays. v2 slows D..B so level 50 lands at ~57 h.
-SHARE = {"E": 0.28, "D": 0.16, "C": 0.08, "B": 0.07, "A": 0.3, "S": 0.25, "Sovereign": 0.25}
+# JAVA Rank.share: share of a level (at RANK_MID) one cleared floor 1 pays. v2 slows D and C so level 50 lands at ~56 h;
+# B pays well again (and A and above more) so the climb from 50 to 135 takes ~45 h and the story ends near 100 h.
+SHARE = {"E": 0.28, "D": 0.16, "C": 0.065, "B": 0.22, "A": 0.6, "S": 0.55, "Sovereign": 0.5}
 
 # Plan v2 targets: hours of normal play to reach a level (balanced player's median).
-LEVEL_TARGETS = {5: (0.75, 1.0), 10: (3.0, 4.0), 25: (15.0, 20.0), 50: (55.0, 60.0)}
+LEVEL_TARGETS = {5: (0.75, 1.0), 10: (3.0, 4.0), 25: (15.0, 20.0), 50: (55.0, 60.0), 135: (95.0, 105.0)}
 # The first-hour slice (docs/v2/BRIEF.md): level at 30 and 60 minutes.
 FIRST_HOUR = {30: (3, 4.99), 60: (5, 6.99)}
 

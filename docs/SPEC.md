@@ -56,7 +56,7 @@ xpToNext(L)      = 90 * L^1.45 + 60
 RANKS            = E, D, C, B, A, S, SOVEREIGN          (index 0..6)
 RANK_LEVEL       = D 10, C 25, B 45, A 70, S 100, SOVEREIGN 135   (level needed to take the Reassessment)
 RANK_MID         = E 5, D 17, C 35, B 57, A 85, S 118, SOVEREIGN 150  (gate content level)
-SHARE            = E .81, D .39, C .25, B .23, A .18, S .12, SOVEREIGN .12
+SHARE            = E .28, D .16, C .065, B .22, A .60, S .55, SOVEREIGN .50   (v2, see §13; v1 was .81/.39/.25/.23/.18/.12/.12)
 floorReward(r,f) = SHARE[r] * xpToNext(RANK_MID[r]) * 1.4^(f-1)
    40% arrives as kill XP during the floor (split across the floor's spawned mobs)
    60% is the floor bonus, carried as "Satchel XP" and banked only on extraction or boss kill
@@ -351,7 +351,8 @@ Story effects on the world:
   (up to 10 tiers); allies are not scaled.
 
 Plan v2 · onboarding and progression (details in docs/modules/onboarding.md):
-- Rank floor-reward shares E .28, D .16, C .08, B .07, A .30, S .25, Sovereign .25; Daily Regimen = 0.1 × xpToNext + 1 point.
+- Rank floor-reward shares E .28, D .16, C .065, B .22, A .60, S .55, Sovereign .50 (sim: level 50 ≈ 56 h, 135 ≈ 101 h for a
+  balanced player, 120 h careful); Daily Regimen = 0.1 × xpToNext + 1 point.
 - §4.3 is replaced: home XP = kill 4% × min(2, hp/20), ore 1%, block 0.05% of a level, each through diminishing returns per
   source (10-minute tally; budgets kill .15, ore .06, build .03, other .25 of a level per 10 min), tapered by
   1/(1 + levels above the content / 10). Discoveries (`Progression.discover`) are uncapped.
@@ -364,7 +365,7 @@ Plan v2 · onboarding and progression (details in docs/modules/onboarding.md):
 - The first power is a choice of three E-tier actives from different families (`powers/Starter.POOL`), saved in
   `awaken:first_power`; Dash comes at level 3.
 - Mod recipes unlock in the recipe book when an ingredient is first held.
-- Pacing (sim, balanced player): first power ~8 min, level 5 ~47 min, 10 ~3.6 h, 25 ~16.8 h, 50 ~56 h.
+- Pacing (sim, balanced player): first power ~8 min, level 5 ~47 min, 10 ~3.6 h, 25 ~17 h, 50 ~56 h, 70 ~73 h, 135 ~101 h.
 
 Plan v2 · System and Hearth:
 - Every Y/N decision is a choice card that says what each key does (`SignalWindow.choice`); information is a toast.
