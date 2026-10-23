@@ -23,7 +23,11 @@ public final class Forces {
 
     public enum Force { HEAT, CHARGE, GRAVITY, SPIRIT, FROST }
 
-    /** Environmental tags that the forces react with. Stored as a bitmask on the entity. */
+    /**
+     * Environmental tags that the forces react with. Stored as a bitmask on the entity. {@code ECHO} is Echoing: the
+     * monster gets up once after its first death (see {@link #markRisen}). Player-owned Echoes are
+     * {@code MobRole.Role.ECHO}, never this tag.
+     */
     public enum Tag { SPORES, WATER, VOLATILE, MIRROR, FROSTED, CHARGED, ECHO, HAUNTED }
 
     public static final ResourceKey<DamageType> HEAT = damage("heat");
@@ -75,5 +79,17 @@ public final class Forces {
 
     public static void untag(Entity e, Tag t) {
         e.setData(TAGS, e.getData(TAGS) & ~(1 << t.ordinal()));
+    }
+
+    private static final String RISEN = "awaken_risen";
+
+    /** Echoing bookkeeping: this one already got up once, whoever raised it, and stays down next time. */
+    public static void markRisen(Entity e) {
+        if (has(e, Tag.ECHO)) untag(e, Tag.ECHO);
+        e.getPersistentData().putBoolean(RISEN, true);
+    }
+
+    public static boolean hasRisen(Entity e) {
+        return e.getPersistentData().getBooleanOr(RISEN, false);
     }
 }

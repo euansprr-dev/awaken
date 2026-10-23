@@ -561,7 +561,7 @@ public class AwakenMob extends Monster {
     // ---- death, rising, volatility -------------------------------------------------------------------------------
 
     private boolean canRise() {
-        return flag(F_ECHO) && !flag(F_RISEN) && !flag(F_DECOY);
+        return flag(F_ECHO) && !flag(F_RISEN) && !flag(F_DECOY) && !Forces.hasRisen(this);
     }
 
     @Override
@@ -613,6 +613,7 @@ public class AwakenMob extends Monster {
     private void rise(ServerLevel level) {
         setFlag(F_FALLEN, false);
         setFlag(F_RISEN, true);
+        Forces.markRisen(this);
         setHealth(getMaxHealth() * 0.5F);
         level.sendParticles(ParticleTypes.SCULK_SOUL, getX(), getY() + 1.0, getZ(), 16, 0.4, 0.6, 0.4, 0.05);
         playSound(MobSounds.RISE.get(), 1.2F, 1.1F);

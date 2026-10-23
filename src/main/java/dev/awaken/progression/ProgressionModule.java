@@ -234,7 +234,7 @@ public final class ProgressionModule {
         Progression.count(sp, Counters.KILLS);
         p.day = new Profile.DayLog(p.day.day(), p.day.levelStart(), p.day.gates(), p.day.kills() + 1, p.day.best());
         var direct = event.getSource().getDirectEntity();
-        boolean byEcho = direct != null && direct != sp && dev.awaken.core.Forces.has(direct, dev.awaken.core.Forces.Tag.ECHO);
+        boolean byEcho = direct != null && direct != sp && dev.awaken.core.api.MobRole.of(direct).role() == dev.awaken.core.api.MobRole.Role.ECHO;
         if (sp.getMainHandItem().isEmpty() && !byEcho && (direct == sp || direct == null)) Progression.count(sp, Counters.KILLS_UNARMED);
         if (dead instanceof Enemy && isHome(sp.level())) {
             Progression.count(sp, Counters.KILLS_OVERWORLD);

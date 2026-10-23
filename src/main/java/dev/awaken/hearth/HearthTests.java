@@ -179,7 +179,7 @@ final class HearthTests {
             h.assertTrue(e instanceof Zombie && Echoes.isEcho(e) && Echoes.link(e).owner().equals(sp.getUUID()), "a zombie copy linked to its owner");
             h.assertTrue(e.getExistingData(dev.awaken.core.api.CoreApi.MOB_ROLE.get()).map(r -> r.role() == dev.awaken.core.api.MobRole.Role.ECHO).orElse(false),
                     "role ECHO");
-            h.assertTrue(dev.awaken.core.Forces.has(e, dev.awaken.core.Forces.Tag.ECHO), "tagged ECHO");
+            h.assertFalse(dev.awaken.core.Forces.has(e, dev.awaken.core.Forces.Tag.ECHO), "an ally is not Echoing (it would get up when it dies)");
             h.assertTrue(Hearth.ownedEchoes(sp).contains(e), "Hearth.ownedEchoes sees it");
             Echoes.dismissField(sp, true);
             h.assertTrue(Echoes.fieldEntities(sp).isEmpty() && !hp.fieldOut, "dismissed");

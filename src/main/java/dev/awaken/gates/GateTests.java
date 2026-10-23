@@ -308,7 +308,7 @@ final class GateTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_build_break_hold", 900, h -> {
+        AwakenTests.registerIsolated("gates_build_break_hold", 900, h -> {
             var level = h.getLevel();
             var server = level.getServer();
             BlockPos base = h.absolutePos(BlockPos.ZERO).offset(14, 0, 14);
@@ -340,14 +340,15 @@ final class GateTests {
                     .thenWaitUntil(() -> h.assertTrue(g.state == GateState.RELEASED, "holding the break releases the gate, was " + g.state))
                     .thenWaitUntil(() -> h.assertFalse(level.getBlockState(g.pos.above(3)).is(GatesRegistry.CORE.get()), "the structure comes down"))
                     .thenExecute(() -> {
+                        // only this gate's monsters: other tests may be running next door
                         for (var e : level.getEntitiesOfClass(net.minecraft.world.entity.Entity.class, new net.minecraft.world.phys.AABB(g.pos).inflate(48),
-                                e -> !(e instanceof ServerPlayer))) e.discard();
+                                e -> dev.awaken.core.api.MobRole.of(e).gateId().equals(g.key()))) e.discard();
                         h.assertTrue(GateRegistry.get(server).releasedCells().contains(g.cell), "its cell waits for cleanup");
                     })
                     .thenSucceed();
         });
 
-        AwakenTests.register("gates_run_walkthrough", 100, h -> {
+        AwakenTests.registerIsolated("gates_run_walkthrough", 100, h -> {
             var level = h.getLevel();
             var server = level.getServer();
             GatePlan plan = new GatePlan(424242, GatePlan.CONTENT_VERSION, Rank.E, Theme.OVERGROWN_TEMPLE, Layout.LABYRINTH, List.of(),
@@ -431,7 +432,7 @@ final class GateTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_lord_and_death", 100, h -> {
+        AwakenTests.registerIsolated("gates_lord_and_death", 100, h -> {
             var level = h.getLevel();
             var server = level.getServer();
             GatePlan plan = new GatePlan(515151, GatePlan.CONTENT_VERSION, Rank.E, Theme.EMBER_MINES, Layout.ARENA_CHAIN, List.of(),
@@ -512,7 +513,7 @@ final class GateTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_overworld_structure", 40, h -> {
+        AwakenTests.registerIsolated("gates_overworld_structure", 40, h -> {
             BlockPos base = h.absolutePos(new BlockPos(0, 0, 0)).offset(6, 0, 6);
             GateRecord g = new GateRecord(77, testPlan(1, Rank.C, Theme.HIVE, Layout.LABYRINTH, Twist.NONE), base, 0, 0, 0, 3, GateState.READY, Optional.empty());
             var level = h.getLevel();

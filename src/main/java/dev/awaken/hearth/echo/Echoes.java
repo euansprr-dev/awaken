@@ -1,7 +1,6 @@
 package dev.awaken.hearth.echo;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.Forces;
 import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.MobHooks;
@@ -373,7 +372,6 @@ public final class Echoes {
     /** Turns a freshly loaded mob into somebody's Echo: link, tags, scaling, and a new mind. */
     public static void makeEcho(Mob mob, UUID owner, EchoRecord r, boolean duty) {
         mob.setData(HearthContent.ECHO_LINK.get(), new EchoLink(owner, r.id(), duty));
-        Forces.tag(mob, Forces.Tag.ECHO);
         MobHooks.scale(mob, r.contentLevel(), new MobRole(MobRole.Role.ECHO, r.contentLevel(), "", Optional.empty(), ""));
         double originHp = switch (r.origin()) { case "BOSS" -> 4.0; case "WARDEN" -> 2.5; default -> 1.5; };
         double originDmg = switch (r.origin()) { case "BOSS" -> 1.8; case "WARDEN" -> 1.4; default -> 1.2; };

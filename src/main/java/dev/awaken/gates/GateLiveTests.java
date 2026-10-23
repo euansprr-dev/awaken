@@ -1,6 +1,7 @@
 package dev.awaken.gates;
 
 import dev.awaken.core.Forces;
+import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.gates.content.GatePlan;
@@ -29,6 +30,7 @@ import dev.awaken.gates.world.GateCells;
 import dev.awaken.gates.world.GateLayout;
 import dev.awaken.gates.world.GatePainter;
 import dev.awaken.gates.world.Room;
+import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
 import net.minecraft.core.BlockPos;
@@ -36,6 +38,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.allay.Allay;
@@ -58,7 +63,7 @@ final class GateLiveTests {
     private GateLiveTests() {}
 
     static void register() {
-        AwakenTests.register("gates_modifiers_live", 100, h -> {
+        AwakenTests.registerIsolated("gates_modifiers_live", 100, h -> {
             ServerLevel level = h.getLevel();
             GatePlan plan = plan(818181, Theme.BELL_CRYPT, Layout.LABYRINTH, Twist.NONE, 0,
                     Modifier.LOW_GRAVITY, Modifier.NO_REGEN, Modifier.GLASS, Modifier.SWARM, Modifier.ECHOING, Modifier.VOLATILE);
@@ -94,17 +99,33 @@ final class GateLiveTests {
                 // Echoing: the dead get up once; Volatile: the dead burst (no block damage)
                 h.assertTrue(Forces.has(mob, Forces.Tag.ECHO) && Forces.has(mob, Forces.Tag.VOLATILE), "modifier tags reach the monster");
                 var key = new GateMobs.Key(g.id, 0, 1, r.id);
-                BlockPos under = mob.blockPosition().below();
-                var floorBefore = level.getBlockState(under);
-                mob.hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
-                h.assertFalse(mob.isAlive(), "the monster died");
+                if (mob instanceof AwakenMob am) {
+                    // Awaken creatures rise by themselves: the first death is a fall (mobs module)
+                    am.hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
+                    h.assertTrue(am.isAlive() && am.flag(AwakenMob.F_FALLEN), "an Echoing creature falls instead of dying");
+                }
                 mob.discard();
-                h.assertTrue(GateMobs.alive(key) == 0, "its room is empty for a moment");
+                // Anything else the gate brings back once, as a fresh monster of the same room
+                Zombie plain = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
+                h.assertTrue(plain != null, "a plain monster");
+                plain.snapTo(mob.getX(), mob.getY(), mob.getZ(), 0, 0);
+                plain.setData(CoreApi.MOB_ROLE.get(), new MobRole(MobRole.Role.NORMAL, 1, "", Optional.empty(), g.key()));
+                level.addFreshEntity(plain);
+                GateMobs.register(plain, key);
+                Forces.tag(plain, Forces.Tag.ECHO);
+                Forces.tag(plain, Forces.Tag.VOLATILE);
+                BlockPos under = plain.blockPosition().below();
+                var floorBefore = level.getBlockState(under);
+                plain.hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
+                h.assertFalse(plain.isAlive(), "the monster died");
+                plain.discard();
+                h.assertTrue(GateMobs.alive(key) == 0, "its room is empty for a moment, alive " + GateMobs.alive(key));
                 RunEvents.pendingNow(level.getServer());
                 h.assertTrue(GateMobs.alive(key) == 1, "an Echoing monster rises once, alive " + GateMobs.alive(key));
                 LivingEntity risen = (LivingEntity) level.getEntity(GateMobs.aliveIds(key).iterator().next());
-                h.assertTrue(risen != null && !Forces.has(risen, Forces.Tag.ECHO), "the risen one won't rise again");
+                h.assertTrue(risen != null && !Forces.has(risen, Forces.Tag.ECHO) && Forces.hasRisen(risen), "the risen one won't rise again");
                 risen.hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
+                h.assertFalse(risen.isAlive(), "the risen one stays down");
                 risen.discard();
                 RunEvents.pendingNow(level.getServer());
                 h.assertTrue(GateMobs.alive(key) == 0, "the second death is final, alive " + GateMobs.alive(key));
@@ -117,7 +138,7 @@ final class GateLiveTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_modifiers_timed", 100, h -> {
+        AwakenTests.registerIsolated("gates_modifiers_timed", 100, h -> {
             ServerLevel level = h.getLevel();
             GatePlan plan = plan(828282, Theme.EMBER_MINES, Layout.LABYRINTH, Twist.NONE, 0,
                     Modifier.MIRROR, Modifier.SILENCE, Modifier.COLLAPSE_TIMER);
@@ -162,7 +183,7 @@ final class GateLiveTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_twist_echo_hollow", 100, h -> {
+        AwakenTests.registerIsolated("gates_twist_echo_hollow", 100, h -> {
             ServerLevel level = h.getLevel();
             GateService.testLevel = level;
             ServerPlayer p = null;
@@ -193,7 +214,7 @@ final class GateLiveTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_twist_inverted_treasure", 100, h -> {
+        AwakenTests.registerIsolated("gates_twist_inverted_treasure", 100, h -> {
             ServerLevel level = h.getLevel();
             GateService.testLevel = level;
             ServerPlayer p = null;
@@ -232,7 +253,7 @@ final class GateLiveTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_twist_friendly_red", 100, h -> {
+        AwakenTests.registerIsolated("gates_twist_friendly_red", 100, h -> {
             ServerLevel level = h.getLevel();
             GateService.testLevel = level;
             ServerPlayer p = null;
@@ -282,7 +303,7 @@ final class GateLiveTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_twist_double_gate", 100, h -> {
+        AwakenTests.registerIsolated("gates_twist_double_gate", 100, h -> {
             ServerLevel level = h.getLevel();
             GateService.testLevel = level;
             ServerPlayer p = null;
@@ -332,7 +353,7 @@ final class GateLiveTests {
             h.succeed();
         });
 
-        AwakenTests.register("gates_twist_gate_within", 100, h -> {
+        AwakenTests.registerIsolated("gates_twist_gate_within", 100, h -> {
             ServerLevel level = h.getLevel();
             GateService.testLevel = level;
             ServerPlayer p = null;

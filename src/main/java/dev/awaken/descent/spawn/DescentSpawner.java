@@ -102,9 +102,9 @@ public final class DescentSpawner {
 
     public static LivingEntity spawnRisen(ServerLevel level, BlockPos pos, int depth, Tracked tracked) {
         LivingEntity mob = MobHooks.spawnThemed(level, theme(depth), MobRole.Role.NORMAL, pos, Strata.contentLevel(depth),
-                Set.of(Forces.Tag.ECHO), "");
+                Set.of(), "");
         if (mob == null) return null;
-        Forces.tag(mob, Forces.Tag.ECHO);
+        Forces.markRisen(mob);
         flag(mob, FLAG_RISEN);
         tracked.mobs.add(mob);
         return mob;

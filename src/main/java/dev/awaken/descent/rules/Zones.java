@@ -374,7 +374,7 @@ public final class Zones {
         int depth = Strata.depthAt(level.dimension(), dead.blockPosition());
         if (depth <= 0 || !Strata.has(Strata.rulesOf(depth), Strata.RULE_RISE)) return;
         if (!(dead instanceof Enemy) || DescentSpawner.has(dead, DescentSpawner.FLAG_RISEN)
-                || dev.awaken.core.Forces.has(dead, dev.awaken.core.Forces.Tag.ECHO)) return;
+                || dev.awaken.core.Forces.has(dead, dev.awaken.core.Forces.Tag.ECHO) || dev.awaken.core.Forces.hasRisen(dead)) return;
         MobRole role = dead.getData(CoreApi.MOB_ROLE.get());
         if (role.role() == MobRole.Role.BOSS) return;
         Zone z = zone(level, depth);

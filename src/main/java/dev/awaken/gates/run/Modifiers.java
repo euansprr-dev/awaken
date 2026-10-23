@@ -55,7 +55,6 @@ public final class Modifiers {
     private static final Identifier LOW_GRAVITY = Awaken.id("gate_low_gravity");
     private static final Identifier LOW_GRAVITY_FALL = Awaken.id("gate_low_gravity_fall");
     private static final Identifier SWARM_HEALTH = Awaken.id("gate_swarm_health");
-    private static final String RISEN = "awaken_gate_risen";
 
     // ---- players entering / leaving ---------------------------------------------------------------------------------
 
@@ -180,7 +179,8 @@ public final class Modifiers {
             level.playSound(null, x, y, z, SoundEvents.CREEPER_PRIMED, SoundSource.HOSTILE, 1F, 1.2F);
             PENDING.add(new Pending(now + 20, () -> level.explode(null, level.damageSources().explosion(null, null), null, x, y + 0.5, z, 2.2F, false, Level.ExplosionInteraction.NONE)));
         }
-        if (Forces.has(dead, Forces.Tag.ECHO) && !dead.getPersistentData().getBooleanOr(RISEN, false)
+        // Awaken creatures rise by themselves (they fall instead of dying); this brings back anything else once.
+        if (Forces.has(dead, Forces.Tag.ECHO) && !Forces.hasRisen(dead)
                 && (role.role() == MobRole.Role.NORMAL || role.role() == MobRole.Role.ELITE)) {
             GateMobs.Key key = GateMobs.keyOf(dead);
             BlockPos at = dead.blockPosition();
@@ -192,8 +192,7 @@ public final class Modifiers {
                 if (f == null) return;
                 LivingEntity risen = Rooms.spawn(level, gg, f, key.room(), role.role(), at);
                 if (risen != null) {
-                    risen.getPersistentData().putBoolean(RISEN, true);
-                    Forces.untag(risen, Forces.Tag.ECHO);
+                    Forces.markRisen(risen);
                     level.sendParticles(ParticleTypes.SOUL, at.getX() + 0.5, at.getY() + 1, at.getZ() + 0.5, 16, 0.3, 0.6, 0.3, 0.02);
                     level.playSound(null, at, SoundEvents.ZOMBIE_VILLAGER_CURE, SoundSource.HOSTILE, 0.7F, 0.6F);
                 }
