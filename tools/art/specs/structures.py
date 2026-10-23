@@ -197,12 +197,9 @@ def shard_texture():
     return c
 
 
-def fissure_top(glow_hex, hot_hex, seed, diag=False):
-    """Scorched stone split by a crack that runs edge to edge (west to east, or corner to corner when {@code diag}), so
-    neighbouring fissure blocks join into one long crack; it glows (the model draws it full bright)."""
-    base = P.stone("obsidian", seed="gate_fissure_base", scale=3, contrast=1.1, lo=1, hi=3)
-    glow, hot = hex_rgba(glow_hex), hex_rgba(hot_hex)
-    rng = rng_for("gate_fissure_crack", seed, diag)
+def crack_path(diag, seed="gate_fissure_crack"):
+    """The crack's pixels: edge to edge (west to east, or corner to corner when diag) so neighbouring fissures join."""
+    rng = rng_for(seed, diag)
     pts = []
     if diag:
         off = 0
@@ -220,7 +217,6 @@ def fissure_top(glow_hex, hot_hex, seed, diag=False):
                 y = max(5, min(10, y + rng.choice((-1, 1))))
             elif x >= 13:
                 y = 7 if abs(y - 7) <= 1 else y + (1 if y < 7 else -1)
-    # a short branch off the middle
     bx, by = pts[rng.randrange(5, 11)]
     d = rng.choice((-1, 1))
     branch = []
@@ -230,14 +226,32 @@ def fissure_top(glow_hex, hot_hex, seed, diag=False):
         x += rng.choice((0, 1))
         if 0 <= x < 16 and 0 <= yy < 16:
             branch.append((x, yy))
-    lit = set(pts) | set(branch)
-    for (x, yy) in pts + branch:
-        base.set(x, yy, hot)
-        for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-            q = (x + dx, yy + dy)
-            if q not in lit and 0 <= q[0] < 16 and 0 <= q[1] < 16:
-                base.blend(*q, glow, 0.7)
+    return pts + branch
+
+
+def fissure_base(diag):
+    """Scorched stone with the crack as a dark groove (the glow overlay lights it)."""
+    base = P.stone("obsidian", seed="gate_fissure_base", scale=3, contrast=1.1, lo=1, hi=3)
+    dark = ramp("obsidian")[0]
+    for (x, y) in crack_path(diag):
+        base.set(x, y, dark)
     return base
+
+
+def fissure_glow(glow_hex, hot_hex, diag):
+    """The crack alone, hot in the middle, rank colour at its edges; transparent elsewhere (drawn full bright)."""
+    c = Canvas(16, 16)
+    glow, hot = hex_rgba(glow_hex), hex_rgba(hot_hex)
+    path = crack_path(diag)
+    lit = set(path)
+    for (x, y) in path:
+        for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+            q = (x + dx, y + dy)
+            if q not in lit and 0 <= q[0] < 16 and 0 <= q[1] < 16:
+                c.set(q[0], q[1], (glow[0], glow[1], glow[2], 150))
+    for (x, y) in path:
+        c.set(x, y, hot)
+    return c
 
 
 def fissure_side():
@@ -246,6 +260,98 @@ def fissure_side():
     for y in range(16):
         base.set(5 + (y // 5) % 2, y, sl[0])
     return base
+
+
+# ---- ruin materials (they sit beside the Above's precursor_plating, so they start from it) -----------------------------
+
+def _plating_canvas():
+    p = os.path.join(ASSETS, "textures/block/precursor_plating.png")
+    im = Image.open(p).convert("RGBA")
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            c.set(x, y, im.getpixel((x, y)))
+    return c
+
+
+def ruin_cracked():
+    c = _plating_canvas()
+    pre = ramp("precursor")
+    rust = [hex_rgba("#5a3418"), hex_rgba("#7a4a20"), hex_rgba("#9a6230")]
+    rng = rng_for("ruin_cracked")
+    # a crack across the plate, dark with a lit lip
+    x, y = 2, rng.randrange(3, 7)
+    while x < 15:
+        c.set(x, y, pre[0])
+        c.blend(x, y - 1, pre[-1], 0.35)
+        x += 1
+        if rng.random() < 0.45:
+            y = max(1, min(14, y + rng.choice((-1, 1))))
+            c.set(x - 1, y, pre[0])
+    # rust bleeding from two rivets
+    for (rx, ry) in ((2, 2), (13, 10)):
+        for k in range(rng.randrange(3, 6)):
+            c.blend(rx, ry + k, rust[min(2, k // 2)], 0.75 - k * 0.1)
+    return c
+
+
+def ruin_mossy():
+    c = _plating_canvas()
+    moss = ramp("moss")
+    rng = rng_for("ruin_mossy")
+    edge = [rng.randrange(3, 7) for _ in range(16)]
+    for x in range(16):
+        for y in range(edge[x]):
+            c.set(x, y, moss[2 + ((x * 7 + y * 3) % 3)] if rng.random() < 0.85 else moss[1])
+        # drips down the seams
+        if x in (0, 8) or rng.random() < 0.15:
+            for y in range(edge[x], min(16, edge[x] + rng.randrange(2, 7))):
+                c.blend(x, y, moss[2], 0.7)
+    return c
+
+
+def ruin_pillar_side():
+    pre, brass = ramp("precursor"), ramp("brass")
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            flute = [1, 3, 4, 3, 2][x % 5] if 0 < x < 15 else 0
+            c.set(x, y, pre[flute])
+    for y in (0, 1, 14, 15):
+        for x in range(16):
+            c.set(x, y, brass[4 if y in (0, 14) else 2])
+    for x in (3, 8, 13):
+        c.set(x, 7, ramp("signal")[4])
+    return c
+
+
+def ruin_pillar_top():
+    pre, brass = ramp("precursor"), ramp("brass")
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - 7.5, y - 7.5)
+            c.set(x, y, brass[3] if 5.5 < d < 7.0 else pre[3] if d <= 5.5 else pre[1])
+    c.set(7, 7, brass[5])
+    c.set(8, 8, brass[5])
+    return c
+
+
+def ruin_glyph_glow():
+    """The glyph alone (transparent elsewhere): a broken ring, a stroke through it, two dots: the gates' alphabet."""
+    c = Canvas(16, 16)
+    sig = ramp("signal")
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - 7.5, y - 7.5)
+            ang = math.atan2(y - 7.5, x - 7.5)
+            if 4.4 < d < 5.6 and not (-0.5 < ang < 0.3):
+                c.set(x, y, sig[4])
+    for y in range(3, 13):
+        c.set(7, y, sig[5] if y in (7, 8) else sig[4])
+    c.set(11, 4, sig[5])
+    c.set(4, 11, sig[5])
+    return c
 
 
 def build(out):
@@ -257,12 +363,18 @@ def build(out):
         json.dump({"texture": {"blur": True}}, f)
     out.written.append("entity/gate_vortex")
     out.entity("gate_shard", shard_texture())
-    for i, rid in enumerate(RANK_IDS):
-        out.block("gate_fissure_" + rid, fissure_top(RANK_GLOW[i], RANK_HOT[i], rid))
-        out.block("gate_fissure_" + rid + "_diag", fissure_top(RANK_GLOW[i], RANK_HOT[i], rid, diag=True))
-    out.block("gate_fissure_broken", fissure_top("#ff3a1a", "#ffd0a0", "broken"))
-    out.block("gate_fissure_broken_diag", fissure_top("#ff3a1a", "#ffd0a0", "broken", diag=True))
+    out.block("gate_fissure_base", fissure_base(False))
+    out.block("gate_fissure_base_diag", fissure_base(True))
+    for i, rid in enumerate(RANK_IDS + ["broken"]):
+        g, h = (RANK_GLOW[i], RANK_HOT[i]) if rid != "broken" else ("#ff3a1a", "#ffd0a0")
+        out.block("gate_fissure_" + rid, fissure_glow(g, h, False))
+        out.block("gate_fissure_" + rid + "_diag", fissure_glow(g, h, True))
     out.block("gate_fissure_side", fissure_side())
+    out.block("ruin_plating_cracked", ruin_cracked())
+    out.block("ruin_plating_mossy", ruin_mossy())
+    out.block("ruin_pillar_side", ruin_pillar_side())
+    out.block("ruin_pillar_top", ruin_pillar_top())
+    out.block("ruin_glyph_glow", ruin_glyph_glow())
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -277,22 +389,36 @@ def write_json(path, data):
 
 
 def merge_json(path, data):
-    """Adds keys to a shared merge file (keeps everything else in it)."""
+    """Adds keys to a shared merge file (keeps everything else in it, in order)."""
     cur = {}
     if os.path.exists(path):
         with open(path) as f:
             cur = json.load(f)
-    cur.update(data)
+    if "values" in data and isinstance(cur.get("values"), list):
+        cur["values"] += [v for v in data["values"] if v not in cur["values"]]
+    else:
+        cur.update(data)
     write_json(path, cur)
 
 
-def fissure_model(tex):
-    faces = {}
-    for d in ("down", "up", "north", "south", "west", "east"):
-        faces[d] = {"texture": "#top" if d == "up" else "#side", "cullface": d}
-    return {"parent": "minecraft:block/block", "textures": {"particle": "awaken:block/gate_fissure_side", "top": tex,
-                                                           "side": "awaken:block/gate_fissure_side"},
-            "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "faces": faces}]}
+def overlay_model(textures, faces_base, glow_faces, particle):
+    """A full cube with an emissive overlay on some faces (the glow texture is transparent but for the light)."""
+    base = {"from": [0, 0, 0], "to": [16, 16, 16],
+            "faces": {d: {"texture": t, "cullface": d} for d, t in faces_base.items()}}
+    glow = {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up",
+            "faces": {d: {"texture": t, "cullface": d} for d, t in glow_faces.items()}}
+    return {"parent": "minecraft:block/block", "textures": dict(textures, particle=particle), "elements": [base, glow]}
+
+
+def fissure_model(base, glow):
+    side = "awaken:block/gate_fissure_side"
+    return overlay_model({"base": base, "glow": glow, "side": side},
+                         {"down": "#side", "up": "#base", "north": "#side", "south": "#side", "west": "#side", "east": "#side"},
+                         {"up": "#glow"}, side)
+
+
+RUIN_BLOCKS = {"ruin_plating_cracked": "Cracked Precursor Plating", "ruin_plating_mossy": "Mossy Precursor Plating",
+               "ruin_pillar": "Precursor Column", "ruin_glyph": "Glyph Plating"}
 
 
 def content():
@@ -300,7 +426,7 @@ def content():
     for i, rid in enumerate(RANK_IDS + ["broken"]):
         for suffix in ("", "_diag"):
             write_json(os.path.join(ASSETS, f"models/block/gate_fissure_{rid}{suffix}.json"),
-                       fissure_model(f"awaken:block/gate_fissure_{rid}{suffix}"))
+                       fissure_model(f"awaken:block/gate_fissure_base{suffix}", f"awaken:block/gate_fissure_{rid}{suffix}"))
         # dir 0 east-west, 1 north-west to south-east, 2 north-south, 3 north-east to south-west
         variants[f"dir=0,rank={i}"] = {"model": f"awaken:block/gate_fissure_{rid}"}
         variants[f"dir=1,rank={i}"] = {"model": f"awaken:block/gate_fissure_{rid}_diag"}
@@ -318,6 +444,33 @@ def content():
             {"name": "minecraft:portal/portal", "pitch": 0.6, "volume": 0.6, "attenuation_distance": 48},
             {"name": "minecraft:block/conduit/ambient", "pitch": 0.5, "volume": 0.8, "attenuation_distance": 48}]},
     })
+
+    # ruin blocks: models, blockstates, item definitions, loot (they drop themselves), lang, pickaxe tag
+    def cube(name, tex):
+        write_json(os.path.join(ASSETS, f"models/block/{name}.json"), {"parent": "minecraft:block/cube_all", "textures": {"all": tex}})
+    cube("ruin_plating_cracked", "awaken:block/ruin_plating_cracked")
+    cube("ruin_plating_mossy", "awaken:block/ruin_plating_mossy")
+    write_json(os.path.join(ASSETS, "models/block/ruin_pillar.json"),
+               {"parent": "minecraft:block/cube_column", "textures": {"end": "awaken:block/ruin_pillar_top", "side": "awaken:block/ruin_pillar_side"}})
+    write_json(os.path.join(ASSETS, "models/block/ruin_glyph.json"),
+               overlay_model({"plate": "awaken:block/precursor_plating", "glow": "awaken:block/ruin_glyph_glow"},
+                             {d: "#plate" for d in ("down", "up", "north", "south", "west", "east")},
+                             {d: "#glow" for d in ("north", "south", "west", "east")}, "awaken:block/precursor_plating"))
+    for name in ("ruin_plating_cracked", "ruin_plating_mossy", "ruin_glyph"):
+        write_json(os.path.join(ASSETS, f"blockstates/{name}.json"), {"variants": {"": {"model": f"awaken:block/{name}"}}})
+    write_json(os.path.join(ASSETS, "blockstates/ruin_pillar.json"), {"variants": {
+        "axis=y": {"model": "awaken:block/ruin_pillar"},
+        "axis=x": {"model": "awaken:block/ruin_pillar", "x": 90, "y": 90},
+        "axis=z": {"model": "awaken:block/ruin_pillar", "x": 90}}})
+    for name in RUIN_BLOCKS:
+        write_json(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": f"awaken:block/{name}"}})
+        write_json(os.path.join(RES, f"data/awaken/loot_table/blocks/{name}.json"), {
+            "type": "minecraft:block", "random_sequence": f"awaken:blocks/{name}",
+            "pools": [{"rolls": 1, "bonus_rolls": 0, "entries": [{"type": "minecraft:item", "name": f"awaken:{name}"}],
+                       "conditions": [{"condition": "minecraft:survives_explosion"}]}]})
+    merge_json(os.path.join(MERGE, "above/assets/awaken/lang/en_us.json"), {f"block.awaken.{k}": v for k, v in RUIN_BLOCKS.items()})
+    merge_json(os.path.join(MERGE, "above/data/minecraft/tags/block/mineable/pickaxe.json"),
+               {"values": [f"awaken:{k}" for k in RUIN_BLOCKS]})
     print("structures: content written")
 
 
@@ -488,11 +641,13 @@ def block_look(name, props_str):
         with open(bs) as f:
             st = json.load(f)
         if "variants" in st:
-            for k, v in st["variants"].items():
-                if _match(k, props):
-                    v = v[0] if isinstance(v, list) else v
-                    model, rx, ry = v["model"], v.get("x", 0), v.get("y", 0)
-                    break
+            items = list(st["variants"].items())
+            hit = next((v for k, v in items if _match(k, props)), None)
+            if hit is None and items:
+                hit = items[0][1]  # no properties in the dump: the first variant
+            if hit is not None:
+                v = hit[0] if isinstance(hit, list) else hit
+                model, rx, ry = v["model"], v.get("x", 0), v.get("y", 0)
         elif "multipart" in st:
             for part in st["multipart"]:
                 if "when" not in part or _when(part["when"], props):
@@ -520,11 +675,16 @@ def block_look(name, props_str):
         for e in elements:
             for fd, fv in e.get("faces", {}).items():
                 wd = DIR_OF[_rot_dir(DIRS[fd], rx, ry)]
-                if wd in faces:
-                    continue
                 tex = _texture(_resolve_tex(textures, fv.get("texture")))
                 if fv.get("tintindex") is not None or path in TINTED:
                     tex = _tint(tex, TINTED.get(path, GRASS_TINT))
+                if wd in faces:
+                    # an overlay on the same face (emissive glow layers, grass side overlays): composite it
+                    if e is not elements[0]:
+                        merged = faces[wd].copy()
+                        merged.alpha_composite(tex)
+                        faces[wd] = merged
+                    continue
                 faces[wd] = tex
     if not faces:
         tex = _texture(_resolve_tex(textures, "#particle") if textures else f"{ns}:block/{path}")
@@ -961,13 +1121,26 @@ def _label(im, text):
     return im
 
 
+LAIRS_RUN = os.path.join(ROOT, "run/fauna_lairs")
+
+
+def _load_dump(path):
+    data = json.load(open(path))
+    if "style" in data:  # the fauna lair test's own format (world/fauna/WildTests.dump)
+        data = {"name": f"lair_{data['style']}_{data['variant']}", "kind": "lair", "blocks": data["blocks"]}
+    return data
+
+
 def preview(outdir, only=()):
     os.makedirs(outdir, exist_ok=True)
-    files = sorted(f for f in os.listdir(RUN) if f.endswith(".json") and f != "vortex_frames.json")
+    files = [os.path.join(RUN, f) for f in sorted(os.listdir(RUN)) if f.endswith(".json") and f != "vortex_frames.json"]
+    if os.path.isdir(LAIRS_RUN):
+        files += [os.path.join(LAIRS_RUN, f) for f in sorted(os.listdir(LAIRS_RUN)) if f.endswith(".json")]
     if only:
-        files = [f for f in files if any(o in f for o in only)]
-    for f in files:
-        data = json.load(open(os.path.join(RUN, f)))
+        files = [f for f in files if any(o in os.path.basename(f) for o in only)]
+    for path in files:
+        data = _load_dump(path)
+        f = data["name"] + ".json"
         sc = Scene(data)
         vx = None
         if sc.vortex is not None:

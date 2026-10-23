@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/ruin_pillar_top",
+    "side": "awaken:block/ruin_pillar_side"
+  }
+}

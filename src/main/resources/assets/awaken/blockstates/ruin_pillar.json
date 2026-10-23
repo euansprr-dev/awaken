@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/ruin_pillar"
+    },
+    "axis=x": {
+      "model": "awaken:block/ruin_pillar",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "awaken:block/ruin_pillar",
+      "x": 90
+    }
+  }
+}

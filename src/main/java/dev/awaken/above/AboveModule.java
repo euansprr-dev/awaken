@@ -23,6 +23,7 @@ public final class AboveModule {
         Above.registerRelaySlot();
         AboveComponents.init(modBus);
         AboveBlocks.init(modBus);
+        dev.awaken.above.ruin.RuinBlocks.init(modBus);
         AboveItems.init(modBus);
         AboveSounds.init();
         Above.initAttachments(modBus);

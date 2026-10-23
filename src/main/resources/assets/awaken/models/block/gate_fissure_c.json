@@ -1,9 +1,10 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "particle": "awaken:block/gate_fissure_side",
-    "top": "awaken:block/gate_fissure_c",
-    "side": "awaken:block/gate_fissure_side"
+    "base": "awaken:block/gate_fissure_base",
+    "glow": "awaken:block/gate_fissure_c",
+    "side": "awaken:block/gate_fissure_side",
+    "particle": "awaken:block/gate_fissure_side"
   },
   "elements": [
     {
@@ -17,14 +18,13 @@
         16,
         16
       ],
-      "light_emission": 15,
       "faces": {
         "down": {
           "texture": "#side",
           "cullface": "down"
         },
         "up": {
-          "texture": "#top",
+          "texture": "#base",
           "cullface": "up"
         },
         "north": {
@@ -42,6 +42,26 @@
         "east": {
           "texture": "#side",
           "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "light_emission": 15,
+      "shade_direction_override": "up",
+      "faces": {
+        "up": {
+          "texture": "#glow",
+          "cullface": "up"
         }
       }
     }

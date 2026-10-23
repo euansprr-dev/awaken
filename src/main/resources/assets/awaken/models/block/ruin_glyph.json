@@ -1,0 +1,80 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "plate": "awaken:block/precursor_plating",
+    "glow": "awaken:block/ruin_glyph_glow",
+    "particle": "awaken:block/precursor_plating"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#plate",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#plate",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#plate",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#plate",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#plate",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#plate",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "light_emission": 15,
+      "shade_direction_override": "up",
+      "faces": {
+        "north": {
+          "texture": "#glow",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#glow",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#glow",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#glow",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}
