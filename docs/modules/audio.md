@@ -122,7 +122,13 @@ little under it:
 | amb (`amb_*`) | -28 ± 3 | ≤ -6 | q4 |
 
 The generator masters to the target (toasts and the Now tick a little lower, rank up a little higher) and leaves
-0.7 dB of true-peak room for the encoder. Positional sounds are mono (ambience, and the level-up, rank-up and warning
+0.7 dB of true-peak room for the encoder. Last report: 41 files, all within target (music -19.0..-19.1 dBFS, max true
+peak -1.3; UI -26.6..-22.0, max -3.6; ambience -29.1..-26.0, max -7.5); 25 MB in all (tracks Vorbis q2, ~1.2 MB each).
+
+Checked by eye on spectrogram sheets (`audio_sheet.py`): no folded (aliased) partials, no clipping, no clicks except
+the strikes meant to be there, tails that end before the file does, seamless loops. Band balance measured against
+vanilla tracks (aerie, os_piano, komorebi, so_below, ancestry): the same shape (most energy under 500 Hz, -20 to -30 dB
+from 2 to 8 kHz, almost nothing above 8 kHz), 9-20 dB of dynamics per piece like vanilla's 10-23. Positional sounds are mono (ambience, and the level-up, rank-up and warning
 the server plays in the world); music and the other UI sounds are stereo. Every event has a subtitle.
 
 ## Try it
