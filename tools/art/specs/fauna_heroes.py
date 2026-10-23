@@ -2282,7 +2282,7 @@ def paint_stonehorn(r, P):
     lichen = Ramp("#4a4a1a", "#6a6a24", "#8e8a30", "#b2aa44")
     hoof = Ramp("#0e0e0f", "#1c1c1e", "#2c2c2f", "#3e3e42")
     rng = P.rng
-    woolp = combine(p_strokes(3, 3, 0.6, 0.6, 0.8, seed=21), p_blotch("wool", 6, 0.35))
+    woolp = combine(p_strokes(3, 3, 0.5, 0.5, 0.6, seed=21), p_blotch("wool", 11, 0.18))
     for nm in ("barrel", "chest", "leg_fl", "leg_hl", "tail"):
         P.paint(nm, wool, 3.0, woolp)
     for nm in ("shin_fl", "shin_hl"):
