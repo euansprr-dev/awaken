@@ -8,5 +8,6 @@ public final class WorldClient {
 
     public static void init(IEventBus modBus) {
         dev.awaken.world.fauna.client.FaunaClient.init(modBus);
+        dev.awaken.world.anomaly.client.AnomalyClient.init(modBus);
     }
 }

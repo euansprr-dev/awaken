@@ -8,5 +8,6 @@ public final class WorldModule {
 
     public static void init(IEventBus modBus) {
         dev.awaken.world.fauna.FaunaModule.init(modBus);
+        dev.awaken.world.anomaly.AnomalyModule.init(modBus);
     }
 }
