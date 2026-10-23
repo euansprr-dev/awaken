@@ -30,12 +30,20 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiPredicate;
 
-/** What the Scanner does: read broken machines and log terminals, and listen to the sky for undiscovered ruins. */
+/**
+ * What the Scanner does: read broken machines and log terminals, and listen to the sky for undiscovered ruins (and, via
+ * {@link #addEchoSource}, other landmarks such as the Well; ruins the player already walked into are skipped through
+ * {@link #setVisitedRuins}).
+ */
 public final class Scanning {
     private Scanning() {}
 
@@ -106,7 +114,7 @@ public final class Scanning {
 
     // ---- sky omens ------------------------------------------------------------------------------------------------
 
-    private record OmenCache(long builtAt, BlockPos builtFrom, List<RuinLocator.Found> found) {}
+    private record OmenCache(long builtAt, BlockPos builtFrom, List<Heard> heard) {}
 
     private static final Map<UUID, OmenCache> OMENS = new HashMap<>();
     private static final Map<UUID, Long> LAST_HINT = new HashMap<>();
@@ -116,17 +124,62 @@ public final class Scanning {
         LAST_HINT.remove(player);
     }
 
-    private static List<RuinLocator.Found> omens(ServerPlayer player) {
+    // ---- other landmarks (hook for the world module's landmarks: the Well, ruins already visited) ----------------------
+
+    /** Something besides the ruins the Scanner can hear (another module's landmark, e.g. the Well). */
+    public record Echo(BlockPos pos, String omen) {}
+
+    @FunctionalInterface
+    public interface EchoSource {
+        List<Echo> echoes(ServerPlayer player, int range);
+    }
+
+    /** What a sweep can point at, nearest first: a ruin's omen or another landmark's echo. */
+    public record Heard(BlockPos pos, String omen, double distance) {}
+
+    private static final List<EchoSource> ECHO_SOURCES = new CopyOnWriteArrayList<>();
+    private static volatile BiPredicate<ServerPlayer, BlockPos> visitedRuin = (p, pos) -> false;
+
+    /** Adds landmarks the sky sweep can point at beside the ruins. */
+    public static void addEchoSource(EchoSource source) {
+        ECHO_SOURCES.add(source);
+    }
+
+    /** Ruins (by the locator's approximate centre) the player already reached in person: the sweep skips them too. */
+    public static void setVisitedRuins(BiPredicate<ServerPlayer, BlockPos> visited) {
+        visitedRuin = visited;
+    }
+
+    /** The (up to four) nearest things this player's Scanner hears, nearest first. Cached for a few seconds. */
+    public static List<Heard> heard(ServerPlayer player) {
         long now = player.level().getGameTime();
         OmenCache c = OMENS.get(player.getUUID());
         if (c == null || now - c.builtAt() > 400 || c.builtFrom().distSqr(player.blockPosition()) > 96 * 96) {
             List<RuinLocator.Found> found = RuinLocator.near(player.level(), player.blockPosition(), OMEN_RANGE,
-                    List.of(RuinKind.values()), Above.data(player), true, 4);
+                    List.of(RuinKind.values()), Above.data(player), true, 8);
             // an empty answer may only mean the locator hasn't finished sampling this area: ask again soon
-            c = new OmenCache(found.size() < 2 ? now - 360 : now, player.blockPosition(), found);
+            c = new OmenCache(found.size() < 2 ? now - 360 : now, player.blockPosition(), collect(player, found));
             OMENS.put(player.getUUID(), c);
         }
-        return c.found();
+        return c.heard();
+    }
+
+    static List<Heard> collect(ServerPlayer player, List<RuinLocator.Found> found) {
+        List<Heard> out = new ArrayList<>();
+        for (RuinLocator.Found f : found) if (!visitedRuin.test(player, f.pos())) out.add(new Heard(f.pos(), f.kind().omen, f.distance()));
+        for (EchoSource s : ECHO_SOURCES) {
+            try {
+                for (Echo e : s.echoes(player, OMEN_RANGE)) {
+                    double dx = e.pos().getX() + 0.5 - player.getX(), dz = e.pos().getZ() + 0.5 - player.getZ();
+                    double d = Math.sqrt(dx * dx + dz * dz);
+                    if (d <= OMEN_RANGE) out.add(new Heard(e.pos(), e.omen(), d));
+                }
+            } catch (RuntimeException ex) {
+                dev.awaken.Awaken.LOG.warn("[scanner] an echo source failed: {}", ex.toString());
+            }
+        }
+        out.sort(Comparator.comparingDouble(Heard::distance));
+        return out.size() > 4 ? List.copyOf(out.subList(0, 4)) : out;
     }
 
     static String distanceWord(double d) {
@@ -143,7 +196,7 @@ public final class Scanning {
             if (usedTicks == 10) player.sendOverlayMessage(Component.literal("Point it at the sky to listen for Precursor echoes."));
             return;
         }
-        List<RuinLocator.Found> found = omens(player);
+        List<Heard> found = heard(player);
         if (found.isEmpty()) {
             if (usedTicks % 40 == 10) {
                 player.sendOverlayMessage(Component.literal("Static. Nothing of theirs within earshot."));
@@ -153,9 +206,9 @@ public final class Scanning {
         }
         double yaw = Math.toRadians(player.getYRot());
         double lookX = -Math.sin(yaw), lookZ = Math.cos(yaw);
-        RuinLocator.Found best = null;
+        Heard best = null;
         double bestAlign = -2;
-        for (RuinLocator.Found f : found) {
+        for (Heard f : found) {
             double dx = f.pos().getX() + 0.5 - player.getX(), dz = f.pos().getZ() + 0.5 - player.getZ();
             double len = Math.sqrt(dx * dx + dz * dz);
             double align = len < 1 ? 1 : (dx * lookX + dz * lookZ) / len;
@@ -167,12 +220,12 @@ public final class Scanning {
         if (best == null) return;
         if (bestAlign > 0.3) ping(player, AboveSounds.PING, 0.35f + 0.35f * (float) bestAlign, 0.6f + 1.2f * (float) Math.max(0, bestAlign));
         if (bestAlign > 0.95) {
-            player.sendOverlayMessage(Component.literal("“" + best.kind().omen + "” · " + distanceWord(best.distance()) + ", "
+            player.sendOverlayMessage(Component.literal("“" + best.omen() + "” · " + distanceWord(best.distance()) + ", "
                     + Travel.compass(best.pos().getX() - player.getBlockX(), best.pos().getZ() - player.getBlockZ())));
             long now = player.level().getGameTime();
             if (now - LAST_HINT.getOrDefault(player.getUUID(), -100_000L) > 20 * 60) {
                 LAST_HINT.put(player.getUUID(), now);
-                DirectorLog.log(player, "scanner", "omen " + best.kind().id + " " + (int) best.distance() + " blocks");
+                DirectorLog.log(player, "scanner", "omen \"" + best.omen() + "\" " + (int) best.distance() + " blocks");
             }
         } else if (bestAlign > 0.6) {
             player.sendOverlayMessage(Component.literal("A faint echo… closer to it."));

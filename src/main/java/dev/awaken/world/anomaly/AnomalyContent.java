@@ -17,7 +17,10 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import java.util.function.Supplier;
 
-/** Everything the anomalies register: the rift and mote entities, the spirit cache block, sounds and the player memory. */
+/**
+ * Everything the anomalies register: the rift, mote, falling-star and shimmer entities, the spirit cache and fallen star
+ * blocks, sounds and the player memory.
+ */
 public final class AnomalyContent {
     private AnomalyContent() {}
 
@@ -30,6 +33,19 @@ public final class AnomalyContent {
     public static final DeferredBlock<SpiritCacheBlock> SPIRIT_CACHE = BLOCKS.registerBlock("anomaly_spirit_cache", SpiritCacheBlock::new,
             p -> p.strength(0.3F, 1200.0F).sound(SoundType.AMETHYST).lightLevel(s -> 12).noOcclusion()
                     .pushReaction(PushReaction.IMMOVEABLE).mapColor(MapColor.COLOR_YELLOW));
+
+    /** The meteor a fallen star leaves in its crater. No item: found, never placed. Sealed while its guardian stands. */
+    public static final DeferredBlock<FallenStarBlock> FALLEN_STAR = BLOCKS.registerBlock("anomaly_fallen_star", FallenStarBlock::new,
+            p -> p.strength(1.5F, 1200.0F).sound(SoundType.ANCIENT_DEBRIS).lightLevel(s -> s.getValue(FallenStarBlock.SEALED) ? 15 : 11)
+                    .noOcclusion().pushReaction(PushReaction.IMMOVEABLE).mapColor(MapColor.COLOR_LIGHT_BLUE));
+
+    /** The light of a falling star on its way down. Never saved. */
+    public static final DeferredHolder<EntityType<?>, EntityType<FallingStarEntity>> FALLING_STAR = ENTITIES.registerEntityType("anomaly_falling_star",
+            FallingStarEntity::new, MobCategory.MISC, b -> b.sized(0.5F, 0.5F).clientTrackingRange(16).updateInterval(1).noSave().noSummon().fireImmune());
+
+    /** A shimmer grove's heart. Never saved. */
+    public static final DeferredHolder<EntityType<?>, EntityType<ShimmerEntity>> SHIMMER = ENTITIES.registerEntityType("anomaly_shimmer",
+            ShimmerEntity::new, MobCategory.MISC, b -> b.sized(0.5F, 0.5F).clientTrackingRange(10).updateInterval(20).noSave().noSummon().fireImmune());
 
     /** The tear and its core. Never saved: the director re-creates it while the rift is open, and cleans up after a restart. */
     public static final DeferredHolder<EntityType<?>, EntityType<RiftEntity>> RIFT = ENTITIES.registerEntityType("rift_tear",
@@ -46,6 +62,12 @@ public final class AnomalyContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> RIFT_FADE = sound("anomaly.rift_fade");
     public static final DeferredHolder<SoundEvent, SoundEvent> MOTES = sound("anomaly.motes");
     public static final DeferredHolder<SoundEvent, SoundEvent> CACHE = sound("anomaly.cache");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STAR_FALL = sound("anomaly.star_fall");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STAR_IMPACT = sound("anomaly.star_impact");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STAR_GUARD = sound("anomaly.star_guard");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STAR_OPEN = sound("anomaly.star_open");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GROVE = sound("anomaly.grove");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GROVE_WHISPER = sound("anomaly.grove_whisper");
 
     public static final Supplier<AttachmentType<AnomalyMemory>> MEMORY = ATTACHMENTS.register("anomaly_memory", () -> AttachmentType
             .builder(AnomalyMemory::new).serialize(AnomalyMemory.MAP_CODEC).copyOnDeath().build());

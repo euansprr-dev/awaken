@@ -6,10 +6,11 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 /**
  * The director's memory of one player (attachment {@code awaken:anomaly_memory}, kept on death): the countdown to the
- * next anomaly in ticks of outdoor play, when they awakened (for the two-minute grace), and a few tallies.
+ * next anomaly in ticks of outdoor play, when they awakened (for the two-minute grace), and a few tallies. Schema 2 added
+ * the fallen star and shimmer grove tallies and the last grove variant (so the same one doesn't come twice running).
  */
 public final class AnomalyMemory {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
 
     /** Outdoor-play ticks until the next try; below zero means not scheduled yet (scheduled on the first eligible check). */
     public double timer = -1;
@@ -20,10 +21,14 @@ public final class AnomalyMemory {
     public int caches;
     public String lastKind = "";
     public long lastStartedAt;
+    public int stars;
+    public int groves;
+    public String lastGrove = "";
     /** Not saved: the last reason the director was paused for this player, so each change is logged once. */
     String lastBlock = "";
 
-    private record A(java.util.Optional<Integer> schema, double timer, long awakenedAt, int started, int riftsClosed, int caches, String lastKind, long lastStartedAt) {
+    private record A(java.util.Optional<Integer> schema, double timer, long awakenedAt, int started, int riftsClosed, int caches, String lastKind,
+                     long lastStartedAt, int stars, int groves, String lastGrove) {
         static final MapCodec<A> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.INT.optionalFieldOf("schema").forGetter(A::schema),
                 Codec.DOUBLE.optionalFieldOf("timer", -1.0).forGetter(A::timer),
@@ -32,7 +37,10 @@ public final class AnomalyMemory {
                 Codec.INT.optionalFieldOf("rifts_closed", 0).forGetter(A::riftsClosed),
                 Codec.INT.optionalFieldOf("caches", 0).forGetter(A::caches),
                 Codec.STRING.optionalFieldOf("last_kind", "").forGetter(A::lastKind),
-                Codec.LONG.optionalFieldOf("last_started", 0L).forGetter(A::lastStartedAt)
+                Codec.LONG.optionalFieldOf("last_started", 0L).forGetter(A::lastStartedAt),
+                Codec.INT.optionalFieldOf("stars", 0).forGetter(A::stars),
+                Codec.INT.optionalFieldOf("groves", 0).forGetter(A::groves),
+                Codec.STRING.optionalFieldOf("last_grove", "").forGetter(A::lastGrove)
         ).apply(i, A::new));
     }
 
@@ -45,12 +53,16 @@ public final class AnomalyMemory {
         m.caches = a.caches();
         m.lastKind = a.lastKind();
         m.lastStartedAt = a.lastStartedAt();
+        m.stars = a.stars();
+        m.groves = a.groves();
+        m.lastGrove = a.lastGrove();
         return m;
-    }, m -> new A(java.util.Optional.of(SCHEMA), m.timer, m.awakenedAt, m.started, m.riftsClosed, m.caches, m.lastKind, m.lastStartedAt));
+    }, m -> new A(java.util.Optional.of(SCHEMA), m.timer, m.awakenedAt, m.started, m.riftsClosed, m.caches, m.lastKind, m.lastStartedAt,
+            m.stars, m.groves, m.lastGrove));
 
     /** Value view for tests. */
     public String describe() {
-        return String.format("timer %.0f, awakened %d, started %d, rifts %d, caches %d, last %s@%d", timer, awakenedAt, started, riftsClosed,
-                caches, lastKind, lastStartedAt);
+        return String.format("timer %.0f, awakened %d, started %d, rifts %d, caches %d, stars %d, groves %d, last %s@%d, grove %s", timer,
+                awakenedAt, started, riftsClosed, caches, stars, groves, lastKind, lastStartedAt, lastGrove);
     }
 }

@@ -3,6 +3,7 @@ package dev.awaken.world.anomaly;
 import dev.awaken.Awaken;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.Playtest;
+import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
@@ -17,13 +18,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The anomaly director: per awakened player in the overworld, a countdown of outdoor play (6–12 minutes, 1.5× faster
@@ -52,6 +56,14 @@ public final class AnomalyDirector {
 
     static AnomalyMemory memory(ServerPlayer p) {
         return p.getData(AnomalyContent.MEMORY);
+    }
+
+    /** The kinds this player has met (their first-sighting discoveries), for the novelty boost in {@link Pacing#weights}. */
+    static Set<String> met(ServerPlayer p) {
+        Profile prof = Progression.profile(p);
+        Set<String> out = new HashSet<>();
+        for (AnomalyKind k : AnomalyKind.values()) if (prof.counter("awaken:discovered/" + k.discoveryKey()) > 0) out.add(k.id);
+        return out;
     }
 
     // ---- ticking ------------------------------------------------------------------------------------------------------
@@ -86,22 +98,23 @@ public final class AnomalyDirector {
         boolean night = p.level().isDarkOutside();
         mem.timer = Pacing.step(mem.timer, ticks, night);
         if (mem.timer > 0) return Decision.of("waiting");
-        int[] w = Pacing.weights(mem.started == 0, night, p.level().getDifficulty() == Difficulty.PEACEFUL, Progression.profile(p).level(), mem.lastKind);
+        int[] w = Pacing.weights(mem.started == 0, night, p.level().getDifficulty() == Difficulty.PEACEFUL, Progression.profile(p).level(),
+                mem.lastKind, met(p));
         AnomalyKind kind = Pacing.pick(w, p.getRandom());
         if (kind == null) {
             mem.timer = Pacing.nextDelay(p.getRandom());
-            DirectorLog.log(p, "anomaly", "due, but nothing fits (a peaceful night) → next in ~" + minutes(mem.timer));
+            DirectorLog.log(p, "anomaly", "due, but nothing fits → next in ~" + minutes(mem.timer));
             return Decision.of("nothing fits");
         }
         StringBuilder why = new StringBuilder();
-        Anomaly a = start(p, kind, false, why);
+        Anomaly a = start(p, kind, false, null, why);
         if (a == null) {
             mem.timer = Pacing.RETRY;
             DirectorLog.log(p, "anomaly", "due (" + kind.id + "), skipped quietly: " + why + " → try again in 1 min");
             return Decision.of("no spot: " + why);
         }
         mem.timer = Pacing.nextDelay(p.getRandom());
-        DirectorLog.log(p, "anomaly", String.format("rolled %s from weights rift %d / gate %d / calm %d%s; next countdown ~%s", kind.id, w[0], w[1], w[2],
+        DirectorLog.log(p, "anomaly", String.format("rolled %s from weights %s%s; next countdown ~%s", kind.id, Pacing.describe(w),
                 night ? " (night, clock ×1.5)" : "", minutes(mem.timer)));
         return new Decision("started", a);
     }
@@ -114,11 +127,16 @@ public final class AnomalyDirector {
         DirectorLog.log(p, "anomaly", "paused: " + reason);
     }
 
+    public static @Nullable Anomaly start(ServerPlayer p, AnomalyKind kind, boolean inFront, StringBuilder why) {
+        return start(p, kind, inFront, null, why);
+    }
+
     /**
      * Starts {@code kind} for this player now on a validated spot. {@code inFront} (commands) tries 14–26 blocks where
-     * the player is looking first. Returns null with the reason in {@code why}.
+     * the player is looking first. {@code variant} picks a shimmer grove's (null: random, not the last one). Returns null
+     * with the reason in {@code why}.
      */
-    public static @Nullable Anomaly start(ServerPlayer p, AnomalyKind kind, boolean inFront, StringBuilder why) {
+    public static @Nullable Anomaly start(ServerPlayer p, AnomalyKind kind, boolean inFront, @Nullable GroveVariant variant, StringBuilder why) {
         ServerLevel level = p.level();
         MinecraftServer s = level.getServer();
         AnomalyData data = AnomalyData.get(s);
@@ -135,10 +153,12 @@ public final class AnomalyDirector {
             return null;
         }
         Map<String, Integer> rejects = Spots.tally();
-        Spots.Rules rules = Spots.Rules.NORMAL;
+        Spots.Rules rules = kind == AnomalyKind.FALLEN_STAR ? Spots.Rules.NORMAL.sky(true) : Spots.Rules.NORMAL;
         int maxFirst = switch (kind) {
             case RIFT_TEAR -> 72;            // a short walk first, the full range if nothing near fits
             case SPIRIT_PROCESSION -> Processions.START_MAX;
+            case SHIMMER_GROVE -> Groves.START_MAX;
+            case FALLEN_STAR -> 80;
             case WANDERING_GATE -> Spots.MAX;
         };
         BlockPos ground = null;
@@ -147,7 +167,7 @@ public final class AnomalyDirector {
             ground = Spots.find(level, p.blockPosition(), p.getRandom(), rules.distance(14, 26), data, Math.atan2(look.z, look.x), Math.PI / 3, rejects);
         }
         if (ground == null) ground = Spots.find(level, p.blockPosition(), p.getRandom(), rules.distance(Spots.MIN, maxFirst), data, Double.NaN, 0, rejects);
-        if (ground == null && maxFirst < Spots.MAX && kind == AnomalyKind.RIFT_TEAR) {
+        if (ground == null && maxFirst < Spots.MAX && kind != AnomalyKind.SPIRIT_PROCESSION) {
             ground = Spots.find(level, p.blockPosition(), p.getRandom(), rules, data, Double.NaN, 0, rejects);
         }
         if (ground == null) {
@@ -175,6 +195,8 @@ public final class AnomalyDirector {
                 }
                 yield Processions.open(level, p, ground, to, data);
             }
+            case FALLEN_STAR -> Stars.open(level, p, ground, data);
+            case SHIMMER_GROVE -> Groves.open(level, p, ground, data, variant != null ? variant : Groves.pickVariant(p.getRandom(), mem.lastGrove));
         };
         if (a == null) return null;
         long now = level.getGameTime();
@@ -183,10 +205,18 @@ public final class AnomalyDirector {
         mem.lastStartedAt = now;
         announce(p, a, now);
         DirectorLog.log(p, "anomaly", String.format("%s #%d at %s (%s)%s%s", a.kind.display, a.id, Spots.where(p.blockPosition(), a.focus()),
-                a.focus().toShortString(), a.kind == AnomalyKind.RIFT_TEAR ? ", " + a.theme + " level " + a.contentLevel + ", " + a.maxHits + " hits" : "",
-                rejects.isEmpty() ? "" : "; spots refused " + rejects));
+                a.focus().toShortString(), detail(a), rejects.isEmpty() ? "" : "; spots refused " + rejects));
         Playtest.log(p, "anomaly_start", "kind", a.kind.id);
         return a;
+    }
+
+    private static String detail(Anomaly a) {
+        return switch (a.kind) {
+            case RIFT_TEAR -> ", " + a.theme + " level " + a.contentLevel + ", " + a.maxHits + " hits";
+            case FALLEN_STAR -> ", guardian " + a.theme + " level " + a.contentLevel;
+            case SHIMMER_GROVE -> ", " + Groves.variant(a).id;
+            default -> "";
+        };
     }
 
     /** The Signal's word on it: a toast, never a choice card. */
@@ -201,6 +231,14 @@ public final class AnomalyDirector {
             case WANDERING_GATE -> {
                 title = "A wandering gate formed";
                 body = where + " · fades in " + WanderingGates.minutesLeft(a, now) + " min unless entered";
+            }
+            case FALLEN_STAR -> {
+                title = "A star fell nearby";
+                body = where + " · something guards it";
+            }
+            case SHIMMER_GROVE -> {
+                title = "The air shimmers nearby";
+                body = where + " · the rules bend there";
             }
             default -> {
                 title = "Lights gather nearby";
@@ -234,6 +272,8 @@ public final class AnomalyDirector {
                     case RIFT_TEAR -> Rifts.update(level, data, a, now);
                     case SPIRIT_PROCESSION -> Processions.update(level, data, a, now);
                     case WANDERING_GATE -> WanderingGates.update(level, data, a, now);
+                    case FALLEN_STAR -> Stars.update(level, data, a, now);
+                    case SHIMMER_GROVE -> Groves.update(level, data, a, now);
                 };
             } catch (RuntimeException e) {
                 Awaken.LOG.warn("[anomaly] #{} failed, ending it: {}", a.id, e.toString());
@@ -243,7 +283,7 @@ public final class AnomalyDirector {
         }
     }
 
-    /** Ends an anomaly: kind cleanup (the tear collapses, lights fade, an unopened cache comes down), then it's forgotten. */
+    /** Ends an anomaly: kind cleanup (the tear collapses, lights fade, an unopened cache or star comes down), then it's forgotten. */
     static void end(MinecraftServer s, AnomalyData data, Anomaly a, String reason, boolean removeBlocks) {
         if (!data.remove(a)) return;
         ServerLevel level = s.overworld();
@@ -251,6 +291,8 @@ public final class AnomalyDirector {
             case RIFT_TEAR -> Rifts.cleanup(level, a);
             case SPIRIT_PROCESSION -> Processions.cleanup(level, data, a, removeBlocks);
             case WANDERING_GATE -> { } // the gates module fades its own gate
+            case FALLEN_STAR -> Stars.cleanup(level, data, a, removeBlocks);
+            case SHIMMER_GROVE -> Groves.cleanup(level, a);
         }
         ServerPlayer owner = s.getPlayerList().getPlayer(a.owner);
         if (owner != null) DirectorLog.log(owner, "anomaly", a.kind.display + " #" + a.id + " ended: " + reason);
@@ -271,6 +313,11 @@ public final class AnomalyDirector {
         processRemovals(s, AnomalyData.get(s));
     }
 
+    /** Blocks an anomaly may leave behind that are taken down once it's over (only if they are still ours). */
+    static boolean ours(BlockState state) {
+        return state.is(AnomalyContent.SPIRIT_CACHE.get()) || state.is(AnomalyContent.FALLEN_STAR.get());
+    }
+
     static void processRemovals(MinecraftServer s, AnomalyData data) {
         if (data.removals().isEmpty()) return;
         Iterator<AnomalyData.Removal> it = data.removals().iterator();
@@ -279,7 +326,7 @@ public final class AnomalyDirector {
             Identifier dim = Identifier.tryParse(r.dimension());
             ServerLevel level = dim == null ? null : s.getLevel(ResourceKey.create(Registries.DIMENSION, dim));
             if (level != null && !level.hasChunkAt(r.pos())) continue; // wait for the chunk
-            if (level != null && level.getBlockState(r.pos()).is(AnomalyContent.SPIRIT_CACHE.get())) level.removeBlock(r.pos(), false);
+            if (level != null && ours(level.getBlockState(r.pos()))) level.removeBlock(r.pos(), false);
             it.remove();
             data.setDirty();
         }
@@ -287,8 +334,9 @@ public final class AnomalyDirector {
 
     /**
      * After a restart (server start): anomalies that were running are interrupted, so each is cleaned up and dropped.
-     * Their entities were never saved; an unopened cache is taken down (now or when its chunk loads); a wandering gate
-     * fades on its own. Returns how many were cleaned up.
+     * Their entities were never saved; an unopened cache or meteor is taken down (now or when its chunk loads); a
+     * wandering gate fades on its own; a star's guardian is turned away when its chunk loads ({@link Stars#onJoin}).
+     * Returns how many were cleaned up.
      */
     public static int recover(MinecraftServer s) {
         return recover(s, AnomalyData.get(s));
@@ -300,6 +348,9 @@ public final class AnomalyDirector {
             data.remove(a);
             if (a.kind == AnomalyKind.SPIRIT_PROCESSION && a.cachePlaced) {
                 data.removals().add(new AnomalyData.Removal(Level.OVERWORLD.identifier().toString(), a.focus()));
+            }
+            if (a.kind == AnomalyKind.FALLEN_STAR && a.landed) {
+                data.removals().add(new AnomalyData.Removal(Level.OVERWORLD.identifier().toString(), a.target));
             }
         }
         if (!was.isEmpty()) {
@@ -332,7 +383,8 @@ public final class AnomalyDirector {
         else if (mem.timer < 0) out.add("The countdown starts on the next check");
         else out.add(String.format("Next anomaly in ~%s of outdoor play%s", minutes(mem.timer),
                 p.level().isDarkOutside() ? " (night: the clock runs 1.5× faster)" : ""));
-        out.add("Seen " + mem.started + " · rifts closed " + mem.riftsClosed + " · caches " + mem.caches);
+        out.add("Seen " + mem.started + " · rifts closed " + mem.riftsClosed + " · caches " + mem.caches + " · stars " + mem.stars
+                + " · groves " + mem.groves);
         return out;
     }
 
