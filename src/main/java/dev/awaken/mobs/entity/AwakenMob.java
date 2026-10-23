@@ -111,6 +111,8 @@ public class AwakenMob extends Monster {
 
     // client-side visuals
     private @Nullable AwLook look;
+    /** Idle loop for models animated by keyframes (Breeze). */
+    public final net.minecraft.world.entity.AnimationState idleAnim = new net.minecraft.world.entity.AnimationState();
     public float squish, oSquish;
     private boolean wasOnGround = true;
 
@@ -290,6 +292,7 @@ public class AwakenMob extends Monster {
     }
 
     private void clientTick() {
+        idleAnim.startIfStopped(tickCount);
         oSquish = squish;
         if (onGround() && !wasOnGround) squish = -0.5F;
         else if (!onGround() && wasOnGround) squish = 1.0F;
