@@ -109,12 +109,9 @@ gives essence and a few useful things).
 
 ## Requests
 
-- **hearth** (Mira's rumours, `hearth/town/Rumours.give`): when no gate is worth a rumour (or on alternate days), call
-  `dev.awaken.world.landmark.Landmarks.rumour(player)`; it returns `Optional<Rumour(id, title, body)>` ready for
-  `HearthPlayer.Rumour(id, title, body, today)`, never repeats, and respects the player's level. That gives every
-  landmark kind its rumour line in town.
-- **core**: a `features.landmarks` config flag. Today the Well's parts follow `features.descent`, the ruins'
-  `features.above` (markers, Now lines, Scanner echoes), and the gate discovery `features.gates` via `GateHooks`.
+- ~~hearth: Mira's rumours~~ done (integrator): `Rumours.give` asks `core.api.WorldHooks.landmarkRumour` when no gate is
+  worth a rumour; `LandmarkModule` installs it.
+- ~~core: `features.landmarks`~~ done: switches discovery, Now hints, rumours and markers off.
 - **gates** (optional): the Gate Map could list reached landmarks from `Landmarks.memory(player).reached()`.
 
 ## SPEC-worthy decisions (for the integrator)
