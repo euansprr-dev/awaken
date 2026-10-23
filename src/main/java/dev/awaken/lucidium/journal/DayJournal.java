@@ -22,7 +22,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
@@ -265,10 +264,5 @@ public final class DayJournal {
 
     public static void forget(ServerPlayer sp) {
         WATCH.remove(sp.getUUID());
-    }
-
-    @SuppressWarnings("unused")
-    private static boolean isBoss(Entity e) {
-        return false;
     }
 }

@@ -4,7 +4,6 @@ import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.PlayDays;
-import dev.awaken.lucidium.LucidiumContent;
 import dev.awaken.lucidium.data.Dreamer;
 import dev.awaken.lucidium.data.Snapshot;
 import dev.awaken.lucidium.data.Vision;
@@ -108,42 +107,70 @@ public final class Visions {
 
     record Candidate(ChunkPos chunk, Holder<Structure> structure, String id) {}
 
-    /** The nearest unvisited surface structure whose placement and biome say it should be there. Pure maths. */
+    /**
+     * The nearest surface structure the player has never been near, whose placement and biome say it should be there.
+     * Placement is pure maths; only the 16 nearest candidates get a (cheap, read-only) biome sample.
+     */
     static Optional<Candidate> structureCandidate(ServerPlayer sp, ServerLevel level, Dreamer d) {
         ChunkGenerator gen = level.getChunkSource().getGenerator();
         ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
         RandomState rs = level.getChunkSource().randomState();
-        Climate.Sampler sampler = rs.createClimateSampler(SamplerContext.builder().build());
-        BiomeResolver resolver = gen.getBiomeSource().createResolver(sampler);
         var structures = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         int px = sp.chunkPosition().x(), pz = sp.chunkPosition().z();
-        Candidate best = null;
-        double bestDist = Double.MAX_VALUE;
+        record Option(double dist, ChunkPos chunk, StructureSet set) {}
+        List<Option> options = new ArrayList<>();
         for (Holder<StructureSet> set : state.possibleStructureSets()) {
             if (!(set.value().placement() instanceof RandomSpreadStructurePlacement spread)) continue;
+            boolean surface = false;
+            for (StructureSet.StructureSelectionEntry e : set.value().structures()) {
+                if (e.structure().value().step() == GenerationStep.Decoration.SURFACE_STRUCTURES) surface = true;
+            }
+            if (!surface) continue;
             for (int gx = -2; gx <= 2; gx++) {
                 for (int gz = -2; gz <= 2; gz++) {
                     ChunkPos cand = spread.getPotentialStructureChunk(state.getLevelSeed(), px + gx * spread.spacing(), pz + gz * spread.spacing());
                     if (!spread.isStructureChunk(state, cand.x(), cand.z())) continue;
                     double dx = (cand.x() - px) * 16.0, dz = (cand.z() - pz) * 16.0;
                     double dist = Math.sqrt(dx * dx + dz * dz);
-                    if (dist < 160 || dist > 1400 || dist >= bestDist) continue;
-                    int bx = cand.getMiddleBlockX(), bz = cand.getMiddleBlockZ();
-                    int y = gen.getBaseHeight(bx, bz, Heightmap.Types.WORLD_SURFACE_WG, level, rs);
-                    Holder<Biome> biome = resolver.getNoiseBiome(QuartPos.fromBlock(bx), QuartPos.fromBlock(y), QuartPos.fromBlock(bz));
-                    for (StructureSet.StructureSelectionEntry e : set.value().structures()) {
-                        Structure s = e.structure().value();
-                        if (s.step() != GenerationStep.Decoration.SURFACE_STRUCTURES || !s.biomes().contains(biome)) continue;
-                        var key = structures.getKey(s);
-                        if (key == null || d.structuresSeen.contains(key.toString())) continue;
-                        best = new Candidate(cand, e.structure(), key.toString());
-                        bestDist = dist;
-                        break;
-                    }
+                    if (dist < 160 || dist > 1400 || visited(d, cand)) continue;
+                    options.add(new Option(dist, cand, set.value()));
                 }
             }
         }
-        return Optional.ofNullable(best);
+        if (options.isEmpty()) return Optional.empty();
+        options.sort(java.util.Comparator.comparingDouble(Option::dist));
+        Climate.Sampler sampler = rs.createClimateSampler(SamplerContext.builder().build());
+        BiomeResolver resolver = gen.getBiomeSource().createResolver(sampler);
+        for (int i = 0; i < Math.min(16, options.size()); i++) {
+            Option o = options.get(i);
+            int bx = o.chunk().getMiddleBlockX(), bz = o.chunk().getMiddleBlockZ();
+            int y = gen.getBaseHeight(bx, bz, Heightmap.Types.WORLD_SURFACE_WG, level, rs);
+            Holder<Biome> biome = resolver.getNoiseBiome(QuartPos.fromBlock(bx), QuartPos.fromBlock(y), QuartPos.fromBlock(bz));
+            for (StructureSet.StructureSelectionEntry e : o.set().structures()) {
+                Structure s = e.structure().value();
+                if (s.step() != GenerationStep.Decoration.SURFACE_STRUCTURES || !s.biomes().contains(biome)) continue;
+                var key = structures.getKey(s);
+                if (key != null) return Optional.of(new Candidate(o.chunk(), e.structure(), key.toString()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Has the player been near this chunk (a remembered place or an earlier vision within 96 blocks)? */
+    private static boolean visited(Dreamer d, ChunkPos c) {
+        BlockPos mid = new BlockPos(c.getMiddleBlockX(), 64, c.getMiddleBlockZ());
+        for (Snapshot s : d.snapshots) {
+            if (horizontalSq(s.pos(), mid) < 96 * 96) return true;
+        }
+        for (Vision v : d.visions) {
+            if (horizontalSq(v.pos(), mid) < 96 * 96) return true;
+        }
+        return false;
+    }
+
+    private static long horizontalSq(BlockPos a, BlockPos b) {
+        long dx = a.getX() - b.getX(), dz = a.getZ() - b.getZ();
+        return dx * dx + dz * dz;
     }
 
     /** Loads the candidate chunk in the background, confirms the structure is really there, then remembers it. */
@@ -263,7 +290,4 @@ public final class Visions {
         QUEUE.clear();
         lastTimeOfDay = -1;
     }
-
-    @SuppressWarnings("unused")
-    private static final LucidiumContent CONTENT = null;
 }

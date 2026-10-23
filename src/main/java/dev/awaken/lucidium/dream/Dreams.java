@@ -40,13 +40,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.golem.IronGolem;
-import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -55,11 +51,9 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractBedBlock;
 import net.minecraft.world.level.block.BedBlock;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
@@ -817,16 +811,4 @@ public final class Dreams {
         for (ActiveDream ad : ACTIVE.values()) if (ad.isDreamEntity(e)) return ad;
         return null;
     }
-
-    static BlockState blockAtLook(ServerPlayer sp, double reach) {
-        HitResult hit = sp.pick(reach, 1f, false);
-        if (hit instanceof BlockHitResult b && hit.getType() == HitResult.Type.BLOCK) return sp.level().getBlockState(b.getBlockPos());
-        return Blocks.AIR.defaultBlockState();
-    }
-
-    static Map<Integer, ActiveDream> activeDreams() {
-        return ACTIVE;
-    }
-
-    static void spawnMentorFallback() {}
 }

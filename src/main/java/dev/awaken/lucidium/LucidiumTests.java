@@ -1,6 +1,12 @@
 package dev.awaken.lucidium;
 
+import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import dev.awaken.Awaken;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.dimension.LevelStem;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.lucidium.data.Dreamer;
 import dev.awaken.lucidium.data.Snapshot;
@@ -53,6 +59,7 @@ final class LucidiumTests {
         AwakenTests.register("lucidium_nightmare_families", 20, LucidiumTests::nightmareFamilies);
         AwakenTests.register("lucidium_plan_not_ready_fallback", 40, LucidiumTests::notReady);
         AwakenTests.register("lucidium_safe_wake", 160, LucidiumTests::safeWake);
+        AwakenTests.register("lucidium_dimension_data", 20, LucidiumTests::dimensionData);
     }
 
     private static final Snapshot.Kind[] ROTA = {Snapshot.Kind.BIOME, Snapshot.Kind.STRUCTURE, Snapshot.Kind.BOSS,
@@ -240,6 +247,27 @@ final class LucidiumTests {
         h.assertTrue(d.weeklyMarks(10).get(Nightmares.Family.BURNING) == 1, "only this week's deaths count");
         d.clearFamily(Nightmares.Family.BURNING);
         h.assertTrue(!d.weeklyMarks(10).containsKey(Nightmares.Family.BURNING), "a beaten fear is gone");
+        h.succeed();
+    }
+
+    /** The GameTest server builds no mod dimensions, so check the Lucidium's data parses against the live registries. */
+    private static void dimensionData(GameTestHelper h) {
+        var server = h.getLevel().getServer();
+        var access = server.registryAccess();
+        var typeKey = ResourceKey.create(Registries.DIMENSION_TYPE, Awaken.id("lucidium"));
+        var biomeKey = ResourceKey.create(Registries.BIOME, Awaken.id("lucidium_dream"));
+        h.assertTrue(access.lookupOrThrow(Registries.DIMENSION_TYPE).get(typeKey).isPresent(), "dimension type awaken:lucidium loaded");
+        h.assertTrue(access.lookupOrThrow(Registries.BIOME).get(biomeKey).isPresent(), "biome awaken:lucidium_dream loaded");
+        var res = server.getResourceManager().getResource(Awaken.id("dimension/lucidium.json"));
+        h.assertTrue(res.isPresent(), "dimension/lucidium.json shipped");
+        try (var reader = res.get().openAsReader()) {
+            var json = JsonParser.parseReader(reader);
+            LevelStem stem = LevelStem.CODEC.parse(RegistryOps.create(JsonOps.INSTANCE, access), json).getOrThrow();
+            h.assertTrue(stem.generator() instanceof dev.awaken.lucidium.world.DreamChunkGenerator, "uses the dream cells generator");
+        } catch (Exception e) {
+            h.fail("dimension/lucidium.json does not parse: " + e.getMessage());
+            return;
+        }
         h.succeed();
     }
 

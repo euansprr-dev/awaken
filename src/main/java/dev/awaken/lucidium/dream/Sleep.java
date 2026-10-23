@@ -24,7 +24,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.clock.ClockTimeMarkers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.neoforged.neoforge.common.NeoForge;
@@ -314,7 +313,4 @@ public final class Sleep {
         SESSIONS.clear();
         lastTimeOfDay = -1;
     }
-
-    @SuppressWarnings("unused")
-    private static final Block KEEP_IMPORT = null;
 }

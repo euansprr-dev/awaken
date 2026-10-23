@@ -28,10 +28,8 @@ import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerWakeUpEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
-import net.neoforged.neoforge.event.level.SleepFinishedTimeEvent;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -268,9 +266,4 @@ public final class DreamEvents {
         Cells.wipe(event.getServer());
         Planner.clearAll();
     }
-
-    @SuppressWarnings("unused")
-    private static final PlayerWakeUpEvent UNUSED = null;
-    @SuppressWarnings("unused")
-    private static final SleepFinishedTimeEvent UNUSED2 = null;
 }
