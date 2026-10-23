@@ -1,0 +1,40 @@
+{
+  "targets": {
+    "swap": {}
+  },
+  "passes": [
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/blight",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "minecraft:main"
+        }
+      ],
+      "output": "swap",
+      "uniforms": {
+        "BlightConfig": [
+          { "name": "Amount", "type": "float", "value": 0.72 },
+          { "name": "Tint", "type": "vec3", "value": [0.86, 0.88, 0.92] }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/blit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "swap"
+        }
+      ],
+      "uniforms": {
+        "BlitConfig": [
+          { "name": "ColorModulate", "type": "vec4", "value": [1.0, 1.0, 1.0, 1.0] }
+        ]
+      },
+      "output": "minecraft:main"
+    }
+  ]
+}

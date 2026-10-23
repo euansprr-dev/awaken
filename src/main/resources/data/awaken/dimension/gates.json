@@ -1,0 +1,27 @@
+{
+  "type": "awaken:gates",
+  "generator": {
+    "type": "awaken:gate_cells",
+    "biome_source": {
+      "type": "awaken:gate_cells",
+      "biomes": [
+        "awaken:gate_bell_crypt",
+        "awaken:gate_fungal_hollow",
+        "awaken:gate_ember_mines",
+        "awaken:gate_drowned_archive",
+        "awaken:gate_clockwork_foundry",
+        "awaken:gate_glass_desert",
+        "awaken:gate_hive",
+        "awaken:gate_overgrown_temple",
+        "awaken:gate_lantern_night_market",
+        "awaken:gate_frost_monastery",
+        "awaken:gate_mirror_palace",
+        "awaken:gate_precursor_lab",
+        "awaken:gate_nightmare",
+        "awaken:gate_sky_archipelago",
+        "awaken:gate_abyssal_shrine"
+      ],
+      "fallback": "awaken:gate_void"
+    }
+  }
+}

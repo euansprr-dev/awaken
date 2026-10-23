@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "awaken:block/gate_frame",
+    "top": "awaken:block/gate_entrance_top",
+    "bottom": "awaken:block/gate_frame"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "awaken:block/gate_cache_side",
+    "top": "awaken:block/gate_cache_top_open",
+    "bottom": "awaken:block/gate_cache_side"
+  }
+}

@@ -1,0 +1,293 @@
+{
+  "gate.enter": {
+    "subtitle": "subtitles.awaken.gate.enter",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/activate",
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/end_portal/endportal",
+        "pitch": 1.4,
+        "volume": 0.4
+      }
+    ]
+  },
+  "gate.exit": {
+    "subtitle": "subtitles.awaken.gate.exit",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "pitch": 0.8
+      }
+    ]
+  },
+  "gate.shrine": {
+    "subtitle": "subtitles.awaken.gate.shrine",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "pitch": 0.8
+      }
+    ]
+  },
+  "gate.seal": {
+    "subtitle": "subtitles.awaken.gate.seal",
+    "sounds": [
+      {
+        "name": "minecraft:block/vault/open_shutter",
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "pitch": 0.5
+      }
+    ]
+  },
+  "gate.cache": {
+    "subtitle": "subtitles.awaken.gate.cache",
+    "sounds": [
+      {
+        "name": "minecraft:block/chest/open",
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/vault/eject1",
+        "pitch": 1.0
+      }
+    ]
+  },
+  "gate.break": {
+    "subtitle": "subtitles.awaken.gate.break",
+    "sounds": [
+      {
+        "name": "minecraft:block/trial_spawner/ominous_activate",
+        "pitch": 0.5,
+        "volume": 1.0,
+        "attenuation_distance": 96
+      },
+      {
+        "name": "minecraft:block/beacon/deactivate",
+        "pitch": 0.4,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "gate.pressure": {
+    "subtitle": "subtitles.awaken.gate.pressure",
+    "sounds": [
+      {
+        "name": "minecraft:block/trial_spawner/spawn1",
+        "pitch": 0.7
+      },
+      {
+        "name": "minecraft:block/trial_spawner/spawn2",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "gate.warden": {
+    "subtitle": "subtitles.awaken.gate.warden",
+    "sounds": [
+      {
+        "name": "minecraft:block/trial_spawner/ominous_activate",
+        "pitch": 0.7,
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "gate.bars": {
+    "subtitle": "subtitles.awaken.gate.bars",
+    "sounds": [
+      {
+        "name": "minecraft:block/chain/break1",
+        "pitch": 0.6
+      },
+      {
+        "name": "minecraft:block/vault/insert",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "gate.rune": {
+    "subtitle": "subtitles.awaken.gate.rune",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "pitch": 1.0
+      }
+    ]
+  },
+  "gate.solved": {
+    "subtitle": "subtitles.awaken.gate.solved",
+    "sounds": [
+      {
+        "name": "minecraft:block/vault/activate",
+        "pitch": 1.0
+      },
+      {
+        "name": "minecraft:block/amethyst/shimmer",
+        "pitch": 1.2
+      }
+    ]
+  },
+  "gate.alarm": {
+    "subtitle": "subtitles.awaken.gate.alarm",
+    "sounds": [
+      {
+        "name": "minecraft:block/bell/bell_use01",
+        "pitch": 1.4,
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "gate.collapse": {
+    "subtitle": "subtitles.awaken.gate.collapse",
+    "sounds": [
+      {
+        "name": "minecraft:block/trial_spawner/break1",
+        "pitch": 0.5
+      },
+      {
+        "name": "minecraft:block/vault/break1",
+        "pitch": 0.5
+      }
+    ]
+  },
+  "gate.cleared": {
+    "subtitle": "subtitles.awaken.gate.cleared",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/power1",
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/set_spawn1",
+        "pitch": 1.2
+      }
+    ]
+  },
+  "gate.hum": {
+    "subtitle": "subtitles.awaken.gate.hum",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "gate.ambient.bell": {
+    "subtitle": "subtitles.awaken.gate.ambient.bell",
+    "sounds": [
+      {
+        "name": "minecraft:block/bell/resonate",
+        "pitch": 0.5,
+        "volume": 0.4
+      },
+      {
+        "name": "minecraft:block/bell/bell_use02",
+        "pitch": 0.45,
+        "volume": 0.3
+      }
+    ]
+  },
+  "gate.ambient.gears": {
+    "subtitle": "subtitles.awaken.gate.ambient.gears",
+    "sounds": [
+      {
+        "name": "minecraft:block/grindstone/grindstone1",
+        "pitch": 0.6,
+        "volume": 0.4
+      },
+      {
+        "name": "minecraft:block/grindstone/grindstone3",
+        "pitch": 0.5,
+        "volume": 0.3
+      }
+    ]
+  },
+  "gate.ambient.chant": {
+    "subtitle": "subtitles.awaken.gate.ambient.chant",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "pitch": 0.5,
+        "volume": 0.4
+      },
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "pitch": 0.6,
+        "volume": 0.3
+      }
+    ]
+  },
+  "gate.ambient.buzz": {
+    "subtitle": "subtitles.awaken.gate.ambient.buzz",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "pitch": 1.6,
+        "volume": 0.3
+      }
+    ]
+  },
+  "gate.ambient.market": {
+    "subtitle": "subtitles.awaken.gate.ambient.market",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate4",
+        "pitch": 1.3,
+        "volume": 0.3
+      },
+      {
+        "name": "minecraft:block/bell/bell_use02",
+        "pitch": 1.8,
+        "volume": 0.15
+      }
+    ]
+  },
+  "gate.ambient.lab": {
+    "subtitle": "subtitles.awaken.gate.ambient.lab",
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/short1",
+        "pitch": 0.7,
+        "volume": 0.3
+      },
+      {
+        "name": "minecraft:block/conduit/short5",
+        "pitch": 0.9,
+        "volume": 0.3
+      }
+    ]
+  },
+  "gate.ambient.glass": {
+    "subtitle": "subtitles.awaken.gate.ambient.glass",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/shimmer",
+        "pitch": 0.8,
+        "volume": 0.4
+      }
+    ]
+  },
+  "gate.ambient.wind": {
+    "subtitle": "subtitles.awaken.gate.ambient.wind",
+    "sounds": [
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/wind1",
+        "pitch": 1.2,
+        "volume": 0.4
+      },
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/wind3",
+        "pitch": 1.1,
+        "volume": 0.4
+      }
+    ]
+  }
+}

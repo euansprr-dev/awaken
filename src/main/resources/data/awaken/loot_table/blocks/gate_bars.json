@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:gate_bars"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/gate_bars"
+}

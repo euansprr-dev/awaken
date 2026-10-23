@@ -124,7 +124,7 @@ final class Palettes {
             case ABYSSAL_SHRINE -> Palette.of(
                     "minecraft:obsidian", "minecraft:deepslate_tiles", "minecraft:sculk",
                     "minecraft:polished_blackstone", "minecraft:sculk", "minecraft:crying_obsidian",
-                    "minecraft:obsidian", "minecraft:deepslate_tile_stairs", "minecraft:respawn_anchor[charges=4]",
+                    "minecraft:obsidian", "minecraft:deepslate_tile_stairs", "minecraft:crying_obsidian",
                     "minecraft:soul_lantern[hanging=true]", "minecraft:air", "minecraft:black_carpet",
                     List.of("minecraft:black_candle[candles=3,lit=true]", "minecraft:sculk"),
                     List.of("minecraft:iron_chain[axis=y]"),
