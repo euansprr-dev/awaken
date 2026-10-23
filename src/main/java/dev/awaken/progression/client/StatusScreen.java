@@ -35,6 +35,13 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         super(Component.translatable("screen.awaken.status"));
     }
 
+    /** Opens on a given tab (the Gate Map from a hint, screenshots). */
+    public StatusScreen(StatusSections.Tab open) {
+        this();
+        tab = open;
+        lastTab = open;
+    }
+
     @Override
     protected void init() {
         List<String> labels = new java.util.ArrayList<>();

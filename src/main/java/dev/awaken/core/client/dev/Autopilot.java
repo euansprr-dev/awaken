@@ -166,7 +166,9 @@ public final class Autopilot {
             }
             case "screen" -> {
                 if (arg.trim().equals("close")) mc.gui.setScreen(null);
-                else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen());
+                else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
+                else if (arg.trim().equals("map")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.GATE_MAP));
+                else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
                 else if (arg.trim().equals("experimental")) {
                     // vanilla's own world-creation prompt, as a new world would show it: ExperimentalWarning should answer it
                     var back = mc.gui.screen();
