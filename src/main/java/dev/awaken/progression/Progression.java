@@ -1,0 +1,486 @@
+package dev.awaken.progression;
+
+import dev.awaken.Awaken;
+import dev.awaken.core.AwakenConfig;
+import dev.awaken.core.CoreModule;
+import dev.awaken.core.DirectorLog;
+import dev.awaken.progression.content.Content;
+import dev.awaken.progression.content.Defs;
+import dev.awaken.signal.Signal;
+import dev.awaken.signal.SignalWindow;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/** Public API for levels, stats, ranks, counters, Truths, Titles, Latents, Paths and perks (SPEC section 4). */
+public final class Progression {
+    private Progression() {}
+
+    /** Where XP came from (affects nothing yet but logging and the Day's End card). */
+    public enum XpSource { GATE_KILL, GATE_FLOOR, GATE_BOSS, HOME, REGIMEN, DIRECTIVE, TRUTH, DESCENT, DREAM, STORY, COMMAND }
+
+    private static final Set<ServerPlayer> DIRTY = new HashSet<>();
+
+    public static Profile profile(Player player) {
+        return player.getData(ProgressionModule.PROFILE.get());
+    }
+
+    public static Rank rank(Player player) {
+        return profile(player).rank();
+    }
+
+    public static int stat(Player player, Stat stat) {
+        return profile(player).stat(stat);
+    }
+
+    public static int contentLevel(Rank rank) {
+        return rank.contentLevel;
+    }
+
+    /** Queue a sync of the profile to its owner (batched once per second). */
+    public static void markDirty(ServerPlayer player) {
+        DIRTY.add(player);
+    }
+
+    static void flushDirty() {
+        for (ServerPlayer p : DIRTY) {
+            if (!p.isRemoved()) p.syncData(ProgressionModule.PROFILE.get());
+        }
+        DIRTY.clear();
+    }
+
+    public static void syncNow(ServerPlayer player) {
+        DIRTY.remove(player);
+        player.syncData(ProgressionModule.PROFILE.get());
+    }
+
+    // ---- XP and levels ------------------------------------------------------------------------------------------------
+
+    /** Grants XP (scaled by the story length setting and XP perks) and handles level-ups. Returns levels gained. */
+    public static int grantXp(ServerPlayer player, double amount, XpSource source) {
+        Profile p = profile(player);
+        if (!p.awakened || amount <= 0) return 0;
+        amount *= AwakenConfig.xpMultiplier() * (1 + perk(player, Perks.XP_BONUS));
+        p.xp += amount;
+        int gained = 0;
+        while (p.xp >= Curve.xpToNext(p.level)) {
+            p.xp -= Curve.xpToNext(p.level);
+            p.level++;
+            p.unspent += Curve.POINTS_PER_LEVEL;
+            gained++;
+        }
+        if (gained > 0) onLevelUp(player, p, gained);
+        markDirty(player);
+        return gained;
+    }
+
+    /** Grants a fraction of the player's current level (used by rewards: "0.25 levels"). */
+    public static int grantLevels(ServerPlayer player, double fraction, XpSource source) {
+        return grantXp(player, fraction * Curve.xpToNext(profile(player).level) / AwakenConfig.xpMultiplier(), source);
+    }
+
+    private static void onLevelUp(ServerPlayer player, Profile p, int gained) {
+        player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
+        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE,
+                        Component.literal(gained > 1 ? "Level up ×" + gained : "Level up"))
+                .row(Component.literal("Level"), Component.literal((p.level - gained) + " → " + p.level))
+                .row(Component.literal("Points to spend"), Component.literal("+" + gained * Curve.POINTS_PER_LEVEL))
+                .footer(Component.literal("Press K to spend them"))
+                .ttl(20 * 5).build());
+        Rank next = p.rank.next();
+        if (next != null && !p.reassessmentReady && p.level >= next.levelRequired) {
+            p.reassessmentReady = true;
+            Signal.send(player, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal("Reassessment available"))
+                    .body(Component.literal("You have outgrown " + p.rank.label + "-rank. Take the trial at the Spire, or at any Reassessment Monolith."))
+                    .footer(Component.literal("Next rank: " + next.label)).ttl(20 * 10).priority(5).build());
+        }
+        evaluate(player, Counters.LEVEL);
+    }
+
+    // ---- stats ------------------------------------------------------------------------------------------------------
+
+    public static boolean spendPoint(ServerPlayer player, Stat stat) {
+        Profile p = profile(player);
+        if (p.unspent <= 0) return false;
+        p.unspent--;
+        p.stats[stat.ordinal()]++;
+        applyAttributes(player);
+        evaluate(player, Counters.STATS);
+        markDirty(player);
+        return true;
+    }
+
+    public static void addStat(ServerPlayer player, Stat stat, int amount) {
+        Profile p = profile(player);
+        p.stats[stat.ordinal()] += amount;
+        applyAttributes(player);
+        evaluate(player, Counters.STATS);
+        markDirty(player);
+    }
+
+    private static final Identifier MOD_STR = Awaken.id("stat_str");
+    private static final Identifier MOD_AGI_SPEED = Awaken.id("stat_agi_speed");
+    private static final Identifier MOD_AGI_ATTACK = Awaken.id("stat_agi_attack");
+    private static final Identifier MOD_VIT = Awaken.id("stat_vit");
+    private static final Identifier MOD_PERK_SPEED = Awaken.id("perk_speed");
+    private static final Identifier MOD_PERK_HEALTH = Awaken.id("perk_health");
+    private static final Identifier MOD_FRACTURE = Awaken.id("fracture");
+
+    /** Re-applies stat attribute modifiers. Call after any stat, perk or fracture change, and on login/respawn. */
+    public static void applyAttributes(ServerPlayer player) {
+        Profile p = profile(player);
+        int str = p.stats[Stat.STR.ordinal()] - Stat.START;
+        int agi = p.stats[Stat.AGI.ordinal()] - Stat.START;
+        int vit = p.stats[Stat.VIT.ordinal()] - Stat.START;
+        boolean fractured = p.fractureUntil > player.level().getGameTime();
+        double strain = player.getData(ProgressionModule.STRAIN.get());
+        double weaken = (fractured ? 0.15 : 0) + strain;
+        modify(player, Attributes.ATTACK_DAMAGE, MOD_STR, p.awakened ? str * 0.025 - weaken : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        modify(player, Attributes.MOVEMENT_SPEED, MOD_AGI_SPEED, p.awakened ? Math.min(0.40, agi * 0.004) : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        modify(player, Attributes.ATTACK_SPEED, MOD_AGI_ATTACK, p.awakened ? Math.min(0.60, agi * 0.01) : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        modify(player, Attributes.MAX_HEALTH, MOD_VIT, p.awakened ? vit * 0.6 : 0, AttributeModifier.Operation.ADD_VALUE);
+        modify(player, Attributes.MOVEMENT_SPEED, MOD_PERK_SPEED, perk(player, Perks.MOVE_SPEED), AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        modify(player, Attributes.MAX_HEALTH, MOD_PERK_HEALTH, perk(player, Perks.MAX_HEALTH), AttributeModifier.Operation.ADD_VALUE);
+        modify(player, Attributes.MOVEMENT_SPEED, MOD_FRACTURE, fractured ? -0.1 : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        if (player.getHealth() > player.getMaxHealth()) player.setHealth(player.getMaxHealth());
+    }
+
+    private static void modify(ServerPlayer player, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attr,
+                               Identifier id, double amount, AttributeModifier.Operation op) {
+        AttributeInstance inst = player.getAttribute(attr);
+        if (inst == null) return;
+        if (Math.abs(amount) < 1e-9) inst.removeModifier(id);
+        else inst.addOrUpdateTransientModifier(new AttributeModifier(id, amount, op));
+    }
+
+    // ---- counters ---------------------------------------------------------------------------------------------------
+
+    public static void count(ServerPlayer player, String counter, long amount) {
+        if (amount == 0) return;
+        Profile p = profile(player);
+        p.counters.merge(counter, amount, Long::sum);
+        evaluate(player, counter);
+        markDirty(player);
+    }
+
+    public static void count(ServerPlayer player, String counter) {
+        count(player, counter, 1);
+    }
+
+    /** Sets a counter (for streaks and records). */
+    public static void setCounter(ServerPlayer player, String counter, long value) {
+        Profile p = profile(player);
+        if (p.counter(counter) == value) return;
+        p.counters.put(counter, value);
+        evaluate(player, counter);
+        markDirty(player);
+    }
+
+    /** Raises a "best" counter if the new value is higher. Returns true when it's a new record. */
+    public static boolean record(ServerPlayer player, String counter, long value) {
+        if (value <= profile(player).counter(counter)) return false;
+        setCounter(player, counter, value);
+        return true;
+    }
+
+    // ---- condition evaluation ---------------------------------------------------------------------------------------
+
+    static void evaluate(ServerPlayer player, String counter) {
+        Profile p = profile(player);
+        if (!p.awakened) return;
+        Set<Identifier> ids = Content.INDEX.get(counter);
+        if (ids != null) {
+            for (Identifier id : List.copyOf(ids)) {
+                String key = id.toString();
+                Defs.TruthDef truth = Content.TRUTHS.get(id);
+                if (truth != null) {
+                    if (p.truthsDeclared.contains(key) && !p.truthsTrue.contains(key) && truth.condition().test(p, null)) {
+                        makeTruthTrue(player, key, truth);
+                    } else if (truth.emergent().isPresent() && !p.truthsTrue.contains(key) && !p.truthsOffered.contains(key)
+                            && !p.truthsDeclared.contains(key) && truth.emergent().get().test(p, null)) {
+                        p.truthsOffered.add(key);
+                        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.TRUTH, Component.literal("The Signal noticed something."))
+                                .body(Component.literal("“" + truth.text() + "”")).footer(Component.literal("A new Truth is available · K"))
+                                .ttl(20 * 8).build());
+                    }
+                }
+                Defs.TitleDef title = Content.TITLES.get(id);
+                if (title != null && !p.titles.contains(key) && title.condition().test(p, null)) {
+                    p.titles.add(key);
+                    markNewThing(player, "title");
+                    Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Title earned"))
+                            .row(Component.literal("Title"), Component.literal(title.name()))
+                            .body(Component.literal(title.description())).footer(Component.literal("Equip it from Status · K")).build());
+                }
+                Defs.LatentDef latent = Content.LATENTS.get(id);
+                if (latent != null && !p.latents.contains(key) && latent.condition().test(p, null)) {
+                    p.latents.add(key);
+                    markNewThing(player, "latent");
+                    Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("A latent ability woke up"))
+                            .row(Component.literal("Latent"), Component.literal(latent.name()))
+                            .body(Component.literal(latent.description())).priority(3).build());
+                    RewardHooks.apply(player, latent.reward(), XpSource.TRUTH);
+                    applyAttributes(player);
+                }
+            }
+        }
+        Directives.evaluate(player, p);
+        Regimen.evaluate(player, p);
+    }
+
+    private static void makeTruthTrue(ServerPlayer player, String key, Defs.TruthDef truth) {
+        Profile p = profile(player);
+        p.truthsTrue.add(key);
+        p.truthsDeclared.remove(key);
+        markNewThing(player, "truth");
+        player.level().playSound(null, player.blockPosition(), CoreModule.RANK_UP.get(), SoundSource.PLAYERS, 0.6f, 1.4f);
+        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.TRUTH, Component.literal("“" + truth.text() + "”"))
+                .body(Component.literal("It's true now."))
+                .footer(Component.literal("True").withStyle(ChatFormatting.GREEN)).priority(4).ttl(20 * 8).build());
+        RewardHooks.apply(player, truth.reward(), XpSource.TRUTH);
+        applyAttributes(player);
+        markDirty(player);
+    }
+
+    // ---- truths -----------------------------------------------------------------------------------------------------
+
+    /** Offers up to {@code count} new Truths fitting the player's rank (at awakening and each rank-up). */
+    public static void offerTruths(ServerPlayer player, int count) {
+        Profile p = profile(player);
+        var rnd = player.getRandom();
+        List<Map.Entry<Identifier, Defs.TruthDef>> pool = new ArrayList<>();
+        for (var e : Content.TRUTHS.map.entrySet()) {
+            String key = e.getKey().toString();
+            var d = e.getValue();
+            if (d.emergent().isPresent()) continue;
+            if (p.truthsTrue.contains(key) || p.truthsDeclared.contains(key) || p.truthsOffered.contains(key)) continue;
+            if (p.rank.ordinal() < d.minRank().ordinal() || p.rank.ordinal() > d.maxRank().ordinal()) continue;
+            pool.add(e);
+        }
+        for (int n = 0; n < count && !pool.isEmpty(); n++) {
+            int total = pool.stream().mapToInt(e -> e.getValue().weight()).sum();
+            int roll = rnd.nextInt(Math.max(1, total));
+            for (int k = 0; k < pool.size(); k++) {
+                roll -= pool.get(k).getValue().weight();
+                if (roll < 0) {
+                    p.truthsOffered.add(pool.remove(k).getKey().toString());
+                    break;
+                }
+            }
+        }
+        if (!p.truthsOffered.isEmpty()) {
+            Signal.send(player, SignalWindow.builder(SignalWindow.Kind.TRUTH, Component.literal("Who are you becoming?"))
+                    .body(Component.literal("New Truths are waiting. Declare up to three. They become true when you live them."))
+                    .footer(Component.literal("Status · K · Truths")).ttl(20 * 10).build());
+        }
+        markDirty(player);
+    }
+
+    public static boolean declareTruth(ServerPlayer player, String key) {
+        Profile p = profile(player);
+        if (!p.truthsOffered.contains(key) || p.truthsDeclared.size() >= 3) return false;
+        Defs.TruthDef d = Content.TRUTHS.get(key);
+        if (d == null) return false;
+        p.truthsOffered.remove(key);
+        p.truthsDeclared.add(key);
+        if (d.condition().test(p, null)) makeTruthTrue(player, key, d);
+        markDirty(player);
+        return true;
+    }
+
+    public static boolean undeclareTruth(ServerPlayer player, String key) {
+        Profile p = profile(player);
+        if (!p.truthsDeclared.remove(key)) return false;
+        p.truthsOffered.add(key);
+        markDirty(player);
+        return true;
+    }
+
+    // ---- titles -----------------------------------------------------------------------------------------------------
+
+    public static boolean equipTitle(ServerPlayer player, String key) {
+        Profile p = profile(player);
+        if (!key.isEmpty() && !p.titles.contains(key)) return false;
+        p.title = key;
+        applyAttributes(player);
+        markDirty(player);
+        return true;
+    }
+
+    // ---- perks ------------------------------------------------------------------------------------------------------
+
+    /** Sum of a perk across true Truths, the equipped Title, Latents and the Path. Cached per tick per player. */
+    public static double perk(Player player, String perkId) {
+        Profile p = profile(player);
+        double sum = 0;
+        for (String t : p.truthsTrue) {
+            var d = Content.TRUTHS.get(t);
+            if (d != null) for (Perk k : d.reward().perks()) if (k.id().equals(perkId)) sum += k.amount();
+        }
+        if (!p.title.isEmpty()) {
+            var d = Content.TITLES.get(p.title);
+            if (d != null) for (Perk k : d.perks()) if (k.id().equals(perkId)) sum += k.amount();
+        }
+        for (String l : p.latents) {
+            var d = Content.LATENTS.get(l);
+            if (d != null) for (Perk k : d.reward().perks()) if (k.id().equals(perkId)) sum += k.amount();
+        }
+        if (!p.path.isEmpty()) {
+            var d = Content.PATHS.get(p.path);
+            if (d != null) for (Perk k : d.perks()) if (k.id().equals(perkId)) sum += k.amount();
+        }
+        return sum;
+    }
+
+    public static boolean hasPerk(Player player, String perkId) {
+        return perk(player, perkId) > 0;
+    }
+
+    // ---- rhythm -----------------------------------------------------------------------------------------------------
+
+    /** Something new to use or show off landed. Feeds the second reward rhythm (SPEC section 2). */
+    public static void markNewThing(ServerPlayer player, String what) {
+        profile(player).lastNewThing = player.level().getGameTime();
+        DirectorLog.log(player, "new-thing", what);
+        markDirty(player);
+    }
+
+    /** Minutes of play since the last new thing. */
+    public static double minutesSinceNewThing(ServerPlayer player) {
+        return (player.level().getGameTime() - profile(player).lastNewThing) / 1200.0;
+    }
+
+    // ---- awakening, rank, path --------------------------------------------------------------------------------------
+
+    /** The Signal chooses the player. Called by the story prologue (or /awaken admin awaken). */
+    public static void awaken(ServerPlayer player) {
+        Profile p = profile(player);
+        if (p.awakened) return;
+        p.awakened = true;
+        p.lastNewThing = player.level().getGameTime();
+        applyAttributes(player);
+        offerTruths(player, 3);
+        markDirty(player);
+    }
+
+    /** Called by the Reassessment trial when the player passes. */
+    public static void passReassessment(ServerPlayer player) {
+        Profile p = profile(player);
+        Rank next = p.rank.next();
+        if (next == null) return;
+        p.rank = next;
+        p.reassessmentReady = next.next() != null && p.level >= next.next().levelRequired;
+        player.level().playSound(null, player.blockPosition(), CoreModule.RANK_UP.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal(next.label + "-rank"))
+                .body(Component.literal("Reassessment passed. The world will treat you differently now."))
+                .row(Component.literal("New gates"), Component.literal(next.label + "-rank pillars will appear"))
+                .priority(9).ttl(20 * 10).build());
+        markNewThing(player, "rank");
+        offerTruths(player, 3);
+        evaluate(player, Counters.RANK);
+        RankHooks.fire(player, next);
+        markDirty(player);
+    }
+
+    /** Scores Paths from real counters and offers the top three plus any hidden Path whose condition is met. */
+    public static List<PathOffer> offerPaths(ServerPlayer player) {
+        Profile p = profile(player);
+        double hours = Math.max(1.0, p.counter("awaken:play_ticks") / 72000.0);
+        List<PathOffer> scored = new ArrayList<>();
+        List<PathOffer> hidden = new ArrayList<>();
+        for (var e : Content.PATHS.map.entrySet()) {
+            var d = e.getValue();
+            if (!d.available()) continue;
+            if (d.hidden().isPresent()) {
+                if (d.hidden().get().test(p, null)) hidden.add(new PathOffer(e.getKey().toString(), 999, evidence(p, d)));
+                continue;
+            }
+            double score = 0;
+            for (var w : d.scoring().entrySet()) score += w.getValue() * p.counter(w.getKey()) / hours;
+            List<String> ev = evidence(p, d);
+            if (ev.isEmpty()) continue; // never offer a Path without real evidence
+            scored.add(new PathOffer(e.getKey().toString(), score, ev));
+        }
+        scored.sort(Comparator.comparingDouble(PathOffer::score).reversed());
+        List<PathOffer> out = new ArrayList<>(scored.subList(0, Math.min(3, scored.size())));
+        out.addAll(hidden);
+        p.pathsOffered.clear();
+        out.forEach(o -> p.pathsOffered.add(o.path()));
+        DirectorLog.log(player, "path-offer", out.toString());
+        markDirty(player);
+        return out;
+    }
+
+    public record PathOffer(String path, double score, List<String> evidence) {}
+
+    private static List<String> evidence(Profile p, Defs.PathDef d) {
+        List<String> out = new ArrayList<>();
+        for (var e : d.evidence().entrySet()) {
+            long v = p.counter(e.getKey());
+            if (v > 0) out.add(String.format(e.getValue(), v));
+        }
+        return out;
+    }
+
+    public static boolean choosePath(ServerPlayer player, String path) {
+        Profile p = profile(player);
+        if (!p.pathsOffered.contains(path)) return false;
+        Defs.PathDef d = Content.PATHS.get(path);
+        if (d == null) return false;
+        p.path = path;
+        p.pathsOffered.clear();
+        d.signaturePower().ifPresent(pw -> RewardHooks.learnPower(player, pw));
+        markNewThing(player, "path");
+        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal(d.name()))
+                .body(Component.literal(d.description())).priority(9).ttl(20 * 12).build());
+        applyAttributes(player);
+        markDirty(player);
+        return true;
+    }
+
+    // ---- misc -------------------------------------------------------------------------------------------------------
+
+    public static void addInsight(ServerPlayer player, String bossId) {
+        profile(player).insight.merge(bossId, 1, Integer::sum);
+        markDirty(player);
+    }
+
+    public static void fracture(ServerPlayer player, int ticks) {
+        profile(player).fractureUntil = player.level().getGameTime() + ticks;
+        applyAttributes(player);
+        markDirty(player);
+    }
+
+    public static void clearFracture(ServerPlayer player) {
+        profile(player).fractureUntil = 0;
+        applyAttributes(player);
+        markDirty(player);
+    }
+
+    /** For the Day's End card: remember the best moment of the day (longest/most impressive wins by score). */
+    public static void bestMoment(ServerPlayer player, String moment) {
+        Profile p = profile(player);
+        p.day = new Profile.DayLog(p.day.day(), p.day.levelStart(), p.day.gates(), p.day.kills(), moment);
+        markDirty(player);
+    }
+
+    static Map<String, Long> snapshot(Profile p, Set<String> counters) {
+        Map<String, Long> m = new HashMap<>();
+        for (String c : counters) m.put(c, p.counter(c));
+        return m;
+    }
+}
