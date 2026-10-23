@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:tide_coral",
+  "count": {
+    "B": 8,
+    "A": 8
+  },
+  "weight": 6,
+  "value": 0.7,
+  "any_of": [
+    "mined:awaken:tide_coral"
+  ],
+  "hint": "Tide coral grows upside down in the Inverted Sea",
+  "group": "strata"
+}

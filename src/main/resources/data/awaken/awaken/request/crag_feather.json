@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:crag_feather",
+  "count": {
+    "E": 5,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 0.8,
+  "any_of": [
+    "seen:peak_kite"
+  ],
+  "hint": "Peak Kites shed them over the peaks",
+  "group": "crag"
+}

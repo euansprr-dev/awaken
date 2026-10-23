@@ -30,6 +30,11 @@ import java.util.List;
  *       hit (+35%, carrying the Force: Heat burns, Frost slows, Charge hits harder, Gravity lifts, Spirit mends you).</li>
  *   <li>B Veilwoven (the Veil, Spirit): spirit damage taken -30%, meditating mends; full set: Veil Flicker, below 40%
  *       health a hit can pass through you (10% + 1% per SPI above 5, up to 35%; once per 8 s).</li>
+ *   <li>A Lordscale (the Lords' Forces): Gravity and Charge damage taken -20%; full set: Overflow, every fifth power hit
+ *       of one Force bursts around the target (half the hit to every foe within 4 blocks, with the Force's touch).</li>
+ *   <li>S Sovereign Weave (the Hollow Court): Unbowed, dying in a gate below your rank leaves no Fracture; full set:
+ *       Sovereign's Measure, your highest stat counts half again (its attribute bonus, powers +0.75% damage a point
+ *       above 5, and the stat-scaled parts of these sets).</li>
  * </ul>
  * Attribute parts are re-applied every 10 ticks per player (staggered) and on equipment changes; combat parts live in
  * {@link GearCombat}.
@@ -51,10 +56,18 @@ public final class SetBonus {
     public static final int MEDITATION_HEAL_TICKS = 40;
     public static final double FLICKER_BELOW = 0.4;
     public static final int FLICKER_COOLDOWN = 160;
+    public static final double LORD_WARD = 0.20;
+    public static final int OVERFLOW_EVERY = 5;
+    public static final double OVERFLOW_SHARE = 0.5, OVERFLOW_RADIUS = 4.0, OVERFLOW_CHARGE_EXTRA = 0.15, OVERFLOW_SPIRIT_LEECH = 0.10;
+    /** Sovereign's Measure: the highest stat's points above 5 count this much again. */
+    public static final double MEASURE = 0.5;
+    /** Powers scale 1.5% a point of their stat (PowerMath.statScale); the Measure adds half of that for the highest stat. */
+    public static final double MEASURE_POWER_PER_POINT = 0.0075;
 
     public static final Identifier SNEAK_ID = Awaken.id("gear_wildhide_sneak");
     public static final Identifier HEALTH_ID = Awaken.id("gear_beastbound_health");
     public static final Identifier CORNERED_ID = Awaken.id("gear_cornered");
+    public static final Identifier MEASURE_ID = Awaken.id("gear_sovereign_measure");
 
     public record Line(int pieces, String text) {}
 
@@ -69,6 +82,10 @@ public final class SetBonus {
                     new Line(FULL, "-25%; a power hit primes your next melee hit: +35% and it carries the Force"));
             case B -> List.of(new Line(HALF, "Spirit damage taken -30%; meditating mends you"),
                     new Line(FULL, "Veil Flicker: below 40% health a hit may pass through you (more with SPI)"));
+            case A -> List.of(new Line(HALF, "Gravity and Charge damage taken -20%"),
+                    new Line(FULL, "Overflow: every fifth power hit of one Force bursts around the target"));
+            case S -> List.of(new Line(HALF, "Unbowed: dying in a gate below your rank leaves no Fracture"),
+                    new Line(FULL, "Sovereign's Measure: your highest stat counts half again, for gear and powers"));
         };
     }
 
@@ -106,6 +123,59 @@ public final class SetBonus {
         return Math.min(0.35, 0.10 + 0.01 * Math.max(0, spirit - 5));
     }
 
+    /** Lordscale's ward against the Sky Leviathan's and the Herald's Forces. */
+    public static double lordWard(int pieces) {
+        return pieces >= HALF ? LORD_WARD : 0;
+    }
+
+    /** Unbowed (two Sovereign Weave pieces): a death in a gate below your rank leaves no Fracture. */
+    public static boolean waivesFracture(int pieces, int playerRank, int gateRank) {
+        return pieces >= HALF && gateRank >= 0 && gateRank < playerRank;
+    }
+
+    // ---- Sovereign's Measure ----------------------------------------------------------------------------------------
+
+    private static final Stat[] STATS = Stat.values();
+
+    /** The player's highest stat (ties: the first in STR, AGI, VIT, INT, PER, SPI order). */
+    public static Stat highest(Player p) {
+        Stat best = Stat.STR;
+        int v = Integer.MIN_VALUE;
+        for (Stat s : STATS) {
+            int n = Progression.stat(p, s);
+            if (n > v) {
+                v = n;
+                best = s;
+            }
+        }
+        return best;
+    }
+
+    /** Extra points the Measure gives a stat of {@code raw}: half its points above 5. */
+    public static int measurePoints(int raw) {
+        return (int) Math.floor(Math.max(0, raw - Stat.START) * MEASURE);
+    }
+
+    /** Whether Sovereign's Measure is on (four Sovereign Weave pieces). */
+    public static boolean measure(LivingEntity e) {
+        return count(e, HunterTier.S) >= FULL;
+    }
+
+    /**
+     * A stat as gear sees it: the player's own, plus Sovereign's Measure on the highest one. Hunter's Sense, Cornered and
+     * Veil Flicker read this, so the Measure lifts them too.
+     */
+    public static int stat(Player p, Stat s) {
+        int raw = Progression.stat(p, s);
+        return measure(p) && highest(p) == s ? raw + measurePoints(raw) : raw;
+    }
+
+    /** The Measure's extra share of power damage for this player (0 without the full set). */
+    public static double measurePower(Player p) {
+        if (!measure(p)) return 0;
+        return MEASURE_POWER_PER_POINT * Math.max(0, Progression.stat(p, highest(p)) - Stat.START);
+    }
+
     // ---- applying ---------------------------------------------------------------------------------------------------
 
     static void onPlayerTick(PlayerTickEvent.Post event) {
@@ -120,8 +190,9 @@ public final class SetBonus {
         int veil = count(sp, HunterTier.B);
         modify(sp, Attributes.SNEAKING_SPEED, SNEAK_ID, wild >= FULL ? SNEAK_FULL : wild >= HALF ? SNEAK_HALF : 0, false);
         modify(sp, Attributes.MAX_HEALTH, HEALTH_ID, beast >= FULL ? HEALTH_FULL : beast >= HALF ? HEALTH_HALF : 0, true);
+        applyMeasure(sp);
         boolean cornered = beast >= FULL && sp.isAlive() && sp.getHealth() < sp.getMaxHealth() * CORNERED_BELOW;
-        double bonus = cornered ? corneredBonus(Progression.stat(sp, Stat.STR)) : 0;
+        double bonus = cornered ? corneredBonus(stat(sp, Stat.STR)) : 0;
         modify(sp, Attributes.ATTACK_DAMAGE, CORNERED_ID, bonus, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, false);
         modify(sp, Attributes.KNOCKBACK_RESISTANCE, CORNERED_ID, cornered ? CORNERED_KNOCKBACK : 0, false);
         if (sp.getHealth() > sp.getMaxHealth()) sp.setHealth(sp.getMaxHealth());
@@ -133,6 +204,25 @@ public final class SetBonus {
                 sp.heal(1.0f);
             }
         }
+    }
+
+    /**
+     * Sovereign's Measure on the attribute stats, with progression's own numbers (STR +2.5% attack a point, AGI +0.4% speed
+     * and +1% attack speed a point under its 40% / 60% caps, VIT +0.6 health a point) for the extra points.
+     */
+    static void applyMeasure(ServerPlayer sp) {
+        boolean on = measure(sp);
+        Stat hi = on ? highest(sp) : null;
+        int str = Progression.stat(sp, Stat.STR), agi = Math.max(0, Progression.stat(sp, Stat.AGI) - Stat.START);
+        double strExtra = hi == Stat.STR ? measurePoints(str) * 0.025 : 0;
+        int agiExtra = hi == Stat.AGI ? measurePoints(agi + Stat.START) : 0;
+        double speed = Math.min(0.40, (agi + agiExtra) * 0.004) - Math.min(0.40, agi * 0.004);
+        double swing = Math.min(0.60, (agi + agiExtra) * 0.01) - Math.min(0.60, agi * 0.01);
+        double health = hi == Stat.VIT ? measurePoints(Progression.stat(sp, Stat.VIT)) * 0.6 : 0;
+        modify(sp, Attributes.ATTACK_DAMAGE, MEASURE_ID, strExtra, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, false);
+        modify(sp, Attributes.MOVEMENT_SPEED, MEASURE_ID, speed, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, false);
+        modify(sp, Attributes.ATTACK_SPEED, MEASURE_ID, swing, AttributeModifier.Operation.ADD_MULTIPLIED_BASE, false);
+        modify(sp, Attributes.MAX_HEALTH, MEASURE_ID, health, AttributeModifier.Operation.ADD_VALUE, true);
     }
 
     /** Whether the Cornered bonus is on right now (for tests and the command). */

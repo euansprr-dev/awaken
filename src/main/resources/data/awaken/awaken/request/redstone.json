@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:redstone",
+  "count": {
+    "D": 16,
+    "C": 24
+  },
+  "weight": 10,
+  "value": 0.15,
+  "any_of": [
+    "mined:minecraft:redstone_ore",
+    "mined:minecraft:deepslate_redstone_ore"
+  ],
+  "hint": "Redstone glows deep underground"
+}

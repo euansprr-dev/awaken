@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:leviathan_fin",
+  "count": {
+    "B": 2,
+    "A": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:sky_leviathan"
+  ],
+  "hint": "The Sky Leviathan circles a Sky Archipelago",
+  "group": "lord"
+}

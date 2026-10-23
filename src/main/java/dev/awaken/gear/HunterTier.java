@@ -22,7 +22,8 @@ import java.util.Map;
 
 /**
  * Hunter gear tiers (plan v2 §4.5), one per rank. Each sits on a vanilla equivalent (E stone/copper, D iron, C diamond,
- * B netherite) and adds a twist through its set bonus ({@link SetBonus}). A and S are designed in docs/modules/gear.md.
+ * B netherite) and adds a twist through its set bonus ({@link SetBonus}); A (Lordscale) and S (Sovereign Weave) go past
+ * netherite, the late-game sets.
  * Numbers are the source for the stats test and the doc; change them together.
  */
 public enum HunterTier {
@@ -35,7 +36,12 @@ public enum HunterTier {
     C("gatewrought", "Gatewrought", Rank.C, Rarity.RARE, new Armour(3, 6, 7, 3, 28, 1.5f, 0.0f, 12, SoundEvents.ARMOR_EQUIP_IRON),
             new Blade(6.0f, -2.3f, 1400), new Focus(4.0f, 0.12, 1100), new Mattock(7.5f, 4.0f, 1450, BlockTags.INCORRECT_FOR_DIAMOND_TOOL)),
     B("veilwoven", "Veilwoven", Rank.B, Rarity.EPIC, new Armour(3, 6, 8, 3, 35, 2.5f, 0.05f, 15, SoundEvents.ARMOR_EQUIP_DIAMOND),
-            new Blade(7.0f, -2.3f, 1900), new Focus(5.0f, 0.15, 1600), new Mattock(8.5f, 5.0f, 1950, BlockTags.INCORRECT_FOR_NETHERITE_TOOL));
+            new Blade(7.0f, -2.3f, 1900), new Focus(5.0f, 0.15, 1600), new Mattock(8.5f, 5.0f, 1950, BlockTags.INCORRECT_FOR_NETHERITE_TOOL)),
+    // past netherite: the Lords' own scales, then the Hollow Court's weave
+    A("lordscale", "Lordscale", Rank.A, Rarity.EPIC, new Armour(3, 7, 8, 3, 40, 3.0f, 0.1f, 15, SoundEvents.ARMOR_EQUIP_NETHERITE),
+            new Blade(8.0f, -2.3f, 2300), new Focus(6.0f, 0.18, 2000), new Mattock(9.5f, 6.0f, 2350, BlockTags.INCORRECT_FOR_NETHERITE_TOOL)),
+    S("sovereign", "Sovereign Weave", Rank.S, Rarity.EPIC, new Armour(4, 7, 9, 4, 48, 3.5f, 0.15f, 18, SoundEvents.ARMOR_EQUIP_NETHERITE),
+            new Blade(9.0f, -2.2f, 2800), new Focus(7.0f, 0.22, 2500), new Mattock(11.0f, 7.0f, 2850, BlockTags.INCORRECT_FOR_NETHERITE_TOOL));
 
     /** Armour points per piece, the durability multiplier (vanilla style), toughness and knockback resistance per piece. */
     public record Armour(int boots, int legs, int chest, int helm, int durability, float toughness, float knockback, int enchantability,
@@ -95,12 +101,12 @@ public enum HunterTier {
         return tag("hunter_hide_" + name().toLowerCase());
     }
 
-    /** The tier's signature part: bone and quartz (E), beast trophies (D), Gate Lord relics (C, B). */
+    /** The tier's signature part: bone and quartz (E), beast trophies (D), Gate Lord relics (C, B), Lord and Descent relics (A, S). */
     public TagKey<Item> coreTag() {
         return tag("hunter_core_" + name().toLowerCase());
     }
 
-    /** Bindings and fittings: sinew (E), metal (D), gate treasure (C), Veil-touched (B). Also what repairs the tier. */
+    /** Bindings and fittings: sinew (E), metal (D), gate treasure (C), Veil-touched (B), sky and abyss (A), the Court's (S). Also repairs the tier. */
     public TagKey<Item> bindTag() {
         return tag("hunter_bind_" + name().toLowerCase());
     }
@@ -127,6 +133,6 @@ public enum HunterTier {
     }
 
     public HunterTier next() {
-        return this == B ? null : values()[ordinal() + 1];
+        return this == S ? null : values()[ordinal() + 1];
     }
 }

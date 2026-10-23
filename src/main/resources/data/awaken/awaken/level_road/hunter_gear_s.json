@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "level": 97,
+  "title": "Sovereign Weave · S",
+  "text": "The Herald's halo, woven into a crown.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:sovereign_helmet",
+        "awaken:sovereign_chestplate",
+        "awaken:sovereign_leggings",
+        "awaken:sovereign_boots",
+        "awaken:sovereign_blade",
+        "awaken:sovereign_focus",
+        "awaken:sovereign_mattock"
+      ]
+    }
+  ],
+  "quiet": false
+}

@@ -1,0 +1,10 @@
+{
+  "values": [
+    {
+      "id": "awaken:precursor_alloy",
+      "required": false
+    },
+    "minecraft:netherite_scrap",
+    "minecraft:shulker_shell"
+  ]
+}

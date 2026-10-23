@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:quartz",
+  "count": {
+    "E": 6,
+    "D": 8
+  },
+  "weight": 10,
+  "value": 0.7,
+  "any_of": [
+    "seen:glass_scarab",
+    "mined:minecraft:nether_quartz_ore"
+  ],
+  "hint": "Glass Scarabs carry it in the desert"
+}

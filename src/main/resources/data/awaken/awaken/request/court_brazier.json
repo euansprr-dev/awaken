@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "awaken:court_brazier",
+  "count": {
+    "S": 6
+  },
+  "weight": 6,
+  "value": 1.2,
+  "any_of": [
+    "mined:awaken:court_brazier"
+  ],
+  "hint": "Braziers burn gold in the Hollow Court",
+  "group": "strata"
+}

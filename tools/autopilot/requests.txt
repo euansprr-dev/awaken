@@ -1,0 +1,133 @@
+# Anchor requests and the late Hunter gear (hearth/request, gear A and S). Awaken, root an Anchor, meet the Mire (a
+# sighting), get a quiet offer (toast, then "1 decision waiting · K"), the offer in the Status screen, take it, carry
+# part of it home (Now line with progress and the Anchor's compass), deliver part (the stream into the Anchor, the
+# "Delivered" toast), then the rest (the completion toast and its rewards), the town's regard at night (Trusted: the
+# lamps), the Status section with streak and Forge credit, the second slot at C-rank. Then Lordscale and Sovereign Weave
+# on mannequins: front, three-quarter and back (horns, crest, pauldrons, spines, claws; crown, collar, cape, fins), held
+# in first person by day and at night (the pearl and crimson glow layers).
+# Run by the integrator: tools/autopilot.sh requests (builders never run a client).
+world autopilot_requests creative 7171
+waitworld
+gui 0
+cmd weather clear 100000
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin awaken
+wait 80
+cmd awaken powers starter 1
+wait 40
+# face south, root an Anchor three blocks ahead (claimed as if placed)
+cmd tp @s ~ ~ ~ 0 25
+wait 10
+cmd awaken admin request anchor
+wait 80
+shot requests_00_home_anchor
+# a Bog Toad sighting makes Mire Hide askable; the offer arrives quietly
+cmd awaken admin counter "awaken:discovered/creature/bog_toad" 1
+cmd awaken admin request pools
+wait 10
+cmd awaken admin request offer
+wait 20
+shot requests_01_offer_toast
+wait 140
+shot requests_02_decision_waiting_tracker
+screen status
+wait 30
+shot requests_03_status_offer
+screen close
+cmd awaken admin request take
+wait 30
+shot requests_04_taken_now_line
+# walk away a little so the tracker's compass points home, carrying part of it
+cmd tp @s ^ ^ ^-14 180 10
+cmd awaken admin request fill 3
+wait 50
+shot requests_05_now_progress_compass
+# back at the Anchor: a partial delivery (the stream, then the toast)
+cmd tp @s ^ ^ ^14 0 25
+wait 10
+cmd awaken admin request deliver
+wait 6
+shot requests_06_stream_partial
+wait 20
+shot requests_07_partial_toast
+cmd awaken admin request fill
+wait 40
+shot requests_08_ready_use_the_anchor
+cmd awaken admin request deliver
+wait 7
+shot requests_09_stream_complete
+wait 12
+shot requests_10_anchor_flare
+wait 12
+shot requests_11_complete_toast
+cmd awaken hearth requests
+wait 20
+shot requests_12_requests_in_chat
+# the town's regard: Trusted keeps the Anchor's lamps lit at night
+cmd awaken admin request reputation 24
+cmd awaken admin request streak 4
+cmd time set 18000
+wait 80
+shot requests_13_trusted_lamps_night
+cmd time set 6000
+wait 20
+screen status
+wait 30
+shot requests_14_status_section
+screen close
+# C-rank: a second slot
+cmd awaken admin rankup
+cmd awaken admin rankup
+wait 40
+cmd awaken admin request offer
+wait 40
+shot requests_15_second_slot_offer
+screen status
+wait 30
+shot requests_16_status_two_requests
+screen close
+# the late sets on mannequins (the line-up holds every tier; A and S are the last two pairs)
+cmd tp @s ~ ~ ~ 0 10
+wait 10
+cmd awaken gear lineup
+wait 40
+look 0 10
+shot requests_20_lineup_all_six
+look 30 12
+shot requests_21_lineup_lordscale_sovereign
+cmd tp @s ^-4.2 ^ ^3
+wait 10
+look 0 16
+shot requests_22_close_lordscale
+cmd tp @s ^-2.8 ^ ^
+wait 10
+look 0 16
+shot requests_23_close_sovereign
+cmd tp @s ^-1.4 ^ ^1.5 40 12
+wait 10
+shot requests_24_three_quarter
+cmd tp @s ^ ^ ^5.5 180 14
+wait 10
+shot requests_25_backs_cape_spines
+cmd time set 18000
+wait 40
+shot requests_26_backs_night
+cmd time set 6000
+# first person: wear and hold each late tier, by day and by night
+cmd tp @s ^ ^ ^-6 0 30
+wait 10
+cmd awaken gear kit A
+wait 20
+shot requests_27_held_lordscale_warblade_orb
+cmd awaken gear kit S
+wait 20
+shot requests_28_held_sovereign_oathblade_sceptre
+cmd time set 18000
+wait 40
+shot requests_29_held_sovereign_night
+cmd awaken gear
+wait 20
+shot requests_30_gear_status_in_chat
+cmd awaken gear lineup clear
+quit

@@ -26,5 +26,19 @@
   "item.awaken.veilwoven_boots": "Veilwoven Treads",
   "item.awaken.veilwoven_blade": "Veilwoven Edge",
   "item.awaken.veilwoven_focus": "Veilwoven Censer",
-  "item.awaken.veilwoven_mattock": "Veilwoven Mattock"
+  "item.awaken.veilwoven_mattock": "Veilwoven Mattock",
+  "item.awaken.lordscale_helmet": "Lordscale Greathelm",
+  "item.awaken.lordscale_chestplate": "Lordscale Warplate",
+  "item.awaken.lordscale_leggings": "Lordscale Tassets",
+  "item.awaken.lordscale_boots": "Lordscale Talons",
+  "item.awaken.lordscale_blade": "Lordscale Warblade",
+  "item.awaken.lordscale_focus": "Lordscale Orb",
+  "item.awaken.lordscale_mattock": "Lordscale Mattock",
+  "item.awaken.sovereign_helmet": "Sovereign Crown",
+  "item.awaken.sovereign_chestplate": "Sovereign Regalia",
+  "item.awaken.sovereign_leggings": "Sovereign Legwraps",
+  "item.awaken.sovereign_boots": "Sovereign Striders",
+  "item.awaken.sovereign_blade": "Sovereign Oathblade",
+  "item.awaken.sovereign_focus": "Sovereign Sceptre",
+  "item.awaken.sovereign_mattock": "Sovereign Mattock"
 }

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "minecraft:echo_shard",
+  "count": {
+    "A": 2,
+    "S": 3
+  },
+  "weight": 10,
+  "value": 4.0,
+  "any_of": [
+    "got:minecraft:echo_shard"
+  ],
+  "hint": "Ancient cities, and the Hollow Herald"
+}

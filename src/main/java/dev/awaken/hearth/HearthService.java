@@ -183,6 +183,7 @@ public final class HearthService {
             return;
         }
         player(sp).respawnAtHearth = true;
+        if (dev.awaken.hearth.request.Requests.onAnchorUsed(sp, level, r.get())) return; // carried a request home: deliver first
         Upgrades.offerAnchor(sp, level, r.get());
     }
 

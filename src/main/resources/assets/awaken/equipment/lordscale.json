@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "awaken:lordscale"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "awaken:lordscale"
+      }
+    ]
+  }
+}

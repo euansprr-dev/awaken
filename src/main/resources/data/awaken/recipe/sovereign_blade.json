@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_blade",
+  "key": {
+    "B": "#awaken:hunter_bind_s",
+    "C": "#awaken:hunter_core_s",
+    "L": "awaken:lord_heart",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "  C",
+    "LC ",
+    "BS "
+  ],
+  "result": {
+    "id": "awaken:sovereign_blade"
+  }
+}

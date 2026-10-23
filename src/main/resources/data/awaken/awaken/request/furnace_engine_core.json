@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:furnace_engine_core",
+  "count": {
+    "B": 2,
+    "A": 2
+  },
+  "weight": 6,
+  "value": 7.0,
+  "any_of": [
+    "killed:awaken:guardian_foundry"
+  ],
+  "hint": "The Furnace Engine wakes the Precursor Foundry",
+  "group": "guardian"
+}

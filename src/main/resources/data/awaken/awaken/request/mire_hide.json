@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "item": "awaken:mire_hide",
+  "count": {
+    "E": 6,
+    "D": 8,
+    "C": 10
+  },
+  "weight": 12,
+  "value": 1.2,
+  "any_of": [
+    "seen:bog_toad",
+    "seen:mire_mother"
+  ],
+  "hint": "Bog Toads in the swamps drop it",
+  "group": "mire"
+}

@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * {@code /awaken gear}: the sets you wear and what they do now. Admin: {@code kit <E|D|C|B>} (wear and hold a whole
+ * {@code /awaken gear}: the sets you wear and what they do now. Admin: {@code kit <E|D|C|B|A|S>} (wear and hold a whole
  * tier) and {@code lineup [clear]} (every tier on mannequins in a row, for screenshots and look tests).
  */
 final class GearCommands {
@@ -40,7 +40,7 @@ final class GearCommands {
             var gear = Commands.literal("gear").executes(GearCommands::status);
             gear.then(Commands.literal("kit").requires(AwakenCommands.admin())
                     .then(Commands.argument("tier", StringArgumentType.word())
-                            .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("E", "D", "C", "B"), b))
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("E", "D", "C", "B", "A", "S"), b))
                             .executes(GearCommands::kit)));
             gear.then(Commands.literal("lineup").requires(AwakenCommands.admin()).executes(GearCommands::lineup)
                     .then(Commands.literal("clear").executes(c -> clear(c.getSource().getPlayerOrException()))));

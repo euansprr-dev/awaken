@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "awaken:item/sovereign_focus",
+    "layer1": {
+      "sprite": "awaken:item/sovereign_focus_glow",
+      "neoforge_data": {
+        "light_emission": 15
+      }
+    }
+  }
+}

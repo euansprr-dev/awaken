@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:blossom_fur",
+  "count": {
+    "E": 4,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 1.2,
+  "any_of": [
+    "seen:honey_bear",
+    "seen:empress_moth"
+  ],
+  "hint": "Honey Bears amble from nest to nest",
+  "group": "blossom"
+}

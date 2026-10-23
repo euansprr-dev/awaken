@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "minecraft:netherite_scrap",
+  "count": {
+    "B": 2,
+    "A": 4,
+    "S": 4
+  },
+  "weight": 10,
+  "value": 6.0,
+  "any_of": [
+    "mined:minecraft:ancient_debris",
+    "got:minecraft:netherite_scrap"
+  ],
+  "hint": "Ancient debris, low in the Nether"
+}

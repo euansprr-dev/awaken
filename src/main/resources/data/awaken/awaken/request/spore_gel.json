@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:spore_gel",
+  "count": {
+    "E": 4,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 1.2,
+  "any_of": [
+    "seen:sporeback_snail",
+    "seen:mycelord"
+  ],
+  "hint": "Sporeback Snails crawl between the mushrooms",
+  "group": "spore"
+}

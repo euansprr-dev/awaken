@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "awaken:regent_shadow",
+  "count": {
+    "S": 2
+  },
+  "weight": 6,
+  "value": 7.0,
+  "any_of": [
+    "killed:awaken:guardian_court"
+  ],
+  "hint": "The Shadow Regent sits the throne of the Hollow Court",
+  "group": "guardian"
+}

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:briar_tusk",
+  "count": {
+    "D": 2,
+    "C": 2,
+    "B": 3
+  },
+  "weight": 5,
+  "value": 8.0,
+  "any_of": [
+    "killed:awaken:briar_sow"
+  ],
+  "hint": "The Briar Sow roots in her Bramble Wallow",
+  "group": "beast"
+}

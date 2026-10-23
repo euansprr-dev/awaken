@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:moss_block",
+  "name": "Moss",
+  "count": {
+    "E": 8
+  },
+  "weight": 10,
+  "value": 0.4,
+  "any_of": [
+    "seen:mossback"
+  ],
+  "hint": "Mossbacks carry gardens on their shells",
+  "group": "greenwild"
+}

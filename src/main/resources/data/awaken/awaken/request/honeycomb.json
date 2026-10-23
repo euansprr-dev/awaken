@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "minecraft:honeycomb",
+  "count": {
+    "E": 4,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 0.8,
+  "any_of": [
+    "seen:honey_bear",
+    "got:minecraft:honeycomb"
+  ],
+  "hint": "Honey Bears shake it loose from bee nests",
+  "group": "blossom"
+}

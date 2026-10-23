@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_leggings",
+  "key": {
+    "B": "#awaken:hunter_bind_a",
+    "C": "#awaken:hunter_core_a",
+    "H": "#awaken:hunter_hide_a",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "HCH",
+    "B B",
+    "S S"
+  ],
+  "result": {
+    "id": "awaken:lordscale_leggings"
+  }
+}

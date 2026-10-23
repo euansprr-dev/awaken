@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:sleeper_eyelid",
+  "count": {
+    "C": 2,
+    "B": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:the_sleeper"
+  ],
+  "hint": "The Sleeper wanders a Nightmare gate",
+  "group": "lord"
+}

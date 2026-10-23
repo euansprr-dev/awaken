@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "tag": "minecraft:wool",
+  "name": "Wool",
+  "count": {
+    "E": 6,
+    "D": 8
+  },
+  "weight": 6,
+  "value": 0.4,
+  "hint": "Sheep, or Crag Rams on the peaks"
+}

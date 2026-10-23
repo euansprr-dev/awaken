@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "item": "minecraft:leather",
+  "count": {
+    "E": 6,
+    "D": 8
+  },
+  "weight": 8,
+  "value": 0.6,
+  "hint": "Cows, Frost Stags and Gloomstalkers"
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:obsidian",
+  "count": {
+    "C": 8,
+    "B": 12
+  },
+  "weight": 10,
+  "value": 0.8,
+  "any_of": [
+    "mined:minecraft:obsidian",
+    "got:minecraft:obsidian"
+  ],
+  "hint": "Water on still lava, then a diamond pick"
+}

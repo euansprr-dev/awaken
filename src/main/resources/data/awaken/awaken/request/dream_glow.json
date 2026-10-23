@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:dream_glow",
+  "count": {
+    "A": 8,
+    "S": 10
+  },
+  "weight": 6,
+  "value": 0.8,
+  "any_of": [
+    "mined:awaken:dream_glow"
+  ],
+  "hint": "Dream glow lights the Dreaming Stratum",
+  "group": "strata"
+}

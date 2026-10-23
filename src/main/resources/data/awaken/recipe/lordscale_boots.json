@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_boots",
+  "key": {
+    "C": "#awaken:hunter_core_a",
+    "H": "#awaken:hunter_hide_a",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "C C",
+    "HSH"
+  ],
+  "result": {
+    "id": "awaken:lordscale_boots"
+  }
+}
