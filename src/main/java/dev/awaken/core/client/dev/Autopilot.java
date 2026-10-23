@@ -37,6 +37,7 @@ import java.util.Map;
  * screen status|close|experimental             experimental: vanilla's experimental-settings prompt (it should answer itself)
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
  * camera first|back|front                        the F5 views
+ * fps &lt;label&gt;                                     logs the frames of the last second
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * quit
  * </pre>
@@ -71,6 +72,10 @@ public final class Autopilot {
             started = true;
             mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
             mc.options.pauseOnLostFocus = false;
+            // measure what the machine can really do: no vsync, no cap, no throttling while the window sits behind others
+            mc.options.enableVsync().set(false);
+            mc.options.framerateLimit().set(260);
+            mc.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
         }
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
@@ -205,6 +210,7 @@ public final class Autopilot {
                         : v.equals("front") ? net.minecraft.client.CameraType.THIRD_PERSON_FRONT : net.minecraft.client.CameraType.FIRST_PERSON);
                 waitTicks = 2;
             }
+            case "fps" -> Awaken.LOG.info("[autopilot] fps {} {}", arg.trim(), mc.getFps());
             case "quit" -> mc.stop();
             default -> Awaken.LOG.warn("[autopilot] unknown line: {}", line);
         }
