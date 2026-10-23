@@ -84,13 +84,13 @@ public final class GateChunkGenerator extends ChunkGenerator {
         GateLayout layout = GateLayout.of(plan);
         int sections = chunk.getSectionsCount();
         LevelChunkSection[] acquired = new LevelChunkSection[sections];
-        int minY = chunk.getMinY();
+        int minY = chunk.getMinY(), maxY = chunk.getMaxY();
         int[] top = new int[256];
         BlockState[] topState = new BlockState[256];
         Arrays.fill(top, Integer.MIN_VALUE);
         try {
             GatePainter.paint(layout, cell, chunkX, chunkZ, (x, y, z, state) -> {
-                if (y < minY || y >= minY + HEIGHT) return;
+                if (y < minY || y > maxY) return;
                 int si = chunk.getSectionIndex(y);
                 LevelChunkSection s = acquired[si];
                 if (s == null) {

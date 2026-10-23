@@ -273,6 +273,7 @@ public final class GateService {
         reg.releaseCell(g.cell);
         reg.setDirty();
         removeStructureSoon(server, g);
+        dev.awaken.gates.run.GateMobs.forgetGate(g.id);
         GatePayloads.syncBeaconsAround(server, g.pos);
     }
 

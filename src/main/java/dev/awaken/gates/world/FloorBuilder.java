@@ -571,7 +571,7 @@ final class FloorBuilder {
                 case ELITE, KEY -> new Room.Shape[]{Room.Shape.RING, Room.Shape.PILLARED, Room.Shape.OCTAGON};
                 case CACHE -> new Room.Shape[]{Room.Shape.ROUND, Room.Shape.OCTAGON, Room.Shape.CROSS};
                 case ARENA -> new Room.Shape[]{Room.Shape.RING, Room.Shape.ROUND, Room.Shape.OCTAGON, Room.Shape.PILLARED};
-                case BOSS -> new Room.Shape[]{Room.Shape.ROUND, Room.Shape.RING, Room.Shape.OCTAGON};
+                case BOSS -> new Room.Shape[]{Room.Shape.ROUND, Room.Shape.OCTAGON};
                 case HUB -> new Room.Shape[]{Room.Shape.RING};
                 case HALL -> new Room.Shape[]{Room.Shape.HALL};
                 case CAVERN -> new Room.Shape[]{Room.Shape.CAVE};

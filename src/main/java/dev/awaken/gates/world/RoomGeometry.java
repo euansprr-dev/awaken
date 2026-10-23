@@ -43,7 +43,9 @@ public final class RoomGeometry {
             int lat = lateral(d, x, z);
             if (lat < DOOR_LO || lat > DOOR_HI) continue;
             int dep = depth(d, x, z);
-            if (dep >= 0 && dep < TUNNEL) return d;
+            // in the lower of two rooms the tunnel stops at the wall: stairs take over from there
+            int max = d.y > r.dy ? INSET : TUNNEL;
+            if (dep >= 0 && dep < max) return d;
         }
         return null;
     }
@@ -141,7 +143,7 @@ public final class RoomGeometry {
         int edge = Math.min(Math.min(x - r.x0(), r.x1() - x), Math.min(z - r.z0(), r.z1() - z));
         if (onDoorAxis(r, x, z, 3)) return true;
         double n = Hash.fbm(r.seed, x, z, 11);
-        if (edge < (int) (n * 5)) return false;
+        if (edge < (int) (n * 9) - 1) return false;
         return true;
     }
 
@@ -160,7 +162,7 @@ public final class RoomGeometry {
             }
             case CAVE -> {
                 if (onDoorAxis(r, x, z, 3)) return false;
-                return Hash.fbm(r.seed ^ 0x77L, x, z, 7) > 0.78;
+                return Hash.fbm(r.seed ^ 0x77L, x, z, 7) > 0.75;
             }
             default -> {
                 return false;

@@ -123,6 +123,11 @@ public final class Modifiers {
             run.noise += 3;
             return;
         }
+        if (victim instanceof dev.awaken.gates.entity.GateHoarder h && e.getSource().getEntity() instanceof ServerPlayer attacker) {
+            GateRecord hg = GateRegistry.get(server).gate(h.gateId);
+            if (hg != null) Twists.onPlayerHits(attacker, hg, victim, e);
+            return;
+        }
         MobRole role = victim.getData(CoreApi.MOB_ROLE.get());
         if (role.gateId().isEmpty()) return;
         GateRecord g;
@@ -312,7 +317,7 @@ public final class Modifiers {
             GateRegistry.get(level.getServer()).setDirty();
             for (ServerPlayer p : players) Signal.toast(p, Component.literal("The floor is coming down."));
         }
-        if (now % 40 != 0) return;
+        if (level.getServer().getTickCount() % 40 != 0) return;
         for (ServerPlayer p : players) {
             RunState run = Runs.run(p);
             if (run.clearedFloor(run.area, run.floor)) continue;

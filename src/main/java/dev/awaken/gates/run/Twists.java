@@ -271,7 +271,7 @@ public final class Twists {
 
     static void tickGate(ServerLevel level, GateRecord g) {
         long now = GateService.now(level.getServer());
-        if (now % 100 == 0 && !ECHOES_SEEN.contains(g.id)) {
+        if (level.getServer().getTickCount() % 100 == 0 && !ECHOES_SEEN.contains(g.id)) {
             for (ServerPlayer p : level.players()) {
                 if (Runs.run(p).gateId != g.id) continue;
                 List<LivingEntity> near = level.getEntitiesOfClass(LivingEntity.class, new AABB(p.blockPosition()).inflate(24),

@@ -256,6 +256,56 @@ final class GateTests {
             h.succeed();
         });
 
+        AwakenTests.register("gates_dimension_json", 20, h -> {
+            var server = h.getLevel().getServer();
+            var ops = RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE, server.registryAccess());
+            var res = server.getResourceManager().getResource(dev.awaken.Awaken.id("dimension/gates.json"));
+            h.assertTrue(res.isPresent(), "dimension/gates.json is in the mod's data");
+            try (var reader = res.get().openAsReader()) {
+                var json = com.google.gson.JsonParser.parseReader(reader);
+                var stem = net.minecraft.world.level.dimension.LevelStem.CODEC.parse(ops, json).getOrThrow();
+                h.assertTrue(stem.generator() instanceof dev.awaken.gates.world.GateChunkGenerator, "generator is the gate cell generator");
+                var source = stem.generator().getBiomeSource();
+                h.assertTrue(source instanceof dev.awaken.gates.world.GateBiomeSource, "biome source is cell-aware");
+                h.assertTrue(source.possibleBiomes().size() == Theme.values().length + 1, "one biome per theme plus the void, was " + source.possibleBiomes().size());
+                h.assertTrue(stem.type().value().minY() == 0 && stem.type().value().height() == 256, "dimension height");
+            } catch (java.io.IOException e) {
+                h.fail("could not read the dimension: " + e);
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_chunk_generator", 40, h -> {
+            var level = h.getLevel();
+            GatePlan plan = testPlan(31337, Rank.C, Theme.EMBER_MINES, Layout.HUB_AND_SPOKES, Twist.NONE);
+            int cell = 70;
+            GateLayout l = GateTestAccess.build(plan);
+            FloorLayout f = l.main.get(0);
+            Room start = f.room(f.start);
+            int chunkX = (Cells.originX(cell) >> 4) + f.originSlotX + start.gx;
+            int chunkZ = (Cells.originZ(cell) >> 4) + f.originSlotZ + start.gz;
+            var chunk = new net.minecraft.world.level.chunk.ProtoChunk(new net.minecraft.world.level.ChunkPos(chunkX, chunkZ),
+                    net.minecraft.world.level.chunk.UpgradeData.EMPTY, level, level.palettedContainerFactory(), null);
+            GateTestAccess.fill(chunk, plan, cell);
+            BlockPos sigil = new BlockPos(Cells.originX(cell) + f.originSlotX * 16 + start.centerX(), f.baseY + start.dy - 1,
+                    Cells.originZ(cell) + f.originSlotZ * 16 + start.centerZ());
+            h.assertTrue(chunk.getBlockState(sigil).is(GatesRegistry.ENTRANCE.get()), "entrance sigil generated, was " + chunk.getBlockState(sigil));
+            h.assertTrue(chunk.getBlockState(sigil.above()).isAir() && chunk.getBlockState(sigil.above(2)).isAir(), "room to stand");
+            BlockPos wall = new BlockPos(Cells.originX(cell) + f.originSlotX * 16 + start.gx * 16, f.baseY + 2,
+                    Cells.originZ(cell) + f.originSlotZ * 16 + start.gz * 16);
+            h.assertFalse(chunk.getBlockState(wall).isAir(), "rooms are carved out of solid rock");
+            int lights = 0;
+            for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) for (int y = f.baseY - 4; y < f.baseY + 28; y++) {
+                if (chunk.getBlockState(new BlockPos(chunkX * 16 + x, y, chunkZ * 16 + z)).getLightEmission() > 0) lights++;
+            }
+            h.assertTrue(lights > 0, "the start room is lit");
+            var empty = new net.minecraft.world.level.chunk.ProtoChunk(new net.minecraft.world.level.ChunkPos(-40, -40),
+                    net.minecraft.world.level.chunk.UpgradeData.EMPTY, level, level.palettedContainerFactory(), null);
+            GateTestAccess.fill(empty, plan, cell);
+            h.assertTrue(empty.getBlockState(new BlockPos(-40 * 16, f.baseY, -40 * 16)).isAir(), "chunks outside a cell stay void");
+            h.succeed();
+        });
+
         AwakenTests.register("gates_overworld_structure", 40, h -> {
             BlockPos base = h.absolutePos(new BlockPos(0, 0, 0)).offset(6, 0, 6);
             GateRecord g = new GateRecord(77, testPlan(1, Rank.C, Theme.HIVE, Layout.LABYRINTH, Twist.NONE), base, 0, 0, 0, 3, GateState.READY, Optional.empty());

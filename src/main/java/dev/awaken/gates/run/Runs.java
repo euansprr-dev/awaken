@@ -205,7 +205,7 @@ public final class Runs {
         }
         Modifiers.tickPlayer(p, g, run, f, r);
         Twists.tickPlayer(p, g, run, f, r);
-        if (t % 20 == 0) Hud.send(p);
+        if (((t + p.getId()) / 10) % 2 == 0) Hud.send(p);
     }
 
     /** Per gate, once a second: pressure, rising water, collapse, twist actors, room bookkeeping. */
