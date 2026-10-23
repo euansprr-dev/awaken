@@ -86,14 +86,22 @@ public final class AwModels {
             super.setupAnim(s);
             float age = s.ageInTicks;
             float tele = tele(s);
-            head.yRot = s.yRot * Mth.DEG_TO_RAD * 0.6F;
-            head.xRot = s.xRot * Mth.DEG_TO_RAD * 0.5F;
+            head.yRot = Motion.yaw(s, 0.8F);
+            head.xRot = Motion.pitch(s, 0.6F);
             jaw.xRot = 0.15F + 0.25F * (0.5F + 0.5F * Mth.sin(age * 0.2F)) + tele * 0.6F;
+            // the swim quickens with speed and the wave travels down the body; struck, the whole length shudders
             float speed = 0.25F + s.walkAnimationSpeed * 0.4F;
+            float fl = Motion.flinch(s);
             for (int i = 0; i < segments.length; i++) {
-                segments[i].yRot = Mth.sin(age * speed - i * 0.9F) * 0.32F;
+                segments[i].yRot = Mth.sin(age * speed - i * 0.9F) * (0.32F + s.walkAnimationSpeed * 0.12F) + Motion.shudder(s, 0.25F) * (i % 2 == 0 ? 1 : -1);
                 segments[i].xRot = Mth.cos(age * speed * 0.7F - i * 0.7F) * 0.08F;
             }
+            // breathing swells the forebody (segments are chained, so only the first one scales)
+            float breath = Motion.breathe(s, 0.12F, 0.03F);
+            segments[0].xScale = breath;
+            segments[0].yScale = breath;
+            head.xRot -= fl * 0.5F;
+            jaw.xRot += fl * 0.5F;
             head.y = 16 + Mth.sin(age * 0.1F) * 0.8F;
         }
     }

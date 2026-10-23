@@ -95,9 +95,17 @@ public final class FaunaModels {
             hindR.yRot = 0.4F;
             body.y = 18 + Mth.sin(age * 0.17F) * 0.9F;
             body.xRot = 0.12F + Mth.sin(age * 0.11F) * 0.05F;
-            head.yRot = s.yRot * Mth.DEG_TO_RAD * 0.4F;
+            head.yRot = Motion.yaw(s, 0.8F);
+            head.xRot = Motion.pitch(s, 0.5F);
             antL.zRot = 0.35F + Mth.sin(age * 0.3F) * 0.1F;
             antR.zRot = -0.35F - Mth.sin(age * 0.3F + 1) * 0.1F;
+            // breathing: the abdomen swells a little; struck: the wings snap up and it reels
+            body.yScale = Motion.breathe(s, 0.2F, 0.05F);
+            float fl = Motion.flinch(s);
+            wingL.zRot -= fl * 0.7F;
+            wingR.zRot += fl * 0.7F;
+            body.zRot = Motion.shudder(s, 0.4F);
+            body.xRot -= fl * 0.35F;
         }
     }
 
@@ -173,9 +181,14 @@ public final class FaunaModels {
                 headX = -0.1F;
             }
             neck.xRot = neckX;
-            neck.yRot = s.yRot * Mth.DEG_TO_RAD * 0.5F;
+            neck.yRot = Motion.yaw(s, 0.5F);
+            head.yRot = Motion.yaw(s, 0.3F);
             head.xRot = headX;
             tail.xRot = 0.6F + Mth.sin(s.ageInTicks * 0.2F) * 0.1F + s.walkAnimationSpeed * 0.3F;
+            // struck: the head flies up and the body shies sideways
+            float fl = Motion.flinch(s);
+            neck.xRot -= fl * 0.6F;
+            neck.zRot = Motion.shudder(s, 0.25F);
         }
     }
 
@@ -230,11 +243,15 @@ public final class FaunaModels {
             legFR.y = legY;
             legHL.y = legY;
             legHR.y = legY;
-            head.z = tucked ? -5 : -8;
+            // struck: the head snaps back into the shell for a moment (the flinch of a tortoise)
+            float fl = Motion.flinch(s);
+            head.z = tucked ? -5 : -8 + fl * 3.0F + Mth.sin(s.ageInTicks * 0.08F) * 0.3F;
             head.y = tucked ? 18 : 17;
-            head.yRot = tucked ? 0 : s.yRot * Mth.DEG_TO_RAD * 0.6F;
-            head.xRot = has(s, FaunaMob.P_GRAZE) ? 0.75F + Mth.sin(s.ageInTicks * 0.3F) * 0.1F : s.xRot * Mth.DEG_TO_RAD * 0.4F;
+            head.yRot = tucked ? 0 : Motion.yaw(s, 0.8F);
+            head.xRot = has(s, FaunaMob.P_GRAZE) ? 0.75F + Mth.sin(s.ageInTicks * 0.3F) * 0.1F : Motion.pitch(s, 0.6F);
             shell.y = tucked ? 22 : 20 + Mth.sin(s.walkAnimationPos * 0.45F) * 0.25F * s.walkAnimationSpeed;
+            shell.yScale = Motion.breathe(s, 0.07F, 0.02F);
+            shell.zRot = Motion.shudder(s, 0.08F);
             tail.y = tucked ? 21 : 18;
             plantA.zRot = Mth.sin(s.ageInTicks * 0.05F) * 0.06F;
             plantB.zRot = -Mth.sin(s.ageInTicks * 0.05F + 1) * 0.06F;
@@ -287,7 +304,15 @@ public final class FaunaModels {
             tail2.yRot = Mth.sin(age * 0.15F - 0.8F) * 0.35F;
             tail1.xRot = -0.08F + look(s).telegraph * 0.9F;
             body.y = 21 + Mth.sin(age * 0.12F) * 0.6F;
-            body.xRot = s.xRot * Mth.DEG_TO_RAD * 0.3F;
+            body.xRot = Motion.pitch(s, 0.3F);
+            // it turns its whole flat body to face you; struck: it rolls away and the wing tips curl
+            body.yRot = Motion.yaw(s, 0.25F);
+            body.yScale = Motion.breathe(s, 0.12F, 0.08F);
+            float fl = Motion.flinch(s);
+            body.zRot = Motion.shudder(s, 0.3F) + fl * 0.25F;
+            tipL.zRot -= fl * 0.8F;
+            tipR.zRot += fl * 0.8F;
+            tail1.yRot += Motion.shudder(s, 0.5F);
         }
     }
 
@@ -333,10 +358,16 @@ public final class FaunaModels {
                 float phase = (i % 2 == 0 ? 0 : Mth.PI) + pair * 2.1F;
                 legs[i].yRot = (pair - 1) * (i % 2 == 0 ? -0.5F : 0.5F) + Mth.sin(scuttle + phase + (burrow > 0 ? s.ageInTicks * 1.4F : 0)) * amp;
             }
-            head.yRot = s.yRot * Mth.DEG_TO_RAD * 0.5F;
+            head.yRot = Motion.yaw(s, 0.7F);
+            head.xRot = Motion.pitch(s, 0.4F);
             // Digging in: the beetle sinks out of sight.
             body.y = 22.5F + burrow * 7.0F;
             body.xRot = burrow * 0.35F;
+            // breathing under the shell; struck: it clamps down and the legs splay
+            float fl = Motion.flinch(s);
+            body.yScale = Motion.breathe(s, 0.16F, 0.03F) - fl * 0.12F;
+            body.zRot = Motion.shudder(s, 0.2F);
+            for (int i = 0; i < 6; i++) legs[i].zRot = (i % 2 == 0 ? 0.8F : -0.8F) * (1.0F - fl * 0.6F);
         }
     }
 }
