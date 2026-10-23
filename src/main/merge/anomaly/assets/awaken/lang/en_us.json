@@ -8,5 +8,14 @@
   "subtitles.awaken.anomaly.rift_close": "Rift collapses",
   "subtitles.awaken.anomaly.rift_fade": "Rift seals itself",
   "subtitles.awaken.anomaly.motes": "Spirit lights chime",
-  "subtitles.awaken.anomaly.cache": "Spirit cache opens"
+  "subtitles.awaken.anomaly.cache": "Spirit cache opens",
+  "block.awaken.anomaly_fallen_star": "Fallen Star",
+  "entity.awaken.anomaly_falling_star": "Falling Star",
+  "entity.awaken.anomaly_shimmer": "Shimmer",
+  "subtitles.awaken.anomaly.star_fall": "A star falls",
+  "subtitles.awaken.anomaly.star_impact": "A star strikes the ground",
+  "subtitles.awaken.anomaly.star_guard": "The star's guardian wakes",
+  "subtitles.awaken.anomaly.star_open": "A fallen star cracks open",
+  "subtitles.awaken.anomaly.grove": "The air shimmers",
+  "subtitles.awaken.anomaly.grove_whisper": "A spirit whispers"
 }

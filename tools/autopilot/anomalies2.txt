@@ -1,0 +1,165 @@
+# Anomalies P2 + landmarks (docs/modules/anomalies.md P2, docs/modules/landmarks.md): the fallen star and the four
+# shimmer groves at noon and at midnight, then each landmark's marker by day (nothing: the vanilla look), at dusk and at
+# night. `/awaken anomaly now <kind> [variant]` starts one 14-26 blocks where you look; `/awaken anomaly goto` stands you
+# beside your active one; `/awaken landmark goto <kind>` stands you 48 blocks south of the nearest one, facing it.
+# Creative, so guardians ignore us.
+world anomalies2 creative 5150
+waitworld
+gui 0
+cmd awaken admin awaken
+wait 60
+# the first-power cards may open on awakening: close them so they don't cover the shots
+screen close
+cmd awaken powers starter 1
+wait 20
+cmd time set 6000
+cmd time pause
+look 0 12
+wait 40
+
+# ---- day: a fallen star ----
+cmd awaken anomaly now fallen_star
+wait 18
+# the light streaking down with its trail; toast "A star fell nearby · 20 m S"
+shot 01_star_falling_day
+wait 50
+# the crater and the white-hot sealed meteor, smoking; Now "Fallen star · 20 m S"
+shot 02_star_crater_day
+cmd awaken anomaly goto
+wait 40
+# its guardian rises (glowing), toast "The star's guardian wakes"; Now "Defeat the star's guardian"
+shot 03_star_guardian_day
+cmd awaken anomaly skip
+wait 30
+# the guardian fades back into the light; the meteor cools to pale blue; Now "Open the fallen star"
+shot 04_star_cooled_day
+cmd awaken anomaly clear
+wait 20
+
+# ---- day: the four shimmer groves ----
+look 0 12
+cmd awaken anomaly now shimmer_grove lightfoot
+wait 60
+# a ring of faint pale-cyan light curtains, waiting; toast "The air shimmers nearby"; Now "Shimmer grove · 20 m S"
+shot 05_grove_waiting_day
+cmd awaken anomaly goto
+wait 40
+# stepped in: brighter curtains and rising sparks; toast "Shimmer grove · Light steps"; Now "Light steps · 3 min left"
+shot 06_grove_lightfoot_day
+cmd awaken anomaly clear
+wait 20
+
+look 0 12
+cmd awaken anomaly now shimmer_grove ore_sight
+wait 40
+cmd awaken anomaly goto
+wait 60
+look 0 60
+wait 10
+# amber sparks; ore under the grove outlined through the ground, coloured by kind
+shot 07_grove_ore_sight_day
+cmd awaken anomaly clear
+look 0 12
+wait 20
+
+cmd awaken anomaly now shimmer_grove bloom
+wait 40
+cmd awaken anomaly goto
+wait 60
+# pink curtains, falling petals, wildflowers sprung up around the heart
+shot 08_grove_bloom_day
+cmd awaken anomaly clear
+wait 20
+
+cmd awaken anomaly now shimmer_grove whisper
+wait 40
+cmd awaken anomaly goto
+wait 60
+look 180 20
+wait 10
+# violet curtains and the spirit at the heart; toast "A spirit whispers · “Something sealed, 300 m NE”" (or a gate, or old words)
+shot 09_grove_whisper_day
+cmd awaken anomaly clear
+wait 20
+
+# ---- night: the same two ----
+cmd time set 18000
+wait 40
+look 0 12
+cmd awaken anomaly now fallen_star
+wait 18
+shot 10_star_falling_night
+wait 50
+shot 11_star_crater_night
+cmd awaken anomaly goto
+wait 40
+shot 12_star_guardian_night
+cmd awaken anomaly clear
+wait 20
+look 0 12
+cmd awaken anomaly now shimmer_grove lightfoot
+wait 60
+shot 13_grove_waiting_night
+cmd awaken anomaly goto
+wait 40
+shot 14_grove_lightfoot_night
+cmd awaken anomaly clear
+wait 20
+
+# ---- landmarks: the Well ----
+cmd awaken landmark goto well
+wait 120
+cmd time set 6000
+wait 40
+# by day: just the Well, no marker (the vanilla look)
+shot 15_well_day
+cmd time set 12800
+wait 40
+# dusk: the pillar tops begin to glow
+shot 16_well_dusk
+cmd time set 18000
+wait 40
+# night: four soft glows on the pillars, a faint shaft above each
+shot 17_well_night
+
+# ---- landmarks: a sealed vault (the spawn vault is the nearest) ----
+cmd awaken landmark goto vault
+wait 160
+cmd time set 6000
+wait 40
+shot 18_vault_day
+cmd time set 12800
+wait 40
+# dusk: a soft amber light shaft rising from the vault
+shot 19_vault_dusk
+cmd time set 18000
+wait 40
+# night: the shaft lingers, fainter
+shot 20_vault_night
+
+# ---- landmarks: a monolith, an ocean lab, a sky platform (if the seed has one within 4,000 blocks) ----
+cmd awaken landmark goto monolith
+wait 160
+cmd time set 12800
+wait 40
+shot 21_monolith_dusk
+cmd time set 18000
+wait 40
+shot 22_monolith_night
+cmd awaken landmark goto ocean_lab
+wait 160
+cmd time set 12800
+wait 40
+# a sea-blue shaft rising out of the water over the dome
+shot 23_ocean_lab_dusk
+cmd awaken landmark goto sky_platform
+wait 160
+cmd time set 12800
+wait 40
+# looking up: a pale shaft falling from the platform's glowing underside
+shot 24_sky_platform_dusk
+cmd time set 18000
+wait 40
+shot 25_sky_platform_night
+cmd time resume
+quit

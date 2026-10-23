@@ -19,8 +19,9 @@ import java.util.Arrays;
 
 /**
  * {@code /awaken anomaly ...}: {@code why} (anyone: the countdown and the director's recent reasons), and for game
- * masters {@code now [kind]} (start one in front of you), {@code list}, {@code clear}, {@code skip} (jump the active
- * one to its next stage), {@code timer <seconds>} and {@code on|off} (the world switch).
+ * masters {@code now [kind] [grove variant]} (start one in front of you), {@code list}, {@code clear}, {@code skip}
+ * (jump the active one to its next stage: a star lands, its guardian fades or it cools; a grove wakes), {@code timer
+ * <seconds>} and {@code on|off} (the world switch).
  */
 final class AnomalyCommands {
     private AnomalyCommands() {}
@@ -30,10 +31,13 @@ final class AnomalyCommands {
             var an = Commands.literal("anomaly");
             an.then(Commands.literal("why").executes(AnomalyCommands::why));
             an.then(Commands.literal("now").requires(AwakenCommands.admin())
-                    .executes(c -> now(c, null))
+                    .executes(c -> now(c, null, null))
                     .then(Commands.argument("kind", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.stream(AnomalyKind.values()).map(k -> k.id), b))
-                            .executes(c -> now(c, StringArgumentType.getString(c, "kind")))));
+                            .executes(c -> now(c, StringArgumentType.getString(c, "kind"), null))
+                            .then(Commands.argument("variant", StringArgumentType.word())
+                                    .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.stream(GroveVariant.values()).map(v -> v.id), b))
+                                    .executes(c -> now(c, StringArgumentType.getString(c, "kind"), StringArgumentType.getString(c, "variant"))))));
             an.then(Commands.literal("list").requires(AwakenCommands.admin()).executes(AnomalyCommands::list));
             an.then(Commands.literal("clear").requires(AwakenCommands.admin()).executes(c -> {
                 int n = AnomalyDirector.clearAll(c.getSource().getServer());
@@ -41,6 +45,7 @@ final class AnomalyCommands {
                 return n;
             }));
             an.then(Commands.literal("skip").requires(AwakenCommands.admin()).executes(AnomalyCommands::skip));
+            an.then(Commands.literal("goto").requires(AwakenCommands.admin()).executes(AnomalyCommands::goTo));
             an.then(Commands.literal("timer").requires(AwakenCommands.admin())
                     .then(Commands.argument("seconds", IntegerArgumentType.integer(0, 3600)).executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
@@ -67,22 +72,33 @@ final class AnomalyCommands {
         return shown;
     }
 
-    private static int now(CommandContext<CommandSourceStack> c, String kindId) throws CommandSyntaxException {
+    private static int now(CommandContext<CommandSourceStack> c, String kindId, String variantId) throws CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
         AnomalyKind kind;
         if (kindId == null) {
             AnomalyMemory mem = AnomalyDirector.memory(p);
-            kind = Pacing.pick(Pacing.weights(false, p.level().isDarkOutside(), false, Progression.profile(p).level(), mem.lastKind), p.getRandom());
+            kind = Pacing.pick(Pacing.weights(false, p.level().isDarkOutside(), false, Progression.profile(p).level(), mem.lastKind,
+                    AnomalyDirector.met(p)), p.getRandom());
             if (kind == null) kind = AnomalyKind.RIFT_TEAR;
         } else {
             kind = AnomalyKind.byId(kindId);
             if (kind == null) {
-                c.getSource().sendFailure(Component.literal("Unknown kind " + kindId + ": rift_tear, wandering_gate or spirit_procession."));
+                c.getSource().sendFailure(Component.literal("Unknown kind " + kindId + ": "
+                        + String.join(", ", Arrays.stream(AnomalyKind.values()).map(k -> k.id).toList()) + "."));
+                return 0;
+            }
+        }
+        GroveVariant variant = null;
+        if (variantId != null) {
+            variant = GroveVariant.byId(variantId);
+            if (variant == null || kind != AnomalyKind.SHIMMER_GROVE) {
+                c.getSource().sendFailure(Component.literal("A variant only goes with shimmer_grove: "
+                        + String.join(", ", Arrays.stream(GroveVariant.values()).map(v -> v.id).toList()) + "."));
                 return 0;
             }
         }
         StringBuilder why = new StringBuilder();
-        Anomaly a = AnomalyDirector.start(p, kind, true, why);
+        Anomaly a = AnomalyDirector.start(p, kind, true, variant, why);
         if (a == null) {
             c.getSource().sendFailure(Component.literal("No " + kind.display.toLowerCase() + ": " + why));
             return 0;
@@ -105,13 +121,21 @@ final class AnomalyCommands {
                 case SPIRIT_PROCESSION -> (a.stage == Anomaly.CACHE ? "cache placed" : a.stage == Anomaly.LEADING ? "leading" : "waiting")
                         + String.format(", %.0f%% of %.0f m", a.progress * 100, Processions.pathLength(a));
                 case WANDERING_GATE -> "gate " + a.gateId;
+                case FALLEN_STAR -> (!a.landed ? "falling" : switch (a.guardState) {
+                    case Anomaly.GUARD_UP -> "guarded";
+                    case Anomaly.GUARD_SLAIN -> "guardian slain, cooled";
+                    case Anomaly.GUARD_FADED -> "cooled";
+                    default -> "sealed, waiting";
+                }) + ", guardian " + a.theme;
+                case SHIMMER_GROVE -> Groves.variant(a).id + (a.stage == Anomaly.ACTIVE ? ", bending the rules" : ", waiting")
+                        + (a.touched.isEmpty() ? "" : ", " + a.touched.size() + " touched");
             };
             String line = "#" + a.id + " " + a.kind.id + " at " + a.focus().toShortString() + " for " + (owner == null ? a.owner : owner.getGameProfile().name())
                     + " · " + detail + " · ends in " + Math.max(0, (a.endsAt - now) / 20) + " s";
             c.getSource().sendSuccess(() -> Component.literal(line), false);
         }
         int removals = data.removals().size();
-        if (removals > 0) c.getSource().sendSuccess(() -> Component.literal(removals + " cache(s) waiting for their chunk to load to be taken down."), false);
+        if (removals > 0) c.getSource().sendSuccess(() -> Component.literal(removals + " block(s) waiting for their chunk to load to be taken down."), false);
         return data.active().size();
     }
 
@@ -134,10 +158,38 @@ final class AnomalyCommands {
                     a.progress = 1.0;
                 }
             }
+            case FALLEN_STAR -> {
+                if (!a.landed) Stars.land(level, a.id); // straight into the ground
+                else if (a.guardState == Anomaly.GUARD_UP) a.guardUntil = now; // the guardian fades on the next pass
+                else if (a.guardState == Anomaly.GUARD_NONE) {
+                    a.guardState = Anomaly.GUARD_FADED; // no guardian: it cools at once
+                    Stars.cool(level, data, a, now);
+                } else a.endsAt = Math.min(a.endsAt, now + 20 * 5);
+            }
+            case SHIMMER_GROVE -> {
+                if (a.stage != Anomaly.ACTIVE) Groves.activate(level, data, a, p, now); // wake it for you, wherever you stand
+                else a.endsAt = Math.min(a.endsAt, now + 20 * 5);
+            }
             default -> a.endsAt = Math.min(a.endsAt, now + 20 * 5); // the last five seconds
         }
         data.setDirty();
         c.getSource().sendSuccess(() -> Component.literal("Skipped " + a.kind.display.toLowerCase() + " #" + a.id + " ahead."), false);
+        return 1;
+    }
+
+    /** Stands you two blocks from your active anomaly's heart, facing it (a grove wakes as you arrive). */
+    private static int goTo(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        Anomaly a = AnomalyData.get(c.getSource().getServer()).activeFor(p.getUUID());
+        if (a == null) {
+            c.getSource().sendFailure(Component.literal("You have no active anomaly."));
+            return 0;
+        }
+        net.minecraft.core.BlockPos f = a.focus();
+        double x = f.getX() + 0.5, z = f.getZ() + 2.5;
+        double y = Spots.surface(p.level(), net.minecraft.util.Mth.floor(x), net.minecraft.util.Mth.floor(z)).getY() + 1;
+        p.teleportTo(p.level(), x, y, z, java.util.Set.of(), 180.0F, 20.0F, true);
+        c.getSource().sendSuccess(() -> Component.literal("At " + a.kind.display.toLowerCase() + " #" + a.id + "."), false);
         return 1;
     }
 

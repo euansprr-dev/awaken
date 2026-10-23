@@ -55,20 +55,27 @@ public final class Spots {
     public static final HearthCheck REAL_HEARTH = (l, p, r) -> HearthHooks.inside(l, p) || HearthHooks.inside(l, p.offset(r, 0, 0))
             || HearthHooks.inside(l, p.offset(-r, 0, 0)) || HearthHooks.inside(l, p.offset(0, 0, r)) || HearthHooks.inside(l, p.offset(0, 0, -r));
 
-    /** How far from the player, and which outside checks apply (tests swap the Hearth lookup). */
-    public record Rules(int minDist, int maxDist, HearthCheck hearth, boolean checkGates) {
-        public static final Rules NORMAL = new Rules(MIN, MAX, REAL_HEARTH, true);
+    /**
+     * How far from the player, and which outside checks apply (tests swap the Hearth lookup). {@code openSky}: the spot
+     * must see the sky (a fallen star doesn't land under a tree).
+     */
+    public record Rules(int minDist, int maxDist, HearthCheck hearth, boolean checkGates, boolean openSky) {
+        public static final Rules NORMAL = new Rules(MIN, MAX, REAL_HEARTH, true, false);
 
         public Rules distance(int min, int max) {
-            return new Rules(min, max, hearth, checkGates);
+            return new Rules(min, max, hearth, checkGates, openSky);
         }
 
         public Rules hearth(HearthCheck h) {
-            return new Rules(minDist, maxDist, h, checkGates);
+            return new Rules(minDist, maxDist, h, checkGates, openSky);
         }
 
         public Rules gates(boolean check) {
-            return new Rules(minDist, maxDist, hearth, check);
+            return new Rules(minDist, maxDist, hearth, check, openSky);
+        }
+
+        public Rules sky(boolean open) {
+            return new Rules(minDist, maxDist, hearth, checkGates, open);
         }
     }
 
@@ -87,6 +94,8 @@ public final class Spots {
             }
         }
         if (rules.checkGates() && !GateHooks.near(level, ground, GATE_CLEARANCE).isEmpty()) return "gate";
+        // nothing that blocks motion (leaves included) anywhere above: the heightmap, not sky light (which lags behind)
+        if (rules.openSky() && level.getHeight(Heightmap.Types.MOTION_BLOCKING, ground.getX(), ground.getZ()) > ground.getY() + 1) return "no sky";
         return checkGround(level, ground);
     }
 

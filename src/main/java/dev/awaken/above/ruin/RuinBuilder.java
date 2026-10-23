@@ -197,6 +197,15 @@ public final class RuinBuilder {
             // the antechamber leaves a Scanner for whoever finds it first
             out.chest(2, 1, 2, Direction.EAST, loot("precursor_spawn_antechamber"));
         }
+        outerCache(out, 10, 1, 2, Direction.WEST);
+    }
+
+    /**
+     * Landmarks (world module): every ruin keeps something worth taking for an E-rank finder outside its sealed parts.
+     * Fixed spots, no random draws, so ruins already half-generated keep matching their other chunks.
+     */
+    private static void outerCache(Sink out, int x, int y, int z, Direction facing) {
+        out.chest(x, y, z, facing, loot("landmark_outer"));
     }
 
     /** A disc above the clouds with a glowing underside, a keel, and a glass cabin. */
@@ -242,6 +251,7 @@ public final class RuinBuilder {
         for (int i = 0; i < xs.length && i < machines.size(); i++) out.set(xs[i], 5, 10, broken(machines.get(i), Direction.SOUTH));
         out.chest(10, 5, 14, Direction.NORTH, loot("precursor_sky"));
         if (terminal) out.set(14, 5, 13, terminal(RuinKind.SKY.logs, Direction.WEST));
+        outerCache(out, 12, 5, 18, Direction.NORTH);
     }
 
     /** A void-glass dome on the sea floor with a membrane airlock on +X. */
@@ -280,6 +290,7 @@ public final class RuinBuilder {
         for (int i = 0; i < xs.length && i < machines.size(); i++) out.set(xs[i], 1, xs.length == 3 && i == 1 ? 3 : 4, broken(machines.get(i), Direction.SOUTH));
         out.chest(4, 1, 11, Direction.EAST, loot("precursor_ocean"));
         if (terminal) out.set(11, 1, 11, terminal(RuinKind.OCEAN.logs, Direction.WEST));
+        outerCache(out, 12, 1, 6, Direction.WEST);
     }
 
     /** A brass-banded obelisk over the sand with a sealed chamber underneath (ladder down from the plaza). */
@@ -324,6 +335,7 @@ public final class RuinBuilder {
         for (int i = 0; i < xs.length && i < machines.size(); i++) out.set(xs[i], 1, 7, broken(machines.get(i), Direction.NORTH));
         out.chest(7, 1, 2, Direction.WEST, loot("precursor_monolith"));
         if (terminal) out.set(4, 1, 2, terminal(RuinKind.MONOLITH.logs, Direction.SOUTH));
+        outerCache(out, 1, 7, 7, Direction.EAST); // on the plaza, beside the ladder down
     }
 
     /** Door rank of a surface vault by distance from the world origin: the further out, the higher. */

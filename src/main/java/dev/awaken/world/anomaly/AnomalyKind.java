@@ -9,7 +9,11 @@ public enum AnomalyKind {
     /** A short gate at the player's rank (the gates module builds it); fades unless entered, never breaks. */
     WANDERING_GATE("wandering_gate", "Wandering gate"),
     /** Calm, day only: lights that lead the player to a small cache. */
-    SPIRIT_PROCESSION("spirit_procession", "Spirit procession");
+    SPIRIT_PROCESSION("spirit_procession", "Spirit procession"),
+    /** Mostly at night: a star falls into a small crater; a short-lived guardian rises when you come near; open it for loot. */
+    FALLEN_STAR("fallen_star", "Fallen star"),
+    /** Mostly by day, peaceful: a patch where the rules bend for a few minutes (light steps, ore sight, a spirit, healing flowers). */
+    SHIMMER_GROVE("shimmer_grove", "Shimmer grove");
 
     public final String id;
     public final String display;

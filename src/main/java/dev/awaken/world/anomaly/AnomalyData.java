@@ -16,12 +16,13 @@ import java.util.UUID;
 /**
  * World state for anomalies ({@code data/awaken/anomaly_state.dat}, world-global): the active anomalies, blocks still to
  * be taken down when their chunk loads (a cache whose time ran out far away), the id counter and the world switch.
- * Versioned by {@link #SCHEMA}; every field has a default so older files load.
+ * Versioned by {@link #SCHEMA}; every field has a default so older files load (schema 2 added the fallen star's and the
+ * shimmer grove's parts to each anomaly).
  */
 public final class AnomalyData extends SavedData {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
 
-    /** A block an ended anomaly left in a chunk that wasn't loaded; removed only if it is still ours. */
+    /** A block an ended anomaly left in a chunk that wasn't loaded (a cache, a meteor); removed only if it is still ours. */
     public record Removal(String dimension, BlockPos pos) {
         static final Codec<Removal> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("dimension").forGetter(Removal::dimension),

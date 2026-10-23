@@ -127,5 +127,128 @@
         "pitch": 1.3
       }
     ]
+  },
+  "anomaly.star_fall": {
+    "subtitle": "subtitles.awaken.anomaly.star_fall",
+    "sounds": [
+      {
+        "name": "minecraft:fireworks/launch1",
+        "pitch": 0.45
+      }
+    ]
+  },
+  "anomaly.star_impact": {
+    "subtitle": "subtitles.awaken.anomaly.star_impact",
+    "sounds": [
+      {
+        "name": "minecraft:random/explode1",
+        "pitch": 0.6,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:random/explode2",
+        "pitch": 0.6,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:random/explode3",
+        "pitch": 0.6,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:random/explode4",
+        "pitch": 0.6,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:fireworks/largeblast_far1",
+        "pitch": 0.5
+      }
+    ]
+  },
+  "anomaly.star_guard": {
+    "subtitle": "subtitles.awaken.anomaly.star_guard",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/activate",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "anomaly.star_open": {
+    "subtitle": "subtitles.awaken.anomaly.star_open",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/break1",
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/amethyst/break2",
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/amethyst/break3",
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block/amethyst/break4",
+        "pitch": 1.3
+      }
+    ]
+  },
+  "anomaly.grove": {
+    "subtitle": "subtitles.awaken.anomaly.grove",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "pitch": 0.8,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "pitch": 0.8,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "pitch": 0.8,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate4",
+        "pitch": 0.8,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block/enchantment_table/enchant1",
+        "pitch": 1.2,
+        "volume": 0.7
+      },
+      {
+        "name": "minecraft:block/enchantment_table/enchant2",
+        "pitch": 1.2,
+        "volume": 0.7
+      },
+      {
+        "name": "minecraft:block/enchantment_table/enchant3",
+        "pitch": 1.2,
+        "volume": 0.7
+      }
+    ]
+  },
+  "anomaly.grove_whisper": {
+    "subtitle": "subtitles.awaken.anomaly.grove_whisper",
+    "sounds": [
+      {
+        "name": "minecraft:mob/allay/idle_without_item1",
+        "pitch": 0.7,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:mob/allay/idle_without_item2",
+        "pitch": 0.7,
+        "volume": 0.8
+      }
+    ]
   }
 }

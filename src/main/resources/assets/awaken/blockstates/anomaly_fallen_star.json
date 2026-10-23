@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "sealed=true": {
+      "model": "awaken:block/anomaly_fallen_star"
+    },
+    "sealed=false": {
+      "model": "awaken:block/anomaly_fallen_star_cool"
+    }
+  }
+}
