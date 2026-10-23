@@ -83,7 +83,7 @@ shot studio_day_wisp_hound
 cmd tp @e[type=awaken:wisp_hound] ~ -100 ~
 cmd kill @e[type=minecraft:item,distance=..30]
 wait 10
-cmd summon awaken:old_antler ~ ~ ~7 {NoAI:1b,Rotation:[150f,0f]}
+cmd summon awaken:old_antler ~ ~ ~11 {NoAI:1b,Rotation:[150f,0f]}
 wait 25
 shot studio_day_old_antler
 cmd tp @e[type=awaken:old_antler] ~ -100 ~

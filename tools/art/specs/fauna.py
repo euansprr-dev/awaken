@@ -618,7 +618,7 @@ def paint_lumen_moth(m, rng):
                 c = skin.get(x + i, y + j)
                 if c[3] and not glow.get(x + i, y + j)[3]:
                     t = i / max(1, w - 1)
-                    glow.set(x + i, y + j, (c[0], c[1], max(0, c[2] - 40), int(110 + 110 * t)))
+                    glow.set(x + i, y + j, (c[0], c[1], max(0, c[2] - 40), int(190 + 65 * t)))
     # the lumen: the tail end of the abdomen glows like a firefly's, the thorax warmly
     fa = faces(abdomen)
     for name in ("west", "east", "top", "bottom"):
