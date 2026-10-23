@@ -130,6 +130,7 @@ public final class Directives {
                 p.directives.remove(i);
                 p.counters.merge("awaken:directive_done/" + d.id(), 1L, Long::sum);
                 p.counters.merge(Counters.DIRECTIVES_KEPT_STREAK, 1L, Long::sum);
+                dev.awaken.core.audio.AudioCues.ui(player, dev.awaken.core.audio.UiSound.QUEST_DONE);
                 Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Directive complete"))
                         .body(Component.literal(def.text())).row(Component.literal("Reward"), Component.literal(describe(def.reward()))).build());
                 RewardHooks.apply(player, def.reward(), Progression.XpSource.DIRECTIVE);

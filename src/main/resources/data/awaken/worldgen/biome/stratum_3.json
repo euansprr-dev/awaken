@@ -24,7 +24,7 @@
     },
     "minecraft:audio/background_music": {
       "default": {
-        "sound": "minecraft:music.under_water",
+        "sound": "awaken:music.descent.3",
         "min_delay": 6000,
         "max_delay": 18000
       }

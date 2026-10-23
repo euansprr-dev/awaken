@@ -1,0 +1,40 @@
+package dev.awaken.core.audio.client;
+
+import dev.awaken.core.audio.AudioNet;
+import dev.awaken.core.audio.Cue;
+import dev.awaken.core.audio.UiSound;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.SelectMusicEvent;
+import net.neoforged.neoforge.client.event.sound.PlaySoundEvent;
+import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+
+/** Client entry of the audio module: cues through the music manager, the System's UI rules, ambience beds. */
+public final class AudioClient {
+    private AudioClient() {}
+
+    public static void init(IEventBus modBus) {
+        modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
+            e.register(AudioNet.PlayCue.TYPE, (msg, ctx) -> CuePlayer.request(Cue.byOrdinal(msg.cue())));
+            e.register(AudioNet.PlayUi.TYPE, (msg, ctx) -> AudioUi.server(UiSound.byOrdinal(msg.sound())));
+            e.register(AudioNet.Emitters.TYPE, (msg, ctx) -> Ambience.emitters(msg.emitters()));
+        });
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> {
+            AudioUi.tick();
+            CuePlayer.tick();
+            Ambience.tick();
+        });
+        NeoForge.EVENT_BUS.addListener(SelectMusicEvent.class, CuePlayer::onSelectMusic);
+        NeoForge.EVENT_BUS.addListener(PlaySoundEvent.class, AudioUi::onPlaySound);
+        NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, Ambience::onJoin);
+        NeoForge.EVENT_BUS.addListener(EntityLeaveLevelEvent.class, Ambience::onLeave);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            CuePlayer.clear();
+            Ambience.clear();
+        });
+    }
+}

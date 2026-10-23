@@ -155,7 +155,7 @@ public final class SystemHud {
     private static void send(ChoiceDeck.Answer a, SignalWindow w) {
         ClientPacketDistributor.sendToServer(new SignalPayloads.Answer(a.action(), a.accepted()));
         if (w != null) RecentLog.answered(a.action(), "You chose: " + (a.accepted() ? SignalText.yesLabel(w) : SignalText.noLabel(w)));
-        play(CoreModule.SIGNAL_CHIME.get(), 0.4f);
+        dev.awaken.core.audio.client.AudioUi.answer(a.accepted());
     }
 
     public static boolean inCombat() {
@@ -259,7 +259,7 @@ public final class SystemHud {
             addToast(mc, next);
             any = true;
         }
-        if (any) play(CoreModule.SIGNAL_CHIME.get(), 0.25f);
+        if (any) dev.awaken.core.audio.client.AudioUi.toast();
     }
 
     private static void addToast(Minecraft mc, ToastBurst.Out<ToastItem> out) {
@@ -313,7 +313,7 @@ public final class SystemHud {
                 story = null;
                 return;
             }
-            play(CoreModule.SIGNAL_CHIME.get(), 0.35f);
+            dev.awaken.core.audio.client.AudioUi.story();
         }
         story.age++;
         if (story.closingAt >= 0) {
