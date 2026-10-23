@@ -34,8 +34,10 @@ import java.util.Map;
  * cmd &lt;command without slash&gt;
  * look &lt;yaw&gt; &lt;pitch&gt;
  * key &lt;awaken key name&gt;                        press one of the mod's keys (status, accept, dismiss, ...)
- * screen status|close
+ * screen status|close|experimental             experimental: vanilla's experimental-settings prompt (it should answer itself)
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
+ * camera first|back|front                        the F5 views
+ * fps &lt;label&gt;                                     logs the frames of the last second
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * quit
  * </pre>
@@ -70,6 +72,10 @@ public final class Autopilot {
             started = true;
             mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
             mc.options.pauseOnLostFocus = false;
+            // measure what the machine can really do: no vsync, no cap, no throttling while the window sits behind others
+            mc.options.enableVsync().set(false);
+            mc.options.framerateLimit().set(260);
+            mc.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
         }
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
@@ -165,7 +171,18 @@ public final class Autopilot {
             }
             case "screen" -> {
                 if (arg.trim().equals("close")) mc.gui.setScreen(null);
-                else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen());
+                else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
+                else if (arg.trim().equals("map")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.GATE_MAP));
+                else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
+                else if (arg.trim().equals("experimental")) {
+                    // vanilla's own world-creation prompt, as a new world would show it: ExperimentalWarning should answer it
+                    var back = mc.gui.screen();
+                    mc.gui.setScreen(new net.minecraft.client.gui.screens.ConfirmScreen(yes -> {
+                        Awaken.LOG.info("[autopilot] experimental prompt answered: {}", yes ? "yes" : "no");
+                        mc.gui.setScreen(back);
+                    }, net.minecraft.network.chat.Component.translatable("selectWorld.warning.experimental.title"),
+                            net.minecraft.network.chat.Component.translatable("selectWorld.warning.experimental.question")));
+                }
                 waitTicks = 10;
             }
             case "gui" -> {
@@ -187,6 +204,13 @@ public final class Autopilot {
                         msg -> Awaken.LOG.info("[autopilot] screenshot {}", name));
                 waitTicks = 10;
             }
+            case "camera" -> { // first | back | front
+                String v = arg.trim();
+                mc.options.setCameraType(v.equals("back") ? net.minecraft.client.CameraType.THIRD_PERSON_BACK
+                        : v.equals("front") ? net.minecraft.client.CameraType.THIRD_PERSON_FRONT : net.minecraft.client.CameraType.FIRST_PERSON);
+                waitTicks = 2;
+            }
+            case "fps" -> Awaken.LOG.info("[autopilot] fps {} {}", arg.trim(), mc.getFps());
             case "quit" -> mc.stop();
             default -> Awaken.LOG.warn("[autopilot] unknown line: {}", line);
         }

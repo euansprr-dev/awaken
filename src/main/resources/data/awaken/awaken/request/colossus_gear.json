@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:colossus_gear",
+  "count": {
+    "D": 2,
+    "C": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:gearwright_colossus"
+  ],
+  "hint": "The Gearwright Colossus runs a Clockwork Foundry",
+  "group": "lord"
+}

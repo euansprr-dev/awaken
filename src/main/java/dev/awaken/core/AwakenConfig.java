@@ -74,6 +74,10 @@ public final class AwakenConfig {
         public static final ModConfigSpec.DoubleValue SYSTEM_SCALE = C
                 .comment("Size of System cards, story lines and the Now tracker (toasts stay vanilla-sized).")
                 .defineInRange("systemScale", 1.0, 0.75, 1.5);
+        public static final ModConfigSpec.BooleanValue SKIP_EXPERIMENTAL_WARNING = C
+                .comment("Answer vanilla's \"experimental settings\" prompt for you. AWAKEN's dimensions come from data packs,",
+                        "which vanilla calls experimental; the prompt otherwise blocks every new world.")
+                .define("skipExperimentalWarning", true);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}

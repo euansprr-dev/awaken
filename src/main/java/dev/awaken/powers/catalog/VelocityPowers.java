@@ -1,5 +1,8 @@
 package dev.awaken.powers.catalog;
 
+import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.FxKind;
+
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Cast;
 import dev.awaken.powers.Casting;
@@ -35,6 +38,8 @@ final class VelocityPowers {
     private VelocityPowers() {}
 
     static final int RED = 0xFF4A3D;
+    /** Lightning Step shocks everything within this of its path (the streak's halo is drawn as wide). */
+    static final double STEP_WIDTH = 1.2;
 
     static void register() {
         PowerType.builder("dash", "Dash", Family.VELOCITY, Slot.MOVEMENT)
@@ -72,7 +77,9 @@ final class VelocityPowers {
                 .passive(c -> {
                     if (c.player.isSprinting() && c.level.getFluidState(c.player.blockPosition().below()).is(net.minecraft.tags.FluidTags.WATER)) {
                         c.player.resetFallDistance();
-                        if (c.player.tickCount % 2 == 0) c.particles(ParticleTypes.SPLASH, c.pos(), 3, 0.2, 0.05);
+                        if (c.player.tickCount % 2 == 0) c.particles(ParticleTypes.SPLASH, c.pos(), 2, 0.2, 0.05);
+                        // a red wake that lasts while you keep running
+                        Fx.at(c, FxKind.TRAIL, c.pos()).ticks(12).noAnim().send();
                     }
                 }).register();
 
@@ -102,23 +109,25 @@ final class VelocityPowers {
             Vec3 from = c.pos();
             if (to.distanceToSqr(from) < 1) return Result.fail("blocked");
             Moves.teleport(c.player, to);
-            Fx.line(c.level, from.add(0, 1, 0), to.add(0, 1, 0), Fx.dust(RED, 1.0f), 0.4);
+            Fx.at(c, FxKind.BLINK, from).to(to).anim(CastAnim.DASH).send();
             c.sound(PowerSounds.WHOOSH, 1f, 1.6f);
             return Result.OK;
         }
-        if (!c.predicted) Moves.launch(c.player, dashMotion(c.player, c.variant, c.powerLevel));
+        Vec3 motion = dashMotion(c.player, c.variant, c.powerLevel);
+        if (!c.predicted) Moves.launch(c.player, motion);
         Moves.noFall(c, 30);
+        // sonic ring, speed lines, red afterimages and a wind ribbon
+        Fx.at(c, FxKind.DASH, c.pos()).dir(motion == null ? c.flatLook() : motion).ticks(9).send();
         c.sound(PowerSounds.WHOOSH, 0.9f, 1.2f + c.player.getRandom().nextFloat() * 0.2f);
         Running r = Casting.start(c, 7);
         float dmg = c.dmg();
         r.tick(rr -> {
             Vec3 p = c.pos().add(0, 0.9, 0);
-            c.level.sendParticles(Fx.dust(RED, 1.1f), p.x, p.y, p.z, 3, 0.2, 0.4, 0.2, 0);
-            c.level.sendParticles(ParticleTypes.CLOUD, p.x, p.y - 0.6, p.z, 1, 0.1, 0.1, 0.1, 0.01);
             for (LivingEntity e : Combat.foesAround(c.player, p, 1.6)) {
                 if (rr.hit.add(e.getId())) {
                     c.hurt(e, dmg, null);
                     Combat.knockFrom(e, c.pos(), 0.4, 0.2);
+                    Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(c.player.getDeltaMovement()).scale(0.7).noAnim().send();
                 }
             }
         });
@@ -135,15 +144,12 @@ final class VelocityPowers {
         Moves.addMod(c.player, Attributes.ATTACK_SPEED, "flow_attack", 0.4, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         Moves.postOn(c.player, Moves.FX_FLOW);
         c.sound(PowerSounds.FLOW_START, 1f, 1f);
-        c.particles(ParticleTypes.END_ROD, c.pos().add(0, 1, 0), 20, 0.6, 0.15);
+        // a ripple of slowed time, then trailing afterimages for as long as it lasts
+        Fx.at(c, FxKind.RING, c.pos()).scale(5).ticks(14).send();
+        Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FLOW.ordinal()).ticks(ticks).noAnim().send();
         Running r = Casting.start(c, ticks);
-        r.tick(rr -> {
-            st.flowTick();
-            if (rr.age % 2 == 0) {
-                Vec3 p = c.pos().add(0, 1, 0);
-                c.level.sendParticles(Fx.dust(0xFFE0D0, 0.9f), p.x, p.y, p.z, 2, 0.25, 0.5, 0.25, 0);
-            }
-        }).end((rr, why) -> {
+        r.tick(rr -> st.flowTick()).end((rr, why) -> {
+            Fx.end(c, c.player, FxKind.Aura.FLOW.ordinal() + 1);
             TimeSlow.remove(zone);
             Moves.removeMod(c.player, Attributes.MOVEMENT_SPEED, "flow_speed");
             Moves.removeMod(c.player, Attributes.ATTACK_SPEED, "flow_attack");
@@ -167,7 +173,15 @@ final class VelocityPowers {
             spots.add(c.pos().add(side.scale(1.6)));
             spots.add(c.pos().subtract(side.scale(1.6)));
         }
-        for (Vec3 s : spots) Moves.decoy(c, s, ticks, pop, 3.0, 14, "afterimage");
+        boolean first = true;
+        for (Vec3 s : spots) {
+            Moves.decoy(c, s, ticks, pop, 3.0, 14, "afterimage");
+            var fx = Fx.at(c, FxKind.AFTERIMAGE, s).ticks(Math.min(ticks, 60));
+            if (!first) fx.noAnim();
+            fx.send();
+            first = false;
+        }
+        Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(50).noAnim().send();
         Moves.effect(c.player, MobEffects.SPEED, 50, 1);
         c.sound(PowerSounds.WHOOSH, 1f, 0.7f);
         c.sound(PowerSounds.SHADOW, 0.6f, 1.4f);
@@ -183,14 +197,16 @@ final class VelocityPowers {
         Moves.noFall(c, 40);
         float dmg = c.dmg();
         LivingEntity last = null;
-        for (LivingEntity e : Combat.alongLine(c.player, from.add(0, 1, 0), to.add(0, 1, 0), 1.2)) {
+        for (LivingEntity e : Combat.alongLine(c.player, from.add(0, 1, 0), to.add(0, 1, 0), STEP_WIDTH)) {
             c.hurt(e, dmg, Forces.Force.CHARGE);
             Combat.stun(e, 12);
             last = e;
         }
-        Fx.lightning(c.level, from.add(0, 1, 0), to.add(0, 1, 0), Math.max(4, (int) (from.distanceTo(to) / 2)));
+        // the body becomes a bolt: a streak and a crackling arc along the path, a burst where you land
+        Fx.at(c, FxKind.BLINK, from).to(to).aux(STEP_WIDTH).send();
+        Fx.at(c, FxKind.LIGHTNING, from.add(0, 1, 0)).to(to.add(0, 1, 0)).ticks(8).scale(1.4).noAnim().send();
         dev.awaken.powers.ForceInteractions.chargeEchoes(c.player, to, 3);
-        c.level.sendParticles(ParticleTypes.ELECTRIC_SPARK, to.x, to.y + 1, to.z, 20, 0.4, 0.8, 0.4, 0.2);
+        Fx.at(c, FxKind.IMPACT, to.add(0, 1, 0)).dir(to.subtract(from)).scale(1.4).noAnim().send();
         c.sound(from, PowerSounds.ZAP, 1.1f, 1.5f);
         c.sound(to, PowerSounds.THUNDER, 0.8f, 1.6f);
         if (c.is(1)) {
@@ -198,7 +214,7 @@ final class VelocityPowers {
             int forks = 0;
             for (LivingEntity o : Combat.foesAround(c.player, origin, 8)) {
                 if (forks >= 3 || o == last) continue;
-                Fx.lightning(c.level, origin, o.position().add(0, 1, 0), 4);
+                Fx.at(c, FxKind.LIGHTNING, origin).to(o.position().add(0, 1, 0)).ticks(6).noAnim().send();
                 c.hurt(o, dmg * 0.6f, Forces.Force.CHARGE);
                 forks++;
             }

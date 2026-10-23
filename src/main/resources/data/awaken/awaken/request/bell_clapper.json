@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:bell_clapper",
+  "count": {
+    "E": 2,
+    "D": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:bell_warden"
+  ],
+  "hint": "The Bell Warden waits at the bottom of a Bell Crypt",
+  "group": "lord"
+}

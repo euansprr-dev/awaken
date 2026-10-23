@@ -57,6 +57,7 @@ public final class HearthModule {
         Echoes.init();
         Training.init();
         Trials.init();
+        dev.awaken.hearth.request.Requests.init(modBus);
 
         HearthHooks.install(new HearthHooks.Lookup() {
             @Override

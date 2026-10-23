@@ -16,12 +16,14 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 import java.util.List;
 
-/** Client side of Hunter gear: Hunter's Sense outlines and the "worn n/4" tooltip line. */
+/** Client side of Hunter gear: Hunter's Sense outlines, the "worn n/4" tooltip line, the late sets' silhouettes. */
 public final class GearClient {
     private GearClient() {}
 
     public static void init(IEventBus modBus) {
         modBus.addListener(GearClient::onModifiers);
+        modBus.addListener(Silhouettes::registerExtensions);
+        modBus.addListener(Silhouettes::addReloadListener);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> HunterSense.tick());
         NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, GearClient::onTooltip);
     }

@@ -1,5 +1,6 @@
 package dev.awaken.gates.client;
 
+import dev.awaken.core.api.MapMarks;
 import dev.awaken.gates.net.GatePayloads;
 import dev.awaken.progression.client.StatusSections;
 import net.minecraft.client.Minecraft;
@@ -71,6 +72,21 @@ public final class GateMapSection implements StatusSections.Section {
                     g.outline(bx - 3, by - 3, 6, 6, 0x80FFFFFF);
                 }
             }
+            // places other modules mark (lairs): a diamond, filled once you've been there
+            for (MapMarks.Mark m : MapMarks.collect(mc.player)) {
+                double dx = (m.pos().getX() + 0.5 - px) * scale, dz = (m.pos().getZ() + 0.5 - pz) * scale;
+                int bx = cx + (int) Math.round(dx), by = cy + (int) Math.round(dz);
+                if (bx < mx + 3 || bx > mx + MAP - 4 || by < my + 3 || by > my + MAP - 4) continue;
+                int c = 0xFF000000 | m.colour();
+                for (int i = -2; i <= 2; i++) {
+                    int w = 2 - Math.abs(i);
+                    if (m.visited()) g.fill(bx - w, by + i, bx + w + 1, by + i + 1, c);
+                    else {
+                        g.fill(bx - w, by + i, bx - w + 1, by + i + 1, c);
+                        g.fill(bx + w, by + i, bx + w + 1, by + i + 1, c);
+                    }
+                }
+            }
             // you
             float yaw = mc.player.getYRot();
             double fx = -Math.sin(Math.toRadians(yaw)), fz = Math.cos(Math.toRadians(yaw));
@@ -79,9 +95,13 @@ public final class GateMapSection implements StatusSections.Section {
         }
         // list beside the map
         int lx = mx + MAP + 8, ly = my + 2;
-        if (list.isEmpty() || !overworld) {
-            g.text(font, overworld ? "No gates within 1,600 blocks." : "Gates show from the surface.", lx, ly, 0xFF8090A8, false);
+        if (!overworld) {
+            g.text(font, "Gates show from the surface.", lx, ly, 0xFF8090A8, false);
             return;
+        }
+        if (list.isEmpty()) {
+            g.text(font, "No gates within 1,600 blocks.", lx, ly, 0xFF8090A8, false);
+            ly += 14;
         }
         int shown = 0;
         for (GatePayloads.Beacon b : list) {
@@ -104,6 +124,19 @@ public final class GateMapSection implements StatusSections.Section {
             }
             ly += 12;
             shown++;
+        }
+        // then the lairs you know, nearest first
+        List<MapMarks.Mark> marks = new ArrayList<>(MapMarks.collect(mc.player));
+        marks.sort(Comparator.comparingDouble(m -> m.pos().distToCenterSqr(px, m.pos().getY(), pz)));
+        for (MapMarks.Mark m : marks) {
+            if (ly > my + MAP - 10) break;
+            double dx = m.pos().getX() + 0.5 - px, dz = m.pos().getZ() + 0.5 - pz;
+            int dist = (int) Math.sqrt(dx * dx + dz * dz);
+            int d = (int) Math.round(((Math.toDegrees(Math.atan2(dz, dx)) + 90 + 360) % 360) / 45.0) % 8;
+            String where = String.format(" %,d m %s", dist, DIRS[d]) + (m.visited() ? "" : " · heard of");
+            g.text(font, m.label(), lx, ly, 0xFF000000 | m.colour(), false);
+            g.text(font, where, lx + font.width(m.label()), ly, 0xFFB9C7D9, false);
+            ly += 12;
         }
     }
 

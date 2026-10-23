@@ -50,6 +50,8 @@ public final class Moves {
             if (c.hurt(e, damage, force)) n++;
             if (knock != 0 || up != 0) Combat.knockFrom(e, centre, knock, up);
         }
+        // the wave moves everything it passes through; only foes are hurt
+        if (knock != 0 || up != 0) for (LivingEntity e : Combat.bystandersAround(c.player, centre, radius)) Combat.knockFrom(e, centre, knock * 0.6, up * 0.6);
         return n;
     }
 

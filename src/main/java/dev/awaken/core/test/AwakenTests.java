@@ -45,6 +45,9 @@ public final class AwakenTests {
             var origin = h.absolutePos(net.minecraft.core.BlockPos.ZERO);
             int cx = origin.getX() >> 4, cz = origin.getZ() >> 4;
             for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) level.setChunkForced(cx + dx, cz + dz, true);
+            // load them now rather than waiting on the chunk workers: under load (builds running beside the test server)
+            // async loading took over a minute and tests waiting for "entity ticking" timed out
+            for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) level.getChunk(cx + dx, cz + dz);
             // Note: don't defer the body with runAfterDelay. Vanilla iterates its scheduled callbacks while running them,
             // so scheduling from inside one can run entries twice. Tests that need settled chunks delay their own actions.
             test.accept(h);

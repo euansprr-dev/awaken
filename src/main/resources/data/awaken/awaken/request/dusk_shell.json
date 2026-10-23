@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:dusk_shell",
+  "count": {
+    "E": 5,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 1.1,
+  "any_of": [
+    "seen:gloam_snail",
+    "seen:weaver_queen"
+  ],
+  "hint": "Gloam Snails rest in the dark forest",
+  "group": "duskwood"
+}

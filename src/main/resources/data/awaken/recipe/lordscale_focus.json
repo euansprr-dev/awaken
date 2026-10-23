@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_focus",
+  "key": {
+    "B": "#awaken:hunter_bind_a",
+    "C": "#awaken:hunter_core_a",
+    "L": "awaken:lord_heart",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "BLB",
+    " C ",
+    " S "
+  ],
+  "result": {
+    "id": "awaken:lordscale_focus"
+  }
+}

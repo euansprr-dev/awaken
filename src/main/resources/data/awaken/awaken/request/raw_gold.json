@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:raw_gold",
+  "count": {
+    "D": 6,
+    "C": 10
+  },
+  "weight": 10,
+  "value": 0.9,
+  "any_of": [
+    "mined:minecraft:gold_ore",
+    "mined:minecraft:deepslate_gold_ore"
+  ],
+  "hint": "Gold lies deep, and in the badlands"
+}

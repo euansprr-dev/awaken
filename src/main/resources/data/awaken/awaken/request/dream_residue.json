@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "awaken:dream_residue",
+  "count": {
+    "B": 4,
+    "A": 6
+  },
+  "weight": 10,
+  "value": 1.5,
+  "any_of": [
+    "got:awaken:dream_residue"
+  ],
+  "hint": "Lucid dreams leave residue behind"
+}

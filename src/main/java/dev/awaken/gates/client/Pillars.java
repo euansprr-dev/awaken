@@ -36,7 +36,9 @@ public final class Pillars {
         double clamp = Math.max(48, mc.options.getEffectiveRenderDistance() * 16 * 0.7);
         List<Draw> out = new ArrayList<>();
         for (GatePayloads.Beacon b : beacons) {
-            double bx = b.pos().getX() + 0.5, by = b.pos().getY() + 8, bz = b.pos().getZ() + 0.5;
+            // the beam rises from the top of the vortex, which grows with rank
+            var size = dev.awaken.gates.GateVortex.size(b.rank());
+            double bx = b.pos().getX() + 0.5, by = b.pos().getY() + size.centreY() + size.ry() * 1.08, bz = b.pos().getZ() + 0.5;
             double rx = bx - cam.x, ry = by - cam.y, rz = bz - cam.z;
             double dist = Math.sqrt(rx * rx + rz * rz + ry * ry);
             if (dist > GatePayloads.BEACON_RANGE + 100) continue;

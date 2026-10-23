@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "item": "minecraft:cobbled_deepslate",
+  "count": {
+    "D": 32
+  },
+  "weight": 4,
+  "value": 0.06,
+  "requires": [
+    "depth:0"
+  ],
+  "hint": "Below Y 0 the stone turns to deepslate"
+}

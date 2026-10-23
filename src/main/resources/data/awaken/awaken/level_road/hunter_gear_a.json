@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "level": 67,
+  "title": "Lordscale gear · A",
+  "text": "Lords' scales forge gear past netherite.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:lordscale_helmet",
+        "awaken:lordscale_chestplate",
+        "awaken:lordscale_leggings",
+        "awaken:lordscale_boots",
+        "awaken:lordscale_blade",
+        "awaken:lordscale_focus",
+        "awaken:lordscale_mattock"
+      ]
+    }
+  ],
+  "quiet": false
+}

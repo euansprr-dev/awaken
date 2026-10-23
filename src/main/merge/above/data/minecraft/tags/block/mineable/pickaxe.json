@@ -22,6 +22,10 @@
     "awaken:recalibrator",
     "awaken:observatory",
     "awaken:launch_ring",
-    "awaken:fabricator"
+    "awaken:fabricator",
+    "awaken:ruin_plating_cracked",
+    "awaken:ruin_plating_mossy",
+    "awaken:ruin_pillar",
+    "awaken:ruin_glyph"
   ]
 }

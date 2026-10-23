@@ -1,5 +1,10 @@
 package dev.awaken.powers.catalog;
 
+import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.FxEvent;
+import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.FxStyle;
+
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Bolts;
 import dev.awaken.powers.Cast;
@@ -110,7 +115,10 @@ final class EnergyPowers {
     static Result beam(Cast c) {
         double range = c.is(2) ? 32 : 24;
         c.sound(PowerSounds.BEAM, 0.8f, 1.2f);
+        // a quick gather at the palm, then the layered beam itself (see beamRay)
+        Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(0.7).send();
         Running r = Casting.channel(c, c.type.maxDuration);
+        r.end((rr, why) -> Fx.end(c, c.player, 0));
         r.tick(rr -> {
             Vec3 eye = c.player.getEyePosition();
             Vec3 look = c.player.getLookAngle();
@@ -144,10 +152,7 @@ final class EnergyPowers {
             }
             Fx.beam(c.player, c.player, hit.end(), BEAM, 6, width, (float) range, follow);
         }
-        if (rr.age % 2 == 0) {
-            c.level.sendParticles(ParticleTypes.SMALL_FLAME, hit.end().x, hit.end().y, hit.end().z, 2, 0.1, 0.1, 0.1, 0.02);
-            c.level.sendParticles(Fx.dust(0xFFB060, 0.8f), hit.end().x, hit.end().y, hit.end().z, 1, 0.1, 0.1, 0.1, 0);
-        }
+        // embers, splash glow and scorch marks at the end of the beam are drawn by the client from the beam itself
     }
 
     static Result nova(Cast c) {
@@ -156,6 +161,8 @@ final class EnergyPowers {
         if (c.is(2)) {
             for (LivingEntity e : Combat.foesAround(c.player, at, radius + 2)) Combat.push(e, at.subtract(e.position()).normalize().scale(0.8).add(0, 0.2, 0));
             c.sound(PowerSounds.GRAVITY, 1f, 1.4f);
+            Fx.at(c, FxKind.CHARGE, at).ticks(9).scale(1.6).anim(CastAnim.CHARGE2).send();
+            Fx.at(c, FxKind.VORTEX, at).scale(radius + 2).ticks(9).noAnim().send();
             Running r = Casting.start(c, 9);
             r.tick(rr -> {
                 if (rr.age == 8) novaBlast(c, at, radius);
@@ -180,9 +187,8 @@ final class EnergyPowers {
             e.igniteForSeconds(3);
             Combat.knockFrom(e, at, 1.2, 0.4);
         }
-        Fx.sphere(c.level, at, radius * 0.6, ParticleTypes.FLAME, 50);
-        Fx.sphere(c.level, at, radius * 0.9, ParticleTypes.END_ROD, 40);
-        c.particles(ParticleTypes.EXPLOSION, at, 1, 0, 0);
+        // a sphere of burning light with a white flash at its heart, embers and sparks thrown out
+        Fx.at(c, FxKind.NOVA, at).scale(radius).flag(FxEvent.REACH).send();
         c.sound(at, PowerSounds.NOVA, 1.3f, 1f);
         Fx.quake(c.level, at, 16, 3f);
         c.feel(null, 0, 2.5f);
@@ -196,22 +202,20 @@ final class EnergyPowers {
         c.player.setAbsorptionAmount(Math.max(c.player.getAbsorptionAmount(), amount));
         if (c.is(1)) PowerState.of(c.player).buff(PowerState.Buffs.BRACE_REFLECT, c.now() + ticks, 0.33);
         c.sound(PowerSounds.BARRIER, 1f, 1.2f);
-        Fx.sphere(c.level, c.pos().add(0, 1, 0), 1.3, Fx.dust(BLUE, 1.0f), 40);
+        // a bubble with a bright rim and a hex skin that follows you
+        Fx.at(c, FxKind.DOME, c.pos().add(0, 1, 0)).scale(1.35).ticks(ticks).flag(FxEvent.FOLLOW).send();
         Running r = Casting.start(c, ticks);
         r.tick(rr -> {
-            if (rr.age > 2 && c.player.getAbsorptionAmount() <= 0.01f) {
-                rr.stop(Running.Why.DONE);
-                return;
-            }
-            if (rr.age % 10 == 0) Fx.sphere(c.level, c.pos().add(0, 1, 0), 1.2, Fx.dust(BLUE, 0.7f), 16);
+            if (rr.age > 2 && c.player.getAbsorptionAmount() <= 0.01f) rr.stop(Running.Why.DONE);
         }).end((rr, why) -> {
+            Fx.end(c, c.player, -2);
             Moves.removeMod(c.player, Attributes.MAX_ABSORPTION, "barrier");
             if (c.is(1)) PowerState.of(c.player).clearBuff(PowerState.Buffs.BRACE_REFLECT);
             if (why == Running.Why.DONE) {
                 Vec3 at = c.pos().add(0, 1, 0);
                 Moves.blast(c, at, 4, c.dmg(), Forces.Force.CHARGE, 1.0, 0.3);
                 ForceInteractions.chargeEchoes(c.player, at, 4);
-                c.level.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 30, 1.2, 1.0, 1.2, 0.3);
+                Fx.at(c, FxKind.NOVA, at).scale(4).style(FxStyle.CHARGE).flag(FxEvent.REACH).noAnim().send();
                 c.sound(PowerSounds.BARRIER_BREAK, 1.2f, 1f);
             }
         });
@@ -220,6 +224,7 @@ final class EnergyPowers {
 
     static Result chargedShot(Cast c) {
         if (c.is(2)) {
+            Fx.at(c, FxKind.CAST, hand(c.player)).anim(CastAnim.PUSH2).send();
             for (int i = -1; i <= 1; i++) {
                 Vec3 d = c.look().yRot((float) Math.toRadians(i * 6));
                 Bolts.fire(c.level, c.player, c.player, hand(c.player), d, 2.4f, c.dmg(), Forces.Force.CHARGE, 0xFF9AD8FF, 40, 0f).stun = 6;
@@ -228,19 +233,34 @@ final class EnergyPowers {
             return Result.OK;
         }
         c.sound(PowerSounds.CHARGE_UP, 0.7f, 1.2f);
+        // crackling orb at the hand; the bolt itself is drawn as it flies (Bolts)
+        Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(0.9).send();
         Running r = Casting.channel(c, c.type.maxDuration);
         r.tick(rr -> {
-            Vec3 h = hand(c.player);
-            c.level.sendParticles(ParticleTypes.ELECTRIC_SPARK, h.x, h.y, h.z, 1 + rr.age / 8, 0.1, 0.1, 0.1, 0.05);
             if (rr.age == 29) c.sound(PowerSounds.CHARGE_UP, 0.6f, 2f);
         }).end((rr, why) -> {
-            if (why == Running.Why.CANCELLED) return;
             double charge = Math.min(1.0, rr.age / 30.0);
+            Fx.at(c, FxKind.CHARGE_END, hand(c.player)).flag(FxEvent.FULL, charge > 0.95).noAnim().send();
+            if (why == Running.Why.CANCELLED) return;
+            Fx.at(c, FxKind.CAST, hand(c.player)).anim(CastAnim.AIM).send();
             float dmg = c.dmg(c.type.damage + 14f * (float) charge);
             var b = Bolts.fire(c.level, c.player, c.player, hand(c.player), c.player.getLookAngle(), 2.6f, dmg, Forces.Force.CHARGE,
                     0xFF9AD8FF, 40, charge > 0.95 ? 2.5f : 0f);
             b.stun = 10 + (int) (20 * charge);
             if (c.is(1)) b.bounces = 2;
+            // a muzzle burst at the palm, and the bolt's landing where the aim meets something (it flies 2.6 blocks a tick)
+            Fx.at(c, FxKind.IMPACT, hand(c.player)).dir(c.player.getLookAngle()).scale(1 + charge).noAnim().send();
+            BeamHit aim = trace(c.player, c.player.getEyePosition(), c.player.getLookAngle(), 48);
+            int flight = Math.max(1, (int) Math.ceil(hand(c.player).distanceTo(aim.end()) / 2.6));
+            Vec3 lands = aim.end();
+            Vec3 look = c.player.getLookAngle();
+            float landing = (float) (1.2 + 1.4 * charge);
+            boolean full = charge > 0.95;
+            dev.awaken.powers.Scheduler.after(flight, () -> {
+                if (c.player.isRemoved()) return;
+                Fx.at(c, FxKind.IMPACT, lands).dir(look).scale(landing).flag(FxEvent.FULL, full).noAnim().send();
+                if (full) Fx.at(c, FxKind.NOVA, lands).scale(2.5).noAnim().send();
+            });
             c.sound(PowerSounds.SHOT, 1f, 1.4f - 0.5f * (float) charge);
             c.feel(null, 0, 0.8f + 1.5f * (float) charge);
         });
@@ -254,39 +274,42 @@ final class EnergyPowers {
             st.buff(PowerState.Buffs.CONDUIT, c.now() + ticks, 1);
             st.buff(PowerState.Buffs.OVERLOAD_COST, c.now() + ticks, 1);
             c.sound(PowerSounds.OVERLOAD, 1f, 1.5f);
+            Fx.at(c, FxKind.CAST, c.pos()).anim(CastAnim.SKYWARD).send();
+            Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.OVERLOAD.ordinal()).ticks(ticks).noAnim().send();
             Running r = Casting.start(c, "overload_glow", ticks);
             Moves.postOn(c.player, Moves.FX_OVERLOAD);
-            r.tick(rr -> {
-                if (rr.age % 5 == 0) c.particles(ParticleTypes.ELECTRIC_SPARK, c.pos().add(0, 1, 0), 3, 0.4, 0.05);
-            }).end((rr, why) -> Moves.postOff(c.player, Moves.FX_OVERLOAD));
+            r.end((rr, why) -> {
+                Moves.postOff(c.player, Moves.FX_OVERLOAD);
+                Fx.end(c, c.player, FxKind.Aura.OVERLOAD.ordinal() + 1);
+            });
             return Result.OK;
         }
         Moves.addMod(c.player, Attributes.MOVEMENT_SPEED, "overload_windup", -0.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         c.sound(PowerSounds.OVERLOAD, 1.2f, 0.8f);
+        // a second of gathering everything: both hands pulled in, a growing orb, the air crackling
+        Fx.at(c, FxKind.CHARGE, c.pos().add(0, 1, 0)).ticks(20).scale(1.8).send();
+        Fx.at(c, FxKind.VORTEX, c.pos().add(0, 1, 0)).scale(4).ticks(20).style(FxStyle.CHARGE).noAnim().send();
         Running r = Casting.start(c, 20);
-        r.tick(rr -> {
-            Vec3 at = c.pos().add(0, 1, 0);
-            double rad = 4 * (1 - rr.age / 20.0) + 0.5;
-            Fx.sphere(c.level, at, rad, ParticleTypes.ELECTRIC_SPARK, 14);
-            c.level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 2, 0.3, 0.4, 0.3, 0.01);
-        }).end((rr, why) -> {
+        r.end((rr, why) -> {
             Moves.removeMod(c.player, Attributes.MOVEMENT_SPEED, "overload_windup");
+            Fx.end(c, c.player, 0);
             if (why != Running.Why.EXPIRED) return;
             Vec3 at = c.pos().add(0, 1, 0);
             double radius = c.radius(9);
             float dmg = c.dmg();
             LivingEntity first = null;
+            int arcs = 0;
             for (LivingEntity e : Combat.foesAround(c.player, at, radius)) {
                 c.hurt(e, dmg, e.isInWater() ? Forces.Force.CHARGE : Forces.Force.HEAT);
                 e.igniteForSeconds(4);
                 Combat.stun(e, 20);
                 Combat.knockFrom(e, at, 1.6, 0.6);
                 if (first == null) first = e;
+                if (arcs++ < 6) Fx.at(c, FxKind.LIGHTNING, at).to(e.getBoundingBox().getCenter()).ticks(8).scale(1.4).noAnim().send();
             }
             ForceInteractions.chargeEchoes(c.player, at, radius);
-            c.particles(ParticleTypes.EXPLOSION_EMITTER, at, 2, 0.5, 0);
-            Fx.sphere(c.level, at, radius * 0.7, ParticleTypes.FLAME, 80);
-            Fx.sphere(c.level, at, radius, ParticleTypes.ELECTRIC_SPARK, 80);
+            // the release: an ultimate's screen beat rides on the nova (impact frame, flash, FOV punch)
+            Fx.at(c, FxKind.NOVA, at).scale(radius).flag(FxEvent.REACH).send();
             c.sound(at, PowerSounds.BLAST, 2f, 0.6f);
             Fx.quake(c.level, at, 32, 6f);
             c.feel(first, first != null ? 80 : 0, 6f);
@@ -295,10 +318,12 @@ final class EnergyPowers {
                 st.buff(PowerState.Buffs.OVERLOAD, c.now() + ticks, 0.25);
                 st.buff(PowerState.Buffs.OVERLOAD_COST, c.now() + ticks, 1);
                 Moves.postOn(c.player, Moves.FX_OVERLOAD);
+                Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.OVERLOAD.ordinal()).ticks(ticks).noAnim().send();
                 Running glow = Casting.start(c, "overload_glow", ticks);
-                glow.tick(g -> {
-                    if (g.age % 4 == 0) c.particles(ParticleTypes.ELECTRIC_SPARK, c.pos().add(0, 1, 0), 2, 0.4, 0.05);
-                }).end((g, w) -> Moves.postOff(c.player, Moves.FX_OVERLOAD));
+                glow.end((g, w) -> {
+                    Moves.postOff(c.player, Moves.FX_OVERLOAD);
+                    Fx.end(c, c.player, FxKind.Aura.OVERLOAD.ordinal() + 1);
+                });
             }
         });
         return Result.OK;
@@ -307,7 +332,11 @@ final class EnergyPowers {
     static Result prismLance(Cast c) {
         c.sound(PowerSounds.BEAM, 1f, 0.7f);
         int splits = c.is(1) ? 6 : 4;
+        Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(1.2).send();
+        // an ultimate: the screen beat lands as the lance opens
+        Fx.at(c, FxKind.ULT, c.pos()).scale(28).noAnim().send();
         Running r = Casting.channel(c, c.type.maxDuration);
+        r.end((rr, why) -> Fx.end(c, c.player, 0));
         r.tick(rr -> {
             Vec3 eye = c.player.getEyePosition();
             Vec3 look = c.player.getLookAngle();

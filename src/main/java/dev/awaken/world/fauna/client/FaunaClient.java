@@ -22,7 +22,22 @@ public final class FaunaClient {
         modBus.addListener(FaunaClient::layers);
         FaunaHooks.installViewer(FaunaClient::viewerAwakened);
         CodexEntries.addSource(CreatureCodex::entries);
+        dev.awaken.core.api.MapMarks.register(FaunaClient::lairMarks);
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> RevealPulse.stop());
+    }
+
+    /** Lairs this player has heard of (outlined on the Gate Map) or found (filled), in the beast's colour. */
+    private static java.util.List<dev.awaken.core.api.MapMarks.Mark> lairMarks(net.minecraft.world.entity.player.Player p) {
+        var lairs = p.getData(dev.awaken.world.fauna.FaunaModule.STATE.get()).lairs();
+        if (lairs.isEmpty()) return java.util.List.of();
+        java.util.List<dev.awaken.core.api.MapMarks.Mark> out = new java.util.ArrayList<>(lairs.size());
+        for (var l : lairs) {
+            var def = dev.awaken.mobs.def.Bestiary.get(l.beast());
+            String name = def == null ? l.beast() : def.name;
+            int colour = def == null ? 0xFFD27A : def.glow;
+            out.add(new dev.awaken.core.api.MapMarks.Mark(l.pos(), colour, "Lair · " + name, l.found()));
+        }
+        return out;
     }
 
     private static void payloads(RegisterClientPayloadHandlersEvent e) {

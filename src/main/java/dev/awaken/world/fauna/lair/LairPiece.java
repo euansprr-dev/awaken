@@ -28,6 +28,8 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
     private final BlockPos centre;
     private final long seed;
     private final int variant;
+    /** Which blueprint built it ({@link LairBuilder#STYLE}); pieces saved before the redesign have none. */
+    private final int look;
 
     public LairPiece(LairStyle style, BlockPos centre, long seed, int variant) {
         super(LairWorldgen.PIECE.get(), 0, box(centre));
@@ -35,6 +37,7 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
         this.centre = centre.immutable();
         this.seed = seed;
         this.variant = variant;
+        this.look = LairBuilder.STYLE;
         setOrientation(null);
     }
 
@@ -47,6 +50,7 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
         this.centre = new BlockPos(tag.getIntOr("cx", 0), tag.getIntOr("cy", 64), tag.getIntOr("cz", 0));
         this.seed = tag.getLongOr("seed", 0L);
         this.variant = tag.getIntOr("variant", 0);
+        this.look = tag.getIntOr("look", 1);
         setOrientation(null);
     }
 
@@ -63,6 +67,7 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
         tag.putInt("cz", centre.getZ());
         tag.putLong("seed", seed);
         tag.putInt("variant", variant);
+        tag.putInt("look", look);
     }
 
     public LairStyle style() {
@@ -86,6 +91,8 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
     @Override
     public void postProcess(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random,
                             BoundingBox chunkBB, ChunkPos chunkPos, BlockPos referencePos) {
+        // a lair started before the redesign keeps what it already built (no new blueprint welded on at a chunk edge)
+        if (look < LairBuilder.STYLE) return;
         build(level, chunkBB);
     }
 

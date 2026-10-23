@@ -56,6 +56,8 @@ public final class GatesRegistry {
     public static final DeferredRegister<MapCodec<? extends BiomeSource>> BIOME_SOURCES = DeferredRegister.create(Registries.BIOME_SOURCE, Awaken.MODID);
     public static final DeferredRegister<TicketType> TICKETS = DeferredRegister.create(Registries.TICKET_TYPE, Awaken.MODID);
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, Awaken.MODID);
+    public static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>> BLOCK_ENTITIES =
+            DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Awaken.MODID);
 
     // ---- blocks -----------------------------------------------------------------------------------------------------
 
@@ -70,6 +72,11 @@ public final class GatesRegistry {
             p -> p.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(-1.0F, 3600000.0F).noCollision().noOcclusion().noLootTable()
                     .lightLevel(s -> s.getValue(GateBlocks.Core.BROKEN) ? 9 : 15).sound(SoundType.AMETHYST).pushReaction(PushReaction.IMMOVEABLE)
                     .isValidSpawn((st, l, pos, t) -> false).isSuffocating((s, l, pos) -> false).isViewBlocking((s, l, pos, box) -> false));
+    /** Ground cracks glowing in the rank colour round a surface gate (rank 7 = broken, red). */
+    public static final DeferredBlock<dev.awaken.gates.block.GateFissureBlock> FISSURE = BLOCKS.registerBlock("gate_fissure",
+            dev.awaken.gates.block.GateFissureBlock::new,
+            p -> p.mapColor(MapColor.COLOR_BLACK).strength(1.5F, 6.0F).sound(SoundType.DEEPSLATE).noLootTable()
+                    .lightLevel(s -> s.getValue(dev.awaken.gates.block.GateFissureBlock.RANK) == 7 ? 6 : 7).isValidSpawn((st, l, pos, t) -> false));
     public static final DeferredBlock<GateBlocks.Portal> EXIT = portal("gate_exit", GateBlocks.Portal.Kind.EXIT);
     public static final DeferredBlock<GateBlocks.Portal> RIFT = portal("gate_rift", GateBlocks.Portal.Kind.RIFT);
     public static final DeferredBlock<GateBlocks.Portal> INNER = portal("gate_inner", GateBlocks.Portal.Kind.INNER);
@@ -106,6 +113,12 @@ public final class GatesRegistry {
     public static final DeferredItem<BlockItem> LANTERN_ITEM = ITEMS.registerSimpleBlockItem(LANTERN);
     public static final DeferredItem<BlockItem> UPDRAFT_ITEM = ITEMS.registerSimpleBlockItem(UPDRAFT);
 
+    // ---- block entities ---------------------------------------------------------------------------------------------
+
+    /** The anchor core's vortex (render data, synced). */
+    public static final Supplier<net.minecraft.world.level.block.entity.BlockEntityType<GateVortexBlockEntity>> VORTEX_BE =
+            BLOCK_ENTITIES.register("gate_vortex", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(GateVortexBlockEntity::new, CORE.get()));
+
     // ---- entities ---------------------------------------------------------------------------------------------------
 
     public static final DeferredHolder<EntityType<?>, EntityType<GateShade>> SHADE = ENTITIES.registerEntityType("gate_shade",
@@ -134,6 +147,8 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_COLLAPSE = sound("gate.collapse");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_CLEARED = sound("gate.cleared");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_HUM = sound("gate.hum");
+    /** The surface vortex's turning whoosh (looped with the hum near a gate). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_VORTEX = sound("gate.vortex");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_BELL = sound("gate.ambient.bell");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_GEARS = sound("gate.ambient.gears");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_CHANT = sound("gate.ambient.chant");
@@ -178,6 +193,8 @@ public final class GatesRegistry {
         BIOME_SOURCES.register(modBus);
         TICKETS.register(modBus);
         ATTACHMENTS.register(modBus);
+        BLOCK_ENTITIES.register(modBus);
+        GateExterior.init(modBus);
         modBus.addListener(GatesRegistry::attributes);
         modBus.addListener(GatesRegistry::creativeTab);
     }

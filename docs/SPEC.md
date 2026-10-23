@@ -382,7 +382,11 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
   while a screen is open); 10 ticks between cards; warnings and priority ≥ 9 pre-empt.
 - Pending decisions persist per player (max 12) until answered, withdrawn or past their ttl; on login they come back
   folded (tracker and Status), never as cards.
-- Toasts are vanilla size (160×32), at most 3 of ours; a burst merges into "N new things". Cards sit right of the
+- Optional offers (Directives) never card over the world: `Signal.offerQuietly` sends a toast and the decision waits
+  folded. Cards are for decisions that matter now (gates, extraction, Echo binding, travel, the Stillpoint).
+- A lesson step just reached outranks standing reminders on the one-line tracker for five minutes.
+- Toasts are 160 wide and vanilla height (32), or 43 when the detail needs a second line (a level-road step); at most 3
+  of ours; a burst merges into "N new things". Cards sit right of the
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
   (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed.
 
@@ -429,6 +433,33 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
 - Faint light shafts over ruins at dusk (fainter at night) and the Well's pillars at night, within 288 blocks; nothing
   by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
 - Config `features.landmarks` switches discovery, hints, rumours and markers off.
+
+Plan v2 · Anchor requests (details in docs/modules/requests.md):
+- Once a player has a Hearth Anchor, the System asks for materials they can really get (sightings, vanilla stats, depth,
+  rank): one request at a time, two from C-rank, offered quietly with a one play-day ttl, renewed per free slot each
+  play-day and after each delivery; nothing lost for ignoring, declining or dropping one.
+- Delivery at the Anchor (part loads count) pays essence, a share of a level through `Progression.worldXp`
+  (source `hearth_request`, its own budget), Forge credit (a refund on the next temper or upgrade, up to 50%), sometimes
+  a Power Core Shard (four fuse into a core) or an early recipe, and town reputation (Known 6, Trusted 18, Valued 40,
+  Beloved 80) with town touches. Streaks: +10% a delivery day after the first, up to +50%, lapsing after 3 play-days.
+- Pools in `data/*/awaken/request/*.json` (schema 1) with tokens `seen:`, `killed:`, `mined:`, `got:`, `depth:`.
+
+Plan v2 · late Hunter gear: A Lordscale (Gravity/Charge ward; every fifth power hit of one Force bursts onto nearby foes)
+and S Sovereign Weave (no Fracture from dying in a gate below your rank; your highest stat counts half again for gear
+and powers), each with its own silhouette parts; level-road steps at 67 and 97.
+
+Plan v2 · the road to 50 (details in docs/modules/road.md):
+- Every level 1–50 has a level-road step. Steps (schema 2) may carry a goal {now, done, requires, toast, priority}: a Now
+  line that stays until a real counter says it's done, then a toast; only the newest open goal shows (priority 35); met
+  goals are saved as `awaken:goal/<step>`. Requirement tokens add `rank:X` and `path`.
+- Power mastery: a power gains points from casts that land on a living target (their energy cost), half the energy spent
+  in a real fight that missed, and kills; nothing from casting at the air. Levels at 7,000 / 13,000 / 32,000 / 50,000
+  points, the same effect as a duplicate core. Loadout schema 2 adds `mastery`. Sim: a main power reaches level 3 at
+  player level ~20 and 5 at ~44.
+- Lessons taught in play: meditation (level 11), dreams (12), the Veil (15), each with Now lines, toasts and a choice card
+  where the decision is real; progress in `awaken:lesson/*` counters.
+- API: `Powers.restoreEnergy`, `Powers.masteryProgress`, `Progression.addPerkSource`, `Lessons.define`. A Hunter focus
+  refunds 0.5/1/1.5/2 energy (E–B) per power hit, at most once a second.
 
 Plan v2 · Hunter gear (details in docs/modules/gear.md):
 - Module `gear`: tiers E Wildhide, D Beastbound, C Gatewrought, B Veilwoven; 4 armour pieces, a blade, a power focus

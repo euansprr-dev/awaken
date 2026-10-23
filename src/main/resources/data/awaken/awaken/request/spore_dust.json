@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:spore_dust",
+  "count": {
+    "E": 6,
+    "D": 8
+  },
+  "weight": 10,
+  "value": 0.8,
+  "any_of": [
+    "seen:shroomlet",
+    "seen:mycelord"
+  ],
+  "hint": "Shroomlets puff it on the mushroom fields",
+  "group": "spore"
+}

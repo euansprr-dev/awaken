@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "minecraft:pink_petals",
+  "count": {
+    "E": 12
+  },
+  "weight": 5,
+  "value": 0.15,
+  "any_of": [
+    "seen:bloom_sprite",
+    "seen:petalwing"
+  ],
+  "hint": "Bloom Sprites shed them; cherry groves are full of them"
+}

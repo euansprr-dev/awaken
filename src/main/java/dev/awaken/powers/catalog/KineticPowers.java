@@ -17,10 +17,12 @@ import dev.awaken.powers.PowerType.Slot;
 import dev.awaken.powers.PowerType.Variant;
 import dev.awaken.powers.Running;
 import dev.awaken.powers.TerrainLedger;
+import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.FxEvent;
+import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.FxStyle;
 import dev.awaken.progression.Rank;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -104,12 +106,12 @@ final class KineticPowers {
             Moves.noFall(c, 80);
             double startY = c.player.getY();
             Running r = Casting.start(c, 70);
+            // the dive: a comet trail and both fists raised, then the slam on landing
+            Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(70).send();
             r.tick(rr -> {
                 if (rr.age > 1 && (c.player.onGround() || c.player.isInWater())) {
                     slamImpact(c, Math.min(14, Math.max(0, startY - c.player.getY()) * 0.6));
                     rr.stop();
-                } else if (rr.age % 2 == 0) {
-                    c.particles(ParticleTypes.CLOUD, c.pos().add(0, 0.5, 0), 3, 0.2, 0.02);
                 }
             });
             c.sound(PowerSounds.WHOOSH, 1f, 0.6f);
@@ -129,14 +131,14 @@ final class KineticPowers {
             if (c.hurt(e, dmg, null)) {
                 hit++;
                 if (first == null) first = e;
+                if (hit <= 4) Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(e.position().subtract(at)).scale(0.9).noAnim().send();
             }
             Combat.knockFrom(e, at, 0.6, 0.55);
             if (c.is(2)) Combat.stun(e, 20);
         }
-        BlockState below = c.level.getBlockState(Moves.below(c.player));
-        if (!below.isAir()) Fx.burstRing(c.level, at.add(0, 0.1, 0), new BlockParticleOption(ParticleTypes.BLOCK, below), 28, 0.5 * c.v.radius());
-        Fx.burstRing(c.level, at.add(0, 0.2, 0), ParticleTypes.CLOUD, 20, 0.35 * c.v.radius());
-        c.particles(ParticleTypes.EXPLOSION, at.add(0, 0.3, 0), 1, 0, 0);
+        for (LivingEntity e : Combat.bystandersAround(c.player, at.add(0, 0.5, 0), radius)) Combat.knockFrom(e, at, 0.45, 0.4);
+        // shockwave ring, cracks, the ground's own chunks thrown up, dust; a falling slam is bigger and hotter
+        Fx.at(c, FxKind.SLAM, at).scale(radius).flag(FxEvent.REACH).flag(FxEvent.FULL, bonus > 4).send();
         c.sound(PowerSounds.SLAM, 1.2f, bonus > 0 ? 0.7f : 0.9f);
         Fx.quake(c.level, at, 14, 2.5f + (float) bonus * 0.2f);
         c.feel(first, hit > 0 ? 60 : 0, 3f);
@@ -155,13 +157,14 @@ final class KineticPowers {
         if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel));
         Moves.noFall(c, 120);
         c.sound(PowerSounds.WHOOSH, 1f, 0.8f);
-        c.particles(ParticleTypes.CLOUD, c.pos(), 10, 0.3, 0.05);
+        Fx.at(c, FxKind.DASH, c.pos()).dir(c.player.getDeltaMovement()).ticks(20).send();
         Running r = Casting.start(c, 100);
         r.tick(rr -> {
             if (rr.age > 4 && (c.player.onGround() || c.player.isInWater())) {
                 Vec3 at = c.pos();
-                Moves.blast(c, at.add(0, 0.5, 0), 3.0, c.dmg(), null, 0.8, 0.4);
-                Fx.burstRing(c.level, at.add(0, 0.1, 0), ParticleTypes.CLOUD, 14, 0.3);
+                double landing = 3.0;
+                Moves.blast(c, at.add(0, 0.5, 0), landing, c.dmg(), null, 0.8, 0.4);
+                Fx.at(c, FxKind.SLAM, at).scale(landing).flag(FxEvent.REACH).flag(FxEvent.FULL, c.is(2)).anim(CastAnim.SLAM).send();
                 c.sound(at, PowerSounds.IMPACT, 0.8f, 1.1f);
                 Fx.quake(c.level, at, 8, 1.2f);
                 rr.stop();
@@ -172,20 +175,20 @@ final class KineticPowers {
 
     static Result haymaker(Cast c) {
         c.sound(PowerSounds.CHARGE_UP, 0.7f, 0.8f);
+        // wind-up: the fist cocked back over the shoulder, energy gathering at the knuckles
+        Fx.at(c, FxKind.CHARGE, c.player.getEyePosition()).ticks(c.type.maxDuration).scale(1.1).send();
         Running r = Casting.channel(c, c.type.maxDuration);
         r.tick(rr -> {
-            if (rr.age % 3 == 0) {
-                Vec3 hand = c.player.getEyePosition().add(c.player.getLookAngle().scale(0.8)).add(0, -0.4, 0);
-                c.particles(ParticleTypes.CRIT, hand, 2 + rr.age / 6, 0.15, 0.05);
-            }
             if (rr.age == 20) c.sound(PowerSounds.CHARGE_UP, 0.6f, 1.6f);
         }).end((rr, why) -> {
-            if (why == Running.Why.CANCELLED) return;
             double charge = Math.min(1.0, rr.age / 20.0);
+            Fx.end(c, c.player, 0);
+            if (why == Running.Why.CANCELLED) return;
             LivingEntity t = Combat.aimEntity(c.player, c.player.getEyePosition(), c.player.getLookAngle(), 4.5, 0.6, true);
-            Moves.swing(c.player, net.minecraft.world.InteractionHand.MAIN_HAND);
             if (t == null) {
-                c.particles(ParticleTypes.SWEEP_ATTACK, c.player.getEyePosition().add(c.player.getLookAngle().scale(1.5)), 1, 0, 0);
+                // a punch into the air still throws a ring of force
+                Vec3 front = c.player.getEyePosition().add(c.player.getLookAngle().scale(1.6));
+                Fx.at(c, FxKind.IMPACT, front).dir(c.player.getLookAngle()).scale(0.5 + 0.5 * charge).send();
                 c.sound(PowerSounds.WHOOSH, 0.8f, 1.3f);
                 return;
             }
@@ -200,8 +203,8 @@ final class KineticPowers {
                 }
                 default -> Combat.knockFrom(t, c.pos(), 0.8 + 1.4 * charge, 0.45 + 0.6 * charge);
             }
-            c.particles(ParticleTypes.EXPLOSION, at, 1, 0, 0);
-            Fx.impact(c.level, at, ORANGE);
+            Fx.at(c, FxKind.IMPACT, at).dir(c.player.getLookAngle()).scale(1.1 + 1.6 * charge).flag(FxEvent.FULL, charge >= 1).send();
+            if (c.is(2)) Fx.at(c, FxKind.SLAM, t.position()).scale(2.2).noAnim().send();
             c.sound(at, PowerSounds.PUNCH, 1.2f, 1.1f - 0.3f * (float) charge);
             c.feel(t, (int) (40 + 40 * charge), 1.5f + 3f * (float) charge);
         });
@@ -250,24 +253,25 @@ final class KineticPowers {
             case 1 -> {
                 var f = FlyingBlocks.launch(c.level, c.player, main, origin, vel.scale(0.9), dmg, null, radius, 2.2f);
                 if (f != null) f.stun = 20;
+                Fx.trailOn(c, f, 40);
             }
             case 2 -> {
                 for (int i = 0; i < 5; i++) {
                     double yaw = (i - 2) * 0.18;
                     Vec3 d = dir.yRot((float) yaw).scale(1.6).add(0, 0.3 + 0.05 * i, 0);
-                    FlyingBlocks.launch(c.level, c.player, states.get(i % states.size()), origin.add(0, i * 0.15, 0), d, dmg, null, radius * 0.6f, 0.7f);
+                    Fx.trailOn(c, FlyingBlocks.launch(c.level, c.player, states.get(i % states.size()), origin.add(0, i * 0.15, 0), d, dmg, null,
+                            radius * 0.6f, 0.7f), 30);
                 }
             }
             default -> {
                 for (int i = 0; i < Math.min(3, states.size()); i++) {
                     Vec3 offset = new Vec3((i - 1) * 0.5, i * 0.35, 0).yRot(-c.yRot() * net.minecraft.util.Mth.DEG_TO_RAD);
-                    FlyingBlocks.launch(c.level, c.player, states.get(i), origin.add(offset), vel, dmg, null, radius, 1.1f);
+                    Fx.trailOn(c, FlyingBlocks.launch(c.level, c.player, states.get(i), origin.add(offset), vel, dmg, null, radius, 1.1f), 30);
                 }
             }
         }
         Vec3 at = Vec3.atCenterOf(centre);
-        c.level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, main), at.x, at.y + 0.6, at.z, 30, 0.8, 0.3, 0.8, 0.2);
-        c.particles(ParticleTypes.POOF, at.add(0, 0.8, 0), 8, 0.6, 0.03);
+        Fx.at(c, FxKind.SLAM, at.add(0, 0.5, 0)).scale(2.6).send();
         c.sound(at, PowerSounds.RIP, 1.2f, 0.8f);
         Fx.quake(c.level, at, 12, 2f);
         return Result.OK;
@@ -280,7 +284,8 @@ final class KineticPowers {
         Vec3 dir = c.flatLook();
         float dmg = c.dmg();
         c.sound(PowerSounds.SHOCKWAVE, 1.1f, 0.9f);
-        Moves.swing(c.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        // a curved wall of force rolls out, tearing dust and chunks out of the ground at its front
+        Fx.at(c, FxKind.CONE, c.pos()).dir(dir).scale(range).aux(half).ticks(10).flag(FxEvent.REACH).send();
         Running r = Casting.start(c, 10);
         r.tick(rr -> {
             double front = range * (rr.age + 1) / 10.0;
@@ -291,13 +296,10 @@ final class KineticPowers {
                 rr.hit.add(e.getId());
                 c.hurt(e, dmg, null);
                 Combat.knockFrom(e, origin, 1.4, 0.35);
+                if (rr.hit.size() <= 5) Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(dir).scale(0.8).noAnim().send();
             }
-            int points = (int) (half / 6) + 3;
-            for (int i = -points; i <= points; i++) {
-                Vec3 d = dir.yRot((float) Math.toRadians(half * i / (double) points));
-                Vec3 p = origin.add(d.scale(front));
-                BlockState s = c.level.getBlockState(BlockPos.containing(p).below());
-                c.level.sendParticles(s.isAir() ? ParticleTypes.CLOUD : new BlockParticleOption(ParticleTypes.BLOCK, s), p.x, p.y - 0.3, p.z, 2, 0.1, 0.1, 0.1, 0.1);
+            for (LivingEntity e : Combat.bystandersInCone(c.player, origin, dir, front, half)) {
+                if (rr.hit.add(e.getId())) Combat.knockFrom(e, origin, 0.9, 0.3);
             }
         });
         Fx.quake(c.level, origin, 10, 1.5f);
@@ -313,16 +315,18 @@ final class KineticPowers {
         if (reflect > 0) st.buff(PowerState.Buffs.BRACE_REFLECT, c.now() + ticks, reflect);
         Moves.addMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "brace", 1.0, AttributeModifier.Operation.ADD_VALUE);
         c.sound(PowerSounds.BRACE, 1f, 0.8f);
+        Fx.at(c, FxKind.RING, c.pos()).scale(1.8).ticks(9).send();
+        Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.BRACE.ordinal()).ticks(ticks).noAnim().send();
         Running r = Casting.start(c, ticks);
-        r.tick(rr -> {
-            if (rr.age % 5 == 0) Fx.ring(c.level, c.pos().add(0, 0.1, 0), 1.0, Fx.dust(ORANGE, 1.0f), 10, 0);
-        }).end((rr, why) -> {
+        r.end((rr, why) -> {
+            Fx.end(c, c.player, FxKind.Aura.BRACE.ordinal() + 1);
             Moves.removeMod(c.player, Attributes.KNOCKBACK_RESISTANCE, "brace");
             st.clearBuff(PowerState.Buffs.BRACE);
             st.clearBuff(PowerState.Buffs.BRACE_REFLECT);
             if (why == Running.Why.EXPIRED) {
-                Moves.blast(c, c.pos().add(0, 0.5, 0), 3.0, c.dmg(), null, 0.9, 0.3);
-                Fx.burstRing(c.level, c.pos().add(0, 0.2, 0), ParticleTypes.CLOUD, 16, 0.3);
+                double burst = 3.0;
+                Moves.blast(c, c.pos().add(0, 0.5, 0), burst, c.dmg(), null, 0.9, 0.3);
+                Fx.at(c, FxKind.SLAM, c.pos()).scale(burst).flag(FxEvent.REACH).anim(CastAnim.STOMP).send();
                 c.sound(PowerSounds.IMPACT, 0.8f, 1.2f);
             }
         });
@@ -331,18 +335,17 @@ final class KineticPowers {
 
     static Result thunderclap(Cast c) {
         Vec3 at = c.pos();
-        Moves.swing(c.player, net.minecraft.world.InteractionHand.MAIN_HAND);
         if (c.is(2)) {
             LivingEntity t = Combat.aimEntity(c, 16, 1.0);
             if (t == null) return Result.fail("no_target");
-            Moves.visualLightning(c.level, t.position());
+            Fx.at(c, FxKind.STRIKE, t.position()).scale(1.3).send();
             c.hurt(t, c.dmg(), Forces.Force.CHARGE);
             Combat.stun(t, 30);
             LivingEntity from = t;
             int forks = 0;
             for (LivingEntity o : Combat.foesAround(c.player, t.position(), 7)) {
                 if (o == t || forks >= 3) continue;
-                Fx.lightning(c.level, from.position().add(0, 1, 0), o.position().add(0, 1, 0), 5);
+                Fx.at(c, FxKind.LIGHTNING, from.position().add(0, 1, 0)).to(o.position().add(0, 1, 0)).ticks(7).noAnim().send();
                 c.hurt(o, c.dmg() * 0.3f, Forces.Force.CHARGE);
                 Combat.stun(o, 15);
                 forks++;
@@ -352,21 +355,22 @@ final class KineticPowers {
             return Result.OK;
         }
         int rings = c.is(1) ? 3 : 1;
+        Fx.at(c, FxKind.CAST, c.player.getEyePosition()).anim(CastAnim.CLAP).send();
         Running r = Casting.start(c, rings == 1 ? 1 : 17);
         r.tick(rr -> {
             if (rr.age % 8 != 0) return;
             int ring = rr.age / 8;
             double radius = rings == 1 ? c.radius(7) : 4 + ring * 3;
-            Moves.visualLightning(c.level, at);
+            Fx.at(c, FxKind.STRIKE, at).scale(1.2).noAnim().send();
+            Fx.at(c, FxKind.RING, at).scale(radius).ticks(10).style(FxStyle.CHARGE).flag(FxEvent.REACH, ring == 0).noAnim().send();
             for (LivingEntity e : Combat.foesAround(c.player, at.add(0, 0.5, 0), radius)) {
                 if (rings > 1 && rr.hit.contains(e.getId() * 10 + ring)) continue;
                 rr.hit.add(e.getId() * 10 + ring);
                 c.hurt(e, c.dmg(), Forces.Force.CHARGE);
                 Combat.stun(e, 30);
                 Combat.knockFrom(e, at, 0.5, 0.3);
-                Fx.lightning(c.level, at.add(0, 1.5, 0), e.position().add(0, e.getBbHeight() * 0.5, 0), 4);
+                Fx.at(c, FxKind.LIGHTNING, at.add(0, 1.5, 0)).to(e.position().add(0, e.getBbHeight() * 0.5, 0)).ticks(6).noAnim().send();
             }
-            Fx.ring(c.level, at.add(0, 0.2, 0), radius, ParticleTypes.ELECTRIC_SPARK, 36, 0.1);
             if (ring == 0) ForceInteractions.chargeEchoes(c.player, at, radius);
             c.sound(at, PowerSounds.THUNDER, 1.5f, 1.0f - ring * 0.1f);
             Fx.quake(c.level, at, 20, 4f);

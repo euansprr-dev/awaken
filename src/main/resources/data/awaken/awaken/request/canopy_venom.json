@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:canopy_venom",
+  "count": {
+    "E": 5,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 1.0,
+  "any_of": [
+    "seen:dart_frog",
+    "seen:plumed_coil"
+  ],
+  "hint": "Dart Frogs climb jungle trunks: strike with a tool, not bare hands",
+  "group": "canopy"
+}

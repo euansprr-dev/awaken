@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:lapis_lazuli",
+  "count": {
+    "D": 12,
+    "C": 16
+  },
+  "weight": 10,
+  "value": 0.25,
+  "any_of": [
+    "mined:minecraft:lapis_ore",
+    "mined:minecraft:deepslate_lapis_ore"
+  ],
+  "hint": "Lapis, deep in the stone"
+}

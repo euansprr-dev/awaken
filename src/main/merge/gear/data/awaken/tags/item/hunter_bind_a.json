@@ -1,0 +1,10 @@
+{
+  "values": [
+    "minecraft:diamond",
+    "minecraft:wind_charge",
+    {
+      "id": "awaken:precursor_circuit",
+      "required": false
+    }
+  ]
+}

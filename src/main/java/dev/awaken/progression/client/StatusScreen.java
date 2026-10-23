@@ -20,7 +20,7 @@ import java.util.List;
  * to a row on top so the content gets the width; every section is clipped to the content area and gets the mouse only
  * while it is over that area.
  */
-public final class StatusScreen extends Screen {
+public final class StatusScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
     private static StatusSections.Tab lastTab = StatusSections.Tab.STATUS;
     private static final int[] SCROLL = new int[StatusSections.Tab.values().length];
     private static final int SECTION_GAP = 12, SCROLLBAR = StatusLayout.SCROLLBAR;
@@ -33,6 +33,13 @@ public final class StatusScreen extends Screen {
 
     public StatusScreen() {
         super(Component.translatable("screen.awaken.status"));
+    }
+
+    /** Opens on a given tab (the Gate Map from a hint, screenshots). */
+    public StatusScreen(StatusSections.Tab open) {
+        this();
+        tab = open;
+        lastTab = open;
     }
 
     @Override

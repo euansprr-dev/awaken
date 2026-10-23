@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "awaken:precursor_scrap",
+  "count": {
+    "C": 12,
+    "B": 16
+  },
+  "weight": 10,
+  "value": 0.6,
+  "any_of": [
+    "got:awaken:precursor_scrap"
+  ],
+  "hint": "Precursor ruins are full of it: sweep the Scanner"
+}

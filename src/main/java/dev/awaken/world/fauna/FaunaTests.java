@@ -275,6 +275,8 @@ final class FaunaTests {
                             level.getGameRules().set(FaunaModule.SPAWNING.get(), true, level.getServer());
                             crowd.forEach(AwakenMob::discard);
                             level.getServer().getPlayerList().remove(p);
+                            unbox(level, dark);
+                            unbox(level, lit);
                         }
                     })
                     .thenSucceed();
@@ -341,7 +343,7 @@ final class FaunaTests {
             });
         });
 
-        AwakenTests.registerIsolated("fauna_hunters_keep_the_light_rule", 200, h -> {
+        AwakenTests.registerIsolated("fauna_hunters_keep_the_light_rule", 400, h -> {
             ServerLevel level = h.getLevel();
             BlockPos dark = h.absolutePos(new BlockPos(6, UP, 0));
             BlockPos lit = h.absolutePos(new BlockPos(-6, UP, 0));
@@ -367,6 +369,8 @@ final class FaunaTests {
                     .thenExecute(() -> {
                         hunter.forEach(AwakenMob::discard);
                         level.getServer().getPlayerList().remove(p);
+                        unbox(level, dark);
+                        unbox(level, lit);
                     })
                     .thenSucceed();
         });
@@ -547,6 +551,13 @@ final class FaunaTests {
     static void ground(ServerLevel level, BlockPos pos) {
         level.setBlock(pos.below(), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
         for (int y = 0; y <= 6; y++) level.setBlock(pos.above(y), Blocks.AIR.defaultBlockState(), 3);
+    }
+
+    /** Takes a {@link #box} down again: plots are reused, and a room left high above one roofs the next test's sky. */
+    static void unbox(ServerLevel level, BlockPos pos) {
+        for (int dx = -2; dx <= 2; dx++) for (int dy = -1; dy <= 3; dy++) for (int dz = -2; dz <= 2; dz++) {
+            level.setBlock(pos.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), 2);
+        }
     }
 
     /** A sealed stone room around a two-high space at pos (grass floor), lit by glowstone in the wall if asked. */

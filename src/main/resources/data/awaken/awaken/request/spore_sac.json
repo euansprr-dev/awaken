@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:spore_sac",
+  "count": {
+    "E": 2,
+    "D": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:mother_of_spores"
+  ],
+  "hint": "The Mother of Spores rules a Fungal Hollow",
+  "group": "lord"
+}

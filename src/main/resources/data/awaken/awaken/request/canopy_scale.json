@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "item": "awaken:canopy_scale",
+  "count": {
+    "E": 5,
+    "D": 6,
+    "C": 8
+  },
+  "weight": 12,
+  "value": 1.1,
+  "any_of": [
+    "seen:crested_basilisk",
+    "seen:plumed_coil"
+  ],
+  "hint": "Crested Basilisks sprint through the jungle",
+  "group": "canopy"
+}

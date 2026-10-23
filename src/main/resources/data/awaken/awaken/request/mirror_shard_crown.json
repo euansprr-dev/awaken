@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:mirror_shard_crown",
+  "count": {
+    "C": 2,
+    "B": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:mirror_knight"
+  ],
+  "hint": "The Mirror Knight wears your face in a Mirror Palace",
+  "group": "lord"
+}

@@ -101,6 +101,7 @@ public final class DescentModule {
         });
         DescentCommands.register();
         DescentTests.register();
+        dev.awaken.descent.well.WellTests.register();
     }
 
     /** Feature flag; tolerant of being asked before the world config is loaded. */

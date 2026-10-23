@@ -32,6 +32,20 @@ public final class Signal {
         if (window.action().isPresent()) PendingChoices.sync(player);
     }
 
+    /**
+     * A decision that can wait (an optional task, not a gate or a fight): no card over the world, just a small toast
+     * and "1 decision waiting · K" in the tracker; the answer buttons are on the Status screen.
+     */
+    public static void offerQuietly(ServerPlayer player, SignalWindow window, Component toast) {
+        if (window.action().isEmpty()) {
+            send(player, window);
+            return;
+        }
+        PendingChoices.add(player, window);
+        PendingChoices.sync(player);
+        toast(player, toast);
+    }
+
     public static void toast(ServerPlayer player, Component text) {
         AwakenNet.send(player, new SignalPayloads.Toast(text));
     }

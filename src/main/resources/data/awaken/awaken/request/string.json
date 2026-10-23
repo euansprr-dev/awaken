@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "item": "minecraft:string",
+  "count": {
+    "E": 8,
+    "D": 12
+  },
+  "weight": 7,
+  "value": 0.35,
+  "hint": "Spiders and Gloomstalkers drop it after dark"
+}

@@ -25,6 +25,7 @@ public final class PowersModule {
         PowerCatalog.bootstrap();
         PowerSounds.SOUNDS.register(modBus);
         PowerContent.init(modBus);
+        dev.awaken.powers.fx.PowerFx.init(modBus); // power visuals: particle types, FX payload, FX tests
         modBus.addListener(PowersModule::registerPayloads);
         PowerEvents.register(NeoForge.EVENT_BUS);
         RewardHooks.powerLearner = (player, id) -> {
@@ -47,6 +48,7 @@ public final class PowersModule {
         Starter.init(modBus); // the first-power choice on awakening (plan v2 §4.1)
         PowersCommands.register();
         PowersTests.register();
+        PowerHitTests.register();
         MasteryCommands.register();
         MasteryTests.register();
         StarterTests.register();

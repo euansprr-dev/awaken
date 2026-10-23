@@ -206,15 +206,16 @@ def spirit():
 
 
 def shaft():
-    """A landmark's light shaft: bright at the foot (v=1), fading to nothing at the top, soft at the sides. White;
-    the client tints it."""
-    c = Canvas(16, 64)
-    for y in range(64):
-        t = 1 - y / 63  # 1 at the top
-        fall = (1 - t) ** 1.8
+    """A landmark's light shaft: bright at the foot (v=1), a long soft rise into the sky, a Gaussian cross-section with
+    faint vertical rays. White; the client tints it and layers a wide halo under a narrow core."""
+    c = Canvas(16, 128)
+    for y in range(128):
+        up = 1 - y / 127  # 1 at the top
+        fall = (1 - up) ** 0.85 * (1 - up ** 8)
         for x in range(16):
-            side = 1 - abs(x - 7.5) / 8
-            a = int(255 * fall * side ** 1.5)
+            side = math.exp(-((x - 7.5) / 4.0) ** 2)
+            rays = 0.88 + 0.12 * math.sin(x * 1.9 + 0.7)
+            a = int(255 * fall * side * rays)
             if a > 1:
                 c.set(x, y, (255, 255, 255, a))
     return c

@@ -58,7 +58,10 @@ public final class FaunaModule {
 
     static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Awaken.MODID);
     public static final Supplier<AttachmentType<FaunaState>> STATE = ATTACHMENTS.register("fauna_state",
-            () -> AttachmentType.builder(() -> FaunaState.EMPTY).serialize(FaunaState.MAP_CODEC).copyOnDeath().build());
+            () -> AttachmentType.builder(() -> FaunaState.EMPTY).serialize(FaunaState.MAP_CODEC).copyOnDeath()
+                    // the owner's client draws known lairs on the Gate Map
+                    .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(FaunaState.MAP_CODEC.codec()))
+                    .build());
 
     static final DeferredRegister<GameRule<?>> RULES = DeferredRegister.create(Registries.GAME_RULE, Awaken.MODID);
     /** {@code /gamerule awaken:fauna_spawning false} switches the overworld creatures off (plan v2 section 6, rollback). */

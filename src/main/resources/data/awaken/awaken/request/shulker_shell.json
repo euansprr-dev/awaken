@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "minecraft:shulker_shell",
+  "count": {
+    "A": 4,
+    "S": 6
+  },
+  "weight": 10,
+  "value": 2.0,
+  "any_of": [
+    "killed:minecraft:shulker"
+  ],
+  "hint": "Shulkers hide in the End's cities"
+}

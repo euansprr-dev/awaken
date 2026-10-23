@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "tag": "minecraft:logs",
+  "name": "Logs",
+  "count": {
+    "E": 16,
+    "D": 24
+  },
+  "weight": 6,
+  "value": 0.15,
+  "hint": "Any wood will do: fell a few trees"
+}

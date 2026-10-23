@@ -1,0 +1,305 @@
+# Structures tour (docs/modules/structures.md): the gate vortex at every rank and in every look, the Well, the four
+# ruin kinds and the nine lairs, each from afar and up close, by day and by night.
+# Run by the integrator: tools/autopilot.sh structures (builders never run a client).
+#
+# Commands it relies on (game master):
+#   /awaken gate showcase <E|D|C|B|A|S|SOVEREIGN> <open|warning|broken|calm|spent|forming> [red]   a display gate ahead
+#   /awaken gate showcase clear                                                                    removes them (96 blocks)
+#   /awaken above ruin showcase <vault|spawn_vault|monolith|ocean_lab|sky_platform>                 a ruin ahead, door toward you
+#   /awaken landmark goto <well|vault|monolith|ocean_lab|sky_platform>   48 blocks south of the nearest real one, facing it
+#   /awaken fauna lair place <beast>                                     a lair 16 blocks ahead
+# Moving to fresh ground between builds: spreadplayers drops you on the surface 90 blocks east.
+world autopilot_structures creative 20261023
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule send_command_feedback false
+
+# ---- the Well: the landmark near spawn (it is built in the first seconds of a new world) ----
+cmd awaken landmark goto well
+wait 200
+look 180 4
+wait 20
+shot structures_01_well_far_day
+cmd time set 18000
+wait 40
+# night: glyph bands and crowns of light on the twelve pillars, the lantern pylons, the glowing mouth of the shaft
+shot structures_02_well_far_night
+cmd tp @s ^ ^ ^30
+look 180 30
+wait 40
+shot structures_03_well_close_night
+cmd time set 6000
+wait 30
+shot structures_04_well_close_day
+look 180 70
+wait 20
+# straight down the shaft: rings of glyph light, the pool's lights far below
+shot structures_05_well_shaft
+
+# ---- gates: every rank open, from afar, by day; the vortex hangs over a scorched pad between leaning rock fangs ----
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -4
+cmd awaken gate showcase E open
+wait 60
+shot structures_10_gate_e_day
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -4
+cmd awaken gate showcase D open
+wait 60
+shot structures_11_gate_d_day
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -6
+cmd awaken gate showcase C open
+wait 60
+shot structures_12_gate_c_day
+cmd time set 18000
+wait 40
+shot structures_13_gate_c_night
+cmd tp @s ^ ^ ^12
+wait 30
+# close: the arms turn smoothly, motes spiral in, shards orbit the rim, fissures glow in the rank colour
+shot structures_14_gate_c_close_night
+cmd time set 6000
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -6
+cmd awaken gate showcase B open
+wait 60
+shot structures_15_gate_b_day
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -8
+cmd awaken gate showcase A open
+wait 60
+shot structures_16_gate_a_day
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -10
+cmd awaken gate showcase S open
+wait 60
+shot structures_17_gate_s_day
+cmd time set 18000
+wait 40
+shot structures_18_gate_s_night
+cmd tp @s ^ ^ ^16
+look 0 -25
+wait 30
+shot structures_19_gate_s_close_night
+cmd time set 6000
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -12
+cmd awaken gate showcase SOVEREIGN open
+wait 60
+# gold on black, unmistakable
+shot structures_20_gate_sovereign_day
+cmd time set 18000
+wait 40
+shot structures_21_gate_sovereign_night
+cmd time set 6000
+cmd awaken gate showcase clear
+
+# ---- gates: the looks, on a C-rank ----
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -6
+cmd awaken gate showcase C warning
+wait 60
+# about to break: it breathes, the rim flickers red, cracks spread over the pad
+shot structures_22_gate_warning_day
+cmd time set 18000
+wait 40
+shot structures_23_gate_warning_night
+cmd time set 6000
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -6
+cmd awaken gate showcase S broken
+wait 60
+# broken: red-black and churning, the fangs snapped, shards fallen, the fissures red, ash
+shot structures_24_gate_broken_day
+cmd time set 18000
+wait 40
+shot structures_25_gate_broken_night
+cmd time set 6000
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -6
+cmd awaken gate showcase C calm
+wait 60
+# calm (the story's ending): slow, pale, still
+shot structures_26_gate_calm
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -6
+cmd awaken gate showcase C spent
+wait 60
+# spent (cleared): shrunk and dim
+shot structures_27_gate_spent
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -6
+cmd awaken gate showcase B open true
+wait 60
+# a Red Gate: the rim and glow turn red whatever the rank
+shot structures_28_gate_red
+cmd awaken gate showcase clear
+cmd spreadplayers ~90 ~ 0 1 false @s
+wait 60
+look 0 -6
+cmd awaken gate showcase C forming
+wait 25
+# forming: it grows from a point (taken mid-growth)
+shot structures_29_gate_forming
+cmd awaken gate showcase clear
+
+# ---- ruins, built ahead on fresh ground: far by day, far by night, close ----
+cmd spreadplayers ~120 ~ 0 1 false @s
+wait 60
+look 0 -2
+cmd awaken above ruin showcase vault
+wait 60
+# the sealed vault: two spires with amber crowns, the beacon mast, pilasters and recessed glyph panels, the portal
+shot structures_30_vault_far_day
+cmd time set 18000
+wait 40
+shot structures_31_vault_far_night
+cmd tp @s ^ ^ ^14
+look 0 0
+wait 30
+shot structures_32_vault_portal_night
+cmd time set 6000
+wait 20
+shot structures_33_vault_portal_day
+cmd tp @s ^ ^ ^8
+wait 20
+# inside the antechamber: the ring of light round the sealed rank door, the fallen ceiling's corner
+shot structures_34_vault_door
+cmd spreadplayers ~120 ~ 0 1 false @s
+wait 60
+look 0 -28
+cmd awaken above ruin showcase monolith
+wait 60
+# the monolith: a black obelisk with blue glyph channels, its capstone floating over three blocks of air
+shot structures_35_monolith_far_day
+cmd time set 18000
+wait 40
+shot structures_36_monolith_far_night
+cmd time set 6000
+cmd spreadplayers ~120 ~ 0 1 false @s
+wait 60
+look 0 -30
+cmd awaken above ruin showcase sky_platform
+wait 80
+# from below: the keel's glowing rings, the islands and their chains
+shot structures_37_sky_platform_below_day
+cmd time set 18000
+wait 40
+shot structures_38_sky_platform_below_night
+cmd time set 6000
+cmd tp @s ~ ~30 ~
+look 0 20
+wait 40
+shot structures_39_sky_platform_level
+# the real ones where the seed placed them (terrain fit); skipped silently if none is within reach
+cmd awaken landmark goto vault
+wait 200
+shot structures_40_vault_in_the_world
+cmd awaken landmark goto monolith
+wait 200
+shot structures_41_monolith_in_the_world
+cmd awaken landmark goto ocean_lab
+wait 200
+cmd time set 18000
+wait 40
+# lit domes under water
+shot structures_42_ocean_lab_night
+cmd time set 6000
+
+# ---- lairs: each beast's home, built ahead (its biome's look where the place command picks one) ----
+cmd spreadplayers ~150 ~ 0 1 false @s
+wait 60
+look 0 15
+cmd awaken fauna lair place briar_sow
+wait 40
+shot structures_50_lair_wallow
+cmd spreadplayers ~60 ~ 0 1 false @s
+wait 40
+look 0 15
+cmd awaken fauna lair place dune_wyrm
+wait 40
+shot structures_51_lair_glass_hollow
+cmd spreadplayers ~60 ~ 0 1 false @s
+wait 40
+look 0 15
+cmd awaken fauna lair place old_antler
+wait 40
+shot structures_52_lair_antler_grove
+cmd spreadplayers ~60 ~ 0 1 false @s
+wait 40
+look 0 15
+cmd awaken fauna lair place mire_mother
+wait 40
+shot structures_53_lair_toad_throne
+cmd spreadplayers ~60 ~ 0 1 false @s
+wait 40
+look 0 15
+cmd awaken fauna lair place plumed_coil
+wait 40
+shot structures_54_lair_serpent_shrine
+cmd spreadplayers ~60 ~ 0 1 false @s
+wait 40
+look 0 15
+cmd awaken fauna lair place weaver_queen
+wait 40
+shot structures_55_lair_silk_hollow
+cmd spreadplayers ~60 ~ 0 1 false @s
+wait 40
+look 0 15
+cmd awaken fauna lair place empress_moth
+wait 40
+shot structures_56_lair_petal_bower
+cmd time set 18000
+wait 40
+# the bower by night: end rods round the chrysalis, lanterns at the trunks
+shot structures_57_lair_petal_bower_night
+cmd time set 6000
+cmd spreadplayers ~60 ~ 0 1 false @s
+wait 40
+look 0 15
+cmd awaken fauna lair place stonehorn
+wait 40
+shot structures_58_lair_rams_cairn
+cmd spreadplayers ~60 ~ 0 1 false @s
+wait 40
+look 0 15
+cmd awaken fauna lair place mycelord
+wait 40
+shot structures_59_lair_spore_ring
+cmd time set 18000
+wait 40
+shot structures_60_lair_spore_ring_night
+cmd time resume
+quit

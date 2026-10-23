@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:foundry_lamp",
+  "count": {
+    "B": 6,
+    "A": 6
+  },
+  "weight": 6,
+  "value": 0.9,
+  "any_of": [
+    "mined:awaken:foundry_lamp"
+  ],
+  "hint": "Lamps burn on in the Precursor Foundry",
+  "group": "strata"
+}

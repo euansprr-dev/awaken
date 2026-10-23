@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:toadstone",
+  "count": {
+    "D": 2,
+    "C": 2,
+    "B": 3
+  },
+  "weight": 5,
+  "value": 8.0,
+  "any_of": [
+    "killed:awaken:mire_mother"
+  ],
+  "hint": "The Mire Mother sits on her Toad Throne",
+  "group": "beast"
+}

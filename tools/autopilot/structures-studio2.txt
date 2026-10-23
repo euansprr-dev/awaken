@@ -1,0 +1,278 @@
+# Structures studio, part 2: the biggest gates and the ruins on a large sky platform (room to step back).
+world structstudio2 creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -40 150 -48 39 150 -1 minecraft:smooth_stone
+cmd fill -40 150 0 39 150 63 minecraft:smooth_stone
+cmd fill -40 151 -48 39 155 -1 minecraft:air
+cmd fill -40 151 0 39 155 63 minecraft:air
+cmd fill -40 156 -48 39 160 -1 minecraft:air
+cmd fill -40 156 0 39 160 63 minecraft:air
+cmd fill -40 161 -48 39 165 -1 minecraft:air
+cmd fill -40 161 0 39 165 63 minecraft:air
+cmd fill -40 166 -48 39 170 -1 minecraft:air
+cmd fill -40 166 0 39 170 63 minecraft:air
+cmd fill -40 171 -48 39 175 -1 minecraft:air
+cmd fill -40 171 0 39 175 63 minecraft:air
+cmd fill -40 176 -48 39 180 -1 minecraft:air
+cmd fill -40 176 0 39 180 63 minecraft:air
+cmd fill -40 181 -48 39 185 -1 minecraft:air
+cmd fill -40 181 0 39 185 63 minecraft:air
+cmd fill -40 186 -48 39 190 -1 minecraft:air
+cmd fill -40 186 0 39 190 63 minecraft:air
+cmd fill -40 191 -48 39 195 -1 minecraft:air
+cmd fill -40 191 0 39 195 63 minecraft:air
+cmd fill -40 196 -48 39 200 -1 minecraft:air
+cmd fill -40 196 0 39 200 63 minecraft:air
+wait 10
+# gate_c_open_red
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase C open true
+wait 60
+cmd tp @s 0.5 151 -1.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot s2_gate_c_open_red_day
+cmd time set 18000
+wait 30
+shot s2_gate_c_open_red_night
+# gate_s_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase S open
+wait 60
+cmd tp @s 0.5 151 -13.5 0 0
+look 0 -14
+cmd time set 6000
+wait 30
+shot s2_gate_s_open_day
+cmd time set 18000
+wait 30
+shot s2_gate_s_open_night
+# gate_sovereign_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase SOVEREIGN open
+wait 60
+cmd tp @s 0.5 151 -17.5 0 0
+look 0 -16
+cmd time set 6000
+wait 30
+shot s2_gate_sovereign_open_day
+cmd time set 18000
+wait 30
+shot s2_gate_sovereign_open_night
+cmd awaken gate showcase clear
+# ruin vault
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -40 150 -48 39 150 -1 minecraft:smooth_stone
+cmd fill -40 150 0 39 150 63 minecraft:smooth_stone
+cmd fill -40 151 -48 39 155 -1 minecraft:air
+cmd fill -40 151 0 39 155 63 minecraft:air
+cmd fill -40 156 -48 39 160 -1 minecraft:air
+cmd fill -40 156 0 39 160 63 minecraft:air
+cmd fill -40 161 -48 39 165 -1 minecraft:air
+cmd fill -40 161 0 39 165 63 minecraft:air
+cmd fill -40 166 -48 39 170 -1 minecraft:air
+cmd fill -40 166 0 39 170 63 minecraft:air
+cmd fill -40 171 -48 39 175 -1 minecraft:air
+cmd fill -40 171 0 39 175 63 minecraft:air
+cmd fill -40 176 -48 39 180 -1 minecraft:air
+cmd fill -40 176 0 39 180 63 minecraft:air
+cmd fill -40 181 -48 39 185 -1 minecraft:air
+cmd fill -40 181 0 39 185 63 minecraft:air
+cmd fill -40 186 -48 39 190 -1 minecraft:air
+cmd fill -40 186 0 39 190 63 minecraft:air
+cmd fill -40 191 -48 39 195 -1 minecraft:air
+cmd fill -40 191 0 39 195 63 minecraft:air
+cmd fill -40 196 -48 39 200 -1 minecraft:air
+cmd fill -40 196 0 39 200 63 minecraft:air
+wait 10
+cmd awaken above ruin showcase vault
+wait 120
+cmd tp @s 0.5 151 -15.5 0 0
+look 0 -8
+cmd time set 6000
+wait 30
+shot s2_ruin_vault_day
+cmd time set 13000
+wait 30
+shot s2_ruin_vault_dusk
+cmd time set 18000
+wait 30
+shot s2_ruin_vault_night
+# ruin monolith
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -40 150 -48 39 150 -1 minecraft:smooth_stone
+cmd fill -40 150 0 39 150 63 minecraft:smooth_stone
+cmd fill -40 151 -48 39 155 -1 minecraft:air
+cmd fill -40 151 0 39 155 63 minecraft:air
+cmd fill -40 156 -48 39 160 -1 minecraft:air
+cmd fill -40 156 0 39 160 63 minecraft:air
+cmd fill -40 161 -48 39 165 -1 minecraft:air
+cmd fill -40 161 0 39 165 63 minecraft:air
+cmd fill -40 166 -48 39 170 -1 minecraft:air
+cmd fill -40 166 0 39 170 63 minecraft:air
+cmd fill -40 171 -48 39 175 -1 minecraft:air
+cmd fill -40 171 0 39 175 63 minecraft:air
+cmd fill -40 176 -48 39 180 -1 minecraft:air
+cmd fill -40 176 0 39 180 63 minecraft:air
+cmd fill -40 181 -48 39 185 -1 minecraft:air
+cmd fill -40 181 0 39 185 63 minecraft:air
+cmd fill -40 186 -48 39 190 -1 minecraft:air
+cmd fill -40 186 0 39 190 63 minecraft:air
+cmd fill -40 191 -48 39 195 -1 minecraft:air
+cmd fill -40 191 0 39 195 63 minecraft:air
+cmd fill -40 196 -48 39 200 -1 minecraft:air
+cmd fill -40 196 0 39 200 63 minecraft:air
+wait 10
+cmd awaken above ruin showcase monolith
+wait 120
+cmd tp @s 0.5 151 -35.5 0 0
+look 0 -22
+cmd time set 6000
+wait 30
+shot s2_ruin_monolith_day
+cmd time set 13000
+wait 30
+shot s2_ruin_monolith_dusk
+cmd time set 18000
+wait 30
+shot s2_ruin_monolith_night
+# ruin ocean_lab
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -40 150 -48 39 150 -1 minecraft:smooth_stone
+cmd fill -40 150 0 39 150 63 minecraft:smooth_stone
+cmd fill -40 151 -48 39 155 -1 minecraft:air
+cmd fill -40 151 0 39 155 63 minecraft:air
+cmd fill -40 156 -48 39 160 -1 minecraft:air
+cmd fill -40 156 0 39 160 63 minecraft:air
+cmd fill -40 161 -48 39 165 -1 minecraft:air
+cmd fill -40 161 0 39 165 63 minecraft:air
+cmd fill -40 166 -48 39 170 -1 minecraft:air
+cmd fill -40 166 0 39 170 63 minecraft:air
+cmd fill -40 171 -48 39 175 -1 minecraft:air
+cmd fill -40 171 0 39 175 63 minecraft:air
+cmd fill -40 176 -48 39 180 -1 minecraft:air
+cmd fill -40 176 0 39 180 63 minecraft:air
+cmd fill -40 181 -48 39 185 -1 minecraft:air
+cmd fill -40 181 0 39 185 63 minecraft:air
+cmd fill -40 186 -48 39 190 -1 minecraft:air
+cmd fill -40 186 0 39 190 63 minecraft:air
+cmd fill -40 191 -48 39 195 -1 minecraft:air
+cmd fill -40 191 0 39 195 63 minecraft:air
+cmd fill -40 196 -48 39 200 -1 minecraft:air
+cmd fill -40 196 0 39 200 63 minecraft:air
+wait 10
+cmd awaken above ruin showcase ocean_lab
+wait 120
+cmd tp @s 0.5 151 -15.5 0 0
+look 0 -6
+cmd time set 6000
+wait 30
+shot s2_ruin_ocean_lab_day
+cmd time set 13000
+wait 30
+shot s2_ruin_ocean_lab_dusk
+cmd time set 18000
+wait 30
+shot s2_ruin_ocean_lab_night
+# ruin sky_platform
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -40 150 -48 39 150 -1 minecraft:smooth_stone
+cmd fill -40 150 0 39 150 63 minecraft:smooth_stone
+cmd fill -40 151 -48 39 155 -1 minecraft:air
+cmd fill -40 151 0 39 155 63 minecraft:air
+cmd fill -40 156 -48 39 160 -1 minecraft:air
+cmd fill -40 156 0 39 160 63 minecraft:air
+cmd fill -40 161 -48 39 165 -1 minecraft:air
+cmd fill -40 161 0 39 165 63 minecraft:air
+cmd fill -40 166 -48 39 170 -1 minecraft:air
+cmd fill -40 166 0 39 170 63 minecraft:air
+cmd fill -40 171 -48 39 175 -1 minecraft:air
+cmd fill -40 171 0 39 175 63 minecraft:air
+cmd fill -40 176 -48 39 180 -1 minecraft:air
+cmd fill -40 176 0 39 180 63 minecraft:air
+cmd fill -40 181 -48 39 185 -1 minecraft:air
+cmd fill -40 181 0 39 185 63 minecraft:air
+cmd fill -40 186 -48 39 190 -1 minecraft:air
+cmd fill -40 186 0 39 190 63 minecraft:air
+cmd fill -40 191 -48 39 195 -1 minecraft:air
+cmd fill -40 191 0 39 195 63 minecraft:air
+cmd fill -40 196 -48 39 200 -1 minecraft:air
+cmd fill -40 196 0 39 200 63 minecraft:air
+wait 10
+cmd awaken above ruin showcase sky_platform
+wait 120
+cmd tp @s 0.5 151 -25.5 0 0
+look 0 -14
+cmd time set 6000
+wait 30
+shot s2_ruin_sky_platform_day
+cmd time set 13000
+wait 30
+shot s2_ruin_sky_platform_dusk
+cmd time set 18000
+wait 30
+shot s2_ruin_sky_platform_night
+# ruin spawn_vault
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -40 150 -48 39 150 -1 minecraft:smooth_stone
+cmd fill -40 150 0 39 150 63 minecraft:smooth_stone
+cmd fill -40 151 -48 39 155 -1 minecraft:air
+cmd fill -40 151 0 39 155 63 minecraft:air
+cmd fill -40 156 -48 39 160 -1 minecraft:air
+cmd fill -40 156 0 39 160 63 minecraft:air
+cmd fill -40 161 -48 39 165 -1 minecraft:air
+cmd fill -40 161 0 39 165 63 minecraft:air
+cmd fill -40 166 -48 39 170 -1 minecraft:air
+cmd fill -40 166 0 39 170 63 minecraft:air
+cmd fill -40 171 -48 39 175 -1 minecraft:air
+cmd fill -40 171 0 39 175 63 minecraft:air
+cmd fill -40 176 -48 39 180 -1 minecraft:air
+cmd fill -40 176 0 39 180 63 minecraft:air
+cmd fill -40 181 -48 39 185 -1 minecraft:air
+cmd fill -40 181 0 39 185 63 minecraft:air
+cmd fill -40 186 -48 39 190 -1 minecraft:air
+cmd fill -40 186 0 39 190 63 minecraft:air
+cmd fill -40 191 -48 39 195 -1 minecraft:air
+cmd fill -40 191 0 39 195 63 minecraft:air
+cmd fill -40 196 -48 39 200 -1 minecraft:air
+cmd fill -40 196 0 39 200 63 minecraft:air
+wait 10
+cmd awaken above ruin showcase spawn_vault
+wait 120
+cmd tp @s 0.5 151 -15.5 0 0
+look 0 -8
+cmd time set 6000
+wait 30
+shot s2_ruin_spawn_vault_day
+cmd time set 13000
+wait 30
+shot s2_ruin_spawn_vault_dusk
+cmd time set 18000
+wait 30
+shot s2_ruin_spawn_vault_night
+quit

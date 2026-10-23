@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:molten_core",
+  "count": {
+    "E": 2,
+    "D": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:ember_tyrant"
+  ],
+  "hint": "The Ember Tyrant holds the deepest Ember Mine",
+  "group": "lord"
+}

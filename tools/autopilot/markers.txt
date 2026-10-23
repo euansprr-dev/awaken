@@ -1,0 +1,44 @@
+# Landmark markers: the vault's light shaft and the Well's pillar glow, seen from above the trees at 48, 120 and 220
+# blocks, at noon (nothing), dusk (the shaft at its brightest) and midnight (faint shaft, glowing pillars).
+world markers creative 5150
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 100000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 40
+screen close
+cmd awaken landmark goto vault
+wait 40
+cmd tp @s ~ ~24 ~
+cmd effect give @s minecraft:slow_falling 600 0 true
+wait 30
+cmd time set 6000
+wait 30
+shot mk_vault_48_noon
+cmd time set 12400
+wait 40
+shot mk_vault_48_dusk
+cmd tp @s ~ ~ ~72
+wait 40
+shot mk_vault_120_dusk
+cmd tp @s ~ ~ ~100
+wait 40
+shot mk_vault_220_dusk
+cmd time set 18000
+wait 40
+shot mk_vault_220_night
+cmd awaken landmark goto well
+wait 40
+cmd tp @s ~ ~30 ~
+wait 30
+cmd time set 18000
+wait 40
+shot mk_well_48_night
+cmd tp @s ~ ~ ~100
+wait 40
+shot mk_well_150_night
+quit

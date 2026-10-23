@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "item": "awaken:crag_horn",
+  "count": {
+    "E": 3,
+    "D": 4,
+    "C": 6
+  },
+  "weight": 12,
+  "value": 2.0,
+  "any_of": [
+    "seen:crag_ram",
+    "seen:stonehorn"
+  ],
+  "hint": "Crag Rams graze the ledges: mind the drop",
+  "group": "crag"
+}

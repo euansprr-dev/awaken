@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_boots",
+  "key": {
+    "C": "#awaken:hunter_core_s",
+    "H": "#awaken:hunter_hide_s",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "H H",
+    "CSC"
+  ],
+  "result": {
+    "id": "awaken:sovereign_boots"
+  }
+}

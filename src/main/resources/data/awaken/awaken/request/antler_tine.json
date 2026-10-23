@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:antler_tine",
+  "count": {
+    "D": 2,
+    "C": 2,
+    "B": 3
+  },
+  "weight": 5,
+  "value": 8.0,
+  "any_of": [
+    "killed:awaken:old_antler"
+  ],
+  "hint": "The Old Antler keeps to his grove of pale posts",
+  "group": "beast"
+}

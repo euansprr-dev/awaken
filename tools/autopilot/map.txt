@@ -1,0 +1,24 @@
+# The Gate Map with gates and the lairs you know (heard of: outlined; found: filled), and the Codex.
+world mapcheck creative 4242
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken fauna lair hear briar_sow
+cmd awaken fauna lair hear old_antler
+cmd awaken fauna lair hear dune_wyrm
+cmd awaken fauna lair hear mire_mother
+cmd awaken fauna lair hear stonehorn
+wait 60
+screen map
+wait 20
+shot map_00_gate_map_lairs
+screen codex
+wait 20
+shot map_01_codex
+screen close
+quit

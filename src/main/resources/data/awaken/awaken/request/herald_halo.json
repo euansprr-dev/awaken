@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:herald_halo",
+  "count": {
+    "A": 2,
+    "S": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:hollow_herald"
+  ],
+  "hint": "The Hollow Herald waits in an Abyssal Shrine",
+  "group": "lord"
+}

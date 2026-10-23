@@ -1,0 +1,321 @@
+# Structures studio: every gate rank and look, and each ruin, built ahead of you on a clean platform in the sky so
+# nothing stands in front. Day and night. Run by the integrator.
+world structstudio creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -32 150 -8 31 150 55 minecraft:smooth_stone
+cmd fill -32 151 -8 31 158 55 minecraft:air
+cmd fill -32 159 -8 31 166 55 minecraft:air
+cmd fill -32 167 -8 31 174 55 minecraft:air
+cmd fill -32 175 -8 31 182 55 minecraft:air
+cmd fill -32 183 -8 31 190 55 minecraft:air
+wait 10
+# gate_e_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase E open
+wait 60
+look 0 -6
+cmd time set 6000
+wait 30
+shot ss_gate_e_open_day
+cmd time set 18000
+wait 30
+shot ss_gate_e_open_night
+# gate_d_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase D open
+wait 60
+look 0 -8
+cmd time set 6000
+wait 30
+shot ss_gate_d_open_day
+cmd time set 18000
+wait 30
+shot ss_gate_d_open_night
+# gate_c_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase C open
+wait 60
+cmd tp @s 0.5 151 -1.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_gate_c_open_day
+cmd time set 18000
+wait 30
+shot ss_gate_c_open_night
+# gate_b_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase B open
+wait 60
+cmd tp @s 0.5 151 -3.5 0 0
+look 0 -12
+cmd time set 6000
+wait 30
+shot ss_gate_b_open_day
+cmd time set 18000
+wait 30
+shot ss_gate_b_open_night
+# gate_a_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase A open
+wait 60
+cmd tp @s 0.5 151 -7.5 0 0
+look 0 -14
+cmd time set 6000
+wait 30
+shot ss_gate_a_open_day
+cmd time set 18000
+wait 30
+shot ss_gate_a_open_night
+# gate_s_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase S open
+wait 60
+cmd tp @s 0.5 151 -11.5 0 0
+look 0 -16
+cmd time set 6000
+wait 30
+shot ss_gate_s_open_day
+cmd time set 18000
+wait 30
+shot ss_gate_s_open_night
+# gate_sovereign_open
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase SOVEREIGN open
+wait 60
+cmd tp @s 0.5 151 -13.5 0 0
+look 0 -18
+cmd time set 6000
+wait 30
+shot ss_gate_sovereign_open_day
+cmd time set 18000
+wait 30
+shot ss_gate_sovereign_open_night
+# gate_c_forming
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase C forming
+wait 60
+cmd tp @s 0.5 151 -1.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_gate_c_forming_day
+cmd time set 18000
+wait 30
+shot ss_gate_c_forming_night
+# gate_c_warning
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase C warning
+wait 60
+cmd tp @s 0.5 151 -1.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_gate_c_warning_day
+cmd time set 18000
+wait 30
+shot ss_gate_c_warning_night
+# gate_c_broken
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase C broken
+wait 60
+cmd tp @s 0.5 151 -1.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_gate_c_broken_day
+cmd time set 18000
+wait 30
+shot ss_gate_c_broken_night
+# gate_c_calm
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase C calm
+wait 60
+cmd tp @s 0.5 151 -1.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_gate_c_calm_day
+cmd time set 18000
+wait 30
+shot ss_gate_c_calm_night
+# gate_c_spent
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase C spent
+wait 60
+cmd tp @s 0.5 151 -1.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_gate_c_spent_day
+cmd time set 18000
+wait 30
+shot ss_gate_c_spent_night
+# gate_c_open_red
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken gate showcase clear
+wait 10
+cmd awaken gate showcase C open red
+wait 60
+cmd tp @s 0.5 151 -1.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_gate_c_open_red_day
+cmd time set 18000
+wait 30
+shot ss_gate_c_open_red_night
+cmd awaken gate showcase clear
+# ruin vault
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -32 150 -8 31 150 55 minecraft:smooth_stone
+cmd fill -32 151 -8 31 158 55 minecraft:air
+cmd fill -32 159 -8 31 166 55 minecraft:air
+cmd fill -32 167 -8 31 174 55 minecraft:air
+cmd fill -32 175 -8 31 182 55 minecraft:air
+cmd fill -32 183 -8 31 190 55 minecraft:air
+wait 10
+cmd awaken above ruin showcase vault
+wait 120
+cmd tp @s 0.5 151 -9.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_ruin_vault_day
+cmd time set 13000
+wait 30
+shot ss_ruin_vault_dusk
+cmd time set 18000
+wait 30
+shot ss_ruin_vault_night
+# ruin spawn_vault
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -32 150 -8 31 150 55 minecraft:smooth_stone
+cmd fill -32 151 -8 31 158 55 minecraft:air
+cmd fill -32 159 -8 31 166 55 minecraft:air
+cmd fill -32 167 -8 31 174 55 minecraft:air
+cmd fill -32 175 -8 31 182 55 minecraft:air
+cmd fill -32 183 -8 31 190 55 minecraft:air
+wait 10
+cmd awaken above ruin showcase spawn_vault
+wait 120
+cmd tp @s 0.5 151 -9.5 0 0
+look 0 -10
+cmd time set 6000
+wait 30
+shot ss_ruin_spawn_vault_day
+cmd time set 13000
+wait 30
+shot ss_ruin_spawn_vault_dusk
+cmd time set 18000
+wait 30
+shot ss_ruin_spawn_vault_night
+# ruin monolith
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -32 150 -8 31 150 55 minecraft:smooth_stone
+cmd fill -32 151 -8 31 158 55 minecraft:air
+cmd fill -32 159 -8 31 166 55 minecraft:air
+cmd fill -32 167 -8 31 174 55 minecraft:air
+cmd fill -32 175 -8 31 182 55 minecraft:air
+cmd fill -32 183 -8 31 190 55 minecraft:air
+wait 10
+cmd awaken above ruin showcase monolith
+wait 120
+cmd tp @s 0.5 151 -29.5 0 0
+look 0 -25
+cmd time set 6000
+wait 30
+shot ss_ruin_monolith_day
+cmd time set 13000
+wait 30
+shot ss_ruin_monolith_dusk
+cmd time set 18000
+wait 30
+shot ss_ruin_monolith_night
+# ruin ocean_lab
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -32 150 -8 31 150 55 minecraft:smooth_stone
+cmd fill -32 151 -8 31 158 55 minecraft:air
+cmd fill -32 159 -8 31 166 55 minecraft:air
+cmd fill -32 167 -8 31 174 55 minecraft:air
+cmd fill -32 175 -8 31 182 55 minecraft:air
+cmd fill -32 183 -8 31 190 55 minecraft:air
+wait 10
+cmd awaken above ruin showcase ocean_lab
+wait 120
+cmd tp @s 0.5 151 -9.5 0 0
+look 0 -8
+cmd time set 6000
+wait 30
+shot ss_ruin_ocean_lab_day
+cmd time set 13000
+wait 30
+shot ss_ruin_ocean_lab_dusk
+cmd time set 18000
+wait 30
+shot ss_ruin_ocean_lab_night
+# ruin sky_platform
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -32 150 -8 31 150 55 minecraft:smooth_stone
+cmd fill -32 151 -8 31 158 55 minecraft:air
+cmd fill -32 159 -8 31 166 55 minecraft:air
+cmd fill -32 167 -8 31 174 55 minecraft:air
+cmd fill -32 175 -8 31 182 55 minecraft:air
+cmd fill -32 183 -8 31 190 55 minecraft:air
+wait 10
+cmd awaken above ruin showcase sky_platform
+wait 120
+cmd tp @s 0.5 151 -19.5 0 0
+look 0 -15
+cmd time set 6000
+wait 30
+shot ss_ruin_sky_platform_day
+cmd time set 13000
+wait 30
+shot ss_ruin_sky_platform_dusk
+cmd time set 18000
+wait 30
+shot ss_ruin_sky_platform_night
+quit

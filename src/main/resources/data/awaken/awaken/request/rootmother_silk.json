@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:rootmother_silk",
+  "count": {
+    "E": 1,
+    "D": 2
+  },
+  "weight": 6,
+  "value": 7.0,
+  "any_of": [
+    "killed:awaken:guardian_rim"
+  ],
+  "hint": "The Rootmother guards the Rim",
+  "group": "guardian"
+}

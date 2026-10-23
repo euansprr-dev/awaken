@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:choirmaster_pearl",
+  "count": {
+    "D": 2,
+    "C": 2
+  },
+  "weight": 6,
+  "value": 7.0,
+  "any_of": [
+    "killed:awaken:guardian_choir"
+  ],
+  "hint": "The Choirmaster sings in the Drowned Choir",
+  "group": "guardian"
+}

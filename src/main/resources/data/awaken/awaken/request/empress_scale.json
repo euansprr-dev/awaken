@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:empress_scale",
+  "count": {
+    "D": 2,
+    "C": 2,
+    "B": 3
+  },
+  "weight": 5,
+  "value": 8.0,
+  "any_of": [
+    "killed:awaken:empress_moth"
+  ],
+  "hint": "The Empress Moth rests in the Petal Bower",
+  "group": "beast"
+}
