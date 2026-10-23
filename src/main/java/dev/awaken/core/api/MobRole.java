@@ -11,7 +11,7 @@ import java.util.Optional;
  */
 public record MobRole(Role role, int contentLevel, String theme, Optional<String> bossId, String gateId) {
     public enum Role { NONE, NORMAL, ELITE, WARDEN, BOSS, BREAK, ECHO, NIGHTMARE, SPIRIT;
-        public static final Codec<Role> CODEC = Codec.STRING.xmap(Role::valueOf, Role::name); }
+        public static final Codec<Role> CODEC = dev.awaken.core.Codecs.lenientEnum(Role.class, NONE); }
 
     public static final MobRole NONE = new MobRole(Role.NONE, 0, "", Optional.empty(), "");
 
@@ -22,6 +22,11 @@ public record MobRole(Role role, int contentLevel, String theme, Optional<String
             Codec.STRING.optionalFieldOf("boss").forGetter(MobRole::bossId),
             Codec.STRING.optionalFieldOf("gate", "").forGetter(MobRole::gateId)
     ).apply(i, MobRole::new));
+
+    /** The role of an entity without creating an attachment on it. */
+    public static MobRole of(net.minecraft.world.entity.Entity e) {
+        return e.getExistingData(CoreApi.MOB_ROLE).orElse(NONE);
+    }
 
     public boolean isBindable() {
         return role == Role.ELITE || role == Role.WARDEN || role == Role.BOSS;

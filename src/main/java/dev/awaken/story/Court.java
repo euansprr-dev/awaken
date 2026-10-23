@@ -28,7 +28,12 @@ final class Court {
 
     static void onJoin(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide() || !(event.getEntity() instanceof LivingEntity e)) return;
-        MobRole role = e.getData(CoreApi.MOB_ROLE.get());
+        // Court Sovereigns are summoned fresh each visit; a copy reloaded from disk would be a duplicate.
+        if (event.loadedFromDisk() && e.getPersistentData().getBooleanOr(COURT_TAG, false)) {
+            event.setCanceled(true);
+            return;
+        }
+        MobRole role = MobRole.of(e);
         if (role.bossId().isEmpty()) return;
         StoryContent.Sovereign sov = StoryContent.SOVEREIGNS.get(net.minecraft.resources.Identifier.tryParse(role.bossId().get()));
         String boss = role.bossId().get();
@@ -52,8 +57,8 @@ final class Court {
 
     static void onDeath(LivingDeathEvent event) {
         LivingEntity e = event.getEntity();
-        if (e.level().isClientSide()) return;
-        MobRole role = e.getData(CoreApi.MOB_ROLE.get());
+        if (e.level().isClientSide() || !Prologue.storyOn()) return;
+        MobRole role = MobRole.of(e);
         if (role.bossId().isEmpty()) return;
         String boss = role.bossId().get();
         StoryContent.Sovereign sov = StoryContent.SOVEREIGNS.get(net.minecraft.resources.Identifier.tryParse(boss));
@@ -87,24 +92,44 @@ final class Court {
      * Every 30 seconds: an S-rank player in the Hollow Court with no Sovereign nearby meets the next one they haven't set
      * free; a player in the Seed whose Court is empty starts the finale (once at a time).
      */
+    static final String COURT_TAG = "awaken_court";
+    private static final java.util.Map<java.util.UUID, java.util.UUID> SUMMONED = new java.util.HashMap<>();
+
+    static void forget() {
+        SUMMONED.clear();
+        PLAYING.clear();
+    }
+
+    /**
+     * Every 30 seconds an S-rank player in the Hollow Court with no Sovereign of theirs alive meets the next one they
+     * haven't set free. One per player at a time, never near the camp, never for spectators or creative players.
+     * The finale in the Seed is started by the Descent's own arena check.
+     */
     static void courtTick(MinecraftServer server) {
-        if (server.getTickCount() % 600 != 300) return;
+        if (server.getTickCount() % 600 != 300 || !Prologue.storyOn()) return;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-            if (!(p.level() instanceof net.minecraft.server.level.ServerLevel level)) continue;
-            int depth = dev.awaken.descent.Descent.depthOf(p);
+            if (!(p.level() instanceof net.minecraft.server.level.ServerLevel level) || p.isSpectator() || p.isCreative()) continue;
+            if (dev.awaken.descent.Descent.depthOf(p) != 9 || Progression.rank(p).ordinal() < Rank.S.ordinal()) continue;
+            if (dev.awaken.descent.Descent.nearCamp(p, 9, 40)) continue;
+            java.util.UUID mine = SUMMONED.get(p.getUUID());
+            if (mine != null && level.getEntity(mine) instanceof LivingEntity alive && alive.isAlive()) continue;
             StoryProgress s = Prologue.progress(p);
-            if (depth == 9 && Progression.rank(p).ordinal() >= Rank.S.ordinal()) {
-                String next = ORDER.stream().filter(id -> !s.sovereignsDefeated.contains(id)).findFirst().orElse(null);
-                if (next == null) continue;
-                boolean alive = !level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(80),
-                        e -> e.isAlive() && e.getData(CoreApi.MOB_ROLE.get()).bossId().map(ORDER::contains).orElse(false)).isEmpty();
-                if (alive) continue;
-                net.minecraft.core.BlockPos at = floorNear(level, p.blockPosition().offset(p.getRandom().nextInt(31) - 15, 0, p.getRandom().nextInt(31) - 15));
-                dev.awaken.core.api.MobHooks.spawnBoss(level, next, at, Rank.S.contentLevel, "");
-            } else if (depth == 10 && seedOpen(p) && !s.seen.contains("seed:defeated")
-                    && !dev.awaken.descent.Descent.finaleActive(server)) {
-                dev.awaken.descent.Descent.beginFinale(p);
+            String next = ORDER.stream().filter(id -> !s.sovereignsDefeated.contains(id)).findFirst().orElse(null);
+            if (next == null) continue;
+            net.minecraft.core.BlockPos at = floorNear(level, p.blockPosition().offset(p.getRandom().nextInt(31) - 15, 0, p.getRandom().nextInt(31) - 15));
+            LivingEntity boss = dev.awaken.core.api.MobHooks.spawnBoss(level, next, at, Rank.S.contentLevel, "");
+            if (boss != null) {
+                boss.getPersistentData().putBoolean(COURT_TAG, true);
+                SUMMONED.put(p.getUUID(), boss.getUUID());
             }
+        }
+    }
+
+    /** Re-offer the ending choice if it was lost (disconnect, crash, death screen). */
+    static void reofferEnding(ServerPlayer p) {
+        StoryProgress s = Prologue.progress(p);
+        if (Prologue.storyOn() && s.seen.contains("seed:defeated") && !s.seen.contains("ending:chosen")) {
+            AwakenNet.send(p, new StoryPayloads.OpenEnding());
         }
     }
 
@@ -131,7 +156,8 @@ final class Court {
     static void choose(ServerPlayer p, String which) {
         StoryProgress s = Prologue.progress(p);
         if (!s.seen.contains("seed:defeated") || s.seen.contains("ending:chosen")) return;
-        StoryContent.Ending ending = StoryContent.ENDINGS.get(Awaken.id(which));
+        var endingId = net.minecraft.resources.Identifier.tryParse("awaken:" + which);
+        StoryContent.Ending ending = endingId == null ? null : StoryContent.ENDINGS.get(endingId);
         if (ending == null) return;
         s.seen.add("ending:chosen");
         s.seen.add("ending:" + which);

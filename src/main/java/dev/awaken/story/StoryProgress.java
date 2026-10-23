@@ -10,7 +10,7 @@ import java.util.Set;
 /** Per-player story state (saved, kept on death, synced to its owner). */
 public final class StoryProgress {
     public enum Prologue { NOT_STARTED, GLITCHED, GATE_OPEN, ACCEPTING, DONE;
-        public static final Codec<Prologue> CODEC = Codec.STRING.xmap(Prologue::valueOf, Prologue::name); }
+        public static final Codec<Prologue> CODEC = dev.awaken.core.Codecs.lenientEnum(Prologue.class, NOT_STARTED); }
 
     Prologue prologue = Prologue.NOT_STARTED;
     String prologueGate = "";

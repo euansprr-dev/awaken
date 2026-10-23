@@ -62,6 +62,11 @@ final class WorldLatents {
         });
     }
 
+    static void forget() {
+        TRACK.clear();
+        SLEPT.clear();
+    }
+
     private static Track track(ServerPlayer p) {
         return TRACK.computeIfAbsent(p.getUUID(), k -> new Track());
     }
@@ -133,8 +138,8 @@ final class WorldLatents {
         // Blast Skin: a creeper explodes on you at full health and you live.
         if (event.getSource().getDirectEntity() instanceof Creeper && p.getHealth() >= p.getMaxHealth() - 0.01f) {
             track(p).creeperArmed = true;
-            p.level().getServer().execute(() -> {
-                if (p.isAlive() && track(p).creeperArmed) flag(p, "creeper_point_blank_survived");
+            dev.awaken.core.Later.run(p.level().getServer(), 1, () -> {
+                if (p.isAlive() && !p.isRemoved() && track(p).creeperArmed) flag(p, "creeper_point_blank_survived");
                 track(p).creeperArmed = false;
             });
         }

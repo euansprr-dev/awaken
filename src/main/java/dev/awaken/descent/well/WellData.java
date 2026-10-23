@@ -20,11 +20,13 @@ public final class WellData extends SavedData {
             Codec.INT.fieldOf("z").forGetter(d -> d.z),
             Codec.INT.optionalFieldOf("bottom", 0).forGetter(d -> d.bottom),
             Codec.INT.optionalFieldOf("spawn_x", 0).forGetter(d -> d.spawnX),
-            Codec.INT.optionalFieldOf("spawn_z", 0).forGetter(d -> d.spawnZ)
-    ).apply(i, (schema, state, x, y, z, bottom, sx, sz) -> {
+            Codec.INT.optionalFieldOf("spawn_z", 0).forGetter(d -> d.spawnZ),
+            Codec.unboundedMap(Codec.STRING, Codec.LONG).optionalFieldOf("guardian_times", java.util.Map.of()).forGetter(d -> java.util.Map.copyOf(d.guardianTimes))
+    ).apply(i, (schema, state, x, y, z, bottom, sx, sz, times) -> {
         WellData d = new WellData(state, x, y, z, bottom);
         d.spawnX = sx;
         d.spawnZ = sz;
+        d.guardianTimes.putAll(times);
         return d;
     }));
 
@@ -34,6 +36,8 @@ public final class WellData extends SavedData {
     public int x, y, z, bottom;
     /** World spawn when the site was chosen (the Well is 400-700 blocks from it). */
     public int spawnX, spawnZ;
+    /** Game time each stratum's Guardian last woke (key = depth), so the respawn cooldown survives restarts. */
+    public final java.util.Map<String, Long> guardianTimes = new java.util.HashMap<>();
 
     public WellData() {}
 

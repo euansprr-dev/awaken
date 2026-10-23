@@ -84,9 +84,17 @@ public final class StoryModule {
             if (e.getEntity() instanceof ServerPlayer p) {
                 Prologue.sync(p);
                 sendSeen(p);
+                Court.reofferEnding(p);
             }
         });
         Signal.onAction("story", Prologue::onAnswer);
+        bus.addListener(PlayerEvent.PlayerRespawnEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer p) Court.reofferEnding(p);
+        });
+        bus.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> {
+            Court.forget();
+            Rival.forget();
+        });
         RankHooks.onRankUp(Rival::onRankUp);
         Progression.onNewThing(Beats::onNewThing);
         StoryHooks.install(new StoryHooks.State() {
@@ -94,6 +102,7 @@ public final class StoryModule {
             @Override public boolean colourRestored(MinecraftServer server) { return StoryWorld.get(server).colourRestored; }
             @Override public int ascension(MinecraftServer server) { return StoryWorld.get(server).ascension; }
             @Override public java.util.Optional<String> seedSealed(ServerPlayer p) {
+                if (!Prologue.storyOn()) return java.util.Optional.empty();
                 int left = 8 - Prologue.progress(p).sovereignsDefeated().size();
                 return left <= 0 ? java.util.Optional.empty()
                         : java.util.Optional.of("The Hollow Court still holds the Seed shut. " + left + " Sovereign" + (left == 1 ? "" : "s") + " remain.");

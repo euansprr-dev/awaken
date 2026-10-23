@@ -473,17 +473,21 @@ public final class Zones {
         if (z.form == Strata.COUNT) return;
         if (z.guardian != null && level.getEntity(z.guardian) instanceof LivingEntity g && g.isAlive()) return;
         z.guardian = null;
+        var wellData = dev.awaken.descent.well.WellData.get(level.getServer());
+        long last = wellData.guardianTimes.getOrDefault(String.valueOf(z.depth), z.lastGuardian);
         BlockPos lair = Layout.world(z.depth, Layout.lair(z.form));
         for (ServerPlayer p : z.players) {
             if (p.isCreative()) continue;
             double dx = p.getX() - lair.getX(), dz = p.getZ() - lair.getZ();
             if (dx * dx + dz * dz > 34 * 34 || Math.abs(p.getY() - lair.getY()) > 14) continue;
             boolean beaten = DescentSync.data(p).guardians.contains(z.depth);
-            if (beaten && now - z.lastGuardian < 48000) continue;
+            if (beaten && now - last < 48000) continue;
             LivingEntity boss = DescentSpawner.spawnGuardian(level, z.depth, z.tracked);
             if (boss == null) return;
             z.guardian = boss.getUUID();
             z.lastGuardian = now;
+            wellData.guardianTimes.put(String.valueOf(z.depth), now);
+            wellData.setDirty();
             for (ServerPlayer q : z.players) {
                 if (q.distanceToSqr(boss) > 96 * 96) continue;
                 Signal.send(q, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("The Guardian wakes"))
@@ -495,7 +499,8 @@ public final class Zones {
     }
 
     private static void seedApproach(ServerLevel level, Zone z) {
-        if (dev.awaken.core.AwakenConfig.STORY.get()) return; // the story module runs the finale
+        // Entry to the Seed is already gated (rank, level, and the story's Sovereigns); here we only start the finale
+        // when someone actually reaches the arena, so it never spawns far from the player and despawns again.
         BlockPos arena = Layout.world(z.depth, Layout.pit(z.form));
         for (ServerPlayer p : z.players) {
             if (DescentSync.data(p).seedCleared) continue;
@@ -524,6 +529,9 @@ public final class Zones {
         if (depth <= 0) return;
         Zone z = zone(level, depth);
         if (!z.tracked.mobs.contains(e)) z.tracked.mobs.add(e);
+        // a Guardian or the finale boss reloaded from disk: re-bind it so a second one never spawns
+        if (DescentSpawner.has(e, DescentSpawner.FLAG_GUARDIAN) && e.isAlive()) z.guardian = e.getUUID();
+        if (DescentSpawner.has(e, DescentSpawner.FLAG_FINALE) && e.isAlive()) z.finale = e.getUUID();
     }
 
     // ---- HUD --------------------------------------------------------------------------------------------------------

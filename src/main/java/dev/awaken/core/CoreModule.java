@@ -50,5 +50,8 @@ public final class CoreModule {
         NeoForge.EVENT_BUS.addListener(AwakenCommands::onRegister);
         modBus.addListener(CorePayloads::register);
         Playtest.init();
+        NeoForge.EVENT_BUS.addListener(Later::tick);
+        NeoForge.EVENT_BUS.addListener(Later::stopping);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> { DirectorLog.clear(); Playtest.clear(); });
     }
 }

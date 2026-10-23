@@ -189,8 +189,8 @@ final class HearthTests {
             hp.replace(hp.echoes.get(0).withField(false));
             HearthRecord home = new HearthRecord(sp.getUUID(), "test", at.east(3), HearthService.OVERWORLD);
             home.pads.put(at.south(2), EchoRole.GUARD);
-            // Duty only spawns workers on entity-ticking pads; give the fresh test area a few ticks to start ticking.
-            h.runAfterDelay(5, () -> {
+            // Duty only spawns workers on entity-ticking pads: keep running upkeep until the fresh test area ticks.
+            h.succeedWhen(() -> {
                 Duty.upkeep(sp, level, home, level.getGameTime());
                 var worker = Echoes.live(level.getServer(), id);
                 h.assertTrue(worker != null && Echoes.link(worker).duty(), "the Echo works the pad (pad ticking="
@@ -198,17 +198,21 @@ final class HearthTests {
                 h.assertTrue(worker.blockPosition().closerThan(at.south(2), 2.5), "standing on its pad");
                 Duty.releaseAll(level, home);
                 h.assertTrue(Echoes.live(level.getServer(), id) == null, "released from duty");
-                h.succeed();
             });
         });
 
-        AwakenTests.register("hearth_room_detection", 600, h -> {
+        AwakenTests.registerIsolated("hearth_room_detection", 600, h -> {
             ServerLevel level = h.getLevel();
-            BlockPos base = h.absolutePos(new BlockPos(1, 1, 1));
-            // A closed 5×4×5 stone room with a bed and a Meditation Mat inside.
+            // Built high above the shared test floor so beds and blocks left by other tests are outside the 48-block sweep,
+            // and inside a single chunk (a neighbouring chunk on the test server may not be fully loaded).
+            BlockPos origin = h.absolutePos(BlockPos.ZERO);
+            BlockPos base = new BlockPos((origin.getX() & ~15) + 4, origin.getY() + 120, (origin.getZ() & ~15) + 4);
+            // A closed 5×4×5 stone room with a glass ceiling, a bed and a Meditation Mat inside.
             for (int x = 0; x < 5; x++) for (int y = 0; y < 4; y++) for (int z = 0; z < 5; z++) {
                 boolean shell = x == 0 || x == 4 || y == 0 || y == 3 || z == 0 || z == 4;
-                level.setBlock(base.offset(x, y, z), shell ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
+                // a glass ceiling still makes a closed room
+                BlockState wall = y == 3 ? Blocks.GLASS.defaultBlockState() : Blocks.STONE.defaultBlockState();
+                level.setBlock(base.offset(x, y, z), shell ? wall : Blocks.AIR.defaultBlockState(), 3);
             }
             BlockState foot = Blocks.BED.pick(net.minecraft.world.item.DyeColor.RED).defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH).setValue(BedBlock.PART, BedPart.FOOT);
             level.setBlock(base.offset(1, 1, 1), foot, 3);
@@ -216,6 +220,8 @@ final class HearthTests {
             level.setBlock(base.offset(3, 1, 3), HearthContent.MEDITATION_MAT.get().defaultBlockState(), 3);
             UUID owner = UUID.randomUUID();
             HearthRecord rec = new HearthRecord(owner, "test", base.offset(2, 4, 2), HearthService.OVERWORLD);
+            // upkeep drops any Hearth whose Anchor block is gone, so the record needs a real Anchor on the roof
+            level.setBlock(rec.pos, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
             HearthData data = HearthData.get(level.getServer());
             data.put(rec);
             h.assertTrue(Room.classify(1, 1, 0, 0, 0, 0, 0, 0).contains(RoomType.SANCTUARY), "bed + mat classify as a Sanctuary");
@@ -224,8 +230,13 @@ final class HearthTests {
             h.succeedWhen(() -> {
                 HearthService.scanNow(level, rec);
                 boolean ok = rec.hasRoom(RoomType.SANCTUARY) && Hearth.isSanctuary(level, base.offset(2, 1, 2));
-                if (ok) data.remove(owner);
-                h.assertTrue(ok, "the closed room is recognised as a Sanctuary");
+                if (ok) {
+                    data.remove(owner);
+                    level.removeBlock(rec.pos, false);
+                }
+                h.assertTrue(ok, "the closed room is recognised as a Sanctuary (rooms "
+                        + rec.rooms.stream().map(r -> r.types().toString()).toList() + ", hearth found "
+                        + HearthData.get(level.getServer()).containing(base.offset(2, 1, 2), HearthService.OVERWORLD).isPresent() + ")");
             });
         });
 

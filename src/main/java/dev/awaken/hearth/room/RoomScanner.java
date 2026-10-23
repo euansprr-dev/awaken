@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.common.Tags;
 
@@ -166,7 +167,9 @@ public final class RoomScanner {
             long l = queue.dequeueLong();
             m.set(l);
             cost += 7;
-            if (level.canSeeSky(m)) {
+            // Open sky = nothing solid anywhere above this cell. The heightmap updates with every block change (sky
+            // light lags behind) and counts a glass roof as a roof.
+            if (m.getY() >= level.getHeight(Heightmap.Types.MOTION_BLOCKING, m.getX(), m.getZ())) {
                 open = true;
                 break;
             }

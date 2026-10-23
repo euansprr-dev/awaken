@@ -142,6 +142,7 @@ public final class DescentModule {
     }
 
     private static void onServerStopping(ServerStoppingEvent event) {
+        WELL_NOTICED.clear();
         Well.reset();
         Zones.clear();
         DescentTravel.clearAll();

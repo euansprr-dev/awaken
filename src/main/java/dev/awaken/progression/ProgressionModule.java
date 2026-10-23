@@ -77,6 +77,12 @@ public final class ProgressionModule {
         bus.addListener(ProgressionModule::onFall);
         bus.addListener(ProgressionModule::onWake);
         bus.addListener(ProgressionModule::onTame);
+        bus.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> {
+            HOME_XP_THIS_MINUTE.clear();
+            ACTION_RATE.clear();
+            Progression.forget();
+            WorldLatents.forget();
+        });
         Signal.onAction(Directives.ACTION, Directives::answer);
         PlayDays.onMorning((server, day) -> {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -95,6 +101,10 @@ public final class ProgressionModule {
         r.playToClient(ProgressionPayloads.ContentSync.TYPE, ProgressionPayloads.ContentSync.STREAM_CODEC);
         r.playToServer(ProgressionPayloads.StatusAction.TYPE, ProgressionPayloads.StatusAction.STREAM_CODEC, (msg, ctx) -> {
             if (!(ctx.player() instanceof ServerPlayer sp)) return;
+            long now = sp.level().getGameTime();
+            long[] window = ACTION_RATE.computeIfAbsent(sp.getUUID(), k -> new long[]{now, 0});
+            if (now - window[0] >= 20) { window[0] = now; window[1] = 0; }
+            if (++window[1] > 10) return; // at most 10 Status actions a second
             switch (msg.kind()) {
                 case "spend" -> {
                     try { Progression.spendPoint(sp, Stat.valueOf(msg.arg())); } catch (IllegalArgumentException ignored) {}
@@ -128,6 +138,7 @@ public final class ProgressionModule {
     private static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             Progression.applyAttributes(sp);
+            if (!event.isEndConquered()) sp.setHealth(sp.getMaxHealth()); // respawn at your real maximum, not 20
             Progression.syncNow(sp);
         }
     }
@@ -149,10 +160,12 @@ public final class ProgressionModule {
     // ---- ticking ----------------------------------------------------------------------------------------------------
 
     private static final Map<UUID, Double> HOME_XP_THIS_MINUTE = new HashMap<>();
+    private static final Map<UUID, long[]> ACTION_RATE = new HashMap<>();
 
     private static void onServerTick(ServerTickEvent.Post event) {
         var server = event.getServer();
         if (server.getTickCount() % 20 == 0) Progression.flushDirty();
+        if (server.getTickCount() % 100 == 0) Progression.flushLazy();
         if (server.getTickCount() % 1200 == 0) {
             HOME_XP_THIS_MINUTE.clear();
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -181,9 +194,10 @@ public final class ProgressionModule {
         }
         double strain = sp.getData(STRAIN.get());
         if (strain > 0) {
-            double next = Math.max(0, strain - 0.05 / 30.0); // full Strain (5%) fades over ~10 minutes
+            double next = Math.max(0, strain - 0.05 / 600.0); // each 5% of Strain fades over 10 minutes (SPEC 8)
             sp.setData(STRAIN.get(), next);
-            if (next == 0) Progression.applyAttributes(sp);
+            // re-apply in 1% steps so the penalty eases off gradually instead of vanishing at once
+            if (next == 0 || (int) (next * 100) != (int) (strain * 100)) Progression.applyAttributes(sp);
         }
     }
 
@@ -256,8 +270,9 @@ public final class ProgressionModule {
         double resist = Progression.perk(sp, Perks.FALL_RESIST);
         if (resist > 0) event.setDamageMultiplier((float) (event.getDamageMultiplier() * Math.max(0, 1 - resist)));
         double dist = event.getDistance();
-        if (dist > 3) sp.level().getServer().execute(() -> {
-            if (sp.isAlive()) Progression.record(sp, Counters.FALL_SURVIVED_MAX, Math.round(dist));
+        // check on the next tick, after the fall damage has been applied
+        if (dist > 3) dev.awaken.core.Later.run(sp.level().getServer(), 1, () -> {
+            if (sp.isAlive() && !sp.isRemoved()) Progression.record(sp, Counters.FALL_SURVIVED_MAX, Math.round(dist));
         });
     }
 

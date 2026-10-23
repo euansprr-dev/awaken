@@ -37,11 +37,11 @@ public final class DescentSpawner {
     }
 
     public static boolean isOurs(LivingEntity e) {
-        return (e.getData(DescentContent.MOB_FLAGS.get()) & FLAG_DESCENT) != 0;
+        return (e.getExistingData(DescentContent.MOB_FLAGS.get()).orElse(0) & FLAG_DESCENT) != 0;
     }
 
     public static boolean has(LivingEntity e, int flag) {
-        return (e.getData(DescentContent.MOB_FLAGS.get()) & flag) != 0;
+        return (e.getExistingData(DescentContent.MOB_FLAGS.get()).orElse(0) & flag) != 0;
     }
 
     public static void flag(LivingEntity e, int flags) {

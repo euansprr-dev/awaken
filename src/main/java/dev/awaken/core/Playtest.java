@@ -38,6 +38,11 @@ public final class Playtest {
     private static final Map<UUID, Long> SESSION_START = new HashMap<>();
     private static final Map<UUID, Long> LAST_DEATH = new HashMap<>();
 
+    static void clear() {
+        SESSION_START.clear();
+        LAST_DEATH.clear();
+    }
+
     public static boolean enabled() {
         try {
             return AwakenConfig.PLAYTEST_MODE.get();

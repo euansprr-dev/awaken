@@ -34,6 +34,8 @@ public final class Progression {
     public enum XpSource { GATE_KILL, GATE_FLOOR, GATE_BOSS, HOME, REGIMEN, DIRECTIVE, TRUTH, DESCENT, DREAM, STORY, COMMAND }
 
     private static final Set<ServerPlayer> DIRTY = new HashSet<>();
+    /** Counter-only changes sync less often: the client shows counters only in progress bars. */
+    private static final Set<ServerPlayer> DIRTY_LAZY = new HashSet<>();
 
     public static Profile profile(Player player) {
         return player.getData(ProgressionModule.PROFILE.get());
@@ -59,8 +61,25 @@ public final class Progression {
     static void flushDirty() {
         for (ServerPlayer p : DIRTY) {
             if (!p.isRemoved()) p.syncData(ProgressionModule.PROFILE.get());
+            DIRTY_LAZY.remove(p);
         }
         DIRTY.clear();
+    }
+
+    static void flushLazy() {
+        for (ServerPlayer p : DIRTY_LAZY) {
+            if (!p.isRemoved()) p.syncData(ProgressionModule.PROFILE.get());
+        }
+        DIRTY_LAZY.clear();
+    }
+
+    static void markLazy(ServerPlayer player) {
+        if (!DIRTY.contains(player)) DIRTY_LAZY.add(player);
+    }
+
+    static void forget() {
+        DIRTY.clear();
+        DIRTY_LAZY.clear();
     }
 
     public static void syncNow(ServerPlayer player) {
@@ -164,8 +183,15 @@ public final class Progression {
                                Identifier id, double amount, AttributeModifier.Operation op) {
         AttributeInstance inst = player.getAttribute(attr);
         if (inst == null) return;
-        if (Math.abs(amount) < 1e-9) inst.removeModifier(id);
-        else inst.addOrUpdateTransientModifier(new AttributeModifier(id, amount, op));
+        var existing = inst.getModifier(id);
+        if (Math.abs(amount) < 1e-9) {
+            if (existing != null) inst.removeModifier(id);
+            return;
+        }
+        if (existing != null && existing.amount() == amount && existing.operation() == op) return;
+        // Permanent so max-health bonuses survive a reload: health is clamped to max on load before we re-apply.
+        inst.removeModifier(id);
+        inst.addPermanentModifier(new AttributeModifier(id, amount, op));
     }
 
     // ---- counters ---------------------------------------------------------------------------------------------------
@@ -180,7 +206,7 @@ public final class Progression {
         p.counters.merge(counter, amount, Long::sum);
         if (LOGGED.contains(counter)) dev.awaken.core.Playtest.log(player, "counter", counter, p.counter(counter));
         evaluate(player, counter);
-        markDirty(player);
+        markLazy(player);
     }
 
     public static void count(ServerPlayer player, String counter) {
@@ -193,7 +219,7 @@ public final class Progression {
         if (p.counter(counter) == value) return;
         p.counters.put(counter, value);
         evaluate(player, counter);
-        markDirty(player);
+        markLazy(player);
     }
 
     /** Raises a "best" counter if the new value is higher. Returns true when it's a new record. */

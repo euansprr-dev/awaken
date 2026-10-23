@@ -6,7 +6,7 @@ import com.mojang.serialization.Codec;
 public enum Stat {
     STR("Strength"), AGI("Agility"), VIT("Vitality"), INT("Intellect"), PER("Perception"), SPI("Spirit");
 
-    public static final Codec<Stat> CODEC = Codec.STRING.xmap(Stat::valueOf, Stat::name);
+    public static final Codec<Stat> CODEC = dev.awaken.core.Codecs.lenientEnum(Stat.class, STR);
     public static final int START = 5;
 
     public final String displayName;

@@ -130,39 +130,43 @@ final class PowersTests {
             floor(h, 3);
             ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
             Zombie z = stillZombie(h, new BlockPos(2, 1, 0));
-            float hp = z.getHealth();
-            PowerType slam = PowerRegistry.get("ground_slam");
-            Powers.learn(sp, slam.id, 0);
-            Powers.fillEnergy(sp);
-            float energy = Powers.loadout(sp).energy();
-            PowerType.Result r = Casting.cast(sp, slam, 0, false, sp.getYRot(), sp.getXRot());
-            h.assertTrue(r.ok(), "ground slam should cast: " + r.reason());
-            h.assertTrue(z.getHealth() < hp, "the zombie took damage (" + hp + " -> " + z.getHealth() + ")");
-            Loadout l = Powers.loadout(sp);
-            h.assertTrue(l.cooldownLeft("awaken:ground_slam", Casting.now(sp)) > 0, "cooldown started");
-            h.assertTrue(l.energy() < energy, "energy spent");
-            h.assertTrue(Progression.profile(sp).counter("awaken:power_uses/kinetic") == 1, "kinetic use counted");
-            PowerType.Result again = Casting.cast(sp, slam, 0, false, sp.getYRot(), sp.getXRot());
-            h.assertTrue(!again.ok() && again.reason().equals("cooldown"), "cooldown blocks a recast");
-            h.succeed();
+            h.runAfterDelay(3, () -> { // act once the forced test chunks tick
+                float hp = z.getHealth();
+                PowerType slam = PowerRegistry.get("ground_slam");
+                Powers.learn(sp, slam.id, 0);
+                Powers.fillEnergy(sp);
+                float energy = Powers.loadout(sp).energy();
+                PowerType.Result r = Casting.cast(sp, slam, 0, false, sp.getYRot(), sp.getXRot());
+                h.assertTrue(r.ok(), "ground slam should cast: " + r.reason());
+                h.assertTrue(z.getHealth() < hp, "the zombie took damage (" + hp + " -> " + z.getHealth() + ")");
+                Loadout l = Powers.loadout(sp);
+                h.assertTrue(l.cooldownLeft("awaken:ground_slam", Casting.now(sp)) > 0, "cooldown started");
+                h.assertTrue(l.energy() < energy, "energy spent");
+                h.assertTrue(Progression.profile(sp).counter("awaken:power_uses/kinetic") == 1, "kinetic use counted");
+                PowerType.Result again = Casting.cast(sp, slam, 0, false, sp.getYRot(), sp.getXRot());
+                h.assertTrue(!again.ok() && again.reason().equals("cooldown"), "cooldown blocks a recast");
+                h.succeed();
+            });
         });
 
         AwakenTests.register("powers_cast_spirit_palm_aimed", 60, h -> {
             floor(h, 3);
             ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
             Zombie z = stillZombie(h, new BlockPos(2, 1, 0));
-            PowerType palm = PowerRegistry.get("spirit_palm");
-            Powers.learn(sp, palm.id, 0);
-            Powers.fillEnergy(sp);
-            float hp = z.getHealth();
-            Vec3 to = z.getEyePosition().subtract(sp.getEyePosition());
-            float yRot = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
-            PowerType.Result r = Casting.cast(sp, palm, 0, false, yRot, 0f);
-            h.assertTrue(r.ok(), "palm should land: " + r.reason());
-            h.assertTrue(z.getHealth() < hp, "the zombie took spirit damage");
-            PowerType.Result miss = Casting.cast(sp, PowerRegistry.get("dash"), 0, false, yRot, 0f);
-            h.assertTrue(!miss.ok() && miss.reason().equals("not_owned"), "unowned powers can't be cast");
-            h.succeed();
+            h.runAfterDelay(3, () -> { // act once the forced test chunks tick
+                PowerType palm = PowerRegistry.get("spirit_palm");
+                Powers.learn(sp, palm.id, 0);
+                Powers.fillEnergy(sp);
+                float hp = z.getHealth();
+                Vec3 to = z.getEyePosition().subtract(sp.getEyePosition());
+                float yRot = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+                PowerType.Result r = Casting.cast(sp, palm, 0, false, yRot, 0f);
+                h.assertTrue(r.ok(), "palm should land: " + r.reason());
+                h.assertTrue(z.getHealth() < hp, "the zombie took spirit damage");
+                PowerType.Result miss = Casting.cast(sp, PowerRegistry.get("dash"), 0, false, yRot, 0f);
+                h.assertTrue(!miss.ok() && miss.reason().equals("not_owned"), "unowned powers can't be cast");
+                h.succeed();
+            });
         });
 
         AwakenTests.register("powers_energy_gate", 40, h -> {
@@ -231,21 +235,27 @@ final class PowersTests {
         AwakenTests.register("powers_force_spore_chain", 80, h -> {
             floor(h, 4);
             ServerPlayer sp = player(h, new BlockPos(-3, 1, 0));
+            // keep both zombies in one chunk: on the test server a neighbouring chunk may not be entity-ticking
+            int ax = h.absolutePos(BlockPos.ZERO).getX();
+            int dx = ((ax + 3) >> 4) == (ax >> 4) ? 3 : -3;
             Zombie a = stillZombie(h, new BlockPos(0, 1, 0));
-            Zombie b = stillZombie(h, new BlockPos(3, 1, 0));
+            Zombie b = stillZombie(h, new BlockPos(dx, 1, 0));
             Forces.tag(a, Forces.Tag.SPORES);
             Forces.tag(b, Forces.Tag.SPORES);
-            // let the spawned mobs settle into the level before the first hit (same as the charge test)
+            // let the spawned mobs settle before the first hit; schedule both steps from the body (never nest them)
+            float[] hpB = new float[1];
+            long[] before = new long[1];
+            boolean[] hit = new boolean[1];
             h.runAfterDelay(5, () -> {
-                float hpB = b.getHealth();
-                long before = Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS);
-                boolean hit = Combat.hurtFrom(sp, null, a, 2f, Forces.Force.HEAT, true);
-                h.runAfterDelay(15, () -> {
-                    h.assertTrue(b.getHealth() < hpB || !b.isAlive(), "the chain reached the second spore-tagged zombie (first hit=" + hit
-                            + ", a=" + a.blockPosition() + " alive=" + a.isAlive() + ", b=" + b.blockPosition() + " hp " + hpB + " -> " + b.getHealth() + ")");
-                    h.assertTrue(Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS) > before, "force interaction counted");
-                    h.succeed();
-                });
+                hpB[0] = b.getHealth();
+                before[0] = Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS);
+                hit[0] = Combat.hurtFrom(sp, null, a, 2f, Forces.Force.HEAT, true);
+            });
+            h.runAfterDelay(20, () -> {
+                h.assertTrue(b.getHealth() < hpB[0] || !b.isAlive(), "the chain reached the second spore-tagged zombie (first hit=" + hit[0]
+                        + ", a=" + a.blockPosition() + " alive=" + a.isAlive() + ", b=" + b.blockPosition() + " hp " + hpB[0] + " -> " + b.getHealth() + ")");
+                h.assertTrue(Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS) > before[0], "force interaction counted");
+                h.succeed();
             });
         });
 

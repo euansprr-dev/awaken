@@ -95,6 +95,7 @@ public final class Directives {
 
     /** Signal answer: Y accepts (baseline starts now), N dismisses. */
     static void answer(ServerPlayer player, String action, boolean accepted) {
+        if (action.length() <= ACTION.length() + 1) return;
         String key = action.substring(ACTION.length() + 1);
         Profile p = Progression.profile(player);
         for (int i = 0; i < p.directives.size(); i++) {

@@ -53,17 +53,38 @@ public final class Hazards {
     /** A cloud that pulses every 10 ticks for {@code life} ticks. */
     public static void cloud(ServerLevel level, @Nullable AwakenMob owner, Vec3 pos, float radius, int life, float damage, BoltKind bolt, @Nullable MobEffectInstance effect) {
         if (ACTIVE.size() >= MAX) return;
-        ACTIVE.add(new Hazard(level, owner, pos, radius, 0, life, damage, bolt, effect, false));
+        add(new Hazard(level, owner, pos, radius, 0, life, damage, bolt, effect, false));
     }
 
     /** One strike after {@code delay} ticks (root lances, fuse lines). */
     public static void strike(ServerLevel level, @Nullable AwakenMob owner, Vec3 pos, float radius, int delay, float damage, BoltKind bolt, @Nullable MobEffectInstance effect) {
         if (ACTIVE.size() >= MAX) return;
-        ACTIVE.add(new Hazard(level, owner, pos, radius, delay, 1, damage, bolt, effect, true));
+        add(new Hazard(level, owner, pos, radius, delay, 1, damage, bolt, effect, true));
+    }
+
+    /** Hazards created while we iterate (an owner dying mid-tick leaves a death cloud) join on the next tick. */
+    private static final java.util.List<Hazard> PENDING = new java.util.ArrayList<>();
+    private static boolean ticking;
+
+    private static void add(Hazard h) {
+        if (ticking) PENDING.add(h); else ACTIVE.add(h);
     }
 
     public static void tick(Level level) {
+        if (!PENDING.isEmpty() && !ticking) {
+            ACTIVE.addAll(PENDING);
+            PENDING.clear();
+        }
         if (ACTIVE.isEmpty() || !(level instanceof ServerLevel sl)) return;
+        ticking = true;
+        try {
+            tickIn(sl);
+        } finally {
+            ticking = false;
+        }
+    }
+
+    private static void tickIn(ServerLevel sl) {
         boolean pulse = sl.getGameTime() % 10 == 0;
         for (Iterator<Hazard> it = ACTIVE.iterator(); it.hasNext(); ) {
             Hazard h = it.next();

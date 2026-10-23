@@ -12,7 +12,7 @@ public enum Rank {
     S("S", 100, 118, 0.12, 0xFF5A6A),
     SOVEREIGN("Sovereign", 135, 150, 0.12, 0xD4AF37);
 
-    public static final Codec<Rank> CODEC = Codec.STRING.xmap(Rank::valueOf, Rank::name);
+    public static final Codec<Rank> CODEC = dev.awaken.core.Codecs.lenientEnum(Rank.class, E);
 
     public final String label;
     /** Level needed to take this rank's Reassessment. */

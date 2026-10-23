@@ -25,7 +25,12 @@ final class RegistryDump {
                 items.add(k.getPath());
                 if (BuiltInRegistries.ITEM.getValue(k) instanceof BlockItem) blockItems.add(k.getPath());
             });
-            BuiltInRegistries.BLOCK.keySet().stream().filter(k -> k.getNamespace().equals(Awaken.MODID)).sorted().forEach(k -> blocks.add(k.getPath()));
+            JsonArray noLoot = new JsonArray();
+            BuiltInRegistries.BLOCK.keySet().stream().filter(k -> k.getNamespace().equals(Awaken.MODID)).sorted().forEach(k -> {
+                blocks.add(k.getPath());
+                if (BuiltInRegistries.BLOCK.getValue(k).getLootTable().isEmpty()) noLoot.add(k.getPath());
+            });
+            root.add("no_loot", noLoot);
             BuiltInRegistries.ENTITY_TYPE.keySet().stream().filter(k -> k.getNamespace().equals(Awaken.MODID)).sorted().forEach(k -> entities.add(k.getPath()));
             root.add("items", items);
             root.add("block_items", blockItems);

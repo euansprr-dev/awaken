@@ -28,6 +28,10 @@ public final class DirectorLog {
         while (d.size() > KEEP) d.removeLast();
     }
 
+    public static synchronized void clear() {
+        LOG.clear();
+    }
+
     public static synchronized List<Entry> recent(UUID player, int n) {
         Deque<Entry> d = LOG.get(player);
         if (d == null) return List.of();

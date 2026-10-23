@@ -52,6 +52,11 @@ public final class SignalHud {
 
     public static void show(SignalWindow w) {
         Minecraft mc = Minecraft.getInstance();
+        if (w.action().isPresent()) {
+            String a = w.action().get();
+            if (current != null && current.closingAt < 0 && current.w.action().map(a::equals).orElse(false)) return;
+            QUEUE.removeIf(q -> q.action().map(a::equals).orElse(false)); // the newest copy replaces older ones
+        }
         boolean urgent = w.kind() == SignalWindow.Kind.WARNING || w.priority() >= 9;
         if (inCombat() && !urgent) {
             toast(w.title(), edgeFor(w.kind()));

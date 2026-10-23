@@ -344,6 +344,7 @@ final class LucidiumTests {
         h.assertTrue(sp.getPostEffects().contains(Dreams.FX), "dream shader on");
         h.assertTrue(sp.position().distanceTo(p.blueprint().spawn) < 2, "arrived at the dream's start");
         int cell = p.blueprint().cell;
+        int[] itemsBefore = new int[1];
         h.runAfterDelay(5, () -> {
             Dreams.wake(sp, Dreams.Wake.TIME);
             h.assertFalse(Dreams.isDreaming(sp), "awake");
@@ -357,14 +358,16 @@ final class LucidiumTests {
             int items = sp.getInventory().getContainerSize();
             sp.setHealth(0.5f);
             sp.die(level.damageSources().fellOutOfWorld()); // the death is cancelled and becomes a wake
-            h.runAfterDelay(3, () -> {
-                h.assertFalse(Dreams.isDreaming(sp), "a fatal blow wakes you");
-                h.assertTrue(sp.isAlive() && sp.getHealth() > 0, "alive");
-                h.assertTrue(sp.hasEffect(LucidiumContent.SHAKEN), "shaken");
-                h.assertTrue(sp.getInventory().getContainerSize() == items, "nothing lost");
-                level.getServer().getPlayerList().remove(sp);
-                h.succeed();
-            });
+            itemsBefore[0] = items;
+        });
+        // scheduled from the body, not from inside the callback above (vanilla re-runs nested schedules)
+        h.runAfterDelay(8, () -> {
+            h.assertFalse(Dreams.isDreaming(sp), "a fatal blow wakes you");
+            h.assertTrue(sp.isAlive() && sp.getHealth() > 0, "alive");
+            h.assertTrue(sp.hasEffect(LucidiumContent.SHAKEN), "shaken");
+            h.assertTrue(sp.getInventory().getContainerSize() == itemsBefore[0], "nothing lost");
+            level.getServer().getPlayerList().remove(sp);
+            h.succeed();
         });
     }
 }

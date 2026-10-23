@@ -59,14 +59,14 @@ public final class Forces {
 
     /** Bitmask of {@link Tag}s. Saved with the entity. */
     public static final Supplier<AttachmentType<Integer>> TAGS = ATTACHMENTS.register("force_tags",
-            () -> AttachmentType.builder(() -> 0).serialize(Codec.INT.fieldOf("bits")).build());
+            () -> AttachmentType.builder(() -> 0).serialize(Codec.INT.fieldOf("bits"), bits -> bits != 0).build());
 
     static void init(IEventBus modBus) {
         ATTACHMENTS.register(modBus);
     }
 
     public static boolean has(Entity e, Tag t) {
-        return (e.getData(TAGS) & (1 << t.ordinal())) != 0;
+        return (e.getExistingData(TAGS).orElse(0) & (1 << t.ordinal())) != 0;
     }
 
     public static void tag(Entity e, Tag t) {

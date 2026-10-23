@@ -27,6 +27,10 @@ final class Rival {
 
     private static final List<Scene> SCENES = new ArrayList<>();
 
+    static void forget() {
+        SCENES.clear();
+    }
+
     static void onRankUp(ServerPlayer p, Rank rank) {
         String key = rank == Rank.SOVEREIGN ? "sovereign" : rank.name().toLowerCase();
         StoryContent.RivalBeat beat = StoryContent.RIVAL.get(Awaken.id(key));

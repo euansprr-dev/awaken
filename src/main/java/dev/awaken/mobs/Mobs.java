@@ -138,7 +138,9 @@ public final class Mobs {
         BlockPos bp = BlockPos.containing(pos);
         EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(bp), EntitySpawnReason.MOB_SUMMONED, null);
         mob.configure(contentLevel, role, tags);
-        mob.setPersistenceRequired();
+        // Only creatures that matter persist; ordinary ones follow vanilla despawning (gates and the Descent manage theirs).
+        if (def.tier.isBoss() || role.role() == MobRole.Role.WARDEN || role.role() == MobRole.Role.BOSS || role.role() == MobRole.Role.BREAK
+                || role.role() == MobRole.Role.NIGHTMARE || role.role() == MobRole.Role.ECHO || !role.gateId().isEmpty()) mob.setPersistenceRequired();
         if (def.tier.isBoss() || role.role() == MobRole.Role.WARDEN || role.role() == MobRole.Role.BOSS) mob.setHomeTo(bp, def.arena);
         level.addFreshEntity(mob);
         return mob;

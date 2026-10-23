@@ -21,7 +21,7 @@ public final class CoreApi {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
 
     public static final Supplier<AttachmentType<MobRole>> MOB_ROLE = ATTACHMENTS.register("mob_role",
-            () -> AttachmentType.builder(() -> MobRole.NONE).serialize(MobRole.CODEC.fieldOf("role")).build());
+            () -> AttachmentType.builder(() -> MobRole.NONE).serialize(MobRole.CODEC.fieldOf("role"), r -> r.role() != MobRole.Role.NONE).build());
 
     /** Gate currency: dropped in gates and breaks, spent by the Hearth and the Above. */
     public static final DeferredItem<Item> ESSENCE_SHARD = ITEMS.registerSimpleItem("essence_shard");

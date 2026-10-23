@@ -78,7 +78,7 @@ final class Prologue {
             }
             case ACCEPTING -> {
                 // Waiting for the answer. If the window was missed (relog), ask again every 30 seconds.
-                if ((now - s.prologueSince) % 600 < 20) askToAccept(p);
+                if (now - s.prologueSince > 20 * 70 && (now - s.prologueSince) % (20 * 70) < 20) askToAccept(p);
             }
             default -> {}
         }
@@ -90,7 +90,10 @@ final class Prologue {
         StoryProgress s = progress(p);
         if (s.prologue == StoryProgress.Prologue.GLITCHED && event.getState().is(BlockTags.LOGS)
                 && p.level().getGameTime() - s.prologueSince > 20 * 30) {
-            openFirstGate(p, s);
+            // never teleport or open gates inside the break event: the break is still running
+            dev.awaken.core.Later.run(p.level().getServer(), 1, () -> {
+                if (!p.isRemoved() && progress(p).prologue == StoryProgress.Prologue.GLITCHED) openFirstGate(p, progress(p));
+            });
         }
     }
 
@@ -137,7 +140,7 @@ final class Prologue {
         }
         // "The statues move": the first time an unawakened player gets a Gate Lord below half health, it calls for help.
         if (event.getSource().getEntity() instanceof ServerPlayer p && !Progression.profile(p).awakened()) {
-            MobRole role = target.getData(CoreApi.MOB_ROLE.get());
+            MobRole role = MobRole.of(target);
             if (role.role() == MobRole.Role.BOSS && target.getHealth() - event.getAmount() < target.getMaxHealth() / 2
                     && !target.getPersistentData().getBooleanOr("awaken_statues_moved", false)) {
                 target.getPersistentData().putBoolean("awaken_statues_moved", true);
@@ -163,13 +166,17 @@ final class Prologue {
         sync(p);
         p.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0, false, false));
         p.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 20 * 30, 4, false, false));
-        ServerLevel still = p.level().getServer().getLevel(STILLPOINT);
-        if (still != null) {
-            still.getChunk(0, 0);
-            int y = Math.max(still.getMinY() + 1, still.getHeight(Heightmap.Types.MOTION_BLOCKING, 0, 0));
-            p.teleportTo(still, 0.5, y, 0.5, Set.<Relative>of(), p.getYRot(), 0, true);
-        }
-        p.level().getServer().execute(() -> askToAccept(p));
+        // the damage event that got us here is still running: move the player on the next tick
+        dev.awaken.core.Later.run(p.level().getServer(), 1, () -> {
+            if (p.isRemoved()) return;
+            ServerLevel still = p.level().getServer().getLevel(STILLPOINT);
+            if (still != null) {
+                still.getChunk(0, 0);
+                int y = Math.max(still.getMinY() + 1, still.getHeight(Heightmap.Types.MOTION_BLOCKING, 0, 0));
+                p.teleportTo(still, 0.5, y, 0.5, Set.<Relative>of(), p.getYRot(), 0, true);
+            }
+            askToAccept(p);
+        });
     }
 
     static java.util.Optional<Vec3> gateMouth(ServerPlayer p, StoryProgress s) {
@@ -189,7 +196,7 @@ final class Prologue {
     static void onAnswer(ServerPlayer p, String action, boolean accepted) {
         if (!ACCEPT_ACTION.equals(action)) return;
         StoryProgress s = progress(p);
-        if (s.prologue != StoryProgress.Prologue.ACCEPTING && Progression.profile(p).awakened()) return;
+        if (s.prologue != StoryProgress.Prologue.ACCEPTING || Progression.profile(p).awakened()) return;
         Progression.awaken(p);
         s.prologue = StoryProgress.Prologue.DONE;
         s.seen.add("revelation:prologue_accept");
@@ -205,6 +212,10 @@ final class Prologue {
 
     static void skip(ServerPlayer p) {
         StoryProgress s = progress(p);
+        if (s.prologue == StoryProgress.Prologue.ACCEPTING) {
+            onAnswer(p, ACCEPT_ACTION, true); // also brings the player back from the Stillpoint
+            return;
+        }
         Progression.awaken(p);
         s.prologue = StoryProgress.Prologue.DONE;
         sync(p);

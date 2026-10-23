@@ -164,7 +164,7 @@ public final class DescentContent {
             .builder(DeepPack::new).serialize(DeepPack.MAP_CODEC).sync((holder, to) -> holder == to, DeepPack.STREAM_CODEC).build());
     /** Flags on mobs the Descent spawned ({@link dev.awaken.descent.spawn.DescentSpawner}). */
     public static final Supplier<AttachmentType<Integer>> MOB_FLAGS = ATTACHMENTS.register("descent_mob", () -> AttachmentType
-            .builder(() -> 0).serialize(Codec.INT.fieldOf("flags")).build());
+            .builder(() -> 0).serialize(Codec.INT.fieldOf("flags"), f -> f != 0).build());
 
     // ---- sounds -------------------------------------------------------------------------------------------------------
 

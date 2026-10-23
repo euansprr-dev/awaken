@@ -29,7 +29,10 @@ public final class ProgressionClient {
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
-        event.register(ProgressionPayloads.ContentSync.TYPE, (msg, ctx) -> msg.apply());
+        // In single player the integrated server already filled these shared maps; replacing them here would race it.
+        event.register(ProgressionPayloads.ContentSync.TYPE, (msg, ctx) -> {
+            if (!Minecraft.getInstance().hasSingleplayerServer()) msg.apply();
+        });
     }
 
     private static void onLayers(RegisterGuiLayersEvent event) {

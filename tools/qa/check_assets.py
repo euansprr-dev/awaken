@@ -29,7 +29,7 @@ for b in dump["blocks"]:
         problems.append(f"block {b}: missing blockstate")
     if f"block.awaken.{b}" not in lang:
         problems.append(f"block {b}: missing lang key block.awaken.{b}")
-    if b in dump["block_items"] and not has(f"data/awaken/loot_table/blocks/{b}.json"):
+    if b in dump["block_items"] and b not in dump.get("no_loot", []) and not has(f"data/awaken/loot_table/blocks/{b}.json"):
         problems.append(f"block {b}: missing loot table (data/awaken/loot_table/blocks/{b}.json)")
 for e in dump["entities"]:
     if f"entity.awaken.{e}" not in lang:
