@@ -143,7 +143,8 @@ public class NamedBeast extends FaunaMob {
     private void warn(ServerLevel level, Player p) {
         setTelegraph(16, false);
         cue(CUE_WARN, -1);
-        playLevelSound(def().voice().ambient != null ? def().voice().ambient : MobSounds.TELEGRAPH.get(), 1.6F, 0.7F);
+        net.minecraft.sounds.SoundEvent own = MobSounds.fauna(def().id, "ambient");
+        playLevelSound(own != null ? own : def().voice().ambient != null ? def().voice().ambient : MobSounds.TELEGRAPH.get(), 1.6F, own != null ? 0.9F : 0.7F);
         level.sendParticles(ParticleTypes.CLOUD, getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.4, 0.2, 0.4, 0.02);
         if (p instanceof ServerPlayer sp) {
             sp.sendOverlayMessage(Component.literal(def().name + " warns you off. Stay, or strike it, and it fights.").withColor(def().glow));
