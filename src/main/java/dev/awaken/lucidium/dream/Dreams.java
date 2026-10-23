@@ -691,9 +691,10 @@ public final class Dreams {
             case UNDEAD -> java.util.Set.of(Forces.Tag.HAUNTED);
             default -> java.util.Set.of();
         };
+        int ring = f == Nightmares.Family.FALLING ? 1 : 5; // the falling arena is mostly sky
         for (int k = 0; k < count; k++) {
             double a = k * (Math.PI * 2 / count) + 0.4;
-            BlockPos at = ad.standingSpot(n.feet().offset((int) Math.round(Math.cos(a) * 5), 1, (int) Math.round(Math.sin(a) * 5)));
+            BlockPos at = ad.standingSpot(n.feet().offset((int) Math.round(Math.cos(a) * ring), 1, (int) Math.round(Math.sin(a) * ring)));
             if (at == null) at = n.feet().above();
             LivingEntity mob = MobHooks.spawnThemed(ad.level, f.theme(), MobRole.Role.NIGHTMARE, at, lv, tags, "");
             if (mob != null) {

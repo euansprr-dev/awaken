@@ -96,7 +96,7 @@ public final class BlueprintCompiler {
             switch (e.kind()) {
                 case DreamPlan.STAIR -> stair(props, a.feet(), b.feet(), m, glass);
                 case DreamPlan.PORTAL -> portal(props, doors, a.feet(), b.feet(), m, palette);
-                default -> bridge(props, a.feet(), b.feet(), m, e.style(), glass, 9.5);
+                default -> bridge(props, a.feet(), b.feet(), m, e.style(), glass, 9.5, 9.5);
             }
         }
 
@@ -211,13 +211,13 @@ public final class BlueprintCompiler {
     // ---- bridges ---------------------------------------------------------------------------------------------------
 
     /** A 3-wide walkway from rim to rim. Half steps use slabs so it can be walked without jumping. */
-    static void bridge(Map<Long, BlockState> out, BlockPos a, BlockPos b, Materials m, int style, BlockState post, double rim) {
+    static void bridge(Map<Long, BlockState> out, BlockPos a, BlockPos b, Materials m, int style, BlockState post, double rimA, double rimB) {
         double dx = b.getX() - a.getX(), dz = b.getZ() - a.getZ();
         double len = Math.sqrt(dx * dx + dz * dz);
         if (len < 1) return;
         double ux = dx / len, uz = dz / len, px = -uz, pz = ux;
-        double sx = a.getX() + 0.5 + ux * rim, sz = a.getZ() + 0.5 + uz * rim;
-        double span = Math.max(1, len - rim * 2);
+        double sx = a.getX() + 0.5 + ux * rimA, sz = a.getZ() + 0.5 + uz * rimA;
+        double span = Math.max(1, len - rimA - rimB);
         double ya = a.getY() - 1, yb = b.getY() - 1;
         boolean stepping = Math.floorMod(style, 4) == 2;
         double arc = Math.floorMod(style, 4) == 1 ? Math.min(5, span / 6) : 0;
@@ -252,7 +252,7 @@ public final class BlueprintCompiler {
         double r = 4.5;
         double startAng = Math.atan2(low.getZ() - mz, low.getX() - mx);
         BlockPos entry = BlockPos.containing(mx + Math.cos(startAng) * r, low.getY(), mz + Math.sin(startAng) * r);
-        bridge(out, low, entry, m, 0, core, 9.5);
+        bridge(out, low, entry, m, 0, core, 9.5, 0);
         int rise = high.getY() - low.getY();
         int n = Math.max(1, rise * 2);
         double dAng = 1.15 / r;
@@ -271,7 +271,7 @@ public final class BlueprintCompiler {
         for (int y = low.getY() - 3; y <= high.getY() + 1; y++) out.put(BlockPos.asLong(Mth.floor(mx), y, Mth.floor(mz)), core);
         BlockPos exit = BlockPos.containing(mx + Math.cos(ang) * r, high.getY(), mz + Math.sin(ang) * r);
         // short landing from the top of the spiral to the high island
-        bridge(out, exit, high, m, 0, core, 0.5);
+        bridge(out, exit, high, m, 0, core, 0, 9.5);
     }
 
     /** An impossible door: walk through a frame on one island and come out of its twin on another. */

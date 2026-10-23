@@ -60,6 +60,7 @@ final class LucidiumTests {
         AwakenTests.register("lucidium_plan_not_ready_fallback", 40, LucidiumTests::notReady);
         AwakenTests.register("lucidium_safe_wake", 160, LucidiumTests::safeWake);
         AwakenTests.register("lucidium_dimension_data", 20, LucidiumTests::dimensionData);
+        if (System.getenv("AWAKEN_LUCIDIUM_MAP") != null) AwakenTests.register("lucidium_debug_map", 400, LucidiumTests::debugMap);
     }
 
     private static final Snapshot.Kind[] ROTA = {Snapshot.Kind.BIOME, Snapshot.Kind.STRUCTURE, Snapshot.Kind.BOSS,
@@ -247,6 +248,43 @@ final class LucidiumTests {
         h.assertTrue(d.weeklyMarks(10).get(Nightmares.Family.BURNING) == 1, "only this week's deaths count");
         d.clearFamily(Nightmares.Family.BURNING);
         h.assertTrue(!d.weeklyMarks(10).containsKey(Nightmares.Family.BURNING), "a beaten fear is gone");
+        h.succeed();
+    }
+
+    /** Debug only (env AWAKEN_LUCIDIUM_MAP=<file.png>): a top-down picture of a compiled dream. */
+    private static void debugMap(GameTestHelper h) {
+        DreamPlan plan = DreamPlanner.plan(input(3, Map.of(Nightmares.Family.UNDEAD, 3), DreamPlanner.FIND_THE_DOOR)).orElseThrow();
+        DreamBlueprint bp = BlueprintCompiler.compile(plan, 7, id -> Optional.empty());
+        int size = 400, half = size / 2;
+        java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        for (int px = 0; px < size; px++) {
+            for (int pz = 0; pz < size; pz++) {
+                int x = bp.center.getX() - half + px, z = bp.center.getZ() - half + pz;
+                int rgb = 0x1A1424;
+                for (int y = 140; y >= 60; y--) {
+                    BlockState s = bp.blockAt(x, y, z);
+                    if (s == null || s.isAir()) continue;
+                    int col = s.getMapColor(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO).col;
+                    float shade = 0.55f + (y - 60) / 160f;
+                    int r = Math.min(255, (int) (((col >> 16) & 255) * shade)), g = Math.min(255, (int) (((col >> 8) & 255) * shade)),
+                            b = Math.min(255, (int) ((col & 255) * shade));
+                    rgb = (r << 16) | (g << 8) | b;
+                    break;
+                }
+                img.setRGB(px, pz, rgb);
+            }
+        }
+        int sx = (int) bp.spawn.x - bp.center.getX() + half, sz = (int) bp.spawn.z - bp.center.getZ() + half;
+        for (int d = -2; d <= 2; d++) {
+            img.setRGB(Math.max(0, Math.min(size - 1, sx + d)), Math.max(0, Math.min(size - 1, sz)), 0xFF2020);
+            img.setRGB(Math.max(0, Math.min(size - 1, sx)), Math.max(0, Math.min(size - 1, sz + d)), 0xFF2020);
+        }
+        try {
+            javax.imageio.ImageIO.write(img, "png", new java.io.File(System.getenv("AWAKEN_LUCIDIUM_MAP")));
+        } catch (java.io.IOException e) {
+            h.fail(e.getMessage());
+            return;
+        }
         h.succeed();
     }
 

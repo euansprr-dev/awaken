@@ -74,7 +74,13 @@ public final class DreamEvents {
         bus.addListener(DreamEvents::onServerStopping);
         bus.addListener(DreamEvents::onServerStopped);
         bus.addListener(DreamEvents::onServerAboutToStart);
-        PlayDays.onMorning((server, day) -> Planner.morning());
+        PlayDays.onMorning((server, day) -> {
+            Planner.morning();
+            // the night is over: tonight's intentions are spent
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                if (!Dreams.isDreaming(p)) Dreams.dreamer(p).setIntention("", day);
+            }
+        });
     }
 
     private static boolean inLucidium(Level level) {

@@ -157,9 +157,9 @@ public final class Dreamer implements ValueIOSerializable {
 
     // ---- intention -------------------------------------------------------------------------------------------------
 
-    /** Tonight's intention, or "" (an intention lasts until the next morning). */
+    /** Tonight's intention, or "" (it lasts until the next in-game morning, which clears it). */
     public String intention(long day) {
-        return intentionDay == day ? intention : "";
+        return day - intentionDay <= 1 ? intention : "";
     }
 
     public void setIntention(String intention, long day) {
