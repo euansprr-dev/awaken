@@ -1,0 +1,62 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:meadow",
+    "minecraft:forest",
+    "minecraft:flower_forest",
+    "minecraft:birch_forest",
+    "minecraft:old_growth_birch_forest",
+    "minecraft:dappled_forest",
+    "minecraft:dark_forest",
+    "minecraft:cherry_grove"
+  ],
+  "spawners": [
+    {
+      "type": "awaken:lumen_moth",
+      "weight": 30,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 2,
+        "max_inclusive": 4
+      }
+    },
+    {
+      "type": "awaken:bloom_sprite",
+      "weight": 20,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 2
+      }
+    },
+    {
+      "type": "awaken:mossback",
+      "weight": 14,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 2
+      }
+    },
+    {
+      "type": "awaken:gloomstalker",
+      "weight": 22,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 2
+      }
+    },
+    {
+      "type": "awaken:briar_sow",
+      "weight": 3,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 1
+      }
+    }
+  ]
+}

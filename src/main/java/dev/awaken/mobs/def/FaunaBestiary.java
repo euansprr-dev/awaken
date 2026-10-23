@@ -50,7 +50,7 @@ final class FaunaBestiary {
 
     // Desert, savanna, badlands.
     private static void sunscorch(List<MobDef> out) {
-        out.add(m("glass_scarab", "Glass Scarab", Theme.SUNSCORCH, Tier.NORMAL, Model.SCARAB, "Scuttles over hot sand and dives into it when you stomp close; sneak up to catch its quartz").hp(4).dmg(1).spd(0.3).xp(1).tint(0xFFFFFF).glow(0xFFF4D0).fauna(FaunaRole.AMBIENT).talent(FaunaTalent.BURROW).build());
+        out.add(m("glass_scarab", "Glass Scarab", Theme.SUNSCORCH, Tier.NORMAL, Model.SCARAB, "Scuttles over hot sand and dives into it when you stomp close; sneak up to catch its quartz").hp(4).dmg(1).spd(0.3).scale(1.4F).xp(1).tint(0xFFFFFF).glow(0xFFF4D0).fauna(FaunaRole.AMBIENT).talent(FaunaTalent.BURROW).build());
         out.add(m("dune_ray", "Dune Ray", Theme.SUNSCORCH, Tier.NORMAL, Model.RAY, "Glides a hand's breadth over the dunes; strike it and it lashes back with its tail").hp(20).dmg(4).spd(0.45).scale(1.4F).xp(6).tint(0xFFFFFF).glow(0x5FE8D8).fauna(FaunaRole.NEUTRAL).talent(FaunaTalent.GLIDE)
                 .ab(a(CHARGE, "Tail Lash").power(1.2F).range(10).cd(100), a(GUST, "Sand Gust").radius(5.0F).power(0.6F).cd(200)).build());
         out.add(m("dune_wyrm", "The Dune Wyrm", Theme.SUNSCORCH, Tier.WARDEN, Model.SERPENT, "Swims through the air over the sand as if it were water; it sinks away and surfaces beside you").hp(26).dmg(4.5).spd(0.5).scale(1.4F).xp(60).arena(40).tint(0xFFFFFF).glow(0xFFB347).bar(BossBarColor.YELLOW).fauna(FaunaRole.BEAST).talent(FaunaTalent.TERRITORY)

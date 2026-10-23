@@ -1,0 +1,52 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:taiga",
+    "minecraft:snowy_taiga",
+    "minecraft:old_growth_pine_taiga",
+    "minecraft:old_growth_spruce_taiga",
+    "minecraft:grove",
+    "minecraft:snowy_plains",
+    "minecraft:snowy_slopes",
+    "minecraft:ice_spikes",
+    "minecraft:windswept_forest"
+  ],
+  "spawners": [
+    {
+      "type": "awaken:frostfinch",
+      "weight": 26,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 3,
+        "max_inclusive": 5
+      }
+    },
+    {
+      "type": "awaken:frost_stag",
+      "weight": 22,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 3
+      }
+    },
+    {
+      "type": "awaken:wisp_hound",
+      "weight": 22,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 2,
+        "max_inclusive": 3
+      }
+    },
+    {
+      "type": "awaken:old_antler",
+      "weight": 3,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 1
+      }
+    }
+  ]
+}

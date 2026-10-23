@@ -141,16 +141,16 @@ public final class FaunaModels {
         /** A main beam with three tines and a crown point; side = 1 left, -1 right. */
         private static void antler(PartDefinition head, String name, int side) {
             CubeListBuilder beamC = side > 0 ? CubeListBuilder.create().texOffs(44, 24) : CubeListBuilder.create().mirror().texOffs(44, 24);
-            PartDefinition beam = head.addOrReplaceChild("antler_" + name, beamC.addBox(-0.5F, -7, -0.5F, 1, 7, 1),
-                    PartPose.offsetAndRotation(side * 1.5F, -3, -1, -0.25F, 0, -side * 0.45F));
+            PartDefinition beam = head.addOrReplaceChild("antler_" + name, beamC.addBox(-0.5F, -9, -0.5F, 1, 9, 1),
+                    PartPose.offsetAndRotation(side * 1.5F, -3, -1, -0.3F, 0, -side * 0.55F));
             CubeListBuilder tineC = side > 0 ? CubeListBuilder.create().texOffs(48, 24) : CubeListBuilder.create().mirror().texOffs(48, 24);
-            beam.addOrReplaceChild("tine_a_" + name, tineC.addBox(-0.5F, -4, -0.5F, 1, 4, 1), PartPose.offsetAndRotation(0, -2.5F, 0, -0.9F, 0, side * 0.2F));
+            beam.addOrReplaceChild("tine_a_" + name, tineC.addBox(-0.5F, -5, -0.5F, 1, 5, 1), PartPose.offsetAndRotation(0, -3, 0, -1.0F, 0, side * 0.25F));
             CubeListBuilder tineB = side > 0 ? CubeListBuilder.create().texOffs(48, 24) : CubeListBuilder.create().mirror().texOffs(48, 24);
-            beam.addOrReplaceChild("tine_b_" + name, tineB.addBox(-0.5F, -4, -0.5F, 1, 4, 1), PartPose.offsetAndRotation(0, -5, 0, -0.6F, 0, -side * 0.5F));
+            beam.addOrReplaceChild("tine_b_" + name, tineB.addBox(-0.5F, -5, -0.5F, 1, 5, 1), PartPose.offsetAndRotation(0, -6, 0, -0.55F, 0, -side * 0.55F));
             CubeListBuilder tineC2 = side > 0 ? CubeListBuilder.create().texOffs(48, 24) : CubeListBuilder.create().mirror().texOffs(48, 24);
-            beam.addOrReplaceChild("tine_c_" + name, tineC2.addBox(-0.5F, -4, -0.5F, 1, 4, 1), PartPose.offsetAndRotation(0, -6.5F, 0, 0.5F, 0, side * 0.35F));
+            beam.addOrReplaceChild("tine_c_" + name, tineC2.addBox(-0.5F, -5, -0.5F, 1, 5, 1), PartPose.offsetAndRotation(0, -8, 0, 0.55F, 0, side * 0.4F));
             CubeListBuilder crown = side > 0 ? CubeListBuilder.create().texOffs(52, 24) : CubeListBuilder.create().mirror().texOffs(52, 24);
-            beam.addOrReplaceChild("crown_" + name, crown.addBox(-0.5F, -3, -0.5F, 1, 3, 1), PartPose.offsetAndRotation(0, -7, 0, 0.1F, 0, side * 0.6F));
+            beam.addOrReplaceChild("crown_" + name, crown.addBox(-0.5F, -4, -0.5F, 1, 4, 1), PartPose.offsetAndRotation(0, -9, 0, 0.1F, 0, side * 0.7F));
         }
 
         @Override
@@ -307,16 +307,17 @@ public final class FaunaModels {
         public static LayerDefinition create() {
             MeshDefinition mesh = new MeshDefinition();
             PartDefinition root = mesh.getRoot();
-            PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-3, -3, -3.5F, 6, 3, 7)
-                    .texOffs(0, 10).addBox(-3.5F, -4, -3, 7, 2, 7), PartPose.offset(0, 22.5F, 0));
-            PartDefinition head = body.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 19).addBox(-2, -2, -2, 4, 3, 2), PartPose.offset(0, -1, -3.5F));
-            head.addOrReplaceChild("horn", CubeListBuilder.create().texOffs(12, 19).addBox(-0.5F, -3, -1, 1, 3, 1), PartPose.offsetAndRotation(0, -1, -1, -0.5F, 0, 0));
+            // A low body under a high domed shell that comes well down the sides: a beetle, not a table.
+            PartDefinition body = root.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-3, -2, -3.5F, 6, 2, 7)
+                    .texOffs(0, 10).addBox(-3.5F, -4.5F, -3, 7, 3, 7), PartPose.offset(0, 22.5F, 0));
+            PartDefinition head = body.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 20).addBox(-2, -2, -2, 4, 3, 2), PartPose.offset(0, -1, -3.5F));
+            head.addOrReplaceChild("horn", CubeListBuilder.create().texOffs(12, 20).addBox(-0.5F, -3, -1, 1, 3, 1), PartPose.offsetAndRotation(0, -1, -1, -0.5F, 0, 0));
             for (int i = 0; i < 3; i++) {
                 float z = -2 + i * 2;
-                body.addOrReplaceChild("leg" + (i * 2), CubeListBuilder.create().texOffs(16, 19).addBox(0, 0, -0.5F, 4, 1, 1),
-                        PartPose.offsetAndRotation(2.5F, -0.5F, z, 0, (i - 1) * -0.5F, 0.6F));
-                body.addOrReplaceChild("leg" + (i * 2 + 1), CubeListBuilder.create().mirror().texOffs(16, 19).addBox(-4, 0, -0.5F, 4, 1, 1),
-                        PartPose.offsetAndRotation(-2.5F, -0.5F, z, 0, (i - 1) * 0.5F, -0.6F));
+                body.addOrReplaceChild("leg" + (i * 2), CubeListBuilder.create().texOffs(16, 20).addBox(0, 0, -0.5F, 3, 1, 1),
+                        PartPose.offsetAndRotation(2.5F, -0.5F, z, 0, (i - 1) * -0.5F, 0.8F));
+                body.addOrReplaceChild("leg" + (i * 2 + 1), CubeListBuilder.create().mirror().texOffs(16, 20).addBox(-3, 0, -0.5F, 3, 1, 1),
+                        PartPose.offsetAndRotation(-2.5F, -0.5F, z, 0, (i - 1) * 0.5F, -0.8F));
             }
             return LayerDefinition.create(mesh, 32, 32);
         }

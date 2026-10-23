@@ -1,0 +1,50 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:desert",
+    "minecraft:savanna",
+    "minecraft:savanna_plateau",
+    "minecraft:windswept_savanna",
+    "minecraft:badlands",
+    "minecraft:eroded_badlands",
+    "minecraft:wooded_badlands"
+  ],
+  "spawners": [
+    {
+      "type": "awaken:glass_scarab",
+      "weight": 30,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 2,
+        "max_inclusive": 3
+      }
+    },
+    {
+      "type": "awaken:dune_ray",
+      "weight": 22,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 2
+      }
+    },
+    {
+      "type": "awaken:gloomstalker",
+      "weight": 20,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 2
+      }
+    },
+    {
+      "type": "awaken:dune_wyrm",
+      "weight": 3,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 1
+      }
+    }
+  ]
+}

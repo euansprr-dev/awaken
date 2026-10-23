@@ -1,0 +1,104 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:quartz",
+          "modifier": [
+            {
+              "type": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 3,
+                "max": 6
+              }
+            },
+            {
+              "type": "minecraft:enchanted_count_increase",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 0.0,
+                "max": 1.0
+              },
+              "enchantment": "minecraft:looting"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_nugget",
+          "modifier": [
+            {
+              "type": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 3,
+                "max": 8
+              }
+            },
+            {
+              "type": "minecraft:enchanted_count_increase",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 0.0,
+                "max": 1.0
+              },
+              "enchantment": "minecraft:looting"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "condition": {
+        "type": "minecraft:killed_by_player"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:essence_shard",
+          "modifier": [
+            {
+              "type": "awaken:mob_level_count",
+              "base": 3.0,
+              "per_level": 0.15,
+              "max": 32
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "condition": {
+        "type": "minecraft:killed_by_player"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:wyrm_scale",
+          "modifier": [
+            {
+              "type": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "random_sequence": "awaken:entities/dune_wyrm"
+}
