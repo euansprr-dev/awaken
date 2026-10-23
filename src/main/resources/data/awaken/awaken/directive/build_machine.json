@@ -13,5 +13,8 @@
   "min_rank": "C",
   "max_rank": "SOVEREIGN",
   "quick": false,
-  "weight": 10
+  "weight": 10,
+  "requires": [
+    "counter:awaken:machines_scanned"
+  ]
 }

@@ -12,5 +12,9 @@
   "min_rank": "E",
   "max_rank": "SOVEREIGN",
   "quick": false,
-  "weight": 5
+  "weight": 5,
+  "requires": [
+    "counter:awaken:gates_cleared",
+    "level:8"
+  ]
 }
