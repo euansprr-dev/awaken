@@ -120,7 +120,8 @@ final class PowerHitTests {
                     for (var e : bodies.entrySet()) {
                         Spot s = e.getKey();
                         LivingEntity b = e.getValue();
-                        boolean hurt = !b.isAlive() || b.getHealth() < hp.get(s) - 0.01f;
+                        // hurt by the caster, not by a neighbour in the line-up (a hunter or a ravager may swing at it)
+                        boolean hurt = (!b.isAlive() || b.getHealth() < hp.get(s) - 0.01f) && b.getLastHurtByPlayer() == p;
                         double moved = b.position().distanceTo(where.get(s));
                         report.add(s.name() + (hurt ? " hurt" : " -") + String.format(" moved %.1f", moved));
                         if (s.foe() && !hurt) wrong.add(s.name() + " was not hurt");
