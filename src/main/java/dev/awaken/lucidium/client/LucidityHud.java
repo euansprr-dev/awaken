@@ -121,7 +121,8 @@ public final class LucidityHud {
     }
 
     private static int hint(GuiGraphicsExtractor g, Font font, String key, int x, int y, int colour) {
-        small(g, font, scramble(Component.translatable(key).getString()), x, y, colour);
+        Component keyName = dev.awaken.core.client.AwakenKeys.REALITY_CHECK.getTranslatedKeyMessage();
+        small(g, font, scramble(Component.translatable(key, keyName).getString()), x, y, colour);
         return y + 8;
     }
 

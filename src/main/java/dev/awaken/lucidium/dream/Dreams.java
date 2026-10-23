@@ -567,7 +567,8 @@ public final class Dreams {
         }
         if (!st.masteryShown && st.lucidity >= Lucidity.MASTERY) {
             st.masteryShown = true;
-            Signal.toast(sp, Component.literal("You are the dreamer. Sneak and hold H to call on a memory."));
+            Signal.toast(sp, Component.literal("You are the dreamer. Sneak and hold ").append(Component.keybind("key.awaken.reality_check"))
+                    .append(" to call on a memory."));
         }
         ActiveDream ad = active(sp);
         if (ad != null) sendHud(sp, st, ad, false);
@@ -593,7 +594,8 @@ public final class Dreams {
         playTo(sp, LucidiumContent.LUCID.get(), 0.8f, 1.0f);
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal("You are dreaming."))
                 .body(Component.literal("You know it now, and the dream knows you know. Fly. Shape it. Remember it."))
-                .footer(Component.literal("Hold H on a wall, a floor or the open air to shape the dream"))
+                .footer(Component.literal("Hold ").append(Component.keybind("key.awaken.reality_check"))
+                        .append(" on a wall, a floor or the open air to shape the dream"))
                 .ttl(20 * 8).priority(4).build());
         if (!d.lucidEver) {
             d.lucidEver = true;
