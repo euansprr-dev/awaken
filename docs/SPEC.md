@@ -426,7 +426,10 @@ Plan v2 · anomalies (details in docs/modules/anomalies.md):
 
 Plan v2 · landmarks (details in docs/modules/landmarks.md):
 - Kinds: the Well, vaults (the spawn vault too), monoliths, ocean labs, sky platforms, gates by theme. Reaching the
-  first of each kind is a discovery (0.15 of a level). Memory `awaken:landmark_memory` (schema 1, copied on death).
+  first of each kind is a discovery (0.15 of a level). Memory `awaken:landmark_memory` (schema 2, copied on death,
+  synced to its owner).
+- The Gate Map marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
+  named by the Now tracker.
 - The Now tracker names the nearest unreached landmark once there is a reason to go (Well from level 10, vault and
   monolith 4, spawn vault 2, ocean lab 6, sky platform 20); never inside a Hearth or a gate. Mira tells one landmark
   rumour a day when no gate is worth one (`core.api.WorldHooks.landmarkRumour`).

@@ -1,4 +1,4 @@
-# The Gate Map with gates and the lairs you know (heard of: outlined; found: filled), and the Codex.
+# The Gate Map with gates, and the lairs and landmarks you know (heard of: outlined; found: filled), and the Codex.
 world mapcheck creative 4242
 waitworld
 gui 0
@@ -13,6 +13,7 @@ cmd awaken fauna lair hear old_antler
 cmd awaken fauna lair hear dune_wyrm
 cmd awaken fauna lair hear mire_mother
 cmd awaken fauna lair hear stonehorn
+cmd awaken landmark hear
 wait 60
 screen map
 wait 20

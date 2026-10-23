@@ -184,6 +184,10 @@ final class LandmarkTests {
                 h.assertTrue(rumour.isPresent() && rumour.get().title().equals("The Well, to the southeast") && rumour.get().body().contains("about 500 blocks"),
                         "a rumour: " + rumour);
                 h.assertTrue(Landmarks.rumour(p).isEmpty(), "never the same rumour twice");
+                // heard of: on the Gate Map, outlined
+                var placed = Landmarks.memory(p).places().stream().filter(pl -> pl.id().equals("well")).findFirst();
+                h.assertTrue(placed.isPresent() && placed.get().landmark() == LandmarkKind.WELL && !Landmarks.memory(p).reached("well"),
+                        "the rumour puts the Well on the map: " + Landmarks.memory(p).describe());
                 // a spirit's whisper raises it
                 var w = Landmarks.whisper(p);
                 h.assertTrue(w.isPresent() && w.get().contains("500 m SE"), "the spirit whispers: " + w);
@@ -194,6 +198,7 @@ final class LandmarkTests {
                 LandmarkWatch.reach(p, LandmarkKind.WELL, "well");
                 h.assertTrue(LandmarkNow.suggest(p).isEmpty(), "once you've been there, the line goes");
                 h.assertTrue(Landmarks.memory(p).whispered().isEmpty(), "and the whisper is spent");
+                h.assertTrue(Landmarks.memory(p).places().size() == 1, "still one place on the map, now reached");
             } finally {
                 Landmarks.testOverrides(null, false);
             }
@@ -248,9 +253,12 @@ final class LandmarkTests {
             mem.told.add("ruin:3,-7");
             mem.whispered = "ruin:9,9";
             mem.whisperedAt = 1234;
+            mem.place("ruin:3,-7", LandmarkKind.VAULT, new BlockPos(56, 70, -104));
+            mem.place("well", LandmarkKind.WELL, new BlockPos(-1200, 64, 345));
             var tag = LandmarkMemory.MAP_CODEC.codec().encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, mem).getOrThrow();
             LandmarkMemory back = LandmarkMemory.MAP_CODEC.codec().parse(net.minecraft.nbt.NbtOps.INSTANCE, tag).getOrThrow();
-            h.assertTrue(back.describe().equals(mem.describe()), "memory survives: " + back.describe());
+            h.assertTrue(back.describe().equals(mem.describe()) && List.copyOf(back.places()).equals(List.copyOf(mem.places())),
+                    "memory survives: " + back.describe());
             LandmarkMemory fresh = LandmarkMemory.MAP_CODEC.codec().parse(net.minecraft.nbt.NbtOps.INSTANCE, new net.minecraft.nbt.CompoundTag()).getOrThrow();
             h.assertTrue(fresh.reached().isEmpty() && fresh.whispered().isEmpty(), "an old player loads empty");
             h.succeed();
