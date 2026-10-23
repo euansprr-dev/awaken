@@ -34,7 +34,7 @@ import java.util.Map;
  * cmd &lt;command without slash&gt;
  * look &lt;yaw&gt; &lt;pitch&gt;
  * key &lt;awaken key name&gt;                        press one of the mod's keys (status, accept, dismiss, ...)
- * screen status|close
+ * screen status|close|experimental             experimental: vanilla's experimental-settings prompt (it should answer itself)
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * quit
@@ -166,6 +166,15 @@ public final class Autopilot {
             case "screen" -> {
                 if (arg.trim().equals("close")) mc.gui.setScreen(null);
                 else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen());
+                else if (arg.trim().equals("experimental")) {
+                    // vanilla's own world-creation prompt, as a new world would show it: ExperimentalWarning should answer it
+                    var back = mc.gui.screen();
+                    mc.gui.setScreen(new net.minecraft.client.gui.screens.ConfirmScreen(yes -> {
+                        Awaken.LOG.info("[autopilot] experimental prompt answered: {}", yes ? "yes" : "no");
+                        mc.gui.setScreen(back);
+                    }, net.minecraft.network.chat.Component.translatable("selectWorld.warning.experimental.title"),
+                            net.minecraft.network.chat.Component.translatable("selectWorld.warning.experimental.question")));
+                }
                 waitTicks = 10;
             }
             case "gui" -> {

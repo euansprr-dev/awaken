@@ -1,0 +1,12 @@
+# The experimental-settings prompt answers itself (core/client/ExperimentalWarning): a new world opens with no prompt,
+# then vanilla's own prompt is opened on purpose and should vanish within a tick ("experimental prompt answered: yes").
+world experimental_check survival 777
+waitworld
+gui 0
+wait 40
+shot exp_00_world_open_no_prompt
+screen experimental
+wait 3
+shot exp_01_prompt_gone
+wait 20
+quit

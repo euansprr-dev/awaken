@@ -28,7 +28,8 @@
     "subtitle": "subtitles.awaken.signal.warning",
     "sounds": [
       {
-        "name": "minecraft:block/note_block/bit",
+        "name": "minecraft:block.note_block.bit",
+        "type": "event",
         "pitch": 0.6,
         "volume": 0.8
       }
@@ -38,7 +39,8 @@
     "subtitle": "subtitles.awaken.level_up",
     "sounds": [
       {
-        "name": "minecraft:block/beacon/power_select",
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event",
         "pitch": 1.4,
         "volume": 0.8
       }
