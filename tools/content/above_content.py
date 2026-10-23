@@ -125,7 +125,7 @@ def block_models():
         "textures": {"particle": "#side"},
         "elements": [
             {"from": [0, 0, 0], "to": [16, 16, 16], "faces": base_faces},
-            {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade": False, "faces": {
+            {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up", "faces": {
                 "north": {"texture": "#front_glow", "cullface": "north"},
                 "up": {"texture": "#top_glow", "cullface": "up"},
             }},
@@ -180,7 +180,7 @@ def block_models():
                  "up": {"texture": "#screen"}, "down": {"texture": "#side"},
                  "north": {"texture": "#trim"}, "south": {"texture": "#trim"}, "west": {"texture": "#trim"}, "east": {"texture": "#trim"}}},
             {"from": [1, 10, 2], "to": [15, 13, 14], "rotation": {"origin": [8, 11.5, 8], "axis": "x", "angle": -22.5},
-             "light_emission": 12, "shade": False, "faces": {"up": {"texture": "#screen"}}},
+             "light_emission": 12, "shade_direction_override": "up", "faces": {"up": {"texture": "#screen"}}},
         ],
     })
     asset("blockstates/precursor_log_terminal.json", {"variants": {
@@ -198,7 +198,7 @@ def block_models():
                 "south": {"texture": "#side", "uv": [0, 12, 16, 16], "cullface": "south"},
                 "west": {"texture": "#side", "uv": [0, 12, 16, 16], "cullface": "west"},
                 "east": {"texture": "#side", "uv": [0, 12, 16, 16], "cullface": "east"}}},
-            {"from": [0, 4, 0], "to": [16, 4, 16], "light_emission": 15, "shade": False, "faces": {"up": {"texture": "#top"}}},
+            {"from": [0, 4, 0], "to": [16, 4, 16], "light_emission": 15, "shade_direction_override": "up", "faces": {"up": {"texture": "#top"}}},
         ],
     })
     asset("blockstates/halo_return_pad.json", {"variants": {"": {"model": a("block/halo_return_pad")}}})

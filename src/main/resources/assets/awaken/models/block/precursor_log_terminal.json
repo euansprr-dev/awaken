@@ -128,7 +128,7 @@
         "angle": -22.5
       },
       "light_emission": 12,
-      "shade": false,
+      "shade_direction_override": "up",
       "faces": {
         "up": {
           "texture": "#screen"

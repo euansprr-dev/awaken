@@ -79,7 +79,7 @@
         16
       ],
       "light_emission": 15,
-      "shade": false,
+      "shade_direction_override": "up",
       "faces": {
         "up": {
           "texture": "#top"

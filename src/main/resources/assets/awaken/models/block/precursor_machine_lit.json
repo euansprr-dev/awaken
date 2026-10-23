@@ -54,7 +54,7 @@
         16
       ],
       "light_emission": 15,
-      "shade": false,
+      "shade_direction_override": "up",
       "faces": {
         "north": {
           "texture": "#front_glow",
