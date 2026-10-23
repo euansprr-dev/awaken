@@ -1,0 +1,10 @@
+{
+  "type": "awaken:lucidium",
+  "generator": {
+    "type": "awaken:dream_cells",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "awaken:lucidium_dream"
+    }
+  }
+}

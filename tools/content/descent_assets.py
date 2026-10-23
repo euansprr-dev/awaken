@@ -51,7 +51,7 @@ BLOCKS = {
     "foundry_lamp": ("all", "Foundry Lamp", "pickaxe"),
     "brine_stone": ("all", "Brine Stone", "pickaxe"),
     "tide_coral": ("all", "Tide Coral", "pickaxe"),
-    "dream_cloud": ("all", "Dream Cloud", "shovel"),
+    "stratum_cloud": ("all", "Dreaming Cloud", "shovel"),
     "dream_tile": ("all", "Dream Tile", "pickaxe"),
     "dream_glow": ("all", "Dream Glow", "pickaxe"),
     "court_stone": ("all", "Court Stone", "pickaxe"),

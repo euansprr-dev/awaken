@@ -135,7 +135,7 @@ public final class DescentContent {
     public static final DeferredBlock<Block> BRINE_STONE = simple("brine_stone", rock(3.0F, SoundType.STONE, MapColor.WARPED_NYLIUM));
     public static final DeferredBlock<Block> TIDE_CORAL = simple("tide_coral", glow(1.0F, SoundType.CORAL_BLOCK, 11, MapColor.COLOR_CYAN));
     // 8 The Dreaming Stratum
-    public static final DeferredBlock<Block> DREAM_CLOUD = simple("dream_cloud", p -> p.strength(0.8F).sound(SoundType.WOOL).mapColor(MapColor.COLOR_PINK));
+    public static final DeferredBlock<Block> DREAM_CLOUD = simple("stratum_cloud", p -> p.strength(0.8F).sound(SoundType.WOOL).mapColor(MapColor.COLOR_PINK));
     public static final DeferredBlock<Block> DREAM_TILE = simple("dream_tile", rock(2.0F, SoundType.CALCITE, MapColor.COLOR_MAGENTA));
     public static final DeferredBlock<Block> DREAM_GLOW = simple("dream_glow", glow(1.0F, SoundType.AMETHYST, 13, MapColor.COLOR_PINK));
     // 9 The Hollow Court

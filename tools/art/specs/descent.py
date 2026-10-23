@@ -168,7 +168,7 @@ def build(out):
     out.block("tide_coral", crystal(glow_block("water", "tide_coral"), "frost", seed="tide_coral", count=3))
 
     # ---- 8 The Dreaming Stratum ---------------------------------------------------------------------------------------
-    out.block("dream_cloud", overlay_noise(stone("dream", seed="dream_cloud", scale=3, contrast=1.0, lo=3), "cloud", seed="dc", density=0.12, idx=4))
+    out.block("stratum_cloud", overlay_noise(stone("dream", seed="dream_cloud", scale=3, contrast=1.0, lo=3), "cloud", seed="dc", density=0.12, idx=4))
     out.block("dream_tile", tiles("dream", "dream_tile", size=8, lo=2))
     out.block("dream_glow", glow_block("dream", "dream_glow"))
 

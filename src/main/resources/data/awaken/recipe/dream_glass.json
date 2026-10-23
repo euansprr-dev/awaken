@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": "minecraft:glass",
+    "R": "awaken:dream_residue"
+  },
+  "pattern": [
+    "GGG",
+    "GRG",
+    "GGG"
+  ],
+  "result": {
+    "id": "awaken:dream_glass",
+    "count": 8
+  }
+}

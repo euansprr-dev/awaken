@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "awaken:dream_residue",
+    "#minecraft:wool",
+    "#minecraft:wool",
+    "#minecraft:wool"
+  ],
+  "result": {
+    "id": "awaken:dream_cloud",
+    "count": 4
+  }
+}

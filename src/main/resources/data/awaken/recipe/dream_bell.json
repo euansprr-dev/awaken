@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "G": "minecraft:gold_ingot",
+    "R": "awaken:dream_residue"
+  },
+  "pattern": [
+    " A ",
+    "GRG",
+    "GGG"
+  ],
+  "result": {
+    "id": "awaken:dream_bell"
+  }
+}
