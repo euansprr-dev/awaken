@@ -1449,6 +1449,25 @@ final class FxRecipes {
                             0.05f, st.core, alpha(st.mid, 0), FxPool.ADD | (st == FxStyle.HEAT ? FxPool.ANIM : FxPool.STRETCH));
                     FxWorld.grav(p, st == FxStyle.HEAT ? -0.004f : 0.02f);
                 }
+                {
+                    // (every other tick) rings riding down the beam: seen from behind the caster (where the beam itself hides behind the
+                    // body) they read as a tunnel of light around the line of fire
+                    double bx = ex - s.x, by = ey - s.y, bz = ez - s.z;
+                    double bl = Math.sqrt(bx * bx + by * by + bz * bz);
+                    if (bl > 2) {
+                        double ux = bx / bl, uy = by / bl, uz = bz / bl;
+                        for (int i = 0; i < 2; i++) {
+                            double at = R.f(1.0f, (float) Math.min(bl - 0.5, 7));
+                            Shape rr = ring(s.x + ux * at, s.y + uy * at, s.z + uz * at, 0.25f, 0.75f, 0.14f, 0.04f, 6, alpha(s.c0, 0.9f), alpha(st.edge, 0),
+                                    (float) ux, (float) uy, (float) uz);
+                            if (rr != null) {
+                                rr.vx = ux * 0.6;
+                                rr.vy = uy * 0.6;
+                                rr.vz = uz * 0.6;
+                            }
+                        }
+                    }
+                }
                 if (s.age % 4 == 0) {
                     FxWorld.sprite(GLOW, ex, ey, ez, 0, 0, 0, 6, 2.0f, 0.6f, alpha(s.c0, 0.8f), alpha(s.c0, 0), FxPool.ADD);
                     // a shock ring where the beam lands and one at the palm, both facing along the beam
