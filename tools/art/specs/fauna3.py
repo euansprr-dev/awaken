@@ -129,19 +129,26 @@ def paint_glimmerfin(r, P):
                 if col is not None:
                     f.set(i, j, col)
     P.paint("gsnout", silver, 2.8)
+    # night: the iridescent stripe shines down both flanks and the scale row under it glimmers (the glow is the
+    # stripe's own colour, so by day it is just the stripe)
+    for nm in ("gbody", "ghead", "gtail1", "gtail2"):
+        for fname in SIDES:
+            f = P.face(nm, fname)
+            g = P.face(nm, fname, glow=True)
+            if f.h < 2:
+                continue
+            for i in range(f.w):
+                t = i / max(1, f.w - 1)
+                g.set(i, 1, f.get(i, 1)[:3] + (int(190 + 65 * t),))
+                if nm in ("gbody", "gtail1") and f.h > 2:
+                    g.set(i, 2, hexc("#b4f4ff", 210 if i % 2 == 0 else 160))
     # the eye: dark with a bright ring, glowing
     for fname in ("west", "east"):
         f = P.face("ghead", fname)
         g = P.face("ghead", fname, glow=True)
         ex = 0 if fname == "west" else f.w - 1
         f.set(ex, 1, hexc("#06121c"))
-        g.set(ex, 1, hexc("#bff8ff", 200))
-    # glowing scales along the flank (the shimmer)
-    for nm in ("gbody", "gtail1"):
-        for fname in ("west", "east"):
-            g = P.face(nm, fname, glow=True)
-            for i in range(0, g.w, 2):
-                g.set(i, 2, hexc("#9cf6ff", 210))
+        g.set(ex, 1, hexc("#d8fcff", 245))
     # fins: shaped membranes with rays, translucent at the edges; the tail is forked
     fin_c = lambda i, j, edge: hexc("#9ae4f2", 230) if edge else (hexc("#5cb8d4", 210) if i % 2 == 0 else hexc("#3a8eb0", 170))  # noqa: E731
     def membrane(nm, keep):
@@ -149,9 +156,13 @@ def paint_glimmerfin(r, P):
             f = P.face(nm, fname)
             if f.w <= 0 or f.h <= 0:
                 continue
+            g = P.face(nm, fname, glow=True)
             for i, j in f.each():
                 k = keep(f, i, j)
                 f.set(i, j, (0, 0, 0, 0) if k is None else fin_c(i, j, k))
+                if k is not None:
+                    # both faces of every fin glimmer, the edges most
+                    g.set(i, j, hexc("#b4f4ff", 230) if k else hexc("#8ee4f6", 150))
     # tail (west/east faces are 3 wide, 5 tall): a fork, deepest at the middle row
     membrane("gfin", lambda f, i, j: None if (j == 2 and i >= 1) or (j in (1, 3) and i == 2) else (i == f.w - 1 or j in (0, f.h - 1)))
     # dorsal (4 long, 2 tall): a swept sail, tallest at the front
@@ -237,7 +248,8 @@ def breathbell_clips(r):
 
 def paint_breathbell(r, P):
     gel = Ramp("#4a6a8a", "#6a92b4", "#8cb8d8", "#b4dcf0", "#dcf4ff")
-    # the bell: milky glass, radial canals, brighter toward the brim, mostly see-through
+    # the bell: milky glass, radial canals, brighter toward the brim, mostly see-through. At night the whole bell
+    # glows softly, the canals and the frilled rim brightest (glow on both faces of the skirt, every face of the bell)
     for nm in ("brim", "dome", "shoulder", "cap"):
         for fname in ("top", "bottom") + SIDES:
             f = P.face(nm, fname)
@@ -250,10 +262,12 @@ def paint_breathbell(r, P):
                 rim = nm == "brim"
                 a = 200 if rim else (150 if canal else 90)
                 f.set(i, j, gel.at((3.8 if canal or rim else 2.8) + (0.3 if nm == "cap" else 0))[:3] + (a,))
-                if rim and fname in SIDES and i % 3 == 1:
-                    g.set(i, j, hexc("#b8f0ff", 170))
-                elif canal and fname == "top" and nm != "cap":
-                    g.set(i, j, hexc("#9ce6ff", 80))
+                if rim:
+                    g.set(i, j, hexc("#c8f6ff", 245 if (fname in SIDES and i % 3 == 1) else 215))
+                elif canal:
+                    g.set(i, j, hexc("#a8ecff", 205))
+                else:
+                    g.set(i, j, hexc("#8cd4f4", 120))
     # the bubble of air: bright silver-blue with a highlight
     for fname in ("top", "bottom") + SIDES:
         f = P.face("airbell", fname)
@@ -261,7 +275,7 @@ def paint_breathbell(r, P):
         for i, j in f.each():
             hi = (i, j) in ((1, 1), (2, 1), (1, 2))
             f.set(i, j, hexc("#f4feff", 235) if hi else hexc("#c4ecff", 175))
-            g.set(i, j, hexc("#e4fbff", 150 if not hi else 230))
+            g.set(i, j, hexc("#ecfdff", 200 if not hi else 255))
     for fname in ("north", "south"):
         f = P.face("skirt0", fname)
         g = P.face("skirt0", fname, glow=True)
@@ -270,8 +284,9 @@ def paint_breathbell(r, P):
                 f.set(i, j, (0, 0, 0, 0))
                 continue
             f.set(i, j, gel.at(3.6 - j * 0.6)[:3] + (150,))
-            if j == f.h - 1:
-                g.set(i, j, hexc("#b8f0ff", 150))
+            t = j / max(1, f.h - 1)
+            g.set(i, j, hexc("#b8f0ff", int(190 + 65 * t)))
+    # tentacles: faint at the root, bright beads toward the tips
     for nm in ("tent0a", "tent0b", "tent0c"):
         for fname in ("top", "bottom") + SIDES:
             f = P.face(nm, fname)
@@ -279,8 +294,9 @@ def paint_breathbell(r, P):
             for i, j in f.each():
                 fade = 130 if nm == "tent0a" else 105 if nm == "tent0b" else 80
                 f.set(i, j, gel.at(3.4)[:3] + (fade,))
-                if nm != "tent0a" and j == f.h - 1:
-                    g.set(i, j, hexc("#d8ffff", 210))
+                base = 150 if nm == "tent0a" else 185 if nm == "tent0b" else 215
+                g.set(i, j, hexc("#d8ffff", 255 if (j == f.h - 1 or j % 2 == 0) and nm != "tent0a" else base))
+    # the ribbon arms: violet, frilled, glowing on both faces
     for fname in ("north", "south"):
         f = P.face("arm0", fname)
         g = P.face("arm0", fname, glow=True)
@@ -290,8 +306,7 @@ def paint_breathbell(r, P):
                 f.set(i, j, (0, 0, 0, 0))
                 continue
             f.set(i, j, hexc("#e6b8ff", 170) if edge else hexc("#b48cf0", 135))
-            if j % 3 == 0:
-                g.set(i, j, hexc("#e0c8ff", 140))
+            g.set(i, j, hexc("#ecd4ff", 235) if edge or j % 3 == 0 else hexc("#d0b4ff", 175))
     return P.skin, P.glow
 
 
@@ -668,46 +683,67 @@ def paint_tidesteed(r, P):
 def lantern_maw():
     r = Rig("lantern_maw", (256, 128))
     r.walk_stride, r.run_stride, r.run_speed, r.shadow = 3.0, 6.0, (0.2, 0.4), 1.6
-    body = r.bone("body", (0, 13, 4))
-    body.cube("trunk", -8, -8, -2, 16, 15, 14)
-    head = body.bone("mhead", (0, -1, -2))
-    head.cube("mskull", -11, -10, -16, 22, 11, 16)
-    head.cube("brow", -9, -12, -12, 18, 2, 10)
+    # a short body behind a vast head: the head is the animal
+    body = r.bone("body", (0, 12, 6))
+    body.cube("trunk", -9, -10, -1, 18, 15, 13)
+    head = body.bone("mhead", (0, -1, -1))
+    head.cube("mskull", -12, -11, -20, 24, 11, 20)
+    head.cube("crown", -9, -14, -17, 18, 3, 14)
+    head.cube("lip", -11, -3, -21, 22, 3, 1)
     for side, nm in ((1, "l"), (-1, "r")):
-        head.bone("meye_" + nm, (side * 9, -8, -11)).cube("meye_" + nm, -1, -1, -1, 2, 2, 2, mirror=side < 0, share=None if side > 0 else "meye_l")
-        head.bone("gill_" + nm, (side * 10.5, -2, -2), (0, side * -20, 0)).cube(
-            "gill_" + nm, 0, -4, 0, 0, 8, 5, mirror=side < 0, share=None if side > 0 else "gill_l")
-    head.bone("teeth_up", (0, 1, -15)).cube("teeth_up", -10, 0, 0, 20, 4, 0)
+        # small pale eyes high on the head, bulging out of the skull
+        head.bone("meye_" + nm, (side * 12, -8, -15)).cube("meye_" + nm, -1, -1.5, -1.5, 2, 3, 3, mirror=side < 0, share=None if side > 0 else "meye_l")
+        head.bone("gill_" + nm, (side * 12, -4, -3), (0, side * -20, 0)).cube(
+            "gill_" + nm, 0, -4, 0, 0, 10, 7, mirror=side < 0, share=None if side > 0 else "gill_l")
+    # the upper teeth: a row of glass needles hanging under the lip, more along the sides, two long fangs in front
+    head.bone("teeth_up", (0, 0, -19.5)).cube("teeth_up", -11, 0, 0, 22, 4, 0)
     for side, nm in ((1, "l"), (-1, "r")):
-        head.bone("teeth_upside_" + nm, (side * 10.5, 1, -8)).cube("teeth_upside_" + nm, 0, 0, -7, 0, 3, 8, mirror=side < 0,
-                                                                   share=None if side > 0 else "teeth_upside_l")
-    jaw = head.bone("mjaw", (0, 1, -2))
-    jaw.cube("mjaw", -12, 0, -17, 24, 7, 17)
-    jaw.bone("teeth_lo", (0, 0, -17)).cube("teeth_lo", -11, -5, 0, 22, 5, 0)
+        head.bone("teeth_upside_" + nm, (side * 11.5, 0, -10)).cube("teeth_upside_" + nm, 0, 0, -9, 0, 3, 10, mirror=side < 0,
+                                                                     share=None if side > 0 else "teeth_upside_l")
+        head.bone("fang_up_" + nm, (side * 6, 0, -19.5), (14, 0, 0)).cube("fang_up_" + nm, -0.5, 0, -0.5, 1, 7, 1, share=None if side > 0 else "fang_up_l")
+    # the lower jaw: deep, wider and longer than the head (an underbite), hanging a little open at rest
+    jaw = head.bone("mjaw", (0, 0, -1), (12, 0, 0))
+    jaw.cube("mjaw", -13, 0, -23, 26, 9, 23)
+    jaw.cube("chin", -10, 9, -22, 20, 3, 13)
+    jaw.bone("teeth_lo", (0, 0, -22.5)).cube("teeth_lo", -12, -6, 0, 24, 6, 0)
     for side, nm in ((1, "l"), (-1, "r")):
-        jaw.bone("teeth_loside_" + nm, (side * 11.5, 0, -9)).cube("teeth_loside_" + nm, 0, -4, -8, 0, 4, 9, mirror=side < 0,
-                                                                  share=None if side > 0 else "teeth_loside_l")
-    # the lure: a jointed rod from the brow, bent forward, with a glowing bulb and two filaments
-    rod = head.bone("rod1", (0, -12, -10), (-30, 0, 0))
-    rod.cube("rod1", -0.5, -8, -0.5, 1, 8, 1)
-    rod2 = rod.bone("rod2", (0, -8, 0), (-50, 0, 0))
-    rod2.cube("rod2", -0.5, -7, -0.5, 1, 7, 1)
-    esca = rod2.bone("esca", (0, -7, 0), (80, 0, 0))
-    esca.cube("esca", -2, -2, -2, 4, 4, 4)
-    esca.bone("filament0", (1, 2, 0), (0, 0, -20)).cube("filament0", 0, 0, 0, 0, 5, 1)
-    esca.bone("filament1", (-1, 2, 0), (0, 0, 20)).cube("filament1", 0, 0, 0, 0, 5, 1, share="filament0")
+        jaw.bone("teeth_loside_" + nm, (side * 12.5, 0, -11)).cube("teeth_loside_" + nm, 0, -4, -11, 0, 4, 12, mirror=side < 0,
+                                                                   share=None if side > 0 else "teeth_loside_l")
+    for k, (x, sp) in enumerate(((-9, -10), (-4, -4), (4, 4), (9, 10))):
+        jaw.bone(f"fang_lo{k}", (x, 0, -22), (-14, 0, sp)).cube(f"fang_lo{k}", -0.5, -8, -0.5, 1, 8, 1, share=None if k == 0 else "fang_lo0")
+    # the lure (the illicium): four joints rising from the crown and arching forward over the mouth, a blazing bulb
+    # at the end with two filaments, and a halo of light round it (three crossed planes, glow only)
+    rod = head.bone("rod1", (0, -14, -13), (10, 0, 0))
+    rod.cube("rod1", -0.5, -7, -0.5, 1, 7, 1)
+    rod2 = rod.bone("rod2", (0, -7, 0), (35, 0, 0))
+    rod2.cube("rod2", -0.5, -7, -0.5, 1, 7, 1, share="rod1")
+    rod3 = rod2.bone("rod3", (0, -7, 0), (40, 0, 0))
+    rod3.cube("rod3", -0.5, -7, -0.5, 1, 7, 1, share="rod1")
+    rod4 = rod3.bone("rod4", (0, -7, 0), (45, 0, 0))
+    rod4.cube("rod4", -0.5, -6, -0.5, 1, 6, 1)
+    esca = rod4.bone("esca", (0, -8, 0), (-130, 0, 0))
+    esca.cube("esca", -2.5, -2.5, -2.5, 5, 5, 5)
+    esca.cube("escacap", -1.5, -3.5, -1.5, 3, 1, 3)
+    esca.bone("filament0", (1.5, 2.5, 0), (0, 0, -15)).cube("filament0", 0, 0, -0.5, 0, 6, 1)
+    esca.bone("filament1", (-1.5, 2.5, 0), (0, 0, 15)).cube("filament1", 0, 0, -0.5, 0, 6, 1, share="filament0")
+    halo = esca.bone("halo", (0, 0, 0))
+    halo.cube("halo_xy", -7, -7, 0, 14, 14, 0)
+    halo.cube("halo_zy", 0, -7, -7, 0, 14, 14)
+    halo.cube("halo_xz", -7, 0, -7, 14, 0, 14)
+    # ragged pectoral fans, a torn dorsal, a fan of a tail in three lobes
     for side, nm in ((1, "l"), (-1, "r")):
-        body.bone("mpec_" + nm, (side * 8, 3, 2), (0, side * -30, side * -20)).cube(
-            "mpec_" + nm, 0, -2, 0, 0, 8, 9, mirror=side < 0, share=None if side > 0 else "mpec_l")
-    for k, z in enumerate((0, 4, 8)):
-        sp = body.bone(f"spine{k}", (0, -8, z), (-20, 0, 0))
-        sp.cube(f"spine{k}", -0.5, -6 + k, -0.5, 1, 6 - k, 1)
-    body.bone("mdorsal", (0, -8, 1), (-20, 0, 0)).cube("mdorsal", 0, -5, 0, 0, 5, 10)
-    t1 = body.bone("mtail1", (0, 0, 12))
-    t1.cube("mtail1", -5, -5, 0, 10, 10, 8)
+        body.bone("mpec_" + nm, (side * 9, 1, 1), (0, side * -35, side * -20)).cube(
+            "mpec_" + nm, 0, -3, 0, 0, 11, 13, mirror=side < 0, share=None if side > 0 else "mpec_l")
+    body.bone("mdorsal", (0, -10, 1), (-12, 0, 0)).cube("mdorsal", 0, -7, 0, 0, 7, 11)
+    t1 = body.bone("mtail1", (0, -2, 12))
+    t1.cube("mtail1", -6, -6, 0, 12, 11, 8)
+    t1.bone("manal", (0, 5, 2), (25, 0, 0)).cube("manal", 0, 0, 0, 0, 5, 8)
     t2 = t1.bone("mtail2", (0, 0, 8))
-    t2.cube("mtail2", -3, -3, 0, 6, 6, 6)
-    t2.bone("caudal", (0, 0, 6)).cube("caudal", 0, -9, -1, 0, 18, 10)
+    t2.cube("mtail2", -3.5, -4, 0, 7, 7, 6)
+    caudal = t2.bone("caudal", (0, -0.5, 6))
+    caudal.bone("caudal_u", (0, -1, 0), (-30, 0, 0)).cube("caudal_u", 0, -4, 0, 0, 7, 13)
+    caudal.bone("caudal_m", (0, 0, 0)).cube("caudal_m", 0, -3, 0, 0, 6, 11)
+    caudal.bone("caudal_d", (0, 1, 0), (30, 0, 0)).cube("caudal_d", 0, -3, 0, 0, 7, 13)
     r.look = [("mhead", 0.25, 0.25), ("rod1", 0.3, 0.3)]
     r.moves = {"Maw Lunge": "lunge", "Lure": "lure", "Black Water": "ink", "Abyss Glare": "glare", "Deep Hunger": "roar"}
     r.pack()
@@ -717,85 +753,107 @@ def lantern_maw():
 
 def maw_clips(r):
     idle = r.clip("idle", 4.0, loop=True)
-    # it hangs in the dark: the lure sways, the jaw breathes, the fins scull, the tail sweeps slowly
-    cycle(idle, "rod1", "rot", lambda p: (6 * s(p), 0, 4 * s(p, 0.25)), 8)
-    cycle(idle, "rod2", "rot", lambda p: (8 * s(p, 0.15), 0, 6 * s(p, 0.4)), 8)
-    cycle(idle, "esca", "rot", lambda p: (10 * s(p, 0.3), 0, 0), 8)
+    # it hangs in the dark: the lure sways and bobs (the joints out of step), the bulb breathes, the jaw opens and
+    # closes slowly like a sleeper's breath, the gill flaps pulse, the fins scull, the tail sweeps
+    cycle(idle, "rod1", "rot", lambda p: (5 * s(p), 0, 6 * s(p, 0.25)), 8)
+    cycle(idle, "rod2", "rot", lambda p: (7 * s(p, 0.15), 0, 7 * s(p, 0.4)), 8)
+    cycle(idle, "rod3", "rot", lambda p: (8 * s(p, 0.3), 0, 6 * s(p, 0.55)), 8)
+    cycle(idle, "rod4", "rot", lambda p: (10 * s(p, 0.45), 0, 4 * s(p, 0.7)), 8)
     cycle(idle, "esca", "scale", lambda p: (1 + 0.12 * s(p * 2), 1 + 0.12 * s(p * 2), 1 + 0.12 * s(p * 2)), 8)
-    cycle(idle, "mjaw", "rot", lambda p: (4 + 4 * s(p), 0, 0), 8)
+    cycle(idle, "halo", "scale", lambda p: (1 + 0.2 * s(p * 2, 0.1), 1 + 0.2 * s(p * 2, 0.1), 1 + 0.2 * s(p * 2, 0.1)), 8)
+    cycle(idle, "filament0", "rot", lambda p: (12 * s(p, 0.2), 0, 8 * s(p * 2)), 8)
+    cycle(idle, "filament1", "rot", lambda p: (12 * s(p, 0.5), 0, -8 * s(p * 2, 0.3)), 8)
+    cycle(idle, "mjaw", "rot", lambda p: (5 * s(p), 0, 0), 8)
     for nm, sg in (("mpec_l", 1), ("mpec_r", -1)):
-        cycle(idle, nm, "rot", lambda p, sg=sg: (0, sg * 12 * s(p * 2), 0), 8)
+        cycle(idle, nm, "rot", lambda p, sg=sg: (0, sg * 14 * s(p * 2), sg * 6 * s(p * 2, 0.25)), 8)
     for nm, sg in (("gill_l", 1), ("gill_r", -1)):
-        cycle(idle, nm, "rot", lambda p, sg=sg: (0, sg * -10 * max(0.0, s(p)), 0), 8)
-    wave(idle, ["mtail1", "mtail2", "caudal"], "y", 0, lag=0.15, amps=[4, 8, 12])
+        cycle(idle, nm, "rot", lambda p, sg=sg: (0, sg * -14 * max(0.0, s(p)), 0), 8)
+    cycle(idle, "mdorsal", "rot", lambda p: (4 * s(p, 0.3), 0, 0), 8)
+    wave(idle, ["mtail1", "mtail2", "caudal"], "y", 0, lag=0.15, amps=[4, 8, 14])
     fly = r.clip("fly", 2.0, loop=True)
     wave(fly, ["body", "mtail1", "mtail2", "caudal"], "y", 0, lag=0.14, amps=[3, 10, 18, 26])
     cycle(fly, "mhead", "rot", lambda p: (0, -3 * s(p), 0), 8)
+    cycle(fly, "rod1", "rot", lambda p: (-6 + 4 * s(p * 2), 0, 0), 8)
+    cycle(fly, "rod3", "rot", lambda p: (6 * s(p * 2, 0.3), 0, 0), 8)
     for nm, sg in (("mpec_l", 1), ("mpec_r", -1)):
-        cycle(fly, nm, "rot", lambda p, sg=sg: (0, sg * (-10 + 20 * s(p * 2)), 0), 8)
+        cycle(fly, nm, "rot", lambda p, sg=sg: (0, sg * (-10 + 22 * s(p * 2)), 0), 8)
     beached = r.clip("beached", 1.4, loop=True)
     beached.rot("body", [(0, 0, 0, 70), (1.4, 0, 0, 70)])
     cycle(beached, "mtail1", "rot", lambda p: (0, 24 * s(p), 0), 6)
-    cycle(beached, "mjaw", "rot", lambda p: (10 + 14 * max(0.0, s(p)), 0, 0), 6)
-    # Maw Lunge (signature): it draws back, the lure flares and lifts out of the way, the jaws gape... then it lunges
+    cycle(beached, "mjaw", "rot", lambda p: (8 + 14 * max(0.0, s(p)), 0, 0), 6)
+    beached.scale("halo", [(0, 0.5, 0.5, 0.5), (1.4, 0.5, 0.5, 0.5)])
+    # Maw Lunge (signature): it draws back, the lure lifts out of the way and flares, the jaws gape... then it lunges
     lw = r.clip("lunge_windup", 1.2)
     lw.pos("body", [(0, 0, 0, 0), (1.2, 0, 0, 4)])
     lw.rot("body", [(0, 0, 0, 0), (1.2, -8, 0, 0)])
-    lw.rot("mjaw", [(0, 4, 0, 0), (0.5, 20, 0, 0), (1.2, 48, 0, 0)])
+    lw.rot("mjaw", [(0, 0, 0, 0), (0.5, 16, 0, 0), (1.2, 40, 0, 0)])
     lw.rot("mhead", [(0, 0, 0, 0), (1.2, -14, 0, 0)])
-    lw.rot("rod1", [(0, 0, 0, 0), (1.2, 40, 0, 0)])
-    lw.scale("esca", [(0, 1, 1, 1), (1.2, 1.6, 1.6, 1.6)])
+    lw.rot("rod1", [(0, 0, 0, 0), (1.2, -25, 0, 0)])
+    lw.rot("rod3", [(0, 0, 0, 0), (1.2, -20, 0, 0)])
+    lw.scale("esca", [(0, 1, 1, 1), (1.2, 1.5, 1.5, 1.5)])
+    lw.scale("halo", [(0, 1, 1, 1), (1.2, 1.7, 1.7, 1.7)])
     for nm, sg in (("gill_l", 1), ("gill_r", -1)):
         lw.rot(nm, [(0, 0, 0, 0), (1.2, 0, sg * -40, 0)])
     ls = r.clip("lunge_strike", 1.0)
     ls.pos("body", [(0, 0, 0, 4), (0.12, 0, 0, -10), (0.4, 0, 0, -8), (1.0, 0, 0, 0)])
-    ls.rot("mjaw", [(0, 48, 0, 0), (0.14, 50, 0, 0), (0.22, 0, 0, 0), (1.0, 4, 0, 0)])
+    ls.rot("mjaw", [(0, 40, 0, 0), (0.14, 42, 0, 0), (0.22, -10, 0, 0), (1.0, 0, 0, 0)])
     ls.rot("mhead", [(0, -14, 0, 0), (0.2, 6, 0, 0), (1.0, 0, 0, 0)])
-    ls.rot("rod1", [(0, 40, 0, 0), (1.0, 0, 0, 0)])
-    ls.scale("esca", [(0, 1.6, 1.6, 1.6), (1.0, 1, 1, 1)])
+    ls.rot("rod1", [(0, -25, 0, 0), (1.0, 0, 0, 0)])
+    ls.rot("rod3", [(0, -20, 0, 0), (1.0, 0, 0, 0)])
+    ls.scale("esca", [(0, 1.5, 1.5, 1.5), (1.0, 1, 1, 1)])
+    ls.scale("halo", [(0, 1.7, 1.7, 1.7), (1.0, 1, 1, 1)])
     wave(ls, ["mtail1", "mtail2", "caudal"], "y", 0, lag=0.1, amps=[20, 30, 40])
-    # Lure: the lure dances in front of you, closer and closer, then jerks back toward the open mouth
+    # Lure: the bulb dances out in front of you, closer and closer, then jerks back toward the open mouth
     uw = r.clip("lure_windup", 1.5)
-    uw.rot("rod1", [(0, 0, 0, 0), (0.5, -20, 0, 10), (1.0, -10, 0, -10), (1.5, -30, 0, 0)])
-    uw.rot("rod2", [(0, 0, 0, 0), (0.5, 20, 0, 0), (1.5, 40, 0, 0)])
+    uw.rot("rod1", [(0, 0, 0, 0), (0.5, 15, 0, 10), (1.0, 8, 0, -10), (1.5, 22, 0, 0)])
+    uw.rot("rod2", [(0, 0, 0, 0), (0.5, -10, 0, 0), (1.5, -20, 0, 0)])
     uw.scale("esca", [(0, 1, 1, 1), (0.3, 1.4, 1.4, 1.4), (0.6, 1.1, 1.1, 1.1), (0.9, 1.5, 1.5, 1.5), (1.2, 1.2, 1.2, 1.2), (1.5, 1.7, 1.7, 1.7)])
-    uw.rot("mjaw", [(0, 4, 0, 0), (1.5, 26, 0, 0)])
+    uw.scale("halo", [(0, 1, 1, 1), (0.3, 1.5, 1.5, 1.5), (0.6, 1.1, 1.1, 1.1), (0.9, 1.7, 1.7, 1.7), (1.2, 1.2, 1.2, 1.2), (1.5, 1.9, 1.9, 1.9)])
+    uw.rot("mjaw", [(0, 0, 0, 0), (1.5, 22, 0, 0)])
     us = r.clip("lure_strike", 0.8)
-    us.rot("rod1", [(0, -30, 0, 0), (0.15, 30, 0, 0), (0.8, 0, 0, 0)])
-    us.rot("rod2", [(0, 40, 0, 0), (0.15, -20, 0, 0), (0.8, 0, 0, 0)])
+    us.rot("rod1", [(0, 22, 0, 0), (0.15, -25, 0, 0), (0.8, 0, 0, 0)])
+    us.rot("rod2", [(0, -20, 0, 0), (0.15, 15, 0, 0), (0.8, 0, 0, 0)])
     us.scale("esca", [(0, 1.7, 1.7, 1.7), (0.8, 1, 1, 1)])
-    us.rot("mjaw", [(0, 26, 0, 0), (0.3, 30, 0, 0), (0.8, 4, 0, 0)])
-    # Black Water: the lure goes out, the body hunches, fins flare (the ink)
+    us.scale("halo", [(0, 1.9, 1.9, 1.9), (0.8, 1, 1, 1)])
+    us.rot("mjaw", [(0, 22, 0, 0), (0.3, 30, 0, 0), (0.8, 0, 0, 0)])
+    # Black Water: the light goes out, the body hunches, fins flare (the ink)
     iw = r.clip("ink_windup", 1.0)
     iw.scale("esca", [(0, 1, 1, 1), (1.0, 0.4, 0.4, 0.4)])
+    iw.scale("halo", [(0, 1, 1, 1), (1.0, 0.1, 0.1, 0.1)])
     iw.rot("body", [(0, 0, 0, 0), (1.0, 10, 0, 0)])
     for nm, sg in (("mpec_l", 1), ("mpec_r", -1)):
         iw.rot(nm, [(0, 0, 0, 0), (1.0, 0, sg * -40, sg * -20)])
     ist = r.clip("ink_strike", 0.8)
     ist.rot("body", [(0, 10, 0, 0), (0.15, -6, 0, 0), (0.8, 0, 0, 0)])
     ist.scale("esca", [(0, 0.4, 0.4, 0.4), (0.8, 0.6, 0.6, 0.6)])
+    ist.scale("halo", [(0, 0.1, 0.1, 0.1), (0.8, 0.4, 0.4, 0.4)])
     # Abyss Glare: the lure held out straight and still, blazing; then a flash
     gw = r.clip("glare_windup", 1.4)
-    gw.rot("rod1", [(0, 0, 0, 0), (1.4, -32, 0, 0)])
-    gw.rot("rod2", [(0, 0, 0, 0), (1.4, 42, 0, 0)])
+    gw.rot("rod1", [(0, 0, 0, 0), (1.4, 20, 0, 0)])
+    gw.rot("rod2", [(0, 0, 0, 0), (1.4, -15, 0, 0)])
+    gw.rot("rod3", [(0, 0, 0, 0), (1.4, -25, 0, 0)])
     gw.scale("esca", [(0, 1, 1, 1), (1.4, 2.0, 2.0, 2.0)])
+    gw.scale("halo", [(0, 1, 1, 1), (1.4, 2.2, 2.2, 2.2)])
     gs = r.clip("glare_strike", 0.8)
     gs.scale("esca", [(0, 2.0, 2.0, 2.0), (0.1, 2.6, 2.6, 2.6), (0.8, 1, 1, 1)])
-    gs.rot("rod1", [(0, -32, 0, 0), (0.8, 0, 0, 0)])
-    gs.rot("rod2", [(0, 42, 0, 0), (0.8, 0, 0, 0)])
+    gs.scale("halo", [(0, 2.2, 2.2, 2.2), (0.1, 3.0, 3.0, 3.0), (0.8, 1, 1, 1)])
+    gs.rot("rod1", [(0, 20, 0, 0), (0.8, 0, 0, 0)])
+    gs.rot("rod2", [(0, -15, 0, 0), (0.8, 0, 0, 0)])
+    gs.rot("rod3", [(0, -25, 0, 0), (0.8, 0, 0, 0)])
     w = r.clip("windup", 0.8)
-    w.rot("mjaw", [(0, 4, 0, 0), (0.8, 30, 0, 0)])
+    w.rot("mjaw", [(0, 0, 0, 0), (0.8, 28, 0, 0)])
     w.rot("mhead", [(0, 0, 0, 0), (0.8, -8, 0, 0)])
     st = r.clip("strike", 0.5)
-    st.rot("mjaw", [(0, 30, 0, 0), (0.1, 0, 0, 0), (0.5, 4, 0, 0)])
+    st.rot("mjaw", [(0, 28, 0, 0), (0.1, -10, 0, 0), (0.5, 0, 0, 0)])
     st.pos("body", [(0, 0, 0, 0), (0.1, 0, 0, -4), (0.5, 0, 0, 0)])
     bite = r.clip("bite", 0.6)
-    bite.rot("mjaw", [(0, 4, 0, 0), (0.12, 40, 0, 0), (0.25, 0, 0, 0), (0.6, 4, 0, 0)])
+    bite.rot("mjaw", [(0, 0, 0, 0), (0.12, 34, 0, 0), (0.25, -10, 0, 0), (0.6, 0, 0, 0)])
     bite.pos("body", [(0, 0, 0, 0), (0.2, 0, 0, -4), (0.6, 0, 0, 0)])
     roar = r.clip("roar", 1.8)
-    roar.rot("mjaw", [(0, 4, 0, 0), (0.3, 55, 0, 0), (1.4, 55, 0, 0), (1.8, 4, 0, 0)])
+    roar.rot("mjaw", [(0, 0, 0, 0), (0.3, 45, 0, 0), (1.4, 45, 0, 0), (1.8, 0, 0, 0)])
     roar.rot("mhead", [(0, 0, 0, 0), (0.3, -16, 0, 0), (0.5, -16, 6, 0), (0.7, -16, -6, 0), (0.9, -16, 6, 0), (1.1, -16, -6, 0), (1.4, -14, 0, 0), (1.8, 0, 0, 0)])
     roar.scale("esca", [(0, 1, 1, 1), (0.3, 1.8, 1.8, 1.8), (1.4, 1.6, 1.6, 1.6), (1.8, 1, 1, 1)])
+    roar.scale("halo", [(0, 1, 1, 1), (0.3, 2.0, 2.0, 2.0), (1.4, 1.8, 1.8, 1.8), (1.8, 1, 1, 1)])
     for nm, sg in (("mpec_l", 1), ("mpec_r", -1)):
         roar.rot(nm, [(0, 0, 0, 0), (0.3, 0, sg * -50, sg * -30), (1.4, 0, sg * -50, sg * -30), (1.8, 0, 0, 0)])
     for nm, sg in (("gill_l", 1), ("gill_r", -1)):
@@ -803,37 +861,47 @@ def maw_clips(r):
     warn = r.clip("warn", 1.2)
     # the warning: the lure flicks bright twice, the jaw snaps shut on nothing
     warn.scale("esca", [(0, 1, 1, 1), (0.15, 1.8, 1.8, 1.8), (0.3, 1, 1, 1), (0.45, 1.8, 1.8, 1.8), (0.6, 1, 1, 1)])
-    warn.rot("mjaw", [(0, 4, 0, 0), (0.7, 36, 0, 0), (0.85, 0, 0, 0), (1.2, 4, 0, 0)])
+    warn.scale("halo", [(0, 1, 1, 1), (0.15, 2.2, 2.2, 2.2), (0.3, 1, 1, 1), (0.45, 2.2, 2.2, 2.2), (0.6, 1, 1, 1)])
+    warn.rot("mjaw", [(0, 0, 0, 0), (0.7, 32, 0, 0), (0.85, -10, 0, 0), (1.2, 0, 0, 0)])
     hurt = r.clip("hurt", 0.5)
     hurt.rot("body", [(0, 0, 0, 0), (0.06, -4, 8, 6), (0.25, 2, -3, -2), (0.5, 0, 0, 0)])
     hurt.scale("esca", [(0, 1, 1, 1), (0.06, 0.5, 0.5, 0.5), (0.4, 1, 1, 1)])
+    hurt.scale("halo", [(0, 1, 1, 1), (0.06, 0.3, 0.3, 0.3), (0.4, 1, 1, 1)])
     death = r.clip("death", 1.8)
     # it rolls belly up, the jaw goes slack, the light dies, and it sinks
     death.rot("body", [(0, 0, 0, 0), (0.4, -8, 0, 20), (1.4, 0, 0, 170), (1.8, 0, 0, 178)])
     death.pos("body", [(0, 0, 0, 0), (1.8, 0, -8, 0)])
-    death.rot("mjaw", [(0, 4, 0, 0), (0.4, 40, 0, 0), (1.8, 28, 0, 0)])
+    death.rot("mjaw", [(0, 0, 0, 0), (0.4, 36, 0, 0), (1.8, 24, 0, 0)])
     death.scale("esca", [(0, 1, 1, 1), (1.0, 0.5, 0.5, 0.5), (1.8, 0.3, 0.3, 0.3)])
+    death.scale("halo", [(0, 1, 1, 1), (1.0, 0.3, 0.3, 0.3), (1.8, 0.01, 0.01, 0.01)])
 
 
 def paint_lantern_maw(r, P):
-    hide = Ramp("#06080e", "#0c1018", "#141a24", "#1e2632", "#2a3442", "#384454")
+    hide = Ramp("#07090f", "#0d121b", "#151c27", "#1f2834", "#2b3645", "#3a4658", "#4c5a6e")
     belly = Ramp("#2a2e38", "#3c424e", "#525866", "#6a7080")
-    mouth = Ramp("#1a0408", "#2c080e", "#441016", "#5e1a20")
+    mouth = Ramp("#1e0408", "#34080e", "#521018", "#741c24", "#963038")
     glassy = Ramp("#5a6a70", "#8aa4a8", "#bcd6d6", "#e8fffa")
-    rough = combine(p_blotch("maw", 7, 0.5, levels=3), lambda f, i, j: (0.5 if (_h(f.cube.name, f.name, i // 2, j // 2) % 11 == 0) else 0))
-    for nm in ("trunk", "mskull", "brow", "mjaw", "mtail1", "mtail2"):
-        P.paint(nm, hide, 2.8 if nm != "brow" else 3.2, rough, rim=0.3)
+    teal = hexc("#7fffe0")
+    # the hide: dark, warty, lit along the top edges so the shape reads in daylight (a cold rim of light)
+    warts = combine(p_blotch("maw", 7, 0.5, levels=3), lambda f, i, j: (0.9 if (_h(f.cube.name, f.name, i // 2, j // 2) % 9 == 0) else 0))
+    for nm in ("trunk", "mskull", "crown", "mjaw", "chin", "mtail1", "mtail2", "lip"):
+        P.paint(nm, hide, 2.9 if nm not in ("crown",) else 3.3, warts, rim=0.9)
     # the pale, ghostly underside
-    for nm in ("trunk", "mjaw", "mtail1"):
+    for nm in ("trunk", "mjaw", "chin", "mtail1"):
         f = P.face(nm, "bottom")
         for i, j in f.each():
             f.set(i, j, belly.at(2.0 - (0.5 if (i * 3 + j) % 5 == 0 else 0)))
-    # inside the mouth: the jaw's top face and the skull's underside are a dark red gullet
+    # inside the mouth: the jaw's top face and the skull's underside are a red gullet with a pale tongue ridge
     for nm, fname in (("mjaw", "top"), ("mskull", "bottom")):
         f = P.face(nm, fname)
         for i, j in f.each():
-            f.set(i, j, mouth.at(1.8 + (0.8 if abs(i - f.w / 2) < 3 else 0) - (0.6 if j < 2 else 0)))
-    # teeth: needles of glass, uneven, transparent between
+            ridge = abs(i - f.w / 2 + 0.5) < 2.5 and nm == "mjaw"
+            f.set(i, j, mouth.at(2.0 + (1.6 if ridge else 0) - (0.8 if (j < 2 or i < 2 or i >= f.w - 2) else 0) + (0.4 if (i + j) % 4 == 0 else 0)))
+    # the back of the throat seen through the gape: the trunk's front face is black-red
+    f = P.face("trunk", "north")
+    for i, j in f.each():
+        f.set(i, j, mouth.at(0.6 + (0.6 if abs(i - f.w / 2 + 0.5) < 4 and 4 < j < 12 else 0)))
+    # teeth: needles of glass, uneven, transparent between; they catch the light a little
     for nm in ("teeth_up", "teeth_lo", "teeth_upside_l", "teeth_loside_l"):
         for fname in ("north", "south", "west", "east"):
             f = P.face(nm, fname)
@@ -847,56 +915,119 @@ def paint_lantern_maw(r, P):
                 if i % 2 == 1 or not inside:
                     f.set(i, j, (0, 0, 0, 0))
                     continue
-                tip = (j == 0) if up else (j == length - 1)
-                f.set(i, j, glassy.at(3.4 if tip else 2.4)[:3] + (235,))
-                g.set(i, j, hexc("#c8fff0", 70))
-    # the lure: a blazing teal bulb; the rod dark with pale rings
-    P.paint("esca", Ramp("#2ac8b0", "#5ce8d0", "#9cfff0", "#e0fffa"), 2.6, lambda f, i, j: 1.0 if (i, j) in ((1, 1), (2, 1)) else 0)
-    for fname in ("top", "bottom") + SIDES:
-        g = P.face("esca", fname, glow=True)
-        for i, j in g.each():
-            g.set(i, j, hexc("#a8fff0", 255))
-    for nm in ("rod1", "rod2"):
-        P.paint(nm, hide, 3.0, lambda f, i, j: 1.6 if j % 3 == 0 else 0)
+                tip = (j == f.h - length) if up else (j == length - 1)
+                f.set(i, j, glassy.at(3.4 if tip else 2.4)[:3] + (240,))
+                g.set(i, j, hexc("#c8fff0", 120 if tip else 70))
+    for nm in ("fang_up_l", "fang_lo0"):
+        P.paint(nm, glassy, 2.6, lambda f, i, j: 1.0 if (j == 0 if nm == "fang_lo0" else j == f.h - 1) else 0)
         for fname in SIDES:
             g = P.face(nm, fname, glow=True)
-            for j in range(0, g.h, 3):
-                g.set(0, j, hexc("#7fffe0", 120))
+            for j in range(g.h):
+                g.set(0, j, hexc("#d8fff4", 90 + (80 if (j == 0 if nm == "fang_lo0" else j == g.h - 1) else 0)))
+    # the lure: a blazing white-teal bulb (glow on every face, nearly white at its heart), the rod dark with
+    # luminous rings so its arc shows in the black water, two glowing filaments
+    P.paint("esca", Ramp("#4ad8c0", "#7cf0dc", "#b4fff0", "#eafffb"), 3.0, lambda f, i, j: 1.0 if 1 <= i <= 3 and 1 <= j <= 3 else 0)
+    for nm in ("esca", "escacap"):
+        for fname in ("top", "bottom") + SIDES:
+            g = P.face(nm, fname, glow=True)
+            for i, j in g.each():
+                core = 1 <= i <= g.w - 2 and 1 <= j <= g.h - 2
+                g.set(i, j, hexc("#f0fffc" if core else "#a8fff0", 255))
+    P.paint("escacap", Ramp("#4ad8c0", "#7cf0dc", "#b4fff0"), 2.0)
+    for nm in ("rod1", "rod4"):
+        P.paint(nm, hide, 3.4, lambda f, i, j: 1.8 if j % 3 == 0 else 0)
+        for fname in SIDES + ("top", "bottom"):
+            g = P.face(nm, fname, glow=True)
+            for i, j in g.each():
+                if j % 3 == 0:
+                    g.set(i, j, hexc("#7fffe0", 190))
     for fname in ("west", "east"):
         f = P.face("filament0", fname)
         g = P.face("filament0", fname, glow=True)
         for i, j in f.each():
-            f.set(i, j, hexc("#7fffe0", 200))
-            g.set(i, j, hexc("#a8fff0", 200 if j % 2 == 0 else 110))
-    # small pale eyes that catch the light
-    P.paint("meye_l", Ramp("#2a3a3a", "#6a8a86", "#b8e0d8", "#e8fff8"), 2.4, lambda f, i, j: -2.2 if (i, j) == (1, 1) else 0)
-    for fname in SIDES + ("top",):
-        P.face("meye_l", fname, glow=True).set(0, 0, hexc("#c8fff0", 200))
-    # ragged fins: dark membranes with paler rays, torn edges, glowing tips
-    for nm in ("mpec_l", "gill_l", "mdorsal", "caudal"):
-        for fname in ("west", "east"):
+            f.set(i, j, hexc("#9ffff0", 220))
+            g.set(i, j, hexc("#c8fff6", 255 if j % 2 == 0 or j == f.h - 1 else 190))
+    # the halo: no skin at all, only light, brightest at the bulb and fading to nothing (crossed planes read as a
+    # soft orb from any side)
+    for nm, fnames in (("halo_xy", ("north", "south")), ("halo_zy", ("west", "east")), ("halo_xz", ("top", "bottom"))):
+        for fname in fnames:
             f = P.face(nm, fname)
             g = P.face(nm, fname, glow=True)
             for i, j in f.each():
-                torn = (i == f.w - 1 and j % 3 != 1) or (j == 0 and i % 4 == 3) or (nm == "caudal" and abs(j - f.h / 2 + 0.5) < 1.5 and i >= f.w - 3)
-                if torn:
-                    f.set(i, j, (0, 0, 0, 0))
+                f.set(i, j, (0, 0, 0, 0))
+                dx, dy = (i + 0.5 - f.w / 2) / (f.w / 2), (j + 0.5 - f.h / 2) / (f.h / 2)
+                d = math.sqrt(dx * dx + dy * dy)
+                if d >= 1.0:
                     continue
-                ray = j % 3 == 1 if nm != "caudal" else (i + j) % 3 == 0
-                f.set(i, j, hide.at(3.6 if ray else 2.4)[:3] + (230,))
-                if ray and (i == f.w - 2):
-                    g.set(i, j, hexc("#7fffe0", 170))
-    for k in range(3):
-        P.paint(f"spine{k}", glassy, 2.4)
-    # bioluminescent dots along the lateral line and the jaw's edge
-    for nm, n, row in (("trunk", 6, 7), ("mtail1", 3, 4), ("mjaw", 7, 1), ("mskull", 6, 9)):
+                a = int(150 * (1.0 - d) ** 1.6)
+                if a >= 8:
+                    g.set(i, j, lerpc(hexc("#5ff2d8"), hexc("#d8fff8"), max(0.0, 1.0 - d * 1.6))[:3] + (a,))
+    # small pale eyes that catch the light
+    P.paint("meye_l", Ramp("#2a3a3a", "#6a8a86", "#b8e0d8", "#e8fff8"), 2.4, lambda f, i, j: -2.2 if (i, j) == (1, 1) else 0)
+    for fname in SIDES:
+        g = P.face("meye_l", fname, glow=True)
+        for i, j in g.each():
+            g.set(i, j, hexc("#c8fff0", 230 if (i, j) != (1, 1) else 90))
+    # ragged fins: dark membranes stretched between pale rays that run past the torn edge; glowing ray tips.
+    # ab(fname, i, j, w, h) -> (across, along, length): along = 0 at the fin's root.
+    along_z = lambda fname, i, j, w, h: (j, i if fname == "west" else w - 1 - i, w)  # noqa: E731  (east faces run back to front)
+    up_from_root = lambda fname, i, j, w, h: (i, h - 1 - j, h)  # noqa: E731
+    down_from_root = lambda fname, i, j, w, h: (i, j, h)  # noqa: E731
+
+    def ragged(nm, ab, every, seed, fan=0.0):
         for fname in ("west", "east"):
             f = P.face(nm, fname)
             g = P.face(nm, fname, glow=True)
-            for k in range(n):
-                i = int((k + 0.5) * f.w / n)
-                f.set(i, row, hexc("#5ae8d0"))
-                g.set(i, row, hexc("#7fffe0", 220))
+            if f.w <= 0 or f.h <= 0:
+                continue
+            for i, j in f.each():
+                a, b, length = ab(fname, i, j, f.w, f.h)
+                across = f.h if ab is along_z else f.w
+                # a fan: narrow at the root, opening toward the edge
+                if fan and abs(a + 0.5 - across / 2) > (across / 2) * (1.0 - fan + fan * (b + 1) / length):
+                    f.set(i, j, (0, 0, 0, 0))
+                    continue
+                ray = a % every == every // 2
+                # the torn edge: each gap between rays is torn back by a different amount; a few holes
+                torn = 1 + (_h(nm, seed, a // every) % (4 if every == 2 else 3))
+                if not ray and (b >= length - torn or _h(nm, seed, a, b) % 23 == 0):
+                    f.set(i, j, (0, 0, 0, 0))
+                    continue
+                f.set(i, j, hide.at(4.2 if ray else 2.6 + 0.8 * (b / max(1, length - 1)))[:3] + (245 if ray else 210,))
+                tips = 1 if (every == 3 or ab is down_from_root) else 2
+                if ray and b >= length - tips:
+                    g.set(i, j, teal[:3] + (150 if every == 3 else 230,))
+    ragged("mpec_l", along_z, 2, 1, fan=0.6)
+    ragged("gill_l", along_z, 2, 2, fan=0.4)
+    ragged("mdorsal", up_from_root, 3, 3)
+    ragged("manal", down_from_root, 2, 4)
+    for k, nm in enumerate(("caudal_u", "caudal_m", "caudal_d")):
+        ragged(nm, along_z, 2, 5 + k, fan=0.3)
+    # photophores: two rows of cold lights down each flank, a row along the jaw's edge and spots on the chin, so its
+    # length and its gape show in black water
+    def spots(nm, fname, row, n, start=0.0, size=1):
+        f = P.face(nm, fname)
+        g = P.face(nm, fname, glow=True)
+        for k in range(n):
+            i = int(start * f.w + (k + 0.5) * f.w * (1 - start) / n)
+            for di in range(size):
+                for dj in range(size):
+                    f.set(i + di, row + dj, hexc("#9ffff0"))
+                    g.set(i + di, row + dj, hexc("#c0fff6", 255))
+    for fname in ("west", "east"):
+        spots("trunk", fname, 6, 4, size=2)
+        spots("trunk", fname, 11, 3, start=0.2)
+        spots("mtail1", fname, 4, 2, size=2)
+        spots("mtail2", fname, 3, 1)
+        spots("mskull", fname, 8, 4, start=0.15)
+        spots("mjaw", fname, 2, 6)
+    spots("chin", "bottom", 4, 4)
+    spots("chin", "north", 1, 3)
+    # a faint lateral glow along the crown's ridge
+    f = P.face("crown", "top")
+    g = P.face("crown", "top", glow=True)
+    for j in range(1, f.h - 1, 2):
+        g.set(f.w // 2, j, teal[:3] + (130,))
     return P.skin, P.glow
 
 
@@ -915,8 +1046,8 @@ def chime_cricket():
     body.cube("thorax", -1.5, -1.5, -2, 3, 3, 3)
     abd = body.bone("abdomen", (0, -0.5, 1), (8, 0, 0))
     abd.cube("abdomen", -2, -1.5, 0, 4, 3, 5)
-    for k, (x, z, h, rx, rz) in enumerate(((0, 1, 3, -20, 0), (-1, 2.5, 2, -30, -20), (1, 3, 2, -35, 20), (0, 4, 2, -45, 0))):
-        abd.bone(f"crystal{k}", (x, -1.5, z), (rx, 0, rz)).cube(f"crystal{k}", -0.5, -h, -0.5, 1, h, 1)
+    for k, (x, z, h, w, rx, rz) in enumerate(((0, 1, 4, 2, -20, 0), (-1.2, 2.5, 3, 1, -30, -25), (1.2, 3, 3, 1, -35, 25), (0, 4, 3, 2, -45, 0))):
+        abd.bone(f"crystal{k}", (x, -1.5, z), (rx, 0, rz)).cube(f"crystal{k}", -w / 2, -h, -w / 2, w, h, w)
     for side, nm in ((1, "l"), (-1, "r")):
         mir = side < 0
 
@@ -987,13 +1118,26 @@ def paint_chime_cricket(r, P):
         g = P.face("chead", fname, glow=True)
         e = 0 if fname != "east" else f.w - 1
         f.set(e, 1, hexc("#d8c8ff"))
-        g.set(e, 1, hexc("#d8c8ff", 170))
+        g.set(e, 1, hexc("#ece0ff", 240))
     for k in range(4):
         P.paint(f"crystal{k}", amethyst, 3.6, lambda f, i, j: (1.4 if j == 0 else 0) - (0.8 if f.name in ("east", "south") else 0))
-        for fname in ("top", "north", "west", "east", "south"):
+        # night: every face of every crystal shines, brightest at the point (190 at the root to 255 at the tip)
+        for fname in ("top", "bottom", "north", "west", "east", "south"):
             g = P.face(f"crystal{k}", fname, glow=True)
             for i, j in g.each():
-                g.set(i, j, hexc("#d8b8ff", 200 if j == 0 else 110))
+                t = 1.0 if fname == "top" else 0.0 if fname == "bottom" else 1.0 - j / max(1, g.h - 1)
+                g.set(i, j, lerpc(hexc("#b48cf0"), hexc("#f0e4ff"), t)[:3] + (int(190 + 65 * t),))
+    # a vein of crystal light down the middle of the back, and glowing antenna tips
+    f = P.face("abdomen", "top")
+    g = P.face("abdomen", "top", glow=True)
+    for j in range(f.h):
+        for i in (1, 2):
+            g.set(i, j, hexc("#c8a4ff", 170 if j % 2 == 0 else 120))
+    for nm in ("cant2_l",):
+        for fname in ("west", "east"):
+            g = P.face(nm, fname, glow=True)
+            g.set(0, 0, hexc("#e0ccff", 240))
+            g.set(0, 1, hexc("#e0ccff", 170))
     for nm in ("cleg0_l", "hthigh_l", "hshin_l"):
         P.paint(nm, leg, 2.6, lambda f, i, j: 0.8 if j == 0 and f.name in SIDES else 0)
     for nm in ("cant_l", "cant2_l"):
@@ -1020,7 +1164,7 @@ def wickling():
     body.cube("wbody", -1.5, -1.5, -3, 3, 2, 6)
     head = body.bone("whead", (0, -0.5, -3))
     head.cube("whead", -2, -1, -3, 4, 2, 3)
-    for k, (x, z, rz, h) in enumerate(((0, -1, 0, 3), (1.2, -0.5, 30, 2), (-1.2, -0.5, -30, 2))):
+    for k, (x, z, rz, h) in enumerate(((0, -1, 0, 4), (1.2, -0.5, 30, 3), (-1.2, -0.5, -30, 3))):
         head.bone(f"crest{k}", (x, -1, z), (-15, 0, rz)).cube(f"crest{k}", 0, -h, -0.5, 0, h, 3, share=None if k == 0 else ("crest1" if k == 2 else None))
     for k, z in enumerate((-1, 1.5)):
         body.bone(f"wfrill{k}", (0, -1.5, z), (-10, 0, 0)).cube(f"wfrill{k}", 0, -2, 0, 0, 2, 2, share=None if k == 0 else "wfrill0")
@@ -1036,7 +1180,7 @@ def wickling():
     t2.cube("wtail2", -0.5, -0.5, 0, 1, 1, 3)
     tip = t2.bone("wtip", (0, 0, 3))
     tip.cube("wtip", -0.5, -0.5, 0, 1, 1, 1)
-    tip.bone("flame", (0, -0.5, 0.5)).cube("flame", 0, -4, -1.5, 0, 4, 3)
+    tip.bone("flame", (0, -0.5, 0.5)).cube("flame", 0, -5, -2, 0, 5, 4)
     r.look = [("whead", 0.6, 0.5)]
     r.pack()
     wickling_clips(r)
@@ -1081,7 +1225,7 @@ def paint_wickling(r, P):
     skin = Ramp("#120c0a", "#1e1410", "#2c1e16", "#3e2a1c", "#523824")
     belly = Ramp("#5a2a10", "#7a3c16", "#9c521e", "#c06c28")
     flame = Ramp("#a8300c", "#e05a14", "#ff8a2a", "#ffbe4a", "#ffe89a", "#fffbe0")
-    speck = lambda f, i, j: (hexc("#ff8a2a") if (_h(f.cube.name, f.name, i, j) % 9 == 0 and f.name == "top") else 0)  # noqa: E731
+    speck = lambda f, i, j: (hexc("#ff8a2a") if (_h(f.cube.name, f.name, i, j) % 5 == 0 and f.name == "top") else 0)  # noqa: E731
     for nm in ("wbody", "whead", "wtail1", "wtail2", "wleg0_l", "wfoot0_l"):
         P.paint(nm, skin, 2.8, speck)
         f = P.face(nm, "bottom")
@@ -1090,13 +1234,13 @@ def paint_wickling(r, P):
         for i, j in f.each():
             g = P.face(nm, "top", glow=True)
             if P.face(nm, "top").get(i, j)[:3] == hexc("#ff8a2a")[:3]:
-                g.set(i, j, hexc("#ffb45a", 170))
+                g.set(i, j, hexc("#ffb45a", 225))
     for fname in ("west", "east", "north"):
         f = P.face("whead", fname)
         g = P.face("whead", fname, glow=True)
         e = 0 if fname != "east" else f.w - 1
         f.set(e, 0, hexc("#ffd27a"))
-        g.set(e, 0, hexc("#ffe08a", 210))
+        g.set(e, 0, hexc("#ffe08a", 250))
     # the crest, the frills and the tail's flame: candle-flame planes, hot at the root, pale at the tip
     for nm in ("crest0", "crest1", "wfrill0", "flame"):
         for fname in ("west", "east"):
@@ -1110,7 +1254,8 @@ def paint_wickling(r, P):
                     continue
                 col = flame.at(5 - t * 3.5)
                 f.set(i, j, col[:3] + (235,))
-                g.set(i, j, col[:3] + (230,))
+                # both faces burn: 255 at the tip down to 190 at the root
+                g.set(i, j, col[:3] + (int(255 - 65 * t),))
     P.paint("wtip", flame, 3.6)
     for fname in ("top", "bottom") + SIDES:
         P.face("wtip", fname, glow=True).set(0, 0, hexc("#ffd27a", 255))
@@ -1241,6 +1386,18 @@ def paint_drip_lurker(r, P):
             for j in range(f.h):
                 f.set(x + (j % 2), j, hexc("#ff7a3a"))
                 g.set(x + (j % 2), j, hexc("#ff8a4a", 150))
+    # a wet glint on the cone's point (and the drips' points): hanging from a dark roof it is the one pale fleck a
+    # player looking up has a fair chance to spot
+    for fname in ("top",) + SIDES:
+        g = P.face("cone4", fname, glow=True)
+        for i, j in g.each():
+            if fname == "top" or j == 0:
+                g.set(i, j, hexc("#e4f0f4", 170 if fname == "top" else 110))
+    for fname in ("top",) + SIDES:
+        g = P.face("drip0", fname, glow=True)
+        for i, j in g.each():
+            if (fname == "top" and (i + j) % 2 == 0) or (fname != "top" and j == 0 and i % 2 == 0):
+                g.set(i, j, hexc("#d8e8ee", 80))
     P.paint("dbody", body, 2.6, p_blotch("lurk", 4, 0.4))
     P.paint("dhead", body, 2.8)
     for fname in ("north", "west", "east"):
@@ -1585,16 +1742,27 @@ def paint_thousandfoot(r, P):
     g = P.face("thead", "north", glow=True)
     for x, y in ((1, 1), (2, 1), (f.w - 2, 1), (f.w - 3, 1), (1, 2), (f.w - 2, 2)):
         f.set(x, y, hexc("#e0c8ff"))
-        g.set(x, y, hexc("#e0c8ff", 230))
+        g.set(x, y, hexc("#efe2ff", 255))
     for nm in ("mand_l", "mandtip_l", "prong_l"):
         P.paint(nm, amber, 3.0, lambda f, i, j: 1.0 if f.name == "top" else 0)
     for nm in ("tleg0_l", "tfoot0_l", "tant_l", "tant2_l"):
         P.paint(nm, amber, 2.6, lambda f, i, j: -1.2 if (i // 2) % 2 == 1 and f.name in ("north", "south", "top", "bottom") else 0)
     P.paint("spike0_l", amethyst, 3.6, lambda f, i, j: (1.4 if j == 0 else 0) - (0.8 if f.name in ("east", "south") else 0))
-    for fname in ("top", "north", "west", "east", "south"):
+    # night: the crystal back shines (every face of every spike, 190 at the root to 255 at the point) and a seam of
+    # crystal light runs along the top of every plate
+    for fname in ("top", "bottom", "north", "west", "east", "south"):
         gg = P.face("spike0_l", fname, glow=True)
         for i, j in gg.each():
-            gg.set(i, j, hexc("#d8b8ff", 210 if j == 0 else 120))
+            t = 1.0 if fname == "top" else 0.0 if fname == "bottom" else 1.0 - j / max(1, gg.h - 1)
+            gg.set(i, j, lerpc(hexc("#b48cf0"), hexc("#f0e4ff"), t)[:3] + (int(190 + 65 * t),))
+    for nm in ("seg3", "seg4", "seg5", "seg6", "ttail"):
+        f = P.face(nm, "top")
+        g = P.face(nm, "top", glow=True)
+        mid = f.w // 2
+        for j in range(f.h):
+            for i in (mid - 1, mid):
+                f.set(i, j, amethyst.at(2.6 + (0.8 if j % 2 == 0 else 0)))
+                g.set(i, j, hexc("#c8a4ff", 190 if j % 2 == 0 else 140))
     return P.skin, P.glow
 
 
@@ -2235,6 +2403,25 @@ def pose_list(rig):
     return out
 
 
+def ingame_night(sk, gl, strength=0.85, dark=0.10):
+    """What the game draws in a dark place: the skin almost black, the glow layer alpha-blended over it at the layer's
+    strength (WildRenderer: full-bright, translucent, about 0.85 for a calm creature), no halo."""
+    from PIL import Image
+    base = sk.copy()
+    px = base.load()
+    for y in range(base.height):
+        for x in range(base.width):
+            r_, g_, b_, a_ = px[x, y]
+            px[x, y] = (int(r_ * dark), int(g_ * dark), int(b_ * dark), a_)
+    g2 = gl.copy()
+    gp = g2.load()
+    for y in range(g2.height):
+        for x in range(g2.width):
+            r_, g_, b_, a_ = gp[x, y]
+            gp[x, y] = (r_, g_, b_, int(a_ * strength))
+    return Image.alpha_composite(base, g2)
+
+
 def preview(outdir, only=None):
     from PIL import Image, ImageDraw
     os.makedirs(outdir, exist_ok=True)
@@ -2246,10 +2433,11 @@ def preview(outdir, only=None):
         rest = rig.tree(rig.sample([("idle", 0.4, 1.0)]))
         cell = (300, 260)
         views = [R.render(rest, lit, yaw=35, pitch=18, size=cell), R.render(rest, lit, yaw=100, pitch=8, size=cell),
-                 R.render(rest, lit, yaw=-145, pitch=30, size=cell), R.render(rest, sk, yaw=35, pitch=18, size=cell, night=gl)]
-        row1 = Image.new("RGBA", (cell[0] * 4, cell[1]), BG_DAY)
+                 R.render(rest, lit, yaw=-145, pitch=30, size=cell), R.render(rest, sk, yaw=35, pitch=18, size=cell, night=gl),
+                 R.render(rest, ingame_night(sk, gl), yaw=35, pitch=18, size=cell)]
+        row1 = Image.new("RGBA", (cell[0] * 5, cell[1]), BG_DAY)
         for i, im in enumerate(views):
-            bg = Image.new("RGBA", cell, BG_NIGHT if i == 3 else BG_DAY)
+            bg = Image.new("RGBA", cell, BG_NIGHT if i >= 3 else BG_DAY)
             bg.alpha_composite(im, (0, 0))
             row1.paste(bg, (i * cell[0], 0))
         unit = 4.0
@@ -2262,7 +2450,7 @@ def preview(outdir, only=None):
         items = [("player", pl), (f"{rid} (box {bw * sc:.2f}x{bh * sc:.2f})", new_im)]
         W2 = sum(im.width for _, im in items) + 60 * len(items) + 140
         H2 = max(im.height for _, im in items) + 40
-        row2 = Image.new("RGBA", (max(W2, cell[0] * 4), H2), (150, 170, 160, 255))
+        row2 = Image.new("RGBA", (max(W2, cell[0] * 5), H2), (150, 170, 160, 255))
         d2 = ImageDraw.Draw(row2)
         x, ground = 20, H2 - 24
         for name, im in items:
@@ -2277,7 +2465,7 @@ def preview(outdir, only=None):
         b = R.bounds_of(trees, yaw, pitch)
         pc = (220, 200)
         px = min((pc[0] - 16) / max(1e-6, b[1] - b[0]), (pc[1] - 24) / max(1e-6, b[3] - b[2]))
-        row3 = Image.new("RGBA", (max(pc[0] * len(poses), cell[0] * 4), pc[1] + 16), (40, 44, 54, 255))
+        row3 = Image.new("RGBA", (max(pc[0] * len(poses), cell[0] * 5), pc[1] + 16), (40, 44, 54, 255))
         d3 = ImageDraw.Draw(row3)
         for k, ((label, _), t) in enumerate(zip(poses, trees)):
             im = R.render(t, lit, yaw=yaw, pitch=pitch, px=px, bounds=b,
