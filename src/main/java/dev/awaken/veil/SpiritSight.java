@@ -217,7 +217,9 @@ public final class SpiritSight {
             if (be instanceof SpawnerBlockEntity || be instanceof TrialSpawnerBlockEntity) secret = true;
             else if (be instanceof RandomizableContainer rc && rc.getLootTable() != null) {
                 int surface = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, p.getX() & 15, p.getZ() & 15);
-                secret = p.getY() < surface - 3; // a hidden, unopened loot chest: dungeons, temples, ruins, wrecks
+                // a hidden, unopened loot chest: dungeons, temples, ruins, wrecks (a village larder is not a secret)
+                secret = p.getY() < surface - 3
+                        && !level.structureManager().getStructureWithPieceAt(p, net.minecraft.tags.StructureTags.VILLAGE).isValid();
                 if (secret) VeilGates.considerRift(level, p);
             }
             if (secret && filter.allowed(p)) out.add(p.asLong());

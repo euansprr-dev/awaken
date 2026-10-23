@@ -37,6 +37,7 @@ final class VeilTests {
         AwakenTests.register("veil_gate_puzzles_solvable", 40, VeilTests::puzzlesSolvable);
         AwakenTests.register("veil_temple_layout", 40, VeilTests::templeLayout);
         AwakenTests.register("veil_stillpoint_dimension_decodes", 40, VeilTests::dimensionDecodes);
+        AwakenTests.register("veil_meditation_flow", 100, VeilTests::meditationFlow);
     }
 
     private static ServerPlayer spiritAt(GameTestHelper h, BlockPos at) {
@@ -231,6 +232,45 @@ final class VeilTests {
             }
             h.assertTrue(java.util.Arrays.equals(state, l.target()), "every Veil Gate puzzle can be solved");
         }
+        h.succeed();
+    }
+
+    private static void meditate(ServerPlayer sp, int ticks) {
+        for (int i = 0; i < ticks; i++) {
+            sp.setOnGround(true);
+            Meditation.tick(sp);
+        }
+    }
+
+    private static void meditationFlow(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos base = h.absolutePos(BlockPos.ZERO).above(2);
+        ServerPlayer sp = spiritAt(h, base);
+        dev.awaken.progression.Progression.awaken(sp);
+        sp.setShiftKeyDown(true);
+        long before = dev.awaken.progression.Progression.profile(sp).counter(dev.awaken.progression.Counters.MEDITATE_TICKS);
+        Meditation.input(sp, true, false);
+        meditate(sp, Meditation.STEP_OUT);
+        h.assertTrue(Meditation.ticks(sp.getUUID()) == Meditation.STEP_OUT, "ten still seconds of meditation");
+        h.assertTrue(Veil.isMeditating(sp), "meditating");
+        h.assertTrue(Veil.energyRegenMultiplier(sp) >= 2.0, "meditation doubles energy regen");
+        h.assertTrue(dev.awaken.progression.Progression.profile(sp).counter(dev.awaken.progression.Counters.MEDITATE_TICKS) > before,
+                "meditate_ticks counts");
+        Meditation.input(sp, false, true); // stood up
+        h.assertFalse(Veil.isSpirit(sp), "standing up only ends the meditation");
+        h.assertFalse(Veil.isMeditating(sp), "and it has ended");
+
+        Meditation.input(sp, true, false);
+        meditate(sp, 50);
+        sp.teleportTo(level, base.getX() + 2.5, base.getY(), base.getZ() + 0.5, Set.of(), 0F, 0F, true);
+        meditate(sp, 1);
+        h.assertTrue(Meditation.ticks(sp.getUUID()) == 0, "moving breaks the stillness");
+        meditate(sp, Meditation.STEP_OUT);
+        Meditation.input(sp, false, false); // let go of Focus after ten seconds
+        h.assertTrue(Veil.isSpirit(sp), "letting go of Focus after ten seconds steps out of the body");
+        Projection.end(sp, Projection.EndReason.COMMAND);
+        h.assertFalse(Veil.isSpirit(sp), "back in the body");
+        level.getServer().getPlayerList().remove(sp);
         h.succeed();
     }
 
