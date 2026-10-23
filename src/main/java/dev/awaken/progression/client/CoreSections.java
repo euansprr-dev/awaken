@@ -47,6 +47,7 @@ final class CoreSections {
     static void register() {
         StatusSections.add(StatusSections.Tab.STATUS, new Spine());
         StatusSections.add(StatusSections.Tab.STATUS, new Stats());
+        StatusSections.add(StatusSections.Tab.STATUS, new RoadSection());
         StatusSections.add(StatusSections.Tab.STATUS, new DirectivesSection());
         StatusSections.add(StatusSections.Tab.STATUS, new RegimenSection());
         StatusSections.add(StatusSections.Tab.STATUS, new Records());
