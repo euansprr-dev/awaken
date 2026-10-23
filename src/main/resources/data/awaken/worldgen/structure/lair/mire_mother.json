@@ -1,0 +1,8 @@
+{
+  "type": "awaken:fauna_lair",
+  "lair": "toad_throne",
+  "biomes": "#awaken:has_lair/mire_mother",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

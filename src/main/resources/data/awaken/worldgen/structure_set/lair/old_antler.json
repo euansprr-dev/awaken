@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:lair/old_antler",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 112,
+    "separation": 48,
+    "salt": 820374615
+  }
+}

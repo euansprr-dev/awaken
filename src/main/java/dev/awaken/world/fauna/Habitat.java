@@ -103,7 +103,7 @@ public record Habitat(Window window, boolean caves, Ground ground, float preAwak
             Map.entry("crag_ram", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 0, "Butts you off ledges if cornered")),
             Map.entry("stonehorn", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Its stamp looses rocks")),
             // Sporewild: mushroom fields
-            Map.entry("puffcap", new Habitat(Window.ANY, false, Ground.NATURAL, HINT, 0, "Plants mushrooms; puffs if startled")),
+            Map.entry("shroomlet", new Habitat(Window.ANY, false, Ground.NATURAL, HINT, 0, "Plants mushrooms; puffs if startled")),
             Map.entry("sporeback_snail", new Habitat(Window.ANY, false, Ground.NATURAL, HINT, 0, "Mushrooms it rests by grow huge")),
             Map.entry("mycelord", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Its spores choke")));
 

@@ -41,7 +41,7 @@
     },
     {
       "type": "awaken:old_antler",
-      "weight": 3,
+      "weight": 1,
       "count": {
         "type": "minecraft:uniform",
         "min_inclusive": 1,

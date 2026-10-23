@@ -1358,10 +1358,9 @@ def build(out):
 # ---------------------------------------------------------------------------------------------------------------------
 # Content: biome modifiers, loot tables, item models, lang. Weights are relative inside the fauna category of a biome.
 
-GREENWILD = ["minecraft:plains", "minecraft:sunflower_plains", "minecraft:meadow", "minecraft:forest", "minecraft:flower_forest",
-             "minecraft:birch_forest", "minecraft:old_growth_birch_forest", "minecraft:dappled_forest", "minecraft:dark_forest",
-             "minecraft:cherry_grove"]
-WOODS = ["minecraft:forest", "minecraft:birch_forest", "minecraft:old_growth_birch_forest", "minecraft:dappled_forest", "minecraft:dark_forest"]
+# P2 handed the dark forest to Duskwood and the cherry grove, flower and birch forests to Blossomwood (fauna2.py).
+GREENWILD = ["minecraft:plains", "minecraft:sunflower_plains", "minecraft:meadow", "minecraft:forest", "minecraft:dappled_forest"]
+WOODS = ["minecraft:forest", "minecraft:birch_forest", "minecraft:old_growth_birch_forest", "minecraft:dappled_forest"]
 SUNSCORCH = ["minecraft:desert", "minecraft:savanna", "minecraft:savanna_plateau", "minecraft:windswept_savanna", "minecraft:badlands",
              "minecraft:eroded_badlands", "minecraft:wooded_badlands"]
 FROSTWILD = ["minecraft:taiga", "minecraft:snowy_taiga", "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga",
@@ -1370,10 +1369,10 @@ TAIGA = ["minecraft:taiga", "minecraft:old_growth_pine_taiga", "minecraft:old_gr
 CAVES = ["minecraft:dripstone_caves", "minecraft:lush_caves"]
 
 SPAWNS = {
-    "fauna_greenwild": (GREENWILD, [("lumen_moth", 30, 2, 4), ("bloom_sprite", 20, 1, 2), ("mossback", 14, 1, 2), ("gloomstalker", 22, 1, 2), ("briar_sow", 3, 1, 1)]),
+    "fauna_greenwild": (GREENWILD, [("lumen_moth", 30, 2, 4), ("bloom_sprite", 20, 1, 2), ("mossback", 14, 1, 2), ("gloomstalker", 22, 1, 2), ("briar_sow", 1, 1, 1)]),
     "fauna_greenwild_woods": (WOODS, [("frost_stag", 8, 1, 2), ("frostfinch", 8, 2, 4)]),
-    "fauna_sunscorch": (SUNSCORCH, [("glass_scarab", 30, 2, 3), ("dune_ray", 22, 1, 2), ("gloomstalker", 20, 1, 2), ("dune_wyrm", 3, 1, 1)]),
-    "fauna_frostwild": (FROSTWILD, [("frostfinch", 26, 3, 5), ("frost_stag", 22, 1, 3), ("wisp_hound", 22, 2, 3), ("old_antler", 3, 1, 1)]),
+    "fauna_sunscorch": (SUNSCORCH, [("glass_scarab", 30, 2, 3), ("dune_ray", 22, 1, 2), ("gloomstalker", 20, 1, 2), ("dune_wyrm", 1, 1, 1)]),
+    "fauna_frostwild": (FROSTWILD, [("frostfinch", 26, 3, 5), ("frost_stag", 22, 1, 3), ("wisp_hound", 22, 2, 3), ("old_antler", 1, 1, 1)]),
     "fauna_frostwild_taiga": (TAIGA, [("lumen_moth", 14, 2, 3)]),
     "fauna_caves": (CAVES, [("gloomstalker", 10, 1, 2), ("wisp_hound", 10, 2, 2)]),
 }
@@ -1465,7 +1464,10 @@ def content():
         for p in m["parts"]:
             item_model(p["id"])
             lang["item.awaken." + p["id"]] = p["name"]
-    write_json(os.path.join(MERGE, "lang/en_us.json"), dict(sorted(lang.items())))
+    path = os.path.join(MERGE, "lang/en_us.json")
+    merged = json.load(open(path)) if os.path.exists(path) else {}
+    merged.update(lang)  # fauna2.py adds P2's names to the same file
+    write_json(path, dict(sorted(merged.items())))
     print(f"fauna: {len(ms)} creatures, {len(SPAWNS)} biome modifiers")
 
 

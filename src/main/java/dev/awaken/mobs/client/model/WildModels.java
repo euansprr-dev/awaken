@@ -16,7 +16,7 @@ import net.minecraft.util.Mth;
 
 /**
  * The P2 creatures' own bodies, where a vanilla one would look wrong: the lizard (Mudskipper, Crested Basilisk), the
- * snail (Gloam Snail, Sporeback Snail), the walking mushroom (Puffcap, the Mycelord) and the marmot (Scree Marmot).
+ * snail (Gloam Snail, Sporeback Snail), the walking mushroom (Shroomlet, the Mycelord) and the marmot (Scree Marmot).
  * Texture layouts are mirrored box for box in tools/art/specs/fauna2.py (keep them in sync). Poses come from
  * {@link AwLook#fauna} ({@link FaunaMob}'s bits).
  */
@@ -173,7 +173,7 @@ public final class WildModels {
         }
     }
 
-    // ---- walking mushroom (Puffcap, the Mycelord) -----------------------------------------------------------------------
+    // ---- walking mushroom (Shroomlet, the Mycelord) -----------------------------------------------------------------------
 
     public static final class Mushroom extends EntityModel<LivingEntityRenderState> {
         private final ModelPart body, cap, armL, armR, legL, legR;

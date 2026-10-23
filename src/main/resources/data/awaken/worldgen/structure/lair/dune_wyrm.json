@@ -1,0 +1,8 @@
+{
+  "type": "awaken:fauna_lair",
+  "lair": "glass_hollow",
+  "biomes": "#awaken:has_lair/dune_wyrm",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

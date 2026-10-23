@@ -1,0 +1,8 @@
+{
+  "type": "awaken:fauna_lair",
+  "lair": "rams_cairn",
+  "biomes": "#awaken:has_lair/stonehorn",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

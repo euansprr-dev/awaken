@@ -1,0 +1,45 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:dark_forest",
+    "minecraft:pale_garden"
+  ],
+  "spawners": [
+    {
+      "type": "awaken:gloam_snail",
+      "weight": 26,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 3
+      }
+    },
+    {
+      "type": "awaken:hollow_owl",
+      "weight": 14,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 1
+      }
+    },
+    {
+      "type": "awaken:thornling",
+      "weight": 24,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 2,
+        "max_inclusive": 3
+      }
+    },
+    {
+      "type": "awaken:weaver_queen",
+      "weight": 1,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 1
+      }
+    }
+  ]
+}

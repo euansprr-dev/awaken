@@ -103,7 +103,7 @@ final class WildBestiary {
 
     // Mushroom fields.
     private static void spore(List<MobDef> out) {
-        out.add(m("puffcap", "Puffcap", Theme.SPORE, Tier.NORMAL, Model.MUSHROOM, "A walking mushroom no taller than your knee; it puffs spores when startled and plants mushrooms in the shade").hp(6).dmg(1).spd(0.22).scale(0.9F).xp(1).tint(0xFFFFFF).glow(0xFF9AE0).fauna(FaunaRole.AMBIENT).talent(FaunaTalent.SPORE).build());
+        out.add(m("shroomlet", "Shroomlet", Theme.SPORE, Tier.NORMAL, Model.MUSHROOM, "A walking mushroom no taller than your knee; it puffs spores when startled and plants mushrooms in the shade").hp(6).dmg(1).spd(0.22).scale(0.9F).xp(1).tint(0xFFFFFF).glow(0xFF9AE0).fauna(FaunaRole.AMBIENT).talent(FaunaTalent.SPORE).build());
         out.add(m("sporeback_snail", "Sporeback Snail", Theme.SPORE, Tier.NORMAL, Model.SNAIL, "A snail with a mushroom farm on its shell; mushrooms it rests beside swell into giants").hp(8).dmg(1).spd(0.1).scale(1.3F).xp(1).tint(0xFFFFFF).glow(0xFF9AE0).fauna(FaunaRole.AMBIENT).talent(FaunaTalent.MYCEL).build());
         out.add(m("mycelord", "The Mycelord", Theme.SPORE, Tier.WARDEN, Model.MUSHROOM, "A mushroom as tall as a tree that walks its island; its cap breathes clouds of spores").hp(30).dmg(4.5).spd(0.2).scale(4.2F).xp(60).arena(40).tint(0xFFFFFF).glow(0xFF9AE0).bar(BossBarColor.PINK).voice(Model.Voice.MYCELORD).fauna(FaunaRole.BEAST).talent(FaunaTalent.TERRITORY)
                 .phase(1.0F, "", a(SLAM, "Cap Slam").radius(4.5F).heavy().cd(120), a(CLOUD, "Spore Cloud").radius(3.0F).fx(MobEffects.POISON, 60, 0))

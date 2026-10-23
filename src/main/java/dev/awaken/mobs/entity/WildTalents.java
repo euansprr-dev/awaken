@@ -36,7 +36,7 @@ import java.util.List;
 
 /**
  * The P2 creatures' talents that are not movement (see {@link WildGoals} for those): what a gloam snail leaves behind,
- * what a puffcap plants, a kite's falling feather, an owl's stare, a dart frog's skin, a marmot's alarm. Called from
+ * what a shroomlet plants, a kite's falling feather, an owl's stare, a dart frog's skin, a marmot's alarm. Called from
  * {@link FaunaMob} at most every two seconds per creature (the marmot's alarm every five ticks, like a scarab's);
  * every world change is guarded by the Hearth check, so nothing ever grows or glows inside a home.
  */
@@ -98,7 +98,7 @@ final class WildTalents {
         return !HearthHooks.inside(level, at);
     }
 
-    // ---- puffcap: small mushrooms in the shade, a spore puff when startled ------------------------------------------
+    // ---- shroomlet: small mushrooms in the shade, a spore puff when startled ------------------------------------------
 
     static boolean plantMushroom(FaunaMob m, ServerLevel level) {
         if (m.talentCooldown > 0 || m.getTarget() != null) return false;
@@ -119,7 +119,7 @@ final class WildTalents {
         return false;
     }
 
-    /** A puffcap startled or struck: a cloud of spores (harmless) and a little pop. */
+    /** A shroomlet startled or struck: a cloud of spores (harmless) and a little pop. */
     static void puff(FaunaMob m, ServerLevel level) {
         if (m.puffTicks > 0) return;
         m.puffTicks = 24;
@@ -197,7 +197,7 @@ final class WildTalents {
         return true;
     }
 
-    // ---- basilisk and puffcap: who counts as a threat ------------------------------------------------------------------
+    // ---- basilisk and shroomlet: who counts as a threat ------------------------------------------------------------------
 
     static void noticeThreats(FaunaMob m, ServerLevel level) {
         boolean lizard = m.talent() == FaunaTalent.SPRINT;

@@ -47,7 +47,7 @@ public enum FaunaTalent {
     HONEY,
     /** Peak kites: soar in high loops; now and then a feather drifts down near a player. */
     SOAR,
-    /** Puffcaps: puff spores when startled, plant small mushrooms in the shade. */
+    /** Shroomlets: puff spores when startled, plant small mushrooms in the shade. */
     SPORE,
     /** Sporeback snails: mushrooms they rest beside grow into giant mushrooms. */
     MYCEL

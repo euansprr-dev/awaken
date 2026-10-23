@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:lair/briar_sow",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 112,
+    "separation": 48,
+    "salt": 371920451
+  }
+}

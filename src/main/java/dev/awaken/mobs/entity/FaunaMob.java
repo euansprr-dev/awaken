@@ -76,7 +76,7 @@ public class FaunaMob extends AwakenMob {
     @Nullable BlockPos lure;
     int talentCooldown, talentTries;
     int burrowTicks;
-    /** P2 talents: a marmot sitting up to whistle, an owl's stare (alert); a puffcap's spore puff (ticks left). */
+    /** P2 talents: a marmot sitting up to whistle, an owl's stare (alert); a shroomlet's spore puff (ticks left). */
     int alertTicks, puffTicks;
     private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
     // client
