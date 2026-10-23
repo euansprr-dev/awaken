@@ -23,6 +23,12 @@ public final class DaysEnd {
         WAITING.add(provider);
     }
 
+    /** Shows the Day's End card now (other modules call this, e.g. after a dream ends). */
+    public static void show(ServerPlayer player) {
+        Profile p = Progression.profile(player);
+        if (p.awakened() && p.day().day() >= 0) send(player, p);
+    }
+
     static void send(ServerPlayer player, Profile p) {
         var d = p.day();
         int levels = p.level() - d.levelStart();

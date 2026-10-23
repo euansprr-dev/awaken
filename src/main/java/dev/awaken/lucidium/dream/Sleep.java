@@ -130,7 +130,7 @@ public final class Sleep {
         long day = PlayDays.current(server);
         s.wbtb = d.wbtbUntil > 0 && now <= d.wbtbUntil;
         boolean intention = !d.intention(day).isEmpty();
-        boolean sanctuary = blockNear((ServerLevel) sp.level(), s.bed, 6, 3, MEDITATION_MAT);
+        boolean sanctuary = dev.awaken.hearth.Hearth.isSanctuary(sp.level(), s.bed) || blockNear((ServerLevel) sp.level(), s.bed, 6, 3, MEDITATION_MAT);
         boolean homeBed = HearthHooks.hearthOf(sp).map(h -> h.distSqr(s.bed) <= 48 * 48).orElse(false);
         double chance = Lucidity.dreamChance(Progression.stat(sp, Stat.SPI), sanctuary, homeBed, intention, s.wbtb);
         if (d.dreams == 0) chance = 1.0; // the first night always dreams

@@ -134,6 +134,13 @@ public final class ProgressionModule {
 
     static void startDay(ServerPlayer player, long day) {
         Profile p = Progression.profile(player);
+        // Weekly counters ("killed_by_week/...", used to pick nightmares) reset every seven play-days.
+        long week = day / 7;
+        if (p.counter("awaken:week_epoch") != week + 1) {
+            p.counters.keySet().removeIf(k -> k.startsWith("awaken:killed_by_week/"));
+            p.counters.put("awaken:week_epoch", week + 1);
+            Progression.markDirty(player);
+        }
         if (p.day.day() == day) return;
         p.day = new Profile.DayLog(day, p.level, 0, 0, "");
         Progression.markDirty(player);
@@ -212,7 +219,9 @@ public final class ProgressionModule {
         if (!p.awakened()) return;
         Progression.count(sp, Counters.KILLS);
         p.day = new Profile.DayLog(p.day.day(), p.day.levelStart(), p.day.gates(), p.day.kills() + 1, p.day.best());
-        if (sp.getMainHandItem().isEmpty()) Progression.count(sp, Counters.KILLS_UNARMED);
+        var direct = event.getSource().getDirectEntity();
+        boolean byEcho = direct != null && direct != sp && dev.awaken.core.Forces.has(direct, dev.awaken.core.Forces.Tag.ECHO);
+        if (sp.getMainHandItem().isEmpty() && !byEcho && (direct == sp || direct == null)) Progression.count(sp, Counters.KILLS_UNARMED);
         if (dead instanceof Enemy && isHome(sp.level())) {
             Progression.count(sp, Counters.KILLS_OVERWORLD);
             homeXp(sp, 0.04 * Math.min(2.0, dead.getMaxHealth() / 20.0));
