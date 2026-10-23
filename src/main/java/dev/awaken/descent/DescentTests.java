@@ -51,6 +51,47 @@ final class DescentTests {
         AwakenTests.register("descent_dream_view", 40, DescentTests::dreamView);
         AwakenTests.register("descent_data_loads", 40, DescentTests::dataLoads);
         AwakenTests.register("descent_well_builds", 1200, DescentTests::wellBuilds);
+        AwakenTests.register("descent_generator_fills_chunks", 200, DescentTests::fillsChunks);
+    }
+
+    /** Runs the real chunk generator on proto chunks (strata and Endless cells) and checks the landmarks land in them. */
+    private static void fillsChunks(GameTestHelper h) {
+        var level = h.getLevel();
+        long seed = 31337L;
+        var biomes = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+        var biome = biomes.getOrThrow(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BIOME, dev.awaken.Awaken.id("stratum_1")));
+        var source = new net.minecraft.world.level.biome.FixedBiomeSource(biome);
+        int[] depths = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Strata.ENDLESS_BASE + 1, Strata.ENDLESS_BASE + 70};
+        for (int depth : depths) {
+            int stratum = depth > Strata.COUNT ? 0 : depth;
+            var gen = new dev.awaken.descent.world.StratumGenerator(source, stratum);
+            int form = Strata.formOf(depth);
+            BlockPos entry = Layout.world(depth, Layout.entry(form)), camp = Layout.world(depth, Layout.waystone(form));
+            for (BlockPos target : new BlockPos[]{entry, camp}) {
+                var cp = net.minecraft.world.level.ChunkPos.containing(target);
+                var chunk = new net.minecraft.world.level.chunk.ProtoChunk(cp, net.minecraft.world.level.chunk.UpgradeData.EMPTY,
+                        net.minecraft.world.level.LevelHeightAccessor.create(Layout.MIN_Y, Layout.HEIGHT), level.palettedContainerFactory(), null);
+                gen.fill(chunk, seed);
+                if (target == entry) {
+                    h.assertTrue(!chunk.getBlockState(target.below()).isAir() && chunk.getBlockState(target).isAir()
+                            && chunk.getBlockState(target.above()).isAir(), Strata.label(depth) + ": arrival platform missing in the chunk");
+                } else {
+                    h.assertTrue(chunk.getBlockState(target).is(DescentContent.WAYSTONE.get()), Strata.label(depth) + ": waystone missing in the chunk");
+                }
+                // the chunk matches the pure terrain column by column
+                Terrain t = Terrain.forDepth(depth, seed);
+                for (int k = 0; k < 4; k++) {
+                    int x = cp.getMinBlockX() + k * 5, z = cp.getMinBlockZ() + 15 - k * 4;
+                    BlockState[] col = t.singleColumn(x - Strata.centerX(depth), z - Strata.centerZ(depth));
+                    for (int y = 1; y < Layout.HEIGHT; y += 7) {
+                        h.assertTrue(chunk.getBlockState(new BlockPos(x, y, z)) == col[y], Strata.label(depth) + ": chunk and terrain disagree at " + x + " " + y + " " + z);
+                    }
+                }
+                h.assertTrue(chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, target.getX() & 15, target.getZ() & 15) >= Layout.HEIGHT - 2,
+                        "heightmap not primed");
+            }
+        }
+        h.succeed();
     }
 
     /** The Well is placed once and built at server start: wait for it, then check its shape. */

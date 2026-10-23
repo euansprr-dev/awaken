@@ -138,7 +138,7 @@ public final class Well {
     public static void tick(MinecraftServer server) {
         Job j = JOB;
         if (j == null) return;
-        if (j.step(24)) {
+        if (j.step(10)) { // ~10 columns per tick keeps the build under the 3 ms/tick budget
             JOB = null;
             building = false;
             j.data.state = WellData.BUILT;
