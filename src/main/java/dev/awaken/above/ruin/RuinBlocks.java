@@ -45,6 +45,7 @@ public final class RuinBlocks {
         ITEMS.register(modBus);
         modBus.addListener(RuinBlocks::creativeTab);
         RuinTests.register();
+        RuinShowcase.register();
     }
 
     private static void creativeTab(BuildCreativeModeTabContentsEvent e) {

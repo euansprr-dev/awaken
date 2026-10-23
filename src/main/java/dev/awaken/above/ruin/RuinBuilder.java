@@ -51,10 +51,13 @@ public final class RuinBuilder {
 
     public record Size(int x, int y, int z) {}
 
+    /** The blueprint's version, saved on each piece (1 = before the structures redesign). */
+    public static final int STYLE = 2;
+
     /** Footprints are square (the piece turns inside them). */
     public static Size size(RuinKind kind) {
         return switch (kind) {
-            case VAULT, SPAWN_VAULT -> new Size(23, 18, 23);
+            case VAULT, SPAWN_VAULT -> new Size(23, 24, 23);
             case SKY -> new Size(49, 26, 49);
             case OCEAN -> new Size(31, 22, 31);
             case MONOLITH -> new Size(17, 46, 17);
@@ -80,6 +83,7 @@ public final class RuinBuilder {
     static BlockState cracked() { return RuinBlocks.CRACKED.get().defaultBlockState(); }
     static BlockState mossy() { return RuinBlocks.MOSSY.get().defaultBlockState(); }
     static BlockState of(net.minecraft.world.level.block.Block b) { return b.defaultBlockState(); }
+    static BlockState black() { return Blocks.POLISHED_BLACKSTONE.defaultBlockState(); }
 
     public static BlockState broken(MachineType t, Direction facing) {
         return AboveBlocks.BROKEN_MACHINE.get().defaultBlockState().setValue(BrokenMachineBlock.MACHINE, t)
@@ -278,17 +282,19 @@ public final class RuinBuilder {
                         b.set(x, y, z, air());
                     }
                 }
-                b.set(x, ROOF, z, outer ? trim() : b.plate(x, ROOF, z, 0.5));
+                boolean cornerCap = (x == X0 || x == X1) && (z == Z0 || z == Z1);
+                b.set(x, ROOF, z, outer ? (cornerCap ? trim() : of(Blocks.POLISHED_DEEPSLATE)) : b.plate(x, ROOF, z, 0.5));
             }
         }
         // the cornice overhangs the walls by a block
+        BlockState cornice = of(Blocks.POLISHED_DEEPSLATE);
         for (int x = X0 - 1; x <= X1 + 1; x++) {
-            b.set(x, ROOF, Z0 - 1, trim());
-            b.set(x, ROOF, Z1 + 1, trim());
+            b.set(x, ROOF, Z0 - 1, x >= 8 && x <= 14 ? trim() : cornice);
+            b.set(x, ROOF, Z1 + 1, cornice);
         }
         for (int z = Z0 - 1; z <= Z1 + 1; z++) {
-            b.set(X0 - 1, ROOF, z, trim());
-            b.set(X1 + 1, ROOF, z, trim());
+            b.set(X0 - 1, ROOF, z, cornice);
+            b.set(X1 + 1, ROOF, z, cornice);
         }
         // the portal: a deep double reveal framed in brass, a glowing emblem above
         for (int y = 1; y <= 7; y++) {
@@ -379,7 +385,7 @@ public final class RuinBuilder {
                         continue;
                     }
                     boolean corner = (x == 4 || x == 18) && (z == 7 || z == 18);
-                    BlockState s = y == 13 ? (edge ? trim() : b.plate(x, y, z, 0.6)) : corner ? pillar()
+                    BlockState s = y == 13 ? (edge ? (corner ? trim() : of(Blocks.POLISHED_DEEPSLATE)) : b.plate(x, y, z, 0.6)) : corner ? pillar()
                             : (y == 11 && Math.floorMod(x + z, 3) == 0) ? glyph() : b.plate(x, y, z, 0.45);
                     b.set(x, y, z, s);
                 }
@@ -394,19 +400,31 @@ public final class RuinBuilder {
         }
         b.set(11, 16, 12, glow());
         b.set(11, 16, 13, glow());
-        b.set(11, 17, 12, warn());
+        // the beacon mast: a fluted spire with brass crossbars, the signal light at its tip
+        for (int y = 17; y <= 21; y++) b.set(11, y, 12, pillar());
+        b.set(10, 19, 12, trim());
+        b.set(12, 19, 12, trim());
+        b.set(11, 19, 11, trim());
+        b.set(11, 19, 13, trim());
+        b.set(11, 22, 12, glow());
+        b.set(11, 23, 12, warn());
         // the pylons: tall, tapering, a light line on the face toward the walk, amber crowns
         for (int px : new int[]{1, 19}) {
             int inner = px == 1 ? 3 : 19;
-            for (int y = 1; y <= 13; y++) {
+            // 3x3 to the cornice, then a slim spire to 19, an amber light at its tip
+            for (int y = 1; y <= 20; y++) {
                 for (int x = px; x <= px + 2; x++) {
                     for (int z = 0; z <= 2; z++) {
                         boolean corner = (x == px || x == px + 2) && (z == 0 || z == 2);
+                        boolean mid = x == px + 1 && z == 1;
                         BlockState s;
                         if (y == 1) s = of(Blocks.POLISHED_DEEPSLATE);
                         else if (y <= 10) s = corner ? pillar() : (x == inner && z == 1 && y >= 3 && y <= 9) ? glow() : b.plate(x, y, z, y > 7 ? 0.5 : 0.2);
-                        else if (y == 11) s = trim();
-                        else s = (x == px + 1 && z == 1) ? (y == 13 ? warn() : trim()) : air();
+                        else if (y == 11) s = corner ? trim() : of(Blocks.POLISHED_DEEPSLATE);
+                        else if (y == 12) s = corner ? air() : mid ? plating() : b.plate(x, y, z, 0.3);
+                        else if (y <= 18) s = mid ? (y % 3 == 0 ? glyph() : pillar()) : air();
+                        else if (y == 19) s = mid ? trim() : air();
+                        else s = mid ? warn() : air();
                         b.set(x, y, z, s);
                     }
                 }
@@ -509,7 +527,7 @@ public final class RuinBuilder {
         }
         // the shaft: 5x5 with pilaster corners, brass bands, glyph channels up the middle of each face
         for (int y = P + 3; y <= P + 20; y++) {
-            boolean band = (y - P - 3) % 6 == 5;
+            boolean band = y == P + 3 || y == P + 20;
             for (int x = 6; x <= 10; x++) {
                 for (int z = 6; z <= 10; z++) {
                     boolean edge = x == 6 || x == 10 || z == 6 || z == 10;
@@ -517,11 +535,11 @@ public final class RuinBuilder {
                         b.set(x, y, z, plating());
                         continue;
                     }
-                    boolean corner = (x == 6 || x == 10) && (z == 6 || z == 10);
                     boolean channel = (x == 8) != (z == 8);
                     int k = (y - P - 3) % 6;
-                    BlockState s = band ? trim() : corner ? pillar() : channel ? (k == 1 || k == 2 ? glyph() : k == 3 ? glow() : plating())
-                            : b.plate(x, y, z, y < P + 6 ? 0.45 : 0.15);
+                    // black stone, unbroken but for the glyph channels: the Keepers did not build it to be looked at
+                    BlockState s = band ? trim() : channel ? (k == 1 || k == 2 ? glyph() : k == 3 ? glow() : black())
+                            : y < P + 6 && b.n(x, y, z) < 0.3 ? of(Blocks.POLISHED_BLACKSTONE_BRICKS) : black();
                     b.set(x, y, z, s);
                 }
             }
@@ -532,27 +550,28 @@ public final class RuinBuilder {
                 for (int z = 7; z <= 9; z++) {
                     boolean centre = x == 8 && z == 8;
                     boolean face = (x == 8) != (z == 8);
-                    b.set(x, y, z, y == P + 28 ? trim() : centre ? plating() : face && (y - P) % 3 == 0 ? glyph() : b.plate(x, y, z, 0.1));
+                    b.set(x, y, z, y == P + 28 ? trim() : centre ? black() : face && (y - P) % 3 == 0 ? glyph() : black());
                 }
             }
         }
         // the gap, the stones it holds up, and the floating capstone with its amber eye
-        for (int y = P + 29; y <= P + 30; y++) b.box(7, y, 7, 9, y, 9, air());
-        b.set(5, P + 29, 8, b.plate(5, 0, 8, 0.3));
-        b.set(11, P + 30, 8, plating());
+        // three blocks of empty air, stones hanging in it, then the capstone floating with its amber eye
+        for (int y = P + 29; y <= P + 31; y++) b.box(7, y, 7, 9, y, 9, air());
+        b.set(5, P + 29, 8, black());
+        b.set(11, P + 31, 8, black());
         b.set(8, P + 30, 5, trim());
-        b.set(8, P + 29, 11, b.plate(8, 0, 11, 0.3));
-        for (int y = P + 31; y <= P + 33; y++) {
+        b.set(8, P + 30, 11, black());
+        for (int y = P + 32; y <= P + 34; y++) {
             for (int x = 7; x <= 9; x++) {
                 for (int z = 7; z <= 9; z++) {
                     boolean face = (x == 8) != (z == 8);
-                    b.set(x, y, z, y == P + 33 ? trim() : face && y == P + 32 ? glow() : plating());
+                    b.set(x, y, z, y == P + 34 ? trim() : face && y == P + 33 ? glow() : black());
                 }
             }
         }
-        b.set(8, P + 34, 8, plating());
-        b.set(8, P + 35, 8, warn());
-        b.set(8, P + 36, 8, trim());
+        b.set(8, P + 35, 8, black());
+        b.set(8, P + 36, 8, warn());
+        b.set(8, P + 37, 8, trim());
         outerCache(b, 3, P + 1, 10, Direction.EAST); // on the plaza, beside the hatch
     }
 
@@ -626,7 +645,9 @@ public final class RuinBuilder {
                         f = crust < 0.3 ? of(Blocks.DARK_PRISMARINE) : crust < 0.5 ? of(Blocks.PRISMARINE) : plating();
                     }
                     b.set(x, 0, z, f);
-                    if (flat >= R + 0.5 && b.n(x, 1, z) < 0.12) {
+                    if (Math.abs(flat - (R + 1.0)) < 0.5 && Math.floorMod((int) Math.round(Math.atan2(z - cz, x - cx) * 12 / Math.PI), 3) == 0) {
+                        b.set(x, 1, z, of(Blocks.SEA_LANTERN));
+                    } else if (flat >= R + 0.5 && b.n(x, 1, z) < 0.12) {
                         b.set(x, 1, z, b.n(x, 2, z) < 0.5 ? of(Blocks.DEAD_TUBE_CORAL_BLOCK) : of(Blocks.DEAD_HORN_CORAL_BLOCK));
                     }
                 }
@@ -637,7 +658,7 @@ public final class RuinBuilder {
                         double ang = Math.atan2(z - cz, x - cx);
                         boolean rib = Math.abs(Math.sin(ang * 4)) * flat < 0.55;
                         boolean belt = y == Math.max(2, R / 2);
-                        b.set(x, y, z, belt ? trim() : rib ? plating() : glass());
+                        b.set(x, y, z, belt ? glass() : rib ? plating() : Blocks.STAINED_GLASS.pick(net.minecraft.world.item.DyeColor.LIGHT_BLUE).defaultBlockState());
                     }
                 }
             }
@@ -688,8 +709,9 @@ public final class RuinBuilder {
                 if (d <= 11.6) {
                     int ring = (int) Math.round(d);
                     boolean spoke = (x == C || z == C) && d > 5;
-                    b.set(x, DECK, z, d > 10.6 ? trim() : spoke || ring == 4 || ring == 8 ? trim() : panel());
-                    if (d > 10.6 && ((x + z) & 1) == 0) b.set(x, DECK + 1, z, trim());
+                    boolean lamp = (ring == 8) && Math.floorMod((int) Math.round(Math.atan2(z - C, x - C) * 8 / Math.PI), 2) == 0;
+                    b.set(x, DECK, z, d > 10.6 ? of(Blocks.POLISHED_DEEPSLATE) : lamp ? glow() : spoke || ring == 4 ? plating() : panel());
+                    if (d > 10.6 && Math.floorMod(x * 3 + z * 7, 5) == 0) b.set(x, DECK + 1, z, trim());
                 }
             }
         }
@@ -705,7 +727,8 @@ public final class RuinBuilder {
                     else if (y == DECK + 1 || y == DECK + 5) b.set(x, y, z, b.plate(x, y, z, 0.2));
                     else b.set(x, y, z, glass());
                 }
-                b.set(x, DECK + 6, z, wall ? trim() : (Math.abs(x - C) <= 1 && Math.abs(z - C) <= 1) ? glow() : plating());
+                boolean cabinCorner = (x == C - 4 || x == C + 4) && (z == C - 4 || z == C + 4);
+                b.set(x, DECK + 6, z, cabinCorner ? trim() : wall ? of(Blocks.POLISHED_DEEPSLATE) : (Math.abs(x - C) <= 1 && Math.abs(z - C) <= 1) ? glow() : plating());
             }
         }
         b.set(C, DECK + 1, C + 4, air());

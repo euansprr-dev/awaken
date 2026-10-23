@@ -317,11 +317,11 @@ def ruin_pillar_side():
         for x in range(16):
             flute = [1, 3, 4, 3, 2][x % 5] if 0 < x < 15 else 0
             c.set(x, y, pre[flute])
-    for y in (0, 1, 14, 15):
-        for x in range(16):
-            c.set(x, y, brass[4 if y in (0, 14) else 2])
-    for x in (3, 8, 13):
-        c.set(x, 7, ramp("signal")[4])
+    # stacked, the flutes run on unbroken; a faint seam every block and one signal dot, no brass (brass is an accent)
+    for x in range(16):
+        c.set(x, 15, pre[0] if 0 < x < 15 else pre[0])
+    c.set(8, 7, ramp("signal")[4])
+    c.set(8, 8, ramp("signal")[3])
     return c
 
 
@@ -486,6 +486,8 @@ TINTED = {"grass_block": GRASS_TINT, "short_grass": GRASS_TINT, "tall_grass": GR
           "mangrove_leaves": FOLIAGE_TINT, "vine": FOLIAGE_TINT, "lily_pad": (0x20, 0x80, 0x30), "spruce_leaves": (0x61, 0x99, 0x61),
           "birch_leaves": (0x80, 0xA7, 0x55), "water": (0x3F, 0x76, 0xE4), "bush": GRASS_TINT, "leaf_litter": (0xA0, 0x70, 0x3A),
           "sugar_cane": GRASS_TINT, "big_dripleaf": FOLIAGE_TINT, "moss_carpet": (255, 255, 255)}
+# leaves whose models carry a tint index the game doesn't colour
+UNTINTED = {"cherry_leaves", "azalea_leaves", "flowering_azalea_leaves", "pale_oak_leaves"}
 # block light the game gives these blocks (ours by name in our_light)
 EMIT = {"glowstone": 15, "sea_lantern": 15, "lantern": 15, "soul_lantern": 10, "torch": 14, "wall_torch": 14, "soul_torch": 10,
         "soul_wall_torch": 10, "shroomlight": 15, "ochre_froglight": 15, "verdant_froglight": 15, "pearlescent_froglight": 15,
@@ -655,6 +657,10 @@ def block_look(name, props_str):
                     a = a[0] if isinstance(a, list) else a
                     model, rx, ry = a["model"], a.get("x", 0), a.get("y", 0)
                     break
+            if model is None and st["multipart"]:
+                a = st["multipart"][0]["apply"]
+                a = a[0] if isinstance(a, list) else a
+                model = a["model"]
     textures, elements = _load_model(model) if model else ({}, None)
     faces, shape = {}, "cube"
     if elements:
@@ -676,7 +682,7 @@ def block_look(name, props_str):
             for fd, fv in e.get("faces", {}).items():
                 wd = DIR_OF[_rot_dir(DIRS[fd], rx, ry)]
                 tex = _texture(_resolve_tex(textures, fv.get("texture")))
-                if fv.get("tintindex") is not None or path in TINTED:
+                if (fv.get("tintindex") is not None or path in TINTED) and path not in UNTINTED:
                     tex = _tint(tex, TINTED.get(path, GRASS_TINT))
                 if wd in faces:
                     # an overlay on the same face (emissive glow layers, grass side overlays): composite it
@@ -874,6 +880,16 @@ def render_iso(scene, k=0, night=False, S=10, vortex=None):
         shape, faces = block_look(name, props)
         x, y, z = p
         fb = _full_bright(name)
+        if shape == "liquid":
+            # only the water's surface, faint: the structures under it are what we judge
+            if (x, y + 1, z) in cells and block_look(*cells[(x, y + 1, z)])[0] == "liquid":
+                return
+            spr, mx, my = _warp(faces["up"], _face_poly(iso, x, y, z, "top", 0.0, 0.88))
+            if spr is not None:
+                arr = np.asarray(spr).copy()
+                arr[..., 3] = (arr[..., 3] * 0.3).astype(np.uint8)
+                img.alpha_composite(Image.fromarray(arr, "RGBA"), (mx, my))
+            return
         if shape == "cross":
             tex = faces["north"]
             w = int(S * 1.55)
@@ -1137,7 +1153,8 @@ def preview(outdir, only=()):
     if os.path.isdir(LAIRS_RUN):
         files += [os.path.join(LAIRS_RUN, f) for f in sorted(os.listdir(LAIRS_RUN)) if f.endswith(".json")]
     if only:
-        files = [f for f in files if any(o in os.path.basename(f) for o in only)]
+        files = [f for f in files if any(o in os.path.basename(f) or (o.startswith("lair") and f.startswith(LAIRS_RUN)
+                                                                    and o[5:] in os.path.basename(f)) for o in only)]
     for path in files:
         data = _load_dump(path)
         f = data["name"] + ".json"
