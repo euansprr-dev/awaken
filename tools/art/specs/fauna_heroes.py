@@ -465,31 +465,31 @@ def paint_briar_sow(r, P):
 # The Dune Wyrm: a plated sand-swimmer with a three-way jaw and a spine of sun-glass; it swims the air like water,
 # undulating up and down (the Plumed Coil, by contrast, slithers side to side)
 
-WYRM_SEGS = [(10, 9, 9), (9, 8, 9), (8, 8, 8), (7, 7, 8), (6, 6, 7), (5, 5, 7), (4, 4, 6), (3, 3, 6)]
+WYRM_SEGS = [(11, 10, 9), (10, 9, 9), (9, 8, 8), (8, 7, 8), (7, 6, 7), (6, 5, 7), (5, 4, 6), (4, 3, 6), (3, 3, 5)]
 
 
 def dune_wyrm():
     r = Rig("dune_wyrm", (128, 128))
     r.shadow = 0.9
     head = r.bone("head", (0, 15, -6))
-    head.cube("skull", -5, -4, -11, 10, 8, 11)
-    head.cube("snout", -3.5, -2.5, -16, 7, 5, 5)
-    head.cube("brow", -5.5, -5, -9, 11, 2, 8)
-    jaw = head.bone("jaw", (0, 3, -2))
-    jaw.cube("jaw", -4, 0, -14, 8, 2, 13)
+    head.cube("skull", -6, -5, -12, 12, 10, 12)
+    head.cube("snout", -4, -3, -18, 8, 6, 6)
+    head.cube("brow", -6.5, -6.5, -11, 13, 2, 9)
+    jaw = head.bone("jaw", (0, 4, -2))
+    jaw.cube("jaw", -5, 0, -16, 10, 2, 15)
     for side, nm in ((1, "l"), (-1, "r")):
         mir = side < 0
         sh = None if side > 0 else "mand_l"
-        m = head.bone("mand_" + nm, (side * 4.5, 1, -6), (0, side * 10, 0))
-        m.cube("mand_" + nm, -1, -1, -10, 2, 3, 10, mirror=mir, share=sh)
-        tip = m.bone("mandtip_" + nm, (0, 0, -9.5), (0, side * 35, 0))
-        tip.cube("mandtip_" + nm, -0.5, -0.5, -4, 1, 2, 4, mirror=mir, share=None if side > 0 else "mandtip_l")
+        m = head.bone("mand_" + nm, (side * 6, 2, -7), (0, side * 14, 0))
+        m.cube("mand_" + nm, -1.5, -1.5, -12, 3, 4, 12, mirror=mir, share=sh)
+        tip = m.bone("mandtip_" + nm, (0, 0, -11.5), (0, side * 42, 0))
+        tip.cube("mandtip_" + nm, -1, -1, -6, 2, 3, 6, mirror=mir, share=None if side > 0 else "mandtip_l")
         claw = head.bone("arm_" + nm, (side * 4, 6, 6), (40, 0, side * -20))
         claw.cube("arm_" + nm, -1, 0, -1, 2, 5, 2, mirror=mir, share=None if side > 0 else "arm_l")
         claw.bone("hand_" + nm, (0, 5, 0), (-60, 0, 0)).cube("hand_" + nm, -1.5, 0, -2, 3, 1, 3, mirror=mir, share=None if side > 0 else "hand_l")
     # a crest of glass shards along the skull
-    for k, (h, z, tilt) in enumerate(((5, -8, -30), (7, -4, -35), (6, 0, -40))):
-        head.bone(f"crest{k}", (0, -4.5, z), (tilt, 0, 0)).cube(f"crest{k}", -1, -h, -1, 2, h, 2)
+    for k, (h, z, tilt) in enumerate(((6, -9, -30), (9, -5, -35), (8, -1, -40))):
+        head.bone(f"crest{k}", (0, -6, z), (tilt, 0, 0)).cube(f"crest{k}", -1.5, -h, -1, 3, h, 3)
     node = head
     z = 0
     for k, (w, hgt, ln) in enumerate(WYRM_SEGS):
@@ -969,16 +969,16 @@ def paint_plumed_coil(r, P):
         n = c.name
         if n.startswith("plume"):
             for fname in ("west", "east"):
-                feather(P.face(c, fname), [teal, jade, red], eye=(teal.at(5), gold.at(5)), glow_eye=P.face(c, fname, glow=True))
+                feather(P.face(c, fname), [jade, teal, gold, red], eye=(teal.at(5), gold.at(5)), glow_eye=P.face(c, fname, glow=True))
         elif n.startswith("ruff"):
             for fname in ("north", "south"):
-                feather(P.face(c, fname), [jade, teal, red], eye=(gold.at(4), teal.at(5)), glow_eye=P.face(c, fname, glow=True))
+                feather(P.face(c, fname), [teal, gold, red, red], eye=(gold.at(4), teal.at(5)), glow_eye=P.face(c, fname, glow=True))
         elif n.startswith("wing"):
             for fname in ("top", "bottom"):
                 feather(P.face(c, fname), [jade, teal])
         elif n.startswith("streamer"):
             for fname in ("top", "bottom"):
-                feather(P.face(c, fname), [jade, teal, teal, red], eye=(gold.at(4), teal.at(5)), glow_eye=P.face(c, fname, glow=True))
+                feather(P.face(c, fname), [jade, teal, gold, red], eye=(gold.at(4), teal.at(5)), glow_eye=P.face(c, fname, glow=True))
     return P.skin, P.glow
 
 
@@ -1020,10 +1020,10 @@ def old_antler():
     neck.bone("beard", (0, 0, -3.6)).cube("beard", -3, 0, 0, 6, 8, 0)
     head = neck.bone("head", (0, -12.5, 0), (-32, 0, 0))
     head.cube("skull", -3.5, -4, -8, 7, 7, 8)
-    head.cube("muzzle", -2.5, -2.5, -15, 5, 6, 7)
+    head.cube("muzzle", -2, -2, -13, 4, 5, 5)
     head.cube("brow", -4, -5, -6, 8, 2, 4)
     jaw = head.bone("jaw", (0, 3, -6))
-    jaw.cube("jaw", -2, 0, -8.5, 4, 2, 8)
+    jaw.cube("jaw", -1.5, 0, -7, 3, 2, 6)
     for side, nm in ((1, "l"), (-1, "r")):
         mir = side < 0
 
