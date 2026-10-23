@@ -70,6 +70,8 @@ public final class GatePainter {
         final Sink out;
         final int gx, gz, yLo, yHi, floorY;
         final boolean lightless, dim;
+        /** The room's fill light (an invisible light block on an 8-block grid just above head height), or null. */
+        final BlockState fillLight;
         final Theme theme;
         final Room.Door[] stairDoor = new Room.Door[1];
         /** open() for the chunk and a 3-block margin, computed once: walls look at their neighbours a lot. */
@@ -90,6 +92,8 @@ public final class GatePainter {
             this.lightless = plan.has(Modifier.LIGHTLESS) && r.type != Room.Type.SHRINE;
             this.theme = f.theme;
             this.dim = r.dark || k.has(Kit.DIM);
+            int fill = r.type == Room.Type.SHRINE ? Math.max(10, fillLevel(theme)) : r.type == Room.Type.BOSS ? 15 : fillLevel(theme);
+            this.fillLight = lightless || fill <= 0 ? null : state("minecraft:light[level=" + fill + "]");
         }
 
         void set(int bx, int y, int bz, BlockState s) {
@@ -599,7 +603,12 @@ public final class GatePainter {
                 set(bx, ceil + 1, bz, k.sconce()); // the sun behind the amber glass
                 solidColumn(bx, bz, ceil + 2, yHi);
             } else solidColumn(bx, bz, ceil + 1, yHi);
-            if (r.piece != null && Pieces.paint(this, bx, bz, x, z, walk, ceil, fo)) return;
+            if (r.piece != null && Pieces.paint(this, bx, bz, x, z, walk, ceil, fo)) {
+                // an arena's own furniture doesn't get to darken its floor
+                if (r.piece.arena && !RoomGeometry.blocked(r, x, z)) fill(bx, bz, x, z, walk, ceil - walk);
+                return;
+            }
+            fill(bx, bz, x, z, walk, ceil - walk);
             if (fo == 0) decorate(bx, bz, x, z, walk, ceil, edge);
             else if (fo == -2 && r.shape == Room.Shape.PIT && theme == Theme.CLOCKWORK_FOUNDRY) set(bx, walk, bz, AIR);
         }
@@ -733,6 +742,18 @@ public final class GatePainter {
         }
 
         /**
+         * Fill light: the game's gate dimension has no ambient light at all, so a room lit only by its fixtures reads
+         * black between them at default brightness. An invisible light block on an 8-block grid, just above head
+         * height, keeps the floor, the doors and every monster readable (median floor light 7+ on the critical path,
+         * 8+ over most of a Lord's arena: {@code gates_interior_light}); the fixtures still make the pools.
+         */
+        void fill(int bx, int bz, int x, int z, int walk, int headroom) {
+            if (fillLight == null || headroom < 4) return;
+            int ox = Math.floorMod(x, 16), oz = Math.floorMod(z, 16);
+            if ((ox == 4 || ox == 12) && (oz == 4 || oz == 12)) set(bx, walk + 2, bz, fillLight);
+        }
+
+        /**
          * The antechamber's braziers: a fire either side of the arena's doors, so the last room before the Lord says
          * where the Lord is. Soul fire in the cold themes.
          */
@@ -830,6 +851,7 @@ public final class GatePainter {
             solidColumn(bx, bz, ceil + 1, yHi);
             if (!RoomGeometry.island(r, x, z)) {
                 if (r.piece != null) Pieces.paint(this, bx, bz, x, z, cloud + 1, ceil, -3);
+                fill(bx, bz, x, z, cloud + 1, ceil - cloud - 1); // whoever falls to the clouds can still see
                 return;
             }
             // the island: grass over dirt, stone hanging underneath toward the clouds
@@ -837,6 +859,7 @@ public final class GatePainter {
             for (int y = floorY - 1 - depth; y < floorY - 1; y++) if (y > cloud) set(bx, y, bz, y == floorY - 2 ? state("minecraft:dirt") : p.floorAlt());
             set(bx, floorY - 1, bz, p.floor());
             if (r.piece != null && Pieces.paint(this, bx, bz, x, z, floorY, ceil, 0)) return;
+            fill(bx, bz, x, z, floorY, ceil - floorY);
             double roll = u(x, z, 12);
             boolean axis = RoomGeometry.onDoorAxis(r, x, z, 1);
             if (!axis && roll < 0.22) set(bx, floorY, bz, pick(p.floorDecor(), x, z, 13));
@@ -896,6 +919,21 @@ public final class GatePainter {
     }
 
     // ---- shared helpers ---------------------------------------------------------------------------------------------
+
+    /**
+     * Fill light per theme (0: the fixtures alone are enough). Dark themes keep their mood with a lower fill and dim
+     * fixtures; bright themes need little. The Lords' arenas always fill at 15 (the Lord must read from the doors).
+     */
+    static int fillLevel(Theme t) {
+        return switch (t) {
+            // the themes that already looked right in game keep a light touch; open caverns and hubs need 13 to read
+            case DROWNED_ARCHIVE, EMBER_MINES -> 12;
+            case CLOCKWORK_FOUNDRY, HIVE, OVERGROWN_TEMPLE, LANTERN_NIGHT_MARKET, FROST_MONASTERY, MIRROR_PALACE, PRECURSOR_LAB,
+                 FUNGAL_HOLLOW, GLASS_DESERT, SKY_ARCHIPELAGO, BELL_CRYPT -> 13;
+            case ABYSSAL_SHRINE -> 14;
+            case NIGHTMARE -> 15;
+        };
+    }
 
     private static volatile BlockState chain, bone;
 
