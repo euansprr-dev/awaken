@@ -29,6 +29,7 @@ public final class VeilModule {
         modBus.addListener(VeilModule::registerPayloads);
         VeilEvents.init();
         VeilCommands.register();
+        VeilLessons.register(); // meditation and the Veil taught in play (level road flags)
         VeilTests.register();
     }
 
