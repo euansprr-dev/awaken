@@ -45,8 +45,8 @@ public final class LandmarkClient {
 
     private static final ContextKey<List<Draw>> KEY = new ContextKey<>(Awaken.id("landmark_markers"));
 
-    /** Peak opacity: these are hints at the edge of sight, not beacons. */
-    static final float RUIN_ALPHA = 0.45F, WELL_ALPHA = 0.55F;
+    /** Peak opacity of a shaft's bright core; its halo is wide and faint. Seen at dusk, faint through the night. */
+    static final float RUIN_ALPHA = 0.75F, HALO_ALPHA = 0.26F, WELL_ALPHA = 0.7F;
 
     /** dx/dy/dz relative to the camera; kind 0 = shaft up, 1 = shaft down, 2 = glow. */
     private record Draw(double dx, double dy, double dz, int kind, float size, float height, int argb) {}
@@ -84,22 +84,29 @@ public final class LandmarkClient {
                     for (int sz = -1; sz <= 1; sz += 2) {
                         double px = cx + sx * 8, pz = cz + sz * 8;
                         double d = Math.sqrt((px - cam.x) * (px - cam.x) + (pz - cam.z) * (pz - cam.z));
-                        out.add(new Draw(px - cam.x, top - cam.y, pz - cam.z, 2, 1.5F, 0F, argb(WELL_ALPHA * glow, 0x8FD8FF)));
-                        float a = WELL_ALPHA * 0.55F * glow * MarkerLight.distanceFade(d);
-                        if (a > 0.01F) out.add(new Draw(px - cam.x, top - 0.4 - cam.y, pz - cam.z, 0, 0.8F, 16F, argb(a, 0x8FD8FF)));
+                        out.add(new Draw(px - cam.x, top - cam.y, pz - cam.z, 2, 2.2F, 0F, argb(WELL_ALPHA * glow, 0x8FD8FF)));
+                        float a = WELL_ALPHA * 0.6F * glow * MarkerLight.distanceFade(d);
+                        if (a > 0.01F) {
+                            float w = (float) Math.max(1.4, d * 0.005);
+                            out.add(new Draw(px - cam.x, top - 0.4 - cam.y, pz - cam.z, 0, w * 3F, 28F, argb(a * 0.35F, 0x8FD8FF)));
+                            out.add(new Draw(px - cam.x, top - 0.4 - cam.y, pz - cam.z, 0, w, 36F, argb(a, 0x8FD8FF)));
+                        }
                     }
                 }
                 continue;
             }
             if (shaft <= 0F) continue;
             double d = Math.sqrt((cx - cam.x) * (cx - cam.x) + (cz - cam.z) * (cz - cam.z));
-            float a = RUIN_ALPHA * shaft * MarkerLight.distanceFade(d);
-            if (a <= 0.01F) continue;
-            switch (kind) {
-                case SKY_PLATFORM -> out.add(new Draw(cx - cam.x, m.y() - cam.y, cz - cam.z, 1, 1.8F, 72F, argb(a, 0xC8DCFF)));
-                case OCEAN_LAB -> out.add(new Draw(cx - cam.x, m.y() + m.height() - cam.y, cz - cam.z, 0, 1.3F, 56F, argb(a, 0x9FE7FF)));
-                default -> out.add(new Draw(cx - cam.x, m.y() + m.height() - cam.y, cz - cam.z, 0, 1.2F, 44F, argb(a, 0xFFD9A0)));
-            }
+            float fade = shaft * MarkerLight.distanceFade(d);
+            if (fade <= 0.01F) continue;
+            // wide enough to read as a column of light from far off, not a hairline: it grows a little with distance
+            float core = (float) Math.max(2.0, d * 0.007);
+            int rgb = kind == LandmarkKind.SKY_PLATFORM ? 0xC8DCFF : kind == LandmarkKind.OCEAN_LAB ? 0x9FE7FF : 0xFFD9A0;
+            int dir = kind == LandmarkKind.SKY_PLATFORM ? 1 : 0;
+            double y = kind == LandmarkKind.SKY_PLATFORM ? m.y() : m.y() + m.height();
+            float h = kind == LandmarkKind.SKY_PLATFORM ? 96F : kind == LandmarkKind.OCEAN_LAB ? 120F : 110F;
+            out.add(new Draw(cx - cam.x, y - cam.y, cz - cam.z, dir, core * 3.4F, h * 0.85F, argb(HALO_ALPHA * fade, rgb)));
+            out.add(new Draw(cx - cam.x, y - cam.y, cz - cam.z, dir, core, h, argb(RUIN_ALPHA * fade, rgb)));
         }
         if (!out.isEmpty()) e.getRenderState().setRenderData(KEY, out);
     }
