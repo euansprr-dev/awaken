@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "level": 22,
+  "title": "Gatewrought gear · C",
+  "text": "D-rank Lord relics forge diamond-grade gear.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:gatewrought_helmet",
+        "awaken:gatewrought_chestplate",
+        "awaken:gatewrought_leggings",
+        "awaken:gatewrought_boots",
+        "awaken:gatewrought_blade",
+        "awaken:gatewrought_focus",
+        "awaken:gatewrought_mattock"
+      ]
+    }
+  ],
+  "quiet": false
+}

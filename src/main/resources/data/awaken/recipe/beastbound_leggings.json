@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_leggings",
+  "key": {
+    "B": "#awaken:hunter_bind_d",
+    "C": "#awaken:hunter_core_d",
+    "H": "#awaken:hunter_hide_d",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "BCB",
+    "S S",
+    "H H"
+  ],
+  "result": {
+    "id": "awaken:beastbound_leggings"
+  }
+}

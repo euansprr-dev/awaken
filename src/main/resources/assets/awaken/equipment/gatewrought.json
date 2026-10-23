@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "awaken:gatewrought"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "awaken:gatewrought"
+      }
+    ]
+  }
+}

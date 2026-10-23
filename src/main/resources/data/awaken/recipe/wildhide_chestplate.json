@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_chestplate",
+  "key": {
+    "B": "#awaken:hunter_bind_e",
+    "H": "#awaken:hunter_hide_e",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "H H",
+    "HSH",
+    "BHB"
+  ],
+  "result": {
+    "id": "awaken:wildhide_chestplate"
+  }
+}

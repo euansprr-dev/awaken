@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_mattock",
+  "key": {
+    "/": "minecraft:stick",
+    "B": "#awaken:hunter_bind_d",
+    "C": "#awaken:hunter_core_d",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "BCB",
+    " /S",
+    " / "
+  ],
+  "result": {
+    "id": "awaken:beastbound_mattock"
+  }
+}

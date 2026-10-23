@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_mattock",
+  "key": {
+    "/": "minecraft:stick",
+    "B": "#awaken:hunter_bind_e",
+    "C": "#awaken:hunter_core_e",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "CCC",
+    "B/S",
+    " / "
+  ],
+  "result": {
+    "id": "awaken:wildhide_mattock"
+  }
+}

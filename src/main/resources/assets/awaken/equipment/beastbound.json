@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "awaken:beastbound"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "awaken:beastbound"
+      }
+    ]
+  }
+}

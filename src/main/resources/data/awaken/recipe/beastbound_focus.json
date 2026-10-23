@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_focus",
+  "key": {
+    "B": "#awaken:hunter_bind_d",
+    "C": "#awaken:hunter_core_d",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "SBS",
+    " C ",
+    " B "
+  ],
+  "result": {
+    "id": "awaken:beastbound_focus"
+  }
+}

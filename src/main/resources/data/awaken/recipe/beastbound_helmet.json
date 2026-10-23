@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_helmet",
+  "key": {
+    "B": "#awaken:hunter_bind_d",
+    "C": "#awaken:hunter_core_d",
+    "H": "#awaken:hunter_hide_d",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "HCH",
+    "BSB"
+  ],
+  "result": {
+    "id": "awaken:beastbound_helmet"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_chestplate",
+  "key": {
+    "B": "#awaken:hunter_bind_c",
+    "C": "#awaken:hunter_core_c",
+    "H": "#awaken:hunter_hide_c",
+    "L": "awaken:lord_heart",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "HSH",
+    "BLB",
+    "SCS"
+  ],
+  "result": {
+    "id": "awaken:gatewrought_chestplate"
+  }
+}

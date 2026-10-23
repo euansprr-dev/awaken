@@ -39,5 +39,6 @@ public final class AwakenClient {
         HearthClient.init(modBus);
         StoryClient.init(modBus);
         WorldClient.init(modBus);
+        dev.awaken.gear.client.GearClient.init(modBus);
     }
 }

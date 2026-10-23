@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_mattock",
+  "key": {
+    "/": "minecraft:stick",
+    "B": "#awaken:hunter_bind_b",
+    "C": "#awaken:hunter_core_b",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "CBC",
+    "S/S",
+    " / "
+  ],
+  "result": {
+    "id": "awaken:veilwoven_mattock"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "awaken:item/gatewrought_focus",
+    "layer1": {
+      "sprite": "awaken:item/gatewrought_focus_glow",
+      "neoforge_data": {
+        "light_emission": 15
+      }
+    }
+  }
+}
