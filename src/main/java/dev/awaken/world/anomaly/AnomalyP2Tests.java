@@ -25,6 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -138,6 +139,7 @@ final class AnomalyP2Tests {
         h.assertTrue("no sky".equals(Spots.check(level, from, g, sky, null)), "a star never lands under a roof");
         level.setBlock(g.above(6), Blocks.AIR.defaultBlockState(), 3);
 
+        clearOthers(level, p, g);
         Anomaly a = Stars.open(level, p, g, data);
         UUID light = a.entity;
         h.assertTrue(light != null && level.getEntity(light) instanceof FallingStarEntity, "a light streaks down");
@@ -203,6 +205,7 @@ final class AnomalyP2Tests {
                     .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
                     .thenExecute(() -> {
                         AnomalyData data = AnomalyData.get(server);
+                        clearOthers(level, p, g);
                         Anomaly a = Stars.open(level, p, g, data);
                         long now = level.getGameTime();
                         // the light never arrives (its chunk didn't tick): the director lands it anyway
@@ -235,6 +238,18 @@ final class AnomalyP2Tests {
                     })
                     .thenSucceed();
         });
+    }
+
+    /**
+     * Mock players left behind by earlier batches may stand on this test's spot; a grove wakes and a guardian rises for
+     * anyone, so they are moved far away first.
+     */
+    static void clearOthers(ServerLevel level, ServerPlayer keep, BlockPos around) {
+        for (ServerPlayer o : List.copyOf(level.players())) {
+            if (o != keep && o.blockPosition().distSqr(around) < 48 * 48) {
+                o.teleportTo(level, around.getX() + 5000.5, around.getY() + 200, around.getZ() + 5000.5, Set.of(), 0, 0, true);
+            }
+        }
     }
 
     // ---- shimmer grove ------------------------------------------------------------------------------------------------
@@ -280,6 +295,7 @@ final class AnomalyP2Tests {
         Progression.topUpToLevel(p, 10, Progression.XpSource.COMMAND); // the whisper needs a reason to send you to the Well
         int visited = 0;
         for (GroveVariant v : GroveVariant.values()) {
+            clearOthers(level, p, g);
             p.teleportTo(level, g.getX() + 11.5, g.getY() + 1, g.getZ() + 0.5, Set.of(), 0, 0, true);
             Anomaly a = Groves.open(level, p, g, data, v);
             ShimmerEntity s = Groves.shimmer(level, a);
@@ -329,6 +345,7 @@ final class AnomalyP2Tests {
             h.assertTrue(data.find(a.id) == null, "forgotten");
         }
         // an unvisited grove just fades
+        clearOthers(level, p, g);
         Anomaly lonely = Groves.open(level, p, g, data, GroveVariant.BLOOM);
         p.teleportTo(level, g.getX() + 11.5, g.getY() + 1, g.getZ() + 0.5, Set.of(), 0, 0, true);
         String ended = Groves.update(level, data, lonely, lonely.endsAt);

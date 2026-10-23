@@ -37,8 +37,12 @@ public final class LandmarkClient {
 
     private static final Identifier SHAFT = Awaken.id("textures/misc/landmark_shaft.png");
     private static final Identifier GLOW = Awaken.id("textures/misc/landmark_glow.png");
-    private static final RenderType SHAFT_TYPE = RenderTypes.beaconBeam(SHAFT, true);
-    private static final RenderType GLOW_TYPE = RenderTypes.beaconBeam(GLOW, true);
+    /** Created on first draw, not when this class loads at mod construction (before the renderer is up). */
+    private static final class Types {
+        static final RenderType SHAFT_TYPE = RenderTypes.beaconBeam(SHAFT, true);
+        static final RenderType GLOW_TYPE = RenderTypes.beaconBeam(GLOW, true);
+    }
+
     private static final ContextKey<List<Draw>> KEY = new ContextKey<>(Awaken.id("landmark_markers"));
 
     /** Peak opacity: these are hints at the edge of sight, not beacons. */
@@ -111,13 +115,13 @@ public final class LandmarkClient {
             if (d.kind() == 2) {
                 ps.rotate(e.getLevelRenderState().cameraRenderState.orientation);
                 float s = d.size();
-                out.submitCustomGeometry(ps, GLOW_TYPE, (pose, vc) -> quad(pose, vc, -s, -s, s, s, 0F, 1F, d.argb()));
+                out.submitCustomGeometry(ps, Types.GLOW_TYPE, (pose, vc) -> quad(pose, vc, -s, -s, s, s, 0F, 1F, d.argb()));
             } else {
                 // turn about the vertical axis to face the camera: a soft column from any side
                 ps.rotate(Axis.YP.rotation((float) Math.atan2(-d.dx(), -d.dz())));
                 float w = d.size() / 2F, h = d.height();
-                if (d.kind() == 0) out.submitCustomGeometry(ps, SHAFT_TYPE, (pose, vc) -> quad(pose, vc, -w, 0F, w, h, 1F, 0F, d.argb()));
-                else out.submitCustomGeometry(ps, SHAFT_TYPE, (pose, vc) -> quad(pose, vc, -w, -h, w, 0F, 0F, 1F, d.argb()));
+                if (d.kind() == 0) out.submitCustomGeometry(ps, Types.SHAFT_TYPE, (pose, vc) -> quad(pose, vc, -w, 0F, w, h, 1F, 0F, d.argb()));
+                else out.submitCustomGeometry(ps, Types.SHAFT_TYPE, (pose, vc) -> quad(pose, vc, -w, -h, w, 0F, 0F, 1F, d.argb()));
             }
             ps.popPose();
         }
