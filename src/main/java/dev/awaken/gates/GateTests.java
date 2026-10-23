@@ -1,0 +1,335 @@
+package dev.awaken.gates;
+
+import dev.awaken.core.AwakenConfig;
+import dev.awaken.core.test.AwakenTests;
+import dev.awaken.gates.content.GatePlan;
+import dev.awaken.gates.content.Layout;
+import dev.awaken.gates.content.Modifier;
+import dev.awaken.gates.content.Theme;
+import dev.awaken.gates.content.Twist;
+import dev.awaken.gates.run.Claims;
+import dev.awaken.gates.run.GateMemory;
+import dev.awaken.gates.run.RunState;
+import dev.awaken.gates.run.Runs;
+import dev.awaken.gates.run.Satchel;
+import dev.awaken.gates.world.Cells;
+import dev.awaken.gates.world.FloorLayout;
+import dev.awaken.gates.world.GateLayout;
+import dev.awaken.gates.world.GatePainter;
+import dev.awaken.gates.world.GateTestAccess;
+import dev.awaken.gates.world.Puzzles;
+import dev.awaken.gates.world.Room;
+import dev.awaken.progression.Curve;
+import dev.awaken.progression.Rank;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+/** GameTests for the gates module: Director rules, determinism, claims, death rules, states, cell maths, painting. */
+final class GateTests {
+    private GateTests() {}
+
+    static void register() {
+        AwakenTests.register("gates_director_rules", 40, h -> {
+            for (Rank player : Rank.values()) {
+                GateMemory mem = new GateMemory();
+                List<String> themes = new ArrayList<>();
+                List<String> layouts = new ArrayList<>();
+                int sinceTwist = 0;
+                for (int i = 0; i < 300; i++) {
+                    Director.Roll roll = Director.roll(0xA11CE + i * 7919L + player.ordinal() * 1_000_003L, player, mem, null, null);
+                    GatePlan p = roll.plan();
+                    int d = Math.abs(p.rank().ordinal() - player.ordinal());
+                    h.assertTrue(d <= 1, "rank within one of the player's: " + p.rank() + " for " + player);
+                    h.assertTrue(p.theme().fits(p.rank()), "theme " + p.theme() + " fits rank " + p.rank());
+                    for (int k = Math.max(0, themes.size() - 3); k < themes.size(); k++)
+                        h.assertTrue(!themes.get(k).equals(p.theme().id), "no theme from the last 3 (" + p.theme() + " at roll " + i + ")");
+                    for (int k = Math.max(0, layouts.size() - 2); k < layouts.size(); k++)
+                        h.assertTrue(!layouts.get(k).equals(p.layout().name()), "no layout from the last 2 (" + p.layout() + ")");
+                    int cost = 0;
+                    for (Modifier m : p.modifiers()) cost += m.cost;
+                    h.assertTrue(cost <= Curve.modifierBudget(p.rank()), "modifier budget " + cost + " > " + Curve.modifierBudget(p.rank()));
+                    h.assertTrue(p.modifiers().size() <= Curve.modifierMax(p.rank()), "modifier count");
+                    h.assertTrue(p.modifiers().stream().distinct().count() == p.modifiers().size(), "no duplicate modifiers");
+                    if (p.theme().friendly) h.assertTrue(p.modifiers().isEmpty(), "friendly gates have no modifiers");
+                    sinceTwist = p.twist() == Twist.NONE ? sinceTwist + 1 : 0;
+                    h.assertTrue(sinceTwist <= 11, "a twist at least every 12 gates");
+                    h.assertTrue(p.floors() == Math.min(6, 3 + p.rank().ordinal() / 2) || p.floors() == Math.min(6, 4 + p.rank().ordinal() / 2), "floors via Curve");
+                    h.assertTrue(roll.breaksInDays() >= 1 && roll.breaksInDays() <= 5, "break days via Curve");
+                    themes.add(p.theme().id);
+                    layouts.add(p.layout().name());
+                }
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_plan_determinism", 60, h -> {
+            for (int i = 0; i < 24; i++) {
+                GatePlan plan = testPlan(9000L + i * 31L, Rank.values()[i % 6], Theme.values()[i % Theme.values().length],
+                        Layout.values()[i % Layout.values().length], Twist.values()[i % Twist.values().length]);
+                GateLayout a = GateTestAccess.build(plan), b = GateTestAccess.build(plan);
+                h.assertTrue(signature(a).equals(signature(b)), "same plan → same rooms (" + plan.layout() + ")");
+                for (FloorLayout f : a.main) {
+                    h.assertTrue(!f.criticalPath().isEmpty(), "floor " + f.floor + " of " + plan.layout() + " reaches its end");
+                    for (Room r : f.rooms) if (r.normals + r.elites > 0) h.assertTrue(!r.spawnSpots.isEmpty(), "spawn spots in " + r.type + " " + r.shape);
+                }
+                for (FloorLayout f : a.annex) h.assertTrue(!f.criticalPath().isEmpty(), "annex floor reaches its end");
+                h.assertTrue(a.main.size() == plan.floors() && a.main.get(plan.floors() - 1).bossFloor, "last floor holds the Lord");
+                h.assertTrue(a.annex.isEmpty() != plan.hasAnnex(), "annex only for Double Gate / Gate within a Gate");
+                long pa = paintHash(a, 7), pb = paintHash(b, 7);
+                h.assertTrue(pa == pb, "same plan → same blocks");
+            }
+            GatePlan x = testPlan(1, Rank.C, Theme.HIVE, Layout.LABYRINTH, Twist.NONE);
+            GatePlan y = testPlan(2, Rank.C, Theme.HIVE, Layout.LABYRINTH, Twist.NONE);
+            h.assertFalse(signature(GateTestAccess.build(x)).equals(signature(GateTestAccess.build(y))), "different seeds → different labyrinths");
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_painter_features", 60, h -> {
+            GatePlan plan = testPlan(4242, Rank.D, Theme.BELL_CRYPT, Layout.PUZZLE_VAULT, Twist.NONE);
+            GateLayout l = GateTestAccess.build(plan);
+            FloorLayout f = l.main.get(0);
+            Room start = f.room(f.start), end = f.room(f.end);
+            Map<Long, BlockState> blocks = paintRoom(l, f, start);
+            int ex = start.centerX(), ez = start.centerZ();
+            BlockState under = blocks.get(key(ex, f.baseY + start.dy - 1, ez));
+            h.assertTrue(under != null && under.is(GatesRegistry.ENTRANCE.get()), "entrance sigil under the arrival point, was " + under);
+            h.assertTrue(!blocks.containsKey(key(ex, f.baseY + start.dy, ez)) && !blocks.containsKey(key(ex, f.baseY + start.dy + 1, ez)), "head room above the sigil");
+            Map<Long, BlockState> shrine = paintRoom(l, f, end);
+            Room.Feature sf = end.feature(Room.FeatureKind.SHRINE), seal = end.feature(Room.FeatureKind.SEAL);
+            h.assertTrue(sf != null && seal != null, "shrine room has a shrine and a seal");
+            BlockState s1 = shrine.get(key(sf.x(), f.baseY + end.dy + sf.y(), sf.z()));
+            h.assertTrue(s1 != null && s1.is(GatesRegistry.SHRINE.get()), "shrine block painted, was " + s1);
+            boolean barred = false;
+            for (BlockState s : shrine.values()) if (s.is(GatesRegistry.BARS.get())) barred = true;
+            h.assertTrue(barred, "puzzle vault shrine starts sealed");
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_claim_idempotent", 60, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            GateRegistry reg = GateRegistry.get(h.getLevel().getServer());
+            String id = "test:" + UUID.randomUUID() + ":" + p.getUUID();
+            Claim c = new Claim(id, p.getUUID(), -5, List.of(new ItemStack(Items.DIAMOND, 3)), 0, "extract", "");
+            h.assertTrue(Claims.write(p, c), "first write accepted");
+            h.assertFalse(Claims.write(p, c), "second write refused");
+            int before = p.getInventory().countItem(Items.DIAMOND);
+            Claims.deliver(p);
+            Claims.deliver(p);
+            h.assertTrue(p.getInventory().countItem(Items.DIAMOND) - before == 3, "paid exactly once");
+            h.assertTrue(reg.isDone(id), "claim marked DONE");
+            h.assertFalse(Claims.write(p, c), "a DONE claim can't be written again");
+            Claims.deliver(p);
+            h.assertTrue(p.getInventory().countItem(Items.DIAMOND) - before == 3, "still paid once after replays");
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_satchel_death_rules", 20, h -> {
+            RunState run = new RunState();
+            Satchel.add(run.satchel, new ItemStack(Items.IRON_INGOT, 16));
+            Satchel.add(run.satchel, new ItemStack(Items.DIAMOND, 1));
+            Satchel.add(run.satchel, new ItemStack(Items.EMERALD, 1));
+            Satchel.add(run.satchel, new ItemStack(Items.BREAD, 5));
+            List<ItemStack> kept = Runs.satchelOnDeath(run, AwakenConfig.Difficulty.STORY);
+            h.assertTrue(run.satchel.isEmpty(), "Story: the Satchel ends empty");
+            int iron = 0, gems = 0, bread = 0;
+            for (ItemStack s : kept) {
+                if (s.is(Items.IRON_INGOT)) iron += s.getCount();
+                if (s.is(Items.DIAMOND) || s.is(Items.EMERALD)) gems += s.getCount();
+                if (s.is(Items.BREAD)) bread += s.getCount();
+            }
+            h.assertTrue(iron == 8 && bread == 2 && gems == 1, "Story keeps half: iron " + iron + " bread " + bread + " gems " + gems);
+            Satchel.add(run.satchel, new ItemStack(Items.IRON_INGOT, 16));
+            h.assertTrue(Runs.satchelOnDeath(run, AwakenConfig.Difficulty.HUNTER).isEmpty() && run.satchel.isEmpty(), "Hunter loses the Satchel");
+            Satchel.add(run.satchel, new ItemStack(Items.IRON_INGOT, 16));
+            h.assertTrue(Runs.satchelOnDeath(run, AwakenConfig.Difficulty.HARDLINE).isEmpty(), "Hardline loses the Satchel");
+            // capacity and merging
+            RunState full = new RunState();
+            for (int i = 0; i < 30; i++) Satchel.add(full.satchel, new ItemStack(i % 2 == 0 ? Items.STONE : Items.DIRT, 64));
+            h.assertTrue(Satchel.count(full.satchel) == Satchel.SLOTS, "27 slots, was " + Satchel.count(full.satchel));
+            ItemStack extra = new ItemStack(Items.OAK_LOG, 1);
+            h.assertTrue(Satchel.add(full.satchel, extra) == 0 && extra.getCount() == 1, "a full Satchel refuses new items");
+            RunState merge = new RunState();
+            Satchel.add(merge.satchel, new ItemStack(Items.ARROW, 40));
+            Satchel.add(merge.satchel, new ItemStack(Items.ARROW, 40));
+            h.assertTrue(Satchel.count(merge.satchel) == 2 && Satchel.items(merge.satchel) == 80, "stacks merge");
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_state_machine", 20, h -> {
+            GateRecord g = new GateRecord(1, testPlan(5, Rank.E, Theme.HIVE, Layout.SHAFT, Twist.NONE), BlockPos.ZERO, 0, 0, 0, 3, GateState.BUILDING, Optional.empty());
+            h.assertFalse(g.transition(GateState.ACTIVE), "BUILDING can't go ACTIVE");
+            h.assertTrue(g.transition(GateState.READY), "BUILDING → READY");
+            h.assertTrue(g.transition(GateState.ACTIVE), "READY → ACTIVE");
+            h.assertTrue(g.transition(GateState.OPEN), "ACTIVE → OPEN");
+            h.assertTrue(g.transition(GateState.ACTIVE), "OPEN → ACTIVE");
+            h.assertFalse(g.transition(GateState.READY), "can't go back to READY");
+            h.assertTrue(g.transition(GateState.CLEARED), "ACTIVE → CLEARED");
+            h.assertFalse(g.transition(GateState.BROKEN), "a cleared gate never breaks");
+            h.assertTrue(g.transition(GateState.RELEASED), "CLEARED → RELEASED");
+            h.assertTrue(GateState.RELEASED.next().isEmpty(), "RELEASED is final");
+            GateRecord b = new GateRecord(2, g.plan, BlockPos.ZERO, 0, 1, 0, 3, GateState.READY, Optional.empty());
+            h.assertTrue(b.transition(GateState.BROKEN) && b.transition(GateState.RELEASED), "READY → BROKEN → RELEASED");
+            h.assertFalse(GateState.BROKEN.canGo(GateState.ACTIVE), "broken gates can't be entered");
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_cell_region_math", 20, h -> {
+            int[] cells = {0, 1, 63, 64, 65, 130, 4095};
+            for (int i : cells) {
+                int ox = Cells.originX(i), oz = Cells.originZ(i);
+                h.assertTrue(ox == (i % 64) * 1024 && oz == (i / 64) * 1024, "origin of " + i);
+                h.assertTrue(Cells.regionX(i) == 2 * (i % 64) && Cells.regionZ(i) == 2 * (i / 64), "region of " + i);
+                h.assertTrue(Cells.cellAt(ox, oz) == i && Cells.cellAt(ox + 511, oz + 511) == i && Cells.cellAt(ox + 200, oz + 300) == i, "inside cell " + i);
+                h.assertTrue(Cells.cellAt(ox + 512, oz) == -1 && Cells.cellAt(ox, oz + 700) == -1, "gaps belong to no cell");
+                h.assertTrue((ox >> 9) == Cells.regionX(i) && ((ox + 511) >> 9) == Cells.regionX(i), "one region file per cell");
+            }
+            h.assertTrue(Cells.regionFile(65).equals("r.2.2.mca"), "region file name");
+            for (int f = 1; f <= 6; f++) {
+                int y = Cells.floorY(f);
+                h.assertTrue(y == 200 - 32 * (f - 1), "floor " + f + " Y");
+                h.assertTrue(Cells.floorAtY(y) == f && Cells.floorAtY(y - 4) == f && Cells.floorAtY(y + 27) == f, "band of floor " + f);
+            }
+            h.assertTrue(Cells.cellAt(-5, 10) == -1, "negative coordinates hold no cell");
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_puzzles_solvable", 20, h -> {
+            GatePlan plan = testPlan(77, Rank.B, Theme.PRECURSOR_LAB, Layout.PUZZLE_VAULT, Twist.NONE);
+            GateLayout l = GateTestAccess.build(plan);
+            int puzzles = 0;
+            for (FloorLayout f : l.main) {
+                for (Room r : f.rooms) {
+                    if (r.type != Room.Type.PUZZLE) continue;
+                    puzzles++;
+                    int n = r.features(Room.FeatureKind.RUNE).size();
+                    int mask = Puzzles.initialMask(r, n);
+                    h.assertFalse(Puzzles.solved(mask, n), "a puzzle doesn't start solved");
+                    boolean solvable = false;
+                    for (int presses = 0; presses < (1 << n) && !solvable; presses++) {
+                        int m = mask;
+                        for (int i = 0; i < n; i++) if ((presses & (1 << i)) != 0) m = Puzzles.press(m, i, n);
+                        solvable = Puzzles.solved(m, n);
+                    }
+                    h.assertTrue(solvable, "every rune puzzle can be solved");
+                }
+            }
+            h.assertTrue(puzzles >= 2, "a Puzzle Vault has puzzles");
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_codecs_roundtrip", 20, h -> {
+            var ops = RegistryOps.create(NbtOps.INSTANCE, h.getLevel().registryAccess());
+            GateRecord g = new GateRecord(9, testPlan(33, Rank.A, Theme.FROST_MONASTERY, Layout.HUB_AND_SPOKES, Twist.ECHO_GATE),
+                    new BlockPos(10, 70, -20), 1, 12, 4, 6, GateState.OPEN, Optional.of(UUID.randomUUID()));
+            g.floor(0, 2).clearedRooms.add(5);
+            g.floor(0, 2).runes.put(3, 9);
+            g.entries.put(UUID.randomUUID(), 2);
+            g.echoPaths.put("0:1:x", List.of(1L, 2L, 3L));
+            var tag = GateRecord.CODEC.encodeStart(ops, g).getOrThrow();
+            GateRecord back = GateRecord.CODEC.parse(ops, tag).getOrThrow();
+            h.assertTrue(back.plan.equals(g.plan) && back.cell == 12 && back.state == GateState.OPEN, "gate record round trip");
+            h.assertTrue(back.floor(0, 2).clearedRooms.contains(5) && back.floor(0, 2).runes.get(3) == 9, "floor state round trip");
+            h.assertTrue(back.entries.size() == 1 && back.echoPaths.get("0:1:x").size() == 3, "entries and echo paths");
+            RunState run = new RunState();
+            run.gateId = 9;
+            run.floor = 3;
+            run.satchelXp = 123.5;
+            run.runIndex = 2;
+            Satchel.add(run.satchel, new ItemStack(Items.GOLD_INGOT, 7));
+            run.cleared.add("0:1");
+            var rt = RunState.MAP_CODEC.codec().encodeStart(ops, run).getOrThrow();
+            RunState r2 = RunState.MAP_CODEC.codec().parse(ops, rt).getOrThrow();
+            h.assertTrue(r2.gateId == 9 && r2.floor == 3 && r2.runIndex == 2 && Satchel.items(r2.satchel) == 7 && r2.clearedFloor(0, 1), "run state round trip");
+            h.succeed();
+        });
+
+        AwakenTests.register("gates_overworld_structure", 40, h -> {
+            BlockPos base = h.absolutePos(new BlockPos(0, 0, 0)).offset(6, 0, 6);
+            GateRecord g = new GateRecord(77, testPlan(1, Rank.C, Theme.HIVE, Layout.LABYRINTH, Twist.NONE), base, 0, 0, 0, 3, GateState.READY, Optional.empty());
+            var level = h.getLevel();
+            Overworld.place(level, g, false);
+            h.assertTrue(level.getBlockState(base.above(3)).is(GatesRegistry.CORE.get()), "core in the middle of the frame");
+            h.assertTrue(level.getBlockState(base.offset(2, 3, 0)).is(GatesRegistry.FRAME.get()), "frame post");
+            h.assertTrue(level.getBlockState(base.above(3)).getValue(dev.awaken.gates.block.GateBlocks.Core.RANK) == Rank.C.ordinal(), "core coloured by rank");
+            h.assertTrue(level.getBlockState(g.mouth()).isAir(), "the mouth is clear");
+            Overworld.remove(level, g);
+            h.assertTrue(level.getBlockState(base.above(3)).isAir(), "removed again");
+            for (int a = -3; a <= 3; a++) for (int b = -2; b <= 2; b++) level.setBlock(base.offset(a, 0, b), Blocks.AIR.defaultBlockState(), 2);
+            h.succeed();
+        });
+    }
+
+    static GatePlan testPlan(long seed, Rank rank, Theme theme, Layout layout, Twist twist) {
+        List<Modifier> mods = twist == Twist.FRIENDLY || theme.friendly ? List.of() : List.of(Modifier.values()[(int) Math.floorMod(seed, 14L)]);
+        return new GatePlan(seed, GatePlan.CONTENT_VERSION, rank, theme, layout, mods, twist, Curve.floorsFor(rank, seed % 2 == 0),
+                theme.bossId(), Theme.values()[(theme.ordinal() + 3) % Theme.values().length], (int) Math.floorMod(seed, 3L));
+    }
+
+    static String signature(GateLayout l) {
+        StringBuilder sb = new StringBuilder();
+        for (List<FloorLayout> list : List.of(l.main, l.annex)) {
+            for (FloorLayout f : list) {
+                sb.append('F').append(f.area).append(f.floor).append(':').append(f.w).append('x').append(f.h).append('|');
+                for (Room r : f.rooms) {
+                    sb.append(r.type).append(r.shape).append(r.gx).append(',').append(r.gz).append(',').append(r.gw).append(r.gh)
+                            .append(r.dy).append('h').append(r.height).append('n').append(r.normals).append('e').append(r.elites);
+                    for (Room.Door d : r.doors) sb.append('d').append(d.side).append(d.toRoom).append(d.y);
+                    sb.append(';');
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /** Hash of every block painted for the start and end chunk of each floor (cell 7). */
+    static long paintHash(GateLayout l, int cell) {
+        long h = 1469598103934665603L;
+        for (FloorLayout f : l.main) {
+            for (int id : new int[]{f.start, f.end}) {
+                Room r = f.room(id);
+                for (var e : paintRoomAt(l, f, r, cell).entrySet()) {
+                    h = (h ^ e.getKey()) * 1099511628211L;
+                    h = (h ^ e.getValue().hashCode()) * 1099511628211L;
+                }
+            }
+        }
+        return h;
+    }
+
+    static long key(int x, int y, int z) {
+        return ((long) (x & 0xFFFFF) << 40) | ((long) (y & 0xFFFFF) << 20) | (z & 0xFFFFF);
+    }
+
+    static Map<Long, BlockState> paintRoom(GateLayout l, FloorLayout f, Room r) {
+        return paintRoomAt(l, f, r, 3);
+    }
+
+    /** Paints the chunks a room covers; keys are floor-local x, absolute y, floor-local z. */
+    static Map<Long, BlockState> paintRoomAt(GateLayout l, FloorLayout f, Room r, int cell) {
+        Map<Long, BlockState> out = new HashMap<>();
+        for (int sx = r.gx; sx < r.gx + r.gw; sx++) {
+            for (int sz = r.gz; sz < r.gz + r.gh; sz++) {
+                int chunkX = (Cells.originX(cell) >> 4) + f.originSlotX + sx;
+                int chunkZ = (Cells.originZ(cell) >> 4) + f.originSlotZ + sz;
+                int bx0 = sx * 16, bz0 = sz * 16;
+                GatePainter.paint(l, cell, chunkX, chunkZ, (x, y, z, s) -> {
+                    if (Cells.floorAtY(y) == f.floor) out.put(key(bx0 + x, y, bz0 + z), s);
+                });
+            }
+        }
+        return out;
+    }
+}
