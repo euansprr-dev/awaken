@@ -1,0 +1,47 @@
+package dev.awaken.core.api;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Read access to gates for modules built alongside the gates module (Veil scouting, Above machines, Hearth breaks).
+ * The gates module installs the real implementation; the default knows no gates.
+ */
+public final class GateHooks {
+    private GateHooks() {}
+
+    /** A gate as other modules see it. rank = Rank ordinal; state = BUILDING/READY/ACTIVE/OPEN/CLEARED/BROKEN/RELEASED. */
+    public record GateView(String id, BlockPos pos, int rank, String theme, String themeName, String omen, String layout,
+                           List<String> modifiers, String twist, int floors, String boss, String state, long breaksOnPlayDay) {}
+
+    public interface Access {
+        List<GateView> near(ServerLevel level, BlockPos pos, int radius);
+        Optional<GateView> get(ServerLevel level, String id);
+        /** Mark a gate as scouted by this player (shows full detail on its card). */
+        void markScouted(ServerPlayer player, String id);
+        /** Push a gate's break back by some play-days (Gate Stabiliser). Returns false if not possible. */
+        boolean stabilise(ServerLevel level, String id, int days);
+        /** Whether this entity is inside a gate cell. */
+        boolean inGate(net.minecraft.world.entity.Entity e);
+    }
+
+    private static Access access = new Access() {
+        @Override public List<GateView> near(ServerLevel level, BlockPos pos, int radius) { return List.of(); }
+        @Override public Optional<GateView> get(ServerLevel level, String id) { return Optional.empty(); }
+        @Override public void markScouted(ServerPlayer player, String id) {}
+        @Override public boolean stabilise(ServerLevel level, String id, int days) { return false; }
+        @Override public boolean inGate(net.minecraft.world.entity.Entity e) { return false; }
+    };
+
+    public static void install(Access a) { access = a; }
+
+    public static List<GateView> near(ServerLevel level, BlockPos pos, int radius) { return access.near(level, pos, radius); }
+    public static Optional<GateView> get(ServerLevel level, String id) { return access.get(level, id); }
+    public static void markScouted(ServerPlayer player, String id) { access.markScouted(player, id); }
+    public static boolean stabilise(ServerLevel level, String id, int days) { return access.stabilise(level, id, days); }
+    public static boolean inGate(net.minecraft.world.entity.Entity e) { return access.inGate(e); }
+}
