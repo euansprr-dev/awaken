@@ -74,6 +74,7 @@ public final class FaunaModule {
         ATTACHMENTS.register(modBus);
         RULES.register(modBus);
         FaunaItems.init(modBus);
+        Mounts.init(modBus); // P3: taming, the bridle, the whistle
         dev.awaken.world.fauna.lair.LairWorldgen.init(modBus);
         modBus.addListener(FaunaModule::placements);
         modBus.addListener(FaunaNet::register);
@@ -99,6 +100,8 @@ public final class FaunaModule {
         FaunaTests.register();
         WildTests.register();
         dev.awaken.mobs.entity.WildTalentTests.register();
+        Fauna3Tests.register();
+        MountTests.register();
     }
 
     /** The {@code awaken:fauna_spawning} game rule (on by default). */
@@ -114,6 +117,12 @@ public final class FaunaModule {
     }
 
     private static <T extends Mob> void placement(RegisterSpawnPlacementsEvent e, EntityType<T> type) {
+        MobDef d = MobTypes.def(type);
+        if (d != null && Habitat.of(d.id).water()) {
+            // P3: the Tidewater spawns in water (vanilla's fish placement), judged by the same rules
+            e.register(type, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, FaunaRules::check, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+            return;
+        }
         e.register(type, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, FaunaRules::check, RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 

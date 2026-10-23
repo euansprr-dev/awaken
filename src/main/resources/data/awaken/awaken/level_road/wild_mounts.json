@@ -1,0 +1,28 @@
+{
+  "schema": 2,
+  "level": 11,
+  "title": "Wild mounts",
+  "text": "A bridle recipe. Sneak and feed a Frost Stag, Dune Ray or Tidesteed its favourite food; when it trusts you, bridle it and ride.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:hunters_bridle"
+      ]
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Tame a mount: sneak, feed it",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:mounts_tamed",
+      "value": 1
+    },
+    "requires": [
+      "counter:awaken:mount_met"
+    ],
+    "toast": "Now bridle it and ride",
+    "priority": 45
+  }
+}

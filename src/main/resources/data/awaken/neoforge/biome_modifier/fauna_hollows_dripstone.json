@@ -1,0 +1,35 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:dripstone_caves"
+  ],
+  "spawners": [
+    {
+      "type": "awaken:chime_cricket",
+      "weight": 26,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 3
+      }
+    },
+    {
+      "type": "awaken:drip_lurker",
+      "weight": 22,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 2
+      }
+    },
+    {
+      "type": "awaken:thousandfoot",
+      "weight": 1,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 1
+      }
+    }
+  ]
+}

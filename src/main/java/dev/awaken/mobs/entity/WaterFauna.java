@@ -352,6 +352,23 @@ public class WaterFauna extends WildMount {
         return new ItemStack(item, count);
     }
 
+    /** Tests: the talents, called directly. */
+    public boolean shimmerForTest(ServerLevel level) {
+        return shimmer(level);
+    }
+
+    public boolean airbellForTest(ServerLevel level) {
+        return airbell(level);
+    }
+
+    public boolean startFetchForTest(ServerLevel level) {
+        return startFetch(level);
+    }
+
+    public void fetchStepForTest() {
+        fetchStep();
+    }
+
     /** Tests and commands: the otter's state. */
     public int fetchStage() {
         return fetchStage;

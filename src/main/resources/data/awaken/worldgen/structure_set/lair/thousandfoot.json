@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:lair/thousandfoot",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 96,
+    "separation": 40,
+    "salt": 742019385
+  }
+}

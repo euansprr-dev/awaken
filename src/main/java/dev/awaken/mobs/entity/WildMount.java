@@ -526,6 +526,20 @@ public class WildMount extends FaunaMob implements PlayerRideableJumping, WildPo
         return jumpCooldown;
     }
 
+    /** Tests: what the rider's keys ask of the mount this tick, and how fast it goes for them. */
+    public Vec3 riddenInputFor(Player rider) {
+        return getRiddenInput(rider, Vec3.ZERO);
+    }
+
+    public float riddenSpeedFor(Player rider) {
+        return getRiddenSpeed(rider);
+    }
+
+    /** Tests: the charge of a jump the rider asked for that has not happened yet. */
+    public float jumpPending() {
+        return jumpPending;
+    }
+
     /** Autopilot and tests: run forward for {@code ticks} (and jump once after {@code jumpAfter} ticks, or never if < 0). */
     public void drive(int ticks, int jumpAfter) {
         long now = level().getGameTime();

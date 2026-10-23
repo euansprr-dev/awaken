@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "item": "awaken:tide_scale",
+  "count": {
+    "E": 6,
+    "D": 8,
+    "C": 10
+  },
+  "weight": 12,
+  "value": 1.1,
+  "any_of": [
+    "seen:glimmerfin",
+    "seen:tidesteed",
+    "seen:lantern_maw"
+  ],
+  "hint": "Glimmerfin schools in rivers drop it",
+  "group": "tidewater"
+}

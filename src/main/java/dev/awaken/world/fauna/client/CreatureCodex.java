@@ -30,6 +30,11 @@ final class CreatureCodex {
             if (!seen(p, d)) continue;
             StringBuilder body = new StringBuilder(d.signature).append(".\n").append(role(d.fauna)).append("\nLives in ").append(where(d.theme)).append('.');
             if (p.counter("awaken:discovered/beast_felled/" + d.id) > 0) body.append("\nYou have felled it.");
+            var mount = dev.awaken.mobs.entity.Fauna3Kinds.mount(d.id);
+            if (mount != null) {
+                String food = new net.minecraft.world.item.ItemStack(mount.favouriteItem()).getHoverName().getString().toLowerCase(java.util.Locale.ROOT);
+                body.append("\nA mount from level 11: sneak and feed it ").append(food).append(" until it trusts you, then put a Hunter's Bridle on it.");
+            }
             if (d.fauna == FaunaRole.BEAST) {
                 if (p.counter("awaken:discovered/lair/" + d.id) > 0) body.append("\nYou have found its lair.");
                 else if (p.counter("awaken:lair_heard/" + d.id) > 0) body.append("\nYou have heard where its lair is (see the tracker).");
@@ -71,6 +76,8 @@ final class CreatureCodex {
             case BLOSSOM -> "Blossomwood: cherry groves, flower and birch forests";
             case CRAG -> "the Crags: peaks, windswept hills, stony shores";
             case SPORE -> "Sporewild: the mushroom fields";
+            case TIDEWATER -> "the Tidewater: rivers, lakes and the sea";
+            case HOLLOWS -> "the Hollows: lush caves, dripstone caves, the deep dark";
             default -> t.display;
         };
     }

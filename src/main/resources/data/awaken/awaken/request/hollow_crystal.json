@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "item": "awaken:hollow_crystal",
+  "count": {
+    "E": 5,
+    "D": 7,
+    "C": 9
+  },
+  "weight": 11,
+  "value": 1.3,
+  "any_of": [
+    "seen:chime_cricket",
+    "seen:thousandfoot"
+  ],
+  "hint": "Chime Crickets sing beside ore in caves",
+  "group": "hollows"
+}

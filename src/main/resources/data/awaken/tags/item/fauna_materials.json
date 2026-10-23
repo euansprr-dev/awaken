@@ -1,0 +1,76 @@
+{
+  "values": [
+    {
+      "id": "awaken:mire_hide",
+      "required": false
+    },
+    {
+      "id": "awaken:mire_glowsac",
+      "required": false
+    },
+    {
+      "id": "awaken:canopy_venom",
+      "required": false
+    },
+    {
+      "id": "awaken:canopy_scale",
+      "required": false
+    },
+    {
+      "id": "awaken:dusk_shell",
+      "required": false
+    },
+    {
+      "id": "awaken:dusk_feather",
+      "required": false
+    },
+    {
+      "id": "awaken:blossom_dust",
+      "required": false
+    },
+    {
+      "id": "awaken:blossom_fur",
+      "required": false
+    },
+    {
+      "id": "awaken:crag_horn",
+      "required": false
+    },
+    {
+      "id": "awaken:crag_feather",
+      "required": false
+    },
+    {
+      "id": "awaken:spore_dust",
+      "required": false
+    },
+    {
+      "id": "awaken:spore_gel",
+      "required": false
+    },
+    {
+      "id": "awaken:tide_scale",
+      "required": false
+    },
+    {
+      "id": "awaken:tide_pelt",
+      "required": false
+    },
+    {
+      "id": "awaken:tide_gel",
+      "required": false
+    },
+    {
+      "id": "awaken:hollow_crystal",
+      "required": false
+    },
+    {
+      "id": "awaken:hollow_chitin",
+      "required": false
+    },
+    {
+      "id": "awaken:hollow_wick",
+      "required": false
+    }
+  ]
+}

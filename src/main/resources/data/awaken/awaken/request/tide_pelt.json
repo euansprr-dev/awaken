@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:tide_pelt",
+  "count": {
+    "E": 4,
+    "D": 6
+  },
+  "weight": 9,
+  "value": 1.4,
+  "any_of": [
+    "seen:brook_otter"
+  ],
+  "hint": "Brook Otters on river banks drop it",
+  "group": "tidewater"
+}

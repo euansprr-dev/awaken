@@ -76,19 +76,33 @@ public final class FaunaRules {
         MobDef d = MobTypes.def(type);
         if (d == null || d.fauna == null) return "not an overworld creature";
         Habitat h = Habitat.of(d.id);
+        boolean water = h.water();
         if (EntitySpawnReason.isSpawner(reason)) {
+            if (water) return inWater(la, pos) ? null : "not in water";
             return h.window() != Habitat.Window.DARK || Monster.checkMonsterSpawnRules(type, la, reason, pos, random) ? null : "spawner too bright";
         }
         if (reason != EntitySpawnReason.NATURAL && reason != EntitySpawnReason.CHUNK_GENERATION) {
+            if (water) return inWater(la, pos) ? null : "not in water";
             return Mob.checkMobSpawnRules(type, la, reason, pos, random) ? null : "no ground";
         }
         ServerLevel level = la.getLevel();
         if (!FaunaModule.spawningOn(level)) return "game rule awaken:fauna_spawning is off";
         if (level.dimension() != Level.OVERWORLD) return "not the overworld";
-        if (!Mob.checkMobSpawnRules(type, la, reason, pos, random)) return "the block below can't be spawned on";
-        if (!h.ground().accepts(la.getBlockState(pos.below()))) return "wrong ground";
-        boolean surface = pos.getY() >= la.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
-        if (!surface && !h.caves()) return "under a roof (surface creature)";
+        if (water) {
+            // P3: the Tidewater spawns in open water (two deep, three for the big ones), never in a puddle
+            if (!inWater(la, pos)) return "not in water";
+            if (d.width * d.scale > 1.0F && !la.getFluidState(pos.above(2)).is(net.minecraft.tags.FluidTags.WATER)) return "water too shallow";
+        } else {
+            if (!Mob.checkMobSpawnRules(type, la, reason, pos, random)) return "the block below can't be spawned on";
+            if (!h.ground().accepts(la.getBlockState(pos.below()))) return "wrong ground";
+            boolean surface = pos.getY() >= la.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
+            if (h.ground() == Habitat.Ground.CAVE) {
+                // P3: the Hollows live under a roof, never on the surface
+                if (surface || la.canSeeSky(pos)) return "not in a cave";
+            } else if (!surface && !h.caves()) {
+                return "under a roof (surface creature)";
+            }
+        }
         FaunaRole role = d.fauna;
         if (h.window() == Habitat.Window.DARK) {
             if (level.getDifficulty() == Difficulty.PEACEFUL) return "peaceful";
@@ -102,7 +116,8 @@ public final class FaunaRules {
         if (p.isSpectator()) return "nearest player is a spectator";
         Profile prof = Progression.profile(p);
         boolean awakened = prof.awakened();
-        int count = FaunaCensus.countNear(level, role, p.getX(), p.getZ(), 128.0);
+        int count = water && role != FaunaRole.BEAST ? FaunaCensus.countWater(level, role, p.getX(), p.getZ(), 128.0)
+                : FaunaCensus.countNear(level, role, p.getX(), p.getZ(), 128.0);
         boolean nearHearth = role != FaunaRole.AMBIENT && awakened && hearth.near(level, pos);
         if (!allowed(role, h, awakened, prof.level(), nearHearth, count, random.nextFloat())) {
             if (!awakened) return role == FaunaRole.AMBIENT ? (count >= HINT_CAP ? "enough hints already" : "a hint, not this time") : "the player hasn't awakened";
@@ -128,7 +143,26 @@ public final class FaunaRules {
         if (!awakened) return role == FaunaRole.AMBIENT && count < HINT_CAP && roll < h.preAwakenChance();
         if (role != FaunaRole.AMBIENT && nearHearth) return false;
         if (playerLevel < h.minPlayerLevel()) return false;
-        return count < role.capPerPlayer;
+        return count < (h.water() ? waterCap(role) : role.capPerPlayer);
+    }
+
+    /**
+     * P3: the water creatures' own caps near one player (inside their own category's cap of 10): a school or two of
+     * fish and a few jellies, three otters or steeds, and the named beasts' shared one.
+     */
+    public static int waterCap(FaunaRole role) {
+        return switch (role) {
+            case AMBIENT -> 7;
+            case NEUTRAL -> 3;
+            case HUNTER -> 0;
+            case BEAST -> FaunaRole.BEAST.capPerPlayer;
+        };
+    }
+
+    /** Water here and below (a fish never spawns in the top film of a puddle). */
+    static boolean inWater(ServerLevelAccessor la, BlockPos pos) {
+        return la.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER) && la.getFluidState(pos.below()).is(net.minecraft.tags.FluidTags.WATER)
+                && !la.getBlockState(pos.above()).isRedstoneConductor(la, pos.above());
     }
 
     /**

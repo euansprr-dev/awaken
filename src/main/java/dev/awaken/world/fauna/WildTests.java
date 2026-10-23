@@ -89,7 +89,7 @@ final class WildTests {
             new Family(Theme.SPORE, Biomes.MUSHROOM_FIELDS, Blocks.MYCELIUM, "fauna_spore"));
 
     static boolean p2(MobDef d) {
-        return d.theme.ordinal() > Theme.FROSTWILD.ordinal() && d.isFauna();
+        return d.theme.ordinal() > Theme.FROSTWILD.ordinal() && d.theme.ordinal() <= Theme.SPORE.ordinal() && d.isFauna();
     }
 
     static void register() {
@@ -293,6 +293,7 @@ final class WildTests {
             Map<LairStyle, Integer> found = new EnumMap<>(LairStyle.class);
             int candidates = 0;
             for (LairStyle style : LairStyle.values()) {
+                if (style.placement != LairStyle.Placement.SURFACE) continue; // the sea floor and the caves: Fauna3Tests
                 Structure structure = structures.getOrThrow(LairWorldgen.structure(style.beast)).value();
                 var spread = (RandomSpreadStructurePlacement) sets.getOrThrow(LairWorldgen.set(style.beast)).value().placement();
                 int cells = style == LairStyle.SPORE_RING ? 8 : 5;
@@ -428,7 +429,7 @@ final class WildTests {
                 for (LairStyle style : LairStyle.values()) {
                     for (int variant = 0; variant < 2; variant++) {
                         boolean twoLooks = style == LairStyle.GLASS_HOLLOW || style == LairStyle.ANTLER_GROVE || style == LairStyle.SILK_HOLLOW
-                                || style == LairStyle.RAMS_CAIRN;
+                                || style == LairStyle.RAMS_CAIRN || style == LairStyle.SUNKEN_SHRINE || style == LairStyle.CRYSTAL_NEST;
                         if (variant == 1 && !twoLooks) continue;
                         wipe(level, lo, hi);
                         // a meadow to stand it on, so the ring outside the floor has ground to follow

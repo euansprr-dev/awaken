@@ -69,6 +69,9 @@ final class FaunaCommands {
                     .then(Commands.argument("which", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(lineups(), b))
                             .executes(c -> lineup(c, StringArgumentType.getString(c, "which")))));
             fauna.then(LairCommands.build());
+            fauna.then(Fauna3Commands.mount()); // P3: mounts, the tank and the grotto
+            fauna.then(Fauna3Commands.tank());
+            fauna.then(Fauna3Commands.grotto());
             fauna.then(Commands.literal("why").requires(AwakenCommands.admin())
                     .then(Commands.argument("id", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(ids(), b))
                             .executes(FaunaCommands::why)));
@@ -94,7 +97,7 @@ final class FaunaCommands {
     }
 
     private static List<String> lineups() {
-        List<String> out = new ArrayList<>(List.of("all", "p1", "p2"));
+        List<String> out = new ArrayList<>(List.of("all", "p1", "p2", "p3"));
         out.addAll(families());
         return out;
     }
@@ -158,9 +161,11 @@ final class FaunaCommands {
     static boolean hasFamily(Holder<Biome> biome, Theme theme) {
         EnvironmentAttributeMap.Entry<MobSpawnSettings, ?> e = biome.value().getAttributes().get(EnvironmentAttributes.NATURAL_MOB_SPAWNS);
         if (e == null || !(e.argument() instanceof MobSpawnSettings s)) return false;
-        for (Weighted<MobSpawnSettings.SpawnerData> w : s.getMobsToSpawn(MobTypes.FAUNA).unwrap()) {
-            MobDef d = MobTypes.def(w.value().type());
-            if (d != null && d.theme == theme) return true;
+        for (var cat : List.of(MobTypes.FAUNA, dev.awaken.mobs.entity.Fauna3Kinds.FAUNA_WATER)) {
+            for (Weighted<MobSpawnSettings.SpawnerData> w : s.getMobsToSpawn(cat).unwrap()) {
+                MobDef d = MobTypes.def(w.value().type());
+                if (d != null && d.theme == theme) return true;
+            }
         }
         return false;
     }
@@ -197,7 +202,9 @@ final class FaunaCommands {
         List<MobDef> all = new ArrayList<>();
         for (MobDef d : Bestiary.fauna()) {
             boolean p1 = d.theme.ordinal() <= Theme.FROSTWILD.ordinal();
-            if (only != null ? d.theme == only : which.equals("p1") ? p1 : !which.equals("p2") || !p1) all.add(d);
+            boolean p3 = d.theme.ordinal() >= Theme.TIDEWATER.ordinal();
+            if (Habitat.of(d.id).water()) continue; // the Tidewater lines up in water: /awaken fauna tank
+            if (only != null ? d.theme == only : which.equals("p1") ? p1 : which.equals("p2") ? !p1 && !p3 : !which.equals("p3") || p3) all.add(d);
         }
         double total = 0;
         for (MobDef d : all) total += gap(d) + 0.2;

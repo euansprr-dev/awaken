@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:hollow_wick",
+  "count": {
+    "E": 4,
+    "D": 6
+  },
+  "weight": 9,
+  "value": 1.2,
+  "any_of": [
+    "seen:wickling"
+  ],
+  "hint": "Wicklings walk the lush caves",
+  "group": "hollows"
+}

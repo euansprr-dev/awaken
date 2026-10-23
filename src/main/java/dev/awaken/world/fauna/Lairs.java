@@ -125,7 +125,8 @@ public final class Lairs {
             double dx = e.den().getX() + 0.5 - p.getX(), dz = e.den().getZ() + 0.5 - p.getZ();
             double d2 = dx * dx + dz * dz;
             if (d2 > WAKE * WAKE) continue;
-            if (d2 < FOUND * FOUND && Progression.profile(p).awakened()) found(p, e);
+            // (a cave lair is found down in it, not from the surface above it)
+            if (d2 < FOUND * FOUND && Math.abs(e.den().getY() - p.getY()) < 16 && Progression.profile(p).awakened()) found(p, e);
             wake(level, reg, e, p, true);
         }
     }

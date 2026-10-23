@@ -66,9 +66,11 @@ public final class LairBuilder {
             case PETAL_BOWER -> petalBower(s, r, seed);
             case RAMS_CAIRN -> ramsCairn(s, r, seed, variant);
             case SPORE_RING -> sporeRing(s, r, seed);
+            case SUNKEN_SHRINE -> DeepLairs.sunkenShrine(s, r, seed, variant);
+            case CRYSTAL_NEST -> DeepLairs.crystalNest(s, r, seed, variant);
         }
-        // the den itself stays clear: carpets, petals and snow round it, never on it
-        if (s.here(style.denX, style.denZ)) {
+        // the den itself stays clear: carpets, petals and snow round it, never on it (the sea floor's den is open water)
+        if (style.placement != LairStyle.Placement.SEABED && s.here(style.denX, style.denZ)) {
             for (int dy = 0; dy < 4; dy++) s.set(style.denX, style.denY + dy, style.denZ, AIR);
         }
     }
@@ -789,5 +791,11 @@ public final class LairBuilder {
     /** For the tests: the den must be standing room (two clear blocks over a solid floor). */
     public static boolean standingRoom(net.minecraft.world.level.Level level, BlockPos den) {
         return level.getBlockState(den).isAir() && level.getBlockState(den.above()).isAir() && !level.getBlockState(den.below()).isAir();
+    }
+
+    /** P3: room for a beast at the den in air or in water (no collision there and above it, something under it). */
+    public static boolean openRoom(net.minecraft.world.level.Level level, BlockPos den) {
+        return level.getBlockState(den).getCollisionShape(level, den).isEmpty() && level.getBlockState(den.above()).getCollisionShape(level, den.above()).isEmpty()
+                && !level.getBlockState(den.below()).isAir() && level.getBlockState(den.below()).getFluidState().isEmpty();
     }
 }

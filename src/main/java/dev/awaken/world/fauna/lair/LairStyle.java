@@ -25,7 +25,13 @@ public enum LairStyle implements StringRepresentable {
     SILK_HOLLOW("weaver_queen", "the Silk Hollow", 2, 1, 2, 7, false, 6),
     PETAL_BOWER("empress_moth", "the Petal Bower", 0, 1, 0, 7, false, 6),
     RAMS_CAIRN("stonehorn", "the Ram's Cairn", 0, 1, 3, 8, false, 16),
-    SPORE_RING("mycelord", "the Spore Ring", 0, 1, 0, 8, false, 6);
+    SPORE_RING("mycelord", "the Spore Ring", 0, 1, 0, 8, false, 6),
+    // P3: on the floor of the deep sea, and in a cave of its own deep under the dripstone and the lush caves
+    SUNKEN_SHRINE("lantern_maw", "the Sunken Shrine", 0, 2, 0, 8, false, 6),
+    CRYSTAL_NEST("thousandfoot", "the Crystal Nest", 0, 1, 1, 8, false, 6);
+
+    /** Where a lair goes: on the land (the first nine), on the sea floor under deep water, or carved out underground. */
+    public enum Placement { SURFACE, SEABED, CAVE }
 
     public static final Codec<LairStyle> CODEC = StringRepresentable.fromEnum(LairStyle::values);
     /** Half-width of a lair's footprint, the scattered ring outside the floor included. */
@@ -43,6 +49,8 @@ public enum LairStyle implements StringRepresentable {
     public final int maxSlope;
     /** Lives high up (the peaks): its biome is looked up at the surface rather than near sea level. */
     public final boolean highland;
+    /** P3: where it is placed (the sea floor and caves have their own site search and no terrain flattening in caves). */
+    public final Placement placement;
 
     LairStyle(String beast, String title, int denX, int denY, int denZ, int radius, boolean wet, int maxSlope) {
         this.beast = beast;
@@ -54,6 +62,7 @@ public enum LairStyle implements StringRepresentable {
         this.wet = wet;
         this.maxSlope = maxSlope;
         this.highland = beast.equals("stonehorn");
+        this.placement = beast.equals("lantern_maw") ? Placement.SEABED : beast.equals("thousandfoot") ? Placement.CAVE : Placement.SURFACE;
     }
 
     @Override
@@ -72,6 +81,8 @@ public enum LairStyle implements StringRepresentable {
             case ANTLER_GROVE -> biome.is(Biomes.SNOWY_TAIGA) || biome.is(Biomes.SNOWY_PLAINS) || biome.is(Biomes.GROVE) || biome.is(Biomes.SNOWY_SLOPES) ? 1 : 0;
             case SILK_HOLLOW -> biome.is(Biomes.PALE_GARDEN) ? 1 : 0;
             case RAMS_CAIRN -> biome.is(Biomes.FROZEN_PEAKS) || biome.is(Biomes.JAGGED_PEAKS) || biome.is(Biomes.SNOWY_SLOPES) ? 1 : 0;
+            case SUNKEN_SHRINE -> biome.is(Biomes.DEEP_LUKEWARM_OCEAN) || biome.is(Biomes.WARM_OCEAN) ? 1 : 0; // coral in the warm deep
+            case CRYSTAL_NEST -> biome.is(Biomes.LUSH_CAVES) ? 1 : 0; // a mossy nest under the lush caves
             default -> 0;
         };
     }

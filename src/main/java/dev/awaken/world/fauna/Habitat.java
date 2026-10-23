@@ -45,11 +45,18 @@ public record Habitat(Window window, boolean caves, Ground ground, float preAwak
         /** Sand, red sand, terracotta. */
         SANDY,
         /** Whatever vanilla's spawn rules allow (night hunters in caves). */
-        ANY;
+        ANY,
+        /** P3: in water (the spawn rules check the water itself, not the block below). */
+        WATER,
+        /** P3: a cave floor under a roof: stone, deepslate, tuff, dripstone, calcite, moss, clay, gravel, sculk. */
+        CAVE;
 
         public boolean accepts(BlockState below) {
             return switch (this) {
-                case ANY -> true;
+                case ANY, WATER -> true;
+                case CAVE -> below.is(BlockTags.BASE_STONE_OVERWORLD) || below.is(Blocks.DRIPSTONE_BLOCK) || below.is(Blocks.CALCITE) || below.is(Blocks.TUFF)
+                        || below.is(Blocks.MOSS_BLOCK) || below.is(Blocks.CLAY) || below.is(Blocks.GRAVEL) || below.is(Blocks.SCULK) || below.is(Blocks.ROOTED_DIRT)
+                        || below.is(BlockTags.DIRT) || below.is(Blocks.SMOOTH_BASALT) || below.is(Blocks.COBBLED_DEEPSLATE);
                 case SANDY -> below.is(BlockTags.SAND) || below.is(BlockTags.TERRACOTTA) || below.is(BlockTags.BADLANDS_TERRACOTTA);
                 case NATURAL -> below.is(BlockTags.ANIMALS_SPAWNABLE_ON) || below.is(BlockTags.DIRT) || below.is(BlockTags.SAND)
                         || below.is(BlockTags.TERRACOTTA) || below.is(BlockTags.BADLANDS_TERRACOTTA) || below.is(BlockTags.SNOW)
@@ -105,7 +112,24 @@ public record Habitat(Window window, boolean caves, Ground ground, float preAwak
             // Sporewild: mushroom fields
             Map.entry("shroomlet", new Habitat(Window.ANY, false, Ground.NATURAL, HINT, 0, "Plants mushrooms; puffs if startled")),
             Map.entry("sporeback_snail", new Habitat(Window.ANY, false, Ground.NATURAL, HINT, 0, "Mushrooms it rests by grow huge")),
-            Map.entry("mycelord", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Its spores choke")));
+            Map.entry("mycelord", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Its spores choke")),
+            // P3. The Tidewater: rivers, lakes, the sea (its own spawn category and caps)
+            Map.entry("glimmerfin", new Habitat(Window.ANY, false, Ground.WATER, HINT, 0, "Swim through a school to see in the dark")),
+            Map.entry("breathbell", new Habitat(Window.ANY, false, Ground.WATER, HINT, 0, "Drowning? Touch its bell and breathe")),
+            Map.entry("brook_otter", new Habitat(Window.DAY_DUSK, false, Ground.WATER, 0, 0, "Dives and brings you what it finds")),
+            Map.entry("tidesteed", new Habitat(Window.ANY, false, Ground.WATER, 0, 0, "Kelp wins its trust; ride from level 11")),
+            Map.entry("lantern_maw", new Habitat(Window.ANY, false, Ground.WATER, 0, 3, "Named beast. Its lure is the only light")),
+            // The Hollows: lush caves, dripstone caves, the deep dark
+            Map.entry("chime_cricket", new Habitat(Window.ANY, true, Ground.CAVE, HINT, 0, "Sings beside buried ore. Follow it")),
+            Map.entry("wickling", new Habitat(Window.ANY, true, Ground.CAVE, HINT, 0, "Ripens glow berries on the cave vines")),
+            Map.entry("drip_lurker", new Habitat(Window.DARK, true, Ground.CAVE, 0, 0, "Hangs from the roof. Torchlight is safe")),
+            Map.entry("hushling", new Habitat(Window.DARK, true, Ground.CAVE, 0, 0, "Hunts by sound. Sneak, or carry light")),
+            Map.entry("thousandfoot", new Habitat(Window.ANY, true, Ground.CAVE, 0, 3, "Named beast. Nests in a crystal cave")));
+
+    /** P3: lives in water (its own spawn category, placement and caps). */
+    public boolean water() {
+        return ground == Ground.WATER;
+    }
 
     public static Habitat of(String id) {
         Habitat h = ALL.get(id);

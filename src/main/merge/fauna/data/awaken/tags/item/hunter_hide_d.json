@@ -11,6 +11,18 @@
     {
       "id": "awaken:blossom_fur",
       "required": false
+    },
+    {
+      "id": "awaken:tide_scale",
+      "required": false
+    },
+    {
+      "id": "awaken:tide_pelt",
+      "required": false
+    },
+    {
+      "id": "awaken:hollow_chitin",
+      "required": false
     }
   ]
 }

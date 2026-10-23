@@ -168,6 +168,15 @@ public class CaveFauna extends FaunaMob implements WildPose {
         chirpPose = 8;
     }
 
+    /** Tests: the cricket's search and the lurker's roof, called directly. */
+    public void seekOreForTest(ServerLevel level) {
+        seekOre(level);
+    }
+
+    public int ceilingAboveForTest() {
+        return ceilingAbove(3, 9);
+    }
+
     /** The ore it sings for (tests, the Codex). */
     public @Nullable BlockPos singingFor() {
         return lure;
