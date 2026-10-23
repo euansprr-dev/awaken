@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/ascent_stone_top",
+    "side": "awaken:block/ascent_stone_side"
+  }
+}

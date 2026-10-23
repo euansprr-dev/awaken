@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/conduit"
+    },
+    "lit=true": {
+      "model": "awaken:block/conduit_lit"
+    }
+  }
+}

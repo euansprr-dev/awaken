@@ -1,0 +1,30 @@
+{
+  "values": [
+    "awaken:abyss_stone",
+    "awaken:well_stone",
+    "awaken:well_glyph",
+    "awaken:well_light",
+    "awaken:rim_stone",
+    "awaken:garden_stone",
+    "awaken:choir_stone",
+    "awaken:choir_bricks",
+    "awaken:choir_crystal",
+    "awaken:marrow_stone",
+    "awaken:marrow_lantern",
+    "awaken:hush_stone",
+    "awaken:hush_tiles",
+    "awaken:hush_lamp",
+    "awaken:foundry_plate",
+    "awaken:foundry_grate",
+    "awaken:foundry_lamp",
+    "awaken:brine_stone",
+    "awaken:tide_coral",
+    "awaken:dream_tile",
+    "awaken:dream_glow",
+    "awaken:court_stone",
+    "awaken:court_tile",
+    "awaken:court_brazier",
+    "awaken:seed_shell",
+    "awaken:seed_vein"
+  ]
+}

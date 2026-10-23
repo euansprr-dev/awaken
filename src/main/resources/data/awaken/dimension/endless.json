@@ -1,0 +1,21 @@
+{
+  "type": "awaken:endless",
+  "generator": {
+    "type": "awaken:stratum",
+    "stratum": 0,
+    "biome_source": {
+      "type": "awaken:endless",
+      "biomes": [
+        "awaken:stratum_1",
+        "awaken:stratum_2",
+        "awaken:stratum_3",
+        "awaken:stratum_4",
+        "awaken:stratum_5",
+        "awaken:stratum_6",
+        "awaken:stratum_7",
+        "awaken:stratum_8",
+        "awaken:stratum_9"
+      ]
+    }
+  }
+}

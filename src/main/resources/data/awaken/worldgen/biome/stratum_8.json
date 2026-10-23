@@ -1,0 +1,47 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0.0,
+  "effects": {
+    "water_color": "#a06ac0"
+  },
+  "attributes": {
+    "minecraft:visual/fog_color": "#3a2340",
+    "minecraft:visual/sky_color": "#3a2340",
+    "minecraft:visual/water_fog_color": "#2a1832",
+    "minecraft:visual/fog_start_distance": 0.0,
+    "minecraft:visual/fog_end_distance": 72.0,
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:end_rod"
+          },
+          "probability": 0.003
+        }
+      ]
+    },
+    "minecraft:audio/background_music": {
+      "default": {
+        "sound": "minecraft:music.overworld.cherry_grove",
+        "min_delay": 6000,
+        "max_delay": 18000
+      }
+    },
+    "minecraft:audio/ambient_sounds": {
+      "mood": {
+        "sound": "minecraft:ambient.cave",
+        "tick_delay": 6000,
+        "block_search_extent": 8,
+        "offset": 2.0
+      },
+      "additions": {
+        "sound": "awaken:descent.room_shift",
+        "tick_chance": 0.001
+      }
+    }
+  },
+  "carvers": [],
+  "features": []
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "awaken:block/well_lift_top",
+    "bottom": "awaken:block/well_stone",
+    "side": "awaken:block/well_lift_side"
+  }
+}

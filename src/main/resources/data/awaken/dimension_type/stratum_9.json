@@ -1,0 +1,29 @@
+{
+  "has_fixed_time": true,
+  "has_skylight": false,
+  "has_ceiling": true,
+  "has_ender_dragon_fight": false,
+  "coordinate_scale": 1.0,
+  "min_y": 0,
+  "height": 256,
+  "logical_height": 256,
+  "infiniburn": "#minecraft:infiniburn_overworld",
+  "ambient_light": 0.06,
+  "monster_spawn_light_level": 0,
+  "monster_spawn_block_light_limit": 0,
+  "skybox": "none",
+  "attributes": {
+    "minecraft:visual/ambient_light_color": "#0e0814",
+    "minecraft:gameplay/bed_rule": {
+      "can_sleep": "always",
+      "can_set_spawn": "never"
+    },
+    "minecraft:gameplay/straw_bed_rule": {
+      "can_sleep": "always",
+      "can_set_spawn": "never"
+    },
+    "minecraft:gameplay/respawn_anchor_works": false,
+    "minecraft:gameplay/can_start_raid": false,
+    "minecraft:gameplay/nether_portal_spawns_piglin": false
+  }
+}

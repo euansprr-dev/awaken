@@ -1,0 +1,11 @@
+{
+  "type": "awaken:stratum_3",
+  "generator": {
+    "type": "awaken:stratum",
+    "stratum": 3,
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "awaken:stratum_3"
+    }
+  }
+}
