@@ -43,3 +43,4 @@ repo/
 .ref/
 logs/
 *.log
+.claude/worktrees/
