@@ -61,6 +61,7 @@ public final class RevealFilter {
         Optional<BlockPos> own = level.dimension() == Level.OVERWORLD ? HearthHooks.hearthOf(viewer) : Optional.empty();
         int reach = radius + RADIUS;
         int half = Math.max(8, radius / 2);
+        // nearest() returns one Hearth, so probe across the disc: your own Hearth must never hide someone else's
         int[][] probes = {{0, 0}, {half, 0}, {-half, 0}, {0, half}, {0, -half}, {half, half}, {-half, half}, {half, -half}, {-half, -half}};
         for (int[] p : probes) {
             BlockPos probe = BlockPos.containing(center.x + p[0], center.y, center.z + p[1]);
