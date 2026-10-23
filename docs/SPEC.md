@@ -350,5 +350,28 @@ Story effects on the world:
 - "Become the Signal": each Ascension tier gives hostile creatures +30% health and +15% damage and the player +15% XP
   (up to 10 tiers); allies are not scaled.
 
+Plan v2 · onboarding and progression (details in docs/modules/onboarding.md):
+- Rank floor-reward shares E .28, D .16, C .08, B .07, A .30, S .25, Sovereign .25; Daily Regimen = 0.1 × xpToNext + 1 point.
+- §4.3 is replaced: home XP = kill 4% × min(2, hp/20), ore 1%, block 0.05% of a level, each through diminishing returns per
+  source (10-minute tally; budgets kill .15, ore .06, build .03, other .25 of a level per 10 min), tapered by
+  1/(1 + levels above the content / 10). Discoveries (`Progression.discover`) are uncapped.
+- Profile schema 2 adds `banked_xp` and `unlocks`. XP earned before awakening is banked and paid on Accept, which tops the
+  player up to level 2. The Accept card is a choice card.
+- Truths are first offered at level 5 (level-road flag `awaken:truths`), then at each rank-up.
+- Directives and drills have `requires`; unmet ones are never offered.
+- §4.11 Level road: `level_road/*.json` {level, title, text, grants[power|recipe|item|power_core|flag], quiet}; unlock ids
+  are saved, missed steps are granted on login, flags read with `Progression.hasFlag` (`awaken:road/<name>`).
+- The first power is a choice of three E-tier actives from different families (`powers/Starter.POOL`), saved in
+  `awaken:first_power`; Dash comes at level 3.
+- Mod recipes unlock in the recipe book when an ingredient is first held.
+- Pacing (sim, balanced player): first power ~8 min, level 5 ~47 min, 10 ~3.6 h, 25 ~16.8 h, 50 ~56 h.
+
+Plan v2 · System and Hearth:
+- Every Y/N decision is a choice card that says what each key does (`SignalWindow.choice`); information is a toast.
+- The Now tracker (`core/api/NowHooks`) collects up to three concrete suggestions from every module.
+- The Hearth Anchor is crafted from a Lord's Heart, 4 stone bricks and 4 copper ingots (no obsidian: stone tools suffice).
+- Wandering gates (anomalies) form at the player's rank, fade after their lifetime unless entered, never break, and don't
+  count toward the Director's 1–4.
+
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
