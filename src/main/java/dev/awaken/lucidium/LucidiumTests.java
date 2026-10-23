@@ -191,7 +191,8 @@ final class LucidiumTests {
     private static void lucidityMaths(GameTestHelper h) {
         h.assertTrue(Lucidity.start(true, true, 4, 0) == 37f, "intention 10 + WBTB 25 + recall 2");
         h.assertTrue(Lucidity.start(false, false, 100, 0) == 10f, "recall is capped at +10");
-        h.assertTrue(Lucidity.start(true, true, 40, 50) == 100f, "clamped at 100");
+        h.assertTrue(Lucidity.start(true, true, 40, 50) == 95f, "10 + 25 + 10 + 50");
+        h.assertTrue(Lucidity.start(true, true, 40, 70) == 100f, "clamped at 100");
         h.assertTrue(Math.abs(Lucidity.gain(40f, Lucidity.REALITY_CHECK, 10) - 53.2f) < 1e-3, "SPI 10 adds 10% to gains");
         h.assertTrue(Lucidity.gain(95f, Lucidity.DREAM_SIGN, 0) == 100f, "never above 100");
         h.assertTrue(Lucidity.realityCheckAmount(5) == Lucidity.REALITY_CHECK / 2, "spammed checks count half");

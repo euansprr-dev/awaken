@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/dream_bell"
+    },
+    "lit=true": {
+      "model": "awaken:block/dream_bell_armed"
+    }
+  }
+}

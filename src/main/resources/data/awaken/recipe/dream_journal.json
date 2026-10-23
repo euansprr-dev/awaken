@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:feather",
+    "minecraft:amethyst_shard"
+  ],
+  "result": {
+    "id": "awaken:dream_journal"
+  }
+}

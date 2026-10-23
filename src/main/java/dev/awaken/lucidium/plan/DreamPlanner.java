@@ -62,6 +62,17 @@ public final class DreamPlanner {
         List<Snapshot> picks = new ArrayList<>();
         for (Snapshot s : today) if (picks.size() < target) picks.add(s);
         for (Snapshot s : older) if (picks.size() < target) picks.add(s);
+        // your home turns up in your dreams, wrong: keep the latest one in, and start there
+        boolean hasHome = picks.stream().anyMatch(s -> s.kind() == Snapshot.Kind.HOME);
+        if (!hasHome) {
+            for (int i = memories.size() - 1; i >= 0; i--) {
+                if (memories.get(i).kind() == Snapshot.Kind.HOME) {
+                    if (picks.size() >= target) picks.removeLast();
+                    picks.add(memories.get(i));
+                    break;
+                }
+            }
+        }
         // dreams start at home when home is part of them
         for (int i = 0; i < picks.size(); i++) {
             if (picks.get(i).kind() == Snapshot.Kind.HOME) {

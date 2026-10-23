@@ -1,0 +1,134 @@
+{
+  "dream.enter": {
+    "subtitle": "subtitles.awaken.dream.enter",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/shimmer",
+        "pitch": 0.6,
+        "volume": 0.8
+      },
+      {
+        "name": "minecraft:block/beacon/ambient",
+        "pitch": 1.6,
+        "volume": 0.4
+      }
+    ]
+  },
+  "dream.wake": {
+    "subtitle": "subtitles.awaken.dream.wake",
+    "sounds": [
+      {
+        "name": "minecraft:block/bell/resonate",
+        "pitch": 1.5,
+        "volume": 0.45
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "pitch": 0.8,
+        "volume": 0.6
+      }
+    ]
+  },
+  "dream.reality_check": {
+    "subtitle": "subtitles.awaken.dream.reality_check",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate2",
+        "pitch": 1.9,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:random/glass1",
+        "pitch": 1.8,
+        "volume": 0.25
+      }
+    ]
+  },
+  "dream.lucid": {
+    "subtitle": "subtitles.awaken.dream.lucid",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/activate",
+        "pitch": 1.4,
+        "volume": 0.7
+      }
+    ]
+  },
+  "dream.sign": {
+    "subtitle": "subtitles.awaken.dream.sign",
+    "sounds": [
+      {
+        "name": "minecraft:block/amethyst/resonate3",
+        "pitch": 1.2,
+        "volume": 0.7
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate4",
+        "pitch": 1.1,
+        "volume": 0.7
+      }
+    ]
+  },
+  "dream.manifest": {
+    "subtitle": "subtitles.awaken.dream.manifest",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "pitch": 1.3,
+        "volume": 0.6
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "pitch": 1.3,
+        "volume": 0.6
+      }
+    ]
+  },
+  "dream.nightmare": {
+    "subtitle": "subtitles.awaken.dream.nightmare",
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/heartbeat_1",
+        "pitch": 0.9,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:mob/warden/heartbeat_2",
+        "pitch": 0.9,
+        "volume": 1.0
+      }
+    ]
+  },
+  "dream.door": {
+    "subtitle": "subtitles.awaken.dream.door",
+    "sounds": [
+      {
+        "name": "minecraft:block/end_portal/eyeplace1",
+        "pitch": 1.4,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:block/end_portal/eyeplace2",
+        "pitch": 1.4,
+        "volume": 0.5
+      }
+    ]
+  },
+  "dream.bell": {
+    "subtitle": "subtitles.awaken.dream.bell",
+    "sounds": [
+      {
+        "name": "minecraft:block/bell/bell_use01",
+        "pitch": 0.8,
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "minecraft:block/bell/bell_use02",
+        "pitch": 0.8,
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  }
+}
