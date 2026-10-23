@@ -80,6 +80,21 @@ public class DeepBeast extends NamedBeast implements WildPose {
     public void aiStep() {
         super.aiStep();
         Swim.flop(this);
+        if (level().isClientSide() && isAlive() && tickCount % 5 == 0 && isInWater()) lureMote();
+    }
+
+    /**
+     * Now and then a mote of light drifts off the lure's bulb (client only, no blocks touched: no real light), so the
+     * lure reads from far off in dark water. The bulb sits about 27 model pixels ahead and 34 up at rest.
+     */
+    private void lureMote() {
+        float sc = getScale(), yaw = yBodyRot * net.minecraft.util.Mth.DEG_TO_RAD;
+        double fwd = 27.0 / 16.0 * sc, up = 34.0 / 16.0 * sc;
+        var r = getRandom();
+        level().addParticle(net.minecraft.core.particles.ParticleTypes.GLOW,
+                getX() - net.minecraft.util.Mth.sin(yaw) * fwd + (r.nextDouble() - 0.5) * 0.5, getY() + up + (r.nextDouble() - 0.5) * 0.5,
+                getZ() + net.minecraft.util.Mth.cos(yaw) * fwd + (r.nextDouble() - 0.5) * 0.5,
+                (r.nextDouble() - 0.5) * 0.02, 0.012, (r.nextDouble() - 0.5) * 0.02);
     }
 
     @Override

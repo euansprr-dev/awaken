@@ -221,7 +221,9 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         public void submit(PoseStack pose, SubmitNodeCollector collector, int light, WildRenderState s, float yRot, float xRot) {
             if (s.isInvisible) return;
             AwLook l = look(s);
-            float a = Mth.clamp(l.glow * (l.translucent ? 0.8F : 1.0F), 0.0F, 1.0F);
+            // P3 glows are their light in dark water and caves: never below 0.8 of the texture's own alpha (the
+            // creature's pulse rides on top); only a pre-awakening shimmer stays faint
+            float a = Mth.clamp(l.translucent ? l.glow * 0.8F : 0.7F + 0.3F * l.glow, 0.0F, 1.0F);
             if (s.dying >= 0) a *= Math.max(0.0F, 1.0F - s.dying / (NamedBeast.DEATH_TICKS / 20.0F));
             if (a <= 0.01F) return;
             collector.order(2).submitModel(getParentModel(), s, pose, type, LightCoordsUtil.FULL_BRIGHT,
