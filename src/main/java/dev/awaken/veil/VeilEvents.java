@@ -65,6 +65,7 @@ final class VeilEvents {
             Projection.tick(sp, s);
             return;
         }
+        if (Projection.owesDeath(sp)) Projection.tryPendingDeath(sp);
         Meditation.tick(sp);
         Stillpoint.tick(sp);
         SpiritSight.tickAwake(sp);

@@ -36,10 +36,12 @@ final class VeilTests {
         AwakenTests.register("veil_ghost_door_and_solidity", 60, VeilTests::ghostDoor);
         AwakenTests.register("veil_gate_puzzles_solvable", 40, VeilTests::puzzlesSolvable);
         AwakenTests.register("veil_temple_layout", 40, VeilTests::templeLayout);
+        AwakenTests.register("veil_stillpoint_dimension_decodes", 40, VeilTests::dimensionDecodes);
     }
 
     private static ServerPlayer spiritAt(GameTestHelper h, BlockPos at) {
         ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        sp.connection.markClientLoaded(); // otherwise a fresh player cannot be hurt
         ServerLevel level = h.getLevel();
         sp.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), 0F, 0F, true);
         return sp;
@@ -228,6 +230,24 @@ final class VeilTests {
                 }
             }
             h.assertTrue(java.util.Arrays.equals(state, l.target()), "every Veil Gate puzzle can be solved");
+        }
+        h.succeed();
+    }
+
+    /** The GameTest server never creates datapack dimensions, so decode ours against the live registries instead. */
+    private static void dimensionDecodes(GameTestHelper h) {
+        var server = h.getLevel().getServer();
+        var id = net.minecraft.resources.Identifier.fromNamespaceAndPath("awaken", "dimension/stillpoint.json");
+        try (var reader = server.getResourceManager().openAsReader(id)) {
+            var json = com.google.gson.JsonParser.parseReader(reader);
+            var ops = net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE, server.registryAccess());
+            var stem = net.minecraft.world.level.dimension.LevelStem.CODEC.parse(ops, json).getOrThrow();
+            h.assertTrue(stem.generator() instanceof dev.awaken.veil.world.StillpointGenerator, "the Stillpoint uses its own generator");
+            h.assertTrue(stem.type().value().hasFixedTime(), "it is always dawn in the Stillpoint");
+            h.assertTrue(stem.type().value().hasSkyLight(), "the Stillpoint has a sky");
+        } catch (java.io.IOException e) {
+            h.fail("missing dimension json: " + e.getMessage());
+            return;
         }
         h.succeed();
     }

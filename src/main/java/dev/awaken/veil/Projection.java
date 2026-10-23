@@ -447,10 +447,36 @@ public final class Projection {
     private static void bodyDied(ServerPlayer sp, Spirit s) {
         DamageSource source = s.bodyDiedSource;
         end(sp, EndReason.BODY_DIED);
-        if (sp.isAlive() && source != null) {
-            sp.setHealth(1F);
-            if (!sp.hurtServer(sp.level(), source, Float.MAX_VALUE) && sp.isAlive()) sp.kill(sp.level());
+        if (source == null || !sp.isAlive()) return;
+        sp.setHealth(1F);
+        PENDING_DEATH.put(sp.getUUID(), new PendingDeath(source, 100));
+        tryPendingDeath(sp);
+    }
+
+    /** A death owed by a Body: applied as soon as the player can be hurt (not mid-teleport). */
+    private record PendingDeath(DamageSource source, int ttl) {}
+
+    private static final Map<UUID, PendingDeath> PENDING_DEATH = new HashMap<>();
+
+    static void tryPendingDeath(ServerPlayer sp) {
+        PendingDeath d = PENDING_DEATH.get(sp.getUUID());
+        if (d == null) return;
+        if (!sp.isAlive() || d.ttl() <= 0) {
+            PENDING_DEATH.remove(sp.getUUID());
+            return;
         }
+        ServerLevel level = sp.level();
+        if (!sp.isInvulnerableTo(level, d.source())) {
+            if (!sp.hurtServer(level, d.source(), Float.MAX_VALUE) && sp.isAlive()) sp.kill(level);
+        } else if (!sp.isInvulnerableTo(level, level.damageSources().genericKill())) {
+            sp.kill(level);
+        }
+        if (!sp.isAlive()) PENDING_DEATH.remove(sp.getUUID());
+        else PENDING_DEATH.put(sp.getUUID(), new PendingDeath(d.source(), d.ttl() - 1));
+    }
+
+    static boolean owesDeath(ServerPlayer sp) {
+        return PENDING_DEATH.containsKey(sp.getUUID());
     }
 
     // ---- end --------------------------------------------------------------------------------------------------------
