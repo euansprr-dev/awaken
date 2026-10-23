@@ -170,7 +170,7 @@ public final class GearCombat {
             level.sendParticles(fx, cx, cy, cz, 0, Math.cos(a), 0.05, Math.sin(a), 0.35);
         }
         level.sendParticles(net.minecraft.core.particles.ColorParticleOption.create(ParticleTypes.FLASH, 0xFFF2A541), cx, cy, cz, 1, 0, 0, 0, 0);
-        level.playSound(null, victim.blockPosition(), SoundEvents.TRIDENT_THUNDER.value(), SoundSource.PLAYERS, 0.35f, 1.6f);
+        level.playSound(null, victim.blockPosition(), SoundEvents.WIND_CHARGE_BURST.value(), SoundSource.PLAYERS, 0.6f, 0.8f);
     }
 
     /** Who an Overflow can catch: living foes around the target, never the caster's side. */

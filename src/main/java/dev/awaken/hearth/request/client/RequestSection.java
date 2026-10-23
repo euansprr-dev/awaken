@@ -10,7 +10,6 @@ import dev.awaken.hearth.request.RequestRules;
 import dev.awaken.hearth.request.RequestState;
 import dev.awaken.hearth.request.Requests;
 import dev.awaken.signal.client.Glass;
-import dev.awaken.signal.client.SystemHud;
 import dev.awaken.signal.client.Ui;
 import dev.awaken.signal.client.UiSection;
 import net.minecraft.client.Minecraft;
@@ -78,8 +77,8 @@ final class RequestSection extends UiSection {
             ActiveRequest r = o.request();
             row(ui, r, "Offered · " + r.count() + " " + Requests.name(r).getString(), hint(r), Glass.EDGE);
             var flow = ui.flow();
-            if (flow.button("Take it on", Glass.GOOD, true)) SystemHud.answer(o.action(), true);
-            if (flow.button("Not now", Glass.LABEL, true)) SystemHud.answer(o.action(), false);
+            if (flow.button("Take it on", Glass.GOOD, true)) ClientPacketDistributor.sendToServer(new RequestNet.Answer(o.nonce(), true));
+            if (flow.button("Not now", Glass.LABEL, true)) ClientPacketDistributor.sendToServer(new RequestNet.Answer(o.nonce(), false));
             flow.end();
             ui.gap(2);
         }

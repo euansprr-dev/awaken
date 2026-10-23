@@ -35,6 +35,16 @@ public final class RequestNet {
         @Override public Type<Drop> type() { return TYPE; }
     }
 
+    /** Client → server: the Status section's Take it on / Not now for the offer with this nonce. */
+    public record Answer(int nonce, boolean yes) implements CustomPacketPayload {
+        public static final Type<Answer> TYPE = new Type<>(Awaken.id("hearth_request_answer"));
+        public static final StreamCodec<ByteBuf, Answer> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Answer::nonce,
+                ByteBufCodecs.BOOL, Answer::yes,
+                Answer::new);
+        @Override public Type<Answer> type() { return TYPE; }
+    }
+
     private static final Map<UUID, Long> RATE = new HashMap<>();
 
     static void register(RegisterPayloadHandlersEvent event) {
@@ -47,6 +57,11 @@ public final class RequestNet {
             Long last = RATE.put(sp.getUUID(), now);
             if (last != null && now - last < 5) return;
             Requests.drop(sp, msg.index(), msg.id());
+        });
+        r.playToServer(Answer.TYPE, Answer.STREAM_CODEC, (msg, ctx) -> {
+            if (!(ctx.player() instanceof ServerPlayer sp)) return;
+            // through the Signal, so the waiting decision clears everywhere it shows
+            Requests.state(sp).offer(msg.nonce()).ifPresent(o -> dev.awaken.signal.Signal.answer(sp, o.action(), msg.yes()));
         });
     }
 
