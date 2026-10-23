@@ -1,0 +1,1568 @@
+{
+  "fauna.bloom_sprite.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bloom_sprite/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/bloom_sprite/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bloom_sprite.ambient"
+  },
+  "fauna.bloom_sprite.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bloom_sprite/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bloom_sprite.death"
+  },
+  "fauna.bloom_sprite.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bloom_sprite/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bloom_sprite.hurt"
+  },
+  "fauna.bloom_sprite.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bloom_sprite/step1",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.bog_toad.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bog_toad/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/bog_toad/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bog_toad.ambient"
+  },
+  "fauna.bog_toad.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bog_toad/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bog_toad.death"
+  },
+  "fauna.bog_toad.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bog_toad/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bog_toad.hurt"
+  },
+  "fauna.bog_toad.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bog_toad/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/bog_toad/step2",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.bogwick.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bogwick/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/bogwick/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bogwick.ambient"
+  },
+  "fauna.bogwick.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bogwick/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bogwick.death"
+  },
+  "fauna.bogwick.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bogwick/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.bogwick.hurt"
+  },
+  "fauna.bogwick.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/bogwick/step1",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.briar_sow.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/briar_sow/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/briar_sow/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/briar_sow/ambient3",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.briar_sow.ambient"
+  },
+  "fauna.briar_sow.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/briar_sow/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.briar_sow.death"
+  },
+  "fauna.briar_sow.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/briar_sow/hurt1",
+        "volume": 1.0
+      },
+      {
+        "name": "awaken:fauna/briar_sow/hurt2",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.briar_sow.hurt"
+  },
+  "fauna.briar_sow.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/briar_sow/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      },
+      {
+        "name": "awaken:fauna/briar_sow/roar2",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.briar_sow.roar"
+  },
+  "fauna.briar_sow.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/briar_sow/step1",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/briar_sow/step2",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/briar_sow/step3",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.canopy_prowler.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/canopy_prowler/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/canopy_prowler/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.canopy_prowler.ambient"
+  },
+  "fauna.canopy_prowler.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/canopy_prowler/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.canopy_prowler.death"
+  },
+  "fauna.canopy_prowler.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/canopy_prowler/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.canopy_prowler.hurt"
+  },
+  "fauna.canopy_prowler.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/canopy_prowler/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/canopy_prowler/step2",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.crag_ram.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/crag_ram/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/crag_ram/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.crag_ram.ambient"
+  },
+  "fauna.crag_ram.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/crag_ram/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.crag_ram.death"
+  },
+  "fauna.crag_ram.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/crag_ram/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.crag_ram.hurt"
+  },
+  "fauna.crag_ram.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/crag_ram/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/crag_ram/step2",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/crag_ram/step3",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.crested_basilisk.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/crested_basilisk/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/crested_basilisk/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.crested_basilisk.ambient"
+  },
+  "fauna.crested_basilisk.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/crested_basilisk/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.crested_basilisk.death"
+  },
+  "fauna.crested_basilisk.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/crested_basilisk/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.crested_basilisk.hurt"
+  },
+  "fauna.crested_basilisk.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/crested_basilisk/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/crested_basilisk/step2",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.dart_frog.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dart_frog/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/dart_frog/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dart_frog.ambient"
+  },
+  "fauna.dart_frog.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dart_frog/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dart_frog.death"
+  },
+  "fauna.dart_frog.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dart_frog/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dart_frog.hurt"
+  },
+  "fauna.dart_frog.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dart_frog/step1",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.dune_ray.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_ray/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/dune_ray/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dune_ray.ambient"
+  },
+  "fauna.dune_ray.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_ray/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dune_ray.death"
+  },
+  "fauna.dune_ray.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_ray/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dune_ray.hurt"
+  },
+  "fauna.dune_ray.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_ray/step1",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.dune_wyrm.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_wyrm/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/dune_wyrm/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dune_wyrm.ambient"
+  },
+  "fauna.dune_wyrm.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_wyrm/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dune_wyrm.death"
+  },
+  "fauna.dune_wyrm.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_wyrm/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dune_wyrm.hurt"
+  },
+  "fauna.dune_wyrm.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_wyrm/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.dune_wyrm.roar"
+  },
+  "fauna.dune_wyrm.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/dune_wyrm/step1",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.empress_moth.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/empress_moth/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/empress_moth/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.empress_moth.ambient"
+  },
+  "fauna.empress_moth.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/empress_moth/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.empress_moth.death"
+  },
+  "fauna.empress_moth.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/empress_moth/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.empress_moth.hurt"
+  },
+  "fauna.empress_moth.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/empress_moth/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.empress_moth.roar"
+  },
+  "fauna.empress_moth.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/empress_moth/step1",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/empress_moth/step2",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.frost_stag.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/frost_stag/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/frost_stag/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.frost_stag.ambient"
+  },
+  "fauna.frost_stag.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/frost_stag/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.frost_stag.death"
+  },
+  "fauna.frost_stag.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/frost_stag/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.frost_stag.hurt"
+  },
+  "fauna.frost_stag.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/frost_stag/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/frost_stag/step2",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/frost_stag/step3",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.frostfinch.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/frostfinch/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/frostfinch/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.frostfinch.ambient"
+  },
+  "fauna.frostfinch.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/frostfinch/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.frostfinch.death"
+  },
+  "fauna.frostfinch.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/frostfinch/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.frostfinch.hurt"
+  },
+  "fauna.frostfinch.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/frostfinch/step1",
+        "volume": 0.25
+      },
+      {
+        "name": "awaken:fauna/frostfinch/step2",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.glass_scarab.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/glass_scarab/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/glass_scarab/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.glass_scarab.ambient"
+  },
+  "fauna.glass_scarab.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/glass_scarab/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.glass_scarab.death"
+  },
+  "fauna.glass_scarab.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/glass_scarab/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.glass_scarab.hurt"
+  },
+  "fauna.glass_scarab.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/glass_scarab/step1",
+        "volume": 0.25
+      },
+      {
+        "name": "awaken:fauna/glass_scarab/step2",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.gloam_snail.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/gloam_snail/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/gloam_snail/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.gloam_snail.ambient"
+  },
+  "fauna.gloam_snail.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/gloam_snail/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.gloam_snail.death"
+  },
+  "fauna.gloam_snail.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/gloam_snail/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.gloam_snail.hurt"
+  },
+  "fauna.gloam_snail.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/gloam_snail/step1",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.gloomstalker.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/gloomstalker/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/gloomstalker/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.gloomstalker.ambient"
+  },
+  "fauna.gloomstalker.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/gloomstalker/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.gloomstalker.death"
+  },
+  "fauna.gloomstalker.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/gloomstalker/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.gloomstalker.hurt"
+  },
+  "fauna.gloomstalker.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/gloomstalker/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/gloomstalker/step2",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.hollow_owl.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/hollow_owl/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/hollow_owl/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.hollow_owl.ambient"
+  },
+  "fauna.hollow_owl.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/hollow_owl/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.hollow_owl.death"
+  },
+  "fauna.hollow_owl.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/hollow_owl/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.hollow_owl.hurt"
+  },
+  "fauna.hollow_owl.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/hollow_owl/step1",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.honey_bear.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/honey_bear/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/honey_bear/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.honey_bear.ambient"
+  },
+  "fauna.honey_bear.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/honey_bear/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.honey_bear.death"
+  },
+  "fauna.honey_bear.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/honey_bear/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.honey_bear.hurt"
+  },
+  "fauna.honey_bear.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/honey_bear/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/honey_bear/step2",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.lumen_moth.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/lumen_moth/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/lumen_moth/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.lumen_moth.ambient"
+  },
+  "fauna.lumen_moth.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/lumen_moth/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.lumen_moth.death"
+  },
+  "fauna.lumen_moth.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/lumen_moth/hurt1",
+        "volume": 0.6
+      },
+      {
+        "name": "awaken:fauna/lumen_moth/hurt2",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.lumen_moth.hurt"
+  },
+  "fauna.lumen_moth.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/lumen_moth/step1",
+        "volume": 0.25
+      },
+      {
+        "name": "awaken:fauna/lumen_moth/step2",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.mire_mother.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mire_mother/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/mire_mother/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mire_mother.ambient"
+  },
+  "fauna.mire_mother.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mire_mother/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mire_mother.death"
+  },
+  "fauna.mire_mother.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mire_mother/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mire_mother.hurt"
+  },
+  "fauna.mire_mother.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mire_mother/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mire_mother.roar"
+  },
+  "fauna.mire_mother.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mire_mother/step1",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/mire_mother/step2",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.mossback.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mossback/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/mossback/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mossback.ambient"
+  },
+  "fauna.mossback.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mossback/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mossback.death"
+  },
+  "fauna.mossback.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mossback/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mossback.hurt"
+  },
+  "fauna.mossback.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mossback/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/mossback/step2",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.mudskipper.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mudskipper/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/mudskipper/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mudskipper.ambient"
+  },
+  "fauna.mudskipper.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mudskipper/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mudskipper.death"
+  },
+  "fauna.mudskipper.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mudskipper/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mudskipper.hurt"
+  },
+  "fauna.mudskipper.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mudskipper/step1",
+        "volume": 0.25
+      },
+      {
+        "name": "awaken:fauna/mudskipper/step2",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.mycelord.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mycelord/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/mycelord/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mycelord.ambient"
+  },
+  "fauna.mycelord.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mycelord/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mycelord.death"
+  },
+  "fauna.mycelord.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mycelord/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mycelord.hurt"
+  },
+  "fauna.mycelord.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mycelord/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.mycelord.roar"
+  },
+  "fauna.mycelord.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/mycelord/step1",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/mycelord/step2",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.old_antler.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/old_antler/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/old_antler/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.old_antler.ambient"
+  },
+  "fauna.old_antler.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/old_antler/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.old_antler.death"
+  },
+  "fauna.old_antler.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/old_antler/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.old_antler.hurt"
+  },
+  "fauna.old_antler.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/old_antler/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      },
+      {
+        "name": "awaken:fauna/old_antler/roar2",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.old_antler.roar"
+  },
+  "fauna.old_antler.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/old_antler/step1",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/old_antler/step2",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/old_antler/step3",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.peak_kite.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/peak_kite/ambient1",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.peak_kite.ambient"
+  },
+  "fauna.peak_kite.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/peak_kite/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.peak_kite.death"
+  },
+  "fauna.peak_kite.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/peak_kite/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.peak_kite.hurt"
+  },
+  "fauna.peak_kite.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/peak_kite/step1",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.petalwing.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/petalwing/ambient1",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.petalwing.ambient"
+  },
+  "fauna.petalwing.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/petalwing/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.petalwing.death"
+  },
+  "fauna.petalwing.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/petalwing/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.petalwing.hurt"
+  },
+  "fauna.petalwing.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/petalwing/step1",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.plumed_coil.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/plumed_coil/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/plumed_coil/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.plumed_coil.ambient"
+  },
+  "fauna.plumed_coil.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/plumed_coil/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.plumed_coil.death"
+  },
+  "fauna.plumed_coil.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/plumed_coil/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.plumed_coil.hurt"
+  },
+  "fauna.plumed_coil.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/plumed_coil/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.plumed_coil.roar"
+  },
+  "fauna.plumed_coil.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/plumed_coil/step1",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.scree_marmot.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/scree_marmot/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/scree_marmot/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.scree_marmot.ambient"
+  },
+  "fauna.scree_marmot.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/scree_marmot/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.scree_marmot.death"
+  },
+  "fauna.scree_marmot.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/scree_marmot/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.scree_marmot.hurt"
+  },
+  "fauna.scree_marmot.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/scree_marmot/step1",
+        "volume": 0.25
+      },
+      {
+        "name": "awaken:fauna/scree_marmot/step2",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.shroomlet.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/shroomlet/ambient1",
+        "volume": 0.5
+      },
+      {
+        "name": "awaken:fauna/shroomlet/ambient2",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.shroomlet.ambient"
+  },
+  "fauna.shroomlet.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/shroomlet/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.shroomlet.death"
+  },
+  "fauna.shroomlet.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/shroomlet/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.shroomlet.hurt"
+  },
+  "fauna.shroomlet.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/shroomlet/step1",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.sporeback_snail.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/sporeback_snail/ambient1",
+        "volume": 0.5
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.sporeback_snail.ambient"
+  },
+  "fauna.sporeback_snail.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/sporeback_snail/death1",
+        "volume": 0.7
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.sporeback_snail.death"
+  },
+  "fauna.sporeback_snail.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/sporeback_snail/hurt1",
+        "volume": 0.6
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.sporeback_snail.hurt"
+  },
+  "fauna.sporeback_snail.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/sporeback_snail/step1",
+        "volume": 0.25
+      }
+    ]
+  },
+  "fauna.stonehorn.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/stonehorn/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/stonehorn/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.stonehorn.ambient"
+  },
+  "fauna.stonehorn.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/stonehorn/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.stonehorn.death"
+  },
+  "fauna.stonehorn.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/stonehorn/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.stonehorn.hurt"
+  },
+  "fauna.stonehorn.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/stonehorn/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.stonehorn.roar"
+  },
+  "fauna.stonehorn.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/stonehorn/step1",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/stonehorn/step2",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/stonehorn/step3",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.thornling.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/thornling/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/thornling/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.thornling.ambient"
+  },
+  "fauna.thornling.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/thornling/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.thornling.death"
+  },
+  "fauna.thornling.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/thornling/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.thornling.hurt"
+  },
+  "fauna.thornling.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/thornling/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/thornling/step2",
+        "volume": 0.45
+      }
+    ]
+  },
+  "fauna.weaver_queen.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/weaver_queen/ambient1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:fauna/weaver_queen/ambient2",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.weaver_queen.ambient"
+  },
+  "fauna.weaver_queen.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/weaver_queen/death1",
+        "volume": 1.0,
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.weaver_queen.death"
+  },
+  "fauna.weaver_queen.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/weaver_queen/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.weaver_queen.hurt"
+  },
+  "fauna.weaver_queen.roar": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/weaver_queen/roar1",
+        "volume": 1.0,
+        "attenuation_distance": 48
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.weaver_queen.roar"
+  },
+  "fauna.weaver_queen.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/weaver_queen/step1",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/weaver_queen/step2",
+        "volume": 0.7
+      },
+      {
+        "name": "awaken:fauna/weaver_queen/step3",
+        "volume": 0.7
+      }
+    ]
+  },
+  "fauna.wisp_hound.ambient": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/wisp_hound/ambient1",
+        "volume": 0.8
+      },
+      {
+        "name": "awaken:fauna/wisp_hound/ambient2",
+        "volume": 0.8
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.wisp_hound.ambient"
+  },
+  "fauna.wisp_hound.death": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/wisp_hound/death1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.wisp_hound.death"
+  },
+  "fauna.wisp_hound.hurt": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/wisp_hound/hurt1",
+        "volume": 1.0
+      }
+    ],
+    "subtitle": "subtitles.awaken.fauna.wisp_hound.hurt"
+  },
+  "fauna.wisp_hound.step": {
+    "sounds": [
+      {
+        "name": "awaken:fauna/wisp_hound/step1",
+        "volume": 0.45
+      },
+      {
+        "name": "awaken:fauna/wisp_hound/step2",
+        "volume": 0.45
+      }
+    ]
+  }
+}

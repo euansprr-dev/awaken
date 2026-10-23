@@ -94,8 +94,8 @@ public final class WildModels {
             legFR.yRot = -swing;
             legHL.yRot = -swing;
             body.yRot = Mth.sin(pos) * 0.12F * amp;
-            head.yRot = s.yRot * Mth.DEG_TO_RAD * 0.5F;
-            head.xRot = s.xRot * Mth.DEG_TO_RAD * 0.4F;
+            head.yRot = Motion.yaw(s, 0.8F);
+            head.xRot = Motion.pitch(s, 0.5F);
             tail.yRot = Mth.sin(s.ageInTicks * 0.1F) * 0.15F - body.yRot * 2.0F;
             tailEnd.yRot = Mth.sin(s.ageInTicks * 0.1F - 0.7F) * 0.25F;
             crest.zRot = 0;
@@ -124,6 +124,13 @@ public final class WildModels {
             boolean angry = has(s, FaunaMob.P_ANGRY) || look(s).telegraph > 0;
             sail.yScale = angry ? 1.4F : 1.0F;
             crest.yScale = angry ? 1.3F : 1.0F;
+            // a lizard's throat pumps while it rests; struck, it jerks its head up and lashes its tail
+            body.xScale = Motion.breathe(s, 0.35F, 0.04F);
+            float fl = Motion.flinch(s);
+            head.xRot -= fl * 0.6F;
+            body.zRot = Motion.shudder(s, 0.2F);
+            tail.yRot += Motion.shudder(s, 0.8F);
+            sail.yScale += fl * 0.4F;
         }
     }
 
@@ -160,15 +167,22 @@ public final class WildModels {
             float amp = Math.min(1.0F, s.walkAnimationSpeed * 2.5F);
             float crawl = Mth.sin(s.walkAnimationPos * 0.8F) * amp;
             boolean tucked = has(s, FaunaMob.P_GRAZE) || has(s, FaunaMob.P_REST) || has(s, FaunaMob.P_GUARD);
-            foot.zScale = 1.0F + crawl * 0.08F;
-            head.z = tucked ? -4.0F : -6.0F - crawl * 0.6F;
-            head.y = tucked ? -0.5F : -2.0F;
-            head.yRot = tucked ? 0 : s.yRot * Mth.DEG_TO_RAD * 0.4F;
+            // a snail's gait is a wave down the foot: it stretches and gathers as it slides
+            foot.zScale = 1.0F + crawl * 0.08F + (Motion.breathe(s, 0.09F, 0.02F) - 1.0F);
+            // struck: the eye stalks shrink back and the head pulls in under the shell
+            float fl = Motion.flinch(s);
+            head.z = tucked ? -4.0F : -6.0F - crawl * 0.6F + fl * 2.0F;
+            head.y = tucked ? -0.5F : -2.0F + fl;
+            head.yRot = tucked ? 0 : Motion.yaw(s, 0.6F);
+            head.xRot = tucked ? 0 : Motion.pitch(s, 0.4F);
             eyeL.visible = !tucked;
             eyeR.visible = !tucked;
             eyeL.zRot = 0.25F + Mth.sin(s.ageInTicks * 0.2F) * 0.12F;
             eyeR.zRot = -0.25F - Mth.sin(s.ageInTicks * 0.2F + 1.3F) * 0.12F;
+            eyeL.yScale = 1.0F - fl * 0.7F;
+            eyeR.yScale = 1.0F - fl * 0.7F;
             shell.xRot = -0.15F + crawl * 0.03F;
+            shell.zRot = Motion.shudder(s, 0.1F);
             garden.zRot = Mth.sin(s.ageInTicks * 0.05F) * 0.05F;
         }
     }
@@ -221,8 +235,16 @@ public final class WildModels {
             cap.zScale = puff ? 1.15F : 1.0F;
             cap.yScale = puff ? 0.8F : 1.0F;
             boolean angry = has(s, FaunaMob.P_ANGRY) || look(s).telegraph > 0;
-            cap.xRot = angry ? 0.25F + look(s).telegraph * 0.2F : 0.0F;
-            cap.yRot = s.yRot * Mth.DEG_TO_RAD * 0.3F;
+            cap.xRot = angry ? 0.25F + look(s).telegraph * 0.2F : Motion.pitch(s, 0.3F);
+            cap.yRot = Motion.yaw(s, 0.5F);
+            body.yRot = Motion.yaw(s, 0.2F);
+            // the cap breathes; struck, it squashes and wobbles like jelly
+            float fl = Motion.flinch(s);
+            float b = Motion.breathe(s, 0.1F, 0.03F);
+            cap.xScale *= b + fl * 0.15F;
+            cap.zScale *= b + fl * 0.15F;
+            cap.yScale *= (2.0F - b) - fl * 0.25F;
+            body.zRot += Motion.shudder(s, 0.25F);
         }
     }
 
@@ -270,9 +292,15 @@ public final class WildModels {
             legHR.xRot = Mth.cos(pos) * amp;
             legFR.xRot = -Mth.cos(pos) * amp;
             legHL.xRot = -Mth.cos(pos) * amp;
-            head.yRot = s.yRot * Mth.DEG_TO_RAD * 0.6F;
-            head.xRot = s.xRot * Mth.DEG_TO_RAD * 0.5F;
+            head.yRot = Motion.yaw(s, 0.8F);
+            head.xRot = Motion.pitch(s, 0.6F);
             tail.xRot = -0.3F + Mth.sin(s.ageInTicks * 0.15F) * 0.08F;
+            // a fat marmot breathes fast; struck, it flinches flat and flicks its tail
+            body.yScale = Motion.breathe(s, 0.45F, 0.035F);
+            float fl = Motion.flinch(s);
+            head.xRot += fl * 0.5F;
+            tail.xRot -= fl * 0.8F;
+            body.zRot = Motion.shudder(s, 0.15F);
             legFL.y = legFR.y = 22 + sink;
             legHL.y = legHR.y = 22 + sink;
             legFL.z = legFR.z = -2;

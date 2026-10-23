@@ -1,0 +1,475 @@
+# Hero bodies studio: every named beast (and the Hollow Owl and the Bogwick) alone on a stone platform in the sky,
+# NoAI, from the front quarter and the side by day, then by night (the glow layer), then each beast with AI on, struck
+# by the player in survival: one shot as it winds up (its tell) and one as the move lands. Run by the integrator.
+world herostudio creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s 0.5 201 0.5 0 0
+wait 20
+cmd fill -20 200 -12 20 200 30 minecraft:smooth_stone
+cmd fill -20 201 -12 20 210 30 minecraft:air
+cmd fill -20 211 -12 20 220 30 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 20
+# briar_sow (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 12
+cmd summon awaken:briar_sow 0.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_briar_sow_front
+cmd tp @e[type=awaken:briar_sow] 0.5 201 9.5 240 0
+wait 15
+shot heroes_day_briar_sow_side
+cmd tp @e[type=awaken:briar_sow] 0.5 201 9.5 330 0
+wait 15
+shot heroes_day_briar_sow_back
+cmd tp @e[type=awaken:briar_sow] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# dune_wyrm (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 10
+cmd summon awaken:dune_wyrm 0.5 202 10.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_dune_wyrm_front
+cmd tp @e[type=awaken:dune_wyrm] 0.5 202 10.5 240 0
+wait 15
+shot heroes_day_dune_wyrm_side
+cmd tp @e[type=awaken:dune_wyrm] 0.5 202 10.5 330 0
+wait 15
+shot heroes_day_dune_wyrm_back
+cmd tp @e[type=awaken:dune_wyrm] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# old_antler (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 4
+cmd summon awaken:old_antler 0.5 201 12.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_old_antler_front
+cmd tp @e[type=awaken:old_antler] 0.5 201 12.5 240 0
+wait 15
+shot heroes_day_old_antler_side
+cmd tp @e[type=awaken:old_antler] 0.5 201 12.5 330 0
+wait 15
+shot heroes_day_old_antler_back
+cmd tp @e[type=awaken:old_antler] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# mire_mother (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 14
+cmd summon awaken:mire_mother 0.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_mire_mother_front
+cmd tp @e[type=awaken:mire_mother] 0.5 201 9.5 240 0
+wait 15
+shot heroes_day_mire_mother_side
+cmd tp @e[type=awaken:mire_mother] 0.5 201 9.5 330 0
+wait 15
+shot heroes_day_mire_mother_back
+cmd tp @e[type=awaken:mire_mother] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# plumed_coil (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 10
+cmd summon awaken:plumed_coil 0.5 202 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_plumed_coil_front
+cmd tp @e[type=awaken:plumed_coil] 0.5 202 11.5 240 0
+wait 15
+shot heroes_day_plumed_coil_side
+cmd tp @e[type=awaken:plumed_coil] 0.5 202 11.5 330 0
+wait 15
+shot heroes_day_plumed_coil_back
+cmd tp @e[type=awaken:plumed_coil] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# weaver_queen (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 16
+cmd summon awaken:weaver_queen 0.5 201 10.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_weaver_queen_front
+cmd tp @e[type=awaken:weaver_queen] 0.5 201 10.5 240 0
+wait 15
+shot heroes_day_weaver_queen_side
+cmd tp @e[type=awaken:weaver_queen] 0.5 201 10.5 330 0
+wait 15
+shot heroes_day_weaver_queen_back
+cmd tp @e[type=awaken:weaver_queen] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# empress_moth (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 4
+cmd summon awaken:empress_moth 0.5 203 12.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_empress_moth_front
+cmd tp @e[type=awaken:empress_moth] 0.5 203 12.5 240 0
+wait 15
+shot heroes_day_empress_moth_side
+cmd tp @e[type=awaken:empress_moth] 0.5 203 12.5 330 0
+wait 15
+shot heroes_day_empress_moth_back
+cmd tp @e[type=awaken:empress_moth] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# stonehorn (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 8
+cmd summon awaken:stonehorn 0.5 201 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_stonehorn_front
+cmd tp @e[type=awaken:stonehorn] 0.5 201 11.5 240 0
+wait 15
+shot heroes_day_stonehorn_side
+cmd tp @e[type=awaken:stonehorn] 0.5 201 11.5 330 0
+wait 15
+shot heroes_day_stonehorn_back
+cmd tp @e[type=awaken:stonehorn] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# mycelord (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 0
+cmd summon awaken:mycelord 0.5 201 12.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_mycelord_front
+cmd tp @e[type=awaken:mycelord] 0.5 201 12.5 240 0
+wait 15
+shot heroes_day_mycelord_side
+cmd tp @e[type=awaken:mycelord] 0.5 201 12.5 330 0
+wait 15
+shot heroes_day_mycelord_back
+cmd tp @e[type=awaken:mycelord] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# hollow_owl (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 18
+cmd summon awaken:hollow_owl 0.5 201 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_hollow_owl_front
+cmd tp @e[type=awaken:hollow_owl] 0.5 201 4.5 240 0
+wait 15
+shot heroes_day_hollow_owl_side
+cmd tp @e[type=awaken:hollow_owl] 0.5 201 4.5 330 0
+wait 15
+shot heroes_day_hollow_owl_back
+cmd tp @e[type=awaken:hollow_owl] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# bogwick (day)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 14
+cmd summon awaken:bogwick 0.5 202 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_day_bogwick_front
+cmd tp @e[type=awaken:bogwick] 0.5 202 3.5 240 0
+wait 15
+shot heroes_day_bogwick_side
+cmd tp @e[type=awaken:bogwick] 0.5 202 3.5 330 0
+wait 15
+shot heroes_day_bogwick_back
+cmd tp @e[type=awaken:bogwick] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+cmd time set 18000
+wait 30
+# briar_sow (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 12
+cmd summon awaken:briar_sow 0.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_briar_sow_front
+cmd tp @e[type=awaken:briar_sow] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# dune_wyrm (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 10
+cmd summon awaken:dune_wyrm 0.5 202 10.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_dune_wyrm_front
+cmd tp @e[type=awaken:dune_wyrm] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# old_antler (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 4
+cmd summon awaken:old_antler 0.5 201 12.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_old_antler_front
+cmd tp @e[type=awaken:old_antler] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# mire_mother (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 14
+cmd summon awaken:mire_mother 0.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_mire_mother_front
+cmd tp @e[type=awaken:mire_mother] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# plumed_coil (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 10
+cmd summon awaken:plumed_coil 0.5 202 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_plumed_coil_front
+cmd tp @e[type=awaken:plumed_coil] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# weaver_queen (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 16
+cmd summon awaken:weaver_queen 0.5 201 10.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_weaver_queen_front
+cmd tp @e[type=awaken:weaver_queen] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# empress_moth (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 4
+cmd summon awaken:empress_moth 0.5 203 12.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_empress_moth_front
+cmd tp @e[type=awaken:empress_moth] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# stonehorn (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 8
+cmd summon awaken:stonehorn 0.5 201 11.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_stonehorn_front
+cmd tp @e[type=awaken:stonehorn] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# mycelord (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 0
+cmd summon awaken:mycelord 0.5 201 12.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_mycelord_front
+cmd tp @e[type=awaken:mycelord] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# hollow_owl (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 18
+cmd summon awaken:hollow_owl 0.5 201 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_hollow_owl_front
+cmd tp @e[type=awaken:hollow_owl] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+# bogwick (night)
+cmd tp @s 0.5 201 0.5 0 0
+look 0 14
+cmd summon awaken:bogwick 0.5 202 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 30
+shot heroes_night_bogwick_front
+cmd tp @e[type=awaken:bogwick] 0.5 -100 0.5
+cmd kill @e[type=minecraft:item,distance=..60]
+wait 10
+cmd time set 6000
+wait 20
+cmd effect give @s minecraft:resistance 600 4 true
+cmd effect give @s minecraft:regeneration 600 2 true
+# briar_sow attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 12
+cmd summon awaken:briar_sow 0.5 201 9.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:briar_sow,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_briar_sow_1
+wait 15
+shot heroes_attack_briar_sow_2
+wait 25
+shot heroes_attack_briar_sow_3
+cmd gamemode creative
+cmd kill @e[type=awaken:briar_sow]
+wait 45
+shot heroes_death_briar_sow
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+# dune_wyrm attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 10
+cmd summon awaken:dune_wyrm 0.5 202 10.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:dune_wyrm,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_dune_wyrm_1
+wait 15
+shot heroes_attack_dune_wyrm_2
+wait 25
+shot heroes_attack_dune_wyrm_3
+cmd gamemode creative
+cmd kill @e[type=awaken:dune_wyrm]
+wait 45
+shot heroes_death_dune_wyrm
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+# old_antler attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 4
+cmd summon awaken:old_antler 0.5 201 12.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:old_antler,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_old_antler_1
+wait 15
+shot heroes_attack_old_antler_2
+wait 25
+shot heroes_attack_old_antler_3
+cmd gamemode creative
+cmd kill @e[type=awaken:old_antler]
+wait 45
+shot heroes_death_old_antler
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+# mire_mother attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 14
+cmd summon awaken:mire_mother 0.5 201 9.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:mire_mother,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_mire_mother_1
+wait 15
+shot heroes_attack_mire_mother_2
+wait 25
+shot heroes_attack_mire_mother_3
+cmd gamemode creative
+cmd kill @e[type=awaken:mire_mother]
+wait 45
+shot heroes_death_mire_mother
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+# plumed_coil attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 10
+cmd summon awaken:plumed_coil 0.5 202 11.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:plumed_coil,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_plumed_coil_1
+wait 15
+shot heroes_attack_plumed_coil_2
+wait 25
+shot heroes_attack_plumed_coil_3
+cmd gamemode creative
+cmd kill @e[type=awaken:plumed_coil]
+wait 45
+shot heroes_death_plumed_coil
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+# weaver_queen attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 16
+cmd summon awaken:weaver_queen 0.5 201 10.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:weaver_queen,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_weaver_queen_1
+wait 15
+shot heroes_attack_weaver_queen_2
+wait 25
+shot heroes_attack_weaver_queen_3
+cmd gamemode creative
+cmd kill @e[type=awaken:weaver_queen]
+wait 45
+shot heroes_death_weaver_queen
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+# empress_moth attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 4
+cmd summon awaken:empress_moth 0.5 203 12.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:empress_moth,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_empress_moth_1
+wait 15
+shot heroes_attack_empress_moth_2
+wait 25
+shot heroes_attack_empress_moth_3
+cmd gamemode creative
+cmd kill @e[type=awaken:empress_moth]
+wait 45
+shot heroes_death_empress_moth
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+# stonehorn attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 8
+cmd summon awaken:stonehorn 0.5 201 11.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:stonehorn,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_stonehorn_1
+wait 15
+shot heroes_attack_stonehorn_2
+wait 25
+shot heroes_attack_stonehorn_3
+cmd gamemode creative
+cmd kill @e[type=awaken:stonehorn]
+wait 45
+shot heroes_death_stonehorn
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+# mycelord attack
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 0
+cmd summon awaken:mycelord 0.5 201 12.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd damage @e[type=awaken:mycelord,limit=1] 1 minecraft:player_attack by @s
+wait 30
+shot heroes_attack_mycelord_1
+wait 15
+shot heroes_attack_mycelord_2
+wait 25
+shot heroes_attack_mycelord_3
+cmd gamemode creative
+cmd kill @e[type=awaken:mycelord]
+wait 45
+shot heroes_death_mycelord
+cmd kill @e[type=!minecraft:player,distance=..60]
+wait 10
+cmd gamemode creative
+quit
