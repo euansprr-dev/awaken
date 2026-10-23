@@ -150,7 +150,8 @@ public final class Loadout {
 
     // ---- codecs -----------------------------------------------------------------------------------------------------
     public static final MapCodec<Loadout> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(l -> l.schema),
+            // a missing schema is a schema-1 save (defaults are not written, so 2 and later always are)
+            Codec.INT.optionalFieldOf("schema", 1).forGetter(l -> l.schema),
             Owned.CODEC.listOf().fieldOf("owned").forGetter(l -> List.copyOf(l.owned.values())),
             Codec.STRING.listOf().fieldOf("slots").forGetter(l -> Arrays.asList(l.slots)),
             Codec.unboundedMap(Codec.STRING, Cooldown.CODEC).optionalFieldOf("cooldowns", Map.of()).forGetter(l -> Map.copyOf(l.cooldowns)),

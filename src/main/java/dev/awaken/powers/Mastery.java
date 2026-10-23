@@ -252,9 +252,10 @@ public final class Mastery {
     }
 
     private static void announce(ServerPlayer player, PowerType type, int level) {
+        // toast-sized: the first sentence is what shows (144 px), the rest stays in Recent messages
         String body = level >= Loadout.MAX_LEVEL
-                ? "Mastered through use: its full strength"
-                : "Grown through use: +12% damage, 4% shorter cooldown";
+                ? "Mastered: full strength. It grew through use."
+                : "+12% damage, -4% cooldown. It grew through use.";
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(type.name + " · level " + level))
                 .body(Component.literal(body)).presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), PowerSounds.LEARN.get(), SoundSource.PLAYERS, 0.7f, 1.3f);
