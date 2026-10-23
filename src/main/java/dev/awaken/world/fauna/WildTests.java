@@ -126,7 +126,7 @@ final class WildTests {
             // every named beast, P1's too, has a lair
             for (MobDef d : Bestiary.fauna()) if (d.fauna == FaunaRole.BEAST) h.assertTrue(LairStyle.byBeast(d.id) != null, d.id + "'s lair");
             // the families' materials, two each
-            h.assertTrue(FaunaItems.MATERIALS.size() == 12, "twelve materials");
+            h.assertTrue(FaunaItems.MATERIALS.size() == 12 + 6, "twelve P2 materials (and P3's six)");
             for (String id : FaunaItems.MATERIALS) {
                 h.assertTrue(FaunaItems.get(id) != Items.AIR, id + " registered");
                 h.assertTrue(BuiltInRegistries.ITEM.getKey(FaunaItems.get(id)).equals(Awaken.id(id)), id + " under its own id");

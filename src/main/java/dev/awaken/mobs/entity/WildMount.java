@@ -60,7 +60,7 @@ public class WildMount extends FaunaMob implements PlayerRideableJumping, WildPo
     /** What is saved: the owner, the trust gained so far (and from whom), the bond bits, where it rests. */
     public record Bond(int schema, Optional<UUID> owner, Optional<UUID> trustBy, int trust, int bits, Optional<BlockPos> rest) {
         public static final Codec<Bond> CODEC = RecordCodecBuilder.create(i -> i.group(
-                Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(Bond::schema),
+                Codec.INT.fieldOf("schema").orElse(SCHEMA).forGetter(Bond::schema),
                 UUIDUtil.CODEC.optionalFieldOf("owner").forGetter(Bond::owner),
                 UUIDUtil.CODEC.optionalFieldOf("trust_by").forGetter(Bond::trustBy),
                 Codec.INT.optionalFieldOf("trust", 0).forGetter(Bond::trust),

@@ -20,7 +20,7 @@ public record MountBond(int schema, Optional<UUID> mount, String kind, BlockPos 
     public static final MountBond EMPTY = new MountBond(SCHEMA, Optional.empty(), "", BlockPos.ZERO, "", false);
 
     public static final MapCodec<MountBond> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(MountBond::schema),
+            Codec.INT.fieldOf("schema").orElse(SCHEMA).forGetter(MountBond::schema),
             UUIDUtil.CODEC.optionalFieldOf("mount").forGetter(MountBond::mount),
             Codec.STRING.optionalFieldOf("kind", "").forGetter(MountBond::kind),
             BlockPos.CODEC.optionalFieldOf("last", BlockPos.ZERO).forGetter(MountBond::last),

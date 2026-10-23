@@ -197,7 +197,12 @@ final class MountTests {
             List<AwakenMob> made = new ArrayList<>();
             h.startSequence()
                     .thenExecute(() -> {
-                        WildMount steed = (WildMount) Fauna3Tests.spawn(level, "tidesteed", Vec3.atBottomCenterOf(centre.above(2)), made);
+                        Fauna3Tests.spawn(level, "tidesteed", Vec3.atBottomCenterOf(centre.above(2)), made);
+                    })
+                    .thenIdle(3) // in-water state is worked out on its first ticks
+                    .thenExecute(() -> {
+                        h.assertTrue(made.size() == 1, "the tidesteed spawned");
+                        WildMount steed = (WildMount) made.get(0);
                         h.assertTrue(steed.isInWater(), "in the water");
                         steed.tameTo(p, true);
                         p.teleportTo(level, steed.getX(), steed.getY() + 1, steed.getZ(), Set.of(), 0, 0, true);

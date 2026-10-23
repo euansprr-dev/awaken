@@ -357,12 +357,13 @@ final class Fauna3Tests {
                                 EnumSet.noneOf(Forces.Tag.class));
                         h.assertTrue(maw instanceof DeepBeast, "the Lantern Maw is a deep beast");
                         made.add(maw);
-                        h.assertTrue(maw.isInWater() && (((DeepBeast) maw).wildState() & WildPose.S_SWIM) != 0, "it hangs in the water at its den");
+                        h.assertTrue(level.getFluidState(maw.blockPosition()).is(net.minecraft.tags.FluidTags.WATER), "it hangs in the water at its den");
                     })
                     .thenIdle(40)
                     .thenExecute(() -> {
                         AwakenMob maw = made.get(0);
                         h.assertTrue(maw.isAlive() && maw.isInWater() && maw.getHealth() >= maw.getMaxHealth() - 0.01F, "it lives in the water (no drowning, no flopping)");
+                        h.assertTrue((((DeepBeast) maw).wildState() & WildPose.S_SWIM) != 0, "it swims");
                         made.forEach(AwakenMob::discard);
                         made.clear();
                         WildTests.wipe(level, lo, hi);
@@ -396,32 +397,42 @@ final class Fauna3Tests {
             FaunaTests.awaken(p);
             List<AwakenMob> made = new ArrayList<>();
             Fauna3Commands.buildTank(level, centre, 6, 5, 6);
+            WaterFauna[] w = new WaterFauna[3];
             h.startSequence()
                     .thenExecute(() -> {
+                        p.teleportTo(level, centre.getX() + 0.5, centre.getY() + 2, centre.getZ() + 0.5, Set.of(), 0, 0, true);
+                        w[0] = (WaterFauna) spawn(level, "glimmerfin", Vec3.atCenterOf(centre.above(2)).add(1, 0, 0), made);
+                        w[1] = (WaterFauna) spawn(level, "breathbell", Vec3.atCenterOf(centre.above(2)).add(0.6, 0, 0), made);
+                        w[2] = (WaterFauna) spawn(level, "brook_otter", Vec3.atCenterOf(centre.above(2)).add(-2, 0, 2), made);
+                        h.assertTrue(w[0] != null && w[1] != null && w[2] != null, "the three swimmers spawned");
+                    })
+                    .thenIdle(3) // their in-water state is worked out on their first ticks
+                    .thenExecute(() -> {
+                        WaterFauna fish = w[0], bell = w[1];
                         // the school's shimmer: a swimmer among them can see in the dark water
                         p.teleportTo(level, centre.getX() + 0.5, centre.getY() + 2, centre.getZ() + 0.5, Set.of(), 0, 0, true);
-                        WaterFauna fish = (WaterFauna) spawn(level, "glimmerfin", Vec3.atCenterOf(centre.above(2)).add(1, 0, 0), made);
+                        fish.teleportTo(p.getX() + 1, p.getY(), p.getZ());
                         h.assertTrue(p.isInWater(), "the player swims");
                         h.assertTrue(fish.isInWater() && (fish.wildState() & WildPose.S_SWIM) != 0, "the fish swims");
+                        p.removeEffect(MobEffects.NIGHT_VISION);
                         h.assertTrue(testShimmer(fish, level) && p.hasEffect(MobEffects.NIGHT_VISION), "swimming through a school opens your eyes");
                         // the bell's air: a drowning swimmer touching it breathes again; then the bell is empty for a while
                         p.setAirSupply(10);
-                        WaterFauna bell = (WaterFauna) spawn(level, "breathbell", p.position().add(0.6, 0, 0), made);
+                        bell.teleportTo(p.getX() + 0.6, p.getY(), p.getZ());
+                        h.assertTrue(p.isUnderWater(), "the player is under water");
                         h.assertTrue(testAirbell(bell, level), "the bell gives its air");
                         h.assertTrue(p.getAirSupply() >= 10 + WaterFauna.BELL_AIR - 1 && bell.bellEmpty(), "air came back and the bell is empty");
                         p.setAirSupply(10);
                         h.assertTrue(!testAirbell(bell, level), "an empty bell gives nothing until it refills");
                         // the otter's fetch: it dives, rummages, and brings its find to the player
-                        WaterFauna otter = (WaterFauna) spawn(level, "brook_otter", Vec3.atCenterOf(centre.above(2)).add(-2, 0, 2), made);
-                        h.assertTrue(otter.startFetchForTest(level), "the otter dives for something");
+                        h.assertTrue(w[2].startFetchForTest(level), "the otter dives for something");
                     })
                     .thenWaitUntil(() -> {
-                        WaterFauna otter = (WaterFauna) made.get(2);
-                        otter.fetchStepForTest();
-                        h.assertTrue(otter.fetchStage() == 3 && !otter.carried().isEmpty(), "it rummages and comes up with a find");
+                        w[2].fetchStepForTest();
+                        h.assertTrue(w[2].fetchStage() == 3 && !w[2].carried().isEmpty(), "it rummages and comes up with a find");
                     })
                     .thenExecute(() -> {
-                        WaterFauna otter = (WaterFauna) made.get(2);
+                        WaterFauna otter = w[2];
                         h.assertTrue((otter.wildState() & WildPose.S_CARRY) != 0, "it carries the find in its mouth");
                         otter.teleportTo(p.getX() + 1, p.getY(), p.getZ());
                         otter.fetchStepForTest();
@@ -439,16 +450,19 @@ final class Fauna3Tests {
                     .thenExecute(() -> {
                         // the cricket finds the ore through the rock and sings beside it
                         CaveFauna cricket = (CaveFauna) spawn(level, "chime_cricket", Vec3.atBottomCenterOf(centre.offset(4, 1, 3)), made);
+                        h.assertTrue(cricket != null, "the cricket spawned");
                         for (int i = 0; i < 40 && cricket.singingFor() == null; i++) cricket.seekOreForTest(level);
                         BlockPos ore = cricket.singingFor();
                         h.assertTrue(ore != null && level.getBlockState(ore).is(net.neoforged.neoforge.common.Tags.Blocks.ORES), "the cricket knows where the ore is: " + ore);
                         // the wickling ripens the vine it stands under
                         CaveFauna wick = (CaveFauna) spawn(level, "wickling", Vec3.atBottomCenterOf(centre.offset(-2, 1, -3)), made);
+                        h.assertTrue(wick != null, "the wick spawned");
                         BlockPos vine = centre.offset(-2, 4, -3);
                         h.assertTrue(level.getBlockState(vine).getBlock() instanceof CaveVines, "a vine hangs there");
                         h.assertTrue(wick.ripen(level, vine) >= 1 && CaveVines.hasGlowBerries(level.getBlockState(vine)), "glow berries ripen on it");
                         // the drip lurker clings to the roof; in the dark it drops on whoever passes under it
                         CaveFauna lurker = (CaveFauna) spawn(level, "drip_lurker", Vec3.atBottomCenterOf(centre.offset(3, 1, -2)), made);
+                        h.assertTrue(lurker != null, "the lurker spawned");
                         int roof = lurker.ceilingAboveForTest();
                         h.assertTrue(roof == centre.getY() + 6, "it finds the roof over it: " + roof);
                         lurker.hang(roof);
@@ -458,6 +472,7 @@ final class Fauna3Tests {
                         h.assertTrue(!lurker.hanging() && lurker.getTarget() == p, "it drops on you in the dark");
                         // the hushling hears a running player in the dark, and not one who sneaks
                         CaveFauna hush = (CaveFauna) spawn(level, "hushling", Vec3.atBottomCenterOf(centre.offset(-3, 1, 2)), made);
+                        h.assertTrue(hush != null, "the hush spawned");
                         h.assertTrue(hush.def().has(dev.awaken.mobs.def.Trait.LISTENER), "a listener");
                     })
                     .thenExecute(() -> {
