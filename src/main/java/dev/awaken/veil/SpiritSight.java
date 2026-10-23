@@ -357,7 +357,7 @@ public final class SpiritSight {
 
     static void tickAwake(ServerPlayer sp) {
         if (sp.tickCount % 5 != 0) return;
-        if (!Progression.profile(sp).awakened() || Veil.isSpirit(sp)) {
+        if (!Veil.enabled() || !Progression.profile(sp).awakened() || Veil.isSpirit(sp)) {
             if (AWAKE.remove(sp.getUUID()) != null) AwakenNet.send(sp, VeilPayloads.Sight.EMPTY);
             return;
         }

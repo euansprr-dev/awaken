@@ -162,7 +162,8 @@ Stillpoint for other builders (trial arenas): anywhere with x <= -8192 is free (
 Body dies and so does the player), `veil_interaction_rule` (living rejected, stone rejected, too far rejected, ghost lever
 accepted), `veil_spirit_placement` (determinism, cells, biome matching), `veil_no_reveal_near_hearth` (explicit zones,
 another player's bed hidden, your own not), `veil_ghost_door_and_solidity`, `veil_gate_puzzles_solvable` (200 seeds),
-`veil_temple_layout`, `veil_stillpoint_dimension_decodes`.
+`veil_temple_layout`, `veil_stillpoint_dimension_decodes`, `veil_meditation_flow` (ten still seconds, standing up only
+ends it, moving breaks it, letting go of Focus steps out).
 
 ## Known gaps
 
