@@ -197,7 +197,7 @@ final class OnboardingTests {
             double second = Progression.worldXp(sp, "test_source", 0.3);
             h.assertTrue(first == 0.1 && second < 0.3 && second > 0, "the world budget bends: " + first + ", " + second);
             h.assertTrue(p.xp() > 0, "and it lands as XP");
-            sp.getInventory().add(new ItemStack(Items.OBSIDIAN));
+            sp.getInventory().add(new ItemStack(Items.COPPER_INGOT)); // the Hearth Anchor needs copper
             h.assertTrue(RecipeUnlocks.check(sp) >= 1, "holding an ingredient unlocks its mod recipe");
             h.assertTrue(sp.getRecipeBook().contains(ResourceKey.create(Registries.RECIPE, Identifier.parse("awaken:hearth_anchor"))), "the Hearth Anchor is in the book");
             h.assertTrue(RecipeUnlocks.check(sp) == 0, "only once");
