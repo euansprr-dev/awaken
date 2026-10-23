@@ -522,7 +522,8 @@ public final class SpiritPowers {
         if (wall != null && c.level.getBlockState(wall.getBlockPos()).is(MIRROR)) mirror = true;
         Vec3 to = mirror ? Moves.phaseTarget(c.player, dir, 7, 10) : Moves.phaseTarget(c.player, dir, 7, 2);
         if (to.distanceToSqr(from) < 1) return Result.fail("blocked");
-        if (!Constructs.mayChange(c.player, BlockPos.containing(to)) && !c.level.noCollision(c.player, c.player.getBoundingBox())) return Result.fail("blocked");
+        // never phase into someone else's Hearth
+        if (!Constructs.mayChange(c.player, BlockPos.containing(to))) return Result.fail("blocked");
         for (LivingEntity e : Combat.alongLine(c.player, from.add(0, 1, 0), to.add(0, 1, 0), 0.8)) {
             c.hurt(e, c.dmg(), Forces.Force.SPIRIT);
             Moves.effect(e, MobEffects.SLOWNESS, 40, 1);

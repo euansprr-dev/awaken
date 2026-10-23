@@ -53,7 +53,7 @@ final class PowersCommands {
                 int n = 0;
                 for (PowerType t : PowerRegistry.all()) {
                     if (!Powers.owns(sp, t.id.toString())) {
-                        Powers.learnOrLevel(sp, t.id, 0, false);
+                        Powers.learnOrLevel(sp, t.id, 0, false, false);
                         n++;
                     }
                 }

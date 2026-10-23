@@ -83,7 +83,7 @@ final class BeamRenderer {
 
     /** Roughly where the right hand is, so beams leave the hand rather than the face. */
     static Vec3 handOf(Entity e, float pt) {
-        if (!(e instanceof LivingEntity)) return e.getPosition(pt).add(0, e.getBbHeight() * 0.5, 0);
+        if (!(e instanceof net.minecraft.world.entity.player.Player)) return e.getPosition(pt).add(0, e.getBbHeight() * 0.55, 0);
         Vec3 look = e.getViewVector(pt);
         Vec3 flat = new Vec3(look.x, 0, look.z);
         flat = flat.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : flat.normalize();

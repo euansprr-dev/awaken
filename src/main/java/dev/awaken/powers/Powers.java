@@ -82,6 +82,11 @@ public final class Powers {
      * new variant instead and keeps the level.
      */
     public static LearnResult learnOrLevel(ServerPlayer player, Identifier power, int variant, boolean swapVariant) {
+        return learnOrLevel(player, power, variant, swapVariant, true);
+    }
+
+    /** As above; {@code announce} false skips the Signal window (bulk admin learning). */
+    public static LearnResult learnOrLevel(ServerPlayer player, Identifier power, int variant, boolean swapVariant, boolean announce) {
         PowerType type = PowerRegistry.get(power);
         if (type == null) return LearnResult.UNKNOWN;
         Loadout l = loadout(player);
@@ -93,7 +98,7 @@ public final class Powers {
             int slot = autoSlot(l, type);
             Progression.markNewThing(player, "power " + type.name);
             DirectorLog.log(player, "powers", "learned " + id + " variant " + type.variant(v).name() + (slot >= 0 ? " on slot " + slot : ""));
-            announce(player, type, v, 1, "New power", slot);
+            if (announce) announce(player, type, v, 1, "New power", slot);
             markDirty(player);
             return LearnResult.LEARNED;
         }
