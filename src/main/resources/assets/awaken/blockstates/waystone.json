@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/waystone"
+    },
+    "lit=true": {
+      "model": "awaken:block/waystone_lit"
+    }
+  }
+}

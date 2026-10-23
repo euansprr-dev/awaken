@@ -1,0 +1,46 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/descent_pit",
+    "pit": "awaken:block/descent_pit"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        12,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#pit",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#pit"
+        },
+        "north": {
+          "texture": "#pit",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#pit",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#pit",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#pit",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,309 @@
+{
+  "descent.well": {
+    "subtitle": "subtitles.awaken.descent.well",
+    "sounds": [
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/whisper1",
+        "pitch": 0.6,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:ambient/cave/cave13",
+        "pitch": 0.6,
+        "volume": 0.5
+      }
+    ]
+  },
+  "descent.drop": {
+    "subtitle": "subtitles.awaken.descent.drop",
+    "sounds": [
+      {
+        "name": "minecraft:portal/travel",
+        "pitch": 1.6,
+        "volume": 0.35
+      },
+      {
+        "name": "minecraft:mob/phantom/swoop1",
+        "pitch": 0.6,
+        "volume": 0.8
+      }
+    ]
+  },
+  "descent.arrive": {
+    "subtitle": "subtitles.awaken.descent.arrive",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/set_spawn1",
+        "pitch": 0.7,
+        "volume": 0.8
+      }
+    ]
+  },
+  "descent.sealed": {
+    "subtitle": "subtitles.awaken.descent.sealed",
+    "sounds": [
+      {
+        "name": "minecraft:block/vault/insert_fail",
+        "pitch": 0.6,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.waystone_light": {
+    "subtitle": "subtitles.awaken.descent.waystone_light",
+    "sounds": [
+      {
+        "name": "minecraft:block/beacon/activate",
+        "pitch": 1.2,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:block/respawn_anchor/charge1",
+        "pitch": 1.0,
+        "volume": 0.7
+      }
+    ]
+  },
+  "descent.waystone_rest": {
+    "subtitle": "subtitles.awaken.descent.waystone_rest",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/ambient1",
+        "pitch": 1.4,
+        "volume": 0.8
+      }
+    ]
+  },
+  "descent.wind": {
+    "subtitle": "subtitles.awaken.descent.wind",
+    "sounds": [
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/wind1",
+        "pitch": 0.8,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/wind2",
+        "pitch": 0.8,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/wind3",
+        "pitch": 0.8,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/wind4",
+        "pitch": 0.8,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.choir": {
+    "subtitle": "subtitles.awaken.descent.choir",
+    "sounds": [
+      {
+        "name": "minecraft:mob/allay/idle_without_item1",
+        "pitch": 0.5,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:mob/allay/idle_without_item2",
+        "pitch": 0.45,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block/amethyst/resonate1",
+        "pitch": 0.5,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.flood": {
+    "subtitle": "subtitles.awaken.descent.flood",
+    "sounds": [
+      {
+        "name": "minecraft:block/bubble_column/upwards_ambient1",
+        "pitch": 0.6,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:ambient/underwater/additions/bubbles1",
+        "pitch": 0.7,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.rise": {
+    "subtitle": "subtitles.awaken.descent.rise",
+    "sounds": [
+      {
+        "name": "minecraft:mob/drowned/convert1",
+        "pitch": 0.6,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:mob/drowned/convert2",
+        "pitch": 0.6,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.listener": {
+    "subtitle": "subtitles.awaken.descent.listener",
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/listening_1",
+        "pitch": 1.3,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:mob/warden/listening_2",
+        "pitch": 1.3,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:mob/warden/sniff_1",
+        "pitch": 1.4,
+        "volume": 0.8
+      }
+    ]
+  },
+  "descent.conduit_on": {
+    "subtitle": "subtitles.awaken.descent.conduit_on",
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/activate",
+        "pitch": 1.4,
+        "volume": 0.8
+      }
+    ]
+  },
+  "descent.conduit_off": {
+    "subtitle": "subtitles.awaken.descent.conduit_off",
+    "sounds": [
+      {
+        "name": "minecraft:block/conduit/deactivate",
+        "pitch": 1.3,
+        "volume": 0.8
+      }
+    ]
+  },
+  "descent.foundry_open": {
+    "subtitle": "subtitles.awaken.descent.foundry_open",
+    "sounds": [
+      {
+        "name": "minecraft:block/vault/activate",
+        "pitch": 0.6,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:block/beacon/power1",
+        "pitch": 0.6,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.tide": {
+    "subtitle": "subtitles.awaken.descent.tide",
+    "sounds": [
+      {
+        "name": "minecraft:item/trident/riptide1",
+        "pitch": 0.5,
+        "volume": 0.9
+      },
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "pitch": 0.5,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.room_shift": {
+    "subtitle": "subtitles.awaken.descent.room_shift",
+    "sounds": [
+      {
+        "name": "minecraft:block/chorus_flower/grow1",
+        "pitch": 0.5,
+        "volume": 0.6
+      },
+      {
+        "name": "minecraft:block/chorus_flower/grow2",
+        "pitch": 0.45,
+        "volume": 0.6
+      }
+    ]
+  },
+  "descent.shadow": {
+    "subtitle": "subtitles.awaken.descent.shadow",
+    "sounds": [
+      {
+        "name": "minecraft:mob/vex/charge1",
+        "pitch": 0.5,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:mob/vex/charge2",
+        "pitch": 0.5,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.grave": {
+    "subtitle": "subtitles.awaken.descent.grave",
+    "sounds": [
+      {
+        "name": "minecraft:enchant/soulspeed/soulspeed1",
+        "pitch": 0.6,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:ambient/nether/soulsand_valley/whisper1",
+        "pitch": 0.9,
+        "volume": 0.6
+      }
+    ]
+  },
+  "descent.grave_recover": {
+    "subtitle": "subtitles.awaken.descent.grave_recover",
+    "sounds": [
+      {
+        "name": "minecraft:block/respawn_anchor/charge2",
+        "pitch": 1.4,
+        "volume": 0.9
+      }
+    ]
+  },
+  "descent.strain": {
+    "subtitle": "subtitles.awaken.descent.strain",
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/heartbeat_1",
+        "pitch": 1.2,
+        "volume": 1.0
+      },
+      {
+        "name": "minecraft:mob/warden/heartbeat_2",
+        "pitch": 1.2,
+        "volume": 1.0
+      }
+    ]
+  },
+  "descent.seed": {
+    "subtitle": "subtitles.awaken.descent.seed",
+    "sounds": [
+      {
+        "name": "minecraft:mob/warden/heartbeat_1",
+        "pitch": 0.5,
+        "volume": 1.0,
+        "attenuation_distance": 64
+      },
+      {
+        "name": "minecraft:mob/warden/heartbeat_3",
+        "pitch": 0.5,
+        "volume": 1.0,
+        "attenuation_distance": 64
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/court_brazier_top",
+    "side": "awaken:block/court_brazier_side"
+  }
+}
