@@ -1,5 +1,10 @@
 package dev.awaken.powers.catalog;
 
+import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.FxEvent;
+import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.FxStyle;
+
 import dev.awaken.core.Forces;
 import dev.awaken.powers.Cast;
 import dev.awaken.powers.Casting;
@@ -85,12 +90,14 @@ final class FlightPowers {
     static Result hover(Cast c) {
         Moves.startFlight(c.player, "hover", 0.02f);
         c.sound(PowerSounds.HOVER, 1f, 1.2f);
-        Running r = Casting.channel(c, c.ticks(100));
-        r.tick(rr -> {
-            c.player.resetFallDistance();
-            if (rr.age % 3 == 0) c.particles(ParticleTypes.CLOUD, c.pos().add(0, -0.1, 0), 2, 0.25, 0.01);
-            if (rr.age % 4 == 0) c.level.sendParticles(Fx.dust(SKY, 0.8f), c.player.getX(), c.player.getY(), c.player.getZ(), 2, 0.3, 0.05, 0.3, 0);
-        }).end((rr, why) -> {
+        int hoverTicks = c.ticks(100);
+        // a gust ring under the feet, then wind rings and curls while you hang there
+        Fx.at(c, FxKind.RING, c.pos()).scale(2.2).ticks(10).send();
+        Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.HOVER.ordinal()).ticks(hoverTicks).noAnim().send();
+        Running r = Casting.channel(c, hoverTicks);
+        r.tick(rr -> c.player.resetFallDistance()).end((rr, why) -> {
+            Fx.end(c, c.player, FxKind.Aura.HOVER.ordinal() + 1);
+            Fx.end(c, c.player, 0);
             Moves.endFlight(c.player, "hover");
             Moves.noFall(c, 100);
             if (c.is(2)) Moves.effect(c.player, MobEffects.SLOW_FALLING, 140, 0);
@@ -103,16 +110,18 @@ final class FlightPowers {
         float speed = (float) (0.05 * (c.is(1) ? 1.4 : c.is(2) ? 0.85 : 1.0) * (1 + 0.04 * (c.powerLevel - 1)));
         Moves.startFlight(c.player, "flight", speed);
         c.sound(PowerSounds.WHOOSH, 1f, 0.6f);
+        Fx.at(c, FxKind.RING, c.pos()).scale(3).ticks(12).send();
+        Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FLIGHT.ordinal()).ticks(120).noAnim().send();
         Running r = Casting.channel(c, -1);
         double extra = pressure(c) - 1.0;
         r.tick(rr -> {
             c.player.resetFallDistance();
             if (extra > 0 && !Casting.drainExtra(c.player, (float) (c.type.drain * c.v.cost() * extra / 20.0))) rr.stop(Running.Why.NO_ENERGY);
             if (!c.player.getAbilities().flying && c.player.onGround() && rr.age > 20) rr.stop(Running.Why.TOGGLED_OFF);
-            if (rr.age % 3 == 0 && c.player.getAbilities().flying) {
-                c.level.sendParticles(Fx.dust(SKY, 0.9f), c.player.getX(), c.player.getY() + 0.2, c.player.getZ(), 2, 0.2, 0.1, 0.2, 0);
-            }
+            // wind ribbons on hands and feet, refreshed while you fly
+            if (rr.age % 100 == 99) Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FLIGHT.ordinal()).ticks(120).noAnim().send();
         }).end((rr, why) -> {
+            Fx.end(c, c.player, FxKind.Aura.FLIGHT.ordinal() + 1);
             Moves.endFlight(c.player, "flight");
             Moves.noFall(c, 120);
             Moves.effect(c.player, MobEffects.SLOW_FALLING, 60, 0);
@@ -143,7 +152,10 @@ final class FlightPowers {
         double pull = c.is(1) ? 0.16 : 0.09;
         float dmg = c.dmg();
         c.sound(centre, PowerSounds.GRAVITY, 1.2f, 0.7f);
-        Running r = Casting.start(c, c.ticks(80)).at(centre);
+        int wellTicks = c.ticks(80);
+        // a void core with a violet rim, rings contracting into it, sparks and debris drawn in
+        Fx.at(c, FxKind.VORTEX, centre).scale(radius).ticks(wellTicks).flag(FxEvent.REPULSE, repulse).flag(FxEvent.REACH).send();
+        Running r = Casting.start(c, wellTicks).at(centre);
         r.tick(rr -> {
             for (LivingEntity e : Combat.foesAround(c.player, centre, radius)) {
                 Vec3 d = centre.subtract(e.position().add(0, e.getBbHeight() * 0.5, 0));
@@ -165,18 +177,11 @@ final class FlightPowers {
             }
             if (rr.age % 5 == 0 && !repulse) volatileCheck(c, centre, radius);
             if (rr.age == 4 && !repulse) pullWalls(c, centre, radius);
-            double a = rr.age * 0.35;
-            for (int i = 0; i < 3; i++) {
-                double ang = a + i * Math.PI * 2 / 3;
-                double rad = radius * (1 - (rr.age % 20) / 20.0);
-                c.level.sendParticles(ParticleTypes.REVERSE_PORTAL, centre.x + Math.cos(ang) * rad, centre.y, centre.z + Math.sin(ang) * rad, 1, 0, 0.1, 0, 0);
-            }
-            c.level.sendParticles(Fx.dust(VIOLET, 1.6f), centre.x, centre.y, centre.z, 2, 0.2, 0.2, 0.2, 0);
             if (rr.age % 20 == 0) c.sound(centre, PowerSounds.GRAVITY, 0.7f, 0.5f);
         }).end((rr, why) -> {
             if (c.is(1) && why == Running.Why.EXPIRED) {
                 Moves.blast(c, centre, radius + 1, c.dmg(8), Forces.Force.GRAVITY, 1.2, 0.5);
-                c.particles(ParticleTypes.EXPLOSION_EMITTER, centre, 1, 0, 0);
+                Fx.at(c, FxKind.NOVA, centre).scale(radius + 1).flag(FxEvent.REPULSE).noAnim().send();
                 c.sound(centre, PowerSounds.BLAST, 1.2f, 0.6f);
                 Fx.quake(c.level, centre, 16, 3f);
             }
@@ -214,6 +219,7 @@ final class FlightPowers {
             Vec3 v = centre.subtract(from).normalize().scale(0.9).add(0, 0.2, 0);
             var f = FlyingBlocks.launch(c.level, c.player, s, from, v, c.dmg(4), Forces.Force.GRAVITY, 1.5f, 0.9f);
             if (f != null) f.gravity(0.01);
+            if (n <= 6) Fx.trailOn(c, f, 30);
         }
         ForceInteractions.count(c.player, ForceInteractions.Reaction.WALL_THROW);
     }
@@ -226,6 +232,9 @@ final class FlightPowers {
         if (Combat.isHeavy(t)) return Result.fail("too_heavy");
         int max = c.is(2) ? 30 : c.type.maxDuration;
         c.sound(t.position(), PowerSounds.GRAVITY, 1f, 1.4f);
+        // the grip: violet rings around the lifted mob and a cord of force from the hand
+        Fx.at(c, FxKind.LIFT, t.position()).target(t).ticks(max).send();
+        Fx.at(c, FxKind.TETHER, c.player.getEyePosition()).target(t).to(t.position()).aux(2).ticks(max).anim(CastAnim.AIM_HOLD).send();
         Running r = Casting.channel(c, max);
         r.target = t;
         r.tick(rr -> {
@@ -237,9 +246,11 @@ final class FlightPowers {
             Combat.push(t, hold.subtract(t.position()).scale(0.35));
             t.fallDistance = 0;
             if (c.is(1) && rr.age % 10 == 0) c.hurt(t, c.dmg(1.5f), Forces.Force.GRAVITY);
-            if (rr.age % 2 == 0) c.level.sendParticles(Fx.dust(VIOLET, 1.0f), t.getX(), t.getY() + t.getBbHeight() * 0.5, t.getZ(), 3, 0.4, 0.4, 0.4, 0);
         }).end((rr, why) -> {
+            Fx.end(c, c.player, 0);
             if (why == Running.Why.CANCELLED || !t.isAlive()) return;
+            Fx.at(c, FxKind.CAST, c.player.getEyePosition()).anim(CastAnim.THROW).send();
+            Fx.at(c, FxKind.TRAIL, t.position()).caster(t).aux(2).ticks(30).noAnim().send();
             Vec3 v = c.is(1) ? new Vec3(0, -2.6, 0) : c.player.getLookAngle().scale(c.is(2) ? 3.6 : 2.4);
             Combat.push(t, v);
             c.sound(PowerSounds.THROW, 1f, 1f);
@@ -274,12 +285,11 @@ final class FlightPowers {
                         Combat.knockFrom(o, at, 0.8, 0.3);
                     }
                 }
-                c.particles(ParticleTypes.EXPLOSION, at.add(0, 0.5, 0), 1, 0, 0);
+                Fx.at(c, FxKind.SLAM, at).scale(2.4).noAnim().send();
+                Fx.at(c, FxKind.IMPACT, at.add(0, 0.5, 0)).scale(1.6).noAnim().send();
                 c.sound(at, PowerSounds.IMPACT, 1.1f, 0.9f);
                 c.feel(t, 50, 2.5f);
                 rr.stop();
-            } else {
-                c.level.sendParticles(ParticleTypes.CLOUD, t.getX(), t.getY() + 0.3, t.getZ(), 1, 0.1, 0.1, 0.1, 0);
             }
         });
     }
@@ -298,7 +308,10 @@ final class FlightPowers {
                 f.stun = 10;
                 f.gravity(0.02);
             }
+            if (f != null && wall.size() <= 16) Fx.trailOn(c, f, 30);
         }
+        Fx.at(c, FxKind.CAST, c.player.getEyePosition()).anim(CastAnim.PUSH2).send();
+        Fx.at(c, FxKind.RING, Vec3.atCenterOf(start)).dir(dir).scale(3).ticks(8).noAnim().send();
         c.sound(Vec3.atCenterOf(start), PowerSounds.THROW, 1.3f, 0.6f);
         Fx.quake(c.level, c.pos(), 10, 2f);
         ForceInteractions.count(c.player, ForceInteractions.Reaction.WALL_THROW);
@@ -310,6 +323,7 @@ final class FlightPowers {
         if (grounded) Moves.launch(c.player, new Vec3(0, 1.5, 0));
         Moves.noFall(c, 160);
         c.sound(PowerSounds.WHOOSH, 1f, 0.5f);
+        Fx.at(c, FxKind.TRAIL, c.pos()).aux(2).ticks(24).send();
         Running r = Casting.start(c, 140);
         r.value = c.player.getY();
         r.count = grounded ? 0 : 1; // phase: 0 rising, 1 diving
@@ -326,10 +340,14 @@ final class FlightPowers {
                 Moves.launch(c.player, new Vec3(f.x, -2.6, f.z));
                 rr.count = 2;
                 c.sound(PowerSounds.WHOOSH, 1.2f, 0.4f);
+                // the comet: a burning (or violet) trail and glow until it hits
+                var comet = Fx.at(c, FxKind.METEOR, c.pos()).ticks(60).anim(CastAnim.SLAM_WIND);
+                if (c.is(1)) comet.style(FxStyle.HEAT);
+                comet.send();
                 return;
             }
-            c.particles(c.is(1) ? ParticleTypes.FLAME : ParticleTypes.CLOUD, c.pos().add(0, 1, 0), 4, 0.3, 0.02);
             if (c.player.onGround() || c.player.isInWater()) {
+                Fx.end(c, c.player, 0);
                 double fallen = Math.max(0, rr.value - c.player.getY());
                 impact(c, fallen);
                 rr.stop();
@@ -351,10 +369,10 @@ final class FlightPowers {
             if (c.is(2)) Combat.stun(e, 30);
             if (first == null) first = e;
         }
-        c.particles(ParticleTypes.EXPLOSION_EMITTER, at.add(0, 0.5, 0), 1, 0, 0);
-        BlockState below = c.level.getBlockState(Moves.below(c.player));
-        if (!below.isAir()) Fx.burstRing(c.level, at.add(0, 0.1, 0), new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, below), 40, 0.6);
-        if (c.is(1)) Fx.burstRing(c.level, at.add(0, 0.2, 0), ParticleTypes.FLAME, 24, 0.4);
+        var slam = Fx.at(c, FxKind.SLAM, at).scale(radius).flag(FxEvent.REACH).flag(FxEvent.FULL, fallen > 10);
+        if (c.is(1)) slam.style(FxStyle.HEAT);
+        slam.send();
+        if (first != null) Fx.at(c, FxKind.IMPACT, first.getBoundingBox().getCenter()).scale(1.6).noAnim().send();
         c.sound(PowerSounds.SLAM, 1.5f, 0.6f);
         Fx.quake(c.level, at, 24, 5f);
         c.feel(first, first != null ? 80 : 0, 5f);
@@ -370,7 +388,12 @@ final class FlightPowers {
         Moves.effect(c.player, MobEffects.JUMP_BOOST, 80, 2);
         Moves.noFall(c, 120);
         c.sound(PowerSounds.GRAVITY, 1.3f, 1.5f);
-        Fx.ring(c.level, c.pos().add(0, 0.2, 0), c.radius(10), ParticleTypes.REVERSE_PORTAL, 48, 0.05);
+        Fx.at(c, FxKind.RING, c.pos()).scale(c.radius(10)).ticks(14).flag(FxEvent.REACH).send();
+        int lifted = 0;
+        for (LivingEntity e : foes) {
+            if (Combat.isHeavy(e) || lifted++ >= 8) continue;
+            Fx.at(c, FxKind.LIFT, e.position()).target(e).ticks(30).noAnim().send();
+        }
         float dmg = c.dmg();
         Running r = Casting.start(c, 45);
         r.tick(rr -> {
@@ -385,7 +408,7 @@ final class FlightPowers {
                 for (LivingEntity e : foes) {
                     if (!e.isAlive()) continue;
                     c.hurt(e, dmg, Forces.Force.GRAVITY);
-                    c.level.sendParticles(ParticleTypes.EXPLOSION, e.getX(), e.getY(), e.getZ(), 1, 0, 0, 0, 0);
+                    Fx.at(c, FxKind.SLAM, e.position()).scale(1.8).noAnim().send();
                 }
                 c.sound(PowerSounds.SLAM, 1.2f, 0.8f);
             }

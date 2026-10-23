@@ -151,6 +151,7 @@ public final class ClientPowers {
             FROZEN.put(msg.entityId(), new Freeze(System.nanoTime() + msg.hitstopMs() * 1_000_000L));
         }
         if (msg.shake() > 0) CombatFeel.kick(msg.shake(), 8 + (int) (msg.shake() * 2));
+        dev.awaken.powers.client.fx.FxClient.onFeel(msg.entityId(), msg.hitstopMs());
     }
 
     // ---- housekeeping -----------------------------------------------------------------------------------------------

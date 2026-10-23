@@ -25,6 +25,7 @@ public final class PowersModule {
         PowerCatalog.bootstrap();
         PowerSounds.SOUNDS.register(modBus);
         PowerContent.init(modBus);
+        dev.awaken.powers.fx.PowerFx.init(modBus); // power visuals: particle types, FX payload, FX tests
         modBus.addListener(PowersModule::registerPayloads);
         PowerEvents.register(NeoForge.EVENT_BUS);
         RewardHooks.powerLearner = (player, id) -> {

@@ -88,17 +88,20 @@ final class ClientCasting {
                 p.setDeltaMovement(v);
                 p.resetFallDistance();
                 predicted = true;
-                Vec3 at = p.position();
-                for (int i = 0; i < 6; i++) p.level().addParticle(ParticleTypes.CLOUD, at.x, at.y + 0.2, at.z, -v.x * 0.1, 0.02, -v.z * 0.1);
             }
         }
         ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, predicted, p.getYRot(), p.getXRot()));
+        if (!toggleOff) dev.awaken.powers.client.fx.FxClient.predictCast(p, t);
         if (t.mode == PowerType.Mode.CHANNEL) channeling[slot] = true;
         if (!toggleOff && t.mode == PowerType.Mode.INSTANT) {
             int cd = PowerMath.cooldown(t.cooldown, t.variant(o.variant()).cooldown(), o.level(), 0);
             ClientPowers.predictSpend(cost, slot, now + cd);
         }
-        p.swing(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, false);
+        // powers with a designed cast pose animate the body themselves; the rest get a plain arm swing
+        var def = dev.awaken.powers.fx.PowerFxDefs.get(t.path);
+        if (def == null || def.anim() == dev.awaken.powers.fx.CastAnim.NONE || !dev.awaken.powers.client.fx.FxClient.animations()) {
+            p.swing(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, false);
+        }
     }
 
     private static void release(int slot) {
@@ -106,6 +109,7 @@ final class ClientCasting {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
         ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.RELEASE, false, p.getYRot(), p.getXRot()));
+        dev.awaken.powers.client.fx.FxClient.predictRelease(p);
     }
 
     static void reset() {
@@ -139,7 +143,7 @@ final class ClientCasting {
             double y = Math.max(v.y, wallTicks < 6 ? 0.12 : -0.02);
             p.setDeltaMovement(v.x + look.x * 0.04, y, v.z + look.z * 0.04);
             p.resetFallDistance();
-            if (wallTicks % 3 == 0) p.level().addParticle(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.3, p.getZ(), 0, 0, 0);
+            if (wallTicks % 3 == 0) dev.awaken.powers.client.fx.FxClient.localTrail(p, dev.awaken.powers.fx.FxStyle.VELOCITY);
         }
     }
 

@@ -56,5 +56,11 @@
   "subtitles.awaken.power.stun": "Stunned",
   "subtitles.awaken.power.shatter": "Mirror shatters",
   "subtitles.awaken.power.danger": "Danger sensed",
-  "screen.awaken.first_power": "Choose your first power"
+  "screen.awaken.first_power": "Choose your first power",
+  "awaken.configuration.powerEffects": "Power effects",
+  "awaken.configuration.powerEffects.tooltip": "FULL: everything. REDUCED: about half the sprites, softer screen feel, few afterimages. MINIMAL: a few sprites and the shapes that show where a power hits; no flashes or afterimages.",
+  "awaken.configuration.castAnimations": "Cast animations",
+  "awaken.configuration.castAnimations.tooltip": "Arms and body move when you or others cast powers, in third and first person.",
+  "awaken.configuration.screenFlashes": "Screen flashes",
+  "awaken.configuration.screenFlashes.tooltip": "Brief flashes and impact frames on big hits and ultimates."
 }

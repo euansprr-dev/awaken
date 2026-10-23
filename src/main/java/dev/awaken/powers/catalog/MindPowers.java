@@ -1,5 +1,9 @@
 package dev.awaken.powers.catalog;
 
+import dev.awaken.powers.fx.FxEvent;
+import dev.awaken.powers.fx.FxKind;
+import dev.awaken.powers.fx.FxStyle;
+
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.Forces;
 import dev.awaken.core.api.CoreApi;
@@ -95,7 +99,11 @@ public final class MindPowers {
             Vec3 to = p.getBoundingBox().getCenter().subtract(pr.position());
             if (v.normalize().dot(to.normalize()) > 0.93) ids.add(pr.getId());
         }
-        if (!ids.isEmpty()) AwakenNet.send(p, new PowerPayloads.Marks(PowerPayloads.Marks.DANGER, ids, 8));
+        if (!ids.isEmpty()) {
+            AwakenNet.send(p, new PowerPayloads.Marks(PowerPayloads.Marks.DANGER, ids, 8));
+            // a faint ripple from the head, at most once a second
+            if (p.tickCount % 20 < PowerType.PASSIVE_PERIOD) Fx.at(c, FxKind.PSI, p.getEyePosition()).ticks(6).flag(FxEvent.QUIET).send();
+        }
     }
 
     // ---- active -----------------------------------------------------------------------------------------------------
@@ -114,6 +122,8 @@ public final class MindPowers {
         }
         int per = Progression.stat(c.player, Stat.PER);
         int base = c.ticks(160) + per * 2;
+        // rings of will travel from your head into theirs
+        Fx.at(c, FxKind.PSI, c.player.getEyePosition()).to(target.getEyePosition()).ticks(12).send();
         long now = c.now();
         List<Integer> ids = new ArrayList<>();
         for (Mob m : minds) {
@@ -121,7 +131,8 @@ public final class MindPowers {
             Allies.add(m, c.player.getUUID(), Allies.Kind.DOMINATED, now + ticks);
             m.setTarget(null);
             ids.add(m.getId());
-            c.level.sendParticles(Fx.dust(PINK, 1.4f), m.getX(), m.getY() + m.getBbHeight(), m.getZ(), 16, 0.4, 0.4, 0.4, 0);
+            Fx.at(c, FxKind.AURA, m.position()).caster(m).aux(FxKind.Aura.MARK.ordinal()).ticks(isElite(m) ? base / 2 : base).noAnim().send();
+            Fx.at(c, FxKind.IMPACT, m.getEyePosition()).scale(0.8).noAnim().send();
             if (c.is(2)) Moves.addMod(m, net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, "frenzy", 0.5,
                     net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         }
@@ -139,7 +150,6 @@ public final class MindPowers {
                     LivingEntity next = nearestFoeOf(c, m);
                     m.setTarget(next);
                 }
-                c.level.sendParticles(Fx.dust(PINK, 0.9f), m.getX(), m.getY() + m.getBbHeight() + 0.3, m.getZ(), 2, 0.2, 0.1, 0.2, 0);
             }
             if (!any) rr.stop();
         }).end((rr, why) -> {
@@ -149,6 +159,7 @@ public final class MindPowers {
                 if (m.isAlive()) {
                     m.setTarget(null);
                     c.level.sendParticles(ParticleTypes.ANGRY_VILLAGER, m.getX(), m.getY() + m.getBbHeight(), m.getZ(), 2, 0.2, 0.2, 0.2, 0);
+                    Fx.end(c, m, FxKind.Aura.MARK.ordinal() + 1);
                 }
             }
         });
@@ -178,6 +189,8 @@ public final class MindPowers {
         double range = c.is(2) ? 48 : 24;
         PowerState.of(c.player).buff(PowerState.Buffs.READ_INTENT, c.now() + ticks, 0.15);
         c.sound(PowerSounds.MIND, 1f, 1.2f);
+        Fx.at(c, FxKind.PSI, c.player.getEyePosition()).ticks(16).send();
+        Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.READ.ordinal()).ticks(ticks).noAnim().send();
         Running r = Casting.start(c, ticks);
         r.tick(rr -> {
             if (rr.age % 10 != 0) return;
@@ -203,6 +216,9 @@ public final class MindPowers {
         Vec3 spot = new Vec3(at.x, pos.getY(), at.z);
         var body = Moves.decoy(c, spot, c.ticks(120), c.dmg(), c.is(2) ? 4.5 : 3.0, c.is(1) ? 24 : 16, "decoy");
         if (body == null) return Result.fail("blocked");
+        // the image is thrown: a ripple leaves the hand and the copy shimmers into being
+        Fx.at(c, FxKind.PSI, c.player.getEyePosition()).to(spot.add(0, 1.4, 0)).ticks(8).send();
+        Fx.at(c, FxKind.BLINK, c.pos()).to(spot).noAnim().send();
         c.sound(spot, PowerSounds.MIND, 0.9f, 1.4f);
         return Result.OK;
     }
@@ -215,10 +231,11 @@ public final class MindPowers {
         Moves.postOn(c.player, Moves.FX_FORESIGHT);
         c.sound(PowerSounds.FLOW_START, 1f, 1.5f);
         c.sound(PowerSounds.MIND, 1f, 0.6f);
+        Fx.at(c, FxKind.RING, c.pos()).scale(6).ticks(16).colour(0xFFFFD27A).send();
+        Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.FORESIGHT.ordinal()).ticks(ticks).noAnim().send();
         Running r = Casting.start(c, ticks);
-        r.tick(rr -> {
-            if (rr.age % 3 == 0) c.level.sendParticles(Fx.dust(0xFFD27A, 0.8f), c.player.getX(), c.player.getEyeY(), c.player.getZ(), 2, 0.4, 0.3, 0.4, 0);
-        }).end((rr, why) -> {
+        r.end((rr, why) -> {
+            Fx.end(c, c.player, FxKind.Aura.FORESIGHT.ordinal() + 1);
             TimeSlow.remove(zone);
             st.clearBuff(PowerState.Buffs.FORESIGHT);
             Moves.postOff(c.player, Moves.FX_FORESIGHT);
@@ -232,7 +249,7 @@ public final class MindPowers {
         Vec3 away = attackerOrNull == null ? player.getLookAngle().scale(-1) : player.position().subtract(attackerOrNull.position());
         Vec3 side = Moves.flat(away).yRot((float) (Math.PI / 2 * (player.getRandom().nextBoolean() ? 1 : -1)));
         Vec3 to = Moves.blinkTarget(player, side.add(Moves.flat(away)).normalize(), 2.5);
-        player.level().sendParticles(Fx.dust(0xFFD27A, 1.2f), player.getX(), player.getY() + 1, player.getZ(), 12, 0.3, 0.6, 0.3, 0);
+        Fx.at(player.level(), FxKind.BLINK, FxStyle.MIND, player.position()).caster(player).to(to).colour(0xFFFFD27A).send();
         Moves.teleport(player, to);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), PowerSounds.WHOOSH.get(), net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 1.8f);
     }

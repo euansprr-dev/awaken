@@ -1,5 +1,7 @@
 package dev.awaken.powers.catalog;
 
+import dev.awaken.powers.fx.FxKind;
+
 import dev.awaken.core.Forces;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.MobRole;
@@ -73,10 +75,9 @@ public final class ShadowPowers {
 
     // ---- behaviours -------------------------------------------------------------------------------------------------
 
+    /** Inky smoke with violet glints, tendrils and a shadow pool. */
     static void shadowPuff(Cast c, Vec3 at) {
-        c.level.sendParticles(ParticleTypes.LARGE_SMOKE, at.x, at.y + 1, at.z, 12, 0.3, 0.6, 0.3, 0.02);
-        c.level.sendParticles(Fx.dust(SHADE, 1.3f), at.x, at.y + 1, at.z, 14, 0.4, 0.7, 0.4, 0);
-        c.level.sendParticles(ParticleTypes.SCULK_SOUL, at.x, at.y + 0.5, at.z, 4, 0.3, 0.3, 0.3, 0.02);
+        Fx.at(c, FxKind.SMOKE, at).scale(1).noAnim().send();
     }
 
     static Result shadowStep(Cast c) {
@@ -97,8 +98,9 @@ public final class ShadowPowers {
         }
         PowerState.of(c.player).buff(PowerState.Buffs.BACKSTAB, c.now() + 60, c.is(1) ? 2.2 : 1.6);
         if (c.is(2)) Moves.effect(c.player, MobEffects.INVISIBILITY, 40, 0);
-        shadowPuff(c, from);
-        shadowPuff(c, to);
+        // vanish in ink, reappear behind them with a slash of shadow; the mark shows the backstab is ready
+        Fx.at(c, FxKind.BLINK, from).to(to).send();
+        if (t != null) Fx.at(c, FxKind.AURA, t.position()).caster(t).aux(FxKind.Aura.MARK.ordinal()).ticks(60).noAnim().send();
         c.sound(from, PowerSounds.SHADOW, 0.9f, 1f);
         c.sound(to, PowerSounds.SHADOW, 0.9f, 1.3f);
         return Result.OK;
@@ -111,13 +113,14 @@ public final class ShadowPowers {
         Moves.effect(c.player, MobEffects.INVISIBILITY, ticks, 0);
         for (Mob m : c.level.getEntitiesOfClass(Mob.class, c.player.getBoundingBox().inflate(32), m -> m.getTarget() == c.player)) m.setTarget(null);
         Moves.postOn(c.player, Moves.FX_CLOAK);
-        shadowPuff(c, c.pos());
+        Fx.at(c, FxKind.SMOKE, c.pos()).scale(1.4).send();
+        Fx.at(c, FxKind.AURA, c.pos()).aux(FxKind.Aura.CLOAK.ordinal()).ticks(ticks).noAnim().send();
         c.sound(PowerSounds.CLOAK, 1f, 1f);
         Running r = Casting.start(c, ticks);
         r.tick(rr -> {
             if (!st.has(PowerState.Buffs.CLOAK, c.now())) rr.stop(Running.Why.DONE);
-            else if (rr.age % 8 == 0) c.level.sendParticles(ParticleTypes.SMOKE, c.player.getX(), c.player.getY() + 0.1, c.player.getZ(), 1, 0.2, 0, 0.2, 0);
         }).end((rr, why) -> {
+            Fx.end(c, c.player, FxKind.Aura.CLOAK.ordinal() + 1);
             st.clearBuff(PowerState.Buffs.CLOAK);
             c.player.removeEffect(MobEffects.INVISIBILITY);
             Moves.postOff(c.player, Moves.FX_CLOAK);
@@ -135,7 +138,9 @@ public final class ShadowPowers {
             if (type != null) {
                 Cast c = Cast.of(player, type);
                 Moves.blast(c, victim.position().add(0, 1, 0), 3, c.dmg(), Forces.Force.SPIRIT, 0.6, 0.2);
-                shadowPuff(c, victim.position());
+                Fx.at(c, FxKind.SMOKE, victim.position()).scale(1.6).noAnim().send();
+                Fx.at(c, FxKind.RING, victim.position()).scale(3).ticks(10).flag(dev.awaken.powers.fx.FxEvent.REACH).noAnim().send();
+                Fx.at(c, FxKind.IMPACT, victim.getBoundingBox().getCenter()).scale(1.6).noAnim().send();
             }
         }
     }
@@ -174,11 +179,11 @@ public final class ShadowPowers {
         Vec3 theirs = other.position();
         other.teleportTo(mine.x, mine.y, mine.z);
         Moves.teleport(c.player, theirs);
-        shadowPuff(c, mine);
-        shadowPuff(c, theirs);
+        Fx.at(c, FxKind.BLINK, mine).to(theirs).send();
         c.sound(mine, PowerSounds.SHADOW, 0.8f, 0.8f);
         c.sound(theirs, PowerSounds.SHADOW, 1f, 1.2f);
         if (!c.is(2)) {
+            Fx.at(c, FxKind.RING, theirs).scale(3.5).ticks(10).flag(dev.awaken.powers.fx.FxEvent.REACH).noAnim().send();
             for (LivingEntity e : Combat.foesAround(c.player, theirs.add(0, 1, 0), 3.5)) {
                 c.hurt(e, c.dmg(), Forces.Force.SPIRIT);
                 Moves.effect(e, MobEffects.BLINDNESS, 40, 0);
@@ -186,7 +191,7 @@ public final class ShadowPowers {
         }
         if (c.is(1)) {
             for (Vec3 p : new Vec3[]{mine, theirs}) {
-                c.level.sendParticles(ParticleTypes.LARGE_SMOKE, p.x, p.y + 1, p.z, 40, 1.5, 1, 1.5, 0.01);
+                Fx.at(c, FxKind.SMOKE, p).scale(2.6).noAnim().send();
                 for (LivingEntity e : Combat.foesAround(c.player, p, 4)) {
                     Moves.effect(e, MobEffects.BLINDNESS, 60, 0);
                     Moves.effect(e, MobEffects.SLOWNESS, 60, 1);
@@ -204,6 +209,8 @@ public final class ShadowPowers {
         int life = c.ticks(400);
         double hp = 20 * PowerMath.levelScale(Progression.profile(c.player).level()) * 0.8 * hpMul;
         Moves.makeRoom(c.player, count);
+        // a circle of shadow opens under you and the soldiers climb out of it
+        Fx.at(c, FxKind.GLYPH, c.pos()).scale(3.2).ticks(60).send();
         int spawned = 0;
         for (int i = 0; i < count; i++) {
             double a = Math.PI * 2 * i / count + c.yRot() * Math.PI / 180;
@@ -225,13 +232,13 @@ public final class ShadowPowers {
                 if (scale != null) scale.setBaseValue(0.8);
             }
             c.level.addFreshEntity(s);
-            c.level.sendParticles(ParticleTypes.SCULK_SOUL, spot.x, spot.y + 0.2, spot.z, 10, 0.3, 0.1, 0.3, 0.05);
-            c.level.sendParticles(ParticleTypes.LARGE_SMOKE, spot.x, spot.y + 1, spot.z, 8, 0.3, 0.6, 0.3, 0.02);
+            var rise = Fx.at(c, FxKind.SUMMON, spot).scale(c.is(1) ? 1.4 : 1);
+            if (spawned > 0) rise.noAnim().range(48);
+            rise.send();
             spawned++;
         }
         if (spawned == 0) return Result.fail("blocked");
         c.sound(PowerSounds.SUMMON, 1.3f, 0.7f);
-        Fx.ring(c.level, c.pos().add(0, 0.1, 0), 2.5, Fx.dust(SHADE, 1.5f), 30, 0);
         return Result.OK;
     }
 }

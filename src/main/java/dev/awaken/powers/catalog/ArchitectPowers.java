@@ -1,5 +1,9 @@
 package dev.awaken.powers.catalog;
 
+import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.FxEvent;
+import dev.awaken.powers.fx.FxKind;
+
 import dev.awaken.powers.Cast;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Combat;
@@ -123,7 +127,23 @@ final class ArchitectPowers {
         int placed = Constructs.place(c.player, shape, slabs, false, LIFE);
         if (placed == 0) return Result.fail("blocked");
         c.sound(PowerSounds.BUILD, 1f, 0.9f + c.player.getRandom().nextFloat() * 0.3f);
+        assemble(c, shape);
         return Result.OK;
+    }
+
+    /** The blocks of a construct assemble with glowing seams, sweeping out from the caster over a blueprint circle. */
+    static void assemble(Cast c, List<BlockPos> shape) {
+        if (shape.isEmpty()) return;
+        int x0 = Integer.MAX_VALUE, y0 = Integer.MAX_VALUE, z0 = Integer.MAX_VALUE, x1 = Integer.MIN_VALUE, y1 = Integer.MIN_VALUE, z1 = Integer.MIN_VALUE;
+        for (BlockPos p : shape) {
+            x0 = Math.min(x0, p.getX());
+            y0 = Math.min(y0, p.getY());
+            z0 = Math.min(z0, p.getZ());
+            x1 = Math.max(x1, p.getX());
+            y1 = Math.max(y1, p.getY());
+            z1 = Math.max(z1, p.getZ());
+        }
+        Fx.at(c, FxKind.CONSTRUCT, new Vec3(x0, y0, z0)).dir(new Vec3(x1 - x0 + 0.99, y1 - y0 + 0.99, z1 - z0 + 0.99)).send();
     }
 
     static Result spire(Cast c) {
@@ -140,7 +160,11 @@ final class ArchitectPowers {
                 List<BlockPos> spike = new ArrayList<>();
                 for (int h = 0; h < 3; h++) spike.add(base.above(h));
                 Constructs.place(c.player, spike, Set.of(), false, 200);
-                c.level.sendParticles(ParticleTypes.CRIT, e.getX(), e.getY(), e.getZ(), 10, 0.3, 0.5, 0.3, 0.3);
+                var spikeFx = Fx.at(c, FxKind.PILLAR, Vec3.atBottomCenterOf(base)).scale(3);
+                if (n > 1) spikeFx.noAnim();
+                spikeFx.send();
+                assemble(c, spike);
+                Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(new Vec3(0, 1, 0)).scale(1.2).noAnim().send();
             }
             c.sound(PowerSounds.BUILD, 1.2f, 0.6f);
             return Result.OK;
@@ -148,19 +172,26 @@ final class ArchitectPowers {
         int height = c.is(1) ? 9 : 6;
         Moves.launch(c.player, new Vec3(c.player.getDeltaMovement().x, c.is(1) ? 2.0 : 1.6, c.player.getDeltaMovement().z));
         Moves.noFall(c, 160);
-        for (LivingEntity e : Combat.foesAround(c.player, c.pos().add(0, 0.5, 0), 2.8)) {
+        double throwRadius = 2.8;
+        Fx.at(c, FxKind.RING, c.pos()).scale(throwRadius).ticks(9).flag(FxEvent.REACH).noAnim().send();
+        for (LivingEntity e : Combat.foesAround(c.player, c.pos().add(0, 0.5, 0), throwRadius)) {
             c.hurt(e, c.dmg(), null);
             Combat.knockFrom(e, c.pos(), 0.5, 1.0);
         }
         c.sound(PowerSounds.BUILD, 1.3f, 0.5f);
         c.sound(PowerSounds.WHOOSH, 1f, 0.8f);
+        // the pillar erupts: a column of light, ground thrown out, then each block assembles as it rises
+        Fx.at(c, FxKind.PILLAR, c.pos()).scale(height).send();
+        List<BlockPos> column = new ArrayList<>();
+        for (int h = 0; h < height; h++) column.add(feet.above(h));
+        assemble(c, column);
+        Fx.at(c, FxKind.TRAIL, c.pos()).aux(0).ticks(30).noAnim().send();
         Running r = Casting.start(c, 40);
         r.tick(rr -> {
             // the pillar grows under the player as they rise, one block at a time
             while (rr.count < height && c.player.getY() >= feet.getY() + rr.count + 1.0) {
                 BlockPos p = feet.above(rr.count++);
                 Constructs.place(c.player, List.of(p), Set.of(), false, LIFE);
-                c.level.sendParticles(ParticleTypes.END_ROD, p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 3, 0.3, 0.3, 0.3, 0.02);
             }
             if (rr.count >= height) rr.stop();
         });
@@ -197,9 +228,13 @@ final class ArchitectPowers {
                 f.gravity(0.03);
                 if (c.is(2)) f.stun = 30;
             }
+            // every block tears loose with a flash and streaks at its target
+            if (thrown < 10) Fx.trailOn(c, f, 30);
+            if (thrown < 6) Fx.at(c, FxKind.IMPACT, from).scale(0.6).noAnim().send();
             thrown++;
         }
         if (thrown == 0) return Result.fail("no_target");
+        Fx.at(c, FxKind.RING, c.pos()).scale(Math.min(10, radius * 0.5)).ticks(12).anim(CastAnim.THROW).send();
         c.sound(PowerSounds.COLLAPSE, 1.3f, 0.8f);
         Fx.quake(c.level, c.pos(), 16, 2.5f);
         return Result.OK;
@@ -213,6 +248,10 @@ final class ArchitectPowers {
         c.sound(PowerSounds.BUILD, 1.5f, 0.5f);
         Vec3 middle = Vec3.atBottomCenterOf(centre);
         PowerState st = PowerState.of(c.player);
+        // blueprint circle, a ground dome of hard light, and the dome's blocks assembling ring by ring
+        Fx.at(c, FxKind.GLYPH, middle).scale(radius + 1).ticks(LIFE).send();
+        Fx.at(c, FxKind.DOME, middle).scale(radius).aux(1).ticks(LIFE).flag(FxEvent.REACH).send();
+        assemble(c, dome);
         Running r = Casting.start(c, LIFE);
         r.tick(rr -> {
             if (rr.age < rows) {
@@ -229,7 +268,7 @@ final class ArchitectPowers {
                     Moves.effect(p, MobEffects.REGENERATION, 50, c.is(2) ? 1 : 0);
                     PowerState.of(p).buff(PowerState.Buffs.BULWARK, c.now() + 25, 0.2);
                 }
-                if (st != null) c.level.sendParticles(Fx.dust(SAND, 1.0f), middle.x, middle.y + 1, middle.z, 6, radius * 0.4, 1, radius * 0.4, 0);
+                if (st != null && rr.age % 60 == 0) Fx.at(c, FxKind.HEAL, middle).ticks(40).flag(FxEvent.QUIET).noAnim().send();
             }
         });
         return Result.OK;
