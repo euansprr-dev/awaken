@@ -373,5 +373,35 @@ Plan v2 · System and Hearth:
 - Wandering gates (anomalies) form at the player's rank, fade after their lifetime unless entered, never break, and don't
   count toward the Director's 1–4.
 
+Plan v2 · System v2 (details in docs/modules/system-ui.md):
+- Any message with an action is a choice card whatever its presentation; a CHOICE without an action is a toast.
+- A card is armed after 8 ticks without a Y/N press (stray presses are ignored) and folds after 20 s on screen (paused
+  while a screen is open); 10 ticks between cards; warnings and priority ≥ 9 pre-empt.
+- Pending decisions persist per player (max 12) until answered, withdrawn or past their ttl; on login they come back
+  folded (tracker and Status), never as cards.
+- Toasts are vanilla size (160×32), at most 3 of ours; a burst merges into "N new things". Cards sit right of the
+  crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
+  (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed.
+
+Plan v2 · overworld creatures (details in docs/modules/fauna.md):
+- Spawn category `awaken:fauna` (16 per player, NeoForge enum extension). Role caps per player: ambient 8 (3 before
+  awakening), neutral 5, hunter 5, named beast 1. Game rule `awaken:fauna_spawning` switches them all off.
+- Hunters follow the vanilla monster light rule, are hostile only while the player stands in block light < 8 and not
+  under open daytime sky, and melt away after 10 s of open daylight. Inside a Hearth's radius only ambient creatures spawn.
+- Content level = player level − 1, capped at the rank's gate content level (beasts: player level, cap +2).
+- Named beasts: from level 3, 40+ blocks away, 30-minute world cooldown, 384 blocks apart, at most 12; 45% Power Core;
+  first kill pays 0.5 level, first sighting 0.1 (beasts 0.25) through `Progression.discover`. Their boss bar shows only
+  while they have a target.
+- The reveal pulse plays once per player at awakening (old awakened saves get it once).
+
+Plan v2 · anomalies (details in docs/modules/anomalies.md):
+- One anomaly at a time per player, after 6–12 minutes of outdoor play (3–6 after awakening), ×1.5 faster at night;
+  paused in gates, outside the overworld, asleep, at home (inside a Hearth's radius) and in the first 2 minutes.
+- Kinds: rift tear (2 min of waves, reward once: shards, 0.3 × a floor reward, 12% Power Core), spirit procession (day
+  only; follow five lights to a cache) and wandering gate (from level 3; 1–2 floors, 5–8 minutes). Weights day 55/15/30,
+  night 80/20/0; the first is always a rift; no rifts on Peaceful. Config switch `features.anomalies`.
+- Spots: 32–96 blocks away, ≥ 24 blocks outside any Hearth's radius, ≥ 24 from a gate, ≥ 48 from another anomaly, dry, not built on.
+- Each kind is a discovery (0.1 of a level). Interrupted anomalies are cleaned up on server start.
+
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
