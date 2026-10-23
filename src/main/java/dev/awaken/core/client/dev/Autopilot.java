@@ -44,7 +44,7 @@ public final class Autopilot {
     private Autopilot() {}
 
     private static final List<String> LINES = new ArrayList<>();
-    private static int index, waitTicks, waitWorldTicks;
+    private static int index, waitTicks, waitWorldTicks, stuckTicks;
     private static boolean started;
     private static String createName;
     private static WorldCreationUiState.SelectedGameMode createMode;
@@ -119,7 +119,15 @@ public final class Autopilot {
         String arg = a.length > 1 ? a[1] : "";
         switch (a[0]) {
             case "world" -> {
-                if (!(mc.gui.screen() instanceof TitleScreen)) return false;
+                if (!(mc.gui.screen() instanceof TitleScreen)) {
+                    // a startup screen nobody will click (mod warnings, first-run prompts): after 5 s, go to the title
+                    if (mc.gui.overlay() == null && mc.gui.screen() != null && ++stuckTicks > 100) {
+                        Awaken.LOG.info("[autopilot] leaving {} for the title screen", mc.gui.screen().getClass().getSimpleName());
+                        mc.gui.setScreen(new TitleScreen());
+                        stuckTicks = 0;
+                    }
+                    return false;
+                }
                 String[] w = arg.split("\\s+");
                 if (mc.getLevelSource().levelExists(w[0])) {
                     mc.createWorldOpenFlows().openWorld(w[0], () -> mc.gui.setScreen(new TitleScreen()));

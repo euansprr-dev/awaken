@@ -98,19 +98,17 @@ public final class VeilClient {
     }
 
     /** Status tab: what your stats give you in the Veil. */
-    static final class VeilSection implements StatusSections.Section {
+    static final class VeilSection extends dev.awaken.signal.client.UiSection {
         public String title() { return "THE VEIL"; }
         public int order() { return 320; }
         public boolean visible() {
             var p = Minecraft.getInstance().player;
             return p != null && Progression.profile(p).awakened();
         }
-        public int height(int width) { return 44; }
-
-        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
+        @Override
+        protected void build(dev.awaken.signal.client.Ui ui) {
             var p = Minecraft.getInstance().player;
             if (p == null) return;
-            Font f = Minecraft.getInstance().font;
             int spi = Progression.stat(p, Stat.SPI), per = Progression.stat(p, Stat.PER);
             int cord = Cord.radius(spi, Progression.perk(p, Perks.CORD_LENGTH));
             int secs = Cord.timeTicks(spi) / 20;
@@ -118,12 +116,8 @@ public final class VeilClient {
             int sense = Cord.secretSense(per, Progression.perk(p, Perks.SECRET_GLOW_RANGE));
             String[][] rows = {{"Cord", cord + " blocks"}, {"Time out of body", secs + " s"}, {"Awareness", aware + " blocks"},
                     {"Secret sense", sense + " blocks"}};
-            int cw = w / 2;
-            for (int i = 0; i < rows.length; i++) {
-                int cx = x + (i % 2) * cw, cy = y + (i / 2) * 20;
-                g.text(f, rows[i][0], cx, cy, Glass.a(Glass.LABEL, 1F), false);
-                g.text(f, rows[i][1], cx, cy + 9, Glass.a(Glass.TITLE, 1F), false);
-            }
+            for (String[] r : rows) ui.pair(r[0], r[1], Glass.a(Glass.LABEL, 1F), Glass.a(Glass.TITLE, 1F));
+            ui.text("Sneak and hold G for 10 s to step out of your body.", Glass.a(Glass.LABEL, 0.8F));
         }
     }
 }

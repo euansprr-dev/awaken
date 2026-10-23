@@ -236,18 +236,24 @@ public final class Projection {
 
         VeilMemory mem = sp.getData(VeilContent.MEMORY.get());
         mem.projections++;
-        if (mem.tipsShown < TIPS.length) Signal.toast(sp, Component.literal(TIPS[mem.tipsShown++]));
+        if (mem.tipsShown < TIPS) Signal.toast(sp, tip(mem.tipsShown++));
         DirectorLog.log(sp, "veil", "projected: cord " + s.radius + ", time " + s.maxTicks / 20 + "s, awareness " + s.awareness);
         dev.awaken.core.Playtest.log(sp, "veil_project", "cord", s.radius);
         sendState(sp, s);
         return true;
     }
 
-    private static final String[] TIPS = {
-            "You can pass through anything. You can only touch what glows blue.",
-            "[G] speak to the dead · [Y] go back to your body",
-            "Your body stays behind. Somewhere safe would be good."
-    };
+    private static final int TIPS = 3;
+
+    /** First-projection tips; keys are shown as the player bound them. */
+    private static Component tip(int i) {
+        return switch (i) {
+            case 0 -> Component.literal("You can pass through anything. You can only touch what glows blue.");
+            case 1 -> Component.literal("[").append(Component.keybind("key.awaken.focus")).append("] speak to the dead · [")
+                    .append(Component.keybind("key.awaken.accept")).append("] go back to your body");
+            default -> Component.literal("Your body stays behind. Somewhere safe would be good.");
+        };
+    }
 
     static @Nullable Mannequin createBody(ServerPlayer sp) {
         ServerLevel level = sp.level();

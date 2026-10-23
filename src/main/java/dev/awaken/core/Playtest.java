@@ -165,7 +165,7 @@ public final class Playtest {
                 Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Playtest check-in"))
                         .body(Component.literal("What are you doing next, and why? Press T and type /awaken next <answer>. "
                                 + "How fun is it right now? /awaken fun 1-5"))
-                        .ttl(20 * 15).build());
+                        .presentation(SignalWindow.Presentation.PANEL).ttl(20 * 15).build());
                 log(p, "prompt", null);
             }
         }
