@@ -142,6 +142,15 @@ Content level = `Rank.of(min(6, (n+1)/2)).contentLevel` (as specified), so strat
 - The Endless rules come from {wind, water, dead rise, Listeners, tides, shadow} plus the form's own rule; rooms and
   machines appear only in their own forms.
 
+## Tests (21 GameTests, all passing)
+`descent_generator_determinism` (every form and Endless cells, seed-sensitive, strata distinct), `descent_landmarks_and_helix`
+(platform, ascent stone, Waystone, bed, pit, Foundry seal, and a full walk down every helix in 1-2 block steps),
+`descent_generator_fills_chunks` (the real generator on proto chunks matches the pure terrain), `descent_generation_is_cheap`
+(about 1 ms per chunk cold), `descent_data_loads` (every dimension JSON decodes into the generator; biomes registered),
+`descent_well_builds` (the Well is placed and built in the test world), `descent_well_ring_distance`, `descent_gating_by_rank`,
+`descent_strain_maths`, `descent_deep_pack_death_rules`, `descent_deep_pack_insert`, `descent_grave_echo_recover`,
+`descent_waystone_travel_list`, `descent_foundry_puzzle`, `descent_rule_timers`, `descent_endless_rules`, `descent_dream_view`.
+
 ## Known gaps
 - The GameTest server never creates datapack dimensions, so travel into strata is not integration-tested there; the
   tests cover the generator (determinism, landmarks, a full walk of every helix), the data (every dimension JSON is

@@ -257,6 +257,7 @@ final class DescentTests {
             }
         }
         double msPerChunk = (System.nanoTime() - t0) / 1e6 / chunks;
+        dev.awaken.Awaken.LOG.info("AWAKEN descent: terrain generation {} ms per chunk ({} chunks, cold)", String.format("%.2f", msPerChunk), chunks);
         h.assertTrue(msPerChunk < 40, "generation too slow: " + String.format("%.1f", msPerChunk) + " ms per chunk");
         h.succeed();
     }
