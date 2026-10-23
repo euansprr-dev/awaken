@@ -83,7 +83,9 @@ public final class ProgressionModule {
             Progression.forget();
             WorldLatents.forget();
             RecipeUnlocks.forget();
+            Lessons.forgetAll();
         });
+        bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> Lessons.forget(e.getEntity().getUUID()));
         bus.addListener(RecipeUnlocks::onPlayerTick);
         LevelRoad.init();
         // Truths wait for level 5 (plan v2 §4.6). Players awakened before v2 already hold theirs: never a second set.
@@ -94,6 +96,7 @@ public final class ProgressionModule {
             }
         });
         ProgressionNow.register();
+        Lessons.init(); // teaching in play and the level road's goals (P3)
         Signal.onAction(Directives.ACTION, Directives::answer);
         PlayDays.onMorning((server, day) -> {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -106,6 +109,7 @@ public final class ProgressionModule {
         WorldLatents.init();
         ProgressionTests.register();
         OnboardingTests.register();
+        RoadTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -200,6 +204,7 @@ public final class ProgressionModule {
         if (!(event.getEntity() instanceof ServerPlayer sp) || sp.tickCount % 20 != 0) return;
         Profile p = Progression.profile(sp);
         if (!p.awakened()) return;
+        Lessons.evaluate(sp);
         if (sp.isSprinting()) {
             double dist = Math.hypot(sp.getX() - sp.xo, sp.getZ() - sp.zo) * 20; // approx blocks/second → per second
             Progression.count(sp, Counters.SPRINT_CM, Math.round(dist * 100));
