@@ -29,6 +29,7 @@ final class Shape {
     static final int FLICKER = 16;   // random flicker (electric)
     static final int AIM = 32;       // beam end follows the local player's live aim (own channelled beams)
     static final int HOLD = 64;      // sphere/ring: grow over the first 8 ticks, then hold the size
+    static final int RIM = 128;      // sphere: also draw its silhouette as a bold band facing the camera
 
     int type;
     boolean live;

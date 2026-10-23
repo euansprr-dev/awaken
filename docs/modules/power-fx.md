@@ -55,6 +55,7 @@ type cuts out alpha < 0.1). Alpha sprites (smoke, dust, decals) carry coverage i
 | `palm` | 32 × 1 | add | open palm print (Spirit Palm) |
 | `wind` | 16 × 3 | add | curved wind streak (flight) |
 | `glyph_circle` | 32 × 1 | add | magic circle decal |
+| `halo` | 64 × 1 | add | smooth radial gradient for big halos (not pixel art: it is scaled across the view) |
 | `smoke` | 16 × 6 | alpha | puff breaking up (shadow ink, generic) |
 | `dust` | 16 × 6 | alpha | ground dust billow |
 | `decal_crack` | 32 × 1 | alpha | radial ground cracks |
@@ -173,6 +174,18 @@ The tour (third person, camera behind the caster, target straight ahead) showed 
   family colour rather than white, because white additive light disappears against a pale sky.
 - Beams never depended on the key being held: they are built from the server's events, so other players and
   `/awaken admin power cast` show them too (the caster's own client follows its live aim).
+
+### Round 3 (first-person polish)
+
+- Nothing glows within 1.5 blocks of the camera and everything is at full strength from 4 (`FxRender.near`); a
+  camera-facing sprite never grows past 0.45 x its distance (about 25 degrees of view). Mesh vertices fade the same
+  way, except a beam's thin body and core, which leave your hand visibly. The caster's own charge orb in first person
+  stays a small light in the hand (capped at 0.2 x distance). Your own afterimages fade when they stand on the camera.
+- Big halos use a smooth 64 px radial gradient (`power_fx_halo`); pixel-art bands are for small sprites. Soft glows
+  get no daylight under-copy (that copy was what drew the blocky translucent squares).
+- Nova: the shell grows in eight ticks and holds a second, its silhouette drawn as a bold band facing the camera;
+  from inside (the caster) the shell reads as a wall of light round the horizon, with two more rings of latitude and a
+  flash across the ground.
 
 ## 4. How it works
 

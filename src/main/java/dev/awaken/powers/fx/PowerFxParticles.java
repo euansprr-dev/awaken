@@ -52,6 +52,8 @@ public final class PowerFxParticles {
     public static final Sprite CRACK = sprite("decal_crack", 1, false);
     public static final Sprite SCORCH = sprite("decal_scorch", 1, false);
     public static final Sprite POOL = sprite("decal_pool", 1, false);
+    /** A smooth 64 px radial gradient for big halos (pixel-art bands turn into blocky squares when scaled up). */
+    public static final Sprite HALO = sprite("halo", 1, true);
 
     private static Sprite sprite(String name, int frames, boolean additive) {
         // false: these never get past the vanilla particle limiter; our pool has its own caps
