@@ -50,6 +50,13 @@ public final class MobsSpawner implements MobHooks.Spawner {
     }
 
     @Override
+    public boolean peaceful(net.minecraft.world.entity.Entity e) {
+        if (!(e instanceof dev.awaken.mobs.entity.FaunaMob f)) return false;
+        var r = f.faunaRole();
+        return (r == dev.awaken.mobs.def.FaunaRole.AMBIENT || r == dev.awaken.mobs.def.FaunaRole.NEUTRAL) && f.getTarget() == null;
+    }
+
+    @Override
     public @Nullable LivingEntity spawnBoss(ServerLevel level, String bossId, BlockPos pos, int contentLevel, String gateId) {
         MobDef d = bossDef(bossId);
         MobRole.Role role = d.tier.role == MobRole.Role.NORMAL || d.tier.role == MobRole.Role.ELITE ? MobRole.Role.BOSS : d.tier.role;

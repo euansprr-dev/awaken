@@ -77,6 +77,8 @@ neoForge {
         gameTestServer {
             type = "gameTestServer"
             programArguments.addAll '--tests', 'awaken:*'
+            // -PpowerAudit casts every damaging power at a line-up and logs who it hit (PowerHitTests)
+            if (project.hasProperty('powerAudit')) systemProperty 'awaken.powerAudit', 'true'
             // never a Dock icon or a focus grab on the owner's Mac while tests run
             systemProperty 'java.awt.headless', 'true'
             systemProperty 'apple.awt.UIElement', 'true'
