@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:zero_core",
+  "count": {
+    "C": 2,
+    "B": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:unit_zero"
+  ],
+  "hint": "Unit Zero counts down in a Precursor Lab",
+  "group": "lord"
+}

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:blossom_dust",
+  "count": {
+    "E": 6,
+    "D": 8
+  },
+  "weight": 10,
+  "value": 0.8,
+  "any_of": [
+    "seen:petalwing",
+    "seen:empress_moth"
+  ],
+  "hint": "Petalwings hover over meadows and cherry groves",
+  "group": "blossom"
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:broker_lantern",
+  "count": {
+    "D": 2,
+    "C": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:lantern_broker"
+  ],
+  "hint": "The Lantern Broker trades at the Night Market; ask for a duel",
+  "group": "lord"
+}

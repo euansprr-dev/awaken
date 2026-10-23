@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:wind_charge",
+  "count": {
+    "B": 8,
+    "A": 8
+  },
+  "weight": 10,
+  "value": 0.6,
+  "any_of": [
+    "killed:minecraft:breeze",
+    "killed:awaken:sky_leviathan"
+  ],
+  "hint": "Breezes, and the Sky Leviathan"
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:listener_ear",
+  "count": {
+    "C": 2,
+    "B": 2
+  },
+  "weight": 6,
+  "value": 7.0,
+  "any_of": [
+    "killed:awaken:guardian_silent"
+  ],
+  "hint": "The Great Listener hears you in the Silent Halls",
+  "group": "guardian"
+}

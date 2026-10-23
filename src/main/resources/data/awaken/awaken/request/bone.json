@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "item": "minecraft:bone",
+  "count": {
+    "E": 8,
+    "D": 12
+  },
+  "weight": 7,
+  "value": 0.35,
+  "hint": "Skeletons at night, Wisp Hounds in the cold"
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:choir_crystal",
+  "count": {
+    "D": 8,
+    "C": 8
+  },
+  "weight": 6,
+  "value": 0.6,
+  "any_of": [
+    "mined:awaken:choir_crystal"
+  ],
+  "hint": "Crystals ring in the Drowned Choir",
+  "group": "strata"
+}

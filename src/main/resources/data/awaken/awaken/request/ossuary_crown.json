@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:ossuary_crown",
+  "count": {
+    "C": 2,
+    "B": 2
+  },
+  "weight": 6,
+  "value": 7.0,
+  "any_of": [
+    "killed:awaken:guardian_orchard"
+  ],
+  "hint": "The Ossuary King rules the Bone Orchard",
+  "group": "guardian"
+}

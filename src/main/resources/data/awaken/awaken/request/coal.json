@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:coal",
+  "count": {
+    "E": 12,
+    "D": 16
+  },
+  "weight": 6,
+  "value": 0.2,
+  "any_of": [
+    "mined:minecraft:coal_ore",
+    "mined:minecraft:deepslate_coal_ore"
+  ],
+  "hint": "Coal shows in cliffs and caves"
+}

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "minecraft:emerald",
+  "count": {
+    "C": 4,
+    "B": 6
+  },
+  "weight": 10,
+  "value": 2.5,
+  "any_of": [
+    "mined:minecraft:emerald_ore",
+    "mined:minecraft:deepslate_emerald_ore",
+    "got:minecraft:emerald"
+  ],
+  "hint": "Mountain ore, or a villager's trade"
+}

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:dusk_feather",
+  "count": {
+    "E": 5,
+    "D": 6,
+    "C": 8
+  },
+  "weight": 12,
+  "value": 0.9,
+  "any_of": [
+    "seen:hollow_owl"
+  ],
+  "hint": "Hollow Owls watch the dark forest at night",
+  "group": "duskwood"
+}

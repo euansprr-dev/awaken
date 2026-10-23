@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "minecraft:ghast_tear",
+  "count": {
+    "B": 2,
+    "A": 3
+  },
+  "weight": 10,
+  "value": 4.0,
+  "any_of": [
+    "killed:minecraft:ghast"
+  ],
+  "hint": "Ghasts drift over the Nether's wastes"
+}

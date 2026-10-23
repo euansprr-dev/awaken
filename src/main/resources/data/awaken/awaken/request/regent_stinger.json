@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:regent_stinger",
+  "count": {
+    "E": 2,
+    "D": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:hive_regent"
+  ],
+  "hint": "The Hive Regent guards a Hive gate's comb",
+  "group": "lord"
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:glowstone_dust",
+  "count": {
+    "E": 8,
+    "D": 12
+  },
+  "weight": 10,
+  "value": 0.4,
+  "any_of": [
+    "seen:lumen_moth",
+    "mined:minecraft:glowstone"
+  ],
+  "hint": "Lumen Moths circle at night over buried ore"
+}

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:saint_heartwood",
+  "count": {
+    "E": 2,
+    "D": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:root_saint"
+  ],
+  "hint": "The Root Saint sleeps in an Overgrown Temple",
+  "group": "lord"
+}

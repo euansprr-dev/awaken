@@ -48,5 +48,23 @@
       { "name": "minecraft:block.anvil.use", "type": "event", "pitch": 0.9, "volume": 0.6 },
       { "name": "minecraft:block.blastfurnace.fire_crackle", "type": "event", "volume": 0.8 }
     ]
+  },
+  "hearth.request_deliver": {
+    "subtitle": "subtitles.awaken.hearth.request_deliver",
+    "sounds": [
+      { "name": "minecraft:item.bundle.drop_contents", "type": "event", "pitch": 1.15, "volume": 0.8 }
+    ]
+  },
+  "hearth.request_complete": {
+    "subtitle": "subtitles.awaken.hearth.request_complete",
+    "sounds": [
+      { "name": "minecraft:block.bell.use", "type": "event", "pitch": 1.5, "volume": 0.7 }
+    ]
+  },
+  "hearth.core_fuse": {
+    "subtitle": "subtitles.awaken.hearth.core_fuse",
+    "sounds": [
+      { "name": "minecraft:block.respawn_anchor.charge", "type": "event", "pitch": 1.4, "volume": 0.8 }
+    ]
   }
 }

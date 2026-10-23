@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "item": "minecraft:feather",
+  "count": {
+    "E": 8
+  },
+  "weight": 5,
+  "value": 0.3,
+  "hint": "Chickens and Frostfinches"
+}

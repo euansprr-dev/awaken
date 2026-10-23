@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "item": "minecraft:wheat",
+  "count": {
+    "E": 12,
+    "D": 16
+  },
+  "weight": 4,
+  "value": 0.2,
+  "hint": "Grow it at home, or find it in a village"
+}

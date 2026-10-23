@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "item": "minecraft:diamond",
+  "count": {
+    "C": 4,
+    "B": 6,
+    "A": 8,
+    "S": 8
+  },
+  "weight": 10,
+  "value": 3.0,
+  "any_of": [
+    "mined:minecraft:diamond_ore",
+    "mined:minecraft:deepslate_diamond_ore"
+  ],
+  "hint": "Diamonds sit near the bottom of the world"
+}

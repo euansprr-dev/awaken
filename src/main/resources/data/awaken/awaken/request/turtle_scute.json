@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:turtle_scute",
+  "count": {
+    "E": 3,
+    "D": 4
+  },
+  "weight": 10,
+  "value": 2.0,
+  "any_of": [
+    "seen:mossback"
+  ],
+  "hint": "Mossbacks graze the green plains; a scute now and then",
+  "group": "greenwild"
+}

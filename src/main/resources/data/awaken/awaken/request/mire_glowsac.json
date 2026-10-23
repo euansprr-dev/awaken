@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "awaken:mire_glowsac",
+  "count": {
+    "E": 5,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 1.0,
+  "any_of": [
+    "seen:bogwick",
+    "seen:mire_mother"
+  ],
+  "hint": "Bogwicks drift over swamps at dusk",
+  "group": "mire"
+}

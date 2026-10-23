@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "minecraft:blaze_rod",
+  "count": {
+    "B": 6,
+    "A": 8
+  },
+  "weight": 10,
+  "value": 1.2,
+  "any_of": [
+    "killed:minecraft:blaze"
+  ],
+  "hint": "Blazes guard the Nether's fortresses"
+}

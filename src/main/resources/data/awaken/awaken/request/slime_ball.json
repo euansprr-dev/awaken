@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "minecraft:slime_ball",
+  "count": {
+    "E": 4,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 0.8,
+  "any_of": [
+    "seen:bog_toad",
+    "killed:minecraft:slime"
+  ],
+  "hint": "Bog Toads gulp small slimes and spit the balls out",
+  "group": "mire"
+}

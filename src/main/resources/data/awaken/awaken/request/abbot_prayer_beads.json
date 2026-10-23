@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:abbot_prayer_beads",
+  "count": {
+    "C": 2,
+    "B": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:abbot_of_frost"
+  ],
+  "hint": "The Abbot of Frost leads a Frost Monastery's choir",
+  "group": "lord"
+}

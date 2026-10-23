@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:archivist_quill",
+  "count": {
+    "D": 2,
+    "C": 3
+  },
+  "weight": 8,
+  "value": 5.0,
+  "any_of": [
+    "killed:awaken:drowned_archivist"
+  ],
+  "hint": "The Drowned Archivist keeps a Drowned Archive",
+  "group": "lord"
+}

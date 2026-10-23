@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:raw_copper",
+  "count": {
+    "E": 12,
+    "D": 16
+  },
+  "weight": 10,
+  "value": 0.3,
+  "any_of": [
+    "mined:minecraft:copper_ore",
+    "mined:minecraft:deepslate_copper_ore"
+  ],
+  "hint": "Copper veins in the caves you've dug"
+}

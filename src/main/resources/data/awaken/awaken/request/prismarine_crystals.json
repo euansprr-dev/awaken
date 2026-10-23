@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "item": "minecraft:prismarine_crystals",
+  "count": {
+    "B": 8
+  },
+  "weight": 10,
+  "value": 0.5,
+  "any_of": [
+    "killed:minecraft:guardian",
+    "killed:awaken:guardian_inverted"
+  ],
+  "hint": "Ocean monuments, and the Inverted Sea"
+}

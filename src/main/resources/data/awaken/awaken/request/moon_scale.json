@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:moon_scale",
+  "count": {
+    "B": 2,
+    "A": 2
+  },
+  "weight": 6,
+  "value": 7.0,
+  "any_of": [
+    "killed:awaken:guardian_inverted"
+  ],
+  "hint": "The Drowned Moon turns the tide of the Inverted Sea",
+  "group": "guardian"
+}

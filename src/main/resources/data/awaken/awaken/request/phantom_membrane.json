@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "item": "minecraft:phantom_membrane",
+  "count": {
+    "E": 4,
+    "D": 6
+  },
+  "weight": 10,
+  "value": 1.2,
+  "any_of": [
+    "seen:dune_ray",
+    "killed:minecraft:phantom"
+  ],
+  "hint": "Dune Rays glide over the desert sand",
+  "group": "sunscorch"
+}

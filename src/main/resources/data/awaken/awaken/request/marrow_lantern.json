@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:marrow_lantern",
+  "count": {
+    "C": 6,
+    "B": 6
+  },
+  "weight": 6,
+  "value": 0.8,
+  "any_of": [
+    "mined:awaken:marrow_lantern"
+  ],
+  "hint": "Marrow lanterns light the Bone Orchard",
+  "group": "strata"
+}

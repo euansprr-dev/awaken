@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:architect_key",
+  "count": {
+    "A": 2,
+    "S": 2
+  },
+  "weight": 6,
+  "value": 7.0,
+  "any_of": [
+    "killed:awaken:guardian_dreaming"
+  ],
+  "hint": "The Architect of Rooms rearranges the Dreaming Stratum",
+  "group": "guardian"
+}

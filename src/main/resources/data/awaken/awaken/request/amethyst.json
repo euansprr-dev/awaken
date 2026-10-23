@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "minecraft:amethyst_shard",
+  "count": {
+    "D": 8,
+    "C": 12
+  },
+  "weight": 10,
+  "value": 0.4,
+  "any_of": [
+    "mined:minecraft:amethyst_cluster",
+    "got:minecraft:amethyst_shard"
+  ],
+  "hint": "Geodes hide under the hills"
+}
