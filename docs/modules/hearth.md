@@ -10,7 +10,7 @@ Echoes fill role pads by themselves, and every Y/N choice is optional.
 ## How to try it
 
 1. `/awaken admin awaken`, then get a Lord's Heart (`/give @s awaken:lord_heart`) and craft a **Hearth Anchor**
-   (obsidian corners, stone bricks, Lord's Heart in the middle). Place it: radius 48, respawn here, Oren arrives and a small
+   (copper ingot corners, stone bricks, Lord's Heart in the middle; copper rather than obsidian so your first base needs only stone tools). Place it: radius 48, respawn here, Oren arrives and a small
    Spire (Spire Board + Reassessment Monolith + lanterns) rises on open ground near the Anchor.
 2. Use the Anchor: tier, radius, rooms, town, and the next upgrade with its (rank-discounted) price. Y builds it.
 3. Build rooms (they must be roofed and closed; doors, panes, fences and walls close gaps):

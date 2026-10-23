@@ -303,8 +303,7 @@ public final class Town {
         if (hp.rumourDay == today) {
             w.footer(Component.literal("Nothing new today. Mira hears things overnight."));
         } else {
-            w.action(Offers.offer(sp, "rumour", 20 * 30, p -> Rumours.give(p, (ServerLevel) p.level())));
-            w.footer(Component.literal("Hear her rumour?"));
+            w.choice(Offers.offer(sp, "rumour", 20 * 30, p -> Rumours.give(p, (ServerLevel) p.level())), "Hear her rumour", "Not now");
         }
         Signal.send(sp, w.ttl(20 * 10).build());
     }
@@ -317,8 +316,8 @@ public final class Town {
         }
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role()))
                 .body(Component.literal("“" + line + "”"))
-                .action(Offers.offer(sp, "codex", 20 * 30, Town::readCodex))
-                .footer(Component.literal("Have him read your Codex aloud? (Hold an item to have it identified)")).ttl(20 * 10).build());
+                .choice(Offers.offer(sp, "codex", 20 * 30, Town::readCodex), "Read my Codex aloud", "Not now")
+                .footer(Component.literal("Hold an item to have it identified")).ttl(20 * 30).build());
     }
 
     private static void sun(ServerPlayer sp, ServerLevel level, Townsfolk.Def d, String line) {
@@ -327,13 +326,12 @@ public final class Town {
         var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role())).body(Component.literal("“" + line + "”"));
         if (fractured) {
             w.row(Component.literal("Fracture"), Component.literal(((p.fractureUntil() - level.getGameTime()) / 1200 + 1) + " min left"));
-            w.action(Offers.offer(sp, "heal", 20 * 30, pl -> {
+            w.choice(Offers.offer(sp, "heal", 20 * 30, pl -> {
                 Progression.clearFracture(pl);
                 pl.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 10, 1));
                 pl.level().playSound(null, pl.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1f, 1.2f);
                 Signal.toast(pl, Component.literal("Sun mends the Fracture. “No charge. Eat something.”"));
-            }));
-            w.footer(Component.literal("Let her mend it? Free."));
+            }), "Let her mend it (free)", "Not now");
         } else {
             sp.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 8, 0));
             w.footer(Component.literal("How are you actually doing?"));

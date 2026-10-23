@@ -111,8 +111,7 @@ public final class Upgrades {
         int off = Costs.discountPercent(rank, next.tier());
         if (off > 0) w.row(Component.literal("Rank discount"), Component.literal("−" + off + "%"));
         if (Costs.canAfford(sp, price)) {
-            w.action(Offers.offer(sp, "anchor", 20 * 30, p -> upgradeAnchor(p, h.owner)));
-            w.footer(Component.literal("Build Tier " + roman(h.tier + 1) + "?"));
+            w.choice(Offers.offer(sp, "anchor", 20 * 30, p -> upgradeAnchor(p, h.owner)), "Build Tier " + roman(h.tier + 1), "Not now");
         } else {
             w.footer(Component.literal("Gather the materials and come back"));
         }
@@ -179,8 +178,7 @@ public final class Upgrades {
         int off = Costs.discountPercent(rank, next.tier());
         if (off > 0) w.row(Component.literal("Rank discount"), Component.literal("−" + off + "%"));
         if (Costs.canAfford(sp, price)) {
-            w.action(Offers.offer(sp, "forge", 20 * 30, p -> upgradeForge(p, level, forgePos)));
-            w.footer(Component.literal("Upgrade the Forge?"));
+            w.choice(Offers.offer(sp, "forge", 20 * 30, p -> upgradeForge(p, level, forgePos)), "Upgrade the Forge", "Not now");
         }
         Signal.send(sp, w.ttl(20 * 12).build());
     }
@@ -263,7 +261,7 @@ public final class Upgrades {
         if (oren) w.body(Component.literal("I'll bring the essence. You bring the iron."));
         Item item = stack.getItem();
         if (Costs.canAfford(sp, price)) {
-            w.action(Offers.offer(sp, "temper", 20 * 30, p -> {
+            w.choice(Offers.offer(sp, "temper", 20 * 30, p -> {
                 ItemStack now = p.getItemInHand(hand);
                 if (!now.is(item) || temperOf(now) != current) return;
                 List<Costs.Part> again = Costs.price(def.base(), Progression.rank(p), def.tier());
@@ -274,7 +272,7 @@ public final class Upgrades {
                 ((ServerLevel) p.level()).sendParticles(ParticleTypes.CRIT, p.getX(), p.getY() + 1, p.getZ(), 16, 0.4, 0.4, 0.4, 0.2);
                 Signal.toast(p, Component.literal(now.getHoverName().getString() + " tempered to " + roman(current + 1)));
                 Progression.count(p, "awaken:gear_tempered");
-            }));
+            }), "Temper it to " + roman(current + 1), "Not now");
         }
         Signal.send(sp, w.ttl(20 * 12).build());
     }

@@ -19,6 +19,7 @@ public final class GatesModule {
         modBus.addListener(GatesModule::registerPayloads);
         GateEvents.register();
         GateAccess.install();
+        GatesNow.register();
         PlayDays.onNewPlayDay(Breaks::onNewPlayDay);
         DaysEnd.addWaiting(Breaks::waitingLine);
         Signal.onAction(Interactions.ACTION, Interactions::answer);

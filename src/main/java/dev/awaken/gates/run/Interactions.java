@@ -131,8 +131,8 @@ public final class Interactions {
                 .row("Satchel XP", Long.toString(Math.round(run.satchelXp)))
                 .row("Floor", w.floorNo() + (w.area() == 0 ? " of " + g.plan.floors() : " (second gate)"))
                 .body(Component.literal(last ? "Below the Seal waits the Lord." : "Carry it out now, or break the Seal and go deeper for more."))
-                .footer(Component.literal("[Y] Extract · [N] Stay"))
-                .action(ACTION + ":extract").priority(5).build());
+                .choice(ACTION + ":extract", "Leave with your loot", last ? "Stay and face the Lord" : "Stay and go deeper")
+                .priority(5).build());
     }
 
     public static void useSeal(ServerPlayer p, BlockPos pos) {
@@ -200,7 +200,7 @@ public final class Interactions {
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Retreat?"))
                 .body(Component.literal("You can walk back out, but the gate keeps what's in your Satchel."))
                 .row("Satchel", Satchel.items(run.satchel) + " items, " + Math.round(run.satchelXp) + " XP")
-                .footer(Component.literal("[Y] Leave without it · [N] Stay")).action(ACTION + ":retreat").build());
+                .choice(ACTION + ":retreat", "Leave (the gate keeps your Satchel)", "Stay").build());
     }
 
     public static void takeLantern(ServerPlayer p, BlockPos pos) {

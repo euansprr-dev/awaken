@@ -252,7 +252,7 @@ public final class DescentTravel {
                 .row(Component.literal("To"), Component.literal(target == 0 ? "The Well (the surface)" : Strata.label(target) + " · bottom camp"))
                 .row(Component.literal("Strain"), Component.literal("−" + Math.round(after * 100) + "% stats for a while"))
                 .footer(Component.literal(target == 0 ? "Your Deep Pack becomes yours at the top" : "The Deep Lift at home climbs without Strain"))
-                .action("descent:ascend:" + here).build());
+                .choice("descent:ascend:" + here, "Climb up (costs Strain)", "Stay down here").build());
     }
 
     static void onAscendAnswer(ServerPlayer player, String action, boolean accepted) {

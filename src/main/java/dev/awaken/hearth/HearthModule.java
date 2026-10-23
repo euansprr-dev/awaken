@@ -51,6 +51,7 @@ public final class HearthModule {
         bus.addListener(HearthModule::onServerTick);
 
         HearthService.init();
+        HearthNow.register();
         Offers.init();
         Later.init();
         Echoes.init();

@@ -216,8 +216,8 @@ public final class Trials {
                 .body(Component.literal(kind.text + " If you fall, you wake at home and can try again next play-day."))
                 .row(Component.literal("Trial"), Component.literal(kind.name().charAt(0) + kind.name().substring(1).toLowerCase(java.util.Locale.ROOT)))
                 .row(Component.literal("Time"), Component.literal(kind.duration / 1200 + " minutes"))
-                .action(Offers.offer(sp, "trial", 20 * 30, pl -> start(pl, kind, next, false)))
-                .footer(Component.literal("Begin?")).priority(6).ttl(20 * 30).build());
+                .choice(Offers.offer(sp, "trial", 20 * 30, pl -> start(pl, kind, next, false)), "Begin the trial", "Not now")
+                .priority(6).ttl(20 * 30).build());
     }
 
     // ---- starting ---------------------------------------------------------------------------------------------------

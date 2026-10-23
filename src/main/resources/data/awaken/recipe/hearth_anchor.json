@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "O": "minecraft:obsidian",
+    "O": "minecraft:copper_ingot",
     "S": "minecraft:stone_bricks",
     "H": "awaken:lord_heart"
   },

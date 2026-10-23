@@ -415,8 +415,7 @@ public final class Projection {
         Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Your body is under attack."))
                 .body(Component.literal(culprit(source.getEntity()) + " " + heartsLost(amount) + " lost."))
                 .row(Component.literal("Body"), Component.literal(hearts(body.getHealth()) + " / " + hearts(body.getMaxHealth()) + " ♥"))
-                .footer(Component.literal("Return"))
-                .action("veil:return").priority(9).ttl(20 * 8).build());
+                .choice("veil:return", "Return to your body", "Stay out").priority(9).ttl(20 * 8).build());
         owner.connection.send(new net.minecraft.network.protocol.game.ClientboundSoundPacket(dev.awaken.core.CoreModule.SIGNAL_WARNING,
                 SoundSource.PLAYERS, owner.getX(), owner.getY(), owner.getZ(), 0.8F, 0.8F, owner.getRandom().nextLong()));
     }
