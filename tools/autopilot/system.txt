@@ -8,7 +8,11 @@ cmd time set day
 look 0 10
 gui 0
 cmd awaken admin awaken
-wait 120
+wait 200
+# pick the first power so its choice screen never covers a shot
+cmd awaken powers starter 1
+wait 20
+screen close
 
 # --- GUI scale 0 (auto) ---
 cmd awaken signal demo now
