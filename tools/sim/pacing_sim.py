@@ -110,13 +110,13 @@ PLAYERS = {
 }
 
 
-# ---- power mastery (JAVA powers/Mastery + PowerMath.masteryNeed) --------------------------------------------------
+# ---- power mastery (JAVA powers/Mastery) --------------------------------------------------
 # A power gains mastery points (MP) from real use: the energy of a cast that lands a hit on a living target pays 1 MP
 # per energy point, energy spent in a fight that hit nothing pays FIGHT_MP, kills pay KILL_MP (elites and wardens
 # ELITE_MP, bosses BOSS_MP). Energy spent at the air, out of a fight, pays nothing. A full bar levels the power up
 # exactly like a duplicate Power Core (cores stay a shortcut). The sim tracks the player's MAIN power only, from the
 # moment the first power is chosen, with no duplicate cores (a core is a random roll, rarely your main).
-MASTERY_NEED = {1: 7000, 2: 13000, 3: 32000, 4: 50000}  # JAVA PowerMath.masteryNeed(level): MP from level to level + 1
+MASTERY_NEED = {1: 7000, 2: 13000, 3: 32000, 4: 50000}  # JAVA Mastery.need(level): MP from level to level + 1
 FIGHT_MP = 0.5                                          # JAVA Mastery.FIGHT_SHARE
 KILL_MP, ELITE_MP, BOSS_MP = 6, 18, 60                  # JAVA Mastery.KILL / ELITE / BOSS
 # ASSUMED play style (not game code): how a main power is used in a fight.

@@ -427,11 +427,21 @@ final class GearTests {
         DamageSource power = level.damageSources().source(Forces.KINETIC, sp);
         plain.hurtServer(level, power, 4);
         sp.setItemSlot(EquipmentSlot.OFFHAND, GearItems.stack(HunterTier.E, Piece.FOCUS));
+        dev.awaken.powers.Powers.fillEnergy(sp);
+        dev.awaken.powers.Casting.drainExtra(sp, 40);
+        float energyBefore = dev.awaken.powers.Powers.energy(sp);
         focused.hurtServer(level, power, 4);
         float lostPlain = plain.getMaxHealth() - plain.getHealth();
         float lostFocused = focused.getMaxHealth() - focused.getHealth();
         h.assertTrue(Math.abs(lostPlain - 4) < 1e-3, "no focus: 4, got " + lostPlain);
         h.assertTrue(Math.abs(lostFocused - 4 * (1 + HunterTier.E.focus.powerBonus())) < 1e-3, "Wildhide Charm: +6%, got " + lostFocused);
+        // the focus gives a little energy back for a power hit, at most once a second
+        float afterHit = dev.awaken.powers.Powers.energy(sp);
+        h.assertTrue(Math.abs(afterHit - energyBefore - GearCombat.focusEnergy(GearItems.stack(HunterTier.E, Piece.FOCUS))) < 1e-3,
+                "a Wildhide Charm restores 0.5 energy: " + energyBefore + " -> " + afterHit);
+        plain.hurtServer(level, power, 4);
+        h.assertTrue(Math.abs(dev.awaken.powers.Powers.energy(sp) - afterHit) < 1e-3, "not twice in the same second");
+        h.assertTrue(GearCombat.focusEnergy(GearItems.stack(HunterTier.B, Piece.FOCUS)) == 2f, "a Veilwoven Censer restores 2");
         h.succeed();
     }
 

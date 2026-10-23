@@ -66,6 +66,7 @@ public final class GearCombat {
                 float after = (float) (before * (1 + bonus));
                 if (isBoss(victim)) after = Math.min(after, Math.max(before, victim.getMaxHealth() * BOSS_HIT_CAP));
                 e.setAmount(after);
+                focusEnergy(p, level);
             }
             if (SetBonus.has(p, HunterTier.C, SetBonus.FULL)) {
                 GearState st = GearState.of(p);
@@ -116,6 +117,28 @@ public final class GearCombat {
     public static boolean primed(ServerPlayer p) {
         GearState st = GearState.of(p);
         return st.primedUntil != 0 && p.level().getGameTime() <= st.primedUntil;
+    }
+
+    /**
+     * Energy a focus gives back for a power hit that lands, at most once a second: E 0.5, D 1, C 1.5, B 2. Modest on
+     * purpose (regen is 4.4/s at INT 5): a focus keeps a fight going a little longer, it never pays for a cast.
+     */
+    public static float focusEnergy(ItemStack stack) {
+        if (!(stack.getItem() instanceof HunterGearItem g) || g.piece != Piece.FOCUS) return 0;
+        return 0.5f * (g.tier.ordinal() + 1);
+    }
+
+    /** Ticks between two focus refunds. */
+    static final int FOCUS_ENERGY_GAP = 20;
+
+    private static void focusEnergy(ServerPlayer p, ServerLevel level) {
+        float amount = Math.max(focusEnergy(p.getMainHandItem()), focusEnergy(p.getOffhandItem()));
+        if (amount <= 0) return;
+        GearState st = GearState.of(p);
+        long now = level.getGameTime();
+        if (now - st.focusEnergyAt < FOCUS_ENERGY_GAP) return;
+        st.focusEnergyAt = now;
+        dev.awaken.powers.Powers.restoreEnergy(p, amount);
     }
 
     /** The best focus bonus in either hand (they don't stack). */

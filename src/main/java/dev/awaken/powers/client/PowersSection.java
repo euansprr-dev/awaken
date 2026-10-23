@@ -67,7 +67,7 @@ final class PowersSection implements StatusSections.Section {
     private static int detailLines(Font font, int width) {
         PowerType t = PowerRegistry.get(selected == null ? "" : selected);
         if (t == null) return 1;
-        return 2 + font.split(Component.literal(t.description), width).size();
+        return 3 + font.split(Component.literal(t.description), width).size();
     }
 
     @Override
@@ -127,7 +127,12 @@ final class PowersSection implements StatusSections.Section {
             g.blitSprite(RenderPipelines.GUI_TEXTURED, PowerHud.icon(t), cx + 3, cy + 3, 16, 16);
             Loadout.Owned o = l.get(id);
             int level = o == null ? 1 : o.level();
-            for (int p = 0; p < level; p++) g.fill(cx + 2 + p * 3, cy + CELL - 3, cx + 4 + p * 3, cy + CELL - 1, 0xFFFFCF7A);
+            for (int p = 0; p < level; p++) g.fill(cx + 2 + p * 3, cy + CELL - 4, cx + 4 + p * 3, cy + CELL - 2, 0xFFFFCF7A);
+            // mastery toward the next level: a hairline under the pips (full and gold when mastered)
+            int barW = CELL - 4;
+            g.fill(cx + 2, cy + CELL - 1, cx + 2 + barW, cy + CELL, 0xFF1A2230);
+            int filled = Math.round(barW * l.masteryProgress(id));
+            if (filled > 0) g.fill(cx + 2, cy + CELL - 1, cx + 2 + filled, cy + CELL, level >= Loadout.MAX_LEVEL ? 0xFFFFCF7A : 0xFF9AD4FF);
             if (l.slotOf(id) >= 0) g.fill(cx + CELL - 4, cy + 1, cx + CELL - 1, cy + 4, 0xFF9AD4FF);
             if (t.isPassive()) g.fill(cx + CELL - 4, cy + 1, cx + CELL - 1, cy + 4, 0xFF86E0A0);
             if (l.cooldownLeft(id, now) > 0) g.fill(cx + 3, cy + 3, cx + 19, cy + 19, 0x80000000);
@@ -152,7 +157,17 @@ final class PowersSection implements StatusSections.Section {
         String meta = show.family.label + " · " + slot + variant + " · Lv " + (o == null ? 1 : o.level())
                 + (show.isPassive() ? "" : " · " + (int) show.cost + " energy · " + trim(show.cooldown / 20.0) + " s");
         g.text(font, Component.literal(meta), x, dy + 10, 0xFF9FB0C8, false);
-        g.textWithWordWrap(font, Component.literal(show.description), x, dy + 20, width, 0xFFD6DEE8, false);
+        g.text(font, Component.literal(masteryLine(l, show, o)), x, dy + 20, 0xFF9AD4FF, false);
+        g.textWithWordWrap(font, Component.literal(show.description), x, dy + 30, width, 0xFFD6DEE8, false);
+    }
+
+    /** "Mastery 34% → Lv 3 · grows in real fights", or "Mastered: level 5". */
+    private static String masteryLine(Loadout l, PowerType t, Loadout.@org.jspecify.annotations.Nullable Owned o) {
+        int level = o == null ? 1 : o.level();
+        if (level >= Loadout.MAX_LEVEL) return "Mastered: level " + Loadout.MAX_LEVEL;
+        int pct = (int) Math.floor(100 * l.masteryProgress(t.id.toString()));
+        String how = t.isPassive() ? "grows as it strikes" : "grows in real fights";
+        return "Mastery " + pct + "% → Lv " + (level + 1) + " · " + how;
     }
 
     private static String trim(double v) {

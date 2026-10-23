@@ -118,6 +118,7 @@ public final class Powers {
             return LearnResult.MAXED;
         }
         l.owned.put(id, new Loadout.Owned(id, o.variant(), o.level() + 1));
+        Mastery.coreLevelled(l, id, o.level(), o.level() + 1);
         announce(player, type, o.variant(), o.level() + 1, "Power levelled up", l.slotOf(id));
         markDirty(player);
         return LearnResult.LEVELLED;
@@ -206,7 +207,21 @@ public final class Powers {
         l.owned.remove(id);
         for (int i = 0; i < Loadout.SLOTS; i++) if (l.slots[i].equals(id)) l.slots[i] = "";
         l.cooldowns.remove(id);
+        l.mastery.remove(id);
         markDirty(player);
+    }
+
+    /**
+     * Gives the player energy back, never above their pool (gear, rewards, other modules). Returns what was actually
+     * added. Restored energy is not "spent", so it never counts toward mastery.
+     */
+    public static float restoreEnergy(ServerPlayer player, float amount) {
+        return Casting.restore(player, amount);
+    }
+
+    /** Mastery toward a power's next level, 0..1 (1 at the top level). Server and client (from the synced loadout). */
+    public static float masteryProgress(Player player, String powerId) {
+        return loadout(player).masteryProgress(powerId);
     }
 
     public static void fillEnergy(ServerPlayer player) {

@@ -458,7 +458,34 @@ public final class Progression {
             var d = Content.PATHS.get(p.path);
             if (d != null) for (Perk k : d.perks()) if (k.id().equals(perkId)) sum += k.amount();
         }
+        PerkSource[] sources = perkSources;
+        for (int i = 0; i < sources.length; i++) {
+            try {
+                sum += sources[i].perk(player, perkId);
+            } catch (RuntimeException e) {
+                dev.awaken.Awaken.LOG.warn("[progression] a perk source failed: {}", e.toString());
+            }
+        }
         return sum;
+    }
+
+    /** Something outside progression that grants perks (worn gear, a machine nearby). Called on both sides. */
+    @FunctionalInterface
+    public interface PerkSource {
+        /** This source's amount of {@code perkId} for the player right now (0 if none). Keep it cheap: no allocation. */
+        double perk(Player player, String perkId);
+    }
+
+    private static volatile PerkSource[] perkSources = new PerkSource[0];
+
+    /**
+     * Adds a perk source: its amounts are summed into {@link #perk} with Truths, the Title, Latents and the Path, so
+     * every reader of a perk (energy regen, cooldowns, cord length...) sees it with no other change.
+     */
+    public static synchronized void addPerkSource(PerkSource source) {
+        PerkSource[] next = java.util.Arrays.copyOf(perkSources, perkSources.length + 1);
+        next[next.length - 1] = source;
+        perkSources = next;
     }
 
     public static boolean hasPerk(Player player, String perkId) {

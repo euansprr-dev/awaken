@@ -47,6 +47,7 @@ public final class PowersModule {
         Starter.init(modBus); // the first-power choice on awakening (plan v2 §4.1)
         PowersCommands.register();
         PowersTests.register();
+        MasteryTests.register();
         StarterTests.register();
         PowersTests.registerIsolated(modBus);
     }

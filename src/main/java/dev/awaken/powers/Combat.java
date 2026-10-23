@@ -99,7 +99,9 @@ public final class Combat {
         if (resetIframes) target.damageCooldownTime = 0;
         PowerState st = PowerState.of(owner);
         st.markCombat(owner);
-        return target.hurtServer(level, source(level, force, direct, owner), amount);
+        boolean landed = target.hurtServer(level, source(level, force, direct, owner), amount);
+        if (landed) Mastery.landed(owner, direct, target, force, Casting.now(owner));
+        return landed;
     }
 
     public static boolean hurt(Cast c, LivingEntity target, float amount, Forces.@Nullable Force force) {
