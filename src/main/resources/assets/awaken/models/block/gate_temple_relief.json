@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "awaken:block/gate_temple_relief",
+    "side": "awaken:block/gate_temple_relief_side",
+    "top": "awaken:block/gate_temple_relief_side"
+  }
+}

@@ -102,6 +102,88 @@ public final class GatesRegistry {
 
     public static final List<DeferredBlock<? extends Block>> ITEM_BLOCKS = List.of(FRAME, FRAME_CRACKED, SHRINE, SEAL, CACHE, BARS, RUNE, ENTRANCE, LANTERN, UPDRAFT);
 
+    // ---- interior materials: where vanilla runs out (docs/modules/gates.md "Interiors"; textures tools/art/specs/gate_interiors.py)
+
+    private static UnaryOperator<BlockBehaviour.Properties> stoneLike(MapColor c, SoundType s, int light) {
+        return p -> p.mapColor(c).strength(1.5F, 6.0F).sound(s).requiresCorrectToolForDrops().lightLevel(st -> light);
+    }
+
+    private static UnaryOperator<BlockBehaviour.Properties> soft(MapColor c, SoundType s, float strength, int light) {
+        return p -> p.mapColor(c).strength(strength).sound(s).lightLevel(st -> light);
+    }
+
+    private static UnaryOperator<BlockBehaviour.Properties> glassy(MapColor c, SoundType s, int light) {
+        return p -> p.mapColor(c).strength(0.4F).sound(s).noOcclusion().lightLevel(st -> light)
+                .isValidSpawn((st, l, pos, t) -> false).isRedstoneConductor((st, l, pos) -> false)
+                .isSuffocating((st, l, pos) -> false).isViewBlocking((st, l, pos, box) -> false);
+    }
+
+    /** Skulls and long bones stacked into a wall: the Bell Crypt's ossuaries. */
+    public static final DeferredBlock<Block> OSSUARY = BLOCKS.registerSimpleBlock("gate_ossuary", stoneLike(MapColor.SAND, SoundType.BONE_BLOCK, 0));
+    /** Dark bronze gone green at the edges: the great bells and their crowns. */
+    public static final DeferredBlock<Block> BELL_BRONZE = BLOCKS.registerSimpleBlock("gate_bell_bronze", stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0));
+    /** A small bronze bell hanging from a chain (a plain model, no block entity, so worldgen can place it). */
+    public static final DeferredBlock<Block> BELL = BLOCKS.registerSimpleBlock("gate_bell",
+            p -> stoneLike(MapColor.TERRACOTTA_ORANGE, SoundType.COPPER, 0).apply(p).noOcclusion().isSuffocating((st, l, pos) -> false));
+    /** A giant mushroom's cap, glowing violet with cyan spots. */
+    public static final DeferredBlock<Block> GLOWCAP = BLOCKS.registerSimpleBlock("gate_glowcap", soft(MapColor.COLOR_PURPLE, SoundType.FUNGUS, 0.6F, 12));
+    /** The gills under a giant cap, faintly luminous. */
+    public static final DeferredBlock<Block> GLOWCAP_GILLS = BLOCKS.registerSimpleBlock("gate_glowcap_gills", soft(MapColor.COLOR_CYAN, SoundType.FUNGUS, 0.6F, 9));
+    /** Blackstone split by veins of ore still glowing from below. */
+    public static final DeferredBlock<Block> EMBER_ORE = BLOCKS.registerSimpleBlock("gate_ember_ore", stoneLike(MapColor.COLOR_BLACK, SoundType.GILDED_BLACKSTONE, 7));
+    /** A bookshelf the sea got into: swollen spines, green with algae. */
+    public static final DeferredBlock<Block> SODDEN_SHELF = BLOCKS.registerSimpleBlock("gate_sodden_shelf", soft(MapColor.COLOR_CYAN, SoundType.WOOD, 1.5F, 0));
+    /** A copper gear face: hub, spokes and teeth. */
+    public static final DeferredBlock<Block> GEAR = BLOCKS.registerSimpleBlock("gate_gear", stoneLike(MapColor.COLOR_ORANGE, SoundType.COPPER, 0));
+    /** A conveyor belt: dark slats over rollers (axis = the way it runs). */
+    public static final DeferredBlock<net.minecraft.world.level.block.RotatedPillarBlock> CONVEYOR = BLOCKS.registerBlock("gate_conveyor",
+            net.minecraft.world.level.block.RotatedPillarBlock::new, stoneLike(MapColor.COLOR_GRAY, SoundType.COPPER, 0));
+    /** Sand fused into amber glass by something very hot. */
+    public static final DeferredBlock<net.minecraft.world.level.block.TransparentBlock> SANDGLASS = BLOCKS.registerBlock("gate_sandglass",
+            net.minecraft.world.level.block.TransparentBlock::new, glassy(MapColor.COLOR_ORANGE, SoundType.GLASS, 0));
+    /** A sandstone tile inlaid with a sun that still holds the heat. */
+    public static final DeferredBlock<Block> SUN_TILE = BLOCKS.registerSimpleBlock("gate_sun_tile", stoneLike(MapColor.SAND, SoundType.STONE, 6));
+    /** Wax comb, capped cells and a few glowing larvae. */
+    public static final DeferredBlock<Block> BROOD_CELL = BLOCKS.registerSimpleBlock("gate_brood_cell", soft(MapColor.COLOR_ORANGE, SoundType.CORAL_BLOCK, 0.8F, 6));
+    /** Royal jelly: a translucent glowing gold. */
+    public static final DeferredBlock<net.minecraft.world.level.block.TransparentBlock> ROYAL_JELLY = BLOCKS.registerBlock("gate_royal_jelly",
+            net.minecraft.world.level.block.TransparentBlock::new, glassy(MapColor.GOLD, SoundType.HONEY_BLOCK, 12));
+    /** A carved face looking out of the temple wall (facing = the way it looks). */
+    public static final DeferredBlock<net.minecraft.world.level.block.GlazedTerracottaBlock> TEMPLE_RELIEF = BLOCKS.registerBlock("gate_temple_relief",
+            net.minecraft.world.level.block.GlazedTerracottaBlock::new, stoneLike(MapColor.STONE, SoundType.STONE, 0));
+    /** Polished jade, veined green. */
+    public static final DeferredBlock<Block> JADE = BLOCKS.registerSimpleBlock("gate_jade", stoneLike(MapColor.EMERALD, SoundType.STONE, 0));
+    /** A red paper lantern. */
+    public static final DeferredBlock<Block> PAPER_LANTERN = BLOCKS.registerSimpleBlock("gate_paper_lantern",
+            p -> soft(MapColor.COLOR_RED, SoundType.WOOL, 0.3F, 15).apply(p).noOcclusion().isSuffocating((st, l, pos) -> false));
+    /** Quartz brick under a crust of rime. */
+    public static final DeferredBlock<Block> RIME_BRICK = BLOCKS.registerSimpleBlock("gate_rime_brick", stoneLike(MapColor.SNOW, SoundType.STONE, 0));
+    /** A frosted window with cold light behind it. */
+    public static final DeferredBlock<net.minecraft.world.level.block.TransparentBlock> FROST_WINDOW = BLOCKS.registerBlock("gate_frost_window",
+            net.minecraft.world.level.block.TransparentBlock::new, glassy(MapColor.ICE, SoundType.GLASS, 9));
+    /** Silvered glass: a mirror. */
+    public static final DeferredBlock<Block> MIRROR = BLOCKS.registerSimpleBlock("gate_mirror", stoneLike(MapColor.QUARTZ, SoundType.GLASS, 3));
+    /** A white Precursor lab panel with a cyan light strip. */
+    public static final DeferredBlock<Block> LAB_PANEL = BLOCKS.registerSimpleBlock("gate_lab_panel", stoneLike(MapColor.QUARTZ, SoundType.METAL, 9));
+    /** A rack of Precursor machines blinking in no language (facing = its front). */
+    public static final DeferredBlock<net.minecraft.world.level.block.GlazedTerracottaBlock> LAB_RACK = BLOCKS.registerBlock("gate_lab_rack",
+            net.minecraft.world.level.block.GlazedTerracottaBlock::new, stoneLike(MapColor.COLOR_GRAY, SoundType.METAL, 5));
+    /** Wallpaper from a house you almost remember. The pattern is eyes. */
+    public static final DeferredBlock<Block> DREAM_PAPER = BLOCKS.registerSimpleBlock("gate_dream_paper", soft(MapColor.COLOR_PURPLE, SoundType.WOOL, 0.8F, 0));
+    /** A bank of cloud. */
+    public static final DeferredBlock<Block> CLOUD = BLOCKS.registerSimpleBlock("gate_cloud", soft(MapColor.SNOW, SoundType.WOOL, 0.4F, 0));
+    /** Black glass with stars in it, a long way down. */
+    public static final DeferredBlock<Block> VOID_GLASS = BLOCKS.registerSimpleBlock("gate_void_glass", stoneLike(MapColor.COLOR_BLACK, SoundType.GLASS, 3));
+    /** Open sky, painted on the Sky Archipelago's walls and vaults; it gives off a little daylight of its own. */
+    public static final DeferredBlock<Block> SKY = BLOCKS.registerSimpleBlock("gate_sky", soft(MapColor.COLOR_LIGHT_BLUE, SoundType.WOOL, 0.4F, 6));
+    /** The System's blue: the Rest Shrine's light. */
+    public static final DeferredBlock<Block> SIGNAL_LAMP = BLOCKS.registerSimpleBlock("gate_signal_lamp", stoneLike(MapColor.COLOR_LIGHT_BLUE, SoundType.AMETHYST, 14));
+
+    public static final List<DeferredBlock<? extends Block>> INTERIOR_BLOCKS = List.of(OSSUARY, BELL_BRONZE, BELL, GLOWCAP, GLOWCAP_GILLS,
+            EMBER_ORE, SODDEN_SHELF, GEAR, CONVEYOR, SANDGLASS, SUN_TILE, BROOD_CELL, ROYAL_JELLY, TEMPLE_RELIEF, JADE, PAPER_LANTERN,
+            RIME_BRICK, FROST_WINDOW, MIRROR, LAB_PANEL, LAB_RACK, DREAM_PAPER, CLOUD, SKY, VOID_GLASS, SIGNAL_LAMP);
+    public static final List<DeferredItem<BlockItem>> INTERIOR_ITEMS = INTERIOR_BLOCKS.stream().map(ITEMS::registerSimpleBlockItem).toList();
+
     public static final DeferredItem<BlockItem> FRAME_ITEM = ITEMS.registerSimpleBlockItem(FRAME);
     public static final DeferredItem<BlockItem> FRAME_CRACKED_ITEM = ITEMS.registerSimpleBlockItem(FRAME_CRACKED);
     public static final DeferredItem<BlockItem> SHRINE_ITEM = ITEMS.registerSimpleBlockItem(SHRINE);
@@ -195,6 +277,7 @@ public final class GatesRegistry {
         ATTACHMENTS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
         GateExterior.init(modBus);
+        dev.awaken.gates.world.Interiors.init();
         modBus.addListener(GatesRegistry::attributes);
         modBus.addListener(GatesRegistry::creativeTab);
     }
@@ -210,5 +293,6 @@ public final class GatesRegistry {
         if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
         for (var item : List.of(FRAME_ITEM, FRAME_CRACKED_ITEM, SHRINE_ITEM, SEAL_ITEM, CACHE_ITEM, BARS_ITEM, RUNE_ITEM, ENTRANCE_ITEM,
                 LANTERN_ITEM, UPDRAFT_ITEM)) e.accept(item.get());
+        for (var item : INTERIOR_ITEMS) e.accept(item.get());
     }
 }

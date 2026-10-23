@@ -140,9 +140,102 @@ def mastery_per_combat_minute(level):
 
 
 def death_risk(floor, ratio, skill):
-    # Per-floor chance of dying. ratio = player level / gate's content level.
+    # Per-floor chance of dying. ratio = player level / gate's content level. (The prologue's Bell Crypt; real gates
+    # use gate_floor_risk below, built on what the gates actually contain.)
     base = 0.035 * 1.7 ** (floor - 1)
     return min(0.85, base / (max(ratio, 0.3) ** 2.2) / skill)
+
+
+# ---- the gates themselves (P3: D-B tuning; docs/modules/gates.md "Tuning") ----------------------------------------
+# JAVA, measured: the GameTest gates_tuning_export rolls 240 gates per rank through the real Director and FloorBuilder
+# and writes run/gate_tuning.json (copied to tools/sim/gate_tuning.json): floors per gate, modifier and twist
+# frequencies, and per floor the monsters on the critical path and in the side rooms (an elite counts 3).
+import os as _os
+
+_HERE = _os.path.dirname(_os.path.abspath(__file__))
+COMP_FILE = _os.path.join(_HERE, "gate_tuning.json")
+COMP = json.load(open(COMP_FILE)) if _os.path.exists(COMP_FILE) else None
+CONTENT = _os.environ.get("AWAKEN_SIM_CONTENT", "v2")  # which interiors: "v1" = before the P3 tuning, "v2" = now
+
+# ASSUMED (a combat model, not game code): what makes a floor dangerous.
+FLOOR1_RISK = 0.035       # an on-level balanced player dying on the reference floor (v1, C rank, floor 1)
+THREAT_EXP = 0.7          # danger grows slower than the monster count: you fight them a few at a time
+ATTRITION = 1.3           # each floor deeper: health, food, durability and cooldowns you carry in
+LORD_RISK = 0.06          # an on-level balanced player dying to a Lord on a gate's first floor depth (x ATTRITION^depth)
+LORD_XP = 1.0             # the Lord's floor pays a floor reward like any other (the hoard is on top: cores, hearts)
+SIDE_SHARE = {"careful": 0.3, "balanced": 0.45, "greedy": 0.75, "builder": 0.4}  # side rooms a player clears
+STOP_RISK = {"careful": 0.14, "balanced": 0.2, "greedy": 0.45, "builder": 0.18}   # won't enter a floor riskier than this
+LORD_TEMPT = {"careful": 0.10, "balanced": 0.16, "greedy": 0.4, "builder": 0.12}  # a Lord one floor past the plan, if this safe
+# modifiers whose danger the monster counts don't already carry (Swarm, Fortune, Elite Pack are in the composition)
+MOD_DANGER = {"GLASS": 1.45, "NO_REGEN": 1.2, "MIRROR": 1.2, "COLLAPSE_TIMER": 1.15, "SILENCE": 1.1, "VOLATILE": 1.1,
+              "ECHOING": 1.15, "HAUNTED": 1.1, "LIGHTLESS": 1.12, "FLOODING": 1.05, "LOW_GRAVITY": 1.0, "SWARM": 1.05,
+              "FORTUNE": 1.0, "ELITE_PACK": 1.05}
+TWIST_DANGER = {"NONE": 1.0, "RED_GATE": 1.2, "HOLLOW_GATE": 0.5, "FRIENDLY": 0.0, "TREASURE_GATE": 1.0, "INVERTED": 0.85,
+                "ECHO_GATE": 1.0, "DOUBLE_GATE": 1.0, "GATE_WITHIN": 1.0}
+
+
+GATE_DEATHS = (1.0, 3.0)  # P3 target: balanced player's deaths per 10 gates at D, C and B
+PUSH_PEAK = (3, 5)        # P3 target: the floor you should plan to stop after, by levels per hour
+
+
+def _ref_units():
+    c = COMP["ranks"]["C"]["v1"]
+    return c["path"][0] + SIDE_SHARE["balanced"] * c["side"][0]
+
+
+def floor_units(rank, floor, side_share, content=None):
+    c = COMP["ranks"][rank][content or CONTENT]
+    i = min(floor, len(c["path"])) - 1
+    while c["path"][i] is None:
+        i -= 1
+    return c["path"][i] + side_share * c["side"][i]
+
+
+def gate_floor_risk(rank, floor, nfloors, ratio, skill, side_share=0.45, danger=1.0, content=None):
+    """Chance of dying on one floor of a real gate (the last floor is the Lord's)."""
+    if danger <= 0:
+        return 0.0
+    if floor >= nfloors:
+        base = LORD_RISK * ATTRITION ** (floor - 1)
+    else:
+        base = FLOOR1_RISK * ATTRITION ** (floor - 1) * (floor_units(rank, floor, side_share, content) / _ref_units()) ** THREAT_EXP
+    return min(0.85, base * danger / (max(ratio, 0.3) ** 2.2) / skill)
+
+
+LORD_MIN = 4.0            # ASSUMED: minutes a Lord fight adds to its floor
+TIME_EXP = 0.6            # ASSUMED: a floor with more monsters takes longer, a little less than in proportion
+
+
+def floor_minutes_factor(rank, floor, nfloors, side_share=0.45):
+    """How much longer a floor takes than the gate's first (more monsters deeper); the Lord's floor adds the fight."""
+    if floor >= nfloors:
+        return 1.0 + LORD_MIN / sum(FLOOR_MIN[rank]) * 2
+    return (floor_units(rank, floor, side_share) / floor_units(rank, 1, side_share)) ** TIME_EXP
+
+
+def roll_gate(rank, rng):
+    """Floors, modifier danger and twist of one gate, drawn from what the Director rolled (COMP)."""
+    c = COMP["ranks"][rank]
+    total = sum(c["floors"].values())
+    x = rng.random() * total
+    nfloors = 3
+    for k, v in sorted(c["floors"].items(), key=lambda kv: int(kv[0])):
+        x -= v
+        if x <= 0:
+            nfloors = int(k)
+            break
+    danger = 1.0
+    for m, cnt in c["mods"].items():
+        if rng.random() < cnt / COMP["samples"]:
+            danger *= MOD_DANGER.get(m, 1.0)
+    tw = "NONE"
+    x = rng.random() * COMP["samples"]
+    for t, cnt in c["twists"].items():
+        x -= cnt
+        if x <= 0:
+            tw = t
+            break
+    return nfloors, danger * TWIST_DANGER.get(tw, 1.0), tw
 
 
 def simulate(kind, rng):
@@ -154,6 +247,7 @@ def simulate(kind, rng):
     rank_i = 0
     rank_times = {}
     deaths = gates = 0
+    by_rank = {}  # gate rank -> [gates, deaths, floors cleared, Lords killed]
     mastery = {"on": False, "mp": 0.0, "level": 1, "at": {1: (1, 0.0)}, "combat_min": 0.0}
 
     def fight(minutes, extra_mp=0.0):
@@ -251,24 +345,44 @@ def simulate(kind, rng):
                     rank_times[nxt] = st["t"] / 60
                 continue
         # 4) A gate run. The first is the Bell Crypt (E, three floors, content level 0, never breaks).
+        real = bell_crypt_done and COMP is not None and rank in COMP["ranks"] and RANKS[max(0, rank_i - 1)] in COMP["ranks"]
         if not bell_crypt_done:
             g_rank, floors, cl = "E", 3, 3.0
+            nfloors, danger, twist = 3, 1.0, "NONE"
         else:
             g_rank = rank if rng.random() > 0.15 else RANKS[max(0, rank_i - 1)]
             floors, cl = p["push"], RANK_MID[g_rank]
+            nfloors, danger, twist = roll_gate(g_rank, rng) if real else (floors, 1.0, "NONE")
+            if real:
+                # the plan: push floors, one more if it is the Lord and safe enough; a Red Gate won't let you out early
+                floors = min(nfloors, p["push"])
+                if twist == "RED_GATE":
+                    floors = nfloors
+                elif floors + 1 == nfloors and gate_floor_risk(g_rank, nfloors, nfloors, st["level"] / cl, p["skill"], SIDE_SHARE[kind], danger) < LORD_TEMPT[kind]:
+                    floors = nfloors
         ratio = st["level"] / cl
         below = g_rank != rank
         unbanked = 0.0
         gates += 1
+        by_rank.setdefault(g_rank, [0, 0, 0, 0])[0] += 1
         cleared = 0
         st["t"] += 3 if not bell_crypt_done else rng.uniform(3, 8)  # walk to it (the Director keeps gates 300-1500 m out)
+
+        def risk(f):
+            if real:
+                return gate_floor_risk(g_rank, f, nfloors, ratio, p["skill"], SIDE_SHARE[kind], danger)
+            return death_risk(f, ratio, p["skill"])
+
         for floor in range(1, floors + 1):
             lo, hi = FLOOR_MIN[g_rank]
             floor_min = rng.uniform(lo, hi) / (0.85 + 0.15 * p["skill"])
+            if real:
+                floor_min *= floor_minutes_factor(g_rank, floor, nfloors, SIDE_SHARE[kind])
             st["t"] += floor_min
             fight(COMBAT_MIN["floor"] * floor_min, ELITES_PER_FLOOR * MAIN_SHARE * ELITE_MP)
-            if rng.random() < death_risk(floor, ratio, p["skill"]):
+            if rng.random() < risk(floor):
                 deaths += 1
+                by_rank[g_rank][1] += 1
                 unbanked = 0.0
                 st["t"] += 4 + DEATH_EXTRA_MIN
                 break
@@ -276,10 +390,13 @@ def simulate(kind, rng):
             gain(KILL_SHARE * reward)
             unbanked += (1 - KILL_SHARE) * reward
             cleared = floor
-            if bell_crypt_done and kind != "greedy" and death_risk(floor + 1, ratio, p["skill"]) > 0.22:
+            if bell_crypt_done and floor < floors and twist != "RED_GATE" and risk(floor + 1) > (STOP_RISK[kind] if real else 0.22) \
+                    and (real or kind != "greedy"):
                 break
         gain(unbanked)
-        if bell_crypt_done and cleared == floors:
+        by_rank[g_rank][2] += cleared
+        if bell_crypt_done and cleared == (nfloors if real else floors):
+            by_rank[g_rank][3] += 1
             fight(0, MAIN_SHARE * BOSS_MP)  # the Lord waiting on the last floor
         if not bell_crypt_done and cleared >= 2:
             bell_crypt_done = cleared == 3 or rng.random() < 0.5
@@ -293,7 +410,7 @@ def simulate(kind, rng):
                 best = max(best, lv)
         return best
 
-    return {"rank_hours": rank_times, "deaths": deaths, "gates": gates, "level_times": level_times,
+    return {"rank_hours": rank_times, "deaths": deaths, "gates": gates, "level_times": level_times, "by_rank": by_rank,
             "level_at": {m: level_at(m) for m in (10, 30, 60, 120)}, "first_power_min": first_power_min,
             "final_level": st["level"], "discoveries": found[0],
             "mastery_at": mastery["at"], "combat_minutes": mastery["combat_min"], "minutes": st["t"]}
@@ -313,6 +430,44 @@ def mastery_farm_check():
 
 
 ENTRY_MIN = 3  # walk to the gate, gear check, entry
+
+
+def push_ev_gate(rank, level=None, skill=1.0, kind="balanced", trials=20000, seed=7):
+    """Levels per hour if you always plan to stop after floor N of a real gate of this rank (its most common floor
+    count; the last floor is the Lord's). Red Gates won't let you out early. Time includes entry and deaths."""
+    rng = random.Random(seed)
+    level = level or RANK_MID[rank]
+    fl = COMP["ranks"][rank]["floors"]
+    nfl = int(max(fl.items(), key=lambda kv: kv[1])[0])
+    out = []
+    lo, hi = FLOOR_MIN[rank]
+    for stop in range(1, nfl + 1):
+        total = minutes = 0.0
+        died = lords = 0
+        for _ in range(trials):
+            _, danger, twist = roll_gate(rank, rng)
+            last = nfl if twist == "RED_GATE" else stop
+            banked = unbanked = 0.0
+            minutes += ENTRY_MIN
+            for floor in range(1, last + 1):
+                minutes += rng.uniform(lo, hi) * floor_minutes_factor(rank, floor, nfl, SIDE_SHARE[kind])
+                if rng.random() < gate_floor_risk(rank, floor, nfl, level / RANK_MID[rank], skill, SIDE_SHARE[kind], danger):
+                    unbanked = 0.0
+                    died += 1
+                    minutes += 4 + DEATH_EXTRA_MIN
+                    break
+                r = gate_floor_xp(rank, floor)
+                banked += KILL_SHARE * r
+                unbanked += (1 - KILL_SHARE) * r
+                if floor == nfl:
+                    lords += 1
+            total += banked + unbanked
+        out.append({"stop_at": stop, "levels_per_hour": round(total / xp_to_next(level) / (minutes / 60), 3),
+                    "death_rate": round(died / trials, 3), "lord_rate": round(lords / trials, 3)})
+    best = max(o["levels_per_hour"] for o in out)
+    for o in out:
+        o["vs_best"] = round(o["levels_per_hour"] / best, 2)
+    return {"floors": nfl, "peak": max(out, key=lambda o: o["levels_per_hour"])["stop_at"], "by_stop": out}
 
 
 def push_ev(rank="C", level=35, skill=1.0, max_floor=7, trials=20000, seed=7):
@@ -378,6 +533,15 @@ def main():
         for m in (10, 30, 60, 120):
             row["level_at_minutes"][m] = quantiles([x["level_at"][m] for x in rs])
         row["deaths_per_10_gates"] = round(10 * sum(x["deaths"] for x in rs) / max(1, sum(x["gates"] for x in rs)), 2)
+        row["by_gate_rank"] = {}
+        for gr in RANKS:
+            g = sum(x["by_rank"].get(gr, [0, 0, 0, 0])[0] for x in rs)
+            if g:
+                d = sum(x["by_rank"][gr][1] for x in rs if gr in x["by_rank"])
+                fl = sum(x["by_rank"][gr][2] for x in rs if gr in x["by_rank"])
+                lk = sum(x["by_rank"][gr][3] for x in rs if gr in x["by_rank"])
+                row["by_gate_rank"][gr] = {"gates": g, "deaths_per_10": round(10 * d / g, 2), "floors_per_gate": round(fl / g, 2),
+                                           "lords_per_10": round(10 * lk / g, 2)}
         row["first_power_minute"] = statistics.median(x["first_power_min"] for x in rs)
         row["discoveries_median"] = statistics.median(x["discoveries"] for x in rs)
         # main power mastery: the player level (and hours) when it reached each power level
@@ -403,10 +567,24 @@ def main():
         med = bal["mastery_player_level"].get(ml, {}).get("median")
         checks.append({"main_power_level": ml, "target_player_level": [lo, hi], "balanced_median": med,
                        "pass": med is not None and lo <= med <= hi})
-    result = {"summary": summary, "target_checks": checks,
+    # P3 gate targets (docs/modules/gates.md "Tuning"): the balanced player dies 1-3 times in ten gates at D, C and B,
+    # and planning to go one floor deeper pays best somewhere between floors 3 and 5
+    gate_checks = []
+    evs = {r: push_ev_gate(r) for r in ("D", "C", "B")} if COMP else {}
+    for r in ("D", "C", "B"):
+        v = bal["by_gate_rank"].get(r)
+        d = v["deaths_per_10"] if v else None
+        gate_checks.append({"gate_rank": r, "deaths_per_10_gates": d, "target": list(GATE_DEATHS),
+                            "pass": d is not None and GATE_DEATHS[0] <= d <= GATE_DEATHS[1]})
+        if r in evs:
+            gate_checks.append({"gate_rank": r, "push_ev_peak_floor": evs[r]["peak"], "target": list(PUSH_PEAK),
+                                "pass": PUSH_PEAK[0] <= evs[r]["peak"] <= PUSH_PEAK[1]})
+    checks += gate_checks
+    result = {"summary": summary, "target_checks": checks, "gate_checks": gate_checks, "gate_content": CONTENT,
               "mastery_need": MASTERY_NEED,
               "mastery_pure_combat_hours_1_to_5": mastery_farm_check(),
               "push_ev_C_on_level": push_ev(),
+              "push_ev_real_gates": evs,
               "push_ev_C_underlevelled": push_ev(level=28),
               "mob_farm_levels_per_hour": farm_check(),
               "xp_curve": {L: round(xp_to_next(L)) for L in (1, 5, 10, 25, 45, 70, 100, 135)},
@@ -429,6 +607,12 @@ def main():
           result["mastery_pure_combat_hours_1_to_5"])
     print("\nPush EV, C-rank gate, on-level player:")
     for e in result["push_ev_C_on_level"]: print("  ", e)
+    for r, ev in result["push_ev_real_gates"].items():
+        print(f"\nPush EV on real {r}-rank gates ({ev['floors']} floors, the last the Lord's), on-level balanced player: peak at {ev['peak']}")
+        for e in ev["by_stop"]: print("  ", e)
+    print("\nDeaths per 10 gates by gate rank:")
+    for kind, row in summary.items():
+        print("  ", kind, {r: (v["deaths_per_10"], v["floors_per_gate"], v["lords_per_10"]) for r, v in row["by_gate_rank"].items()})
 
 
 if __name__ == "__main__":

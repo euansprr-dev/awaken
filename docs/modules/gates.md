@@ -18,6 +18,8 @@ floors that push back the longer you stay, a Satchel you have to carry out, and 
 | `/awaken gate scout <id>` | admin | What the Veil's scouting does (`Gates.markScouted`). |
 | `/awaken gate director` | admin | Run one Director pass for you now (no chance roll). |
 | `/awaken why` | anyone | The last decisions, including every gate roll line. |
+| `/awaken gate interior enter` | admin | Walk into the newest standing gate (yours first), for tours that can't know its id. |
+| `/awaken gate interior goto <start\|piece\|small\|shrine\|ante\|lord>` | admin | Inside a gate: stand where that place reads best, facing it (`ante` and `lord` go to the Lord's floor). |
 
 A quick tour: `/awaken admin awaken`, `/awaken gate open C clockwork_foundry`, walk into the core (or
 `/awaken gate enter <id>`), clear floors, read the run HUD on the left, open K → Gate Map for the run summary and the
@@ -106,7 +108,7 @@ pity, scouted gates, extraction floors ("comfort"), twist streak, echo pace, the
 | Puzzle Vault | Labyrinth with 2–3 rune puzzle rooms; each solved puzzle opens its caged vault cache; the Shrine opens when all agree. |
 | Open Cavern | One noise-carved 4×6-slot cave (uneven floor, rock pillars, varied ceiling) whose zones wake one by one; side cache and elite rooms. |
 
-The last floor is always the Lord's: start → hall → antechamber → a 3×3 arena (round or octagonal, 17 high).
+The last floor is always the Lord's: start → hall → antechamber → a 3×3 arena (17 high; content version 2: round, built for its Lord, see "Interiors").
 Room shapes: rect, octagon, round, cross, pillared, ring (solid core), pit (ledge + liquid), dais, hall (alcoves), cave,
 shaft, islands. Doorways are 4 wide, framed in the theme's pillar block; height differences get real stairs; lights,
 carpets on the main walks, wall props, hanging decor and theme details are placed by deterministic hashing.
@@ -119,6 +121,180 @@ solvable), SHRINE (Rest Shrine + Seal), BOSS, HALL, HUB, ARENA, CAVERN, ANTE, IN
 Monsters appear when a player first enters a room (`MobHooks.spawnThemed` / `spawnBoss`, content level
 `Progression.contentLevel(rank)`, theme tags + modifier tags), tracked per room (`GateMobs`, rebuilt from entity data
 after restarts). Cap: 40 live gate monsters per gate.
+
+## Interiors (content version 2)
+
+Gate interiors are where players spend most of their fighting time, so every theme has a look you'd know from one
+screenshot, its bigger rooms carry set pieces, and every Lord fights in an arena built for its moves. Code:
+`gates/world/GatePainter` (the dressing), `Kit` (each theme's extra materials), `SetPiece` (the catalogue),
+`Pieces` (dispatch and shared shapes), `PiecesRooms`, `PiecesSmall`, `PiecesArenas`. Everything is a pure function of
+the room and a column, painted per chunk on worldgen threads (no lists, no allocation per column).
+
+### The language every room speaks
+
+- **Walls have a rhythm.** Pilasters at slot offsets 2, 5, 10 and 13 (the door frames are the ones at 5 and 10), the
+  wall between them recessed one block as a niche whose back is the theme's signature panel (ossuary, bookcases,
+  ember seams, brood comb, carved faces, frosted windows lit from behind, mirrors, lab panels, void glass...). A
+  plinth at the foot, a lintel over the niches, a cornice of upturned stairs under the ceiling. Rooms 12 or more
+  high get a second tier of niches. Organic themes (the Fungal Hollow) get soft patched walls with alcoves and
+  glowing caps instead; the Sky Archipelago's walls and vaults are painted sky (`gate_sky`, full bright) with cloud
+  banks along the bottom.
+- **Floors have bands** in line with the pilasters, a border, and a medallion under each chandelier; the Mirror
+  Palace is a black and white checker.
+- **Ceilings**: beams across flat ceilings (resting on the cornice), ribs under domes, skylights (amber glass with the
+  sun behind it in the Glass Desert; light panels in the Lab).
+- **Light pools.** No more even grid of lamps: a chandelier at the room's centre (a five-light cross on chains in tall
+  rooms) and at each slot's centre in big rooms, niche lights hung from the lintels, the set pieces' own lights. Dim
+  themes (Bell Crypt, Fungal Hollow, Abyssal Shrine) light every other niche. Stealth rooms keep only the centre.
+- **Version 2 rooms are taller**: single rooms 8 to 10 high (were 7 to 9), big rooms 11, arenas and hubs 12, the
+  Shrine 10, the antechamber 11; the Lords' arenas vault up to the top of the band (17 at the wall, 26 at the apex).
+
+### The way on
+
+- The door of every room on the critical path that leads one room closer to the end has a **lit lintel** in the
+  theme's guide light (froglights, sea lanterns, bulbs...). Side doors are dark.
+- The last door before the Rest Shrine is lit in the **System's blue** (`gate_signal_lamp`) in its lintel and both
+  frame posts; the Shrine room has a blue ring in its floor round the Shrine and Seal and a blue light above them. Blue
+  through a doorway always means "the Shrine is here".
+- A **runner** joins the doors on the critical path (carpet, an inlay, rails in the Ember Mines, a cyan line in the
+  Lab), so the floor itself leads on.
+- On the Lord's floor the antechamber's door into the arena is lit like the Shrine's (in the guide light), and
+  **braziers** stand either side of it (soul fire in the cold themes, a cauldron of lava in the warm ones; neither can
+  spread).
+
+### Themes
+
+| Theme | Walls (niche panel / pilaster) | Floor, ceiling, light | Set pieces (big rooms / single rooms) | The Lord's arena |
+|---|---|---|---|---|
+| Bell Crypt | `gate_ossuary` skulls behind polished deepslate; chiseled lintels | deepslate tile bands, ribbed vaults, soul lanterns in the niches | Bell Loft (a great bronze bell glowing from inside, small bells and soul lanterns on chains round it, candles where its shadow falls), Ossuary Aisles (free-standing bone walls with candles) / Sarcophagi, Candle Vigil | The Bell Warden's belfry: its great bell over the medallion, floor rings where the Toll Waves fall, eight statues with soul lanterns as cover (they move halfway) |
+| Fungal Hollow | soft patched tuff, mud and moss with alcoves; glowing caps grown into the walls | mycelium and moss, shroomlight, spore blossoms | Mushroom Grove (four giant glowcaps with glowing gills) / Spore Pool (a ring of lit water round a mushroom island), Toadstool Ring | Mother of Spores: six giant caps are the only shelter from the Spore Rain; an inverted cap drips spores over her |
+| Ember Mines | `gate_ember_ore` seams between timber posts | blackstone bands, timber beams with lanterns, rails down the path | Lava Forge (a lava channel the length of the hall, bridges where doorways cross, crucibles on chains, anvils) / Mine Gallery (timber frames, ore heaps), Cave-In | The Ember Tyrant: a moat of lava rings the floor (bridges on six spokes), basalt columns as cover from Eruption, glowing seams out from its anvil-stone, lanterns on timber beams |
+| Drowned Archive | bookshelves and `gate_sodden_shelf` floor to lintel between dark oak | prismarine bands, reading lamps on chains | Flooded Stacks (shelves standing in shallow sea water, lamps under it) / Reading Room, Sunken Desks | The Drowned Archivist: eight tall stacks to brace behind when the Tidal Page hits, the outer ring already flooded, a chandelier of lanterns over the desk |
+| Clockwork Foundry | chiseled copper and grates between iron pilasters | grate bands, `gate_gear` medallions, copper bulbs and lanterns | Conveyor (a belt with crates, a gantry with hooks, a press), Boiler (a banded copper drum to the ceiling, gauges lit, pipes) / Gear Wall (a wall of interlocking gears round lit hubs), Press Line | The Gearwright Colossus: six copper pylons with lightning rods (the Overload Arc), grate rings, a great gear flat under the vault, gears in the wall niches |
+| Glass Desert | chiseled sandstone and `gate_sun_tile` | sand runner, amber skylights, lanterns | Buried Colonnade (columns half drowned in dunes, a fallen obelisk) / Glass Garden (glass and amethyst crystals out of the drifts, lit from below), Obelisks | The Glass Serpent: a floor of sand to swim through, six glass crystals to break its lunges, dunes against the walls, an amber oculus for a sun |
+| Hive | `gate_brood_cell` behind resin bricks | resin and terracotta bands, honey dripping, candles in the niches | Brood Comb (six comb pillars round a royal cell glowing gold) / Honey Pools, Wax Pillars | The Hive Regent: six comb pillars carrying canopies of comb (shelter from the Honey Rain), honey pools in the middle ring, a crown of royal jelly over her |
+| Overgrown Temple | `gate_temple_relief` faces with jade eyes; jade plinths | moss in patches, roots and vines | Root Tree (a trunk through the floor into the vault, buttress roots, a canopy hung with glow berries and lanterns) / Reflecting Pools, Idols | The Root Saint: root-caged pillars on a seven-block grid (dodge the Root Lances down the lanes), a jade altar, a canopy of leaves and glowing vines |
+| Lantern Night Market | birch screens and cinnabar between red mangrove posts | red runner, beams strung with `gate_paper_lantern` | Lantern Tree (a dark oak hung with paper lanterns, benches round it) / Market Stalls (striped awnings, goods), Tea House | The Lantern Broker's plaza: stalls in a ring, lantern strings from the vault, a round rug where it waits |
+| Frost Monastery | `gate_frost_window` lit from behind, `gate_rime_brick` | ice bands, ribbed quartz vaults | Cloister (an arcade round a frozen garden under a higher vault) / Choir, Ice Garden | The Abbot of Frost: eight quartz pillars, choir stalls in arcs (the Choir sings from them), a ring of ice where the Ice Spikes rise, a crown of sea lanterns |
+| Mirror Palace | `gate_mirror` (full-bright silver) framed in quartz | black and white checker, crystal light | Mirror Maze / Mirror Hall (a ring of mirrors round a prism), Crystal Chandelier | The Mirror Knight: eight mirrors in a ring face the floor, a star of quartz in the checker, a chandelier of glass and end rods |
+| Precursor Lab | `gate_lab_panel` and cyan glass between Precursor plating with glyph capitals | cyan guide line, light-panel skylights | Server Hall (rows of blinking `gate_lab_rack`, cable trays) / Specimen Tanks (lit water in plated tubes), Control Room | Unit Zero: target rings in the floor, six plated crates as cover from the Zero Lance, hazard stripes, an oculus of light panels where the Orbital Marks come from |
+| Nightmare | `gate_dream_paper` (the pattern is eyes) and windows of `gate_void_glass` | wrong floors, soul lanterns | Giant Table (legs like pillars, a man-high candle, chairs you can't climb) / Wrong Room (furniture on the ceiling, a door to nowhere), Stairs to Nowhere | The Sleeper: a giant's bed against the far wall, furniture and lit pumpkins floating at every height, stars in the vault |
+| Sky Archipelago | painted sky, cloud banks | grass islands over a cloud floor, glowstone suns | Wind Shrine (a ring of white pillars with streamers round a beam of light) / Floating Isles (round islands, a birch, lamp posts), Cloud Bank | The Sky Leviathan: islands over a cloud sea (updrafts throw you back up), clouds drifting below, a vault of open sky |
+| Abyssal Shrine | `gate_void_glass` behind obsidian with crying lintels | sculk, black candles, almost nothing else | Void Rift (the floor falls away into stars, candles round the rim) / Monoliths, Sculk Bloom | The Hollow Herald: six obsidian monoliths as cover from the Void Bolts, an event horizon of void glass round its spot, a ceiling of stars |
+
+### Set pieces
+
+- 47 room pieces (3 or 4 per theme) and 15 arenas (`SetPiece`). Chosen by `FloorBuilder.pieces()` (content version
+  2 only) from per-room hashes, never from the floor's random stream, so the rooms themselves are exactly what
+  version 1 built. Big rooms (2x2) take a big piece, each big piece once a floor (an Arena Chain's later arenas keep
+  their own shapes); single rooms take one of the theme's small pieces 3 times in
+  10; the theme's pieces take turns so a floor shows its range. A piece may set the room's shape.
+- Rules every piece keeps (`Pieces.clear`): the axes from each door to the centre stay walkable and level (5 wide);
+  nothing within two blocks of a feature (cache, runes, the Lord's spot, the exit portal's row); a piece with an
+  obstacle at the centre (a boiler, a tree, a rift: `SetPiece.core()`) keeps a 2.6-block walkway round it. Obstacles
+  are `RoomGeometry.blocked`, so monsters never spawn in them.
+- No block entities in worldgen (no skulls, bells, chests, lecterns, campfires): the crypt's bells are `gate_bell`
+  (a plain model) and its skulls are in the `gate_ossuary` texture. Liquids sit in basins; fire only on soul soil.
+
+### The Lords' arenas
+
+The boss room keeps the mobs module's size (3x3 slots, 17 high at the wall) and is round (radius 22), so every spot a
+player can stand on is inside the Lord's arena radius (22 to 28; the friendly Broker's is 18). The Lord appears on a
+lit medallion at the centre with a ring of lights set in the floor round it (dim themes add an invisible light block
+above the spot); the doors open straight onto it. Cover stands at about 0.55 of the radius; hazards (lava, flood, ice,
+honey, sand) sit in rings away from the spot. The Double Gate's second Lord fights in its own Lord's arena built from
+the annex theme's materials; the inner gate's keeper gets its theme's arena at 2x2. Measured by
+`gates_interior_arenas_fit_lords` (every Lord spawned for real):
+
+| Lord | size (w x h) | arena radius | farthest standing spot | open floor within 10 |
+|---|---|---|---|---|
+| Bell Warden | 1.4 x 3.0 | 22 | 23.0 | 317/317 |
+| Mother of Spores (flies) | 4.0 x 4.0 | 24 | 23.9 | 317/317 |
+| Ember Tyrant | 1.2 x 3.9 | 22 | 23.0 | 307/317 |
+| Drowned Archivist | 1.1 x 3.7 | 22 | 23.0 | 317/317 |
+| Gearwright Colossus | 2.5 x 4.9 | 24 | 23.0 | 317/317 |
+| Glass Serpent (flies) | 2.2 x 2.2 | 26 | 23.0 | 317/317 |
+| Hive Regent (flies) | 2.8 x 2.4 | 22 | 23.0 | 317/317 |
+| Root Saint | 1.6 x 4.9 | 22 | 23.0 | 294/317 |
+| Lantern Broker | 0.8 x 2.0 | 18 (friendly) | 23.0 | 317/317 |
+| Abbot of Frost | 1.0 x 3.3 | 22 | 23.0 | 317/317 |
+| Mirror Knight | 0.8 x 2.5 | 22 | 23.0 | 317/317 |
+| Unit Zero | 0.6 x 1.8 | 22 | 23.0 | 315/317 |
+| The Sleeper | 1.3 x 4.3 | 22 | 23.0 | 317/317 |
+| Sky Leviathan (flies) | 3.2 x 3.2 | 28 | 23.0 | 316/317 |
+| Hollow Herald (flies) | 1.3 x 3.9 | 24 | 23.0 | 317/317 |
+
+### Interior blocks
+
+26 decorative blocks registered in `GatesRegistry` (`INTERIOR_BLOCKS`, creative tab, self drops, mining tags), textures
+and content from `tools/art/specs/gate_interiors.py`: `gate_ossuary`, `gate_bell_bronze`, `gate_bell`, `gate_glowcap`
+(light 12), `gate_glowcap_gills` (9), `gate_ember_ore` (7), `gate_sodden_shelf`, `gate_gear`, `gate_conveyor` (axis),
+`gate_sandglass` (translucent), `gate_sun_tile` (6), `gate_brood_cell` (6), `gate_royal_jelly` (translucent, 12),
+`gate_temple_relief` (facing), `gate_jade`, `gate_paper_lantern` (15), `gate_rime_brick`, `gate_frost_window`
+(translucent, 9), `gate_mirror` (full bright, 3), `gate_lab_panel` (9), `gate_lab_rack` (facing, blinking, 5),
+`gate_dream_paper`, `gate_cloud` (full bright), `gate_sky` (full bright, 6), `gate_void_glass` (3), `gate_signal_lamp` (14).
+Glowing parts are emissive overlays (`light_emission` model elements).
+
+### Seeing it without a client
+
+- `gates_interior_dumps` writes one floor and the Lord's floor of every theme to `run/interiors/<theme>_floor1.json`
+  and `<theme>_lord.json` (the floor's band as a palette and a base64 grid, its rooms, and cameras).
+- `python3 tools/art/specs/gate_interiors.py preview DIR [filters]` (also `structures.py interiors DIR`) renders each:
+  a cut-away plan from above (walls capped dark at the cut, so floors read) and eye-level shots from the dump's cameras
+  (`start` facing the way on, `piece` the biggest set piece, `small` a single room's piece, `shrine` facing the blue
+  door, `ante` facing the arena, `lord` from the arena's doors) with the real textures, the game's block-light flood
+  fill and warm lightmap curve, and the theme's fog. A numpy voxel ray-caster: cubes, boxes, crossed planes,
+  alpha-tested cut-outs, translucent glass and water. `python3 tools/art/specs/gate_interiors.py sheet OUT.png` lays out
+  the textures.
+- What the previews showed and what changed: rooms read as boxes at version 1's heights (now taller); lamps set into
+  the pilasters read as glowing cubes (gone: lights hang in niches and from chandeliers); unlit clouds and mirrors
+  read as grey slabs (now full bright); the arenas of the Abyss, the Nightmare and the Temple were black from the door
+  (rim lanterns, lamps in the root cages, lit floating pumpkins); single rooms all had the same piece (a second small
+  piece per theme, and 3 in 10 single rooms instead of 4); door tunnels jutted into rooms as low stubs (gone: past the
+  wall line the room's own floor and ceiling run); the cameras first stood in doorways (now where you walk in).
+- Tour: `tools/autopilot/interiors.txt` (integrator) opens a gate of every theme with `/awaken gate open`, walks in with
+  `/awaken gate interior enter` and stands at each spot with `/awaken gate interior goto <start|piece|small|shrine|ante|lord>`.
+
+## Tuning (P3: D–B)
+
+Pushing deeper is now harder in the game, not only in the simulator: version 2 floors carry more monsters and more
+elites the deeper you go (`FloorBuilder.depthMonsters`, `extraElite`):
+
+| | floor 1 | floor 2 | floor 3 | floor 4 | floor 5 |
+|---|---|---|---|---|---|
+| extra monsters per room (plain, elite, key, hall, hub, cavern, arena) | 0 | 0 | +1 | +1 | +2 |
+| arena second wave elites | 1 | 1 | 2 | 2 | 2 |
+| extra chance a plain room is elite (on top of version 1's 12%) | 0 / 0 / 1 % (D/C/B) | 3 / 4 / 5 % | 7 / 8 / 9 % | 11 / 12 / 13 % | 15 / 16 / 17 % |
+
+Unchanged and checked: floors per gate (`Curve.floorsFor`: D 3 or 4, C 4 or 5, B 4 or 5, the last the Lord's), the
+modifier budget (D 2, C 3, B 4) and count (D 1, C and B 2), the twist weights (2/2/1/2/1/1/1/1, one in eight, pity at
+12), labyrinth size (5x5 to B) and the version 1 room counts.
+
+Measured composition (`gates_tuning_matches_sim` rolls 240 gates per rank through the real Director and FloorBuilder;
+monsters on the critical path, an elite counting 3; ordinary floors only):
+
+| rank | floor 1 | floor 2 | floor 3 | floor 4 | side rooms, floor 1 |
+|---|---|---|---|---|---|
+| D | 16.2 | 16.6 | 24.4 | – | 9.3 |
+| C | 24.9 | 25.1 | 31.3 | 32.9 | 12.4 |
+| B | 28.6 | 29.2 | 36.8 | 37.3 | 16.4 |
+
+The simulator (`tools/sim/pacing_sim.py`) now plays real gates: floors, modifiers and twists drawn from that export,
+a floor's danger from its monsters (`FLOOR1_RISK` x `ATTRITION`^depth x (monsters / reference)^0.7 x modifier and twist
+danger / level-ratio^2.2 / skill), the Lord's floor its own risk, floors with more monsters taking longer, Red Gates
+forcing the full clear. Results for the balanced player (`tools/sim/pacing_results.json`, `gate_checks`):
+
+| | D | C | B | target |
+|---|---|---|---|---|
+| deaths per 10 gates | 1.31 | 1.99 | 2.13 | 1 to 3 |
+| best floor to plan to stop after (levels per hour) | 4 of 4 | 5 of 5 | 4 of 4 | 3 to 5 |
+| stopping one floor early: share of the best, death rate | 98%, 13% vs 24% | 99%, 26% vs 40% | 97%, 20% vs 32% | a real decision |
+
+Stopping one floor before the Lord keeps almost all the XP at about half the risk; the Lord's hoard (Power Core,
+Lord's Heart) is what the last floor is for. The pacing targets still hold (level 50 at 56.6 h, 135 at 104 h). To
+re-tune: change the numbers, run the GameTests, copy `run/gate_tuning.json` to `tools/sim/`, run
+`python3 tools/sim/pacing_sim.py --json tools/sim/pacing_results.json` (all checks must pass), and run the GameTests
+again: `gates_tuning_matches_sim` fails while the game and the simulator disagree.
 
 ## Runs
 
@@ -236,9 +412,43 @@ hoard into the Satchel), `gates_twist_friendly_red` (lanterns, spirit, shrine un
 and can't be hurt, so player deaths are tested by posting `LivingDeathEvent`. Timers are tested by moving the floor
 clock (`floorStartedAt`, `enteredAt`) back, not by waiting.
 
+Interior tests (`gates/world/InteriorTests`):
+- `gates_interior_pieces_keep_doorways`: 6 plans per theme (D to B, labyrinths and arena chains): every room with a set
+  piece or arena is painted and walked (step up one, drop up to three, two blocks of head room): every doorway reaches
+  every other, and in arenas the Lord's spot and the exit portal's row; every one of the 62 pieces and arenas is built somewhere.
+- `gates_interior_arenas_fit_lords` (isolated): each Lord spawned for real (size with its scale, arena radius): its box
+  plus a block (three above flyers) is clear at its spot, no standing spot beyond its arena radius + 3, 60%+ of the
+  floor within 10 open, its spot lit 9+.
+- `gates_interior_build_budget`: every theme's whole B-rank gate painted chunk by chunk after a warm-up pass: mean
+  under 4 ms a chunk, worst under 40 ms, layout under 50 ms (measured: 0.1 to 0.3 ms mean, under 1.1 ms worst, layout
+  under 3 ms). Floors are still generated by worldgen threads chunk by chunk as the player arrives; nothing is placed
+  on the server thread.
+- `gates_interior_dumps`: the preview dumps (see "Seeing it without a client").
+- `gates_tuning_matches_sim`: the composition export matches `tools/sim/gate_tuning.json` and every check in
+  `tools/sim/pacing_results.json` passes (see "Tuning").
+
 ## Decisions
 
-Folded into SPEC section 13 ("Gates" and "Story effects on the world").
+Folded into SPEC section 13 ("Gates" and "Story effects on the world"). New with the interiors (for SPEC):
+1. Gate content version 2: set pieces, Lord arenas, taller rooms and the depth tuning apply to version 2 plans only;
+   version 1 gates keep their rooms (READY unentered ones rebuild on start as before).
+2. Every room's dressing (`Kit`) and the way-on lighting: guide-lit lintels on the critical path, the System's blue on
+   the last door before the Shrine and round it, braziers by the arena doors.
+3. Set pieces keep door axes (5 wide) level and clear, features clear by 2, a 2.6 walkway round central obstacles; no
+   block entities in worldgen; liquids only in basins; fire only on soul soil.
+4. Lord arenas stay 3x3 slots and 17 high at the wall, round (radius 22) so no standing spot is outside the Lord's
+   arena radius; the Lord's spot is lit 9+ and clear by a block round its box.
+5. Depth tuning: +1 monster per room from floor 3, +2 from floor 5; a second-wave elite from floor 3; extra elite chance
+   0.04 x (floor - 1) + 0.01 x rank - 0.02. Targets: balanced deaths per 10 gates 1 to 3 at D, C and B; push EV peak at
+   floors 3 to 5.
+6. 26 interior blocks (`gate_*`), listed above.
+
+## Changes outside the listed paths (smallest possible)
+
+- `gates/content/GatePlan.CONTENT_VERSION` 1 -> 2 (one line): new plans get the version 2 interiors; unentered READY
+  gates rebuild with them; entered gates keep the rooms they were built with.
+- `GatesRegistry.init` calls `gates.world.Interiors.init()` (registers the interior tests and the
+  `/awaken gate interior` tour command), like `GateExterior.init` before it.
 
 ## Integration (done on the main branch)
 

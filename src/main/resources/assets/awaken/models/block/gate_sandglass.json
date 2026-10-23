@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": {
+      "sprite": "awaken:block/gate_sandglass",
+      "force_translucent": true
+    }
+  }
+}

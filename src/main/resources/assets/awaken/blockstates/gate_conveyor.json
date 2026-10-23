@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/gate_conveyor"
+    },
+    "axis=x": {
+      "model": "awaken:block/gate_conveyor",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "awaken:block/gate_conveyor",
+      "x": 90
+    }
+  }
+}

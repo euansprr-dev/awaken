@@ -89,21 +89,28 @@ public final class RoomGeometry {
 
     /** Near one of the axes that connect the room's doors to its centre (kept clear in every shape). */
     public static boolean onDoorAxis(Room r, int x, int z, int half) {
-        int cx = r.centerX(), cz = r.centerZ();
-        for (Room.Door d : r.doors) {
-            if (d.side == 0 || d.side == 2) {
-                int dx = d.gx * 16 + 8;
-                boolean between = d.side == 0 ? z <= cz && z >= d.gz * 16 : z >= cz && z <= (d.gz + 1) * 16;
-                if (Math.abs(x + 0.5 - dx) <= half + 0.5 && between) return true;
-                if (Math.abs(z + 0.5 - cz) <= half + 0.5 && x >= Math.min(dx, cx) - half && x <= Math.max(dx, cx) + half) return true;
-            } else {
-                int dz = d.gz * 16 + 8;
-                boolean between = d.side == 3 ? x <= cx && x >= d.gx * 16 : x >= cx && x <= (d.gx + 1) * 16;
-                if (Math.abs(z + 0.5 - dz) <= half + 0.5 && between) return true;
-                if (Math.abs(x + 0.5 - cx) <= half + 0.5 && z >= Math.min(dz, cz) - half && z <= Math.max(dz, cz) + half) return true;
-            }
-        }
+        for (Room.Door d : r.doors) if (onAxisOf(r, d, x, z, half)) return true;
         return false;
+    }
+
+    /** Near the axis from one door to the room's centre (straight in, then along the centre line if the door is off it). */
+    public static boolean onAxisOf(Room r, Room.Door d, int x, int z, int half) {
+        int cx = r.centerX(), cz = r.centerZ();
+        if (d.side == 0 || d.side == 2) {
+            int dx = d.gx * 16 + 8;
+            boolean between = d.side == 0 ? z <= cz && z >= d.gz * 16 : z >= cz && z <= (d.gz + 1) * 16;
+            if (Math.abs(x + 0.5 - dx) <= half + 0.5 && between) return true;
+            return Math.abs(z + 0.5 - cz) <= half + 0.5 && x >= Math.min(dx, cx) - half && x <= Math.max(dx, cx) + half;
+        }
+        int dz = d.gz * 16 + 8;
+        boolean between = d.side == 3 ? x <= cx && x >= d.gx * 16 : x >= cx && x <= (d.gx + 1) * 16;
+        if (Math.abs(z + 0.5 - dz) <= half + 0.5 && between) return true;
+        return Math.abs(x + 0.5 - cx) <= half + 0.5 && z >= Math.min(dz, cz) - half && z <= Math.max(dz, cz) + half;
+    }
+
+    /** Solid structure or a set piece's obstacle: nobody stands or spawns here. */
+    public static boolean blocked(Room r, int x, int z) {
+        return solid(r, x, z) || (r.piece != null && inRect(r, x, z) && Pieces.blocks(r, x, z));
     }
 
     /** Inside the room's open interior (not wall, not pillar). Doors and stairs are handled separately. */
@@ -111,7 +118,9 @@ public final class RoomGeometry {
         if (!inRect(r, x, z)) return false;
         double u = u(r, x), v = v(r, z);
         return switch (r.shape) {
-            case RECT, PILLARED, PIT, TERRACE, SHAFT, ISLANDS -> true;
+            case RECT, PILLARED, PIT, TERRACE, SHAFT -> true;
+            // the Sky Leviathan's islands float in a round sky, so its corners stay inside its arena radius
+            case ISLANDS -> r.piece != SetPiece.ARENA_SKY || u * u + v * v <= 1.04 || onDoorAxis(r, x, z, 2);
             case OCTAGON -> Math.abs(u) + Math.abs(v) <= 1.55;
             case ROUND -> u * u + v * v <= 1.04 || onDoorAxis(r, x, z, 2);
             case CROSS -> Math.abs(u) <= 0.45 || Math.abs(v) <= 0.45;
@@ -173,6 +182,10 @@ public final class RoomGeometry {
     /** Offset of the walking surface relative to the room's dy (dais +1, pit ledge -1, pit bottom -2, cave bumps). */
     public static int floorOffset(Room r, int x, int z) {
         if (!inRect(r, x, z)) return 0;
+        if (r.piece != null) {
+            int d = Pieces.floorDelta(r, x, z);
+            if (d != Pieces.KEEP) return d;
+        }
         switch (r.shape) {
             case TERRACE -> {
                 double u = Math.abs(u(r, x)), v = Math.abs(v(r, z));
@@ -207,15 +220,20 @@ public final class RoomGeometry {
         if (r.area() >= 4) {
             double u = u(r, x), v = v(r, z);
             double d = Math.max(0, 1 - (u * u + v * v));
-            int dome = Math.min(4, 27 - r.dy - h);
+            // the Lords' arenas vault up to the top of the floor's band; other big rooms get a gentle dome
+            int rise = r.piece != null && r.piece.arena ? 9 : 4;
+            int dome = Math.min(rise, 27 - r.dy - h);
             if (dome > 0) h += (int) Math.round(d * dome);
         }
+        if (r.piece != null) h = Math.max(4, Math.min(27 - r.dy, h + Pieces.ceilingDelta(r, x, z)));
         return h;
     }
 
     /** Sky Archipelago: is there island ground here (otherwise a drop to the cloud layer)? */
     public static boolean island(Room r, int x, int z) {
         if (onDoorAxis(r, x, z, 1)) return true;
+        if (r.piece == SetPiece.FLOATING_ISLES) return Pieces.isle(r, x, z);
+        if (r.piece == SetPiece.ARENA_SKY) return PiecesArenas.skyIsland(r, x, z);
         double n = Hash.fbm(r.seed ^ 0x5151L, x, z, 9);
         double u = u(r, x), v = v(r, z);
         return n - (u * u + v * v) * 0.18 > 0.42;
@@ -230,12 +248,12 @@ public final class RoomGeometry {
     }
 
     private static boolean open(Room r, int x, int z) {
-        return (inside(r, x, z) && !solid(r, x, z)) || tunnel(r, x, z) != null;
+        return (inside(r, x, z) && !blocked(r, x, z)) || tunnel(r, x, z) != null;
     }
 
     /** A good column for a monster or an item to appear on: open, level, clear of walls and decor rings. */
     public static boolean spawnable(Room r, int x, int z) {
-        if (!inside(r, x, z) || solid(r, x, z) || floorOffset(r, x, z) != 0) return false;
+        if (!inside(r, x, z) || blocked(r, x, z) || floorOffset(r, x, z) != 0) return false;
         if (r.shape == Room.Shape.ISLANDS && !island(r, x, z)) return false;
         if (r.shape == Room.Shape.SHAFT) return false;
         return edgeDistance(r, x, z) >= 2;
