@@ -23,6 +23,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
@@ -84,7 +85,7 @@ final class LandmarkWatch {
                 StructureStart s = level.getChunk(start.x(), start.z()).getStartForStructure(ruin);
                 if (s == null || !s.isValid()) continue;
                 BoundingBox box = s.getBoundingBox().inflatedBy(RUIN_REACH);
-                if (box.isInside(me) && reach(p, LandmarkKind.of(ruin.kind()), id)) found++;
+                if (box.isInside(me) && reach(p, LandmarkKind.of(ruin.kind()), id, s.getBoundingBox().getCenter())) found++;
             }
         }
         return found;
@@ -104,8 +105,16 @@ final class LandmarkWatch {
      * whisper for it), and the first of its kind is a discovery with a toast. Returns false if it was already known.
      */
     static boolean reach(ServerPlayer p, LandmarkKind kind, String id) {
+        BlockPos at = kind == LandmarkKind.WELL ? Landmarks.wellPos(p.level().getServer()).orElse(null) : null;
+        return reach(p, kind, id, at);
+    }
+
+    /** As above, with where the landmark stands (for the Gate Map; null when unknown). */
+    static boolean reach(ServerPlayer p, LandmarkKind kind, String id, @Nullable BlockPos at) {
         LandmarkMemory m = Landmarks.memory(p);
         if (!m.reach(id)) return false;
+        if (at != null) m.place(id, kind, at);
+        Landmarks.sync(p);
         if (m.whispered.equals(id)) m.whispered = "";
         LandmarkNow.forget(p.getUUID());
         Scanning.forget(p.getUUID());

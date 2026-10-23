@@ -45,6 +45,17 @@ final class LandmarkCommands {
                 c.getSource().sendSuccess(() -> Component.literal(n + " landmark marker(s) sent."), false);
                 return n;
             }));
+            lm.then(Commands.literal("hear").requires(AwakenCommands.admin()).executes(c -> {
+                // as if told of every landmark within 700 blocks (and the Well): they go on the Gate Map, outlined
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                LandmarkMemory m = Landmarks.memory(p);
+                int n = 0;
+                for (Landmarks.Landmark l : Landmarks.around(p, Landmarks.NEAR, 8)) if (m.place(l.id(), l.kind(), l.pos())) n++;
+                if (n > 0) Landmarks.sync(p);
+                int heard = n;
+                c.getSource().sendSuccess(() -> Component.literal(heard + " landmark(s) put on your Gate Map."), false);
+                return n;
+            }));
             lm.then(Commands.literal("check").requires(AwakenCommands.admin()).executes(c -> {
                 int n = LandmarkWatch.check(c.getSource().getPlayerOrException(), true);
                 c.getSource().sendSuccess(() -> Component.literal(n == 0 ? "No new landmark here." : n + " landmark(s) reached."), false);
@@ -61,7 +72,9 @@ final class LandmarkCommands {
                 int n = m.reached.size();
                 m.reached.clear();
                 m.told.clear();
+                m.places.clear();
                 m.whispered = "";
+                Landmarks.sync(p);
                 LandmarkNow.forget(p.getUUID());
                 Scanning.forget(p.getUUID());
                 c.getSource().sendSuccess(() -> Component.literal("Forgot " + n + " landmark(s) you had reached."), false);

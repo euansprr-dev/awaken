@@ -17,8 +17,11 @@ import java.util.Set;
 public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, Layout layout, List<Modifier> modifiers,
                        Twist twist, int floors, String boss, Theme annexTheme, int annexRule) {
 
-    /** Bump when generation changes: READY gates nobody entered are rebuilt on the new version. */
-    public static final int CONTENT_VERSION = 1;
+    /**
+     * Bump when generation changes: READY gates nobody entered are rebuilt on the new version. 2: the interiors' art
+     * pass (set pieces, Lord arenas, taller rooms) and deeper floors that push back harder (docs/modules/gates.md).
+     */
+    public static final int CONTENT_VERSION = 2;
 
     public static final Codec<GatePlan> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.LONG.fieldOf("seed").forGetter(GatePlan::seed),

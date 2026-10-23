@@ -1,6 +1,7 @@
 package dev.awaken.world.landmark;
 
 import dev.awaken.Awaken;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -15,7 +16,10 @@ public final class LandmarkContent {
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Awaken.MODID);
 
     public static final Supplier<AttachmentType<LandmarkMemory>> MEMORY = ATTACHMENTS.register("landmark_memory", () -> AttachmentType
-            .builder(LandmarkMemory::new).serialize(LandmarkMemory.MAP_CODEC).copyOnDeath().build());
+            .builder(LandmarkMemory::new).serialize(LandmarkMemory.MAP_CODEC).copyOnDeath()
+            // only to its owner: the Gate Map marks the landmarks they reached or heard of
+            .sync((holder, to) -> holder == to, ByteBufCodecs.fromCodecWithRegistries(LandmarkMemory.MAP_CODEC.codec()))
+            .build());
 
     static void register(IEventBus modBus) {
         ATTACHMENTS.register(modBus);

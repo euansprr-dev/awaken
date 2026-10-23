@@ -36,7 +36,8 @@
         "name": "awaken:fauna/bloom_sprite/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.bog_toad.ambient": {
     "sounds": [
@@ -79,7 +80,8 @@
         "name": "awaken:fauna/bog_toad/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.bogwick.ambient": {
     "sounds": [
@@ -118,7 +120,8 @@
         "name": "awaken:fauna/bogwick/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.breathbell.ambient": {
     "sounds": [
@@ -231,7 +234,8 @@
         "name": "awaken:fauna/briar_sow/step3",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.brook_otter.ambient": {
     "sounds": [
@@ -317,7 +321,8 @@
         "name": "awaken:fauna/canopy_prowler/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.chime_cricket.ambient": {
     "sounds": [
@@ -403,7 +408,8 @@
         "name": "awaken:fauna/crag_ram/step3",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.crested_basilisk.ambient": {
     "sounds": [
@@ -446,7 +452,8 @@
         "name": "awaken:fauna/crested_basilisk/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.dart_frog.ambient": {
     "sounds": [
@@ -485,7 +492,8 @@
         "name": "awaken:fauna/dart_frog/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.drip_lurker.ambient": {
     "sounds": [
@@ -567,7 +575,8 @@
         "name": "awaken:fauna/dune_ray/step1",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.dune_wyrm.ambient": {
     "sounds": [
@@ -619,7 +628,8 @@
         "name": "awaken:fauna/dune_wyrm/step1",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.empress_moth.ambient": {
     "sounds": [
@@ -675,7 +685,8 @@
         "name": "awaken:fauna/empress_moth/step2",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.frost_stag.ambient": {
     "sounds": [
@@ -722,7 +733,8 @@
         "name": "awaken:fauna/frost_stag/step3",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.frostfinch.ambient": {
     "sounds": [
@@ -765,7 +777,8 @@
         "name": "awaken:fauna/frostfinch/step2",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.glass_scarab.ambient": {
     "sounds": [
@@ -808,7 +821,8 @@
         "name": "awaken:fauna/glass_scarab/step2",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.glimmerfin.ambient": {
     "sounds": [
@@ -890,7 +904,8 @@
         "name": "awaken:fauna/gloam_snail/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.gloomstalker.ambient": {
     "sounds": [
@@ -933,7 +948,8 @@
         "name": "awaken:fauna/gloomstalker/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.hollow_owl.ambient": {
     "sounds": [
@@ -972,7 +988,8 @@
         "name": "awaken:fauna/hollow_owl/step1",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.honey_bear.ambient": {
     "sounds": [
@@ -1015,7 +1032,8 @@
         "name": "awaken:fauna/honey_bear/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.hushling.ambient": {
     "sounds": [
@@ -1157,7 +1175,8 @@
         "name": "awaken:fauna/lumen_moth/step2",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.mire_mother.ambient": {
     "sounds": [
@@ -1213,7 +1232,8 @@
         "name": "awaken:fauna/mire_mother/step2",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.mossback.ambient": {
     "sounds": [
@@ -1256,7 +1276,8 @@
         "name": "awaken:fauna/mossback/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.mount_whistle": {
     "sounds": [
@@ -1309,7 +1330,8 @@
         "name": "awaken:fauna/mudskipper/step2",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.mycelord.ambient": {
     "sounds": [
@@ -1365,7 +1387,8 @@
         "name": "awaken:fauna/mycelord/step2",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.old_antler.ambient": {
     "sounds": [
@@ -1430,7 +1453,8 @@
         "name": "awaken:fauna/old_antler/step3",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.peak_kite.ambient": {
     "sounds": [
@@ -1465,7 +1489,8 @@
         "name": "awaken:fauna/peak_kite/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.petalwing.ambient": {
     "sounds": [
@@ -1500,7 +1525,8 @@
         "name": "awaken:fauna/petalwing/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.plumed_coil.ambient": {
     "sounds": [
@@ -1552,7 +1578,8 @@
         "name": "awaken:fauna/plumed_coil/step1",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.scree_marmot.ambient": {
     "sounds": [
@@ -1595,7 +1622,8 @@
         "name": "awaken:fauna/scree_marmot/step2",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.shroomlet.ambient": {
     "sounds": [
@@ -1634,7 +1662,8 @@
         "name": "awaken:fauna/shroomlet/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.sporeback_snail.ambient": {
     "sounds": [
@@ -1669,7 +1698,8 @@
         "name": "awaken:fauna/sporeback_snail/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.stonehorn.ambient": {
     "sounds": [
@@ -1729,7 +1759,8 @@
         "name": "awaken:fauna/stonehorn/step3",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.thornling.ambient": {
     "sounds": [
@@ -1772,7 +1803,8 @@
         "name": "awaken:fauna/thornling/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.thousandfoot.ambient": {
     "sounds": [
@@ -1931,7 +1963,8 @@
         "name": "awaken:fauna/weaver_queen/step3",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.wickling.ambient": {
     "sounds": [
@@ -2017,6 +2050,7 @@
         "name": "awaken:fauna/wisp_hound/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   }
 }

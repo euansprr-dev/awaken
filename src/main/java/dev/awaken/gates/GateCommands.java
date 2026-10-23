@@ -15,15 +15,19 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /** {@code /awaken gate ...}: open, list, trace, enter, break, satchel, leave, scout, director. */
 final class GateCommands {
@@ -45,6 +49,7 @@ final class GateCommands {
                             .then(Commands.argument("theme", StringArgumentType.word())
                                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.stream(Theme.values()).map(t -> t.id), b))
                                     .executes(c -> open(c, StringArgumentType.getString(c, "theme"))))));
+            gate.then(Commands.literal("hop").requires(AwakenCommands.admin()).executes(GateCommands::hop));
             gate.then(Commands.literal("enter").requires(AwakenCommands.admin())
                     .then(Commands.argument("id", IntegerArgumentType.integer(1)).executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
@@ -114,6 +119,39 @@ final class GateCommands {
         c.getSource().sendSuccess(() -> Component.literal("Gate " + g.id + " forming: " + g.plan.rank().label + " " + g.plan.theme().displayName
                 + " at " + g.pos.getX() + " " + g.pos.getY() + " " + g.pos.getZ()), true);
         return g.id;
+    }
+
+    /**
+     * Dev and tours: to dry land at least 160 blocks from every gate, searching rings outward from here, so a following
+     * "gate open" has room. (Hopping a fixed distance with spreadplayers fails over the sea and leaves you by the last gate.)
+     */
+    private static int hop(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        MinecraftServer server = c.getSource().getServer();
+        ServerLevel over = server.overworld();
+        GateRegistry reg = GateRegistry.get(server);
+        for (int r = 200; r <= 3000; r += 100) {
+            for (int k = 0; k < 24; k++) {
+                double a = Math.PI * 2 * k / 24;
+                int x = p.getBlockX() + (int) Math.round(Math.cos(a) * r), z = p.getBlockZ() + (int) Math.round(Math.sin(a) * r);
+                BlockPos at = Director.surfaceEstimate(over, x, z);
+                if (at == null || !reg.near(at, 160, false).isEmpty()) continue;
+                boolean room = true;
+                for (int d = 0; d < 8 && room; d++) {
+                    double b = Math.PI * 2 * d / 8;
+                    room = Director.surfaceEstimate(over, x + (int) Math.round(Math.cos(b) * 26), z + (int) Math.round(Math.sin(b) * 26)) != null;
+                }
+                if (!room) continue;
+                over.getChunk(x >> 4, z >> 4);
+                int y = over.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                p.teleportTo(over, x + 0.5, y, z + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);
+                int dist = r;
+                c.getSource().sendSuccess(() -> Component.literal("Hopped " + dist + " blocks to dry land at " + x + " " + y + " " + z), false);
+                return 1;
+            }
+        }
+        c.getSource().sendFailure(Component.literal("No dry land clear of gates within 3,000 blocks."));
+        return 0;
     }
 
     private static int list(CommandContext<CommandSourceStack> c) {

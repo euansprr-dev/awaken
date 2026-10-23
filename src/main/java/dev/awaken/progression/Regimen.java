@@ -85,6 +85,7 @@ public final class Regimen {
             // a tenth of a level (v1: a quarter): a morning comes every 20 minutes, so this is a steady source (tools/sim)
             Progression.grantLevels(player, REWARD_LEVELS, Progression.XpSource.REGIMEN);
             p.counters.merge("awaken:regimens_done", 1L, Long::sum);
+            dev.awaken.core.audio.AudioCues.ui(player, dev.awaken.core.audio.UiSound.QUEST_DONE);
             Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Regimen complete"))
                     .body(Component.literal("+1 point and a tenth of a level"))
                     .presentation(SignalWindow.Presentation.TOAST).build());

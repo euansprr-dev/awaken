@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "awaken:block/gate_sun_tile"
+    }
+  }
+}

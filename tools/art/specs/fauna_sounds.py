@@ -652,8 +652,9 @@ def encode(x, path):
     x = fade(x / peak * 0.89, 0.002, 0.02)
     pcm = (np.clip(x, -1, 1) * 32767).astype("<i2").tobytes()
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    # synthesised at 22.05 kHz, stored at 44.1 kHz like every other mod sound (the audio tests require it)
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "s16le", "-ar", str(SR), "-ac", "1", "-i", "pipe:0",
-                    "-c:a", "libvorbis", "-q:a", "3", path], input=pcm, check=True)
+                    "-ar", "44100", "-c:a", "libvorbis", "-q:a", "3", path], input=pcm, check=True)
 
 
 def render_all():
@@ -706,7 +707,11 @@ def build_sounds():
             entries.append(e)
         key = f"fauna.{cid}.{kind}"
         ev = {"sounds": entries}
-        if kind != "step":
+        if kind == "step":
+            # one shared line, like vanilla's "Footsteps" for every mob
+            ev["subtitle"] = "subtitles.awaken.fauna.step"
+            lang["subtitles.awaken.fauna.step"] = "Footsteps"
+        else:
             ev["subtitle"] = "subtitles.awaken." + key
             name = nm.get(cid, cid)
             if kind == "roar":

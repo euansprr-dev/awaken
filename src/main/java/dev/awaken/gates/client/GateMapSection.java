@@ -72,7 +72,7 @@ public final class GateMapSection implements StatusSections.Section {
                     g.outline(bx - 3, by - 3, 6, 6, 0x80FFFFFF);
                 }
             }
-            // places other modules mark (lairs): a diamond, filled once you've been there
+            // places other modules mark (lairs, landmarks): a diamond, filled once you've been there
             for (MapMarks.Mark m : MapMarks.collect(mc.player)) {
                 double dx = (m.pos().getX() + 0.5 - px) * scale, dz = (m.pos().getZ() + 0.5 - pz) * scale;
                 int bx = cx + (int) Math.round(dx), by = cy + (int) Math.round(dz);
@@ -125,11 +125,16 @@ public final class GateMapSection implements StatusSections.Section {
             ly += 12;
             shown++;
         }
-        // then the lairs you know, nearest first
+        // then the lairs and landmarks you know, nearest first
         List<MapMarks.Mark> marks = new ArrayList<>(MapMarks.collect(mc.player));
         marks.sort(Comparator.comparingDouble(m -> m.pos().distToCenterSqr(px, m.pos().getY(), pz)));
-        for (MapMarks.Mark m : marks) {
-            if (ly > my + MAP - 10) break;
+        for (int i = 0; i < marks.size(); i++) {
+            MapMarks.Mark m = marks.get(i);
+            if (ly > my + MAP - 22 && i < marks.size() - 1) {
+                // no room for the rest: say how many more there are rather than dropping them silently
+                g.text(font, "+ " + (marks.size() - i) + " more you know, further out", lx, ly, 0xFF8090A8, false);
+                break;
+            }
             double dx = m.pos().getX() + 0.5 - px, dz = m.pos().getZ() + 0.5 - pz;
             int dist = (int) Math.sqrt(dx * dx + dz * dz);
             int d = (int) Math.round(((Math.toDegrees(Math.atan2(dz, dx)) + 90 + 360) % 360) / 45.0) % 8;

@@ -1,0 +1,89 @@
+# Audio tour (docs/modules/audio.md). Builders can't hear the client, so this tour is checked in three ways:
+#  1. the log: every cue writes "[audio] cue <id> started" (or why it was skipped), grep logs for "[audio]";
+#  2. the shots: the Now Playing toast names each cue when it starts (if Options > Music & Sounds > "Show music toast"
+#     is on), the subtitles (Options > Accessibility > Show Subtitles) name every sound;
+#  3. listening, if the owner wants to: run it with the volume up.
+# Cues go through vanilla's music manager: one waits while a song plays, so `cue` here forces them one by one with
+# enough time between for each to finish (the longest is 34 s).
+world audio creative 4242
+waitworld
+gui 0
+cmd time set 6000
+cmd time pause
+look 0 5
+wait 60
+# the awakening: the System's theme (and the level-up sounds)
+cmd awaken admin awaken
+wait 140
+screen close
+shot 01_awakening_cue
+wait 700
+cmd awaken audio cue beast
+wait 80
+shot 02_beast_cue
+wait 360
+cmd awaken audio cue gate_forming
+wait 80
+shot 03_gate_forming_cue
+wait 360
+cmd awaken audio cue gate_broke
+wait 80
+shot 04_gate_broke_cue
+wait 420
+cmd awaken audio cue shrine
+wait 80
+shot 05_shrine_cue
+wait 440
+cmd awaken audio cue lair
+wait 80
+shot 06_lair_cue
+wait 360
+cmd awaken audio cue rank_up
+wait 100
+shot 07_rank_up_cue
+wait 500
+# the System's UI family: a quest done, a request delivered, a toast, a choice card (Y / N), a warning
+cmd awaken audio ui quest_done
+wait 60
+cmd awaken audio ui request_delivered
+wait 60
+cmd awaken signal demo toast
+wait 60
+shot 08_toast
+cmd awaken signal demo choice
+wait 60
+shot 09_choice
+key accept
+wait 40
+cmd awaken signal demo story
+wait 120
+shot 10_story
+# ambience: a rift's crackle, a grove's shimmer, a falling star's whistle and the meteor cooling
+cmd awaken anomaly now rift_tear
+wait 100
+shot 11_rift_bed
+cmd awaken anomaly clear
+wait 20
+cmd awaken anomaly now shimmer_grove
+wait 100
+shot 12_grove_bed
+cmd awaken anomaly clear
+wait 20
+cmd awaken anomaly now fallen_star
+wait 30
+shot 13_star_whistle
+wait 120
+cmd awaken audio emitters
+wait 120
+shot 14_star_cooling
+cmd awaken anomaly clear
+wait 20
+# the Well's hum and a ruin at night
+cmd awaken landmark goto vault
+wait 100
+cmd tp @s ~ ~ ~-30
+cmd time set 18000
+cmd awaken audio emitters
+wait 160
+shot 15_ruin_night
+quit

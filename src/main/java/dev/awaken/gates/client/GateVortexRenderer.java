@@ -32,6 +32,8 @@ public final class GateVortexRenderer implements BlockEntityRenderer<GateVortexB
     static final Identifier ATLAS = Awaken.id("textures/entity/gate_vortex.png");
     static final Identifier SHARD = Awaken.id("textures/entity/gate_shard.png");
     private static final RenderType GLOW = RenderTypes.entityTranslucentEmissive(ATLAS);
+    /** The dark heart writes depth (the emissive glow can't), so clouds behind the gate don't show through it. */
+    private static final RenderType HEART = RenderTypes.entityTranslucent(ATLAS);
     private static final RenderType ROCK = RenderTypes.entityCutout(SHARD);
     /** Ticks in the animation clock's loop (an hour), so float time stays precise. */
     private static final long LOOP = 72000L;
@@ -85,7 +87,9 @@ public final class GateVortexRenderer implements BlockEntityRenderer<GateVortexB
         pose.translate(0.5F, s.centreY, 0.5F);
         // axis 1: the opening's face runs along z; turn the local frame (x along the face, z through it) a quarter
         if (s.axis == 1) pose.rotateDegrees(Axis.YP, 90F);
-        out.submitCustomGeometry(pose, GLOW, (p, vc) -> GateVortex.emitSurface(look, time, side, new Glow(p, vc)));
+        // the heart goes in an earlier order, so the glow layers in front of it are drawn after its depth is written
+        out.order(-1).submitCustomGeometry(pose, HEART, (p, vc) -> GateVortex.emitHeart(look, time, side, new Glow(p, vc)));
+        out.submitCustomGeometry(pose, GLOW, (p, vc) -> GateVortex.emitSurface(look, time, side, new Glow(p, vc), null));
         out.submitCustomGeometry(pose, ROCK, (p, vc) -> GateVortex.emitShards(look, time, new Rock(p, vc, light)));
         pose.popPose();
     }

@@ -1,0 +1,339 @@
+# Interiors tour (docs/modules/gates.md "Interiors"): one gate of every theme, entered for real: the first room facing
+# the way on, the floor's biggest set piece, the room before the Rest Shrine facing its blue door, the antechamber
+# facing the arena, and the arena seen from its doors with the Lord on its lit medallion.
+# Run by the integrator: tools/autopilot.sh interiors (builders never run a client).
+#
+# Commands it relies on (game master):
+#   /awaken gate open <rank> <theme>     a gate of that theme 18-30 blocks away (forms in a few seconds; gates stand 96+ apart)
+#   /awaken gate interior enter          walk into the newest standing gate (yours first)
+#   /awaken gate interior goto <start|piece|small|shrine|ante|lord>
+#                                        inside a gate: stand where that place reads best, facing it (ante and lord go to the
+#                                        Lord's floor; stepping into the arena wakes the Lord)
+#   /awaken gate leave                   out again, Satchel kept
+#   /awaken gate hop                     to dry land 160+ blocks from every gate (between gates)
+world autopilot_interiors creative 20261024
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule send_command_feedback false
+
+# ---- Bell Crypt (E): ossuary niches, the bell loft, the Bell Warden's belfry --------------------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E bell_crypt
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_01_bell_crypt_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_02_bell_crypt_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_02b_bell_crypt_small
+cmd awaken gate interior goto shrine
+wait 60
+shot interiors_03_bell_crypt_shrine
+cmd awaken gate interior goto ante
+wait 160
+shot interiors_04_bell_crypt_ante
+cmd awaken gate interior goto lord
+wait 120
+shot interiors_05_bell_crypt_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Fungal Hollow (E): soft walls, glowcaps, the giant grove, Mother of Spores under her caps ---------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E fungal_hollow
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_06_fungal_hollow_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_07_fungal_hollow_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_07b_fungal_hollow_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_08_fungal_hollow_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Ember Mines (E): timber frames and ore seams, the forge hall, the Ember Tyrant's lava ring --------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E ember_mines
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_09_ember_mines_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_10_ember_mines_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_10b_ember_mines_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_11_ember_mines_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Hive (E): brood comb in the walls, the comb hall, the Hive Regent's throne room ------------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E hive
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_12_hive_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_13_hive_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_13b_hive_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_14_hive_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Overgrown Temple (E): carved faces and jade, the tree that split the temple, the Root Saint's pillar grid ------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E overgrown_temple
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_15_overgrown_temple_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_16_overgrown_temple_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_16b_overgrown_temple_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_17_overgrown_temple_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Drowned Archive (D): bookcases floor to cornice, the flooded stacks, the Archivist's reading room ------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open D drowned_archive
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_18_drowned_archive_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_19_drowned_archive_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_19b_drowned_archive_small
+cmd awaken gate interior goto shrine
+wait 60
+shot interiors_20_drowned_archive_shrine
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_21_drowned_archive_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Clockwork Foundry (D): the gear wall, the conveyor or the boiler, the Colossus's pylons ----------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open D clockwork_foundry
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_22_clockwork_foundry_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_23_clockwork_foundry_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_23b_clockwork_foundry_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_24_clockwork_foundry_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Glass Desert (D): sun tiles and skylights, the glass garden, the Serpent's dunes ----------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open D glass_desert
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_25_glass_desert_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_26_glass_desert_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_26b_glass_desert_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_27_glass_desert_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Lantern Night Market (D, friendly): stalls and paper lanterns, the Broker's plaza ----------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open D lantern_night_market
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_28_night_market_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_29_night_market_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_29b_night_market_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_30_night_market_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Frost Monastery (C): frosted windows lit from behind, the cloister, the Abbot's chapel -----------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open C frost_monastery
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_31_frost_monastery_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_32_frost_monastery_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_32b_frost_monastery_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_33_frost_monastery_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Mirror Palace (C): mirrors framed in quartz on a black and white floor, the Mirror Knight's ring -------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open C mirror_palace
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_34_mirror_palace_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_35_mirror_palace_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_35b_mirror_palace_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_36_mirror_palace_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Precursor Lab (C): lab panels and glyph capitals, tanks or the server hall, Unit Zero's test chamber ----------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open C precursor_lab
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_37_precursor_lab_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_38_precursor_lab_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_38b_precursor_lab_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_39_precursor_lab_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Nightmare (C): wallpaper that watches, the giant table, the Sleeper's bedroom --------------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open C nightmare
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_40_nightmare_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_41_nightmare_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_41b_nightmare_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_42_nightmare_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Sky Archipelago (B): painted sky, floating isles, the Leviathan's islands over the cloud sea ------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open B sky_archipelago
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_43_sky_archipelago_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_44_sky_archipelago_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_44b_sky_archipelago_small
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_45_sky_archipelago_lord
+cmd awaken gate leave
+wait 80
+
+# ---- Abyssal Shrine (A): void glass and obsidian, the rift, the Hollow Herald's monoliths -------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open A abyssal_shrine
+wait 320
+cmd awaken gate interior enter
+wait 200
+shot interiors_46_abyssal_shrine_start
+cmd awaken gate interior goto piece
+wait 80
+shot interiors_47_abyssal_shrine_piece
+cmd awaken gate interior goto small
+wait 60
+shot interiors_47b_abyssal_shrine_small
+cmd awaken gate interior goto shrine
+wait 60
+shot interiors_48_abyssal_shrine_shrine
+cmd awaken gate interior goto lord
+wait 160
+shot interiors_49_abyssal_shrine_lord
+cmd awaken gate leave
+wait 80
+quit

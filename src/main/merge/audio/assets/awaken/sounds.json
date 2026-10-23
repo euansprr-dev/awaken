@@ -1,0 +1,512 @@
+{
+  "ui.answer_yes": {
+    "subtitle": "subtitles.awaken.ui.answer_yes",
+    "sounds": [
+      {
+        "name": "awaken:ui_answer_yes"
+      }
+    ]
+  },
+  "ui.answer_no": {
+    "subtitle": "subtitles.awaken.ui.answer_no",
+    "sounds": [
+      {
+        "name": "awaken:ui_answer_no"
+      }
+    ]
+  },
+  "ui.story": {
+    "subtitle": "subtitles.awaken.ui.story",
+    "sounds": [
+      {
+        "name": "awaken:ui_story"
+      }
+    ]
+  },
+  "ui.now": {
+    "subtitle": "subtitles.awaken.ui.now",
+    "sounds": [
+      {
+        "name": "awaken:ui_now"
+      }
+    ]
+  },
+  "ui.quest_done": {
+    "subtitle": "subtitles.awaken.ui.quest_done",
+    "sounds": [
+      {
+        "name": "awaken:ui_quest_done"
+      }
+    ]
+  },
+  "ui.request_delivered": {
+    "subtitle": "subtitles.awaken.ui.request_delivered",
+    "sounds": [
+      {
+        "name": "awaken:ui_request_delivered"
+      }
+    ]
+  },
+  "amb.rift": {
+    "subtitle": "subtitles.awaken.amb.rift",
+    "sounds": [
+      {
+        "name": "awaken:amb_rift",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "amb.grove": {
+    "subtitle": "subtitles.awaken.amb.grove",
+    "sounds": [
+      {
+        "name": "awaken:amb_grove",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "amb.star_whistle": {
+    "subtitle": "subtitles.awaken.amb.star_whistle",
+    "sounds": [
+      {
+        "name": "awaken:amb_star_whistle",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "amb.star_cooling": {
+    "subtitle": "subtitles.awaken.amb.star_cooling",
+    "sounds": [
+      {
+        "name": "awaken:amb_star_cooling",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "amb.star_cooled": {
+    "subtitle": "subtitles.awaken.amb.star_cooled",
+    "sounds": [
+      {
+        "name": "awaken:amb_star_cooled",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "amb.well": {
+    "subtitle": "subtitles.awaken.amb.well",
+    "sounds": [
+      {
+        "name": "awaken:amb_well",
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "amb.ruin_night": {
+    "subtitle": "subtitles.awaken.amb.ruin_night",
+    "sounds": [
+      {
+        "name": "awaken:amb_ruin_night",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "music.cue.awakening": {
+    "subtitle": "subtitles.awaken.music.cue.awakening",
+    "sounds": [
+      {
+        "name": "awaken:music_cue_awakening",
+        "stream": true
+      }
+    ]
+  },
+  "music.cue.beast": {
+    "subtitle": "subtitles.awaken.music.cue.beast",
+    "sounds": [
+      {
+        "name": "awaken:music_cue_beast",
+        "stream": true
+      }
+    ]
+  },
+  "music.cue.gate_forming": {
+    "subtitle": "subtitles.awaken.music.cue.gate_forming",
+    "sounds": [
+      {
+        "name": "awaken:music_cue_gate_forming",
+        "stream": true
+      }
+    ]
+  },
+  "music.cue.gate_broke": {
+    "subtitle": "subtitles.awaken.music.cue.gate_broke",
+    "sounds": [
+      {
+        "name": "awaken:music_cue_gate_broke",
+        "stream": true
+      }
+    ]
+  },
+  "music.cue.rank_up": {
+    "subtitle": "subtitles.awaken.music.cue.rank_up",
+    "sounds": [
+      {
+        "name": "awaken:music_cue_rank_up",
+        "stream": true
+      }
+    ]
+  },
+  "music.cue.shrine": {
+    "subtitle": "subtitles.awaken.music.cue.shrine",
+    "sounds": [
+      {
+        "name": "awaken:music_cue_shrine",
+        "stream": true
+      }
+    ]
+  },
+  "music.cue.lair": {
+    "subtitle": "subtitles.awaken.music.cue.lair",
+    "sounds": [
+      {
+        "name": "awaken:music_cue_lair",
+        "stream": true
+      }
+    ]
+  },
+  "music.gate.bell_crypt": {
+    "subtitle": "subtitles.awaken.music.gate.bell_crypt",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_bell_crypt",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.deep_dark",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.fungal_hollow": {
+    "subtitle": "subtitles.awaken.music.gate.fungal_hollow",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_fungal_hollow",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.lush_caves",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.ember_mines": {
+    "subtitle": "subtitles.awaken.music.gate.ember_mines",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_ember_mines",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.nether.basalt_deltas",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.drowned_archive": {
+    "subtitle": "subtitles.awaken.music.gate.drowned_archive",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_drowned_archive",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.under_water",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.clockwork_foundry": {
+    "subtitle": "subtitles.awaken.music.gate.clockwork_foundry",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_clockwork_foundry",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.dripstone_caves",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.glass_desert": {
+    "subtitle": "subtitles.awaken.music.gate.glass_desert",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_glass_desert",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.desert",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.hive": {
+    "subtitle": "subtitles.awaken.music.gate.hive",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_hive",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.flower_forest",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.overgrown_temple": {
+    "subtitle": "subtitles.awaken.music.gate.overgrown_temple",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_overgrown_temple",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.jungle",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.lantern_night_market": {
+    "subtitle": "subtitles.awaken.music.gate.lantern_night_market",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_lantern_night_market",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.cherry_grove",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.frost_monastery": {
+    "subtitle": "subtitles.awaken.music.gate.frost_monastery",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_frost_monastery",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.frozen_peaks",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.mirror_palace": {
+    "subtitle": "subtitles.awaken.music.gate.mirror_palace",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_mirror_palace",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.end",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.precursor_lab": {
+    "subtitle": "subtitles.awaken.music.gate.precursor_lab",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_precursor_lab",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.end",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.nightmare": {
+    "subtitle": "subtitles.awaken.music.gate.nightmare",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_nightmare",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.deep_dark",
+        "type": "event"
+      }
+    ]
+  },
+  "music.gate.sky_archipelago": {
+    "subtitle": "subtitles.awaken.music.gate.sky_archipelago",
+    "sounds": [
+      {
+        "name": "awaken:music_gate_sky_archipelago",
+        "weight": 3,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.meadow",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.1": {
+    "subtitle": "subtitles.awaken.music.descent.1",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.lush_caves",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.2": {
+    "subtitle": "subtitles.awaken.music.descent.2",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.flower_forest",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.3": {
+    "subtitle": "subtitles.awaken.music.descent.3",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.under_water",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.4": {
+    "subtitle": "subtitles.awaken.music.descent.4",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.nether.soul_sand_valley",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.5": {
+    "subtitle": "subtitles.awaken.music.descent.5",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.deep_dark",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.6": {
+    "subtitle": "subtitles.awaken.music.descent.6",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.nether.basalt_deltas",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.7": {
+    "subtitle": "subtitles.awaken.music.descent.7",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.under_water",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.8": {
+    "subtitle": "subtitles.awaken.music.descent.8",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.overworld.cherry_grove",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.9": {
+    "subtitle": "subtitles.awaken.music.descent.9",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.nether.crimson_forest",
+        "type": "event"
+      }
+    ]
+  },
+  "music.descent.10": {
+    "subtitle": "subtitles.awaken.music.descent.10",
+    "sounds": [
+      {
+        "name": "awaken:music_descent",
+        "weight": 2,
+        "stream": true
+      },
+      {
+        "name": "minecraft:music.end",
+        "type": "event"
+      }
+    ]
+  }
+}

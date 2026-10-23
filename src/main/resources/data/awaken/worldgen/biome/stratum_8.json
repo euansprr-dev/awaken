@@ -24,7 +24,7 @@
     },
     "minecraft:audio/background_music": {
       "default": {
-        "sound": "minecraft:music.overworld.cherry_grove",
+        "sound": "awaken:music.descent.8",
         "min_delay": 6000,
         "max_delay": 18000
       }

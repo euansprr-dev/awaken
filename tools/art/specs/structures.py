@@ -5,6 +5,9 @@
     python3 tools/art/specs/structures.py preview DIR  isometric renders of every structure the GameTests built
                                                        (run/structures/*.json), two angles, day and night, and the gate
                                                        vortex's key frames (run/structures/vortex_frames.json)
+    python3 tools/art/specs/structures.py interiors DIR  gate interiors (run/interiors/*.json): cut-away plans and
+                                                       eye-level shots of every theme's floor and Lord's arena
+                                                       (tools/art/specs/gate_interiors.py)
 
 The previews draw the real block textures (vanilla from /Volumes/MEDIA/Awaken/.ref/assets, ours from the resources) on
 the block lists the Java builders produced, light them with a flood fill like the game's block light, and composite the
@@ -1217,5 +1220,9 @@ if __name__ == "__main__":
         content()
     elif len(sys.argv) > 1 and sys.argv[1] == "preview":
         preview(sys.argv[2] if len(sys.argv) > 2 else "/tmp/structures_preview", sys.argv[3:])
+    elif len(sys.argv) > 1 and sys.argv[1] == "interiors":
+        # gate interiors (run/interiors/*.json): plans and eye-level shots, see gate_interiors.py
+        import gate_interiors
+        gate_interiors.preview(sys.argv[2] if len(sys.argv) > 2 else "/tmp/interiors", sys.argv[3:])
     else:
         print(__doc__)

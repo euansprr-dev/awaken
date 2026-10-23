@@ -58,6 +58,10 @@ final class LandmarkNow {
         if (c == null || now - c.at() > CACHE_TICKS || now < c.at() || c.from().distSqr(me) > CACHE_MOVE * CACHE_MOVE) {
             c = new Cached(now, me, pick(p, now));
             CACHE.put(p.getUUID(), c);
+            // a landmark the System points you at is one you've heard of: it goes on the Gate Map
+            c.pick().ifPresent(k -> {
+                if (Landmarks.memory(p).place(k.landmark().id(), k.landmark().kind(), k.landmark().pos())) Landmarks.sync(p);
+            });
         }
         if (c.pick().isEmpty()) return List.of();
         Pick k = c.pick().get();

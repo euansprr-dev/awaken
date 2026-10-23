@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/gate_conveyor_end",
+    "side": "awaken:block/gate_conveyor_side"
+  }
+}

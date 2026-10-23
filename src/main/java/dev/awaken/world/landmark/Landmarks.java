@@ -75,6 +75,11 @@ public final class Landmarks {
         return p.getData(LandmarkContent.MEMORY);
     }
 
+    /** Sends this player's landmark memory to their client after a change (the Gate Map reads it). */
+    static void sync(ServerPlayer p) {
+        p.syncData(LandmarkContent.MEMORY);
+    }
+
     static boolean descentOn() {
         try {
             return AwakenConfig.DESCENT.get();
@@ -165,6 +170,7 @@ public final class Landmarks {
         LandmarkMemory m = memory(p);
         m.whispered = l.get().id();
         m.whisperedAt = p.level().getGameTime();
+        if (m.place(l.get().id(), l.get().kind(), l.get().pos())) sync(p);
         LandmarkNow.forget(p.getUUID());
         return Optional.of(String.format(l.get().kind().whisper, Spots.where(p.blockPosition(), l.get().pos())));
     }
@@ -181,6 +187,7 @@ public final class Landmarks {
         if (l.isEmpty()) return Optional.empty();
         Landmark k = l.get();
         m.told.add(k.id());
+        if (m.place(k.id(), k.kind(), k.pos())) sync(p);
         String dir = compassWords(me, k.pos());
         int dist = (int) (Math.round(Spots.horizontal(me, k.pos()) / 50.0) * 50);
         return Optional.of(new Rumour("landmark/" + k.id(), k.kind().display + ", " + dir,

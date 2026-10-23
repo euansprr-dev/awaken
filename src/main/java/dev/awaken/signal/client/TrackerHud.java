@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
+import net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent;
 
 import java.util.List;
 
@@ -42,6 +43,14 @@ final class TrackerHud {
     private static boolean lowered(Minecraft mc) {
         Identifier dim = mc.player.level().dimension().identifier();
         return dim.getNamespace().equals(Awaken.MODID) && (dim.getPath().startsWith("stratum_") || dim.getPath().equals("endless"));
+    }
+
+    /** Where the boss bars drawn this frame end (0 when none); they draw before this layer. */
+    private static int bossBottom;
+
+    /** Each boss bar as vanilla places it: the bar is 5 tall, its name sits above it. */
+    static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress e) {
+        bossBottom = Math.max(bossBottom, e.getY() + 5);
     }
 
     private record Lines(String line1, String compass, String line2, int colour1, Rect rect) {}
@@ -75,6 +84,8 @@ final class TrackerHud {
     }
 
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
+        int bars = bossBottom;
+        bossBottom = 0;
         if (!enabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden() || mc.getDebugOverlay().showDebugScreen()) return;
@@ -100,6 +111,8 @@ final class TrackerHud {
         String line1 = c.line1, compass = c.compass, line2 = c.line2;
         int colour1 = c.colour1;
         Rect r = c.rect;
+        // a boss fight: step below the bars rather than print over their names (narrow screens, long lines)
+        if (bars > 0 && r.right() > sw / 2 - 92 && r.y() < bars + 3) r = new Rect(r.x(), bars + 3, r.w(), r.h());
         float alpha = Math.min(1f, (NowClient.sinceChange() + dt.getGameTimeDeltaPartialTick(false)) / 8f);
 
         g.pose().pushMatrix();

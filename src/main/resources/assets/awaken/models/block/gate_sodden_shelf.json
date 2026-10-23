@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/gate_sodden_shelf_top",
+    "side": "awaken:block/gate_sodden_shelf"
+  }
+}

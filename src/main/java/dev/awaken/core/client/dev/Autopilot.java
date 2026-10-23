@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -39,7 +40,8 @@ import java.util.Map;
  * camera first|back|front                        the F5 views
  * fps &lt;label&gt;                                     logs the frames of the last second
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
- * quit
+ * leave                                          save and quit to the title (a following "world" line rejoins)
+ * quit                                           save and quit to the title, then close the game
  * </pre>
  */
 public final class Autopilot {
@@ -211,7 +213,17 @@ public final class Autopilot {
                 waitTicks = 2;
             }
             case "fps" -> Awaken.LOG.info("[autopilot] fps {} {}", arg.trim(), mc.getFps());
-            case "quit" -> mc.stop();
+            case "leave" -> {
+                if (mc.level != null) mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE);
+            }
+            case "quit" -> {
+                // the pause menu's "Save and Quit to Title" first, so the world and the player are saved as in play
+                if (mc.level != null) {
+                    mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE);
+                    return false;
+                }
+                mc.stop();
+            }
             default -> Awaken.LOG.warn("[autopilot] unknown line: {}", line);
         }
         Awaken.LOG.info("[autopilot] {}", line);

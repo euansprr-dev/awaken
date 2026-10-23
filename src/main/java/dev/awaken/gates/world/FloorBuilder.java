@@ -491,6 +491,10 @@ final class FloorBuilder {
                 }
                 r.height = Math.min(r.height, 27 - r.dy);
             }
+            if (plan.contentVersion() >= 2) {
+                pieces();
+                if (!friendly && !hollow) deeperTypes();
+            }
             for (Room r : rooms) {
                 if (!(friendly || (hollow && r.type != Room.Type.BOSS))) spawns(r);
                 features(r);
@@ -504,9 +508,79 @@ final class FloorBuilder {
                     d.ownsBars = true;
                 }
             }
+            markPath();
             int baseY = Cells.floorY(floor);
             int ox = area == 0 ? Cells.GRID_ORIGIN : Cells.ANNEX_SLOT_X + Cells.GRID_ORIGIN;
             return new FloorLayout(area, floor, baseY, ox, Cells.GRID_ORIGIN, w, h, theme, bossFloor, rooms, start, end);
+        }
+
+        /**
+         * Set pieces and the Lord's arena (content version 2+). Choices come from per-room hashes, never from {@code rnd},
+         * so the rooms themselves stay exactly what version 1 built. The theme's pieces take turns so a floor shows its
+         * range; big rooms get a piece, single rooms two times in five.
+         */
+        void pieces() {
+            List<SetPiece> pool = SetPiece.roomPieces(theme);
+            java.util.Set<SetPiece> usedBig = java.util.EnumSet.noneOf(SetPiece.class);
+            int turn = (int) Math.floorMod(Hash.of(seed, 61, floor), 997L);
+            for (Room r : rooms) {
+                if (r.type == Room.Type.BOSS) {
+                    r.piece = SetPiece.arenaFor(lordTheme());
+                    r.shape = r.piece.shape;
+                    continue;
+                }
+                if (pool.isEmpty() || !takesPiece(r)) continue;
+                boolean big = r.area() >= 2;
+                if (!big && Hash.unit(r.seed, 41, 7) >= 0.3) continue;
+                SetPiece pick = null;
+                for (int k = 0; k < pool.size() && pick == null; k++) {
+                    SetPiece p = pool.get(Math.floorMod(turn + k, pool.size()));
+                    if (p.minArea > r.area() || p.minHeight > r.height) continue;
+                    if (big && p.minArea < 2) continue;              // big rooms take the big pieces...
+                    if (big && usedBig.contains(p)) continue;         // ...each once a floor; the rest keep their own shapes
+                    pick = p;
+                }
+                if (pick != null && big) usedBig.add(pick);
+                if (pick == null) continue;
+                turn++;
+                r.piece = pick;
+                if (pick.shape != null) r.shape = pick.shape;
+            }
+        }
+
+        private boolean takesPiece(Room r) {
+            if (r.shape == Room.Shape.SHAFT || r.shape == Room.Shape.CAVE || r.shape == Room.Shape.HALL) return false;
+            // pieces keep clear of features themselves (Pieces.blocks), so caches added later still have their spot
+            return switch (r.type) {
+                case NORMAL, ELITE, KEY, ARENA -> true;
+                default -> false;
+            };
+        }
+
+        /** Whose arena the boss room is: the Lord (main floor, Double Gate echo) or the inner gate's keeper. */
+        private Theme lordTheme() {
+            if (area == 1 && plan.twist() == Twist.GATE_WITHIN) return theme;
+            String key = plan.boss();
+            for (Theme t : Theme.values()) if (t.bossId().equals(key)) return t;
+            return plan.theme();
+        }
+
+        /** The critical path: rooms on it, the door that leads on from each, and the last door into the end room. */
+        void markPath() {
+            List<Integer> path = new FloorLayoutView(this).path();
+            for (int i = 0; i < path.size(); i++) {
+                Room r = rooms.get(path.get(i));
+                r.onPath = true;
+                if (i > 0) r.pathIn = r.doorTo(path.get(i - 1));
+                if (i + 1 < path.size()) {
+                    Room.Door d = r.doorTo(path.get(i + 1));
+                    if (d != null) {
+                        d.onward = true;
+                        d.toEnd = i + 2 == path.size();
+                        r.pathOut = d;
+                    }
+                }
+            }
         }
 
         private boolean skyIsland(Room r) {
@@ -588,6 +662,21 @@ final class FloorBuilder {
         }
 
         int heightFor(Room r) {
+            if (plan.contentVersion() >= 2) {
+                // version 2 rooms are taller: a single room is 12 wide, so 8 to 10 high gives it the proportions of a hall
+                int v2 = switch (r.type) {
+                    case BOSS -> r.gw >= 3 ? 17 : 13;
+                    case ARENA, HUB -> 12;
+                    case CAVERN -> 14;
+                    case SHAFT -> 26;
+                    case HALL -> 7;
+                    case SHRINE -> 10;
+                    case START -> 9;
+                    case ANTE -> 11;
+                    default -> r.area() > 1 ? 11 : 8 + (int) Math.floorMod(r.seed >> 8, 3L);
+                };
+                return Math.min(v2, 27 - r.dy);
+            }
             int hgt = switch (r.type) {
                 case BOSS -> r.gw >= 3 ? 17 : 12;
                 case ARENA, HUB -> 11;
@@ -599,6 +688,43 @@ final class FloorBuilder {
                 default -> r.area() > 1 ? 10 : 7 + (int) Math.floorMod(r.seed >> 8, 3L);
             };
             return Math.min(hgt, 27 - r.dy);
+        }
+
+        // ---- P3 tuning (content version 2): deeper floors push back harder ----------------------------------------
+        // Numbers from tools/sim/pacing_sim.py (docs/modules/gates.md "Tuning"): the balanced player dies 1-3 times in
+        // ten gates at D, C and B, and planning one floor deeper pays best around floors 3 to 5.
+
+        /** Extra monsters per room on floor f (1-based): one more from the third floor, another from the fifth. */
+        static int depthMonsters(int floor) {
+            return (floor >= 3 ? 1 : 0) + (floor >= 5 ? 1 : 0);
+        }
+
+        /** Extra chance (on top of version 1's rolls) that a plain room on this floor holds an elite. */
+        static double extraElite(int rank, int floor) {
+            return Math.max(0, 0.04 * (floor - 1) + 0.01 * rank - 0.02);
+        }
+
+        /** Version 2's room types: plain rooms turn elite more often deeper down (per-room hash: rnd is untouched). */
+        void deeperTypes() {
+            if (bossFloor) return;
+            double extra = extraElite(rank, floor);
+            for (Room r : rooms) {
+                if (r.type == Room.Type.NORMAL && r.id != start && r.id != end && Hash.unit(r.seed, 91, floor) < extra) r.type = Room.Type.ELITE;
+            }
+        }
+
+        void deeper(Room r) {
+            int more = depthMonsters(floor);
+            switch (r.type) {
+                case NORMAL, HALL, HUB, CAVERN -> r.normals += r.normals > 1 ? more : 0;
+                case ELITE, KEY -> r.normals += more;
+                case ARENA -> {
+                    r.normals += more;
+                    r.wave2Normals += more;
+                    if (floor >= 3) r.wave2Elites += 1;
+                }
+                default -> {}
+            }
         }
 
         void spawns(Room r) {
@@ -620,6 +746,7 @@ final class FloorBuilder {
                 case BOSS -> r.normals = 2;
                 default -> {}
             }
+            if (plan.contentVersion() >= 2) deeper(r);
             if (plan.has(Modifier.SWARM)) {
                 r.normals = (int) Math.ceil(r.normals * 1.6);
                 r.wave2Normals = (int) Math.ceil(r.wave2Normals * 1.6);

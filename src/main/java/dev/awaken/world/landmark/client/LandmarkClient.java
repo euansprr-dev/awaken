@@ -1,5 +1,10 @@
 package dev.awaken.world.landmark.client;
 
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.core.BlockPos;
+import dev.awaken.world.landmark.Landmarks;
+import dev.awaken.world.landmark.LandmarkMemory;
+import dev.awaken.core.api.MapMarks;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -58,6 +63,28 @@ public final class LandmarkClient {
         NeoForge.EVENT_BUS.addListener(ExtractLevelRenderStateEvent.class, LandmarkClient::onExtract);
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, LandmarkClient::onSubmit);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> markers = List.of());
+        MapMarks.register(LandmarkClient::mapMarks);
+    }
+
+    /** Landmarks this player reached (filled on the Gate Map) or heard of (outlined), in the colour of their light. */
+    private static List<MapMarks.Mark> mapMarks(Player p) {
+        LandmarkMemory m = Landmarks.memory(p);
+        if (m.places().isEmpty()) return List.of();
+        List<MapMarks.Mark> out = new ArrayList<>(m.places().size());
+        for (LandmarkMemory.Place pl : m.places()) {
+            LandmarkKind k = pl.landmark();
+            out.add(new MapMarks.Mark(new BlockPos(pl.x(), 64, pl.z()), mapColour(k), k.display, m.reached(pl.id())));
+        }
+        return out;
+    }
+
+    static int mapColour(LandmarkKind k) {
+        return switch (k) {
+            case WELL -> 0x8FD8FF;
+            case SKY_PLATFORM -> 0xC8DCFF;
+            case OCEAN_LAB -> 0x9FE7FF;
+            default -> 0xFFD9A0;
+        };
     }
 
     private static int argb(float alpha, int rgb) {

@@ -29,8 +29,11 @@ Ruins are identified by their start chunk (`ruin:<x>,<z>`), the Well as `well`.
     Precursor ruin's start, if its chunk is loaded, gives its bounds; inside them (+10 blocks) you've reached it. No
     structure searches;
   - **gates**: every fifth check, `GateHooks.near` (20 blocks of a gate's mouth).
-- Reached: remembered in the player's attachment `awaken:landmark_memory` (schema 1, kept on death: reached ids, rumours
-  told, the last whisper). The first of each kind is `Progression.discover(player, "landmark/<kind>", 0.15)` with
+- Reached: remembered in the player's attachment `awaken:landmark_memory` (schema 2, kept on death, synced to its owner:
+  reached ids, rumours told, the last whisper, and the places of every landmark reached or heard of).
+- On the Gate Map: a landmark is placed when you reach it, Mira tells of it, a spirit whispers it or the Now tracker
+  first points at it. Reached ones are filled diamonds, heard-of ones outlined, in the colour of their light (Well and
+  ocean lab cyan, sky platform pale blue, vault and monolith amber), and they're listed beside the gates and lairs. The first of each kind is `Progression.discover(player, "landmark/<kind>", 0.15)` with
   `markNewThing` and a toast ("New landmark · Sealed Vault / Something waits in the antechamber · +XP"); gates per theme
   ("New gate · Bell Crypt / E-rank · +XP"). Every reached landmark counts `awaken:landmarks_reached`.
 - Nothing before awakening (the world reveals itself at Accept).
@@ -112,13 +115,13 @@ gives essence and a few useful things).
 - ~~hearth: Mira's rumours~~ done (integrator): `Rumours.give` asks `core.api.WorldHooks.landmarkRumour` when no gate is
   worth a rumour; `LandmarkModule` installs it.
 - ~~core: `features.landmarks`~~ done: switches discovery, Now hints, rumours and markers off.
-- **gates** (optional): the Gate Map could list reached landmarks from `Landmarks.memory(player).reached()`.
+- ~~gates: landmarks on the Gate Map~~ done (integrator) through `core.api.MapMarks`, from the synced memory's places.
 
 ## SPEC-worthy decisions (for the integrator)
 
 1. New §: Landmarks. Kinds Well / vault (incl. spawn vault) / monolith / ocean lab / sky platform / gate theme; reached
    = Well within 20, ruin bounds +10, gate mouth within 20; first of each kind `discover("landmark/<kind>", 0.15)`, gates
-   per theme; counter `awaken:landmarks_reached`; attachment `awaken:landmark_memory` schema 1 (copy on death).
+   per theme; counter `awaken:landmarks_reached`; attachment `awaken:landmark_memory` schema 2 (copy on death, synced to its owner, places for the Gate Map).
 2. Reason-to-go levels: Well 10, vault 4 (spawn vault 2), monolith 4, ocean lab 6, sky platform 20. Now line priority
    30 (whispered 38 for 10 min); ruins ≤ 700 m, Well ≤ 1,500 m; never inside a Hearth or a gate.
 3. Markers: within 288 blocks; ruin shafts at dusk (11000–15000, peak 12000–13600) and 30% at night; Well pillar glow at
