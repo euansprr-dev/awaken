@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "awaken:item/frame_module_shield_emitter"
+  }
+}

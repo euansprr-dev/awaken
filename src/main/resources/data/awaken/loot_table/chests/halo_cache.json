@@ -1,0 +1,113 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 5,
+        "max": 8
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:precursor_alloy",
+          "weight": 14,
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 2,
+              "max": 5
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:precursor_circuit",
+          "weight": 14,
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 2,
+              "max": 5
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:essence_cell",
+          "weight": 8,
+          "modifier": {
+            "type": "minecraft:set_components",
+            "components": {
+              "awaken:essence": 1000
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:essence_shard",
+          "weight": 12,
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 3,
+              "max": 8
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:lord_heart",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond",
+          "weight": 4,
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 3
+            }
+          }
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:frame_module_jet_boots",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:frame_module_shield_emitter",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:frame_module_stealth_field",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:frame_module_magnet",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:frame_module_night_vision",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:frame_module_step_assist",
+          "weight": 3
+        }
+      ]
+    }
+  ],
+  "random_sequence": "awaken:chests/halo_cache"
+}

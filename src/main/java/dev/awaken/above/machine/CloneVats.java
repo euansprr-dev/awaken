@@ -61,6 +61,7 @@ public final class CloneVats {
     }
 
     public static boolean consume(ServerPlayer player, long today) {
+        if (!dev.awaken.core.AwakenConfig.ABOVE.get()) return false;
         AboveData d = Above.data(player);
         if (d.clonePending()) return true; // same death, asked again
         if (!canUse(d.cloneUsedDay(), today)) return false;

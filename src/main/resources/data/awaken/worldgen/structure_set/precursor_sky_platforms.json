@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:precursor_sky_platform",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 44,
+    "separation": 16,
+    "salt": 1096176178
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "PP",
+    "PP"
+  ],
+  "key": {
+    "P": "awaken:precursor_plating"
+  },
+  "result": {
+    "id": "awaken:precursor_panel",
+    "count": 4
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "values": [
+    "awaken:precursor_plating",
+    "awaken:precursor_panel",
+    "awaken:precursor_glow_panel",
+    "awaken:precursor_warning_light",
+    "awaken:precursor_void_glass",
+    "awaken:precursor_membrane",
+    "awaken:launch_ring_frame",
+    "awaken:precursor_trim",
+    "awaken:broken_machine",
+    "awaken:precursor_log_terminal",
+    "awaken:essence_reactor",
+    "awaken:gate_scanner",
+    "awaken:gate_stabiliser",
+    "awaken:waypoint_pylon",
+    "awaken:deep_lift",
+    "awaken:frame_forge",
+    "awaken:clone_vat",
+    "awaken:dream_recorder",
+    "awaken:signal_relay",
+    "awaken:recalibrator",
+    "awaken:observatory",
+    "awaken:launch_ring",
+    "awaken:fabricator"
+  ]
+}

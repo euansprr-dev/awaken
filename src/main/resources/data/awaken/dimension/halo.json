@@ -1,0 +1,10 @@
+{
+  "type": "awaken:halo",
+  "generator": {
+    "type": "awaken:halo_station",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "awaken:halo_orbit"
+    }
+  }
+}

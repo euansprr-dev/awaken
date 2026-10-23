@@ -1,0 +1,11 @@
+{
+  "parent": "awaken:block/precursor_machine_lit",
+  "textures": {
+    "front": "awaken:block/observatory_front",
+    "front_glow": "awaken:block/observatory_front_glow",
+    "side": "awaken:block/precursor_machine_side",
+    "top": "awaken:block/precursor_machine_top",
+    "top_glow": "awaken:block/precursor_machine_top_glow",
+    "bottom": "awaken:block/precursor_machine_bottom"
+  }
+}

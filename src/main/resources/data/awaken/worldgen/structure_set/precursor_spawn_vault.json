@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:precursor_spawn_vault",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "awaken:precursor_spawn_ring",
+    "min_distance": 240,
+    "max_distance": 360,
+    "salt": 1096176181
+  }
+}

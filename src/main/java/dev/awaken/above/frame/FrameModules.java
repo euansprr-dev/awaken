@@ -79,6 +79,7 @@ public final class FrameModules {
 
     private static void onTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer sp) || sp.tickCount % 10 != 0 || sp.isSpectator()) return;
+        if (!dev.awaken.core.AwakenConfig.ABOVE.get()) return;
         int mask = mask(sp);
         Integer last = LAST_MASK.get(sp.getUUID());
         if (last == null || last != mask) {

@@ -214,6 +214,47 @@ final class AboveTests {
             h.succeed();
         });
 
+        AwakenTests.register("above_ruins_generate_in_world", 200, h -> {
+            // the same path as /place structure: generate a start, then place it chunk by chunk, far from other tests
+            var level = h.getLevel();
+            var structures = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+            var gen = level.getChunkSource().getGenerator();
+            var rs = level.getChunkSource().randomState();
+            BlockPos base = h.absolutePos(BlockPos.ZERO).offset(6000, 0, 0);
+            int i = 0;
+            for (RuinKind kind : RuinKind.values()) {
+                var holder = structures.getOrThrow(kind.structure);
+                BlockPos at = base.offset(i++ * 160, 0, 0);
+                var start = holder.value().generate(holder, level.dimension(), level.registryAccess(), gen, gen.getBiomeSource(),
+                        rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.EMPTY_UNCACHED), rs,
+                        level.getStructureTemplateManager(), level.getSeed(), net.minecraft.world.level.ChunkPos.containing(at), 0, level, b -> true);
+                h.assertTrue(start.isValid(), kind.id + " start is valid");
+                var box = start.getBoundingBox();
+                for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
+                    for (int cz = box.minZ() >> 4; cz <= box.maxZ() >> 4; cz++) {
+                        level.getChunk(cx, cz);
+                        var c = new net.minecraft.world.level.ChunkPos(cx, cz);
+                        start.placeInChunk(level, level.structureManager(), gen, level.getRandom(),
+                                new net.minecraft.world.level.levelgen.structure.BoundingBox(c.getMinBlockX(), level.getMinY(), c.getMinBlockZ(),
+                                        c.getMaxBlockX(), level.getMaxY() + 1, c.getMaxBlockZ()), c);
+                    }
+                }
+                int machines = 0, cores = 0, chests = 0;
+                for (BlockPos p : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+                    BlockState s = level.getBlockState(p);
+                    if (s.is(AboveBlocks.BROKEN_MACHINE.get())) machines++;
+                    else if (s.is(AboveBlocks.DOOR_CORE.get())) cores++;
+                    else if (s.is(Blocks.CHEST) && level.getBlockEntity(p) instanceof net.minecraft.world.RandomizableContainer rc
+                            && rc.getLootTable() != null) chests++;
+                }
+                h.assertTrue(machines >= 1 && machines <= 3, kind.id + " placed " + machines + " broken machines");
+                h.assertTrue(chests >= 1, kind.id + " placed a loot chest");
+                if (kind.isVault()) h.assertTrue(cores == 1, kind.id + " placed its door core");
+                if (kind == RuinKind.SKY) h.assertTrue(box.minY() >= 262, "sky platforms float above Y 262, was " + box.minY());
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("above_data_codec_and_halo_layout", 20, h -> {
             AboveData d = new AboveData();
             d.learnAll();

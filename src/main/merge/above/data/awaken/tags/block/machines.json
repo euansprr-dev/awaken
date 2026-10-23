@@ -1,0 +1,17 @@
+{
+  "values": [
+    "awaken:essence_reactor",
+    "awaken:gate_scanner",
+    "awaken:gate_stabiliser",
+    "awaken:waypoint_pylon",
+    "awaken:deep_lift",
+    "awaken:frame_forge",
+    "awaken:clone_vat",
+    "awaken:dream_recorder",
+    "awaken:signal_relay",
+    "awaken:recalibrator",
+    "awaken:observatory",
+    "awaken:launch_ring",
+    "awaken:fabricator"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/precursor_trim_top",
+    "side": "awaken:block/precursor_trim"
+  }
+}

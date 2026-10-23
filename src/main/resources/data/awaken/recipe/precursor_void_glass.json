@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "GGG",
+    "GSG",
+    "GGG"
+  ],
+  "key": {
+    "G": "minecraft:glass",
+    "S": "awaken:precursor_scrap"
+  },
+  "result": {
+    "id": "awaken:precursor_void_glass",
+    "count": 8
+  }
+}

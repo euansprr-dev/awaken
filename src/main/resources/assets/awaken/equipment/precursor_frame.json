@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "awaken:precursor_frame"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "awaken:precursor_frame"
+      }
+    ]
+  }
+}

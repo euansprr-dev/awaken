@@ -1,0 +1,8 @@
+{
+  "type": "awaken:precursor_ruin",
+  "kind": "ocean_lab",
+  "biomes": "#awaken:has_structure/precursor_ocean_lab",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

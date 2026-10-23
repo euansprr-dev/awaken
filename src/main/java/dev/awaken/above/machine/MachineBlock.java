@@ -2,6 +2,7 @@ package dev.awaken.above.machine;
 
 import dev.awaken.above.AboveBlocks;
 import dev.awaken.above.MachineType;
+import dev.awaken.above.power.Power;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -80,6 +81,13 @@ public class MachineBlock extends BaseEntityBlock {
     public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> beType) {
         if (level.isClientSide() || type == null) return null;
         return createTickerHelper(beType, AboveBlocks.MACHINE_BE.get(), MachineBlockEntity::serverTick);
+    }
+
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        // index a new reactor at once (onLoad only runs on the next block-entity tick)
+        if (type == MachineType.REACTOR && level instanceof ServerLevel sl && !oldState.is(this)) Power.add(sl, pos);
     }
 
     @Override
