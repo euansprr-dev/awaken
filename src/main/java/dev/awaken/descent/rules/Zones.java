@@ -96,6 +96,7 @@ public final class Zones {
 
     private static final Int2ObjectOpenHashMap<Zone> ZONES = new Int2ObjectOpenHashMap<>();
     private static final Map<UUID, PState> PLAYERS = new HashMap<>();
+    private static final List<Zone> ACTIVE = new ArrayList<>();
 
     public static PState state(ServerPlayer p) {
         return PLAYERS.computeIfAbsent(p.getUUID(), k -> new PState());
@@ -136,11 +137,10 @@ public final class Zones {
                 if (ps.zoneDepth != depth) enter(p, ps, z, level.getGameTime());
             }
         }
-        for (Zone z : ZONES.values()) {
-            if (z.players.isEmpty()) continue;
-            ServerLevel level = z.players.getFirst().level();
-            tickZone(level, z);
-        }
+        // tick a snapshot: rules may create zones (a mob dying elsewhere) while we iterate
+        ACTIVE.clear();
+        for (Zone z : ZONES.values()) if (!z.players.isEmpty()) ACTIVE.add(z);
+        for (Zone z : ACTIVE) tickZone(z.players.getFirst().level(), z);
     }
 
     private static void enter(ServerPlayer p, PState ps, Zone z, long now) {
