@@ -27,6 +27,11 @@ public final class HearthHooks {
         lookup = l;
     }
 
+    /** The installed lookup (tests swap it in and out in try/finally). */
+    public static Lookup installed() {
+        return lookup;
+    }
+
     /** Whether {@code pos} lies inside any Hearth's radius (exact, by tier). */
     public static boolean inside(ServerLevel level, BlockPos pos) {
         return lookup.inside(level, pos);

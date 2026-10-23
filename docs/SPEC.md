@@ -396,6 +396,15 @@ Plan v2 · overworld creatures (details in docs/modules/fauna.md):
   first kill pays 0.5 level, first sighting 0.1 (beasts 0.25) through `Progression.discover`. Their boss bar shows only
   while they have a target.
 - The reveal pulse plays once per player at awakening (old awakened saves get it once).
+- P2: six more families (the Mire, the Canopy, Duskwood, Blossomwood, the Crags, Sporewild; 22 creatures). Greenwild
+  hands over dark forest, cherry grove, flower and birch forests; Sunscorch keeps savanna and badlands.
+- Every named beast has a lair placed by world generation (one structure set each; spacing 112 chunks for P1's three,
+  96 for P2's, 40 for the Mycelord). The lair's beast appears when an awakened level-3+ player is within 96 blocks and
+  returns an hour of play after it falls. Roaming beasts spawn at weight 1.
+- Meeting a family's creature at level 3+ tells of its nearest lair (within 3,000 blocks); finding a lair pays 0.15 of
+  a level once per beast kind. Block-changing talents (lichen, flowers, mushrooms) never act inside a Hearth radius.
+- Twelve family materials (`<family>_<thing>`) and the beasts' parts join the Hunter gear tags (E hides, cores and
+  bindings; D cores) from `src/main/merge/fauna/`.
 
 Plan v2 · anomalies (details in docs/modules/anomalies.md):
 - One anomaly at a time per player, after 6–12 minutes of outdoor play (3–6 after awakening), ×1.5 faster at night;
