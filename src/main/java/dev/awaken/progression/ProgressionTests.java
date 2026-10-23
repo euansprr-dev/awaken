@@ -53,6 +53,72 @@ final class ProgressionTests {
             h.assertTrue(q.directives().get(0).baseline().get("awaken:floors_cleared") == 9L, "directive baseline");
             h.succeed();
         });
+        AwakenTests.register("progression_content_loaded", 20, h -> {
+            h.assertTrue(dev.awaken.progression.content.Content.TRUTHS.map.size() >= 25, "truths loaded: " + dev.awaken.progression.content.Content.TRUTHS.map.size());
+            h.assertTrue(dev.awaken.progression.content.Content.DIRECTIVES.map.size() >= 30, "directives loaded");
+            h.assertTrue(dev.awaken.progression.content.Content.PATHS.map.size() == 12, "12 paths");
+            h.assertTrue(dev.awaken.progression.content.Content.DRILLS.map.size() >= 15, "drills loaded");
+            h.succeed();
+        });
+        AwakenTests.register("progression_directive_lifecycle", 40, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            Progression.awaken(sp);
+            Profile p = Progression.profile(sp);
+            Directives.tryOffer(sp, "test");
+            h.assertTrue(p.directives().size() == 1, "one directive offered, got " + p.directives().size());
+            String id = p.directives().get(0).id();
+            Directives.answer(sp, Directives.ACTION + ":" + id, true);
+            h.assertTrue(p.directives().get(0).accepted(), "accepted");
+            var def = dev.awaken.progression.content.Content.DIRECTIVES.get(id);
+            java.util.Set<String> cs = new java.util.HashSet<>();
+            def.condition().counters(cs);
+            for (String c : cs) Progression.count(sp, c, 10_000_000L);
+            h.assertTrue(p.directives().isEmpty(), "completed and removed: " + id);
+            h.assertTrue(p.counter("awaken:directive_done/" + id) == 1, "done counter");
+            h.succeed();
+        });
+        AwakenTests.register("progression_truth_declare_and_true", 40, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            Progression.awaken(sp);
+            Profile p = Progression.profile(sp);
+            h.assertTrue(p.truthsOffered().size() == 3, "three truths offered at awakening, got " + p.truthsOffered().size());
+            String t = p.truthsOffered().get(0);
+            h.assertTrue(Progression.declareTruth(sp, t), "declare");
+            h.assertTrue(p.truthsDeclared().contains(t), "declared");
+            var def = dev.awaken.progression.content.Content.TRUTHS.get(t);
+            java.util.Set<String> cs = new java.util.HashSet<>();
+            def.condition().counters(cs);
+            for (String c : cs) Progression.setCounter(sp, c, 10_000_000L);
+            h.assertTrue(p.truthsTrue().contains(t), "became true: " + t);
+            h.succeed();
+        });
+        AwakenTests.register("progression_regimen_rolls_three", 40, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            Progression.awaken(sp);
+            Regimen.morning(sp);
+            Profile p = Progression.profile(sp);
+            h.assertTrue(p.regimen().drills().size() == 3, "three drills, got " + p.regimen().drills().size());
+            int before = p.unspent();
+            for (String id : p.regimen().drills()) {
+                java.util.Set<String> cs = new java.util.HashSet<>();
+                dev.awaken.progression.content.Content.DRILLS.get(id).condition().counters(cs);
+                for (String c : cs) Progression.count(sp, c, 10_000_000L);
+            }
+            h.assertTrue(p.regimen().done().size() == 3, "all drills done");
+            h.assertTrue(p.unspent() >= before + 1, "regimen point granted");
+            h.succeed();
+        });
+        AwakenTests.register("progression_respec_refunds", 40, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            Progression.awaken(sp);
+            Progression.grantXp(sp, Curve.xpToNext(1) + 1, Progression.XpSource.COMMAND);
+            Progression.spendPoint(sp, Stat.STR);
+            Progression.spendPoint(sp, Stat.AGI);
+            int refund = Progression.respec(sp);
+            Profile p = Progression.profile(sp);
+            h.assertTrue(refund == 2 && p.stat(Stat.STR) == Stat.START && p.unspent() == 3, "refund 2, back to 3 unspent");
+            h.succeed();
+        });
         AwakenTests.register("progression_level_up_grants_points", 40, h -> {
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
             Progression.awaken(sp);

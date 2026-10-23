@@ -36,6 +36,7 @@ public final class AwakenTests {
     }
 
     public static void init(IEventBus modBus) {
+        RegistryDump.register();
         FUNCTIONS.register(modBus);
         modBus.addListener(AwakenTests::onRegisterTests);
     }

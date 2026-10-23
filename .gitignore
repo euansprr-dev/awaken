@@ -44,3 +44,5 @@ repo/
 logs/
 *.log
 .claude/worktrees/
+
+awaken-registry.json
