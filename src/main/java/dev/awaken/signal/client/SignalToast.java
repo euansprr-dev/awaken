@@ -8,14 +8,19 @@ import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastManager;
 
 /**
- * A System toast, managed by vanilla's ToastManager so it stacks with advancement and recipe toasts: 160×32, top
- * right, a title and one detail line, on screen for 5 s × the player's notification-time option.
+ * A System toast, managed by vanilla's ToastManager so it stacks with advancement and recipe toasts: 160 wide, top
+ * right, a title and one detail line (32 tall), or two when the detail needs them (43 tall), on screen for 5 s × the
+ * player's notification-time option.
  */
 final class SignalToast implements Toast {
     static final long BASE_MS = 5000L;
 
     private String title;
     private String detail;
+    /** The detail wrapped to the toast's width: one or two lines, worked out when the text changes, not per frame. */
+    private String line1 = "", line2 = "";
+    /** Vanilla reserves a toast's slots once, when it's added: a short toast that later grows stays one line. */
+    private final boolean mayWrap;
     private int colour;
     private long shownFrom;
     private boolean reset;
@@ -27,6 +32,8 @@ final class SignalToast implements Toast {
         this.detail = detail;
         this.colour = colour;
         this.onDone = onDone;
+        layout(true);
+        this.mayWrap = !line2.isEmpty();
     }
 
     /** Replaces the text and restarts the timer (a merged toast that grew). */
@@ -35,6 +42,27 @@ final class SignalToast implements Toast {
         this.detail = detail;
         this.colour = colour;
         this.reset = true;
+        layout(mayWrap);
+    }
+
+    private static final int TWO_LINE_H = 43;
+
+    private void layout(boolean twoLines) {
+        line1 = line2 = "";
+        if (detail == null || detail.isBlank()) return;
+        net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+        int textW = SignalLayout.TOAST_W - 16;
+        java.util.List<String> lines = SignalText.wrap(detail, textW, font::width);
+        if (lines.isEmpty()) return;
+        if (!twoLines) {
+            line1 = SignalText.ellipsize(detail, textW, font::width);
+            return;
+        }
+        line1 = lines.get(0);
+        if (lines.size() > 1) {
+            String rest = String.join(" ", lines.subList(1, lines.size()));
+            line2 = SignalText.ellipsize(rest, textW, font::width);
+        }
     }
 
     @Override
@@ -60,12 +88,19 @@ final class SignalToast implements Toast {
         g.fill(0, 0, 2, h, Glass.a(colour, 1f));
         int textW = w - 16;
         String t = SignalText.ellipsize(title, textW, font::width);
-        if (detail == null || detail.isBlank()) {
+        if (line1.isEmpty()) {
             g.text(font, t, 9, (h - 8) / 2, Glass.a(Glass.TITLE, 1f), false);
         } else {
             g.text(font, t, 9, 7, Glass.a(Glass.TITLE, 1f), false);
-            g.text(font, SignalText.ellipsize(detail, textW, font::width), 9, 18, Glass.a(Glass.TEXT, 0.85f), false);
+            g.text(font, line1, 9, 18, Glass.a(Glass.TEXT, 0.85f), false);
+            if (!line2.isEmpty()) g.text(font, line2, 9, 29, Glass.a(Glass.TEXT, 0.85f), false);
         }
+    }
+
+    /** Slots are 32 tall whatever this toast's height (vanilla's default multiplies by the height). */
+    @Override
+    public float yPos(int firstSlotIndex) {
+        return firstSlotIndex * 32.0F;
     }
 
     @Override
@@ -75,7 +110,7 @@ final class SignalToast implements Toast {
 
     @Override
     public int height() {
-        return SignalLayout.TOAST_H;
+        return line2.isEmpty() ? SignalLayout.TOAST_H : TWO_LINE_H;
     }
 
     @Override
