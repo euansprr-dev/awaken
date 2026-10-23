@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "item": "awaken:tide_gel",
+  "count": {
+    "D": 6,
+    "C": 8
+  },
+  "weight": 9,
+  "value": 1.3,
+  "any_of": [
+    "seen:breathbell"
+  ],
+  "hint": "Breathbell Jellies drift in the sea",
+  "group": "tidewater"
+}

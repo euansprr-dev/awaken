@@ -30,13 +30,20 @@ public final class FaunaItems {
             "dusk_shell", "dusk_feather",
             "blossom_dust", "blossom_fur",
             "crag_horn", "crag_feather",
-            "spore_dust", "spore_gel");
+            "spore_dust", "spore_gel",
+            // P3: the Tidewater and the Hollows
+            "tide_scale", "tide_pelt", "tide_gel",
+            "hollow_crystal", "hollow_chitin", "hollow_wick");
 
     private static final Map<String, DeferredItem<Item>> BY_ID = new LinkedHashMap<>();
 
     static {
         for (String id : MATERIALS) BY_ID.put(id, ITEMS.registerSimpleItem(id, p -> p.rarity(Rarity.COMMON)));
     }
+
+    /** P3: the Hunter's Bridle (makes a trusting mount rideable) and the Hunter's Whistle (calls it). */
+    public static final DeferredItem<Item> BRIDLE = ITEMS.registerSimpleItem("hunters_bridle", p -> p.stacksTo(8).rarity(Rarity.UNCOMMON));
+    public static final DeferredItem<WhistleItem> WHISTLE = ITEMS.registerItem("hunters_whistle", WhistleItem::new, p -> p.stacksTo(1).rarity(Rarity.UNCOMMON));
 
     static void init(IEventBus modBus) {
         ITEMS.register(modBus);
@@ -52,5 +59,7 @@ public final class FaunaItems {
     private static void tab(BuildCreativeModeTabContentsEvent e) {
         if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
         for (DeferredItem<Item> item : BY_ID.values()) e.accept(item.get());
+        e.accept(BRIDLE.get());
+        e.accept(WHISTLE.get());
     }
 }

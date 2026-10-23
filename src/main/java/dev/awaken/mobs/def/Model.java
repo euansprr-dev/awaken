@@ -96,17 +96,39 @@ public enum Model {
     STONEHORN("", Move.GROUND, 1.46F, 2.11F, Voice.GOAT),
     MYCELORD("", Move.GROUND, 1.4F, 2.67F, Voice.MYCELORD),
     OWL("", Move.GROUND, 0.6F, 0.9F, Voice.OWL),
-    FIREFLY("", Move.FLY, 0.5F, 0.42F, Voice.FIREFLY);
+    FIREFLY("", Move.FLY, 0.5F, 0.42F, Voice.FIREFLY),
+    // P3 (the water and the caves): every body is a rig of its own (tools/art/specs/fauna3.py -> mobs.client.anim.Fauna3Data),
+    // drawn by mobs.client.anim.WildRenderer (swimmers pitch with their swim, a hanging lurker hangs).
+    GLIMMERFIN("", Move.SWIM, 0.5F, 0.35F, Voice.FISH),
+    BROOK_OTTER("", Move.SWIM, 0.6F, 0.55F, Voice.OTTER),
+    BREATHBELL("", Move.SWIM, 0.7F, 0.8F, Voice.FISH),
+    TIDESTEED("", Move.SWIM, 1.2F, 1.3F, Voice.OTTER),
+    LANTERN_MAW("", Move.SWIM, 2.0F, 1.6F, Voice.ELDER),
+    CHIME_CRICKET("", Move.GROUND, 0.5F, 0.4F, Voice.SCARAB),
+    WICKLING("", Move.GROUND, 0.5F, 0.35F, Voice.LIZARD),
+    DRIP_LURKER("", Move.GROUND, 0.8F, 1.1F, Voice.SPIDER),
+    HUSHLING("", Move.GROUND, 0.6F, 0.75F, Voice.LISTENER),
+    THOUSANDFOOT("", Move.GROUND, 2.0F, 1.1F, Voice.SPIDER);
 
     /** Bodies drawn by a hero rig (mobs.client.anim.HeroRenderer). */
     public boolean hero() {
         return switch (this) {
             case BRIAR_SOW, DUNE_WYRM, OLD_ANTLER, MIRE_MOTHER, PLUMED_COIL, WEAVER_QUEEN, EMPRESS_MOTH, STONEHORN, MYCELORD, OWL, FIREFLY -> true;
+            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT -> true;
             default -> false;
         };
     }
 
-    public enum Move { GROUND, HOP, FLY }
+    /** SWIM: water creatures (their own navigation and move control, mobs.entity.WaterFauna); P3. */
+    public enum Move { GROUND, HOP, FLY, SWIM }
+
+    /** P3 bodies drawn by mobs.client.anim.WildRenderer (a hero rig with swim pitch and hold poses). */
+    public boolean wild() {
+        return switch (this) {
+            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT -> true;
+            default -> false;
+        };
+    }
 
     /** Path under minecraft:textures/entity/ (without .png), or "" when we ship our own texture. */
     public final String vanillaTexture;
@@ -211,7 +233,10 @@ public enum Model {
         PROWLER(SoundEvents.WOLF_SOUNDS.get(net.minecraft.world.entity.animal.wolf.WolfSoundVariants.SoundSet.BIG).adultSounds().growlSound().value(),
                 SoundEvents.OCELOT_HURT, SoundEvents.OCELOT_DEATH),
         /** The walking mushroom's giant: a deep snuffle. */
-        MYCELORD(SoundEvents.SNIFFER_IDLE, SoundEvents.SNIFFER_HURT, SoundEvents.SNIFFER_DEATH);
+        MYCELORD(SoundEvents.SNIFFER_IDLE, SoundEvents.SNIFFER_HURT, SoundEvents.SNIFFER_DEATH),
+        // P3 fallbacks (every P3 creature has its own voice in sounds.json)
+        FISH(null, SoundEvents.COD_HURT, SoundEvents.COD_DEATH),
+        OTTER(SoundEvents.DOLPHIN_AMBIENT, SoundEvents.DOLPHIN_HURT, SoundEvents.DOLPHIN_DEATH);
 
         public final SoundEvent ambient;
         public final SoundEvent hurt;

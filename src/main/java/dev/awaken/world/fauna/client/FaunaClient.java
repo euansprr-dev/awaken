@@ -20,6 +20,8 @@ public final class FaunaClient {
     public static void init(IEventBus modBus) {
         modBus.addListener(FaunaClient::payloads);
         modBus.addListener(FaunaClient::layers);
+        modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.AddLayers e) -> BridleLayer.addLayers(e)); // P3: the stag's and the ray's bridle
+        modBus.addListener((net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent e) -> BridleLayer.modifiers(e));
         FaunaHooks.installViewer(FaunaClient::viewerAwakened);
         CodexEntries.addSource(CreatureCodex::entries);
         dev.awaken.core.api.MapMarks.register(FaunaClient::lairMarks);

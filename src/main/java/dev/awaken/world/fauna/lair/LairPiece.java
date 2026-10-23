@@ -143,7 +143,8 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
 
     @Override
     public TerrainAdjustment getTerrainAdjustment() {
-        return TerrainAdjustment.BEARD_THIN;
+        // a cave lair carves its own chamber; nothing to flatten down there
+        return style.placement == LairStyle.Placement.CAVE ? TerrainAdjustment.NONE : TerrainAdjustment.BEARD_THIN;
     }
 
     @Override

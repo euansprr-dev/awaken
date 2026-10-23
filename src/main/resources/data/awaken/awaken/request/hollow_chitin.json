@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "item": "awaken:hollow_chitin",
+  "count": {
+    "D": 6,
+    "C": 8,
+    "B": 10
+  },
+  "weight": 10,
+  "value": 1.5,
+  "any_of": [
+    "seen:drip_lurker",
+    "seen:thousandfoot"
+  ],
+  "hint": "Drip Lurkers hang in dripstone caves",
+  "group": "hollows"
+}

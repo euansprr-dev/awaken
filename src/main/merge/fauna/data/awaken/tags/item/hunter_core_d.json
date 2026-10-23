@@ -23,6 +23,14 @@
     {
       "id": "awaken:mycel_heart",
       "required": false
+    },
+    {
+      "id": "awaken:maw_lantern",
+      "required": false
+    },
+    {
+      "id": "awaken:thousandfoot_mandible",
+      "required": false
     }
   ]
 }

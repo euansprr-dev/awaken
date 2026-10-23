@@ -50,5 +50,22 @@ public enum FaunaTalent {
     /** Shroomlets: puff spores when startled, plant small mushrooms in the shade. */
     SPORE,
     /** Sporeback snails: mushrooms they rest beside grow into giant mushrooms. */
-    MYCEL
+    MYCEL,
+    // ---- P3 (the water and the caves) ----
+    /** Glimmerfin: swim in schools after a leader; swim through a school and your eyes open to the dark water. */
+    SHOAL,
+    /** Brook otters: dive and bring up what the river hides, dropping it on the bank near a player. */
+    FETCH,
+    /** Breathbell jellies: hold a bell of air; a drowning swimmer who touches one breathes again. */
+    AIRBELL,
+    /** Tidesteeds: race the waves in small herds and leap from the water (a mount). */
+    TIDE,
+    /** Chime crickets: find ore through the rock and chime beside it, faster as you come closer. */
+    CHIME,
+    /** Wicklings: glow berries ripen on the cave vines they climb past; they follow glow berries in your hand. */
+    RIPEN,
+    /** Drip lurkers: hang from the cave roof like a dripstone fang and drop on whoever passes beneath in the dark. */
+    CLING,
+    /** Hushlings: blind, they hunt by sound; sneak, or stand in torchlight, and they pass you by. */
+    HUSH
 }

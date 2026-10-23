@@ -36,8 +36,22 @@ final class FaunaCensus {
         return list == null ? List.of() : Collections.unmodifiableList(list);
     }
 
-    /** Live creatures of {@code role} within {@code radius} blocks (horizontal) of x, z. */
+    /**
+     * Live land creatures of {@code role} within {@code radius} blocks (horizontal) of x, z. Water creatures have their
+     * own caps ({@link #countWater}) and a mount that trusts a player counts for no one; named beasts are counted on land
+     * and in water alike (one beast near a player).
+     */
     static int countNear(Level level, FaunaRole role, double x, double z, double radius) {
+        return count(level, role, x, z, radius, role == FaunaRole.BEAST ? 2 : 0);
+    }
+
+    /** Live water creatures (the {@code awaken:fauna_water} category) of {@code role} near x, z (P3's water caps). */
+    static int countWater(Level level, FaunaRole role, double x, double z, double radius) {
+        return count(level, role, x, z, radius, 1);
+    }
+
+    /** where: 0 land, 1 water, 2 both. */
+    private static int count(Level level, FaunaRole role, double x, double z, double radius, int where) {
         List<FaunaMob> list = LIVE.get(level.dimension());
         if (list == null) return 0;
         double r2 = radius * radius;
@@ -45,6 +59,8 @@ final class FaunaCensus {
         for (int i = 0, size = list.size(); i < size; i++) {
             FaunaMob m = list.get(i);
             if (m.def().fauna != role || !m.isAlive()) continue;
+            if (m instanceof dev.awaken.mobs.entity.WildMount w && w.owner() != null) continue;
+            if (where != 2 && (m.getType().getCategory() == dev.awaken.mobs.entity.Fauna3Kinds.FAUNA_WATER) != (where == 1)) continue;
             double dx = m.getX() - x, dz = m.getZ() - z;
             if (dx * dx + dz * dz <= r2) n++;
         }

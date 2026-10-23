@@ -89,7 +89,7 @@ final class WildTests {
             new Family(Theme.SPORE, Biomes.MUSHROOM_FIELDS, Blocks.MYCELIUM, "fauna_spore"));
 
     static boolean p2(MobDef d) {
-        return d.theme.ordinal() > Theme.FROSTWILD.ordinal() && d.isFauna();
+        return d.theme.ordinal() > Theme.FROSTWILD.ordinal() && d.theme.ordinal() <= Theme.SPORE.ordinal() && d.isFauna();
     }
 
     static void register() {
@@ -126,7 +126,7 @@ final class WildTests {
             // every named beast, P1's too, has a lair
             for (MobDef d : Bestiary.fauna()) if (d.fauna == FaunaRole.BEAST) h.assertTrue(LairStyle.byBeast(d.id) != null, d.id + "'s lair");
             // the families' materials, two each
-            h.assertTrue(FaunaItems.MATERIALS.size() == 12, "twelve materials");
+            h.assertTrue(FaunaItems.MATERIALS.size() == 12 + 6, "twelve P2 materials (and P3's six)");
             for (String id : FaunaItems.MATERIALS) {
                 h.assertTrue(FaunaItems.get(id) != Items.AIR, id + " registered");
                 h.assertTrue(BuiltInRegistries.ITEM.getKey(FaunaItems.get(id)).equals(Awaken.id(id)), id + " under its own id");
@@ -293,6 +293,7 @@ final class WildTests {
             Map<LairStyle, Integer> found = new EnumMap<>(LairStyle.class);
             int candidates = 0;
             for (LairStyle style : LairStyle.values()) {
+                if (style.placement != LairStyle.Placement.SURFACE) continue; // the sea floor and the caves: Fauna3Tests
                 Structure structure = structures.getOrThrow(LairWorldgen.structure(style.beast)).value();
                 var spread = (RandomSpreadStructurePlacement) sets.getOrThrow(LairWorldgen.set(style.beast)).value().placement();
                 int cells = style == LairStyle.SPORE_RING ? 8 : 5;
@@ -428,7 +429,7 @@ final class WildTests {
                 for (LairStyle style : LairStyle.values()) {
                     for (int variant = 0; variant < 2; variant++) {
                         boolean twoLooks = style == LairStyle.GLASS_HOLLOW || style == LairStyle.ANTLER_GROVE || style == LairStyle.SILK_HOLLOW
-                                || style == LairStyle.RAMS_CAIRN;
+                                || style == LairStyle.RAMS_CAIRN || style == LairStyle.SUNKEN_SHRINE || style == LairStyle.CRYSTAL_NEST;
                         if (variant == 1 && !twoLooks) continue;
                         wipe(level, lo, hi);
                         // a meadow to stand it on, so the ring outside the floor has ground to follow

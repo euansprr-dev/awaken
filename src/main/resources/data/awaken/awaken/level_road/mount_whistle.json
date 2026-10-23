@@ -1,0 +1,28 @@
+{
+  "schema": 2,
+  "level": 13,
+  "title": "The whistle",
+  "text": "A whistle recipe. Blow it and your mount comes; sneak and use it to send it home to rest.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:hunters_whistle"
+      ]
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Ride your bridled mount",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:mount_rides",
+      "value": 1
+    },
+    "requires": [
+      "counter:awaken:mounts_bridled"
+    ],
+    "toast": "Whistle, and it comes",
+    "priority": 42
+  }
+}

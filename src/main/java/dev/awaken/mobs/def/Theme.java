@@ -4,7 +4,7 @@ import dev.awaken.progression.Rank;
 
 /**
  * Where a creature belongs: the 15 gate themes (ids exactly as in docs/plan.html's gate generator), the ten Descent
- * strata, the Veil, the Lucidium, the nightmare templates and the overworld's biome families (three from P1, six from P2). The ramp names
+ * strata, the Veil, the Lucidium, the nightmare templates and the overworld's biome families (three from P1, six from P2, two from P3). The ramp names
  * match tools/art/pixelart.py so textures generated for a theme share its colours.
  */
 public enum Theme {
@@ -49,7 +49,10 @@ public enum Theme {
     DUSKWOOD("awaken:duskwood", "Duskwood", Rank.E, 0xB4ACC4, 0xD8C8FF, BoltKind.SPIRIT),
     BLOSSOM("awaken:blossom", "Blossomwood", Rank.E, 0xF4D8E8, 0xFFB8E0, BoltKind.HONEY),
     CRAG("awaken:crag", "The Crags", Rank.E, 0xD0D0D4, 0xA8D8FF, BoltKind.PLAIN),
-    SPORE("awaken:spore", "Sporewild", Rank.E, 0xD8C0D8, 0xFF9AE0, BoltKind.SPORE);
+    SPORE("awaken:spore", "Sporewild", Rank.E, 0xD8C0D8, 0xFF9AE0, BoltKind.SPORE),
+    // P3: the water and the caves (docs/modules/fauna.md, "P3")
+    TIDEWATER("awaken:tidewater", "The Tidewater", Rank.E, 0xA8CCD8, 0x7FE8FF, BoltKind.WATER),
+    HOLLOWS("awaken:hollows", "The Hollows", Rank.E, 0xB8B4C4, 0x9CD8FF, BoltKind.GLASS);
 
     public final String id;
     public final String display;

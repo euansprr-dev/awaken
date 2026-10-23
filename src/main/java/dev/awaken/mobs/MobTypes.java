@@ -71,7 +71,10 @@ public final class MobTypes {
             DeferredHolder<EntityType<?>, ? extends EntityType<? extends AwakenMob>> holder;
             if (d.isFauna()) {
                 // The Awakened layer's overworld creatures: their own spawn category and cap.
-                if (d.fauna == FaunaRole.BEAST) {
+                var p3 = dev.awaken.mobs.entity.Fauna3Kinds.register(ENTITIES, d, MobTypes::configureFauna); // P3: water, caves, mounts
+                if (p3 != null) {
+                    holder = p3;
+                } else if (d.fauna == FaunaRole.BEAST) {
                     holder = ENTITIES.registerEntityType(d.id, NamedBeast::new, FAUNA, b -> configureFauna(b, d));
                 } else {
                     holder = ENTITIES.registerEntityType(d.id, FaunaMob::new, FAUNA, b -> configureFauna(b, d));

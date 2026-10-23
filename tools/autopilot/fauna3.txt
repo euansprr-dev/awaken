@@ -1,0 +1,202 @@
+# Fauna P3 tour (the water, the caves, the mounts): awaken, take a first power, then the Tidewater in a tank of sea water
+# by day and by night, the Hollows in a dark grotto (and by night vision), the two lairs, the taming steps on a Frost
+# Stag, riding the stag (a jump), the Dune Ray (a soar and a glide) and the Tidesteed (under water), the whistle (it
+# comes; it says why not), the Codex.
+# Run by the integrator: tools/autopilot.sh fauna3 (builders never run a client).
+world autopilot_fauna3 creative 4253
+waitworld
+gui 0
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning true
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+# the first-power cards may open on awakening: take one so they don't cover the rest of the tour
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+# level 11: named beasts and lairs (3), mounts trust you (11)
+cmd awaken admin levels 11
+wait 40
+screen close
+cmd time set 6000
+cmd time pause
+look 0 10
+wait 40
+
+# ---- the Tidewater in a tank of sea water: a glimmerfin school, two breathbells, an otter, a tidesteed ----
+cmd awaken fauna tank
+wait 60
+look 0 15
+shot fauna3_01_tank_day
+cmd time set 18000
+wait 40
+shot fauna3_02_tank_night
+cmd effect give @s minecraft:night_vision 60 0 true
+wait 20
+shot fauna3_03_tank_night_vision
+cmd effect clear @s minecraft:night_vision
+cmd kill @e[tag=awaken_tank]
+cmd time set 6000
+# the Lantern Maw in a deep tank (its lure is the only light at night)
+cmd awaken fauna tank deep
+wait 60
+look 0 12
+shot fauna3_04_maw_day
+cmd time set 18000
+wait 40
+shot fauna3_05_maw_night
+cmd kill @e[tag=awaken_tank]
+cmd time set 6000
+
+# ---- the Hollows in a dark grotto: crickets singing beside the ore, wicklings under the vines, a drip lurker on the
+# roof, hushlings listening; then night vision to judge the bodies, then the Thousandfoot ----
+cmd awaken fauna grotto
+wait 80
+cmd tp @s ^ ^1 ^6
+look 0 20
+wait 40
+shot fauna3_06_grotto_dark
+cmd effect give @s minecraft:night_vision 60 0 true
+wait 20
+shot fauna3_07_grotto_night_vision
+look 0 -60
+wait 20
+# the lurker hanging from the roof like a dripstone fang
+shot fauna3_08_grotto_lurker_on_roof
+cmd effect clear @s minecraft:night_vision
+cmd kill @e[tag=awaken_grotto]
+cmd tp @s ~ ~10 ~-12
+cmd awaken fauna grotto beast
+wait 80
+cmd tp @s ^ ^1 ^8
+look 0 15
+cmd effect give @s minecraft:night_vision 30 0 true
+wait 40
+shot fauna3_09_thousandfoot
+cmd kill @e[tag=awaken_grotto]
+cmd effect clear @s minecraft:night_vision
+
+# ---- each family where it lives (natural spawning, the census) ----
+cmd time set 1000
+cmd awaken fauna goto tidewater
+wait 400
+look 0 30
+shot fauna3_10_tidewater_day
+cmd awaken fauna census
+wait 10
+shot fauna3_11_tidewater_census
+cmd time set 18000
+wait 400
+shot fauna3_12_tidewater_night
+cmd time set 6000
+
+# ---- the lairs: the Sunken Shrine (built in a glass tank of sea water) and the Crystal Nest (carved under you) ----
+cmd awaken fauna lair place lantern_maw
+wait 80
+shot fauna3_13_lair_sunken_shrine
+cmd time set 18000
+wait 30
+shot fauna3_14_lair_sunken_shrine_night
+cmd time set 6000
+cmd awaken fauna lair place thousandfoot
+wait 80
+cmd effect give @s minecraft:night_vision 30 0 true
+look 270 10
+wait 20
+shot fauna3_15_lair_crystal_nest
+cmd effect clear @s minecraft:night_vision
+cmd awaken fauna goto frostwild
+wait 300
+
+# ---- taming: a wild Frost Stag; the trust ritual (sneak, sweet berries) is shown by the toasts and the Now line ----
+cmd gamemode survival
+cmd give @s minecraft:sweet_berries 8
+cmd summon awaken:frost_stag ^ ^ ^4
+wait 40
+look 0 15
+# the Now tracker: "Frost Stag 4 m N · sneak, feed sweet berries"
+shot fauna3_16_wild_stag_now
+cmd awaken fauna mount tame frost_stag
+wait 40
+# "Tamed · Frost Stag / It follows you..." and "Bridle your Frost Stag · Hunter's Bridle" on the tracker
+shot fauna3_17_stag_tamed
+cmd give @s awaken:hunters_bridle
+cmd give @s awaken:hunters_whistle
+cmd kill @e[type=awaken:frost_stag]
+cmd awaken fauna mount tame frost_stag bridled
+wait 40
+camera back
+shot fauna3_18_stag_bridled
+cmd awaken fauna mount ride
+wait 20
+shot fauna3_19_riding_stag
+cmd awaken fauna mount drive 60 20
+wait 30
+# mid-jump
+shot fauna3_20_stag_jump
+wait 40
+shot fauna3_21_stag_run
+cmd tp @s ~ ~2 ~
+wait 10
+
+# ---- the Dune Ray: a soar, then the glide ----
+cmd awaken fauna goto sunscorch
+wait 300
+cmd awaken fauna mount tame dune_ray bridled
+wait 20
+cmd awaken fauna mount ride
+wait 20
+shot fauna3_22_riding_ray
+cmd awaken fauna mount drive 120 10
+wait 25
+shot fauna3_23_ray_soar
+wait 50
+shot fauna3_24_ray_glide
+wait 60
+cmd tp @s ~ ~2 ~
+wait 10
+
+# ---- the Tidesteed: under the sea, the rider breathing ----
+cmd awaken fauna goto tidewater
+wait 300
+cmd awaken fauna mount tame tidesteed bridled
+wait 20
+cmd awaken fauna mount ride
+wait 20
+look 0 30
+shot fauna3_25_riding_tidesteed
+cmd awaken fauna mount drive 80 -1
+wait 40
+shot fauna3_26_tidesteed_dive
+wait 50
+cmd tp @s ~ ~4 ~
+
+# ---- the whistle: it comes; and when it can't, it says why ----
+camera first
+cmd awaken fauna goto frostwild
+wait 300
+cmd awaken fauna mount tame frost_stag bridled
+wait 20
+cmd tp @s ~30 ~ ~
+wait 40
+cmd awaken fauna mount whistle
+wait 30
+# "Your Frost Stag is coming." and the stag beside you
+shot fauna3_27_whistle_comes
+cmd awaken fauna mount whistle home
+wait 10
+# "You have no Hearth yet..." (or it goes home to rest at your Hearth)
+shot fauna3_28_whistle_home
+cmd awaken fauna mount
+wait 10
+shot fauna3_29_mount_status
+cmd gamemode creative
+screen status
+shot fauna3_30_status
+screen codex
+shot fauna3_31_codex
+screen close
+cmd time unpause
+quit

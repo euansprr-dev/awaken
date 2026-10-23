@@ -100,6 +100,12 @@ final class LairCommands {
                 BlockPos to = e != null ? e.den().south(14) : at.offset(8, 0, 8);
                 level.getChunk(to.getX() >> 4, to.getZ() >> 4);
                 int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, to.getX(), to.getZ());
+                // P3: down in the water beside the shrine, inside the nest's chamber
+                if (e != null && style.placement == LairStyle.Placement.SEABED) y = e.den().getY() + 3;
+                if (e != null && style.placement == LairStyle.Placement.CAVE) {
+                    to = e.den().east(5);
+                    y = e.den().getY();
+                }
                 sp.teleportTo(level, to.getX() + 0.5, y + 0.1, to.getZ() + 0.5, Set.<Relative>of(), 180.0F, 15.0F, true);
                 String where = (e != null ? e.den() : at).toShortString();
                 c.getSource().sendSuccess(() -> Component.literal("Went to " + style.title + " near " + where), false);
@@ -110,7 +116,16 @@ final class LairCommands {
         float yaw = sp.getYRot() * Mth.DEG_TO_RAD;
         int x = Mth.floor(sp.getX() - Mth.sin(yaw) * 16), z = Mth.floor(sp.getZ() + Mth.cos(yaw) * 16);
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+        if (style.placement == LairStyle.Placement.SEABED) {
+            // P3: built in a tank of sea water so it sits where it belongs (under water)
+            Fauna3Commands.buildTank(level, new BlockPos(x, y, z), LairStyle.EXTENT, LairStyle.HEIGHT, LairStyle.EXTENT);
+            y += 1;
+        } else if (style.placement == LairStyle.Placement.CAVE) {
+            // P3: carved out of the rock under your feet; you stand in it afterwards
+            y = Math.max(level.getMinY() + 12, y - 28);
+        }
         BlockPos den = Lairs.placeAt(level, style, new BlockPos(x, y, z), level.getRandom().nextLong());
+        if (style.placement == LairStyle.Placement.CAVE) sp.teleportTo(level, den.getX() + 5.5, den.getY(), den.getZ() + 0.5, Set.<Relative>of(), 90.0F, 10.0F, true);
         c.getSource().sendSuccess(() -> Component.literal("Built " + style.title + "; its den is at " + den.toShortString()), true);
         return 1;
     }

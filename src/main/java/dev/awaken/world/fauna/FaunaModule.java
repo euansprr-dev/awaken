@@ -74,8 +74,10 @@ public final class FaunaModule {
         ATTACHMENTS.register(modBus);
         RULES.register(modBus);
         FaunaItems.init(modBus);
+        Mounts.init(modBus); // P3: taming, the bridle, the whistle
         dev.awaken.world.fauna.lair.LairWorldgen.init(modBus);
         modBus.addListener(FaunaModule::placements);
+        modBus.addListener(FaunaModule::caveAttributes);
         modBus.addListener(FaunaNet::register);
         FaunaHooks.install(new Hooks());
         Progression.onAwakened(Reveal::onAwakened);
@@ -99,6 +101,8 @@ public final class FaunaModule {
         FaunaTests.register();
         WildTests.register();
         dev.awaken.mobs.entity.WildTalentTests.register();
+        Fauna3Tests.register();
+        MountTests.register();
     }
 
     /** The {@code awaken:fauna_spawning} game rule (on by default). */
@@ -106,6 +110,16 @@ public final class FaunaModule {
         return level.getGameRules().get(SPAWNING.get());
     }
 
+
+    /** P3: the Hollows' wicklings follow glow berries (vanilla's tempt goal reads the tempt range attribute). */
+    private static void caveAttributes(net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent e) {
+        for (String id : dev.awaken.mobs.entity.Fauna3Kinds.CAVE) {
+            var type = dev.awaken.mobs.MobTypes.type(id);
+            if (type != null && !e.has(type, net.minecraft.world.entity.ai.attributes.Attributes.TEMPT_RANGE)) {
+                e.add(type, net.minecraft.world.entity.ai.attributes.Attributes.TEMPT_RANGE, 10.0);
+            }
+        }
+    }
     private static void placements(RegisterSpawnPlacementsEvent e) {
         for (MobDef d : Bestiary.fauna()) {
             EntityType<? extends Mob> type = MobTypes.type(d);
@@ -114,6 +128,12 @@ public final class FaunaModule {
     }
 
     private static <T extends Mob> void placement(RegisterSpawnPlacementsEvent e, EntityType<T> type) {
+        MobDef d = MobTypes.def(type);
+        if (d != null && Habitat.of(d.id).water()) {
+            // P3: the Tidewater spawns in water (vanilla's fish placement), judged by the same rules
+            e.register(type, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, FaunaRules::check, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+            return;
+        }
         e.register(type, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, FaunaRules::check, RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 

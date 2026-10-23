@@ -74,7 +74,9 @@ final class FaunaTests {
 
     static final List<String> MODIFIERS = List.of("fauna_greenwild", "fauna_greenwild_woods", "fauna_sunscorch", "fauna_frostwild",
             "fauna_frostwild_taiga", "fauna_caves", "fauna_mire", "fauna_canopy", "fauna_duskwood", "fauna_blossom", "fauna_blossom_meadow",
-            "fauna_crag", "fauna_spore");
+            "fauna_crag", "fauna_spore",
+            "fauna_tidewater_rivers", "fauna_tidewater_lakes", "fauna_tidewater_ocean", "fauna_tidewater_deep",
+            "fauna_hollows_dripstone", "fauna_hollows_lush", "fauna_hollows_deep_dark");
 
     static void register() {
         AwakenTests.register("fauna_category_and_bestiary", 20, h -> {
@@ -83,22 +85,23 @@ final class FaunaTests {
             h.assertTrue(c.getSerializedName().equals("awaken:fauna") && c.getMaxInstancesPerChunk() == 16, "16 per player");
             h.assertTrue(c.isFriendly() && !c.isPersistent() && c.getDespawnDistance() == 128, "friendly, despawns like monsters");
             List<MobDef> fauna = Bestiary.fauna();
-            h.assertTrue(fauna.size() == 34, "34 overworld creatures (12 from P1, 22 from P2), have " + fauna.size());
+            h.assertTrue(fauna.size() == 44, "44 overworld creatures (12 from P1, 22 from P2, 10 from P3), have " + fauna.size());
             Map<FaunaRole, Integer> roles = new EnumMap<>(FaunaRole.class);
             Map<Theme, Set<FaunaRole>> families = new EnumMap<>(Theme.class);
             for (MobDef d : fauna) {
                 roles.merge(d.fauna, 1, Integer::sum);
                 families.computeIfAbsent(d.theme, k -> EnumSet.noneOf(FaunaRole.class)).add(d.fauna);
                 EntityType<? extends AwakenMob> type = MobTypes.type(d);
-                h.assertTrue(type != null && type.getCategory() == c, d.id + " is in the fauna category");
+                boolean water = Habitat.of(d.id).water();
+                h.assertTrue(type != null && type.getCategory() == (water ? dev.awaken.mobs.entity.Fauna3Kinds.FAUNA_WATER : c), d.id + " is in its fauna category");
                 h.assertTrue(type.isAllowedInPeaceful() == (d.fauna == FaunaRole.AMBIENT || d.fauna == FaunaRole.NEUTRAL), d.id + " peaceful rule");
-                h.assertTrue(SpawnPlacements.getPlacementType(type) == SpawnPlacementTypes.ON_GROUND, d.id + " has a spawn placement");
+                h.assertTrue(SpawnPlacements.getPlacementType(type) == (water ? SpawnPlacementTypes.IN_WATER : SpawnPlacementTypes.ON_GROUND), d.id + " has a spawn placement");
                 h.assertTrue(Habitat.ALL.containsKey(d.id) && !Habitat.of(d.id).hint().isEmpty(), d.id + " has a habitat and a hint");
                 h.assertTrue(d.talent != dev.awaken.mobs.def.FaunaTalent.NONE, d.id + " has a talent (a purpose)");
                 h.assertTrue(d.theme.isWild(), d.id + " belongs to a biome family");
             }
-            h.assertTrue(roles.get(FaunaRole.AMBIENT) == 13 && roles.get(FaunaRole.NEUTRAL) == 8 && roles.get(FaunaRole.HUNTER) == 4
-                    && roles.get(FaunaRole.BEAST) == 9, "13 ambient, 8 neutral, 4 hunters, 9 beasts: " + roles);
+            h.assertTrue(roles.get(FaunaRole.AMBIENT) == 17 && roles.get(FaunaRole.NEUTRAL) == 10 && roles.get(FaunaRole.HUNTER) == 6
+                    && roles.get(FaunaRole.BEAST) == 11, "17 ambient, 10 neutral, 6 hunters, 11 beasts: " + roles);
             for (Theme t : List.of(Theme.GREENWILD, Theme.SUNSCORCH, Theme.FROSTWILD)) {
                 Set<FaunaRole> r = families.get(t);
                 h.assertTrue(r != null && r.contains(FaunaRole.AMBIENT) && r.contains(FaunaRole.NEUTRAL) && r.contains(FaunaRole.BEAST),
@@ -124,7 +127,8 @@ final class FaunaTests {
                 for (Weighted<MobSpawnSettings.SpawnerData> w : add.spawners().unwrap()) {
                     EntityType<?> t = w.value().type();
                     MobDef d = MobTypes.def(t);
-                    h.assertTrue(d != null && d.isFauna() && t.getCategory() == MobTypes.FAUNA, name + " spawns only fauna: " + BuiltInRegistries.ENTITY_TYPE.getKey(t));
+                    h.assertTrue(d != null && d.isFauna() && (t.getCategory() == MobTypes.FAUNA || t.getCategory() == dev.awaken.mobs.entity.Fauna3Kinds.FAUNA_WATER),
+                            name + " spawns only fauna: " + BuiltInRegistries.ENTITY_TYPE.getKey(t));
                     listed.add(t);
                 }
             }

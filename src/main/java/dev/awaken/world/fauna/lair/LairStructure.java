@@ -63,6 +63,16 @@ public class LairStructure extends Structure {
                 x += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
                 z += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
             }
+            if (style.placement == LairStyle.Placement.SEABED) {
+                Site s = seabed(ctx, style, x, z, sea, seed);
+                if (s != null) return s;
+                continue;
+            }
+            if (style.placement == LairStyle.Placement.CAVE) {
+                Site s = cave(ctx, style, x, z, sea, seed, rnd);
+                if (s != null) return s;
+                continue;
+            }
             // the cheap test first: is this the beast's biome at all (sampled just above sea level; on the peaks, where the
             // mountain biomes only start high up, at the surface itself)
             int top = -1;
@@ -91,6 +101,44 @@ public class LairStructure extends Structure {
             return new Site(new BlockPos(x, y, z), style.variant(surface), seed);
         }
         return null;
+    }
+
+    /** P3: the sea floor of a deep ocean, under at least {@value #SEA_DEPTH} blocks of water, flat enough. */
+    static final int SEA_DEPTH = 12;
+
+    private static Site seabed(Structure.GenerationContext ctx, LairStyle style, int x, int z, int sea, long seed) {
+        Holder<Biome> b = ctx.biomeResolver().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(sea - 20), QuartPos.fromBlock(z));
+        if (!ctx.validBiome().test(b)) return null;
+        int top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
+        int floor = height(ctx, x, z, Heightmap.Types.OCEAN_FLOOR_WG);
+        if (top - floor < SEA_DEPTH) return null;
+        int r = style.radius, min = floor, max = floor, sum = floor;
+        int[][] corners = {{r, r}, {-r, r}, {r, -r}, {-r, -r}};
+        for (int[] k : corners) {
+            int h = height(ctx, x + k[0], z + k[1], Heightmap.Types.OCEAN_FLOOR_WG);
+            if (top - h < SEA_DEPTH - 3) return null;
+            min = Math.min(min, h);
+            max = Math.max(max, h);
+            sum += h;
+        }
+        if (max - min > style.maxSlope) return null;
+        int y = Math.round(sum / 5.0F);
+        if (y <= ctx.heightAccessor().getMinY() + LairStyle.DEPTH + 2 || y + LairStyle.HEIGHT >= top) return null;
+        Holder<Biome> here = ctx.biomeResolver().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z));
+        if (!ctx.validBiome().test(here)) return null;
+        return new Site(new BlockPos(x, y, z), style.variant(here), seed);
+    }
+
+    /** P3: deep underground (20 to 50 blocks under the sea level), where the cave biome is the beast's, under a thick roof. */
+    private static Site cave(Structure.GenerationContext ctx, LairStyle style, int x, int z, int sea, long seed, WorldgenRandom rnd) {
+        int y = sea - 20 - rnd.nextInt(30);
+        int minY = ctx.heightAccessor().getMinY() + LairStyle.DEPTH + 4;
+        if (y < minY) y = minY;
+        Holder<Biome> b = ctx.biomeResolver().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y + 3), QuartPos.fromBlock(z));
+        if (!ctx.validBiome().test(b)) return null;
+        int top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
+        if (top - y < 24) return null;
+        return new Site(new BlockPos(x, y, z), style.variant(b), seed);
     }
 
     private static int height(Structure.GenerationContext ctx, int x, int z, Heightmap.Types type) {

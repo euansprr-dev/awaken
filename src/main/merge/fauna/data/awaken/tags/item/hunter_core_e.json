@@ -7,6 +7,10 @@
     {
       "id": "awaken:dusk_shell",
       "required": false
+    },
+    {
+      "id": "awaken:hollow_crystal",
+      "required": false
     }
   ]
 }

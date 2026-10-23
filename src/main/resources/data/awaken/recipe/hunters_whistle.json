@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    "minecraft:bone",
+    "minecraft:iron_nugget",
+    "#awaken:fauna_materials"
+  ],
+  "result": {
+    "id": "awaken:hunters_whistle"
+  }
+}
