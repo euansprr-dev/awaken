@@ -511,6 +511,19 @@ Plan v2 · overworld structures (details in docs/modules/structures.md):
   version. The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
 - The Gate Map shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
 
+Plan v2 · gate interiors and D–B tuning (details in docs/modules/gates.md "Interiors", "Tuning"):
+- Gate content version 2 (`GatePlan.CONTENT_VERSION`): every theme has its own room dressing, 3–4 set pieces and a Lord's
+  arena; rooms are taller. Version 1 gates already entered keep their rooms; READY unentered ones rebuild.
+- The way on is lit: guide-lit lintels on the critical path, the System's blue on the door into the Rest Shrine, braziers
+  by the arena doors. Set pieces keep 5-wide door axes level and clear; no block entities in worldgen; liquids only in
+  basins; fire only on soul soil.
+- Lord arenas stay 3×3 slots and 17 high, round (radius 22), so no standing spot is outside the Lord's arena radius; the
+  Lord's spot is lit 9+.
+- Depth: +1 monster per room from floor 3, +2 from floor 5; a second arena-wave elite from floor 3; extra elite chance
+  0.04 × (floor − 1) + 0.01 × rank − 0.02. Targets (simulator on real generated gates, balanced player): 1–3 deaths per
+  10 gates at D, C and B; the best floor to stop after is 3–5, and stopping one floor before the Lord keeps ~98% of the
+  XP at about half the risk. `gates_tuning_matches_sim` fails if the game and the simulator drift apart.
+
 Plan v2 · first launch: vanilla's "experimental settings" prompt (shown because the mod adds worldgen) is answered for
 the player (client config `skipExperimentalWarning`, default on).
 
