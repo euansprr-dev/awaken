@@ -1404,9 +1404,10 @@ def part_icon(p):
 def build(out):
     for m in creatures():
         rng = rng_for("fauna2", m["id"])
-        skin, glow = PAINTERS[m["id"]](m, rng)
-        out.entity("mobs/" + m["id"], skin)
-        out.entity("mobs/" + m["id"] + "_glow", glow)
+        if m["model"] in MODELS:  # hero bodies (beasts, the owl, the bogwick) are painted by heroes.py
+            skin, glow = PAINTERS[m["id"]](m, rng)
+            out.entity("mobs/" + m["id"], skin)
+            out.entity("mobs/" + m["id"] + "_glow", glow)
         out.item(m["id"] + "_spawn_egg", egg(m["id"], m["role"] == "BEAST", rng_for("fauna2_egg", m["id"])))
         for p in m["parts"]:
             out.item(p["id"], part_icon(p))
@@ -1555,7 +1556,7 @@ BG = {"MIRE": (70, 84, 62), "CANOPY": (56, 96, 60), "DUSKWOOD": (58, 52, 66), "B
 def preview(outdir, only=None):
     from PIL import Image, ImageDraw
     os.makedirs(outdir, exist_ok=True)
-    ms = [m for m in creatures() if not only or m["id"] in only]
+    ms = [m for m in creatures() if (not only or m["id"] in only) and m["model"] in MODELS]  # hero bodies: heroes.py preview
     cell = (300, 240)
     sheet = Image.new("RGBA", (cell[0] * 4, (cell[1] + 18) * len(ms)), (24, 26, 34, 255))
     dr = ImageDraw.Draw(sheet)
