@@ -359,8 +359,16 @@ public final class Progression {
     // ---- rhythm -----------------------------------------------------------------------------------------------------
 
     /** Something new to use or show off landed. Feeds the second reward rhythm (SPEC section 2). */
+    private static final List<java.util.function.BiConsumer<ServerPlayer, String>> NEW_THING_LISTENERS = new ArrayList<>();
+
+    /** Listen for "new thing" moments (story uses this for the Signal's first-time lines). */
+    public static void onNewThing(java.util.function.BiConsumer<ServerPlayer, String> listener) {
+        NEW_THING_LISTENERS.add(listener);
+    }
+
     public static void markNewThing(ServerPlayer player, String what) {
         dev.awaken.core.Playtest.log(player, "new_thing", "what", what);
+        for (var l : NEW_THING_LISTENERS) l.accept(player, what);
         profile(player).lastNewThing = player.level().getGameTime();
         DirectorLog.log(player, "new-thing", what);
         markDirty(player);

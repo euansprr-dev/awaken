@@ -237,8 +237,9 @@ public final class SignalHud {
         if (w.footer().isPresent() || w.action().isPresent()) {
             String foot = w.footer().map(Component::getString).orElse("");
             if (w.action().isPresent()) {
+                boolean only = w.action().get().endsWith("accept_only");
                 String keys = "[" + AwakenKeys.ACCEPT.getTranslatedKeyMessage().getString() + "] Accept   ["
-                        + AwakenKeys.DISMISS.getTranslatedKeyMessage().getString() + "] Dismiss";
+                        + AwakenKeys.DISMISS.getTranslatedKeyMessage().getString() + "] " + (only ? "Accept" : "Dismiss");
                 foot = foot.isEmpty() ? keys : foot + "   " + keys;
             }
             g.text(font, foot, x + 10, ty, Glass.a(edge, alpha * reveal), false);
