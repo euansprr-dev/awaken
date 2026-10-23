@@ -52,7 +52,7 @@ final class KineticPowers {
                 .variant(Variant.of("Pounce", "Higher; the landing hits far harder").dmg(1.8f))
                 .predict((p, variant, level) -> {
                     Vec3 f = Moves.flat(p.getLookAngle());
-                    double h = variant == 1 ? 1.75 : 1.25;
+                    double h = variant == 1 ? 1.5 : 1.1;
                     double y = variant == 2 ? 1.15 : variant == 1 ? 0.8 : 0.95;
                     return new Vec3(f.x * h, y, f.z * h);
                 })

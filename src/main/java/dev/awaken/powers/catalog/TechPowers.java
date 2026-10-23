@@ -189,6 +189,7 @@ final class TechPowers {
         while (have.size() + count > max && !have.isEmpty()) have.remove(0).discard();
         int interval = c.is(1) ? 24 : 16;
         int life = c.ticks(400);
+        Moves.makeRoom(c.player, count);
         for (int i = 0; i < count; i++) {
             PowerDrone d = spawnDrone(c, c.pos().add(0, 2.2, 0), c.dmg(), life);
             if (d != null) d.orbit(have.size() + i, interval);
@@ -202,6 +203,7 @@ final class TechPowers {
         Vec3 at = Combat.aimPoint(c, 8).subtract(c.look().scale(0.5));
         int range = 20;
         int interval = c.is(1) ? 30 : c.is(2) ? 5 : 10;
+        Moves.makeRoom(c.player, 1);
         PowerDrone t = spawnDrone(c, at, c.dmg(), c.ticks(600));
         if (t == null) return Result.fail("blocked");
         t.makeTurret(range, interval);
@@ -274,6 +276,7 @@ final class TechPowers {
         int interval = c.is(2) ? 10 : 18;
         int life = c.ticks(400);
         LivingEntity focus = Combat.aimEntity(c, 32, 1.0);
+        Moves.makeRoom(c.player, count);
         List<PowerDrone> made = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             PowerDrone d = spawnDrone(c, c.pos().add(0, 2.4, 0), c.dmg(), life);

@@ -88,7 +88,8 @@ final class VelocityPowers {
 
     static Vec3 dashMotion(Player p, int variant, int level) {
         if (variant == 1) return null;
-        double speed = (variant == 2 ? 1.45 : 1.9) * (1 + 0.04 * (level - 1));
+        // air has less drag than ground, so an air dash is a little gentler to travel about as far
+        double speed = (variant == 2 ? 1.45 : 1.9) * (1 + 0.04 * (level - 1)) * (p.onGround() ? 1.0 : 0.8);
         Vec3 look = p.getLookAngle();
         Vec3 f = Moves.flat(look);
         double y = p.onGround() ? 0.12 : Math.max(0.28, look.y * speed * 0.5);

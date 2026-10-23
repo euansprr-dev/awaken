@@ -252,6 +252,20 @@ public final class Moves {
         }
     }
 
+    // ---- summons ----------------------------------------------------------------------------------------------------
+
+    /** Most summons one player may have at once (SPEC: at most 60 combat entities in a fight). */
+    public static final int SUMMON_CAP = 12;
+
+    /** Retires a player's oldest summons so {@code incoming} new ones fit under the cap. */
+    public static void makeRoom(ServerPlayer p, int incoming) {
+        List<dev.awaken.powers.content.PowerSummon> mine = new java.util.ArrayList<>(p.level().getEntitiesOfClass(
+                dev.awaken.powers.content.PowerSummon.class, p.getBoundingBox().inflate(96), s -> s.getOwner() == p && s.isAlive()));
+        mine.sort(java.util.Comparator.comparingInt(dev.awaken.powers.content.PowerSummon::lifeLeft));
+        int excess = mine.size() + incoming - SUMMON_CAP;
+        for (int i = 0; i < excess && i < mine.size(); i++) mine.get(i).discard();
+    }
+
     // ---- visuals ----------------------------------------------------------------------------------------------------
 
     /** A harmless lightning bolt for the look and sound of a strike. */

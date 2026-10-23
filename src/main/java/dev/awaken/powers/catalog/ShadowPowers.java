@@ -203,6 +203,7 @@ public final class ShadowPowers {
         float dmg = c.dmg();
         int life = c.ticks(400);
         double hp = 20 * PowerMath.levelScale(Progression.profile(c.player).level()) * 0.8 * hpMul;
+        Moves.makeRoom(c.player, count);
         int spawned = 0;
         for (int i = 0; i < count; i++) {
             double a = Math.PI * 2 * i / count + c.yRot() * Math.PI / 180;
