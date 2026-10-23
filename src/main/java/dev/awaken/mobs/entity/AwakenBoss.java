@@ -33,6 +33,8 @@ public class AwakenBoss extends AwakenMob {
     private static final BossEvent.BossBarColor[] PHASE_COLOURS = {BossEvent.BossBarColor.RED, BossEvent.BossBarColor.PURPLE, BossEvent.BossBarColor.WHITE};
 
     private int phase, shieldTicks, lonelyTicks;
+    /** Bitmask of phases whose part already broke off (kept through resets, so a part can't be farmed). */
+    private int partsBroken;
     private boolean introduced;
 
     public AwakenBoss(EntityType<? extends AwakenBoss> type, Level level) {
@@ -83,6 +85,10 @@ public class AwakenBoss extends AwakenMob {
         setTelegraph(30, true);
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + getBbHeight() * 0.5, getZ(), 1, 0, 0, 0, 0);
         playLevelSound(MobSounds.BOSS_PHASE.get(), 2.0F, 0.8F);
+        if ((partsBroken & (1 << phase)) == 0) {
+            partsBroken |= 1 << phase;
+            MobLoot.breakPart(level, this, phase);
+        }
         String line = d.phases.get(phase).line();
         if (!line.isEmpty()) tell(level, Component.literal(line).withColor(d.glow));
     }
@@ -162,12 +168,14 @@ public class AwakenBoss extends AwakenMob {
     protected void addAdditionalSaveData(ValueOutput out) {
         super.addAdditionalSaveData(out);
         out.putInt("awaken_phase", phase);
+        out.putInt("awaken_parts_broken", partsBroken);
     }
 
     @Override
     protected void readAdditionalSaveData(ValueInput in) {
         super.readAdditionalSaveData(in);
         phase = in.getIntOr("awaken_phase", 0);
+        partsBroken = in.getIntOr("awaken_parts_broken", 0);
     }
 
     @Override

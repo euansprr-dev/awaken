@@ -59,9 +59,9 @@ public enum Model {
     WITHER("wither/wither", Move.FLY, 0.9F, 3.5F, Voice.WITHER),
     // our own models
     SERPENT("", Move.FLY, 1.0F, 1.0F, Voice.SERPENT),
-    LISTENER("", Move.GROUND, 0.8F, 2.6F, Voice.LISTENER),
-    BELL("", Move.GROUND, 1.4F, 3.2F, Voice.BELL),
-    LANTERN("", Move.GROUND, 0.8F, 2.4F, Voice.LANTERN),
+    LISTENER("", Move.GROUND, 0.8F, 2.4F, Voice.LISTENER),
+    BELL("", Move.GROUND, 1.4F, 3.0F, Voice.BELL),
+    LANTERN("", Move.GROUND, 0.8F, 2.0F, Voice.LANTERN),
     SHADE("", Move.FLY, 0.9F, 2.8F, Voice.SHADE);
 
     public enum Move { GROUND, HOP, FLY }

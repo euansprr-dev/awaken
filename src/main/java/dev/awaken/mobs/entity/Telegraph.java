@@ -15,7 +15,7 @@ final class Telegraph {
 
     static void ring(ServerLevel level, Vec3 centre, float radius, int points, int colour, boolean heavy) {
         DustParticleOptions dust = new DustParticleOptions(colour, heavy ? 1.6F : 1.1F);
-        int n = Math.max(8, Math.min(48, points));
+        int n = Math.max(8, Math.min(Math.min(28, points), (int) (radius * 4) + 6));
         for (int i = 0; i < n; i++) {
             float a = i * Mth.TWO_PI / n;
             level.sendParticles(dust, centre.x + Mth.cos(a) * radius, centre.y + 0.15, centre.z + Mth.sin(a) * radius, 1, 0, 0, 0, 0);

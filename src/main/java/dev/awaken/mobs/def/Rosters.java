@@ -44,8 +44,10 @@ public final class Rosters {
         // Moods other modules can ask for.
         Roster silent = BY_ID.get(Theme.SILENT.id);
         BY_ID.put("awaken:silence", new Roster("awaken:silence", Theme.SILENT, List.of(Bestiary.get("listener")), null, null, Bestiary.get("guardian_silent"), Set.of()));
-        Roster veil = BY_ID.get(Theme.VEIL.id);
-        BY_ID.put("awaken:haunted", new Roster("awaken:haunted", Theme.VEIL, veil.normals(), null, null, null, Set.of(Forces.Tag.HAUNTED)));
+        // The Veil proper is Cord-Eaters; the Haunted gate modifier brings Veil Wraiths with them.
+        BY_ID.put(Theme.VEIL.id, new Roster(Theme.VEIL.id, Theme.VEIL, List.of(Bestiary.get("cord_eater")), null, null, null, Set.of()));
+        BY_ID.put("awaken:haunted", new Roster("awaken:haunted", Theme.VEIL, List.of(Bestiary.get("veil_wraith"), Bestiary.get("cord_eater")),
+                null, null, null, Set.of(Forces.Tag.HAUNTED)));
         BY_ID.put("awaken:mirror", new Roster("awaken:mirror", Theme.MIRROR, List.of(Bestiary.get("mirror_shade"), Bestiary.get("court_shadow")), null, null, null, Set.of()));
         // Dream fauna borrows the Dreaming Stratum's wisps too.
         Roster dream = BY_ID.get(Theme.DREAM.id);

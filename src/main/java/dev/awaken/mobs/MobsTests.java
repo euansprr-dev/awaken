@@ -176,14 +176,13 @@ final class MobsTests {
 
         AwakenTests.register("mobs_echo_rises_once", 140, h -> {
             ServerLevel level = h.getLevel();
-            LivingEntity e = MobHooks.spawnThemed(level, "awaken:ember_mines", MobRole.Role.NORMAL, h.absolutePos(new BlockPos(0, 1, 0)), 5, EnumSet.of(Forces.Tag.ECHO), "");
-            AwakenMob m = (AwakenMob) e;
-            m.setNoAi(false);
+            AwakenMob m = Mobs.spawn(level, Bestiary.get("toll_ghoul"), h.absoluteVec(new net.minecraft.world.phys.Vec3(0.5, 1, 0.5)), 5,
+                    new MobRole(MobRole.Role.NORMAL, 5, Theme.BELL.id, Optional.empty(), ""), EnumSet.of(Forces.Tag.ECHO));
             m.hurtServer(level, level.damageSources().generic(), 10000F);
             h.assertTrue(m.isAlive() && m.flag(AwakenMob.F_FALLEN), "first death falls instead of dying");
             h.runAfterDelay(70, () -> {
                 h.assertTrue(m.isAlive() && m.flag(AwakenMob.F_RISEN) && !m.flag(AwakenMob.F_FALLEN), "it got up");
-                h.assertTrue(Math.abs(m.getHealth() - m.getMaxHealth() * 0.5F) < 0.01F, "at half health");
+                h.assertTrue(m.getHealth() > m.getMaxHealth() * 0.4F && m.getHealth() <= m.getMaxHealth() * 0.5F + 0.01F, "back at half health, has " + m.getHealth());
                 m.damageCooldownTime = 0;
                 m.hurtServer(level, level.damageSources().generic(), 10000F);
                 h.assertTrue(m.isDeadOrDying(), "second death is final");

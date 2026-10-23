@@ -140,7 +140,7 @@ final class DeepBestiary {
                 .phase(1.0F, "The Great Listener turns its head.", a(SLAM, "Found You").radius(3.5F).power(1.6F).heavy(), a(BEAM, "Echo Scream").bolt(BoltKind.VOID))
                 .phase(0.5F, "It stops breathing.", a(DARKNESS, "Absolute Silence").radius(20), a(SUMMON, "Ears").summon("listener").n(2), a(SLAM, "Found You").radius(3.5F).power(1.6F))
                 .parts(P("listener_ear", "Great Listener's Ear", "stone")).build());
-        out.add(m("guardian_foundry", "The Furnace Engine", Theme.FOUNDRY, Tier.GUARDIAN, Model.IRON_GOLEM, "Arc welds and rivet rain; the machines wake around it").hp(32).dmg(5).spd(0.24).scale(2.0F).tint(0x98B0D0).bar(BossBarColor.YELLOW).arena(24)
+        out.add(m("guardian_foundry", "The Furnace Engine", Theme.FOUNDRY, Tier.GUARDIAN, Model.IRON_GOLEM, "Arc welds and rivet rain; the machines wake around it").hp(32).dmg(5).spd(0.24).scale(1.8F).tint(0x98B0D0).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry's heart is still warm.")
                 .phase(1.0F, "The Furnace Engine powers up.", a(SLAM, "Engine Slam").radius(4.5F).heavy(), a(BEAM, "Arc Weld").bolt(BoltKind.CHARGE))
                 .phase(0.5F, "Machines wake.", a(SUMMON, "Wake the Drones").summon("arc_drone").n(3), a(RAIN, "Rivet Rain").n(5).bolt(BoltKind.CHARGE), a(SLAM, "Engine Slam").radius(4.5F))
@@ -174,7 +174,7 @@ final class DeepBestiary {
                 .phase(0.66F, "It is still hungry.", a(SUMMON, "Hounds of the Court").summon("court_hound").n(2), a(SLAM, "Gorge").radius(4.5F), a(CHARGE, "Devour"))
                 .phase(0.33F, "Starving.", a(FRENZY, "Starving Frenzy"), a(AURA, "Famine").radius(8).bolt(BoltKind.VOID).fx(MobEffects.HUNGER, 100, 2).heavy(), a(CHARGE, "Devour"))
                 .parts(P("hunger_fang", "Fang of Hunger", "crimson")).build());
-        out.add(m("sovereign_silence", "Sovereign of Silence", Theme.COURT, Tier.SOVEREIGN, Model.LISTENER, "The Veil gone wrong: hunts every sound, swallows every light").hp(34).dmg(5.5).spd(0.3).scale(2.4F).tint(0x8890A8).glow(0xE6F0FF).traits(LISTENER).bar(BossBarColor.WHITE).arena(26)
+        out.add(m("sovereign_silence", "Sovereign of Silence", Theme.COURT, Tier.SOVEREIGN, Model.LISTENER, "The Veil gone wrong: hunts every sound, swallows every light").hp(34).dmg(5.5).spd(0.3).scale(1.9F).tint(0x8890A8).glow(0xE6F0FF).traits(LISTENER).bar(BossBarColor.WHITE).arena(26)
                 .intro("It listened until there was nothing left to hear.")
                 .phase(1.0F, "The Sovereign of Silence tilts its head.", a(SLAM, "Found You").radius(4).power(1.6F).heavy(), a(DARKNESS, "No Sound At All").radius(20))
                 .phase(0.66F, "It hears your heartbeat.", a(BEAM, "Inverted Scream").bolt(BoltKind.VOID).power(2.0F).heavy(), a(SUMMON, "Ears").summon("listener").n(2))
@@ -186,7 +186,7 @@ final class DeepBestiary {
                 .phase(0.66F, "You feel heavy.", a(SUMMON, "Lullabies").summon("lullaby_phantom").n(3), a(RAIN, "Dream Fall").n(5).bolt(BoltKind.DREAM), a(CHARGE, "Night Dive"))
                 .phase(0.33F, "Never wake.", a(BURST, "Never Wake").radius(15).inner(4).bolt(BoltKind.DREAM).heavy(), a(CHARGE, "Night Dive"), a(DARKNESS, "Lullaby").radius(16).fx(MobEffects.SLOWNESS, 80, 2))
                 .parts(P("sleep_feather", "Feather of Sleep", "dream")).build());
-        out.add(m("sovereign_machines", "Sovereign of Machines", Theme.COURT, Tier.SOVEREIGN, Model.IRON_GOLEM, "The Above gone wrong: every move calculated, every strike from orbit").hp(36).dmg(5.5).spd(0.24).scale(2.4F).tint(0xB8C8E0).glow(0xFFD060).bar(BossBarColor.YELLOW).arena(26)
+        out.add(m("sovereign_machines", "Sovereign of Machines", Theme.COURT, Tier.SOVEREIGN, Model.IRON_GOLEM, "The Above gone wrong: every move calculated, every strike from orbit").hp(36).dmg(5.5).spd(0.24).scale(1.9F).tint(0xB8C8E0).glow(0xFFD060).bar(BossBarColor.YELLOW).arena(26)
                 .intro("It built until nothing was left to build with.")
                 .phase(1.0F, "The Sovereign of Machines computes you.", a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE).power(1.8F), a(SLAM, "Hydraulic Slam").radius(4.5F).heavy())
                 .phase(0.66F, "Subroutines.", a(SUMMON, "Drones").summon("arc_drone").n(3), a(RAIN, "Orbital Strike").n(6).bolt(BoltKind.CHARGE), a(BEAM, "Calculated Lance").bolt(BoltKind.CHARGE))
@@ -204,7 +204,7 @@ final class DeepBestiary {
                 .phase(0.66F, "The storm thickens.", a(BOLT, "Storm Spears").n(5).bolt(BoltKind.CHARGE), a(LIFT, "Updraft").radius(4), a(RAIN, "Lightning").n(5).bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Eye of the storm.", a(RAIN, "Lightning").n(8).bolt(BoltKind.CHARGE).heavy(), a(FRENZY, "Overdrive"), a(GUST, "Thunderclap").radius(12).power(0.9F))
                 .parts(P("storm_core", "Storm Core", "signal")).build());
-        out.add(m("sovereign_roots", "Sovereign of Roots", Theme.COURT, Tier.SOVEREIGN, Model.CREAKING, "Home gone wrong: it holds you fast and never lets you leave").hp(36).dmg(5.5).spd(0.26).scale(2.6F).tint(0x806848).glow(0xD4AF37).bar(BossBarColor.GREEN).arena(24)
+        out.add(m("sovereign_roots", "Sovereign of Roots", Theme.COURT, Tier.SOVEREIGN, Model.CREAKING, "Home gone wrong: it holds you fast and never lets you leave").hp(36).dmg(5.5).spd(0.26).scale(1.9F).tint(0x806848).glow(0xD4AF37).bar(BossBarColor.GREEN).arena(24)
                 .intro("It made a home and closed every door.")
                 .phase(1.0F, "The Sovereign of Roots takes hold.", a(FANGS, "Root Lance").n(16), a(ROOT, "Hold Fast").radius(3))
                 .phase(0.66F, "Stay.", a(SUMMON, "Rooted Ones").summon("vine_creaker").n(2), a(FANGS_RING, "Hearth Ring").n(12), a(FANGS, "Root Lance").n(16))

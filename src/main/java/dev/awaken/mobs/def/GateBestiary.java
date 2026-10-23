@@ -133,7 +133,7 @@ final class GateBestiary {
                 .ab(a(CHARGE, "Steam Charge").heavy(), a(SLAM, "Piston Slam")).build());
         out.add(m("the_regulator", "The Regulator", Theme.CLOCKWORK, Tier.WARDEN, Model.IRON_GOLEM, "Overclocks as it nears you; Governor Slam and a spark ring").hp(38).dmg(7).spd(0.27).tint(0xE6B860).traits(HUNTER)
                 .ab(a(SLAM, "Governor Slam").radius(4).heavy(), a(NOVA, "Spark Ring").n(12).bolt(BoltKind.CHARGE), a(FRENZY, "Overclock")).build());
-        out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").hp(34).dmg(5).spd(0.22).scale(2.2F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
+        out.add(m("gearwright_colossus", "The Gearwright Colossus", Theme.CLOCKWORK, Tier.LORD, Model.IRON_GOLEM, "Piston Slams and spark halos; at the end an Overload arc").hp(34).dmg(5).spd(0.22).scale(1.8F).tint(0xF0C060).bar(BossBarColor.YELLOW).arena(24)
                 .intro("The foundry built one thing. It is still building it.")
                 .phase(1.0F, "The Colossus engages.", a(SLAM, "Piston Slam").radius(4.5F).heavy(), a(NOVA, "Spark Halo").n(12).bolt(BoltKind.CHARGE))
                 .phase(0.66F, "Gears engage.", a(SUMMON, "Release Drones").summon("spark_drone").n(3), a(CHARGE, "Colossal Stride"), a(SLAM, "Piston Slam").radius(4.5F))
@@ -190,7 +190,7 @@ final class GateBestiary {
                 .ab(a(FANGS, "Root Fangs"), a(HEAL, "Incense"), a(CLOUD, "Incense Smoke").fx(MobEffects.WEAKNESS, 80, 0)).build());
         out.add(m("the_overgrowth", "The Overgrowth", Theme.TEMPLE, Tier.WARDEN, Model.IRON_GOLEM, "A temple statue grown through with roots; rings of fangs").hp(38).dmg(7).spd(0.25).tint(0x8AB070).traits(HUNTER)
                 .ab(a(SLAM, "Temple Fist").radius(4).heavy(), a(FANGS_RING, "Root Ring").n(10), a(ROOT, "Strangling Vines").radius(2.5F)).build());
-        out.add(m("root_saint", "The Root Saint", Theme.TEMPLE, Tier.LORD, Model.CREAKING, "Root Lances in lines, then the whole temple grabs for you").hp(30).dmg(4.5).spd(0.24).scale(2.2F).bar(BossBarColor.GREEN).arena(22)
+        out.add(m("root_saint", "The Root Saint", Theme.TEMPLE, Tier.LORD, Model.CREAKING, "Root Lances in lines, then the whole temple grabs for you").hp(30).dmg(4.5).spd(0.24).scale(1.8F).bar(BossBarColor.GREEN).arena(22)
                 .intro("Incense and wet roots.")
                 .phase(1.0F, "The Root Saint opens its eyes.", a(FANGS, "Root Lance").n(14), a(SLAM, "Saint's Palm").radius(4))
                 .phase(0.66F, "The temple grows.", a(SUMMON, "Grow Creakers").summon("vine_creaker").n(2), a(ROOT, "Root Grasp").radius(3), a(FANGS_RING, "Root Ring").n(10))
@@ -286,7 +286,7 @@ final class GateBestiary {
                 .ab(a(BLINK, "Doorway"), a(DARKNESS, "Lights Off")).build());
         out.add(m("the_waking", "The Waking", Theme.NIGHTMARE, Tier.WARDEN, Model.WARDEN, "A wake-up call that tears at the spirit").hp(36).dmg(6.5).spd(0.28).traits(HUNTER)
                 .ab(a(BEAM, "Wake-Up Call").bolt(BoltKind.DREAM).power(1.9F).wind(34).heavy(), a(SLAM, "Thrash").radius(4), a(SUMMON, "Bad Dreams").summon("night_terror").n(2)).build());
-        out.add(m("the_sleeper", "The Sleeper", Theme.NIGHTMARE, Tier.LORD, Model.ZOMBIE, "Sleepwalks between dream and waking; when it wakes, everything does").hp(30).dmg(4.5).spd(0.24).scale(2.6F).traits(HAUNTED).bar(BossBarColor.PINK).arena(22)
+        out.add(m("the_sleeper", "The Sleeper", Theme.NIGHTMARE, Tier.LORD, Model.ZOMBIE, "Sleepwalks between dream and waking; when it wakes, everything does").hp(30).dmg(4.5).spd(0.24).scale(2.2F).traits(HAUNTED).bar(BossBarColor.PINK).arena(22)
                 .intro("You've been here before. You haven't.")
                 .phase(1.0F, "The Sleeper stirs.", a(SLAM, "Restless Fist").radius(4.5F), a(DARKNESS, "Heavy Eyelids"))
                 .phase(0.66F, "It turns over in its sleep.", a(SUMMON, "Night Terrors").summon("night_terror").n(2), a(BLINK, "Dreamstep"), a(SLAM, "Restless Fist").radius(4.5F))

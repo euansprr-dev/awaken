@@ -97,6 +97,8 @@ public final class AbilityRunner {
                 begin(level, i, a, t);
                 return;
             }
+            // Abilities that need an entity query back off when they can't fire, so they don't query every 4 ticks.
+            if (a.kind() == Ability.Kind.SUMMON || a.kind() == Ability.Kind.DECOY || a.kind() == Ability.Kind.HEAL) cooldowns[i] = 40;
         }
     }
 

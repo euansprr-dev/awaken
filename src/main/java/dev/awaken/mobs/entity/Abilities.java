@@ -309,6 +309,9 @@ final class Abilities {
             double r = 2.0 + mob.getBbWidth();
             Vec3 p = mob.position().add(Mth.cos(ang) * r, 0, Mth.sin(ang) * r);
             copy.snapTo(p.x, p.y, p.z, mob.getYRot(), 0);
+            for (net.minecraft.world.entity.EquipmentSlot slot : net.minecraft.world.entity.EquipmentSlot.VALUES) {
+                copy.setItemSlot(slot, mob.getItemBySlot(slot).copy());
+            }
             copy.makeDecoy(200);
             copy.setTarget(mob.getTarget());
             level.addFreshEntity(copy);

@@ -142,6 +142,21 @@ public final class MobLoot {
         DirectorLog.log(sp, "mobs", d.id + " lv" + boss.contentLevel() + " core=" + got + (pity ? " (pity)" : "") + " since_core=" + sp.getData(BOSS_RECORD.get()).sinceCore());
     }
 
+    /**
+     * Monster Hunter style: each phase change knocks one of the boss's parts loose (once per boss, never again after a
+     * reset). The full set still drops from the loot table on the kill.
+     */
+    public static void breakPart(ServerLevel level, AwakenBoss boss, int phase) {
+        MobDef d = boss.def();
+        if (d.parts.isEmpty() || boss.isDecoy() || !d.tier.countsAsBoss()) return;
+        var item = MobTypes.part(d.parts.get((phase - 1 + d.parts.size()) % d.parts.size()).id());
+        if (item == null) return;
+        boss.spawnAtLocation(level, new ItemStack(item));
+        level.sendParticles(new net.minecraft.core.particles.ItemParticleOption(net.minecraft.core.particles.ParticleTypes.ITEM, item),
+                boss.getX(), boss.getY() + boss.getBbHeight() * 0.7, boss.getZ(), 16, 0.4, 0.4, 0.4, 0.15);
+        boss.playLevelSound(net.minecraft.sounds.SoundEvents.ITEM_BREAK.value(), 1.5F, 0.7F);
+    }
+
     /** Elites and Wardens sometimes carry a Power Core; more often when nothing new has happened for 20 minutes. */
     public static void eliteDrop(ServerLevel level, LivingEntity mob, MobRole role, DamageSource source) {
         float chance = switch (role.role()) {
