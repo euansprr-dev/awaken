@@ -96,21 +96,22 @@ public final class LevelRoad {
         Profile p = Progression.profile(player);
         if (!p.awakened()) return 0;
         if (backfill) warnUnknown(player, p);
-        int granted = 0;
+        int granted = 0, visible = 0;
         for (Step s : steps()) {
             if (s.def().level() > p.level()) break;
             String key = s.id().toString();
             if (!p.unlocks.add(key)) continue;
             boolean announced = apply(player, p, s);
             granted++;
+            if (!s.def().quiet()) visible++;
             dev.awaken.core.Playtest.log(player, "unlock", "id", key);
             DirectorLog.log(player, "level-road", "level " + s.def().level() + ": " + key + (backfill ? " (caught up)" : ""));
             if (!backfill && !announced && !s.def().quiet()) announce(player, s.def());
         }
         if (granted > 0) {
-            if (backfill) {
+            if (backfill && visible > 0) {
                 Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The level road"))
-                        .body(Component.literal(granted + " unlock" + (granted == 1 ? "" : "s") + " caught up from your level · K"))
+                        .body(Component.literal(visible + " unlock" + (visible == 1 ? "" : "s") + " caught up from your level · K"))
                         .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
             }
             Progression.markDirty(player);
