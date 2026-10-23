@@ -69,6 +69,13 @@ public final class WildTalentTests {
         for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) level.setBlock(pos.offset(dx, -1, dz), ground.defaultBlockState(), 3);
     }
 
+    /** Air in a box: the test spot is shared, so tests that build put it back as they found it. */
+    static void wipe(ServerLevel level, BlockPos a, BlockPos b) {
+        for (BlockPos q : BlockPos.betweenClosed(a, b)) {
+            if (!level.getBlockState(q).isAir()) level.setBlock(q, Blocks.AIR.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
+    }
+
     static boolean dark(ServerLevel level, BlockPos pos) {
         return level.getBrightness(LightLayer.SKY, pos) == 0 && level.getBrightness(LightLayer.BLOCK, pos) == 0;
     }
@@ -174,6 +181,7 @@ public final class WildTalentTests {
             } finally {
                 made.forEach(FaunaMob::discard);
                 level.getEntitiesOfClass(ItemEntity.class, new AABB(at).inflate(12)).forEach(ItemEntity::discard);
+                wipe(level, at.offset(-7, -1, -7), at.offset(7, 9, 7));
             }
             h.succeed();
         });
@@ -223,6 +231,7 @@ public final class WildTalentTests {
                             h.assertTrue(planted, "a mushroom planted");
                         } finally {
                             made.forEach(net.minecraft.world.entity.Entity::discard);
+                            for (BlockPos c : List.of(snailRoom, owlRoom, sporeRoom)) wipe(level, c.offset(-3, -1, -3), c.offset(3, 3, 3));
                         }
                     })
                     .thenSucceed();

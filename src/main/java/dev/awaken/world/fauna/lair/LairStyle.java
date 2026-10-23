@@ -24,7 +24,7 @@ public enum LairStyle implements StringRepresentable {
     SERPENT_SHRINE("plumed_coil", "the Serpent Shrine", 0, 1, 0, 7, false, 7),
     SILK_HOLLOW("weaver_queen", "the Silk Hollow", 2, 1, 2, 7, false, 6),
     PETAL_BOWER("empress_moth", "the Petal Bower", 0, 1, 0, 7, false, 6),
-    RAMS_CAIRN("stonehorn", "the Ram's Cairn", 0, 1, 3, 8, false, 9),
+    RAMS_CAIRN("stonehorn", "the Ram's Cairn", 0, 1, 3, 8, false, 12),
     SPORE_RING("mycelord", "the Spore Ring", 0, 1, 0, 8, false, 6);
 
     public static final Codec<LairStyle> CODEC = StringRepresentable.fromEnum(LairStyle::values);

@@ -410,6 +410,11 @@ final class WildTests {
                         h.assertTrue("its beast fell; the lair is quiet".equals(Lairs.wake(level, reg, e, p, false)), "no new beast at once");
                         reg.remove(key);
                         level.getServer().getPlayerList().remove(p);
+                        // leave the spot as found: the beast's drops would count as another test's loot, the wallow's water
+                        // would run into the next test's patch
+                        level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, new net.minecraft.world.phys.AABB(den).inflate(16))
+                                .forEach(net.minecraft.world.entity.Entity::discard);
+                        wipe(level, centre.offset(-LairStyle.EXTENT, -LairStyle.DEPTH, -LairStyle.EXTENT), centre.offset(LairStyle.EXTENT, LairStyle.HEIGHT, LairStyle.EXTENT));
                     })
                     .thenSucceed();
         });
@@ -530,6 +535,13 @@ final class WildTests {
             if (time < 12000) h.assertTrue(seen.size() >= 3, "several families came out: " + seen);
         } finally {
             FaunaRules.timeOverride = null;
+        }
+    }
+
+    /** Air in a box (tests that build put the shared test spot back as they found it). */
+    static void wipe(ServerLevel level, BlockPos a, BlockPos b) {
+        for (BlockPos q : BlockPos.betweenClosed(a, b)) {
+            if (!level.getBlockState(q).isAir()) level.setBlock(q, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
     }
 

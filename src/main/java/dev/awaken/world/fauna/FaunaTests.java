@@ -216,6 +216,15 @@ final class FaunaTests {
                                 if (v == null) hints++;
                                 else last = v;
                             }
+                            if (!(hints > 30 && hints < 120)) {
+                                StringBuilder above = new StringBuilder();
+                                int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, open.getX(), open.getZ());
+                                for (int y = open.getY(); y <= top + 1; y++) {
+                                    var st = level.getBlockState(new BlockPos(open.getX(), y, open.getZ()));
+                                    if (!st.isAir()) above.append(y - open.getY()).append(':').append(st.getBlock().getDescriptionId()).append(' ');
+                                }
+                                Awaken.LOG.error("[fauna] open spot {} heightmap {} above: {}", open.toShortString(), top, above);
+                            }
                             h.assertTrue(hints > 30 && hints < 120, "ambient hints about a third of the time before awakening, got " + hints + "/200 (last refusal: " + last + ")");
                             awaken(p);
                             allows(h, level, "bloom_sprite", open, rnd, p, "a sprite by day");
