@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "open=false": {
+      "model": "awaken:block/ghost_door"
+    },
+    "open=true": {
+      "model": "awaken:block/ghost_door_open"
+    }
+  }
+}

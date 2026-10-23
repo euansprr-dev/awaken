@@ -1,0 +1,12 @@
+{
+  "values": [
+    "minecraft:ender_dragon",
+    "minecraft:wither",
+    "minecraft:warden",
+    "minecraft:elder_guardian",
+    "minecraft:mannequin",
+    "minecraft:villager",
+    "minecraft:wandering_trader",
+    "awaken:veil_spirit"
+  ]
+}

@@ -1,0 +1,284 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/stillpoint_shrine_side",
+    "side": "awaken:block/stillpoint_shrine_side",
+    "top": "awaken:block/stillpoint_shrine_top",
+    "flame": "awaken:block/stillpoint_flame"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        3,
+        14
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "texture": "#top"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "texture": "#top"
+        },
+        "north": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            2,
+            13,
+            14,
+            16
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        3,
+        5
+      ],
+      "to": [
+        11,
+        11,
+        11
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ],
+          "texture": "#top"
+        },
+        "up": {
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ],
+          "texture": "#top"
+        },
+        "north": {
+          "uv": [
+            5,
+            5,
+            11,
+            13
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            5,
+            5,
+            11,
+            13
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            5,
+            5,
+            11,
+            13
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            5,
+            5,
+            11,
+            13
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        11,
+        3
+      ],
+      "to": [
+        13,
+        14,
+        13
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#top"
+        },
+        "up": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#top"
+        },
+        "north": {
+          "uv": [
+            3,
+            2,
+            13,
+            5
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            3,
+            2,
+            13,
+            5
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            3,
+            2,
+            13,
+            5
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            3,
+            2,
+            13,
+            5
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        6.5,
+        14,
+        6.5
+      ],
+      "to": [
+        9.5,
+        16.5,
+        9.5
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            6.5,
+            6.5,
+            9.5,
+            9.5
+          ],
+          "texture": "#flame"
+        },
+        "up": {
+          "uv": [
+            6.5,
+            6.5,
+            9.5,
+            9.5
+          ],
+          "texture": "#flame"
+        },
+        "north": {
+          "uv": [
+            6.5,
+            0,
+            9.5,
+            2
+          ],
+          "texture": "#flame"
+        },
+        "south": {
+          "uv": [
+            6.5,
+            0,
+            9.5,
+            2
+          ],
+          "texture": "#flame"
+        },
+        "west": {
+          "uv": [
+            6.5,
+            0,
+            9.5,
+            2
+          ],
+          "texture": "#flame"
+        },
+        "east": {
+          "uv": [
+            6.5,
+            0,
+            9.5,
+            2
+          ],
+          "texture": "#flame"
+        }
+      },
+      "light_emission": 15
+    }
+  ]
+}

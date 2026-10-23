@@ -1,0 +1,85 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/veil_cache",
+    "side": {
+      "sprite": "awaken:block/veil_cache",
+      "force_translucent": true
+    },
+    "top": {
+      "sprite": "awaken:block/veil_cache_top",
+      "force_translucent": true
+    }
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        12,
+        13
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#top"
+        },
+        "up": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#top"
+        },
+        "north": {
+          "uv": [
+            3,
+            4,
+            13,
+            16
+          ],
+          "texture": "#side"
+        },
+        "south": {
+          "uv": [
+            3,
+            4,
+            13,
+            16
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            3,
+            4,
+            13,
+            16
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            3,
+            4,
+            13,
+            16
+          ],
+          "texture": "#side"
+        }
+      },
+      "light_emission": 13
+    }
+  ]
+}
