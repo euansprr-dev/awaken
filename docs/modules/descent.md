@@ -142,7 +142,7 @@ Content level = `Rank.of(min(6, (n+1)/2)).contentLevel` (as specified), so strat
 - The Endless rules come from {wind, water, dead rise, Listeners, tides, shadow} plus the form's own rule; rooms and
   machines appear only in their own forms.
 
-## Tests (21 GameTests, all passing)
+## Tests (17 descent GameTests; the full suite of 21 passes)
 `descent_generator_determinism` (every form and Endless cells, seed-sensitive, strata distinct), `descent_landmarks_and_helix`
 (platform, ascent stone, Waystone, bed, pit, Foundry seal, and a full walk down every helix in 1-2 block steps),
 `descent_generator_fills_chunks` (the real generator on proto chunks matches the pure terrain), `descent_generation_is_cheap`
