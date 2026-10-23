@@ -1,0 +1,35 @@
+# Saves survive a rejoin: awaken, learn of lairs and landmarks, save and quit to the title, open the world again and
+# check the Status screen and the Gate Map still show them. Run by the integrator.
+world persistcheck creative 4242
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken fauna lair hear briar_sow
+cmd awaken fauna lair hear old_antler
+cmd awaken landmark hear
+wait 60
+screen map
+wait 20
+shot persist_00_map_before
+screen status
+wait 20
+shot persist_01_status_before
+screen close
+leave
+world persistcheck creative 4242
+waitworld
+gui 0
+wait 100
+screen map
+wait 20
+shot persist_02_map_after_rejoin
+screen status
+wait 20
+shot persist_03_status_after_rejoin
+screen close
+quit
