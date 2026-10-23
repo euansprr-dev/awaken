@@ -342,14 +342,6 @@ public final class Runs {
         Modifiers.removeFrom(p);
         Twists.leave(p, g);
         p.setData(GatesRegistry.RUN.get(), RunState.none());
-        if (g != null) {
-            g.inside.remove(p.getUUID());
-            if (g.inside.isEmpty()) {
-                if (g.state == GateState.ACTIVE) GateService.setState(server, g, GateState.OPEN);
-                else if (g.state == GateState.CLEARED) GateService.release(server, g);
-            }
-            GateRegistry.get(server).setDirty();
-        }
         if (teleport && p.isAlive()) {
             ServerLevel over = server.overworld();
             BlockPos to = g != null && g.structurePlaced ? g.mouth() : over.getRespawnData().pos();
@@ -357,6 +349,15 @@ public final class Runs {
             float yaw = g == null ? 0 : (g.axis == 0 ? 0F : -90F);
             p.teleport(new TeleportTransition(over, GateService.center(to), Vec3.ZERO, yaw, 0F, TeleportTransition.PLAY_PORTAL_SOUND));
             over.playSound(null, to, GatesRegistry.SND_EXIT.get(), SoundSource.PLAYERS, 1F, 1F);
+        }
+        // only after you are out: a cleared gate can't be released while you still stand in its cell
+        if (g != null) {
+            g.inside.remove(p.getUUID());
+            if (g.inside.isEmpty()) {
+                if (g.state == GateState.ACTIVE) GateService.setState(server, g, GateState.OPEN);
+                else if (g.state == GateState.CLEARED) GateService.release(server, g);
+            }
+            GateRegistry.get(server).setDirty();
         }
         Hud.clear(p);
         if (g != null) GatePayloads.syncBeaconsAround(server, g.pos);

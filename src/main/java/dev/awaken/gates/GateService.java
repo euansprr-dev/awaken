@@ -305,6 +305,12 @@ public final class GateService {
     }
 
     static void tickRemovals(MinecraftServer server) {
+        if (server.getTickCount() % 100 == 40) {
+            // cleared gates whose last visitor left by dying (or a refused release) are swept up here
+            for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) {
+                if (g.state == GateState.CLEARED && g.inside.isEmpty()) release(server, g);
+            }
+        }
         if (REMOVALS.isEmpty() || server.getTickCount() % 10 != 0) return;
         ServerLevel over = server.overworld();
         GateRegistry reg = GateRegistry.get(server);

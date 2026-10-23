@@ -431,6 +431,87 @@ final class GateTests {
             h.succeed();
         });
 
+        AwakenTests.register("gates_lord_and_death", 100, h -> {
+            var level = h.getLevel();
+            var server = level.getServer();
+            GatePlan plan = new GatePlan(515151, GatePlan.CONTENT_VERSION, Rank.E, Theme.EMBER_MINES, Layout.ARENA_CHAIN, List.of(),
+                    Twist.NONE, 3, Theme.EMBER_MINES.bossId(), Theme.HIVE, 0);
+            GateRegistry reg = GateRegistry.get(server);
+            int cell = reg.allocateCell();
+            dev.awaken.gates.world.GateCells.put(cell, plan);
+            GateService.testLevel = level;
+            try {
+                GateLayout l = GateLayout.of(plan);
+                FloorLayout bf = l.main.get(plan.floors() - 1);
+                for (int gx = -1; gx <= bf.w; gx++) {
+                    for (int gz = -1; gz <= bf.h; gz++) {
+                        int cx = (Cells.originX(cell) >> 4) + bf.originSlotX + gx, cz = (Cells.originZ(cell) >> 4) + bf.originSlotZ + gz;
+                        level.getChunk(cx, cz);
+                        GatePainter.paint(l, cell, cx, cz, (x, y, z, s) -> {
+                            if (Cells.floorAtY(y) == bf.floor) level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818);
+                        });
+                    }
+                }
+                GateRecord g = new GateRecord(reg.nextId(), plan, h.absolutePos(BlockPos.ZERO), 0, cell, 0, 99, GateState.READY, Optional.empty());
+                g.interiorReady = true;
+                reg.put(g);
+                ServerPlayer p = h.makeMockServerPlayerInLevel();
+                dev.awaken.progression.Progression.awaken(p);
+                h.assertTrue(Runs.enter(p, g), "entered");
+                Room arena = bf.room(bf.end);
+                h.assertTrue(arena.type == Room.Type.BOSS, "the last floor ends in the Lord's arena");
+                BlockPos at = GateService.roomFloor(g, bf, arena, arena.centerX() + 6, arena.centerZ() + 6);
+                p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(), 0, 0, true);
+                dev.awaken.gates.run.RunEvents.tickNow(p);
+                h.assertTrue(Runs.run(p).floor == plan.floors(), "the run follows you to the boss floor");
+                h.assertTrue(g.boss.isPresent(), "the Lord appeared");
+                var lord = level.getEntity(g.boss.get());
+                h.assertTrue(lord instanceof net.minecraft.world.entity.LivingEntity, "the Lord is a living thing");
+                Gates.satchelAdd(p, new ItemStack(Items.EMERALD, 3));
+                ((net.minecraft.world.entity.LivingEntity) lord).hurtServer(level, p.damageSources().playerAttack(p), 1_000_000F);
+                h.assertTrue(g.bossDead && g.state == GateState.CLEARED, "the gate is cleared, was " + g.state);
+                h.assertTrue(!reg.pendingFor(p.getUUID()).isEmpty(), "the hoard and Satchel wait in a claim");
+                h.assertTrue(Runs.run(p).satchel.isEmpty(), "the Satchel moved into the claim");
+                Room.Feature exit = arena.feature(Room.FeatureKind.EXIT_ANCHOR);
+                BlockPos portal = GateService.world(g, bf, exit.x(), arena.dy + 1, exit.z());
+                h.assertTrue(level.getBlockState(portal).is(GatesRegistry.EXIT.get()), "an exit portal opened");
+                Runs.exitPortal(p);
+                h.assertFalse(Runs.run(p).active(), "out through the exit");
+                h.assertTrue(p.getInventory().countItem(dev.awaken.core.api.CoreApi.LORD_HEART.get()) >= 1, "the Lord's Heart was paid");
+                h.assertTrue(p.getInventory().countItem(Items.EMERALD) >= 3, "the Satchel was paid");
+                h.assertTrue(g.state == GateState.RELEASED, "an emptied cleared gate is released, was " + g.state);
+                h.assertTrue(dev.awaken.progression.Progression.profile(p).counter("awaken:gates_cleared") >= 1, "gates_cleared counted");
+
+                // death in a gate (Hunter): Satchel lost, gear kept, Fracture
+                GateRecord g2 = new GateRecord(reg.nextId(), plan, h.absolutePos(BlockPos.ZERO).offset(3, 0, 0), 0, reg.allocateCell(), 0, 99, GateState.READY, Optional.empty());
+                g2.interiorReady = true;
+                reg.put(g2);
+                dev.awaken.gates.world.GateCells.put(g2.cell, plan);
+                p.getInventory().clearContent();
+                p.getInventory().add(new ItemStack(Items.IRON_SWORD));
+                h.assertTrue(Runs.enter(p, g2), "entered the second gate");
+                Gates.satchelAdd(p, new ItemStack(Items.GOLD_INGOT, 9));
+                // mock players never finish loading a client, so the game won't let them be hurt: fire the death event the way the game does
+                var death = new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(p, level.damageSources().generic());
+                net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(death);
+                h.assertFalse(death.isCanceled(), "no cheat death without the perk");
+                h.assertFalse(Runs.run(p).active(), "death ends the run");
+                if (dev.awaken.core.AwakenConfig.DIFFICULTY.get() != dev.awaken.core.AwakenConfig.Difficulty.STORY) {
+                    h.assertTrue(dev.awaken.progression.Progression.profile(p).fractureUntil() > level.getGameTime(), "Fracture applied");
+                }
+                h.assertTrue(p.getInventory().isEmpty(), "nothing dropped from the inventory (held aside)");
+                dev.awaken.gates.run.RunEvents.onRespawn(p);
+                h.assertTrue(p.getInventory().countItem(Items.IRON_SWORD) == 1, "gear came back");
+                h.assertTrue(p.getInventory().countItem(Items.GOLD_INGOT) == 0, "the Satchel did not");
+                h.assertTrue(g2.inside.isEmpty() && g2.state == GateState.OPEN, "the gate stays open for another try");
+                dev.awaken.gates.world.GateCells.remove(g2.cell);
+            } finally {
+                GateService.testLevel = null;
+                dev.awaken.gates.world.GateCells.remove(cell);
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("gates_overworld_structure", 40, h -> {
             BlockPos base = h.absolutePos(new BlockPos(0, 0, 0)).offset(6, 0, 6);
             GateRecord g = new GateRecord(77, testPlan(1, Rank.C, Theme.HIVE, Layout.LABYRINTH, Twist.NONE), base, 0, 0, 0, 3, GateState.READY, Optional.empty());
