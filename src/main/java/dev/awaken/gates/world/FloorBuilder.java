@@ -491,6 +491,7 @@ final class FloorBuilder {
                 }
                 r.height = Math.min(r.height, 27 - r.dy);
             }
+            if (plan.contentVersion() >= 2) pieces();
             for (Room r : rooms) {
                 if (!(friendly || (hollow && r.type != Room.Type.BOSS))) spawns(r);
                 features(r);
@@ -504,9 +505,81 @@ final class FloorBuilder {
                     d.ownsBars = true;
                 }
             }
+            markPath();
             int baseY = Cells.floorY(floor);
             int ox = area == 0 ? Cells.GRID_ORIGIN : Cells.ANNEX_SLOT_X + Cells.GRID_ORIGIN;
             return new FloorLayout(area, floor, baseY, ox, Cells.GRID_ORIGIN, w, h, theme, bossFloor, rooms, start, end);
+        }
+
+        /**
+         * Set pieces and the Lord's arena (content version 2+). Choices come from per-room hashes, never from {@code rnd},
+         * so the rooms themselves stay exactly what version 1 built. The theme's pieces take turns so a floor shows its
+         * range; big rooms get a piece, single rooms two times in five.
+         */
+        void pieces() {
+            List<SetPiece> pool = SetPiece.roomPieces(theme);
+            int turn = (int) Math.floorMod(Hash.of(seed, 61, floor), 997L);
+            for (Room r : rooms) {
+                if (r.type == Room.Type.BOSS) {
+                    r.piece = SetPiece.arenaFor(lordTheme());
+                    r.shape = r.piece.shape;
+                    continue;
+                }
+                if (pool.isEmpty() || !takesPiece(r)) continue;
+                boolean big = r.area() >= 2;
+                if (!big && Hash.unit(r.seed, 41, 7) >= 0.4) continue;
+                SetPiece pick = null;
+                for (int k = 0; k < pool.size() && pick == null; k++) {
+                    SetPiece p = pool.get(Math.floorMod(turn + k, pool.size()));
+                    if (p.minArea > r.area() || p.minHeight > r.height) continue;
+                    if (big && p.minArea < 2 && hasBig(pool, r)) continue; // big rooms take the big pieces
+                    pick = p;
+                }
+                if (pick == null) continue;
+                turn++;
+                r.piece = pick;
+                if (pick.shape != null) r.shape = pick.shape;
+            }
+        }
+
+        private boolean hasBig(List<SetPiece> pool, Room r) {
+            for (SetPiece p : pool) if (p.minArea >= 2 && p.minArea <= r.area() && p.minHeight <= r.height) return true;
+            return false;
+        }
+
+        private boolean takesPiece(Room r) {
+            if (r.shape == Room.Shape.SHAFT || r.shape == Room.Shape.CAVE || r.shape == Room.Shape.HALL) return false;
+            // pieces keep clear of features themselves (Pieces.blocks), so caches added later still have their spot
+            return switch (r.type) {
+                case NORMAL, ELITE, KEY, ARENA -> true;
+                default -> false;
+            };
+        }
+
+        /** Whose arena the boss room is: the Lord (main floor, Double Gate echo) or the inner gate's keeper. */
+        private Theme lordTheme() {
+            if (area == 1 && plan.twist() == Twist.GATE_WITHIN) return theme;
+            String key = plan.boss();
+            for (Theme t : Theme.values()) if (t.bossId().equals(key)) return t;
+            return plan.theme();
+        }
+
+        /** The critical path: rooms on it, the door that leads on from each, and the last door into the end room. */
+        void markPath() {
+            List<Integer> path = new FloorLayoutView(this).path();
+            for (int i = 0; i < path.size(); i++) {
+                Room r = rooms.get(path.get(i));
+                r.onPath = true;
+                if (i > 0) r.pathIn = r.doorTo(path.get(i - 1));
+                if (i + 1 < path.size()) {
+                    Room.Door d = r.doorTo(path.get(i + 1));
+                    if (d != null) {
+                        d.onward = true;
+                        d.toEnd = i + 2 == path.size();
+                        r.pathOut = d;
+                    }
+                }
+            }
         }
 
         private boolean skyIsland(Room r) {
@@ -588,6 +661,21 @@ final class FloorBuilder {
         }
 
         int heightFor(Room r) {
+            if (plan.contentVersion() >= 2) {
+                // version 2 rooms are taller: a single room is 12 wide, so 8 to 10 high gives it the proportions of a hall
+                int v2 = switch (r.type) {
+                    case BOSS -> r.gw >= 3 ? 17 : 13;
+                    case ARENA, HUB -> 12;
+                    case CAVERN -> 14;
+                    case SHAFT -> 26;
+                    case HALL -> 7;
+                    case SHRINE -> 10;
+                    case START -> 9;
+                    case ANTE -> 11;
+                    default -> r.area() > 1 ? 11 : 8 + (int) Math.floorMod(r.seed >> 8, 3L);
+                };
+                return Math.min(v2, 27 - r.dy);
+            }
             int hgt = switch (r.type) {
                 case BOSS -> r.gw >= 3 ? 17 : 12;
                 case ARENA, HUB -> 11;

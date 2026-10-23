@@ -44,6 +44,10 @@ public final class Room {
         public final int toRoom;
         public boolean sealed;         // bars at generation (shrine waiting on keys/puzzles/lanterns)
         public boolean ownsBars;       // this side paints the bars
+        /** Leads one room closer to the floor's end along the critical path: its frame is lit with the guide light. */
+        public boolean onward;
+        /** Opens into the floor's end room (Shrine or the Lord's arena): lit in the System's blue or the Lord's colour. */
+        public boolean toEnd;
 
         Door(int gx, int gz, int side, int y, int toRoom) {
             this.gx = gx;
@@ -88,6 +92,12 @@ public final class Room {
     public final List<int[]> spawnSpots = new ArrayList<>();
     /** Sky Archipelago and Shaft rooms can have open drops; painted by the room itself. */
     public boolean dark;
+    /** The set piece or Lord's arena dressing this room (null: the theme's plain dressing). Content version 2+. */
+    public SetPiece piece;
+    /** On the shortest way from the floor's start to its end. */
+    public boolean onPath;
+    /** On the critical path: the door you came in by and the door that leads on (null at the start and the end). */
+    public Door pathIn, pathOut;
 
     Room(int id, Type type, Shape shape, int gx, int gz, int gw, int gh, int dy, int height, long seed) {
         this.id = id;
