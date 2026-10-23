@@ -1,0 +1,98 @@
+# The road to 50 (P3): power mastery on the Status card and its level-up toast, the level road's goals on the Now
+# tracker, and the three lessons taught in play (meditation at 11, lucid dreams at 12, the Veil at 15) with the
+# Stillpoint choice card. Counters stand in for the slow parts (sitting 5 s, a night's sleep); every toast, Now line
+# and card is the real one. Run by the integrator: tools/autopilot.sh road (builders never run a client).
+world autopilot_road creative 5050
+waitworld
+gui 0
+cmd weather clear 100000
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin awaken
+wait 80
+cmd awaken powers starter 1
+wait 40
+shot road_00_first_power
+# --- mastery: a zombie in front, the first power cast at it (the bar grows only from hits that land)
+cmd summon minecraft:zombie ^ ^ ^3 {NoAI:1b}
+wait 10
+look 0 10
+key power1
+wait 30
+shot road_01_cast_landed
+screen status
+wait 10
+shot road_02_status_mastery_bar
+screen close
+# half a bar, then a full one: the level-up toast ("<power> · level 2", "+12% damage, -4% cooldown.")
+cmd awaken admin power mastery spirit_palm 3500
+cmd awaken admin power mastery haymaker 3500
+cmd awaken admin power mastery beam 3500
+cmd awaken admin power mastery shockwave 3500
+cmd awaken admin power mastery charged_shot 3500
+cmd awaken admin power mastery shadow_step 3500
+wait 20
+screen status
+wait 10
+shot road_03_status_half_bar
+screen close
+cmd awaken admin power mastery spirit_palm 7000
+cmd awaken admin power mastery haymaker 7000
+cmd awaken admin power mastery beam 7000
+cmd awaken admin power mastery shockwave 7000
+cmd awaken admin power mastery charged_shot 7000
+cmd awaken admin power mastery shadow_step 7000
+wait 10
+shot road_04_mastery_toast
+wait 120
+# --- the level road: to level 11, the meditation lesson's Now line
+cmd awaken admin levels 9
+wait 200
+shot road_05_level_11_toasts
+wait 160
+shot road_06_now_meditate
+cmd awaken admin counter "awaken:meditate_ticks" 100
+wait 40
+shot road_07_meditation_learned_toast
+# level 12: lucid dreams (a reality check first); level 14: the Training Grounds goal
+cmd awaken admin levels 1
+wait 160
+shot road_08_now_reality_check
+cmd awaken admin counter "awaken:reality_checks" 1
+wait 40
+shot road_09_reality_check_toast
+cmd awaken admin levels 2
+wait 160
+shot road_10_level_14_training_grounds
+# level 15: the Veil. Stepping out and hearing the dead are counters here; then the Stillpoint card
+cmd awaken admin levels 1
+wait 160
+shot road_11_now_step_out
+cmd awaken admin counter "awaken:veil_ticks" 20
+wait 40
+shot road_12_stepped_out_toast
+cmd awaken admin counter "awaken:spirits_spoken" 1
+wait 60
+shot road_13_stillpoint_choice_card
+gui 2
+wait 10
+shot road_14_stillpoint_choice_card_gui2
+gui 0
+key dismiss
+wait 30
+shot road_15_now_hold_g_20s
+# the rest of the road: one step per level to 50, the newest goal on the tracker
+cmd awaken admin levels 10
+wait 200
+shot road_16_level_25
+cmd awaken admin levels 12
+wait 200
+shot road_17_level_37
+cmd awaken admin levels 13
+wait 200
+shot road_18_level_50
+screen status
+wait 10
+shot road_19_status_level_50
+screen close
+quit
