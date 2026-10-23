@@ -65,6 +65,9 @@ final class FaunaCommands {
                             .executes(c -> summon(c, -1))
                             .then(Commands.argument("level", IntegerArgumentType.integer(0, 400)).executes(c -> summon(c, IntegerArgumentType.getInteger(c, "level"))))));
             fauna.then(Commands.literal("lineup").requires(AwakenCommands.admin()).executes(FaunaCommands::lineup));
+            fauna.then(Commands.literal("why").requires(AwakenCommands.admin())
+                    .then(Commands.argument("id", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(ids(), b))
+                            .executes(FaunaCommands::why)));
             fauna.then(Commands.literal("beasts").requires(AwakenCommands.admin()).executes(FaunaCommands::beasts)
                     .then(Commands.literal("reset").executes(c -> {
                         BeastRegistry.get(c.getSource().getServer()).resetCooldown();
@@ -192,6 +195,7 @@ final class FaunaCommands {
             if (m == null) continue;
             m.setNoAi(true);
             m.setPersistenceRequired();
+            m.addTag("awaken_lineup"); // /kill @e[tag=awaken_lineup] clears the row
             float face = sp.getYRot() + 180.0F;
             m.setYRot(face);
             m.setYHeadRot(face);
@@ -201,6 +205,23 @@ final class FaunaCommands {
         int count = n;
         c.getSource().sendSuccess(() -> Component.literal("Lined up " + count + " creatures"), false);
         return n;
+    }
+
+    /** Would this creature spawn where you stand, and if not, why not (spawn rules only; vanilla's 24-block gap aside). */
+    @SuppressWarnings("unchecked")
+    private static int why(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        MobDef d = Bestiary.get(StringArgumentType.getString(c, "id"));
+        if (d == null || !d.isFauna()) {
+            c.getSource().sendFailure(Component.literal("Not an overworld creature. Try one of " + ids()));
+            return 0;
+        }
+        var type = (net.minecraft.world.entity.EntityType<net.minecraft.world.entity.Mob>) (net.minecraft.world.entity.EntityType<?>) MobTypes.type(d);
+        String v = FaunaRules.verdict(type, sp.level(), net.minecraft.world.entity.EntitySpawnReason.NATURAL, sp.blockPosition(),
+                net.minecraft.util.RandomSource.create(), null, false);
+        String msg = d.name + " here: " + (v == null ? "yes" : "no, " + v);
+        c.getSource().sendSuccess(() -> Component.literal(msg), false);
+        return v == null ? 1 : 0;
     }
 
     private static int beasts(CommandContext<CommandSourceStack> c) {

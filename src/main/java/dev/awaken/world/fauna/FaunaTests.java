@@ -66,6 +66,12 @@ import java.util.UUID;
 final class FaunaTests {
     private FaunaTests() {}
 
+    /**
+     * In-world tests work on a platform this high above the test origin: isolated batches reuse the same spot, and
+     * blocks other tests leave there (gate structures, walls) would block sight lines or the open sky.
+     */
+    static final int UP = 65;
+
     static final List<String> MODIFIERS = List.of("fauna_greenwild", "fauna_greenwild_woods", "fauna_sunscorch", "fauna_frostwild",
             "fauna_frostwild_taiga", "fauna_caves");
 
@@ -182,84 +188,93 @@ final class FaunaTests {
             h.succeed();
         });
 
-        AwakenTests.registerIsolated("fauna_spawn_rules_in_world", 200, h -> {
+        AwakenTests.registerIsolated("fauna_spawn_rules_in_world", 300, h -> {
             ServerLevel level = h.getLevel();
-            ServerPlayer p = realPlayer(h, new BlockPos(0, 1, 30));
-            BlockPos open = h.absolutePos(new BlockPos(0, 1, 0));
+            ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 30));
+            BlockPos open = h.absolutePos(new BlockPos(0, UP, 0));
             ground(level, open);
-            BlockPos dark = h.absolutePos(new BlockPos(6, 1, 0));
-            BlockPos lit = h.absolutePos(new BlockPos(-6, 1, 0));
+            BlockPos dark = h.absolutePos(new BlockPos(6, UP, 0));
+            BlockPos lit = h.absolutePos(new BlockPos(-6, UP, 0));
             box(level, dark, false);
             box(level, lit, true);
-            h.runAfterDelay(20, () -> {
-                clearFauna(level, p);
-                List<AwakenMob> crowd = new ArrayList<>();
-                FaunaRules.timeOverride = 6000L;
-                try {
-                    RandomSource rnd = RandomSource.create(7L);
-                    // not awakened: neutral never, ambient only sometimes (hints)
-                    h.assertTrue(!rule(level, "mossback", open, rnd, p), "no mossback before awakening");
-                    int hints = 0;
-                    for (int i = 0; i < 200; i++) if (rule(level, "bloom_sprite", open, rnd, p)) hints++;
-                    h.assertTrue(hints > 30 && hints < 120, "ambient hints about a third of the time before awakening, got " + hints + "/200");
-                    awaken(p);
-                    h.assertTrue(rule(level, "bloom_sprite", open, rnd, p), "a sprite by day");
-                    h.assertTrue(rule(level, "mossback", open, rnd, p), "a mossback by day");
-                    h.assertTrue(!rule(level, "lumen_moth", open, rnd, p), "no moths by day");
-                    h.assertTrue(!rule(level, "glass_scarab", open, rnd, p), "no scarab on grass");
-                    h.assertTrue(!rule(level, "mossback", dark, rnd, p), "surface creatures don't spawn under a roof");
-                    h.assertTrue(rule(level, "gloomstalker", dark, rnd, p), "a night hunter in the dark");
-                    h.assertTrue(!rule(level, "gloomstalker", lit, rnd, p), "torchlight: no night hunter");
-                    FaunaRules.timeOverride = 18000L;
-                    h.assertTrue(rule(level, "lumen_moth", open, rnd, p), "moths at night");
-                    h.assertTrue(!rule(level, "bloom_sprite", open, rnd, p), "no sprites at night");
-                    FaunaRules.timeOverride = 6000L;
-                    // Hearth radius
-                    FaunaRules.HearthCheck before = FaunaRules.hearth;
-                    FaunaRules.hearth = (l, at) -> true;
-                    try {
-                        h.assertTrue(!rule(level, "mossback", open, rnd, p) && !rule(level, "gloomstalker", dark, rnd, p), "nothing but ambient inside a Hearth radius");
-                        h.assertTrue(rule(level, "bloom_sprite", open, rnd, p), "ambient creatures still visit home");
-                    } finally {
-                        FaunaRules.hearth = before;
-                    }
-                    // named beasts: level 3+ and never on top of you
-                    h.assertTrue(!rule(level, "briar_sow", open, rnd, p), "no beast below level 3");
-                    while (Progression.profile(p).level() < 3) Progression.grantLevels(p, 1.0, Progression.XpSource.COMMAND);
-                    BeastRegistry.get(level.getServer()).resetCooldown();
-                    h.assertTrue(!rule(level, "briar_sow", open, rnd, p), "no beast within " + FaunaRules.BEAST_MIN_DISTANCE + " blocks");
-                    // the game rule
-                    level.getGameRules().set(FaunaModule.SPAWNING.get(), false, level.getServer());
-                    h.assertTrue(!rule(level, "bloom_sprite", open, rnd, p), "awaken:fauna_spawning false stops spawns");
-                    level.getGameRules().set(FaunaModule.SPAWNING.get(), true, level.getServer());
-                    // the cap: five mossbacks near the player and the sixth is refused
-                    MobDef moss = Bestiary.get("mossback");
-                    for (int i = 0; i < FaunaRole.NEUTRAL.capPerPlayer; i++) {
-                        AwakenMob m = Mobs.spawn(level, moss, Vec3.atBottomCenterOf(open.offset(i * 2 - 4, 0, 4)), 1,
-                                new MobRole(MobRole.Role.NORMAL, 1, moss.theme.id, Optional.empty(), ""), Set.of());
-                        if (m != null) {
-                            m.setNoAi(true);
-                            crowd.add(m);
+            List<AwakenMob> crowd = new ArrayList<>();
+            h.startSequence()
+                    // the light engine runs behind the block changes: wait until the rooms are really dark and lit
+                    .thenWaitUntil(() -> lightSettled(h, level, dark, lit))
+                    .thenExecute(() -> {
+                        clearFauna(level, p);
+                        FaunaRules.timeOverride = 6000L;
+                        try {
+                            RandomSource rnd = RandomSource.create(7L);
+                            // not awakened: neutral never, ambient only sometimes (hints)
+                            denies(h, level, "mossback", open, rnd, p, "no mossback before awakening");
+                            int hints = 0;
+                            String last = null;
+                            for (int i = 0; i < 200; i++) {
+                                String v = why(level, "bloom_sprite", open, rnd, p);
+                                if (v == null) hints++;
+                                else last = v;
+                            }
+                            h.assertTrue(hints > 30 && hints < 120, "ambient hints about a third of the time before awakening, got " + hints + "/200 (last refusal: " + last + ")");
+                            awaken(p);
+                            allows(h, level, "bloom_sprite", open, rnd, p, "a sprite by day");
+                            allows(h, level, "mossback", open, rnd, p, "a mossback by day");
+                            denies(h, level, "lumen_moth", open, rnd, p, "no moths by day");
+                            denies(h, level, "glass_scarab", open, rnd, p, "no scarab on grass");
+                            denies(h, level, "mossback", dark, rnd, p, "surface creatures don't spawn under a roof");
+                            allows(h, level, "gloomstalker", dark, rnd, p, "a night hunter in the dark");
+                            denies(h, level, "gloomstalker", lit, rnd, p, "torchlight: no night hunter");
+                            FaunaRules.timeOverride = 18000L;
+                            allows(h, level, "lumen_moth", open, rnd, p, "moths at night");
+                            denies(h, level, "bloom_sprite", open, rnd, p, "no sprites at night");
+                            FaunaRules.timeOverride = 6000L;
+                            // Hearth radius
+                            FaunaRules.HearthCheck before = FaunaRules.hearth;
+                            FaunaRules.hearth = (l, at) -> true;
+                            try {
+                                denies(h, level, "mossback", open, rnd, p, "no neutral creature inside a Hearth radius");
+                                denies(h, level, "gloomstalker", dark, rnd, p, "no night hunter inside a Hearth radius");
+                                allows(h, level, "bloom_sprite", open, rnd, p, "ambient creatures still visit home");
+                            } finally {
+                                FaunaRules.hearth = before;
+                            }
+                            // named beasts: level 3+ and never on top of you
+                            denies(h, level, "briar_sow", open, rnd, p, "no beast below level 3");
+                            while (Progression.profile(p).level() < 3) Progression.grantLevels(p, 1.0, Progression.XpSource.COMMAND);
+                            BeastRegistry.get(level.getServer()).resetCooldown();
+                            denies(h, level, "briar_sow", open, rnd, p, "no beast within " + FaunaRules.BEAST_MIN_DISTANCE + " blocks");
+                            // the game rule
+                            level.getGameRules().set(FaunaModule.SPAWNING.get(), false, level.getServer());
+                            denies(h, level, "bloom_sprite", open, rnd, p, "awaken:fauna_spawning false stops spawns");
+                            level.getGameRules().set(FaunaModule.SPAWNING.get(), true, level.getServer());
+                            // the cap: five mossbacks near the player and the sixth is refused
+                            MobDef moss = Bestiary.get("mossback");
+                            for (int i = 0; i < FaunaRole.NEUTRAL.capPerPlayer; i++) {
+                                AwakenMob m = Mobs.spawn(level, moss, Vec3.atBottomCenterOf(open.offset(i * 2 - 4, 0, 4)), 1,
+                                        new MobRole(MobRole.Role.NORMAL, 1, moss.theme.id, Optional.empty(), ""), Set.of());
+                                if (m != null) {
+                                    m.setNoAi(true);
+                                    crowd.add(m);
+                                }
+                            }
+                            h.assertTrue(FaunaCensus.countNear(level, FaunaRole.NEUTRAL, p.getX(), p.getZ(), 128) >= FaunaRole.NEUTRAL.capPerPlayer, "census counts them");
+                            denies(h, level, "mossback", open, rnd, p, "role cap reached");
+                            allows(h, level, "bloom_sprite", open, rnd, p, "other roles unaffected");
+                        } finally {
+                            FaunaRules.timeOverride = null;
+                            level.getGameRules().set(FaunaModule.SPAWNING.get(), true, level.getServer());
+                            crowd.forEach(AwakenMob::discard);
+                            level.getServer().getPlayerList().remove(p);
                         }
-                    }
-                    h.assertTrue(FaunaCensus.countNear(level, FaunaRole.NEUTRAL, p.getX(), p.getZ(), 128) >= FaunaRole.NEUTRAL.capPerPlayer, "census counts them");
-                    h.assertTrue(!rule(level, "mossback", open, rnd, p), "role cap reached");
-                    h.assertTrue(rule(level, "bloom_sprite", open, rnd, p), "other roles unaffected");
-                } finally {
-                    FaunaRules.timeOverride = null;
-                    level.getGameRules().set(FaunaModule.SPAWNING.get(), true, level.getServer());
-                    crowd.forEach(AwakenMob::discard);
-                    level.getServer().getPlayerList().remove(p);
-                }
-                h.succeed();
-            });
+                    })
+                    .thenSucceed();
         });
 
         AwakenTests.registerIsolated("fauna_natural_spawning_end_to_end", 200, h -> {
             ServerLevel level = h.getLevel();
-            ServerPlayer p = realPlayer(h, new BlockPos(0, 1, 30));
+            ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 30));
             awaken(p);
-            BlockPos start = h.absolutePos(new BlockPos(0, 1, 0));
+            BlockPos start = h.absolutePos(new BlockPos(0, UP, 0));
             for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) ground(level, start.offset(dx, 0, dz));
             // The test world's biome is whatever the flat preset puts here: make this patch plains.
             BlockPos a = start.offset(-10, -4, -10), b = start.offset(10, 6, 10);
@@ -309,38 +324,43 @@ final class FaunaTests {
 
         AwakenTests.registerIsolated("fauna_hunters_keep_the_light_rule", 200, h -> {
             ServerLevel level = h.getLevel();
-            BlockPos dark = h.absolutePos(new BlockPos(6, 1, 0));
-            BlockPos lit = h.absolutePos(new BlockPos(-6, 1, 0));
+            BlockPos dark = h.absolutePos(new BlockPos(6, UP, 0));
+            BlockPos lit = h.absolutePos(new BlockPos(-6, UP, 0));
             box(level, dark, false);
             box(level, lit, true);
-            ServerPlayer p = realPlayer(h, new BlockPos(-6, 1, 0));
-            h.runAfterDelay(20, () -> {
-                p.setPos(Vec3.atBottomCenterOf(dark));
-                h.assertTrue(FaunaMob.inDarkness(p), "a player in a dark room is fair game");
-                p.setPos(Vec3.atBottomCenterOf(lit));
-                h.assertTrue(!FaunaMob.inDarkness(p), "a player in torchlight is safe");
-                MobDef d = Bestiary.get("gloomstalker");
-                AwakenMob m = Mobs.spawn(level, d, Vec3.atBottomCenterOf(lit), 1, new MobRole(MobRole.Role.NORMAL, 1, d.theme.id, Optional.empty(), ""), Set.of());
-                h.assertTrue(m != null, "gloomstalker spawned");
-                m.setTarget(p);
-                h.assertTrue(m.getTarget() == p, "it had a target");
-                h.succeedWhen(() -> {
-                    h.assertTrue(m.getTarget() == null, "a night hunter lets go of a player standing in torchlight");
-                    m.discard();
-                    level.getServer().getPlayerList().remove(p);
-                });
-            });
+            ServerPlayer p = realPlayer(h, new BlockPos(-6, UP, 0));
+            List<AwakenMob> hunter = new ArrayList<>();
+            h.startSequence()
+                    .thenWaitUntil(() -> lightSettled(h, level, dark, lit))
+                    .thenExecute(() -> {
+                        p.setPos(Vec3.atBottomCenterOf(dark));
+                        h.assertTrue(FaunaMob.inDarkness(p), "a player in a dark room is fair game");
+                        p.setPos(Vec3.atBottomCenterOf(lit));
+                        h.assertTrue(!FaunaMob.inDarkness(p), "a player in torchlight is safe");
+                        MobDef d = Bestiary.get("gloomstalker");
+                        AwakenMob m = Mobs.spawn(level, d, Vec3.atBottomCenterOf(lit), 1, new MobRole(MobRole.Role.NORMAL, 1, d.theme.id, Optional.empty(), ""), Set.of());
+                        h.assertTrue(m != null, "gloomstalker spawned");
+                        hunter.add(m);
+                        m.setTarget(p);
+                        h.assertTrue(m.getTarget() == p, "it had a target");
+                    })
+                    .thenWaitUntil(() -> h.assertTrue(hunter.get(0).getTarget() == null, "a night hunter lets go of a player standing in torchlight"))
+                    .thenExecute(() -> {
+                        hunter.forEach(AwakenMob::discard);
+                        level.getServer().getPlayerList().remove(p);
+                    })
+                    .thenSucceed();
         });
 
         AwakenTests.registerIsolated("fauna_sighting_discovery", 200, h -> {
             ServerLevel level = h.getLevel();
-            ServerPlayer p = realPlayer(h, new BlockPos(0, 1, 0));
+            ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 0));
             p.setYRot(0.0F);
             p.setXRot(0.0F);
             p.setYHeadRot(0.0F);
             List<AwakenMob> made = new ArrayList<>();
             try {
-                BlockPos at = h.absolutePos(new BlockPos(0, 1, 0));
+                BlockPos at = h.absolutePos(new BlockPos(0, UP, 0));
                 MobDef moss = Bestiary.get("mossback");
                 AwakenMob seen = Mobs.spawn(level, moss, Vec3.atBottomCenterOf(at.south(6)), 1, new MobRole(MobRole.Role.NORMAL, 1, moss.theme.id, Optional.empty(), ""), Set.of());
                 seen.setNoAi(true);
@@ -382,9 +402,9 @@ final class FaunaTests {
 
         AwakenTests.registerIsolated("fauna_reveal_on_awakening", 200, h -> {
             ServerLevel level = h.getLevel();
-            BlockPos at = h.absolutePos(new BlockPos(0, 1, 0));
+            BlockPos at = h.absolutePos(new BlockPos(0, UP, 0));
             for (int dx = -14; dx <= 14; dx++) for (int dz = -14; dz <= 14; dz++) ground(level, at.offset(dx, 0, dz));
-            ServerPlayer p = realPlayer(h, new BlockPos(0, 1, 0));
+            ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 0));
             clearFauna(level, p);
             List<FaunaMob> before = new ArrayList<>(FaunaCensus.in(level));
             Reveal.FORCED.add(p.getUUID());
@@ -417,31 +437,39 @@ final class FaunaTests {
             h.assertTrue(beast.bar() != null, "it has a bar");
             beast.setGuaranteedCore(true);
             UUID id = beast.getUUID();
-            h.runAfterDelay(45, () -> {
-                h.assertTrue(BeastRegistry.get(level.getServer()).all().stream().anyMatch(x -> x.id().equals(id)), "the beast reported in");
-                long felled = Progression.profile(p).counter("awaken:beasts_felled");
-                Vec3 where = beast.position();
-                beast.hurtServer(level, level.damageSources().playerAttack(p), 1.0E6F);
-                h.succeedWhen(() -> {
-                    h.assertTrue(beast.isDeadOrDying(), "felled");
-                    List<ItemEntity> drops = level.getEntitiesOfClass(ItemEntity.class, new AABB(BlockPos.containing(where)).inflate(4));
-                    int essence = 0;
-                    boolean part = false, core = false;
-                    for (ItemEntity ie : drops) {
-                        if (ie.getItem().is(CoreApi.ESSENCE_SHARD.get())) essence += ie.getItem().getCount();
-                        if (BuiltInRegistries.ITEM.getKey(ie.getItem().getItem()).getPath().equals("briar_tusk")) part = true;
-                        if (BuiltInRegistries.ITEM.getKey(ie.getItem().getItem()).getPath().equals("power_core")) core = true;
-                    }
-                    h.assertTrue(essence >= 2, "essence shards dropped: " + essence);
-                    h.assertTrue(part, "its part dropped");
-                    h.assertTrue(core, "a Power Core dropped (guaranteed for the test; 45% in play)");
-                    h.assertTrue(Progression.profile(p).counter("awaken:beasts_felled") == felled + 1, "beasts_felled counted");
-                    h.assertTrue(Progression.profile(p).counter("awaken:discovered/beast_felled/briar_sow") == 1, "first kill paid");
-                    h.assertTrue(BeastRegistry.get(level.getServer()).all().stream().noneMatch(x -> x.id().equals(id)), "a felled beast leaves the registry");
-                    drops.forEach(ItemEntity::discard);
-                    level.getServer().getPlayerList().remove(p);
-                });
-            });
+            long[] felled = {0};
+            Vec3[] where = {Vec3.ZERO};
+            List<ItemEntity> drops = new ArrayList<>();
+            h.startSequence()
+                    .thenWaitUntil(() -> h.assertTrue(BeastRegistry.get(level.getServer()).all().stream().anyMatch(x -> x.id().equals(id)), "the beast reported in"))
+                    .thenExecute(() -> {
+                        felled[0] = Progression.profile(p).counter("awaken:beasts_felled");
+                        where[0] = beast.position();
+                        beast.hurtServer(level, level.damageSources().playerAttack(p), 1.0E6F);
+                    })
+                    .thenWaitUntil(() -> {
+                        h.assertTrue(beast.isDeadOrDying(), "felled");
+                        drops.clear();
+                        drops.addAll(level.getEntitiesOfClass(ItemEntity.class, new AABB(BlockPos.containing(where[0])).inflate(4)));
+                        int essence = 0;
+                        boolean part = false, core = false;
+                        for (ItemEntity ie : drops) {
+                            if (ie.getItem().is(CoreApi.ESSENCE_SHARD.get())) essence += ie.getItem().getCount();
+                            if (BuiltInRegistries.ITEM.getKey(ie.getItem().getItem()).getPath().equals("briar_tusk")) part = true;
+                            if (BuiltInRegistries.ITEM.getKey(ie.getItem().getItem()).getPath().equals("power_core")) core = true;
+                        }
+                        h.assertTrue(essence >= 2, "essence shards dropped: " + essence);
+                        h.assertTrue(part, "its part dropped");
+                        h.assertTrue(core, "a Power Core dropped (guaranteed for the test; 45% in play)");
+                        h.assertTrue(Progression.profile(p).counter("awaken:beasts_felled") == felled[0] + 1, "beasts_felled counted");
+                        h.assertTrue(Progression.profile(p).counter("awaken:discovered/beast_felled/briar_sow") == 1, "first kill paid");
+                        h.assertTrue(BeastRegistry.get(level.getServer()).all().stream().noneMatch(x -> x.id().equals(id)), "a felled beast leaves the registry");
+                    })
+                    .thenExecute(() -> {
+                        drops.forEach(ItemEntity::discard);
+                        level.getServer().getPlayerList().remove(p);
+                    })
+                    .thenSucceed();
         });
     }
 
@@ -461,10 +489,28 @@ final class FaunaTests {
         }
     }
 
+    /** The rules' answer for one creature here, judged against p (null = it may spawn). */
     @SuppressWarnings("unchecked")
-    private static boolean rule(ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p) {
+    private static String why(ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p) {
         EntityType<Mob> type = (EntityType<Mob>) (EntityType<?>) MobTypes.type(id);
-        return FaunaRules.check(type, level, EntitySpawnReason.NATURAL, pos, rnd, p);
+        return FaunaRules.verdict(type, level, EntitySpawnReason.NATURAL, pos, rnd, p, true);
+    }
+
+    private static void allows(GameTestHelper h, ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p, String what) {
+        String v = why(level, id, pos, rnd, p);
+        h.assertTrue(v == null, what + " (refused: " + v + ")");
+    }
+
+    private static void denies(GameTestHelper h, ServerLevel level, String id, BlockPos pos, RandomSource rnd, ServerPlayer p, String what) {
+        h.assertTrue(why(level, id, pos, rnd, p) != null, what);
+    }
+
+    /** The light engine trails block changes by a few ticks; wait until the sealed room is dark and the lit one bright. */
+    private static void lightSettled(GameTestHelper h, ServerLevel level, BlockPos dark, BlockPos lit) {
+        h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.SKY, dark) == 0
+                && level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, dark) == 0, "the sealed room is dark");
+        h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, lit) >= 10
+                && level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, lit.above()) >= 10, "the lit room is bright");
     }
 
     /** Grass under pos, air at pos and above. */
