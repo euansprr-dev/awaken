@@ -89,11 +89,11 @@ public final class Interactions {
         queue(p, () -> Runs.enter(p, g));
     }
 
-    /** The gate whose surface structure contains this block. */
+    /** The gate whose surface structure contains this block (big gates reach far from their foot: S stands 17 high). */
     public static GateRecord structureAt(MinecraftServer server, BlockPos pos) {
-        for (GateRecord g : GateRegistry.get(server).near(pos, 8, false)) {
+        for (GateRecord g : GateRegistry.get(server).near(pos, Overworld.REACH, false)) {
             if (!g.structurePlaced) continue;
-            for (Overworld.Placed b : Overworld.blocks(g.pos, g.axis, 0, false)) if (b.pos().equals(pos)) return g;
+            if (Overworld.isPart(g, pos)) return g;
         }
         return null;
     }

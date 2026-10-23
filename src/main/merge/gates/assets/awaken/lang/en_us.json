@@ -63,5 +63,7 @@
   "subtitles.awaken.gate.seal": "The Seal breaks",
   "subtitles.awaken.gate.shrine": "A Rest Shrine hums",
   "subtitles.awaken.gate.solved": "The runes agree",
-  "subtitles.awaken.gate.warden": "The Warden arrives"
+  "subtitles.awaken.gate.warden": "The Warden arrives",
+  "block.awaken.gate_fissure": "Gate Fissure",
+  "subtitles.awaken.gate.vortex": "Gate vortex turns"
 }

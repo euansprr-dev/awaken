@@ -176,7 +176,8 @@
     "sounds": [
       {
         "name": "minecraft:block/beacon/ambient",
-        "pitch": 0.7
+        "pitch": 0.7,
+        "attenuation_distance": 48
       }
     ]
   },
@@ -287,6 +288,23 @@
         "name": "minecraft:ambient/nether/soulsand_valley/wind3",
         "pitch": 1.1,
         "volume": 0.4
+      }
+    ]
+  },
+  "gate.vortex": {
+    "subtitle": "subtitles.awaken.gate.vortex",
+    "sounds": [
+      {
+        "name": "minecraft:portal/portal",
+        "pitch": 0.6,
+        "volume": 0.6,
+        "attenuation_distance": 48
+      },
+      {
+        "name": "minecraft:block/conduit/ambient",
+        "pitch": 0.5,
+        "volume": 0.8,
+        "attenuation_distance": 48
       }
     ]
   }

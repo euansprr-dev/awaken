@@ -1,0 +1,116 @@
+{
+  "variants": {
+    "dir=0,rank=0": {
+      "model": "awaken:block/gate_fissure_e"
+    },
+    "dir=1,rank=0": {
+      "model": "awaken:block/gate_fissure_e_diag"
+    },
+    "dir=2,rank=0": {
+      "model": "awaken:block/gate_fissure_e",
+      "y": 90
+    },
+    "dir=3,rank=0": {
+      "model": "awaken:block/gate_fissure_e_diag",
+      "y": 90
+    },
+    "dir=0,rank=1": {
+      "model": "awaken:block/gate_fissure_d"
+    },
+    "dir=1,rank=1": {
+      "model": "awaken:block/gate_fissure_d_diag"
+    },
+    "dir=2,rank=1": {
+      "model": "awaken:block/gate_fissure_d",
+      "y": 90
+    },
+    "dir=3,rank=1": {
+      "model": "awaken:block/gate_fissure_d_diag",
+      "y": 90
+    },
+    "dir=0,rank=2": {
+      "model": "awaken:block/gate_fissure_c"
+    },
+    "dir=1,rank=2": {
+      "model": "awaken:block/gate_fissure_c_diag"
+    },
+    "dir=2,rank=2": {
+      "model": "awaken:block/gate_fissure_c",
+      "y": 90
+    },
+    "dir=3,rank=2": {
+      "model": "awaken:block/gate_fissure_c_diag",
+      "y": 90
+    },
+    "dir=0,rank=3": {
+      "model": "awaken:block/gate_fissure_b"
+    },
+    "dir=1,rank=3": {
+      "model": "awaken:block/gate_fissure_b_diag"
+    },
+    "dir=2,rank=3": {
+      "model": "awaken:block/gate_fissure_b",
+      "y": 90
+    },
+    "dir=3,rank=3": {
+      "model": "awaken:block/gate_fissure_b_diag",
+      "y": 90
+    },
+    "dir=0,rank=4": {
+      "model": "awaken:block/gate_fissure_a"
+    },
+    "dir=1,rank=4": {
+      "model": "awaken:block/gate_fissure_a_diag"
+    },
+    "dir=2,rank=4": {
+      "model": "awaken:block/gate_fissure_a",
+      "y": 90
+    },
+    "dir=3,rank=4": {
+      "model": "awaken:block/gate_fissure_a_diag",
+      "y": 90
+    },
+    "dir=0,rank=5": {
+      "model": "awaken:block/gate_fissure_s"
+    },
+    "dir=1,rank=5": {
+      "model": "awaken:block/gate_fissure_s_diag"
+    },
+    "dir=2,rank=5": {
+      "model": "awaken:block/gate_fissure_s",
+      "y": 90
+    },
+    "dir=3,rank=5": {
+      "model": "awaken:block/gate_fissure_s_diag",
+      "y": 90
+    },
+    "dir=0,rank=6": {
+      "model": "awaken:block/gate_fissure_sovereign"
+    },
+    "dir=1,rank=6": {
+      "model": "awaken:block/gate_fissure_sovereign_diag"
+    },
+    "dir=2,rank=6": {
+      "model": "awaken:block/gate_fissure_sovereign",
+      "y": 90
+    },
+    "dir=3,rank=6": {
+      "model": "awaken:block/gate_fissure_sovereign_diag",
+      "y": 90
+    },
+    "dir=0,rank=7": {
+      "model": "awaken:block/gate_fissure_broken"
+    },
+    "dir=1,rank=7": {
+      "model": "awaken:block/gate_fissure_broken_diag"
+    },
+    "dir=2,rank=7": {
+      "model": "awaken:block/gate_fissure_broken",
+      "y": 90
+    },
+    "dir=3,rank=7": {
+      "model": "awaken:block/gate_fissure_broken_diag",
+      "y": 90
+    }
+  }
+}
