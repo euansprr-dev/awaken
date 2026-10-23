@@ -1,0 +1,10 @@
+{
+  "text": "Run a lap of the Training Grounds",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:training_laps",
+    "value": 1
+  },
+  "paths": [],
+  "min_rank": "D"
+}

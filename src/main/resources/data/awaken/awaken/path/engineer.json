@@ -1,0 +1,22 @@
+{
+  "name": "Engineer",
+  "description": "Machines are an extension of you. Drones fight at your side.",
+  "colour": 4678266,
+  "scoring": {
+    "awaken:machines_built": 30.0,
+    "awaken:power_uses/tech": 2.0,
+    "awaken:machines_scanned": 10.0
+  },
+  "evidence": {
+    "awaken:machines_built": "You built %d machines",
+    "awaken:power_uses/tech": "You used tech %d times"
+  },
+  "perks": [
+    {
+      "id": "awaken:cooldown_reduction",
+      "amount": 0.15
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:drone_swarm"
+}

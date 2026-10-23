@@ -1,0 +1,18 @@
+{
+  "text": "I move like water.",
+  "hint": "Chain ten dashes without touching the ground.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:dash_chain_airborne_best",
+    "value": 10
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:flow_duration",
+        "amount": 0.3
+      }
+    ]
+  },
+  "min_rank": "E"
+}

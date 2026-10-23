@@ -1,0 +1,16 @@
+{
+  "name": "Blast Skin",
+  "description": "A creeper went off in your face at full health. You got up.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/creeper_point_blank_survived"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:explosion_resist",
+        "amount": 0.25
+      }
+    ]
+  }
+}

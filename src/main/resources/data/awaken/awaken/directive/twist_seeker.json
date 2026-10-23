@@ -1,0 +1,16 @@
+{
+  "text": "Survive a twisted gate.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:twists_seen",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.3
+  },
+  "expires_days": 4,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 5
+}

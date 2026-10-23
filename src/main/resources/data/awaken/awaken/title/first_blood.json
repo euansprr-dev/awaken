@@ -1,0 +1,15 @@
+{
+  "name": "First Blood",
+  "description": "Cleared your first gate.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:gates_cleared",
+    "value": 1
+  },
+  "perks": [
+    {
+      "id": "awaken:xp_bonus",
+      "amount": 0.02
+    }
+  ]
+}

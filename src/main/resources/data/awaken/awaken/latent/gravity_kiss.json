@@ -1,0 +1,11 @@
+{
+  "name": "Gravity's Kiss",
+  "description": "You fell up in the Inverted Sea and landed on your feet.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/inverted_landing"
+  },
+  "reward": {
+    "power": "awaken:gravity_flip"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Featherfall",
+  "description": "You fell from the sky into water from the build limit.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/fell_from_height_limit_into_water"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:fall_resist",
+        "amount": 0.5
+      }
+    ]
+  }
+}

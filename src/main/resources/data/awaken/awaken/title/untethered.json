@@ -1,0 +1,15 @@
+{
+  "name": "Untethered",
+  "description": "Stepped out of your body.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:veil_ticks",
+    "value": 20
+  },
+  "perks": [
+    {
+      "id": "awaken:cord_length",
+      "amount": 16
+    }
+  ]
+}

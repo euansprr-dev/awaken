@@ -1,0 +1,11 @@
+{
+  "name": "Twin Soul",
+  "description": "You survived a Double Gate.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/double_gate_cleared"
+  },
+  "reward": {
+    "power": "awaken:twin_strike"
+  }
+}

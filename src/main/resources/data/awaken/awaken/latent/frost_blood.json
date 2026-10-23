@@ -1,0 +1,11 @@
+{
+  "name": "Frost Blood",
+  "description": "You froze nearly solid in powder snow and climbed out.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/escaped_freezing"
+  },
+  "reward": {
+    "power": "awaken:frost_nova"
+  }
+}

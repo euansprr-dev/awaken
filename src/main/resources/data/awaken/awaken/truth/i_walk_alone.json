@@ -1,0 +1,18 @@
+{
+  "text": "I walk alone.",
+  "hint": "You've cleared many gates without Echoes.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:gates_solo_no_echo",
+    "value": 15
+  },
+  "emergent": {
+    "type": "counter",
+    "counter": "awaken:gates_solo_no_echo",
+    "value": 10
+  },
+  "reward": {
+    "stat": "AGI",
+    "stat_amount": 4
+  }
+}

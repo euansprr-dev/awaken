@@ -1,0 +1,28 @@
+{
+  "name": "Seer",
+  "description": "You see before it happens. The Veil and the future open to you.",
+  "colour": 12831743,
+  "scoring": {
+    "awaken:veil_ticks": 0.02,
+    "awaken:spirits_spoken": 10.0,
+    "awaken:power_uses/mind": 2.0,
+    "awaken:secrets_found": 10.0
+  },
+  "evidence": {
+    "awaken:veil_ticks": "You spent %d ticks outside your body",
+    "awaken:secrets_found": "You found %d secrets",
+    "awaken:spirits_spoken": "You spoke with %d spirits"
+  },
+  "perks": [
+    {
+      "id": "awaken:cord_length",
+      "amount": 128
+    },
+    {
+      "id": "awaken:secret_glow_range",
+      "amount": 8
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:foresight"
+}

@@ -1,0 +1,12 @@
+{
+  "text": "Dream once",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:dreams",
+    "value": 1
+  },
+  "paths": [
+    "awaken:dreamwalker"
+  ],
+  "min_rank": "E"
+}

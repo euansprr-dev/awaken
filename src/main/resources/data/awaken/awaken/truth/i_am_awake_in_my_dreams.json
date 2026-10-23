@@ -1,0 +1,18 @@
+{
+  "text": "I am awake in my dreams.",
+  "hint": "Become lucid in five dreams.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:lucid_dreams",
+    "value": 5
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:lucidity_start",
+        "amount": 20
+      }
+    ]
+  },
+  "min_rank": "E"
+}

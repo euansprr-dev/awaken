@@ -1,0 +1,16 @@
+{
+  "name": "Beast Tongue",
+  "description": "A tamed wolf died protecting you. Animals know you now.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/wolf_died_protecting"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:wolf_friend",
+        "amount": 1.0
+      }
+    ]
+  }
+}

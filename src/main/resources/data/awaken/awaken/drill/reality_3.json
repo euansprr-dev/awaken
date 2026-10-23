@@ -1,0 +1,10 @@
+{
+  "text": "Do 3 reality checks",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:reality_checks",
+    "value": 3
+  },
+  "paths": [],
+  "min_rank": "E"
+}

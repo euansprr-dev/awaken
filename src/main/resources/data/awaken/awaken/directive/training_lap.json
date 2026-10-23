@@ -1,0 +1,16 @@
+{
+  "text": "Beat your best lap at the Training Grounds.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:training_records",
+    "value": 1
+  },
+  "reward": {
+    "stat": "AGI"
+  },
+  "expires_days": 2,
+  "min_rank": "D",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

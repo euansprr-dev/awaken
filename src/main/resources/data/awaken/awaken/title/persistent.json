@@ -1,0 +1,15 @@
+{
+  "name": "Persistent",
+  "description": "Died twenty times and kept coming back.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:deaths",
+    "value": 20
+  },
+  "perks": [
+    {
+      "id": "awaken:max_health",
+      "amount": 2
+    }
+  ]
+}

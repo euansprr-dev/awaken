@@ -1,0 +1,15 @@
+{
+  "name": "Fear Eater",
+  "description": "Defeated a nightmare.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:nightmares_beaten",
+    "value": 1
+  },
+  "perks": [
+    {
+      "id": "awaken:max_health",
+      "amount": 2
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Lucid",
+  "description": "Became lucid for the first time.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:lucid_dreams",
+    "value": 1
+  },
+  "perks": [
+    {
+      "id": "awaken:lucidity_start",
+      "amount": 5
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "text": "I am the storm.",
+  "hint": "Spend fifteen minutes in Flow.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:flow_ticks",
+    "value": 18000
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:cooldown_reduction",
+        "amount": 0.1
+      }
+    ]
+  },
+  "min_rank": "B"
+}

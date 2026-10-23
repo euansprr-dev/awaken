@@ -1,0 +1,18 @@
+{
+  "text": "I go deeper.",
+  "hint": "Reach stratum 5 of the Descent.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:depth_record",
+    "value": 5
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:fall_resist",
+        "amount": 0.5
+      }
+    ]
+  },
+  "min_rank": "C"
+}

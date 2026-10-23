@@ -1,0 +1,16 @@
+{
+  "text": "Defeat 10 foes bare-handed.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:kills_unarmed",
+    "value": 10
+  },
+  "reward": {
+    "stat": "STR"
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

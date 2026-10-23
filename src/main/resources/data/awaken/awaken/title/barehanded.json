@@ -1,0 +1,15 @@
+{
+  "name": "Barehanded",
+  "description": "Defeated 100 foes without a weapon.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:kills_unarmed",
+    "value": 100
+  },
+  "perks": [
+    {
+      "id": "awaken:damage_above_half_hp",
+      "amount": 0.05
+    }
+  ]
+}

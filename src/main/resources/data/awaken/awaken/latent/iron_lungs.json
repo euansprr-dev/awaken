@@ -1,0 +1,13 @@
+{
+  "name": "Iron Lungs",
+  "description": "You stayed under water until you nearly drowned, three times.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:latent/near_drowned",
+    "value": 3
+  },
+  "reward": {
+    "stat": "VIT",
+    "stat_amount": 4
+  }
+}

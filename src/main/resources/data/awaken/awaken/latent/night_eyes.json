@@ -1,0 +1,13 @@
+{
+  "name": "Night Eyes",
+  "description": "Three nights without sleep in the dark taught your eyes.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:latent/nights_awake_underground",
+    "value": 3
+  },
+  "reward": {
+    "stat": "PER",
+    "stat_amount": 3
+  }
+}

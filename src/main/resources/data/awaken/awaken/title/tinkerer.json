@@ -1,0 +1,15 @@
+{
+  "name": "Tinkerer",
+  "description": "Scanned five broken machines.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:machines_scanned",
+    "value": 5
+  },
+  "perks": [
+    {
+      "id": "awaken:cooldown_reduction",
+      "amount": 0.03
+    }
+  ]
+}

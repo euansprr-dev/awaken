@@ -1,0 +1,18 @@
+{
+  "text": "I am fast.",
+  "hint": "Sprint 50 kilometres.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:sprint_cm",
+    "value": 5000000
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:move_speed",
+        "amount": 0.05
+      }
+    ]
+  },
+  "min_rank": "E"
+}

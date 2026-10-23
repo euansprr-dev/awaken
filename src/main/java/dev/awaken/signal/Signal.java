@@ -3,7 +3,7 @@ package dev.awaken.signal;
 import dev.awaken.signal.net.SignalPayloads;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
+import dev.awaken.core.AwakenNet;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,11 +22,11 @@ public final class Signal {
     private static final Map<String, ActionHandler> HANDLERS = new HashMap<>();
 
     public static void send(ServerPlayer player, SignalWindow window) {
-        PacketDistributor.sendToPlayer(player, new SignalPayloads.Show(window));
+        AwakenNet.send(player, new SignalPayloads.Show(window));
     }
 
     public static void toast(ServerPlayer player, Component text) {
-        PacketDistributor.sendToPlayer(player, new SignalPayloads.Toast(text));
+        AwakenNet.send(player, new SignalPayloads.Toast(text));
     }
 
     /** Register the handler for actions whose id starts with {@code prefix + ":"}. */

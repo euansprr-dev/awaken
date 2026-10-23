@@ -1,0 +1,15 @@
+{
+  "name": "Stonebreaker",
+  "description": "Mined 1,000 ores.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:ores_mined",
+    "value": 1000
+  },
+  "perks": [
+    {
+      "id": "awaken:loot_bonus",
+      "amount": 0.05
+    }
+  ]
+}

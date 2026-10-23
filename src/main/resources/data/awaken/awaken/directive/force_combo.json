@@ -1,0 +1,17 @@
+{
+  "text": "Make two forces meet.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:force_interactions",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.1,
+    "stat": "INT"
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

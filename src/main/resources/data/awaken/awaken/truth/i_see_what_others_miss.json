@@ -1,0 +1,18 @@
+{
+  "text": "I see what others miss.",
+  "hint": "Find ten secrets.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:secrets_found",
+    "value": 10
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:secret_glow_range",
+        "amount": 6
+      }
+    ]
+  },
+  "min_rank": "E"
+}

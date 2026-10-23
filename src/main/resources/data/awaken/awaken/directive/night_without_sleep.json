@@ -1,0 +1,16 @@
+{
+  "text": "Stay awake through a whole night.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:nights_awake",
+    "value": 1
+  },
+  "reward": {
+    "stat": "PER"
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 5
+}

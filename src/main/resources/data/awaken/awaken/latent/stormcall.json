@@ -1,0 +1,11 @@
+{
+  "name": "Stormcall",
+  "description": "Lightning found the copper in your hand, and you kept it.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/struck_holding_copper"
+  },
+  "reward": {
+    "power": "awaken:storm_call"
+  }
+}

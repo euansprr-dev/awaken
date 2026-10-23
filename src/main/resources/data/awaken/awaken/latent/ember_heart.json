@@ -1,0 +1,11 @@
+{
+  "name": "Ember Heart",
+  "description": "You walked through lava and lived.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/survived_lava"
+  },
+  "reward": {
+    "power": "awaken:ember_step"
+  }
+}

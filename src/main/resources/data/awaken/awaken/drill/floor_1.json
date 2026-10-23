@@ -1,0 +1,10 @@
+{
+  "text": "Clear a gate floor",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:floors_cleared",
+    "value": 1
+  },
+  "paths": [],
+  "min_rank": "E"
+}

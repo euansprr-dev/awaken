@@ -1,0 +1,11 @@
+{
+  "name": "Ghost Step",
+  "description": "You walked the Silent Halls without a sound.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/silent_halls_unheard"
+  },
+  "reward": {
+    "power": "awaken:ghost_step"
+  }
+}

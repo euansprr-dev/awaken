@@ -1,0 +1,13 @@
+{
+  "text": "I choose my path.",
+  "hint": "Complete 30 Daily Regimens.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:regimens_done",
+    "value": 30
+  },
+  "reward": {
+    "stat_points": 6
+  },
+  "min_rank": "B"
+}

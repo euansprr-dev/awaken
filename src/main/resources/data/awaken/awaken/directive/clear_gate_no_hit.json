@@ -1,0 +1,17 @@
+{
+  "text": "Clear a gate without being hit.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:gates_no_hit",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.5,
+    "stat_points": 2
+  },
+  "expires_days": 3,
+  "min_rank": "D",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 10
+}

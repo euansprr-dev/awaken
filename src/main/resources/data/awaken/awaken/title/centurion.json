@@ -1,0 +1,15 @@
+{
+  "name": "Centurion",
+  "description": "Defeated 100 foes.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:kills",
+    "value": 100
+  },
+  "perks": [
+    {
+      "id": "awaken:crit_chance",
+      "amount": 0.02
+    }
+  ]
+}

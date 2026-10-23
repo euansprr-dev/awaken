@@ -1,0 +1,18 @@
+{
+  "text": "I am more than my body.",
+  "hint": "Spend ten minutes outside your body.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:veil_ticks",
+    "value": 12000
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:cord_length",
+        "amount": 64
+      }
+    ]
+  },
+  "min_rank": "D"
+}

@@ -1,0 +1,12 @@
+{
+  "text": "Land 20 kinetic strikes",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:power_uses/kinetic",
+    "value": 20
+  },
+  "paths": [
+    "awaken:stormbreaker"
+  ],
+  "min_rank": "E"
+}

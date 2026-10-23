@@ -1,0 +1,16 @@
+{
+  "text": "Hang a new trophy in your Hall.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:trophies_placed",
+    "value": 1
+  },
+  "reward": {
+    "stat_points": 1
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Gatebreaker",
+  "description": "Cleared a gate before its omen revealed itself.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:gate_cleared_unscouted_fast"
+  },
+  "perks": [
+    {
+      "id": "awaken:loot_bonus",
+      "amount": 0.1
+    }
+  ]
+}

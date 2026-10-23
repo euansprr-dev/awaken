@@ -1,0 +1,12 @@
+{
+  "name": "Pathfinder",
+  "description": "You found a vision's place on the first night.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/vision_found_same_day"
+  },
+  "reward": {
+    "stat": "SPI",
+    "stat_amount": 3
+  }
+}

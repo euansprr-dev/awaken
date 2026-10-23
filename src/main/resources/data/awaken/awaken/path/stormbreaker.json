@@ -1,0 +1,21 @@
+{
+  "name": "Stormbreaker",
+  "description": "You hit like thunder and fly like it too.",
+  "colour": 15913546,
+  "scoring": {
+    "awaken:power_uses/kinetic": 2.0,
+    "awaken:kills": 0.5
+  },
+  "evidence": {
+    "awaken:power_uses/kinetic": "You threw %d kinetic strikes",
+    "awaken:kills": "You defeated %d foes"
+  },
+  "perks": [
+    {
+      "id": "awaken:damage_above_half_hp",
+      "amount": 0.2
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:thunderclap"
+}

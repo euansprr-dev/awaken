@@ -1,0 +1,18 @@
+{
+  "text": "I do not retreat.",
+  "hint": "Clear five floors in a row without extracting early.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:floor_streak_no_early_extract",
+    "value": 5
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:damage_above_half_hp",
+        "amount": 0.15
+      }
+    ]
+  },
+  "min_rank": "E"
+}

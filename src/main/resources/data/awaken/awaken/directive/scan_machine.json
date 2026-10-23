@@ -1,0 +1,16 @@
+{
+  "text": "Scan a broken machine.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:machines_scanned",
+    "value": 1
+  },
+  "reward": {
+    "stat": "INT"
+  },
+  "expires_days": 2,
+  "min_rank": "D",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

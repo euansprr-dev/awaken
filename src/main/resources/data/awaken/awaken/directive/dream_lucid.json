@@ -1,0 +1,17 @@
+{
+  "text": "Become lucid in your next dream.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:lucid_dreams",
+    "value": 1
+  },
+  "reward": {
+    "stat": "SPI",
+    "levels": 0.1
+  },
+  "expires_days": 3,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 10
+}

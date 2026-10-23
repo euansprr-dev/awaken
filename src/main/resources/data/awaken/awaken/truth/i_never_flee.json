@@ -1,0 +1,24 @@
+{
+  "text": "I never flee.",
+  "hint": "You've never fled a fight.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:floor_streak_no_early_extract",
+    "value": 12
+  },
+  "emergent": {
+    "type": "counter",
+    "counter": "awaken:floor_streak_no_early_extract",
+    "value": 8
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:damage_above_half_hp",
+        "amount": 0.1
+      }
+    ],
+    "stat": "VIT",
+    "stat_amount": 2
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "text": "I keep my word.",
+  "hint": "Finish every Directive you accept for seven in a row.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:directives_kept_streak",
+    "value": 7
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:extra_directive_slot",
+        "amount": 1.0
+      }
+    ]
+  },
+  "min_rank": "E"
+}

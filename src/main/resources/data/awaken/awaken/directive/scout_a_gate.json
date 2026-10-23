@@ -1,0 +1,16 @@
+{
+  "text": "Scout a gate from the Veil before entering it.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:gates_scouted",
+    "value": 1
+  },
+  "reward": {
+    "stat": "PER"
+  },
+  "expires_days": 2,
+  "min_rank": "D",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

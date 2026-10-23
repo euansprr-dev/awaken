@@ -1,0 +1,16 @@
+{
+  "name": "Lucky Star",
+  "description": "You found three twists in three gates in a row.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/three_twists_row"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:loot_bonus",
+        "amount": 0.15
+      }
+    ]
+  }
+}

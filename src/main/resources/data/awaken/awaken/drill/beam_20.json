@@ -1,0 +1,12 @@
+{
+  "text": "Fire 20 energy powers",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:power_uses/energy",
+    "value": 20
+  },
+  "paths": [
+    "awaken:prism"
+  ],
+  "min_rank": "E"
+}

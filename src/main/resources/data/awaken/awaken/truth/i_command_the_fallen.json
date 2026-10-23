@@ -1,0 +1,18 @@
+{
+  "text": "I command the fallen.",
+  "hint": "Bind twenty Echoes.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:echoes_bound",
+    "value": 20
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:bind_chance",
+        "amount": 0.15
+      }
+    ]
+  },
+  "min_rank": "C"
+}

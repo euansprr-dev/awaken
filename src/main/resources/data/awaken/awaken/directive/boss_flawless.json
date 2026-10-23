@@ -1,0 +1,17 @@
+{
+  "text": "Defeat a Gate Lord without taking damage.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:boss_floors_no_damage",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.5,
+    "stat": "VIT"
+  },
+  "expires_days": 3,
+  "min_rank": "C",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 10
+}

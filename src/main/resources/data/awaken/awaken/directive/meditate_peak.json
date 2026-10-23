@@ -1,0 +1,16 @@
+{
+  "text": "Meditate for a minute somewhere high.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:meditate_high_ticks",
+    "value": 1200
+  },
+  "reward": {
+    "stat": "SPI"
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

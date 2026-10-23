@@ -1,0 +1,17 @@
+{
+  "text": "Defeat a Gate Lord bare-handed.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:bosses_killed_unarmed",
+    "value": 1
+  },
+  "reward": {
+    "stat": "STR",
+    "stat_amount": 2
+  },
+  "expires_days": 4,
+  "min_rank": "C",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 4
+}

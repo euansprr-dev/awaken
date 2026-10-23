@@ -1,0 +1,12 @@
+{
+  "name": "Clarity",
+  "description": "You meditated above the clouds at dawn. Things are sharper now.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/dawn_meditation_above_clouds"
+  },
+  "reward": {
+    "stat": "PER",
+    "stat_amount": 5
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Dream Hands",
+  "description": "You manifested something in a dream and it stayed for a moment when you woke.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/manifest_woke"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:lucidity_start",
+        "amount": 10
+      }
+    ]
+  }
+}

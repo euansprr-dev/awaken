@@ -1,0 +1,21 @@
+{
+  "name": "Prism",
+  "description": "Light obeys you. Beams split, burn and carry you into the sky.",
+  "colour": 8373247,
+  "scoring": {
+    "awaken:power_uses/energy": 2.0,
+    "awaken:power_uses/flight": 2.0
+  },
+  "evidence": {
+    "awaken:power_uses/energy": "You fired energy powers %d times",
+    "awaken:power_uses/flight": "You took to the air %d times"
+  },
+  "perks": [
+    {
+      "id": "awaken:force_amp",
+      "amount": 0.2
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:prism_lance"
+}

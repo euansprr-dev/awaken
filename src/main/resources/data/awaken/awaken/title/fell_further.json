@@ -1,0 +1,15 @@
+{
+  "name": "Fell Further",
+  "description": "Survived a 200-block fall.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:fall_survived_max",
+    "value": 200
+  },
+  "perks": [
+    {
+      "id": "awaken:fall_resist",
+      "amount": 0.3
+    }
+  ]
+}

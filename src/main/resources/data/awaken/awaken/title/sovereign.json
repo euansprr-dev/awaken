@@ -1,0 +1,14 @@
+{
+  "name": "Sovereign",
+  "description": "Reached the highest rank.",
+  "condition": {
+    "type": "rank",
+    "rank": "SOVEREIGN"
+  },
+  "perks": [
+    {
+      "id": "awaken:xp_bonus",
+      "amount": 0.1
+    }
+  ]
+}

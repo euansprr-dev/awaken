@@ -1,0 +1,15 @@
+{
+  "name": "Unwitnessed",
+  "description": "Cleared a gate without taking a hit.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:gates_no_hit",
+    "value": 1
+  },
+  "perks": [
+    {
+      "id": "awaken:stealth",
+      "amount": 0.25
+    }
+  ]
+}

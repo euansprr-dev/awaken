@@ -1,0 +1,13 @@
+{
+  "text": "I finish what I start.",
+  "hint": "Clear 25 gates.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:gates_cleared",
+    "value": 25
+  },
+  "reward": {
+    "stat_points": 5
+  },
+  "min_rank": "C"
+}

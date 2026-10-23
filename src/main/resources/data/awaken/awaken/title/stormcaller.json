@@ -1,0 +1,15 @@
+{
+  "name": "Stormcaller",
+  "description": "Spent five minutes in Flow.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:flow_ticks",
+    "value": 6000
+  },
+  "perks": [
+    {
+      "id": "awaken:flow_duration",
+      "amount": 0.1
+    }
+  ]
+}

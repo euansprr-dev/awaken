@@ -1,0 +1,18 @@
+{
+  "text": "I am still.",
+  "hint": "Meditate for twenty minutes in total.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:meditate_ticks",
+    "value": 24000
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:energy_regen",
+        "amount": 0.2
+      }
+    ]
+  },
+  "min_rank": "E"
+}

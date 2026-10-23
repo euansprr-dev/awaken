@@ -1,0 +1,15 @@
+{
+  "name": "Chain Reaction",
+  "description": "Triggered ten force interactions.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:force_interactions",
+    "value": 10
+  },
+  "perks": [
+    {
+      "id": "awaken:force_amp",
+      "amount": 0.1
+    }
+  ]
+}

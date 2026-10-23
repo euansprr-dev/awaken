@@ -1,0 +1,21 @@
+{
+  "name": "Architect",
+  "description": "You build under fire. Walls rise as fast as you think them.",
+  "colour": 14269312,
+  "scoring": {
+    "awaken:blocks_placed_in_combat": 1.0,
+    "awaken:power_uses/architect": 2.0
+  },
+  "evidence": {
+    "awaken:blocks_placed_in_combat": "You placed %d blocks mid-fight",
+    "awaken:power_uses/architect": "You raised %d walls in combat"
+  },
+  "perks": [
+    {
+      "id": "awaken:explosion_resist",
+      "amount": 0.3
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:citadel"
+}

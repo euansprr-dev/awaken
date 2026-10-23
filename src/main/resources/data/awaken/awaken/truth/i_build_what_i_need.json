@@ -1,0 +1,13 @@
+{
+  "text": "I build what I need.",
+  "hint": "Place 2,000 blocks.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:blocks_placed",
+    "value": 2000
+  },
+  "reward": {
+    "stat_points": 3
+  },
+  "min_rank": "E"
+}

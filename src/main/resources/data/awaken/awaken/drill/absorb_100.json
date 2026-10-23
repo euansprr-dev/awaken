@@ -1,0 +1,12 @@
+{
+  "text": "Take 100 damage and keep standing",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:damage_taken",
+    "value": 100
+  },
+  "paths": [
+    "awaken:warden"
+  ],
+  "min_rank": "E"
+}

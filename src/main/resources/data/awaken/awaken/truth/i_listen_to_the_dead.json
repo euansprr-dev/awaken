@@ -1,0 +1,22 @@
+{
+  "text": "I listen to the dead.",
+  "hint": "You keep stopping to talk to spirits.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:spirits_spoken",
+    "value": 20
+  },
+  "emergent": {
+    "type": "counter",
+    "counter": "awaken:spirits_spoken",
+    "value": 12
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:cord_length",
+        "amount": 96
+      }
+    ]
+  }
+}

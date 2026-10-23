@@ -30,7 +30,6 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
@@ -87,6 +86,8 @@ public final class ProgressionModule {
             }
         });
         ProgressionCommands.register();
+        WorldLatents.init();
+        ProgressionTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -114,7 +115,7 @@ public final class ProgressionModule {
 
     private static void onDatapackSync(OnDatapackSyncEvent event) {
         var msg = ProgressionPayloads.ContentSync.build();
-        event.getRelevantPlayers().forEach(p -> PacketDistributor.sendToPlayer(p, msg));
+        event.getRelevantPlayers().forEach(p -> dev.awaken.core.AwakenNet.send(p, msg));
     }
 
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {

@@ -1,0 +1,12 @@
+{
+  "text": "Use tech 10 times",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:power_uses/tech",
+    "value": 10
+  },
+  "paths": [
+    "awaken:engineer"
+  ],
+  "min_rank": "E"
+}

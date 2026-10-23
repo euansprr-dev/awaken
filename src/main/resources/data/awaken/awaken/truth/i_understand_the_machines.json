@@ -1,0 +1,14 @@
+{
+  "text": "I understand the machines.",
+  "hint": "Build five Precursor machines.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:machines_built",
+    "value": 5
+  },
+  "reward": {
+    "stat": "INT",
+    "stat_amount": 3
+  },
+  "min_rank": "C"
+}

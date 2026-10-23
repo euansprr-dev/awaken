@@ -1,0 +1,18 @@
+{
+  "text": "I endure.",
+  "hint": "Take 5,000 damage and keep going.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:damage_taken",
+    "value": 5000
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:max_health",
+        "amount": 4
+      }
+    ]
+  },
+  "min_rank": "D"
+}

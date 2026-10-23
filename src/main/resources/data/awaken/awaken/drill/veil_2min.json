@@ -1,0 +1,12 @@
+{
+  "text": "Spend two minutes in the Veil",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:veil_ticks",
+    "value": 2400
+  },
+  "paths": [
+    "awaken:seer"
+  ],
+  "min_rank": "E"
+}

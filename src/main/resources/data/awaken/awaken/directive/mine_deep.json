@@ -1,0 +1,16 @@
+{
+  "text": "Mine 30 ores.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:ores_mined",
+    "value": 30
+  },
+  "reward": {
+    "levels": 0.1
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

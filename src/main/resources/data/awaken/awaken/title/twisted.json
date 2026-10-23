@@ -1,0 +1,15 @@
+{
+  "name": "Twisted",
+  "description": "Survived five gate twists.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:twists_seen",
+    "value": 5
+  },
+  "perks": [
+    {
+      "id": "awaken:loot_bonus",
+      "amount": 0.05
+    }
+  ]
+}

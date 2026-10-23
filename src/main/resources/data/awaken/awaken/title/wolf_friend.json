@@ -1,0 +1,15 @@
+{
+  "name": "Wolf Friend",
+  "description": "Tamed ten wolves.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:wolves_tamed",
+    "value": 10
+  },
+  "perks": [
+    {
+      "id": "awaken:wolf_friend",
+      "amount": 1.0
+    }
+  ]
+}

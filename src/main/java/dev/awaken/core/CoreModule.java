@@ -44,6 +44,8 @@ public final class CoreModule {
         TABS.register(modBus);
         SOUNDS.register(modBus);
         Forces.init(modBus);
+        dev.awaken.core.test.AwakenTests.init(modBus);
+        dev.awaken.core.api.CoreApi.init(modBus);
         NeoForge.EVENT_BUS.addListener(PlayDays::onServerTick);
         NeoForge.EVENT_BUS.addListener(AwakenCommands::onRegister);
     }

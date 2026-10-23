@@ -1,0 +1,15 @@
+{
+  "name": "Marathon",
+  "description": "Sprinted 42 kilometres.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:sprint_cm",
+    "value": 4200000
+  },
+  "perks": [
+    {
+      "id": "awaken:move_speed",
+      "amount": 0.03
+    }
+  ]
+}

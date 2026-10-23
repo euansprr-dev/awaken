@@ -1,0 +1,21 @@
+{
+  "name": "Dreamwalker",
+  "description": "What you shape in dreams follows you into the waking world.",
+  "colour": 13666498,
+  "scoring": {
+    "awaken:lucid_dreams": 40.0,
+    "awaken:dreams": 10.0
+  },
+  "evidence": {
+    "awaken:lucid_dreams": "You woke up inside %d dreams",
+    "awaken:dreams": "You dreamed %d times"
+  },
+  "perks": [
+    {
+      "id": "awaken:lucidity_start",
+      "amount": 30
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:waking_dream"
+}

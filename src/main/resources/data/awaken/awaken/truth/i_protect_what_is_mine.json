@@ -1,0 +1,18 @@
+{
+  "text": "I protect what's mine.",
+  "hint": "Hold your Hearth through three breaks.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:breaks_held_at_hearth",
+    "value": 3
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:hearth_shield",
+        "amount": 1.0
+      }
+    ]
+  },
+  "min_rank": "D"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Second Wind",
+  "description": "Sprinting on an empty stomach taught your body to find more.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/sprint_starving"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:second_wind",
+        "amount": 1.0
+      }
+    ]
+  }
+}

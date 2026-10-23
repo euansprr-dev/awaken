@@ -1,0 +1,16 @@
+{
+  "text": "Light a new Waystone in the Descent.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:waystones_lit",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.3
+  },
+  "expires_days": 3,
+  "min_rank": "D",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 10
+}

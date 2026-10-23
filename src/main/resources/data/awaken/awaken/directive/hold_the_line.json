@@ -1,0 +1,16 @@
+{
+  "text": "Defend your Hearth from a break without losing a structure.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:breaks_held_at_hearth",
+    "value": 1
+  },
+  "reward": {
+    "stat_points": 2
+  },
+  "expires_days": 3,
+  "min_rank": "D",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 10
+}

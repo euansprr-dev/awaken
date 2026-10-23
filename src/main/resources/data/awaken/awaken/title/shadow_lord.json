@@ -1,0 +1,15 @@
+{
+  "name": "Shadow Lord",
+  "description": "Bound fifty Echoes.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:echoes_bound",
+    "value": 50
+  },
+  "perks": [
+    {
+      "id": "awaken:bind_chance",
+      "amount": 0.1
+    }
+  ]
+}

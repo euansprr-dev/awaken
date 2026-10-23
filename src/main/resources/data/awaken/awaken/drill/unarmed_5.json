@@ -1,0 +1,10 @@
+{
+  "text": "Defeat 5 foes bare-handed",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:kills_unarmed",
+    "value": 5
+  },
+  "paths": [],
+  "min_rank": "E"
+}

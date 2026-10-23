@@ -1,0 +1,12 @@
+{
+  "text": "Fight with three Echoes",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:echo_army_peak",
+    "value": 3
+  },
+  "paths": [
+    "awaken:shadowbinder"
+  ],
+  "min_rank": "E"
+}

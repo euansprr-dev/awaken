@@ -1,0 +1,14 @@
+{
+  "text": "I face my fears.",
+  "hint": "Defeat three nightmares.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:nightmares_beaten",
+    "value": 3
+  },
+  "reward": {
+    "stat": "SPI",
+    "stat_amount": 3
+  },
+  "min_rank": "D"
+}

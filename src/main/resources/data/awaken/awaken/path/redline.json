@@ -1,0 +1,26 @@
+{
+  "name": "Redline",
+  "description": "Speed is your power. Flow lasts longer and the world gets slower.",
+  "colour": 16730685,
+  "scoring": {
+    "awaken:flow_ticks": 0.05,
+    "awaken:dashes": 1.0,
+    "awaken:sprint_cm": 0.0005
+  },
+  "evidence": {
+    "awaken:flow_ticks": "You spent %d ticks in Flow",
+    "awaken:dashes": "You dashed %d times"
+  },
+  "perks": [
+    {
+      "id": "awaken:flow_duration",
+      "amount": 0.5
+    },
+    {
+      "id": "awaken:move_speed",
+      "amount": 0.08
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:lightning_step"
+}

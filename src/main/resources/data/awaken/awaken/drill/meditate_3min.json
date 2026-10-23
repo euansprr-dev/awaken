@@ -1,0 +1,12 @@
+{
+  "text": "Meditate for three minutes",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:meditate_ticks",
+    "value": 3600
+  },
+  "paths": [
+    "awaken:monk"
+  ],
+  "min_rank": "E"
+}

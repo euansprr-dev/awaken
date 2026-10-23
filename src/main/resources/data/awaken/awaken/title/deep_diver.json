@@ -1,0 +1,15 @@
+{
+  "name": "Deep Diver",
+  "description": "Reached stratum 3.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:depth_record",
+    "value": 3
+  },
+  "perks": [
+    {
+      "id": "awaken:fall_resist",
+      "amount": 0.2
+    }
+  ]
+}

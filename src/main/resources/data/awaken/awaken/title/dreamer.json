@@ -1,0 +1,15 @@
+{
+  "name": "Dreamer",
+  "description": "Had ten dreams.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:dreams",
+    "value": 10
+  },
+  "perks": [
+    {
+      "id": "awaken:lucidity_start",
+      "amount": 10
+    }
+  ]
+}

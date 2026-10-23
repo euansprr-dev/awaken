@@ -1,0 +1,15 @@
+{
+  "name": "The Regimen",
+  "description": "Completed ten Daily Regimens.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:regimens_done",
+    "value": 10
+  },
+  "perks": [
+    {
+      "id": "awaken:energy_regen",
+      "amount": 0.1
+    }
+  ]
+}

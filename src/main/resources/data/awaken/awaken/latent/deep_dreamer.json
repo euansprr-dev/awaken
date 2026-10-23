@@ -1,0 +1,16 @@
+{
+  "name": "Deep Dreamer",
+  "description": "You slept in the Deep and dreamed of what lies below.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/slept_in_descent"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:lucidity_start",
+        "amount": 15
+      }
+    ]
+  }
+}

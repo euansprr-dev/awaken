@@ -1,0 +1,16 @@
+{
+  "text": "Sprint 3 kilometres.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:sprint_cm",
+    "value": 300000
+  },
+  "reward": {
+    "stat": "AGI"
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

@@ -1,0 +1,12 @@
+{
+  "text": "Raise 10 walls",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:power_uses/architect",
+    "value": 10
+  },
+  "paths": [
+    "awaken:architect"
+  ],
+  "min_rank": "E"
+}

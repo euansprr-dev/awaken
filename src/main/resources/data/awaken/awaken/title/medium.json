@@ -1,0 +1,15 @@
+{
+  "name": "Medium",
+  "description": "Spoke with ten spirits.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:spirits_spoken",
+    "value": 10
+  },
+  "perks": [
+    {
+      "id": "awaken:secret_glow_range",
+      "amount": 3
+    }
+  ]
+}

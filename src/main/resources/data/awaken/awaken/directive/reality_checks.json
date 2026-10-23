@@ -1,0 +1,16 @@
+{
+  "text": "Do five reality checks while awake.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:reality_checks",
+    "value": 5
+  },
+  "reward": {
+    "stat": "SPI"
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

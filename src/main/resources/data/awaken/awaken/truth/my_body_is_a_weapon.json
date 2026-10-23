@@ -1,0 +1,14 @@
+{
+  "text": "My body is a weapon.",
+  "hint": "Defeat 300 foes bare-handed.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:kills_unarmed",
+    "value": 300
+  },
+  "reward": {
+    "stat": "STR",
+    "stat_amount": 3
+  },
+  "min_rank": "E"
+}

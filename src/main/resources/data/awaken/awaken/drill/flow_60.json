@@ -1,0 +1,12 @@
+{
+  "text": "Spend a minute in Flow",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:flow_ticks",
+    "value": 1200
+  },
+  "paths": [
+    "awaken:redline"
+  ],
+  "min_rank": "E"
+}

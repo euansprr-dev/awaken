@@ -1,0 +1,18 @@
+{
+  "text": "Deploy drones ten times.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:power_uses/tech",
+    "value": 10
+  },
+  "reward": {
+    "stat": "INT",
+    "stat_amount": 2
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 10,
+  "path": "awaken:engineer"
+}

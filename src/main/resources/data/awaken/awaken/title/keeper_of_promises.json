@@ -1,0 +1,15 @@
+{
+  "name": "Keeper of Promises",
+  "description": "Kept seven Directives in a row.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:directives_kept_streak",
+    "value": 7
+  },
+  "perks": [
+    {
+      "id": "awaken:xp_bonus",
+      "amount": 0.03
+    }
+  ]
+}

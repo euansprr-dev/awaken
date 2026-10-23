@@ -1,0 +1,26 @@
+{
+  "name": "Warden",
+  "description": "You stand between harm and everyone else.",
+  "colour": 6279311,
+  "scoring": {
+    "awaken:damage_taken": 0.05,
+    "awaken:breaks_held_at_hearth": 20.0,
+    "awaken:power_uses/spirit": 1.0
+  },
+  "evidence": {
+    "awaken:damage_taken": "You took %d damage and kept standing",
+    "awaken:breaks_held_at_hearth": "You held your home through %d breaks"
+  },
+  "perks": [
+    {
+      "id": "awaken:max_health",
+      "amount": 10
+    },
+    {
+      "id": "awaken:hearth_shield",
+      "amount": 1.0
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:bulwark"
+}

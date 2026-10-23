@@ -1,0 +1,17 @@
+{
+  "text": "Build a Precursor machine.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:machines_built",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.25,
+    "stat": "INT"
+  },
+  "expires_days": 3,
+  "min_rank": "C",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 10
+}

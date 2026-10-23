@@ -1,0 +1,16 @@
+{
+  "name": "Sun Eyes",
+  "description": "You stared at the noon sun from a mountaintop for a full minute.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/stared_at_sun"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:crit_chance",
+        "amount": 0.03
+      }
+    ]
+  }
+}

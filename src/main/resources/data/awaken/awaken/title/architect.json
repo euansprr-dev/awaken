@@ -1,0 +1,15 @@
+{
+  "name": "Architect",
+  "description": "Placed 500 blocks mid-fight.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:blocks_placed_in_combat",
+    "value": 500
+  },
+  "perks": [
+    {
+      "id": "awaken:explosion_resist",
+      "amount": 0.15
+    }
+  ]
+}

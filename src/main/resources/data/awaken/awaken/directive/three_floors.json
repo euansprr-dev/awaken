@@ -1,0 +1,16 @@
+{
+  "text": "Clear three gate floors.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:floors_cleared",
+    "value": 3
+  },
+  "reward": {
+    "levels": 0.2
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 10
+}

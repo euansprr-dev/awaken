@@ -1,0 +1,16 @@
+{
+  "text": "Defeat 20 hostiles under the night sky.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:kills_overworld_night",
+    "value": 20
+  },
+  "reward": {
+    "levels": 0.15
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10
+}

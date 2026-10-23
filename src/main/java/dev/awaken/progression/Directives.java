@@ -101,6 +101,7 @@ public final class Directives {
             if (!d.id().equals(key) || d.accepted()) continue;
             if (!accepted) {
                 p.directives.remove(i);
+                p.counters.merge("awaken:directives_dismissed", 1L, Long::sum);
             } else {
                 var def = Content.DIRECTIVES.get(key);
                 if (def == null) { p.directives.remove(i); break; }

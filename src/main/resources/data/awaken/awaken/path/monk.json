@@ -1,0 +1,37 @@
+{
+  "name": "Monk",
+  "description": "Empty hands, quiet mind. You need nothing else.",
+  "colour": 16765578,
+  "scoring": {},
+  "evidence": {
+    "awaken:kills_unarmed": "You defeated %d foes bare-handed",
+    "awaken:meditate_ticks": "You meditated for %d ticks"
+  },
+  "perks": [
+    {
+      "id": "awaken:damage_above_half_hp",
+      "amount": 0.25
+    },
+    {
+      "id": "awaken:energy_regen",
+      "amount": 0.4
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:hundred_palms",
+  "hidden": {
+    "type": "all",
+    "of": [
+      {
+        "type": "counter",
+        "counter": "awaken:kills_unarmed",
+        "value": 400
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:meditate_ticks",
+        "value": 36000
+      }
+    ]
+  }
+}

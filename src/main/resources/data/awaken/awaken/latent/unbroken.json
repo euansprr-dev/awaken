@@ -1,0 +1,11 @@
+{
+  "name": "Unbroken",
+  "description": "You cleared a Red Gate.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/red_gate_cleared"
+  },
+  "reward": {
+    "stat_points": 5
+  }
+}

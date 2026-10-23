@@ -1,0 +1,37 @@
+{
+  "name": "Hollow",
+  "description": "You took power from the Deep. It took something back.",
+  "colour": 3351898,
+  "scoring": {},
+  "evidence": {
+    "awaken:depth_record": "You reached stratum %d",
+    "awaken:deaths": "You died %d times and returned"
+  },
+  "perks": [
+    {
+      "id": "awaken:force_amp",
+      "amount": 0.35
+    },
+    {
+      "id": "awaken:max_health",
+      "amount": -4
+    }
+  ],
+  "available": true,
+  "signature_power": "awaken:void_maw",
+  "hidden": {
+    "type": "all",
+    "of": [
+      {
+        "type": "counter",
+        "counter": "awaken:depth_record",
+        "value": 6
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:slept_in_descent",
+        "value": 3
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "text": "Place 100 blocks",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:blocks_placed",
+    "value": 100
+  },
+  "paths": [],
+  "min_rank": "E"
+}

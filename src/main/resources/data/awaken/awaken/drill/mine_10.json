@@ -1,0 +1,10 @@
+{
+  "text": "Mine 10 ores",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:ores_mined",
+    "value": 10
+  },
+  "paths": [],
+  "min_rank": "E"
+}

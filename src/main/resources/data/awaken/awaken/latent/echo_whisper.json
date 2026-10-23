@@ -1,0 +1,16 @@
+{
+  "name": "Echo Whisper",
+  "description": "A spirit told you its name, and you remembered it.",
+  "condition": {
+    "type": "flag",
+    "flag": "awaken:latent/spirit_named"
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:bind_chance",
+        "amount": 0.1
+      }
+    ]
+  }
+}

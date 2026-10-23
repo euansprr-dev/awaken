@@ -1,0 +1,29 @@
+{
+  "name": "Wanderer",
+  "description": "You refused the Signal's choices. You'll take a little of everything.",
+  "colour": 10592168,
+  "scoring": {},
+  "evidence": {
+    "awaken:directives_dismissed": "You turned the Signal down %d times"
+  },
+  "perks": [
+    {
+      "id": "awaken:xp_bonus",
+      "amount": 0.1
+    },
+    {
+      "id": "awaken:move_speed",
+      "amount": 0.04
+    },
+    {
+      "id": "awaken:cooldown_reduction",
+      "amount": 0.05
+    }
+  ],
+  "available": true,
+  "hidden": {
+    "type": "counter",
+    "counter": "awaken:directives_dismissed",
+    "value": 25
+  }
+}

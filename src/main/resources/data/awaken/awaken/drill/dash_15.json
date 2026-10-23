@@ -1,0 +1,10 @@
+{
+  "text": "Dash 15 times",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:dashes",
+    "value": 15
+  },
+  "paths": [],
+  "min_rank": "E"
+}

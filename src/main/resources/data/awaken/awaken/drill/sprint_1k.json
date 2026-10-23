@@ -1,0 +1,10 @@
+{
+  "text": "Sprint 1,000 blocks",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:sprint_cm",
+    "value": 100000
+  },
+  "paths": [],
+  "min_rank": "E"
+}

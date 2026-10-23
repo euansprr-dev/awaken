@@ -1,0 +1,18 @@
+{
+  "text": "The deep does not scare me.",
+  "hint": "Reach stratum 8.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:depth_record",
+    "value": 8
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:explosion_resist",
+        "amount": 0.3
+      }
+    ]
+  },
+  "min_rank": "A"
+}
