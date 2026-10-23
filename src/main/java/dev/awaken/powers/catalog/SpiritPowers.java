@@ -481,6 +481,8 @@ public final class SpiritPowers {
                 var strike = Fx.at(c, FxKind.STRIKE, e.position()).scale(mul > 1 ? 1.4 : 1.1);
                 if (!firstStrike) strike.noAnim();
                 strike.send();
+                // and the real sky: a (harmless) vanilla bolt for the flash across the world and the thunder
+                Moves.visualLightning(c.level, e.position());
                 Combat.hurtFrom(c.player, null, e, dmg, Forces.Force.CHARGE, true);
                 Combat.stun(e, 30);
             });

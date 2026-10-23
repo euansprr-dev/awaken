@@ -156,6 +156,24 @@ Notes on the starters and Dash, which every player sees first:
 - **Dash**: lean hard into the motion; a sonic ring at the start, speed lines streaming back, red ribbons from body
   and feet, red-tinted afterimages of your pose every couple of ticks, an FOV punch and screen speed lines for you.
 
+### Round 2 (after the first in-game tour)
+
+The tour (third person, camera behind the caster, target straight ahead) showed what reads and what doesn't:
+- Anything that travels along the aim (beams, bolts, the palm print) is hidden behind the caster's own body from that
+  camera, and short effects (5-10 ticks) were gone before the first shot. Fixes: effects that matter now outlast a
+  second and are bigger than the caster's silhouette: Spirit Palm's print flies three blocks past the target, with a
+  2.5-block spirit ring and a ground ring on impact and a blooming echo a second later; beams carry rings riding down
+  their length (a tunnel of light around the line of fire when seen from behind) plus shock rings at both ends;
+  Charged Shot gets a muzzle burst, a tracer that piles up and a landing burst where the aim meets something.
+- Shockwave: the wall of force is 2.3 blocks tall in the family colour, and a crescent of dust is thrown up along the
+  whole front and left standing for two seconds, with chunks and cracks along the path.
+- Nova: the shell holds for a second with its equator drawn as a ring. Storm Call: a dark storm knot overhead, a
+  longer re-flickering bolt, crackle crawling over the ground, and the vanilla sky flash and thunder.
+- Daylight: the under-copy is stronger (58% opacity at 62% brightness), and bodies (rings, sparks) are drawn in the
+  family colour rather than white, because white additive light disappears against a pale sky.
+- Beams never depended on the key being held: they are built from the server's events, so other players and
+  `/awaken admin power cast` show them too (the caster's own client follows its live aim).
+
 ## 4. How it works
 
 - **Server** (`powers/Fx.java`): `Fx.at(cast, FxKind, pos).scale(..).send()` builds one `FxEvent` (kind, style, caster,

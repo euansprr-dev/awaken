@@ -32,8 +32,8 @@ final class FxBeams {
         float w = sh.a * breathe;
         int body = sh.c0, core = sh.c1 == 0 ? 0xFFFFFFFF : sh.c1;
         // the halo stays faint so day scenes keep their colour; the body carries the family colour
-        FxRender.segment(vc, ax, ay, az, bx, by, bz, w * 3.2f, w * 3.6f, FxWorld.alpha(body, 0.22f * fade), FxWorld.alpha(body, 0.16f * fade));
-        FxRender.segment(vc, ax, ay, az, bx, by, bz, w, w * 1.1f, FxWorld.alpha(body, 0.9f * fade), FxWorld.alpha(body, 0.8f * fade));
+        FxRender.segment(vc, ax, ay, az, bx, by, bz, w * 3.2f, w * 3.6f, FxWorld.alpha(body, 0.35f * fade), FxWorld.alpha(body, 0.28f * fade));
+        FxRender.segment(vc, ax, ay, az, bx, by, bz, w, w * 1.1f, FxWorld.alpha(body, fade), FxWorld.alpha(body, 0.9f * fade));
         FxRender.segment(vc, ax, ay, az, bx, by, bz, w * 0.34f, w * 0.38f, FxWorld.alpha(core, fade), FxWorld.alpha(core, 0.9f * fade));
     }
 
