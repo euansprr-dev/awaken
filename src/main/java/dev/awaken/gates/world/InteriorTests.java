@@ -37,6 +37,7 @@ public final class InteriorTests {
 
     static void register() {
         registerArenaTest();
+        registerLightTest();
         // The P3 targets hold: the gates the game builds today are the gates tools/sim/pacing_sim.py was run on
         // (tools/sim/gate_tuning.json), and that run met its targets (tools/sim/pacing_results.json "gate_checks").
         // Changing floors, room counts, elites or modifiers fails this until the export is copied and the sim re-run.
@@ -218,6 +219,113 @@ public final class InteriorTests {
             Awaken.LOG.info("[gates] arenas\n{}", report);
             h.succeed();
         });
+    }
+
+    /**
+     * The gate dimension has no ambient light, so the floor is only as readable as its block light. Every theme, on
+     * the showcase floor and the Lord's floor: the median block light where you stand on the critical path is 7+, and
+     * in the Lord's arena the median is 8+ with 8+ on at least 60% of the floor (coordinator's in-game check, P3).
+     */
+    static void registerLightTest() {
+        AwakenTests.register("gates_interior_light", 600, h -> {
+            StringBuilder report = new StringBuilder();
+            List<String> fails = new ArrayList<>();
+            for (Theme t : Theme.values()) {
+                GatePlan plan = showcasePlan(t);
+                GateLayout l = GateTestAccess.build(plan);
+                FloorLayout f1 = l.main.get(0), boss = l.main.get(l.main.size() - 1);
+                double path = median(floorLight(f1, paintFloor(l, f1, 23), true));
+                // and a second gate of the theme on another layout, so the numbers aren't one lucky seed
+                GateLayout l2 = GateTestAccess.build(plan(0x11AB0L + t.ordinal() * 17L, Rank.B, t, Layout.values()[(t.ordinal() + 3) % Layout.values().length], Twist.NONE));
+                path = Math.min(path, median(floorLight(l2.main.get(0), paintFloor(l2, l2.main.get(0), 23), true)));
+                List<Integer> arena = floorLight(boss, paintFloor(l, boss, 23), false);
+                double am = median(arena);
+                double share = arena.stream().filter(v -> v >= 8).count() / (double) Math.max(1, arena.size());
+                report.append(String.format(Locale.ROOT, "%s: path median %.1f, arena median %.1f, arena 8+ %.0f%%%n", t.id, path, am, share * 100));
+                if (path < 7) fails.add(t.id + ": median floor light on the critical path is " + path + " (needs 7)");
+                if (am < 8 || share < 0.6) fails.add(t.id + ": the Lord's arena floor: median " + am + ", " + Math.round(share * 100) + "% at 8+ (needs 8 and 60%)");
+            }
+            Awaken.LOG.info("[gates] interior light\n{}", report);
+            h.assertTrue(fails.isEmpty(), String.join("; ", fails));
+            h.succeed();
+        });
+    }
+
+    static double median(List<Integer> v) {
+        if (v.isEmpty()) return 0;
+        List<Integer> s = new ArrayList<>(v);
+        s.sort(Integer::compare);
+        int n = s.size();
+        return n % 2 == 1 ? s.get(n / 2) : (s.get(n / 2 - 1) + s.get(n / 2)) / 2.0;
+    }
+
+    /**
+     * Block light where you stand: on the critical path's rooms (path = true, the Lord's arena excluded) or in the
+     * Lord's arena. A flood fill like the game's: emitters out, each step costing max(1, the block's dampening).
+     */
+    static List<Integer> floorLight(FloorLayout f, Map<Long, BlockState> b, boolean path) {
+        int x0 = -16, z0 = -16, y0 = f.baseY - Cells.BAND_BELOW;
+        int W = (f.w + 2) * 16, D = (f.h + 2) * 16, H = Cells.BAND_BELOW + Cells.BAND_ABOVE;
+        BlockState[] grid = new BlockState[W * D * H];
+        byte[] lvl = new byte[grid.length];
+        int[][] bucket = new int[16][];
+        int[] size = new int[16];
+        for (int i = 0; i < 16; i++) bucket[i] = new int[1024];
+        for (var e : b.entrySet()) {
+            long k = e.getKey();
+            int x = (int) (k >> 40) & 0xFFFFF, y = (int) (k >> 20) & 0xFFFFF, z = (int) k & 0xFFFFF;
+            if (x >= 0x80000) x -= 0x100000;
+            if (z >= 0x80000) z -= 0x100000;
+            int gx = x - x0, gy = y - y0, gz = z - z0;
+            if (gx < 0 || gz < 0 || gy < 0 || gx >= W || gz >= D || gy >= H) continue;
+            int i = gx + gz * W + gy * W * D;
+            grid[i] = e.getValue();
+            int em = e.getValue().getLightEmission();
+            if (em > 0) {
+                lvl[i] = (byte) em;
+                if (size[em] == bucket[em].length) bucket[em] = java.util.Arrays.copyOf(bucket[em], size[em] * 2);
+                bucket[em][size[em]++] = i;
+            }
+        }
+        int[] step = {1, -1, W, -W, W * D, -W * D};
+        for (int L = 15; L >= 2; L--) {
+            for (int q = 0; q < size[L]; q++) {
+                int i = bucket[L][q];
+                if (lvl[i] != L) continue;
+                int gx = i % W, gz = (i / W) % D, gy = i / (W * D);
+                for (int s = 0; s < 6; s++) {
+                    if ((s == 0 && gx == W - 1) || (s == 1 && gx == 0) || (s == 2 && gz == D - 1) || (s == 3 && gz == 0)
+                            || (s == 4 && gy == H - 1) || (s == 5 && gy == 0)) continue;
+                    int n = i + step[s];
+                    BlockState st = grid[n];
+                    int damp = st == null ? 0 : st.getLightDampening();
+                    if (damp >= 15) continue;
+                    int nl = L - Math.max(1, damp);
+                    if (nl <= lvl[n]) continue;
+                    lvl[n] = (byte) nl;
+                    if (size[nl] == bucket[nl].length) bucket[nl] = java.util.Arrays.copyOf(bucket[nl], size[nl] * 2);
+                    bucket[nl][size[nl]++] = n;
+                }
+            }
+        }
+        java.util.Set<Integer> onPath = new java.util.HashSet<>(f.criticalPath());
+        List<Integer> out = new ArrayList<>();
+        for (Room r : f.rooms) {
+            boolean want = path ? onPath.contains(r.id) && r.type != Room.Type.BOSS : r.type == Room.Type.BOSS;
+            if (!want) continue;
+            int walk = f.baseY + r.dy;
+            for (int x = r.x0(); x <= r.x1(); x++) {
+                for (int z = r.z0(); z <= r.z1(); z++) {
+                    for (int y = walk - 4; y <= walk + 2; y++) {
+                        if (standable(b.get(key(x, y - 1, z))) && passable(b.get(key(x, y, z))) && passable(b.get(key(x, y + 1, z)))) {
+                            out.add((int) lvl[(x - x0) + (z - z0) * W + (y - y0) * W * D]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return out;
     }
 
     /** Block light at a spot: a flood fill from every emitter in the painted map, stopped by full blocks. */

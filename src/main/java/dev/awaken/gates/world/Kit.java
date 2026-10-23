@@ -176,7 +176,7 @@ public record Kit(
             case NIGHTMARE -> kit("minecraft:dark_oak_planks", "awaken:gate_dream_paper", "awaken:gate_void_glass",
                     "minecraft:oak_log[axis=y]", "minecraft:oak_planks", "minecraft:oak_stairs",
                     "minecraft:oak_log[axis=x]", "minecraft:oak_planks", "minecraft:white_wool",
-                    "minecraft:crying_obsidian", "minecraft:soul_lantern[hanging=true]", "minecraft:soul_lantern[hanging=true]",
+                    "minecraft:crying_obsidian", "minecraft:soul_lantern[hanging=true]", "minecraft:lantern[hanging=true]",
                     "minecraft:iron_chain[axis=y]", "minecraft:crying_obsidian", "minecraft:purple_carpet",
                     INSETS | BEAMS | WRONG | CARPET);
             // sky on every side: cloud banks for walls, light from the sun overhead
@@ -189,7 +189,7 @@ public record Kit(
             // black stone, windows into the void, obsidian ribs, candles and almost nothing else
             case ABYSSAL_SHRINE -> kit("minecraft:polished_blackstone_bricks", "awaken:gate_void_glass", "minecraft:obsidian",
                     "minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:polished_blackstone_brick_stairs",
-                    "minecraft:obsidian", "minecraft:polished_blackstone", "awaken:gate_void_glass",
+                    "minecraft:obsidian", "minecraft:polished_blackstone", "minecraft:crying_obsidian",
                     "minecraft:crying_obsidian", "minecraft:black_candle[candles=3,lit=true]", "minecraft:soul_lantern[hanging=true]",
                     "minecraft:iron_chain[axis=y]", "minecraft:crying_obsidian", "minecraft:sculk",
                     INSETS | RIBS | STAND_NICHE | DIM);

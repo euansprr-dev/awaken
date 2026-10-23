@@ -469,6 +469,51 @@ def plan_shot(vol, fog, yaw_deg=45, pitch_deg=58, px_per_block=4.0, cut=None, bo
     return (out.reshape(H, W, 3) * 255).astype(np.uint8)
 
 
+def floor_light(data, vol):
+    """Block light where you stand, per room: {room id: [levels...]} for every walkable column of its interior."""
+    np = _np()
+    L = vol.looks
+    out = {}
+    for r in data["rooms"]:
+        vals = []
+        for x in range(r["x0"], r["x1"] + 1):
+            for z in range(r["z0"], r["z1"] + 1):
+                gx, gz = x - vol.x0, z - vol.z0
+                if not (0 <= gx < vol.nx and 0 <= gz < vol.nz):
+                    continue
+                # the feet: the lowest air cell with a solid (or liquid) cell under it, within the room's band
+                for y in range(r["y"] - 4, r["y"] + 3):
+                    gy = y - vol.y0
+                    if gy <= 0 or gy + 1 >= vol.ny:
+                        continue
+                    below, here, head = vol.g[gx, gy - 1, gz], vol.g[gx, gy, gz], vol.g[gx, gy + 1, gz]
+                    if L.K[below] in (1, 4) and L.K[here] in (0, 2, 3) and L.K[head] in (0, 2, 3):
+                        vals.append(int(vol.light[gx, gy, gz]))
+                        break
+        out[r["id"]] = vals
+    return out
+
+
+def light_report(names=()):
+    """Median floor light on the critical path and in the Lord's arena, per dumped floor (targets: 7 and 8)."""
+    np = _np()
+    rows = []
+    for fn in sorted(f for f in os.listdir(RUN) if f.endswith(".json")):
+        if names and not any(n in fn for n in names):
+            continue
+        data = json.load(open(os.path.join(RUN, fn)))
+        vol = Volume(data, Looks())
+        fl = floor_light(data, vol)
+        path = [v for r in data["rooms"] if r["onPath"] and r["type"] != "BOSS" for v in fl[r["id"]]]
+        arena = [v for r in data["rooms"] if r["type"] == "BOSS" for v in fl[r["id"]]]
+        p = float(np.median(path)) if path else -1
+        a = float(np.median(arena)) if arena else -1
+        a8 = float(np.mean(np.array(arena) >= 8)) if arena else -1
+        rows.append((data["name"], p, a, a8))
+        print(f"{data['name']:34s} path median {p:4.1f}  arena median {a:4.1f}  arena >=8 {a8:4.2f}")
+    return rows
+
+
 def _label(im, text):
     from PIL import ImageDraw
     d = ImageDraw.Draw(im)
@@ -1248,6 +1293,8 @@ if __name__ == "__main__":
         preview(sys.argv[2] if len(sys.argv) > 2 else "/tmp/interiors", sys.argv[3:])
     elif len(sys.argv) > 1 and sys.argv[1] == "content":
         content()  # noqa: F821
+    elif len(sys.argv) > 1 and sys.argv[1] == "light":
+        light_report(sys.argv[2:])
     elif len(sys.argv) > 1 and sys.argv[1] == "sheet":
         contact_sheet(sys.argv[2] if len(sys.argv) > 2 else "/tmp/gate_interiors.png")
     else:
