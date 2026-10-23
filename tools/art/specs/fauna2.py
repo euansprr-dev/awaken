@@ -970,42 +970,104 @@ def paint_empress_moth(m, rng):
     return skin, glow
 
 
+def mass(c, b, ramp, base, light=None, pattern=None, grad=0.8, axis="j", rim=0.5, ao=0.6, flip=False):
+    """Clean value masses on one named box (the hero painter's rules): a base step per face (light from above), a
+    soft gradient along the face's vertical axis, a lit top edge and a dark foot, then a sparse pattern. `light`
+    overrides FACE_LIGHT for rotated boxes; axis="i" when a face's vertical runs across the texture (rotated bodies)."""
+    import fauna_rig as FR
+    cube = _B(b)
+    lt = dict(FR.FACE_LIGHT)
+    if light:
+        lt.update(light)
+    for fname in ("top", "bottom", "west", "north", "east", "south"):
+        f = FR.Face(c, cube, fname)
+        if f.w <= 0 or f.h <= 0:
+            continue
+        for i, j in f.each():
+            v = base + lt[fname]
+            if fname in FR.SIDES:
+                along, size = (i, f.w) if axis == "i" else (j, f.h)
+                t = along / max(1, size - 1)
+                if flip:
+                    t = 1 - t
+                v += grad * (0.5 - t)
+                if (along == 0 and not flip) or (along == size - 1 and flip):
+                    v += rim
+                if size > 2 and ((along == size - 1 and not flip) or (along == 0 and flip)):
+                    v -= ao
+            if pattern is not None:
+                p = pattern(f, i, j)
+                if p is None:
+                    continue
+                if isinstance(p, tuple):
+                    f.set(i, j, p)
+                    continue
+                v += p
+            f.set(i, j, ramp.at(v))
+
+
+class _B:
+    """A fauna2 named box seen as a rig cube (for fauna_rig's face helpers)."""
+
+    def __init__(self, b):
+        self.u, self.v, self.w, self.h, self.d = b["u"], b["v"], int(round(b["w"])), int(round(b["h"])), int(round(b["d"]))
+        self.name = b.get("name", "box")
+
+
 def paint_honey_bear(m, rng):
+    import fauna_rig as FR
     skin, glow, nb, tree = setup(m)
-    honey = P("#3e240e", "#5a3414", "#784818", "#965e22", "#b2782e")
-    for key in ("head", "body", "shoulders", "hind", "front", "ear", "mouth"):
-        fur(skin, nb[key], honey[1:], rng, n=0.12)
-    # rotated body: the south face is the back (darker), the north the belly (paler)
+    coat = FR.Ramp("#2a1709", "#3d220e", "#552f13", "#6e3f19", "#8a5322", "#a66a2e", "#c0853f")
+    cream = FR.Ramp("#8a6a44", "#a8855a", "#c4a274", "#dcc094", "#eedab4")
+    paw = FR.Ramp("#160d06", "#24160a", "#34200f", "#462c16")
+    fur_ = FR.p_strokes(3, 3, 0.5, 0.4, 0.55, seed=31)
+    # the body and shoulders are rotated a quarter turn: their south face is the back, the north the belly
+    rotated = {"top": -0.2, "bottom": -0.2, "south": 1.0, "north": -1.4, "west": 0.0, "east": -0.35}
     for key in ("body", "shoulders"):
-        f = faces(nb[key])
-        noise(skin, f["south"], honey[:4], rng, 3)
-        noise(skin, f["north"], P("#8c5a2a", "#a87038", "#c08a4a"), rng, 3)
-    # a cream muzzle with a dark nose, honey smeared on it and on the paws
-    for name, r in faces(nb["mouth"]).items():
-        noise(skin, r, P("#c8a874", "#dcc08c", "#ecd6a8"), rng, 2)
+        mass(skin, nb[key], coat, 3.2, light=rotated, pattern=fur_, axis="i", flip=True)
+    mass(skin, nb["head"], coat, 3.5, pattern=FR.p_strokes(2, 2, 0.5, 0.4, 0.6, seed=32))
+    for key in ("hind", "front"):
+        mass(skin, nb[key], coat, 2.8, pattern=FR.p_strokes(3, 3, 0.5, 0.4, 0.6, seed=33))
+    mass(skin, nb["ear"], coat, 2.6)
+    mass(skin, nb["mouth"], cream, 2.6)
+    # a pale crescent across the chest (the shoulders' front end is their bottom face after the turn)
+    f = FR.Face(skin, _B(nb["shoulders"]), "bottom")
+    for i, j in f.each():
+        cx = (f.w - 1) / 2
+        if abs(j - (2 + abs(i - cx) * 0.45)) < 1.2 and abs(i - cx) < f.w / 2 - 1:
+            f.set(i, j, cream.at(3.2 - (0.6 if abs(i - cx) > 3 else 0)))
+    # face: cream muzzle, dark nose and mouth line, small dark eyes with an amber glint
     x, y, w, h = faces(nb["mouth"])["north"]
-    for i in range(1, w - 1):
-        skin.set(x + i, y, rgba("#1a120a"))
-    skin.set(x + w // 2, y + 1, rgba("#1a120a"))
-    for k in range(3):
-        glow.set(x + rng.randrange(w), y + h - 1, rgba("#ffb020", 140))
-        skin.set(x + rng.randrange(w), y + h - 1, rgba("#ffb020"))
+    for i in range(w):
+        skin.set(x + i, y + h - 1, rgba("#3a2814"))
+    for i in range(w // 2 - 1, w // 2 + 1):
+        skin.set(x + i, y, rgba("#120a05"))
+        skin.set(x + i, y + 1, rgba("#120a05"))
     x, y, w, h = faces(nb["head"])["north"]
-    for ex in (x + 1, x + w - 2):
-        eye(skin, glow, ex, y + 2, rgba("#140c06"), rgba("#ffc850", 60))
+    for i in range(1, w - 1):  # a lighter brow over the eyes
+        skin.set(x + i, y + 1, coat.at(4.3))
+    for ex in (x + 1, x + w - 3):
+        skin.set(ex, y + 3, rgba("#0c0704"))
+        skin.set(ex + 1, y + 3, rgba("#0c0704"))
+        skin.set(ex + 1, y + 2, coat.at(2))
+        glow.set(ex, y + 3, rgba("#ffc850", 70))
+    # paws: dark, with honey smeared on the toes (it glows a little at night)
     for key in ("hind", "front"):
         for name in ("west", "north", "east", "south"):
             x, y, w, h = faces(nb[key])[name]
             for j in range(h - 3, h):
                 for i in range(w):
-                    skin.set(x + i, y + j, rgba("#2a180a"))
-            for i in range(w):
-                if rng.random() < 0.3:
-                    skin.set(x + i, y + h - 4, rgba("#e8a020"))
-                    glow.set(x + i, y + h - 4, rgba("#ffb020", 110))
-    for r in faces(nb["ear"]).values():
-        solid(skin, r, honey[1])
-    cover(skin, "POLAR_BEAR", honey[2])
+                    skin.set(x + i, y + j, paw.at(2.2 - (j - h + 3) * 0.6 + (0.5 if j == h - 3 else 0)))
+            if name == "north":
+                for i in (1, w - 2):
+                    skin.set(x + i, y + h - 3, rgba("#e8a020"))
+                    skin.set(x + i, y + h - 2, rgba("#b87810"))
+                    glow.set(x + i, y + h - 3, rgba("#ffb020", 110))
+    for k in range(3):
+        x, y, w, h = faces(nb["mouth"])["north"]
+        skin.set(x + 1 + k, y + h - 1, rgba("#ffb020"))
+        glow.set(x + 1 + k, y + h - 1, rgba("#ffb020", 140))
+    cover(skin, "POLAR_BEAR", coat.at(3))
     return skin, glow
 
 
@@ -1014,33 +1076,48 @@ def paint_honey_bear(m, rng):
 
 
 def paint_scree_marmot(m, rng):
+    import fauna_rig as FR
     skin, glow, nb, _ = setup(m)
-    fur_ = P("#33291f", "#4b3d30", "#655343", "#806c58", "#9c8870")
-    grizzle = P("#c4b8a2", "#d6ccb8")
-    for key in ("body", "head", "tail", "leg", "ear"):
-        fur(skin, nb[key], fur_, rng, n=0.25, length=(1, 3), belly=P("#a89478", "#bca88c"))
-        for name, r in faces(nb[key]).items():
-            if name != "bottom":
-                dots(skin, r, grizzle, rng, r[2] * r[3] / 7)
+    coat = FR.Ramp("#2a2018", "#3b2e22", "#4f3f2f", "#65523e", "#7e6850", "#988266", "#b39d80")
+    cream = FR.Ramp("#8a7a62", "#a6957a", "#c0b094", "#d6c8ae", "#e8dcc6")
+    dark = FR.Ramp("#120d09", "#1e1610", "#2c2118", "#3a2c20")
+    # agouti: grizzled tips in short rows along the back, a darker saddle, a pale underside
+    grizzle = lambda f, i, j: (0.9 if f.name in ("top",) and (i + j * 2) % 5 == 0 else 0) + (  # noqa: E731
+        0.7 if f.name in FR.SIDES and j <= 1 and (i * 3 + j) % 4 == 0 else 0)
+    mass(skin, nb["body"], coat, 3.3, pattern=grizzle)
+    for fname in FR.SIDES + ("bottom",):
+        f = FR.Face(skin, _B(nb["body"]), fname)
+        for i, j in f.each():
+            if fname == "bottom" or j >= f.h - 2:
+                f.set(i, j, cream.at(2.6 - (0.6 if fname != "bottom" and j == f.h - 2 else 0)))
+    mass(skin, nb["head"], coat, 3.6, pattern=grizzle)
+    mass(skin, nb["ear"], dark, 2.4)
+    mass(skin, nb["leg"], dark, 2.0, grad=0.3)
+    # the tail: brown with a near-black tip
+    mass(skin, nb["tail"], coat, 2.8)
+    for fname in ("west", "east", "top", "bottom"):
+        f = FR.Face(skin, _B(nb["tail"]), fname)
+        for i, j in f.each():
+            # the tail points back: on the side faces the last columns are its tip
+            tip = (i <= 1) if fname == "west" else (i >= f.w - 2) if fname == "east" else (j <= 1)
+            if tip:
+                f.set(i, j, dark.at(1.4))
+    f = FR.Face(skin, _B(nb["tail"]), "south")
+    for i, j in f.each():
+        f.set(i, j, dark.at(1.2))
+    # face: a cream muzzle and cheeks, a dark nose, bright black eyes with an amber glint
     x, y, w, h = faces(nb["head"])["north"]
     for j in range(h // 2, h):
-        for i in range(1, w - 1):
-            skin.set(x + i, y + j, rgba("#d8ccb4") if (i + j) % 3 else rgba("#c4b8a0"))
-    skin.set(x + w // 2, y + h - 2, rgba("#1a120c"))
-    for ex in (x + 1, x + w - 2):
-        eye(skin, glow, ex, y + 1, rgba("#0c0806"), rgba("#ffd27a", 70))
-    for name in ("west", "east", "north", "south", "top", "bottom"):
-        x, y, w, h = faces(nb["tail"])[name]
-        if name in ("top", "bottom"):
-            for i in range(w):
-                skin.set(x + i, y, rgba("#1e1610"))
-        else:
-            for j in range(h):
-                skin.set(x + (w - 1 if name == "west" else 0), y + j, rgba("#1e1610")) if name in ("west", "east") else None
-    for name in ("west", "north", "east", "south"):
-        x, y, w, h = faces(nb["leg"])[name]
         for i in range(w):
-            skin.set(x + i, y + h - 1, rgba("#1e1610"))
+            skin.set(x + i, y + j, cream.at(3.0 - (0.6 if i in (0, w - 1) else 0)))
+    skin.set(x + w // 2, y + h - 2, rgba("#140e0a"))
+    for ex in (x + 1, x + w - 2):
+        skin.set(ex, y + 1, rgba("#0a0705"))
+        glow.set(ex, y + 1, rgba("#ffd27a", 70))
+    for name in ("west", "east"):
+        x, y, w, h = faces(nb["head"])[name]
+        for i in range(w):
+            skin.set(x + i, y + h - 1, cream.at(2.6))
     return skin, glow
 
 
