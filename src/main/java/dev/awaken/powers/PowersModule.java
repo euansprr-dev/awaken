@@ -44,8 +44,10 @@ public final class PowersModule {
                 return t == null ? ItemStack.EMPTY : PowerContent.core(t, variant);
             }
         });
+        Starter.init(modBus); // the first-power choice on awakening (plan v2 §4.1)
         PowersCommands.register();
         PowersTests.register();
+        StarterTests.register();
         PowersTests.registerIsolated(modBus);
     }
 

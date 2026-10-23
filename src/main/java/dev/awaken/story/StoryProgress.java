@@ -18,10 +18,26 @@ public final class StoryProgress {
     double returnX, returnY, returnZ;
     final Set<String> seen = new LinkedHashSet<>();          // revelations, rival beats, signal lines, sovereigns met
     final Set<String> sovereignsDefeated = new LinkedHashSet<>();
+    /** The Bell Crypt as you left it, for the Now tracker: deepest floor reached, floors cleared, the last floors counter seen. */
+    int cryptFloor, cryptCleared;
+    long cryptCounterSeen = -1;
 
     public Prologue prologue() { return prologue; }
     public Set<String> seen() { return seen; }
     public Set<String> sovereignsDefeated() { return sovereignsDefeated; }
+
+    /** 1: v2 adds the Bell Crypt floor tracker (defaults for older saves). */
+    static final int SCHEMA = 1;
+
+    private record Crypt(int schema, int floor, int cleared, long counterSeen) {
+        static final Crypt NONE = new Crypt(SCHEMA, 0, 0, -1);
+        static final Codec<Crypt> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(Crypt::schema),
+                Codec.INT.optionalFieldOf("floor", 0).forGetter(Crypt::floor),
+                Codec.INT.optionalFieldOf("cleared", 0).forGetter(Crypt::cleared),
+                Codec.LONG.optionalFieldOf("counter_seen", -1L).forGetter(Crypt::counterSeen)
+        ).apply(i, Crypt::new));
+    }
 
     public static final Codec<StoryProgress> CODEC = RecordCodecBuilder.create(i -> i.group(
             Prologue.CODEC.fieldOf("prologue").forGetter(s -> s.prologue),
@@ -29,8 +45,9 @@ public final class StoryProgress {
             Codec.LONG.fieldOf("since").forGetter(s -> s.prologueSince),
             Codec.DOUBLE.listOf().fieldOf("return").forGetter(s -> List.of(s.returnX, s.returnY, s.returnZ)),
             Codec.STRING.listOf().fieldOf("seen").forGetter(s -> List.copyOf(s.seen)),
-            Codec.STRING.listOf().fieldOf("sovereigns").forGetter(s -> List.copyOf(s.sovereignsDefeated))
-    ).apply(i, (pro, gate, since, ret, seen, sov) -> {
+            Codec.STRING.listOf().fieldOf("sovereigns").forGetter(s -> List.copyOf(s.sovereignsDefeated)),
+            Crypt.CODEC.optionalFieldOf("crypt", Crypt.NONE).forGetter(s -> new Crypt(SCHEMA, s.cryptFloor, s.cryptCleared, s.cryptCounterSeen))
+    ).apply(i, (pro, gate, since, ret, seen, sov, crypt) -> {
         StoryProgress s = new StoryProgress();
         s.prologue = pro;
         s.prologueGate = gate;
@@ -38,6 +55,9 @@ public final class StoryProgress {
         if (ret.size() == 3) { s.returnX = ret.get(0); s.returnY = ret.get(1); s.returnZ = ret.get(2); }
         s.seen.addAll(seen);
         s.sovereignsDefeated.addAll(sov);
+        s.cryptFloor = crypt.floor();
+        s.cryptCleared = crypt.cleared();
+        s.cryptCounterSeen = crypt.counterSeen();
         return s;
     }));
 

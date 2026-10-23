@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "level": 8,
+  "title": "Essence",
+  "text": "8 shards for your Hearth and machines.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 8
+    }
+  ],
+  "quiet": false
+}

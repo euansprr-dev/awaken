@@ -1,9 +1,9 @@
 {
-  "text": "Defeat 10 foes bare-handed.",
+  "text": "Defeat 5 foes bare-handed.",
   "condition": {
     "type": "counter",
     "counter": "awaken:kills_unarmed",
-    "value": 10
+    "value": 5
   },
   "reward": {
     "stat": "STR"

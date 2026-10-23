@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "level": 50,
+  "title": "The Hollow Court stirs",
+  "text": "Something below noticed you. Two Cores.",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:hollow_court"
+    },
+    {
+      "type": "power_core",
+      "count": 2
+    }
+  ],
+  "quiet": false
+}

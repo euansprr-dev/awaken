@@ -1,0 +1,19 @@
+{
+  "text": "Dash ten times.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:dashes",
+    "value": 10
+  },
+  "reward": {
+    "stat": "AGI"
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 10,
+  "requires": [
+    "dash"
+  ]
+}

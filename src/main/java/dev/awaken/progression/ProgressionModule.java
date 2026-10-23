@@ -78,11 +78,22 @@ public final class ProgressionModule {
         bus.addListener(ProgressionModule::onWake);
         bus.addListener(ProgressionModule::onTame);
         bus.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> {
-            HOME_XP_THIS_MINUTE.clear();
+            XpBudget.forgetAll();
             ACTION_RATE.clear();
             Progression.forget();
             WorldLatents.forget();
+            RecipeUnlocks.forget();
         });
+        bus.addListener(RecipeUnlocks::onPlayerTick);
+        LevelRoad.init();
+        // Truths wait for level 5 (plan v2 §4.6). Players awakened before v2 already hold theirs: never a second set.
+        LevelRoad.onFlag("awaken:truths", p -> {
+            Profile prof = Progression.profile(p);
+            if (prof.truthsOffered().isEmpty() && prof.truthsDeclared().isEmpty() && prof.truthsTrue().isEmpty()) {
+                Progression.offerTruths(p, 3);
+            }
+        });
+        ProgressionNow.register();
         Signal.onAction(Directives.ACTION, Directives::answer);
         PlayDays.onMorning((server, day) -> {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -94,6 +105,7 @@ public final class ProgressionModule {
         ProgressionCommands.register();
         WorldLatents.init();
         ProgressionTests.register();
+        OnboardingTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -131,6 +143,8 @@ public final class ProgressionModule {
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer sp)) return;
         Progression.applyAttributes(sp);
+        // older saves get the level-road steps they missed (ids, not positions: nothing is granted twice)
+        LevelRoad.catchUp(sp, true);
         Progression.syncNow(sp);
         startDay(sp, PlayDays.current(sp.level().getServer()));
     }
@@ -159,7 +173,6 @@ public final class ProgressionModule {
 
     // ---- ticking ----------------------------------------------------------------------------------------------------
 
-    private static final Map<UUID, Double> HOME_XP_THIS_MINUTE = new HashMap<>();
     private static final Map<UUID, long[]> ACTION_RATE = new HashMap<>();
 
     private static void onServerTick(ServerTickEvent.Post event) {
@@ -167,7 +180,6 @@ public final class ProgressionModule {
         if (server.getTickCount() % 20 == 0) Progression.flushDirty();
         if (server.getTickCount() % 100 == 0) Progression.flushLazy();
         if (server.getTickCount() % 1200 == 0) {
-            HOME_XP_THIS_MINUTE.clear();
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 Profile prof = Progression.profile(p);
                 if (!prof.awakened()) continue;
@@ -201,14 +213,18 @@ public final class ProgressionModule {
         }
     }
 
-    /** Home activity XP, capped at 1.5% of a level per real minute (SPEC section 4.3). */
-    static void homeXp(ServerPlayer player, double fractionOfLevel) {
-        double used = HOME_XP_THIS_MINUTE.getOrDefault(player.getUUID(), 0.0);
-        double allowed = Math.max(0, Math.min(fractionOfLevel, 0.015 - used));
-        if (allowed <= 0) return;
-        HOME_XP_THIS_MINUTE.put(player.getUUID(), used + allowed);
-        Progression.grantLevels(player, allowed, Progression.XpSource.HOME);
+    /**
+     * Home activity XP (SPEC 4.3, v2): diminishing returns per source per ~10 minutes instead of a flat cap, tapered
+     * when you've out-levelled the thing (vanilla mobs and blocks are content level 0). Before awakening it's banked.
+     */
+    static void homeXp(ServerPlayer player, String source, double fractionOfLevel, int contentLevel) {
+        double taper = XpBudget.taper(Progression.profile(player).level(), contentLevel);
+        double paid = XpBudget.pay(player.getUUID(), source, fractionOfLevel, player.level().getGameTime()) * taper;
+        if (paid > 0) Progression.grantLevels(player, paid, Progression.XpSource.HOME);
     }
+
+    /** Full-value world XP per kill of a 20-HP mob (× min(2, max health / 20)), mined ore and placed block. */
+    static final double KILL_XP = 0.04, ORE_XP = 0.01, BLOCK_XP = 0.0005;
 
     private static boolean isHome(Level level) {
         return level.dimension() == Level.OVERWORLD;
@@ -230,33 +246,33 @@ public final class ProgressionModule {
         }
         if (!(event.getSource().getEntity() instanceof ServerPlayer sp)) return;
         Profile p = Progression.profile(sp);
+        if (dead instanceof Enemy && isHome(sp.level())) {
+            var role = dev.awaken.core.api.MobRole.of(dead);
+            int contentLevel = role.role() == dev.awaken.core.api.MobRole.Role.NONE ? 0 : Math.max(0, role.contentLevel());
+            homeXp(sp, XpBudget.KILL, KILL_XP * Math.min(2.0, dead.getMaxHealth() / 20.0), contentLevel);
+        }
         if (!p.awakened()) return;
         Progression.count(sp, Counters.KILLS);
         p.day = new Profile.DayLog(p.day.day(), p.day.levelStart(), p.day.gates(), p.day.kills() + 1, p.day.best());
         var direct = event.getSource().getDirectEntity();
         boolean byEcho = direct != null && direct != sp && dev.awaken.core.api.MobRole.of(direct).role() == dev.awaken.core.api.MobRole.Role.ECHO;
         if (sp.getMainHandItem().isEmpty() && !byEcho && (direct == sp || direct == null)) Progression.count(sp, Counters.KILLS_UNARMED);
-        if (dead instanceof Enemy && isHome(sp.level())) {
-            Progression.count(sp, Counters.KILLS_OVERWORLD);
-            homeXp(sp, 0.04 * Math.min(2.0, dead.getMaxHealth() / 20.0));
-        }
+        if (dead instanceof Enemy && isHome(sp.level())) Progression.count(sp, Counters.KILLS_OVERWORLD);
     }
 
     private static void onBreak(BreakBlockEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer sp) || !Progression.profile(sp).awakened()) return;
-        var state = event.getState();
-        boolean ore = state.is(BlockTags.ORES);
-        if (ore) {
-            Progression.count(sp, Counters.ORES_MINED);
-            if (isHome(sp.level())) homeXp(sp, 0.01);
-        }
+        if (!(event.getPlayer() instanceof ServerPlayer sp)) return;
+        boolean ore = event.getState().is(BlockTags.ORES);
+        if (ore && isHome(sp.level())) homeXp(sp, XpBudget.ORE, ORE_XP, 0); // banked before awakening
+        if (!Progression.profile(sp).awakened()) return;
+        if (ore) Progression.count(sp, Counters.ORES_MINED);
         Progression.count(sp, "awaken:blocks_broken");
     }
 
     private static void onPlace(BlockEvent.EntityPlaceEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer sp) || !Progression.profile(sp).awakened()) return;
         Progression.count(sp, Counters.BLOCKS_PLACED);
-        if (isHome(sp.level())) homeXp(sp, 0.0005);
+        if (isHome(sp.level())) homeXp(sp, XpBudget.BUILD, BLOCK_XP, 0);
     }
 
     private static void onTame(net.neoforged.neoforge.event.entity.living.AnimalTameEvent event) {

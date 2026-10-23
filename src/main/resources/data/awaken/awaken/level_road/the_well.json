@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "level": 20,
+  "title": "The Well",
+  "text": "The Descent waits below. A Power Core.",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:descent"
+    },
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false
+}

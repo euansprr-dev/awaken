@@ -8,5 +8,8 @@
   "paths": [
     "awaken:shadowbinder"
   ],
-  "min_rank": "E"
+  "min_rank": "E",
+  "requires": [
+    "unlock:awaken:echoes"
+  ]
 }

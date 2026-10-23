@@ -20,7 +20,8 @@ import java.util.Set;
  * Mutate through {@link Progression}; call {@code Progression.markDirty(player)} after direct edits.
  */
 public final class Profile {
-    public static final int SCHEMA = 1;
+    /** 2: banked prologue XP and level-road unlock ids (both default empty for older saves). */
+    public static final int SCHEMA = 2;
 
     // core
     int schema = SCHEMA;
@@ -32,6 +33,8 @@ public final class Profile {
     int[] stats = {Stat.START, Stat.START, Stat.START, Stat.START, Stat.START, Stat.START};
     String path = "";
     boolean reassessmentReady;
+    /** XP earned before awakening (the prologue), paid on awakening. */
+    double bankedXp;
 
     // identity
     final List<String> truthsDeclared = new ArrayList<>();
@@ -41,6 +44,8 @@ public final class Profile {
     String title = "";
     final Set<String> latents = new LinkedHashSet<>();
     final List<String> pathsOffered = new ArrayList<>();
+    /** Level-road unlock ids already granted (ids, never table positions, so editing the table never revokes). */
+    final Set<String> unlocks = new LinkedHashSet<>();
 
     // activity
     final Map<String, Long> counters = new HashMap<>();
@@ -62,6 +67,8 @@ public final class Profile {
     public int stat(Stat s) { return stats[s.ordinal()]; }
     public Optional<String> path() { return path.isEmpty() ? Optional.empty() : Optional.of(path); }
     public boolean reassessmentReady() { return reassessmentReady; }
+    public double bankedXp() { return bankedXp; }
+    public Set<String> unlocks() { return unlocks; }
     public List<String> truthsDeclared() { return truthsDeclared; }
     public List<String> truthsOffered() { return truthsOffered; }
     public Set<String> truthsTrue() { return truthsTrue; }
@@ -114,7 +121,7 @@ public final class Profile {
 
     // ---- codec (split in three groups to stay under the 16-field limit) ---------------------------------------------
     private record Core(int schema, boolean awakened, int level, double xp, Rank rank, int unspent, List<Integer> stats,
-                        String path, boolean reassessmentReady) {
+                        String path, boolean reassessmentReady, double bankedXp) {
         static final Codec<Core> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("schema").forGetter(Core::schema),
                 Codec.BOOL.fieldOf("awakened").forGetter(Core::awakened),
@@ -124,12 +131,13 @@ public final class Profile {
                 Codec.INT.fieldOf("unspent").forGetter(Core::unspent),
                 Codec.INT.listOf().fieldOf("stats").forGetter(Core::stats),
                 Codec.STRING.fieldOf("path").forGetter(Core::path),
-                Codec.BOOL.optionalFieldOf("reassessment_ready", false).forGetter(Core::reassessmentReady)
+                Codec.BOOL.optionalFieldOf("reassessment_ready", false).forGetter(Core::reassessmentReady),
+                Codec.DOUBLE.optionalFieldOf("banked_xp", 0.0).forGetter(Core::bankedXp)
         ).apply(i, Core::new));
     }
 
     private record Identity(List<String> declared, List<String> offered, List<String> truths, List<String> titles,
-                            String title, List<String> latents, List<String> paths) {
+                            String title, List<String> latents, List<String> paths, List<String> unlocks) {
         static final Codec<Identity> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.listOf().fieldOf("declared").forGetter(Identity::declared),
                 Codec.STRING.listOf().fieldOf("offered").forGetter(Identity::offered),
@@ -137,7 +145,8 @@ public final class Profile {
                 Codec.STRING.listOf().fieldOf("titles").forGetter(Identity::titles),
                 Codec.STRING.fieldOf("title").forGetter(Identity::title),
                 Codec.STRING.listOf().fieldOf("latents").forGetter(Identity::latents),
-                Codec.STRING.listOf().fieldOf("paths_offered").forGetter(Identity::paths)
+                Codec.STRING.listOf().fieldOf("paths_offered").forGetter(Identity::paths),
+                Codec.STRING.listOf().optionalFieldOf("unlocks", List.of()).forGetter(Identity::unlocks)
         ).apply(i, Identity::new));
     }
 
@@ -156,10 +165,10 @@ public final class Profile {
 
     public static final MapCodec<Profile> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Core.CODEC.fieldOf("core").forGetter(p -> new Core(p.schema, p.awakened, p.level, p.xp, p.rank, p.unspent,
-                    java.util.Arrays.stream(p.stats).boxed().toList(), p.path, p.reassessmentReady)),
+                    java.util.Arrays.stream(p.stats).boxed().toList(), p.path, p.reassessmentReady, p.bankedXp)),
             Identity.CODEC.fieldOf("identity").forGetter(p -> new Identity(List.copyOf(p.truthsDeclared),
                     List.copyOf(p.truthsOffered), List.copyOf(p.truthsTrue), List.copyOf(p.titles), p.title,
-                    List.copyOf(p.latents), List.copyOf(p.pathsOffered))),
+                    List.copyOf(p.latents), List.copyOf(p.pathsOffered), List.copyOf(p.unlocks))),
             Activity.CODEC.fieldOf("activity").forGetter(p -> new Activity(Map.copyOf(p.counters),
                     List.copyOf(p.directives), p.regimen, p.lastNewThing, p.fractureUntil, Map.copyOf(p.insight), p.day))
     ).apply(i, Profile::fromParts));
@@ -169,7 +178,7 @@ public final class Profile {
 
     private static Profile fromParts(Core c, Identity id, Activity a) {
         Profile p = new Profile();
-        p.schema = c.schema;
+        p.schema = SCHEMA; // older schemas load with defaults for the newer fields; nothing else changed shape
         p.awakened = c.awakened;
         p.level = Math.max(1, c.level);
         p.xp = c.xp;
@@ -178,6 +187,7 @@ public final class Profile {
         for (int s = 0; s < 6 && s < c.stats.size(); s++) p.stats[s] = c.stats.get(s);
         p.path = c.path;
         p.reassessmentReady = c.reassessmentReady;
+        p.bankedXp = Math.max(0, c.bankedXp);
         p.truthsDeclared.addAll(id.declared);
         p.truthsOffered.addAll(id.offered);
         p.truthsTrue.addAll(id.truths);
@@ -185,6 +195,7 @@ public final class Profile {
         p.title = id.title;
         p.latents.addAll(id.latents);
         p.pathsOffered.addAll(id.paths);
+        p.unlocks.addAll(id.unlocks);
         p.counters.putAll(a.counters);
         p.directives.addAll(a.directives);
         p.regimen = a.regimen;

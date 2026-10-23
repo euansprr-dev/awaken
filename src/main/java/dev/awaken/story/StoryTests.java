@@ -92,12 +92,43 @@ final class StoryTests {
                     .thenExecute(() -> {
                         Prologue.onAnswer(p, Prologue.ACCEPT_ACTION, false);
                         h.assertTrue(Progression.profile(p).awakened() && s.prologue == StoryProgress.Prologue.DONE, "accepted anyway");
+                        h.assertTrue(Progression.profile(p).level() >= Prologue.WAKE_LEVEL, "you wake at level 2 or more");
                         GateRecord g = gate[0];
                         h.assertTrue(p.level().dimension() == Level.OVERWORLD && p.blockPosition().closerThan(g.mouth(), 3),
                                 "back at the gate's mouth: " + p.blockPosition() + " vs " + g.mouth());
+                        // the gate waits, and the Now tracker says where you left off
+                        h.assertTrue(Prologue.cryptNextFloor(p, s) == 1, "next is floor 1, got " + Prologue.cryptNextFloor(p, s));
+                        var now = dev.awaken.core.api.NowHooks.collect(p, 8);
+                        h.assertTrue(now.stream().anyMatch(x -> x.id().equals("story:bell_crypt") && x.text().getString().equals("Bell Crypt · floor 1")
+                                && x.where().isPresent()), "Now: Bell Crypt · floor 1, got " + now);
                         GateService.release(server, g);
+                        h.assertTrue(Prologue.cryptNextFloor(p, s) == 0, "a released gate is no longer suggested");
                     })
                     .thenSucceed();
+        });
+
+        // Accept pays the prologue's bank and never leaves you below level 2; both keys accept.
+        AwakenTests.register("story_accept_pays_the_bank", 60, h -> {
+            ServerPlayer small = h.makeMockServerPlayerInLevel();
+            ServerPlayer big = h.makeMockServerPlayerInLevel();
+            for (ServerPlayer p : List.of(small, big)) {
+                StoryProgress s = Prologue.progress(p);
+                s.prologue = StoryProgress.Prologue.ACCEPTING;
+                s.returnX = p.getX();
+                s.returnY = p.getY();
+                s.returnZ = p.getZ();
+            }
+            Progression.grantXp(small, 40, Progression.XpSource.GATE_KILL); // one prologue kill
+            Progression.grantXp(big, 700, Progression.XpSource.GATE_KILL);  // a floor and more
+            h.assertTrue(Progression.profile(small).bankedXp() > 0 && !Progression.profile(small).awakened(), "banked, not paid yet");
+            Prologue.onAnswer(small, Prologue.ACCEPT_ACTION, true);
+            Prologue.onAnswer(big, Prologue.ACCEPT_ACTION, false);
+            Profile a = Progression.profile(small), b = Progression.profile(big);
+            h.assertTrue(a.awakened() && b.awakened(), "Y and N both accept");
+            h.assertTrue(a.level() == 2 && a.bankedXp() == 0, "a small bank is topped up to level 2, got " + a.level());
+            h.assertTrue(b.level() >= 3 && b.bankedXp() == 0, "a big bank lands higher, got " + b.level());
+            h.assertTrue(a.truthsOffered().isEmpty(), "no Truths at minute 6 any more");
+            h.succeed();
         });
 
         // A Sovereign is set free by a fight, not by a command or the void.

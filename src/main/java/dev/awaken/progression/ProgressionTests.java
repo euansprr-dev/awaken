@@ -93,7 +93,10 @@ final class ProgressionTests {
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
             Progression.awaken(sp);
             Profile p = Progression.profile(sp);
-            h.assertTrue(p.truthsOffered().size() == 3, "three truths offered at awakening, got " + p.truthsOffered().size());
+            // plan v2 §4.6: Truths come with the level road at level 5, not at awakening
+            h.assertTrue(p.truthsOffered().isEmpty(), "no truths at awakening, got " + p.truthsOffered().size());
+            while (p.level() < 5) Progression.grantXp(sp, Curve.xpToNext(p.level()) + 1, Progression.XpSource.COMMAND);
+            h.assertTrue(p.truthsOffered().size() == 3, "three truths offered at level 5, got " + p.truthsOffered().size());
             String t = p.truthsOffered().get(0);
             h.assertTrue(Progression.declareTruth(sp, t), "declare");
             h.assertTrue(p.truthsDeclared().contains(t), "declared");

@@ -13,5 +13,8 @@
   "min_rank": "E",
   "max_rank": "SOVEREIGN",
   "quick": false,
-  "weight": 10
+  "weight": 10,
+  "requires": [
+    "unlock:awaken:dreams"
+  ]
 }

@@ -108,6 +108,18 @@ public final class StoryModule {
                         : java.util.Optional.of("The Hollow Court still holds the Seed shut. " + left + " Sovereign" + (left == 1 ? "" : "s") + " remain.");
             }
         });
+        // Now tracker: the story's gate waits for you; say which floor is next
+        dev.awaken.core.api.NowHooks.register(p -> {
+            if (!Progression.profile(p).awakened() || dev.awaken.core.api.GateHooks.inGate(p)) return List.of();
+            StoryProgress s = Prologue.progress(p);
+            int floor = Prologue.cryptNextFloor(p, s);
+            if (floor <= 0) return List.of();
+            String text = "Bell Crypt · floor " + floor;
+            var mouth = dev.awaken.core.api.GateHooks.get(p.level().getServer().overworld(), s.prologueGate).map(g -> g.mouth());
+            return List.of(mouth.isPresent() && p.level().dimension() == net.minecraft.world.level.Level.OVERWORLD
+                    ? dev.awaken.core.api.NowHooks.Suggestion.at("story:bell_crypt", 70, text, mouth.get())
+                    : dev.awaken.core.api.NowHooks.Suggestion.of("story:bell_crypt", 70, text));
+        });
         commands();
         StoryTests.register();
     }
@@ -189,6 +201,17 @@ public final class StoryModule {
                 s.prologue = StoryProgress.Prologue.GLITCHED;
                 s.prologueSince = p.level().getGameTime() - 20 * 60 * 10;
                 Prologue.openFirstGate(p, s);
+                return 1;
+            }));
+            // walk into the story's gate without finding it (autopilot scripts): the gates module's own command does it
+            adminStory.then(Commands.literal("enter").executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                String gate = Prologue.progress(p).prologueGate;
+                if (gate.isEmpty()) {
+                    c.getSource().sendFailure(Component.literal("No story gate yet: /awaken admin story prologue opens it."));
+                    return 0;
+                }
+                c.getSource().getServer().getCommands().performPrefixedCommand(c.getSource(), "awaken gate enter " + gate);
                 return 1;
             }));
             admin.then(adminStory);

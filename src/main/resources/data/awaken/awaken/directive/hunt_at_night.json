@@ -1,9 +1,9 @@
 {
-  "text": "Defeat 20 hostiles under the night sky.",
+  "text": "Defeat 8 hostiles under the night sky.",
   "condition": {
     "type": "counter",
     "counter": "awaken:kills_overworld_night",
-    "value": 20
+    "value": 8
   },
   "reward": {
     "levels": 0.15

@@ -14,5 +14,8 @@
   "max_rank": "SOVEREIGN",
   "quick": false,
   "weight": 10,
-  "path": "awaken:architect"
+  "path": "awaken:architect",
+  "requires": [
+    "family:architect"
+  ]
 }

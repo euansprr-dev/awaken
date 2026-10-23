@@ -6,5 +6,8 @@
     "value": 1
   },
   "paths": [],
-  "min_rank": "D"
+  "min_rank": "D",
+  "requires": [
+    "hearth"
+  ]
 }

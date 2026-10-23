@@ -1,9 +1,9 @@
 {
-  "text": "Defeat 20 foes",
+  "text": "Defeat 10 foes",
   "condition": {
     "type": "counter",
     "counter": "awaken:kills",
-    "value": 20
+    "value": 10
   },
   "paths": [],
   "min_rank": "E"

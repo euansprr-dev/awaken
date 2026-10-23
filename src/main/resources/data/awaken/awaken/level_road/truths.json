@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 5,
+  "title": "Truths",
+  "text": "Who are you becoming? Rewards shown \u00b7 K",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:truths"
+    }
+  ],
+  "quiet": false
+}

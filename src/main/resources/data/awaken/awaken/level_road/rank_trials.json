@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "level": 10,
+  "title": "Reassessment",
+  "text": "Build a Monolith; take the D-rank trial.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:reassessment_monolith"
+      ]
+    },
+    {
+      "type": "flag",
+      "id": "awaken:rank_trials"
+    }
+  ],
+  "quiet": false
+}

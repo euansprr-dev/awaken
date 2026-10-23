@@ -1,0 +1,57 @@
+# Onboarding (plan v2 §4.1): a fresh SURVIVAL world, the prologue, the Accept card, the first-power cards, the level road.
+# Commands only skip waiting and walking; every step after them is the real flow.
+world onboarding survival 4242
+waitworld
+gui 0
+look 0 10
+# the Signal glitches about 5 s in
+wait 120
+shot 01_glitch
+# skip the two-minute wait: the white pillar rises ~55 blocks ahead
+cmd awaken admin story prologue
+wait 400
+shot 02_pillar
+# walk in (the story's own gate)
+cmd awaken admin story enter
+wait 120
+shot 03_bell_crypt_floor1
+# the killing blow becomes the question: Stillpoint, the Accept card ("[Y] Accept · [N] Accept anyway")
+cmd damage @s 1000
+wait 100
+shot 04_accept_card
+key accept
+# back at the gate's mouth: "Accepted. The gate will wait. It never breaks." and level 2 (the prologue's bank)
+wait 30
+shot 05_accepted_toast
+# the first-power cards open once nothing else is on screen
+wait 90
+shot 06_first_power_cards_auto
+gui 2
+wait 10
+shot 07_first_power_cards_gui2
+gui 3
+wait 10
+shot 08_first_power_cards_gui3
+gui 0
+# closing without choosing: Esc, then the Now tracker says "Choose your first power · K", and K brings the cards back
+screen close
+wait 40
+shot 09_now_choose_first_power
+key status
+wait 20
+shot 10_cards_again_from_k
+# pick the second card (same as clicking it or pressing 2)
+cmd awaken powers starter 2
+wait 40
+shot 11_first_power_learned
+key status
+wait 20
+shot 12_status_with_power
+screen close
+# three more levels: one toast per level and one per level-road unlock (crafts came at 2; 3 Dash, 4 a Power Core, 5 Truths)
+cmd awaken admin levels 3
+wait 80
+shot 13_level_road_toasts
+wait 200
+shot 14_now_tracker_after
+quit

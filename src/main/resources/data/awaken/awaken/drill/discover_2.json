@@ -1,0 +1,10 @@
+{
+  "text": "Find two things you've never seen",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:discoveries",
+    "value": 2
+  },
+  "paths": [],
+  "min_rank": "E"
+}

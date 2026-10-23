@@ -48,11 +48,13 @@ public final class Directives {
             if (active.contains(key)) continue;
             if (p.rank().ordinal() < d.minRank().ordinal() || p.rank().ordinal() > d.maxRank().ordinal()) continue;
             if (d.path().isPresent() && !d.path().get().equals(p.path)) continue;
+            if (!Requirements.met(player, d.requires())) continue; // never ask for a power, place or skill you don't have
             long lastOffered = p.counter("awaken:directive_offered/" + key);
             if (lastOffered > 0 && today - (lastOffered - 1) < 5) continue;
             if (mustBeFresh && p.counter("awaken:directive_done/" + key) > 0) continue;
             pool.add(e);
         }
+        pool.sort(Map.Entry.comparingByKey()); // map order isn't stable: keep the roll reproducible
         if (pool.isEmpty()) {
             DirectorLog.log(player, "directive", "no valid offer (" + reason + ")");
             return;
@@ -73,9 +75,8 @@ public final class Directives {
         DirectorLog.log(player, "directive", "offered " + key + " (" + reason + ", pool " + pool.size()
                 + (wantQuick ? ", quick bias" : "") + (mustBeFresh ? ", fresh only" : "") + ")");
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.DIRECTIVE, Component.literal(def.text()))
-                .row(Component.literal("Fades in"), Component.literal(def.expiresDays() + " play-day" + (def.expiresDays() == 1 ? "" : "s")))
-                .row(Component.literal("Reward"), Component.literal(describe(def.reward())))
-                .action(ACTION + ":" + key).build());
+                .body(Component.literal(describe(def.reward()) + " · fades in " + def.expiresDays() + " day" + (def.expiresDays() == 1 ? "" : "s")))
+                .choice(ACTION + ":" + key, "Take it on", "Let it pass").build());
         Progression.markDirty(player);
     }
 

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "level": 6,
+  "title": "Hearth Anchor",
+  "text": "Craft it from a Lord's Heart: claim a home.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:hearth_anchor"
+      ]
+    },
+    {
+      "type": "flag",
+      "id": "awaken:hearth"
+    }
+  ],
+  "quiet": false
+}

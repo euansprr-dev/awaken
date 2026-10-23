@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 9,
+  "title": "Another Power Core",
+  "text": "A third power, or a stronger one.",
+  "grants": [
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false
+}
