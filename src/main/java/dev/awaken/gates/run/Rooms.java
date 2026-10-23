@@ -90,6 +90,16 @@ public final class Rooms {
             e = MobHooks.spawnThemed(level, themeOf(g, f).themeId(), role, pos, lv, tags(g, f), g.key());
         }
         if (e == null) return null;
+        if (g.scripted && role != MobRole.Role.BOSS && e.isNoGravity()) {
+            // no flyers in the first gate: diving wisps were the deaths in the first playtest. Ask the roster again.
+            e.discard();
+            e = MobHooks.spawnThemed(level, themeOf(g, f).themeId(), role, pos, lv, tags(g, f), g.key());
+            if (e != null && e.isNoGravity()) {
+                e.discard();
+                return null;
+            }
+            if (e == null) return null;
+        }
         if (g.scripted) firstGate(e, role);
         GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
         Modifiers.onSpawn(g, e);
@@ -120,6 +130,11 @@ public final class Rooms {
     static int spawnGroup(ServerLevel level, GateRecord g, FloorLayout f, Room r, int roomKey, int normals, int elites, int offset) {
         List<BlockPos> spots = spots(level, g, f, r);
         int n = 0;
+        if (g.scripted) {
+            // the story's first gate: half the company, so a wooden sword and one power can carry a room
+            normals = (normals + 1) / 2;
+            elites = Math.min(elites, 1);
+        }
         for (int i = 0; i < normals + elites; i++) {
             BlockPos p = spots.get((i + offset) % spots.size());
             if (spawn(level, g, f, roomKey, i < elites ? MobRole.Role.ELITE : MobRole.Role.NORMAL, p) != null) n++;

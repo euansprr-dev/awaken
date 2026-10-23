@@ -30,9 +30,9 @@ public final class Spots {
 
     public static final int MIN = 32, MAX = 96;
     /** The largest Hearth radius (tier V). A player inside it is at home. */
-    public static final int HOME_RADIUS = 80;
     /** ...and an anomaly keeps a little further off, so nothing that spills out wanders in. */
-    public static final int HEARTH_CLEARANCE = 96;
+    /** Spots keep this far beyond the edge of any Hearth (the check probes the four sides). */
+    public static final int HEARTH_CLEARANCE = 24;
     public static final int GATE_CLEARANCE = 24;
     public static final int ANOMALY_CLEARANCE = 48;
     /** Not on a cliff far above or below the player. */
@@ -51,7 +51,9 @@ public final class Spots {
         boolean near(ServerLevel level, BlockPos pos, int radius);
     }
 
-    public static final HearthCheck REAL_HEARTH = (l, p, r) -> HearthHooks.nearest(l, p, r).isPresent();
+    /** Inside a Hearth (its real, tier-sized radius) or within {@code r} blocks of its edge. */
+    public static final HearthCheck REAL_HEARTH = (l, p, r) -> HearthHooks.inside(l, p) || HearthHooks.inside(l, p.offset(r, 0, 0))
+            || HearthHooks.inside(l, p.offset(-r, 0, 0)) || HearthHooks.inside(l, p.offset(0, 0, r)) || HearthHooks.inside(l, p.offset(0, 0, -r));
 
     /** How far from the player, and which outside checks apply (tests swap the Hearth lookup). */
     public record Rules(int minDist, int maxDist, HearthCheck hearth, boolean checkGates) {

@@ -14,6 +14,8 @@ public final class HearthHooks {
     public interface Lookup {
         Optional<BlockPos> nearest(ServerLevel level, BlockPos pos, int radius);
         Optional<BlockPos> hearthOf(ServerLevel level, UUID owner);
+        /** Inside any Hearth's own radius (it grows with the Hearth's tier). */
+        default boolean inside(ServerLevel level, BlockPos pos) { return false; }
     }
 
     private static Lookup lookup = new Lookup() {
@@ -23,6 +25,11 @@ public final class HearthHooks {
 
     public static void install(Lookup l) {
         lookup = l;
+    }
+
+    /** Whether {@code pos} lies inside any Hearth's radius (exact, by tier). */
+    public static boolean inside(ServerLevel level, BlockPos pos) {
+        return lookup.inside(level, pos);
     }
 
     public static Optional<BlockPos> nearest(ServerLevel level, BlockPos pos, int radius) {

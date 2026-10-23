@@ -33,6 +33,8 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue ABOVE = B.define("above", true);
     public static final ModConfigSpec.BooleanValue HEARTH = B.define("hearth", true);
     public static final ModConfigSpec.BooleanValue STORY = B.define("story", true);
+    public static final ModConfigSpec.BooleanValue ANOMALIES = B.comment("Rift tears, wandering gates and spirit processions near awakened players")
+            .define("anomalies", true);
 
     static {
         B.pop();

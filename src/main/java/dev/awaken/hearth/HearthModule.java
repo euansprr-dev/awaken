@@ -68,6 +68,11 @@ public final class HearthModule {
             public Optional<BlockPos> hearthOf(ServerLevel level, UUID owner) {
                 return HearthData.get(level.getServer()).of(owner).map(h -> h.pos);
             }
+
+            @Override
+            public boolean inside(ServerLevel level, BlockPos pos) {
+                return HearthData.get(level.getServer()).containing(pos, level.dimension().identifier().toString()).isPresent();
+            }
         });
         Regimen.penaltyHandler = Trials::penalty;
         RankHooks.onRankUp((sp, rank) -> {

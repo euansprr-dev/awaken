@@ -153,6 +153,7 @@ public final class FaunaModule {
             MobDef d = beast.def();
             Progression.count(killer, "awaken:beasts_felled");
             boolean first = Progression.discover(killer, "beast_felled/" + d.id, 0.5);
+            if (!first) Progression.worldXp(killer, "beast", 0.2); // later kills pay less, and less again when farmed
             Progression.markNewThing(killer, "beast:" + d.id);
             Progression.bestMoment(killer, (first ? "First kill: " : "Felled ") + d.name);
             Signal.send(killer, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name + " falls").withColor(d.glow))

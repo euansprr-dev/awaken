@@ -182,8 +182,7 @@ public final class Mobs {
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.translatable("awaken.mobs.broker.duel_title"))
                 .body(Component.translatable("awaken.mobs.broker.duel_body"))
                 .row(Component.translatable("awaken.mobs.broker.duel_stakes"), Component.translatable("awaken.mobs.broker.duel_stakes_value"))
-                .footer(Component.translatable("awaken.mobs.broker.duel_footer"))
-                .action("mobs:duel")
+                .choice("mobs:duel", "Accept the duel", "Walk away")
                 .build());
         player.sendSystemMessage(Component.translatable("awaken.mobs.broker.duel_chat").withColor(broker.def().glow));
     }

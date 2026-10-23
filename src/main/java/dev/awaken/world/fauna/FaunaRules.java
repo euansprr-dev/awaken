@@ -49,7 +49,7 @@ public final class FaunaRules {
         boolean near(ServerLevel level, BlockPos pos);
     }
 
-    static HearthCheck hearth = (level, pos) -> HearthHooks.nearest(level, pos, HEARTH_GUARD).isPresent();
+    static HearthCheck hearth = HearthHooks::inside;
     static @Nullable Long timeOverride;
 
     public static long dayTime(Level level) {

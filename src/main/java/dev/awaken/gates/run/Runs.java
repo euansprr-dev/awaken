@@ -499,6 +499,14 @@ public final class Runs {
             return;
         }
         AwakenConfig.Difficulty diff = AwakenConfig.DIFFICULTY.get();
+        if (g != null && g.scripted) {
+            // the story's first gate is where you learn: dying here keeps your Satchel and leaves no Fracture
+            bankSatchel(p, g, run, "f" + label(run.area, run.floor), "recover", "The first gate is forgiving. You kept what you carried.");
+            stashGear(p);
+            DirectorLog.log(p, "gate", "died in the story's first gate on floor " + label(run.area, run.floor) + ": no loss");
+            endRun(p, g, false);
+            return;
+        }
         if (g != null && dev.awaken.above.Above.consumeCloneSave(p)) {
             // The Clone Vat grew a body for you: the whole Satchel comes back with it (the claim window says so).
             bankSatchel(p, g, run, "c" + label(run.area, run.floor), "clone", "");
