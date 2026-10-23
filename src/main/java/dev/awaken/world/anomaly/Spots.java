@@ -94,7 +94,8 @@ public final class Spots {
             }
         }
         if (rules.checkGates() && !GateHooks.near(level, ground, GATE_CLEARANCE).isEmpty()) return "gate";
-        if (rules.openSky() && !level.canSeeSky(ground.above())) return "no sky";
+        // nothing that blocks motion (leaves included) anywhere above: the heightmap, not sky light (which lags behind)
+        if (rules.openSky() && level.getHeight(Heightmap.Types.MOTION_BLOCKING, ground.getX(), ground.getZ()) > ground.getY() + 1) return "no sky";
         return checkGround(level, ground);
     }
 

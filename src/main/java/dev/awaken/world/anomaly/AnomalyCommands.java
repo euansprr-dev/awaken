@@ -45,6 +45,7 @@ final class AnomalyCommands {
                 return n;
             }));
             an.then(Commands.literal("skip").requires(AwakenCommands.admin()).executes(AnomalyCommands::skip));
+            an.then(Commands.literal("goto").requires(AwakenCommands.admin()).executes(AnomalyCommands::goTo));
             an.then(Commands.literal("timer").requires(AwakenCommands.admin())
                     .then(Commands.argument("seconds", IntegerArgumentType.integer(0, 3600)).executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
@@ -173,6 +174,22 @@ final class AnomalyCommands {
         }
         data.setDirty();
         c.getSource().sendSuccess(() -> Component.literal("Skipped " + a.kind.display.toLowerCase() + " #" + a.id + " ahead."), false);
+        return 1;
+    }
+
+    /** Stands you two blocks from your active anomaly's heart, facing it (a grove wakes as you arrive). */
+    private static int goTo(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        Anomaly a = AnomalyData.get(c.getSource().getServer()).activeFor(p.getUUID());
+        if (a == null) {
+            c.getSource().sendFailure(Component.literal("You have no active anomaly."));
+            return 0;
+        }
+        net.minecraft.core.BlockPos f = a.focus();
+        double x = f.getX() + 0.5, z = f.getZ() + 2.5;
+        double y = Spots.surface(p.level(), net.minecraft.util.Mth.floor(x), net.minecraft.util.Mth.floor(z)).getY() + 1;
+        p.teleportTo(p.level(), x, y, z, java.util.Set.of(), 180.0F, 20.0F, true);
+        c.getSource().sendSuccess(() -> Component.literal("At " + a.kind.display.toLowerCase() + " #" + a.id + "."), false);
         return 1;
     }
 

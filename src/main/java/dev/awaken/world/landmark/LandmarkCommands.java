@@ -1,7 +1,10 @@
 package dev.awaken.world.landmark;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dev.awaken.above.ruin.RuinKind;
+import dev.awaken.above.ruin.RuinLocator;
 import dev.awaken.above.scan.Scanning;
 import dev.awaken.core.AwakenCommands;
 import dev.awaken.core.DirectorLog;
@@ -9,16 +12,22 @@ import dev.awaken.progression.Progression;
 import dev.awaken.world.anomaly.Spots;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * {@code /awaken landmark ...}: {@code why} (anyone: the landmarks around you, which you've reached, which one the Now
  * tracker suggests and why, the recent decisions), and for game masters {@code near} (the full list with ids within
  * 1,500 blocks, spending more terrain samples), {@code markers} (resend your markers now), {@code check} (look around
- * for landmarks now) and {@code forget} (forget the landmarks you reached; discoveries stay paid).
+ * for landmarks now), {@code goto <kind>} (stand south of the nearest one, facing it) and {@code forget} (forget the
+ * landmarks you reached; discoveries stay paid).
  */
 final class LandmarkCommands {
     private LandmarkCommands() {}
@@ -41,6 +50,11 @@ final class LandmarkCommands {
                 c.getSource().sendSuccess(() -> Component.literal(n == 0 ? "No new landmark here." : n + " landmark(s) reached."), false);
                 return n;
             }));
+            lm.then(Commands.literal("goto").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", StringArgumentType.word())
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.stream(LandmarkKind.values())
+                                    .filter(k -> k != LandmarkKind.GATE).map(k -> k.id), b))
+                            .executes(c -> goTo(c, StringArgumentType.getString(c, "kind")))));
             lm.then(Commands.literal("forget").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 LandmarkMemory m = Landmarks.memory(p);
@@ -56,6 +70,47 @@ final class LandmarkCommands {
             root.then(lm);
         });
     }
+
+    /**
+     * Stands you {@link #VIEW} blocks south of the nearest landmark of a kind (within 4,000 blocks), facing it: for
+     * screenshots of its marker. Sky platforms: from below, looking up at them.
+     */
+    private static int goTo(CommandContext<CommandSourceStack> c, String kindId) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        LandmarkKind kind = null;
+        for (LandmarkKind k : LandmarkKind.values()) if (k.id.equals(kindId) && k != LandmarkKind.GATE) kind = k;
+        if (kind == null) {
+            c.getSource().sendFailure(Component.literal("Unknown landmark kind " + kindId + "."));
+            return 0;
+        }
+        BlockPos target = null;
+        if (kind == LandmarkKind.WELL) {
+            target = Landmarks.wellPos(c.getSource().getServer()).orElse(null);
+        } else {
+            for (RuinKind r : RuinKind.values()) {
+                if (LandmarkKind.of(r) != kind) continue;
+                for (RuinLocator.Found f : RuinLocator.near(p.level(), p.blockPosition(), 4000, List.of(r), null, false, 1, 64)) {
+                    if (target == null || Spots.horizontal(p.blockPosition(), f.pos()) < Spots.horizontal(p.blockPosition(), target)) target = f.pos();
+                }
+            }
+        }
+        if (target == null) {
+            c.getSource().sendFailure(Component.literal("No " + kind.display + " found nearby."));
+            return 0;
+        }
+        ServerLevel level = p.level();
+        double x = target.getX() + 0.5, z = target.getZ() + VIEW + 0.5;
+        level.getChunk(Mth.floor(x) >> 4, Mth.floor(z) >> 4); // load where you'll stand
+        double y = Spots.surface(level, Mth.floor(x), Mth.floor(z)).getY() + 1 + (kind == LandmarkKind.OCEAN_LAB ? 0 : 6);
+        float pitch = kind == LandmarkKind.SKY_PLATFORM ? -35.0F : 10.0F;
+        p.teleportTo(level, x, y, z, java.util.Set.of(), 180.0F, pitch, true);
+        LandmarkMarkers.forget(p.getUUID());
+        BlockPos t = target;
+        c.getSource().sendSuccess(() -> Component.literal(kindId + " at " + t.getX() + " " + t.getZ() + "; you stand " + VIEW + " blocks south."), false);
+        return 1;
+    }
+
+    static final int VIEW = 48;
 
     private static int why(CommandContext<CommandSourceStack> c, int budget) throws CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
