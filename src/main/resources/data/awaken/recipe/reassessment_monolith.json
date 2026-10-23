@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "D": "minecraft:polished_deepslate",
+    "A": "minecraft:amethyst_shard",
+    "E": "awaken:essence_shard"
+  },
+  "pattern": [
+    "DAD",
+    "DED",
+    "DDD"
+  ],
+  "result": {
+    "id": "awaken:reassessment_monolith"
+  }
+}

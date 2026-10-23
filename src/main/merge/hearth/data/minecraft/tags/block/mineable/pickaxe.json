@@ -1,0 +1,14 @@
+{
+  "values": [
+    "awaken:hearth_anchor",
+    "awaken:forge",
+    "awaken:reassessment_monolith",
+    "awaken:role_pad_guard",
+    "awaken:role_pad_haul",
+    "awaken:role_pad_farm",
+    "awaken:role_pad_mine",
+    "awaken:role_pad_train",
+    "awaken:start_gate",
+    "awaken:finish_gate"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/spire_board"
+    },
+    "facing=east": {
+      "model": "awaken:block/spire_board",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/spire_board",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/spire_board",
+      "y": 270
+    }
+  }
+}

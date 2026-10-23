@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:smooth_stone_slab",
+    "minecraft:lime_dye",
+    "minecraft:redstone"
+  ],
+  "result": {
+    "id": "awaken:start_gate"
+  }
+}

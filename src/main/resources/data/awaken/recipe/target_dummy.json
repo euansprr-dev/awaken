@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "T": "minecraft:target",
+    "H": "minecraft:hay_block",
+    "F": "#minecraft:wooden_fences"
+  },
+  "pattern": [
+    "T",
+    "H",
+    "F"
+  ],
+  "result": {
+    "id": "awaken:target_dummy"
+  }
+}

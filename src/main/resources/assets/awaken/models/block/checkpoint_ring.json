@@ -1,0 +1,285 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "ring": "awaken:block/checkpoint_ring",
+    "particle": "awaken:block/checkpoint_ring"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        7
+      ],
+      "to": [
+        16,
+        2,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#ring",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#ring",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        }
+      },
+      "light_emission": 12
+    },
+    {
+      "from": [
+        0,
+        14,
+        7
+      ],
+      "to": [
+        16,
+        16,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#ring",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#ring",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        }
+      },
+      "light_emission": 12
+    },
+    {
+      "from": [
+        0,
+        2,
+        7
+      ],
+      "to": [
+        2,
+        14,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#ring",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#ring",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        }
+      },
+      "light_emission": 12
+    },
+    {
+      "from": [
+        14,
+        2,
+        7
+      ],
+      "to": [
+        16,
+        14,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "up": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "north": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#ring",
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#ring",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        },
+        "east": {
+          "texture": "#ring",
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ]
+        }
+      },
+      "light_emission": 12
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/trophy_mount"
+    },
+    "facing=east": {
+      "model": "awaken:block/trophy_mount",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/trophy_mount",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/trophy_mount",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": "#minecraft:planks",
+    "L": "minecraft:lantern",
+    "S": "minecraft:stick"
+  },
+  "pattern": [
+    "PPP",
+    "PLP",
+    " S "
+  ],
+  "result": {
+    "id": "awaken:spire_board"
+  }
+}

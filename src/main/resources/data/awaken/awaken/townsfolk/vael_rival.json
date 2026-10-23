@@ -1,0 +1,15 @@
+{
+  "name": "Vael",
+  "role": "Rival",
+  "arrives_at": "A",
+  "leaves_at": "S",
+  "lines": {
+    "A": "It said you'd be the one who makes it. It said that to me first."
+  },
+  "chatter": [
+    "The Signal talks to me too. Did you know that?",
+    "So which one of us is it lying to?",
+    "Nice town. Mine's bigger. I don't have a town.",
+    "Your Blacksmith tried to sell me a sword. I said I'd think about it. I won't."
+  ]
+}

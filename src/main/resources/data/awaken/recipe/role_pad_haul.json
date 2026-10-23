@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:smooth_stone_slab",
+    "minecraft:smooth_stone_slab",
+    "awaken:essence_shard",
+    "minecraft:chest"
+  ],
+  "result": {
+    "id": "awaken:role_pad_haul"
+  }
+}

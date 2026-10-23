@@ -1,0 +1,86 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "face": "awaken:block/target_dummy",
+    "side": "awaken:block/target_dummy_side",
+    "particle": "awaken:block/target_dummy_side"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        6,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#side"
+        },
+        "up": {
+          "texture": "#side"
+        },
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        6,
+        6
+      ],
+      "to": [
+        13,
+        16,
+        10
+      ],
+      "faces": {
+        "down": {
+          "texture": "#side"
+        },
+        "up": {
+          "texture": "#side"
+        },
+        "north": {
+          "texture": "#face",
+          "uv": [
+            3,
+            0,
+            13,
+            10
+          ]
+        },
+        "south": {
+          "texture": "#face",
+          "uv": [
+            3,
+            0,
+            13,
+            10
+          ]
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        }
+      }
+    }
+  ]
+}

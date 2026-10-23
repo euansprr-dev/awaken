@@ -1,0 +1,86 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "board": "awaken:block/spire_board",
+    "post": "awaken:block/spire_board_post",
+    "particle": "awaken:block/spire_board_post"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        4,
+        6
+      ],
+      "to": [
+        15,
+        16,
+        10
+      ],
+      "faces": {
+        "down": {
+          "texture": "#post"
+        },
+        "up": {
+          "texture": "#post"
+        },
+        "north": {
+          "texture": "#board",
+          "uv": [
+            1,
+            0,
+            15,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#board",
+          "uv": [
+            1,
+            0,
+            15,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#post"
+        },
+        "east": {
+          "texture": "#post"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        0,
+        7
+      ],
+      "to": [
+        10,
+        4,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#post"
+        },
+        "up": {
+          "texture": "#post"
+        },
+        "north": {
+          "texture": "#post"
+        },
+        "south": {
+          "texture": "#post"
+        },
+        "west": {
+          "texture": "#post"
+        },
+        "east": {
+          "texture": "#post"
+        }
+      }
+    }
+  ]
+}

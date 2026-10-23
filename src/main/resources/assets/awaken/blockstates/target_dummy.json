@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/target_dummy"
+    },
+    "facing=east": {
+      "model": "awaken:block/target_dummy",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/target_dummy",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/target_dummy",
+      "y": 270
+    }
+  }
+}

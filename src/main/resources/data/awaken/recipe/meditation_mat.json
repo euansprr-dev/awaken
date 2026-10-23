@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "W": "#minecraft:wool",
+    "A": "minecraft:amethyst_shard"
+  },
+  "pattern": [
+    "WAW"
+  ],
+  "result": {
+    "id": "awaken:meditation_mat"
+  }
+}
