@@ -347,6 +347,90 @@ final class GateTests {
                     .thenSucceed();
         });
 
+        AwakenTests.register("gates_run_walkthrough", 100, h -> {
+            var level = h.getLevel();
+            var server = level.getServer();
+            GatePlan plan = new GatePlan(424242, GatePlan.CONTENT_VERSION, Rank.E, Theme.OVERGROWN_TEMPLE, Layout.LABYRINTH, List.of(),
+                    Twist.NONE, 3, Theme.OVERGROWN_TEMPLE.bossId(), Theme.HIVE, 0);
+            GateRegistry reg = GateRegistry.get(server);
+            int cell = reg.allocateCell();
+            dev.awaken.gates.world.GateCells.put(cell, plan);
+            GateService.testLevel = level;
+            try {
+                GateLayout l = GateLayout.of(plan);
+                FloorLayout f = l.main.get(0);
+                for (int gx = -1; gx <= f.w; gx++) {
+                    for (int gz = -1; gz <= f.h; gz++) {
+                        int cx = (Cells.originX(cell) >> 4) + f.originSlotX + gx, cz = (Cells.originZ(cell) >> 4) + f.originSlotZ + gz;
+                        level.getChunk(cx, cz);
+                        GatePainter.paint(l, cell, cx, cz, (x, y, z, s) -> level.setBlock(new BlockPos(cx * 16 + x, y, cz * 16 + z), s, 818));
+                    }
+                }
+                GateRecord g = new GateRecord(reg.nextId(), plan, h.absolutePos(BlockPos.ZERO), 0, cell, 0, 99, GateState.READY, Optional.empty());
+                g.interiorReady = true;
+                reg.put(g);
+                ServerPlayer p = h.makeMockServerPlayerInLevel();
+                dev.awaken.progression.Progression.awaken(p);
+                double xp0 = dev.awaken.progression.Progression.profile(p).xp() + dev.awaken.progression.Progression.profile(p).level() * 1e6;
+                h.assertTrue(Runs.enter(p, g), "entered the gate");
+                var w = dev.awaken.gates.run.Where.at(server, p.blockPosition());
+                h.assertTrue(w != null && w.room() != null && w.room().id == f.start, "arrived in the start room");
+                h.assertTrue(g.state == GateState.ACTIVE && g.inside.contains(p.getUUID()), "gate ACTIVE with the player inside");
+                List<Integer> path = f.criticalPath();
+                int spawned = 0;
+                for (int i = 1; i < path.size(); i++) {
+                    Room r = f.room(path.get(i));
+                    int[] spot = r.spawnSpots.isEmpty() ? new int[]{r.centerX(), r.centerZ()} : r.spawnSpots.get(0);
+                    BlockPos at = GateService.roomFloor(g, f, r, spot[0], spot[1]);
+                    p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(), 0, 0, true);
+                    dev.awaken.gates.run.RunEvents.tickNow(p);
+                    var key = new dev.awaken.gates.run.GateMobs.Key(g.id, 0, 1, r.id);
+                    for (UUID id : dev.awaken.gates.run.GateMobs.aliveIds(key)) {
+                        var e = level.getEntity(id);
+                        if (e instanceof net.minecraft.world.entity.LivingEntity le) {
+                            spawned++;
+                            le.hurtServer(level, p.damageSources().playerAttack(p), 100000F);
+                            e.discard();
+                        }
+                    }
+                    h.assertTrue(dev.awaken.gates.run.GateMobs.alive(key) == 0, "room " + r.id + " emptied");
+                }
+                RunState run = Runs.run(p);
+                h.assertTrue(run.clearedFloor(0, 1), "stepping into the shrine room clears the floor");
+                h.assertTrue(run.satchelXp > 0, "the floor bonus rides in the Satchel");
+                h.assertTrue(spawned > 0 && run.kills >= spawned, "monsters woke and kills were counted (" + spawned + " spawned, " + run.kills + " kills)");
+                double xp1 = dev.awaken.progression.Progression.profile(p).xp() + dev.awaken.progression.Progression.profile(p).level() * 1e6;
+                h.assertTrue(spawned == 0 || xp1 > xp0, "kill XP is granted live");
+                h.assertTrue(dev.awaken.gates.run.Rooms.spots(level, g, f, f.room(f.end)).size() > 0, "shrine room has floor");
+                ItemStack loot = new ItemStack(Items.DIAMOND, 5);
+                Gates.satchelAdd(p, loot);
+                h.assertTrue(loot.isEmpty() && Satchel.items(run.satchel) >= 5, "loot moved into the Satchel");
+                int before = p.getInventory().countItem(Items.DIAMOND);
+                dev.awaken.gates.run.Interactions.answer(p, "gates:extract", true);
+                dev.awaken.gates.run.RunEvents.flushNow();
+                h.assertFalse(Runs.run(p).active(), "extracting ends the run");
+                h.assertTrue(p.getInventory().countItem(Items.DIAMOND) - before == 5, "the Satchel was paid out once");
+                h.assertTrue(g.state == GateState.OPEN && g.inside.isEmpty(), "gate OPEN and empty, was " + g.state);
+                h.assertTrue(dev.awaken.progression.Progression.profile(p).counter("awaken:floors_cleared") >= 1, "floors_cleared counted");
+                // a second run: through the Seal to floor 2
+                h.assertTrue(Runs.enter(p, g), "re-entered");
+                h.assertTrue(Runs.run(p).runIndex == 1, "second run gets its own claim ids");
+                Room shrine = f.room(f.end);
+                BlockPos sp = GateService.roomFloor(g, f, shrine, shrine.centerX(), shrine.centerZ() + 2);
+                p.teleportTo(level, sp.getX() + 0.5, sp.getY(), sp.getZ() + 0.5, java.util.Set.of(), 0, 0, true);
+                dev.awaken.gates.run.RunEvents.tickNow(p);
+                Runs.descend(p);
+                h.assertTrue(Runs.run(p).floor == 2, "the Seal leads to floor 2, run is on " + Runs.run(p).floor);
+                h.assertTrue(Gates.activeRun(p).map(ri -> ri.floor() == 2).orElse(false), "activeRun reports floor 2");
+                h.assertTrue(Gates.forceExtract(p, true), "force extract");
+                h.assertFalse(Runs.run(p).active(), "out again");
+            } finally {
+                GateService.testLevel = null;
+                dev.awaken.gates.world.GateCells.remove(cell);
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("gates_overworld_structure", 40, h -> {
             BlockPos base = h.absolutePos(new BlockPos(0, 0, 0)).offset(6, 0, 6);
             GateRecord g = new GateRecord(77, testPlan(1, Rank.C, Theme.HIVE, Layout.LABYRINTH, Twist.NONE), base, 0, 0, 0, 3, GateState.READY, Optional.empty());

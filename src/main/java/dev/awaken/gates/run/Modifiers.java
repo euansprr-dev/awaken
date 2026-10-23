@@ -111,7 +111,7 @@ public final class Modifiers {
 
     static void onIncomingDamage(LivingIncomingDamageEvent e) {
         LivingEntity victim = e.getEntity();
-        if (victim.level().isClientSide() || victim.level().dimension() != GatesRegistry.GATES) return;
+        if (victim.level().isClientSide() || !GateService.inGate(victim)) return;
         MinecraftServer server = victim.level().getServer();
         if (victim instanceof ServerPlayer p) {
             GateRecord g = Runs.gateOf(p);
@@ -148,7 +148,7 @@ public final class Modifiers {
     /** Fortune doubles what gate monsters drop. */
     static void onDrops(LivingDropsEvent e) {
         LivingEntity dead = e.getEntity();
-        if (dead.level().dimension() != GatesRegistry.GATES) return;
+        if (!GateService.inGate(dead)) return;
         MobRole role = dead.getData(CoreApi.MOB_ROLE.get());
         if (role.gateId().isEmpty()) return;
         GateRecord g = gate(dead.level().getServer(), role);

@@ -63,8 +63,25 @@ public final class GateService {
         return server.overworld().getGameTime();
     }
 
+    /** Tests only: a level that stands in for the gate dimension (the GameTest server has no datapack dimensions). */
+    static ServerLevel testLevel;
+
     public static ServerLevel gateLevel(MinecraftServer server) {
-        return server.getLevel(GatesRegistry.GATES);
+        return testLevel != null ? testLevel : server.getLevel(GatesRegistry.GATES);
+    }
+
+    /** The level gates are built in. */
+    public static boolean isGateLevel(net.minecraft.world.level.Level level) {
+        return testLevel != null ? level == testLevel : level.dimension() == GatesRegistry.GATES;
+    }
+
+    /** Inside the gate world: in the gate level and inside a cell's area. */
+    public static boolean inGate(net.minecraft.world.entity.Entity e) {
+        return isGateLevel(e.level()) && Cells.cellAt(e.getBlockX(), e.getBlockZ()) >= 0;
+    }
+
+    public static boolean inGate(net.minecraft.world.level.Level level, BlockPos pos) {
+        return isGateLevel(level) && Cells.cellAt(pos.getX(), pos.getZ()) >= 0;
     }
 
     // ---- creation ---------------------------------------------------------------------------------------------------
@@ -263,7 +280,7 @@ public final class GateService {
         if (g.state == GateState.RELEASED) return;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             // never release a cell with someone standing in it
-            if (p.level().dimension() == GatesRegistry.GATES && Cells.cellAt(p.getBlockX(), p.getBlockZ()) == g.cell) return;
+            if (inGate(p) && Cells.cellAt(p.getBlockX(), p.getBlockZ()) == g.cell) return;
         }
         if (!g.transition(GateState.RELEASED)) {
             g.state = GateState.RELEASED;

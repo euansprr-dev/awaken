@@ -37,7 +37,7 @@ public final class Claims {
 
     /** Pays every pending claim of this player, if they are outside a gate. Returns how many were paid. */
     public static int deliver(ServerPlayer p) {
-        if (p.level().dimension() == GatesRegistry.GATES || !p.isAlive()) return 0;
+        if (dev.awaken.gates.GateService.inGate(p) || !p.isAlive()) return 0;
         GateRegistry reg = GateRegistry.get(p.level().getServer());
         List<Claim> pending = reg.pendingFor(p.getUUID());
         int paid = 0;

@@ -176,13 +176,13 @@ public final class Runs {
         }
     }
 
-    private static void tickPlayer(MinecraftServer server, ServerPlayer p, RunState run, int t) {
+    static void tickPlayer(MinecraftServer server, ServerPlayer p, RunState run, int t) {
         GateRecord g = GateRegistry.get(server).gate(run.gateId);
         if (g == null || g.state == GateState.RELEASED) {
             lost(p, run, "The gate collapsed behind you. Your Satchel came with you.");
             return;
         }
-        if (p.level().dimension() != GatesRegistry.GATES) {
+        if (!GateService.inGate(p)) {
             if (p.isAlive()) lost(p, run, "You were pulled out of the gate. Your Satchel came with you.");
             return;
         }
@@ -374,7 +374,7 @@ public final class Runs {
             run.satchelXp = 0;
         }
         DirectorLog.log(p, "gate", "run in gate " + run.gateId + " ended: " + why);
-        boolean inGate = p.level().dimension() == GatesRegistry.GATES;
+        boolean inGate = GateService.inGate(p);
         if (g != null) endRun(p, g, inGate);
         else {
             Modifiers.removeFrom(p);
@@ -550,7 +550,7 @@ public final class Runs {
         RunState run = run(p);
         if (run.active()) {
             GateRecord g = GateRegistry.get(server).gate(run.gateId);
-            if (g == null || g.state == GateState.RELEASED || g.state == GateState.BROKEN || p.level().dimension() != GatesRegistry.GATES) {
+            if (g == null || g.state == GateState.RELEASED || g.state == GateState.BROKEN || !GateService.inGate(p)) {
                 lost(p, run, "The gate collapsed behind you. Your Satchel came with you.");
             } else {
                 g.inside.add(p.getUUID());
@@ -558,7 +558,7 @@ public final class Runs {
                 Modifiers.applyTo(p, g);
                 Hud.send(p);
             }
-        } else if (p.level().dimension() == GatesRegistry.GATES && !p.isCreative() && !p.isSpectator()) {
+        } else if (GateService.inGate(p) && !p.isCreative() && !p.isSpectator()) {
             // standing in a gate with no run (a cell that was cleaned up): bring them home
             ServerLevel over = server.overworld();
             BlockPos to = over.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, over.getRespawnData().pos());
@@ -621,7 +621,7 @@ public final class Runs {
     static void onPickup(ItemEntityPickupEvent.Pre e) {
         if (!(e.getPlayer() instanceof ServerPlayer p)) return;
         RunState run = run(p);
-        if (!run.active() || p.level().dimension() != GatesRegistry.GATES) return;
+        if (!run.active() || !GateService.inGate(p)) return;
         ItemEntity item = e.getItemEntity();
         if (item.hasPickUpDelay() || (item.getTarget() != null && !item.getTarget().equals(p.getUUID()))) return;
         if (item.getOwner() == p) return;

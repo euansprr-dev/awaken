@@ -88,7 +88,7 @@ public final class Interactions {
     // ---- inside -----------------------------------------------------------------------------------------------------
 
     public static void touchPortal(ServerLevel level, BlockPos pos, ServerPlayer p, GateBlocks.Portal.Kind kind) {
-        if (level.dimension() != GatesRegistry.GATES || !cooled(p, 30)) return;
+        if (!GateService.isGateLevel(level) || !cooled(p, 30)) return;
         GateRecord g = Runs.gateOf(p);
         if (g == null) return;
         switch (kind) {

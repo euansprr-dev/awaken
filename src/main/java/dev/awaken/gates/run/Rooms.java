@@ -91,7 +91,7 @@ public final class Rooms {
     }
 
     /** World positions of open floor spots in a room, best first. */
-    static List<BlockPos> spots(ServerLevel level, GateRecord g, FloorLayout f, Room r) {
+    public static List<BlockPos> spots(ServerLevel level, GateRecord g, FloorLayout f, Room r) {
         List<BlockPos> out = new ArrayList<>();
         for (int[] s : r.spawnSpots) {
             BlockPos p = GateService.roomFloor(g, f, r, s[0], s[1]);

@@ -125,21 +125,21 @@ final class GateEvents {
             return;
         }
         if (g == null) return;
-        if (level.dimension() == Level.OVERWORLD) {
-            if (g.state == GateState.BROKEN && g.lord.isPresent() && g.lord.get().equals(dead.getUUID())) Breaks.onLordDeath(level, g, dead, killer);
+        if (level.dimension() == Level.OVERWORLD && g.state == GateState.BROKEN && g.lord.isPresent() && g.lord.get().equals(dead.getUUID())) {
+            Breaks.onLordDeath(level, g, dead, killer);
             return;
         }
-        if (level.dimension() != GatesRegistry.GATES) return;
+        if (!GateService.inGate(dead)) return;
         RunEvents.onGateMobDeath(level, g, dead, killer, role);
     }
 
     private static void onJoin(EntityJoinLevelEvent e) {
-        if (e.getLevel().isClientSide() || e.getLevel().dimension() != GatesRegistry.GATES) return;
+        if (e.getLevel().isClientSide() || !GateService.isGateLevel(e.getLevel())) return;
         if (e.loadedFromDisk()) GateMobs.onLoad(e.getEntity());
     }
 
     private static void onLeave(EntityLeaveLevelEvent e) {
-        if (e.getLevel().isClientSide() || e.getLevel().dimension() != GatesRegistry.GATES) return;
+        if (e.getLevel().isClientSide() || !GateService.isGateLevel(e.getLevel())) return;
         Entity ent = e.getEntity();
         Entity.RemovalReason why = ent.getRemovalReason();
         if (why == null || !why.shouldDestroy()) return;
@@ -172,17 +172,17 @@ final class GateEvents {
     }
 
     private static void onBreak(BreakBlockEvent e) {
-        if (e.getLevel().isClientSide() || ((Level) e.getLevel()).dimension() != GatesRegistry.GATES) return;
+        if (e.getLevel().isClientSide() || !GateService.inGate((Level) e.getLevel(), e.getPos())) return;
         if (e.getPlayer() != null && e.getPlayer().isCreative()) return;
         if (fabric().contains(e.getState().getBlock())) e.setCanceled(true);
     }
 
     private static void onExplode(ExplosionEvent.Detonate e) {
-        if (e.getLevel().dimension() == GatesRegistry.GATES) e.getAffectedBlocks().clear();
+        if (GateService.inGate(e.getLevel(), net.minecraft.core.BlockPos.containing(e.getExplosion().center()))) e.getAffectedBlocks().clear();
     }
 
     private static void onEntityInteract(PlayerInteractEvent.EntityInteract e) {
-        if (!(e.getEntity() instanceof ServerPlayer p) || p.level().dimension() != GatesRegistry.GATES) return;
+        if (!(e.getEntity() instanceof ServerPlayer p) || !GateService.inGate(p)) return;
         Entity target = e.getTarget();
         var data = target.getPersistentData();
         if (data.contains(Rooms.SPIRIT_TAG)) {

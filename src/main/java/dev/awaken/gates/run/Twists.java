@@ -420,7 +420,7 @@ public final class Twists {
     /** Inverted: the Lord's minions don't attack one of their own. */
     static void onTarget(LivingChangeTargetEvent e) {
         if (!(e.getNewAboutToBeSetTarget() instanceof ServerPlayer p)) return;
-        if (e.getEntity().level().dimension() != GatesRegistry.GATES) return;
+        if (!GateService.inGate(e.getEntity())) return;
         GateRecord g = Runs.gateOf(p);
         if (g == null) return;
         MobRole role = e.getEntity().getData(CoreApi.MOB_ROLE.get());

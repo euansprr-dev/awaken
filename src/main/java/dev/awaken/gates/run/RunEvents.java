@@ -102,7 +102,20 @@ public final class RunEvents {
         return GateLayout.of(g.plan).floor(area, floor);
     }
 
+    // ---- test hooks (GameTests drive a run synchronously) ------------------------------------------------------------
+
+    /** One run tick for one player right now (normally every 10 ticks). */
+    public static void tickNow(ServerPlayer p) {
+        RunState run = Runs.run(p);
+        if (run.active()) Runs.tickPlayer(p.level().getServer(), p, run, p.level().getServer().getTickCount());
+    }
+
+    /** Runs queued block interactions now (normally at the end of the tick). */
+    public static void flushNow() {
+        Interactions.flush();
+    }
+
     static boolean inGateDim(Entity e) {
-        return e.level().dimension() == GatesRegistry.GATES;
+        return dev.awaken.gates.GateService.inGate(e);
     }
 }

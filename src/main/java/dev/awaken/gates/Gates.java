@@ -60,7 +60,7 @@ public final class Gates {
     public static Optional<GateInfo> gateAt(ServerLevel level, BlockPos pos) {
         MinecraftServer s = level.getServer();
         GateRegistry reg = GateRegistry.get(s);
-        if (level.dimension() == GatesRegistry.GATES) {
+        if (GateService.inGate(level, pos)) {
             GateRecord g = reg.byCell(Cells.cellAt(pos.getX(), pos.getZ()));
             return g == null ? Optional.empty() : Optional.of(info(s, g));
         }
@@ -80,7 +80,7 @@ public final class Gates {
 
     /** In the gate dimension (inside a live cell). Works for any entity. */
     public static boolean isInGate(Entity e) {
-        if (e.level().dimension() != GatesRegistry.GATES) return false;
+        if (!GateService.isGateLevel(e.level())) return false;
         if (!(e.level() instanceof ServerLevel sl)) return true;
         return GateRegistry.get(sl.getServer()).byCell(Cells.cellAt(e.getBlockX(), e.getBlockZ())) != null;
     }
