@@ -1,0 +1,16 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "awaken:item/power_core",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -1
+      },
+      {
+        "type": "awaken:power_family",
+        "default": -8404993
+      }
+    ]
+  }
+}

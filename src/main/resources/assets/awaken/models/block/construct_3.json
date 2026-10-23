@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": {
+      "sprite": "awaken:block/construct_3",
+      "force_translucent": true
+    }
+  }
+}

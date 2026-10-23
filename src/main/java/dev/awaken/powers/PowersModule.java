@@ -1,11 +1,65 @@
 package dev.awaken.powers;
 
+import dev.awaken.core.api.PowerCoreHooks;
+import dev.awaken.powers.catalog.PowerCatalog;
+import dev.awaken.powers.content.PowerContent;
+import dev.awaken.powers.net.PowerPayloads;
+import dev.awaken.progression.Rank;
+import dev.awaken.progression.RewardHooks;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
-/** Entry point for the powers module. See docs/SPEC.md. */
+/**
+ * Entry point for the powers module (SPEC section 6): the power framework and catalog, Power Cores, energy and
+ * cooldowns, key casting, the Five Forces, and combat feel. Client side lives in {@code powers.client}.
+ */
 public final class PowersModule {
     private PowersModule() {}
 
     public static void init(IEventBus modBus) {
+        PowerCatalog.bootstrap();
+        PowerSounds.SOUNDS.register(modBus);
+        PowerContent.init(modBus);
+        modBus.addListener(PowersModule::registerPayloads);
+        PowerEvents.register(NeoForge.EVENT_BUS);
+        RewardHooks.powerLearner = (player, id) -> {
+            Identifier parsed = Identifier.tryParse(id);
+            if (parsed != null) Powers.learn(player, parsed, 0);
+        };
+        PowerCoreHooks.install(new PowerCoreHooks.Roller() {
+            @Override
+            public ItemStack roll(Rank rank, RandomSource random) {
+                PowerType t = PowerRegistry.roll(rank, random);
+                return t == null ? ItemStack.EMPTY : PowerContent.core(t, PowerRegistry.rollVariant(t, random));
+            }
+
+            @Override
+            public ItemStack forPower(String powerId, int variant) {
+                PowerType t = PowerRegistry.get(powerId);
+                return t == null ? ItemStack.EMPTY : PowerContent.core(t, variant);
+            }
+        });
+        PowersCommands.register();
+        PowersTests.register();
+        PowersTests.registerIsolated(modBus);
+    }
+
+    private static void registerPayloads(RegisterPayloadHandlersEvent event) {
+        var r = event.registrar("1");
+        r.playToServer(PowerPayloads.Cast.TYPE, PowerPayloads.Cast.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Casting.onPayload(sp, msg);
+        });
+        r.playToServer(PowerPayloads.Equip.TYPE, PowerPayloads.Equip.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Powers.equip(sp, msg.slot(), msg.power());
+        });
+        r.playToClient(PowerPayloads.Feedback.TYPE, PowerPayloads.Feedback.STREAM_CODEC);
+        r.playToClient(PowerPayloads.Feel.TYPE, PowerPayloads.Feel.STREAM_CODEC);
+        r.playToClient(PowerPayloads.Marks.TYPE, PowerPayloads.Marks.STREAM_CODEC);
+        r.playToClient(PowerPayloads.Beam.TYPE, PowerPayloads.Beam.STREAM_CODEC);
     }
 }

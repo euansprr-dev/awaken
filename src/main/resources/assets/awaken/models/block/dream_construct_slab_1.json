@@ -1,0 +1,17 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": {
+      "sprite": "awaken:block/dream_construct_1",
+      "force_translucent": true
+    },
+    "top": {
+      "sprite": "awaken:block/dream_construct_1",
+      "force_translucent": true
+    },
+    "side": {
+      "sprite": "awaken:block/dream_construct_1",
+      "force_translucent": true
+    }
+  }
+}
