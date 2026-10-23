@@ -300,7 +300,10 @@ final class FaunaTests {
                     h.assertTrue(FaunaRules.check(moss, level, EntitySpawnReason.NATURAL, start, RandomSource.create(3L)), "the rules allow a mossback here by day");
                     for (int i = 0; i < 80 && spawned.size() < 6; i++) {
                         NaturalSpawner.spawnCategoryForPosition(MobTypes.FAUNA, level, start);
-                        for (FaunaMob m : FaunaCensus.in(level)) if (!before.contains(m) && !spawned.contains(m)) spawned.add(m);
+                        // only what spawned here: elsewhere in the test world it may be night, and night hunters spawn there
+                        for (FaunaMob m : FaunaCensus.in(level)) {
+                            if (!before.contains(m) && !spawned.contains(m) && m.distanceToSqr(Vec3.atCenterOf(start)) < 48 * 48) spawned.add(m);
+                        }
                     }
                     h.assertTrue(!spawned.isEmpty(), "vanilla's spawner placed overworld creatures through the biome modifier");
                     for (FaunaMob m : spawned) {
@@ -354,6 +357,9 @@ final class FaunaTests {
 
         AwakenTests.registerIsolated("fauna_sighting_discovery", 200, h -> {
             ServerLevel level = h.getLevel();
+            // only the creatures this test places: natural spawns near the awakened player would be seen first
+            boolean spawning = level.getGameRules().get(FaunaModule.SPAWNING.get());
+            level.getGameRules().set(FaunaModule.SPAWNING.get(), false, level.getServer());
             ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 0));
             p.setYRot(0.0F);
             p.setXRot(0.0F);
@@ -394,6 +400,7 @@ final class FaunaTests {
                 Sightings.forget(p.getUUID());
                 h.assertTrue(Sightings.check(p) == moth, "turn around and you see it");
             } finally {
+                level.getGameRules().set(FaunaModule.SPAWNING.get(), spawning, level.getServer());
                 made.forEach(AwakenMob::discard);
                 level.getServer().getPlayerList().remove(p);
             }
