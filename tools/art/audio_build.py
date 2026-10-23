@@ -99,7 +99,7 @@ def render(snd):
     x = snd.render(snd.seed)
     if snd.mono:
         x = K.mono(x)  # played in the world: OpenAL only places mono sources
-    y = K.master(x, snd.rms, snd.ceiling)
+    y = K.master(x, snd.rms, snd.ceiling - 0.7)  # room for the encoder's overshoot
     path = os.path.join(SOUNDS, snd.name + ".ogg")
     K.write_ogg(path, y, snd.quality, snd.title)
     kb = os.path.getsize(path) / 1024

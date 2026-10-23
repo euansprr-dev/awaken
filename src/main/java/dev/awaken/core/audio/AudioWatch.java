@@ -57,6 +57,8 @@ final class AudioWatch {
     private static Set<String> beasts;
 
     static void tick(MinecraftServer server) {
+        // GameTests call discoveries()/compute() themselves; other tests' mock players never wake the watches
+        if (server instanceof net.minecraft.gametest.framework.GameTestServer) return;
         int t = server.getTickCount();
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             int phase = Math.floorMod(p.getUUID().hashCode(), 100);

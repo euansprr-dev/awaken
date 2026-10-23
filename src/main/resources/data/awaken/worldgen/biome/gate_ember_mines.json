@@ -59,9 +59,9 @@
     },
     "minecraft:audio/background_music": {
       "default": {
-        "sound": "minecraft:music.nether.basalt_deltas",
-        "min_delay": 12000,
-        "max_delay": 24000
+        "sound": "awaken:music.gate.ember_mines",
+        "min_delay": 3600,
+        "max_delay": 12000
       }
     }
   },

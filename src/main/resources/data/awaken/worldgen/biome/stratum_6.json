@@ -30,7 +30,7 @@
     },
     "minecraft:audio/background_music": {
       "default": {
-        "sound": "minecraft:music.nether.basalt_deltas",
+        "sound": "awaken:music.descent.6",
         "min_delay": 6000,
         "max_delay": 18000
       }

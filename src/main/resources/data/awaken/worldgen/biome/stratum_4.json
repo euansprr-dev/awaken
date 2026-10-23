@@ -24,7 +24,7 @@
     },
     "minecraft:audio/background_music": {
       "default": {
-        "sound": "minecraft:music.nether.soul_sand_valley",
+        "sound": "awaken:music.descent.4",
         "min_delay": 6000,
         "max_delay": 18000
       }

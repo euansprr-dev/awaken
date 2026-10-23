@@ -52,9 +52,9 @@
     },
     "minecraft:audio/background_music": {
       "default": {
-        "sound": "minecraft:music.overworld.deep_dark",
-        "min_delay": 12000,
-        "max_delay": 24000
+        "sound": "awaken:music.gate.bell_crypt",
+        "min_delay": 3600,
+        "max_delay": 12000
       }
     }
   },
