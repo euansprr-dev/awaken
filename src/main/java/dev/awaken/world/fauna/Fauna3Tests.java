@@ -412,6 +412,10 @@ final class Fauna3Tests {
                         // the school's shimmer: a swimmer among them can see in the dark water
                         p.teleportTo(level, centre.getX() + 0.5, centre.getY() + 2, centre.getZ() + 0.5, Set.of(), 0, 0, true);
                         fish.teleportTo(p.getX() + 1, p.getY(), p.getZ());
+                        // a test player has no client to tick it: two ticks of its own work out that it is in the water
+                        // (the first finds the water, the second puts its eyes under it)
+                        p.doTick();
+                        p.doTick();
                         h.assertTrue(p.isInWater(), "the player swims");
                         h.assertTrue(fish.isInWater() && (fish.wildState() & WildPose.S_SWIM) != 0, "the fish swims");
                         p.removeEffect(MobEffects.NIGHT_VISION);

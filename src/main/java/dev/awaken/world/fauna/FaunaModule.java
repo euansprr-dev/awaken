@@ -77,6 +77,7 @@ public final class FaunaModule {
         Mounts.init(modBus); // P3: taming, the bridle, the whistle
         dev.awaken.world.fauna.lair.LairWorldgen.init(modBus);
         modBus.addListener(FaunaModule::placements);
+        modBus.addListener(FaunaModule::caveAttributes);
         modBus.addListener(FaunaNet::register);
         FaunaHooks.install(new Hooks());
         Progression.onAwakened(Reveal::onAwakened);
@@ -109,6 +110,16 @@ public final class FaunaModule {
         return level.getGameRules().get(SPAWNING.get());
     }
 
+
+    /** P3: the Hollows' wicklings follow glow berries (vanilla's tempt goal reads the tempt range attribute). */
+    private static void caveAttributes(net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent e) {
+        for (String id : dev.awaken.mobs.entity.Fauna3Kinds.CAVE) {
+            var type = dev.awaken.mobs.MobTypes.type(id);
+            if (type != null && !e.has(type, net.minecraft.world.entity.ai.attributes.Attributes.TEMPT_RANGE)) {
+                e.add(type, net.minecraft.world.entity.ai.attributes.Attributes.TEMPT_RANGE, 10.0);
+            }
+        }
+    }
     private static void placements(RegisterSpawnPlacementsEvent e) {
         for (MobDef d : Bestiary.fauna()) {
             EntityType<? extends Mob> type = MobTypes.type(d);

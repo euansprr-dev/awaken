@@ -383,3 +383,153 @@ its beast home, two more lair styles built in front of the camera, the Codex).
   (`FaunaItems.MATERIALS`); recipes can refer to them by id.
 - Core (`HearthHooks`): a way to read back the installed lookup would let tests swap it in try/finally (the talent
   tests don't test the Hearth guard for that reason; the lair tests do, through `FaunaRules.hearth`).
+
+# P3: the water, the caves, and mounts
+
+Plan v2 P3. Two more families (ten creatures) for the places P1 and P2 left empty: rivers, lakes and the sea (the
+Tidewater) and the caves (the Hollows), each with a named beast and a lair. And mounts (§4.4, levels 11-20): the
+Frost Stag, the Dune Ray and the Tidesteed can be tamed, bridled, ridden, whistled for and sent home to rest.
+
+Code: `mobs/def/WaterBestiary.java`, `CaveBestiary.java` (the defs); `mobs/entity/Fauna3Kinds.java` (which class each
+id gets, the water category, the mount kinds), `WildMount.java` (trust, bridle, riding, the saved bond),
+`WaterFauna.java` + `Swim.java` (swimmers), `CaveFauna.java`, `DeepBeast.java` (the Lantern Maw), `Fauna3Goals.java`,
+`MountPhysics.java`, `MountHooks.java` (the bridge to `world.fauna.Mounts`), `WildPose.java`; client
+`mobs/client/anim/WildRenderer.java`, `WildRenderState.java`, `Fauna3Data.java` (generated rigs),
+`mobs/client/model/WildModel.java`, `world/fauna/client/BridleLayer.java`; `world/fauna/Mounts.java`, `MountBond.java`,
+`WhistleItem.java`, `Fauna3Commands.java`, `lair/DeepLairs.java`; tests `Fauna3Tests.java`, `MountTests.java`.
+Everything generated (rigs, textures, voices, loot, biome modifiers, lairs, recipes, tags, requests, level road, lang)
+comes from `tools/art/specs/fauna3.py`.
+
+## The families
+
+| family (theme) | where | creatures (role, talent) | materials |
+|---|---|---|---|
+| The Tidewater (`TIDEWATER`) | rivers, lakes, oceans; the Maw in deep oceans | Glimmerfin (ambient school, `SHOAL`), Breathbell Jelly (ambient, `AIRBELL`), Brook Otter (neutral, `FETCH`), Tidesteed (neutral, a mount, `TIDE`), **The Lantern Maw** (beast) | `tide_scale`, `tide_pelt`, `tide_gel` |
+| The Hollows (`HOLLOWS`) | dripstone caves, lush caves, the deep dark | Chime Cricket (ambient, `CHIME`), Wickling (ambient, `RIPEN`), Drip Lurker (night hunter, `CLING`), Hushling (hunter, `HUSH`, a listener), **The Thousandfoot** (beast) | `hollow_crystal`, `hollow_chitin`, `hollow_wick` |
+
+All ten have their own hero-rig body (`fauna3.py` rigs and keyframe clips: idle, swim or walk, hurt, death, the moves,
+and held poses: hang, chirp, ripen, listen, deflate, carry, rest, beached, ridden). Swimmers pitch with their swim; a
+lurker on the roof hangs upside down; a bridled stag or ray wears a bridle overlay (`BridleLayer`).
+
+| creature | what the player sees |
+|---|---|
+| Glimmerfin | schools of 4-6 that follow a leader; swim through one and your eyes open to the dark water (night vision 15 s, not stacked); sprint at them and they scatter |
+| Breathbell Jelly | drifts, rises at night; a drowning swimmer who touches it gets 150 ticks of air, then its bell is empty for 20 s (it deflates) |
+| Brook Otter | on banks by day and dusk; dives near a player, rummages on the bottom and brings the find to them (clay, fish, nuggets, rarely a nautilus shell or a Tide Scale); Pounce if struck |
+| Tidesteed | a sea horse of the open sea; leaps the waves at the surface; Tail Lash and Wave Surge if struck; a mount |
+| The Lantern Maw | deep-sea beast whose lure is the only light at night; Maw Lunge, Lure, Black Water, Pressure Wave, Abyss Glare, Tooth Storm, Deep Hunger |
+| Chime Cricket | finds ore through the rock within 8 blocks and sings beside it, faster the closer you come |
+| Wickling | walks under a bare cave vine and ripens it (up to three of the column; never in a Hearth radius) |
+| Drip Lurker | clings to the roof like a dripstone fang; in the dark it drops on whoever passes under it; light rule |
+| Hushling | blind; hears the noisiest player standing in the dark within 20 blocks; sneak past it; light rule |
+| The Thousandfoot | cave beast; Coil Strike, Mandible Snap, Burrow, Venom Spit, Crystal Shed, Dripfall, Thousand Legs |
+
+## Spawning and caps
+
+- Water creatures have their own category `awaken:fauna_water` (enum extension, 10 per player, peaceful) so they never
+  take vanilla's fish or squid slots, and their own role caps per player (ambient 7, neutral 3, beast 1, no hunters).
+  Placement `IN_WATER` (`OCEAN_FLOOR` heightmap); `FaunaRules` checks water at the spot (deep enough for the big ones).
+  The census counts water and land apart (a beast counts in both).
+- Cave creatures use `awaken:fauna` and its caps, but only under a roof (no sky; stone, deepslate, tuff, dripstone,
+  moss or sculk underfoot). The hunters keep the light rule.
+- Biome modifiers `fauna_tidewater_rivers`, `_lakes`, `_ocean`, `_deep`, `fauna_hollows_dripstone`, `_lush`,
+  `_deep_dark` (weights in `fauna3.py` `SPAWNS`).
+- Owned mounts never despawn and are left out of the census (they don't fill a cap).
+
+## Lairs
+
+- **The Sunken Shrine** (Lantern Maw): on the floor of deep oceans (placement `SEABED`: 12+ blocks of water, a gentle
+  slope): a prismarine dais lit by four sea lanterns, eight columns (one fallen), a gate, bones, kelp and coral.
+- **The Crystal Nest** (Thousandfoot): carved in the rock under dripstone and lush caves (placement `CAVE`: 20-50 below
+  sea level, 24+ of rock overhead): a dome with a ringed floor, tunnels east and west, stalactites, amethyst, a pool, a
+  bone-ring nest, glow berries and moss.
+- P2's rules hold (registry, rumours, the Now tracker, Gate Map marks through `FaunaClient.lairMarks`); a lair counts
+  as found only within 16 blocks of its den's height too. `lair place` builds the shrine in a glass tank of sea water
+  and carves the nest under you and puts you in it.
+
+## Mounts
+
+- **Trust** (level 11+): sneak and feed it its favourite food a few times, at least 1.5 s apart (Frost Stag: sweet
+  berries x3; Dune Ray: cactus flower x4; Tidesteed: kelp x3). Below level 11, or standing up, it shies away and eats
+  nothing. Trusting, it follows you. Toasts and the Now tracker show each step ("Frost Stag 4 m N · sneak, feed sweet
+  berries").
+- **Bridle**: use a Hunter's Bridle on your trusting mount (level 11 recipe: leather, string, an iron nugget and any
+  fauna material). Then right-click to ride. Sneak with an empty hand: it rests where it stands (again: it wakes).
+- **Riding** (the rider steers, like a horse): the stag runs and makes charged jumps; the ray skims low over the ground
+  (hover 1.1 blocks), a charged jump is a soar, and holding jump glides down slowly; the Tidesteed swims where you look,
+  surfaces and dives, and its rider has Breath of the Nautilus. Mounts take no damage from falls under 6 blocks (a
+  glider never).
+- **Loyalty**: the mount saves its bond (`awaken_mount`: schema, owner, trust, bridled, resting); the player keeps
+  `awaken:fauna_mount` (schema 1, kept through death: which mount, its kind, where and in which world it was last
+  seen, resting or not). It never despawns and never turns on its owner; resting in a Hearth radius it heals. One
+  bonded mount per player: the last one tamed answers the whistle.
+- **Whistle** (Hunter's Whistle, level 13 recipe): within 160 blocks the mount comes (runs if within 20, otherwise
+  appears beside you, in water for the Tidesteed); cooldown 10 s (2 s after a call that failed). Sneak and blow it to
+  send the mount home to rest at your Hearth. When it can't, it says why: no mount yet, in another world, out of
+  earshot (last seen where), too far, no room (it needs water), no Hearth, Hearth too far, you are riding it.
+- Level road (`data/awaken/awaken/level_road/`): `wild_mounts` (level 11: the bridle recipe; Now "Tame a mount: sneak,
+  feed it" once a mount has been met) and `mount_whistle` (level 13: the whistle recipe; Now "Ride your bridled
+  mount"). Existing steps unchanged. Counters `awaken:mount_met`, `mounts_tamed`, `mounts_bridled`, `mount_rides`.
+
+## Drops, gear, requests
+
+Materials join the Hunter gear tags in `src/main/merge/fauna/`: hides `tide_scale`, `tide_pelt`, `hollow_chitin`;
+cores `hollow_crystal` (E), `maw_lantern` and `thousandfoot_mandible` (D); bindings `tide_gel`, `hollow_wick`.
+`#awaken:fauna_materials` holds all eighteen family materials (the bridle and whistle recipes use it). Hushlings drop
+bone, sculk and rarely an echo shard. Eight new request pools in `data/awaken/awaken/request/` (six materials, two
+beast parts).
+
+## Commands (admin unless noted)
+
+- `/awaken fauna mount` (anyone): your mount, where it is, resting or not.
+- `/awaken fauna mount tame <kind> [bridled]`, `ride`, `drive <ticks> [jump-at]`, `whistle [home]`.
+- `/awaken fauna tank [deep]`: a glass tank of sea water ahead of you with the Tidewater (or the Lantern Maw), tagged
+  `awaken_tank`. `/awaken fauna grotto [beast]`: a sealed dark grotto with ore, vines and the Hollows (or the
+  Thousandfoot), tagged `awaken_grotto`.
+- `goto tidewater|hollows`, `lineup` (water creatures are left out of land line-ups), `lair goto|place lantern_maw|thousandfoot`.
+
+## Tests
+
+`fauna_p3_bestiary`, `fauna_p3_biome_modifiers`, `fauna_p3_water_rules`, `fauna_p3_lair_placement` (real noise:
+shrines only on deep sea floor under deep water, nests only deep in their cave biomes), `fauna_mount_physics`,
+`fauna_mount_saves`; isolated: `fauna_p3_water_spawning` (vanilla's spawner in a river by day and by night and in the
+sea: every creature in water, none past its caps, nothing in a land category), `fauna_p3_caves_spawn` (a sealed grotto
+in each cave biome by day and by night; one torch and the hunters stop while the cricket still comes),
+`fauna_p3_lairs_build` (both lairs built where they belong; the Maw lives in the water at its shrine; dumps for
+`fauna2.py lairs`), `fauna_p3_talents` (shimmer, air bell, the otter's fetch, the cricket's ore, the wickling's
+berries, the lurker's roof and drop, the light rule), `fauna_mount_taming` (refused below 11 and standing, the ritual,
+the bridle, rider input and the charged jump, save and load, the whistle's answers, glide and swim input),
+`fauna_mount_tidesteed` (dives where you look; its rider breathes). P1/P2 counts updated (44 creatures, 18 materials).
+
+## Art
+
+`python3 tools/art/build_all.py fauna3` (textures, glow, eggs, icons, bridle overlays), `fauna3.py content` (JSON),
+`fauna3.py sounds` (voices at 44.1 kHz, every event subtitled; steps share `subtitles.awaken.fauna.step`),
+`fauna3.py preview <dir> [ids]` (each creature on its real rig: three day views, night with glow, a size line-up),
+`fauna3.py java` (writes `Fauna3Data.java`). Previews judged: the hippocamp, the maw, the lurker, the thousandfoot, the
+fish and the cricket read well; the Maw's tail fin is plain. Autopilot: `tools/autopilot/fauna3.txt`.
+
+## Known gaps (P3)
+
+- Not seen in a real client: riding feel (speeds, the ray's glide), swim pitch and the bridle overlay are checked by
+  tests and previews only; the autopilot tour covers them.
+- `goto hollows` lands on the surface above the cave biome; use `grotto` or `lair goto thousandfoot` for screenshots.
+- Re-running `fauna_sounds.py build` or `fauna2.py content` alone rewrites shared files without P3's entries: run
+  `fauna3.py content` and `fauna3.py sounds` after them (as `build_all.py fauna3` does).
+
+## SPEC-worthy decisions (P3, for the integrator)
+
+1. Two families: the Tidewater (5) and the Hollows (5); 44 overworld creatures in all.
+2. A water fauna category `awaken:fauna_water` (10 per player) with water role caps 7/3/0/1; cave fauna share
+   `awaken:fauna` but need a roof.
+3. Mounts from level 11: trust by sneaking and feeding (3-4 feeds); Hunter's Bridle (level 11 recipe); Hunter's
+   Whistle (level 13 recipe, 160 blocks, 10 s cooldown). One bonded mount per player.
+4. Lair placements SEABED and CAVE for the two new lairs (spacing 96, separation 40).
+
+## Requests (P3)
+
+- Registration lines made outside the module (please keep): `Theme` (TIDEWATER, HOLLOWS), `Model` (10 bodies,
+  `Move.SWIM`), `FaunaTalent` (8), `Bestiary` (two define calls), `MobTypes` (the Fauna3Kinds hook),
+  `FaunaMob.SIGNATURES`, `AwRenderers`, `HeroRig` (parses `Fauna3Data`), `META-INF/enumextensions.json`
+  (`AWAKEN_FAUNA_WATER`).
+- Hearth: a stable spot beside the Anchor would give resting mounts a proper place (now any open spot in the radius).

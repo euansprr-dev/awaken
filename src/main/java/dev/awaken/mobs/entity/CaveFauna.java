@@ -136,19 +136,32 @@ public class CaveFauna extends FaunaMob implements WildPose {
 
     // ---- the chime cricket ---------------------------------------------------------------------------------------------
 
-    /** Ten probes within 8 blocks for ore; the first found is its spot (forgotten when mined). */
+    /**
+     * Sweeps the rock within 8 blocks for ore, one 17 x 17 layer a call (11 calls a sweep, 5 below to 5 above); the
+     * nearest ore of the layer is its spot (forgotten when mined). A sweep that finds nothing rests 15 calls. Random
+     * probes missed a lone ore vein too often.
+     */
     void seekOre(ServerLevel level) {
         if (lure != null && !level.getBlockState(lure).is(ORES)) lure = null;
-        if (lure != null || oreTries > 30) return;
-        oreTries++;
-        for (int i = 0; i < 10; i++) {
-            probe.set(getBlockX() + random.nextInt(17) - 8, getBlockY() + random.nextInt(11) - 5, getBlockZ() + random.nextInt(17) - 8);
-            if (level.hasChunkAt(probe) && level.getBlockState(probe).is(ORES)) {
-                lure = probe.immutable();
-                oreTries = 0;
-                return;
+        if (lure != null) return;
+        if (oreTries < 0) {
+            oreTries++;
+            return;
+        }
+        int dy = oreTries - 5, bx = getBlockX(), by = getBlockY() + dy, bz = getBlockZ();
+        int best = Integer.MAX_VALUE;
+        for (int x = -8; x <= 8; x++) {
+            for (int z = -8; z <= 8; z++) {
+                probe.set(bx + x, by, bz + z);
+                if (!level.hasChunkAt(probe) || !level.getBlockState(probe).is(ORES)) continue;
+                int d = x * x + z * z;
+                if (d < best) {
+                    best = d;
+                    lure = probe.immutable();
+                }
             }
         }
+        oreTries = lure != null ? 0 : oreTries >= 10 ? -15 : oreTries + 1;
     }
 
     /** Beside its ore it sings when a player is within 16 blocks, more often the closer they come. */
