@@ -1,0 +1,173 @@
+package dev.awaken.mobs.client.model;
+
+import dev.awaken.Awaken;
+import dev.awaken.mobs.client.anim.HeroRenderState;
+import dev.awaken.mobs.client.anim.HeroRig;
+import net.minecraft.client.animation.AnimationChannel;
+import net.minecraft.client.animation.AnimationDefinition;
+import net.minecraft.client.animation.Keyframe;
+import net.minecraft.client.animation.KeyframeAnimation;
+import net.minecraft.client.animation.KeyframeAnimations;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.util.Mth;
+import org.joml.Vector3f;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * One body for every hero rig (the named beasts, the Hollow Owl, the Bogwick): the mesh is built from
+ * {@link HeroRig} and every clip is baked into a vanilla {@link KeyframeAnimation}. setupAnim layers them like a
+ * small animation graph: idle breathing, a distance-locked walk that blends into the run (or a flight loop), head look
+ * toward what it watches, the cue clip (a move's wind-up, its strike, a roar, a warning), the melee bite, the flinch,
+ * and the fall, which replaces everything else.
+ */
+public final class HeroModel extends EntityModel<HeroRenderState> {
+    private final HeroRig rig;
+    private final List<KeyframeAnimation> baked = new ArrayList<>();
+    private final List<HeroRig.Clip> clips = new ArrayList<>();
+    private final Map<String, Integer> clipIndex = new HashMap<>();
+    private final ModelPart[] lookParts;
+    private final float[] lookYaw, lookPitch;
+    private final int idle, walk, run, fly, air, death, hurt, bite, angry;
+
+    public HeroModel(ModelPart root, HeroRig rig) {
+        super(root, rig.translucent ? RenderTypes::entityTranslucent : RenderTypes::entityCutout);
+        this.rig = rig;
+        for (HeroRig.Clip c : rig.clips.values()) {
+            clipIndex.put(c.name(), baked.size());
+            clips.add(c);
+            baked.add(definition(c).bake(root)); // throws if a bone is missing, like any vanilla model
+        }
+        var lookup = root.createPartLookup();
+        lookParts = new ModelPart[rig.look.size()];
+        lookYaw = new float[lookParts.length];
+        lookPitch = new float[lookParts.length];
+        for (int i = 0; i < lookParts.length; i++) {
+            HeroRig.Look l = rig.look.get(i);
+            lookParts[i] = lookup.apply(l.bone());
+            lookYaw[i] = l.yaw();
+            lookPitch[i] = l.pitch();
+        }
+        idle = clip("idle");
+        walk = clip("walk");
+        run = clip("run");
+        fly = clip("fly");
+        air = clip("air");
+        death = clip("death");
+        hurt = clip("hurt");
+        bite = clip("bite");
+        angry = clip("angry");
+    }
+
+    public static ModelLayerLocation layer(String id) {
+        return new ModelLayerLocation(Awaken.id("hero_" + id), "main");
+    }
+
+    public HeroRig rig() {
+        return rig;
+    }
+
+    /** The clip slot for a name, or -1. */
+    public int clip(String name) {
+        Integer i = clipIndex.get(name);
+        return i == null ? -1 : i;
+    }
+
+    public float length(int clip) {
+        return clip < 0 ? 0.0F : clips.get(clip).length();
+    }
+
+    // ---- building ---------------------------------------------------------------------------------------------------
+
+    public static LayerDefinition create(HeroRig rig) {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition[] parts = new PartDefinition[rig.bones.size()];
+        for (int i = 0; i < parts.length; i++) {
+            HeroRig.Bone b = rig.bones.get(i);
+            CubeListBuilder cubes = CubeListBuilder.create();
+            for (HeroRig.Cube c : b.cubes()) {
+                cubes.texOffs(c.u(), c.v()).mirror(c.mirror())
+                        .addBox(c.x(), c.y(), c.z(), c.w(), c.h(), c.d(), c.inflate() == 0 ? CubeDeformation.NONE : new CubeDeformation(c.inflate()));
+            }
+            PartDefinition parent = b.parent() < 0 ? mesh.getRoot() : parts[b.parent()];
+            parts[i] = parent.addOrReplaceChild(b.name(), cubes, PartPose.offsetAndRotation(b.px(), b.py(), b.pz(), b.rx(), b.ry(), b.rz()));
+        }
+        return LayerDefinition.create(mesh, rig.texW, rig.texH);
+    }
+
+    private static AnimationDefinition definition(HeroRig.Clip c) {
+        AnimationDefinition.Builder b = AnimationDefinition.Builder.withLength(c.length());
+        if (c.loop()) b.looping();
+        for (HeroRig.Track t : c.tracks()) {
+            Keyframe[] keys = new Keyframe[t.keys().size()];
+            for (int k = 0; k < keys.length; k++) {
+                HeroRig.Key key = t.keys().get(k);
+                Vector3f v = switch (t.target()) {
+                    case POS -> KeyframeAnimations.posVec(key.x(), key.y(), key.z());
+                    case ROT -> KeyframeAnimations.degreeVec(key.x(), key.y(), key.z());
+                    case SCALE -> KeyframeAnimations.scaleVec(key.x(), key.y(), key.z());
+                };
+                keys[k] = new Keyframe(key.t(), v, key.catmull() ? AnimationChannel.Interpolations.CATMULLROM : AnimationChannel.Interpolations.LINEAR);
+            }
+            AnimationChannel.Target target = switch (t.target()) {
+                case POS -> AnimationChannel.Targets.POSITION;
+                case ROT -> AnimationChannel.Targets.ROTATION;
+                case SCALE -> AnimationChannel.Targets.SCALE;
+            };
+            b.addAnimation(t.bone(), new AnimationChannel(target, keys));
+        }
+        return b.build();
+    }
+
+    // ---- animating --------------------------------------------------------------------------------------------------
+
+    private void play(int clip, float seconds, float weight) {
+        if (clip >= 0 && weight > 0.001F) baked.get(clip).apply((long) (seconds * 1000.0F), Math.min(1.0F, weight));
+    }
+
+    @Override
+    public void setupAnim(HeroRenderState s) {
+        super.setupAnim(s);
+        if (s.dying >= 0 && death >= 0) {
+            play(death, s.dying, 1.0F);
+            return;
+        }
+        float t = s.ageInTicks / 20.0F;
+        boolean grounded = !s.airborne || air < 0;
+        float moving = grounded ? s.walk : 0.0F;
+        play(idle, t, 1.0F - 0.55F * moving);
+        if (angry >= 0) play(angry, t, s.angry * (1.0F - moving));
+        if (fly >= 0) play(fly, t * (1.0F + Math.min(2.0F, s.speed * 4.0F)), 1.0F);
+        if (air >= 0 && s.airborne) play(air, t, 1.0F);
+        if (moving > 0.01F) {
+            if (walk >= 0) play(walk, s.gait / rig.walkStride * length(walk), moving * (1.0F - s.run));
+            if (run >= 0) play(run, s.gait / rig.runStride * length(run), moving * s.run);
+            else if (walk >= 0 && s.run > 0) play(walk, s.gait / rig.walkStride * length(walk), moving * s.run);
+        }
+        // Look where the head is turned (the cue clips own the head while they play).
+        float lookW = 1.0F - Mth.clamp(s.cueWeight, 0.0F, 1.0F) * 0.7F;
+        float yaw = Mth.clamp(s.yRot, -170.0F, 170.0F) * Mth.DEG_TO_RAD * lookW;
+        float pitch = Mth.clamp(s.xRot, -60.0F, 60.0F) * Mth.DEG_TO_RAD * lookW;
+        for (int i = 0; i < lookParts.length; i++) {
+            if (lookParts[i] == null) continue;
+            lookParts[i].yRot += yaw * lookYaw[i];
+            lookParts[i].xRot += pitch * lookPitch[i];
+        }
+        play(s.prevClip, s.prevTime, s.prevWeight);
+        play(s.cueClip, s.cueTime, s.cueWeight);
+        if (s.melee >= 0 && bite >= 0 && s.melee <= length(bite)) play(bite, s.melee, 1.0F);
+        if (s.hurt >= 0 && hurt >= 0 && s.hurt <= length(hurt)) play(hurt, s.hurt, 1.0F);
+    }
+}
