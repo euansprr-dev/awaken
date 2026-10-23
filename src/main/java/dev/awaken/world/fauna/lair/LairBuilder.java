@@ -54,6 +54,10 @@ public final class LairBuilder {
             case RAMS_CAIRN -> ramsCairn(s, r, seed, variant);
             case SPORE_RING -> sporeRing(s, r, seed);
         }
+        // the den itself stays clear: carpets, petals and snow round it, never on it
+        if (s.here(style.denX, style.denZ)) {
+            for (int dy = 0; dy < 4; dy++) s.set(style.denX, style.denY + dy, style.denZ, AIR);
+        }
     }
 
     // ---- helpers -----------------------------------------------------------------------------------------------------

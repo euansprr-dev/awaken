@@ -63,10 +63,13 @@ public class LairStructure extends Structure {
                 x += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
                 z += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
             }
-            // the cheap test first: is this the beast's biome at all (sampled just above sea level)
-            Holder<Biome> b = ctx.biomeResolver().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(sea + 4), QuartPos.fromBlock(z));
+            // the cheap test first: is this the beast's biome at all (sampled just above sea level; on the peaks, where the
+            // mountain biomes only start high up, at the surface itself)
+            int top = -1;
+            if (style.highland) top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
+            Holder<Biome> b = ctx.biomeResolver().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(style.highland ? top : sea + 4), QuartPos.fromBlock(z));
             if (!ctx.validBiome().test(b)) continue;
-            int top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
+            if (top < 0) top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
             int floor = height(ctx, x, z, Heightmap.Types.OCEAN_FLOOR_WG);
             int water = top - floor;
             if (water > (style.wet ? 2 : 0)) continue;

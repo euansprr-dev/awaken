@@ -419,6 +419,40 @@ final class WildTests {
                     .thenSucceed();
         });
 
+        AwakenTests.registerIsolated("fauna_lair_styles_build", 200, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos centre = h.absolutePos(new BlockPos(0, UP, 0));
+            BlockPos lo = centre.offset(-LairStyle.EXTENT - 1, -LairStyle.DEPTH, -LairStyle.EXTENT - 1);
+            BlockPos hi = centre.offset(LairStyle.EXTENT + 1, LairStyle.HEIGHT, LairStyle.EXTENT + 1);
+            try {
+                for (LairStyle style : LairStyle.values()) {
+                    for (int variant = 0; variant < 2; variant++) {
+                        boolean twoLooks = style == LairStyle.GLASS_HOLLOW || style == LairStyle.ANTLER_GROVE || style == LairStyle.SILK_HOLLOW
+                                || style == LairStyle.RAMS_CAIRN;
+                        if (variant == 1 && !twoLooks) continue;
+                        wipe(level, lo, hi);
+                        // a meadow to stand it on, so the ring outside the floor has ground to follow
+                        for (int dx = -LairStyle.EXTENT; dx <= LairStyle.EXTENT; dx++) for (int dz = -LairStyle.EXTENT; dz <= LairStyle.EXTENT; dz++) {
+                            level.setBlock(centre.offset(dx, 0, dz), Blocks.GRASS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS);
+                            level.setBlock(centre.offset(dx, -1, dz), Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
+                        }
+                        dev.awaken.world.fauna.lair.LairPiece piece = new dev.awaken.world.fauna.lair.LairPiece(style, centre, 7L + style.ordinal(), variant);
+                        piece.build(level, piece.getBoundingBox());
+                        BlockPos den = piece.den();
+                        h.assertTrue(LairBuilder.standingRoom(level, den), style + " (" + variant + "): the den is standing room");
+                        for (int dy = 0; dy < 4; dy++) {
+                            var st = level.getBlockState(den.above(dy));
+                            h.assertTrue(st.getCollisionShape(level, den.above(dy)).isEmpty(), style + " (" + variant + "): headroom over the den at +" + dy + ": " + st);
+                        }
+                        dump(level, style, variant, lo, hi, centre);
+                    }
+                }
+            } finally {
+                wipe(level, lo, hi);
+            }
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("fauna_lair_rumour_and_tracker", 100, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer p = FaunaTests.realPlayer(h, new BlockPos(0, UP, 0));
@@ -535,6 +569,29 @@ final class WildTests {
             if (time < 12000) h.assertTrue(seen.size() >= 3, "several families came out: " + seen);
         } finally {
             FaunaRules.timeOverride = null;
+        }
+    }
+
+    /** Writes a built lair's blocks to run/fauna_lairs/ (tools/art/specs/fauna2.py lairs renders them for a look). */
+    static void dump(ServerLevel level, LairStyle style, int variant, BlockPos lo, BlockPos hi, BlockPos centre) {
+        StringBuilder sb = new StringBuilder("{\"style\":\"").append(style.getSerializedName()).append("\",\"variant\":").append(variant)
+                .append(",\"den\":[").append(style.denX).append(',').append(style.denY).append(',').append(style.denZ).append("],\"blocks\":[");
+        boolean first = true;
+        for (BlockPos q : BlockPos.betweenClosed(lo, hi)) {
+            var st = level.getBlockState(q);
+            if (st.isAir()) continue;
+            if (!first) sb.append(',');
+            first = false;
+            sb.append('[').append(q.getX() - centre.getX()).append(',').append(q.getY() - centre.getY()).append(',').append(q.getZ() - centre.getZ())
+                    .append(",\"").append(BuiltInRegistries.BLOCK.getKey(st.getBlock()).getPath()).append("\"]");
+        }
+        sb.append("]}");
+        try {
+            java.nio.file.Path dir = java.nio.file.Path.of("fauna_lairs");
+            java.nio.file.Files.createDirectories(dir);
+            java.nio.file.Files.writeString(dir.resolve(style.getSerializedName() + "_" + variant + ".json"), sb.toString());
+        } catch (java.io.IOException e) {
+            Awaken.LOG.warn("[fauna] could not write the lair dump: {}", e.toString());
         }
     }
 
