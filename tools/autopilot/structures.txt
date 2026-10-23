@@ -17,8 +17,11 @@ cmd gamerule awaken:fauna_spawning false
 cmd time set 6000
 cmd time pause
 cmd awaken admin awaken
-wait 60
+wait 200
+cmd awaken powers starter 1
+wait 20
 screen close
+cmd gamerule send_command_feedback false
 
 # ---- the Well: the landmark near spawn (it is built in the first seconds of a new world) ----
 cmd awaken landmark goto well
