@@ -122,7 +122,8 @@ public final class Scanning {
         if (c == null || now - c.builtAt() > 400 || c.builtFrom().distSqr(player.blockPosition()) > 96 * 96) {
             List<RuinLocator.Found> found = RuinLocator.near(player.level(), player.blockPosition(), OMEN_RANGE,
                     List.of(RuinKind.values()), Above.data(player), true, 4);
-            c = new OmenCache(now, player.blockPosition(), found);
+            // an empty answer may only mean the locator hasn't finished sampling this area: ask again soon
+            c = new OmenCache(found.size() < 2 ? now - 360 : now, player.blockPosition(), found);
             OMENS.put(player.getUUID(), c);
         }
         return c.found();

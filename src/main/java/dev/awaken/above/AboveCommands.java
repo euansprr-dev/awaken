@@ -40,7 +40,7 @@ final class AboveCommands {
                         }
                         int n = 0;
                         for (RuinKind k : List.of(RuinKind.VAULT, RuinKind.SKY, RuinKind.OCEAN, RuinKind.MONOLITH)) {
-                            var found = RuinLocator.near(level, origin, 4000, List.of(k), sp == null ? null : Above.data(sp), false, 1);
+                            var found = RuinLocator.near(level, origin, 4000, List.of(k), sp == null ? null : Above.data(sp), false, 1, 96);
                             if (found.isEmpty()) {
                                 src.sendSuccess(() -> Component.literal(k.displayName + ": none within 4,000 blocks").withStyle(ChatFormatting.GRAY), false);
                                 continue;

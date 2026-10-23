@@ -34,16 +34,23 @@ public final class RuinLocator {
     public record Found(RuinKind kind, BlockPos pos, boolean discovered, double distance) {}
 
     private static final Map<Long, Boolean> VALID = new ConcurrentHashMap<>();
+    private static final int MAX_UNCACHED = 8;
     private static long cachedSeed;
 
-    private static boolean valid(ServerLevel level, RuinKind kind, Holder<Structure> structure, ChunkPos chunk) {
-        long seed = level.getSeed();
-        if (seed != cachedSeed) {
+    private static long key(ChunkPos chunk, RuinKind kind) {
+        return chunk.pack() * 31 + kind.ordinal();
+    }
+
+    private static boolean cached(ServerLevel level, RuinKind kind, ChunkPos chunk) {
+        if (level.getSeed() != cachedSeed) {
             VALID.clear();
-            cachedSeed = seed;
+            cachedSeed = level.getSeed();
         }
-        long key = chunk.pack() * 31 + kind.ordinal();
-        return VALID.computeIfAbsent(key, k -> {
+        return VALID.containsKey(key(chunk, kind));
+    }
+
+    private static boolean valid(ServerLevel level, RuinKind kind, Holder<Structure> structure, ChunkPos chunk) {
+        return VALID.computeIfAbsent(key(chunk, kind), k -> {
             int x = chunk.getMiddleBlockX(), z = chunk.getMiddleBlockZ();
             ChunkGenerator gen = level.getChunkSource().getGenerator();
             Heightmap.Types hm = kind == RuinKind.OCEAN ? Heightmap.Types.OCEAN_FLOOR_WG : Heightmap.Types.WORLD_SURFACE_WG;
@@ -71,6 +78,12 @@ public final class RuinLocator {
      */
     public static List<Found> near(ServerLevel level, BlockPos origin, int radius, List<RuinKind> kinds, @Nullable AboveData data,
                                    boolean undiscoveredOnly, int max) {
+        return near(level, origin, radius, kinds, data, undiscoveredOnly, max, MAX_UNCACHED);
+    }
+
+    /** As above, with an explicit budget of uncached terrain samples (commands may spend more). */
+    public static List<Found> near(ServerLevel level, BlockPos origin, int radius, List<RuinKind> kinds, @Nullable AboveData data,
+                                   boolean undiscoveredOnly, int max, int maxUncached) {
         if (level.dimension() != Level.OVERWORLD) return List.of();
         record Candidate(RuinKind kind, Holder<Structure> structure, ChunkPos chunk, double dist) {}
         List<Candidate> candidates = new ArrayList<>();
@@ -104,13 +117,18 @@ public final class RuinLocator {
         }
         candidates.sort(Comparator.comparingDouble(Candidate::dist));
         List<Found> out = new ArrayList<>();
+        // Each uncached candidate costs a terrain height sample; cap them per call (results are cached, so repeated
+        // calls finish the job) to keep one call to a few milliseconds.
         int checks = 0;
         for (Candidate c : candidates) {
-            if (out.size() >= max || checks >= 24) break;
+            if (out.size() >= max) break;
             BlockPos p = center(c.chunk(), origin.getY());
             boolean discovered = data != null && data.hasRuinNear(p, 48);
             if (undiscoveredOnly && discovered) continue;
-            checks++;
+            if (!cached(level, c.kind(), c.chunk())) {
+                if (checks >= maxUncached) continue;
+                checks++;
+            }
             if (!valid(level, c.kind(), c.structure(), c.chunk())) continue;
             out.add(new Found(c.kind(), p, discovered, c.dist()));
         }
