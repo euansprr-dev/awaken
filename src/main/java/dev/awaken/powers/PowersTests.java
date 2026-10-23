@@ -129,7 +129,7 @@ final class PowersTests {
         AwakenTests.register("powers_cast_ground_slam", 60, h -> {
             floor(h, 3);
             ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
-            Zombie z = h.spawn(EntityTypes.ZOMBIE, new BlockPos(2, 1, 0));
+            Zombie z = stillZombie(h, new BlockPos(2, 1, 0));
             float hp = z.getHealth();
             PowerType slam = PowerRegistry.get("ground_slam");
             Powers.learn(sp, slam.id, 0);
@@ -150,7 +150,7 @@ final class PowersTests {
         AwakenTests.register("powers_cast_spirit_palm_aimed", 60, h -> {
             floor(h, 3);
             ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
-            Zombie z = h.spawn(EntityTypes.ZOMBIE, new BlockPos(2, 1, 0));
+            Zombie z = stillZombie(h, new BlockPos(2, 1, 0));
             PowerType palm = PowerRegistry.get("spirit_palm");
             Powers.learn(sp, palm.id, 0);
             Powers.fillEnergy(sp);
@@ -231,17 +231,21 @@ final class PowersTests {
         AwakenTests.register("powers_force_spore_chain", 80, h -> {
             floor(h, 4);
             ServerPlayer sp = player(h, new BlockPos(-3, 1, 0));
-            Zombie a = h.spawn(EntityTypes.ZOMBIE, new BlockPos(0, 1, 0));
-            Zombie b = h.spawn(EntityTypes.ZOMBIE, new BlockPos(3, 1, 0));
+            Zombie a = stillZombie(h, new BlockPos(0, 1, 0));
+            Zombie b = stillZombie(h, new BlockPos(3, 1, 0));
             Forces.tag(a, Forces.Tag.SPORES);
             Forces.tag(b, Forces.Tag.SPORES);
-            float hpB = b.getHealth();
-            long before = Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS);
-            Combat.hurtFrom(sp, null, a, 2f, Forces.Force.HEAT, true);
-            h.runAfterDelay(20, () -> {
-                h.assertTrue(b.getHealth() < hpB || !b.isAlive(), "the chain reached the second spore-tagged zombie");
-                h.assertTrue(Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS) > before, "force interaction counted");
-                h.succeed();
+            // let the spawned mobs settle into the level before the first hit (same as the charge test)
+            h.runAfterDelay(5, () -> {
+                float hpB = b.getHealth();
+                long before = Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS);
+                boolean hit = Combat.hurtFrom(sp, null, a, 2f, Forces.Force.HEAT, true);
+                h.runAfterDelay(15, () -> {
+                    h.assertTrue(b.getHealth() < hpB || !b.isAlive(), "the chain reached the second spore-tagged zombie (first hit=" + hit
+                            + ", a=" + a.blockPosition() + " alive=" + a.isAlive() + ", b=" + b.blockPosition() + " hp " + hpB + " -> " + b.getHealth() + ")");
+                    h.assertTrue(Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS) > before, "force interaction counted");
+                    h.succeed();
+                });
             });
         });
 
@@ -250,7 +254,7 @@ final class PowersTests {
             BlockPos w = new BlockPos(1, 1, 0);
             h.setBlock(w, Blocks.WATER);
             ServerPlayer sp = player(h, new BlockPos(-2, 1, 0));
-            Zombie z = h.spawn(EntityTypes.ZOMBIE, w);
+            Zombie z = stillZombie(h, w);
             Forces.tag(z, Forces.Tag.WATER); // a Flooding gate tags its mobs; also keeps the test steady while it bobs
             h.runAfterDelay(5, () -> {
                 float hp = z.getHealth();
@@ -259,7 +263,9 @@ final class PowersTests {
                 h.assertTrue(hit && z.getHealth() < hp, "the charge landed (hit=" + hit + ", hp " + hp + " -> " + z.getHealth()
                         + ", alive=" + z.isAlive() + ", invul=" + z.isInvulnerable() + ", cd=" + z.damageCooldownTime + ")");
                 h.assertTrue(Progression.profile(sp).counter(Counters.FORCE_INTERACTIONS) > before, "reaction counted (wet=" + z.isInWater() + ")");
-                h.assertTrue(z.hasEffect(PowerContent.STUNNED), "a zombie standing in water is stunned by charge");
+                h.assertTrue(z.hasEffect(PowerContent.STUNNED), "a zombie standing in water is stunned by charge (effects="
+                        + z.getActiveEffects() + ", wet=" + z.isInWater() + ", tagged=" + Forces.has(z, Forces.Tag.WATER)
+                        + ", pos=" + z.blockPosition() + ", alive=" + z.isAlive() + ")");
                 h.succeed();
             });
         });
@@ -305,7 +311,7 @@ final class PowersTests {
             Powers.learn(sp, t.id, 0);
             Powers.resetCooldowns(sp);
             Powers.fillEnergy(sp);
-            Zombie z = h.spawn(EntityTypes.ZOMBIE, new BlockPos(0, 1, 0));
+            Zombie z = stillZombie(h, new BlockPos(0, 1, 0));
             Vec3 to = z.getEyePosition().subtract(sp.getEyePosition());
             float yRot = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
             PowerType.Result r = Casting.cast(sp, t, 0, false, yRot, 0f);
@@ -349,5 +355,13 @@ final class PowersTests {
         for (int x = -r; x <= r; x++) {
             for (int z = -r; z <= r; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
         }
+    }
+
+    /** Test zombies stand still and can't burn, so force tests don't depend on AI movement or daylight. */
+    private static Zombie stillZombie(GameTestHelper h, BlockPos pos) {
+        Zombie z = h.spawn(EntityTypes.ZOMBIE, pos);
+        z.setNoAi(true);
+        z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 20 * 60, 0, false, false));
+        return z;
     }
 }

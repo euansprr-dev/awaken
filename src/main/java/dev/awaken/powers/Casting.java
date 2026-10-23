@@ -240,7 +240,8 @@ public final class Casting {
         Loadout l = Powers.loadout(player);
         int intStat = Progression.stat(player, Stat.INT);
         float max = PowerMath.maxEnergy(intStat);
-        float regen = PowerMath.regenPerTick(intStat, st.regenPerk) * (st.has(PowerState.Buffs.CONDUIT, now) ? 3f : 1f);
+        float regen = PowerMath.regenPerTick(intStat, st.regenPerk) * (st.has(PowerState.Buffs.CONDUIT, now) ? 3f : 1f)
+                * (float) dev.awaken.veil.Veil.energyRegenMultiplier(player);
         if (l.maxEnergy != max || Math.abs(l.regenPerTick - regen) > 1e-6) {
             l.maxEnergy = max;
             l.regenPerTick = regen;

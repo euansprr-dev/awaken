@@ -319,3 +319,14 @@ Above:
   a Scanner. A powered Signal Relay near your Hearth links for 7 play-days and grants +1 Directive slot. The
   Recalibrator uses `Progression.respec`. The Clone Vat (`Above.consumeCloneSave`) keeps the Deep Pack / Satchel once
   per play-day. Revelations fired by modules go through `Story.revelation` so they show once and reach the Codex.
+
+Veil:
+- Meditation: sneak + hold G still for 10 s, release G to step out; keep holding to 20 s for the Stillpoint; N to simply
+  sit. Fracture heals 3× faster while meditating. Energy regen ×2 while meditating, ×1.5 in the Stillpoint.
+- Awareness radius = 16 + 2×PER + SPI blocks. Cord = 32 + 6×SPI (+perk, cap 1024); time = 30 s + 3 s×SPI.
+- Closed Ghost Doors and Veil stone block spirits; the Out door sends the spirit to your return point while the body
+  rests safely in the temple. Survival players can't edit the temple or Veil Gate pockets.
+- Cord-Eaters are driven by the Veil (the mobs module's AI is bypassed); a bite ends the projection with Spirit Shock.
+
+Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
+so results never depend on AI wandering, daylight or chunk-ticking timing.

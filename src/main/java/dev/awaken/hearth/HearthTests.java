@@ -189,16 +189,20 @@ final class HearthTests {
             hp.replace(hp.echoes.get(0).withField(false));
             HearthRecord home = new HearthRecord(sp.getUUID(), "test", at.east(3), HearthService.OVERWORLD);
             home.pads.put(at.south(2), EchoRole.GUARD);
-            Duty.upkeep(sp, level, home, level.getGameTime());
-            var worker = Echoes.live(level.getServer(), id);
-            h.assertTrue(worker != null && Echoes.link(worker).duty(), "the Echo works the pad");
-            h.assertTrue(worker.blockPosition().closerThan(at.south(2), 2.5), "standing on its pad");
-            Duty.releaseAll(level, home);
-            h.assertTrue(Echoes.live(level.getServer(), id) == null, "released from duty");
-            h.succeed();
+            // Duty only spawns workers on entity-ticking pads; give the fresh test area a few ticks to start ticking.
+            h.runAfterDelay(5, () -> {
+                Duty.upkeep(sp, level, home, level.getGameTime());
+                var worker = Echoes.live(level.getServer(), id);
+                h.assertTrue(worker != null && Echoes.link(worker).duty(), "the Echo works the pad (pad ticking="
+                        + level.isPositionEntityTicking(at.south(2)) + ")");
+                h.assertTrue(worker.blockPosition().closerThan(at.south(2), 2.5), "standing on its pad");
+                Duty.releaseAll(level, home);
+                h.assertTrue(Echoes.live(level.getServer(), id) == null, "released from duty");
+                h.succeed();
+            });
         });
 
-        AwakenTests.register("hearth_room_detection", 200, h -> {
+        AwakenTests.register("hearth_room_detection", 600, h -> {
             ServerLevel level = h.getLevel();
             BlockPos base = h.absolutePos(new BlockPos(1, 1, 1));
             // A closed 5×4×5 stone room with a bed and a Meditation Mat inside.

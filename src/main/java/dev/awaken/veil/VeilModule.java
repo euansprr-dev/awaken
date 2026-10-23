@@ -19,6 +19,12 @@ public final class VeilModule {
     private VeilModule() {}
 
     public static void init(IEventBus modBus) {
+        dev.awaken.mobs.Mobs.installSpiritHooks(new dev.awaken.mobs.Mobs.SpiritHooks() {
+            @Override public boolean isSpirit(net.minecraft.server.level.ServerPlayer p) { return Veil.isSpirit(p); }
+            @Override public void onCordBitten(net.minecraft.server.level.ServerPlayer p, net.minecraft.world.entity.LivingEntity eater) {
+                if (Projection.live(p) != null) Projection.end(p, Projection.EndReason.CORD_CUT);
+            }
+        });
         VeilContent.register(modBus);
         modBus.addListener(VeilModule::registerPayloads);
         VeilEvents.init();
