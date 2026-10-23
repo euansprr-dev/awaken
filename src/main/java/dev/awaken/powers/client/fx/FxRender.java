@@ -187,7 +187,7 @@ final class FxRender {
                 if ((f & FxPool.ADD) == 0) continue;
                 float prog = p.progress(i, t);
                 float size = Mth.lerp(prog, p.size0[i], p.size1[i]);
-                if (size < 0.22f) continue;
+                if (size < 0.18f) continue;
                 int frames = FxSprites.frames(p.sprite[i]);
                 int frame = (f & FxPool.ANIM) != 0 ? Math.min(frames - 1, (int) (prog * frames)) : p.frame[i];
                 TextureAtlasSprite s = FxSprites.get(p.sprite[i], frame);
@@ -209,10 +209,13 @@ final class FxRender {
         }
     }
 
-    /** Underlay colour: the same hue at half brightness and under half the opacity. */
+    /**
+     * Underlay colour: the same hue at about 60% brightness and a little over half the opacity. Tuned after the first
+     * in-game tour: at 42% / 50% several effects still vanished against a bright sky.
+     */
     static int shade(int argb) {
-        int a = (int) (((argb >>> 24) & 255) * 0.42f);
-        int r = ((argb >> 16) & 255) >> 1, g = ((argb >> 8) & 255) >> 1, b = (argb & 255) >> 1;
+        int a = (int) (((argb >>> 24) & 255) * 0.58f);
+        int r = (((argb >> 16) & 255) * 5) >> 3, g = (((argb >> 8) & 255) * 5) >> 3, b = ((argb & 255) * 5) >> 3;
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
@@ -335,10 +338,10 @@ final class FxRender {
                     int core = tint(FxWorld.alpha(sh.c1 == 0 ? 0xFFFFFFFF : sh.c1, 0.9f * fade));
                     float ax = (float) (sh.rx - cx), ay = (float) (sh.ry - cy), az = (float) (sh.rz - cz);
                     float bx = (float) (sh.rex - cx), by = (float) (sh.rey - cy), bz = (float) (sh.rez - cz);
-                    billboard(vc, s, ax, ay, az, w * 7, 0, body, LightCoordsUtil.FULL_BRIGHT);
-                    billboard(vc, s, ax, ay, az, w * 3, 0, core, LightCoordsUtil.FULL_BRIGHT);
-                    billboard(vc, s, bx, by, bz, w * 9, time * 0.2f, body, LightCoordsUtil.FULL_BRIGHT);
-                    billboard(vc, s, bx, by, bz, w * 3.5f, 0, core, LightCoordsUtil.FULL_BRIGHT);
+                    billboard(vc, s, ax, ay, az, w * 8, 0, body, LightCoordsUtil.FULL_BRIGHT);
+                    billboard(vc, s, ax, ay, az, w * 3.5f, 0, core, LightCoordsUtil.FULL_BRIGHT);
+                    billboard(vc, s, bx, by, bz, w * 14, time * 0.2f, body, LightCoordsUtil.FULL_BRIGHT);
+                    billboard(vc, s, bx, by, bz, w * 5, 0, core, LightCoordsUtil.FULL_BRIGHT);
                 }
                 default -> {
                 }

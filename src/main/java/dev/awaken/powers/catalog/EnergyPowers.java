@@ -248,6 +248,19 @@ final class EnergyPowers {
                     0xFF9AD8FF, 40, charge > 0.95 ? 2.5f : 0f);
             b.stun = 10 + (int) (20 * charge);
             if (c.is(1)) b.bounces = 2;
+            // a muzzle burst at the palm, and the bolt's landing where the aim meets something (it flies 2.6 blocks a tick)
+            Fx.at(c, FxKind.IMPACT, hand(c.player)).dir(c.player.getLookAngle()).scale(1 + charge).noAnim().send();
+            BeamHit aim = trace(c.player, c.player.getEyePosition(), c.player.getLookAngle(), 48);
+            int flight = Math.max(1, (int) Math.ceil(hand(c.player).distanceTo(aim.end()) / 2.6));
+            Vec3 lands = aim.end();
+            Vec3 look = c.player.getLookAngle();
+            float landing = (float) (1.2 + 1.4 * charge);
+            boolean full = charge > 0.95;
+            dev.awaken.powers.Scheduler.after(flight, () -> {
+                if (c.player.isRemoved()) return;
+                Fx.at(c, FxKind.IMPACT, lands).dir(look).scale(landing).flag(FxEvent.FULL, full).noAnim().send();
+                if (full) Fx.at(c, FxKind.NOVA, lands).scale(2.5).noAnim().send();
+            });
             c.sound(PowerSounds.SHOT, 1f, 1.4f - 0.5f * (float) charge);
             c.feel(null, 0, 0.8f + 1.5f * (float) charge);
         });

@@ -29,7 +29,7 @@ final class FxRecipes {
 
     // emitters (per-tick behaviour of a live shape)
     static final int E_CHARGE = 1, E_BEAM = 2, E_CONE = 3, E_GHOSTS = 4, E_TRAIL = 5, E_DOME = 6, E_VORTEX = 7, E_AURA = 8,
-            E_FLURRY = 9, E_HEAL = 10, E_FIRE = 11, E_EXHAUST = 12, E_CONSTRUCT = 13, E_PSI = 14, E_METEOR = 15, E_LIFT = 16, E_AURA_CHILD = 17;
+            E_FLURRY = 9, E_HEAL = 10, E_FIRE = 11, E_EXHAUST = 12, E_CONSTRUCT = 13, E_PSI = 14, E_METEOR = 15, E_LIFT = 16, E_AURA_CHILD = 17, E_CRACKLE = 18;
 
     private static final double[] P = new double[3];
     private static final FxKind.Aura[] AURAS = FxKind.Aura.values();
@@ -99,7 +99,7 @@ final class FxRecipes {
     static void flare(double x, double y, double z, float size, FxStyle st, int life) {
         int f = FxWorld.sprite(FLARE, x, y, z, 0, 0, 0, life, size, size * 0.45f, st.core, alpha(st.mid, 0), FxPool.ADD | FxPool.ANIM);
         FxWorld.spin(f, R.f(0, 0.8f), 0);
-        FxWorld.sprite(GLOW, x, y, z, 0, 0, 0, life + 2, size * 1.7f, size * 0.6f, alpha(st.mid, 0.8f), alpha(st.edge, 0), FxPool.ADD);
+        FxWorld.sprite(GLOW, x, y, z, 0, 0, 0, life + 3, size * 2.0f, size * 0.7f, alpha(st.mid, 1f), alpha(st.edge, 0), FxPool.ADD);
     }
 
     /** Sparks flying out (biased along a direction when given), stretched by their speed. */
@@ -113,8 +113,9 @@ final class FxRecipes {
             vz = vz / l + bz * bias;
             l = Math.sqrt(vx * vx + vy * vy + vz * vz) + 1e-4;
             float sp = speed * R.f(0.5f, 1.2f);
-            int s = FxWorld.sprite(SPARK, x, y, z, vx / l * sp, vy / l * sp, vz / l * sp, life + R.i(4), R.f(0.12f, 0.2f), 0.03f,
-                    st.core, alpha(st.mid, 0), FxPool.ADD | FxPool.STRETCH);
+            // sparks start between white and the family colour: pure white additive vanishes against a bright sky
+            int s = FxWorld.sprite(SPARK, x, y, z, vx / l * sp, vy / l * sp, vz / l * sp, life + R.i(4), R.f(0.16f, 0.26f), 0.04f,
+                    FxWorld.mix(st.core, st.mid, 0.45f), alpha(st.mid, 0), FxPool.ADD | FxPool.STRETCH);
             FxWorld.drag(s, 0.86f);
             FxWorld.grav(s, gravity);
         }
@@ -303,8 +304,8 @@ final class FxRecipes {
 
     /** The charge orb at the hand: a pulsing core in a halo that gathers sparks; also used for local prediction. */
     static void startCharge(Entity caster, FxStyle st, float scale, int life, int seed) {
-        float sc = Math.max(0.5f, scale);
-        Shape halo = attach(disc(0, 0, 0, GLOW, 0.25f * sc, 1.1f * sc, life, alpha(st.mid, 0.75f), alpha(st.mid, 0.95f)), caster, Anchors.HAND);
+        float sc = Math.max(0.5f, scale) * 1.3f;
+        Shape halo = attach(disc(0, 0, 0, GLOW, 0.3f * sc, 1.2f * sc, life, alpha(st.mid, 0.85f), alpha(st.mid, 1f)), caster, Anchors.HAND);
         if (halo != null) {
             halo.emitter = E_CHARGE;
             halo.style = st;
@@ -357,7 +358,7 @@ final class FxRecipes {
         flare(x, y, z, 0.9f * s, st, 5);
         sparks(x, y, z, n((int) (9 * s)), 0.32f * s, st, 6, 0.01f, bx, by, bz, 0.8f);
         // a ring of force punched out along the hit
-        if (dl > 1e-3) ring(x, y, z, 0.15f * s, 1.3f * s, 0.25f * s, 0.05f, 7, alpha(st.core, 0.9f), alpha(st.mid, 0), (float) bx, (float) by, (float) bz);
+        if (dl > 1e-3) ring(x, y, z, 0.15f * s, 1.3f * s, 0.25f * s, 0.05f, 9, alpha(st.mid, 0.95f), alpha(st.edge, 0), (float) bx, (float) by, (float) bz);
         switch (st) {
             case KINETIC -> {
                 smokePuffs(x, y, z, n((int) (4 * s)), 0.3f, 0.5f * s, st, 0.05f, 14);
@@ -380,7 +381,17 @@ final class FxRecipes {
                 int sl = FxWorld.sprite(SLASH, x, y, z, 0, 0, 0, 6, 1.8f * s, 2.1f * s, st.core, alpha(st.mid, 0), FxPool.ADD | FxPool.ANIM);
                 FxWorld.spin(sl, R.f(0, 6.28f), 0);
             }
-            case SPIRIT, SOUL -> wisps(x, y, z, n((int) (6 * s)), 0.35f, st, 0.03f);
+            case SPIRIT, SOUL -> {
+                // the spirit goes through: a tall ring around the target, a ring on the ground and a palm print bursting
+                wisps(x, y, z, n((int) (8 * s)), 0.5f, st, 0.03f);
+                if (s >= 1f) {
+                    ring(x, y, z, 0.4f, 1.6f * s, 0.45f, 0.12f, 14, alpha(st.mid, 0.95f), alpha(st.edge, 0.2f), (float) bx, (float) by, (float) bz);
+                    double gy = FxWorld.groundY(x, y, z);
+                    ring(x, gy + 0.06, z, 0.3f, 1.4f * s, 0.5f, 0.15f, 16, alpha(st.mid, 0.9f), alpha(st.edge, 0), 0, 1, 0);
+                    FxWorld.sprite(PALM, x, y, z, bx * 0.08, by * 0.08, bz * 0.08, 12, 1.4f * s, 2.2f * s, alpha(st.mid, 0.9f), alpha(st.edge, 0),
+                            FxPool.ADD);
+                }
+            }
             case MIND -> {
                 for (int i = 0; i < 3; i++) {
                     FxWorld.sprite(RING, x, y, z, 0, 0, 0, 8 + i * 3, 0.3f, (1.4f + i * 0.6f) * s, alpha(st.core, 0.9f), alpha(st.mid, 0), FxPool.ADD);
@@ -497,7 +508,7 @@ final class FxRecipes {
             dome.fadeOut = 4;
         }
         // the shockwave: a thick hot band and a wider faint one behind it
-        ring(x, y + 0.08, z, 0.3f, r - 0.3f, 0.9f, 0.3f, 11, alpha(st.core, 1f), alpha(st.mid, 0.4f), 0, 1, 0);
+        ring(x, y + 0.08, z, 0.3f, r - 0.3f, 0.9f, 0.3f, 14, alpha(st.mid, 1f), alpha(st.edge, 0.5f), 0, 1, 0);
         ring(x, y + 0.06, z, 0.5f, r - 0.1f, 0.5f, 0.1f, 15, alpha(st.mid, 0.6f), alpha(st.edge, 0), 0, 1, 0);
         decal(x, y, z, CRACK, r * 1.1f, 0xD82A2420, 90);
         if (st == FxStyle.GRAVITY) decal(x, y, z, SCORCH, r * 0.8f, 0xC0201830, 70);
@@ -537,20 +548,23 @@ final class FxRecipes {
         float r = Math.max(0.5f, e.scale());
         boolean implode = e.has(FxEvent.REPULSE);
         flare(x, y, z, 2.2f * big, st, 7);
-        Shape shell = FxWorld.shape(Shape.SPHERE, 12);
+        Shape shell = FxWorld.shape(Shape.SPHERE, 20);
         if (shell != null) {
             shell.x = x;
             shell.y = y;
             shell.z = z;
             shell.a = implode ? r : 0.3f;
             shell.b = implode ? 0.2f : r;
-            shell.c = 2.6f;
-            shell.d = 0.06f;
-            shell.c0 = alpha(st.mid, 0.95f);
-            shell.c1 = alpha(st.edge, 0.1f);
+            shell.c = 1.7f;
+            shell.d = 0.14f;
+            shell.c0 = alpha(st.mid, 1f);
+            shell.c1 = alpha(st.edge, 0.35f);
             shell.fadeIn = 0;
-            shell.fadeOut = 5;
+            shell.fadeOut = 8;
         }
+        // the sphere's equator, so its edge reads even where the shell is faint
+        Shape eq = ring(x, y, z, implode ? r : 0.3f, implode ? 0.2f : r, 0.5f, 0.25f, 18, alpha(st.mid, 1f), alpha(st.edge, 0.3f), 0, 1, 0);
+        if (eq != null) eq.fadeOut = 8;
         sphereBurst(x, y, z, 0.2f, r * 0.55f, 7, st);
         ring(x, FxWorld.groundY(x, y, z) + 0.08, z, 0.4f, r - 0.4f, 0.7f, 0.25f, 12, alpha(st.core, 0.9f), alpha(st.mid, 0), 0, 1, 0);
         sparks(x, y, z, n((int) (22 * big)), 0.6f, st, 8, 0, 0, 0, 0, 0);
@@ -592,12 +606,12 @@ final class FxRecipes {
             w.a = 0.4f;
             w.b = range;
             w.c = half;
-            w.d = 1.4f * big;
+            w.d = 2.3f * big;
             w.nx = dx;
             w.ny = 0;
             w.nz = dz;
-            w.c0 = alpha(st.core, 0.95f);
-            w.c1 = alpha(st.mid, 0.5f);
+            w.c0 = alpha(st.mid, 1f);
+            w.c1 = alpha(st.edge, 0.6f);
             w.fadeIn = 0;
             w.fadeOut = 3;
             w.emitter = E_CONE;
@@ -632,7 +646,7 @@ final class FxRecipes {
         b.ex = ex;
         b.ey = ey;
         b.ez = ez;
-        b.a = Math.max(0.03f, e.aux() <= 0 ? 0.1f : e.aux()) * 0.9f;
+        b.a = Math.max(0.05f, e.aux() <= 0 ? 0.1f : e.aux()) * 1.35f;
         b.c0 = col(e) | 0xFF000000;
         b.c1 = st.core;
         b.c = R.f(0, 6.28f);
@@ -655,7 +669,7 @@ final class FxRecipes {
 
     private static void bolt(FxEvent e, FxStyle st) {
         double bx = e.x() + e.dx(), by = e.y() + e.dy(), bz = e.z() + e.dz();
-        Shape s = FxWorld.shape(Shape.BEAM, 4);
+        Shape s = FxWorld.shape(Shape.BEAM, 7);
         int c = col(e) | 0xFF000000;
         if (s != null) {
             s.x = e.x();
@@ -664,14 +678,14 @@ final class FxRecipes {
             s.ex = bx;
             s.ey = by;
             s.ez = bz;
-            s.a = 0.07f * Math.max(0.5f, e.scale());
+            s.a = 0.1f * Math.max(0.6f, e.scale());
             s.c0 = c;
             s.c1 = 0xFFFFFFFF;
             s.fadeIn = 0;
             s.fadeOut = 3;
             if (st == FxStyle.CHARGE) s.flags |= Shape.FLICKER;
         }
-        FxWorld.sprite(GLOW, bx, by, bz, 0, 0, 0, 3, 0.7f * e.scale(), 0.3f, alpha(c, 0.9f), alpha(c, 0), FxPool.ADD);
+        FxWorld.sprite(GLOW, bx, by, bz, 0, 0, 0, 4, 1.3f * Math.max(0.6f, e.scale()), 0.4f, alpha(c, 1f), alpha(c, 0), FxPool.ADD);
         if (R.chance(0.5f)) {
             int b = FxWorld.sprite(BOLT, bx, by, bz, 0, 0, 0, 2, 0.5f, 0.4f, st.core, alpha(st.mid, 0), FxPool.ADD);
             FxWorld.spin(b, R.f(0, 6.28f), 0);
@@ -693,15 +707,30 @@ final class FxRecipes {
         double x = e.x(), z = e.z();
         double y = FxWorld.groundY(x, e.y() + 1, z);
         float s = Math.max(0.6f, e.scale()) * big;
-        arc(x + R.s() * 2, y + 22, z + R.s() * 2, x, y, z, st, 8, 0.12f * s);
-        arc(x + R.s() * 3, y + 18, z + R.s() * 3, x, y + 0.5, z, st, 5, 0.06f * s);
-        Shape col = FxWorld.shape(Shape.COLUMN, 6);
+        arc(x + R.s() * 2, y + 22, z + R.s() * 2, x, y, z, st, 14, 0.16f * s);
+        arc(x + R.s() * 3, y + 18, z + R.s() * 3, x, y + 0.5, z, st, 9, 0.08f * s);
+        // the sky answers: a dark storm knot over the strike
+        for (int i = 0; i < n(9); i++) {
+            int c = FxWorld.sprite(SMOKE, x + R.s() * 3, y + R.f(17, 21), z + R.s() * 3, R.s() * 0.02, 0, R.s() * 0.02, 40 + R.i(20), R.f(3, 4.5f),
+                    R.f(5, 7), 0xE0383C48, 0x00383C48, FxPool.BRIGHT | FxPool.ANIM);
+            FxWorld.spin(c, R.f(0, 6.28f), R.s() * 0.01f);
+        }
+        Shape crackle = FxWorld.shape(Shape.EMITTER, 18);
+        if (crackle != null) {
+            crackle.x = x;
+            crackle.y = y;
+            crackle.z = z;
+            crackle.style = st;
+            crackle.seed = e.seed();
+            crackle.emitter = E_CRACKLE;
+        }
+        Shape col = FxWorld.shape(Shape.COLUMN, 10);
         if (col != null) {
             col.x = x;
             col.y = y;
             col.z = z;
             col.a = 24;
-            col.b = 0.5f * s;
+            col.b = 0.7f * s;
             col.c0 = alpha(st.mid, 0.9f);
             col.c1 = alpha(st.edge, 0);
             col.c2 = 0xFFFFFFFF;
@@ -937,7 +966,7 @@ final class FxRecipes {
             halo.emitParam = out ? 1 : 0;
             halo.d = r;
         }
-        if (!out) {
+        if (!out && st.inky()) {
             Shape core = disc(x, y, z, GLOW, 0.4f, 1.15f * big, life, 0xF80D0A17, 0xF80D0A17);
             if (core != null) {
                 core.flags |= Shape.DARK | Shape.PULSE;
@@ -1052,29 +1081,43 @@ final class FxRecipes {
         float dl = Mth.sqrt(e.dx() * e.dx() + e.dy() * e.dy() + e.dz() * e.dz());
         float dx = dl > 1e-4f ? e.dx() / dl : 0, dy = dl > 1e-4f ? e.dy() / dl : 0, dz = dl > 1e-4f ? e.dz() / dl : 1;
         float s = Math.max(0.6f, e.scale()) * big;
-        float speed = Math.max(0.4f, Math.min(1.2f, dl / 6f));
-        FxWorld.sprite(PALM, x, y, z, dx * speed, dy * speed, dz * speed, 7, 0.9f * s, 2.4f * s, alpha(st.core, 0.95f), alpha(st.mid, 0), FxPool.ADD);
-        FxWorld.sprite(PALM, x, y, z, dx * speed * 0.7f, dy * speed * 0.7f, dz * speed * 0.7f, 9, 0.7f * s, 1.8f * s, alpha(st.mid, 0.6f),
-                alpha(st.edge, 0), FxPool.ADD);
-        Shape r = ring(x, y, z, 0.3f, 1.2f * s, 0.3f, 0.05f, 8, alpha(st.core, 0.9f), alpha(st.mid, 0), dx, dy, dz);
+        // d reaches the target; the print keeps going three blocks past it so it reads as passing through
+        float travel = dl + 3f;
+        float speed = 0.55f;
+        int life = Math.max(8, Math.min(24, (int) (travel / speed)));
+        int p1 = FxWorld.sprite(PALM, x, y, z, dx * speed, dy * speed, dz * speed, life, 1.2f * s, 3.0f * s, alpha(st.mid, 0.95f), alpha(st.edge, 0),
+                FxPool.ADD);
+        FxWorld.drag(p1, 1f);
+        int p2 = FxWorld.sprite(PALM, x, y, z, dx * speed * 0.8f, dy * speed * 0.8f, dz * speed * 0.8f, life + 4, 1.0f * s, 2.4f * s, alpha(st.core, 0.7f),
+                alpha(st.mid, 0), FxPool.ADD);
+        FxWorld.drag(p2, 1f);
+        Shape r = ring(x, y, z, 0.3f, 1.4f * s, 0.3f, 0.08f, life, alpha(st.mid, 0.95f), alpha(st.edge, 0.3f), dx, dy, dz);
         if (r != null) {
             r.vx = dx * speed;
             r.vy = dy * speed;
             r.vz = dz * speed;
+            r.fadeOut = 4;
         }
-        flare(x, y, z, 0.8f, st, 4);
-        wisps(x + dx, y + dy, z + dz, n(6), 0.3f, st, 0.03f);
+        flare(x, y, z, 1.1f, st, 5);
+        // wisps strung along the path the print takes
+        for (int i = 0; i < n(10); i++) {
+            float t = R.f(0, travel);
+            wisps(x + dx * t, y + dy * t, z + dz * t, 1, 0.35f, st, 0.03f);
+        }
         if (mine) FxScreen.kick(-0.8f, 0, 0);
     }
 
     private static void echo(FxEvent e, FxStyle st, float big) {
         double x = e.x(), y = e.y(), z = e.z();
         float s = Math.max(0.6f, e.scale()) * big;
-        ring(x, y, z, 0.2f, 1.6f * s, 0.35f, 0.05f, 9, alpha(st.core, 0.9f), alpha(st.mid, 0), e.dx(), e.dy(), e.dz());
-        ring(x, y, z, 0.2f, 1.0f * s, 0.25f, 0.05f, 7, alpha(st.mid, 0.8f), alpha(st.edge, 0), 0, 1, 0);
-        FxWorld.sprite(PALM, x, y, z, 0, 0, 0, 8, 1.6f * s, 0.8f * s, alpha(st.mid, 0.7f), alpha(st.edge, 0), FxPool.ADD);
-        flare(x, y, z, 0.9f * s, st, 5);
-        wisps(x, y, z, n(8), 0.4f, st, 0.04f);
+        ring(x, y, z, 0.2f, 2.2f * s, 0.45f, 0.1f, 14, alpha(st.mid, 0.95f), alpha(st.edge, 0.2f), e.dx(), e.dy(), e.dz());
+        double gy = FxWorld.groundY(x, y, z);
+        ring(x, gy + 0.06, z, 0.2f, 1.8f * s, 0.4f, 0.1f, 16, alpha(st.mid, 0.85f), alpha(st.edge, 0), 0, 1, 0);
+        // the echo of the palm: a print that blooms out of the target and fades
+        FxWorld.sprite(PALM, x, y, z, 0, 0, 0, 14, 2.6f * s, 1.4f * s, alpha(st.mid, 0.9f), alpha(st.edge, 0), FxPool.ADD);
+        FxWorld.sprite(PALM, x, y, z, 0, 0.02, 0, 10, 1.2f * s, 3.2f * s, alpha(st.core, 0.6f), alpha(st.mid, 0), FxPool.ADD);
+        flare(x, y, z, 1.4f * s, st, 6);
+        wisps(x, y, z, n(14), 0.6f, st, 0.05f);
     }
 
     private static void flurry(FxEvent e, FxStyle st) {
@@ -1389,6 +1432,9 @@ final class FxRecipes {
                             FxPool.LIT | FxPool.ANIM);
                     FxWorld.drag(p, 0.9f);
                 }
+                if (st == FxStyle.CHARGE && s.age % 3 == 0) {
+                    arc(s.x, s.y, s.z, s.x + R.s() * 0.9, s.y + R.s() * 0.9, s.z + R.s() * 0.9, st, 2, 0.025f);
+                }
                 if (s.age > 18 && s.age % 6 == 0) {
                     // fully charged: a ring snaps around the hand
                     ring(s.x, s.y, s.z, 0.2f, 0.7f, 0.08f, 0.02f, 5, alpha(st.core, 0.9f), alpha(st.mid, 0), R.s(), R.s(), R.s());
@@ -1403,7 +1449,13 @@ final class FxRecipes {
                             0.05f, st.core, alpha(st.mid, 0), FxPool.ADD | (st == FxStyle.HEAT ? FxPool.ANIM : FxPool.STRETCH));
                     FxWorld.grav(p, st == FxStyle.HEAT ? -0.004f : 0.02f);
                 }
-                if (s.age % 6 == 0) FxWorld.sprite(GLOW, ex, ey, ez, 0, 0, 0, 5, 1.2f, 0.4f, alpha(s.c0, 0.6f), alpha(s.c0, 0), FxPool.ADD);
+                if (s.age % 4 == 0) {
+                    FxWorld.sprite(GLOW, ex, ey, ez, 0, 0, 0, 6, 2.0f, 0.6f, alpha(s.c0, 0.8f), alpha(s.c0, 0), FxPool.ADD);
+                    // a shock ring where the beam lands and one at the palm, both facing along the beam
+                    float bdx = (float) (ex - s.x), bdy = (float) (ey - s.y), bdz = (float) (ez - s.z);
+                    ring(ex, ey, ez, 0.2f, 1.1f, 0.18f, 0.05f, 6, alpha(s.c0, 0.9f), alpha(st.edge, 0), bdx, bdy, bdz);
+                    ring(s.x, s.y, s.z, 0.1f, 0.55f, 0.1f, 0.03f, 5, alpha(s.c0, 0.9f), alpha(st.edge, 0), bdx, bdy, bdz);
+                }
                 if (s.age % 10 == 0 && st == FxStyle.HEAT) {
                     double gy = FxWorld.groundY(ex, ey + 0.2, ez);
                     if (Math.abs(gy - ey) < 0.4) decal(ex, gy, ez, SCORCH, 0.9f, 0xA0201410, 60);
@@ -1411,23 +1463,35 @@ final class FxRecipes {
                 }
             }
             case E_CONE -> {
-                // dust and debris thrown up along the wave front
+                // a crescent wall of dust thrown up along the whole wave front, left standing as it passes, chunks of the
+                // ground and cracks along the path
                 float t = s.t(0);
                 float r = Mth.lerp(t, s.a, s.b);
+                if (r > s.b) return;
                 float base = (float) Math.atan2(s.nz, s.nx);
-                int k = n(3);
+                int k = n(6);
+                int dust = alpha(FxWorld.mix(st.accent, 0xFFCFC6B5, 0.35f), 0.9f);
                 for (int i = 0; i < k; i++) {
                     float a = base + R.s() * s.c;
                     double px = s.x + Mth.cos(a) * r, pz = s.z + Mth.sin(a) * r;
-                    int p = FxWorld.sprite(DUST, px, s.y + 0.2, pz, Mth.cos(a) * 0.08, 0.03, Mth.sin(a) * 0.08, 20 + R.i(10), 0.6f, 1.8f,
-                            alpha(FxWorld.mix(st.accent, 0xFFCFC6B5, 0.35f), 0.8f), alpha(st.accent, 0), FxPool.LIT | FxPool.ANIM);
-                    FxWorld.drag(p, 0.88f);
+                    int p = FxWorld.sprite(DUST, px, s.y + R.f(0.1f, 1.4f), pz, Mth.cos(a) * 0.05, R.f(0.02f, 0.06f), Mth.sin(a) * 0.05, 30 + R.i(16),
+                            1.0f, R.f(2.4f, 3.4f), dust, alpha(st.accent, 0), FxPool.LIT | FxPool.ANIM);
+                    FxWorld.drag(p, 0.9f);
                     FxWorld.floor(p, (float) s.y);
+                    FxWorld.spin(p, R.f(0, 6.28f), R.s() * 0.03f);
                 }
                 if (s.age % 2 == 0) {
-                    float a = base + R.s() * s.c;
-                    debrisAt(s.x + Mth.cos(a) * r, s.y, s.z + Mth.sin(a) * r, 0.42f);
+                    for (int j = 0; j < 2; j++) {
+                        float a = base + R.s() * s.c;
+                        debrisAt(s.x + Mth.cos(a) * r, s.y, s.z + Mth.sin(a) * r, 0.5f);
+                    }
+                    // cracks along the middle and both flanks of the path
+                    for (int side = -1; side <= 1; side++) {
+                        float a = base + side * s.c * 0.6f;
+                        decal(s.x + Mth.cos(a) * r, s.y, s.z + Mth.sin(a) * r, CRACK, 1.8f, 0xC82A2420, 90);
+                    }
                 }
+                if (s.age % 3 == 0) sparks(s.x + Mth.cos(base) * r, s.y + 0.4, s.z + Mth.sin(base) * r, n(4), 0.3f, st, 6, 0.02f, Mth.cos(base), 0.6, Mth.sin(base), 0.6f);
             }
             case E_GHOSTS -> {
                 Entity e = followed(s);
@@ -1486,6 +1550,14 @@ final class FxRecipes {
                 if (st.inky() && s.age % 4 == 0) smokePuffs(s.x, s.y, s.z, 1, r * 0.5f, 0.6f, st, 0.02f, 14);
             }
             case E_AURA -> aura(s, st);
+            case E_CRACKLE -> {
+                // electricity crawling over the ground where lightning landed
+                if (s.age % 2 != 0) return;
+                double px = s.x + R.s() * 1.6, pz = s.z + R.s() * 1.6;
+                int b = FxWorld.sprite(BOLT, px, s.y + 0.15, pz, 0, 0, 0, 3, R.f(0.6f, 1.1f), 0.3f, st.core, alpha(st.mid, 0), FxPool.ADD);
+                FxWorld.spin(b, R.f(0, 6.28f), 0);
+                if (s.age % 6 == 0) arc(s.x, s.y + 0.2, s.z, px, s.y + 0.1, pz, st, 3, 0.03f);
+            }
             case E_FLURRY -> {
                 Entity e = followed(s);
                 if (e == null) return;
