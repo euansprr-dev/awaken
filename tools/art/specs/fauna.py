@@ -389,7 +389,10 @@ def render(tree, tex, yaw=35.0, pitch=22.0, px=8.0, size=None, light=1.0, night=
         if col is not None:
             dr.polygon(pts, fill=col[:3] + (255,))
         if gcol is not None:
-            dr.polygon(pts, fill=gcol[:3] + (255,))
+            # the game draws the glow layer translucent: its alpha is how strongly it shines over the dark body
+            a = gcol[3] / 255
+            under = col[:3] if col is not None else (0, 0, 0)
+            dr.polygon(pts, fill=tuple(int(under[k] * (1 - a) + gcol[k] * a) for k in range(3)) + (255,))
             gdr.polygon(pts, fill=gcol[:3] + (min(255, gcol[3]),))
     if night is not None:
         from PIL import ImageFilter
@@ -607,6 +610,15 @@ def paint_lumen_moth(m, rng):
         for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
             skin.set(sx + dx, sy + dy, amber[3])
             glow.set(sx + dx, sy + dy, rgba("#ffd27a", 170))
+    # both sides of every wing give off a soft lamplight, brightest at the tips: at night a moth reads as a light
+    for r in (ff["top"], fh["top"], ff["bottom"], fh["bottom"]):
+        x, y, w, h = r
+        for j in range(h):
+            for i in range(w):
+                c = skin.get(x + i, y + j)
+                if c[3] and not glow.get(x + i, y + j)[3]:
+                    t = i / max(1, w - 1)
+                    glow.set(x + i, y + j, (c[0], c[1], max(0, c[2] - 40), int(110 + 110 * t)))
     # the lumen: the tail end of the abdomen glows like a firefly's, the thorax warmly
     fa = faces(abdomen)
     for name in ("west", "east", "top", "bottom"):
@@ -1087,6 +1099,12 @@ def paint_wisp_hound(m, rng):
         for name in ("west", "east", "top", "bottom", "north"):
             noise(skin, f[name], spirit, rng, 3)
             streaks(skin, f[name], spirit[-1], rng, f[name][2] * f[name][3] / 6)
+            # the brightest wisps shine faintly: a hound you can see coming in the dark
+            fx, fy, fw, fh = f[name]
+            for j in range(fh):
+                for i in range(fw):
+                    if skin.get(fx + i, fy + j) == spirit[-1]:
+                        glow.set(fx + i, fy + j, rgba("#c8f8ff", 60))
         x, y, w, h = f["south"]
         noise(skin, f["south"], fr[1:4], rng, 3)
         # frost runes down the back
