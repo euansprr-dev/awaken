@@ -202,7 +202,7 @@ final class GearTests {
         }
         h.assertTrue(sp.getRecipeBook().contains(vest), "holding leather unlocks the Wildhide Vest");
         // the level road points at each tier and puts its whole recipe set in the book
-        Map<HunterTier, Integer> want = Map.of(HunterTier.E, 3, HunterTier.D, 9, HunterTier.C, 22, HunterTier.B, 42);
+        Map<HunterTier, Integer> want = Map.of(HunterTier.E, 3, HunterTier.D, 13, HunterTier.C, 22, HunterTier.B, 42);
         for (HunterTier tier : HunterTier.values()) {
             String id = "awaken:hunter_gear_" + tier.name().toLowerCase();
             LevelRoad.Step step = LevelRoad.steps().stream().filter(s -> s.id().toString().equals(id)).findFirst().orElse(null);
@@ -212,10 +212,10 @@ final class GearTests {
             for (Piece piece : Piece.values()) h.assertTrue(ids.contains("awaken:" + tier.itemId(piece)), id + " grants " + tier.itemId(piece));
         }
         Profile p = Progression.profile(sp);
-        while (p.level() < 9) Progression.grantXp(sp, Curve.xpToNext(p.level()) + 1, Progression.XpSource.COMMAND);
+        while (p.level() < 13) Progression.grantXp(sp, Curve.xpToNext(p.level()) + 1, Progression.XpSource.COMMAND);
         for (Piece piece : Piece.values()) {
             h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.E, piece)), "level 3 put E " + piece.id + " in the book");
-            h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.D, piece)), "level 9 put D " + piece.id + " in the book");
+            h.assertTrue(sp.getRecipeBook().contains(key(HunterTier.D, piece)), "level 13 put D " + piece.id + " in the book");
             h.assertTrue(!sp.getRecipeBook().contains(key(HunterTier.C, piece)), "C waits for level 22");
         }
         h.succeed();

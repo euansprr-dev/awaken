@@ -118,7 +118,7 @@ RECIPES = {
 
 ROAD = {
     "E": (3, "Hunter gear · E", "Creature hide, bone and essence: your first set. Recipe book."),
-    "D": (9, "Beastbound gear · D", "Beast trophies and Lord parts make iron-grade gear."),
+    "D": (13, "Beastbound gear · D", "Beast trophies and Lord parts make iron-grade gear."),
     "C": (22, "Gatewrought gear · C", "D-rank Lord relics forge diamond-grade gear."),
     "B": (42, "Veilwoven gear · B", "C-rank relics and Veil-touched bindings."),
 }
@@ -146,6 +146,7 @@ PAL = {
     "veil": ["#0f0b1e", "#1a1430", "#261e47", "#352a62", "#473a80", "#5f50a3"],
     "mirror": RAMPS["mirror"],
     "obsidian": RAMPS["obsidian"],
+    "flint": ["#1c1c20", "#2c2c33", "#3f3f48", "#575762", "#73737f", "#9494a0"],
 }
 RANK = {"E": "#f4f6fb", "D": "#5fd08f", "C": "#6fb3ff", "B": "#b48cff"}
 
@@ -437,7 +438,7 @@ def mattock_icon(t):
     look = LOOK[t]
     handle = {"E": "bark", "D": "bark", "C": "slate", "B": "obsidian"}[t]
     diag_band(c, OX, OY, 0.8, 12.2, 0.8, lambda tt, sn: P(handle, 4 if sn < -0.2 else 2 if sn < 0.5 else 1))
-    head = {"E": "bone", "D": "bone", "C": "slate", "B": "veil"}[t]
+    head = {"E": "flint", "D": "bone", "C": "slate", "B": "veil"}[t]
     edge = {"E": ("bone", 5), "D": ("bronze", 5), "C": ("signal", 4), "B": ("spirit", 5)}[t]
     # the head crosses the handle near its top: a pick point to the upper left, an adze blade to the lower right
     ht = 10.6

@@ -1,0 +1,87 @@
+# Hunter gear tour (gear module): awaken, take a first power, then every tier worn on mannequins (blade and focus held
+# by the first of each pair, the mattock by the second), close-ups of each pair, and each tier worn and held in first
+# person (blade in the main hand, focus in the off hand, then the mattock). Ends with /awaken gear in chat.
+# Run by the integrator: tools/autopilot.sh gear (builders never run a client).
+world autopilot_gear creative 7070
+waitworld
+gui 0
+cmd weather clear 100000
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin awaken
+wait 80
+shot gear_00_awakened
+cmd awaken powers starter 1
+wait 40
+# face south on level ground, mannequins six blocks ahead
+cmd tp @s ~ ~ ~ 0 10
+wait 10
+cmd awaken gear lineup
+wait 40
+look 0 12
+shot gear_01_lineup_all
+look -26 10
+shot gear_02_lineup_wildhide_beastbound
+look 26 10
+shot gear_03_lineup_gatewrought_veilwoven
+# close-ups: three blocks from each pair (local coordinates: left, up, forward)
+cmd tp @s ^4.2 ^ ^3
+wait 10
+look 0 18
+shot gear_04_close_wildhide
+cmd tp @s ^-2.8 ^ ^
+wait 10
+look 0 18
+shot gear_05_close_beastbound
+cmd tp @s ^-2.8 ^ ^
+wait 10
+look 0 18
+shot gear_06_close_gatewrought
+cmd tp @s ^-2.8 ^ ^
+wait 10
+look 0 18
+shot gear_07_close_veilwoven
+# from behind: the backs of the sets
+cmd tp @s ^ ^ ^5.5 180 18
+wait 10
+shot gear_08_backs_veilwoven
+look 180 8
+shot gear_09_backs_row
+# first person: wear and hold each tier
+cmd tp @s ^ ^ ^-6 0 30
+wait 10
+cmd awaken gear kit E
+wait 20
+look 0 30
+shot gear_10_held_wildhide_fang_charm
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_mattock
+wait 10
+shot gear_11_held_wildhide_mattock
+cmd awaken gear kit D
+wait 20
+shot gear_12_held_beastbound_cleaver_totem
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_mattock
+wait 10
+shot gear_13_held_beastbound_mattock
+cmd awaken gear kit C
+wait 20
+shot gear_14_held_gatewrought_sabre_lens
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_mattock
+wait 10
+shot gear_15_held_gatewrought_mattock
+cmd awaken gear kit B
+wait 20
+shot gear_16_held_veilwoven_edge_censer
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_mattock
+wait 10
+shot gear_17_held_veilwoven_mattock
+# night: the C and B glow layers on the held items
+cmd time set 18000
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_blade
+wait 40
+shot gear_18_held_veilwoven_night
+cmd awaken gear
+wait 20
+shot gear_19_status_in_chat
+cmd awaken gear lineup clear
+quit
