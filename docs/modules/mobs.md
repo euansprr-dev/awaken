@@ -85,7 +85,8 @@ Spawning goes through `core.api.MobHooks` (installed by `MobsModule.init`):
   for guardians and nightmares) with a 1.5 s invulnerable roar, a spoken line and a new ability list; arena awareness
   (home = spawn point, radius per boss; walks back, blinks back if kited more than 10 blocks out, ignores targets out
   of the arena, resets to full health after 30 s with nobody near); never despawn; knockback and explosion knockback
-  resistance 1.0; one intro line when the fight starts.
+  resistance 1.0; one intro line when the fight starts. Monster Hunter style, each phase change knocks one of the
+  boss's parts loose (dropped on the spot, once per boss, never again after a reset); the full set drops on the kill.
 - **Drops**: loot tables carry themed vanilla drops, boss parts and essence shards through `awaken:mob_level_count`
   (count = floor(base + perLevel x content level + random)). Code adds the Lord Heart (Gate Lords), Power Cores via
   `PowerCoreHooks.roll` (Lord 40%, guardian 50%, Sovereign 75%, final 100%, nightmare 15%, elites 6%, Wardens 15%;
