@@ -56,9 +56,9 @@ NO_SPAWNS = {"modifier": "overlay", "argument": {"spawn_costs": {}, "spawns_by_c
 
 # id: (display, fog colour, fog start, fog end, particles, ambient, music, water colour)
 THEMES = {
-    "bell_crypt": ("Bell Crypt", "#1c1a24", 4.0, 52.0, particles(("white_ash", 0.004)),
+    "bell_crypt": ("Bell Crypt", "#24212f", 8.0, 64.0, particles(("white_ash", 0.004)),
                    ambient(additions="awaken:gate.ambient.bell", chance=0.004), music("minecraft:music.overworld.deep_dark"), "#3f4c5f"),
-    "fungal_hollow": ("Fungal Hollow", "#3b2a44", 2.0, 44.0, particles(("spore_blossom_air", 0.01), ("crimson_spore", 0.004)),
+    "fungal_hollow": ("Fungal Hollow", "#3b2a44", 6.0, 56.0, particles(("spore_blossom_air", 0.01), ("crimson_spore", 0.004)),
                       ambient(loop="minecraft:ambient.crimson_forest.loop", additions="minecraft:ambient.crimson_forest.additions", chance=0.008),
                       music("minecraft:music.overworld.lush_caves"), "#5a7a4a"),
     "ember_mines": ("Ember Mines", "#3a1a10", 6.0, 64.0, particles(("ash", 0.008), ("small_flame", 0.0008)),
@@ -69,7 +69,7 @@ THEMES = {
                         music("minecraft:music.under_water"), "#1d6a7a"),
     "clockwork_foundry": ("Clockwork Foundry", "#3a2e22", 6.0, 64.0, particles(("white_smoke", 0.002), ("electric_spark", 0.001)),
                           ambient(additions="awaken:gate.ambient.gears", chance=0.008), music("minecraft:music.overworld.dripstone_caves"), "#4a6a5a"),
-    "glass_desert": ("Glass Desert", "#c9a86a", 10.0, 80.0, particles(("white_ash", 0.012)),
+    "glass_desert": ("Glass Desert", "#5c5242", 16.0, 96.0, particles(("white_ash", 0.012)),
                      ambient(additions="awaken:gate.ambient.glass", chance=0.005, mood=None), music("minecraft:music.overworld.desert"), "#32a598"),
     "hive": ("Hive", "#4a3a10", 4.0, 48.0, particles(("falling_honey", 0.004), ("dripping_honey", 0.003)),
              ambient(additions="awaken:gate.ambient.buzz", chance=0.012), music("minecraft:music.overworld.flower_forest"), "#b0882a"),
@@ -83,12 +83,12 @@ THEMES = {
                       ambient(additions="awaken:gate.ambient.glass", chance=0.006, mood=None), music("minecraft:music.end"), "#9aa4ff"),
     "precursor_lab": ("Precursor Lab", "#0c1e2a", 6.0, 64.0, particles(("electric_spark", 0.003), ("glow", 0.002)),
                       ambient(additions="awaken:gate.ambient.lab", chance=0.006), music("minecraft:music.end"), "#2a7aa0"),
-    "nightmare": ("Nightmare", "#1a0a24", 3.0, 40.0, particles(("reverse_portal", 0.006), ("soul", 0.002)),
+    "nightmare": ("Nightmare", "#231432", 8.0, 64.0, particles(("reverse_portal", 0.006), ("soul", 0.002)),
                   ambient(loop="minecraft:ambient.soul_sand_valley.loop", additions="minecraft:ambient.soul_sand_valley.additions", chance=0.0111,
                           mood="minecraft:ambient.soul_sand_valley.mood"), music("minecraft:music.overworld.deep_dark"), "#5a2a7a"),
     "sky_archipelago": ("Sky Archipelago", "#bfe0ff", 12.0, 96.0, particles(("cloud", 0.002), ("white_ash", 0.004)),
                         ambient(additions="awaken:gate.ambient.wind", chance=0.006, mood=None), music("minecraft:music.overworld.meadow"), "#4a9ff0"),
-    "abyssal_shrine": ("Abyssal Shrine", "#05040a", 2.0, 36.0, None, None, None, "#0a0a14"),
+    "abyssal_shrine": ("Abyssal Shrine", "#110f26", 8.0, 64.0, None, None, None, "#0a0a14"),
 }
 
 

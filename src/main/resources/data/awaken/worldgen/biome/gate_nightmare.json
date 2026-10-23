@@ -6,10 +6,10 @@
     "water_color": "#5a2a7a"
   },
   "attributes": {
-    "minecraft:visual/fog_color": "#1a0a24",
-    "minecraft:visual/sky_color": "#1a0a24",
-    "minecraft:visual/fog_start_distance": 3.0,
-    "minecraft:visual/fog_end_distance": 40.0,
+    "minecraft:visual/fog_color": "#231432",
+    "minecraft:visual/sky_color": "#231432",
+    "minecraft:visual/fog_start_distance": 8.0,
+    "minecraft:visual/fog_end_distance": 64.0,
     "minecraft:visual/water_fog_color": "#050f1a",
     "minecraft:gameplay/natural_mob_spawns": {
       "modifier": "overlay",
