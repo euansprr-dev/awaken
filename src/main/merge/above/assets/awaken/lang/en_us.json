@@ -54,5 +54,9 @@
   "subtitles.awaken.above.log": "Log plays",
   "subtitles.awaken.above.jet": "Jet boots",
   "subtitles.awaken.above.module_off": "Frame powers down",
-  "subtitles.awaken.above.ui_click": "Click"
+  "subtitles.awaken.above.ui_click": "Click",
+  "block.awaken.ruin_plating_cracked": "Cracked Precursor Plating",
+  "block.awaken.ruin_plating_mossy": "Mossy Precursor Plating",
+  "block.awaken.ruin_pillar": "Precursor Column",
+  "block.awaken.ruin_glyph": "Glyph Plating"
 }

@@ -21,18 +21,22 @@ public final class WellData extends SavedData {
             Codec.INT.optionalFieldOf("bottom", 0).forGetter(d -> d.bottom),
             Codec.INT.optionalFieldOf("spawn_x", 0).forGetter(d -> d.spawnX),
             Codec.INT.optionalFieldOf("spawn_z", 0).forGetter(d -> d.spawnZ),
-            Codec.unboundedMap(Codec.STRING, Codec.LONG).optionalFieldOf("guardian_times", java.util.Map.of()).forGetter(d -> java.util.Map.copyOf(d.guardianTimes))
-    ).apply(i, (schema, state, x, y, z, bottom, sx, sz, times) -> {
+            Codec.unboundedMap(Codec.STRING, Codec.LONG).optionalFieldOf("guardian_times", java.util.Map.of()).forGetter(d -> java.util.Map.copyOf(d.guardianTimes)),
+            Codec.INT.optionalFieldOf("style", 1).forGetter(d -> d.style)
+    ).apply(i, (schema, state, x, y, z, bottom, sx, sz, times, style) -> {
         WellData d = new WellData(state, x, y, z, bottom);
         d.spawnX = sx;
         d.spawnZ = sz;
         d.guardianTimes.putAll(times);
+        d.style = style;
         return d;
     }));
 
     public static final SavedDataType<WellData> TYPE = new SavedDataType<>(Awaken.id("descent_well"), WellData::new, CODEC);
 
     public int state;
+    /** Which look the Well was built in ({@link Well#STYLE}); an older look is rebuilt in place on start. */
+    public int style = 1;
     public int x, y, z, bottom;
     /** World spawn when the site was chosen (the Well is 400-700 blocks from it). */
     public int spawnX, spawnZ;

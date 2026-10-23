@@ -1,5 +1,7 @@
 package dev.awaken.gates.block;
 
+import dev.awaken.gates.GateVortexBlockEntity;
+import dev.awaken.gates.GatesRegistry;
 import dev.awaken.gates.run.Interactions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -16,6 +18,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -27,24 +34,49 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jspecify.annotations.Nullable;
 
 /** The gate's own blocks. Interaction logic lives in {@link Interactions}; these classes only route events. */
 public final class GateBlocks {
     private GateBlocks() {}
 
-    /** The surface gate's core: walk into it to enter. Rank picks the colour; BROKEN after a break. */
-    public static final class Core extends Block {
+    /**
+     * The surface gate's core: invisible blocks filling the opening; walk into one to enter. Rank picks the colour,
+     * BROKEN after a break. The ANCHOR core (bottom centre) carries the block entity whose renderer draws the whole
+     * vortex ({@link dev.awaken.gates.GateVortexBlockEntity}).
+     */
+    public static final class Core extends Block implements EntityBlock {
         public static final IntegerProperty RANK = IntegerProperty.create("rank", 0, 6);
         public static final BooleanProperty BROKEN = BooleanProperty.create("broken");
+        public static final BooleanProperty ANCHOR = BooleanProperty.create("anchor");
 
         public Core(BlockBehaviour.Properties p) {
             super(p);
-            registerDefaultState(stateDefinition.any().setValue(RANK, 0).setValue(BROKEN, false));
+            registerDefaultState(stateDefinition.any().setValue(RANK, 0).setValue(BROKEN, false).setValue(ANCHOR, false));
         }
 
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
-            b.add(RANK, BROKEN);
+            b.add(RANK, BROKEN, ANCHOR);
+        }
+
+        @Override
+        public @Nullable BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+            return state.getValue(ANCHOR) ? new GateVortexBlockEntity(pos, state) : null;
+        }
+
+        @Override
+        public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+            if (level.isClientSide() || !state.getValue(ANCHOR) || type != GatesRegistry.VORTEX_BE.get()) return null;
+            @SuppressWarnings("unchecked")
+            BlockEntityTicker<T> ticker = (BlockEntityTicker<T>) (BlockEntityTicker<GateVortexBlockEntity>) GateVortexBlockEntity::serverTick;
+            return ticker;
+        }
+
+        /** The renderer draws the opening as one surface; the blocks themselves are not drawn. */
+        @Override
+        protected RenderShape getRenderShape(BlockState state) {
+            return RenderShape.INVISIBLE;
         }
 
         @Override
@@ -59,10 +91,10 @@ public final class GateBlocks {
 
         @Override
         public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-            if (random.nextInt(4) == 0) {
-                level.addParticle(state.getValue(BROKEN) ? ParticleTypes.ASH : ParticleTypes.END_ROD,
-                        pos.getX() + random.nextDouble(), pos.getY() + random.nextDouble(), pos.getZ() + random.nextDouble(),
-                        0, 0.02, 0);
+            // the renderer draws the motes; the blocks only shed ash once the gate has broken
+            if (state.getValue(BROKEN) && random.nextInt(3) == 0) {
+                level.addParticle(random.nextBoolean() ? ParticleTypes.ASH : ParticleTypes.WHITE_ASH,
+                        pos.getX() + random.nextDouble(), pos.getY() + random.nextDouble(), pos.getZ() + random.nextDouble(), 0, 0.03, 0);
             }
         }
 

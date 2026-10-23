@@ -37,6 +37,7 @@ public final class GatesClient {
         bus.addListener(Blight::onTick);
         bus.addListener(Blight::onFogColour);
         bus.addListener(Blight::onFog);
+        bus.addListener(GateHum::onTick);
         bus.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> ClientGates.clear());
         StatusSections.add(StatusSections.Tab.GATE_MAP, new GateMapSection());
     }
@@ -64,6 +65,7 @@ public final class GatesClient {
         e.registerEntityRenderer(GatesRegistry.GHOST.get(), ShadeRenderer::new);
         e.registerEntityRenderer(GatesRegistry.HOLLOW.get(), ShadeRenderer::new);
         e.registerEntityRenderer(GatesRegistry.HOARDER.get(), ZombieRenderer::new);
+        e.registerBlockEntityRenderer(GatesRegistry.VORTEX_BE.get(), GateVortexRenderer::new);
     }
 
     private static void layers(RegisterGuiLayersEvent e) {

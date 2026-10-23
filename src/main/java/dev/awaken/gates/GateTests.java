@@ -517,14 +517,22 @@ final class GateTests {
             BlockPos base = h.absolutePos(new BlockPos(0, 0, 0)).offset(6, 0, 6);
             GateRecord g = new GateRecord(77, testPlan(1, Rank.C, Theme.HIVE, Layout.LABYRINTH, Twist.NONE), base, 0, 0, 0, 3, GateState.READY, Optional.empty());
             var level = h.getLevel();
+            // the isolated tests share this spot: put the ground back exactly as it was afterwards
+            int r = (int) Math.ceil(GateVortex.size(Rank.C.ordinal()).ringRadius()) + 1;
+            java.util.Map<BlockPos, net.minecraft.world.level.block.state.BlockState> before = new java.util.HashMap<>();
+            for (BlockPos q : BlockPos.betweenClosed(base.offset(-r, -5, -r), base.offset(r, 16, r))) before.put(q.immutable(), level.getBlockState(q));
             Overworld.place(level, g, false);
-            h.assertTrue(level.getBlockState(base.above(3)).is(GatesRegistry.CORE.get()), "core in the middle of the frame");
-            h.assertTrue(level.getBlockState(base.offset(2, 3, 0)).is(GatesRegistry.FRAME.get()), "frame post");
+            h.assertTrue(level.getBlockState(base.above(3)).is(GatesRegistry.CORE.get()), "core in the middle of the opening");
+            h.assertTrue(level.getBlockState(base.offset(2, 3, 0)).is(GatesRegistry.CORE.get()), "a C-rank opening is wider than the old doorway");
+            int spur = (int) Math.round(GateVortex.size(Rank.C.ordinal()).rx() + 1.2F);
+            h.assertFalse(level.getBlockState(base.offset(-spur, 1, -1)).isAir(), "a rock spur flanks the opening");
             h.assertTrue(level.getBlockState(base.above(3)).getValue(dev.awaken.gates.block.GateBlocks.Core.RANK) == Rank.C.ordinal(), "core coloured by rank");
             h.assertTrue(level.getBlockState(g.mouth()).isAir(), "the mouth is clear");
             Overworld.remove(level, g);
             h.assertTrue(level.getBlockState(base.above(3)).isAir(), "removed again");
-            for (int a = -3; a <= 3; a++) for (int b = -2; b <= 2; b++) level.setBlock(base.offset(a, 0, b), Blocks.AIR.defaultBlockState(), 2);
+            before.forEach((q, st) -> {
+                if (level.getBlockState(q) != st) level.setBlock(q, st, 2);
+            });
             h.succeed();
         });
     }

@@ -33,6 +33,8 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
     private final long seed;
     private final int rotation;
     private final int doorRank;
+    /** Which blueprint built it ({@link RuinBuilder#STYLE}); pieces saved before the redesign have none. */
+    private final int style;
 
     public PrecursorRuinPiece(RuinKind kind, BlockPos corner, int rotation, long seed, int doorRank) {
         super(AboveWorldgen.RUIN_PIECE.get(), 0, box(kind, corner));
@@ -40,6 +42,7 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
         this.seed = seed;
         this.rotation = rotation & 3;
         this.doorRank = doorRank;
+        this.style = RuinBuilder.STYLE;
         setOrientation(null);
     }
 
@@ -50,6 +53,7 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
         this.seed = tag.getLongOr("seed", 0L);
         this.rotation = tag.getIntOr("rot", 0) & 3;
         this.doorRank = tag.getIntOr("rank", 1);
+        this.style = tag.getIntOr("style", 1);
         setOrientation(null);
     }
 
@@ -65,6 +69,7 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
         tag.putLong("seed", seed);
         tag.putInt("rot", rotation);
         tag.putInt("rank", doorRank);
+        tag.putInt("style", style);
     }
 
     public RuinKind kind() {
@@ -96,6 +101,9 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
     @Override
     public void postProcess(WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random,
                             BoundingBox chunkBB, ChunkPos chunkPos, BlockPos referencePos) {
+        // a ruin started before the redesign keeps what it already built: its unbuilt chunks don't get the new blueprint
+        // (that would weld two buildings together at a chunk edge)
+        if (style < RuinBuilder.STYLE) return;
         Rotation rot = rot();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         RuinBuilder.build(kind, seed, doorRank, new RuinBuilder.Sink() {
