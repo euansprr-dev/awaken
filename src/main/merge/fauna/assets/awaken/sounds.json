@@ -160,7 +160,8 @@
         "name": "awaken:fauna/breathbell/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.briar_sow.ambient": {
     "sounds": [
@@ -278,7 +279,8 @@
         "name": "awaken:fauna/brook_otter/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.canopy_prowler.ambient": {
     "sounds": [
@@ -361,7 +363,8 @@
         "name": "awaken:fauna/chime_cricket/step1",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.crag_ram.ambient": {
     "sounds": [
@@ -536,7 +539,8 @@
         "name": "awaken:fauna/drip_lurker/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.dune_ray.ambient": {
     "sounds": [
@@ -865,7 +869,8 @@
         "name": "awaken:fauna/glimmerfin/step2",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.gloam_snail.ambient": {
     "sounds": [
@@ -1076,7 +1081,8 @@
         "name": "awaken:fauna/hushling/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.lantern_maw.ambient": {
     "sounds": [
@@ -1128,7 +1134,8 @@
         "name": "awaken:fauna/lantern_maw/step1",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.lumen_moth.ambient": {
     "sounds": [
@@ -1860,7 +1867,8 @@
         "name": "awaken:fauna/thousandfoot/step2",
         "volume": 0.7
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.tidesteed.ambient": {
     "sounds": [
@@ -1903,7 +1911,8 @@
         "name": "awaken:fauna/tidesteed/step2",
         "volume": 0.45
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.weaver_queen.ambient": {
     "sounds": [
@@ -2007,7 +2016,8 @@
         "name": "awaken:fauna/wickling/step2",
         "volume": 0.25
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.fauna.step"
   },
   "fauna.wisp_hound.ambient": {
     "sounds": [

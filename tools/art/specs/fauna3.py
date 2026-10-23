@@ -2172,7 +2172,11 @@ def sounds():
                 entries.append(e)
             key = f"fauna.{cid}.{kind}"
             ev = {"sounds": entries}
-            if kind != "step":
+            if kind == "step":
+                # every event has a subtitle (the audio module's rule): steps share one
+                ev["subtitle"] = "subtitles.awaken.fauna.step"
+                lang["subtitles.awaken.fauna.step"] = "Footsteps"
+            else:
                 ev["subtitle"] = "subtitles.awaken." + key
                 if kind == "roar":
                     lang["subtitles.awaken." + key] = f"{names[cid]} {ROARS[cid]}"
