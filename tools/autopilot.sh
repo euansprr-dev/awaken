@@ -8,6 +8,7 @@ T=${2:-900}
 mkdir -p run-autopilot
 cp "$SCRIPT" run-autopilot/script.txt
 rm -f run-autopilot/screenshots/*.png
+rm -rf run-autopilot/saves   # every tour starts from a fresh world
 tools/gradle.sh "$T" runAutopilot > /dev/null
 echo "screenshots:"
 ls -1 run-autopilot/screenshots/ 2>/dev/null

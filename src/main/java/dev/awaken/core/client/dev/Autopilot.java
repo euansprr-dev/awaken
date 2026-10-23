@@ -49,6 +49,7 @@ public final class Autopilot {
     private static String createName;
     private static WorldCreationUiState.SelectedGameMode createMode;
     private static String createSeed;
+    private static String shotPending;
 
     public static void init() {
         String path = System.getProperty("awaken.autopilot");
@@ -70,6 +71,8 @@ public final class Autopilot {
             mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
             mc.options.pauseOnLostFocus = false;
         }
+        // the window lost focus (the owner is using the Mac): never photograph the pause menu
+        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
         if (waitTicks > 0) {
             waitTicks--;
             return;
@@ -171,8 +174,17 @@ public final class Autopilot {
                 waitTicks = 5;
             }
             case "shot" -> {
-                Screenshot.grab(mc.gameDirectory, arg.trim() + ".png", mc.gameRenderer.mainRenderTarget(), 1,
-                        msg -> Awaken.LOG.info("[autopilot] screenshot {}", arg.trim()));
+                // command feedback is not part of the picture: clear the chat, let a few frames render without it
+                if (shotPending == null) {
+                    mc.gui.hud.getChat().clearMessages(false);
+                    shotPending = arg.trim();
+                    waitTicks = 3;
+                    return false;
+                }
+                String name = shotPending;
+                shotPending = null;
+                Screenshot.grab(mc.gameDirectory, name + ".png", mc.gameRenderer.mainRenderTarget(), 1,
+                        msg -> Awaken.LOG.info("[autopilot] screenshot {}", name));
                 waitTicks = 10;
             }
             case "quit" -> mc.stop();

@@ -1,0 +1,123 @@
+# Creature studio: every overworld creature alone on a plain platform in the sky, close up, by day and (night
+# creatures) by night. Judge silhouettes, textures and glow without trees or other mobs in the way.
+world studio creative 777
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+cmd tp @s ~ 200 ~ 0 15
+cmd fill ~-7 ~-1 ~-3 ~7 ~-1 ~14 minecraft:smooth_stone
+cmd fill ~-7 ~ ~-3 ~7 ~6 ~14 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..40]
+wait 20
+look 0 12
+cmd summon awaken:lumen_moth ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_lumen_moth
+cmd tp @e[type=awaken:lumen_moth] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:bloom_sprite ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_bloom_sprite
+cmd tp @e[type=awaken:bloom_sprite] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:mossback ~ ~ ~7 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_mossback
+cmd tp @e[type=awaken:mossback] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:gloomstalker ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_gloomstalker
+cmd tp @e[type=awaken:gloomstalker] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:briar_sow ~ ~ ~7 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_briar_sow
+cmd tp @e[type=awaken:briar_sow] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:glass_scarab ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_glass_scarab
+cmd tp @e[type=awaken:glass_scarab] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:dune_ray ~ ~ ~7 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_dune_ray
+cmd tp @e[type=awaken:dune_ray] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:dune_wyrm ~ ~ ~7 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_dune_wyrm
+cmd tp @e[type=awaken:dune_wyrm] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:frostfinch ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_frostfinch
+cmd tp @e[type=awaken:frostfinch] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:frost_stag ~ ~ ~7 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_frost_stag
+cmd tp @e[type=awaken:frost_stag] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:wisp_hound ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_wisp_hound
+cmd tp @e[type=awaken:wisp_hound] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:old_antler ~ ~ ~7 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_day_old_antler
+cmd tp @e[type=awaken:old_antler] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd time set 18000
+wait 30
+cmd summon awaken:lumen_moth ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_night_lumen_moth
+cmd tp @e[type=awaken:lumen_moth] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:gloomstalker ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_night_gloomstalker
+cmd tp @e[type=awaken:gloomstalker] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:wisp_hound ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_night_wisp_hound
+cmd tp @e[type=awaken:wisp_hound] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd summon awaken:frostfinch ~ ~ ~4 {NoAI:1b,Rotation:[150f,0f]}
+wait 25
+shot studio_night_frostfinch
+cmd tp @e[type=awaken:frostfinch] ~ -100 ~
+cmd kill @e[type=minecraft:item,distance=..30]
+wait 10
+cmd time set 6000
+wait 20
+screen status
+shot studio_status
+screen close
+quit

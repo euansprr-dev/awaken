@@ -80,6 +80,13 @@ public class NamedBeast extends FaunaMob {
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
+    /** A named beast's bar shows only while it is fighting someone (a beast minding its territory is not a boss fight). */
+    @Override
+    protected void ensureBar() {
+        super.ensureBar();
+        barVisible(getTarget() != null);
+    }
+
     @Override
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
