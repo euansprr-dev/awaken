@@ -75,10 +75,10 @@ public final class Anomaly {
 
     // ---- saving --------------------------------------------------------------------------------------------------------
 
-    record Base(int schema, int id, AnomalyKind kind, UUID owner, BlockPos pos, long startedAt, long endsAt, boolean discovered,
+    record Base(Optional<Integer> schema, int id, AnomalyKind kind, UUID owner, BlockPos pos, long startedAt, long endsAt, boolean discovered,
                 int stage, String gateId) {
         static final MapCodec<Base> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-                Codec.INT.optionalFieldOf("schema", AnomalyData.SCHEMA).forGetter(Base::schema),
+                Codec.INT.optionalFieldOf("schema").forGetter(Base::schema),
                 Codec.INT.fieldOf("id").forGetter(Base::id),
                 AnomalyKind.CODEC.fieldOf("kind").forGetter(Base::kind),
                 UUIDUtil.CODEC.fieldOf("owner").forGetter(Base::owner),
@@ -128,7 +128,7 @@ public final class Anomaly {
     }
 
     public Saved save() {
-        return new Saved(new Base(AnomalyData.SCHEMA, id, kind, owner, pos, startedAt, endsAt, discovered, stage, gateId),
+        return new Saved(new Base(Optional.of(AnomalyData.SCHEMA), id, kind, owner, pos, startedAt, endsAt, discovered, stage, gateId),
                 new RiftPart(theme, contentLevel, maxHits, hitsLeft, paid, guardSpawned, nextWaveAt, spawned, Optional.ofNullable(entity), List.copyOf(mobs)),
                 new TrailPart(target, progress, cachePlaced, List.copyOf(motes)));
     }

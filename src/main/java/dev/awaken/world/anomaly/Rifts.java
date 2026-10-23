@@ -246,7 +246,9 @@ final class Rifts {
         RiftEntity e = entity(level, a);
         if (e != null) {
             if (!a.paid) level.playSound(null, e.getX(), e.getY() + 1.0, e.getZ(), AnomalyContent.RIFT_FADE.get(), SoundSource.HOSTILE, 2.0F, 1.0F);
-            e.beginClose();
+            // the collapse plays out over its own ticks; where entities don't tick, it simply goes
+            if (level.isPositionEntityTicking(e.blockPosition())) e.beginClose();
+            else e.discard();
         }
     }
 

@@ -75,7 +75,7 @@ public final class AnomalyDirector {
         long now = s.overworld().getGameTime();
         String blocked = Eligibility.blocked(Eligibility.of(p, data, mem, now));
         if (blocked != null) {
-            noteBlocked(p, mem, blocked, now);
+            noteBlocked(p, mem, blocked);
             return Decision.of("blocked: " + blocked);
         }
         mem.lastBlock = "";
@@ -106,7 +106,7 @@ public final class AnomalyDirector {
         return new Decision("started", a);
     }
 
-    private static void noteBlocked(ServerPlayer p, AnomalyMemory mem, String reason, long now) {
+    private static void noteBlocked(ServerPlayer p, AnomalyMemory mem, String reason) {
         if (reason.equals(mem.lastBlock)) return;
         mem.lastBlock = reason;
         // the everyday reasons aren't news; the ones that keep an anomaly away are
@@ -195,16 +195,16 @@ public final class AnomalyDirector {
         String title, body;
         switch (a.kind) {
             case RIFT_TEAR -> {
-                title = "Something tore open nearby · " + where;
-                body = "Break its core to close it";
+                title = "Something tore open nearby";
+                body = where + " · break its core";
             }
             case WANDERING_GATE -> {
-                title = "A wandering gate formed · " + where;
-                body = "It fades in " + WanderingGates.minutesLeft(a, now) + " min unless you enter";
+                title = "A wandering gate formed";
+                body = where + " · fades in " + WanderingGates.minutesLeft(a, now) + " min unless entered";
             }
             default -> {
-                title = "Lights gather nearby · " + where;
-                body = "Follow them";
+                title = "Lights gather nearby";
+                body = where + " · follow them";
             }
         }
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(title)).body(Component.literal(body))
@@ -268,7 +268,10 @@ public final class AnomalyDirector {
     }
 
     static void processRemovals(MinecraftServer s) {
-        AnomalyData data = AnomalyData.get(s);
+        processRemovals(s, AnomalyData.get(s));
+    }
+
+    static void processRemovals(MinecraftServer s, AnomalyData data) {
         if (data.removals().isEmpty()) return;
         Iterator<AnomalyData.Removal> it = data.removals().iterator();
         while (it.hasNext()) {
@@ -288,7 +291,10 @@ public final class AnomalyDirector {
      * fades on its own. Returns how many were cleaned up.
      */
     public static int recover(MinecraftServer s) {
-        AnomalyData data = AnomalyData.get(s);
+        return recover(s, AnomalyData.get(s));
+    }
+
+    static int recover(MinecraftServer s, AnomalyData data) {
         List<Anomaly> was = new ArrayList<>(data.active());
         for (Anomaly a : was) {
             data.remove(a);
@@ -300,7 +306,7 @@ public final class AnomalyDirector {
             data.setDirty();
             Awaken.LOG.info("[anomaly] cleaned up {} anomalies interrupted by the restart", was.size());
         }
-        processRemovals(s);
+        processRemovals(s, data);
         return was.size();
     }
 

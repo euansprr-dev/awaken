@@ -36,7 +36,7 @@ public final class AnomalyData extends SavedData {
 
     public AnomalyData() {}
 
-    private AnomalyData(int schema, int nextId, boolean enabled, List<Anomaly> active, List<Removal> removals) {
+    private AnomalyData(java.util.Optional<Integer> schema, int nextId, boolean enabled, List<Anomaly> active, List<Removal> removals) {
         this.nextId = Math.max(1, nextId);
         this.enabled = enabled;
         this.active.addAll(active);
@@ -44,7 +44,7 @@ public final class AnomalyData extends SavedData {
     }
 
     public static final Codec<AnomalyData> CODEC = RecordCodecBuilder.create(i -> i.group(
-            Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(d -> SCHEMA),
+            Codec.INT.optionalFieldOf("schema").forGetter(d -> java.util.Optional.of(SCHEMA)),
             Codec.INT.optionalFieldOf("next_id", 1).forGetter(d -> d.nextId),
             Codec.BOOL.optionalFieldOf("enabled", true).forGetter(d -> d.enabled),
             Anomaly.CODEC.listOf().optionalFieldOf("active", List.of()).forGetter(d -> List.copyOf(d.active)),

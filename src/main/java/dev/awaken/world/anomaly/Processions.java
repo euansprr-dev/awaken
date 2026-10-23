@@ -170,8 +170,8 @@ final class Processions {
         level.playSound(null, top, AnomalyContent.CACHE.get(), SoundSource.AMBIENT, 1.5F, 1.0F);
         level.sendParticles(ParticleTypes.END_ROD, top.getX() + 0.5, top.getY() + 0.6, top.getZ() + 0.5, 24, 0.3, 0.4, 0.3, 0.04);
         if (owner != null && owner.level() == level) {
-            Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The lights leave something behind"))
-                    .body(Component.literal("A spirit cache · " + Spots.where(owner.blockPosition(), top)))
+            Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The lights left a gift"))
+                    .body(Component.literal("Spirit cache · " + Spots.where(owner.blockPosition(), top)))
                     .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
             DirectorLog.log(owner, "anomaly", "procession #" + a.id + ": the lights sank into a cache at " + top.toShortString());
         }
@@ -199,7 +199,12 @@ final class Processions {
 
     /** Ended: the lights fade; an unopened cache comes down (now, or when its chunk next loads). */
     static void cleanup(ServerLevel level, AnomalyData data, Anomaly a, boolean removeBlocks) {
-        for (UUID id : a.motes) if (level.getEntity(id) instanceof AnomalyMote m) m.fadeAfter(10);
+        for (UUID id : a.motes) {
+            if (level.getEntity(id) instanceof AnomalyMote m) {
+                if (level.isPositionEntityTicking(m.blockPosition())) m.fadeAfter(10);
+                else m.discard();
+            }
+        }
         if (!removeBlocks || !a.cachePlaced) return;
         BlockPos at = a.focus();
         if (level.hasChunkAt(at)) {

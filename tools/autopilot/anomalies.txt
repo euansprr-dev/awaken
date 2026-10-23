@@ -1,0 +1,82 @@
+# Anomalies (plan v2 §4.3): each kind started in front of the player, at noon and at midnight.
+# `/awaken anomaly now <kind>` starts one 14-26 blocks where you look (or elsewhere nearby if that ground isn't valid);
+# `/tp @s ^ ^ ^10` walks the camera ten blocks forward for a close-up. Creative, so the rift's monsters ignore us.
+world anomalies creative 5150
+waitworld
+gui 0
+cmd awaken admin awaken
+wait 60
+# the first-power cards may open on awakening: close them so they don't cover the shots
+screen close
+cmd awaken powers starter 1
+wait 20
+cmd time set 6000
+cmd time pause
+look 0 12
+wait 40
+
+# ---- day ----
+cmd awaken anomaly now rift_tear
+wait 60
+# toast "Something tore open nearby · 22 m S"; Now "Rift tear · 22 m S"
+shot 01_rift_day_toast
+wait 80
+shot 02_rift_day
+cmd tp @s ^ ^ ^10
+wait 20
+# close up: the crack, its core, and the first monsters; Now "Break the rift's core · 4 hits" once within 8 m
+shot 03_rift_day_close
+cmd awaken anomaly clear
+wait 40
+
+cmd awaken anomaly now spirit_procession
+wait 60
+# toast "Lights gather nearby · 20 m S", five warm lights circling; Now "Follow the lights · 20 m S"
+shot 04_lights_day
+cmd tp @s ^ ^ ^10
+wait 40
+shot 05_lights_day_close
+# jump the lights to the end of their path: they sink into a Spirit Cache
+cmd awaken anomaly skip
+wait 60
+shot 06_cache_day
+cmd awaken anomaly clear
+wait 40
+
+cmd awaken anomaly now wandering_gate
+wait 200
+# toast "A wandering gate formed · 20 m S"; the gates module's Now line "Wandering gate · 20 m · fades in 6 min"
+shot 07_gate_day
+cmd awaken anomaly clear
+wait 20
+
+# ---- night ----
+cmd time set 18000
+wait 40
+look 180 12
+wait 20
+cmd awaken anomaly now rift_tear
+wait 80
+shot 08_rift_night
+cmd tp @s ^ ^ ^10
+wait 20
+shot 09_rift_night_close
+cmd awaken anomaly clear
+wait 40
+
+# (the director never starts a procession at night; the command can, to see the lights in the dark)
+cmd awaken anomaly now spirit_procession
+wait 80
+shot 10_lights_night
+cmd awaken anomaly skip
+wait 60
+shot 11_cache_night
+cmd awaken anomaly clear
+wait 40
+
+cmd awaken anomaly now wandering_gate
+wait 200
+shot 12_gate_night
+cmd awaken anomaly clear
+cmd time resume
+quit

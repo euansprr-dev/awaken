@@ -64,6 +64,10 @@ public final class Spots {
         public Rules hearth(HearthCheck h) {
             return new Rules(minDist, maxDist, h, checkGates);
         }
+
+        public Rules gates(boolean check) {
+            return new Rules(minDist, maxDist, hearth, check);
+        }
     }
 
     /** Why {@code ground} can't hold an anomaly for a player standing at {@code from}, or null when it can. */

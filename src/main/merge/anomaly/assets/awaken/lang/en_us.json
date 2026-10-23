@@ -1,0 +1,12 @@
+{
+  "block.awaken.anomaly_spirit_cache": "Spirit Cache",
+  "entity.awaken.rift_tear": "Rift Tear",
+  "entity.awaken.anomaly_mote": "Spirit Light",
+  "subtitles.awaken.anomaly.rift_open": "Something tears open",
+  "subtitles.awaken.anomaly.rift_hum": "Rift hums",
+  "subtitles.awaken.anomaly.rift_hit": "Rift core cracks",
+  "subtitles.awaken.anomaly.rift_close": "Rift collapses",
+  "subtitles.awaken.anomaly.rift_fade": "Rift seals itself",
+  "subtitles.awaken.anomaly.motes": "Spirit lights chime",
+  "subtitles.awaken.anomaly.cache": "Spirit cache opens"
+}

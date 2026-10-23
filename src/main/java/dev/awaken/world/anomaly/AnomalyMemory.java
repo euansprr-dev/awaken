@@ -23,9 +23,9 @@ public final class AnomalyMemory {
     /** Not saved: the last reason the director was paused for this player, so each change is logged once. */
     String lastBlock = "";
 
-    private record A(int schema, double timer, long awakenedAt, int started, int riftsClosed, int caches, String lastKind, long lastStartedAt) {
+    private record A(java.util.Optional<Integer> schema, double timer, long awakenedAt, int started, int riftsClosed, int caches, String lastKind, long lastStartedAt) {
         static final MapCodec<A> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-                Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(A::schema),
+                Codec.INT.optionalFieldOf("schema").forGetter(A::schema),
                 Codec.DOUBLE.optionalFieldOf("timer", -1.0).forGetter(A::timer),
                 Codec.LONG.optionalFieldOf("awakened_at", -1L).forGetter(A::awakenedAt),
                 Codec.INT.optionalFieldOf("started", 0).forGetter(A::started),
@@ -46,7 +46,7 @@ public final class AnomalyMemory {
         m.lastKind = a.lastKind();
         m.lastStartedAt = a.lastStartedAt();
         return m;
-    }, m -> new A(SCHEMA, m.timer, m.awakenedAt, m.started, m.riftsClosed, m.caches, m.lastKind, m.lastStartedAt));
+    }, m -> new A(java.util.Optional.of(SCHEMA), m.timer, m.awakenedAt, m.started, m.riftsClosed, m.caches, m.lastKind, m.lastStartedAt));
 
     /** Value view for tests. */
     public String describe() {
