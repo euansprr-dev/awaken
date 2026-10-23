@@ -58,6 +58,7 @@ public final class PowersClient {
             return p == null ? null : p.getData(PowerContent.LOADOUT.get());
         };
         StatusSections.add(StatusSections.Tab.STATUS, new PowersSection());
+        StarterClient.init(modBus);
     }
 
     private static void payloads(RegisterClientPayloadHandlersEvent e) {
