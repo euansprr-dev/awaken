@@ -14,7 +14,7 @@ The client side registers itself (`@EventBusSubscriber`, client only), so nothin
 ## What the player sees
 
 1. **The offer.** A little after the Anchor takes root (90 s, so it isn't lost in "Home exists."), and again each
-   play-day and after each delivery, a quiet offer: a toast "Anchor request · 8 Mire Hide · K", then
+   play-day and after each delivery, a quiet offer: a toast "Anchor request · 8 Mire Hide", then
    "1 decision waiting · K" in the tracker (`Signal.offerQuietly`). The Status screen's *Waiting for you* and the
    ANCHOR REQUESTS section both have **Take it on** / **Not now**. The decision says what it pays ("about 4 essence ·
    14% of a level · Forge credit") and where to look ("Bog Toads in the swamps drop it"). It stays answerable for the

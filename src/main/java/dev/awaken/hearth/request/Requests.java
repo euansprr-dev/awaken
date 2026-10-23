@@ -221,7 +221,7 @@ public final class Requests {
         st.nextOfferAt = now + BETWEEN_OFFERS;
         DirectorLog.log(sp, "requests", "offered " + e.id() + " ×" + req.count() + " (effort " + Math.round(req.effort()) + ")");
         Signal.offerQuietly(sp, offerWindow(sp, st, o, e.def()), Component.literal("Anchor request · " + req.count() + " ")
-                .append(name(req)).append(" · K"));
+                .append(name(req)));
         return true;
     }
 
@@ -269,7 +269,8 @@ public final class Requests {
             } else {
                 ActiveRequest r = o.get().request().startedOn(PlayDays.current(sp.level().getServer()));
                 st.active.add(r);
-                Signal.toast(sp, Component.literal("Request taken · ").append(name(r)).append(" 0/" + r.count()));
+                int have = Math.min(r.count(), RequestRules.carried(sp, r.target()));
+                Signal.toast(sp, Component.literal("Request taken · ").append(name(r)).append(" " + have + "/" + r.count()));
                 DirectorLog.log(sp, "requests", "took " + r.id());
             }
         }
@@ -370,7 +371,7 @@ public final class Requests {
         st.completed++;
         st.reputation += rw.reputation();
         st.forgeCredit = Math.min(RequestRules.FORGE_CREDIT_CAP, st.forgeCredit + rw.forgeCredit());
-        st.credits++;
+        st.credits = Math.min(RequestRules.slots(rank), st.credits + 1); // a new request after each delivery, never a backlog
         st.nextOfferAt = Math.max(st.nextOfferAt, now + AFTER_DELIVERY);
         give(sp, new ItemStack(CoreApi.ESSENCE_SHARD.get(), rw.essence()));
         if (rw.shards() > 0) give(sp, new ItemStack(RequestContent.CORE_SHARD.get(), rw.shards()));
