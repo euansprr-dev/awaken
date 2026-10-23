@@ -155,6 +155,25 @@ final class MobsTests {
             });
         });
 
+        AwakenTests.register("mobs_boss_bar_only_on_its_storey", 100, h -> {
+            // tracking ignores height and gate floors are stacked 32 apart: a Lord's bar must not show a floor up
+            ServerLevel level = h.getLevel();
+            AwakenBoss boss = (AwakenBoss) MobHooks.spawnBoss(level, "awaken:bell_warden", h.absolutePos(new BlockPos(0, 1, 0)), 5, "");
+            ServerPlayer near = h.makeMockServerPlayerInLevel();
+            ServerPlayer above = h.makeMockServerPlayerInLevel();
+            near.snapTo(boss.getX() + 3, boss.getY(), boss.getZ());
+            above.snapTo(boss.getX() + 3, boss.getY() + 32, boss.getZ());
+            boss.startSeenByPlayer(near);
+            boss.startSeenByPlayer(above);
+            h.assertTrue(boss.bar().getPlayers().contains(near), "a player beside the Lord sees its bar");
+            h.assertTrue(!boss.bar().getPlayers().contains(above), "a player a floor up doesn't");
+            above.snapTo(boss.getX() - 3, boss.getY() + 2, boss.getZ());
+            h.succeedWhen(() -> {
+                h.assertTrue(boss.bar().getPlayers().contains(above), "the bar shows once they come down to its floor");
+                boss.discard();
+            });
+        });
+
         AwakenTests.register("mobs_volatile_explodes_on_death", 100, h -> {
             ServerLevel level = h.getLevel();
             BlockPos pos = h.absolutePos(new BlockPos(0, 1, 0));

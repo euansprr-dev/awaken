@@ -65,6 +65,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -96,6 +97,10 @@ public class AwakenMob extends Monster {
     private @Nullable MobDef def;
     protected @Nullable AbilityRunner abilities;
     protected @Nullable ServerBossEvent bar;
+    /** Players tracking this mob. Its bar shows to the ones near its height: tracking ignores height, and a gate's
+     *  floors are stacked 32 blocks apart, so a living Lord would otherwise show its bar on every floor above it. */
+    private final Set<ServerPlayer> watchers = new HashSet<>();
+    static final int BAR_STOREY = 24;
 
     private ItemStack stolen = ItemStack.EMPTY;
     int fleeTicks;
@@ -324,6 +329,7 @@ public class AwakenMob extends Monster {
             if (d.has(Trait.MIMIC)) updateMimic(level);
         }
         if (bar != null && (tickCount & 3) == 0) bar.setProgress(getHealth() / getMaxHealth());
+        if (bar != null && tickCount % 10 == 0) refreshBarPlayers();
         if (flag(F_DECOY) && --decoyTicks <= 0) {
             poof(level);
             return;
@@ -685,13 +691,27 @@ public class AwakenMob extends Monster {
     public void startSeenByPlayer(ServerPlayer player) {
         super.startSeenByPlayer(player);
         if (bar == null && (syncedRole() == MobRole.Role.WARDEN || syncedRole() == MobRole.Role.BOSS || syncedRole() == MobRole.Role.NIGHTMARE)) ensureBar();
-        if (bar != null) bar.addPlayer(player);
+        watchers.add(player);
+        if (bar != null && sameStorey(player)) bar.addPlayer(player);
     }
 
     @Override
     public void stopSeenByPlayer(ServerPlayer player) {
         super.stopSeenByPlayer(player);
+        watchers.remove(player);
         if (bar != null) bar.removePlayer(player);
+    }
+
+    private boolean sameStorey(ServerPlayer p) {
+        return Math.abs(p.getY() - getY()) <= BAR_STOREY;
+    }
+
+    private void refreshBarPlayers() {
+        for (ServerPlayer p : watchers) {
+            boolean near = sameStorey(p), has = bar.getPlayers().contains(p);
+            if (near && !has) bar.addPlayer(p);
+            else if (!near && has) bar.removePlayer(p);
+        }
     }
 
     @Override
