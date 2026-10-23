@@ -207,6 +207,13 @@ public final class DescentTravel {
             sealed(player, access, target);
             return;
         }
+        if (target == Strata.COUNT) {
+            var storySeal = dev.awaken.core.api.StoryHooks.seedSealed(player);
+            if (storySeal.isPresent()) {
+                player.sendOverlayMessage(Component.literal(storySeal.get()));
+                return;
+            }
+        }
         if (Strata.has(Strata.rulesOf(here), Strata.RULE_LISTENERS) && d.visitFromEntrance && !d.visitHeard) {
             Progression.count(player, "awaken:latent/silent_halls_unheard");
             Signal.toast(player, Component.literal("You crossed " + Strata.shortName(here) + " without a sound."));

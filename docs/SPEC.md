@@ -272,3 +272,26 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.core.Forces` — force/environment tags on entities and damage.
 - `dev.awaken.core.PlayDays` — current play-day counter.
 - `dev.awaken.mobs.Mobs` — `spawnScaled(ServerLevel, EntityType, pos, level, modifiers)`, rosters by theme.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 13. Decisions made while building (details in docs/modules/*.md)
+
+Descent:
+- Strata open by rank: 1 E · 2–3 D · 4–5 C · 6–7 B · 8 A · 9 S · 10 (the Seed) S-rank at level 135 **and** all eight
+  Sovereigns of the Hollow Court defeated (story gate via `StoryHooks.seedSealed`). The Endless opens after the Seed.
+- Stratum content level = content level of rank index min(6, (n+1)/2): stratum 1 already plays at D (17).
+- STORY-mode deaths in the Descent keep half the Deep Pack at once; the other half waits in a Grave Echo.
+- Waystone travel *upward* costs Strain; only the Deep Lift climbs for free.
+
+Mobs:
+- 154 creatures; vanilla models re-tinted (vanilla textures referenced, never copied) plus 5 custom models.
+- Scaling: normals ×1, elites ×2.5, wardens ×5, bosses ×14 health (bosses ×1.6 damage); nightmares ×6 health / ×1.25
+  damage; Sovereigns ×1.5 and the Signal's Shadow ×2 on top of boss scaling. All scaling uses permanent modifiers.
+- Boss phase changes knock one boss part loose (once per boss). Essence per kill scales with content tier.
+- `bosses_killed` and `bosses_killed_unarmed` are counted by mobs (not gates).
+
+Story:
+- The Hollow Court spawns the next undefeated Sovereign (fixed order: Hunger, Silence, Sleep, Machines, Mirrors,
+  Storms, Roots, Ash) near an S-rank player in stratum 9 when none is alive nearby; in the Seed the story starts the
+  finale (`Descent.beginFinale`), and the chosen ending calls `Descent.completeSeed`.

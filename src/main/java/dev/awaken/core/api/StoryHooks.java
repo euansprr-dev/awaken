@@ -13,6 +13,8 @@ public final class StoryHooks {
         boolean gatesCalm(MinecraftServer server);
         boolean colourRestored(MinecraftServer server);
         int ascension(MinecraftServer server);
+        /** Why the Seed (stratum 10) is still sealed for this player, or empty if the story allows it. */
+        default java.util.Optional<String> seedSealed(net.minecraft.server.level.ServerPlayer player) { return java.util.Optional.empty(); }
     }
 
     private static State state = new State() {
@@ -25,4 +27,5 @@ public final class StoryHooks {
     public static boolean gatesCalm(MinecraftServer server) { return state.gatesCalm(server); }
     public static boolean colourRestored(MinecraftServer server) { return state.colourRestored(server); }
     public static int ascension(MinecraftServer server) { return state.ascension(server); }
+    public static java.util.Optional<String> seedSealed(net.minecraft.server.level.ServerPlayer p) { return state.seedSealed(p); }
 }

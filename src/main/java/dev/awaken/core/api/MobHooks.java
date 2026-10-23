@@ -52,14 +52,21 @@ public final class MobHooks {
             case BOSS -> 14.0;
             default -> 1.0;
         };
-        var h = e.getAttribute(Attributes.MAX_HEALTH);
-        if (h != null) h.addOrUpdateTransientModifier(new AttributeModifier(dev.awaken.Awaken.id("level_health"), hp * mult - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-        var d = e.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (d != null) d.addOrUpdateTransientModifier(new AttributeModifier(dev.awaken.Awaken.id("level_damage"), dmg * (role.role() == MobRole.Role.BOSS ? 1.6 : 1.0) - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
-        var a = e.getAttribute(Attributes.ARMOR);
-        if (a != null) a.addOrUpdateTransientModifier(new AttributeModifier(dev.awaken.Awaken.id("level_armor"), lv / 12.0, AttributeModifier.Operation.ADD_VALUE));
+        // Permanent modifiers so scaled mobs keep their stats through a save and reload.
+        permanent(e, Attributes.MAX_HEALTH, "level_health", hp * mult - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        permanent(e, Attributes.ATTACK_DAMAGE, "level_damage", dmg * (role.role() == MobRole.Role.BOSS ? 1.6 : 1.0) - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        permanent(e, Attributes.ARMOR, "level_armor", lv / 12.0, AttributeModifier.Operation.ADD_VALUE);
         e.setHealth(e.getMaxHealth());
         e.setData(CoreApi.MOB_ROLE.get(), role);
+    }
+
+    private static void permanent(LivingEntity e, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attr,
+                                  String id, double amount, AttributeModifier.Operation op) {
+        var inst = e.getAttribute(attr);
+        if (inst == null) return;
+        var key = dev.awaken.Awaken.id(id);
+        inst.removeModifier(key);
+        inst.addPermanentModifier(new AttributeModifier(key, amount, op));
     }
 
     private static final class Fallback implements Spawner {

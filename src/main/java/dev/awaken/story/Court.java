@@ -77,6 +77,46 @@ final class Court {
         }
     }
 
+    // ---- the Hollow Court (stratum 9) and the Seed (stratum 10) --------------------------------------------------------
+
+    private static final java.util.List<String> ORDER = java.util.List.of("awaken:sovereign_hunger", "awaken:sovereign_silence",
+            "awaken:sovereign_sleep", "awaken:sovereign_machines", "awaken:sovereign_mirrors", "awaken:sovereign_storms",
+            "awaken:sovereign_roots", "awaken:sovereign_ash");
+
+    /**
+     * Every 30 seconds: an S-rank player in the Hollow Court with no Sovereign nearby meets the next one they haven't set
+     * free; a player in the Seed whose Court is empty starts the finale (once at a time).
+     */
+    static void courtTick(MinecraftServer server) {
+        if (server.getTickCount() % 600 != 300) return;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            if (!(p.level() instanceof net.minecraft.server.level.ServerLevel level)) continue;
+            int depth = dev.awaken.descent.Descent.depthOf(p);
+            StoryProgress s = Prologue.progress(p);
+            if (depth == 9 && Progression.rank(p).ordinal() >= Rank.S.ordinal()) {
+                String next = ORDER.stream().filter(id -> !s.sovereignsDefeated.contains(id)).findFirst().orElse(null);
+                if (next == null) continue;
+                boolean alive = !level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(80),
+                        e -> e.isAlive() && e.getData(CoreApi.MOB_ROLE.get()).bossId().map(ORDER::contains).orElse(false)).isEmpty();
+                if (alive) continue;
+                net.minecraft.core.BlockPos at = floorNear(level, p.blockPosition().offset(p.getRandom().nextInt(31) - 15, 0, p.getRandom().nextInt(31) - 15));
+                dev.awaken.core.api.MobHooks.spawnBoss(level, next, at, Rank.S.contentLevel, "");
+            } else if (depth == 10 && seedOpen(p) && !s.seen.contains("seed:defeated")
+                    && !dev.awaken.descent.Descent.finaleActive(server)) {
+                dev.awaken.descent.Descent.beginFinale(p);
+            }
+        }
+    }
+
+    /** A standing spot near pos: the first solid block under 2 air, searching down then up. */
+    static net.minecraft.core.BlockPos floorNear(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos pos) {
+        for (int dy = 4; dy > -24; dy--) {
+            var at = pos.above(dy);
+            if (level.getBlockState(at.below()).isSolid() && level.getBlockState(at).isAir() && level.getBlockState(at.above()).isAir()) return at;
+        }
+        return pos;
+    }
+
     /** Whether the player may enter the Seed: S-rank or above and all eight Sovereigns defeated. */
     static boolean seedOpen(ServerPlayer p) {
         return Progression.rank(p).ordinal() >= Rank.S.ordinal() && Prologue.progress(p).sovereignsDefeated.size() >= 8;
@@ -106,6 +146,7 @@ final class Court {
         }
         w.setDirty();
         if (Progression.rank(p) == Rank.S) Progression.passReassessment(p);
+        dev.awaken.descent.Descent.completeSeed(p);
         Progression.markNewThing(p, "ending");
         PLAYING.add(new Playing(p, ending, p.level().getGameTime()));
     }

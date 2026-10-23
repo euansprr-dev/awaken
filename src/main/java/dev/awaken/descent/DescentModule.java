@@ -86,6 +86,11 @@ public final class DescentModule {
             if (action.startsWith("descent:ascend:")) DescentTravel.onAscendAnswer(player, action, accepted);
         });
         DaysEnd.addWaiting(DescentModule::waitingLine);
+        dev.awaken.core.api.DescentHooks.install(new dev.awaken.core.api.DescentHooks.Access() {
+            @Override public java.util.List<Integer> litWaystones(net.minecraft.server.level.ServerPlayer p) { return java.util.List.copyOf(DescentSync.data(p).lit); }
+            @Override public boolean ride(net.minecraft.server.level.ServerPlayer p, int stratum) { return Descent.ride(p, stratum); }
+            @Override public boolean inDescent(net.minecraft.server.level.ServerPlayer p) { return Descent.isInDescent(p); }
+        });
         RankHooks.onRankUp((player, rank) -> {
             int before = DescentSync.data(player).deepest;
             DescentSync.push(player);

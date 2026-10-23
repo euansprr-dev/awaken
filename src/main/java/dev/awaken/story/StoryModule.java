@@ -78,6 +78,7 @@ public final class StoryModule {
         bus.addListener(ServerTickEvent.Post.class, e -> {
             Rival.tick(e.getServer());
             Court.tick(e.getServer());
+            Court.courtTick(e.getServer());
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer p) {
@@ -92,6 +93,11 @@ public final class StoryModule {
             @Override public boolean gatesCalm(MinecraftServer server) { return StoryWorld.get(server).gatesCalm; }
             @Override public boolean colourRestored(MinecraftServer server) { return StoryWorld.get(server).colourRestored; }
             @Override public int ascension(MinecraftServer server) { return StoryWorld.get(server).ascension; }
+            @Override public java.util.Optional<String> seedSealed(ServerPlayer p) {
+                int left = 8 - Prologue.progress(p).sovereignsDefeated().size();
+                return left <= 0 ? java.util.Optional.empty()
+                        : java.util.Optional.of("The Hollow Court still holds the Seed shut. " + left + " Sovereign" + (left == 1 ? "" : "s") + " remain.");
+            }
         });
         commands();
         StoryTests.register();
