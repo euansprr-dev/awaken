@@ -284,6 +284,10 @@ final class FaunaTests {
             for (ServerPlayer other : List.copyOf(level.players())) {
                 if (other != p && other.distanceToSqr(Vec3.atCenterOf(start)) < 200 * 200) other.setPos(other.getX() + 2000, other.getY(), other.getZ());
             }
+            // the real clock to noon too: night hunters also ask the sky how dark it is (earlier batches may leave it night)
+            long clock = Math.floorMod(level.getOverworldClockTime(), 24000L);
+            var cmd = level.getServer().createCommandSourceStack().withLevel(level).withSuppressedOutput();
+            level.getServer().getCommands().performPrefixedCommand(cmd, "time set 6000");
             h.runAfterDelay(10, () -> {
                 clearFauna(level, p);
                 List<FaunaMob> before = new ArrayList<>(FaunaCensus.in(level));
@@ -318,6 +322,7 @@ final class FaunaTests {
                     }
                 } finally {
                     FaunaRules.timeOverride = null;
+                    level.getServer().getCommands().performPrefixedCommand(cmd, "time set " + clock);
                     spawned.forEach(FaunaMob::discard);
                     level.getServer().getPlayerList().remove(p);
                 }

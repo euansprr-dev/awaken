@@ -76,7 +76,8 @@ public final class Starter {
         ATTACHMENTS.register(modBus);
         modBus.addListener(Starter::payloads);
         // let the Accept teleport and its toasts land first; the client also waits for any open screen to close
-        Progression.onAwakened(p -> Later.run(p.level().getServer(), 40, () -> offer(p)));
+        // after the reveal (the world changing around you is the moment; the cards come once it has played)
+        Progression.onAwakened(p -> Later.run(p.level().getServer(), 140, () -> offer(p)));
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (!(e.getEntity() instanceof ServerPlayer p) || !Progression.profile(p).awakened()) return;
             migrate(p);

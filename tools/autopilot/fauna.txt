@@ -17,6 +17,11 @@ wait 30
 shot fauna_03_reveal_creatures
 wait 60
 shot fauna_04_first_sighting_toast
+# the first-power cards come after the reveal: take one so they don't cover the rest of the tour
+wait 60
+shot fauna_04b_first_power_cards
+cmd awaken powers starter 1
+wait 20
 # every creature in a row, standing still, facing the camera
 cmd time set 6000
 cmd tp @s ~ ~ ~ 0 10
