@@ -251,7 +251,7 @@ public final class Spirits {
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(def.displayName()))
                 .body(Component.literal(def.lines().get(line)))
                 .footer(Component.literal((line + 1) + " / " + total + (line + 1 < total ? "   [G] go on" : "")))
-                .ttl(20 * 12).priority(4).build());
+                .ttl(20 * 12).priority(9).build()); // asked for: never folded into a combat toast
         sp.level().playSound(null, ghost.getX(), ghost.getEyeY(), ghost.getZ(), VeilContent.WHISPER.get(), SoundSource.NEUTRAL, 0.6F,
                 0.8F + 0.1F * def.factionIndex());
         int heard = Math.max(mem.spiritLines.getOrDefault(id, 0), line + 1);

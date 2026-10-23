@@ -63,8 +63,14 @@ final class VeilInput {
         }
         if (want != holdingSent) {
             holdingSent = want;
-            if (!want) justSit = false;
-            send(new VeilPayloads.MeditateInput(want, justSit));
+            if (want) {
+                send(new VeilPayloads.MeditateInput(true, justSit));
+            } else {
+                // letting go of Focus completes the meditation; standing up (or a screen) only ends it
+                boolean letGoOfFocus = !AwakenKeys.FOCUS.isDown() && !screenOpen;
+                send(new VeilPayloads.MeditateInput(false, justSit || !letGoOfFocus));
+                justSit = false;
+            }
         }
     }
 

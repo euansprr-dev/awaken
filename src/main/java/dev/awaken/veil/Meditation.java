@@ -82,7 +82,7 @@ public final class Meditation {
         }
         State s = STATES.get(sp.getUUID());
         if (s == null) return;
-        boolean complete = s.holding && s.ticks >= STEP_OUT && !s.justSit && canTravel(sp);
+        boolean complete = s.holding && s.ticks >= STEP_OUT && !s.justSit && !justSit && canTravel(sp);
         stop(sp);
         if (!complete) return;
         if (Veil.inStillpoint(sp)) Stillpoint.leave(sp);

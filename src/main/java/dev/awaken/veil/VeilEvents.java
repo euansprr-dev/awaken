@@ -93,6 +93,7 @@ final class VeilEvents {
         Meditation.LAST_HURT.remove(sp.getUUID());
         SpiritSight.forgetAwake(sp.getUUID());
         Stillpoint.forget(sp.getUUID());
+        VeilModule.REFUSED.remove(sp.getUUID());
     }
 
     private static void onDeath(LivingDeathEvent event) {

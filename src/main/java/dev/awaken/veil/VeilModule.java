@@ -26,7 +26,7 @@ public final class VeilModule {
         VeilTests.register();
     }
 
-    private static final Map<UUID, Long> REFUSED = new HashMap<>();
+    static final Map<UUID, Long> REFUSED = new HashMap<>();
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
         var r = event.registrar("1");

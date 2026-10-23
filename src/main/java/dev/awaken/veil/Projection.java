@@ -88,6 +88,7 @@ public final class Projection {
         int age;
         int warnStage;
         long lastWarning = -1000;
+        long lastPullToast = -1000;
         public int warningsSent;
         long lastBodyHurt = -1000;
         boolean bodyHurtFlag;
@@ -342,9 +343,9 @@ public final class Projection {
             Vec3 back = s.anchor.add(dir.scale(Cord.pullBackDistance(s.radius)));
             sp.teleportTo(level, back.x, back.y, back.z, Set.of(), sp.getYRot(), sp.getXRot(), true);
             s.lastGood = back;
-            if (s.age - s.lastWarning > 40) {
+            if (s.age - s.lastPullToast > 40) {
                 Signal.toast(sp, Component.literal("The cord pulls you back.").withStyle(ChatFormatting.RED));
-                s.lastWarning = s.age;
+                s.lastPullToast = s.age;
             }
             s.warnStage = 2;
         } else if (tension >= Cord.DANGER && s.warnStage < 2) {
@@ -411,17 +412,23 @@ public final class Projection {
         if (s.age - s.lastWarning < 60 && s.warningsSent > 0) return;
         s.lastWarning = s.age;
         s.warningsSent++;
-        Entity attacker = source.getEntity();
-        String who = attacker != null ? attacker.getDisplayName().getString() : "Something";
-        String article = attacker instanceof net.minecraft.world.entity.player.Player || attacker == null || who.matches("^[A-Z][a-z]+ [A-Z].*") ? "" : "A ";
-        String lead = attacker == null ? "Something" : (article.isEmpty() ? who : article + who.toLowerCase(java.util.Locale.ROOT));
         Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Your body is under attack."))
-                .body(Component.literal(lead + " found you meditating. " + heartsLost(amount) + " lost."))
+                .body(Component.literal(culprit(source.getEntity()) + " " + heartsLost(amount) + " lost."))
                 .row(Component.literal("Body"), Component.literal(hearts(body.getHealth()) + " / " + hearts(body.getMaxHealth()) + " ♥"))
                 .footer(Component.literal("Return"))
                 .action("veil:return").priority(9).ttl(20 * 8).build());
         owner.connection.send(new net.minecraft.network.protocol.game.ClientboundSoundPacket(dev.awaken.core.CoreModule.SIGNAL_WARNING,
                 SoundSource.PLAYERS, owner.getX(), owner.getY(), owner.getZ(), 0.8F, 0.8F, owner.getRandom().nextLong()));
+    }
+
+    /** "A zombie found you meditating." / "Vael found you meditating." / "Something is hurting it." */
+    static String culprit(@Nullable Entity attacker) {
+        if (attacker == null) return "Something is hurting it.";
+        String name = attacker.getDisplayName().getString();
+        if (attacker instanceof net.minecraft.world.entity.player.Player || attacker.hasCustomName()) return name + " found you meditating.";
+        String lower = name.toLowerCase(java.util.Locale.ROOT);
+        String article = !lower.isEmpty() && "aeiou".indexOf(lower.charAt(0)) >= 0 ? "An " : "A ";
+        return article + lower + " found you meditating.";
     }
 
     private static String hearts(float hp) {

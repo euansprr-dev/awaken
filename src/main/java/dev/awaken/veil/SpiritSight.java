@@ -344,7 +344,7 @@ public final class SpiritSight {
                 .row("Floors", String.valueOf(g.floors()))
                 .row("Boss", g.boss().isEmpty() ? "?" : Spirits.pretty(g.boss().substring(g.boss().indexOf(':') + 1)))
                 .footer(Component.literal("Scouted from the Veil"))
-                .ttl(20 * 14).priority(6);
+                .ttl(20 * 14).priority(9);
         if (!g.omen().isEmpty()) b.body(Component.literal("“" + g.omen() + "”"));
         return b.build();
     }
@@ -375,8 +375,11 @@ public final class SpiritSight {
             for (long[] arr : sc.chunkSecrets.values()) for (long p : arr) if (dist2(p, c) <= r2) secrets.add(p);
             long[] sec = new long[Math.min(MAX_SECRETS, secrets.size())];
             for (int i = 0; i < sec.length; i++) sec[i] = secrets.get(i);
+            boolean unchanged = java.util.Arrays.equals(sec, sc.lastSecrets);
             sc.lastSecrets = sec;
-            AwakenNet.send(sp, new VeilPayloads.Sight(true, new long[0], new byte[0], sec, new long[0], List.of(), new int[0], new int[0]));
+            if (!unchanged || sc.age % 40 == 0) {
+                AwakenNet.send(sp, new VeilPayloads.Sight(true, new long[0], new byte[0], sec, new long[0], List.of(), new int[0], new int[0]));
+            }
             Vec3 eye = c.add(0, 0.9, 0);
             for (long p : sec) if (dist2(p, eye) <= 2.5 * 2.5) found(sp, level, p);
         }
