@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SS",
+    "SS"
+  ],
+  "key": {
+    "S": "awaken:precursor_scrap"
+  },
+  "result": {
+    "id": "awaken:precursor_plating",
+    "count": 4
+  }
+}

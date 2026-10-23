@@ -103,7 +103,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "awaken:precursor_plating",
+          "name": "awaken:zero_plating",
           "modifier": [
             {
               "type": "minecraft:set_count",

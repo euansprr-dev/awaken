@@ -1,0 +1,9 @@
+{
+  "parent": "awaken:block/precursor_machine_base",
+  "textures": {
+    "front": "awaken:block/broken_machine_front",
+    "side": "awaken:block/broken_machine_side",
+    "top": "awaken:block/broken_machine_top",
+    "bottom": "awaken:block/precursor_machine_bottom"
+  }
+}

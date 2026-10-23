@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "awaken:precursor_plating",
+    "minecraft:glowstone_dust",
+    "minecraft:orange_dye"
+  ],
+  "result": {
+    "id": "awaken:precursor_warning_light",
+    "count": 1
+  }
+}

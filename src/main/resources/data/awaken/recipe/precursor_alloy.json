@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SSS",
+    "SHS",
+    "SSS"
+  ],
+  "key": {
+    "S": "awaken:precursor_scrap",
+    "H": "awaken:lord_heart"
+  },
+  "result": {
+    "id": "awaken:precursor_alloy",
+    "count": 8
+  }
+}

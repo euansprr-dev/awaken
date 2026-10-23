@@ -1,0 +1,8 @@
+{
+  "type": "awaken:precursor_ruin",
+  "kind": "monolith",
+  "biomes": "#awaken:has_structure/precursor_monolith",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

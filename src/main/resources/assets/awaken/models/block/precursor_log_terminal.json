@@ -1,0 +1,139 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/precursor_plating",
+    "side": "awaken:block/precursor_plating",
+    "trim": "awaken:block/precursor_trim",
+    "screen": "awaken:block/precursor_log_terminal_screen"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        0,
+        3
+      ],
+      "to": [
+        13,
+        2,
+        13
+      ],
+      "faces": {
+        "down": {
+          "texture": "#trim",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#trim"
+        },
+        "north": {
+          "texture": "#trim"
+        },
+        "south": {
+          "texture": "#trim"
+        },
+        "west": {
+          "texture": "#trim"
+        },
+        "east": {
+          "texture": "#trim"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        2,
+        5
+      ],
+      "to": [
+        11,
+        11,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        10,
+        2
+      ],
+      "to": [
+        15,
+        13,
+        14
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          11.5,
+          8
+        ],
+        "axis": "x",
+        "angle": -22.5
+      },
+      "faces": {
+        "up": {
+          "texture": "#screen"
+        },
+        "down": {
+          "texture": "#side"
+        },
+        "north": {
+          "texture": "#trim"
+        },
+        "south": {
+          "texture": "#trim"
+        },
+        "west": {
+          "texture": "#trim"
+        },
+        "east": {
+          "texture": "#trim"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        10,
+        2
+      ],
+      "to": [
+        15,
+        13,
+        14
+      ],
+      "rotation": {
+        "origin": [
+          8,
+          11.5,
+          8
+        ],
+        "axis": "x",
+        "angle": -22.5
+      },
+      "light_emission": 12,
+      "shade_direction_override": "up",
+      "faces": {
+        "up": {
+          "texture": "#screen"
+        }
+      }
+    }
+  ]
+}

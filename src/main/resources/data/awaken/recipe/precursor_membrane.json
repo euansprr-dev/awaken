@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "awaken:precursor_void_glass",
+    "minecraft:slime_ball"
+  ],
+  "result": {
+    "id": "awaken:precursor_membrane",
+    "count": 2
+  }
+}

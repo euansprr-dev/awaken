@@ -272,7 +272,7 @@ final class GateBestiary {
                 .phase(1.0F, "Unit Zero activates.", a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE), a(BLINK, "Phase Step"))
                 .phase(0.66F, "Countdown: three.", a(SUMMON, "Deploy Coils").summon("coil_unit").n(2), a(RAIN, "Orbital Mark").n(4).bolt(BoltKind.CHARGE), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE))
                 .phase(0.33F, "Countdown: zero.", a(BURST, "Zero Point").radius(14).inner(3.5F).bolt(BoltKind.CHARGE).heavy(), a(BEAM, "Zero Lance").bolt(BoltKind.CHARGE), a(BLINK, "Phase Step"))
-                .parts(P("zero_core", "Zero Core", "signal"), P("precursor_plating", "Precursor Plating", "precursor")).build());
+                .parts(P("zero_core", "Zero Core", "signal"), P("zero_plating", "Zero Plating", "precursor")).build());
     }
 
     private static void nightmare(List<MobDef> out) {

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " A ",
+    "SCS"
+  ],
+  "key": {
+    "A": "awaken:precursor_alloy",
+    "S": "awaken:precursor_scrap",
+    "C": "awaken:precursor_circuit"
+  },
+  "result": {
+    "id": "awaken:launch_ring_frame",
+    "count": 4
+  }
+}
