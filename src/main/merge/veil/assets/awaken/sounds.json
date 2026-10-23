@@ -1,0 +1,75 @@
+{
+  "veil.hum": {
+    "subtitle": "subtitles.awaken.veil.hum",
+    "sounds": [
+      { "name": "minecraft:block/beacon/ambient", "pitch": 0.55, "volume": 0.7 }
+    ]
+  },
+  "veil.drift": {
+    "subtitle": "subtitles.awaken.veil.drift",
+    "sounds": [
+      { "name": "minecraft:ambient/nether/soulsand_valley/ambience", "pitch": 1.25, "volume": 0.4, "stream": true }
+    ]
+  },
+  "veil.rise": {
+    "subtitle": "subtitles.awaken.veil.rise",
+    "sounds": [
+      { "name": "minecraft:block/beacon/activate", "pitch": 1.4, "volume": 0.8 },
+      { "name": "minecraft:block/amethyst/resonate1", "pitch": 0.6, "volume": 0.8 }
+    ]
+  },
+  "veil.return": {
+    "subtitle": "subtitles.awaken.veil.return",
+    "sounds": [
+      { "name": "minecraft:block/beacon/deactivate", "pitch": 1.2, "volume": 0.8 }
+    ]
+  },
+  "veil.threshold": {
+    "subtitle": "subtitles.awaken.veil.threshold",
+    "sounds": [
+      { "name": "minecraft:note/icechime", "pitch": 0.6, "volume": 0.7 }
+    ]
+  },
+  "veil.touch": {
+    "subtitle": "subtitles.awaken.veil.touch",
+    "sounds": [
+      { "name": "minecraft:block/amethyst/shimmer", "pitch": 1.2, "volume": 0.8 },
+      { "name": "minecraft:block/amethyst/place1", "pitch": 1.4, "volume": 0.6 }
+    ]
+  },
+  "veil.whisper": {
+    "subtitle": "subtitles.awaken.veil.whisper",
+    "sounds": [
+      { "name": "minecraft:ambient/nether/soulsand_valley/whisper1", "pitch": 1.2, "volume": 0.6 },
+      { "name": "minecraft:ambient/nether/soulsand_valley/whisper2", "pitch": 1.2, "volume": 0.6 },
+      { "name": "minecraft:ambient/nether/soulsand_valley/whisper3", "pitch": 1.2, "volume": 0.6 }
+    ]
+  },
+  "veil.cord_snap": {
+    "subtitle": "subtitles.awaken.veil.cord_snap",
+    "sounds": [
+      { "name": "minecraft:random/glass1", "pitch": 0.5, "volume": 0.9 },
+      { "name": "minecraft:block/amethyst/break1", "pitch": 0.6, "volume": 0.9 }
+    ]
+  },
+  "veil.rift": {
+    "subtitle": "subtitles.awaken.veil.rift",
+    "sounds": [
+      { "name": "minecraft:block/end_portal/eyeplace1", "pitch": 0.8, "volume": 0.8 },
+      { "name": "minecraft:portal/portal", "pitch": 1.6, "volume": 0.25 }
+    ]
+  },
+  "veil.bell": {
+    "subtitle": "subtitles.awaken.veil.bell",
+    "sounds": [
+      { "name": "minecraft:block/bell/resonate", "pitch": 0.8, "volume": 0.6 }
+    ]
+  },
+  "veil.cache": {
+    "subtitle": "subtitles.awaken.veil.cache",
+    "sounds": [
+      { "name": "minecraft:block/vault/open_shutter", "pitch": 1.2, "volume": 0.8 },
+      { "name": "minecraft:block/amethyst/resonate2", "pitch": 1.0, "volume": 0.8 }
+    ]
+  }
+}

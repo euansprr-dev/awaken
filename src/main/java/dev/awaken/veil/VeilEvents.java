@@ -51,6 +51,8 @@ final class VeilEvents {
         bus.addListener(VeilEvents::onAttack);
         bus.addListener(VeilEvents::onEntityTick);
         bus.addListener(VeilEvents::onStopped);
+        bus.addListener(VeilEvents::onBreak);
+        bus.addListener(VeilEvents::onPlace);
         Signal.onAction("veil", (player, action, accepted) -> {
             if (accepted && "veil:return".equals(action)) Veil.returnToBody(player);
         });
@@ -197,6 +199,22 @@ final class VeilEvents {
         } else if (e instanceof LivingEntity l && CordEaters.EATERS.containsKey(l.getUUID())) {
             if (CordEaters.drive(l)) event.setCanceled(true);
         }
+    }
+
+    /** The temple and the Veil Gate pockets are shared and quiet: survival hands don't change them. */
+    static boolean protectedSpot(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos pos) {
+        if (!(level instanceof net.minecraft.world.level.Level l) || l.dimension() != Veil.STILLPOINT) return false;
+        boolean temple = Math.abs(pos.getX()) <= 40 && Math.abs(pos.getZ()) <= 40;
+        boolean pockets = pos.getX() >= VeilGates.POCKET_X0 - 16 && pos.getZ() >= VeilGates.POCKET_Z0 - 16;
+        return temple || pockets;
+    }
+
+    private static void onBreak(net.neoforged.neoforge.event.level.block.BreakBlockEvent event) {
+        if (event.getPlayer() instanceof ServerPlayer sp && !sp.isCreative() && protectedSpot(event.getLevel(), event.getPos())) event.setCanceled(true);
+    }
+
+    private static void onPlace(net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent event) {
+        if (event.getEntity() instanceof ServerPlayer sp && !sp.isCreative() && protectedSpot(event.getLevel(), event.getPos())) event.setCanceled(true);
     }
 
     private static void onStopped(ServerStoppedEvent event) {

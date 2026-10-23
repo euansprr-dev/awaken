@@ -70,7 +70,7 @@ public final class VeilContent {
     public static final DeferredBlock<GhostDoorBlock> GHOST_DOOR = BLOCKS.registerBlock("ghost_door", GhostDoorBlock::new,
             p -> ghost(p).lightLevel(s -> s.getValue(GhostDoorBlock.OPEN) ? 2 : 6));
     public static final DeferredBlock<VeilCacheBlock> VEIL_CACHE = BLOCKS.registerBlock("veil_cache", VeilCacheBlock::new,
-            p -> ghost(p).lightLevel(s -> 11));
+            p -> ghost(p).strength(-1.0F, 3_600_000.0F).noLootTable().lightLevel(s -> 11));
     /** The walls of a Veil Gate: as solid to a spirit as stone is to you. */
     public static final DeferredBlock<Block> VEIL_STONE = BLOCKS.registerSimpleBlock("veil_stone",
             p -> p.mapColor(MapColor.COLOR_BLUE).strength(-1.0F, 3_600_000.0F).sound(SoundType.AMETHYST).lightLevel(s -> 3)

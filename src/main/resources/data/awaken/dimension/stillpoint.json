@@ -1,0 +1,7 @@
+{
+  "type": "awaken:stillpoint",
+  "generator": {
+    "type": "awaken:stillpoint",
+    "biome_source": { "type": "minecraft:fixed", "biome": "awaken:stillpoint" }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "awaken:block/veil_glyph"
+    },
+    "lit=true": {
+      "model": "awaken:block/veil_glyph_lit"
+    }
+  }
+}

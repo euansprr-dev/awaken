@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "C": "minecraft:calcite",
+    "L": "minecraft:lantern",
+    "Q": "minecraft:smooth_quartz"
+  },
+  "pattern": [
+    " L ",
+    "ACA",
+    "QQQ"
+  ],
+  "result": { "count": 1, "id": "awaken:stillpoint_shrine" }
+}
