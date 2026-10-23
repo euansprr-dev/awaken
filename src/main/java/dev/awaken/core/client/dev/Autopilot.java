@@ -36,6 +36,7 @@ import java.util.Map;
  * key &lt;awaken key name&gt;                        press one of the mod's keys (status, accept, dismiss, ...)
  * screen status|close|experimental             experimental: vanilla's experimental-settings prompt (it should answer itself)
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
+ * camera first|back|front                        the F5 views
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * quit
  * </pre>
@@ -195,6 +196,12 @@ public final class Autopilot {
                 Screenshot.grab(mc.gameDirectory, name + ".png", mc.gameRenderer.mainRenderTarget(), 1,
                         msg -> Awaken.LOG.info("[autopilot] screenshot {}", name));
                 waitTicks = 10;
+            }
+            case "camera" -> { // first | back | front
+                String v = arg.trim();
+                mc.options.setCameraType(v.equals("back") ? net.minecraft.client.CameraType.THIRD_PERSON_BACK
+                        : v.equals("front") ? net.minecraft.client.CameraType.THIRD_PERSON_FRONT : net.minecraft.client.CameraType.FIRST_PERSON);
+                waitTicks = 2;
             }
             case "quit" -> mc.stop();
             default -> Awaken.LOG.warn("[autopilot] unknown line: {}", line);
