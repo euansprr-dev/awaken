@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 45,
+  "title": "B-rank trial",
+  "text": "A duel with a Lord: Monolith or Spire.",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:rank_b"
+    }
+  ],
+  "quiet": false
+}

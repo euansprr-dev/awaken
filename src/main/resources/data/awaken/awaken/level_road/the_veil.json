@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "level": 15,
+  "title": "The Veil",
+  "text": "Meditate, then let go of G: step outside.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:stillpoint_shrine"
+      ]
+    },
+    {
+      "type": "flag",
+      "id": "awaken:veil"
+    }
+  ],
+  "quiet": false
+}

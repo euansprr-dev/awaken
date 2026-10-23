@@ -8,5 +8,8 @@
   "paths": [
     "awaken:redline"
   ],
-  "min_rank": "E"
+  "min_rank": "E",
+  "requires": [
+    "power:awaken:flow"
+  ]
 }

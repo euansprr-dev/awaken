@@ -30,8 +30,12 @@ import java.util.Set;
 public final class Progression {
     private Progression() {}
 
-    /** Where XP came from (affects nothing yet but logging and the Day's End card). */
-    public enum XpSource { GATE_KILL, GATE_FLOOR, GATE_BOSS, HOME, REGIMEN, DIRECTIVE, TRUTH, DESCENT, DREAM, STORY, COMMAND }
+    /**
+     * Where XP came from (logging and the Day's End card). Repeatable world XP goes through {@link #worldXp}, which
+     * applies diminishing returns per source; DISCOVERY is {@link #discover}; ANOMALY is for the anomaly director.
+     */
+    public enum XpSource { GATE_KILL, GATE_FLOOR, GATE_BOSS, HOME, REGIMEN, DIRECTIVE, TRUTH, DESCENT, DREAM, STORY, COMMAND,
+        DISCOVERY, WORLD, ANOMALY }
 
     private static final Set<ServerPlayer> DIRTY = new HashSet<>();
     /** Counter-only changes sync less often: the client shows counters only in progress bars. */
@@ -89,11 +93,36 @@ public final class Progression {
 
     // ---- XP and levels ------------------------------------------------------------------------------------------------
 
-    /** Grants XP (scaled by the story length setting and XP perks) and handles level-ups. Returns levels gained. */
+    /**
+     * Grants XP (scaled by the story length setting and XP perks) and handles level-ups. Returns levels gained.
+     * Before awakening nothing is lost: the XP is banked in the profile and paid when the player awakens.
+     */
     public static int grantXp(ServerPlayer player, double amount, XpSource source) {
         Profile p = profile(player);
-        if (!p.awakened || amount <= 0) return 0;
+        if (amount <= 0 || !Double.isFinite(amount)) return 0;
+        if (!p.awakened) {
+            p.bankedXp += amount; // raw: the scale and perks apply when it's paid
+            markLazy(player);
+            return 0;
+        }
         amount *= xpScale(player) * (1 + perk(player, Perks.XP_BONUS));
+        return addXp(player, p, amount);
+    }
+
+    /**
+     * Raises an awakened player to at least {@code level} with exactly the XP missing (no scaling), through the normal
+     * level-ups. The story's Accept uses it: waking is worth level 2 even if the prologue banked little.
+     */
+    public static int topUpToLevel(ServerPlayer player, int level, XpSource source) {
+        Profile p = profile(player);
+        if (!p.awakened || p.level >= level) return 0;
+        double missing = -p.xp;
+        for (int lv = p.level; lv < level; lv++) missing += Curve.xpToNext(lv);
+        DirectorLog.log(player, "progression", "topped up to level " + level + " (" + Math.round(missing) + " XP, " + source + ")");
+        return addXp(player, p, missing + 1e-6);
+    }
+
+    private static int addXp(ServerPlayer player, Profile p, double amount) {
         p.xp += amount;
         int gained = 0;
         while (p.xp >= Curve.xpToNext(p.level)) {
@@ -133,30 +162,47 @@ public final class Progression {
 
     /**
      * A first: a creature, place, landmark or event this player has never met. Grants {@code fractionOfLevel} of a
-     * level the first time only (counter {@code awaken:discovered/<key>}) and returns whether it was new. Never capped
-     * by the home XP limit: discovery is the point.
+     * level the first time only (counter {@code awaken:discovered/<key>}) and returns whether it was new. No
+     * diminishing returns: discovery is the point. Before awakening it is banked. Suggested sizes (tools/sim):
+     * a creature, biome or anomaly kind 0.1–0.15, a landmark or named beast 0.25.
      */
     public static boolean discover(ServerPlayer player, String key, double fractionOfLevel) {
         String id = "awaken:discovered/" + key;
         if (profile(player).counter(id) > 0) return false;
         setCounter(player, id, 1);
         count(player, "awaken:discoveries");
-        if (fractionOfLevel > 0) grantLevels(player, fractionOfLevel, XpSource.HOME);
+        if (fractionOfLevel > 0) grantLevels(player, fractionOfLevel, XpSource.DISCOVERY);
         return true;
+    }
+
+    /**
+     * Repeatable world XP (kills, mining, building, or any module's own source key) with diminishing returns per
+     * source per ~10 minutes ({@link XpBudget}). {@code fractionOfLevel} is the full-value grant; returns what was
+     * actually granted. Out-levelled content should be tapered by the caller with {@link XpBudget#taper}.
+     */
+    public static double worldXp(ServerPlayer player, String source, double fractionOfLevel) {
+        double paid = XpBudget.pay(player.getUUID(), source, fractionOfLevel, player.level().getGameTime());
+        if (paid > 0) grantLevels(player, paid, XpSource.WORLD);
+        return paid;
+    }
+
+    /** Whether the level road has granted this flag ("awaken:veil", "awaken:meditation", ...). Server and client. */
+    public static boolean hasFlag(Player player, String flag) {
+        return LevelRoad.hasFlag(profile(player), flag);
     }
 
     private static void onLevelUp(ServerPlayer player, Profile p, int gained) {
         dev.awaken.core.Playtest.log(player, "level_up", "level", p.level);
-        for (int lv = p.level - gained + 1; lv <= p.level; lv++) {
-            for (var l : LEVEL_LISTENERS) l.accept(player, lv);
-        }
         player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE,
-                        Component.literal(gained > 1 ? "Level up ×" + gained : "Level up"))
-                .row(Component.literal("Level"), Component.literal((p.level - gained) + " → " + p.level))
-                .row(Component.literal("Points to spend"), Component.literal("+" + gained * Curve.POINTS_PER_LEVEL))
-                .footer(Component.literal("Press K to spend them"))
-                .ttl(20 * 5).build());
+                        Component.literal(gained > 1 ? "Level " + (p.level - gained) + " → " + p.level : "Level " + p.level))
+                .body(Component.literal("+" + gained * Curve.POINTS_PER_LEVEL + " points to spend · K"))
+                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 5).build());
+        // after the level toast, so each level's unlock (the level road) reads as its consequence
+        int top = p.level;
+        for (int lv = top - gained + 1; lv <= top; lv++) {
+            for (var l : LEVEL_LISTENERS) l.accept(player, lv);
+        }
         Rank next = p.rank.next();
         if (next != null && !p.reassessmentReady && p.level >= next.levelRequired) {
             p.reassessmentReady = true;
@@ -326,7 +372,7 @@ public final class Progression {
 
     // ---- truths -----------------------------------------------------------------------------------------------------
 
-    /** Offers up to {@code count} new Truths fitting the player's rank (at awakening and each rank-up). */
+    /** Offers up to {@code count} new Truths fitting the player's rank (first at level 5 via the level road, then at each rank-up). */
     public static void offerTruths(ServerPlayer player, int count) {
         Profile p = profile(player);
         var rnd = player.getRandom();
@@ -351,9 +397,10 @@ public final class Progression {
             }
         }
         if (!p.truthsOffered.isEmpty()) {
-            Signal.send(player, SignalWindow.builder(SignalWindow.Kind.TRUTH, Component.literal("Who are you becoming?"))
-                    .body(Component.literal("New Truths are waiting. Declare up to three. They become true when you live them."))
-                    .footer(Component.literal("Status · K · Truths")).ttl(20 * 10).build());
+            // a long-term goal, not a quest: a calm toast; each Truth's reward is on the Truths tab
+            Signal.send(player, SignalWindow.builder(SignalWindow.Kind.TRUTH, Component.literal("Truths: who are you becoming?"))
+                    .body(Component.literal("Declare any you like. No rush · K"))
+                    .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).build());
         }
         markDirty(player);
     }
@@ -443,14 +490,24 @@ public final class Progression {
 
     // ---- awakening, rank, path --------------------------------------------------------------------------------------
 
-    /** The Signal chooses the player. Called by the story prologue (or /awaken admin awaken). */
+    /**
+     * The Signal chooses the player. Called by the story prologue (or /awaken admin awaken). Everything earned before
+     * (the prologue's kills and floors) is paid now. Truths wait for level 5 (the level road), so the first minutes
+     * aren't a list of long-term goals.
+     */
     public static void awaken(ServerPlayer player) {
         Profile p = profile(player);
         if (p.awakened) return;
         p.awakened = true;
         p.lastNewThing = player.level().getGameTime();
         applyAttributes(player);
-        offerTruths(player, 3);
+        double banked = p.bankedXp;
+        p.bankedXp = 0;
+        if (banked > 0) {
+            dev.awaken.core.Playtest.log(player, "banked_xp_paid", "xp", Math.round(banked));
+            DirectorLog.log(player, "progression", "awakened: paid " + Math.round(banked) + " banked XP");
+            grantXp(player, banked, XpSource.STORY);
+        }
         markDirty(player);
         for (var l : AWAKENED_LISTENERS) l.accept(player);
     }

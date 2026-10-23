@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "level": 12,
+  "title": "Lucid dreams",
+  "text": "H checks if you're dreaming. Keep a journal.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:dream_journal"
+      ]
+    },
+    {
+      "type": "flag",
+      "id": "awaken:dreams"
+    }
+  ],
+  "quiet": false
+}

@@ -71,9 +71,13 @@ public final class Defs {
         ).apply(i, PathDef::new));
     }
 
-    /** A Signal suggestion. Conditions measure progress since it was accepted. */
+    /**
+     * A Signal suggestion. Conditions measure progress since it was accepted. {@code requires} lists what the player
+     * needs before it may be offered (see {@link dev.awaken.progression.Requirements}).
+     */
     public record DirectiveDef(String text, Condition condition, Reward reward, int expiresDays, Rank minRank,
-                               Rank maxRank, Optional<String> path, Optional<String> context, boolean quick, int weight) {
+                               Rank maxRank, Optional<String> path, Optional<String> context, boolean quick, int weight,
+                               List<String> requires) {
         public static final Codec<DirectiveDef> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("text").forGetter(DirectiveDef::text),
                 Condition.CODEC.fieldOf("condition").forGetter(DirectiveDef::condition),
@@ -84,17 +88,49 @@ public final class Defs {
                 Codec.STRING.optionalFieldOf("path").forGetter(DirectiveDef::path),
                 Codec.STRING.optionalFieldOf("context").forGetter(DirectiveDef::context),
                 Codec.BOOL.optionalFieldOf("quick", false).forGetter(DirectiveDef::quick),
-                Codec.INT.optionalFieldOf("weight", 10).forGetter(DirectiveDef::weight)
+                Codec.INT.optionalFieldOf("weight", 10).forGetter(DirectiveDef::weight),
+                Codec.STRING.listOf().optionalFieldOf("requires", List.of()).forGetter(DirectiveDef::requires)
         ).apply(i, DirectiveDef::new));
     }
 
-    /** One drill of the Daily Regimen. */
-    public record DrillDef(String text, Condition condition, List<String> paths, Rank minRank) {
+    /** One drill of the Daily Regimen. {@code requires}: as for Directives. */
+    public record DrillDef(String text, Condition condition, List<String> paths, Rank minRank, List<String> requires) {
         public static final Codec<DrillDef> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("text").forGetter(DrillDef::text),
                 Condition.CODEC.fieldOf("condition").forGetter(DrillDef::condition),
                 Codec.STRING.listOf().optionalFieldOf("paths", List.of()).forGetter(DrillDef::paths),
-                Rank.CODEC.optionalFieldOf("min_rank", Rank.E).forGetter(DrillDef::minRank)
+                Rank.CODEC.optionalFieldOf("min_rank", Rank.E).forGetter(DrillDef::minRank),
+                Codec.STRING.listOf().optionalFieldOf("requires", List.of()).forGetter(DrillDef::requires)
         ).apply(i, DrillDef::new));
+    }
+
+    /**
+     * One step of the level road (data/awaken/awaken/level_road/*.json). The file id is the unlock id that the profile
+     * saves, so reordering or retuning the table never revokes anything. {@code quiet} entries are granted without a
+     * toast (something else announces them, like the first-power choice).
+     */
+    public record LevelRoadDef(int schema, int level, String title, String text, List<Grant> grants, boolean quiet) {
+        public static final Codec<LevelRoadDef> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("schema", 1).forGetter(LevelRoadDef::schema),
+                Codec.INT.fieldOf("level").forGetter(LevelRoadDef::level),
+                Codec.STRING.fieldOf("title").forGetter(LevelRoadDef::title),
+                Codec.STRING.optionalFieldOf("text", "").forGetter(LevelRoadDef::text),
+                Grant.CODEC.listOf().optionalFieldOf("grants", List.of()).forGetter(LevelRoadDef::grants),
+                Codec.BOOL.optionalFieldOf("quiet", false).forGetter(LevelRoadDef::quiet)
+        ).apply(i, LevelRoadDef::new));
+    }
+
+    /**
+     * What a level-road step gives. type: {@code power} (id), {@code recipe} (ids), {@code item} (id, count),
+     * {@code power_core} (count, rolled at your rank), {@code flag} (id; other modules ask {@code Progression.hasFlag}).
+     * A step with no grants is a hint: its text is the unlock.
+     */
+    public record Grant(String type, Optional<String> id, List<String> ids, int count) {
+        public static final Codec<Grant> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("type").forGetter(Grant::type),
+                Codec.STRING.optionalFieldOf("id").forGetter(Grant::id),
+                Codec.STRING.listOf().optionalFieldOf("ids", List.of()).forGetter(Grant::ids),
+                Codec.INT.optionalFieldOf("count", 1).forGetter(Grant::count)
+        ).apply(i, Grant::new));
     }
 }

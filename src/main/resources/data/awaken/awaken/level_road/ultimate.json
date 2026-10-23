@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 35,
+  "title": "Overload",
+  "text": "R: gather everything, then explode.",
+  "grants": [
+    {
+      "type": "power",
+      "id": "awaken:overload"
+    }
+  ],
+  "quiet": false
+}

@@ -1,290 +1,682 @@
 {
  "summary": {
   "careful": {
-   "D": {
-    "median": 4.2,
-    "p10": 3.0,
-    "p90": 5.9,
-    "reached": 1.0
+   "level_hours": {
+    "3": {
+     "median": 0.52,
+     "p10": 0.37,
+     "p90": 0.75,
+     "reached": 1.0
+    },
+    "5": {
+     "median": 0.84,
+     "p10": 0.7,
+     "p90": 1.64,
+     "reached": 1.0
+    },
+    "10": {
+     "median": 4.07,
+     "p10": 3.47,
+     "p90": 4.9,
+     "reached": 1.0
+    },
+    "15": {
+     "median": 8.46,
+     "p10": 7.44,
+     "p90": 9.98,
+     "reached": 1.0
+    },
+    "20": {
+     "median": 13.26,
+     "p10": 12.02,
+     "p90": 15.09,
+     "reached": 1.0
+    },
+    "25": {
+     "median": 19.59,
+     "p10": 17.97,
+     "p90": 21.63,
+     "reached": 1.0
+    },
+    "30": {
+     "median": 27.44,
+     "p10": 25.54,
+     "p90": 29.72,
+     "reached": 1.0
+    },
+    "40": {
+     "median": 44.75,
+     "p10": 42.24,
+     "p90": 47.31,
+     "reached": 1.0
+    },
+    "45": {
+     "median": 54.69,
+     "p10": 52.03,
+     "p90": 57.57,
+     "reached": 1.0
+    },
+    "50": {
+     "median": 64.38,
+     "p10": 61.1,
+     "p90": 67.46,
+     "reached": 1.0
+    },
+    "70": {
+     "median": 106.65,
+     "p10": 102.18,
+     "p90": 110.15,
+     "reached": 1.0
+    },
+    "100": {
+     "median": 133.88,
+     "p10": 128.85,
+     "p90": 138.5,
+     "reached": 1.0
+    },
+    "135": {
+     "median": 170.43,
+     "p10": 165.27,
+     "p90": 176.0,
+     "reached": 1.0
+    }
    },
-   "C": {
-    "median": 12.8,
-    "p10": 11.0,
-    "p90": 14.9,
-    "reached": 1.0
+   "rank_hours": {
+    "D": {
+     "median": 5.08,
+     "p10": 4.14,
+     "p90": 6.75,
+     "reached": 1.0
+    },
+    "C": {
+     "median": 20.51,
+     "p10": 18.86,
+     "p90": 22.91,
+     "reached": 1.0
+    },
+    "B": {
+     "median": 55.67,
+     "p10": 52.77,
+     "p90": 58.73,
+     "reached": 1.0
+    },
+    "A": {
+     "median": 107.41,
+     "p10": 102.94,
+     "p90": 111.1,
+     "reached": 1.0
+    },
+    "S": {
+     "median": 134.81,
+     "p10": 129.64,
+     "p90": 139.38,
+     "reached": 1.0
+    },
+    "Sovereign": {
+     "median": 171.38,
+     "p10": 166.01,
+     "p90": 176.93,
+     "reached": 1.0
+    }
    },
-   "B": {
-    "median": 27.7,
-    "p10": 25.4,
-    "p90": 30.4,
-    "reached": 1.0
+   "level_at_minutes": {
+    "10": {
+     "median": 2.0,
+     "p10": 2.0,
+     "p90": 2.0
+    },
+    "30": {
+     "median": 2.0,
+     "p10": 2.0,
+     "p90": 3.0
+    },
+    "60": {
+     "median": 5.0,
+     "p10": 3.0,
+     "p90": 5.0
+    },
+    "120": {
+     "median": 6.0,
+     "p10": 5.0,
+     "p90": 7.0
+    }
    },
-   "A": {
-    "median": 47.7,
-    "p10": 45.2,
-    "p90": 50.7,
-    "reached": 1.0
-   },
-   "S": {
-    "median": 76.3,
-    "p10": 73.0,
-    "p90": 80.1,
-    "reached": 1.0
-   },
-   "Sovereign": {
-    "median": 117.5,
-    "p10": 113.6,
-    "p90": 121.7,
-    "reached": 1.0
-   },
-   "level_gap_min_by_band": {
-    "E": 23.5,
-    "D": 30.6,
-    "C": 39.6,
-    "B": 43.0,
-    "A": 53.6,
-    "S": 67.3
-   },
-   "deaths_per_10_gates": 1.08
+   "deaths_per_10_gates": 1.0,
+   "first_power_minute": 8.0,
+   "discoveries_median": 24.0
   },
   "balanced": {
-   "D": {
-    "median": 3.5,
-    "p10": 2.6,
-    "p90": 5.1,
-    "reached": 1.0
+   "level_hours": {
+    "3": {
+     "median": 0.47,
+     "p10": 0.33,
+     "p90": 0.62,
+     "reached": 1.0
+    },
+    "5": {
+     "median": 0.78,
+     "p10": 0.69,
+     "p90": 1.54,
+     "reached": 1.0
+    },
+    "10": {
+     "median": 3.59,
+     "p10": 3.07,
+     "p90": 4.41,
+     "reached": 1.0
+    },
+    "15": {
+     "median": 7.53,
+     "p10": 6.42,
+     "p90": 8.79,
+     "reached": 1.0
+    },
+    "20": {
+     "median": 11.69,
+     "p10": 10.17,
+     "p90": 13.28,
+     "reached": 1.0
+    },
+    "25": {
+     "median": 16.84,
+     "p10": 15.06,
+     "p90": 18.56,
+     "reached": 1.0
+    },
+    "30": {
+     "median": 23.9,
+     "p10": 21.64,
+     "p90": 26.29,
+     "reached": 1.0
+    },
+    "40": {
+     "median": 38.97,
+     "p10": 36.44,
+     "p90": 42.08,
+     "reached": 1.0
+    },
+    "45": {
+     "median": 47.75,
+     "p10": 44.95,
+     "p90": 50.97,
+     "reached": 1.0
+    },
+    "50": {
+     "median": 56.36,
+     "p10": 53.13,
+     "p90": 59.92,
+     "reached": 1.0
+    },
+    "70": {
+     "median": 93.49,
+     "p10": 89.32,
+     "p90": 97.96,
+     "reached": 1.0
+    },
+    "100": {
+     "median": 115.66,
+     "p10": 110.5,
+     "p90": 120.39,
+     "reached": 1.0
+    },
+    "135": {
+     "median": 145.17,
+     "p10": 139.46,
+     "p90": 150.59,
+     "reached": 1.0
+    }
    },
-   "C": {
-    "median": 10.6,
-    "p10": 8.9,
-    "p90": 12.5,
-    "reached": 1.0
+   "rank_hours": {
+    "D": {
+     "median": 4.66,
+     "p10": 3.77,
+     "p90": 5.9,
+     "reached": 1.0
+    },
+    "C": {
+     "median": 17.79,
+     "p10": 15.9,
+     "p90": 19.88,
+     "reached": 1.0
+    },
+    "B": {
+     "median": 48.64,
+     "p10": 45.61,
+     "p90": 51.71,
+     "reached": 1.0
+    },
+    "A": {
+     "median": 94.3,
+     "p10": 90.06,
+     "p90": 99.14,
+     "reached": 1.0
+    },
+    "S": {
+     "median": 116.59,
+     "p10": 111.24,
+     "p90": 121.67,
+     "reached": 1.0
+    },
+    "Sovereign": {
+     "median": 146.19,
+     "p10": 140.36,
+     "p90": 151.38,
+     "reached": 1.0
+    }
    },
-   "B": {
-    "median": 23.1,
-    "p10": 20.5,
-    "p90": 25.6,
-    "reached": 1.0
+   "level_at_minutes": {
+    "10": {
+     "median": 2.0,
+     "p10": 2.0,
+     "p90": 2.0
+    },
+    "30": {
+     "median": 3.0,
+     "p10": 2.0,
+     "p90": 3.0
+    },
+    "60": {
+     "median": 5.0,
+     "p10": 3.0,
+     "p90": 5.0
+    },
+    "120": {
+     "median": 7.0,
+     "p10": 6.0,
+     "p90": 8.0
+    }
    },
-   "A": {
-    "median": 39.9,
-    "p10": 37.1,
-    "p90": 43.3,
-    "reached": 1.0
-   },
-   "S": {
-    "median": 64.7,
-    "p10": 61.1,
-    "p90": 68.5,
-    "reached": 1.0
-   },
-   "Sovereign": {
-    "median": 102.5,
-    "p10": 98.3,
-    "p90": 106.6,
-    "reached": 1.0
-   },
-   "level_gap_min_by_band": {
-    "E": 20.0,
-    "D": 24.2,
-    "C": 32.9,
-    "B": 35.5,
-    "A": 43.8,
-    "S": 59.3
-   },
-   "deaths_per_10_gates": 1.77
+   "deaths_per_10_gates": 1.72,
+   "first_power_minute": 8.0,
+   "discoveries_median": 21.0
   },
   "greedy": {
-   "D": {
-    "median": 4.5,
-    "p10": 3.4,
-    "p90": 5.8,
-    "reached": 1.0
+   "level_hours": {
+    "3": {
+     "median": 0.45,
+     "p10": 0.33,
+     "p90": 0.6,
+     "reached": 1.0
+    },
+    "5": {
+     "median": 0.77,
+     "p10": 0.68,
+     "p90": 1.72,
+     "reached": 1.0
+    },
+    "10": {
+     "median": 3.44,
+     "p10": 2.55,
+     "p90": 4.88,
+     "reached": 1.0
+    },
+    "15": {
+     "median": 8.55,
+     "p10": 6.68,
+     "p90": 10.34,
+     "reached": 1.0
+    },
+    "20": {
+     "median": 13.23,
+     "p10": 10.16,
+     "p90": 15.99,
+     "reached": 1.0
+    },
+    "25": {
+     "median": 17.56,
+     "p10": 14.34,
+     "p90": 20.86,
+     "reached": 1.0
+    },
+    "30": {
+     "median": 26.51,
+     "p10": 22.28,
+     "p90": 30.64,
+     "reached": 1.0
+    },
+    "40": {
+     "median": 44.11,
+     "p10": 37.38,
+     "p90": 49.02,
+     "reached": 1.0
+    },
+    "45": {
+     "median": 52.11,
+     "p10": 45.74,
+     "p90": 57.73,
+     "reached": 1.0
+    },
+    "50": {
+     "median": 63.91,
+     "p10": 55.52,
+     "p90": 70.82,
+     "reached": 1.0
+    },
+    "70": {
+     "median": 103.59,
+     "p10": 93.79,
+     "p90": 113.17,
+     "reached": 1.0
+    },
+    "100": {
+     "median": 126.04,
+     "p10": 114.78,
+     "p90": 138.08,
+     "reached": 1.0
+    },
+    "135": {
+     "median": 155.62,
+     "p10": 140.98,
+     "p90": 168.39,
+     "reached": 1.0
+    }
    },
-   "C": {
-    "median": 11.1,
-    "p10": 8.6,
-    "p90": 14.0,
-    "reached": 1.0
+   "rank_hours": {
+    "D": {
+     "median": 4.52,
+     "p10": 3.4,
+     "p90": 6.49,
+     "reached": 1.0
+    },
+    "C": {
+     "median": 18.55,
+     "p10": 15.08,
+     "p90": 22.27,
+     "reached": 1.0
+    },
+    "B": {
+     "median": 53.12,
+     "p10": 46.76,
+     "p90": 58.75,
+     "reached": 1.0
+    },
+    "A": {
+     "median": 104.6,
+     "p10": 94.64,
+     "p90": 113.97,
+     "reached": 1.0
+    },
+    "S": {
+     "median": 127.12,
+     "p10": 116.05,
+     "p90": 139.45,
+     "reached": 1.0
+    },
+    "Sovereign": {
+     "median": 156.76,
+     "p10": 141.69,
+     "p90": 169.3,
+     "reached": 1.0
+    }
    },
-   "B": {
-    "median": 24.4,
-    "p10": 20.2,
-    "p90": 28.8,
-    "reached": 1.0
+   "level_at_minutes": {
+    "10": {
+     "median": 2.0,
+     "p10": 2.0,
+     "p90": 2.0
+    },
+    "30": {
+     "median": 3.0,
+     "p10": 2.0,
+     "p90": 3.0
+    },
+    "60": {
+     "median": 5.0,
+     "p10": 3.0,
+     "p90": 5.0
+    },
+    "120": {
+     "median": 6.0,
+     "p10": 5.0,
+     "p90": 9.0
+    }
    },
-   "A": {
-    "median": 42.4,
-    "p10": 36.5,
-    "p90": 48.5,
-    "reached": 1.0
-   },
-   "S": {
-    "median": 69.5,
-    "p10": 61.3,
-    "p90": 77.3,
-    "reached": 1.0
-   },
-   "Sovereign": {
-    "median": 112.8,
-    "p10": 103.6,
-    "p90": 125.7,
-    "reached": 1.0
-   },
-   "level_gap_min_by_band": {
-    "E": 20.6,
-    "D": 36.5,
-    "C": 53.3,
-    "B": 57.6,
-    "A": 70.3,
-    "S": 88.7
-   },
-   "deaths_per_10_gates": 7.02
+   "deaths_per_10_gates": 6.84,
+   "first_power_minute": 8.0,
+   "discoveries_median": 15.5
   },
   "builder": {
-   "D": {
-    "median": 3.9,
-    "p10": 2.8,
-    "p90": 6.1,
-    "reached": 1.0
+   "level_hours": {
+    "3": {
+     "median": 0.52,
+     "p10": 0.37,
+     "p90": 0.66,
+     "reached": 1.0
+    },
+    "5": {
+     "median": 0.8,
+     "p10": 0.7,
+     "p90": 1.7,
+     "reached": 1.0
+    },
+    "10": {
+     "median": 3.67,
+     "p10": 3.13,
+     "p90": 4.48,
+     "reached": 1.0
+    },
+    "15": {
+     "median": 7.88,
+     "p10": 6.67,
+     "p90": 9.23,
+     "reached": 1.0
+    },
+    "20": {
+     "median": 11.96,
+     "p10": 10.62,
+     "p90": 13.94,
+     "reached": 1.0
+    },
+    "25": {
+     "median": 17.32,
+     "p10": 15.81,
+     "p90": 19.48,
+     "reached": 1.0
+    },
+    "30": {
+     "median": 24.53,
+     "p10": 22.61,
+     "p90": 26.79,
+     "reached": 1.0
+    },
+    "40": {
+     "median": 40.14,
+     "p10": 37.47,
+     "p90": 42.67,
+     "reached": 1.0
+    },
+    "45": {
+     "median": 48.93,
+     "p10": 46.16,
+     "p90": 51.81,
+     "reached": 1.0
+    },
+    "50": {
+     "median": 57.78,
+     "p10": 54.6,
+     "p90": 60.89,
+     "reached": 1.0
+    },
+    "70": {
+     "median": 95.37,
+     "p10": 90.85,
+     "p90": 99.52,
+     "reached": 1.0
+    },
+    "100": {
+     "median": 118.38,
+     "p10": 113.06,
+     "p90": 123.7,
+     "reached": 1.0
+    },
+    "135": {
+     "median": 149.97,
+     "p10": 143.63,
+     "p90": 156.14,
+     "reached": 1.0
+    }
    },
-   "C": {
-    "median": 11.6,
-    "p10": 9.5,
-    "p90": 14.1,
-    "reached": 1.0
+   "rank_hours": {
+    "D": {
+     "median": 4.84,
+     "p10": 3.85,
+     "p90": 6.46,
+     "reached": 1.0
+    },
+    "C": {
+     "median": 18.48,
+     "p10": 16.72,
+     "p90": 20.72,
+     "reached": 1.0
+    },
+    "B": {
+     "median": 49.89,
+     "p10": 46.95,
+     "p90": 52.92,
+     "reached": 1.0
+    },
+    "A": {
+     "median": 95.96,
+     "p10": 91.75,
+     "p90": 100.43,
+     "reached": 1.0
+    },
+    "S": {
+     "median": 119.62,
+     "p10": 114.24,
+     "p90": 124.9,
+     "reached": 1.0
+    },
+    "Sovereign": {
+     "median": 150.95,
+     "p10": 144.71,
+     "p90": 156.92,
+     "reached": 1.0
+    }
    },
-   "B": {
-    "median": 24.6,
-    "p10": 22.1,
-    "p90": 27.7,
-    "reached": 1.0
+   "level_at_minutes": {
+    "10": {
+     "median": 2.0,
+     "p10": 2.0,
+     "p90": 2.0
+    },
+    "30": {
+     "median": 2.0,
+     "p10": 2.0,
+     "p90": 3.0
+    },
+    "60": {
+     "median": 5.0,
+     "p10": 3.0,
+     "p90": 5.0
+    },
+    "120": {
+     "median": 7.0,
+     "p10": 5.0,
+     "p90": 7.0
+    }
    },
-   "A": {
-    "median": 42.1,
-    "p10": 39.2,
-    "p90": 45.8,
-    "reached": 1.0
-   },
-   "S": {
-    "median": 67.3,
-    "p10": 64.1,
-    "p90": 71.5,
-    "reached": 1.0
-   },
-   "Sovereign": {
-    "median": 105.3,
-    "p10": 100.8,
-    "p90": 110.1,
-    "reached": 1.0
-   },
-   "level_gap_min_by_band": {
-    "E": 22.6,
-    "D": 25.5,
-    "C": 34.0,
-    "B": 36.6,
-    "A": 45.6,
-    "S": 58.1
-   },
-   "deaths_per_10_gates": 1.93
+   "deaths_per_10_gates": 1.87,
+   "first_power_minute": 8.0,
+   "discoveries_median": 23.0
   }
  },
  "target_checks": [
   {
-   "rank": "D",
-   "target": [
-    2.5,
-    4.5
+   "level": 5,
+   "target_hours": [
+    0.75,
+    1.0
    ],
-   "balanced_median": 3.5,
+   "balanced_median": 0.78,
    "pass": true
   },
   {
-   "rank": "C",
-   "target": [
-    8,
-    13
+   "level": 10,
+   "target_hours": [
+    3.0,
+    4.0
    ],
-   "balanced_median": 10.6,
+   "balanced_median": 3.59,
    "pass": true
   },
   {
-   "rank": "B",
-   "target": [
-    18,
-    28
+   "level": 25,
+   "target_hours": [
+    15.0,
+    20.0
    ],
-   "balanced_median": 23.1,
+   "balanced_median": 16.84,
    "pass": true
   },
   {
-   "rank": "A",
-   "target": [
-    32,
-    48
+   "level": 50,
+   "target_hours": [
+    55.0,
+    60.0
    ],
-   "balanced_median": 39.9,
+   "balanced_median": 56.36,
    "pass": true
   },
   {
-   "rank": "S",
-   "target": [
-    52,
-    78
+   "minute": 30,
+   "target_level": [
+    3,
+    4
    ],
-   "balanced_median": 64.7,
+   "balanced_median": 3.0,
    "pass": true
   },
   {
-   "rank": "Sovereign",
-   "target": [
-    85,
-    120
+   "minute": 60,
+   "target_level": [
+    5,
+    6
    ],
-   "balanced_median": 102.5,
+   "balanced_median": 5.0,
    "pass": true
   }
  ],
  "push_ev_C_on_level": [
   {
    "stop_at": 1,
-   "levels_per_hour": 1.39,
+   "levels_per_hour": 0.44,
    "death_rate": 0.035,
-   "vs_best": 0.59
+   "vs_best": 0.58
   },
   {
    "stop_at": 2,
-   "levels_per_hour": 1.85,
+   "levels_per_hour": 0.59,
    "death_rate": 0.092,
    "vs_best": 0.78
   },
   {
    "stop_at": 3,
-   "levels_per_hour": 2.18,
+   "levels_per_hour": 0.7,
    "death_rate": 0.182,
    "vs_best": 0.92
   },
   {
    "stop_at": 4,
-   "levels_per_hour": 2.36,
+   "levels_per_hour": 0.76,
    "death_rate": 0.324,
    "vs_best": 1.0
   },
   {
    "stop_at": 5,
-   "levels_per_hour": 2.31,
+   "levels_per_hour": 0.74,
    "death_rate": 0.523,
-   "vs_best": 0.98
+   "vs_best": 0.97
   },
   {
    "stop_at": 6,
-   "levels_per_hour": 1.89,
+   "levels_per_hour": 0.61,
    "death_rate": 0.765,
    "vs_best": 0.8
   },
   {
    "stop_at": 7,
-   "levels_per_hour": 1.26,
+   "levels_per_hour": 0.4,
    "death_rate": 0.961,
    "vs_best": 0.53
   }
@@ -292,47 +684,53 @@
  "push_ev_C_underlevelled": [
   {
    "stop_at": 1,
-   "levels_per_hour": 1.83,
+   "levels_per_hour": 0.58,
    "death_rate": 0.057,
-   "vs_best": 0.7
+   "vs_best": 0.69
   },
   {
    "stop_at": 2,
-   "levels_per_hour": 2.34,
+   "levels_per_hour": 0.75,
    "death_rate": 0.151,
-   "vs_best": 0.9
+   "vs_best": 0.89
   },
   {
    "stop_at": 3,
-   "levels_per_hour": 2.61,
+   "levels_per_hour": 0.84,
    "death_rate": 0.286,
    "vs_best": 1.0
   },
   {
    "stop_at": 4,
-   "levels_per_hour": 2.56,
+   "levels_per_hour": 0.82,
    "death_rate": 0.493,
    "vs_best": 0.98
   },
   {
    "stop_at": 5,
-   "levels_per_hour": 2.15,
+   "levels_per_hour": 0.69,
    "death_rate": 0.732,
    "vs_best": 0.82
   },
   {
    "stop_at": 6,
-   "levels_per_hour": 1.38,
+   "levels_per_hour": 0.44,
    "death_rate": 0.952,
-   "vs_best": 0.53
+   "vs_best": 0.52
   },
   {
    "stop_at": 7,
-   "levels_per_hour": 1.2,
+   "levels_per_hour": 0.38,
    "death_rate": 0.992,
-   "vs_best": 0.46
+   "vs_best": 0.45
   }
  ],
+ "mob_farm_levels_per_hour": {
+  "3": 0.8,
+  "10": 0.5,
+  "25": 0.28,
+  "50": 0.16
+ },
  "xp_curve": {
   "1": 150,
   "5": 988,
@@ -342,5 +740,14 @@
   "70": 42682,
   "100": 71550,
   "135": 110525
+ },
+ "share": {
+  "E": 0.28,
+  "D": 0.16,
+  "C": 0.08,
+  "B": 0.07,
+  "A": 0.3,
+  "S": 0.25,
+  "Sovereign": 0.25
  }
 }

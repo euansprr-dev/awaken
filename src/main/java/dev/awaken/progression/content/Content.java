@@ -29,8 +29,9 @@ public final class Content {
     public static final Store<PathDef> PATHS = new Store<>("path", PathDef.CODEC);
     public static final Store<DirectiveDef> DIRECTIVES = new Store<>("directive", DirectiveDef.CODEC);
     public static final Store<DrillDef> DRILLS = new Store<>("drill", DrillDef.CODEC);
+    public static final Store<LevelRoadDef> LEVEL_ROAD = new Store<>("level_road", LevelRoadDef.CODEC);
 
-    public static final List<Store<?>> ALL = List.of(TRUTHS, TITLES, LATENTS, PATHS, DIRECTIVES, DRILLS);
+    public static final List<Store<?>> ALL = List.of(TRUTHS, TITLES, LATENTS, PATHS, DIRECTIVES, DRILLS, LEVEL_ROAD);
 
     /** Counter id -> content ids whose condition reads it. Rebuilt on reload. */
     public static final Map<String, Set<Identifier>> INDEX = new HashMap<>();

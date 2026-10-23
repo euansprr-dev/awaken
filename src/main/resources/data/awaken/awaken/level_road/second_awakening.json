@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 25,
+  "title": "Second Awakening",
+  "text": "Pass the C-rank trial to find your Path.",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:path"
+    }
+  ],
+  "quiet": false
+}

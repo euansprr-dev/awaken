@@ -1,9 +1,9 @@
 {
-  "text": "Sprint 3 kilometres.",
+  "text": "Sprint a kilometre.",
   "condition": {
     "type": "counter",
     "counter": "awaken:sprint_cm",
-    "value": 300000
+    "value": 100000
   },
   "reward": {
     "stat": "AGI"

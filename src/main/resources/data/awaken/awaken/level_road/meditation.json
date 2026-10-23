@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "level": 11,
+  "title": "Meditation",
+  "text": "Sneak and hold G: energy flows back faster.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:meditation_mat"
+      ]
+    },
+    {
+      "type": "flag",
+      "id": "awaken:meditation"
+    }
+  ],
+  "quiet": false
+}

@@ -1,0 +1,64 @@
+{
+  "text": "Use your powers ten times in a fight.",
+  "condition": {
+    "type": "any",
+    "of": [
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/kinetic",
+        "value": 10
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/velocity",
+        "value": 10
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/flight",
+        "value": 10
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/energy",
+        "value": 10
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/shadow",
+        "value": 10
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/mind",
+        "value": 10
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/architect",
+        "value": 10
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/tech",
+        "value": 10
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:power_uses/spirit",
+        "value": 10
+      }
+    ]
+  },
+  "reward": {
+    "stat_points": 1
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 14,
+  "requires": [
+    "active"
+  ]
+}

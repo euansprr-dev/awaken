@@ -24,6 +24,9 @@ import java.util.function.Consumer;
 public final class Regimen {
     private Regimen() {}
 
+    /** Levels for finishing all three drills (tools/sim/pacing_sim.py REGIMEN_LEVELS). */
+    static final double REWARD_LEVELS = 0.1;
+
     /** Installed by the module that builds the Penalty Zone (Hardline only). */
     public static Consumer<ServerPlayer> penaltyHandler = p -> {};
 
@@ -40,8 +43,10 @@ public final class Regimen {
             var d = e.getValue();
             if (p.rank().ordinal() < d.minRank().ordinal()) continue;
             if (!d.paths().isEmpty() && !d.paths().contains(p.path)) continue;
+            if (!Requirements.met(player, d.requires())) continue; // never a drill you can't do yet
             pool.add(e);
         }
+        pool.sort(Map.Entry.comparingByKey()); // map order isn't stable: keep the roll reproducible
         List<String> drills = new ArrayList<>();
         Set<String> counters = new HashSet<>();
         var rnd = player.getRandom();
@@ -54,7 +59,7 @@ public final class Regimen {
         if (drills.isEmpty()) return;
         var w = SignalWindow.builder(SignalWindow.Kind.DIRECTIVE, Component.literal("Daily Regimen"));
         for (String id : drills) w.row(Component.literal("•"), Component.literal(Content.DRILLS.get(id).text()));
-        w.footer(Component.literal("Optional · +1 point and a quarter level"));
+        w.footer(Component.literal("Optional · +1 point and a tenth of a level"));
         Signal.send(player, w.ttl(20 * 10).build());
         Progression.markDirty(player);
     }
@@ -77,10 +82,12 @@ public final class Regimen {
         p.regimen = new Profile.RegimenState(r.day(), r.drills(), done, r.baseline());
         if (done.size() == r.drills().size()) {
             p.unspent += 1;
-            Progression.grantLevels(player, 0.25, Progression.XpSource.REGIMEN);
+            // a tenth of a level (v1: a quarter): a morning comes every 20 minutes, so this is a steady source (tools/sim)
+            Progression.grantLevels(player, REWARD_LEVELS, Progression.XpSource.REGIMEN);
             p.counters.merge("awaken:regimens_done", 1L, Long::sum);
             Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Regimen complete"))
-                    .row(Component.literal("Reward"), Component.literal("+1 point, a quarter level")).build());
+                    .body(Component.literal("+1 point and a tenth of a level"))
+                    .presentation(SignalWindow.Presentation.TOAST).build());
         }
         Progression.markDirty(player);
     }

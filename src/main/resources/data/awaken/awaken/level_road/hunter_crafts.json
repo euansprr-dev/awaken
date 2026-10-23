@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "level": 2,
+  "title": "Hunter crafts",
+  "text": "Forge, Target Dummy, Trophy Mount: recipe book.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:forge",
+        "awaken:target_dummy",
+        "awaken:trophy_mount"
+      ]
+    }
+  ],
+  "quiet": false
+}

@@ -6,5 +6,8 @@
     "value": 15
   },
   "paths": [],
-  "min_rank": "E"
+  "min_rank": "E",
+  "requires": [
+    "dash"
+  ]
 }

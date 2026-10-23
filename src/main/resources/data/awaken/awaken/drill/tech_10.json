@@ -8,5 +8,8 @@
   "paths": [
     "awaken:engineer"
   ],
-  "min_rank": "E"
+  "min_rank": "E",
+  "requires": [
+    "family:tech"
+  ]
 }

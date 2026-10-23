@@ -14,5 +14,8 @@
   "max_rank": "SOVEREIGN",
   "quick": true,
   "weight": 10,
-  "path": "awaken:redline"
+  "path": "awaken:redline",
+  "requires": [
+    "power:awaken:flow"
+  ]
 }

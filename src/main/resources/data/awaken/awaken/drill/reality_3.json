@@ -6,5 +6,8 @@
     "value": 3
   },
   "paths": [],
-  "min_rank": "E"
+  "min_rank": "E",
+  "requires": [
+    "unlock:awaken:dreams"
+  ]
 }

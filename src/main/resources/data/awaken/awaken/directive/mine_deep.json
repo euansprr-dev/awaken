@@ -1,9 +1,9 @@
 {
-  "text": "Mine 30 ores.",
+  "text": "Mine 12 ores.",
   "condition": {
     "type": "counter",
     "counter": "awaken:ores_mined",
-    "value": 30
+    "value": 12
   },
   "reward": {
     "levels": 0.1

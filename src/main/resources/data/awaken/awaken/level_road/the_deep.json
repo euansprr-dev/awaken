@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "level": 40,
+  "title": "The deep calls",
+  "text": "Strata 4 and 5 are open. A Power Core.",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:deep"
+    },
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false
+}
