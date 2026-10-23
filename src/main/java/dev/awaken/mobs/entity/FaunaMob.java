@@ -65,6 +65,20 @@ public class FaunaMob extends AwakenMob {
 
     private static final net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> ORES = net.neoforged.neoforge.common.Tags.BlockItems.ORES.block();
     private static final EntityDataAccessor<Integer> DATA_POSE = SynchedEntityData.defineId(FaunaMob.class, EntityDataSerializers.INT);
+    /**
+     * The animation cue for hero bodies: bits 0-7 the move slot + 1 ({@link #moveNames}), bits 8-10 the stage
+     * ({@code CUE_*}), bits 11-18 a serial so the same move twice still restarts its clip.
+     */
+    private static final EntityDataAccessor<Integer> DATA_CUE = SynchedEntityData.defineId(FaunaMob.class, EntityDataSerializers.INT);
+    public static final int CUE_NONE = 0, CUE_WINDUP = 1, CUE_STRIKE = 2, CUE_ROAR = 3, CUE_WARN = 4;
+    /**
+     * Each named beast's signature move: its wind-up opens with the beast's roar or cry (on top of the telegraph), so
+     * the big one always reads before it lands. The hero bodies give these their own wind-up and strike clips.
+     */
+    public static final java.util.Map<String, String> SIGNATURES = java.util.Map.of(
+            "briar_sow", "Bramble Charge", "dune_wyrm", "Surface", "old_antler", "Antler Rush", "mire_mother", "Tongue Lash",
+            "plumed_coil", "Coil Strike", "weaver_queen", "Pounce", "empress_moth", "Wingbeat", "stonehorn", "Ram Charge",
+            "mycelord", "Cap Slam");
 
     // Server state. No field initialisers: registerGoals runs inside the super constructor.
     int scareTicks;
@@ -86,6 +100,15 @@ public class FaunaMob extends AwakenMob {
     public final net.minecraft.world.entity.AnimationState croakAnim = new net.minecraft.world.entity.AnimationState();
     public final net.minecraft.world.entity.AnimationState tongueAnim = new net.minecraft.world.entity.AnimationState();
     private int croakTicks, tongueTicks;
+    // server: the ability being wound up (to cue its strike when it fires), the cue serial
+    private dev.awaken.mobs.def.@Nullable Ability cueAbility;
+    private int cueSerial;
+    // client: when the current and the previous cue started (for the hero renderer's clips), distance-locked gait,
+    // the last melee swing, how long it has been dying
+    private int cueStart, lastCue, prevCue, prevCueStart, prevCueEnd, meleeStart = Integer.MIN_VALUE / 2, dyingTicks;
+    private float gait, gaitO, gaitSpeed;
+    private boolean wasSwinging;
+    private float nextFlap;
 
     public FaunaMob(EntityType<? extends FaunaMob> type, Level level) {
         super(type, level);
@@ -153,10 +176,130 @@ public class FaunaMob extends AwakenMob {
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
         b.define(DATA_POSE, 0);
+        b.define(DATA_CUE, 0);
     }
 
     public int pose() {
         return entityData.get(DATA_POSE);
+    }
+
+    // ---- animation cues (hero bodies) ----------------------------------------------------------------------------
+
+    /** Every distinct ability name of a def, in phase order: a move's slot is its index here (same on both sides). */
+    public static java.util.List<String> moveNames(MobDef d) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (MobDef.Phase p : d.phases) for (dev.awaken.mobs.def.Ability a : p.abilities()) if (!out.contains(a.name())) out.add(a.name());
+        return out;
+    }
+
+    public static int cueStage(int cue) {
+        return (cue >> 8) & 7;
+    }
+
+    /** The move slot of a wind-up or strike cue, or -1. */
+    public static int cueSlot(int cue) {
+        return (cue & 0xFF) - 1;
+    }
+
+    public int cue() {
+        return entityData.get(DATA_CUE);
+    }
+
+    /** Server: tells the client body what to play (a move's wind-up or strike, a roar, a warning). */
+    public void cue(int stage, int slot) {
+        cueSerial = (cueSerial + 1) & 0xFF;
+        entityData.set(DATA_CUE, (slot + 1 & 0xFF) | (stage & 7) << 8 | cueSerial << 11);
+    }
+
+    /** Server: a phase change or a roar interrupts whatever was winding up (no strike follows it). */
+    public void cueRoar(int stage) {
+        cueAbility = null;
+        cue(stage, -1);
+    }
+
+    /** Server: the ability runner was interrupted; its wind-up will not fire, so cue no strike for it. */
+    protected void forgetCue() {
+        if (cueAbility != null) {
+            cueAbility = null;
+            cue(CUE_NONE, -1);
+        }
+    }
+
+    /** Server, every tick: follow the ability runner (a wind-up begins, then it fires) and cue the body. */
+    private void tickCue(ServerLevel level) {
+        dev.awaken.mobs.def.Ability a = abilities == null ? null : abilities.active();
+        if (a == cueAbility) return;
+        if (a != null) {
+            cue(CUE_WINDUP, moveNames(def()).indexOf(a.name()));
+            if (a.name().equals(SIGNATURES.get(def().id))) {
+                SoundEvent roar = dev.awaken.mobs.MobSounds.fauna(def().id, "roar");
+                if (roar != null) playSound(roar, getSoundVolume() * 1.2F, 0.95F + random.nextFloat() * 0.1F);
+            }
+        } else if (cueAbility != null && isAlive()) {
+            cue(CUE_STRIKE, moveNames(def()).indexOf(cueAbility.name()));
+        }
+        cueAbility = a;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (key == DATA_CUE && level() != null && level().isClientSide()) {
+            prevCue = lastCue;
+            prevCueStart = cueStart;
+            prevCueEnd = tickCount;
+            cueStart = tickCount;
+            lastCue = entityData.get(DATA_CUE);
+        }
+    }
+
+    /** Client: tick the current cue started on; the previous cue's start and end (to fade a held wind-up out). */
+    public int cueStart() {
+        return cueStart;
+    }
+
+    public int prevCueStart() {
+        return prevCueStart;
+    }
+
+    public int prevCueEnd() {
+        return prevCueEnd;
+    }
+
+    public int prevCue() {
+        return prevCue;
+    }
+
+    /** Client: blocks travelled (unclamped, unlike walkAnimation), so gaits lock to the ground at any speed. */
+    public float gait(float partialTicks) {
+        return Mth.lerp(partialTicks, gaitO, gait);
+    }
+
+    /** Client: smoothed ground speed in blocks per tick. */
+    public float gaitSpeed() {
+        return gaitSpeed;
+    }
+
+    public int meleeStart() {
+        return meleeStart;
+    }
+
+    /** Client: ticks since it started dying (beasts take longer to fall than vanilla's 20 ticks). */
+    public int dyingTicks() {
+        return dyingTicks;
+    }
+
+    private void clientAnimTick() {
+        gaitO = gait;
+        double dx = getX() - xo, dy = def().flies() ? getY() - yo : 0, dz = getZ() - zo;
+        float d = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (d > 4) d = 0; // a teleport, not a stride
+        gait += d;
+        gaitSpeed += (d - gaitSpeed) * 0.35F;
+        boolean sw = isSwinging();
+        if (sw && !wasSwinging) meleeStart = tickCount;
+        wasSwinging = sw;
+        dyingTicks = isDeadOrDying() ? dyingTicks + 1 : 0;
     }
 
     /** Dart frogs climb trunks and walls like spiders. */
@@ -208,6 +351,7 @@ public class FaunaMob extends AwakenMob {
     public void tick() {
         super.tick();
         if (level().isClientSide()) {
+            clientAnimTick();
             burrowAnim = (pose() & P_BURROW) != 0 ? Math.min(1.0F, burrowAnim + 1.0F / BURROW_TICKS) : 0.0F;
             if (def().model == Model.FROG) animateFrog();
             if (def().model == Model.SNOW_WOLF && tickCount % 6 == 0 && random.nextInt(3) == 0) {
@@ -270,6 +414,7 @@ public class FaunaMob extends AwakenMob {
         }
         if (talent() == FaunaTalent.DIG && burrowTicks == 0 && slot % 5 == 0) WildTalents.checkAlarm(this, level);
         updatePose();
+        tickCue(level);
     }
 
     /** Ambient and skittish creatures keep their distance from players who run at them (sneak to get close). */
@@ -522,29 +667,74 @@ public class FaunaMob extends AwakenMob {
         return super.doHurtTarget(level, target);
     }
 
+    // Every overworld creature has its own voice (sounds.json in merge/fauna, files from tools/art/specs/fauna_sounds.py);
+    // the borrowed vanilla voice is only the fallback.
+
     @Override
     protected @Nullable SoundEvent getAmbientSound() {
         if (burrowTicks > 0) return null;
-        return def().voice().ambient;
+        SoundEvent s = dev.awaken.mobs.MobSounds.fauna(def().id, "ambient");
+        return s != null ? s : def().voice().ambient;
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return def().voice().hurt;
+        SoundEvent s = dev.awaken.mobs.MobSounds.fauna(def().id, "hurt");
+        return s != null ? s : def().voice().hurt;
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return def().voice().death;
+        SoundEvent s = dev.awaken.mobs.MobSounds.fauna(def().id, "death");
+        return s != null ? s : def().voice().death;
     }
 
+    /** Vanilla's quiet: the small and the many speak rarely and softly, a lone beast more often and louder. */
     @Override
     public int getAmbientSoundInterval() {
         return switch (faunaRole()) {
-            case AMBIENT -> 420;
-            case HUNTER -> 300;
-            default -> 360;
+            case AMBIENT -> 900;
+            case NEUTRAL -> 600;
+            case HUNTER -> 420;
+            case BEAST -> 360;
         };
+    }
+
+    @Override
+    protected float getSoundVolume() {
+        return switch (faunaRole()) {
+            case AMBIENT -> 0.45F;
+            case NEUTRAL -> 0.8F;
+            case HUNTER -> 0.9F;
+            case BEAST -> 1.5F;
+        };
+    }
+
+    /** Its own footfall over the block's (soft pads, hooves, a beast's thud). */
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        super.playStepSound(pos, state);
+        SoundEvent s = dev.awaken.mobs.MobSounds.fauna(def().id, "step");
+        if (s != null) playSound(s, faunaRole() == FaunaRole.BEAST ? 0.9F : faunaRole() == FaunaRole.AMBIENT ? 0.25F : 0.45F, 0.9F + random.nextFloat() * 0.2F);
+    }
+
+    /** Fliers: their "step" is a wingbeat every couple of blocks flown. */
+    @Override
+    protected boolean isFlapping() {
+        return def().flies() && flyDist > nextFlap;
+    }
+
+    @Override
+    protected void onFlap() {
+        nextFlap = flyDist + (faunaRole() == FaunaRole.BEAST ? 2.5F : 1.6F);
+        SoundEvent s = dev.awaken.mobs.MobSounds.fauna(def().id, "step");
+        if (s != null) playSound(s, faunaRole() == FaunaRole.BEAST ? 0.8F : 0.2F, 0.9F + random.nextFloat() * 0.2F);
+    }
+
+    /** Owls turn their heads round almost to their backs. */
+    @Override
+    public int getMaxHeadYRot() {
+        return def().model == Model.OWL ? 160 : super.getMaxHeadYRot();
     }
 
     // ---- client look ---------------------------------------------------------------------------------------------
@@ -555,6 +745,7 @@ public class FaunaMob extends AwakenMob {
         int pose = pose();
         l.fauna = pose;
         l.faunaAnim = burrowAnim;
+        l.hurt = hurtTime > 0 && hurtDuration > 0 ? Math.max(0.0F, (hurtTime - partialTicks) / hurtDuration) : 0.0F;
         FaunaRole role = faunaRole();
         float pulse = 0.5F + 0.5F * Mth.sin((tickCount + partialTicks) * 0.09F + getId());
         if (l.telegraph <= 0) l.glow = role == FaunaRole.AMBIENT ? 0.65F + 0.3F * pulse : (pose & P_ANGRY) != 0 ? 0.85F : 0.45F + 0.25F * pulse;

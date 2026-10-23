@@ -142,6 +142,7 @@ public class NamedBeast extends FaunaMob {
     /** One snort, a flash and a line on the action bar: you are in its territory. */
     private void warn(ServerLevel level, Player p) {
         setTelegraph(16, false);
+        cue(CUE_WARN, -1);
         playLevelSound(def().voice().ambient != null ? def().voice().ambient : MobSounds.TELEGRAPH.get(), 1.6F, 0.7F);
         level.sendParticles(ParticleTypes.CLOUD, getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.4, 0.2, 0.4, 0.02);
         if (p instanceof ServerPlayer sp) {
@@ -153,6 +154,28 @@ public class NamedBeast extends FaunaMob {
         setTarget(p);
         closeTicks = 0;
         playLevelSound(MobSounds.BOSS_INTRO.get(), 1.6F, 1.1F);
+        roar();
+    }
+
+    /** The body rears and roars (its clip and its own cry): a fight begins, or a new phase. */
+    private void roar() {
+        cueRoar(CUE_ROAR);
+        net.minecraft.sounds.SoundEvent cry = MobSounds.fauna(def().id, "roar");
+        if (cry != null) playSound(cry, getSoundVolume() * 1.2F, 0.9F + random.nextFloat() * 0.1F);
+    }
+
+    /** Beasts take longer to fall than vanilla's second: the death clip runs this many ticks before removal. */
+    public static final int DEATH_TICKS = 36;
+    private int deathHold;
+
+    @Override
+    protected void tickDeath() {
+        // Hold just before vanilla's removal tick (19) for the rest of the fall, on both sides alike.
+        if (deathTime == 19 && deathHold < DEATH_TICKS - 20) {
+            deathHold++;
+            return;
+        }
+        super.tickDeath();
     }
 
     @Override
@@ -178,6 +201,7 @@ public class NamedBeast extends FaunaMob {
             abilities.interrupt();
             abilities.setPhase(phase);
         }
+        forgetCue(); // the interrupted wind-up never strikes
         AttributeInstance speed = getAttribute(Attributes.MOVEMENT_SPEED);
         float bonus = d.phases.get(Math.min(phase, d.phases.size() - 1)).speedBonus();
         if (speed != null) {
@@ -187,6 +211,7 @@ public class NamedBeast extends FaunaMob {
         if (bar != null) bar.setColor(phase == 0 ? d.barColor : PHASE_COLOURS[(phase - 1) % PHASE_COLOURS.length]);
         if (!announce) return;
         setTelegraph(24, true);
+        roar();
         level.sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + getBbHeight() * 0.5, getZ(), 2, 0.4, 0.4, 0.4, 0);
         playLevelSound(MobSounds.BOSS_PHASE.get(), 1.6F, 0.9F);
         String line = d.phases.get(phase).line();

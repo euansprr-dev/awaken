@@ -8,6 +8,9 @@ import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.mobs.client.model.AwModels;
 import dev.awaken.mobs.client.model.FaunaModels;
 import dev.awaken.mobs.client.model.WildModels;
+import dev.awaken.mobs.client.anim.HeroRenderer;
+import dev.awaken.mobs.client.anim.HeroRig;
+import dev.awaken.mobs.client.model.HeroModel;
 import net.minecraft.client.model.animal.feline.AdultOcelotModel;
 import net.minecraft.client.model.animal.frog.FrogModel;
 import net.minecraft.client.model.animal.goat.GoatModel;
@@ -117,6 +120,8 @@ final class AwRenderers {
         e.registerLayerDefinition(WildModels.SNAIL, WildModels.Snail::create);
         e.registerLayerDefinition(WildModels.MUSHROOM, WildModels.Mushroom::create);
         e.registerLayerDefinition(WildModels.MARMOT, WildModels.Marmot::create);
+        // hero bodies: the named beasts, the Hollow Owl, the Bogwick
+        for (HeroRig r : HeroRig.all().values()) e.registerLayerDefinition(HeroModel.layer(r.id), () -> HeroModel.create(r));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -282,6 +287,9 @@ final class AwRenderers {
                         s.lieDownAmountTail = 0.0F;
                         s.relaxStateOneAmount = 0.0F;
                     });
+            // hero bodies (rigs, clips and textures from tools/art/specs/heroes.py)
+            case BRIAR_SOW, DUNE_WYRM, OLD_ANTLER, MIRE_MOTHER, PLUMED_COIL, WEAVER_QUEEN, EMPRESS_MOTH, STONEHORN, MYCELORD, OWL, FIREFLY ->
+                    HeroRenderer.create(ctx, d);
         };
     }
 

@@ -22,4 +22,6 @@ public final class AwLook {
     public int fauna;
     /** Overworld creatures: a 0..1 progress for the current pose (burrowing, grazing). */
     public float faunaAnim;
+    /** Overworld creatures: 1 the moment it is hit, falling to 0 (the model's flinch). */
+    public float hurt;
 }

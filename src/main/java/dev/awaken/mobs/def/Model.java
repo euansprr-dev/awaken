@@ -83,7 +83,28 @@ public enum Model {
     // ...and three more vanilla animal bodies, repainted by the skin layer
     FROG("frog/frog_temperate", Move.GROUND, 0.5F, 0.5F, Voice.FROG),
     GOAT("goat/goat", Move.GROUND, 0.9F, 1.3F, Voice.GOAT),
-    OCELOT("cat/ocelot", Move.GROUND, 0.6F, 0.7F, Voice.OCELOT);
+    OCELOT("cat/ocelot", Move.GROUND, 0.6F, 0.7F, Voice.OCELOT),
+    // Hero bodies: each named beast's own rig (tools/art/specs/heroes.py -> mobs.client.anim.HeroData), plus a real owl
+    // and a firefly. Sizes are the collision box before the def's scale; the beasts keep the boxes they had.
+    BRIAR_SOW("", Move.GROUND, 1.83F, 1.83F, Voice.BOAR),
+    DUNE_WYRM("", Move.FLY, 1.0F, 1.0F, Voice.SERPENT),
+    OLD_ANTLER("", Move.GROUND, 1.43F, 2.53F, Voice.STAG),
+    MIRE_MOTHER("", Move.GROUND, 1.5F, 1.5F, Voice.FROG),
+    PLUMED_COIL("", Move.FLY, 1.0F, 1.0F, Voice.SERPENT),
+    WEAVER_QUEEN("", Move.GROUND, 2.37F, 1.52F, Voice.SPIDER),
+    EMPRESS_MOTH("", Move.FLY, 1.33F, 1.11F, Voice.MOTH),
+    STONEHORN("", Move.GROUND, 1.46F, 2.11F, Voice.GOAT),
+    MYCELORD("", Move.GROUND, 1.4F, 2.67F, Voice.MYCELORD),
+    OWL("", Move.GROUND, 0.6F, 0.9F, Voice.OWL),
+    FIREFLY("", Move.FLY, 0.5F, 0.42F, Voice.FIREFLY);
+
+    /** Bodies drawn by a hero rig (mobs.client.anim.HeroRenderer). */
+    public boolean hero() {
+        return switch (this) {
+            case BRIAR_SOW, DUNE_WYRM, OLD_ANTLER, MIRE_MOTHER, PLUMED_COIL, WEAVER_QUEEN, EMPRESS_MOTH, STONEHORN, MYCELORD, OWL, FIREFLY -> true;
+            default -> false;
+        };
+    }
 
     public enum Move { GROUND, HOP, FLY }
 
