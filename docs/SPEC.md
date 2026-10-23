@@ -388,7 +388,8 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
 - Toasts are 160 wide and vanilla height (32), or 43 when the detail needs a second line (a level-road step); at most 3
   of ours; a burst merges into "N new things". Cards sit right of the
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
-  (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed.
+  (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed, and steps below the boss
+  bars when they would overlap it.
 
 Plan v2 · overworld creatures (details in docs/modules/fauna.md):
 - Spawn category `awaken:fauna` (16 per player, NeoForge enum extension). Role caps per player: ambient 8 (3 before
