@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=z": {
+      "model": "awaken:block/checkpoint_ring"
+    },
+    "axis=x": {
+      "model": "awaken:block/checkpoint_ring",
+      "y": 90
+    }
+  }
+}

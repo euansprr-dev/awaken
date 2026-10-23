@@ -1,0 +1,56 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "side": "awaken:block/monolith_side",
+    "top": "awaken:block/monolith_top",
+    "particle": "awaken:block/monolith_side"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        16,
+        14
+      ],
+      "faces": {
+        "down": {
+          "texture": "#top",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#top",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        },
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        }
+      },
+      "light_emission": 4
+    }
+  ]
+}

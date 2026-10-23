@@ -1,0 +1,47 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "plaque": "awaken:block/trophy_mount",
+    "particle": "awaken:block/trophy_mount"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        2,
+        14
+      ],
+      "to": [
+        14,
+        14,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#plaque"
+        },
+        "up": {
+          "texture": "#plaque"
+        },
+        "north": {
+          "texture": "#plaque",
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ]
+        },
+        "south": {
+          "texture": "#plaque"
+        },
+        "west": {
+          "texture": "#plaque"
+        },
+        "east": {
+          "texture": "#plaque"
+        }
+      }
+    }
+  ]
+}

@@ -3,7 +3,6 @@ package dev.awaken.hearth;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.hearth.echo.BindMath;
 import dev.awaken.hearth.echo.Duty;
-import dev.awaken.hearth.echo.EchoGoals;
 import dev.awaken.hearth.echo.EchoRecord;
 import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.echo.Echoes;
@@ -16,7 +15,6 @@ import dev.awaken.hearth.trial.Trials;
 import dev.awaken.progression.Curve;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
-import dev.awaken.progression.Stat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -156,7 +154,6 @@ final class HearthTests {
             h.assertTrue(owner.getHealth() == ob, "an Echo's strike never lands on its owner");
             mate.hurtServer(level, level.damageSources().mobAttack(echo), 4f);
             h.assertTrue(mate.getHealth() == mate.getMaxHealth(), "Echoes don't hurt each other");
-            h.assertTrue(foe.getTarget() == null || foe.getTarget() != echo || true, "foe untouched");
             for (Entity e : List.of(echo, mate, foe)) e.discard();
             h.succeed();
         });
@@ -227,6 +224,44 @@ final class HearthTests {
             });
         });
 
+        AwakenTests.register("hearth_trials_dimension", 100, h -> {
+            var regs = h.getLevel().registryAccess();
+            h.assertTrue(regs.lookupOrThrow(net.minecraft.core.registries.Registries.DIMENSION_TYPE)
+                    .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION_TYPE, dev.awaken.Awaken.id("trials"))).isPresent(),
+                    "the trials dimension type loads");
+            h.assertTrue(regs.lookupOrThrow(net.minecraft.core.registries.Registries.BIOME)
+                    .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BIOME, dev.awaken.Awaken.id("trials"))).isPresent(),
+                    "the trials biome loads");
+            // The dimension file itself decodes against the live registries (generator codec, biome source, type).
+            var res = h.getLevel().getServer().getResourceManager().getResource(dev.awaken.Awaken.id("dimension/trials.json"));
+            h.assertTrue(res.isPresent(), "dimension/trials.json is in the mod's data");
+            try (var reader = new java.io.InputStreamReader(res.get().open(), java.nio.charset.StandardCharsets.UTF_8)) {
+                var json = com.google.gson.JsonParser.parseReader(reader);
+                var stem = net.minecraft.world.level.dimension.LevelStem.CODEC.parse(
+                        net.minecraft.resources.RegistryOps.create(com.mojang.serialization.JsonOps.INSTANCE, regs), json);
+                h.assertTrue(stem.result().isPresent(), "trials dimension decodes: " + stem.error().map(Object::toString).orElse(""));
+                h.assertTrue(stem.result().get().generator() instanceof TrialChunkGenerator, "uses the trial generator");
+            } catch (java.io.IOException ex) {
+                h.fail("could not read dimension/trials.json: " + ex);
+            }
+            ServerLevel trials = h.getLevel().getServer().getLevel(Trials.DIMENSION);
+            if (trials == null) {
+                // The GameTest server only creates the overworld; in a real world the dimension is checked below.
+                h.succeed();
+                return;
+            }
+            BlockPos o = TrialChunkGenerator.origin(0);
+            trials.getChunk(o.getX() >> 4, o.getZ() >> 4);
+            BlockState floor = trials.getBlockState(o.offset(3, 0, 2));
+            h.assertTrue(floor.is(Blocks.DEEPSLATE_TILES) || floor.is(Blocks.POLISHED_DEEPSLATE), "hall floor generated, was " + floor);
+            h.assertTrue(trials.getBlockState(o.offset(0, 3, 10)).is(Blocks.POLISHED_BLACKSTONE_BRICKS), "hall wall generated");
+            BlockPos d = TrialChunkGenerator.origin(1);
+            trials.getChunk(d.getX() >> 4, d.getZ() >> 4);
+            h.assertTrue(trials.getBlockState(d.offset(10, 0, 11)).is(Blocks.SAND), "desert floor generated");
+            h.assertTrue(trials.getBlockState(o.offset(TrialChunkGenerator.SIZE + 4, 0, 4)).isAir(), "void between arenas");
+            h.succeed();
+        });
+
         AwakenTests.register("hearth_pure_rules", 20, h -> {
             h.assertTrue(Breaks.shouldCount(false, "CLEARED", 2, 2), "count a clean BROKEN→CLEARED");
             h.assertFalse(Breaks.shouldCount(false, "CLEARED", 2, 3), "the gates module already counted it");
@@ -263,6 +298,4 @@ final class HearthTests {
         level.addFreshEntity(z);
         return z;
     }
-
-    static void unusedImports(Stat s, EchoGoals g) {}
 }

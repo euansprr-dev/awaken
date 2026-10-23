@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": "#minecraft:planks",
+    "G": "minecraft:gold_ingot"
+  },
+  "pattern": [
+    "PPP",
+    "PGP"
+  ],
+  "result": {
+    "id": "awaken:trophy_mount",
+    "count": 2
+  }
+}

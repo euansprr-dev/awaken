@@ -1,0 +1,52 @@
+{
+  "hearth.bind": {
+    "subtitle": "subtitles.awaken.hearth.bind",
+    "sounds": [
+      { "name": "minecraft:block.respawn_anchor.charge", "type": "event", "pitch": 0.6, "volume": 0.9 }
+    ]
+  },
+  "hearth.bind_fail": {
+    "subtitle": "subtitles.awaken.hearth.bind_fail",
+    "sounds": [
+      { "name": "minecraft:block.respawn_anchor.deplete", "type": "event", "pitch": 1.3, "volume": 0.7 }
+    ]
+  },
+  "hearth.summon": {
+    "subtitle": "subtitles.awaken.hearth.summon",
+    "sounds": [
+      { "name": "minecraft:entity.evoker.prepare_summon", "type": "event", "pitch": 1.4, "volume": 0.5 }
+    ]
+  },
+  "hearth.anchor": {
+    "subtitle": "subtitles.awaken.hearth.anchor",
+    "sounds": [
+      { "name": "minecraft:block.respawn_anchor.set_spawn", "type": "event", "pitch": 0.8, "volume": 0.9 },
+      { "name": "minecraft:block.beacon.activate", "type": "event", "pitch": 0.7, "volume": 0.6 }
+    ]
+  },
+  "hearth.checkpoint": {
+    "subtitle": "subtitles.awaken.hearth.checkpoint",
+    "sounds": [
+      { "name": "minecraft:block.note_block.chime", "type": "event", "volume": 0.8 }
+    ]
+  },
+  "hearth.record": {
+    "subtitle": "subtitles.awaken.hearth.record",
+    "sounds": [
+      { "name": "minecraft:ui.toast.challenge_complete", "type": "event", "pitch": 1.2, "volume": 0.7 }
+    ]
+  },
+  "hearth.trial": {
+    "subtitle": "subtitles.awaken.hearth.trial",
+    "sounds": [
+      { "name": "minecraft:block.beacon.power_select", "type": "event", "pitch": 0.6, "volume": 1.0 }
+    ]
+  },
+  "hearth.forge": {
+    "subtitle": "subtitles.awaken.hearth.forge",
+    "sounds": [
+      { "name": "minecraft:block.anvil.use", "type": "event", "pitch": 0.9, "volume": 0.6 },
+      { "name": "minecraft:block.blastfurnace.fire_crackle", "type": "event", "volume": 0.8 }
+    ]
+  }
+}

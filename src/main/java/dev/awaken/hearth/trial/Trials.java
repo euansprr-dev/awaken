@@ -465,8 +465,9 @@ public final class Trials {
                 for (int dz = -7; dz <= 7; dz++) {
                     boolean edge = Math.abs(dx) == 7 || Math.abs(dz) == 7;
                     place(s, f.offset(dx, 0, dz), (dx + dz) % 6 == 0 && !edge ? lamp : floor);
-                    if (k == 0) place(s, f.offset(dx, 7, dz), wall);
-                    if (edge) for (int y = 1; y <= 6; y++) place(s, f.offset(dx, y, dz), y == 3 && (dx + dz) % 4 == 0 ? lamp : wall);
+                    if (k == 0) place(s, f.offset(dx, 12, dz), wall);
+                    // Walls reach the floor of the room above, so the only way on is down.
+                    if (edge) for (int y = 1; y <= 11; y++) place(s, f.offset(dx, y, dz), y == 3 && (dx + dz) % 4 == 0 ? lamp : wall);
                 }
             }
         }

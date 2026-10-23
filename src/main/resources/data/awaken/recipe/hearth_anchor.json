@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "O": "minecraft:obsidian",
+    "S": "minecraft:stone_bricks",
+    "H": "awaken:lord_heart"
+  },
+  "pattern": [
+    "OSO",
+    "SHS",
+    "OSO"
+  ],
+  "result": {
+    "id": "awaken:hearth_anchor"
+  }
+}

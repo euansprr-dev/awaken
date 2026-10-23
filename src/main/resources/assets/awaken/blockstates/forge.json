@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/forge"
+    },
+    "facing=east": {
+      "model": "awaken:block/forge",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/forge",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/forge",
+      "y": 270
+    }
+  }
+}

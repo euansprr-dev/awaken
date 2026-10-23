@@ -1,0 +1,7 @@
+{
+  "parent": "awaken:block/thin_plate",
+  "textures": {
+    "top": "awaken:block/finish_gate",
+    "side": "awaken:block/role_pad_side"
+  }
+}
