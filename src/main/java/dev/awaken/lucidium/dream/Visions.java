@@ -176,7 +176,7 @@ public final class Visions {
     /** Loads the candidate chunk in the background, confirms the structure is really there, then remembers it. */
     private static void loadAndCapture(UUID player, ServerLevel level, Candidate c) {
         MinecraftServer server = level.getServer();
-        level.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, c.chunk(), 1).thenRunAsync(() -> {
+        level.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, c.chunk(), 0).thenRunAsync(() -> {
             ServerPlayer sp = server.getPlayerList().getPlayer(player);
             if (sp == null) return;
             ChunkAccess chunk = level.getChunk(c.chunk().x(), c.chunk().z());
@@ -187,24 +187,29 @@ public final class Visions {
             }
             var box = start.getBoundingBox();
             int x = (box.minX() + box.maxX()) / 2, z = (box.minZ() + box.maxZ()) / 2;
-            level.getChunk(x >> 4, z >> 4);
-            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-            BlockPos feet = new BlockPos(x, y, z);
-            if (DayJournal.othersBase(sp, level, feet)) return;
-            if (!level.isLoaded(feet.offset(-8, 0, -8)) || !level.isLoaded(feet.offset(7, 0, 7))) {
-                level.getChunk((x - 8) >> 4, (z - 8) >> 4);
-                level.getChunk((x + 7) >> 4, (z + 7) >> 4);
-            }
-            CompoundTag tag = SnapshotFiles.capture(level, feet);
-            Fragment f = Fragment.fromTemplate(BuiltInRegistries.BLOCK, tag);
-            Dreamer d = Dreams.dreamer(sp);
-            long day = PlayDays.current(server);
-            String id = d.newId(day) + "_v";
-            SnapshotFiles.write(server, player, id, tag);
-            String label = Describe.place(f, c.id());
-            d.putVision(new Vision(id, id, label, level.dimension().identifier().toString(), feet, "", day, -1, false));
-            DirectorLog.log(sp, "vision", "prepared: " + label + " (" + c.id() + ")");
+            // the middle of the structure may be a few chunks away: load around it in the background too
+            level.getChunkSource().addTicketAndLoadWithRadius(TicketType.PORTAL, new ChunkPos(x >> 4, z >> 4), 1)
+                    .thenRunAsync(() -> captureVision(player, level, c, x, z), server);
         }, server);
+    }
+
+    private static void captureVision(UUID player, ServerLevel level, Candidate c, int x, int z) {
+        MinecraftServer server = level.getServer();
+        ServerPlayer sp = server.getPlayerList().getPlayer(player);
+        if (sp == null) return;
+        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        BlockPos feet = new BlockPos(x, y, z);
+        if (DayJournal.othersBase(sp, level, feet)) return;
+        if (!level.isLoaded(feet.offset(-8, 0, -8)) || !level.isLoaded(feet.offset(7, 0, 7))) return;
+        CompoundTag tag = SnapshotFiles.capture(level, feet);
+        Fragment f = Fragment.fromTemplate(BuiltInRegistries.BLOCK, tag);
+        Dreamer d = Dreams.dreamer(sp);
+        long day = PlayDays.current(server);
+        String id = d.newId(day) + "_v";
+        SnapshotFiles.write(server, player, id, tag);
+        String label = Describe.place(f, c.id());
+        d.putVision(new Vision(id, id, label, level.dimension().identifier().toString(), feet, "", day, -1, false));
+        DirectorLog.log(sp, "vision", "prepared: " + label + " (" + c.id() + ")");
     }
 
     /** Fallback: an old remembered place, at least three play-days old and far from where you are now. */

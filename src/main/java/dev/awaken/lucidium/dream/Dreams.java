@@ -433,7 +433,10 @@ public final class Dreams {
                 if (!state(p).active) continue;
                 tickPlayer(p, state(p), ad, now);
             }
-            if (now % 10 == 3) tickEncounters(ad, players, now);
+            if (now % 10 == 3 && ACTIVE.get(ad.bp.cell) == ad) {
+                players.removeIf(p -> !state(p).active || p.level() != ad.level);
+                if (!players.isEmpty()) tickEncounters(ad, players, now);
+            }
         }
     }
 
@@ -720,7 +723,7 @@ public final class Dreams {
         DreamBlueprint.Node n = ad.bp.nodes.get(ad.nightmareNode);
         dropResidue(ad.level, Vec3.atCenterOf(n.feet()), 3);
         for (ServerPlayer p : players) {
-            if (horizontal(p, n.feet()) > 40) continue;
+            if (p.level() != ad.level || horizontal(p, n.feet()) > 40) continue;
             Progression.count(p, Counters.NIGHTMARES_BEATEN);
             var profile = Progression.profile(p);
             for (String counter : Nightmares.weeklyCountersOf(ad.family, Map.copyOf(profile.counters()))) Progression.setCounter(p, counter, 0);
