@@ -1,0 +1,27 @@
+{
+  "schema": 2,
+  "level": 24,
+  "title": "The Hanging Gardens",
+  "text": "Stratum 2, 8 essence. Wind pushes you toward the drops: sneak.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 8
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Descend to stratum 2 of the Well",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:depth_record",
+      "value": 2
+    },
+    "toast": "Light its Waystone",
+    "requires": [
+      "unlock:awaken:descent",
+      "rank:D"
+    ]
+  }
+}

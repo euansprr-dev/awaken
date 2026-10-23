@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 46,
+  "title": "The Foundry",
+  "text": "Stratum 6, a Power Core. Light five conduits to open its pit.",
+  "grants": [
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Descend to stratum 6 (B-rank)",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:depth_record",
+      "value": 6
+    },
+    "toast": "Light all five conduits",
+    "requires": [
+      "unlock:awaken:descent",
+      "rank:B"
+    ]
+  }
+}

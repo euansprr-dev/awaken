@@ -1,0 +1,23 @@
+{
+  "schema": 2,
+  "level": 43,
+  "title": "Push past comfort",
+  "text": "16 essence. Deeper floors fill the Satchel faster.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 16
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Clear a floor deeper than usual",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:floors_pushed_past_comfort",
+      "value": 1
+    },
+    "toast": "Deeper floors pay more"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schema": 2,
+  "level": 39,
+  "title": "Beasts everywhere",
+  "text": "A Power Core. Every biome family has its named beast.",
+  "grants": [
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Fell three named beasts",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:beasts_felled",
+      "value": 3
+    },
+    "toast": "The wilds know you"
+  }
+}

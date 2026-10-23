@@ -1,0 +1,30 @@
+{
+  "schema": 2,
+  "level": 18,
+  "title": "Machines, not mounts",
+  "text": "An essence cell for you. Waypoint Pylons and the Deep Lift carry you.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:essence_cell",
+        "awaken:precursor_void_glass"
+      ]
+    },
+    {
+      "type": "item",
+      "id": "awaken:essence_cell",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Build a machine at the Fabricator",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:machines_built",
+      "value": 1
+    },
+    "toast": "Feed a Reactor nearby"
+  }
+}

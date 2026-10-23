@@ -1,0 +1,27 @@
+{
+  "schema": 2,
+  "level": 48,
+  "title": "The Inverted Sea",
+  "text": "Stratum 7, 20 essence. Its tides lift you: land before the ebb.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 20
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Descend to stratum 7 (B-rank)",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:depth_record",
+      "value": 7
+    },
+    "toast": "Land before the ebb",
+    "requires": [
+      "unlock:awaken:descent",
+      "rank:B"
+    ]
+  }
+}

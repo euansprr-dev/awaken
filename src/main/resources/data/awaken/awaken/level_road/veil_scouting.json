@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 19,
+  "title": "Scout from the Veil",
+  "text": "8 essence. As a spirit, a gate's mouth shows its Lord.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 8
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "As a spirit, drift into a gate",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:gates_scouted",
+      "value": 1
+    },
+    "toast": "Its Lord is on the card",
+    "requires": [
+      "unlock:awaken:veil"
+    ]
+  }
+}

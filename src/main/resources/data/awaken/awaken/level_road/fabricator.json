@@ -1,0 +1,25 @@
+{
+  "schema": 2,
+  "level": 17,
+  "title": "The Fabricator",
+  "text": "Scan it, then build it. Broken machines in ruins hold blueprints.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:fabricator",
+        "awaken:precursor_circuit"
+      ]
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Scan a broken machine in a ruin",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:machines_scanned",
+      "value": 1
+    },
+    "toast": "Its blueprint is yours"
+  }
+}

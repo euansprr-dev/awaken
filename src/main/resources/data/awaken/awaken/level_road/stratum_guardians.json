@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 38,
+  "title": "Stratum guardians",
+  "text": "12 essence. A lair 14 blocks north of each pit.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 12
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Beat a guardian (north of a pit)",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:guardians_defeated",
+      "value": 1
+    },
+    "toast": "A core and essence",
+    "requires": [
+      "unlock:awaken:descent"
+    ]
+  }
+}

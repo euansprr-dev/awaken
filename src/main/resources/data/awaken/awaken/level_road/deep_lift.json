@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 34,
+  "title": "The Deep Lift",
+  "text": "12 Precursor scrap. Lit Waystones become Lift stops, with no Strain.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:precursor_scrap",
+      "count": 12
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Light three Descent Waystones",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:waystones_lit",
+      "value": 3
+    },
+    "toast": "A Deep Lift rides there",
+    "requires": [
+      "unlock:awaken:descent"
+    ]
+  }
+}

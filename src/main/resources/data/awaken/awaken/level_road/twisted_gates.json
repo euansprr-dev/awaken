@@ -1,0 +1,22 @@
+{
+  "schema": 2,
+  "level": 28,
+  "title": "Twisted gates",
+  "text": "A Power Core. A twist rewrites a gate's rules.",
+  "grants": [
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Clear a gate with a twist",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:twists_seen",
+      "value": 1
+    },
+    "toast": "Scout to see twists"
+  }
+}

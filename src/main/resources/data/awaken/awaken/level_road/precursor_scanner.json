@@ -1,0 +1,29 @@
+{
+  "schema": 2,
+  "level": 16,
+  "title": "The Scanner",
+  "text": "Ruins hum back at it. Hold it up at the sky and sweep.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:precursor_scanner",
+      "count": 1
+    },
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:precursor_scanner"
+      ]
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Sweep the Scanner: find a ruin",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:ruins_found",
+      "value": 1
+    },
+    "toast": "Pylons can bring you back"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema": 2,
+  "level": 37,
+  "title": "Precursor Frames",
+  "text": "Masonry in the book. Frames with Jet Boots fly where mounts can't.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:precursor_plating",
+        "awaken:precursor_panel",
+        "awaken:precursor_trim",
+        "awaken:precursor_glow_panel",
+        "awaken:precursor_warning_light",
+        "awaken:precursor_membrane"
+      ]
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Forge a Frame at a Frame Forge",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:frames_forged",
+      "value": 1
+    },
+    "toast": "Jet Boots: hold jump"
+  }
+}

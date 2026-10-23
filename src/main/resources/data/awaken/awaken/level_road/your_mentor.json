@@ -1,0 +1,27 @@
+{
+  "schema": 2,
+  "level": 29,
+  "title": "Your mentor",
+  "text": "A Lord's Heart. Your Path's mentor waits in your dreams.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:lord_heart",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Beat your mentor in a dream",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:mentor_duels_won",
+      "value": 1
+    },
+    "toast": "A fifth of a level a win",
+    "requires": [
+      "path",
+      "unlock:awaken:dreams"
+    ]
+  }
+}

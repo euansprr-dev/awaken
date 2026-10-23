@@ -1,0 +1,34 @@
+{
+  "schema": 2,
+  "level": 23,
+  "title": "Shape the dream",
+  "text": "Hold H on a wall: a door. Lucid, a floor gives stairs and the air a bridge.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:dream_glass",
+        "awaken:dream_cloud",
+        "awaken:shifting_stone"
+      ]
+    },
+    {
+      "type": "item",
+      "id": "awaken:dream_residue",
+      "count": 2
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Lucid: hold H on a wall for a door",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:dream_manifests",
+      "value": 1
+    },
+    "toast": "Air makes bridges too",
+    "requires": [
+      "unlock:awaken:dreams"
+    ]
+  }
+}

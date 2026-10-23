@@ -1,0 +1,32 @@
+{
+  "schema": 2,
+  "level": 26,
+  "title": "The town grows",
+  "text": "A Spire Board for home. C-rank brings Teodor, and Anchor tier III.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:spire_board"
+      ]
+    },
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 10
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Hang a Lord's trophy in your Hall",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:trophies_placed",
+      "value": 1
+    },
+    "toast": "+1% damage per Lord",
+    "requires": [
+      "hearth"
+    ]
+  }
+}

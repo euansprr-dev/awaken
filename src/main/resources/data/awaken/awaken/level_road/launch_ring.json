@@ -1,0 +1,28 @@
+{
+  "schema": 2,
+  "level": 49,
+  "title": "The Launch Ring",
+  "text": "Ring frames in the book. 16 round a core and 2,000 essence: the Halo.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:launch_ring_frame",
+        "awaken:precursor_alloy"
+      ]
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Ride a Launch Ring to the Halo",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:story/halo_reached",
+      "value": 1
+    },
+    "toast": "Read the archive",
+    "requires": [
+      "rank:B"
+    ]
+  }
+}

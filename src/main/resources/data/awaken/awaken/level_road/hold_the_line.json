@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 41,
+  "title": "Hold the line",
+  "text": "A Lord's Heart. A gate that breaks near home sends its Lord.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:lord_heart",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Hold a gate break at your Hearth",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:breaks_held_at_hearth",
+      "value": 1
+    },
+    "toast": "The town is safe",
+    "requires": [
+      "hearth"
+    ]
+  }
+}

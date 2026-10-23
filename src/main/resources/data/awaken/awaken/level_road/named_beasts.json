@@ -1,0 +1,23 @@
+{
+  "schema": 2,
+  "level": 32,
+  "title": "Named beasts",
+  "text": "10 essence. The Old Antler, the Briar Sow and the Dune Wyrm roam.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 10
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Fell a named beast",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:beasts_felled",
+      "value": 1
+    },
+    "toast": "Half carry a Power Core"
+  }
+}
