@@ -34,7 +34,7 @@ public final class Glossary {
         TERMS.put(term.toLowerCase(Locale.ROOT), text);
     }
 
-    private static final String[] ENDINGS = {"", "s", "es", "ed", "ion", "ing"};
+    private static final String[] ENDINGS = {"", "s", "es", "d", "ed", "ion", "ing"};
 
     /** The explanation for a word as written in text, if it is a glossary term. */
     public static Optional<String> lookup(String word) {

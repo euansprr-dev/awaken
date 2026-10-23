@@ -1,0 +1,8 @@
+{
+  "awaken.configuration.systemStyle": "System style",
+  "awaken.configuration.systemStyle.tooltip": "V2: small toasts, choice cards and story lines. CLASSIC: the old centre window.",
+  "awaken.configuration.nowTracker": "Now tracker",
+  "awaken.configuration.nowTracker.tooltip": "One line in the top-left corner with something you could do next.",
+  "awaken.configuration.systemScale": "System size",
+  "awaken.configuration.systemScale.tooltip": "Size of System cards, story lines and the Now tracker. Toasts stay vanilla-sized."
+}

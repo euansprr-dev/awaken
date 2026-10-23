@@ -7,6 +7,7 @@ import dev.awaken.signal.ui.Glossary;
 import dev.awaken.signal.ui.Rect;
 import dev.awaken.signal.ui.SignalLayout;
 import dev.awaken.signal.ui.SignalText;
+import dev.awaken.signal.ui.StatusLayout;
 import dev.awaken.signal.ui.StoryPager;
 import dev.awaken.signal.ui.ToastBurst;
 import net.minecraft.core.BlockPos;
@@ -63,6 +64,28 @@ final class SignalTests {
             h.succeed();
         });
 
+        AwakenTests.register("signal_status_screen_frame", 20, h -> {
+            List<String> tabs = List.of("Status", "Truths", "Codex", "Gate Map");
+            for (int[] s : SIZES) {
+                String at = s[0] + "x" + s[1];
+                StatusLayout.Frame f = StatusLayout.of(s[0], s[1], tabs, "K to close", SignalText::approxWidth);
+                h.assertTrue(f.panel().insideScreen(s[0], s[1]), "panel inside the screen at " + at);
+                Rect c = f.content();
+                h.assertTrue(c.x() >= f.panel().x() && c.right() + StatusLayout.SCROLLBAR <= f.panel().right()
+                        && c.y() >= f.panel().y() && c.bottom() <= f.panel().bottom(), "content inside the panel at " + at + ": " + c);
+                h.assertTrue(c.w() >= 300 && c.h() >= 150, "content keeps a usable size at " + at + ": " + c);
+                for (int i = 0; i < f.tabs().size(); i++) {
+                    Rect t = f.tabs().get(i);
+                    h.assertTrue(t.x() >= f.panel().x() && t.right() <= f.panel().right() && t.bottom() <= f.panel().bottom(), "tab inside the panel at " + at);
+                    h.assertFalse(t.intersects(c), "tab clear of the content at " + at);
+                    for (int j = i + 1; j < f.tabs().size(); j++) h.assertFalse(t.intersects(f.tabs().get(j)), "tabs don't overlap at " + at);
+                    if (f.close() != null) h.assertFalse(t.intersects(f.close()), "close hint clear of the tabs at " + at);
+                }
+            }
+            h.assertTrue(StatusLayout.of(378, 246, tabs, "K to close", SignalText::approxWidth).topTabs(), "the owner's screen gets tabs on top");
+            h.succeed();
+        });
+
         AwakenTests.register("signal_text_rules", 20, h -> {
             h.assertTrue(SignalText.stripKeyHints("[Y] Extract · [N] Stay").isEmpty(), "hint-only footer vanishes");
             h.assertTrue(SignalText.stripKeyHints("[G] speak to the dead · [Y] go back to your body").isEmpty(), "veil hints");
@@ -104,11 +127,15 @@ final class SignalTests {
             deck.offer(choice("signaltest:b"), 20 * 60);
             h.assertTrue(deck.tick(1, 0, false) == null, "a press on the tick a card appears is ignored");
             h.assertTrue(deck.current() != null && deck.current().action.equals("signaltest:a"), "first card is a");
-            for (int i = 0; i < ChoiceDeck.ARM_TICKS; i++) h.assertTrue(deck.tick(1, 1, false) == null, "presses before arming are ignored");
+            // a key held or mashed from before never answers: each press restarts the quiet wait
+            for (int i = 0; i < ChoiceDeck.ARM_TICKS * 3; i++) h.assertTrue(deck.tick(1, 1, false) == null, "presses before arming are ignored");
+            h.assertFalse(deck.armed(), "not armed while presses keep coming");
+            for (int i = 0; i < ChoiceDeck.ARM_TICKS; i++) h.assertTrue(deck.tick(0, 0, false) == null, "quiet ticks");
+            h.assertTrue(deck.armed(), "armed after a quiet moment");
             ChoiceDeck.Answer a = deck.tick(1, 0, false);
             h.assertTrue(a != null && a.action().equals("signaltest:a") && a.accepted(), "Y answers a: " + a);
-            // the player keeps pressing Y: none of it may answer b
-            for (int i = 0; i < ChoiceDeck.GAP_TICKS + ChoiceDeck.ARM_TICKS + 2; i++) {
+            // the player keeps pressing Y for two seconds: none of it may answer b
+            for (int i = 0; i < 40; i++) {
                 ChoiceDeck.Answer stray = deck.tick(1, 0, false);
                 h.assertTrue(stray == null, "a stray Y answered " + (stray == null ? "" : stray.action()) + " at tick " + i);
             }
@@ -145,6 +172,20 @@ final class SignalTests {
             h.assertTrue(relog.current() == null && relog.waiting() == 1, "synced decisions wait folded");
             relog.sync(List.of());
             h.assertTrue(relog.pending().isEmpty(), "sync removes what the server dropped");
+            // an urgent decision pushes an ordinary card back and goes first
+            ChoiceDeck urgent = new ChoiceDeck();
+            urgent.offer(choice("signaltest:question"), 20 * 60);
+            urgent.tick(0, 0, false);
+            h.assertTrue(urgent.current() != null && urgent.current().action.equals("signaltest:question"), "question up");
+            urgent.offer(SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Your body is under attack."))
+                    .choice("signaltest:body", "Go back to your body", "Stay").priority(9).build(), 160);
+            urgent.tick(0, 0, false);
+            h.assertTrue(urgent.current() != null && urgent.current().action.equals("signaltest:body"), "the warning pre-empts");
+            for (int i = 0; i < ChoiceDeck.ARM_TICKS; i++) urgent.tick(0, 0, false);
+            ChoiceDeck.Answer back = urgent.tick(1, 0, false);
+            h.assertTrue(back != null && back.action().equals("signaltest:body"), "Y answers the warning");
+            for (int i = 0; i <= ChoiceDeck.GAP_TICKS; i++) urgent.tick(0, 0, false);
+            h.assertTrue(urgent.current() != null && urgent.current().action.equals("signaltest:question"), "the question comes back");
             // newest copy replaces the older one
             relog.offer(choice("signaltest:g"), 100);
             relog.offer(choice("signaltest:g"), 200);

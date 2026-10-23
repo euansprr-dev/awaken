@@ -90,7 +90,11 @@ public final class SystemHud {
     static void show(SignalWindow w) {
         RecentLog.add(w);
         switch (effective(w)) {
-            case CHOICE -> DECK.offer(w, w.ttlTicks());
+            case CHOICE -> {
+                DECK.offer(w, w.ttlTicks());
+                // a revelation that asks something ("Will you accept?") is also spoken in full beside its card
+                if (w.kind() == SignalWindow.Kind.REVELATION) STORIES.addLast(w);
+            }
             case STORY -> {
                 STORIES.addLast(w);
                 while (STORIES.size() > MAX_STORIES) STORIES.removeFirst(); // kept in the log and the Codex
@@ -104,7 +108,8 @@ public final class SystemHud {
             }
             default -> BURST.offer(ticks, item(w));
         }
-        if (w.kind() == SignalWindow.Kind.WARNING) play(CoreModule.SIGNAL_WARNING.get(), 0.6f);
+        // a decision's card plays its own sound when it opens
+        if (w.kind() == SignalWindow.Kind.WARNING && w.action().isEmpty()) play(CoreModule.SIGNAL_WARNING.get(), 0.6f);
     }
 
     static void toast(Component text, int colour) {

@@ -5,6 +5,7 @@ import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.Ui;
 import dev.awaken.signal.ui.Rect;
 import dev.awaken.signal.ui.SignalText;
+import dev.awaken.signal.ui.StatusLayout;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -22,11 +23,12 @@ import java.util.List;
 public final class StatusScreen extends Screen {
     private static StatusSections.Tab lastTab = StatusSections.Tab.STATUS;
     private static final int[] SCROLL = new int[StatusSections.Tab.values().length];
-    private static final int SECTION_GAP = 12, SCROLLBAR = 6, SIDE_TABS_MIN_W = 440;
+    private static final int SECTION_GAP = 12, SCROLLBAR = StatusLayout.SCROLLBAR;
 
     private StatusSections.Tab tab = lastTab;
     private int px, py, pw, ph, cx, cy, cw, ch;
     private boolean topTabs;
+    private StatusLayout.Frame frame;
     private int contentHeight;
 
     public StatusScreen() {
@@ -35,22 +37,23 @@ public final class StatusScreen extends Screen {
 
     @Override
     protected void init() {
-        pw = Math.min(560, width - 16);
-        ph = Math.min(360, height - 16);
-        px = (width - pw) / 2;
-        py = (height - ph) / 2;
-        topTabs = pw < SIDE_TABS_MIN_W;
-        if (topTabs) {
-            cx = px + 10;
-            cy = py + 28;
-            cw = pw - 20 - SCROLLBAR;
-            ch = ph - 28 - 8;
-        } else {
-            cx = px + 106;
-            cy = py + 12;
-            cw = pw - 106 - 10 - SCROLLBAR;
-            ch = ph - 24;
-        }
+        List<String> labels = new java.util.ArrayList<>();
+        for (StatusSections.Tab t : StatusSections.Tab.values()) labels.add(label(t));
+        frame = StatusLayout.of(width, height, labels, closeHint(), font::width);
+        Rect p = frame.panel(), c = frame.content();
+        px = p.x();
+        py = p.y();
+        pw = p.w();
+        ph = p.h();
+        topTabs = frame.topTabs();
+        cx = c.x();
+        cy = c.y();
+        cw = c.w();
+        ch = c.h();
+    }
+
+    private static String closeHint() {
+        return AwakenKeys.STATUS.getTranslatedKeyMessage().getString() + " to close";
     }
 
     private static String label(StatusSections.Tab t) {
@@ -64,10 +67,7 @@ public final class StatusScreen extends Screen {
 
     /** Where tab {@code i}'s button is. */
     private Rect tabRect(int i) {
-        if (!topTabs) return new Rect(px + 8, py + 32 + i * 22, 86, 18);
-        int x = px + 8;
-        for (int k = 0; k < i; k++) x += font.width(label(StatusSections.Tab.values()[k])) + 16 + 4;
-        return new Rect(x, py + 6, font.width(label(StatusSections.Tab.values()[i])) + 16, 16);
+        return frame.tabs().get(i);
     }
 
     private boolean overContent(double mx, double my) {
@@ -97,16 +97,14 @@ public final class StatusScreen extends Screen {
             if (on && !topTabs) g.verticalLine(r.x(), r.y(), r.bottom() - 1, Glass.a(Glass.EDGE, 1f));
             g.text(font, label(t), r.x() + 8, r.y() + (r.h() - 8) / 2, Glass.a(on ? Glass.TITLE : Glass.LABEL, 1f), false);
         }
-        String close = AwakenKeys.STATUS.getTranslatedKeyMessage().getString() + " to close";
+        Rect close = frame.close();
         if (topTabs) {
-            Rect last = tabRect(tabs.length - 1);
-            int cwid = font.width(close);
-            if (last.right() + 12 + cwid <= px + pw - 8) g.text(font, close, px + pw - 8 - cwid, py + 10, Glass.a(Glass.LABEL, 0.7f), false);
+            if (close != null) g.text(font, closeHint(), close.x(), close.y(), Glass.a(Glass.LABEL, 0.7f), false);
             g.horizontalLine(px + 8, px + pw - 8, py + 23, Glass.a(Glass.EDGE, 0.18f));
         } else {
             g.text(font, "◇ SIGNAL", px + 12, py + 12, Glass.a(Glass.EDGE, 1f), false);
             g.verticalLine(px + 98, py + 8, py + ph - 8, Glass.a(Glass.EDGE, 0.18f));
-            g.text(font, SignalText.ellipsize(close, 84, font::width), px + 12, py + ph - 16, Glass.a(Glass.LABEL, 0.7f), false);
+            g.text(font, SignalText.ellipsize(closeHint(), close.w(), font::width), close.x(), close.y(), Glass.a(Glass.LABEL, 0.7f), false);
         }
 
         // content
