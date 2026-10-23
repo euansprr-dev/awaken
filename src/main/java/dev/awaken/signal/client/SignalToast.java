@@ -77,7 +77,8 @@ final class SignalToast implements Toast {
             reset = false;
         }
         double ms = BASE_MS * manager.getNotificationDisplayTimeMultiplier();
-        wanted = fullyVisibleForMs - shownFrom < ms ? Visibility.SHOW : Visibility.HIDE;
+        boolean quiet = net.minecraft.client.Minecraft.getInstance().gui.screen() instanceof QuietScreen;
+        wanted = !quiet && fullyVisibleForMs - shownFrom < ms ? Visibility.SHOW : Visibility.HIDE;
     }
 
     @Override

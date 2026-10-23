@@ -21,7 +21,7 @@ import java.util.List;
  * does). Click a card or press 1 / 2 / 3. Esc closes it for now; the Now tracker and the next login bring it back.
  * Sized to fit the smallest auto GUI scale (378 × 246 GUI px) and doesn't pause the game.
  */
-final class StarterScreen extends Screen {
+final class StarterScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
     private static final int EDGE = 0xFF7FC3FF, LANTERN = 0xFFFFCF7A, TITLE = 0xFFF4F6FB, LABEL = 0xFFAFC2D8, DIM = 0xFF6F8299;
     private static final int CARD_H = 104;
 
