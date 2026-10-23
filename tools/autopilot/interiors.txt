@@ -10,7 +10,7 @@
 #                                        inside a gate: stand where that place reads best, facing it (ante and lord go to the
 #                                        Lord's floor; stepping into the arena wakes the Lord)
 #   /awaken gate leave                   out again, Satchel kept
-# Between gates: spreadplayers moves you 120 blocks east, so every gate has fresh ground.
+#   /awaken gate hop                     to dry land 160+ blocks from every gate (between gates)
 world autopilot_interiors creative 20261024
 waitworld
 gui 0
@@ -26,7 +26,7 @@ screen close
 cmd gamerule send_command_feedback false
 
 # ---- Bell Crypt (E): ossuary niches, the bell loft, the Bell Warden's belfry --------------------------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open E bell_crypt
 wait 320
@@ -52,7 +52,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Fungal Hollow (E): soft walls, glowcaps, the giant grove, Mother of Spores under her caps ---------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open E fungal_hollow
 wait 320
@@ -72,7 +72,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Ember Mines (E): timber frames and ore seams, the forge hall, the Ember Tyrant's lava ring --------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open E ember_mines
 wait 320
@@ -92,7 +92,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Hive (E): brood comb in the walls, the comb hall, the Hive Regent's throne room ------------------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open E hive
 wait 320
@@ -112,7 +112,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Overgrown Temple (E): carved faces and jade, the tree that split the temple, the Root Saint's pillar grid ------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open E overgrown_temple
 wait 320
@@ -132,7 +132,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Drowned Archive (D): bookcases floor to cornice, the flooded stacks, the Archivist's reading room ------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open D drowned_archive
 wait 320
@@ -155,7 +155,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Clockwork Foundry (D): the gear wall, the conveyor or the boiler, the Colossus's pylons ----------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open D clockwork_foundry
 wait 320
@@ -175,7 +175,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Glass Desert (D): sun tiles and skylights, the glass garden, the Serpent's dunes ----------------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open D glass_desert
 wait 320
@@ -195,7 +195,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Lantern Night Market (D, friendly): stalls and paper lanterns, the Broker's plaza ----------------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open D lantern_night_market
 wait 320
@@ -215,7 +215,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Frost Monastery (C): frosted windows lit from behind, the cloister, the Abbot's chapel -----------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open C frost_monastery
 wait 320
@@ -235,7 +235,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Mirror Palace (C): mirrors framed in quartz on a black and white floor, the Mirror Knight's ring -------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open C mirror_palace
 wait 320
@@ -255,7 +255,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Precursor Lab (C): lab panels and glyph capitals, tanks or the server hall, Unit Zero's test chamber ----------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open C precursor_lab
 wait 320
@@ -275,7 +275,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Nightmare (C): wallpaper that watches, the giant table, the Sleeper's bedroom --------------------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open C nightmare
 wait 320
@@ -295,7 +295,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Sky Archipelago (B): painted sky, floating isles, the Leviathan's islands over the cloud sea ------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open B sky_archipelago
 wait 320
@@ -315,7 +315,7 @@ cmd awaken gate leave
 wait 80
 
 # ---- Abyssal Shrine (A): void glass and obsidian, the rift, the Hollow Herald's monoliths -------------------------------
-cmd spreadplayers ~120 ~ 0 1 false @s
+cmd awaken gate hop
 wait 60
 cmd awaken gate open A abyssal_shrine
 wait 320
