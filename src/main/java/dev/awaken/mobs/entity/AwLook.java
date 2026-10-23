@@ -18,4 +18,8 @@ public final class AwLook {
     public boolean upsideDown;
     public boolean fallen;
     public float swell;
+    /** Overworld creatures: pose bits ({@code FaunaMob.P_*}) for the model (airborne, stalking, grazing, angry...). */
+    public int fauna;
+    /** Overworld creatures: a 0..1 progress for the current pose (burrowing, grazing). */
+    public float faunaAnim;
 }

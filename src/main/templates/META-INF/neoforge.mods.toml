@@ -32,6 +32,9 @@ displayName="${mod_name}" #mandatory
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="awaken_logo.png"
 
+# Enum extensions: the awaken:fauna spawn category (MobCategory.AWAKEN_FAUNA), the overworld creatures' own cap.
+enumExtensions="META-INF/enumextensions.json"
+
 # A text field displayed in the mod UI
 #credits="" #optional
 
