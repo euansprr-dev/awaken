@@ -31,5 +31,6 @@
   "subtitles.awaken.signal.open": "Signal window opens",
   "subtitles.awaken.signal.warning": "Signal warning",
   "subtitles.awaken.level_up": "Level up",
-  "subtitles.awaken.rank_up": "Rank up"
+  "subtitles.awaken.rank_up": "Rank up",
+  "screen.awaken.status": "Status"
 }
