@@ -7,6 +7,7 @@ import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.MobHooks;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.CoreApi;
+import dev.awaken.progression.Counters;
 import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
@@ -53,6 +54,7 @@ final class Prologue {
     static void onTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer p) || p.tickCount % 20 != 0) return;
         StoryProgress s = progress(p);
+        trackCrypt(p, s);
         boolean awakened = Progression.profile(p).awakened();
         if (awakened) {
             if (s.prologue != StoryProgress.Prologue.DONE && s.prologue != StoryProgress.Prologue.ACCEPTING) {
@@ -186,18 +188,23 @@ final class Prologue {
 
     static void askToAccept(ServerPlayer p) {
         var r = StoryContent.revelation("prologue_accept");
+        // both keys accept: the card says so, in the story's own voice
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.REVELATION,
                         Component.literal(r == null ? "You have met the conditions." : r.title()))
                 .body(Component.literal(r == null ? "Will you accept?" : r.body()))
-                .action(ACCEPT_ACTION).priority(10).ttl(20 * 60).build());
+                .choice(ACCEPT_ACTION, "Accept", "Accept anyway").priority(10).ttl(20 * 60).build());
     }
+
+    /** Waking is worth at least this level, whatever the prologue banked (plan v2 §4.1: level 2–3 on waking). */
+    static final int WAKE_LEVEL = 2;
 
     /** Signal answer: both answers are yes. */
     static void onAnswer(ServerPlayer p, String action, boolean accepted) {
         if (!ACCEPT_ACTION.equals(action)) return;
         StoryProgress s = progress(p);
         if (s.prologue != StoryProgress.Prologue.ACCEPTING || Progression.profile(p).awakened()) return;
-        Progression.awaken(p);
+        Progression.awaken(p); // pays everything the prologue banked: kills, floors, the Satchel's claim
+        Progression.topUpToLevel(p, WAKE_LEVEL, Progression.XpSource.STORY);
         s.prologue = StoryProgress.Prologue.DONE;
         s.seen.add("revelation:prologue_accept");
         sync(p);
@@ -206,9 +213,35 @@ final class Prologue {
         p.teleportTo(overworld, s.returnX, s.returnY, s.returnZ, Set.<Relative>of(), p.getYRot(), 0, true);
         p.setHealth(p.getMaxHealth());
         p.removeEffect(MobEffects.BLINDNESS);
+        // what's true: the Bell Crypt is scripted and never breaks, so there's no hurry to go back in
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(accepted ? "Accepted." : "Accepted anyway."))
-                .body(Component.literal("Press K to see who you are now. The gate is still open. Finish what you started."))
-                .ttl(20 * 10).priority(9).build());
+                .body(Component.literal("The gate will wait. It never breaks."))
+                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).priority(9).build());
+    }
+
+    /**
+     * Remembers how far into the Bell Crypt the player got (deepest floor, floors cleared there), for the Now
+     * tracker's "Bell Crypt · floor N". Floors cleared elsewhere don't count: the counter is only read while inside it.
+     */
+    static void trackCrypt(ServerPlayer p, StoryProgress s) {
+        if (s.prologueGate.isEmpty()) return;
+        long floors = Progression.profile(p).counter(Counters.FLOORS_CLEARED);
+        var run = dev.awaken.gates.Gates.activeRun(p);
+        if (run.isPresent() && String.valueOf(run.get().gateId()).equals(s.prologueGate)) {
+            if (run.get().area() == 0) s.cryptFloor = Math.max(s.cryptFloor, run.get().floor());
+            if (s.cryptCounterSeen >= 0 && floors > s.cryptCounterSeen) s.cryptCleared += (int) (floors - s.cryptCounterSeen);
+        }
+        s.cryptCounterSeen = floors;
+    }
+
+    /** The next Bell Crypt floor to fight, or 0 when the story's gate is done (cleared, released) or unknown. */
+    static int cryptNextFloor(ServerPlayer p, StoryProgress s) {
+        if (s.prologueGate.isEmpty()) return 0;
+        var view = GateHooks.get(p.level().getServer().overworld(), s.prologueGate);
+        if (view.isEmpty()) return 0;
+        String state = view.get().state();
+        if (!(state.equals("BUILDING") || state.equals("READY") || state.equals("ACTIVE") || state.equals("OPEN"))) return 0;
+        return Math.max(1, Math.min(view.get().floors(), Math.max(s.cryptFloor, s.cryptCleared + 1)));
     }
 
     static void skip(ServerPlayer p) {
@@ -218,6 +251,7 @@ final class Prologue {
             return;
         }
         Progression.awaken(p);
+        Progression.topUpToLevel(p, WAKE_LEVEL, Progression.XpSource.STORY);
         s.prologue = StoryProgress.Prologue.DONE;
         sync(p);
     }
