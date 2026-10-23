@@ -79,8 +79,13 @@ public final class GateCard {
         }
         if (g.state.standing()) {
             long in = g.breaksIn(today);
-            w.row("Breaks in", g.scripted ? "never" : g.neverBreaks(p.level().getServer()) ? "never · the gates are calm"
-                    : in == 0 ? "today" : in + " play-day" + (in > 1 ? "s" : ""));
+            if (g.wandering()) {
+                long left = Math.max(0, g.expiresAt - GateService.now(p.level().getServer())) / 1200;
+                w.row("Fades in", left < 1 ? "under a minute" : left + " min");
+            } else {
+                w.row("Breaks in", g.scripted ? "never" : g.neverBreaks(p.level().getServer()) ? "never · the gates are calm"
+                        : in == 0 ? "today" : in + " play-day" + (in > 1 ? "s" : ""));
+            }
         }
         w.row("Omen", plan.theme().omen);
         if (scouted) w.row("Theme", plan.theme().displayName);

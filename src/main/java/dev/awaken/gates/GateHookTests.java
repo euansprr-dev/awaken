@@ -22,6 +22,7 @@ final class GateHookTests {
     private GateHookTests() {}
 
     static void register() {
+        registerWandering();
         AwakenTests.registerIsolated("gates_hooks_view_stabilise_calm", 900, h -> {
             var level = h.getLevel();
             MinecraftServer server = level.getServer();
@@ -62,6 +63,35 @@ final class GateHookTests {
                         }
                         GateService.release(server, g);
                     })
+                    .thenSucceed();
+        });
+    }
+
+    static void registerWandering() {
+        // A wandering gate (anomalies): forms near the player at their rank, never breaks, and fades on time.
+        AwakenTests.registerIsolated("gates_wandering_gate_fades", 400, h -> {
+            var level = h.getLevel();
+            MinecraftServer server = level.getServer();
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            Progression.awaken(p);
+            GateRecord[] made = new GateRecord[1];
+            h.startSequence()
+                    .thenExecute(() -> {
+                        GateService.useTestLevel(level);
+                        try {
+                            var id = GateHooks.openWandering(p, p.blockPosition().offset(12, 0, 0), 1, 20 * 60 * 5);
+                            h.assertTrue(id.isPresent(), "a wandering gate formed");
+                            GateRecord g = GateRegistry.get(server).gate(Integer.parseInt(id.get()));
+                            made[0] = g;
+                            h.assertTrue(g.wandering() && !g.scripted && g.plan.floors() == 1, "short, wandering, not a story gate");
+                            h.assertTrue(g.neverBreaks(server), "it never breaks");
+                            h.assertTrue(GateHooks.get(level, id.get()).get().breaksOnPlayDay() == Long.MAX_VALUE, "the view agrees");
+                            g.expiresAt = GateService.now(server); // its time is up
+                        } finally {
+                            GateService.useTestLevel(null);
+                        }
+                    })
+                    .thenWaitUntil(() -> h.assertTrue(made[0].state == GateState.RELEASED, "it fades when nobody is inside, state " + made[0].state))
                     .thenSucceed();
         });
     }

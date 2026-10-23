@@ -94,6 +94,18 @@ final class GateAccess implements GateHooks.Access {
         return id < 0 ? Optional.empty() : Optional.of(Integer.toString(id));
     }
 
+    @Override
+    public Optional<String> openWandering(ServerPlayer player, BlockPos near, int floors, int lifetimeTicks) {
+        int id = Gates.openWandering(player, near, floors, lifetimeTicks);
+        return id < 0 ? Optional.empty() : Optional.of(Integer.toString(id));
+    }
+
+    @Override
+    public void release(ServerLevel level, String id) {
+        GateRecord g = record(level, id);
+        if (g != null) GateService.release(level.getServer(), g);
+    }
+
     private static GatePlan withFloors(GatePlan p, int floors) {
         return new GatePlan(p.seed(), p.contentVersion(), p.rank(), p.theme(), p.layout(), p.modifiers(), p.twist(), floors, p.boss(),
                 p.annexTheme(), p.annexRule());

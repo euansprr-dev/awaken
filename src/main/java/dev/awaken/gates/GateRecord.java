@@ -54,6 +54,12 @@ public final class GateRecord {
     public boolean spillPending;
     /** Broken and its roaming Lord fell: the gate only waits to be released. */
     public boolean breakHeld;
+    /** A wandering gate (an anomaly): game time it fades if nobody is inside, or -1 for an ordinary gate. */
+    public long expiresAt = -1;
+
+    public boolean wandering() {
+        return expiresAt >= 0;
+    }
 
     public GateRecord(int id, GatePlan plan, BlockPos pos, int axis, int cell, long createdDay, long breaksOnPlayDay,
                       GateState state, Optional<UUID> owner) {
@@ -86,7 +92,7 @@ public final class GateRecord {
 
     /** Scripted gates never break, and none do once the story has calmed the gates ("Break the Signal"). */
     public boolean neverBreaks(net.minecraft.server.MinecraftServer server) {
-        return scripted || dev.awaken.core.api.StoryHooks.gatesCalm(server);
+        return scripted || wandering() || dev.awaken.core.api.StoryHooks.gatesCalm(server);
     }
 
     public long breaksIn(long today) {
@@ -145,8 +151,9 @@ public final class GateRecord {
             Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.INT).optionalFieldOf("entries", Map.of()).forGetter(g -> Map.copyOf(g.entries)),
             Codec.STRING.listOf().optionalFieldOf("floors_paid", List.of()).forGetter(g -> List.copyOf(g.floorsPaid)),
             Codec.BOOL.optionalFieldOf("spill_pending", false).forGetter(g -> g.spillPending),
-            Codec.BOOL.optionalFieldOf("break_held", false).forGetter(g -> g.breakHeld)
-    ).apply(i, (h, f, floors, echo, entries, paid, spill, held) -> {
+            Codec.BOOL.optionalFieldOf("break_held", false).forGetter(g -> g.breakHeld),
+            Codec.LONG.optionalFieldOf("expires_at", -1L).forGetter(g -> g.expiresAt)
+    ).apply(i, (h, f, floors, echo, entries, paid, spill, held, expires) -> {
         GateRecord g = new GateRecord(h.id, h.plan, h.pos, h.axis, h.cell, h.createdDay, h.breaks, h.state, h.owner);
         g.party.addAll(h.party);
         g.inside.addAll(h.inside);
@@ -168,6 +175,7 @@ public final class GateRecord {
         g.floorsPaid.addAll(paid);
         g.spillPending = spill;
         g.breakHeld = held;
+        g.expiresAt = expires;
         return g;
     }));
 }

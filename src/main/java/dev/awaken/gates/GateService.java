@@ -316,9 +316,15 @@ public final class GateService {
 
     static void tickRemovals(MinecraftServer server) {
         if (server.getTickCount() % 100 == 40) {
-            // cleared gates whose last visitor left by dying (or a refused release) are swept up here
+            long now = now(server);
             for (GateRecord g : List.copyOf(GateRegistry.get(server).all())) {
+                // cleared gates whose last visitor left by dying (or a refused release) are swept up here
                 if (g.state == GateState.CLEARED && g.inside.isEmpty()) release(server, g);
+                // wandering gates fade when their time is up and nobody is inside
+                else if (g.wandering() && g.state != GateState.RELEASED && g.inside.isEmpty() && now >= g.expiresAt) {
+                    g.trace.add("faded");
+                    release(server, g);
+                }
             }
         }
         if (REMOVALS.isEmpty() || server.getTickCount() % 10 != 0) return;

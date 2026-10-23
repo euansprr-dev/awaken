@@ -140,17 +140,45 @@ public final class Gates {
 
     /** As {@link #openScripted(ServerPlayer, GatePlan)}, standing on the ground at {@code near}'s x/z, facing the player. */
     public static int openScripted(ServerPlayer p, GatePlan plan, BlockPos near) {
+        GateRecord g = createNear(p, plan, near, true, "scripted");
+        return g == null ? -1 : g.id;
+    }
+
+    /**
+     * A wandering gate (an anomaly): a short gate at the player's rank standing near {@code near}. It fades after
+     * {@code lifetimeTicks} unless someone is inside, never breaks, and doesn't count toward the Director's 1–4.
+     * Returns the gate id, or -1 when no gate can form (no gate world, no free cell).
+     */
+    public static int openWandering(ServerPlayer p, BlockPos near, int floors, int lifetimeTicks) {
         MinecraftServer s = p.level().getServer();
-        if (GateService.gateLevel(s) == null || !GateRegistry.get(s).hasFreeCell()) return -1;
+        long seed = Hash.mix(p.getUUID().getMostSignificantBits() ^ s.overworld().getGameTime());
+        GatePlan rolled = Director.roll(seed, Progression.rank(p), p.getData(GatesRegistry.MEMORY.get()), null, null).plan();
+        GatePlan plan = new GatePlan(rolled.seed(), rolled.contentVersion(), rolled.rank(), rolled.theme(), rolled.layout(),
+                rolled.modifiers(), Twist.NONE, Math.max(1, floors), rolled.theme().bossId(), rolled.annexTheme(), rolled.annexRule());
+        GateRecord g = createNear(p, plan, near, false, "wandering");
+        if (g == null) return -1;
+        g.expiresAt = GateService.now(s) + Math.max(20 * 30, lifetimeTicks);
+        GateRegistry.get(s).setDirty();
+        return g.id;
+    }
+
+    /** Releases a gate now (its structure comes down; refused while someone stands in its cell). */
+    public static void release(MinecraftServer s, int gateId) {
+        GateRecord g = GateRegistry.get(s).gate(gateId);
+        if (g != null) GateService.release(s, g);
+    }
+
+    private static GateRecord createNear(ServerPlayer p, GatePlan plan, BlockPos near, boolean scripted, String why) {
+        MinecraftServer s = p.level().getServer();
+        if (GateService.gateLevel(s) == null || !GateRegistry.get(s).hasFreeCell()) return null;
         ServerLevel over = s.overworld();
         BlockPos ground = over.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(near.getX(), 0, near.getZ())).below();
         GateRegistry reg = GateRegistry.get(s);
         int id = reg.nextId();
         List<String> trace = new ArrayList<>();
-        trace.add("scripted  " + plan.rank().label + " " + plan.theme().displayName + " for " + p.getGameProfile().name());
+        trace.add(String.format("%-9s %s %s for %s", why, plan.rank().label, plan.theme().displayName, p.getGameProfile().name()));
         int axis = Math.abs(near.getX() - p.getBlockX()) > Math.abs(near.getZ() - p.getBlockZ()) ? 1 : 0;
-        GateRecord g = GateService.create(s, id, plan, ground, axis, Optional.of(p.getUUID()), 9999, trace, true);
-        return g.id;
+        return GateService.create(s, id, plan, ground, axis, Optional.of(p.getUUID()), 9999, trace, scripted);
     }
 
     public static List<GateInfo> near(ServerLevel level, BlockPos pos, int radius) {

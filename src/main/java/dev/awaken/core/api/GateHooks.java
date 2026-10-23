@@ -33,6 +33,10 @@ public final class GateHooks {
         boolean inGate(net.minecraft.world.entity.Entity e);
         /** Open a scripted gate near a position (story prologue). Returns the gate id, or empty if gates are unavailable. */
         Optional<String> openScripted(ServerPlayer player, String theme, int rank, BlockPos near, int floors);
+        /** Open a wandering gate at the player's rank near a position; it fades after {@code lifetimeTicks} unless entered. */
+        default Optional<String> openWandering(ServerPlayer player, BlockPos near, int floors, int lifetimeTicks) { return Optional.empty(); }
+        /** Release a gate now (refused while someone stands inside). */
+        default void release(ServerLevel level, String id) {}
     }
 
     private static Access access = new Access() {
@@ -52,4 +56,6 @@ public final class GateHooks {
     public static boolean stabilise(ServerLevel level, String id, int days) { return access.stabilise(level, id, days); }
     public static boolean inGate(net.minecraft.world.entity.Entity e) { return access.inGate(e); }
     public static Optional<String> openScripted(ServerPlayer p, String theme, int rank, BlockPos near, int floors) { return access.openScripted(p, theme, rank, near, floors); }
+    public static Optional<String> openWandering(ServerPlayer p, BlockPos near, int floors, int lifetimeTicks) { return access.openWandering(p, near, floors, lifetimeTicks); }
+    public static void release(ServerLevel level, String id) { access.release(level, id); }
 }

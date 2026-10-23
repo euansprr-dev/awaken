@@ -200,7 +200,7 @@ public final class Director {
         if (p.level().dimension() != Level.OVERWORLD) return null;
         GateRegistry reg = GateRegistry.get(server);
         int standing = 0;
-        for (GateRecord g : reg.near(p.blockPosition(), MAX_DIST, true)) if (!g.scripted) standing++;
+        for (GateRecord g : reg.near(p.blockPosition(), MAX_DIST, true)) if (!g.scripted && !g.wandering()) standing++;
         double chance = standing == 0 ? 1.0 : standing < 2 ? 0.3 : standing < 4 ? 0.08 : 0.0;
         double r = p.getRandom().nextDouble();
         if (!force && r >= chance) {

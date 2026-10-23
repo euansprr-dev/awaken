@@ -1,0 +1,537 @@
+<title>The Awakened World</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap">
+<style>
+/* Layout: one reading column (~70ch) with full-width bands for diagrams; the mod's own "System glass" palette, dark-first. */
+:root {
+  --bg: #0d1420;
+  --panel: #142033;
+  --panel-2: #1a2a42;
+  --line: #2a3d5c;
+  --fg: #dfe8f4;
+  --muted: #93a7c2;
+  --accent: #7fc3ff;
+  --amber: #ffcf7a;
+  --good: #8ff0c0;
+  --warn: #ff8a7a;
+  --violet: #b48cff;
+  --screen: #3b6b3f;
+  --screen-sky: #6e9fd6;
+  --font-display: "Silkscreen", ui-monospace, monospace;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f6fb; --panel: #ffffff; --panel-2: #eaf0f8; --line: #c9d5e6; --fg: #142033; --muted: #4f6380;
+    --accent: #1f6fb8; --amber: #a86400; --good: #11804f; --warn: #b8322a; --violet: #6a3fc0;
+    --screen: #5f9a5f; --screen-sky: #9cc4ee; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f3f6fb; --panel: #ffffff; --panel-2: #eaf0f8; --line: #c9d5e6; --fg: #142033; --muted: #4f6380;
+  --accent: #1f6fb8; --amber: #a86400; --good: #11804f; --warn: #b8322a; --violet: #6a3fc0;
+  --screen: #5f9a5f; --screen-sky: #9cc4ee; color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 17px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 72px;
+}
+main { max-width: 860px; margin: 0 auto; display: grid; gap: 56px; }
+section { display: grid; gap: 18px; min-width: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); letter-spacing: -0.01em; }
+h2 { font-size: 26px; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 19px; color: var(--accent); }
+p, ul, ol { margin: 0; max-width: 70ch; }
+ul, ol { padding-left: 1.2em; display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+.lede { font-size: 19px; color: var(--muted); max-width: 64ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+.muted { color: var(--muted); }
+.tag { display: inline-block; font-family: var(--font-display); font-size: 10px; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 3px; border: 1px solid currentColor; vertical-align: 2px; white-space: nowrap; }
+.t-v { color: var(--good); } .t-r { color: var(--accent); } .t-h { color: var(--amber); } .t-p { color: var(--violet); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; display: grid; gap: 12px; min-width: 0; }
+.callout { border-left: 3px solid var(--amber); background: var(--panel); padding: 14px 18px; border-radius: 0 6px 6px 0; display: grid; gap: 8px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 640px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); font-weight: 400; background: var(--panel-2); }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 14px; color: var(--muted); }
+
+/* to-scale screen mockups: a 378 x 246 GUI-pixel canvas (Mac, auto GUI scale) */
+.screens { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.screen-fig { display: grid; gap: 8px; min-width: 0; }
+.screen { position: relative; width: 100%; aspect-ratio: 378 / 246; border-radius: 4px; overflow: hidden;
+  background: linear-gradient(to bottom, var(--screen-sky) 0 52%, var(--screen) 52% 100%); border: 1px solid var(--line); }
+.screen .hotbar { position: absolute; left: 26.2%; width: 47.6%; bottom: 0.8%; height: 8.9%; background: rgba(20,20,20,.55); border: 1px solid rgba(255,255,255,.35); }
+.screen .cross { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; transform: translate(-50%, -50%); }
+.screen .cross::before, .screen .cross::after { content: ""; position: absolute; background: #fff; }
+.screen .cross::before { left: 6px; top: 0; width: 2px; height: 14px; }
+.screen .cross::after { top: 6px; left: 0; height: 2px; width: 14px; }
+.ui { position: absolute; border-radius: 2px; font-family: var(--font-display); color: #e9f1ff; font-size: clamp(6px, 1.5vw, 10px); line-height: 1.25; padding: 0.6% 1.2%; overflow: hidden; }
+.ui.window { background: rgba(15,23,36,.93); border: 1px solid #7fc3ff; }
+.ui.toast { background: rgba(15,23,36,.9); border: 1px solid #7fc3ff; }
+.ui.choice { background: rgba(15,23,36,.9); border: 1px solid #ffcf7a; }
+.ui.track { background: rgba(15,23,36,.55); border: none; color: #cfe6ff; }
+.ui.story { background: none; border: none; color: #f4f0ff; text-align: center; text-shadow: 0 1px 2px #000; }
+.ui small { display: block; color: #9fb7d6; }
+.cap { font-size: 14px; color: var(--muted); }
+
+/* level road */
+.road { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.band { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
+.band b { font-family: var(--font-display); font-size: 12px; letter-spacing: .06em; color: var(--accent); font-weight: 400; }
+.band span { font-size: 14px; color: var(--muted); }
+
+/* timeline */
+.tl { display: grid; gap: 0; border-left: 2px solid var(--line); margin-left: 6px; }
+.tl div { position: relative; padding: 4px 0 10px 18px; }
+.tl div::before { content: ""; position: absolute; left: -7px; top: 11px; width: 12px; height: 12px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); }
+.tl div.bad::before { border-color: var(--warn); }
+.tl div.good::before { border-color: var(--good); }
+.tl time { font-family: var(--font-mono); font-size: 13px; color: var(--muted); margin-right: 8px; }
+
+.decision { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.decision .rec { color: var(--good); font-weight: 700; }
+pre.mermaid { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; overflow-x: auto; margin: 0; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { body { font-size: 16px; } table { font-size: 14px; } }
+</style>
+
+<main>
+
+<header style="display:grid;gap:14px">
+  <span class="eyebrow">AWAKEN · plan v2 · for approval</span>
+  <h1>The Awakened World</h1>
+  <p class="lede">Your playtest showed the first build fails exactly where you said it does. The overworld is untouched, the first hour gives you nothing new except a dungeon you can't survive, and the System windows cover half the screen without saying what you're meant to do. This plan keeps everything that works (gates, the Descent, dreams, the Veil, the Hearth, the story) and adds the missing layer: a world that changes the moment you awaken, powers from the start, a reason to level from 1 to 50, and a System that speaks in small, clear prompts.</p>
+  <div class="legend">
+    <span><span class="tag t-v">VERIFIED</span> read in code, data or your save</span>
+    <span><span class="tag t-r">RESEARCH</span> external source, cited</span>
+    <span><span class="tag t-h">HYPOTHESIS</span> to be tested</span>
+    <span><span class="tag t-p">PROPOSAL</span> not built yet</span>
+  </div>
+</header>
+
+<!-- ============================================================ 1 -->
+<section id="contract">
+  <span class="eyebrow">1 · Understanding</span>
+  <h2>What you need, and how we'll know it worked</h2>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>The job</h3>
+      <p>Play a long single-player Minecraft survival game where the world itself feels new from the first minutes, you always know what you could do next, and growing from level 1 to 50 feels like the best RPG packs. It should still feel peaceful and recognisably Minecraft.</p>
+    </div>
+    <div class="panel">
+      <h3>The pain</h3>
+      <ul>
+        <li>The outside world feels exactly like vanilla.</li>
+        <li>Your first goal turns out to be "go find iron".</li>
+        <li>After the prologue, the dungeon kills you.</li>
+        <li>The pop-ups are huge and don't say what to do.</li>
+        <li>You don't know what you're supposed to do next.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>What "revolutionary" has to mean in play</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Moment</th><th>Strong result</th><th>Weak result</th><th>Unacceptable</th></tr></thead>
+    <tbody>
+      <tr><td>First 5 minutes</td><td>You notice the world is different without being told: something glowing at the tree line, a creature you've never seen.</td><td>Only the System talks; the world looks vanilla.</td><td>Nothing new until you walk 300 m.</td></tr>
+      <tr><td>First power</td><td>In your hands within ~10 minutes, used on something that same minute.</td><td>After the first gate.</td><td>"Get iron first."</td></tr>
+      <tr><td>Knowing what to do</td><td>One glance answers "what could I do now?", with 1–3 concrete options, never a checklist.</td><td>You have to open a menu and read.</td><td>A dead end, or advice that kills you.</td></tr>
+      <tr><td>System prompts</td><td>Toast-sized, out of the crosshair, plain words, every choice says what each key does.</td><td>Smaller but still jargon.</td><td>Anything covering the crosshair; a Y/N with no meaning.</td></tr>
+      <tr><td>Level 1 → 50</td><td>Every level gives something you can see or use; something new every few levels.</td><td>Stat points only.</td><td>Hours with nothing new (or level 50 by hour 5, then nothing: the Prominence II trap).</td></tr>
+      <tr><td>Feel</td><td>Calm days, tense nights, light still means safety, danger you choose to seek.</td><td>Busy everywhere.</td><td>Constant harassment, building interrupted.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>Your ideas, treated as ideas</h3>
+      <ul>
+        <li><b>Tons of new mobs in the world</b>: adopted, with roles (ambient, neutral, night hunters, rare named beasts), not random hostiles.</li>
+        <li><b>Change the world itself</b>: adopted as an "awakened layer" on top of vanilla terrain, not a terrain replacement (keeps the Minecraft feel and the M4 frame rate).</li>
+        <li><b>Smaller, clearer UI</b>: adopted, sized like vanilla toasts.</li>
+        <li><b>Don't start with "find iron"</b>: adopted. Vanilla gear still matters, but gathering gets a purpose and powers come first.</li>
+        <li><b>Level 1 → 50</b>: adopted as a designed "level road". Level 50 lands at B-rank in the current rank table (D at 10, C at 25, B at 45).</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Must keep</h3>
+      <ul>
+        <li>Survival, peaceful days, Minecraft feel; vanilla mobs stay.</li>
+        <li>Single-player first, server-authoritative.</li>
+        <li>120 fps on your M4.</li>
+        <li>No FOMO loops or daily-login pressure.</li>
+        <li>Gates, Descent, dreams, Veil, Hearth, story, 121 passing tests.</li>
+      </ul>
+      <h3>Not in this plan</h3>
+      <ul>
+        <li>Replacing vanilla terrain generation (a later option, see §3).</li>
+        <li>Multiplayer balancing.</li>
+        <li>New dimensions.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="audit">
+  <span class="eyebrow">2 · Audit and diagnosis</span>
+  <h2>What the build actually does</h2>
+  <p>Four read-only investigations traced the code, the data and your save. Everything below marked verified was checked against source, and the key numbers were re-checked by hand.</p>
+
+  <h3>Your session, reconstructed</h3>
+  <div class="tl">
+    <div><time>16:07</time>New world, HUNTER difficulty, auto GUI scale, fullscreen. <span class="tag t-v">VERIFIED</span></div>
+    <div><time>+0:05</time>"[ERROR] … candidate found." window.</div>
+    <div><time>+~2:00</time>White pillar, Bell Crypt 55 blocks ahead. Inside you can't die yet: the first lethal hit sends you to the Stillpoint.</div>
+    <div class="bad"><time>Accept</time>You awaken: 3 Truths offered, no power, no items, and every kill and floor you cleared during the prologue paid <b>0 XP</b> (XP is discarded until awakened, <code>Progression.java:95</code>). The window says "The gate is still open. Finish what you started."</div>
+    <div class="bad"><time>16:14</time>"Dev was slain by Toll Ghoul": back in the same gate, level 1, all stats at 5 (zero bonus), vanilla gear, against level-5 monsters. The simulator itself rates floor 1 at about a 50% death chance at level 1.</div>
+    <div><time>16:19</time>Commands to explore; 16:21 crash, caused by my build running while you played (not a game bug).</div>
+    <div class="bad"><time>end</time>Save: level 1, 0 XP, no powers, empty inventory, no directives, no regimen. The only other gates were 847 m and 1,093 m away.</div>
+  </div>
+
+  <h3>Component map</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Component</th><th>What it actually does</th><th>Evidence</th><th>Consequence</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Overworld content</td><td>No natural spawns, no terrain features, no loot changes, no vanilla mob changes. Only 5 sparse ruin types (no marker), the Well (no marker, 400–700 m out), and gate pillars that appear only after awakening, 300–1500 m away.</td><td>No biome modifiers anywhere; <code>world/WorldModule.java</code> is an empty stub; the original plan lists "replacing vanilla mobs, biomes" as a non-goal</td><td>The world feels vanilla for 1–2 hours</td><td><b>Build</b> (world module)</td></tr>
+      <tr><td>Creature system</td><td>154 creatures with abilities, phases, scaling and loot, but spawned only by code inside gates, strata, dreams and the Veil</td><td><code>mobs/</code>, all spawns via <code>MobHooks.spawnThemed/spawnBoss</code></td><td>A huge asset that never reaches the overworld</td><td><b>Reuse, extend</b></td></tr>
+      <tr><td>Home XP</td><td>Capped at 1.5% of a level per real minute: ≤ 0.9 levels per hour</td><td><code>ProgressionModule.java:205-211</code></td><td>Level 5 at home takes ~2.4 h at best, level 10 ~5.5 h</td><td><b>Replace</b></td></tr>
+      <tr><td>Powers</td><td>63 powers. Awakening grants none. Cores drop only from gate elites (~20%), wardens and Lords (~70%), plus three hidden Latents</td><td><code>Progression.awaken</code>, <code>gates/run/Loot.java</code>, <code>mobs/MobLoot.java</code></td><td>No power in the first hour unless you beat a gate you can't beat</td><td><b>Extend</b></td></tr>
+      <tr><td>First gate</td><td>Scripted Bell Crypt at E content level 5: Lord 578 HP with a 22.5 hit; pressure waves and a 234-HP Warden after 8 min</td><td><code>GateBestiary.java:44-61</code>, scaling in <code>MobScaling.java</code></td><td>The difficulty cliff you hit</td><td><b>Retune</b> (fix drafted, uncommitted)</td></tr>
+      <tr><td>System windows</td><td>One fixed 260-px-wide window, top-centre, 12% down, near-opaque; jargon headers; contradictory key hints; bursts of 3–6 windows (30–50 s)</td><td><code>SignalHud.java:183,197</code></td><td>69% of screen width on your Mac; rich windows cover 49–53% of height and the crosshair</td><td><b>Replace presentation</b>, keep the API</td></tr>
+      <tr><td>Direction</td><td>No next-step surface. Status says only "Reassessment at Level 10". Directives empty for ~20 min, and many need powers you can't have yet. Day's End points at the Well (level 17)</td><td><code>CoreSections.java:84-95</code>, directive and drill data</td><td>"What am I supposed to do?"</td><td><b>Build</b> the Now tracker</td></tr>
+      <tr><td>Truths</td><td>Long-term identity goals (sprint 50 km, 300 bare-hand kills…) with hidden rewards, offered at minute 3</td><td><code>truth/*.json</code>, <code>CoreSections.java:389-410</code></td><td>Read as urgent quests</td><td><b>Move later</b>, show rewards</td></tr>
+      <tr><td>Recipes</td><td>34 mod recipes, none in the recipe book (no unlocks)</td><td>No advancements or <code>awardRecipes</code></td><td>Craftables are invisible</td><td><b>Fix</b></td></tr>
+      <tr><td>Gates, Descent, dreams, Veil, Hearth, story</td><td>Working, tested, deep content</td><td>121 GameTests; 18 gate defects found, 11 fixed in the uncommitted tree</td><td>The deep layers are fine; you just can't reach them</td><td><b>Keep</b></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Root causes</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Symptom</th><th>Cause</th><th>Evidence</th><th>Kind</th><th>Smallest test</th></tr></thead>
+    <tbody>
+      <tr><td>"The world feels the same"</td><td>The design put every new thing behind a portal and ruled out overworld changes</td><td><span class="tag t-v">VERIFIED</span> zero overworld spawns or features; plan.html non-goal</td><td>Product policy, not a bug</td><td>A slice with ~10 creatures in 3 biome families; your reaction in a fresh world</td></tr>
+      <tr><td>"Mobs are way stronger"</td><td>The prologue's death protection ends at Accept, but the monsters stay at level 5 and you get no power</td><td><span class="tag t-v">VERIFIED</span> stats above; sim 50% floor-1 death risk</td><td>Tuning and onboarding</td><td>Content level 0 first gate + starter power; replay</td></tr>
+      <tr><td>"Start is find iron"</td><td>Home XP cap, prologue XP discarded, powers only from gate drops</td><td><span class="tag t-v">VERIFIED</span></td><td>Progression policy</td><td>Level and power timestamps in a playtest log</td></tr>
+      <tr><td>"Windows huge and confusing"</td><td>Fixed 260-px width at auto scale; generic Accept/Dismiss; jargon; bursts</td><td><span class="tag t-v">VERIFIED</span> measured per GUI scale</td><td>Presentation</td><td>To-scale render at 3 GUI scales (autopilot screenshots)</td></tr>
+      <tr><td>"What do I do?"</td><td>No next-step surface; offers that need powers; combat drops info windows</td><td><span class="tag t-v">VERIFIED</span></td><td>Missing feature</td><td>Playtest "what next?" answers: vague vs specific</td></tr>
+      <tr><td>Will new mobs feel revolutionary rather than re-skinned?</td><td>Most of the 154 creatures are re-tinted vanilla bodies</td><td><span class="tag t-h">HYPOTHESIS</span> not seen in game yet</td><td>Art risk</td><td>Screenshot review of the slice's creatures before scaling up</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout">
+    <b>Also found (bugs, not design)</b>
+    <ul>
+      <li>A stale Y press on an info window can accept the next Y/N window before you read it.</li>
+      <li>"Damage taken" adds about 2.1 billion per instant-kill hit, so a kill command can complete damage-based Truths.</li>
+      <li>A Sovereign counts as defeated if one dies within 96 blocks, with no check on who killed it.</li>
+      <li>The "first power" story line can never fire (name mismatch).</li>
+      <li>The Codex isn't refreshed after Accept.</li>
+      <li>18 gate defects from the review; 11 are fixed in uncommitted, untested edits.</li>
+      <li>Your crash: dev builds rewrite the classes the running game loads.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ research -->
+<section id="research">
+  <span class="eyebrow">What the best packs do</span>
+  <h2>Lessons from the top of the scene</h2>
+  <p>Researched today. Review evidence is anecdotal (small samples); download counts and code facts are firm.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Finding</th><th>Source</th><th>What it means for AWAKEN</th></tr></thead>
+    <tbody>
+      <tr><td>Alex's Mobs (~159M downloads) adds about 89 biome-tied creatures, "no purely aesthetic creatures"; Mowzie's Mobs (115M) has only 11, each tied to a place, with bosses placed by world generation and kept rare.</td><td><a href="https://www.curseforge.com/minecraft/mc-mods/alexs-mobs">CurseForge</a>, <a href="https://www.curseforge.com/minecraft/mc-mods/mowzies-mobs">CurseForge</a> <span class="tag t-r">RESEARCH</span></td><td>Biome-native creatures that each do something, plus a few rare set pieces. Scale of ~50–90 is proven demand.</td></tr>
+      <tr><td>Terralith, Biomes O' Plenty: new worlds from vanilla blocks; When Dungeons Arise keeps big structures rare.</td><td><a href="https://www.curseforge.com/minecraft/mc-mods/terralith">CurseForge</a>, <a href="https://www.curseforge.com/minecraft/mc-mods/when-dungeons-arise">CurseForge</a> <span class="tag t-r">RESEARCH</span></td><td>New, but still Minecraft. Rarity keeps it from becoming a theme park.</td></tr>
+      <tr><td>Cobblemon hands you a starter on first join; Iron's Spells' first spells come from scrolls you find and can use at once.</td><td><a href="https://primagames.com/tips/cobblemon-controls-guide-how-to-play-cobblemon">Prima</a> (secondhand), <a href="https://iron.wiki/1_19/">iron.wiki</a> <span class="tag t-r">RESEARCH</span></td><td>The first fun thing comes in minute one, not after a crafting chain.</td></tr>
+      <tr><td>Vault Hunters starts like vanilla, but every chore feeds a visible goal (the altar), and the first vault grants several levels at once. Criticised for grind that never eases (one reviewer quit after 40–50 h).</td><td><a href="https://www.curseforge.com/minecraft/modpacks/vault-hunters-1-18-2">CurseForge</a>, <a href="https://vaulthunters.wiki.gg/wiki/Vault_Experience">VH wiki</a>, <a href="https://moddex.gg/modpack/vault-hunters-1-18-2">Moddex</a> <span class="tag t-r">RESEARCH</span></td><td>Give gathering a purpose; burst rewards early; ease the late grind.</td></tr>
+      <tr><td>Prominence II: talent points every 2 levels, but reviewers hit level 50 by the end of chapter 1 and then lost purpose.</td><td><a href="https://www.curseforge.com/minecraft/modpacks/prominence-2-rpg">CurseForge</a>, <a href="https://moddex.gg/modpack/prominence-2-hasturian-era">Moddex</a> <span class="tag t-r">RESEARCH</span></td><td>Don't front-load the curve. Level 50 should be about half the story, not hour five.</td></tr>
+      <tr><td>Vanilla toasts are 160×32 GUI px, at most 5 visible, 5 s × your notification-time setting; tutorial hints teach by doing and then stop for good.</td><td>26.3 source <code>Toast.java</code>, <code>ToastManager.java</code> <span class="tag t-v">VERIFIED</span>; <a href="https://minecraft.wiki/w/Tutorial_hints">Minecraft Wiki</a></td><td>The System should live at toast scale.</td></tr>
+      <tr><td>Modal windows only for real decisions; contextual "just in time" hints beat up-front text; text tutorials reached 2–5 of 10 players vs almost all for in-play teaching.</td><td><a href="https://www.nngroup.com/articles/modal-nonmodal-dialog/">NN/g 2017</a>, <a href="https://create.roblox.com/docs/production/game-design/onboarding-techniques">Roblox docs</a>, <a href="https://www.gamedeveloper.com/business/no-one-reads-text-in-a-tutorial">Game Developer 2015</a> <span class="tag t-r">RESEARCH</span></td><td>Teach through the world. Blocking prompts only for Accept, gate entry, rank choices.</td></tr>
+      <tr><td>Players drop heavy packs for overload ("trying to do too much at once") and instability; the most-downloaded Modrinth pack is a performance pack.</td><td><a href="https://moddex.gg/modpack/better-mc-forge-bmc4">Moddex BMC4</a>, <a href="https://modrinth.com">Modrinth</a> <span class="tag t-r">RESEARCH</span></td><td>Staged reveal; stability and frame rate are features.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="options">
+  <span class="eyebrow">3 · Alternatives</span>
+  <h2>Three ways to go, and the recommendation</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>A · Targeted repair</h3>
+      <p>Starter power, fair first gate, XP retune, small System prompts, Now tracker, bug fixes. About 2–3 days.</p>
+      <p class="muted">Fixes the cliff and the confusion. <b>Loses</b> because the world would still feel vanilla, which was your main complaint.</p>
+    </div>
+    <div class="panel" style="border-color:var(--good)">
+      <h3>B · The Awakened World <span class="tag t-v" style="color:var(--good)">RECOMMENDED</span></h3>
+      <p>Everything in A, plus a living overworld layer: creatures native to every biome, anomalies that come to you, marked landmarks, materials and gear from the world, and a designed level road from 1 to 50.</p>
+      <p class="muted">Reuses the creature system, gates, story and progression engine. Needs real art work and careful pacing. About 3–5 weeks of building in stages, with a playable slice in about a week.</p>
+    </div>
+    <div class="panel">
+      <h3>C · Total conversion</h3>
+      <p>B plus new terrain generation, survival systems (temperature, thirst) and an animation library for every creature.</p>
+      <p class="muted"><b>Loses for now:</b> replaced terrain stops feeling like Minecraft, it multiplies art and frame-rate risk, and the best terrain mods don't support 26.3 yet (Tectonic lists 1.21.1 and 26.1). It can be revisited once B is fun.</p>
+    </div>
+  </div>
+  <p>What would change the recommendation: if the vertical slice shows that new creatures in the overworld don't change how the world feels to you, we stop scaling creatures and put that effort into anomalies and landmarks instead.</p>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="design">
+  <span class="eyebrow">4 · Behaviour and architecture</span>
+  <h2>How the Awakened World works</h2>
+
+  <pre class="mermaid">
+flowchart TB
+  V["Vanilla overworld<br/>terrain · villages · vanilla mobs (unchanged)"]
+  A["Awakened layer · NEW<br/>biome creatures · anomalies · landmarks · materials"]
+  S["System · REDESIGNED<br/>toasts · choice cards · Now tracker · story lines"]
+  D["Deep layers · KEEP<br/>gates · the Descent · dreams · the Veil"]
+  H["Home · KEEP<br/>Hearth · town · Echoes"]
+  P["Progression · REWORKED<br/>level road 1→50 · powers from the start · XP from the world"]
+  V --> A
+  A -->|"rifts, wandering gates"| D
+  A --> P
+  D --> P
+  P --> H
+  S -.->|"tells you what's near, what's next"| A
+  S -.-> D
+  </pre>
+
+  <h3>4.1 The awakening is a reveal</h3>
+  <p><span class="tag t-p">PROPOSAL</span> The prologue stays (glitch, pillar, the Bell Crypt, the death, "Will you accept?"), but it ends with a payoff instead of a cliff:</p>
+  <ul>
+    <li><b>Your eyes open.</b> On Accept the screen pulses, and the awakened layer becomes visible: light motes in the grass, a creature watching from the trees, faint lines of energy over ore veins. In Solo Leveling terms, the gates were always there; you just couldn't see them.</li>
+    <li><b>You choose a first power</b> from three, shown as big cards with a one-line effect and a 3-second preview (for example Haymaker, Charged Shot, Spirit Palm). Dash follows at level 2.</li>
+    <li><b>The prologue pays.</b> Every kill and floor during the prologue is banked and paid on Accept, which should make you level 2–3 on waking.</li>
+    <li><b>The Bell Crypt becomes a fair first gate</b>: content level 0, softer monsters, a ~190-HP Lord, no pressure clock. The message says what's true: "The gate will wait. It never breaks."</li>
+  </ul>
+
+  <h3>4.2 Creatures native to the overworld</h3>
+  <p><span class="tag t-p">PROPOSAL</span> New creatures spawn naturally, by biome and time of day, alongside vanilla mobs. The names below are illustrative.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Role</th><th>Share of spawns</th><th>Behaviour</th><th>Examples (illustrative)</th></tr></thead>
+    <tbody>
+      <tr><td>Ambient</td><td class="num">~40%</td><td>Never hostile. Makes biomes feel alive; some drop crafting materials or lead you somewhere.</td><td>Lumen moths at dusk in forests, glass scarabs in deserts</td></tr>
+      <tr><td>Neutral</td><td class="num">~30%</td><td>Grazes or wanders and fights back. Some can be tamed or ridden later.</td><td>Mossback tortoise, frost stag, dune ray</td></tr>
+      <tr><td>Night hunters</td><td class="num">~25%</td><td>Hostile in the dark and in caves. They obey vanilla's light rule, so torches still mean safety.</td><td>Thornlings, wisp hounds, cave lurkers</td></tr>
+      <tr><td>Named beasts</td><td class="num">rare</td><td>One roaming beast per region, placed by world generation (Mowzie's pattern). Drops essence and a good chance of a Power Core.</td><td>"The Old Antler" in taiga</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><b>Mechanism (verified to exist in 26.3):</b> NeoForge's data-driven <code>add_spawns</code> biome modifiers, spawn placements, and an extensible spawn category. The new creatures get their own population cap, so they never crowd out cows, zombies or the rest of vanilla.</li>
+    <li><b>Reuse:</b> the existing creature definitions, abilities, phases, scaling, loot and texture pipeline. Several of the 154 gate and stratum creatures fit the overworld as they are.</li>
+    <li><b>Peace:</b> days are mostly ambient and neutral, and nothing spawns inside your Hearth radius or in lit areas.</li>
+  </ul>
+
+  <h3>4.3 Anomalies: the world comes to you</h3>
+  <p><span class="tag t-p">PROPOSAL</span> Small events within 32–96 blocks, every 6–12 minutes of play (more often at night), at most one at a time, never inside your Hearth radius, and never while you sleep:</p>
+  <ul>
+    <li><b>Rift tear</b>: a 2-minute skirmish against monsters pouring out of a crack. Close it by breaking its core. Pays essence, XP and a Power Core chance.</li>
+    <li><b>Fallen star</b>: a small crater with materials and a short-lived guardian.</li>
+    <li><b>Spirit procession</b>: peaceful. Follow the lights to a hidden cache or a landmark.</li>
+    <li><b>Wandering gate</b>: a one-floor mini-gate you can enter right there. You never have to walk a kilometre to fight.</li>
+    <li><b>Shimmer grove</b>: a patch of altered rules for a few minutes (low gravity, glowing ore, a talking spirit).</li>
+  </ul>
+
+  <h3>4.4 The level road, 1 → 50</h3>
+  <p><span class="tag t-p">PROPOSAL</span> Every level gives +3 stat points <b>and</b> one visible unlock from a data table, so there are no dead levels:</p>
+  <div class="road">
+    <div class="band"><b>L1–5 · Awakening</b><span>First power (choice) · Dash · second power key · recipe book fills with Hunter crafts · first named beast in range</span></div>
+    <div class="band"><b>L6–10 · First gates</b><span>Hearth Anchor · Echo binding · Gate Map compass · rank D trial</span></div>
+    <div class="band"><b>L11–20 · The Veil</b><span>Meditation and projection taught in play · mounts · gear tier 2 · the Well opens up</span></div>
+    <div class="band"><b>L21–30 · C-rank</b><span>Second Awakening (your Path) · dream control · the town grows</span></div>
+    <div class="band"><b>L31–45 · Deep</b><span>Strata 3–6 · named beasts in every biome · ultimate power</span></div>
+    <div class="band"><b>L46–50 · B-rank</b><span>B trial · the Hollow Court starts to stir · Ascension hints</span></div>
+  </div>
+  <ul>
+    <li><b>XP from the world:</b> first sightings of a creature, biome or landmark; overworld creature kills; anomalies; gates. This replaces the flat 1.5%-per-minute cap with diminishing returns per source, so playing normally grows you without farming.</li>
+    <li><b>Pacing targets</b> (to validate in <code>tools/sim</code> before tuning content): level 5 in about 45–60 min, level 10 in 3–4 h, level 25 in ~15–20 h, level 50 in ~55–60 h of the ~100-hour story. That avoids the Prominence II trap of hitting the cap by chapter one.</li>
+  </ul>
+
+  <h3>4.5 Gear and gathering with a purpose</h3>
+  <ul>
+    <li><span class="tag t-p">PROPOSAL</span> <b>Hunter gear</b> crafted from creature materials and essence, in tiers by rank, sits beside vanilla gear rather than replacing it. Iron still helps; it's just not a wall.</li>
+    <li>Mod recipes unlock in the recipe book the moment you first pick up an ingredient (vanilla's own mechanism).</li>
+    <li>A System request turns gathering into a goal ("Bring 8 moss hide to the Anchor"), the Vault Hunters altar pattern.</li>
+  </ul>
+
+  <h3>4.6 The System, at toast scale</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Surface</th><th>Used for</th><th>Size and place</th><th>Behaviour</th></tr></thead>
+    <tbody>
+      <tr><td>Toast</td><td>Information: level up, loot, discoveries</td><td>160×32 GUI px (vanilla toast size), top-right, at most 3</td><td>5 s × your notification-time setting. One title line and one detail line.</td></tr>
+      <tr><td>Choice card</td><td>Real decisions only: Accept, enter a gate, extract</td><td>~170×48, right side below the middle, clear of the crosshair</td><td>Every key says what it does ("[Y] Leave with your loot · [N] Keep going"). If ignored for 20 s, it folds into the tracker as "1 decision waiting · K".</td></tr>
+      <tr><td>Now tracker</td><td>What you could do next</td><td>One line, top-left, can be turned off</td><td>1–3 suggestions from your situation ("Rift tear · 40 m north", "Spend 3 points · K", "Bell Crypt · floor 2"). Updates when the situation changes, never while you read it.</td></tr>
+      <tr><td>Story line</td><td>The Signal's voice, revelations</td><td>Subtitle above the hotbar</td><td>Types out and fades. Every line is kept in the Codex.</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>Bursts merge: three things at once becomes one toast ("3 new things · K").</li>
+    <li>No jargon headers; words are explained on hover in the Status screen.</li>
+    <li>Truths are offered from level 5, with their reward shown.</li>
+    <li>Directives that need a power you don't have are never offered.</li>
+    <li>The old window stays available behind a setting until the new one passes your playtest.</li>
+  </ul>
+
+  <h3>4.7 Contracts, state and failure</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Piece</th><th>Trigger → output</th><th>State</th><th>Failure handling</th></tr></thead>
+    <tbody>
+      <tr><td>Fauna spawning</td><td>Vanilla spawn cycle → creatures by biome, light and time</td><td>None (data-driven); own spawn cap</td><td>Per-player cap; a broken creature definition is skipped and logged; a <code>fauna</code> setting turns it off</td></tr>
+      <tr><td>Anomaly director</td><td>Per-player timer → event at a validated spot</td><td>Player attachment (memory, cooldowns) + world save (active anomaly, versioned)</td><td>Spot validation (no water, no player builds, not in Hearth radius, like the gate fix #8); an interrupted event is cleaned up on load; at most one active</td></tr>
+      <tr><td>Level road</td><td>Level up → unlock from <code>level_road/*.json</code></td><td>Profile (unlock ids, so changing the table later never revokes)</td><td>Unknown unlock id: logged, skipped; old saves are granted missed unlocks on login</td></tr>
+      <tr><td>Starter power</td><td>Accept → choice card of 3</td><td>Profile flag "starter chosen"</td><td>If ignored or disconnected, the choice comes back on login; never twice</td></tr>
+      <tr><td>Now tracker</td><td>State change → up to 3 suggestions</td><td>Derived only (computed, never saved)</td><td>No suggestion: shows nothing rather than inventing one</td></tr>
+      <tr><td>System prompts</td><td>Any module → toast, choice, or story line</td><td>Pending choices persist across relog</td><td>Unanswered choices park in Status; keys are consumed per prompt (fixes the stale-Y bug)</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Performance budget:</b> no more than ~16 new creatures active per player, no per-tick scans of all entities, and anomalies checked every 20 ticks. Frame rate is measured in the slice on your M4 before scaling up; the target is no measurable drop at 120 fps.</p>
+  <p><b>Old saves:</b> every new saved field has a default. Your current world keeps working, and the awakened layer switches on for already-awakened players.</p>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="demo">
+  <span class="eyebrow">5 · Before and after</span>
+  <h2>The same moments, today and proposed</h2>
+
+  <h3>To scale on your Mac (auto GUI scale: 378 × 246 GUI pixels)</h3>
+  <div class="screens">
+    <figure class="screen-fig" style="margin:0">
+      <div class="screen" role="img" aria-label="Today: one System window covering about 69 percent of the width and half the height, over the crosshair">
+        <div class="cross"></div><div class="hotbar"></div>
+        <div class="ui window" style="left:15.6%;top:11.8%;width:68.8%;height:51.6%">◇ NOTICE<small>Floor 1 cleared</small><small>Satchel XP +480 (carrying 480)</small><small>Satchel 6 / 27 slots</small><small>Rest at the Shrine to carry it out, or break the Seal and go deeper.</small><small>[Y] Extract · [N] Stay   [Y] Accept   [N] Dismiss</small></div>
+      </div>
+      <figcaption class="cap"><b>Today.</b> 260×127 px: 69% of the width, 52% of the height, over the crosshair, with contradictory keys.</figcaption>
+    </figure>
+    <figure class="screen-fig" style="margin:0">
+      <div class="screen" role="img" aria-label="Proposed: a small toast top-right, a choice card on the right below the middle, a one-line tracker top-left">
+        <div class="cross"></div><div class="hotbar"></div>
+        <div class="ui track" style="left:1.1%;top:1.6%;width:40%;height:5%">◇ Now · Rest Shrine · 12 m</div>
+        <div class="ui toast" style="left:56.6%;top:1.6%;width:42.3%;height:13%">Floor 1 cleared<small>+480 XP in your Satchel</small></div>
+        <div class="ui choice" style="left:53.9%;top:58%;width:45%;height:19.5%">Leave now?<small>[Y] Leave with your loot</small><small>[N] Keep going down</small></div>
+      </div>
+      <figcaption class="cap"><b>Proposed.</b> Toast 5.5% of the screen, choice card 8.8%, tracker 2%. The crosshair stays clear.</figcaption>
+    </figure>
+  </div>
+
+  <h3>Your first hour</h3>
+  <div class="grid2">
+    <div class="panel">
+      <h3 style="color:var(--warn)">Today</h3>
+      <div class="tl">
+        <div><time>0–2</time>Vanilla. One glitch window.</div>
+        <div><time>2–6</time>Bell Crypt; invulnerable; nothing earned counts.</div>
+        <div class="bad"><time>6</time>Accept: no power. "Finish what you started."</div>
+        <div class="bad"><time>7</time>Killed by level-5 monsters at level 1.</div>
+        <div class="bad"><time>7–60</time>Vanilla survival; ≤ 0.9 levels per hour; the next gate is ~1 km away; windows about Truths and drills that need powers.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3 style="color:var(--good)">Proposed</h3>
+      <div class="tl">
+        <div class="good"><time>0–2</time>Vanilla plus hints: motes at the tree line, a glitch.</div>
+        <div class="good"><time>2–6</time>Bell Crypt prologue; everything you earn is banked.</div>
+        <div class="good"><time>6</time>Accept: the world reveals itself; pick your first power; level 2–3.</div>
+        <div class="good"><time>8–20</time>Try the power on a night hunter; meet ambient creatures; first rift tear 60 m away. Now: "Bell Crypt · floor 1 (fair now)".</div>
+        <div class="good"><time>20–60</time>Clear the Bell Crypt, get the Lord's heart, place your Hearth; level 5–6; Dash; a named beast on the Gate Map.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Four walkthroughs</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Case</th><th>What you do</th><th>What happens today</th><th>What happens after</th><th>Why it's less work</th></tr></thead>
+    <tbody>
+      <tr><td>Ordinary</td><td>Walk through a forest at dusk</td><td>Vanilla forest</td><td>Lumen moths rise, a mossback grazes, a toast: "New: Mossback · +XP for the sighting"</td><td>Discovery is the reward; nothing to look up</td></tr>
+      <tr><td>Your disappointment</td><td>Re-enter the Bell Crypt after Accept</td><td>Level-5 monsters, no power, death, Fracture</td><td>Content level 0, your chosen power, banked XP has made you level 2–3; the Lord is beatable</td><td>A fair fight; a clear next step</td></tr>
+      <tr><td>Ambiguous</td><td>You want to build, not fight</td><td>Windows keep offering combat drills</td><td>The Now tracker says nothing urgent; anomalies stay outside your Hearth radius; ambient creatures around your base</td><td>The game respects a building session</td></tr>
+      <tr><td>Missing data or failure</td><td>Anomaly picks a spot in water or on your house</td><td>(n/a)</td><td>Spot rejected, the next candidate tried; if none is valid, no event and no message</td><td>Nothing breaks your build</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="delivery">
+  <span class="eyebrow">6 · Evaluation and delivery</span>
+  <h2>How we prove it, in stages</h2>
+
+  <h3>Baseline and targets</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Measure</th><th>Today</th><th>Target after slice</th><th>How we measure</th></tr></thead>
+    <tbody>
+      <tr><td>Time to first power</td><td>not in the first hour</td><td>≤ 10 min</td><td>Playtest log event</td></tr>
+      <tr><td>Level at 30 / 60 min</td><td>1 / 1–2 (your save: 1, 0 XP)</td><td>3–4 / 5–6</td><td>Playtest log, simulator</td></tr>
+      <tr><td>New creature types seen in 30 min</td><td>0 in the overworld</td><td>≥ 6</td><td>Sighting counter</td></tr>
+      <tr><td>Largest System prompt</td><td>52% of screen height, over the crosshair</td><td>≤ 20% height, never over the crosshair</td><td>Layout tests at 3 GUI scales + screenshots</td></tr>
+      <tr><td>Windows in minutes 0–10</td><td>7–9 big windows + 4–8 toasts</td><td>≤ 2 choice cards; toasts as needed</td><td>Playtest log</td></tr>
+      <tr><td>"What will you do next?"</td><td>"I don't know"</td><td>A concrete answer at every 15-min check-in</td><td>Playtest mode prompt</td></tr>
+      <tr><td>Fun right now (1–5)</td><td>not recorded</td><td>≥ 4 at each check-in</td><td>Playtest mode prompt</td></tr>
+      <tr><td>Frame rate on your M4</td><td>not measured</td><td>No measurable drop vs today</td><td>F3 plus a tick-time log in a fixed spot</td></tr>
+      <tr><td>Crashes and test regressions</td><td>1 crash (process), 121 tests passing</td><td>0; all tests passing plus new ones</td><td>Play copy, GameTests</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">Automated tests can prove spawn rules, unlock tables, layout bounds and save compatibility. Whether it's fun is something only your playtests can prove: an agent's walkthrough doesn't count as user testing. A second, fresh-eyes player would be a valuable extra check.</p>
+
+  <h3>Stages</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Stage</th><th>Contents</th><th>Size</th><th>Go / no-go</th></tr></thead>
+    <tbody>
+      <tr><td><b>P0 · Stabilise</b></td><td>Test and commit the 18 gate fixes. Fix the bugs above. A separate play copy, so my builds never touch your game. A screenshot autopilot so I can check visuals myself.</td><td class="num">~1 day</td><td>All tests pass; screenshots at 3 GUI scales</td></tr>
+      <tr><td><b>P1 · The first hour</b> (vertical slice)</td><td>
+        <ul>
+          <li>The new System (toasts, choice cards, tracker, story lines).</li>
+          <li>Awakening reveal and starter power choice; prologue XP banked; fair first gate.</li>
+          <li>XP rework for levels 1–10; recipe unlocks.</li>
+          <li>~10 creatures in 3 biome families; rift tear and wandering gate.</li>
+          <li>Early Truths and Directives retuned.</li>
+        </ul></td><td class="num">~1 week</td><td>Your 60-minute fresh-world playtest hits the targets above. If the world still feels vanilla, we revisit before scaling.</td></tr>
+      <tr><td><b>P2 · The living world</b></td><td>Creatures for every biome (~50 total), 5–6 anomaly types, named beasts placed by world generation, landmarks marked by the Scanner and the Gate Map, Hunter gear tiers.</td><td class="num">~2 weeks</td><td>A second playtest, with a long session (2–3 h)</td></tr>
+      <tr><td><b>P3 · Road to 50</b></td><td>Full unlock table, power growth by use, D–B gate tuning, Veil and dreams taught in play, simulator-checked pacing.</td><td class="num">~1 week</td><td>Simulator targets met; a long-session playtest</td></tr>
+      <tr><td><b>P4 · Polish</b></td><td>Custom models for ~10 hero creatures, sounds, particles, music respecting vanilla's long silences.</td><td class="num">ongoing</td><td>Your screenshot review</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Rollback:</b> every layer has a setting (fauna, anomalies, level road, System style), so any part can be switched off without touching your saves. The old System window stays available until the new one passes P1.</p>
+  <p><b>Biggest risks:</b></p>
+  <ul>
+    <li><b>Creature art</b> may look re-skinned. We'll test it in P1 with screenshots before making 50.</li>
+    <li><b>Pacing</b> is easy to get wrong in either direction. The simulator plus your long playtests are the check.</li>
+    <li><b>Scope:</b> sizes assume parallel builders, as in the first build. The art and the playtest loop set the real speed.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="decisions">
+  <span class="eyebrow">7 · Decisions for you</span>
+  <h2>What I need from you</h2>
+  <div class="decision"><b>1. Direction.</b> Build the Awakened World (B), starting with the first-hour slice? <span class="rec">Recommended: yes.</span></div>
+  <div class="decision"><b>2. When the world changes.</b>
+    <ul>
+      <li>(a) Faint hints from minute one, the full reveal at Accept.</li>
+      <li>(b) Nothing until Accept.</li>
+      <li>(c) Fully new from the first second.</li>
+    </ul>
+    <span class="rec">Recommended: (a). The reveal becomes the big moment, and the first two minutes still aren't plain vanilla.</span></div>
+  <div class="decision"><b>3. First power.</b> Choose one of three, or a surprise? <span class="rec">Recommended: choose one of three.</span></div>
+  <div class="decision"><b>4. Danger in the overworld.</b> Calm days and dangerous nights (vanilla rhythm), or more danger overall? <span class="rec">Recommended: calm days, dangerous nights; the real danger stays behind gates and anomalies you choose to engage.</span></div>
+  <div class="decision"><b>5. Creature art.</b> Mostly vanilla-shaped bodies plus ~10 custom hero creatures, or custom models for everything (much slower)? <span class="rec">Recommended: the mix, judged on screenshots in P1.</span></div>
+  <div class="decision"><b>6. Pacing.</b> Level 50 at about 55–60 hours of a ~100-hour story? <span class="rec">Recommended: yes.</span></div>
+  <div class="decision"><b>7. Start P0 now?</b> Stabilising, the play copy and the screenshot autopilot are useful whatever you decide. <span class="rec">Recommended: yes.</span></div>
+</section>
+
+</main>

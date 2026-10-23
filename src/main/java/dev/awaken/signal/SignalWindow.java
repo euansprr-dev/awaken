@@ -14,11 +14,33 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * One Signal window. Build with {@link #builder(Kind, Component)}. A window has at most one meaningful action pair
- * (accept / dismiss), answered with the Y and N keys.
+ * One Signal message. Build with {@link #builder(Kind, Component)}. A message has at most one meaningful action pair,
+ * answered with the Y and N keys; {@link Builder#choice} says in plain words what each key does.
+ *
+ * <p>How it appears is its {@link Presentation} (System v2): a small toast for information, a choice card for a real
+ * decision, a story line for the Signal's voice, or a panel for rich cards. {@code AUTO} picks from the kind and
+ * whether there is an action.
  */
 public record SignalWindow(int id, Kind kind, Component title, Optional<Component> body, List<Row> rows,
-                           Optional<Component> footer, Optional<String> action, int ttlTicks, int priority) {
+                           Optional<Component> footer, Optional<String> action, int ttlTicks, int priority,
+                           Presentation presentation, Optional<Component> yesLabel, Optional<Component> noLabel) {
+
+    /** How a message is shown (System v2). */
+    public enum Presentation {
+        AUTO, TOAST, CHOICE, STORY, PANEL;
+        public static final Codec<Presentation> CODEC = Codec.STRING.xmap(Presentation::valueOf, Presentation::name);
+
+        /** What AUTO resolves to for a message. */
+        public static Presentation resolve(SignalWindow w) {
+            if (w.presentation() != AUTO) return w.presentation();
+            if (w.action().isPresent()) return CHOICE;
+            return switch (w.kind()) {
+                case REVELATION -> STORY;
+                case GATE -> PANEL;
+                default -> TOAST;
+            };
+        }
+    }
 
     public enum Kind {
         NOTICE, GATE, DIRECTIVE, TRUTH, WARNING, REASSESSMENT, REVELATION, DAYS_END;
@@ -41,7 +63,10 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
             ComponentSerialization.CODEC.optionalFieldOf("footer").forGetter(SignalWindow::footer),
             Codec.STRING.optionalFieldOf("action").forGetter(SignalWindow::action),
             Codec.INT.fieldOf("ttl").forGetter(SignalWindow::ttlTicks),
-            Codec.INT.fieldOf("priority").forGetter(SignalWindow::priority)
+            Codec.INT.fieldOf("priority").forGetter(SignalWindow::priority),
+            Presentation.CODEC.optionalFieldOf("presentation", Presentation.AUTO).forGetter(SignalWindow::presentation),
+            ComponentSerialization.CODEC.optionalFieldOf("yes").forGetter(SignalWindow::yesLabel),
+            ComponentSerialization.CODEC.optionalFieldOf("no").forGetter(SignalWindow::noLabel)
     ).apply(i, SignalWindow::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SignalWindow> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistriesTrusted(CODEC);
@@ -61,6 +86,8 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
         private String action;
         private int ttl = 20 * 8;
         private int priority = 0;
+        private Presentation presentation = Presentation.AUTO;
+        private Component yes, no;
 
         private Builder(Kind kind, Component title) {
             this.kind = kind;
@@ -73,12 +100,24 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
         public Builder footer(Component footer) { this.footer = footer; return this; }
         /** An action id routed to the handler registered with {@link Signal#onAction}. Shows [Y] / [N] hints. */
         public Builder action(String actionId) { this.action = actionId; this.ttl = Math.max(ttl, 20 * 30); return this; }
+        /**
+         * A real decision: the action id plus what Y and N do, in plain words ("Leave with your loot", "Keep going").
+         * Shown as a choice card.
+         */
+        public Builder choice(String actionId, String yesDoes, String noDoes) {
+            action(actionId);
+            this.yes = Component.literal(yesDoes);
+            this.no = Component.literal(noDoes);
+            return this;
+        }
+        public Builder presentation(Presentation p) { this.presentation = p; return this; }
         public Builder ttl(int ticks) { this.ttl = ticks; return this; }
         public Builder priority(int p) { this.priority = p; return this; }
 
         public SignalWindow build() {
             return new SignalWindow(NEXT_ID.getAndIncrement(), kind, title, Optional.ofNullable(body), List.copyOf(rows),
-                    Optional.ofNullable(footer), Optional.ofNullable(action), ttl, priority);
+                    Optional.ofNullable(footer), Optional.ofNullable(action), ttl, priority, presentation,
+                    Optional.ofNullable(yes), Optional.ofNullable(no));
         }
     }
 }

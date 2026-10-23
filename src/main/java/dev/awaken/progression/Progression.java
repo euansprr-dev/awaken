@@ -118,8 +118,38 @@ public final class Progression {
         return AwakenConfig.xpMultiplier() * (1 + 0.15 * tier);
     }
 
+    private static final List<java.util.function.Consumer<ServerPlayer>> AWAKENED_LISTENERS = new ArrayList<>();
+    private static final List<java.util.function.BiConsumer<ServerPlayer, Integer>> LEVEL_LISTENERS = new ArrayList<>();
+
+    /** Called once, right after a player awakens (the story's Accept, a skip, or a command). */
+    public static void onAwakened(java.util.function.Consumer<ServerPlayer> listener) {
+        AWAKENED_LISTENERS.add(listener);
+    }
+
+    /** Called for every level reached (once per level, in order), after the level-up itself. */
+    public static void onLevelReached(java.util.function.BiConsumer<ServerPlayer, Integer> listener) {
+        LEVEL_LISTENERS.add(listener);
+    }
+
+    /**
+     * A first: a creature, place, landmark or event this player has never met. Grants {@code fractionOfLevel} of a
+     * level the first time only (counter {@code awaken:discovered/<key>}) and returns whether it was new. Never capped
+     * by the home XP limit: discovery is the point.
+     */
+    public static boolean discover(ServerPlayer player, String key, double fractionOfLevel) {
+        String id = "awaken:discovered/" + key;
+        if (profile(player).counter(id) > 0) return false;
+        setCounter(player, id, 1);
+        count(player, "awaken:discoveries");
+        if (fractionOfLevel > 0) grantLevels(player, fractionOfLevel, XpSource.HOME);
+        return true;
+    }
+
     private static void onLevelUp(ServerPlayer player, Profile p, int gained) {
         dev.awaken.core.Playtest.log(player, "level_up", "level", p.level);
+        for (int lv = p.level - gained + 1; lv <= p.level; lv++) {
+            for (var l : LEVEL_LISTENERS) l.accept(player, lv);
+        }
         player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE,
                         Component.literal(gained > 1 ? "Level up ×" + gained : "Level up"))
@@ -422,6 +452,7 @@ public final class Progression {
         applyAttributes(player);
         offerTruths(player, 3);
         markDirty(player);
+        for (var l : AWAKENED_LISTENERS) l.accept(player);
     }
 
     /** Called by the Reassessment trial when the player passes. */
