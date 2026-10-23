@@ -1,0 +1,32 @@
+{
+  "schema": 2,
+  "level": 21,
+  "title": "The Dream Bell",
+  "text": "Lucid sooner. Arm it by your bed: you wake at midnight; sleep again.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:dream_bell"
+      ]
+    },
+    {
+      "type": "item",
+      "id": "awaken:dream_residue",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Arm a Dream Bell; be lucid again",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:lucid_dreams",
+      "value": 2
+    },
+    "toast": "The dream answers you",
+    "requires": [
+      "unlock:awaken:dreams"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema": 2,
+  "level": 31,
+  "title": "The Drowned Choir",
+  "text": "Stratum 3, 12 scrap. The water rises every five minutes.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:precursor_scrap",
+      "count": 12
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Descend to stratum 3, the Choir",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:depth_record",
+      "value": 3
+    },
+    "toast": "When it sings, climb",
+    "requires": [
+      "unlock:awaken:descent",
+      "rank:D"
+    ]
+  }
+}

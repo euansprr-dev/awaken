@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 14,
+  "title": "Training Grounds",
+  "text": "Race your own ghost. Start Gate, Checkpoint Rings and Finish Gate are in the recipe book.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:start_gate",
+        "awaken:checkpoint_ring",
+        "awaken:finish_gate"
+      ]
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Lay Start, Rings, Finish: run a lap",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:training_laps",
+      "value": 1
+    },
+    "toast": "Your ghost races you next"
+  }
+}

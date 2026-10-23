@@ -109,15 +109,35 @@ public final class Defs {
      * saves, so reordering or retuning the table never revokes anything. {@code quiet} entries are granted without a
      * toast (something else announces them, like the first-power choice).
      */
-    public record LevelRoadDef(int schema, int level, String title, String text, List<Grant> grants, boolean quiet) {
+    public record LevelRoadDef(int schema, int level, String title, String text, List<Grant> grants, boolean quiet, Optional<Goal> goal) {
         public static final Codec<LevelRoadDef> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.optionalFieldOf("schema", 1).forGetter(LevelRoadDef::schema),
                 Codec.INT.fieldOf("level").forGetter(LevelRoadDef::level),
                 Codec.STRING.fieldOf("title").forGetter(LevelRoadDef::title),
                 Codec.STRING.optionalFieldOf("text", "").forGetter(LevelRoadDef::text),
                 Grant.CODEC.listOf().optionalFieldOf("grants", List.of()).forGetter(LevelRoadDef::grants),
-                Codec.BOOL.optionalFieldOf("quiet", false).forGetter(LevelRoadDef::quiet)
+                Codec.BOOL.optionalFieldOf("quiet", false).forGetter(LevelRoadDef::quiet),
+                Goal.CODEC.optionalFieldOf("goal").forGetter(LevelRoadDef::goal)
         ).apply(i, LevelRoadDef::new));
+
+        public LevelRoadDef(int schema, int level, String title, String text, List<Grant> grants, boolean quiet) {
+            this(schema, level, title, text, grants, quiet, Optional.empty());
+        }
+    }
+
+    /**
+     * The concrete thing a level-road step asks you to do (schema 2). Once the step is unlocked and until {@code done}
+     * holds, the Now tracker shows {@code now} (only while every {@code requires} token is met, see Requirements); when
+     * it holds, a toast says {@code toast}. A goal already met when its step unlocks completes silently.
+     */
+    public record Goal(String now, Condition done, List<String> requires, String toast, int priority) {
+        public static final Codec<Goal> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.fieldOf("now").forGetter(Goal::now),
+                Condition.CODEC.fieldOf("done").forGetter(Goal::done),
+                Codec.STRING.listOf().optionalFieldOf("requires", List.of()).forGetter(Goal::requires),
+                Codec.STRING.optionalFieldOf("toast", "").forGetter(Goal::toast),
+                Codec.INT.optionalFieldOf("priority", 35).forGetter(Goal::priority)
+        ).apply(i, Goal::new));
     }
 
     /**

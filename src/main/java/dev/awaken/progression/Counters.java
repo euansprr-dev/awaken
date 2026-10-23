@@ -57,4 +57,9 @@ public final class Counters {
     public static final String DEPTH_RECORD = "awaken:depth_record";
     public static final String TRAINING_BEST_LAPS = "awaken:training_laps";
     public static final String DIRECTIVES_KEPT_STREAK = "awaken:directives_kept_streak";
+
+    // Teaching (progression/Lessons): "awaken:lesson/<lesson>" = steps done, "awaken:lesson/<lesson>/<step>" = its card
+    // (1 sent, 2 yes, 3 no); "awaken:goal/<level-road step>" = that step's goal met.
+    public static final String LESSON_PREFIX = "awaken:lesson/";
+    public static final String GOAL_PREFIX = "awaken:goal/";
 }

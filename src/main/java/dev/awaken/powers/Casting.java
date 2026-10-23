@@ -89,15 +89,25 @@ public final class Casting {
         if (l.energy < cost) return PowerType.Result.fail("energy");
         Cast c = new Cast(player, type, owned.variant(), owned.level(), slot, predicted, yRot, xRot);
         PowerType.Result r;
+        PowerType prevCtx = Mastery.enter(type);
+        boolean prevCast = Mastery.beginCast();
         try {
             r = type.behaviour.cast(c);
         } catch (RuntimeException e) {
             errors++;
             dev.awaken.Awaken.LOG.error("Power {} failed to cast", id, e);
+            Mastery.castFailed(player, type);
             return PowerType.Result.fail("error");
+        } finally {
+            Mastery.endCast(prevCast);
+            Mastery.exit(prevCtx);
         }
-        if (!r.ok()) return r;
+        if (!r.ok()) {
+            Mastery.castFailed(player, type);
+            return r;
+        }
         if (cost > 0) spend(player, l, cost, now);
+        Mastery.cast(player, type, cost, now);
         Running channel = st.running(id);
         boolean deferred = channel != null && channel.channel && !channel.stopping();
         if (!deferred) startCooldown(player, l, type, owned, st);
@@ -136,11 +146,14 @@ public final class Casting {
         return true;
     }
 
-    /** Gives energy back (Conduit, kills with Void Maw). */
-    public static void restore(ServerPlayer player, float amount) {
+    /** Gives energy back (Conduit, kills with Void Maw, a Hunter focus). Never above the pool; returns what was added. */
+    public static float restore(ServerPlayer player, float amount) {
+        if (amount <= 0) return 0;
         Loadout l = Powers.loadout(player);
-        l.energy = Math.min(Powers.maxEnergy(player), Math.max(0, l.energy) + amount);
+        float before = Math.max(0, l.energy < 0 ? Powers.maxEnergy(player) : l.energy);
+        l.energy = Math.min(Powers.maxEnergy(player), before + amount);
         Powers.markDirty(player);
+        return l.energy - before;
     }
 
     static void ensureEnergy(ServerPlayer player, Loadout l) {
@@ -201,11 +214,14 @@ public final class Casting {
         if (r.ended) return;
         r.ended = true;
         if (r.why == null) r.why = why;
+        PowerType prevCtx = Mastery.enter(r.c.type);
         try {
             if (r.onEnd != null) r.onEnd.end(r, r.why);
         } catch (RuntimeException e) {
             errors++;
             dev.awaken.Awaken.LOG.error("Power {} failed while ending", r.key, e);
+        } finally {
+            Mastery.exit(prevCtx);
         }
         if (r.channel) {
             Loadout l = Powers.loadout(player);
@@ -263,11 +279,14 @@ public final class Casting {
             for (Loadout.Owned o : l.owned.values()) {
                 PowerType t = PowerRegistry.get(o.id());
                 if (t != null && t.passive != null) {
+                    PowerType prevCtx = Mastery.enter(t);
                     try {
                         t.passive.tick(new Cast(player, t, o.variant(), o.level(), -1, false, player.getYRot(), player.getXRot()));
                     } catch (RuntimeException e) {
                         errors++;
                         dev.awaken.Awaken.LOG.error("Passive {} failed", o.id(), e);
+                    } finally {
+                        Mastery.exit(prevCtx);
                     }
                 }
             }
@@ -287,7 +306,8 @@ public final class Casting {
             st.flowTickBank = 0;
         }
 
-        if (st.loadoutDirty || (regenerating && now % 20 == 0)) sync(player, l, st, now);
+        // mastery moves with nearly every hit: it rides the once-a-second sync instead of sending one per hit
+        if (st.loadoutDirty || ((regenerating || st.masteryDirty) && now % 20 == 0)) sync(player, l, st, now);
     }
 
     private static void tickRunning(ServerPlayer player, PowerState st, Loadout l, long now) {
@@ -303,16 +323,20 @@ public final class Casting {
                     } else {
                         l.energy -= drain;
                         l.pauseUntil = now + PowerMath.REGEN_PAUSE_TICKS;
+                        Mastery.drained(player, st, r.c.type, drain, now);
                     }
                 }
             }
             if (!r.stopping()) {
+                PowerType prevCtx = Mastery.enter(r.c.type);
                 try {
                     if (r.onTick != null) r.onTick.tick(r);
                 } catch (RuntimeException e) {
                     errors++;
                     dev.awaken.Awaken.LOG.error("Power {} failed while running", r.key, e);
                     r.stop(Running.Why.CANCELLED);
+                } finally {
+                    Mastery.exit(prevCtx);
                 }
                 r.age++;
                 if (r.duration >= 0 && r.age >= r.duration) r.stop(Running.Why.EXPIRED);
@@ -324,6 +348,7 @@ public final class Casting {
 
     static void sync(ServerPlayer player, Loadout l, PowerState st, long now) {
         st.loadoutDirty = false;
+        st.masteryDirty = false;
         l.syncTime = now;
         l.active.clear();
         for (Running r : st.running) {

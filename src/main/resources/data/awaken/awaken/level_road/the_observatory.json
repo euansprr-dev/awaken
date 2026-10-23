@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 47,
+  "title": "The Observatory",
+  "text": "A Lord's Heart. At B-rank an Observatory shows the Halo.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:lord_heart",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Find the Halo with an Observatory",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:story/halo_seen",
+      "value": 1
+    },
+    "toast": "Something above the sky",
+    "requires": [
+      "rank:B"
+    ]
+  }
+}

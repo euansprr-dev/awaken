@@ -1,0 +1,27 @@
+{
+  "schema": 2,
+  "level": 36,
+  "title": "The Silent Halls",
+  "text": "Stratum 5, 14 essence. Listeners hunt by ear.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 14
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Descend to stratum 5; stay quiet",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:depth_record",
+      "value": 5
+    },
+    "toast": "Listeners hunt by ear",
+    "requires": [
+      "unlock:awaken:descent",
+      "rank:C"
+    ]
+  }
+}

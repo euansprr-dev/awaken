@@ -33,6 +33,7 @@ final class ProgressionCommands {
                 }
                 return entries.size();
             }));
+            root.then(Commands.literal("road").executes(c -> road(c.getSource().getPlayerOrException(), c.getSource())));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("awaken").executes(c -> {
                 Progression.awaken(c.getSource().getPlayerOrException());
@@ -85,4 +86,27 @@ final class ProgressionCommands {
         });
     }
 
+    /** /awaken road: the steps around your level with their goals, and the lessons you are on. */
+    private static int road(ServerPlayer sp, net.minecraft.commands.CommandSourceStack src) {
+        Profile p = Progression.profile(sp);
+        int shown = 0;
+        for (LevelRoad.Step s : LevelRoad.steps()) {
+            int lv = s.def().level();
+            if (lv < p.level() - 4 || lv > p.level() + 3) continue;
+            boolean got = p.unlocks.contains(s.idString());
+            String goal = s.def().goal().map(g -> p.counter(s.goalKey()) > 0 ? " · done: " + g.now() : got ? " · to do: " + g.now() : "").orElse("");
+            String line = (got ? "✔ " : "  ") + "Lv " + lv + " " + s.def().title() + goal;
+            src.sendSuccess(() -> Component.literal(line).withStyle(got ? net.minecraft.ChatFormatting.WHITE : net.minecraft.ChatFormatting.GRAY), false);
+            shown++;
+        }
+        for (Lessons.Lesson l : Lessons.lessons()) {
+            String step = Lessons.currentStep(sp, l.id());
+            if (step.isEmpty()) continue;
+            for (Lessons.Step st : l.steps()) {
+                if (st.id().equals(step)) src.sendSuccess(() -> Component.literal("Lesson " + l.id() + ": " + st.now())
+                        .withStyle(net.minecraft.ChatFormatting.AQUA), false);
+            }
+        }
+        return shown;
+    }
 }

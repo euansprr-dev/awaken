@@ -110,6 +110,35 @@ PLAYERS = {
 }
 
 
+# ---- power mastery (JAVA powers/Mastery) --------------------------------------------------
+# A power gains mastery points (MP) from real use: the energy of a cast that lands a hit on a living target pays 1 MP
+# per energy point, energy spent in a fight that hit nothing pays FIGHT_MP, kills pay KILL_MP (elites and wardens
+# ELITE_MP, bosses BOSS_MP). Energy spent at the air, out of a fight, pays nothing. A full bar levels the power up
+# exactly like a duplicate Power Core (cores stay a shortcut). The sim tracks the player's MAIN power only, from the
+# moment the first power is chosen, with no duplicate cores (a core is a random roll, rarely your main).
+MASTERY_NEED = {1: 7000, 2: 13000, 3: 32000, 4: 50000}  # JAVA Mastery.need(level): MP from level to level + 1
+FIGHT_MP = 0.5                                          # JAVA Mastery.FIGHT_SHARE
+KILL_MP, ELITE_MP, BOSS_MP = 6, 18, 60                  # JAVA Mastery.KILL / ELITE / BOSS
+# ASSUMED play style (not game code): how a main power is used in a fight.
+MAIN_SHARE = 0.45             # share of the energy you spend that goes into your main power
+UTILISATION = 0.7             # share of energy regen you actually spend while fighting
+LANDED = 0.85                 # share of the main power's energy whose cast lands a hit (the rest is spent in the fight)
+KILLS_PER_COMBAT_MIN = 1.5    # kills per minute of fighting (gates, nights, rift tears)
+INT_PER_LEVEL = 0.5           # 3 points a level over six stats
+# combat minutes per event: share of a gate floor's minutes, a night minute with kills, a rift tear, a rank trial
+COMBAT_MIN = {"floor": 0.55, "night_kill_minute": 0.5, "rift": 1.5, "trial": 12.0}
+ELITES_PER_FLOOR = 0.4
+
+
+def regen_per_s(level):  # JAVA PowerMath.regenPerSecond at a balanced INT
+    return 4.0 + 0.08 * (5 + INT_PER_LEVEL * (level - 1))
+
+
+def mastery_per_combat_minute(level):
+    energy = 60 * regen_per_s(level) * UTILISATION * MAIN_SHARE
+    return energy * (LANDED + (1 - LANDED) * FIGHT_MP) + KILLS_PER_COMBAT_MIN * MAIN_SHARE * KILL_MP
+
+
 def death_risk(floor, ratio, skill):
     # Per-floor chance of dying. ratio = player level / gate's content level.
     base = 0.035 * 1.7 ** (floor - 1)
@@ -125,6 +154,18 @@ def simulate(kind, rng):
     rank_i = 0
     rank_times = {}
     deaths = gates = 0
+    mastery = {"on": False, "mp": 0.0, "level": 1, "at": {1: (1, 0.0)}, "combat_min": 0.0}
+
+    def fight(minutes, extra_mp=0.0):
+        """Minutes of fighting with the main power. Deterministic, so the XP pacing's random stream is untouched."""
+        if not mastery["on"]:
+            return
+        mastery["combat_min"] += minutes
+        mastery["mp"] += minutes * mastery_per_combat_minute(st["level"]) + extra_mp
+        while mastery["level"] < 5 and mastery["mp"] >= MASTERY_NEED[mastery["level"]]:
+            mastery["mp"] -= MASTERY_NEED[mastery["level"]]
+            mastery["level"] += 1
+            mastery["at"][mastery["level"]] = (st["level"], st["t"] / 60)
 
     def gain(amount):
         st["xp"] += amount
@@ -147,6 +188,7 @@ def simulate(kind, rng):
             hp_factor = rng.choice((1.0, 1.0, 1.0, 1.3, 2.0))
             if kills:
                 gain(budget.pay("kill", KILL_FRAC * hp_factor) * taper(lv) * xp_to_next(lv))
+                fight(COMBAT_MIN["night_kill_minute"])
             if rng.random() < 0.25 * p["ores"]:
                 gain(budget.pay("ore", ORE_FRAC * rng.randint(1, 4)) * taper(lv) * xp_to_next(lv))
             gain(budget.pay("build", BLOCK_FRAC * 12 * (1 + 2 * p["build_time"])) * taper(lv) * xp_to_next(lv))
@@ -159,6 +201,7 @@ def simulate(kind, rng):
             if awake and rng.random() < p["engage"] / ANOMALY_EVERY_MIN:
                 st["t"] += 2  # a rift tear takes a couple of minutes
                 gain(ANOMALY_K * gate_floor_xp(RANKS[rank_i], 1))
+                fight(COMBAT_MIN["rift"])
 
     # 0-2 min: vanilla (a sighting may already bank), 2-6 min: the Bell Crypt prologue, banked.
     bank = 0.0
@@ -173,6 +216,7 @@ def simulate(kind, rng):
         gain(xp_to_next(1) - st["xp"])
     st["t"] = 8.0                                 # choose the first power
     first_power_min = st["t"]
+    mastery["on"] = True
 
     day_clock = 8.0
     bell_crypt_done = False
@@ -200,6 +244,7 @@ def simulate(kind, rng):
             nxt = RANKS[rank_i + 1]
             if st["level"] >= RANK_LEVEL[nxt]:
                 st["t"] += 22
+                fight(COMBAT_MIN["trial"])
                 ratio = st["level"] / RANK_MID[nxt]
                 if rng.random() < min(0.95, 0.55 * ratio * p["skill"] + 0.25):
                     rank_i += 1
@@ -219,7 +264,9 @@ def simulate(kind, rng):
         st["t"] += 3 if not bell_crypt_done else rng.uniform(3, 8)  # walk to it (the Director keeps gates 300-1500 m out)
         for floor in range(1, floors + 1):
             lo, hi = FLOOR_MIN[g_rank]
-            st["t"] += rng.uniform(lo, hi) / (0.85 + 0.15 * p["skill"])
+            floor_min = rng.uniform(lo, hi) / (0.85 + 0.15 * p["skill"])
+            st["t"] += floor_min
+            fight(COMBAT_MIN["floor"] * floor_min, ELITES_PER_FLOOR * MAIN_SHARE * ELITE_MP)
             if rng.random() < death_risk(floor, ratio, p["skill"]):
                 deaths += 1
                 unbanked = 0.0
@@ -232,6 +279,8 @@ def simulate(kind, rng):
             if bell_crypt_done and kind != "greedy" and death_risk(floor + 1, ratio, p["skill"]) > 0.22:
                 break
         gain(unbanked)
+        if bell_crypt_done and cleared == floors:
+            fight(0, MAIN_SHARE * BOSS_MP)  # the Lord waiting on the last floor
         if not bell_crypt_done and cleared >= 2:
             bell_crypt_done = cleared == 3 or rng.random() < 0.5
         elif not bell_crypt_done:
@@ -246,7 +295,21 @@ def simulate(kind, rng):
 
     return {"rank_hours": rank_times, "deaths": deaths, "gates": gates, "level_times": level_times,
             "level_at": {m: level_at(m) for m in (10, 30, 60, 120)}, "first_power_min": first_power_min,
-            "final_level": st["level"], "discoveries": found[0]}
+            "final_level": st["level"], "discoveries": found[0],
+            "mastery_at": mastery["at"], "combat_minutes": mastery["combat_min"], "minutes": st["t"]}
+
+
+# Power mastery targets (P3 brief): your main power reaches level 3 around player level 20 and level 5 around 45.
+MASTERY_TARGETS = {3: (17, 23), 5: (41, 49)}
+
+
+def mastery_farm_check():
+    """Nothing but fighting (a farm, a gate held open): hours of pure combat to take one power from level 1 to 5."""
+    out = {}
+    for lv in (10, 25, 45):
+        need = sum(MASTERY_NEED.values())
+        out[lv] = round(need / (60 * mastery_per_combat_minute(lv)), 1)
+    return out
 
 
 ENTRY_MIN = 3  # walk to the gate, gear check, entry
@@ -317,6 +380,15 @@ def main():
         row["deaths_per_10_gates"] = round(10 * sum(x["deaths"] for x in rs) / max(1, sum(x["gates"] for x in rs)), 2)
         row["first_power_minute"] = statistics.median(x["first_power_min"] for x in rs)
         row["discoveries_median"] = statistics.median(x["discoveries"] for x in rs)
+        # main power mastery: the player level (and hours) when it reached each power level
+        row["mastery_player_level"] = {}
+        for ml in (2, 3, 4, 5):
+            hit = [x["mastery_at"][ml] for x in rs if ml in x["mastery_at"]]
+            if hit:
+                row["mastery_player_level"][ml] = quantiles([h[0] for h in hit]) | {
+                    "hours_median": round(statistics.median(h[1] for h in hit), 1), "reached": round(len(hit) / len(rs), 2)}
+        # share of play time spent fighting (the sim's estimate; mastery comes only from these minutes)
+        row["combat_share_median"] = round(statistics.median(x["combat_minutes"] / max(1.0, x["minutes"]) for x in rs), 3)
         summary[kind] = row
     checks = []
     bal = summary["balanced"]
@@ -327,7 +399,13 @@ def main():
     for m, (lo, hi) in FIRST_HOUR.items():
         med = bal["level_at_minutes"][m]["median"]
         checks.append({"minute": m, "target_level": [lo, int(hi)], "balanced_median": med, "pass": lo <= med <= hi})
+    for ml, (lo, hi) in MASTERY_TARGETS.items():
+        med = bal["mastery_player_level"].get(ml, {}).get("median")
+        checks.append({"main_power_level": ml, "target_player_level": [lo, hi], "balanced_median": med,
+                       "pass": med is not None and lo <= med <= hi})
     result = {"summary": summary, "target_checks": checks,
+              "mastery_need": MASTERY_NEED,
+              "mastery_pure_combat_hours_1_to_5": mastery_farm_check(),
               "push_ev_C_on_level": push_ev(),
               "push_ev_C_underlevelled": push_ev(level=28),
               "mob_farm_levels_per_hour": farm_check(),
@@ -342,9 +420,13 @@ def main():
         print("   level at minute:", {m: v["median"] for m, v in row["level_at_minutes"].items()})
         print("   hours to level: ", {lv: v["median"] for lv, v in row["level_hours"].items()})
         print("   hours to rank:  ", {r: v["median"] for r, v in row["rank_hours"].items()})
+        print("   main power level -> player level:", {ml: (v["median"], v["hours_median"]) for ml, v in row["mastery_player_level"].items()},
+              " combat share", row["combat_share_median"])
     print("\nTarget checks (balanced player):")
     for c in checks: print("  ", c)
     print("\nMob farm, kills only (levels per hour):", result["mob_farm_levels_per_hour"])
+    print("Mastery, nothing but fighting: hours to take one power from 1 to 5, by player level:",
+          result["mastery_pure_combat_hours_1_to_5"])
     print("\nPush EV, C-rank gate, on-level player:")
     for e in result["push_ev_C_on_level"]: print("  ", e)
 

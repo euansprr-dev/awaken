@@ -143,7 +143,38 @@
    },
    "deaths_per_10_gates": 1.01,
    "first_power_minute": 8.0,
-   "discoveries_median": 24.0
+   "discoveries_median": 24.0,
+   "mastery_player_level": {
+    "2": {
+     "median": 10.0,
+     "p10": 10.0,
+     "p90": 11.0,
+     "hours_median": 4.9,
+     "reached": 1.0
+    },
+    "3": {
+     "median": 19.0,
+     "p10": 18.0,
+     "p90": 21.0,
+     "hours_median": 13.2,
+     "reached": 1.0
+    },
+    "4": {
+     "median": 32.0,
+     "p10": 30.0,
+     "p90": 33.0,
+     "hours_median": 31.5,
+     "reached": 1.0
+    },
+    "5": {
+     "median": 45.0,
+     "p10": 43.0,
+     "p90": 46.0,
+     "hours_median": 57.8,
+     "reached": 1.0
+    }
+   },
+   "combat_share_median": 0.299
   },
   "balanced": {
    "level_hours": {
@@ -288,7 +319,38 @@
    },
    "deaths_per_10_gates": 1.73,
    "first_power_minute": 8.0,
-   "discoveries_median": 21.0
+   "discoveries_median": 21.0,
+   "mastery_player_level": {
+    "2": {
+     "median": 10.0,
+     "p10": 10.0,
+     "p90": 11.0,
+     "hours_median": 4.4,
+     "reached": 1.0
+    },
+    "3": {
+     "median": 20.0,
+     "p10": 18.0,
+     "p90": 21.0,
+     "hours_median": 11.8,
+     "reached": 1.0
+    },
+    "4": {
+     "median": 32.0,
+     "p10": 31.0,
+     "p90": 33.0,
+     "hours_median": 28.1,
+     "reached": 1.0
+    },
+    "5": {
+     "median": 44.0,
+     "p10": 43.0,
+     "p90": 46.0,
+     "hours_median": 51.0,
+     "reached": 1.0
+    }
+   },
+   "combat_share_median": 0.338
   },
   "greedy": {
    "level_hours": {
@@ -433,7 +495,38 @@
    },
    "deaths_per_10_gates": 6.7,
    "first_power_minute": 8.0,
-   "discoveries_median": 16.0
+   "discoveries_median": 16.0,
+   "mastery_player_level": {
+    "2": {
+     "median": 10.0,
+     "p10": 9.0,
+     "p90": 12.0,
+     "hours_median": 4.0,
+     "reached": 1.0
+    },
+    "3": {
+     "median": 17.0,
+     "p10": 16.0,
+     "p90": 19.0,
+     "hours_median": 10.9,
+     "reached": 1.0
+    },
+    "4": {
+     "median": 29.0,
+     "p10": 28.0,
+     "p90": 31.0,
+     "hours_median": 26.0,
+     "reached": 1.0
+    },
+    "5": {
+     "median": 40.0,
+     "p10": 38.0,
+     "p90": 42.0,
+     "hours_median": 47.8,
+     "reached": 1.0
+    }
+   },
+   "combat_share_median": 0.371
   },
   "builder": {
    "level_hours": {
@@ -578,7 +671,38 @@
    },
    "deaths_per_10_gates": 1.88,
    "first_power_minute": 8.0,
-   "discoveries_median": 24.0
+   "discoveries_median": 24.0,
+   "mastery_player_level": {
+    "2": {
+     "median": 11.0,
+     "p10": 10.0,
+     "p90": 12.0,
+     "hours_median": 5.1,
+     "reached": 1.0
+    },
+    "3": {
+     "median": 21.0,
+     "p10": 19.0,
+     "p90": 22.0,
+     "hours_median": 13.6,
+     "reached": 1.0
+    },
+    "4": {
+     "median": 34.0,
+     "p10": 32.0,
+     "p90": 35.0,
+     "hours_median": 32.2,
+     "reached": 1.0
+    },
+    "5": {
+     "median": 50.0,
+     "p10": 47.0,
+     "p90": 54.0,
+     "hours_median": 57.8,
+     "reached": 1.0
+    }
+   },
+   "combat_share_median": 0.296
   }
  },
  "target_checks": [
@@ -644,8 +768,37 @@
    ],
    "balanced_median": 5.0,
    "pass": true
+  },
+  {
+   "main_power_level": 3,
+   "target_player_level": [
+    17,
+    23
+   ],
+   "balanced_median": 20.0,
+   "pass": true
+  },
+  {
+   "main_power_level": 5,
+   "target_player_level": [
+    41,
+    49
+   ],
+   "balanced_median": 44.0,
+   "pass": true
   }
  ],
+ "mastery_need": {
+  "1": 7000,
+  "2": 13000,
+  "3": 32000,
+  "4": 50000
+ },
+ "mastery_pure_combat_hours_1_to_5": {
+  "10": 19.5,
+  "25": 17.4,
+  "45": 15.2
+ },
  "push_ev_C_on_level": [
   {
    "stop_at": 1,

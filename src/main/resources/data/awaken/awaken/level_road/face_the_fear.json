@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 27,
+  "title": "Face the nightmare",
+  "text": "Beat what hunts you. Set 'face my fear' in the Dream Journal.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:dream_residue",
+      "count": 2
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Journal 'face my fear', then win",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:nightmares_beaten",
+      "value": 1
+    },
+    "toast": "That fear is gone",
+    "requires": [
+      "unlock:awaken:dreams"
+    ]
+  }
+}

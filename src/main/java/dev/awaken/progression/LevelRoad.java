@@ -36,7 +36,12 @@ import java.util.function.Consumer;
 public final class LevelRoad {
     private LevelRoad() {}
 
-    public record Step(Identifier id, LevelRoadDef def) {}
+    /** One step; {@code idString} and {@code goalKey} (its goal's saved marker) are built once, for the per-second checks. */
+    public record Step(Identifier id, LevelRoadDef def, String idString, String goalKey) {
+        public Step(Identifier id, LevelRoadDef def) {
+            this(id, def, id.toString(), Lessons.goalKey(id.toString()));
+        }
+    }
 
     private static List<Step> sorted = List.of();
     private static final Map<String, List<Consumer<ServerPlayer>>> FLAG_LISTENERS = new HashMap<>();

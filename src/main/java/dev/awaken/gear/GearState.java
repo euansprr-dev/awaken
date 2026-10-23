@@ -22,6 +22,8 @@ final class GearState {
     long flickerReadyAt;
     /** Last meditation heal (Veilwoven, 2 pieces). */
     long lastHeal;
+    /** Last energy a focus gave back for a power hit (at most once a second). */
+    long focusEnergyAt = Long.MIN_VALUE / 2;
     /** The Now tracker's last answer and when it was worked out. */
     List<NowHooks.Suggestion> now = List.of();
     long nowAt = Long.MIN_VALUE;

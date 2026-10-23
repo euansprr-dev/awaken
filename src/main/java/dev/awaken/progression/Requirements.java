@@ -18,6 +18,7 @@ import java.util.function.BiPredicate;
  * unlock:awaken:veil    a level-road flag is unlocked (the System has taught it)
  * level:8               level 8 or more            hearth     has a Hearth Anchor
  * counter:awaken:x      counter x is at least 1
+ * rank:C                rank C or higher           path       has chosen a Path (Second Awakening)
  * </pre>
  * Unknown tokens count as unmet (and are logged once), so a typo hides a directive rather than offering the impossible.
  */
@@ -42,6 +43,8 @@ public final class Requirements {
             if (token.startsWith("level:")) return p.level() >= Integer.parseInt(token.substring("level:".length()));
             if (token.startsWith("counter:")) return p.counter(token.substring("counter:".length())) >= 1;
             if (token.equals("hearth")) return dev.awaken.core.api.HearthHooks.hearthOf(player).isPresent();
+            if (token.equals("path")) return !p.path().isEmpty();
+            if (token.startsWith("rank:")) return p.rank().ordinal() >= Rank.valueOf(token.substring("rank:".length())).ordinal();
         } catch (RuntimeException bad) {
             warn(token);
             return false;
@@ -58,7 +61,15 @@ public final class Requirements {
     /** Whether a token is well formed (content tests check every directive and drill with this). */
     public static boolean known(String token) {
         if (isPowerToken(token)) return !token.endsWith(":");
-        if (token.equals("hearth")) return true;
+        if (token.equals("hearth") || token.equals("path")) return true;
+        if (token.startsWith("rank:")) {
+            try {
+                Rank.valueOf(token.substring(5));
+                return true;
+            } catch (IllegalArgumentException e) {
+                return false;
+            }
+        }
         if (token.startsWith("level:")) {
             try {
                 Integer.parseInt(token.substring(6));
