@@ -434,6 +434,20 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
   by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
 - Config `features.landmarks` switches discovery, hints, rumours and markers off.
 
+Plan v2 · Anchor requests (details in docs/modules/requests.md):
+- Once a player has a Hearth Anchor, the System asks for materials they can really get (sightings, vanilla stats, depth,
+  rank): one request at a time, two from C-rank, offered quietly with a one play-day ttl, renewed per free slot each
+  play-day and after each delivery; nothing lost for ignoring, declining or dropping one.
+- Delivery at the Anchor (part loads count) pays essence, a share of a level through `Progression.worldXp`
+  (source `hearth_request`, its own budget), Forge credit (a refund on the next temper or upgrade, up to 50%), sometimes
+  a Power Core Shard (four fuse into a core) or an early recipe, and town reputation (Known 6, Trusted 18, Valued 40,
+  Beloved 80) with town touches. Streaks: +10% a delivery day after the first, up to +50%, lapsing after 3 play-days.
+- Pools in `data/*/awaken/request/*.json` (schema 1) with tokens `seen:`, `killed:`, `mined:`, `got:`, `depth:`.
+
+Plan v2 · late Hunter gear: A Lordscale (Gravity/Charge ward; every fifth power hit of one Force bursts onto nearby foes)
+and S Sovereign Weave (no Fracture from dying in a gate below your rank; your highest stat counts half again for gear
+and powers), each with its own silhouette parts; level-road steps at 67 and 97.
+
 Plan v2 · the road to 50 (details in docs/modules/road.md):
 - Every level 1–50 has a level-road step. Steps (schema 2) may carry a goal {now, done, requires, toast, priority}: a Now
   line that stays until a real counter says it's done, then a toast; only the newest open goal shows (priority 35); met

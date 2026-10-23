@@ -207,11 +207,7 @@ layer, so nothing ever renders with mismatched UVs.
 
 ## Requests
 
-- **powers**: a public `Powers.restoreEnergy(player, amount)` (or a perk source hook) so a focus could also feed energy;
-  today the focus only raises damage (Casting.restore is internal).
-- **progression**: a perk-source hook (`Progression.addPerkSource(fn)`) would let gear grant perks (energy regen,
-  cooldown reduction) instead of re-implementing them; and gear-granted stat points could then show on the Status screen.
-- **hearth**: a Forge recipe hook (`HearthHooks.forgeRecipe(...)`) if the owner wants C/B gear "forged" at the Forge
-  rather than crafted; tempering already works on every piece.
-- **fauna / new families**: add your hides and trophies to `#awaken:hunter_hide_<t>` / `hunter_core_<t>` from your merge
-  folder; D is the natural home for overworld beast trophies, C/B for gate and anomaly materials.
+- ~~powers: `Powers.restoreEnergy`~~ done (the focus refunds energy on power hits).
+- ~~progression: `Progression.addPerkSource`~~ done (nothing registers a source yet).
+- ~~fauna: hides and trophies in the hunter tags~~ done from `src/main/merge/fauna/`.
+- **hearth** (open): a Forge recipe hook if C/B gear should be forged at the Forge rather than crafted.
