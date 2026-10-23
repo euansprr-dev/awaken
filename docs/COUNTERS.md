@@ -1,13 +1,13 @@
 # Counters referenced by content
 
-Generated from data/awaken/awaken/** by the snippet in tools/content. Each owning module must count these.
+Counters that content in data/awaken/awaken/** reads. Each owning module must count these.
 
 | Counter | Owner | Used by |
 |---|---|---|
 | `awaken:blocks_placed` | progression | drill/place_100, truth/i_build_what_i_need |
 | `awaken:blocks_placed_in_combat` | powers | path/architect, title/architect |
 | `awaken:boss_floors_no_damage` | gates | directive/boss_flawless, truth/nothing_can_touch_me |
-| `awaken:bosses_killed_unarmed` | gates | directive/kill_unarmed_boss |
+| `awaken:bosses_killed_unarmed` | mobs (every boss, Gate Lords included) | directive/kill_unarmed_boss |
 | `awaken:breaks_held_at_hearth` | hearth | directive/hold_the_line, path/warden, truth/i_protect_what_is_mine |
 | `awaken:damage_taken` | progression | directive/warden_guard, drill/absorb_100, path/warden, truth/i_endure |
 | `awaken:dash_chain_airborne_best` | powers | truth/i_move_like_water |
@@ -30,7 +30,7 @@ Generated from data/awaken/awaken/** by the snippet in tools/content. Each ownin
 | `awaken:gate_cleared_unscouted_fast` | gates | title/gatebreaker |
 | `awaken:gates_cleared` | gates | title/first_blood, truth/i_finish_what_i_start |
 | `awaken:gates_no_hit` | gates | directive/clear_gate_no_hit, title/unwitnessed, truth/i_am_never_caught |
-| `awaken:gates_scouted` | veil | directive/scout_a_gate |
+| `awaken:gates_scouted` | gates (`Gates.markScouted`, called by Veil scouting) | directive/scout_a_gate |
 | `awaken:gates_solo_no_echo` | gates | truth/i_walk_alone |
 | `awaken:kills` | progression | drill/kills_20, path/stormbreaker, title/centurion, title/thousand_hands, truth/i_strike_first |
 | `awaken:kills_airborne` | powers | directive/prism_sky |
@@ -85,3 +85,21 @@ Generated from data/awaken/awaken/** by the snippet in tools/content. Each ownin
 | `awaken:veil_ticks` | veil | drill/veil_2min, path/seer, title/untethered, truth/i_am_more_than_my_body |
 | `awaken:waystones_lit` | descent | directive/descent_stratum |
 | `awaken:wolves_tamed` | progression | title/wolf_friend |
+
+## Also counted (Status → Records, revelations)
+
+| Counter | Owner | Read by |
+|---|---|---|
+| `awaken:blocks_broken` | progression | (kept for later) |
+| `awaken:bosses_killed` | mobs | Status → Records |
+| `awaken:dreams_written` | lucidium | (kept for later) |
+| `awaken:frames_forged`, `awaken:frame_modules_socketed` | above | (kept for later) |
+| `awaken:gate_scans` | above | (kept for later) |
+| `awaken:gear_tempered` | hearth | (kept for later) |
+| `awaken:guardians_defeated` | descent | Status → Records |
+| `awaken:kills_overworld` | progression | (kept for later) |
+| `awaken:mentor_duels_won` | lucidium | (kept for later) |
+| `awaken:play_ticks` | progression | Status → Records |
+| `awaken:shadows_defeated` | descent | Status → Records |
+| `awaken:sovereigns_defeated` | story | revelation/first_sovereign, Status → Records |
+| `awaken:story/seed_reached` | story | revelation/seed_reached |

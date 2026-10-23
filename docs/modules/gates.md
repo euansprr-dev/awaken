@@ -236,25 +236,15 @@ hoard into the Satchel), `gates_twist_friendly_red` (lanterns, spirit, shrine un
 and can't be hurt, so player deaths are tested by posting `LivingDeathEvent`. Timers are tested by moving the floor
 clock (`floorStartedAt`, `enteredAt`) back, not by waiting.
 
-## Decisions (not in SPEC yet)
+## Decisions
 
-- Director spawn chance per pass: 100% / 30% / 8% / 0% at 0 / 1 / 2–3 / 4 standing gates; spots ≥ 96 blocks apart.
-- SOVEREIGN players can roll SOVEREIGN gates (the "one above" of S).
-- Claim ids carry a run index after the first run (`gateId:floor:player#n`) so a re-entered gate can pay again.
-- Retreating through floor 1's entrance forfeits the Satchel (the gate keeps it).
-- Twists are counted as "seen" when you come out of that gate alive (extract or clear), once per gate.
-- "Comfort" for `floors_pushed_past_comfort` is the median of your last five extraction floors (2 before any).
-- Gate interiors are protected: blocks the themes are built from can't be broken by non-creative players; explosions
-  never break blocks in the gate dimension.
-- Volatile and Echoing behaviour (burst / rise once) is implemented here for gate monsters (`MobRole.gateId` set).
-- Breaks are deferred while an online player is inside that gate.
+Folded into SPEC section 13 ("Gates" and "Story effects on the world").
 
-## Known gaps / requests
+## Integration (done on the main branch)
 
-- `Profile.day` has no public mutator: the Day's End gate tally round-trips the profile through `Profile.CODEC`
-  (`Claims.countGateToday`). Request: `Progression.addGateToday(ServerPlayer)`.
-- Mobs: a BREAK-role spawn from the fallback spawner is a plain zombie; gates scale it up (×8 health, ×1.5 size) only when
-  its max health is under 80. The mobs module should make BREAK a real roaming Lord and must not duplicate the gates'
-  Volatile/Echoing death behaviour or add a second boss bar for BREAK.
-- Hearth: overflow from claims drops at the player's feet (no Hearth chest API yet).
-- Veil: scouting should call `Gates.markScouted(player, id)` (counts `gates_scouted`) and may show `Gates.preview(id)`.
+- `GateAccess` installs `GateHooks` for the story, Veil, Above and Hearth: views carry the gate's mouth; `stabilise`
+  refuses gates that never break; `openScripted` places the gate where the caller asks.
+- `GateRecord.neverBreaks` = scripted or `StoryHooks.gatesCalm`; beacons carry CALM and NO_BLIGHT flags.
+- `Progression.addGateToday` feeds the Day's End tally; `bosses_killed_unarmed` is counted only by mobs.
+- Clone Vat saves bank the Satchel; mobs spawn a real Lord for BREAK (no second bar).
+- Hearth has no storage block, so claim overflow still drops at the player's feet (the claim window says so).

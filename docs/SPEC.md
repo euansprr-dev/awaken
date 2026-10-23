@@ -200,7 +200,8 @@ gate mouth) or continue via the Seal to the next floor. Boss kill: claim + exit 
 Gate pressure: after 4 min on a floor, a wave every 45 s, scaling; at 8 min the gate's Warden (elite) arrives.
 States: BUILDING → READY → ACTIVE ⇄ OPEN → CLEARED | BROKEN → RELEASED (cell region files deleted on server stop).
 Break: spill wave + roaming Gate Lord with boss bar at the gate; blight (desaturation + grey fog) within 96 blocks until
-cleared; better loot. Warning one play-day ahead when within 256 blocks of a Hearth.
+cleared; better loot. Warning one play-day ahead when within 256 blocks of a Hearth. The Gate Stabiliser pushes a break
+back by play-days. After the "Break the Signal" ending no gate breaks; after "Wake up" there is no blight.
 
 Themes (15), layouts (8), modifiers (14), twists (8), bosses: exactly as in `docs/plan.html` gate generator.
 
@@ -327,6 +328,27 @@ Veil:
 - Closed Ghost Doors and Veil stone block spirits; the Out door sends the spirit to your return point while the body
   rests safely in the temple. Survival players can't edit the temple or Veil Gate pockets.
 - Cord-Eaters are driven by the Veil (the mobs module's AI is bypassed); a bite ends the projection with Spirit Shock.
+
+Gates:
+- Director spawn chance per pass: 100% / 30% / 8% / 0% at 0 / 1 / 2–3 / 4 standing gates; spots ≥ 96 blocks apart.
+  SOVEREIGN players can roll SOVEREIGN gates. Breaks are deferred while an online player is inside that gate.
+- Claim ids carry a run index after the first run, so a re-entered gate can pay again. Retreating through floor 1's
+  entrance forfeits the Satchel. A Clone Vat save banks the whole Satchel; pockets-full loot drops at your feet and the
+  claim window says so.
+- Twists count as "seen" when you come out of that gate alive. "Comfort" for `floors_pushed_past_comfort` is the median
+  of your last five extraction floors (2 before any). Gate interiors can't be broken or blown up.
+- Echoing (`Forces.Tag.ECHO`) means "gets up once": Awaken creatures fall and stand up by themselves (mobs), anything
+  else is replaced once by the gate; `Forces.markRisen` records that it already rose (shared with the Descent).
+  Player-owned Echoes are `MobRole.Role.ECHO`, never this tag.
+- A broken gate's Lord is the theme's Lord body with role BREAK (×8 health, ×1.3 damage), shown with the gates' boss bar.
+- The prologue's Bell Crypt is a scripted E-rank gate of three floors placed where the story asks (`GateHooks.openScripted`);
+  scripted gates never break.
+
+Story effects on the world:
+- "Break the Signal": no gate breaks again (cards say "never · the gates are calm", the map says "calm").
+- "Wake up": the blight never greys the land again.
+- "Become the Signal": each Ascension tier gives hostile creatures +30% health and +15% damage and the player +15% XP
+  (up to 10 tiers); allies are not scaled.
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.

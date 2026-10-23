@@ -34,3 +34,15 @@ powers, mobs, gates (wave 1) · descent, lucidium (wave 2a) · veil, hearth, abo
 - lucidium: install `DreamHooks`.
 - above: wire Signal Relay to `Progression.addDirectiveSlotSource`, Recalibrator to `Progression.respec`,
   Clone Vat into gates/descent death handling.
+
+### Integration (main branch), 2026-10-23
+- All eight builder modules merged (powers, mobs, gates, descent, lucidium, veil, hearth, above) with
+  `tools/qa/integrate.sh` (merge, build, full GameTests, asset check).
+- Code review fixes: `core/Later` (next-tick work; `server.execute` runs inline on the server thread), lenient enum
+  codecs, permanent modifiers, persisted guardian timers, prologue re-ask and skip, court summon cleanup.
+- Cross-module fixes found while integrating: one meaning for Echoing (`Forces.markRisen`; allies are MobRole ECHO);
+  real Lords for broken gates; Clone Vat in gate deaths; no double-counted unarmed boss kills; rooms with glass ceilings.
+- Story reaches the world: the prologue opens a real Bell Crypt; calm gates; restored colour; Ascension tiers scale
+  monsters and XP.
+- Test stability: isolated batches for tests that touch shared world state, chunks forced around each test, no nested
+  scheduling, mock players marked loaded and set to survival before they are hurt. 121 GameTests pass, repeatedly.

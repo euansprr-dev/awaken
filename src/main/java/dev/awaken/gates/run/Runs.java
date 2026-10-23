@@ -487,11 +487,8 @@ public final class Runs {
         }
         AwakenConfig.Difficulty diff = AwakenConfig.DIFFICULTY.get();
         if (g != null && dev.awaken.above.Above.consumeCloneSave(p)) {
-            // The Clone Vat grew a body for you: the whole Satchel comes back with it.
-            boolean carried = !run.satchel.isEmpty() || run.satchelXp > 0;
-            if (bankSatchel(p, g, run, "c" + label(run.area, run.floor), "clone", "The Clone Vat kept your Satchel.") && carried) {
-                Signal.toast(p, Component.literal("The Clone Vat kept your Satchel"));
-            }
+            // The Clone Vat grew a body for you: the whole Satchel comes back with it (the claim window says so).
+            bankSatchel(p, g, run, "c" + label(run.area, run.floor), "clone", "");
         }
         List<ItemStack> kept = satchelOnDeath(run, diff);
         if (g != null && (!kept.isEmpty() || (diff == AwakenConfig.Difficulty.STORY && run.satchelXp > 0))) {

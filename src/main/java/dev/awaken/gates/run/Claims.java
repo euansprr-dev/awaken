@@ -49,12 +49,15 @@ public final class Claims {
     }
 
     private static void pay(ServerPlayer p, Claim c) {
-        int stacks = 0, items = 0;
+        int stacks = 0, items = 0, dropped = 0;
         for (ItemStack s : c.items()) {
             ItemStack give = s.copy(); // the claim's own copy is dropped with the claim: loot moves once
             items += give.getCount();
             stacks++;
-            if (!p.addItem(give) && !give.isEmpty()) p.drop(give, false, Prediction.SERVER_ONLY);
+            if (!p.addItem(give) && !give.isEmpty()) {
+                p.drop(give, false, Prediction.SERVER_ONLY);
+                dropped++;
+            }
         }
         int levels = 0;
         if (c.xp() > 0) {
@@ -65,9 +68,11 @@ public final class Claims {
                 case "boss" -> "The hoard is yours";
                 case "death" -> "Half your Satchel came back with you";
                 case "recover" -> "Recovered your loot";
+                case "clone" -> "The Clone Vat kept your Satchel";
                 default -> "Extracted";
             }));
             w.row("Items", items + " in " + stacks + " stack" + (stacks == 1 ? "" : "s"));
+            if (dropped > 0) w.row("Pockets full", dropped + " stack" + (dropped == 1 ? "" : "s") + " dropped at your feet");
             if (c.xp() > 0) w.row("Satchel XP", "+" + Math.round(c.xp()) + (levels > 0 ? "  (+" + levels + " level" + (levels > 1 ? "s" : "") + ")" : ""));
             if (!c.note().isEmpty()) w.body(Component.literal(c.note()));
             Signal.send(p, w.ttl(20 * 7).build());

@@ -49,6 +49,7 @@ final class CoreSections {
         StatusSections.add(StatusSections.Tab.STATUS, new Stats());
         StatusSections.add(StatusSections.Tab.STATUS, new DirectivesSection());
         StatusSections.add(StatusSections.Tab.STATUS, new RegimenSection());
+        StatusSections.add(StatusSections.Tab.STATUS, new Records());
         StatusSections.add(StatusSections.Tab.TRUTHS, new PathChoice());
         StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.DECLARED));
         StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.OFFERED));
@@ -214,6 +215,64 @@ final class CoreSections {
                 boolean done = r.done().contains(id);
                 g.text(font(), (done ? "✓ " : "· ") + (def == null ? id : def.text()), x, y, Glass.a(done ? Glass.GOOD : Glass.TEXT, 1f), false);
                 y += 12;
+            }
+        }
+    }
+
+    /** Lifetime records from the counters, two columns, only what you've actually done. */
+    static final class Records implements StatusSections.Section {
+        private record Row(String label, String counter) {}
+
+        private static final List<Row> ROWS = List.of(
+                new Row("Time awake", "awaken:play_ticks"),
+                new Row("Monsters slain", "awaken:kills"),
+                new Row("Bosses felled", "awaken:bosses_killed"),
+                new Row("…bare-handed", "awaken:bosses_killed_unarmed"),
+                new Row("Gates cleared", "awaken:gates_cleared"),
+                new Row("Floors cleared", "awaken:floors_cleared"),
+                new Row("Gates scouted", "awaken:gates_scouted"),
+                new Row("Twists seen", "awaken:twists_seen"),
+                new Row("Breaks held at home", "awaken:breaks_held_at_hearth"),
+                new Row("Deepest stratum", "awaken:depth_record"),
+                new Row("Guardians", "awaken:guardians_defeated"),
+                new Row("Your shadow, beaten", "awaken:shadows_defeated"),
+                new Row("Sovereigns", "awaken:sovereigns_defeated"),
+                new Row("Dreams", "awaken:dreams"),
+                new Row("Lucid dreams", "awaken:lucid_dreams"),
+                new Row("Nightmares beaten", "awaken:nightmares_beaten"),
+                new Row("Spirits spoken to", "awaken:spirits_spoken"),
+                new Row("Echoes bound", "awaken:echoes_bound"),
+                new Row("Machines built", "awaken:machines_built"),
+                new Row("Secrets found", "awaken:secrets_found"),
+                new Row("Deaths", "awaken:deaths"));
+
+        private static List<String[]> lines() {
+            Profile p = profile();
+            List<String[]> out = new ArrayList<>();
+            for (Row r : ROWS) {
+                long v = p.counter(r.counter());
+                if (v <= 0) continue;
+                String value = r.counter().equals("awaken:play_ticks")
+                        ? (v / 72000 > 0 ? v / 72000 + " h " : "") + (v / 1200) % 60 + " min"
+                        : String.format("%,d", v);
+                out.add(new String[]{r.label(), value});
+            }
+            return out;
+        }
+
+        public String title() { return "RECORDS"; }
+        public int order() { return 900; }
+        public boolean visible() { return !lines().isEmpty(); }
+        public int height(int w) { return (lines().size() + 1) / 2 * 12; }
+
+        public void render(GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
+            List<String[]> l = lines();
+            int col = w / 2;
+            for (int i = 0; i < l.size(); i++) {
+                int cx = x + (i % 2) * col, cy = y + (i / 2) * 12;
+                String v = l.get(i)[1];
+                g.text(font(), l.get(i)[0], cx, cy, Glass.a(Glass.LABEL, 1f), false);
+                g.text(font(), v, cx + col - 8 - font().width(v), cy, Glass.a(Glass.TEXT, 1f), false);
             }
         }
     }
