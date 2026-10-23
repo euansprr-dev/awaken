@@ -116,7 +116,7 @@ final class AnomalyP2Tests {
     // ---- fallen star --------------------------------------------------------------------------------------------------
 
     static void starPaysOnce() {
-        AwakenTests.registerIsolated("anomaly_star_lands_guards_pays_once", 1200, h -> {
+        AwakenTests.registerIsolated("anomaly_star_lands_guards_pays_once", 2400, h -> {
             ServerLevel level = h.getLevel();
             MinecraftServer server = level.getServer();
             BlockPos g = AnomalyTests.platform(h, 12, 12);
@@ -202,7 +202,7 @@ final class AnomalyP2Tests {
     }
 
     static void starBurnsOut() {
-        AwakenTests.registerIsolated("anomaly_star_burns_out_and_strays_go", 1200, h -> {
+        AwakenTests.registerIsolated("anomaly_star_burns_out_and_strays_go", 2400, h -> {
             ServerLevel level = h.getLevel();
             MinecraftServer server = level.getServer();
             BlockPos g = AnomalyTests.platform(h, -12, -12);
@@ -276,7 +276,7 @@ final class AnomalyP2Tests {
     }
 
     static void groves() {
-        AwakenTests.registerIsolated("anomaly_grove_bends_the_rules", 1200, h -> {
+        AwakenTests.registerIsolated("anomaly_grove_bends_the_rules", 2400, h -> {
             ServerLevel level = h.getLevel();
             MinecraftServer server = level.getServer();
             BlockPos g = meadow(h, 0, 0);

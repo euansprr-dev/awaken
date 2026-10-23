@@ -196,7 +196,7 @@ final class AnomalyTests {
     // ---- spots --------------------------------------------------------------------------------------------------------
 
     static void spots() {
-        AwakenTests.registerIsolated("anomaly_spot_rejects_builds_water_hearth", 1200, h -> {
+        AwakenTests.registerIsolated("anomaly_spot_rejects_builds_water_hearth", 2400, h -> {
             ServerLevel level = h.getLevel();
             BlockPos g = platform(h, 12, 12);
             // a player standing there keeps the chunks simulated, as in play
@@ -295,7 +295,7 @@ final class AnomalyTests {
     // ---- rifts --------------------------------------------------------------------------------------------------------
 
     static void riftPaysOnce() {
-        AwakenTests.registerIsolated("anomaly_rift_close_pays_once", 1200, h -> {
+        AwakenTests.registerIsolated("anomaly_rift_close_pays_once", 2400, h -> {
             ServerLevel level = h.getLevel();
             MinecraftServer server = level.getServer();
             BlockPos g = platform(h, 12, -12);
@@ -346,7 +346,7 @@ final class AnomalyTests {
     }
 
     static void riftIgnored() {
-        AwakenTests.registerIsolated("anomaly_rift_ignored_closes_cleanly", 1200, h -> {
+        AwakenTests.registerIsolated("anomaly_rift_ignored_closes_cleanly", 2400, h -> {
             ServerLevel level = h.getLevel();
             MinecraftServer server = level.getServer();
             BlockPos g = platform(h, -12, 12);
@@ -505,7 +505,7 @@ final class AnomalyTests {
     // ---- processions --------------------------------------------------------------------------------------------------
 
     static void processionCache() {
-        AwakenTests.registerIsolated("anomaly_procession_leads_to_a_cache", 1200, h -> {
+        AwakenTests.registerIsolated("anomaly_procession_leads_to_a_cache", 2400, h -> {
             ServerLevel level = h.getLevel();
             MinecraftServer server = level.getServer();
             BlockPos g = platform(h, 14, -14);

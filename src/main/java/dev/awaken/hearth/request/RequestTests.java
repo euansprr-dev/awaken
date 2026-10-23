@@ -365,7 +365,9 @@ final class RequestTests {
             h.assertTrue(lines.get(0).priority() == Requests.NOW_GATHER, "gathering is an idea, not an alarm");
             sp.getInventory().add(icon.copyWithCount(r.count()));
             h.assertTrue(Requests.suggest(sp).get(0).priority() == Requests.NOW_READY, "all in hand: bring it home");
-            // C-rank opens the second slot
+            // C-rank opens the second slot; give it more than one thing to ask for whatever the first random pick took
+            for (String c : List.of("frost_stag", "mossback", "gloomstalker", "briar_sow", "glass_scarab", "crag_ram", "dart_frog", "honey_bear"))
+                Progression.setCounter(sp, "awaken:discovered/creature/" + c, 1);
             setRank(sp, Rank.C);
             h.assertTrue(Requests.free(sp, st) == 1 && Requests.offerNow(sp), "a second request at C-rank");
             // a new play-day withdraws yesterday's offer and owes a fresh one; active requests stay
