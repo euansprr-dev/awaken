@@ -76,6 +76,8 @@ final class FxRender {
      * family colour readable. Meshes reuse their geometry through {@link #put} with a white texel of the atlas.
      */
     private static boolean under;
+    /** Set while drawing a beam's thin body and core, which should leave your hand visibly (only halos fade near). */
+    static boolean keepNear;
     private static float whiteU, whiteV;
 
     static void onExtract(ExtractLevelRenderStateEvent e) {
@@ -161,6 +163,13 @@ final class FxRender {
             float x = (float) (Mth.lerp(t, p.px[i], p.x[i]) - cx);
             float y = (float) (Mth.lerp(t, p.py[i], p.y[i]) - cy);
             float z = (float) (Mth.lerp(t, p.pz[i], p.z[i]) - cz);
+            if ((f & FxPool.FLAT) == 0) {
+                float dist = Mth.sqrt(x * x + y * y + z * z);
+                float nf = near(dist);
+                if (nf <= 0.01f) continue;
+                colour = scaleAlpha(colour, nf);
+                size = Math.min(size, SIZE_CAP * dist);
+            }
             int light = bucket == FxPool.LIT ? p.light[i] : LightCoordsUtil.FULL_BRIGHT;
             if (bucket == FxPool.ADD) colour = premul(colour);
             float rot = Mth.lerp(t, p.prot[i], p.rot[i]);
@@ -187,16 +196,18 @@ final class FxRender {
                 if ((f & FxPool.ADD) == 0) continue;
                 float prog = p.progress(i, t);
                 float size = Mth.lerp(prog, p.size0[i], p.size1[i]);
-                if (size < 0.18f) continue;
+                if (size < 0.18f || soft(p.sprite[i])) continue;
                 int frames = FxSprites.frames(p.sprite[i]);
                 int frame = (f & FxPool.ANIM) != 0 ? Math.min(frames - 1, (int) (prog * frames)) : p.frame[i];
                 TextureAtlasSprite s = FxSprites.get(p.sprite[i], frame);
                 if (s == null) continue;
-                int colour = shade(FxWorld.mix(p.c0[i], p.c1[i], prog));
-                if ((colour >>> 24) < 4) continue;
                 float x = (float) (Mth.lerp(t, p.px[i], p.x[i]) - cx);
                 float y = (float) (Mth.lerp(t, p.py[i], p.y[i]) - cy);
                 float z = (float) (Mth.lerp(t, p.pz[i], p.z[i]) - cz);
+                float dist = Mth.sqrt(x * x + y * y + z * z);
+                if ((f & FxPool.FLAT) == 0) size = Math.min(size, SIZE_CAP * dist);
+                int colour = shade(scaleAlpha(FxWorld.mix(p.c0[i], p.c1[i], prog), (f & FxPool.FLAT) == 0 ? near(dist) : 1f));
+                if ((colour >>> 24) < 4) continue;
                 float rot = Mth.lerp(t, p.prot[i], p.rot[i]);
                 if ((f & FxPool.STRETCH) != 0) stretched(vc, s, x, y, z, p.vx[i], p.vy[i], p.vz[i], size, p.stretch[i], colour, LightCoordsUtil.FULL_BRIGHT);
                 else if ((f & FxPool.FLAT) != 0) flat(vc, s, x, y, z, size, rot, colour, LightCoordsUtil.FULL_BRIGHT);
@@ -207,6 +218,34 @@ final class FxRender {
         } finally {
             under = false;
         }
+    }
+
+    /**
+     * How much of a glow shows at a distance from the camera: nothing within 1.5 blocks, all of it from 4. Anything
+     * closer covers the crosshair and the target as a screen-filling blur.
+     */
+    static float near(float dist) {
+        if (dist <= 1.5f) return 0f;
+        if (dist >= 4f) return 1f;
+        float t = (dist - 1.5f) / 2.5f;
+        return t * t * (3 - 2 * t);
+    }
+
+    /** A sprite never grows past this fraction of its distance (about 25 degrees of view). */
+    static final float SIZE_CAP = 0.45f;
+
+    /** Glows attached to the local player's own hand in first person: kept small and in the hand, never in the view. */
+    static final float HAND_CAP = 0.2f;
+
+    static int scaleAlpha(int argb, float k) {
+        if (k >= 1f) return argb;
+        int a = (int) (((argb >>> 24) & 255) * Math.max(0f, k));
+        return (a << 24) | (argb & 0x00FFFFFF);
+    }
+
+    /** Soft glow sprites have no edge worth protecting by day: they get no under-copy. */
+    private static boolean soft(int sprite) {
+        return sprite == dev.awaken.powers.fx.PowerFxParticles.GLOW.index() || sprite == dev.awaken.powers.fx.PowerFxParticles.HALO.index();
     }
 
     /**
@@ -221,6 +260,9 @@ final class FxRender {
 
     /** One mesh vertex: position + colour for the additive pass, or a full entity vertex on a white texel for the underlay. */
     static void put(VertexConsumer vc, float x, float y, float z, int argb) {
+        // meshes fade out right in front of the camera too (rings at your own hand, a beam's first block)
+        float d2 = x * x + y * y + z * z;
+        if (d2 < 16f && !keepNear) argb = scaleAlpha(argb, near(Mth.sqrt(d2)));
         if (under) vc.addVertex(x, y, z, shade(argb), whiteU, whiteV, OverlayTexture.NO_OVERLAY, LightCoordsUtil.FULL_BRIGHT, 0, 1, 0);
         else vc.addVertex(x, y, z).setColor(argb);
     }
@@ -305,15 +347,28 @@ final class FxRender {
                 case Shape.DISC -> {
                     boolean dark = (sh.flags & Shape.DARK) != 0;
                     if (dark != darkPass) continue;
+                    if (under && soft(sh.sprite)) continue;
                     TextureAtlasSprite s = FxSprites.get(sh.sprite, sh.frame);
                     if (s == null) continue;
                     float t = sh.t(pt);
                     float size = Mth.lerp(t, sh.a, sh.b);
                     if ((sh.flags & Shape.PULSE) != 0) size *= 1 + 0.12f * Mth.sin((sh.age + pt) * 1.3f);
                     if ((sh.flags & Shape.FLICKER) != 0) size *= 0.85f + 0.3f * flick(sh.seed, sh.age);
-                    int col = FxWorld.alpha(FxWorld.mix(sh.c0, sh.c1, t), fade * (((FxWorld.mix(sh.c0, sh.c1, t) >>> 24) & 255) / 255f));
-                    billboard(vc, s, (float) (sh.rx - cx), (float) (sh.ry - cy), (float) (sh.rz - cz), size, sh.c * (sh.age + pt),
-                            dark ? col : tint(col), LightCoordsUtil.FULL_BRIGHT);
+                    float x = (float) (sh.rx - cx), y = (float) (sh.ry - cy), z = (float) (sh.rz - cz);
+                    float dist = Mth.sqrt(x * x + y * y + z * z);
+                    float nf;
+                    if (ownHand(sh)) {
+                        // the caster's own charge orb in first person: a small light held in the hand, out of the view
+                        nf = 0.85f;
+                        size = Math.min(size, HAND_CAP * dist);
+                    } else {
+                        nf = near(dist);
+                        size = Math.min(size, SIZE_CAP * dist);
+                    }
+                    if (nf <= 0.01f) continue;
+                    int mixed = FxWorld.mix(sh.c0, sh.c1, t);
+                    int col = FxWorld.alpha(mixed, fade * nf * (((mixed >>> 24) & 255) / 255f));
+                    billboard(vc, s, x, y, z, size, sh.c * (sh.age + pt), dark ? col : tint(col), LightCoordsUtil.FULL_BRIGHT);
                 }
                 case Shape.GLYPH -> {
                     if (darkPass) continue;
@@ -330,18 +385,28 @@ final class FxRender {
                     shell(vc, sh, fade);
                 }
                 case Shape.BEAM -> {
-                    if (darkPass) continue;
-                    TextureAtlasSprite s = FxSprites.get(dev.awaken.powers.fx.PowerFxParticles.GLOW.index(), 0);
+                    if (darkPass || under) continue; // soft glows: no under-copy
+                    TextureAtlasSprite s = FxSprites.get(dev.awaken.powers.fx.PowerFxParticles.HALO.index(), 0);
                     if (s == null) continue;
                     float w = sh.a * (1 + 0.15f * Mth.sin((sh.age + pt) * 2.1f));
-                    int body = tint(FxWorld.alpha(sh.c0, 0.75f * fade));
-                    int core = tint(FxWorld.alpha(sh.c1 == 0 ? 0xFFFFFFFF : sh.c1, 0.9f * fade));
                     float ax = (float) (sh.rx - cx), ay = (float) (sh.ry - cy), az = (float) (sh.rz - cz);
                     float bx = (float) (sh.rex - cx), by = (float) (sh.rey - cy), bz = (float) (sh.rez - cz);
-                    billboard(vc, s, ax, ay, az, w * 8, 0, body, LightCoordsUtil.FULL_BRIGHT);
-                    billboard(vc, s, ax, ay, az, w * 3.5f, 0, core, LightCoordsUtil.FULL_BRIGHT);
-                    billboard(vc, s, bx, by, bz, w * 14, time * 0.2f, body, LightCoordsUtil.FULL_BRIGHT);
-                    billboard(vc, s, bx, by, bz, w * 5, 0, core, LightCoordsUtil.FULL_BRIGHT);
+                    float da = Mth.sqrt(ax * ax + ay * ay + az * az), db = Mth.sqrt(bx * bx + by * by + bz * bz);
+                    // the start glow sits at the caster's hand: in first person it stays small, never across the view
+                    float na = ownHand(sh) ? 0.8f : near(da), capA = ownHand(sh) ? HAND_CAP : SIZE_CAP;
+                    float nb = near(db);
+                    if (na > 0.01f) {
+                        billboard(vc, s, ax, ay, az, Math.min(w * 8, capA * da), 0, tint(FxWorld.alpha(sh.c0, 0.75f * fade * na)), LightCoordsUtil.FULL_BRIGHT);
+                        billboard(vc, s, ax, ay, az, Math.min(w * 3.5f, capA * da * 0.5f), 0,
+                                tint(FxWorld.alpha(sh.c1 == 0 ? 0xFFFFFFFF : sh.c1, 0.9f * fade * na)), LightCoordsUtil.FULL_BRIGHT);
+                    }
+                    if (nb > 0.01f) {
+                        // the landing glow is capped so the target stays visible through it
+                        billboard(vc, s, bx, by, bz, Math.min(w * 14, SIZE_CAP * db), time * 0.2f, tint(FxWorld.alpha(sh.c0, 0.7f * fade * nb)),
+                                LightCoordsUtil.FULL_BRIGHT);
+                        billboard(vc, s, bx, by, bz, Math.min(w * 5, SIZE_CAP * db * 0.4f), 0,
+                                tint(FxWorld.alpha(sh.c1 == 0 ? 0xFFFFFFFF : sh.c1, 0.8f * fade * nb)), LightCoordsUtil.FULL_BRIGHT);
+                    }
                 }
                 default -> {
                 }
@@ -364,8 +429,11 @@ final class FxRender {
             float nx = Mth.cos(th) * r, nz = Mth.sin(th) * r;
             float h01 = (yy + 1) * 0.5f;
             float lit = Math.max(0.15f, 1 - Math.abs(h01 - sweep) * 4);
-            int col = tint(FxWorld.alpha(sh.c0, fade * lit * 0.8f));
             float px = bx + nx * sh.a, py = by + yy * sh.a * 1.35f, pz = bz + nz * sh.a;
+            // a skin around your own body is right in front of the camera in first person: let it fade there
+            float nf = near(Mth.sqrt(px * px + py * py + pz * pz));
+            if (nf <= 0.01f) continue;
+            int col = tint(FxWorld.alpha(sh.c0, fade * lit * 0.8f * nf));
             // a quad in the plane perpendicular to the normal
             float ex = -nz, ez = nx, ey = 0;
             float el = Mth.sqrt(ex * ex + ez * ez);
@@ -383,6 +451,13 @@ final class FxRender {
                     px + (-ex - gx) * h, py + (-ey - gy) * h, pz + (-ez - gz) * h, px + (-ex + gx) * h, py + (-ey + gy) * h, pz + (-ez + gz) * h,
                     col, LightCoordsUtil.FULL_BRIGHT);
         }
+    }
+
+    /** A shape held in the local player's hand while the camera is in first person. */
+    private static boolean ownHand(Shape sh) {
+        if (sh.anchor != Anchors.HAND && sh.anchor != Anchors.OFFHAND) return false;
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        return mc.player != null && sh.follow == mc.player.getId() && mc.options.getCameraType().isFirstPerson();
     }
 
     static float flick(int seed, int age) {
@@ -573,6 +648,16 @@ final class FxRender {
                         ox + n2x * r, oy + n2y * r, oz + n2z * r, c2, ox + n3x * r, oy + n3y * r, oz + n3z * r, c3);
             }
         }
+        if ((sh.flags & Shape.RIM) != 0 && !inside) {
+            // the silhouette as a bold band facing the camera: the edge reads against sky and stone alike
+            float d = Mth.sqrt(ox * ox + oy * oy + oz * oz);
+            float nx = -ox / d, ny = -oy / d, nz = -oz / d;
+            float rs = r * Mth.sqrt(Math.max(0, 1 - (r / d) * (r / d)));
+            float shift = r * r / d;
+            float w = Math.max(0.12f, r * 0.08f);
+            bandAround(vc, ox + nx * shift, oy + ny * shift, oz + nz * shift, nx, ny, nz, Math.max(0, rs - w), rs, rs + w * 0.6f,
+                    FxWorld.alpha(rgb, Math.min(1, base)), 40, 0, (float) (Math.PI * 2));
+        }
     }
 
     private static int sphereCol(int rgb, float base, float ox, float oy, float oz, float r, float nx, float ny, float nz, float rimPow,
@@ -581,7 +666,14 @@ final class FxRender {
         float pl = Mth.sqrt(px * px + py * py + pz * pz);
         float facing = pl < 1e-4f ? 1 : Math.abs(-(px * nx + py * ny + pz * nz) / pl);
         float rim = (float) Math.pow(1 - facing, rimPow);
-        float a = base * (inside ? fill + rim * 0.45f : fill + rim * (1 - fill));
+        float a;
+        if (inside) {
+            // from inside (a caster in their own nova) the shell reads as a wall of light around the horizon
+            float band = 1 - Math.abs(ny);
+            a = base * (fill + 0.12f + 0.55f * band * band);
+        } else {
+            a = base * (fill + rim * (1 - fill));
+        }
         return FxWorld.alpha(rgb, Math.min(1, a));
     }
 

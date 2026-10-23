@@ -33,8 +33,14 @@ final class FxBeams {
         int body = sh.c0, core = sh.c1 == 0 ? 0xFFFFFFFF : sh.c1;
         // the halo stays faint so day scenes keep their colour; the body carries the family colour
         FxRender.segment(vc, ax, ay, az, bx, by, bz, w * 3.2f, w * 3.6f, FxWorld.alpha(body, 0.35f * fade), FxWorld.alpha(body, 0.28f * fade));
-        FxRender.segment(vc, ax, ay, az, bx, by, bz, w, w * 1.1f, FxWorld.alpha(body, fade), FxWorld.alpha(body, 0.9f * fade));
-        FxRender.segment(vc, ax, ay, az, bx, by, bz, w * 0.34f, w * 0.38f, FxWorld.alpha(core, fade), FxWorld.alpha(core, 0.9f * fade));
+        // the body and core leave the hand visibly even in first person; only the wide halo fades near the camera
+        FxRender.keepNear = true;
+        try {
+            FxRender.segment(vc, ax, ay, az, bx, by, bz, w, w * 1.1f, FxWorld.alpha(body, fade), FxWorld.alpha(body, 0.9f * fade));
+            FxRender.segment(vc, ax, ay, az, bx, by, bz, w * 0.34f, w * 0.38f, FxWorld.alpha(core, fade), FxWorld.alpha(core, 0.9f * fade));
+        } finally {
+            FxRender.keepNear = false;
+        }
     }
 
     /** Per tick: how far the local player's aim beam reaches (blocks, then living things). */

@@ -99,7 +99,7 @@ final class FxRecipes {
     static void flare(double x, double y, double z, float size, FxStyle st, int life) {
         int f = FxWorld.sprite(FLARE, x, y, z, 0, 0, 0, life, size, size * 0.45f, st.core, alpha(st.mid, 0), FxPool.ADD | FxPool.ANIM);
         FxWorld.spin(f, R.f(0, 0.8f), 0);
-        FxWorld.sprite(GLOW, x, y, z, 0, 0, 0, life + 3, size * 2.0f, size * 0.7f, alpha(st.mid, 1f), alpha(st.edge, 0), FxPool.ADD);
+        FxWorld.sprite(HALO, x, y, z, 0, 0, 0, life + 3, size * 2.4f, size * 0.8f, alpha(st.mid, 1f), alpha(st.edge, 0), FxPool.ADD);
     }
 
     /** Sparks flying out (biased along a direction when given), stretched by their speed. */
@@ -305,7 +305,7 @@ final class FxRecipes {
     /** The charge orb at the hand: a pulsing core in a halo that gathers sparks; also used for local prediction. */
     static void startCharge(Entity caster, FxStyle st, float scale, int life, int seed) {
         float sc = Math.max(0.5f, scale) * 1.3f;
-        Shape halo = attach(disc(0, 0, 0, GLOW, 0.3f * sc, 1.2f * sc, life, alpha(st.mid, 0.85f), alpha(st.mid, 1f)), caster, Anchors.HAND);
+        Shape halo = attach(disc(0, 0, 0, HALO, 0.5f * sc, 1.8f * sc, life, alpha(st.mid, 0.9f), alpha(st.mid, 1f)), caster, Anchors.HAND);
         if (halo != null) {
             halo.emitter = E_CHARGE;
             halo.style = st;
@@ -558,15 +558,37 @@ final class FxRecipes {
             shell.c = 1.7f;
             shell.d = 0.14f;
             shell.c0 = alpha(st.mid, 1f);
-            shell.c1 = alpha(st.edge, 0.35f);
+            shell.c1 = alpha(st.mid, 0.8f);
             shell.fadeIn = 0;
             shell.fadeOut = 8;
+            // the shell grows in eight ticks and holds for a second; its silhouette is drawn as a bold band
+            if (!implode) shell.flags |= Shape.HOLD;
+            shell.flags |= Shape.RIM;
+        }
+        double gy0 = FxWorld.groundY(x, y, z);
+        // a flash across the ground under the sphere and two more rings of latitude, so a caster standing inside
+        // their own nova sees the wall of light all around
+        int flash = FxWorld.sprite(HALO, x, gy0 + 0.05, z, 0, 0, 0, 12, r * 1.2f, r * 2.1f, alpha(st.mid, 0.9f), alpha(st.edge, 0),
+                FxPool.ADD | FxPool.FLAT);
+        FxWorld.drag(flash, 0);
+        for (int k = -1; k <= 1; k += 2) {
+            double ly = y + k * r * 0.5;
+            if (ly < gy0 + 0.2) continue;
+            Shape lat = ring(x, ly, z, implode ? r * 0.87f : 0.3f, implode ? 0.2f : r * 0.87f, 0.35f, 0.18f, 18, alpha(st.mid, 0.9f),
+                    alpha(st.edge, 0.25f), 0, 1, 0);
+            if (lat != null) {
+                lat.flags |= Shape.HOLD;
+                lat.fadeOut = 8;
+            }
         }
         // the sphere's equator, so its edge reads even where the shell is faint
-        Shape eq = ring(x, y, z, implode ? r : 0.3f, implode ? 0.2f : r, 0.5f, 0.25f, 18, alpha(st.mid, 1f), alpha(st.edge, 0.3f), 0, 1, 0);
-        if (eq != null) eq.fadeOut = 8;
+        Shape eq = ring(x, y, z, implode ? r : 0.3f, implode ? 0.2f : r, 0.5f, 0.3f, 18, alpha(st.mid, 1f), alpha(st.mid, 0.6f), 0, 1, 0);
+        if (eq != null) {
+            if (!implode) eq.flags |= Shape.HOLD;
+            eq.fadeOut = 8;
+        }
         sphereBurst(x, y, z, 0.2f, r * 0.55f, 7, st);
-        ring(x, FxWorld.groundY(x, y, z) + 0.08, z, 0.4f, r - 0.4f, 0.7f, 0.25f, 12, alpha(st.core, 0.9f), alpha(st.mid, 0), 0, 1, 0);
+        ring(x, FxWorld.groundY(x, y, z) + 0.08, z, 0.4f, r - 0.4f, 0.8f, 0.35f, 18, alpha(st.mid, 1f), alpha(st.edge, 0.2f), 0, 1, 0);
         sparks(x, y, z, n((int) (22 * big)), 0.6f, st, 8, 0, 0, 0, 0, 0);
         if (st == FxStyle.HEAT || st == FxStyle.ENERGY) embers(x, y, z, n((int) (14 * big)), r * 0.4f, FxStyle.HEAT, 0.003f);
         if (st == FxStyle.GRAVITY) dustRing(x, FxWorld.groundY(x, y, z), z, r * 0.6f, n(12), st, -0.08f);
@@ -685,7 +707,7 @@ final class FxRecipes {
             s.fadeOut = 3;
             if (st == FxStyle.CHARGE) s.flags |= Shape.FLICKER;
         }
-        FxWorld.sprite(GLOW, bx, by, bz, 0, 0, 0, 4, 1.3f * Math.max(0.6f, e.scale()), 0.4f, alpha(c, 1f), alpha(c, 0), FxPool.ADD);
+        FxWorld.sprite(HALO, bx, by, bz, 0, 0, 0, 4, 1.8f * Math.max(0.6f, e.scale()), 0.6f, alpha(c, 1f), alpha(c, 0), FxPool.ADD);
         if (R.chance(0.5f)) {
             int b = FxWorld.sprite(BOLT, bx, by, bz, 0, 0, 0, 2, 0.5f, 0.4f, st.core, alpha(st.mid, 0), FxPool.ADD);
             FxWorld.spin(b, R.f(0, 6.28f), 0);
@@ -956,7 +978,7 @@ final class FxRecipes {
         float r = Math.max(1f, e.scale());
         int life = Math.max(10, e.ticks());
         boolean out = e.has(FxEvent.REPULSE);
-        Shape halo = disc(x, y, z, GLOW, 0.6f, 1.8f * big, life, alpha(st.mid, 0.9f), alpha(st.mid, 0.9f));
+        Shape halo = disc(x, y, z, HALO, 1.0f, 2.8f * big, life, alpha(st.mid, 0.9f), alpha(st.mid, 0.9f));
         if (halo != null) {
             halo.flags |= Shape.PULSE;
             halo.fadeOut = 6;
@@ -1372,7 +1394,7 @@ final class FxRecipes {
             t.fadeOut = 6;
             t.pushHistory(t.x, t.y, t.z);
         }
-        Shape g = attach(disc(0, 0, 0, GLOW, 1.0f, 1.6f, life, alpha(st.mid, 0.8f), alpha(st.core, 0.9f)), caster, Anchors.BODY);
+        Shape g = attach(disc(0, 0, 0, HALO, 1.6f, 2.4f, life, alpha(st.mid, 0.8f), alpha(st.core, 0.9f)), caster, Anchors.BODY);
         if (g != null) g.flags |= Shape.PULSE;
         Shape em = emitter(e, E_METEOR, life, caster, Anchors.BODY);
         if (em != null) em.style = st;
@@ -1469,7 +1491,7 @@ final class FxRecipes {
                     }
                 }
                 if (s.age % 4 == 0) {
-                    FxWorld.sprite(GLOW, ex, ey, ez, 0, 0, 0, 6, 2.0f, 0.6f, alpha(s.c0, 0.8f), alpha(s.c0, 0), FxPool.ADD);
+                    FxWorld.sprite(HALO, ex, ey, ez, 0, 0, 0, 6, 2.6f, 0.8f, alpha(s.c0, 0.8f), alpha(s.c0, 0), FxPool.ADD);
                     // a shock ring where the beam lands and one at the palm, both facing along the beam
                     float bdx = (float) (ex - s.x), bdy = (float) (ey - s.y), bdz = (float) (ez - s.z);
                     ring(ex, ey, ez, 0.2f, 1.1f, 0.18f, 0.05f, 6, alpha(s.c0, 0.9f), alpha(st.edge, 0), bdx, bdy, bdz);

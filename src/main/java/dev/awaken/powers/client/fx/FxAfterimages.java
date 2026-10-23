@@ -124,7 +124,9 @@ final class FxAfterimages {
         for (Ghost g : G) {
             if (!g.live || g.state == null) continue;
             float t = (g.age + pt) / g.life;
-            float a = (1 - t) * (1 - t) * 0.55f;
+            double gx = g.x - cx, gy = g.y + 1 - cy, gz = g.z - cz;
+            // a ghost of yourself left where you stand would fill a first-person view: fade ghosts near the camera
+            float a = (1 - t) * (1 - t) * 0.55f * FxRender.near((float) Math.sqrt(gx * gx + gy * gy + gz * gz));
             if (a <= 0.02f) continue;
             int tint = ((int) (a * 255) << 24) | (g.colour & 0xFFFFFF);
             ps.pushPose();

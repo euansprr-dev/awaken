@@ -784,6 +784,42 @@ def s_pool():
     return [b]
 
 
+class Smooth:
+    """A smooth frame, not pixel art: a halo scaled across a third of the view must not show bands or steps.
+    Brightness carries the falloff; alpha follows it too (never below the 0.1 cut-out where anything is lit), so a
+    halo also fades smoothly if it is ever drawn alpha-blended."""
+
+    def __init__(self, size, fn):
+        self.w = self.h = size
+        self.fn = fn
+
+    def canvas(self, kind):
+        c = Canvas(self.w, self.h)
+        for y in range(self.h):
+            for x in range(self.w):
+                v = max(0.0, min(1.0, self.fn(x, y)))
+                if v < 0.012:
+                    continue
+                g = round(255 * v)
+                c.set(x, y, (g, g, g, max(28, round(255 * min(1.0, v * 1.5)))))
+        return c
+
+
+def s_halo():
+    """64 px radial gradient for big halos (beam ends, charge orbs, flares, novas): a hot core and a long soft tail."""
+    m = 31.5
+
+    def fn(x, y):
+        d = math.hypot(x - m, y - m) / 32.0
+        if d >= 1:
+            return 0
+        tail = (1 - d) ** 2.4
+        core = math.exp(-(d / 0.16) ** 2)
+        return 0.78 * tail + 0.22 * core
+
+    return [Smooth(64, fn)]
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Registry and build
 
@@ -795,6 +831,7 @@ SPEC = {  # name: (kind, size, frames, maker)
     "palm": ("add", 32, 1, s_palm), "wind": ("add", 16, 3, s_wind), "glyph_circle": ("add", 32, 1, s_glyph_circle),
     "smoke": ("alpha", 16, 6, s_smoke), "dust": ("alpha", 16, 6, s_dust), "decal_crack": ("alpha", 32, 1, s_crack),
     "decal_scorch": ("alpha", 32, 1, s_scorch), "decal_pool": ("alpha", 32, 1, s_pool),
+    "halo": ("add", 64, 1, s_halo),
 }
 
 _IMAGES = {}
