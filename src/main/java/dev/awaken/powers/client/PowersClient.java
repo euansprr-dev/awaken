@@ -14,10 +14,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
@@ -41,16 +39,12 @@ public final class PowersClient {
             ClientPowers.tick();
             ClientCasting.tick();
             CombatFeel.tick();
-            BeamRenderer.tick();
         });
         bus.addListener(PlayerTickEvent.Pre.class, ClientCasting::onPlayerTick);
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, CombatFeel::onCameraAngles);
-        bus.addListener(ExtractLevelRenderStateEvent.class, BeamRenderer::onExtract);
-        bus.addListener(SubmitCustomGeometryEvent.class, BeamRenderer::onSubmit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ClientPowers.reset();
             ClientCasting.reset();
-            BeamRenderer.reset();
         });
 
         Powers.clientLoadout = () -> {
@@ -59,13 +53,15 @@ public final class PowersClient {
         };
         StatusSections.add(StatusSections.Tab.STATUS, new PowersSection());
         StarterClient.init(modBus);
+        dev.awaken.powers.client.fx.FxClient.init(modBus);
     }
 
     private static void payloads(RegisterClientPayloadHandlersEvent e) {
         e.register(PowerPayloads.Feedback.TYPE, (msg, ctx) -> ClientPowers.onFeedback(msg));
         e.register(PowerPayloads.Feel.TYPE, (msg, ctx) -> ClientPowers.onFeel(msg));
         e.register(PowerPayloads.Marks.TYPE, (msg, ctx) -> ClientPowers.onMarks(msg));
-        e.register(PowerPayloads.Beam.TYPE, (msg, ctx) -> BeamRenderer.onBeam(msg));
+        e.register(PowerPayloads.Beam.TYPE, (msg, ctx) -> dev.awaken.powers.client.fx.FxClient.legacyBeam(msg.casterId(), msg.x(), msg.y(), msg.z(),
+                msg.colour(), msg.ticks(), msg.width(), msg.range(), msg.follow()));
     }
 
     private static void renderers(EntityRenderersEvent.RegisterRenderers e) {
