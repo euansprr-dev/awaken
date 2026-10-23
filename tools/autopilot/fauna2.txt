@@ -1,0 +1,185 @@
+# Fauna P2 tour (the rest of the land): awaken, take a first power, then every new creature lined up family by family
+# by day and by night, each family in its own biome by day and by night with the census in chat, a rumour of a lair
+# on the tracker, a lair visited with its beast at home, and the Codex.
+# Run by the integrator: tools/autopilot.sh fauna2 (builders never run a client).
+world autopilot_fauna2 creative 4243
+waitworld
+gui 0
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning true
+cmd time set 6000
+cmd awaken admin awaken
+wait 60
+# the first-power cards may open on awakening: take one so they don't cover the rest of the tour
+screen close
+cmd awaken powers starter 1
+wait 20
+# level 3: named beasts, lairs and rumours start here
+cmd awaken admin levels 3
+wait 20
+cmd time set 6000
+cmd time pause
+look 0 10
+wait 40
+
+# ---- line-ups: each family in a row facing the camera (NoAI, tagged awaken_lineup), noon then midnight ----
+cmd awaken fauna lineup mire
+wait 40
+shot fauna2_01_mire_lineup_day
+cmd time set 18000
+wait 30
+shot fauna2_02_mire_lineup_night
+cmd kill @e[tag=awaken_lineup]
+cmd time set 6000
+cmd awaken fauna lineup canopy
+wait 40
+shot fauna2_03_canopy_lineup_day
+cmd time set 18000
+wait 30
+shot fauna2_04_canopy_lineup_night
+cmd kill @e[tag=awaken_lineup]
+cmd time set 6000
+cmd awaken fauna lineup duskwood
+wait 40
+shot fauna2_05_duskwood_lineup_day
+cmd time set 18000
+wait 30
+shot fauna2_06_duskwood_lineup_night
+cmd kill @e[tag=awaken_lineup]
+cmd time set 6000
+cmd awaken fauna lineup blossom
+wait 40
+shot fauna2_07_blossom_lineup_day
+cmd time set 18000
+wait 30
+shot fauna2_08_blossom_lineup_night
+cmd kill @e[tag=awaken_lineup]
+cmd time set 6000
+cmd awaken fauna lineup crag
+wait 40
+shot fauna2_09_crag_lineup_day
+cmd time set 18000
+wait 30
+shot fauna2_10_crag_lineup_night
+cmd kill @e[tag=awaken_lineup]
+cmd time set 6000
+cmd awaken fauna lineup spore
+wait 40
+shot fauna2_11_spore_lineup_day
+cmd time set 18000
+wait 30
+shot fauna2_12_spore_lineup_night
+cmd kill @e[tag=awaken_lineup]
+# all 22 at once, from further back (a size check against the player)
+cmd time set 6000
+cmd awaken fauna lineup p2
+wait 40
+cmd tp @s ^ ^ ^-14
+look 0 8
+wait 20
+shot fauna2_13_p2_lineup_wide
+cmd kill @e[tag=awaken_lineup]
+cmd time unpause
+
+# ---- each family where it lives, by day and by night (natural spawning, the census in chat) ----
+cmd time set 1000
+cmd awaken fauna goto mire
+wait 400
+look 0 12
+shot fauna2_14_mire_day
+cmd awaken fauna census
+wait 10
+shot fauna2_15_mire_census
+cmd time set 14000
+wait 500
+shot fauna2_16_mire_night
+cmd time set 1000
+cmd awaken fauna goto canopy
+wait 400
+look 0 12
+shot fauna2_17_canopy_day
+cmd awaken fauna census
+wait 10
+shot fauna2_18_canopy_census
+cmd time set 14000
+wait 500
+shot fauna2_19_canopy_night
+cmd time set 1000
+cmd awaken fauna goto duskwood
+wait 400
+look 0 12
+shot fauna2_20_duskwood_day
+cmd awaken fauna census
+wait 10
+shot fauna2_21_duskwood_census
+cmd time set 14000
+wait 500
+shot fauna2_22_duskwood_night
+cmd time set 1000
+cmd awaken fauna goto blossom
+wait 400
+look 0 12
+shot fauna2_23_blossom_day
+cmd awaken fauna census
+wait 10
+shot fauna2_24_blossom_census
+cmd time set 14000
+wait 500
+shot fauna2_25_blossom_night
+cmd time set 1000
+cmd awaken fauna goto crag
+wait 400
+look 0 12
+shot fauna2_26_crag_day
+cmd awaken fauna census
+wait 10
+shot fauna2_27_crag_census
+cmd time set 14000
+wait 500
+shot fauna2_28_crag_night
+cmd time set 1000
+cmd awaken fauna goto spore
+wait 400
+look 0 12
+shot fauna2_29_spore_day
+cmd awaken fauna census
+wait 10
+shot fauna2_30_spore_census
+cmd time set 14000
+wait 500
+shot fauna2_31_spore_night
+
+# ---- a lair: heard of (toast and tracker), then visited, its beast waiting at the den ----
+cmd time set 6000
+cmd awaken fauna goto greenwild
+wait 300
+cmd awaken fauna lair hear briar_sow
+wait 20
+# toast "Heard of · The Bramble Wallow / The Briar Sow's lair · 1.2 km NE"; Now "Lair of the Briar Sow · 1.2 km NE"
+shot fauna2_32_lair_heard
+cmd awaken fauna lair goto briar_sow
+wait 300
+look 0 20
+# 14 blocks south of the den, facing it: the wallow, its berry ring, the Briar Sow (or "No lair within reach: built one")
+shot fauna2_33_lair_wallow
+cmd awaken fauna lair why
+wait 10
+shot fauna2_34_lair_why
+cmd tp @s ^ ^ ^8
+wait 40
+# "Lair found · The Bramble Wallow" toast; the Sow warns you off
+shot fauna2_35_lair_found
+cmd awaken fauna lair list
+wait 10
+shot fauna2_36_lair_list
+# another family's lair, built in front of the camera to judge its look (every style can be placed this way)
+cmd awaken fauna lair place weaver_queen
+wait 60
+shot fauna2_37_lair_silk_hollow
+cmd awaken fauna lair place mycelord
+wait 60
+shot fauna2_38_lair_spore_ring
+screen status
+shot fauna2_39_status_codex
+screen close
+quit

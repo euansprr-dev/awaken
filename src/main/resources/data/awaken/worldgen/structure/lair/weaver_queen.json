@@ -1,0 +1,8 @@
+{
+  "type": "awaken:fauna_lair",
+  "lair": "silk_hollow",
+  "biomes": "#awaken:has_lair/weaver_queen",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

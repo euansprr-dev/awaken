@@ -1,0 +1,8 @@
+{
+  "type": "awaken:fauna_lair",
+  "lair": "wallow",
+  "biomes": "#awaken:has_lair/briar_sow",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin"
+}

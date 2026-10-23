@@ -40,7 +40,7 @@ public record Habitat(Window window, boolean caves, Ground ground, float preAwak
 
     /** What it must stand on to spawn. */
     public enum Ground {
-        /** Grass, dirt, podzol, moss, snow, sand, terracotta, stone slopes: anything a wild animal walks on. */
+        /** Grass, dirt, podzol, mycelium, moss, mud, snow, sand, terracotta, stone slopes: anything a wild animal walks on. */
         NATURAL,
         /** Sand, red sand, terracotta. */
         SANDY,
@@ -53,7 +53,8 @@ public record Habitat(Window window, boolean caves, Ground ground, float preAwak
                 case SANDY -> below.is(BlockTags.SAND) || below.is(BlockTags.TERRACOTTA) || below.is(BlockTags.BADLANDS_TERRACOTTA);
                 case NATURAL -> below.is(BlockTags.ANIMALS_SPAWNABLE_ON) || below.is(BlockTags.DIRT) || below.is(BlockTags.SAND)
                         || below.is(BlockTags.TERRACOTTA) || below.is(BlockTags.BADLANDS_TERRACOTTA) || below.is(BlockTags.SNOW)
-                        || below.is(BlockTags.GOATS_SPAWNABLE_ON) || below.is(BlockTags.WOLVES_SPAWNABLE_ON) || below.is(Blocks.PODZOL);
+                        || below.is(BlockTags.GOATS_SPAWNABLE_ON) || below.is(BlockTags.WOLVES_SPAWNABLE_ON) || below.is(Blocks.PODZOL)
+                        || below.is(BlockTags.SUBSTRATE_OVERWORLD) || below.is(Blocks.CLAY) || below.is(Blocks.CALCITE);
             };
         }
     }
@@ -76,7 +77,35 @@ public record Habitat(Window window, boolean caves, Ground ground, float preAwak
             Map.entry("frostfinch", new Habitat(Window.DAY, false, Ground.NATURAL, HINT, 0, "Drops feathers; loves campfires")),
             Map.entry("frost_stag", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 0, "Bolts from running feet. Sneak")),
             Map.entry("wisp_hound", new Habitat(Window.DARK, true, Ground.ANY, 0, 0, "Hunts in packs at night. Firelight is safe")),
-            Map.entry("old_antler", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Guards its valley")));
+            Map.entry("old_antler", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Guards its valley")),
+            // P2. The Mire: swamp, mangrove swamp
+            Map.entry("bogwick", new Habitat(Window.DUSK_NIGHT, false, Ground.NATURAL, HINT, 0, "Draws the poison out of you")),
+            Map.entry("mudskipper", new Habitat(Window.DAY, false, Ground.NATURAL, HINT, 0, "Digs clay and slime out of the mud")),
+            Map.entry("bog_toad", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 0, "Eats small slimes; its tongue pulls")),
+            Map.entry("mire_mother", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Rules the bog")),
+            // The Canopy: jungles
+            Map.entry("dart_frog", new Habitat(Window.DAY, false, Ground.NATURAL, HINT, 0, "Venom skin. Never touch it bare-handed")),
+            Map.entry("crested_basilisk", new Habitat(Window.DAY_DUSK, false, Ground.NATURAL, 0, 0, "Sprints across water when startled")),
+            Map.entry("canopy_prowler", new Habitat(Window.DARK, true, Ground.ANY, 0, 0, "Hunts at night. Firelight is safe")),
+            Map.entry("plumed_coil", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Strikes from the canopy")),
+            // Duskwood: dark forest, pale garden
+            Map.entry("gloam_snail", new Habitat(Window.ANY, false, Ground.NATURAL, HINT, 0, "Leaves glowing lichen in the dark")),
+            Map.entry("hollow_owl", new Habitat(Window.DUSK_NIGHT, false, Ground.NATURAL, 0, 0, "Makes monsters glow in the dark")),
+            Map.entry("thornling", new Habitat(Window.DARK, true, Ground.ANY, 0, 0, "Hunts in packs. Torchlight is safe")),
+            Map.entry("weaver_queen", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Her webs hang nearby")),
+            // Blossomwood: cherry grove, flower forest, birch forests
+            Map.entry("petalwing", new Habitat(Window.DAY, false, Ground.NATURAL, HINT, 0, "Flowers open where it rests")),
+            Map.entry("honey_bear", new Habitat(Window.DAY_DUSK, false, Ground.NATURAL, 0, 0, "Shakes honeycomb out of bee nests")),
+            Map.entry("empress_moth", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Her dust brings sleep")),
+            // The Crags: peaks, windswept hills, stony shores
+            Map.entry("scree_marmot", new Habitat(Window.DAY, false, Ground.NATURAL, HINT, 0, "Digs flint and nuggets. Sneak up")),
+            Map.entry("peak_kite", new Habitat(Window.DAY, false, Ground.NATURAL, HINT, 0, "Drops feathers as it soars")),
+            Map.entry("crag_ram", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 0, "Butts you off ledges if cornered")),
+            Map.entry("stonehorn", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Its stamp looses rocks")),
+            // Sporewild: mushroom fields
+            Map.entry("shroomlet", new Habitat(Window.ANY, false, Ground.NATURAL, HINT, 0, "Plants mushrooms; puffs if startled")),
+            Map.entry("sporeback_snail", new Habitat(Window.ANY, false, Ground.NATURAL, HINT, 0, "Mushrooms it rests by grow huge")),
+            Map.entry("mycelord", new Habitat(Window.ANY, false, Ground.NATURAL, 0, 3, "Named beast. Its spores choke")));
 
     public static Habitat of(String id) {
         Habitat h = ALL.get(id);

@@ -8,8 +8,8 @@ import net.minecraft.sounds.SoundEvents;
  * The body a creature wears. Most are vanilla models re-tinted with our own skin and glow layers on top (the vanilla
  * texture is referenced, never copied); the last few are our own LayerDefinitions with generated textures. The client
  * maps each value to a renderer in {@code mobs.client.AwRenderers}; this common enum only holds what the server needs.
- * The overworld creatures' bodies (moth, stag, tortoise, ray, scarab) are ours; allay, parrot and fox are vanilla
- * bodies whose every face our skin layer repaints.
+ * The overworld creatures' bodies (moth, stag, tortoise, ray, scarab; P2: lizard, snail, mushroom, marmot) are ours;
+ * allay, parrot, fox (P2: frog, goat, ocelot) are vanilla bodies whose every face our skin layer repaints.
  */
 public enum Model {
     // humanoids
@@ -74,7 +74,16 @@ public enum Model {
     // ...and vanilla animal bodies repainted by our skin layer
     ALLAY("allay/allay", Move.FLY, 0.35F, 0.6F, Voice.ALLAY),
     PARROT("parrot/parrot_grey", Move.GROUND, 0.4F, 0.6F, Voice.PARROT),
-    FOX("fox/fox_snow", Move.GROUND, 0.6F, 0.7F, Voice.FOX);
+    FOX("fox/fox_snow", Move.GROUND, 0.6F, 0.7F, Voice.FOX),
+    // P2 (the rest of the land): our own bodies where a vanilla one would look wrong...
+    LIZARD("", Move.GROUND, 0.6F, 0.45F, Voice.LIZARD),
+    SNAIL("", Move.GROUND, 0.5F, 0.6F, Voice.SNAIL),
+    MUSHROOM("", Move.GROUND, 0.5F, 0.95F, Voice.MUSHROOM),
+    MARMOT("", Move.GROUND, 0.5F, 0.5F, Voice.MARMOT),
+    // ...and three more vanilla animal bodies, repainted by the skin layer
+    FROG("frog/frog_temperate", Move.GROUND, 0.5F, 0.5F, Voice.FROG),
+    GOAT("goat/goat", Move.GROUND, 0.9F, 1.3F, Voice.GOAT),
+    OCELOT("cat/ocelot", Move.GROUND, 0.6F, 0.7F, Voice.OCELOT);
 
     public enum Move { GROUND, HOP, FLY }
 
@@ -162,7 +171,26 @@ public enum Model {
         WISP(SoundEvents.WOLF_SOUNDS.get(net.minecraft.world.entity.animal.wolf.WolfSoundVariants.SoundSet.BIG).adultSounds().growlSound().value(),
                 SoundEvents.WOLF_SOUNDS.get(net.minecraft.world.entity.animal.wolf.WolfSoundVariants.SoundSet.BIG).adultSounds().hurtSound().value(),
                 SoundEvents.WOLF_SOUNDS.get(net.minecraft.world.entity.animal.wolf.WolfSoundVariants.SoundSet.BIG).adultSounds().deathSound().value()),
-        BOAR(SoundEvents.HOGLIN_AMBIENT, SoundEvents.HOGLIN_HURT, SoundEvents.HOGLIN_DEATH);
+        BOAR(SoundEvents.HOGLIN_AMBIENT, SoundEvents.HOGLIN_HURT, SoundEvents.HOGLIN_DEATH),
+        // P2 bodies and overrides
+        LIZARD(SoundEvents.ARMADILLO_AMBIENT, SoundEvents.ARMADILLO_HURT, SoundEvents.ARMADILLO_DEATH),
+        SNAIL(null, SoundEvents.SLIME_HURT_SMALL, SoundEvents.SLIME_DEATH_SMALL),
+        MUSHROOM(null, SoundEvents.SLIME_HURT_SMALL, SoundEvents.SLIME_DEATH_SMALL),
+        MARMOT(SoundEvents.RABBIT_AMBIENT, SoundEvents.RABBIT_HURT, SoundEvents.RABBIT_DEATH),
+        FROG(SoundEvents.FROG_AMBIENT, SoundEvents.FROG_HURT, SoundEvents.FROG_DEATH),
+        GOAT(SoundEvents.GOAT_AMBIENT, SoundEvents.GOAT_HURT, SoundEvents.GOAT_DEATH),
+        OCELOT(SoundEvents.OCELOT_AMBIENT, SoundEvents.OCELOT_HURT, SoundEvents.OCELOT_DEATH),
+        /** A swamp firefly: no buzzing loop. */
+        FIREFLY(null, SoundEvents.BEE_HURT, SoundEvents.BEE_DEATH),
+        /** A low flute note reads as a hoot at an owl's pitch. */
+        OWL(SoundEvents.NOTE_BLOCK_FLUTE.value(), SoundEvents.PARROT_HURT, SoundEvents.PARROT_DEATH),
+        /** A soaring bird on a phantom's body must not shriek like one. */
+        KITE(SoundEvents.PARROT_AMBIENT, SoundEvents.PARROT_HURT, SoundEvents.PARROT_DEATH),
+        /** A big cat's growl. */
+        PROWLER(SoundEvents.WOLF_SOUNDS.get(net.minecraft.world.entity.animal.wolf.WolfSoundVariants.SoundSet.BIG).adultSounds().growlSound().value(),
+                SoundEvents.OCELOT_HURT, SoundEvents.OCELOT_DEATH),
+        /** The walking mushroom's giant: a deep snuffle. */
+        MYCELORD(SoundEvents.SNIFFER_IDLE, SoundEvents.SNIFFER_HURT, SoundEvents.SNIFFER_DEATH);
 
         public final SoundEvent ambient;
         public final SoundEvent hurt;

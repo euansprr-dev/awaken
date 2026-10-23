@@ -56,14 +56,15 @@ import java.util.Set;
  */
 public class FaunaMob extends AwakenMob {
     /** Pose bits synced to the client ({@link AwLook#fauna}). */
-    public static final int P_AIR = 1, P_STALK = 1 << 1, P_GRAZE = 1 << 2, P_ANGRY = 1 << 3, P_BURROW = 1 << 4, P_REST = 1 << 5, P_GUARD = 1 << 6;
+    public static final int P_AIR = 1, P_STALK = 1 << 1, P_GRAZE = 1 << 2, P_ANGRY = 1 << 3, P_BURROW = 1 << 4, P_REST = 1 << 5, P_GUARD = 1 << 6,
+            P_ALERT = 1 << 7, P_SPRINT = 1 << 8, P_PUFF = 1 << 9;
     /** Night hunters leave alone a player standing in block light this bright, or under an open daytime sky. */
     public static final int SAFE_LIGHT = 8;
     /** Ticks a scarab takes to dig itself in. */
     static final int BURROW_TICKS = 30;
 
     private static final net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> ORES = net.neoforged.neoforge.common.Tags.BlockItems.ORES.block();
-    private static final EntityDataAccessor<Byte> DATA_POSE = SynchedEntityData.defineId(FaunaMob.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Integer> DATA_POSE = SynchedEntityData.defineId(FaunaMob.class, EntityDataSerializers.INT);
 
     // Server state. No field initialisers: registerGoals runs inside the super constructor.
     int scareTicks;
@@ -75,9 +76,16 @@ public class FaunaMob extends AwakenMob {
     @Nullable BlockPos lure;
     int talentCooldown, talentTries;
     int burrowTicks;
+    /** P2 talents: a marmot sitting up to whistle, an owl's stare (alert); a shroomlet's spore puff (ticks left). */
+    int alertTicks, puffTicks;
     private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
     // client
     private float burrowAnim;
+    /** Frog bodies are animated by keyframes: hops, croaks and the tongue (client only). */
+    public final net.minecraft.world.entity.AnimationState jumpAnim = new net.minecraft.world.entity.AnimationState();
+    public final net.minecraft.world.entity.AnimationState croakAnim = new net.minecraft.world.entity.AnimationState();
+    public final net.minecraft.world.entity.AnimationState tongueAnim = new net.minecraft.world.entity.AnimationState();
+    private int croakTicks, tongueTicks;
 
     public FaunaMob(EntityType<? extends FaunaMob> type, Level level) {
         super(type, level);
@@ -101,7 +109,7 @@ public class FaunaMob extends AwakenMob {
         boolean flies = d.flies();
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new MobGoals.Hold(this));
-        if (d.talent == FaunaTalent.BURROW) goalSelector.addGoal(1, new FaunaGoals.Burrow(this));
+        if (d.talent == FaunaTalent.BURROW || d.talent == FaunaTalent.DIG) goalSelector.addGoal(1, new FaunaGoals.Burrow(this));
         goalSelector.addGoal(2, new FaunaGoals.Scatter(this));
         switch (role) {
             case HUNTER -> {
@@ -122,11 +130,13 @@ public class FaunaMob extends AwakenMob {
             case TEND -> goalSelector.addGoal(4, new FaunaGoals.Tend(this));
             case FLOCK -> goalSelector.addGoal(4, new FaunaGoals.Flock(this));
             case GLIDE -> goalSelector.addGoal(5, new FaunaGoals.Glide(this));
-            case GRAZE, SKITTISH -> goalSelector.addGoal(5, new FaunaGoals.Graze(this));
-            default -> { }
+            case GRAZE, SKITTISH, SPRINT -> goalSelector.addGoal(5, new FaunaGoals.Graze(this));
+            default -> WildGoals.add(this, d.talent);
         }
         if (flies) {
-            if (d.talent != FaunaTalent.GLIDE && d.talent != FaunaTalent.DOWSE) goalSelector.addGoal(7, new MobGoals.FlyWander(this));
+            if (d.talent != FaunaTalent.GLIDE && d.talent != FaunaTalent.DOWSE && !WildGoals.ownsFlight(d.talent)) {
+                goalSelector.addGoal(7, new MobGoals.FlyWander(this));
+            }
         } else {
             goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, role == FaunaRole.AMBIENT ? 0.9 : 0.7));
             goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -134,14 +144,37 @@ public class FaunaMob extends AwakenMob {
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
     }
 
+    /** For {@link WildGoals} (the goal selector is protected). */
+    void goal(int priority, net.minecraft.world.entity.ai.goal.Goal goal) {
+        goalSelector.addGoal(priority, goal);
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
-        b.define(DATA_POSE, (byte) 0);
+        b.define(DATA_POSE, 0);
     }
 
     public int pose() {
-        return entityData.get(DATA_POSE) & 0xFF;
+        return entityData.get(DATA_POSE);
+    }
+
+    /** Dart frogs climb trunks and walls like spiders. */
+    @Override
+    protected net.minecraft.world.entity.ai.navigation.PathNavigation createNavigation(Level level) {
+        if (def().talent == FaunaTalent.VENOM) return new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this, level);
+        return super.createNavigation(level);
+    }
+
+    @Override
+    public boolean onClimbable() {
+        return (talent() == FaunaTalent.VENOM && horizontalCollision) || super.onClimbable();
+    }
+
+    /** A startled basilisk runs straight across water on its hind legs. */
+    @Override
+    public boolean canStandOnFluid(net.minecraft.world.level.material.FluidState fluid) {
+        return talent() == FaunaTalent.SPRINT && scareTicks > 0 && fluid.is(net.minecraft.tags.FluidTags.WATER);
     }
 
     // ---- spawning ------------------------------------------------------------------------------------------------
@@ -176,9 +209,28 @@ public class FaunaMob extends AwakenMob {
         super.tick();
         if (level().isClientSide()) {
             burrowAnim = (pose() & P_BURROW) != 0 ? Math.min(1.0F, burrowAnim + 1.0F / BURROW_TICKS) : 0.0F;
+            if (def().model == Model.FROG) animateFrog();
             if (def().model == Model.SNOW_WOLF && tickCount % 6 == 0 && random.nextInt(3) == 0) {
                 level().addParticle(ParticleTypes.SNOWFLAKE, getRandomX(0.6), getY() + 0.3, getRandomZ(0.6), 0, 0.01, 0);
             }
+        }
+    }
+
+    /** Keyframe states for frog bodies: a hop while airborne, a croak now and then, the tongue as an attack winds up. */
+    private void animateFrog() {
+        if (!onGround() && !isInWater()) jumpAnim.startIfStopped(tickCount);
+        else jumpAnim.stop();
+        if (croakTicks > 0) {
+            if (--croakTicks == 0) croakAnim.stop();
+        } else if (onGround() && walkAnimation.speed() < 0.05F && random.nextInt(240) == 0) {
+            croakTicks = 60;
+            croakAnim.start(tickCount);
+        }
+        if (tongueTicks > 0) {
+            if (--tongueTicks == 0) tongueAnim.stop();
+        } else if (telegraphTicks() > 0 || (pose() & P_ALERT) != 0) {
+            tongueTicks = 10;
+            tongueAnim.start(tickCount);
         }
     }
 
@@ -198,6 +250,8 @@ public class FaunaMob extends AwakenMob {
         if (scareTicks > 0 && --scareTicks == 0) scareFrom = null;
         if (graze > 0) graze--;
         if (burrowTicks > 0) tickBurrow(level);
+        if (alertTicks > 0) alertTicks--;
+        if (puffTicks > 0) puffTicks--;
         int phase = (tickCount + getId()) % 10;
         if (phase == 0) {
             switch (faunaRole()) {
@@ -214,6 +268,7 @@ public class FaunaMob extends AwakenMob {
         } else if (slot % 40 == 5) {
             tickTalent(level);
         }
+        if (talent() == FaunaTalent.DIG && burrowTicks == 0 && slot % 5 == 0) WildTalents.checkAlarm(this, level);
         updatePose();
     }
 
@@ -221,6 +276,10 @@ public class FaunaMob extends AwakenMob {
     private void noticeThreats(ServerLevel level) {
         FaunaTalent t = talent();
         if (scareTicks > 0 || getTarget() != null) return;
+        if (t == FaunaTalent.SPRINT || t == FaunaTalent.SPORE) {
+            WildTalents.noticeThreats(this, level);
+            return;
+        }
         if (t != FaunaTalent.FLOCK && t != FaunaTalent.SKITTISH) return;
         Player p = level.getNearestPlayer(this, t == FaunaTalent.SKITTISH ? 12.0 : 7.0);
         if (p == null || p.isSpectator()) return;
@@ -293,7 +352,7 @@ public class FaunaMob extends AwakenMob {
             case FLOCK -> {
                 if (lure == null || !isCampfire(level, lure)) lure = findCampfire(level);
             }
-            default -> { }
+            default -> WildTalents.tick(this, level);
         }
     }
 
@@ -313,8 +372,9 @@ public class FaunaMob extends AwakenMob {
         return null;
     }
 
-    private @Nullable BlockPos findCrop(ServerLevel level) {
+    @Nullable BlockPos findCrop(ServerLevel level) {
         int bx = getBlockX(), bz = getBlockZ();
+        boolean mushrooms = talent() == FaunaTalent.MYCEL;
         for (int i = 0; i < 20; i++) {
             int x = bx + random.nextInt(25) - 12, z = bz + random.nextInt(25) - 12;
             int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
@@ -322,7 +382,8 @@ public class FaunaMob extends AwakenMob {
                 probe.set(x, top + dy, z);
                 if (!level.hasChunkAt(probe)) break;
                 BlockState s = level.getBlockState(probe);
-                if ((s.is(BlockTags.CROPS) || s.is(BlockTags.SAPLINGS)) && s.getBlock() instanceof net.minecraft.world.level.block.BonemealableBlock b
+                boolean wanted = mushrooms ? s.getBlock() instanceof net.minecraft.world.level.block.MushroomBlock : s.is(BlockTags.CROPS) || s.is(BlockTags.SAPLINGS);
+                if (wanted && s.getBlock() instanceof net.minecraft.world.level.block.BonemealableBlock b
                         && b.isValidBonemealTarget(level, probe, s, net.minecraft.world.level.block.BonemealSource.MOB)) {
                     return probe.immutable();
                 }
@@ -385,13 +446,16 @@ public class FaunaMob extends AwakenMob {
 
     private void updatePose() {
         int p = 0;
+        if (alertTicks > 0) p |= P_ALERT;
+        if (puffTicks > 0) p |= P_PUFF;
+        if (scareTicks > 0 && talent() == FaunaTalent.SPRINT && getDeltaMovement().horizontalDistanceSqr() > 0.004) p |= P_SPRINT;
         if (!onGround()) p |= P_AIR;
         if (stalking) p |= P_STALK;
         if (graze > 0) p |= level().isDarkOutside() && talent() == FaunaTalent.GRAZE ? P_REST : P_GRAZE;
         if (getTarget() != null) p |= P_ANGRY;
         if (burrowTicks > 0) p |= P_BURROW;
         if (flag(F_GUARDING)) p |= P_GUARD;
-        if (p != (entityData.get(DATA_POSE) & 0xFF)) entityData.set(DATA_POSE, (byte) p);
+        if (p != entityData.get(DATA_POSE)) entityData.set(DATA_POSE, p);
     }
 
     // ---- the light rule ----------------------------------------------------------------------------------------------
@@ -443,6 +507,8 @@ public class FaunaMob extends AwakenMob {
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
         boolean hurt = super.hurtServer(level, source, damage);
+        if (hurt && talent() == FaunaTalent.VENOM) WildTalents.venom(this, source);
+        if (hurt && talent() == FaunaTalent.SPORE) WildTalents.puff(this, level);
         if (hurt && faunaRole() == FaunaRole.AMBIENT) {
             Entity a = source.getEntity();
             scare(a != null ? a.position() : position().add(random.nextGaussian(), 0, random.nextGaussian()), 100);
@@ -492,6 +558,7 @@ public class FaunaMob extends AwakenMob {
         FaunaRole role = faunaRole();
         float pulse = 0.5F + 0.5F * Mth.sin((tickCount + partialTicks) * 0.09F + getId());
         if (l.telegraph <= 0) l.glow = role == FaunaRole.AMBIENT ? 0.65F + 0.3F * pulse : (pose & P_ANGRY) != 0 ? 0.85F : 0.45F + 0.25F * pulse;
+        if ((pose & (P_ALERT | P_PUFF)) != 0) l.glow = Math.max(l.glow, 0.95F); // an owl's stare, a bogwick's cure, a puff
         if (def().model == Model.SNOW_WOLF) {
             // Wisp hounds are half spirit.
             l.translucent = true;

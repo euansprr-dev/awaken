@@ -7,6 +7,13 @@ import dev.awaken.mobs.entity.AwLook;
 import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.mobs.client.model.AwModels;
 import dev.awaken.mobs.client.model.FaunaModels;
+import dev.awaken.mobs.client.model.WildModels;
+import net.minecraft.client.model.animal.feline.AdultOcelotModel;
+import net.minecraft.client.model.animal.frog.FrogModel;
+import net.minecraft.client.model.animal.goat.GoatModel;
+import net.minecraft.client.renderer.entity.state.FelineRenderState;
+import net.minecraft.client.renderer.entity.state.FrogRenderState;
+import net.minecraft.client.renderer.entity.state.GoatRenderState;
 import dev.awaken.mobs.entity.FaunaMob;
 import net.minecraft.client.model.animal.allay.AllayModel;
 import net.minecraft.client.model.animal.fox.AdultFoxModel;
@@ -106,6 +113,10 @@ final class AwRenderers {
         e.registerLayerDefinition(FaunaModels.TORTOISE, FaunaModels.Tortoise::create);
         e.registerLayerDefinition(FaunaModels.RAY, FaunaModels.Ray::create);
         e.registerLayerDefinition(FaunaModels.SCARAB, FaunaModels.Scarab::create);
+        e.registerLayerDefinition(WildModels.LIZARD, WildModels.Lizard::create);
+        e.registerLayerDefinition(WildModels.SNAIL, WildModels.Snail::create);
+        e.registerLayerDefinition(WildModels.MUSHROOM, WildModels.Mushroom::create);
+        e.registerLayerDefinition(WildModels.MARMOT, WildModels.Marmot::create);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -194,9 +205,10 @@ final class AwRenderers {
                     }).scaler((s, pose, l) -> pose.translate(0.0F, 1.3125F, 0.1875F));
             case BEE -> new AwMobRenderer<BeeRenderState, AdultBeeModel>(ctx, d, new AdultBeeModel(ctx.bakeLayer(ModelLayers.BEE)), 0.4F, BeeRenderState::new,
                     (m, s, pt, l) -> {
-                        s.isAngry = true;
+                        // Gate bees are angry and armed; the overworld's bogwicks bob gently, stingless.
+                        s.isAngry = !d.isFauna();
                         s.isOnGround = false;
-                        s.hasStinger = true;
+                        s.hasStinger = !d.isFauna();
                     });
             case GUARDIAN -> guardian(ctx, d, ModelLayers.GUARDIAN, 0.5F);
             case ELDER_GUARDIAN -> guardian(ctx, d, ModelLayers.ELDER_GUARDIAN, 1.2F);
@@ -237,6 +249,38 @@ final class AwRenderers {
                         s.isSleeping = false;
                         s.isFaceplanted = false;
                         s.headRollAngle = 0.0F;
+                    });
+            // P2: our own bodies...
+            case LIZARD -> new AwMobRenderer<LivingEntityRenderState, WildModels.Lizard>(ctx, d, new WildModels.Lizard(ctx.bakeLayer(WildModels.LIZARD)), 0.4F, LivingEntityRenderState::new, null);
+            case SNAIL -> new AwMobRenderer<LivingEntityRenderState, WildModels.Snail>(ctx, d, new WildModels.Snail(ctx.bakeLayer(WildModels.SNAIL)), 0.35F, LivingEntityRenderState::new, null);
+            case MUSHROOM -> new AwMobRenderer<LivingEntityRenderState, WildModels.Mushroom>(ctx, d, new WildModels.Mushroom(ctx.bakeLayer(WildModels.MUSHROOM)), 0.4F, LivingEntityRenderState::new, null);
+            case MARMOT -> new AwMobRenderer<LivingEntityRenderState, WildModels.Marmot>(ctx, d, new WildModels.Marmot(ctx.bakeLayer(WildModels.MARMOT)), 0.3F, LivingEntityRenderState::new, null);
+            // ...and three vanilla animal bodies
+            case FROG -> new AwMobRenderer<FrogRenderState, FrogModel>(ctx, d, new FrogModel(ctx.bakeLayer(ModelLayers.FROG)), 0.3F, FrogRenderState::new,
+                    (m, s, pt, l) -> {
+                        s.isSwimming = m.isInWater();
+                        if (m instanceof FaunaMob f) {
+                            s.jumpAnimationState.copyFrom(f.jumpAnim);
+                            s.croakAnimationState.copyFrom(f.croakAnim);
+                            s.tongueAnimationState.copyFrom(f.tongueAnim);
+                        }
+                    });
+            case GOAT -> new AwMobRenderer<GoatRenderState, GoatModel>(ctx, d, new GoatModel(ctx.bakeLayer(ModelLayers.GOAT)), 0.7F, GoatRenderState::new,
+                    (m, s, pt, l) -> {
+                        s.hasLeftHorn = true;
+                        s.hasRightHorn = true;
+                        // Head down to graze, or lowered to ram while a charge winds up.
+                        s.rammingXHeadRot = l.telegraph > 0 ? 0.6F + 0.5F * l.telegraph : (l.fauna & FaunaMob.P_GRAZE) != 0 ? 1.1F : 0.0F;
+                    });
+            case OCELOT -> new AwMobRenderer<FelineRenderState, AdultOcelotModel>(ctx, d, new AdultOcelotModel(ctx.bakeLayer(ModelLayers.OCELOT)), 0.4F, FelineRenderState::new,
+                    (m, s, pt, l) -> {
+                        boolean crouch = (l.fauna & FaunaMob.P_STALK) != 0 || l.telegraph > 0;
+                        s.isCrouching = crouch;
+                        s.isSprinting = !crouch && (l.fauna & FaunaMob.P_ANGRY) != 0 && s.walkAnimationSpeed > 0.4F;
+                        s.isSitting = (l.fauna & FaunaMob.P_REST) != 0;
+                        s.lieDownAmount = 0.0F;
+                        s.lieDownAmountTail = 0.0F;
+                        s.relaxStateOneAmount = 0.0F;
                     });
         };
     }

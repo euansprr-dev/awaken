@@ -95,6 +95,7 @@ public final class Sightings {
                 .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
         Playtest.log(p, "sighting", "creature", d.id);
         DirectorLog.log(p, "fauna", "first sighting: " + d.id);
+        Lairs.onSighting(p, d);
         return true;
     }
 

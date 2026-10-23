@@ -1,0 +1,18 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:meadow",
+    "minecraft:sunflower_plains"
+  ],
+  "spawners": [
+    {
+      "type": "awaken:petalwing",
+      "weight": 12,
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 3
+      }
+    }
+  ]
+}
