@@ -94,6 +94,7 @@ public final class Progression {
     }
 
     private static void onLevelUp(ServerPlayer player, Profile p, int gained) {
+        dev.awaken.core.Playtest.log(player, "level_up", "level", p.level);
         player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE,
                         Component.literal(gained > 1 ? "Level up ×" + gained : "Level up"))
@@ -169,10 +170,15 @@ public final class Progression {
 
     // ---- counters ---------------------------------------------------------------------------------------------------
 
+    private static final java.util.Set<String> LOGGED = java.util.Set.of(Counters.GATES_CLEARED, Counters.FLOORS_CLEARED,
+            "awaken:bosses_killed", Counters.LUCID_DREAMS, Counters.DREAMS, Counters.ECHOES_BOUND, Counters.MACHINES_BUILT,
+            "awaken:waystones_lit", Counters.NIGHTMARES_BEATEN, "awaken:gates_scouted", Counters.SECRETS_FOUND);
+
     public static void count(ServerPlayer player, String counter, long amount) {
         if (amount == 0) return;
         Profile p = profile(player);
         p.counters.merge(counter, amount, Long::sum);
+        if (LOGGED.contains(counter)) dev.awaken.core.Playtest.log(player, "counter", counter, p.counter(counter));
         evaluate(player, counter);
         markDirty(player);
     }
@@ -354,6 +360,7 @@ public final class Progression {
 
     /** Something new to use or show off landed. Feeds the second reward rhythm (SPEC section 2). */
     public static void markNewThing(ServerPlayer player, String what) {
+        dev.awaken.core.Playtest.log(player, "new_thing", "what", what);
         profile(player).lastNewThing = player.level().getGameTime();
         DirectorLog.log(player, "new-thing", what);
         markDirty(player);
