@@ -1,0 +1,11 @@
+{
+  "name": "Tobin who Ran",
+  "faction": "hunter",
+  "biome_hint": "minecraft:forest",
+  "lines": [
+    "I ran from a red gate once.",
+    "It followed me home.",
+    "Don't run from the red ones. Close them or don't open them."
+  ],
+  "gives": "hint:red_gate"
+}

@@ -1,0 +1,5 @@
+{
+  "trigger": "counter:awaken:veil_ticks>=20",
+  "title": "Out",
+  "body": "Your body is a place you live, not all of you. Come back before something notices it's empty."
+}

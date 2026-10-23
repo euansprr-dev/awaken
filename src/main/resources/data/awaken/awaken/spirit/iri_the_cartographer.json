@@ -1,0 +1,11 @@
+{
+  "name": "Iri the Cartographer",
+  "faction": "hunter",
+  "biome_hint": "minecraft:plains",
+  "lines": [
+    "I mapped every gate in this valley.",
+    "Then one opened under my feet.",
+    "There's a light past the eastern ridge. I never got to it. You should."
+  ],
+  "gives": "rumour:eastern_light"
+}

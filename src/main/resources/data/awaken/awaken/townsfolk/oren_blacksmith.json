@@ -1,0 +1,14 @@
+{
+  "name": "Oren",
+  "role": "Blacksmith",
+  "arrives_at": "E",
+  "lines": {
+    "E": "Another hunter. Try not to die before you pay me.",
+    "D": "D-rank. Your sword still looks like it's apologising. Bring it here.",
+    "C": "Heard you picked a Path. Good. Indecision rusts.",
+    "B": "Lord's hearts make the best steel. Don't tell the Healer I said that.",
+    "A": "People ask me if I forged your gear. I say yes. Don't correct me.",
+    "S": "I'm putting your name on the wall. Don't let it go to your head. Okay, a little.",
+    "SOVEREIGN": "I made you a sword. It's not for fighting. It's for hanging over a fireplace. Yours."
+  }
+}

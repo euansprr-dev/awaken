@@ -1,0 +1,11 @@
+{
+  "name": "the Engineer Without A Name",
+  "faction": "ascendant",
+  "biome_hint": "minecraft:desert",
+  "lines": [
+    "The ring is still there, under the sand.",
+    "We used it to leave. It needs a heart to run.",
+    "A Lord's heart would do."
+  ],
+  "gives": "rumour:launch_ring"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Orsa the Heavy",
+  "faction": "hunter",
+  "biome_hint": "minecraft:badlands",
+  "lines": [
+    "I could lift a house. Didn't help.",
+    "The Lord of the Ember Mines doesn't care how strong you are.",
+    "Bring water. Bring a lot of water."
+  ],
+  "gives": "hint:ember_tyrant"
+}

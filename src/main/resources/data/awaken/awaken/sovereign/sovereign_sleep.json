@@ -1,0 +1,7 @@
+{
+  "boss": "awaken:sovereign_sleep",
+  "name": "Morrow",
+  "title": "Sovereign of Sleep",
+  "intro": "You're dreaming this. Of course you are. Everyone is.",
+  "defeat": "Wake up. Wake up. Wake up."
+}

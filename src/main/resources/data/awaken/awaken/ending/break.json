@@ -1,0 +1,11 @@
+{
+  "title": "Break the Signal",
+  "lines": [
+    "You close your hand around the light and squeeze.",
+    "The Choir stops singing.",
+    "Up top, every gate goes quiet. They're just doors now.",
+    "Nobody will tell you what to do anymore.",
+    "It's terrifying. It's yours."
+  ],
+  "effect": "calm_gates"
+}

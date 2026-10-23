@@ -1,0 +1,10 @@
+{
+  "name": "the Mapmaker of Strata",
+  "faction": "hunter",
+  "biome_hint": "minecraft:beach",
+  "lines": [
+    "Ten floors down, then it stops being floors.",
+    "I made it to seven. Light a Waystone every time. Every time."
+  ],
+  "gives": "hint:waystones"
+}

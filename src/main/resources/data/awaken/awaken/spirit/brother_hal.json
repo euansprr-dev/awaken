@@ -1,0 +1,11 @@
+{
+  "name": "Brother Hal",
+  "faction": "keeper",
+  "biome_hint": "minecraft:deep_dark",
+  "lines": [
+    "We went down so you could stay up.",
+    "It was a fair trade for about a century.",
+    "Then the Court stopped answering the bells."
+  ],
+  "gives": "lore:keepers"
+}

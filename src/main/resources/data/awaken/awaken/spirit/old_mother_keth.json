@@ -1,0 +1,10 @@
+{
+  "name": "Old Mother Keth",
+  "faction": "keeper",
+  "biome_hint": "minecraft:swamp",
+  "lines": [
+    "The spores remember everyone they ever ate.",
+    "Fire answers spores. Very loudly."
+  ],
+  "gives": "hint:heat_spores"
+}

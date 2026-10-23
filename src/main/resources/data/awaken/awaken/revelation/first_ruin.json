@@ -1,0 +1,5 @@
+{
+  "trigger": "counter:awaken:machines_scanned>=1",
+  "title": "The ones before",
+  "body": "They built me. They also left. Read what they wrote. Don't believe all of it."
+}

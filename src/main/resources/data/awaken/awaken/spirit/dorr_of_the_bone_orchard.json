@@ -1,0 +1,10 @@
+{
+  "name": "Dorr of the Bone Orchard",
+  "faction": "keeper",
+  "biome_hint": "minecraft:stony_peaks",
+  "lines": [
+    "The dead get up once down there.",
+    "Kill them like you mean it twice."
+  ],
+  "gives": "hint:bone_orchard"
+}

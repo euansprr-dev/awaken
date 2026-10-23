@@ -1,0 +1,12 @@
+{
+  "name": "Teodor",
+  "role": "Archivist",
+  "arrives_at": "C",
+  "lines": {
+    "C": "You've been reading Precursor logs. They disagree with each other. Isn't it wonderful?",
+    "B": "The Keepers went down. The Ascendants went up. The Sleepers went in. Nobody went home.",
+    "A": "I think the Signal is older than the Choir. I think it's younger too. I need a drink.",
+    "S": "Bring me anything from the Seed. A pebble. A sentence.",
+    "SOVEREIGN": "When you come back, tell me which one of them was right. Or don't. I like not knowing."
+  }
+}

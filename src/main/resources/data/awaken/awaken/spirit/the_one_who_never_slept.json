@@ -1,0 +1,11 @@
+{
+  "name": "the One who Never Slept",
+  "faction": "sleeper",
+  "biome_hint": "minecraft:savanna",
+  "lines": [
+    "I stayed awake for three nights to see what would happen.",
+    "My eyes learned the dark. My heart did not.",
+    "Sleep, friend. But maybe once, don't."
+  ],
+  "gives": "hint:night_eyes"
+}

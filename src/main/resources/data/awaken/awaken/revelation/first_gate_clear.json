@@ -1,0 +1,5 @@
+{
+  "trigger": "counter:awaken:gates_cleared>=1",
+  "title": "Doors",
+  "body": "Every gate is a door somebody forgot to close. You just closed one. There are more."
+}

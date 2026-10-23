@@ -1,0 +1,11 @@
+{
+  "name": "the Child In the Snow",
+  "faction": "sleeper",
+  "biome_hint": "minecraft:snowy_slopes",
+  "lines": [
+    "I dreamed a monastery above the clouds.",
+    "Monks rang bells there to keep the dark from climbing.",
+    "If you go, sit very still at dawn."
+  ],
+  "gives": "hint:clarity"
+}

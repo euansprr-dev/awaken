@@ -1,0 +1,11 @@
+{
+  "name": "Sun",
+  "role": "Healer",
+  "arrives_at": "B",
+  "lines": {
+    "B": "You got hit by a gate. How's the rest of you?",
+    "A": "Sleep. Actually sleep. Dreams don't count as rest, I don't care what the Sleepers say.",
+    "S": "You carry a lot. Put some of it down here. I'll watch it.",
+    "SOVEREIGN": "Whatever you choose, come back and eat something."
+  }
+}

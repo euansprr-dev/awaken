@@ -1,0 +1,11 @@
+{
+  "name": "the Signal Once",
+  "faction": "sleeper",
+  "biome_hint": "minecraft:mushroom_fields",
+  "lines": [
+    "It talked to me too.",
+    "It said I'd be the one.",
+    "It wasn't lying. It just says it to everyone it loves."
+  ],
+  "gives": "lore:signal_loops"
+}

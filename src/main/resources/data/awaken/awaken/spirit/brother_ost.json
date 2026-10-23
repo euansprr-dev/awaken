@@ -1,0 +1,11 @@
+{
+  "name": "Brother Ost",
+  "faction": "keeper",
+  "biome_hint": "minecraft:deep_dark",
+  "lines": [
+    "The Sovereign of Silence was my teacher.",
+    "She took all the noise of the world into herself so we could sleep.",
+    "Be gentle with her. She'll try to kill you."
+  ],
+  "gives": "lore:sovereign_silence"
+}

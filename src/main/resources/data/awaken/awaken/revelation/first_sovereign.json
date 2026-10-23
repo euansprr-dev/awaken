@@ -1,0 +1,5 @@
+{
+  "trigger": "counter:awaken:sovereigns_defeated>=1",
+  "title": "A keeper falls",
+  "body": "That one carried hunger for a thousand years so nobody else had to. You set it down. Now somebody has to carry it, or feel it."
+}

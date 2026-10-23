@@ -1,0 +1,10 @@
+{
+  "name": "Precept Seven",
+  "faction": "ascendant",
+  "biome_hint": "minecraft:ocean",
+  "lines": [
+    "Log entry. The lab is flooded. Of course it is.",
+    "The scanner still works. Point it at anything with a light still on."
+  ],
+  "gives": "hint:scanner"
+}

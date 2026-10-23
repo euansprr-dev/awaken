@@ -1,0 +1,10 @@
+{
+  "name": "the Mirror Keeper",
+  "faction": "keeper",
+  "biome_hint": "minecraft:ice_spikes",
+  "lines": [
+    "Your shadow is the part of you that stayed behind.",
+    "In the mirrors it walks. Your spirit can walk with it."
+  ],
+  "gives": "hint:spirit_mirror"
+}

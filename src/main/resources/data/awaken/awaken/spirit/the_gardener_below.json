@@ -1,0 +1,10 @@
+{
+  "name": "the Gardener Below",
+  "faction": "keeper",
+  "biome_hint": "minecraft:lush_caves",
+  "lines": [
+    "The Hanging Gardens grow toward a sun that isn't there.",
+    "When the wind comes, hold the vines."
+  ],
+  "gives": "hint:gardens"
+}

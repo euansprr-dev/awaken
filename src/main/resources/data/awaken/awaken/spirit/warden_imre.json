@@ -1,0 +1,11 @@
+{
+  "name": "Warden Imre",
+  "faction": "hunter",
+  "biome_hint": "minecraft:taiga",
+  "lines": [
+    "I held my home through nine breaks.",
+    "On the tenth, I wasn't home.",
+    "Build walls. Build friends. Same thing, eventually."
+  ],
+  "gives": "hint:hearth_breaks"
+}

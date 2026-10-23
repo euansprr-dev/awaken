@@ -1,0 +1,11 @@
+{
+  "name": "the Last Ascendant",
+  "faction": "ascendant",
+  "biome_hint": "minecraft:windswept_hills",
+  "lines": [
+    "We built the Choir to wake people up.",
+    "It woke them up all the way down.",
+    "If it's talking to you, it already knows how this ends. Ask it anyway."
+  ],
+  "gives": "lore:choir_built"
+}

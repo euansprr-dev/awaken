@@ -1,0 +1,11 @@
+{
+  "name": "the Quiet One",
+  "faction": "sleeper",
+  "biome_hint": "minecraft:pale_garden",
+  "lines": [
+    "...",
+    "You're still. Good. Stay.",
+    "The void isn't empty. It's listening."
+  ],
+  "gives": "hint:meditation"
+}

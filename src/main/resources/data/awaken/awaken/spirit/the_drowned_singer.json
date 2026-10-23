@@ -1,0 +1,10 @@
+{
+  "name": "the Drowned Singer",
+  "faction": "keeper",
+  "biome_hint": "minecraft:river",
+  "lines": [
+    "We sang in the halls under the water.",
+    "The water rises when we stop. Can you hear it? We stopped."
+  ],
+  "gives": "lore:choir"
+}

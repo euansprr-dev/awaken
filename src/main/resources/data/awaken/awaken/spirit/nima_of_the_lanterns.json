@@ -1,0 +1,11 @@
+{
+  "name": "Nima of the Lanterns",
+  "faction": "hunter",
+  "biome_hint": "minecraft:cherry_grove",
+  "lines": [
+    "There's a gate that's a market.",
+    "Nobody fights. Everybody haggles.",
+    "The Broker likes people who say no to his first price."
+  ],
+  "gives": "hint:lantern_market"
+}

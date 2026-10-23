@@ -1,0 +1,5 @@
+{
+  "trigger": "trigger:prologue_death",
+  "title": "You have met the conditions.",
+  "body": "You died inside a gate and kept thinking. Few do. Will you accept?"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Kael Twice Bound",
+  "faction": "hunter",
+  "biome_hint": "minecraft:dark_forest",
+  "lines": [
+    "I bound my own brother as an Echo.",
+    "He still follows me around. He's very polite about it.",
+    "Bind only what you can live with."
+  ],
+  "gives": "hint:echo"
+}

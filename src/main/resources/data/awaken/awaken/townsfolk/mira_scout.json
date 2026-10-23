@@ -1,0 +1,13 @@
+{
+  "name": "Mira",
+  "role": "Scout",
+  "arrives_at": "D",
+  "lines": {
+    "D": "There's a light past the river nobody's been back from. Want it?",
+    "C": "I mapped three new gates. One's ugly. You'll love it.",
+    "B": "Something's walking around the old ruins at night. I didn't stay to ask.",
+    "A": "The sky platforms are humming. They never hum.",
+    "S": "I followed you to the Well once. Just to the edge. That's as far as I go.",
+    "SOVEREIGN": "Draw me a map of the bottom someday? I'll frame it."
+  }
+}

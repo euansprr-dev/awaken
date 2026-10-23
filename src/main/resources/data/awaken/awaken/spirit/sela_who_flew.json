@@ -1,0 +1,11 @@
+{
+  "name": "Sela who Flew",
+  "faction": "hunter",
+  "biome_hint": "minecraft:jagged_peaks",
+  "lines": [
+    "I learned to fly at A-rank.",
+    "Then I learned why they put ceilings in gates.",
+    "Fly home. Walk in."
+  ],
+  "gives": "hint:flight"
+}

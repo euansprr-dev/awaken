@@ -1,0 +1,11 @@
+{
+  "name": "Ama who Waited",
+  "faction": "sleeper",
+  "biome_hint": "minecraft:meadow",
+  "lines": [
+    "Are you asleep right now? Check.",
+    "Look at your hands.",
+    "If they look wrong, you're one of us. If they look right, you're one of us later."
+  ],
+  "gives": "hint:reality_check"
+}

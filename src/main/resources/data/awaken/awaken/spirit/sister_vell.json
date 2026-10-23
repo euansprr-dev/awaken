@@ -1,0 +1,10 @@
+{
+  "name": "Sister Vell",
+  "faction": "keeper",
+  "biome_hint": "minecraft:dripstone_caves",
+  "lines": [
+    "Every stratum has one rule. Learn it before it learns you.",
+    "In the Silent Halls, walk like you're sneaking into your own house at night."
+  ],
+  "gives": "hint:silent_halls"
+}
