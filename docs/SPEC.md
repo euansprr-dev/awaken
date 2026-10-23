@@ -382,7 +382,8 @@ Plan v2 · System v2 (details in docs/modules/system-ui.md):
   while a screen is open); 10 ticks between cards; warnings and priority ≥ 9 pre-empt.
 - Pending decisions persist per player (max 12) until answered, withdrawn or past their ttl; on login they come back
   folded (tracker and Status), never as cards.
-- Toasts are vanilla size (160×32), at most 3 of ours; a burst merges into "N new things". Cards sit right of the
+- Toasts are 160 wide and vanilla height (32), or 43 when the detail needs a second line (a level-road step); at most 3
+  of ours; a burst merges into "N new things". Cards sit right of the
   crosshair and never exceed 20% of the screen height. Client settings: `systemStyle`, `nowTracker`, `systemScale`
   (0.75–1.5, toasts don't scale). The Now tracker syncs every 40 ticks, only when changed.
 
@@ -429,6 +430,19 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
 - Faint light shafts over ruins at dusk (fainter at night) and the Well's pillars at night, within 288 blocks; nothing
   by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
 - Config `features.landmarks` switches discovery, hints, rumours and markers off.
+
+Plan v2 · the road to 50 (details in docs/modules/road.md):
+- Every level 1–50 has a level-road step. Steps (schema 2) may carry a goal {now, done, requires, toast, priority}: a Now
+  line that stays until a real counter says it's done, then a toast; only the newest open goal shows (priority 35); met
+  goals are saved as `awaken:goal/<step>`. Requirement tokens add `rank:X` and `path`.
+- Power mastery: a power gains points from casts that land on a living target (their energy cost), half the energy spent
+  in a real fight that missed, and kills; nothing from casting at the air. Levels at 7,000 / 13,000 / 32,000 / 50,000
+  points, the same effect as a duplicate core. Loadout schema 2 adds `mastery`. Sim: a main power reaches level 3 at
+  player level ~20 and 5 at ~44.
+- Lessons taught in play: meditation (level 11), dreams (12), the Veil (15), each with Now lines, toasts and a choice card
+  where the decision is real; progress in `awaken:lesson/*` counters.
+- API: `Powers.restoreEnergy`, `Powers.masteryProgress`, `Progression.addPerkSource`, `Lessons.define`. A Hunter focus
+  refunds 0.5/1/1.5/2 energy (E–B) per power hit, at most once a second.
 
 Plan v2 · Hunter gear (details in docs/modules/gear.md):
 - Module `gear`: tiers E Wildhide, D Beastbound, C Gatewrought, B Veilwoven; 4 armour pieces, a blade, a power focus
