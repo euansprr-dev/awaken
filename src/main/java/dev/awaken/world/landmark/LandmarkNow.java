@@ -48,7 +48,7 @@ final class LandmarkNow {
     }
 
     static List<NowHooks.Suggestion> suggest(ServerPlayer p) {
-        if (p.level().dimension() != Level.OVERWORLD) return List.of();
+        if (p.level().dimension() != Level.OVERWORLD || !Landmarks.enabled()) return List.of();
         Profile prof = Progression.profile(p);
         if (!prof.awakened() || GateHooks.inGate(p)) return List.of();
         BlockPos me = p.blockPosition();

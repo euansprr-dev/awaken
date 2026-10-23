@@ -273,6 +273,8 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.core.Forces` — force/environment tags on entities and damage.
 - `dev.awaken.core.PlayDays` — current play-day counter.
 - `dev.awaken.mobs.Mobs` — `spawnScaled(ServerLevel, EntityType, pos, level, modifiers)`, rosters by theme.
+- `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
+  `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -403,6 +405,21 @@ Plan v2 · anomalies (details in docs/modules/anomalies.md):
   night 80/20/0; the first is always a rift; no rifts on Peaceful. Config switch `features.anomalies`.
 - Spots: 32–96 blocks away, ≥ 24 blocks outside any Hearth's radius, ≥ 24 from a gate, ≥ 48 from another anomaly, dry, not built on.
 - Each kind is a discovery (0.1 of a level). Interrupted anomalies are cleaned up on server start.
+- P2 kinds: **fallen star** (mostly at night: a crater in natural ground with a sealed meteor; a guardian of your rank
+  rises within 16 blocks for 90 s; opened once it cools for loot, shards, 0.2 × a floor reward (0.3 if the guardian was
+  slain) and a 10% (25%) Power Core; burns out after 6 min) and **shimmer grove** (mostly by day, peaceful: 2½ minutes
+  of light steps, ore sight, a spirit's landmark hint or healing flowers). Weights day 30/15/20/6/25, night 45/15/0/35/5
+  (rift/gate/procession/star/grove); no kind twice running; kinds never met weigh double. Saved state schema 2.
+
+Plan v2 · landmarks (details in docs/modules/landmarks.md):
+- Kinds: the Well, vaults (the spawn vault too), monoliths, ocean labs, sky platforms, gates by theme. Reaching the
+  first of each kind is a discovery (0.15 of a level). Memory `awaken:landmark_memory` (schema 1, copied on death).
+- The Now tracker names the nearest unreached landmark once there is a reason to go (Well from level 10, vault and
+  monolith 4, spawn vault 2, ocean lab 6, sky platform 20); never inside a Hearth or a gate. Mira tells one landmark
+  rumour a day when no gate is worth one (`core.api.WorldHooks.landmarkRumour`).
+- Faint light shafts over ruins at dusk (fainter at night) and the Well's pillars at night, within 288 blocks; nothing
+  by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
+- Config `features.landmarks` switches discovery, hints, rumours and markers off.
 
 Plan v2 · Hunter gear (details in docs/modules/gear.md):
 - Module `gear`: tiers E Wildhide, D Beastbound, C Gatewrought, B Veilwoven; 4 armour pieces, a blade, a power focus

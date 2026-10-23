@@ -26,6 +26,7 @@ public final class LandmarkModule {
         LandmarkContent.register(modBus);
         modBus.addListener(LandmarkNet::register);
         NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> {
+            if (!Landmarks.enabled()) return;
             LandmarkWatch.tick(e.getServer());
             LandmarkMarkers.tick(e.getServer());
         });
@@ -41,6 +42,9 @@ public final class LandmarkModule {
         Scanning.addEchoSource(LandmarkModule::echoes);
         Scanning.setVisitedRuins((p, pos) -> Landmarks.reached(p, Landmarks.ruinIdAt(pos)));
         LandmarkNow.register();
+        dev.awaken.core.api.WorldHooks.installRumours(p -> Landmarks.enabled()
+                ? Landmarks.rumour(p).map(r -> new dev.awaken.core.api.WorldHooks.Rumour(r.id(), r.title(), r.body()))
+                : java.util.Optional.empty());
         LandmarkCommands.register();
         LandmarkTests.register();
     }

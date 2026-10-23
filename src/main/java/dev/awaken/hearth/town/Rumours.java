@@ -51,6 +51,8 @@ public final class Rumours {
             String where = direction(from, g.pos()) + ", about " + roundDistance(from, g.pos()) + " blocks";
             rumour = new HearthPlayer.Rumour("gate/" + g.id(), "A " + Rank.of(g.rank()).label + "-rank light, " + direction(from, g.pos()),
                     "Mira: “" + where + ". " + GATE_FLAVOUR[r] + "” " + (g.omen() == null || g.omen().isEmpty() ? "" : "She says: " + g.omen() + "."), today);
+        } else if (dev.awaken.core.api.WorldHooks.landmarkRumour(sp).orElse(null) instanceof dev.awaken.core.api.WorldHooks.Rumour lm) {
+            rumour = new HearthPlayer.Rumour(lm.id(), lm.title(), lm.body(), today);
         } else {
             BlockPos found = overworld.findNearestMapStructure(Town.ruinsTag(), from, 48, false);
             final BlockPos ruin = found != null ? found : overworld.findNearestMapStructure(Town.fallbackRuins(), from, 32, false);

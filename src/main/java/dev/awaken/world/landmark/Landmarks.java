@@ -51,6 +51,15 @@ public final class Landmarks {
     /** A rumour line for the town: a stable id (so it isn't told twice), a title, and Mira's words. */
     public record Rumour(String id, String title, String body) {}
 
+    /** The landmarks setting (on when the config isn't loaded yet, as in GameTests). */
+    static boolean enabled() {
+        try {
+            return dev.awaken.core.AwakenConfig.LANDMARKS.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
     /** GameTests stand a Well in (try/finally, isolated batch). */
     static volatile @Nullable BlockPos testWell;
     /** GameTests that must not see real ruins from the test world's placement maths. */

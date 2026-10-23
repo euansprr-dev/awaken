@@ -35,6 +35,8 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue STORY = B.define("story", true);
     public static final ModConfigSpec.BooleanValue ANOMALIES = B.comment("Rift tears, wandering gates and spirit processions near awakened players")
             .define("anomalies", true);
+    public static final ModConfigSpec.BooleanValue LANDMARKS = B.comment("Landmark discovery, Now hints, Mira's landmark rumours and night markers over ruins")
+            .define("landmarks", true);
 
     static {
         B.pop();
