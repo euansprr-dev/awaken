@@ -74,9 +74,11 @@ public final class Directives {
         p.counters.merge("awaken:directive_offers", 1L, Long::sum);
         DirectorLog.log(player, "directive", "offered " + key + " (" + reason + ", pool " + pool.size()
                 + (wantQuick ? ", quick bias" : "") + (mustBeFresh ? ", fresh only" : "") + ")");
-        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.DIRECTIVE, Component.literal(def.text()))
+        // an optional task never interrupts: it waits folded (tracker + Status screen) with a small toast
+        Signal.offerQuietly(player, SignalWindow.builder(SignalWindow.Kind.DIRECTIVE, Component.literal(def.text()))
                 .body(Component.literal(describe(def.reward()) + " · fades in " + def.expiresDays() + " day" + (def.expiresDays() == 1 ? "" : "s")))
-                .choice(ACTION + ":" + key, "Take it on", "Let it pass").build());
+                .choice(ACTION + ":" + key, "Take it on", "Let it pass").build(),
+                Component.literal("New directive · " + def.text() + " · K"));
         Progression.markDirty(player);
     }
 
