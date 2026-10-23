@@ -553,6 +553,8 @@ final class GearTests {
         for (var z : List.of(target, near)) {
             z.setNoAi(true);
             z.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.FIRE_RESISTANCE, 200));
+            var armour = z.getAttribute(Attributes.ARMOR);
+            if (armour != null) armour.setBaseValue(0); // a zombie's own 2 armour would shave the burst
         }
         float before = near.getHealth(), petBefore = pet.getHealth();
         for (int i = 0; i < 4; i++) hit(target, sources.source(Forces.FROST, sp), 4, null);

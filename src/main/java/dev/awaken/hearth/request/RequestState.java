@@ -104,7 +104,7 @@ public final class RequestState {
                          Forge forge, List<String> recent, int lowestY) {}
 
     public static final MapCodec<RequestState> MAP_CODEC = RecordCodecBuilder.<Saved>mapCodec(i -> i.group(
-            Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(Saved::schema),
+            Codec.INT.fieldOf("schema").orElse(0).forGetter(Saved::schema),
             ActiveRequest.CODEC.listOf().optionalFieldOf("active", List.of()).forGetter(Saved::active),
             Offer.CODEC.listOf().optionalFieldOf("offers", List.of()).forGetter(Saved::offers),
             Pace.CODEC.optionalFieldOf("pace", new Pace(0, -1, 0, 0, -1, -1, 0)).forGetter(Saved::pace),

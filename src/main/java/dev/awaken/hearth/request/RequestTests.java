@@ -369,9 +369,11 @@ final class RequestTests {
             setRank(sp, Rank.C);
             h.assertTrue(Requests.free(sp, st) == 1 && Requests.offerNow(sp), "a second request at C-rank");
             // a new play-day withdraws yesterday's offer and owes a fresh one; active requests stay
-            st.day = st.day - 1;
+            st.day = day(h) + 7; // any other play-day (the test world may still be on day 0)
             Requests.newDay(sp, st, day(h), level.getGameTime());
-            h.assertTrue(st.offers.isEmpty() && st.active.size() == 1 && st.credits >= 1, "new day: fresh offer owed, the taken request kept");
+            h.assertTrue(st.offers.isEmpty(), "new day: yesterday's offer withdrawn");
+            h.assertTrue(st.active.size() == 1, "new day: the taken request kept");
+            h.assertTrue(st.credits >= 1, "new day: a fresh offer owed, credits " + st.credits);
             // dropping costs nothing
             int rep = st.reputation;
             Requests.drop(sp, 0, st.active.get(0).id());

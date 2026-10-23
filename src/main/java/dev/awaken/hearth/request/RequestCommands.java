@@ -21,9 +21,10 @@ import java.util.Optional;
 
 /**
  * {@code /awaken hearth requests}: what the Anchor asked for, the streak, the town's regard, Forge credit. Admin
- * ({@code /awaken admin request ...}): {@code offer} (one now), {@code fill} (carry what your requests need),
- * {@code deliver} (as if you used your Anchor), {@code pools} (what could be asked of you, and why not),
- * {@code reputation <n>}, {@code streak <n>}, {@code reset}.
+ * ({@code /awaken admin request ...}): {@code anchor} (root an Anchor three blocks ahead), {@code offer} (one now),
+ * {@code take} (answer the waiting offer yes), {@code fill [n]} (carry what your requests need), {@code deliver} (as if
+ * you used your Anchor), {@code pools} (what could be asked of you, and why not), {@code reputation <n>},
+ * {@code streak <n>}, {@code reset}.
  */
 final class RequestCommands {
     private RequestCommands() {}
@@ -38,23 +39,24 @@ final class RequestCommands {
                 boolean ok = Requests.offerNow(sp);
                 return ok ? ok(c, "Offered: see the toast, the tracker and the Status screen (K)") : fail(c, "No free slot, or nothing you could be asked for yet.");
             }));
-            req.then(Commands.literal("fill").executes(c -> {
+            req.then(Commands.literal("fill").executes(c -> fill(c, Integer.MAX_VALUE))
+                    .then(Commands.argument("count", IntegerArgumentType.integer(1, 999)).executes(c -> fill(c, IntegerArgumentType.getInteger(c, "count")))));
+            req.then(Commands.literal("take").executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
-                int n = 0;
-                for (ActiveRequest r : Requests.state(sp).active) {
-                    ItemStack icon = RequestRules.icon(r.target());
-                    if (icon.isEmpty()) continue;
-                    int left = r.remaining();
-                    while (left > 0) {
-                        int k = Math.min(left, icon.getMaxStackSize());
-                        ItemStack s = icon.copyWithCount(k);
-                        if (!sp.addItem(s)) sp.drop(s, false, Prediction.SERVER_ONLY);
-                        left -= k;
-                        n += k;
-                    }
-                }
-                int total = n;
-                return ok(c, "Gave " + total + " items for your requests");
+                var offers = Requests.state(sp).offers;
+                if (offers.isEmpty()) return fail(c, "No request is waiting for an answer.");
+                dev.awaken.signal.Signal.answer(sp, offers.get(0).action(), true);
+                return ok(c, "Taken");
+            }));
+            req.then(Commands.literal("anchor").executes(c -> {
+                ServerPlayer sp = c.getSource().getPlayerOrException();
+                if (HearthService.hearthOf(sp).isPresent()) return fail(c, "You already have a Hearth.");
+                var level = sp.level();
+                var pos = sp.blockPosition().relative(sp.getDirection(), 3);
+                if (!HearthService.canPlaceAnchor(sp, level, pos)) return fail(c, "No Anchor can root here.");
+                level.setBlock(pos, dev.awaken.hearth.HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
+                HearthService.onAnchorPlaced(sp, level, pos);
+                return ok(c, "A Hearth Anchor took root three blocks ahead");
             }));
             req.then(Commands.literal("deliver").executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
@@ -131,6 +133,26 @@ final class RequestCommands {
         c.getSource().sendSuccess(() -> Component.literal(n + " of " + RequestPools.all().size() + " could be asked of you now (level "
                 + Progression.profile(sp).level() + ", lowest Y " + st.lowestY + ")"), false);
         return doable;
+    }
+
+    /** Gives up to {@code limit} of what each active request still needs (admin, autopilot). */
+    private static int fill(CommandContext<CommandSourceStack> c, int limit) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        int n = 0;
+        for (ActiveRequest r : Requests.state(sp).active) {
+            ItemStack icon = RequestRules.icon(r.target());
+            if (icon.isEmpty()) continue;
+            int left = Math.min(limit, r.remaining());
+            while (left > 0) {
+                int k = Math.min(left, icon.getMaxStackSize());
+                ItemStack s = icon.copyWithCount(k);
+                if (!sp.addItem(s)) sp.drop(s, false, Prediction.SERVER_ONLY);
+                left -= k;
+                n += k;
+            }
+        }
+        int total = n;
+        return ok(c, "Gave " + total + " items for your requests");
     }
 
     private static int ok(CommandContext<CommandSourceStack> c, String msg) {
