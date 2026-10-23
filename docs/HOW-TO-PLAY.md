@@ -12,6 +12,8 @@
 ## Your first hour
 Play normal Minecraft. Something will glitch. A white light will rise on the horizon. Walk to it.
 Everything else teaches itself. If you'd rather skip the prologue: `/awaken story skip`.
+The story has three endings. Each one changes the world for good, and one of them starts New Game+ (Ascension tiers:
+tougher monsters, faster XP).
 
 ## Keys (change them under Options → Controls → AWAKEN)
 | Key | Does |
@@ -19,7 +21,7 @@ Everything else teaches itself. If you'd rather skip the prologue: `/awaken stor
 | Z X C V | Powers 1–4 |
 | R | Ultimate |
 | Left Alt | Movement power |
-| K | Status (stats, Truths, Codex, Gate Map) |
+| K | Status (stats, records, Truths, Codex, Gate Map) |
 | Sneak + G (hold) | Meditate · step out of your body |
 | H | Reality check (in dreams it matters) |
 | Y / N | Answer the Signal |
