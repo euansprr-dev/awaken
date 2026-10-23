@@ -404,5 +404,16 @@ Plan v2 · anomalies (details in docs/modules/anomalies.md):
 - Spots: 32–96 blocks away, ≥ 24 blocks outside any Hearth's radius, ≥ 24 from a gate, ≥ 48 from another anomaly, dry, not built on.
 - Each kind is a discovery (0.1 of a level). Interrupted anomalies are cleaned up on server start.
 
+Plan v2 · Hunter gear (details in docs/modules/gear.md):
+- Module `gear`: tiers E Wildhide, D Beastbound, C Gatewrought, B Veilwoven; 4 armour pieces, a blade, a power focus
+  and a mattock each, at vanilla stone/copper, iron, diamond and netherite strength. A and S are designed only.
+- Set bonuses at 2 and 4 pieces per tier (E Perception: quiet sneaking, Hunter's Sense; D Strength/Vitality: hearts,
+  Cornered; C Five Forces: Force ward, primed strikes; B Veil/Spirit: Spirit ward, meditation heal, Veil Flicker).
+  Numbers live in `gear/SetBonus`.
+- A focus adds +6/9/12/15% power damage in either hand (+2% per temper level), under the boss cap.
+- Crafting-table recipes with hook tags `#awaken:hunter_<hide|core|bind>_<e|d|c|b>`; new creature families add their
+  materials to these tags from their own merge folders. E-tier is craftable from first-hour creature drops.
+- Level road `hunter_gear_e/d/c/b` at 3, 13, 22, 42. Now line priority 25, only for an upgrade.
+
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
