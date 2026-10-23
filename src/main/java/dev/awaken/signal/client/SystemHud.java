@@ -198,6 +198,8 @@ public final class SystemHud {
         story = null;
         panel = null;
         lastCard = "";
+        choiceMemo = null;
+        panelMemo = null;
     }
 
     // ---- tick -----------------------------------------------------------------------------------------------------
@@ -368,10 +370,30 @@ public final class SystemHud {
         return w.footer().map(Component::getString).map(SignalText::stripKeyHints).orElse("");
     }
 
-    private static SignalLayout.Card choiceLayout(Font font, SignalWindow w, int sw, int sh, double s) {
+    /** The last layout worked out, per window and screen size: cards are drawn every frame but change rarely. */
+    private record Memo(SignalWindow w, int sw, int sh, double s, SignalLayout.Card card, List<String> question,
+                        String body, List<PanelLine> lines, String footer) {
+        boolean matches(SignalWindow w2, int sw2, int sh2, double s2) {
+            return w == w2 && sw == sw2 && sh == sh2 && s == s2;
+        }
+    }
+
+    private static Memo choiceMemo, panelMemo;
+
+    private static Memo choiceMemo(Font font, SignalWindow w, int sw, int sh, double s) {
+        if (choiceMemo != null && choiceMemo.matches(w, sw, sh, s)) return choiceMemo;
         int tw = SignalLayout.CARD_W - 12;
         int q = Math.min(2, Math.max(1, SignalText.wrap(w.title().getString(), tw, font::width).size()));
-        return SignalLayout.choice(sw, sh, s, q, !choiceBody(w).isBlank());
+        String body = choiceBody(w);
+        SignalLayout.Card card = SignalLayout.choice(sw, sh, s, q, !body.isBlank());
+        int cw = card.textWidth();
+        List<String> question = SignalText.wrapAtMost(w.title().getString(), cw, card.lines(), font::width);
+        choiceMemo = new Memo(w, sw, sh, s, card, question, SignalText.ellipsize(body, cw, font::width), List.of(), "");
+        return choiceMemo;
+    }
+
+    private static SignalLayout.Card choiceLayout(Font font, SignalWindow w, int sw, int sh, double s) {
+        return choiceMemo(font, w, sw, sh, s).card();
     }
 
     private record PanelLine(String left, String right) {}
@@ -390,8 +412,17 @@ public final class SystemHud {
         return w.footer().map(Component::getString).map(SignalText::stripKeyHints).orElse("");
     }
 
+    private static Memo panelMemo(Font font, SignalWindow w, int sw, int sh, double s) {
+        if (panelMemo != null && panelMemo.matches(w, sw, sh, s)) return panelMemo;
+        List<PanelLine> lines = panelLines(font, w);
+        String footer = panelFooter(w);
+        SignalLayout.Card card = SignalLayout.panel(sw, sh, s, lines.size(), !footer.isBlank());
+        panelMemo = new Memo(w, sw, sh, s, card, List.of(), "", lines, footer);
+        return panelMemo;
+    }
+
     private static SignalLayout.Card panelLayout(Font font, SignalWindow w, int sw, int sh, double s) {
-        return SignalLayout.panel(sw, sh, s, panelLines(font, w).size(), !panelFooter(w).isBlank());
+        return panelMemo(font, w, sw, sh, s).card();
     }
 
     /** The card slot's rect right now (choice or panel), or null when empty. */
@@ -420,7 +451,8 @@ public final class SystemHud {
 
     private static Rect drawChoice(GuiGraphicsExtractor g, Font font, ChoiceDeck.Choice c, int sw, int sh, double s, float pt) {
         SignalWindow w = c.window();
-        SignalLayout.Card card = choiceLayout(font, w, sw, sh, s);
+        Memo m = choiceMemo(font, w, sw, sh, s);
+        SignalLayout.Card card = m.card();
         Rect r = card.rect();
         float alpha = Math.min(1f, (cardAge + pt) / OPEN_TICKS);
         int w0 = SignalLayout.CARD_W, h0 = SignalLayout.choiceHeight(card.lines(), card.extra());
@@ -431,12 +463,12 @@ public final class SystemHud {
         int accent = w.kind() == SignalWindow.Kind.WARNING ? Glass.WARN : Glass.AMBER;
         Glass.card(g, 0, 0, w0, h0, accent, alpha);
         int tx = 7, ty = 4;
-        for (String line : SignalText.wrapAtMost(w.title().getString(), tw, card.lines(), font::width)) {
+        for (String line : m.question()) {
             g.text(font, line, tx, ty, Glass.a(Glass.TITLE, alpha), true);
             ty += SignalLayout.LINE;
         }
         if (card.extra()) {
-            g.text(font, SignalText.ellipsize(choiceBody(w), tw, font::width), tx, ty, Glass.a(Glass.TEXT, 0.8f * alpha), false);
+            g.text(font, m.body(), tx, ty, Glass.a(Glass.TEXT, 0.8f * alpha), false);
             ty += SignalLayout.LINE;
         }
         ty += 2;
@@ -458,7 +490,8 @@ public final class SystemHud {
 
     private static Rect drawPanel(GuiGraphicsExtractor g, Font font, Panel p, int sw, int sh, double s, float pt) {
         SignalWindow w = p.w;
-        SignalLayout.Card card = panelLayout(font, w, sw, sh, s);
+        Memo m = panelMemo(font, w, sw, sh, s);
+        SignalLayout.Card card = m.card();
         Rect r = card.rect();
         float age = p.age + pt;
         float alpha = Math.min(1f, age / OPEN_TICKS);
@@ -474,7 +507,7 @@ public final class SystemHud {
         int tx = 7, ty = 4;
         g.text(font, SignalText.ellipsize(w.title().getString(), tw, font::width), tx, ty, Glass.a(accent, alpha), true);
         ty += SignalLayout.LINE + 1;
-        List<PanelLine> lines = panelLines(font, w);
+        List<PanelLine> lines = m.lines();
         int room = card.lines();
         boolean cut = lines.size() > room;
         int show = cut ? Math.max(0, room - 1) : lines.size();
@@ -497,7 +530,7 @@ public final class SystemHud {
             ty += SignalLayout.LINE;
         }
         if (card.extra()) {
-            g.text(font, SignalText.ellipsize(panelFooter(w), tw, font::width), tx, ty, Glass.a(Glass.EDGE, 0.85f * alpha), false);
+            g.text(font, SignalText.ellipsize(m.footer(), tw, font::width), tx, ty, Glass.a(Glass.EDGE, 0.85f * alpha), false);
         }
         if (p.closingAt < 0 && w.ttlTicks() > 0) {
             float left = 1f - Math.min(1f, age / Math.max(60, w.ttlTicks()));

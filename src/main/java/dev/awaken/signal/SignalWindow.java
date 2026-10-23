@@ -98,11 +98,11 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
         public Builder row(Component label, Component value) { rows.add(new Row(label, value)); return this; }
         public Builder row(String label, String value) { return row(Component.literal(label), Component.literal(value)); }
         public Builder footer(Component footer) { this.footer = footer; return this; }
-        /** An action id routed to the handler registered with {@link Signal#onAction}. Shows [Y] / [N] hints. */
+        /** An action id routed to the handler registered with {@link Signal#onAction}: a decision (choice card). Prefer {@link #choice}. */
         public Builder action(String actionId) { this.action = actionId; this.ttl = Math.max(ttl, 20 * 30); return this; }
         /**
          * A real decision: the action id plus what Y and N do, in plain words ("Leave with your loot", "Keep going").
-         * Shown as a choice card.
+         * Shown as a choice card; unanswered after 20 s it waits in the tracker and the Status screen until the ttl.
          */
         public Builder choice(String actionId, String yesDoes, String noDoes) {
             action(actionId);
@@ -111,6 +111,7 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
             return this;
         }
         public Builder presentation(Presentation p) { this.presentation = p; return this; }
+        /** Info: how long a card is shown. A decision: how long it stays answerable (keep it within the handler's own offer). */
         public Builder ttl(int ticks) { this.ttl = ticks; return this; }
         public Builder priority(int p) { this.priority = p; return this; }
 

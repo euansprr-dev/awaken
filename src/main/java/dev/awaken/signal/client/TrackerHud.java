@@ -44,19 +44,13 @@ final class TrackerHud {
         return dim.getNamespace().equals(Awaken.MODID) && (dim.getPath().startsWith("stratum_") || dim.getPath().equals("endless"));
     }
 
-    static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
-        if (!enabled()) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.gui.hud.isHidden() || mc.getDebugOverlay().showDebugScreen()) return;
-        List<NowHooks.Suggestion> list = NowClient.suggestions();
-        int waiting = v2() ? SystemHud.waiting() : 0;
-        if (list.isEmpty() && waiting == 0) return;
+    private record Lines(String line1, String compass, String line2, int colour1, Rect rect) {}
 
-        Font font = mc.font;
-        int sw = g.guiWidth(), sh = g.guiHeight();
-        double s = SystemHud.scale();
+    private static Lines cached;
+    private static int cacheKey;
+
+    private static Lines build(Minecraft mc, Font font, List<NowHooks.Suggestion> list, int waiting, int sw, int sh, double s) {
         int maxText = SignalLayout.trackerTextWidth(sw, s);
-
         String line1 = null, compass = "";
         int colour1 = Glass.TEXT;
         if (!list.isEmpty()) {
@@ -68,7 +62,6 @@ final class TrackerHud {
         }
         String line2 = waiting <= 0 ? null : SignalText.ellipsize("◇ " + waiting + (waiting == 1 ? " decision waiting · " : " decisions waiting · ")
                 + SystemHud.key(AwakenKeys.STATUS), maxText, font::width);
-
         int textW = 0, lines = 0;
         if (line1 != null) {
             textW = font.width(line1) + font.width(compass);
@@ -78,7 +71,35 @@ final class TrackerHud {
             textW = Math.max(textW, font.width(line2));
             lines++;
         }
-        Rect r = SignalLayout.tracker(sw, sh, s, textW, lines, lowered(mc));
+        return new Lines(line1, compass, line2, colour1, SignalLayout.tracker(sw, sh, s, textW, lines, lowered(mc)));
+    }
+
+    static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
+        if (!enabled()) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.gui.hud.isHidden() || mc.getDebugOverlay().showDebugScreen()) return;
+        List<NowHooks.Suggestion> list = NowClient.suggestions();
+        int waiting = v2() ? SystemHud.waiting() : 0;
+        if (list.isEmpty() && waiting == 0) return;
+
+        Font font = mc.font;
+        int sw = g.guiWidth(), sh = g.guiHeight();
+        double s = SystemHud.scale();
+        // the text only changes with the suggestions, the decisions, or where you stand and look: build it then
+        int key = NowClient.version();
+        key = 31 * key + waiting;
+        key = 31 * key + mc.player.getBlockX();
+        key = 31 * key + mc.player.getBlockZ();
+        key = 31 * key + Math.round(mc.player.getYRot() / 5f);
+        key = 31 * key + sw * 1000 + (int) Math.round(s * 100);
+        if (key != cacheKey || cached == null) {
+            cacheKey = key;
+            cached = build(mc, font, list, waiting, sw, sh, s);
+        }
+        Lines c = cached;
+        String line1 = c.line1, compass = c.compass, line2 = c.line2;
+        int colour1 = c.colour1;
+        Rect r = c.rect;
         float alpha = Math.min(1f, (NowClient.sinceChange() + dt.getGameTimeDeltaPartialTick(false)) / 8f);
 
         g.pose().pushMatrix();

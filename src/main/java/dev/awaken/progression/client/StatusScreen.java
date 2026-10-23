@@ -135,6 +135,8 @@ public final class StatusScreen extends Screen {
         }
         contentHeight = y + SCROLL[tab.ordinal()] - cy;
         g.disableScissor();
+        // content can shrink (a decision answered, a screen resize): never stay scrolled past the end
+        SCROLL[tab.ordinal()] = Math.min(SCROLL[tab.ordinal()], Math.max(0, contentHeight - ch));
 
         // scrollbar
         if (contentHeight > ch) {

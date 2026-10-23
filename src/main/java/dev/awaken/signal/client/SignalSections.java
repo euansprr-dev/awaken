@@ -82,10 +82,7 @@ final class SignalSections {
             long now = System.currentTimeMillis();
             for (int i = 0; i < n; i++) {
                 RecentLog.Entry e = list.get(i);
-                Ui.Flow head = ui.flow();
-                head.text(e.title, colour(e.kind));
-                head.text(ago(now - e.at), Glass.LABEL);
-                head.end();
+                ui.pair(e.title, ago(now - e.at), colour(e.kind), Glass.LABEL);
                 for (String l : e.lines) ui.text(l, Glass.TEXT, 6, false);
                 if (!e.outcome().isEmpty()) ui.text(e.outcome(), Glass.GOOD, 6, false);
                 ui.gap(3);

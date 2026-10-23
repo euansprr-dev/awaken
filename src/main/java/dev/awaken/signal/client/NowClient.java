@@ -19,14 +19,21 @@ public final class NowClient {
     private static String topId = "";
     private static int changedAt;
     private static int ticks;
+    private static int version;
 
     static void accept(SignalPayloads.Now now) {
+        version++;
         String id = now.top().map(NowHooks.Suggestion::id).orElse("");
         if (!id.equals(topId)) {
             topId = id;
             changedAt = ticks;
         }
         current = now;
+    }
+
+    /** Changes whenever new suggestions arrive (the tracker rebuilds its text then). */
+    static int version() {
+        return version;
     }
 
     static void tick() {
@@ -58,6 +65,7 @@ public final class NowClient {
     }
 
     static void clear() {
+        version++;
         current = new SignalPayloads.Now(current.dimension(), List.of());
         topId = "";
     }
