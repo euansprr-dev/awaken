@@ -24,7 +24,14 @@ public final class FloorState {
     public final Set<Integer> puzzlesSolved = new LinkedHashSet<>();
     public final Set<Integer> lanternsTaken = new LinkedHashSet<>();
     public final Map<Integer, Integer> water = new HashMap<>();
-    public long enteredAt = -1;
+    /** Game time anyone first set foot here, or {@link #NEVER}. */
+    public long enteredAt = NEVER;
+    public static final long NEVER = Long.MIN_VALUE;
+
+    public boolean entered() {
+        return enteredAt != NEVER;
+    }
+
     public int pressureWaves;
     public boolean warden;
     public boolean alarm;

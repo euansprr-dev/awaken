@@ -136,6 +136,16 @@ public final class Twists {
         return ECHOES_SEEN.contains(g.id);
     }
 
+    static boolean hasPuppet(ServerPlayer p) {
+        return PUPPETS.containsKey(p.getUUID());
+    }
+
+    /** The Hollow follower or the Hoarder of a floor, if it is in the world. */
+    static Entity actor(ServerLevel level, GateRecord g, int area, int floor, boolean follower) {
+        UUID id = (follower ? FOLLOWERS : HOARDERS).get(floorKey(g, area, floor));
+        return id == null ? null : level.getEntity(id);
+    }
+
     // ---- floors -----------------------------------------------------------------------------------------------------
 
     static void floorFirstEntered(ServerLevel level, GateRecord g, FloorLayout f) {

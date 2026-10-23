@@ -56,7 +56,7 @@ public final class Hud {
         long onFloor = now - run.floorStartedAt;
         int pressure = Pressure.stage(g, onFloor);
         int collapse = g.plan.has(Modifier.COLLAPSE_TIMER) && !run.clearedFloor(run.area, run.floor)
-                ? (int) Math.max(0, (Modifiers.collapseTicks(g) - (now - Math.max(0, fs.enteredAt))) / 20) : -1;
+                ? (int) Math.max(0, (Modifiers.collapseTicks(g) - (now - (fs.entered() ? fs.enteredAt : now))) / 20) : -1;
         int flags = (g.plan.has(Modifier.LIGHTLESS) ? GatePayloads.RunHud.LIGHTLESS : 0)
                 | (g.plan.is(Twist.RED_GATE) && !g.bossDead ? GatePayloads.RunHud.RED : 0)
                 | (g.plan.has(Modifier.LOW_GRAVITY) ? GatePayloads.RunHud.LOW_GRAVITY : 0)

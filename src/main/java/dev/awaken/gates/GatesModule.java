@@ -23,6 +23,7 @@ public final class GatesModule {
         Signal.onAction(Interactions.ACTION, Interactions::answer);
         GateCommands.register();
         GateTests.register();
+        GateLiveTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent e) {

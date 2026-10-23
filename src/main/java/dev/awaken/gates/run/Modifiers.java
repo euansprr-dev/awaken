@@ -216,6 +216,14 @@ public final class Modifiers {
         tickWater(server);
     }
 
+    /** Test hook: runs every scheduled effect now, due or not. */
+    static void runAllPending(MinecraftServer server) {
+        List<Pending> all = new ArrayList<>(PENDING);
+        PENDING.clear();
+        for (Pending pd : all) pd.run.run();
+        tickWater(server);
+    }
+
     // ---- per player -------------------------------------------------------------------------------------------------
 
     private static final Map<UUID, String> SHADE_FLOOR = new HashMap<>();
@@ -229,7 +237,8 @@ public final class Modifiers {
             else if (p.isShiftKeyDown()) run.noise = Math.max(0, run.noise - 3);
             else run.noise = Math.max(0, run.noise - 1);
             if (!p.onGround() && p.getDeltaMovement().y > 0.2) run.noise += 1;
-            if (run.noise >= 24 && now - LISTENER_AT.getOrDefault(p.getUUID(), 0L) > 600 && r != null && !r.type.safe() && f != null) {
+            Long lastListener = LISTENER_AT.get(p.getUUID());
+            if (run.noise >= 24 && (lastListener == null || now - lastListener > 600) && r != null && !r.type.safe() && f != null) {
                 LISTENER_AT.put(p.getUUID(), now);
                 run.noise = 6;
                 BlockPos at = Pressure.spotNear(level, g, f, p, 9);
@@ -302,7 +311,7 @@ public final class Modifiers {
                     }
                 }
             }
-            if (g.plan.has(Modifier.COLLAPSE_TIMER) && fs.enteredAt >= 0) collapse(level, g, f, fs, players, now);
+            if (g.plan.has(Modifier.COLLAPSE_TIMER) && fs.entered()) collapse(level, g, f, fs, players, now);
         }
     }
 

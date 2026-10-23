@@ -115,6 +115,38 @@ public final class RunEvents {
         Interactions.flush();
     }
 
+    /** One per-gate tick (pressure, modifiers, twist actors) now. */
+    public static void tickGateNow(ServerLevel level, GateRecord g) {
+        Pressure.tick(level, g);
+        Modifiers.tickGate(level, g);
+        Twists.tickGate(level, g);
+    }
+
+    /** Runs every scheduled monster effect (Volatile bursts, Echoing rises) and queued water now, due or not. */
+    public static void pendingNow(MinecraftServer server) {
+        Modifiers.runAllPending(server);
+    }
+
+    public static void enterAnnexNow(ServerPlayer p, GateRecord g) {
+        Twists.enterAnnex(p, g);
+    }
+
+    public static void returnFromInnerNow(ServerPlayer p, GateRecord g) {
+        Twists.returnFromInner(p, g);
+    }
+
+    public static Entity ghostOf(ServerPlayer p) {
+        return Twists.ghostOf(p);
+    }
+
+    public static boolean hasPuppet(ServerPlayer p) {
+        return Twists.hasPuppet(p);
+    }
+
+    public static Entity twistActor(ServerLevel level, GateRecord g, int area, int floor, boolean follower) {
+        return Twists.actor(level, g, area, floor, follower);
+    }
+
     static boolean inGateDim(Entity e) {
         return dev.awaken.gates.GateService.inGate(e);
     }

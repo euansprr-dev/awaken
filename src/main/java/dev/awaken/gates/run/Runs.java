@@ -148,7 +148,7 @@ public final class Runs {
         FloorLayout f = GateLayout.of(g.plan).floor(area, floor);
         FloorState fs = g.floor(area, floor);
         ServerLevel gl = GateService.gateLevel(server);
-        if (fs.enteredAt < 0) {
+        if (!fs.entered()) {
             fs.enteredAt = now(server);
             if (gl != null && f != null) Rooms.floorFirstEntered(gl, g, f);
         }

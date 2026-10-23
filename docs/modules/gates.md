@@ -222,8 +222,19 @@ floor reaches its end, spawn spots exist), `gates_painter_features`, `gates_chun
 `gates_dimension_json` (decodes the dimension with its codecs), `gates_claim_idempotent`, `gates_satchel_death_rules`,
 `gates_state_machine`, `gates_cell_region_math`, `gates_puzzles_solvable`, `gates_codecs_roundtrip`,
 `gates_overworld_structure`, `gates_build_break_hold` (create → READY → break → Lord → held → RELEASED → structure gone).
-The GameTest server has no datapack dimensions, so the inside of a run is covered by the pure tests above, not by a
-walking test.
+
+The GameTest server has no datapack dimensions, so the walking tests set `GateService.testLevel` to the test level,
+paint the floors they need in place with `GatePainter`, and drive a mock player through them inside one tick:
+`gates_run_walkthrough` (enter, rooms wake, kills, floor cleared at the shrine, Satchel, extract, re-enter, Seal to
+floor 2), `gates_lord_and_death` (the Lord, claims, exit portal, release; death in a gate: Satchel lost, gear back,
+Fracture), `gates_modifiers_live` (Low Gravity, No Regen, Glass both ways, Swarm, Echoing rise-once, Volatile without
+block damage), `gates_modifiers_timed` (Mirror shade after 40 s, Silence Listener, Collapse Timer, pressure wave and
+Warden), `gates_twist_echo_hollow`, `gates_twist_inverted_treasure` (disguise, target cancel, broken by a hit; Hoarder
+hoard into the Satchel), `gates_twist_friendly_red` (lanterns, spirit, shrine unsealed; Red Gate refuses extraction),
+`gates_twist_double_gate` (rift opens after the Lord, second gate entered, the law of the second gate) and
+`gates_twist_gate_within` (inner gate painted on floor 2, keeper, way back, quiet afterwards). Mock players are creative
+and can't be hurt, so player deaths are tested by posting `LivingDeathEvent`. Timers are tested by moving the floor
+clock (`floorStartedAt`, `enteredAt`) back, not by waiting.
 
 ## Decisions (not in SPEC yet)
 
