@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "awaken:sovereign"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "awaken:sovereign"
+      }
+    ]
+  }
+}

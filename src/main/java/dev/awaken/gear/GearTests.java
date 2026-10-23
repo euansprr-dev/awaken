@@ -78,6 +78,9 @@ final class GearTests {
         AwakenTests.registerIsolated("gear_focus_in_world", 40, GearTests::focusInWorld);
         AwakenTests.register("gear_tempering_works", 20, GearTests::tempering);
         AwakenTests.register("gear_now_suggests_next_piece", 20, GearTests::now);
+        AwakenTests.register("gear_late_set_bonuses", 20, GearTests::lateBonuses);
+        AwakenTests.registerIsolated("gear_lordscale_overflow", 40, GearTests::overflow);
+        AwakenTests.register("gear_silhouettes_valid", 20, GearTests::silhouettes);
     }
 
     // ---- registry, tags, recipes ------------------------------------------------------------------------------------
@@ -98,6 +101,11 @@ final class GearTests {
         expectIn(h, HunterTier.C.coreTag(), "colossus_gear", "serpent_scale", "archivist_quill", "broker_lantern");
         expectIn(h, HunterTier.B.coreTag(), "glacier_heart", "mirror_shard_crown", "zero_core", "sleeper_eyelid");
         expectIn(h, HunterTier.B.bindTag(), "dream_residue");
+        // A: the B- and A-rank Lords and the deep guardians; S: the Herald, the Dreaming and the Hollow Court
+        expectIn(h, HunterTier.A.coreTag(), "leviathan_fin", "herald_halo", "furnace_engine_core", "moon_scale", "architect_key");
+        expectIn(h, HunterTier.A.hideTag(), "precursor_alloy");
+        expectIn(h, HunterTier.S.coreTag(), "herald_halo", "architect_key", "regent_shadow", "mirror_heart");
+        expectIn(h, HunterTier.S.bindTag(), "dream_residue");
         h.succeed();
     }
 
@@ -202,7 +210,8 @@ final class GearTests {
         }
         h.assertTrue(sp.getRecipeBook().contains(vest), "holding leather unlocks the Wildhide Vest");
         // the level road points at each tier and puts its whole recipe set in the book
-        Map<HunterTier, Integer> want = Map.of(HunterTier.E, 3, HunterTier.D, 13, HunterTier.C, 22, HunterTier.B, 42);
+        Map<HunterTier, Integer> want = Map.of(HunterTier.E, 3, HunterTier.D, 13, HunterTier.C, 22, HunterTier.B, 42,
+                HunterTier.A, 67, HunterTier.S, 97);
         for (HunterTier tier : HunterTier.values()) {
             String id = "awaken:hunter_gear_" + tier.name().toLowerCase();
             LevelRoad.Step step = LevelRoad.steps().stream().filter(s -> s.id().toString().equals(id)).findFirst().orElse(null);
@@ -282,9 +291,16 @@ final class GearTests {
         h.assertTrue(attr(GearItems.stack(HunterTier.B, Piece.CHESTPLATE), Attributes.ARMOR_TOUGHNESS, EquipmentSlot.CHEST)
                 <= attr(new ItemStack(Items.NETHERITE_CHESTPLATE), Attributes.ARMOR_TOUGHNESS, EquipmentSlot.CHEST), "B toughness at most netherite's");
         Item[] swords = {Items.STONE_SWORD, Items.IRON_SWORD, Items.DIAMOND_SWORD, Items.NETHERITE_SWORD};
-        for (int i = 0; i < t.length; i++) {
+        for (int i = 0; i < swords.length; i++) {
             h.assertTrue(melee(GearItems.get(t[i], Piece.BLADE)) == melee(swords[i]), t[i] + " blade hits like " + swords[i]);
         }
+        // A and S go past netherite: more armour, toughness from netherite's up, harder blades
+        double netherite = vanillaArmour(Items.NETHERITE_HELMET, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_LEGGINGS, Items.NETHERITE_BOOTS);
+        h.assertTrue(armourTotal(HunterTier.A) > netherite && armourTotal(HunterTier.S) > armourTotal(HunterTier.A), "A and S above netherite");
+        h.assertTrue(attr(GearItems.stack(HunterTier.A, Piece.CHESTPLATE), Attributes.ARMOR_TOUGHNESS, EquipmentSlot.CHEST)
+                >= attr(new ItemStack(Items.NETHERITE_CHESTPLATE), Attributes.ARMOR_TOUGHNESS, EquipmentSlot.CHEST), "A toughness at least netherite's");
+        h.assertTrue(melee(GearItems.get(HunterTier.A, Piece.BLADE)) > melee(Items.NETHERITE_SWORD), "the Warblade hits harder than netherite");
+        h.assertTrue(armourTotal(HunterTier.S) <= 30, "S stays under the armour attribute's 30 cap");
         // mattocks: what each tier may mine, and that one head does stone, wood and earth
         assertMines(h, HunterTier.E, Blocks.IRON_ORE, true);
         assertMines(h, HunterTier.E, Blocks.DIAMOND_ORE, false);
@@ -292,6 +308,8 @@ final class GearTests {
         assertMines(h, HunterTier.D, Blocks.OBSIDIAN, false);
         assertMines(h, HunterTier.C, Blocks.OBSIDIAN, true);
         assertMines(h, HunterTier.B, Blocks.ANCIENT_DEBRIS, true);
+        assertMines(h, HunterTier.A, Blocks.ANCIENT_DEBRIS, true);
+        assertMines(h, HunterTier.S, Blocks.OBSIDIAN, true);
         for (HunterTier tier : t) {
             Tool tool = GearItems.stack(tier, Piece.MATTOCK).get(DataComponents.TOOL);
             h.assertTrue(tool != null, tier + " mattock is a tool");
@@ -475,6 +493,107 @@ final class GearTests {
         }
         wear(sp, HunterTier.E, 0);
         SetBonus.refresh(sp);
+        h.succeed();
+    }
+
+    // ---- the late sets ------------------------------------------------------------------------------------------------
+
+    /** Lordscale's ward, Sovereign's Measure (attributes, power hits, the stat gear reads) and Unbowed's rule. */
+    private static void lateBonuses(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        Progression.awaken(sp);
+        var sources = level.damageSources();
+        wear(sp, HunterTier.A, 1);
+        h.assertTrue(hit(sp, sources.source(Forces.GRAVITY), 10, null) == 10, "one Lordscale piece: no ward");
+        wear(sp, HunterTier.A, 2);
+        h.assertTrue(Math.abs(hit(sp, sources.source(Forces.GRAVITY), 10, null) - 8f) < 1e-4, "two: Gravity -20%");
+        h.assertTrue(Math.abs(hit(sp, sources.source(Forces.CHARGE), 10, null) - 8f) < 1e-4, "and Charge -20%");
+        h.assertTrue(hit(sp, sources.source(Forces.HEAT), 10, null) == 10, "Heat untouched");
+        // Sovereign's Measure on the highest stat
+        wear(sp, HunterTier.A, 0);
+        Progression.addStat(sp, dev.awaken.progression.Stat.STR, 10);
+        wear(sp, HunterTier.S, 2);
+        SetBonus.refresh(sp);
+        h.assertTrue(mod(sp, Attributes.ATTACK_DAMAGE, SetBonus.MEASURE_ID) == 0 && SetBonus.stat(sp, dev.awaken.progression.Stat.STR) == 15,
+                "two pieces: no Measure yet");
+        wear(sp, HunterTier.S, 4);
+        SetBonus.refresh(sp);
+        h.assertTrue(SetBonus.highest(sp) == dev.awaken.progression.Stat.STR, "STR is the highest");
+        h.assertTrue(SetBonus.stat(sp, dev.awaken.progression.Stat.STR) == 20 && SetBonus.stat(sp, dev.awaken.progression.Stat.AGI) == 5,
+                "STR 15 counts as 20, the rest as they are");
+        h.assertTrue(Math.abs(mod(sp, Attributes.ATTACK_DAMAGE, SetBonus.MEASURE_ID) - 5 * 0.025) < 1e-9, "+5 STR worth of attack");
+        h.assertTrue(Math.abs(SetBonus.measurePower(sp) - 0.075) < 1e-9, "powers +0.75% a point above 5");
+        Pig pig = pig(h, 2);
+        float powered = hit(pig, sources.source(Forces.KINETIC, sp), 10, null);
+        h.assertTrue(Math.abs(powered - 10.75f) < 1e-3, "a power hit +7.5%, got " + powered);
+        Progression.addStat(sp, dev.awaken.progression.Stat.VIT, 20);
+        SetBonus.refresh(sp);
+        h.assertTrue(SetBonus.highest(sp) == dev.awaken.progression.Stat.VIT && mod(sp, Attributes.ATTACK_DAMAGE, SetBonus.MEASURE_ID) == 0
+                && Math.abs(mod(sp, Attributes.MAX_HEALTH, SetBonus.MEASURE_ID) - 10 * 0.6) < 1e-9, "VIT 25 highest: +10 VIT worth of health");
+        wear(sp, HunterTier.S, 0);
+        SetBonus.refresh(sp);
+        h.assertTrue(mod(sp, Attributes.MAX_HEALTH, SetBonus.MEASURE_ID) == 0, "taken off: gone");
+        // Unbowed: a gate below your rank can't Fracture you (two pieces)
+        h.assertTrue(SetBonus.waivesFracture(2, 3, 2) && !SetBonus.waivesFracture(2, 3, 3) && !SetBonus.waivesFracture(1, 3, 0)
+                && !SetBonus.waivesFracture(4, 3, -1), "Unbowed only for gates below your rank, with two pieces");
+        h.assertTrue(SetBonus.lines(HunterTier.A).size() == 2 && SetBonus.lines(HunterTier.S).size() == 2, "every set says what it does");
+        h.succeed();
+    }
+
+    /** Lordscale, four pieces: every fifth power hit of one Force bursts around the target, half the hit, foes only. */
+    private static void overflow(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        wear(sp, HunterTier.A, 4);
+        var sources = level.damageSources();
+        net.minecraft.world.entity.monster.zombie.Zombie target = h.spawn(EntityTypes.ZOMBIE, new BlockPos(1, 1, 1));
+        net.minecraft.world.entity.monster.zombie.Zombie near = h.spawn(EntityTypes.ZOMBIE, new BlockPos(3, 1, 1));
+        Pig pet = pig(h, 1);
+        for (var z : List.of(target, near)) {
+            z.setNoAi(true);
+            z.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.FIRE_RESISTANCE, 200));
+        }
+        float before = near.getHealth(), petBefore = pet.getHealth();
+        for (int i = 0; i < 4; i++) hit(target, sources.source(Forces.FROST, sp), 4, null);
+        h.assertTrue(near.getHealth() == before, "four hits: no burst yet");
+        hit(target, sources.source(Forces.FROST, sp), 4, null);
+        h.assertTrue(Math.abs(before - near.getHealth() - 2f) < 1e-3, "the fifth Frost hit bursts: half of 4 to the zombie nearby, got "
+                + (before - near.getHealth()));
+        h.assertTrue(near.hasEffect(MobEffects.SLOWNESS), "and the burst carries Frost");
+        h.assertTrue(pet.getHealth() == petBefore, "an animal beside it is never caught");
+        // Forces count apart: Heat hits don't spend Frost's count
+        for (int i = 0; i < 4; i++) hit(target, sources.source(Forces.HEAT, sp), 4, null);
+        float mid = near.getHealth();
+        hit(target, sources.source(Forces.FROST, sp), 4, null);
+        h.assertTrue(near.getHealth() == mid, "one Frost hit after a burst starts a new count");
+        wear(sp, HunterTier.A, 0);
+        h.succeed();
+    }
+
+    /** The late sets' extra geometry: the client builds the armour from this file, so it must be whole and fit its texture. */
+    private static void silhouettes(GameTestHelper h) {
+        for (HunterTier tier : List.of(HunterTier.A, HunterTier.S)) {
+            String file = "/assets/awaken/" + Silhouette.path(tier);
+            try (var in = GearTests.class.getResourceAsStream(file)) {
+                h.assertTrue(in != null, file + " is on the classpath");
+                var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+                Silhouette spec = Silhouette.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow();
+                List<String> bad = spec.problems();
+                h.assertTrue(bad.isEmpty(), tier.setName + ": " + String.join("; ", bad));
+                h.assertTrue(spec.parts().size() >= 10, tier.setName + " adds real geometry (" + spec.parts().size() + " parts)");
+                for (String slot : List.of("head", "chest", "feet")) {
+                    h.assertTrue(spec.parts().stream().anyMatch(p -> p.slot().equals(slot)), tier.setName + " changes the " + slot + " silhouette");
+                }
+                try (var png = GearTests.class.getResourceAsStream("/assets/awaken/" + Silhouette.texture(tier))) {
+                    h.assertTrue(png != null, "silhouette texture for " + tier.setName);
+                    var img = javax.imageio.ImageIO.read(png);
+                    h.assertTrue(img.getWidth() == spec.texture().get(0) && img.getHeight() == spec.texture().get(1), "texture size matches the spec");
+                }
+            } catch (java.io.IOException e) {
+                h.fail(file + ": " + e);
+            }
+        }
         h.succeed();
     }
 

@@ -32,7 +32,7 @@ public final class HunterSense {
         LocalPlayer p = Minecraft.getInstance().player;
         active = p != null && !p.isSpectator() && p.isShiftKeyDown() && SetBonus.has(p, HunterTier.E, SetBonus.FULL);
         if (active) {
-            int r = SetBonus.senseRadius(Progression.stat(p, Stat.PER));
+            int r = SetBonus.senseRadius(SetBonus.stat(p, Stat.PER));
             radiusSq = (double) r * r;
         }
     }

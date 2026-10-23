@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_leggings",
+  "key": {
+    "B": "#awaken:hunter_bind_s",
+    "C": "#awaken:hunter_core_s",
+    "H": "#awaken:hunter_hide_s",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "CSC",
+    "H H",
+    "B B"
+  ],
+  "result": {
+    "id": "awaken:sovereign_leggings"
+  }
+}

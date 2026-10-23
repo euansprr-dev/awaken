@@ -4,9 +4,13 @@
     "awaken:beastbound_mattock",
     "awaken:gatewrought_mattock",
     "awaken:veilwoven_mattock",
+    "awaken:lordscale_mattock",
+    "awaken:sovereign_mattock",
     "awaken:wildhide_focus",
     "awaken:beastbound_focus",
     "awaken:gatewrought_focus",
-    "awaken:veilwoven_focus"
+    "awaken:veilwoven_focus",
+    "awaken:lordscale_focus",
+    "awaken:sovereign_focus"
   ]
 }

@@ -1,0 +1,32 @@
+{
+  "values": [
+    {
+      "id": "awaken:leviathan_fin",
+      "required": false
+    },
+    {
+      "id": "awaken:sky_pearl",
+      "required": false
+    },
+    {
+      "id": "awaken:herald_halo",
+      "required": false
+    },
+    {
+      "id": "awaken:abyssal_glass",
+      "required": false
+    },
+    {
+      "id": "awaken:furnace_engine_core",
+      "required": false
+    },
+    {
+      "id": "awaken:moon_scale",
+      "required": false
+    },
+    {
+      "id": "awaken:architect_key",
+      "required": false
+    }
+  ]
+}

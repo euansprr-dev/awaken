@@ -24,6 +24,12 @@ final class GearState {
     long lastHeal;
     /** Last energy a focus gave back for a power hit (at most once a second). */
     long focusEnergyAt = Long.MIN_VALUE / 2;
+    /** Power hits per Force since the last Overflow (Lordscale, 4 pieces): the five Forces, then Kinetic. */
+    final int[] forceHits = new int[6];
+    /** True while an Overflow burst is being dealt, so the burst never feeds itself, a focus or a primed strike. */
+    boolean bursting;
+    /** Fracture end before a death was handled (Unbowed restores it), or -1. */
+    long fractureBefore = -1;
     /** The Now tracker's last answer and when it was worked out. */
     List<NowHooks.Suggestion> now = List.of();
     long nowAt = Long.MIN_VALUE;

@@ -1,0 +1,56 @@
+{
+  "values": [
+    {
+      "id": "awaken:herald_halo",
+      "required": false
+    },
+    {
+      "id": "awaken:abyssal_glass",
+      "required": false
+    },
+    {
+      "id": "awaken:architect_key",
+      "required": false
+    },
+    {
+      "id": "awaken:regent_shadow",
+      "required": false
+    },
+    {
+      "id": "awaken:hunger_fang",
+      "required": false
+    },
+    {
+      "id": "awaken:silence_ear",
+      "required": false
+    },
+    {
+      "id": "awaken:sleep_feather",
+      "required": false
+    },
+    {
+      "id": "awaken:machine_crown",
+      "required": false
+    },
+    {
+      "id": "awaken:mirror_heart",
+      "required": false
+    },
+    {
+      "id": "awaken:storm_core",
+      "required": false
+    },
+    {
+      "id": "awaken:root_heart",
+      "required": false
+    },
+    {
+      "id": "awaken:ash_heart",
+      "required": false
+    },
+    {
+      "id": "awaken:seed_shard",
+      "required": false
+    }
+  ]
+}
