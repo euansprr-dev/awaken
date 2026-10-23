@@ -93,7 +93,7 @@ public final class Progression {
     public static int grantXp(ServerPlayer player, double amount, XpSource source) {
         Profile p = profile(player);
         if (!p.awakened || amount <= 0) return 0;
-        amount *= AwakenConfig.xpMultiplier() * (1 + perk(player, Perks.XP_BONUS));
+        amount *= xpScale(player) * (1 + perk(player, Perks.XP_BONUS));
         p.xp += amount;
         int gained = 0;
         while (p.xp >= Curve.xpToNext(p.level)) {
@@ -109,7 +109,13 @@ public final class Progression {
 
     /** Grants a fraction of the player's current level (used by rewards: "0.25 levels"). */
     public static int grantLevels(ServerPlayer player, double fraction, XpSource source) {
-        return grantXp(player, fraction * Curve.xpToNext(profile(player).level) / AwakenConfig.xpMultiplier(), source);
+        return grantXp(player, fraction * Curve.xpToNext(profile(player).level) / xpScale(player), source);
+    }
+
+    /** Global XP scale: the config multiplier and the story's Ascension tier (+15% per tier, up to 10 tiers). */
+    static double xpScale(ServerPlayer player) {
+        int tier = Math.clamp(dev.awaken.core.api.StoryHooks.ascension(player.level().getServer()), 0, 10);
+        return AwakenConfig.xpMultiplier() * (1 + 0.15 * tier);
     }
 
     private static void onLevelUp(ServerPlayer player, Profile p, int gained) {
@@ -539,6 +545,14 @@ public final class Progression {
     public static void clearFracture(ServerPlayer player) {
         profile(player).fractureUntil = 0;
         applyAttributes(player);
+        markDirty(player);
+    }
+
+    /** Day's End tally: the player came out of one more gate today. */
+    public static void addGateToday(ServerPlayer player) {
+        Profile p = profile(player);
+        if (p.day.day() < 0) return;
+        p.day = new Profile.DayLog(p.day.day(), p.day.levelStart(), p.day.gates() + 1, p.day.kills(), p.day.best());
         markDirty(player);
     }
 

@@ -74,7 +74,8 @@ public final class GateCard {
         }
         if (g.state.standing()) {
             long in = g.breaksIn(today);
-            w.row("Breaks in", g.scripted ? "never" : in == 0 ? "today" : in + " play-day" + (in > 1 ? "s" : ""));
+            w.row("Breaks in", g.scripted ? "never" : g.neverBreaks(p.level().getServer()) ? "never · the gates are calm"
+                    : in == 0 ? "today" : in + " play-day" + (in > 1 ? "s" : ""));
         }
         w.row("Omen", plan.theme().omen);
         if (scouted) w.row("Theme", plan.theme().displayName);

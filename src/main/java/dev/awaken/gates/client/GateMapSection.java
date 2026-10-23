@@ -93,9 +93,10 @@ public final class GateMapSection implements StatusSections.Section {
             g.text(font, label, lx, ly, ClientGates.rankColour(b.rank()), false);
             String rest = String.format(" %,d m %s", dist, DIRS[d]);
             g.text(font, rest, lx + font.width(label), ly, 0xFFE6ECF5, false);
-            String when = b.broken() ? "BROKEN" : (b.flags() & GatePayloads.Beacon.SCRIPTED) != 0 ? "" : b.breaksIn() == 0 ? "breaks today"
-                    : "breaks in " + b.breaksIn() + "d";
-            int wc = b.broken() ? 0xFFFF8A7A : b.breaksIn() <= 1 ? 0xFFFFCF7A : 0xFF8090A8;
+            boolean calm = (b.flags() & GatePayloads.Beacon.CALM) != 0;
+            String when = b.broken() ? "BROKEN" : (b.flags() & GatePayloads.Beacon.SCRIPTED) != 0 ? "" : calm ? "calm"
+                    : b.breaksIn() == 0 ? "breaks today" : "breaks in " + b.breaksIn() + "d";
+            int wc = b.broken() ? 0xFFFF8A7A : calm ? 0xFF8FC4B0 : b.breaksIn() <= 1 ? 0xFFFFCF7A : 0xFF8090A8;
             if (lx + 150 < x + width) g.text(font, when, x + width - font.width(when) - 4, ly, wc, false);
             else {
                 ly += 10;

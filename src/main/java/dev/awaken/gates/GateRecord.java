@@ -78,6 +78,11 @@ public final class GateRecord {
         return true;
     }
 
+    /** Scripted gates never break, and none do once the story has calmed the gates ("Break the Signal"). */
+    public boolean neverBreaks(net.minecraft.server.MinecraftServer server) {
+        return scripted || dev.awaken.core.api.StoryHooks.gatesCalm(server);
+    }
+
     public long breaksIn(long today) {
         return Math.max(0, breaksOnPlayDay - today);
     }

@@ -188,6 +188,13 @@ final class Court {
                 Signal.send(pl.p(), SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal(index == 0 ? pl.ending().title() : ""))
                         .body(Component.literal(pl.ending().lines().get(index))).priority(10).ttl(95).build());
             }
+            if (t % 100 == 0 && index == pl.ending().lines().size() && "ascension".equals(pl.ending().effect())) {
+                int tier = StoryWorld.get(server).ascension;
+                Signal.send(pl.p(), SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Ascension " + tier))
+                        .body(Component.literal("Everything that hunts you is stronger now. You learn faster to match."))
+                        .row("Monsters", "+" + (30 * Math.min(tier, 10)) + "% health, +" + (15 * Math.min(tier, 10)) + "% damage")
+                        .row("XP", "+" + (15 * Math.min(tier, 10)) + "%").priority(10).ttl(95).build());
+            }
             if (index >= pl.ending().lines().size() + 1) {
                 AwakenNet.send(pl.p(), new StoryPayloads.Credits(pl.ending().title()));
                 it.remove();

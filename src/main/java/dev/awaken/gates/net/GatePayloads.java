@@ -28,7 +28,8 @@ public final class GatePayloads {
 
     /** One gate as the client sees it from afar: a pillar, a rank, a timer. Nothing about the inside. */
     public record Beacon(int id, BlockPos pos, int rank, int flags, int breaksIn) {
-        public static final int BROKEN = 1, RED = 2, SCRIPTED = 4;
+        /** CALM: never breaks (the story calmed the gates). NO_BLIGHT: the land keeps its colour around a break. */
+        public static final int BROKEN = 1, RED = 2, SCRIPTED = 4, CALM = 8, NO_BLIGHT = 16;
         public static final StreamCodec<ByteBuf, Beacon> CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Beacon::id, BlockPos.STREAM_CODEC, Beacon::pos, ByteBufCodecs.VAR_INT, Beacon::rank,
                 ByteBufCodecs.VAR_INT, Beacon::flags, ByteBufCodecs.VAR_INT, Beacon::breaksIn, Beacon::new);
@@ -121,7 +122,8 @@ public final class GatePayloads {
                 if (g.state == GateState.RELEASED || g.state == GateState.BUILDING) continue;
                 if (g.state == GateState.CLEARED && g.inside.isEmpty()) continue;
                 int flags = (g.state == GateState.BROKEN ? Beacon.BROKEN : 0) | (g.plan.is(dev.awaken.gates.content.Twist.RED_GATE) ? Beacon.RED : 0)
-                        | (g.scripted ? Beacon.SCRIPTED : 0);
+                        | (g.scripted ? Beacon.SCRIPTED : 0) | (!g.scripted && g.neverBreaks(server) ? Beacon.CALM : 0)
+                        | (dev.awaken.core.api.StoryHooks.colourRestored(server) ? Beacon.NO_BLIGHT : 0);
                 list.add(new Beacon(g.id, g.pos, g.plan.rank().ordinal(), flags, (int) g.breaksIn(today)));
             }
         }

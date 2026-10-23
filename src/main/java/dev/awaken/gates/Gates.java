@@ -132,18 +132,23 @@ public final class Gates {
      * toward the Director's 1–4. Returns the gate id (-1 if no gate dimension).
      */
     public static int openScripted(ServerPlayer p, GatePlan plan) {
+        var look = p.getLookAngle();
+        double len = Math.max(0.01, Math.hypot(look.x, look.z));
+        return openScripted(p, plan, new BlockPos(p.getBlockX() + (int) Math.round(look.x / len * 20), p.getBlockY(),
+                p.getBlockZ() + (int) Math.round(look.z / len * 20)));
+    }
+
+    /** As {@link #openScripted(ServerPlayer, GatePlan)}, standing on the ground at {@code near}'s x/z, facing the player. */
+    public static int openScripted(ServerPlayer p, GatePlan plan, BlockPos near) {
         MinecraftServer s = p.level().getServer();
         if (GateService.gateLevel(s) == null) return -1;
         ServerLevel over = s.overworld();
-        var look = p.getLookAngle();
-        double len = Math.max(0.01, Math.hypot(look.x, look.z));
-        int x = p.getBlockX() + (int) Math.round(look.x / len * 20), z = p.getBlockZ() + (int) Math.round(look.z / len * 20);
-        BlockPos ground = over.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z)).below();
+        BlockPos ground = over.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(near.getX(), 0, near.getZ())).below();
         GateRegistry reg = GateRegistry.get(s);
         int id = reg.nextId();
         List<String> trace = new ArrayList<>();
         trace.add("scripted  " + plan.rank().label + " " + plan.theme().displayName + " for " + p.getGameProfile().name());
-        int axis = Math.abs(look.x) > Math.abs(look.z) ? 1 : 0;
+        int axis = Math.abs(near.getX() - p.getBlockX()) > Math.abs(near.getZ() - p.getBlockZ()) ? 1 : 0;
         GateRecord g = GateService.create(s, id, plan, ground, axis, Optional.of(p.getUUID()), 9999, trace, true);
         return g.id;
     }

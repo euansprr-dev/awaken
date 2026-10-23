@@ -18,12 +18,14 @@ public final class GatesModule {
         GatesRegistry.init(modBus);
         modBus.addListener(GatesModule::registerPayloads);
         GateEvents.register();
+        GateAccess.install();
         PlayDays.onNewPlayDay(Breaks::onNewPlayDay);
         DaysEnd.addWaiting(Breaks::waitingLine);
         Signal.onAction(Interactions.ACTION, Interactions::answer);
         GateCommands.register();
         GateTests.register();
         GateLiveTests.register();
+        GateHookTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent e) {

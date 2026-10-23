@@ -5,13 +5,8 @@ import dev.awaken.gates.Claim;
 import dev.awaken.gates.GateRegistry;
 import dev.awaken.gates.GatesRegistry;
 import dev.awaken.progression.Progression;
-import dev.awaken.progression.Profile;
-import dev.awaken.progression.ProgressionModule;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Prediction;
@@ -81,26 +76,8 @@ public final class Claims {
 
     // ---- Day's End --------------------------------------------------------------------------------------------------
 
-    /**
-     * Adds one gate to today's Day's End tally. Profile's day log has no public setter, so this round-trips the profile
-     * through its own codec (the only safe public path) and puts it back.
-     */
+    /** Adds one gate to today's Day's End tally. */
     public static void countGateToday(ServerPlayer p) {
-        Profile prof = Progression.profile(p);
-        if (prof.day().day() < 0) return;
-        try {
-            Tag t = Profile.CODEC.encodeStart(NbtOps.INSTANCE, prof).getOrThrow();
-            if (!(t instanceof CompoundTag root)) return;
-            CompoundTag act = root.getCompoundOrEmpty("activity");
-            CompoundTag day = act.getCompoundOrEmpty("day");
-            day.putInt("gates", day.getIntOr("gates", 0) + 1);
-            act.put("day", day);
-            root.put("activity", act);
-            Profile next = Profile.CODEC.parse(NbtOps.INSTANCE, root).getOrThrow();
-            p.setData(ProgressionModule.PROFILE.get(), next);
-            Progression.markDirty(p);
-        } catch (RuntimeException e) {
-            DirectorLog.log(p, "gate", "could not update the Day's End tally: " + e.getMessage());
-        }
+        Progression.addGateToday(p);
     }
 }

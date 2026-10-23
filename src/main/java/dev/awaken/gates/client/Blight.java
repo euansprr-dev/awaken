@@ -28,7 +28,7 @@ public final class Blight {
         Vec3 p = mc.player.position();
         float best = 0;
         for (GatePayloads.Beacon b : ClientGates.beacons()) {
-            if (!b.broken()) continue;
+            if (!b.broken() || (b.flags() & GatePayloads.Beacon.NO_BLIGHT) != 0) continue;
             double d = Math.sqrt(b.pos().distToCenterSqr(p));
             float f = (float) Math.max(0, Math.min(1, (96 - d) / 32.0));
             best = Math.max(best, f);

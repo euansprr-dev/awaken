@@ -51,7 +51,7 @@ public final class Breaks {
     static void onNewPlayDay(MinecraftServer server, long day) {
         GateRegistry reg = GateRegistry.get(server);
         for (GateRecord g : List.copyOf(reg.all())) {
-            if (g.scripted || !(g.state == GateState.READY || g.state == GateState.OPEN || g.state == GateState.ACTIVE)) continue;
+            if (g.neverBreaks(server) || !(g.state == GateState.READY || g.state == GateState.OPEN || g.state == GateState.ACTIVE)) continue;
             if (day >= g.breaksOnPlayDay) {
                 if (g.state == GateState.ACTIVE && someoneOnlineInside(server, g)) {
                     g.trace.add("break deferred on play-day " + day + ": someone is inside");
@@ -176,9 +176,9 @@ public final class Breaks {
         if (lord.getMaxHealth() < 80) {
             // the fallback spawner gives a plain monster: make it a Lord in size and toughness
             var hp = lord.getAttribute(Attributes.MAX_HEALTH);
-            if (hp != null) hp.addOrUpdateTransientModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_break_lord"), 7.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+            if (hp != null) hp.addOrReplacePermanentModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_break_lord"), 7.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
             var sc = lord.getAttribute(Attributes.SCALE);
-            if (sc != null) sc.addOrUpdateTransientModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_break_lord_scale"), 0.5, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+            if (sc != null) sc.addOrReplacePermanentModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_break_lord_scale"), 0.5, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
             lord.setHealth(lord.getMaxHealth());
         }
         lord.setCustomName(Component.literal(lordName(g)));
@@ -203,7 +203,7 @@ public final class Breaks {
             if (g.nearHearth || HearthHooks.nearest(level, g.pos, 256).isPresent()) Progression.count(p, Counters.BREAKS_HELD_AT_HEARTH);
             Progression.bestMoment(p, "Held a broken " + g.plan.rank().label + "-rank gate (" + g.plan.theme().displayName + ")");
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The break is held"))
-                    .body(Component.literal("The colour comes back.")).row("Lord", lordName(g)).priority(5).ttl(20 * 8).build());
+                    .body(Component.literal(dev.awaken.core.api.StoryHooks.colourRestored(server) ? "Its Lord is gone." : "The colour comes back.")).row("Lord", lordName(g)).priority(5).ttl(20 * 8).build());
         }
         level.addFreshEntity(new ItemEntity(level, lord.getX(), lord.getY() + 0.5, lord.getZ(), new ItemStack(CoreApi.LORD_HEART.get())));
         g.lord = java.util.Optional.empty();
@@ -225,7 +225,7 @@ public final class Breaks {
         GateRecord best = null;
         double bestD = Double.MAX_VALUE;
         for (GateRecord g : GateRegistry.get(server).near(p.blockPosition(), Director.MAX_DIST, true)) {
-            if (g.scripted || g.breaksIn(today) > 1) continue;
+            if (g.neverBreaks(server) || g.breaksIn(today) > 1) continue;
             double d = g.pos.distSqr(p.blockPosition());
             if (d < bestD) {
                 bestD = d;

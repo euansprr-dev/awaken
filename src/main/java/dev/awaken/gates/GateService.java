@@ -66,6 +66,11 @@ public final class GateService {
     /** Tests only: a level that stands in for the gate dimension (the GameTest server has no datapack dimensions). */
     static ServerLevel testLevel;
 
+    /** GameTests in other modules only: stand {@code level} in for the gate dimension, or null to stop. Reset it in a finally. */
+    public static void useTestLevel(ServerLevel level) {
+        testLevel = level;
+    }
+
     public static ServerLevel gateLevel(MinecraftServer server) {
         return testLevel != null ? testLevel : server.getLevel(GatesRegistry.GATES);
     }

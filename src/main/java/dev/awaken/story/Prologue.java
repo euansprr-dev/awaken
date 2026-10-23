@@ -181,7 +181,7 @@ final class Prologue {
 
     static java.util.Optional<Vec3> gateMouth(ServerPlayer p, StoryProgress s) {
         if (s.prologueGate.isEmpty()) return java.util.Optional.empty();
-        return GateHooks.get(p.level().getServer().overworld(), s.prologueGate).map(g -> Vec3.atBottomCenterOf(g.pos()).add(2, 0, 2));
+        return GateHooks.get(p.level().getServer().overworld(), s.prologueGate).map(g -> Vec3.atBottomCenterOf(g.mouth()));
     }
 
     static void askToAccept(ServerPlayer p) {

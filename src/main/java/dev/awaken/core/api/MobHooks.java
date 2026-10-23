@@ -49,15 +49,36 @@ public final class MobHooks {
         double mult = switch (role.role()) {
             case ELITE -> 2.5;
             case WARDEN -> 5.0;
+            case BREAK -> 8.0;
             case BOSS -> 14.0;
             default -> 1.0;
         };
+        hp *= ascensionHealth(e, role);
+        dmg *= ascensionDamage(e, role);
         // Permanent modifiers so scaled mobs keep their stats through a save and reload.
         permanent(e, Attributes.MAX_HEALTH, "level_health", hp * mult - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
-        permanent(e, Attributes.ATTACK_DAMAGE, "level_damage", dmg * (role.role() == MobRole.Role.BOSS ? 1.6 : 1.0) - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        permanent(e, Attributes.ATTACK_DAMAGE, "level_damage", dmg * (role.role() == MobRole.Role.BOSS ? 1.6 : role.role() == MobRole.Role.BREAK ? 1.3 : 1.0) - 1.0,
+                AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         permanent(e, Attributes.ARMOR, "level_armor", lv / 12.0, AttributeModifier.Operation.ADD_VALUE);
         e.setHealth(e.getMaxHealth());
         e.setData(CoreApi.MOB_ROLE.get(), role);
+    }
+
+    /** The world's Ascension tier for a hostile role (0 for allies, spirits and when no story is installed), at most 10. */
+    public static int ascension(LivingEntity e, MobRole role) {
+        if (role.role() == MobRole.Role.ECHO || role.role() == MobRole.Role.SPIRIT || role.role() == MobRole.Role.NONE) return 0;
+        if (!(e.level() instanceof ServerLevel sl)) return 0;
+        return Math.clamp(StoryHooks.ascension(sl.getServer()), 0, 10);
+    }
+
+    /** New Game+: each Ascension tier gives hostile creatures +30% health... */
+    public static double ascensionHealth(LivingEntity e, MobRole role) {
+        return 1.0 + 0.3 * ascension(e, role);
+    }
+
+    /** ...and +15% damage. Allies are left alone. */
+    public static double ascensionDamage(LivingEntity e, MobRole role) {
+        return 1.0 + 0.15 * ascension(e, role);
     }
 
     private static void permanent(LivingEntity e, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attr,

@@ -190,6 +190,21 @@ final class MobsTests {
             });
         });
 
+        AwakenTests.register("mobs_break_is_a_roaming_lord", 40, h -> {
+            ServerLevel level = h.getLevel();
+            LivingEntity e = MobHooks.spawnThemed(level, "awaken:bell_crypt", MobRole.Role.BREAK, h.absolutePos(new BlockPos(1, 1, 1)), 10, Set.of(), "test");
+            h.assertTrue(e instanceof AwakenBoss b && b.def().tier == Tier.LORD, "a broken gate's Lord is the theme's Lord, got " + e);
+            AwakenBoss lord = (AwakenBoss) e;
+            h.assertTrue(lord.role().role() == MobRole.Role.BREAK, "role BREAK");
+            h.assertTrue(lord.bar() == null, "no boss bar of its own (the gates show one)");
+            double want = lord.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).getBaseValue()
+                    * MobScaling.totalHealth(10, MobRole.Role.BREAK, Tier.LORD);
+            h.assertTrue(Math.abs(lord.getMaxHealth() - want) < 0.5, "Lord-sized health " + lord.getMaxHealth() + ", want " + want);
+            h.assertTrue(lord.isPersistenceRequired(), "it stays until the break is held");
+            lord.discard();
+            h.succeed();
+        });
+
         AwakenTests.register("mobs_loot_tables_present", 40, h -> {
             var regs = h.getLevel().getServer().reloadableRegistries();
             for (MobDef d : Bestiary.all()) {

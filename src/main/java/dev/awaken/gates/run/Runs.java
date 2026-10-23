@@ -438,7 +438,7 @@ public final class Runs {
             Progression.count(p, Counters.GATES_CLEARED);
             if (run.damageFloor <= 0) Progression.count(p, Counters.BOSS_FLOORS_NO_DAMAGE);
             if (run.damageRun <= 0) Progression.count(p, Counters.GATES_NO_HIT);
-            if (killer && p.getMainHandItem().isEmpty()) Progression.count(p, "awaken:bosses_killed_unarmed");
+            // bosses_killed / bosses_killed_unarmed are counted by the mobs module for every boss, Gate Lords included
             if (plan.is(Twist.RED_GATE)) Progression.setCounter(p, "awaken:latent/red_gate_cleared", 1);
             if (!run.scoutedAtEntry && t - run.startedAt <= 20 * 60 * 20) Progression.setCounter(p, "awaken:gate_cleared_unscouted_fast", 1);
             if (g.party.size() == 1 && !Twists.echoesSeen(g)) Progression.count(p, "awaken:gates_solo_no_echo");
@@ -486,6 +486,13 @@ public final class Runs {
             return;
         }
         AwakenConfig.Difficulty diff = AwakenConfig.DIFFICULTY.get();
+        if (g != null && dev.awaken.above.Above.consumeCloneSave(p)) {
+            // The Clone Vat grew a body for you: the whole Satchel comes back with it.
+            boolean carried = !run.satchel.isEmpty() || run.satchelXp > 0;
+            if (bankSatchel(p, g, run, "c" + label(run.area, run.floor), "clone", "The Clone Vat kept your Satchel.") && carried) {
+                Signal.toast(p, Component.literal("The Clone Vat kept your Satchel"));
+            }
+        }
         List<ItemStack> kept = satchelOnDeath(run, diff);
         if (g != null && (!kept.isEmpty() || (diff == AwakenConfig.Difficulty.STORY && run.satchelXp > 0))) {
             double xp = diff == AwakenConfig.Difficulty.STORY ? run.satchelXp * 0.5 : 0;

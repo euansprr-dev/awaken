@@ -14,9 +14,13 @@ import java.util.Optional;
 public final class GateHooks {
     private GateHooks() {}
 
-    /** A gate as other modules see it. rank = Rank ordinal; state = BUILDING/READY/ACTIVE/OPEN/CLEARED/BROKEN/RELEASED. */
+    /**
+     * A gate as other modules see it. rank = Rank ordinal; state = BUILDING/READY/ACTIVE/OPEN/CLEARED/BROKEN/RELEASED;
+     * mouth = where a player stands in front of the portal; breaksOnPlayDay = Long.MAX_VALUE for gates that never break.
+     */
     public record GateView(String id, BlockPos pos, int rank, String theme, String themeName, String omen, String layout,
-                           List<String> modifiers, String twist, int floors, String boss, String state, long breaksOnPlayDay) {}
+                           List<String> modifiers, String twist, int floors, String boss, String state, long breaksOnPlayDay,
+                           BlockPos mouth) {}
 
     public interface Access {
         List<GateView> near(ServerLevel level, BlockPos pos, int radius);

@@ -24,6 +24,8 @@ public final class StoryHooks {
     };
 
     public static void install(State s) { state = s; }
+    /** The installed state (tests swap it in and out). */
+    public static State installed() { return state; }
     public static boolean gatesCalm(MinecraftServer server) { return state.gatesCalm(server); }
     public static boolean colourRestored(MinecraftServer server) { return state.colourRestored(server); }
     public static int ascension(MinecraftServer server) { return state.ascension(server); }

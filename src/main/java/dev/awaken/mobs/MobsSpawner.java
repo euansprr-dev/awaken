@@ -78,6 +78,8 @@ public final class MobsSpawner implements MobHooks.Spawner {
             case ELITE -> new Pick(r.elite() != null ? r.elite() : normal, MobRole.Role.ELITE);
             case WARDEN -> new Pick(r.warden() != null ? r.warden() : r.elite() != null ? r.elite() : normal, MobRole.Role.WARDEN);
             case BOSS -> new Pick(r.boss() != null ? r.boss() : LORDS.get(Math.floorMod(r.id().hashCode(), LORDS.size())), MobRole.Role.BOSS);
+            // a broken gate's Lord walks out: the theme's Lord body, with the gates' boss bar instead of its own
+            case BREAK -> new Pick(r.boss() != null ? r.boss() : LORDS.get(Math.floorMod(r.id().hashCode(), LORDS.size())), MobRole.Role.BREAK);
             case NIGHTMARE -> {
                 MobDef n = r.theme() == Theme.FEAR ? normal : Bestiary.get("nightmare_generic");
                 yield new Pick(n, MobRole.Role.NIGHTMARE);
