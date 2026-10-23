@@ -133,6 +133,12 @@ final class AnomalyP2Tests {
         AnomalyData data = AnomalyData.get(server);
         // its spot needs open sky: a roof well above the ground (not "cramped") still refuses it
         Spots.Rules sky = Spots.Rules.NORMAL.hearth((l, q, r) -> false).gates(false).sky(true);
+        // test plots are reused and other tests build high above them: open the sky over the spot first
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+            for (BlockPos q = g.offset(dx, 8, dz); q.getY() < level.getMaxY(); q = q.above()) {
+                if (!level.getBlockState(q).isAir()) level.setBlock(q, Blocks.AIR.defaultBlockState(), 2);
+            }
+        }
         BlockPos from = g.offset(-40, 0, 0);
         h.assertTrue(Spots.check(level, from, g, sky, null) == null, "open ground under the sky: " + Spots.check(level, from, g, sky, null));
         level.setBlock(g.above(6), Blocks.STONE.defaultBlockState(), 3);
