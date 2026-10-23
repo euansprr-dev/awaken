@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:item/test_subject_spawn_egg"
+  }
+}

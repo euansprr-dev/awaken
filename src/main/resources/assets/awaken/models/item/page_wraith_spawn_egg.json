@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:item/page_wraith_spawn_egg"
+  }
+}

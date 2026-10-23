@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:item/chant_master_spawn_egg"
+  }
+}
