@@ -7,5 +7,6 @@ public final class WorldClient {
     private WorldClient() {}
 
     public static void init(IEventBus modBus) {
+        dev.awaken.world.anomaly.client.AnomalyClient.init(modBus);
     }
 }

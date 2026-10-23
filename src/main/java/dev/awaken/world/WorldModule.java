@@ -7,5 +7,6 @@ public final class WorldModule {
     private WorldModule() {}
 
     public static void init(IEventBus modBus) {
+        dev.awaken.world.anomaly.AnomalyModule.init(modBus);
     }
 }
