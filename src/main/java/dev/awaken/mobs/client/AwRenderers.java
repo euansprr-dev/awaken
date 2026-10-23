@@ -6,6 +6,15 @@ import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.entity.AwLook;
 import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.mobs.client.model.AwModels;
+import dev.awaken.mobs.client.model.FaunaModels;
+import dev.awaken.mobs.entity.FaunaMob;
+import net.minecraft.client.model.animal.allay.AllayModel;
+import net.minecraft.client.model.animal.fox.AdultFoxModel;
+import net.minecraft.client.model.animal.parrot.ParrotModel;
+import net.minecraft.client.renderer.entity.state.AllayRenderState;
+import net.minecraft.client.renderer.entity.state.FoxRenderState;
+import net.minecraft.client.renderer.entity.state.ParrotRenderState;
+import net.minecraft.util.Mth;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.animal.bee.AdultBeeModel;
 import net.minecraft.client.model.animal.golem.IronGolemModel;
@@ -92,6 +101,11 @@ final class AwRenderers {
         e.registerLayerDefinition(AwModels.BELL, AwModels.Bell::create);
         e.registerLayerDefinition(AwModels.LANTERN, AwModels.Lantern::create);
         e.registerLayerDefinition(AwModels.SHADE, AwModels.Shade::create);
+        e.registerLayerDefinition(FaunaModels.MOTH, FaunaModels.Moth::create);
+        e.registerLayerDefinition(FaunaModels.STAG, FaunaModels.Stag::create);
+        e.registerLayerDefinition(FaunaModels.TORTOISE, FaunaModels.Tortoise::create);
+        e.registerLayerDefinition(FaunaModels.RAY, FaunaModels.Ray::create);
+        e.registerLayerDefinition(FaunaModels.SCARAB, FaunaModels.Scarab::create);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -195,6 +209,35 @@ final class AwRenderers {
             case BELL -> new AwMobRenderer<LivingEntityRenderState, AwModels.Bell>(ctx, d, new AwModels.Bell(ctx.bakeLayer(AwModels.BELL)), 1.0F, LivingEntityRenderState::new, null);
             case LANTERN -> new AwMobRenderer<LivingEntityRenderState, AwModels.Lantern>(ctx, d, new AwModels.Lantern(ctx.bakeLayer(AwModels.LANTERN)), 0.6F, LivingEntityRenderState::new, null);
             case SHADE -> new AwMobRenderer<LivingEntityRenderState, AwModels.Shade>(ctx, d, new AwModels.Shade(ctx.bakeLayer(AwModels.SHADE)), 0.7F, LivingEntityRenderState::new, null);
+            // the Awakened layer's overworld creatures
+            case MOTH -> new AwMobRenderer<LivingEntityRenderState, FaunaModels.Moth>(ctx, d, new FaunaModels.Moth(ctx.bakeLayer(FaunaModels.MOTH)), 0.2F, LivingEntityRenderState::new, null);
+            case STAG -> new AwMobRenderer<LivingEntityRenderState, FaunaModels.Stag>(ctx, d, new FaunaModels.Stag(ctx.bakeLayer(FaunaModels.STAG)), 0.6F, LivingEntityRenderState::new, null);
+            case TORTOISE -> new AwMobRenderer<LivingEntityRenderState, FaunaModels.Tortoise>(ctx, d, new FaunaModels.Tortoise(ctx.bakeLayer(FaunaModels.TORTOISE)), 0.7F, LivingEntityRenderState::new, null);
+            case RAY -> new AwMobRenderer<LivingEntityRenderState, FaunaModels.Ray>(ctx, d, new FaunaModels.Ray(ctx.bakeLayer(FaunaModels.RAY)), 0.6F, LivingEntityRenderState::new, null);
+            case SCARAB -> new AwMobRenderer<LivingEntityRenderState, FaunaModels.Scarab>(ctx, d, new FaunaModels.Scarab(ctx.bakeLayer(FaunaModels.SCARAB)), 0.25F, LivingEntityRenderState::new, null);
+            case ALLAY -> new AwMobRenderer<AllayRenderState, AllayModel>(ctx, d, new AllayModel(ctx.bakeLayer(ModelLayers.ALLAY)), 0.3F, AllayRenderState::new,
+                    (m, s, pt, l) -> {
+                        s.isDancing = false;
+                        s.isSpinning = false;
+                        s.holdingAnimationProgress = 0.0F;
+                    });
+            case PARROT -> new AwMobRenderer<ParrotRenderState, ParrotModel>(ctx, d, new ParrotModel(ctx.bakeLayer(ModelLayers.PARROT)), 0.3F, ParrotRenderState::new,
+                    (m, s, pt, l) -> {
+                        boolean air = (l.fauna & FaunaMob.P_AIR) != 0;
+                        s.pose = air ? ParrotModel.Pose.FLYING : ParrotModel.Pose.STANDING;
+                        s.flapAngle = air ? (Mth.sin(s.ageInTicks * 1.3F) + 1.0F) * 0.6F : 0.0F;
+                    });
+            case FOX -> new AwMobRenderer<FoxRenderState, AdultFoxModel>(ctx, d, new AdultFoxModel(ctx.bakeLayer(ModelLayers.FOX)), 0.4F, FoxRenderState::new,
+                    (m, s, pt, l) -> {
+                        boolean crouch = (l.fauna & FaunaMob.P_STALK) != 0 || l.telegraph > 0;
+                        s.isCrouching = crouch;
+                        s.crouchAmount = crouch ? 2.5F : 0.0F;
+                        s.isPouncing = (l.fauna & FaunaMob.P_AIR) != 0 && (l.fauna & FaunaMob.P_ANGRY) != 0;
+                        s.isSitting = (l.fauna & FaunaMob.P_REST) != 0;
+                        s.isSleeping = false;
+                        s.isFaceplanted = false;
+                        s.headRollAngle = 0.0F;
+                    });
         };
     }
 

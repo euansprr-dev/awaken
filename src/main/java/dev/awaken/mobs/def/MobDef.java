@@ -44,6 +44,12 @@ public final class MobDef {
     /** Explosion power when it dies volatile (FUSE mobs and the Volatile modifier). */
     public final float blast;
     public final int xp;
+    /** Overworld creatures only (the Awakened layer): what it is for. Null for gate, stratum and dream creatures. */
+    public final @Nullable FaunaRole fauna;
+    /** Overrides the model's borrowed voice (overworld creatures only). */
+    public final Model.@Nullable Voice voice;
+    /** What an overworld creature does (NONE for everything else). */
+    public final FaunaTalent talent;
 
     /** A boss phase: entered when health falls below {@code below} (phase 0 uses 1.0). */
     public record Phase(float below, String line, List<Ability> abilities, float speedBonus) {}
@@ -85,6 +91,18 @@ public final class MobDef {
             case NIGHTMARE -> 40;
             default -> 80;
         };
+        this.fauna = b.fauna;
+        this.voice = b.voice;
+        this.talent = b.talent;
+    }
+
+    public boolean isFauna() {
+        return fauna != null;
+    }
+
+    /** The voice this creature speaks with (its own override, else its model's). */
+    public Model.Voice voice() {
+        return voice != null ? voice : model.voice;
     }
 
     public boolean has(Trait t) {
@@ -122,6 +140,9 @@ public final class MobDef {
         final List<Part> parts = new ArrayList<>();
         BossEvent.BossBarColor barColor = BossEvent.BossBarColor.PURPLE;
         String intro;
+        FaunaRole fauna;
+        Model.Voice voice;
+        FaunaTalent talent = FaunaTalent.NONE;
 
         B(String id, String name, Theme theme, Tier tier, Model model, String signature) {
             this.id = id;
@@ -153,6 +174,10 @@ public final class MobDef {
         public B arena(int radius) { arena = radius; return this; }
         public B intro(String line) { intro = line; return this; }
         public B parts(Part... p) { parts.addAll(List.of(p)); return this; }
+        /** Marks an overworld creature (spawned by the world module's fauna layer, not by gates). */
+        public B fauna(FaunaRole role) { fauna = role; return this; }
+        public B voice(Model.Voice v) { voice = v; return this; }
+        public B talent(FaunaTalent t) { talent = t; return this; }
 
         /** Abilities for a non-boss (or a boss's opening phase). */
         public B ab(Ability.Builder... abilities) {

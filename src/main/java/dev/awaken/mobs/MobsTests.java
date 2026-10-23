@@ -223,7 +223,8 @@ final class MobsTests {
                 h.assertTrue(MobTypes.type(d) != null, d.id + " registered");
                 h.assertTrue(MobTypes.eggs().containsKey(d.id), d.id + " has a spawn egg");
                 if (d.tier == Tier.NORMAL && d.theme.isGate()) gateNormals++;
-                boolean passive = d.has(Trait.FUSE) || d.has(Trait.STEALER);
+                // Ambient overworld creatures never fight, so they have nothing to telegraph.
+                boolean passive = d.has(Trait.FUSE) || d.has(Trait.STEALER) || (d.fauna != null && d.fauna.peaceful());
                 h.assertTrue(passive || !d.phases.get(0).abilities().isEmpty(), d.id + " has a telegraphed ability");
                 if (d.tier == Tier.LORD || d.tier == Tier.SOVEREIGN || d.tier == Tier.FINAL) h.assertTrue(d.phases.size() == 3, d.id + " has three phases");
                 if (d.tier == Tier.LORD) h.assertTrue(d.parts.size() == 2, d.id + " drops two parts");

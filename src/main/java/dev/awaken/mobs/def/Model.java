@@ -8,6 +8,8 @@ import net.minecraft.sounds.SoundEvents;
  * The body a creature wears. Most are vanilla models re-tinted with our own skin and glow layers on top (the vanilla
  * texture is referenced, never copied); the last few are our own LayerDefinitions with generated textures. The client
  * maps each value to a renderer in {@code mobs.client.AwRenderers}; this common enum only holds what the server needs.
+ * The overworld creatures' bodies (moth, stag, tortoise, ray, scarab) are ours; allay, parrot and fox are vanilla
+ * bodies whose every face our skin layer repaints.
  */
 public enum Model {
     // humanoids
@@ -62,7 +64,17 @@ public enum Model {
     LISTENER("", Move.GROUND, 0.8F, 2.4F, Voice.LISTENER),
     BELL("", Move.GROUND, 1.4F, 3.0F, Voice.BELL),
     LANTERN("", Move.GROUND, 0.8F, 2.0F, Voice.LANTERN),
-    SHADE("", Move.FLY, 0.9F, 2.8F, Voice.SHADE);
+    SHADE("", Move.FLY, 0.9F, 2.8F, Voice.SHADE),
+    // the Awakened layer (overworld creatures): our own bodies...
+    MOTH("", Move.FLY, 0.6F, 0.5F, Voice.MOTH),
+    STAG("", Move.GROUND, 0.9F, 1.6F, Voice.STAG),
+    TORTOISE("", Move.GROUND, 0.9F, 0.7F, Voice.TORTOISE),
+    RAY("", Move.FLY, 1.0F, 0.35F, Voice.RAY),
+    SCARAB("", Move.GROUND, 0.45F, 0.3F, Voice.SCARAB),
+    // ...and vanilla animal bodies repainted by our skin layer
+    ALLAY("allay/allay", Move.FLY, 0.35F, 0.6F, Voice.ALLAY),
+    PARROT("parrot/parrot_grey", Move.GROUND, 0.4F, 0.6F, Voice.PARROT),
+    FOX("fox/fox_snow", Move.GROUND, 0.6F, 0.7F, Voice.FOX);
 
     public enum Move { GROUND, HOP, FLY }
 
@@ -136,7 +148,21 @@ public enum Model {
         LISTENER(null, SoundEvents.WARDEN_HURT, SoundEvents.WARDEN_DEATH),
         BELL(null, SoundEvents.IRON_GOLEM_DAMAGE, SoundEvents.IRON_GOLEM_DEATH),
         LANTERN(SoundEvents.WANDERING_TRADER_AMBIENT, SoundEvents.WANDERING_TRADER_HURT, SoundEvents.WANDERING_TRADER_DEATH),
-        SHADE(SoundEvents.ALLAY_AMBIENT_WITHOUT_ITEM, SoundEvents.WARDEN_HURT, SoundEvents.WITHER_DEATH);
+        SHADE(SoundEvents.ALLAY_AMBIENT_WITHOUT_ITEM, SoundEvents.WARDEN_HURT, SoundEvents.WITHER_DEATH),
+        MOTH(null, SoundEvents.BAT_HURT, SoundEvents.BAT_DEATH),
+        STAG(SoundEvents.GOAT_AMBIENT, SoundEvents.GOAT_HURT, SoundEvents.GOAT_DEATH),
+        TORTOISE(SoundEvents.TURTLE_AMBIENT_LAND, SoundEvents.TURTLE_HURT, SoundEvents.TURTLE_DEATH),
+        RAY(SoundEvents.DOLPHIN_AMBIENT, SoundEvents.DOLPHIN_HURT, SoundEvents.DOLPHIN_DEATH),
+        SCARAB(SoundEvents.SILVERFISH_AMBIENT, SoundEvents.SILVERFISH_HURT, SoundEvents.SILVERFISH_DEATH),
+        ALLAY(SoundEvents.ALLAY_AMBIENT_WITHOUT_ITEM, SoundEvents.ALLAY_HURT, SoundEvents.ALLAY_DEATH),
+        PARROT(SoundEvents.PARROT_AMBIENT, SoundEvents.PARROT_HURT, SoundEvents.PARROT_DEATH),
+        FOX(SoundEvents.FOX_AMBIENT, SoundEvents.FOX_HURT, SoundEvents.FOX_DEATH),
+        /** Night hunters of the dark: a fox's screech, a big wolf's growl. */
+        STALKER(SoundEvents.FOX_SCREECH, SoundEvents.FOX_HURT, SoundEvents.FOX_DEATH),
+        WISP(SoundEvents.WOLF_SOUNDS.get(net.minecraft.world.entity.animal.wolf.WolfSoundVariants.SoundSet.BIG).adultSounds().growlSound().value(),
+                SoundEvents.WOLF_SOUNDS.get(net.minecraft.world.entity.animal.wolf.WolfSoundVariants.SoundSet.BIG).adultSounds().hurtSound().value(),
+                SoundEvents.WOLF_SOUNDS.get(net.minecraft.world.entity.animal.wolf.WolfSoundVariants.SoundSet.BIG).adultSounds().deathSound().value()),
+        BOAR(SoundEvents.HOGLIN_AMBIENT, SoundEvents.HOGLIN_HURT, SoundEvents.HOGLIN_DEATH);
 
         public final SoundEvent ambient;
         public final SoundEvent hurt;

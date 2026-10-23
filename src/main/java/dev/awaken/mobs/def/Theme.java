@@ -4,8 +4,8 @@ import dev.awaken.progression.Rank;
 
 /**
  * Where a creature belongs: the 15 gate themes (ids exactly as in docs/plan.html's gate generator), the ten Descent
- * strata, the Veil, the Lucidium, and the nightmare templates. The ramp names match tools/art/pixelart.py so textures
- * generated for a theme share its colours.
+ * strata, the Veil, the Lucidium, the nightmare templates and the overworld's three biome families. The ramp names
+ * match tools/art/pixelart.py so textures generated for a theme share its colours.
  */
 public enum Theme {
     BELL("awaken:bell_crypt", "Bell Crypt", Rank.E, 0x9CA8D8, 0x9AA8FF, BoltKind.SPIRIT),
@@ -37,7 +37,12 @@ public enum Theme {
 
     VEIL("awaken:veil", "The Veil", Rank.C, 0x8E9AEE, 0xC3CBFF, BoltKind.SPIRIT),
     DREAM("awaken:dream", "The Lucidium", Rank.E, 0xE2A8DA, 0xF6C6E6, BoltKind.DREAM),
-    FEAR("awaken:nightmare/generic", "Nightmares", Rank.D, 0x846A8C, 0xFF4A8A, BoltKind.DREAM);
+    FEAR("awaken:nightmare/generic", "Nightmares", Rank.D, 0x846A8C, 0xFF4A8A, BoltKind.DREAM),
+
+    // The Awakened layer: overworld creatures by biome family (spawned by the world module, docs/modules/fauna.md).
+    GREENWILD("awaken:greenwild", "Greenwild", Rank.E, 0xC8DCB0, 0xFFD27A, BoltKind.THORN),
+    SUNSCORCH("awaken:sunscorch", "Sunscorch", Rank.E, 0xF2DCB0, 0xFFE9A0, BoltKind.GLASS),
+    FROSTWILD("awaken:frostwild", "Frostwild", Rank.E, 0xDCE8F4, 0x9FE8FF, BoltKind.FROST);
 
     public final String id;
     public final String display;
@@ -64,6 +69,11 @@ public enum Theme {
 
     public boolean isStratum() {
         return ordinal() >= RIM.ordinal() && ordinal() <= SEED.ordinal();
+    }
+
+    /** An overworld biome family (the Awakened layer), not a gate or a stratum. */
+    public boolean isWild() {
+        return ordinal() >= GREENWILD.ordinal();
     }
 
     public static Theme byId(String id) {

@@ -1,0 +1,10 @@
+{
+  "entries": [
+    {
+      "enum": "net/minecraft/world/entity/MobCategory",
+      "name": "AWAKEN_FAUNA",
+      "constructor": "(Ljava/lang/String;Ljava/lang/String;IZZI)V",
+      "parameters": ["awaken:fauna", "AWF", 16, true, false, 128]
+    }
+  ]
+}

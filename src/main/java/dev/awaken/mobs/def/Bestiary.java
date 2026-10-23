@@ -14,16 +14,21 @@ public final class Bestiary {
     private Bestiary() {}
 
     private static final Map<String, MobDef> BY_ID;
+    private static final List<MobDef> FAUNA;
 
     static {
         List<MobDef> all = new ArrayList<>();
         GateBestiary.define(all);
         DeepBestiary.define(all);
+        FaunaBestiary.define(all);
         Map<String, MobDef> map = new LinkedHashMap<>();
         for (MobDef d : all) {
             if (map.put(d.id, d) != null) throw new IllegalStateException("Duplicate mob id " + d.id);
         }
         BY_ID = Collections.unmodifiableMap(map);
+        List<MobDef> fauna = new ArrayList<>();
+        for (MobDef d : all) if (d.isFauna()) fauna.add(d);
+        FAUNA = List.copyOf(fauna);
         for (MobDef d : all) {
             for (MobDef.Phase p : d.phases) {
                 for (Ability a : p.abilities()) {
@@ -48,6 +53,11 @@ public final class Bestiary {
         if (id == null) return null;
         String path = id.startsWith(Awaken.MODID + ":") ? id.substring(Awaken.MODID.length() + 1) : id;
         return BY_ID.get(path);
+    }
+
+    /** The overworld creatures (the Awakened layer), in declaration order. */
+    public static List<MobDef> fauna() {
+        return FAUNA;
     }
 
     public static List<MobDef> of(Theme theme, Tier tier) {

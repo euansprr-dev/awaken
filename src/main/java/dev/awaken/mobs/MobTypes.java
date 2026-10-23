@@ -2,12 +2,15 @@ package dev.awaken.mobs;
 
 import dev.awaken.Awaken;
 import dev.awaken.mobs.def.Bestiary;
+import dev.awaken.mobs.def.FaunaRole;
 import dev.awaken.mobs.def.MobDef;
 import dev.awaken.mobs.def.Trait;
 import dev.awaken.mobs.entity.AwBolt;
 import dev.awaken.mobs.entity.AwakenBoss;
 import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.mobs.entity.BrokerBoss;
+import dev.awaken.mobs.entity.FaunaMob;
+import dev.awaken.mobs.entity.NamedBeast;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -39,6 +42,22 @@ public final class MobTypes {
     public static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(Awaken.MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
 
+    /**
+     * The overworld creatures' own spawn category ({@code awaken:fauna}, added by META-INF/enumextensions.json): 16 per
+     * player, friendly (spawns in Peaceful too; the spawn rules keep hunters out), despawns like monsters. Its own cap
+     * means the Awakened layer never takes a slot from cows, zombies or the rest of vanilla.
+     */
+    public static final MobCategory FAUNA = faunaCategory();
+
+    private static MobCategory faunaCategory() {
+        try {
+            return MobCategory.valueOf("AWAKEN_FAUNA");
+        } catch (IllegalArgumentException e) {
+            Awaken.LOG.error("[mobs] the awaken:fauna spawn category is missing (enum extension not applied); overworld creatures use CREATURE");
+            return MobCategory.CREATURE;
+        }
+    }
+
     public static final DeferredHolder<EntityType<?>, EntityType<AwBolt>> BOLT = ENTITIES.registerEntityType("mob_bolt", AwBolt::new, MobCategory.MISC,
             b -> b.sized(0.4F, 0.4F).clientTrackingRange(4).updateInterval(10).noLootTable());
 
@@ -50,7 +69,14 @@ public final class MobTypes {
     static {
         for (MobDef d : Bestiary.all()) {
             DeferredHolder<EntityType<?>, ? extends EntityType<? extends AwakenMob>> holder;
-            if (d.has(Trait.FRIENDLY)) {
+            if (d.isFauna()) {
+                // The Awakened layer's overworld creatures: their own spawn category and cap.
+                if (d.fauna == FaunaRole.BEAST) {
+                    holder = ENTITIES.registerEntityType(d.id, NamedBeast::new, FAUNA, b -> configureFauna(b, d));
+                } else {
+                    holder = ENTITIES.registerEntityType(d.id, FaunaMob::new, FAUNA, b -> configureFauna(b, d));
+                }
+            } else if (d.has(Trait.FRIENDLY)) {
                 holder = ENTITIES.registerEntityType(d.id, BrokerBoss::new, MobCategory.MONSTER, b -> configure(b, d));
             } else if (d.tier.isBoss()) {
                 holder = ENTITIES.registerEntityType(d.id, AwakenBoss::new, MobCategory.MONSTER, b -> configure(b, d));
@@ -63,6 +89,14 @@ public final class MobTypes {
                 PARTS.put(part.id(), ITEMS.registerSimpleItem(part.id(), p -> p.rarity(d.tier == dev.awaken.mobs.def.Tier.LORD ? Rarity.UNCOMMON : Rarity.RARE)));
             }
         }
+    }
+
+    private static <E extends AwakenMob> EntityType.Builder<E> configureFauna(EntityType.Builder<E> b, MobDef d) {
+        configure(b, d);
+        if (d.fauna == FaunaRole.BEAST) b.clientTrackingRange(10);
+        // Night hunters and beasts leave in Peaceful, like vanilla monsters; the rest stay.
+        if (d.fauna == FaunaRole.HUNTER || d.fauna == FaunaRole.BEAST) b.notInPeaceful();
+        return b;
     }
 
     private static <E extends AwakenMob> EntityType.Builder<E> configure(EntityType.Builder<E> b, MobDef d) {

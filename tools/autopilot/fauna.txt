@@ -1,0 +1,90 @@
+# Fauna tour (the Awakened layer's overworld creatures): faint hints before awakening, the reveal, every creature
+# lined up by day and by night, then a walk through each biome family by day and by night with the census in chat.
+# Run by the integrator: tools/autopilot.sh fauna (builders never run a client).
+world autopilot_fauna creative 4242
+waitworld
+gui 0
+cmd weather clear 100000
+cmd time set 11800
+cmd gamerule awaken:fauna_spawning true
+look 0 8
+wait 400
+shot fauna_01_hints_before_awakening
+cmd awaken admin awaken
+wait 40
+shot fauna_02_reveal_pulse
+wait 30
+shot fauna_03_reveal_creatures
+wait 60
+shot fauna_04_first_sighting_toast
+# every creature in a row, standing still, facing the camera
+cmd time set 6000
+cmd tp @s ~ ~ ~ 0 10
+look 0 10
+cmd awaken fauna lineup
+wait 40
+shot fauna_05_lineup_day
+look -30 6
+shot fauna_06_lineup_day_left
+look 30 6
+shot fauna_07_lineup_day_right
+cmd time set 18000
+wait 40
+look 0 10
+shot fauna_08_lineup_night
+look -30 6
+shot fauna_09_lineup_night_left
+look 30 6
+shot fauna_10_lineup_night_right
+cmd kill @e[tag=awaken_lineup]
+# Greenwild: forest, plains, meadow
+cmd time set 1000
+cmd awaken fauna goto greenwild
+wait 400
+look 0 12
+shot fauna_11_greenwild_day
+cmd awaken fauna census
+wait 10
+shot fauna_12_greenwild_census
+cmd time set 14000
+wait 500
+shot fauna_13_greenwild_night
+look 180 12
+shot fauna_14_greenwild_night_behind
+# Sunscorch: desert, savanna, badlands
+cmd time set 1000
+cmd awaken fauna goto sunscorch
+wait 400
+look 0 12
+shot fauna_15_sunscorch_day
+cmd awaken fauna census
+wait 10
+shot fauna_16_sunscorch_census
+cmd time set 14000
+wait 500
+shot fauna_17_sunscorch_night
+# Frostwild: taiga, snowy plains, grove
+cmd time set 1000
+cmd awaken fauna goto frostwild
+wait 400
+look 0 12
+shot fauna_18_frostwild_day
+cmd awaken fauna census
+wait 10
+shot fauna_19_frostwild_census
+cmd time set 14000
+wait 500
+shot fauna_20_frostwild_night
+# a named beast up close, and the Codex
+cmd time set 6000
+cmd awaken fauna summon old_antler 5
+wait 40
+look 0 0
+shot fauna_21_old_antler
+cmd awaken fauna beasts
+wait 10
+shot fauna_22_beast_registry
+screen status
+shot fauna_23_status
+screen close
+quit
