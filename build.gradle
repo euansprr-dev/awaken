@@ -59,6 +59,10 @@ neoForge {
             client()
             gameDirectory = project.file('run-autopilot')
             systemProperty 'awaken.autopilot', project.file('run-autopilot/script.txt').absolutePath
+            // open behind the owner's work: SDL neither activates the app nor focuses the window when it shows
+            environment 'SDL_MAC_BACKGROUND_APP', '1'
+            environment 'SDL_WINDOW_ACTIVATE_WHEN_SHOWN', '0'
+            systemProperty 'apple.awt.UIElement', 'true'
         }
 
         server {
@@ -73,6 +77,9 @@ neoForge {
         gameTestServer {
             type = "gameTestServer"
             programArguments.addAll '--tests', 'awaken:*'
+            // never a Dock icon or a focus grab on the owner's Mac while tests run
+            systemProperty 'java.awt.headless', 'true'
+            systemProperty 'apple.awt.UIElement', 'true'
         }
 
         data {
