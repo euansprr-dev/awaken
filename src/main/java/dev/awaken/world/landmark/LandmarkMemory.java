@@ -34,6 +34,11 @@ public final class LandmarkMemory {
         return reached;
     }
 
+    /** The landmark a grove's spirit last whispered about ("" when none). */
+    public String whispered() {
+        return whispered;
+    }
+
     /** Records a landmark reached in person. Returns false if it was already known. */
     boolean reach(String id) {
         if (!reached.add(id)) return false;

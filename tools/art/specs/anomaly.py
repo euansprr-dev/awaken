@@ -1,4 +1,5 @@
-"""Anomalies (world/anomaly): the rift tear and its core, the procession's light, the spirit cache."""
+"""Anomalies (world/anomaly): the rift tear and its core, the procession's light, the spirit cache, the fallen star and its
+meteor, the shimmer grove's curtain and spirit; and the landmarks' (world/landmark) light shaft and glow."""
 import math
 
 from pixelart import *
@@ -114,9 +115,135 @@ def cache_top():
     return c
 
 
+def meteor(sealed=True, seed="fallen_star"):
+    """The fallen star's meteor. Sealed: a scorched dark crust split by white-hot cracks. Cooled: pale signal-blue
+    crystal showing through a grey crust."""
+    rng = rng_for("meteor", seed)
+    c = stone("obsidian" if sealed else "slate", seed=seed, scale=3, contrast=0.9, lo=0, hi=3 if sealed else 4)
+    hot = ramp("ember") if sealed else ramp("signal")
+    # cracks: a few random walks across the face
+    for _ in range(4 if sealed else 3):
+        x, y = rng.randrange(16), rng.randrange(16)
+        for _ in range(rng.randrange(6, 12)):
+            c.set(x, y, hot[5] if sealed else hot[4])
+            for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                if rng.random() < 0.35:
+                    c.blend(nx, ny, hot[3], 0.6)
+            x = max(0, min(15, x + rng.choice((-1, 0, 1))))
+            y = max(0, min(15, y + rng.choice((-1, 0, 1))))
+    if not sealed:
+        # crystal facets showing through
+        crystal(c, "signal", seed=seed + "_crystal", count=3)
+    else:
+        # a white-hot heart
+        for y in range(16):
+            for x in range(16):
+                d = math.hypot(x - 7.5, y - 8.5)
+                if d < 1.6:
+                    c.set(x, y, (255, 250, 230, 255))
+                elif d < 2.6:
+                    c.blend(x, y, hot[5], 0.8)
+    return c
+
+
+def star_glow():
+    """A falling star seen from below: a white point, a blue-white halo that fades out (drawn camera-facing)."""
+    sig = ramp("signal")
+    c = Canvas(32, 32)
+    for y in range(32):
+        for x in range(32):
+            d = math.hypot(x - 15.5, y - 15.5) / 16
+            if d < 0.12:
+                c.set(x, y, (255, 255, 255, 255))
+            elif d < 1:
+                r, g, b, _ = sig[5] if d < 0.4 else sig[4]
+                a = int(255 * (1 - d) ** 2.2)
+                # four soft rays
+                ray = max(0.0, 1 - min(abs(x - 15.5), abs(y - 15.5)) / 2.0) * (1 - d)
+                a = min(255, a + int(160 * ray))
+                if a > 3:
+                    c.set(x, y, (r, g, b, a))
+    return c
+
+
+def shimmer_curtain(seed="shimmer"):
+    """A grove's curtain: white streaks (tinted in game) that are bright at the foot and fade upward, with a wavering
+    top edge. 32x32; v=1 is the bottom."""
+    rng = rng_for("shimmer", seed)
+    phases = [rng.uniform(0, math.tau) for _ in range(4)]
+    c = Canvas(32, 32)
+    for x in range(32):
+        streak = 0.55 + 0.45 * math.sin(x * 0.7 + phases[0]) * math.sin(x * 0.23 + phases[1])
+        top = 0.25 + 0.2 * math.sin(x * 0.4 + phases[2])
+        for y in range(32):
+            t = 1 - y / 31  # 1 at the top row, 0 at the bottom
+            if t > 1 - top:
+                continue
+            k = (1 - t / (1 - top)) ** 1.6
+            a = int(255 * k * (0.5 + 0.5 * streak))
+            if a > 2:
+                c.set(x, y, (255, 255, 255, a))
+    return c
+
+
+def spirit():
+    """The whispering spirit: a soft figure of light, wider at the head, trailing off below."""
+    spi = ramp("spirit")
+    c = Canvas(16, 24)
+    for y in range(24):
+        for x in range(16):
+            # head
+            dh = math.hypot(x - 7.5, y - 6) / 5.5
+            # body: a tapering wisp
+            w = max(0.8, 7.0 * (1 - (y - 8) / 17)) if y >= 8 else 0
+            db = abs(x - 7.5 - math.sin(y * 0.5) * 0.8) / w if w > 0 else 9
+            d = min(dh, db)
+            if d < 1:
+                a = int(255 * (1 - d) ** 1.3)
+                col = (255, 255, 255) if d < 0.35 else spi[5][:3] if d < 0.7 else spi[4][:3]
+                c.set(x, y, (*col, a))
+    return c
+
+
+def shaft():
+    """A landmark's light shaft: bright at the foot (v=1), fading to nothing at the top, soft at the sides. White;
+    the client tints it."""
+    c = Canvas(16, 64)
+    for y in range(64):
+        t = 1 - y / 63  # 1 at the top
+        fall = (1 - t) ** 1.8
+        for x in range(16):
+            side = 1 - abs(x - 7.5) / 8
+            a = int(255 * fall * side ** 1.5)
+            if a > 1:
+                c.set(x, y, (255, 255, 255, a))
+    return c
+
+
+def glow():
+    """A soft round glow (the Well's pillar tops)."""
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - 7.5, y - 7.5) / 8
+            if d < 1:
+                a = int(255 * (1 - d) ** 2)
+                if a > 1:
+                    c.set(x, y, (255, 255, 255, a))
+    return c
+
+
 def build(out):
     out.entity("rift_tear", rift_tear())
     out.entity("rift_core", rift_core())
     out.entity("anomaly_mote", particle_dot("amber", 16))
     out.block("anomaly_spirit_cache", cache_side())
     out.block("anomaly_spirit_cache_top", cache_top())
+    out.block("anomaly_fallen_star", meteor(True))
+    out.block("anomaly_fallen_star_cool", meteor(False))
+    out.entity("anomaly_star", star_glow())
+    out.entity("anomaly_shimmer", shimmer_curtain())
+    out.entity("anomaly_spirit", spirit())
+    # landmarks (world/landmark): client-drawn markers
+    out._save("misc/landmark_shaft", shaft())
+    out._save("misc/landmark_glow", glow())

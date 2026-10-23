@@ -321,6 +321,8 @@ final class Stars {
 
     /** Someone opened (used or broke) the cooled meteor at {@code pos}. Pays once; its loot table drops with the block. */
     static void opened(ServerLevel level, BlockPos pos, ServerPlayer p) {
+        BlockState here = level.getBlockState(pos);
+        if (here.is(AnomalyContent.FALLEN_STAR.get()) && here.getValue(FallenStarBlock.SEALED)) return; // still guarded
         AnomalyData data = AnomalyData.get(level.getServer());
         for (Anomaly a : data.active()) {
             if (a.kind != AnomalyKind.FALLEN_STAR || !a.landed || a.paid || !a.target.equals(pos)) continue;

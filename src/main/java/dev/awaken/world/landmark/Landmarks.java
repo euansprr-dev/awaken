@@ -56,6 +56,12 @@ public final class Landmarks {
     /** GameTests that must not see real ruins from the test world's placement maths. */
     static volatile boolean testNoRuins;
 
+    /** GameTests only (isolated batch, try/finally): stand a Well at {@code well} (null: the real one) and hide real ruins. */
+    public static void testOverrides(@Nullable BlockPos well, boolean noRuins) {
+        testWell = well;
+        testNoRuins = noRuins;
+    }
+
     public static LandmarkMemory memory(Player p) {
         return p.getData(LandmarkContent.MEMORY);
     }

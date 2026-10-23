@@ -42,6 +42,7 @@ final class AnomalyTests {
         recoverAfterRestart();
         processionCache();
         wanderingGate();
+        AnomalyP2Tests.register();
     }
 
     // ---- helpers ------------------------------------------------------------------------------------------------------
@@ -122,8 +123,11 @@ final class AnomalyTests {
             h.assertTrue(again[2] == 0, "the calm event never twice in a row");
             h.assertTrue(Pacing.pick(new int[] {0, 0, 0}, r) == null, "nothing fits → nothing");
             int calm = 0;
-            for (int i = 0; i < 1000; i++) if (Pacing.pick(Pacing.weights(false, false, false, 10, ""), r) == AnomalyKind.SPIRIT_PROCESSION) calm++;
-            h.assertTrue(calm > 200 && calm < 400, "about 30% calm by day: " + calm);
+            for (int i = 0; i < 1000; i++) {
+                AnomalyKind k = Pacing.pick(Pacing.weights(false, false, false, 10, ""), r);
+                if (k == AnomalyKind.SPIRIT_PROCESSION || k == AnomalyKind.SHIMMER_GROVE) calm++;
+            }
+            h.assertTrue(calm > 380 && calm < 560, "nearly half of the day's anomalies are calm (a procession or a grove): " + calm);
             // words
             h.assertTrue(Spots.direction(BlockPos.ZERO, new BlockPos(0, 0, -10)).equals("N") && Spots.direction(BlockPos.ZERO, new BlockPos(10, 0, 0)).equals("E")
                     && Spots.direction(BlockPos.ZERO, new BlockPos(30, 0, -30)).equals("NE"), "compass: north is -Z, east +X");
@@ -410,16 +414,41 @@ final class AnomalyTests {
             trail.motes.add(UUID.randomUUID());
             Anomaly gate = new Anomaly(5, AnomalyKind.WANDERING_GATE, UUID.randomUUID(), new BlockPos(100, 80, 100), 3000, 12000);
             gate.gateId = "17";
+            Anomaly star = new Anomaly(6, AnomalyKind.FALLEN_STAR, UUID.randomUUID(), new BlockPos(-70, 63, 12), 4000, 11000);
+            star.landed = true;
+            star.target = new BlockPos(-70, 62, 12);
+            star.guardState = Anomaly.GUARD_UP;
+            star.guardUntil = 5800;
+            star.guard = UUID.randomUUID();
+            star.theme = "awaken:hive";
+            star.contentLevel = 5;
+            Anomaly grove = new Anomaly(7, AnomalyKind.SHIMMER_GROVE, UUID.randomUUID(), new BlockPos(40, 70, -90), 5000, 8000);
+            grove.stage = Anomaly.ACTIVE;
+            grove.variant = GroveVariant.WHISPER.ordinal();
+            grove.hinted = true;
             data.add(rift);
             data.add(trail);
             data.add(gate);
+            data.add(star);
+            data.add(grove);
             data.removals().add(new AnomalyData.Removal("minecraft:overworld", new BlockPos(1, 2, 3)));
             Tag tag = AnomalyData.CODEC.encodeStart(NbtOps.INSTANCE, data).getOrThrow();
             h.assertTrue(tag instanceof CompoundTag ct && ct.getIntOr("schema", -1) == AnomalyData.SCHEMA, "the file says its version");
             AnomalyData back = AnomalyData.CODEC.parse(NbtOps.INSTANCE, tag).getOrThrow();
             h.assertTrue(back.nextId == 9 && !back.enabled, "counter and switch survive");
-            h.assertTrue(back.active().size() == 3, "all three anomalies survive");
-            for (int i = 0; i < 3; i++) {
+            h.assertTrue(back.active().size() == 5, "all five anomalies survive");
+            Anomaly starBack = back.find(6), groveBack = back.find(7);
+            h.assertTrue(starBack != null && starBack.landed && starBack.guardState == Anomaly.GUARD_UP && star.guard.equals(starBack.guard)
+                    && starBack.target.equals(star.target), "the star's state survives");
+            h.assertTrue(groveBack != null && groveBack.variant == GroveVariant.WHISPER.ordinal() && groveBack.hinted && groveBack.stage == Anomaly.ACTIVE,
+                    "the grove's state survives");
+            // a schema-1 record (no star or grove parts) loads with defaults
+            CompoundTag old = (CompoundTag) Anomaly.CODEC.encodeStart(NbtOps.INSTANCE, rift).getOrThrow();
+            old.remove("star");
+            old.remove("grove");
+            Anomaly oldBack = Anomaly.CODEC.parse(NbtOps.INSTANCE, old).getOrThrow();
+            h.assertTrue(!oldBack.landed && oldBack.guardState == Anomaly.GUARD_NONE && oldBack.variant == 0, "an old record loads with defaults");
+            for (int i = 0; i < 5; i++) {
                 h.assertTrue(back.active().get(i).save().equals(data.active().get(i).save()), "anomaly " + i + " is the same after a save and load");
             }
             h.assertTrue(back.removals().equals(data.removals()), "pending removals survive");
@@ -434,6 +463,9 @@ final class AnomalyTests {
             mem.caches = 1;
             mem.lastKind = "rift_tear";
             mem.lastStartedAt = 55555;
+            mem.stars = 2;
+            mem.groves = 4;
+            mem.lastGrove = "bloom";
             Tag mt = AnomalyMemory.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, mem).getOrThrow();
             AnomalyMemory mb = AnomalyMemory.MAP_CODEC.codec().parse(NbtOps.INSTANCE, mt).getOrThrow();
             h.assertTrue(mb.describe().equals(mem.describe()), "memory survives: " + mb.describe());
