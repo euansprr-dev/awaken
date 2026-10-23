@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "awaken:wildhide"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "awaken:wildhide"
+      }
+    ]
+  }
+}

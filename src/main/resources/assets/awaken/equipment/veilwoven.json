@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "awaken:veilwoven"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "awaken:veilwoven"
+      }
+    ]
+  }
+}

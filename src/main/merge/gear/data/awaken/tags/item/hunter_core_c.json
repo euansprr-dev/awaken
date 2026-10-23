@@ -1,0 +1,36 @@
+{
+  "values": [
+    {
+      "id": "awaken:archivist_quill",
+      "required": false
+    },
+    {
+      "id": "awaken:waterlogged_codex",
+      "required": false
+    },
+    {
+      "id": "awaken:colossus_gear",
+      "required": false
+    },
+    {
+      "id": "awaken:mainspring",
+      "required": false
+    },
+    {
+      "id": "awaken:serpent_scale",
+      "required": false
+    },
+    {
+      "id": "awaken:sand_glass_fang",
+      "required": false
+    },
+    {
+      "id": "awaken:broker_lantern",
+      "required": false
+    },
+    {
+      "id": "awaken:gilded_ledger",
+      "required": false
+    }
+  ]
+}

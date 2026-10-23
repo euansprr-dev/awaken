@@ -1,0 +1,44 @@
+{
+  "values": [
+    {
+      "id": "awaken:abbot_prayer_beads",
+      "required": false
+    },
+    {
+      "id": "awaken:glacier_heart",
+      "required": false
+    },
+    {
+      "id": "awaken:mirror_shard_crown",
+      "required": false
+    },
+    {
+      "id": "awaken:knight_reflection",
+      "required": false
+    },
+    {
+      "id": "awaken:zero_core",
+      "required": false
+    },
+    {
+      "id": "awaken:zero_plating",
+      "required": false
+    },
+    {
+      "id": "awaken:sleeper_eyelid",
+      "required": false
+    },
+    {
+      "id": "awaken:sleepers_lullaby",
+      "required": false
+    },
+    {
+      "id": "awaken:leviathan_fin",
+      "required": false
+    },
+    {
+      "id": "awaken:sky_pearl",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "values": [
+    {
+      "id": "awaken:briar_tusk",
+      "required": false
+    },
+    {
+      "id": "awaken:wyrm_scale",
+      "required": false
+    },
+    {
+      "id": "awaken:antler_tine",
+      "required": false
+    },
+    {
+      "id": "awaken:bell_clapper",
+      "required": false
+    },
+    {
+      "id": "awaken:crypt_bronze",
+      "required": false
+    },
+    {
+      "id": "awaken:spore_sac",
+      "required": false
+    },
+    {
+      "id": "awaken:mother_cap",
+      "required": false
+    },
+    {
+      "id": "awaken:tyrant_crown",
+      "required": false
+    },
+    {
+      "id": "awaken:molten_core",
+      "required": false
+    },
+    {
+      "id": "awaken:regent_stinger",
+      "required": false
+    },
+    {
+      "id": "awaken:royal_jelly",
+      "required": false
+    },
+    {
+      "id": "awaken:saint_heartwood",
+      "required": false
+    },
+    {
+      "id": "awaken:temple_resin",
+      "required": false
+    }
+  ]
+}

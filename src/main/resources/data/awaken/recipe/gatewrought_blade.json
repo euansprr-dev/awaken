@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_blade",
+  "key": {
+    "B": "#awaken:hunter_bind_c",
+    "C": "#awaken:hunter_core_c",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    " C",
+    "SC",
+    "B "
+  ],
+  "result": {
+    "id": "awaken:gatewrought_blade"
+  }
+}

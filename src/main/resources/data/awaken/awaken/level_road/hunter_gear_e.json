@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "level": 3,
+  "title": "Hunter gear · E",
+  "text": "Creature hide, bone and essence: your first set. Recipe book.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:wildhide_helmet",
+        "awaken:wildhide_chestplate",
+        "awaken:wildhide_leggings",
+        "awaken:wildhide_boots",
+        "awaken:wildhide_blade",
+        "awaken:wildhide_focus",
+        "awaken:wildhide_mattock"
+      ]
+    }
+  ],
+  "quiet": false
+}

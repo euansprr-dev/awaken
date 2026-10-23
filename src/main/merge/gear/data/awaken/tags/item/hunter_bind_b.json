@@ -1,0 +1,10 @@
+{
+  "values": [
+    "minecraft:echo_shard",
+    {
+      "id": "awaken:dream_residue",
+      "required": false
+    },
+    "minecraft:ender_pearl"
+  ]
+}

@@ -44,6 +44,7 @@ public final class Awaken {
         HearthModule.init(modBus);
         StoryModule.init(modBus);
         WorldModule.init(modBus);
+        dev.awaken.gear.GearModule.init(modBus);
     }
 
     public static Identifier id(String path) {

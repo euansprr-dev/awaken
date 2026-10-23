@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_leggings",
+  "key": {
+    "B": "#awaken:hunter_bind_c",
+    "C": "#awaken:hunter_core_c",
+    "H": "#awaken:hunter_hide_c",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "BCB",
+    "S S",
+    "H H"
+  ],
+  "result": {
+    "id": "awaken:gatewrought_leggings"
+  }
+}

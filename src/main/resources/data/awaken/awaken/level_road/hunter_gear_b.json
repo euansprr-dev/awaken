@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "level": 42,
+  "title": "Veilwoven gear · B",
+  "text": "C-rank relics and Veil-touched bindings.",
+  "grants": [
+    {
+      "type": "recipe",
+      "ids": [
+        "awaken:veilwoven_helmet",
+        "awaken:veilwoven_chestplate",
+        "awaken:veilwoven_leggings",
+        "awaken:veilwoven_boots",
+        "awaken:veilwoven_blade",
+        "awaken:veilwoven_focus",
+        "awaken:veilwoven_mattock"
+      ]
+    }
+  ],
+  "quiet": false
+}

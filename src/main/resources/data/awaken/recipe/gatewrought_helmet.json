@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "group": "awaken_hunter_helmet",
+  "key": {
+    "B": "#awaken:hunter_bind_c",
+    "C": "#awaken:hunter_core_c",
+    "H": "#awaken:hunter_hide_c",
+    "S": "awaken:essence_shard"
+  },
+  "pattern": [
+    "BCB",
+    "HSH"
+  ],
+  "result": {
+    "id": "awaken:gatewrought_helmet"
+  }
+}
