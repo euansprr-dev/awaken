@@ -191,11 +191,11 @@ def render(date, cards):
       </div>
       <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>{stems}</details>
     </section>""")
-    stems = sum(len(c["stems"]) for c in cards)
+    layers = sum(len(c["stems"]) for c in cards)
     minutes = round(len(cards) * JOURNEY_END / 60)
     return TEMPLATE.replace("%DATE%", e(date)).replace("%MARKS%", marks).replace("%CARDS%", "".join(body)) \
         .replace("%KEY%", f"awaken-listening-{date}").replace("%THEMES%", str(len(cards))) \
-        .replace("%STEMS%", str(stems)).replace("%MINUTES%", str(minutes))
+        .replace("%STEMS%", str(layers)).replace("%MINUTES%", str(minutes))
 
 
 def verdict():
