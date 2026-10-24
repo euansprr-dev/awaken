@@ -603,6 +603,7 @@ final class CityEvents {
     }
 
     private void setFlames(int[] data, int intensity) {
+        if (!c.work.edits) return; // a borrowed graph (the events test): the fire burns in the ledger only
         int want = (int) Math.ceil(intensity / 1000.0 * 8);
         for (int t = 0; t < 8; t++) {
             if (data[8 + t * 3] == Integer.MIN_VALUE) continue;
@@ -685,7 +686,7 @@ final class CityEvents {
             if (dd[8 + t * 3] == Integer.MIN_VALUE) continue;
             BlockPos fire = new BlockPos(dd[8 + t * 3], dd[9 + t * 3], dd[10 + t * 3]);
             for (BlockPos p : BlockPos.betweenClosed(fire.offset(-1, -2, -1), fire.offset(1, -1, 1))) {
-                if (n >= burn || !c.level.isLoaded(p)) continue;
+                if (n >= burn || !c.work.edits || !c.level.isLoaded(p)) continue;
                 BlockState s = c.level.getBlockState(p);
                 if (s.isAir() || s.is(CitizensContent.CITY_FIRE.get()) || CitizenWork.burnt(s)) continue;
                 if (Math.floorMod(CitizenWork.mixHash(p.asLong()), 3L) != 0) continue;
@@ -775,7 +776,7 @@ final class CityEvents {
             int x = (int) Math.floor(mx) + (int) Math.floorMod(CitizenWork.mixHash(seed + t * 3), 7L) - 3;
             int z = (int) Math.floor(mz) + (int) Math.floorMod(CitizenWork.mixHash(seed + t * 3 + 1), 7L) - 3;
             BlockPos p = new BlockPos(x, y, z);
-            if (!c.level.isLoaded(p) || !c.level.getBlockState(p).isAir() || !c.level.getBlockState(p.below()).isSolid()) continue;
+            if (!c.work.edits || !c.level.isLoaded(p) || !c.level.getBlockState(p).isAir() || !c.level.getBlockState(p.below()).isSolid()) continue;
             if (!CityPlan.walkable(plan.kind(x - l.cx, z - l.cz))) continue;
             c.level.setBlock(p, CitizensContent.CARGO_CRATE.get().defaultBlockState(), Block.UPDATE_ALL);
             data[3 + n * 3] = x;
@@ -966,7 +967,7 @@ final class CityEvents {
 
     private void scorchField(int x, int z, long now) {
         int y0 = c.level.isLoaded(new BlockPos(x, 0, z)) ? c.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : -999;
-        if (y0 == -999) return;
+        if (y0 == -999 || !c.work.edits) return;
         for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) {
             BlockPos top = new BlockPos(x + dx, y0, z + dz);
             for (int dy = 2; dy >= -3; dy--) {

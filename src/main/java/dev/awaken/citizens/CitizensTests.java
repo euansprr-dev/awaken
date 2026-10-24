@@ -160,6 +160,7 @@ final class CitizensTests {
         Citizens before = Citizens.active;
         Citizens c = new Citizens(level, r, g, new CitizensData(), origin.getX(), origin.getZ(), origin.getY());
         c.crowd.on = false;
+        c.work.edits = false; // the shared test world is not Carillon: change no blocks there
         c.setClock(16000); // night: a burglary's hour
         c.events.noPlan();
         Citizens.active = c;

@@ -61,6 +61,11 @@ final class CitizenWork implements Ledger.Work {
     /** Which stall an open/close sequence is animating, and how far (cells done). */
     private final int[] stallAnim;
     long lampsLit, lampsOut, deliveries, sales, strokes, repairsDone;
+    /**
+     * Off where the city's graph is only borrowed (the events test places it in the shared GameTest world): stalls,
+     * lines, anvils, tubs, crates and repairs would land on other tests' ground, and the scans would load its chunks.
+     */
+    boolean edits = true;
 
     static final int NIGHT_FROM = 13000, NIGHT_TO = 23200, STALLS_OPEN = 700, STALLS_CLOSE = 11800;
 
@@ -194,14 +199,18 @@ final class CitizenWork implements Ledger.Work {
         jumped = false;
         if (now % 40 == 9) stalls(tod);
         peal(now);
-        reconcileLamps(2);
-        reconcileStalls(now);
-        laundry(now, tod);
-        furnish();
-        findBells();
+        if (edits) {
+            reconcileLamps(2);
+            reconcileStalls(now);
+            laundry(now, tod);
+            furnish();
+            findBells();
+        }
         if (darkDirty) rebuildDark(tod);
-        masons(now, tod);
-        chimneys();
+        if (edits) {
+            masons(now, tod);
+            chimneys();
+        }
         if (now % 600 == 0) darkDirty = true; // dusk and dawn change what "dark at night" means
     }
 
@@ -256,7 +265,7 @@ final class CitizenWork implements Ledger.Work {
     /** The lamplighter's pole reaches the lamp: set it now, with a flare (or a wisp of smoke going out). */
     private void lampNow(int k, boolean light) {
         BlockPos pos = lampHead[k];
-        if (!level.isLoaded(pos)) return;
+        if (!edits || !level.isLoaded(pos)) return;
         BlockState s = level.getBlockState(pos);
         if (s.is(CitizensContent.STREET_LAMP.get()) || s.is(Blocks.LANTERN)) {
             level.setBlock(pos, lampState(light ? LAMP_LIT : LAMP_OUT), Block.UPDATE_ALL);
@@ -277,7 +286,7 @@ final class CitizenWork implements Ledger.Work {
         darkDirty = true;
         d.setDirty();
         BlockPos pos = lampHead[k];
-        if (level.isLoaded(pos)) {
+        if (edits && level.isLoaded(pos) && (level.getBlockState(pos).is(CitizensContent.STREET_LAMP.get()) || level.getBlockState(pos).is(Blocks.LANTERN))) {
             level.setBlock(pos, lampState(LAMP_BROKEN), Block.UPDATE_ALL);
             level.playSound(null, pos, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 1f, 1f);
         }
