@@ -3,7 +3,7 @@
  "minecraft": "26.3",
  "loader": "neoforge",
  "neoforge": "26.3.0.95",
- "generated": "2026-10-24 09:02",
+ "generated": "2026-10-24 09:10",
  "files": [
   {
    "slug": "3dskinlayers",
@@ -325,6 +325,29 @@
    "why": "Faster game logic on the integrated server."
   },
   {
+   "slug": "lithostitched",
+   "title": "Lithostitched",
+   "projectId": "XaDC71GB",
+   "versionId": "sQznZoKs",
+   "version": "2.0.6-neoforge-26.3",
+   "channel": "release",
+   "published": "2026-10-13",
+   "file": "lithostitched-2.0.6-neoforge-26.3.jar",
+   "url": "https://cdn.modrinth.com/data/XaDC71GB/versions/sQznZoKs/lithostitched-2.0.6-neoforge-26.3.jar",
+   "size": 1002707,
+   "sha1": "da5dd0e330f34854dca45c1f6cb5d3f88f96b0eb",
+   "sha512": "0d085656fae32b09c2ef338f351eff3819349e7ad8ff895d34e9f763619fee7ca2bcb99d5443dc077db014088873dbdb661edeee45d8b0034ef39e86a877972c",
+   "client": "unsupported",
+   "server": "required",
+   "profiles": [
+    "world"
+   ],
+   "dependencyOf": [
+    "tectonic"
+   ],
+   "why": "dependency"
+  },
+  {
    "slug": "mezzconfig",
    "title": "MezzConfig",
    "projectId": "7tEfOcA7",
@@ -540,6 +563,27 @@
    ],
    "dependencyOf": [],
    "why": "Profiler for frame and tick spikes."
+  },
+  {
+   "slug": "tectonic",
+   "title": "Tectonic",
+   "projectId": "lWDHr9jE",
+   "versionId": "yWpa8ww5",
+   "version": "3.0.31-neoforge-26.3",
+   "channel": "release",
+   "published": "2026-09-27",
+   "file": "tectonic-3.0.31-neoforge-26.3.jar",
+   "url": "https://cdn.modrinth.com/data/lWDHr9jE/versions/yWpa8ww5/tectonic-3.0.31-neoforge-26.3.jar",
+   "size": 387758,
+   "sha1": "e6f0ec73813a7d9aad0a2c5d8be98536cd1e5f81",
+   "sha512": "1c12e6d1ce34802651bc808c47a2b96579db2fc7c24b5b1221f0f49e45aee21654f55c6de8eb5058e1753c2a8b16134d82651f2d16638c7eca44f805704ec299",
+   "client": "optional",
+   "server": "required",
+   "profiles": [
+    "world"
+   ],
+   "dependencyOf": [],
+   "why": "Mountain ranges, deep oceans and valleys; keeps vanilla biomes, so every Awaken spawn and ruin still has a home."
   },
   {
    "slug": "xaeros-world-map",

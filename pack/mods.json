@@ -12,7 +12,8 @@
     "comfort": "Recipe lookup, block info, inventory help, a world map (no minimap, by design).",
     "together": "Join links and proximity voice.",
     "ultra": "Experimental: Iris shaders (OpenGL only; Iris lists Apple Silicon as unsupported).",
-    "tools": "Profiling."
+    "tools": "Profiling.",
+    "world": "New terrain (Tectonic). Only ever installed into a fresh game folder (tools/play.sh --pack): it would seam existing worlds."
   },
   "mods": [
     {
@@ -72,6 +73,13 @@
         "horizon"
       ],
       "why": "Terrain to the horizon."
+    },
+    {
+      "slug": "tectonic",
+      "profiles": [
+        "world"
+      ],
+      "why": "Mountain ranges, deep oceans and valleys; keeps vanilla biomes, so every Awaken spawn and ruin still has a home."
     },
     {
       "slug": "player-animation-library",
