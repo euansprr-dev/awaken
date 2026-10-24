@@ -24,13 +24,13 @@
       "min_inclusive": 3,
       "max_inclusive": 5
     },
-    "limb_start": 0.7,
+    "limb_start": 0.66,
     "limb_length": {
       "type": "minecraft:uniform",
       "min_inclusive": 4,
       "max_inclusive": 6
     },
-    "limb_rise": 0.35,
+    "limb_rise": 0.6,
     "twig": {
       "type": "minecraft:uniform",
       "min_inclusive": 2,
@@ -63,7 +63,7 @@
       "min_inclusive": 3,
       "max_inclusive": 4
     },
-    "offset": 0,
+    "offset": 1,
     "height": 1,
     "depth": 0.6,
     "hollow": 0.0,
@@ -92,11 +92,11 @@
           "tip": "true"
         }
       },
-      "probability": 0.07,
+      "probability": 0.12,
       "length": {
         "type": "minecraft:uniform",
         "min_inclusive": 1,
-        "max_inclusive": 4
+        "max_inclusive": 5
       }
     },
     {
@@ -120,38 +120,7 @@
       },
       "height": 2,
       "radius": 4,
-      "tries": 40
-    },
-    {
-      "type": "minecraft:alter_ground",
-      "provider": {
-        "type": "minecraft:rule_based",
-        "rules": [
-          {
-            "if_true": {
-              "type": "minecraft:matching_block_tag",
-              "tag": "minecraft:beneath_tree_podzol_replaceable"
-            },
-            "then": {
-              "type": "minecraft:weighted",
-              "entries": [
-                {
-                  "data": {
-                    "id": "minecraft:moss_block"
-                  },
-                  "weight": 3
-                },
-                {
-                  "data": {
-                    "id": "minecraft:rooted_dirt"
-                  },
-                  "weight": 1
-                }
-              ]
-            }
-          }
-        ]
-      }
+      "tries": 48
     }
   ],
   "ignore_vines": true

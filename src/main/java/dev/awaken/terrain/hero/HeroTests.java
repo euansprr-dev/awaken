@@ -44,6 +44,7 @@ public final class HeroTests {
             for (HeroTree tree : HeroTree.values()) {
                 double total = 0, worst = 0;
                 int seeds = 8;
+                for (long warm = 101; warm <= 103; warm++) tree.build(warm); // the JIT first, then the clock
                 for (long seed = 1; seed <= seeds; seed++) {
                     long t0 = System.nanoTime();
                     Blueprint bp = tree.build(seed * 1_000_003L);
@@ -90,7 +91,7 @@ public final class HeroTests {
                 int r = tree == HeroTree.ELDER_COLOSSUS ? 44 : 26;
                 ground(level, origin, r, slope);
                 BlockPos foot = origin.above(slope ? 0 : 0);
-                HeroPiece piece = new HeroPiece(tree, foot, 424242L);
+                HeroPiece piece = new HeroPiece(tree, foot, 424242L); // builds and caches the blueprint: the chunks below only place it
                 BoundingBox box = piece.getBoundingBox();
                 int chunks = 0, placed = 0;
                 double worst = 0, total = 0;

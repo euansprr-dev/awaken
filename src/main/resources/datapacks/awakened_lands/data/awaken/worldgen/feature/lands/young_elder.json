@@ -15,10 +15,10 @@
     "width": 1,
     "lean": {
       "type": "minecraft:uniform",
-      "min_inclusive": 1,
-      "max_inclusive": 3
+      "min_inclusive": 0,
+      "max_inclusive": 2
     },
-    "lean_start": 0.3,
+    "lean_start": 0.4,
     "limbs": {
       "type": "minecraft:uniform",
       "min_inclusive": 1,

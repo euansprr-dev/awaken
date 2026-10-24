@@ -32,6 +32,10 @@
       "burn_odds": 5,
       "ignite_odds": 5
     },
+    "awaken:veined_lumen_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
     "awaken:elder_planks": {
       "burn_odds": 20,
       "ignite_odds": 5

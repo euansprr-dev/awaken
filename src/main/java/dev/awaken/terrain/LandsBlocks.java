@@ -53,6 +53,8 @@ public final class LandsBlocks {
     public static final DeferredBlock<RotatedPillarBlock> STRIPPED_LUMEN_LOG = log("stripped_lumen_log", MapColor.CLAY, MapColor.CLAY);
     public static final DeferredBlock<RotatedPillarBlock> LUMEN_WOOD = log("lumen_wood", MapColor.SNOW, MapColor.SNOW);
     public static final DeferredBlock<RotatedPillarBlock> STRIPPED_LUMEN_WOOD = log("stripped_lumen_wood", MapColor.CLAY, MapColor.CLAY);
+    /** The Lumen Spire's bark: glowing veins wind up it (emissive model faces, no block light). */
+    public static final DeferredBlock<RotatedPillarBlock> VEINED_LUMEN_LOG = log("veined_lumen_log", MapColor.CLAY, MapColor.SNOW);
     public static final DeferredBlock<Block> LUMEN_PLANKS = planks("lumen_planks", MapColor.CLAY);
     public static final DeferredBlock<LeavesBlock> LUMEN_LEAVES = leaves("lumen_leaves", MapColor.WARPED_WART_BLOCK);
     public static final DeferredBlock<SaplingBlock> LUMEN_SAPLING = sapling("lumen_sapling", LandsTrees.LUMEN);
@@ -99,7 +101,7 @@ public final class LandsBlocks {
     /** Every Awakened Lands block, in creative-tab order. */
     public static List<DeferredBlock<? extends Block>> all() {
         return List.of(ELDER_LOG, STRIPPED_ELDER_LOG, ELDER_WOOD, STRIPPED_ELDER_WOOD, ELDER_PLANKS, ELDER_LEAVES, ELDER_SAPLING,
-                LUMEN_LOG, STRIPPED_LUMEN_LOG, LUMEN_WOOD, STRIPPED_LUMEN_WOOD, LUMEN_PLANKS, LUMEN_LEAVES, LUMEN_SAPLING,
+                LUMEN_LOG, STRIPPED_LUMEN_LOG, LUMEN_WOOD, STRIPPED_LUMEN_WOOD, VEINED_LUMEN_LOG, LUMEN_PLANKS, LUMEN_LEAVES, LUMEN_SAPLING,
                 LUMEN_MOSS, LUMEN_CAP, LUMEN_VINES);
     }
 

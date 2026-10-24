@@ -55,6 +55,7 @@ LOGS = {  # name: (side texture, end texture)
     "stripped_lumen_log": ("stripped_lumen_log", "stripped_lumen_log_top"),
     "lumen_wood": ("lumen_log", "lumen_log"),
     "stripped_lumen_wood": ("stripped_lumen_log", "stripped_lumen_log"),
+    "veined_lumen_log": ("veined_lumen_log", "lumen_log_top"),
 }
 PLANKS = ["elder_planks", "lumen_planks"]
 SAPLINGS = ["elder_sapling", "lumen_sapling"]
@@ -65,6 +66,7 @@ NAMES = {
     "lumen_log": "Lumen Log", "stripped_lumen_log": "Stripped Lumen Log", "lumen_wood": "Lumen Wood",
     "stripped_lumen_wood": "Stripped Lumen Wood", "lumen_planks": "Lumen Planks", "lumen_leaves": "Lumen Leaves",
     "lumen_sapling": "Lumen Sapling", "lumen_moss": "Lumen Moss", "lumen_cap": "Lumen Caps", "lumen_vines": "Lumen Vines",
+    "veined_lumen_log": "Veined Lumen Log",
 }
 
 # A speck is a one-pixel emissive face laid a hair in front of the matching dim pixel of the base texture: a solid
@@ -72,21 +74,22 @@ NAMES = {
 LIFT = 0.05
 
 
-def speck(face, u, v):
-    """The element for texel (u, v) of a full-cube face (vanilla's default face UVs, FaceBakery.defaultFaceUV)."""
+def speck(face, u, v, n=1):
+    """The element for the n x n texels from (u, v) of a full-cube face (vanilla's default face UVs,
+    FaceBakery.defaultFaceUV)."""
     lo, hi = -LIFT, 16 + LIFT
     if face == "up":
-        a, b = [u, hi, v], [u + 1, hi, v + 1]
+        a, b = [u, hi, v], [u + n, hi, v + n]
     elif face == "down":
-        a, b = [u, lo, 15 - v], [u + 1, lo, 16 - v]
+        a, b = [u, lo, 16 - n - v], [u + n, lo, 16 - v]
     elif face == "north":
-        a, b = [15 - u, 15 - v, lo], [16 - u, 16 - v, lo]
+        a, b = [16 - n - u, 16 - n - v, lo], [16 - u, 16 - v, lo]
     elif face == "south":
-        a, b = [u, 15 - v, hi], [u + 1, 16 - v, hi]
+        a, b = [u, 16 - n - v, hi], [u + n, 16 - v, hi]
     elif face == "west":
-        a, b = [lo, 15 - v, u], [lo, 16 - v, u + 1]
+        a, b = [lo, 16 - n - v, u], [lo, 16 - v, u + n]
     else:  # east
-        a, b = [hi, 15 - v, 15 - u], [hi, 16 - v, 16 - u]
+        a, b = [hi, 16 - n - v, 16 - n - u], [hi, 16 - v, 16 - u]
     return {"from": a, "to": b, "light_emission": 15, "shade_direction_override": "up",
             "neoforge_data": {"ambient_occlusion": False},
             "faces": {face: {"texture": "#glow", "cullface": face}}}
@@ -107,8 +110,9 @@ def lumen_leaves_models():
                     "faces": {f: {"uv": [0, 0, 16, 16], "texture": "#all", "cullface": f} for f in FACES}}
             els = [base]
             for f in FACES:
-                for (u, v) in rng.sample(pixels, 2):
-                    els.append(speck(f, u, v))
+                big = f in ("up", "down")
+                for (u, v) in rng.sample(pixels, 3 if big else 2):
+                    els.append(speck(f, min(u, 14) if big else u, min(v, 14) if big else v, 2 if big else 1))
             model = {"parent": mc("block/block"), "ambientocclusion": True,
                      "textures": {"all": aw("block/lumen_leaves"), "glow": aw("block/lumen_glow"), "particle": aw("block/lumen_leaves")},
                      "elements": els}
@@ -145,6 +149,26 @@ def lumen_moss_models():
     write(f"{ASSETS}/items/lumen_moss.json", {"model": {"type": mc("model"), "model": aw("block/lumen_moss_a")}})
 
 
+def veined_log_models():
+    """The veined log: a column with an emissive vein layer over its four sides (cutout, few blocks: only the spires).
+    The horizontal one is vanilla's cube_column_horizontal shape (its top end turned half round)."""
+    for name, horizontal in (("veined_lumen_log", False), ("veined_lumen_log_horizontal", True)):
+        sides = ["north", "south", "west", "east"]
+        faces = {f: {"uv": [0, 0, 16, 16], "texture": "#side", "cullface": f} for f in sides}
+        faces["down"] = {"uv": [0, 0, 16, 16], "texture": "#end", "cullface": "down"}
+        faces["up"] = {"uv": [0, 0, 16, 16], "texture": "#end", "cullface": "up"}
+        if horizontal:
+            faces["up"]["rotation"] = 180
+        glow = {f: dict(faces[f], texture="#glow") for f in sides}
+        write(f"{ASSETS}/models/block/{name}.json", {
+            "parent": mc("block/block"),
+            "textures": {"side": aw("block/veined_lumen_log"), "end": aw("block/lumen_log_top"), "glow": aw("block/veined_lumen_log_glow"),
+                         "particle": aw("block/veined_lumen_log")},
+            "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces},
+                         {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up",
+                          "neoforge_data": {"ambient_occlusion": False}, "faces": glow}]})
+
+
 def cross_with_glow(name, base, glow):
     """A cross model with an emissive overlay cross (vanilla's cross_emissive, our textures)."""
     write(f"{ASSETS}/models/block/{name}.json", {"parent": mc("block/cross_emissive"),
@@ -153,6 +177,12 @@ def cross_with_glow(name, base, glow):
 
 def block_assets():
     for name, (side, end) in LOGS.items():
+        if name == "veined_lumen_log":
+            h = aw("block/veined_lumen_log_horizontal")
+            write(f"{ASSETS}/blockstates/{name}.json", {"variants": {
+                "axis=x": {"model": h, "x": 90, "y": 90}, "axis=y": {"model": aw("block/" + name)}, "axis=z": {"model": h, "x": 90}}})
+            write(f"{ASSETS}/items/{name}.json", {"model": {"type": mc("model"), "model": aw("block/" + name)}})
+            continue
         write(f"{ASSETS}/models/block/{name}.json", {"parent": mc("block/cube_column"),
                                                        "textures": {"end": aw("block/" + end), "side": aw("block/" + side)}})
         horizontal = side != end
@@ -163,6 +193,7 @@ def block_assets():
         write(f"{ASSETS}/blockstates/{name}.json", {"variants": {
             "axis=x": {"model": h, "x": 90, "y": 90}, "axis=y": {"model": aw("block/" + name)}, "axis=z": {"model": h, "x": 90}}})
         write(f"{ASSETS}/items/{name}.json", {"model": {"type": mc("model"), "model": aw("block/" + name)}})
+    veined_log_models()
     for name in PLANKS:
         write(f"{ASSETS}/models/block/{name}.json", {"parent": mc("block/cube_all"), "textures": {"all": aw("block/" + name)}})
         write(f"{ASSETS}/blockstates/{name}.json", {"variants": {"": {"model": aw("block/" + name)}}})
@@ -277,11 +308,12 @@ def block_data():
     write(f"{RES}/data/neoforge/data_maps/block/flammable.json", {"values": flammable})
     strip = {}
     for kind in ("elder", "lumen"):
-        for src in (f"{kind}_log", f"{kind}_wood"):
+        for src in (f"{kind}_log", f"{kind}_wood") + (("veined_lumen_log",) if kind == "lumen" else ()):
+            dst = "stripped_lumen_log" if src == "veined_lumen_log" else "stripped_" + src
             strip[aw(src)] = {"transformer": mc("axe"), "transform_data": {
                 "block_state_provider": {"type": mc("rule_based"), "rules": [
                     {"if_true": {"type": mc("matching_blocks"), "blocks": aw(src)},
-                     "then": {"type": mc("copy_properties"), "source": {"id": aw("stripped_" + src), "properties": {"axis": "y"}}}}]},
+                     "then": {"type": mc("copy_properties"), "source": {"id": aw(dst), "properties": {"axis": "y"}}}}]},
                 "item_damage_per_use": 1, "sound": mc("item.axe.strip")}}
     write(f"{RES}/data/neoforge/data_maps/block/transformables.json", {"values": strip})
     lang = {f"block.awaken.{k}": v for k, v in NAMES.items()}
@@ -314,7 +346,7 @@ LEAF_LITTER = weighted(*[(state(mc("leaf_litter"), facing=f, segment_amount=n), 
 
 
 def tree(trunk, branch, leaves, *, base, ra, rb, width, lean, lean_start, limbs, limb_start, limb_length, limb_rise, twig,
-         flare, radius, height, depth, hollow, ragged, hang, decorators, size):
+         flare, radius, height, depth, hollow, ragged, hang, decorators, size, offset=0):
     return {
         "type": mc("tree"),
         "below_trunk_provider": mc("soil_beneath_tree"),
@@ -324,7 +356,7 @@ def tree(trunk, branch, leaves, *, base, ra, rb, width, lean, lean_start, limbs,
                          "limb_length": limb_length, "limb_rise": limb_rise, "twig": twig, "root_flare": flare,
                          "branch_provider": state(branch, axis="y")},
         "foliage_provider": leaves_state(leaves),
-        "foliage_placer": {"type": aw("cloud_foliage_placer"), "radius": radius, "offset": 0, "height": height, "depth": depth,
+        "foliage_placer": {"type": aw("cloud_foliage_placer"), "radius": radius, "offset": offset, "height": height, "depth": depth,
                            "hollow": hollow, "ragged": ragged, "hang": hang},
         "minimum_size": size,
         "decorators": decorators,
@@ -349,8 +381,8 @@ def features():
     f = {}
     # Elder: a tall pale 2x2 column, clean below, a high crown of two to four billowing masses on rising limbs
     f["lands/elder"] = tree(aw("elder_log"), aw("elder_wood"), aw("elder_leaves"), base=18, ra=4, rb=4, width=2,
-                            lean=uniform(0, 1), lean_start=0.55, limbs=uniform(2, 4), limb_start=0.62, limb_length=uniform(3, 6),
-                            limb_rise=0.85, twig=uniform(1, 2), flare=uniform(2, 3), radius=uniform(3, 4), height=uniform(2, 3),
+                            lean=uniform(0, 1), lean_start=0.55, limbs=uniform(3, 5), limb_start=0.6, limb_length=uniform(3, 6),
+                            limb_rise=0.8, twig=uniform(2, 3), flare=uniform(2, 3), radius=uniform(4, 5), height=uniform(2, 3),
                             depth=0.55, hollow=0.0, ragged=0.4, hang=0.12,
                             decorators=[on_ground(LEAF_LITTER, 5, 70), {"type": mc("shelf_mushroom"), "probability": 0.25},
                                         ground_ring(weighted((state(mc("moss_block")), 3), (state(mc("podzol"), snowy=False), 2),
@@ -358,24 +390,23 @@ def features():
                             size={"type": mc("two_layers_feature_size"), "limit": 1, "lower_size": 1, "upper_size": 2, "min_clipped_height": 15})
     # Young elder: slim, leaning, one or two short limbs
     f["lands/young_elder"] = tree(aw("elder_log"), aw("elder_wood"), aw("elder_leaves"), base=9, ra=2, rb=2, width=1,
-                                  lean=uniform(1, 3), lean_start=0.3, limbs=uniform(1, 2), limb_start=0.6, limb_length=uniform(2, 3),
+                                  lean=uniform(0, 2), lean_start=0.4, limbs=uniform(1, 2), limb_start=0.6, limb_length=uniform(2, 3),
                                   limb_rise=1.0, twig=uniform(1, 1), flare=uniform(0, 1), radius=uniform(2, 3), height=uniform(2, 2),
                                   depth=0.6, hollow=0.0, ragged=0.45, hang=0.08,
                                   decorators=[on_ground(LEAF_LITTER, 3, 24)],
                                   size={"type": mc("two_layers_feature_size"), "limit": 1, "lower_size": 0, "upper_size": 1, "min_clipped_height": 7})
     # Lumen tree: a short 2x2 trunk spreading into near-level limbs, each ending in a flat pad; vines hang from the pads
     f["lands/lumen"] = tree(aw("lumen_log"), aw("lumen_wood"), aw("lumen_leaves"), base=10, ra=3, rb=3, width=2,
-                            lean=uniform(0, 1), lean_start=0.5, limbs=uniform(3, 5), limb_start=0.7, limb_length=uniform(4, 6),
-                            limb_rise=0.35, twig=uniform(2, 3), flare=uniform(1, 2), radius=uniform(3, 4), height=uniform(1, 1),
-                            depth=0.6, hollow=0.0, ragged=0.3, hang=0.3,
-                            decorators=[dict(VINES, probability=0.07, length=uniform(1, 4)), on_ground(LUMEN_GROUND, 4, 40),
-                                        ground_ring(weighted((state(mc("moss_block")), 3), (state(mc("rooted_dirt")), 1)))],
+                            lean=uniform(0, 1), lean_start=0.5, limbs=uniform(3, 5), limb_start=0.66, limb_length=uniform(4, 6),
+                            limb_rise=0.6, twig=uniform(2, 3), flare=uniform(1, 2), radius=uniform(3, 4), height=uniform(1, 1),
+                            depth=0.6, hollow=0.0, ragged=0.3, hang=0.3, offset=1,
+                            decorators=[dict(VINES, probability=0.12, length=uniform(1, 5)), on_ground(LUMEN_GROUND, 4, 48)],
                             size={"type": mc("two_layers_feature_size"), "limit": 1, "lower_size": 1, "upper_size": 2, "min_clipped_height": 9})
     f["lands/small_lumen"] = tree(aw("lumen_log"), aw("lumen_wood"), aw("lumen_leaves"), base=6, ra=1, rb=2, width=1,
-                                  lean=uniform(0, 1), lean_start=0.4, limbs=uniform(2, 3), limb_start=0.65, limb_length=uniform(2, 3),
-                                  limb_rise=0.5, twig=uniform(1, 2), flare=uniform(0, 1), radius=uniform(2, 3), height=uniform(1, 1),
-                                  depth=0.6, hollow=0.0, ragged=0.3, hang=0.25,
-                                  decorators=[dict(VINES, probability=0.05, length=uniform(1, 2)), on_ground(LUMEN_GROUND, 2, 12)],
+                                  lean=uniform(0, 1), lean_start=0.4, limbs=uniform(2, 3), limb_start=0.6, limb_length=uniform(2, 3),
+                                  limb_rise=0.7, twig=uniform(1, 2), flare=uniform(0, 1), radius=uniform(2, 3), height=uniform(1, 1),
+                                  depth=0.6, hollow=0.0, ragged=0.3, hang=0.25, offset=1,
+                                  decorators=[dict(VINES, probability=0.08, length=uniform(1, 3)), on_ground(LUMEN_GROUND, 2, 12)],
                                   size={"type": mc("two_layers_feature_size"), "limit": 1, "lower_size": 0, "upper_size": 1, "min_clipped_height": 5})
     for kind, log, carpet in (("elder", aw("elder_log"), mc("moss_carpet")), ("lumen", aw("lumen_log"), aw("lumen_moss"))):
         f[f"lands/fallen_{kind}"] = {
@@ -390,7 +421,7 @@ def features():
     # tree mixes (random selectors pick a placed tree per spot)
     f["lands/elderwood_trees"] = {"type": mc("random_selector"), "default": aw("lands/young_elder"), "features": [
         {"chance": 0.03, "feature": aw("lands/fallen_elder")},
-        {"chance": 0.5, "feature": aw("lands/elder")}]}
+        {"chance": 0.55, "feature": aw("lands/elder")}]}
     f["lands/lumen_trees"] = {"type": mc("random_selector"), "default": aw("lands/small_lumen"), "features": [
         {"chance": 0.02, "feature": {"feature": mc("huge_brown_mushroom"), "placement": []}},
         {"chance": 0.03, "feature": aw("lands/fallen_lumen")},
@@ -405,7 +436,7 @@ def features():
             (state(mc("large_fern"), half="lower"), 8), (state(mc("leaf_litter"), facing="north", segment_amount=3), 10))}, "placement": []}}
     f["lands/lumen_moss_patch"] = {
         "type": mc("vegetation_patch"), "surface": "floor", "depth": 1, "vertical_range": 5, "extra_bottom_block_chance": 0.0,
-        "extra_edge_column_chance": 0.4, "ground_state": state(mc("moss_block")), "replaceable": "#minecraft:moss_replaceable",
+        "extra_edge_column_chance": 0.4, "ground_state": state(mc("grass_block"), snowy=False), "replaceable": "#minecraft:moss_replaceable",
         "vegetation_chance": 0.85, "xz_radius": uniform(3, 6),
         "vegetation_feature": {"feature": {"type": mc("simple_block"), "to_place": weighted(
             (state(aw("lumen_moss")), 70), (state(aw("lumen_cap")), 4), (state(mc("fern")), 8), (state(mc("short_grass")), 6))},
@@ -449,7 +480,7 @@ def placed():
         sap = aw("elder_sapling") if "elder" in name else aw("lumen_sapling")
         p[f"lands/{name}"] = {"feature": aw("lands/" + name), "placement": [
             {"type": mc("block_predicate_filter"), "predicate": {"type": mc("would_survive"), "state": state(sap, stage=0)}}]}
-    p["lands/elderwood_trees"] = trees_placed(aw("lands/elderwood_trees"), [(4, 3), (5, 4), (6, 2)], aw("elder_sapling"))
+    p["lands/elderwood_trees"] = trees_placed(aw("lands/elderwood_trees"), [(6, 3), (7, 4), (8, 2)], aw("elder_sapling"))
     p["lands/lumen_trees"] = trees_placed(aw("lands/lumen_trees"), [(5, 3), (6, 4), (7, 2)], aw("lumen_sapling"))
     p["lands/elder_moss_patch"] = {"feature": aw("lands/elder_moss_patch"), "placement": [
         {"type": mc("count"), "count": uniform(0, 2)}, {"type": mc("in_square")},
@@ -460,7 +491,7 @@ def placed():
     p["lands/elder_leaf_litter"] = scatter(mc("leaf_litter"), 4, 7, 32, below=[mc("grass_block"), mc("moss_block"), mc("podzol")])
     p["lands/elder_ferns"] = scatter(mc("taiga_grass"), 2, 7, 24)
     p["lands/elder_large_ferns"] = scatter(mc("large_fern"), 1, 6, 24, rarity=3)
-    p["lands/lumen_caps"] = scatter(aw("lands/lumen_cap"), 2, 4, 10, survive=state(aw("lumen_cap")))
+    p["lands/lumen_caps"] = scatter(aw("lands/lumen_cap"), 3, 4, 14, survive=state(aw("lumen_cap")))
     p["lands/lumen_fireflies"] = scatter(mc("firefly_bush"), 2, 5, 10, survive=state(mc("firefly_bush")))
     return p
 

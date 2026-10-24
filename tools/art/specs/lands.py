@@ -14,7 +14,7 @@ RAMPS = {
     # Elderwood: pale silver-cream bark with dark fissures, warm cream heartwood, gold-green leaves
     "elder_bark": ["#2f2a24", "#4c463d", "#716a5e", "#968e7e", "#b9b19d", "#d8d0bb", "#ece6d2"],
     "elder_wood": ["#5a4630", "#7d6444", "#a3875e", "#c4a97c", "#dcc59a", "#efe0bd"],
-    "elder_leaf": ["#1f3012", "#30481a", "#456224", "#5f7c2c", "#829435", "#aaa83f", "#d6c35a"],
+    "elder_leaf": ["#2b3a12", "#43561a", "#5f7321", "#818f29", "#a6a935", "#cbbd46", "#ecd668"],
     # Lumen Forest: ash-white bark, blue-grey heartwood, deep teal leaves with glowing specks
     "lumen_bark": ["#3b4550", "#56616d", "#77828e", "#9aa4ae", "#bcc4cb", "#dbe1e5", "#f0f3f5"],
     "lumen_wood": ["#36404c", "#4e5a68", "#6a7786", "#8995a3", "#a9b3bf", "#c9d1da"],
@@ -308,6 +308,29 @@ def lumen_vines(seed, tip):
     return c, g
 
 
+def veined_bark(seed):
+    """Lumen Spire bark: the ash-white bark with two or three glowing veins winding up it (base, glow layer). The
+    veins wander but always continue from row to row, so stacked blocks read as one unbroken vein."""
+    c = bark("lumen_bark", seed, fissures=3)
+    g = Canvas()
+    gl = [hex_rgba(h) for h in RAMPS["lumen_glow"]]
+    rng = rng_for("veins", seed)
+    for start in (3, 11):
+        x = start
+        for y in range(16):
+            # tileable vertically: the vein ends where it began (it returns over the last rows)
+            if y < 12 and rng.random() < 0.3:
+                x += rng.choice((-1, 1))
+            elif y >= 12 and x != start:
+                x += 1 if start > x else -1
+            px = x % 16
+            c.set(px, y, shade(gl[0], 0.45))
+            if (y * 7 + start) % 9 < 2:
+                continue  # the glow breaks now and then: a vein of light, not a neon tube
+            g.set(px, y, gl[0] if (y + start) % 6 else gl[1])
+    return c, g
+
+
 def glow_tile():
     """A solid glow tile: the emissive pixels of Lumen models sample it, so every mip level keeps the same colour."""
     c = Canvas()
@@ -377,6 +400,9 @@ def build(out):
     out.block("lumen_vines_tip", vine)
     out.block("lumen_vines_tip_glow", glow)
     out.block("lumen_glow", glow_tile())
+    veins, glow = veined_bark("spire")
+    out.block("veined_lumen_log", veins)
+    out.block("veined_lumen_log_glow", glow)
     for i, shape in enumerate(("oval", "long", "round", "edge")):
         out.particle(f"falling_leaf_{i}", leaf_sprite("leaf", shape))
 

@@ -28,7 +28,8 @@ final class LumenSpire {
             int span = (int) Math.ceil(rad * 1.3) + 1;
             for (int x = (int) Math.floor(cx) - span; x <= (int) Math.ceil(cx) + span; x++) {
                 for (int z = (int) Math.floor(cz) - span; z <= (int) Math.ceil(cz) + span; z++) {
-                    double dx = x + 0.5 - cx, dz = z + 0.5 - cz;
+                    double dx = x + 0.5 - cx, dz = z + 0.5 - cz, d2 = dx * dx + dz * dz;
+                    if (d2 > rad * rad * (1 + 0.24) * (1 + 0.24)) continue; // outside even the widest flute: skip the trig
                     double reff = rad * (1 + 0.24 * Math.sin(3 * Math.atan2(dz, dx) + phase + y * twist));
                     if (dx * dx + dz * dz > reff * reff) continue;
                     bp.set(x, y, z, Blueprint.LOG);

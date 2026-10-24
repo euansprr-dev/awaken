@@ -7,7 +7,7 @@
       "feature": "awaken:lands/fallen_elder"
     },
     {
-      "chance": 0.5,
+      "chance": 0.55,
       "feature": "awaken:lands/elder"
     }
   ]

@@ -92,6 +92,7 @@ shot lands_lumen_night_above
 cmd time set 6000
 cmd locate structure awaken:elder_colossus
 cmd locate structure awaken:lumen_spire
+cmd gamemode spectator
 cmd awaken terrain herovisit elder_colossus 80 2
 wait 400
 shot lands_colossus_far
@@ -105,7 +106,7 @@ cmd time set 6000
 cmd awaken terrain herovisit elder_colossus 16 1
 wait 200
 shot lands_colossus_foot
-cmd awaken terrain herovisit lumen_spire 60 2
+cmd awaken terrain herovisit lumen_spire 70 22
 wait 400
 shot lands_spire_far
 cmd time set 18000

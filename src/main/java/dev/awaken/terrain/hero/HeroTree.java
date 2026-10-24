@@ -45,7 +45,7 @@ public enum HeroTree implements StringRepresentable {
 
         @Override
         BlockState[] blocks() {
-            return palette(LandsBlocks.LUMEN_LOG.get(), LandsBlocks.LUMEN_WOOD.get(), LandsBlocks.LUMEN_LEAVES.get(), LandsBlocks.LUMEN_VINES.get(),
+            return palette(LandsBlocks.VEINED_LUMEN_LOG.get(), LandsBlocks.LUMEN_WOOD.get(), LandsBlocks.LUMEN_LEAVES.get(), LandsBlocks.LUMEN_VINES.get(),
                     LandsBlocks.LUMEN_MOSS.get().defaultBlockState());
         }
     };

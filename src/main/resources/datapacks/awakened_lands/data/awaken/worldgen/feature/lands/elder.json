@@ -21,20 +21,20 @@
     "lean_start": 0.55,
     "limbs": {
       "type": "minecraft:uniform",
-      "min_inclusive": 2,
-      "max_inclusive": 4
+      "min_inclusive": 3,
+      "max_inclusive": 5
     },
-    "limb_start": 0.62,
+    "limb_start": 0.6,
     "limb_length": {
       "type": "minecraft:uniform",
       "min_inclusive": 3,
       "max_inclusive": 6
     },
-    "limb_rise": 0.85,
+    "limb_rise": 0.8,
     "twig": {
       "type": "minecraft:uniform",
-      "min_inclusive": 1,
-      "max_inclusive": 2
+      "min_inclusive": 2,
+      "max_inclusive": 3
     },
     "root_flare": {
       "type": "minecraft:uniform",
@@ -60,8 +60,8 @@
     "type": "awaken:cloud_foliage_placer",
     "radius": {
       "type": "minecraft:uniform",
-      "min_inclusive": 3,
-      "max_inclusive": 4
+      "min_inclusive": 4,
+      "max_inclusive": 5
     },
     "offset": 0,
     "height": {

@@ -24,13 +24,13 @@
       "min_inclusive": 2,
       "max_inclusive": 3
     },
-    "limb_start": 0.65,
+    "limb_start": 0.6,
     "limb_length": {
       "type": "minecraft:uniform",
       "min_inclusive": 2,
       "max_inclusive": 3
     },
-    "limb_rise": 0.5,
+    "limb_rise": 0.7,
     "twig": {
       "type": "minecraft:uniform",
       "min_inclusive": 1,
@@ -63,7 +63,7 @@
       "min_inclusive": 2,
       "max_inclusive": 3
     },
-    "offset": 0,
+    "offset": 1,
     "height": 1,
     "depth": 0.6,
     "hollow": 0.0,
@@ -92,11 +92,11 @@
           "tip": "true"
         }
       },
-      "probability": 0.05,
+      "probability": 0.08,
       "length": {
         "type": "minecraft:uniform",
         "min_inclusive": 1,
-        "max_inclusive": 2
+        "max_inclusive": 3
       }
     },
     {

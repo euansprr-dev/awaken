@@ -132,14 +132,20 @@ public final class Blueprint {
         int x0 = (int) Math.floor(cx - rx - 1), x1 = (int) Math.ceil(cx + rx + 1);
         int y0 = (int) Math.floor(cy - down - 1), y1 = (int) Math.ceil(cy + up + 1);
         int z0 = (int) Math.floor(cz - rx - 1), z1 = (int) Math.ceil(cz + rx + 1);
-        double h2 = hollow * hollow;
+        double h2 = hollow * hollow, inner = 1.0 - ragged * 0.5, outer = 1.0 + ragged * 0.5;
         for (int y = y0; y <= y1; y++) {
             double fy = (y + 0.5 - cy) / ((y + 0.5 >= cy) ? up : down);
+            double fy2 = fy * fy;
+            if (fy2 > outer) continue;
             for (int x = x0; x <= x1; x++) {
+                double fx = (x + 0.5 - cx) / rx, exy = fx * fx + fy2;
+                if (exy > outer) continue;
                 for (int z = z0; z <= z1; z++) {
-                    double fx = (x + 0.5 - cx) / rx, fz = (z + 0.5 - cz) / rx;
-                    double e = fx * fx + fy * fy + fz * fz;
-                    if (e > 1.0 + (hash(seed, x, y, z) - 0.5) * ragged || e < h2) continue;
+                    double fz = (z + 0.5 - cz) / rx;
+                    double e = exy + fz * fz;
+                    if (e < h2 || e > outer) continue;
+                    // only the ragged rim needs the hash
+                    if (e > inner && e > 1.0 + (hash(seed, x, y, z) - 0.5) * ragged) continue;
                     fill(x, y, z, LEAF);
                 }
             }
@@ -153,8 +159,9 @@ public final class Blueprint {
      * six persistent and removes the ones no wood reaches at all (they would float).
      */
     public void settleLeaves() {
-        int n = cells.length;
-        int[] queue = new int[n];
+        int n = cells.length, used = 0;
+        for (int i = 0; i < n; i++) if (cells[i] != EMPTY) used++;
+        int[] queue = new int[used];
         byte[] dist = new byte[n];
         Arrays.fill(dist, Byte.MAX_VALUE);
         int head = 0, tail = 0;
@@ -211,20 +218,16 @@ public final class Blueprint {
 
     /** Records each column's used range, so placement skips empty air quickly; returns the number of cells in use. */
     public int seal() {
-        int used = 0;
-        for (int x = -extent; x <= extent; x++) {
-            for (int z = -extent; z <= extent; z++) {
-                int c = column(x, z);
-                int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
-                for (int y = minY; y <= maxY; y++) {
-                    if (cells[index(x, y, z)] != EMPTY) {
-                        lo = Math.min(lo, y);
-                        hi = y;
-                        used++;
-                    }
-                }
-                colLo[c] = (short) (lo == Integer.MAX_VALUE ? 1 : lo);
-                colHi[c] = (short) (lo == Integer.MAX_VALUE ? 0 : hi);
+        int used = 0, cols = sx * sx;
+        Arrays.fill(colLo, (short) 1);
+        Arrays.fill(colHi, (short) 0);
+        // y outermost: the grid is laid out by layer, so this reads it front to back
+        for (int y = minY, i = 0; y <= maxY; y++) {
+            for (int c = 0; c < cols; c++, i++) {
+                if (cells[i] == EMPTY) continue;
+                used++;
+                if (colLo[c] > colHi[c]) colLo[c] = (short) y;
+                colHi[c] = (short) y;
             }
         }
         return used;
