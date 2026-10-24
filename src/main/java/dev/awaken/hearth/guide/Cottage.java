@@ -8,6 +8,7 @@ import dev.awaken.hearth.player.HearthPlayer;
 import dev.awaken.hearth.town.TownNpc;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
+import dev.awaken.terrain.api.BiomeTable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -18,12 +19,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
@@ -301,10 +302,15 @@ public final class Cottage {
         return m.immutable();
     }
 
-    /** Wood and stone from the biome. */
+    /** Each palette's biomes in the biome table: {@code #awaken:cottage/<palette>}, in {@link CottagePlan#PALETTES} order. */
+    private static final List<TagKey<Biome>> PLANS = CottagePlan.PALETTES.stream().map(p -> BiomeTable.tag("cottage/" + p.id())).toList();
+
+    /**
+     * Wood and stone from the biome: its plan in the biome table (every vanilla and Awakened overworld biome has one);
+     * another mod's biome by its vanilla and c: tags.
+     */
     public static CottagePlan.Palette palette(Holder<Biome> b) {
-        if (b.is(Biomes.CHERRY_GROVE)) return CottagePlan.CHERRY;
-        if (b.is(Biomes.MANGROVE_SWAMP)) return CottagePlan.MANGROVE;
+        for (int i = 0; i < PLANS.size(); i++) if (b.is(PLANS.get(i))) return CottagePlan.PALETTES.get(i);
         if (b.is(BiomeTags.IS_BADLANDS)) return CottagePlan.BADLANDS;
         if (b.is(Tags.Biomes.IS_DESERT)) return CottagePlan.DESERT;
         if (b.is(BiomeTags.IS_SAVANNA)) return CottagePlan.SAVANNA;

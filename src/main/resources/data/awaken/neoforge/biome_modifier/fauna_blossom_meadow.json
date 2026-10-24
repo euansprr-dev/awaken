@@ -1,9 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:meadow",
-    "minecraft:sunflower_plains"
-  ],
+  "biomes": "#awaken:fauna/blossom_meadow",
   "spawners": [
     {
       "type": "awaken:petalwing",

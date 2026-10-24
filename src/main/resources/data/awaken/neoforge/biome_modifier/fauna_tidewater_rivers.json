@@ -1,9 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:river",
-    "minecraft:frozen_river"
-  ],
+  "biomes": "#awaken:fauna/tidewater_rivers",
   "spawners": [
     {
       "type": "awaken:glimmerfin",

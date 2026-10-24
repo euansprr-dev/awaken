@@ -38,6 +38,7 @@ Hard rules:
 | `story` | prologue (Bell Crypt, death, Stillpoint, Accept), acts, Revelations, Codex board content, the Rival, endings, New Game+ / Ascension |
 | `world` | shared overworld worldgen hooks (biome modifiers, structure sets) used by descent/above/story |
 | `body` | the Awakened Body: soft landing, tactical sprint, slide, mantle; momentum hits and trips; `core.api.MovementHooks` |
+| `terrain` | Awakened Lands (§15): the biome table, Awakened biomes and their placement, trees, ground cover, wind and falling leaves, biome looks and sound, the terrain studio commands |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -278,6 +279,12 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
   the hall), `isRitual(server, gateId)`.
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
+- `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
+  its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
+- `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
+  rule, once at mod init), `site(server)` (centre, core and blend radii, street Y, the river's centre line, whether the
+  basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
+  placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
@@ -740,6 +747,107 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 15. Awakened Lands (terrain, biomes, trees, living foliage; plan in docs/plan-lands.html, approved 2026-10-24)
+
+- Shape comes from Tectonic (MIT), pinned in the pack's `world` profile with the Awakened preset `pack/tectonic/awakened.json`
+  (chosen in the studio 2026-10-24: scale 1.35, boost 0.25, erosion 0.2, ridges 0.22, continents 0.08, ocean offset
+  −0.55; results in pack/tectonic/README.md); Awaken never forks it
+  unless the studio demands it. Terralith and Continents are never used (their licence bans AI projects). World height
+  stays vanilla (−64 to 320); 384 only if the studio shows peaks capped.
+- Awakened biomes take about 40% of the land. The first six: Elderwood (Greenwild), Lumen Forest (Duskwood), Glass
+  Steppe (Sunscorch), Shattered Highlands (Crag), Frost Spires (Frostwild), Mirror Marsh (Mire). Rift Canyons are a
+  landmark feature across biomes. Placement: Lithostitched biome injectors first, TerraBlender if they fall short.
+- One biome table (stage 1) gives every biome, vanilla or Awakened, its family, spirit hint, lair and ruin rights,
+  cottage palette, music, ambience and Lens look; every Awaken system reads tags generated from it. A census test fails
+  the build if any biome lacks a row.
+- New worlds only, by feature flag: everything Awakened (biomes, their placement, their tag memberships, trees) lives
+  in the built-in data pack `datapacks/awakened_lands` (`dev.awaken.terrain.LandsPack`), which asks for the feature flag
+  `awaken:awakened_lands` (declared in META-INF/feature_flags.json). A world being created may turn on any flag, so it
+  loads the pack and records the flag; a world made before the flag existed lacks it, so the game skips the pack there
+  and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
+  it off). Test: `terrain_lands_pack_new_worlds_only`.
+- Until the vertical slice lands, no Awakened biome is placed (the stage-0 placeholder Elderwood exists in the
+  registry and the table but has no injector), so new worlds never show an unfinished biome.
+- Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
+  `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
+  threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
+  are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+- The biome table (stage 1): `tools/terrain/biomes.py` is the one source (`write`; `check` fails on a stale file, a
+  vanilla overworld biome without a row or a lands-pack biome without one). Base Awaken data refers to biomes only
+  through the tags it writes, listing vanilla biomes exactly as before: `awaken:fauna/<group>` (one per fauna spawn
+  modifier, which names `#awaken:fauna/<group>`), `awaken:has_lair/<beast>`, `awaken:lair_style/<style>` (where a lair
+  wears its second look: red sand, snow, pale oak, coral, moss; the Glass Hollow's keeps `#minecraft:is_badlands`) and
+  `awaken:cottage/<plan>` (every overworld biome has one; another mod's biome falls back to the old vanilla and `c:`
+  tag checks). The lands pack adds each Awakened biome to the same tags (tags merge across packs) plus every
+  `minecraft:`, `c:` and `awaken:` biome tag its archetype is in (nested tags resolved, so vanilla structures and the
+  Precursor ruins come too), to `awaken:archetype/<vanilla biome>`, and gives it the archetype's villager type; the
+  script owns every biome tag of the lands pack. An Awakened row is its archetype, its family (the fauna group it joins,
+  even where the archetype lacks it) and tags to add or drop: Elderwood is the old growth birch forest plus the
+  Greenwild and the Briar Sow's lair. Code that still reasons by biome name (spirits) asks
+  `dev.awaken.terrain.api.BiomeTable.archetype(biome)` first. `terrain_biome_table_census` fails if an Awakened biome
+  lacks an archetype, a fauna group (and live spawns), a cottage plan or spirits, or is not in `#minecraft:is_overworld`;
+  `terrain_biome_table_parity` holds every vanilla overworld biome to the spawners, lairs, cottage plan and lair looks
+  it had before the table.
+- Trees: data trees keep canopies within about 12 blocks of the trunk (a feature may write one chunk beyond its own);
+  giant hero trees are structures. No ticking or growing trees. Awaken logs and leaves join `#minecraft:logs` and
+  `#minecraft:leaves`. Vanilla leaf textures are untouched; Awaken trees get their own art.
+- Life: wind from world time and seed (same for every player, no packets) drives falling leaves (a fixed client pool,
+  about 150 at once, scaled by the frame budget), petals, dust and leaf rustle. Waving leaves only if the Sodium spike
+  proves them safe; if not, wind, leaves and sound ship without them.
+- Wind (`dev.awaken.terrain.Wind`, common): salt = fingerprint of the hashed world seed through the level's
+  BiomeManager (server and clients agree); a heading per 2000 ticks with a 400-tick turn, headings from a slow noise;
+  steady 0..1 (0.2 + 0.45 noise over 170 s, + 0.3 rain, + 0.3 thunder); gust fronts 0..1 rolling downwind at
+  7 blocks/s; strength = min(1, steady (0.6 + 0.8 gust) + 0.25 gust). One field per client feeds the waving shader,
+  the falling leaves and the rustle. Tests: `terrain_wind_deterministic`, `terrain_wind_ranges`.
+- Falling leaves (`terrain.client.FallingLeaves`): Awaken's own particle, spawned from leaves with air below 6-32
+  blocks out (70% toward the view), chance 0.06 × biome rate × leaf rate × (0.25 + 1.5 strength); caps 60/150/300 by
+  client setting `falling_leaves` = off|low|normal|high (default normal) × a frame-budget scale (1 at ≥ 50 fps,
+  0.25 by 30 fps); tinted from the leaf's BlockColors tint over its texture's average; tumble, flutter, wind drift,
+  1-3 s rest, 1 s fade. Per-block and per-biome rules in `assets/awaken/lands/air.json` (schemaVersion 1): forests
+  1.0, elsewhere 0.5, cherry 0 (vanilla petals), Elderwood 3.0 gold, Lumen Forest motes at night only.
+- Leaf rustle (`terrain.client.LeafRustle`): `amb.lands_rustle` under canopy and `amb.lands_wind_high` high and in the
+  open, volumes from the wind and a 16-column canopy ring; client setting `leaf_rustle` (default on).
+- Waving leaves (spike done 2026-10-24, docs/spikes/waving-leaves.md: safe, cost within noise, at most ~0.05 ms p50 in
+  a dense dark forest): `dev.awaken.terrain.client`. A built-in client pack (`resourcepacks/awaken_waving_leaves`)
+  replaces Sodium's terrain vertex shader, offered only when Sodium is exactly 0.9.3-beta.1+mc26.3 with terrain shader
+  sources of a known SHA-256, Iris is absent and client setting `waving_leaves` (`awaken-terrain-client.toml`, default
+  on) is on; otherwise nothing is installed (vanilla renderer: no waving). Marker: every `LeavesBlock` model is wrapped
+  after baking with vertex colour alpha 254 (textures untouched). Wind: texels at the block atlas's bottom-right
+  corner written each frame (signature, time mod 2048 s, camera, wind, the gust profile along the wind from
+  `terrain.Wind`): 22 texels.
+  Amplitude 0.11 blocks at full wind and gust. `/awaken terrain waving on|off|status` (client).
+- Budgets: forest p50 within the Swift budget at 2880×1800 (the darkest Tectonic forest already measured 8.7 ms on
+  2026-10-24, so new foliage pays for itself); any feature ≤ 0.5 ms per chunk on average, hero-tree structures ≤ 2 ms;
+  chunk generation and a 64-chunk Distant Horizons build within 20% of plain Tectonic. Features are safe off the main
+  thread (Distant Horizons runs them in 4×4-chunk batches). Far terrain shows ground blocks, logs and leaves only, so
+  each Awakened biome has a recognisable ground block and canopy shape.
+- Gates between stages are judged from the terrain studio (contact sheets on fixed seeds and survey numbers), not by
+  playtests; Euan gets the sheets as progress.
+- Terrain studio (stage 0): `/awaken terrain survey <name> [radius] [step]` samples the generator's surface height and
+  surface biome on a grid (no chunks generated, worker threads) and writes `terrain/<name>.json` in the game folder;
+  `tools/terrain/survey.py` turns it into a biome and relief map plus numbers (biomes per km on eight transects,
+  relief per 512-block window, land share, biome shares). `/awaken terrain visit <biome|#tag>` stands you in the
+  heart of the nearest surface patch of that biome; `/awaken terrain lookout [radius]` takes you to the highest ground
+  nearby; `/awaken terrain at` prints the biome, height and climate where you stand. Tectonic presets live in
+  `pack/tectonic/<preset>.json` and an autopilot run picks one with `TECTONIC=<preset>`.
+- City basin (Carillon, requested 2026-10-24): the city calls `CityBasin.request(rule)` (its rule: the world has the
+  feature flag `awaken:carillon`, which its pack asks for and Classic start turns off). At `ServerAboutToStart`, before
+  any level exists, terrain picks the site from the overworld generator and the seed (`terrain.city.SitePicker`: land
+  within ~1,440 blocks of the origin, ground near y 70, gentle across the core, low along the city's river, near street
+  level on the ring at 520; about 2 s). The lands pack wraps the overworld's `final_density` (router) and
+  `minecraft:overworld/preliminary_surface_level` (what aquifers and surface rules read) with `awaken:city_basin`:
+  flat at y 70 out to 330 blocks with 20 solid blocks under the street (caves and ores carry on below), the city's fixed
+  river carved to y 57 and 18 wide (water to sea level 63: the surface estimate reads 8 below the floor there, the aquifer's test for open
+  sea-level water),
+  continuing straight past the core and fading out 160 blocks beyond it; everything eases back to the natural terrain
+  by 700. No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
+  ruins skip `reserved(x, z)`; the city wires its runtime systems (gates, anomalies, landmarks, spawn vault, the Well).
+  Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
+  city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
+  Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
 
 ---------------------------------------------------------------------------------------------------------------------
 
