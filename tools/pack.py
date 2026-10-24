@@ -245,6 +245,7 @@ def cmd_install(game_dir, profiles, reset_configs=False):
         cmd_dhconfig(game_dir, "swift", only_if_missing=True)
     install_configs(game_dir, names, reset_configs)
     cmd_backend(game_dir, "vulkan", only_if_unset=True)
+    mac_windowing(game_dir)
     save(mods_dir / MARKER, {"schemaVersion": 1, "profiles": names, "installed": time.strftime("%Y-%m-%d %H:%M"),
                              "lockGenerated": lock["generated"],
                              "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"]} for e in chosen]})
@@ -300,6 +301,20 @@ def cmd_backend(game_dir, backend, only_if_unset=False):
         print(f"  graphics API: {backend} (was {current or 'unset'}) in {opts}; takes effect on the next launch")
     if (current if keep else backend) == "vulkan":
         early_window_off(game_dir)
+
+
+def mac_windowing(game_dir):
+    """On a Mac, exclusive fullscreen (Sodium turns it on by default) always takes the built-in display, so with an
+    external monitor the game goes fullscreen on a screen you may not be looking at. Borderless follows the window."""
+    if sys.platform != "darwin":
+        return
+    opts = game_dir / "options.txt"
+    lines = opts.read_text().splitlines() if opts.exists() else []
+    if "exclusiveFullscreen:false" in lines:
+        return
+    lines = [l for l in lines if not l.startswith("exclusiveFullscreen:")] + ["exclusiveFullscreen:false"]
+    opts.write_text("\n".join(lines) + "\n")
+    print(f"  exclusive fullscreen off in {opts} (on a Mac it always picks the built-in display)")
 
 
 def early_window_off(game_dir):

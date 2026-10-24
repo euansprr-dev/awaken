@@ -1,0 +1,36 @@
+# The Look switch's frame-time line against the harness: a measuring tour (it runs alone). The same vista as look.txt,
+# a perf scene per tier, then the screen: its "LAST 60 S" line covers exactly the 60 s Swift scene, so it should agree
+# with that perf line in the log.
+# PACK=perf,horizon DH=swift tools/autopilot.sh tools/autopilot/look-perf.txt
+world lookperf creative 20261024
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 11500
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken gate hop
+wait 100
+cmd gamemode spectator
+cmd tp @s ~ ~50 ~
+look 90 3
+lookswitch cinematic
+# Distant Horizons builds the horizon
+wait 2400
+perf look_cinematic 20
+lookswitch swift
+wait 100
+perf look_swift 60
+screen look
+wait 30
+shot lookperf_1_screen
+perf look_swift_screen_open 10
+shot lookperf_2_screen_after
+screen close
+quit
