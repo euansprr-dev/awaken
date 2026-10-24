@@ -43,6 +43,36 @@ public final class FarTerrain {
     public static boolean reverseZ() { return reverseZ; }
     public static boolean zeroToOne() { return zeroToOne; }
 
+    /**
+     * A far renderer outside this package (Awaken's own Far Sight) reports the frame it drew: its depth texture (a
+     * GpuTexture or GpuTextureView it keeps until post effects, or null for none), the clip planes and the depth
+     * convention it drew with. Called once a frame while it draws.
+     */
+    public static void report(Object depthTexture, float zNear, float zFar, boolean reverse, boolean zeroToOneNdc) {
+        near = zNear;
+        far = zFar;
+        reverseZ = reverse;
+        zeroToOne = zeroToOneNdc;
+        pointDepthAt(depthTexture);
+        lastFrameNanos = System.nanoTime();
+    }
+
+    private static volatile float renderDistanceFogEnd = -1f;
+
+    /**
+     * A far renderer that pushes vanilla's render-distance fog out (so the real chunks don't fog into a band where far
+     * terrain begins) records the end it replaced, before it changes the fog. Lens scales its distance haze by it.
+     */
+    public static void renderDistanceFog(float vanillaEnd) {
+        renderDistanceFogEnd = vanillaEnd;
+    }
+
+    /** Vanilla's render-distance fog end this frame: the recorded one while far terrain draws, else {@code fogEnd}. */
+    public static float renderDistanceFogEnd(float fogEnd) {
+        float v = renderDistanceFogEnd;
+        return v > 0f && active() ? v : fogEnd;
+    }
+
     /** The texture Lens samples as its far-terrain depth (a 1×1 placeholder until the companion hands its own over). */
     public static AbstractTexture depthTexture() {
         if (depth == null) depth = new ExternalDepth();

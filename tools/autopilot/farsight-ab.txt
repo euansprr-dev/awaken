@@ -1,0 +1,126 @@
+# Far Sight's decisive A/B (docs/perf/far-sight/REPORT.md): the same seed, places and moments for every far-terrain
+# setup. Run on Vulkan with LENS=swift and PACK=perf, once per setup:
+#   vanilla RD 16 and RD 32 (RD=32), Distant Horizons Swift (PACK=perf,horizon DH=swift), and Far Sight (this script
+#   with its "farsight off" line turned on). tools/farsight-ab.sh runs each setup and files its results.
+# Logs '[autopilot] perf <scene> ...' and Far Sight's ring timings; shots are 2880x1800 (1440x900 points, Retina).
+world farsightab creative 777
+waitworld
+gui 0
+farsight off
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd gamemode spectator
+# 1 time to the first horizon: a jump to land no far renderer has seen, shot 2 and 10 seconds later
+cmd tp @s 30000.5 200 0.5 -90 8
+wait 40
+shot ab_1_jump_2s
+wait 160
+shot ab_2_jump_10s
+farsight status
+# 2 the vista at noon and at sunset, high above spawn, east and west
+cmd tp @s 0.5 200 0.5 90 8
+wait 300
+perf vista_noon_west 10
+shot ab_3_noon_west
+look -90 8
+wait 60
+perf vista_noon_east 10
+shot ab_4_noon_east
+cmd time set 12600
+look 90 8
+wait 60
+perf vista_sunset_west 10
+shot ab_5_sunset_west
+cmd time set 6000
+# 3 on the ground, looking out (dry land: the seed may spawn at sea)
+cmd awaken gate hop
+wait 200
+look 0 0
+wait 40
+perf ground 10
+shot ab_6_ground
+look 180 0
+wait 40
+shot ab_7_ground_back
+# 4 flight: 30 s west at 20 blocks a second, 150 up; shots along the way show any seam between rings
+cmd tp @s 0.5 150 0.5 90 10
+wait 100
+perfstart flight
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+shotnow ab_8_flight_a
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+shotnow ab_9_flight_b
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+perfend
+shot ab_10_flight_end
+farsight status
+info
+quit

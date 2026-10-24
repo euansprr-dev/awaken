@@ -1065,3 +1065,47 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
   Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
 
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 16. Far Sight (Awaken's own far terrain; plan https://claude.ai/artifact/LvAoTbYB82o6ggcHS73rX1, approved 2026-10-24)
+
+- Module `dev.awaken.farsight` (common: `Rings`, `FarColumns`, `FarPalette`, `FarWorkers`; client: `farsight.client`).
+  Stage 0 is a proof: off unless turned on (autopilot `farsight on|off|status`, or `-Dawaken.farsight=true`), never
+  while Distant Horizons is installed, singleplayer only (it predicts from the integrated server's generator; a remote
+  server's client draws nothing until stage 2 streams server-made tiles). No mixins, reflection or access transformers.
+- Rings: geometry clipmaps, 7 square windows of 256×256 cells centred on the camera, ring k's cells `2 << k` blocks
+  (2 to 128; ring 6 reaches about 16 km). Windows snap to whole patches of 16×16 cells and move only once the camera is
+  three quarters of a patch past their centre. Each ring's heights, colours and shade live in three RGBA8 atlases of
+  256 × (256·7) texels, addressed toroidally (a cell's texel is its coordinate masked to 255), so moving uploads only
+  the patches that came into view; a slot whose patch left is zeroed at once and the coarser ring shows through.
+- Heights are predicted on 1–3 low-priority worker threads (a third of the cores), coarsest ring first, then nearest,
+  never on the server tick or the render thread. Rings 3–6 take one sample of the noise router's
+  `chunk_surface_level` per cell (at a 16-block corner, where the interpolated function is a single sample); rings
+  0–2 (about a kilometre) the exact `getBaseHeight(OCEAN_FLOOR_WG)`. A ground below sea level is water at sea level.
+  The biome comes from the biome source (per-worker uncached resolver); colour from `FarPalette` (one colour per
+  biome from its archetype, `BiomeTable.archetype`, and its grass and foliage colours; forests darker, the canopy is
+  what shows), snow where the biome is cold enough at that height. Patches the real chunks will always hide are never
+  sampled. Instanced dimensions get no far view (`compat.FarView`); only dimensions with the overworld sky draw it.
+- Drawing: in `RenderLevelStageEvent.AfterSky`, into the main colour target, before any chunk, so real chunks draw
+  over it with no depth fight. One pipeline, no vertex buffer: each ring's window minus the next finer window is cut
+  into pieces of at most 64×64 cells, culled on the CPU (frustum, and wholly under the real chunks), each one draw of
+  one shared index buffer (cell i = vertices 12i..12i+11: a flat top and the walls toward the camera, standing where
+  the neighbour is lower). A ring eases into the next coarser one over its window's outer 14 cells and takes the
+  coarser value where its own isn't predicted yet, so rings meet without a seam. Far terrain is hidden within 32
+  blocks of the render distance and dithers in over those 32 blocks.
+- Light and fog: lit by the lightmap's full-sky texel (day, night, storms and the dimension's ambient as vanilla
+  terrain gets them), sun shading from the slope, valley shade and normals baked per ring on the GPU (`FarGpu`; the
+  fragment-pass implementation today, Turbo compute and Mojang compute later, each kept only if it measures better),
+  steep slopes bare rock, water catching the sky at grazing angles. While Far Sight draws, vanilla's render-distance
+  fog moves out to its horizon (start 50%, end at ring 6's reach less its window lag, ≈14.6 km), and clear-weather
+  atmospheric fog (1024 blocks by default) stretches to 1.6× that; rain brings 85% of it back; thick fog (under 200
+  blocks: a boss, a gate's weather) is never thinned. Far terrain takes the same fog colour and the same linear fog.
+- Lens: Far Sight keeps its own depth (D32, reversed-Z, the device's depth range, planes 1 and 32768) at the main
+  target's size; nothing else writes it, so it lasts until post. It reports through `compat.client.FarTerrain.report`
+  (texture, planes, convention) like Distant Horizons, so Lens's probe trusts it and hazes far terrain by its real
+  distance on both graphics APIs. `FarTerrain.renderDistanceFog` records vanilla's render-distance end before Far
+  Sight moves it; Lens's params texel 11 carries that end while far terrain draws.
+- Tests: `farsight_rings_nest` (windows nest with blend room, on whole cells, hysteresis), `farsight_columns_predict`
+  (every ring's patch filled from the level's generator, water at sea level). The A/B tour is
+  `tools/autopilot/farsight-ab.txt`, run per setup by `tools/farsight-ab.sh`; results in `docs/perf/far-sight/`.
