@@ -285,11 +285,17 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   rule, once at mod init), `site(server)` (centre, core and blend radii, street Y, the river's centre line, whether the
   basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
+- `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
+  tier, radius, members, foundedFrom)` with `has(UUID)`, `hearthsOf(MinecraftServer, UUID)` / `hearthsOf(ServerPlayer)`,
+  `home(ServerPlayer)`, `isMember(ServerPlayer, BlockPos anchor)`, `isMember(MinecraftServer, UUID player, UUID owner)`,
+  `hearthAt(ServerLevel, BlockPos)`; plus `anchor`, `atHome`, `hasRoom`, `isSanctuary`, `inRoom`, `ownedEchoes`.
 - `dev.awaken.core.audio.MusicLayers` — the layered music: `register(Slot, priority, name, Provider)` (a provider names a
   player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null; it may set the given
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
-- `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
+- `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
+  `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
+  `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise).
@@ -1120,4 +1126,122 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
   Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Together (multiplayer; pack plan stage 6, Euan's decisions 2026-10-24)
+
+"Story starts together, shared Hearth with members with options to expand one into multiple over time." The audit and
+what was fixed: docs/multiplayer-audit.md. Every rule here holds for one player alone exactly as before (a party of
+one, a Hearth with no members, a world whose story only they reach); `together_old_saves_load_the_same` checks it.
+
+Parties and the bridges:
+- `core.api.PartyHooks` (the city's v0 hook, verbatim): `members(Player)` (the player included), `sameParty(Player,
+  Player)`. Until the guild module installs real parties, gates installs the rule: a player's party is everyone inside
+  the gate run they are in, plus everyone who shares a Hearth with them; alone, a party of one. Sealing and shared
+  rewards ask `PartyHooks` only.
+- `core.api.HearthHooks` gains `belongs`, `hearthsOf`, `household`, `shareHearth`, `within`; `hearthOf` is the
+  player's home (their own Hearth, else the first they share). `core.api.StoryHooks` gains `gatesCalm(server, owner)`
+  and `ascension(player)` / `ascensionOf(player)`. `core.api.MobHooks` gains `bondedTo(entity)`.
+- Dedicated server: client-sent actions are rate-limited per player (`core.Throttle`); `/awaken as <player> <any awaken
+  command>` runs it for that player (game masters, the console, command blocks; `<player>` is a name or a selector, as
+  vanilla's player arguments take it, never a UUID); `core.RegionRecycler` erases a batch
+  of chunks from region files while running, once none is in memory on two checks at least 10 s apart (written as "no
+  data" through the level's own chunk IO worker), so gate and dream cells are reused without a restart.
+
+A shared Hearth (members, and growing into several):
+- A Hearth has one owner and any number of members (`HearthRecord` household, schema 1; a Hearth saved before it
+  loads with none). A player owns at most one Hearth and may be a member of any number.
+- Joining: the owner runs `/awaken hearth invite <player>` (a choice card, open 2 minutes; `/awaken hearth join
+  <owner>` answers it too), or someone who doesn't share a Hearth uses its Anchor and the owner, if online, gets a
+  choice card "<name> asks to share your Hearth" (once per 30 s per asker). Leaving: `/awaken hearth leave [owner]`;
+  the owner takes it back with `/awaken hearth remove <member>`; `/awaken hearth members` lists them.
+- Members, like the owner: use the Anchor (the guide, request deliveries, waking there: the Hearth whose Anchor you used
+  last, `HearthPlayer` schema 2 `respawn_hearth`), rest and heal there, build there with powers, see there with spirit
+  sight (and their household's beds are not hidden), get its Trophy Hall bonus, are served by its townsfolk, get its
+  break warnings, "The Hearth held" and the Hearth Shield of anyone online who holds the perk, and may build its Anchor
+  and Forge upgrades (paying themselves). Only the owner moves the Anchor, invites and removes, and has Oren's cottage;
+  role pads are worked by the owner's Echoes.
+- The town follows the household: townsfolk arrive and leave by the highest rank among its owner and members online,
+  every member online hears who came, and a member's rank-up is celebrated when they are home (`cheers`).
+- When an owner breaks their Anchor, the household is kept (`HearthData` schema 2 `kept`) and shares it again where the
+  Anchor next takes root. An owner moving home this way may always place it again, and it never becomes a sister home.
+- Growing into several Hearths: from Hearth tier III a member's own Anchor founds a sister home: its founder owns it and
+  everyone else of the first Hearth (owner and members) is a member of it (`founded_from`). One sister at tier III,
+  two at IV, three at V. Before that, a member who owns no Hearth is told the rule when placing an Anchor: share until
+  tier III, or leave to found an unrelated one.
+- Public API (`dev.awaken.hearth.Hearth`): `record HearthInfo(UUID owner, String ownerName, BlockPos anchor, int tier,
+  int radius, List<UUID> members, Optional<UUID> foundedFrom)` with `has(UUID)`; `hearthsOf(MinecraftServer, UUID)` and
+  `hearthsOf(ServerPlayer)` (own first, then shared, in join order; works for offline players); `home(ServerPlayer)`;
+  `isMember(ServerPlayer, BlockPos anchor)`; `isMember(MinecraftServer, UUID player, UUID hearthOwner)`;
+  `hearthAt(ServerLevel, BlockPos)`. `hasRoom`, `anchor` and `atHome` read the home Hearth.
+- Above machines answer to their owner, anyone who shares a Hearth with the owner, and anyone using one that stands
+  inside a Hearth they belong to (machines with no owner, ruins and old saves, answer to everyone); binding a Clone
+  Vat never changes its owner, so a household shares one clone.
+- A Hearth member's kill near friends: see "Shared rewards" below (Echo binding is one bind roll per player).
+
+The world's story (one story, shared; friends who join late go at their own pace):
+- One ending per world. The first player to choose at the Seed decides it (`StoryWorld` schema 2: who chose, the
+  play-day, and every player who reached it with the Ascension tier they took part in). Anyone who reaches the Seed
+  after that gets no choice card: they are told the world's ending (its lines, "This world's ending: <name> chose it",
+  the credits) and their own story finishes as before (the Sovereign Reassessment, the Endless, a new thing). Players
+  still choosing at the same Seed when the first one chooses are told at once.
+- The ending's effect applies once: "Become the Signal" raises the world's Ascension tier by one (the world's only
+  milestone; nothing raises it per player), "Break the Signal" calms the gates, "Wake up" restores the colour.
+- Own tier: the Ascension tier a player meets is min(world tier, the tier recorded when they reached the ending), 0
+  before that. A creature is scaled when it appears for the nearest player within 64 blocks (the world's tier when
+  nobody is near) and keeps that tier (`awaken_ascension`); every hit between it and another player is evened out to
+  that player's own tier: its melee ×(1 + 0.15·mine)/(1 + 0.15·its), the player's hits on it ×(1 + 0.3·its)/(1 +
+  0.3·mine). XP is ×(1 + 0.15·own tier). Projectiles were never scaled and aren't evened out.
+- Calm gates: a gate never breaks once the world's gates are calm, unless it was rolled for a player who hasn't reached
+  the world's ending: theirs still break (and look it). A gate with no owner follows the world.
+- Old saves: a schema 1 world records each player who chose an ending as having reached it at the world's tier when
+  they log in, so a single-player world plays exactly as before.
+- The Rival's beats are one player's scenes: only that player sees Vael (`VaelEntity` keeps its viewer).
+- Admin: `/awaken admin story ending` tells the ending once the world has one; `/awaken admin story ending reset` gives
+  the world its story back (tests and tours).
+
+Gates in a party:
+- Sealing: when an arena or the Lord's room seals behind someone, party members of the same run on the same floor
+  within 48 blocks step through with them; a party member who reaches the bars of a sealed room their party is fighting
+  in is let through.
+- Size: n = players of the gate on that floor (1 to 4). Room groups get +35% monsters per extra player (rounded) and +1
+  elite per two extra players; the Lord +50% health per extra player (its hoard is already one per player). Scripted
+  gates (the story's) never scale.
+- "Solo" (the `gates_solo_no_echo` counter) means nobody else was inside the gate at any point of your run
+  (`RunState` schema 2 `company`), not that the gate's all-time party set has one name.
+- The Director rolls per owner: the 1 to 4 standing gates are counted per player (a gate with no owner on record counts
+  for whoever is near, as before); a gate rolled for someone never forms within 256 blocks of a Hearth they don't own
+  or share, and a gate whose break comes due within 256 blocks of a Hearth its owner doesn't share (one placed after
+  the gate formed) folds away instead of breaking. A veteran's A-rank gates and breaks never land on a newcomer's home.
+- Cells: a released gate cell is erased and reused while the server runs (`RegionRecycler`); the registry (schema 2)
+  keeps each cell's generation, entities stamp theirs (`awaken_cell_gen`), and one saved with an older generation of
+  its cell leaves when loaded. The stop-time cleanup still deletes whatever was left.
+
+Shared rewards (credit the party in range; separate rolls per player; `core.api.Parties.sharing` is the one rule for
+who: party members online, alive, not spectating, in the same level within 32 blocks of the kill):
+- A gate kill: every party member of that run on the same floor within 32 blocks gets their own kill XP share (from
+  their own floor budget, so a party never earns more per player than alone) and their own elite loot roll into their
+  own Satchel. Credit falls back to whoever last hurt the creature (fire, a fall, an Echo finishing it).
+- Descent kills and overworld (home) kills: party members within 32 blocks get the same XP, each through their own
+  budget. A bindable kill leaves each party member within 32 blocks their own lingering Echo (their own bind roll).
+
+The Veil, the Lucidium and the rest:
+- A projected Body takes no damage from players: never from its own spirit or a party member, and from anyone else only
+  while the world's `pvp` game rule is on. A Body felled by a player who may not hurt it never takes its owner along.
+- Only its owner possesses a bonded mount (as with tamed pets; `MobHooks.bondedTo`).
+- Overworld creatures' content level follows the group: the lowest level among awakened players within 48 blocks of
+  the spawn decides (then the nearest player within 128, as before).
+- The cast-fail sound plays to the caster only.
+- Rate limits: Journal actions 4 a second, reality checks one per 10 ticks, the playtest "unfair death" flag one per
+  2 s; background dream builds at most 3 per player per 1000 ticks, whatever asks for them.
+- Lucidium cells are reused: when a dream ends its cell is erased (the chunks it generated, once out of memory) and
+  handed to the next dream; anything but a player loaded from disk in the Lucidium stays only if it belongs to the
+  dream running in its cell. A plan that is never dreamed gives its cell back the same way: thrown away at morning,
+  replaced when its player changes their intention (a build still compiling gives it back when it completes), or taken
+  by someone who then couldn't enter it. A sleeper about to dream a plan the planner lets go keeps it, and their night
+  gives it back if they never dream it. A cell is handed out again only once every chunk it generated is erased,
+  including chunks that were still generating when it was let go.
+- Statics cleared on server stop: Echo duty bookkeeping, breaks near Hearths, Bodies' owed deaths, Hearth offers and
+  invitations, throttles, queued region erasures.
 

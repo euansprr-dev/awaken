@@ -141,9 +141,12 @@ public final class Progression {
         return grantXp(player, fraction * Curve.xpToNext(profile(player).level) / xpScale(player), source);
     }
 
-    /** Global XP scale: the config multiplier and the story's Ascension tier (+15% per tier, up to 10 tiers). */
+    /**
+     * Global XP scale: the config multiplier and the Ascension tier this player meets (+15% per tier, up to 10 tiers;
+     * the world's tier, never above their own: SPEC "Together").
+     */
     static double xpScale(ServerPlayer player) {
-        int tier = Math.clamp(dev.awaken.core.api.StoryHooks.ascension(player.level().getServer()), 0, 10);
+        int tier = dev.awaken.core.api.StoryHooks.ascensionOf(player);
         return AwakenConfig.xpMultiplier() * (1 + 0.15 * tier);
     }
 

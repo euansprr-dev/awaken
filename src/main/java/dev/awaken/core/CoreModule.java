@@ -52,6 +52,8 @@ public final class CoreModule {
         Playtest.init();
         NeoForge.EVENT_BUS.addListener(Later::tick);
         NeoForge.EVENT_BUS.addListener(Later::stopping);
-        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> { DirectorLog.clear(); Playtest.clear(); });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> { DirectorLog.clear(); Playtest.clear(); Throttle.clear(); RegionRecycler.clear(); });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) -> RegionRecycler.tick(e.getServer()));
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> Throttle.forget(e.getEntity().getUUID()));
     }
 }

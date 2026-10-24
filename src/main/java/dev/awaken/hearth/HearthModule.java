@@ -67,13 +67,46 @@ public final class HearthModule {
             }
 
             @Override
-            public Optional<BlockPos> hearthOf(ServerLevel level, UUID owner) {
-                return HearthData.get(level.getServer()).of(owner).map(h -> h.pos);
+            public Optional<BlockPos> hearthOf(ServerLevel level, UUID player) {
+                return HearthData.get(level.getServer()).home(player).map(h -> h.pos);
             }
 
             @Override
             public boolean inside(ServerLevel level, BlockPos pos) {
                 return HearthData.get(level.getServer()).containing(pos, level.dimension().identifier().toString()).isPresent();
+            }
+
+            @Override
+            public boolean belongs(ServerLevel level, UUID player, BlockPos anchor) {
+                return HearthData.get(level.getServer()).at(anchor, HearthService.OVERWORLD).map(h -> h.belongs(player)).orElse(false);
+            }
+
+            @Override
+            public java.util.List<BlockPos> hearthsOf(ServerLevel level, UUID player) {
+                java.util.List<BlockPos> out = new java.util.ArrayList<>(2);
+                for (HearthRecord h : HearthData.get(level.getServer()).hearthsOf(player)) out.add(h.pos);
+                return out;
+            }
+
+            @Override
+            public java.util.Set<UUID> household(ServerLevel level, UUID player) {
+                java.util.Set<UUID> out = new java.util.LinkedHashSet<>();
+                for (HearthRecord h : HearthData.get(level.getServer()).hearthsOf(player)) out.addAll(h.everyone());
+                out.remove(player);
+                return out;
+            }
+
+            @Override
+            public java.util.List<BlockPos> within(ServerLevel level, BlockPos pos, int radius) {
+                java.util.List<BlockPos> out = new java.util.ArrayList<>(1);
+                String dim = level.dimension().identifier().toString();
+                long r2 = (long) radius * radius;
+                for (HearthRecord h : HearthData.get(level.getServer()).all()) {
+                    if (!h.dimension.equals(dim)) continue;
+                    long dx = h.pos.getX() - pos.getX(), dz = h.pos.getZ() - pos.getZ();
+                    if (dx * dx + dz * dz <= r2) out.add(h.pos);
+                }
+                return out;
             }
         });
         Regimen.penaltyHandler = Trials::penalty;
@@ -83,12 +116,13 @@ public final class HearthModule {
             Auras.refresh(sp);
             HearthViews.refresh(sp);
         });
-        DaysEnd.addWaiting(sp -> HearthService.hearthOf(sp)
-                .filter(h -> h.pendingCelebration >= 0)
+        DaysEnd.addWaiting(sp -> HearthService.homeOf(sp)
+                .filter(h -> h.owner.equals(sp.getUUID()) ? h.pendingCelebration >= 0 : h.memberCelebrations.containsKey(sp.getUUID()))
                 .map(h -> "The town is waiting to celebrate you")
                 .orElse(null));
         HearthCommands.register();
         HearthTests.register();
+        TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();
     }
 
@@ -130,5 +164,7 @@ public final class HearthModule {
         if (trialMob) return;
         Trophies.onDeath(e, killer, level);
         Echoes.onKill(dead, killer, level);
+        // the party in range each get their own chance to bind it (SPEC "Together": separate rolls per player)
+        for (ServerPlayer mate : dev.awaken.core.api.Parties.sharing(killer, dead)) Echoes.onKill(dead, mate, level);
     }
 }

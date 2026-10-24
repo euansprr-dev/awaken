@@ -27,6 +27,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -72,24 +73,43 @@ public final class Town {
     // ---- arrivals ---------------------------------------------------------------------------------------------------
 
     public static void onHearthCreated(ServerPlayer owner, ServerLevel level, HearthRecord h) {
-        arrivals(owner, level, h, true);
+        arrivals(level, h, true);
     }
 
-    /** Rank-up: new people arrive, the town celebrates (now if you're home, otherwise when you get back). */
-    public static void onRankUp(ServerPlayer owner, Rank rank) {
-        Optional<HearthRecord> ho = HearthService.hearthOf(owner);
-        if (ho.isEmpty()) return;
-        HearthRecord h = ho.get();
-        ServerLevel level = HearthService.levelOf(owner.level().getServer(), h);
-        h.pendingCelebration = rank.ordinal();
-        HearthService.dirty(owner.level().getServer());
-        arrivals(owner, level, h, false);
-        if (owner.level() == level && h.contains(owner.blockPosition())) celebrate(owner, level, h);
+    /**
+     * Rank-up: new people arrive, the town celebrates (now if you're home, otherwise when you get back). A member's
+     * rank-up counts at every Hearth they share (SPEC "Together").
+     */
+    public static void onRankUp(ServerPlayer sp, Rank rank) {
+        for (HearthRecord h : HearthData.get(sp.level().getServer()).hearthsOf(sp.getUUID())) {
+            ServerLevel level = HearthService.levelOf(sp.level().getServer(), h);
+            if (h.owner.equals(sp.getUUID())) h.pendingCelebration = rank.ordinal();
+            else h.memberCelebrations.put(sp.getUUID(), rank.ordinal());
+            HearthService.dirty(sp.level().getServer());
+            arrivals(level, h, false);
+            if (sp.level() == level && h.contains(sp.blockPosition())) celebrateWaiting(sp, level, h);
+        }
     }
 
-    /** Lets everyone in who belongs at the owner's rank, and sees off anyone whose time is over (Vael at S). */
-    public static void arrivals(ServerPlayer owner, ServerLevel level, HearthRecord h, boolean newHome) {
-        Rank rank = Progression.rank(owner);
+    /** The town follows the household: the highest rank among its owner and members online (null = nobody is). */
+    static Rank householdRank(MinecraftServer server, HearthRecord h) {
+        Rank best = null;
+        for (ServerPlayer p : dev.awaken.hearth.Household.online(server, h)) {
+            Rank r = Progression.rank(p);
+            if (best == null || r.ordinal() > best.ordinal()) best = r;
+        }
+        return best;
+    }
+
+    /**
+     * Lets everyone in who belongs at the household's rank, and sees off anyone whose time is over (Vael at S). Every
+     * online member of the household hears who came.
+     */
+    public static void arrivals(ServerLevel level, HearthRecord h, boolean newHome) {
+        MinecraftServer server = level.getServer();
+        Rank rank = householdRank(server, h);
+        if (rank == null) return;
+        List<ServerPlayer> home = dev.awaken.hearth.Household.online(server, h);
         List<String> came = new ArrayList<>();
         for (var e : Townsfolk.inArrivalOrder()) {
             String id = e.getKey();
@@ -98,30 +118,34 @@ public final class Town {
                 h.arrived.add(id);
                 came.add(id);
             } else if (!d.presentAt(rank) && h.arrived.contains(id) && rank.ordinal() >= d.arrivesAt().ordinal()) {
-                depart(owner, level, h, id, d);
+                depart(home, level, h, id, d);
             }
         }
         if (came.isEmpty()) return;
-        HearthService.dirty(level.getServer());
+        HearthService.dirty(server);
         if (level.isPositionEntityTicking(h.pos)) for (String id : came) spawn(level, h, id);
         if (h.spire == null) raiseSpire(level, h);
+        SignalWindow w;
         if (came.size() == 1 && !newHome) {
             String id = came.get(0);
             Townsfolk.Def d = Townsfolk.get(id).orElseThrow();
-            Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName(id) + " arrived"))
+            w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName(id) + " arrived"))
                     .body(Component.literal("“" + d.line(rank) + "”"))
-                    .footer(Component.literal("They live at your Hearth now")).priority(4).ttl(20 * 10).build());
+                    .footer(Component.literal("They live at your Hearth now")).priority(4).ttl(20 * 10).build();
         } else {
             List<String> names = new ArrayList<>();
             for (String id : came) names.add(Townsfolk.displayName(id));
             String first = came.get(0);
-            Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(newHome ? "Someone moved in" : "New neighbours"))
-                    .body(Component.literal(String.join(", ", names) + (came.size() > 1 ? " came to live at your Hearth." : " came to live at your Hearth.")))
+            w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(newHome ? "Someone moved in" : "New neighbours"))
+                    .body(Component.literal(String.join(", ", names) + " came to live at your Hearth."))
                     .row(Component.literal(Townsfolk.shortName(first)), Component.literal("“" + Townsfolk.get(first).map(d -> d.line(rank)).orElse("") + "”"))
-                    .priority(4).ttl(20 * 10).build());
+                    .priority(4).ttl(20 * 10).build();
         }
-        if (Progression.profile(owner).awakened()) Progression.markNewThing(owner, "townsfolk");
-        HearthViews.refresh(owner);
+        for (ServerPlayer p : home) {
+            Signal.send(p, w);
+            if (Progression.profile(p).awakened()) Progression.markNewThing(p, "townsfolk");
+            HearthViews.refresh(p);
+        }
     }
 
     /** Admin: someone arrives now, whatever the rank. */
@@ -137,15 +161,17 @@ public final class Town {
         HearthViews.refresh(owner);
     }
 
-    private static void depart(ServerPlayer owner, ServerLevel level, HearthRecord h, String id, Townsfolk.Def d) {
+    private static void depart(List<ServerPlayer> home, ServerLevel level, HearthRecord h, String id, Townsfolk.Def d) {
         h.arrived.remove(id);
         UUID u = h.npcs.remove(id);
         if (u != null && level.getEntity(u) instanceof TownNpc npc) npc.discard();
         HearthService.dirty(level.getServer());
         String note = "rival".equalsIgnoreCase(d.role()) ? "Gone to the Court. Don't follow. (Follow.)" : "Moved on.";
-        Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " left town"))
-                .body(Component.literal("A note on the Spire: “" + note + "”")).ttl(20 * 10).build());
-        HearthViews.refresh(owner);
+        for (ServerPlayer p : home) {
+            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " left town"))
+                    .body(Component.literal("A note on the Spire: “" + note + "”")).ttl(20 * 10).build());
+            HearthViews.refresh(p);
+        }
     }
 
     /** Puts an arrived NPC into the world near the Anchor. */
@@ -197,12 +223,17 @@ public final class Town {
                 }
             }
         }
-        if (owner == null) return;
         if (now % 200 < 20) {
-            arrivals(owner, level, h, false);
-            refreshBoards(owner, level, h);
+            arrivals(level, h, false);
+            if (owner != null) refreshBoards(owner, level, h);
         }
-        if (h.pendingCelebration >= 0 && owner.level() == level && h.contains(owner.blockPosition())) celebrate(owner, level, h);
+        if (owner != null && h.pendingCelebration >= 0 && owner.level() == level && h.contains(owner.blockPosition())) celebrateWaiting(owner, level, h);
+        if (!h.memberCelebrations.isEmpty()) {
+            for (UUID m : List.copyOf(h.memberCelebrations.keySet())) {
+                ServerPlayer mp = level.getServer().getPlayerList().getPlayer(m);
+                if (mp != null && mp.level() == level && h.contains(mp.blockPosition())) celebrateWaiting(mp, level, h);
+            }
+        }
     }
 
     private static boolean areaLoaded(ServerLevel level, BlockPos c, int r) {
@@ -218,21 +249,34 @@ public final class Town {
 
     // ---- recognition: the rank-up celebration -------------------------------------------------------------------------
 
-    static void celebrate(ServerPlayer owner, ServerLevel level, HearthRecord h) {
-        Rank rank = Rank.of(h.pendingCelebration);
-        h.pendingCelebration = -1;
+    /** The rank-up waiting for this player here (owner or member), if any, is celebrated now. */
+    static void celebrateWaiting(ServerPlayer who, ServerLevel level, HearthRecord h) {
+        int rank;
+        if (who.getUUID().equals(h.owner)) {
+            rank = h.pendingCelebration;
+            h.pendingCelebration = -1;
+        } else {
+            Integer r = h.memberCelebrations.remove(who.getUUID());
+            rank = r == null ? -1 : r;
+        }
+        if (rank < 0) return;
         HearthService.dirty(level.getServer());
+        celebrate(who, level, h, Rank.of(rank));
+    }
+
+    static void celebrate(ServerPlayer who, ServerLevel level, HearthRecord h, Rank rank) {
         int colour = rank.colour;
         for (int i = 0; i < 7; i++) {
             int n = i;
             Later.run(level.getServer(), 10 + i * 12, () -> firework(level, h.pos, colour, n));
         }
         List<TownNpc> npcs = present(level, h);
-        Vec3 at = owner.position();
+        Vec3 at = who.position();
         for (TownNpc npc : npcs) npc.gather(at, 20 * 15);
         level.playSound(null, h.pos, SoundEvents.PLAYER_LEVELUP, SoundSource.AMBIENT, 1f, 0.7f);
+        boolean owner = who.getUUID().equals(h.owner);
         var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(npcs.isEmpty() ? "The Hearth burns brighter" : "The town gathers"))
-                .body(Component.literal(owner.getGameProfile().name() + ", " + rank.label + "-rank. Your name goes on the Spire."));
+                .body(Component.literal(who.getGameProfile().name() + ", " + rank.label + "-rank." + (owner ? " Your name goes on the Spire." : "")));
         int rows = 0;
         for (TownNpc npc : npcs) {
             Optional<Townsfolk.Def> d = Townsfolk.get(npc.kind());
@@ -240,8 +284,8 @@ public final class Town {
             w.row(Component.literal(d.get().name()), Component.literal("“" + d.get().line(rank) + "”"));
             rows++;
         }
-        Later.run(level.getServer(), 30, () -> Signal.send(owner, w.priority(6).ttl(20 * 14).build()));
-        refreshBoards(owner, level, h);
+        Later.run(level.getServer(), 30, () -> Signal.send(who, w.priority(6).ttl(20 * 14).build()));
+        if (owner) refreshBoards(who, level, h);
     }
 
     private static void firework(ServerLevel level, BlockPos centre, int colour, int n) {
@@ -266,7 +310,10 @@ public final class Town {
         Optional<Townsfolk.Def> od = Townsfolk.get(id);
         if (od.isEmpty()) return;
         Townsfolk.Def d = od.get();
-        boolean mine = sp.getUUID().equals(npc.hearthOwner());
+        // the townsfolk serve everyone who shares their Hearth (SPEC "Together")
+        UUID home = npc.hearthOwner();
+        boolean mine = home != null && (sp.getUUID().equals(home)
+                || HearthData.get(sp.level().getServer()).of(home).map(r -> r.belongs(sp.getUUID())).orElse(false));
         Rank rank = Progression.rank(sp);
         String line = d.line(rank);
         if (!d.chatter().isEmpty() && sp.getRandom().nextInt(3) == 0) line = d.chatter().get(sp.getRandom().nextInt(d.chatter().size()));
@@ -389,7 +436,7 @@ public final class Town {
 
     /** The nearest townsperson has something to say about a newly hung trophy. */
     public static void commentTrophy(ServerPlayer sp, ServerLevel level, BlockPos pos, TrophyData d) {
-        Optional<HearthRecord> h = HearthService.hearthOf(sp).filter(r -> r.contains(pos));
+        Optional<HearthRecord> h = HearthService.sharedAt(sp, pos);
         if (h.isEmpty()) return;
         TownNpc nearest = null;
         double best = 32 * 32;

@@ -53,4 +53,15 @@ public final class Offers {
     static void forget(UUID player) {
         PENDING.remove(player);
     }
+
+    /** Server stop: no offer outlives its world. */
+    static void forgetAll() {
+        PENDING.clear();
+    }
+
+    /** Whether this player has an open offer under this key (tests). */
+    static boolean open(UUID player, String key) {
+        Map<String, Pending> mine = PENDING.get(player);
+        return mine != null && mine.containsKey(key);
+    }
 }

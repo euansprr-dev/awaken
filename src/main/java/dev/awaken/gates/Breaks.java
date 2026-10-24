@@ -50,18 +50,38 @@ public final class Breaks {
 
     static void onNewPlayDay(MinecraftServer server, long day) {
         GateRegistry reg = GateRegistry.get(server);
-        for (GateRecord g : List.copyOf(reg.all())) {
-            if (g.neverBreaks(server) || !(g.state == GateState.READY || g.state == GateState.OPEN || g.state == GateState.ACTIVE)) continue;
-            if (day >= g.breaksOnPlayDay) {
-                if (g.state == GateState.ACTIVE && someoneOnlineInside(server, g)) {
-                    g.trace.add("break deferred on play-day " + day + ": someone is inside");
-                    continue;
-                }
-                breakGate(server, g);
-            } else if (day == g.breaksOnPlayDay - 1 && !g.warned) {
-                warn(server, g);
+        for (GateRecord g : List.copyOf(reg.all())) newPlayDay(server, g, day);
+    }
+
+    /** One gate on a new play-day: warned the day before, broken (or folded, or deferred) on the day. */
+    static void newPlayDay(MinecraftServer server, GateRecord g, long day) {
+        if (g.neverBreaks(server) || !(g.state == GateState.READY || g.state == GateState.OPEN || g.state == GateState.ACTIVE)) return;
+        if (day >= g.breaksOnPlayDay) {
+            if (g.state == GateState.ACTIVE && someoneOnlineInside(server, g)) {
+                g.trace.add("break deferred on play-day " + day + ": someone is inside");
+                return;
             }
+            if (foreignHearthNear(server, g)) {
+                // a gate rolled for someone else that stands near a Hearth its owner doesn't share folds away
+                // instead of loosing its Lord on that home (a Hearth placed after the gate formed)
+                g.trace.add("folded on play-day " + day + ": a Hearth its owner doesn't share is within " + Director.FOREIGN_HEARTH_RADIUS);
+                GateService.release(server, g);
+                return;
+            }
+            breakGate(server, g);
+        } else if (day == g.breaksOnPlayDay - 1 && !g.warned) {
+            warn(server, g);
         }
+    }
+
+    /** Whether a Hearth the gate's owner doesn't share stands within a break's reach (gates with no owner: never). */
+    static boolean foreignHearthNear(MinecraftServer server, GateRecord g) {
+        if (g.owner.isEmpty()) return false;
+        ServerLevel over = server.overworld();
+        for (BlockPos anchor : HearthHooks.within(over, g.pos, Director.FOREIGN_HEARTH_RADIUS)) {
+            if (!HearthHooks.installed().belongs(over, g.owner.get(), anchor)) return true;
+        }
+        return false;
     }
 
     private static boolean someoneOnlineInside(MinecraftServer server, GateRecord g) {
@@ -78,7 +98,7 @@ public final class Breaks {
         GateRegistry.get(server).setDirty();
         if (!nearHearth) return;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-            boolean home = HearthHooks.hearthOf(p).map(h -> h.distSqr(g.pos) <= 256 * 256).orElse(false);
+            boolean home = HearthHooks.hearthsOf(p).stream().anyMatch(h -> h.distSqr(g.pos) <= 256 * 256);
             boolean close = p.level() == over && p.blockPosition().distSqr(g.pos) <= 512 * 512;
             if (!home && !close) continue;
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("A gate near your Hearth will break tomorrow"))

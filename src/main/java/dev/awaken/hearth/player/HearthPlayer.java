@@ -19,7 +19,8 @@ import java.util.UUID;
  * {@code HearthViews.refresh(player)} so the owner's client sees it.
  */
 public final class HearthPlayer {
-    public static final int SCHEMA = 1;
+    /** 2: {@code respawn_hearth}, which shared Hearth you wake at (SPEC "Together"). */
+    public static final int SCHEMA = 2;
 
     /** A rumour Mira told: a Codex entry pointing at a gate or ruin. */
     public record Rumour(String id, String title, String body, long day) {
@@ -38,6 +39,8 @@ public final class HearthPlayer {
     /** Bosses that already gave their guaranteed first trophy. */
     public final Set<String> trophyBosses = new LinkedHashSet<>();
     public boolean respawnAtHearth;
+    /** The owner of the Hearth you wake at (the one whose Anchor you used last); null = your home. */
+    public UUID respawnHearth;
     /** Play-day of the last failed Reassessment (one attempt per play-day). */
     public long trialFailDay = -1;
     /** A Hardline Penalty Zone is owed (started the next time the player is home and free). */
@@ -71,7 +74,7 @@ public final class HearthPlayer {
 
     private record Saved(int schema, List<EchoRecord> echoes, boolean fieldOut, List<Rumour> rumours, List<String> trophyBosses,
                          boolean respawnAtHearth, long trialFailDay, boolean penaltyPending, Map<String, Integer> bests,
-                         List<String> tips, long rumourDay) {}
+                         List<String> tips, long rumourDay, Optional<UUID> respawnHearth) {}
 
     public static final MapCodec<HearthPlayer> MAP_CODEC = RecordCodecBuilder.<Saved>mapCodec(i -> i.group(
             Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(Saved::schema),
@@ -84,7 +87,8 @@ public final class HearthPlayer {
             Codec.BOOL.optionalFieldOf("penalty_pending", false).forGetter(Saved::penaltyPending),
             Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("bests", Map.of()).forGetter(Saved::bests),
             Codec.STRING.listOf().optionalFieldOf("tips", List.of()).forGetter(Saved::tips),
-            Codec.LONG.optionalFieldOf("rumour_day", -1L).forGetter(Saved::rumourDay)
+            Codec.LONG.optionalFieldOf("rumour_day", -1L).forGetter(Saved::rumourDay),
+            net.minecraft.core.UUIDUtil.CODEC.optionalFieldOf("respawn_hearth").forGetter(Saved::respawnHearth)
     ).apply(i, Saved::new)).xmap(HearthPlayer::fromSaved, HearthPlayer::toSaved);
 
     private static HearthPlayer fromSaved(Saved s) {
@@ -99,11 +103,12 @@ public final class HearthPlayer {
         h.bests.putAll(s.bests);
         h.tips.addAll(s.tips);
         h.rumourDay = s.rumourDay;
+        h.respawnHearth = s.respawnHearth.orElse(null);
         return h;
     }
 
     private Saved toSaved() {
         return new Saved(SCHEMA, List.copyOf(echoes), fieldOut, List.copyOf(rumours), List.copyOf(trophyBosses),
-                respawnAtHearth, trialFailDay, penaltyPending, Map.copyOf(bests), List.copyOf(tips), rumourDay);
+                respawnAtHearth, trialFailDay, penaltyPending, Map.copyOf(bests), List.copyOf(tips), rumourDay, Optional.ofNullable(respawnHearth));
     }
 }

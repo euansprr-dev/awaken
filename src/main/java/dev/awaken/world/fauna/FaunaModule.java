@@ -103,6 +103,7 @@ public final class FaunaModule {
         dev.awaken.mobs.entity.WildTalentTests.register();
         Fauna3Tests.register();
         MountTests.register();
+        TogetherFaunaTests.register();
     }
 
     /** The {@code awaken:fauna_spawning} game rule (on by default). */

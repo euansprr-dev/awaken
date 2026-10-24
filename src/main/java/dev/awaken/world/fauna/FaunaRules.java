@@ -165,14 +165,31 @@ public final class FaunaRules {
                 && !la.getBlockState(pos.above()).isRedstoneConductor(la, pos.above());
     }
 
+    /** Players within this many blocks of a spawn are its group (SPEC "Together"). */
+    static final double GROUP_RADIUS = 48;
+
     /**
-     * The content level a creature spawning here gets: a step below the nearest player's level (beasts at it), never
-     * above their rank's gates. Overworld creatures stay gentler than the gates the player can enter.
+     * The content level a creature spawning here gets: a step below the player's level (beasts at it), never above
+     * their rank's gates. Overworld creatures stay gentler than the gates the player can enter. With several players
+     * near (the group: within {@link #GROUP_RADIUS}), the lowest of their levels decides, so a friend who joined late is
+     * never out-levelled beside a veteran; with nobody that close, the nearest player within 128 blocks.
      */
     public static int contentLevel(ServerLevel level, BlockPos pos, FaunaRole role) {
-        Player p = level.getNearestPlayer(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 128.0, false);
-        if (p == null) return 0;
-        Profile prof = Progression.profile(p);
+        if (role == FaunaRole.AMBIENT) return 0;
+        double x = pos.getX() + 0.5, y = pos.getY(), z = pos.getZ() + 0.5;
+        int best = Integer.MAX_VALUE;
+        for (Player p : level.players()) {
+            if (p.isSpectator() || p.distanceToSqr(x, y, z) > GROUP_RADIUS * GROUP_RADIUS) continue;
+            Profile prof = Progression.profile(p);
+            if (!prof.awakened()) continue;
+            best = Math.min(best, levelFor(prof, role));
+        }
+        if (best != Integer.MAX_VALUE) return best;
+        Player p = level.getNearestPlayer(x, y, z, 128.0, false);
+        return p == null ? 0 : levelFor(Progression.profile(p), role);
+    }
+
+    private static int levelFor(Profile prof, FaunaRole role) {
         int cap = prof.rank().contentLevel;
         return switch (role) {
             case AMBIENT -> 0;
