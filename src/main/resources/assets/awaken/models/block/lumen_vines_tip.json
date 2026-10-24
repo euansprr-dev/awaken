@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross_emissive",
+  "textures": {
+    "cross": "awaken:block/lumen_vines_tip",
+    "cross_emissive": "awaken:block/lumen_vines_tip_glow"
+  }
+}

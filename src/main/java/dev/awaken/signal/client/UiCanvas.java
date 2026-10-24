@@ -36,6 +36,12 @@ public interface UiCanvas {
     /** A GUI-atlas sprite ({@code textures/gui/sprites/...}), tinted. */
     void sprite(Identifier sprite, int x, int y, int w, int h, int argb);
 
+    /**
+     * Part of a whole texture (an Identifier'd DynamicTexture, or a render target registered with the TextureManager),
+     * tinted: one quad from (x, y) to (x + w, y + h) showing UVs (u0, v0)–(u1, v1) in 0..1.
+     */
+    void texture(Identifier texture, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb);
+
     /** A tooltip for the next frame at the mouse. */
     void tooltip(Font font, List<? extends FormattedCharSequence> lines, int x, int y);
 

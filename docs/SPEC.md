@@ -292,6 +292,22 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise).
+- `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
+  glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
+  installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
+  the player reads (the first-power choice): with the projected look the world dims behind it (`UiHooks.focus`).
+- `dev.awaken.signal.client.UiCanvas.texture(Identifier, x, y, w, h, u0, v0, u1, v1, argb)` (client) — part of a whole
+  texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
+- `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
+  (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
+- `dev.awaken.core.client.skin` (client) — `SkinnedMobRenderer<T extends Mob, S extends SkinRenderState>`, `SkinModel`,
+  `SkinRenderState` (`wear(PlayerSkin)`, `wear(texture, slim)`, overlay toggles): the renderer for every non-player body
+  with a player-format skin (townsfolk, training ghost, gate shades, Shadow Self, HUMAN and MIMIC mobs). The player mesh
+  is picked per state (wide or slim, as the skin says); subclasses add their own tint, see-through, scale and layers.
+  **Rule: a non-player entity never uses `AvatarRenderState` in 26.3.** `EntityRenderDispatcher.getRenderer(state)`
+  sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
+  extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
+  townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -667,7 +683,17 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   Scale, off without View Bobbing, snapped to framebuffer pixels. Vanilla layers never move.
 - `UiHooks.focus()` (0..1) eases with the open panel for Lens. Lens may also tell panels apart by depth: the glass writes
   its real distance (≈0.6 m) into the main depth.
-- Client settings (`awaken-holo-client.toml`): `statusStyle`, `hudMotion`, `reducedMotion`.
+- System cards (`HudLook`, drawn in the GUI pass with the panel's own shaders on GUI pipelines): toasts, the choice and
+  gate cards, story lines, the Now line and the first-power choice are projected glass (hairline edge, brackets, static
+  scan lines, one even tint, a faint halo) with text as light. Positions, sizes, timing and every System v2 rule are
+  unchanged (the look never moves or resizes a card). A card scans in from the top behind a bright line over the time
+  it used to fade in (toasts: vanilla's 600 ms show, done by 270 ms, without the slide), and glitches out in three bands
+  that slip ≤ 3.5 GUI px and fade (toasts: in 300 ms of vanilla's hide); reduced motion makes both a fade. The Now line
+  is a still card (no scan, no glitch). Only reading screens raise `UiHooks.focus`; toasts, cards and the Now line never
+  dim the world. `statusStyle = FLAT` (or GUI shaders that fail) keeps everything flat. With a first power pending, K
+  opens the first-power choice in either style.
+- Client settings (`awaken-holo-client.toml`): `statusStyle` (the projected look for the K menu, the System's cards and
+  the first-power choice), `hudMotion`, `reducedMotion`.
 
 Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
 docs/modules/onboarding.md "The Ritual of the Bell"):
@@ -794,8 +820,8 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   loads the pack and records the flag; a world made before the flag existed lacks it, so the game skips the pack there
   and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
   it off). Test: `terrain_lands_pack_new_worlds_only`.
-- Until the vertical slice lands, no Awakened biome is placed (the stage-0 placeholder Elderwood exists in the
-  registry and the table but has no injector), so new worlds never show an unfinished biome.
+- Placed today (2026-10-24, the vertical slice): Elderwood (replaces forest, birch, old-growth birch and flower forest)
+  and Lumen Forest (replaces dark forest), both where the awakening field ≥ 0. Every other row of the table is planned.
 - Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds

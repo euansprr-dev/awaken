@@ -1,0 +1,125 @@
+# Awakened Lands slice (docs/modules/lands.md): Elderwood and Lumen Forest at noon, golden hour and night, from the
+# ground and from 60 blocks up; an Elder Colossus and a Lumen Spire from 80 blocks away and from their foot; frame
+# times in the densest spots. Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/lands-slice.txt 1800
+world lands777 creative 777
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+# ---- Elderwood (round the nearest Elder Colossus, which stands where the biome has room) ----
+cmd awaken terrain herovisit elder_colossus 45 0
+wait 400
+cmd awaken terrain at
+look 180 -10
+wait 60
+shot lands_elder_noon_ground
+perf lands_elderwood 8
+look 110 -6
+wait 40
+shot lands_elder_noon_ground_b
+cmd time set 12400
+wait 60
+look 180 -10
+wait 20
+shot lands_elder_golden_ground
+lens cinematic
+wait 40
+shot lands_elder_golden_ground_cinematic
+lens swift
+cmd time set 18000
+wait 60
+shot lands_elder_night_ground
+cmd gamemode spectator
+cmd awaken terrain herovisit elder_colossus 110 60
+wait 300
+cmd time set 6000
+look 200 22
+wait 60
+shot lands_elder_noon_above
+cmd time set 12400
+wait 40
+shot lands_elder_golden_above
+cmd time set 18000
+wait 40
+shot lands_elder_night_above
+cmd gamemode creative
+# ---- Lumen Forest ----
+cmd time set 6000
+cmd awaken terrain visit awaken:lumen_forest
+wait 400
+cmd awaken terrain at
+look 30 -10
+wait 60
+shot lands_lumen_noon_ground
+cmd time set 12400
+wait 40
+shot lands_lumen_golden_ground
+cmd time set 18000
+wait 60
+shot lands_lumen_night_ground
+perf lands_lumen 8
+lens cinematic
+wait 40
+shot lands_lumen_night_ground_cinematic
+lens swift
+look 210 -20
+wait 40
+shot lands_lumen_night_ground_b
+cmd gamemode spectator
+cmd tp @s ~ ~60 ~
+wait 300
+cmd time set 6000
+look 30 25
+wait 60
+shot lands_lumen_noon_above
+cmd time set 12400
+wait 40
+shot lands_lumen_golden_above
+cmd time set 18000
+wait 40
+shot lands_lumen_night_above
+# ---- the hero trees ----
+cmd time set 6000
+cmd locate structure awaken:elder_colossus
+cmd locate structure awaken:lumen_spire
+cmd gamemode spectator
+cmd awaken terrain herovisit elder_colossus 130 28
+wait 400
+shot lands_colossus_far
+cmd awaken terrain herovisit elder_colossus 90 40
+wait 200
+shot lands_colossus_far_high
+cmd time set 12400
+wait 40
+shot lands_colossus_far_high_golden
+cmd time set 6000
+cmd awaken terrain herovisit elder_colossus 16 1
+wait 200
+shot lands_colossus_foot
+cmd awaken terrain herovisit lumen_spire 70 22
+wait 400
+shot lands_spire_far
+cmd time set 18000
+wait 60
+shot lands_spire_far_night
+lens cinematic
+wait 40
+shot lands_spire_far_night_cinematic
+lens swift
+cmd awaken terrain herovisit lumen_spire 12 1
+wait 200
+shot lands_spire_foot_night
+cmd time set 6000
+wait 40
+shot lands_spire_foot
+quit

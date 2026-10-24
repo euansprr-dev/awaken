@@ -57,7 +57,8 @@ public final class StarterClient {
 
     private static void onOpening(ScreenEvent.Opening e) {
         if (cards.isEmpty() || e.getCurrentScreen() != null) return;
-        if (e.getNewScreen() instanceof dev.awaken.progression.client.StatusScreen) e.setNewScreen(new StarterScreen(cards));
+        if (e.getNewScreen() instanceof dev.awaken.progression.client.StatusScreen
+                || e.getNewScreen() instanceof dev.awaken.holo.client.HoloStatusScreen) e.setNewScreen(new StarterScreen(cards));
     }
 
     static void choose(String power) {

@@ -79,17 +79,23 @@ public final class Survey {
                 palette, System.currentTimeMillis() - t0);
     }
 
+    /** A patch smaller than this many dry samples of the 13 x 13 round a hit (24 blocks apart) is passed over. */
+    static final int MIN_PATCH = 45;
+
     /**
-     * The middle of the nearest surface patch of a biome: rings of samples outward from (x, z) every 64 blocks (a cheap
-     * climate check at three heights first, the real surface only for candidates), then twice toward the centroid of
-     * the matching samples around the hit. Null if none within {@code radius}.
+     * The middle of the nearest sizeable surface patch of a biome on dry land: rings of samples outward from (x, z)
+     * every 64 blocks (a cheap climate check at three heights first, the real surface only for candidates); each hit is
+     * measured on a 13 x 13 grid round it and slivers and lake beds are passed over (the biggest is kept if nothing
+     * else turns up); then twice toward the centroid of the matching samples. Null if none within {@code radius}.
      */
     public static Spot findHeart(ChunkGenerator gen, RandomState rs, LevelHeightAccessor level, Predicate<Holder<Biome>> want,
                                  int x, int z, int radius) {
         BiomeResolver resolver = gen.getBiomeSource().createCachingResolver(rs);
         int sea = gen.getSeaLevel();
         int[] probeYs = {sea, sea + 40, sea + 100};
-        Spot hit = null;
+        Spot hit = null, best = null;
+        int bestCount = 0, measured = 0;
+        java.util.List<Spot> passed = new java.util.ArrayList<>();
         search:
         for (int r = 0; r <= radius; r += 64) {
             int n = r == 0 ? 1 : Math.max(8, (int) Math.round(2 * Math.PI * r / 64));
@@ -105,31 +111,53 @@ public final class Survey {
                 }
                 if (!maybe) continue;
                 Spot s = spot(gen, rs, level, resolver, sx, sz);
-                if (want.test(s.biome())) {
-                    hit = s;
+                // dry land: a forest biome also runs under Tectonic's lakes
+                if (!want.test(s.biome()) || s.floor() < sea) continue;
+                boolean near = false;
+                for (Spot q : passed) near |= Math.abs(q.x() - sx) < 240 && Math.abs(q.z() - sz) < 240;
+                if (near) continue;
+                int count = patch(gen, rs, level, resolver, want, sea, sx, sz, null);
+                if (count > bestCount) {
+                    best = s;
+                    bestCount = count;
+                }
+                if (count >= MIN_PATCH || ++measured >= 16) {
+                    hit = count >= MIN_PATCH ? s : best;
                     break search;
                 }
+                passed.add(s);
             }
         }
+        if (hit == null) hit = best;
         if (hit == null) return null;
         for (int pass = 0; pass < 2; pass++) {
-            long sumX = 0, sumZ = 0;
-            int count = 0;
-            for (int dx = -6; dx <= 6; dx++) {
-                for (int dz = -6; dz <= 6; dz++) {
-                    int sx = hit.x() + dx * 24, sz = hit.z() + dz * 24;
-                    if (want.test(spot(gen, rs, level, resolver, sx, sz).biome())) {
-                        sumX += sx;
-                        sumZ += sz;
-                        count++;
-                    }
-                }
-            }
-            Spot centre = spot(gen, rs, level, resolver, (int) (sumX / count), (int) (sumZ / count));
-            if (!want.test(centre.biome())) break; // a ring-shaped patch: its centroid lies outside it
+            long[] sum = new long[2];
+            int count = patch(gen, rs, level, resolver, want, sea, hit.x(), hit.z(), sum);
+            Spot centre = spot(gen, rs, level, resolver, (int) (sum[0] / count), (int) (sum[1] / count));
+            if (!want.test(centre.biome()) || centre.floor() < sea) break; // a ring-shaped patch, or a lake in the middle
             hit = centre;
         }
         return hit;
+    }
+
+    /** Dry samples of the biome on a 13 x 13 grid 24 blocks apart round (x, z); their x and z sums go into {@code sum}. */
+    private static int patch(ChunkGenerator gen, RandomState rs, LevelHeightAccessor level, BiomeResolver resolver, Predicate<Holder<Biome>> want,
+                             int sea, int x, int z, long[] sum) {
+        int count = 0;
+        for (int dx = -6; dx <= 6; dx++) {
+            for (int dz = -6; dz <= 6; dz++) {
+                int sx = x + dx * 24, sz = z + dz * 24;
+                Spot p = spot(gen, rs, level, resolver, sx, sz);
+                if (want.test(p.biome()) && p.floor() >= sea) {
+                    count++;
+                    if (sum != null) {
+                        sum[0] += sx;
+                        sum[1] += sz;
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     /** The highest dry ground within {@code radius} of (x, z), sampled every 16 blocks. */
