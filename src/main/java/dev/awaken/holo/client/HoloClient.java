@@ -266,6 +266,7 @@ public final class HoloClient {
                 HoloConfig.refresh();
             }
             case "peek" -> HoloOthers.peekSelf = a[1].equals("on");
+            case "glow" -> HoloRender.glowOn = a[1].equals("on");
             case "arm" -> Wrist.forcedSkin = switch (a[1]) {
                 case "slim" -> net.minecraft.client.resources.DefaultPlayerSkin.get(new java.util.UUID(0, 6));
                 case "wide" -> net.minecraft.client.resources.DefaultPlayerSkin.get(new java.util.UUID(0, 15));

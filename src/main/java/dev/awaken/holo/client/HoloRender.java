@@ -477,7 +477,7 @@ final class HoloRender {
                 d.keyShadow[i] = shadow;
             }
             if (scale != 1f) d.scaled[i].set(p.pose).translate(x, y, 0).scale(scale, scale, 1);
-            if (((colour >>> 24) * GLOW_ALPHA) >= 26) { // under 0.1 the text shader drops it anyway
+            if (glowOn && ((colour >>> 24) * GLOW_ALPHA) >= 26) { // under 0.1 the text shader drops it anyway
                 for (int g = 0; g < GLOW_TAPS; g++) glowOut.submitSpecial(key, d.glow[i * GLOW_TAPS + g]);
             }
             out.submitSpecial(key, s);
@@ -497,6 +497,8 @@ final class HoloRender {
 
     // the text glow: four taps half a unit off diagonally (≈2–3 framebuffer pixels), faint cyan; headers a little bluer
     static final int GLOW_TAPS = 4;
+    /** Autopilot A/B for frame times ({@code holo glow on|off}). */
+    static boolean glowOn = true;
     private static final float[] GLOW_DX = {-0.5f, 0.5f, -0.5f, 0.5f}, GLOW_DY = {-0.5f, -0.5f, 0.5f, 0.5f};
     private static final float GLOW_ALPHA = 0.20f;
     private static final int TEXT_GLOW = (Math.round(255 * GLOW_ALPHA) << 24) | 0x7FDCFF;
