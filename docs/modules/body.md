@@ -8,7 +8,7 @@ Grounded moves only: anything airborne or long-range stays a power. A player who
 |---|---|---|---|
 | Awakening | Soft landing | land sprinting or crouching (≥ 3 blocks) | a roll: safe fall +3, ×0.6 beyond |
 | Awakening | Tactical sprint | double-tap sprint while running | +25% speed up to 3 s, hands lowered, view pushed wide; recharge 4 s |
-| D | Slide | crouch while sprinting | 14 ticks low and fast (~4 blocks, ~5 out of a tactical sprint), crawl-height box; jump out to keep the speed |
+| D | Slide | crouch while sprinting | 14 ticks low and fast (~4.6 blocks with forward held, ~5.5 out of a tactical sprint), crawl-height box; jump out to keep the speed |
 | C | Mantle | jump at a ledge 1.1–1.6 above the feet | a 6-tick pull up and over |
 
 In a fight: **momentum hits** (a full swing while sprinting or sliding: up to +30% damage and more knockback by speed),
@@ -51,8 +51,9 @@ docs/modules/power-fx.md "Move twists"). No invincibility frames: Dash stays the
   and swings it back; the mantle lifts the eyes to the lip then tips over it, hands reaching up; the slide drops to crawl
   eye height, tilts 7.5° with a faint ground judder and +7% FOV; the slide-cancel kicks the view up; the tactical sprint
   lowers the hands and widens the view (plus vanilla's own speed push). Only the drawn camera moves, never the aim.
-- **Dust** (`awaken:body_dust`, four frames from `tools/art/specs/body.py`): one clod sprite tinted by the ground it came off
-  (map colour softened toward grey): slide spray every tick, a roll's ring, chips off a mantled lip, a kick-off puff, a burst
+- **Dust** (`awaken:body_dust`, four pixel-art frames from `tools/art/specs/body.py`, a clump breaking into specks): tinted
+  by the ground it came off (map colour softened toward grey); the run's own sprint footprints pause during a slide so only
+  this grit shows: slide spray every tick, a roll's ring, chips off a mantled lip, a kick-off puff, a burst
   at a tripped or momentum-hit body. No vanilla particles.
 - **Sounds** (`tools/art/specs/audio_body.py`, synthesised, mono, sfx loudness): `body.roll` (shoulder thump, cloth, grit,
   feet coming round), `body.sprint` (heel, scuff, cloth snap, air), `body.slide` (hip drop, a friction slide falling in pitch,
@@ -71,8 +72,10 @@ copied on death); an old save that already holds a move hears about it once, 3 s
 ## Try it
 
 - `/awaken body`: your moves.
-- Game masters: `/awaken body try <roll|sprint|slide|tacslide|slidejump|mantle|hit|release>` makes your client press the
-  move's keys (W, sprint, crouch, jump, attack) for a few ticks, exactly the path real input takes; `/awaken body forget`.
+- Game masters: `/awaken body try <roll|sprint|slide|tacslide|slidejump|mantle|hit|release> [delay]` makes your client
+  press the move's keys (W, sprint, crouch, jump, attack) for a few ticks, exactly the path real input takes; the delay
+  lines a move's frame up with an autopilot shot. `/awaken body forget`. In autopilot runs every move's start and end
+  (and why it ended) is logged as `[body] t<tick> ...`.
 - Autopilot: `tools/autopilot.sh tools/autopilot/body.txt` (every move in first and third person, the twists, the Status line).
 - Sounds: `python3 tools/art/specs/audio_body.py`; dust: `python3 tools/art/build_all.py body`.
 

@@ -513,7 +513,7 @@ Awakened Body (module `body`, docs/modules/body.md; approved 2026-10-24, widened
   `awaken:body_tactical_sprint`) for ≤ 60 ticks, 0.4 exhaustion, recharge 80 ticks after it ends. A stop, a swing, a cast,
   an item or water ends it; the swing or cast goes off at once.
 - Slide: crouch while sprinting on the ground: 14 ticks at v0·(1 − 0.5·t/14), v0 = max(0.38, entry), 0.46 out of a tactical
-  sprint (~4.1 / ~5.0 blocks); crawl pose forced on both sides; ends at a wall, off an edge, in water; jumping out adds 0.15
+  sprint (~4.1 / ~5.0 blocks, ~4.6 / ~5.5 with forward held); crawl pose forced on both sides, the run paused; ends at a wall, off an edge, in water; jumping out adds 0.15
   (the slide-cancel); 0.1 exhaustion; cooldown 20 ticks after it ends. A cast mid-slide keeps it; a power's motion ends it
   (snapped onto the slide's way within 60°; a Velocity power's ×1.3).
 - Mantle: jump facing a ledge whose top is 1.1–1.6 above the feet, face within 0.6 (server 1.1), 2 free blocks over it, a clear
