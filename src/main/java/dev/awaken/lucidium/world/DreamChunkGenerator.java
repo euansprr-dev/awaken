@@ -78,6 +78,7 @@ public final class DreamChunkGenerator extends ChunkGenerator {
                                                        @Nullable WorldGenRegion carverBiomeRegion, Set<Holder<Biome>> possibleBiomes) {
         int cell = Cells.cellAt(chunk.getPos().getMinBlockX(), chunk.getPos().getMinBlockZ());
         if (cell >= 0) {
+            Cells.generated(cell, chunk.getPos().pack());
             DreamBlueprint bp = BLUEPRINTS.get(cell);
             if (bp != null) bp.write(chunk);
         }

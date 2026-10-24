@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:block/sunshard_cluster",
+    "layer1": {
+      "sprite": "awaken:block/sunshard_cluster_glow",
+      "neoforge_data": {
+        "light_emission": 15
+      }
+    }
+  }
+}

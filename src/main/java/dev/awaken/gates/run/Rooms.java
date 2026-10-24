@@ -58,6 +58,33 @@ public final class Rooms {
 
     public static final String SPIRIT_TAG = "awaken_gate_spirit";
     public static final String LORD_TAG = "awaken_gate_friendly_lord";
+    /** Party scaling (SPEC "Together"): monsters per extra player, the Lord's health per extra player, the party counted up to. */
+    public static final float PARTY_MOBS = 0.35F;
+    public static final double PARTY_LORD_HEALTH = 0.5;
+    public static final int PARTY_MAX = 4;
+
+    /**
+     * A party meets a bigger company (SPEC "Together"): +35% monsters per extra player (rounded), +1 elite per two extra
+     * players (rooms with any monsters). Returns {normals, elites}.
+     */
+    public static int[] partyCompany(int normals, int elites, int party) {
+        int extra = Math.max(0, Math.min(PARTY_MAX, party) - 1);
+        if (extra == 0 || normals + elites == 0) return new int[]{normals, elites};
+        return new int[]{Math.round(normals * (1 + PARTY_MOBS * extra)), elites + extra / 2};
+    }
+
+    /** Players of this gate on this floor right now (1 at least, {@link #PARTY_MAX} at most). */
+    public static int partyOnFloor(ServerLevel level, GateRecord g, FloorLayout f) {
+        int n = 0;
+        for (java.util.UUID u : g.inside) {
+            ServerPlayer o = level.getServer().getPlayerList().getPlayer(u);
+            if (o == null || !o.isAlive() || o.isSpectator()) continue;
+            RunState run = Runs.run(o);
+            if (run.gateId == g.id && run.area == f.area && run.floor == f.floor) n++;
+        }
+        return Math.max(1, Math.min(PARTY_MAX, n));
+    }
+
     /** Hard cap on live gate monsters per gate (SPEC: ≤ 60 active combat entities overall). */
     public static final int GATE_CAP = 40;
     /** Arena waves may go over GATE_CAP up to the SPEC budget: an arena seals you in, its waves must come. */
@@ -101,9 +128,19 @@ public final class Rooms {
             if (e == null) return null;
         }
         if (g.scripted) firstGate(e, role);
+        else if (role == MobRole.Role.BOSS) partyLord(e, partyOnFloor(level, g, f));
         GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
         Modifiers.onSpawn(g, e);
         return e;
+    }
+
+    /** A Lord met by a party: +50% health per extra player (the hoard is already one per player). */
+    static void partyLord(LivingEntity e, int party) {
+        if (party <= 1) return;
+        var h = e.getAttribute(Attributes.MAX_HEALTH);
+        if (h != null) h.addOrReplacePermanentModifier(new AttributeModifier(dev.awaken.Awaken.id("gate_party_health"),
+                PARTY_LORD_HEALTH * (party - 1), AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        e.setHealth(e.getMaxHealth());
     }
 
     /** First-gate tuning: a Lord you can beat with iron and one power (about 190 health), monsters a little softer. */
@@ -134,6 +171,10 @@ public final class Rooms {
             // the story's first gate: half the company, so a wooden sword and one power can carry a room
             normals = (normals + 1) / 2;
             elites = Math.min(elites, 1);
+        } else {
+            int[] company = partyCompany(normals, elites, partyOnFloor(level, g, f));
+            normals = company[0];
+            elites = company[1];
         }
         for (int i = 0; i < normals + elites; i++) {
             BlockPos p = spots.get((i + offset) % spots.size());
@@ -165,12 +206,14 @@ public final class Rooms {
         GateRegistry.get(level.getServer()).setDirty();
         switch (r.type) {
             case ARENA -> {
+                gatherParty(level, p, g, f, r);
                 lock(level, g, f, r, true);
                 fs.waves.put(r.id, 1);
                 spawnGroup(level, g, f, r, r.id, r.normals, r.elites, 0);
                 Signal.toast(p, Component.literal("The arena seals."));
             }
             case BOSS -> {
+                gatherParty(level, p, g, f, r);
                 lock(level, g, f, r, true);
                 Twists.bossArena(level, p, g, f, r);
             }
@@ -191,13 +234,77 @@ public final class Rooms {
      */
     private static void resealUnfinished(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r, FloorState fs) {
         if (r.type == Room.Type.ARENA && !fs.clearedRooms.contains(r.id)) {
+            gatherParty(level, p, g, f, r);
             lock(level, g, f, r, true);
             Signal.toast(p, Component.literal("The arena seals."));
             if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) emptied(level, g, f, r);
         } else if (r.type == Room.Type.BOSS && !(g.plan.friendly() && f.area == 0) && !(f.area == 0 ? g.bossDead : g.annexBossDead)) {
+            gatherParty(level, p, g, f, r);
             lock(level, g, f, r, true);
             if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) Twists.bossArena(level, p, g, f, r);
         }
+    }
+
+    /** Party members on this floor within this many blocks are drawn in when a room seals behind someone. */
+    static final int GATHER_RADIUS = 48;
+
+    /**
+     * An arena or the Lord's room seals: the party isn't locked out (SPEC "Together"). Party members on the same floor
+     * nearby who aren't in the room yet step through with the one who triggered it.
+     */
+    static void gatherParty(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
+        for (java.util.UUID u : List.copyOf(g.inside)) {
+            if (u.equals(p.getUUID())) continue;
+            ServerPlayer mate = level.getServer().getPlayerList().getPlayer(u);
+            if (mate == null || mate.level() != level || !mate.isAlive() || mate.isSpectator()) continue;
+            if (!dev.awaken.core.api.PartyHooks.sameParty(p, mate)) continue;
+            RunState run = Runs.run(mate);
+            if (run.gateId != g.id || run.area != f.area || run.floor != f.floor) continue;
+            if (mate.distanceToSqr(p) > GATHER_RADIUS * GATHER_RADIUS) continue;
+            if (inRoom(level, mate, f, r)) continue;
+            mate.teleportTo(level, p.getX(), p.getY(), p.getZ(), java.util.Set.of(), p.getYRot(), mate.getXRot(), true);
+            Signal.toast(mate, Component.literal("You step through with " + p.getGameProfile().name() + " as the bars come down."));
+        }
+    }
+
+    /**
+     * A party member who reaches the bars of a sealed room their party is fighting in is let through (every 10 ticks,
+     * from the run tick). Returns whether they were moved in.
+     */
+    static boolean admitAtBars(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f) {
+        FloorState fs = g.floor(f.area, f.floor);
+        if (fs.locked.isEmpty()) return false;
+        for (int id : fs.locked) {
+            Room r = f.room(id);
+            if (r == null || (r.type != Room.Type.ARENA && r.type != Room.Type.BOSS)) continue;
+            boolean atBars = false;
+            for (Room.Door d : r.doors) {
+                for (BlockPos b : barsPositions(g, f, d)) {
+                    if (p.blockPosition().distManhattan(b) <= 2) { atBars = true; break; }
+                }
+                if (atBars) break;
+            }
+            if (!atBars) continue;
+            if (inRoom(level, p, f, r)) return false;
+            for (java.util.UUID u : g.inside) {
+                ServerPlayer mate = level.getServer().getPlayerList().getPlayer(u);
+                if (mate == null || mate == p || mate.level() != level || !mate.isAlive()) continue;
+                if (!inRoom(level, mate, f, r) || !dev.awaken.core.api.PartyHooks.sameParty(p, mate)) continue;
+                p.teleportTo(level, mate.getX(), mate.getY(), mate.getZ(), java.util.Set.of(), p.getYRot(), p.getXRot(), true);
+                Signal.toast(p, Component.literal("The bars let you through to " + mate.getGameProfile().name() + "."));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static boolean inRoom(ServerLevel level, ServerPlayer p, FloorLayout f, Room r) {
+        return inRoomAt(level, p.blockPosition(), f, r);
+    }
+
+    static boolean inRoomAt(ServerLevel level, BlockPos pos, FloorLayout f, Room r) {
+        Where w = Where.at(level.getServer(), pos);
+        return w != null && w.floor() != null && w.area() == f.area && w.floorNo() == f.floor && w.room() != null && w.room().id == r.id;
     }
 
     /** Nobody is inside any more: every barred room opens (it seals again when someone walks back in). */

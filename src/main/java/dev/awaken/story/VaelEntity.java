@@ -11,9 +11,14 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
-/** Vael, the Rival. Appears for authored beats tied to the player's rank only, then leaves. Can't be hurt. */
+/**
+ * Vael, the Rival. Appears for authored beats tied to the player's rank only, then leaves. Can't be hurt. A beat is one
+ * player's scene: only that player sees this Vael (SPEC "Together").
+ */
 public class VaelEntity extends PathfinderMob {
     int lifeTicks = 20 * 40;
+    /** The player whose scene this is (null: everyone sees it, as before). */
+    java.util.UUID viewer;
 
     public VaelEntity(EntityType<? extends VaelEntity> type, Level level) {
         super(type, level);
@@ -36,6 +41,23 @@ public class VaelEntity extends PathfinderMob {
     }
 
     @Override
+    public boolean broadcastToPlayer(net.minecraft.server.level.ServerPlayer player) {
+        return (viewer == null || viewer.equals(player.getUUID())) && super.broadcastToPlayer(player);
+    }
+
+    @Override
+    protected void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput out) {
+        super.addAdditionalSaveData(out);
+        out.storeNullable("awaken_viewer", net.minecraft.core.UUIDUtil.CODEC, viewer);
+    }
+
+    @Override
+    protected void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput in) {
+        super.readAdditionalSaveData(in);
+        viewer = in.read("awaken_viewer", net.minecraft.core.UUIDUtil.CODEC).orElse(null);
+    }
+
+    @Override
     public boolean isPushable() {
         return false;
     }
@@ -44,6 +66,9 @@ public class VaelEntity extends PathfinderMob {
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
         if (--lifeTicks <= 0) discard();
+        // Vael speaks to one player: look at them, not at whoever stands nearest
+        var p = viewer == null ? null : level.getServer().getPlayerList().getPlayer(viewer);
+        if (p != null && p.level() == level && p.distanceToSqr(this) < 24 * 24) getLookControl().setLookAt(p);
     }
 
     @Override

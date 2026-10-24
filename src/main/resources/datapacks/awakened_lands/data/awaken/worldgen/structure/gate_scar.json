@@ -1,0 +1,8 @@
+{
+  "type": "awaken:landmark",
+  "landmark": "gate_scar",
+  "biomes": "#awaken:has_structure/gate_scar",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

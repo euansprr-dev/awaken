@@ -31,28 +31,43 @@ public final class Breaks {
     public static final int RADIUS = 256;
     private static final Set<UUID> ACTIVE = new HashSet<>();
 
+    /** Server stop: the next world starts with no breaks remembered (singleplayer reuses the JVM). */
+    static void clear() {
+        ACTIVE.clear();
+    }
+
     /** Whether a break is happening near this Hearth right now (from the last check). */
     public static boolean active(HearthRecord h) {
         return ACTIVE.contains(h.owner);
     }
 
-    static void check(ServerPlayer owner, ServerLevel level, HearthRecord h) {
+    /**
+     * Once every five seconds for a Hearth with someone of its household online ({@code home}: the owner and members
+     * online). Everyone in the household hears of a break and of the Hearth holding; the counter is the owner's (a
+     * member who fights the Lord is counted by the gates module, which counts everyone near it).
+     */
+    static void check(List<ServerPlayer> home, ServerLevel level, HearthRecord h) {
         boolean changed = false;
         BlockPos defend = null;
+        ServerPlayer owner = null;
+        for (ServerPlayer p : home) if (p.getUUID().equals(h.owner)) owner = p;
+        ServerPlayer logTo = owner != null ? owner : home.get(0);
         List<GateHooks.GateView> near = GateHooks.near(level, h.pos, RADIUS);
         for (GateHooks.GateView g : near) {
             if (!"BROKEN".equals(g.state())) continue;
             if (defend == null) defend = g.pos();
             if (!h.breaks.containsKey(g.id())) {
-                long counter = Progression.profile(owner).counter(Counters.BREAKS_HELD_AT_HEARTH);
+                long counter = owner == null ? -1 : Progression.profile(owner).counter(Counters.BREAKS_HELD_AT_HEARTH);
                 h.breaks.put(g.id(), new HearthRecord.BreakState(g.id(), counter, false, g.pos()));
                 changed = true;
-                DirectorLog.log(owner, "hearth", "break near home: " + g.id());
-                Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("A gate broke near your Hearth"))
-                        .row(Component.literal("Gate"), Component.literal(rankLabel(g.rank()) + "-rank · " + g.themeName()))
-                        .row(Component.literal("Distance"), Component.literal((int) Math.sqrt(g.pos().distSqr(h.pos)) + " blocks"))
-                        .body(Component.literal(Duty.guardCount(h) > 0 ? "Your Guards are on their way." : "Hold the line. Guard pads would help."))
-                        .priority(6).build());
+                DirectorLog.log(logTo, "hearth", "break near home: " + g.id());
+                for (ServerPlayer p : home) {
+                    Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("A gate broke near your Hearth"))
+                            .row(Component.literal("Gate"), Component.literal(rankLabel(g.rank()) + "-rank · " + g.themeName()))
+                            .row(Component.literal("Distance"), Component.literal((int) Math.sqrt(g.pos().distSqr(h.pos)) + " blocks"))
+                            .body(Component.literal(Duty.guardCount(h) > 0 ? "The Guards are on their way." : "Hold the line. Guard pads would help."))
+                            .priority(6).build());
+                }
             }
         }
         for (Iterator<Map.Entry<String, HearthRecord.BreakState>> it = h.breaks.entrySet().iterator(); it.hasNext(); ) {
@@ -64,15 +79,18 @@ public final class Breaks {
                 continue;
             }
             if (!b.counted() && "CLEARED".equals(g.get().state())) {
-                long now = Progression.profile(owner).counter(Counters.BREAKS_HELD_AT_HEARTH);
+                long now = owner == null ? -2 : Progression.profile(owner).counter(Counters.BREAKS_HELD_AT_HEARTH);
                 h.breaks.put(b.gateId(), new HearthRecord.BreakState(b.gateId(), b.counterAtBreak(), true, b.gatePos()));
                 changed = true;
-                if (now == b.counterAtBreak()) {
+                boolean count = owner != null && now == b.counterAtBreak();
+                if (count) {
                     Progression.count(owner, Counters.BREAKS_HELD_AT_HEARTH);
-                    Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The Hearth held"))
-                            .body(Component.literal("The break is closed and home is still standing.")).priority(5).build());
+                    for (ServerPlayer p : home) {
+                        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The Hearth held"))
+                                .body(Component.literal("The break is closed and home is still standing.")).priority(5).build());
+                    }
                 }
-                DirectorLog.log(owner, "hearth", "break cleared " + b.gateId() + (now == b.counterAtBreak() ? " (counted)" : " (already counted)"));
+                DirectorLog.log(logTo, "hearth", "break cleared " + b.gateId() + (count ? " (counted)" : " (already counted)"));
             }
         }
         if (defend != null) ACTIVE.add(h.owner);

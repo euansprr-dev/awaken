@@ -301,9 +301,24 @@ public final class GateService {
         GateCells.remove(g.cell);
         reg.releaseCell(g.cell);
         reg.setDirty();
+        recycleWhileRunning(server, g.cell);
         removeStructureSoon(server, g);
         dev.awaken.gates.run.GateMobs.forgetGate(g.id);
         GatePayloads.syncBeaconsAround(server, g.pos);
+    }
+
+    /**
+     * A dedicated server may run for weeks: a released cell's chunks are erased once they are out of memory (a few
+     * seconds after everyone left, see {@link dev.awaken.core.RegionRecycler}) and the cell is free again. Never in
+     * the GameTest stand-in level, and a restart still deletes whatever was left.
+     */
+    static void recycleWhileRunning(MinecraftServer server, int cell) {
+        if (testLevel != null) return;
+        ServerLevel gl = server.getLevel(GatesRegistry.GATES);
+        if (gl == null) return;
+        int cx = Cells.originX(cell) >> 4, cz = Cells.originZ(cell) >> 4;
+        dev.awaken.core.RegionRecycler.eraseWhenUnloaded(gl, dev.awaken.core.RegionRecycler.square(cx, cz, Cells.SIZE >> 4),
+                () -> GateRegistry.get(server).cellRecycled(cell));
     }
 
     private static final List<Integer> REMOVALS = new ArrayList<>();

@@ -1,0 +1,8 @@
+{
+  "type": "awaken:landmark",
+  "landmark": "shard_drift",
+  "biomes": "#awaken:has_structure/shard_drift",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

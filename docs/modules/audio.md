@@ -159,6 +159,10 @@ delivered, warning, an answer) played in the last 2.5 s, so a moment never sound
 clear next step (priority 50+), never in the first 10 s in a place, at most every 30 s. Server-asked UI sounds go to one
 player as `audio_ui` and play non-positional on the Interface slider.
 
+The Holo UI's panels speak in the same voice (`tools/art/specs/audio_holo.py`, events in `src/main/merge/holo`, played
+by the holo module): the unfold, the inventory's shorter one, the fold, the hover tick and the projected card, which
+takes `signal.open`'s place while the projected look draws. Details in docs/modules/holo.md "Sounds".
+
 ## Ambience beds (`Ambience`, all mono, seamless loops, the Ambient/Environment slider)
 
 | Event | Source | Range | Sound |

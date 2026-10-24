@@ -50,6 +50,12 @@ public final class HearthRecord {
     public long itemsHauled, cropsHarvested, oresBrought;
     /** A cell inside the cottage Oren raised here (null = none): the guide says "Oren built this one". */
     public BlockPos cottage;
+    /** Players who share this Hearth with its owner (SPEC "Together"), uuid → last known name, in the order they joined. */
+    public final LinkedHashMap<UUID, String> members = new LinkedHashMap<>();
+    /** The owner of the Hearth this one was founded from as a sister home (null = founded on its own). */
+    public UUID foundedFrom;
+    /** Members' rank-ups still waiting to be celebrated here: uuid → rank ordinal. */
+    public final Map<UUID, Integer> memberCelebrations = new HashMap<>();
 
     // ---- runtime only -----------------------------------------------------------------------------------------------
     public volatile List<Room> rooms = List.of();
@@ -118,10 +124,38 @@ public final class HearthRecord {
         ).apply(i, Town::new));
     }
 
+    /** One member: who, and the name they had when last seen (for lists while they are offline). */
+    record Member(UUID id, String name) {
+        static final Codec<Member> CODEC = RecordCodecBuilder.create(i -> i.group(
+                UUIDUtil.CODEC.fieldOf("id").forGetter(Member::id),
+                Codec.STRING.optionalFieldOf("name", "").forGetter(Member::name)
+        ).apply(i, Member::new));
+    }
+
+    private record Cheer(UUID id, int rank) {
+        static final Codec<Cheer> CODEC = RecordCodecBuilder.create(i -> i.group(
+                UUIDUtil.CODEC.fieldOf("id").forGetter(Cheer::id),
+                Codec.INT.fieldOf("rank").forGetter(Cheer::rank)
+        ).apply(i, Cheer::new));
+    }
+
+    /** Schema 1 of the household (SPEC "Together"): a Hearth saved before it has none and loads with no members. */
+    private record Household(int schema, List<Member> members, Optional<UUID> foundedFrom, List<Cheer> cheers) {
+        static final int SCHEMA = 1;
+        static final Household NONE = new Household(SCHEMA, List.of(), Optional.empty(), List.of());
+        static final Codec<Household> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(Household::schema),
+                Member.CODEC.listOf().optionalFieldOf("members", List.of()).forGetter(Household::members),
+                UUIDUtil.CODEC.optionalFieldOf("founded_from").forGetter(Household::foundedFrom),
+                Cheer.CODEC.listOf().optionalFieldOf("cheers", List.of()).forGetter(Household::cheers)
+        ).apply(i, Household::new));
+    }
+
     public static final Codec<HearthRecord> CODEC = RecordCodecBuilder.<HearthRecord>create(i -> i.group(
             Core.CODEC.fieldOf("core").forGetter(HearthRecord::core),
-            Town.CODEC.fieldOf("town").forGetter(HearthRecord::town)
-    ).apply(i, HearthRecord::fromParts));
+            Town.CODEC.fieldOf("town").forGetter(HearthRecord::town),
+            Household.CODEC.optionalFieldOf("household", Household.NONE).forGetter(HearthRecord::household)
+    ).apply(i, HearthRecord::fromSaved));
 
     public HearthRecord(UUID owner, String ownerName, BlockPos pos, String dimension) {
         this.owner = owner;
@@ -141,6 +175,22 @@ public final class HearthRecord {
         List<Pad> p = new ArrayList<>();
         pads.forEach((pos, role) -> p.add(new Pad(pos, role, Optional.ofNullable(padEchoes.get(pos)), mineProgress.getOrDefault(pos, 0))));
         return new Town(n, p, List.copyOf(breaks.values()), List.of(itemsHauled, cropsHarvested, oresBrought));
+    }
+
+    private Household household() {
+        List<Member> m = new ArrayList<>();
+        members.forEach((id, name) -> m.add(new Member(id, name == null ? "" : name)));
+        List<Cheer> c = new ArrayList<>();
+        memberCelebrations.forEach((id, rank) -> c.add(new Cheer(id, rank)));
+        return new Household(Household.SCHEMA, m, Optional.ofNullable(foundedFrom), c);
+    }
+
+    private static HearthRecord fromSaved(Core c, Town t, Household h) {
+        HearthRecord r = fromParts(c, t);
+        for (Member m : h.members) if (!m.id().equals(r.owner)) r.members.put(m.id(), m.name());
+        r.foundedFrom = h.foundedFrom.orElse(null);
+        for (Cheer ch : h.cheers) if (r.members.containsKey(ch.id())) r.memberCelebrations.put(ch.id(), ch.rank());
+        return r;
     }
 
     private static HearthRecord fromParts(Core c, Town t) {
@@ -170,6 +220,19 @@ public final class HearthRecord {
     }
 
     // ---- queries ----------------------------------------------------------------------------------------------------
+
+    /** Whether this player owns the Hearth or is one of its members. */
+    public boolean belongs(UUID player) {
+        return owner.equals(player) || members.containsKey(player);
+    }
+
+    /** The owner and every member, the owner first. */
+    public List<UUID> everyone() {
+        List<UUID> out = new ArrayList<>(1 + members.size());
+        out.add(owner);
+        out.addAll(members.keySet());
+        return out;
+    }
 
     public int radius() {
         return radiusForTier(tier);

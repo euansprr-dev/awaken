@@ -90,7 +90,10 @@ final class LucidiumCommands {
             prepared = Optional.of(Planner.buildNow(src.getServer(), sp.getUUID(), plan.get()));
         }
         boolean ok = Dreams.enter(sp, prepared.get(), Dreams.Entry.awake()) != null;
-        if (!ok) src.sendFailure(Component.literal("Couldn't enter the dream."));
+        if (!ok) {
+            Planner.discard(src.getServer(), prepared.get());
+            src.sendFailure(Component.literal("Couldn't enter the dream."));
+        }
         return ok ? 1 : 0;
     }
 
