@@ -5,6 +5,7 @@ import dev.awaken.signal.ui.SignalText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +13,8 @@ import java.util.Optional;
 /**
  * Immediate-mode layout for Status screen sections. One {@code build(ui)} method serves three passes: MEASURE (height),
  * DRAW and CLICK, so the height, the drawing and the hit boxes can never disagree. Every text wraps to the width;
- * glossary words get a faint underline and explain themselves on hover.
+ * glossary words get a faint underline and explain themselves on hover. DRAW goes through a {@link UiCanvas}: the flat
+ * screen ({@link GuiCanvas}, the same pixels as before) or a holo panel, so a section is written once for both.
  */
 public final class Ui {
     private enum Mode { MEASURE, DRAW, CLICK }
@@ -21,6 +23,7 @@ public final class Ui {
     public static final int BUTTON_H = 13;
 
     private final Mode mode;
+    private final UiCanvas c;
     private final GuiGraphicsExtractor g;
     private final Font font;
     public final int x, width;
@@ -30,8 +33,9 @@ public final class Ui {
     private boolean consumed;
     private boolean tooltipSet;
 
-    private Ui(Mode mode, GuiGraphicsExtractor g, Font font, int x, int y, int width, double mx, double my) {
+    private Ui(Mode mode, UiCanvas c, GuiGraphicsExtractor g, Font font, int x, int y, int width, double mx, double my) {
         this.mode = mode;
+        this.c = c;
         this.g = g;
         this.font = font;
         this.x = x;
@@ -43,20 +47,31 @@ public final class Ui {
     }
 
     public static Ui measure(Font font, int width) {
-        return new Ui(Mode.MEASURE, null, font, 0, 0, width, -10000, -10000);
+        return new Ui(Mode.MEASURE, null, null, font, 0, 0, width, -10000, -10000);
     }
 
     public static Ui draw(GuiGraphicsExtractor g, Font font, int x, int y, int width, int mouseX, int mouseY) {
-        return new Ui(Mode.DRAW, g, font, x, y, width, mouseX, mouseY);
+        return new Ui(Mode.DRAW, GuiCanvas.of(g), g, font, x, y, width, mouseX, mouseY);
+    }
+
+    /** Draws onto any canvas (a holo panel's); coordinates are the canvas's units. */
+    public static Ui draw(UiCanvas canvas, Font font, int x, int y, int width, int mouseX, int mouseY) {
+        return new Ui(Mode.DRAW, canvas, canvas instanceof GuiCanvas gc ? gc.graphics() : null, font, x, y, width, mouseX, mouseY);
     }
 
     public static Ui click(Font font, int x, int y, int width, double mouseX, double mouseY) {
-        return new Ui(Mode.CLICK, null, font, x, y, width, mouseX, mouseY);
+        return new Ui(Mode.CLICK, null, null, font, x, y, width, mouseX, mouseY);
     }
 
     public Font font() { return font; }
     public boolean drawing() { return mode == Mode.DRAW; }
-    /** Only valid while {@link #drawing()}. */
+    /** What DRAW draws through. Only valid while {@link #drawing()}. */
+    public UiCanvas canvas() { return c; }
+    /**
+     * The flat graphics, only while drawing on the flat screen (null on a holo panel).
+     * @deprecated draw through {@link #canvas()} or {@link #fill}/{@link #item} so the section also works on a panel.
+     */
+    @Deprecated
     public GuiGraphicsExtractor g() { return g; }
     public int y() { return y; }
     public int height() { return y - top; }
@@ -110,7 +125,7 @@ public final class Ui {
 
     private void line(String s, int lx, int ly, int colour, boolean shadow) {
         if ((colour >>> 24) == 0) colour |= 0xFF000000; // an RGB constant: opaque (alpha 0 would draw nothing)
-        g.text(font, s, lx, ly, colour, shadow);
+        c.text(font, s, lx, ly, colour, shadow);
         explain(s, lx, ly);
     }
 
@@ -128,9 +143,9 @@ public final class Ui {
             Optional<String> def = Glossary.lookup(line.substring(i, j));
             if (def.isPresent()) {
                 int tx = lx + font.width(line.substring(0, i)), tw = font.width(line.substring(i, j));
-                g.horizontalLine(tx, tx + tw - 1, ly + 9, Glass.a(Glass.EDGE, 0.35f));
+                c.hLine(tx, tx + tw - 1, ly + 9, Glass.a(Glass.EDGE, 0.35f));
                 if (!tooltipSet && mx >= tx && mx < tx + tw && my >= ly - 1 && my < ly + 10) {
-                    g.setTooltipForNextFrame(font, font.split(Component.literal(def.get()), 200), (int) mx, (int) my);
+                    c.tooltip(font, font.split(Component.literal(def.get()), 200), (int) mx, (int) my);
                     tooltipSet = true;
                 }
             }
@@ -145,13 +160,23 @@ public final class Ui {
     }
 
     public void bar(double fraction, int colour, int w) {
-        if (drawing()) Glass.bar(g, x, y, Math.min(w, width), 4, fraction, colour, 1f);
+        if (drawing()) Glass.bar(c, x, y, Math.min(w, width), 4, fraction, colour, 1f);
         y += 6;
     }
 
     public void rule() {
-        if (drawing()) g.horizontalLine(x, x + width - 1, y + 2, Glass.a(Glass.EDGE, 0.12f));
+        if (drawing()) c.hLine(x, x + width - 1, y + 2, Glass.a(Glass.EDGE, 0.12f));
         y += 5;
+    }
+
+    /** A filled rectangle at absolute coordinates (draw pass only; doesn't move the cursor). */
+    public void fill(int x0, int y0, int x1, int y1, int argb) {
+        if (drawing()) c.fill(x0, y0, x1, y1, argb);
+    }
+
+    /** A 16×16 item icon at absolute coordinates (draw pass only; doesn't move the cursor). */
+    public void item(ItemStack stack, int ix, int iy) {
+        if (drawing()) c.item(stack, ix, iy);
     }
 
     public boolean hover(int hx, int hy, int hw, int hh) {
@@ -162,7 +187,7 @@ public final class Ui {
     public boolean buttonAt(String label, int bx, int by, int bw, int bh, int accent, boolean enabled) {
         boolean hover = hover(bx, by, bw, bh);
         if (drawing()) {
-            Glass.button(g, font, SignalText.ellipsize(label, bw - 6, font::width), bx, by, bw, bh, hover, enabled, accent);
+            Glass.button(c, font, SignalText.ellipsize(label, bw - 6, font::width), bx, by, bw, bh, hover, enabled, accent);
             return false;
         }
         if (mode == Mode.CLICK && enabled && hover && !consumed) {
@@ -202,7 +227,7 @@ public final class Ui {
             String l = SignalText.ellipsize(label, width - 8, font::width);
             int cw = font.width(l) + 8;
             place(cw, 11);
-            if (drawing()) Glass.chip(g, font, l, fx, y, colour);
+            if (drawing()) Glass.chip(c, font, l, fx, y, colour);
             fx += cw + 4;
         }
 
