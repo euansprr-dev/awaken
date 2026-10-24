@@ -21,8 +21,9 @@ Branch `carillon/m3-alive`, worktree /Volumes/MEDIA/Awaken-alive. Brief: docs/ca
   path → rescue unseen (or after 15 s in view). Hurt, never killed: they limp to the infirmary. 244 skins from
   `tools/art/specs/citizens.py` (Sonnet 2, M3-sonnet-2.md): base, job clothes, hair or hat, palettes, so no two in a
   frame look alike (docs/carillon/milestones/m3/citizens_front.jpg, _back.jpg). Job clips from
-  `tools/art/specs/citizen_clips.py` (body_moves' figure and bake): hammer, sweep, scrub, haul, ring, call, light,
-  hand bell, guard, browse, idle variants, crossfaded on our own model.
+  `tools/art/specs/citizen_clips.py` (body_moves' figure and bake), 32 clips: hammer, trowel, scrub, hang, haul,
+  carry_back, set_down, shutter, serve, bell_pull, lamp_light, proclaim, halberd, bucket_pass, thief_run, point_shout,
+  hurt, wave, nod, talk and idle stances, crossfaded on our own model.
 - **The jobs, with visible work.** Lamplighters run their rounds with a pole: our street lamp (lit, out, broken)
   replaces M1's 78 lanterns and the avenues go dark at dawn and light at dusk; a broken lamp left dark lets monsters
   spawn near it at night (the only natural spawns inside the wall). Bellringers ring the hour on the six bells (one
@@ -61,6 +62,11 @@ Server, from the in-game rolling log (`[citizens] last 1200t`, and a timing wind
 
 `mspt` during the window p50 2.4, p95 3.2 ms with the client's integrated server. The frame cost of 40 citizens
 was not measured (the brief leaves it to the quiet pass in Detail).
+
+CI (full GameTest suite): **green on 4701a6d** (run 40135078966, all 401 required tests). Earlier green on 374a563;
+the two pushes between failed `gates_hooks_view_stabilise_calm` ("no dry ground"): the events test's borrowed city
+had furnished stalls, lines, anvils and crates over neighbouring tests' ground in the shared test world. Fixed in
+4701a6d (the test's city changes no blocks; a broken lamp only ever replaces a lamp).
 
 ## Shots
 
@@ -119,16 +125,18 @@ lit windows and the kit are what close the gap, not more systems: the ledger and
   (fixable in plan.py).
 - **Moving light**: the Watch's lanterns place light blocks (level 11, at most 12 at once, tracked and cleared
   as chunks load after a stop), so night patrols really light the street.
-- **Bell Festival** is not built (it belongs with M2's calendar).
+- **Bell Festival** is not built (not in this brief).
 
 ## Gaps
 
 - **M2**: rooftop runners and rooftop chases (the thief's escape over the roofs, the Watch on ladders) once the Ascent
   lands; the Bell Bridge break closing graph edges (StreetNet can close edges, as the cart jam does); the opening's
-  walk past working citizens and the Registry; the infirmary interior (the hurt walk in and come out healed); the Bell
-  Festival; Lens Carillon light at night.
+  walk past working citizens and the Registry; the infirmary interior (the hurt walk in and come out healed); Lens
+  Carillon light at night.
 - **M4**: lit windows and more lamps beyond the avenues (night scenes are dark away from the lamp lines), stall wares
   and awnings in the kit, cloth laundry instead of carpet, interiors behind the doors people use, a crowd murmur
   ambience, boats on the canals, and the quiet frame measurement for 40 bodies.
 - **Here**: some district framings still land on thin streets at dawn and night; the 240-record roster is thin outside
-  the market (see Density).
+  the market (see Density). `citizens_events` sprints the server for ~9,000 ticks (about 1 s) to let every event run
+  its course; other tests running then see their tick timeouts pass in wall-clock haste (gate builds waiting on chunk
+  generation). A simulated clock for the events test would remove that; worth doing if a gate test flakes during it.
