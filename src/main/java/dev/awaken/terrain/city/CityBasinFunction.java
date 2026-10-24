@@ -17,9 +17,11 @@ import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import java.util.List;
 
 /**
- * {@code awaken:city_basin}: wraps the overworld's final density ({@code mode: density}) or its chunk surface level
- * ({@code mode: surface}) so the ground around the city site is flat at street level, a river channel runs through it,
- * and both ease back to the natural terrain by the blend radius. Deep below the street (more than {@link #CRUST} blocks)
+ * {@code awaken:city_basin}: wraps the overworld's final density ({@code mode: density}) or its preliminary surface
+ * level ({@code mode: surface}: what aquifers and surface rules believe the ground height is) so the ground around the
+ * city site is flat at street level, a river channel runs through it, and both ease back to the natural terrain by the
+ * blend radius. The surface estimate dips well under the river (see {@link Shape#channelEstimate}) so the aquifer
+ * treats the channel as sea-level water and fills it to the waterline. Deep below the street (more than {@link #CRUST} blocks)
  * the natural density stays, so caves and ores go on under the city. With no site in this world (old worlds, Classic
  * start, a test generator) it compiles to its input unchanged.
  */
@@ -55,7 +57,7 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
 
     @Override
     public Interval range() {
-        return mode == Mode.SURFACE ? Interval.encapsulating(input.range(), Interval.ofExact(CityBasin.STREET_Y))
+        return mode == Mode.SURFACE ? Interval.encapsulating(input.range(), Interval.of(CityBasin.RIVER_FLOOR_Y - 8, CityBasin.STREET_Y))
                 : Interval.encapsulating(input.range(), Interval.of(-1.0F, 1.0F));
     }
 
@@ -136,6 +138,18 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
             return street;
         }
 
+        /**
+         * The surface estimate over the channel. The aquifer fills a column with sea water only when this estimate plus 8
+         * lies below sea level (Aquifer.computeFluid), so over the channel it reads 8 below the river floor; a little
+         * wider than the channel, since aquifers sample it every 4 blocks.
+         */
+        public float channelEstimate(float d) {
+            float low = floor - 8;
+            if (d <= half + 4) return low;
+            if (d <= half + 10) return low + (d - (half + 4)) / 6.0F * (street - low);
+            return street;
+        }
+
         /** The basin's own density at height y over a column whose ground stands at {@code surface}. */
         static float target(float surface, int y, float natural) {
             if (y < surface - CRUST) return natural;
@@ -157,8 +171,8 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
                         index += volume.sizeY();
                         continue;
                     }
-                    float rw = mode == Mode.DENSITY ? shape.riverWeight(bx, bz) : 0.0F;
-                    float channel = rw > 0 ? shape.channelSurface(shape.riverDistance(bx, bz)) : shape.street;
+                    float rw = shape.riverWeight(bx, bz);
+                    float channel = channel(bx, bz, rw);
                     for (int y = 0; y < volume.sizeY(); y++, index++) {
                         out.set(index, apply(out.get(index), w, rw, channel, volume.blockY(y)));
                     }
@@ -171,13 +185,21 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
             float natural = input.sampleValue(context, x, y, z);
             float w = shape.weight(x, z);
             if (w <= 0.0F) return natural;
-            float rw = mode == Mode.DENSITY ? shape.riverWeight(x, z) : 0.0F;
-            float channel = rw > 0 ? shape.channelSurface(shape.riverDistance(x, z)) : shape.street;
-            return apply(natural, w, rw, channel, y);
+            float rw = shape.riverWeight(x, z);
+            return apply(natural, w, rw, channel(x, z, rw), y);
+        }
+
+        private float channel(int x, int z, float rw) {
+            if (rw <= 0) return shape.street;
+            float d = shape.riverDistance(x, z);
+            return mode == Mode.SURFACE ? shape.channelEstimate(d) : shape.channelSurface(d);
         }
 
         private float apply(float natural, float w, float rw, float channel, int y) {
-            if (mode == Mode.SURFACE) return natural + w * (shape.street - natural);
+            if (mode == Mode.SURFACE) {
+                float flat = natural + w * (shape.street - natural);
+                return channel >= shape.street ? flat : Math.min(flat, flat + rw * (channel - flat));
+            }
             float flat = natural + w * (Shape.target(shape.street, y, natural) - natural);
             if (rw <= 0.0F || channel >= shape.street) return flat;
             // the channel only ever removes ground: never more solid than the flattened terrain

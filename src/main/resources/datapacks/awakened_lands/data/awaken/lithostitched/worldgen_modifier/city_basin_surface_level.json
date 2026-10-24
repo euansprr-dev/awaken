@@ -1,7 +1,6 @@
 {
-  "type": "lithostitched:wrap_noise_router",
-  "dimension": "minecraft:overworld",
-  "target": "chunk_surface_level",
+  "type": "lithostitched:wrap_density_function",
+  "target_function": "minecraft:overworld/preliminary_surface_level",
   "wrapper_function": {
     "type": "awaken:city_basin",
     "mode": "surface",

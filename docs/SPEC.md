@@ -278,6 +278,10 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
+- `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
+  rule, once at mod init), `site(server)` (centre, core and blend radii, street Y, the river's centre line, whether the
+  basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
+  placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
@@ -717,4 +721,19 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   heart of the nearest surface patch of that biome; `/awaken terrain lookout [radius]` takes you to the highest ground
   nearby; `/awaken terrain at` prints the biome, height and climate where you stand. Tectonic presets live in
   `pack/tectonic/<preset>.json` and an autopilot run picks one with `TECTONIC=<preset>`.
+- City basin (Carillon, requested 2026-10-24): the city calls `CityBasin.request(rule)` (its rule: the world has the
+  feature flag `awaken:carillon`, which its pack asks for and Classic start turns off). At `ServerAboutToStart`, before
+  any level exists, terrain picks the site from the overworld generator and the seed (`terrain.city.SitePicker`: land
+  within ~1,440 blocks of the origin, ground near y 70, gentle across the core, low along the city's river, near street
+  level on the ring at 520; about 2 s). The lands pack wraps the overworld's `final_density` (router) and
+  `minecraft:overworld/preliminary_surface_level` (what aquifers and surface rules read) with `awaken:city_basin`:
+  flat at y 70 out to 330 blocks with 20 solid blocks under the street (caves and ores carry on below), the city's fixed
+  river carved to y 57 and 18 wide (water to sea level 63: the surface estimate reads 8 below the floor there, the aquifer's test for open
+  sea-level water),
+  continuing straight past the core and fading out 160 blocks beyond it; everything eases back to the natural terrain
+  by 700. No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
+  ruins skip `reserved(x, z)`; the city wires its runtime systems (gates, anomalies, landmarks, spawn vault, the Well).
+  Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
+  city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
+  Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
 

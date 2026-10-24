@@ -69,6 +69,8 @@ public final class CityBasinTests {
                 DensitySampler surf = new CityBasinFunction(DensityFunctions.constant(100), CityBasinFunction.Mode.SURFACE).compileSampler(NO_NOISE);
                 h.assertTrue(Math.abs(surf.sampleValue(ctx, cx, 0, cz) - 70) < 0.01 && Math.abs(surf.sampleValue(ctx, cx + 900, 0, cz) - 100) < 0.01,
                         "surface level 70 in the core, natural outside");
+                h.assertTrue(surf.sampleValue(ctx, rx, 0, rz) + 8 < 63,
+                        "the surface estimate dips under the river, so aquifers fill it");
                 // the reserve
                 h.assertTrue(CityBasin.reserved(cx, cz) && CityBasin.reserved(cx + 370, cz) && !CityBasin.reserved(cx + 390, cz), "reserve = core + 48");
                 CityBasin.set(null);
