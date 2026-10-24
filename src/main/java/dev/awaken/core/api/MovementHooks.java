@@ -37,6 +37,12 @@ public final class MovementHooks {
          * before the cast's effects are predicted. {@code family} is the power family's enum name.
          */
         default void castStarting(Player p, String powerId, String family, boolean motionPredicted) {}
+
+        /**
+         * The movement key belongs to the body for this player (the Ascent's rope, once the Tether is held): the
+         * movement slot's power steps aside and never casts from it.
+         */
+        default boolean ownsMovementKey(Player p) { return false; }
     }
 
     private static Access access = new Access() {};
@@ -81,5 +87,10 @@ public final class MovementHooks {
 
     public static void clientCastStarting(Player p, String powerId, String family, boolean motionPredicted) {
         client.castStarting(p, powerId, family, motionPredicted);
+    }
+
+    /** Client: whether the body owns the movement key for its own player (see {@link ClientAccess#ownsMovementKey}). */
+    public static boolean clientOwnsMovementKey(Player p) {
+        return client.ownsMovementKey(p);
     }
 }

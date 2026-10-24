@@ -43,6 +43,7 @@ public final class BodyModule {
         MovementHooks.install(new Hooks());
         BodyCommands.register();
         BodyTests.register();
+        dev.awaken.body.ascent.AscentModule.init(modBus);
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

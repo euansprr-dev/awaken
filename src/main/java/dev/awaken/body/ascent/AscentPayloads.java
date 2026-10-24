@@ -1,0 +1,92 @@
+package dev.awaken.body.ascent;
+
+import dev.awaken.Awaken;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+
+/** The Ascent's messages: one per state change each way, the event others see, and the dev switches. */
+public final class AscentPayloads {
+    private AscentPayloads() {}
+
+    /** One-off moments others see and hear (a rope firing, a launch, the wings opening, the boom, a landing). */
+    public static final int EV_FIRE = 1, EV_LAUNCH = 2, EV_DEPLOY = 3, EV_BOOM = 4, EV_LAND = 5, EV_FLAP = 6, EV_CATCH = 7;
+
+    /**
+     * Client → server: the local player's state changed (predicted). (x, y, z) = the rope's anchor while one is out;
+     * len = the rope's length.
+     */
+    public record State(int state, double x, double y, double z, float len) implements CustomPacketPayload {
+        public static final Type<State> TYPE = new Type<>(Awaken.id("ascent_state"));
+        public static final StreamCodec<ByteBuf, State> STREAM_CODEC = StreamCodec.of((buf, m) -> {
+            ByteBufCodecs.VAR_INT.encode(buf, m.state);
+            buf.writeDouble(m.x);
+            buf.writeDouble(m.y);
+            buf.writeDouble(m.z);
+            buf.writeFloat(m.len);
+        }, buf -> new State(ByteBufCodecs.VAR_INT.decode(buf), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readFloat()));
+        @Override public Type<State> type() { return TYPE; }
+    }
+
+    /** Client → server: a one-off moment (EV_*), at a speed, for the server to replay to everyone watching. */
+    public record Event(int what, float speed) implements CustomPacketPayload {
+        public static final Type<Event> TYPE = new Type<>(Awaken.id("ascent_event"));
+        public static final StreamCodec<ByteBuf, Event> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Event::what, ByteBufCodecs.FLOAT, Event::speed, Event::new);
+        @Override public Type<Event> type() { return TYPE; }
+    }
+
+    /** Server → watching clients: an entity's state (and its rope's anchor). */
+    public record Seen(int entityId, int state, double x, double y, double z) implements CustomPacketPayload {
+        public static final Type<Seen> TYPE = new Type<>(Awaken.id("ascent_seen"));
+        public static final StreamCodec<ByteBuf, Seen> STREAM_CODEC = StreamCodec.of((buf, m) -> {
+            ByteBufCodecs.VAR_INT.encode(buf, m.entityId);
+            ByteBufCodecs.VAR_INT.encode(buf, m.state);
+            buf.writeDouble(m.x);
+            buf.writeDouble(m.y);
+            buf.writeDouble(m.z);
+        }, buf -> new Seen(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), buf.readDouble(), buf.readDouble(),
+                buf.readDouble()));
+        @Override public Type<Seen> type() { return TYPE; }
+    }
+
+    /** Server → watching clients: someone else's one-off moment. */
+    public record SeenEvent(int entityId, int what, float speed) implements CustomPacketPayload {
+        public static final Type<SeenEvent> TYPE = new Type<>(Awaken.id("ascent_seen_event"));
+        public static final StreamCodec<ByteBuf, SeenEvent> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, SeenEvent::entityId, ByteBufCodecs.VAR_INT, SeenEvent::what, ByteBufCodecs.FLOAT, SeenEvent::speed,
+                SeenEvent::new);
+        @Override public Type<SeenEvent> type() { return TYPE; }
+    }
+
+    /**
+     * Server → client: which tiers this player may use (a bit per {@link Tier}). Phase 0 grants them by command only;
+     * the Ascent progress record replaces this in Phase 1.
+     */
+    public record Tiers(int bits) implements CustomPacketPayload {
+        public static final Type<Tiers> TYPE = new Type<>(Awaken.id("ascent_tiers"));
+        public static final StreamCodec<ByteBuf, Tiers> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Tiers::bits, Tiers::new);
+        @Override public Type<Tiers> type() { return TYPE; }
+    }
+
+    /** Server → client (dev, autopilot): run a line of the pilot (scripted input for tours). */
+    public record Pilot(String line) implements CustomPacketPayload {
+        public static final Type<Pilot> TYPE = new Type<>(Awaken.id("ascent_pilot"));
+        public static final StreamCodec<ByteBuf, Pilot> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.STRING_UTF8, Pilot::line, Pilot::new);
+        @Override public Type<Pilot> type() { return TYPE; }
+    }
+
+    /** The ladder's tiers above the Runner (the Runner is everyone's from the start). */
+    public enum Tier {
+        TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN;
+
+        public int bit() {
+            return 1 << ordinal();
+        }
+
+        public boolean in(int bits) {
+            return (bits & bit()) != 0;
+        }
+    }
+}

@@ -147,6 +147,9 @@ dependencies {
     compileOnly "maven.modrinth:iris:1.11.7+26.3-neoforge"
     // full-body cast clips (powers/client/fx/PalCasts). The version id, not "1.2.8": that number resolves to the 26.1 build
     compileOnly "maven.modrinth:player-animation-library:xJ30QmpE"
+    // the Ascent's Feel Director pauses Camera Overhaul while it owns the camera (body.client.feel.CameraOverhaulPause;
+    // version id of the build pack/lock.json pins, 2.1.2-neoforge+mc.26.3-plus)
+    compileOnly "maven.modrinth:cameraoverhaul:8NAGipZQ"
     // the comfort profile's plugins (compat.jei, compat.jade): version ids, the exact builds pack/lock.json pins
     // (JEI 31.14.0.72, Jade 26.3.5+neoforge)
     compileOnly "maven.modrinth:jei:kLsKOFxv"

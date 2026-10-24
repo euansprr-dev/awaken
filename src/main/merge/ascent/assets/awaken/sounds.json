@@ -1,0 +1,102 @@
+{
+  "ascent.rope_fire": {
+    "subtitle": "subtitles.awaken.ascent.rope_fire",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rope_fire",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.rope_bite": {
+    "subtitle": "subtitles.awaken.ascent.rope_bite",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rope_bite",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.rope_strain": {
+    "subtitle": "subtitles.awaken.ascent.rope_strain",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rope_strain",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.rope_release": {
+    "subtitle": "subtitles.awaken.ascent.rope_release",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rope_release",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.launch": {
+    "subtitle": "subtitles.awaken.ascent.launch",
+    "sounds": [
+      {
+        "name": "awaken:ascent_launch",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.wind": {
+    "subtitle": "subtitles.awaken.ascent.wind",
+    "sounds": [
+      {
+        "name": "awaken:ascent_wind",
+        "attenuation_distance": 16,
+        "stream": false
+      }
+    ]
+  },
+  "ascent.wings_open": {
+    "subtitle": "subtitles.awaken.ascent.wings_open",
+    "sounds": [
+      {
+        "name": "awaken:ascent_wings_open",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ascent.wings_fold": {
+    "subtitle": "subtitles.awaken.ascent.wings_fold",
+    "sounds": [
+      {
+        "name": "awaken:ascent_wings_fold",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.flap": {
+    "subtitle": "subtitles.awaken.ascent.flap",
+    "sounds": [
+      {
+        "name": "awaken:ascent_flap",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "ascent.boom": {
+    "subtitle": "subtitles.awaken.ascent.boom",
+    "sounds": [
+      {
+        "name": "awaken:ascent_boom",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "ascent.land": {
+    "subtitle": "subtitles.awaken.ascent.land",
+    "sounds": [
+      {
+        "name": "awaken:ascent_land",
+        "attenuation_distance": 20
+      }
+    ]
+  }
+}

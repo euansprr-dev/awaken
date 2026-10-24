@@ -69,8 +69,13 @@ public final class BodyClient {
             @Override public void castStarting(net.minecraft.world.entity.player.Player p, String powerId, String family, boolean motionPredicted) {
                 ClientMoves.castStarting(p, powerId, family, motionPredicted);
             }
+
+            @Override public boolean ownsMovementKey(net.minecraft.world.entity.player.Player p) {
+                return dev.awaken.body.ascent.client.AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.TETHER);
+            }
         });
         StatusSections.add(StatusSections.Tab.STATUS, new BodySection());
+        dev.awaken.body.ascent.client.AscentClient.init(modBus);
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {

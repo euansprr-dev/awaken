@@ -1,0 +1,44 @@
+package dev.awaken.body.ascent;
+
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+
+/**
+ * The Ascent (SPEC §17, docs/plan-ascent.html): the body's states above the ground (the rope, the momentum you
+ * carry, wings, flight) and the ladder of tiers that opens them. Part of the body module: movement is built once.
+ * Phase 0 is the feel spike: the states and their feel, tiers granted by command.
+ */
+public final class AscentModule {
+    private AscentModule() {}
+
+    public static void init(IEventBus modBus) {
+        AscentContent.register(modBus);
+        modBus.addListener(AscentModule::registerPayloads);
+        var bus = NeoForge.EVENT_BUS;
+        bus.addListener(AscentServer::onPlayerTick);
+        // before the body's own roll (LOW): an airborne state's landing never hurts
+        bus.addListener(EventPriority.HIGH, AscentServer::onFall);
+        bus.addListener(AscentServer::onLogin);
+        bus.addListener(AscentServer::onRespawn);
+        bus.addListener(AscentServer::onDimension);
+        AscentCommands.register();
+        AscentTests.register();
+    }
+
+    private static void registerPayloads(RegisterPayloadHandlersEvent event) {
+        var r = event.registrar("1");
+        r.playToServer(AscentPayloads.State.TYPE, AscentPayloads.State.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) AscentServer.onState(sp, msg);
+        });
+        r.playToServer(AscentPayloads.Event.TYPE, AscentPayloads.Event.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) AscentServer.onEvent(sp, msg);
+        });
+        r.playToClient(AscentPayloads.Seen.TYPE, AscentPayloads.Seen.STREAM_CODEC);
+        r.playToClient(AscentPayloads.SeenEvent.TYPE, AscentPayloads.SeenEvent.STREAM_CODEC);
+        r.playToClient(AscentPayloads.Tiers.TYPE, AscentPayloads.Tiers.STREAM_CODEC);
+        r.playToClient(AscentPayloads.Pilot.TYPE, AscentPayloads.Pilot.STREAM_CODEC);
+    }
+}

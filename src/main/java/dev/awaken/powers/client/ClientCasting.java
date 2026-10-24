@@ -48,7 +48,8 @@ final class ClientCasting {
             KeyMapping k = key(slot);
             boolean pressed = false;
             while (k.consumeClick()) pressed = true;
-            if (blocked) {
+            // the body's rope owns the movement key once the Ascent's Tether is held (core.api.MovementHooks)
+            if (blocked || k == AwakenKeys.MOVEMENT && dev.awaken.core.api.MovementHooks.clientOwnsMovementKey(p)) {
                 if (channeling[slot]) release(slot);
                 continue;
             }

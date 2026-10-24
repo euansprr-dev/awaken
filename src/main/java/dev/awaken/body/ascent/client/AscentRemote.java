@@ -1,0 +1,114 @@
+package dev.awaken.body.ascent.client;
+
+import dev.awaken.body.ascent.AscentContent;
+import dev.awaken.body.ascent.AscentPayloads;
+import dev.awaken.body.ascent.AscentState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * Other players' Ascent as this client sees it: their state and rope from the server's Seen messages, their moments
+ * (a rope firing, wings opening, the boom) with sound and light. Fixed slots, nothing allocated per tick.
+ */
+public final class AscentRemote {
+    private AscentRemote() {}
+
+    static final class Slot {
+        int entity = -1;
+        AscentState state = AscentState.NONE;
+        double ax, ay, az;
+        int since;
+    }
+
+    static final Slot[] SLOTS = new Slot[32];
+
+    static {
+        for (int i = 0; i < SLOTS.length; i++) SLOTS[i] = new Slot();
+    }
+
+    static @Nullable Slot of(int entityId) {
+        for (Slot s : SLOTS) if (s.entity == entityId) return s;
+        return null;
+    }
+
+    /** The state another entity is in (NONE when unknown); for the local player, the prediction. */
+    public static AscentState stateOf(Entity e) {
+        Minecraft mc = Minecraft.getInstance();
+        if (e == mc.player) return AscentMoves.state();
+        Slot s = of(e.getId());
+        return s == null ? AscentState.NONE : s.state;
+    }
+
+    static void seen(AscentPayloads.Seen msg) {
+        AscentState st = AscentState.byId(msg.state());
+        if (st == null) return;
+        Slot s = of(msg.entityId());
+        if (st == AscentState.NONE) {
+            if (s != null) {
+                if (s.state.rope) AscentFx.loose(msg.entityId(), s.ax, s.ay, s.az);
+                s.entity = -1;
+            }
+            AscentAnims.stop(msg.entityId());
+            return;
+        }
+        if (s == null) s = free();
+        AscentState was = s.entity == msg.entityId() ? s.state : AscentState.NONE;
+        if (was.rope && !st.rope) AscentFx.loose(msg.entityId(), s.ax, s.ay, s.az);
+        s.entity = msg.entityId();
+        s.state = st;
+        s.ax = msg.x();
+        s.ay = msg.y();
+        s.az = msg.z();
+        s.since = AscentMoves.ticks;
+        AscentAnims.play(msg.entityId(), st, was);
+    }
+
+    static void event(AscentPayloads.SeenEvent msg) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        Entity e = mc.level.getEntity(msg.entityId());
+        if (e == null) return;
+        switch (msg.what()) {
+            case AscentPayloads.EV_FIRE -> AscentSounds.local(e, AscentContent.ROPE_FIRE.get(), 0.7F, 1F);
+            case AscentPayloads.EV_LAUNCH -> AscentSounds.local(e, AscentContent.LAUNCH.get(), 0.7F, 1F);
+            case AscentPayloads.EV_DEPLOY -> AscentSounds.local(e, AscentContent.WINGS_OPEN.get(), 0.9F, 1F);
+            case AscentPayloads.EV_FLAP -> {
+                AscentSounds.local(e, AscentContent.FLAP.get(), 0.8F, 1F);
+                WingLayer.flap(e.getId());
+            }
+            case AscentPayloads.EV_CATCH -> AscentSounds.local(e, AscentContent.ROPE_STRAIN.get(), 0.6F, 0.9F);
+            case AscentPayloads.EV_LAND -> AscentSounds.local(e, AscentContent.LAND.get(), Math.min(1F, 0.3F + msg.speed() * 0.5F), 1F);
+            case AscentPayloads.EV_BOOM -> {
+                AscentSounds.local(e, AscentContent.BOOM.get(), 1F, 1F);
+                AscentFx.ring(e.getX(), e.getY() + 0.9, e.getZ(), e.getDeltaMovement(), 1F);
+            }
+            default -> {
+            }
+        }
+        if (msg.what() == AscentPayloads.EV_FIRE) {
+            Slot s = of(e.getId());
+            if (s != null && s.state.rope) AscentFx.bite(e, s.ax, s.ay, s.az);
+        }
+    }
+
+    static void tick() {
+        Minecraft mc = Minecraft.getInstance();
+        for (Slot s : SLOTS) {
+            if (s.entity < 0) continue;
+            Entity e = mc.level == null ? null : mc.level.getEntity(s.entity);
+            if (e == null || e.isRemoved()) s.entity = -1;
+        }
+    }
+
+    static void reset() {
+        for (Slot s : SLOTS) s.entity = -1;
+    }
+
+    private static Slot free() {
+        for (Slot s : SLOTS) if (s.entity < 0) return s;
+        Slot oldest = SLOTS[0];
+        for (Slot s : SLOTS) if (s.since < oldest.since) oldest = s;
+        return oldest;
+    }
+}

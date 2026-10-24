@@ -1245,3 +1245,102 @@ The Veil, the Lucidium and the rest:
 - Statics cleared on server stop: Echo duty bookkeeping, breaks near Hearths, Bodies' owed deaths, Hearth offers and
   invitations, throttles, queued region erasures.
 
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 17. The Ascent (movement as the reward; plan in docs/plan-ascent.html, brief docs/ascent/BRIEF.md, approved 2026-10-24)
+
+The body's states above the ground, climbed as a ladder (Runner → Tether → Leaper → Wings → Skyborn → Sovereign), the
+world built to be crossed, and gate rooms that move. Built once, in the body module (`dev.awaken.body.ascent`, client
+`...ascent.client`, the Feel Director in `dev.awaken.body.client.feel`). The bar every part must pass is BRIEF.md's
+nine-point "genuinely magical" list.
+
+### 17.1 Phase 0: the feel spike (2026-10-24)
+Throwaway in its tuning, not in its structure: the states, physics and feel below are the skeleton Phase 1 builds on.
+
+States (`AscentState`, ordinal = network id, new ones only at the end): NONE, TETHER (on a rope), ZIP (pulled along a
+rope), CARRY (flying free with a move's momentum), GLIDE (wings), SOAR (momentum flight). Each airborne state keeps its
+own velocity and sets the body's motion every tick in the movement-input event (HIGH priority, before the Awakened
+Body's moves, which stand aside while one runs); vanilla's collision moves the body; what vanilla's air control would add
+from the keys is taken off first. A collision shows up next tick as the body ending short: that part of the velocity is
+gone; a landing ends the state; a teleport (over 3 blocks off) ends it.
+
+Controls (no new keys): the movement key (Left Alt) fires and holds the rope once the Tether tier is held, and the
+movement slot's power steps aside (`MovementHooks.ClientAccess.ownsMovementKey`, default false). Letting go flies on
+(CARRY); jump on the rope jumps off it; forward pumps the swing near the bottom of the arc; sideways turns it; sneak
+reels in. Jump in the air (falling, 2.2+ above the floor) opens the wings; jump while gliding takes flight; sneak while
+gliding folds them into a dive. In flight: forward cruises along the look, sprint boosts, jump climbs, sneak sinks, no
+forward hovers; a jump with no forward is a wing beat. A double-tap of jump in the air without wings takes flight.
+
+Numbers (`AscentRules`, blocks and ticks; gravity 0.08 everywhere):
+- Rope: reach 44, shortest 3, pulls on the hand 1.55 above the feet. Air drag 0.0025 a tick. Pump 0.016 a tick at
+  forward, full from 30° below the anchor's level down to the bottom. Steer 0.012. Sneak reels in 0.34 a tick. Top
+  speed 2.6. The arc's lowest point keeps 1.8 above the floor (the higher of the floor under you and under the arc's
+  bottom, taken 1.5 off the anchor toward you so its own trunk isn't the floor); a rope longer than that reels in at
+  1.2 a tick as it bites (the yank into the swing). The bite tugs 0.22 along the swing in the way you look. A swing
+  may scrape the floor for 5 ticks; the 6th on the ground lands it. An anchor less than 2 above the hand zips instead
+  of swinging (accel 0.24, top 1.45, lets go within 2.2 with a hop up of at least 0.48). A rope flies out for 1-3
+  ticks (distance / 16) before it bites. The integrator moves the hand along the rope's sphere on a great circle
+  (energy kept but for drag and input: GameTest `ascent_swing_energy`).
+- Anchors: the look's own ray (reach 44) wins when it hits 6+ above the eye (aimed swing) or under 2 above and at
+  least 4 away (aimed zip). Anything else (sky, a trunk a few blocks up, a wall closer than 4) asks the assist: 25 rays
+  climbing 20-62° above the horizon, straight ahead and up to 28° either side, scored ahead (≥0.45 of the facing) ×
+  rise near 14 × reach near 13 (gaussian, 9 wide). A low direct hit 4+ away swings as it is only when the assist finds
+  nothing.
+- Release window: letting go while rising in the front half of the arc, best 52° past the bottom (±30°), adds up to
+  ×1.06. Jumping off: ×1.12 horizontal and +0.46 up. A rope is cut only by something solid across its middle (from
+  1.5 off the hand to 3 short of the anchor; checked every 4 ticks: it wraps its own trunk as you swing round it) or
+  by its anchor block going.
+- Carry: horizontal drag 0.988, vertical 0.98 (vanilla's 0.91 would eat the swing); input bends the path by 0.02 a
+  tick and never adds speed beyond what you had (or 0.24 when slow).
+- Glide: speed changes by -dir.y × 0.08 - 0.0062 × speed² a tick (dives gain, climbs pay); the path turns 16% of the
+  way to the look a tick at full authority (25% of that below 0.9 b/t); below 0.42 it stalls and sags. Opening the
+  wings keeps 45% of a fall's descent and turns half the rest forward. A 6° glide holds ~1.16 b/t (ratio ~9.5).
+- Sonic boom: crossing 2.2 b/t in a glide or flight; arms again below 1.6.
+- Soar: thrust 0.0098 (cruise ≈ 1.25), boost 0.032 (≈ 2.25), drag 0.0063 × speed², path turn 0.2, top 3.2; hover bleeds
+  ×0.88 a tick, climbs at 0.32, sinks at 0.36; a wing beat lifts 0.38.
+
+Server (Phase 0): takes the client's state (`AscentPayloads.State`) when the tiers allow it (else NONE), shows it to
+players within 160 (`Seen`, `SeenEvent` for one-off moments: fire, launch, deploy, boom, land, flap, catch). While a
+state is airborne it resets fall distance and `connection.resetFlyingTicks()` each tick (never mayFly, which would give
+the client creative flight on a double jump); a landing in an airborne state or within 15 ticks after one takes no
+fall damage (soft failure; Phase 1 turns hard landings into rolls with the body's roll). A body on the ground 20 ticks
+while its client still says airborne is ended by the server. Phase 1 adds the checks (anchors really there, speed caps
+per tier, history-based position checks as Carillon's S3 proved).
+
+Tiers: a bit per `AscentPayloads.Tier` (TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN) in `AscentMemory` (saved, kept
+through death, schema 1). Phase 0 grants them only by `/awaken ascent grant <all|none|tether|wings|skyborn>` (game
+masters); `/awaken ascent sandbox` grows 14 giant trees (26-38 tall, branches, persistent leaves) down a lane ahead and a
+46-tall launch tower under you. `/awaken ascent pilot <line>` drives the tour pilot (scripted keys) and the clip recorder.
+
+Feel (the Feel Director, one client voice): camera roll capped at the comfort setting (5° default) (banked into turns at 1.5 × the yaw rate; on a rope,
+leaning with the rope's angle across the view, 9° per unit), halved in third person; FOV × (1 + 0.17 × smoothstep of
+speed 0.4-2.4) times vanilla's FOV-effects slider, plus punches; a damped pitch spring for moments (bite, catch, launch,
+deploy, flap, land, bonk); a faint tremor above 1.7 b/t and shake on the boom and hard landings, both off with Awaken's
+camera-shake setting; light streaks at the frame's edge above 1.0 b/t (first person); the boom flashes the frame, cuts
+the wind out for 7 ticks, then cracks. Everything starts on the predicted state, never the server's answer. Wind is one
+listener-relative loop, louder and higher with speed. Comfort lives in `config/awaken-feel-client.toml`: cameraRoll
+0-7.5 (5), speedFov 0-1 (1, times vanilla's FOV-effects slider), movementShake (on; also off with Awaken's
+cameraShake), reducedMotion (off: on removes streaks, air motes, the boom flash and the tremor, and halves the roll).
+Camera Overhaul (pack, optional) is switched off through its own public settings (`Configuration.get().general
+.enabled`, never saved) while an Ascent state is airborne, and put back after (decision 6; compileOnly, the one class
+`body.client.feel.CameraOverhaulPause`).
+
+Look (no vanilla particles or render types reused for the shapes): the rope is a ribbon of `textures/ascent/rope.png`
+(white core, braided cyan strands, a deep-blue rim for daylight) plus an additive glow; it flies out rippling, sags
+while slack, and falls away from the hand when let go. Contrails trail the wingtips (wings open, over 0.55 b/t) or the
+hands (over 0.85). Motes of air stream past your eyes above 0.7 b/t. A rope's bite flashes a four-point flare and throws
+`awaken:ascent_mote` sparks; the boom throws a ring of shocked air across the line of flight and a cone of vapour. Wings
+are a render layer on the player model (`WingLayer`): three jointed bones a side, 21 overlapping flight feathers and two
+rows of coverts (`textures/ascent/wing.png`), unfolding from the back, beating, swept back by speed, folding on landing;
+drawn translucent (a Signal-cyan tint) plus a faint additive glow; the trailing edge is fourteen feathers whose
+outer ones alternate short, so the primaries part at the tip; hovering, they beat slowly every 18 ticks. Your own wings
+and contrails are not drawn in first person (whole, they fill the frame's lower corners; Phase 1 gives first person
+light at the edges instead). The whole figure turns with the state
+(`AscentAnims`): along the rope while swinging (pivot at the shoulder), belly down along the line of flight on wings,
+banked into turns, upright when hovering, one forward flip after letting go of a rope; the limbs come from
+`player_animations/ascent_moves.json` (tools/art/specs/ascent_moves.py: swing, zip, flip, fall, glide, soar, hover, each
+with a `_bent` twin). Sounds: tools/art/specs/audio_ascent.py, eleven events under `ascent.*`.
+
+Tours: tools/autopilot/ascent-spike.txt records clips (run-autopilot/clips/<name>/ frames with their game times;
+`python3 -I tools/ascent/clip.py <dir>` makes a real-time mp4 and a contact sheet).

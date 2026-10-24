@@ -1,0 +1,80 @@
+# The Ascent, Phase 0 feel spike: the rope swing, a dive to the sonic boom, a glide and momentum flight, each recorded
+# as a clip (run-autopilot/clips/<name>/, then python3 -I tools/ascent/clip.py run-autopilot/clips/<name>).
+# The autopilot can't hold keys: "awaken ascent pilot run <swing|boom|glide|soar>" presses them through the real input
+# path. A floor of grass in the sky (y 150) under the sandbox's grove keeps every run the same whatever the seed.
+world ascent_spike survival 4242
+waitworld
+window 1440 900
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd tp @s 0.5 152 0.5 0 0
+wait 20
+cmd fill -30 150 -12 30 150 250 minecraft:grass_block
+cmd fill -30 151 -12 30 160 250 minecraft:air
+cmd tp @s 0.5 151 0.5 0 0
+wait 10
+cmd awaken ascent sandbox
+wait 200
+screen close
+# a high deck for dives and flight (100 above the floor)
+cmd fill -3 250 -3 3 250 3 minecraft:polished_deepslate
+
+# ---- the swing, first person ----
+cmd tp @s 0.5 151 5.5 0 -10
+camera first
+wait 40
+cmd awaken ascent pilot rec swing_fp 330 3
+cmd awaken ascent pilot run swing 5
+wait 340
+
+# ---- the swing, third person ----
+cmd awaken ascent pilot stop
+cmd tp @s 0.5 151 5.5 0 -10
+camera back
+wait 40
+cmd awaken ascent pilot rec swing_tp 330 3
+cmd awaken ascent pilot run swing 5
+wait 340
+
+# ---- off the high deck: dive to the boom, pull up (third person) ----
+cmd awaken ascent pilot stop
+cmd tp @s 0.5 251 -2.5 0 10
+camera back
+wait 40
+cmd awaken ascent pilot rec boom_tp 260 3
+cmd awaken ascent pilot run boom
+wait 270
+
+# ---- a glide, first person ----
+cmd awaken ascent pilot stop
+cmd tp @s 0.5 198 0.5 0 10
+camera first
+wait 40
+cmd awaken ascent pilot rec glide_fp 240 3
+cmd awaken ascent pilot run glide
+wait 250
+
+# ---- flight: take off, cruise, boost, a banked turn, a hover (third person) ----
+cmd awaken ascent pilot stop
+cmd tp @s 0.5 251 -2.5 0 10
+camera back
+wait 40
+cmd awaken ascent pilot rec soar_tp 280 3
+cmd awaken ascent pilot run soar
+wait 290
+info
+quit

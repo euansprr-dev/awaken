@@ -123,7 +123,22 @@ public final class ClientMoves {
 
     static boolean off(LocalPlayer p) {
         return p.isPassenger() || p.isSleeping() || p.isSpectator() || !p.isAlive() || p.getAbilities().flying || p.isFallFlying()
-                || Veil.isSpirit(p);
+                || Veil.isSpirit(p) || dev.awaken.body.ascent.client.AscentMoves.active();
+    }
+
+    /** An Ascent state takes the body into the air (a rope, wings): whatever grounded move was running stops. */
+    public static void ascentStarting(LocalPlayer p) {
+        stopAll(p);
+        lastFly = ticks; // its landing is the Ascent's, never a second roll here
+    }
+
+    /** An Ascent state landed hard: the soft-landing roll's clip, sound and ring (the Ascent decided the landing). */
+    public static void ascentRoll(LocalPlayer p) {
+        rollAt = ticks;
+        trace("roll out of the Ascent");
+        BodyAnims.play(p.getId(), Move.ROLL, p.getYRot());
+        BodyFx.sound(p, BodyContent.ROLL.get(), 0.9F, 1F);
+        BodyFx.rollRing(p);
     }
 
     /** The same keys with jump and shift replaced (cached: nothing allocated per tick). */
