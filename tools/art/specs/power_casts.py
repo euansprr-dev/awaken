@@ -379,17 +379,18 @@ F_GRIP = pose(lean=-4, rise=0.6, ra=(-112, 6, -6), ra_aim=True, la=(-6, 0, -34),
 hold("hold_flight", F_GRIP, [nudge(F_GRIP, ra=(-3, 2, 0), rise=0.4), nudge(F_GRIP, ra=(2, -2, 0), rise=-0.2)], 8,
      "holding something aloft: the hand up and out, the body light")
 
-# Energy: gather at the chest, then both palms thrust out along the aim from a wide braced stance.
-E_GATHER = pose(lean=-6, ra=(-48, -40, 0), la=(-48, 40, 0), rl=(12, 0, 8), ll=(-6, 0, -8))
+# Energy: the hands gather the charge cupped at the main hip with the chest coiled away, then both palms thrust out
+# along the aim from a wide braced stance.
+E_GATHER = pose(lean=-4, twist=30, ra=(26, 0, 10), la=(-34, 52, 0), rl=(14, 0, 8), ll=(-6, 0, -8))
 E_THRUST = pose(lean=14, shift=1.5, ra=(-92, -12, 0), la=(-92, 12, 0), ra_aim=True, la_aim=True, rl=(24, 0, 9), ll=(-16, 0, -9))
 E_HOLD = pose(E_THRUST, lean=11, ra=(-90, -12, 0), la=(-90, 12, 0))
 E_SETTLE = pose(E_THRUST, lean=5, shift=0.5, ra=(-62, -14, 0), la=(-62, 14, 0), ra_aim=False, la_aim=False, rl=(12, 0, 6), ll=(-8, 0, -6))
 cast("energy", [(0, NEUTRAL, "linear"), (3, E_GATHER, "easeoutquad"), (5, E_THRUST, "easeoutexpo"),
                 (8, E_HOLD, "easeinoutsine"), (9, E_SETTLE, "easeinoutsine")], 12, 3,
-     "gather at the chest, both palms thrust out along the aim")
-E_CHARGE = pose(E_GATHER, lean=-8, ra=(-52, -42, 0), la=(-52, 42, 0), rl=(14, 0, 10), ll=(-8, 0, -10))
+     "gather cupped at the hip, both palms thrust out along the aim")
+E_CHARGE = pose(E_GATHER, lean=-6, twist=34, ra=(30, 0, 10), la=(-30, 54, 0), rl=(16, 0, 10), ll=(-8, 0, -10))
 hold("hold_energy", E_CHARGE, [nudge(E_CHARGE, ra=(3, 2, 0), la=(-3, -2, 0), rise=0.3), nudge(E_CHARGE, ra=(-2, -1, 0), la=(2, 1, 0))], 4,
-     "power gathered between the palms at the chest, trembling")
+     "power gathered between the palms at the hip, trembling")
 
 # Shadow: drop into a low crouch with the hand drawn across to the off shoulder, then sweep it out wide at waist
 # height as the chest uncoils; stay low.

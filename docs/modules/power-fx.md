@@ -232,7 +232,7 @@ The tour (third person, camera behind the caster, target straight ahead) showed 
   | Kinetic | wide stance, chest coils away, hips and chest snap round, straight fist at the target, off fist chambered | 10 | punch loaded, trembling |
   | Velocity | crouch, then a hard forward lean with both arms swept back and a long stride (every dash plays this) | 10 | crouched to go |
   | Flight & Gravity | hands gather low at the off hip, sweep diagonally up past the main shoulder, the body lifts and arches | 15 | a hand up holding something aloft |
-  | Energy | hands gather at the chest, both palms thrust out along the aim from a braced lunge | 12 | power between the palms |
+  | Energy | hands gather the charge cupped at the main hip, chest coiled, then both palms thrust out along the aim from a braced lunge | 12 | power between the palms at the hip |
   | Shadow | drop into a low wide crouch, hand drawn to the off shoulder, then a wide sweep at waist height | 13 | coiled low |
   | Mind | two fingers to the temple, head tipped to the hand, then a straight point at the target | 15 | concentrating |
   | Architect | hands draw a frame in the air (together, apart, down the sides), then set it with both palms | 14 | the frame held open |
