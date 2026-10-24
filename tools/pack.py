@@ -217,8 +217,15 @@ def cmd_install(game_dir, profiles, reset_configs=False):
     lock = load(LOCK)
     chosen, names = select(lock, profiles)
     mods_dir = game_dir / "mods"
-    mods_dir.mkdir(parents=True, exist_ok=True)
     old = marker_of(mods_dir)
+    # terrain mods reshape every chunk generated from now on: an old world would get seams where new land meets old,
+    # so the world profile only goes into a folder whose worlds were all made with it (or that has none yet)
+    saves = game_dir / "saves"
+    has_worlds = saves.is_dir() and any(p.is_dir() for p in saves.iterdir())
+    if "world" in names and has_worlds and "world" not in old.get("profiles", []):
+        raise SystemExit(f"{game_dir} has worlds made without the world profile; terrain mods would seam them. "
+                         "Use a fresh game folder (tools/play.sh --pack uses run-pack).")
+    mods_dir.mkdir(parents=True, exist_ok=True)
     keep = {e["file"] for e in chosen}
     for f in old["files"]:  # take out what an earlier install put here and this selection no longer wants
         p = mods_dir / f["file"]
