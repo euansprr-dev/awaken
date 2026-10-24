@@ -727,9 +727,11 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `tools/pack.py lock` into `pack/lock.json` (exact files and SHA-512, required dependencies, a dependency's own
   version pin). `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
   what it installed, and refuses while a client runs there. GameTests never load the pack: they test Awaken alone.
-- Far view (`compat.FarView`): far-terrain mods draw in vanilla dimensions and `awaken:stillpoint` only. In every other
-  `awaken:` dimension (gate and dream cells, trials, the Halo, the Descent) Distant Horizons renders nothing and gets
-  empty columns instead of running Awaken's chunk generators. Test: `compat_far_view_policy`.
+- Instanced dimensions (`compat.Instanced`): every `awaken:` dimension but `awaken:stillpoint` (gate and dream cells,
+  trials, the Halo, the Descent's strata, the Endless). Companions that draw or remember a place stay out of them.
+  Far view (`compat.FarView`): far-terrain mods draw in vanilla dimensions and the Stillpoint only; in instanced ones
+  Distant Horizons renders nothing and gets empty columns instead of running Awaken's chunk generators. Test:
+  `compat_instanced_dimensions`.
 - Frame time is measured, not guessed: autopilot `perf <label> <s>`, `perfstart`/`perfend`, `info`; fixed scenes in
   `tools/autopilot/perf-pack.txt` at a 1440×900-point window; results and comparisons in `docs/perf/`
   (`tools/perf-report.py`). Every perf line carries the machine's load; runs that disagree by more than 5% on p50 are
@@ -828,12 +830,18 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   ritual's Seated One and statues or Veil marks, and decoys show their name only. Server facts come from
   `compat.LookAt` (plain Awaken code); without Jade on the server the client-only lines remain. Tests:
   `compat_look_at_gate_rule`, `compat_look_at_machines`, `compat_look_at_creatures`.
-- Xaero's World Map and instanced dimensions: there is no supported way to keep 1.47.1 from mapping a dimension. Its
-  ignore list is hard-coded (`MapProcessor.dimensionsToIgnore`, one entry), the map writer has no dimension filter, its
-  "load/update chunks" options are global per config profile, and it has no API for other mods; anything else would be
-  a mixin or reflection, which Awaken doesn't do. So Xaero maps gate cells, dream cells, the strata and trial wings
-  like any dimension, each in its own per-dimension cache (the overworld map is never touched), and a reused gate cell
-  can show an earlier gate's rooms until it is walked again. Accepted until Carillon's Atlas replaces Xaero.
+- Xaero's World Map is shut in instanced dimensions (`compat.WorldMaps`, 2026-10-24): a map of every chunk in view
+  would read a gate's layout before PER 20 may, and a reused cell would show an earlier gate's rooms. 1.47.1 has no
+  setting to skip a dimension (its ignore list is hard-coded, `MapProcessor.dimensionsToIgnore`; "load/update chunks"
+  are global per config profile; per-player server profiles need a permissions mod; no API), so Awaken uses the
+  control Xaero supports for servers: its own No World Map effect (`xaeroworldmap:no_world_map`, registered while
+  Xaero's common option `register_status_effects` is on, its default). A player in an instanced dimension carries it
+  (ambient, no particles, no HUD icon; the inventory lists it as "No World Map"), renewed every 40 ticks for 100 and
+  taken off when they change dimension; an effect an operator gave is never touched. Xaero's map screen then reads
+  "The map is disabled with a potion effect". Xaero still records those chunks into that dimension's own cache (the
+  overworld map is never touched). The effect lives in the server's registry: single player always has it, a dedicated
+  server needs Xaero's World Map installed (it is server-optional). Without Xaero nothing registers. Autopilot
+  `compat map` reports it. Test: `compat_world_map_rule`. Until Carillon's Atlas replaces Xaero.
 
 ---------------------------------------------------------------------------------------------------------------------
 

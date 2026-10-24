@@ -45,7 +45,7 @@ import java.util.Map;
  *                                                experimental: vanilla's experimental-settings prompt (it should answer itself)
  * click &lt;x&gt; &lt;y&gt;                                 a left click on the open screen at GUI coordinates
  * holo &lt;args&gt;                                    the holo module's test lines (HoloClient.autopilot): demo, at, run, hud, log
- * compat &lt;args&gt;                                  the companion plugins' lines (CompatClient.autopilot): inventory, jei ..., press, discovered
+ * compat &lt;args&gt;                                  the companion plugins' lines (CompatClient.autopilot): inventory, jei ..., press, discovered, map
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
  * camera first|back|front                        the F5 views
  * fps &lt;label&gt;                                     logs the frames of the last second

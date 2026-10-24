@@ -1,6 +1,7 @@
 package dev.awaken.compat.client;
 
 import dev.awaken.compat.Discovered;
+import dev.awaken.compat.WorldMaps;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -24,7 +25,8 @@ public final class CompatClient {
      * The autopilot's {@code compat ...} lines (development tours): {@code inventory} opens the inventory (JEI's list
      * sits beside it), {@code jei <args>} drives JEI ({@link dev.awaken.compat.client.jei.JeiHooks#autopilot}),
      * {@code press <key mapping name>} presses any key mapping by its name (e.g. another mod's "open the map"),
-     * {@code discovered} reports the local copy of the spoiler guard's record.
+     * {@code discovered} reports the local copy of the spoiler guard's record, {@code map} whether Xaero's World Map is
+     * shut here ({@link WorldMaps}).
      */
     public static String autopilot(String args) {
         Minecraft mc = Minecraft.getInstance();
@@ -50,6 +52,11 @@ public final class CompatClient {
             }
             case "discovered" -> {
                 return mc.player == null ? "no player" : Discovered.of(mc.player).size() + " discovered, guard " + (Spoilers.active() ? "on" : "off");
+            }
+            case "map" -> {
+                if (mc.player == null) return "no player";
+                boolean shut = mc.player.getActiveEffects().stream().anyMatch(i -> i.getEffect().is(WorldMaps.NO_WORLD_MAP));
+                return "world map " + (shut ? "shut" : "open") + " in " + mc.player.level().dimension().identifier();
             }
             default -> {
                 return "unknown: " + args;

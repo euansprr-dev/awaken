@@ -15,6 +15,7 @@ public final class CompatModule {
     public static void init(IEventBus modBus) {
         modBus.addListener(CompatModule::setup);
         Discovered.init(modBus);
+        if (ModList.get().isLoaded("xaeroworldmap")) WorldMaps.init();
         CompatCommands.register();
         CompatTests.register();
     }

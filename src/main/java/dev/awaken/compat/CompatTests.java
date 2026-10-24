@@ -27,10 +27,14 @@ import dev.awaken.progression.Rank;
 import dev.awaken.veil.VeilContent;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -44,7 +48,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Companion policies, Awaken's side of them: the far-view policy covers every dimension; the
+ * Companion policies, Awaken's side of them: which dimensions are instanced (far terrain off, Xaero's map shut); the
  * spoiler rule's record (exactly which items a player state counts as discovered) and its guard (what a viewer hides and
  * brings back as the record grows); the look-at facts follow the gate card's rule and read machines, creatures and
  * townsfolk right. None of this needs a companion mod installed.
@@ -53,7 +57,8 @@ final class CompatTests {
     private CompatTests() {}
 
     static void register() {
-        AwakenTests.register("compat_far_view_policy", 20, h -> {
+        // Which dimensions are instanced (far terrain off, Xaero's map shut): every awaken: one but the Stillpoint.
+        AwakenTests.register("compat_instanced_dimensions", 20, h -> {
             int closed = 0;
             // every dimension the data packs define (the GameTest world itself only has the overworld)
             var files = h.getLevel().getServer().getResourceManager().listResources("dimension", f -> f.getPath().endsWith(".json"));
@@ -61,13 +66,37 @@ final class CompatTests {
                 String path = file.getPath();
                 String id = file.getNamespace() + ":" + path.substring("dimension/".length(), path.length() - ".json".length());
                 boolean awaken = id.startsWith(Awaken.MODID + ":");
-                boolean open = FarView.OPEN.contains(id);
-                h.assertTrue(FarView.allowed(id) == (!awaken || open), "far view for " + id);
+                boolean open = Instanced.OPEN.contains(id);
+                h.assertTrue(Instanced.is(id) == (awaken && !open), "instanced: " + id);
+                h.assertTrue(FarView.allowed(id) == !Instanced.is(id), "far view for " + id);
                 if (awaken && !open) closed++;
             }
-            h.assertTrue(FarView.allowed("minecraft:overworld") && FarView.allowed("awaken:stillpoint")
-                    && !FarView.allowed("awaken:gates"), "far view basics");
+            h.assertTrue(!Instanced.is("minecraft:overworld") && !Instanced.is("awaken:stillpoint") && Instanced.is("awaken:gates")
+                    && !Instanced.is(null) && FarView.allowed(null), "the basics");
             h.assertTrue(closed >= 10, "instanced Awaken dimensions found: " + closed);
+            h.succeed();
+        });
+
+        // Xaero's World Map is shut by its own effect while the player is in an instanced dimension. GameTests never load
+        // Xaero, so the effect's upkeep is checked with a vanilla stand-in.
+        AwakenTests.register("compat_world_map_rule", 20, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            h.assertTrue(WorldMaps.effect().isEmpty() && !WorldMaps.apply(sp), "without Xaero there is no effect and nothing to do");
+            Holder<MobEffect> stand = MobEffects.LUCK;
+            WorldMaps.keep(sp, stand, true);
+            MobEffectInstance given = sp.getEffect(stand);
+            h.assertTrue(given != null && WorldMaps.ours(given) && !given.isVisible() && !given.showIcon(), "shut: the effect, no particles, no icon");
+            WorldMaps.keep(sp, stand, true);
+            h.assertTrue(sp.getEffect(stand).getDuration() == WorldMaps.DURATION, "renewed, never stacked");
+            WorldMaps.keep(sp, stand, false);
+            h.assertTrue(!sp.hasEffect(stand), "open the moment the player leaves");
+            // an operator's /effect (visible, longer) is never taken off or shortened
+            sp.addEffect(new MobEffectInstance(stand, 600));
+            WorldMaps.keep(sp, stand, false);
+            WorldMaps.keep(sp, stand, true);
+            MobEffectInstance theirs = sp.getEffect(stand);
+            h.assertTrue(theirs != null && !WorldMaps.ours(theirs) && theirs.getDuration() > WorldMaps.DURATION, "an operator's effect stays as it was");
+            sp.removeEffect(stand);
             h.succeed();
         });
 
