@@ -7,20 +7,30 @@ import java.util.Arrays;
  * built once from the structure's seed and kept while the chunks it spans generate. Building it never looks at the
  * world: every random choice comes from the seed, so every chunk sees the same tree. The world only decides, column
  * by column, where the ground is ({@link #foot}: trunk and root columns reach down to it) and what may be replaced.
+ *
+ * <p>Cost: the work follows the cells written, not the grid. Writes keep each column's used range and a list of the
+ * wood and leaf cells, so settling the leaves walks only those; canopy masses fill whole spans of a row and only test
+ * the ragged rim cell by cell.
  */
 public final class Blueprint {
     // cell codes (states per tree: HeroTree#state)
-    public static final byte EMPTY = 0, LOG = 1, LOG_X = 2, LOG_Z = 3, WOOD = 4, LEAF = 5, VINE = 6, VINE_TIP = 7, MOSS = 8;
-    /** Leaves after {@link #settleLeaves()}: distance 1..6 to wood ({@code LEAF_D1 + d - 1}), or too far (persistent). */
-    public static final byte LEAF_D1 = 10, LEAF_PERSISTENT = 16;
+    public static final byte EMPTY = 0, LOG = 1, LOG_X = 2, LOG_Z = 3, WOOD = 4, LEAF = 5, VINE = 6, VINE_TIP = 7, MOSS = 8, LEAF2 = 9;
+    /**
+     * Leaves after {@link #settleLeaves()}: distance 1..6 to wood ({@code LEAF_D1 + d - 1}) or too far (persistent);
+     * the second leaf tone the same from {@link #LEAF2_D1}.
+     */
+    public static final byte LEAF_D1 = 10, LEAF_PERSISTENT = 16, LEAF2_D1 = 17, LEAF2_PERSISTENT = 23, CODES = 24;
     public static final int NO_FOOT = Short.MIN_VALUE;
 
     public final int extent, minY, maxY, sx, sy;
     final byte[] cells;
     /** Per column: the lowest trunk or root cell, which reaches down to the ground at placement (NO_FOOT elsewhere). */
     final short[] foot;
-    /** Per column: the lowest and highest cell in use (lowest > highest when the column is empty). */
+    /** Per column: the lowest and highest cell ever written (lowest > highest when the column is empty). */
     final short[] colLo, colHi;
+    /** Every cell written as wood, and as leaf (may hold repeats and cells since overwritten: read the cell again). */
+    private int[] woodCells = new int[4096], leafCells = new int[16384];
+    private int woodCount, leafCount;
 
     public Blueprint(int extent, int minY, int maxY) {
         this.extent = extent;
@@ -33,6 +43,8 @@ public final class Blueprint {
         this.colLo = new short[sx * sx];
         this.colHi = new short[sx * sx];
         Arrays.fill(foot, (short) NO_FOOT);
+        Arrays.fill(colLo, Short.MAX_VALUE);
+        Arrays.fill(colHi, Short.MIN_VALUE);
     }
 
     public boolean inside(int x, int y, int z) {
@@ -52,14 +64,27 @@ public final class Blueprint {
     }
 
     public void set(int x, int y, int z, byte code) {
-        if (inside(x, y, z)) cells[index(x, y, z)] = code;
+        if (inside(x, y, z)) write(index(x, y, z), column(x, z), y, code);
     }
 
     /** Sets a cell only where nothing is yet (leaves never overwrite wood). */
     public void fill(int x, int y, int z, byte code) {
         if (inside(x, y, z)) {
             int i = index(x, y, z);
-            if (cells[i] == EMPTY) cells[i] = code;
+            if (cells[i] == EMPTY) write(i, column(x, z), y, code);
+        }
+    }
+
+    private void write(int i, int col, int y, byte code) {
+        cells[i] = code;
+        if (y < colLo[col]) colLo[col] = (short) y;
+        if (y > colHi[col]) colHi[col] = (short) y;
+        if (wood(code)) {
+            if (woodCount == woodCells.length) woodCells = Arrays.copyOf(woodCells, woodCount * 2);
+            woodCells[woodCount++] = i;
+        } else if (code == LEAF || code == LEAF2) {
+            if (leafCount == leafCells.length) leafCells = Arrays.copyOf(leafCells, leafCount * 2);
+            leafCells[leafCount++] = i;
         }
     }
 
@@ -68,7 +93,7 @@ public final class Blueprint {
     }
 
     static boolean leaf(byte c) {
-        return c == LEAF || (c >= LEAF_D1 && c <= LEAF_PERSISTENT);
+        return c == LEAF || c == LEAF2 || (c >= LEAF_D1 && c <= LEAF2_PERSISTENT);
     }
 
     /** Marks a trunk or root column: from its lowest cell the wood continues down to the ground. */
@@ -92,18 +117,23 @@ public final class Blueprint {
     /** A tube from a to b, its radius going from ra to rb; thin ends are kept joined face to face by a walk. */
     public void tube(double ax, double ay, double az, double bx, double by, double bz, double ra, double rb, byte code) {
         double r = Math.max(ra, rb);
-        int x0 = (int) Math.floor(Math.min(ax, bx) - r - 1), x1 = (int) Math.ceil(Math.max(ax, bx) + r + 1);
-        int y0 = (int) Math.floor(Math.min(ay, by) - r - 1), y1 = (int) Math.ceil(Math.max(ay, by) + r + 1);
-        int z0 = (int) Math.floor(Math.min(az, bz) - r - 1), z1 = (int) Math.ceil(Math.max(az, bz) + r + 1);
+        int x0 = Math.max(-extent, (int) Math.floor(Math.min(ax, bx) - r - 1)), x1 = Math.min(extent, (int) Math.ceil(Math.max(ax, bx) + r + 1));
+        int y0 = Math.max(minY, (int) Math.floor(Math.min(ay, by) - r - 1)), y1 = Math.min(maxY, (int) Math.ceil(Math.max(ay, by) + r + 1));
+        int z0 = Math.max(-extent, (int) Math.floor(Math.min(az, bz) - r - 1)), z1 = Math.min(extent, (int) Math.ceil(Math.max(az, bz) + r + 1));
         double dx = bx - ax, dy = by - ay, dz = bz - az, len2 = dx * dx + dy * dy + dz * dz;
+        double inv = len2 == 0 ? 0 : 1.0 / len2;
         for (int y = y0; y <= y1; y++) {
+            double py = y + 0.5 - ay;
+            int layer = (y - minY) * sx;
             for (int x = x0; x <= x1; x++) {
+                double px = x + 0.5 - ax;
+                int rowBase = (layer + x + extent) * sx + extent, colBase = (x + extent) * sx + extent;
                 for (int z = z0; z <= z1; z++) {
-                    double px = x + 0.5 - ax, py = y + 0.5 - ay, pz = z + 0.5 - az;
-                    double t = len2 == 0 ? 0 : Math.max(0, Math.min(1, (px * dx + py * dy + pz * dz) / len2));
+                    double pz = z + 0.5 - az;
+                    double t = Math.max(0, Math.min(1, (px * dx + py * dy + pz * dz) * inv));
                     double qx = px - t * dx, qy = py - t * dy, qz = pz - t * dz;
                     double rad = ra + (rb - ra) * t;
-                    if (qx * qx + qy * qy + qz * qz <= rad * rad) set(x, y, z, code);
+                    if (qx * qx + qy * qy + qz * qz <= rad * rad) write(rowBase + z, colBase + z, y, code);
                 }
             }
         }
@@ -125,28 +155,53 @@ public final class Blueprint {
     }
 
     /**
-     * A canopy mass: an ellipsoid of leaves (rx across, up above the centre, down below it), its edge broken by the
-     * hash, hollow inside {@code hollow} (a share of the radius) so only a shell is built.
+     * A canopy mass of leaves ({@code code}: {@link #LEAF} or {@link #LEAF2}): an ellipsoid (rx across, up above the
+     * centre, down below it), its edge broken by the hash, hollow inside {@code hollow} (a share of the radius) so only a
+     * shell is built. Rows are filled span by span; only the ragged rim is tested cell by cell.
      */
-    public void cloud(long seed, double cx, double cy, double cz, double rx, double up, double down, double hollow, double ragged) {
-        int x0 = (int) Math.floor(cx - rx - 1), x1 = (int) Math.ceil(cx + rx + 1);
-        int y0 = (int) Math.floor(cy - down - 1), y1 = (int) Math.ceil(cy + up + 1);
-        int z0 = (int) Math.floor(cz - rx - 1), z1 = (int) Math.ceil(cz + rx + 1);
-        double h2 = hollow * hollow, inner = 1.0 - ragged * 0.5, outer = 1.0 + ragged * 0.5;
+    public void cloud(long seed, double cx, double cy, double cz, double rx, double up, double down, double hollow, double ragged, byte code) {
+        int x0 = Math.max(-extent, (int) Math.floor(cx - rx - 1)), x1 = Math.min(extent, (int) Math.ceil(cx + rx + 1));
+        int y0 = Math.max(minY, (int) Math.floor(cy - down - 1)), y1 = Math.min(maxY, (int) Math.ceil(cy + up + 1));
+        double h2 = hollow * hollow, inner = 1.0 - ragged * 0.5, outer = 1.0 + ragged * 0.5, irx = 1.0 / rx;
         for (int y = y0; y <= y1; y++) {
             double fy = (y + 0.5 - cy) / ((y + 0.5 >= cy) ? up : down);
             double fy2 = fy * fy;
             if (fy2 > outer) continue;
+            int layer = (y - minY) * sx;
             for (int x = x0; x <= x1; x++) {
-                double fx = (x + 0.5 - cx) / rx, exy = fx * fx + fy2;
+                double fx = (x + 0.5 - cx) * irx, exy = fx * fx + fy2;
                 if (exy > outer) continue;
+                // the row's reach: solid out to `in`, ragged from there to `out`, hollow inside `hole` (in z, from cz)
+                double out = rx * Math.sqrt(outer - exy), in = exy < inner ? rx * Math.sqrt(inner - exy) : 0;
+                double hole = exy < h2 ? rx * Math.sqrt(h2 - exy) : -1;
+                int z0 = Math.max(-extent, (int) Math.floor(cz - out - 0.5)), z1 = Math.min(extent, (int) Math.ceil(cz + out - 0.5));
+                int rowBase = (layer + x + extent) * sx + extent, colBase = (x + extent) * sx + extent;
                 for (int z = z0; z <= z1; z++) {
-                    double fz = (z + 0.5 - cz) / rx;
-                    double e = exy + fz * fz;
-                    if (e < h2 || e > outer) continue;
-                    // only the ragged rim needs the hash
-                    if (e > inner && e > 1.0 + (hash(seed, x, y, z) - 0.5) * ragged) continue;
-                    fill(x, y, z, LEAF);
+                    double dz = Math.abs(z + 0.5 - cz);
+                    if (dz > out || dz < hole) continue;
+                    int i = rowBase + z;
+                    if (cells[i] != EMPTY) continue;
+                    if (dz > in) {
+                        double fz = dz * irx;
+                        if (exy + fz * fz > 1.0 + (hash(seed, x, y, z) - 0.5) * ragged) continue;
+                    }
+                    write(i, colBase + z, y, code);
+                }
+            }
+        }
+    }
+
+    /** Clears leaves (never wood) in a vertical cylinder from {@code fromY} up: a shaft for the sky to reach the trunk. */
+    public void shaft(double cx, double cz, double r, int fromY) {
+        int x0 = (int) Math.floor(cx - r), x1 = (int) Math.ceil(cx + r), z0 = (int) Math.floor(cz - r), z1 = (int) Math.ceil(cz + r);
+        for (int x = x0; x <= x1; x++) {
+            for (int z = z0; z <= z1; z++) {
+                double dx = x + 0.5 - cx, dz = z + 0.5 - cz;
+                if (dx * dx + dz * dz > r * r || x < -extent || x > extent || z < -extent || z > extent) continue;
+                int col = column(x, z);
+                for (int y = Math.max(fromY, colLo[col]); y <= colHi[col]; y++) {
+                    int i = index(x, y, z);
+                    if (cells[i] == LEAF || cells[i] == LEAF2) cells[i] = EMPTY;
                 }
             }
         }
@@ -156,18 +211,20 @@ public final class Blueprint {
 
     /**
      * Gives every leaf its distance to wood through other leaves (vanilla's decay rule), makes the ones further than
-     * six persistent and removes the ones no wood reaches at all (they would float).
+     * six persistent and removes the ones no wood reaches at all (they would float). Walks only the cells written.
      */
+    /** Per worker thread: distances for the settling walk (zero between uses: each walk clears what it touched). */
+    private static final ThreadLocal<byte[]> DIST = ThreadLocal.withInitial(() -> new byte[0]);
+
     public void settleLeaves() {
-        int n = cells.length, used = 0;
-        for (int i = 0; i < n; i++) if (cells[i] != EMPTY) used++;
-        int[] queue = new int[used];
-        byte[] dist = new byte[n];
-        Arrays.fill(dist, Byte.MAX_VALUE);
+        byte[] dist = DIST.get(); // distance + 1; 0 = not reached
+        if (dist.length < cells.length) DIST.set(dist = new byte[cells.length]);
+        int[] queue = new int[woodCount + leafCount];
         int head = 0, tail = 0;
-        for (int i = 0; i < n; i++) {
-            if (wood(cells[i])) {
-                dist[i] = 0;
+        for (int k = 0; k < woodCount; k++) {
+            int i = woodCells[k];
+            if (wood(cells[i]) && dist[i] == 0) {
+                dist[i] = 1;
                 queue[tail++] = i;
             }
         }
@@ -187,24 +244,31 @@ public final class Blueprint {
                     case 4 -> j = y + 1 < sy ? i + strideY : -1;
                     default -> j = y > 0 ? i - strideY : -1;
                 }
-                if (j < 0 || cells[j] != LEAF || dist[j] <= d) continue;
+                if (j < 0 || dist[j] != 0 || (cells[j] != LEAF && cells[j] != LEAF2)) continue;
                 dist[j] = (byte) d;
                 queue[tail++] = j;
             }
         }
-        for (int i = 0; i < n; i++) {
-            if (cells[i] != LEAF) continue;
-            int d = dist[i];
-            cells[i] = d == Byte.MAX_VALUE ? EMPTY : d <= 6 ? (byte) (LEAF_D1 + d - 1) : LEAF_PERSISTENT;
+        for (int k = 0; k < leafCount; k++) {
+            int i = leafCells[k];
+            byte c = cells[i];
+            if (c != LEAF && c != LEAF2) continue; // overwritten since, or already settled (a repeat)
+            int d = dist[i] - 1;
+            byte first = c == LEAF ? LEAF_D1 : LEAF2_D1, far = c == LEAF ? LEAF_PERSISTENT : LEAF2_PERSISTENT;
+            cells[i] = d < 0 ? EMPTY : d <= 6 ? (byte) (first + d - 1) : far;
         }
+        for (int k = 0; k < tail; k++) dist[queue[k]] = 0;
     }
 
     /** Strands hanging from the underside of leaves: {@code chance} per open leaf, lengths from {@code lo} to {@code hi}. */
     public void hangVines(long seed, double chance, int lo, int hi, java.util.function.IntUnaryOperator longerAt) {
         for (int x = -extent; x <= extent; x++) {
             for (int z = -extent; z <= extent; z++) {
-                for (int y = maxY; y > minY; y--) {
-                    byte c = get(x, y, z);
+                int col = column(x, z);
+                if (colLo[col] > colHi[col]) continue;
+                int bottom = Math.max(minY + 1, colLo[col]); // read once: the vines hung below extend the column
+                for (int y = colHi[col]; y >= bottom; y--) {
+                    byte c = cells[index(x, y, z)];
                     if (!leaf(c) || get(x, y - 1, z) != EMPTY) continue;
                     if (hash(seed, x, y, z) >= chance) continue;
                     int len = lo + (int) (hash(seed + 1, x, y, z) * (hi - lo + 1)) + longerAt.applyAsInt(x * x + z * z);
@@ -216,24 +280,15 @@ public final class Blueprint {
         }
     }
 
-    /** Records each column's used range, so placement skips empty air quickly; returns the number of cells in use. */
+    /** Kept for the callers: the used ranges are tracked as cells are written. Returns the cells in use. */
     public int seal() {
-        int used = 0, cols = sx * sx;
-        Arrays.fill(colLo, (short) 1);
-        Arrays.fill(colHi, (short) 0);
-        // y outermost: the grid is laid out by layer, so this reads it front to back
-        for (int y = minY, i = 0; y <= maxY; y++) {
-            for (int c = 0; c < cols; c++, i++) {
-                if (cells[i] == EMPTY) continue;
-                used++;
-                if (colLo[c] > colHi[c]) colLo[c] = (short) y;
-                colHi[c] = (short) y;
-            }
-        }
+        int used = 0;
+        for (int k = 0; k < woodCount; k++) if (cells[woodCells[k]] != EMPTY) used++;
+        for (int k = 0; k < leafCount; k++) if (cells[leafCells[k]] != EMPTY) used++;
         return used;
     }
 
-    /** The cells' actual bounds (after {@link #seal()}): minX, minY, minZ, maxX, maxY, maxZ relative to the base. */
+    /** The cells' bounds: minX, minY, minZ, maxX, maxY, maxZ relative to the base. */
     public int[] bounds() {
         int[] b = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};
         for (int x = -extent; x <= extent; x++) {

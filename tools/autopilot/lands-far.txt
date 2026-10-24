@@ -1,0 +1,42 @@
+# Awakened Lands hero trees on far terrain (docs/modules/lands.md): the Elder Colossus and the Lumen Spire from 300-600
+# blocks with Distant Horizons drawing the distance. Run: PACK=perf,horizon,world DH=swift TECTONIC=awakened
+#   tools/autopilot.sh tools/autopilot/lands-far.txt 1800
+world landsfar777 creative 777
+waitworld
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+info
+cmd gamemode spectator
+cmd awaken terrain herovisit elder_colossus 300 40
+wait 1200
+shot far_colossus_300
+cmd awaken terrain herovisit elder_colossus 450 50
+wait 1200
+shot far_colossus_450
+cmd awaken terrain herovisit elder_colossus 600 60
+wait 1200
+shot far_colossus_600
+cmd time set 12400
+wait 60
+shot far_colossus_600_golden
+cmd time set 6000
+cmd awaken terrain herovisit lumen_spire 300 30
+wait 1200
+shot far_spire_300
+cmd time set 18000
+wait 60
+shot far_spire_300_night
+cmd time set 6000
+cmd awaken terrain herovisit lumen_spire 450 40
+wait 1200
+shot far_spire_450
+quit

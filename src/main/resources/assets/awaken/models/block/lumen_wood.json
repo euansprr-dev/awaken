@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:block/cube_column",
   "textures": {
-    "end": "awaken:block/lumen_log",
-    "side": "awaken:block/lumen_log"
+    "end": "awaken:block/lumen_wood",
+    "side": "awaken:block/lumen_wood"
   }
 }

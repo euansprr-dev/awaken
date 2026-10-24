@@ -7,7 +7,7 @@
     {"match": ["minecraft:birch_leaves", "minecraft:azalea_leaves", "minecraft:flowering_azalea_leaves", "minecraft:acacia_leaves"], "sprites": [2, 0], "size": 0.9},
     {"match": ["minecraft:jungle_leaves", "minecraft:mangrove_leaves"], "sprites": [1, 0], "size": 1.15},
     {"match": ["minecraft:red_poplar_leaves", "minecraft:orange_poplar_leaves", "minecraft:yellow_poplar_leaves"], "sprites": [2, 4], "rate": 1.4},
-    {"match": ["awaken:elder_leaves"], "sprites": [4, 0], "size": 1.25, "rate": 2.0},
+    {"match": ["awaken:elder_leaves", "awaken:elder_leaves_gold"], "sprites": [4, 0], "size": 1.25, "rate": 2.0},
     {"match": ["awaken:lumen_leaves"], "skip": true, "_why": "the Lumen Forest's air is motes"},
     {"match": ["#minecraft:leaves"], "sprites": [0, 2, 0, 1]}
   ],

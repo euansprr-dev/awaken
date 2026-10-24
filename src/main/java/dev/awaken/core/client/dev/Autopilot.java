@@ -57,6 +57,7 @@ import java.util.Map;
  * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
  * lensdebug 0..3                                 Lens debug views: normal, pass-through, depth masks, far depth
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
+ * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments)
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
  * </pre>
@@ -339,6 +340,12 @@ public final class Autopilot {
                 Screenshot.grab(mc.gameDirectory, name + ".png", mc.gameRenderer.mainRenderTarget(), 1,
                         msg -> Awaken.LOG.info("[autopilot] screenshot {}", name));
                 waitTicks = 10;
+            }
+            case "shotnow" -> { // a shot this tick, without "shot"'s 3-tick settle (for moments shorter than that)
+                String name = arg.trim();
+                Screenshot.grab(mc.gameDirectory, name + ".png", mc.gameRenderer.mainRenderTarget(), 1,
+                        msg -> Awaken.LOG.info("[autopilot] screenshot {}", name));
+                waitTicks = 1;
             }
             case "camera" -> { // first | back | front
                 String v = arg.trim();

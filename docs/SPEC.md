@@ -656,8 +656,10 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
 - `UiHooks.focus()` (0..1) eases with the open panel for Lens. Lens may also tell panels apart by depth: the glass writes
   its real distance (≈0.6 m) into the main depth.
 - System cards (`HudLook`, drawn in the GUI pass with the panel's own shaders on GUI pipelines): toasts, the choice and
-  gate cards, story lines, the Now line and the first-power choice are projected glass (hairline edge, brackets, static
-  scan lines, one even tint, a faint halo) with text as light. Positions, sizes, timing and every System v2 rule are
+  gate cards, story lines, the Now line and the first-power choice are projected glass in the K panel's family (its rim
+  glow and corner brackets, static scan lines, one even 40% tint, a faint halo) with text as light; notices also carry
+  a slow interference band (one pass per 6.5 s, still with reduced motion) and toasts a projection edge on their screen
+  side that flares on arrival. The Now line has the frame only (no band, no flicker). Positions, sizes, timing and every System v2 rule are
   unchanged (the look never moves or resizes a card). A card scans in from the top behind a bright line over the time
   it used to fade in (toasts: vanilla's 600 ms show, done by 270 ms, without the slide), and glitches out in three bands
   that slip ≤ 3.5 GUI px and fade (toasts: in 300 ms of vanilla's hide); reduced motion makes both a fade. The Now line

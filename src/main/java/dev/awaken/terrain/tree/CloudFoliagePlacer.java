@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
@@ -13,6 +14,11 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.feature.TreeFeature;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacerType;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
+
+import java.util.Optional;
 
 /**
  * A canopy mass for the Awakened trees: an ellipsoid of leaves round each attachment, domed on top and flatter below
@@ -30,7 +36,9 @@ public final class CloudFoliagePlacer extends FoliagePlacer {
             Codec.floatRange(0.0F, 2.0F).fieldOf("depth").forGetter(p -> p.depth),
             Codec.floatRange(0.0F, 0.9F).optionalFieldOf("hollow", 0.0F).forGetter(p -> p.hollow),
             Codec.floatRange(0.0F, 1.0F).optionalFieldOf("ragged", 0.3F).forGetter(p -> p.ragged),
-            Codec.floatRange(0.0F, 1.0F).optionalFieldOf("hang", 0.0F).forGetter(p -> p.hang)
+            Codec.floatRange(0.0F, 1.0F).optionalFieldOf("hang", 0.0F).forGetter(p -> p.hang),
+            BlockStateProvider.CODEC.optionalFieldOf("top_provider").forGetter(p -> p.topProvider),
+            Codec.floatRange(0.0F, 1.0F).optionalFieldOf("top_from", 0.4F).forGetter(p -> p.topFrom)
     )).apply(i, CloudFoliagePlacer::new));
 
     /** Leaves further than this from wood decay (LeavesBlock.DECAY_DISTANCE - 1). */
@@ -41,14 +49,20 @@ public final class CloudFoliagePlacer extends FoliagePlacer {
     private final float hollow;
     private final float ragged;
     private final float hang;
+    /** The crown's top (the mass above {@code top_from} of its height) may take its leaves from here: a warmer tone. */
+    private final Optional<Holder<BlockStateProvider>> topProvider;
+    private final float topFrom;
 
-    public CloudFoliagePlacer(IntProvider radius, IntProvider offset, IntProvider height, float depth, float hollow, float ragged, float hang) {
+    public CloudFoliagePlacer(IntProvider radius, IntProvider offset, IntProvider height, float depth, float hollow, float ragged, float hang,
+                              Optional<Holder<BlockStateProvider>> topProvider, float topFrom) {
         super(radius, offset);
         this.height = height;
         this.depth = depth;
         this.hollow = hollow;
         this.ragged = ragged;
         this.hang = hang;
+        this.topProvider = topProvider;
+        this.topFrom = topFrom;
     }
 
     @Override
@@ -114,7 +128,14 @@ public final class CloudFoliagePlacer extends FoliagePlacer {
             for (int x = 0; x < sx; x++) {
                 for (int z = 0; z < sx; z++) {
                     int i = (y * sx + x) * sx + z;
-                    if (cell[i] == 1 && dist[i] <= REACH) tryPlaceLeaf(level, setter, random, tree, m.setWithOffset(c, x + lo, y - below, z + lo));
+                    if (cell[i] != 1 || dist[i] > REACH) continue;
+                    int dy = y - below;
+                    m.setWithOffset(c, x + lo, dy, z + lo);
+                    if (topProvider.isPresent() && dy > 0 && dy >= topFrom * up) {
+                        place(level, setter, topProvider.get().value().getState(level, random, m), m);
+                    } else {
+                        tryPlaceLeaf(level, setter, random, tree, m);
+                    }
                 }
             }
         }
@@ -138,6 +159,15 @@ public final class CloudFoliagePlacer extends FoliagePlacer {
                 }
             }
         }
+    }
+
+    /** A leaf from another provider than the tree's own (tryPlaceLeaf's checks, our state). */
+    private static void place(WorldGenLevel level, FoliageSetter setter, BlockState state, BlockPos pos) {
+        if (!free(level, pos)) return;
+        if (state.hasProperty(BlockStateProperties.WATERLOGGED)) {
+            state = state.setValue(BlockStateProperties.WATERLOGGED, level.isFluidAtPosition(pos, f -> f.isSourceOfType(Fluids.WATER)));
+        }
+        setter.set(pos, state);
     }
 
     /** Room for a leaf: air or anything a tree may grow into, but never someone's persistent leaves. */
