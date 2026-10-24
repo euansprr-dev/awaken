@@ -79,7 +79,7 @@ final class MoveTwists {
         for (LivingEntity e : Combat.bystandersInCone(c.player, origin, dir, PUNCH_RANGE, PUNCH_HALF_ANGLE)) {
             Combat.knockFrom(e, origin, PUNCH_KNOCK * 0.55, PUNCH_UP * 0.5);
         }
-        Fx.at(c, FxKind.CONE, origin).dir(dir).scale(PUNCH_RANGE).aux(PUNCH_HALF_ANGLE).ticks(9).noAnim().send();
+        Fx.at(c, FxKind.CONE, origin).dir(dir).scale(PUNCH_RANGE).aux(PUNCH_HALF_ANGLE).ticks(14).noAnim().send();
         Fx.at(c, FxKind.SLAM, c.pos()).scale(1.6).noAnim().send();
         c.sound(PowerSounds.SHOCKWAVE, 0.9F, 1.25F);
         return hit;

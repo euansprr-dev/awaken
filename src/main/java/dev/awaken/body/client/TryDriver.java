@@ -17,11 +17,12 @@ final class TryDriver {
     private static int age;
     private static boolean holding;
 
-    static void start(int what) {
+    static void start(int what, int delay) {
         if (what < 0 || what >= BodyPayloads.TRIES.length) return;
         release();
         script = BodyPayloads.TRIES[what];
-        age = 0;
+        age = -Math.max(0, delay);
+        ClientMoves.trace("try " + script + (delay > 0 ? " after " + delay : ""));
         if (script.equals("release")) script = "";
     }
 
@@ -34,6 +35,7 @@ final class TryDriver {
         }
         Options o = mc.options;
         age++;
+        if (age <= 0) return;
         holding = true;
         int end;
         switch (script) {

@@ -13,8 +13,9 @@ import net.minecraft.server.level.ServerPlayer;
 
 /**
  * {@code /awaken body}: the moves your body has and how to do them (never the ones still to come). Game masters:
- * {@code try <roll|sprint|slide|mantle|slidejump|tacslide|hit|release>} makes your client press the keys of a move as
- * a player would (the autopilot can't hold keys), {@code forget} clears which unlocks were announced.
+ * {@code try <roll|sprint|slide|mantle|slidejump|tacslide|hit|release> [delay]} makes your client press the keys of a
+ * move as a player would (the autopilot can't hold keys; the delay lines a frame up with a screenshot), {@code forget}
+ * clears which unlocks were announced.
  */
 final class BodyCommands {
     private BodyCommands() {}
@@ -25,7 +26,10 @@ final class BodyCommands {
             var admin = Commands.literal("try").requires(AwakenCommands.admin())
                     .then(Commands.argument("move", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(BodyPayloads.TRIES, b))
-                            .executes(c -> tryMove(c.getSource(), StringArgumentType.getString(c, "move"))));
+                            .executes(c -> tryMove(c.getSource(), StringArgumentType.getString(c, "move"), 0))
+                            .then(Commands.argument("delay", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 200))
+                                    .executes(c -> tryMove(c.getSource(), StringArgumentType.getString(c, "move"),
+                                            com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "delay")))));
             body.then(admin);
             body.then(Commands.literal("forget").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
@@ -50,7 +54,7 @@ final class BodyCommands {
         return n;
     }
 
-    private static int tryMove(CommandSourceStack src, String name) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int tryMove(CommandSourceStack src, String name, int delay) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         int what = -1;
         for (int i = 0; i < BodyPayloads.TRIES.length; i++) if (BodyPayloads.TRIES[i].equals(name)) what = i;
@@ -67,8 +71,8 @@ final class BodyCommands {
             case "mantle" -> Move.MANTLE;
             default -> null;
         };
-        BodyServer.assist(p, move, 20 * 10);
-        AwakenNet.send(p, new BodyPayloads.Try(what));
+        BodyServer.assist(p, move, 20 * 10 + delay);
+        AwakenNet.send(p, new BodyPayloads.Try(what, delay));
         return 1;
     }
 }

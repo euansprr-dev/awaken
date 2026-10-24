@@ -135,8 +135,9 @@ final class BodyAnims {
                 // the body points down the slide; the head keeps looking where it was
                 s.yRot = Mth.clamp(Mth.wrapDegrees(s.yRot + s.bodyRot - a.yaw), -80F, 80F);
                 s.bodyRot = a.yaw;
-                if (right) s.leftArmPose = HumanoidModel.ArmPose.THROW_TRIDENT;
-                else s.rightArmPose = HumanoidModel.ArmPose.THROW_TRIDENT;
+                // the lead hand up in a guard; the other hangs back to the ground (the seat's forward tilt, undone by the lean)
+                if (right) s.rightArmPose = HumanoidModel.ArmPose.BLOCK;
+                else s.leftArmPose = HumanoidModel.ArmPose.BLOCK;
             }
             case MANTLE -> {
                 float u = age / BodyRules.MANTLE_TICKS;
@@ -179,11 +180,11 @@ final class BodyAnims {
             case SLIDE -> {
                 if (!s.hasPose(Pose.SWIMMING)) return;
                 float in = Math.min(1F, age / 2.5F);
-                float lean = -24F * in; // sitting back
+                float lean = -34F * in; // sitting well back, feet first
                 ps.pushPose();
                 pushed++;
                 // the hips come down to the ground and back a little, so the legs lie along the box's length
-                ps.translate(-fx * 0.25F * in, -0.62F * in, -fz * 0.25F * in);
+                ps.translate(-fx * 0.2F * in, -0.6F * in, -fz * 0.2F * in);
                 tip(ps, 0.72F, lean, yaw);
             }
             case ROLL -> {

@@ -59,6 +59,15 @@ public final class ClientMoves {
     private static int lastFly = -1000, lastGlide = -1000;
     private static final double[] PATH = new double[3];
     private static final Input[] INPUTS = new Input[128];
+    /** Autopilot runs log every move's start and end (and why), so a tour's frames can be checked against them. */
+    private static final boolean TRACE = System.getProperty("awaken.autopilot") != null;
+
+    static void trace(String what) {
+        if (!TRACE) return;
+        LocalPlayer p = Minecraft.getInstance().player;
+        dev.awaken.Awaken.LOG.info("[body] t{} {}{}", ticks, what,
+                p == null ? "" : String.format(" at (%.2f, %.2f, %.2f) v %.2f", p.getX(), p.getY(), p.getZ(), p.getDeltaMovement().horizontalDistance()));
+    }
 
     // ---- the input event --------------------------------------------------------------------------------------------
 
@@ -148,6 +157,7 @@ public final class ClientMoves {
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.addOrUpdateTransientModifier(BodyRules.TAC_MODIFIER);
         send(Move.TACTICAL_SPRINT, p.getYRot(), 0, 0, 0, 0, false);
+        trace("tactical sprint");
         BodyAnims.play(p.getId(), Move.TACTICAL_SPRINT, p.getYRot());
         BodyFx.sound(p, BodyContent.SPRINT.get(), 0.7F, 1F);
         BodyFx.kick(p, -Mth.sin(p.getYRot() * Mth.DEG_TO_RAD), Mth.cos(p.getYRot() * Mth.DEG_TO_RAD));
@@ -164,6 +174,7 @@ public final class ClientMoves {
 
     static void endTac(LocalPlayer p, boolean tellServer) {
         if (!tac) return;
+        trace("tactical sprint ends after " + (ticks - tacStart));
         tac = false;
         tacEnd = ticks;
         tacReadyAt = ticks + BodyRules.TAC_RECHARGE;
@@ -210,6 +221,7 @@ public final class ClientMoves {
         p.setPose(Pose.SWIMMING);
         float slideYaw = yawOf(dx, dz);
         send(Move.SLIDE, slideYaw, 0, 0, 0, slideV0, fromTac);
+        trace("slide v0 " + String.format("%.2f", slideV0) + (fromTac ? " (tactical)" : ""));
         BodyAnims.play(p.getId(), Move.SLIDE, slideYaw);
         BodyFx.sound(p, BodyContent.SLIDE.get(), 0.85F, fromTac ? 0.92F : 1F);
         in.keyPresses = with(in.keyPresses, in.keyPresses.jump(), false); // no sneaking at an edge mid-slide
@@ -222,18 +234,18 @@ public final class ClientMoves {
         double h = Math.sqrt(v.x * v.x + v.z * v.z);
         // something else moved the body (a blow, a blast): it wins and the slide lets go
         if (h > expectH + 0.2 || v.y > 0.3) {
-            endSlide(p, true);
+            endSlide(p, true, "pushed");
             return;
         }
         if (slideAge > 1 && p.horizontalCollision && !p.minorHorizontalCollision) { // a wall stops it, with a thud
-            endSlide(p, true);
+            endSlide(p, true, "wall");
             BodyFx.sound(p, BodyContent.IMPACT.get(), 0.35F, 1.45F);
             BodyFx.kick(p, -slideX, -slideZ);
             return;
         }
         slideAir = p.onGround() ? 0 : slideAir + 1;
         if (slideAir > 2 || p.isInLiquid() || off(p) || slideAge >= BodyRules.SLIDE_TICKS) {
-            endSlide(p, true);
+            endSlide(p, true, slideAge >= BodyRules.SLIDE_TICKS ? "done" : slideAir > 2 ? "airborne" : "off");
             return;
         }
         if (jumpPressed) {
@@ -263,18 +275,20 @@ public final class ClientMoves {
     /** The slide-cancel: up and out with the slide's speed, plus a little. Vanilla's own jump does the rest. */
     private static void jumpOut(LocalPlayer p, ClientInput in) {
         double speed = BodyRules.slideSpeed(slideAge, slideV0) + BodyRules.SLIDE_JUMP;
-        endSlide(p, true);
+        endSlide(p, true, "jump out");
         p.setPose(Pose.STANDING);
         Vec3 v = p.getDeltaMovement();
         p.setDeltaMovement(slideX * speed, v.y, slideZ * speed);
         if (!in.keyPresses.jump()) in.keyPresses = with(in.keyPresses, true, false);
         slideJumpAt = ticks;
+        trace("slide-cancel jump");
         BodyFx.sound(p, BodyContent.SPRINT.get(), 0.6F, 1.25F);
         BodyFx.kick(p, slideX, slideZ);
     }
 
-    static void endSlide(LocalPlayer p, boolean tellServer) {
+    static void endSlide(LocalPlayer p, boolean tellServer, String why) {
         if (!sliding) return;
+        trace("slide ends (" + why + ") after " + slideAge);
         sliding = false;
         slideEnd = ticks;
         slideReadyAt = ticks + BodyRules.SLIDE_COOLDOWN;
@@ -301,6 +315,7 @@ public final class ClientMoves {
         jumpSuppressed = true; // holding jump through the climb doesn't hop on top
         float yaw = p.getYRot();
         send(Move.MANTLE, yaw, l.x(), l.y(), l.z(), 0, false);
+        trace("mantle onto " + String.format("%.2f", l.height()));
         BodyAnims.play(p.getId(), Move.MANTLE, yaw);
         BodyFx.sound(p, BodyContent.MANTLE.get(), 0.8F, 1F);
         double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
@@ -321,6 +336,7 @@ public final class ClientMoves {
             // over the lip: carry on walking
             mantling = false;
             mantleEnd = ticks;
+            trace("mantle done");
             double fx = l.x() - msx, fz = l.z() - msz, f = Math.sqrt(fx * fx + fz * fz);
             if (f > 1e-6) p.setDeltaMovement(fx / f * 0.12, 0, fz / f * 0.12);
             return;
@@ -330,6 +346,7 @@ public final class ClientMoves {
             BodyRules.mantlePath(msx, msy, msz, l, mantleAge - 1, PATH);
             double ex = PATH[0] - p.getX(), ey = PATH[1] - p.getY(), ez = PATH[2] - p.getZ();
             if (ex * ex + ey * ey + ez * ez > 0.5) {
+                trace("mantle blocked");
                 mantling = false;
                 mantleEnd = ticks;
                 return;
@@ -354,6 +371,7 @@ public final class ClientMoves {
         double otherSafe = safe == null ? 0 : safe.getValue() - safe.getBaseValue();
         if (BodyRules.roll(distance, otherSafe, 1.0) == null) return;
         rollAt = ticks;
+        trace("roll from " + String.format("%.1f", distance));
         BodyAnims.play(p.getId(), Move.ROLL, p.getYRot());
         BodyFx.sound(p, BodyContent.ROLL.get(), 0.9F, 1F);
         BodyFx.rollRing(p);
@@ -365,11 +383,12 @@ public final class ClientMoves {
         LocalPlayer p = Minecraft.getInstance().player;
         Move move = Move.byId(moveId);
         if (p == null || move == null) return;
+        trace("server ended " + move);
         switch (move) {
             case TACTICAL_SPRINT -> endTac(p, false);
             case SLIDE -> {
                 if (sliding) {
-                    endSlide(p, false);
+                    endSlide(p, false, "refused");
                     Vec3 v = p.getDeltaMovement();
                     p.setDeltaMovement(0, v.y, 0);
                 }
@@ -398,12 +417,12 @@ public final class ClientMoves {
             double stretch = "VELOCITY".equals(family) ? MovementHooks.DASH_OUT_STRETCH : 1.0;
             p.setDeltaMovement(slideX * h * stretch, v.y, slideZ * h * stretch);
         }
-        endSlide(p, true);
+        endSlide(p, true, "power " + powerId);
     }
 
     static void stopAll(LocalPlayer p) {
         endTac(p, true);
-        endSlide(p, true);
+        endSlide(p, true, "stop");
         mantling = false;
     }
 

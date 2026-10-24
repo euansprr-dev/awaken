@@ -36,8 +36,6 @@ final class BodyDustParticle extends SingleQuadParticle {
         float shade = 0.9F + this.random.nextFloat() * 0.2F;
         this.setColor(Math.min(1F, ((c >> 16) & 255) / 255F * shade), Math.min(1F, ((c >> 8) & 255) / 255F * shade), Math.min(1F, (c & 255) / 255F * shade));
         this.alpha = 0.85F;
-        this.roll = this.random.nextFloat() * 6.2831855F;
-        this.oRoll = this.roll;
         this.setSpriteFromAge(sprites);
     }
 
@@ -52,8 +50,6 @@ final class BodyDustParticle extends SingleQuadParticle {
         this.setSpriteFromAge(this.sprites);
         float life = (float) this.age / this.lifetime;
         this.alpha = 0.85F * (1F - life * life);
-        this.oRoll = this.roll;
-        this.roll += 0.04F * (1F - life);
         if (this.age < 8) this.quadSize *= 1F + 0.06F * this.grow;
     }
 

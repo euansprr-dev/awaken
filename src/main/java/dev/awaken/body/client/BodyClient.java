@@ -76,7 +76,7 @@ public final class BodyClient {
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
         event.register(BodyPayloads.Refuse.TYPE, (msg, ctx) -> ClientMoves.refused(msg.move()));
         event.register(BodyPayloads.Seen.TYPE, (msg, ctx) -> seen(msg));
-        event.register(BodyPayloads.Try.TYPE, (msg, ctx) -> TryDriver.start(msg.what()));
+        event.register(BodyPayloads.Try.TYPE, (msg, ctx) -> TryDriver.start(msg.what(), msg.delay()));
     }
 
     private static void tick() {

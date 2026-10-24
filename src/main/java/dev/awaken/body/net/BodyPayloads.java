@@ -54,10 +54,14 @@ public final class BodyPayloads {
         @Override public Type<Seen> type() { return TYPE; }
     }
 
-    /** Server → client (dev command): press the keys of a move as a player would. what = a {@code Try} name's index. */
-    public record Try(int what) implements CustomPacketPayload {
+    /**
+     * Server → client (dev command): press the keys of a move as a player would, after {@code delay} ticks. what = the
+     * index of a name in {@link #TRIES}.
+     */
+    public record Try(int what, int delay) implements CustomPacketPayload {
         public static final Type<Try> TYPE = new Type<>(Awaken.id("body_try"));
-        public static final StreamCodec<ByteBuf, Try> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Try::what, Try::new);
+        public static final StreamCodec<ByteBuf, Try> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Try::what,
+                ByteBufCodecs.VAR_INT, Try::delay, Try::new);
         @Override public Type<Try> type() { return TYPE; }
     }
 
