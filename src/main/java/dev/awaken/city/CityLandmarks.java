@@ -395,7 +395,9 @@ final class CityLandmarks {
             for (int ry = 21; ry <= 25; ry++) b.set(x, g + ry, z, r2 > 5.2 * 5.2 ? (ry == 25 ? BRONZE : CALCITE) : CORE);
             for (int ry = 26; ry <= 33; ry++) {
                 double rr = 6.2 * Math.sqrt(Math.max(0, 1 - Math.pow((ry - 25) / 8.5, 2)));
-                if (r2 <= rr * rr) b.set(x, g + ry, z, BRONZE);
+                // a copper dome with bronze ribs on the eight winds: it catches the dawn from the whole city
+                boolean rib = Math.abs(dx) < 0.6 || Math.abs(dz) < 0.6 || Math.abs(Math.abs(dx) - Math.abs(dz)) < 0.6;
+                if (r2 <= rr * rr) b.set(x, g + ry, z, rib ? BRONZE : GILDED);
             }
         }
         if (Math.abs(dx) <= 1.1 && Math.abs(dz) <= 1.1) {

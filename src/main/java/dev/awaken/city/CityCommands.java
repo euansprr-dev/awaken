@@ -75,18 +75,57 @@ final class CityCommands {
         ServerPlayer p = src.getPlayerOrException();
         ServerLevel level = src.getServer().overworld();
         // street views stand on open ground: the nearest street, square or quay cell to the named spot
-        double ex = v.x(), ey = v.ry(), ez = v.z();
-        if (v.ry() < 30) {
+        CityViews.View at = v;
+        if (CityViews.ALONG.contains(name)) at = along(l.plan, v);
+        else if (name.startsWith("studio_") && v.ry() < 25 && !CityPlan.walkable(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z())))
+                && !CityPlan.water(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z()))) && l.plan.inside((int) Math.floor(v.x()), (int) Math.floor(v.z()))) {
+            // a framing from above the streets: over open ground, at its height above it
             int[] cell = openCell(l.plan, (int) Math.floor(v.x()), (int) Math.floor(v.z()));
-            ex = cell[0] + 0.5;
-            ez = cell[1] + 0.5;
-            ey = l.plan.lift(cell[0], cell[1]) + 1.0 + Math.max(0, v.ry() - 1.0 - l.plan.lift((int) Math.floor(v.x()), (int) Math.floor(v.z())));
+            at = new CityViews.View(cell[0] + 0.5, v.ry(), cell[1] + 0.5, v.tx(), v.tr(), v.tz());
+        } else if (v.ry() < 12) {
+            int[] cell = openCell(l.plan, (int) Math.floor(v.x()), (int) Math.floor(v.z()));
+            at = new CityViews.View(cell[0] + 0.5, l.plan.lift(cell[0], cell[1]) + 1.0, cell[1] + 0.5, v.tx(), v.tr(), v.tz());
         }
-        CityViews.View at = new CityViews.View(ex, ey, ez, v.tx(), v.tr(), v.tz());
         p.teleportTo(level, l.cx + at.x(), l.streetY + at.ry(), l.cz + at.z(), Set.of(), at.yaw(), at.pitch(), true);
         dev.awaken.Awaken.LOG.info("[city] view {} at {} {} {} yaw {} pitch {}", name, l.cx + v.x(), l.streetY + v.ry(), l.cz + v.z(),
                 v.yaw(), v.pitch());
         return 1;
+    }
+
+    /**
+     * A street view near the named spot: of the open cells within 24 blocks, the one with the longest clear run of open
+     * ground in one of eight directions; the camera stands there at eye height and looks down that run.
+     */
+    static CityViews.View along(CityPlan p, CityViews.View v) {
+        int x0 = (int) Math.floor(v.x()), z0 = (int) Math.floor(v.z());
+        int bx = x0, bz = z0, bd = 0, best = -1;
+        int[][] dirs = {{0, -1}, {1, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}};
+        for (int dx = -24; dx <= 24; dx++) {
+            for (int dz = -24; dz <= 24; dz++) {
+                int x = x0 + dx, z = z0 + dz;
+                byte k = p.kind(x, z);
+                if (k != CityPlan.AVENUE && k != CityPlan.STREET && k != CityPlan.LANE && k != CityPlan.RING) continue;
+                for (int d = 0; d < 8; d++) {
+                    int run = 0;
+                    while (run < 70 && CityPlan.walkable(p.kind(x + dirs[d][0] * (run + 1), z + dirs[d][1] * (run + 1)))) run++;
+                    // the middle of the street, not against a wall: open ground on both sides of the line of sight
+                    int[] side = dirs[(d + 2) & 7];
+                    int left = 0, right = 0;
+                    while (left < 4 && CityPlan.walkable(p.kind(x + side[0] * (left + 1), z + side[1] * (left + 1)))) left++;
+                    while (right < 4 && CityPlan.walkable(p.kind(x - side[0] * (right + 1), z - side[1] * (right + 1)))) right++;
+                    // a long run in the middle of a street, near the spot
+                    int score = run * 4 + 8 * Math.min(left, right) - (Math.abs(dx) + Math.abs(dz));
+                    if (score > best) {
+                        best = score;
+                        bx = x;
+                        bz = z;
+                        bd = d;
+                    }
+                }
+            }
+        }
+        double ey = p.lift(bx, bz) + 1.0;
+        return new CityViews.View(bx + 0.5, ey, bz + 0.5, bx + 0.5 + dirs[bd][0] * 40, ey + 7, bz + 0.5 + dirs[bd][1] * 40);
     }
 
     /** The nearest cell (spiralling out) that is open ground with open ground round it, not under a building. */
