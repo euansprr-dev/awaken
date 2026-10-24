@@ -1,0 +1,2 @@
+com.mojang.renderpearl.api.device.SurfaceException: Cannot acquire minimized window
+com.mojang.renderpearl.api.device.SurfaceException: Cannot acquire minimized window
