@@ -46,6 +46,7 @@ public final class Awaken {
         WorldModule.init(modBus);
         dev.awaken.gear.GearModule.init(modBus);
         dev.awaken.core.audio.AudioModule.init(modBus);
+        dev.awaken.compat.CompatModule.init(modBus);
     }
 
     public static Identifier id(String path) {

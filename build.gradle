@@ -27,7 +27,11 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // Modrinth's Maven, only for the optional mods Awaken talks to (compileOnly: never bundled, never required)
+    exclusiveContent {
+        forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
 }
 
 base {
@@ -49,6 +53,8 @@ neoForge {
     runs {
         client {
             client()
+            // tools/play.sh --pack plays from its own folder (-PgameDir=run-pack) so new-terrain mods never touch run/'s worlds
+            gameDirectory = project.file(project.findProperty('gameDir') ?: 'run')
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
@@ -63,6 +69,9 @@ neoForge {
             environment 'SDL_MAC_BACKGROUND_APP', '1'
             environment 'SDL_WINDOW_ACTIVATE_WHEN_SHOWN', '0'
             systemProperty 'apple.awt.UIElement', 'true'
+            // frame-time experiments (tools/autopilot.sh with XMX=6G ZGC=1): the client's heap and garbage collector
+            if (project.hasProperty('xmx')) jvmArgument "-Xmx${project.property('xmx')}"
+            if (project.hasProperty('zgc')) jvmArgument '-XX:+UseZGC'
         }
 
         server {
@@ -130,6 +139,11 @@ configurations {
 }
 
 dependencies {
+    // dev.awaken.compat: far terrain off inside gates, dreams and other instanced dimensions (pack/lock.json pins the same build)
+    compileOnly "maven.modrinth:distanthorizons:3.3.4-26.3"
+    // Lens steps aside while an Iris shaderpack is on (the Ultra look)
+    compileOnly "maven.modrinth:iris:1.11.7+26.3-neoforge"
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

@@ -1,0 +1,100 @@
+# The First Vista (docs/plan-pack.html, stage 2): a fresh world seen from the ground and from above once far terrain
+# has had time to build. Every view is shot twice in the same moment, Lens off then Lens cinematic (the autopilot's
+# lens command), so the pair differs only by Lens. Then a content check: Awaken's ruins and creatures must still
+# place in this terrain. Run with PACK=perf,horizon,world and DH=swift|cinematic.
+world vista creative 20261024
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+# stand on dry land (this seed spawns on a deep ocean) and give far terrain five minutes to build around it
+cmd awaken gate hop
+wait 6000
+look 0 -4
+lens off
+wait 40
+shot vista_ground_south_off
+lens cinematic
+wait 60
+shot vista_ground_south_cine
+look 180 -4
+lens off
+wait 40
+shot vista_ground_north_off
+lens cinematic
+wait 60
+shot vista_ground_north_cine
+lens swift
+perf vista_ground 10
+cmd gamemode spectator
+cmd tp @s ~ ~90 ~
+wait 400
+look 0 16
+lens off
+wait 40
+shot vista_noon_south_off
+lens cinematic
+wait 60
+shot vista_noon_south_cine
+look 90 16
+lens off
+wait 40
+shot vista_noon_west_off
+lens cinematic
+wait 60
+shot vista_noon_west_cine
+look 180 16
+lens off
+wait 40
+shot vista_noon_north_off
+lens cinematic
+wait 60
+shot vista_noon_north_cine
+look -90 16
+lens off
+wait 40
+shot vista_noon_east_off
+lens cinematic
+wait 60
+shot vista_noon_east_cine
+lens swift
+perf vista_noon 10
+cmd time set 12350
+wait 120
+look -90 12
+lens off
+wait 40
+shot vista_sunset_east_off
+lens cinematic
+wait 60
+shot vista_sunset_east_cine
+look 90 12
+lens off
+wait 40
+shot vista_sunset_west_off
+lens cinematic
+wait 60
+shot vista_sunset_west_cine
+lens swift
+perf vista_sunset 10
+# content check
+cmd locate structure awaken:precursor_vault
+wait 100
+cmd locate structure awaken:precursor_monolith
+wait 100
+cmd locate structure awaken:precursor_ocean_lab
+wait 100
+cmd locate structure awaken:precursor_sky_platform
+wait 100
+cmd gamemode creative
+cmd awaken fauna census
+wait 40
+quit

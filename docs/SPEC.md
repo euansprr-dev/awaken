@@ -558,3 +558,43 @@ the player (client config `skipExperimentalWarning`, default on).
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 14. The Awakened Pack (companion mods; plan in docs/plan-pack.html, approved 2026-10-24)
+
+- Awaken stays mixin-free and plays the same with no companion mod installed. Integrations live in `dev.awaken.compat`;
+  each class is loaded only when its mod is present (`ModList` check), compiled against the mod as `compileOnly` from
+  Modrinth's Maven, never bundled or required.
+- The pack is `pack/mods.json` (profiles: perf, horizon, feel, sound, comfort, together, ultra, tools), pinned by
+  `tools/pack.py lock` into `pack/lock.json` (exact files and SHA-512, required dependencies, a dependency's own
+  version pin). `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
+  what it installed, and refuses while a client runs there. GameTests never load the pack: they test Awaken alone.
+- Far view (`compat.FarView`): far-terrain mods draw in vanilla dimensions and `awaken:stillpoint` only. In every other
+  `awaken:` dimension (gate and dream cells, trials, the Halo, the Descent) Distant Horizons renders nothing and gets
+  empty columns instead of running Awaken's chunk generators. Test: `compat_far_view_policy`.
+- Frame time is measured, not guessed: autopilot `perf <label> <s>`, `perfstart`/`perfend`, `info`; fixed scenes in
+  `tools/autopilot/perf-pack.txt` at a 1440×900-point window; results and comparisons in `docs/perf/`
+  (`tools/perf-report.py`). Every perf line carries the machine's load; runs that disagree by more than 5% on p50 are
+  re-run.
+- Looks: Swift (default; the SPEC budget above), Cinematic (p50 ≥ 60 fps, p99 ≤ 25 ms at 4K, to confirm after the
+  baseline), Ultra (Iris, experimental: OpenGL only and unsupported on Apple Silicon by Iris).
+- Terrain mods (Tectonic) only in new worlds; existing worlds keep vanilla terrain. Maps: a world map, no minimap.
+- Lens (`dev.awaken.lens`), AWAKEN's light layer: the post chains `awaken:lens_swift` (haze, bloom, grade, vignette,
+  dither; five passes, three of them at 960×600 or smaller) and `awaken:lens_cinematic` (adds light shafts). It runs
+  first in the player's post-effect list, so gameplay effects (dreams, blight, the Veil) still draw on top, and
+  re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 16×1
+  texture (`awaken:lens_params`), written once a frame in `ViewportEvent.RenderFog` at LOWEST priority: the look, the
+  depth range (26.3 is reversed-Z; zero-to-one depth differs between OpenGL and Vulkan), the final fog colour and
+  distances, the sun's screen position and the sunrise colour. Looks per dimension live in
+  `assets/awaken/lens/looks.json` (schemaVersion 1; exact id, then `prefix*`, then `default`) and ease into each other
+  over about 1.5 s. Lens never lifts shadows (exposure ≤ 1.05) and backs off where the game's own fog is thick.
+  It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT | CINEMATIC; **OFF by default
+  until the Distant Horizons fix lands** (2026-10-24: with DH installed, Lens on can hide far terrain; SWIFT becomes
+  the default again once the vista A/B tour shows far terrain intact).
+- Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
+  finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
+- Lens and far terrain: Distant Horizons draws without the game's depth, so Lens reads DH's own depth through
+  `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
+  and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
+  distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.

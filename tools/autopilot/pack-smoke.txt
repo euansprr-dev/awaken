@@ -1,0 +1,42 @@
+# Pack smoke tour: Awaken's main systems with every pack profile installed (PACK=perf,horizon,feel,sound,comfort,
+# together,world). Passes when the game reaches the end with no crash; read the log for errors from any mod.
+world packsmoke creative 4242
+waitworld
+gui 0
+cmd awaken admin awaken
+wait 100
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+look 0 5
+shot smoke_world
+screen status
+shot smoke_status
+screen close
+cmd summon minecraft:husk ~3 ~ ~3 {PersistenceRequired:1b}
+wait 20
+cmd awaken admin power cast storm_call
+wait 30
+camera back
+shot smoke_cast_back
+camera first
+cmd awaken gate open E bell_crypt
+wait 200
+cmd awaken gate interior enter
+wait 300
+shot smoke_gate_inside
+cmd awaken gate interior leave
+wait 100
+cmd awaken dream now
+wait 300
+shot smoke_dream
+cmd awaken dream wake
+wait 100
+cmd awaken veil stillpoint
+wait 200
+shot smoke_stillpoint
+cmd awaken veil return
+wait 100
+quit

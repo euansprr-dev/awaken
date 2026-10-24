@@ -13,13 +13,17 @@ import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.sounds.SoundSource;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +43,12 @@ import java.util.Map;
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
  * camera first|back|front                        the F5 views
  * fps &lt;label&gt;                                     logs the frames of the last second
+ * perf &lt;label&gt; &lt;seconds&gt;                         records every frame's time, then logs p50/p95/p99 and the server tick
+ * perfstart &lt;label&gt; ... perfend                 the same around the lines in between (a flight, a fight)
+ * info                                           logs the renderer, device, framebuffer, heap, GC and loaded mods
+ * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
+ * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
+ * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
@@ -54,6 +64,12 @@ public final class Autopilot {
     private static WorldCreationUiState.SelectedGameMode createMode;
     private static String createSeed;
     private static String shotPending;
+    // perf: frame-to-frame times of the scene being measured, preallocated so measuring costs no allocation per frame
+    private static final long[] FRAMES = new long[1 << 15];
+    private static int frameCount;
+    private static long lastFrameNanos;
+    private static String perfLabel;
+    private static boolean perfTimed;
 
     public static void init() {
         String path = System.getProperty("awaken.autopilot");
@@ -65,7 +81,78 @@ public final class Autopilot {
             return;
         }
         NeoForge.EVENT_BUS.addListener(Autopilot::tick);
+        NeoForge.EVENT_BUS.addListener(Autopilot::frame);
+        keepAwake();
         Awaken.LOG.info("[autopilot] {} lines from {}", LINES.size(), path);
+    }
+
+    // macOS naps a background app whose window is covered (App Nap and occlusion throttling: ~10 fps), which would
+    // turn frame-time measurements into measurements of the window's visibility. A user-initiated activity keeps this
+    // one process awake while the autopilot runs; it still lets the Mac sleep, and ends when the game closes.
+    private static Object activity;
+
+    private static void keepAwake() {
+        if (!com.mojang.blaze3d.platform.MacosUtil.IS_MACOS) return;
+        try {
+            long userInitiatedAllowingSleep = 0x00EFFFFFL, latencyCritical = 0xFF00000000L;
+            activity = ca.weblite.objc.Client.getInstance().sendProxy("NSProcessInfo", "processInfo")
+                    .sendProxy("beginActivityWithOptions:reason:", userInitiatedAllowingSleep | latencyCritical, "AWAKEN autopilot");
+            Awaken.LOG.info("[autopilot] App Nap off for this run");
+        } catch (RuntimeException | LinkageError e) {
+            Awaken.LOG.warn("[autopilot] could not keep the process awake: {}", e.toString());
+        }
+    }
+
+    private static boolean occluded(Minecraft mc) {
+        return (org.lwjgl.sdl.SDLVideo.SDL_GetWindowFlags(mc.getWindow().handle()) & org.lwjgl.sdl.SDLVideo.SDL_WINDOW_OCCLUDED) != 0;
+    }
+
+    private static void frame(RenderFrameEvent.Post e) {
+        if (perfLabel == null) return;
+        long now = System.nanoTime();
+        if (lastFrameNanos != 0 && frameCount < FRAMES.length) FRAMES[frameCount++] = now - lastFrameNanos;
+        lastFrameNanos = now;
+    }
+
+    /** Logs one scene's frame-time percentiles and the integrated server's tick time over its last 100 ticks. */
+    private static void finishPerf(Minecraft mc) {
+        String label = perfLabel;
+        perfLabel = null;
+        if (frameCount < 2) {
+            Awaken.LOG.warn("[autopilot] perf {} recorded no frames", label);
+            return;
+        }
+        long[] f = Arrays.copyOf(FRAMES, frameCount);
+        Arrays.sort(f);
+        long sum = 0;
+        for (long v : f) sum += v;
+        String tick = "n/a";
+        var server = mc.getSingleplayerServer();
+        if (server != null) {
+            long[] t = server.getTickTimesNanos().clone();
+            Arrays.sort(t);
+            tick = String.format(java.util.Locale.ROOT, "%.2f", t[(int) (t.length * 0.95)] / 1e6);
+        }
+        Runtime rt = Runtime.getRuntime();
+        Awaken.LOG.info(String.format(java.util.Locale.ROOT,
+                "[autopilot] perf %s frames=%d avg_fps=%.1f p50=%.2fms p95=%.2fms p99=%.2fms max=%.2fms tick_p95=%sms heap=%d/%dMB fb=%dx%d load=%.1f occluded=%s minimized=%s",
+                label, f.length, f.length / (sum / 1e9), pct(f, 0.50), pct(f, 0.95), pct(f, 0.99), f[f.length - 1] / 1e6, tick,
+                (rt.totalMemory() - rt.freeMemory()) >> 20, rt.maxMemory() >> 20, mc.getWindow().getWidth(), mc.getWindow().getHeight(),
+                // the machine's 1-minute load: other builds or games running at the same time show up here
+                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(), occluded(mc),
+                // a minimized window is held to 10 fps by the game itself (FramerateLimitTracker)
+                mc.getWindow().isIconified()));
+    }
+
+    private static void startPerf(String label, boolean timed) {
+        perfLabel = label;
+        perfTimed = timed;
+        frameCount = 0;
+        lastFrameNanos = 0;
+    }
+
+    private static double pct(long[] sorted, double q) {
+        return sorted[Math.min(sorted.length - 1, (int) (sorted.length * q))] / 1e6;
     }
 
     private static void tick(ClientTickEvent.Post e) {
@@ -85,6 +172,7 @@ public final class Autopilot {
             waitTicks--;
             return;
         }
+        if (perfLabel != null && perfTimed) finishPerf(mc);
         if (createName != null) {
             if (!(mc.gui.screen() instanceof CreateWorldScreen cws)) return; // still loading the screen
             WorldCreationUiState ui = cws.getUiState();
@@ -213,6 +301,49 @@ public final class Autopilot {
                 waitTicks = 2;
             }
             case "fps" -> Awaken.LOG.info("[autopilot] fps {} {}", arg.trim(), mc.getFps());
+            case "perf" -> { // perf <label> <seconds>
+                if (mc.level == null) return false;
+                String[] p = arg.trim().split("\\s+");
+                startPerf(p[0], true);
+                waitTicks = 20 * (p.length > 1 ? Integer.parseInt(p[1]) : 10);
+            }
+            case "perfstart" -> {
+                if (mc.level == null) return false;
+                startPerf(arg.trim(), false);
+            }
+            case "perfend" -> {
+                if (perfLabel != null) finishPerf(mc);
+            }
+            case "info" -> {
+                var d = com.mojang.blaze3d.systems.RenderSystem.getDevice().getDeviceInfo();
+                StringBuilder gc = new StringBuilder();
+                for (var b : ManagementFactory.getGarbageCollectorMXBeans()) gc.append(gc.isEmpty() ? "" : ",").append(b.getName());
+                StringBuilder mods = new StringBuilder();
+                for (var m : ModList.get().getMods()) mods.append(mods.isEmpty() ? "" : ",").append(m.getModId());
+                Awaken.LOG.info("[autopilot] info backend={} driver={} device={} fb={}x{} window={}x{} rd={} sd={} heapMax={}MB gc={} mods={}",
+                        d.backendName(), d.driverInfo(), d.name(), mc.getWindow().getWidth(), mc.getWindow().getHeight(),
+                        mc.getWindow().getScreenWidth(), mc.getWindow().getScreenHeight(), mc.options.renderDistance().get(),
+                        mc.options.simulationDistance().get(), Runtime.getRuntime().maxMemory() >> 20, gc, mods);
+            }
+            case "window" -> { // window <width> <height>, in points
+                String[] w = arg.trim().split("\\s+");
+                mc.getWindow().setWindowed(Integer.parseInt(w[0]), Integer.parseInt(w[1]));
+                waitTicks = 20;
+            }
+            case "lens" -> {
+                dev.awaken.core.AwakenConfig.Client.LENS.set(dev.awaken.core.AwakenConfig.Client.LensLook.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
+                waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
+            }
+            case "opt" -> { // opt renderDistance|simulationDistance <n>
+                String[] o = arg.trim().split("\\s+");
+                int v = Integer.parseInt(o[1]);
+                switch (o[0]) {
+                    case "renderDistance" -> mc.options.renderDistance().set(v);
+                    case "simulationDistance" -> mc.options.simulationDistance().set(v);
+                    default -> Awaken.LOG.warn("[autopilot] unknown option {}", o[0]);
+                }
+                waitTicks = 20;
+            }
             case "leave" -> {
                 if (mc.level != null) mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE);
             }

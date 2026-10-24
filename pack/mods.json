@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "minecraft": "26.3",
+  "loader": "neoforge",
+  "neoforge": "26.3.0.95",
+  "about": "The Awakened Pack (docs/plan-pack.html). Edit this file, then run tools/pack.py lock to pin exact files.",
+  "profiles": {
+    "perf": "Frame rate and memory. Client-side except Lithium and FerriteCore.",
+    "horizon": "Far terrain.",
+    "feel": "Camera, limbs and the animation library Awaken's full-body casts use.",
+    "sound": "Room acoustics.",
+    "comfort": "Recipe lookup, block info, inventory help, a world map (no minimap, by design).",
+    "together": "Join links and proximity voice.",
+    "ultra": "Experimental: Iris shaders (OpenGL only; Iris lists Apple Silicon as unsupported).",
+    "tools": "Profiling.",
+    "world": "New terrain (Tectonic). Only ever installed into a fresh game folder (tools/play.sh --pack): it would seam existing worlds."
+  },
+  "mods": [
+    {
+      "slug": "sodium",
+      "profiles": [
+        "perf",
+        "ultra"
+      ],
+      "why": "Faster chunk rendering. 0.9.3-beta.1: 0.9.2 crashes on NeoForge 26.3.0.95 (LevelExtractor mixin, 2026-10-24).",
+      "pin": "~mc26.3-0.9.3-beta.1-neoforge"
+    },
+    {
+      "slug": "lithium",
+      "profiles": [
+        "perf"
+      ],
+      "why": "Faster game logic on the integrated server."
+    },
+    {
+      "slug": "ferrite-core",
+      "profiles": [
+        "perf"
+      ],
+      "why": "Less memory, which matters on 16 GB."
+    },
+    {
+      "slug": "immediatelyfast",
+      "profiles": [
+        "perf"
+      ],
+      "why": "Faster HUD, text and entity drawing."
+    },
+    {
+      "slug": "entityculling",
+      "profiles": [
+        "perf"
+      ],
+      "why": "Skips entities and block entities you can't see."
+    },
+    {
+      "slug": "moreculling",
+      "profiles": [
+        "perf"
+      ],
+      "why": "Culls more block faces (leaves)."
+    },
+    {
+      "slug": "dynamic-fps",
+      "profiles": [
+        "comfort"
+      ],
+      "why": "Throttles the game in the background: a cooler laptop. Never in perf runs: it stops drawing while the window is hidden, so a background measurement records no frames."
+    },
+    {
+      "slug": "distanthorizons",
+      "profiles": [
+        "horizon"
+      ],
+      "why": "Terrain to the horizon."
+    },
+    {
+      "slug": "tectonic",
+      "profiles": [
+        "world"
+      ],
+      "why": "Mountain ranges, deep oceans and valleys; keeps vanilla biomes, so every Awaken spawn and ruin still has a home."
+    },
+    {
+      "slug": "player-animation-library",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Full-body cast animations (optional for Awaken)."
+    },
+    {
+      "slug": "bendable-cuboids",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Bent knees and elbows: renders the bend the Player Animation Library's clips carry (same author). Client only."
+    },
+    {
+      "slug": "cameraoverhaul",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Camera roll and sway that give movement weight."
+    },
+    {
+      "slug": "not-enough-animations",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Third-person limbs for eating, climbing, maps."
+    },
+    {
+      "slug": "3dskinlayers",
+      "profiles": [
+        "feel"
+      ],
+      "why": "3D skin layers: players read as people in co-op."
+    },
+    {
+      "slug": "sound-physics-remastered",
+      "profiles": [
+        "sound"
+      ],
+      "why": "Reverb and echo in halls and caves."
+    },
+    {
+      "slug": "jei",
+      "profiles": [
+        "comfort"
+      ],
+      "why": "Recipe lookup."
+    },
+    {
+      "slug": "jade",
+      "profiles": [
+        "comfort"
+      ],
+      "why": "What am I looking at."
+    },
+    {
+      "slug": "appleskin",
+      "profiles": [
+        "comfort"
+      ],
+      "why": "Food values."
+    },
+    {
+      "slug": "mouse-tweaks",
+      "profiles": [
+        "comfort"
+      ],
+      "why": "Inventory dragging."
+    },
+    {
+      "slug": "controlling",
+      "profiles": [
+        "comfort"
+      ],
+      "why": "Searchable key binds."
+    },
+    {
+      "slug": "xaeros-world-map",
+      "profiles": [
+        "comfort"
+      ],
+      "why": "A world map you open; no minimap."
+    },
+    {
+      "slug": "e4mc",
+      "profiles": [
+        "together"
+      ],
+      "why": "Share a single-player world by link."
+    },
+    {
+      "slug": "simple-voice-chat",
+      "profiles": [
+        "together"
+      ],
+      "why": "Proximity voice."
+    },
+    {
+      "slug": "iris",
+      "profiles": [
+        "ultra"
+      ],
+      "why": "Shaderpacks, experimental. 1.11.7 pins Sodium 0.9.2, which crashes on NeoForge 26.3.0.95: Ultra waits for an Iris update."
+    },
+    {
+      "slug": "spark",
+      "profiles": [
+        "tools"
+      ],
+      "why": "Profiler for frame and tick spikes."
+    }
+  ]
+}

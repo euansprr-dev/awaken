@@ -1,0 +1,323 @@
+#!/usr/bin/env python3
+"""The Awakened Pack: pin, install, remove and export the mods that ship around Awaken (docs/plan-pack.html).
+
+  python3 -I tools/pack.py lock                          resolve pack/mods.json against Modrinth into pack/lock.json
+  python3 -I tools/pack.py list                          what the lock pins, by profile
+  python3 -I tools/pack.py install <game-dir> <profiles>  e.g. install run-autopilot perf,horizon  (all = every profile)
+  python3 -I tools/pack.py remove <game-dir>             take out exactly what install put there
+  python3 -I tools/pack.py status <game-dir>             what is installed, hashes, and jars the pack doesn't own
+  python3 -I tools/pack.py export <out.mrpack> <profiles> --awaken-jar build/libs/awaken-x.jar
+  python3 -I tools/pack.py dhconfig <game-dir> swift|cinematic|default   Distant Horizons settings for a look
+
+install writes the Swift Distant Horizons settings when the horizon profile goes into a folder that has none yet
+(an existing DistantHorizons.toml is the player's and is left alone). install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
+never deletes a jar it didn't put there, and refuses to touch a game folder a client is running from.
+"""
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+import urllib.parse
+import urllib.request
+import zipfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+MODS = ROOT / "pack" / "mods.json"
+LOCK = ROOT / "pack" / "lock.json"
+CACHE = Path(os.environ.get("AWAKEN_PACK_CACHE", "/Volumes/MEDIA/.awaken-pack-cache"))
+MARKER = ".awaken-pack.json"
+API = "https://api.modrinth.com/v2"
+UA = {"User-Agent": "awaken-pack/1 (github.com/euansprr; modpack installer)"}
+CHANNEL_RANK = {"release": 0, "beta": 1, "alpha": 2}
+
+
+def get(url):
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
+                return json.load(r)
+        except Exception as e:  # transient network trouble: back off, then give up loudly
+            if attempt == 3:
+                raise SystemExit(f"Modrinth request failed: {url}: {e}")
+            time.sleep(1.5 * (attempt + 1))
+
+
+def sha512(path):
+    h = hashlib.sha512()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def load(path):
+    with open(path) as f:
+        return json.load(f)
+
+
+def save(path, data):
+    tmp = Path(str(path) + ".tmp")
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=1)
+        f.write("\n")
+    tmp.replace(path)  # never leave a half-written lock or marker behind
+
+
+# ---------------------------------------------------------------------------------------------------------------- lock
+
+def best_version(project, mc, loader, pin=None):
+    if pin and not pin.startswith("~"):  # an exact Modrinth version id, as a dependency names it
+        return get(f"{API}/version/{pin}")
+    q = urllib.parse.urlencode({"game_versions": json.dumps([mc]), "loaders": json.dumps([loader])})
+    versions = get(f"{API}/project/{project}/version?{q}")
+    if pin:  # "~<version_number>" in mods.json pins one release by its name
+        versions = [v for v in versions if v["version_number"] == pin[1:]]
+    if not versions:
+        return None
+    # newest release if there is one, else the newest beta, else alpha (Modrinth lists newest first)
+    return sorted(versions, key=lambda v: CHANNEL_RANK.get(v["version_type"], 3))[0]
+
+
+def cmd_lock():
+    spec = load(MODS)
+    mc, loader = spec["minecraft"], spec["loader"]
+    entries, by_id, missing = {}, {}, []
+    queue = [(m["slug"], set(m["profiles"]), None, m.get("why", ""), m.get("pin")) for m in spec["mods"]]
+    while queue:
+        ref, profiles, parent, why, pin = queue.pop(0)
+        project = get(f"{API}/project/{ref}")
+        slug = project["slug"]
+        if slug in entries:  # already pinned: just widen its profiles and record who needs it
+            e = entries[slug]
+            e["profiles"] = sorted(set(e["profiles"]) | profiles)
+            if parent and parent not in e["dependencyOf"]:
+                e["dependencyOf"].append(parent)
+            if pin and not pin.startswith("~") and pin != e["versionId"]:
+                print(f"  warning: {parent} wants {slug} version {pin}, the lock has {e['version']} ({e['versionId']})")
+            continue
+        v = best_version(project["id"], mc, loader, pin)
+        if v is None:
+            missing.append(f"{slug} (needed by {parent})" if parent else slug)
+            continue
+        f = next((x for x in v["files"] if x.get("primary")), v["files"][0])
+        entries[slug] = {
+            "slug": slug, "title": project["title"], "projectId": project["id"], "versionId": v["id"],
+            "version": v["version_number"], "channel": v["version_type"], "published": v["date_published"][:10],
+            "file": f["filename"], "url": f["url"], "size": f["size"],
+            "sha1": f["hashes"]["sha1"], "sha512": f["hashes"]["sha512"],
+            "client": project.get("client_side"), "server": project.get("server_side"),
+            "profiles": sorted(profiles), "dependencyOf": [parent] if parent else [], "why": why,
+        }
+        by_id[project["id"]] = slug
+        for d in v["dependencies"]:
+            if d["dependency_type"] == "required" and d.get("project_id"):
+                queue.append((d["project_id"], set(profiles), slug, "dependency", d.get("version_id")))
+        time.sleep(0.1)
+    if missing:
+        raise SystemExit("No " + mc + " " + loader + " build for: " + ", ".join(missing) + ". Lock not written.")
+    lock = {"schemaVersion": 1, "minecraft": mc, "loader": loader, "neoforge": spec.get("neoforge"),
+            "generated": time.strftime("%Y-%m-%d %H:%M"), "files": sorted(entries.values(), key=lambda e: e["slug"])}
+    save(LOCK, lock)
+    print(f"locked {len(entries)} files into {LOCK.relative_to(ROOT)}")
+    for e in lock["files"]:
+        tag = "" if e["channel"] == "release" else f"  [{e['channel']}]"
+        dep = f"  (for {', '.join(e['dependencyOf'])})" if e["dependencyOf"] else ""
+        print(f"  {e['slug']:28} {e['version']:34} {','.join(e['profiles'])}{tag}{dep}")
+
+
+def cmd_list():
+    lock = load(LOCK)
+    profiles = sorted({p for e in lock["files"] for p in e["profiles"]})
+    for p in profiles:
+        files = [e for e in lock["files"] if p in e["profiles"]]
+        print(f"{p} ({len(files)}): " + ", ".join(f"{e['slug']} {e['version']}" for e in files))
+
+
+# ------------------------------------------------------------------------------------------------- install and remove
+
+def client_running_in(game_dir):
+    """True if a dev client runs from this game folder (its cwd) or from the worktree that owns it."""
+    game_dir = game_dir.resolve()
+    tree = str(game_dir.parent) + "/"
+    try:
+        ps = subprocess.run(["ps", "-axo", "pid=,command="], capture_output=True, text=True, check=True).stdout
+    except Exception:
+        return True  # can't tell: be safe
+    for line in ps.splitlines():
+        if "devlaunch.Main" not in line:
+            continue
+        pid = line.split(None, 1)[0]
+        if tree in line:
+            return True
+        cwd = subprocess.run(["lsof", "-a", "-d", "cwd", "-p", pid, "-Fn"], capture_output=True, text=True).stdout
+        if any(l[1:] == str(game_dir) for l in cwd.splitlines() if l.startswith("n")):
+            return True
+    return False
+
+
+def select(lock, profiles):
+    want = set(profiles.split(",")) if profiles != "all" else {p for e in lock["files"] for p in e["profiles"]}
+    unknown = want - {p for e in lock["files"] for p in e["profiles"]}
+    if unknown:
+        raise SystemExit("unknown profile(s): " + ", ".join(sorted(unknown)))
+    return [e for e in lock["files"] if want & set(e["profiles"])], sorted(want)
+
+
+def fetch(e):
+    CACHE.mkdir(parents=True, exist_ok=True)
+    path = CACHE / f"{e['sha512'][:32]}-{e['file']}"
+    if path.exists() and sha512(path) == e["sha512"]:
+        return path
+    tmp = Path(str(path) + ".part")
+    with urllib.request.urlopen(urllib.request.Request(e["url"], headers=UA), timeout=120) as r, open(tmp, "wb") as f:
+        shutil.copyfileobj(r, f)
+    if sha512(tmp) != e["sha512"]:
+        tmp.unlink()
+        raise SystemExit(f"hash mismatch for {e['file']} from {e['url']}: not installed")
+    tmp.replace(path)
+    return path
+
+
+def marker_of(mods_dir):
+    m = mods_dir / MARKER
+    return load(m) if m.exists() else {"files": []}
+
+
+def cmd_install(game_dir, profiles):
+    game_dir = Path(game_dir)
+    if client_running_in(game_dir):
+        raise SystemExit(f"a client is running from {game_dir}: close it first")
+    lock = load(LOCK)
+    chosen, names = select(lock, profiles)
+    mods_dir = game_dir / "mods"
+    mods_dir.mkdir(parents=True, exist_ok=True)
+    old = marker_of(mods_dir)
+    keep = {e["file"] for e in chosen}
+    for f in old["files"]:  # take out what an earlier install put here and this selection no longer wants
+        p = mods_dir / f["file"]
+        if f["file"] not in keep and p.exists() and sha512(p) == f["sha512"]:
+            p.unlink()
+            print(f"  removed {f['file']}")
+    for e in chosen:
+        src = fetch(e)
+        dst = mods_dir / e["file"]
+        if not (dst.exists() and sha512(dst) == e["sha512"]):
+            shutil.copyfile(src, dst)
+            print(f"  installed {e['file']}")
+    if any(e["slug"] == "distanthorizons" for e in chosen):
+        cmd_dhconfig(game_dir, "swift", only_if_missing=True)
+    save(mods_dir / MARKER, {"schemaVersion": 1, "profiles": names, "installed": time.strftime("%Y-%m-%d %H:%M"),
+                             "lockGenerated": lock["generated"],
+                             "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"]} for e in chosen]})
+    foreign = sorted(p.name for p in mods_dir.glob("*.jar") if p.name not in keep)
+    print(f"{len(chosen)} pack files in {mods_dir} ({', '.join(names)})" + (f"; not ours: {', '.join(foreign)}" if foreign else ""))
+
+
+def cmd_remove(game_dir):
+    game_dir = Path(game_dir)
+    if client_running_in(game_dir):
+        raise SystemExit(f"a client is running from {game_dir}: close it first")
+    mods_dir = game_dir / "mods"
+    old = marker_of(mods_dir)
+    for f in old["files"]:
+        p = mods_dir / f["file"]
+        if p.exists() and sha512(p) == f["sha512"]:
+            p.unlink()
+            print(f"  removed {f['file']}")
+    if (mods_dir / MARKER).exists():
+        (mods_dir / MARKER).unlink()
+    print(f"pack removed from {mods_dir}")
+
+
+def cmd_status(game_dir):
+    mods_dir = Path(game_dir) / "mods"
+    old = marker_of(mods_dir)
+    print(f"profiles: {', '.join(old.get('profiles', [])) or 'none'}  installed: {old.get('installed', '-')}")
+    ours = set()
+    for f in old["files"]:
+        p = mods_dir / f["file"]
+        state = "ok" if p.exists() and sha512(p) == f["sha512"] else ("changed" if p.exists() else "missing")
+        ours.add(f["file"])
+        print(f"  {state:8} {f['file']}")
+    for p in sorted(mods_dir.glob("*.jar")):
+        if p.name not in ours:
+            print(f"  {'not ours':8} {p.name}")
+
+
+# ---------------------------------------------------------------------------------------------- Distant Horizons looks
+
+def cmd_dhconfig(game_dir, preset, only_if_missing=False):
+    """Writes config/DistantHorizons.toml from DH's own default file with one look's keys changed."""
+    import re
+    target = Path(game_dir) / "config" / "DistantHorizons.toml"
+    if only_if_missing and target.exists():
+        return
+    text = (ROOT / "pack" / "dh" / "default.toml").read_text()
+    if preset != "default":
+        changes = {k: v for k, v in load(ROOT / "pack" / "dh" / f"{preset}.json").items() if not k.startswith("_")}
+        for key, value in changes.items():
+            text, n = re.subn(rf"(?m)^(\s*){re.escape(key)} = .*$", lambda m: f"{m.group(1)}{key} = {value}", text)
+            if n != 1:
+                raise SystemExit(f"DistantHorizons.toml: expected one '{key}', found {n}")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text)
+    print(f"  Distant Horizons: {preset} settings in {target}")
+
+
+# ------------------------------------------------------------------------------------------------------------- export
+
+def env(e):
+    side = lambda v: "required" if v == "required" else ("optional" if v == "optional" else "unsupported")
+    return {"client": side(e["client"]), "server": side(e["server"])}
+
+
+def cmd_export(out, profiles, awaken_jar):
+    lock = load(LOCK)
+    chosen, names = select(lock, profiles)
+    jar = Path(awaken_jar)
+    if not jar.exists():
+        raise SystemExit(f"no Awaken jar at {jar}: run tools/gradle.sh 900 build first")
+    index = {
+        "formatVersion": 1, "game": "minecraft", "versionId": time.strftime("%Y.%m.%d"),
+        "name": "The Awakened Pack", "summary": "Awaken and the mods chosen to frame it: " + ", ".join(names),
+        "files": [{"path": f"mods/{e['file']}", "hashes": {"sha1": e["sha1"], "sha512": e["sha512"]},
+                   "env": env(e), "downloads": [e["url"]], "fileSize": e["size"]} for e in chosen],
+        "dependencies": {"minecraft": lock["minecraft"], "neoforge": lock["neoforge"]},
+    }
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("modrinth.index.json", json.dumps(index, indent=1))
+        z.write(jar, f"overrides/mods/{jar.name}")  # Awaken isn't on Modrinth: it travels inside the pack
+        for cfg in sorted((ROOT / "pack" / "config").glob("**/*")) if (ROOT / "pack" / "config").exists() else []:
+            if cfg.is_file():
+                z.write(cfg, "overrides/config/" + str(cfg.relative_to(ROOT / "pack" / "config")))
+    print(f"wrote {out}: {len(chosen)} mods + {jar.name} ({', '.join(names)})")
+
+
+def main(argv):
+    if len(argv) < 2:
+        raise SystemExit(__doc__)
+    c = argv[1]
+    if c == "lock":
+        cmd_lock()
+    elif c == "list":
+        cmd_list()
+    elif c == "install" and len(argv) == 4:
+        cmd_install(argv[2], argv[3])
+    elif c == "remove" and len(argv) == 3:
+        cmd_remove(argv[2])
+    elif c == "status" and len(argv) == 3:
+        cmd_status(argv[2])
+    elif c == "dhconfig" and len(argv) == 4 and argv[3] in ("swift", "cinematic", "default"):
+        cmd_dhconfig(argv[2], argv[3])
+    elif c == "export" and len(argv) == 6 and argv[4] == "--awaken-jar":
+        cmd_export(argv[2], argv[3], argv[5])
+    else:
+        raise SystemExit(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv)

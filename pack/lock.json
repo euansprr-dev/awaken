@@ -1,0 +1,631 @@
+{
+ "schemaVersion": 1,
+ "minecraft": "26.3",
+ "loader": "neoforge",
+ "neoforge": "26.3.0.95",
+ "generated": "2026-10-24 12:21",
+ "files": [
+  {
+   "slug": "3dskinlayers",
+   "title": "3D Skin Layers",
+   "projectId": "zV5r3pPn",
+   "versionId": "wEqkPuIv",
+   "version": "1.11.4",
+   "channel": "release",
+   "published": "2026-10-18",
+   "file": "skinlayers3d-neoforge-1.11.4-mc26.3.jar",
+   "url": "https://cdn.modrinth.com/data/zV5r3pPn/versions/wEqkPuIv/skinlayers3d-neoforge-1.11.4-mc26.3.jar",
+   "size": 1882611,
+   "sha1": "3a00dea67fa5d3dbc9d12da62b0d655ad5ce7160",
+   "sha512": "26cca52dc5f50e0264151fc90ee1d0b46a66e8accf483562eefbb97cd80e4fdd5136e8879069a9971107321d41ebc235cffd18bb07e8b30c9f8122880703343b",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "3D skin layers: players read as people in co-op."
+  },
+  {
+   "slug": "appleskin",
+   "title": "AppleSkin",
+   "projectId": "EsAfCjCV",
+   "versionId": "6vok7cLb",
+   "version": "3.0.10+mc26.3",
+   "channel": "release",
+   "published": "2026-09-17",
+   "file": "appleskin-neoforge-mc26.3-3.0.10.jar",
+   "url": "https://cdn.modrinth.com/data/EsAfCjCV/versions/6vok7cLb/appleskin-neoforge-mc26.3-3.0.10.jar",
+   "size": 80755,
+   "sha1": "1eaf890236c4d0815a3bd0933fd55174ff6249cd",
+   "sha512": "a454c90af544a63fb904709987513122706b8b26f97bcb2d36458f99697754ae4b32d2e275c77dae9d448cfa236497e0de36677cc0c4e002f78feddbe04449ef",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [],
+   "why": "Food values."
+  },
+  {
+   "slug": "bendable-cuboids",
+   "title": "Bendable Cuboids",
+   "projectId": "OI3FlFon",
+   "versionId": "DbUl93Sa",
+   "version": "2.1.0",
+   "channel": "beta",
+   "published": "2026-10-06",
+   "file": "BendableCuboidsMerged-2.1.0+mc.26.3.jar",
+   "url": "https://cdn.modrinth.com/data/OI3FlFon/versions/DbUl93Sa/BendableCuboidsMerged-2.1.0%2Bmc.26.3.jar",
+   "size": 59841,
+   "sha1": "5f8037cadcbe6139dd3ad15e65b7a17aa38d54ea",
+   "sha512": "59428a7e216b0b0fef73e09d8859a608386643309470917f11b6a806295ee9d697adf81fae50d7f5543a6587e923915c2e472c1443f26a3588a127210a309616",
+   "client": "required",
+   "server": "optional",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Bent knees and elbows: renders the bend the Player Animation Library's clips carry (same author). Client only."
+  },
+  {
+   "slug": "cameraoverhaul",
+   "title": "Camera Overhaul",
+   "projectId": "m0oRwcZx",
+   "versionId": "8NAGipZQ",
+   "version": "2.1.2-neoforge+mc.26.3-plus",
+   "channel": "release",
+   "published": "2026-09-26",
+   "file": "CameraOverhaul-v2.1.2-neoforge+mc[26.3-plus].jar",
+   "url": "https://cdn.modrinth.com/data/m0oRwcZx/versions/8NAGipZQ/CameraOverhaul-v2.1.2-neoforge%2Bmc%5B26.3-plus%5D.jar",
+   "size": 136919,
+   "sha1": "793c19812a361c5e4817debb9f6a7a4d2c5d66d5",
+   "sha512": "6d6063d466fd92488d146b15f1670a196c4a6ee03988f2720f8ad88d35e16860d2212185687bc5b6bb3316f8b3bc48ca5f333661d63e28f76bf5220e0595c7bf",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Camera roll and sway that give movement weight."
+  },
+  {
+   "slug": "cloth-config",
+   "title": "Cloth Config API",
+   "projectId": "9s6osm5g",
+   "versionId": "GchRXPnb",
+   "version": "26.3.159+neoforge",
+   "channel": "release",
+   "published": "2026-09-23",
+   "file": "cloth-config-neoforge-26.3.159.jar",
+   "url": "https://cdn.modrinth.com/data/9s6osm5g/versions/GchRXPnb/cloth-config-neoforge-26.3.159.jar",
+   "size": 1135657,
+   "sha1": "d57fa1419228ee371b0c29abf943288d384e2d08",
+   "sha512": "941dd8aab50d658cfa6da071dacd05802c7097643ad569935d0073b39231a2137f2ade2403b791f70cf5ebf1649d7b6337862568a8b340c88e5d364569f94431",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "feel",
+    "perf"
+   ],
+   "dependencyOf": [
+    "moreculling",
+    "cameraoverhaul"
+   ],
+   "why": "dependency"
+  },
+  {
+   "slug": "controlling",
+   "title": "Controlling",
+   "projectId": "xv94TkTM",
+   "versionId": "k8C4cEvR",
+   "version": "26.3.4",
+   "channel": "release",
+   "published": "2026-10-09",
+   "file": "Controlling-neoforge-26.3-26.3.4.jar",
+   "url": "https://cdn.modrinth.com/data/xv94TkTM/versions/k8C4cEvR/Controlling-neoforge-26.3-26.3.4.jar",
+   "size": 78847,
+   "sha1": "77c21687adefcac6ee231f86ce394cb2c9de664b",
+   "sha512": "c254af0386e1f8d6a5512cd7a25edeefbd02a404d51ec768326cc9f4ba800a57d2f3211046099f70edfb8593070a43d740e822c4ad60973d114d574cc1b61214",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [],
+   "why": "Searchable key binds."
+  },
+  {
+   "slug": "distanthorizons",
+   "title": "Distant Horizons",
+   "projectId": "uCdwusMi",
+   "versionId": "TGgEbP9A",
+   "version": "3.3.4-26.3",
+   "channel": "release",
+   "published": "2026-09-29",
+   "file": "DistantHorizons-3.3.4-26.3-fabric-neoforge.jar",
+   "url": "https://cdn.modrinth.com/data/uCdwusMi/versions/TGgEbP9A/DistantHorizons-3.3.4-26.3-fabric-neoforge.jar",
+   "size": 28476894,
+   "sha1": "310c0363068dfae18e91f799ed671a591b6ad49a",
+   "sha512": "0b90b1b08d99974bfc3c8e86b2ceb252e2f91715ed66b925004c28335fb44e1bddbbb6b8043e4d4d53c87ed247789cd1788b1ba4e3f4394efe154e0c59cff236",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "horizon"
+   ],
+   "dependencyOf": [],
+   "why": "Terrain to the horizon."
+  },
+  {
+   "slug": "dynamic-fps",
+   "title": "Dynamic FPS",
+   "projectId": "LQ3K71Q1",
+   "versionId": "KGWebRrW",
+   "version": "3.11.10",
+   "channel": "release",
+   "published": "2026-09-16",
+   "file": "dynamic-fps-3.11.10+minecraft-26.3.0-neoforge.jar",
+   "url": "https://cdn.modrinth.com/data/LQ3K71Q1/versions/KGWebRrW/dynamic-fps-3.11.10%2Bminecraft-26.3.0-neoforge.jar",
+   "size": 186475,
+   "sha1": "3b6d398a201195ae96201154743bee4c4361f634",
+   "sha512": "8add2316e6b41405535a1411daf40e9e700c70091963baac530a2769f122ee3a70608ef51e95a821d5aae80e17b384d9822d2a8b4e3dff38dfd7e72d727bd282",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [],
+   "why": "Throttles the game in the background: a cooler laptop. Never in perf runs: it stops drawing while the window is hidden, so a background measurement records no frames."
+  },
+  {
+   "slug": "e4mc",
+   "title": "e4mc",
+   "projectId": "qANg5Jrr",
+   "versionId": "HXD8kS5O",
+   "version": "6.2.3-neoforge",
+   "channel": "release",
+   "published": "2026-10-01",
+   "file": "e4mc-neoforge-6.2.3.jar",
+   "url": "https://cdn.modrinth.com/data/qANg5Jrr/versions/HXD8kS5O/e4mc-neoforge-6.2.3.jar",
+   "size": 666469,
+   "sha1": "7127478b19531091257b3f58cd734a638200e481",
+   "sha512": "6d029c61c71503dbf03710a0a944b462fc0351a862db773d4ffe39ffe8d8a205d12a4f031361d82867d365a2335abbdc91859a2777108ca4c9c14fe243b92197",
+   "client": "required",
+   "server": "required",
+   "profiles": [
+    "together"
+   ],
+   "dependencyOf": [],
+   "why": "Share a single-player world by link."
+  },
+  {
+   "slug": "entityculling",
+   "title": "Entity Culling",
+   "projectId": "NNAgCjsB",
+   "versionId": "YWSFNKio",
+   "version": "1.11.3",
+   "channel": "release",
+   "published": "2026-10-08",
+   "file": "entityculling-neoforge-1.11.3-mc26.3.jar",
+   "url": "https://cdn.modrinth.com/data/NNAgCjsB/versions/YWSFNKio/entityculling-neoforge-1.11.3-mc26.3.jar",
+   "size": 1498685,
+   "sha1": "75df6fa16449e91f9a20cd5f6ce5db9b3b972938",
+   "sha512": "129b94d59a6ff5513e3dca34a59aadb9eefedde8508bdbfb6997146647971fb5a49b5e111353753955888ddefc886a7893637951088c759ed3b0390b61cfe7e0",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "perf"
+   ],
+   "dependencyOf": [],
+   "why": "Skips entities and block entities you can't see."
+  },
+  {
+   "slug": "ferrite-core",
+   "title": "FerriteCore",
+   "projectId": "uXXizFIs",
+   "versionId": "LtVvw4uS",
+   "version": "9.0.0-neoforge",
+   "channel": "release",
+   "published": "2026-03-24",
+   "file": "ferritecore-9.0.0-neoforge.jar",
+   "url": "https://cdn.modrinth.com/data/uXXizFIs/versions/LtVvw4uS/ferritecore-9.0.0-neoforge.jar",
+   "size": 71947,
+   "sha1": "b8bfb14ba6ce7068aae08c3a132ca40bda6bd143",
+   "sha512": "e96a99ac5539f56a1f4cd109d62b668ebd5283f0068491ede956f52e67023beba7abe2e40021499352ffc41ead950bebcabce7792352249a1b45c5dccb3cf99c",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "perf"
+   ],
+   "dependencyOf": [],
+   "why": "Less memory, which matters on 16 GB."
+  },
+  {
+   "slug": "immediatelyfast",
+   "title": "ImmediatelyFast",
+   "projectId": "5ZwdcRci",
+   "versionId": "4SovUFpn",
+   "version": "1.17.1+26.3-neoforge",
+   "channel": "release",
+   "published": "2026-09-17",
+   "file": "ImmediatelyFast-NeoForge-1.17.1+26.3.jar",
+   "url": "https://cdn.modrinth.com/data/5ZwdcRci/versions/4SovUFpn/ImmediatelyFast-NeoForge-1.17.1%2B26.3.jar",
+   "size": 109497,
+   "sha1": "a072863c3b4e7cfed81899d8d3115839a161a708",
+   "sha512": "6fddcf7e9de2bf179bdd18cc317fa1cc50ea9c3a40b06a0e0673ecb1dba29fb2ac2743ada361e32f52c2c1f333043795a5149b8b89ee467665c2b734e7d5d951",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "perf"
+   ],
+   "dependencyOf": [],
+   "why": "Faster HUD, text and entity drawing."
+  },
+  {
+   "slug": "iris",
+   "title": "Iris Shaders",
+   "projectId": "YL57xq9U",
+   "versionId": "Ag5S66CF",
+   "version": "1.11.7+26.3-neoforge",
+   "channel": "release",
+   "published": "2026-09-30",
+   "file": "iris-neoforge-1.11.7+mc26.3.jar",
+   "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/Ag5S66CF/iris-neoforge-1.11.7%2Bmc26.3.jar",
+   "size": 2804761,
+   "sha1": "57cbbd1f58b6226c633520541c1a3ae57c019373",
+   "sha512": "302659f09e50d02a6cd96075be93aade2a2f9d709afe21d56465228fb7d7f4717566e3702a7872479df2fff9b7a5ff5b1b6047cc95e09ee6120fad5ea5857eec",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "ultra"
+   ],
+   "dependencyOf": [],
+   "why": "Shaderpacks, experimental. 1.11.7 pins Sodium 0.9.2, which crashes on NeoForge 26.3.0.95: Ultra waits for an Iris update."
+  },
+  {
+   "slug": "jade",
+   "title": "Jade \ud83d\udd0d",
+   "projectId": "nvQzSEkH",
+   "versionId": "dVB8U7Td",
+   "version": "26.3.5+neoforge",
+   "channel": "release",
+   "published": "2026-10-02",
+   "file": "Jade-mc26.3-NeoForge-26.3.5.jar",
+   "url": "https://cdn.modrinth.com/data/nvQzSEkH/versions/dVB8U7Td/Jade-mc26.3-NeoForge-26.3.5.jar",
+   "size": 1084541,
+   "sha1": "add5199928930724adbe6f9dfaaf646bd1027294",
+   "sha512": "32219fb2a8b004d027179bdf2707647be4c08ab374ca5204432d63601e7e4cbc4f4574273289bb867a8afa476db63a69a5a0d08746e9bc134d52eb41489e3add",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [],
+   "why": "What am I looking at."
+  },
+  {
+   "slug": "jei",
+   "title": "Just Enough Items (JEI)",
+   "projectId": "u6dRKJwZ",
+   "versionId": "kLsKOFxv",
+   "version": "31.14.0.72",
+   "channel": "release",
+   "published": "2026-10-16",
+   "file": "jei-26.3-neoforge-31.14.0.72.jar",
+   "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/kLsKOFxv/jei-26.3-neoforge-31.14.0.72.jar",
+   "size": 2403531,
+   "sha1": "3099d3575007a79954a65e3ea55a94fe2342be8f",
+   "sha512": "7c79297551a373602d12f9a16f659cad76eac096e10e70ac0c5d1c1a2c036d2df8fa49c458291e15a3f3f03246c30da9d95000b38059a3af019f0cd5acd41221",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [],
+   "why": "Recipe lookup."
+  },
+  {
+   "slug": "lithium",
+   "title": "Lithium",
+   "projectId": "gvQqBUqZ",
+   "versionId": "1rb9wI5K",
+   "version": "mc26.3-0.26.2-neoforge",
+   "channel": "release",
+   "published": "2026-09-28",
+   "file": "lithium-neoforge-0.26.2+mc26.3.jar",
+   "url": "https://cdn.modrinth.com/data/gvQqBUqZ/versions/1rb9wI5K/lithium-neoforge-0.26.2%2Bmc26.3.jar",
+   "size": 903255,
+   "sha1": "1d11e085f74dda6fb797dfc4296cf4086fddfdcb",
+   "sha512": "af579327afba03fac855b0a55c1cd25236483d2d2a22f7686eb7b046a1a814511caa1c767dc5967f69ce92dcd5980e85340047b5b732ab7ba190f093788c20db",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "perf"
+   ],
+   "dependencyOf": [],
+   "why": "Faster game logic on the integrated server."
+  },
+  {
+   "slug": "lithostitched",
+   "title": "Lithostitched",
+   "projectId": "XaDC71GB",
+   "versionId": "sQznZoKs",
+   "version": "2.0.6-neoforge-26.3",
+   "channel": "release",
+   "published": "2026-10-13",
+   "file": "lithostitched-2.0.6-neoforge-26.3.jar",
+   "url": "https://cdn.modrinth.com/data/XaDC71GB/versions/sQznZoKs/lithostitched-2.0.6-neoforge-26.3.jar",
+   "size": 1002707,
+   "sha1": "da5dd0e330f34854dca45c1f6cb5d3f88f96b0eb",
+   "sha512": "0d085656fae32b09c2ef338f351eff3819349e7ad8ff895d34e9f763619fee7ca2bcb99d5443dc077db014088873dbdb661edeee45d8b0034ef39e86a877972c",
+   "client": "unsupported",
+   "server": "required",
+   "profiles": [
+    "world"
+   ],
+   "dependencyOf": [
+    "tectonic"
+   ],
+   "why": "dependency"
+  },
+  {
+   "slug": "mezzconfig",
+   "title": "MezzConfig",
+   "projectId": "7tEfOcA7",
+   "versionId": "WFeT02Wv",
+   "version": "0.6.8",
+   "channel": "beta",
+   "published": "2026-10-03",
+   "file": "mezz_config-26.3-neoforge-0.6.8-standalone.jar",
+   "url": "https://cdn.modrinth.com/data/7tEfOcA7/versions/WFeT02Wv/mezz_config-26.3-neoforge-0.6.8-standalone.jar",
+   "size": 327189,
+   "sha1": "a1c1f51cb1e99eef3b4d6c84415ce98e71a51742",
+   "sha512": "6774c36d33775fb72d5b1079271c381d0935ef6cdf8a4ae3b84c63a657d8aa4fee10d67432f9cbddb27741fc9434f5347eed0f05b1fe64205dc2c6809c5197fd",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [
+    "jei"
+   ],
+   "why": "dependency"
+  },
+  {
+   "slug": "moreculling",
+   "title": "More Culling",
+   "projectId": "51shyZVL",
+   "versionId": "1of2eSie",
+   "version": "1.9.0",
+   "channel": "release",
+   "published": "2026-10-03",
+   "file": "moreculling-neoforge-26.3-1.9.0.jar",
+   "url": "https://cdn.modrinth.com/data/51shyZVL/versions/1of2eSie/moreculling-neoforge-26.3-1.9.0.jar",
+   "size": 276980,
+   "sha1": "f99a4e0c208138945b63d2c09455d0a925287e2a",
+   "sha512": "301c90f3332ccd74fb6fde8b22f43e15221a3f99213d0b0e711692bcf34d0ceefc4744388c5f6c8813960c69b5fcb6b16e9ae969f15a5393b99b0bb15fedf409",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "perf"
+   ],
+   "dependencyOf": [],
+   "why": "Culls more block faces (leaves)."
+  },
+  {
+   "slug": "mouse-tweaks",
+   "title": "Mouse Tweaks",
+   "projectId": "aC3cM3Vq",
+   "versionId": "f4tPRGDq",
+   "version": "26.3-2.31-neoforge",
+   "channel": "release",
+   "published": "2026-09-15",
+   "file": "MouseTweaks-neoforge-mc26.3-2.31.jar",
+   "url": "https://cdn.modrinth.com/data/aC3cM3Vq/versions/f4tPRGDq/MouseTweaks-neoforge-mc26.3-2.31.jar",
+   "size": 74133,
+   "sha1": "de224d4e3c270b749345c3a6703b51336a3ce5d3",
+   "sha512": "93e7ac34bbc15de635073722054b11fed3981e0f39954286e8a57214ce5ce007e5562882cb81cd230c8ea49970970c84548cfc598332c539777986090b090798",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [],
+   "why": "Inventory dragging."
+  },
+  {
+   "slug": "not-enough-animations",
+   "title": "Not Enough Animations",
+   "projectId": "MPCX6s5C",
+   "versionId": "YEeJ72Hz",
+   "version": "1.12.6",
+   "channel": "release",
+   "published": "2026-09-20",
+   "file": "notenoughanimations-neoforge-1.12.6-mc26.3.jar",
+   "url": "https://cdn.modrinth.com/data/MPCX6s5C/versions/YEeJ72Hz/notenoughanimations-neoforge-1.12.6-mc26.3.jar",
+   "size": 1853669,
+   "sha1": "9cfcbc764013d5ac0f27d11adb291dce239c144f",
+   "sha512": "7395b23f1fa4b5f2c907fd4d84e7fbf0342e23f99e0eece6ef46707529eba9120051c9f0fc8354e9f5c1d161ddadeff943c8954a6c479c27de07ef9517d52ed6",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Third-person limbs for eating, climbing, maps."
+  },
+  {
+   "slug": "player-animation-library",
+   "title": "Player Animation Library",
+   "projectId": "ha1mEyJS",
+   "versionId": "xJ30QmpE",
+   "version": "1.2.8",
+   "channel": "beta",
+   "published": "2026-10-06",
+   "file": "PlayerAnimationLibMerged-1.2.8+mc.26.3.jar",
+   "url": "https://cdn.modrinth.com/data/ha1mEyJS/versions/xJ30QmpE/PlayerAnimationLibMerged-1.2.8%2Bmc.26.3.jar",
+   "size": 406793,
+   "sha1": "e878fad023249fb2e039ddc6ce67821e1ba22960",
+   "sha512": "d6870759e2f5f83c6a74b2d02aeabab937d6d8da8c46245566646bc6e8efaeeb06c978edc43a50b57a0de2d015b341c284382bc5d4ae2e450d1b6aa5f8e2e97e",
+   "client": "required",
+   "server": "optional",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Full-body cast animations (optional for Awaken)."
+  },
+  {
+   "slug": "searchables",
+   "title": "Searchables",
+   "projectId": "fuuu3xnx",
+   "versionId": "V62qRRhH",
+   "version": "1.0.3",
+   "channel": "release",
+   "published": "2026-10-09",
+   "file": "Searchables-neoforge-26.3-1.0.3.jar",
+   "url": "https://cdn.modrinth.com/data/fuuu3xnx/versions/V62qRRhH/Searchables-neoforge-26.3-1.0.3.jar",
+   "size": 78423,
+   "sha1": "674a24084048f85403b6541033dbff53c24b662d",
+   "sha512": "6e502811734298c43dba32b38416ce93b6f10ceafe171512d7d332089737eea24d816ec00faf4a55db9996cbdcba40eac40aa22820078409c39073b9207e8c7f",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [
+    "controlling"
+   ],
+   "why": "dependency"
+  },
+  {
+   "slug": "simple-voice-chat",
+   "title": "Simple Voice Chat",
+   "projectId": "9eGKb6K1",
+   "versionId": "gp5gcmgC",
+   "version": "neoforge-2.6.25+26.3",
+   "channel": "beta",
+   "published": "2026-10-22",
+   "file": "voicechat-neoforge-2.6.25+26.3.jar",
+   "url": "https://cdn.modrinth.com/data/9eGKb6K1/versions/gp5gcmgC/voicechat-neoforge-2.6.25%2B26.3.jar",
+   "size": 4942252,
+   "sha1": "31484869da3e42277f751bc0e387d12e63905669",
+   "sha512": "e524e888fa1862a9696b66778e525d44ae9da0e55b4347bfe15c18263be27ffcedfbe60e90ad8bbeea3b4dd2e6b795f9862126a4ef8cb758580de0d6020544f3",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "together"
+   ],
+   "dependencyOf": [],
+   "why": "Proximity voice."
+  },
+  {
+   "slug": "sodium",
+   "title": "Sodium",
+   "projectId": "AANobbMI",
+   "versionId": "SS023RVV",
+   "version": "mc26.3-0.9.3-beta.1-neoforge",
+   "channel": "beta",
+   "published": "2026-10-15",
+   "file": "sodium-neoforge-0.9.3-beta.1+mc26.3.jar",
+   "url": "https://cdn.modrinth.com/data/AANobbMI/versions/SS023RVV/sodium-neoforge-0.9.3-beta.1%2Bmc26.3.jar",
+   "size": 1209577,
+   "sha1": "c9412897122afb33007f6c0d6ee1b2248a9ebcf7",
+   "sha512": "92cdb344cb8049993685e3d81498411d4e6965a8f054c912a297bfe550937ed4792b7c1cb4efea5b5ac9c0e6c32aea777389207e481f008ce6f176b5ae6aab93",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "perf",
+    "ultra"
+   ],
+   "dependencyOf": [
+    "iris"
+   ],
+   "why": "Faster chunk rendering. 0.9.3-beta.1: 0.9.2 crashes on NeoForge 26.3.0.95 (LevelExtractor mixin, 2026-10-24)."
+  },
+  {
+   "slug": "sound-physics-remastered",
+   "title": "Sound Physics Remastered",
+   "projectId": "qyVF9oeo",
+   "versionId": "fsyAOst7",
+   "version": "neoforge-1.5.2+26.3",
+   "channel": "beta",
+   "published": "2026-10-21",
+   "file": "sound-physics-remastered-neoforge-1.5.2+26.3.jar",
+   "url": "https://cdn.modrinth.com/data/qyVF9oeo/versions/fsyAOst7/sound-physics-remastered-neoforge-1.5.2%2B26.3.jar",
+   "size": 202021,
+   "sha1": "56298c65465ee938668b0b1f5156c8e9c5026d9b",
+   "sha512": "4d2a7e73982c74e53d5e680d36fda118ace42807e739385d8dde78749ddeb8b46d6d43395cb574df79c5afb60f2b99b11a6f5977de9317c45e6d5f3b1a1a9581",
+   "client": "required",
+   "server": "optional",
+   "profiles": [
+    "sound"
+   ],
+   "dependencyOf": [],
+   "why": "Reverb and echo in halls and caves."
+  },
+  {
+   "slug": "spark",
+   "title": "spark",
+   "projectId": "l6YH9Als",
+   "versionId": "HwHxykP9",
+   "version": "1.10.187-neoforge",
+   "channel": "release",
+   "published": "2026-09-19",
+   "file": "spark-1.10.187-neoforge.jar",
+   "url": "https://cdn.modrinth.com/data/l6YH9Als/versions/HwHxykP9/spark-1.10.187-neoforge.jar",
+   "size": 3910570,
+   "sha1": "be5c8cf137b1bcaa5627a85c7cfe83da846e9e36",
+   "sha512": "130c6f529346cd275460070491a47d76c0e61b30f1d02530e97aae7fce3eccba2b82b4e3bef5abe5febff62daf53066a235d843a94e81fed2ecf1def5946349a",
+   "client": "optional",
+   "server": "optional",
+   "profiles": [
+    "tools"
+   ],
+   "dependencyOf": [],
+   "why": "Profiler for frame and tick spikes."
+  },
+  {
+   "slug": "tectonic",
+   "title": "Tectonic",
+   "projectId": "lWDHr9jE",
+   "versionId": "yWpa8ww5",
+   "version": "3.0.31-neoforge-26.3",
+   "channel": "release",
+   "published": "2026-09-27",
+   "file": "tectonic-3.0.31-neoforge-26.3.jar",
+   "url": "https://cdn.modrinth.com/data/lWDHr9jE/versions/yWpa8ww5/tectonic-3.0.31-neoforge-26.3.jar",
+   "size": 387758,
+   "sha1": "e6f0ec73813a7d9aad0a2c5d8be98536cd1e5f81",
+   "sha512": "1c12e6d1ce34802651bc808c47a2b96579db2fc7c24b5b1221f0f49e45aee21654f55c6de8eb5058e1753c2a8b16134d82651f2d16638c7eca44f805704ec299",
+   "client": "optional",
+   "server": "required",
+   "profiles": [
+    "world"
+   ],
+   "dependencyOf": [],
+   "why": "Mountain ranges, deep oceans and valleys; keeps vanilla biomes, so every Awaken spawn and ruin still has a home."
+  },
+  {
+   "slug": "xaeros-world-map",
+   "title": "Xaero's World Map",
+   "projectId": "NcUtCpym",
+   "versionId": "wmZLa8s4",
+   "version": "neoforge-26.3-1.47.1",
+   "channel": "release",
+   "published": "2026-10-20",
+   "file": "xaeroworldmap-neoforge-26.3-1.47.1.jar",
+   "url": "https://cdn.modrinth.com/data/NcUtCpym/versions/wmZLa8s4/xaeroworldmap-neoforge-26.3-1.47.1.jar",
+   "size": 1453922,
+   "sha1": "8a86e23fb37b5726a2d0d6ac89fa400cb5eb5df3",
+   "sha512": "cef2c94fcb5fcebcb4a4a8c5132bffb5b0644afaaa1afefc0a8e89b87201b9b5339b24747b9683a955c834ca36c6c1636a93d10df699626f1adbcbe7909655ae",
+   "client": "required",
+   "server": "optional",
+   "profiles": [
+    "comfort"
+   ],
+   "dependencyOf": [],
+   "why": "A world map you open; no minimap."
+  }
+ ]
+}
