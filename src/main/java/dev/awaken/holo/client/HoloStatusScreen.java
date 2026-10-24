@@ -143,7 +143,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         for (StatusSections.Section s : StatusSections.of(tab)) {
             if (!s.visible()) continue;
             any = true;
-            Ui title = Ui.draw(gg, font, cx, y, cw, mx, my);
+            Ui title = Ui.draw((GuiGraphicsExtractor) gg, font, cx, y, cw, mx, my);
             title.text(s.title(), Glass.a(Glass.EDGE, 0.85f));
             y += title.height() + 2;
             int h = s.height(cw);
@@ -156,7 +156,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
                 case GATE_MAP -> "No gates detected.";
                 default -> "";
             };
-            Ui ui = Ui.draw(gg, font, cx, y, cw, mx, my);
+            Ui ui = Ui.draw((GuiGraphicsExtractor) gg, font, cx, y, cw, mx, my);
             ui.text(empty, Glass.a(Glass.LABEL, 1f));
             y += ui.height();
         }

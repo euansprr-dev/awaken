@@ -4,6 +4,7 @@ import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.Ui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -21,6 +22,7 @@ final class HoloDemo {
     static void show(HoloPanel p, int mode) {
         p.w = W;
         p.h = H;
+        p.screenFrac = 0.42f; // the same pixels per unit as the K menu's wider panel
         if (mode == 1) {
             p.anchor = HoloPanel.Anchor.VIEW;
             p.timeline.seek(HoloTimeline.OPEN_MS);
@@ -43,7 +45,7 @@ final class HoloDemo {
         String clock = "HOLO · LIVE";
         g.text(font, clock, x + w - font.width(clock), 11, Glass.a(Glass.LABEL, 0.8f), false);
         g.horizontalLine(x, x + w - 1, 24, Glass.a(Glass.EDGE, 0.22f));
-        Ui ui = Ui.draw(g, font, x, 30, w, -10000, -10000);
+        Ui ui = Ui.draw((GuiGraphicsExtractor) g, font, x, 30, w, -10000, -10000);
         String name = mc.player != null ? mc.player.getName().getString() : "Hunter";
         ui.pair(name, "Lv 12  ·  E-rank", Glass.a(Glass.TITLE, 1f), Glass.a(Glass.AMBER, 1f));
         ui.gap(3);
