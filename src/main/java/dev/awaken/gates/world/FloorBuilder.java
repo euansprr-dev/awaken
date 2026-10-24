@@ -516,9 +516,12 @@ final class FloorBuilder {
                 pieces();
                 if (!friendly && !hollow) deeperTypes();
             }
+            // the Gate Rig's room (version 4): chosen by per-room hashes, so every other room stays as version 3 built it
+            if (plan.contentVersion() >= 4) RigRooms.assign(this);
             for (Room r : rooms) {
                 if (!(friendly || (hollow && r.type != Room.Type.BOSS))) spawns(r);
                 features(r);
+                RigRooms.finish(r);
             }
             if (friendly && area == 0 && !bossFloor) lanterns();
             for (Room r : rooms) spots(r);
@@ -589,6 +592,11 @@ final class FloorBuilder {
             String key = plan.boss();
             for (Theme t : Theme.values()) if (t.bossId().equals(key)) return t;
             return plan.theme();
+        }
+
+        /** Room ids from the floor's start to its end along the shortest way (empty before both exist). */
+        List<Integer> path() {
+            return new FloorLayoutView(this).path();
         }
 
         /** The critical path: rooms on it, the door that leads on from each, and the last door into the end room. */
@@ -847,7 +855,7 @@ final class FloorBuilder {
         /** Friendly floors hide three lost lanterns in rooms off the spirit's path. */
         void lanterns() {
             List<Integer> picks = new ArrayList<>();
-            for (Room r : rooms) if (r.type == Room.Type.NORMAL || r.type == Room.Type.CACHE) picks.add(r.id);
+            for (Room r : rooms) if ((r.type == Room.Type.NORMAL || r.type == Room.Type.CACHE) && r.rig == null) picks.add(r.id);
             for (int i = 0; i < 3 && !picks.isEmpty(); i++) {
                 Room r = rooms.get(picks.remove(rnd.nextInt(picks.size())));
                 r.features.add(new Room.Feature(Room.FeatureKind.LANTERN, r.centerX() + 2, 0, r.centerZ() - 2, i));

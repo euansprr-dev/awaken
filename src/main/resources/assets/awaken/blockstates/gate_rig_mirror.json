@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "turn=0,turning=false": {
+      "model": "awaken:block/gate_rig_mirror"
+    },
+    "turn=0,turning=true": {
+      "model": "awaken:block/gate_rig_mirror"
+    },
+    "turn=1,turning=false": {
+      "model": "awaken:block/gate_rig_mirror",
+      "y": 90
+    },
+    "turn=1,turning=true": {
+      "model": "awaken:block/gate_rig_mirror",
+      "y": 90
+    },
+    "turn=2,turning=false": {
+      "model": "awaken:block/gate_rig_mirror",
+      "y": 180
+    },
+    "turn=2,turning=true": {
+      "model": "awaken:block/gate_rig_mirror",
+      "y": 180
+    },
+    "turn=3,turning=false": {
+      "model": "awaken:block/gate_rig_mirror",
+      "y": 270
+    },
+    "turn=3,turning=true": {
+      "model": "awaken:block/gate_rig_mirror",
+      "y": 270
+    }
+  }
+}

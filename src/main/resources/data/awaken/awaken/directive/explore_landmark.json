@@ -1,0 +1,19 @@
+{
+  "text": "Stand at a landmark you've never reached.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:landmarks_reached",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.2
+  },
+  "expires_days": 3,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 12,
+  "requires": [
+    "level:4"
+  ]
+}

@@ -110,7 +110,8 @@ public final class RoomGeometry {
 
     /** Solid structure or a set piece's obstacle: nobody stands or spawns here. */
     public static boolean blocked(Room r, int x, int z) {
-        return solid(r, x, z) || (r.piece != null && inRect(r, x, z) && Pieces.blocks(r, x, z));
+        return solid(r, x, z) || (r.piece != null && inRect(r, x, z) && Pieces.blocks(r, x, z))
+                || (r.rig != null && inRect(r, x, z) && RigRooms.blocks(r, x, z));
     }
 
     /** Inside the room's open interior (not wall, not pillar). Doors and stairs are handled separately. */
@@ -182,6 +183,10 @@ public final class RoomGeometry {
     /** Offset of the walking surface relative to the room's dy (dais +1, pit ledge -1, pit bottom -2, cave bumps). */
     public static int floorOffset(Room r, int x, int z) {
         if (!inRect(r, x, z)) return 0;
+        if (r.rig != null) {
+            int d = RigRooms.floorDelta(r, x, z);
+            if (d != Pieces.KEEP) return d;
+        }
         if (r.piece != null) {
             int d = Pieces.floorDelta(r, x, z);
             if (d != Pieces.KEEP) return d;
@@ -226,7 +231,7 @@ public final class RoomGeometry {
             if (dome > 0) h += (int) Math.round(d * dome);
         }
         if (r.piece != null) h = Math.max(4, Math.min(27 - r.dy, h + Pieces.ceilingDelta(r, x, z)));
-        return h;
+        return r.rig != null ? RigRooms.ceiling(r, h) : h;
     }
 
     /** Sky Archipelago: is there island ground here (otherwise a drop to the cloud layer)? */

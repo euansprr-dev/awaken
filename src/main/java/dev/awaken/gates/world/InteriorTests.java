@@ -180,9 +180,9 @@ public final class InteriorTests {
                                     + " (first runs: build %.1f ms, mean %.2f ms, worst %.2f ms; %d chunks re-painted)%n",
                             t.id, build / 1e6, chunks, mean, worst / 1e6, maxBlocks, buildFirst / 1e6, totalFirst / 1e6 / chunks, worstFirst / 1e6, retimed));
                     // a worldgen thread paints one chunk per task: keep it well under a vanilla noise chunk (~5-15 ms)
-                    h.assertTrue(mean < 4.0, t.id + " paints a chunk in " + mean + " ms on average, a slow chunk at its fastest of 5 (budget 4)");
-                    h.assertTrue(worst < 40.0 * 1e6, t.id + " worst chunk " + worst / 1e6 + " ms, fastest of 5 paints (budget 40)");
-                    h.assertTrue(build < 50 * 1e6, t.id + " layout built in " + build / 1e6 + " ms, fastest of 3 (budget 50, once per gate, cached)");
+                    h.assertTrue(mean < AwakenTests.cpuBudget(4.0), t.id + " paints a chunk in " + mean + " ms on average, a slow chunk at its fastest of 5 (budget 4)");
+                    h.assertTrue(worst < AwakenTests.cpuBudget(40.0) * 1e6, t.id + " worst chunk " + worst / 1e6 + " ms, fastest of 5 paints (budget 40)");
+                    h.assertTrue(build < AwakenTests.cpuBudget(50) * 1e6, t.id + " layout built in " + build / 1e6 + " ms, fastest of 3 (budget 50, once per gate, cached)");
                     h.assertTrue(maxBlocks <= 16 * 16 * Cells.FLOOR_PITCH * l.main.size(), t.id + " writes " + maxBlocks + " blocks in one chunk");
                 }
             }

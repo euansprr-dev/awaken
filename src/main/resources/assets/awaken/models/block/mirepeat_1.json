@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "awaken:block/mirepeat_top_1",
+    "side": "awaken:block/mirepeat",
+    "bottom": "awaken:block/mirepeat_bottom"
+  }
+}

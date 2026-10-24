@@ -1,6 +1,7 @@
 package dev.awaken.signal.net;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.HorizonHooks;
 import dev.awaken.core.api.NowHooks;
 import dev.awaken.signal.SignalWindow;
 import io.netty.buffer.ByteBuf;
@@ -68,6 +69,24 @@ public final class SignalPayloads {
             ComponentSerialization.TRUSTED_STREAM_CODEC, NowHooks.Suggestion::text,
             ByteBufCodecs.<RegistryFriendlyByteBuf, BlockPos>optional(BlockPos.STREAM_CODEC), NowHooks.Suggestion::where,
             NowHooks.Suggestion::new);
+
+    public static final StreamCodec<ByteBuf, HorizonHooks.Line> LINE = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8, HorizonHooks.Line::id,
+            ByteBufCodecs.STRING_UTF8, HorizonHooks.Line::name,
+            BlockPos.STREAM_CODEC, HorizonHooks.Line::where,
+            ByteBufCodecs.STRING_UTF8, HorizonHooks.Line::need,
+            ByteBufCodecs.BOOL, HorizonHooks.Line::tease,
+            HorizonHooks.Line::new);
+
+    /** Server → client: the Horizon line (SPEC §17), or none. {@code dimension}: where it was picked (for the compass). */
+    public record Horizon(Identifier dimension, Optional<HorizonHooks.Line> line) implements CustomPacketPayload {
+        public static final Type<Horizon> TYPE = new Type<>(Awaken.id("signal_horizon"));
+        public static final StreamCodec<ByteBuf, Horizon> STREAM_CODEC = StreamCodec.composite(
+                Identifier.STREAM_CODEC, Horizon::dimension,
+                ByteBufCodecs.optional(LINE), Horizon::line,
+                Horizon::new);
+        @Override public Type<Horizon> type() { return TYPE; }
+    }
 
     /**
      * Server → client: the Now tracker's suggestions (best first, up to three). {@code dimension} is where the player

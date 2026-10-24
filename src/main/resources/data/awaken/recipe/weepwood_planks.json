@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "group": "planks",
+  "ingredients": [
+    "#awaken:weepwood_logs"
+  ],
+  "result": {
+    "count": 4,
+    "id": "awaken:weepwood_planks"
+  }
+}

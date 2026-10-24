@@ -1,0 +1,18 @@
+{
+  "text": "I close what tears open.",
+  "hint": "Close five rift tears.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:rifts_closed",
+    "value": 5
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:force_amp",
+        "amount": 0.05
+      }
+    ]
+  },
+  "min_rank": "E"
+}

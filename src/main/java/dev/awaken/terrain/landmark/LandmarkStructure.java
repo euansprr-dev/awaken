@@ -19,8 +19,9 @@ import java.util.Optional;
 /**
  * A landmark (lands pack {@code worldgen/structure/<landmark>.json}, placed by a wide random spread). The start chunk
  * is the placement's; the landmark may stand up to {@link #SEARCH} chunks from it wherever its biome is and its ground
- * suits it: a Gate Scar wants dry, fairly level steppe high enough above the sea that its bowl stays dry; a Shard
- * Drift wants a fault line under it (it walks onto the line along the fault noise) on dry land.
+ * suits it: a Gate Scar wants dry, fairly level steppe high enough above the sea that its bowl stays dry; an Aurora
+ * Spire wants dry, level ground for its tarn; a Shard Drift wants a fault line under it (it walks onto the line along
+ * the fault noise) on dry land.
  */
 public class LandmarkStructure extends Structure {
     public static final MapCodec<LandmarkStructure> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -44,11 +45,12 @@ public class LandmarkStructure extends Structure {
     @Override
     protected Optional<GenerationStub> findGenerationPoint(GenerationContext ctx) {
         return switch (landmark) {
-            case GATE_SCAR -> {
-                BlockPos site = scarSite(ctx);
+            case GATE_SCAR, AURORA_SPIRE -> {
+                BlockPos site = levelSite(ctx, landmark);
                 if (site == null) yield Optional.empty();
                 long seed = ctx.random().nextLong();
-                yield Optional.of(new GenerationStub(site, b -> b.addPiece(LandmarkPiece.scar(site, seed))));
+                yield Optional.of(new GenerationStub(site, b -> b.addPiece(landmark == Landmark.GATE_SCAR ? LandmarkPiece.scar(site, seed)
+                        : LandmarkPiece.spire(site, seed))));
             }
             case SHARD_DRIFT -> {
                 double[] site = driftSite(ctx);
@@ -62,8 +64,24 @@ public class LandmarkStructure extends Structure {
         };
     }
 
-    /** Where a Gate Scar's centre goes (the first air over the ground there), or null. */
-    static BlockPos scarSite(GenerationContext ctx) {
+    /**
+     * What a landmark on level ground asks of its site: dry ground at least {@code aboveSea} over the sea (a Gate Scar's
+     * bowl, up to ~11 down, stays dry), within {@code nearStep} of the centre's height at {@code near} blocks out and
+     * {@code farStep} at {@code far} (a plain, not a hillside), and {@code headroom} under the build limit.
+     */
+    private record Level(int aboveSea, int near, int nearStep, int far, int farStep, int headroom) {}
+
+    private static Level level(Landmark landmark) {
+        return switch (landmark) {
+            case GATE_SCAR -> new Level(12, 16, 5, 28, 8, 50);
+            case AURORA_SPIRE -> new Level(2, 12, 4, 20, 6, 70);
+            case SHARD_DRIFT -> throw new IllegalArgumentException("a drift hangs over its fault");
+        };
+    }
+
+    /** Where a Gate Scar's or an Aurora Spire's centre goes (the first air over the ground there), or null. */
+    static BlockPos levelSite(GenerationContext ctx, Landmark landmark) {
+        Level want = level(landmark);
         ChunkPos c = ctx.chunkPos();
         WorldgenRandom rnd = ctx.random();
         int sea = ctx.chunkGenerator().getSeaLevel();
@@ -73,22 +91,21 @@ public class LandmarkStructure extends Structure {
                 x += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
                 z += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
             }
-            if (cityNear(x, z, Landmark.GATE_SCAR.reach)) continue;
+            if (cityNear(x, z, landmark.reach)) continue;
             int top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
             if (!biome(ctx, x, top, z)) continue;
-            // the bowl's floor (up to ~11 down) must stay above the sea, and the ground must be dry
-            if (top <= sea + 12 || height(ctx, x, z, Heightmap.Types.OCEAN_FLOOR_WG) != top) continue;
+            if (top <= sea + want.aboveSea() || height(ctx, x, z, Heightmap.Types.OCEAN_FLOOR_WG) != top) continue;
             boolean ok = true;
             for (int k = 0; k < 12 && ok; k++) {
                 double a = k * Math.PI / 6;
-                double d = k % 2 == 0 ? 16 : 28;
+                int d = k % 2 == 0 ? want.near() : want.far();
                 int rx = x + (int) Math.round(Math.cos(a) * d), rz = z + (int) Math.round(Math.sin(a) * d);
                 int h = height(ctx, rx, rz, Heightmap.Types.WORLD_SURFACE_WG);
                 if (h != height(ctx, rx, rz, Heightmap.Types.OCEAN_FLOOR_WG)) ok = false; // water on the rim
-                if (Math.abs(h - top) > (d < 20 ? 5 : 8)) ok = false; // a hillside, not a plain
+                if (Math.abs(h - top) > (d == want.near() ? want.nearStep() : want.farStep())) ok = false;
             }
             if (!ok) continue;
-            if (top + 50 > ctx.heightAccessor().getMaxY()) continue;
+            if (top + want.headroom() > ctx.heightAccessor().getMaxY()) continue;
             return new BlockPos(x, top + 1, z);
         }
         return null;

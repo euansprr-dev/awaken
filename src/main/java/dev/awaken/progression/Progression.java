@@ -98,6 +98,11 @@ public final class Progression {
      * Before awakening nothing is lost: the XP is banked in the profile and paid when the player awakens.
      */
     public static int grantXp(ServerPlayer player, double amount, XpSource source) {
+        return grant(player, amount, source, null);
+    }
+
+    /** {@link #grantXp}, with world XP's own source key for the ledger ({@link XpLedger}). */
+    private static int grant(ServerPlayer player, double amount, XpSource source, @org.jspecify.annotations.Nullable String worldKey) {
         Profile p = profile(player);
         if (amount <= 0 || !Double.isFinite(amount)) return 0;
         if (!p.awakened) {
@@ -106,7 +111,13 @@ public final class Progression {
             return 0;
         }
         amount *= xpScale(player) * (1 + perk(player, Perks.XP_BONUS));
+        xpLedger(player).add(source, worldKey, amount);
         return addXp(player, p, amount);
+    }
+
+    /** Where this player's XP came from so far, by source (pacing telemetry). */
+    public static XpLedger xpLedger(Player player) {
+        return player.getData(ProgressionModule.XP_LEDGER.get());
     }
 
     /**
@@ -185,7 +196,7 @@ public final class Progression {
      */
     public static double worldXp(ServerPlayer player, String source, double fractionOfLevel) {
         double paid = XpBudget.pay(player.getUUID(), source, fractionOfLevel, player.level().getGameTime());
-        if (paid > 0) grantLevels(player, paid, XpSource.WORLD);
+        if (paid > 0) grant(player, paid * Curve.xpToNext(profile(player).level) / xpScale(player), XpSource.WORLD, source);
         return paid;
     }
 

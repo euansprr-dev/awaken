@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:random_selector",
+  "default": "awaken:lands/weepwood",
+  "features": [
+    {
+      "chance": 0.08,
+      "feature": "awaken:lands/fallen_weepwood"
+    },
+    {
+      "chance": 0.3,
+      "feature": "awaken:lands/great_weepwood"
+    }
+  ]
+}

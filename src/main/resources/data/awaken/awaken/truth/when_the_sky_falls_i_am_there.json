@@ -1,0 +1,28 @@
+{
+  "text": "When the sky falls, I'm there first.",
+  "hint": "Open three fallen stars and slay a star's guardian.",
+  "condition": {
+    "type": "all",
+    "of": [
+      {
+        "type": "counter",
+        "counter": "awaken:stars_opened",
+        "value": 3
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:star_guardians_slain",
+        "value": 1
+      }
+    ]
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:crit_chance",
+        "amount": 0.02
+      }
+    ]
+  },
+  "min_rank": "E"
+}

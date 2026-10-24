@@ -5,6 +5,13 @@ Euan's 5-hour plan window ran out, so the remaining work moves to Claude Code cl
 are unfinished and unbuilt).
 
 ## Rules for every cloud task
+
+**Token budget first (Euan, 25 Oct):** "keep tests and verifications low for the cloud, make it focus on building and
+coding to avoid using millions and millions of tokens. It should still do an excellent job though."
+- Write only the GameTests that guard the core rules: one per mechanism, not one per case.
+- Run the full suite in the VM at most once, at the end. GitHub CI runs it on every push anyway.
+- No re-runs and no long investigations of known flakes (timing budgets go through AwakenTests.cpuBudget).
+- Spend the effort on the build itself: the code, the look and the feel.
 - Read CLAUDE.md and docs/SPEC.md first. Ignore Mac-only paths in them (/Volumes/MEDIA/..., tools/gradle.sh's
   JAVA_HOME, slot.sh): in the cloud VM, run `./gradlew --console=plain build` directly.
 - The `.ref/` reference sources aren't in git. After a first `./gradlew build`, read the decompiled Minecraft and

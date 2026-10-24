@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
 import dev.awaken.core.CoreModule;
 import dev.awaken.gates.block.GateBlocks;
+import dev.awaken.gates.block.RigBlocks;
 import dev.awaken.gates.entity.EchoGhost;
 import dev.awaken.gates.entity.GateHoarder;
 import dev.awaken.gates.entity.GateShade;
@@ -13,6 +14,8 @@ import dev.awaken.gates.run.GearStash;
 import dev.awaken.gates.run.RunState;
 import dev.awaken.gates.world.GateBiomeSource;
 import dev.awaken.gates.world.GateChunkGenerator;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.TicketType;
@@ -58,6 +61,7 @@ public final class GatesRegistry {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, Awaken.MODID);
     public static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>> BLOCK_ENTITIES =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Awaken.MODID);
+    public static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
 
     // ---- blocks -----------------------------------------------------------------------------------------------------
 
@@ -178,11 +182,27 @@ public final class GatesRegistry {
     public static final DeferredBlock<Block> SKY = BLOCKS.registerSimpleBlock("gate_sky", soft(MapColor.COLOR_LIGHT_BLUE, SoundType.WOOL, 0.4F, 6));
     /** The System's blue: the Rest Shrine's light. */
     public static final DeferredBlock<Block> SIGNAL_LAMP = BLOCKS.registerSimpleBlock("gate_signal_lamp", stoneLike(MapColor.COLOR_LIGHT_BLUE, SoundType.AMETHYST, 14));
+    /** A mirror crazed with fine cracks: the pavilion's front in a Mirror Hall (a spirit walks through it). */
+    public static final DeferredBlock<Block> MIRROR_CRACKED = BLOCKS.registerSimpleBlock("gate_mirror_cracked", stoneLike(MapColor.QUARTZ, SoundType.GLASS, 3));
+    /** The glowing rim of a gravity well, on the floor and on the ceiling above it. */
+    public static final DeferredBlock<Block> WELL_RIM = BLOCKS.registerSimpleBlock("gate_well_rim", stoneLike(MapColor.COLOR_PURPLE, SoundType.AMETHYST, 10));
 
     public static final List<DeferredBlock<? extends Block>> INTERIOR_BLOCKS = List.of(OSSUARY, BELL_BRONZE, BELL, GLOWCAP, GLOWCAP_GILLS,
             EMBER_ORE, SODDEN_SHELF, GEAR, CONVEYOR, SANDGLASS, SUN_TILE, BROOD_CELL, ROYAL_JELLY, TEMPLE_RELIEF, JADE, PAPER_LANTERN,
-            RIME_BRICK, FROST_WINDOW, MIRROR, LAB_PANEL, LAB_RACK, DREAM_PAPER, CLOUD, SKY, VOID_GLASS, SIGNAL_LAMP);
+            RIME_BRICK, FROST_WINDOW, MIRROR, LAB_PANEL, LAB_RACK, DREAM_PAPER, CLOUD, SKY, VOID_GLASS, SIGNAL_LAMP, MIRROR_CRACKED, WELL_RIM);
     public static final List<DeferredItem<BlockItem>> INTERIOR_ITEMS = INTERIOR_BLOCKS.stream().map(ITEMS::registerSimpleBlockItem).toList();
+
+    // ---- the Gate Rig's Mirror Hall (SPEC §17): the turning mirror, the lens, the seal --------------------------------
+
+    public static final DeferredBlock<RigBlocks.Mirror> RIG_MIRROR = BLOCKS.registerBlock("gate_rig_mirror",
+            RigBlocks.Mirror::new, p -> unbreakable(MapColor.QUARTZ, SoundType.GLASS, 4).apply(p).noOcclusion());
+    public static final DeferredBlock<RigBlocks.Lens> RIG_LENS = BLOCKS.registerBlock("gate_rig_lens",
+            RigBlocks.Lens::new, unbreakable(MapColor.GOLD, SoundType.AMETHYST, 13));
+    public static final DeferredBlock<RigBlocks.Seal> RIG_SEAL = BLOCKS.registerBlock("gate_rig_seal",
+            RigBlocks.Seal::new, p -> unbreakable(MapColor.COLOR_LIGHT_BLUE, SoundType.AMETHYST, 0).apply(p)
+                    .lightLevel(s -> s.getValue(RigBlocks.Seal.LIT) ? 15 : 4));
+    public static final List<DeferredItem<BlockItem>> RIG_ITEMS = List.of(ITEMS.registerSimpleBlockItem(RIG_MIRROR),
+            ITEMS.registerSimpleBlockItem(RIG_LENS), ITEMS.registerSimpleBlockItem(RIG_SEAL));
 
     public static final DeferredItem<BlockItem> FRAME_ITEM = ITEMS.registerSimpleBlockItem(FRAME);
     public static final DeferredItem<BlockItem> FRAME_CRACKED_ITEM = ITEMS.registerSimpleBlockItem(FRAME_CRACKED);
@@ -245,6 +265,41 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_GLASS = sound("gate.ambient.glass");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WIND = sound("gate.ambient.wind");
 
+    // the Gate Rig (tools/art/specs/audio_rig.py): the collapse, the mirrors and the light, the wells, the cave-in
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_CRACK = sound("gate.rig.crack");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_FALL = sound("gate.rig.fall");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_KNIT = sound("gate.rig.knit");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_RUN = sound("gate.rig.run");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_PIT = sound("gate.rig.pit");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_TURN = sound("gate.rig.turn");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_HUM = sound("gate.rig.hum");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_BURN = sound("gate.rig.burn");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_IGNITE = sound("gate.rig.ignite");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_SHATTER = sound("gate.rig.shatter");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_FLIP_UP = sound("gate.rig.flip_up");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_FLIP_DOWN = sound("gate.rig.flip_down");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_SURGE = sound("gate.rig.surge");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_CAVE = sound("gate.rig.cave");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_RUBBLE = sound("gate.rig.rubble");
+
+    // ---- particles (the Gate Rig's own; client providers in gates.client.RigParticles) -------------------------------
+
+    /** Grit and dust shaken off a cracking tile or a ceiling about to fall (tinted by the client). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_GRIT =
+            PARTICLES.register("gate_rig_grit", () -> new SimpleParticleType(false));
+    /** A spark rising out of a crack, or off a monster the light burns. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_SPARK =
+            PARTICLES.register("gate_rig_spark", () -> new SimpleParticleType(false));
+    /** A mote of light drifting off the beam, a mirror or the seal. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_GLINT =
+            PARTICLES.register("gate_rig_glint", () -> new SimpleParticleType(false));
+    /** A shard of mirror glass, tumbling. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_SHARD =
+            PARTICLES.register("gate_rig_shard", () -> new SimpleParticleType(false));
+    /** A well's mote: it drifts toward the well's "down". */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> P_MOTE =
+            PARTICLES.register("gate_rig_mote", () -> new SimpleParticleType(false));
+
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));
     }
@@ -281,6 +336,7 @@ public final class GatesRegistry {
         TICKETS.register(modBus);
         ATTACHMENTS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
+        PARTICLES.register(modBus);
         GateExterior.init(modBus);
         dev.awaken.gates.world.Interiors.init();
         modBus.addListener(GatesRegistry::attributes);
@@ -299,5 +355,6 @@ public final class GatesRegistry {
         for (var item : List.of(FRAME_ITEM, FRAME_CRACKED_ITEM, SHRINE_ITEM, SEAL_ITEM, CACHE_ITEM, BARS_ITEM, RUNE_ITEM, ENTRANCE_ITEM,
                 LANTERN_ITEM, UPDRAFT_ITEM)) e.accept(item.get());
         for (var item : INTERIOR_ITEMS) e.accept(item.get());
+        for (var item : RIG_ITEMS) e.accept(item.get());
     }
 }

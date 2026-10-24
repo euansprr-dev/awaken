@@ -47,6 +47,14 @@ public final class AwakenTests {
             .map(String::strip).filter(s -> !s.isEmpty()).toList();
 
     /** True when the test filter lets this test name through (always, without a filter). */
+    /**
+     * A CPU-time budget measured on Euan's M4, widened 3x on CI (GitHub's 2-core runners set CI=true and run about 2x
+     * slower), so a timing assertion still catches a real regression without failing on a slow machine.
+     */
+    public static double cpuBudget(double m4Millis) {
+        return System.getenv("CI") != null ? m4Millis * 3 : m4Millis;
+    }
+
     public static boolean selected(String name) {
         return FILTER.isEmpty() || FILTER.stream().anyMatch(name::startsWith);
     }

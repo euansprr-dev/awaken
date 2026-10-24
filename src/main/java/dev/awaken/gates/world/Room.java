@@ -100,6 +100,8 @@ public final class Room {
     public boolean onPath;
     /** On the critical path: the door you came in by and the door that leads on (null at the start and the end). */
     public Door pathIn, pathOut;
+    /** The Gate Rig's archetype in this room, or null (content version 4+; at most one room a floor). */
+    public RigRoom rig;
 
     Room(int id, Type type, Shape shape, int gx, int gz, int gw, int gh, int dy, int height, long seed) {
         this.id = id;
