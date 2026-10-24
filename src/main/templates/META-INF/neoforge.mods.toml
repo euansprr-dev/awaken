@@ -39,6 +39,11 @@ enumExtensions="META-INF/enumextensions.json"
 # before it existed never get it, so their terrain never changes (docs/SPEC.md §15).
 featureFlags="META-INF/feature_flags.json"
 
+# Pixels (Far Sight path 4, SPEC §16): the world at a lower resolution, rebuilt to the screen's. Client-only mixins under
+# the Turbo contract (dev.awaken.turbo.pixels.mixin); not required, so a mixin that can't apply turns Pixels off.
+[[mixins]]
+config="awaken.pixels.mixins.json"
+
 # A text field displayed in the mod UI
 #credits="" #optional
 

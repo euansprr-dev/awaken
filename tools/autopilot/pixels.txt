@@ -1,0 +1,149 @@
+# Pixels' decisive measurement (SPEC §16, docs/perf/pixels/REPORT.md): the same moment drawn at native, 0.75, 0.67
+# and 0.5 with FSR, 0.67 with bilinear, then native again (the drift check: it should match the first native run), back
+# to back in each scene. Scenes: the perf-pack's sunset vista from 190 m, a grove close up (foliage, the hand), and a
+# ground vista on dry land; then the K menu and a text-heavy flat screen at each scale, shots only.
+# Run: SLOT_WHO=pixels PACK=perf RD=32 slot.sh tour tools/autopilot.sh tools/autopilot/pixels.txt
+# (Euan's settings: Vulkan, render distance 32, Lens Swift, no Distant Horizons.) Window 1440x900 points.
+world pixels creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+lens swift
+pixels state
+hud off
+# 1 the sunset vista (perf-pack scene 1)
+cmd gamemode spectator
+cmd tp @s 0.5 190 0.5 90 12
+cmd time set 12600
+wait 500
+pixels 1.0 fsr
+wait 30
+perf vista_100 8
+shot px_vista_100
+pixels 0.75 fsr
+wait 30
+perf vista_075 8
+shot px_vista_075
+pixels 0.67 fsr
+wait 30
+perf vista_067 8
+shot px_vista_067
+pixels 0.5 fsr
+wait 30
+perf vista_050 8
+shot px_vista_050
+pixels 0.67 bilinear
+wait 30
+perf vista_067b 8
+shot px_vista_067b
+pixels 1.0 fsr
+wait 30
+perf vista_100r 8
+
+# 2 a grove close up: leaves, grass, the hand
+cmd time set 6000
+cmd gamemode creative
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -24 150 -4 24 150 40 minecraft:grass_block
+cmd fill -24 151 -4 24 166 40 minecraft:air
+cmd place feature minecraft:fancy_oak -6 151 14
+cmd place feature minecraft:fancy_oak 7 151 18
+cmd place feature minecraft:birch 0 151 26
+cmd place feature minecraft:oak 11 151 7
+cmd place feature minecraft:oak -11 151 8
+cmd place feature minecraft:birch -3 151 34
+cmd fill -24 151 -4 24 151 40 minecraft:short_grass replace minecraft:air
+hud on
+wait 80
+look 0 4
+pixels 1.0 fsr
+wait 30
+perf grove_100 8
+shot px_grove_100
+pixels 0.75 fsr
+wait 30
+perf grove_075 8
+shot px_grove_075
+pixels 0.67 fsr
+wait 30
+perf grove_067 8
+shot px_grove_067
+pixels 0.5 fsr
+wait 30
+perf grove_050 8
+shot px_grove_050
+pixels 0.67 bilinear
+wait 30
+perf grove_067b 8
+shot px_grove_067b
+pixels 1.0 fsr
+wait 30
+perf grove_100r 8
+
+# 3 a ground vista on dry land, far from spawn
+hud off
+cmd awaken gate hop
+wait 700
+look 0 -2
+pixels 1.0 fsr
+wait 30
+perf ground_100 8
+shot px_ground_100
+pixels 0.75 fsr
+wait 30
+perf ground_075 8
+shot px_ground_075
+pixels 0.67 fsr
+wait 30
+perf ground_067 8
+shot px_ground_067
+pixels 0.5 fsr
+wait 30
+perf ground_050 8
+shot px_ground_050
+pixels 0.67 bilinear
+wait 30
+perf ground_067b 8
+shot px_ground_067b
+pixels 1.0 fsr
+wait 30
+perf ground_100r 8
+
+# 4 the K menu (Holo panels draw inside the world) and a flat text-heavy screen, over the grove
+cmd tp @s 0.5 151 0.5 0 4
+hud on
+wait 60
+pixels 1.0 fsr
+screen holo
+wait 80
+shot px_kmenu_100
+pixels 0.67 fsr
+wait 30
+shot px_kmenu_067
+pixels 0.5 fsr
+wait 30
+shot px_kmenu_050
+screen close
+wait 10
+screen codex
+wait 30
+shot px_codex_050
+pixels 1.0 fsr
+wait 30
+shot px_codex_100
+screen close
+pixels config
+quit
