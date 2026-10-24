@@ -1,0 +1,77 @@
+package dev.awaken.core.api;
+
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * The Awakened Body's moves (roll, tactical sprint, slide, mantle) as other modules see them: powers asks whether the
+ * caster is sliding for its family twists and chain refunds, and tells the body when a cast goes out (a cast ends a
+ * tactical sprint; a mid-slide cast never ends the slide). Installed by the body module; the defaults know no moves,
+ * so powers works the same without it.
+ */
+public final class MovementHooks {
+    private MovementHooks() {}
+
+    /** Server side, and the client for its own player. */
+    public interface Access {
+        default boolean sliding(Player p) { return false; }
+        default boolean tacticalSprinting(Player p) { return false; }
+        default boolean mantling(Player p) { return false; }
+        /** Overworld game time of the last tick a move ran (a landing roll counts once), or {@link Long#MIN_VALUE}. */
+        default long lastMoveTick(Player p) { return Long.MIN_VALUE; }
+        /** The slide's way (unit, horizontal) while sliding, else null. */
+        default @Nullable Vec3 slideDirection(Player p) { return null; }
+        /** A power is being cast (server, before its checks): a tactical sprint ends and the cast goes off at once. */
+        default void castStarting(ServerPlayer p) {}
+    }
+
+    /** Client side: the local player's power key sent a cast. */
+    public interface ClientAccess {
+        /**
+         * Called after a movement power's motion was predicted (so the body can let it win and keep a slide's way) and
+         * before the cast's effects are predicted. {@code family} is the power family's enum name.
+         */
+        default void castStarting(Player p, String powerId, String family, boolean motionPredicted) {}
+    }
+
+    private static Access access = new Access() {};
+    private static ClientAccess client = new ClientAccess() {};
+
+    public static void install(Access a) {
+        access = a;
+    }
+
+    public static void installClient(ClientAccess c) {
+        client = c;
+    }
+
+    public static boolean sliding(Player p) {
+        return access.sliding(p);
+    }
+
+    public static boolean tacticalSprinting(Player p) {
+        return access.tacticalSprinting(p);
+    }
+
+    public static boolean mantling(Player p) {
+        return access.mantling(p);
+    }
+
+    public static long lastMoveTick(Player p) {
+        return access.lastMoveTick(p);
+    }
+
+    public static @Nullable Vec3 slideDirection(Player p) {
+        return access.slideDirection(p);
+    }
+
+    public static void castStarting(ServerPlayer p) {
+        access.castStarting(p);
+    }
+
+    public static void clientCastStarting(Player p, String powerId, String family, boolean motionPredicted) {
+        client.castStarting(p, powerId, family, motionPredicted);
+    }
+}
