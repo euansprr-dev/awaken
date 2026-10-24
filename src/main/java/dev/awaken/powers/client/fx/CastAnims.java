@@ -2,7 +2,9 @@ package dev.awaken.powers.client.fx;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import dev.awaken.powers.PowerType.Family;
 import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.CastClips;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
@@ -16,15 +18,21 @@ import net.minecraft.util.context.ContextKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import org.joml.Quaternionf;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Cast animations without mixins. Third person: a render-state modifier swaps in vanilla arm poses (the horn pose is
  * a straight punch, the bow pose two palms out, the trident pose an arm cocked overhead, the shield pose a guard)
  * and twists the body, and a player render event leans the whole figure. First person: the hand render event moves
  * the drawn arm, and draws the off arm too for two-handed casts. Held wind-ups tremble until released.
+ * <p>
+ * With the Player Animation Library installed (optional), third person plays a full-body clip per power family instead
+ * ({@link PalCasts}, the only class that touches the library; clips from {@code CastClips}); the vanilla poses and the
+ * lean then step aside for that player, and first person stays exactly as here.
  */
 final class CastAnims {
     private CastAnims() {}
@@ -37,6 +45,18 @@ final class CastAnims {
         boolean held;
         float releasedAt = -1;
         float hold;
+        /** The library is posing this one (full body), so the vanilla poses and lean leave it alone. */
+        boolean pal;
+        Family family = Family.ENERGY;
+        boolean palFrozen;
+        boolean palLetGo;
+    }
+
+    /** The Player Animation Library is installed: casts get full-body clips in third person. */
+    static final boolean PAL = ModList.get().isLoaded("player_animation_library");
+
+    static void init() {
+        if (PAL) PalCasts.init();
     }
 
     private static final Anim[] SLOTS = new Anim[48];
@@ -54,10 +74,16 @@ final class CastAnims {
     }
 
     /** Starts an animation on an entity; a held one stays until {@link #release}. */
-    static void play(int entityId, CastAnim kind, int ticks) {
+    static void play(int entityId, CastAnim kind, int ticks, @Nullable Family family) {
         if (kind == CastAnim.NONE || entityId < 0) return;
         Anim a = find(entityId);
-        if (a == null) a = free();
+        boolean afterHold = a != null && a.held && a.pal && !kind.held;
+        boolean wasPal = a != null && a.pal;
+        if (a == null) {
+            a = free();
+            // a held clip on the evicted player would loop forever
+            if (a.entity >= 0 && a.pal) PalCasts.stop(a.entity);
+        }
         a.entity = entityId;
         a.kind = kind;
         a.start = FxWorld.ticks;
@@ -65,6 +91,25 @@ final class CastAnims {
         a.held = kind.held;
         a.releasedAt = -1;
         a.hold = 0;
+        a.family = family == null ? Family.ENERGY : family;
+        a.palFrozen = false;
+        a.palLetGo = false;
+        a.pal = false;
+        if (PAL && PowerFxConfig.animations()) {
+            String clip = CastClips.clip(a.family, kind, afterHold);
+            a.pal = clip != null && PalCasts.play(entityId, clip, fadeIn(kind));
+        }
+        if (wasPal && !a.pal && PAL) PalCasts.stop(entityId);
+    }
+
+    /** Ticks a clip blends in over: casts start from a standing pose, holds and slams start already posed. */
+    private static int fadeIn(CastAnim kind) {
+        return switch (kind) {
+            case HOVER -> 4;
+            case PUNCH_WIND, CHARGE2, AIM_HOLD, SLAM_WIND -> 3;
+            case SLAM -> 2;
+            default -> 1;
+        };
     }
 
     /** True when the entity started this animation within the last few ticks (prediction already played it). */
@@ -87,6 +132,10 @@ final class CastAnims {
     static void tick() {
         for (Anim a : SLOTS) {
             if (a.entity < 0) continue;
+            if (a.pal && (a.hold > 0) != a.palFrozen) {
+                a.palFrozen = a.hold > 0;
+                PalCasts.freeze(a.entity, a.palFrozen);
+            }
             if (a.hold > 0) {
                 float h = Math.min(1, a.hold);
                 a.start += h;
@@ -95,12 +144,22 @@ final class CastAnims {
             }
             float age = FxWorld.ticks - a.start;
             boolean done = a.held ? (a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt > 5) || age > 20 * 30 : age > a.ticks + 2;
+            // a held clip lets go a moment after release, so a release cast arriving just behind it takes over smoothly
+            if (a.pal && a.held && !a.palLetGo && (done || a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt >= 2)) {
+                a.palLetGo = true;
+                String clip = CastClips.letGo(a.family, a.kind);
+                if (clip == null || !PalCasts.play(a.entity, clip, 2)) PalCasts.stop(a.entity);
+            }
+            if (done && a.pal && a.palFrozen) PalCasts.freeze(a.entity, false);
             if (done) a.entity = -1;
         }
     }
 
     static void reset() {
-        for (Anim a : SLOTS) a.entity = -1;
+        for (Anim a : SLOTS) {
+            if (a.entity >= 0 && a.pal) PalCasts.stop(a.entity);
+            a.entity = -1;
+        }
     }
 
     private static Anim find(int id) {
@@ -142,6 +201,8 @@ final class CastAnims {
     static void modify(Entity entity, EntityRenderState state) {
         if (!(state instanceof HumanoidRenderState s)) return;
         Anim a = PowerFxConfig.animations() ? find(entity.getId()) : null;
+        // the library poses the whole body (lean included) for this one
+        if (a != null && a.pal) a = null;
         s.setRenderData(ANIM, a);
         if (a == null) return;
         float pt = s.partialTick;

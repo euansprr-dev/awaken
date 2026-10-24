@@ -1,5 +1,8 @@
 package dev.awaken.powers.fx;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.powers.Casting;
 import dev.awaken.powers.Fx;
@@ -19,6 +22,9 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -126,8 +132,59 @@ final class PowerFxTests {
             h.succeed();
         });
 
+        AwakenTests.register("power_fx_cast_clips", 20, PowerFxTests::castClips);
         AwakenTests.registerIsolated("power_fx_every_cast_emits", 200, PowerFxTests::everyCastEmits);
         AwakenTests.registerIsolated("power_fx_reach_matches_hits", 400, PowerFxTests::reachMatchesHits);
+    }
+
+    private static final Set<String> CLIP_BONES = Set.of("body", "torso", "head", "right_arm", "left_arm", "right_leg", "left_leg");
+
+    /**
+     * The optional full-body clips (Player Animation Library): every clip the table can name is in the generated file
+     * with only player bones, one-shot clips ease out (endTick) and wind-ups loop; and every power's family is read back
+     * from its own events, so each power plays its family's clip.
+     */
+    private static void castClips(GameTestHelper h) {
+        JsonObject anims;
+        try (InputStream in = PowerFxTests.class.getResourceAsStream("/" + CastClips.FILE)) {
+            h.assertTrue(in != null, "missing " + CastClips.FILE + " (python3 tools/art/specs/power_casts.py build)");
+            anims = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("animations");
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+        for (String name : CastClips.all()) {
+            h.assertTrue(anims.has(name), "clip " + name + " is missing from " + CastClips.FILE);
+            JsonObject a = anims.getAsJsonObject(name);
+            for (String bone : a.getAsJsonObject("bones").keySet()) h.assertTrue(CLIP_BONES.contains(bone), name + " moves an unknown bone " + bone);
+            boolean loops = a.has("loop") && a.get("loop").getAsBoolean();
+            h.assertTrue(loops == name.matches("(hold_[a-z]+|slam_wind|hover)"), name + (loops ? " loops but is not a wind-up" : " should loop"));
+            if (!loops) {
+                JsonElement end = a.has("player_animation_library") ? a.getAsJsonObject("player_animation_library").get("endTick") : null;
+                h.assertTrue(end != null && end.getAsFloat() < a.get("animation_length").getAsFloat() * 20, name + " eases back to the vanilla pose (endTick)");
+            }
+        }
+        for (PowerType.Family f : PowerType.Family.values()) {
+            for (CastAnim k : CastAnim.values()) {
+                for (boolean after : new boolean[]{false, true}) {
+                    String c = CastClips.clip(f, k, after);
+                    h.assertTrue(k == CastAnim.NONE ? c == null : c != null && anims.has(c), f + " " + k + " names a clip that exists: " + c);
+                }
+                String letGo = CastClips.letGo(f, k);
+                h.assertTrue(k.held == (letGo != null) && (letGo == null || anims.has(letGo)), f + " " + k + " lets go cleanly: " + letGo);
+            }
+        }
+        List<String> wrong = new ArrayList<>();
+        for (PowerFxDefs.Def d : PowerFxDefs.ALL.values()) {
+            PowerType t = PowerRegistry.get(d.power());
+            if (t == null) continue;
+            for (CastAnim a : new CastAnim[]{d.anim(), d.windAnim()}) {
+                if (a == null || a == CastAnim.NONE) continue;
+                PowerType.Family got = CastClips.family(d.style(), a, d.ultimate());
+                if (got != t.family) wrong.add(t.path + " " + a + " -> " + got);
+            }
+        }
+        h.assertTrue(wrong.isEmpty(), "powers whose events read as another family: " + wrong);
+        h.succeed();
     }
 
     /** Area and wave powers whose hit volume the effect draws; probes run along +X (rings) or +Z (cones, the aim). */

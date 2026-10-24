@@ -141,6 +141,8 @@ dependencies {
     compileOnly "maven.modrinth:distanthorizons:3.3.4-26.3"
     // Lens steps aside while an Iris shaderpack is on (the Ultra look)
     compileOnly "maven.modrinth:iris:1.11.7+26.3-neoforge"
+    // full-body cast clips (powers/client/fx/PalCasts). The version id, not "1.2.8": that number resolves to the 26.1 build
+    compileOnly "maven.modrinth:player-animation-library:xJ30QmpE"
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
