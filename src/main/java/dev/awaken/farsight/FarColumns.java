@@ -73,7 +73,8 @@ public final class FarColumns {
     /**
      * Fills one patch of ring {@code ring}: {@code height[i]} and {@code colour[i]} for its 16×16 cells, row by row,
      * as the RGBA8 texels the client uploads (ABGR ints). Height texel: r, g the drawn top (+{@link #HEIGHT_OFFSET}),
-     * b the water's depth (0 on land), a 255 (known). Colour texel: r, g, b the colour, a 255. Returns min and max top as
+     * b the water's depth (0 on land), a 255 (known). Colour texel: r, g, b the colour, a 255 or, in a forest, 16 × its
+     * canopy height + 15 (the near rings draw treetops from it). Returns min and max top as
      * {@code min << 16 | max} (offset), for culling.
      */
     public int patch(int ring, int px, int pz, int[] height, int[] colour) {
@@ -90,20 +91,23 @@ public final class FarColumns {
                 boolean water = ground < seaLevel;
                 int top = water ? seaLevel : ground;
                 Holder<Biome> biome = biome(x, top, z);
-                int rgb;
+                int rgb, alpha = 255;
                 if (water) {
                     rgb = FarPalette.water(biome);
                 } else {
                     rgb = FarPalette.ground(biome);
                     if (top > seaLevel + 2 && biome.value().coldEnoughToSnow(pos.set(x, top, z), seaLevel)) rgb = FarPalette.SNOW;
-                    // treetops, not the forest floor: they meet the real canopy where the chunks end
-                    top += FarPalette.canopy(biome);
+                    // treetops, not the forest floor: they meet the real canopy where the chunks end; the near rings
+                    // grow procedural treetops from the canopy height kept in alpha
+                    int trees = FarPalette.canopy(biome);
+                    top += trees;
+                    if (trees > 0) alpha = 16 * Math.min(trees, 14) + 15;
                 }
                 int h = Math.clamp(top + HEIGHT_OFFSET, 0, 65535);
                 int k = j * Rings.PATCH + i;
                 int depth = water ? Math.clamp(seaLevel - ground, 1, MAX_DEPTH) : 0;
                 height[k] = 255 << 24 | depth << 16 | (h & 255) << 8 | h >> 8;
-                colour[k] = 255 << 24 | (rgb & 255) << 16 | (rgb >> 8 & 255) << 8 | rgb >> 16 & 255;
+                colour[k] = alpha << 24 | (rgb & 255) << 16 | (rgb >> 8 & 255) << 8 | rgb >> 16 & 255;
                 min = Math.min(min, h);
                 max = Math.max(max, h);
             }

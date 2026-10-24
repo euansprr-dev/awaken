@@ -1124,6 +1124,15 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   fog moves out to its horizon (start 50%, end at ring 6's reach less its window lag, ≈14.6 km), and clear-weather
   atmospheric fog (1024 blocks by default) stretches to 1.6× that; rain brings 85% of it back; thick fog (under 200
   blocks: a boss, a gate's weather) is never thinned. Far terrain takes the same fog colour and the same linear fog.
+- What columns are made of (the A/B showed DH's real cliffs in dirt and stone against Far Sight's all-green walls):
+  walls show what lies under the top (dirt then stone under grass, snow over stone, sandstone under sand, banded
+  terracotta strata in badlands, a band every 2 blocks of y picked by hash) and darken toward their foot; badlands
+  tops take the band at their height too. Tops get a block-by-block colour texture (±8%, by world block, fading out
+  once a block spans more than about a pixel) and terrace lines at the camera-facing edges: a sunlit rim where the
+  ground drops away, a contact shadow up to 28% where it rises. In rings 0–2 a predicted forest grows treetops: per
+  cell a hash keeps two thirds a block or two above the canopy (6% lighter) and drops the rest toward the forest floor
+  (28% darker), the same whichever ring asks, so rings still meet exactly; the generated layer shows real treetops
+  instead. A predicted forest's colour texel carries its canopy height in alpha (16 × height + 15).
 - Lens: Far Sight keeps its own depth (D32, reversed-Z, the device's depth range, planes 1 and 32768) at the main
   target's size; nothing else writes it, so it lasts until post. It reports through `compat.client.FarTerrain.report`
   (texture, planes, convention) like Distant Horizons, so Lens's probe trusts it and hazes far terrain by its real

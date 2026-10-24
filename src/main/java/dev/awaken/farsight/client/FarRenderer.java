@@ -44,7 +44,7 @@ final class FarRenderer implements AutoCloseable {
     static final float NEAR = 1f, FAR = 32768f;
     static final int PIECE = 64, MAX_DRAWS = 256;
     private static final int QUADS_PER_CELL = 3, INDICES_PER_CELL = QUADS_PER_CELL * 6;
-    static final int FRAME_SIZE = new Std140SizeCalculator().putMat4f().putVec4().putVec4().putVec4().putVec4().get()
+    static final int FRAME_SIZE = new Std140SizeCalculator().putMat4f().putVec4().putVec4().putVec4().putVec4().putVec4().get()
             + Rings.RINGS * 16 * 2;
 
     private final MappableRingBuffer frameUbo = new MappableRingBuffer(() -> "awaken far sight frame", 130, FRAME_SIZE);
@@ -192,7 +192,8 @@ final class FarRenderer implements AutoCloseable {
         try (var view = frame.map(false, true)) {
             Std140Builder u = Std140Builder.intoBuffer(view.data());
             u.putMat4f(viewRotation).putVec4(a, b, clipStart, clipBand).putVec4(fogStart, fogEnd, (float) camY, seaLevel)
-                    .putVec4(sun.x, sun.y, sun.z, 0f);
+                    .putVec4(sun.x, sun.y, sun.z, 0f)
+                    .putVec4((float) (camX - Math.floor(camX / 4096.0) * 4096.0), (float) camY, (float) (camZ - Math.floor(camZ / 4096.0) * 4096.0), 0f);
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putVec4(originX[r], originZ[r], Rings.cellSize(r), field.valid[r] ? 1f : 0f);
             }

@@ -78,7 +78,7 @@ final class FarSightTests {
                     h.assertTrue(top >= minY && top <= maxY, "ring " + r + " cell " + i + " top " + top + " inside the world");
                     boolean water = (height[i] >> 16 & 255) > 0;
                     h.assertTrue(!water || top == columns.seaLevel(), "ring " + r + " water lies at sea level");
-                    h.assertTrue(colour[i] >>> 24 == 255, "ring " + r + " cell " + i + " has a colour");
+                    h.assertTrue((colour[i] >>> 24) % 16 == 15, "ring " + r + " cell " + i + " has a colour (alpha 255, or a canopy)");
                 }
             }
             h.succeed();
