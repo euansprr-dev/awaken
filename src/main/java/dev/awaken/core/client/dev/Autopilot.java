@@ -40,7 +40,8 @@ import java.util.Map;
  * look &lt;yaw&gt; &lt;pitch&gt;
  * turn &lt;degrees per tick&gt; &lt;ticks&gt;             a steady turn that keeps going while later lines run (a sharp turn)
  * key &lt;awaken key name&gt;                        press one of the mod's keys (status, accept, dismiss, ...)
- * screen status|map|codex|holo|close|experimental  holo: the holo K menu (status/map/codex stay flat and deterministic);
+ * screen status|map|codex|holo|uiprobe|close|experimental  holo: the holo K menu (status/map/codex stay flat);
+ *                                                uiprobe: every Ui/Glass primitive on black, for pixel checks;
  *                                                experimental: vanilla's experimental-settings prompt (it should answer itself)
  * click &lt;x&gt; &lt;y&gt;                                 a left click on the open screen at GUI coordinates
  * holo &lt;args&gt;                                    the holo module's test lines (HoloClient.autopilot): demo, at, run, hud, log
@@ -288,6 +289,7 @@ public final class Autopilot {
                 else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
                 else if (arg.trim().equals("map")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.GATE_MAP));
                 else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
+                else if (arg.trim().equals("uiprobe")) mc.gui.setScreen(new UiProbeScreen());
                 else if (arg.trim().startsWith("holo")) {
                     String t = arg.trim().length() > 4 ? arg.trim().substring(4).trim() : "status";
                     var tab = switch (t) {
