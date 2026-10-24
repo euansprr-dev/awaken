@@ -201,6 +201,7 @@ final class CitizenWork implements Ledger.Work {
         findBells();
         if (darkDirty) rebuildDark(tod);
         masons(now, tod);
+        chimneys();
         if (now % 600 == 0) darkDirty = true; // dusk and dawn change what "dark at night" means
     }
 
@@ -691,6 +692,105 @@ final class CitizenWork implements Ledger.Work {
         return -1;
     }
 
+    // ---- chimneys: the smoke the client puffs (signs of life) ------------------------------------------------------
+
+    private final java.util.Map<Integer, Long> chimneyOf = new java.util.HashMap<>();
+    private final java.util.Map<Integer, Byte> chimneyKind = new java.util.HashMap<>();
+    private int[] firstPlots;
+    private int housesCursor, firstCursor;
+
+    /** Bakeries, taverns and smithies first; then houses near a player, one plot a tick, each once per world. */
+    private void chimneys() {
+        dev.awaken.city.CityPlan plan = dev.awaken.city.CityPlan.get();
+        if (firstPlots == null) {
+            for (int k = 0; k + 1 < d.chimneys.length; k += 2) chimneyOf.put((int) d.chimneys[k], d.chimneys[k + 1]);
+            java.util.List<Integer> first = new java.util.ArrayList<>();
+            for (Bakery b : r.bakeries) {
+                first.add(b.plot());
+                chimneyKind.put(b.plot(), (byte) 0);
+            }
+            for (Tavern t : r.taverns) {
+                first.add(t.plot());
+                chimneyKind.put(t.plot(), (byte) 2);
+            }
+            for (Smithy sm : r.smithies) {
+                first.add(sm.plot());
+                chimneyKind.put(sm.plot(), (byte) 3);
+            }
+            firstPlots = first.stream().mapToInt(Integer::intValue).toArray();
+        }
+        int plot = -1;
+        for (int n = 0; n < firstPlots.length && plot < 0; n++) {
+            int cand = firstPlots[firstCursor];
+            firstCursor = (firstCursor + 1) % firstPlots.length;
+            if (!chimneyOf.containsKey(cand)) plot = cand;
+        }
+        if (plot < 0) {
+            for (int n = 0; n < 8 && plot < 0; n++) {
+                int cand = housesCursor;
+                housesCursor = (housesCursor + 1) % plan.plots.size();
+                dev.awaken.city.CityPlan.Plot pl = plan.plots.get(cand);
+                if (chimneyOf.containsKey(pl.id()) || !nearPlayer(cx + pl.x0(), cz + pl.z0(), 112)) continue;
+                plot = pl.id();
+            }
+        }
+        if (plot < 0) return;
+        dev.awaken.city.CityPlan.Plot pl = plan.plots.get(plot);
+        BlockPos a = new BlockPos(cx + pl.x0(), sy, cz + pl.z0()), b = new BlockPos(cx + pl.x1(), sy, cz + pl.z1());
+        if (!level.isLoaded(a) || !level.isLoaded(b) || !level.isLoaded(new BlockPos(a.getX(), sy, b.getZ())) || !level.isLoaded(new BlockPos(b.getX(), sy, a.getZ())))
+            return;
+        long found = -1;
+        int g = sy + pl.lift();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        outer:
+        for (int y = g + pl.top() + 24; y > g + Math.max(2, pl.eave() - 1); y--) {
+            for (int x = pl.x0(); x <= pl.x1(); x++) {
+                for (int z = pl.z0(); z <= pl.z1(); z++) {
+                    BlockState st = level.getBlockState(m.set(cx + x, y, cz + z));
+                    if (st.is(Blocks.FLOWER_POT) || st.is(Blocks.STONE_SLAB)) {
+                        BlockState below = level.getBlockState(m.set(cx + x, y - 1, cz + z));
+                        if (below.is(Blocks.BRICKS) || below.is(Blocks.POLISHED_BLACKSTONE_BRICKS) || below.getBlock().getDescriptionId().contains("bricks")) {
+                            found = BlockPos.asLong(cx + x, y + 1, cz + z);
+                            if (st.is(Blocks.STONE_SLAB) && !chimneyKind.containsKey(plot)) chimneyKind.put(plot, (byte) 3);
+                            break outer;
+                        }
+                    }
+                }
+            }
+        }
+        chimneyOf.put(plot, found);
+        int n = d.chimneys.length;
+        d.chimneys = java.util.Arrays.copyOf(d.chimneys, n + 2);
+        d.chimneys[n] = plot;
+        d.chimneys[n + 1] = found;
+        d.setDirty();
+        if (found != -1) CitizensNet.emitters(level.players(), false, new long[]{found}, new byte[]{chimneyKind.getOrDefault(plot, (byte) 1)});
+    }
+
+    private boolean nearPlayer(int x, int z, double range) {
+        for (ServerPlayer p : level.players()) if (Math.abs(p.getX() - x) < range && Math.abs(p.getZ() - z) < range) return true;
+        return false;
+    }
+
+    /** Every chimney found so far, for a player who just arrived. */
+    void sendChimneys(ServerPlayer p) {
+        if (firstPlots == null) chimneys();
+        java.util.List<Long> ps = new java.util.ArrayList<>();
+        java.util.List<Byte> ks = new java.util.ArrayList<>();
+        for (var e : chimneyOf.entrySet()) {
+            if (e.getValue() == -1) continue;
+            ps.add(e.getValue());
+            ks.add(chimneyKind.getOrDefault(e.getKey(), (byte) 1));
+        }
+        long[] pa = new long[ps.size()];
+        byte[] ka = new byte[ks.size()];
+        for (int k = 0; k < pa.length; k++) {
+            pa[k] = ps.get(k);
+            ka[k] = ks.get(k);
+        }
+        CitizensNet.emitters(java.util.List.of(p), true, pa, ka);
+    }
+
     // ---- what a body shows ------------------------------------------------------------------------------------------
 
     private static final ItemStack EMPTY = ItemStack.EMPTY;
@@ -834,6 +934,8 @@ final class CitizenWork implements Ledger.Work {
                 }
             }
         }
+        if (b.gesture != Act.NONE && b.tickCount < b.gestureUntil) act = b.gesture;
+        else b.gesture = Act.NONE;
         b.setAct(act);
         b.hold(EquipmentSlot.MAINHAND, main);
         b.hold(EquipmentSlot.OFFHAND, off);

@@ -175,17 +175,16 @@ final class Crowd {
         CitizensData d = l.d;
         float yaw;
         int a = d.at[i], nx = d.next[i];
-        if (nx >= 0) {
-            yaw = (float) (Math.toDegrees(Math.atan2(g.z[nx] - g.z[a], g.x[nx] - g.x[a])) - 90.0);
-            if (g.kind[a] == StreetNet.DOOR && d.prog[i] < 120) {
-                // coming out of a door: start a step out of it, and open it behind them
-                double len = Math.max(1e-6, g.len(a, nx));
-                tmp[0] = g.x[a] + (g.x[nx] - g.x[a]) / len * 0.9;
-                tmp[2] = g.z[a] + (g.z[nx] - g.z[a]) / len * 0.9;
-                openDoorAt(a, 30);
-            }
-        } else {
-            yaw = d.state[i] == CitizensData.STAND ? l.spotYaw(i) : 0f;
+        if (nx >= 0) yaw = (float) (Math.toDegrees(Math.atan2(g.z[nx] - g.z[a], g.x[nx] - g.x[a])) - 90.0);
+        else yaw = d.state[i] == CitizensData.STAND ? l.spotYaw(i) : 0f;
+        if (g.kind[a] == StreetNet.DOOR && d.state[i] == CitizensData.WALK && d.prog[i] < 120) {
+            // coming out of a door: start a step out of it toward the street, and open it behind them
+            int out = nx >= 0 ? nx : g.adj[g.adjStart[a]];
+            double len = Math.max(1e-6, g.len(a, out));
+            tmp[0] = g.x[a] + (g.x[out] - g.x[a]) / len * 0.9;
+            tmp[2] = g.z[a] + (g.z[out] - g.z[a]) / len * 0.9;
+            yaw = (float) (Math.toDegrees(Math.atan2(g.z[out] - g.z[a], g.x[out] - g.x[a])) - 90.0);
+            openDoorAt(a, 30);
         }
         b.snapTo(tmp[0], tmp[1], tmp[2], yaw, 0f);
         b.setYHeadRot(yaw);

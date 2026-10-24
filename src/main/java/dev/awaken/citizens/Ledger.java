@@ -46,6 +46,8 @@ final class Ledger {
     final @Nullable CitizenBody[] body;
     /** One bit per spot per place: who stands where. */
     final long[] spotMask;
+    /** A spot an event gives a record (a place in a bucket line), or NaN: where it stands when its place has no spot. */
+    final double[] rx, ry, rz;
     private final long[] lastGame, lastClock;
     /** The infirmary (the Association's door): where the hurt go. */
     final int infirmary;
@@ -68,6 +70,10 @@ final class Ledger {
         this.streetY = streetY;
         body = new CitizenBody[n];
         spotMask = new long[r.places];
+        rx = new double[n];
+        ry = new double[n];
+        rz = new double[n];
+        Arrays.fill(rx, Double.NaN);
         lastGame = new long[n];
         lastClock = new long[n];
         slice = Math.max(1, (n + 19) / 20);
@@ -363,6 +369,7 @@ final class Ledger {
             if (a == HOME || a == Roster.INSIDE) {
                 d.state[i] = INSIDE;
                 d.setDirty();
+                work.arrived(i, p, now);
                 return;
             }
         }
@@ -472,6 +479,12 @@ final class Ledger {
             int s = d.spot[i];
             if (s >= 0) {
                 spotWorld(s, d.place[i], out);
+                return true;
+            }
+            if (!Double.isNaN(rx[i])) {
+                out[0] = rx[i];
+                out[1] = ry[i];
+                out[2] = rz[i];
                 return true;
             }
             out[0] = g.x[a];

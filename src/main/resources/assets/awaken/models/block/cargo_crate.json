@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "awaken:block/cargo_crate_top",
+    "bottom": "awaken:block/cargo_crate_top",
+    "side": "awaken:block/cargo_crate",
+    "particle": "awaken:block/cargo_crate"
+  }
+}

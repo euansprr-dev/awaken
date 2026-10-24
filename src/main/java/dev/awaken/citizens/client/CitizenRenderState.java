@@ -14,4 +14,12 @@ public final class CitizenRenderState extends SkinRenderState {
     public boolean hasPose, hasPrev;
     public boolean crate, hurt;
     public final ItemStackRenderState backItem = new ItemStackRenderState();
+    /** What the citizen is saying (wrapped lines), how it fades, and its kind (0 to you, 1 aloud, 2 a shout). */
+    public java.util.@org.jspecify.annotations.Nullable List<net.minecraft.util.FormattedCharSequence> speech;
+    public float speechAlpha;
+    public int speechKind;
+    /** The name shown when you look at them up close. */
+    public net.minecraft.util.@org.jspecify.annotations.Nullable FormattedCharSequence label;
+    public float labelWidth;
+    public float height = 1.95f;
 }

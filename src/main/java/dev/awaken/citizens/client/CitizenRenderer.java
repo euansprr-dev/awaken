@@ -88,6 +88,52 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         s.hasPrev = s.blend < 1f && prev != Act.NONE && CitizenClips.sample(prev, body.tickCount - body.pStart + partial, s.prevPose);
         if (s.crate) itemModelResolver.updateForLiving(s.backItem, CRATE, ItemDisplayContext.FIXED, body);
         else s.backItem.clear();
+        s.height = body.getBbHeight();
+        // what they say, fading in and out; their name when you look at them up close
+        s.speech = null;
+        if (body.speech != null && body.tickCount < body.speechUntil && s.distanceToCameraSq < 28 * 28) {
+            float in = (body.tickCount - body.speechStart + partial) / 5f, out = (body.speechUntil - body.tickCount - partial) / 10f;
+            s.speech = body.speech;
+            s.speechAlpha = Mth.clamp(Math.min(in, out), 0f, 1f) * s.alpha;
+            s.speechKind = body.speechKind;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        s.label = null;
+        if (mc.crosshairPickEntity == body && s.distanceToCameraSq < 9 * 9 && s.speech == null) {
+            s.label = CitizenFx.label(body);
+            s.labelWidth = body.labelWidth;
+        }
+    }
+
+    @Override
+    public void submit(CitizenRenderState s, PoseStack pose, SubmitNodeCollector collector, net.minecraft.client.renderer.state.level.CameraRenderState camera) {
+        super.submit(s, pose, collector, camera);
+        if (s.speech == null && s.label == null) return;
+        var font = getFont();
+        pose.pushPose();
+        pose.translate(0f, s.height + 0.42f, 0f);
+        pose.rotate(camera.orientation);
+        float scale = s.speech != null && s.speechKind == 2 ? 0.027f : 0.024f;
+        pose.scale(scale, -scale, scale);
+        if (s.speech != null) {
+            int a = Math.max(4, Math.round(s.speechAlpha * 255f));
+            int lines = s.speech.size();
+            float lh = font.lineHeight + 1;
+            float top = -lines * lh;
+            float w = 0;
+            for (var line : s.speech) w = Math.max(w, font.width(line));
+            int bg = Math.round(s.speechAlpha * 150f) << 24 | (s.speechKind == 2 ? 0x3A1A10 : 0x2A2018);
+            collector.submitTextBackground(pose, -w / 2f - 3, top - 2, w / 2f + 3, 1, bg, net.minecraft.client.gui.Font.DisplayMode.NORMAL, s.lightCoords);
+            for (int k = 0; k < lines; k++) {
+                var line = s.speech.get(k);
+                collector.submitText(pose, -font.width(line) / 2f, top + k * lh, line, false, net.minecraft.client.gui.Font.DisplayMode.NORMAL,
+                        net.minecraft.util.LightCoordsUtil.FULL_BRIGHT, a << 24 | 0xFFFFFF, 0, 0);
+            }
+        } else {
+            collector.submitText(pose, -s.labelWidth / 2f, -font.lineHeight, s.label, false, net.minecraft.client.gui.Font.DisplayMode.NORMAL,
+                    net.minecraft.util.LightCoordsUtil.FULL_BRIGHT, 0xE0FFFFFF, 0x50201810, 0);
+        }
+        pose.popPose();
     }
 
     private static final ItemStack CRATE = new ItemStack(CitizensContent.PORTER_CRATE.get());

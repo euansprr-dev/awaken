@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "lamp=out": {
+      "model": "awaken:block/street_lamp_out"
+    },
+    "lamp=lit": {
+      "model": "awaken:block/street_lamp_lit"
+    },
+    "lamp=broken": {
+      "model": "awaken:block/street_lamp_broken"
+    }
+  }
+}

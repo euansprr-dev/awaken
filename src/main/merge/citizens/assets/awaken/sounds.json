@@ -1,0 +1,38 @@
+{
+  "city.bell.hour": {
+    "subtitle": "subtitles.awaken.city.bell.hour",
+    "sounds": [
+      {
+        "name": "awaken:city/bell_hour",
+        "attenuation_distance": 176
+      }
+    ]
+  },
+  "city.bell.district": {
+    "subtitle": "subtitles.awaken.city.bell.district",
+    "sounds": [
+      {
+        "name": "awaken:city/bell_district",
+        "attenuation_distance": 120
+      }
+    ]
+  },
+  "city.bell.alarm": {
+    "subtitle": "subtitles.awaken.city.bell.alarm",
+    "sounds": [
+      {
+        "name": "awaken:city/bell_alarm",
+        "attenuation_distance": 112
+      }
+    ]
+  },
+  "city.handbell": {
+    "subtitle": "subtitles.awaken.city.handbell",
+    "sounds": [
+      {
+        "name": "awaken:city/handbell",
+        "attenuation_distance": 40
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "awaken:block/street_lamp_lit"
+  }
+}

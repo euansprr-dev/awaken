@@ -56,9 +56,22 @@ public class CitizenBody extends PathfinderMob implements Npc {
     /** Set by the think: the nearest player, squared distance (for greetings and looks). */
     double nearestSq = Double.MAX_VALUE;
     int lastAct = -1;
+    /** A brief gesture over whatever the body does (a wave, a nod), until tickCount reaches gestureUntil. */
+    Act gesture = Act.NONE;
+    int gestureUntil;
+    /** Someone it's looking at for a while (a greeting). */
+    net.minecraft.world.entity.player.@org.jspecify.annotations.Nullable Player lookTarget;
+    int lookUntil;
+    /** A heading an event wants it to face while standing (NaN: the spot's). */
+    float faceYaw = Float.NaN;
     // client: the clip playing since when, the one before it (crossfade), and when a fade-out began
     public int cAct, cStart, pAct, pStart, fadeStart = -1;
     public static final float FADE_TICKS_CLIENT = 12f;
+    // client: what it's saying (wrapped once when it arrives) and until when
+    public java.util.@org.jspecify.annotations.Nullable List<net.minecraft.util.FormattedCharSequence> speech;
+    public int speechStart, speechUntil, speechKind;
+    public net.minecraft.util.@org.jspecify.annotations.Nullable FormattedCharSequence label;
+    public float labelWidth;
 
     public CitizenBody(EntityType<? extends CitizenBody> type, Level level) {
         super(type, level);
@@ -136,6 +149,19 @@ public class CitizenBody extends PathfinderMob implements Npc {
         if (!ItemStack.matches(getItemBySlot(slot), stack)) setItemSlot(slot, stack);
     }
 
+    void gesture(Act a, int ticks) {
+        if (a == Act.NONE) return;
+        gesture = a;
+        gestureUntil = tickCount + ticks;
+        setAct(a);
+    }
+
+    void lookAt(net.minecraft.world.entity.player.Player p, int ticks) {
+        lookTarget = p;
+        lookUntil = tickCount + ticks;
+        getLookControl().setLookAt(p, 40f, 40f);
+    }
+
     boolean fading() {
         return fadeOut > 0;
     }
@@ -154,6 +180,18 @@ public class CitizenBody extends PathfinderMob implements Npc {
     public void tick() {
         if (level().isClientSide()) {
             super.tick();
+            Act a = Act.of(cAct);
+            if (a == Act.HAMMER) {
+                // the hammer meets the anvil at the clip's tick 12 (citizen_clips.py): sparks off the work
+                int t = (tickCount - cStart + (record() & 7) * 3) % 22;
+                if (t == 12) {
+                    double yaw = Math.toRadians(yBodyRot);
+                    double fx = -Math.sin(yaw), fz = Math.cos(yaw);
+                    double x = getX() + fx * 0.85, y = getY() + 0.95 * getScale(), z = getZ() + fz * 0.85;
+                    for (int k = 0; k < 7; k++)
+                        level().addParticle(CitizensContent.FORGE_SPARK.get(), x, y, z, fx * 0.02, 0, fz * 0.02);
+                }
+            }
             return;
         }
         long t0 = System.nanoTime();
@@ -198,6 +236,10 @@ public class CitizenBody extends PathfinderMob implements Npc {
                 l.spotWorld(s, d.place[rec], l.tmp);
                 tx = l.tmp[0];
                 tz = l.tmp[2];
+            } else if (!Double.isNaN(l.rx[rec])) {
+                tx = l.tmp[0] = l.rx[rec];
+                l.tmp[1] = l.ry[rec];
+                tz = l.tmp[2] = l.rz[rec];
             } else {
                 if (!l.position(rec, l.tmp)) return;
                 tx = l.tmp[0];
@@ -207,7 +249,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
             if (d2 < 0.25 * 0.25) {
                 releasePath();
                 getNavigation().stop();
-                face(l.spotYaw(rec));
+                if (lookTarget == null || tickCount > lookUntil) face(Float.isNaN(faceYaw) ? l.spotYaw(rec) : faceYaw);
                 return;
             }
             int p = d.place[rec];
@@ -357,8 +399,11 @@ public class CitizenBody extends PathfinderMob implements Npc {
         thinkAt = tickCount + Math.max(1, Math.min(40, (int) (best / 256.0)));
         c.crowd.thinks++;
         c.work.show(this, rec, now);
-        if (near != null && best < 9 * 9) {
-            if (!c.recognition.think(this, rec, near, best, now) && best < 6 * 6) getLookControl().setLookAt(near, 20f, 20f);
+        if (lookTarget != null && tickCount <= lookUntil && !lookTarget.isRemoved()) getLookControl().setLookAt(lookTarget, 40f, 40f);
+        else if (near != null && best < 9 * 9) {
+            lookTarget = null;
+            if (!c.recognition.think(this, rec, near, best, now) && best < 6 * 6 && (rec * 7 + tickCount / 100) % 3 == 0)
+                getLookControl().setLookAt(near, 20f, 20f);
         }
         CitizensData d = l.d;
         boolean wantsToMove = d.state[rec] == WALK || d.state[rec] == STAND && farFromSpot(l);
