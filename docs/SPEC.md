@@ -766,6 +766,8 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   loads the pack and records the flag; a world made before the flag existed lacks it, so the game skips the pack there
   and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
   it off). Test: `terrain_lands_pack_new_worlds_only`.
+- Until the vertical slice lands, no Awakened biome is placed (the stage-0 placeholder Elderwood exists in the
+  registry and the table but has no injector), so new worlds never show an unfinished biome.
 - Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
