@@ -141,7 +141,7 @@ final class BodyAnims {
             }
             case MANTLE -> {
                 float u = age / BodyRules.MANTLE_TICKS;
-                if (u < 0.55F) {
+                if (u < 0.45F) {
                     s.rightArmPose = HumanoidModel.ArmPose.THROW_TRIDENT;
                     s.leftArmPose = HumanoidModel.ArmPose.THROW_TRIDENT;
                 } else {
@@ -199,7 +199,8 @@ final class BodyAnims {
             }
             case MANTLE -> {
                 float u = Mth.clamp(age / BodyRules.MANTLE_TICKS, 0, 1.3F);
-                float lean = u < 0.5F ? -6F * u / 0.5F : 34F * Mth.sin(Math.min(1F, (u - 0.5F) / 0.8F) * Mth.PI);
+                // hanging off the hands, then the chest goes over the lip
+                float lean = u < 0.45F ? -8F * u / 0.45F : 42F * Mth.sin(Math.min(1F, (u - 0.45F) / 0.85F) * Mth.PI);
                 ps.pushPose();
                 pushed++;
                 tip(ps, 0.9F, lean, yaw);
@@ -208,7 +209,7 @@ final class BodyAnims {
                 float in = Math.min(1F, age / 4F);
                 ps.pushPose();
                 pushed++;
-                tip(ps, 0F, 13F * in, yaw);
+                tip(ps, 0F, 18F * in, yaw);
             }
             case null -> {
             }

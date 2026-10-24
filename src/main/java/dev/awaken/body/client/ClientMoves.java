@@ -48,6 +48,7 @@ public final class ClientMoves {
     static double slideX, slideZ, slideV0, slideSpeed;
     private static double expectH;
     static boolean slideFromTac;
+    private static boolean slideWasSprinting;
     // mantle
     static boolean mantling;
     static int mantleStart = -100, mantleEnd = -100, mantleAge;
@@ -219,6 +220,9 @@ public final class ClientMoves {
         // crawl height now, so this very tick already fits under a gap
         p.setForcedPose(Pose.SWIMMING);
         p.setPose(Pose.SWIMMING);
+        // no running while sliding (vanilla's sprint footprints would show under our own grit); the run comes back after
+        slideWasSprinting = p.isSprinting();
+        p.setSprinting(false);
         float slideYaw = yawOf(dx, dz);
         send(Move.SLIDE, slideYaw, 0, 0, 0, slideV0, fromTac);
         trace("slide v0 " + String.format("%.2f", slideV0) + (fromTac ? " (tactical)" : ""));
@@ -294,6 +298,7 @@ public final class ClientMoves {
         slideReadyAt = ticks + BodyRules.SLIDE_COOLDOWN;
         if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null); // vanilla keeps a crawl under a gap
         BodyAnims.stop(p.getId(), Move.SLIDE);
+        if (slideWasSprinting && tellServer && p.input.hasForwardImpulse() && !p.isInLiquid()) p.setSprinting(true);
         if (tellServer) sendEnd(Move.SLIDE);
     }
 
