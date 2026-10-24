@@ -122,10 +122,7 @@ final class AnomalyP2Tests {
             BlockPos g = AnomalyTests.platform(h, 12, 12);
             ServerPlayer p = AnomalyTests.awakenedPlayer(h, g.offset(9, 0, 0));
             Progression.discover(p, AnomalyKind.FALLEN_STAR.discoveryKey(), 0.1); // so the reward below is the star's alone
-            h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
-                    .thenExecute(() -> starRun(h, level, server, g, p))
-                    .thenSucceed();
+            h.startSequence().thenExecute(() -> starRun(h, level, server, g, p)).thenSucceed();
         });
     }
 
@@ -208,7 +205,6 @@ final class AnomalyP2Tests {
             BlockPos g = AnomalyTests.platform(h, -12, -12);
             ServerPlayer p = AnomalyTests.awakenedPlayer(h, g.offset(30, 0, 0)); // too far to wake a guardian
             h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
                     .thenExecute(() -> {
                         AnomalyData data = AnomalyData.get(server);
                         clearOthers(level, p, g);
@@ -262,7 +258,8 @@ final class AnomalyP2Tests {
 
     /**
      * A grassy platform (radius 12) for groves: flowers need soil. Flowers grow on the surface (the heightmap), and test
-     * plots are reused under whatever earlier batches built high above them, so the sky over the meadow is opened too.
+     * plots sit 6 blocks apart under whatever neighbouring tests built high above them, so the sky over the meadow is
+     * opened too.
      */
     static BlockPos meadow(GameTestHelper h, int dx, int dz) {
         ServerLevel level = h.getLevel();
@@ -279,6 +276,7 @@ final class AnomalyP2Tests {
                 }
             }
         }
+        AnomalyTests.assertTicks(h, c, 12, "the meadow ticks");
         return c;
     }
 
@@ -289,7 +287,6 @@ final class AnomalyP2Tests {
             BlockPos g = meadow(h, 0, 0);
             ServerPlayer p = AnomalyTests.awakenedPlayer(h, g.offset(11, 0, 0));
             h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the meadow ticks"))
                     .thenExecute(() -> {
                         Landmarks.testOverrides(g.offset(300, 0, 400), true);
                         try {
