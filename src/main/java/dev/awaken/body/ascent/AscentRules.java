@@ -139,7 +139,7 @@ public final class AscentRules {
     }
 
     /** Input (forward -1..1, right -1..1) as a horizontal world direction, unnormalised. Writes x, z into out[0..1]. */
-    static void inputDir(float yaw, double fwd, double right, double[] out) {
+    public static void inputDir(float yaw, double fwd, double right, double[] out) {
         double ax = fx(yaw), az = fz(yaw);
         // facing +z, your right hand points to -x
         double rx = -az, rz = ax;
@@ -312,6 +312,14 @@ public final class AscentRules {
     public static final double AETHER_CRUISE = 1.0 / 1200, AETHER_BOOST = 3.2 / 1200, AETHER_HOVER = 1.6 / 1200, AETHER_FLAP = 0.012;
     public static final double AETHER_SUN = 1.0 / 400, AETHER_SHADE = 1.0 / 1800, AETHER_UPDRAFT = 1.0 / 120;
     public static final double AETHER_START = 0.08, MASTERY_AETHER = 0.03;
+
+    /**
+     * The barrel roll (Skyborn): a second tap of left or right within {@link #ROLL_TAP} ticks in flight throws the body
+     * {@link #ROLL_IMPULSE} a tick sideways (about 3.5 blocks before the flight's drag takes it) and a little up, for
+     * {@link #ROLL_AETHER} of the meter, once every {@link #ROLL_COOLDOWN} ticks.
+     */
+    public static final int ROLL_TAP = 7, ROLL_COOLDOWN = 20, ROLL_TICKS = 10;
+    public static final double ROLL_IMPULSE = 0.85, ROLL_LIFT = 0.1, ROLL_AETHER = 0.03;
 
     /** One tick of the meter: the drain while flying (a rate above), the refill out of it or in an updraft. */
     public static double aetherStep(double a, boolean flying, double drain, boolean sun, boolean updraft, int skybornLevel) {

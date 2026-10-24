@@ -117,6 +117,13 @@ public final class FeelDirector {
         if (!FeelConfig.reduced()) fovPunch += 0.07F;
     }
 
+    /** A barrel roll: the view tilts into the dodge (within the comfort cap) and the frame breathes. */
+    public static void barrelRoll(int dir) {
+        roll1 += dir * Math.min(4F, FeelConfig.roll());
+        kick(-0.8F);
+        if (!FeelConfig.reduced()) fovPunch += 0.05F;
+    }
+
     /** An air dash: a sharp shove forward (the frame widens, the view dips into it). */
     public static void dash() {
         kick(1.6F);

@@ -62,7 +62,9 @@ public final class AscentMoves {
     static double pullX, pullZ, pullTop;
     static double tension;
     // input edges
-    private static boolean tetherWas, jumpWas, sneakWas, sprintWas;
+    private static boolean tetherWas, jumpWas, sneakWas, sprintWas, leftWas, rightWas;
+    /** The barrel roll's double tap: the last side tapped and when; when the last roll went. */
+    private static int sideTapAt = -100, sideTapDir, rollAt = -100;
     /** The Leaper's air moves used this airtime (bits: 1 double jump, 2 air dash), back on landing or a rope's bite. */
     static int airMovesUsed;
     /** A dive slam is falling: its landing shakes the ground. */
@@ -151,6 +153,9 @@ public final class AscentMoves {
         boolean jump = k.jump(), sneak = k.shift(), sprint = k.sprint();
         boolean tetherPressed = tether && !tetherWas, jumpPressed = jump && !jumpWas, sneakPressed = sneak && !sneakWas;
         boolean sprintPressed = sprint && !sprintWas;
+        int sidePressed = k.right() && !rightWas ? 1 : k.left() && !leftWas ? -1 : 0;
+        leftWas = k.left();
+        rightWas = k.right();
         tetherWas = tether;
         jumpWas = jump;
         sneakWas = sneak;
@@ -243,6 +248,7 @@ public final class AscentMoves {
                         flapAt = ticks;
                         AscentSounds.local(p, AscentContent.FLAP.get(), 0.45F, 0.85F + p.getRandom().nextFloat() * 0.1F);
                     }
+                    if (sidePressed != 0) sideTap(p, sidePressed);
                     AscentRules.soarStep(K, yaw, pitch, fwd, right, jump, sneak, k.sprint(), S);
                     boomCheck(p);
                     aetherDrain = k.sprint() ? AscentRules.AETHER_BOOST
@@ -741,6 +747,28 @@ public final class AscentMoves {
         aether = Math.max(0, AscentRules.aetherStep(aether, flying, aetherDrain, sun, updraft, lv(dev.awaken.body.ascent.AscentMemory.Track.SKYBORN)));
         aetherDrain = AscentRules.AETHER_CRUISE;
         if (flying && aether <= 0) skyLetsGo(p);
+    }
+
+    /** A tap of left or right in flight: the second, soon enough and the same way, is a barrel roll. */
+    private static void sideTap(LocalPlayer p, int dir) {
+        boolean again = dir == sideTapDir && ticks - sideTapAt <= AscentRules.ROLL_TAP;
+        sideTapDir = dir;
+        sideTapAt = ticks;
+        if (!again || ticks - rollAt < AscentRules.ROLL_COOLDOWN || aether < AscentRules.ROLL_AETHER) return;
+        rollAt = ticks;
+        sideTapAt = -100;
+        aether -= AscentRules.ROLL_AETHER;
+        AscentRules.inputDir(p.getYRot(), 0, dir, S);
+        K.vx += S[0] * AscentRules.ROLL_IMPULSE;
+        K.vz += S[1] * AscentRules.ROLL_IMPULSE;
+        K.vy += AscentRules.ROLL_LIFT;
+        AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.7F, 1.45F);
+        AscentSounds.local(p, AscentContent.FLAP.get(), 0.6F, 1.25F);
+        FeelDirector.barrelRoll(dir);
+        AscentAnims.roll(p.getId(), dir);
+        AscentFlow.gain(0.06F);
+        event(AscentPayloads.EV_ROLL, dir);
+        trace(dir > 0 ? "barrel roll right" : "barrel roll left");
     }
 
     /** Out of Aether in flight: the wings stop beating and hold a glide (never a drop). */

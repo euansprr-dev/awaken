@@ -257,6 +257,12 @@ public final class AscentServer {
             case AscentPayloads.EV_FLAP -> {
                 if (Ascent.has(p, Ascent.Tier.SKYBORN)) link(p, AscentMemory.Track.SKYBORN, 1);
             }
+            case AscentPayloads.EV_ROLL -> {
+                if (Ascent.has(p, Ascent.Tier.SKYBORN) && st == AscentState.SOAR) {
+                    motion(p).aether -= AscentRules.ROLL_AETHER;
+                    link(p, AscentMemory.Track.SKYBORN, 2);
+                }
+            }
             default -> {
             }
         }

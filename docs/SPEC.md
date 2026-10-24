@@ -1947,6 +1947,12 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   bar's own edge it was too faint to read) (fading out once full on the ground),
   flickering under 20% in flight, dimmed for a moment when a flight is refused for want of it.
 - `ascent_aether` holds those numbers and the server's refusals.
+- **The barrel roll** (Skyborn): in flight, a second tap of left or right within 7 ticks (vanilla's double-tap window)
+  throws the body 0.85 a tick that way and 0.1 up (about 3.5 blocks before the flight's drag takes it), for 3% Aether,
+  once a second. Others see the figure turn once about its line of flight (10 ticks, eased; `EV_ROLL`) and hear it;
+  your own view only tilts into it within the comfort cap (at most 4°) with a small kick and a breath of FOV. A roll
+  is a Flow link and 2 Skyborn mastery. (Pilot `double <key>` taps like a player for tours; the autopilot's own command
+  round trip put taps 11 ticks apart.)
 
 ---------------------------------------------------------------------------------------------------------------------
 

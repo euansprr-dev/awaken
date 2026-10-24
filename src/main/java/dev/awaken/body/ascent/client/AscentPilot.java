@@ -20,6 +20,7 @@ import net.minecraft.util.Mth;
  * rec &lt;name&gt; &lt;ticks&gt; [n]     film a clip (every n-th frame)
  * route rec|play|stop [name] record a run's keys and view, or play one back from its start ({@link AscentRoutes})
  * aether &lt;0..1&gt;              set this client's Aether (to film the meter and its empty)
+ * double &lt;key&gt;               a double tap, as a player's: 2 ticks down, 3 up, 2 down (a barrel roll: double right)
  * stop                       let go of everything
  * </pre>
  */
@@ -30,6 +31,8 @@ public final class AscentPilot {
     private static final int[] HOLD = new int[8];
     private static float aimYaw, aimPitch, aimStepYaw, aimStepPitch;
     private static int aimTicks;
+    /** A double tap in progress: the key and how far along (-1: none). */
+    private static int doubleKey = -1, doubleAge = -1;
     /** Keys were pressed last tick (released once when the holds run out). */
     private static boolean holding;
     private static String script = "";
@@ -66,6 +69,10 @@ public final class AscentPilot {
             }
             case "rec" -> ClipRecorder.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Integer.parseInt(a[3]) : 2);
             case "route" -> AscentRoutes.line(a);
+            case "double" -> {
+                doubleKey = key(a[1]);
+                doubleAge = 0;
+            }
             case "aether" -> AscentMoves.aether = Math.max(0, Math.min(1, Double.parseDouble(a[1])));
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
@@ -112,6 +119,10 @@ public final class AscentPilot {
             p.setYRot(p.getYRot() + aimStepYaw);
             p.setYHeadRot(p.getYRot());
             p.setXRot(Mth.clamp(p.getXRot() + aimStepPitch, -90, 90));
+        }
+        if (doubleAge >= 0 && doubleKey >= 0) {
+            if (doubleAge == 0 || doubleAge == 5) HOLD[doubleKey] = Math.max(HOLD[doubleKey], 2);
+            if (++doubleAge > 6) doubleAge = -1;
         }
         boolean any = false;
         for (int i = 0; i < HOLD.length; i++) if (HOLD[i] > 0) any = true;

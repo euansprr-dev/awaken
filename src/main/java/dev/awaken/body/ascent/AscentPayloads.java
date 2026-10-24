@@ -15,7 +15,9 @@ public final class AscentPayloads {
             /** The Leaper's air moves: a double jump, an air dash, a dive slam (its landing is EV_SLAM_LAND). */
             EV_DOUBLE = 8, EV_DASH = 9, EV_DIVE = 10, EV_SLAM_LAND = 11,
             /** "Your body remembers": the scene of an old world's tiers given back (others see the wings unfold). */
-            EV_REMEMBER = 12;
+            EV_REMEMBER = 12,
+            /** A barrel roll in flight (speed: its direction, +1 right, -1 left). */
+            EV_ROLL = 13;
 
     /**
      * Client → server: the local player's state changed (predicted). (x, y, z) = the rope's anchor while one is out;
