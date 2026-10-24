@@ -208,17 +208,18 @@ public final class Look {
      * {@code irisVersion} is null when Iris isn't installed; {@code backend} is the device's backend name.
      */
     public static Availability ultra(@Nullable String irisVersion, String backend) {
+        boolean openGl = "OpenGL".equalsIgnoreCase(backend);
+        // Iris draws only on OpenGL: every reason says so, and which API this game runs on when it isn't
+        String api = openGl ? "it draws only on OpenGL" : "it draws only on OpenGL, and this game runs on " + backend;
         if (irisVersion == null) {
-            return new Availability(false, "Needs Iris. Iris 1.11.7 requires Sodium 0.9.2, which crashes on this NeoForge: "
-                    + "Ultra waits for an Iris update.");
+            return new Availability(false, "Needs Iris (" + api + "). Iris 1.11.7 requires Sodium 0.9.2, which crashes on this "
+                    + "NeoForge: Ultra waits for an Iris update.");
         }
         if (compareVersions(irisVersion, IRIS_KNOWN_BAD) <= 0) {
             return new Availability(false, "Iris " + shortVersion(irisVersion) + " is built for Sodium 0.9.2, which crashes on this "
-                    + "NeoForge: Ultra waits for an Iris update.");
+                    + "NeoForge (and " + api + "): Ultra waits for an Iris update.");
         }
-        if (!"OpenGL".equalsIgnoreCase(backend)) {
-            return new Availability(false, "Iris draws only on OpenGL; this game runs on " + backend + ".");
-        }
+        if (!openGl) return new Availability(false, "Iris draws only on OpenGL; this game runs on " + backend + ".");
         return new Availability(true, "");
     }
 

@@ -151,9 +151,14 @@ final class CompatTests {
 
         AwakenTests.register("compat_look_ultra_gate", 20, h -> {
             Look.Availability none = Look.ultra(null, "OpenGL");
-            h.assertTrue(!none.available() && none.reason().contains("Iris") && none.reason().contains("0.9.2"), "no Iris: " + none.reason());
+            h.assertTrue(!none.available() && none.reason().contains("Iris") && none.reason().contains("0.9.2")
+                    && none.reason().contains("only on OpenGL"), "no Iris: " + none.reason());
+            Look.Availability noneVulkan = Look.ultra(null, "Vulkan");
+            h.assertTrue(!noneVulkan.available() && noneVulkan.reason().contains("only on OpenGL") && noneVulkan.reason().contains("Vulkan"),
+                    "no Iris on Vulkan says which API runs: " + noneVulkan.reason());
             Look.Availability bad = Look.ultra("1.11.7+26.3-neoforge", "OpenGL");
-            h.assertTrue(!bad.available() && bad.reason().startsWith("Iris 1.11.7 "), "Iris 1.11.7: " + bad.reason());
+            h.assertTrue(!bad.available() && bad.reason().startsWith("Iris 1.11.7 ") && bad.reason().contains("only on OpenGL"),
+                    "Iris 1.11.7: " + bad.reason());
             h.assertTrue(!Look.ultra("1.10.2", "OpenGL").available(), "an older Iris either");
             h.assertTrue(Look.ultra("1.11.8+26.3-neoforge", "OpenGL").available(), "a newer Iris on OpenGL");
             Look.Availability vulkan = Look.ultra("1.12.0", "Vulkan");
