@@ -27,6 +27,11 @@ The plan is docs/plan-carillon.html; the source of truth is docs/SPEC.md §16. T
   load: `gates_interior_build_budget`, `fauna_p3_caves_spawn`.
 - Lens: cutscenes use `LensClient.override(lookId, fadeTicks)` / `clearOverride()` (a story override wins over biome and
   dimension looks). Carillon's own looks go in `assets/awaken/lens/looks_carillon.json`; never edit looks.json.
+- Player-shaped entities (26.3 trap): `EntityRenderDispatcher` routes ANY `AvatarRenderState` to the vanilla player
+  renderer, so a mob renderer's texture, render type, tint, scale and layers never run (townsfolk drew as Steve). For
+  non-player humanoids use a `HumanoidRenderState` subclass + a `HumanoidModel` baked from the PLAYER/PLAYER_SLIM layer
+  (being fixed and written into SPEC on pack/avatar-render by the main session). Setting `state.skin` is only a fallback
+  for opaque, untinted figures.
 - Autopilot traps: docs in the repo and memory say every tour must `cmd awaken admin awaken`, then
   `cmd awaken powers starter 1` + `screen close`, or the first-power screen covers the shots. `quit` saves.
 

@@ -54,3 +54,7 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   ground (the painter clears plots); caves and ores continue deeper than 20 below the street. Dev view:
   `CITY=on PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/city-basin.txt`, `/awaken terrain city`.
   Carillon gets it through build/awaken-v1 once the main session merges pack/awakened-lands (decision 13).
+- 2026-10-24: S4 found the 26.3 avatar-render trap (any AvatarRenderState → vanilla player renderer). The main session
+  confirmed five renderers affected (TownNpc, training Ghost, Shade, ShadowSelf, AwRenderers' player-model mobs) and is
+  fixing them on pack/avatar-render with the HumanoidRenderState pattern; the rule is in briefs/RULES.md. pack/awakened-
+  lands 4f81ce8 is being merged into build/awaken-v1 (tests running).
