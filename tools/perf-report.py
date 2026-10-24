@@ -58,7 +58,7 @@ def main(argv):
             print(f"  {n}: no frames recorded (rendering was paused); left out")
             del scenes[n]
         for s in scenes.values():
-            s["throttled"] = s.get("occluded") == "true" or abs(s["p50"] - 100.0) < 3.0
+            s["throttled"] = s.get("occluded") == "true" or s.get("minimized") == "true" or abs(s["p50"] - 100.0) < 3.0
     names = list(dict.fromkeys(n for scenes, _ in runs for n in scenes))
     if len(runs) == 1:
         head = ["scene", "fps", "p50 ms", "p95 ms", "p99 ms", "max ms", "tick p95", "heap MB", "load"]

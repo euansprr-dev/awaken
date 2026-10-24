@@ -1,86 +1,337 @@
 {
   "schemaVersion": 1,
-  "_about": "Lens looks per dimension (dev.awaken.lens.client). Missing fields inherit from default. Exposure is capped at 1.05 and shadows are never lifted, so dark places stay dark. Haze goes toward the game's own fog colour, mixed with hazeTint by hazeTintMix; it starts at hazeStart x the render distance.",
+  "_about": "Lens looks per dimension (dev.awaken.lens.client). Missing fields inherit from default. Exposure is capped at 1.05 and shadows are never lifted, so dark places stay dark. Haze goes toward the game's own fog colour, mixed with hazeTint by hazeTintMix; it starts at hazeStart x the render distance. sunGlow scales the halo around the sun (0 where there is no sun).",
   "looks": {
     "default": {
       "_name": "Golden clarity: cool shadows, warm light, a blue aerial haze over the distance, warm at sunrise and sunset",
-      "exposure": 1.0, "contrast": 1.07, "saturation": 1.1, "warmth": 0.06,
-      "shadowTint": [0.42, 0.48, 0.62], "highlightTint": [1.0, 0.9, 0.72], "splitTone": 0.1, "vignette": 0.2,
-      "bloom": 0.32, "bloomThreshold": 0.8, "skyBloom": 0.25, "shafts": 0.55,
-      "haze": 0.45, "hazeStart": 0.3, "hazeTint": [0.7, 0.8, 0.95], "hazeTintMix": 0.35, "hazeDesaturate": 0.25,
-      "sunsetWarmth": 0.6
+      "exposure": 1.0,
+      "contrast": 1.08,
+      "saturation": 1.12,
+      "warmth": 0.06,
+      "shadowTint": [
+        0.42,
+        0.48,
+        0.62
+      ],
+      "highlightTint": [
+        1.0,
+        0.9,
+        0.72
+      ],
+      "splitTone": 0.1,
+      "vignette": 0.12,
+      "bloom": 0.42,
+      "bloomThreshold": 0.72,
+      "skyBloom": 0.25,
+      "shafts": 0.55,
+      "haze": 0.32,
+      "hazeStart": 0.5,
+      "hazeTint": [
+        0.7,
+        0.8,
+        0.95
+      ],
+      "hazeTintMix": 0.3,
+      "hazeDesaturate": 0.12,
+      "sunsetWarmth": 0.6,
+      "sunGlow": 0.8
     },
     "minecraft:the_nether": {
       "_name": "Ember: heat haze, lava glow, rust shadows",
-      "contrast": 1.1, "saturation": 1.05, "warmth": 0.25,
-      "shadowTint": [0.45, 0.3, 0.28], "highlightTint": [1.0, 0.75, 0.45], "splitTone": 0.12, "vignette": 0.3,
-      "bloom": 0.5, "bloomThreshold": 0.7, "skyBloom": 0.0, "shafts": 0.0,
-      "haze": 0.55, "hazeStart": 0.15, "hazeTint": [0.55, 0.2, 0.1], "hazeTintMix": 0.25, "hazeDesaturate": 0.15,
-      "sunsetWarmth": 0.0
+      "contrast": 1.1,
+      "saturation": 1.05,
+      "warmth": 0.25,
+      "shadowTint": [
+        0.45,
+        0.3,
+        0.28
+      ],
+      "highlightTint": [
+        1.0,
+        0.75,
+        0.45
+      ],
+      "splitTone": 0.12,
+      "vignette": 0.3,
+      "bloom": 0.5,
+      "bloomThreshold": 0.7,
+      "skyBloom": 0.0,
+      "shafts": 0.0,
+      "haze": 0.55,
+      "hazeStart": 0.15,
+      "hazeTint": [
+        0.55,
+        0.2,
+        0.1
+      ],
+      "hazeTintMix": 0.25,
+      "hazeDesaturate": 0.15,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0
     },
     "minecraft:the_end": {
       "_name": "Void: violet shadows, pale light",
-      "contrast": 1.08, "saturation": 0.92, "warmth": -0.15,
-      "shadowTint": [0.4, 0.32, 0.6], "highlightTint": [0.85, 0.85, 1.0], "splitTone": 0.14, "vignette": 0.28,
-      "bloom": 0.45, "bloomThreshold": 0.72, "skyBloom": 0.5, "shafts": 0.0,
-      "haze": 0.35, "hazeStart": 0.25, "hazeTint": [0.25, 0.18, 0.35], "hazeTintMix": 0.4, "hazeDesaturate": 0.2,
-      "sunsetWarmth": 0.0
+      "contrast": 1.08,
+      "saturation": 0.92,
+      "warmth": -0.15,
+      "shadowTint": [
+        0.4,
+        0.32,
+        0.6
+      ],
+      "highlightTint": [
+        0.85,
+        0.85,
+        1.0
+      ],
+      "splitTone": 0.14,
+      "vignette": 0.28,
+      "bloom": 0.45,
+      "bloomThreshold": 0.72,
+      "skyBloom": 0.5,
+      "shafts": 0.0,
+      "haze": 0.35,
+      "hazeStart": 0.25,
+      "hazeTint": [
+        0.25,
+        0.18,
+        0.35
+      ],
+      "hazeTintMix": 0.4,
+      "hazeDesaturate": 0.2,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0
     },
     "awaken:gates": {
       "_name": "Gate: crisp and cool, so runes, portals and the System's blue glow",
-      "contrast": 1.1, "saturation": 1.05, "warmth": -0.05,
-      "shadowTint": [0.38, 0.45, 0.62], "highlightTint": [0.85, 0.95, 1.0], "splitTone": 0.12, "vignette": 0.3,
-      "bloom": 0.55, "bloomThreshold": 0.68, "skyBloom": 0.3, "shafts": 0.0,
-      "haze": 0.4, "hazeStart": 0.12, "hazeTint": [0.3, 0.35, 0.45], "hazeTintMix": 0.25, "hazeDesaturate": 0.2,
-      "sunsetWarmth": 0.0
+      "contrast": 1.1,
+      "saturation": 1.05,
+      "warmth": -0.05,
+      "shadowTint": [
+        0.38,
+        0.45,
+        0.62
+      ],
+      "highlightTint": [
+        0.85,
+        0.95,
+        1.0
+      ],
+      "splitTone": 0.12,
+      "vignette": 0.3,
+      "bloom": 0.55,
+      "bloomThreshold": 0.68,
+      "skyBloom": 0.3,
+      "shafts": 0.0,
+      "haze": 0.4,
+      "hazeStart": 0.12,
+      "hazeTint": [
+        0.3,
+        0.35,
+        0.45
+      ],
+      "hazeTintMix": 0.25,
+      "hazeDesaturate": 0.2,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0
     },
     "awaken:trials": {
       "_name": "Trials: as a gate",
-      "contrast": 1.1, "saturation": 1.05, "warmth": -0.05,
-      "shadowTint": [0.38, 0.45, 0.62], "highlightTint": [0.85, 0.95, 1.0], "splitTone": 0.12, "vignette": 0.3,
-      "bloom": 0.55, "bloomThreshold": 0.68, "skyBloom": 0.3, "shafts": 0.0,
-      "haze": 0.4, "hazeStart": 0.12, "hazeTint": [0.3, 0.35, 0.45], "hazeTintMix": 0.25, "hazeDesaturate": 0.2,
-      "sunsetWarmth": 0.0
+      "contrast": 1.1,
+      "saturation": 1.05,
+      "warmth": -0.05,
+      "shadowTint": [
+        0.38,
+        0.45,
+        0.62
+      ],
+      "highlightTint": [
+        0.85,
+        0.95,
+        1.0
+      ],
+      "splitTone": 0.12,
+      "vignette": 0.3,
+      "bloom": 0.55,
+      "bloomThreshold": 0.68,
+      "skyBloom": 0.3,
+      "shafts": 0.0,
+      "haze": 0.4,
+      "hazeStart": 0.12,
+      "hazeTint": [
+        0.3,
+        0.35,
+        0.45
+      ],
+      "hazeTintMix": 0.25,
+      "hazeDesaturate": 0.2,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0
     },
     "awaken:lucidium": {
       "_name": "Dream: soft contrast, blooming light, a lilac haze",
-      "contrast": 0.95, "saturation": 1.15, "warmth": 0.05,
-      "shadowTint": [0.55, 0.4, 0.7], "highlightTint": [1.0, 0.85, 0.95], "splitTone": 0.18, "vignette": 0.32,
-      "bloom": 0.8, "bloomThreshold": 0.6, "skyBloom": 0.6, "shafts": 0.4,
-      "haze": 0.55, "hazeStart": 0.2, "hazeTint": [0.8, 0.65, 0.95], "hazeTintMix": 0.5, "hazeDesaturate": 0.1,
-      "sunsetWarmth": 0.3
+      "contrast": 0.95,
+      "saturation": 1.15,
+      "warmth": 0.05,
+      "shadowTint": [
+        0.55,
+        0.4,
+        0.7
+      ],
+      "highlightTint": [
+        1.0,
+        0.85,
+        0.95
+      ],
+      "splitTone": 0.18,
+      "vignette": 0.32,
+      "bloom": 0.8,
+      "bloomThreshold": 0.6,
+      "skyBloom": 0.6,
+      "shafts": 0.4,
+      "haze": 0.55,
+      "hazeStart": 0.2,
+      "hazeTint": [
+        0.8,
+        0.65,
+        0.95
+      ],
+      "hazeTintMix": 0.5,
+      "hazeDesaturate": 0.1,
+      "sunsetWarmth": 0.3,
+      "sunGlow": 0.6
     },
     "awaken:stillpoint": {
       "_name": "Stillness: pale, quiet, a cloud sea that fades to white",
-      "contrast": 1.02, "saturation": 0.85, "warmth": -0.08,
-      "shadowTint": [0.5, 0.58, 0.7], "highlightTint": [0.95, 0.98, 1.0], "splitTone": 0.1, "vignette": 0.2,
-      "bloom": 0.6, "bloomThreshold": 0.7, "skyBloom": 0.5, "shafts": 0.65,
-      "haze": 0.5, "hazeStart": 0.25, "hazeTint": [0.82, 0.9, 1.0], "hazeTintMix": 0.55, "hazeDesaturate": 0.35,
-      "sunsetWarmth": 0.3
+      "contrast": 1.02,
+      "saturation": 0.85,
+      "warmth": -0.08,
+      "shadowTint": [
+        0.5,
+        0.58,
+        0.7
+      ],
+      "highlightTint": [
+        0.95,
+        0.98,
+        1.0
+      ],
+      "splitTone": 0.1,
+      "vignette": 0.2,
+      "bloom": 0.6,
+      "bloomThreshold": 0.7,
+      "skyBloom": 0.5,
+      "shafts": 0.65,
+      "haze": 0.5,
+      "hazeStart": 0.25,
+      "hazeTint": [
+        0.82,
+        0.9,
+        1.0
+      ],
+      "hazeTintMix": 0.55,
+      "hazeDesaturate": 0.35,
+      "sunsetWarmth": 0.3,
+      "sunGlow": 0.9
     },
     "awaken:stratum_*": {
       "_name": "Deep: cold stone, dense dark haze, warm lantern light",
-      "contrast": 1.12, "saturation": 0.9, "warmth": -0.1,
-      "shadowTint": [0.3, 0.38, 0.5], "highlightTint": [1.0, 0.88, 0.7], "splitTone": 0.14, "vignette": 0.34,
-      "bloom": 0.5, "bloomThreshold": 0.66, "skyBloom": 0.0, "shafts": 0.0,
-      "haze": 0.6, "hazeStart": 0.1, "hazeTint": [0.18, 0.22, 0.3], "hazeTintMix": 0.4, "hazeDesaturate": 0.3,
-      "sunsetWarmth": 0.0
+      "contrast": 1.12,
+      "saturation": 0.9,
+      "warmth": -0.1,
+      "shadowTint": [
+        0.3,
+        0.38,
+        0.5
+      ],
+      "highlightTint": [
+        1.0,
+        0.88,
+        0.7
+      ],
+      "splitTone": 0.14,
+      "vignette": 0.34,
+      "bloom": 0.5,
+      "bloomThreshold": 0.66,
+      "skyBloom": 0.0,
+      "shafts": 0.0,
+      "haze": 0.6,
+      "hazeStart": 0.1,
+      "hazeTint": [
+        0.18,
+        0.22,
+        0.3
+      ],
+      "hazeTintMix": 0.4,
+      "hazeDesaturate": 0.3,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0
     },
     "awaken:endless": {
       "_name": "The Endless: as the Deep",
-      "contrast": 1.12, "saturation": 0.9, "warmth": -0.1,
-      "shadowTint": [0.3, 0.38, 0.5], "highlightTint": [1.0, 0.88, 0.7], "splitTone": 0.14, "vignette": 0.34,
-      "bloom": 0.5, "bloomThreshold": 0.66, "skyBloom": 0.0, "shafts": 0.0,
-      "haze": 0.6, "hazeStart": 0.1, "hazeTint": [0.18, 0.22, 0.3], "hazeTintMix": 0.4, "hazeDesaturate": 0.3,
-      "sunsetWarmth": 0.0
+      "contrast": 1.12,
+      "saturation": 0.9,
+      "warmth": -0.1,
+      "shadowTint": [
+        0.3,
+        0.38,
+        0.5
+      ],
+      "highlightTint": [
+        1.0,
+        0.88,
+        0.7
+      ],
+      "splitTone": 0.14,
+      "vignette": 0.34,
+      "bloom": 0.5,
+      "bloomThreshold": 0.66,
+      "skyBloom": 0.0,
+      "shafts": 0.0,
+      "haze": 0.6,
+      "hazeStart": 0.1,
+      "hazeTint": [
+        0.18,
+        0.22,
+        0.3
+      ],
+      "hazeTintMix": 0.4,
+      "hazeDesaturate": 0.3,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0
     },
     "awaken:halo": {
       "_name": "Orbit: hard light and black, a thin haze",
-      "contrast": 1.1, "saturation": 1.0, "warmth": -0.05,
-      "shadowTint": [0.4, 0.45, 0.6], "highlightTint": [0.95, 0.97, 1.0], "splitTone": 0.08, "vignette": 0.18,
-      "bloom": 0.4, "bloomThreshold": 0.75, "skyBloom": 0.4, "shafts": 0.3,
-      "haze": 0.12, "hazeStart": 0.5, "hazeTint": [0.1, 0.12, 0.2], "hazeTintMix": 0.3, "hazeDesaturate": 0.1,
-      "sunsetWarmth": 0.0
+      "contrast": 1.1,
+      "saturation": 1.0,
+      "warmth": -0.05,
+      "shadowTint": [
+        0.4,
+        0.45,
+        0.6
+      ],
+      "highlightTint": [
+        0.95,
+        0.97,
+        1.0
+      ],
+      "splitTone": 0.08,
+      "vignette": 0.18,
+      "bloom": 0.4,
+      "bloomThreshold": 0.75,
+      "skyBloom": 0.4,
+      "shafts": 0.3,
+      "haze": 0.12,
+      "hazeStart": 0.5,
+      "hazeTint": [
+        0.1,
+        0.12,
+        0.2
+      ],
+      "hazeTintMix": 0.3,
+      "hazeDesaturate": 0.1,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 1.0
     }
   }
 }

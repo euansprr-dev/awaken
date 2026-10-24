@@ -134,11 +134,13 @@ public final class Autopilot {
         }
         Runtime rt = Runtime.getRuntime();
         Awaken.LOG.info(String.format(java.util.Locale.ROOT,
-                "[autopilot] perf %s frames=%d avg_fps=%.1f p50=%.2fms p95=%.2fms p99=%.2fms max=%.2fms tick_p95=%sms heap=%d/%dMB fb=%dx%d load=%.1f occluded=%s",
+                "[autopilot] perf %s frames=%d avg_fps=%.1f p50=%.2fms p95=%.2fms p99=%.2fms max=%.2fms tick_p95=%sms heap=%d/%dMB fb=%dx%d load=%.1f occluded=%s minimized=%s",
                 label, f.length, f.length / (sum / 1e9), pct(f, 0.50), pct(f, 0.95), pct(f, 0.99), f[f.length - 1] / 1e6, tick,
                 (rt.totalMemory() - rt.freeMemory()) >> 20, rt.maxMemory() >> 20, mc.getWindow().getWidth(), mc.getWindow().getHeight(),
                 // the machine's 1-minute load: other builds or games running at the same time show up here
-                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(), occluded(mc)));
+                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(), occluded(mc),
+                // a minimized window is held to 10 fps by the game itself (FramerateLimitTracker)
+                mc.getWindow().isIconified()));
     }
 
     private static void startPerf(String label, boolean timed) {

@@ -7,7 +7,9 @@
 // Never lifts shadows: a dark place (a Lightless gate, a night cave) stays as dark as the game made it.
 uniform sampler2D InSampler;
 uniform sampler2D DepthSampler;
-uniform sampler2D BloomSampler;
+uniform sampler2D BloomSampler;      // tight glow, quarter size
+uniform sampler2D WideSampler;       // wide glow, eighth size
+uniform sampler2D SkySampler;        // quarter-size frame: alpha = open, bright sky (hides the sun halo behind hills)
 uniform sampler2D ShaftsSampler;
 uniform sampler2D ParamsSampler;
 
@@ -41,7 +43,7 @@ float viewDistance(float depth, float zFar, bool zeroToOne) {
 void main() {
     vec3 c = texture(InSampler, texCoord).rgb;
     vec4 p0 = P(0), p1 = P(1), g = P(3), shadowT = P(4), highT = P(5), b = P(6), h = P(7), hz = P(8), sunset = P(9);
-    vec4 fogColor = P(10), fogDist = P(11);
+    vec4 fogColor = P(10), fogDist = P(11), p12 = P(12), sunPos = P(2);
     float farPlane = max((p1.r * 255.0 * 256.0 + p1.g * 255.0), 16.0);
     float depth = texture(DepthSampler, texCoord).r;
     bool sky = depth < 1.0e-7;
@@ -58,8 +60,18 @@ void main() {
     c = mix(c, mix(c, vec3(l0), h.a), haze);
     c = mix(c, hazeColor, haze * 0.55);
 
-    // bloom and light shafts, screen-blended so nothing clips to white
-    c = screen(c, texture(BloomSampler, texCoord).rgb * b.r * 2.0);
+    // bloom (a tight and a wide layer) and light shafts, screen-blended so nothing clips to white
+    vec3 glow = texture(BloomSampler, texCoord).rgb * 0.55 + texture(WideSampler, texCoord).rgb * 0.9;
+    c = screen(c, glow * b.r * 2.0);
+    // the sun's halo: light scattering around the disc, warm at sunset, gone when hills or trees hide the sun
+    if (p1.b > 0.0 && p12.r > 0.0) {
+        vec2 sun = vec2((sunPos.r * 255.0 * 256.0 + sunPos.g * 255.0) / 65535.0, (sunPos.b * 255.0 * 256.0 + sunPos.a * 255.0) / 65535.0) * 3.0 - 1.0;
+        float open = (texture(SkySampler, sun).a + texture(SkySampler, sun + vec2(0.01, 0.0)).a + texture(SkySampler, sun - vec2(0.01, 0.0)).a) / 3.0;
+        float r = length((texCoord - sun) * vec2(OutSize.x / OutSize.y, 1.0));
+        float halo = (exp(-r * 9.0) * 0.45 + exp(-r * 2.6) * 0.16) * p1.b * p12.r * clamp(open * 1.6, 0.0, 1.0);
+        vec3 haloColor = mix(vec3(1.0, 0.93, 0.8), sunset.rgb, p1.a);
+        c = screen(c, haloColor * halo);
+    }
     if (Cinematic > 0.5) {
         vec3 sunColor = mix(vec3(1.0, 0.96, 0.88), sunset.rgb, p1.a);
         c = screen(c, texture(ShaftsSampler, texCoord).r * sunColor * 1.4);

@@ -1,8 +1,8 @@
 #version 330
 #extension GL_ARB_separate_shader_objects : require
 
-// AWAKEN Lens, pass 3: one wide, soft blur at quarter size. Bilinear taps at two rings make thirteen texels' worth of
-// filter from nine samples; at this size the glow spreads across about forty screen pixels.
+// AWAKEN Lens, the glow blur: bilinear taps on two rings make thirteen texels' worth of filter from nine samples. Run
+// at quarter size it gives the tight glow (about forty screen pixels), at eighth size the wide one.
 uniform sampler2D InSampler;
 
 layout(location = 0) in vec2 texCoord;

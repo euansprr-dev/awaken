@@ -12,6 +12,14 @@
       "width": 480,
       "height": 300
     },
+    "awaken:lens_eighth": {
+      "width": 240,
+      "height": 150
+    },
+    "awaken:lens_wide": {
+      "width": 240,
+      "height": 150
+    },
     "swap": {}
   },
   "passes": [
@@ -64,6 +72,30 @@
     },
     {
       "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_down",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_quarter",
+          "bilinear": true
+        }
+      ],
+      "output": "awaken:lens_eighth"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_blur",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_eighth",
+          "bilinear": true
+        }
+      ],
+      "output": "awaken:lens_wide"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
       "fragment_shader": "awaken:post/lens_composite",
       "inputs": [
         {
@@ -78,6 +110,16 @@
         {
           "sampler_name": "Bloom",
           "target": "awaken:lens_bloom",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Wide",
+          "target": "awaken:lens_wide",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Sky",
+          "target": "awaken:lens_quarter",
           "bilinear": true
         },
         {
@@ -112,6 +154,7 @@
           "target": "swap"
         }
       ],
+      "output": "minecraft:main",
       "uniforms": {
         "BlitConfig": [
           {
@@ -125,8 +168,7 @@
             ]
           }
         ]
-      },
-      "output": "minecraft:main"
+      }
     }
   ]
 }

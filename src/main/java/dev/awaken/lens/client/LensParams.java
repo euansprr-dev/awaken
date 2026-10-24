@@ -35,6 +35,7 @@ final class LensParams {
         packed[10] = pack(fogR, fogG, fogB, 1f);
         int rd = Math.clamp(Math.round(fogEnd), 0, 65535), env = Math.clamp(Math.round(environmentalEnd), 0, 65535);
         packed[11] = bytes(rd >> 8, rd & 255, env >> 8, env & 255);
+        packed[12] = pack(look[Look.SUN_GLOW], 0f, 0f, 0f);
         for (int i = 0; i < WIDTH; i++) {
             if (packed[i] != uploaded[i]) {
                 dirty = true;

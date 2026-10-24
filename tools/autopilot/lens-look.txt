@@ -1,0 +1,68 @@
+# Lens look check (docs/plan-pack.html): the same frames with LENS=off, swift and cinematic, for side-by-side review.
+# Shots only, no perf: run it any time a Lens shader or look changes.
+world lenslook creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+cmd gamemode spectator
+cmd tp @s 0.5 190 0.5 90 12
+cmd time set 12600
+wait 300
+shot lens_sunset_sun
+cmd tp @s 0.5 190 0.5 -90 12
+wait 60
+shot lens_sunset_away
+cmd time set 6000
+cmd tp @s 0.5 150 0.5 0 8
+wait 120
+shot lens_noon
+cmd gamemode creative
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -20 150 -10 19 150 40 minecraft:smooth_stone
+cmd fill -20 151 -10 19 170 40 minecraft:air
+wait 40
+cmd awaken gate showcase S open
+wait 60
+look 0 -10
+shot lens_gate_day
+cmd time set 18000
+wait 60
+shot lens_gate_night
+cmd awaken gate showcase clear
+cmd time set 6000
+cmd awaken landmark goto well
+wait 60
+cmd time set 18000
+wait 60
+shot lens_well_night
+cmd time set 6000
+cmd awaken descent go 5
+wait 200
+shot lens_descent
+cmd awaken descent go 0
+wait 100
+cmd awaken veil stillpoint
+wait 200
+shot lens_stillpoint
+cmd awaken veil return
+wait 100
+cmd awaken dream now
+wait 300
+shot lens_dream
+cmd awaken dream wake
+wait 100
+cmd execute in minecraft:the_nether run tp @s 0.5 70 0.5 0 5
+wait 300
+shot lens_nether
+quit
