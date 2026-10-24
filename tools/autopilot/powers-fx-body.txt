@@ -24,9 +24,9 @@ cmd awaken admin power learn gravity_flip
 cmd awaken admin power learn gravity_well
 cmd awaken admin power learn nova
 cmd awaken admin power learn barrier
-cmd awaken admin power learn cloak
+cmd awaken admin power learn legion
 cmd awaken admin power learn foresight
-cmd awaken admin power learn wall
+cmd awaken admin power learn floor
 cmd awaken admin power learn drone
 cmd awaken admin power learn railgun
 cmd awaken admin power learn mend
@@ -48,7 +48,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 shot body_b_shockwave_1
@@ -58,7 +58,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
@@ -70,7 +70,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 shot body_f_shockwave_1
@@ -80,7 +80,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
@@ -94,7 +94,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 cmd awaken admin power cast haymaker
 shot body_b_haymaker_1
@@ -106,7 +106,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 cmd awaken admin power cast haymaker
 shot body_f_haymaker_1
@@ -121,7 +121,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key movement
 shot body_b_dash_1
@@ -131,7 +131,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key movement
 wait 5
@@ -143,7 +143,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key movement
 shot body_f_dash_1
@@ -153,7 +153,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key movement
 wait 5
@@ -168,7 +168,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 shot body_b_gravity_flip_1
@@ -178,7 +178,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
@@ -190,7 +190,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 shot body_f_gravity_flip_1
@@ -200,7 +200,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
@@ -215,7 +215,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 shot body_b_gravity_well_1
@@ -225,7 +225,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 wait 5
@@ -237,7 +237,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 shot body_f_gravity_well_1
@@ -247,13 +247,13 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 wait 5
 shot body_f_gravity_well_2
 
-# nova: Energy: the gather held, then the thrust
+# nova: Energy: the gather, then the thrust
 camera back
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
@@ -261,7 +261,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 cmd awaken admin power cast nova
 shot body_b_nova_1
@@ -273,7 +273,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 cmd awaken admin power cast nova
 shot body_f_nova_1
@@ -288,7 +288,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 shot body_b_barrier_1
@@ -298,7 +298,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
@@ -310,7 +310,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 shot body_f_barrier_1
@@ -320,14 +320,14 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
 shot body_f_barrier_2
 
-# cloak: Shadow cast
-cmd awaken powers equip 1 cloak
+# legion: Shadow cast (an ultimate)
+cmd awaken powers equip 5 legion
 camera back
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
@@ -335,21 +335,21 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
-key power1
-shot body_b_cloak_1
+key ultimate
+shot body_b_legion_1
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
 cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
-key power1
+key ultimate
 wait 5
-shot body_b_cloak_2
+shot body_b_legion_2
 camera front
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
@@ -357,21 +357,21 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
-key power1
-shot body_f_cloak_1
+key ultimate
+shot body_f_legion_1
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
 cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
-key power1
+key ultimate
 wait 5
-shot body_f_cloak_2
+shot body_f_legion_2
 
 # foresight: Mind cast
 cmd awaken powers equip 2 foresight
@@ -382,7 +382,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 shot body_b_foresight_1
@@ -392,7 +392,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 wait 5
@@ -404,7 +404,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 shot body_f_foresight_1
@@ -414,14 +414,14 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 wait 5
 shot body_f_foresight_2
 
-# wall: Architect cast
-cmd awaken powers equip 1 wall
+# floor: Architect cast
+cmd awaken powers equip 1 floor
 camera back
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
@@ -429,21 +429,21 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
-shot body_b_wall_1
+shot body_b_floor_1
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
 cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
-shot body_b_wall_2
+shot body_b_floor_2
 camera front
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
@@ -451,21 +451,21 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
-shot body_f_wall_1
+shot body_f_floor_1
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
 cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
-shot body_f_wall_2
+shot body_f_floor_2
 
 # drone: Tech cast
 cmd awaken powers equip 2 drone
@@ -476,7 +476,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 shot body_b_drone_1
@@ -486,7 +486,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 wait 5
@@ -498,7 +498,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 shot body_f_drone_1
@@ -508,7 +508,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 wait 5
@@ -522,7 +522,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 cmd awaken admin power cast railgun
 shot body_b_railgun_1
@@ -534,7 +534,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 cmd awaken admin power cast railgun
 shot body_f_railgun_1
@@ -549,7 +549,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 shot body_b_mend_1
@@ -559,7 +559,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
@@ -571,7 +571,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 shot body_f_mend_1
@@ -581,7 +581,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power1
 wait 5
@@ -596,7 +596,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 shot body_b_spirit_palm_1
@@ -606,7 +606,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 wait 5
@@ -618,7 +618,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 shot body_f_spirit_palm_1
@@ -628,13 +628,14 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key power2
 wait 5
 shot body_f_spirit_palm_2
 
-# ground_slam: slam wind-up and landing
+# ground_slam: slam: arms up, then fists into the ground
+cmd awaken powers equip 1 ground_slam
 camera back
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
@@ -642,10 +643,20 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
-cmd awaken admin power cast ground_slam
+key power1
 shot body_b_ground_slam_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+wait 5
 shot body_b_ground_slam_2
 camera front
 cmd fill -12 200 -8 12 216 22 minecraft:air
@@ -654,10 +665,20 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
-cmd awaken admin power cast ground_slam
+key power1
 shot body_f_ground_slam_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+wait 5
 shot body_f_ground_slam_2
 
 # hundred_palms: the flurry
@@ -669,7 +690,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key ultimate
 shot body_b_hundred_palms_1
@@ -679,7 +700,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key ultimate
 wait 5
@@ -691,7 +712,7 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key ultimate
 shot body_f_hundred_palms_1
@@ -701,13 +722,13 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 key ultimate
 wait 5
 shot body_f_hundred_palms_2
 
-# hover: weightless (last: it stays on)
+# hover: weightless: toggled on once, seen from behind and then in front
 camera back
 cmd fill -12 200 -8 12 216 22 minecraft:air
 cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
@@ -715,21 +736,14 @@ cmd kill @e[type=!minecraft:player,distance=..80]
 cmd tp @s 0.5 200 0.5 0 8
 cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
 cmd awaken admin power reset
-wait 8
+wait 20
 look 0 8
 cmd awaken admin power cast hover
+wait 10
 shot body_b_hover_1
 shot body_b_hover_2
 camera front
-cmd fill -12 200 -8 12 216 22 minecraft:air
-cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
-cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
-cmd awaken admin power reset
-wait 8
-look 0 8
-cmd awaken admin power cast hover
+wait 5
 shot body_f_hover_1
 shot body_f_hover_2
 
