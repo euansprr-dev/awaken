@@ -37,7 +37,8 @@ public abstract class SkinnedMobRenderer<T extends Mob, S extends SkinRenderStat
         this(ctx, new SkinModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false), new SkinModel<>(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true), shadow);
     }
 
-    private SkinnedMobRenderer(EntityRendererProvider.Context ctx, SkinModel<S> wide, SkinModel<S> slim, float shadow) {
+    /** With the subclass's own wide and slim models (a SkinModel subclass that poses parts after the vanilla pose). */
+    protected SkinnedMobRenderer(EntityRendererProvider.Context ctx, SkinModel<S> wide, SkinModel<S> slim, float shadow) {
         super(ctx, wide, shadow);
         this.wide = wide;
         this.slim = slim;
