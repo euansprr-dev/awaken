@@ -6,9 +6,9 @@ the story starts together, friends share one Hearth as members, and a Hearth can
 ## Done
 - **The WIP (ebf8841) finished.** It built as it was; its one failing test (`together_server_throttle_and_as`) passed
   a UUID to `/awaken as`, which vanilla's player argument never takes. The test now names its two players.
-- **origin/build/awaken-v1 merged in**, twice: 2e05a76 (the CI workflow, the cloud hand-off, holo cards, lands
-  polish), then 90801b4 (adaptive gate music) when it moved during the session. One SPEC §12 conflict: both sides
-  added an API line; both are kept.
+- **origin/build/awaken-v1 merged in** as it moved during the session: 2e05a76 (the CI workflow, the cloud hand-off,
+  holo cards, lands polish), 90801b4 (adaptive gate music) and 1dc0a2e (the Look switch, JEI/Jade). One SPEC §12
+  conflict: both sides added an API line; both are kept.
 - **All 17 audit items are fixed**, each with GameTests of two or more players; the audit doc lists them per item with
   the player count, and a "Deferred" section for what is left.
 - **Found and fixed while testing:**
@@ -93,6 +93,6 @@ No new looks, so no screenshot tour. Worth one manual two-client LAN session bef
 Hearth, a party gate (sealing, shared kills), and a shared dream.
 
 ## CI
-Built and tested in the cloud VM (JDK 25.0.5 from foojay): `./gradlew build runGameTestServer`, "All 352 required tests
-passed" on the final merged code (346 before pack/sound's tests came in with the second merge). GitHub Actions: the
+Built and tested in the cloud VM (JDK 25.0.5 from foojay): `./gradlew build runGameTestServer`, "All 362 required tests
+passed" on the final merged code (346 before the sound, look and comfort tests came in with the later merges). GitHub Actions: the
 GameTests run for this branch's head on pack/together.
