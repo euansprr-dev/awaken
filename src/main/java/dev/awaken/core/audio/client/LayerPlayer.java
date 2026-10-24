@@ -177,7 +177,7 @@ final class LayerPlayer {
                 MusicManager mm = mc.getMusicManager();
                 float g = vanillaFrom * Math.max(0F, 1F - phaseTicks / (float) VANILLA_FADE);
                 sm.updateCategoryVolume(SoundSource.MUSIC, g);
-                if (phaseTicks >= VANILLA_FADE || mm.getCurrentMusicTranslationKey() == null || !CuePlayer.songActive()) {
+                if (phaseTicks >= VANILLA_FADE || !CuePlayer.songActive()) {
                     mm.stopPlaying();
                     restoreGain();
                     start(mc);
@@ -256,7 +256,7 @@ final class LayerPlayer {
 
     /** Starts the layers, after fading out a vanilla song that is playing (never a stage cue: those wait). */
     private void beginOrFade(Minecraft mc) {
-        if (slot == MusicLayers.Slot.MUSIC && mc.getMusicManager().getCurrentMusicTranslationKey() != null && CuePlayer.songActive()) {
+        if (slot == MusicLayers.Slot.MUSIC && CuePlayer.songActive()) {
             vanillaFrom = Math.max(0.01F, mc.getMusicVolume());
             setPhase(Phase.FADING_VANILLA, "a song is playing: it fades out first");
             return;

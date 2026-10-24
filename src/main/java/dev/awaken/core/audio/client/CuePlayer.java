@@ -6,11 +6,13 @@ import dev.awaken.core.audio.Cue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.client.event.SelectMusicEvent;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Plays music cues through vanilla's {@link MusicManager}, so a cue is a song as far as the game is concerned: it
@@ -29,7 +31,8 @@ final class CuePlayer {
 
     private static Pending pending;
     private static Cue playingCue;
-    private static boolean songActive;
+    /** The music manager's song as of its last {@link SelectMusicEvent} (it asks no one while it fades its gain). */
+    private static @Nullable SoundInstance lastSong;
     private static Music playingMusic;
     private static ClientLevel lastLevel;
     private static int ticks, levelAge;
@@ -77,7 +80,7 @@ final class CuePlayer {
         }
         // the layered music holds the channel: a stage cue makes it fade, an ordinary one waits unless it is calm
         if (!LayerPlayer.MUSIC.yieldTo(p.cue)) return;
-        if (mm.getCurrentMusicTranslationKey() != null) {
+        if (songActive()) {
             if (!p.cue.stage) return; // wait for the song to end
             mm.stopPlaying();
         }
@@ -102,7 +105,7 @@ final class CuePlayer {
      */
     static void onSelectMusic(SelectMusicEvent e) {
         SoundInstance now = e.getPlayingMusic();
-        songActive = now != null && Minecraft.getInstance().getSoundManager().isActive(now);
+        lastSong = now;
         if (playingMusic != null && now != null && now.getIdentifier().equals(AudioSounds.cue(playingCue).getId())
                 && Minecraft.getInstance().getSoundManager().isActive(now)) {
             if (e.getMusic() == null) e.setMusic(playingMusic);
@@ -115,9 +118,19 @@ final class CuePlayer {
         return playingCue;
     }
 
-    /** Whether vanilla's music manager has a song that is really sounding (a teleport stops it without telling it). */
+    /**
+     * Whether the music manager has a song that really sounds. A teleport stops every sound without telling it, and
+     * while it fades its gain it doesn't look, so it can hold a dead song for seconds: ask the engine about the song
+     * it last named. One it started after asking (another key) is new, so it sounds.
+     */
     static boolean songActive() {
-        return songActive;
+        Minecraft mc = Minecraft.getInstance();
+        String key = mc.getMusicManager().getCurrentMusicTranslationKey();
+        if (key == null) return false;
+        SoundInstance s = lastSong;
+        Sound sound = s == null ? null : s.getSound();
+        if (sound == null || !key.equals(sound.getLocation().toShortLanguageKey())) return true;
+        return mc.getSoundManager().isActive(s);
     }
 
     static boolean playingStage() {
@@ -128,6 +141,7 @@ final class CuePlayer {
         pending = null;
         playingCue = null;
         playingMusic = null;
+        lastSong = null;
     }
 
     private static void log(Cue cue, String what) {
