@@ -1,6 +1,6 @@
 # Turbo bridge (24 Oct 2026)
 
-Path 2 of the Far Sight plan: raw Vulkan under the Turbo contract (CLAUDE.md, SPEC §16). MacBook Pro M4, Minecraft 26.3,
+Path 2 of the Far Sight plan: raw Vulkan under the Turbo contract (CLAUDE.md, SPEC §19). MacBook Pro M4, Minecraft 26.3,
 NeoForge 26.3.0.95, MoltenVK 1.4.2 (LWJGL 3.4.3). Tours: `tools/turbo-bench.sh` (tour `tools/autopilot/turbo.txt`), window
 854x480 on the built-in display (fb 1708x960), render distance 16, frame cap lifted (maxFps 260, vsync off); the Vulkan
 swapchain still holds most runs at the display's 120 Hz, so p50 is the refresh interval and p99, p99.5, the worst frame

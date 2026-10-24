@@ -1,10 +1,10 @@
 #!/bin/zsh
-# Turbo's launch-time experiments (SPEC §16): runs tools/autopilot/turbo.txt once per variant, back to back, on the
+# Turbo's launch-time experiments (SPEC §19): runs tools/autopilot/turbo.txt once per variant, back to back, on the
 # same world and seed with the frame cap lifted, and keeps each run's [turbo] and perf lines (and its shots) in
 # docs/perf/turbo/<name>/. Wrap it in the shared slot: slot.sh tour tools/turbo-bench.sh <name> <variant>...
 # Variants: base (every launch experiment off), cache-clear (pipeline cache from empty: fills it), cache (pipeline
-# cache as the last run left it), opt (optimised shader compiles), mvk (the MoltenVK settings below), all, gl (OpenGL:
-# Turbo must stay off and the game must look the same).
+# cache as the last run left it), opt (optimised shader compiles), mvk (the MoltenVK settings below), all, metal
+# (VK_EXT_metal_objects asked for at device creation), gl (OpenGL: Turbo must stay off and the game must look the same).
 cd "$(dirname "$0")/.."
 NAME=${1:?name}; shift
 OUT=docs/perf/turbo/$NAME
@@ -25,6 +25,7 @@ for V in "$@"; do
     opt) T=pipelineCache=off,shaderOpt=on ;;
     mvk) M=$MVK_SET ;;
     all) T=pipelineCache=on,shaderOpt=on; M=$MVK_SET ;;
+    metal) T=pipelineCache=off,shaderOpt=off,metalObjects=on ;;
     gl) B=opengl ;;
     *) echo "unknown variant $V"; exit 1 ;;
   esac

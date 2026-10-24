@@ -12,7 +12,7 @@
 #   RD=<chunks>             vanilla render distance for this run
 #   TECTONIC=<preset>       Tectonic settings from pack/tectonic/<preset>.json (unset: Tectonic's defaults)
 #   CITY=on                 ask for the city basin before Carillon exists (terrain's dev switch)
-#   TURBO=pipelineCache=on,shaderOpt=off   Turbo switches for this run (SPEC §16; "off" turns Turbo off)
+#   TURBO=pipelineCache=on,shaderOpt=off   Turbo switches for this run (SPEC §19; "off" turns Turbo off)
 #   MVK=USE_MTLHEAP=1,...   MoltenVK settings for this run (each becomes MVK_CONFIG_<name> in the client's environment)
 cd "$(dirname "$0")/.."
 SCRIPT=${1:?script}

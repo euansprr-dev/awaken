@@ -1,4 +1,4 @@
-# Turbo bridge (SPEC §16). Turbo logs its own numbers: the probe ("[turbo] on:" or "[turbo] off: <why>"), the device's
+# Turbo bridge (SPEC §19). Turbo logs its own numbers: the probe ("[turbo] on:" or "[turbo] off: <why>"), the device's
 # extensions, and "[turbo] bench" lines for launch to title, join to first frame and the first 30 s in the world
 # (p50/p99/p99.5/max). The tour keeps still through those 30 s, then shows the compute-built demo grid drawn after the
 # sky (a shot, and frame times with the demo on and off). tools/turbo-bench.sh runs it once per variant.

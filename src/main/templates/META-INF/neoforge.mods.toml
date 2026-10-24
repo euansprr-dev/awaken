@@ -51,7 +51,7 @@ One home. Four directions. No ceiling.
 Gates, an endless Descent, lucid dreams, the Veil and the machines of the Above.
 '''
 
-# Turbo (dev.awaken.turbo, the Turbo contract in CLAUDE.md and SPEC §16): its mixins apply only on the verified
+# Turbo (dev.awaken.turbo, the Turbo contract in CLAUDE.md and SPEC §19): its mixins apply only on the verified
 # Minecraft and NeoForge versions with their switch on (TurboMixinPlugin), and every one passes through when off.
 [[mixins]]
 config="${mod_id}.turbo.mixins.json"

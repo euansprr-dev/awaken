@@ -30,7 +30,7 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.shaderc.Shaderc;
 
 /**
- * Turbo: Awaken's door to Minecraft's Vulkan internals, under the Turbo contract (CLAUDE.md, SPEC §16). Client only.
+ * Turbo: Awaken's door to Minecraft's Vulkan internals, under the Turbo contract (CLAUDE.md, SPEC §19). Client only.
  * <p>The probe runs once, on the render thread at the first frame. Turbo turns on only when the master switch is on,
  * this is a verified Minecraft and NeoForge build ({@link TurboVersions#VERIFIED}), the backend is Vulkan, and a
  * self-test passes (a compute shader fills a buffer that is read back and checked). Otherwise it logs one

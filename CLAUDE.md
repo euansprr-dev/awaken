@@ -50,7 +50,7 @@ tools/                   gradle.sh, sim/ (pacing simulator), art/ (texture + sou
   (if needed: `src/main/resources/awaken.mixins.json`, coordinate first).
 - **The Turbo contract** (Far Sight plan, approved 2026-10-24: "I'm open to all of them … I'm really open to anything
   for making this absolutely peak", then "Go ahead with Far Sight build out along with pixels and turbo bridge").
-  Minecraft internals are allowed only under these rules (SPEC §16):
+  Minecraft internals are allowed only under these rules (SPEC §19):
   1. One place: internals live only in `dev.awaken.turbo` (and its subpackages), with their own mixin configs
      (`awaken.turbo.mixins.json`, …) and the access-transformer lines in `META-INF/accesstransformer.cfg`.
   2. Never required: every feature has a public-API fallback and switches itself off when its probe fails (wrong

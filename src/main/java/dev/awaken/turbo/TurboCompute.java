@@ -37,7 +37,7 @@ import org.lwjgl.vulkan.VkSubmitInfo2;
 import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 /**
- * Turbo's compute bridge (SPEC §16): GLSL compute shaders run on Minecraft's own Vulkan device, writing
+ * Turbo's compute bridge (SPEC §19): GLSL compute shaders run on Minecraft's own Vulkan device, writing
  * {@link TurboBuffer}s that normal RenderPipelines draw from (vertex, index, indirect). Get it from
  * {@link Turbo#compute()}, which is null whenever Turbo is off; everything here is render thread only.
  * <ul>

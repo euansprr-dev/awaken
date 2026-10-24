@@ -11,7 +11,7 @@ import java.util.Properties;
 import net.neoforged.fml.loading.FMLPaths;
 
 /**
- * Turbo's on/off switches (SPEC §16). Read once, early: the mixin plugin asks before Minecraft's classes load, so a
+ * Turbo's on/off switches (SPEC §19). Read once, early: the mixin plugin asks before Minecraft's classes load, so a
  * change needs a restart. Sources, later wins: the defaults below, {@code config/awaken-turbo.properties}
  * ({@code name=on|off} lines), then {@code -Dawaken.turbo=name=on,name=off} (or just {@code off}) for experiments.
  * No Minecraft classes here: this class loads during mixin setup.

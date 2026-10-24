@@ -315,7 +315,7 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
   extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
   townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
-- `dev.awaken.turbo.Turbo` (client, §16) — `compute()` (the compute bridge, null when Turbo is off), `on()`, `why()`,
+- `dev.awaken.turbo.Turbo` (client, §19) — `compute()` (the compute bridge, null when Turbo is off), `on()`, `why()`,
   `isVulkan()`, `deviceExtensions()` / `enabledDeviceExtensions()`. `TurboCompute`: `program(name, glsl, storageBuffers,
   pushBytes)`, `buffer(label, GpuBuffer usage bits, size)` (a `TurboBuffer`, a real `VulkanGpuBuffer` RenderPasses draw
   from), `frame()` / `async()` passes (`update`, `fill`, `dispatch`), `done(ticket)`, `awaitOnGpu(ticket)`,
@@ -1252,7 +1252,7 @@ The Veil, the Lucidium and the rest:
 
 ---------------------------------------------------------------------------------------------------------------------
 
-## 16. Turbo (Minecraft internals under contract; Far Sight plan path 2, approved 2026-10-24)
+## 19. Turbo (Minecraft internals under contract; Far Sight plan path 2, approved 2026-10-24)
 
 Euan, 2026-10-24, on the Far Sight plan's four paths: "I'm open to all of them … I'm really open to anything for making
 this absolutely peak"; then "Go ahead with Far Sight build out along with pixels and turbo bridge". The Turbo contract
