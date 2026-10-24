@@ -123,18 +123,25 @@ VANILLA = {
 # The Awakened side: one row per Awakened biome. A biome takes everything its archetype (the vanilla biome it stands
 # in for) has: fauna groups, lairs, second looks, cottage plan, and every vanilla, c: and awaken: tag. It also joins its
 # family's fauna group (the plan's family) where the archetype lacks it; `add` and `drop` name tags to join or leave on
-# top. Output is written only for biomes the lands pack has (worldgen/biome/<id>.json); `planned` rows show the shape.
+# top; `heroes` names the hero-tree structures that grow there (awaken:has_structure/<hero>, read by the lands pack's
+# worldgen/structure/<hero>.json). Output is written only for biomes the lands pack has (worldgen/biome/<id>.json);
+# `planned` rows show the shape.
 
 class Awakened:
-    def __init__(self, biome, family, archetype, add=(), drop=(), planned=False):
+    def __init__(self, biome, family, archetype, add=(), drop=(), heroes=(), planned=False):
         self.id, self.family, self.archetype = "awaken:" + biome, family, archetype
-        self.add, self.drop, self.planned = tuple(add), tuple(drop), planned
+        self.add, self.drop, self.heroes, self.planned = tuple(add), tuple(drop), tuple(heroes), planned
+
+
+# The hero trees (dev.awaken.terrain.hero.HeroTree): giant trees built as structures, only in the biomes that list them.
+HEROES = ("elder_colossus", "lumen_spire")
 
 
 AWAKENED = [
     # Greenwild colossal trees where the forests and birch woods were: the birch forest's life, the Greenwild's and its beast
-    Awakened("elderwood", "greenwild", "old_growth_birch_forest", add=("awaken:has_lair/briar_sow",)),
-    Awakened("lumen_forest", "duskwood", "dark_forest", planned=True),
+    Awakened("elderwood", "greenwild", "old_growth_birch_forest", add=("awaken:has_lair/briar_sow",), heroes=("elder_colossus",)),
+    # Duskwood: the dark forest's life in a forest that glows at night, under the Lumen Spires
+    Awakened("lumen_forest", "duskwood", "dark_forest", heroes=("lumen_spire",)),
     Awakened("glass_steppe", "sunscorch", "savanna", planned=True),              # or desert
     Awakened("shattered_highlands", "crag", "windswept_hills", planned=True),    # or stony_peaks
     Awakened("frost_spires", "frostwild", "grove", planned=True),               # or snowy_plains
@@ -248,6 +255,7 @@ def awakened_tags(row, tags, resolve):
     arch = "minecraft:" + row.archetype
     got = {t for t in tags if arch in resolve(t)}
     got |= {"awaken:archetype/" + row.archetype, "awaken:fauna/" + row.family} | set(row.add)
+    got |= {"awaken:has_structure/" + h for h in row.heroes}
     return got - set(row.drop)
 
 
@@ -362,6 +370,14 @@ def problems():
             errs.append(f"{r.id}: needs exactly one cottage plan")
         if "minecraft:is_overworld" not in got:
             errs.append(f"{r.id}: not in #minecraft:is_overworld")
+        errs += [f"{r.id}: unknown hero tree {h}" for h in r.heroes if h not in HEROES]
+    # every hero tree grows somewhere, and its structure reads its tag
+    for h in HEROES:
+        if not any(h in r.heroes for r in AWAKENED if r.id in have):
+            errs.append(f"hero tree {h} grows in no biome of the lands pack")
+        p = os.path.join(LANDS, "awaken/worldgen/structure", h + ".json")
+        if os.path.exists(p) and json.load(open(p)).get("biomes") != "#awaken:has_structure/" + h:
+            errs.append(f"lands pack structure/{h}.json should name #awaken:has_structure/{h}")
     return errs
 
 

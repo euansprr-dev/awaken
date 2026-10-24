@@ -10,8 +10,11 @@ public final class TerrainModule {
         modBus.addListener(LandsPack::onAddPackFinders);
         LandsBlocks.init(modBus);
         dev.awaken.terrain.tree.LandsTrees.init(modBus);
+        dev.awaken.terrain.hero.HeroWorldgen.init(modBus);
         TerrainCommands.register();
         TerrainTests.register();
         BiomeTableTests.register();
+        LandsTests.register();
+        dev.awaken.terrain.hero.HeroTests.register();
     }
 }

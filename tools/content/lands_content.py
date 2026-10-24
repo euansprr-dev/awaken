@@ -518,7 +518,24 @@ def injector(name, targets):
             "replacement": aw(name), "parameters": {"awaken:lands/awakening": {"min_inclusive": 0.0}}}
 
 
+# Hero trees: one candidate per spacing x spacing chunks, kept where the site search finds its biome and level ground
+# within four chunks of it (dev.awaken.terrain.hero.HeroStructure); inside their biome that is about one per 300-500
+# blocks. The biomes come from the biome table (tools/terrain/biomes.py, awaken:has_structure/<tree>).
+HEROES = {"elder_colossus": (26, 10, 1830266171), "lumen_spire": (22, 8, 774409123)}
+
+
+def heroes():
+    for name, (spacing, separation, salt) in HEROES.items():
+        write(f"{PACK}/awaken/worldgen/structure/{name}.json", {
+            "type": aw("hero_tree"), "tree": name, "biomes": f"#awaken:has_structure/{name}", "step": "surface_structures",
+            "spawn_overrides": {}, "terrain_adaptation": "none"})
+        write(f"{PACK}/awaken/worldgen/structure_set/{name}.json", {
+            "structures": [{"structure": aw(name), "weight": 1}],
+            "placement": {"type": mc("random_spread"), "spacing": spacing, "separation": separation, "salt": salt}})
+
+
 def pack():
+    heroes()
     for name, data in features().items():
         write(f"{PACK}/awaken/worldgen/feature/{name}.json", data)
     for name, data in placed().items():

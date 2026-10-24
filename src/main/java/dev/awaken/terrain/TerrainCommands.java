@@ -30,7 +30,8 @@ import java.util.concurrent.CompletableFuture;
  * {@code /awaken terrain ...}, the terrain studio (game masters only): {@code survey <name> [radius] [step]} samples the
  * land around you into {@code terrain/<name>.json} for tools/terrain/survey.py; {@code visit <biome|#tag>} stands you in
  * the heart of the nearest surface patch of that biome; {@code lookout [radius]} takes you to the highest ground nearby;
- * {@code at} prints the biome, ground height and climate where you stand. The searches run off the main thread and
+ * {@code at} prints the biome, ground height and climate where you stand; {@code hero <tree> [seed]} grows a hero tree
+ * where you stand and {@code herovisit <tree> [distance above]} stands you before the nearest generated one. The searches run off the main thread and
  * log {@code [terrain]} lines the autopilot can wait on.
  */
 final class TerrainCommands {
@@ -52,8 +53,81 @@ final class TerrainCommands {
                     .then(Commands.argument("radius", IntegerArgumentType.integer(16, 2048))
                             .executes(c -> lookout(c, IntegerArgumentType.getInteger(c, "radius")))));
             t.then(Commands.literal("at").executes(TerrainCommands::at));
+            for (var tree : dev.awaken.terrain.hero.HeroTree.values()) {
+                t.then(Commands.literal("hero").then(Commands.literal(tree.getSerializedName())
+                        .executes(c -> hero(c, tree, c.getSource().getLevel().getRandom().nextLong()))
+                        .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
+                                .executes(c -> hero(c, tree, com.mojang.brigadier.arguments.LongArgumentType.getLong(c, "seed"))))));
+                t.then(Commands.literal("herovisit").then(Commands.literal(tree.getSerializedName())
+                        .executes(c -> heroVisit(c, tree, 80, 2))
+                        .then(Commands.argument("distance", IntegerArgumentType.integer(0, 512))
+                                .then(Commands.argument("above", IntegerArgumentType.integer(0, 256))
+                                        .executes(c -> heroVisit(c, tree, IntegerArgumentType.getInteger(c, "distance"),
+                                                IntegerArgumentType.getInteger(c, "above")))))));
+            }
             root.then(t);
         });
+    }
+
+    /** Grows a hero tree with its foot where you stand (for looking at it; worldgen places them by itself). */
+    private static int hero(CommandContext<CommandSourceStack> c, dev.awaken.terrain.hero.HeroTree tree, long seed) {
+        ServerLevel level = c.getSource().getLevel();
+        var at = net.minecraft.core.BlockPos.containing(c.getSource().getPosition());
+        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ());
+        long t0 = System.nanoTime();
+        var piece = new dev.awaken.terrain.hero.HeroPiece(tree, new net.minecraft.core.BlockPos(at.getX(), y, at.getZ()), seed);
+        int placed = piece.build(level, piece.getBoundingBox());
+        long ms = (System.nanoTime() - t0) / 1_000_000;
+        Awaken.LOG.info("[terrain] hero {} seed {} at {} {} {}: {} blocks in {} ms", tree.getSerializedName(), seed, at.getX(), y, at.getZ(), placed, ms);
+        c.getSource().sendSuccess(() -> Component.literal("Grew " + tree.getSerializedName() + " (seed " + seed + "): " + placed + " blocks"), false);
+        return placed;
+    }
+
+    /**
+     * Finds the nearest hero tree of that kind the world generated and stands you {@code distance} blocks south of its
+     * trunk, {@code above} blocks over the ground there, looking at it (for screenshots: {@code [terrain] herovisit}).
+     */
+    private static int heroVisit(CommandContext<CommandSourceStack> c, dev.awaken.terrain.hero.HeroTree tree, int distance, int above)
+            throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        ServerLevel level = sp.level().getServer().overworld();
+        var structure = level.registryAccess().lookupOrThrow(Registries.STRUCTURE).get(dev.awaken.terrain.hero.HeroWorldgen.structure(tree));
+        if (structure.isEmpty()) {
+            Awaken.LOG.info("[terrain] herovisit {} none (no lands pack)", tree.getSerializedName());
+            c.getSource().sendFailure(Component.literal("This world has no " + tree.getSerializedName()));
+            return 0;
+        }
+        var found = level.getChunkSource().getGenerator().findNearestMapStructure(level, net.minecraft.core.HolderSet.direct(structure.get()),
+                sp.blockPosition(), 100, false);
+        if (found == null) {
+            Awaken.LOG.info("[terrain] herovisit {} none within 1600 blocks", tree.getSerializedName());
+            c.getSource().sendFailure(Component.literal("No " + tree.getSerializedName() + " nearby"));
+            return 0;
+        }
+        var start = found.getFirst();
+        var chunk = level.getChunk(start.getX() >> 4, start.getZ() >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS);
+        var st = chunk.getStartForStructure(structure.get().value());
+        net.minecraft.core.BlockPos foot = start;
+        int top = 40;
+        if (st != null) {
+            for (var piece : st.getPieces()) {
+                if (piece instanceof dev.awaken.terrain.hero.HeroPiece hp) {
+                    foot = hp.centre();
+                    top = hp.getBoundingBox().maxY() - foot.getY();
+                }
+            }
+        }
+        int vx = foot.getX(), vz = foot.getZ() + distance;
+        level.getChunk(vx >> 4, vz >> 4);
+        int vy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, vx, vz) + above;
+        double aim = foot.getY() + top * 0.42 - (vy + 1.62);
+        float pitch = (float) -Math.toDegrees(Math.atan2(aim, Math.max(4, distance)));
+        sp.teleportTo(level, vx + 0.5, vy + 0.1, vz + 0.5, Set.<Relative>of(), 180.0F, pitch, true);
+        Awaken.LOG.info("[terrain] herovisit {} foot {} {} {} top +{}, viewed from {} {} {}", tree.getSerializedName(), foot.getX(), foot.getY(),
+                foot.getZ(), top, vx, vy, vz);
+        net.minecraft.core.BlockPos f = foot;
+        c.getSource().sendSuccess(() -> Component.literal(tree.getSerializedName() + " at " + f.toShortString()), false);
+        return 1;
     }
 
     private static int survey(CommandContext<CommandSourceStack> c, int radius, int step) throws CommandSyntaxException {
