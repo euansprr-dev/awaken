@@ -52,11 +52,18 @@ final class CastAnims {
         boolean palLetGo;
     }
 
-    /** The Player Animation Library is installed: casts get full-body clips in third person. */
-    static final boolean PAL = ModList.get().isLoaded("player_animation_library");
+    /** The Player Animation Library is installed (and took our layer): casts get full-body clips in third person. */
+    private static boolean pal = ModList.get().isLoaded("player_animation_library");
 
     static void init() {
-        if (PAL) PalCasts.init();
+        if (!pal) return;
+        try {
+            PalCasts.init();
+        } catch (RuntimeException | LinkageError ex) {
+            // another version of the library with a different API: keep the vanilla poses
+            pal = false;
+            dev.awaken.Awaken.LOG.warn("Player Animation Library found but its API did not match; using the vanilla cast poses", ex);
+        }
     }
 
     private static final Anim[] SLOTS = new Anim[48];
@@ -95,11 +102,11 @@ final class CastAnims {
         a.palFrozen = false;
         a.palLetGo = false;
         a.pal = false;
-        if (PAL && PowerFxConfig.animations()) {
+        if (pal && PowerFxConfig.animations()) {
             String clip = CastClips.clip(a.family, kind, afterHold);
             a.pal = clip != null && PalCasts.play(entityId, clip, fadeIn(kind));
         }
-        if (wasPal && !a.pal && PAL) PalCasts.stop(entityId);
+        if (wasPal && !a.pal) PalCasts.stop(entityId);
     }
 
     /** Ticks a clip blends in over: casts start from a standing pose, holds and slams start already posed. */
