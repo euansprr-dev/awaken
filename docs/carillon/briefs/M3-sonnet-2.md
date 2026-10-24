@@ -147,3 +147,36 @@ Write a "## Result" section at the end of this brief (what you made, the variety
 brief left room, where it still falls short), commit, and make your final message the result plus the paths of the
 contact sheets (put them under `build/art/citizens/`; build/ is gitignored, so also copy the two figure sheets,
 downscaled to ≤ 1600 px wide JPGs, to `docs/carillon/milestones/m3/` and commit those).
+
+
+## Result
+
+Done. Everything is generated and deterministic (two builds are byte-identical); nothing in `src/main/java`, `citizens.json`, `plan.json`, `citizens.py` (the roster generator) or `sounds.json` was touched.
+
+**Files**
+- `tools/art/specs/citizens.py` (the spec; imports hearth's `tex/col/h01/_faces/EYE_WHITE` and `pixelart`). `python3 tools/art/build_all.py citizens` writes 280 textures; `python3 tools/art/specs/citizens.py preview DIR` writes the three sheets and runs the checks (`... check` runs only the checks; they also compare the files on disk with the roster once built).
+- `tools/art/specs/audio_city.py` (numpy only, seeded; `python3 tools/art/specs/audio_city.py` renders, `... sheet OUT.png` adds a spectrogram sheet). It writes only the four `.ogg` files and no JSON.
+- Textures under `src/main/resources/assets/awaken/textures/`: `entity/citizen/c000..c239.png` minus the four named (236) and `t0..t7.png` (244 skins); blocks `street_lamp_frame`, `street_lamp_glass_lit/out/broken`, `laundry_line`, `laundry_1..6`, `cargo_crate`, `cargo_crate_top`, and `city_fire` (32 frames, 16x512, `frametime 1`, **`interpolate: false`**, because blending frames would smear its dark tips); items `lamplighter_pole watch_halberd smith_hammer mason_trowel crier_scroll hand_lantern bread_basket laundry_basket ledger_book courier_satchel stolen_bag`; particles `chimney_smoke_0..3 forge_spark_0..1 lamp_flare_0..1 fire_ember_0..2` (partial alpha, white/grey, 16x16 smoke and flares, 8x8 sparks and embers).
+- Sounds `assets/awaken/sounds/city/`: `bell_hour` (8.6 s, hum D2, prime D3, a bronze partial series with beating pairs and a dull clapper thump under it), `bell_district` (4.4 s, prime A3), `bell_alarm` (1.05 s, prime F6, tight), `handbell` (1.15 s, a double ring, brass partials plus clapper chatter). Mono, mastered to sfx loudness: RMS -19.0 / -20.1 / -20.5 / -22.5 dBFS, true peak under -1.8; `audio_mix.py` reports all four `ok`. I judged them by spectrogram and levels only (I cannot listen).
+- Contact sheets: `build/art/citizens/citizens_front.png`, `citizens_back.png`, `citizens_things.png` (blocks, items, particles and six fire frames at 8x on grey and dark). The two figure sheets are also in `docs/carillon/milestones/m3/citizens_front.jpg` and `citizens_back.jpg` (1492 px wide, so no downscale was needed).
+
+**Variety numbers** (`citizens.py check`)
+- 244 skins, no two identical (hash check).
+- Distinct (job, outfit, hairStyle, hairColour, tone) tuples among 40 random citizens (4,000 draws): min 39, mean 40.0; threshold 24. 235 distinct tuples among the 236 non-thief citizens.
+- Image level: mean absolute RGB difference (both skins laid over mid grey, averaged over the pixels either skin uses) between any two same-job, different-household skins: **min 6.6 (c080 vs c083, two Watch), median 28.1; threshold 6.0**. The minima per job: watch 6.6, thief 6.8, porter 7.8, tavernkeeper 8.0, lamplighter 9.2, crier 9.9, child 9.3, shopkeeper 11.3, bellringer 12.1, stallkeeper 12.3, runner 12.7, clerk 12.9, resident 14.2, boatman 14.4, baker 16.9, mason 17.6, washer 18.1, smith 21.9, miller 24.6. The Watch is one livery on purpose, so its floor is the lowest; I kept the threshold at what a uniform can honestly clear instead of faking it.
+- Every non-thief skin carries bronze or brass somewhere (a button, buckle, bell, pin) and the checks assert it.
+
+**What I chose where the brief left room**
+- Gender is read from the given name (the roster's two name lists plus the extra names); beards, skirts and earrings follow it. Face 0-7 sets eye colour, brows, mouth and one trait (1 freckles, 2 a pale scar, 3 stubble or a beauty mark, 4 rosy cheeks, 5 a full beard on men or a mole, 6 a moustache on men, 7 eye bags); faces on elders get lines, on children round cheeks and bigger eyes. Bald (style 7) is only worn by grown men; anyone else with 7 gets a close crop. Spectacles: all clerks with accent 2-3, about 30% of elders.
+- Slim arms use vanilla's slim layout (3 px; the faces shift left, the 2 spare columns stay transparent); one grid per part (outer edge first) paints both builds.
+- Accents: stallkeeper awning colour = (outfit + 2 * (accent >> 1)) mod 6 over red, blue, yellow, green, orange, purple, headwear = accent & 1 (kerchief or flat cap); bellringer accent 3 = hood up; watch accent 0-1 kettle helmet, 2-3 blue cap; smith accent 1 headband, 2 goggles pushed up, 3 leather cap; clerk accent 2-3 spectacles; tavernkeeper, baker and miller get their faces dusted or flushed.
+- Individuality on top of the look data: each person's cloth is nudged in hue and value by their own seed, 40% have a mend on one elbow, 35% on a knee, 28% on the hem, some wear the Association's bell pin, a watch sergeant has one or two bronze sleeve bands and a belt pouch, porters a neckerchief, thieves a baldric, scarf end, dagger or patch by accent.
+- Fire: deeper orange core, brown-black smoky tips that break up, rising embers; it reaches the top rows so the template's crossed planes read tall. The crate's bell is stencilled between two riveted iron bands.
+
+**Where it still falls short**
+- Seen only as flat unfolds (front and back sheets): I never saw a skin on the real model, so the overlay volume (hair, hat, jackets) is judged from the layout, not in 3D.
+- Children differ from adults by scale (the builder's), bright clothes, round cheeks and bare knees; the head is the same size, so they are "small people", not chibi.
+- The stalls' own awning colours (`stalls[].colour`, a dye-like 0..7 index) are not matched to their keepers' aprons; the roster's colour index is not the six-awning list in the brief, so I did not guess.
+- Crier's hat is a hat-layer cap with a band, a plume and a brim row, not a really broad brim (the layer cannot grow past the head box). Thieves' hair is hidden by the hood, so they differ by cloak, scarf and kit only.
+- The smoke puffs are small in their 16 px frames (the game scales them); the lamp glass textures leave the unused 10 columns filled with plain glass colour.
+- The bells are untested by ear. If one is too thin or too bright on speakers, change the `bright=` and `t60` arguments at the top of each function in `audio_city.py`.
