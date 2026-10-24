@@ -74,7 +74,47 @@
     "depth": 0.5,
     "hollow": 0.35,
     "ragged": 0.45,
-    "hang": 0.12
+    "hang": 0.12,
+    "top_provider": {
+      "type": "minecraft:noise_threshold",
+      "seed": 8113,
+      "noise": {
+        "base_octave": 0,
+        "octave_count": 1
+      },
+      "scale": 0.03,
+      "threshold": 0.15,
+      "high_chance": 0.9,
+      "default_state": {
+        "id": "awaken:elder_leaves",
+        "properties": {
+          "distance": "7",
+          "persistent": "false",
+          "waterlogged": "false"
+        }
+      },
+      "low_states": [
+        {
+          "id": "awaken:elder_leaves",
+          "properties": {
+            "distance": "7",
+            "persistent": "false",
+            "waterlogged": "false"
+          }
+        }
+      ],
+      "high_states": [
+        {
+          "id": "awaken:elder_leaves_gold",
+          "properties": {
+            "distance": "7",
+            "persistent": "false",
+            "waterlogged": "false"
+          }
+        }
+      ]
+    },
+    "top_from": 0.34
   },
   "minimum_size": {
     "type": "minecraft:two_layers_feature_size",

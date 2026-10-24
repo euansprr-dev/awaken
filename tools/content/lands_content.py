@@ -53,7 +53,7 @@ LOGS = {  # name: (side texture, end texture)
     "stripped_elder_wood": ("stripped_elder_log", "stripped_elder_log"),
     "lumen_log": ("lumen_log", "lumen_log_top"),
     "stripped_lumen_log": ("stripped_lumen_log", "stripped_lumen_log_top"),
-    "lumen_wood": ("lumen_log", "lumen_log"),
+    "lumen_wood": ("lumen_wood", "lumen_wood"),  # the limbs' slate bark: branches read as wood, not beams
     "stripped_lumen_wood": ("stripped_lumen_log", "stripped_lumen_log"),
     "veined_lumen_log": ("veined_lumen_log", "lumen_log_top"),
 }
@@ -62,6 +62,7 @@ SAPLINGS = ["elder_sapling", "lumen_sapling"]
 NAMES = {
     "elder_log": "Elder Log", "stripped_elder_log": "Stripped Elder Log", "elder_wood": "Elder Wood",
     "stripped_elder_wood": "Stripped Elder Wood", "elder_planks": "Elder Planks", "elder_leaves": "Elder Leaves",
+    "elder_leaves_gold": "Golden Elder Leaves",
     "elder_sapling": "Elder Sapling",
     "lumen_log": "Lumen Log", "stripped_lumen_log": "Stripped Lumen Log", "lumen_wood": "Lumen Wood",
     "stripped_lumen_wood": "Stripped Lumen Wood", "lumen_planks": "Lumen Planks", "lumen_leaves": "Lumen Leaves",
@@ -109,9 +110,10 @@ def lumen_leaves_models():
             base = {"from": [0, 0, 0], "to": [16, 16, 16],
                     "faces": {f: {"uv": [0, 0, 16, 16], "texture": "#all", "cullface": f} for f in FACES}}
             els = [base]
+            # fewer, brighter spores: two on the top, one under, one on each side (a soft glow, not a starfield)
             for f in FACES:
                 big = f in ("up", "down")
-                for (u, v) in rng.sample(pixels, 3 if big else 2):
+                for (u, v) in rng.sample(pixels, 2 if f == "up" else 1):
                     els.append(speck(f, min(u, 14) if big else u, min(v, 14) if big else v, 2 if big else 1))
             model = {"parent": mc("block/block"), "ambientocclusion": True,
                      "textures": {"all": aw("block/lumen_leaves"), "glow": aw("block/lumen_glow"), "particle": aw("block/lumen_leaves")},
@@ -119,8 +121,8 @@ def lumen_leaves_models():
         write(f"{ASSETS}/models/block/{name}.json", model)
         variants.append(name)
     write(f"{ASSETS}/blockstates/lumen_leaves.json", {"variants": {"": [
-        {"model": aw("block/lumen_leaves_specks_a"), "weight": 2},
-        {"model": aw("block/lumen_leaves_specks_b"), "weight": 2},
+        {"model": aw("block/lumen_leaves_specks_a"), "weight": 1},
+        {"model": aw("block/lumen_leaves_specks_b"), "weight": 1},
         {"model": aw("block/lumen_leaves"), "weight": 2}]}})
 
 
@@ -162,7 +164,7 @@ def veined_log_models():
         glow = {f: dict(faces[f], texture="#glow") for f in sides}
         write(f"{ASSETS}/models/block/{name}.json", {
             "parent": mc("block/block"),
-            "textures": {"side": aw("block/veined_lumen_log"), "end": aw("block/lumen_log_top"), "glow": aw("block/veined_lumen_log_glow"),
+            "textures": {"side": aw("block/veined_lumen_log"), "end": aw("block/veined_lumen_log"), "glow": aw("block/veined_lumen_log_glow"),
                          "particle": aw("block/veined_lumen_log")},
             "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces},
                          {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up",
@@ -199,9 +201,10 @@ def block_assets():
         write(f"{ASSETS}/blockstates/{name}.json", {"variants": {"": {"model": aw("block/" + name)}}})
         write(f"{ASSETS}/items/{name}.json", {"model": {"type": mc("model"), "model": aw("block/" + name)}})
     # elder leaves: fixed colours (no tint source is registered for them, so tintindex is ignored)
-    write(f"{ASSETS}/models/block/elder_leaves.json", {"parent": mc("block/leaves"), "textures": {"all": aw("block/elder_leaves")}})
-    write(f"{ASSETS}/blockstates/elder_leaves.json", {"variants": {"": {"model": aw("block/elder_leaves")}}})
-    write(f"{ASSETS}/items/elder_leaves.json", {"model": {"type": mc("model"), "model": aw("block/elder_leaves")}})
+    for name in ("elder_leaves", "elder_leaves_gold"):
+        write(f"{ASSETS}/models/block/{name}.json", {"parent": mc("block/leaves"), "textures": {"all": aw("block/" + name)}})
+        write(f"{ASSETS}/blockstates/{name}.json", {"variants": {"": {"model": aw("block/" + name)}}})
+        write(f"{ASSETS}/items/{name}.json", {"model": {"type": mc("model"), "model": aw("block/" + name)}})
     lumen_leaves_models()
     write(f"{ASSETS}/items/lumen_leaves.json", {"model": {"type": mc("model"), "model": aw("block/lumen_leaves_specks_a")}})
     for name in SAPLINGS:
@@ -256,6 +259,7 @@ def block_data():
     for name in list(LOGS) + PLANKS + SAPLINGS + ["lumen_moss", "lumen_cap"]:
         write(f"{DATA}/loot_table/blocks/{name}.json", self_drop(name))
     write(f"{DATA}/loot_table/blocks/elder_leaves.json", leaves_loot("elder_leaves", "elder_sapling"))
+    write(f"{DATA}/loot_table/blocks/elder_leaves_gold.json", leaves_loot("elder_leaves_gold", "elder_sapling"))
     write(f"{DATA}/loot_table/blocks/lumen_leaves.json", leaves_loot("lumen_leaves", "lumen_sapling"))
     write(f"{DATA}/loot_table/blocks/lumen_vines.json", {"type": mc("block"), "pools": [
         {"condition": SHEARS_OR_SILK, "entries": [{"type": mc("item"), "name": aw("lumen_vines")}], "rolls": 1}],
@@ -275,7 +279,7 @@ def block_data():
         "minecraft:logs_that_burn": ["#awaken:elder_logs", "#awaken:lumen_logs"],
         "minecraft:overworld_natural_logs": [aw("elder_log"), aw("lumen_log")],
         "minecraft:planks": [aw(n) for n in PLANKS],
-        "minecraft:leaves": [aw("elder_leaves"), aw("lumen_leaves")],
+        "minecraft:leaves": [aw("elder_leaves"), aw("elder_leaves_gold"), aw("lumen_leaves")],
         "minecraft:saplings": [aw(n) for n in SAPLINGS],
         "minecraft:mineable/hoe": [aw("lumen_moss")],
         "minecraft:replaceable_by_trees": [aw("lumen_moss"), aw("lumen_cap"), aw("lumen_vines")],
@@ -301,7 +305,7 @@ def block_data():
         flammable[aw(name)] = {"burn_odds": 5, "ignite_odds": 5}
     for name in PLANKS:
         flammable[aw(name)] = {"burn_odds": 20, "ignite_odds": 5}
-    for name in ("elder_leaves", "lumen_leaves"):
+    for name in ("elder_leaves", "elder_leaves_gold", "lumen_leaves"):
         flammable[aw(name)] = {"burn_odds": 60, "ignite_odds": 30}
     flammable[aw("lumen_moss")] = {"burn_odds": 20, "ignite_odds": 60}
     flammable[aw("lumen_vines")] = {"burn_odds": 100, "ignite_odds": 15}
@@ -354,7 +358,7 @@ LEAF_LITTER = weighted(*[(state(mc("leaf_litter"), facing=f, segment_amount=n), 
 
 
 def tree(trunk, branch, leaves, *, base, ra, rb, width, lean, lean_start, limbs, limb_start, limb_length, limb_rise, twig,
-         flare, radius, height, depth, hollow, ragged, hang, decorators, size, offset=0, limb_mass=-1, crown_mass=0):
+         flare, radius, height, depth, hollow, ragged, hang, decorators, size, offset=0, limb_mass=-1, crown_mass=0, top=None):
     return {
         "type": mc("tree"),
         "below_trunk_provider": mc("soil_beneath_tree"),
@@ -366,7 +370,7 @@ def tree(trunk, branch, leaves, *, base, ra, rb, width, lean, lean_start, limbs,
                          "branch_provider": state(branch, axis="y")},
         "foliage_provider": leaves_state(leaves),
         "foliage_placer": {"type": aw("cloud_foliage_placer"), "radius": radius, "offset": offset, "height": height, "depth": depth,
-                           "hollow": hollow, "ragged": ragged, "hang": hang},
+                           "hollow": hollow, "ragged": ragged, "hang": hang, **({"top_provider": top, "top_from": 0.34} if top else {})},
         "minimum_size": size,
         "decorators": decorators,
         "ignore_vines": True,
@@ -386,13 +390,20 @@ VINES = {"type": aw("hanging_vines"), "body": state(aw("lumen_vines"), tip=False
 LUMEN_GROUND = weighted((state(aw("lumen_moss")), 12), (state(aw("lumen_cap")), 1))
 
 
+# Elder crown tops: gold where a slow noise runs high (patches of trees a few hundred blocks across, about a third of the
+# wood), gold-green elsewhere: the canopy from above is a gold-green field with warm crowns in it, not one flat colour.
+ELDER_TOPS = {"type": mc("noise_threshold"), "seed": 8113, "noise": {"base_octave": 0, "octave_count": 1}, "scale": 0.03,
+              "threshold": 0.15, "high_chance": 0.9, "default_state": leaves_state(aw("elder_leaves")),
+              "low_states": [leaves_state(aw("elder_leaves"))], "high_states": [leaves_state(aw("elder_leaves_gold"))]}
+
+
 def features():
     f = {}
     # Elder: a tall pale 2x2 column, clean below, a high crown of two to four billowing masses on rising limbs
     f["lands/elder"] = tree(aw("elder_log"), aw("elder_wood"), aw("elder_leaves"), base=18, ra=4, rb=4, width=2,
                             lean=uniform(0, 1), lean_start=0.55, limbs=uniform(3, 5), limb_start=0.5, limb_length=uniform(3, 6),
                             limb_rise=0.75, twig=uniform(2, 3), flare=uniform(2, 3), radius=uniform(3, 4), height=uniform(2, 3),
-                            depth=0.5, hollow=0.35, ragged=0.45, hang=0.12, limb_mass=0, crown_mass=0,
+                            depth=0.5, hollow=0.35, ragged=0.45, hang=0.12, limb_mass=0, crown_mass=0, top=ELDER_TOPS,
                             decorators=[on_ground(LEAF_LITTER, 5, 70), {"type": mc("shelf_mushroom"), "probability": 0.25},
                                         ground_ring(weighted((state(mc("moss_block")), 3), (state(mc("podzol"), snowy=False), 2),
                                                              (state(mc("coarse_dirt")), 1)))],
@@ -404,18 +415,19 @@ def features():
                                   depth=0.6, hollow=0.0, ragged=0.45, hang=0.08,
                                   decorators=[on_ground(LEAF_LITTER, 3, 24)],
                                   size={"type": mc("two_layers_feature_size"), "limit": 1, "lower_size": 0, "upper_size": 1, "min_clipped_height": 7})
-    # Lumen tree: a short 2x2 trunk spreading into near-level limbs, each ending in a flat pad; vines hang from the pads
+    # Lumen tree: a short 2x2 trunk, a few slate limbs climbing steeply to broad flat pads that hide them; a curtain of
+    # glowing vines hangs from the pads
     f["lands/lumen"] = tree(aw("lumen_log"), aw("lumen_wood"), aw("lumen_leaves"), base=10, ra=3, rb=3, width=2,
-                            lean=uniform(0, 1), lean_start=0.5, limbs=uniform(3, 5), limb_start=0.66, limb_length=uniform(4, 6),
-                            limb_rise=0.6, twig=uniform(2, 3), flare=uniform(1, 2), radius=uniform(3, 4), height=uniform(1, 1),
-                            depth=0.6, hollow=0.0, ragged=0.3, hang=0.3, offset=1,
-                            decorators=[dict(VINES, probability=0.12, length=uniform(1, 5)), on_ground(LUMEN_GROUND, 4, 48)],
+                            lean=uniform(0, 1), lean_start=0.5, limbs=uniform(2, 4), limb_start=0.62, limb_length=uniform(3, 5),
+                            limb_rise=1.0, twig=uniform(2, 3), flare=uniform(1, 2), radius=uniform(3, 4), height=uniform(1, 1),
+                            depth=0.6, hollow=0.0, ragged=0.3, hang=0.3, offset=1, limb_mass=0,
+                            decorators=[dict(VINES, probability=0.17, length=uniform(2, 6)), on_ground(LUMEN_GROUND, 4, 48)],
                             size={"type": mc("two_layers_feature_size"), "limit": 1, "lower_size": 1, "upper_size": 2, "min_clipped_height": 9})
     f["lands/small_lumen"] = tree(aw("lumen_log"), aw("lumen_wood"), aw("lumen_leaves"), base=6, ra=1, rb=2, width=1,
                                   lean=uniform(0, 1), lean_start=0.4, limbs=uniform(2, 3), limb_start=0.6, limb_length=uniform(2, 3),
-                                  limb_rise=0.7, twig=uniform(1, 2), flare=uniform(0, 1), radius=uniform(2, 3), height=uniform(1, 1),
+                                  limb_rise=1.0, twig=uniform(1, 2), flare=uniform(0, 1), radius=uniform(2, 3), height=uniform(1, 1),
                                   depth=0.6, hollow=0.0, ragged=0.3, hang=0.25, offset=1,
-                                  decorators=[dict(VINES, probability=0.08, length=uniform(1, 3)), on_ground(LUMEN_GROUND, 2, 12)],
+                                  decorators=[dict(VINES, probability=0.12, length=uniform(1, 4)), on_ground(LUMEN_GROUND, 2, 12)],
                                   size={"type": mc("two_layers_feature_size"), "limit": 1, "lower_size": 0, "upper_size": 1, "min_clipped_height": 5})
     for kind, log, carpet in (("elder", aw("elder_log"), mc("moss_carpet")), ("lumen", aw("lumen_log"), aw("lumen_moss"))):
         f[f"lands/fallen_{kind}"] = {
