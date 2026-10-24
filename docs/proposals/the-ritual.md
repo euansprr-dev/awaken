@@ -9,6 +9,11 @@ lets make that black effect stay the whole time, so you basically can't really s
 The same day he decided: **the story starts together, and friends share one Hearth as members, which can later grow
 into several.**
 
+**Correction from Euan the same day:** "I never make it past the first few mobs LOL because I don't have any armor or
+anything yet. So I always awaken from dying in the first room." So the hall is the scripted Bell Crypt's **first and
+only room**, with no mobs before it, and **nobody can die before the scripted end**: every hit inside the hall leaves
+at least half a heart until the Seated One's hand closes.
+
 It is an original homage, not a copy. Awaken's own words, rules, god and hall; nothing lifted from the anime.
 
 ## Where it sits in today's prologue
