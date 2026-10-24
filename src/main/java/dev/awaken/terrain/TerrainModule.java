@@ -8,6 +8,8 @@ public final class TerrainModule {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(LandsPack::onAddPackFinders);
+        dev.awaken.terrain.city.CityBasinSetup.init(modBus);
+        dev.awaken.terrain.city.CityBasinTests.register();
         TerrainCommands.register();
         TerrainTests.register();
         BiomeTableTests.register();

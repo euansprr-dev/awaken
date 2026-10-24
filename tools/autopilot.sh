@@ -11,6 +11,7 @@
 #   DH=swift|cinematic|default  Distant Horizons settings (pack/dh/); unset leaves them
 #   RD=<chunks>             vanilla render distance for this run
 #   TECTONIC=<preset>       Tectonic settings from pack/tectonic/<preset>.json (unset: Tectonic's defaults)
+#   CITY=on                 ask for the city basin before Carillon exists (terrain's dev switch)
 cd "$(dirname "$0")/.."
 SCRIPT=${1:?script}
 T=${2:-900}
@@ -46,6 +47,9 @@ if [ -n "$TECTONIC" ]; then
 elif [ -f run-autopilot/config/tectonic.json ]; then
   cp pack/tectonic/default.json run-autopilot/config/tectonic.json
 fi
+# CITY=on: terrain's dev switch for the city basin (config/awaken-terrain-dev.properties); unset removes it
+if [ "$CITY" = on ]; then echo "city=on" > run-autopilot/config/awaken-terrain-dev.properties
+else rm -f run-autopilot/config/awaken-terrain-dev.properties; fi
 # DH=swift|cinematic|default rewrites Distant Horizons' settings for this run
 [ -n "$DH" ] && { python3 -I tools/pack.py dhconfig run-autopilot "$DH" > /dev/null || exit 1; }
 GRADLE_ARGS=()
