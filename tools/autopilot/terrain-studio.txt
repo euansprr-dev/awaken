@@ -44,6 +44,18 @@ wait 60
 look 90 10
 wait 40
 shot studio_golden_west
+# the Awakened spike biome, if this world has it (Lithostitched installed and the lands pack on)
+cmd time set 6000
+cmd awaken terrain visit awaken:elderwood
+wait 400
+look 45 10
+wait 60
+shot studio_elderwood_ground
+cmd tp @s ~ ~60 ~
+wait 200
+look 45 35
+wait 40
+shot studio_elderwood_above
 leave
 world studio20261024 creative 20261024
 waitworld
