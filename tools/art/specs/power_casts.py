@@ -21,7 +21,10 @@ arm's y > 0 turns it outward, y < 0 across the chest). A pose is written in figu
           looks at whatever the lean or twist
   rl, ll  main-side / off-side leg (x, y, z), world-relative: the legs stay where they are when the body leans
   head_z  head roll, + toward the main hand (the head always keeps the player's look; a lean is taken out of it)
-  ground  True: the figure is raised or lowered so the lowest foot is on the ground (then rise is added)
+  head_x  None, or a fixed head pitch on the body (+ chin down) that drops the look (a tucked roll)
+  limbs_body  legs relative to the body instead of the world (a tuck that turns with the body)
+  ground  True: the figure is raised or lowered so the lowest foot is on the ground (then rise is added);
+          "all": the lowest point of any part is put on the ground (sitting, sliding); False: only rise
 Clips are authored right-handed; the game mirrors them for a left main arm. A cast clip's last key is its endTick: the
 library then eases every bone back to the vanilla pose over the rest of the clip.
 """
@@ -49,7 +52,8 @@ YAW = "math.min_angle(q.head_y_rotation - q.body_y_rotation)"
 
 DEFAULTS = dict(lean=0.0, tilt=0.0, rise=0.0, shift=0.0, side=0.0, twist=0.0, ground=True,
                 ra=(0.0, 0.0, 3.0), la=(0.0, 0.0, -3.0), ra_aim=False, la_aim=False,
-                rl=(0.0, 0.0, 0.0), ll=(0.0, 0.0, 0.0), head_z=0.0, re=0.0, le=0.0, rk=0.0, lk=0.0)
+                rl=(0.0, 0.0, 0.0), ll=(0.0, 0.0, 0.0), head_z=0.0, re=0.0, le=0.0, rk=0.0, lk=0.0,
+                head_x=None, limbs_body=False)
 
 
 def pose(base=None, **kw):
@@ -152,13 +156,17 @@ def bake(p, bent=False):
         if bent:
             # a knee folds the shin back: the thigh swings forward to keep the foot under the line
             x -= keep_line(name, p[flex])
-        b[name] = {"rotation": (V(x - lean), V(y), V(z - brz))}
+        if p["limbs_body"]:
+            b[name] = {"rotation": (V(x), V(y), V(z))}
+        else:
+            b[name] = {"rotation": (V(x - lean), V(y), V(z - brz))}
         if bent:
             b[name]["bend"] = (V(p[flex]), V(0), V(0))
-    b["head"] = {"rotation": (V(-lean, 1), OFF, V(-p["head_z"]))}
+    head_x = V(-lean, 1) if p["head_x"] is None else V(p["head_x"])
+    b["head"] = {"rotation": (head_x, OFF, V(-p["head_z"]))}
     by = p["rise"]
     if p["ground"]:
-        by += ground_offset(p, b)
+        by += ground_offset(p, b, every=p["ground"] == "all")
     b["body"] = {"rotation": (V(lean), V(0), V(brz)), "position": (V(-p["side"]), V(by), V(-p["shift"]))}
     return b
 
@@ -202,19 +210,28 @@ def part_frames(b, pitch=0.0):
     return out
 
 
-def ground_offset(p, b):
-    """px to raise the figure (y up) so its lowest foot corner sits on the ground (model y = 24)."""
+def ground_offset(p, b, every=False):
+    """px to raise the figure (y up) so its lowest foot corner (every: its lowest corner of any part) is on the ground."""
     probe = dict(b)
-    probe["body"] = {"rotation": (V(p["lean"]), V(0), V(-p["tilt"])), "position": (V(0), V(0), V(0))}
+    probe["body"] = {"rotation": (V(p["lean"]), V(0), V(-p["tilt"])), "position": (V(-p["side"]), V(0), V(-p["shift"]))}
     frames = part_frames(probe)
     low = -1e9
-    for leg in ("right_leg", "left_leg"):
-        M, T = frames.get(leg + ":lower", frames[leg])
-        _, (x0, y0, z0, w, h, d), _ = PARTS[leg]
+    for key, (M, T) in frames.items():
+        part = key.split(":")[0]
+        if not every and part not in ("right_leg", "left_leg"):
+            continue
+        _, (x0, y0, z0, w, h, d), _ = PARTS[part]
+        if part not in JOINTS or part + ":lower" not in frames:
+            ys = (y0, y0 + h)
+        elif key.endswith(":lower"):
+            ys = (JOINTS[part][0], y0 + h)
+        else:
+            ys = (y0, JOINTS[part][0])
         for cx in (x0, x0 + w):
-            for cz in (z0, z0 + d):
-                q = R._mv(M, (cx, y0 + h, cz))
-                low = max(low, q[1] + T[1])
+            for yy in ys:
+                for cz in (z0, z0 + d):
+                    q = R._mv(M, (cx, yy, cz))
+                    low = max(low, q[1] + T[1])
     return low - 24.0
 
 
