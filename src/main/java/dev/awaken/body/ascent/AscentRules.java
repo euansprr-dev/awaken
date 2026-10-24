@@ -25,6 +25,14 @@ public final class AscentRules {
     public static final double TETHER_DRAG = 0.0025;
     /** Forward input adds this much speed per tick along the swing, most at the bottom of the arc (pumping). */
     public static final double TETHER_PUMP = 0.016;
+    /**
+     * Flow (0..1, SPEC §17.6): at full flow the pump is 25% stronger and the carry keeps 0.4% more speed a tick.
+     * Mastery (levels 0-10 per track): rope reach +0.4 a level, pump +3% a level; the Leaper's double jump +0.012 a level
+     * and dash +2% a level; the glide's drag -2% a level.
+     */
+    public static final double FLOW_PUMP = 0.25, FLOW_CARRY = 0.004;
+    public static final double MASTERY_REACH = 0.4, MASTERY_PUMP = 0.03, MASTERY_DOUBLE = 0.012, MASTERY_DASH = 0.02,
+            MASTERY_GLIDE_DRAG = 0.02;
     /** Sideways input swings the arc's plane round. */
     public static final double TETHER_STEER = 0.012;
     /** Reeling in (sneak) shortens the rope this much per tick. */
@@ -298,6 +306,11 @@ public final class AscentRules {
 
     /** One tick of flying free after letting go: gravity, light drag, and input that bends the path without adding speed. */
     public static void carryStep(Kin k, float yaw, double fwd, double right, double[] scratch) {
+        carryStep(k, yaw, fwd, right, scratch, CARRY_DRAG_H);
+    }
+
+    /** The carry with its horizontal drag given (Flow eases it a little). */
+    public static void carryStep(Kin k, float yaw, double fwd, double right, double[] scratch, double dragH) {
         if (fwd != 0 || right != 0) {
             double h = k.hspeed();
             inputDir(yaw, fwd, right, scratch);
@@ -313,8 +326,8 @@ public final class AscentRules {
             }
         }
         k.vy -= G;
-        k.vx *= CARRY_DRAG_H;
-        k.vz *= CARRY_DRAG_H;
+        k.vx *= dragH;
+        k.vz *= dragH;
         k.vy *= CARRY_DRAG_V;
         k.x += k.vx;
         k.y += k.vy;
@@ -345,6 +358,11 @@ public final class AscentRules {
      * along the path gains, climbing pays for itself, and drag takes the rest. Too slow and the path sags into a sink.
      */
     public static void glideStep(Kin k, float yaw, float pitch) {
+        glideStep(k, yaw, pitch, 1);
+    }
+
+    /** The glide with its drag scaled (Wings mastery trims it). */
+    public static void glideStep(Kin k, float yaw, float pitch, double dragScale) {
         double s = k.speed();
         double dx, dy, dz;
         double cp = Mth.cos(pitch * Mth.DEG_TO_RAD);
@@ -371,7 +389,7 @@ public final class AscentRules {
         dx /= dl;
         dy /= dl;
         dz /= dl;
-        s += -dy * G - GLIDE_DRAG * s * s;
+        s += -dy * G - GLIDE_DRAG * dragScale * s * s;
         if (s < 0.05) s = 0.05;
         k.vx = dx * s;
         k.vy = dy * s;

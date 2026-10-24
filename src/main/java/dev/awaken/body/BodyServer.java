@@ -239,6 +239,13 @@ final class BodyServer {
     static void did(ServerPlayer p, BodyMotion m, Move move, float yaw, Holder<SoundEvent> sound, float volume, long now) {
         m.lastMove = now;
         Progression.count(p, "awaken:body_" + move.key);
+        // the Runner's moves are links in the Ascent's chains and earn the Runner's mastery
+        switch (move) {
+            case WALL_RUN, WALL_JUMP, LEDGE_JUMP -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 2);
+            case LEDGE_HANG -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 1);
+            default -> {
+            }
+        }
         p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, 1.0F);
         show(p, p, new BodyPayloads.Seen(p.getId(), move.ordinal(), yaw));
     }
@@ -247,6 +254,13 @@ final class BodyServer {
     static void didClip(ServerPlayer p, BodyMotion m, Move move, float yaw, Holder<SoundEvent> sound, float volume, long now, String clip) {
         m.lastMove = now;
         Progression.count(p, "awaken:body_" + move.key);
+        // the Runner's moves are links in the Ascent's chains and earn the Runner's mastery
+        switch (move) {
+            case WALL_RUN, WALL_JUMP, LEDGE_JUMP -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 2);
+            case LEDGE_HANG -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 1);
+            default -> {
+            }
+        }
         p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, 1.0F);
         showClip(p, clip, yaw);
     }

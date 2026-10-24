@@ -37,6 +37,8 @@ public final class AscentMoves {
 
     static AscentState state = AscentState.NONE;
     static int tiers;
+    /** The six mastery levels, 4 bits each (AscentMemory.Track order), from the server. */
+    static int mastery;
     static final AscentRules.Kin K = new AscentRules.Kin();
     private static final double[] S = new double[3];
 
@@ -78,6 +80,15 @@ public final class AscentMoves {
 
     public static boolean has(AscentPayloads.Tier t) {
         return t.in(tiers);
+    }
+
+    /** This player's mastery level on a track (0-10). */
+    public static int level(dev.awaken.body.ascent.AscentMemory.Track t) {
+        return (mastery >> (4 * t.ordinal())) & 15;
+    }
+
+    private static int lv(dev.awaken.body.ascent.AscentMemory.Track t) {
+        return level(t);
     }
 
     /** Whether an Ascent state owns the body right now (the Awakened Body's grounded moves stand aside). */
@@ -172,7 +183,7 @@ public final class AscentMoves {
             case ZIP -> {
                 if (!tether) {
                     toCarry(p, "zip let go");
-                    AscentRules.carryStep(K, yaw, fwd, right, S);
+                    carry(yaw, fwd, right);
                 } else {
                     zipTick(p, yaw);
                 }
@@ -187,11 +198,11 @@ public final class AscentMoves {
                     return;
                 } else if (leaperMove(p, jumpPressed, sprintPressed, sneakPressed, false)) {
                     // the move set this tick's velocity; the carry flies it
-                    AscentRules.carryStep(K, yaw, fwd, right, S);
+                    carry(yaw, fwd, right);
                 } else if (jumpPressed && has(AscentPayloads.Tier.WINGS) && canDeploy(p)) {
                     startGlide(p);
                 } else {
-                    AscentRules.carryStep(K, yaw, fwd, right, S);
+                    carry(yaw, fwd, right);
                 }
             }
             case GLIDE -> {
@@ -202,9 +213,9 @@ public final class AscentMoves {
                 } else if (sneakPressed) {
                     fold(p);
                     toCarry(p, "wings folded");
-                    AscentRules.carryStep(K, yaw, fwd, right, S);
+                    carry(yaw, fwd, right);
                 } else {
-                    AscentRules.glideStep(K, yaw, pitch);
+                    AscentRules.glideStep(K, yaw, pitch, glideDrag());
                     boomCheck(p);
                 }
             }
@@ -277,6 +288,7 @@ public final class AscentMoves {
             bonkSpeed = (float) (hBefore - K.hspeed());
             trace("bonk " + String.format("%.2f", bonkSpeed));
             FeelDirector.bonk(bonkSpeed);
+            AscentFlow.bonk();
         }
         groundTicks = p.onGround() ? groundTicks + 1 : 0;
         boolean landed = switch (state) {
@@ -329,12 +341,22 @@ public final class AscentMoves {
         p.resetFallDistance();
     }
 
+    /** A tick of the carry; Flow keeps a little more of the speed. */
+    private static void carry(float yaw, double fwd, double right) {
+        AscentRules.carryStep(K, yaw, fwd, right, S, AscentRules.CARRY_DRAG_H + AscentRules.FLOW_CARRY * AscentFlow.flow);
+    }
+
+    private static double glideDrag() {
+        return 1 - AscentRules.MASTERY_GLIDE_DRAG * lv(dev.awaken.body.ascent.AscentMemory.Track.WINGS);
+    }
+
     // ---- the rope ---------------------------------------------------------------------------------------------------
 
     /** Fires the rope; true when it found an anchor (the state is then TETHER or ZIP). */
     private static boolean fire(LocalPlayer p) {
         Vec3 eye = p.getEyePosition();
-        AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, p.getYRot(), p.getXRot(), AscentRules.TETHER_RANGE);
+        AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, p.getYRot(), p.getXRot(),
+                AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER));
         fireAt = ticks;
         AscentSounds.local(p, AscentContent.ROPE_FIRE.get(), 0.8F, 0.95F + p.getRandom().nextFloat() * 0.1F);
         event(AscentPayloads.EV_FIRE, 0);
@@ -390,14 +412,14 @@ public final class AscentMoves {
         if (ropeTravel > 0) {
             ropeTravel--;
             if (ropeTravel == 0) bite(p, 0.6F);
-            AscentRules.carryStep(K, yaw, 0, 0, S);
+            carry(yaw, 0, 0);
         } else if (AscentRules.zipStep(K, ax, ay, az)) {
             // arrived: a hop up onto whatever the rope bit, then fly on
             K.vx *= 0.45;
             K.vz *= 0.45;
             K.vy = Math.max(K.vy * 0.3, 0.48);
             toCarry(p, "zip arrived");
-            AscentRules.carryStep(K, yaw, 0, 0, S);
+            carry(yaw, 0, 0);
         }
     }
 
@@ -406,7 +428,7 @@ public final class AscentMoves {
             // the rope is still flying out: the body falls on as it was
             ropeTravel--;
             double hx = K.x, hy = K.y, hz = K.z;
-            AscentRules.carryStep(K, yaw, fwd * 0.5, right * 0.5, S);
+            carry(yaw, fwd * 0.5, right * 0.5);
             if (ropeTravel == 0) {
                 double d = Math.sqrt((K.x - ax) * (K.x - ax) + (K.y - ay) * (K.y - ay) + (K.z - az) * (K.z - az));
                 len = Math.max(AscentRules.TETHER_MIN, Math.min(len, d));
@@ -421,7 +443,7 @@ public final class AscentMoves {
                 trace("rope cut");
                 AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.7F, 1.4F);
                 toCarry(p, "rope cut");
-                AscentRules.carryStep(K, yaw, fwd, right, S);
+                carry(yaw, fwd, right);
                 return;
             }
         }
@@ -433,7 +455,9 @@ public final class AscentMoves {
             lenTarget = len;
         }
         boolean wasTaut = ropeTaut;
-        double t = AscentRules.tetherStep(K, ax, ay, az, len, yaw, fwd, right, S);
+        // Flow and the Tether's mastery make the pump stronger (the pump is linear in the forward input)
+        double pump = AscentFlow.pump() * (1 + AscentRules.MASTERY_PUMP * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER));
+        double t = AscentRules.tetherStep(K, ax, ay, az, len, yaw, fwd * pump, right, S);
         double r = Math.sqrt((K.x - ax) * (K.x - ax) + (K.y - ay) * (K.y - ay) + (K.z - az) * (K.z - az));
         ropeTaut = r >= len - 0.02;
         tension = t;
@@ -473,6 +497,7 @@ public final class AscentMoves {
         }
         biteAt = ticks;
         biteStrength = strength;
+        AscentFlow.gain(0.08F);
         trace("rope bites");
         AscentSounds.at(p, ax, ay, az, AscentContent.ROPE_BITE.get(), 0.9F, 0.9F + p.getRandom().nextFloat() * 0.2F);
         AscentFx.bite(p, ax, ay, az);
@@ -482,7 +507,7 @@ public final class AscentMoves {
     private static void release(LocalPlayer p) {
         if (ropeTravel > 0) {
             toCarry(p, "let go before the bite");
-            AscentRules.carryStep(K, p.getYRot(), 0, 0, S);
+            carry(p.getYRot(), 0, 0);
             return;
         }
         float q = (float) AscentRules.releaseQuality(K, ax, ay, az);
@@ -494,11 +519,12 @@ public final class AscentMoves {
         }
         releaseAt = ticks;
         releaseQuality = q;
+        AscentFlow.gain(0.04F + 0.12F * q);
         AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.6F, 1.0F + q * 0.15F);
         FeelDirector.release(q);
         trace(String.format("release (window %.2f)", q));
         toCarry(p, "released");
-        AscentRules.carryStep(K, p.getYRot(), 0, 0, S);
+        carry(p.getYRot(), 0, 0);
     }
 
     /** Jumping off the rope: up and on, faster than you swung. */
@@ -509,13 +535,14 @@ public final class AscentMoves {
         K.vy = Math.max(K.vy, 0) + AscentRules.LAUNCH_UP;
         launchAt = ticks;
         releaseQuality = q;
+        AscentFlow.gain(0.1F + 0.06F * q);
         AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.8F, 1F);
         AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.5F, 1.2F);
         event(AscentPayloads.EV_LAUNCH, (float) K.speed());
         FeelDirector.launch(q);
         trace("launch");
         toCarry(p, "launched");
-        AscentRules.carryStep(K, p.getYRot(), 0, 0, S);
+        carry(p.getYRot(), 0, 0);
     }
 
     // ---- the Leaper ---------------------------------------------------------------------------------------------------
@@ -534,7 +561,8 @@ public final class AscentMoves {
         if (fromNone) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         if (dbl) {
             airMovesUsed |= 1;
-            K.vy = Math.max(K.vy, 0) + AscentRules.DOUBLE_JUMP;
+            K.vy = Math.max(K.vy, 0) + AscentRules.DOUBLE_JUMP
+                    + AscentRules.MASTERY_DOUBLE * lv(dev.awaken.body.ascent.AscentMemory.Track.LEAPER);
             AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.6F, 1.3F);
             AscentFx.ring(p.getX(), p.getY() + 0.1, p.getZ(), new Vec3(0, 1, 0), 0.35F);
             event(AscentPayloads.EV_DOUBLE, 0);
@@ -543,7 +571,8 @@ public final class AscentMoves {
         } else if (dash) {
             airMovesUsed |= 2;
             double yaw = p.getYRot() * Mth.DEG_TO_RAD, fx = -Math.sin(yaw), fz = Math.cos(yaw);
-            double speed = Math.max(AscentRules.DASH_SPEED, K.hspeed() * AscentRules.DASH_GAIN);
+            double speed = Math.max(AscentRules.DASH_SPEED, K.hspeed() * AscentRules.DASH_GAIN)
+                    * (1 + AscentRules.MASTERY_DASH * lv(dev.awaken.body.ascent.AscentMemory.Track.LEAPER));
             K.vx = fx * speed;
             K.vz = fz * speed;
             K.vy = Math.max(K.vy, AscentRules.DASH_LIFT);
@@ -562,6 +591,7 @@ public final class AscentMoves {
             FeelDirector.dive();
             trace("dive slam");
         }
+        AscentFlow.gain(0.08F);
         if (fromNone) setState(p, AscentState.CARRY);
         return true;
     }
@@ -576,13 +606,14 @@ public final class AscentMoves {
         if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         AscentRules.glideCatch(K, p.getYRot(), p.getXRot());
         deployAt = ticks;
+        AscentFlow.gain(0.06F);
         boomArmed = K.speed() < AscentRules.BOOM_SPEED;
         setState(p, AscentState.GLIDE);
         AscentSounds.local(p, AscentContent.WINGS_OPEN.get(), 1F, 1F);
         event(AscentPayloads.EV_DEPLOY, (float) K.speed());
         FeelDirector.deploy();
         trace("wings open");
-        AscentRules.glideStep(K, p.getYRot(), p.getXRot());
+        AscentRules.glideStep(K, p.getYRot(), p.getXRot(), glideDrag());
     }
 
     private static void fold(LocalPlayer p) {
@@ -603,6 +634,7 @@ public final class AscentMoves {
 
     private static void flap(LocalPlayer p) {
         flapAt = ticks;
+        AscentFlow.gain(0.02F);
         K.vy = Math.max(K.vy, 0) + AscentRules.SOAR_FLAP;
         AscentSounds.local(p, AscentContent.FLAP.get(), 0.9F, 0.9F + p.getRandom().nextFloat() * 0.15F);
         event(AscentPayloads.EV_FLAP, 0);
@@ -614,6 +646,7 @@ public final class AscentMoves {
         if (boomArmed && s >= AscentRules.BOOM_SPEED) {
             boomArmed = false;
             boomAt = ticks;
+            AscentFlow.gain(0.25F);
             trace("sonic boom");
             FeelDirector.boom();
             AscentFx.boom(p, K);
@@ -640,6 +673,7 @@ public final class AscentMoves {
             AscentSounds.local(p, AscentContent.BOOM.get(), 0.7F, 1.35F);
             AscentFx.ring(p.getX(), p.getY() + 0.15, p.getZ(), new Vec3(0, 1, 0), 0.5F);
             FeelDirector.slam(landSpeed);
+            AscentFlow.gain(0.1F);
             event(AscentPayloads.EV_SLAM_LAND, landSpeed);
         } else {
             FeelDirector.land(landSpeed);
@@ -722,6 +756,8 @@ public final class AscentMoves {
     static void reset() {
         forget();
         tiers = 0;
+        mastery = 0;
+        AscentFlow.reset();
         ticks = 0;
         fireAt = biteAt = releaseAt = launchAt = deployAt = foldAt = boomAt = landAt = flapAt = bonkAt = missAt = soarAt = -100;
     }

@@ -16,6 +16,7 @@ final class AscentTests {
         AwakenTests.register("ascent_glide_numbers", 20, AscentTests::glideNumbers);
         AwakenTests.register("ascent_soar_speeds", 20, AscentTests::soarSpeeds);
         AwakenTests.register("ascent_tiers_and_arrival", 40, AscentTests::tiersAndArrival);
+        AwakenTests.register("ascent_chains_and_mastery", 40, AscentTests::chainsAndMastery);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -100,6 +101,41 @@ final class AscentTests {
         m.placedAt = Long.MIN_VALUE / 2;
         for (int i = 0; i < 300; i++) m.mark(i % 5 == 0);
         h.assertFalse(Ascent.arrivedByMovement(p, 10), "a fifth of the time is a walk");
+        h.getLevel().getServer().getPlayerList().remove(p);
+        h.succeed();
+    }
+
+    /**
+     * Mastery levels at 25 n² points (capped at 10); a chain of three or more links pays style XP, at most 1.5% of a
+     * level a minute, and the longest chain is kept; a record without mastery (schema 1) reads as none.
+     */
+    private static void chainsAndMastery(GameTestHelper h) {
+        h.assertTrue(AscentMemory.level(24) == 0 && AscentMemory.level(25) == 1 && AscentMemory.level(2499) == 9
+                && AscentMemory.level(99999) == 10, "levels at 25 n squared");
+        AscentMemory old = AscentMemory.MAP_CODEC.codec().parse(com.mojang.serialization.JsonOps.INSTANCE,
+                com.google.gson.JsonParser.parseString("{\"schemaVersion\":1,\"tiers\":3}")).getOrThrow();
+        h.assertTrue(old.tiers() == 3 && old.level(AscentMemory.Track.TETHER) == 0 && old.chainBest() == 0, "schema 1 reads: " + old);
+        net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        dev.awaken.progression.Progression.awaken(p);
+        for (int i = 0; i < 30; i++) AscentServer.link(p, AscentMemory.Track.TETHER, 2);
+        AscentMemory mem = p.getData(AscentContent.MEMORY);
+        h.assertTrue(mem.points(AscentMemory.Track.TETHER) == 60 && mem.level(AscentMemory.Track.TETHER) == 1,
+                "thirty links on the rope: " + mem.points(AscentMemory.Track.TETHER));
+        AscentMotion m = AscentServer.motion(p);
+        double before = dev.awaken.progression.Progression.profile(p).xp();
+        int levelBefore = dev.awaken.progression.Progression.profile(p).level();
+        AscentServer.payChain(p, m, AscentServer.now(p));
+        double toNext = dev.awaken.progression.Curve.xpToNext(levelBefore);
+        double paid = dev.awaken.progression.Progression.profile(p).xp() - before;
+        h.assertTrue(dev.awaken.progression.Progression.profile(p).level() == levelBefore && paid > 0
+                && paid <= toNext * AscentServer.STYLE_CAP_MINUTE * 1.6, "a 30-link chain paid " + paid + " of " + toNext);
+        h.assertTrue(p.getData(AscentContent.MEMORY).chainBest() == 30, "the longest chain is kept");
+        for (int i = 0; i < 25; i++) AscentServer.link(p, AscentMemory.Track.RUNNER, 1);
+        double mid = dev.awaken.progression.Progression.profile(p).xp();
+        AscentServer.payChain(p, m, AscentServer.now(p));
+        h.assertTrue(dev.awaken.progression.Progression.profile(p).xp() - mid <= 1e-6 + toNext * 0.0001,
+                "the minute's style budget is spent: " + (dev.awaken.progression.Progression.profile(p).xp() - mid));
+        h.assertTrue(p.getData(AscentContent.MEMORY).chainBest() == 30, "a shorter chain keeps the record");
         h.getLevel().getServer().getPlayerList().remove(p);
         h.succeed();
     }

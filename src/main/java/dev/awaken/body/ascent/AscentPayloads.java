@@ -63,12 +63,13 @@ public final class AscentPayloads {
     }
 
     /**
-     * Server → client: which tiers this player may use (a bit per {@link Tier}). Phase 0 grants them by command only;
-     * the Ascent progress record replaces this in Phase 1.
+     * Server → client: which tiers this player holds (a bit per {@link Tier}) and its six mastery levels, 4 bits each
+     * (AscentMemory.Track order).
      */
-    public record Tiers(int bits) implements CustomPacketPayload {
+    public record Tiers(int bits, int mastery) implements CustomPacketPayload {
         public static final Type<Tiers> TYPE = new Type<>(Awaken.id("ascent_tiers"));
-        public static final StreamCodec<ByteBuf, Tiers> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Tiers::bits, Tiers::new);
+        public static final StreamCodec<ByteBuf, Tiers> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Tiers::bits,
+                ByteBufCodecs.VAR_INT, Tiers::mastery, Tiers::new);
         @Override public Type<Tiers> type() { return TYPE; }
     }
 

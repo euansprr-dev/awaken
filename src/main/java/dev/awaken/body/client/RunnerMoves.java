@@ -187,6 +187,15 @@ public final class RunnerMoves {
     }
 
     private static void send(Move move, int flag, LocalPlayer p, double tx, double ty, double tz, int axis, int sign) {
+        // the Runner's moves feed the Ascent's Flow (a shimmy is a pause, not a move)
+        switch (move) {
+            case WALL_RUN -> dev.awaken.body.ascent.client.AscentFlow.gain(0.07F);
+            case WALL_JUMP -> dev.awaken.body.ascent.client.AscentFlow.gain(0.09F);
+            case LEDGE_HANG -> dev.awaken.body.ascent.client.AscentFlow.gain(0.03F);
+            case LEDGE_JUMP -> dev.awaken.body.ascent.client.AscentFlow.gain(0.06F);
+            default -> {
+            }
+        }
         ClientPacketDistributor.sendToServer(new BodyPayloads.Run(move.ordinal(), flag, p.getYRot(), p.getX(), p.getY(), p.getZ(), tx, ty, tz, axis, sign));
     }
 

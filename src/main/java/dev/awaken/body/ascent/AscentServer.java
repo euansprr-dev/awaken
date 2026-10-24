@@ -40,12 +40,62 @@ public final class AscentServer {
     }
 
     static void syncTiers(ServerPlayer p) {
-        AwakenNet.send(p, new AscentPayloads.Tiers(tiers(p)));
+        AscentMemory mem = p.getData(AscentContent.MEMORY);
+        AwakenNet.send(p, new AscentPayloads.Tiers(mem.tiers(), mem.packedLevels()));
     }
 
     /** The client heard its tiers (Ascent.has on the client reads them). */
     public static void clientTiers(int bits) {
         Ascent.clientTiers = bits;
+    }
+
+    // ---- chains, style XP and mastery ------------------------------------------------------------------------------
+
+    /** Links further apart than this end the chain. */
+    static final int CHAIN_GAP = 50;
+    /** Style XP per link of a finished chain (×xpToNext), the most links paid, and the most paid a minute (×xpToNext). */
+    static final double STYLE_PER_LINK = 0.0012, STYLE_CAP_MINUTE = 0.015;
+    static final int STYLE_MAX_LINKS = 25;
+
+    /**
+     * A move went off (a rope's bite, a launch, wings, a boom, an air move, a wall-run, a wall jump, a ledge grab, a
+     * slide): mastery points on its track, and a link in the chain if it came soon enough after the last one.
+     */
+    public static void link(ServerPlayer p, AscentMemory.Track track, int points) {
+        AscentMotion m = motion(p);
+        long now = now(p);
+        if (m.chain > 0 && now - m.lastLinkAt > CHAIN_GAP) payChain(p, m, now);
+        m.chain++;
+        m.lastLinkAt = now;
+        AscentMemory before = p.getData(AscentContent.MEMORY);
+        AscentMemory after = before.withPoints(track, points);
+        p.setData(AscentContent.MEMORY, after);
+        if (after.level(track) != before.level(track)) {
+            syncTiers(p);
+            dev.awaken.core.DirectorLog.log(p, "ascent", track + " mastery " + after.level(track));
+        }
+    }
+
+    /** A chain ended: style XP for its links (three or more), within the minute's cap; the record if it's the longest. */
+    static void payChain(ServerPlayer p, AscentMotion m, long now) {
+        int chain = m.chain;
+        m.chain = 0;
+        if (chain < 3) return;
+        p.setData(AscentContent.MEMORY, p.getData(AscentContent.MEMORY).withChain(chain));
+        // style is paid once awake (before that the body is learning, not performing)
+        if (!dev.awaken.progression.Progression.profile(p).awakened()) return;
+        double toNext = dev.awaken.progression.Curve.xpToNext(dev.awaken.progression.Progression.profile(p).level());
+        if (now - m.styleMinuteAt >= 1200) {
+            m.styleMinuteAt = now;
+            m.stylePaid = 0;
+        }
+        double want = toNext * STYLE_PER_LINK * Math.min(chain, STYLE_MAX_LINKS);
+        double room = toNext * STYLE_CAP_MINUTE - m.stylePaid;
+        double xp = Math.min(want, Math.max(0, room));
+        if (xp <= 0) return;
+        m.stylePaid += xp;
+        dev.awaken.progression.Progression.grantXp(p, xp, dev.awaken.progression.Progression.XpSource.WORLD);
+        dev.awaken.progression.Progression.count(p, "awaken:ascent_chains");
     }
 
     static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
@@ -87,7 +137,10 @@ public final class AscentServer {
             s = AscentState.NONE;
         }
         if (s == AscentState.NONE && m.state != AscentState.NONE) m.endedAt = now(p);
+        // a rope that bit is a link (counted here, once the server has checked its anchor)
+        boolean newRope = s.rope && !m.state.rope;
         m.state = s;
+        if (newRope) link(p, AscentMemory.Track.TETHER, 2);
         m.ax = msg.x();
         m.ay = msg.y();
         m.az = msg.z();
@@ -99,11 +152,12 @@ public final class AscentServer {
     }
 
     /**
-     * A rope's anchor is real: within the rope's reach (plus the ground the body covered while the packet travelled) of
+     * A rope's anchor is real: within the rope's longest reach (mastery 10; plus the ground the body covered while the
+     * packet travelled) of
      * where the server has the body, and the point sits on a block's collision (it is placed a hair off the face it bit).
      */
     static boolean anchorReal(ServerPlayer p, double ax, double ay, double az) {
-        double reach = AscentRules.TETHER_RANGE + 6;
+        double reach = AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * 10 + 6;
         if (p.distanceToSqr(ax, ay, az) > reach * reach) return false;
         net.minecraft.world.phys.AABB probe = new net.minecraft.world.phys.AABB(ax - 0.12, ay - 0.12, az - 0.12, ax + 0.12, ay + 0.12, az + 0.12);
         for (var shape : p.level().getBlockCollisions(null, probe)) {
@@ -114,6 +168,31 @@ public final class AscentServer {
 
     static void onEvent(ServerPlayer p, AscentPayloads.Event msg) {
         if (msg.what() == AscentPayloads.EV_SLAM_LAND) slam(p, Math.min(3F, Math.max(0F, msg.speed())));
+        // the moves that count as links, each only with the tier that has it and from a state it can come from (a
+        // rope's is counted when its state lands)
+        AscentState st = motion(p).state;
+        switch (msg.what()) {
+            case AscentPayloads.EV_LAUNCH -> {
+                if (st == AscentState.TETHER) link(p, AscentMemory.Track.TETHER, 3);
+            }
+            case AscentPayloads.EV_DEPLOY -> {
+                if (Ascent.has(p, Ascent.Tier.WINGS)) link(p, AscentMemory.Track.WINGS, 2);
+            }
+            case AscentPayloads.EV_BOOM -> {
+                if (Ascent.has(p, Ascent.Tier.WINGS) && st.wings) link(p, AscentMemory.Track.WINGS, 6);
+            }
+            case AscentPayloads.EV_DOUBLE, AscentPayloads.EV_DASH, AscentPayloads.EV_DIVE -> {
+                if (Ascent.has(p, Ascent.Tier.LEAPER)) link(p, AscentMemory.Track.LEAPER, 2);
+            }
+            case AscentPayloads.EV_SLAM_LAND -> {
+                if (Ascent.has(p, Ascent.Tier.LEAPER)) link(p, AscentMemory.Track.LEAPER, 3);
+            }
+            case AscentPayloads.EV_FLAP -> {
+                if (Ascent.has(p, Ascent.Tier.SKYBORN)) link(p, AscentMemory.Track.SKYBORN, 1);
+            }
+            default -> {
+            }
+        }
         show(p, new AscentPayloads.SeenEvent(p.getId(), msg.what(), msg.speed()));
     }
 
@@ -158,6 +237,7 @@ public final class AscentServer {
         AscentMotion m = motion(p);
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
         m.mark(Ascent.moving(p, m));
+        if (m.chain > 0 && now(p) - m.lastLinkAt > CHAIN_GAP) payChain(p, m, now(p));
         if (!m.state.airborne()) return;
         if (p.isPassenger() || p.isSpectator() || !p.isAlive()) {
             end(p, m);

@@ -9,6 +9,10 @@ final class AscentMotion {
     long since, endedAt = Long.MIN_VALUE / 2;
     /** Ticks on the ground while the client still says airborne (a lost NONE): the server ends it itself. */
     int groundTicks;
+    // the chain of moves (style XP) and the minute's style budget
+    int chain;
+    long lastLinkAt = Long.MIN_VALUE / 2, styleMinuteAt = Long.MIN_VALUE / 2;
+    double stylePaid;
 
     // ---- how the player got here (Ascent.arrivedByMovement) ----
     /** The trail's length: 20 seconds of ticks, a bit each (moving by Ascent or Runner, or not). */

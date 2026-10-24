@@ -1432,10 +1432,35 @@ is what the Ascent decided while building it.
   A slam's landing: within 3.5 blocks, creatures take 3 + 3 × the landing speed (falling off to 40% at the edge) and
   are thrown out; players only where the world's PvP rule allows; your own tamed creatures never. The server applies it
   only with the Leaper tier, out of an airborne state a moment ago.
-- The server's checks (more to come with the latency tours): a rope's anchor must be within 50 of where the server has
+- The server's checks (more to come with the latency tours): a rope's anchor must be within 50 (54 since mastery, §17.6) of where the server has
   the body and sit on a block's collision (`AscentServer.anchorReal`); a state the tiers don't allow, the `ascent` world
   option off, riding or spectating are refused with `AscentPayloads.Stop`, and the client lets go (a refused rope
   becomes the carry: never a yank back).
+
+(§17.4 is the Wilds' and §17.5 the Gate Rig's: docs/ascent/briefs/.)
+
+### 17.6 Phase 1c: Flow, chains and mastery
+- **Flow** (client, 0..1; `AscentFlow`): each move adds to it, less as it fills (+a × (1 − flow/2), ×1.25 once a chain
+  is three links long): a rope's bite 0.08, a release 0.04 + 0.12 × the release window, a launch 0.10 + 0.06 × the
+  window, the wings opening 0.06, a flap 0.02, the boom 0.25, a Leaper move 0.08, a slam's landing 0.10, a wall-run
+  0.07, a wall jump 0.09, a ledge grab 0.03, a ledge jump 0.06. A wall taken hard (a bonk) takes 0.35 and the chain.
+  Standing still on the ground drains it 0.015 a tick after 25 idle ticks (full to empty in ~3 s); in the air or on a
+  wall it holds, then drains 0.002 a tick after 80 idle ticks. What it pays (small on purpose, never a wall): the
+  pump ×(1 + 0.25 × flow), the carry's horizontal drag 0.988 → 0.988 + 0.004 × flow. Shown as one line of light between
+  the XP bar and the hotbar (grows from the middle, whiter as it fills, flares at each link, its ends burn while a chain
+  runs); hidden before awakening.
+- **Chains** (server; `AscentServer.link`): links are a rope that bit (counted when the server accepts its state), a launch, the wings opening (Wings
+  held), the boom, a double jump, an air dash, a dive, a slam's landing (Leaper held), a flap (Skyborn held), and the
+  Runner's wall-run, wall jump, ledge jump (2 points each) and ledge grab (1). Links more than 50 ticks apart end the
+  chain. A finished chain of 3+ links pays style XP once awake: xpToNext × 0.0012 × min(links, 25), at most 1.5% of a
+  level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`).
+- **Mastery** per track (RUNNER, TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN): each link adds its points to its track
+  (rope fire 2, launch 3, wings 2, boom 6, Leaper moves 2, slam 3, flap 1, Runner 1-2); level = floor(√(points / 25)),
+  max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (client, predicted):
+  rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
+  dash +2% a Leaper level, glide drag −2% a Wings level.
+- **The record**: `AscentMemory` schema 2 = tiers + mastery points (list, Track order) + chainBest; schema 1 reads as
+  no mastery yet. Kept through death.
 
 ---------------------------------------------------------------------------------------------------------------------
 

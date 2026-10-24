@@ -28,6 +28,8 @@ public final class AscentClient {
         modBus.addListener(AscentClient::onPayloads);
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(AscentContent.MOTE.get(), MoteParticle.Provider::new));
         modBus.addListener(AscentClient::onAddLayers);
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_flow"), AscentFlow::render));
         FeelDirector.init(modBus);
         var bus = NeoForge.EVENT_BUS;
         // before the Awakened Body's own moves: an airborne state owns the body and the body's moves stand aside
@@ -61,6 +63,7 @@ public final class AscentClient {
         event.register(AscentPayloads.SeenEvent.TYPE, (msg, ctx) -> AscentRemote.event(msg));
         event.register(AscentPayloads.Tiers.TYPE, (msg, ctx) -> {
             AscentMoves.tiers = msg.bits();
+            AscentMoves.mastery = msg.mastery();
             dev.awaken.body.ascent.AscentServer.clientTiers(msg.bits());
         });
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
@@ -71,6 +74,7 @@ public final class AscentClient {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
         AscentMoves.tick();
+        AscentFlow.tick(mc.player);
         AscentPilot.tick();
         AscentRemote.tick();
         AscentAnims.tick();
