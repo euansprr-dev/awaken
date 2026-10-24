@@ -69,16 +69,23 @@ public final class AscentAnchors {
         return v * v;
     }
 
-    /** A good swing: well above you (best ~14), ahead of you (best ~13 out), in the way you look. */
+    /**
+     * A good swing: well above you (best ~14), ahead of you (best ~13 out), in the way you look, and off to one side of
+     * your line (3-9 out): the arc's bottom passes under the anchor, so an anchor on a trunk dead ahead swings you into
+     * that trunk, while one beside your path swings you past it.
+     */
     static double score(Anchor a, Vec3 eye, float yaw) {
         double dx = a.x - eye.x, dy = a.y - eye.y, dz = a.z - eye.z;
         double h = Math.sqrt(dx * dx + dz * dz);
         if (dy < 4 || h < 3) return 0;
-        double ahead = (dx * AscentRules.fx(yaw) + dz * AscentRules.fz(yaw)) / h;
+        double fx = AscentRules.fx(yaw), fz = AscentRules.fz(yaw);
+        double ahead = (dx * fx + dz * fz) / h;
         if (ahead < 0.45) return 0;
+        double side = Math.abs(dx * -fz + dz * fx);
+        double sideFit = 0.25 + 0.75 * Mth.clamp((side - 1.5) / 2.0, 0, 1) * (1 - Mth.clamp((side - 9) / 6, 0, 1));
         double riseFit = Math.exp(-sq((dy - 14) / 9));
         double reachFit = Math.exp(-sq((h - 13) / 9));
-        return ahead * riseFit * reachFit;
+        return ahead * riseFit * reachFit * sideFit;
     }
 
     private static Anchor anchorOf(BlockHitResult h, Vec3 eye, boolean aimed) {
@@ -98,7 +105,7 @@ public final class AscentAnchors {
     /**
      * Whether the rope's line from the hand to the anchor is still clear. Only the middle of the rope counts: near the
      * anchor it wraps its own trunk or branch as you swing round it, and near the hand it brushes whatever you pass;
-     * something solid across the middle (another trunk swung behind) cuts it.
+     * something solid across the middle (another trunk swung behind) cuts it. Leaves never do.
      */
     public static boolean clear(Level level, Entity who, Vec3 hand, double ax, double ay, double az) {
         Vec3 a = new Vec3(ax, ay, az);
@@ -107,7 +114,8 @@ public final class AscentAnchors {
         if (len < 6) return true;
         Vec3 from = hand.add(d.scale(1.5 / len)), to = hand.add(d.scale((len - 3.0) / len));
         BlockHitResult h = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, who));
-        return h.getType() != HitResult.Type.BLOCK;
+        // a line of light passes through foliage
+        return h.getType() != HitResult.Type.BLOCK || level.getBlockState(h.getBlockPos()).is(net.minecraft.tags.BlockTags.LEAVES);
     }
 
     /** The floor under a point, or {@code y - maxDown} when there is none within reach. */

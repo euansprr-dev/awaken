@@ -30,8 +30,8 @@ wait 10
 cmd awaken ascent sandbox
 wait 200
 screen close
-# a high deck for dives and flight (100 above the floor)
-cmd fill -3 250 -3 3 250 3 minecraft:polished_deepslate
+# a high deck for dives and flight (140 above the floor)
+cmd fill -3 290 -3 3 290 3 minecraft:polished_deepslate
 
 # ---- the swing, first person ----
 cmd tp @s 0.5 151 5.5 0 -10
@@ -52,7 +52,7 @@ wait 340
 
 # ---- off the high deck: dive to the boom, pull up (third person) ----
 cmd awaken ascent pilot stop
-cmd tp @s 0.5 251 -2.5 0 10
+cmd tp @s 0.5 291 -2.5 0 10
 camera back
 wait 40
 cmd awaken ascent pilot rec boom_tp 260 3
@@ -70,7 +70,7 @@ wait 250
 
 # ---- flight: take off, cruise, boost, a banked turn, a hover (third person) ----
 cmd awaken ascent pilot stop
-cmd tp @s 0.5 251 -2.5 0 10
+cmd tp @s 0.5 291 -2.5 0 10
 camera back
 wait 40
 cmd awaken ascent pilot rec soar_tp 280 3
