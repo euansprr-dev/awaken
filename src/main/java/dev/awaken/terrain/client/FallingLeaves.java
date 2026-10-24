@@ -69,6 +69,7 @@ final class FallingLeaves {
 
     /** Once a frame: keep a running frame time and scale the cap from it. */
     static void frame() {
+        framesMeasured++;
         long now = System.nanoTime();
         if (lastFrame != 0) {
             double ms = Math.min(250, (now - lastFrame) / 1e6);
@@ -79,7 +80,18 @@ final class FallingLeaves {
         lastFrame = now;
     }
 
+    // what the air costs on the CPU, summed between two status lines (load-proof, unlike frame times on a busy Mac)
+    static long spawnNanos, particleNanos, extractNanos, windNanos;
+    private static int ticksMeasured, framesMeasured;
+
     static void tick(Minecraft mc) {
+        long t0 = System.nanoTime();
+        tickSpawner(mc);
+        spawnNanos += System.nanoTime() - t0;
+        ticksMeasured++;
+    }
+
+    private static void tickSpawner(Minecraft mc) {
         ClientLevel level = mc.level;
         if (level != slotLevel) {
             java.util.Arrays.fill(SLOTS, null);
@@ -91,6 +103,13 @@ final class FallingLeaves {
             else SLOTS[i] = null;
         }
         TerrainClientConfig.LeafAmount amount = TerrainClientConfig.fallingLeaves();
+        if (amount == TerrainClientConfig.LeafAmount.OFF && alive > 0) { // switched off: the air clears at once
+            for (int i = 0; i < SLOTS.length; i++) {
+                if (SLOTS[i] != null) SLOTS[i].remove();
+                SLOTS[i] = null;
+            }
+            alive = 0;
+        }
         Wind.Field wind = ClientWind.field();
         if (level == null || mc.player == null || mc.isPaused() || amount == TerrainClientConfig.LeafAmount.OFF || wind == null) return;
         int cap = Math.max(1, (int) (amount.cap * budgetScale));
@@ -147,19 +166,20 @@ final class FallingLeaves {
         int[] sprites = bs.sprites() != null ? bs.sprites() : ls.sprites();
         TextureAtlasSprite sprite = sprite(mc, LEAF_SPRITES[sprites[RNG.nextInt(sprites.length)]]);
         int rgb = leafColor(mc, level, st, POS.set(bx, y, bz), ls, bs);
-        float size = 0.075F * ls.size() * bs.size() * (0.85F + RNG.nextFloat() * 0.3F);
+        float size = 0.09F * ls.size() * bs.size() * (0.85F + RNG.nextFloat() * 0.3F);
         return add(mc, new FallingLeafParticle(level, bx + 0.1 + RNG.nextFloat() * 0.8, y - 0.08, bz + 0.1 + RNG.nextFloat() * 0.8,
                 sprite, rgb, size, false));
     }
 
     private static boolean spawnMote(Minecraft mc, ClientLevel level, int bx, int bz, Vec3 c, AirTable.MoteStyle m) {
-        int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
-        if (ground < c.y - 16 || ground > c.y + 16) return false;
         TextureAtlasSprite sprite = sprite(mc, MOTE_SPRITES[RNG.nextInt(MOTE_SPRITES.length)]);
-        int rgb = shade(m.color() < 0 ? 0x7FF0F2 : m.color(), 0.85F + RNG.nextFloat() * 0.25F);
-        float size = 0.045F + RNG.nextFloat() * 0.04F;
-        return add(mc, new FallingLeafParticle(level, bx + RNG.nextFloat(), ground + 0.2 + RNG.nextFloat() * 2.5, bz + RNG.nextFloat(),
-                sprite, rgb, size, true));
+        int rgb = shade(m.color() < 0 ? 0x7FF0F2 : m.color(), 0.9F + RNG.nextFloat() * 0.3F);
+        float size = 0.12F + RNG.nextFloat() * 0.1F;
+        // motes gather nearer than leaves fall (3.6-19 blocks): a speck far off is a pixel
+        double x = c.x + (bx + RNG.nextFloat() - c.x) * 0.6, z = c.z + (bz + RNG.nextFloat() - c.z) * 0.6;
+        int gy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+        if (gy < c.y - 16 || gy > c.y + 16) return false;
+        return add(mc, new FallingLeafParticle(level, x, gy + 0.2 + RNG.nextFloat() * 2.5, z, sprite, rgb, size, true));
     }
 
     private static boolean add(Minecraft mc, FallingLeafParticle p) {
@@ -189,10 +209,10 @@ final class FallingLeaves {
                 AVERAGE.put(st.getBlock(), avg);
             }
             BlockTintSource tint = mc.getBlockColors().getTintSource(st, 0);
-            rgb = tint == null ? avg : multiply(avg, tint.colorInWorld(st, level, pos), 1.3F);
+            rgb = tint == null ? shade(avg, 1.1F) : multiply(avg, tint.colorInWorld(st, level, pos), 1.55F);
         }
         if (bs.color() >= 0) rgb = mix(rgb, bs.color(), bs.colorMix());
-        if (RNG.nextFloat() < 0.12F) rgb = mix(rgb, 0xC9A83A, 0.3F); // now and then one already turning
+        if (RNG.nextFloat() < 0.18F) rgb = mix(rgb, 0xC9A83A, 0.35F); // now and then one already turning
         return shade(rgb, 0.86F + RNG.nextFloat() * 0.26F);
     }
 
@@ -249,8 +269,16 @@ final class FallingLeaves {
     }
 
     static String status() {
-        return String.format(java.util.Locale.ROOT, "%d alive (cap %d x %.2f budget), %d spawned, frame %.1f ms%s",
+        double perTick = ticksMeasured == 0 ? 0 : (spawnNanos + particleNanos) / 1e3 / ticksMeasured;
+        double perFrame = framesMeasured == 0 ? 0 : (extractNanos + windNanos) / 1e3 / framesMeasured;
+        double framesPerTick = ticksMeasured == 0 ? 1 : Math.max(1.0, framesMeasured / (double) ticksMeasured);
+        String line = String.format(java.util.Locale.ROOT,
+                "%d alive (cap %d x %.2f budget), %d spawned, frame %.1f ms; cpu: spawner+rustle %.1f us + particles %.1f us a tick, wind+texels %.1f us + drawing %.1f us a frame = %.3f ms a frame%s",
                 alive, TerrainClientConfig.fallingLeaves().cap, budgetScale, spawned, frameMs,
-                forcedBiomeId == null ? "" : ", forced biome " + forcedBiomeId);
+                ticksMeasured == 0 ? 0 : spawnNanos / 1e3 / ticksMeasured, ticksMeasured == 0 ? 0 : particleNanos / 1e3 / ticksMeasured,
+                framesMeasured == 0 ? 0 : windNanos / 1e3 / framesMeasured, framesMeasured == 0 ? 0 : extractNanos / 1e3 / framesMeasured, (perTick / framesPerTick + perFrame) / 1e3, forcedBiomeId == null ? "" : ", forced biome " + forcedBiomeId);
+        spawnNanos = particleNanos = extractNanos = windNanos = 0;
+        ticksMeasured = framesMeasured = 0;
+        return line;
     }
 }

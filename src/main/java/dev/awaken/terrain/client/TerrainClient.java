@@ -38,15 +38,19 @@ public final class TerrainClient {
 
     private static void frame(RenderFrameEvent.Pre e) {
         Minecraft mc = Minecraft.getInstance();
+        long t0 = System.nanoTime();
         ClientWind.update(mc, e.getPartialTick().getGameTimeDeltaPartialTick(false));
         WavingLeaves.frame(mc);
+        FallingLeaves.windNanos += System.nanoTime() - t0;
         FallingLeaves.frame();
     }
 
     private static void tick() {
         Minecraft mc = Minecraft.getInstance();
         FallingLeaves.tick(mc);
+        long t0 = System.nanoTime();
         LeafRustle.tick(mc);
+        FallingLeaves.spawnNanos += System.nanoTime() - t0;
     }
 
     /**

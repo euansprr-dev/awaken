@@ -64,6 +64,12 @@ final class FallingLeafParticle extends net.minecraft.client.particle.SingleQuad
 
     @Override
     public void tick() {
+        long t0 = System.nanoTime();
+        tickLeaf();
+        FallingLeaves.particleNanos += System.nanoTime() - t0;
+    }
+
+    private void tickLeaf() {
         xo = x;
         yo = y;
         zo = z;
@@ -174,6 +180,12 @@ final class FallingLeafParticle extends net.minecraft.client.particle.SingleQuad
 
     @Override
     public void extract(QuadParticleRenderState out, Camera camera, float partialTick) {
+        long t0 = System.nanoTime();
+        extractLeaf(out, camera, partialTick);
+        FallingLeaves.extractNanos += System.nanoTime() - t0;
+    }
+
+    private void extractLeaf(QuadParticleRenderState out, Camera camera, float partialTick) {
         if (state != FALLING || mote) {
             if (mote) rot.set(camera.rotation());
             else rot.set(rest);
@@ -182,6 +194,17 @@ final class FallingLeafParticle extends net.minecraft.client.particle.SingleQuad
             // (never quite edge-on, and never turned past the edge: particles are one-sided)
             float c = Math.max(0.12F, Math.abs(Mth.cos(Mth.lerp(partialTick, oFlip, flip))));
             rot.set(camera.rotation()).rotateZ(Mth.lerp(partialTick, oRoll, roll)).rotateX((float) Math.acos(c));
+        }
+        // a leaf brushing the lens would fill the screen with one flat quad: fade it out inside two blocks
+        double dx = Mth.lerp(partialTick, xo, x) - camera.position().x, dy = Mth.lerp(partialTick, yo, y) - camera.position().y,
+                dz = Mth.lerp(partialTick, zo, z) - camera.position().z;
+        double d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < 4.0) {
+            float keep = alpha;
+            alpha *= (float) Math.clamp((Math.sqrt(d2) - 0.8) / 1.2, 0.0, 1.0);
+            if (alpha > 0.02F) extractRotatedQuad(out, camera, rot, partialTick);
+            alpha = keep;
+            return;
         }
         extractRotatedQuad(out, camera, rot, partialTick);
     }
