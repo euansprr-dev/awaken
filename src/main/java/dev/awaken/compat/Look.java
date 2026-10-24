@@ -200,26 +200,22 @@ public final class Look {
     /** Whether Ultra can be offered, and if not, the honest reason. */
     public record Availability(boolean available, String reason) {}
 
-    /** The newest Iris known not to run here: 1.11.7 requires Sodium 0.9.2, and Sodium 0.9.2 crashes on NeoForge 26.3.0.95. */
+    /** The newest Iris known not to run here: 1.11.7 pins Sodium 0.9.2, and Sodium 0.9.2 crashes on NeoForge 26.3.0.95. */
     public static final String IRIS_KNOWN_BAD = "1.11.7";
 
     /**
-     * Ultra needs Iris newer than {@link #IRIS_KNOWN_BAD} on the OpenGL renderer (Iris draws only there).
-     * {@code irisVersion} is null when Iris isn't installed; {@code backend} is the device's backend name.
+     * Ultra needs Iris newer than {@link #IRIS_KNOWN_BAD} on the OpenGL renderer (Iris draws only there). Every reason
+     * says Iris needs OpenGL (the pack runs on Vulkan); until a newer Iris is installed it also names Iris's Sodium pin.
+     * Short enough for the Look screen's three note lines. {@code irisVersion} is null when Iris isn't installed;
+     * {@code backend} is the device's backend name.
      */
     public static Availability ultra(@Nullable String irisVersion, String backend) {
         boolean openGl = "OpenGL".equalsIgnoreCase(backend);
-        // Iris draws only on OpenGL: every reason says so, and which API this game runs on when it isn't
-        String api = openGl ? "it draws only on OpenGL" : "it draws only on OpenGL, and this game runs on " + backend;
-        if (irisVersion == null) {
-            return new Availability(false, "Needs Iris (" + api + "). Iris 1.11.7 requires Sodium 0.9.2, which crashes on this "
-                    + "NeoForge: Ultra waits for an Iris update.");
-        }
-        if (compareVersions(irisVersion, IRIS_KNOWN_BAD) <= 0) {
-            return new Availability(false, "Iris " + shortVersion(irisVersion) + " is built for Sodium 0.9.2, which crashes on this "
-                    + "NeoForge (and " + api + "): Ultra waits for an Iris update.");
-        }
-        if (!openGl) return new Availability(false, "Iris draws only on OpenGL; this game runs on " + backend + ".");
+        String api = openGl ? "needs OpenGL." : "needs OpenGL; this game runs on " + backend + ".";
+        String pin = " pins Sodium 0.9.2, which crashes on this NeoForge: Ultra waits for an Iris update. Iris also " + api;
+        if (irisVersion == null) return new Availability(false, "Needs Iris. Iris " + IRIS_KNOWN_BAD + pin);
+        if (compareVersions(irisVersion, IRIS_KNOWN_BAD) <= 0) return new Availability(false, "Iris " + shortVersion(irisVersion) + pin);
+        if (!openGl) return new Availability(false, "Iris " + api + " Switch in Video Settings → Graphics API, then restart.");
         return new Availability(true, "");
     }
 

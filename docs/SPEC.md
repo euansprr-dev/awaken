@@ -850,8 +850,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   only adds option pages; its options file is in use while the game runs), so it keeps its own settings and the
   screen says so. Iris: `IrisApiConfig.setShadersEnabledAndApply`; the shaderpack stays the player's. Ultra is offered
   only with an Iris newer than 1.11.7 on the OpenGL renderer; otherwise its card is disabled with the reason, which
-  always says Iris draws only on OpenGL (and names the API the game runs on, Vulkan for the pack), plus today's
-  blocker: Iris 1.11.7 requires Sodium 0.9.2, which crashes on NeoForge 26.3.0.95. The frame-time line: the last 60 s of
+  always says Iris needs OpenGL (and names the API the game runs on, Vulkan for the pack) and, until a newer Iris is
+  installed, Iris's Sodium pin: Iris 1.11.7 pins Sodium 0.9.2, which crashes on NeoForge 26.3.0.95. With a newer Iris
+  on Vulkan it says where to switch (Video Settings → Graphics API, then restart). At most 180 characters, the Look
+  screen's three note lines. The frame-time line: the last 60 s of
   frame-to-frame times (`RenderFrameEvent.Post` into a 32768-int ring, no allocation), p50 and p99 from a 0.1 ms
   histogram twice a second while the screen is open, green while they fit the tier's budget (Swift p50 ≤ 9.1 ms and
   p99 ≤ 16 ms; Cinematic ≤ 16.7 and ≤ 25 ms; Ultra promises none), and "HORIZON n CHUNKS" with DH ("off in this
