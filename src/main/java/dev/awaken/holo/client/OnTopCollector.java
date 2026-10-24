@@ -31,13 +31,27 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * Routes what an item draws into the level's always-on-top phase of one order, so an item icon on a panel draws over
- * the world (against the cleared on-top depth, so its own faces still sort) exactly like the panel around it. Items,
- * models and custom geometry go on top; anything else an item renderer might call goes to the normal collector.
+ * Routes what an item draws into the panel's phase of one order ({@link #phase}), so an item icon on a panel draws
+ * over the world exactly like the panel around it. Items, models and custom geometry go there; anything else an item
+ * renderer might call goes to the normal collector.
  */
 final class OnTopCollector implements SubmitNodeCollector {
-    /** The always-on-top phase of a {@code SubmitNodeCollection} (NeoForge renders it even without gizmos). */
+    /**
+     * The main pass's translucent custom geometry (classic transparency): drawn after the world's opaque parts and
+     * its other translucent features, before water, particles, clouds and weather, which the glass's depth then keeps
+     * behind the panel. Costs no extra render pass.
+     */
+    static final RenderPhaseKey<SubmitNode> MAIN = new RenderPhaseKey<>(c -> c.translucentCustomGeometry);
+    /**
+     * The always-on-top phase (NeoForge renders it even without gizmos). Used only with Improved Transparency, whose
+     * OIT phase would need OIT variants of our pipelines; it costs two full-screen passes (its own depth and the merge).
+     */
     static final RenderPhaseKey<SubmitNode> ON_TOP = new RenderPhaseKey<>(c -> c.alwaysOnTopGizmos);
+
+    /** Where panels draw this frame. */
+    static RenderPhaseKey<SubmitNode> phase() {
+        return net.minecraft.client.Minecraft.getInstance().gameRenderer.useImprovedTransparency() ? ON_TOP : MAIN;
+    }
 
     private OrderedSubmitNodeCollector out;
 
@@ -56,23 +70,23 @@ final class OnTopCollector implements SubmitNodeCollector {
             int[] tintLayers, ItemQuads quads, ItemStackRenderState.FoilType foilType) {
         PoseStack.Pose pose = poseStack.last().copy();
         if (!quads.solid().isEmpty()) {
-            out.submitSpecial(ON_TOP, new ItemFeatureRenderer.Submit(pose, displayContext, lightCoords, overlayCoords, 0, tintLayers, quads.solid(), foilType));
+            out.submitSpecial(phase(), new ItemFeatureRenderer.Submit(pose, displayContext, lightCoords, overlayCoords, 0, tintLayers, quads.solid(), foilType));
         }
         if (!quads.translucent().isEmpty()) {
-            out.submitSpecial(ON_TOP, new ItemFeatureRenderer.Submit(pose, displayContext, lightCoords, overlayCoords, 0, tintLayers, quads.translucent(), foilType));
+            out.submitSpecial(phase(), new ItemFeatureRenderer.Submit(pose, displayContext, lightCoords, overlayCoords, 0, tintLayers, quads.translucent(), foilType));
         }
     }
 
     @Override
     public <S> void submitModel(Model<? super S> model, S state, PoseStack poseStack, RenderType renderType, int lightCoords, int overlayCoords,
             int tintedColor, @Nullable UvMapping uvMapping, int outlineColor) {
-        out.submitSpecial(ON_TOP, new ModelFeatureRenderer.Submit<>(renderType, poseStack.last().copy(), model, state, lightCoords, overlayCoords,
+        out.submitSpecial(phase(), new ModelFeatureRenderer.Submit<>(renderType, poseStack.last().copy(), model, state, lightCoords, overlayCoords,
                 tintedColor, uvMapping, null));
     }
 
     @Override
     public void submitCustomGeometry(PoseStack poseStack, RenderType renderType, CustomGeometryRenderer customGeometryRenderer) {
-        out.submitSpecial(ON_TOP, new CustomFeatureRenderer.Submit(poseStack.last().copy(), renderType, customGeometryRenderer));
+        out.submitSpecial(phase(), new CustomFeatureRenderer.Submit(poseStack.last().copy(), renderType, customGeometryRenderer));
     }
 
     // ---- everything else: the normal collector ---------------------------------------------------------------------

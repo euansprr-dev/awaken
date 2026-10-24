@@ -16,7 +16,9 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.data.AtlasIds;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.client.renderer.feature.submit.SubmitNode;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.submit.RenderPhaseKey;
 import org.joml.Matrix4f;
 
 /**
@@ -80,8 +82,11 @@ final class HoloRender {
         return p.anchor == HoloPanel.Anchor.VIEW || p.timeline.active();
     }
 
+    private static RenderPhaseKey<SubmitNode> key = OnTopCollector.MAIN;
+
     private static void submitPanel(SubmitNodeCollector c, Draw d) {
         HoloPanel p = d.p;
+        key = OnTopCollector.phase();
         int base = ORDER + p.layer * 8;
         d.stack.last().pose().set(p.pose);
         if (d.glass == null) {
@@ -92,10 +97,10 @@ final class HoloRender {
         if (p.beam > 0.01f) {
             d.view.last().pose().set(ViewMath.VIEW_TO_WORLD).mul(ViewMath.UNBOB);
             if (d.beam == null) d.beam = new CustomFeatureRenderer.Submit(d.view.last(), HoloPipelines.glow(), (pose, vc) -> beam(d, pose, vc));
-            c.order(base).submitSpecial(OnTopCollector.ON_TOP, d.beam);
+            c.order(base).submitSpecial(key, d.beam);
         }
-        c.order(base).submitSpecial(OnTopCollector.ON_TOP, d.halo);
-        c.order(base + 1).submitSpecial(OnTopCollector.ON_TOP, d.glass);
+        c.order(base).submitSpecial(key, d.halo);
+        c.order(base + 1).submitSpecial(key, d.glass);
         HoloCanvas cv = p.canvas;
         float content = p.glassAlpha * p.fade;
         if (content > 0.02f) {
@@ -105,14 +110,14 @@ final class HoloRender {
                     d.spriteType = RenderTypes.textSeeThrough(atlas.location());
                     d.sprites = new CustomFeatureRenderer.Submit(d.stack.last(), d.spriteType, (pose, vc) -> sprites(d, pose, vc));
                 }
-                c.order(base + 2).submitSpecial(OnTopCollector.ON_TOP, d.sprites);
+                c.order(base + 2).submitSpecial(key, d.sprites);
             }
             items(c, d, base + 3);
             text(c, d, base + 4);
         } else {
             d.caretCount = 0;
         }
-        c.order(base + 5).submitSpecial(OnTopCollector.ON_TOP, d.top);
+        c.order(base + 5).submitSpecial(key, d.top);
     }
 
     // ---- glass ----------------------------------------------------------------------------------------------------
@@ -365,7 +370,7 @@ final class HoloRender {
                 d.keyShadow[i] = shadow;
             }
             if (scale != 1f) d.scaled[i].set(p.pose).translate(x, y, 0).scale(scale, scale, 1);
-            out.submitSpecial(OnTopCollector.ON_TOP, s);
+            out.submitSpecial(key, s);
             if (limit != Integer.MAX_VALUE && limit < seq.length() && d.caretCount < 64) {
                 d.carets[d.caretCount * 2] = x + font.width(seq) * scale;
                 d.carets[d.caretCount * 2 + 1] = y;
