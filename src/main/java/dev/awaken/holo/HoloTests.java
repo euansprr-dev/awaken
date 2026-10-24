@@ -70,6 +70,8 @@ final class HoloTests {
             far.snapTo(base.x + 2000, base.y, base.z);
             ServerChunkCache cache = h.getLevel().getChunkSource();
             h.succeedWhen(() -> {
+                // mock players never send movement, so tell the chunk map where they are (what the packet handler does)
+                for (ServerPlayer p : List.of(sender, near, far)) cache.move(p);
                 List<ServerPlayer> watching = cache.chunkMap.getPlayersWatching(sender);
                 h.assertTrue(watching.contains(near), "waiting for the near player to see the sender");
                 h.assertFalse(watching.contains(far), "the far player is out of range");
