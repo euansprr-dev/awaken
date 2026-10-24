@@ -286,8 +286,9 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
 - `dev.awaken.core.audio.MusicLayers` — the layered music: `register(Slot, priority, name, Provider)` (a provider names a
-  player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null), `current(ServerPlayer, Slot)`,
-  `level(ServerPlayer, Slot)`. `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
+  player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null; it may set the given
+  `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
+  Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
@@ -615,9 +616,18 @@ Plan v2 · audio (details in docs/modules/audio.md):
 - Layer loudness: the music rule applies to each level's mix, not to a stem: calm -20.5, tension -19.5, combat -18.5,
   Lord -17.5 dBFS gated RMS, every mix ≤ -1 dBTP after encoding; a stem alone ≤ -1 dBTP. Stems are equal-length loops
   of whole bars (Vorbis q1). GameTests decode the shipped files in Java and check every mix.
-- Contexts are data: `assets/<ns>/music_layers/<path>.json` (schemaVersion 1) for the context `<ns>:<path>` (gates:
-  `awaken:gate/<theme>`); two slots, music (the music channel) and ambience (Ambient slider, never the music channel);
-  providers register with a priority (gates 100) and may report pressure or pin the level.
+- Contexts are data, open to any module: the context `<ns>:<path>` plays `assets/<ns>/music_layers/<path>.json`
+  (schemaVersion 1: `source` music or ambient, the slider it follows; `frames`; 1-8 equal-length stems each with
+  attack / duck / release; one gain per stem for levels 0-3, a missing level repeating the last). Two slots, each with
+  its own context and level: **music** (takes the music channel, follows the place's music volume, rests and yields to
+  cues as above) and **ambience** (never touches the music channel, never rests or yields). Providers register per
+  slot with a priority (`MusicLayers.register`); every 10 ticks the highest that names a context wins. A provider may
+  report the gate's pressure, pin the level (0-3, instead of the player's intensity) or flag an arrival (the bed
+  returns from its rest). Ids: `awaken:gate/<theme>` (music; provider `gate`, priority 100; none in the Abyssal Shrine
+  or the Ritual). Reserved: `awaken:descent/stratum_<n>` (music); `awaken:city/<district>` for the city's ambience
+  (ambience slot, `source` ambient, priority 100; its levels are the district's crowd, e.g. night / quiet / busy /
+  crowd, pinned by the provider from the district's density; it answers only inside the city site, so it never meets a
+  gate's music).
 
 Plan v2 · overworld structures (details in docs/modules/structures.md):
 - One visual language: three families (gates, Precursor ruins, lairs), each with its own light and palette.

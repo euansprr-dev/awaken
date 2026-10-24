@@ -125,11 +125,13 @@ change is heard within about a second. A soft knee above -1 dBFS catches a stem 
 It plays through NeoForge's per-instance stream hook (`SoundInstance.getStream`), relative and at the origin.
 
 **Contexts are data** (`LayerManifest`): `assets/<ns>/music_layers/<path>.json` for the context `<ns>:<path>` (gates:
-`awaken:gate/<theme>`): `source` music or ambient, `frames` (every stem's exact length), the stems (file, attack, duck,
-release) and the gains per level. Two slots play at once: music (takes the music channel) and ambience (the Ambient
-slider, never touches the music channel). Any module adds a context with `MusicLayers.register(slot, priority, name,
+`awaken:gate/<theme>`): `source` music or ambient (the slider it follows), `frames` (every stem's exact length), the
+stems (file, attack, duck, release) and the gains per level. Two slots play at once: music (takes the music channel)
+and ambience (never touches the music channel). Any module adds a context with `MusicLayers.register(slot, priority, name,
 provider)`: the provider names the context for a player (or null) and may report pressure or pin the level (e.g. a
-city district's crowd density). The highest priority that answers wins; gates are priority 100.
+city district's crowd density). The highest priority that answers wins; gates are priority 100. Reserved ids (SPEC):
+`awaken:descent/stratum_<n>` (music) and `awaken:city/<district>` (ambience: `source` ambient, its four levels the
+district's crowd, pinned by the city's provider from its density, answering only inside the city site).
 
 **Loudness of the layers.** The music rule (-19 ± 2 dBFS gated RMS, ≤ -1 dBTP) applies to what the player hears: the
 mix at each level, not a stem alone. The stems of a theme are mastered together: one gain per stem so calm sits at

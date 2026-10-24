@@ -74,7 +74,7 @@ public final class MusicLayers {
         return LayerWatch.current(p, slot);
     }
 
-    /** The intensity level of a player's slot as last decided ({@link Intensity#CALM}..{@link Intensity#LORD}). */
+    /** The intensity level of a player's slot as last decided ({@link Intensity#CALM}..{@link Intensity#LORD}; -1 without a context). */
     public static int level(ServerPlayer p, Slot slot) {
         return LayerWatch.level(p, slot);
     }
