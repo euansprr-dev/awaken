@@ -13,7 +13,7 @@ Orchestrator: session "btw: kind of a side question…" (local_fe8b1e52…, List
 | S3 runner | wall-run, hang, ledge jump on the body pattern; latency; accidental triggers | /Volumes/MEDIA/Awaken-c-runner · carillon/spike-runner | running |
 | S4 crowd | 240 ledger + 40 bodies: tick and frame cost | /Volumes/MEDIA/Awaken-c-crowd · carillon/spike-crowd | running |
 | S5 atlas | picture-in-picture diorama + clouds cost; reuse Diorama or not | /Volumes/MEDIA/Awaken-c-atlas · carillon/spike-atlas | running |
-| S6 basin | city basin at spawn | Awakened Lands session, pack/awakened-lands | agreed, ~1 day (API below) |
+| S6 basin | city basin at spawn | Awakened Lands session, pack/awakened-lands (07d24ce, fb39078) | **done**: API landed, 300/300 GameTests, verified on seed 777 (site 1178, 828 on a peninsula; flat y 70 to 330, eased by 700; river carved to y 57, water to 63, terraced banks) |
 
 Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / cut per feature; SPEC §16 numbers marked
 (G0) updated; workstream briefs W1–W9 written from the results.
@@ -47,3 +47,10 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 - 2026-10-24: Holo part 1 (wristband, K menu, text glow, core/api/UiHooks) + Lens dimming (texel 14) landed on
   build/awaken-v1 (238546c, 401f1b0; 310/310 GameTests) and was merged into carillon/main. Holo part 2 (power-pick
   screens, notifications) still on pack/holo-ui.
+- 2026-10-24: S6 done. dev.awaken.terrain.api.CityBasin landed on pack/awakened-lands (07d24ce, fb39078): request(Predicate),
+  site(server), reserved(x, z); STREET_Y 70, CORE_RADIUS 330, BLEND_RADIUS 700, RIVER (the city's path; terrain owns the
+  constant); CitySite(..., river in world coords, riverHalfWidth 9, riverFloorY 57, basinCarved). Feature flag
+  awaken:carillon declared; the Carillon pack's pack.mcmeta requests it. Vanilla trees and flowers still grow on the flat
+  ground (the painter clears plots); caves and ores continue deeper than 20 below the street. Dev view:
+  `CITY=on PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/city-basin.txt`, `/awaken terrain city`.
+  Carillon gets it through build/awaken-v1 once the main session merges pack/awakened-lands (decision 13).
