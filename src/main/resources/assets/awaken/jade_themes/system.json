@@ -1,0 +1,28 @@
+{
+  "version": 200,
+  "styleName": "awaken.system",
+  "tooltipStyle": {
+    "sprite": "awaken:jade/system",
+    "borderWidth": 1,
+    "padding": [6, 6, 9, 7]
+  },
+  "text": {
+    "colors": {
+      "normal": "#D9E4F2",
+      "info": "#8FA7C4",
+      "title": "#FFFFFF",
+      "success": "#8FF0C0",
+      "warning": "#FFCF7A",
+      "danger": "#FF8A7A",
+      "failure": "#FF8A7A"
+    },
+    "shadow": true,
+    "modNameStyle": {
+      "color": "#7FC3FF",
+      "italic": false
+    }
+  },
+  "progressColors": {
+    "normal": "#7FC3FF"
+  }
+}
