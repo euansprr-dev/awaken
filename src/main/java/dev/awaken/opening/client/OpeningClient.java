@@ -97,6 +97,8 @@ public final class OpeningClient {
         bus.addListener(RenderNameTagEvent.CanRender.class, OpeningCamera::nameTag);
         bus.addListener(SubmitCustomGeometryEvent.class, OpeningFx::submit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
+        bus.addListener(net.neoforged.neoforge.client.event.ToastAddEvent.class, OpeningClient::onToast);
+        bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Render.Post.class, OpeningClient::overLoading);
     }
 
     static void reset() {
@@ -145,7 +147,7 @@ public final class OpeningClient {
                     ArrivalShot.start(s);
                 } else {
                     OpeningHud.waiting(s.n());
-                    if (fresh) OpeningHud.title("THE SQUARE", "the gate is drawing breath", 70);
+                    if (fresh && s.n() > 0) OpeningHud.title("CHOIR SQUARE", "the gate is drawing breath", 70);
                 }
             }
             case OpeningPayloads.WAKE -> {
@@ -317,6 +319,7 @@ public final class OpeningClient {
         WakeShot.tickPost();
         RegistryScene.tick();
         if (beat == OpeningPayloads.RUN) RunnerEye.tick(mc);
+        releaseToasts(mc);
     }
 
     /** The View key: vanilla's Toggle Perspective flips first and third person and skips the front view. */
@@ -330,6 +333,34 @@ public final class OpeningClient {
             flipped = true;
         }
         if (flipped) mc.gameRenderer.checkEntityPostEffect(mc.options.getCameraType().isFirstPerson() ? mc.getCameraEntity() : null);
+    }
+
+    // ---- quiet: nothing else on screen while a shot plays (toasts wait and come after) -------------------------------
+
+    private static final java.util.ArrayDeque<net.minecraft.client.gui.components.toasts.Toast> TOASTS = new java.util.ArrayDeque<>();
+    private static long nextToast;
+
+    static boolean quiet() {
+        return OpeningCamera.active() || OpeningHud.black > 0.4F || OpeningHud.lidsOn;
+    }
+
+    private static void onToast(net.neoforged.neoforge.client.event.ToastAddEvent e) {
+        if (!quiet()) return;
+        e.setCanceled(true);
+        if (TOASTS.size() < 12) TOASTS.addLast(e.getToast());
+    }
+
+    private static void releaseToasts(Minecraft mc) {
+        if (TOASTS.isEmpty() || quiet() || ticks < nextToast) return;
+        mc.gui.toastManager().addToast(TOASTS.removeFirst());
+        nextToast = ticks + 10;
+    }
+
+    /** A dimension change shows the loading screen: under the arrival's black it stays black. */
+    private static void overLoading(net.neoforged.neoforge.client.event.ScreenEvent.Render.Post e) {
+        if (!(e.getScreen() instanceof net.minecraft.client.gui.screens.LevelLoadingScreen) || OpeningHud.black < 0.5F) return;
+        var g = e.getGuiGraphics();
+        g.fill(0, 0, g.guiWidth(), g.guiHeight(), 0xFF000000);
     }
 
     static LocalPlayer player() {

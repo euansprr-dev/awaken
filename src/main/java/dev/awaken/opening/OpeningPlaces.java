@@ -35,9 +35,12 @@ public final class OpeningPlaces {
         this.streetY = l.streetY;
     }
 
+    /** Tests: a city put somewhere in the test level (the real one stays as it is). */
+    static @Nullable CityLayout testLayout;
+
     /** This world's places, or null outside a Carillon world. */
     static @Nullable OpeningPlaces get() {
-        CityLayout l = City.layout();
+        CityLayout l = testLayout != null ? testLayout : City.layout();
         return l == null ? null : new OpeningPlaces(l);
     }
 
@@ -129,7 +132,7 @@ public final class OpeningPlaces {
 
     /** The Assessment Lens's crystal (it floats over its pedestal). */
     Vec3 lens() {
-        return atV(LENS_X + 0.5, TERRACE + 2.6, LENS_Z + 0.5);
+        return atV(LENS_X + 0.5, TERRACE + 3.4, LENS_Z + 0.5);
     }
 
     /** Where you stand to be read: a step in front of the Lens, facing it (north). */

@@ -51,7 +51,7 @@ final class OpeningRegistry {
             return;
         }
         OpeningState st = OpeningDirector.state(p);
-        long now = p.level().getGameTime();
+        long now = OpeningDirector.now(p);
         long since = STEP_AT.computeIfAbsent(p.getUUID(), k -> now);
         long age = now - since;
         boolean client = AwakenNet.canReceive(p, OpeningPayloads.Scene.TYPE);
@@ -109,7 +109,7 @@ final class OpeningRegistry {
     static void step(ServerPlayer p, int step) {
         OpeningState st = OpeningDirector.state(p);
         st.step = step;
-        STEP_AT.put(p.getUUID(), p.level().getGameTime());
+        STEP_AT.put(p.getUUID(), OpeningDirector.now(p));
         OpeningDirector.sendScene(p);
         DirectorLog.log(p, "opening", "registry step " + step);
     }

@@ -156,7 +156,7 @@ public final class OpeningModule {
         }
         if (b == Prologue.ARRIVAL) {
             OpeningWorld w = OpeningWorld.get(p.level().getServer());
-            boolean playing = w.cinematicAt >= 0 && p.level().getGameTime() >= w.cinematicAt;
+            boolean playing = w.cinematicAt >= 0 && OpeningDirector.now(p) >= w.cinematicAt;
             s.forced = playing ? Intensity.LORD : Intensity.TENSION;
             return RUN_MUSIC;
         }
@@ -293,7 +293,7 @@ public final class OpeningModule {
         if (Progression.profile(p).awakened()) {
             p.sendSystemMessage(Component.literal("Awakened players keep their awakening; the opening restarts as a replay."));
         }
-        Story.openingBeat(p, Prologue.NOT_STARTED, p.level().getGameTime());
+        Story.openingBeat(p, Prologue.NOT_STARTED, OpeningDirector.now(p));
         OpeningDirector.begin(p);
     }
 
@@ -322,7 +322,7 @@ public final class OpeningModule {
                 // as the Accept leaves it: awakened, in the infirmary's black
                 OpeningDirector.state(p).arrived = true;
                 Progression.awaken(p);
-                Story.openingBeat(p, Prologue.WAKE, p.level().getGameTime());
+                Story.openingBeat(p, Prologue.WAKE, OpeningDirector.now(p));
                 OpeningDirector.state(p).bed = -1;
             }
             case "registry", "lens" -> {

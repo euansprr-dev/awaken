@@ -99,9 +99,50 @@ final class OpeningDirector {
         return inOpening(p) ? b == Prologue.ACCEPTING ? "void" : "ritual" : null;
     }
 
-    private static long now(ServerPlayer p) {
-        return p.level().getGameTime();
+    /** Tests move the opening's clock forward instead of waiting. */
+    static long clockOffset;
+
+    static long now(ServerPlayer p) {
+        return p.level().getGameTime() + clockOffset;
     }
+
+    static long now(MinecraftServer server) {
+        return server.overworld().getGameTime() + clockOffset;
+    }
+
+    /** The story's gate as the opening uses it: tests stand a fake one in. */
+    interface Gate {
+        java.util.Optional<String> open(ServerPlayer p, BlockPos near);
+
+        boolean usable(MinecraftServer server, String id);
+
+        java.util.Optional<BlockPos> pos(MinecraftServer server, String id);
+
+        boolean enter(ServerPlayer p, String id);
+    }
+
+    static final Gate REAL_GATE = new Gate() {
+        @Override public java.util.Optional<String> open(ServerPlayer p, BlockPos near) {
+            return GateHooks.openScripted(p, "awaken:bell_crypt", 0, near, 1);
+        }
+
+        @Override public boolean usable(MinecraftServer server, String gate) {
+            if (gate.isEmpty()) return false;
+            String s = GateHooks.get(server.overworld(), gate).map(GateHooks.GateView::state).orElse("RELEASED");
+            if (!(s.equals("BUILDING") || s.equals("READY") || s.equals("ACTIVE") || s.equals("OPEN"))) return false;
+            return !OpeningModule.ritualSealed(server, gate);
+        }
+
+        @Override public java.util.Optional<BlockPos> pos(MinecraftServer server, String gate) {
+            return gate.isEmpty() ? java.util.Optional.empty() : GateHooks.get(server.overworld(), gate).map(GateHooks.GateView::pos);
+        }
+
+        @Override public boolean enter(ServerPlayer p, String gate) {
+            return OpeningModule.enterGate(p, gate);
+        }
+    };
+
+    static Gate gates = REAL_GATE;
 
     private static long age(ServerPlayer p) {
         return now(p) - Story.prologueSince(p);
@@ -130,7 +171,7 @@ final class OpeningDirector {
         MinecraftServer server = p.level().getServer();
         OpeningWorld w = OpeningWorld.get(server);
         // a new Carillon world opens at first light: the lamps going out, the spire catching the sun
-        if (!w.dawnSet && Math.floorMod(server.overworld().getOverworldClockTime(), 24000L) < 4000) {
+        if (!w.dawnSet && OpeningPlaces.testLayout == null && Math.floorMod(server.overworld().getOverworldClockTime(), 24000L) < 4000) {
             // 26.3's world clocks: the vanilla command knows how to move the overworld's
             server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), "time set 23200");
             w.dawnSet = true;
@@ -236,7 +277,7 @@ final class OpeningDirector {
         MinecraftServer server = p.level().getServer();
         OpeningWorld w = OpeningWorld.get(server);
         if (gateUsable(server, w.gate)) return;
-        var id = GateHooks.openScripted(p, "awaken:bell_crypt", 0, at.square(), 1);
+        var id = gates.open(p, at.square());
         w.gate = id.orElse("");
         w.setDirty();
         DirectorLog.log(p, "opening", id.isPresent() ? "the story's gate opens in Choir Square: " + id.get() : "no gates: the arrival will ask in place");
@@ -244,18 +285,12 @@ final class OpeningDirector {
 
     /** Still standing, and its ritual hasn't sealed anyone in yet. */
     static boolean gateUsable(MinecraftServer server, String gate) {
-        if (gate.isEmpty()) return false;
-        String s = GateHooks.get(server.overworld(), gate).map(GateHooks.GateView::state).orElse("RELEASED");
-        if (!(s.equals("BUILDING") || s.equals("READY") || s.equals("ACTIVE") || s.equals("OPEN"))) return false;
-        return !OpeningModule.ritualSealed(server, gate);
+        return gates.usable(server, gate);
     }
 
     /** Where the light falls: the gate's own place once it stands, else the square's middle. */
     static Vec3 column(MinecraftServer server, OpeningPlaces at) {
-        String gate = OpeningWorld.get(server).gate;
-        var view = gate.isEmpty() ? java.util.Optional.<GateHooks.GateView>empty() : GateHooks.get(server.overworld(), gate);
-        if (view.isPresent()) return Vec3.atBottomCenterOf(view.get().pos());
-        return Vec3.atBottomCenterOf(at.square());
+        return gates.pos(server, OpeningWorld.get(server).gate).map(Vec3::atBottomCenterOf).orElse(Vec3.atBottomCenterOf(at.square()));
     }
 
     private static void tickRun(ServerPlayer p) {
@@ -363,7 +398,7 @@ final class OpeningDirector {
         if (w.cinematicAt >= 0 || !runners(server).isEmpty()) return;
         List<ServerPlayer> here = arrived(server);
         if (here.isEmpty()) return;
-        w.cinematicAt = server.overworld().getGameTime() + (here.size() > 1 ? GROUP_DELAY : SOLO_DELAY);
+        w.cinematicAt = now(server) + (here.size() > 1 ? GROUP_DELAY : SOLO_DELAY);
         w.setDirty();
     }
 
@@ -392,7 +427,7 @@ final class OpeningDirector {
 
     /** The group's clock, once a tick: stragglers pulled, the cinematic set when the last one is in. */
     static void serverTick(MinecraftServer server) {
-        if (server.getTickCount() % 20 != 0 || OpeningPlaces.get() == null) return;
+        if ((server.getTickCount() + clockOffset) % 20 != 0 || OpeningPlaces.get() == null) return;
         OpeningWorld w = OpeningWorld.get(server);
         List<ServerPlayer> running = runners(server);
         List<ServerPlayer> here = arrived(server);
@@ -402,7 +437,7 @@ final class OpeningDirector {
             return;
         }
         if (w.firstArrival < 0) return;
-        long now = server.overworld().getGameTime();
+        long now = now(server);
         for (ServerPlayer r : running) {
             long[] m = MOVED.get(r.getUUID());
             boolean idle = m != null && now - m[2] >= IDLE;
@@ -425,7 +460,7 @@ final class OpeningDirector {
             long arrivedAt = Story.prologueSince(p);
             Story.callToGate(p, w.gate); // the ritual lets in only those its bell rings for
             st.arrived = true;
-            if (OpeningModule.enterGate(p, w.gate)) {
+            if (gates.enter(p, w.gate)) {
                 PULLING.remove(p.getUUID());
                 DirectorLog.log(p, "opening", "the gate takes you: " + w.gate);
                 return;
@@ -478,7 +513,7 @@ final class OpeningDirector {
         }
         OpeningStage.ensure(server.overworld(), at);
         Vec3 side = at.bedside(st.bed);
-        float yaw = Math.floorMod(st.bed, 8) < 4 ? 90F : 90F; // facing east, toward the doorway and the Registry beyond
+        float yaw = -90F; // facing east (Minecraft's yaw: -90 looks along +x), toward the doorway and the Registry beyond
         p.teleportTo(server.overworld(), side.x, side.y, side.z, Set.<Relative>of(), yaw, 0F, true);
         p.resetFallDistance();
         p.removeEffect(MobEffects.BLINDNESS);

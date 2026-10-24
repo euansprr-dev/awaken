@@ -116,8 +116,11 @@ final class OpeningHud {
         Identifier id = e.getName();
         if (id.equals(LAYER)) return;
         String path = id.getPath();
-        if (path.equals("subtitle_overlay") || path.equals("chat")) return;
-        boolean hide = OpeningCamera.active() || black > 0.4F || lidsOn || SkyShot.current != null;
+        if (path.equals("subtitle_overlay")) return;
+        boolean shot = OpeningCamera.active() || SkyShot.current != null;
+        boolean hide = shot || black > 0.4F || lidsOn;
+        // chat stays, except over a shot (it is a film then)
+        if (path.equals("chat") && !shot) return;
         if (hide) e.setCanceled(true);
     }
 

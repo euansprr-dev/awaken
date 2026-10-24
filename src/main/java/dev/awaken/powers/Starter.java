@@ -83,7 +83,7 @@ public final class Starter {
             migrate(p);
             if (pending(p)) Later.run(p.level().getServer(), 60, () -> offer(p));
         });
-        NowHooks.register(p -> pending(p)
+        NowHooks.register(p -> pending(p) && !dev.awaken.core.api.OpeningHooks.inOpening(p)
                 ? List.of(NowHooks.Suggestion.of("powers:first_power", 85, "Choose your first power · K"))
                 : List.of());
         Requirements.powerCheck = Starter::meets;

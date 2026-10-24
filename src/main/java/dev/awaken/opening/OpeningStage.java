@@ -33,8 +33,12 @@ final class OpeningStage {
     static final int VERSION = 1;
     private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
 
+    /** Tests turn the stage off: they share one level, and the stage would write over other tests' ground. */
+    static boolean enabled = true;
+
     /** Builds what this world's stage is missing (its chunks are loaded on the way: the city is pregenerated). */
     static void ensure(ServerLevel level, OpeningPlaces at) {
+        if (!enabled) return;
         OpeningWorld w = OpeningWorld.get(level.getServer());
         if (w.stage >= VERSION) return;
         long t0 = System.nanoTime();
@@ -226,7 +230,7 @@ final class OpeningStage {
     /** The bridge cracks in the middle, its bell rings once as it drops, then the spans go outward into the river. */
     static void dropBridge(ServerLevel level, OpeningPlaces at) {
         CityPlan.Bridge b = at.bellBridgeBox();
-        if (b == null) return;
+        if (b == null || !enabled) return;
         int len = b.x1() - b.x0() + 1;
         int mid = (b.x0() + b.x1()) / 2;
         Vec3 c = at.bellBridge();

@@ -26,7 +26,7 @@ import org.joml.Vector3f;
 final class OpeningFx {
     private OpeningFx() {}
 
-    private static @Nullable RenderType add;
+    private static @Nullable RenderType add, glass;
     private static double cx, cy, cz;
     private static float pt;
     private static final Quaternionf CAM = new Quaternionf();
@@ -134,8 +134,18 @@ final class OpeningFx {
         UP.set(0, 1, 0).rotate(CAM);
         LOOK.set(0, 0, -1).rotate(CAM);
         if (add == null) add = RenderTypes.lightning();
+        if (glass == null) glass = RenderTypes.debugQuads();
         PoseStack ps = e.getPoseStack();
         SubmitNodeCollector out = e.getSubmitNodeCollector();
+        // the column's body: translucent and unfogged, so it reads against a bright dawn sky from across the city
+        // (additive light vanishes against the sky, and the lightning type fades with the fog)
+        if (columnOn) out.submitCustomGeometry(ps, glass, (pose, vc) -> {
+            try {
+                columnBody(vc, OpeningClient.ticks() + pt);
+            } catch (RuntimeException ex) {
+                dev.awaken.Awaken.LOG.error("[opening] fx failed", ex);
+            }
+        });
         out.submitCustomGeometry(ps, add, (pose, vc) -> {
             try {
                 draw(vc);
@@ -199,6 +209,43 @@ final class OpeningFx {
                         argb(0.7F * (1 - k), 0xDDEEFF));
             }
         }
+    }
+
+    /** The column's body (translucent pass): a pale core and a wide blue glow, soft at the edges, faded at the top. */
+    private static void columnBody(VertexConsumer vc, float t) {
+        float since = t - fellAt;
+        double baseY = column.y;
+        double bottom = since < 8 ? TOP - (TOP - baseY) * Mth.clamp(since / 8F, 0, 1) : baseY;
+        float beat = 0.85F + 0.15F * Mth.sin(t * 0.13F) + surge * 0.6F + bloom * 0.5F;
+        double d = Math.sqrt((column.x - cx) * (column.x - cx) + (column.z - cz) * (column.z - cz));
+        float far = (float) Mth.clamp(d / 120.0, 1.0, 2.6);
+        // camera-facing across the column
+        double vx = column.x - cx, vz = column.z - cz;
+        double vl = Math.sqrt(vx * vx + vz * vz);
+        double nx = vl < 1e-6 ? 1 : -vz / vl, nz = vl < 1e-6 ? 0 : vx / vl;
+        ribbon(vc, bottom, nx, nz, (3.0F + bloom * 5) * far, argb(Math.min(0.9F, 0.62F * beat), 0xF0F8FF));
+        ribbon(vc, bottom, nx, nz, (11F + bloom * 14) * far, argb(Math.min(0.6F, 0.2F * beat), 0xA6D2FF));
+    }
+
+    /** A vertical ribbon on the column, bright on its axis and clear at its edges, thinning toward the sky. */
+    private static void ribbon(VertexConsumer vc, double bottom, double nx, double nz, float width, int argb) {
+        double h = width * 0.5;
+        int r = rim(argb);
+        int top = scaleAlpha(argb, 0.35F);
+        double y0 = bottom, y1 = TOP;
+        // two halves: centre to each edge
+        for (int sgn = -1; sgn <= 1; sgn += 2) {
+            double ex = nx * h * sgn, ez = nz * h * sgn;
+            vt(vc, column.x, y0, column.z, argb);
+            vt(vc, column.x, y1, column.z, top);
+            vt(vc, column.x + ex, y1, column.z + ez, rim(top));
+            vt(vc, column.x + ex, y0, column.z + ez, r);
+        }
+    }
+
+    /** Single winding (the translucent pass draws both faces itself). */
+    private static void vt(VertexConsumer vc, double x, double y, double z, int argb) {
+        vc.addVertex((float) (x - cx), (float) (y - cy), (float) (z - cz)).setColor(argb);
     }
 
     /** The bronze pulse on the next hold: twice, soft, then gone (2.5 s); the key glyph floats over it. */
