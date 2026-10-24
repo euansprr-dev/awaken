@@ -152,8 +152,9 @@ final class RouteDriver {
                 boolean step = p.horizontalCollision && ground;
                 keys(true, false, false, false, step, false, m == OpeningRoutes.Move.RUN && dxz > 1.2);
             }
-            case JUMP -> keys(true, false, false, false, ground && (dxz < 1.5 || p.horizontalCollision), false, true);
-            case MANTLE -> keys(true, false, false, false, ground && (dxz < 1.2 || p.horizontalCollision), false, true);
+            // a hop up a step: no sprint close in (a sprint-jump carries the body on, off the side of a gable)
+            case JUMP -> keys(true, false, false, false, ground && (dxz < 1.5 || p.horizontalCollision), false, dxz > 2.5);
+            case MANTLE -> keys(true, false, false, false, ground && (dxz < 1.2 || p.horizontalCollision), false, dxz > 2.5);
             case DROP -> keys(true, false, false, false, false, false, dxz > 1.0);
             case SLIDE -> keys(true, false, false, false, false, dxz < 3.0, true);
             case LEAP -> {
@@ -180,7 +181,8 @@ final class RouteDriver {
             case LEDGE_UP -> keys(false, false, false, false, hang && age % 6 < 3, false, false);
             case SWIM -> keys(true, false, false, false, true, false, false);
             case CLIMB -> {
-                if (dy > 0.2) keys(true, false, false, false, ladder || p.horizontalCollision, false, false);
+                // in the water, swim at the ladder's foot (held up, not sinking to the bed)
+                if (dy > 0.2) keys(true, false, false, false, ladder || p.horizontalCollision || water, false, false);
                 else if (ladder) keys(false, false, false, false, false, false, false); // let go: down the ladder
                 else keys(true, false, false, false, false, false, false);
             }

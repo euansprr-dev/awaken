@@ -340,6 +340,81 @@ def street_points(route, city, pts, move='run', near=1.0):
         to_points(route, path, skip_first=True)
 
 
+HANDHOLD = 'waxed_exposed_cut_copper_slab[type=top]'
+
+
+def lips(stage, route):
+    """A hang up onto a stair-edged lip: the hands find the stair's low step and there's no room to climb out over its
+    high one, so the lip under the hang (and a block either side) becomes a bronze handhold, the run's mark for a climb."""
+    c = stage.city
+    pts = route.points
+    for k in range(1, len(pts)):
+        x, f, z, m = pts[k]
+        if m != 'hang' or f <= pts[k - 1][1] + 0.5:
+            continue
+        cx, cz, ry = int(math.floor(x)), int(math.floor(z)), int(round(f)) - 1
+        ax = abs(pts[k][0] - pts[k - 1][0]) >= abs(pts[k][2] - pts[k - 1][2])
+        for d in (-1, 0, 1):
+            lx, lz = (cx, cz + d) if ax else (cx + d, cz)
+            i, j, l = ry - c.ymin, lz + c.oz, lx + c.ox
+            if 0 <= i < c.H and 0 <= j < c.D and 0 <= l < c.W and c.stairs[i, j, l] and (lx, ry, lz) not in stage.blocks:
+                stage.put(lx, ry, lz, HANDHOLD, FULL)
+
+
+def keep_off_edges(city, route):
+    """A hop up a step beside a drop off the side of the way (up a gable's end) moves a block inward when the floor
+    there is the same: a jump carries the body on a little, and a driven run (or a hesitating player shown the way)
+    keeps to the middle. Runs, take-offs and landings stay where they are."""
+    pts = route.points
+    for k in range(1, len(pts) - 1):
+        x, f, z, m = pts[k]
+        if m not in ('jump', 'mantle') or pts[k + 1][3] in ('leap', 'drop', 'hang'):
+            continue
+        tx, tz = pts[k + 1][0] - pts[k - 1][0], pts[k + 1][2] - pts[k - 1][2]
+        n = math.hypot(tx, tz)
+        if n < 1e-6:
+            continue
+        tx, tz = tx / n, tz / n
+        cx, cz = int(math.floor(x)), int(math.floor(z))
+        for sx, sz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if abs(sx * tx + sz * tz) > 0.5:
+                continue  # ahead or behind, not to the side
+            if any(abs(g - f) <= 1.6 for g in city.floors(cx + sx, cz + sz, int(f) - 3, int(f) + 2)):
+                continue  # no drop that side
+            ix, iz = cx - sx, cz - sz
+            if any(abs(g - f) < 0.01 for g in city.floors(ix, iz, int(f) - 2, int(f) + 2)):
+                pts[k][0], pts[k][2] = round(x - sx, 2), round(z - sz, 2)
+                break
+
+
+def quay_points(city, route, x_near, z0, z1, feet):
+    """Along a lower quay that bends with the water: the middle of the walk every few blocks (the planner's runs join
+    them round the bollards)."""
+    pts = []
+    step = 1 if z1 > z0 else -1
+    for z in range(z0, z1 + step, step):
+        run = [x for x in range(int(x_near) - 4, int(x_near) + 5) if any(abs(g - feet) < 0.01 for g in city.floors(x, z, int(feet) - 2, int(feet) + 2))]
+        if not run:
+            continue
+        # the stretch of walk nearest x_near
+        groups, cur = [], [run[0]]
+        for x in run[1:]:
+            if x == cur[-1] + 1:
+                cur.append(x)
+            else:
+                groups.append(cur)
+                cur = [x]
+        groups.append(cur)
+        g = min(groups, key=lambda g: min(abs(x + 0.5 - x_near) for x in g))
+        mid = g[len(g) // 2] + 0.5
+        x_near = mid
+        if not pts or abs(z - pts[-1][1]) >= 6 or abs(mid - pts[-1][0]) >= 1:
+            pts.append((mid, z + 0.5))
+    if pts[-1][1] != z1 + 0.5:
+        pts.append((pts[-1][0], z1 + 0.5))
+    street_points(route, city, pts, near=feet)
+
+
 # ---- the design ---------------------------------------------------------------------------------------------------------
 
 BOX = (-200, -170, 10, 60)
@@ -378,6 +453,8 @@ def design(city, plan):
     a1_goal = path[-1][0]
     path = run_built(city, (-185, -135, -110, -15), (-169.5, 28.0, -112.5), a1_goal, 'act1_roof')
     to_points(r, path)
+    lips(stage, r)
+    keep_off_edges(city, r)
     routes.append(r)
     a1_end = r.end()
 
@@ -394,6 +471,8 @@ def design(city, plan):
     decorate(stage, planks)
     path = run_built(city, (-140, -60, -76, 0), a1_end, path[-1][0], 'act2_roof')
     to_points(r, path, skip_first=True)
+    lips(stage, r)
+    keep_off_edges(city, r)
     # the arm: run to the trolley, drop to a hang on its south face, shimmy past, climb back up, on to the tower
     r.add(-73.5, 23.0, -25.5, 'run')
     r.add(-73.5, 21.45, -24.5, 'hang')
@@ -417,6 +496,8 @@ def design(city, plan):
     decorate(stage, planks)
     path = run_built(city, (-64, -60, 0, 0), cab, path[-1][0], 'act3_roof')
     to_points(r, path, skip_first=True)
+    lips(stage, r)
+    keep_off_edges(city, r)
     routes.append(r)
 
     # ---------------- the street routes: the couriers' stair, then M1's street route (Roost to the square)
@@ -465,7 +546,8 @@ def design(city, plan):
     r.add(-86.5, 1.0, -142.5, 'run')
     r.add(-85.5, -3.0, -142.5, 'climb')     # down the ladder to the lower quay
     r.add(-85.5, -3.0, -141.5, 'run')
-    r.add(-85.5, -3.0, -41.5, 'run')        # south along the water
+    quay_points(city, r, -85.5, -141, -42, -3.0)   # south along the water, round its bends
+    r.add(-85.5, -3.0, -41.5, 'run')
     routes.append(r)
     r = Route('act2_canal', 2, 'canal')
     r.add(-85.5, -3.0, -41.5, 'run')
@@ -473,7 +555,7 @@ def design(city, plan):
     r.add(-84.5, -3.0, -40.5, 'run')
     r.add(-84.5, -6.4, -37.5, 'swim')       # off the lower quay into the canal's mouth
     r.add(-84.5, -6.4, -33.6, 'swim')
-    r.add(-84.5, -3.0, -33.5, 'climb')      # up the mouth's ladder
+    r.add(-84.5, -3.0, -32.5, 'climb')      # up the mouth's ladder (its column: on it, the driver climbs)
     r.add(-84.5, -3.0, -31.5, 'run')
     street_points(r, city, [(-82.5, -6.5), (-82.5, -4.5)], near=-3.0)
     r.add(-79.5, -6.4, -4.5, 'swim')        # the Bell Bridge is in the river beside you: across
