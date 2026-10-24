@@ -584,3 +584,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT (default) | CINEMATIC.
 - Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
   finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
+- Lens and far terrain: Distant Horizons draws without the game's depth, so Lens reads DH's own depth through
+  `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
+  and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
+  distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.

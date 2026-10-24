@@ -3,7 +3,7 @@
  "minecraft": "26.3",
  "loader": "neoforge",
  "neoforge": "26.3.0.95",
- "generated": "2026-10-24 09:10",
+ "generated": "2026-10-24 12:21",
  "files": [
   {
    "slug": "3dskinlayers",
@@ -46,6 +46,27 @@
    ],
    "dependencyOf": [],
    "why": "Food values."
+  },
+  {
+   "slug": "bendable-cuboids",
+   "title": "Bendable Cuboids",
+   "projectId": "OI3FlFon",
+   "versionId": "DbUl93Sa",
+   "version": "2.1.0",
+   "channel": "beta",
+   "published": "2026-10-06",
+   "file": "BendableCuboidsMerged-2.1.0+mc.26.3.jar",
+   "url": "https://cdn.modrinth.com/data/OI3FlFon/versions/DbUl93Sa/BendableCuboidsMerged-2.1.0%2Bmc.26.3.jar",
+   "size": 59841,
+   "sha1": "5f8037cadcbe6139dd3ad15e65b7a17aa38d54ea",
+   "sha512": "59428a7e216b0b0fef73e09d8859a608386643309470917f11b6a806295ee9d697adf81fae50d7f5543a6587e923915c2e472c1443f26a3588a127210a309616",
+   "client": "required",
+   "server": "optional",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Bent knees and elbows: renders the bend the Player Animation Library's clips carry (same author). Client only."
   },
   {
    "slug": "cameraoverhaul",
@@ -151,10 +172,10 @@
    "client": "required",
    "server": "unsupported",
    "profiles": [
-    "perf"
+    "comfort"
    ],
    "dependencyOf": [],
-   "why": "Throttles the game in the background: cooler laptop."
+   "why": "Throttles the game in the background: a cooler laptop. Never in perf runs: it stops drawing while the window is hidden, so a background measurement records no frames."
   },
   {
    "slug": "e4mc",

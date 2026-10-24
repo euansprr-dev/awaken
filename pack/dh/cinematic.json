@@ -1,0 +1,12 @@
+{
+  "_about": "Distant Horizons for the Cinematic look: a wider horizon with textured, block-detail LODs and SSAO, still under the default 256-chunk radius.",
+  "lodChunkRenderDistanceRadius": "192",
+  "maxHorizontalResolution": "\"BLOCK\"",
+  "verticalQuality": "\"MEDIUM\"",
+  "horizontalQuality": "\"MEDIUM\"",
+  "enableSsao": "true",
+  "enableAntiAliasing": "true",
+  "enableTexturedLods": "true",
+  "enableMultiLayerClouds": "false",
+  "numberOfThreads": "4"
+}

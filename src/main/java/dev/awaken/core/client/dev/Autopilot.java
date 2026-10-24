@@ -48,6 +48,7 @@ import java.util.Map;
  * info                                           logs the renderer, device, framebuffer, heap, GC and loaded mods
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
+ * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
@@ -134,11 +135,13 @@ public final class Autopilot {
         }
         Runtime rt = Runtime.getRuntime();
         Awaken.LOG.info(String.format(java.util.Locale.ROOT,
-                "[autopilot] perf %s frames=%d avg_fps=%.1f p50=%.2fms p95=%.2fms p99=%.2fms max=%.2fms tick_p95=%sms heap=%d/%dMB fb=%dx%d load=%.1f occluded=%s",
+                "[autopilot] perf %s frames=%d avg_fps=%.1f p50=%.2fms p95=%.2fms p99=%.2fms max=%.2fms tick_p95=%sms heap=%d/%dMB fb=%dx%d load=%.1f occluded=%s minimized=%s",
                 label, f.length, f.length / (sum / 1e9), pct(f, 0.50), pct(f, 0.95), pct(f, 0.99), f[f.length - 1] / 1e6, tick,
                 (rt.totalMemory() - rt.freeMemory()) >> 20, rt.maxMemory() >> 20, mc.getWindow().getWidth(), mc.getWindow().getHeight(),
                 // the machine's 1-minute load: other builds or games running at the same time show up here
-                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(), occluded(mc)));
+                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(), occluded(mc),
+                // a minimized window is held to 10 fps by the game itself (FramerateLimitTracker)
+                mc.getWindow().isIconified()));
     }
 
     private static void startPerf(String label, boolean timed) {
@@ -326,6 +329,10 @@ public final class Autopilot {
                 String[] w = arg.trim().split("\\s+");
                 mc.getWindow().setWindowed(Integer.parseInt(w[0]), Integer.parseInt(w[1]));
                 waitTicks = 20;
+            }
+            case "lens" -> {
+                dev.awaken.core.AwakenConfig.Client.LENS.set(dev.awaken.core.AwakenConfig.Client.LensLook.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
+                waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
             }
             case "opt" -> { // opt renderDistance|simulationDistance <n>
                 String[] o = arg.trim().split("\\s+");

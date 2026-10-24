@@ -13,7 +13,7 @@ final class Look {
 
     static final int EXPOSURE = 0, CONTRAST = 1, SATURATION = 2, WARMTH = 3, SHADOW_TINT = 4, HIGHLIGHT_TINT = 7,
             SPLIT_TONE = 10, VIGNETTE = 11, BLOOM = 12, BLOOM_THRESHOLD = 13, SKY_BLOOM = 14, SHAFTS = 15, HAZE = 16,
-            HAZE_START = 17, HAZE_TINT = 18, HAZE_TINT_MIX = 21, HAZE_DESATURATE = 22, SUNSET_WARMTH = 23, SIZE = 24;
+            HAZE_START = 17, HAZE_TINT = 18, HAZE_TINT_MIX = 21, HAZE_DESATURATE = 22, SUNSET_WARMTH = 23, SUN_GLOW = 24, SIZE = 25;
 
     /** The neutral look: the frame exactly as the game drew it, apart from the dither. */
     static float[] neutral() {
@@ -46,6 +46,7 @@ final class Look {
         num(o, "hazeTintMix", v, HAZE_TINT_MIX);
         num(o, "hazeDesaturate", v, HAZE_DESATURATE);
         num(o, "sunsetWarmth", v, SUNSET_WARMTH);
+        num(o, "sunGlow", v, SUN_GLOW);
         return v;
     }
 

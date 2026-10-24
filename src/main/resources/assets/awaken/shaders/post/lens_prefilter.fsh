@@ -5,6 +5,7 @@
 // the open sky is (what light shafts are made of). Parameters arrive in a small texture (dev.awaken.lens.client.LensParams).
 uniform sampler2D InSampler;     // the frame, bilinear
 uniform sampler2D DepthSampler;  // its depth: reversed-Z, so the sky keeps the cleared 0
+uniform sampler2D FarDepthSampler; // far terrain's depth (Distant Horizons), when it draws
 uniform sampler2D ParamsSampler;
 
 layout(location = 0) in vec2 texCoord;
@@ -18,19 +19,31 @@ layout(location = 0) out vec4 fragColor;
 
 vec4 P(int i) { return texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 
+// far terrain (Distant Horizons) draws with its own depth; true where it drew this pixel
+bool farHit(float depth, int flags) {
+    bool reverse = (flags & 1) != 0;
+    return reverse ? depth > 1.0e-6 : depth < 0.999999;
+}
+
 void main() {
     // four bilinear taps, each the mean of a 2x2 block: a cheap box filter that keeps small lights from flickering
     vec2 t = 1.0 / InSize;
     vec3 c = (texture(InSampler, texCoord + t * vec2(-1.0, -1.0)).rgb + texture(InSampler, texCoord + t * vec2(1.0, -1.0)).rgb
             + texture(InSampler, texCoord + t * vec2(-1.0, 1.0)).rgb + texture(InSampler, texCoord + t * vec2(1.0, 1.0)).rgb) * 0.25;
     float sky = texture(DepthSampler, texCoord).r < 1.0e-7 ? 1.0 : 0.0;
+    vec4 p0 = P(0);
+    if (sky > 0.5 && p0.b > 0.5 && farHit(texture(FarDepthSampler, texCoord).r, int(p0.a * 255.0 + 0.5))) sky = 0.0;
     vec4 b = P(6);                    // r bloom strength/2, g threshold, b sky bloom, a shaft strength
-    float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
+    // keyed on the brightest channel, not luminance: Awaken's glows are saturated (pink vortices, blue runes, red
+    // eyes) and luminance alone would never let them bloom; plain white surfaces (clouds, snow) bloom less
+    float hi = max(c.r, max(c.g, c.b)), lo = min(c.r, min(c.g, c.b));
+    float sat = hi > 1.0e-4 ? (hi - lo) / hi : 0.0;
     // soft-knee threshold: lights fade into the bloom instead of popping in
-    float knee = 0.18;
-    float soft = clamp(luma - b.g + knee, 0.0, 2.0 * knee);
+    float knee = 0.22;
+    float soft = clamp(hi - b.g + knee, 0.0, 2.0 * knee);
     soft = soft * soft / (4.0 * knee + 1.0e-4);
-    float w = max(soft, luma - b.g) / max(luma, 1.0e-4);
-    w = clamp(w, 0.0, 1.0) * mix(1.0, b.b, sky);
+    float w = max(soft, hi - b.g) / max(hi, 1.0e-4);
+    w = clamp(w, 0.0, 1.0) * mix(0.45, 1.0, sat) * mix(1.0, b.b, sky);
+    float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
     fragColor = vec4(c * w, sky * smoothstep(0.35, 0.95, luma));
 }
