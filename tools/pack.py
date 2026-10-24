@@ -148,9 +148,11 @@ def client_running_in(game_dir):
     except Exception:
         return True  # can't tell: be safe
     for line in ps.splitlines():
-        if "devlaunch.Main" not in line:
+        parts = line.split(None, 2)
+        # only real game JVMs: a shell whose command text mentions the same words is not a client
+        if len(parts) < 3 or not parts[1].endswith("/java") or "devlaunch.Main" not in parts[2]:
             continue
-        pid = line.split(None, 1)[0]
+        pid = parts[0]
         if tree in line:
             return True
         cwd = subprocess.run(["lsof", "-a", "-d", "cwd", "-p", pid, "-Fn"], capture_output=True, text=True).stdout
