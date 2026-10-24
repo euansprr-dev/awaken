@@ -98,10 +98,19 @@ public final class HearthService {
             activeScan = null;
             scanQueue.clear();
             REST.clear();
-            Breaks.clear();
-            Duty.clear();
+            forgetPeople();
         });
-        Household.init();
+    }
+
+    /**
+     * Server stop (singleplayer reuses the JVM): what the module remembers about people of the world that stopped,
+     * namely breaks near their Hearths, Echo duty, invitations, askings at Anchors and open offers.
+     */
+    static void forgetPeople() {
+        Breaks.clear();
+        Duty.clear();
+        Household.forgetAll();
+        Offers.forgetAll();
     }
 
     /** The world's feature flag. Safe to call before the config has loaded (defaults to on). */

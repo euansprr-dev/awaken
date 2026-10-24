@@ -36,11 +36,15 @@ public final class Household {
     /** The last time each stranger asked at someone's Anchor. */
     private static final Map<UUID, Long> ASKED = new HashMap<>();
 
-    static void init() {
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> {
-            INVITES.clear();
-            ASKED.clear();
-        });
+    /** Server stop: invitations and askings belong to the world that stopped. */
+    static void forgetAll() {
+        INVITES.clear();
+        ASKED.clear();
+    }
+
+    /** Whether this player asked at someone's Anchor since the server started (tests). */
+    static boolean asked(UUID player) {
+        return ASKED.containsKey(player);
     }
 
     /** Sister homes this Hearth may still found: none below tier III, then one per tier. */

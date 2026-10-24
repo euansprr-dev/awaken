@@ -232,7 +232,7 @@ final class VeilEvents {
         if (event.getEntity() instanceof ServerPlayer sp && !sp.isCreative() && protectedSpot(event.getLevel(), event.getPos())) event.setCanceled(true);
     }
 
-    private static void onStopped(ServerStoppedEvent event) {
+    static void onStopped(ServerStoppedEvent event) {
         Projection.LIVE.clear();
         Projection.TRANSIT.clear();
         Projection.clearPendingDeaths();

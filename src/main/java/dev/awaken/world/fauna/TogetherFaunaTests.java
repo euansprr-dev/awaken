@@ -36,6 +36,10 @@ final class TogetherFaunaTests {
                 int vl = Progression.profile(v).level(), ll = Progression.profile(l).level();
                 h.assertTrue(vl > ll + 10, "a veteran well above the friend: " + vl + " vs " + ll);
                 BlockPos spawn = h.absolutePos(new BlockPos(2, 1, 6));
+                // an isolated test runs alone: any other player this close is left over from an earlier test
+                for (ServerPlayer o : java.util.List.copyOf(level.players())) {
+                    if (o != v && o != l && o.distanceToSqr(Vec3.atCenterOf(spawn)) < 160 * 160) level.getServer().getPlayerList().remove(o);
+                }
                 int group = FaunaRules.contentLevel(level, spawn, FaunaRole.NEUTRAL);
                 h.assertTrue(group == Math.max(0, ll - 1), "near both, a creature takes the friend's level (" + group + ")");
                 l.teleportTo(level, spawn.getX() + 100.5, spawn.getY(), spawn.getZ() + 0.5, java.util.Set.of(), 0F, 0F, true);
@@ -47,7 +51,8 @@ final class TogetherFaunaTests {
                 h.assertTrue(m instanceof WildMount, "a Frost Stag");
                 ((WildMount) m).tameTo(v, true);
                 h.assertTrue(MobHooks.bondedTo(m).equals(Optional.of(v.getUUID())), "bonded to the veteran");
-                h.assertFalse(MobHooks.bondedTo(m).map(o -> o.equals(l.getUUID())).orElse(false), "not to the friend, so their spirit can't possess it");
+                h.assertTrue(dev.awaken.veil.Possession.ownedByAnother(m, l), "the friend's spirit can't possess it");
+                h.assertFalse(dev.awaken.veil.Possession.ownedByAnother(m, v), "its owner's can");
             } finally {
                 for (AwakenMob m : made) m.discard();
                 vet.leave();

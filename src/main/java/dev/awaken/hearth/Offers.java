@@ -24,8 +24,6 @@ public final class Offers {
     static void init() {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
                 (net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> forget(e.getEntity().getUUID()));
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
-                (net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> PENDING.clear());
         Signal.onAction(PREFIX, (player, action, accepted) -> {
             String key = action.substring(Math.min(action.length(), PREFIX.length() + 1));
             Map<String, Pending> mine = PENDING.get(player.getUUID());
@@ -54,5 +52,16 @@ public final class Offers {
 
     static void forget(UUID player) {
         PENDING.remove(player);
+    }
+
+    /** Server stop: no offer outlives its world. */
+    static void forgetAll() {
+        PENDING.clear();
+    }
+
+    /** Whether this player has an open offer under this key (tests). */
+    static boolean open(UUID player, String key) {
+        Map<String, Pending> mine = PENDING.get(player);
+        return mine != null && mine.containsKey(key);
     }
 }

@@ -53,6 +53,12 @@ public final class Possession {
         return possessLevel >= 2 || creature;
     }
 
+    /** Someone else's tamed pet or bonded mount: only its owner's spirit may wear it (SPEC "Together"). */
+    public static boolean ownedByAnother(Mob m, ServerPlayer sp) {
+        return (m instanceof TamableAnimal t && t.isTame() && !t.isOwnedBy(sp))
+                || dev.awaken.core.api.MobHooks.bondedTo(m).map(o -> !o.equals(sp.getUUID())).orElse(false);
+    }
+
     static void request(ServerPlayer sp, Projection.Spirit s, int entityId) {
         if (s.possessed != null) {
             release(sp, s, null);
@@ -65,9 +71,7 @@ public final class Possession {
             Signal.toast(sp, Component.literal("The living won't let you in yet. (C-rank)"));
             return;
         }
-        if ((m instanceof TamableAnimal t && t.isTame() && !t.isOwnedBy(sp))
-                || dev.awaken.core.api.MobHooks.bondedTo(m).map(o -> !o.equals(sp.getUUID())).orElse(false)) {
-            // someone's pet, or someone's bonded mount
+        if (ownedByAnother(m, sp)) {
             Signal.toast(sp, Component.literal("That one belongs to someone. It won't let you in."));
             return;
         }
