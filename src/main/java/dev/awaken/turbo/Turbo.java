@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.TreeSet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.IEventBus;
@@ -45,7 +44,7 @@ public final class Turbo {
     private static String why = "not probed yet";
     private static @Nullable TurboDevice device;
     private static @Nullable TurboCompute compute;
-    private static boolean titleSaved;
+    private static boolean titleSaved, sawOverlay;
     private static int worldFrames;
 
     public static void init(IEventBus modBus) {
@@ -209,15 +208,24 @@ public final class Turbo {
     private static void frameStart(RenderFrameEvent.Pre e) {
         if (!probed) probe();
         TurboCompute c = compute;
-        if (c != null) c.tick();
+        if (c == null) return;
+        try {
+            c.tick();
+        } catch (RuntimeException | LinkageError ex) {
+            // the contract: Turbo never takes the game down; it switches itself off instead
+            compute = null;
+            off("compute failed: " + ex);
+            TurboVersions.LOG.error("[turbo] compute stopped", ex);
+        }
     }
 
-    /** Saves the pipeline cache once the title screen is up (loading compiled everything) and 30 s into a world. */
+    /** Saves the pipeline cache once loading is over (the loading overlay gone) and 3,600 frames into a world. */
     private static void frameEnd(RenderFrameEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
-        if (!titleSaved && mc.gui.overlay() == null && mc.gui.screen() instanceof TitleScreen) {
+        if (mc.gui.overlay() != null) sawOverlay = true;
+        if (!titleSaved && sawOverlay && mc.gui.overlay() == null) {
             titleSaved = true;
-            PipelineCacheStore.save("title screen");
+            PipelineCacheStore.save("loaded");
         }
         if (mc.level != null && worldFrames >= 0 && ++worldFrames > 3600) {
             worldFrames = -1;
@@ -228,7 +236,11 @@ public final class Turbo {
     private static void stopping(ClientStoppingEvent e) {
         PipelineCacheStore.save("game closing");
         TurboCompute c = compute;
-        if (c != null) c.drain();
+        try {
+            if (c != null) c.drain();
+        } catch (RuntimeException | LinkageError ex) {
+            TurboVersions.LOG.warn("[turbo] couldn't wait for background work at shutdown: {}", ex.toString());
+        }
     }
 
     /** {@code /awaken turbo status | demo on|off} (client side). */

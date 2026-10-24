@@ -7,6 +7,7 @@ import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.commands.GpuQueryPool;
 import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline;
 import com.mojang.renderpearl.api.pipeline.DepthStencilState;
 import com.mojang.renderpearl.api.pipeline.IndexType;
@@ -51,6 +52,7 @@ final class TurboDemo {
             .withVertexShader("core/position_color")
             .withFragmentShader("core/position_color")
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
+            .withColorTargetState(ColorTargetState.DEFAULT) // one opaque colour target: the builder's default is none
             .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
             .withDepthStencilState(DepthStencilState.DEFAULT)
             .withCull(false)
@@ -110,8 +112,19 @@ final class TurboDemo {
         az = Math.floor(p.z) - N / 2.0;
     }
 
+    /** Never lets an exception reach the render loop: a failure turns the demo off with one log line. */
     private static void afterSky(RenderLevelStageEvent.AfterSky e) {
         if (!wanted) return;
+        try {
+            draw(e);
+        } catch (RuntimeException | LinkageError ex) {
+            wanted = false;
+            last = "stopped: " + ex;
+            TurboVersions.LOG.error("[turbo] demo off: {}", ex.toString(), ex);
+        }
+    }
+
+    private static void draw(RenderLevelStageEvent.AfterSky e) {
         TurboCompute c = Turbo.compute();
         if (c == null) return;
         CompiledRenderPipeline compiled = RenderSystem.getCompiledPipelineNullable(GRID);
