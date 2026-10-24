@@ -31,7 +31,9 @@ import java.util.function.BiConsumer;
  * top, is a foliage attachment). Limbs, root flares and the twig crosses inside each mass are {@code branch_provider}
  * blocks (bark on all sides); the twigs keep every leaf of a wide mass within reach of wood, so nothing decays.
  * Everything stays within {@code limb_length + twig} of the trunk; with a cloud of radius r the tree reaches
- * {@code limb_length + r} at most (kept at 12 or less: a feature may write one chunk beyond its own).
+ * {@code limb_length + r} at most (kept at 12 or less: a feature may write one chunk beyond its own). With
+ * {@code taper}, limbs and their masses shrink toward the top (a conifer's tiers: at the top a limb is
+ * {@code 1 - taper} as long and its mass {@code 2 taper} blocks smaller).
  */
 public final class LimbedTrunkPlacer extends TrunkPlacer {
     public static final MapCodec<LimbedTrunkPlacer> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -41,7 +43,7 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
             Codec.intRange(1, 2).fieldOf("width").forGetter(p -> p.width),
             IntProviders.codec(0, 6).optionalFieldOf("lean", ConstantInt.ZERO).forGetter(p -> p.lean),
             Codec.floatRange(0.0F, 1.0F).optionalFieldOf("lean_start", 0.4F).forGetter(p -> p.leanStart),
-            IntProviders.codec(0, 6).fieldOf("limbs").forGetter(p -> p.limbs),
+            IntProviders.codec(0, 12).fieldOf("limbs").forGetter(p -> p.limbs),
             Codec.floatRange(0.0F, 1.0F).fieldOf("limb_start").forGetter(p -> p.limbStart),
             IntProviders.codec(1, 10).fieldOf("limb_length").forGetter(p -> p.limbLength),
             Codec.floatRange(0.0F, 3.0F).fieldOf("limb_rise").forGetter(p -> p.limbRise),
@@ -49,6 +51,7 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
             IntProviders.codec(0, 4).optionalFieldOf("root_flare", ConstantInt.ZERO).forGetter(p -> p.rootFlare),
             Codec.intRange(-3, 3).optionalFieldOf("limb_mass", -1).forGetter(p -> p.limbMass),
             Codec.intRange(-3, 3).optionalFieldOf("crown_mass", 0).forGetter(p -> p.crownMass),
+            Codec.floatRange(0.0F, 1.0F).optionalFieldOf("taper", 0.0F).forGetter(p -> p.taper),
             BlockStateProvider.CODEC.fieldOf("branch_provider").forGetter(p -> p.branchProvider)
     ).apply(i, LimbedTrunkPlacer::new));
 
@@ -63,11 +66,13 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
     private final IntProvider rootFlare;
     /** Added to the foliage radius of the masses on the limbs and of the crown on the trunk's top. */
     private final int limbMass, crownMass;
+    /** How much limbs and their masses shrink from the lowest limb to the top (0: all alike). */
+    private final float taper;
     private final Holder<BlockStateProvider> branchProvider;
 
     public LimbedTrunkPlacer(int baseHeight, int heightRandA, int heightRandB, int width, IntProvider lean, float leanStart, IntProvider limbs,
                              float limbStart, IntProvider limbLength, float limbRise, IntProvider twig, IntProvider rootFlare,
-                             int limbMass, int crownMass, Holder<BlockStateProvider> branchProvider) {
+                             int limbMass, int crownMass, float taper, Holder<BlockStateProvider> branchProvider) {
         super(baseHeight, heightRandA, heightRandB);
         this.width = width;
         this.lean = lean;
@@ -80,6 +85,7 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
         this.rootFlare = rootFlare;
         this.limbMass = limbMass;
         this.crownMass = crownMass;
+        this.taper = taper;
         this.branchProvider = branchProvider;
     }
 
@@ -129,7 +135,8 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
             int hy = n == 1 ? (lo + hi) / 2 : lo + Math.round((hi - lo) * k / (float) (n - 1)) - random.nextInt(2);
             hy = Mth.clamp(hy, 1, treeHeight - 1);
             double cx = origin.getX() + ox[hy] + (w - 1) / 2.0, cz = origin.getZ() + oz[hy] + (w - 1) / 2.0;
-            int len = limbLength.sample(random);
+            double up = (hy - lo) / (double) Math.max(1, treeHeight - lo); // 0 at the lowest limb, toward 1 at the top
+            int len = Math.max(1, (int) Math.round(limbLength.sample(random) * (1 - taper * up)));
             double rise = limbRise * (0.75 + 0.5 * random.nextDouble());
             BlockPos prev = null, end = null;
             for (double t = w / 2.0 + 0.5; t <= len + 0.01; t += 1.0) {
@@ -141,7 +148,7 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
             }
             if (end == null) continue;
             twigs(level, trunkSetter, random, tree, end);
-            out.add(new FoliagePlacer.FoliageAttachment(end, limbMass, false));
+            out.add(new FoliagePlacer.FoliageAttachment(end, limbMass - (int) Math.round(2 * taper * up), false));
         }
 
         // the crown on top of the trunk

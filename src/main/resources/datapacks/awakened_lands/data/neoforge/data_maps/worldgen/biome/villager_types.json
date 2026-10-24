@@ -1,7 +1,13 @@
 {
   "values": {
+    "awaken:frost_spires": {
+      "villager_type": "minecraft:snow"
+    },
     "awaken:glass_steppe": {
       "villager_type": "minecraft:savanna"
+    },
+    "awaken:mirror_marsh": {
+      "villager_type": "minecraft:swamp"
     },
     "awaken:shattered_highlands": {
       "villager_type": "minecraft:taiga"

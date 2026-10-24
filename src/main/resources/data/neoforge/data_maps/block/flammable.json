@@ -87,6 +87,58 @@
     "awaken:glassbark_leaves": {
       "burn_odds": 60,
       "ignite_odds": 30
+    },
+    "awaken:bluepine_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_bluepine_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:bluepine_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_bluepine_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:weepwood_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_weepwood_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:weepwood_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_weepwood_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:bluepine_planks": {
+      "burn_odds": 20,
+      "ignite_odds": 5
+    },
+    "awaken:bluepine_leaves": {
+      "burn_odds": 60,
+      "ignite_odds": 30
+    },
+    "awaken:weepwood_planks": {
+      "burn_odds": 20,
+      "ignite_odds": 5
+    },
+    "awaken:weepwood_leaves": {
+      "burn_odds": 60,
+      "ignite_odds": 30
+    },
+    "awaken:weepwood_tendrils": {
+      "burn_odds": 100,
+      "ignite_odds": 15
     }
   }
 }

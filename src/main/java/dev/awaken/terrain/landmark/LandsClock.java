@@ -7,8 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * What the second pair's worldgen really costs while a world generates (worker threads, Distant Horizons included):
- * each feature and landmark adds its calls and nanoseconds here; {@code /awaken terrain lands2cost} prints the averages
+ * What the Awakened lands' worldgen really costs while a world generates (worker threads, Distant Horizons included):
+ * each feature and landmark adds its calls and nanoseconds here; {@code /awaken terrain landscost} prints the averages
  * and the time per generated chunk. Two adders per name, no allocation per call once a name is known.
  */
 public final class LandsClock {

@@ -1,0 +1,14 @@
+{
+  "type": "awaken:frost_spires",
+  "count": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 4,
+    "max_inclusive": 8
+  },
+  "height": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 9,
+    "max_inclusive": 16
+  },
+  "splay": 0.5
+}

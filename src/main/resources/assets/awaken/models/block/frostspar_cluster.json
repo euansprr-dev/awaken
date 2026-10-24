@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross_emissive",
+  "textures": {
+    "cross": "awaken:block/frostspar_cluster",
+    "cross_emissive": "awaken:block/frostspar_cluster_glow"
+  }
+}

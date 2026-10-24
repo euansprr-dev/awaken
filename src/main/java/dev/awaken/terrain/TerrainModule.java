@@ -27,5 +27,9 @@ public final class TerrainModule {
         dev.awaken.terrain.landmark.LandmarkWorldgen.init(modBus);
         dev.awaken.terrain.landmark.LandmarkCommands.register();
         dev.awaken.terrain.landmark.LandmarkTests.register();
+        // the third pair: Frost Spires and Mirror Marsh (their landmark and hero tree live with the others)
+        dev.awaken.terrain.frost.FrostLands.init(modBus);
+        dev.awaken.terrain.mire.MireLands.init(modBus);
+        dev.awaken.terrain.landmark.Lands3Tests.register();
     }
 }
