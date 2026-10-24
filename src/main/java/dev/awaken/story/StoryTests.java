@@ -107,6 +107,37 @@ final class StoryTests {
                     .thenSucceed();
         });
 
+        // The black (Euan, 2026-10-24): Blindness from the death until the answer, whatever happens in between.
+        AwakenTests.register("story_black_held_until_accept", 60, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            ServerPlayer q = h.makeMockServerPlayerInLevel();
+            var blind = net.minecraft.world.effect.MobEffects.BLINDNESS;
+            Prologue.beginAcceptance(p, Prologue.progress(p));
+            var e = p.getEffect(blind);
+            h.assertTrue(Prologue.progress(p).prologue == StoryProgress.Prologue.ACCEPTING && e != null && e.isInfiniteDuration(),
+                    "the death holds you blind with no end, got " + e);
+            p.removeEffect(blind); // milk, or a command
+            Prologue.onLogin(p);
+            h.assertTrue(p.hasEffect(blind) && p.getEffect(blind).isInfiniteDuration(), "a relog while asked puts the black back");
+            // a save from before this: three seconds of Blindness, long gone or nearly so
+            p.removeEffect(blind);
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(blind, 20, 0));
+            Prologue.holdTheBlack(p);
+            h.assertTrue(p.getEffect(blind).isInfiniteDuration(), "an old short Blindness becomes the held one");
+            Prologue.onAnswer(p, Prologue.ACCEPT_ACTION, true);
+            h.assertFalse(p.hasEffect(blind), "Accept lifts it");
+            Prologue.onLogin(p);
+            h.assertFalse(p.hasEffect(blind), "and a relog after Accept doesn't bring it back");
+
+            Prologue.beginAcceptance(q, Prologue.progress(q));
+            Prologue.skip(q);
+            h.assertTrue(Progression.profile(q).awakened() && !q.hasEffect(blind), "/awaken story skip lifts it too");
+            q.addEffect(new net.minecraft.world.effect.MobEffectInstance(blind, 200, 0));
+            Prologue.liftTheBlack(q);
+            h.assertTrue(q.hasEffect(blind), "a mob's timed Blindness is not the story's to lift");
+            h.succeed();
+        });
+
         // Accept pays the prologue's bank and never leaves you below level 2; both keys accept.
         AwakenTests.register("story_accept_pays_the_bank", 60, h -> {
             ServerPlayer small = h.makeMockServerPlayerInLevel();

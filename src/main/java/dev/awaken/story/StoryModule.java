@@ -83,6 +83,7 @@ public final class StoryModule {
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer p) {
                 Prologue.sync(p);
+                Prologue.onLogin(p);
                 sendSeen(p);
                 Court.reofferEnding(p);
             }
