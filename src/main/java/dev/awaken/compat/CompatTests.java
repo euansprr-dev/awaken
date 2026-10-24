@@ -1,5 +1,6 @@
 package dev.awaken.compat;
 
+import com.mojang.authlib.GameProfile;
 import dev.awaken.Awaken;
 import dev.awaken.above.Above;
 import dev.awaken.above.AboveBlocks;
@@ -26,12 +27,18 @@ import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
 import dev.awaken.veil.VeilContent;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -46,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Companion policies, Awaken's side of them: which dimensions are instanced (far terrain off, Xaero's map shut); the
@@ -151,8 +159,7 @@ final class CompatTests {
 
         // The guard (SPEC §14): what the rule lets a player see, and a viewer's hidden set following the record as it grows.
         AwakenTests.register("compat_spoiler_guard", 40, h -> {
-            ServerPlayer sp = h.makeMockServerPlayerInLevel();
-            sp.setGameMode(GameType.SURVIVAL);
+            ServerPlayer sp = survivalPlayer(h);
             h.assertTrue(SpoilerRule.applies(sp, true) && !SpoilerRule.applies(sp, false), "on in survival, off with the setting off");
             Item shard = CoreApi.ESSENCE_SHARD.get(), heart = CoreApi.LORD_HEART.get(), iron = Items.IRON_INGOT;
             List<Item> all = List.of(shard, heart, iron);
@@ -205,6 +212,7 @@ final class CompatTests {
             ghoul.discard();
             h.assertTrue(SpoilerRule.disguised(VeilContent.VEIL_MARK.get().defaultBlockState())
                     && !SpoilerRule.disguised(Blocks.STONE.defaultBlockState()), "Veil marks are for spirit sight only");
+            h.getLevel().getServer().getPlayerList().remove(sp);
             h.succeed();
         });
 
@@ -280,5 +288,20 @@ final class CompatTests {
             h.assertTrue(LookAt.Creature.STREAM_CODEC.decode(buf).equals(c), "creature facts travel intact");
             h.succeed();
         });
+    }
+
+    /**
+     * A survival player in the test level: the helper's mock player answers "creative" to every game-mode question, and
+     * the guard is off in creative. A plain ServerPlayer on an embedded connection (as the fauna tests make theirs).
+     */
+    private static ServerPlayer survivalPlayer(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "compat-test"), false);
+        ServerPlayer player = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
+        Connection connection = new Connection(PacketFlow.SERVERBOUND);
+        new EmbeddedChannel(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        player.setGameMode(GameType.SURVIVAL);
+        return player;
     }
 }
