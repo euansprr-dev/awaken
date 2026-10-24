@@ -11,6 +11,7 @@ import com.zigythebird.playeranimcore.easing.EasingType;
 import com.zigythebird.playeranimcore.enums.PlayState;
 import com.zigythebird.playeranimcore.enums.State;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.PlayerClips;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Avatar;
@@ -29,8 +30,10 @@ import org.jspecify.annotations.Nullable;
  * <p>
  * Bendable Cuboids (optional, needs no code from us) draws the library's elbow and knee bends; while it is loaded each
  * clip plays its {@code _bent} twin, whose limbs bend and whose upper arms and thighs turn to keep the hands and feet
- * where the straight clip puts them. {@link #play} takes any clip in {@code assets/awaken/player_animations}, not just
- * casts.
+ * where the straight clip puts them.
+ * <p>
+ * A second layer above the casts plays other modules' clips (the Awakened Body's moves) through
+ * {@link PlayerClips}, which this class installs; a move's pose then wins over a cast's for as long as it runs.
  */
 final class PalCasts {
     private PalCasts() {}
@@ -38,6 +41,9 @@ final class PalCasts {
     private static final Identifier LAYER = Awaken.id("power_casts");
     /** Above the library's own default layer (1000) so a cast wins over idle emotes. */
     private static final int PRIORITY = 1500;
+    /** Other modules' clips (body moves): above the casts, so a slide or a roll keeps its whole body. */
+    private static final Identifier MOVES = Awaken.id("player_clips");
+    private static final int MOVES_PRIORITY = 1600;
     /** Bendable Cuboids draws bends: play each clip's bent twin. */
     private static final boolean BENT = ModList.get().isLoaded("bendable_cuboids");
     private static boolean broken;
@@ -54,27 +60,46 @@ final class PalCasts {
     }
 
     static void init() {
-        // every Avatar (players, mannequins) gets a layer on the client; server-side avatars get none
+        // every Avatar (players, mannequins) gets our layers on the client; server-side avatars get none
         PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(LAYER, PRIORITY,
                 avatar -> avatar.level().isClientSide() ? new Layer(avatar) : null);
+        PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(MOVES, MOVES_PRIORITY,
+                avatar -> avatar.level().isClientSide() ? new Layer(avatar) : null);
+        PlayerClips.install(new PlayerClips.Player() {
+            @Override public boolean play(int entityId, String clip, int fadeIn) {
+                return PalCasts.play(MOVES, entityId, clip, fadeIn);
+            }
+
+            @Override public void stop(int entityId) {
+                PalCasts.stop(MOVES, entityId);
+            }
+        });
     }
 
-    private static @Nullable Layer layer(int entityId) {
+    private static @Nullable Layer layer(Identifier id, int entityId) {
         Minecraft mc = Minecraft.getInstance();
         if (broken || mc.level == null) return null;
         Entity e = mc.level.getEntity(entityId);
         if (!(e instanceof Avatar avatar)) return null;
-        IAnimation a = PlayerAnimationAccess.getPlayerAnimationLayer(avatar, LAYER);
+        IAnimation a = PlayerAnimationAccess.getPlayerAnimationLayer(avatar, id);
         return a instanceof Layer l ? l : null;
     }
 
+    private static @Nullable Layer layer(int entityId) {
+        return layer(LAYER, entityId);
+    }
+
     /**
-     * Starts a clip on a player; false when the library can't pose this entity (not an avatar, no such clip), so the
-     * caller keeps the vanilla pose. {@code fadeIn}: ticks to blend from the current pose (vanilla or another clip).
+     * Starts a cast clip on a player; false when the library can't pose this entity (not an avatar, no such clip), so
+     * the caller keeps the vanilla pose. {@code fadeIn}: ticks to blend from the current pose (vanilla or another clip).
      */
     static boolean play(int entityId, String clip, int fadeIn) {
+        return play(LAYER, entityId, clip, fadeIn);
+    }
+
+    private static boolean play(Identifier layer, int entityId, String clip, int fadeIn) {
         try {
-            Layer l = layer(entityId);
+            Layer l = layer(layer, entityId);
             if (l == null) return false;
             l.mirror.enabled = l.getAvatar().getMainArm() == HumanoidArm.LEFT;
             boolean active = l.isActive();
@@ -104,10 +129,14 @@ final class PalCasts {
         }
     }
 
-    /** Stops whatever Awaken clip a player is in, at once (logout, respawn, settings off). */
+    /** Stops whatever cast clip a player is in, at once (logout, respawn, settings off). */
     static void stop(int entityId) {
+        stop(LAYER, entityId);
+    }
+
+    private static void stop(Identifier layer, int entityId) {
         try {
-            Layer l = layer(entityId);
+            Layer l = layer(layer, entityId);
             if (l != null && l.isActive()) l.stop();
         } catch (RuntimeException | LinkageError ex) {
             fail(ex);
@@ -117,6 +146,6 @@ final class PalCasts {
     private static void fail(Throwable ex) {
         if (broken) return;
         broken = true;
-        Awaken.LOG.warn("Player Animation Library casts failed; using the vanilla cast poses from now on", ex);
+        Awaken.LOG.warn("Player Animation Library clips failed; using the vanilla poses from now on", ex);
     }
 }

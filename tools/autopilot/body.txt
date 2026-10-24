@@ -310,6 +310,279 @@ cmd awaken admin power cast dash
 shot body_twist_velocity
 cmd kill @e[type=!minecraft:player,distance=..80]
 
+# ---- the moves' full-body clips (Player Animation Library; bent limbs with Bendable Cuboids), close up ----
+# With neither library these shots show the vanilla-model poses. The camera comes in (2.5 blocks behind, 3.5 in front);
+# a 'side' shot turns the head 90 degrees mid-slide (the slide keeps its way) so the camera sees the body side on.
+# Timing, from the [body] traces and the shots: a slide is about wait - 0.5 ticks old at its shot, a slide-cancel's
+# jump wait - 7.5, a roll about wait after landing; mantles are shot at a sweep of driver delays (d3..d7).
+cmd clear @s
+cmd kill @e[type=minecraft:item]
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 8
+shot clip_slide_tp_8
+camera front
+cmd attribute @s minecraft:camera_distance base set 4.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 8
+shot clip_slide_front_8
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 6
+look 90 12
+shot clip_slide_side_6
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 10
+shot clip_slidejump_tp_3
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 14
+shot clip_slidejump_tp_7
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 10
+shot clip_slidejump_front_3
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 14
+shot clip_slidejump_front_7
+cmd fill -2 200 4 2 200 6 minecraft:stone_bricks
+cmd fill -2 201 4 2 201 6 minecraft:stone_brick_slab
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 7
+shot clip_mantle_tp_d7
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 6
+shot clip_mantle_tp_d6
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 5
+shot clip_mantle_tp_d5
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 4
+shot clip_mantle_tp_d4
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 3
+shot clip_mantle_tp_d3
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 6
+shot clip_mantle_front_d6
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 5
+shot clip_mantle_front_d5
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 4
+shot clip_mantle_front_d4
+cmd fill -2 200 4 2 201 6 minecraft:air
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 2
+shot clip_roll_tp_2
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 4
+shot clip_roll_tp_4
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 7
+shot clip_roll_tp_7
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 11
+shot clip_roll_tp_12
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 2
+shot clip_roll_front_2
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 4
+shot clip_roll_front_4
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 7
+shot clip_roll_front_7
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 11
+shot clip_roll_front_12
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 9
+shot clip_sprint_tp
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 9
+shot clip_sprint_front
+
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 9
+look 60 12
+shot clip_sprint_side
+cmd kill @e[type=minecraft:item]
+# armour on: does it bend with the limbs or clip?
+cmd item replace entity @s armor.chest with minecraft:iron_chestplate
+cmd item replace entity @s armor.legs with minecraft:iron_leggings
+camera front
+cmd attribute @s minecraft:camera_distance base set 4.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 8
+shot clip_armour_slide_front
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 6
+look 90 12
+shot clip_armour_slide_side
+camera back
+cmd attribute @s minecraft:camera_distance base set 2.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 4
+shot clip_armour_roll_tp
+cmd fill -2 200 4 2 200 6 minecraft:stone_bricks
+cmd fill -2 201 4 2 201 6 minecraft:stone_brick_slab
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 5
+shot clip_armour_mantle_front
+cmd fill -2 200 4 2 201 6 minecraft:air
+camera front
+cmd attribute @s minecraft:camera_distance base set 3.5
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 9
+shot clip_armour_sprint_front
+cmd item replace entity @s armor.chest with minecraft:air
+cmd item replace entity @s armor.legs with minecraft:air
+cmd attribute @s minecraft:camera_distance base set 4
+
 # ---- the Status screen's line ----
 camera first
 cmd awaken body try release

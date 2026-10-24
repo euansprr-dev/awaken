@@ -280,7 +280,8 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
-  `MovementHooks` (the body's moves for powers).
+  `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
+  Animation Library is installed; a no-op otherwise).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -529,6 +530,9 @@ Awakened Body (module `body`, docs/modules/body.md; approved 2026-10-24, widened
   unlock is one toast in the same tick as the awakening or rank-up (it joins that burst), remembered in `awaken:body_memory`
   (schema 1, kept through death); old saves hear theirs once after login. Status › THE BODY lists the moves you have.
 - Off while riding, sleeping, projecting, meditating, flying or gliding. No invincibility frames anywhere.
+- Looks with the Player Animation Library (optional): each move plays a full-body clip (tools/art/specs/body_moves.py;
+  bent elbows and knees with Bendable Cuboids) through `core.api.PlayerClips`, from the same prediction and `body_seen`
+  signals, no new packets; without it the vanilla-model poses stay. First person unchanged.
 - Soft landing: landing from ≥ 3 blocks while sprinting or crouching rolls: safe fall +3, ×0.6 beyond. One LivingFallEvent
   listener (LOW, never sees a cancelled fall), so a power's landing, a mount, an elytra never roll; where Low Gravity or jet
   boots already give ≥ +3 safe fall, or a perk ≤ ×0.6, the kinder rule wins and nothing stacks.
@@ -631,6 +635,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   With Distant Horizons drawing, Lens adds no distance haze (DH fogs its own terrain and turns vanilla fog off; Lens
   hazing only the near terrain drew a ring where it ends): the same-moment A/B tour (tools/autopilot/lens-dh.txt)
   showed far terrain intact with Lens on, and DH's depth texture already cleared by post-effect time.
+- Lens looks load from every `assets/<namespace>/lens/*.json`, merged by key in path order (modules add their own
+  file, e.g. looks_lands.json, never edit looks.json). Key `biome:<id>` wins where the camera's biome matches (sampled
+  every 10 ticks; biome-to-biome changes ease over ~3 s, dimension changes over ~1.5 s).
 - Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
   finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens reads DH's own depth through
