@@ -250,6 +250,43 @@ def leaf_sprite(seed, shape):
     return c
 
 
+def elder_leaf_sprite():
+    """A broad leaf with a stem and a pale midrib (white, tinted gold at spawn)."""
+    c = Canvas(8, 8)
+    body = [(3, 0), (2, 1), (3, 1), (4, 1), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (1, 3), (2, 3), (3, 3), (4, 3), (5, 3),
+            (6, 3), (2, 4), (3, 4), (4, 4), (5, 4), (6, 4), (3, 5), (4, 5), (5, 5)]
+    for x, y in body:
+        c.set(x, y, (214, 214, 214, 255) if (x * 3 + y) % 4 == 0 else (236, 236, 236, 255))
+    for x, y in ((3, 1), (3, 2), (4, 3), (4, 4), (5, 5)):
+        c.set(x, y, (255, 255, 255, 255))  # midrib
+    c.set(6, 6, (176, 176, 176, 255))  # stem
+    c.set(7, 7, (160, 160, 160, 255))
+    return c
+
+
+def needle_sprite():
+    """A spruce or pine twig: two needles spreading from one point."""
+    c = Canvas(8, 8)
+    for x, y in ((2, 5), (3, 4), (4, 3), (5, 2)):
+        c.set(x, y, (240, 240, 240, 255))
+    for x, y in ((2, 6), (3, 6), (4, 5), (5, 5), (6, 4)):
+        c.set(x, y, (205, 205, 205, 255))
+    c.set(1, 6, (255, 255, 255, 255))
+    return c
+
+
+def mote_sprite(radius):
+    """A soft glowing mote: a white core fading out (tinted and lit full bright at spawn)."""
+    c = Canvas(8, 8)
+    for y in range(8):
+        for x in range(8):
+            d = math.hypot(x - 3.5, y - 3.5) / radius
+            if d < 1.0:
+                a = (1.0 - d) ** 1.6
+                c.set(x, y, (255, 255, 255, round(255 * min(1.0, a * 1.4))))
+    return c
+
+
 def build(out):
     out.block("elder_log", bark("elder_bark", "elder"))
     out.block("elder_log_top", log_top("elder_bark", "elder_wood", "elder"))
@@ -271,6 +308,10 @@ def build(out):
     out.block("lumen_cap_glow", glow)
     for i, shape in enumerate(("oval", "long", "round", "edge")):
         out.particle(f"falling_leaf_{i}", leaf_sprite("leaf", shape))
+    out.particle("falling_leaf_4", elder_leaf_sprite())
+    out.particle("falling_leaf_5", needle_sprite())
+    out.particle("lumen_mote_0", mote_sprite(4.2))
+    out.particle("lumen_mote_1", mote_sprite(2.6))
 
 
 def preview(dest):

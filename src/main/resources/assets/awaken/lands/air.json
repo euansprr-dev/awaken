@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "_doc": "What drifts in the air (docs/modules/lands.md, dev.awaken.terrain.client.AirTable). Rules are tried in order, first match wins; any assets/<ns>/lands/air*.json is read, later files' rules first. leaves: by block id or #block tag. sprites: falling_leaf_<n> indices; size: x a leaf's usual size; rate: x the spawn rate; color: a fixed colour instead of the block's tint and texture. biomes: by biome id, #biome tag or *. rate 0 = nothing falls there; color + colorMix tint every leaf in that biome; motes: glowing motes rising (night: only at night).",
+  "leaves": [
+    {"match": ["minecraft:cherry_leaves"], "skip": true, "_why": "vanilla already drops cherry petals"},
+    {"match": ["minecraft:spruce_leaves"], "sprites": [5, 3], "size": 0.85},
+    {"match": ["minecraft:birch_leaves", "minecraft:azalea_leaves", "minecraft:flowering_azalea_leaves", "minecraft:acacia_leaves"], "sprites": [2, 0], "size": 0.9},
+    {"match": ["minecraft:jungle_leaves", "minecraft:mangrove_leaves"], "sprites": [1, 0], "size": 1.15},
+    {"match": ["minecraft:red_poplar_leaves", "minecraft:orange_poplar_leaves", "minecraft:yellow_poplar_leaves"], "sprites": [2, 4], "rate": 1.4},
+    {"match": ["awaken:elder_leaves"], "sprites": [4, 0], "size": 1.25, "rate": 2.0},
+    {"match": ["awaken:lumen_leaves"], "skip": true, "_why": "the Lumen Forest's air is motes"},
+    {"match": ["#minecraft:leaves"], "sprites": [0, 2, 0, 1]}
+  ],
+  "biomes": [
+    {"match": ["awaken:elderwood"], "rate": 3.0, "color": "#d9b347", "colorMix": 0.8, "sprites": [4, 0], "size": 1.2},
+    {"match": ["awaken:lumen_forest"], "rate": 0.0, "motes": {"color": "#7ff0f2", "rate": 1.0, "night": true}},
+    {"match": ["minecraft:cherry_grove"], "rate": 0.0},
+    {"match": ["#minecraft:is_forest", "#minecraft:is_taiga", "#minecraft:is_jungle", "minecraft:mangrove_swamp", "minecraft:swamp", "minecraft:pale_garden"], "rate": 1.0},
+    {"match": ["*"], "rate": 0.5}
+  ]
+}

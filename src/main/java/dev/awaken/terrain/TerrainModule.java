@@ -8,8 +8,10 @@ public final class TerrainModule {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(LandsPack::onAddPackFinders);
+        TerrainSounds.init(modBus);
         TerrainCommands.register();
         TerrainTests.register();
         BiomeTableTests.register();
+        WindTests.register();
     }
 }
