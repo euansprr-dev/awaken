@@ -14,7 +14,9 @@ import org.joml.Vector4f;
  *   <li>{@code VIEW}: in front of the eye, a little left, facing you with a slight turn toward the centre. It trails the
  *       camera through a {@link Spring}. Its size is set in framebuffer pixels per unit (a whole number, so text stays
  *       crisp) from the real projection each frame, so FOV changes never swell it; vanilla's bob is undone.</li>
- *   <li>{@code WRIST}: the same panel while it grows out of the forearm band ({@link Wrist}) and unfolds, then a VIEW.</li>
+ *   <li>{@code WRIST}: the same panel while it grows out of the forearm band ({@link Wrist}) and unfolds, then a VIEW;
+ *       or, {@link #landOn landed on} a flat screen's rectangle (the inventory), it grows out of the band into exactly
+ *       that rectangle and hands over to the flat screen once it is there ({@link #handsOver}).</li>
  *   <li>{@code WORLD}: drawn by {@link HoloOthers} at a fixed spot in the world (the glow over another player's wrist).</li>
  * </ul>
  */
@@ -22,7 +24,7 @@ public final class HoloPanel {
     public enum Anchor { VIEW, WRIST, WORLD }
 
     public final HoloCanvas canvas = new HoloCanvas();
-    public final HoloTimeline timeline = new HoloTimeline();
+    public final HoloTimeline timeline;
     final Spring spring = new Spring(0.20f, 4f);
     public Anchor anchor = Anchor.WRIST;
     public int w = 320, h = 200;
@@ -36,6 +38,13 @@ public final class HoloPanel {
     public float turn = 7f, lean = 3f;
     /** In third person the panel moves aside and shrinks so your raised arm stays in view. */
     boolean thirdPerson;
+    /** Rests on a flat screen's rectangle instead of the view rest: its top-left corner in GUI pixels, 1 unit = 1 GUI
+     *  pixel, parallel to the screen and never trailing (the flat screen doesn't). */
+    boolean onScreen;
+    float screenX, screenY;
+    /** Hands over to a flat screen once landed (the inventory): its own light fades out across {@code landed()} while
+     *  opening, and it shows fully again while it folds back after the flat screen has closed. */
+    boolean handsOver;
     /** Lower draw layers first (the demo under the K menu). */
     final int layer;
 
@@ -56,7 +65,20 @@ public final class HoloPanel {
     private final Vector3f v = new Vector3f(), wrist = new Vector3f();
 
     public HoloPanel(int layer) {
+        this(layer, 1f);
+    }
+
+    /** {@code speed}: how fast it plays the K menu's choreography ({@link HoloTimeline#INVENTORY_SPEED}). */
+    public HoloPanel(int layer, float speed) {
         this.layer = layer;
+        this.timeline = new HoloTimeline(speed);
+    }
+
+    /** Rests on the flat screen rectangle whose top-left corner is (x, y) in GUI pixels (see {@link #onScreen}). */
+    void landOn(float x, float y) {
+        onScreen = true;
+        screenX = x;
+        screenY = y;
     }
 
     /** Animation values for this frame, from the timeline (or all 1 for a plain VIEW panel). */
@@ -78,6 +100,7 @@ public final class HoloPanel {
         beam = anchor == Anchor.WRIST ? t.beam(reduced) : 0;
         beamBoost = anchor == Anchor.WRIST ? t.beamBoost(reduced) : 0;
         fade = t.ms() < 150 ? 0 : 1;
+        if (handsOver) fade *= reduced ? 0 : t.closing() ? 1 : 1 - t.landed();
     }
 
     /** Whole framebuffer pixels per unit so the panel is about {@link #screenFrac} of the width and fits the height. */
@@ -94,6 +117,10 @@ public final class HoloPanel {
      * {@code wristView} (the band's emitter, view space): it comes out of the wrist along the beams into its place.
      */
     void place(float grow, Vector3f wristView) {
+        if (onScreen) {
+            placeOnScreen(grow, wristView);
+            return;
+        }
         ppu = choosePpu();
         float unit = ppu * ViewMath.metresPerPixel(dist);
         float rx = thirdPerson ? Math.min(restX, -0.50f) : restX;
@@ -116,6 +143,32 @@ public final class HoloPanel {
             m.transformPosition(cornerR.set(w, h, 0));
         }
         // view → world, with vanilla's bob undone
+        pose.set(ViewMath.VIEW_TO_WORLD).mul(ViewMath.UNBOB).mul(m);
+        drawn = true;
+    }
+
+    /**
+     * {@link #place} for a panel {@link #onScreen}: the plane at {@link #dist} on which a unit is exactly one GUI pixel,
+     * so at rest the panel covers the flat screen's rectangle pixel for pixel (the GUI is an orthographic overlay of
+     * the same framebuffer: GUI pixel × scale → framebuffer pixel → the level projection's NDC). It unfolds about its
+     * centre and grows out of the wrist like any wrist panel.
+     */
+    private void placeOnScreen(float grow, Vector3f wristView) {
+        int scale = Math.max(1, Minecraft.getInstance().getWindow().getGuiScale());
+        ppu = scale;
+        float unit = scale * ViewMath.metresPerPixel(dist);
+        float ndcX = 2f * (screenX + w / 2f) * scale / ViewMath.fbW - 1f;
+        float ndcY = 1f - 2f * (screenY + h / 2f) * scale / ViewMath.fbH;
+        v.set(ndcX * ViewMath.tanX * dist, ndcY * ViewMath.tanY * dist, -dist);
+        m.identity();
+        float g = Math.max(0.02f, Math.min(1f, grow));
+        if (g < 1f) m.translate(wristView).scale(g).translate(-wristView.x, -wristView.y, -wristView.z);
+        m.translate(v);
+        m.scale(unit * sx, -unit * sy, unit);
+        m.translate(-w / 2f, -h / 2f, 0);
+        beamFrom.set(wristView);
+        m.transformPosition(cornerL.set(0, h, 0));
+        m.transformPosition(cornerR.set(w, h, 0));
         pose.set(ViewMath.VIEW_TO_WORLD).mul(ViewMath.UNBOB).mul(m);
         drawn = true;
     }

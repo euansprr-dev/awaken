@@ -105,6 +105,9 @@ final class Wrist {
     static void onHand(RenderHandEvent e) {
         HoloPanel p = HoloClient.wristPanel();
         if (p == null || !p.timeline.active() || p.anchor != HoloPanel.Anchor.WRIST) return;
+        // the band draws in the holo pipelines: without them (the inventory can still be holo through its GUI ones)
+        // the hands stay vanilla's
+        if (!HoloPipelines.ok()) return;
         // from the first tick of a close the re-equip owns the hands' height: let the event (and the hooks after us) run
         boolean handsBack = p.timeline.closing() && closeTicks >= 1;
         if (!handsBack) e.setCanceled(true);

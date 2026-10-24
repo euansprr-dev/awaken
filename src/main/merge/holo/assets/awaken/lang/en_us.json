@@ -3,6 +3,8 @@
   "awaken.configuration.statusStyle.tooltip": "HOLO: the Status screen (K) unfolds from a band on your wrist and floats in front of you. FLAT: the classic flat screen. FLAT is also used if the holo shaders can't load.",
   "awaken.configuration.hudMotion": "HUD motion",
   "awaken.configuration.hudMotion.tooltip": "How far Awaken's HUD drifts when you turn sharply: OFF, SUBTLE (about 2 pixels) or FULL (4). Follows Screen Effect Scale; off when View Bobbing is off. The vanilla hotbar never moves.",
+  "awaken.configuration.inventoryStyle": "Inventory style",
+  "awaken.configuration.inventoryStyle.tooltip": "HOLO: the inventory (E) unfolds from the band on your wrist as a holo panel. VANILLA: Minecraft's own inventory. HOLO needs the Status screen style HOLO; every click, drag and shift-click works the same either way.",
   "awaken.configuration.reducedMotion": "Reduced motion",
   "awaken.configuration.reducedMotion.tooltip": "Holo panels follow your view directly instead of trailing it, and fade in place instead of unfolding."
 }

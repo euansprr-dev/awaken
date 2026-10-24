@@ -170,6 +170,54 @@ final class HoloGuiLook implements HudLook.Look {
         return (Math.round(aa + (ab - aa) * t) << 24) | (b & 0xFFFFFF | a & 0xFFFFFF) & 0xFFFFFF;
     }
 
+    // ---- a whole panel in the GUI pass (the inventory) ---------------------------------------------------------
+
+    /**
+     * A panel drawn in the GUI pass exactly as {@link HoloRender} draws a settled 3D panel, unit for unit (the
+     * inventory, whose 3D panel lands on this rectangle and hands over to it): the K panel's glass, one even tint
+     * feathered over 14 units toward the rim, its halo, rim and 18-unit corner brackets. {@code alpha} fades all of it.
+     */
+    void panel(GuiGraphicsExtractor g, int x, int y, int w, int h, float alpha) {
+        if (alpha <= 0.01f || w <= 0 || h <= 0) return;
+        Matrix3x2f pose = new Matrix3x2f(g.pose());
+        int rgb = Glass.EDGE;
+        float m = 16f;
+        int halo = argb(rgb, 0.42f * alpha);
+        g.submitGuiElementRenderState(new Quad(HoloPipelines.GUI_GLOW, pose, x - m, y - m, x + w + m, y + h + m, -m, -m, w + m, h + m,
+                halo, halo, w, h));
+        int glass = argb(rgb, alpha);
+        g.submitGuiElementRenderState(new Quad(HoloPipelines.GUI_GLASS, pose, x, y, x + w, y + h, 0, 0, w, h, glass, glass, w, h));
+        float in = 3f, f = 14f;
+        g.submitGuiElementRenderState(new Soft(pose, x + in + f, y + in + f, x + w - in - f, y + h - in - f, f,
+                argb(0x040912, 0.38f * alpha)));
+        // the rim and the corner brackets just outside it (HoloRender.top's settled values)
+        int rim = argb(rgb, 0.30f * alpha);
+        float t = 2.2f;
+        g.submitGuiElementRenderState(hLine(pose, x, y - t, x + w, y + t, rim));
+        g.submitGuiElementRenderState(hLine(pose, x, y + h - t, x + w, y + h + t, rim));
+        g.submitGuiElementRenderState(vLine(pose, x - t, y, x + t, y + h, rim));
+        g.submitGuiElementRenderState(vLine(pose, x + w - t, y, x + w + t, y + h, rim));
+        int b = argb(rgb, 0.42f * alpha);
+        float len = Math.min(18f, Math.min(w, h) / 4f), o = 3.5f, bt = 2.4f;
+        float l = x - o, r = x + w + o, tp = y - o, bm = y + h + o;
+        g.submitGuiElementRenderState(hLine(pose, l, tp - bt, l + len, tp + bt, b));
+        g.submitGuiElementRenderState(vLine(pose, l - bt, tp, l + bt, tp + len, b));
+        g.submitGuiElementRenderState(hLine(pose, r - len, tp - bt, r, tp + bt, b));
+        g.submitGuiElementRenderState(vLine(pose, r - bt, tp, r + bt, tp + len, b));
+        g.submitGuiElementRenderState(hLine(pose, l, bm - bt, l + len, bm + bt, b));
+        g.submitGuiElementRenderState(vLine(pose, l - bt, bm - len, l + bt, bm, b));
+        g.submitGuiElementRenderState(hLine(pose, r - len, bm - bt, r, bm + bt, b));
+        g.submitGuiElementRenderState(vLine(pose, r - bt, bm - len, r + bt, bm, b));
+    }
+
+    /** A soft round light, {@code rx}×{@code ry} about (cx, cy): a projected floor under a figure. */
+    void blob(GuiGraphicsExtractor g, float cx, float cy, float rx, float ry, int accent, float strength) {
+        if (strength <= 0.01f) return;
+        int col = argb(accent & 0xFFFFFF, strength);
+        g.submitGuiElementRenderState(new Quad(HoloPipelines.GUI_GLOW, new Matrix3x2f(g.pose()), cx - rx, cy - ry, cx + rx, cy + ry,
+                -1, -1, 1, 1, col, col, -1, 0));
+    }
+
     @Override
     public void glow(GuiGraphicsExtractor g, int x, int y, int w, int h, int accent, float strength) {
         if (strength <= 0.01f || w <= 0 || h <= 0) return;
@@ -208,6 +256,53 @@ final class HoloGuiLook implements HudLook.Look {
     private static int argb(int rgb, float alpha) {
         int a = Math.round(255 * Math.min(1f, Math.max(0f, alpha)));
         return (a << 24) | (rgb & 0xFFFFFF);
+    }
+
+    /**
+     * The feathered tint (HoloRender.softQuad in the GUI pass): flat inside (x0, y0)–(x1, y1), fading to clear over
+     * {@code f} units outside it; a 3×3 grid of quads in the glass pipeline's flat mode.
+     */
+    record Soft(Matrix3x2fc pose, float x0, float y0, float x1, float y1, float f, int inner, @Nullable ScreenRectangle bounds)
+            implements GuiElementRenderState {
+        Soft(Matrix3x2fc pose, float x0, float y0, float x1, float y1, float f, int inner) {
+            this(pose, x0, y0, x1, y1, f, inner, new ScreenRectangle((int) Math.floor(x0 - f), (int) Math.floor(y0 - f),
+                    (int) Math.ceil(x1 - x0 + 2 * f) + 1, (int) Math.ceil(y1 - y0 + 2 * f) + 1).transformMaxBounds(pose));
+        }
+
+        @Override
+        public void buildVertices(VertexConsumer vc) {
+            for (int j = 0; j < 3; j++) {
+                for (int i = 0; i < 3; i++) {
+                    vertex(vc, i, j);
+                    vertex(vc, i, j + 1);
+                    vertex(vc, i + 1, j + 1);
+                    vertex(vc, i + 1, j);
+                }
+            }
+        }
+
+        /** Grid corner (i, j), 0..3 each way: the inner four are the flat tint, the outer ring clear. */
+        private void vertex(VertexConsumer vc, int i, int j) {
+            float x = i == 0 ? x0 - f : i == 1 ? x0 : i == 2 ? x1 : x1 + f;
+            float y = j == 0 ? y0 - f : j == 1 ? y0 : j == 2 ? y1 : y1 + f;
+            boolean in = (i == 1 || i == 2) && (j == 1 || j == 2);
+            vc.addVertexWith2DPose(pose, x, y).setUv(0, 0).setColor(in ? inner : inner & 0xFFFFFF).setUv2(0, 0);
+        }
+
+        @Override
+        public RenderPipeline pipeline() {
+            return HoloPipelines.GUI_GLASS;
+        }
+
+        @Override
+        public TextureSetup textureSetup() {
+            return TextureSetup.noTexture();
+        }
+
+        @Override
+        public @Nullable ScreenRectangle scissorArea() {
+            return null;
+        }
     }
 
     /** One quad in the PARTICLE format the holo shaders read: UV0 = position in card units, UV2 = the card's size or shape. */

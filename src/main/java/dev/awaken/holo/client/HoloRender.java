@@ -208,9 +208,11 @@ final class HoloRender {
         HoloPanel p = d.p;
         Matrix4f m = pose.pose();
         float w = p.w, h = p.h;
-        // edges: bright while the frame draws itself, settling to a faint rim
+        // edges: bright while the frame draws itself, settling to a faint rim (all of it goes with the panel's fade, which
+        // only differs from 1 before the frame shows, or while a landed panel hands over to its flat screen)
         float settle = 1f - p.glassAlpha;
-        float ea = p.edgeAlpha * (0.30f + 0.45f * settle);
+        float fade = p.fade;
+        float ea = p.edgeAlpha * (0.30f + 0.45f * settle) * fade;
         // line thickness in units, held constant on screen while the panel is squashed by its unfold
         float kx = 1f / Math.max(0.05f, p.sx), ky = 1f / Math.max(0.05f, p.sy);
         if (ea > 0.004f) {
@@ -222,7 +224,7 @@ final class HoloRender {
             lineV(vc, m, w - tx, 0, w + tx, h, col);
         }
         // corner brackets just outside the frame: the System's mark, as on the flat panels
-        float ba = p.edgeAlpha * (0.42f + 0.4f * settle);
+        float ba = p.edgeAlpha * (0.42f + 0.4f * settle) * fade;
         if (ba > 0.004f) {
             int col = mulAlpha(p.accent | 0xFF000000, ba);
             float len = Math.min(18f, Math.min(w, h) / 4f);
@@ -237,7 +239,7 @@ final class HoloRender {
             lineV(vc, m, w + ox - tx, h + oy - ly, w + ox + tx, h + oy, col);
         }
         // corner glints while it unfolds
-        float glint = p.edgeAlpha * settle;
+        float glint = p.edgeAlpha * settle * fade;
         if (glint > 0.01f) {
             int col = mulAlpha(0xFFCFEAFF, 0.6f * glint);
             float rx = 9 * kx, ry = 9 * ky;
@@ -250,9 +252,9 @@ final class HoloRender {
         if (p.scan >= 0) {
             float y = Math.min(1f, p.scan) * h;
             float fadeOut = p.scan > 1 ? Math.max(0, 1 - (p.scan - 1) / 0.15f) : 1f;
-            int core = mulAlpha(0xFFBFE3FF, 0.95f * fadeOut);
+            int core = mulAlpha(0xFFBFE3FF, 0.95f * fadeOut * fade);
             quad(vc, m, -6, y - 4, w + 6, y + 4, -1, -1, 1, 1, core, core, -2, 0);
-            int wakeTop = p.accent & 0xFFFFFF, wakeBottom = mulAlpha(p.accent | 0xFF000000, 0.10f * fadeOut);
+            int wakeTop = p.accent & 0xFFFFFF, wakeBottom = mulAlpha(p.accent | 0xFF000000, 0.10f * fadeOut * fade);
             float wy = Math.max(0, y - 46);
             quad(vc, m, 0, wy, w, y, 0, 0, 0, 0, wakeTop, wakeBottom, 0, 0);
         }
@@ -269,7 +271,7 @@ final class HoloRender {
             quad(vc, m, x - 6, y - 4, x + w0 + 6, y + 12, -1, -1, 1, 1, hg, hg, -1, 0);
         }
         // typing carets
-        int caret = mulAlpha(p.accent | 0xFF000000, 0.85f);
+        int caret = mulAlpha(p.accent | 0xFF000000, 0.85f * fade);
         for (int i = 0; i < d.caretCount; i++) {
             float x = d.carets[i * 2], y = d.carets[i * 2 + 1];
             quad(vc, m, x + 0.5f, y - 0.5f, x + 3.5f, y + 8.5f, 0, 0, 0, 0, caret, caret, 0, 0);

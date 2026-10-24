@@ -9,6 +9,7 @@ import dev.awaken.progression.client.ProgressionClient;
 import dev.awaken.progression.client.StatusScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -25,6 +26,7 @@ import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
@@ -39,7 +41,8 @@ import java.util.List;
  * unfolding from a band on your wrist, the wrist other players see, and the calm HUD. One frame:
  * <ol>
  *   <li>level extract: view facts ({@link ViewMath}), springs, timelines and panel placement; the demo records;</li>
- *   <li>GUI extract: HUD layers sway ({@link HudMotion}); an open {@link HoloStatusScreen} records its panel;</li>
+ *   <li>GUI extract: HUD layers sway ({@link HudMotion}); an open {@link HoloStatusScreen} records its panel, an
+ *       opening {@link HoloInventoryScreen} its 3D face;</li>
  *   <li>level render: {@link HoloRender} replays the panels in the always-on-top phase;</li>
  *   <li>hand pass: {@link Wrist} draws the raised forearm and its band.</li>
  * </ol>
@@ -49,7 +52,10 @@ public final class HoloClient {
 
     private static final HoloPanel DEMO = new HoloPanel(0);
     private static final HoloPanel STATUS = new HoloPanel(1);
-    private static final List<HoloRender.Draw> DRAWS = List.of(new HoloRender.Draw(DEMO), new HoloRender.Draw(STATUS));
+    /** The inventory's 3D face: unfolds from the wrist onto the flat screen's rectangle and hands over to it. */
+    private static final HoloPanel INVENTORY = new HoloPanel(2, HoloTimeline.INVENTORY_SPEED);
+    private static final List<HoloRender.Draw> DRAWS = List.of(new HoloRender.Draw(DEMO), new HoloRender.Draw(STATUS),
+            new HoloRender.Draw(INVENTORY));
     private static int demoMode;
     private static long lastNanos, frame;
     private static HoloKind sent = HoloKind.NONE;
@@ -60,6 +66,10 @@ public final class HoloClient {
         STATUS.w = HoloStatusScreen.W;
         STATUS.h = HoloStatusScreen.H;
         STATUS.anchor = HoloPanel.Anchor.WRIST;
+        INVENTORY.w = InventoryLook.W;
+        INVENTORY.h = InventoryLook.H;
+        INVENTORY.anchor = HoloPanel.Anchor.WRIST;
+        INVENTORY.handsOver = true;
         modBus.addListener(RegisterRenderPipelinesEvent.class, HoloPipelines::onRegister);
         dev.awaken.signal.client.HudLook.install(HoloGuiLook.INSTANCE);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, HoloClient::onPayloads);
@@ -85,6 +95,8 @@ public final class HoloClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> HoloPipelines.recheck());
         bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> HoloOthers.clear());
+        // E opens the holo inventory in vanilla's place (same screen class underneath, so every container behaviour holds)
+        bus.addListener(ScreenEvent.Opening.class, HoloClient::onScreenOpening);
         // reported each frame (UiHooks.setFocus); other sources (the Atlas) report beside it
         ProgressionClient.installStatusOpener(HoloClient::statusScreen);
     }
@@ -118,9 +130,10 @@ public final class HoloClient {
         return STATUS;
     }
 
-    /** The panel the wrist belongs to right now (the K menu, or the wrist demo). */
+    /** The panel the wrist belongs to right now (the K menu, the inventory's 3D face, or the wrist demo). */
     static HoloPanel wristPanel() {
         if (STATUS.timeline.active()) return STATUS;
+        if (INVENTORY.timeline.active()) return INVENTORY;
         if (DEMO.anchor == HoloPanel.Anchor.WRIST && DEMO.timeline.active()) return DEMO;
         return null;
     }
@@ -131,15 +144,56 @@ public final class HoloClient {
             var cam = mc.gameRenderer.mainCamera();
             STATUS.spring.reset(cam.yRot(), cam.xRot());
         }
-        STATUS.timeline.hold(false);
-        STATUS.timeline.open();
+        openOnWrist(STATUS, INVENTORY);
     }
 
     static void closeStatusPanel() {
-        STATUS.timeline.hold(false);
-        boolean was = STATUS.timeline.active() && !STATUS.timeline.closing();
-        STATUS.timeline.close();
+        closeIntoWrist(STATUS);
+    }
+
+    static HoloPanel inventoryPanel() {
+        return INVENTORY;
+    }
+
+    /** The holo inventory opened (or was laid out again): its rectangle on the screen, in GUI pixels. */
+    static void openInventoryPanel(int x, int y, int w, int h) {
+        INVENTORY.w = w;
+        INVENTORY.h = h;
+        INVENTORY.landOn(x, y);
+        openOnWrist(INVENTORY, STATUS);
+    }
+
+    static void closeInventoryPanel() {
+        closeIntoWrist(INVENTORY);
+    }
+
+    /** One forearm at a time: a panel opening stops the other one's fold at once. */
+    private static void openOnWrist(HoloPanel p, HoloPanel other) {
+        if (other.timeline.active()) other.timeline.stop();
+        p.timeline.hold(false);
+        p.timeline.open();
+    }
+
+    /** Folds a panel back into the band; the hands are vanilla's again from the next tick. */
+    private static void closeIntoWrist(HoloPanel p) {
+        p.timeline.hold(false);
+        boolean was = p.timeline.active() && !p.timeline.closing();
+        p.timeline.close();
         if (was) Wrist.handsBack();
+    }
+
+    /** Whether E opens the holo inventory: chosen, and the projected look is drawing (its GUI shaders compiled). */
+    static boolean holoInventory() {
+        return HoloConfig.inventoryStyle == HoloConfig.InventoryStyle.HOLO && HoloGuiLook.INSTANCE.enabled();
+    }
+
+    /** Vanilla's survival inventory becomes the holo one; creative, other containers and other mods' screens stay. */
+    private static void onScreenOpening(ScreenEvent.Opening e) {
+        Screen next = e.getNewScreen();
+        if (next == null || next.getClass() != InventoryScreen.class || !holoInventory()) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.player.hasInfiniteMaterials()) return;
+        e.setNewScreen(new HoloInventoryScreen(mc.player));
     }
 
     private static boolean wristClosing() {
@@ -162,7 +216,7 @@ public final class HoloClient {
     }
 
     private static double focus() {
-        float f = STATUS.timeline.focus();
+        float f = Math.max(STATUS.timeline.focus(), INVENTORY.timeline.focus());
         if (DEMO.anchor == HoloPanel.Anchor.WRIST) f = Math.max(f, DEMO.timeline.focus());
         return Math.max(f, HoloTimeline.easeInOut(readFocus));
     }
@@ -184,13 +238,17 @@ public final class HoloClient {
         HoloConfig.refresh();
         Wrist.tickEnd(wristClosing());
         // tell the server which panel the wrist shows (it relays to whoever can see us, at most 4 a second)
-        HoloKind want = STATUS.timeline.active() && !STATUS.timeline.closing() ? HoloKind.STATUS
-                : DEMO.anchor == HoloPanel.Anchor.WRIST && DEMO.timeline.active() && !DEMO.timeline.closing() ? HoloKind.STATUS : HoloKind.NONE;
+        HoloKind want = opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
+                : DEMO.anchor == HoloPanel.Anchor.WRIST && opening(DEMO) ? HoloKind.STATUS : HoloKind.NONE;
         Minecraft mc = Minecraft.getInstance();
         if (want != sent && mc.getConnection() != null && mc.getConnection().hasChannel(HoloNet.State.TYPE)) {
             ClientPacketDistributor.sendToServer(new HoloNet.State(want.id));
             sent = want;
         }
+    }
+
+    private static boolean opening(HoloPanel p) {
+        return p.timeline.active() && !p.timeline.closing();
     }
 
     private static void onExtract(ExtractLevelRenderStateEvent e) {
@@ -259,11 +317,13 @@ public final class HoloClient {
 
     /**
      * Autopilot {@code holo ...} lines: {@code demo 0|1|2}, {@code at <ms>} (freeze the open panel's timeline at a
-     * moment), {@code run}, {@code close}, {@code hud off|subtle|full}, {@code log}.
+     * moment along the K menu's choreography; the inventory plays it 2.5× faster), {@code run}, {@code close},
+     * {@code hud off|subtle|full}, {@code log}; {@code inv open|click <slot> [shift]|book|close|style holo|vanilla|auto}
+     * (E's screen, a click on a menu slot or the recipe key through its input path, closing it, its style).
      */
     public static String autopilot(String args) {
         String[] a = args.trim().split("\\s+");
-        HoloPanel p = STATUS.timeline.active() ? STATUS : DEMO;
+        HoloPanel p = STATUS.timeline.active() ? STATUS : INVENTORY.timeline.active() ? INVENTORY : DEMO;
         switch (a[0]) {
             case "demo" -> demo(Integer.parseInt(a[1]));
             case "at" -> {
@@ -273,8 +333,39 @@ public final class HoloClient {
             case "run" -> p.timeline.hold(false);
             case "close" -> {
                 p.timeline.hold(false);
-                if (p == STATUS) Minecraft.getInstance().gui.setScreen(null);
+                Minecraft mc = Minecraft.getInstance();
+                if (p == STATUS) mc.gui.setScreen(null);
+                else if (p == INVENTORY && mc.player != null) mc.player.closeContainer();
                 else p.timeline.close();
+            }
+            case "inv" -> {
+                Minecraft mc = Minecraft.getInstance();
+                switch (a[1]) {
+                    case "open" -> { // what E does (Minecraft.handleKeybinds); the Opening swap decides holo or vanilla
+                        if (mc.player == null) return "no player";
+                        mc.gui.setScreen(new InventoryScreen(mc.player));
+                        return "opened " + mc.gui.screen().getClass().getSimpleName();
+                    }
+                    case "click" -> { // click <menu slot> [shift]: through the screen's own input path
+                        if (!(mc.gui.screen() instanceof HoloInventoryScreen inv)) return "no holo inventory";
+                        return inv.autopilotClick(Integer.parseInt(a[2]), a.length > 3 && a[3].equals("shift"));
+                    }
+                    case "book" -> {
+                        if (!(mc.gui.screen() instanceof HoloInventoryScreen inv)) return "no holo inventory";
+                        return inv.autopilotBook();
+                    }
+                    case "close" -> { // vanilla's own close, holo or not (E and Esc do the same)
+                        if (mc.player != null) mc.player.closeContainer();
+                    }
+                    case "style" -> {
+                        HoloConfig.forcedInventory = a[2].equals("auto") ? null
+                                : HoloConfig.InventoryStyle.valueOf(a[2].toUpperCase(java.util.Locale.ROOT));
+                        HoloConfig.refresh();
+                    }
+                    default -> {
+                        return "unknown holo inv line: " + args;
+                    }
+                }
             }
             case "hud" -> {
                 HoloConfig.forcedHudMotion = HoloConfig.HudMotion.valueOf(a[1].toUpperCase(java.util.Locale.ROOT));
@@ -307,13 +398,23 @@ public final class HoloClient {
                 return String.format(java.util.Locale.ROOT, "hud dx=%.2f dy=%.2f lag=%.2f/%.2f ppu=%d t=%.0f sx=%.3f sy=%.3f grow=%.2f edges=%.2f "
                         + "glass=%.2f beam=%.2f wrist=%s centre(world-rel)=%s anchor=%s", HudMotion.dx(), HudMotion.dy(),
                         p.spring.yaw(), p.spring.pitch(), p.ppu, p.timeline.ms(), p.sx, p.sy, p.timeline.grow(HoloConfig.reducedMotion),
-                        p.edgeAlpha, p.glassAlpha, p.beam, WRIST, c, p.anchor);
+                        p.edgeAlpha, p.glassAlpha, p.beam, WRIST, c, p.anchor)
+                        + (p.onScreen ? landing(p) : "");
             }
             default -> {
                 return "unknown holo line: " + args;
             }
         }
         return "ok";
+    }
+
+    /** Where a landed panel's corners project, against the flat screen's rectangle (they should agree to a pixel). */
+    private static String landing(HoloPanel p) {
+        float[] a = new float[2], b = new float[2];
+        boolean ok = p.project(0, 0, a) & p.project(p.w, p.h, b);
+        return String.format(java.util.Locale.ROOT, " landed=%.2f fade=%.2f corners %s(%.2f,%.2f)-(%.2f,%.2f) screen (%.1f,%.1f)-(%.1f,%.1f)",
+                p.timeline.landed(), p.fade, ok ? "" : "unprojected ", a[0], a[1], b[0], b[1], p.screenX, p.screenY,
+                p.screenX + p.w, p.screenY + p.h);
     }
 
     private static void reset() {
