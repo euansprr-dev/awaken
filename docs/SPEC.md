@@ -822,7 +822,8 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   column from each column's own ground and its distance from the centre; the Shard Drift (Shattered Highlands; 7–12
   floating shards along a fault; spacing 22, separation 8) walks its site onto the fault line and samples the ground
   under each shard once at the start. Both place voxels into air, plants and water only and never write outside their
-  box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms; features ≤ 0.5 ms a chunk on average);
+  box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms on the fastest of eight seeds, as
+  `terrain_landmark_shapes` asserts; features ≤ 0.5 ms a chunk on average);
   `/awaken terrain lands2cost` reports what they cost on the worldgen threads.
 - Air for the second pair: an air.json biome rule's `motes.kind` hands the spot to `terrain.client.LandsMotes`
   (cap 120 × the leaves' frame-budget scale): `glint` (Glass Steppe, by day: a star blinking on sunlit glass of
@@ -831,6 +832,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
   are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+  `terrain_lands_placement` holds the injectors to the biome table (one per Awakened biome, its archetype among its
+  vanilla targets, no target claimed twice, ground splices guarded by their biome) and measures the share on the
+  five studio seeds by applying the injectors to the vanilla generator as Lithostitched does.
 - The biome table (stage 1): `tools/terrain/biomes.py` is the one source (`write`; `check` fails on a stale file, a
   vanilla overworld biome without a row or a lands-pack biome without one). Base Awaken data refers to biomes only
   through the tags it writes, listing vanilla biomes exactly as before: `awaken:fauna/<group>` (one per fauna spawn

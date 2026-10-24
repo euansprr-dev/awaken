@@ -146,9 +146,19 @@ load 14-32, so frame times swing by a millisecond between identical scenes; logs
 ## How to check
 
 - Studio: `tools/terrain/studio.sh <preset>` for maps and numbers; `/awaken terrain visit awaken:<biome>` to stand in one.
-- Every Awakened biome: census test (archetype, fauna, cottage, spirits), a worldgen test that its trees and hero
-  structures place on ground without floating or cutting, a cost bench, and a contact sheet (noon, golden hour, night,
-  from the ground and from 60 blocks up).
+- Every Awakened biome: census test (archetype, fauna, cottage, spirits), a placement test (its injector, ground splices
+  and share of land), a worldgen test that its trees and hero structures place on ground without floating or cutting,
+  a cost bench (shape costs asserted on the fastest of eight seeds: other work on the machine only ever adds time), and
+  a contact sheet (noon, golden hour, night, from the ground and from 60 blocks up).
+- `terrain_lands_placement` reads the lands pack's Lithostitched injectors as data: one per Awakened biome, its
+  archetype among its targets, only vanilla overworld targets, no target claimed twice, a field that exists; every
+  `material_rule/lands/<biome>_surface|_under` spliced first by a modifier of the same name, guarded by its biome. Then
+  it applies the injectors to the vanilla generator the way Lithostitched does (first matching injector wins, the field
+  sampled at the biome's quart corner) on the five studio seeds, 3,072 blocks round the origin every 96, and logs the
+  share of land each Awakened biome takes. Measured 2026-10-24 (vanilla shapes, threshold 0): 21.5% of land on average
+  (19-25% a seed; the archetypes cover 41-46%), of it Elderwood 65%, Glass Steppe 25%, Lumen Forest 7%, Shattered
+  Highlands 2% (windswept hills are rare in vanilla; Tectonic raises them). The studio on the Mac measures the real
+  thing (Tectonic and Lithostitched).
 
 ## The slice as built (2026-10-24)
 
@@ -402,7 +412,10 @@ GameTests: `terrain_lands2_blocks`, `terrain_lands2_trees_grow`, `terrain_lands2
 numbers: band share, width, crossings per km, how much opens), `terrain_fault_features` (a real open stretch of fault
 on nine chunks painted one by one: only band columns touched, floors lined, the seam on the line, depth within the V, no
 bigger step at a chunk border than inside one; shards in open air, well clear of the ground, the seam at their tips),
-`terrain_landmark_shapes`, `terrain_landmark_builds_in_box` (a Gate Scar on a slope and a Shard Drift chunk by chunk:
+`terrain_landmark_shapes` (eight seeds each: a scar 30-50 across and 7-11 deep with 8-12 rays, its spires, the gate's
+stumps and the crystal where the gate stood, nothing standing unjoined; a drift's shards, the great one, the seam at
+the tips, every shard hanging; the fastest seed within the 2 ms hero budget: 0.63 ms a scar and 0.90 ms a drift in the
+cloud VM, 2026-10-24), `terrain_landmark_builds_in_box` (a Gate Scar on a slope and a Shard Drift chunk by chunk:
 everything inside the box, the crystal standing on the ground, the heart deep and black, the drift's lowest rock clear of
 the ground), `terrain_landmark_sites`. Tours: `tools/autopilot/lands-biomes2.txt` (looks),
 `tools/autopilot/lands-biomes2-perf.txt` (frame times and worldgen cost).

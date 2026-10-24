@@ -106,13 +106,10 @@ final class BiomeTableTests {
             // the Awakened biomes: every biome the lands pack defines
             var pack = server.getPackRepository().getPack(LandsPack.ID);
             h.assertTrue(pack != null, "the Awakened Lands pack is offered");
-            TreeSet<Identifier> lands = new TreeSet<>();
-            for (var e : server.getResourceManager().listResources("worldgen/biome", id -> id.getPath().endsWith(".json")).entrySet()) {
-                if (!e.getValue().sourcePackId().equals(pack.getId())) continue;
-                String p = e.getKey().getPath();
-                lands.add(Identifier.fromNamespaceAndPath(e.getKey().getNamespace(), p.substring("worldgen/biome/".length(), p.length() - ".json".length())));
+            var lands = LandsPack.files(server, "worldgen/biome").keySet();
+            for (String built : List.of("elderwood", "lumen_forest", "glass_steppe", "shattered_highlands")) {
+                h.assertTrue(lands.contains(Awaken.id(built)), "the lands pack has " + built + ": " + lands);
             }
-            h.assertTrue(lands.contains(Awaken.id("elderwood")), "the lands pack's biomes are found: " + lands);
             for (Identifier id : lands) {
                 var found = biomes.get(ResourceKey.create(Registries.BIOME, id));
                 h.assertTrue(found.isPresent(), id + " is in the biome registry");

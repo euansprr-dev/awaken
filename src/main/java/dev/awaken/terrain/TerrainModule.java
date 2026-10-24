@@ -17,6 +17,7 @@ public final class TerrainModule {
         TerrainCommands.register();
         TerrainTests.register();
         BiomeTableTests.register();
+        PlacementTests.register();
         LandsTests.register();
         dev.awaken.terrain.hero.HeroTests.register();
         WindTests.register();
