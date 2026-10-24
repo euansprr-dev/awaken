@@ -1856,6 +1856,11 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   wings unfold for 2.3 s with one slow beat, then "Your body remembers." and the tiers given ("The line · The leap ·
   Wings · The sky") in the Holo look, about 6.5 s in all. Others nearby see the light and the wings and hear the swell
   (`EV_REMEMBER`). `/awaken ascent remember` replays it (dev).
+- **A zip to a top** (any zip, the vow's too): when the block the rope bit has two cells of room over it (a ledge, a
+  pylon, a branch), arriving pulls the body up and onto it: the rise needed (+0.5) as upward speed (at most 1.1), the
+  zip's sideways speed dropped, and for 14 ticks a pull toward the block's centre, gentle against the face while the
+  feet are under its top, then over the edge (one push at arrival was stopped by the face below the top). A face with
+  more wall over it still gets the old hop off it.
 - **The rope wraps** (soft failure, not a cut): checked every 2 ticks, something solid (never leaves) across the rope's
   middle becomes the new anchor (the face it meets from the hand, 0.06 off it) and the rope shortens to the hand's
   distance from it; the swing goes on about the new point (a strain, a small spark; the server re-checks the anchor).

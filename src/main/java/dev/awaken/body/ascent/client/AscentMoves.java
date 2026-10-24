@@ -11,6 +11,7 @@ import dev.awaken.veil.Veil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Input;
@@ -51,6 +52,9 @@ public final class AscentMoves {
     static boolean ropeTaut;
     /** A line thrown for you (the vow's): held until it arrives, key or no key. */
     static boolean heldForYou;
+    /** After a zip to a top: ticks left pulling up and over its edge, and where to (the block's centre and its top). */
+    static int pullTicks;
+    static double pullX, pullZ, pullTop;
     static double tension;
     // input edges
     private static boolean tetherWas, jumpWas, sneakWas, sprintWas;
@@ -206,6 +210,7 @@ public final class AscentMoves {
                 } else if (jumpPressed && has(AscentPayloads.Tier.WINGS) && canDeploy(p)) {
                     startGlide(p);
                 } else {
+                    if (pullTicks > 0) pullOver();
                     carry(yaw, fwd, right);
                 }
             }
@@ -454,10 +459,26 @@ public final class AscentMoves {
             if (ropeTravel == 0) bite(p, 0.6F);
             carry(yaw, 0, 0);
         } else if (AscentRules.zipStep(K, ax, ay, az)) {
-            // arrived: a hop up onto whatever the rope bit, then fly on
-            K.vx *= 0.45;
-            K.vz *= 0.45;
-            K.vy = Math.max(K.vy * 0.3, 0.48);
+            BlockPos b = anchorBlock;
+            if (b != null && roomOver(p, b)) {
+                // arrived under a top with room over it (a ledge, a pylon, a branch): pulled up and onto it
+                double feet = K.y - AscentRules.HAND_HEIGHT, rise = b.getY() + 1 - feet + 0.5;
+                K.vy = rise > 0 ? Math.min(1.1, Math.sqrt(2 * AscentRules.G * rise) + 0.05) : Math.max(K.vy * 0.3, 0.3);
+                // the zip's own sideways speed would only knock the body on the face: the pull takes over from here,
+                // a few ticks into the carry (the face below the top stops a single push)
+                K.vx = 0;
+                K.vz = 0;
+                pullTicks = 14;
+                pullX = b.getX() + 0.5;
+                pullZ = b.getZ() + 0.5;
+                pullTop = b.getY() + 1;
+                trace(String.format("zip arrived: up onto the top (%.1f up)", rise));
+            } else {
+                // a face with more wall over it: a hop off it, then fly on
+                K.vx *= 0.45;
+                K.vz *= 0.45;
+                K.vy = Math.max(K.vy * 0.3, 0.48);
+            }
             toCarry(p, "zip arrived");
             carry(yaw, 0, 0);
         }
@@ -529,6 +550,28 @@ public final class AscentMoves {
         AscentFx.bite(p, ax, ay, az);
         FeelDirector.ropeCatch(0.3F);
         ClientPacketDistributor.sendToServer(new AscentPayloads.State(state.ordinal(), ax, ay, az, (float) len));
+    }
+
+    /** Up the face and over the edge: pressed gently to the face while the feet are under the top, then onto it. */
+    private static void pullOver() {
+        pullTicks--;
+        double hx = pullX - K.x, hz = pullZ - K.z, hl = Math.sqrt(hx * hx + hz * hz);
+        if (hl < 0.25) {
+            pullTicks = 0;
+            return;
+        }
+        double push = K.y < pullTop + 0.05 ? 0.06 : Math.min(0.3, hl * 0.5);
+        K.vx = hx / hl * push;
+        K.vz = hz / hl * push;
+    }
+
+    /** Two cells of room over a block (somewhere to stand on it). */
+    private static boolean roomOver(LocalPlayer p, BlockPos b) {
+        for (int i = 1; i <= 2; i++) {
+            BlockPos q = b.above(i);
+            if (!p.level().getBlockState(q).getCollisionShape(p.level(), q).isEmpty()) return false;
+        }
+        return true;
     }
 
     /** The block the rope bit is gone (broken, or a leaf that decayed): its cell has no collision any more. */
@@ -763,6 +806,7 @@ public final class AscentMoves {
     private static void setState(LocalPlayer p, AscentState s) {
         if (s == state) return;
         heldForYou = false;
+        if (s != AscentState.CARRY) pullTicks = 0;
         AscentState was = state;
         state = s;
         stateAge = 0;
