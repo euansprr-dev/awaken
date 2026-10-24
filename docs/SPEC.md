@@ -289,6 +289,14 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise).
+- `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
+  glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
+  installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
+  the player reads (the first-power choice): with the projected look the world dims behind it (`UiHooks.focus`).
+- `dev.awaken.signal.client.UiCanvas.texture(Identifier, x, y, w, h, u0, v0, u1, v1, argb)` (client) — part of a whole
+  texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
+- `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
+  (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
 - Carillon hooks (§16.9, v0): `CityHooks`, `CitizenHooks`, `RenownHooks`, `EconomyHooks`, `PartyHooks`, `OpeningHooks`,
   `AtlasHooks`. Defaults behave as a classic world with no city.
 
@@ -642,7 +650,17 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   Scale, off without View Bobbing, snapped to framebuffer pixels. Vanilla layers never move.
 - `UiHooks.focus()` (0..1) eases with the open panel for Lens. Lens may also tell panels apart by depth: the glass writes
   its real distance (≈0.6 m) into the main depth.
-- Client settings (`awaken-holo-client.toml`): `statusStyle`, `hudMotion`, `reducedMotion`.
+- System cards (`HudLook`, drawn in the GUI pass with the panel's own shaders on GUI pipelines): toasts, the choice and
+  gate cards, story lines, the Now line and the first-power choice are projected glass (hairline edge, brackets, static
+  scan lines, one even tint, a faint halo) with text as light. Positions, sizes, timing and every System v2 rule are
+  unchanged (the look never moves or resizes a card). A card scans in from the top behind a bright line over the time
+  it used to fade in (toasts: vanilla's 600 ms show, done by 270 ms, without the slide), and glitches out in three bands
+  that slip ≤ 3.5 GUI px and fade (toasts: in 300 ms of vanilla's hide); reduced motion makes both a fade. The Now line
+  is a still card (no scan, no glitch). Only reading screens raise `UiHooks.focus`; toasts, cards and the Now line never
+  dim the world. `statusStyle = FLAT` (or GUI shaders that fail) keeps everything flat. With a first power pending, K
+  opens the first-power choice in either style.
+- Client settings (`awaken-holo-client.toml`): `statusStyle` (the projected look for the K menu, the System's cards and
+  the first-power choice), `hudMotion`, `reducedMotion`.
 
 Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
 docs/modules/onboarding.md "The Ritual of the Bell"):
