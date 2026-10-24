@@ -228,6 +228,8 @@ public final class Director {
             int z = p.getBlockZ() + (int) Math.round(Math.sin(angle) * dist);
             BlockPos c = surfaceEstimate(over, x, z);
             if (c == null) continue;
+            // never inside Carillon (its core plus the reserve margin; SPEC §16.2)
+            if (dev.awaken.terrain.api.CityBasin.reserved(c.getX(), c.getZ())) continue;
             if (!reg.near(c, 96, false).isEmpty()) continue;
             // never within a break's reach of a Hearth the player doesn't share: a veteran's gates stay off a newcomer's home
             if (nearForeignHearth(over, c, p)) continue;
