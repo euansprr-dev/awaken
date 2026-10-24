@@ -6,5 +6,10 @@
   "awaken.configuration.inventoryStyle": "Inventory style",
   "awaken.configuration.inventoryStyle.tooltip": "HOLO: the inventory (E) unfolds from the band on your wrist as a holo panel. VANILLA: Minecraft's own inventory. HOLO needs the Status screen style HOLO; every click, drag and shift-click works the same either way.",
   "awaken.configuration.reducedMotion": "Reduced motion",
-  "awaken.configuration.reducedMotion.tooltip": "Holo panels follow your view directly instead of trailing it, and fade in place instead of unfolding."
+  "awaken.configuration.reducedMotion.tooltip": "Holo panels follow your view directly instead of trailing it, and fade in place instead of unfolding.",
+  "subtitles.awaken.holo.open": "Holo panel unfolds",
+  "subtitles.awaken.holo.open_quick": "Holo inventory unfolds",
+  "subtitles.awaken.holo.close": "Holo panel folds away",
+  "subtitles.awaken.holo.hover": "Holo panel ticks",
+  "subtitles.awaken.holo.card": "System card projected"
 }

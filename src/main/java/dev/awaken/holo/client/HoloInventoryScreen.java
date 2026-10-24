@@ -2,6 +2,7 @@ package dev.awaken.holo.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.holo.ui.HoloTimeline;
+import dev.awaken.holo.ui.HoverTick;
 import dev.awaken.holo.ui.InventoryWells;
 import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.GuiCanvas;
@@ -32,10 +33,15 @@ import org.jspecify.annotations.Nullable;
  * Clicks work from the first frame: the slots are where they always are, whatever is drawn.
  */
 final class HoloInventoryScreen extends InventoryScreen {
+    /** A hover id for the recipe button (slot indices are below it). */
+    private static final int BOOK = 10_000;
+
     private final HoloPanel panel;
     private final HoloGraphics face = HoloGraphics.create();
+    private final HoverTick hover = new HoverTick();
     /** InventoryScreen keeps the cursor privately for the figure; this screen draws the figure itself. */
     private float mouseX, mouseY;
+    private long lastNanos;
     private @Nullable HoloBookButton book;
 
     HoloInventoryScreen(Player player) {
@@ -48,6 +54,7 @@ final class HoloInventoryScreen extends InventoryScreen {
         super.init();
         if (minecraft.gui.screen() != this) return; // InventoryScreen.init sent a creative player to the creative screen
         restyleRecipeButton();
+        hover.reset();
         HoloClient.openInventoryPanel(leftPos, topPos, imageWidth, imageHeight);
     }
 
@@ -98,6 +105,7 @@ final class HoloInventoryScreen extends InventoryScreen {
         minecraft.gui.hud.extractDeferredSubtitles();
         float k = faceAlpha();
         Slot over = slotAt(mx, my);
+        tick(over, mx, my);
         HoloGuiLook look = HoloGuiLook.INSTANCE;
         look.panel(g, leftPos, topPos, imageWidth, imageHeight, k);
         g.pose().pushMatrix();
@@ -147,6 +155,15 @@ final class HoloInventoryScreen extends InventoryScreen {
     private @Nullable Slot slotAt(double mx, double my) {
         for (Slot s : menu.slots) if (s.isActive() && isHovering(s.x, s.y, 16, 16, mx, my)) return s;
         return null;
+    }
+
+    /** A glass tick as the cursor comes onto something: a slot with an item in it, or the recipe key. */
+    private void tick(@Nullable Slot over, int mx, int my) {
+        long now = System.nanoTime();
+        float dt = lastNanos == 0 ? 0f : (now - lastNanos) / 1e6f;
+        lastNanos = now;
+        int target = over != null && over.hasItem() ? over.index : book != null && book.isMouseOver(mx, my) ? BOOK : HoverTick.NONE;
+        if (hover.update(target, dt, !contentShown() || isQuickCrafting)) HoloAudio.hover();
     }
 
     // ---- autopilot ------------------------------------------------------------------------------------------------

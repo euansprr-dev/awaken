@@ -2,6 +2,7 @@ package dev.awaken.holo;
 
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.holo.ui.HoloTimeline;
+import dev.awaken.holo.ui.HoverTick;
 import dev.awaken.holo.ui.InventoryWells;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +16,7 @@ import java.util.function.Predicate;
 
 /**
  * GameTests for the holo module's rules: {@code awaken:holo_state} (unknown kinds, the rate limit, who hears about it)
- * and the side-agnostic rules the client follows ({@code holo.ui}): the inventory's timeline and wells.
+ * and the side-agnostic rules the client follows ({@code holo.ui}): the inventory's timeline and wells, the hover tick.
  */
 final class HoloTests {
     private HoloTests() {}
@@ -127,6 +128,22 @@ final class HoloTests {
                 h.assertTrue(s.getContainerSlot() == 3, "the lit well is the hand's");
             }
             h.assertTrue(selected == 1, "exactly one well is the hand's, was " + selected);
+            h.succeed();
+        });
+
+        AwakenTests.register("holo_hover_tick", 20, h -> {
+            HoverTick t = new HoverTick();
+            // sweeping across a full hotbar in 160 ms ticks about four times, not nine
+            int ticks = 0;
+            for (int i = 0; i < 9; i++) if (t.update(i, 20f, false)) ticks++;
+            h.assertTrue(ticks >= 3 && ticks <= 4, "a sweep across nine slots ticks 3-4 times, was " + ticks);
+            h.assertFalse(t.update(8, 200f, false), "staying on the same target never ticks again");
+            h.assertFalse(t.update(HoverTick.NONE, 200f, false), "nothing under the cursor is silent");
+            h.assertTrue(t.update(8, 200f, false), "coming back onto it after a pause ticks");
+            h.assertFalse(t.update(2, 200f, true), "a quiet frame (unfolding, a drag) never ticks");
+            h.assertFalse(t.update(2, 200f, false), "and it doesn't tick late for the target it already noted");
+            t.reset();
+            h.assertTrue(t.update(5, 0f, false), "a freshly opened panel ticks for the first target at once");
             h.succeed();
         });
 

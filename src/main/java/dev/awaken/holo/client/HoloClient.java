@@ -28,6 +28,7 @@ import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.event.sound.PlaySoundEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
@@ -97,6 +98,7 @@ public final class HoloClient {
         bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> HoloOthers.clear());
         // E opens the holo inventory in vanilla's place (same screen class underneath, so every container behaviour holds)
         bus.addListener(ScreenEvent.Opening.class, HoloClient::onScreenOpening);
+        bus.addListener(PlaySoundEvent.class, HoloAudio::onPlaySound);
         // reported each frame (UiHooks.setFocus); other sources (the Atlas) report beside it
         ProgressionClient.installStatusOpener(HoloClient::statusScreen);
     }
@@ -144,11 +146,11 @@ public final class HoloClient {
             var cam = mc.gameRenderer.mainCamera();
             STATUS.spring.reset(cam.yRot(), cam.xRot());
         }
-        openOnWrist(STATUS, INVENTORY);
+        openOnWrist(STATUS, INVENTORY, false);
     }
 
     static void closeStatusPanel() {
-        closeIntoWrist(STATUS);
+        closeIntoWrist(STATUS, false);
     }
 
     static HoloPanel inventoryPanel() {
@@ -160,26 +162,30 @@ public final class HoloClient {
         INVENTORY.w = w;
         INVENTORY.h = h;
         INVENTORY.landOn(x, y);
-        openOnWrist(INVENTORY, STATUS);
+        openOnWrist(INVENTORY, STATUS, true);
     }
 
     static void closeInventoryPanel() {
-        closeIntoWrist(INVENTORY);
+        closeIntoWrist(INVENTORY, true);
     }
 
-    /** One forearm at a time: a panel opening stops the other one's fold at once. */
-    private static void openOnWrist(HoloPanel p, HoloPanel other) {
+    /** One forearm at a time: a panel opening stops the other one's fold at once. Sounds only on a real open. */
+    private static void openOnWrist(HoloPanel p, HoloPanel other, boolean inventory) {
         if (other.timeline.active()) other.timeline.stop();
+        boolean fresh = !p.timeline.active() || p.timeline.closing();
         p.timeline.hold(false);
         p.timeline.open();
+        if (fresh) HoloAudio.open(inventory);
     }
 
     /** Folds a panel back into the band; the hands are vanilla's again from the next tick. */
-    private static void closeIntoWrist(HoloPanel p) {
+    private static void closeIntoWrist(HoloPanel p, boolean inventory) {
         p.timeline.hold(false);
         boolean was = p.timeline.active() && !p.timeline.closing();
         p.timeline.close();
-        if (was) Wrist.handsBack();
+        if (!was) return;
+        Wrist.handsBack();
+        HoloAudio.close(inventory);
     }
 
     /** Whether E opens the holo inventory: chosen, and the projected look is drawing (its GUI shaders compiled). */
