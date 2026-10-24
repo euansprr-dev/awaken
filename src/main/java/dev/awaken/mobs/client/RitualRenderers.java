@@ -166,7 +166,8 @@ final class RitualRenderers {
                 best = Math.max(best, level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, p));
             }
             int eyes = (int) (RitualAnchors.eyeLight(e, 0) * 3);
-            return best <= 0 ? eyes : Math.min(15, best + 3 + eyes); // pale marble against the black, dark when every flame dies
+            // pale marble against the black (the lightmap is steep at the top: 12 still reads brown), dark when every flame dies
+            return best <= 0 ? eyes : Math.min(15, Math.max(14, best + 4) + eyes);
         }
     }
 

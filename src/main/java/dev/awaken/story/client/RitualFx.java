@@ -250,12 +250,12 @@ final class RitualFx {
         if (light > 0.01F) {
             for (int side = -1; side <= 1; side += 2) {
                 Vec3 p = towardCamera(eye(pt, side), 0.6);
-                flare(vc, p, 0.55F, argb(1F, 1F, 0.97F, Math.min(1, light)));
-                flare(vc, p, 2.2F * Math.min(1.6F, light), argb(1F, 0.9F, 0.55F, 0.55F * Math.min(1.5F, light)));
-                flare(vc, p, 7F * Math.min(1.6F, light), argb(1F, 0.75F, 0.35F, 0.16F * Math.min(1.5F, light)));
+                flare(vc, p, 0.7F, argb(1F, 1F, 0.97F, Math.min(1, light)));
+                flare(vc, p, 2.6F * Math.min(2.4F, light), argb(1F, 0.9F, 0.55F, 0.6F * Math.min(1.5F, light)));
+                flare(vc, p, 8F * Math.min(2.4F, light), argb(1F, 0.75F, 0.35F, 0.18F * Math.min(1.5F, light)));
             }
             Vec3 c = towardCamera(eyes(pt), 0.8);
-            streak(vc, c, 13F * Math.min(1.8F, light), 0.3F, argb(1F, 0.9F, 0.6F, 0.45F * Math.min(1.5F, light)));
+            streak(vc, c, 14F * Math.min(2.4F, light), 0.35F, argb(1F, 0.9F, 0.6F, 0.5F * Math.min(1.5F, light)));
         }
         for (RitualClient.Cue c : RitualClient.CUES) {
             if (!c.live) continue;
