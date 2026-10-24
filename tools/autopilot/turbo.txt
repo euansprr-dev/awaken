@@ -20,9 +20,11 @@ info
 look 0 10
 wait 460
 cmd awaken turbo status
-cmd tp @s 0.5 190 0.5 0 30
+cmd fill -1 179 -1 1 179 1 minecraft:glass
+cmd tp @s 0.5 180 0.5 0 30
 wait 80
 cmd awaken turbo demo on
+hud off
 wait 80
 shot turbo_demo_on
 perf demo_on 10

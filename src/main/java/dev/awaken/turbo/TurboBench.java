@@ -6,15 +6,14 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Launch-time numbers for Turbo's experiments (autopilot runs, or -Dawaken.turbo.bench=true): one {@code [turbo] bench}
- * line each for launch to title screen, join to first world frame, and every frame of the first 30 s in the world
- * (p50, p99, p99.5, the worst frame: the first-world-load hitch). Each line carries the switches and MoltenVK settings
+ * line each for launch to title screen (the loading overlay gone), join to first world frame, and every frame of the
+ * first 30 s in the world (p50, p99, p99.5, the worst frame: the first-world-load hitch). Each line carries the switches and MoltenVK settings
  * of the run. Frames go into a preallocated array: measuring costs no allocation per frame.
  */
 final class TurboBench {
@@ -23,7 +22,7 @@ final class TurboBench {
     private static final long WINDOW = 30_000_000_000L;
     private static final long[] FRAMES = new long[30 * 400];
     private static int count;
-    private static boolean titleDone;
+    private static boolean titleDone, sawOverlay;
     private static long joinNanos;
     private static long windowStart = -1;
     private static long lastFrame;
@@ -41,7 +40,10 @@ final class TurboBench {
         if (done) return;
         Minecraft mc = Minecraft.getInstance();
         long now = System.nanoTime();
-        if (!titleDone && mc.gui.overlay() == null && mc.gui.screen() instanceof TitleScreen) {
+        // the loading overlay gone for the first time: resources and pipelines are loaded (autopilot may already have
+        // left the title screen while the overlay faded, so the screen itself isn't the signal)
+        if (mc.gui.overlay() != null) sawOverlay = true;
+        if (!titleDone && sawOverlay && mc.gui.overlay() == null) {
             titleDone = true;
             Optional<Instant> start = ProcessHandle.current().info().startInstant();
             TurboVersions.LOG.info("[turbo] bench launch_to_title={}ms {}",

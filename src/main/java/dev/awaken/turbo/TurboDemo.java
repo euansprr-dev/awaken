@@ -80,6 +80,7 @@ final class TurboDemo {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return "Turbo demo: join a world first";
         anchorAt(mc.player.position());
+        prepare(Turbo.compute());
         wanted = true;
         return "Turbo demo on: a compute-built " + N + " x " + N + " grid 8 blocks below you, drawn after the sky";
     }
@@ -91,6 +92,16 @@ final class TurboDemo {
 
     static String status() {
         return (wanted ? "on" : "off") + "; " + last;
+    }
+
+    /** Compiles the shader and makes the buffers ahead of the first drawn frame (the command's frame pays for it). */
+    private static void prepare(TurboCompute c) {
+        if (program != null) return;
+        program = c.program("awaken:turbo/grid.comp", Turbo.source("grid.comp"), 3, 16);
+        verts = c.buffer("turbo demo vertices", GpuBuffer.USAGE_VERTEX, (long) N * N * 16);
+        indices = c.buffer("turbo demo indices", GpuBuffer.USAGE_INDEX, (long) INDICES * 4);
+        args = c.buffer("turbo demo draw", GpuBuffer.USAGE_INDIRECT_PARAMETERS, 32);
+        timer = RenderSystem.getDevice().createTimestampQueryPool(12);
     }
 
     private static void anchorAt(Vec3 p) {
@@ -105,16 +116,12 @@ final class TurboDemo {
         if (c == null) return;
         CompiledRenderPipeline compiled = RenderSystem.getCompiledPipelineNullable(GRID);
         if (compiled == null) return;
-        long t0 = System.nanoTime();
         if (program == null) {
-            program = c.program("awaken:turbo/grid.comp", Turbo.source("grid.comp"), 3, 16);
-            verts = c.buffer("turbo demo vertices", GpuBuffer.USAGE_VERTEX, (long) N * N * 16);
-            indices = c.buffer("turbo demo indices", GpuBuffer.USAGE_INDEX, (long) INDICES * 4);
-            args = c.buffer("turbo demo draw", GpuBuffer.USAGE_INDIRECT_PARAMETERS, 32);
-            timer = RenderSystem.getDevice().createTimestampQueryPool(12);
+            prepare(c);
             Minecraft mc = Minecraft.getInstance();
-            if (ay == 0 && mc.player != null) anchorAt(mc.player.position());
+            if (mc.player != null) anchorAt(mc.player.position());
         }
+        long t0 = System.nanoTime();
         LevelRenderState state = e.getLevelRenderState();
         Vec3 cam = state.cameraRenderState.pos;
         float time = ((state.gameTime % 24000L) + state.worldPartialTicks) / 20.0F;

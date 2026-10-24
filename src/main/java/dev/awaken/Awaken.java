@@ -50,6 +50,7 @@ public final class Awaken {
         dev.awaken.compat.CompatModule.init(modBus);
         dev.awaken.terrain.TerrainModule.init(modBus);
         dev.awaken.holo.HoloModule.init(modBus);
+        dev.awaken.turbo.TurboModule.init(modBus);
     }
 
     public static Identifier id(String path) {
