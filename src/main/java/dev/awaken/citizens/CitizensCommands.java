@@ -247,7 +247,7 @@ final class CitizensCommands {
             int place = d.place[i];
             if (score == 3 && place >= 0 && r.pKind[place] != Roster.P_DOOR && r.pKind[place] != Roster.P_TAVERN_OUT && r.pKind[place] != Roster.P_SIT)
                 score = 4;
-            if (d.dwellUntil[i] > 0) score = 5; // mid-stop on a round: lighting a lamp, a delivery
+            if (d.dwellUntil[i] > 0) score = 3; // mid-stop on a round: they'll walk on soon
             if (score > bestScore) {
                 bestScore = score;
                 best = i;
@@ -266,9 +266,13 @@ final class CitizensCommands {
             double ang = a * Math.PI / 16;
             for (double dist = 4; dist <= 11; dist += 1) {
                 double px = x + Math.cos(ang) * dist, pz = z + Math.sin(ang) * dist;
-                if (!open(plan.kind((int) Math.floor(px - cx), (int) Math.floor(pz - cz)))) continue;
+                int ix = (int) Math.floor(px - cx), iz = (int) Math.floor(pz - cz);
+                if (!open(plan.kind(ix, iz))) continue;
                 if (!clear(plan, x - cx, z - cz, px - cx, pz - cz)) continue;
-                double score = Math.abs(dist - want);
+                // room round the camera: not pressed against a wall or a drainpipe
+                int room = 0;
+                for (int ox = -2; ox <= 2; ox++) for (int oz = -2; oz <= 2; oz++) if (open(plan.kind(ix + ox, iz + oz))) room++;
+                double score = Math.abs(dist - want) + (25 - room) * 0.6;
                 if (score < bestScore) {
                     bestScore = score;
                     best = new double[]{Math.floor(px) + 0.5, Math.floor(pz) + 0.5};
@@ -325,11 +329,21 @@ final class CitizensCommands {
         Citizens c = need(src);
         if (c == null) return 0;
         ServerPlayer p = src.getPlayerOrException();
-        List<CitizenBody> near = new ArrayList<>(c.crowd.bodies);
-        near.removeIf(b -> b.rec < 0 || !c.roster.isCitizen(b.rec));
-        near.sort((a, b) -> Double.compare(a.distanceToSqr(p), b.distanceToSqr(p)));
-        if (near.isEmpty()) return 0;
-        CitizenBody b = near.getFirst();
+        // whoever is most squarely in view within 14 blocks (else the nearest)
+        var look = p.getViewVector(1f);
+        CitizenBody b = null;
+        double best = -1e9;
+        for (CitizenBody o : c.crowd.bodies) {
+            if (o.rec < 0 || !c.roster.isCitizen(o.rec)) continue;
+            double dx = o.getX() - p.getX(), dy = o.getEyeY() - p.getEyeY(), dz = o.getZ() - p.getZ(), dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (dist > 14) continue;
+            double score = (dx * look.x + dy * look.y + dz * look.z) / Math.max(1e-3, dist) * 10 - dist * 0.2;
+            if (score > best) {
+                best = score;
+                b = o;
+            }
+        }
+        if (b == null) return 0;
         c.recognition.greet(b, b.rec, p, c.level.getGameTime(), true);
         return say(src, describe(c, b.rec) + " greets you");
     }
