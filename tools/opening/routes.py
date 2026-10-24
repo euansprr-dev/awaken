@@ -174,8 +174,10 @@ class Route:
         return (p[0], p[1], p[2])
 
 
-def runner_path(city, box, start, goal, centre, min_feet=None, build=False, plank_cost=0.45, limit=400000):
-    P = Builder(city, box, min_feet=-99.0 if min_feet is None else min_feet, plank_cost=plank_cost) if build else Planner(city, box)
+def runner_path(city, box, start, goal, centre, min_feet=None, build=False, plank_cost=0.45, limit=400000, max_drop=None, avoid=None):
+    P = Builder(city, box, min_feet=-99.0 if min_feet is None else min_feet, plank_cost=plank_cost, avoid=avoid) if build else Planner(city, box, avoid=avoid)
+    if max_drop is not None:
+        P.max_drop = max_drop
     if min_feet is not None and not build:
         base = P.moves
 
@@ -218,7 +220,9 @@ def lay_planks(stage, path, gap_every=7):
         skip = set()
         if len(run) >= gap_every:
             mid = len(run) // 2
-            skip = {mid - 1, mid}
+            # a two-block gap across a straight bridge; one block on a diagonal (it is as wide again)
+            ddx, ddz = run[mid][0] - run[mid - 1][0], run[mid][1] - run[mid - 1][1]
+            skip = {mid} if ddx != 0 and ddz != 0 else {mid - 1, mid}
         for i, (x, z, f2) in enumerate(run):
             if i in skip:
                 continue
@@ -310,6 +314,13 @@ def ground_feet(city, x, z, near=1.0):
     return min(fl, key=lambda f: abs(f - near))
 
 
+STALLS = []
+
+
+def off_stalls(x, z):
+    return any(x0 - 1 <= x <= x1 + 1 and z0 - 1 <= z <= z1 + 1 for x0, z0, x1, z1 in STALLS)
+
+
 def street_points(route, city, pts, move='run', near=1.0):
     """Ground waypoints joined by the planner's runs (round a stall, onto a bridge's deck): what a runner on the street does."""
     for x, z in pts:
@@ -321,7 +332,7 @@ def street_points(route, city, pts, move='run', near=1.0):
         if (int(math.floor(a[0])), int(math.floor(a[2]))) == (tx, tz):
             continue
         goal = (lambda tx, tz: (lambda n: abs(n[0] - tx) <= 1 and abs(n[1] - tz) <= 1 and n[2] <= 2 * 3))(tx, tz)
-        path, cost, n = runner_path(city, BOX, a, goal, (tx, tz), min_feet=None, limit=60000)
+        path, cost, n = runner_path(city, BOX, a, goal, (tx, tz), min_feet=None, limit=60000, avoid=off_stalls)
         if path is None:
             # an unreachable waypoint (inside a stall or a doorway): skip it, the next one carries the line
             print(f'   {route.name}: skips waypoint ({x:.1f}, {z:.1f})')
@@ -341,6 +352,7 @@ def in_square(n):
 
 def design(city, plan):
     stage = Stage(city)
+    STALLS[:] = [tuple(p['box']) for l in plan['landmarks'] if l['id'] == 'stalls' for p in l['parts']]
     stair_top = roost(stage)
     crane(stage)
     # the far bank: a ladder from the east lower quay up the quay wall (south of the Bell Bridge, where the swim lands)
@@ -451,14 +463,15 @@ def design(city, plan):
     street_points(r, city, streets.path(a, b))
     r.add(-88.5, 1.0, -142.5, 'run')
     r.add(-86.5, 1.0, -142.5, 'run')
-    r.add(-86.5, -3.0, -142.5, 'climb')     # down the ladder to the lower quay
+    r.add(-85.5, -3.0, -142.5, 'climb')     # down the ladder to the lower quay
     r.add(-85.5, -3.0, -141.5, 'run')
     r.add(-85.5, -3.0, -41.5, 'run')        # south along the water
     routes.append(r)
     r = Route('act2_canal', 2, 'canal')
     r.add(-85.5, -3.0, -41.5, 'run')
-    r.add(-85.5, -3.0, -40.5, 'run')
-    r.add(-85.5, -6.4, -37.5, 'swim')       # off the lower quay into the canal's mouth
+    r.add(-84.5, -3.0, -41.5, 'run')
+    r.add(-84.5, -3.0, -40.5, 'run')
+    r.add(-84.5, -6.4, -37.5, 'swim')       # off the lower quay into the canal's mouth
     r.add(-84.5, -6.4, -33.6, 'swim')
     r.add(-84.5, -3.0, -33.5, 'climb')      # up the mouth's ladder
     r.add(-84.5, -3.0, -31.5, 'run')
@@ -478,6 +491,17 @@ def design(city, plan):
     street_points(r, city, streets.path(a, b) + [(-22.0, -6.0)])
     routes.append(r)
     return stage, routes
+
+
+def over_water(city, p, reach=2):
+    """Water under this point or a step from it (a runner lets go into the river)."""
+    from terrain import WATER
+    x0, z0 = int(math.floor(p[0])), int(math.floor(p[2]))
+    for dx in range(-reach, reach + 1):
+        for dz in range(-reach, reach + 1):
+            if any(city.kind(x0 + dx, ry, z0 + dz) == WATER for ry in range(-8, -4)) and not city.floors(x0 + dx, z0 + dz, -3, int(p[1])):
+                return True
+    return False
 
 
 def draw(city, routes, stage, out):
@@ -523,6 +547,25 @@ def main():
             bad = check(city, r, BOX)
             for a, b in bad:
                 print(f'   cannot run {a} -> {b}')
+    # SPEC §16.4: the street is never more than 30 s away: from any point of a high route a Runner gets down to street
+    # level within 30 s at a sprint (over the river the water is down: you let go)
+    worst = 0.0
+    for r in routes:
+        if r.kind == 'street':
+            continue
+        for p in r.points[::2]:
+            if p[1] <= 2.0 or p[3] in ('hang', 'shimmy', 'ledge_up', 'swim', 'climb'):
+                continue
+            if over_water(city, p):
+                continue  # let go: the river is down
+            goal = lambda n: n[2] <= 2 * 2.5
+            # getting down at any cost: a hang from the eaves and a long fall (no death in the opening) count
+            path, cost, n = runner_path(city, BOX, (p[0], p[1], p[2]), goal, (p[0], p[2]), min_feet=None, limit=60000, max_drop=18.0)
+            c = cost if path is not None else 99.0
+            worst = max(worst, c)
+            if c > 30:
+                print(f'   {r.name}: the street route is {c:.0f} s from {p[:3]}')
+    print(f'the street: at most {worst:.1f} s down from any point of a high route (a Runner at a sprint)')
     stage_list = [[x, ry, z, spec] for (x, ry, z), spec in sorted(stage.blocks.items(), key=lambda kv: (kv[0][1], kv[0][2], kv[0][0]))]
     out = {'schemaVersion': 1, 'generator': 'tools/opening/routes.py', 'planSha256': hashlib.sha256(raw).hexdigest(),
            'routes': [{'name': r.name, 'act': r.act, 'kind': r.kind, 'points': r.points} for r in routes],

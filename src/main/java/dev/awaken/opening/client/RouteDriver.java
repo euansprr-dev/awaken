@@ -142,6 +142,11 @@ final class RouteDriver {
             p.setXRot(10F);
         }
         Vec3 dir = dxz < 1e-4 ? Vec3.ZERO : new Vec3(dx / dxz, 0, dz / dxz);
+        // caught on a ledge where the route doesn't hang (the top of a ladder, a lip on the way): climb out
+        if (hang && m != OpeningRoutes.Move.HANG && m != OpeningRoutes.Move.SHIMMY && m != OpeningRoutes.Move.LEDGE_UP) {
+            keys(false, false, false, false, age % 6 < 3, false, false);
+            return;
+        }
         switch (m) {
             case RUN, WALK -> {
                 boolean step = p.horizontalCollision && ground;
@@ -191,7 +196,7 @@ final class RouteDriver {
             case SHIMMY -> hang && dxz < 0.45;
             case LEDGE_UP -> ground && !hang && Math.abs(dy) < 0.8;
             case SWIM -> dxz < 1.2;
-            case CLIMB -> dxz < 1.4 && (dy > 0 ? dy < 0.15 : dy > -0.15) && !ladder || dxz < 1.0 && Math.abs(dy) < 0.15;
+            case CLIMB -> dxz < 2.0 && Math.abs(dy) < 0.3;
             default -> dxz < 0.7;
         };
     }

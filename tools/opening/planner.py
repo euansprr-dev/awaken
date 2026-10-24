@@ -17,11 +17,13 @@ MAX_DROP = 7.0
 
 
 class Planner:
-    def __init__(self, city, box, avoid=None):
-        """box: (x0, z0, x1, z1) plan coordinates the search stays inside; avoid(x, z) -> True to keep out."""
+    def __init__(self, city, box, avoid=None, max_drop=MAX_DROP):
+        """box: (x0, z0, x1, z1) plan coordinates the search stays inside; avoid(x, z) -> True to keep out. max_drop: the
+        longest fall a path may take (a route keeps to MAX_DROP; getting down at any cost takes more)."""
         self.c = city
         self.box = box
         self.avoid = avoid
+        self.max_drop = max_drop
         self._floors = {}
 
     def floors(self, x, z):
@@ -90,7 +92,7 @@ class Planner:
                 nx, nz = x + dx, z + dz
                 for g in self.floors(nx, nz):
                     dy = g - f
-                    if not (-MAX_DROP <= dy < -1.01):
+                    if not (-self.max_drop <= dy < -1.01):
                         continue
                     # the column we step over (one out) must be open from our feet down to the landing's head room
                     sx, sz = x + (dx > 0) - (dx < 0), z + (dz > 0) - (dz < 0)
@@ -110,15 +112,16 @@ class Planner:
                 lands = self.floors(nx, nz)
                 if not lands:
                     continue
-                # a run-up: the cell behind us at our height
-                bx, bz = x - round(dx / h), z - round(dz / h)
-                if not any(abs(g - f) <= 0.6 for g in self.floors(bx, bz)):
+                # a run-up: two cells behind us at our height, in line (a sprint has to build up)
+                ux, uz = dx / h, dz / h
+                if not all(any(abs(g - f) <= 0.6 for g in self.floors(x - round(ux * k), z - round(uz * k))) for k in (1, 2)):
                     continue
                 for g in lands:
                     dy = g - f
-                    # centre to centre: a diagonal leaves more of each block to take off from and land on
-                    reach = (4.0 if dx == 0 or dz == 0 else 4.4) + max(0.0, -dy) * 0.3
-                    if dy > 1.01 or dy < -6 or h > min(5.2, reach) or (dy > 0.5 and h > 3.6):
+                    # centre to centre: a diagonal leaves more of each block to take off from and land on; a landing
+                    # lower carries further (the driver's runs reach about 4.3 level from a full sprint)
+                    reach = (3.6 if dx == 0 or dz == 0 else 3.9) + max(0.0, -dy) * 0.3
+                    if dy > 1.01 or dy < -6 or h > min(4.8, reach) or (dy > 0.1 and h > 3.2):
                         continue
                     if self.arc_clear(x, z, f, nx, nz, g, h):
                         cost = h / SPRINT + 0.3 + (1.5 if -dy > SAFE_DROP + 0.5 else 0)
