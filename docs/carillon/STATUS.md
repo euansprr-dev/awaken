@@ -123,3 +123,6 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   market quarter and the night lamps read as a living town; elsewhere thin (1–3 people a street), vanilla wares (→ M4:
   roster ~400–480, lit windows, kit, crowd murmur). Open risk: the events test sprints the server ~9,000 ticks, which may
   time out gate builds in tests running alongside (a simulated clock would fix it). M2 started.
+- 2026-10-25: M3 is READY TO MERGE into build/awaken-v1 at carillon/main f6091499 (pushed). The pack session was not
+  running when M3 finished, so it hasn't been told: whoever merges next, take f6091499 (or later) and check CI on
+  carillon/main first. M2 (the opening) started in /Volumes/MEDIA/Awaken-opening.
