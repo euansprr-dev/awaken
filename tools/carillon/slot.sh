@@ -9,6 +9,8 @@
 # SLOT_WAIT seconds (default 7200). Set SLOT_WHO to name yourself in the owner file.
 # Fairness: a waiting build leaves a want-build.<pid> marker; between tours, builds go first (a tour waiter holds off
 # while a live build is waiting, for at most SLOT_YIELD seconds, default 1800), so tours back to back can't starve them.
+# Tours are first come, first served: each waiter takes a ticket in tour-queue/ and only the oldest live ticket may take
+# the tour lock. The machine has 16 GB, so tours never run two at once: keep each tour short and fold scenes together.
 LOCKS=${SLOT_LOCKS:-/Volumes/MEDIA/.carillon-locks}
 mkdir -p $LOCKS
 MODE=${1:?build or tour}; shift
@@ -17,6 +19,8 @@ WAIT=${SLOT_WAIT:-7200}
 YIELD=${SLOT_YIELD:-1800}
 HELD=()
 WANT=""
+TICKET=""
+zmodload zsh/datetime
 
 take() { # take <lock dir>: 0 when we got it
   local d=$LOCKS/$1
@@ -27,7 +31,7 @@ take() { # take <lock dir>: 0 when we got it
   if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then rm -rf "$d"; take "$1"; return $?; fi
   return 1
 }
-release() { for d in $HELD; do rm -rf "$d"; done; HELD=(); [ -n "$WANT" ] && rm -f "$WANT"; }
+release() { for d in $HELD; do rm -rf "$d"; done; HELD=(); [ -n "$WANT" ] && rm -f "$WANT"; [ -n "$TICKET" ] && rm -f "$TICKET"; }
 trap release EXIT INT TERM
 
 builds_waiting() { # 0 when a live build is waiting for a slot
@@ -38,6 +42,15 @@ builds_waiting() { # 0 when a live build is waiting for a slot
     rm -f "$f"
   done
   return 1
+}
+
+oldest_ticket() { # prints the oldest live ticket in the tour queue (stale ones are removed)
+  local f pid
+  for f in $LOCKS/tour-queue/*(Non); do
+    pid=${${f:t}##*.}
+    if kill -0 "$pid" 2>/dev/null; then echo "$f"; return; fi
+    rm -f "$f"
+  done
 }
 
 waited=0
@@ -60,13 +73,18 @@ case $MODE in
     done
     rm -f $WANT; WANT="" ;;
   tour)
+    # first come, first served: a ticket named by the time it was taken (zero-padded so names sort in time order)
+    mkdir -p $LOCKS/tour-queue
+    TICKET=$LOCKS/tour-queue/$(printf '%020.6f' $EPOCHREALTIME).$$
+    echo "$$ $WHO $(date +%Y-%m-%dT%H:%M:%S)" > $TICKET
     # builds go first between tours (bounded, so a stream of builds can't starve tours either)
     yielded=0
-    until ! builds_waiting && take tour; do
-      if [ $yielded -ge $YIELD ]; then waitfor tour; break; fi
-      /bin/sleep 5; yielded=$((yielded + 5)); waited=$((waited + 5))
+    until [ "$(oldest_ticket)" = "$TICKET" ] && { [ $yielded -ge $YIELD ] || ! builds_waiting; } && take tour; do
+      builds_waiting && yielded=$((yielded + 5))
+      /bin/sleep 5; waited=$((waited + 5))
       if [ $waited -ge $WAIT ]; then echo "slot.sh: gave up waiting for the tour lock after ${WAIT}s" >&2; exit 75; fi
     done
+    rm -f $TICKET; TICKET=""
     waitfor build-1; waitfor build-2; waitfor build-3 ;;
   *) echo "slot.sh: mode must be build or tour" >&2; exit 64 ;;
 esac
