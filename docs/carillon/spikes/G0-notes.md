@@ -16,6 +16,9 @@ It reads as the plan's diorama: voxel trees, water by depth, sand terraces, clou
   averaged colours). MIT confirmed; nothing copied.
 - Look gaps for W6/W8: cloud sprite variants + a soft cloud floor; a "lit" bit per column for night windows and lamps;
   AO for dense forest; markers occluded by terrain; city-scale buildings untested.
-- Wrist glance: render to a small texture on change, drawn by Holo as one textured quad. HoloCanvas has no external-
-  texture primitive yet: asked the Holo session (pack/holo-ui part 2). The Atlas screen reports UiHooks.focus().
+- Wrist glance: render to a small texture on change, drawn by Holo as one textured quad. Agreed with the Holo session
+  (2026-10-24): holo merge 2 adds `HoloCanvas.texture(Identifier tex, x, y, w, h, u0, v0, u1, v1, argb)` (one quad, UV +
+  tint, no per-frame allocation; DynamicTexture or render target; a GuiCanvas twin where it fits) and multi-owner
+  focus `UiHooks.setFocus(owner, value)` / `clearFocus(owner)` (max wins; Lens reads focus() into texel 14). Exact
+  signatures arrive when merge 2 lands on build/awaken-v1.
 - Tours: the vanilla tutorial toast ("Move with W, A, S and D") covers shots; W9 sets tutorialStep:none for tours.
