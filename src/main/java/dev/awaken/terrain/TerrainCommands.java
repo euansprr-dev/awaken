@@ -1,0 +1,152 @@
+package dev.awaken.terrain;
+
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import dev.awaken.Awaken;
+import dev.awaken.core.AwakenCommands;
+import net.minecraft.util.Util;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceOrTagArgument;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Relative;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
+
+import java.nio.file.Path;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * {@code /awaken terrain ...}, the terrain studio (game masters only): {@code survey <name> [radius] [step]} samples the
+ * land around you into {@code terrain/<name>.json} for tools/terrain/survey.py; {@code visit <biome|#tag>} stands you in
+ * the heart of the nearest surface patch of that biome; {@code lookout [radius]} takes you to the highest ground nearby;
+ * {@code at} prints the biome, ground height and climate where you stand. The searches run off the main thread and
+ * log {@code [terrain]} lines the autopilot can wait on.
+ */
+final class TerrainCommands {
+    private TerrainCommands() {}
+
+    static void register() {
+        AwakenCommands.add((root, ctx) -> {
+            var t = Commands.literal("terrain").requires(AwakenCommands.admin());
+            t.then(Commands.literal("survey").then(Commands.argument("name", StringArgumentType.word())
+                    .executes(c -> survey(c, 2048, 16))
+                    .then(Commands.argument("radius", IntegerArgumentType.integer(128, 8192))
+                            .executes(c -> survey(c, IntegerArgumentType.getInteger(c, "radius"), 16))
+                            .then(Commands.argument("step", IntegerArgumentType.integer(4, 256))
+                                    .executes(c -> survey(c, IntegerArgumentType.getInteger(c, "radius"), IntegerArgumentType.getInteger(c, "step")))))));
+            t.then(Commands.literal("visit").then(Commands.argument("biome", ResourceOrTagArgument.resourceOrTag(ctx, Registries.BIOME))
+                    .executes(TerrainCommands::visit)));
+            t.then(Commands.literal("lookout")
+                    .executes(c -> lookout(c, 256))
+                    .then(Commands.argument("radius", IntegerArgumentType.integer(16, 2048))
+                            .executes(c -> lookout(c, IntegerArgumentType.getInteger(c, "radius")))));
+            t.then(Commands.literal("at").executes(TerrainCommands::at));
+            root.then(t);
+        });
+    }
+
+    private static int survey(CommandContext<CommandSourceStack> c, int radius, int step) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        String name = StringArgumentType.getString(c, "name");
+        ServerLevel level = sp.level().getServer().overworld();
+        ChunkGenerator gen = level.getChunkSource().getGenerator();
+        RandomState rs = level.getChunkSource().randomState();
+        int x = sp.getBlockX(), z = sp.getBlockZ();
+        Path dir = level.getServer().getServerDirectory().resolve("terrain");
+        c.getSource().sendSuccess(() -> Component.literal("Surveying " + name + "..."), false);
+        CompletableFuture.supplyAsync(() -> {
+            Survey.Grid g = Survey.sample(name, level.getSeed(), gen, rs, level, x, z, radius, step);
+            try {
+                return Survey.write(g, dir).toString() + " (" + g.size() + "² samples, " + g.millis() + " ms)";
+            } catch (java.io.IOException e) {
+                throw new java.io.UncheckedIOException(e);
+            }
+        }, Util.backgroundExecutor()).whenCompleteAsync((msg, err) -> {
+            if (err != null) {
+                Awaken.LOG.error("[terrain] survey {} failed", name, err);
+                c.getSource().sendFailure(Component.literal("Survey failed: " + err.getMessage()));
+            } else {
+                Awaken.LOG.info("[terrain] survey {} done {}", name, msg);
+                c.getSource().sendSuccess(() -> Component.literal("Survey " + name + ": " + msg), false);
+            }
+        }, level.getServer());
+        return 1;
+    }
+
+    private static int visit(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        ResourceOrTagArgument.Result<net.minecraft.world.level.biome.Biome> want = ResourceOrTagArgument.getResourceOrTag(c, "biome", Registries.BIOME);
+        ServerLevel level = sp.level().getServer().overworld();
+        ChunkGenerator gen = level.getChunkSource().getGenerator();
+        RandomState rs = level.getChunkSource().randomState();
+        int x = sp.getBlockX(), z = sp.getBlockZ();
+        String label = want.asPrintable();
+        CompletableFuture.supplyAsync(() -> Survey.findHeart(gen, rs, level, want, x, z, 8192), Util.backgroundExecutor())
+                .whenCompleteAsync((spot, err) -> {
+                    if (err != null || spot == null) {
+                        Awaken.LOG.info("[terrain] visit {} none", label);
+                        c.getSource().sendFailure(Component.literal("No surface " + label + " within 8192 blocks"));
+                        return;
+                    }
+                    stand(sp, level, spot.x(), spot.z(), 0);
+                    Awaken.LOG.info("[terrain] visit {} at {} {} {} ({})", label, spot.x(), spot.floor(), spot.z(), Survey.id(spot.biome()));
+                    c.getSource().sendSuccess(() -> Component.literal("Visiting " + Survey.id(spot.biome()) + " at "
+                            + spot.x() + ", " + spot.z()), false);
+                }, level.getServer());
+        return 1;
+    }
+
+    private static int lookout(CommandContext<CommandSourceStack> c, int radius) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        ServerLevel level = sp.level().getServer().overworld();
+        ChunkGenerator gen = level.getChunkSource().getGenerator();
+        RandomState rs = level.getChunkSource().randomState();
+        int x = sp.getBlockX(), z = sp.getBlockZ();
+        CompletableFuture.supplyAsync(() -> Survey.lookout(gen, rs, level, x, z, radius), Util.backgroundExecutor())
+                .whenCompleteAsync((spot, err) -> {
+                    if (err != null || spot == null) {
+                        Awaken.LOG.info("[terrain] lookout none");
+                        c.getSource().sendFailure(Component.literal("No dry ground within " + radius + " blocks"));
+                        return;
+                    }
+                    stand(sp, level, spot.x(), spot.z(), 2);
+                    Awaken.LOG.info("[terrain] lookout at {} {} {} ({})", spot.x(), spot.floor(), spot.z(), Survey.id(spot.biome()));
+                    c.getSource().sendSuccess(() -> Component.literal("Lookout at " + spot.x() + ", " + spot.floor() + ", " + spot.z()), false);
+                }, level.getServer());
+        return 1;
+    }
+
+    private static int at(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        ServerLevel level = sp.level().getServer().overworld();
+        ChunkGenerator gen = level.getChunkSource().getGenerator();
+        RandomState rs = level.getChunkSource().randomState();
+        Survey.Spot s = Survey.spot(gen, rs, level, gen.getBiomeSource().createCachingResolver(rs), sp.getBlockX(), sp.getBlockZ());
+        Climate.TargetPoint p = rs.createClimateSampler(SamplerContext.EMPTY_UNCACHED)
+                .sample(QuartPos.fromBlock(sp.getBlockX()), QuartPos.fromBlock(Math.max(s.floor(), gen.getSeaLevel())), QuartPos.fromBlock(sp.getBlockZ()));
+        String msg = String.format("%s ground %d · T %.2f H %.2f C %.2f E %.2f D %.2f W %.2f", Survey.id(s.biome()), s.floor(),
+                Climate.unquantizeCoord(p.temperature()), Climate.unquantizeCoord(p.humidity()), Climate.unquantizeCoord(p.continentalness()),
+                Climate.unquantizeCoord(p.erosion()), Climate.unquantizeCoord(p.depth()), Climate.unquantizeCoord(p.weirdness()));
+        Awaken.LOG.info("[terrain] at {} {} {}", sp.getBlockX(), sp.getBlockZ(), msg);
+        c.getSource().sendSuccess(() -> Component.literal(msg), false);
+        return 1;
+    }
+
+    /** Stands the player on the real ground (trees ignored) at (x, z), lifted {@code above} blocks. */
+    private static void stand(ServerPlayer sp, ServerLevel level, int x, int z, int above) {
+        level.getChunk(x >> 4, z >> 4);
+        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        sp.teleportTo(level, x + 0.5, y + 0.1 + above, z + 0.5, Set.<Relative>of(), sp.getYRot(), sp.getXRot(), true);
+    }
+}

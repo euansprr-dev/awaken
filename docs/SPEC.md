@@ -649,7 +649,23 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 - One biome table (stage 1) gives every biome, vanilla or Awakened, its family, spirit hint, lair and ruin rights,
   cottage palette, music, ambience and Lens look; every Awaken system reads tags generated from it. A census test fails
   the build if any biome lacks a row.
-- Trees: data trees keep canopies within about 12 blocks of the trunk (a feature may write one chunk beyond its own);
+- New worlds only, by feature flag: everything Awakened (biomes, their placement, their tag memberships, trees) lives
+  in the built-in data pack `datapacks/awakened_lands` (`dev.awaken.terrain.LandsPack`), which asks for the feature flag
+  `awaken:awakened_lands` (declared in META-INF/feature_flags.json). A world being created may turn on any flag, so it
+  loads the pack and records the flag; a world made before the flag existed lacks it, so the game skips the pack there
+  and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
+  it off). Test: `terrain_lands_pack_new_worlds_only`.
+- Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
+  `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
+  threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
+  are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+- The biome table (stage 1): `tools/terrain/biomes.py` is the one source. Base Awaken data refers to biomes only through
+  tags (`#awaken:fauna/<group>` in the fauna biome modifiers, `awaken:has_lair/<beast>`, `awaken:lair_style/<style>`,
+  `awaken:cottage/<plan>`), listing vanilla biomes. The lands pack adds each Awakened biome to the same tags (tags
+  merge across packs) plus every vanilla and `c:` tag its archetype is in, and to `awaken:archetype/<vanilla biome>`.
+  Code that still reasons by biome name (spirits) asks `dev.awaken.terrain.api.BiomeTable.archetype(biome)` first.
+  A census GameTest fails if an Awakened biome lacks an archetype, a fauna group, a cottage plan or spirits.
+ within about 12 blocks of the trunk (a feature may write one chunk beyond its own);
   giant hero trees are structures. No ticking or growing trees. Awaken logs and leaves join `#minecraft:logs` and
   `#minecraft:leaves`. Vanilla leaf textures are untouched; Awaken trees get their own art.
 - Life: wind from world time and seed (same for every player, no packets) drives falling leaves (a fixed client pool,

@@ -281,6 +281,9 @@ public final class Autopilot {
                 mc.resizeGui();
                 waitTicks = 5;
             }
+            case "hud" -> { // hud off|on: the F1 view, for clean shots
+                if (mc.gui.hud.isHidden() != arg.trim().equals("off")) mc.gui.hud.toggle();
+            }
             case "shot" -> {
                 // command feedback is not part of the picture: clear the chat, let a few frames render without it
                 if (shotPending == null) {

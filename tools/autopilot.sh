@@ -10,6 +10,7 @@
 #   LENS=off|swift|cinematic  Awaken's light layer (unset: whatever run-autopilot's client config says)
 #   DH=swift|cinematic|default  Distant Horizons settings (pack/dh/); unset leaves them
 #   RD=<chunks>             vanilla render distance for this run
+#   TECTONIC=<preset>       Tectonic settings from pack/tectonic/<preset>.json (unset: Tectonic's defaults)
 cd "$(dirname "$0")/.."
 SCRIPT=${1:?script}
 T=${2:-900}
@@ -28,12 +29,22 @@ echo "preferredGraphicsBackend:\"${BACKEND:-default}\"" >> $OPTS
 # RD=<chunks> sets the vanilla render distance for this run (Distant Horizons draws the rest); 16 when unset
 sed -i '' '/^renderDistance:/d' $OPTS
 echo "renderDistance:${RD:-16}" >> $OPTS
+# no tutorial toasts over the shots
+sed -i '' '/^tutorialStep:/d' $OPTS
+echo "tutorialStep:none" >> $OPTS
 # LENS=off|swift|cinematic sets Awaken's light layer for this run (unset leaves the client config as it is)
 if [ -n "$LENS" ]; then
   CFG=run-autopilot/config/awaken-client.toml
   touch $CFG
   sed -i '' '/^lens = /d' $CFG
   echo "lens = \"${(U)LENS}\"" >> $CFG
+fi
+# TECTONIC=<preset> picks the terrain preset; unset restores Tectonic's defaults so a preset never leaks into a later run
+if [ -n "$TECTONIC" ]; then
+  [ -f "pack/tectonic/$TECTONIC.json" ] || { echo "no preset pack/tectonic/$TECTONIC.json"; exit 1; }
+  cp "pack/tectonic/$TECTONIC.json" run-autopilot/config/tectonic.json
+elif [ -f run-autopilot/config/tectonic.json ]; then
+  cp pack/tectonic/default.json run-autopilot/config/tectonic.json
 fi
 # DH=swift|cinematic|default rewrites Distant Horizons' settings for this run
 [ -n "$DH" ] && { python3 -I tools/pack.py dhconfig run-autopilot "$DH" > /dev/null || exit 1; }

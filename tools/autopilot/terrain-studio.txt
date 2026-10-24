@@ -1,0 +1,67 @@
+# Terrain studio (docs/SPEC.md §15): five seeds surveyed into terrain/s<seed>.json (no chunks generated), and on the
+# first seed a vista from the highest ground near spawn, an aerial view and a golden-hour view. Run it through
+# tools/terrain/studio.sh <preset|vanilla>, which picks the preset and collects the results.
+world studio777 creative 777
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken terrain survey s777 3072 32
+wait 900
+cmd gamemode spectator
+cmd awaken terrain lookout 400
+wait 400
+hud off
+look 0 4
+wait 40
+shot studio_vista_south
+look 90 4
+wait 40
+shot studio_vista_west
+look 180 4
+wait 40
+shot studio_vista_north
+look -90 4
+wait 40
+shot studio_vista_east
+cmd awaken terrain at
+cmd tp @s ~ ~110 ~
+wait 300
+look 30 40
+wait 40
+shot studio_aerial
+cmd time set 12400
+wait 60
+look 90 10
+wait 40
+shot studio_golden_west
+leave
+world studio20261024 creative 20261024
+waitworld
+cmd awaken terrain survey s20261024 3072 32
+wait 900
+leave
+world studio4242 creative 4242
+waitworld
+cmd awaken terrain survey s4242 3072 32
+wait 900
+leave
+world studio1337 creative 1337
+waitworld
+cmd awaken terrain survey s1337 3072 32
+wait 900
+leave
+world studio90210 creative 90210
+waitworld
+cmd awaken terrain survey s90210 3072 32
+wait 900
+quit

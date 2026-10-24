@@ -35,6 +35,10 @@ iconFile="awaken_logo.png"
 # Enum extensions: the awaken:fauna spawn category (MobCategory.AWAKEN_FAUNA), the overworld creatures' own cap.
 enumExtensions="META-INF/enumextensions.json"
 
+# Feature flag awaken:awakened_lands: new worlds turn it on (the Awakened Lands data pack asks for it); worlds made
+# before it existed never get it, so their terrain never changes (docs/SPEC.md §15).
+featureFlags="META-INF/feature_flags.json"
+
 # A text field displayed in the mod UI
 #credits="" #optional
 
