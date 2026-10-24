@@ -153,6 +153,20 @@ final class HoloRender {
             lineV(vc, m, -t, 0, t, h, col);
             lineV(vc, m, w - t, 0, w + t, h, col);
         }
+        // corner brackets just outside the frame: the System's mark, as on the flat panels
+        float ba = p.edgeAlpha * (0.42f + 0.4f * settle);
+        if (ba > 0.004f) {
+            int col = mulAlpha(p.accent | 0xFF000000, ba);
+            float o = 3.5f, len = Math.min(18f, Math.min(w, h) / 4f), t = 2.4f;
+            line(vc, m, -o, -o - t, -o + len, -o + t, col);
+            lineV(vc, m, -o - t, -o, -o + t, -o + len, col);
+            line(vc, m, w + o - len, -o - t, w + o, -o + t, col);
+            lineV(vc, m, w + o - t, -o, w + o + t, -o + len, col);
+            line(vc, m, -o, h + o - t, -o + len, h + o + t, col);
+            lineV(vc, m, -o - t, h + o - len, -o + t, h + o, col);
+            line(vc, m, w + o - len, h + o - t, w + o, h + o + t, col);
+            lineV(vc, m, w + o - t, h + o - len, w + o + t, h + o, col);
+        }
         // corner glints while it unfolds
         float glint = p.edgeAlpha * settle;
         if (glint > 0.01f) {

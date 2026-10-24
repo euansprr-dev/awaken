@@ -187,6 +187,7 @@ public final class HoloClient {
                 p.drawn = false;
                 continue;
             }
+            p.thirdPerson = !Minecraft.getInstance().options.getCameraType().isFirstPerson();
             p.animate(reduced);
             float leave = p.anchor == HoloPanel.Anchor.WRIST ? p.timeline.leave(reduced) : 1f;
             wristView(p, WRIST);

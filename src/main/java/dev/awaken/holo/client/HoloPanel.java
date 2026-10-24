@@ -32,6 +32,8 @@ public final class HoloPanel {
     public float screenFrac = 0.62f;
     /** Extra turn toward the centre and lean back, degrees. */
     public float turn = 2.5f, lean = 2f;
+    /** In third person the panel moves aside and shrinks so your raised arm stays in view. */
+    boolean thirdPerson;
     /** Lower draw layers first (the demo under the K menu). */
     final int layer;
 
@@ -73,7 +75,7 @@ public final class HoloPanel {
 
     /** Whole framebuffer pixels per unit so the panel is about {@link #screenFrac} of the width and fits the height. */
     private int choosePpu() {
-        int byW = Math.round(screenFrac * ViewMath.fbW / w);
+        int byW = Math.round(screenFrac * (thirdPerson ? 0.72f : 1f) * ViewMath.fbW / w);
         int byH = (int) Math.floor(0.80f * ViewMath.fbH / h);
         return Math.max(1, Math.min(byW, byH));
     }
@@ -86,7 +88,8 @@ public final class HoloPanel {
         ppu = choosePpu();
         float unit = ppu * ViewMath.metresPerPixel(dist);
         // rest centre in view space and the turn that faces it to the eye
-        float cx = restX * ViewMath.tanX * dist, cy = restY * ViewMath.tanY * dist;
+        float rx = thirdPerson ? Math.min(restX, -0.42f) : restX;
+        float cx = rx * ViewMath.tanX * dist, cy = restY * ViewMath.tanY * dist;
         float face = (float) Math.atan2(-cx, dist), tilt = (float) Math.atan2(cy, dist);
         float l = anchor == Anchor.WRIST ? Math.max(0f, Math.min(1f, leave)) : 1f;
         // the centre trails the camera on the spring; while leaving the wrist it slides from the band to there,

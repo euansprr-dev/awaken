@@ -49,6 +49,11 @@ void main() {
     float inner = exp(-dUnits / 9.0);
     col += accent * inner * 0.16;
 
+    // a slow glint sweeping across the glass every nine seconds
+    float diag = (local.x + local.y * 0.6) / (s.x + s.y * 0.6);
+    float sweep = diag - (fract(t / 9.0) * 1.8 - 0.4);
+    col += vec3(0.75, 0.88, 1.0) * exp(-sweep * sweep * 260.0) * 0.045;
+
     // faint scanlines drifting down, two units apart
     float scan = 0.5 + 0.5 * sin((local.y - t * 6.0) * 3.14159);
     col += accent * scan * 0.012;
