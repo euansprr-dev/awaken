@@ -19,6 +19,8 @@ import net.minecraft.util.Mth;
  * run &lt;script&gt; [n]          a manoeuvre that watches the state: swing (n swings down the lane), glide, boom, soar
  * rec &lt;name&gt; &lt;ticks&gt; [n]     film a clip (every n-th frame)
  * route rec|play|stop [name] record a run's keys and view, or play one back from its start ({@link AscentRoutes})
+ * aether &lt;0..1&gt;              set this client's Aether (to film the meter and its empty)
+ * double &lt;key&gt;               a double tap, as a player's: 2 ticks down, 3 up, 2 down (a barrel roll: double right)
  * stop                       let go of everything
  * </pre>
  */
@@ -29,6 +31,8 @@ public final class AscentPilot {
     private static final int[] HOLD = new int[8];
     private static float aimYaw, aimPitch, aimStepYaw, aimStepPitch;
     private static int aimTicks;
+    /** A double tap in progress: the key and how far along (-1: none). */
+    private static int doubleKey = -1, doubleAge = -1;
     /** Keys were pressed last tick (released once when the holds run out). */
     private static boolean holding;
     private static String script = "";
@@ -62,9 +66,16 @@ public final class AscentPilot {
                 target = a.length > 2 ? Integer.parseInt(a[2]) : 4;
                 age = count = phase = mark = misses = 0;
                 laneYaw = p.getYRot();
+                core = null;
             }
             case "rec" -> ClipRecorder.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Integer.parseInt(a[3]) : 2);
             case "route" -> AscentRoutes.line(a);
+            case "lensmotion" -> dev.awaken.body.client.feel.FeelDirector.lensMotionOn = !a[1].equals("off");
+            case "double" -> {
+                doubleKey = key(a[1]);
+                doubleAge = 0;
+            }
+            case "aether" -> AscentMoves.aether = Math.max(0, Math.min(1, Double.parseDouble(a[1])));
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
         }
@@ -102,6 +113,7 @@ public final class AscentPilot {
                 case "glide" -> glide(p, false);
                 case "boom" -> glide(p, true);
                 case "soar" -> soar(p);
+                case "climb" -> climb(p);
                 default -> script = "";
             }
         }
@@ -110,6 +122,10 @@ public final class AscentPilot {
             p.setYRot(p.getYRot() + aimStepYaw);
             p.setYHeadRot(p.getYRot());
             p.setXRot(Mth.clamp(p.getXRot() + aimStepPitch, -90, 90));
+        }
+        if (doubleAge >= 0 && doubleKey >= 0) {
+            if (doubleAge == 0 || doubleAge == 5) HOLD[doubleKey] = Math.max(HOLD[doubleKey], 2);
+            if (++doubleAge > 6) doubleAge = -1;
         }
         boolean any = false;
         for (int i = 0; i < HOLD.length; i++) if (HOLD[i] > 0) any = true;
@@ -260,6 +276,170 @@ public final class AscentPilot {
     }
 
     /** Off the tower into flight: wings, take flight, cruise, boost, bank through a turn, slow to a hover. */
+    /**
+     * Up a sky platform's ladder (SPEC §17.9): look at the underside of the next anchor ring above (or, with none
+     * left, the side of the pier over the chain) and throw the rope; from each hang under a ring, let go and throw at
+     * the next. On the deck, walk round the cabin to its door and in to the core. Ends with the wings or after 2 min.
+     */
+    private static void climb(LocalPlayer p) {
+        AscentState st = AscentMoves.state();
+        if (core == null && (age % 10 == 1 || p.onGround())) core = coreNear(p);
+        if (core != null && p.getY() > core.getY() - 1.5) {
+            // up: hold the rope until the pull-over sets the feet down, then walk
+            if (AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.WINGS)) {
+                Awaken.LOG.info("[ascent] pilot: the core gave wings");
+                script = "";
+            } else if (st == AscentState.NONE && p.onGround()) {
+                walkToCore(p, core);
+            }
+            return;
+        }
+        if (AscentMoves.pullTicks > 0) return;
+        net.minecraft.core.BlockPos target = null;
+        net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
+        int px = p.getBlockX(), py = p.getBlockY(), pz = p.getBlockZ();
+        double best = Double.MAX_VALUE;
+        // the next ring up: not the one just hung from (a few blocks over the head)
+        for (int dy = 7; dy <= 40 && target == null; dy++) {
+            for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) {
+                m.set(px + dx, py + dy, pz + dz);
+                if (!p.level().getBlockState(m).is(dev.awaken.body.ascent.AscentContent.ANCHOR_RING.get())) continue;
+                double d = dx * dx + dz * dz;
+                if (d < best) {
+                    best = d;
+                    target = m.immutable();
+                }
+            }
+        }
+        double tx, ty, tz;
+        boolean perch = target != null && !p.level().getBlockState(target.east()).isAir() && !p.level().getBlockState(target.north()).isAir();
+        if (target != null && perch) {
+            // the top ring stands in a perch: the underside of its plate nearest the body, just in from the outer
+            // edge (the zip vaults the body over that lip)
+            int cx = target.getX() + Mth.clamp(px - target.getX(), -1, 1), cz = target.getZ() + Mth.clamp(pz - target.getZ(), -1, 1);
+            double ox = p.getX() - (cx + 0.5), oz = p.getZ() - (cz + 0.5);
+            boolean alongX = Math.abs(ox) >= Math.abs(oz);
+            tx = cx + 0.5 + (alongX ? Math.signum(ox) * 0.35 : 0);
+            ty = target.getY() - 0.02;
+            tz = cz + 0.5 + (alongX ? 0 : Math.signum(oz) * 0.35);
+        } else if (target != null) {
+            tx = target.getX() + 0.5;
+            ty = target.getY() - 0.02; // its underside
+            tz = target.getZ() + 0.5;
+        } else {
+            // the pier: the top of the chain column nearby, its +z side
+            // the nearest chain top with a block over it (the top ring's own chain under the pier's arm)
+            net.minecraft.core.BlockPos pier = null;
+            double near = Double.MAX_VALUE;
+            for (int dy = 3; dy <= 40; dy++) for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
+                m.set(px + dx, py + dy, pz + dz);
+                if (p.level().getBlockState(m).is(net.minecraft.world.level.block.Blocks.IRON_CHAIN)
+                        && !p.level().getBlockState(m.above()).is(net.minecraft.world.level.block.Blocks.IRON_CHAIN)
+                        && !p.level().getBlockState(m.above()).isAir() && dx * dx + dz * dz < near) {
+                    near = dx * dx + dz * dz;
+                    pier = m.above().immutable();
+                }
+            }
+            if (pier == null) {
+                if (st == AscentState.NONE && p.onGround() && age > 20) script = "";
+                return;
+            }
+            // its face toward the body (+x when right under it)
+            double ox = p.getX() - (pier.getX() + 0.5), oz = p.getZ() - (pier.getZ() + 0.5);
+            boolean alongX = Math.abs(ox) >= Math.abs(oz) || Math.abs(ox) + Math.abs(oz) < 0.3;
+            double sx = alongX ? (ox >= 0 ? 1 : -1) : 0, sz = alongX ? 0 : (oz >= 0 ? 1 : -1);
+            tx = pier.getX() + 0.5 + sx * 0.55;
+            ty = pier.getY() + 0.5;
+            tz = pier.getZ() + 0.5 + sz * 0.55;
+        }
+        net.minecraft.world.phys.Vec3 eye = p.getEyePosition();
+        double dx = tx - eye.x, dy = ty - eye.y, dz = tz - eye.z;
+        p.setYRot((float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG));
+        p.setYHeadRot(p.getYRot());
+        p.setXRot((float) -(Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG));
+        switch (st) {
+            case NONE, CARRY -> {
+                if (age - mark > 6) {
+                    press(TETHER, 3);
+                    mark = age;
+                }
+            }
+            case TETHER -> {
+                // hanging under a ring: let go and throw again
+                if (AscentMoves.stateAge > 8) {
+                    HOLD[TETHER] = 0;
+                    mark = age - 4;
+                } else {
+                    press(TETHER, 2);
+                }
+            }
+            case ZIP -> press(TETHER, 2);
+            default -> {
+            }
+        }
+        if (age > 2400) script = "";
+    }
+
+    /** The sky platform's core, if one is in sight (on the deck's level or just under it). */
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos core;
+
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos coreNear(LocalPlayer p) {
+        net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
+        int px = p.getBlockX(), py = p.getBlockY(), pz = p.getBlockZ();
+        for (int dy = -10; dy <= 10; dy++) for (int dx = -20; dx <= 20; dx++) for (int dz = -20; dz <= 20; dz++) {
+            m.set(px + dx, py + dy, pz + dz);
+            if (p.level().getBlockState(m).is(dev.awaken.body.ascent.AscentContent.WING_CORE.get())) return m.immutable();
+        }
+        return null;
+    }
+
+    /**
+     * On the deck: in along the pier, round the cabin (walls 4 out from the core, one door in some side) to 5.5 before
+     * its door, then in.
+     * Each tick picks its waypoint from where the body stands, along the door's side and across it.
+     */
+    private static void walkToCore(LocalPlayer p, net.minecraft.core.BlockPos c) {
+        double ox = c.getX() + 0.5, oz = c.getZ() + 0.5;
+        net.minecraft.core.Direction door = null;
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            net.minecraft.core.BlockPos q = c.relative(d, 4);
+            if (p.level().getBlockState(q).getCollisionShape(p.level(), q).isEmpty()
+                    && p.level().getBlockState(q.above()).getCollisionShape(p.level(), q.above()).isEmpty()) door = d;
+        }
+        if (door == null) return;
+        double dx = door.getStepX(), dz = door.getStepZ(), sx = -dz, sz = dx;
+        double rx = p.getX() - ox, rz = p.getZ() - oz;
+        double along = rx * dx + rz * dz, across = rx * sx + rz * sz, side = across >= 0 ? 1 : -1;
+        double ta, tc;
+        if (rx * rx + rz * rz > 10 * 10) {
+            // still on the pier (it runs straight out from the core): in along it to the deck
+            ta = 0;
+            tc = 0;
+        } else if ((Math.abs(along) < 4 && Math.abs(across) < 4) || (along >= 3.5 && Math.abs(across) <= 0.35)) {
+            // inside, or lined up on the door: straight to the core
+            ta = 0;
+            tc = 0;
+            if (Math.hypot(rx, rz) < 1.6) return; // at the core: it answers within half a second
+        } else if (along >= 4.5) {
+            ta = 5.5;
+            tc = 0;
+        } else if (Math.abs(across) >= 5.5) {
+            ta = 6.5;
+            tc = 6.5 * side;
+        } else {
+            ta = along;
+            tc = 6.5 * side;
+        }
+        double tx = ox + ta * dx + tc * sx, tz = oz + ta * dz + tc * sz;
+        if (age % 20 == 0) Awaken.LOG.info("[ascent] pilot: deck walk at {} {} (door {}), to {} {}", String.format("%.1f", along),
+                String.format("%.1f", across), door.getName(), String.format("%.1f", tx - ox), String.format("%.1f", tz - oz));
+        p.setYRot((float) (Mth.atan2(-(tx - p.getX()), tz - p.getZ()) * Mth.RAD_TO_DEG));
+        p.setYHeadRot(p.getYRot());
+        p.setXRot(10);
+        press(FORWARD, 2);
+        if (p.horizontalCollision) press(JUMP, 2);
+    }
+
     private static void soar(LocalPlayer p) {
         AscentState st = AscentMoves.state();
         switch (phase) {
@@ -275,6 +455,10 @@ public final class AscentPilot {
                 if (st == AscentState.GLIDE && age - mark > 8) {
                     press(JUMP, 2);
                     phase = 2;
+                    mark = age;
+                } else if (st != AscentState.GLIDE && age - mark > 6) {
+                    // the first air jump is the Leaper's double jump: the next one opens the wings
+                    press(JUMP, 2);
                     mark = age;
                 }
             }

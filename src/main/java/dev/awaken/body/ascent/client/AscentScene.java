@@ -23,10 +23,11 @@ final class AscentScene {
     private AscentScene() {}
 
     private static final int LENGTH = 130, WINGS_AT = 34;
-    static int pending, playing, age = -1, waited;
+    static int pending, playing, age = -1, waited, mode, playingMode;
 
-    static void remember(int bits) {
+    static void remember(int bits, int sceneMode) {
         pending = bits;
+        mode = sceneMode;
         waited = 0;
     }
 
@@ -41,6 +42,7 @@ final class AscentScene {
             // never lost: after 30 s it plays wherever you are
             if (free || ++waited > 600) {
                 playing = pending;
+                playingMode = mode;
                 pending = 0;
                 age = 0;
                 AscentSounds.local(p, AscentContent.REMEMBER.get(), 1F, 1F);
@@ -88,7 +90,7 @@ final class AscentScene {
         int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * 0.30F);
         float a1 = env(t, 8, 22, 100, 122), a2 = env(t, WINGS_AT + 6, WINGS_AT + 20, 104, 126);
         if (a1 > 0.01F) {
-            Component title = Component.translatable("awaken.ascent.remember.title");
+            Component title = Component.translatable(playingMode == AscentPayloads.GIFT_WINGS ? "awaken.ascent.gift.wings" : "awaken.ascent.remember.title");
             HudLook.glow(g, cx - mc.font.width(title) - 8, y - 6, mc.font.width(title) * 2 + 16, 22, Glass.EDGE, 0.5F * a1);
             g.pose().pushMatrix();
             g.pose().translate(cx, y);
@@ -96,7 +98,10 @@ final class AscentScene {
             HudLook.centered(g, mc.font, title.getString(), 0, 0, Glass.a(0xEAF7FF, a1), true);
             g.pose().popMatrix();
         }
-        if (a2 > 0.01F) HudLook.centered(g, mc.font, given(playing), cx, y + 26, Glass.a(Glass.EDGE, a2), true);
+        if (a2 > 0.01F) {
+            String line = playingMode == AscentPayloads.GIFT_WINGS ? Component.translatable("awaken.ascent.gift.wings.how").getString() : given(playing);
+            HudLook.centered(g, mc.font, line, cx, y + 26, Glass.a(Glass.EDGE, a2), true);
+        }
     }
 
     /** What came back, in the ladder's order: "The line · The leap · Wings". */

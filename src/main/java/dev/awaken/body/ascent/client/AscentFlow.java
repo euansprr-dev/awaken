@@ -86,6 +86,31 @@ public final class AscentFlow {
         }
     }
 
+    /**
+     * Skyborn's Aether over the top edge of the XP bar, in pale gold: shown while flying or not full, fading out once full
+     * on the ground; it flickers when nearly gone and flashes dim when a flight is refused for want of it.
+     */
+    static void renderAether(GuiGraphicsExtractor g, DeltaTracker dt) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.gui.hud.isHidden() || mc.player.isSpectator()) return;
+        if (!AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.SKYBORN)) return;
+        boolean flying = AscentMoves.state() == AscentState.SOAR;
+        aetherShown += ((flying || AscentMoves.aether < 0.995 ? 1F : 0F) - aetherShown) * 0.08F;
+        if (aetherShown < 0.02F) return;
+        // in the free gap between the hearts and the XP bar, two pixels tall
+        int cx = g.guiWidth() / 2, half = Math.round(91 * (float) AscentMoves.aether), y = g.guiHeight() - 32;
+        float a = aetherShown;
+        if (AscentMoves.aether < 0.2 && flying) a *= 0.6F + 0.4F * (float) Math.abs(Math.sin(AscentMoves.ticks * 0.5));
+        if (AscentMoves.ticks - AscentMoves.aetherOutAt < 12) a *= 0.5F;
+        g.fill(cx - 91, y, cx + 91, y + 2, Glass.a(0x2A2410, 0.6F * a));
+        if (half > 0) {
+            HudLook.glow(g, cx - half - 3, y - 2, half * 2 + 6, 6, 0xFFD966, 0.65F * a);
+            g.fill(cx - half, y, cx + half, y + 2, Glass.a(0xFFE08A, a));
+        }
+    }
+
+    private static float aetherShown;
+
     private static int mix(int a, int b, float t) {
         t = Math.max(0, Math.min(1, t));
         int r = (int) (((a >> 16) & 255) + (((b >> 16) & 255) - ((a >> 16) & 255)) * t);

@@ -31,6 +31,8 @@ public final class AscentAnims {
         int since;
         float bank, bankO;
         float heading = Float.NaN;
+        /** A barrel roll: when it began (client clock) and its way (+1 right, -1 left). */
+        int rollAt = -100, rollDir;
         AscentState state = AscentState.NONE;
     }
 
@@ -151,6 +153,14 @@ public final class AscentAnims {
      * The direction a body faces (chest), its up (head) and its right, as the renderer draws it now: into
      * out[0..2], out[3..5], out[6..8]. Upright facing its yaw when nothing turns it.
      */
+    /** A barrel roll for this entity (the local player's, or one heard from another). */
+    static void roll(int entityId, int dir) {
+        Look l = find(entityId);
+        if (l == null) return;
+        l.rollAt = AscentMoves.ticks;
+        l.rollDir = dir;
+    }
+
     static void frame(Entity e, float pt, double[] out) {
         Minecraft mc = Minecraft.getInstance();
         Look l = find(e.getId());
@@ -169,6 +179,11 @@ public final class AscentAnims {
         }
         double s = Math.sqrt(vx * vx + vy * vy + vz * vz);
         float bank = l == null ? 0 : Mth.lerp(pt, l.bankO, l.bank);
+        if (l != null) {
+            // a barrel roll: one whole turn about the line of flight, quick in and out
+            float rt = (AscentMoves.ticks - l.rollAt + pt) / dev.awaken.body.ascent.AscentRules.ROLL_TICKS;
+            if (rt >= 0 && rt < 1) bank += -l.rollDir * 360F * (rt * rt * (3 - 2 * rt));
+        }
         // defaults: upright
         double ux = 0, uy = 1, uz = 0, cx = fx, cy = 0, cz = fz;
         switch (st) {

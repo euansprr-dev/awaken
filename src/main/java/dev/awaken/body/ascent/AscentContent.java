@@ -49,6 +49,22 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_CALL = sound("ascent.vow_call");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_LINE = sound("ascent.vow_line");
 
+    /** An anchor ring: a Precursor ring for the rope (the sky platforms' ladders, the spires); unbreakable, alight. */
+    public static final net.neoforged.neoforge.registries.DeferredBlock<net.minecraft.world.level.block.Block> ANCHOR_RING = BLOCKS.registerSimpleBlock(
+            "anchor_ring", p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_CYAN).strength(-1F, 3600000F)
+                    .sound(net.minecraft.world.level.block.SoundType.AMETHYST).lightLevel(s -> 12).noLootTable());
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem> ANCHOR_RING_ITEM =
+            ITEMS.registerSimpleBlockItem(ANCHOR_RING);
+    /** A sky platform's core: Wings to whoever reaches it by moving (SPEC §17.9); unbreakable, alight. */
+    public static final net.neoforged.neoforge.registries.DeferredBlock<WingCoreBlock> WING_CORE = BLOCKS.registerBlock("wing_core",
+            WingCoreBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_LIGHT_BLUE).strength(-1F, 3600000F)
+                    .sound(net.minecraft.world.level.block.SoundType.AMETHYST).lightLevel(s -> 15).noLootTable());
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem> WING_CORE_ITEM =
+            ITEMS.registerSimpleBlockItem(WING_CORE);
+    public static final Supplier<net.minecraft.world.level.block.entity.BlockEntityType<WingCoreBlockEntity>> WING_CORE_BE =
+            BLOCK_ENTITIES.register("wing_core", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(WingCoreBlockEntity::new,
+                    WING_CORE.get()));
+
     /** A Precursor grate that breathes a column of rising air (the Wilds' pylons stand on them; SPEC §17.6). */
     public static final net.neoforged.neoforge.registries.DeferredBlock<UpdraftVentBlock> UPDRAFT_VENT = BLOCKS.registerBlock("updraft_vent",
             UpdraftVentBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_CYAN).strength(3.5F, 9F)

@@ -94,7 +94,8 @@ final class RunnerServer {
             // a link follows an accepted wall jump, onto a wall other than the one just left
             if (link != m.links || m.links > RunnerRules.links(Body.runnerRank(p)) || w.id() == m.lastWall || now - m.lastWallJumpAt > 40) return false;
         }
-        m.runUntil = now + RunnerRules.runLength(link, Body.runnerRank(p), Body.wallStride(p)) + RunnerRules.RUN_GRACE;
+        m.runUntil = now + RunnerRules.runLength(link, Body.runnerRank(p), Body.wallStride(p)) + RunnerRules.RUN_GRACE
+                + p.getData(dev.awaken.body.ascent.AscentContent.MEMORY).level(dev.awaken.body.ascent.AscentMemory.Track.RUNNER);
         m.runAxis = w.axis();
         m.runSide = w.side();
         m.runPlane = w.plane();

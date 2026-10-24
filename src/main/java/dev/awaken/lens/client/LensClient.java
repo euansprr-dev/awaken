@@ -197,6 +197,22 @@ public final class LensClient {
         bloomTarget = Math.clamp(bloomTo, 0f, 1f);
     }
 
+    // moving fast through the air: the target the Feel Director sets, and what's drawn (eased per frame)
+    private static float motionTarget, motionTx = 0.5f, motionTy = 0.5f, motion, motionX = 0.5f, motionY = 0.5f;
+    private static long motionAt;
+
+    /**
+     * Speed through the air (SPEC §14, §17): a blur toward where you're heading that smears the edges of the frame, with a
+     * touch of chroma. {@code strength} 0..1, ({@code dirX}, {@code dirY}) the heading on screen (0..1 from the bottom
+     * left). Eased over a few frames here; scaled by the FOV-effects slider; 0 while a story scene or the tear runs.
+     * Callers keep it 0 with reduced motion. With Lens off it draws nothing (FxScreen's speed lines are the fallback).
+     */
+    public static void motion(float strength, float dirX, float dirY) {
+        motionTarget = Math.clamp(strength, 0f, 1f);
+        motionTx = Math.clamp(dirX, 0f, 1f);
+        motionTy = Math.clamp(dirY, 0f, 1f);
+    }
+
     /** Whether Lens is drawing this frame (off, or stepped aside for a shaderpack, means callers use their fallbacks). */
     public static boolean active() {
         return active;
@@ -245,9 +261,20 @@ public final class LensClient {
             sunset = glow.w();
         }
         var fog = e.getFogData();
+        // motion eases toward its target by the frame's real time (the same feel at 60 and 240 fps)
+        long nowNs = System.nanoTime();
+        float dt = motionAt == 0 ? 0f : Math.min(0.1f, (nowNs - motionAt) / 1.0e9f);
+        motionAt = nowNs;
+        boolean scene = overrideLook != null || tear > 0 || tearStep > 0;
+        float want = scene ? 0f : motionTarget * mc.options.fovEffectScale().get().floatValue();
+        float k = 1f - (float) Math.exp(-dt * 9.0);
+        motion += (want - motion) * k;
+        motionX += (motionTx - motionX) * k;
+        motionY += (motionTy - motionY) * k;
+        if (motion < 0.003f) motion = 0f;
         params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 fog.renderDistanceEnd, fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
-                UiHooks.focus(),
+                UiHooks.focus(), motion, motionX, motionY,
                 FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far());
         params.uploadIfChanged();
     }

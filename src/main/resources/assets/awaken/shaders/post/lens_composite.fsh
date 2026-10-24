@@ -29,6 +29,8 @@ layout(std140) uniform LensConfig {
 
 layout(location = 0) out vec4 fragColor;
 
+// The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
+// 12 sun glow, 13 the story's moments, 14 holo focus, 15 far terrain's planes, 16 motion; 17-31 free.
 vec4 P(int i) { return texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
@@ -55,7 +57,28 @@ float farDistance(float depth, float zNear, float zFar, int flags, bool deviceZe
 }
 
 void main() {
-    vec3 c = texture(InSampler, texCoord).rgb;
+    // 16: moving fast through the air (LensClient.motion): r strength, g/b the heading on screen. The frame smears
+    // toward where you're heading (sharp there, more toward the edges) with a touch of chroma at the rim; nothing at rest
+    vec4 mo = P(16);
+    vec3 c;
+    if (mo.r > 0.004) {
+        vec2 toHead = mo.gb - texCoord;
+        float edge = clamp(length(toHead * vec2(OutSize.x / OutSize.y, 1.0)) * 1.4, 0.0, 1.0);
+        vec2 stepv = toHead * (mo.r * 0.07 * edge * edge) / 6.0;
+        vec3 acc = vec3(0.0);
+        float wsum = 0.0;
+        for (int i = 0; i < 6; i++) {
+            float w = 1.0 - float(i) / 7.0;
+            acc += texture(InSampler, texCoord + stepv * float(i)).rgb * w;
+            wsum += w;
+        }
+        c = acc / wsum;
+        float fringe = mo.r * edge * edge;
+        c.r = mix(c.r, texture(InSampler, texCoord - stepv * 1.5).r, 0.5 * fringe);
+        c.b = mix(c.b, texture(InSampler, texCoord + stepv * 2.5).b, 0.5 * fringe);
+    } else {
+        c = texture(InSampler, texCoord).rgb;
+    }
     vec4 p0 = P(0), p1 = P(1), g = P(3), shadowT = P(4), highT = P(5), b = P(6), h = P(7), hz = P(8), sunset = P(9);
     vec4 fogColor = P(10), fogDist = P(11), p12 = P(12), sunPos = P(2);
     // 13: the story's moments: r the tear from black (0 off), g crushed blacks, b extra bloom (LensParams)

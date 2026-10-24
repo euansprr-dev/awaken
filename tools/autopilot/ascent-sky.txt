@@ -1,0 +1,32 @@
+# A sky platform's ladder and core (SPEC §17.9): with only the rope, from under the first anchor ring up the helix of
+# rings onto the pier, then into the cabin to the core, which should give wings (arrived by movement). Third person.
+world ascent_sky14 survival 4246
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5500
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken ascent grant tether
+cmd awaken ascent sky goto
+wait 60
+camera back
+hud on
+cmd awaken ascent pilot rec sky_tp 1500 5
+cmd awaken ascent pilot run climb
+wait 1520
+cmd awaken ascent pilot stop
+shotnow sky_end
+info
+quit

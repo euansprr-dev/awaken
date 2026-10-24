@@ -89,6 +89,10 @@ public final class AscentRemote {
                 AscentSounds.local(e, AscentContent.BOOM.get(), 0.7F, 1.35F);
                 AscentFx.ring(e.getX(), e.getY() + 0.15, e.getZ(), new net.minecraft.world.phys.Vec3(0, 1, 0), 0.5F);
             }
+            case AscentPayloads.EV_ROLL -> {
+                AscentSounds.local(e, AscentContent.LAUNCH.get(), 0.6F, 1.45F);
+                AscentAnims.roll(e.getId(), msg.speed() >= 0 ? 1 : -1);
+            }
             case AscentPayloads.EV_REMEMBER -> {
                 // someone's body remembering: the swell, light rising round them, their wings unfolding once
                 AscentSounds.local(e, AscentContent.REMEMBER.get(), 0.8F, 1F);

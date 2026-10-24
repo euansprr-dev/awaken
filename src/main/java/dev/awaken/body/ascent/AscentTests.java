@@ -21,6 +21,8 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_no_kicks", 60, AscentTests::noKicks);
         AwakenTests.registerIsolated("ascent_latency", 60, AscentTests::latency);
         AwakenTests.registerIsolated("ascent_tether_vow", 200, AscentTests::tetherVow);
+        AwakenTests.register("ascent_aether", 40, AscentTests::aether);
+        AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -432,6 +434,126 @@ final class AscentTests {
         for (BlockPos q : BlockPos.betweenClosed(box.minX(), box.minY() - 2, box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
             level.setBlock(q, air, net.minecraft.world.level.block.Block.UPDATE_CLIENTS | net.minecraft.world.level.block.Block.UPDATE_SKIP_ALL_SIDEEFFECTS);
         }
+    }
+
+    /**
+     * Aether (SPEC §17.8): a minute of cruise, about 19 s of boost, 20 s to fill in the sun, an updraft filling it even
+     * in flight, mastery trimming the drain; the server folds a flight it can't afford into a glide, and won't start one.
+     */
+    private static void aether(GameTestHelper h) {
+        int cruise = ticksToEmpty(AscentRules.AETHER_CRUISE, 0), boost = ticksToEmpty(AscentRules.AETHER_BOOST, 0);
+        h.assertTrue(Math.abs(cruise - 1200) <= 1 && Math.abs(boost - 375) <= 1, "cruise " + cruise + " ticks, boost " + boost);
+        h.assertTrue(ticksToEmpty(AscentRules.AETHER_CRUISE, 10) > 1700, "ten Skyborn levels stretch a cruise past 85 s");
+        double a = 0;
+        int t = 0;
+        while (a < 1 && t < 10000) {
+            a = AscentRules.aetherStep(a, false, 0, true, false, 0);
+            t++;
+        }
+        h.assertTrue(Math.abs(t - 400) <= 1, "fills in the sun in " + t + " ticks");
+        h.assertTrue(AscentRules.aetherStep(0.5, true, AscentRules.AETHER_CRUISE, true, true, 0) > 0.5, "an updraft fills it in flight");
+        net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        try {
+            Ascent.grant(p, Ascent.Tier.SKYBORN, "test");
+            AscentMotion m = AscentServer.motion(p);
+            m.aether = AscentRules.AETHER_START - AscentServer.AETHER_TOLERANCE - 0.01;
+            AscentServer.onState(p, new AscentPayloads.State(AscentState.SOAR.ordinal(), 0, 0, 0, 0));
+            h.assertTrue(m.state != AscentState.SOAR, "no flight from a meter the server knows is empty (" + m.aether + ")");
+            m.aether = 0.5;
+            AscentServer.onState(p, new AscentPayloads.State(AscentState.SOAR.ordinal(), 0, 0, 0, 0));
+            h.assertTrue(m.state == AscentState.SOAR, "flight with half a meter");
+            m.aether = -AscentServer.AETHER_TOLERANCE - 0.01;
+            AscentServer.aether(p, m);
+            h.assertTrue(m.state == AscentState.GLIDE, "a flight past empty folds into a glide");
+        } finally {
+            h.getLevel().getServer().getPlayerList().remove(p);
+        }
+        h.succeed();
+    }
+
+    /**
+     * A sky platform's ladder and core (SPEC §17.9): each ring a zip straight up from a hang under the one below (within
+     * the rope's reach and its overhead slope), the first within reach of the ground, the last a zip onto the pier;
+     * placed for real; the core gives wings to an arrival by movement and stays dark to a tower.
+     */
+    private static void skyRig(GameTestHelper h) {
+        int ground = 70, deck = 276;
+        var l = dev.awaken.above.ruin.SkyRig.layout(0, deck, 0, ground);
+        var rings = l.rings();
+        h.assertTrue(rings.size() >= 7, "a ladder of " + rings.size() + " rings");
+        BlockPos bottom = rings.getLast();
+        h.assertTrue(bottom.getY() - ground <= 30 && bottom.getY() - ground >= 20, "the first ring " + (bottom.getY() - ground) + " over the ground");
+        for (int i = rings.size() - 1; i > 1; i--) {
+            BlockPos lo = rings.get(i), hi = rings.get(i - 1);
+            double handY = lo.getY() - AscentRules.CEILING_HANG, rise = hi.getY() - handY;
+            double side = Math.hypot(hi.getX() - lo.getX(), hi.getZ() - lo.getZ());
+            h.assertTrue(rise < AscentRules.TETHER_RANGE && rise > AscentRules.ZIP_UP_MIN_RISE && side < rise * AscentRules.ZIP_UP_SLOPE,
+                    "ring " + i + " to " + (i - 1) + ": rise " + rise + ", side " + side);
+        }
+        // the last zip: standing on the perch (its eye 2.6 over the top ring) up to the pier end's side
+        BlockPos top = rings.getFirst(), pierEnd = l.pier().getLast();
+        h.assertTrue(l.perch().size() == 8, "a perch round the top ring");
+        double rise = pierEnd.getY() + 0.5 - (top.getY() + 1 + 1.62), side = Math.hypot(pierEnd.getX() + 0.5 - (top.getX() + 0.5), pierEnd.getZ() + 1.05 - (top.getZ() + 0.5));
+        h.assertTrue(rise > AscentRules.ZIP_UP_MIN_RISE && side < rise * AscentRules.ZIP_UP_SLOPE, "the last zip, onto the pier: rise " + rise + ", side " + side);
+        // clear of the blueprint's islands (RuinBuilder.sky: on each side 19 out, up to 3 off the line, 3.8 wide and
+        // 0.6 of noise; their tether chains run along that line back to the rim) in any turn of the blueprint
+        java.util.List<BlockPos> rig = new java.util.ArrayList<>(rings);
+        rig.addAll(l.perch());
+        rig.addAll(l.pier());
+        for (BlockPos q : rig) {
+            for (int turn = 0; turn < 4; turn++) {
+                for (int off = -3; off <= 3; off++) {
+                    double ix = turn == 0 ? 19 : turn == 2 ? -19 : off, iz = turn == 1 ? 19 : turn == 3 ? -19 : off;
+                    double clear = Math.hypot(q.getX() - ix, q.getZ() - iz) - 4.4;
+                    boolean underTether = (turn % 2 == 0 ? Math.abs(q.getZ() - iz) : Math.abs(q.getX() - ix)) < 1.5
+                            && (turn % 2 == 0 ? Math.abs(q.getX()) : Math.abs(q.getZ())) >= 10;
+                    h.assertTrue(clear > 3 && !underTether, q.toShortString() + " is " + clear + " from an island's edge");
+                }
+            }
+        }
+        // placed for real, high over the test
+        net.minecraft.server.level.ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(BlockPos.ZERO);
+        int cx = o.getX(), cz = o.getZ(), deckY = level.getMaxY() - 20;
+        dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+        var placed = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
+        h.assertTrue(level.getBlockState(placed.core()).is(AscentContent.WING_CORE.get())
+                && level.getBlockState(placed.rings().getFirst()).is(AscentContent.ANCHOR_RING.get()), "the core and the rings are placed");
+        // the core: by movement, wings; by a tower, nothing
+        net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        var real = dev.awaken.core.api.ArrivalHooks.installed();
+        try {
+            boolean[] moved = {false};
+            dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {
+                @Override
+                public boolean byMovement(net.minecraft.server.level.ServerPlayer pl) {
+                    return moved[0];
+                }
+            });
+            AscentMotion m = AscentServer.motion(p);
+            for (int i = 0; i < 400; i++) m.mark(true);
+            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower gets nothing");
+            moved[0] = true;
+            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way gets wings");
+        } finally {
+            dev.awaken.core.api.ArrivalHooks.install(real);
+            level.getServer().getPlayerList().remove(p);
+            for (BlockPos q : BlockPos.betweenClosed(cx - 1, placed.chainBottom() - 1, cz - 1, cx + 20, deckY + 2, cz + 20)) {
+                if (!level.getBlockState(q).isAir()) level.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
+                        net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            }
+        }
+        h.succeed();
+    }
+
+    private static int ticksToEmpty(double drain, int level) {
+        double a = 1;
+        int t = 0;
+        while (a > 0 && t < 100000) {
+            a = AscentRules.aetherStep(a, true, drain, false, false, level);
+            t++;
+        }
+        return t;
     }
 
     /** Flight cruises near 1.25, boosts near 2.25, and hovers to a stop. */

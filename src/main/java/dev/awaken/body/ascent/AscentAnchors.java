@@ -38,6 +38,25 @@ public final class AscentAnchors {
      * that finds nothing does a low direct hit swing as it is.
      */
     public static @Nullable Anchor find(Level level, Entity who, Vec3 eye, float yaw, float pitch, double range) {
+        return find(level, who, eye, yaw, pitch, range, null);
+    }
+
+    /**
+     * As above, the rope passing through {@code passThrough} (the ring or branch just let go of: you throw past the one
+     * you hung under to the next one up).
+     */
+    public static @Nullable Anchor find(Level level, Entity who, Vec3 eye, float yaw, float pitch, double range, net.minecraft.core.@Nullable BlockPos passThrough) {
+        PASS.set(passThrough);
+        try {
+            return findAimed(level, who, eye, yaw, pitch, range);
+        } finally {
+            PASS.remove();
+        }
+    }
+
+    private static final ThreadLocal<net.minecraft.core.BlockPos> PASS = new ThreadLocal<>();
+
+    private static @Nullable Anchor findAimed(Level level, Entity who, Vec3 eye, float yaw, float pitch, double range) {
         BlockHitResult hit = ray(level, who, eye, yaw, pitch, range);
         Anchor fallback = null;
         if (hit != null) {
@@ -99,6 +118,13 @@ public final class AscentAnchors {
         Vec3 dir = new Vec3(AscentRules.fx(yaw) * cp, -Mth.sin(pitch * Mth.DEG_TO_RAD), AscentRules.fz(yaw) * cp);
         Vec3 end = eye.add(dir.scale(range));
         BlockHitResult h = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, who));
+        net.minecraft.core.BlockPos pass = PASS.get();
+        if (pass != null && h.getType() == HitResult.Type.BLOCK && h.getBlockPos().equals(pass)) {
+            // through the one just let go of: on from its far side
+            Vec3 on = h.getLocation().add(dir.scale(1.8));
+            if (on.distanceTo(eye) >= range) return null;
+            h = level.clip(new ClipContext(on, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, who));
+        }
         return h.getType() == HitResult.Type.BLOCK ? h : null;
     }
 

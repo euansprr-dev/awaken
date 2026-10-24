@@ -837,7 +837,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   dither; five passes, three of them at 960×600 or smaller, after two one-pixel passes for the far-depth trust) and
   `awaken:lens_cinematic` (adds light shafts). It runs
   first in the player's post-effect list, so gameplay effects (dreams, blight, the Veil) still draw on top, and
-  re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 16×1
+  re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 32×1
   texture (`awaken:lens_params`), written once a frame in `ViewportEvent.RenderFog` at LOWEST priority: the look, the
   depth range (26.3 is reversed-Z; zero-to-one depth differs between OpenGL and Vulkan), the final fog colour and
   distances, the sun's screen position and the sunrise colour. Looks per dimension live in
@@ -852,7 +852,13 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 carries the Holo UI
   focus (`UiHooks.focus()`, 0..1 while a holo panel is open): the world more than about 2–3 blocks away dims to ~60%
   and cools, while the panel's glass (it writes depth) and its text stay bright; the first-person arm dims with the
-  world, since its depth lives in a separate target post chains can't read. Texel 15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
+  world, since its depth lives in a separate target post chains can't read. Texel 15 is far terrain's planes. Texel 16
+  is motion (`LensClient.motion(strength, dirX, dirY)`, fed by the Ascent's Feel Director, §17.6): r strength 0..1,
+  g/b the heading on screen (0..1 from the bottom left). The composite pass, only while strength > 0, takes 6 taps
+  along the line to the heading (sharp at the heading, the smear growing toward the frame's edges) and 2 more for a
+  touch of chroma at the rim; strength is eased per frame by real time, scaled by the FOV-effects slider, and 0 while
+  a story override or the tear runs (Lens off: nothing; FxScreen's speed lines stay the fallback). Measured on the M4
+  (Vulkan, 2880×1658): p50 +0.16 ms on Swift, +0.08 ms on Cinematic. Texels 17-31 are free. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
   the scene's length and fades back to the plain frame (the look rests at neutral while Lens is off) before stepping
   aside again (client config `lensInScenes`, default true; never with an Iris shaderpack). Callers carry on without the
   look when Lens can't draw (`LensClient.active()`).
@@ -1839,12 +1845,18 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   held), the boom, a double jump, an air dash, a dive, a slam's landing (Leaper held), a flap (Skyborn held), and the
   Runner's wall-run, wall jump, ledge jump (2 points each) and ledge grab (1). Links more than 50 ticks apart end the
   chain. A finished chain of 3+ links pays style XP once awake: xpToNext × 0.0012 × min(links, 25), at most 1.5% of a
-  level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`).
+  level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`); beating
+  it from 6 links up is told (`AscentPayloads.Record`): "Longest chain yet · 12 moves" over the hotbar and a lift of
+  Flow.
 - **Mastery** per track (RUNNER, TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN): each link adds its points to its track
   (rope fire 2, launch 3, wings 2, boom 6, Leaper moves 2, slam 3, flap 1, Runner 1-2); level = floor(√(points / 25)),
-  max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (client, predicted):
+  max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (predicted, the
+  server agreeing where it checks; the Runner's wall-run +1 tick a level, below):
   rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
   dash +2% a Leaper level, glide drag −2% a Wings level.
+- **A level gained** shows as one quiet line over the hotbar for 5.5 s ("Tether mastery III · the line reaches
+  further"; `AscentNotes`), never a toast; the first sync of a session only fills the client's copy. Runner mastery:
+  a wall-run lasts a tick longer a level (both sides; ranks and Wall Stride still set the base).
 - **The record**: `AscentMemory` schema 2 = tiers + mastery points (list, Track order) + chainBest + flags (1 = settled);
   schema 1 reads as no mastery yet and not settled. Kept through death.
 - **Old worlds, first load** (`AscentServer.settle`, once per player, on login): an awakened player of rank B or above is
@@ -1878,6 +1890,13 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **Latency** (`ascent_latency`, the gate's latency tours as a test): a real swing from a block 20 up, a release and a
   30-block fall to a hard landing, every state message reaching the server 300 ms (6 ticks) after its positions: no
   refusal, no move sent back, no fall damage, the state ends, the arrival still counts as by movement.
+- **The Lens's sense of speed**: from 1.2 blocks a tick in an airborne state, smoothstepped to full at 3, the Feel
+  Director hands the Lens the strength and the heading on screen (projected by the camera's own matrix); none with
+  reduced motion, on the ground, or when heading away from the view (§14, texel 16).
+- **Wings in first person**: your own wings are drawn from the body, only the outer half of the span (the root would
+  sit on the camera; Phase 0 drew it and got white wedges), the cut edge fading in over 0.15 of the span, the body at
+  60% of its alpha and the glow at 45% (this close, full strength read as solid blades). They show at the edges of
+  view: the tips flick into the top corners on a beat, the outer wing rises into view in a banked turn.
 - **Moving air** (`core.api.AirHooks`, for the Wilds' updraft pylons and windways): sources registered on both sides
   add an acceleration (blocks a tick²) at the feet; the client's free states take it after their own step (the carry
   ×1, wings ×1.25, flight ×0.6; a rope none). Sources read only what both sides have (blocks, block entities,
@@ -1923,6 +1942,69 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   `VOW_KEPT` in the record. Lapsed: "The mast will wait." (the rope stays; nothing is lost).
 - `ascent_tether_vow` builds a vault from its blueprint in each turn and checks the turn, the forecourt, the pylon
   anchor (real to the server, the line clear) and the mast, then runs the director: call, line, kept.
+
+### 17.8 Phase 4a: Aether (Skyborn's flight meter)
+- Flight (SOAR) runs on Aether, 0..1: cruising drains a full meter in 60 s, boosting in ~19 s, hovering in ~38 s, each
+  wingbeat 1.2%. Out of flight it fills in the sun (sky over the eyes, a bright sky) in 20 s, in shade or at night in
+  90 s; inside an updraft's column it fills in 6 s, even while flying. Flight needs 8% to begin (less: a weak beat that
+  catches nothing). Skyborn mastery trims the drain 3% a level.
+- Empty in flight: the wings stop beating and hold a glide (never a drop). The client predicts its meter; the server
+  keeps its own at the cheapest drain (it can't see boosts), so a fair flight is never refused. It refuses a flight
+  start it can't afford (under 8% by more than 0.15) and folds a flight 0.15 past empty into a glide (`Stop(SOAR)`,
+  which the client takes as its own empty). Time aloft earns Skyborn mastery (a point every 5 s).
+- Shown as a 2-pixel gold line in the gap between the hearts and the XP bar while flying or not full (over the XP
+  bar's own edge it was too faint to read) (fading out once full on the ground),
+  flickering under 20% in flight, dimmed for a moment when a flight is refused for want of it.
+- `ascent_aether` holds those numbers and the server's refusals.
+- **The barrel roll** (Skyborn): in flight, a second tap of left or right within 7 ticks (vanilla's double-tap window)
+  throws the body 0.85 a tick that way and 0.1 up (about 3.5 blocks before the flight's drag takes it), for 3% Aether,
+  once a second. Others see the figure turn once about its line of flight (10 ticks, eased; `EV_ROLL`) and hear it;
+  your own view only tilts into it within the comfort cap (at most 4°) with a small kick and a breath of FOV. A roll
+  is a Flow link and 2 Skyborn mastery. (Pilot `double <key>` taps like a player for tours; the autopilot's own command
+  round trip put taps 11 ticks apart.)
+
+### 17.9 Phase 2: Wings, the sky platform's way up and its core
+- **The rig** (`above.ruin.SkyRig`): placed once on each sky platform the first time its start chunk loads (queued on
+  `ChunkEvent.Load`, built on a later server tick once the core's and the chain's columns are loaded; done when the
+  core is there), so old worlds' platforms get it too and the blueprint never changes. From the deck's centre (cx, deck,
+  cz): a pier of trim three cells wide on the (+x, +z) diagonal from 7 to 12 out (local a, b in 7..12, |a - b| <= 1),
+  the rim's trim studs on it cleared; a chain from under its end (12, 12) down to the lowest ring. The diagonal: the
+  blueprint's four torn-up islands hang 19 out on each side (up to 3 off the line, 3.8 wide) with their tether chains
+  along that line back to the rim, in any turn; the first rig ran out along +x, under the east island and its tether,
+  which cut ropes, blocked zips and left no room to stand on the pier. `ascent_sky_rig` checks every rig cell is 3+
+  clear of any island's edge and under no tether.
+- **Rings** (`awaken:anchor_ring`, unbreakable, light 12): from 9 under the deck down to 26 over the ground under the
+  chain (the lowest of four columns 5 out diagonally), evenly spaced at most 22 apart, each 3 off the chain a quarter
+  turn round from the last (+z, +x, -z, -x), joined to it by a chain stub. Each is nearly overhead from a hang under the
+  one below it (a vertical zip, below). Over water the lowest ring gets a 5x5 buoy at the surface to stand and throw from
+  (the Ascent stands aside while swimming).
+- **The perch**: the top ring stands in a 3x3 of plating (trim corners), its stub on the chain's side. From the hang
+  under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
+  of the pier's end (7 up) pulls the body onto the pier.
+- **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
+  without Wings who came up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
+  last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
+  with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
+  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told, at most once a minute,
+  that the core answers only to the long way (`awaken.ascent.core.dark`). It breathes a ring of light every 3 s. The
+  platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The rope's moves for a ladder** (§17.6 rope, both sides):
+  - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
+    up to it rather than swinging.
+  - *Ceiling hang*: a zip that bites an underside hangs there on a rope 2.6 long, still, ready to throw again; unless
+  - *the ledge vault*: the underside is a floor's (full blocks with two cells of room on them, at least two together)
+    with an open edge within 3 cells, tried first toward the side the zip came up from. Then the body vaults it: out
+    past the edge's face (the head kept under the ledge), up beside the face until the feet clear the top, then in
+    onto it (up to 40 ticks; any other move takes over). A zip to a face with room over it vaults the same way over that
+    face's edge (a ledge, a pylon, the pier). Lone rings and branches still give the hang. The vault ends with the
+    landing (left set, the next carry pulled toward the old ledge).
+  - *Pass-through*: for 20 ticks after letting go of a rope, a throw passes through the block it held (you throw past
+    the ring you hung under to the next one up).
+  - *Zip stall*: a zip pressed against something, moving under 0.05 a tick for 10 ticks, lets go (never pinned).
+- Dev: `/awaken ascent sky goto` (the nearest platform that really generated, by vanilla's own search; rigs it if not
+  yet; puts you on the ground under the lowest ring); pilot `run climb` climbs the rings, the perch and the pier, walks
+  round the cabin to its door and in, and ends when the core gives Wings (`tools/autopilot/ascent-sky.txt`: from a buoy
+  at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
 
 ---------------------------------------------------------------------------------------------------------------------
 
