@@ -26,6 +26,15 @@ public final class FarPalette {
 
     /** The biome's ground colour, 0xRRGGBB. */
     public static int ground(Holder<Biome> biome) {
+        return look(biome) & 0xFFFFFF;
+    }
+
+    /** How far its canopy stands above the ground (blocks): what shows of a forest from far away is its treetops. */
+    public static int canopy(Holder<Biome> biome) {
+        return look(biome) >>> 24;
+    }
+
+    private static int look(Holder<Biome> biome) {
         Integer c = GROUND.get(biome);
         if (c == null) {
             c = compute(biome);
@@ -53,7 +62,7 @@ public final class FarPalette {
         int foliage = b.getFoliageColor() & 0xFFFFFF;
         if (foliage == 0 || foliage == 0xFF00FF) foliage = grass;
         // the grass and leaf textures are grey tinted by these colours: their average is about this bright
-        int lawn = scale(grass, 0.74f), canopy = scale(foliage, 0.56f);
+        int lawn = scale(grass, 0.68f), canopy = scale(foliage, 0.56f);
         if (a.contains("badlands")) return a.startsWith("eroded") ? TERRACOTTA : RED_SAND;
         if (a.equals("desert")) return SAND;
         if (a.equals("beach")) return 0xE0D6A4;
@@ -62,16 +71,22 @@ public final class FarPalette {
         if (a.contains("ocean") || a.contains("river")) return a.startsWith("frozen") ? SNOW : SEABED;
         if (a.equals("ice_spikes") || a.equals("snowy_plains") || a.equals("snowy_slopes") || a.equals("frozen_peaks")
                 || a.equals("jagged_peaks")) return SNOW;
-        if (a.equals("snowy_taiga") || a.equals("grove")) return mix(SNOW, canopy, 0.35f);
+        if (a.equals("snowy_taiga") || a.equals("grove")) return trees(7, mix(SNOW, canopy, 0.35f));
         if (a.equals("mushroom_fields")) return MYCELIUM;
         if (a.equals("windswept_gravelly_hills")) return GRAVEL;
         if (a.equals("windswept_hills")) return mix(lawn, STONE, 0.35f);
         if (a.equals("pale_garden")) return PALE;
-        if (a.equals("cherry_grove")) return mix(0xD9A3B8, lawn, 0.45f);
-        if (a.equals("dark_forest")) return scale(canopy, 0.8f);
-        if (a.contains("forest") || a.contains("taiga") || a.contains("jungle") || a.contains("swamp")) return mix(canopy, lawn, 0.3f);
+        if (a.equals("cherry_grove")) return trees(5, mix(0xD9A3B8, lawn, 0.45f));
+        if (a.equals("dark_forest")) return trees(8, scale(canopy, 0.8f));
+        if (a.contains("jungle")) return trees(10, mix(canopy, lawn, 0.3f));
+        if (a.contains("forest") || a.contains("taiga")) return trees(6, mix(canopy, lawn, 0.3f));
+        if (a.contains("swamp")) return trees(3, mix(canopy, lawn, 0.3f));
         if (a.startsWith("savanna")) return scale(grass, 0.8f);
         return lawn;
+    }
+
+    private static int trees(int height, int rgb) {
+        return height << 24 | rgb;
     }
 
     static int scale(int rgb, float k) {

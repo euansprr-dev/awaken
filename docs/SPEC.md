@@ -1085,7 +1085,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   0–2 (about a kilometre) the exact `getBaseHeight(OCEAN_FLOOR_WG)`. A ground below sea level is water at sea level.
   The biome comes from the biome source (per-worker uncached resolver); colour from `FarPalette` (one colour per
   biome from its archetype, `BiomeTable.archetype`, and its grass and foliage colours; forests darker, the canopy is
-  what shows), snow where the biome is cold enough at that height. Patches the real chunks will always hide are never
+  what shows, and their tops stand at canopy height: 3 swamp, 5 cherry, 6 forest and taiga, 7 snowy taiga and grove, 8
+  dark forest, 10 jungle, so they meet the real treetops where the chunks end), snow where the biome is cold enough at
+  that height. Patches the real chunks will always hide are never
   sampled. Instanced dimensions get no far view (`compat.FarView`); only dimensions with the overworld sky draw it.
 - Drawing: in `RenderLevelStageEvent.AfterSky`, into the main colour target, before any chunk, so real chunks draw
   over it with no depth fight. One pipeline, no vertex buffer: each ring's window minus the next finer window is cut

@@ -130,11 +130,13 @@ final class FarField implements AutoCloseable {
                     if (!ready[ring][slot] && !isHidden(px, pz, pb, cx, cz, hidden)) missingNow++;
                     continue;
                 }
-                expect[ring].set(slot, key);
+                // a slot that held another patch is zeroed now; a fresh one already is (reset clears the atlases)
+                if (expect[ring].getAndSet(slot, key) != NONE) {
+                    if (enc == null) enc = RenderSystem.getDevice().createCommandEncoder();
+                    enc.writeToTexture(height, zeros, 0, 0, (px * Rings.PATCH) & Rings.MASK, ring * Rings.SIZE + ((pz * Rings.PATCH) & Rings.MASK),
+                            Rings.PATCH, Rings.PATCH);
+                }
                 ready[ring][slot] = false;
-                if (enc == null) enc = RenderSystem.getDevice().createCommandEncoder();
-                enc.writeToTexture(height, zeros, 0, 0, (px * Rings.PATCH) & Rings.MASK, ring * Rings.SIZE + ((pz * Rings.PATCH) & Rings.MASK),
-                        Rings.PATCH, Rings.PATCH);
                 if (isHidden(px, pz, pb, cx, cz, hidden)) continue;
                 missingNow++;
                 // coarsest ring first (the horizon in a second), then nearest the camera

@@ -95,6 +95,8 @@ public final class FarColumns {
                 } else {
                     rgb = FarPalette.ground(biome);
                     if (top > seaLevel + 2 && biome.value().coldEnoughToSnow(pos.set(x, top, z), seaLevel)) rgb = FarPalette.SNOW;
+                    // treetops, not the forest floor: they meet the real canopy where the chunks end
+                    top += FarPalette.canopy(biome);
                 }
                 int h = Math.clamp(top + HEIGHT_OFFSET, 0, 65535);
                 int k = j * Rings.PATCH + i;
