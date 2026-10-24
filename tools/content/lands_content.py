@@ -319,7 +319,15 @@ def block_data():
     lang = {f"block.awaken.{k}": v for k, v in NAMES.items()}
     lang["biome.awaken.elderwood"] = "Elderwood"
     lang["biome.awaken.lumen_forest"] = "Lumen Forest"
-    write(f"{MERGE}/assets/awaken/lang/en_us.json", dict(sorted(lang.items())))
+    # the terrain module's lang file is shared (wind and leaves add their subtitles): keep what others wrote
+    path = f"{MERGE}/assets/awaken/lang/en_us.json"
+    try:
+        with open(path) as f:
+            existing = json.load(f)
+    except (OSError, ValueError):
+        existing = {}
+    existing.update(lang)
+    write(path, dict(sorted(existing.items())))
 
 
 # =====================================================================================================================

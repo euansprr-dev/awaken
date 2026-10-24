@@ -28,7 +28,9 @@ Three parts, switched together by `dev.awaken.terrain.client.WavingLeaves`:
    with alpha 254 and writes their alpha back to 1.0, so nothing downstream sees the marker.
 3. **Wind.** `WindTexels` writes 4 texels into the bottom-right corner of the block atlas once a frame: a signature,
    the time (seconds modulo 256, float bits), the camera to 16 blocks modulo 4096 plus the amplitude, and the wind
-   (direction, steady strength, gust). Sodium binds only its own uniforms, the block atlas
+   (direction, steady strength, gust). *Later (living foliage, same day):* 22 texels from `terrain.Wind`: time modulo
+   2048 s, the exact camera, direction, steady strength, amplitude and a 64-sample gust profile along the wind, so the
+   canopy sways with the same gust fronts the falling leaves ride (docs/modules/lands.md). Sodium binds only its own uniforms, the block atlas
    and the lightmap; the atlas is the one thing Awaken can write that its shader can read. The stitcher fills the atlas
    from the top left, so the corner lies outside every sprite (checked at every stitch; if a sprite is there nothing is
    written, the signature is missing and nothing moves).

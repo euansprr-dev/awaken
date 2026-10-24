@@ -7,8 +7,10 @@
 // what this file was written against (dev.awaken.terrain.client.WaveSupport); otherwise Sodium's file is used.
 //
 // AWAKEN: leaf vertices carry colour alpha 254 (baked into leaf models by WavingLeavesModel; the colour pipeline keeps
-// alpha, AO and shade only touch RGB). The wind lives in 4 texels in the block atlas's bottom-right corner, outside
-// every sprite, written by Awaken once a frame (WindTexels). Without its signature nothing moves.
+// alpha, AO and shade only touch RGB). The wind lives in 22 texels in the block atlas's bottom-right corner, outside
+// every sprite, written by Awaken once a frame from dev.awaken.terrain.Wind (WindTexels): time, camera, direction,
+// steady strength and the gust along the wind, so the canopy sways with the same gust fronts the falling leaves ride.
+// Without its signature nothing moves.
 
 #include <sodium:globals.glsl>
 #include <sodium:fog.glsl>
@@ -55,8 +57,9 @@ vec3 _get_draw_translation(uint pos) {
 // AWAKEN: waving leaves ------------------------------------------------------------------------------------------
 const float AWK_LEAF_ALPHA = 254.0 / 255.0;
 const uint AWK_SIGNATURE = 0x444E5741u; // "AWND", little-endian
-const float AWK_TAU_P = 6.28318530718 / 256.0; // time wraps every 256 s, so every frequency is a whole number of turns
+const float AWK_TAU_P = 6.28318530718 / 2048.0; // time wraps every 2048 s, so every frequency is a whole number of turns
 const vec3 AWK_REGION = vec3(128.0, 64.0, 128.0); // Sodium's render region: 8 x 4 x 8 sections
+const int AWK_TEXELS = 22;
 
 uint _awk_u32(ivec2 p) {
     uvec4 b = uvec4(round(texelFetch(u_BlockTex, p, 0) * 255.0));
@@ -75,36 +78,43 @@ uint _awk_hash(uvec3 v) {
     return v.x ^ v.y ^ v.z;
 }
 
+// One gust sample of the profile along the wind (64 bytes, 4 to a texel, after the 6 header texels).
+float _awk_gust_sample(ivec2 base, int i) {
+    return texelFetch(u_BlockTex, base + ivec2(6 + (i >> 2), 0), 0)[i & 3];
+}
+
 // Offset for one leaf vertex. regionPos is the vertex relative to its render region's origin. The offset is a function
 // of the vertex's world position and time only, so the corners two leaf blocks share move together (no cracks).
 vec3 _awk_leaf_offset(vec3 regionPos) {
-    ivec2 base = textureSize(u_BlockTex, 0) - ivec2(4, 1);
+    ivec2 base = textureSize(u_BlockTex, 0) - ivec2(AWK_TEXELS, 1);
     if (_awk_u32(base) != AWK_SIGNATURE) return vec3(0.0);
     float t = _awk_f32(base + ivec2(1, 0));
-    vec4 camAmp = texelFetch(u_BlockTex, base + ivec2(2, 0), 0); // camera x, y, z (16-block steps mod 256), amplitude
-    vec4 wind = texelFetch(u_BlockTex, base + ivec2(3, 0), 0);   // direction x, z (0..1 for -1..1), steady, gust
+    vec3 cam = vec3(_awk_f32(base + ivec2(2, 0)), _awk_f32(base + ivec2(3, 0)), _awk_f32(base + ivec2(4, 0)));
+    vec4 wind = texelFetch(u_BlockTex, base + ivec2(5, 0), 0); // direction x, z (0..1 for -1..1), steady, amplitude
 
     // World position modulo 4096: the region's origin is a whole number of regions from the camera, and the camera
-    // Awaken wrote (last frame's, to 16 blocks, modulo 4096) is far closer than half a region to this frame's.
-    vec3 cam = (round(camAmp.xyz * 255.0) + 0.5) * 16.0;
+    // Awaken wrote (last frame's) is far closer than half a region to this frame's.
     vec3 origin = round((u_RegionOffset + cam) / AWK_REGION) * AWK_REGION;
     vec3 wp = origin + regionPos;
 
     vec2 dir = wind.xy * 2.0 - 1.0;
     dir *= inversesqrt(max(dot(dir, dir), 1e-4));
     float steady = wind.z;
-    float gust = wind.w;
-    float amp = camAmp.w * 0.25;
+    float amp = wind.w * 0.25;
 
-    // gust fronts roll downwind across the canopy (about 5 blocks a second)
-    float along = dot(wp.xz, dir);
-    float front = 0.5 + 0.5 * sin(t * AWK_TAU_P * 86.0 - along * 0.23);
-    float push = steady * (0.35 + 0.65 * gust * front);
-    // sway along the wind, a slower cross-sway, and a fast flutter that differs per vertex
-    float sway = sin(t * AWK_TAU_P * 69.0 - along * 0.35 + wp.y * 0.21);
-    float crossSway = sin(t * AWK_TAU_P * 118.0 + dot(wp.xz, vec2(0.71, -0.53)) * 0.8 + wp.y * 0.37);
+    // the gust passing this leaf: the profile along the wind through the camera, 4 blocks a sample
+    float gi = clamp(dot(wp.xz - cam.xz, dir) * 0.25 + 31.5, 0.0, 63.0);
+    int i0 = int(gi);
+    float gust = mix(_awk_gust_sample(base, i0), _awk_gust_sample(base, min(i0 + 1, 63)), gi - float(i0));
+    float push = min(1.0, steady * (0.6 + 0.8 * gust) + 0.25 * gust); // Wind.strength
+    push *= 0.4 + 0.6 * gust; // the sway itself mostly comes with the gusts
+
+    // sway along the wind, a slower cross-sway, and a fast flutter that differs per vertex; the spatial phases are
+    // fixed in the world (they never depend on the turning wind), the travelling comes from the gust fronts
+    float sway = sin(t * AWK_TAU_P * 551.0 + dot(wp, vec3(0.23, 0.21, 0.31)));
+    float crossSway = sin(t * AWK_TAU_P * 945.0 + dot(wp, vec3(0.57, 0.37, -0.42)));
     uint h = _awk_hash(uvec3(ivec3(floor(wp * 16.0 + 0.5)) + 1048576));
-    float flutter = sin(t * AWK_TAU_P * 297.0 + float(h & 1023u) * (6.28318530718 / 1024.0));
+    float flutter = sin(t * AWK_TAU_P * 2376.0 + float(h & 1023u) * (6.28318530718 / 1024.0));
 
     vec2 side = vec2(-dir.y, dir.x);
     vec3 offset;
