@@ -1295,6 +1295,9 @@ Added for the lean build (approved by Euan, 2026-10-24):
 19. Tests: GameTests only where breakage is silent, on GitHub CI (push carillon/* branches); locally only a builder's
     own prefix (-Ptests=<prefix>). One short `slot.sh light` screenshot tour per milestone. Perf once, at the end of
     Detail. Euan's three play sessions (the opening in blockout, the city alive, the detail) are the quality gate.
+20. Order (Euan, 2026-10-24, via the pack session: "Sounds good. Do that."): if M1 finishes before the Ascent's Runner
+    tier is on build/awaken-v1, M3 (Alive) runs next; M2 (the opening in blockout) starts as soon as the Runner tier
+    lands. Still one builder at a time.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |

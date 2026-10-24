@@ -16,8 +16,8 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | Milestone | Builder (model) | Branch / worktree | State |
 |---|---|---|---|
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | running (brief: briefs/M1-city.md) |
-| M2 the opening in blockout | Director (Opus xhigh) | — | waits for the Ascent's Runner tier on build/awaken-v1 |
-| M3 alive | Citizens (Opus xhigh + Sonnet data) | — | after M2 (Euan's play 1) |
+| M2 the opening in blockout | Director (Opus xhigh) | — | starts as soon as the Ascent's Runner tier is on build/awaken-v1 |
+| M3 alive | Citizens (Opus xhigh + Sonnet data) | — | next after M1 if the Runner tier hasn't landed (decision 20) |
 | M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
@@ -95,3 +95,5 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   added (existing methods unchanged), and `/awaken ascent pilot route record|play <name>` (per-tick keys + look through
   the real input path) for M2's golden runs. Phase 1 starts after Euan's swing session (Phase 0 is on
   claude/ascent-7dcb3a); it pings once when the Runner tier lands on build/awaken-v1. M2 waits for that ping.
+- 2026-10-25: order change (SPEC §16.0 decision 20, Euan via the pack session): after M1, ask the Ascent for its Runner
+  timing; if the Runner tier isn't on build yet, start M3 (Alive); start M2 the moment it lands.
