@@ -1,0 +1,2 @@
+[13:20:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=OpenGL driver=4.1 Metal - 90.5 device=Apple M4 fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,entityculling,immediatelyfast,awaken,ferritecore,conditional_mixin,distanthorizons,transition,lithium,sodium,moreculling,trender,cloth_config,neoforge
+[13:20:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info

@@ -1,0 +1,8 @@
+[10:54:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=OpenGL driver=4.1 Metal - 90.5 device=Apple M4 fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,entityculling,immediatelyfast,awaken,ferritecore,conditional_mixin,distanthorizons,transition,lithostitched,lithium,sodium,moreculling,apollib,trender,cloth_config,neoforge,tectonic
+[10:54:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[10:59:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_ground 10
+[10:59:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_ground frames=596 avg_fps=59.4 p50=16.52ms p95=19.00ms p99=22.06ms max=29.97ms tick_p95=9.91ms heap=1949/4096MB fb=2880x1800 load=9.1 occluded=false minimized=false
+[10:59:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_noon 10
+[11:00:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_noon frames=659 avg_fps=65.7 p50=15.09ms p95=18.08ms p99=25.28ms max=33.12ms tick_p95=11.64ms heap=1601/4096MB fb=2880x1800 load=8.7 occluded=false minimized=false
+[11:00:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset 10
+[11:00:45] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset frames=514 avg_fps=51.2 p50=19.47ms p95=22.89ms p99=24.08ms max=25.61ms tick_p95=7.42ms heap=1311/4096MB fb=2880x1800 load=8.2 occluded=false minimized=false

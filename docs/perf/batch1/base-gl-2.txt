@@ -1,0 +1,38 @@
+com.mojang.renderpearl.api.device.SurfaceException: Cannot acquire minimized window
+[08:58:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=OpenGL driver=4.1 Metal - 90.5 device=Apple M4 fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,awaken,neoforge
+[08:58:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[08:58:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset 15
+[08:58:45] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset frames=149 avg_fps=10.0 p50=100.17ms p95=103.67ms p99=110.71ms max=121.03ms tick_p95=10.27ms heap=805/4096MB fb=2880x1800 load=11.7
+[08:58:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset_west 10
+[08:59:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset_west frames=100 avg_fps=10.0 p50=100.33ms p95=105.17ms p99=110.43ms max=110.43ms tick_p95=11.22ms heap=743/4096MB fb=2880x1800 load=9.9
+[08:59:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart flight
+[08:59:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf flight frames=328 avg_fps=10.0 p50=100.01ms p95=114.09ms p99=117.75ms max=133.81ms tick_p95=7.03ms heap=1290/4096MB fb=2880x1800 load=8.3
+[08:59:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[08:59:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf overworld_platform 10
+[09:00:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf overworld_platform frames=100 avg_fps=10.0 p50=99.96ms p95=108.30ms p99=121.27ms max=121.27ms tick_p95=11.73ms heap=1359/4096MB fb=2880x1800 load=7.2
+[09:00:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_S_close 10
+[09:00:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_S_close frames=99 avg_fps=10.0 p50=100.03ms p95=106.35ms p99=108.96ms max=108.96ms tick_p95=12.00ms heap=1061/4096MB fb=2880x1800 load=6.6
+[09:00:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_sovereign_night 10
+[09:00:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_sovereign_night frames=98 avg_fps=9.9 p50=100.13ms p95=109.73ms p99=303.22ms max=303.22ms tick_p95=7.71ms heap=861/4096MB fb=2880x1800 load=5.8
+[09:00:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf all_creatures_lineup 10
+[09:00:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf all_creatures_lineup frames=100 avg_fps=10.0 p50=100.11ms p95=106.78ms p99=126.34ms max=126.34ms tick_p95=8.56ms heap=1394/4096MB fb=2880x1800 load=5.4
+[09:00:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_legion
+[09:00:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cast_legion frames=23 avg_fps=10.0 p50=100.18ms p95=111.23ms p99=186.12ms max=186.12ms tick_p95=27.88ms heap=875/4096MB fb=2880x1800 load=5.5
+[09:00:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:00:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_storm_call
+[09:00:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cast_storm_call frames=22 avg_fps=10.0 p50=100.51ms p95=107.28ms p99=110.14ms max=110.14ms tick_p95=21.99ms heap=977/4096MB fb=2880x1800 load=6.0
+[09:00:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:00:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_nova
+[09:01:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cast_nova frames=23 avg_fps=10.0 p50=99.65ms p95=106.96ms p99=108.53ms max=108.53ms tick_p95=21.06ms heap=1100/4096MB fb=2880x1800 load=6.0
+[09:01:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:01:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_overload
+[09:01:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cast_overload frames=22 avg_fps=9.8 p50=98.71ms p95=177.57ms p99=188.02ms max=188.02ms tick_p95=30.96ms heap=870/4096MB fb=2880x1800 load=6.6
+[09:01:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:01:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf well_night 10
+[09:01:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf well_night frames=99 avg_fps=10.0 p50=99.96ms p95=109.21ms p99=149.78ms max=149.78ms tick_p95=8.91ms heap=1206/4096MB fb=2880x1800 load=6.9
+[09:01:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf descent_5 10
+[09:01:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf descent_5 frames=100 avg_fps=10.0 p50=100.12ms p95=105.23ms p99=112.91ms max=112.91ms tick_p95=2.21ms heap=1286/4096MB fb=2880x1800 load=6.0
+[09:01:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf stillpoint 10
+[09:02:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf stillpoint frames=100 avg_fps=10.0 p50=100.15ms p95=104.91ms p99=105.68ms max=105.68ms tick_p95=1.97ms heap=1092/4096MB fb=2880x1800 load=4.9
+[09:02:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf lucidium 10
+[09:02:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf lucidium frames=100 avg_fps=10.0 p50=100.72ms p95=106.14ms p99=107.24ms max=107.24ms tick_p95=2.20ms heap=1369/4096MB fb=2880x1800 load=4.4
