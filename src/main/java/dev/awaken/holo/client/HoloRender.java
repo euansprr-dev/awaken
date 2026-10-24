@@ -256,8 +256,11 @@ final class HoloRender {
         HoloCanvas cv = p.canvas;
         Font font = Minecraft.getInstance().font;
         float typed = p.typeMs;
-        // Signal's typing speed ×4, in characters per millisecond; lines start 12 ms apart
+        // Signal's typing speed ×4 in characters per millisecond, at least fast enough that every line is done by the
+        // end of the timeline; the lines start one after another across the first 90 ms
         float rate = (float) Math.max(0.5, signalSpeed()) * 4f / 50f;
+        float stagger = cv.texts > 1 ? Math.min(12f, 90f / (cv.texts - 1)) : 0f;
+        float window = HoloTimeline.OPEN_MS - 300f;
         d.caretCount = 0;
         var out = c.order(order);
         float ga = p.glassAlpha * p.fade;
@@ -265,12 +268,15 @@ final class HoloRender {
             PrefixText seq = d.seq[i];
             if (seq == null) seq = d.seq[i] = new PrefixText();
             int limit = Integer.MAX_VALUE;
+            seq.set(cv.text[i], Integer.MAX_VALUE);
             if (typed != Float.MAX_VALUE) {
-                float since = typed - i * 12f;
+                float start = i * stagger;
+                float since = typed - start;
                 if (since <= 0) continue;
-                limit = (int) (since * rate);
+                float r = Math.max(rate, seq.length() / Math.max(20f, window - start));
+                limit = (int) (since * r);
             }
-            seq.set(cv.text[i], limit);
+            seq.limit = limit;
             float x = cv.textXY[i * 2], y = cv.textXY[i * 2 + 1];
             int colour = mulAlpha(cv.textColour[i], ga);
             if ((colour >>> 24) < 26) continue; // the text shader drops alpha under 0.1
