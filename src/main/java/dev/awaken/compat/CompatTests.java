@@ -2,17 +2,19 @@ package dev.awaken.compat;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.test.AwakenTests;
-import net.minecraft.server.level.ServerLevel;
 
-/** The far-view policy covers every dimension this build registers: vanilla and the Stillpoint open, the rest closed. */
+/** The far-view policy covers every dimension the data packs define: vanilla and the Stillpoint open, the rest closed. */
 final class CompatTests {
     private CompatTests() {}
 
     static void register() {
         AwakenTests.register("compat_far_view_policy", 20, h -> {
             int closed = 0;
-            for (ServerLevel level : h.getLevel().getServer().getAllLevels()) {
-                String id = level.dimension().identifier().toString();
+            // every dimension the data packs define (the GameTest world itself only has the overworld)
+            var files = h.getLevel().getServer().getResourceManager().listResources("dimension", f -> f.getPath().endsWith(".json"));
+            for (var file : files.keySet()) {
+                String path = file.getPath();
+                String id = file.getNamespace() + ":" + path.substring("dimension/".length(), path.length() - ".json".length());
                 boolean awaken = id.startsWith(Awaken.MODID + ":");
                 boolean open = FarView.OPEN.contains(id);
                 h.assertTrue(FarView.allowed(id) == (!awaken || open), "far view for " + id);
