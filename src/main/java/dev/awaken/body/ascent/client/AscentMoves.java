@@ -436,11 +436,17 @@ public final class AscentMoves {
             }
             return;
         }
-        if (stateAge % 4 == 0) {
+        if (stateAge % 2 == 0) {
             Vec3 hand = new Vec3(K.x, K.y, K.z);
-            if (!AscentAnchors.clear(p.level(), p, hand, ax, ay, az) || p.level().getBlockState(
-                    net.minecraft.core.BlockPos.containing(ax, ay, az)).isAir() && anchorGone(p)) {
-                trace("rope cut");
+            Vec3 snag = AscentAnchors.snag(p.level(), p, hand, ax, ay, az);
+            // swung round a trunk or a corner: the rope wraps there and the swing goes on, shorter, about the new point
+            // (a snag under the hand, or too close to swing from, lets go instead)
+            boolean wrap = snag != null && snag.y > hand.y - 1 && hand.distanceTo(snag) >= AscentRules.TETHER_MIN + 1;
+            if (wrap) {
+                wrap(p, snag, hand.distanceTo(snag));
+            } else if (snag != null || p.level().getBlockState(net.minecraft.core.BlockPos.containing(ax, ay, az)).isAir() && anchorGone(p)) {
+                trace(snag == null ? "rope cut (anchor gone)" : String.format("rope cut (snag %.1f off, %.1f under the hand)",
+                        hand.distanceTo(snag), hand.y - snag.y));
                 AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.7F, 1.4F);
                 toCarry(p, "rope cut");
                 carry(yaw, fwd, right);
@@ -468,6 +474,20 @@ public final class AscentMoves {
             AscentSounds.local(p, AscentContent.ROPE_STRAIN.get(), 0.35F + biteStrength * 0.5F, 0.8F + biteStrength * 0.2F);
             event(AscentPayloads.EV_CATCH, (float) t);
         }
+    }
+
+    /** The rope catches on {@code at}: that point is the anchor now, the rope as long as the hand is from it. */
+    private static void wrap(LocalPlayer p, Vec3 at, double length) {
+        ax = at.x;
+        ay = at.y;
+        az = at.z;
+        len = length;
+        lenTarget = Math.min(lenTarget, length);
+        trace(String.format("rope wraps (%.1f)", length));
+        AscentSounds.at(p, ax, ay, az, AscentContent.ROPE_STRAIN.get(), 0.5F, 1.15F);
+        AscentFx.bite(p, ax, ay, az);
+        FeelDirector.ropeCatch(0.3F);
+        ClientPacketDistributor.sendToServer(new AscentPayloads.State(state.ordinal(), ax, ay, az, (float) len));
     }
 
     /** The anchor's block is gone (broken, or a leaf that decayed): checked only when the anchor point reads air. */

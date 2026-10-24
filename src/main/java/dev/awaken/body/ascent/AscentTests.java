@@ -136,6 +136,14 @@ final class AscentTests {
         h.assertTrue(dev.awaken.progression.Progression.profile(p).xp() - mid <= 1e-6 + toNext * 0.0001,
                 "the minute's style budget is spent: " + (dev.awaken.progression.Progression.profile(p).xp() - mid));
         h.assertTrue(p.getData(AscentContent.MEMORY).chainBest() == 30, "a shorter chain keeps the record");
+        // an old world's first load: B gives Wings, A and up Skyborn, nothing before B or before awakening; once only
+        h.assertTrue(AscentServer.remembered(true, dev.awaken.progression.Rank.C) == null
+                && AscentServer.remembered(true, dev.awaken.progression.Rank.B) == Ascent.Tier.WINGS
+                && AscentServer.remembered(true, dev.awaken.progression.Rank.S) == Ascent.Tier.SKYBORN
+                && AscentServer.remembered(false, dev.awaken.progression.Rank.A) == null, "the ranks' tiers");
+        int first = AscentServer.settle(p);
+        h.assertTrue(first == 0 && (p.getData(AscentContent.MEMORY).flags() & AscentMemory.SETTLED) != 0
+                && AscentServer.settle(p) == 0, "an E-rank player is settled with nothing, once");
         h.getLevel().getServer().getPlayerList().remove(p);
         h.succeed();
     }

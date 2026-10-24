@@ -19,6 +19,10 @@ feathers. Never the body's cloth-and-grit alone, never a vanilla sound.
 - flap:         one wing beat: a low whomp of air and a feather rustle
 - boom:         the sonic boom's crack: a double crack (the shock's two edges) and a long low rumble
 - land:         coming down out of the air: a heavy settle and a skid of grit
+- remember:     "your body remembers": a long inhale of air under a slow rising chord of glass (G, D, G, D), the wings
+                shaking out and the body settling as the top note lands (1.7 s in, when the wings open)
+
+    python3 tools/art/specs/audio_ascent.py --only ascent_remember     render one file (and write the JSON)
 """
 import json
 import os
@@ -211,6 +215,16 @@ def land(seed):
     return finish(x, 0.15, 7000)
 
 
+def remember(seed):
+    n = K.ns(4.8)
+    x = at(n, 0.0, sweep(3.0, 180, 820, 0.7, seed + 1, 0.75, 1.6)) * 0.3                 # the air drawing in
+    for i, (f, t0) in enumerate([(392.0, 0.45), (587.3, 0.85), (784.0, 1.25), (1174.7, 1.65)]):
+        x += at(n, t0, K.glass(f, K.ns(3.1 - t0 * 0.4), bright=0.35, t60=2.4, seed=seed + 2 + i, hit=0.4)) * (0.2 - 0.025 * i)
+    x += at(n, 1.68, rustle(0.9, 18, seed + 9, 4200, 0.8, 1.3)) * 0.2                   # wings shaking out
+    x += at(n, 1.65, thump(70, 48, 0.6, 0.4, 0.5, 200, seed + 10)) * 0.35                # the body settling
+    return finish(x, 0.45, 8000)
+
+
 SOUNDS_SPEC = [
     # file, render, rms (dBFS, sfx -20 ± 4), event, subtitle, volume, attenuation
     ("ascent_rope_fire", rope_fire, -21.0, "ascent.rope_fire", "A line of light is thrown", 1.0, 24),
@@ -224,6 +238,7 @@ SOUNDS_SPEC = [
     ("ascent_flap", flap, -21.0, "ascent.flap", "A wingbeat", 1.0, 28),
     ("ascent_boom", boom, -17.0, "ascent.boom", "A sonic boom", 1.0, 96),
     ("ascent_land", land, -20.0, "ascent.land", "Someone lands hard", 1.0, 20),
+    ("ascent_remember", remember, -21.0, "ascent.remember", "A body remembers", 1.0, 24),
 ]
 
 
@@ -235,8 +250,11 @@ def main(argv):
     tgt, tol, ceil, q = TARGETS["sfx"]
     if "--json" not in argv:
         os.makedirs(SOUNDS, exist_ok=True)
+        only = argv[argv.index("--only") + 1] if "--only" in argv else None
         for name, fn, rms, *_ in SOUNDS_SPEC:
             assert abs(rms - tgt) <= tol, name
+            if only and name != only:
+                continue
             x = K.mono(fn(sum(map(ord, name))))
             y = K.master(x, rms, ceil - 0.7)
             path = os.path.join(SOUNDS, name + ".ogg")
@@ -253,6 +271,13 @@ def main(argv):
         sounds[event] = OrderedDict(subtitle="subtitles.awaken." + event, sounds=[entry])
         lang["subtitles.awaken." + event] = subtitle
     os.makedirs(os.path.join(MERGE, "lang"), exist_ok=True)
+    # the lang file also holds the Ascent's own words (written by hand): keep every line that isn't a subtitle here
+    lang_path = os.path.join(MERGE, "lang/en_us.json")
+    if os.path.exists(lang_path):
+        with open(lang_path) as f:
+            for k, v in json.load(f, object_pairs_hook=OrderedDict).items():
+                if not k.startswith("subtitles.awaken.ascent."):
+                    lang[k] = v
     with open(os.path.join(MERGE, "sounds.json"), "w") as f:
         json.dump(sounds, f, indent=2)
         f.write("\n")

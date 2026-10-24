@@ -62,6 +62,22 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         return null;
     }
 
+    /** Wings opened for a moment outside any state (a scene): entity ids and the client tick they fold at. */
+    private static final int[] FLOURISH = {-1, -1, -1, -1}, FLOURISH_UNTIL = new int[4];
+
+    /** Opens this entity's wings for {@code ticks}, with a beat in the middle, then folds them. */
+    static void flourish(int entityId, int ticks) {
+        int slot = 0;
+        for (int i = 0; i < FLOURISH.length; i++) {
+            if (FLOURISH[i] == entityId || FLOURISH[i] < 0) {
+                slot = i;
+                break;
+            }
+        }
+        FLOURISH[slot] = entityId;
+        FLOURISH_UNTIL[slot] = AscentMoves.ticks + ticks;
+    }
+
     /** A flap for this entity (a beat is a quick down-stroke then a slower recovery). */
     static void flap(int entityId) {
         Wings w = find(entityId);
@@ -80,6 +96,17 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
                 double vx = e.getX() - e.xo, vy = e.getY() - e.yo, vz = e.getZ() - e.zo;
                 touch(e, r.state, Math.sqrt(vx * vx + vy * vy + vz * vz), -100);
             }
+        }
+        for (int i = 0; i < FLOURISH.length; i++) {
+            if (FLOURISH[i] < 0) continue;
+            int left = FLOURISH_UNTIL[i] - AscentMoves.ticks;
+            Entity e = mc.level.getEntity(FLOURISH[i]);
+            if (left <= 0 || e == null) {
+                FLOURISH[i] = -1;
+                continue;
+            }
+            // one slow beat in the middle, the wings showing their whole span
+            touch(e, AscentState.GLIDE, 0, left == 22 ? AscentMoves.ticks : -100);
         }
         for (Wings w : WINGS) {
             if (w.entity < 0) continue;

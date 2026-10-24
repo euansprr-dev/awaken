@@ -13,7 +13,9 @@ public final class AscentPayloads {
     /** One-off moments others see and hear (a rope firing, a launch, the wings opening, the boom, a landing). */
     public static final int EV_FIRE = 1, EV_LAUNCH = 2, EV_DEPLOY = 3, EV_BOOM = 4, EV_LAND = 5, EV_FLAP = 6, EV_CATCH = 7,
             /** The Leaper's air moves: a double jump, an air dash, a dive slam (its landing is EV_SLAM_LAND). */
-            EV_DOUBLE = 8, EV_DASH = 9, EV_DIVE = 10, EV_SLAM_LAND = 11;
+            EV_DOUBLE = 8, EV_DASH = 9, EV_DIVE = 10, EV_SLAM_LAND = 11,
+            /** "Your body remembers": the scene of an old world's tiers given back (others see the wings unfold). */
+            EV_REMEMBER = 12;
 
     /**
      * Client → server: the local player's state changed (predicted). (x, y, z) = the rope's anchor while one is out;
@@ -78,6 +80,13 @@ public final class AscentPayloads {
         public static final Type<Stop> TYPE = new Type<>(Awaken.id("ascent_stop"));
         public static final StreamCodec<ByteBuf, Stop> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Stop::state, Stop::new);
         @Override public Type<Stop> type() { return TYPE; }
+    }
+
+    /** Server → client: play "your body remembers" for these tiers (an old world's first load, SPEC §17.6). */
+    public record Remember(int bits) implements CustomPacketPayload {
+        public static final Type<Remember> TYPE = new Type<>(Awaken.id("ascent_remember"));
+        public static final StreamCodec<ByteBuf, Remember> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Remember::bits, Remember::new);
+        @Override public Type<Remember> type() { return TYPE; }
     }
 
     /** Server → client (dev, autopilot): run a line of the pilot (scripted input for tours). */

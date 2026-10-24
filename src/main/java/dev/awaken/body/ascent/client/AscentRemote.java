@@ -89,6 +89,11 @@ public final class AscentRemote {
                 AscentSounds.local(e, AscentContent.BOOM.get(), 0.7F, 1.35F);
                 AscentFx.ring(e.getX(), e.getY() + 0.15, e.getZ(), new net.minecraft.world.phys.Vec3(0, 1, 0), 0.5F);
             }
+            case AscentPayloads.EV_REMEMBER -> {
+                // someone's body remembering: the swell, light rising round them, their wings unfolding once
+                AscentSounds.local(e, AscentContent.REMEMBER.get(), 0.8F, 1F);
+                remembering(e.getId());
+            }
             case AscentPayloads.EV_BOOM -> {
                 AscentSounds.local(e, AscentContent.BOOM.get(), 1F, 1F);
                 AscentFx.ring(e.getX(), e.getY() + 0.9, e.getZ(), e.getDeltaMovement(), 1F);
@@ -102,6 +107,19 @@ public final class AscentRemote {
         }
     }
 
+    // others' "your body remembers" scenes: who, and how far in (a few at most)
+    private static final int[] REMEMBERING = {-1, -1, -1, -1}, REMEMBER_AGE = new int[4];
+
+    private static void remembering(int entityId) {
+        for (int i = 0; i < REMEMBERING.length; i++) {
+            if (REMEMBERING[i] < 0 || REMEMBERING[i] == entityId || i == REMEMBERING.length - 1) {
+                REMEMBERING[i] = entityId;
+                REMEMBER_AGE[i] = 0;
+                return;
+            }
+        }
+    }
+
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         for (Slot s : SLOTS) {
@@ -109,10 +127,22 @@ public final class AscentRemote {
             Entity e = mc.level == null ? null : mc.level.getEntity(s.entity);
             if (e == null || e.isRemoved()) s.entity = -1;
         }
+        for (int i = 0; i < REMEMBERING.length; i++) {
+            if (REMEMBERING[i] < 0) continue;
+            Entity e = mc.level == null ? null : mc.level.getEntity(REMEMBERING[i]);
+            int t = ++REMEMBER_AGE[i];
+            if (e == null || mc.player == null || t > 80) {
+                REMEMBERING[i] = -1;
+                continue;
+            }
+            AscentScene.risingLight(mc.player, e, t);
+            if (t == 34) WingLayer.flourish(e.getId(), 46);
+        }
     }
 
     static void reset() {
         for (Slot s : SLOTS) s.entity = -1;
+        java.util.Arrays.fill(REMEMBERING, -1);
     }
 
     private static Slot free() {

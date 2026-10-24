@@ -98,5 +98,14 @@
         "attenuation_distance": 20
       }
     ]
+  },
+  "ascent.remember": {
+    "subtitle": "subtitles.awaken.ascent.remember",
+    "sounds": [
+      {
+        "name": "awaken:ascent_remember",
+        "attenuation_distance": 24
+      }
+    ]
   }
 }

@@ -27,6 +27,13 @@ final class AscentCommands {
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(GRANTS, b))
                     .executes(c -> grant(c.getSource(), StringArgumentType.getString(c, "what")))));
             ascent.then(Commands.literal("sandbox").executes(c -> sandbox(c.getSource())));
+            // replays "your body remembers" for the tiers held (Wings if none): for tours and the clip recorder
+            ascent.then(Commands.literal("remember").executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                int bits = AscentServer.tiers(p);
+                AwakenNet.send(p, new AscentPayloads.Remember(bits != 0 ? bits : 0b111));
+                return 1;
+            }));
             ascent.then(Commands.literal("pilot").then(Commands.argument("line", StringArgumentType.greedyString())
                     .executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();

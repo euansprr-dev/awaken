@@ -111,6 +111,12 @@ public final class FeelDirector {
         crackIn = 6;
     }
 
+    /** "Your body remembers": the view lifts and the frame breathes out as the wings open. */
+    public static void remember() {
+        kick(-2.6F);
+        if (!FeelConfig.reduced()) fovPunch += 0.07F;
+    }
+
     /** An air dash: a sharp shove forward (the frame widens, the view dips into it). */
     public static void dash() {
         kick(1.6F);

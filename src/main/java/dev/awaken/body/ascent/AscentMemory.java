@@ -10,17 +10,21 @@ import java.util.List;
 /**
  * What the Ascent remembers about a player (saved, kept through death): the tiers held (a bit per
  * {@link AscentPayloads.Tier}), mastery points per track ({@link Track}: the Runner and each tier), and the longest chain
- * of moves ever strung together. Schema 2 (schema 1 held the tiers only; it reads as no mastery yet).
+ * of moves ever strung together, and flags ({@link #SETTLED}). Schema 2 (schema 1 held the tiers only; it reads as no
+ * mastery yet and not settled).
  */
-public record AscentMemory(int schemaVersion, int tiers, List<Integer> mastery, int chainBest) {
+public record AscentMemory(int schemaVersion, int tiers, List<Integer> mastery, int chainBest, int flags) {
     public static final int SCHEMA = 2;
-    public static final AscentMemory EMPTY = new AscentMemory(SCHEMA, 0, List.of(), 0);
+    /** flags: the first load in a world has been settled (an old world's tiers given back by rank, once). */
+    public static final int SETTLED = 1;
+    public static final AscentMemory EMPTY = new AscentMemory(SCHEMA, 0, List.of(), 0, 0);
 
     public static final MapCodec<AscentMemory> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(AscentMemory::schemaVersion),
             Codec.INT.optionalFieldOf("tiers", 0).forGetter(AscentMemory::tiers),
             Codec.INT.listOf().optionalFieldOf("mastery", List.of()).forGetter(AscentMemory::mastery),
-            Codec.INT.optionalFieldOf("chainBest", 0).forGetter(AscentMemory::chainBest)
+            Codec.INT.optionalFieldOf("chainBest", 0).forGetter(AscentMemory::chainBest),
+            Codec.INT.optionalFieldOf("flags", 0).forGetter(AscentMemory::flags)
     ).apply(i, AscentMemory::new));
 
     /** What mastery is earned on: the Runner's moves, and each tier's. */
@@ -55,21 +59,25 @@ public record AscentMemory(int schemaVersion, int tiers, List<Integer> mastery, 
     }
 
     public AscentMemory withTiers(int bits) {
-        return new AscentMemory(SCHEMA, bits, mastery, chainBest);
+        return new AscentMemory(SCHEMA, bits, mastery, chainBest, flags);
     }
 
     public AscentMemory withPoints(Track t, int add) {
         List<Integer> m = new ArrayList<>(mastery);
         while (m.size() < Track.VALUES.length) m.add(0);
         m.set(t.ordinal(), Math.min(1_000_000, m.get(t.ordinal()) + add));
-        return new AscentMemory(SCHEMA, tiers, List.copyOf(m), chainBest);
+        return new AscentMemory(SCHEMA, tiers, List.copyOf(m), chainBest, flags);
     }
 
     public AscentMemory withChain(int chain) {
-        return chain <= chainBest ? this : new AscentMemory(SCHEMA, tiers, mastery, chain);
+        return chain <= chainBest ? this : new AscentMemory(SCHEMA, tiers, mastery, chain, flags);
+    }
+
+    public AscentMemory withFlag(int flag) {
+        return new AscentMemory(SCHEMA, tiers, mastery, chainBest, flags | flag);
     }
 
     public boolean isEmpty() {
-        return tiers == 0 && chainBest == 0 && mastery.stream().allMatch(v -> v == 0);
+        return tiers == 0 && chainBest == 0 && flags == 0 && mastery.stream().allMatch(v -> v == 0);
     }
 }

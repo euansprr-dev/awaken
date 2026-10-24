@@ -1459,8 +1459,28 @@ is what the Ascent decided while building it.
   max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (client, predicted):
   rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
   dash +2% a Leaper level, glide drag −2% a Wings level.
-- **The record**: `AscentMemory` schema 2 = tiers + mastery points (list, Track order) + chainBest; schema 1 reads as
-  no mastery yet. Kept through death.
+- **The record**: `AscentMemory` schema 2 = tiers + mastery points (list, Track order) + chainBest + flags (1 = settled);
+  schema 1 reads as no mastery yet and not settled. Kept through death.
+- **Old worlds, first load** (`AscentServer.settle`, once per player, on login): an awakened player of rank B or above is
+  given Wings (with Tether and Leaper), A or above Skyborn; anyone else is settled with nothing (later tiers come from
+  their deeds and trials, §17.4-17.5). Three seconds after login the client is sent `Remember`, and it plays
+  **"your body remembers"** once the player is free (no screen, on the ground, not moving by rope or wings; at most
+  30 s later wherever they are): the wind ducks, a synthesised swell (`ascent.remember`: an inhale of air under a
+  rising chord of glass), light rising around the body for 4 s, at 1.7 s the view lifts, the frame breathes out and the
+  wings unfold for 2.3 s with one slow beat, then "Your body remembers." and the tiers given ("The line · The leap ·
+  Wings · The sky") in the Holo look, about 6.5 s in all. Others nearby see the light and the wings and hear the swell
+  (`EV_REMEMBER`). `/awaken ascent remember` replays it (dev).
+- **The rope wraps** (soft failure, not a cut): checked every 2 ticks, something solid (never leaves) across the rope's
+  middle becomes the new anchor (the face it meets from the hand, 0.06 off it) and the rope shortens to the hand's
+  distance from it; the swing goes on about the new point (a strain, a small spark; the server re-checks the anchor).
+  Only a snag below the hand, or one closer than 4, lets go into the carry. (Before: 5 of 8 swings in the sandbox lane
+  were cut on the giant trunks.)
+- **Routes** (dev; golden runs for Carillon's TryDriver and the Ascent's regressions; `AscentRoutes`): pilot lines
+  `route rec <name>` / `route play <name>` / `route stop` record a run tick by tick (movement keys, the movement key,
+  yaw and pitch) to `<game dir>/awaken-routes/<name>.route` (text: a start line, one line a tick, an end line) and play
+  it back through the same keys from the same start (a `tp` command, then 20 ticks to settle). Playing logs where the
+  run ended against the recording's end ("off by d"), so a tour can tell a route that still works from one a change
+  broke. Record from standing still; at most five minutes.
 
 ---------------------------------------------------------------------------------------------------------------------
 

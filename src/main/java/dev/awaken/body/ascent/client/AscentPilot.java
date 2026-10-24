@@ -17,6 +17,8 @@ import net.minecraft.util.Mth;
  * hold &lt;keys&gt; &lt;ticks&gt;      keys: forward,back,left,right,jump,sneak,sprint,tether (comma separated)
  * aim &lt;yaw&gt; &lt;pitch&gt; &lt;ticks&gt; turn smoothly to a view
  * run &lt;script&gt; [n]          a manoeuvre that watches the state: swing (n swings down the lane), glide, boom, soar
+ * rec &lt;name&gt; &lt;ticks&gt; [n]     film a clip (every n-th frame)
+ * route rec|play|stop [name] record a run's keys and view, or play one back from its start ({@link AscentRoutes})
  * stop                       let go of everything
  * </pre>
  */
@@ -60,6 +62,7 @@ public final class AscentPilot {
                 laneYaw = p.getYRot();
             }
             case "rec" -> ClipRecorder.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Integer.parseInt(a[3]) : 2);
+            case "route" -> AscentRoutes.line(a);
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
         }
@@ -192,7 +195,8 @@ public final class AscentPilot {
             default -> {
             }
         }
-        if (age > 320) stop();
+        // never carried into the next scene: about 3.5 s a swing at most
+        if (age > Math.max(320, 70 * target)) stop();
     }
 
     /**

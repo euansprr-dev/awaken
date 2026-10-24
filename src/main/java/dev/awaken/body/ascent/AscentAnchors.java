@@ -108,14 +108,25 @@ public final class AscentAnchors {
      * something solid across the middle (another trunk swung behind) cuts it. Leaves never do.
      */
     public static boolean clear(Level level, Entity who, Vec3 hand, double ax, double ay, double az) {
+        return snag(level, who, hand, ax, ay, az) == null;
+    }
+
+    /**
+     * Where the rope catches on something solid across its middle: the face it meets going from the hand toward the
+     * anchor, a hair off it (on the block's collision, so the server's anchor check holds). Null while it's clear.
+     * The swing wraps round it there (SPEC §17.6) rather than the rope being cut.
+     */
+    public static @Nullable Vec3 snag(Level level, Entity who, Vec3 hand, double ax, double ay, double az) {
         Vec3 a = new Vec3(ax, ay, az);
         Vec3 d = a.subtract(hand);
         double len = d.length();
-        if (len < 6) return true;
+        if (len < 6) return null;
         Vec3 from = hand.add(d.scale(1.5 / len)), to = hand.add(d.scale((len - 3.0) / len));
         BlockHitResult h = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, who));
         // a line of light passes through foliage
-        return h.getType() != HitResult.Type.BLOCK || level.getBlockState(h.getBlockPos()).is(net.minecraft.tags.BlockTags.LEAVES);
+        if (h.getType() != HitResult.Type.BLOCK || level.getBlockState(h.getBlockPos()).is(net.minecraft.tags.BlockTags.LEAVES)) return null;
+        net.minecraft.core.Direction f = h.getDirection();
+        return h.getLocation().add(f.getStepX() * 0.06, f.getStepY() * 0.06, f.getStepZ() * 0.06);
     }
 
     /** The floor under a point, or {@code y - maxDown} when there is none within reach. */

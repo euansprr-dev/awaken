@@ -40,6 +40,7 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> FLAP = sound("ascent.flap");
     public static final DeferredHolder<SoundEvent, SoundEvent> BOOM = sound("ascent.boom");
     public static final DeferredHolder<SoundEvent, SoundEvent> LAND = sound("ascent.land");
+    public static final DeferredHolder<SoundEvent, SoundEvent> REMEMBER = sound("ascent.remember");
 
     /** Motes of the Signal's light: sparks where a rope bites, feathers off the wings, the shock ring's grit. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MOTE = PARTICLES.register("ascent_mote", () -> new SimpleParticleType(false));

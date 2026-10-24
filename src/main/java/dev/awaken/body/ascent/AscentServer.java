@@ -99,7 +99,40 @@ public final class AscentServer {
     }
 
     static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p) syncTiers(p);
+        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        int given = settle(p);
+        syncTiers(p);
+        if (given != 0) {
+            // a moment after arriving (the client plays it once the player is free: no screen, on the ground)
+            dev.awaken.core.Later.run(p.level().getServer(), 60, () -> {
+                if (!p.hasDisconnected()) AwakenNet.send(p, new AscentPayloads.Remember(given));
+            });
+        }
+    }
+
+    /** The tier an old world's player is given back on first load: Wings from rank B, Skyborn from A; none before. */
+    static Ascent.Tier remembered(boolean awakened, dev.awaken.progression.Rank rank) {
+        if (!awakened) return null;
+        if (rank.ordinal() >= dev.awaken.progression.Rank.A.ordinal()) return Ascent.Tier.SKYBORN;
+        return rank.ordinal() >= dev.awaken.progression.Rank.B.ordinal() ? Ascent.Tier.WINGS : null;
+    }
+
+    /**
+     * The first load in a world since the Ascent (once per player): an awakened player of rank B or above is given
+     * Wings (and the tiers under it), A or above Skyborn (SPEC §17.6). Returns the tier bits given (0 for none).
+     */
+    public static int settle(ServerPlayer p) {
+        AscentMemory mem = p.getData(AscentContent.MEMORY);
+        if ((mem.flags() & AscentMemory.SETTLED) != 0) return 0;
+        p.setData(AscentContent.MEMORY, mem.withFlag(AscentMemory.SETTLED));
+        var prof = dev.awaken.progression.Progression.profile(p);
+        Ascent.Tier tier = remembered(prof.awakened(), prof.rank());
+        if (tier == null) return 0;
+        int before = tiers(p);
+        Ascent.grant(p, tier, "your body remembers");
+        int given = tiers(p) & ~before;
+        if (given != 0) dev.awaken.core.DirectorLog.log(p, "ascent", "your body remembers: " + tier + " (rank " + prof.rank().label + ")");
+        return given;
     }
 
     static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
