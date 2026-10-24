@@ -15,17 +15,19 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * The wind, handed to Awaken's terrain shader through 8 texels in the block atlas's bottom-right corner (Sodium binds
+ * The wind, handed to Awaken's terrain shader through 4 texels in the block atlas's bottom-right corner (Sodium binds
  * only its own uniforms, the atlas and the lightmap; the atlas is the one thing Awaken can write that the shader can
  * read). The stitcher fills the atlas from the top left, so that corner lies outside every sprite; it is checked at
  * each stitch and nothing is written if a sprite is there. Written once a frame, before terrain draws.
  *
  * <pre>
- * texel 0  "AWND" signature         texel 4  camera z mod 4096 (float)
- * texel 1  time in s mod 256 (float)texel 5  wind dir x, dir z (unorm, -1..1), steady, gust
- * texel 2  camera x mod 4096 (float)texel 6  amplitude (x 0.25 blocks), layout version, 0, 0
- * texel 3  camera y (float)         texel 7  reserved
+ * texel 0  "AWND" signature
+ * texel 1  time in seconds modulo 256 (float bits)
+ * texel 2  camera x, y, z in 16-block steps modulo 256 (so modulo 4096 blocks), amplitude (x 0.25 blocks)
+ * texel 3  wind direction x, z (-1..1 as 0..1), steady strength, gust
  * </pre>
+ * The shader only needs the camera to within a few blocks: it rounds (region offset + camera) to whole render regions
+ * to find each region's world position modulo 4096. Four fetches per leaf vertex, one for every other vertex none.
  * Wind is a function of the world's game time only (the same for every player, no packets): a direction that drifts
  * over minutes, a steady strength that breathes over a minute or two and rises with rain and thunder, and gusts.
  * Stand-in for the terrain module's wind model (SPEC 15), which will feed the same texels.
@@ -33,8 +35,7 @@ import java.nio.ByteOrder;
 final class WindTexels {
     private WindTexels() {}
 
-    static final int TEXELS = 8;
-    static final int LAYOUT_VERSION = 1;
+    static final int TEXELS = 4;
     private static final int SIGNATURE = 0x444E5741; // "AWND" little-endian
     /** Full sway at steady 1 and gust 1, in blocks (a few hundredths in a breeze). */
     private static final float AMPLITUDE = 0.11F;
@@ -42,6 +43,8 @@ final class WindTexels {
     private static final ByteBuffer BUF = MemoryUtil.memAlloc(TEXELS * 4).order(ByteOrder.LITTLE_ENDIAN);
     private static GpuTexture cornerOf; // the atlas texture whose corner was found free
     private static boolean cornerFree;
+    /** Measuring aid ({@code /awaken terrain waving debug}): 0 normal, 1 no signature (shader exits early), 2 amplitude 0. */
+    static int debugMode;
 
     /** At each block-atlas stitch: is the corner strip outside every sprite? */
     static void onBlockAtlasStitched(TextureAtlas atlas) {
@@ -87,20 +90,17 @@ final class WindTexels {
 
         ByteBuffer b = BUF;
         b.clear();
-        b.putInt(SIGNATURE);
+        b.putInt(debugMode == 1 ? 0 : SIGNATURE);
         b.putFloat(t);
-        b.putFloat((float) wrap(cam.x));
-        b.putFloat((float) cam.y);
-        b.putFloat((float) wrap(cam.z));
+        b.put(step16(cam.x)).put(step16(cam.y)).put(step16(cam.z)).put(debugMode == 2 ? 0 : unorm(AMPLITUDE / 0.25F));
         b.put(snorm((float) Math.cos(heading))).put(snorm((float) Math.sin(heading))).put(unorm(steady)).put(unorm(gust));
-        b.put(unorm(AMPLITUDE / 0.25F)).put((byte) LAYOUT_VERSION).put((byte) 0).put((byte) 0);
-        b.putInt(0);
         b.flip();
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(tex, b, 0, 0, tex.getWidth(0) - TEXELS, tex.getHeight(0) - 1, TEXELS, 1);
     }
 
-    private static double wrap(double v) {
-        return v - Math.floor(v / 4096.0) * 4096.0;
+    /** A coordinate in 16-block steps modulo 256 (the shader adds half a step back). */
+    private static byte step16(double v) {
+        return (byte) Math.floorMod((long) Math.floor(v / 16.0), 256L);
     }
 
     private static byte unorm(float v) {

@@ -1,6 +1,7 @@
 package dev.awaken.terrain.client;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import dev.awaken.Awaken;
 import dev.awaken.compat.Companions;
 import net.minecraft.client.Minecraft;
@@ -111,18 +112,27 @@ public final class WavingLeaves {
         WindTexels.write(mc, e.getPartialTick().getGameTimeDeltaPartialTick(false));
     }
 
-    /** {@code /awaken terrain waving on|off|status} (client side): switch and reload, or say why it is off. */
+    /** {@code /awaken terrain waving on|off|status|debug <0..2>} (client side): switch and reload, or say why it is off. */
     private static void commands(RegisterClientCommandsEvent e) {
         e.getDispatcher().register(Commands.literal(Awaken.MODID).then(Commands.literal("terrain").then(Commands.literal("waving")
                 .then(Commands.literal("on").executes(c -> toggle(true)))
                 .then(Commands.literal("off").executes(c -> toggle(false)))
-                .then(Commands.literal("status").executes(c -> status())))));
+                .then(Commands.literal("status").executes(c -> status()))
+                // measuring aid: 0 normal, 1 shader runs but finds no wind (exits early), 2 full shader, amplitude 0
+                .then(Commands.literal("debug").then(Commands.argument("mode", IntegerArgumentType.integer(0, 2))
+                        .executes(c -> debug(IntegerArgumentType.getInteger(c, "mode"))))))));
     }
 
     private static int toggle(boolean on) {
         TerrainClientConfig.setWavingLeaves(on);
         Awaken.LOG.info("Waving leaves: setting {}, reloading resources", on ? "on" : "off");
         Minecraft.getInstance().reloadResourcePacks();
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int debug(int mode) {
+        WindTexels.debugMode = mode;
+        Awaken.LOG.info("Waving leaves: debug mode {}", mode);
         return Command.SINGLE_SUCCESS;
     }
 

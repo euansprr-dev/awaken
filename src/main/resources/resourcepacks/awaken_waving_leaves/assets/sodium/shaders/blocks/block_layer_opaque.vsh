@@ -7,7 +7,7 @@
 // what this file was written against (dev.awaken.terrain.client.WaveSupport); otherwise Sodium's file is used.
 //
 // AWAKEN: leaf vertices carry colour alpha 254 (baked into leaf models by WavingLeavesModel; the colour pipeline keeps
-// alpha, AO and shade only touch RGB). The wind lives in 8 texels in the block atlas's bottom-right corner, outside
+// alpha, AO and shade only touch RGB). The wind lives in 4 texels in the block atlas's bottom-right corner, outside
 // every sprite, written by Awaken once a frame (WindTexels). Without its signature nothing moves.
 
 #include <sodium:globals.glsl>
@@ -78,15 +78,15 @@ uint _awk_hash(uvec3 v) {
 // Offset for one leaf vertex. regionPos is the vertex relative to its render region's origin. The offset is a function
 // of the vertex's world position and time only, so the corners two leaf blocks share move together (no cracks).
 vec3 _awk_leaf_offset(vec3 regionPos) {
-    ivec2 base = textureSize(u_BlockTex, 0) - ivec2(8, 1);
+    ivec2 base = textureSize(u_BlockTex, 0) - ivec2(4, 1);
     if (_awk_u32(base) != AWK_SIGNATURE) return vec3(0.0);
     float t = _awk_f32(base + ivec2(1, 0));
-    vec3 cam = vec3(_awk_f32(base + ivec2(2, 0)), _awk_f32(base + ivec2(3, 0)), _awk_f32(base + ivec2(4, 0)));
-    vec4 wind = texelFetch(u_BlockTex, base + ivec2(5, 0), 0);  // direction x, z (0..1 for -1..1), steady, gust
-    vec4 shape = texelFetch(u_BlockTex, base + ivec2(6, 0), 0); // amplitude (x 0.25 blocks), version, -, -
+    vec4 camAmp = texelFetch(u_BlockTex, base + ivec2(2, 0), 0); // camera x, y, z (16-block steps mod 256), amplitude
+    vec4 wind = texelFetch(u_BlockTex, base + ivec2(3, 0), 0);   // direction x, z (0..1 for -1..1), steady, gust
 
-    // World position modulo 4096 (x, z): the region's origin is a whole number of regions from the camera, and the
-    // camera Awaken wrote (last frame's, modulo 4096) is far closer than half a region to this frame's.
+    // World position modulo 4096: the region's origin is a whole number of regions from the camera, and the camera
+    // Awaken wrote (last frame's, to 16 blocks, modulo 4096) is far closer than half a region to this frame's.
+    vec3 cam = (round(camAmp.xyz * 255.0) + 0.5) * 16.0;
     vec3 origin = round((u_RegionOffset + cam) / AWK_REGION) * AWK_REGION;
     vec3 wp = origin + regionPos;
 
@@ -94,7 +94,7 @@ vec3 _awk_leaf_offset(vec3 regionPos) {
     dir *= inversesqrt(max(dot(dir, dir), 1e-4));
     float steady = wind.z;
     float gust = wind.w;
-    float amp = shape.x * 0.25;
+    float amp = camAmp.w * 0.25;
 
     // gust fronts roll downwind across the canopy (about 5 blocks a second)
     float along = dot(wp.xz, dir);
