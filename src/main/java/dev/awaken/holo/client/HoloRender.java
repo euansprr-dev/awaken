@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.feature.TextFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.resources.Identifier;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.data.AtlasIds;
@@ -67,6 +68,9 @@ final class HoloRender {
         final float[] headers = new float[48 * 3];
         int headerCount;
         RenderType spriteType;
+        // external textures: one submit per slot, rebuilt only when the slot's texture changes
+        final Identifier[] texOf = new Identifier[HoloCanvas.MAX_TEXTURES];
+        final CustomFeatureRenderer.Submit[] tex = new CustomFeatureRenderer.Submit[HoloCanvas.MAX_TEXTURES];
 
         Draw(HoloPanel p) {
             this.p = p;
@@ -122,6 +126,15 @@ final class HoloRender {
                     d.sprites = new CustomFeatureRenderer.Submit(d.stack.last(), d.spriteType, (pose, vc) -> sprites(d, pose, vc));
                 }
                 c.order(base + 2).submitSpecial(key, d.sprites);
+            }
+            for (int i = 0; i < cv.textureCount; i++) {
+                Identifier id = cv.textures[i];
+                if (d.tex[i] == null || !id.equals(d.texOf[i])) {
+                    final int slot = i;
+                    d.texOf[i] = id;
+                    d.tex[i] = new CustomFeatureRenderer.Submit(d.stack.last(), RenderTypes.textSeeThrough(id), (pose, vc) -> texture(d, slot, pose, vc));
+                }
+                c.order(base + 2).submitSpecial(key, d.tex[i]);
             }
             items(c, d, base + 3);
             text(c, d, base + 4); // glow copies at base + 4, the text at base + 5
@@ -366,6 +379,21 @@ final class HoloRender {
     }
 
     // ---- sprites ----------------------------------------------------------------------------------------------------
+
+    /** One external texture's quad (UV0 its own 0..1 UVs; see-through text type, so it needs no lightmap). */
+    private static void texture(Draw d, int i, PoseStack.Pose pose, VertexConsumer vc) {
+        HoloCanvas cv = d.p.canvas;
+        if (i >= cv.textureCount) return;
+        Matrix4f m = pose.pose();
+        int o = i * 4;
+        float x0 = cv.textureRect[o], y0 = cv.textureRect[o + 1], x1 = x0 + cv.textureRect[o + 2], y1 = y0 + cv.textureRect[o + 3];
+        float u0 = cv.textureUv[o], v0 = cv.textureUv[o + 1], u1 = cv.textureUv[o + 2], v1 = cv.textureUv[o + 3];
+        int col = mulAlpha(cv.textureColour[i], d.p.glassAlpha * d.p.fade);
+        vc.addVertex(m, x0, y0, 0).setUv(u0, v0).setColor(col);
+        vc.addVertex(m, x0, y1, 0).setUv(u0, v1).setColor(col);
+        vc.addVertex(m, x1, y1, 0).setUv(u1, v1).setColor(col);
+        vc.addVertex(m, x1, y0, 0).setUv(u1, v0).setColor(col);
+    }
 
     private static void sprites(Draw d, PoseStack.Pose pose, VertexConsumer vc) {
         HoloPanel p = d.p;
