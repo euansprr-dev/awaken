@@ -51,6 +51,10 @@ public final class LensClient {
     private static @org.jspecify.annotations.Nullable String overrideLook;
     private static boolean overrideChanged;
     private static float ease = 0.06f;
+    // a story scene keeps Lens on although the setting is off (a cutscene): after it, this many ticks to fade to neutral
+    private static int linger;
+    private static boolean wasOff;
+    private static final float[] NEUTRAL = Look.neutral();
     // texel 13: the tear from black (progress per tick), crushed blacks and extra bloom, eased toward their targets
     private static float tear, tearStep, crush, crushTarget, bloomBoost, bloomTarget;
     // reused every frame: the sun's direction and where it lands on screen
@@ -77,11 +81,16 @@ public final class LensClient {
             snap = true;
             active = false;
             overrideLook = null;
+            linger = 0;
             tear = tearStep = crush = crushTarget = bloomBoost = bloomTarget = 0f;
             return;
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
-        boolean on = setting != AwakenConfig.Client.LensLook.OFF && !Companions.shaderPackActive();
+        boolean off = setting == AwakenConfig.Client.LensLook.OFF;
+        // a story scene's look plays like a cutscene even with Lens off (unless the player said no), then fades out
+        boolean scene = overrideLook != null || tearStep > 0 || linger > 0;
+        if (linger > 0) linger--;
+        boolean on = (!off || scene && scenesAllowed()) && !Companions.shaderPackActive();
         Identifier want = !on ? null : setting == AwakenConfig.Client.LensLook.CINEMATIC ? CINEMATIC : SWIFT;
         // the server replaces this list whenever it syncs post effects, so Lens re-asserts itself every tick, first
         List<Identifier> effects = player.getActivePostEffects();
@@ -98,10 +107,14 @@ public final class LensClient {
         active = want != null;
 
         ResourceKey<Level> dim = mc.level.dimension();
-        if (dim != lookFor || overrideChanged) {
-            Looks.resolve(overrideLook != null ? overrideLook : dim.identifier().toString(), target);
+        if (dim != lookFor || overrideChanged || off != wasOff) {
+            // with Lens off the look rests at neutral, so a scene eases in from (and back out to) the plain frame
+            if (overrideLook != null) Looks.resolve(overrideLook, target);
+            else if (off) System.arraycopy(NEUTRAL, 0, target, 0, Look.SIZE);
+            else Looks.resolve(dim.identifier().toString(), target);
             lookFor = dim;
             overrideChanged = false;
+            wasOff = off;
         }
         // ease into a new place's look over about a second and a half (a hard cut on joining a world)
         float k = snap ? 1f : ease;
@@ -120,7 +133,8 @@ public final class LensClient {
 
     /**
      * A story moment's look in place of the dimension's (an id in looks.json, such as {@code awaken:ritual}), eased in
-     * over about {@code fadeTicks}. Nothing happens while Lens is off or a shaderpack is on; callers carry on without it.
+     * over about {@code fadeTicks}. It plays even while Lens is off, for the scene's length (client config
+     * {@code lensInScenes}); never while a shaderpack is on, where callers carry on without it ({@link #active()}).
      */
     public static void override(String lookId, int fadeTicks) {
         if (lookId.equals(overrideLook)) return;
@@ -129,12 +143,22 @@ public final class LensClient {
         ease = rate(fadeTicks);
     }
 
-    /** Back to the dimension's own look over about {@code fadeTicks}. */
+    /** Back to the dimension's own look over about {@code fadeTicks} (with Lens off: to the plain frame, then off). */
     public static void clearOverride(int fadeTicks) {
         if (overrideLook == null) return;
         overrideLook = null;
         overrideChanged = true;
         ease = rate(fadeTicks);
+        linger = Math.max(linger, fadeTicks + 10);
+    }
+
+    /** Whether story scenes may turn Lens on while it's off (client config {@code lensInScenes}). */
+    private static boolean scenesAllowed() {
+        try {
+            return AwakenConfig.Client.LENS_IN_SCENES.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
     }
 
     /** The black opens from the centre over {@code ticks} (the awakening); the frame stays black until it starts. */

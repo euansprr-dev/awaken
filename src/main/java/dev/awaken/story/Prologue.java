@@ -221,7 +221,7 @@ final class Prologue {
         sync(p);
         holdTheBlack(p);
         p.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 20 * 30, 4, false, false));
-        AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.VOID)); // the Void look, the heartbeat
+        AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.VOID, voidWords())); // the Void look, the heartbeat
         // the damage event that got us here is still running: move the player on the next tick
         dev.awaken.core.Later.run(p.level().getServer(), 1, () -> {
             if (p.isRemoved()) return;
@@ -240,13 +240,27 @@ final class Prologue {
         return GateHooks.get(p.level().getServer().overworld(), s.prologueGate).map(g -> Vec3.atBottomCenterOf(g.mouth()));
     }
 
+    static final String QUESTION = "Will you accept?";
+
+    /**
+     * In the black the System's words are the scene's (drawn large in the dark by the ritual's HUD); the card holds only
+     * the question and its keys, so nothing on screen says the same thing twice and no caption lingers after the answer.
+     */
     static void askToAccept(ServerPlayer p) {
         var r = StoryContent.revelation("prologue_accept");
         // both keys accept: the card says so, in the story's own voice
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.REVELATION,
+        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.TRUTH,
                         Component.literal(r == null ? "You have met the conditions." : r.title()))
-                .body(Component.literal(r == null ? "Will you accept?" : r.body()))
+                .body(Component.literal(QUESTION))
                 .choice(ACCEPT_ACTION, "Accept", "Accept anyway").priority(10).ttl(20 * 60).build());
+    }
+
+    /** What the System says in the black: the revelation's body without its question (the card asks it). */
+    static String voidWords() {
+        var r = StoryContent.revelation("prologue_accept");
+        String body = r == null ? "You died inside a gate and kept thinking. Few do." : r.body().strip();
+        if (body.endsWith(QUESTION)) body = body.substring(0, body.length() - QUESTION.length()).strip();
+        return body;
     }
 
     /** Waking is worth at least this level, whatever the prologue banked (plan v2 §4.1: level 2–3 on waking). */
@@ -257,6 +271,7 @@ final class Prologue {
         if (!ACCEPT_ACTION.equals(action)) return;
         StoryProgress s = progress(p);
         if (s.prologue != StoryProgress.Prologue.ACCEPTING || Progression.profile(p).awakened()) return;
+        boolean ritual = Ritual.storyGate(p) >= 0;
         Progression.awaken(p); // pays everything the prologue banked: kills, floors, the Satchel's claim
         Progression.topUpToLevel(p, WAKE_LEVEL, Progression.XpSource.STORY);
         s.prologue = StoryProgress.Prologue.DONE;
@@ -268,10 +283,11 @@ final class Prologue {
         p.setHealth(p.getMaxHealth());
         liftTheBlack(p);
         AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.TEAR)); // the black tears open from the centre
-        // what's true: the Bell Crypt is scripted and never breaks, so there's no hurry to go back in
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(accepted ? "Accepted." : "Accepted anyway."))
-                .body(Component.literal("The gate will wait. It never breaks."))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).priority(9).build());
+        // what's true: the old three-floor Bell Crypt is scripted and never breaks, so there's no hurry to go back in;
+        // the ritual's hall is spent (it comes down behind you), so there's nothing to add
+        var accept = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(accepted ? "Accepted." : "Accepted anyway."));
+        if (!ritual) accept.body(Component.literal("The gate will wait. It never breaks."));
+        Signal.send(p, accept.presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).priority(9).build());
     }
 
     /**
@@ -338,7 +354,7 @@ final class Prologue {
     static void onLogin(ServerPlayer p) {
         if (progress(p).prologue == StoryProgress.Prologue.ACCEPTING && !Progression.profile(p).awakened()) {
             holdTheBlack(p);
-            AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.VOID));
+            AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.VOID, voidWords()));
             return;
         }
         if (!Progression.profile(p).awakened()) Ritual.onLogin(p);

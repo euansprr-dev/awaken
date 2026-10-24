@@ -79,13 +79,15 @@ final class RitualCamera {
         int beat = RitualClient.beat;
         float age = RitualClient.beatAge(0);
         if (beat == RitualClient.DOORS) {
-            // drawn gently toward the throne while the candles light toward it
-            target = RitualFx.eyes(0);
-            pullWant = age < 40 ? 0 : age < 90 ? 0.18F * (age - 40) / 50F : age < 160 ? 0.18F : 0.18F * Math.max(0, 1 - (age - 160) / 30F);
+            // drawn toward the throne while the candles light toward it, closing in a little as the line reaches the god
+            target = RitualFx.eyes(0).add(0, -5, 0);
+            pullWant = age < 40 ? 0 : age < 90 ? 0.3F * (age - 40) / 50F : age < 165 ? 0.3F : 0.3F * Math.max(0, 1 - (age - 165) / 25F);
+            zoomWant = age > 90 && age < 175 ? -0.18F * Math.min(1, (age - 90) / 60F) : 0;
         } else if (beat == RitualClient.WAKING) {
+            // the face, framed: a slow push-in until the eyes fill the frame as they open, held, then let go
             target = RitualFx.eyes(0);
-            pullWant = age < 84 ? Math.min(0.92F, age / 26F) : Math.max(0, 0.92F - (age - 84) / 30F);
-            zoomWant = age < 84 ? -0.1F * Math.min(1, age / 60F) : 0;
+            pullWant = age < 96 ? Math.min(0.95F, age / 24F) : Math.max(0, 0.95F - (age - 96) / 30F);
+            zoomWant = age < 96 ? -0.6F * smooth(Math.min(1, age / 64F)) : 0;
         } else if (beat == RitualClient.END) {
             target = RitualFx.palm(0);
             pullWant = Math.min(0.9F, age / 40F);
@@ -98,6 +100,10 @@ final class RitualCamera {
         pull += (pullWant - pull) * 0.12F;
         zoomO = zoom;
         zoom += (zoomWant - zoom) * 0.08F;
+    }
+
+    private static float smooth(float x) {
+        return x * x * (3 - 2 * x);
     }
 
     static void angles(ViewportEvent.ComputeCameraAngles e) {

@@ -42,6 +42,12 @@ public final class SeatedOne extends Mob {
 
     private static final EntityDataAccessor<Integer> STAGE = SynchedEntityData.defineId(SeatedOne.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> SINCE = SynchedEntityData.defineId(SeatedOne.class, EntityDataSerializers.INT);
+    /** The director's key light on the colossus (0..15, the candle line and the altar), and how awake its runes are (0..100). */
+    private static final EntityDataAccessor<Integer> KEY = SynchedEntityData.defineId(SeatedOne.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> RUNES = SynchedEntityData.defineId(SeatedOne.class, EntityDataSerializers.INT);
+
+    /** Client: the key light and the runes, eased toward the synced values (so a change is a swell, not a cut). */
+    public float clientKey, clientKeyO, clientRunes, clientRunesO;
 
     /** Client: the local game time when the current stage was first seen (synced stage changes arrive late or on join). */
     public long clientStageSeen = Long.MIN_VALUE;
@@ -66,6 +72,28 @@ public final class SeatedOne extends Mob {
         super.defineSynchedData(b);
         b.define(STAGE, DORMANT);
         b.define(SINCE, 0);
+        b.define(KEY, 11);
+        b.define(RUNES, 30);
+    }
+
+    /** Sets the key light (0..15) the colossus is lit by, whatever the block light says (0: only the blocks). */
+    public void setKeyLight(int level) {
+        int v = Math.clamp(level, 0, 15);
+        if (entityData.get(KEY) != v) entityData.set(KEY, v);
+    }
+
+    /** Sets how bright its runes burn (0..100): the halo, the crown, the collar, the sigil, the veins. */
+    public void setRunes(int percent) {
+        int v = Math.clamp(percent, 0, 100);
+        if (entityData.get(RUNES) != v) entityData.set(RUNES, v);
+    }
+
+    public int keyLight() {
+        return entityData.get(KEY);
+    }
+
+    public int runes() {
+        return entityData.get(RUNES);
     }
 
     public int stage() {
@@ -107,9 +135,16 @@ public final class SeatedOne extends Mob {
         // body fixed to the throne whatever the head does
         yBodyRot = yBodyRotO = getYRot();
         setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-        if (level().isClientSide() && stage() != lastSeenStage) {
-            lastSeenStage = stage();
-            clientStageSeen = level().getGameTime();
+        if (level().isClientSide()) {
+            if (stage() != lastSeenStage) {
+                lastSeenStage = stage();
+                clientStageSeen = level().getGameTime();
+            }
+            clientKeyO = clientKey;
+            clientRunesO = clientRunes;
+            if (tickCount <= 1) clientKey = keyLight(); // first sight: no swell from black
+            clientKey += (keyLight() - clientKey) * 0.12F;
+            clientRunes += (runes() / 100F - clientRunes) * 0.08F;
         }
     }
 
@@ -179,11 +214,15 @@ public final class SeatedOne extends Mob {
     protected void addAdditionalSaveData(ValueOutput out) {
         super.addAdditionalSaveData(out);
         out.putInt("awaken_stage", stage());
+        out.putInt("awaken_key", keyLight());
+        out.putInt("awaken_runes", runes());
     }
 
     @Override
     protected void readAdditionalSaveData(ValueInput in) {
         super.readAdditionalSaveData(in);
         entityData.set(STAGE, in.getIntOr("awaken_stage", DORMANT));
+        entityData.set(KEY, in.getIntOr("awaken_key", 11));
+        entityData.set(RUNES, in.getIntOr("awaken_runes", 30));
     }
 }

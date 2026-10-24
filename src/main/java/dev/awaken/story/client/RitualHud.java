@@ -36,6 +36,9 @@ final class RitualHud {
     private static float flash, flashDecay;
     private static float bars, barsO;
     private static long judgementTip = -1;
+    /** What the System says in the black, a sentence a line, and when the black began. */
+    private static String[] question = new String[0];
+    private static long questionFrom = -1;
 
     static void register(RegisterGuiLayersEvent e) {
         e.registerAboveAll(LAYER, RitualHud::render);
@@ -44,6 +47,8 @@ final class RitualHud {
 
     static void reset() {
         wordId = -1;
+        question = new String[0];
+        questionFrom = -1;
         errorFrom = deathFrom = tearFrom = judgementTip = -1;
         flash = 0;
         bars = barsO = 0;
@@ -83,6 +88,15 @@ final class RitualHud {
     static void tear() {
         tearFrom = RitualClient.ticks;
         deathFrom = -1;
+        question = new String[0];
+        questionFrom = -1;
+    }
+
+    /** The void: the System's words, drawn large in the dark, typed out once the black has settled. */
+    static void question(String text) {
+        if (questionFrom >= 0 && question.length > 0) return; // a relog's second VOID keeps the words where they are
+        question = text.isBlank() ? new String[0] : text.strip().split("(?<=[.!?])\\s+");
+        questionFrom = RitualClient.ticks;
     }
 
     static void hurt() {
@@ -104,12 +118,26 @@ final class RitualHud {
         if (RitualClient.beat != RitualClient.JUDGEMENT) judgementTip = -1;
     }
 
-    /** While the scene holds the camera, the game's own HUD steps aside (the letterbox and the scene are the frame). */
+    /**
+     * The scene is the whole screen. In the hall nothing else of AWAKEN's shows (no tracker, toasts, level line or
+     * cards; vanilla's hearts stay while you must dodge); while the scene holds the camera the game's own HUD steps
+     * aside too. In the black only the System's words and the question's card are left; while the tear opens, only the
+     * tear and the world (subtitles always stay, for whoever needs them).
+     */
     private static void hideHud(RenderGuiLayerEvent.Pre e) {
-        if (e.getName().equals(LAYER)) return;
-        if (bars > 0.5F || deathFrom >= 0 && RitualClient.beat != StoryPayloads.RitualScene.VOID) {
-            String path = e.getName().getPath();
-            if (!path.equals("chat") && !path.equals("subtitle_overlay")) e.setCanceled(true);
+        Identifier id = e.getName();
+        if (id.equals(LAYER)) return;
+        String path = id.getPath();
+        if (path.equals("subtitle_overlay")) return;
+        int beat = RitualClient.beat;
+        if (RitualClient.tearing()) {
+            e.setCanceled(true);
+        } else if (beat == StoryPayloads.RitualScene.VOID) {
+            if (!(id.getNamespace().equals(Awaken.MODID) && path.equals("signal")) && !path.equals("chat")) e.setCanceled(true);
+        } else if (bars > 0.5F || deathFrom >= 0) {
+            if (!path.equals("chat")) e.setCanceled(true);
+        } else if (RitualClient.inScene() && id.getNamespace().equals(Awaken.MODID)) {
+            e.setCanceled(true);
         }
     }
 
@@ -184,6 +212,34 @@ final class RitualHud {
                 g.text(font, text, -tw / 2 + 1, -4, 0xC040E0FF, false);
                 g.text(font, text, -tw / 2, -4, 0xFFFFFFFF, false);
                 g.pose().popMatrix();
+            }
+        }
+        // the void: what the System says in the black, a line a sentence, typed slowly once the black has settled
+        if (RitualClient.beat == StoryPayloads.RitualScene.VOID && question.length > 0 && questionFrom >= 0) {
+            float t = now - questionFrom + pt - 46;
+            if (t > 0) {
+                float scale = Math.max(1F, Math.min(2F, w / 320F));
+                int total = 0;
+                for (String q : question) total += q.length();
+                int shown = (int) (t * 0.9F);
+                int lineH = (int) (font.lineHeight * scale * 1.6F);
+                int y0 = (int) (h * 0.36F) - lineH * question.length / 2;
+                int used = 0;
+                for (int k = 0; k < question.length; k++) {
+                    String line = question[k];
+                    int n = Math.max(0, Math.min(line.length(), shown - used - k * 8)); // a beat between sentences
+                    used += line.length();
+                    if (n <= 0) break;
+                    String part = line.substring(0, n);
+                    g.pose().pushMatrix();
+                    g.pose().translate(w / 2F, y0 + k * lineH);
+                    g.pose().scale(scale, scale);
+                    int x = -font.width(line) / 2;
+                    boolean last = k == question.length - 1;
+                    g.text(font, part, x, 0, last ? 0xFFB9C4FF : 0xFFE6E2EE, false);
+                    g.pose().popMatrix();
+                }
+                if (total == 0) questionFrom = -1;
             }
         }
         // the tear, when Lens isn't drawing it: the black lifts with a blue-white flash

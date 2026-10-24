@@ -5,6 +5,7 @@ import dev.awaken.story.RitualSounds;
 import dev.awaken.story.net.StoryPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
+import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -17,6 +18,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.event.ToastAddEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jspecify.annotations.Nullable;
@@ -83,10 +85,47 @@ public final class RitualClient {
         NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeFov.class, RitualCamera::fov);
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, RitualFx::submit);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
+        NeoForge.EVENT_BUS.addListener(ToastAddEvent.class, RitualClient::onToast);
+    }
+
+    // ---- quiet: nothing else on screen while the scene plays --------------------------------------------------------
+
+    /** When the tear began (client ticks), or -1. The frame is the tear's alone until a moment after it opens. */
+    static long tearAt = -1;
+    static final int TEAR_QUIET = 60;
+    private static final int MAX_WAITING_TOASTS = 12;
+    private static final java.util.ArrayDeque<Toast> waitingToasts = new java.util.ArrayDeque<>();
+    private static long nextToast;
+
+    /**
+     * From the doors closing until just after the tear: the ritual, the black, the question and the tear are the whole
+     * screen (no toasts, no tracker, no gate card, no level line). What arrives meanwhile waits and comes after.
+     */
+    static boolean quiet() {
+        return inScene() || beat == StoryPayloads.RitualScene.VOID || tearing();
+    }
+
+    static boolean tearing() {
+        return tearAt >= 0 && ticks - tearAt < TEAR_QUIET;
+    }
+
+    private static void onToast(ToastAddEvent e) {
+        if (!quiet()) return;
+        e.setCanceled(true);
+        if (waitingToasts.size() < MAX_WAITING_TOASTS) waitingToasts.addLast(e.getToast());
+    }
+
+    /** After the scene: what waited is shown, one every half second. */
+    private static void releaseToasts(Minecraft mc) {
+        if (waitingToasts.isEmpty() || quiet() || ticks < nextToast) return;
+        mc.gui.toastManager().addToast(waitingToasts.removeFirst());
+        nextToast = ticks + 10;
     }
 
     static void reset() {
         beat = StoryPayloads.RitualScene.NONE;
+        tearAt = -1;
+        waitingToasts.clear();
         for (Cue c : CUES) c.live = false;
         releaseInput();
         RitualFx.reset();
@@ -117,10 +156,13 @@ public final class RitualClient {
             case StoryPayloads.RitualScene.VOID -> {
                 LensClient.override("awaken:void", 12);
                 LensClient.ritual(0.75F, 0.35F);
+                RitualFx.lightsOut();
+                RitualHud.question(s.text());
                 startVoid();
             }
             case StoryPayloads.RitualScene.TEAR -> {
                 stopLoops();
+                tearAt = ticks;
                 LensClient.tear(36);
                 LensClient.clearOverride(40);
                 LensClient.ritual(0F, 0F);
@@ -129,6 +171,7 @@ public final class RitualClient {
                 ui(RitualSounds.TEAR.get(), 1F, 1F);
             }
             case StoryPayloads.RitualScene.NONE -> {
+                RitualFx.lightsOut();
                 if (was != StoryPayloads.RitualScene.TEAR) LensClient.clearOverride(40);
                 LensClient.ritual(0F, 0F);
                 releaseInput();
@@ -172,7 +215,9 @@ public final class RitualClient {
             case LIGHTS_OUT -> {
                 LensClient.override("awaken:ritual", 6);
                 LensClient.ritual(0.7F, 0.0F);
+                RitualFx.lightsOut();
             }
+            case CANDLE -> RitualFx.candleLit(c.a, c.f);
             case LIGHTS_ON -> LensClient.ritual(0.25F, 0.15F);
             case EYES -> {
                 if (c.f > 0) {
@@ -229,6 +274,8 @@ public final class RitualClient {
         RitualFx.tick();
         RitualHud.tick();
         if (beat == StoryPayloads.RitualScene.VOID) tickVoid(mc);
+        if (tearAt >= 0 && ticks - tearAt >= TEAR_QUIET) tearAt = -1;
+        releaseToasts(mc);
     }
 
     static float beatAge(float pt) {

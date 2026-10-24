@@ -466,12 +466,13 @@ def seated_one():
     B.box(head, "band", -6.5, 6.5, 75, 78, -7.5, 4.5)
     for side, nm in ((1, "l"), (-1, "r")):
         mir = side < 0
-        ex0, ex1 = (1, 4) if side > 0 else (-4, -1)
-        B.box(head, "eye_" + nm, ex0, ex1, 70, 72, -7.2, -6.2, mirror=mir, share=None if side > 0 else "eye_l")
+        # the eyes are the climax: a block across each at x4, so they read from the far end of the nave
+        ex0, ex1 = (1, 5) if side > 0 else (-5, -1)
+        B.box(head, "eye_" + nm, ex0, ex1, 69, 72, -7.2, -6.2, mirror=mir, share=None if side > 0 else "eye_l")
         a0, a1 = (6, 7) if side > 0 else (-7, -6)
         B.box(head, "ear_" + nm, a0, a1, 66, 73, -2, 1, mirror=mir, share=None if side > 0 else "ear_l")
-        lid = B.bone(head, "lid_" + nm, (side * 2.5, 72, -7))
-        lid.cube("lid_" + nm, -1.5, 0, -0.5, 3, 2, 1, mirror=mir, inflate=0.12, share=None if side > 0 else "lid_l")
+        lid = B.bone(head, "lid_" + nm, (side * 3, 72, -7))
+        lid.cube("lid_" + nm, -2, 0, -0.5, 4, 3, 1, mirror=mir, inflate=0.12, share=None if side > 0 else "lid_l")
     crown = B.bone(head, "crown", (0, 75, -2))
     for k, (ang, ln) in enumerate(CROWN):
         a = ang * DEG
@@ -693,17 +694,22 @@ def paint_the_seated_one(r, P):
     # closed lids: smooth stone, a soft lash line at the bottom
     f = P.face("lid_l", "north")
     for i, j in f.each():
-        f.set(i, j, MARBLE.at(6.4 if j == 0 else (4.0 if i == 1 else 5.4)))
+        f.set(i, j, MARBLE.at(6.4 if j == 0 else (4.0 if j == f.h - 1 else 5.4)))
     for fname in ("west", "east", "top", "bottom", "south"):
         for i, j in P.face("lid_l", fname).each():
             P.face("lid_l", fname).set(i, j, MARBLE.at(4.4))
     # the eyes under the lids: dark gold stone; their glow is the only bright thing on the glow layer
     for fname in ("top", "bottom", "west", "east", "south", "north"):
         for i, j in P.face("eye_l", fname).each():
-            P.face("eye_l", fname).set(i, j, GOLD.at(2.0 if fname != "north" else (5.0 if i == 1 else 3.2)))
+            P.face("eye_l", fname).set(i, j, GOLD.at(2.0 if fname != "north" else (5.0 if i in (1, 2) and j == 1 else 3.2)))
     g = P.face("eye_l", "north", glow=True)
     for i, j in g.each():
-        g.set(i, j, EYE_CORE if i == 1 else (EYE_HOT if j == 0 else EYE_GOLD))
+        mid = i in (1, 2)
+        g.set(i, j, EYE_CORE if mid and j == 1 else (EYE_HOT if mid or j == 1 else EYE_GOLD))
+    for fname in ("west", "east", "top", "bottom"):  # the rims burn too, so the eye has depth when seen from the side
+        g = P.face("eye_l", fname, glow=True)
+        for i, j in g.each():
+            g.set(i, j, EYE_GOLD)
     # ears and hair
     P.paint("ear_l", MARBLE, 5.0, lambda f, i, j: (-1.2 if f.name in ("west", "east") and 1 <= j <= f.h - 3 and i == 1 else 0.0))
     P.paint("hair", MARBLE, 4.4, lambda f, i, j: (-0.9 if f.name in SIDES and i % 2 == 1 else 0.3 if f.name in SIDES and i % 4 == 0 else 0.0),
@@ -797,7 +803,106 @@ def paint_the_seated_one(r, P):
     for i, j in f.each():
         d = math.hypot(i - cx, j - cy)
         f.set(i, j, MARBLE.at(4.4 if 1.6 <= d <= 2.5 else 5.0))
-    return P.skin, P.glow
+    return P.skin, P.glow, paint_seated_runes(r, P)
+
+
+RUNE = "#ffcf72"
+RUNE_HOT = "#fff3cf"
+
+
+def paint_seated_runes(r, P):
+    """The runes layer (emissive, the_seated_one_runes.png): the gold that wakes with the god, brightened beat by beat
+    by the story's director. The halo and the crown burn first, so a colossus reads in the black before its eyes open;
+    then the collar, the pendant, the hems and a sigil on the chest; veins of light run through the marble."""
+    from pixelart import Canvas
+    canvas = Canvas(*r.tex)
+    rng = __import__("random").Random("ritual|runes")
+
+    def face(nm, fname):
+        return R.Face(canvas, P.cubes[nm], fname)
+
+    def lit(a, hot=False):
+        return hexc(RUNE_HOT if hot else RUNE, a)
+    # the halo of rays behind the head and the crown: the brightest shapes, a hot line down each front
+    for c in r.cubes:
+        if not P.own(c):
+            continue
+        if c.name.startswith(("ring", "hray", "htip", "ray", "tip")):
+            for fname in ("north", "west", "east", "top", "bottom"):
+                f = face(c.name, fname)
+                for i, j in f.each():
+                    if fname == "north":
+                        f.set(i, j, lit(255, hot=(f.w > 1 and i == f.w // 2) or f.w == 1))
+                    else:
+                        f.set(i, j, lit(150))
+    # the head band's jewel and its edge
+    f = face("band", "north")
+    for i, j in f.each():
+        if i in (5, 6, 7) and j in (1, 2):
+            f.set(i, j, lit(255, hot=i == 6))
+        elif j == 0:
+            f.set(i, j, lit(130))
+    # the collar: an edge of light, its hanging drops lit
+    for fname in SIDES:
+        f = face("collar_out", fname)
+        for i, j in f.each():
+            if j == 0:
+                f.set(i, j, lit(150))
+            elif j >= 4 and i % 3 == 1:
+                f.set(i, j, lit(235, hot=j == f.h - 1))
+        f = face("collar_in", fname)
+        for i, j in f.each():
+            if j == 0:
+                f.set(i, j, lit(120))
+    # the pendant's sun
+    for fname in ("north",):
+        f = face("pendant", fname)
+        cx, cy = (f.w - 1) / 2, (f.h - 1) / 2
+        for i, j in f.each():
+            d = math.hypot(i - cx, j - cy)
+            if d < 1.0:
+                f.set(i, j, lit(255, hot=True))
+            elif 2.0 <= d < 2.8:
+                f.set(i, j, lit(210))
+    # the sash's two lines, the cuffs' and the hems' edges, the lozenges' hearts
+    for fname in SIDES:
+        f = face("sash", fname)
+        for i, j in f.each():
+            if j in (0, 3):
+                f.set(i, j, lit(110))
+        f = face("cuff_l", fname)
+        for i, j in f.each():
+            if j == 0:
+                f.set(i, j, lit(140))
+        f = face("hem_l", fname)
+        mid = (f.h - 1) / 2.0
+        for i, j in f.each():
+            d = abs((i % 6) - 2.5) + abs(j - mid) * 1.2
+            if d < 1.3:
+                f.set(i, j, lit(190))
+            elif j == 0:
+                f.set(i, j, lit(90))
+    # the sigil on the chest: a line down the sternum, three chevrons opening upward, a ring at the heart
+    f = face("ribs", "north")
+    cx = (f.w - 1) / 2.0
+    for i, j in f.each():
+        dx = abs(i - cx)
+        if dx < 0.6 and j >= 2:
+            f.set(i, j, lit(220))
+        for k, top in enumerate((3, 6, 9)):
+            if abs((j - top) - (dx - 0.5) * 0.7) < 0.5 and 1.0 < dx < 4.6 - k * 0.6:
+                f.set(i, j, lit(200 - k * 20))
+        d = math.hypot(i - cx, j - 1.5)
+        if 1.4 <= d <= 2.2:
+            f.set(i, j, lit(230, hot=True))
+    # veins of light in the marble: thin, few, wandering (kintsugi in a god)
+    for nm, fname, n in (("ribs", "west", 1), ("abdomen", "north", 1), ("thigh_l", "top", 2), ("thigh_l", "north", 1),
+                         ("kneedrape_l", "north", 1), ("robe_l", "north", 2), ("forearm_l", "top", 1), ("shoulder_l", "north", 1),
+                         ("uarm_l", "north", 1), ("cape", "west", 1), ("hips", "north", 1), ("shin_l", "north", 1)):
+        fc = face(nm, fname)
+        for _ in range(n):
+            vein(fc, rng, lit(150 + rng.randrange(60)), wander=0.35)
+    return canvas
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1996,14 +2101,14 @@ def build(out=None):
     all_rigs = rigs()
     verify(all_rigs)
     for rid, rig, painter, _ in all_rigs:
-        skin, glow = paint(rig, painter)
-        if out is not None:
-            out.entity("mobs/" + rid, skin)
-            out.entity("mobs/" + rid + "_glow", glow)
-        else:
-            os.makedirs(TEX_DIR, exist_ok=True)
-            skin.image().save(os.path.join(TEX_DIR, rid + ".png"))
-            glow.image().save(os.path.join(TEX_DIR, rid + "_glow.png"))
+        skin, glow, *more = paint(rig, painter)
+        layers = [("", skin), ("_glow", glow)] + ([("_runes", more[0])] if more else [])
+        for suffix, canvas in layers:
+            if out is not None:
+                out.entity("mobs/" + rid + suffix, canvas)
+            else:
+                os.makedirs(TEX_DIR, exist_ok=True)
+                canvas.image().save(os.path.join(TEX_DIR, rid + suffix + ".png"))
     path = java(all_rigs)
     print(f"ritual_art: {len(all_rigs)} rigs -> {os.path.relpath(path, ROOT)}")
 
@@ -2075,8 +2180,10 @@ def preview(outdir, only=None):
         if only and rid not in only:
             continue
         problems, stats = checker(rig)
-        skin, glow = paint(rig, painter)
+        skin, glow, *more = paint(rig, painter)
         sk, gl = skin.image(), glow.image()
+        if more:  # the runes at full strength, on the glow layer, for the previews
+            gl = Image.alpha_composite(gl, more[0].image())
         lit = Image.alpha_composite(sk, gl)
         c0, t0, c1, t1 = HOLD[rid]
         still = rig.tree(rig.sample([(c0, t0, 1.0)]))

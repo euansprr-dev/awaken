@@ -98,8 +98,8 @@ wait 52
 shot r21_error
 wait 28
 shot r22_closed
-# beat 6: the void (the question, in the dark)
-wait 80
+# beat 6: the void (the System's words in the dark, the question's card)
+wait 120
 shot r23_void
 camera back
 wait 5
@@ -111,7 +111,9 @@ wait 10
 shot r24_tear
 wait 40
 shot r25_awake
-wait 90
+wait 30
+shot r25b_toasts_after
+wait 60
 shot r26_first_power_cards
 cmd awaken powers starter 1
 screen close

@@ -38,7 +38,7 @@ final class RitualRenderers {
 
     static final String SEATED = "the_seated_one", STATUE = "ritual_statue";
     /** Eye points in the head bone's own space (model pixels), and the palm in the right hand's. */
-    static final float[] seatedEyeL = {2.5F, -6.0F, -6.2F}, seatedEyeR = {-2.5F, -6.0F, -6.2F}, seatedPalm = {0, 0, 0};
+    static final float[] seatedEyeL = {3.0F, -5.5F, -6.2F}, seatedEyeR = {-3.0F, -5.5F, -6.2F}, seatedPalm = {0, 0, 0};
     static final float[] statueEye = {0, -3.0F, -3.5F};
 
     static void renderers(EntityRenderersEvent.RegisterRenderers e) {
@@ -101,7 +101,8 @@ final class RitualRenderers {
             raise = m.clip("raise");
             close = m.clip("close");
             sleep = m.clip("sleep");
-            addLayer(new Glow<>(this, Awaken.id("textures/entity/mobs/" + SEATED + "_glow.png")));
+            addLayer(new Glow<>(this, Awaken.id("textures/entity/mobs/" + SEATED + "_glow.png"), false));
+            addLayer(new Glow<>(this, Awaken.id("textures/entity/mobs/" + SEATED + "_runes.png"), true));
             addLayer(new Probe<>(this, true));
         }
 
@@ -131,6 +132,12 @@ final class RitualRenderers {
             s.look = e.stage() == SeatedOne.DORMANT || e.stage() == SeatedOne.SPENT ? 0 : 1;
             s.glow = RitualAnchors.eyeLight(e, pt);
             s.glowRgb = 0xFFFFFF;
+            // the runes swell beat by beat (the director's value); awake, they breathe with it
+            float runes = Mth.lerp(pt, e.clientRunesO, e.clientRunes);
+            int stage = e.stage();
+            if (stage == SeatedOne.AWAKE || stage == SeatedOne.GAZE || stage == SeatedOne.RAISE)
+                runes *= 0.88F + 0.12F * Mth.sin((e.tickCount + pt) * 0.13F);
+            s.runes = runes;
         }
 
         @Override
@@ -154,20 +161,20 @@ final class RitualRenderers {
         }
 
         /**
-         * One light for the whole colossus: the brightest of the dais candles before it (so it stands pale against the
-         * black hall, and goes dark with them when every flame dies), lifted while its eyes are open.
+         * One light for the whole colossus: the director's key light (the candle line and the altar's fire on it, synced
+         * and eased), never darker than the dais candles before it, lifted while its eyes are open. Pale marble against
+         * the black hall; when every flame dies only its runes and its halo are left.
          */
         @Override
         protected int getBlockLightLevel(SeatedOne e, net.minecraft.core.BlockPos pos) {
             var level = e.level();
-            int best = super.getBlockLightLevel(e, pos);
+            int best = Math.max(super.getBlockLightLevel(e, pos), Math.round(e.clientKey));
             for (int dz = 3; dz <= 6; dz++) {
                 net.minecraft.core.BlockPos p = pos.relative(e.getDirection(), dz).above();
                 best = Math.max(best, level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, p));
             }
             int eyes = (int) (RitualAnchors.eyeLight(e, 0) * 3);
-            // pale marble against the black (the lightmap is steep at the top: 12 still reads brown), dark when every flame dies
-            return best <= 0 ? eyes : Math.min(15, Math.max(14, best + 4) + eyes);
+            return Math.min(15, best + eyes);
         }
     }
 
@@ -187,7 +194,7 @@ final class RitualRenderers {
             windup = m.clip("windup");
             strike = m.clip("strike");
             recover = m.clip("recover");
-            addLayer(new Glow<>(this, Awaken.id("textures/entity/mobs/" + STATUE + "_glow.png")));
+            addLayer(new Glow<>(this, Awaken.id("textures/entity/mobs/" + STATUE + "_glow.png"), false));
             addLayer(new Probe<>(this, false));
         }
 
@@ -245,20 +252,22 @@ final class RitualRenderers {
 
     // ---- layers -----------------------------------------------------------------------------------------------------
 
-    /** The emissive layer (the eyes), as bright and as coloured as the state says. */
+    /** An emissive layer: the eyes (as bright and as coloured as the state says), or the Seated One's runes. */
     private static final class Glow<E extends net.minecraft.world.entity.LivingEntity> extends RenderLayer<RitualModel.State, RitualModel> {
         private final RenderType type;
+        private final boolean runes;
 
-        Glow(LivingEntityRenderer<E, RitualModel.State, RitualModel> parent, Identifier texture) {
+        Glow(LivingEntityRenderer<E, RitualModel.State, RitualModel> parent, Identifier texture, boolean runes) {
             super(parent);
             this.type = RenderTypes.entityTranslucentEmissive(texture);
+            this.runes = runes;
         }
 
         @Override
         public void submit(PoseStack pose, SubmitNodeCollector collector, int light, RitualModel.State s, float yRot, float xRot) {
-            float a = Mth.clamp(s.glow, 0, 1);
+            float a = Mth.clamp(runes ? s.runes : s.glow, 0, 1);
             if (a <= 0.01F || s.isInvisible) return;
-            int colour = ARGB.color((int) (a * 255), s.glowRgb);
+            int colour = ARGB.color((int) (a * 255), runes ? 0xFFFFFF : s.glowRgb);
             collector.order(2).submitModel(getParentModel(), s, pose, type, LightCoordsUtil.FULL_BRIGHT,
                     LivingEntityRenderer.getOverlayCoords(s, 0.0F), colour, null, s.outlineColor);
         }

@@ -49,6 +49,27 @@ final class RitualFx {
 
     static void reset() {
         for (int i = 0; i < MOTES; i++) life[i] = 0;
+        candles = 0;
+    }
+
+    // ---- the candle line: every flame lit since the lights died, with its place in the line (0 doors .. 1 throne) ----
+
+    private static final int CANDLES = 192;
+    private static final double[] candleX = new double[CANDLES], candleY = new double[CANDLES], candleZ = new double[CANDLES];
+    private static final float[] candleOrder = new float[CANDLES];
+    private static int candles;
+
+    static void candleLit(Vec3 at, float order) {
+        if (candles >= CANDLES) return;
+        candleX[candles] = at.x;
+        candleY[candles] = at.y;
+        candleZ[candles] = at.z;
+        candleOrder[candles] = order;
+        candles++;
+    }
+
+    static void lightsOut() {
+        candles = 0;
     }
 
     private static void spawn(int k, double x, double y, double z, double vx0, double vy0, double vz0, int ticks) {
@@ -125,6 +146,17 @@ final class RitualFx {
             for (int n = 0; n < 6; n++) {
                 double x = RitualClient.door.x + (R.nextFloat() - 0.5) * 40, z = RitualClient.door.z + 4 + R.nextFloat() * 40;
                 spawn(DUST, x, RitualClient.throne.y + 20 + R.nextFloat() * 3, z, 0, -0.05, 0, 60 + R.nextInt(40));
+            }
+        }
+        // dust turning in the shafts of light that fall on the god
+        float shafts = shaftLight(age);
+        if (shafts > 0.05F && RitualClient.ticks % 3 == 0 && !RitualClient.throne.equals(Vec3.ZERO)) {
+            for (int side = -1; side <= 1; side += 2) {
+                Vec3 a = shaftTop(side), b = shaftFoot(side);
+                double t = R.nextDouble();
+                Vec3 p = a.add(b.subtract(a).scale(t));
+                spawn(DUST, p.x + (R.nextFloat() - 0.5) * 2.4, p.y + (R.nextFloat() - 0.5) * 1.5, p.z + (R.nextFloat() - 0.5) * 2.4,
+                        (R.nextFloat() - 0.5) * 0.01, -0.006 - R.nextFloat() * 0.01, (R.nextFloat() - 0.5) * 0.01, 90 + R.nextInt(60));
             }
         }
         // the hall's light drained into the palm, from everywhere, faster toward the end
@@ -245,17 +277,26 @@ final class RitualFx {
     }
 
     private static void draw(VertexConsumer vc) {
-        // the eyes
+        boolean hall = RitualClient.beat >= RitualClient.WAITING && RitualClient.beat <= RitualClient.END
+                && !RitualClient.throne.equals(Vec3.ZERO);
+        if (hall) {
+            backlight(vc);
+            shafts(vc);
+            candles(vc);
+        }
+        // the eyes: two blazing coals a block across, a halo round the face, a long glint
         float light = eyeLight(pt);
         if (light > 0.01F) {
+            float l = Math.min(2.4F, light), a = Math.min(1.5F, light);
             for (int side = -1; side <= 1; side += 2) {
                 Vec3 p = towardCamera(eye(pt, side), 0.6);
-                flare(vc, p, 0.7F, argb(1F, 1F, 0.97F, Math.min(1, light)));
-                flare(vc, p, 2.6F * Math.min(2.4F, light), argb(1F, 0.9F, 0.55F, 0.6F * Math.min(1.5F, light)));
-                flare(vc, p, 8F * Math.min(2.4F, light), argb(1F, 0.75F, 0.35F, 0.18F * Math.min(1.5F, light)));
+                flare(vc, p, 1.1F, argb(1F, 1F, 0.97F, Math.min(1, light)));
+                flare(vc, p, 3.6F * l, argb(1F, 0.9F, 0.55F, 0.62F * a));
+                flare(vc, p, 11F * l, argb(1F, 0.72F, 0.32F, 0.2F * a));
             }
             Vec3 c = towardCamera(eyes(pt), 0.8);
-            streak(vc, c, 14F * Math.min(2.4F, light), 0.35F, argb(1F, 0.9F, 0.6F, 0.5F * Math.min(1.5F, light)));
+            flare(vc, towardCamera(eyes(pt), 1.6), 7F, argb(1F, 0.82F, 0.5F, 0.16F * Math.min(1, light)));
+            streak(vc, c, 24F * l, 0.5F, argb(1F, 0.9F, 0.6F, 0.55F * a));
         }
         for (RitualClient.Cue c : RitualClient.CUES) {
             if (!c.live) continue;
@@ -278,6 +319,94 @@ final class RitualFx {
             flare(vc, cursor, 3.2F, argb(1F, 0.8F, 0.5F, 0.25F));
         }
         motes(vc);
+    }
+
+    // ---- the god's light: what makes a colossus read in two seconds, with or without Lens --------------------------
+
+    /** Behind the throne, toward the wall (away from the doors), on the floor. */
+    private static Vec3 behind(double by) {
+        Vec3 d = new Vec3(RitualClient.throne.x - RitualClient.door.x, 0, RitualClient.throne.z - RitualClient.door.z);
+        double len = d.length();
+        return len < 1e-3 ? RitualClient.throne : RitualClient.throne.add(d.scale(by / len));
+    }
+
+    /** Across the hall (perpendicular to the nave), one way or the other. */
+    private static Vec3 across(int side) {
+        Vec3 d = new Vec3(RitualClient.throne.x - RitualClient.door.x, 0, RitualClient.throne.z - RitualClient.door.z);
+        double len = d.length();
+        return len < 1e-3 ? new Vec3(side, 0, 0) : new Vec3(-d.z / len * side, 0, d.x / len * side);
+    }
+
+    /** How bright the glow behind the god is (0..1): faint in the antechamber's view, almost gone in the black, swelling as the candles reach it, blazing as the eyes open, drained at the end. */
+    private static float backlightLevel(float age) {
+        return switch (RitualClient.beat) {
+            case RitualClient.WAITING -> 0.55F;
+            case RitualClient.DOORS -> age < 34 ? 0.55F : age < 80 ? 0.22F : 0.22F + 0.6F * Mth.clamp((age - 80) / 90F, 0, 1);
+            case RitualClient.BOW, RitualClient.RING -> 0.82F;
+            case RitualClient.JUDGED -> 0.95F;
+            case RitualClient.WAKING -> age < 50 ? 0.95F : age < 70 ? 0.95F + 0.9F * (age - 50) / 20F : Math.max(1.15F, 1.85F - (age - 70) / 40F);
+            case RitualClient.JUDGEMENT -> 1.1F + 0.12F * Mth.sin(age * 0.11F);
+            case RitualClient.END -> Math.max(0.05F, 1.1F * (1 - Mth.clamp((age - 40) / 182F, 0, 1)));
+            default -> 0;
+        };
+    }
+
+    /** A great warm glow on the wall behind the throne: the god stands black against it, its halo burning in front. */
+    private static void backlight(VertexConsumer vc) {
+        float f = backlightLevel(RitualClient.beatAge(pt));
+        if (f <= 0.01F) return;
+        Vec3 c = behind(3.7).add(0, 12.5, 0);
+        flare(vc, c, 15F, argb(1F, 0.78F, 0.46F, 0.17F * f));
+        flare(vc, c.add(0, 2, 0), 27F, argb(1F, 0.6F, 0.32F, 0.08F * f));
+        flare(vc, behind(3.8).add(0, 19.5, 0), 6.5F, argb(1F, 0.88F, 0.6F, 0.2F * f)); // brightest behind the head
+    }
+
+    /** How strong the two shafts of light falling on the god are (0..1): only once the hall is lit. */
+    private static float shaftLight(float age) {
+        return switch (RitualClient.beat) {
+            case RitualClient.DOORS -> Mth.clamp((age - 150) / 40F, 0, 1);
+            case RitualClient.BOW, RitualClient.RING, RitualClient.JUDGED -> 1F;
+            case RitualClient.WAKING -> age < 50 ? 1F : 1.35F;
+            case RitualClient.JUDGEMENT -> 1.2F;
+            case RitualClient.END -> Math.max(0, 1.2F * (1 - Mth.clamp((age - 40) / 120F, 0, 1)));
+            default -> 0;
+        };
+    }
+
+    /** High in the vault on one side, in front of the god. */
+    private static Vec3 shaftTop(int side) {
+        return behind(-11).add(across(side).scale(10)).add(0, 23.5, 0);
+    }
+
+    /** On its knees and hands. */
+    private static Vec3 shaftFoot(int side) {
+        return behind(-4.5).add(across(side).scale(2.6)).add(0, 6.5, 0);
+    }
+
+    /** Two dusty shafts from the vault onto the god's lap: light falling on a colossus, readable with no bloom at all. */
+    private static void shafts(VertexConsumer vc) {
+        float f = shaftLight(RitualClient.beatAge(pt));
+        if (f <= 0.01F) return;
+        for (int side = -1; side <= 1; side += 2) {
+            Vec3 a = shaftTop(side), b = shaftFoot(side);
+            beam(vc, a, b, 4.2F, argb(1F, 0.86F, 0.62F, 0.075F * f));
+            beam(vc, a, b, 1.7F, argb(1F, 0.95F, 0.8F, 0.07F * f));
+            flare(vc, b, 3.4F, argb(1F, 0.9F, 0.65F, 0.1F * f));
+        }
+    }
+
+    /** Each flame of the candle line, so the line reads as light with no bloom (put out again as the end drains it). */
+    private static void candles(VertexConsumer vc) {
+        if (candles == 0) return;
+        boolean end = RitualClient.beat == RitualClient.END;
+        float age = RitualClient.beatAge(pt);
+        float flicker = 0.85F + 0.15F * Mth.sin((RitualClient.ticks + pt) * 0.9F);
+        for (int i = 0; i < candles; i++) {
+            if (end && age > 40 + candleOrder[i] * 150) continue;
+            double x = candleX[i], y = candleY[i] + 0.1, z = candleZ[i];
+            flare(vc, x, y, z, 0.42F, argb(1F, 0.92F, 0.62F, 0.5F * flicker));
+            flare(vc, x, y, z, 1.9F, argb(1F, 0.8F, 0.45F, 0.07F * flicker));
+        }
     }
 
     /** The gaze's line on the floor: dark red, filling from the throne end to the far end, brightening as it fills. */

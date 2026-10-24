@@ -471,6 +471,45 @@ final class Ritual {
             case END -> SeatedOne.AWAKE;
             default -> SeatedOne.DORMANT;
         });
+        godLight(st.beat, 0, l);
+    }
+
+    // ---- the light on the god -------------------------------------------------------------------------------------
+
+    /**
+     * The Seated One must be seen at every beat (SPEC §13): a key light on the colossus that follows the hall's fire
+     * (pale marble while the candles burn, nearly black when every flame dies and the candle line brings it back), and
+     * runes that wake beat by beat (the halo, the crown, the collar, the sigil, the veins) until its eyes open, then
+     * drain into its palm with the hall's light.
+     */
+    static int keyLight(Beat beat, long age) {
+        return switch (beat) {
+            case WAITING -> 11;
+            case DOORS -> age < 34 ? 11 : age < 80 ? 2 : (int) Math.min(15, 2 + 13 * (age - 80) / 90);
+            case BOW, RING, JUDGED, WAKING, JUDGEMENT -> 15;
+            case END -> age < DRAIN_FROM ? 15 : (int) Math.max(7, 15 - 8 * (age - DRAIN_FROM) / DRAIN_TICKS);
+            case DONE -> 0;
+        };
+    }
+
+    static int runes(Beat beat, long age) {
+        return switch (beat) {
+            case WAITING -> 30;
+            case DOORS -> age < 34 ? 30 : 45; // in the black, the runes are what's left of it
+            case BOW -> 55;
+            case RING -> 65;
+            case JUDGED -> 80;
+            case WAKING -> age < 20 ? 80 : (int) Math.min(100, 80 + 20 * (age - 20) / 44);
+            case JUDGEMENT -> 100;
+            case END -> age < DRAIN_FROM ? 100 : (int) Math.max(15, 100 - 85 * (age - DRAIN_FROM) / (CLOSE - DRAIN_FROM));
+            case DONE -> 5;
+        };
+    }
+
+    private static void godLight(Beat beat, long age, Live l) {
+        if (l.seated == null) return;
+        l.seated.setKeyLight(keyLight(beat, age));
+        l.seated.setRunes(runes(beat, age));
     }
 
     private static void run(MinecraftServer server, RitualData data, RitualData.State st, Live l, List<ServerPlayer> here, long now) {
@@ -496,6 +535,7 @@ final class Ritual {
 
     /** Fires everything in this beat between ticks (from, to]; continuous work happens once at {@code to}. */
     private static void beatTick(MinecraftServer server, RitualData.State st, Live l, List<ServerPlayer> here, long from, long to) {
+        godLight(st.beat, to, l);
         switch (st.beat) {
             case DOORS -> doors(st, l, here, from, to);
             case BOW -> bow(st, l, here, from, to);
@@ -529,15 +569,15 @@ final class Ritual {
             setAllLights(l, false);
             cue(l, here, Cue.LIGHTS_OUT, -1, l.hall.altar(), Vec3.ZERO, 0, 46);
         }
-        // the candles light one by one down the nave toward the throne
-        if (to > 80 && from < 180) {
+        // the candles light one by one down the nave toward the throne, and the nave's light comes back with them
+        // (each hidden fill lamp a moment after the candles beside it), so the line visibly lights the hall
+        if (to > 80 && from < 184) {
             List<RitualHall.Light> lights = l.hall.lights();
             for (RitualHall.Light li : lights) {
-                if (li.fill()) continue;
-                long t = 80 + Math.round(li.order() * 100);
+                long t = 80 + Math.round(li.order() * 100) + (li.fill() ? 3 : 0);
                 if (at(from, to, t)) {
                     setLight(l.hall.level(), li, true);
-                    cue(l, here, Cue.CANDLE, -1, Vec3.atCenterOf(li.pos()), Vec3.ZERO, (float) li.order(), 0);
+                    if (!li.fill()) cue(l, here, Cue.CANDLE, -1, Vec3.atCenterOf(li.pos()), Vec3.ZERO, (float) li.order(), 0);
                 }
             }
         }
@@ -964,6 +1004,7 @@ final class Ritual {
 
     private static void done(MinecraftServer server, RitualData data, RitualData.State st, Live l) {
         if (l.seated != null) l.seated.setStage(SeatedOne.SPENT);
+        godLight(Beat.DONE, 0, l);
         data.setDirty();
     }
 
@@ -1100,7 +1141,7 @@ final class Ritual {
     static void sendScene(ServerPlayer p, RitualData.State st, Live l, long now) {
         int beat = st.beat == Beat.DONE ? StoryPayloads.RitualScene.NONE : st.beat.ordinal();
         AwakenNet.send(p, new StoryPayloads.RitualScene(beat, (int) Math.max(0, now - st.beatStart), l.seated == null ? -1 : l.seated.getId(),
-                l.hall.throne(), l.hall.altar(), l.hall.words(), l.hall.doorway(), l.hall.plates()));
+                l.hall.throne(), l.hall.altar(), l.hall.words(), l.hall.doorway(), l.hall.plates(), ""));
     }
 
     /** The scene this player should see now (tests, and a login). */

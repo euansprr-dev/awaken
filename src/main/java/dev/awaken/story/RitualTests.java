@@ -304,6 +304,31 @@ final class RitualTests {
         });
 
         // Saves from before the ritual decode cleanly; the new state round-trips; an unknown one falls back.
+        // the god must be seen at every beat (SPEC §13): lit while the candles burn, its runes waking beat by beat
+        AwakenTests.register("story_ritual_god_is_seen", 20, h -> {
+            int lastRunes = 0;
+            for (Ritual.Beat b : Ritual.Beat.values()) {
+                if (b == Ritual.Beat.DONE) continue;
+                for (long age = 0; age <= Math.max(1, b.length); age += 5) {
+                    int key = Ritual.keyLight(b, age), runes = Ritual.runes(b, age);
+                    // (at the end they drain into its palm with the hall's light, never quite out)
+                    h.assertTrue(runes >= (b == Ritual.Beat.END ? 15 : 30), "the runes always show in the hall: " + b + " at " + age + " is " + runes);
+                    boolean dark = b == Ritual.Beat.DOORS && age >= 34 && age < 120;
+                    h.assertTrue(dark ? key >= 2 : key >= 7, "the god is lit: " + b + " at " + age + " is " + key);
+                }
+                if (b.ordinal() <= Ritual.Beat.JUDGEMENT.ordinal()) {
+                    int r = Ritual.runes(b, b.length);
+                    h.assertTrue(r >= lastRunes, "the runes never dim before the end: " + b);
+                    lastRunes = r;
+                }
+            }
+            h.assertTrue(Ritual.runes(Ritual.Beat.WAKING, Ritual.Beat.WAKING.length) == 100, "fully awake when its eyes are open");
+            h.assertTrue(Ritual.keyLight(Ritual.Beat.DONE, 0) == 0, "after the ritual, only the blocks light it");
+            String words = Prologue.voidWords();
+            h.assertTrue(!words.isBlank() && !words.contains(Prologue.QUESTION), "the black's words leave the question to the card: " + words);
+            h.succeed();
+        });
+
         AwakenTests.register("story_ritual_old_saves", 20, h -> {
             CompoundTag v1 = new CompoundTag();
             v1.putString("prologue", "GATE_OPEN");

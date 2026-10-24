@@ -34,6 +34,8 @@ public final class RitualModel extends EntityModel<RitualModel.State> {
         /** 0..: how bright the glow layer is (the eyes), and its colour. */
         public float glow;
         public int glowRgb = 0xFFFFFF;
+        /** 0..1: how bright the runes layer burns (the Seated One's halo, collar, sigil and veins). */
+        public float runes;
         public int entityId = -1;
         /** How much the look follows the head's turn (0..1). */
         public float look = 1;

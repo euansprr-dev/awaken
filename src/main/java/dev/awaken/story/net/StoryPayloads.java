@@ -48,8 +48,8 @@ public final class StoryPayloads {
      * {@link #NONE}; {@code age} is ticks into the beat; positions are the hall's (zero outside it). VOID and TEAR are
      * the darkness of the question and the moment it tears open (any prologue path, the old Bell Crypt too).
      */
-    public record RitualScene(int beat, int age, int seated, Vec3 throne, Vec3 altar, Vec3 words, Vec3 door, java.util.List<Vec3> plates)
-            implements CustomPacketPayload {
+    public record RitualScene(int beat, int age, int seated, Vec3 throne, Vec3 altar, Vec3 words, Vec3 door, java.util.List<Vec3> plates,
+            String text) implements CustomPacketPayload {
         public static final int NONE = -1, VOID = 100, TEAR = 101;
         public static final Type<RitualScene> TYPE = new Type<>(Awaken.id("story_ritual_scene"));
         public static final StreamCodec<ByteBuf, RitualScene> STREAM_CODEC = StreamCodec.composite(
@@ -61,9 +61,14 @@ public final class StoryPayloads {
                 Vec3.STREAM_CODEC, RitualScene::words,
                 Vec3.STREAM_CODEC, RitualScene::door,
                 Vec3.STREAM_CODEC.apply(ByteBufCodecs.list(3)), RitualScene::plates,
+                ByteBufCodecs.stringUtf8(512), RitualScene::text,
                 RitualScene::new);
         public static RitualScene of(int beat) {
-            return new RitualScene(beat, 0, -1, Vec3.ZERO, Vec3.ZERO, Vec3.ZERO, Vec3.ZERO, java.util.List.of());
+            return of(beat, "");
+        }
+        /** A scene with words: the void carries what the System says in the black (the question's card holds the keys). */
+        public static RitualScene of(int beat, String text) {
+            return new RitualScene(beat, 0, -1, Vec3.ZERO, Vec3.ZERO, Vec3.ZERO, Vec3.ZERO, java.util.List.of(), text);
         }
         @Override public Type<RitualScene> type() { return TYPE; }
     }
