@@ -1,0 +1,12 @@
+{
+  "features": {
+    "enabled": [
+      "awaken:carillon"
+    ]
+  },
+  "pack": {
+    "description": "Carillon: start in the walled city at spawn (new worlds only; switch off for a Classic start)",
+    "max_format": 121,
+    "min_format": 121
+  }
+}

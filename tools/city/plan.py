@@ -2,6 +2,7 @@
 """Carillon's plan as data (docs/SPEC.md §16.2): the one designed city, the same in every world.
 
   python3 -I tools/city/plan.py            writes src/main/resources/data/awaken/city/plan.json and prints the stats
+  python3 -I tools/city/plan.py pin        also pins the new hash in CityTests.PLAN_SHA256 (a deliberate plan change)
   python3 -I tools/city/plan.py preview    also writes build/city/plan-top.png (roofs by district) and
                                            build/city/plan-graph.png (street graph in white, roof graph in bronze)
 
@@ -53,7 +54,7 @@ O = 256  # raster cell (i, j) is plan (x, z) = (i - O, j - O)
 WALL_R = 240          # tower centres sit on this circle
 WALL_HALF = 5         # the curtain is 10 thick
 WALL_H = 40
-TOWER_H = 52
+TOWER_H = 58
 TERRACE_LIFT = 8
 APOTHEM = WALL_R * math.cos(math.radians(7.5))
 
@@ -626,7 +627,6 @@ class Plan:
             pid += 1
             if rnd(pid, 7) < P['gap']:
                 self.gap_beside(placed, side, rint(P['gapw'][0], P['gapw'][1], pid, 8))
-        self.courts()
         rest = K == FREE
         garden = rest & (self.dist == D['garden'])
         K[garden] = GARDEN
@@ -878,6 +878,11 @@ class Plan:
             lines.append((p, q, 'walk', None))
         for a in range(0, 360, 45):
             lines.append(((0.0, 0.0), (36 * math.cos(math.radians(a)), 36 * math.sin(math.radians(a))), 'walk', None))
+        # every street that starts at the square is joined to its middle
+        for st in self.streets:
+            for end in (st['a'], st['b']):
+                if math.hypot(*end) < 42:
+                    lines.append(((0.0, 0.0), tuple(end), 'walk', None))
         for key, (bx, bz) in self.bells.items():
             for (ax_, az_), (bx_, bz_) in (((bx - 16, bz - 9), (bx + 15, bz - 9)), ((bx - 16, bz + 8), (bx + 15, bz + 8)),
                                            ((bx - 9, bz - 16), (bx - 9, bz + 15)), ((bx + 8, bz - 16), (bx + 8, bz + 15))):
@@ -1088,15 +1093,31 @@ class Graph:
                 ok = sum(1 for k in range(n + 1) if self.walkable(*(p + (q - p) * (k / n))))
                 if ok / (n + 1) < 0.85:
                     continue
+                over = self.bridge_over(p, q, n)
                 u = self.node(p[0], p[1])
                 v = self.node(q[0], q[1])
                 if u != v:
-                    self.edges[(min(u, v), max(u, v))] = (move, tag)
+                    self.edges[(min(u, v), max(u, v))] = ('bridge', over) if over else (move, tag)
+
+    def bridge_over(self, p, q, n):
+        """The id of the bridge whose water this piece crosses, or None."""
+        for k in range(n + 1):
+            x, z = p + (q - p) * (k / n)
+            i, j = int(math.floor(x)) + O, int(math.floor(z)) + O
+            if not (0 <= i < N_CELLS and 0 <= j < N_CELLS) or int(self.plan.kind[j, i]) not in WATER:
+                continue
+            for b in self.plan.bridges:
+                x0, z0, x1, z1 = b['box']
+                if x0 <= x < x1 + 1 and z0 <= z < z1 + 1:
+                    return b['id']
+        return None
 
     def attach(self, sx, sz, ref, px, pz):
         """Links a door (or landmark entrance) at (px, pz) to the nearest street edge from (sx, sz)."""
         best = None
         for (u, v), (move, tag) in self.edges.items():
+            if move == 'bridge':
+                continue  # never hang a door on a bridge (the Bell Bridge falls)
             a = np.array(self.nodes[u][:2], float)
             b = np.array(self.nodes[v][:2], float)
             t, dist = project(np.array([sx, sz]), a, b)
@@ -1419,6 +1440,12 @@ def main():
         f.write(text)
     sha = hashlib.sha256(text.encode('utf-8')).hexdigest()
     print(f"wrote {os.path.relpath(OUT, REPO)} ({len(text) // 1024} KB) sha256 {sha}")
+    if 'pin' in sys.argv[1:]:
+        tests = os.path.join(REPO, 'src/main/java/dev/awaken/city/CityTests.java')
+        src = open(tests).read()
+        src2 = re.sub(r'static final String PLAN_SHA256 = "[^"]*";', f'static final String PLAN_SHA256 = "{sha}";', src)
+        open(tests, 'w').write(src2)
+        print('pinned in CityTests.PLAN_SHA256')
     if 'preview' in sys.argv[1:]:
         outdir = os.path.join(REPO, 'build', 'city')
         os.makedirs(outdir, exist_ok=True)
