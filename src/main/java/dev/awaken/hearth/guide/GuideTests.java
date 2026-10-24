@@ -1,0 +1,221 @@
+package dev.awaken.hearth.guide;
+
+import dev.awaken.core.test.AwakenTests;
+import dev.awaken.hearth.Hearth;
+import dev.awaken.hearth.HearthContent;
+import dev.awaken.hearth.HearthData;
+import dev.awaken.hearth.HearthRecord;
+import dev.awaken.hearth.HearthService;
+import dev.awaken.hearth.room.Furniture;
+import dev.awaken.hearth.room.Room;
+import dev.awaken.hearth.room.RoomType;
+import dev.awaken.signal.Signal;
+import io.netty.buffer.Unpooled;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/** GameTests for the Hearth guide: the cottage is a Sanctuary, the "why not" reasons, the data matches RoomType, the offer. */
+public final class GuideTests {
+    private GuideTests() {}
+
+    public static void register() {
+        AwakenTests.register("hearth_guide_matches_roomtype", 20, h -> {
+            HearthRecord rec = new HearthRecord(UUID.randomUUID(), "test", BlockPos.ZERO, HearthService.OVERWORLD);
+            for (RoomType t : RoomType.values()) {
+                int mask = 0;
+                for (Furniture f : t.furniture) mask |= f.bit();
+                // nothing in the radius: nothing ticked; everything the room lists: exactly those ticked
+                rec.furniture = new int[Furniture.COUNT];
+                h.assertTrue(Guide.card(t, rec).have() == 0, t + ": empty radius ticks nothing");
+                for (Furniture f : Furniture.values()) rec.furniture[f.ordinal()] = 1;
+                GuideData.RoomCard card = Guide.card(t, rec);
+                h.assertTrue(card.have() == mask, t + ": the checklist is RoomType's furniture, was " + card.have() + " vs " + mask);
+                h.assertTrue(card.type() == t.ordinal() && card.built().isEmpty(), t + ": not built without a room");
+                // classify reads the same list: all of it makes the room, any one missing doesn't
+                h.assertTrue(Room.classify(c(t, null, Furniture.BED), c(t, null, Furniture.MAT), c(t, null, Furniture.ANVIL), c(t, null, Furniture.FORGE),
+                        c(t, null, Furniture.STAND), c(t, null, Furniture.TROPHY), c(t, null, Furniture.MACHINE), c(t, null, Furniture.PAD)).contains(t),
+                        t + ": its furniture classifies as it");
+                for (Furniture without : t.furniture) {
+                    h.assertFalse(Room.classify(c(t, without, Furniture.BED), c(t, without, Furniture.MAT), c(t, without, Furniture.ANVIL),
+                                    c(t, without, Furniture.FORGE), c(t, without, Furniture.STAND), c(t, without, Furniture.TROPHY),
+                                    c(t, without, Furniture.MACHINE), c(t, without, Furniture.PAD)).contains(t),
+                            t + " without " + without + " is not one");
+                }
+                h.assertTrue(t.needs.contains(t.furniture.get(0).label), t + ": the 'needs' words come from the furniture");
+                // what the player reads fits: toast title and first sentence in 144 px, Now lines in the tracker
+                h.assertTrue(Fit.px(t.label + " recognised") <= Fit.TOAST, t + ": toast title fits");
+                h.assertTrue(Fit.px(Fit.firstSentence(t.toast + " " + t.does)) <= Fit.TOAST, t + ": toast line fits, " + Fit.px(t.toast));
+                rec.furniture = new int[Furniture.COUNT];
+                h.assertTrue(Fit.px(dev.awaken.hearth.HearthNow.progress(t, rec)) <= Fit.TRACKER, t + ": progress line fits");
+                rec.furniture[t.furniture.get(0).ordinal()] = 1;
+                h.assertTrue(Fit.px(dev.awaken.hearth.HearthNow.progress(t, rec)) <= Fit.TRACKER, t + ": progress line fits, half done");
+                for (Furniture f : t.furniture) {
+                    var leak = WhyNot.leak(t, new dev.awaken.hearth.room.Miss(f, BlockPos.ZERO, dev.awaken.hearth.room.Miss.Leak.OPENING, new BlockPos(-123, 64, 456)));
+                    h.assertTrue(Fit.px(leak.tracker()) <= Fit.TRACKER_WITH_COMPASS, t + ": why line fits beside a compass: " + leak.tracker());
+                    h.assertTrue(Fit.px(WhyNot.missing(t, t.furniture, BlockPos.ZERO).tracker()) <= Fit.TRACKER, t + ": missing line fits");
+                }
+            }
+            h.assertTrue(Fit.px("Use the Anchor for a guide") <= Fit.TRACKER, "the guide nudge fits");
+            h.assertTrue(Fit.px("Within 48 blocks: yours.") <= Fit.TOAST && Fit.px("Free: your first Sanctuary.") <= Fit.TOAST, "welcome and offer lines fit");
+            // the guide's data survives the wire
+            GuideData d = new GuideData(2, 56, 26, 13, true, new BlockPos(1, 2, 3),
+                    List.of(new GuideData.RoomCard(0, 3, true, List.of(new BlockPos(4, 5, 6)), "why", Optional.of(new BlockPos(7, 8, 9)), true)),
+                    List.of(new GuideData.RecipeView(1, 3, 1, List.of(List.of(net.minecraft.resources.Identifier.withDefaultNamespace("white_wool")), List.of(),
+                            List.of(net.minecraft.resources.Identifier.withDefaultNamespace("amethyst_shard"))), dev.awaken.Awaken.id("meditation_mat"), 1)),
+                    List.of(new GuideData.Person("Oren", "Blacksmith", "")), List.of(new GuideData.Person("Mira", "Scout", "D-rank")),
+                    new GuideData.Upgrade(false, 3, 64, 22, "C-rank", true, List.of(new GuideData.Part(net.minecraft.resources.Identifier.withDefaultNamespace("diamond"), 6, 2)), 15, false),
+                    GuideData.COTTAGE_OFFER);
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            GuideData.STREAM_CODEC.encode(buf, d);
+            h.assertTrue(GuideData.STREAM_CODEC.decode(buf).equals(d), "guide data round-trips");
+            // the site rules: only terrain and plants give way
+            h.assertTrue(Cottage.clearable(Blocks.SHORT_GRASS.defaultBlockState()) && Cottage.clearable(Blocks.POPPY.defaultBlockState()), "plants clear");
+            h.assertTrue(Cottage.clearable(Blocks.OAK_LEAVES.defaultBlockState()), "natural leaves clear");
+            h.assertFalse(Cottage.clearable(Blocks.OAK_LEAVES.defaultBlockState().setValue(BlockStateProperties.PERSISTENT, true)), "placed leaves don't");
+            h.assertFalse(Cottage.clearable(Blocks.OAK_PLANKS.defaultBlockState()) || Cottage.natural(Blocks.OAK_PLANKS.defaultBlockState()), "planks are a build");
+            h.assertFalse(Cottage.natural(Blocks.FARMLAND.defaultBlockState()) || Cottage.natural(Blocks.COBBLESTONE.defaultBlockState()), "farms and cobble are builds");
+            h.assertTrue(Cottage.natural(Blocks.GRASS_BLOCK.defaultBlockState()) && Cottage.natural(Blocks.STONE.defaultBlockState()), "ground is terrain");
+            h.succeed();
+        });
+
+        AwakenTests.registerIsolated("hearth_cottage_is_a_sanctuary", 600, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            // two cottages high above the test floor, each inside one chunk: one facing north (meadow), one turned (desert)
+            int baseY = o.getY() + 120;
+            BlockPos a = new BlockPos((o.getX() & ~15) + 1, baseY, (o.getZ() & ~15) + 6);
+            BlockPos b = new BlockPos((o.getX() & ~15) + 16 + 12, baseY, (o.getZ() & ~15) + 1); // turned 90°: local x runs south, z runs west
+            UUID owner = UUID.randomUUID();
+            HearthRecord rec = new HearthRecord(owner, "test", a.offset(4, 1, -6), HearthService.OVERWORLD);
+            HearthData data = HearthData.get(level.getServer());
+            h.succeedWhen(() -> {
+                level.setBlock(rec.pos, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
+                if (data.of(owner).isEmpty()) data.put(rec);
+                BlockPos inA = Cottage.placeAll(level, a, Rotation.NONE, CottagePlan.MEADOW);
+                BlockPos inB = Cottage.placeAll(level, b, Rotation.CLOCKWISE_90, CottagePlan.DESERT);
+                rec.cottage = inA;
+                HearthService.scanNow(level, rec);
+                boolean ok = Hearth.isSanctuary(level, inA) && Hearth.isSanctuary(level, inB);
+                long sanctuaries = rec.rooms.stream().filter(r -> r.types().contains(RoomType.SANCTUARY)).count();
+                GuideData.RoomCard card = Guide.card(RoomType.SANCTUARY, rec);
+                if (ok) {
+                    data.remove(owner);
+                    level.removeBlock(rec.pos, false);
+                }
+                h.assertTrue(ok, "both cottages scan as Sanctuaries (rooms " + rec.rooms.stream().map(r -> r.types() + "@" + r.min().toShortString()).toList()
+                        + ", misses " + rec.misses + ")");
+                h.assertTrue(sanctuaries == 2, "two Sanctuaries, was " + sanctuaries);
+                h.assertTrue(card.byOren() && card.built().size() == 2 && card.why().isEmpty(), "the guide says Oren built one");
+                BlockState door = level.getBlockState(CottagePlan.at(a, Rotation.NONE, 4, 1, 0));
+                h.assertTrue(door.is(net.minecraft.tags.BlockTags.DOORS), "a door in the front wall");
+                h.assertTrue(level.getBlockState(CottagePlan.at(b, Rotation.CLOCKWISE_90, 4, 1, 0)).is(net.minecraft.tags.BlockTags.DOORS), "the turned one too");
+            });
+        });
+
+        AwakenTests.registerIsolated("hearth_why_not_reasons", 600, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            BlockPos base = new BlockPos((o.getX() & ~15) + 4, o.getY() + 120, (o.getZ() & ~15) + 4);
+            UUID owner = UUID.randomUUID();
+            HearthRecord rec = new HearthRecord(owner, "test", base.offset(2, 0, -3), HearthService.OVERWORLD);
+            HearthData data = HearthData.get(level.getServer());
+            BlockState foot = Blocks.BED.pick(DyeColor.RED).defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH).setValue(BedBlock.PART, BedPart.FOOT);
+            h.succeedWhen(() -> {
+                level.setBlock(rec.pos, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
+                if (data.of(owner).isEmpty()) data.put(rec);
+                // 1. a 5 × 4 × 5 stone room with no roof: it sees the sky
+                shell(level, base, false);
+                level.setBlock(base.offset(1, 1, 1), foot, 3);
+                level.setBlock(base.offset(1, 1, 2), foot.setValue(BedBlock.PART, BedPart.HEAD), 3);
+                level.setBlock(base.offset(3, 1, 3), HearthContent.MEDITATION_MAT.get().defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                Optional<WhyNot.Reason> roofless = WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses);
+                // 2. roofed, one wall block missing: an opening there
+                shell(level, base, true);
+                BlockPos gap = base.offset(0, 1, 2);
+                level.setBlock(gap, Blocks.AIR.defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                Optional<WhyNot.Reason> opening = WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses);
+                // 3. closed, but a hole in the roof away from the furniture
+                level.setBlock(gap, Blocks.STONE.defaultBlockState(), 3);
+                BlockPos hole = base.offset(3, 3, 1);
+                level.setBlock(hole, Blocks.AIR.defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                Optional<WhyNot.Reason> roofHole = WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses);
+                // 4. closed and roofed, the mat gone: missing a Meditation Mat
+                level.setBlock(hole, Blocks.GLASS.defaultBlockState(), 3);
+                level.setBlock(base.offset(3, 1, 3), Blocks.AIR.defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                Optional<WhyNot.Reason> missing = WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses);
+                // 5. and with the mat back: a Sanctuary, nothing to explain
+                level.setBlock(base.offset(3, 1, 3), HearthContent.MEDITATION_MAT.get().defaultBlockState(), 3);
+                HearthService.scanNow(level, rec);
+                boolean done = rec.hasRoom(RoomType.SANCTUARY) && WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses).isEmpty();
+                h.assertTrue(roofless.isPresent() && roofless.get().kind() == WhyNot.Kind.SKY, "roofless: sees the sky, was " + roofless);
+                h.assertTrue(roofless.get().card().contains("sees the sky") && roofless.get().card().contains("no roof"), "says so: " + roofless.get().card());
+                h.assertTrue(opening.isPresent() && opening.get().kind() == WhyNot.Kind.OPENING && gap.equals(opening.get().at()),
+                        "a gap: an opening at " + gap.toShortString() + ", was " + opening);
+                h.assertTrue(opening.get().card().contains(gap.getX() + " " + gap.getY() + " " + gap.getZ()), "names the spot: " + opening.get().card());
+                h.assertTrue(roofHole.isPresent() && roofHole.get().kind() == WhyNot.Kind.ROOF_HOLE && hole.below().getX() == roofHole.get().at().getX()
+                        && hole.getZ() == roofHole.get().at().getZ(), "a hole in the roof there, was " + roofHole);
+                h.assertTrue(missing.isPresent() && missing.get().kind() == WhyNot.Kind.MISSING && missing.get().card().contains("missing: a Meditation Mat"),
+                        "missing: a Meditation Mat, was " + missing);
+                h.assertTrue(done, "fixed: a Sanctuary");
+                data.remove(owner);
+                level.removeBlock(rec.pos, false);
+            });
+        });
+
+        AwakenTests.register("hearth_cottage_offer_once", 40, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            HearthData data = HearthData.get(h.getLevel().getServer());
+            HearthRecord rec = new HearthRecord(sp.getUUID(), "test", h.absolutePos(new BlockPos(0, 1, 0)), HearthService.OVERWORLD);
+            data.put(rec);
+            try {
+                h.assertTrue(Cottage.offer(sp), "offered the first time");
+                h.assertTrue(Signal.isPending(sp, Cottage.ACTION), "as a choice card that waits for an answer");
+                h.assertFalse(Cottage.offer(sp), "never twice");
+                long cards = Signal.pending(sp).stream().filter(w -> w.action().map(Cottage.ACTION::equals).orElse(false)).count();
+                h.assertTrue(cards == 1, "one card, was " + cards);
+                Signal.answer(sp, Cottage.ACTION, false);
+                h.assertTrue(HearthService.player(sp).tips.contains(Cottage.TIP_DECLINED) && !Signal.isPending(sp, Cottage.ACTION), "declined");
+                h.assertFalse(Cottage.offer(sp), "not offered again after a no");
+                h.assertTrue(Cottage.state(sp, rec) == GuideData.COTTAGE_OFFER, "the guide still offers it");
+            } finally {
+                data.remove(sp.getUUID());
+            }
+            h.succeed();
+        });
+    }
+
+    /** Count of {@code f} in a room holding exactly {@code t}'s furniture, minus {@code without}. */
+    private static int c(RoomType t, Furniture without, Furniture f) {
+        return t.uses(f) && f != without ? 1 : 0;
+    }
+
+    /** A 5 × 4 × 5 stone shell (air inside); with a glass roof or open to the sky. */
+    private static void shell(ServerLevel level, BlockPos base, boolean roof) {
+        for (int x = 0; x < 5; x++) for (int y = 0; y < 4; y++) for (int z = 0; z < 5; z++) {
+            boolean wall = x == 0 || x == 4 || y == 0 || z == 0 || z == 4;
+            BlockPos p = base.offset(x, y, z);
+            BlockState here = level.getBlockState(p);
+            if (y == 3) level.setBlock(p, roof ? Blocks.GLASS.defaultBlockState() : wall ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
+            else if (wall) level.setBlock(p, Blocks.STONE.defaultBlockState(), 3);
+            else if (!here.is(net.minecraft.tags.BlockTags.BEDS) && !here.is(HearthContent.MEDITATION_MAT.get())) level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+        }
+    }
+}

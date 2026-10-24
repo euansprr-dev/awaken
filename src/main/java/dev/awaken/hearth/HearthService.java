@@ -7,9 +7,12 @@ import dev.awaken.hearth.echo.Duty;
 import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.echo.Echoes;
 import dev.awaken.hearth.player.HearthPlayer;
+import dev.awaken.hearth.guide.Cottage;
+import dev.awaken.hearth.guide.Guide;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomScanner;
 import dev.awaken.hearth.room.RoomType;
+import dev.awaken.hearth.room.Scan;
 import dev.awaken.hearth.town.Town;
 import dev.awaken.hearth.trophy.Trophies;
 import dev.awaken.progression.Perks;
@@ -27,7 +30,13 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -83,6 +92,8 @@ public final class HearthService {
         bus.addListener(HearthService::onWake);
         bus.addListener(HearthService::onGrief);
         bus.addListener(HearthService::onExplosion);
+        bus.addListener(HearthService::onEntityJoin);
+        bus.addListener(HearthService::onEntityLeave);
         bus.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> {
             activeScan = null;
             scanQueue.clear();
@@ -154,20 +165,34 @@ public final class HearthService {
         r.createdDay = PlayDays.current(level.getServer());
         r.scanAt = level.getGameTime() + 20;
         r.announceFirstScan = true;
+        r.placedAt = level.getGameTime();
         d.put(r);
         HearthPlayer hp = player(sp);
         hp.respawnAtHearth = true;
         level.playSound(null, pos, HearthContent.SND_ANCHOR.get(), SoundSource.BLOCKS, 1f, 1f);
         level.sendParticles(HearthContent.HEARTH_EMBER.get(), pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, 40, 0.6, 0.6, 0.6, 0.02);
-        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Home exists."))
-                .body(Component.literal("The Anchor takes root. Everything within " + r.radius() + " blocks is your Hearth: you wake here, you heal here, and people will come."))
-                .row(Component.literal("Rooms"), Component.literal("Build them. The Hearth notices what's inside."))
-                .row(Component.literal("Respawn"), Component.literal("Here"))
-                .footer(Component.literal("Use the Anchor to see your Hearth")).ttl(20 * 12).priority(4).build());
+        // A toast shows the title and the first sentence: keep both short. The rest is in Recent messages.
+        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Home exists"))
+                .body(Component.literal("Within " + r.radius() + " blocks: yours. You wake here, you heal here, and people will come. "
+                        + "Use the Anchor for a guide to your Hearth."))
+                .ttl(20 * 8).priority(4).build());
+        unlockFurnitureRecipes(sp);
         if (Progression.profile(sp).awakened()) Progression.markNewThing(sp, "hearth");
         DirectorLog.log(sp, "hearth", "anchor placed at " + pos.toShortString());
         Town.onHearthCreated(sp, level, r);
         HearthViews.refresh(sp);
+        Cottage.afterAnchorPlaced(sp);
+    }
+
+    /** The Anchor teaches the Hearth's furniture in the recipe book (Meditation Mat, Forge, Trophy Mount, role pads). */
+    static void unlockFurnitureRecipes(ServerPlayer sp) {
+        var recipes = sp.level().getServer().getRecipeManager();
+        List<ResourceKey<Recipe<?>>> keys = new ArrayList<>();
+        for (String id : Guide.FURNITURE_RECIPES) {
+            ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, dev.awaken.Awaken.id(id));
+            if (recipes.byKey(key).isPresent()) keys.add(key);
+        }
+        if (!keys.isEmpty()) sp.awardRecipesByKey(keys);
     }
 
     public static void onAnchorUsed(ServerPlayer sp, ServerLevel level, BlockPos pos) {
@@ -184,7 +209,7 @@ public final class HearthService {
         }
         player(sp).respawnAtHearth = true;
         if (dev.awaken.hearth.request.Requests.onAnchorUsed(sp, level, r.get())) return; // carried a request home: deliver first
-        Upgrades.offerAnchor(sp, level, r.get());
+        Guide.open(sp, level, r.get());
     }
 
     public static void onAnchorRemoved(ServerLevel level, BlockPos pos) {
@@ -258,8 +283,25 @@ public final class HearthService {
 
     private static void onPlace(BlockEvent.EntityPlaceEvent e) {
         if (!(e.getLevel() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) return;
-        if (RoomScanner.isFurniture(e.getPlacedBlock()) || e.getPlacedBlock().isCollisionShapeFullBlock(level, e.getPos())) {
-            blockChanged(level, e.getPos());
+        if (roomRelevant(level, e.getPlacedBlock(), e.getPos())) blockChanged(level, e.getPos());
+    }
+
+    /** Blocks whose change can make or break a room: furniture, full blocks and the thin things that close gaps. */
+    private static boolean roomRelevant(ServerLevel level, BlockState s, BlockPos pos) {
+        return RoomScanner.isFurniture(s) || RoomScanner.closesGap(s) || s.isCollisionShapeFullBlock(level, pos);
+    }
+
+    /** Armour stands are entities: placing or breaking one is a room change too (the Armory). */
+    private static void onEntityJoin(EntityJoinLevelEvent e) {
+        if (e.getEntity() instanceof ArmorStand && !e.loadedFromDisk() && e.getLevel() instanceof ServerLevel level) {
+            blockChanged(level, e.getEntity().blockPosition());
+        }
+    }
+
+    private static void onEntityLeave(EntityLeaveLevelEvent e) {
+        if (e.getEntity() instanceof ArmorStand stand && stand.getRemovalReason() != null && stand.getRemovalReason().shouldDestroy()
+                && e.getLevel() instanceof ServerLevel level) {
+            blockChanged(level, stand.blockPosition());
         }
     }
 
@@ -276,9 +318,7 @@ public final class HearthService {
                 return;
             }
         }
-        if (level.dimension() == Level.OVERWORLD && (RoomScanner.isFurniture(s) || s.isCollisionShapeFullBlock(level, e.getPos()))) {
-            blockChanged(level, e.getPos());
-        }
+        if (level.dimension() == Level.OVERWORLD && roomRelevant(level, s, e.getPos())) blockChanged(level, e.getPos());
     }
 
     // ---- Hearth Shield (Perks.HEARTH_SHIELD): during a break near home, nothing breaks your buildings -------------------
@@ -442,7 +482,7 @@ public final class HearthService {
             if (next != null) {
                 d.of(next).ifPresent(h -> {
                     h.scanAt = 0;
-                    activeScan = new RoomScanner(overworld, h, rooms -> onRoomsScanned(server, h, rooms));
+                    activeScan = new RoomScanner(overworld, h, scan -> onRoomsScanned(server, h, scan));
                 });
             }
         }
@@ -477,10 +517,13 @@ public final class HearthService {
     }
 
     /** Called when a room scan finishes: store rooms, update trophy bonuses, tell the owner about new rooms. */
-    static void onRoomsScanned(MinecraftServer server, HearthRecord h, List<Room> rooms) {
+    static void onRoomsScanned(MinecraftServer server, HearthRecord h, Scan scan) {
+        List<Room> rooms = scan.rooms();
         EnumSet<RoomType> before = EnumSet.noneOf(RoomType.class);
         for (Room r : h.rooms) before.addAll(r.types());
         h.rooms = rooms;
+        h.misses = scan.misses();
+        h.furniture = scan.furniture();
         h.lastScan = server.overworld().getGameTime();
         Set<String> trophies = new java.util.HashSet<>();
         EnumSet<RoomType> after = EnumSet.noneOf(RoomType.class);
@@ -496,19 +539,21 @@ public final class HearthService {
             if (announce) {
                 for (RoomType t : after) {
                     if (before.contains(t)) continue;
-                    Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Room recognised: " + t.label))
-                            .body(Component.literal("The Hearth noticed " + t.needs + ". " + capitalise(t.gives) + "."))
+                    // toast: the title and its first sentence fit 144 px; the rest is kept in Recent messages
+                    Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(t.label + " recognised"))
+                            .body(Component.literal(t.toast + " " + t.does + " The Hearth noticed " + t.needs + " in a closed room."))
                             .ttl(20 * 6).build());
                 }
             }
             Trophies.applyHallBonus(sp, h);
             HearthViews.refresh(sp);
+            Guide.refresh(sp);
         });
     }
 
     /** Starts a full scan right now (commands and tests). */
     public static List<Room> scanNow(ServerLevel level, HearthRecord h) {
-        RoomScanner s = new RoomScanner(level, h, rooms -> onRoomsScanned(level.getServer(), h, rooms));
+        RoomScanner s = new RoomScanner(level, h, scan -> onRoomsScanned(level.getServer(), h, scan));
         s.runToEnd();
         return h.rooms;
     }

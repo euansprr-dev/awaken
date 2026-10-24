@@ -1,0 +1,72 @@
+# The Hearth guide (hearth/guide): root an Anchor (the "Home exists" toast, the Now line "Use the Anchor for a guide"),
+# use it ("Your Hearth": the facts, Oren's offer, the room cards with checklists, icons and the Meditation Mat recipe),
+# the radius ring in the world, Oren's cottage card, Y, the cottage rising row by row, outside (front, chimney side, by
+# night) and inside (the bed, the mat, the lanterns), the "Sanctuary recognised" toast, then the screen again with the
+# Sanctuary built ("Oren built this one"), at GUI scale 0 (the owner's) and 2.
+# Run by the integrator: tools/autopilot.sh hearth-guide (builders never run a client).
+world autopilot_hearth_guide creative 4242
+waitworld
+gui 0
+cmd weather clear 100000
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin awaken
+wait 80
+cmd awaken powers starter 1
+wait 40
+screen close
+wait 20
+# face south and root an Anchor three blocks ahead (as if placed): the welcome, Oren moves in, the Spire rises
+cmd tp @s ~ ~ ~ 0 20
+wait 10
+cmd awaken admin request anchor
+wait 50
+shot hearth_guide_00_home_exists_now_line
+# use it: "Your Hearth" (and the radius ring outside the panel)
+cmd awaken hearth guide
+wait 30
+shot hearth_guide_01_your_hearth_gui0
+gui 2
+wait 10
+shot hearth_guide_02_your_hearth_gui2
+gui 0
+screen close
+wait 10
+look 0 35
+shot hearth_guide_03_radius_ring
+# Oren's offer (six seconds after the Anchor): say yes
+wait 70
+shot hearth_guide_04_cottage_card
+key accept
+wait 50
+shot hearth_guide_05_cottage_rising
+wait 220
+shot hearth_guide_06_sanctuary_recognised_toast
+cmd awaken admin hearth cottage view outside
+wait 30
+shot hearth_guide_07_cottage_front
+cmd awaken admin hearth cottage view side
+wait 30
+shot hearth_guide_08_cottage_chimney_side
+cmd awaken admin hearth cottage view inside
+wait 30
+shot hearth_guide_09_cottage_inside
+cmd time set 14500
+wait 60
+shot hearth_guide_10_cottage_inside_night
+cmd awaken admin hearth cottage view outside
+wait 30
+shot hearth_guide_11_cottage_front_night
+cmd time set 6000
+wait 20
+# the screen again: the Sanctuary is built, by Oren
+cmd awaken hearth guide
+wait 40
+shot hearth_guide_12_screen_sanctuary_built
+gui 2
+wait 10
+shot hearth_guide_13_screen_sanctuary_built_gui2
+gui 0
+screen close
+wait 10
+quit

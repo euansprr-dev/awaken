@@ -177,6 +177,10 @@ public final class HearthContent {
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> ECHO_WISP = PARTICLES.register("echo_wisp", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HEARTH_EMBER = PARTICLES.register("hearth_ember", () -> new SimpleParticleType(false));
+    /** The Hearth's edge shown at ground level when you use the Anchor (seen from far: overrides the 32-block limit). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HEARTH_RING = PARTICLES.register("hearth_ring", () -> new SimpleParticleType(true));
+    /** A pulsing signal-blue mark where a room leaks (a gap, the open sky). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HEARTH_LEAK = PARTICLES.register("hearth_leak", () -> new SimpleParticleType(true));
 
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_BIND = sound("hearth.bind");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_BIND_FAIL = sound("hearth.bind_fail");

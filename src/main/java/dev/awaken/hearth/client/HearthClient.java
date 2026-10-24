@@ -33,11 +33,14 @@ public final class HearthClient {
         modBus.addListener(HearthClient::renderers);
         modBus.addListener(HearthClient::particles);
         modBus.addListener(HearthClient::renderStates);
+        modBus.addListener(GuideClient::payloads);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> {
             EchoKeys.tick();
             AuraFx.tick();
+            GuideClient.tick();
         });
         NeoForge.EVENT_BUS.addListener(HearthClient::tooltip);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> GuideClient.clear());
         StatusSections.add(StatusSections.Tab.STATUS, new HearthSection());
         CodexEntries.addSource(HearthClient::rumours);
     }
@@ -53,6 +56,8 @@ public final class HearthClient {
     private static void particles(RegisterParticleProvidersEvent e) {
         e.registerSpriteSet(HearthContent.ECHO_WISP.get(), HearthParticles.Wisp.Provider::new);
         e.registerSpriteSet(HearthContent.HEARTH_EMBER.get(), HearthParticles.Ember.Provider::new);
+        e.registerSpriteSet(HearthContent.HEARTH_RING.get(), HearthParticles.Mark.RingProvider::new);
+        e.registerSpriteSet(HearthContent.HEARTH_LEAK.get(), HearthParticles.Mark.LeakProvider::new);
     }
 
     private static void renderStates(RegisterRenderStateModifiersEvent e) {

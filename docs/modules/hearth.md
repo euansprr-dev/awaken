@@ -11,16 +11,21 @@ Echoes fill role pads by themselves, and every Y/N choice is optional.
 
 1. `/awaken admin awaken`, then get a Lord's Heart (`/give @s awaken:lord_heart`) and craft a **Hearth Anchor**
    (copper ingot corners, stone bricks, Lord's Heart in the middle; copper rather than obsidian so your first base needs only stone tools). Place it: radius 48, respawn here, Oren arrives and a small
-   Spire (Spire Board + Reassessment Monolith + lanterns) rises on open ground near the Anchor.
-2. Use the Anchor: tier, radius, rooms, town, and the next upgrade with its (rank-discounted) price. Y builds it.
-3. Build rooms (they must be roofed and closed; doors, panes, fences and walls close gaps):
-   - Sanctuary: a bed + a **Meditation Mat** (3 wool around an amethyst shard).
+   Spire (Spire Board + Reassessment Monolith + lanterns) rises on open ground near the Anchor. The recipe book learns the
+   Hearth's furniture (Meditation Mat, Forge, Trophy Mount, role pads). A toast says "Home exists"; the Now line says
+   "Use the Anchor for a guide"; six seconds later Oren offers a cottage (see *The Hearth guide*).
+2. Use the Anchor: the **Your Hearth** screen (below). The radius shows in the world for eight seconds. The upgrade
+   button (or Y) builds the next tier. `/awaken hearth guide` opens it from anywhere; the Status screen's HEARTH section
+   has a button for it too.
+3. Build rooms (they must be closed and roofed, at most 32 wide; doors, trapdoors, panes, bars, fences, walls, slabs and
+   stairs close gaps):
+   - Sanctuary: a bed + a **Meditation Mat** (wool, an amethyst shard, wool in a row).
    - Armory: an anvil + a **Forge** + an armour stand.
    - Trophy Hall: a **Trophy Mount** with a trophy on it.
    - Workshop: any block in `#awaken:machines` (filled by the Above module).
    - Barracks: any **Role Pad**.
-   `/awaken admin hearth scan` rescans now; `/awaken hearth info` lists rooms, town, pads and Echo tallies. The Status screen
-   (K) has a HEARTH section.
+   The screen and the Now tracker say what's missing and why a room isn't recognised. `/awaken admin hearth scan` rescans
+   now (and lists every "not a room" with its reason); `/awaken hearth info` lists rooms, town, pads and Echo tallies.
 4. Echoes: kill an elite/warden/boss (`MobRole.isBindable()`), tap **B** within 6 blocks during the 10 s it lingers.
    Tap B elsewhere to call/dismiss your field army; hold B for the chooser (march / home / release). `/awaken hearth echoes`.
 5. Role pads (shapeless: 2 smooth stone slabs + essence shard + iron sword / chest / wheat / iron pickaxe / target).
@@ -39,12 +44,82 @@ owner (or an op) can break it. Upkeep runs once a second per Hearth, staggered b
 **Fracture heals at home**: stand still out of combat inside your radius for `30 - 4×(tier-1)` seconds (half that in a
 Sanctuary; an overlay counts down) or sleep in a Sanctuary → `Progression.clearFracture`. Sun the Healer clears it for free.
 
-**Rooms** (`room/RoomScanner`). Budgeted job, one at a time, 12k block reads per tick: a palette sweep
-(`LevelChunkSection.maybeHas`) skips every section without furniture, then a bounded flood fill (≤4096 cells, ≤32 wide,
-must not see the sky, unloaded chunks count as open) from each piece of furniture. Full-block furniture (Forge, machines) is
-read from the room's walls; armour stands are counted inside the room's cells. Rescans 2 s after a relevant block changes
-nearby, and every 5 minutes. New rooms are announced (not on the first scan after a restart). `Hearth.isSanctuary(level,pos)`
-and `Hearth.inRoom(...)` are exact (cell sets).
+**Rooms** (`room/RoomScanner`, `RoomType`, `Furniture`). Budgeted job, one at a time, 12k block reads per tick: a palette
+sweep (`LevelChunkSection.maybeHas`) skips every section without furniture, then a bounded flood fill (≤4096 cells, ≤32
+wide, must not see the sky, unloaded chunks count as open) from each piece of furniture. Full-block furniture (Forge,
+machines) is read from the room's walls (and no longer floods the same room twice); armour stands are counted inside the
+room's cells. "Sees the sky" is the motion-blocking heightmap plus a look up to 24 blocks for a slab or trapdoor roof.
+Rescans 2 s after a relevant block changes nearby (furniture, full blocks, gap closers, armour stands placed or broken),
+when the owner uses the Anchor, and every 5 minutes. New rooms are announced with a toast ("Sanctuary recognised" /
+"Sleep here: Fracture heals."; not on the first scan after a restart). `Hearth.isSanctuary(level,pos)` and
+`Hearth.inRoom(...)` are exact (cell sets).
+
+The rule lives once: `RoomType.furniture` lists what each room needs; `Room.classify`, the toasts, the Status chips, the
+guide's checklists and the Now lines all read it. `Furniture` holds each piece's label, short name, icon and the AWAKEN
+recipe the guide shows.
+
+**Why a room isn't recognised** (`room/Miss`, `guide/WhyNot`). When a flood leaks, a second bounded fill of the *covered*
+space around the furniture (open sky counts as a wall) says why, and furniture in the same leaky space shares the answer
+without another fill (≤16 explanations per scan): a covered cell with sky right above it → **it sees the sky above the
+bed (no roof)**; sky beside the space inside its footprint or with a wall right behind it → **a hole in the roof at x y
+z**; sky beside it at the edge → **an opening at x y z** (the covered cell the space leaks through); bigger than 32 →
+**too big (over 32 wide)**. A closed room holding part of a room's furniture → **missing: a Meditation Mat**. The scan
+also counts each piece of furniture in the radius (mounted trophies only; armour stands by an entity query at the end)
+for the guide's ticks. Cost: one extra bounded fill per leaky space, inside the same 12k-per-tick budget.
+
+**The Hearth guide** (`guide/Guide`, `GuideData`, `client/HearthScreen`, `client/GuideClient`). Using your own Anchor
+opens **Your Hearth** (a `QuietScreen`: toasts wait while it's open) instead of a notice; a client without the screen
+still gets the old notice and its Y. Status-screen glass with a lantern edge, one scrolling column laid out with
+`signal.client.Ui`:
+- header: YOUR HEARTH, the tier chip, the Anchor's position; then radius, rest healing (and half in a Sanctuary), where
+  you respawn;
+- Oren's cottage offer on top until it stands (Raise it / Try again / being built);
+- ROOMS: the rule in one line (from `RoomScanner.MAX_EXTENT` and the gap closers), then a card per `RoomType`: name and
+  status (Built · x y z, Built ×N, Not yet), what it gives (`RoomType.does`), a checklist with item icons (✓ when that
+  furniture is anywhere in the radius; the last line "all of it in one closed, roofed room"), the real recipe of each
+  missing piece of Hearth furniture drawn as a grid (tag slots cycle; read from the server's recipe manager), the reason
+  it isn't recognised (amber), and "Oren built this one. Build the rest yourself." on the cottage's Sanctuary;
+- TOWN: who lives here, who comes next and at which rank;
+- NEXT UPGRADE: the tier's radius and rest time, each part as have/need with its icon (green when you have it), the rank
+  discount, and **[Y] Build Tier II** (the button or the accept key; the server re-checks everything, `Upgrades.upgradeAnchor`).
+The screen asks for fresh numbers every 2 s and gets them after every scan, upgrade and cottage step. Using the Anchor
+shows the radius in the world for 8 s: amber motes along the square edge at ground level (≤24 a tick, client side).
+While the screen is open, and 30 s after, a pulsing signal-blue mark sits on each leak (`hearth_ring`, `hearth_leak`).
+
+**Taught in play** (`HearthNow`, one line on the Now tracker, never a list). Placing the Anchor: the toast "Home exists ·
+Within 48 blocks: yours."; at home, "Use the Anchor for a guide" (priority 74 for ten minutes, then 56) until the screen
+has been opened once; then the next room with live ticks ("Sanctuary: bed ✓ · mat ✗", shortened to fit 148 px) for a
+Sanctuary, then an Armory, then a Barracks, Trophy Hall or Workshop once you hold or placed what it's made of; and, when a
+room you're building isn't recognised, why ("Sanctuary: no roof", "Armory: wall gap", with a compass to the spot,
+priority 62). Village beds and anvils alone never trigger a why-line (only the current goal, mod furniture, or two pieces
+of one room). The toast when a room is recognised closes the loop. Every line is checked against the toast (144 px) and
+tracker widths (148 px, 100 with a compass) by `GuideTests`.
+
+**Oren's cottage** (`guide/Cottage`, `CottagePlan`). Once per player, six seconds after the Anchor takes root, a choice
+card: "A cottage from Oren? · Free: your first Sanctuary." [Y] Raise it · [N] I'll build my own (no only marks it
+declined; the screen keeps the offer). Yes starts a job:
+- *Site*: 112 candidate centres 10–22 blocks from the Anchor, the door facing it, ranked by heightmap flatness and
+  distance (one tick), then two full checks a tick: every column of the 12 × 13 box must be terrain (dirt, sand, stone,
+  terracotta, gravel, clay, snow, mud...) with only plants, snow, vines and natural (non-persistent) leaves above it, up
+  to three natural trees (logs whose top touches natural leaves) that get felled, no fluid; the footprint may fill down
+  4 or cut up 2, the rim may rise 1; it keeps 2 blocks from the Anchor and 3 from the Spire. Anything a player makes
+  (planks, cobble, farmland, paths, placed leaves, chests) rejects the spot. None in 40 tries → a notice ("No room for a
+  cottage... clear a patch about 12 blocks across... then ask again in your Hearth") and the screen's Try again.
+- *Build*: trees one a tick, then the plants and the bumps in one pass, then four blocks a tick (about six seconds) in
+  order foundation → walls → plate and ceiling → roof → chimney → furnishing, layer by layer and row by row, each row
+  with its material's place sound and embers on new blocks; Oren walks to the door and swings a mace as a hammer. It never
+  replaces a block that isn't terrain or a plant (someone building there meanwhile keeps it). The server stopping
+  mid-build places the rest at once. On completion: the Anchor chime, "Oren's cottage · Your first Sanctuary is up.",
+  `HearthRecord.cottage` (a cell inside, saved) and a rescan, so "Sanctuary recognised" follows within a second.
+- *Design* (`CottagePlan`, local frame, turned to face the Anchor): 9 × 9 on a stone-brick plinth that fills down to
+  the ground; log corner posts and door posts and mid posts; a stone lower course with weathered patches; plank walls;
+  seven glass-pane windows with open trapdoor shutters; a log wall plate; a plank ceiling (so the room is closed whatever
+  the roof does); a 45° stair gable roof with a one-block overhang, a slab-capped ridge and an attic window in each gable;
+  a chimney on the right gable with a campfire on top and a stove behind the wall; two lanterns hanging under the front
+  eave and a door step or a dirt path toward the Anchor. Inside (7 × 7 × 3): a bed under the back window with a barrel
+  nightstand and a lantern, the Meditation Mat, a 3 × 3 rug, a hanging lantern, a chest, a crafting table, a smoker, two
+  bookshelves and potted plants. Ten biome palettes (meadow, taiga/snowy/cold, birch, jungle, savanna, desert, badlands,
+  swamp/dark forest, mangrove, cherry) set the planks, posts, stone, roof, door, shutters, chimney and bed and rug colours.
 
 **Costs that fall** (`Costs`, `Upgrades`). Price ×0.85 per rank you hold above the upgrade's tier (compounding, rounded up,
 never below 1). Anchor tiers II-V (D, C, B, A): radius 48/56/64/72/80, faster rest healing; mostly overworld materials plus a
@@ -116,14 +191,23 @@ Logging out or leaving fails it; logging in inside the trials dimension sends yo
 survive four minutes of waves in a desert arena; failing Fractures you for 8 minutes.
 
 ## Commands
-`/awaken hearth info` · `/awaken hearth echoes` · `/awaken admin trial <D|C|B|A|S|penalty>` ·
-`/awaken admin town arrive <npc id or first name>` · `/awaken admin hearth scan`.
+`/awaken hearth info` · `/awaken hearth echoes` · `/awaken hearth guide` · `/awaken admin trial <D|C|B|A|S|penalty>` ·
+`/awaken admin town arrive <npc id or first name>` · `/awaken admin hearth scan` ·
+`/awaken admin hearth cottage` (raise it now) `| reset` (forget the once) `| offer` `| view <outside|inside|side>`
+(camera spots for screenshots).
 
-## Tests (`HearthTests`, all GameTests)
+Autopilot: `tools/autopilot/hearth-guide.txt` (the integrator runs it).
+
+## Tests (`HearthTests`, `guide/GuideTests`, all GameTests)
 registry + nearest lookup · cost reduction maths · bind chance maths and caps (and Echo levelling) · Echo ally rules (never
 targets or hurts its owner or other Echoes) · role pad assignment · room detection in-world (a closed room with a bed and a
 mat is a Sanctuary) · D trial passes → rank D · Penalty Zone lifecycle (waves, pass, cleanup) · trials dimension type/biome/
-generator decode · pure rules (break counting, lap comparison, compass, arena blocks, ore table, rest times).
+generator decode · pure rules (break counting, lap comparison, compass, arena blocks, ore table, rest times) ·
+`hearth_guide_matches_roomtype` (each card's checklist is `RoomType.furniture`, `classify` needs all of it, every toast and
+Now line fits, the guide data round-trips, the site rules) · `hearth_cottage_is_a_sanctuary` (two cottages, one turned and
+in the desert palette, both scan as Sanctuaries; the guide says Oren built one) · `hearth_why_not_reasons` (roofless →
+sees the sky; a gap → an opening at that block; a hole in the roof → there; no mat → missing: a Meditation Mat; fixed →
+a Sanctuary) · `hearth_cottage_offer_once` (one card, never twice, not after a no, the screen still offers it).
 
 ## Decisions
 - Trials live in their own `awaken:trials` dimension (the builder brief asked for it) rather than the Stillpoint's trial wing
@@ -141,3 +225,25 @@ generator decode · pure rules (break counting, lap comparison, compass, arena b
 - Gate kills by Echoes while you are bare-handed count toward `awaken:kills_unarmed` (progression counts any kill credited
   to an unarmed player).
 - Only the town Spire's board refreshes on its own; extra Spire Boards refresh when used.
+
+## SPEC-worthy decisions (for the integrator)
+1. Using your own Anchor opens the **Your Hearth** screen (a `QuietScreen`); the old notice remains only for clients
+   without the screen. The upgrade is built from the screen's button or the accept key, re-validated on the server.
+2. Stairs and slabs close gaps like doors and panes (a stair or slab roof is a roof); slabs and trapdoors up to 24 blocks
+   above the heightmap count as a roof.
+3. Why a room isn't recognised comes from a second bounded fill of the covered space (sky as a wall), ≤16 per scan, in
+   the scan's budget: sees the sky (no roof), a hole in the roof, an opening at x y z, too big (over 32 wide), missing: X.
+4. The Anchor teaches the Hearth's furniture recipes (Meditation Mat, Forge, Trophy Mount, the five role pads) when it
+   takes root, whatever the level.
+5. Oren's cottage: offered once per player (a choice card six seconds after the first Anchor), free, never on anything a
+   player made: only terrain, plants, natural leaves and up to three natural trees give way. 9 × 9 outside, 7 × 7 × 3
+   inside, ten biome palettes, four blocks a tick (~6 s). Its room is a Sanctuary on completion. No paid cottages yet.
+6. The Now tracker teaches the Hearth one line at a time: "Use the Anchor for a guide" (74 for ten minutes, then 56) until
+   the screen is opened once; then the next room with live ticks (50); a why-line for a room being built (62). Lines are
+   chosen server side to fit 148 px (100 with a compass), toasts' first sentences 144 px.
+7. Using the Anchor shows the radius (a square, |dx|, |dz| ≤ r) as a ground-level ember ring for 8 s, client side.
+8. Saved additions: `HearthRecord.cottage` (optional block pos in `core`), `HearthPlayer.tips` markers `guide_seen`,
+   `cottage_offered`, `cottage_declined`, `cottage_built`, `cottage_no_room` (no schema change: both are optional fields /
+   free-form tips).
+9. Room toasts read "<Room> recognised" with a one-line gain (`RoomType.toast`); the full text (`RoomType.does` and the
+   furniture) stays in Recent messages.

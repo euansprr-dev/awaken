@@ -31,7 +31,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/** /awaken hearth info|echoes and the admin tools /awaken admin trial &lt;rank&gt|penalty, /awaken admin town arrive &lt;npc&gt;. */
+/**
+ * /awaken hearth info|echoes|guide and the admin tools /awaken admin trial &lt;rank&gt;|penalty, /awaken admin town arrive
+ * &lt;npc&gt;, /awaken admin hearth scan, /awaken admin hearth cottage [reset|offer|view outside|inside|side].
+ */
 final class HearthCommands {
     private HearthCommands() {}
 
@@ -39,7 +42,8 @@ final class HearthCommands {
         AwakenCommands.add((root, ctx) -> {
             root.then(Commands.literal("hearth")
                     .then(Commands.literal("info").executes(HearthCommands::info))
-                    .then(Commands.literal("echoes").executes(HearthCommands::echoes)));
+                    .then(Commands.literal("echoes").executes(HearthCommands::echoes))
+                    .then(Commands.literal("guide").executes(HearthCommands::guide)));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("trial").then(Commands.argument("rank", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "C", "B", "A", "S", "penalty"), b))
@@ -56,8 +60,22 @@ final class HearthCommands {
                 }
                 List<Room> rooms = HearthService.scanNow(HearthService.levelOf(sp.level().getServer(), h.get()), h.get());
                 c.getSource().sendSuccess(() -> Component.literal("Scanned: " + rooms.size() + " enclosed rooms"), false);
+                for (var m : h.get().misses) {
+                    c.getSource().sendSuccess(() -> Component.literal("Not a room: " + m.furniture().the + " at " + m.seed().toShortString()
+                            + " · " + m.leak().name().toLowerCase(Locale.ROOT) + " at " + m.at().toShortString()), false);
+                }
                 return rooms.size();
-            })));
+            })).then(Commands.literal("cottage").executes(HearthCommands::cottage)
+                    .then(Commands.literal("reset").executes(HearthCommands::cottageReset))
+                    .then(Commands.literal("offer").executes(c -> {
+                        ServerPlayer sp = c.getSource().getPlayerOrException();
+                        boolean sent = dev.awaken.hearth.guide.Cottage.offer(sp);
+                        c.getSource().sendSuccess(() -> Component.literal(sent ? "Offered (Y raises it)" : "Already offered once (use reset)"), false);
+                        return sent ? 1 : 0;
+                    }))
+                    .then(Commands.literal("view").then(Commands.argument("where", StringArgumentType.word())
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("outside", "inside", "side"), b))
+                            .executes(HearthCommands::cottageView)))));
             root.then(admin);
         });
     }
@@ -89,6 +107,63 @@ final class HearthCommands {
         lines.add("Echoes have hauled " + h.itemsHauled + " items, harvested " + h.cropsHarvested + " crops, brought up " + h.oresBrought + " ore");
         if (Breaks.active(h)) lines.add("A break is happening near home");
         for (String l : lines) c.getSource().sendSuccess(() -> Component.literal(l), false);
+        return 1;
+    }
+
+    /** Opens "Your Hearth" as if the Anchor was used (from anywhere). */
+    private static int guide(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        Optional<HearthRecord> h = HearthService.hearthOf(sp);
+        if (h.isEmpty()) {
+            c.getSource().sendFailure(Component.literal("You have no Hearth. Craft a Hearth Anchor from a Lord's Heart and place it where home should be."));
+            return 0;
+        }
+        dev.awaken.hearth.guide.Guide.open(sp, HearthService.levelOf(sp.level().getServer(), h.get()), h.get());
+        return 1;
+    }
+
+    private static int cottage(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        boolean ok = dev.awaken.hearth.guide.Cottage.start(sp);
+        if (ok) c.getSource().sendSuccess(() -> Component.literal("Oren is looking for a spot"), false);
+        else c.getSource().sendFailure(Component.literal("No Hearth, already built once (use reset), or already building."));
+        return ok ? 1 : 0;
+    }
+
+    private static int cottageReset(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        HearthService.player(sp).tips.removeIf(t -> t.startsWith("cottage_"));
+        HearthService.hearthOf(sp).ifPresent(h -> h.cottage = null);
+        c.getSource().sendSuccess(() -> Component.literal("Oren's cottage can be offered and raised again"), false);
+        return 1;
+    }
+
+    /** Stands you where the cottage shows: outside at the front corner, inside by the door, or at the chimney side. */
+    private static int cottageView(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        var site = dev.awaken.hearth.guide.Cottage.lastSite(sp.getUUID());
+        if (site == null) {
+            c.getSource().sendFailure(Component.literal("No cottage raised this session."));
+            return 0;
+        }
+        String where = StringArgumentType.getString(c, "where");
+        int[] from = switch (where) {
+            case "inside" -> new int[]{6, 1, 1};
+            case "side" -> new int[]{17, 3, 10};
+            default -> new int[]{-5, 2, -9};
+        };
+        int[] look = where.equals("inside") ? new int[]{2, 1, 7} : new int[]{4, 3, 4};
+        var origin = site.origin().atY(site.floorY());
+        var f = dev.awaken.hearth.guide.CottagePlan.at(origin, site.rot(), from[0], from[1], from[2]);
+        var l = dev.awaken.hearth.guide.CottagePlan.at(origin, site.rot(), look[0], look[1], look[2]);
+        double fx = f.getX() + 0.5, fy = f.getY(), fz = f.getZ() + 0.5;
+        if (!where.equals("inside")) {
+            fy = Math.max(fy, sp.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, f.getX(), f.getZ()));
+        }
+        double dx = l.getX() + 0.5 - fx, dy = l.getY() + 0.5 - (fy + 1.62), dz = l.getZ() + 0.5 - fz;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        sp.teleportTo((ServerLevel) sp.level(), fx, fy, fz, java.util.Set.of(), yaw, pitch, true);
         return 1;
     }
 
