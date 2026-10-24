@@ -11,8 +11,9 @@ the pack session for merging. Results and decision: `REPORT.md`; design: SPEC §
 - Side fix, merged first: pack/autopilot-display (tours open on the MacBook's own display; `info` logs `display=`).
 
 ## Next
-- Step 3 (MetalFX spatial) waits for turbo-bridge's core on build/awaken-v1: merge it, agree the
-  VK_EXT_metal_objects feature-set mixin with turbo-bridge, then MTLFXSpatialScaler through java.lang.foreign. The
+- Step 3 (MetalFX spatial) waits for turbo-bridge's core on build/awaken-v1 (agreed: Turbo's `metalObjects`
+  switch enables VK_EXT_metal_objects, pack/turbo 319143fe). The plan, verified as far as it can be without it:
+  `METALFX.md`. The
   bar it has to clear is SHARP (0.24 ms at 2880×1658) with FSR-class edges.
 - Then the temporal write-up (jitter, motion vectors from depth and camera motion). Temporal is what brings back the
   texel detail every spatial upscaler loses.
