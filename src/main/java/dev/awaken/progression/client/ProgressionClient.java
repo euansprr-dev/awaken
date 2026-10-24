@@ -39,10 +39,17 @@ public final class ProgressionClient {
         event.registerAbove(VanillaGuiLayers.HOTBAR, Awaken.id("level"), ProgressionClient::renderLevel);
     }
 
+    /** What K opens: the flat StatusScreen unless the holo module installs its own (statusStyle = HOLO). */
+    private static java.util.function.Supplier<net.minecraft.client.gui.screens.Screen> statusOpener = StatusScreen::new;
+
+    public static void installStatusOpener(java.util.function.Supplier<net.minecraft.client.gui.screens.Screen> opener) {
+        statusOpener = opener;
+    }
+
     private static void onTick() {
         Minecraft mc = Minecraft.getInstance();
         while (AwakenKeys.STATUS.consumeClick()) {
-            if (mc.player != null && mc.gui.screen() == null) mc.gui.setScreen(new StatusScreen());
+            if (mc.player != null && mc.gui.screen() == null) mc.gui.setScreen(statusOpener.get());
         }
     }
 

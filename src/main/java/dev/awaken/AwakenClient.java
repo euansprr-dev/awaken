@@ -42,5 +42,6 @@ public final class AwakenClient {
         dev.awaken.gear.client.GearClient.init(modBus);
         dev.awaken.core.audio.client.AudioClient.init(modBus);
         dev.awaken.lens.client.LensClient.init(modBus);
+        dev.awaken.holo.client.HoloClient.init(modBus);
     }
 }
