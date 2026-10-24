@@ -1,5 +1,7 @@
 package dev.awaken.terrain.landmark;
 
+import dev.awaken.terrain.block.CrystalClusterBlock;
+import dev.awaken.terrain.frost.FrostBlocks;
 import dev.awaken.terrain.glass.GlassBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -19,14 +21,17 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 
 /**
- * A whole landmark as one piece. Its box is reserved from the shape's own bounds (and, for a Gate Scar, the ground it
- * reshapes round it); every chunk writes only its own part. The Gate Scar first reshapes its ground column by column
- * (each column from its own ground and its distance from the centre, so chunks agree without seeing each other), then
- * both place their voxels into air, plants, snow and water only: never into ground or anything built.
+ * A whole landmark as one piece. Its box is reserved from the shape's own bounds (and, for a Gate Scar or an Aurora
+ * Spire, the ground it reshapes round it); every chunk writes only its own part. The Gate Scar and the Aurora Spire
+ * first reshape their ground column by column (each column from its own ground and its distance from the centre, so
+ * chunks agree without seeing each other), then every landmark places its voxels into air, plants, snow and water only:
+ * never into ground or anything built.
  */
 public class LandmarkPiece extends StructurePiece {
     /** How far a standing column may reach down to find the ground. */
     static final int FILL = 12;
+    /** How far the Aurora Spire's tarn may cut into the ground or build up over it to lie level. */
+    static final int TARN_DEPTH = 5;
 
     private final Landmark landmark;
     private final BlockPos centre;
@@ -52,6 +57,10 @@ public class LandmarkPiece extends StructurePiece {
         return new LandmarkPiece(Landmark.SHARD_DRIFT, centre, seed, angle, ground);
     }
 
+    public static LandmarkPiece spire(BlockPos centre, long seed) {
+        return new LandmarkPiece(Landmark.AURORA_SPIRE, centre, seed, 0F, new int[0]);
+    }
+
     public LandmarkPiece(CompoundTag tag) {
         super(LandmarkWorldgen.PIECE.get(), tag);
         Landmark l = Landmark.GATE_SCAR;
@@ -66,16 +75,28 @@ public class LandmarkPiece extends StructurePiece {
     }
 
     static BoundingBox box(Landmark landmark, BlockPos c, long seed, float angle, int[] ground) {
-        if (landmark == Landmark.GATE_SCAR) {
-            GateScar.Plan p = LandmarkWorldgen.scar(seed);
-            int[] b = p.voxels.bounds();
-            int g = p.groundReach();
-            int down = (int) Math.ceil(p.depth) + 4;
-            return new BoundingBox(c.getX() + Math.min(b[0], -g), c.getY() + Math.min(b[1], -down) - FILL, c.getZ() + Math.min(b[2], -g),
-                    c.getX() + Math.max(b[3], g), c.getY() + Math.max(b[4], (int) Math.ceil(p.rimHeight) + 12) + 1, c.getZ() + Math.max(b[5], g));
-        }
-        int[] b = LandmarkWorldgen.drift(seed, angle, ground).bounds();
-        return new BoundingBox(c.getX() + b[0], c.getY() + b[1] - 1, c.getZ() + b[2], c.getX() + b[3], c.getY() + b[4] + 1, c.getZ() + b[5]);
+        return switch (landmark) {
+            case GATE_SCAR -> {
+                GateScar.Plan p = LandmarkWorldgen.scar(seed);
+                int[] b = p.voxels.bounds();
+                int g = p.groundReach();
+                int down = (int) Math.ceil(p.depth) + 4;
+                yield new BoundingBox(c.getX() + Math.min(b[0], -g), c.getY() + Math.min(b[1], -down) - FILL, c.getZ() + Math.min(b[2], -g),
+                        c.getX() + Math.max(b[3], g), c.getY() + Math.max(b[4], (int) Math.ceil(p.rimHeight) + 12) + 1, c.getZ() + Math.max(b[5], g));
+            }
+            case SHARD_DRIFT -> {
+                int[] b = LandmarkWorldgen.drift(seed, angle, ground).bounds();
+                yield new BoundingBox(c.getX() + b[0], c.getY() + b[1] - 1, c.getZ() + b[2], c.getX() + b[3], c.getY() + b[4] + 1, c.getZ() + b[5]);
+            }
+            case AURORA_SPIRE -> {
+                AuroraSpire.Plan p = LandmarkWorldgen.spire(seed);
+                int[] b = p.voxels.bounds();
+                int g = p.groundReach();
+                // the tarn is cut and filled up to TARN_DEPTH round the centre's ground
+                yield new BoundingBox(c.getX() + Math.min(b[0], -g), c.getY() + Math.min(b[1], -TARN_DEPTH) - FILL, c.getZ() + Math.min(b[2], -g),
+                        c.getX() + Math.max(b[3], g), c.getY() + Math.max(b[4], TARN_DEPTH) + 1, c.getZ() + Math.max(b[5], g));
+            }
+        };
     }
 
     @Override
@@ -103,7 +124,11 @@ public class LandmarkPiece extends StructurePiece {
     }
 
     Voxels voxels() {
-        return landmark == Landmark.GATE_SCAR ? LandmarkWorldgen.scar(seed).voxels : LandmarkWorldgen.drift(seed, angle, ground);
+        return switch (landmark) {
+            case GATE_SCAR -> LandmarkWorldgen.scar(seed).voxels;
+            case SHARD_DRIFT -> LandmarkWorldgen.drift(seed, angle, ground);
+            case AURORA_SPIRE -> LandmarkWorldgen.spire(seed).voxels;
+        };
     }
 
     @Override
@@ -128,8 +153,11 @@ public class LandmarkPiece extends StructurePiece {
         int z0 = Math.max(clip.minZ(), box.minZ()), z1 = Math.min(clip.maxZ(), box.maxZ());
         int y0 = Math.max(clip.minY(), box.minY()), y1 = Math.min(clip.maxY(), box.maxY());
         if (x0 > x1 || z0 > z1 || y0 > y1) return 0;
-        int placed = 0;
-        if (landmark == Landmark.GATE_SCAR) placed += shapeScar(level, LandmarkWorldgen.scar(seed), x0, x1, z0, z1, y0, y1);
+        int placed = switch (landmark) {
+            case GATE_SCAR -> shapeScar(level, LandmarkWorldgen.scar(seed), x0, x1, z0, z1, y0, y1);
+            case AURORA_SPIRE -> freezeTarn(level, LandmarkWorldgen.spire(seed), x0, x1, z0, z1, y0, y1);
+            case SHARD_DRIFT -> 0;
+        };
         return placed + placeVoxels(level, voxels(), x0, x1, z0, z1, y0, y1);
     }
 
@@ -155,7 +183,7 @@ public class LandmarkPiece extends StructurePiece {
                 int foot = v.foot[col];
                 if (foot == Voxels.NO_FOOT) continue;
                 BlockState base = landmark.state(v.cells[v.index(bx, foot, bz)]);
-                if (base.isAir() || base.is(GlassBlocks.SUNSHARD_CLUSTER.get())) continue;
+                if (base.isAir() || base.getBlock() instanceof CrystalClusterBlock) continue;
                 for (int y = cy + foot - 1; y >= cy + foot - FILL && y >= y0; y--) {
                     m.set(x, y, z);
                     if (!soft(level.getBlockState(m))) break;
@@ -252,6 +280,67 @@ public class LandmarkPiece extends StructurePiece {
                 if (target + 1 <= y1 && target + 1 >= y0 && Voxels.hash(p.seed + 11, x, 0, z) < (r < p.radius ? 0.035 : 0.06)
                         && level.getBlockState(m.set(x, target + 1, z)).isAir() && !topState.is(Blocks.GRASS_BLOCK)) {
                     level.setBlock(m, cluster, Block.UPDATE_CLIENTS);
+                    placed++;
+                }
+            }
+        }
+        return placed;
+    }
+
+    /**
+     * The Aurora Spire's ground, column by column: inside the tarn, packed ice level with the centre's ground (cut down
+     * to it or built up to it from the column's own ground, at most {@link #TARN_DEPTH}); round it a ring of hoarfrost
+     * on the column's own ground, its snow cleared.
+     */
+    private int freezeTarn(WorldGenLevel level, AuroraSpire.Plan p, int x0, int x1, int z0, int z1, int y0, int y1) {
+        int cx = centre.getX(), cz = centre.getZ(), level0 = centre.getY() - 1;
+        int reach = p.groundReach();
+        Heightmap.Types surface = Voxels.surface(level);
+        BlockState ice = Blocks.PACKED_ICE.defaultBlockState(), frost = FrostBlocks.HOARFROST.get().defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        int placed = 0;
+        for (int x = x0; x <= x1; x++) {
+            for (int z = z0; z <= z1; z++) {
+                double dx = x - cx, dz = z - cz, r = Math.sqrt(dx * dx + dz * dz);
+                if (r > reach) continue;
+                boolean tarn = r < p.tarn;
+                if (!tarn && r >= p.tarn + AuroraSpire.RING + (Voxels.hash(p.seed, x, 0, z) - 0.5) * 2) continue;
+                int top = level.getHeight(surface, x, z) - 1;
+                int g = Integer.MIN_VALUE;
+                for (int y = top; y >= top - 10 && y >= level.getMinY(); y--) {
+                    if (!soft(level.getBlockState(m.set(x, y, z)))) {
+                        g = y;
+                        break;
+                    }
+                }
+                if (g == Integer.MIN_VALUE) continue;
+                if (!tarn) {
+                    // the ring: hoarfrost on the column's own ground, its snow and plants cleared
+                    BlockState was = level.getBlockState(m.set(x, g, z));
+                    boolean takes = was.is(BlockTags.DIRT) || was.is(Blocks.GRASS_BLOCK) || was.is(Blocks.SNOW_BLOCK) || was.is(BlockTags.BASE_STONE_OVERWORLD);
+                    if (g < y0 || g > y1 || !takes) continue;
+                    level.setBlock(m, frost, Block.UPDATE_CLIENTS);
+                    placed++;
+                    for (int y = g + 1; y <= top && y <= y1; y++) {
+                        if (!level.getBlockState(m.set(x, y, z)).isAir()) {
+                            level.setBlock(m, air, Block.UPDATE_CLIENTS);
+                            placed++;
+                        }
+                    }
+                    continue;
+                }
+                if (Math.abs(g - level0) > TARN_DEPTH) continue; // a cliff under the rim: leave it be
+                // cut down to the ice, or build up to it with ice from the column's own ground
+                for (int y = Math.max(top, g); y > level0; y--) {
+                    if (y < y0 || y > y1 || level.getBlockState(m.set(x, y, z)).isAir()) continue;
+                    level.setBlock(m, air, Block.UPDATE_CLIENTS);
+                    placed++;
+                }
+                // at least two layers thick, down to the column's own ground where it lies lower
+                int bottom = Math.max(Math.min(g, level0 - 1), level0 - TARN_DEPTH);
+                for (int y = level0; y >= bottom; y--) {
+                    if (y < y0 || y > y1) continue;
+                    level.setBlock(m.set(x, y, z), ice, Block.UPDATE_CLIENTS);
                     placed++;
                 }
             }

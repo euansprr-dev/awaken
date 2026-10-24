@@ -417,12 +417,7 @@ LANDMARKS = {"gate_scar": (28, 10, 1442977203), "shard_drift": (22, 8, 905113377
 
 def landmarks(lc):
     for name, (spacing, separation, salt) in LANDMARKS.items():
-        lc.write(f"{lc.PACK}/awaken/worldgen/structure/{name}.json", {
-            "type": lc.aw("landmark"), "landmark": name, "biomes": f"#awaken:has_structure/{name}", "step": "surface_structures",
-            "spawn_overrides": {}, "terrain_adaptation": "none"})
-        lc.write(f"{lc.PACK}/awaken/worldgen/structure_set/{name}.json", {
-            "structures": [{"structure": lc.aw(name), "weight": 1}],
-            "placement": {"type": lc.mc("random_spread"), "spacing": spacing, "separation": separation, "salt": salt}})
+        lc.structure("landmark", "landmark", name, spacing, separation, salt)
 
 
 def pack(lc):

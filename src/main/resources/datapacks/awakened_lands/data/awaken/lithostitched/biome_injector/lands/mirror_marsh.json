@@ -1,0 +1,14 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "targets": [
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp"
+  ],
+  "replacement": "awaken:mirror_marsh",
+  "parameters": {
+    "awaken:lands/awakening": {
+      "min_inclusive": 0.0
+    }
+  }
+}

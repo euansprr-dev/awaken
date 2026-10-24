@@ -52,6 +52,13 @@ final class PlacementTests {
     /** The share of land the Awakened biomes take on the studio seeds, mean over the five (plan: about 40%). */
     static final double SHARE_MIN = 0.05, SHARE_MAX = 0.60;
 
+    /**
+     * Which overworld rule each part of an Awakened biome's ground goes first in: its top above water, what lies under
+     * it, or (the marsh) its whole floor, under water too (tools/content/lands3_content.py, TARGETS).
+     */
+    private static final Map<String, String> PARTS = Map.of("surface", "minecraft:overworld/biome_surface",
+            "under", "minecraft:overworld/under_biome_surface", "floor", "minecraft:overworld/surface");
+
     /** One replace_partially injector: where a target biome stands and the field is within [min, max], the replacement goes instead. */
     record Injector(Identifier id, Set<ResourceKey<Biome>> targets, ResourceKey<Biome> replacement, Identifier field, float min, float max) {}
 
@@ -92,14 +99,14 @@ final class PlacementTests {
         var modifiers = LandsPack.files(server, "lithostitched/worldgen_modifier");
         for (Identifier rule : rules.keySet()) {
             String name = rule.getPath().substring(rule.getPath().lastIndexOf('/') + 1);
-            String part = name.endsWith("_surface") ? "surface" : name.endsWith("_under") ? "under" : null;
-            h.assertTrue(part != null, rule + " is a biome's _surface or _under rule");
+            String part = name.substring(name.lastIndexOf('_') + 1);
+            String target = PARTS.get(part);
+            h.assertTrue(target != null, rule + " is a biome's _surface, _under or _floor rule");
             String biome = name.substring(0, name.length() - part.length() - 1);
             h.assertTrue(lands.contains(Awaken.id(biome)), rule + " belongs to a lands biome");
             JsonObject m = json(h, modifiers.get(rule));
             h.assertTrue(m != null, rule + " is spliced in by a modifier of the same name");
             h.assertTrue("lithostitched:set_material_rule".equals(str(m, "type")) && "prepend".equals(str(m, "injection_type")), rule + " goes first");
-            String target = "minecraft:overworld/" + (part.equals("surface") ? "biome_surface" : "under_biome_surface");
             h.assertTrue(target.equals(str(m, "target_rules")), rule + " splices into " + target + ", not " + str(m, "target_rules"));
             JsonObject guard = m.getAsJsonObject("material_rule");
             boolean guarded = guard != null && "minecraft:condition".equals(str(guard, "type"))

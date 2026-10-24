@@ -36,6 +36,40 @@
       "sunsetWarmth": 0.75,
       "sunGlow": 0.9
     },
+    "biome:awaken:frost_spires": {
+      "_name": "Frost Spires: cold clear light, blue shadows, the aurora's green and violet in the split tone, the spires blooming at night",
+      "exposure": 1.0,
+      "contrast": 1.12,
+      "saturation": 1.06,
+      "warmth": -0.14,
+      "shadowTint": [
+        0.36,
+        0.5,
+        0.74
+      ],
+      "highlightTint": [
+        0.82,
+        1.0,
+        0.95
+      ],
+      "splitTone": 0.24,
+      "vignette": 0.14,
+      "bloom": 1.05,
+      "bloomThreshold": 0.5,
+      "skyBloom": 0.5,
+      "shafts": 0.35,
+      "haze": 0.3,
+      "hazeStart": 0.4,
+      "hazeTint": [
+        0.72,
+        0.86,
+        1.0
+      ],
+      "hazeTintMix": 0.45,
+      "hazeDesaturate": 0.12,
+      "sunsetWarmth": 0.3,
+      "sunGlow": 0.8
+    },
     "biome:awaken:glass_steppe": {
       "_name": "Glass Steppe: bleached and high-key, warm light, a strong sun glow and heat haze over the glass",
       "exposure": 1.04,
@@ -102,6 +136,40 @@
       "hazeTintMix": 0.55,
       "hazeDesaturate": 0.15,
       "sunsetWarmth": 0.35,
+      "sunGlow": 0.6
+    },
+    "biome:awaken:mirror_marsh": {
+      "_name": "Mirror Marsh: still and dark, deep shadows, a silver-green mist low and close, the moonblooms blooming at night",
+      "exposure": 0.98,
+      "contrast": 1.14,
+      "saturation": 0.88,
+      "warmth": -0.04,
+      "shadowTint": [
+        0.3,
+        0.36,
+        0.38
+      ],
+      "highlightTint": [
+        0.88,
+        0.96,
+        0.92
+      ],
+      "splitTone": 0.14,
+      "vignette": 0.24,
+      "bloom": 1.0,
+      "bloomThreshold": 0.52,
+      "skyBloom": 0.3,
+      "shafts": 0.3,
+      "haze": 0.5,
+      "hazeStart": 0.18,
+      "hazeTint": [
+        0.6,
+        0.68,
+        0.66
+      ],
+      "hazeTintMix": 0.55,
+      "hazeDesaturate": 0.3,
+      "sunsetWarmth": 0.4,
       "sunGlow": 0.6
     },
     "biome:awaken:shattered_highlands": {

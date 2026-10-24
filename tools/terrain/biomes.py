@@ -135,7 +135,7 @@ class Awakened:
 
 # The hero trees (dev.awaken.terrain.hero.HeroTree): giant trees built as structures, only in the biomes that list them;
 # and the landmarks (dev.awaken.terrain.landmark.Landmark), placed the same way.
-HEROES = ("elder_colossus", "lumen_spire", "gate_scar", "shard_drift")
+HEROES = ("elder_colossus", "lumen_spire", "weeping_matriarch", "gate_scar", "shard_drift", "aurora_spire")
 
 
 AWAKENED = [
@@ -147,8 +147,10 @@ AWAKENED = [
     Awakened("glass_steppe", "sunscorch", "savanna", heroes=("gate_scar",)),
     # Crag: the windswept hills' life on mountains split along lines of light, under the Shard Drifts
     Awakened("shattered_highlands", "crag", "windswept_hills", heroes=("shard_drift",)),
-    Awakened("frost_spires", "frostwild", "grove", planned=True),               # or snowy_plains
-    Awakened("mirror_marsh", "mire", "swamp", planned=True),
+    # Frostwild: the snowy taiga's life among ice-crystal spires and blue pine giants, round the Aurora Spires
+    Awakened("frost_spires", "frostwild", "snowy_taiga", heroes=("aurora_spire",)),
+    # Mire: the swamp's life on still black water under weeping trees, round the Weeping Matriarchs
+    Awakened("mirror_marsh", "mire", "swamp", heroes=("weeping_matriarch",)),
 ]
 
 # ---------------------------------------------------------------------------------------------------------------------

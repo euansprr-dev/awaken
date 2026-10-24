@@ -1,8 +1,10 @@
 {
   "values": [
     "awaken:elderwood",
+    "awaken:frost_spires",
     "awaken:glass_steppe",
     "awaken:lumen_forest",
+    "awaken:mirror_marsh",
     "awaken:shattered_highlands"
   ]
 }

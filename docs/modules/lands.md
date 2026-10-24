@@ -401,9 +401,9 @@ Mountains split along lines of light.
 ### Commands
 
 `/awaken terrain landmark <gate_scar|shard_drift> [seed]` builds one where you stand; `/awaken terrain landmarkvisit
-<landmark> [distance above]` stands you south of the nearest generated one, looking at it; `/awaken terrain lands2cost`
-prints what this pair's worldgen has cost since the server started (calls, average and total per feature and landmark,
-measured on the worldgen threads as chunks generate).
+<landmark> [distance above]` stands you south of the nearest generated one, looking at it; `/awaken terrain landscost`
+prints what the Awakened lands' worldgen has cost since the server started (calls, average and total per feature and
+landmark, measured on the worldgen threads as chunks generate).
 
 ### Checks
 
@@ -419,3 +419,125 @@ cloud VM, 2026-10-24), `terrain_landmark_builds_in_box` (a Gate Scar on a slope 
 everything inside the box, the crystal standing on the ground, the heart deep and black, the drift's lowest rock clear of
 the ground), `terrain_landmark_sites`. Tours: `tools/autopilot/lands-biomes2.txt` (looks),
 `tools/autopilot/lands-biomes2-perf.txt` (frame times and worldgen cost).
+
+## The third pair as built (2026-10-24): Frost Spires and Mirror Marsh
+
+Generated like the others: blocks, models, loot, recipes, tags, data maps, lang and every lands pack file by
+`tools/content/lands3_content.py` (called from `lands_content.py`), textures by `tools/art/specs/lands3.py`
+(`python3 tools/art/build_all.py lands3`; preview `python3 tools/art/specs/lands3.py preview <dir>`), the ambience beds
+by `tools/art/specs/audio_lands.py`. Code: `terrain.frost` (Frost Spires), `terrain.mire` (Mirror Marsh), the Aurora
+Spire in `terrain.landmark`, the Weeping Matriarch in `terrain.hero`, the air in `terrain.client.LandsMotes`. The
+blocks of all three pairs past the slice register through one `terrain.block.BlockSet` (a block set's registers, its
+items and its creative tab), and every crystal sliver (sunshard, frostspar) is a `terrain.block.CrystalClusterBlock`.
+
+### Frost Spires (Frostwild; replaces snowy plains, snowy taiga, grove and ice spikes in the field)
+
+Where an old gate froze, the cold grew into crystal.
+
+- **Blocks** (`terrain.frost.FrostBlocks`): `bluepine_log`, `stripped_bluepine_log`, `bluepine_wood`,
+  `stripped_bluepine_wood`, `bluepine_planks`, `bluepine_leaves` ("Bluepine Needles"), `bluepine_sapling` (blue-grey
+  bark in uneven scaled plates with dark fissures between, never a grid, frost caught on some lips; ice-pale heartwood;
+  short deep ice-blue needles frosted at their tips); `frostspar` (ice grown into crystal: long straight facets in pale
+  ice-blue, two seams of the aurora's green, cyan and violet light running through it as emissive model faces);
+  `frostspar_cluster` (four thin needles splayed from one spot, the aurora at their tips); `hoarfrost` (frozen ground
+  under feathers of frost: a pale ice-blue crust with two or three frost ferns; soil, so saplings root in it). No block
+  light anywhere.
+- **Ground**: hoarfrost where the pack's noise `lands/rime` passes −0.3 (drifts tens of blocks across, most of the
+  ground), grass under snow between (`worldgen/material_rule/lands/frost_spires_surface`). Snow never settles on
+  hoarfrost or frostspar (`#minecraft:cannot_support_snow_layer`), so from a peak the biome reads ice-blue on white,
+  never a vanilla snowfield. Grass `#8fb1aa`, foliage `#5f8fa8`, water `#3f76c9`, fog `#d6e6f4`, sky `#86b6ee`.
+- **Silhouette**: frost spires (`awaken:frost_spires`): a sheaf of 4–8 frostspar needles 9–16 tall bursting from one
+  root, the tallest near upright, the rest splayed every way up to half a radian, the big ones branching once or twice
+  at about 55° as hoarfrost's dendrites do on a pane; square needles turned 45° to a point, never the steppe's hexagonal
+  prisms, never all leaning one way. The root freezes the ground round it to hoarfrost with slivers in it. One in three
+  chunks; a small kind (2–4 needles, 3–7 tall) one in two; frostspar slivers scattered in the snow.
+- **Trees**: *Bluepine* (1×1, 11–16 tall: six to nine tiers of short level limbs spiralling up a dark trunk, flat blue
+  pads drooping at their rims, the tiers narrowing toward the top: a pagoda, never a spruce's solid cone) and the
+  *giant bluepine* (2×2, 22–32 tall, nine to twelve tiers), both on `limbed_trunk_placer` with its new `taper` (each
+  limb shorter and its mass smaller the higher it leaves the trunk); a fallen bluepine under snow now and then; 1–3 a
+  chunk, so the spires have their clearings. Saplings grow them (four: the giant).
+- **Air**: snow blown sideways on the wind, day and night, born upwind and streaming past, thicker in the gusts; at
+  night cold glints wake on the frostspar (`#awaken:lands/frost_glints`) (`LandsMotes`, kind `frost`); a few needles.
+- **Night**: the frostspar's aurora seams on every spire, sliver and the Aurora Spire, the brightest thing in the snow.
+- **Sound**: `amb.frost_spires` (a thin wind whistling through the spires, snow hissing over the crust in the gusts,
+  high ice chimes far apart, the odd deep creak of ice settling).
+- **Lens** (`frost_spires`): cold and clear (warmth −0.14, haze 0.30 from 0.40, tinted ice-blue), blue shadows, the
+  aurora's green and violet in the split tone (0.24), bloom from 0.50 so the spires bloom at night. The aurora in the
+  sky itself is the Lens module's (it has no aurora field yet): flagged in the hand-off.
+- **Landmark: the Aurora Spire** (`terrain.landmark.AuroraSpire`, `awaken:landmark` `"landmark": "aurora_spire"`): a
+  frostspar needle 42–58 tall standing from the middle of a frozen tarn 17–27 across, four to six lesser needles 16–34
+  long leaning out round its foot, every big one branching into side crystals at about 55°, sheaves of small spires
+  round the tarn's rim and slivers on the ice. The tarn is packed ice level with the centre's ground, cut down to it or
+  built up to it column by column (at most 5), at least two layers thick, a ring of hoarfrost round it with its snow
+  cleared; the voxels then go into air, plants, snow and water only, standing needles continued down to the ice or the
+  ground. Sites: dry, level snow (within 4 at 12 out and 6 at 20 out) at least 2 above the sea, 70 under the build
+  limit (`LandmarkStructure.levelSite`, shared with the Gate Scar). `random_spread` spacing 26, separation 9.
+
+### Mirror Marsh (Mire; replaces swamp and mangrove swamp in the field)
+
+Still black water that holds the sky.
+
+- **Blocks** (`terrain.mire.MireBlocks`): `weepwood_log`, `stripped_weepwood_log`, `weepwood_wood`,
+  `stripped_weepwood_wood`, `weepwood_planks`, `weepwood_leaves`, `weepwood_sapling` (smooth pale bark, silver going
+  green in the damp, dark lenticels; cream-green heartwood; long narrow silver-sage leaves hanging down);
+  `weepwood_tendrils` (a hanging strand of tiny paired leaflets, a pale catkin at the tip; vanilla's hanging moss block);
+  `moonbloom` (a round dark pad notched to its middle, a pale six-petalled flower on it whose petals glow as emissive
+  model faces; floats on water like a lily pad); `mirepeat` (dark wet peat with long threads of silver moss wandering
+  over it; soil). No block light anywhere.
+- **Ground**: the whole floor is the marsh's (`worldgen/material_rule/lands/mirror_marsh_floor`, spliced first into the
+  overworld's own `surface` rule, guarded by the biome, so the bed under the water is peat too): wide still pools at
+  the sea's edge (the swamp's own rule, nested as vanilla nests it, where `minecraft:surface_swamp` passes −0.2 instead
+  of 0: more water), mirepeat over most of the dry ground (`lands/peat` past −0.45), the marsh's dark grass between,
+  mirepeat under all of it (`_under`). Water `#11191c` and water fog `#030607`: the pools read black and mirror the sky.
+  Grass `#4f6250`, foliage `#5d6f5c`, fog `#9fb0ac`, sky `#8aa3c0`.
+- **Silhouette**: weeping domes over their reflections; once in a while a **Weeping Matriarch**.
+- **Trees**: *Weepwood* (1×1, 7–11 tall, leaning from a swollen foot, three or four rising limbs under low domes, a
+  curtain of tendrils from a third of the dome undersides, 3–8 long) and the *great weepwood* (2×2, 9–15, four or five
+  limbs, tendrils 4–10; four saplings in a square grow one); a fallen weepwood under moss. They stand in the shallows as swamp oaks do (water up to two
+  deep), 1–3 a chunk; the tendrils stop at the water's surface (the decorator hangs them into air only). Saplings grow
+  them on peat, mud, dirt or grass.
+- **Moonblooms** in place of lily pads, on the still water.
+- **Air**: mist: soft wisps lying just over open water, most at night and dawn (`LandsMotes`, kind `mist`); silver
+  leaves off the weepwoods.
+- **Night**: deliberately dark: the moonblooms' pale petals on black water, nothing else.
+- **Sound**: `amb.mirror_marsh`, deliberately still (a low soft drone of two near tones breathing, the faintest air,
+  slow drips into still water, once or twice a far hollow call).
+- **Lens** (`mirror_marsh`): still and dark (exposure 0.98, contrast 1.14, saturation 0.88, vignette 0.24), a
+  silver-green mist low and close (haze 0.50 from 0.18, desaturated), bloom from 0.52 so the moonblooms bloom.
+- **Hero tree: the Weeping Matriarch** (`terrain.hero.WeepingMatriarch`, `awaken:hero_tree` `"tree":
+  "weeping_matriarch"`): the marsh's mother tree, standing in its own black water. A pale gnarled trunk 4–6 across,
+  leaning, 22–30 tall, lifted on a cage of six to nine prop roots arching out of the water all round it; five to seven
+  great limbs arching out 12–17 blocks and bowing at their ends, each under a broad low dome of silver leaves, and one
+  dome over the trunk; from every dome a curtain of tendrils falls toward the water, longest at the rim. From far off the
+  crown reads as one weeping dome about 45 across over its reflection. Every root and limb is at least 0.9 thick: a
+  thinner tube can leave a block joined to the rest only at an edge. It is the first hero tree that stands in water
+  (`HeroTree.wetDepth` 3: the site's water at most three over the ground and the ground no deeper than that below the
+  sea; `HeroStructure.standing`); its strands end at the water's surface, the last one above it a tip, and moonblooms
+  float under its crown (`HeroTree.onWater`), mirepeat round its feet where they stand dry. `random_spread` spacing 24,
+  separation 9.
+
+### Commands
+
+`/awaken terrain landmark aurora_spire [seed]` and `/awaken terrain hero weeping_matriarch [seed]` build one where you
+stand; `landmarkvisit` and `herovisit` find the nearest. `/awaken terrain landscost` (was `lands2cost`) prints what the
+Awakened lands' worldgen has cost since the server started, the frost spires and the Aurora Spire's shape included.
+
+### Checks
+
+GameTests (`terrain.landmark.Lands3Tests` and the shared landmark and hero tests): `terrain_lands3_blocks`,
+`terrain_lands3_trees_grow` (six seeds of each data tree: grows, nothing loose or born decaying, reach and height; the
+bluepines' tiers narrow toward the top, the weepwoods hang curtains; measured in the cloud VM 2026-10-24: bluepine 50
+logs / 278 leaves, top 14, reach 7; giant 200 / 475, top 29, reach 9; weepwood 45 / 403 and 164 tendrils; great
+weepwood 115 / 620 and 338 tendrils), `terrain_lands3_biomes`, `terrain_frost_features` (eight sheaves on snow: every
+needle joins the ground, within 13 of the root, needles on at least two sides of it, hoarfrost round the root; 159
+blocks, 1.2 ms at the fastest in a live level), `terrain_mire_trees_in_water` (weepwoods grown with their foot in water:
+whole, and no tendril in the water; moonblooms float and never sit on peat), `terrain_landmark_shapes` (the Aurora
+Spire too: tarn, height, frostspar, the great needle in the middle, nothing cut off at the grid's edge, nothing
+unjoined; 0.72 ms at the fastest), `terrain_landmark_builds_in_box` (an Aurora Spire on a slope: its tarn level ice at
+the centre's ground across all of it, the hoarfrost ring whole, nothing floating; 3,084 blocks over 9 chunks, 0.84 ms a
+chunk), `terrain_landmark_sites` (level snow: 26 of 40 candidates on seed 777), `terrain_hero_blueprints` (the
+Matriarch: trunk top, prop roots, crown wider than it is tall, its tendrils; 3.5 ms at the fastest),
+`terrain_hero_builds_in_box` (a Matriarch in two blocks of water: inside its box, standing on the peat, no tendril in
+the water, moonblooms under its crown), `terrain_hero_sites` (swamps: 6 of 10 candidates). Tours:
+`tools/autopilot/lands-biomes3.txt` (looks), `tools/autopilot/lands-biomes3-perf.txt` (frame times beside snowy taiga
+and swamp, and `landscost`).

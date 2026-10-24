@@ -25,10 +25,19 @@ _spec = importlib.util.spec_from_file_location("lands_art", os.path.join(ROOT, "
 art = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(art)
 
-# the second pair of Awakened biomes (Glass Steppe, Shattered Highlands) has its own generator, called at the hooks below
-_spec2 = importlib.util.spec_from_file_location("lands2_content", os.path.join(HERE, "lands2_content.py"))
-lands2 = importlib.util.module_from_spec(_spec2)
-_spec2.loader.exec_module(lands2)
+
+def _load(name):
+    spec = importlib.util.spec_from_file_location(name, os.path.join(HERE, name + ".py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+# each later pair of Awakened biomes has its own generator, called at the hooks below (each exposes block_assets,
+# block_data, tags, flammable, strip_map, lang and pack): Glass Steppe and Shattered Highlands; Frost Spires and Mirror Marsh
+lands2 = _load("lands2_content")
+lands3 = _load("lands3_content")
+PAIRS = (lands2, lands3)
 
 WRITTEN = []
 
@@ -231,7 +240,8 @@ def block_assets():
     write(f"{ASSETS}/models/item/lumen_vines.json", {"parent": mc("item/generated"), "textures": {
         "layer0": aw("block/lumen_vines_tip"), "layer1": {"sprite": aw("block/lumen_vines_tip_glow"), "neoforge_data": {"light_emission": 15}}}})
     write(f"{ASSETS}/items/lumen_vines.json", {"model": {"type": mc("model"), "model": aw("item/lumen_vines")}})
-    lands2.block_assets(sys.modules[__name__])
+    for pair in PAIRS:
+        pair.block_assets(sys.modules[__name__])
 
 
 # =====================================================================================================================
@@ -303,7 +313,8 @@ def block_data():
         "minecraft:leaves": btags["minecraft:leaves"],
         "minecraft:saplings": btags["minecraft:saplings"],
     }
-    lands2.tags(sys.modules[__name__], btags, itags)
+    for pair in PAIRS:
+        pair.tags(sys.modules[__name__], btags, itags)
     for kind, tags in (("block", btags), ("item", itags)):
         for tag, values in tags.items():
             ns, path = tag.split(":")
@@ -317,7 +328,8 @@ def block_data():
         flammable[aw(name)] = {"burn_odds": 60, "ignite_odds": 30}
     flammable[aw("lumen_moss")] = {"burn_odds": 20, "ignite_odds": 60}
     flammable[aw("lumen_vines")] = {"burn_odds": 100, "ignite_odds": 15}
-    lands2.flammable(sys.modules[__name__], flammable)
+    for pair in PAIRS:
+        pair.flammable(sys.modules[__name__], flammable)
     write(f"{RES}/data/neoforge/data_maps/block/flammable.json", {"values": flammable})
     strip = {}
     for kind in ("elder", "lumen"):
@@ -328,13 +340,16 @@ def block_data():
                     {"if_true": {"type": mc("matching_blocks"), "blocks": aw(src)},
                      "then": {"type": mc("copy_properties"), "source": {"id": aw(dst), "properties": {"axis": "y"}}}}]},
                 "item_damage_per_use": 1, "sound": mc("item.axe.strip")}}
-    lands2.strip_map(sys.modules[__name__], strip)
+    for pair in PAIRS:
+        pair.strip_map(sys.modules[__name__], strip)
     write(f"{RES}/data/neoforge/data_maps/block/transformables.json", {"values": strip})
     lang = {f"block.awaken.{k}": v for k, v in NAMES.items()}
     lang["biome.awaken.elderwood"] = "Elderwood"
     lang["biome.awaken.lumen_forest"] = "Lumen Forest"
-    lands2.lang(sys.modules[__name__], lang)
-    lands2.block_data(sys.modules[__name__])
+    for pair in PAIRS:
+        pair.lang(sys.modules[__name__], lang)
+    for pair in PAIRS:
+        pair.block_data(sys.modules[__name__])
     # the terrain module's lang file is shared (wind and leaves add their subtitles): keep what others wrote
     path = f"{MERGE}/assets/awaken/lang/en_us.json"
     try:
@@ -370,7 +385,7 @@ LEAF_LITTER = weighted(*[(state(mc("leaf_litter"), facing=f, segment_amount=n), 
 
 
 def tree(trunk, branch, leaves, *, base, ra, rb, width, lean, lean_start, limbs, limb_start, limb_length, limb_rise, twig,
-         flare, radius, height, depth, hollow, ragged, hang, decorators, size, offset=0, limb_mass=-1, crown_mass=0, top=None):
+         flare, radius, height, depth, hollow, ragged, hang, decorators, size, offset=0, limb_mass=-1, crown_mass=0, top=None, taper=0.0):
     return {
         "type": mc("tree"),
         "below_trunk_provider": mc("soil_beneath_tree"),
@@ -378,7 +393,7 @@ def tree(trunk, branch, leaves, *, base, ra, rb, width, lean, lean_start, limbs,
         "trunk_placer": {"type": aw("limbed_trunk_placer"), "base_height": base, "height_rand_a": ra, "height_rand_b": rb,
                          "width": width, "lean": lean, "lean_start": lean_start, "limbs": limbs, "limb_start": limb_start,
                          "limb_length": limb_length, "limb_rise": limb_rise, "twig": twig, "root_flare": flare,
-                         "limb_mass": limb_mass, "crown_mass": crown_mass,
+                         "limb_mass": limb_mass, "crown_mass": crown_mass, **({"taper": taper} if taper else {}),
                          "branch_provider": state(branch, axis="y")},
         "foliage_provider": leaves_state(leaves),
         "foliage_placer": {"type": aw("cloud_foliage_placer"), "radius": radius, "offset": offset, "height": height, "depth": depth,
@@ -587,14 +602,20 @@ def injector(name, targets):
 HEROES = {"elder_colossus": (26, 10, 1830266171), "lumen_spire": (22, 8, 774409123)}
 
 
+def structure(kind, field, name, spacing, separation, salt):
+    """A one-piece Awaken structure of type `kind` (`field`: which one) and its wide random spread; its biomes are the
+    biome table's awaken:has_structure/<name>."""
+    write(f"{PACK}/awaken/worldgen/structure/{name}.json", {
+        "type": aw(kind), field: name, "biomes": f"#awaken:has_structure/{name}", "step": "surface_structures",
+        "spawn_overrides": {}, "terrain_adaptation": "none"})
+    write(f"{PACK}/awaken/worldgen/structure_set/{name}.json", {
+        "structures": [{"structure": aw(name), "weight": 1}],
+        "placement": {"type": mc("random_spread"), "spacing": spacing, "separation": separation, "salt": salt}})
+
+
 def heroes():
     for name, (spacing, separation, salt) in HEROES.items():
-        write(f"{PACK}/awaken/worldgen/structure/{name}.json", {
-            "type": aw("hero_tree"), "tree": name, "biomes": f"#awaken:has_structure/{name}", "step": "surface_structures",
-            "spawn_overrides": {}, "terrain_adaptation": "none"})
-        write(f"{PACK}/awaken/worldgen/structure_set/{name}.json", {
-            "structures": [{"structure": aw(name), "weight": 1}],
-            "placement": {"type": mc("random_spread"), "spacing": spacing, "separation": separation, "salt": salt}})
+        structure("hero_tree", "tree", name, spacing, separation, salt)
 
 
 def pack():
@@ -608,7 +629,8 @@ def pack():
     write(f"{PACK}/awaken/lithostitched/biome_injector/lands/elderwood.json",
           injector("elderwood", [mc("forest"), mc("birch_forest"), mc("old_growth_birch_forest"), mc("flower_forest")]))
     write(f"{PACK}/awaken/lithostitched/biome_injector/lands/lumen_forest.json", injector("lumen_forest", [mc("dark_forest")]))
-    lands2.pack(sys.modules[__name__])
+    for pair in PAIRS:
+        pair.pack(sys.modules[__name__])
 
 
 if __name__ == "__main__":

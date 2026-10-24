@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:sequence",
+  "sequence": [
+    {
+      "type": "minecraft:condition",
+      "if_true": {
+        "type": "minecraft:noise_threshold",
+        "noise": "awaken:lands/rime",
+        "min_threshold": -0.3,
+        "max_threshold": 1.7976931348623157e+308
+      },
+      "then_run": {
+        "type": "minecraft:block",
+        "result_state": "awaken:hoarfrost"
+      }
+    },
+    {
+      "type": "minecraft:block",
+      "result_state": "minecraft:grass_block"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # Frame times of the second pair (docs/modules/lands.md): the densest Glass Steppe (beside its Gate Scar, noon) and the
 # densest Shattered Highlands (beside its Shard Drift, at night: the faults' light and sparks), each beside its vanilla
 # archetype in the same run, two passes (the machine's load moves every number: compare within a run). The last lines
-# print what the second pair's worldgen cost while the run generated (lands2cost) and the air's CPU (leaves status).
+# print what the second pair's worldgen cost while the run generated (landscost) and the air's CPU (leaves status).
 # Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/lands-biomes2-perf.txt 1500
 world b2perf777 creative 777
 waitworld
@@ -63,7 +63,7 @@ wait 700
 look 30 -6
 wait 100
 perf b2_vanilla_windswept_night_2 10
-cmd awaken terrain lands2cost
+cmd awaken terrain landscost
 cmd awaken terrain leaves status
 wait 20
 quit

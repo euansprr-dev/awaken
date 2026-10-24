@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/leaves",
+  "textures": {
+    "all": "awaken:block/bluepine_leaves"
+  }
+}

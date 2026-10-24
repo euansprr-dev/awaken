@@ -1,0 +1,142 @@
+# Awakened Lands, the third pair (docs/modules/lands.md): Frost Spires and Mirror Marsh at noon, golden hour and night,
+# from the ground and from 60 blocks up; an Aurora Spire and a Weeping Matriarch from 80 blocks away and from their
+# foot; frame times in each biome beside its vanilla archetype. Review against the six signatures: the snow must blow
+# sideways and the frostspar wake at night; the marsh's water must read black and mirror the sky, the mist lie low.
+# Run: PACK=perf,world TECTONIC=awakened RD=24 tools/autopilot.sh tools/autopilot/lands-biomes3.txt 1800
+world biomes3777 creative 777
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+# ---- Frost Spires, round its nearest Aurora Spire ----
+cmd time set 6000
+cmd awaken terrain landmarkvisit aurora_spire 70 1
+wait 500
+cmd awaken terrain at
+look 150 -4
+wait 60
+shot b3_frost_noon_ground
+perf b3_frost 8
+look 230 -6
+wait 40
+shot b3_frost_noon_ground_b
+cmd time set 12400
+wait 60
+look 150 -4
+wait 20
+shot b3_frost_golden_ground
+cmd time set 18000
+wait 60
+shot b3_frost_night_ground
+perf b3_frost_night 8
+cmd time set 6000
+cmd awaken terrain landmarkvisit aurora_spire 110 60
+wait 300
+look 200 20
+wait 60
+shot b3_frost_noon_above
+cmd time set 12400
+wait 40
+shot b3_frost_golden_above
+cmd time set 18000
+wait 40
+shot b3_frost_night_above
+# ---- the Aurora Spire ----
+cmd time set 6000
+cmd awaken terrain landmarkvisit aurora_spire 80 24
+wait 300
+shot b3_spire_far
+cmd time set 12400
+wait 40
+shot b3_spire_far_golden
+cmd time set 18000
+wait 40
+shot b3_spire_far_night
+cmd time set 6000
+cmd awaken terrain landmarkvisit aurora_spire 14 1
+wait 200
+shot b3_spire_foot
+cmd time set 18000
+wait 40
+shot b3_spire_foot_night
+# ---- Mirror Marsh, round its nearest Weeping Matriarch ----
+cmd time set 6000
+cmd awaken terrain herovisit weeping_matriarch 60 1
+wait 500
+cmd awaken terrain at
+look 160 -4
+wait 60
+shot b3_marsh_noon_ground
+perf b3_marsh 8
+look 250 -6
+wait 40
+shot b3_marsh_noon_ground_b
+cmd time set 12400
+wait 60
+look 160 -4
+wait 20
+shot b3_marsh_golden_ground
+cmd time set 18000
+wait 60
+shot b3_marsh_night_ground
+perf b3_marsh_night 8
+cmd time set 6000
+cmd awaken terrain herovisit weeping_matriarch 110 60
+wait 300
+look 200 20
+wait 60
+shot b3_marsh_noon_above
+cmd time set 12400
+wait 40
+shot b3_marsh_golden_above
+cmd time set 18000
+wait 40
+shot b3_marsh_night_above
+# ---- the Weeping Matriarch ----
+cmd time set 6000
+cmd awaken terrain herovisit weeping_matriarch 80 24
+wait 300
+shot b3_matriarch_far
+cmd time set 12400
+wait 40
+shot b3_matriarch_far_golden
+cmd time set 18000
+wait 40
+shot b3_matriarch_far_night
+cmd time set 6000
+cmd awaken terrain herovisit weeping_matriarch 14 1
+wait 200
+shot b3_matriarch_foot
+cmd time set 18000
+wait 40
+shot b3_matriarch_foot_night
+# ---- the archetypes beside them (frame times) ----
+cmd time set 6000
+cmd awaken terrain visit minecraft:snowy_taiga
+wait 500
+look 30 -4
+wait 60
+shot b3_vanilla_snowy_taiga
+perf b3_vanilla_snowy_taiga 8
+cmd time set 18000
+cmd awaken terrain visit minecraft:swamp
+wait 500
+look 30 -2
+wait 60
+shot b3_vanilla_swamp_night
+perf b3_vanilla_swamp_night 8
+cmd awaken terrain leaves status
+cmd awaken terrain landscost
+wait 20
+quit

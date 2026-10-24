@@ -1,0 +1,8 @@
+{
+  "type": "awaken:hero_tree",
+  "tree": "weeping_matriarch",
+  "biomes": "#awaken:has_structure/weeping_matriarch",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}
