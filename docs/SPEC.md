@@ -38,6 +38,7 @@ Hard rules:
 | `story` | prologue (Bell Crypt, death, Stillpoint, Accept), acts, Revelations, Codex board content, the Rival, endings, New Game+ / Ascension |
 | `world` | shared overworld worldgen hooks (biome modifiers, structure sets) used by descent/above/story |
 | `body` | the Awakened Body: soft landing, tactical sprint, slide, mantle; momentum hits and trips; `core.api.MovementHooks` |
+| `terrain` | Awakened Lands (§15): the biome table, Awakened biomes and their placement, trees, ground cover, wind and falling leaves, biome looks and sound, the terrain studio commands |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -634,3 +635,38 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 15. Awakened Lands (terrain, biomes, trees, living foliage; plan in docs/plan-lands.html, approved 2026-10-24)
+
+- Shape comes from Tectonic (MIT), pinned in the pack's `world` profile with an Awakened preset; Awaken never forks it
+  unless the studio demands it. Terralith and Continents are never used (their licence bans AI projects). World height
+  stays vanilla (−64 to 320); 384 only if the studio shows peaks capped.
+- Awakened biomes take about 40% of the land. The first six: Elderwood (Greenwild), Lumen Forest (Duskwood), Glass
+  Steppe (Sunscorch), Shattered Highlands (Crag), Frost Spires (Frostwild), Mirror Marsh (Mire). Rift Canyons are a
+  landmark feature across biomes. Placement: Lithostitched biome injectors first, TerraBlender if they fall short.
+- One biome table (stage 1) gives every biome, vanilla or Awakened, its family, spirit hint, lair and ruin rights,
+  cottage palette, music, ambience and Lens look; every Awaken system reads tags generated from it. A census test fails
+  the build if any biome lacks a row.
+- Trees: data trees keep canopies within about 12 blocks of the trunk (a feature may write one chunk beyond its own);
+  giant hero trees are structures. No ticking or growing trees. Awaken logs and leaves join `#minecraft:logs` and
+  `#minecraft:leaves`. Vanilla leaf textures are untouched; Awaken trees get their own art.
+- Life: wind from world time and seed (same for every player, no packets) drives falling leaves (a fixed client pool,
+  about 150 at once, scaled by the frame budget), petals, dust and leaf rustle. Waving leaves only if the Sodium spike
+  proves them safe; if not, wind, leaves and sound ship without them.
+- Budgets: forest p50 within the Swift budget at 2880×1800 (the darkest Tectonic forest already measured 8.7 ms on
+  2026-10-24, so new foliage pays for itself); any feature ≤ 0.5 ms per chunk on average, hero-tree structures ≤ 2 ms;
+  chunk generation and a 64-chunk Distant Horizons build within 20% of plain Tectonic. Features are safe off the main
+  thread (Distant Horizons runs them in 4×4-chunk batches). Far terrain shows ground blocks, logs and leaves only, so
+  each Awakened biome has a recognisable ground block and canopy shape.
+- Gates between stages are judged from the terrain studio (contact sheets on fixed seeds and survey numbers), not by
+  playtests; Euan gets the sheets as progress.
+- Terrain studio (stage 0): `/awaken terrain survey <name> [radius] [step]` samples the generator's surface height and
+  surface biome on a grid (no chunks generated, worker threads) and writes `terrain/<name>.json` in the game folder;
+  `tools/terrain/survey.py` turns it into a biome and relief map plus numbers (biomes per km on eight transects,
+  relief per 512-block window, land share, biome shares). `/awaken terrain visit <biome|#tag>` stands you in the
+  heart of the nearest surface patch of that biome; `/awaken terrain lookout [radius]` takes you to the highest ground
+  nearby; `/awaken terrain at` prints the biome, height and climate where you stand. Tectonic presets live in
+  `pack/tectonic/<preset>.json` and an autopilot run picks one with `TECTONIC=<preset>`.
+
