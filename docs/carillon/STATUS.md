@@ -20,8 +20,8 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 
 ## Agreements with other sessions (2026-10-24)
 - Main session ("Ultimate mod pack experience", local_95821df4): owns merges into build/awaken-v1 and the body module
-  until W2. body-anims, awakened-body and cast-anims are already in build/awaken-v1 (08d5809). pack/ritual (c387982)
-  and holo part 1 (401f1b0) landed; next holo part 2 and pack/awakened-lands when their sessions say green; it pings Carillon with each
+  until W2. body-anims, awakened-body and cast-anims are already in build/awaken-v1 (08d5809). pack/ritual (c387982),
+  holo part 1 (401f1b0) and awakened-lands (c8bd922) landed; next holo part 2 and pack/avatar-render and pack/awakened-lands when their sessions say green; it pings Carillon with each
   commit, and carillon/main merges build/awaken-v1 after each. It takes the shared tour lock for its own perf tours.
   W2 notes from it: keep `MovementHooks` stable (powers/MoveTwists uses it); clips come from
   tools/art/specs/body_moves.py (edit the spec, not the JSON); update docs/proposals/awakened-body.md and the SPEC rule
@@ -58,3 +58,6 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   confirmed five renderers affected (TownNpc, training Ghost, Shade, ShadowSelf, AwRenderers' player-model mobs) and is
   fixing them on pack/avatar-render with the HumanoidRenderState pattern; the rule is in briefs/RULES.md. pack/awakened-
   lands 4f81ce8 is being merged into build/awaken-v1 (tests running).
+- 2026-10-24: pack/awakened-lands landed on build/awaken-v1 (c8bd922, 318/318) and was merged into carillon/main
+  (0047e13; SPEC end-of-file conflict resolved: §15 before §16). carillon/main now has dev.awaken.terrain (CityBasin,
+  CitySite) and the feature flags awaken:awakened_lands and awaken:carillon. Waiting on: pack/avatar-render, holo merge 2.
