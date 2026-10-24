@@ -1323,6 +1323,16 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   touch it) → grammar fills plots (seed varies details, never shape). The same pass writes the street graph and the roof
   graph (edges carry the move they need; door and stair links). Plan hash checked by GameTest.
 - Placed only in vanilla blocks + the Carillon kit (~35 blocks of our own); no third-party blocks.
+- Decided in M1 (2026-10-25): Choir Square sits at the plan's centre with the Choir on its north edge; the High Terrace is
+  raised 8 blocks (five stairs up); the river has a lower quay at y 66 above water at y 63, with ladders; gatehouses at
+  N, E and S plus two water gates, 24 tower places; fields outside the wall only in carved (basin) worlds; the street
+  graph, roof graph and the opening's street route are generated with the plan (tools/city/plan.py → data/awaken/city/
+  plan.json, schemaVersion 1, hash pinned) and copied into SavedData `awaken:city` at creation; "civic" means
+  everything inside the wall; `respawn_radius` 0 in Carillon worlds (you respawn on the Roost); the pregen covers the
+  painted area plus 2 chunks (1,708 chunks, ~14–15 s with Tectonic + Lithostitched); the spawn vault ring moves to
+  402–522 blocks round the city. Carillon is on by default in new worlds through a built-in pack that requests
+  `awaken:carillon`; turning it off on the Data Packs screen is the Classic start. Until M2, the prologue opens its
+  Bell Crypt gate in Choir Square in Carillon worlds (CityHooks.square).
 - Climbable language: bronze trim, dark beams and drainpipes can be held; plain plaster and glass can't.
 - Pregenerated at world creation (~1,250 chunks, ≤ 30 s on a quiet M4; G0 measured 11–28 s for terrain + city, the
   city 2–5% of it; Distant Horizons holds its LOD building until the pregen ends) behind the opening card; graphs saved

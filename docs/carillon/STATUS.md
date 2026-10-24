@@ -15,7 +15,7 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 
 | Milestone | Builder (model) | Branch / worktree | State |
 |---|---|---|---|
-| M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | running (brief: briefs/M1-city.md) |
+| M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
 | M2 the opening in blockout | Director (Opus xhigh) | — | starts as soon as the Ascent's Runner tier is on build/awaken-v1 |
 | M3 alive | Citizens (Opus xhigh + Sonnet data) | — | next after M1 if the Runner tier hasn't landed (decision 20) |
 | M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
@@ -97,3 +97,11 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   claude/ascent-7dcb3a); it pings once when the Runner tier lands on build/awaken-v1. M2 waits for that ping.
 - 2026-10-25: order change (SPEC §16.0 decision 20, Euan via the pack session): after M1, ask the Ascent for its Runner
   timing; if the Runner tier isn't on build yet, start M3 (Alive); start M2 the moment it lands.
+- 2026-10-25: M1 reviewed and merged (94de89a7). Checked: 6 commits, tree clean, CI green on carillon/m1-city; the edits
+  outside city (gates/Director, world/anomaly/Spots, above/ruin/SpawnRingPlacement, descent/well/Well) are small guarded
+  "stay out of the reserve" checks; shots reviewed (m1/: sky nw/top/low, the Roost, the square, the Quay): from the sky it
+  reads as a designed walled city (ring wall and towers, river and canals, radial avenues from a lit round square, the
+  green spire, the white Terrace, cherry-tree Garden Ward, district colours). Short of the bar: Bellwatch is a dark
+  slate mass from above, the wall one heavy grey, all vanilla blocks up close (→ M4). Interim: the prologue's Bell Crypt
+  gate opens in Choir Square in Carillon worlds (until M2). Watch: a Distant Horizons + Sodium meshing glitch drew
+  floating windows once (tour 1; not the city's blocks). New flake seen on CI: gates_build_break_hold.
