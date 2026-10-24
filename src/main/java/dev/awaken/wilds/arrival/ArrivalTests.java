@@ -98,10 +98,10 @@ public final class ArrivalTests {
         });
     }
 
-    /** Ticks of walking east along the ground. */
+    /** Ticks of walking east along the ground, two blocks clear of the tower block under {@code at}. */
     private static void walk(ServerPlayer p, Arrival.State s, long[] t, BlockPos at, int ticks) {
         for (int i = 0; i < ticks; i++) {
-            p.setPos(at.getX() + 0.5 + (t[0] % 40) * 0.2, at.getY(), at.getZ() + 0.5);
+            p.setPos(at.getX() + 2.5 + (t[0] % 40) * 0.2, at.getY(), at.getZ() + 0.5);
             p.setOnGround(true);
             Arrival.step(p, s, t[0]++);
         }

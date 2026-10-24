@@ -55,5 +55,6 @@ The Wilds' foundations from docs/plan-ascent.html §6: everything that doesn't w
   RMS -23.0 / -21.2 / -19.5 dB, true peak ≤ -1.7 dB).
 
 ## CI
-- VM: one full run at the end (see the commit log for the result).
-- GitHub Actions run: see below once pushed.
+- VM, one full run at the end: every test passed except `wilds_arrival_history`, whose walk passed back over its own
+  tower block (a test bug: the rule was right). Fixed; the wilds, Horizon and System layout tests then passed (16/16).
+- GitHub Actions: the GameTests workflow on `pack/wilds-base` (run id in the hand-off message to the pack session).
