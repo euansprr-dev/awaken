@@ -120,6 +120,33 @@ public final class Autopilot {
         }
     }
 
+    /**
+     * Tours run on the MacBook's own display, never on an external monitor (an external 4K display changes every frame
+     * time and the owner works there): the window moves to the built-in display, or the primary one if none is named so.
+     */
+    private static void onBuiltInDisplay(Minecraft mc) {
+        if (!com.mojang.blaze3d.platform.MacosUtil.IS_MACOS) return;
+        try {
+            long window = mc.getWindow().handle();
+            int target = org.lwjgl.sdl.SDLVideo.SDL_GetPrimaryDisplay();
+            java.nio.IntBuffer displays = org.lwjgl.sdl.SDLVideo.SDL_GetDisplays();
+            if (displays != null) {
+                for (int i = 0; i < displays.remaining(); i++) {
+                    String name = org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(displays.get(i));
+                    if (name != null && name.startsWith("Built-in")) target = displays.get(i);
+                }
+                org.lwjgl.sdl.SDLStdinc.SDL_free(displays);
+            }
+            if (target != 0 && org.lwjgl.sdl.SDLVideo.SDL_GetDisplayForWindow(window) != target) {
+                int centred = org.lwjgl.sdl.SDLVideo.SDL_WINDOWPOS_CENTERED_DISPLAY(target);
+                org.lwjgl.sdl.SDLVideo.SDL_SetWindowPosition(window, centred, centred);
+                Awaken.LOG.info("[autopilot] window moved to {}", org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(target));
+            }
+        } catch (RuntimeException | LinkageError e) {
+            Awaken.LOG.warn("[autopilot] could not choose the display: {}", e.toString());
+        }
+    }
+
     private static boolean occluded(Minecraft mc) {
         return (org.lwjgl.sdl.SDLVideo.SDL_GetWindowFlags(mc.getWindow().handle()) & org.lwjgl.sdl.SDLVideo.SDL_WINDOW_OCCLUDED) != 0;
     }
@@ -182,6 +209,7 @@ public final class Autopilot {
             mc.options.enableVsync().set(false);
             mc.options.framerateLimit().set(260);
             mc.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
+            onBuiltInDisplay(mc);
         }
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
@@ -392,14 +420,17 @@ public final class Autopilot {
                 for (var b : ManagementFactory.getGarbageCollectorMXBeans()) gc.append(gc.isEmpty() ? "" : ",").append(b.getName());
                 StringBuilder mods = new StringBuilder();
                 for (var m : ModList.get().getMods()) mods.append(mods.isEmpty() ? "" : ",").append(m.getModId());
-                Awaken.LOG.info("[autopilot] info backend={} driver={} device={} fb={}x{} window={}x{} rd={} sd={} heapMax={}MB gc={} mods={}",
-                        d.backendName(), d.driverInfo(), d.name(), mc.getWindow().getWidth(), mc.getWindow().getHeight(),
+                Awaken.LOG.info("[autopilot] info backend={} driver={} device={} display={} fb={}x{} window={}x{} rd={} sd={} heapMax={}MB gc={} mods={}",
+                        d.backendName(), d.driverInfo(), d.name(),
+                        org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(org.lwjgl.sdl.SDLVideo.SDL_GetDisplayForWindow(mc.getWindow().handle())).replace(' ', '_'),
+                        mc.getWindow().getWidth(), mc.getWindow().getHeight(),
                         mc.getWindow().getScreenWidth(), mc.getWindow().getScreenHeight(), mc.options.renderDistance().get(),
                         mc.options.simulationDistance().get(), Runtime.getRuntime().maxMemory() >> 20, gc, mods);
             }
-            case "window" -> { // window <width> <height>, in points
+            case "window" -> { // window <width> <height>, in points, on the Mac's own display
                 String[] w = arg.trim().split("\\s+");
                 mc.getWindow().setWindowed(Integer.parseInt(w[0]), Integer.parseInt(w[1]));
+                onBuiltInDisplay(mc);
                 waitTicks = 20;
             }
             case "lens" -> {
