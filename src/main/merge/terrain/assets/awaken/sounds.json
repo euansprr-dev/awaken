@@ -14,5 +14,21 @@
         "name": "awaken:amb_lands_wind_high"
       }
     ]
+  },
+  "amb.glass_steppe": {
+    "subtitle": "subtitles.awaken.amb.glass_steppe",
+    "sounds": [
+      {
+        "name": "awaken:amb_glass_steppe"
+      }
+    ]
+  },
+  "amb.shattered_highlands": {
+    "subtitle": "subtitles.awaken.amb.shattered_highlands",
+    "sounds": [
+      {
+        "name": "awaken:amb_shattered_highlands"
+      }
+    ]
   }
 }

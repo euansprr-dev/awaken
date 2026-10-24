@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/stripped_glassbark_log_top",
+    "side": "awaken:block/stripped_glassbark_log"
+  }
+}

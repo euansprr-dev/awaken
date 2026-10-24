@@ -16,6 +16,8 @@ public final class HoloConfig {
 
     public enum HudMotion { OFF, SUBTLE, FULL }
 
+    public enum InventoryStyle { HOLO, VANILLA }
+
     private static final ModConfigSpec.Builder B = new ModConfigSpec.Builder();
     public static final ModConfigSpec.EnumValue<StatusStyle> STATUS_STYLE = B
             .comment("The Status screen (K): HOLO floats it in front of you from your wrist; FLAT is the classic flat screen.",
@@ -25,6 +27,14 @@ public final class HoloConfig {
             .comment("How much Awaken's HUD drifts when you turn sharply: OFF, SUBTLE (at most ~2 GUI pixels) or FULL (at most 4).",
                     "It also follows vanilla's Screen Effect Scale, and is off when View Bobbing is off. Vanilla's hotbar never moves.")
             .defineEnum("hudMotion", HudMotion.SUBTLE);
+    public static final ModConfigSpec.EnumValue<InventoryStyle> INVENTORY_STYLE = B
+            .comment("The inventory (E): HOLO unfolds it from your wrist as a holo panel; VANILLA keeps Minecraft's own screen.",
+                    "HOLO needs the Status screen style HOLO (and its shaders); every click, drag and shift-click works the same either way.")
+            .defineEnum("inventoryStyle", InventoryStyle.HOLO);
+    public static final ModConfigSpec.BooleanValue HUD_FADE = B
+            .comment("Awaken's power bar and level readout fade to 35% when nothing needs them (out of combat, energy full,",
+                    "no cooldown running, no fresh XP) and come back the moment something does.")
+            .define("hudFade", true);
     public static final ModConfigSpec.BooleanValue REDUCED_MOTION = B
             .comment("Panels follow your view directly instead of trailing it, and open with a short fade.")
             .define("reducedMotion", false);
@@ -34,9 +44,13 @@ public final class HoloConfig {
     static StatusStyle statusStyle = StatusStyle.HOLO;
     static HudMotion hudMotion = HudMotion.SUBTLE;
     static boolean reducedMotion;
+    static InventoryStyle inventoryStyle = InventoryStyle.HOLO;
+    static boolean hudFade = true;
     /** Overrides for the autopilot (null = use the config). */
     static HudMotion forcedHudMotion;
     static StatusStyle forcedStyle;
+    static InventoryStyle forcedInventory;
+    static Boolean forcedHudFade;
 
     static void register() {
         try {
@@ -52,6 +66,8 @@ public final class HoloConfig {
             statusStyle = forcedStyle != null ? forcedStyle : STATUS_STYLE.get();
             hudMotion = forcedHudMotion != null ? forcedHudMotion : HUD_MOTION.get();
             reducedMotion = REDUCED_MOTION.get();
+            inventoryStyle = forcedInventory != null ? forcedInventory : INVENTORY_STYLE.get();
+            hudFade = forcedHudFade != null ? forcedHudFade : HUD_FADE.get();
         } catch (RuntimeException e) {
             // keep the last good values
         }

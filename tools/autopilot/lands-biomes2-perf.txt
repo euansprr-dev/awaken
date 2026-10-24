@@ -1,0 +1,69 @@
+# Frame times of the second pair (docs/modules/lands.md): the densest Glass Steppe (beside its Gate Scar, noon) and the
+# densest Shattered Highlands (beside its Shard Drift, at night: the faults' light and sparks), each beside its vanilla
+# archetype in the same run, two passes (the machine's load moves every number: compare within a run). The last lines
+# print what the second pair's worldgen cost while the run generated (lands2cost) and the air's CPU (leaves status).
+# Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/lands-biomes2-perf.txt 1500
+world b2perf777 creative 777
+waitworld
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+info
+cmd gamemode spectator
+cmd time set 6000
+cmd awaken terrain landmarkvisit gate_scar 40 2
+wait 700
+look 160 -6
+wait 100
+perf b2_glass_steppe_dense 10
+cmd awaken terrain visit minecraft:savanna
+wait 700
+look 30 -6
+wait 100
+perf b2_vanilla_savanna 10
+cmd time set 18000
+cmd awaken terrain landmarkvisit shard_drift 40 2
+wait 700
+look 160 -6
+wait 100
+perf b2_highlands_dense_night 10
+cmd awaken terrain visit minecraft:windswept_hills
+wait 700
+look 30 -6
+wait 100
+perf b2_vanilla_windswept_night 10
+# a second pass
+cmd time set 6000
+cmd awaken terrain landmarkvisit gate_scar 40 2
+wait 700
+look 160 -6
+wait 100
+perf b2_glass_steppe_dense_2 10
+cmd awaken terrain visit minecraft:savanna
+wait 700
+look 30 -6
+wait 100
+perf b2_vanilla_savanna_2 10
+cmd time set 18000
+cmd awaken terrain landmarkvisit shard_drift 40 2
+wait 700
+look 160 -6
+wait 100
+perf b2_highlands_dense_night_2 10
+cmd awaken terrain visit minecraft:windswept_hills
+wait 700
+look 30 -6
+wait 100
+perf b2_vanilla_windswept_night_2 10
+cmd awaken terrain lands2cost
+cmd awaken terrain leaves status
+wait 20
+quit

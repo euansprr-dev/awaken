@@ -549,13 +549,28 @@ final class WildTests {
         }
     }
 
+    /** Rounds of {@link #hammer} that take one creature per patch per turn before the packs. */
+    private static final int SINGLE_ROUNDS = 4;
+
     /** Hundreds of spawn attempts at every family's patch around one player: no role ever passes its cap. */
     private static void hammer(GameTestHelper h, ServerLevel level, ServerPlayer p, List<BlockPos> patches, List<FaunaMob> made, long time) {
         FaunaRules.timeOverride = time;
         try {
             List<FaunaMob> before = new ArrayList<>(FaunaCensus.in(level));
-            for (int round = 0; round < 60; round++) {
-                for (BlockPos c : patches) NaturalSpawner.spawnCategoryForPosition(MobTypes.FAUNA, level, c);
+            // The patches take turns in a fixed order and a call spawns a whole pack, so the first two patches could fill
+            // every cap on their own and leave the other families no room. The first rounds take one creature per patch
+            // per turn, so each family gets its turns while there is room; then whole packs hammer the full caps.
+            int[] thisCall = new int[1];
+            for (int round = 0; round < SINGLE_ROUNDS + 60; round++) {
+                for (BlockPos c : patches) {
+                    if (round < SINGLE_ROUNDS) {
+                        thisCall[0] = 0;
+                        NaturalSpawner.spawnCategoryForPosition(MobTypes.FAUNA, level, level.getChunk(c), c,
+                                (type, l, pos, chunk) -> thisCall[0] == 0, (mob, chunk) -> thisCall[0]++);
+                    } else {
+                        NaturalSpawner.spawnCategoryForPosition(MobTypes.FAUNA, level, c);
+                    }
+                }
                 for (FaunaRole r : FaunaRole.values()) {
                     int n = FaunaCensus.countNear(level, r, p.getX(), p.getZ(), 128);
                     h.assertTrue(n <= r.capPerPlayer, r + " under its cap with every family around: " + n + " > " + r.capPerPlayer);

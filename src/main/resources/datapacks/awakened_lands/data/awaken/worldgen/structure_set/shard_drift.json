@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:shard_drift",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 22,
+    "separation": 8,
+    "salt": 905113377
+  }
+}

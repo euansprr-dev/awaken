@@ -1,0 +1,13 @@
+{
+  "type": "awaken:floating_shard",
+  "radius": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 1,
+    "max_inclusive": 3
+  },
+  "lift": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 7,
+    "max_inclusive": 20
+  }
+}

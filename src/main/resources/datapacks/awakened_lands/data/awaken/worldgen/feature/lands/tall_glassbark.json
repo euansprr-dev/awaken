@@ -1,0 +1,84 @@
+{
+  "type": "minecraft:tree",
+  "below_trunk_provider": "minecraft:soil_beneath_tree",
+  "trunk_provider": {
+    "id": "awaken:glassbark_log",
+    "properties": {
+      "axis": "y"
+    }
+  },
+  "trunk_placer": {
+    "type": "awaken:limbed_trunk_placer",
+    "base_height": 9,
+    "height_rand_a": 3,
+    "height_rand_b": 2,
+    "width": 1,
+    "lean": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 2,
+      "max_inclusive": 4
+    },
+    "lean_start": 0.2,
+    "limbs": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 3,
+      "max_inclusive": 4
+    },
+    "limb_start": 0.5,
+    "limb_length": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 3,
+      "max_inclusive": 5
+    },
+    "limb_rise": 0.75,
+    "twig": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 1,
+      "max_inclusive": 2
+    },
+    "root_flare": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 1,
+      "max_inclusive": 2
+    },
+    "limb_mass": 0,
+    "crown_mass": 0,
+    "branch_provider": {
+      "id": "awaken:glassbark_wood",
+      "properties": {
+        "axis": "y"
+      }
+    }
+  },
+  "foliage_provider": {
+    "id": "awaken:glassbark_leaves",
+    "properties": {
+      "distance": "7",
+      "persistent": "false",
+      "waterlogged": "false"
+    }
+  },
+  "foliage_placer": {
+    "type": "awaken:cloud_foliage_placer",
+    "radius": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 3,
+      "max_inclusive": 5
+    },
+    "offset": 1,
+    "height": 1,
+    "depth": 0.35,
+    "hollow": 0.0,
+    "ragged": 0.3,
+    "hang": 0.0
+  },
+  "minimum_size": {
+    "type": "minecraft:two_layers_feature_size",
+    "limit": 1,
+    "lower_size": 0,
+    "upper_size": 1,
+    "min_clipped_height": 7
+  },
+  "decorators": [],
+  "ignore_vines": true
+}

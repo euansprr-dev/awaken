@@ -42,6 +42,7 @@ import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
@@ -310,7 +311,8 @@ final class Fauna3Tests {
             Fauna3Commands.buildGrotto(level, centre, 7, 5, 7);
             List<FaunaMob> made = new ArrayList<>();
             var seq = h.startSequence();
-            seq.thenIdle(30); // the light engine darkens the sealed room
+            // a cave creature needs a roof that shuts out the sky: the grotto is dark once the light engine has caught up
+            seq.thenExecute(() -> grottoLight(h, centre, 7, 5, 7, false));
             for (var biome : List.of(Biomes.DRIPSTONE_CAVES, Biomes.LUSH_CAVES, Biomes.DEEP_DARK)) {
                 seq.thenExecute(() -> fillBiome(level, cmd, centre, 9, biome));
                 seq.thenIdle(5);
@@ -324,8 +326,8 @@ final class Fauna3Tests {
                 fillBiome(level, cmd, centre, 9, Biomes.DRIPSTONE_CAVES);
                 level.setBlock(centre.offset(-3, 1, 0), Blocks.TORCH.defaultBlockState(), Block.UPDATE_ALL);
                 level.setBlock(centre.offset(3, 1, 0), Blocks.TORCH.defaultBlockState(), Block.UPDATE_ALL);
+                grottoLight(h, centre, 7, 5, 7, true);
             });
-            seq.thenIdle(30);
             seq.thenExecute(() -> spawnCave(h, level, p, centre.offset(2, 1, 0), Biomes.DRIPSTONE_CAVES, 18000L, made, false));
             seq.thenExecute(() -> {
                 made.forEach(FaunaMob::discard);
@@ -509,8 +511,8 @@ final class Fauna3Tests {
                         Fauna3Commands.buildGrotto(level, centre, 6, 5, 5);
                         p.teleportTo(level, centre.getX() + 0.5, centre.getY() + 1, centre.getZ() + 0.5, Set.of(), 0, 0, true);
                     })
-                    .thenIdle(30)
                     .thenExecute(() -> {
+                        grottoLight(h, centre, 6, 5, 5, false);
                         // the cricket finds the ore through the rock and sings beside it
                         CaveFauna cricket = (CaveFauna) spawn(level, "chime_cricket", Vec3.atBottomCenterOf(centre.offset(4, 1, 3)), made);
                         h.assertTrue(cricket != null, "the cricket spawned");
@@ -539,11 +541,10 @@ final class Fauna3Tests {
                         h.assertTrue(hush.def().has(dev.awaken.mobs.def.Trait.LISTENER), "a listener");
                     })
                     .thenExecute(() -> {
-                        // the light rule: a torch at the player's feet and the dark is gone
-                        level.setBlock(BlockPos.containing(p.position()), Blocks.TORCH.defaultBlockState(), Block.UPDATE_ALL);
-                    })
-                    .thenIdle(20)
-                    .thenExecute(() -> {
+                        // the light rule: a torch at the player's feet and the dark is gone (once the light engine has it)
+                        BlockPos torch = BlockPos.containing(p.position());
+                        level.setBlock(torch, Blocks.TORCH.defaultBlockState(), Block.UPDATE_ALL);
+                        AwakenTests.awaitLight(h, torch, torch);
                         h.assertTrue(!FaunaMob.inDarkness(p), "in torchlight the player is safe from the hunters (the light rule)");
                         made.forEach(AwakenMob::discard);
                         WildTests.wipe(level, centre.offset(-8, -2, -8), centre.offset(8, 8, 8));
@@ -678,6 +679,24 @@ final class Fauna3Tests {
             spawned.forEach(FaunaMob::discard);
         } finally {
             FaunaRules.timeOverride = null;
+        }
+    }
+
+    /**
+     * The light in a grotto built by {@link Fauna3Commands#buildGrotto}, read once the light engine has caught up with
+     * its blocks: no sky light anywhere in its hollow, and either no block light at all ({@code lit} false) or some block
+     * light on every floor block ({@code lit} true).
+     */
+    static void grottoLight(net.minecraft.gametest.framework.GameTestHelper h, BlockPos origin, int hw, int hgt, int hd, boolean lit) {
+        AwakenTests.awaitLight(h, origin.offset(-hw - 1, 0, -hd - 1), origin.offset(hw + 1, 0, hd + 1));
+        ServerLevel level = h.getLevel();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int x = -hw; x <= hw; x++) for (int z = -hd; z <= hd; z++) for (int y = 1; y <= hgt; y++) {
+            m.set(origin.getX() + x, origin.getY() + y, origin.getZ() + z);
+            int sky = level.getBrightness(LightLayer.SKY, m), block = level.getBrightness(LightLayer.BLOCK, m);
+            h.assertTrue(sky == 0, "the roof shuts out the sky: sky light " + sky + " at " + m.toShortString());
+            if (!lit) h.assertTrue(block == 0, "the grotto is dark: block light " + block + " at " + m.toShortString());
+            else if (y == 1) h.assertTrue(block > 0, "torchlight reaches every floor block: none at " + m.toShortString());
         }
     }
 

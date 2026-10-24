@@ -135,7 +135,11 @@ final class FallingLeaves {
         AirTable.BiomeStyle bs = forcedBiome != null ? forcedBiome : AirTable.biome(biome);
         float strength = wind.strength(bx + 0.5, bz + 0.5);
 
-        if (bs.motes() != null) {
+        if (bs.motes() != null && bs.motes().kind() != null) {
+            // glints on glass, sparks and dust over the faults (the second pair of Awakened biomes)
+            AirTable.MoteStyle m = bs.motes();
+            if (RNG.nextFloat() < MOTE_CHANCE * m.rate() * rateMul && LandsMotes.spawn(mc, level, bx, bz, c, night, budgetScale, m)) return true;
+        } else if (bs.motes() != null) {
             AirTable.MoteStyle m = bs.motes();
             float when = m.night() ? night : 1F;
             if (when > 0F && RNG.nextFloat() < MOTE_CHANCE * m.rate() * when * rateMul) return spawnMote(mc, level, bx, bz, c, m);

@@ -665,7 +665,7 @@ Plan v2 · gate interiors and D–B tuning (details in docs/modules/gates.md "In
 Plan v2 · first launch: vanilla's "experimental settings" prompt (shown because the mod adds worldgen) is answered for
 the player (client config `skipExperimentalWarning`, default on).
 
-Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 and P2):
+Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1, P2, P3 and P5's sounds and HUD fade):
 - K opens the menu on the wrist when `statusStyle = HOLO` (default) and both holo pipelines compiled; otherwise the
   flat StatusScreen. `screen status|map|codex` in the autopilot stay flat; `screen holo` opens the holo one.
 - Timeline: arm 0–120 ms, band flare 60–200 (peak ×2.5 at 140), beams from the wrist with an opening surge 110–360
@@ -710,8 +710,31 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   is a still card (no scan, no glitch). Only reading screens raise `UiHooks.focus`; toasts, cards and the Now line never
   dim the world. `statusStyle = FLAT` (or GUI shaders that fail) keeps everything flat. With a first power pending, K
   opens the first-power choice in either style.
+- The inventory (P3): E opens vanilla's survival `InventoryScreen` as a holo panel when `inventoryStyle = HOLO` and the
+  projected look draws (`statusStyle = HOLO`, GUI holo shaders compiled); creative and other mods' inventory screens
+  are never swapped. It is a subclass of vanilla's screen (swapped on `ScreenEvent.Opening`), so every click, drag,
+  shift-click, number key, the recipe book and other mods' container hooks are vanilla's, live from the first frame.
+  It plays the K menu's choreography at 2.5× (open in 180 ms, closed in 100 ms): the wrist rises, a 3D panel grows out
+  of the band and lands on the flat screen's rectangle pixel for pixel (one unit = one GUI pixel), and the flat face
+  crossfades in at 148–180 ms (items, figure and title switch halfway); closing, the 3D panel folds back holding what
+  the inventory holds then. Reduced motion (or no world pipelines): the flat face fades in place. The face is the K
+  panel's glass, tint, halo, rim and brackets drawn unit for unit in the GUI pass, projected wells instead of slot
+  squares (18×18, the result 26×26; the hotbar brighter, the hand's slot lit), the figure on a projected floor, an
+  arrow of light to the result, the title as light, the recipe button a glass key; no dim or blur (Lens dims through
+  `UiHooks.focus`). Others see the wrist (`holo_state` INVENTORY). `inventoryStyle = VANILLA` (or the flat look) leaves
+  vanilla's screen untouched. Not restyled yet: the recipe book's panel and the status-effect list.
+- Sounds (P5): `holo.open` (K menu, volume 0.5), `holo.open_quick` (inventory, 0.3), `holo.close` (0.4 / 0.22),
+  `holo.hover` (0.18), `holo.card`; synthesised by `tools/art/specs/audio_holo.py` in the System's glass voice (D major
+  pentatonic), UI loudness (−24 ± 3 dBFS RMS, true peak ≤ −3), Interface slider. While the projected look draws,
+  `signal.open` (a card arriving) plays as `holo.card` instead, never both. The hover tick sounds once per new target
+  (a K-menu tab, an inventory slot holding something, the recipe key), at most every 55 ms, never while a panel still
+  unfolds or a drag spreads items.
+- Calm HUD tier 1 (P5): `awaken:power_bar` and `awaken:level` fade to 35% after 3 s with nothing needing them (out of
+  combat as `SystemHud.inCombat` judges it, energy full, no cooldown or active power, no slot, level, XP or point
+  change), over 1.2 s, and return in 150 ms. Drawn through an alpha-multiplying graphics around the unchanged layers;
+  the gate run HUD never fades (its collapse timer must stay readable).
 - Client settings (`awaken-holo-client.toml`): `statusStyle` (the projected look for the K menu, the System's cards and
-  the first-power choice), `hudMotion`, `reducedMotion`.
+  the first-power choice), `inventoryStyle` (HOLO | VANILLA), `hudMotion`, `hudFade` (on), `reducedMotion`.
 
 Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
 docs/modules/onboarding.md "The Ritual of the Bell"):
@@ -759,6 +782,12 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
+- Ticks are not time on the GameTest server (it never waits between ticks), so no test waits a tick count for work
+  done on other threads. Every test starts once its force-loaded 5x5 chunks entity-tick, and light levels are read
+  after `AwakenTests.awaitLight` (the light engine has taken every block change so far); both wait in real time, at
+  most 30 s, by running the chunk system's main-thread queue. Timing budgets assert on the fastest of a few runs.
+  A test that needs untouched ground owns fresh ground away from the test grid (plots sit 6 blocks apart).
+- `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -991,12 +1020,39 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   loads the pack and records the flag; a world made before the flag existed lacks it, so the game skips the pack there
   and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
   it off). Test: `terrain_lands_pack_new_worlds_only`.
-- Placed today (2026-10-24, the vertical slice): Elderwood (replaces forest, birch, old-growth birch and flower forest)
-  and Lumen Forest (replaces dark forest), both where the awakening field ≥ 0. Every other row of the table is planned.
+- Placed today (2026-10-24): Elderwood (replaces forest, birch, old-growth birch and flower forest), Lumen Forest
+  (dark forest), Glass Steppe (savanna, savanna plateau) and Shattered Highlands (windswept hills, windswept gravelly
+  hills, stony peaks), all where the awakening field ≥ 0. Frost Spires and Mirror Marsh are planned.
+- An Awakened biome's own ground is a material rule in the lands pack (`worldgen/material_rule/lands/<biome>_surface`
+  and `_under`), spliced first into the overworld's `biome_surface` and `under_biome_surface` by Lithostitched
+  `set_material_rule` modifiers (`injection_type: prepend`, guarded by its biome), so the surface pass lays it and far
+  terrain shows it. Glass Steppe: fused glass where the noise `awaken:lands/glass` ≥ 0.3, else sun-gold grass; Shattered
+  Highlands: riven shale on steep ground and where the `minecraft:surface` noise ≥ −0.05, else grass.
+- Shattered Highlands' faults (`terrain.fault.FaultLinesFeature`, `awaken:fault_lines`, local modifications, once a
+  chunk over its own columns): the zero line of `awaken:lands/fault` (octave −8, five octaves); a column's distance to
+  it is the noise over its slope (sampled on a 2-block lattice, bilinear), faultstone within 1.6 blocks (three deep),
+  the seam within 0.55; where `awaken:lands/fault_trench` passes 0.15 the fault widens (by up to 2.8 a side) and opens
+  into a V trench up to 9 deep. Decisions come from the noises and the column only (continuous across chunk borders);
+  never into water or down to the sea. Faultstone and the seam are in `#minecraft:cannot_support_snow_layer`.
+- Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift"`,
+  `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass Steppe; a glassed
+  bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its ground column by
+  column from each column's own ground and its distance from the centre; the Shard Drift (Shattered Highlands; 7–12
+  floating shards along a fault; spacing 22, separation 8) walks its site onto the fault line and samples the ground
+  under each shard once at the start. Both place voxels into air, plants and water only and never write outside their
+  box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms on the fastest of eight seeds, as
+  `terrain_landmark_shapes` asserts; features ≤ 0.5 ms a chunk on average);
+  `/awaken terrain lands2cost` reports what they cost on the worldgen threads.
+- Air for the second pair: an air.json biome rule's `motes.kind` hands the spot to `terrain.client.LandsMotes`
+  (cap 120 × the leaves' frame-budget scale): `glint` (Glass Steppe, by day: a star blinking on sunlit glass of
+  `#awaken:lands/glints`) and `fault` (Shattered Highlands: sparks off `#awaken:lands/faults` at night, dust by day).
 - Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
   are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+  `terrain_lands_placement` holds the injectors to the biome table (one per Awakened biome, its archetype among its
+  vanilla targets, no target claimed twice, ground splices guarded by their biome) and measures the share on the
+  five studio seeds by applying the injectors to the vanilla generator as Lithostitched does.
 - The biome table (stage 1): `tools/terrain/biomes.py` is the one source (`write`; `check` fails on a stale file, a
   vanilla overworld biome without a row or a lands-pack biome without one). Base Awaken data refers to biomes only
   through the tags it writes, listing vanilla biomes exactly as before: `awaken:fauna/<group>` (one per fauna spawn
