@@ -81,7 +81,29 @@ public final class Autopilot {
         }
         NeoForge.EVENT_BUS.addListener(Autopilot::tick);
         NeoForge.EVENT_BUS.addListener(Autopilot::frame);
+        keepAwake();
         Awaken.LOG.info("[autopilot] {} lines from {}", LINES.size(), path);
+    }
+
+    // macOS naps a background app whose window is covered (App Nap and occlusion throttling: ~10 fps), which would
+    // turn frame-time measurements into measurements of the window's visibility. A user-initiated activity keeps this
+    // one process awake while the autopilot runs; it still lets the Mac sleep, and ends when the game closes.
+    private static Object activity;
+
+    private static void keepAwake() {
+        if (!com.mojang.blaze3d.platform.MacosUtil.IS_MACOS) return;
+        try {
+            long userInitiatedAllowingSleep = 0x00EFFFFFL, latencyCritical = 0xFF00000000L;
+            activity = ca.weblite.objc.Client.getInstance().sendProxy("NSProcessInfo", "processInfo")
+                    .sendProxy("beginActivityWithOptions:reason:", userInitiatedAllowingSleep | latencyCritical, "AWAKEN autopilot");
+            Awaken.LOG.info("[autopilot] App Nap off for this run");
+        } catch (RuntimeException | LinkageError e) {
+            Awaken.LOG.warn("[autopilot] could not keep the process awake: {}", e.toString());
+        }
+    }
+
+    private static boolean occluded(Minecraft mc) {
+        return (org.lwjgl.sdl.SDLVideo.SDL_GetWindowFlags(mc.getWindow().handle()) & org.lwjgl.sdl.SDLVideo.SDL_WINDOW_OCCLUDED) != 0;
     }
 
     private static void frame(RenderFrameEvent.Post e) {
@@ -112,11 +134,11 @@ public final class Autopilot {
         }
         Runtime rt = Runtime.getRuntime();
         Awaken.LOG.info(String.format(java.util.Locale.ROOT,
-                "[autopilot] perf %s frames=%d avg_fps=%.1f p50=%.2fms p95=%.2fms p99=%.2fms max=%.2fms tick_p95=%sms heap=%d/%dMB fb=%dx%d load=%.1f",
+                "[autopilot] perf %s frames=%d avg_fps=%.1f p50=%.2fms p95=%.2fms p99=%.2fms max=%.2fms tick_p95=%sms heap=%d/%dMB fb=%dx%d load=%.1f occluded=%s",
                 label, f.length, f.length / (sum / 1e9), pct(f, 0.50), pct(f, 0.95), pct(f, 0.99), f[f.length - 1] / 1e6, tick,
                 (rt.totalMemory() - rt.freeMemory()) >> 20, rt.maxMemory() >> 20, mc.getWindow().getWidth(), mc.getWindow().getHeight(),
                 // the machine's 1-minute load: other builds or games running at the same time show up here
-                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage()));
+                ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage(), occluded(mc)));
     }
 
     private static void startPerf(String label, boolean timed) {

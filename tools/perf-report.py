@@ -50,10 +50,15 @@ def main(argv):
     for i, (p, (_, info)) in enumerate(zip(paths, runs)):
         print(f"{'AB'[i] if len(runs) > 1 else '-'} {p}\n  {describe(info)}")
     names = list(dict.fromkeys(n for scenes, _ in runs for n in scenes))
+    # a scene macOS throttled (window covered, display asleep) runs at ~10 fps: flag it rather than trust it
+    for scenes, _ in runs:
+        for s in scenes.values():
+            s["throttled"] = s.get("occluded") == "true" or abs(s["p50"] - 100.0) < 3.0
     if len(runs) == 1:
         head = ["scene", "fps", "p50 ms", "p95 ms", "p99 ms", "max ms", "tick p95", "heap MB", "load"]
         rows = [[n, f"{s['avg_fps']:.0f}", f"{s['p50']:.2f}", f"{s['p95']:.2f}", f"{s['p99']:.2f}", f"{s['max']:.1f}",
-                 s.get("tick_p95", "-"), s.get("heap", "-"), s.get("load", "-")] for n, s in ((n, runs[0][0][n]) for n in names)]
+                 s.get("tick_p95", "-"), s.get("heap", "-"), s.get("load", "-") + (" THROTTLED" if s["throttled"] else "")]
+                for n, s in ((n, runs[0][0][n]) for n in names)]
     else:
         head = ["scene", "A p50", "B p50", "Δ p50", "A p99", "B p99", "Δ p99"]
         rows = []
@@ -61,6 +66,9 @@ def main(argv):
             a, b = runs[0][0].get(n), runs[1][0].get(n)
             if not a or not b:
                 rows.append([n, "-" if not a else f"{a['p50']:.2f}", "-" if not b else f"{b['p50']:.2f}", "", "", "", ""])
+                continue
+            if a["throttled"] or b["throttled"]:
+                rows.append([n, f"{a['p50']:.2f}", f"{b['p50']:.2f}", "throttled", "", "", ""])
                 continue
             rows.append([n, f"{a['p50']:.2f}", f"{b['p50']:.2f}", f"{(b['p50'] / a['p50'] - 1) * 100:+.0f}%",
                          f"{a['p99']:.2f}", f"{b['p99']:.2f}", f"{(b['p99'] / a['p99'] - 1) * 100:+.0f}%"])
