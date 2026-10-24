@@ -622,6 +622,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 - Looks: Swift (default; the SPEC budget above), Cinematic (p50 ≥ 60 fps, p99 ≤ 25 ms at 4K, to confirm after the
   baseline), Ultra (Iris, experimental: OpenGL only and unsupported on Apple Silicon by Iris).
 - Terrain mods (Tectonic) only in new worlds; existing worlds keep vanilla terrain. Maps: a world map, no minimap.
+- Profile config files: `pack/mods.json` "configs" maps a profile to files the installer copies into the game folder
+  (e.g. world → pack/tectonic/awakened.json as config/tectonic.json) only when missing, so a player's tuning (or a
+  mod's own rewrite) is kept; `install ... --reset-configs` overwrites. The .mrpack export carries them as overrides.
 - Lens (`dev.awaken.lens`), AWAKEN's light layer: the post chains `awaken:lens_swift` (haze, bloom, grade, vignette,
   dither; five passes, three of them at 960×600 or smaller) and `awaken:lens_cinematic` (adds light shafts). It runs
   first in the player's post-effect list, so gameplay effects (dreams, blight, the Veil) still draw on top, and
