@@ -185,6 +185,12 @@ public final class Interactions {
         }
     }
 
+    /** A Gate Rig mirror used: it swings a quarter round (RigDirector). */
+    public static void turnMirror(ServerPlayer p, BlockPos pos) {
+        if (p.isSpectator()) return;
+        RigDirector.turnMirror(p, pos);
+    }
+
     public static void useEntrance(ServerPlayer p, BlockPos pos) {
         RunState run = Runs.run(p);
         GateRecord g = Runs.gateOf(p);

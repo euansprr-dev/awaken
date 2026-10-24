@@ -40,6 +40,7 @@ public final class GatesClient {
         bus.addListener(GateHum::onTick);
         bus.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> ClientGates.clear());
         StatusSections.add(StatusSections.Tab.GATE_MAP, new GateMapSection());
+        RigClient.init(modBus);
     }
 
     private static void payloads(RegisterClientPayloadHandlersEvent e) {
@@ -48,6 +49,8 @@ public final class GatesClient {
             ClientGates.hud = msg;
             ClientGates.hudAt = System.currentTimeMillis();
         });
+        e.register(dev.awaken.gates.net.RigPayloads.Scene.TYPE, (msg, ctx) -> RigClient.scene(msg));
+        e.register(dev.awaken.gates.net.RigPayloads.Cue.TYPE, (msg, ctx) -> RigClient.cue(msg));
         e.register(GatePayloads.SatchelView.TYPE, (msg, ctx) -> {
             ClientGates.satchel = List.copyOf(msg.items());
             ClientGates.satchelXp = msg.xp();

@@ -30,12 +30,14 @@ public final class RunEvents {
         bus.addListener((LivingHealEvent e) -> Modifiers.onHeal(e));
         bus.addListener((LivingDropsEvent e) -> Modifiers.onDrops(e));
         bus.addListener((LivingChangeTargetEvent e) -> Twists.onTarget(e));
+        bus.addListener((net.neoforged.neoforge.event.entity.EntityEvent.Size e) -> RigWellsLive.onSize(e));
     }
 
     public static void tick(MinecraftServer server) {
         Interactions.flush();
         Runs.tick(server);
         Runs.tickGates(server);
+        RigDirector.tick(server);
         Twists.tickPuppets(server);
         Modifiers.tickPending(server);
         Hud.flush(server);

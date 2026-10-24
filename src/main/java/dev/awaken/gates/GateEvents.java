@@ -2,8 +2,6 @@ package dev.awaken.gates;
 
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.MobRole;
-import dev.awaken.gates.content.Palette;
-import dev.awaken.gates.content.Theme;
 import dev.awaken.gates.net.GatePayloads;
 import dev.awaken.gates.run.GateMobs;
 import dev.awaken.gates.run.Hud;
@@ -11,14 +9,18 @@ import dev.awaken.gates.run.RunEvents;
 import dev.awaken.gates.run.Rooms;
 import dev.awaken.gates.run.Runs;
 import dev.awaken.gates.world.GateLayout;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
@@ -26,14 +28,12 @@ import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /** Wires game events to the gates module. */
 final class GateEvents {
@@ -53,6 +53,8 @@ final class GateEvents {
         bus.addListener(GateEvents::onJoin);
         bus.addListener(GateEvents::onLeave);
         bus.addListener(GateEvents::onBreak);
+        bus.addListener(GateEvents::onPlace);
+        bus.addListener(GateEvents::onUseItem);
         bus.addListener(GateEvents::onExplode);
         bus.addListener(GateEvents::onEntityInteract);
         RunEvents.register(bus);
@@ -93,6 +95,7 @@ final class GateEvents {
         dev.awaken.gates.run.Interactions.resetAll();
         dev.awaken.gates.run.Modifiers.resetAll();
         dev.awaken.gates.run.Twists.resetAll();
+        dev.awaken.gates.run.RigDirector.resetAll();
     }
 
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
@@ -194,32 +197,33 @@ final class GateEvents {
 
     // ---- protection -------------------------------------------------------------------------------------------------
 
-    private static Set<Block> fabric;
-
-    /** Blocks gates are built from: players can't break them inside a gate (they can break what they placed). */
-    static Set<Block> fabric() {
-        Set<Block> f = fabric;
-        if (f == null) {
-            f = new HashSet<>();
-            for (Theme t : Theme.values()) {
-                Palette p = t.palette();
-                for (BlockState s : new BlockState[]{p.fill(), p.floor(), p.floorAlt(), p.wall(), p.wallAlt(), p.pillar(), p.ceiling(), p.stair(), p.light(), p.hang(), p.carpet()}) f.add(s.getBlock());
-                for (BlockState s : p.floorDecor()) f.add(s.getBlock());
-                for (BlockState s : p.hangDecor()) f.add(s.getBlock());
-                for (BlockState s : p.clutter()) f.add(s.getBlock());
-            }
-            for (var b : GatesRegistry.BLOCKS.getEntries()) f.add(b.get());
-            f.add(net.minecraft.world.level.block.Blocks.WATER);
-            f.add(net.minecraft.world.level.block.Blocks.LAVA);
-            fabric = f;
-        }
-        return f;
-    }
+    /**
+     * What a player may break inside a gate: only their own powers' constructs (SPEC §17 "Gate Rig"). Everything else in
+     * a gate was painted or put there by the gate itself (the Kit's dressing and the set pieces as much as the palette),
+     * since players can't place blocks there.
+     */
+    static final TagKey<Block> BREAKABLE = TagKey.create(Registries.BLOCK, dev.awaken.Awaken.id("gate_breakable"));
 
     private static void onBreak(BreakBlockEvent e) {
         if (e.getLevel().isClientSide() || !GateService.inGate((Level) e.getLevel(), e.getPos())) return;
         if (e.getPlayer() != null && e.getPlayer().isCreative()) return;
-        if (fabric().contains(e.getState().getBlock())) e.setCanceled(true);
+        if (!e.getState().is(BREAKABLE)) e.setCanceled(true);
+    }
+
+    /** No placing inside a gate (blocks, fire, a stripped log: every block an item puts down); powers' constructs aren't placed by items. */
+    private static void onPlace(BlockEvent.EntityPlaceEvent e) {
+        if (!(e.getEntity() instanceof Player p) || p.isCreative() || !(e.getLevel() instanceof Level level) || level.isClientSide()) return;
+        if (GateService.inGate(level, e.getPos())) e.setCanceled(true);
+    }
+
+    /** Buckets act outside the placement event: no pouring or scooping inside a gate either. */
+    private static void onUseItem(PlayerInteractEvent.RightClickItem e) {
+        Player p = e.getEntity();
+        if (p.isCreative() || p.level().isClientSide() || !GateService.inGate(p)) return;
+        if (e.getItemStack().getItem() instanceof BucketItem) { // fish buckets too; powder snow is a block item
+            e.setCanceled(true);
+            e.setCancellationResult(InteractionResult.FAIL);
+        }
     }
 
     private static void onExplode(ExplosionEvent.Detonate e) {
