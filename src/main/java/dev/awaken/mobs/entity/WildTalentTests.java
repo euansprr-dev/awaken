@@ -198,8 +198,11 @@ public final class WildTalentTests {
             p.setPos(Vec3.atBottomCenterOf(owlRoom.east(1)));
             List<net.minecraft.world.entity.Entity> made = new ArrayList<>();
             h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(dark(level, snailRoom) && dark(level, owlRoom) && dark(level, sporeRoom), "the rooms are dark"))
                     .thenExecute(() -> {
+                        // the light engine runs on its own thread, behind the block changes: read the rooms once it has them
+                        AwakenTests.awaitLight(h, snailRoom.offset(-3, 0, -3), owlRoom.offset(3, 0, 3));
+                        AwakenTests.awaitLight(h, sporeRoom.offset(-3, 0, -3), sporeRoom.offset(3, 0, 3));
+                        h.assertTrue(dark(level, snailRoom) && dark(level, owlRoom) && dark(level, sporeRoom), "the rooms are dark");
                         try {
                             // a gloam snail leaves glow lichen where it rests in the dark, never two patches side by side
                             FaunaMob snail = spawn(level, "gloam_snail", snailRoom);

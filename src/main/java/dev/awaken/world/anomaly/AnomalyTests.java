@@ -58,7 +58,20 @@ final class AnomalyTests {
                 for (int y = 1; y <= 7; y++) level.setBlock(c.offset(x, y, z), air, 3);
             }
         }
+        assertTicks(h, c, 7, "the platform ticks");
         return c;
+    }
+
+    /**
+     * Anomalies only open on entity-ticking ground (Spots), and their lights and guardians only move there: the whole
+     * square of radius {@code r} round {@code c} must tick. Every test starts once its area ticks (AwakenTests), so this
+     * holds from the first tick; it guards that promise instead of waiting out a tick budget for it.
+     */
+    static void assertTicks(GameTestHelper h, BlockPos c, int r, String what) {
+        ServerLevel level = h.getLevel();
+        for (int x = -r; x <= r; x += r) for (int z = -r; z <= r; z += r) {
+            h.assertTrue(level.isPositionEntityTicking(c.offset(x, 0, z)), what + " (not at " + c.offset(x, 0, z).toShortString() + ")");
+        }
     }
 
     static ServerPlayer awakenedPlayer(GameTestHelper h, BlockPos at) {
@@ -202,9 +215,7 @@ final class AnomalyTests {
             // a player standing there keeps the chunks simulated, as in play
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             p.teleportTo(level, g.getX() - 20.5, g.getY() + 1, g.getZ() + 0.5, Set.of(), 0, 0, true);
-            // let the force-loaded chunks settle into entity-ticking before checking "loaded ground"
-            h.startSequence().thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
-                    .thenExecute(() -> spotChecks(h, level, g)).thenSucceed();
+            h.startSequence().thenExecute(() -> spotChecks(h, level, g)).thenSucceed();
         });
     }
 
@@ -301,11 +312,7 @@ final class AnomalyTests {
             BlockPos g = platform(h, 12, -12);
             ServerPlayer p = awakenedPlayer(h, g.offset(3, 0, 0));
             Progression.discover(p, AnomalyKind.RIFT_TEAR.discoveryKey(), 0.1); // so the reward below is the rift's alone
-            // anomalies only ever open on entity-ticking ground (Spots); wait for the test's chunks to get there
-            h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
-                    .thenExecute(() -> closeTheRift(h, level, server, g, p))
-                    .thenSucceed();
+            h.startSequence().thenExecute(() -> closeTheRift(h, level, server, g, p)).thenSucceed();
         });
     }
 
@@ -362,7 +369,6 @@ final class AnomalyTests {
             double[] before = new double[1];
             List<UUID> mobs = new java.util.ArrayList<>();
             h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
                     .thenExecute(() -> {
                         rift[0] = Rifts.open(level, p, g, data, true);
                         core[0] = Rifts.entity(level, rift[0]);
@@ -516,16 +522,15 @@ final class AnomalyTests {
             BlockPos start = g.offset(-5, 0, 0), end = g.offset(5, 0, 0);
             ServerPlayer p = awakenedPlayer(h, start.offset(0, 0, -3));
             AnomalyData data = AnomalyData.get(server);
-            // lights only appear where entities tick: give the force-loaded chunks a moment
-            h.startSequence().thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
-                    .thenExecute(() -> followTheLights(h, level, g, start, end, p, data)).thenSucceed();
+            // lights only appear where entities tick: the platform does, the path's ends five blocks either side included
+            h.startSequence().thenExecute(() -> followTheLights(h, level, g, start, end, p, data)).thenSucceed();
         });
     }
 
     private static void followTheLights(GameTestHelper h, ServerLevel level, BlockPos g, BlockPos start, BlockPos end, ServerPlayer p, AnomalyData data) {
         {
             Anomaly a = Processions.open(level, p, start, end, data);
-            h.assertTrue(a.motes.size() == Processions.MOTES, "five lights");
+            h.assertTrue(a.motes.size() == Processions.MOTES, "five lights: " + a.motes.size());
             long now = level.getGameTime();
             // walk with the lights: each pass they move on while you stay near the lead
             for (int i = 0; i < 40 && a.stage != Anomaly.CACHE; i++) {
