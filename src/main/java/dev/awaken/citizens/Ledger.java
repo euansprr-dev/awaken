@@ -327,7 +327,9 @@ final class Ledger {
     }
 
     float speed(int i, byte act) {
-        boolean run = r.job[i] == Roster.RUNNER && act == ROUND || d.role[i] != 0 && Roles.runs(d.role[i]);
+        // runners on their courier rounds, and lamplighters hurrying lamp to lamp before dark (their tours are 180-300
+        // blocks against a dusk of about 2,300 ticks), go at a run
+        boolean run = (r.job[i] == Roster.RUNNER || r.job[i] == Roster.LAMPLIGHTER) && act == ROUND || d.role[i] != 0 && Roles.runs(d.role[i]);
         return (run ? RUN_SPEED : WALK_SPEED) * r.speed[i];
     }
 
