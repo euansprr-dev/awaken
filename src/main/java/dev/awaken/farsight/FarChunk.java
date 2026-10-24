@@ -55,17 +55,18 @@ public record FarChunk(int x, int z, int[] cell, int[] colour) {
                 int top = Integer.MIN_VALUE, depth = 0, wet = 0, n = 0, r = 0, g = 0, b = 0;
                 for (int k = 0; k < 4; k++) {
                     int lx = sx * 2 + (k & 1), lz = sz * 2 + (k >> 1);
-                    int h = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz);
-                    if (h <= minY) continue;
-                    pos.set(bx + lx, h - 1, bz + lz);
+                    // the top block's y (ChunkAccess.getHeight is the highest taken, not the first free)
+                    int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz);
+                    if (y < minY) continue;
+                    pos.set(bx + lx, y, bz + lz);
                     BlockState state = chunk.getBlockState(pos);
                     int rgb = FarPalette.block(state, chunk, pos,
                             chunk.getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ())));
                     if (rgb < 0) continue;
-                    top = Math.max(top, h);
+                    top = Math.max(top, y + 1);
                     if (state.getFluidState().is(FluidTags.WATER)) {
                         wet++;
-                        depth = Math.max(depth, h - chunk.getHeight(Heightmap.Types.OCEAN_FLOOR, lx, lz));
+                        depth = Math.max(depth, y - chunk.getHeight(Heightmap.Types.OCEAN_FLOOR, lx, lz));
                     }
                     r += rgb >> 16 & 255;
                     g += rgb >> 8 & 255;

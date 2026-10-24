@@ -48,6 +48,7 @@ public final class FarCollector {
         NeoForge.EVENT_BUS.addListener(ServerStoppingEvent.class, e -> {
             PENDING.clear();
             wasCollecting = false;
+            FarLandmarks.clear();
             FarStore.closeAll();
         });
     }
@@ -76,6 +77,7 @@ public final class FarCollector {
             PENDING.clear();
             return;
         }
+        FarLandmarks.tick(server);
         long deadline = System.nanoTime() + BUDGET_NANOS;
         for (var entry : PENDING.entrySet()) {
             ServerLevel level = entry.getKey();

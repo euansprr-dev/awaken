@@ -1101,6 +1101,13 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   the generated layer has its own two atlases (height and colour, same layout); a ring cell takes it where seen
   (cells up to 16 blocks from the 2-block cells inside one chunk; wider cells from the chunks they cover once a
   quarter are known), else the prediction. A changed chunk re-reads every ring's patch over it.
+- Landmarks: `FarLandmarks.register(Source)` (common, once at init): sources are asked on the server tick (every 40
+  ticks, while far terrain is collected) for what stands within Far Sight's reach of each player, at most 48; the
+  client draws each as a camera-facing column (a core and a faint halo, never thinner than a few pixels), tested
+  against Far Sight's depth so ridges hide it, half-pierced by fog, faded in from the landmark's `from` distance.
+  Gate pillars come from `Gates.near` (public API, §12) from 1500 blocks, where the gates stop drawing their own
+  (beacons reach the client only within 1600), coloured by rank like the gate pillars, red when broken; cleared and
+  released gates are left out. The city registers its towers the same way.
 - Water: a height texel's b byte is the water's depth (0 on land; predicted as sea level − ground, generated from the
   heightmaps); shallows show a sandy floor through the water, deep water keeps its biome colour.
 - Drawing: in `RenderLevelStageEvent.AfterSky`, into the main colour target, before any chunk, so real chunks draw

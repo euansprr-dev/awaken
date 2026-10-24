@@ -14,6 +14,7 @@ import com.mojang.renderpearl.api.textures.GpuSampler;
 import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.awaken.farsight.FarColumns;
+import dev.awaken.farsight.FarLandmarks;
 import dev.awaken.farsight.Rings;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import org.joml.FrustumIntersection;
@@ -24,6 +25,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
 
@@ -48,6 +50,8 @@ final class FarRenderer implements AutoCloseable {
     private final MappableRingBuffer frameUbo = new MappableRingBuffer(() -> "awaken far sight frame", 130, FRAME_SIZE);
     private final int align = Math.max(16, RenderSystem.getDevice().getDeviceInfo().limits().minUniformOffsetAlignment());
     private final MappableRingBuffer drawUbo = new MappableRingBuffer(() -> "awaken far sight draws", 130, MAX_DRAWS * align);
+    static final int MAX_MARKS = 48;
+    private final MappableRingBuffer markUbo = new MappableRingBuffer(() -> "awaken far sight landmarks", 130, MAX_MARKS * 3 * 16);
     private final GpuBuffer indices;
     private GpuTexture depth;
     private GpuTextureView depthView;
@@ -171,8 +175,9 @@ final class FarRenderer implements AutoCloseable {
      * (world space); {@code fogStart}/{@code fogEnd} Far Sight's own fog at the horizon; {@code clipStart}/{@code clipBand}
      * where it dithers in under the real chunks.
      */
-    void draw(FarField field, RenderTarget main, Matrix4fc viewRotation, double camY, Vector3f sun, float fogStart, float fogEnd,
-            float clipStart, float clipBand, int seaLevel, boolean zeroToOne, GpuTextureView lightmap) {
+    void draw(FarField field, RenderTarget main, Matrix4fc viewRotation, double camX, double camY, double camZ, Vector3f sun,
+            float fogStart, float fogEnd, float clipStart, float clipBand, int seaLevel, boolean zeroToOne, GpuTextureView lightmap,
+            List<FarLandmarks.Landmark> landmarks) {
         depth(main);
         // clip.z = A + B * clip.w: Far Sight's own planes on the game's x, y and w (so view bobbing and FOV still apply)
         float a, b;
@@ -203,6 +208,22 @@ final class FarRenderer implements AutoCloseable {
                 d.putInt(at, pRing[i]).putInt(at + 4, pX[i]).putInt(at + 8, pZ[i]).putInt(at + 12, pW[i]);
             }
         }
+        int marks = Math.min(MAX_MARKS, landmarks.size());
+        GpuBuffer markBuffer = markUbo.currentBuffer();
+        if (marks > 0) {
+            try (var view = markBuffer.map(false, true)) {
+                ByteBuffer d = view.data();
+                for (int i = 0; i < marks; i++) {
+                    FarLandmarks.Landmark l = landmarks.get(i);
+                    int at = i * 48;
+                    d.putFloat(at, (float) (l.pos().getX() + 0.5 - camX)).putFloat(at + 4, (float) (l.pos().getY() - camY))
+                            .putFloat(at + 8, (float) (l.pos().getZ() + 0.5 - camZ)).putFloat(at + 12, l.height());
+                    d.putFloat(at + 16, (l.argb() >> 16 & 255) / 255f).putFloat(at + 20, (l.argb() >> 8 & 255) / 255f)
+                            .putFloat(at + 24, (l.argb() & 255) / 255f).putFloat(at + 28, 3f);
+                    d.putFloat(at + 32, l.from()).putFloat(at + 36, 0f).putFloat(at + 40, 0f).putFloat(at + 44, 0f);
+                }
+            }
+        }
         GpuSampler nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder()
                 .createRenderPass(() -> "awaken far sight", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.of(0.0))) {
@@ -223,9 +244,20 @@ final class FarRenderer implements AutoCloseable {
                     pass.drawIndexed(pW[i] * pH[i] * INDICES_PER_CELL, 1, 0, 0, 0);
                 }
             }
+            if (marks > 0) {
+                // after the terrain, so ridges in front hide them; two quads each (core and halo)
+                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.MARKS));
+                pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
+                pass.setUniform("Fog", RenderSystem.getShaderFog());
+                pass.setUniform("FarFrame", frame);
+                pass.setUniform("FarMarks", markBuffer);
+                pass.setIndexBuffer(indices, IndexType.SHORT);
+                pass.drawIndexed(marks * 2 * 6, 1, 0, 0, 0);
+            }
         }
         frameUbo.rotate();
         drawUbo.rotate();
+        markUbo.rotate();
     }
 
     /** Opens this frame's GPU timing (before the bake), after reading the result of three frames ago. */
@@ -279,6 +311,7 @@ final class FarRenderer implements AutoCloseable {
     public void close() {
         frameUbo.close();
         drawUbo.close();
+        markUbo.close();
         indices.close();
         for (GpuQueryPool t : timers) if (t != null) t.close();
         if (depthView != null) depthView.close();

@@ -13,6 +13,7 @@ public final class FarSightModule {
 
     public static void init(IEventBus modBus) {
         FarCollector.init();
+        FarLandmarks.register(FarLandmarks::gates);
         FarSightTests.register();
     }
 }

@@ -7,6 +7,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -101,7 +102,10 @@ final class FarSightTests {
             LevelChunk chunk = level.getChunkAt(new BlockPos(x0, y0, z0));
             FarChunk c = FarChunk.of(chunk);
             int pillar = 2 * FarChunk.SIDE + 2, pool = 2 * FarChunk.SIDE + 4;
-            h.assertTrue(FarChunk.top(c.cell()[pillar]) == y0 + 12, "the pillar's top: " + FarChunk.top(c.cell()[pillar]) + " not " + (y0 + 12));
+            h.assertTrue(FarChunk.top(c.cell()[pillar]) == y0 + 12, "the pillar's top: " + FarChunk.top(c.cell()[pillar]) + " not " + (y0 + 12)
+                    + " (motion blocking " + chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, x0 & 15, z0 & 15) + ", world surface "
+                    + chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x0 & 15, z0 & 15) + ", block " + level.getBlockState(new BlockPos(x0, y0 + 11, z0))
+                    + ", min y " + chunk.getMinY() + ", cell " + Integer.toHexString(c.cell()[pillar]) + ")");
             h.assertTrue(FarChunk.depth(c.cell()[pillar]) == 0 && c.colour()[pillar] != 0, "the pillar is dry stone");
             h.assertTrue(FarChunk.top(c.cell()[pool]) == y0 + 4 && FarChunk.depth(c.cell()[pool]) == 3,
                     "the pool: top " + FarChunk.top(c.cell()[pool]) + ", depth " + FarChunk.depth(c.cell()[pool]));

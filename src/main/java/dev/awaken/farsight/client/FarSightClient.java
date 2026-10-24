@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.awaken.Awaken;
 import dev.awaken.compat.FarView;
 import dev.awaken.compat.client.FarTerrain;
+import dev.awaken.farsight.FarLandmarks;
 import dev.awaken.farsight.FarPalette;
 import dev.awaken.farsight.FarStore;
 import dev.awaken.farsight.FarWorkers;
@@ -175,8 +176,9 @@ public final class FarSightClient {
             renderer.timeEnd();
             return;
         }
-        renderer.draw(field, main, e.getModelViewMatrix(), cam.y, sun, fogStart, fogEnd, clipStart, CLIP_BAND, level.getSeaLevel(),
-                RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap());
+        renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, fogStart, fogEnd, clipStart, CLIP_BAND,
+                level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
+                FarLandmarks.current(level.dimension()));
         renderer.timeEnd();
         FarTerrain.report(renderer.depthTexture(), FarRenderer.NEAR, FarRenderer.FAR, true, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
         lastDrawNanos = System.nanoTime();
