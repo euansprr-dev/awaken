@@ -566,7 +566,7 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   drift 0.34 px per degree of trailing offset, soft-limited to 2 GUI px (SUBTLE, default) or 4 (FULL), × Screen Effect
   Scale, off without View Bobbing, snapped to framebuffer pixels. Vanilla layers never move.
 - `UiHooks.focus()` (0..1) eases with the open panel for Lens. Lens may also tell panels apart by depth: the glass writes
-  its real distance into the main depth (≈0.6 m; nothing in the world is that close except the hand).
+  its real distance (≈0.6 m) into the main depth.
 - Client settings (`awaken-holo-client.toml`): `statusStyle`, `hudMotion`, `reducedMotion`.
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
