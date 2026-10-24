@@ -752,6 +752,94 @@ look 50 8
 key ultimate
 shot body_f_hundred_palms_q
 
+# armour: an iron chestplate and leggings. Bendable Cuboids bends the limb; does the armour bend with it or clip?
+cmd item replace entity @s armor.chest with minecraft:iron_chestplate
+cmd item replace entity @s armor.legs with minecraft:iron_leggings
+cmd awaken powers equip 1 shockwave
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast haymaker
+shot armour_b_haymaker_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast haymaker
+shot armour_f_haymaker_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+cmd awaken admin power cast haymaker
+shot armour_f_haymaker_q
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast nova
+shot armour_b_nova_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast nova
+shot armour_f_nova_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+cmd awaken admin power cast nova
+shot armour_f_nova_q
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power1
+shot armour_f_shockwave_q
+cmd item replace entity @s armor.chest with minecraft:air
+cmd item replace entity @s armor.legs with minecraft:air
+
 # hover: weightless: toggled on once, seen from behind and then in front
 camera back
 cmd fill -12 200 -8 12 216 22 minecraft:air

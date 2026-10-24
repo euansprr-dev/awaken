@@ -1,5 +1,6 @@
 package dev.awaken.powers.client.fx;
 
+import com.zigythebird.playeranim.animation.PlayerAnimResources;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
@@ -15,6 +16,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
+import net.neoforged.fml.ModList;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -24,6 +26,11 @@ import org.jspecify.annotations.Nullable;
  * {@code CastClips}) and the vanilla arm poses step aside for that player. First person is untouched: the library's
  * first-person mode stays off and {@link CastAnims} keeps drawing the arms. Any failure switches the library path off
  * for the session and the vanilla poses carry on.
+ * <p>
+ * Bendable Cuboids (optional, needs no code from us) draws the library's elbow and knee bends; while it is loaded each
+ * clip plays its {@code _bent} twin, whose limbs bend and whose upper arms and thighs turn to keep the hands and feet
+ * where the straight clip puts them. {@link #play} takes any clip in {@code assets/awaken/player_animations}, not just
+ * casts.
  */
 final class PalCasts {
     private PalCasts() {}
@@ -31,6 +38,8 @@ final class PalCasts {
     private static final Identifier LAYER = Awaken.id("power_casts");
     /** Above the library's own default layer (1000) so a cast wins over idle emotes. */
     private static final int PRIORITY = 1500;
+    /** Bendable Cuboids draws bends: play each clip's bent twin. */
+    private static final boolean BENT = ModList.get().isLoaded("bendable_cuboids");
     private static boolean broken;
 
     /** Our layer: a controller with nothing to play by default and a mirror for left-handed players. */
@@ -71,7 +80,12 @@ final class PalCasts {
             boolean active = l.isActive();
             int fade = Math.max(1, active ? Math.max(2, fadeIn) : fadeIn);
             l.unpause();
-            return l.replaceAnimationWithFade(AbstractFadeModifier.standardFadeIn(fade, EasingType.EASE_IN_OUT_SINE), Awaken.id(clip), true);
+            Identifier id = Awaken.id(clip);
+            if (BENT) {
+                Identifier bent = Awaken.id(clip + "_bent");
+                if (PlayerAnimResources.hasAnimation(bent)) id = bent;
+            }
+            return l.replaceAnimationWithFade(AbstractFadeModifier.standardFadeIn(fade, EasingType.EASE_IN_OUT_SINE), id, true);
         } catch (RuntimeException | LinkageError ex) {
             fail(ex);
             return false;

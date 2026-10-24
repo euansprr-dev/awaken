@@ -140,9 +140,10 @@ final class PowerFxTests {
     private static final Set<String> CLIP_BONES = Set.of("body", "torso", "head", "right_arm", "left_arm", "right_leg", "left_leg");
 
     /**
-     * The optional full-body clips (Player Animation Library): every clip the table can name is in the generated file
-     * with only player bones, one-shot clips ease out (endTick) and wind-ups loop; and every power's family is read back
-     * from its own events, so each power plays its family's clip.
+     * The optional full-body clips (Player Animation Library): every clip the table can name is in the generated file,
+     * with its Bendable Cuboids twin, with only player bones, one-shot clips ease out (endTick) and wind-ups loop, elbows
+     * fold forward and knees back within reach; and every power's family is read back from its own events, so each power
+     * plays its family's clip.
      */
     private static void castClips(GameTestHelper h) {
         JsonObject anims;
@@ -152,12 +153,28 @@ final class PowerFxTests {
         } catch (java.io.IOException ex) {
             throw new IllegalStateException(ex);
         }
+        List<String> names = new ArrayList<>();
         for (String name : CastClips.all()) {
+            names.add(name);
+            names.add(name + "_bent"); // the Bendable Cuboids twin
+        }
+        for (String name : names) {
             h.assertTrue(anims.has(name), "clip " + name + " is missing from " + CastClips.FILE);
             JsonObject a = anims.getAsJsonObject(name);
-            for (String bone : a.getAsJsonObject("bones").keySet()) h.assertTrue(CLIP_BONES.contains(bone), name + " moves an unknown bone " + bone);
+            JsonObject bones = a.getAsJsonObject("bones");
+            for (String bone : bones.keySet()) {
+                h.assertTrue(CLIP_BONES.contains(bone), name + " moves an unknown bone " + bone);
+                JsonObject b = bones.getAsJsonObject(bone);
+                h.assertTrue(!b.has("bend") || name.endsWith("_bent") && bone.matches("(right|left)_(arm|leg)"), name + ": only the bent twin bends, and only limbs (" + bone + ")");
+                if (b.has("bend")) {
+                    for (var key : b.getAsJsonObject("bend").entrySet()) {
+                        float v = key.getValue().getAsJsonObject().getAsJsonArray("vector").get(0).getAsFloat();
+                        h.assertTrue(bone.endsWith("arm") ? v <= 0 && v >= -150 : v >= 0 && v <= 150, name + " " + bone + " bends the wrong way or too far: " + v);
+                    }
+                }
+            }
             boolean loops = a.has("loop") && a.get("loop").getAsBoolean();
-            h.assertTrue(loops == name.matches("(hold_[a-z]+|slam_wind|hover)"), name + (loops ? " loops but is not a wind-up" : " should loop"));
+            h.assertTrue(loops == name.replace("_bent", "").matches("(hold_[a-z]+|slam_wind|hover)"), name + (loops ? " loops but is not a wind-up" : " should loop"));
             if (!loops) {
                 JsonElement end = a.has("player_animation_library") ? a.getAsJsonObject("player_animation_library").get("endTick") : null;
                 h.assertTrue(end != null && end.getAsFloat() < a.get("animation_length").getAsFloat() * 20, name + " eases back to the vanilla pose (endTick)");

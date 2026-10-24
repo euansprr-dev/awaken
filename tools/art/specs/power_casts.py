@@ -49,7 +49,7 @@ YAW = "math.min_angle(q.head_y_rotation - q.body_y_rotation)"
 
 DEFAULTS = dict(lean=0.0, tilt=0.0, rise=0.0, shift=0.0, side=0.0, twist=0.0, ground=True,
                 ra=(0.0, 0.0, 3.0), la=(0.0, 0.0, -3.0), ra_aim=False, la_aim=False,
-                rl=(0.0, 0.0, 0.0), ll=(0.0, 0.0, 0.0), head_z=0.0)
+                rl=(0.0, 0.0, 0.0), ll=(0.0, 0.0, 0.0), head_z=0.0, re=0.0, le=0.0, rk=0.0, lk=0.0)
 
 
 def pose(base=None, **kw):
@@ -84,6 +84,8 @@ PARTS = {
     "left_leg": ((1.9, 12, 0), (-2, 0, -2, 4, 12, 4), (16, 48)),
 }
 WAIST = 12.0  # the library turns the whole figure (its "body" bone) about the waist
+# Bendable Cuboids bends a limb about the middle of its box: (bend centre on the limb, pivot to centre, centre to tip)
+JOINTS = {"right_arm": (4.0, 4.0, 6.0), "left_arm": (4.0, 4.0, 6.0), "right_leg": (6.0, 6.0, 6.0), "left_leg": (6.0, 6.0, 6.0)}
 
 
 class V:
@@ -110,8 +112,22 @@ class V:
 OFF = V(off=True)
 
 
-def bake(p):
-    """Pose -> {bone: {"rotation": (V, V, V), "position": (V, V, V)}} in library terms (degrees, px, y up)."""
+def keep_line(limb, flex):
+    """Degrees to turn a limb's upper half so that, bent by flex, its tip stays on the straight limb's line."""
+    if flex <= 0:
+        return 0.0
+    _, a, b = JOINTS[limb]
+    f = math.radians(flex)
+    reach = math.sqrt(a * a + b * b + 2 * a * b * math.cos(f))
+    return math.degrees(math.asin(min(1.0, b * math.sin(f) / reach)))
+
+
+def bake(p, bent=False):
+    """Pose -> {bone: {"rotation": (V, V, V), "position": (V, V, V)}} in library terms (degrees, px, y up).
+
+    bent: the Bendable Cuboids twin. Elbows (re, le) and knees (rk, lk) flex by their degrees; each limb's upper half
+    turns away from the bend just enough that its hand or foot stays on the line the straight limb points along (so
+    the pose means the same with or without bends, the hand only pulled in), and the feet are grounded again."""
     lean, tilt, twist = p["lean"], p["tilt"], p["twist"]
     brz = -tilt
     tw = math.radians(twist)
@@ -119,16 +135,26 @@ def bake(p):
     b["torso"] = {"rotation": (OFF, V(twist), OFF)}
     # arms: the shoulders ride the chest's yaw (vanilla's attack swing does the same)
     sx, sz = 5 - 5 * math.cos(tw), 5 * math.sin(tw)
-    for name, key, aim, sgn in (("right_arm", "ra", "ra_aim", 1), ("left_arm", "la", "la_aim", -1)):
+    for name, key, aim, sgn, flex in (("right_arm", "ra", "ra_aim", 1, "re"), ("left_arm", "la", "la_aim", -1, "le")):
         x, y, z = p[key]
+        if bent:
+            # an elbow folds the forearm towards the arm's front: the upper arm swings back to keep the hand on line
+            x += keep_line(name, p[flex])
         if p[aim]:
             rot = (V(x - lean, 1), V(y, ky=1), V(z - brz))
         else:
             rot = (V(x), V(y + twist), V(z))
         b[name] = {"rotation": rot, "position": (V(sgn * sx), OFF, V(sgn * sz))}
-    for name, key in (("right_leg", "rl"), ("left_leg", "ll")):
+        if bent:
+            b[name]["bend"] = (V(-p[flex]), V(0), V(0))
+    for name, key, flex in (("right_leg", "rl", "rk"), ("left_leg", "ll", "lk")):
         x, y, z = p[key]
+        if bent:
+            # a knee folds the shin back: the thigh swings forward to keep the foot under the line
+            x -= keep_line(name, p[flex])
         b[name] = {"rotation": (V(x - lean), V(y), V(z - brz))}
+        if bent:
+            b[name]["bend"] = (V(p[flex]), V(0), V(0))
     b["head"] = {"rotation": (V(-lean, 1), OFF, V(-p["head_z"]))}
     by = p["rise"]
     if p["ground"]:
@@ -167,6 +193,12 @@ def part_frames(b, pitch=0.0):
         T = tuple(root_t[i] + R._mv(root_m, local)[i] for i in range(3))
         M = R._mm(root_m, R._rot(*_deg(r)))
         out[name] = (M, T)
+        if "bend" in ch and name in JOINTS and abs(ch["bend"][0].c) > 1e-6:
+            # the lower half turns about the box's middle (Bendable Cuboids' bend centre), about the limb's own x
+            c = (0.0, JOINTS[name][0], 0.0)
+            M2 = R._mm(M, R._rot(math.radians(ch["bend"][0].c), 0, 0))
+            T2 = tuple(T[i] + R._mv(M, c)[i] - R._mv(M2, c)[i] for i in range(3))
+            out[name + ":lower"] = (M2, T2)
     return out
 
 
@@ -177,7 +209,7 @@ def ground_offset(p, b):
     frames = part_frames(probe)
     low = -1e9
     for leg in ("right_leg", "left_leg"):
-        M, T = frames[leg]
+        M, T = frames.get(leg + ":lower", frames[leg])
         _, (x0, y0, z0, w, h, d), _ = PARTS[leg]
         for cx in (x0, x0 + w):
             for cz in (z0, z0 + d):
@@ -192,8 +224,18 @@ def tree(b, pitch=0.0):
     kids = []
     for name, (pivot, (x, y, z, w, h, d), (u, v)) in PARTS.items():
         M, T = frames[name]
-        kids.append({"pivot": T, "rot": (0, 0, 0), "mat": M, "scale": (1, 1, 1), "children": [],
-                     "boxes": [{"u": u, "v": v, "x": x, "y": y, "z": z, "w": w, "h": h, "d": d, "mirror": False, "grow": 0.0}]})
+        box = {"u": u, "v": v, "x": x, "y": y, "z": z, "w": w, "h": h, "d": d, "mirror": False, "grow": 0.0}
+        if name + ":lower" in frames:
+            # a bent limb: two halves, the skin's side faces split between them
+            cy = JOINTS[name][0]
+            hu = cy - y
+            up = dict(box, h=hu, side=(v + d, v + d + hu), skip={"bottom"})
+            lo = dict(box, y=cy, h=h - hu, side=(v + d + hu, v + d + h), skip={"top"})
+            M2, T2 = frames[name + ":lower"]
+            kids.append({"pivot": T, "mat": M, "boxes": [up]})
+            kids.append({"pivot": T2, "mat": M2, "boxes": [lo]})
+            continue
+        kids.append({"pivot": T, "rot": (0, 0, 0), "mat": M, "scale": (1, 1, 1), "children": [], "boxes": [box]})
     return kids
 
 
@@ -206,9 +248,9 @@ EASES = {"linear", "constant", "step", "easeinsine", "easeoutsine", "easeinoutsi
 
 
 class Clip:
-    def __init__(self, name, keys, length, loop=False, end=None, note=""):
+    def __init__(self, name, keys, length, loop=False, end=None, note="", bent=False):
         """keys: [(tick, pose, easing into this key)]; end: endTick (the last key) for one-shot clips."""
-        self.name, self.length, self.loop, self.note = name, float(length), loop, note
+        self.name, self.length, self.loop, self.note, self.bent = name, float(length), loop, note, bent
         self.keys = sorted(((float(t), p, e) for t, p, e in keys), key=lambda k: k[0])
         self.end = None if loop else float(self.keys[-1][0] if end is None else end)
         for t, _, e in self.keys:
@@ -222,21 +264,21 @@ class Clip:
             raise ValueError(f"{name}: keys past the clip length")
 
     def baked(self):
-        return [(t, bake(p), e) for t, p, e in self.keys]
+        return [(t, bake(p, self.bent), e) for t, p, e in self.keys]
 
     def channels(self):
         """{bone: {target: [(tick, (V, V, V), ease)]}}: every channel any key moves; static channels are dropped."""
         baked = self.baked()
         out = {}
         for bone in ("body", "torso", "head", "right_arm", "left_arm", "right_leg", "left_leg"):
-            for target in ("rotation", "position"):
+            for target in ("rotation", "position", "bend"):
                 rows = [(t, bb[bone][target], e) for t, bb, e in baked if target in bb.get(bone, {})]
                 if not rows:
                     continue
                 axes = [i for i in range(3) if not rows[0][1][i].off]
                 if not axes:
                     continue
-                neutral = bake(NEUTRAL)[bone][target]
+                neutral = bake(NEUTRAL, self.bent)[bone][target]
                 moving = any(abs(r[1][i].c - neutral[i].c) > 1e-3 or r[1][i].k != neutral[i].k or r[1][i].ky != neutral[i].ky
                              for r in rows for i in axes)
                 if not moving:
@@ -277,7 +319,7 @@ class Clip:
         if self.end is not None and tick > self.end:
             # the library's end fade: ease-in-out back to vanilla over the clip's tail
             u = min(1.0, (tick - self.end) / max(1e-6, self.length - self.end))
-            return lerp_bones(last, bake(NEUTRAL), 0.5 - 0.5 * math.cos(math.pi * u))
+            return lerp_bones(last, bake(NEUTRAL, self.bent), 0.5 - 0.5 * math.cos(math.pi * u))
         return last
 
 
@@ -316,10 +358,12 @@ CLIPS = {}
 
 
 def clip(name, keys, length, loop=False, end=None, note=""):
+    """Registers a clip and its Bendable Cuboids twin, {name}_bent (the game picks the twin when that mod is loaded)."""
     c = Clip(name, keys, length, loop, end, note)
     if name in CLIPS:
         raise ValueError(f"duplicate clip {name}")
     CLIPS[name] = c
+    CLIPS[name + "_bent"] = Clip(name + "_bent", keys, length, loop, end, note + " (bent elbows and knees)", bent=True)
     return c
 
 
@@ -351,23 +395,23 @@ def hold(name, base, jitters, period, note):
 
 # Kinetic: a grounded punch. Wide stance, the chest coils away from the target, then the hips and chest snap round,
 # the fist drives straight at the target and the off fist chambers at the hip.
-K_LOAD = pose(lean=-4, twist=30, ra=(34, 0, 14), la=(-74, -24, 0), rl=(18, 0, 7), ll=(-14, 0, -7))
-K_STRIKE = pose(lean=14, shift=1.5, twist=-26, ra=(-94, -6, 0), ra_aim=True, la=(32, 0, -12), rl=(30, 0, 8), ll=(-24, 0, -7))
-K_FOLLOW = pose(K_STRIKE, lean=11, twist=-20, ra=(-90, -6, 0))
-K_SETTLE = pose(K_STRIKE, lean=6, shift=0.5, twist=-10, ra=(-62, -4, 0), ra_aim=False, la=(14, 0, -8), rl=(16, 0, 6), ll=(-12, 0, -6))
+K_LOAD = pose(lean=-4, twist=30, ra=(34, 0, 14), la=(-74, -24, 0), rl=(18, 0, 7), ll=(-14, 0, -7), re=95, le=75, rk=30, lk=35)
+K_STRIKE = pose(lean=14, shift=1.5, twist=-26, ra=(-94, -6, 0), ra_aim=True, la=(32, 0, -12), rl=(30, 0, 8), ll=(-24, 0, -7), re=0, le=100, rk=15, lk=40)
+K_FOLLOW = pose(K_STRIKE, lean=11, twist=-20, ra=(-90, -6, 0), re=5)
+K_SETTLE = pose(K_STRIKE, lean=6, shift=0.5, twist=-10, ra=(-62, -4, 0), ra_aim=False, la=(14, 0, -8), rl=(16, 0, 6), ll=(-12, 0, -6), re=25, le=60, rk=10, lk=20)
 cast("kinetic", [(0, NEUTRAL, "linear"), (2, K_LOAD, "easeoutquad"), (4, K_STRIKE, "easeoutexpo"),
                  (8, K_FOLLOW, "easeinoutsine"), (10, K_SETTLE, "easeinoutsine")], 13, 2,
      "grounded punch: coil, hips and chest snap round, straight fist, off fist chambered")
-K_WIND = pose(K_LOAD, lean=-7, twist=38, ra=(44, 0, 16), la=(-70, -30, 0), rl=(22, 0, 9), ll=(-16, 0, -9))
+K_WIND = pose(K_LOAD, lean=-7, twist=38, ra=(44, 0, 16), la=(-70, -30, 0), rl=(22, 0, 9), ll=(-16, 0, -9), re=110, le=80, rk=35, lk=40)
 hold("hold_kinetic", K_WIND, [nudge(K_WIND, twist=2, ra=(3, 0, 0)), nudge(K_WIND, twist=-1.5, ra=(-2, 0, 1))], 6,
      "a punch loaded and trembling")
 
 # Velocity (also every dash): a sprinter's burst. Load low, then explode into a hard forward lean with both arms
 # swept back like wings and a long stride; the body stays low and fast.
-V_LOAD = pose(lean=18, ra=(-18, 0, 6), la=(-18, 0, -6), rl=(10, 0, 3), ll=(-8, 0, -3))
-V_BURST = pose(lean=40, shift=2, ra=(58, 0, 20), la=(58, 0, -20), rl=(34, 0, 3), ll=(-30, 0, -3))
-V_CARRY = pose(V_BURST, lean=34, ra=(50, 0, 18), la=(50, 0, -18), rl=(26, 0, 3), ll=(-22, 0, -3))
-V_SETTLE = pose(lean=16, shift=0.5, ra=(24, 0, 10), la=(24, 0, -10), rl=(10, 0, 2), ll=(-8, 0, -2))
+V_LOAD = pose(lean=18, ra=(-18, 0, 6), la=(-18, 0, -6), rl=(10, 0, 3), ll=(-8, 0, -3), re=70, le=70, rk=45, lk=50)
+V_BURST = pose(lean=40, shift=2, ra=(58, 0, 20), la=(58, 0, -20), rl=(34, 0, 3), ll=(-30, 0, -3), re=35, le=35, rk=20, lk=60)
+V_CARRY = pose(V_BURST, lean=34, ra=(50, 0, 18), la=(50, 0, -18), rl=(26, 0, 3), ll=(-22, 0, -3), re=40, le=40, rk=25, lk=55)
+V_SETTLE = pose(lean=16, shift=0.5, ra=(24, 0, 10), la=(24, 0, -10), rl=(10, 0, 2), ll=(-8, 0, -2), re=30, le=30, rk=15, lk=20)
 cast("velocity", [(0, NEUTRAL, "linear"), (1, V_LOAD, "easeoutquad"), (3, V_BURST, "easeoutexpo"),
                   (8, V_CARRY, "easeinoutsine"), (10, V_SETTLE, "easeinoutsine")], 13, 1,
      "sprinter's burst: hard forward lean, arms swept back, long stride")
@@ -375,46 +419,46 @@ hold("hold_velocity", V_LOAD, [nudge(V_LOAD, lean=2, rise=0.3), nudge(V_LOAD, le
 
 # Flight & Gravity: the launch. Both hands gather low at the off hip, then sweep diagonally up across the body to
 # above the main shoulder as the figure lifts and arches; the off arm trails down: one long diagonal line, rising.
-F_GATHER = pose(lean=10, twist=-22, ra=(-30, -38, -6), la=(-12, 0, -28), rl=(4, 0, 8), ll=(-4, 0, -8))
-F_LAUNCH = pose(lean=-14, rise=2.5, twist=16, ra=(-160, 0, -24), la=(28, 0, -40), rl=(24, 0, 4), ll=(2, 0, -6))
-F_FLOAT = pose(F_LAUNCH, rise=3.2, twist=12, ra=(-168, 0, -20), la=(30, 0, -46), rl=(28, 0, 4))
-F_SETTLE = pose(F_LAUNCH, lean=-4, rise=1.5, twist=6, ra=(-120, 0, -16), la=(10, 0, -28))
+F_GATHER = pose(lean=10, twist=-22, ra=(-30, -38, -6), la=(-12, 0, -28), rl=(4, 0, 8), ll=(-4, 0, -8), re=40, le=30, rk=35, lk=35)
+F_LAUNCH = pose(lean=-14, rise=2.5, twist=16, ra=(-160, 0, -24), la=(28, 0, -40), rl=(24, 0, 4), ll=(2, 0, -6), re=5, le=15, rk=70, lk=20)
+F_FLOAT = pose(F_LAUNCH, rise=3.2, twist=12, ra=(-168, 0, -20), la=(30, 0, -46), rl=(28, 0, 4), re=0, le=20, rk=80, lk=25)
+F_SETTLE = pose(F_LAUNCH, lean=-4, rise=1.5, twist=6, ra=(-120, 0, -16), la=(10, 0, -28), re=15, le=15, rk=40, lk=15)
 cast("flight", [(0, NEUTRAL, "linear"), (3, F_GATHER, "easeoutquad"), (6, F_LAUNCH, "easeoutcubic"),
                 (10, F_FLOAT, "easeoutsine"), (11, F_SETTLE, "easeinoutsine")], 15, 3,
      "the launch: gather low at the off hip, sweep diagonally up across the body, lift off")
-F_GRIP = pose(lean=-4, rise=0.6, ra=(-112, 6, -6), ra_aim=True, la=(-6, 0, -34), rl=(6, 0, 4), ll=(-2, 0, -4))
+F_GRIP = pose(lean=-4, rise=0.6, ra=(-112, 6, -6), ra_aim=True, la=(-6, 0, -34), rl=(6, 0, 4), ll=(-2, 0, -4), re=25, le=20, rk=30, lk=20)
 hold("hold_flight", F_GRIP, [nudge(F_GRIP, ra=(-3, 2, 0), rise=0.4), nudge(F_GRIP, ra=(2, -2, 0), rise=-0.2)], 8,
      "holding something aloft: the hand up and out, the body light")
 
 # Energy: the hands gather the charge cupped at the main hip with the chest coiled away, then both palms thrust out
 # along the aim from a wide braced stance.
-E_GATHER = pose(lean=-4, twist=30, ra=(26, 0, 10), la=(-34, 52, 0), rl=(14, 0, 8), ll=(-6, 0, -8))
-E_THRUST = pose(lean=14, shift=1.5, ra=(-92, -12, 0), la=(-92, 12, 0), ra_aim=True, la_aim=True, rl=(24, 0, 9), ll=(-16, 0, -9))
-E_HOLD = pose(E_THRUST, lean=11, ra=(-90, -12, 0), la=(-90, 12, 0))
-E_SETTLE = pose(E_THRUST, lean=5, shift=0.5, ra=(-62, -14, 0), la=(-62, 14, 0), ra_aim=False, la_aim=False, rl=(12, 0, 6), ll=(-8, 0, -6))
+E_GATHER = pose(lean=-4, twist=30, ra=(26, 0, 10), la=(-34, 52, 0), rl=(14, 0, 8), ll=(-6, 0, -8), re=95, le=95, rk=35, lk=30)
+E_THRUST = pose(lean=14, shift=1.5, ra=(-92, -12, 0), la=(-92, 12, 0), ra_aim=True, la_aim=True, rl=(24, 0, 9), ll=(-16, 0, -9), re=0, le=0, rk=10, lk=40)
+E_HOLD = pose(E_THRUST, lean=11, ra=(-90, -12, 0), la=(-90, 12, 0), re=5, le=5, rk=12)
+E_SETTLE = pose(E_THRUST, lean=5, shift=0.5, ra=(-62, -14, 0), la=(-62, 14, 0), ra_aim=False, la_aim=False, rl=(12, 0, 6), ll=(-8, 0, -6), re=25, le=25, rk=10, lk=20)
 cast("energy", [(0, NEUTRAL, "linear"), (3, E_GATHER, "easeoutquad"), (5, E_THRUST, "easeoutexpo"),
                 (9, E_HOLD, "easeinoutsine"), (10, E_SETTLE, "easeinoutsine")], 13, 3,
      "gather cupped at the hip, both palms thrust out along the aim")
-E_CHARGE = pose(E_GATHER, lean=-6, twist=34, ra=(30, 0, 10), la=(-30, 54, 0), rl=(16, 0, 10), ll=(-8, 0, -10))
+E_CHARGE = pose(E_GATHER, lean=-6, twist=34, ra=(30, 0, 10), la=(-30, 54, 0), rl=(16, 0, 10), ll=(-8, 0, -10), re=100, le=100, rk=40, lk=35)
 hold("hold_energy", E_CHARGE, [nudge(E_CHARGE, ra=(3, 2, 0), la=(-3, -2, 0), rise=0.3), nudge(E_CHARGE, ra=(-2, -1, 0), la=(2, 1, 0))], 4,
      "power gathered between the palms at the hip, trembling")
 
 # Shadow: drop into a low crouch with the hand drawn across to the off shoulder, then sweep it out wide at waist
 # height as the chest uncoils; stay low.
-S_DRAW = pose(lean=24, twist=-26, ra=(-96, -58, 0), la=(36, 0, -22), rl=(16, 0, 30), ll=(-10, 0, -30))
-S_SWEEP = pose(lean=28, twist=30, ra=(-72, 72, 22), la=(42, 0, -30), rl=(18, 0, 32), ll=(-12, 0, -32))
-S_LOW = pose(S_SWEEP, lean=26, twist=34, ra=(-60, 86, 26))
-S_SETTLE = pose(lean=14, twist=14, ra=(-30, 40, 16), la=(20, 0, -16), rl=(8, 0, 16), ll=(-6, 0, -16))
+S_DRAW = pose(lean=24, twist=-26, ra=(-96, -58, 0), la=(36, 0, -22), rl=(16, 0, 30), ll=(-10, 0, -30), re=110, le=40, rk=70, lk=75)
+S_SWEEP = pose(lean=28, twist=30, ra=(-72, 72, 22), la=(42, 0, -30), rl=(18, 0, 32), ll=(-12, 0, -32), re=10, le=50, rk=70, lk=70)
+S_LOW = pose(S_SWEEP, lean=26, twist=34, ra=(-60, 86, 26), re=5, rk=65, lk=65)
+S_SETTLE = pose(lean=14, twist=14, ra=(-30, 40, 16), la=(20, 0, -16), rl=(8, 0, 16), ll=(-6, 0, -16), re=20, le=30, rk=35, lk=35)
 cast("shadow", [(0, NEUTRAL, "linear"), (3, S_DRAW, "easeoutquad"), (6, S_SWEEP, "easeoutexpo"),
                 (9, S_LOW, "easeoutsine"), (10, S_SETTLE, "easeinoutsine")], 13, 3,
      "low crouch, hand drawn across, a wide sweep at waist height")
 hold("hold_shadow", S_DRAW, [nudge(S_DRAW, lean=1.5, ra=(2, 2, 0)), nudge(S_DRAW, lean=-1, ra=(-2, -1, 0))], 8, "coiled low")
 
 # Mind: two fingers to the temple (head tipped to the hand, the body still), then a straight point at the target.
-M_TEMPLE = pose(lean=-3, twist=6, ra=(-152, -24, -14), la=(6, 0, -6), head_z=8)
-M_FOCUS = pose(M_TEMPLE, ra=(-156, -26, -14), head_z=10)
-M_POINT = pose(lean=6, twist=-10, ra=(-92, -4, 0), ra_aim=True, la=(14, 0, -8))
-M_HOLD = pose(M_POINT, lean=5, ra=(-90, -4, 0))
+M_TEMPLE = pose(lean=-3, twist=6, ra=(-152, -24, -14), la=(6, 0, -6), head_z=8, re=95, le=15)
+M_FOCUS = pose(M_TEMPLE, ra=(-156, -26, -14), head_z=10, re=100)
+M_POINT = pose(lean=6, twist=-10, ra=(-92, -4, 0), ra_aim=True, la=(14, 0, -8), re=0, le=20)
+M_HOLD = pose(M_POINT, lean=5, ra=(-90, -4, 0), re=0)
 cast("mind", [(0, NEUTRAL, "linear"), (3, M_TEMPLE, "easeoutquad"), (7, M_FOCUS, "easeinoutsine"),
               (9, M_POINT, "easeoutexpo"), (12, M_HOLD, "easeoutsine")], 15, 3,
      "two fingers to the temple, then a forward point")
@@ -422,10 +466,10 @@ hold("hold_mind", M_FOCUS, [nudge(M_FOCUS, head_z=2, ra=(-2, 0, 0)), nudge(M_FOC
 
 # Architect: the hands draw a frame in the air (together at the top, apart, down the sides), then set it with both
 # palms pressed forward and down. Ruler-straight moves (linear), a firm set.
-A_TOP = pose(ra=(-102, -14, 0), la=(-102, 14, 0), rl=(0, 0, 7), ll=(0, 0, -7), head_z=5)
-A_SPREAD = pose(A_TOP, ra=(-100, 42, 0), la=(-100, -42, 0), head_z=7)
-A_SIDES = pose(A_TOP, ra=(-60, 42, 0), la=(-60, -42, 0), head_z=3)
-A_SET = pose(lean=12, shift=1, ra=(-58, -6, 0), la=(-58, 6, 0), ra_aim=True, la_aim=True, rl=(12, 0, 8), ll=(-8, 0, -8))
+A_TOP = pose(ra=(-102, -14, 0), la=(-102, 14, 0), rl=(0, 0, 7), ll=(0, 0, -7), head_z=5, re=60, le=60, rk=5, lk=5)
+A_SPREAD = pose(A_TOP, ra=(-100, 42, 0), la=(-100, -42, 0), head_z=7, re=35, le=35)
+A_SIDES = pose(A_TOP, ra=(-60, 42, 0), la=(-60, -42, 0), head_z=3, re=35, le=35)
+A_SET = pose(lean=12, shift=1, ra=(-58, -6, 0), la=(-58, 6, 0), ra_aim=True, la_aim=True, rl=(12, 0, 8), ll=(-8, 0, -8), re=20, le=20, rk=30, lk=25)
 cast("architect", [(0, NEUTRAL, "linear"), (2, A_TOP, "easeoutquad"), (5, A_SPREAD, "linear"), (8, A_SIDES, "linear"),
                    (10, A_SET, "easeoutback")], 14, 2,
      "hands draw a frame in the air, then set it")
@@ -434,10 +478,10 @@ hold("hold_architect", A_SPREAD, [nudge(A_SPREAD, ra=(0, 3, 0), la=(0, -3, 0)), 
 
 # Tech: the off hand taps the device on the main wrist, the arm locks straight onto the target (side-on stance), a
 # recoil kicks it up and rocks the body back, then it settles: mechanical, no wasted motion.
-T_TAP = pose(twist=8, ra=(-94, -48, 0), la=(-84, 54, 0), head_z=-6)
-T_LOCK = pose(twist=-36, ra=(-92, 0, 0), ra_aim=True, la=(-80, 40, 0), rl=(12, 0, 5), ll=(-10, 0, -6))
-T_KICK = pose(T_LOCK, lean=-8, shift=-1, ra=(-114, 0, 0))
-T_SETTLE = pose(T_LOCK, lean=-1, twist=-32, ra=(-94, 0, 0))
+T_TAP = pose(twist=8, ra=(-94, -48, 0), la=(-84, 54, 0), head_z=-6, re=100, le=80, rk=10, lk=10)
+T_LOCK = pose(twist=-36, ra=(-92, 0, 0), ra_aim=True, la=(-80, 40, 0), rl=(12, 0, 5), ll=(-10, 0, -6), re=0, le=70, rk=15, lk=20)
+T_KICK = pose(T_LOCK, lean=-8, shift=-1, ra=(-114, 0, 0), re=10, le=75)
+T_SETTLE = pose(T_LOCK, lean=-1, twist=-32, ra=(-94, 0, 0), re=2, le=70)
 cast("tech", [(0, NEUTRAL, "linear"), (2, T_TAP, "easeoutquad"), (4, T_LOCK, "easeoutexpo"), (5, T_KICK, "easeoutexpo"),
               (8, T_SETTLE, "easeoutcubic"), (10, T_SETTLE, "linear")], 13, 2,
      "tap the wrist device, lock on, recoil")
@@ -445,10 +489,10 @@ hold("hold_tech", T_LOCK, [nudge(T_LOCK, ra=(-1, 0.6, 0)), nudge(T_LOCK, ra=(0.8
 
 # Spirit: palms meet at the chest with a small bow, then the arms open wide and high as the body rises and the chest
 # lifts; a slow float down.
-P_PRAY = pose(lean=8, ra=(-56, -40, 0), la=(-56, 40, 0), rl=(0, 0, 4), ll=(0, 0, -4))
-P_OPEN = pose(lean=-10, rise=2.0, ra=(-24, 0, 118), la=(-24, 0, -118), rl=(6, 0, 3), ll=(6, 0, -3))
-P_FLOAT = pose(P_OPEN, rise=2.6, ra=(-26, 0, 128), la=(-26, 0, -128))
-P_SETTLE = pose(P_OPEN, lean=-4, rise=1.2, ra=(-16, 0, 84), la=(-16, 0, -84))
+P_PRAY = pose(lean=8, ra=(-56, -40, 0), la=(-56, 40, 0), rl=(0, 0, 4), ll=(0, 0, -4), re=100, le=100, rk=20, lk=20)
+P_OPEN = pose(lean=-10, rise=2.0, ra=(-24, 0, 118), la=(-24, 0, -118), rl=(6, 0, 3), ll=(6, 0, -3), re=15, le=15, rk=10, lk=10)
+P_FLOAT = pose(P_OPEN, rise=2.6, ra=(-26, 0, 128), la=(-26, 0, -128), re=10, le=10, rk=20, lk=15)
+P_SETTLE = pose(P_OPEN, lean=-4, rise=1.2, ra=(-16, 0, 84), la=(-16, 0, -84), re=20, le=20, rk=10, lk=10)
 cast("spirit", [(0, NEUTRAL, "linear"), (3, P_PRAY, "easeoutquad"), (7, P_OPEN, "easeoutcubic"), (11, P_FLOAT, "easeoutsine"),
                 (12, P_SETTLE, "easeinoutsine")], 16, 3,
      "palms together at the chest, then an open-armed rise")
@@ -458,26 +502,26 @@ hold("hold_spirit", P_PRAY, [nudge(P_PRAY, lean=1.5, rise=0.3), nudge(P_PRAY, le
 # Moves the body makes because of what the power does to it (any family)
 
 # Slam: both arms high, hands together, arched back (held); then a deep crouch with both fists driven into the ground.
-SL_UP = pose(lean=-12, ra=(-172, -12, 0), la=(-172, 12, 0), rl=(6, 0, 8), ll=(-4, 0, -8))
-SL_DOWN = pose(lean=36, shift=1.5, ra=(-48, -14, 0), la=(-48, 14, 0), rl=(20, 0, 26), ll=(-14, 0, -26))
-SL_REBOUND = pose(SL_DOWN, lean=30, ra=(-52, -14, 0), la=(-52, 14, 0))
-SL_SETTLE = pose(lean=14, ra=(-20, -8, 6), la=(-20, 8, -6), rl=(8, 0, 12), ll=(-6, 0, -12))
+SL_UP = pose(lean=-12, ra=(-172, -12, 0), la=(-172, 12, 0), rl=(6, 0, 8), ll=(-4, 0, -8), re=25, le=25, rk=15, lk=15)
+SL_DOWN = pose(lean=36, shift=1.5, ra=(-48, -14, 0), la=(-48, 14, 0), rl=(20, 0, 26), ll=(-14, 0, -26), re=10, le=10, rk=80, lk=85)
+SL_REBOUND = pose(SL_DOWN, lean=30, ra=(-52, -14, 0), la=(-52, 14, 0), rk=70, lk=72)
+SL_SETTLE = pose(lean=14, ra=(-20, -8, 6), la=(-20, 8, -6), rl=(8, 0, 12), ll=(-6, 0, -12), re=20, le=20, rk=30, lk=30)
 hold("slam_wind", SL_UP, [nudge(SL_UP, lean=-1.5, ra=(-2, 0, 0), la=(-2, 0, 0)), nudge(SL_UP, lean=1)], 6, "both arms up, about to come down")
 clip("slam", [(0, SL_UP, "linear"), (2, SL_DOWN, "easeinexpo"), (5, SL_REBOUND, "easeoutsine"), (6, SL_SETTLE, "easeinoutsine")], 10,
      note="both fists into the ground from overhead")
 
 # Flurry: palms strike in turn every two ticks from a wide stance, the chest turning into each one.
-FL_BASE = dict(lean=12, shift=1, rl=(22, 0, 10), ll=(-16, 0, -10))
-FL_R = pose(**FL_BASE, twist=-16, ra=(-92, -8, 0), ra_aim=True, la=(-40, 34, 0))
-FL_L = pose(**FL_BASE, twist=16, ra=(-40, -34, 0), la=(-92, 8, 0), la_aim=True)
+FL_BASE = dict(lean=12, shift=1, rl=(22, 0, 10), ll=(-16, 0, -10), rk=35, lk=40)
+FL_R = pose(**FL_BASE, twist=-16, ra=(-92, -8, 0), ra_aim=True, la=(-40, 34, 0), re=0, le=85)
+FL_L = pose(**FL_BASE, twist=16, ra=(-40, -34, 0), la=(-92, 8, 0), la_aim=True, re=85, le=0)
 fl_keys = [(0, NEUTRAL, "linear")]
 for i in range(18):
     fl_keys.append((2 + 2 * i, FL_R if i % 2 == 0 else FL_L, "easeoutquad"))
-fl_keys.append((38, pose(**FL_BASE, ra=(-50, -20, 0), la=(-50, 20, 0)), "easeinoutsine"))
+fl_keys.append((38, pose(**FL_BASE, ra=(-50, -20, 0), la=(-50, 20, 0), re=40, le=40), "easeinoutsine"))
 clip("flurry", fl_keys, 42, note="palms in turn, too fast to see")
 
 # Hover: weightless; legs hang a little back, arms float out low with the palms down, a slow bob.
-H_BASE = pose(ground=False, lean=4, ra=(-10, 0, 34), la=(-10, 0, -34), rl=(14, 0, 5), ll=(8, 0, -5))
+H_BASE = pose(ground=False, lean=4, ra=(-10, 0, 34), la=(-10, 0, -34), rl=(14, 0, 5), ll=(8, 0, -5), re=25, le=25, rk=45, lk=35)
 hold("hover", H_BASE, [nudge(H_BASE, rise=0.7, ra=(0, 0, 4), la=(0, 0, -4), rl=(-3, 0, 0)),
                        nudge(H_BASE, rise=-0.5, ra=(0, 0, -2), la=(0, 0, 2), ll=(-3, 0, 0))], 40, "weightless, a slow bob")
 
@@ -495,7 +539,7 @@ def write(root=None):
     path = os.path.join(root or os.path.join(ROOT, "src/main/resources"), OUT_REL)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as fh:
-        json.dump(document(), fh, indent=1, sort_keys=False)
+        json.dump(document(), fh, separators=(",", ":"))
         fh.write("\n")
     return path
 
@@ -518,15 +562,20 @@ def penetration(b, pitch=0.0):
     frames = part_frames(b, pitch)
     worst, where = 0.0, ""
     for arm in ("right_arm", "left_arm"):
-        M, T = frames[arm]
         _, (x0, y0, z0, w, h, d), _ = PARTS[arm]
-        pts = [(x0 + w * fx, y0 + h * fy, z0 + d * fz) for fx in (0.1, 0.5, 0.9) for fy in (0.4, 0.65, 0.95) for fz in (0.1, 0.5, 0.9)]
+        cy = JOINTS[arm][0]
+        pts = []
+        for fx in (0.1, 0.5, 0.9):
+            for fy in (0.4, 0.65, 0.95):
+                for fz in (0.1, 0.5, 0.9):
+                    q = (x0 + w * fx, y0 + h * fy, z0 + d * fz)
+                    M, T = frames.get(arm + ":lower", frames[arm]) if q[1] > cy else frames[arm]
+                    m = R._mv(M, q)
+                    pts.append((m[0] + T[0], m[1] + T[1], m[2] + T[2]))
         for other in ("head", "torso", "right_leg", "left_leg"):
             Mo, To = frames[other]
             _, (ox, oy, oz, ow, oh, od), _ = PARTS[other]
-            for pt in pts:
-                q = R._mv(M, pt)
-                q = (q[0] + T[0], q[1] + T[1], q[2] + T[2])
+            for q in pts:
                 lx, ly, lz = _inv_apply(Mo, To, q)
                 depth = min(lx - ox, ox + ow - lx, ly - oy, oy + oh - ly, lz - oz, oz + od - lz)
                 if depth > worst:
@@ -577,10 +626,17 @@ def _quads(kids):
             u, v, w, h, d = bx["u"], bx["v"], bx["w"], bx["h"], bx["d"]
             U0, U1, U2, U22, U3, U4 = u, u + d, u + d + w, u + d + w + w, u + d + w + d, u + d + w + d + w
             V0, V1, V2 = v, v + d, v + d + h
+            S1, S2 = bx.get("side", (V1, V2))
+            skip = bx.get("skip", ())
             centre = tf(((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2))
-            for verts, rect in (((l1, l0, t0, t1), (U1, V0, U2, V1)), ((t2, t3, l3, l2), (U2, V1, U22, V0)),
-                                ((t0, l0, l3, t3), (U0, V1, U1, V2)), ((t1, t0, t3, t2), (U1, V1, U2, V2)),
-                                ((l1, t1, t2, l2), (U2, V1, U3, V2)), ((l0, l1, l2, l3), (U3, V1, U4, V2))):
+            faces = []
+            if "top" not in skip:
+                faces.append(((l1, l0, t0, t1), (U1, V0, U2, V1)))
+            if "bottom" not in skip:
+                faces.append(((t2, t3, l3, l2), (U2, V1, U22, V0)))
+            faces += [((t0, l0, l3, t3), (U0, S1, U1, S2)), ((t1, t0, t3, t2), (U1, S1, U2, S2)),
+                      ((l1, t1, t2, l2), (U2, S1, U3, S2)), ((l0, l1, l2, l3), (U3, S1, U4, S2))]
+            for verts, rect in faces:
                 vs = [tf(q) for q in verts]
                 fc = tuple(sum(q[i] for q in vs) / 4 for i in range(3))
                 out.append((vs, rect, tuple(fc[i] - centre[i] for i in range(3)), False))
@@ -635,7 +691,7 @@ def strip_bounds(clips, yaw, pitch):
     for b in trees:
         fr = part_frames(b, 8.0)
         for name, (M, T) in fr.items():
-            _, (x0, y0, z0, w, h, d), _ = PARTS[name]
+            _, (x0, y0, z0, w, h, d), _ = PARTS[name.split(":")[0]]
             for cx in (x0, x0 + w):
                 for cy in (y0, y0 + h):
                     for cz in (z0, z0 + d):
@@ -673,18 +729,18 @@ def strip(c, out_dir, px=5.0):
     return path
 
 
-def families_sheet(out_dir, px=5.0):
+def families_sheet(out_dir, px=5.0, suffix=""):
     """The nine families, one per row: wind-up, release and follow-through from the front, the side and behind
     (the third-person camera), then the release as a flat silhouette at about ten blocks, seen three-quarters on."""
     from PIL import Image, ImageDraw
     fams = ["kinetic", "velocity", "flight", "energy", "shadow", "mind", "architect", "tech", "spirit"]
     beats = {}
     for f in fams:
-        c = CLIPS[f"cast_{f}"]
+        c = CLIPS[f"cast_{f}{suffix}"]
         ks = [t for t, _, _ in c.keys]
         beats[f] = (c, [ks[1], ks[2], ks[-2]])
     views = (("front", -30.0, 12.0), ("side", -90.0, 6.0), ("behind", 160.0, 16.0))
-    bounds = {v: strip_bounds([CLIPS[f"cast_{f}"] for f in fams], v[1], v[2]) for v in views}
+    bounds = {v: strip_bounds([CLIPS[f"cast_{f}{suffix}"] for f in fams], v[1], v[2]) for v in views}
     rows = []
     for f in fams:
         c, ts = beats[f]
@@ -707,7 +763,7 @@ def families_sheet(out_dir, px=5.0):
         dr.text((6, 20 + j * h + h // 2), f, fill=(230, 232, 240, 255))
         for i, im in enumerate(cells):
             sheet.paste(im, (90 + i * w + (i // 3) * gap, 20 + j * h))
-    path = os.path.join(out_dir, "families.png")
+    path = os.path.join(out_dir, f"families{suffix}.png")
     sheet.save(path)
     return path
 
@@ -746,14 +802,15 @@ def main(argv):
     if cmd == "preview":
         out_dir = argv[1]
         os.makedirs(out_dir, exist_ok=True)
-        names = argv[2:] or [n for n in CLIPS if not n.endswith("_end") and not n.endswith("_release")]
+        names = argv[2:] or [n for n in CLIPS if not any(n.endswith(x) for x in ("_end", "_release", "_end_bent", "_release_bent"))]
         for n in names:
-            if n == "families":
-                print(families_sheet(out_dir))
+            if n in ("families", "families_bent"):
+                print(families_sheet(out_dir, suffix=n[len("families"):]))
                 continue
             print(strip(CLIPS[n], out_dir))
         if not argv[2:]:
             print(families_sheet(out_dir))
+            print(families_sheet(out_dir, suffix="_bent"))
         return 0
     raise SystemExit(__doc__)
 
