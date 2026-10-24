@@ -293,13 +293,29 @@ def cmd_backend(game_dir, backend, only_if_unset=False):
     opts = game_dir / "options.txt"
     lines = opts.read_text().splitlines() if opts.exists() else []
     current = next((l.split(":", 1)[1].strip().strip('"') for l in lines if l.startswith("preferredGraphicsBackend:")), None)
-    if only_if_unset and current not in (None, "default"):
+    keep = only_if_unset and current not in (None, "default")
+    if not keep and current != backend:
+        lines = [l for l in lines if not l.startswith("preferredGraphicsBackend:")] + [f'preferredGraphicsBackend:"{backend}"']
+        opts.write_text("\n".join(lines) + "\n")
+        print(f"  graphics API: {backend} (was {current or 'unset'}) in {opts}; takes effect on the next launch")
+    if (current if keep else backend) == "vulkan":
+        early_window_off(game_dir)
+
+
+def early_window_off(game_dir):
+    """NeoForge's early loading screen can't hand over to Minecraft on Vulkan (MoltenVK): the game freezes at "loading
+    mods" with "the background loading screen renderer seems stuck". Vulkan game folders run without it."""
+    fml = game_dir / "config" / "fml.toml"
+    text = fml.read_text() if fml.exists() else ""
+    if "earlyWindowControl = false" in text:
         return
-    if current == backend:
-        return
-    lines = [l for l in lines if not l.startswith("preferredGraphicsBackend:")] + [f'preferredGraphicsBackend:"{backend}"']
-    opts.write_text("\n".join(lines) + "\n")
-    print(f"  graphics API: {backend} (was {current or 'unset'}) in {opts}; takes effect on the next launch")
+    if "earlyWindowControl" in text:
+        text = "\n".join("earlyWindowControl = false" if l.startswith("earlyWindowControl") else l for l in text.splitlines()) + "\n"
+    else:
+        text = text + ("" if text.endswith("\n") or not text else "\n") + "earlyWindowControl = false\n"
+    fml.parent.mkdir(parents=True, exist_ok=True)
+    fml.write_text(text)
+    print(f"  early loading screen off in {fml} (it freezes on Vulkan)")
 
 
 # ---------------------------------------------------------------------------------------------- Distant Horizons looks
