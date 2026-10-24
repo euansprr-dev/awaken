@@ -27,7 +27,7 @@ public final class HoloPanel {
     public int w = 320, h = 200;
     public int accent = Glass.EDGE;
     /** Rest centre as a fraction of the half-screen (x right, y up) and distance in metres. */
-    public float restX = -0.48f, restY = 0.17f, dist = 0.62f;
+    public float restX = -0.43f, restY = 0.15f, dist = 0.62f;
     /** Target width as a fraction of the screen: left of the crosshair, its right edge near the centre. */
     public float screenFrac = 0.45f;
     /** Yaw toward the wrist side (the left edge nearer) and lean back (the bottom nearer), degrees. */

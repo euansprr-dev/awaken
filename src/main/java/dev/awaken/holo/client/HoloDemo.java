@@ -22,7 +22,7 @@ final class HoloDemo {
     static void show(HoloPanel p, int mode) {
         p.w = W;
         p.h = H;
-        p.screenFrac = 0.31f; // the same pixels per unit as the K menu's wider panel
+        p.screenFrac = 0.39f; // the same pixels per unit as the K menu's wider panel
         if (mode == 1) {
             p.anchor = HoloPanel.Anchor.VIEW;
             p.timeline.seek(HoloTimeline.OPEN_MS);

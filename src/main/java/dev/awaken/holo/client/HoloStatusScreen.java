@@ -27,7 +27,8 @@ import java.util.List;
  * toasts wait ({@link QuietScreen}).
  */
 public final class HoloStatusScreen extends Screen implements QuietScreen {
-    static final int W = 344, H = 214;
+    /** Panel units: 5 framebuffer pixels per unit at 45% of a 3024-wide screen, so body text is 45 px tall there. */
+    static final int W = 272, H = 228;
     private static StatusSections.Tab lastTab = StatusSections.Tab.STATUS;
     private static final int[] SCROLL = new int[StatusSections.Tab.values().length];
     private static final int SECTION_GAP = 12, SCROLLBAR = StatusLayout.SCROLLBAR;

@@ -64,6 +64,11 @@ final class HoloRender {
         // headers (x, y, width) for their glow
         final float[] headers = new float[48 * 3];
         int headerCount;
+        // the dark beds behind text lines (x0, y0, x1, y1), and each line's full width (cached by its text)
+        final float[] beds = new float[HoloCanvas.MAX_TEXT * 4];
+        int bedCount;
+        final float[] widths = new float[HoloCanvas.MAX_TEXT];
+        final Object[] widthOf = new Object[HoloCanvas.MAX_TEXT];
         RenderType spriteType;
 
         Draw(HoloPanel p) {
@@ -125,6 +130,7 @@ final class HoloRender {
             text(c, d, base + 4);
         } else {
             d.caretCount = 0;
+            d.bedCount = 0;
         }
         c.order(base + 5).submitSpecial(key, d.top);
     }
@@ -138,12 +144,76 @@ final class HoloRender {
         if (ga <= 0.004f) return;
         int bg = (Math.round(255 * ga) << 24) | (p.accent & 0xFFFFFF);
         quad(vc, m, 0, 0, p.w, p.h, 0, 0, p.w, p.h, bg, bg, p.w, p.h);
+        // a calm dark field behind every line of text, feathered out, so text reads over any sky, grass or night;
+        // the panel's edges and glow stay light
+        int bed = mulAlpha(0xFF040912, 0.58f * ga), clear = 0x00040912;
+        mergeBeds(d);
+        for (int i = 0; i < d.bedCount; i++) {
+            int o = i * 4;
+            softQuad(vc, m, d.beds[o], d.beds[o + 1], d.beds[o + 2], d.beds[o + 3], 7f, bed, clear);
+        }
         HoloCanvas cv = p.canvas;
         for (int i = 0; i < cv.fills; i++) {
             int o = i * 4;
             int top = mulAlpha(cv.fillTop[i], ga), bottom = mulAlpha(cv.fillBottom[i], ga);
             quad(vc, m, cv.fill[o], cv.fill[o + 1], cv.fill[o + 2], cv.fill[o + 3], 0, 0, 0, 0, top, bottom, 0, 0);
         }
+    }
+
+    /** Joins text beds that touch (within a few units) into one block per paragraph, column or grid, in place. */
+    private static void mergeBeds(Draw d) {
+        float gapX = 14f, gapY = 5f; // a grid's columns join into one field; paragraphs a section apart stay apart
+        float[] b = d.beds;
+        boolean merged = true;
+        while (merged) {
+            merged = false;
+            for (int i = 0; i < d.bedCount; i++) {
+                int o = i * 4;
+                for (int j = i + 1; j < d.bedCount; j++) {
+                    int q = j * 4;
+                    if (b[q] > b[o + 2] + gapX || b[q + 2] < b[o] - gapX || b[q + 1] > b[o + 3] + gapY || b[q + 3] < b[o + 1] - gapY) continue;
+                    b[o] = Math.min(b[o], b[q]);
+                    b[o + 1] = Math.min(b[o + 1], b[q + 1]);
+                    b[o + 2] = Math.max(b[o + 2], b[q + 2]);
+                    b[o + 3] = Math.max(b[o + 3], b[q + 3]);
+                    int last = (d.bedCount - 1) * 4;
+                    b[q] = b[last];
+                    b[q + 1] = b[last + 1];
+                    b[q + 2] = b[last + 2];
+                    b[q + 3] = b[last + 3];
+                    d.bedCount--;
+                    j--;
+                    merged = true;
+                }
+            }
+        }
+    }
+
+    /** A flat rectangle whose outer ring of {@code f} units fades to clear (a 3×3 grid; glass pipeline, flat mode). */
+    private static void softQuad(VertexConsumer vc, Matrix4f m, float x0, float y0, float x1, float y1, float f, int inner, int clear) {
+        float[] xs = GX, ys = GY;
+        xs[0] = x0 - f;
+        xs[1] = x0;
+        xs[2] = x1;
+        xs[3] = x1 + f;
+        ys[0] = y0 - f;
+        ys[1] = y0;
+        ys[2] = y1;
+        ys[3] = y1 + f;
+        for (int j = 0; j < 3; j++) {
+            for (int i = 0; i < 3; i++) {
+                vc.addVertex(m, xs[i], ys[j], 0).setUv(0, 0).setColor(grid(i, j, inner, clear)).setUv2(0, 0);
+                vc.addVertex(m, xs[i], ys[j + 1], 0).setUv(0, 0).setColor(grid(i, j + 1, inner, clear)).setUv2(0, 0);
+                vc.addVertex(m, xs[i + 1], ys[j + 1], 0).setUv(0, 0).setColor(grid(i + 1, j + 1, inner, clear)).setUv2(0, 0);
+                vc.addVertex(m, xs[i + 1], ys[j], 0).setUv(0, 0).setColor(grid(i + 1, j, inner, clear)).setUv2(0, 0);
+            }
+        }
+    }
+
+    private static final float[] GX = new float[4], GY = new float[4];
+
+    private static int grid(int i, int j, int inner, int clear) {
+        return (i == 1 || i == 2) && (j == 1 || j == 2) ? inner : clear;
     }
 
     // ---- glow -----------------------------------------------------------------------------------------------------
@@ -390,6 +460,7 @@ final class HoloRender {
         float window = HoloTimeline.OPEN_MS - 300f;
         d.caretCount = 0;
         d.headerCount = 0;
+        d.bedCount = 0;
         var out = c.order(order);
         float ga = p.glassAlpha * p.fade;
         for (int i = 0; i < cv.texts; i++) {
@@ -436,6 +507,19 @@ final class HoloRender {
             }
             if (scale != 1f) d.scaled[i].set(p.pose).translate(x, y, 0).scale(scale, scale, 1);
             out.submitSpecial(key, s);
+            Object src = cv.text[i];
+            if (d.widthOf[i] == null || !d.widthOf[i].equals(src)) {
+                d.widths[i] = src instanceof String str ? font.width(str) : font.width((net.minecraft.util.FormattedCharSequence) src);
+                d.widthOf[i] = src;
+            }
+            if (d.bedCount < HoloCanvas.MAX_TEXT) {
+                int o = d.bedCount * 4;
+                d.beds[o] = x - 2;
+                d.beds[o + 1] = y - 1.5f;
+                d.beds[o + 2] = x + d.widths[i] * scale + 2;
+                d.beds[o + 3] = y + 9 * scale + 0.5f;
+                d.bedCount++;
+            }
             if (header && d.headerCount < 48) {
                 d.headers[d.headerCount * 3] = x;
                 d.headers[d.headerCount * 3 + 1] = y;
