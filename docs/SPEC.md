@@ -784,7 +784,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   for the rest. Opened with U (`key.awaken.look`, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
   Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
   default stays SWIFT (client config `lens`). The current tier is read back from the settings (Lens, Iris's shaders
-  switch), not stored twice.
+  switch), not stored twice. Drawn like the System's cards (`HudLook`: projected glass that scans in while the holo
+  look is on, flat `Glass` otherwise); not a reading screen, so the world behind stays undimmed and a choice shows at
+  once.
 
   | Owned key | SWIFT | CINEMATIC | ULTRA |
   |---|---|---|---|
