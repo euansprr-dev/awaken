@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "group": "planks",
+  "ingredients": [
+    "#awaken:bluepine_logs"
+  ],
+  "result": {
+    "count": 4,
+    "id": "awaken:bluepine_planks"
+  }
+}

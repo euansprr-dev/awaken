@@ -7,7 +7,7 @@
   "replacement": "awaken:lumen_forest",
   "parameters": {
     "awaken:lands/awakening": {
-      "min_inclusive": 0.0
+      "min_inclusive": -0.34
     }
   }
 }

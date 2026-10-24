@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "tip=false": {
+      "model": "awaken:block/weepwood_tendrils"
+    },
+    "tip=true": {
+      "model": "awaken:block/weepwood_tendrils_tip"
+    }
+  }
+}

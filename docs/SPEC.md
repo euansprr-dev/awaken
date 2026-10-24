@@ -1021,35 +1021,64 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
   it off). Test: `terrain_lands_pack_new_worlds_only`.
 - Placed today (2026-10-24): Elderwood (replaces forest, birch, old-growth birch and flower forest), Lumen Forest
-  (dark forest), Glass Steppe (savanna, savanna plateau) and Shattered Highlands (windswept hills, windswept gravelly
-  hills, stony peaks), all where the awakening field ≥ 0. Frost Spires and Mirror Marsh are planned.
+  (dark forest), Glass Steppe (savanna, savanna plateau, windswept savanna), Shattered Highlands (windswept hills,
+  windswept gravelly hills, windswept forest, stony peaks), Frost Spires (snowy plains, snowy taiga, grove, ice
+  spikes) and Mirror Marsh (swamp, mangrove swamp), each where the awakening field passes its threshold (below).
 - An Awakened biome's own ground is a material rule in the lands pack (`worldgen/material_rule/lands/<biome>_surface`
   and `_under`), spliced first into the overworld's `biome_surface` and `under_biome_surface` by Lithostitched
   `set_material_rule` modifiers (`injection_type: prepend`, guarded by its biome), so the surface pass lays it and far
-  terrain shows it. Glass Steppe: fused glass where the noise `awaken:lands/glass` ≥ 0.3, else sun-gold grass; Shattered
-  Highlands: riven shale on steep ground and where the `minecraft:surface` noise ≥ −0.05, else grass.
+  terrain shows it; a biome that owns its whole floor, under water too, has a `_floor` rule spliced first into the
+  overworld's `surface` instead. Glass Steppe: fused glass where the noise `awaken:lands/glass` ≥ 0.3, else sun-gold
+  grass; Shattered Highlands: riven shale on steep ground and where the `minecraft:surface` noise ≥ −0.05, else grass;
+  Frost Spires: hoarfrost where `awaken:lands/rime` ≥ −0.3, else grass (snow never settles on hoarfrost); Mirror
+  Marsh (`_floor`): still water at y 62 where `minecraft:surface_swamp` ≥ −0.2 (vanilla's swamp rule with more of the
+  noise), mirepeat on dry floor where `awaken:lands/peat` ≥ −0.45, else grass, mirepeat under water and under it all.
+  A block in a material rule is a block id or an `{"id", "properties"}` map (26.3's `BlockState` codec; never
+  `Name`/`Properties`), and 26.3 has no `all_of` condition: conditions nest.
 - Shattered Highlands' faults (`terrain.fault.FaultLinesFeature`, `awaken:fault_lines`, local modifications, once a
   chunk over its own columns): the zero line of `awaken:lands/fault` (octave −8, five octaves); a column's distance to
   it is the noise over its slope (sampled on a 2-block lattice, bilinear), faultstone within 1.6 blocks (three deep),
   the seam within 0.55; where `awaken:lands/fault_trench` passes 0.15 the fault widens (by up to 2.8 a side) and opens
   into a V trench up to 9 deep. Decisions come from the noises and the column only (continuous across chunk borders);
   never into water or down to the sea. Faultstone and the seam are in `#minecraft:cannot_support_snow_layer`.
-- Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift"`,
-  `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass Steppe; a glassed
-  bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its ground column by
-  column from each column's own ground and its distance from the centre; the Shard Drift (Shattered Highlands; 7–12
-  floating shards along a fault; spacing 22, separation 8) walks its site onto the fault line and samples the ground
-  under each shard once at the start. Both place voxels into air, plants and water only and never write outside their
-  box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms on the fastest of eight seeds, as
+- Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift" |
+  "aurora_spire"`, `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass
+  Steppe; a glassed bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its
+  ground column by column from each column's own ground and its distance from the centre; the Shard Drift (Shattered
+  Highlands; 7–12 floating shards along a fault; spacing 22, separation 8) walks its site onto the fault line and
+  samples the ground under each shard once at the start; the Aurora Spire (Frost Spires; a frostspar needle 42–58 tall
+  on a frozen tarn 17–27 across, 4–6 lesser needles and rim sheaves, branches at about 55°; spacing 26, separation 9)
+  freezes its tarn level with the centre's ground column by column (cut or built up at most 5, packed ice two layers
+  at least, a hoarfrost ring). The Gate Scar and the Aurora Spire share one level-site search
+  (`LandmarkStructure.levelSite`: dry, at least 12 / 2 over the sea, within 5 / 4 of the centre's height at 16 / 12
+  out and 8 / 6 at 28 / 20 out, 50 / 70 under the build limit). All place voxels into air, plants, snow and water only
+  and never write outside their box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms on the fastest of eight seeds, as
   `terrain_landmark_shapes` asserts; features ≤ 0.5 ms a chunk on average);
-  `/awaken terrain lands2cost` reports what they cost on the worldgen threads.
-- Air for the second pair: an air.json biome rule's `motes.kind` hands the spot to `terrain.client.LandsMotes`
-  (cap 120 × the leaves' frame-budget scale): `glint` (Glass Steppe, by day: a star blinking on sunlit glass of
-  `#awaken:lands/glints`) and `fault` (Shattered Highlands: sparks off `#awaken:lands/faults` at night, dust by day).
+  `/awaken terrain landscost` reports what they cost on the worldgen threads.
+- Air for the second and third pairs: an air.json biome rule's `motes.kind` hands the spot to
+  `terrain.client.LandsMotes` (cap 120 × the leaves' frame-budget scale): `glint` (Glass Steppe, by day: a star
+  blinking on sunlit glass of `#awaken:lands/glints`), `fault` (Shattered Highlands: sparks off `#awaken:lands/faults`
+  at night, dust by day), `frost` (Frost Spires: snow blown sideways on the wind, thicker in gusts; at night three in
+  ten spots a cold glint on `#awaken:lands/frost_glints`) and `mist` (Mirror Marsh: wisps just over open water, 0.35 +
+  0.65 × night of the spots).
+- Hero trees may stand in water: `HeroTree.wetDepth` (0 for dry-land trees; the Weeping Matriarch 3) lets the site
+  search accept ground under at most that much water and no deeper than that below the sea (`HeroStructure.standing`);
+  the piece ends hanging strands at the water's surface (the last one above it a tip) and asks the tree what floats on
+  open water under its crown (`HeroTree.onWater`: the Matriarch's moonblooms). The Weeping Matriarch (Mirror Marsh;
+  trunk 4–6 across and 22–30 tall on 6–9 prop roots, 5–7 bowing limbs under low domes, a curtain of tendrils, about
+  45 across; spacing 24, separation 9) keeps every tube at least 0.9 thick: within 0.87 of an axis every cell joins the
+  axis face to face, so no block touches the tree only at an edge.
 - Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
-  are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+  are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds. Tuned 2026-10-24
+  (`AWAKENING` in `tools/content/lands_content.py`): Elderwood −0.22, Glass Steppe and Frost Spires −0.27, Lumen
+  Forest and Shattered Highlands −0.34, Mirror Marsh −0.41 (the field's deciles over the archetypes' land run −0.41,
+  −0.27, −0.17, −0.09, −0.01, 0.07, 0.15, 0.25, 0.40, so −0.27 claims about 80%). Forests are the commonest archetype,
+  so Elderwood takes less of them and stays one Awakened biome among six; the rare archetypes give more. Measured:
+  40.6% of land under Tectonic's `awakened` preset (28–50% a seed; 24.2% when every threshold was 0), 41.5% on
+  vanilla shapes; about a fifth to a third of each archetype stays vanilla. `terrain_lands_placement` fails outside
+  34–48% on vanilla shapes.
   `terrain_lands_placement` holds the injectors to the biome table (one per Awakened biome, its archetype among its
   vanilla targets, no target claimed twice, ground splices guarded by their biome) and measures the share on the
   five studio seeds by applying the injectors to the vanilla generator as Lithostitched does.
@@ -1383,3 +1412,61 @@ is what the Ascent decided while building it.
   cuts in, ending the Runner move); a jump at a runnable wall goes to the wall-run, not the wings; flying free off a
   rope (CARRY), a jump at a wall hands the body to the wall-run with the rope's speed.
 - `core.api.MovementHooks` gains `wallRunning(Player)` and `hanging(Player)` (both sides; existing methods unchanged).
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
+
+The world is drawn at a lower resolution and rebuilt to the screen's; menus, the HUD and all GUI text stay native.
+Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73rX1). Measurements and crops:
+`docs/perf/pixels/REPORT.md`.
+- A Turbo feature (the Turbo contract: internals only in `dev.awaken.turbo`, a public-API fallback, version-locked,
+  kept only with a measured win, access transformer before mixin, never reflection). Code: `dev.awaken.turbo.pixels`;
+  mixins `dev.awaken.turbo.pixels.mixin` in its own config `awaken.pixels.mixins.json` (client only, not required,
+  `defaultRequire` 0). Version lock: Minecraft 26.3 with NeoForge 26.3.0.95 exactly (`Pixels.MINECRAFT/NEOFORGE`);
+  any other: off, one log line. Until turbo-bridge's shared probe lands on build/awaken-v1 this check is local.
+- Why a mixin: 26.3 has no render-scale option and no event at the two moments that matter. `FrameGraphSetupEvent`
+  fires after `LevelRenderer.render` has sized its own targets (OIT, depth bounds) from the main target, and render
+  passes demand attachments of one size (`FrontendCommandEncoder.createRenderPass`). So `GameRendererMixin` injects
+  two calls into `GameRenderer.render()`: before `renderLevel()` and after `applyPostEffects()`. An accessor
+  (`RenderTargetAccess`) sets a render target's protected textures; turbo-bridge owns the shared access-transformer
+  file, so Pixels keeps to its own mixin config instead of adding lines there.
+- How: for the world pass the main target and the hand's depth target (`hud3DTarget`) lend themselves smaller
+  textures: their own colour and depth are set aside and the low-resolution ones put in their place, on the same
+  objects, with `width`/`height` to match. Everything that holds the main target (the level renderer and its frame
+  graph, the sky renderer, Sodium, Distant Horizons (checked: pixels-dh tour), NeoForge's render stages, post chains)
+  draws at the lower resolution without knowing. After the post effects the real textures go back and the upscaler fills the main
+  colour; the GUI then clears depth and draws on top, native. The `Globals` UBO's `ScreenSize` stays the window's
+  (line widths keep their screen-pixel width).
+- Lens runs before the upscale, at render scale, with every other post effect: its depth is the world's own, its
+  bloom and haze get cheaper with the pixels, and FSR expects a finished, display-referred frame.
+- Upscalers (`PixelsPipelines`, full-screen passes on vanilla's `core/screenquad`, both graphics APIs, registered
+  optional; each pass clears its target rather than loading it, which is free on a tile-based GPU):
+  SHARP (default): one pass, bilinear plus FSR 1's RCAS (contrast-adaptive sharpening with noise detection,
+  strength exp2(-0.2) = 0.87) from a ring one world pixel apart. FSR: a port of AMD FidelityFX FSR 1.0 (MIT; the
+  notice is in each shader), with EASU (edge-adaptive Lanczos-2, 12 texel taps, dering clamp) into a screen-sized
+  intermediate, then RCAS into the main target. BILINEAR: one linear tap. A pipeline that doesn't compile falls back:
+  FSR and SHARP to bilinear, bilinear to native.
+- Measured (docs/perf/pixels/REPORT.md, M4 at 2880×1658, Vulkan, RD 32, Lens Swift): GPU time saved a frame with
+  SHARP: 0.75 saves 0.9–1.6 ms (10–14%), 0.67 saves 1.2–2.1 ms (13–19%), 0.5 saves 1.5–2.2 ms (22–25%). Frame p50
+  fell 0.8–1.8 ms where the GPU was the limit; p99 doesn't move (its spikes are CPU work). The upscale costs bilinear
+  0.12 ms, SHARP 0.24 ms, FSR 1.21 ms, so on Apple's GPU FSR eats most of what 0.67 saves (only 16–23% of the world
+  pass scales with pixels; the rest is geometry). Fine block textures soften at every scale; GUI text never changes.
+- Defaults (decided 2026-10-24 from those numbers): `renderScale` 1.0 (off), `upscaler` SHARP. Recommended:
+  1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at 120 Hz or on the CPU, doesn't pay
+  for the softer textures); 0.75 with SHARP on a 4K screen (the pixel-bound part grows 1.73×: an estimate until a
+  Dell run, which needs Euan's OK).
+- Holo: panels draw inside the world (the level's always-on-top phase), so at render scale their text would be
+  upscaled with it (measured: softer, with RCAS fringes at 0.67). While a panel holds the player's attention
+  (`UiHooks.focus() > 0`: the K menu, a reading screen) the world renders native, so panel text, Lens's bloom on the
+  glow and its focus dimming stay exactly as without Pixels; the low-resolution targets are kept for after. Toasts,
+  cards and the HUD are GUI and always native.
+- Safety: both hooks must be seen in one frame before the first swap; a frame that ends with the target still lent
+  (`RenderFrameEvent.Post`) gets it back and turns Pixels off for the session, as does any exception in a pass.
+- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off) and `upscaler` SHARP |
+  FSR | BILINEAR. Autopilot `pixels <scale> [sharp|fsr|bilinear] | config | state` overrides them for a tour (not
+  saved). Tours:
+  `tools/autopilot/pixels.txt` (the measurement), `pixels-smoke.txt`, `pixels-dh.txt`; crops: `tools/pixels-crops.py`.
+  `pixels gpu on|reset|<label>` (measurement only) writes GPU timestamps before the world, after the post effects and
+  after the upscale, and logs the world pass's and the upscale's GPU time per label (`PixelsTiming`): on a busy Mac
+  the frame time is the CPU's, so the GPU time is what shows what Pixels saves.

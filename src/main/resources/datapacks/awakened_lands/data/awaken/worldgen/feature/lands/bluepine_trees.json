@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:random_selector",
+  "default": "awaken:lands/bluepine",
+  "features": [
+    {
+      "chance": 0.07,
+      "feature": "awaken:lands/fallen_bluepine"
+    },
+    {
+      "chance": 0.28,
+      "feature": "awaken:lands/giant_bluepine"
+    }
+  ]
+}

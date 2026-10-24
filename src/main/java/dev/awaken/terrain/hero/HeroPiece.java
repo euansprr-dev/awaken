@@ -16,11 +16,13 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
+import net.minecraft.world.level.material.Fluids;
 
 /**
  * A whole hero tree as one piece. Its box is reserved from the blueprint's own bounds (plus the ground cover round
  * its foot and the depth its trunk and roots may reach down), and every chunk writes only its own part of it. It only
- * ever replaces air, plants, water and leaves: never logs (another tree's trunk), never ground or anything built.
+ * ever replaces air, plants, water and leaves: never logs (another tree's trunk), never ground or anything built; its
+ * hanging strands end at the water's surface.
  */
 public class HeroPiece extends StructurePiece {
     /** How far trunk and root columns may reach down from the blueprint to find the ground. */
@@ -116,6 +118,16 @@ public class HeroPiece extends StructurePiece {
                 double dist = Math.sqrt(dx * dx + dz * dz);
                 if (dist > g) continue;
                 int top = Math.min(level.getHeight(surface, x, z) - 1, cy + 16);
+                double n = Blueprint.hash(seed, x, 7, z);
+                if (level.getFluidState(m.set(x, top, z)).isSourceOfType(Fluids.WATER) && top + 1 <= y1 && level.getBlockState(m.set(x, top + 1, z)).isAir()) {
+                    // open water: what floats there
+                    BlockState floats = tree.onWater(dist, n);
+                    if (floats != null) {
+                        level.setBlock(m, floats, Block.UPDATE_CLIENTS);
+                        placed++;
+                    }
+                    continue;
+                }
                 int gy = Integer.MIN_VALUE;
                 for (int y = top; y >= cy - 16 && y >= y0; y--) {
                     BlockState s = level.getBlockState(m.set(x, y, z));
@@ -128,7 +140,7 @@ public class HeroPiece extends StructurePiece {
                 }
                 if (gy == Integer.MIN_VALUE || gy + 1 > y1) continue;
                 double patch = (Blueprint.hash(seed, x >> 2, 0, z >> 2) + Blueprint.hash(seed, (x + 2) >> 2, 1, (z + 2) >> 2)) * 0.5;
-                BlockState[] cover = tree.cover(dist, Blueprint.hash(seed, x, 7, z), patch);
+                BlockState[] cover = tree.cover(dist, n, patch);
                 if (cover[0] != null) level.setBlock(m.set(x, gy, z), cover[0], Block.UPDATE_CLIENTS);
                 if (cover[1] != null && level.getBlockState(m.set(x, gy + 1, z)).isAir()) {
                     level.setBlock(m, cover[1], Block.UPDATE_CLIENTS);
@@ -151,7 +163,13 @@ public class HeroPiece extends StructurePiece {
                     byte code = bp.cells[bp.index(bx, y, bz)];
                     if (code == Blueprint.EMPTY) continue;
                     m.set(x, cy + y, z);
-                    if (!soft(level.getBlockState(m))) continue;
+                    BlockState was = level.getBlockState(m);
+                    if (!soft(was)) continue;
+                    if (code == Blueprint.VINE || code == Blueprint.VINE_TIP) {
+                        // strands end at the water: none under it, and the last one above it is a tip
+                        if (!was.getFluidState().isEmpty()) continue;
+                        if (code == Blueprint.VINE && !level.getFluidState(m.below()).isEmpty()) code = Blueprint.VINE_TIP;
+                    }
                     level.setBlock(m, tree.state(code), Block.UPDATE_CLIENTS);
                     placed++;
                 }

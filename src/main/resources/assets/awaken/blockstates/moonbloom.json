@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/moonbloom"
+      },
+      {
+        "model": "awaken:block/moonbloom",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/moonbloom",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/moonbloom",
+        "y": 270
+      }
+    ]
+  }
+}

@@ -53,6 +53,13 @@ public final class LandmarkWorldgen {
                 LandsClock.add("gate_scar shape", System.nanoTime() - t0);
                 return p;
             }));
+    private static final LoadingCache<Long, AuroraSpire.Plan> SPIRES = CacheBuilder.newBuilder().maximumSize(8)
+            .build(CacheLoader.from(seed -> {
+                long t0 = System.nanoTime();
+                AuroraSpire.Plan p = AuroraSpire.plan(seed);
+                LandsClock.add("aurora_spire shape", System.nanoTime() - t0);
+                return p;
+            }));
     private static final LoadingCache<DriftKey, Voxels> DRIFTS = CacheBuilder.newBuilder().maximumSize(8)
             .build(CacheLoader.from(k -> {
                 long t0 = System.nanoTime();
@@ -63,6 +70,10 @@ public final class LandmarkWorldgen {
 
     static GateScar.Plan scar(long seed) {
         return SCARS.getUnchecked(seed);
+    }
+
+    static AuroraSpire.Plan spire(long seed) {
+        return SPIRES.getUnchecked(seed);
     }
 
     static Voxels drift(long seed, float angle, int[] ground) {
