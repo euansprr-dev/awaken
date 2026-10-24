@@ -49,9 +49,13 @@ public final class Pixels {
         return Math.clamp(scale, 0.5f, 1f);
     }
 
-    /** The upscaler that will run: FSR falls back to bilinear when its pipelines didn't compile. */
+    /** The upscaler that will run: FSR and SHARP fall back to bilinear when their pipelines didn't compile. */
     static PixelsConfig.Upscaler upscaler() {
-        return upscaler == PixelsConfig.Upscaler.FSR && PixelsPipelines.fsrOk() ? PixelsConfig.Upscaler.FSR : PixelsConfig.Upscaler.BILINEAR;
+        return switch (upscaler) {
+            case FSR -> PixelsPipelines.fsrOk() ? PixelsConfig.Upscaler.FSR : PixelsConfig.Upscaler.BILINEAR;
+            case SHARP -> PixelsPipelines.sharpOk() ? PixelsConfig.Upscaler.SHARP : PixelsConfig.Upscaler.BILINEAR;
+            case BILINEAR -> PixelsConfig.Upscaler.BILINEAR;
+        };
     }
 
     /** Whether Pixels may take this frame: right versions, its hooks applied, nothing failed, an upscaler compiled. */
@@ -92,11 +96,23 @@ public final class Pixels {
     }
 
     /**
-     * The autopilot's line: {@code pixels <scale> [fsr|bilinear]} overrides the settings for the following scenes
-     * (not saved), {@code pixels config} goes back to them, {@code pixels state} logs what's in force.
+     * The autopilot's line: {@code pixels <scale> [fsr|sharp|bilinear]} overrides the settings for the following scenes
+     * (not saved), {@code pixels config} goes back to them, {@code pixels state} logs what's in force;
+     * {@code pixels gpu on|off|reset|<label>} times the world pass and the upscale on the GPU (PixelsTiming).
      */
     public static String autopilot(String arg) {
         String[] a = arg.trim().toLowerCase(Locale.ROOT).split("\\s+");
+        if (a[0].equals("gpu")) {
+            String what = a.length > 1 ? a[1] : "";
+            switch (what) {
+                case "on", "off" -> PixelsTiming.enable(what.equals("on"));
+                case "reset" -> PixelsTiming.reset();
+                default -> {
+                    return PixelsTiming.report(what);
+                }
+            }
+            return "gpu timing " + what;
+        }
         switch (a[0]) {
             case "config" -> {
                 forcedScale = -1f;

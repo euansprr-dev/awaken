@@ -14,7 +14,7 @@ public final class PixelsConfig {
     private PixelsConfig() {}
 
     /** How the lower-resolution world is rebuilt to the screen's. */
-    public enum Upscaler { FSR, BILINEAR }
+    public enum Upscaler { FSR, SHARP, BILINEAR }
 
     private static final ModConfigSpec.Builder B = new ModConfigSpec.Builder();
     public static final ModConfigSpec.DoubleValue RENDER_SCALE = B
@@ -22,8 +22,9 @@ public final class PixelsConfig {
                     "0.75 draws 56% of the pixels, 0.67 draws 45%, 0.5 draws 25%. Menus, the HUD and text stay native.")
             .defineInRange("renderScale", 1.0, 0.5, 1.0);
     public static final ModConfigSpec.EnumValue<Upscaler> UPSCALER = B
-            .comment("FSR: edge-adaptive upscale plus contrast-adaptive sharpening (AMD FidelityFX FSR 1, MIT licence).",
-                    "BILINEAR: a plain stretch (softer, slightly cheaper).")
+            .comment("FSR: edge-adaptive upscale plus contrast-adaptive sharpening, two passes (AMD FidelityFX FSR 1, MIT licence).",
+                    "SHARP: a stretch with FSR's sharpening in the same pass (about a third of FSR's cost).",
+                    "BILINEAR: a plain stretch (softest, cheapest).")
             .defineEnum("upscaler", Upscaler.FSR);
     public static final ModConfigSpec SPEC = B.build();
 

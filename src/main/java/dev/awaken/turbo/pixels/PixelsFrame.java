@@ -10,10 +10,14 @@ import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.UiHooks;
 import dev.awaken.turbo.pixels.mixin.RenderTargetAccess;
+import org.joml.Vector4f;
+import org.joml.Vector4fc;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * One frame of Pixels, on the render thread (SPEC §16). Around {@code GameRenderer.renderLevel()} and the post effects
@@ -37,6 +41,11 @@ final class PixelsFrame {
     // both hooks must be seen in one frame before the first swap, so a hook that didn't apply never leaves the frame
     // half-swapped; the begin hook's sighting this frame
     private static boolean proven, beganThisFrame;
+    // the passes' labels, made once (no allocation per frame)
+    private static final Supplier<String> EASU_LABEL = () -> "Pixels EASU", RCAS_LABEL = () -> "Pixels RCAS",
+            SHARP_LABEL = () -> "Pixels sharp", BILINEAR_LABEL = () -> "Pixels bilinear";
+    // every upscale pass writes every pixel: clearing first is free on a tile-based GPU, loading the old frame is not
+    private static final Optional<Vector4fc> CLEAR = Optional.of(new Vector4f(0f, 0f, 0f, 1f));
     // what the last frame drew, logged when it changes
     private static int loggedW, loggedH;
     private static PixelsConfig.@Nullable Upscaler loggedUpscaler;
@@ -45,12 +54,19 @@ final class PixelsFrame {
     static void begin(RenderTarget main, RenderTarget hand) {
         if (lentMain != null) giveBack(); // never expected: the end hook always runs before the next frame
         beganThisFrame = true;
+        PixelsTiming.stamp(PixelsTiming.BEFORE_WORLD);
         if (!proven) return;
         float scale = Pixels.scale();
         int w = main.width, h = main.height;
         int sw = Math.max(1, Math.round(w * scale)), sh = Math.max(1, Math.round(h * scale));
         if (scale >= 1f || sw >= w && sh >= h || !Pixels.usable()) {
             release();
+            logIfChanged(w, h, null);
+            return;
+        }
+        // a panel holds the player's attention (the K menu, a reading screen): Holo draws inside the world, so its text
+        // would be upscaled with it; the world renders native until the panel closes (targets kept for after)
+        if (UiHooks.focus() > 0f) {
             logIfChanged(w, h, null);
             return;
         }
@@ -71,7 +87,11 @@ final class PixelsFrame {
             Awaken.LOG.info("[pixels] render hooks in place");
         }
         beganThisFrame = false;
-        if (lentMain == null) return;
+        PixelsTiming.stamp(PixelsTiming.AFTER_WORLD);
+        if (lentMain == null) {
+            PixelsTiming.stamp(PixelsTiming.AFTER_UPSCALE);
+            return;
+        }
         giveBack();
         PixelsConfig.Upscaler upscaler = Pixels.upscaler();
         try {
@@ -79,15 +99,20 @@ final class PixelsFrame {
             GpuTextureView world = low.getColorTextureView();
             if (upscaler == PixelsConfig.Upscaler.FSR) {
                 easu = sized(easu, "Pixels EASU", main.width, main.height, main.getColorTexture().getFormat(), null);
-                pass(encoder, "Pixels EASU", easu.getColorTextureView(), PixelsPipelines.EASU, world, FilterMode.NEAREST);
-                pass(encoder, "Pixels RCAS", main.getColorTextureView(), PixelsPipelines.RCAS, easu.getColorTextureView(), FilterMode.NEAREST);
+                pass(encoder, EASU_LABEL, easu.getColorTextureView(), PixelsPipelines.EASU, world, FilterMode.NEAREST);
+                pass(encoder, RCAS_LABEL, main.getColorTextureView(), PixelsPipelines.RCAS, easu.getColorTextureView(), FilterMode.NEAREST);
             } else {
                 if (easu != null) {
                     easu.destroyBuffers();
                     easu = null;
                 }
-                pass(encoder, "Pixels bilinear", main.getColorTextureView(), PixelsPipelines.BILINEAR, world, FilterMode.LINEAR);
+                if (upscaler == PixelsConfig.Upscaler.SHARP) {
+                    pass(encoder, SHARP_LABEL, main.getColorTextureView(), PixelsPipelines.SHARP, world, FilterMode.LINEAR);
+                } else {
+                    pass(encoder, BILINEAR_LABEL, main.getColorTextureView(), PixelsPipelines.BILINEAR, world, FilterMode.LINEAR);
+                }
             }
+            PixelsTiming.stamp(PixelsTiming.AFTER_UPSCALE);
             logIfChanged(low.width, low.height, upscaler);
         } catch (RuntimeException e) {
             Pixels.fail("the upscale pass failed", e);
@@ -97,14 +122,15 @@ final class PixelsFrame {
     /** After the whole frame: a level that threw mid-frame must not leave the main target lent out. */
     static void frameEnd() {
         beganThisFrame = false;
+        PixelsTiming.frameEnd();
         if (lentMain != null) {
             giveBack();
             Pixels.fail("the frame ended with the world still at the lower resolution", null);
         }
     }
 
-    private static void pass(CommandEncoder encoder, String label, GpuTextureView out, RenderPipeline pipeline, GpuTextureView in, FilterMode filter) {
-        try (RenderPass pass = encoder.createRenderPass(() -> label, out, Optional.empty())) {
+    private static void pass(CommandEncoder encoder, Supplier<String> label, GpuTextureView out, RenderPipeline pipeline, GpuTextureView in, FilterMode filter) {
+        try (RenderPass pass = encoder.createRenderPass(label, out, CLEAR)) {
             pass.setPipeline(RenderSystem.getCompiledPipeline(pipeline));
             pass.setUniform("InSampler", in, RenderSystem.getSamplerCache().getClampToEdge(filter));
             pass.draw(3, 1, 0, 0);

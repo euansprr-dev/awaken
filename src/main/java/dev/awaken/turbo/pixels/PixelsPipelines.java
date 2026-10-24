@@ -10,7 +10,7 @@ import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 
 /**
  * The upscalers, as full-screen passes on vanilla's screen quad (both graphics APIs). Registered optional: a pipeline
- * that fails to build turns its upscaler off (FSR falls back to bilinear, bilinear to native) instead of failing the
+ * that fails to build turns its upscaler off (FSR and SHARP fall back to bilinear, bilinear to native) instead of failing the
  * resource reload.
  */
 final class PixelsPipelines {
@@ -20,6 +20,8 @@ final class PixelsPipelines {
     static final float SHARPNESS = 0.87f;
 
     static final RenderPipeline BILINEAR = screen("bilinear").build();
+    /** One pass: bilinear, sharpened with RCAS from a ring one world pixel apart. */
+    static final RenderPipeline SHARP = screen("sharp").withShaderDefine("SHARPNESS", SHARPNESS).build();
     /** FSR 1 pass 1: edge-adaptive spatial upsampling, from the world's resolution to the screen's. */
     static final RenderPipeline EASU = screen("easu").build();
     /** FSR 1 pass 2: robust contrast-adaptive sharpening, at the screen's resolution. */
@@ -37,16 +39,22 @@ final class PixelsPipelines {
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(BILINEAR);
+        e.registerOptionalPipeline(SHARP);
         e.registerOptionalPipeline(EASU);
         e.registerOptionalPipeline(RCAS);
     }
 
     // -1 unknown, 0 failed, 1 compiled; looked up once per resource load (a failed one would recompile on every lookup)
-    private static int bilinearOk = -1, fsrOk = -1;
+    private static int bilinearOk = -1, sharpOk = -1, fsrOk = -1;
 
     static boolean bilinearOk() {
         if (bilinearOk < 0) bilinearOk = compiled(BILINEAR) ? 1 : 0;
         return bilinearOk == 1;
+    }
+
+    static boolean sharpOk() {
+        if (sharpOk < 0) sharpOk = compiled(SHARP) ? 1 : 0;
+        return sharpOk == 1;
     }
 
     static boolean fsrOk() {
@@ -56,7 +64,7 @@ final class PixelsPipelines {
 
     /** After a resource reload the pipelines are rebuilt: look again. */
     static void recheck() {
-        bilinearOk = fsrOk = -1;
+        bilinearOk = sharpOk = fsrOk = -1;
     }
 
     private static boolean compiled(RenderPipeline p) {

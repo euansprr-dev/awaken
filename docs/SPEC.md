@@ -1065,3 +1065,47 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
   Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
 
+
+## 16. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
+
+The world is drawn at a lower resolution and rebuilt to the screen's; menus, the HUD and all GUI text stay native.
+Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73rX1). Measurements and crops:
+`docs/perf/pixels/REPORT.md`.
+- A Turbo feature (the Turbo contract: internals only in `dev.awaken.turbo`, a public-API fallback, version-locked,
+  kept only with a measured win, access transformer before mixin, never reflection). Code: `dev.awaken.turbo.pixels`;
+  mixins `dev.awaken.turbo.pixels.mixin` in its own config `awaken.pixels.mixins.json` (client only, not required,
+  `defaultRequire` 0). Version lock: Minecraft 26.3 with NeoForge 26.3.0.95 exactly (`Pixels.MINECRAFT/NEOFORGE`);
+  any other: off, one log line. Until turbo-bridge's shared probe lands on build/awaken-v1 this check is local.
+- Why a mixin: 26.3 has no render-scale option and no event at the two moments that matter. `FrameGraphSetupEvent`
+  fires after `LevelRenderer.render` has sized its own targets (OIT, depth bounds) from the main target, and render
+  passes demand attachments of one size (`FrontendCommandEncoder.createRenderPass`). So `GameRendererMixin` injects
+  two calls into `GameRenderer.render()`: before `renderLevel()` and after `applyPostEffects()`. An accessor
+  (`RenderTargetAccess`) sets a render target's protected textures; turbo-bridge owns the shared access-transformer
+  file, so Pixels keeps to its own mixin config instead of adding lines there.
+- How: for the world pass the main target and the hand's depth target (`hud3DTarget`) lend themselves smaller
+  textures: their own colour and depth are set aside and the low-resolution ones put in their place, on the same
+  objects, with `width`/`height` to match. Everything that holds the main target (the level renderer and its frame
+  graph, the sky renderer, Sodium, Distant Horizons, NeoForge's render stages, post chains) draws at the lower
+  resolution without knowing. After the post effects the real textures go back and the upscaler fills the main
+  colour; the GUI then clears depth and draws on top, native. The `Globals` UBO's `ScreenSize` stays the window's
+  (line widths keep their screen-pixel width).
+- Lens runs before the upscale, at render scale, with every other post effect: its depth is the world's own, its
+  bloom and haze get cheaper with the pixels, and FSR expects a finished, display-referred frame.
+- Upscalers (`PixelsPipelines`, full-screen passes on vanilla's `core/screenquad`, both graphics APIs, registered
+  optional): BILINEAR (one linear tap) and FSR, a port of AMD FidelityFX FSR 1.0 (MIT; the notice is in each shader):
+  EASU (edge-adaptive Lanczos-2, 12 texel taps, dering clamp) from the world's resolution into a screen-sized
+  intermediate, then RCAS (contrast-adaptive sharpening with noise detection, strength exp2(-0.2) = 0.87) into the
+  main target. A pipeline that doesn't compile falls back: FSR to bilinear, bilinear to native.
+- Holo: panels draw inside the world (the level's always-on-top phase), so at render scale their text would be
+  upscaled with it (measured: softer, with RCAS fringes at 0.67). While a panel holds the player's attention
+  (`UiHooks.focus() > 0`: the K menu, a reading screen) the world renders native, so panel text, Lens's bloom on the
+  glow and its focus dimming stay exactly as without Pixels; the low-resolution targets are kept for after. Toasts,
+  cards and the HUD are GUI and always native.
+- Safety: both hooks must be seen in one frame before the first swap; a frame that ends with the target still lent
+  (`RenderFrameEvent.Post`) gets it back and turns Pixels off for the session, as does any exception in a pass.
+- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off) and `upscaler` FSR |
+  BILINEAR. Autopilot `pixels <scale> [fsr|bilinear] | config | state` overrides them for a tour (not saved). Tours:
+  `tools/autopilot/pixels.txt` (the measurement), `pixels-smoke.txt`, `pixels-dh.txt`; crops: `tools/pixels-crops.py`.
+  `pixels gpu on|reset|<label>` (measurement only) writes GPU timestamps before the world, after the post effects and
+  after the upscale, and logs the world pass's and the upscale's GPU time per label (`PixelsTiming`): on a busy Mac
+  the frame time is the CPU's, so the GPU time is what shows what Pixels saves.

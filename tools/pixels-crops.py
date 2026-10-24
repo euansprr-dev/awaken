@@ -12,7 +12,8 @@ import sys
 
 from PIL import Image, ImageDraw
 
-TAGS = [("100", "native"), ("075", "0.75 FSR"), ("067", "0.67 FSR"), ("067b", "0.67 bilinear"), ("050", "0.5 FSR")]
+TAGS = [("100", "native"), ("075s", "0.75 sharp"), ("067s", "0.67 sharp"), ("067f", "0.67 FSR"), ("067b", "0.67 bilinear"),
+        ("050s", "0.5 sharp"), ("050f", "0.5 FSR")]
 LABEL_H = 28
 
 
