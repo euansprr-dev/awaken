@@ -86,7 +86,10 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         s.hasPose = cur != Act.NONE && CitizenClips.sample(cur, t + (rec & 7) * 3, s.pose);
         s.blend = Math.min(1f, t / BLEND);
         s.hasPrev = s.blend < 1f && prev != Act.NONE && CitizenClips.sample(prev, body.tickCount - body.pStart + partial, s.prevPose);
-        if (s.crate) itemModelResolver.updateForLiving(s.backItem, CRATE, ItemDisplayContext.FIXED, body);
+        if (s.crate) {
+            if (crate == null) crate = new ItemStack(CitizensContent.PORTER_CRATE.get());
+            itemModelResolver.updateForLiving(s.backItem, crate, ItemDisplayContext.FIXED, body);
+        }
         else s.backItem.clear();
         s.height = body.getBbHeight();
         // what they say, fading in and out; their name when you look at them up close
@@ -136,7 +139,8 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         pose.popPose();
     }
 
-    private static final ItemStack CRATE = new ItemStack(CitizensContent.PORTER_CRATE.get());
+    /** Made on first use: an ItemStack can't be built while the renderer class loads (components aren't bound yet). */
+    private static ItemStack crate;
 
     @Override
     protected int getModelTint(CitizenRenderState s) {
