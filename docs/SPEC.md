@@ -1855,6 +1855,13 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   bit (remembered at the bite and at each wrap, `AscentAnchors.blockOf`) has no collision any more. (Before: 5 of 8
   swings in the sandbox lane were cut, mostly by a false "gone" once the swing passed its anchor; after: none, six
   releases chained without touching the ground, 197 blocks in 12.7 s, so 300 in about 19 s.)
+- **0 kicks** (`ascent_no_kicks`): the server's real movement checks (skipped for a singleplayer host, so tours can't
+  show them) on a survival player flying an Ascent state for 15 s at 1.25, 2.25 and 3.2 blocks a tick, back and forth,
+  one position a client tick and then in lag bursts of up to five client ticks: no move is sent back, no disconnect.
+  Known limit (vanilla): six or more client ticks arriving in one server tick (a 300 ms stall) count as one packet's
+  allowance, so above ~1.7 b/t that move is sent back once (a rubber band, not a kick). The floating kick exists only
+  on dedicated servers with allow-flight off; AscentServer resets its count every tick a state runs, before vanilla
+  counts (to be seen on a dedicated server).
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
   hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
   Leaper together (`HorizonHooks.addReach`).

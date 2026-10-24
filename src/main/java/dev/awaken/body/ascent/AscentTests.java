@@ -17,6 +17,7 @@ final class AscentTests {
         AwakenTests.register("ascent_soar_speeds", 20, AscentTests::soarSpeeds);
         AwakenTests.register("ascent_tiers_and_arrival", 40, AscentTests::tiersAndArrival);
         AwakenTests.register("ascent_chains_and_mastery", 40, AscentTests::chainsAndMastery);
+        AwakenTests.registerIsolated("ascent_no_kicks", 60, AscentTests::noKicks);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -146,6 +147,87 @@ final class AscentTests {
                 && AscentServer.settle(p) == 0, "an E-rank player is settled with nothing, once");
         h.getLevel().getServer().getPlayerList().remove(p);
         h.succeed();
+    }
+
+    /**
+     * 0 kicks (the Phase 1 gate), through the server's real movement checks, which skip the singleplayer host (so tours
+     * can't show it): a survival player on a plain connection flies an Ascent state for 15 s at 1.25, 2.25 and 3.2
+     * blocks a tick (the top speeds: flight cruise, boost, the cap), turning back and forth and rising and falling, one
+     * position a client tick and, for the last third, in lag bursts of up to five client ticks at once. Not one move
+     * is sent back ("moved too quickly" or "moved wrongly" snap the body to where it was) and the player stays
+     * connected. (The floating kick can't fire here: only a dedicated server with allow-flight off has it. Every tick
+     * a state runs, AscentServer resets the count before vanilla adds to it.)
+     */
+    private static void noKicks(GameTestHelper h) {
+        net.minecraft.server.level.ServerLevel level = h.getLevel();
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "ascent-flyer"), false);
+        net.minecraft.server.level.ServerPlayer p = new net.minecraft.server.level.ServerPlayer(level.getServer(), level, cookie.gameProfile(),
+                cookie.clientInformation()) {
+            @Override
+            public net.minecraft.world.level.GameType gameMode() {
+                return net.minecraft.world.level.GameType.SURVIVAL;
+            }
+        };
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        new io.netty.channel.embedded.EmbeddedChannel(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, p, cookie);
+        try {
+            var conn = p.connection;
+            p.getAbilities().mayfly = false;
+            p.getAbilities().flying = false;
+            conn.handleAcceptPlayerLoad(new net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket());
+            net.minecraft.core.BlockPos base = h.absolutePos(net.minecraft.core.BlockPos.ZERO);
+            double x = base.getX() + 0.5, y = base.getY() + 60, z = base.getZ() + 0.5;
+            conn.teleport(x, y, z, 0, 0);
+            conn.resetPosition(); // the check that runs on accepting a teleport measures from here
+            for (int id = 0; id < 16; id++) {
+                conn.handleAcceptTeleportPacket(new net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket(id, x, y, z, 0, 0));
+            }
+            conn.tick(); // the server takes the tick's starting point from where the body is
+            h.assertTrue(p.position().distanceTo(new net.minecraft.world.phys.Vec3(x, y, z)) < 1e-3, "the test's teleport was accepted");
+            Ascent.grant(p, Ascent.Tier.SKYBORN, "test");
+            onStateForTest(p, AscentState.SOAR);
+            h.assertTrue(motion(p).state == AscentState.SOAR, "the server took the flight");
+            java.util.List<double[]> queued = new java.util.ArrayList<>();
+            double dir = 1;
+            for (int t = 0; t < 300; t++) {
+                double speed = t < 80 ? 1.25 : t < 160 ? 2.25 : 3.2;
+                if (t % 24 == 0) dir = -dir; // back and forth, so the flight stays over loaded ground
+                double vy = 0.5 * Math.sin(t / 9.0);
+                double h2 = Math.sqrt(Math.max(0, speed * speed - vy * vy));
+                x += dir * h2;
+                y += vy;
+                queued.add(new double[]{x, y, z, t, speed});
+                // the last third arrives in lag bursts: one to five client ticks' positions in one server tick
+                int burst = t < 200 ? 1 : 1 + (t * 7) % 5;
+                if (queued.size() < burst && t < 299) {
+                    conn.tick();
+                    continue;
+                }
+                for (double[] q : queued) {
+                    conn.handleMovePlayer(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(q[0], q[1], q[2], 0, 0, false, false));
+                    conn.handleClientTickEnd(net.minecraft.network.protocol.game.ServerboundClientTickEndPacket.INSTANCE);
+                    double off = p.position().distanceTo(new net.minecraft.world.phys.Vec3(q[0], q[1], q[2]));
+                    h.assertTrue(off < 1e-3, String.format("sent back %.2f at tick %d, %.2f a tick, %d in the burst", off, (int) q[3], q[4], queued.size()));
+                }
+                queued.clear();
+                conn.tick();
+                h.assertFalse(p.hasDisconnected(), "kicked at tick " + t);
+            }
+        } finally {
+            level.getServer().getPlayerList().remove(p);
+        }
+        h.succeed();
+    }
+
+    /** The server hearing a state from this player's client (tests). */
+    private static void onStateForTest(net.minecraft.server.level.ServerPlayer p, AscentState s) {
+        AscentServer.onState(p, new AscentPayloads.State(s.ordinal(), 0, 0, 0, 0));
+    }
+
+    private static AscentMotion motion(net.minecraft.server.level.ServerPlayer p) {
+        return AscentServer.motion(p);
     }
 
     /** Flight cruises near 1.25, boosts near 2.25, and hovers to a stop. */
