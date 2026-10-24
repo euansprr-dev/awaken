@@ -75,8 +75,11 @@ public final class OpeningModule {
     /** The bell crypt's layered music carries the run (its tension, then its drums), the Lord stem the arrival. */
     static final Identifier RUN_MUSIC = Awaken.id("gate/bell_crypt");
 
-    /** Tours: the sky shot saves its frames; no first-run questions (the view stays as the tour set it). */
-    static volatile boolean tourShots, noQuestions;
+    /**
+     * Tours: the sky shot saves its frames (on by default under the autopilot, whose client shares this JVM); no
+     * first-run questions (the view stays as the tour set it).
+     */
+    static volatile boolean tourShots = System.getProperty("awaken.autopilot") != null, noQuestions;
 
     public static void init(IEventBus modBus) {
         ATTACHMENTS.register(modBus);
@@ -322,11 +325,12 @@ public final class OpeningModule {
                 Story.openingBeat(p, Prologue.WAKE, p.level().getGameTime());
                 OpeningDirector.state(p).bed = -1;
             }
-            case "registry" -> {
+            case "registry", "lens" -> {
                 Progression.awaken(p);
+                OpeningStage.ensure(server.overworld(), at);
                 OpeningDirector.toRegistry(p);
-                Vec3 to = at.bedside(0);
-                p.teleportTo(server.overworld(), to.x, to.y, to.z, java.util.Set.of(), 90F, 0F, true);
+                Vec3 to = beat.equals("lens") ? at.lensMark() : at.bedside(0);
+                p.teleportTo(server.overworld(), to.x, to.y, to.z, java.util.Set.of(), beat.equals("lens") ? 180F : 90F, 0F, true);
             }
             default -> {
                 return false;
