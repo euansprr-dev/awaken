@@ -103,10 +103,13 @@ wait 5
 shot holo_19_arm_slim
 holo arm auto
 
-# --- third person ---
+# --- third person (the back shots face the other way: the hill behind the spawn would pull the back camera into
+# your head) ---
+look 200 4
 camera back
 wait 10
 shot holo_20_k_third_back
+look 20 4
 camera front
 wait 10
 shot holo_21_k_third_front
@@ -114,12 +117,14 @@ shot holo_21_k_third_front
 holo peek on
 wait 3
 shot holo_23_others_see_front
+look 200 4
 camera back
 wait 5
 shot holo_24_others_see_back
 holo peek off
+look 20 4
 camera first
-wait 5
+wait 10
 
 # --- frame times: the same view with and without the K menu, twice over (the Mac is shared) ---
 perf holo_open 10
