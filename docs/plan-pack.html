@@ -1,0 +1,527 @@
+<title>The Awakened Pack</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap">
+<style>
+/* Layout: one reading column (~70ch) with full-width bands for tables and diagrams; Awaken's "System glass" palette from plan-v2, dark-first. */
+:root {
+  --bg: #0d1420;
+  --panel: #142033;
+  --panel-2: #1a2a42;
+  --line: #2a3d5c;
+  --fg: #dfe8f4;
+  --muted: #93a7c2;
+  --accent: #7fc3ff;
+  --amber: #ffcf7a;
+  --good: #8ff0c0;
+  --warn: #ff8a7a;
+  --violet: #b48cff;
+  --font-display: "Silkscreen", ui-monospace, monospace;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f6fb; --panel: #ffffff; --panel-2: #eaf0f8; --line: #c9d5e6; --fg: #142033; --muted: #4f6380;
+    --accent: #1f6fb8; --amber: #a86400; --good: #11804f; --warn: #b8322a; --violet: #6a3fc0; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f3f6fb; --panel: #ffffff; --panel-2: #eaf0f8; --line: #c9d5e6; --fg: #142033; --muted: #4f6380;
+  --accent: #1f6fb8; --amber: #a86400; --good: #11804f; --warn: #b8322a; --violet: #6a3fc0; color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 17px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 72px;
+}
+main { max-width: 900px; margin: 0 auto; display: grid; gap: 56px; }
+section { display: grid; gap: 18px; min-width: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); letter-spacing: -0.01em; }
+h2 { font-size: 26px; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 19px; color: var(--accent); }
+p, ul, ol { margin: 0; max-width: 70ch; }
+ul, ol { padding-left: 1.2em; display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+.lede { font-size: 19px; color: var(--muted); max-width: 64ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.84em; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.tag { display: inline-block; font-family: var(--font-display); font-size: 10px; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 3px; border: 1px solid currentColor; vertical-align: 2px; white-space: nowrap; }
+.t-v { color: var(--good); } .t-r { color: var(--accent); } .t-h { color: var(--amber); } .t-p { color: var(--violet); } .t-x { color: var(--warn); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.callout { border-left: 3px solid var(--amber); background: var(--panel); padding: 14px 18px; border-radius: 0 6px 6px 0; display: grid; gap: 8px; }
+.callout.good { border-left-color: var(--good); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 680px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); font-weight: 400; background: var(--panel-2); }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+td.grp { font-family: var(--font-display); font-size: 11px; letter-spacing: .08em; color: var(--accent); background: var(--panel-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 14px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); white-space: nowrap; }
+.chip.no { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--warn); }
+.chip.beta { border-color: var(--amber); }
+.chip.ours { border-color: var(--good); color: var(--good); }
+pre.mermaid { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; overflow-x: auto; margin: 0; }
+.decision { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.decision .rec { color: var(--good); font-weight: 700; }
+.tl { display: grid; gap: 0; border-left: 2px solid var(--line); margin-left: 6px; }
+.tl > div { position: relative; padding: 4px 0 14px 18px; display: grid; gap: 4px; }
+.tl > div::before { content: ""; position: absolute; left: -7px; top: 11px; width: 12px; height: 12px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); }
+.tl > div.gate::before { border-color: var(--amber); border-radius: 2px; }
+.tl b { font-family: var(--font-display); font-weight: 400; font-size: 13px; letter-spacing: .06em; color: var(--accent); }
+.tl .est { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+
+/* frame budget bars */
+.budget { display: grid; gap: 10px; }
+.brow { display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: center; font-size: 14px; }
+.brow > span:first-child { font-family: var(--font-display); font-size: 11px; letter-spacing: .06em; color: var(--muted); }
+.bar { position: relative; height: 22px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; }
+.bar i.w { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.bar i.l { background: color-mix(in srgb, var(--violet) 60%, transparent); }
+.bar i.d { background: color-mix(in srgb, var(--good) 45%, transparent); }
+.bar i.s { background: color-mix(in srgb, var(--amber) 55%, transparent); }
+.bar .mark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg); }
+.bscale { display: grid; grid-template-columns: 112px 1fr; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.bscale div { display: flex; justify-content: space-between; }
+
+/* tier cards */
+.tier { display: grid; gap: 8px; }
+.tier .t-name { font-family: var(--font-display); font-size: 14px; letter-spacing: .08em; }
+.tier dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 0; font-size: 15px; }
+.tier dt { color: var(--muted); }
+.tier dd { margin: 0; }
+
+/* walkthroughs */
+.walk { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.walk .panel h4 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 12px; letter-spacing: .08em; color: var(--muted); }
+.walk .panel.after h4 { color: var(--good); }
+.walk ol { font-size: 15px; }
+
+/* settings mockup */
+.mock { background: #10151d; border: 1px solid #3b4a60; border-radius: 4px; padding: 16px; display: grid; gap: 12px; color: #e9f1ff; font-family: var(--font-display); font-size: 12px; letter-spacing: .04em; max-width: 620px; }
+.mock .mt { text-align: center; font-size: 13px; }
+.mock .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.mock .opt { border: 1px solid #4a5d78; background: #1b2635; padding: 10px; display: grid; gap: 6px; border-radius: 2px; }
+.mock .opt.on { border-color: #8ff0c0; box-shadow: inset 0 0 0 1px #8ff0c0; }
+.mock .opt small { font-family: var(--font-body); font-size: 12px; letter-spacing: 0; color: #a9bbd4; line-height: 1.35; }
+.mock .row { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; border-top: 1px solid #2d3a4d; padding-top: 8px; }
+.mock .row span:last-child { color: #8ff0c0; }
+.anno { font-size: 14px; color: var(--muted); display: grid; gap: 4px; }
+.anno b { color: var(--amber); font-weight: 700; }
+
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 520px) { body { font-size: 16px; } table { font-size: 14px; } .brow, .bscale { grid-template-columns: 84px 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<main>
+
+<header style="display:grid;gap:14px">
+  <span class="eyebrow">Awaken · Pack plan · 24 Oct 2026 · for approval</span>
+  <h1>The Awakened Pack</h1>
+  <p class="lede">How Awaken stops being a great mod inside vanilla Minecraft and becomes a game that feels new from the first hilltop: the horizon, the light, how your body moves, how the world sounds, and friends beside you. Built on 26.3, on your M4.</p>
+  <div class="callout good">
+    <p><b>Distant Horizons</b> is the "unlimited render distance" mod. Version <code>3.3.4-26.3</code> for NeoForge came out on 29 Sep 2026 and is a full release. <span id="dh-status">I downloaded it from Modrinth and checked its SHA-512. Your game was running from the play copy, so I didn't install it. It's staged at <code>/Volumes/MEDIA/Awaken-staging/</code>, ready to back up your saves and copy into <code>Awaken-play/run/mods/</code> once you close the game.</span></p>
+    <p><b>Your own Mac shader:</b> yes, but not as an Iris shaderpack. Iris only runs on OpenGL, lists Apple Silicon as unsupported, and 26.4 makes Vulkan the default. The version that lasts is <b>Lens</b>: a light layer inside Awaken built on 26.3's own post-effect system. It compiles for both renderers, every player gets it, and it's tuned for Apple's tile-based GPU (few passes, half and quarter resolution).</p>
+    <p><b>Two surprises from the audit.</b> 26.3 ships a new Vulkan renderer, but your game runs on OpenGL 4.1 translated to Metal. And Awaken has never been run next to another mod, although its plan says it was tested with Sodium.</p>
+  </div>
+</header>
+
+<!-- ============================================================ 1 -->
+<section id="contract">
+  <span class="eyebrow">1 · Understanding and success contract</span>
+  <h2>What you need, and how we'll know it worked</h2>
+  <p>You like Awaken as it is. The ask is everything around it: the frame Awaken sits in. Today that frame is vanilla. It has a 256-block fog wall, flat light, vanilla arm poses when you cast, synthesised sounds nobody has listened to, and no other mods. You want a curated whole that makes a first-time player feel they found a new game, on your MacBook and 4K monitor, and that friends can join later.</p>
+  <div class="grid2">
+    <div class="panel"><h3>The job</h3><p>Ship one coherent game, Awaken plus a few chosen mods, configs and art, that you and later friends launch and play. It's not a pile of mods to try.</p></div>
+    <div class="panel"><h3>What's missing today</h3><p>No far view, no lighting pass, vanilla body animation, untested audio. And no way to install, pin or test other mods next to Awaken at all.</p></div>
+    <div class="panel"><h3>Your ideas, to test, not assume</h3><p>Distant Horizons, a custom macOS shader, movement, terrain and structure mods, animations, textures, QoL, player animations for multiplayer.</p></div>
+    <div class="panel"><h3>Must keep (from plan v2)</h3><p>120 fps on your M4, Minecraft feel and survival, vanilla mobs, single-player first, server-authoritative, every gate, dream and story system, all tests passing.</p></div>
+  </div>
+
+  <h3>"Magical", as things you can see</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Moment</th><th>Today</th><th>New-game version</th><th>How we check</th></tr></thead>
+    <tbody>
+      <tr><td><b>First hilltop</b></td><td>Fog wall at 16 chunks (256 blocks)</td><td>Mountains 2,000+ blocks off, an Awaken landmark beam on the horizon that pulls you toward it</td><td>Fixed-seed shot; Distant Horizons LOD radius in the log</td></tr>
+      <tr><td><b>First cast</b></td><td>Vanilla bow, trident or spyglass pose plus a body lean</td><td>A whole-body cast per power family that other players also see</td><td>Frame strip from the studio tour</td></tr>
+      <tr><td><b>First gate</b></td><td>Halls sound like an open field</td><td>Reverb and echo in halls; music that rises when a fight starts</td><td>Listening check with you (subjective)</td></tr>
+      <tr><td><b>Golden hour</b></td><td>Vanilla light, Awaken glows look flat</td><td>Warm grade, soft bloom on Awaken's glow layers, depth haze, a look of its own in each dimension</td><td>12-shot contact sheet, before and after</td></tr>
+      <tr><td><b>A friend joins</b></td><td>Not possible without setup</td><td>Join by link, proximity voice, see each other's casts</td><td>Two-client test</td></tr>
+      <tr><td><b>Never a hitch</b></td><td>p99 frame time has never been measured with mods</td><td>Frame-time percentiles per scene, within budget</td><td>New frame-time tour</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid3">
+    <div class="panel" style="border-color:var(--good)"><h3 style="color:var(--good)">Strong</h3><p class="small">Each layer adds one thing you notice in the first ten minutes. Everything shares Awaken's art direction. The Swift look holds your 120 fps budget, Cinematic holds 60+, and Awaken's effects look the same or better with every pack piece on.</p></div>
+    <div class="panel" style="border-color:var(--amber)"><h3 style="color:var(--amber)">Weak</h3><p class="small">Sixty popular mods with clashing styles and a dozen config menus. 40 fps at 4K. A shaderpack that washes out Awaken's glows. Fewer Awaken creatures because a terrain mod renamed the biomes.</p></div>
+    <div class="panel" style="border-color:var(--warn)"><h3 style="color:var(--warn)">Unacceptable</h3><p class="small">Crashes or world damage. Awaken effects missing or broken. A client-only mod required on the server. A frame-rate regression under the SPEC budget. Old worlds getting terrain seams.</p></div>
+  </div>
+  <p class="muted small"><b>Not in this plan:</b> changing Awaken's gameplay numbers, new dimensions, replacing Awaken's own systems with mods (combat, travel, quests), 32× or HD texture packs (they clash with Awaken's 16× art), and Fabric-only mods (no Fabric bridge exists for 26.3).</p>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="audit">
+  <span class="eyebrow">2 · Verified audit and diagnosis</span>
+  <h2>What exists today</h2>
+
+  <h3>Your machine and the renderer</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Fact</th><th>Evidence</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td>MacBook Pro M4 (Mac16,1): 10-core GPU, 16 GB unified memory, macOS 26.6.2. Dell U2725QE at 3840×2160, 120 Hz, "looks like 1920×1080".</td><td><code>system_profiler</code></td><td>The game, its GPU memory, Gradle, Claude and your browser all share 16 GB.</td></tr>
+      <tr><td>The game draws every Retina pixel: 8.3 million per frame on the Dell, 5.9 million on the laptop screen.</td><td><code>Window.java:152</code> creates the window with <code>HIGH_PIXEL_DENSITY</code>; no render-scale option in <code>Options.java</code></td><td>Pixel count, not geometry, is the main cost of any shader on your setup. No 26.3 NeoForge mod lowers it.</td></tr>
+      <tr><td>26.3 ships a new renderer, "renderpearl", with OpenGL and Vulkan back ends. <i>Default</i> tries OpenGL first.</td><td><code>PreferredGraphicsApi.java:36-39</code>, 146 files under <code>com/mojang/renderpearl</code></td><td>Vulkan is one option away. On a Mac it runs through MoltenVK to Metal.</td></tr>
+      <tr><td>Your last session ran on "OpenGL 4.1 Metal", and Vulkan found the M4 through the Portability Subset.</td><td><code>Awaken-play/run/logs/latest.log</code>, 24 Oct 07:03</td><td>Apple's OpenGL is frozen at 4.1, with no compute shaders. An unclean start on Vulkan falls back by itself (<code>Minecraft.java:469-477</code>).</td></tr>
+      <tr><td>You play fullscreen, render distance 16, simulation 12, 120 fps cap, vsync on, Fancy. The client run sets no heap size.</td><td><code>run/options.txt</code>, <code>build.gradle:50-55</code></td><td>The JVM picks the heap itself, normally a quarter of RAM (4 GB). Tight for Distant Horizons plus mods; to measure.</td></tr>
+      <tr><td>Data-driven post effects can read the depth buffer.</td><td><code>PostChainConfig.java:99</code> <code>use_depth_buffer</code></td><td>Depth fog, haze and bloom are possible inside Awaken, without Iris and without mixins.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Awaken, component by component</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Component</th><th>What it actually does</th><th>Evidence</th><th>Consequence</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Render stack</td><td>15 vanilla post-effect chains and 6 GLSL post shaders, custom geometry via <code>SubmitCustomGeometryEvent</code>, vanilla render types only. No raw OpenGL, no mixins.</td><td><code>assets/awaken/post_effect/</code>, <code>FxRender.java:126</code></td><td>Likely survives Sodium, Iris and Vulkan, but never tried. True additive glow was never built.</td><td><span class="tag t-r">EXTEND</span></td></tr>
+      <tr><td>Companion mods</td><td><code>plan.html:874</code> says tested with Sodium, Lithium, FerriteCore, ImmediatelyFast and EntityCulling. In fact no dependencies, and every <code>mods/</code> folder is empty.</td><td><code>build.gradle:130-150</code>; <code>run/mods</code>, <code>Awaken-play/run/mods</code>, <code>run-autopilot/mods</code></td><td>The plan's claim isn't backed by anything. Nothing can install or pin a mod next to Awaken.</td><td><span class="tag t-x">BUILD</span></td></tr>
+      <tr><td>Cast animation</td><td>Swaps in vanilla arm poses (bow, trident, spyglass) and leans the body; redraws first-person arms.</td><td><code>CastAnims.java:23-27, 282-336</code></td><td>This is why casting "reads vanilla". The Player Animation Library was planned (<code>plan.html:867</code>) and now exists for 26.3.</td><td><span class="tag t-h">REPLACE</span></td></tr>
+      <tr><td>Movement</td><td>Dash, Blink, Wall Run, Water Run, Hover, Glide, Flight, Leap, Grapple, Jet Burst, Shadow Step.</td><td><code>VelocityPowers.java:45</code>, <code>ClientCasting.java:84-161</code></td><td>Awaken already is a movement mod. Parkour or dodge mods would flatten the power curve.</td><td><span class="tag t-v">KEEP</span></td></tr>
+      <tr><td>Overworld spawns</td><td>20 biome modifiers name exact vanilla biomes (<code>minecraft:taiga</code>, <code>minecraft:forest</code>…). Ruins use vanilla tags plus exact names.</td><td><code>data/awaken/neoforge/biome_modifier/</code>, <code>merge/above/.../has_structure/</code></td><td>A biome mod like Terralith would quietly thin out Awaken's creatures. Tectonic keeps vanilla biomes, so it doesn't.</td><td><span class="tag t-r">EXTEND</span></td></tr>
+      <tr><td>Dimensions</td><td>16 custom generators. Gates and dreams paint from runtime plans that worker threads only read (<code>ConcurrentHashMap</code>). The cloud sea is a pure function of the seed.</td><td><code>GateChunkGenerator.java:69-82</code>, <code>DreamChunkGenerator.java:36-43</code></td><td>Far-terrain generation is thread-safe, but in instanced dimensions it would bake empty void into the LOD cache.</td><td><span class="tag t-p">INVESTIGATE</span></td></tr>
+      <tr><td>Audio</td><td>399 synthesised sound events, one music track per biome or theme, ambience beds. No reverb, no adaptive music. "Nobody has listened".</td><td><code>docs/modules/audio.md:174</code>, <code>Ambience.java</code></td><td>The largest untouched lever for "new game" feel.</td><td><span class="tag t-r">EXTEND</span></td></tr>
+      <tr><td>Multiplayer</td><td>64 payloads registered properly, about 30 per-player attachments, no client classes in common code. But: static server maps, one story ending per world, party co-op designed but not built.</td><td><code>StoryWorld.java:10</code>, <code>Twists.java:123</code>, <code>plan.html:853</code></td><td>A friend could join today, but would share one story and see your casts as vanilla poses.</td><td><span class="tag t-p">INVESTIGATE</span></td></tr>
+      <tr><td>Perf tooling</td><td>The autopilot's <code>fps</code> logs one whole-number frame count per second. No frame-time percentiles.</td><td><code>Autopilot.java:215</code></td><td>The SPEC's p99 ≤ 16 ms has never been measurable. Shader and Distant Horizons decisions need it first.</td><td><span class="tag t-x">BUILD</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>What 26.3 NeoForge actually offers</h3>
+  <p class="small muted">Checked against Modrinth's API on 24 Oct 2026, about 130 projects. 26.3 came out on 15 Sep, so ports are six weeks old and several are betas (amber outline).</p>
+  <div class="grid2">
+    <div class="panel"><h3 style="color:var(--good)">Available</h3>
+      <div class="chips">
+        <span class="chip">Distant Horizons 3.3.4</span><span class="chip beta">Sodium 0.9.3 beta</span><span class="chip">Iris 1.11.7</span><span class="chip">Lithium</span><span class="chip">FerriteCore</span><span class="chip">ImmediatelyFast</span><span class="chip">EntityCulling</span><span class="chip">MoreCulling</span><span class="chip">Dynamic FPS</span><span class="chip">spark</span>
+        <span class="chip beta">Player Animation Library beta</span><span class="chip">GeckoLib</span><span class="chip">Not Enough Animations</span><span class="chip">First-person Model</span><span class="chip">Camera Overhaul</span><span class="chip">Shoulder Surfing</span><span class="chip">3D Skin Layers</span><span class="chip">EMF + ETF</span><span class="chip">Fresh Animations (pack)</span>
+        <span class="chip beta">Sound Physics Remastered beta</span><span class="chip">AmbientSounds</span>
+        <span class="chip beta">Tectonic beta</span><span class="chip">Terralith</span><span class="chip">Lithostitched</span><span class="chip">Towns and Towers</span><span class="chip">Dungeons and Taverns</span>
+        <span class="chip beta">JEI beta</span><span class="chip">Jade</span><span class="chip">AppleSkin</span><span class="chip">Xaero's maps</span><span class="chip">JourneyMap</span><span class="chip">Mouse Tweaks</span><span class="chip">Controlling</span>
+        <span class="chip">e4mc</span><span class="chip beta">Simple Voice Chat beta</span><span class="chip beta">Emotecraft alpha</span>
+        <span class="chip">Shaderpacks: Complementary, BSL, Photon, Solas, MakeUp Ultra Fast</span>
+      </div></div>
+    <div class="panel"><h3 style="color:var(--warn)">Not on 26.3 NeoForge</h3>
+      <div class="chips">
+        <span class="chip no">Voxy</span><span class="chip no">C2ME</span><span class="chip no">ModernFix</span><span class="chip no">Veil</span><span class="chip no">Flywheel</span><span class="chip no">Lodestone</span><span class="chip no">YUNG's</span><span class="chip no">EMI</span><span class="chip no">Continuity</span><span class="chip no">Presence Footsteps</span><span class="chip no">Visuality</span><span class="chip no">Wakes</span><span class="chip no">Particle Rain</span><span class="chip no">ParCool</span><span class="chip no">Figura</span><span class="chip no">Create</span><span class="chip no">Connector (Fabric bridge)</span><span class="chip no">any render-scale mod</span>
+      </div>
+      <p class="small muted">Also suspect: LambDynamicLights and Zoomify list <code>fabric-api</code> as required on their NeoForge builds. Treat them as unavailable until a launch proves otherwise.</p></div>
+  </div>
+
+  <h3>Why it doesn't feel like a new game yet</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Symptom</th><th>Likely cause</th><th>For</th><th>Against, or what would disprove it</th><th>Smallest test</th><th>Impact if fixed</th></tr></thead>
+    <tbody>
+      <tr><td>"Looks like an add-on"</td><td>The frame around Awaken is vanilla: view distance, light, poses, sound</td><td>Audit rows above; your 23 Oct feedback on vanilla-looking powers</td><td>If before/after shots of the same scenes don't change your reaction, the problem is Awaken's content, not the frame</td><td>12-shot contact sheet: Awaken alone vs. Awaken + pack</td><td>High</td></tr>
+      <tr><td>Shaders will be slow on your Mac</td><td>8.3 MP per frame at 4K, plus OpenGL 4.1 translated to Metal</td><td><code>Window.java:152</code>; your log</td><td>Swift and Cinematic holding their targets at 4K would disprove it</td><td>Frame-time tour of Awaken alone, then each layer, at 4K and on the laptop screen</td><td>Decides the default tier and whether render scale is needed</td></tr>
+      <tr><td>Mods might break Awaken's visuals</td><td>Never tested with Sodium or Iris</td><td>Empty mods folders</td><td>All current studio and gate tours look the same with the pack</td><td>Run the existing tours with the pack</td><td>Blocker if wrong</td></tr>
+      <tr><td>Far terrain could look wrong in gates</td><td>Gate and dream cells are void until a plan exists, and LODs are cached</td><td>Generator code</td><td>Distant Horizons might skip these dimensions or refresh LODs</td><td>Gate tour with Distant Horizons on: open, clear, reopen</td><td>Medium</td></tr>
+      <tr><td>A terrain mod would empty the wilds</td><td>Spawns name exact vanilla biomes</td><td>Biome modifiers</td><td>Tectonic keeps vanilla biomes (its docs say so); Terralith adds its own</td><td>Spawn census GameTest per biome</td><td>High, if we add biomes</td></tr>
+      <tr><td>The world sounds thin</td><td>Synthesised sounds, no reverb, no music layers</td><td><code>audio.md:174</code></td><td>Your ear</td><td>One 15-minute listening session</td><td>Medium to high</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="research">
+  <span class="eyebrow">3 · Research</span>
+  <h2>What the outside world says</h2>
+  <p class="small muted">Each question below came out of the audit. minecraft.net timed out, so game-version facts come from minecraft.wiki changelogs and Mojira, which track Mojang's notes. Rows marked "checked" were also confirmed in the local 26.3 sources.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Claim</th><th>Source and date</th><th>Confidence</th><th>What it means here</th><th>Still to validate</th></tr></thead>
+    <tbody>
+      <tr><td>26.4-snapshot-1 makes "Default" mean Vulkan. 26.3 already compiles every shader to SPIR-V for both back ends.</td><td>minecraft.wiki, 26.4-snapshot-1 (22 Sep 2026) and 26.3 (15 Sep 2026)</td><td>High</td><td>Anything we build for light must run on Vulkan, or it dies at the next update.</td><td>Lens on both back ends, stage 2</td></tr>
+      <tr><td>Iris is OpenGL-only; shaders switch off under Vulkan. Its successor, Aperture, is a private-beta Vulkan rewrite that won't load today's packs.</td><td>Iris posts on X (19 Feb, 13 May 2026, seen in search snippets only); github.com/IrisShaders/Iris issue 3416 (12 Oct 2026)</td><td>Medium</td><td>A hand-written OptiFine-format pack would be built on a path that's ending.</td><td>Watch Aperture's public release</td></tr>
+      <tr><td>Iris's driver page lists Apple Silicon Macs as "not supported, drivers have known crash issues".</td><td>github.com/IrisShaders/Iris, docs/usage/drivers.md (undated)</td><td>High</td><td>The Ultra tier may crash on your Mac. It stays experimental.</td><td>One Ultra tour before we offer it</td></tr>
+      <tr><td>Photon says it's not compatible with Apple GPUs; Bliss has limited support because of macOS's OpenGL version.</td><td>modrinth.com, both shader pages</td><td>High</td><td>Ultra candidates narrow to Complementary, BSL and MakeUp Ultra Fast.</td><td>Frame-time tour of each</td></tr>
+      <tr><td>Mojang fixed Vulkan on Macs splitting each frame into 45+ render passes, which is slow on Apple's tile-based GPUs. Closed 19 Oct; more tuning is tracked internally.</td><td>Mojira MC-311557 (31 Aug → 19 Oct 2026)</td><td>Medium</td><td>Vulkan may now beat OpenGL on your M4. It also tells us Lens must keep its own pass count small.</td><td>OpenGL vs Vulkan in stage 0</td></tr>
+      <tr><td>Distant Horizons 3.3.4 supports 26.3 on NeoForge. It renders through Mojang's renderer, Vulkan included, since 3.1.0; 3.3.2 fixed a NeoForge 26.3 crash. With Iris it needs its OpenGL path.</td><td>modrinth.com/mod/distanthorizons changelogs (Jun–Sep 2026)</td><td>High</td><td>Far terrain works on both back ends, so it fits every tier.</td><td>Behaviour in Awaken's 16 dimensions</td></tr>
+      <tr><td>Distant Horizons suggests 6–8 GB of RAM for 4–8 core CPUs, and ZGC.</td><td>Same page, FAQ</td><td>High</td><td>Your client gets about 4 GB by default. Give it an explicit heap of about 6 GB and compare G1 with ZGC.</td><td>Heap and p99 in the long tour</td></tr>
+      <tr><td>Voxy, the other far-render mod, is Fabric-only and needs OpenGL 4.6.</td><td>modrinth.com/mod/voxy (19 Oct 2026)</td><td>High</td><td>Not an option on NeoForge or a Mac.</td><td>—</td></tr>
+      <tr><td>Sodium 0.9.3-beta.1 fixes compatibility with NeoForge 26.3 and adds a macOS fullscreen option; 0.9.x has "early support for Vulkan".</td><td>modrinth.com/mod/sodium (15 Oct 2026); CurseForge page (undated)</td><td>High / Medium</td><td>Beta risk, and its Vulkan behaviour is unknown.</td><td>Smoke tour on both back ends</td></tr>
+      <tr><td>26.3 added <code>/posteffect</code> and an always-on <code>minecraft:end_of_frame</code> post effect for resource packs.</td><td>minecraft.wiki 26.3; checked in <code>GameRenderer.java:436</code></td><td>High</td><td>A first Lens can be pure shader and JSON files, so we can test the look before writing any Java.</td><td>The prototype in stage 2</td></tr>
+      <tr><td>NeoForge's <code>FrameGraphSetupEvent</code> lets mods add passes to the frame graph. <code>ConfigureMainRenderTargetEvent</code> only switches on a stencil buffer.</td><td>Checked in <code>.ref/neo/.../client/event/</code></td><td>High</td><td>Lens's production hook needs no mixin. Render scale does need one.</td><td>—</td></tr>
+      <tr><td>Veil and Lodestone have no 26.x builds; Flywheel has only a 26.1 dev branch.</td><td>GitHub branches (10 Oct 2026)</td><td>High</td><td>No effects library to lean on, so we build Lens ourselves.</td><td>—</td></tr>
+      <tr><td>A Mac mini M4 (same GPU) at 1080p, render distance 16: vanilla about 150 fps, Sodium 0.9.3 about 255–280 fps.</td><td>github.com/noahdunnagan/mcopt README (2026, a third-party mod's own numbers)</td><td>Low–Medium</td><td>Plenty of headroom at 1080p. Your Dell has four times the pixels.</td><td>Our own baseline</td></tr>
+      <tr><td>Vibrant Visuals hasn't appeared in any Java development version, and there is no date.</td><td>minecraft.wiki/w/Vibrant_Visuals</td><td>High</td><td>Don't wait for Mojang's lighting.</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout">
+    <p><b>What changed in the plan because of this.</b> I had a custom Iris shaderpack as the gated "ultimate" option. It's out. Iris is OpenGL-only, it doesn't support Apple Silicon, and Vulkan becomes the default next version. The custom Mac shader is now Lens itself, grown in tiers. That's the one path that runs on both of Mojang's renderers, works for every player in multiplayer, and lets us control every pass for Apple's tile-based GPU.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="options">
+  <span class="eyebrow">4 · Alternatives</span>
+  <h2>Three ways to go, and the recommendation</h2>
+  <div class="grid3">
+    <div class="panel">
+      <h3>A · Curated kit</h3>
+      <p class="small">Pick about 25 available mods and a shaderpack, drop them in the play copy, play. About a day.</p>
+      <p class="small muted"><b>Loses</b> because nothing checks that Awaken still looks and runs right. The styles won't match, and the pack can't be rebuilt or handed to a friend. It's the "weak result" above.</p>
+    </div>
+    <div class="panel" style="border-color:var(--good)">
+      <h3>B · Integrated pack <span class="tag t-v">RECOMMENDED</span></h3>
+      <p class="small">A pinned, tested pack around Awaken. Awaken changes to fit it: biome tags, a far-terrain policy, its own light layer (Lens), full-body casts, adaptive music. Three look tiers, a frame-time harness, and an export friends can import.</p>
+      <p class="small muted">Reuses Awaken's post-effect system, autopilot and progression. About 4–7 weeks in stages, with the first vertical slice in about a week.</p>
+    </div>
+    <div class="panel">
+      <h3>C · Engine-level conversion</h3>
+      <p class="small">B plus our own shaderpack from day one, our own terrain generator, a render-scale mod with mixins, our own animation system and a dedicated server.</p>
+      <p class="small muted"><b>Loses:</b> months of work. A custom Iris pack would target an OpenGL path that 26.4 replaces with Vulkan, on Macs Iris doesn't support. The parts worth keeping survive in B as gated options: Lens Ultra and render scale.</p>
+    </div>
+  </div>
+  <p>What would change this: if Lens's look doesn't beat plain vanilla in your blind picks at stage 2, we stop investing in light and put that time into the body and the sound. If 4K frame times miss badly even on Swift, render scale moves up to a decision at stage 2.</p>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="design">
+  <span class="eyebrow">5 · Behaviour and architecture</span>
+  <h2>How the pack works</h2>
+  <pre class="mermaid">
+flowchart TB
+  M["Pack manifest · NEW<br/>pinned mods, hashes, configs, profiles"]
+  I["tools/pack.sh · NEW<br/>verify and install into a game folder"]
+  P["Play copy<br/>Awaken-play/run"]
+  T["Autopilot tours<br/>run-autopilot"]
+  X[".mrpack export<br/>friends import in one click"]
+  G["GameTests<br/>Awaken alone, unchanged"]
+  M --> I
+  I --> P
+  I --> T
+  I --> X
+  M -. "never" .-> G
+  </pre>
+  <pre class="mermaid">
+flowchart LR
+  W["World render<br/>Sodium chunks"] --> D["Distant Horizons<br/>LODs to the horizon"]
+  D --> A["Awaken geometry<br/>beams · FX · glows"]
+  A --> L["Lens · NEW<br/>grade · bloom · depth haze"]
+  L --> F["Awaken gameplay FX<br/>dream · blight · veil"]
+  F --> U["HUD and GUI"]
+  S["Iris shaderpack<br/>Ultra tier only"] -. "replaces Lens" .-> L
+  </pre>
+
+  <h3>Three looks, one switch</h3>
+  <div class="grid3">
+    <div class="panel tier"><span class="t-name" style="color:var(--good)">Swift</span>
+      <dl><dt>For</dt><dd>Your 120 fps rule; laptops; fights</dd><dt>Has</dt><dd>Performance mods, Distant Horizons at a moderate radius, Lens light (grade and quarter-res bloom)</dd><dt>Target</dt><dd>p50 ≥ 110 fps, p99 ≤ 16 ms on the laptop screen in a gate fight (today's SPEC)</dd></dl></div>
+    <div class="panel tier"><span class="t-name" style="color:var(--accent)">Cinematic</span>
+      <dl><dt>For</dt><dd>Exploring, sunsets, the Dell</dd><dt>Has</dt><dd>Swift plus full Lens (depth haze, light shafts, dream depth of field) and a wider horizon</dd><dt>Target</dt><dd>p50 ≥ 60 fps, p99 ≤ 25 ms at 4K (proposed; set after the baseline)</dd></dl></div>
+    <div class="panel tier"><span class="t-name" style="color:var(--violet)">Ultra</span>
+      <dl><dt>For</dt><dd>Screenshots, slow exploring</dd><dt>Has</dt><dd>Iris and a tuned pack: shadows, water, sky. Lens steps aside; Awaken's gameplay effects stay.</dd><dt>Caveat</dt><dd><span class="tag t-h">EXPERIMENTAL</span> OpenGL only, and Iris lists Apple Silicon as unsupported. Offered only if it survives a tour.</dd></dl></div>
+  </div>
+
+  <h3>Where a frame goes, at 120 Hz</h3>
+  <p class="small muted">An 8.33 ms frame. <b>The bars are illustrative splits, not measurements.</b> The first job of stage 0 is to replace them with numbers from your Mac.</p>
+  <div class="budget" role="img" aria-label="Illustrative frame budgets for the Swift and Cinematic tiers against the 8.33 ms and 16.7 ms lines">
+    <div class="bscale"><span></span><div><span>0</span><span>4 ms</span><span>8.33</span><span>12.5</span><span>16.7 ms</span></div></div>
+    <div class="brow"><span>Swift</span><div class="bar"><i class="w" style="width:33%"></i><i class="d" style="width:6%"></i><i class="l" style="width:5%"></i><i class="s" style="width:4%"></i><span class="mark" style="left:50%"></span></div></div>
+    <div class="brow"><span>Cinematic</span><div class="bar"><i class="w" style="width:52%"></i><i class="d" style="width:12%"></i><i class="l" style="width:14%"></i><i class="s" style="width:5%"></i><span class="mark" style="left:100%"></span></div></div>
+    <div class="legend"><span>■ <span style="color:var(--accent)">world and entities</span></span><span>■ <span style="color:var(--good)">Distant Horizons</span></span><span>■ <span style="color:var(--violet)">Lens</span></span><span>■ <span style="color:var(--amber)">HUD and Awaken FX</span></span><span>│ frame deadline for the tier</span></div>
+  </div>
+
+  <h3>Each change, and why</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Change</th><th>Evidence or problem</th><th>Benefit</th><th>Preserves</th><th>Tradeoff</th><th>Test</th></tr></thead>
+    <tbody>
+      <tr><td class="grp" colspan="6">Foundation</td></tr>
+      <tr><td><b>Pack manifest and installer</b></td><td>Empty mods folders; nothing can pin a version</td><td>One command installs a known-good set into any game folder; a lock file makes it reversible; exports a <code>.mrpack</code></td><td>GameTests stay Awaken-only</td><td>One more file to keep current</td><td>Install, remove, reinstall into a scratch folder; hashes match</td></tr>
+      <tr><td><b>Frame-time harness</b></td><td>The autopilot only logs whole fps</td><td>p50, p95 and p99 frame time per scene, GL vs Vulkan, with and without each layer</td><td>The existing <code>fps</code> command</td><td>Needs a quiet machine; a 4K window needs your OK</td><td>Same scene run twice must agree within 5%</td></tr>
+      <tr><td><b>Compatibility pass</b></td><td>Never run with Sodium, Iris or Distant Horizons</td><td>Proof that Awaken looks right in the pack, or a list of fixes</td><td>Mixin-free Awaken</td><td>Sodium 0.9.3 is a beta</td><td>Every existing tour with the pack: no new log errors, same shots</td></tr>
+      <tr><td class="grp" colspan="6">The horizon and the light</td></tr>
+      <tr><td><b>Far-terrain policy</b></td><td>Instanced dimensions would bake void into the LOD cache</td><td>Horizon in the overworld and the endless cloud sea; off in gates, dreams, trials and the Halo</td><td>Gate and dream generation</td><td>Needs Distant Horizons' API or config per dimension (to verify)</td><td>Gate tour: open, clear, reopen; no phantom rooms</td></tr>
+      <tr><td><b>Landmarks on the horizon</b></td><td>Beams fade with distance (<code>MarkerLight.distanceFade</code>)</td><td>A Precursor beam 1,500 blocks away is the reason to travel</td><td>Discovery without quest markers</td><td>Must not reveal every landmark</td><td>Hilltop shot shows exactly the landmarks in range</td></tr>
+      <tr><td><b>Lens, Awaken's light layer</b></td><td>Vanilla light; post chains can read depth</td><td>Per-dimension grade, emissive bloom, depth haze and a dither against banding, on both renderers, for every player</td><td>Awaken's gameplay post effects, which compose after it</td><td>Doesn't see Distant Horizons' depth without its API</td><td>Per-pass GPU time; 12-shot contact sheet</td></tr>
+      <tr><td><b>Tuned shader profile (Ultra)</b></td><td>Good packs exist for 26.3</td><td>Shadows and water for screenshots, with Awaken-aware per-dimension settings</td><td>Awaken's gameplay effects</td><td>Iris needs OpenGL and lists Apple Silicon as unsupported; a pack can wash out glows</td><td>Same contact sheet; glows still read</td></tr>
+      <tr><td><b>Tectonic, new worlds only</b></td><td>v2 deferred terrain because nothing supported 26.3; Tectonic now does (beta)</td><td>Mountain ranges and deep oceans that Distant Horizons can show off</td><td>Vanilla biomes, so every Awaken spawn and ruin</td><td>Beta; would create seams in old worlds</td><td>Spawn census and <code>/locate</code> for every Awaken structure</td></tr>
+      <tr><td><b>Biome tags</b></td><td>Exact biome IDs</td><td>Any later biome mod (Terralith) gets Awaken creatures too</td><td>Today's spawn tables</td><td>One SPEC change</td><td>Census identical on vanilla terrain</td></tr>
+      <tr><td class="grp" colspan="6">The body</td></tr>
+      <tr><td><b>Full-body casts</b></td><td>Vanilla arm poses (<code>CastAnims.java</code>)</td><td>Nine family animations (wind-up, release, follow-through), synced so others see them</td><td>First-person arms, cast timing</td><td>Library is a beta; an optional dependency, with today's poses as the fallback</td><td>Frame strips per family; two-client test</td></tr>
+      <tr><td><b>Awakened Body</b> (proposal)</td><td>No parkour mod on 26.3, and one would cheapen powers</td><td>After awakening your body changes: mantle, sprint-slide and a soft landing unlock with rank</td><td>The power curve; vanilla feel before awakening</td><td>New design (SPEC change)</td><td>GameTests for each move; tour shots</td></tr>
+      <tr><td><b>Camera and limbs</b></td><td>Vanilla camera</td><td>Camera Overhaul, Not Enough Animations, 3D Skin Layers; First-person Model on trial</td><td>Awaken's camera kick</td><td>Possible double arms in first person</td><td>Studio tour, first and third person</td></tr>
+      <tr><td class="grp" colspan="6">The sound</td></tr>
+      <tr><td><b>Room sound and music layers</b></td><td>No reverb; one track per theme</td><td>Sound Physics Remastered for halls and caves; explore, fight and boss layers per gate theme</td><td>Awaken's cue system</td><td>Reverb costs CPU; needs your ear</td><td>15-minute listening session; CPU per frame</td></tr>
+      <tr><td class="grp" colspan="6">Comfort and together</td></tr>
+      <tr><td><b>Comfort set</b></td><td>No recipe lookup, no inventory help</td><td>JEI, Jade, AppleSkin, Mouse Tweaks, Controlling; Awaken plugins so Jade shows a creature's rank</td><td>"Direction comes from the world"</td><td>A minimap would undercut discovery (your call)</td><td>Pack smoke tour</td></tr>
+      <tr><td><b>Friends</b></td><td>Single story per world; no party</td><td>e4mc join links, proximity voice, synced casts, an <code>.mrpack</code> friends import</td><td>Single-player first</td><td>Story and party design work</td><td>Two clients on one machine, then a real friend</td></tr>
+      <tr><td class="grp" colspan="6">Gated, only if the numbers ask for it</td></tr>
+      <tr><td><b>Lens Ultra</b></td><td>Only if Cinematic proves the look and leaves budget</td><td>Depth-only screen-space effects: soft ambient occlusion, contact shadows, glints on water. Works on Vulkan, so it outlives Iris.</td><td>Lens tiers; Awaken's gameplay effects</td><td>1–2 weeks; screen-space effects have edge artefacts</td><td>Same harness and contact sheet; must stay inside the Cinematic budget</td></tr>
+      <tr><td><b>Render scale</b></td><td>8.3 MP at 4K; no 26.3 mod</td><td>Draw the world at 67–75% and upscale with sharpening; GUI stays crisp</td><td>Mixin-free Awaken: this lives in a separate small client mod</td><td>Needs a mixin, so it needs your sign-off</td><td>Frame time and a sharpness check on text and edges</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Lens, as a contract</h3>
+  <div class="grid2">
+    <div class="panel small">
+      <p><b>Trigger:</b> every frame on the client while in a world, unless an Iris shaderpack is active or the tier is Off.</p>
+      <p><b>Inputs:</b> main colour and depth targets, the current dimension, time of day, the tier, and the per-dimension look file <code>assets/awaken/lens/&lt;dimension&gt;.json</code>.</p>
+      <p><b>Processing:</b> half-res bright and haze pass, quarter-res separable blur, then one full-res composite (grade, bloom, haze, vignette, dither). Cinematic adds light shafts and dream depth of field. At most four render passes, because each pass costs extra on a tile-based GPU (see MC-311557).</p>
+      <p><b>Hook:</b> prototype as a pure-asset <code>end_of_frame</code> effect; ship through NeoForge's <code>FrameGraphSetupEvent</code> so Awaken owns the order and other packs can't replace it.</p>
+    </div>
+    <div class="panel small">
+      <p><b>Invariants:</b> never changes gameplay or server state; never hides an Awaken gameplay effect (those draw after Lens); same look for every player in a dimension.</p>
+      <p><b>Budget:</b> ≤ 1.0 ms Swift, ≤ 2.5 ms Cinematic at 4K. Over budget for 5 seconds: drop one step and say so once.</p>
+      <p><b>Failure:</b> a shader that fails to compile disables Lens and logs it once; the game keeps vanilla light. It never crashes the client.</p>
+    </div>
+  </div>
+
+  <h3>Data and lifecycle</h3>
+  <ul class="small">
+    <li><b>Canonical:</b> the manifest (<code>pack/manifest.json</code>: project, version, file, SHA-512, side, profile) and our config overrides in <code>pack/config/</code>, both in git.</li>
+    <li><b>Derived:</b> installed jars, plus a lock file in each <code>mods/</code> listing only what the installer put there. It never removes a jar it didn't install. Distant Horizons' LOD database inside each save can be deleted and rebuilt.</li>
+    <li><b>Updates:</b> bump one entry, rerun the smoke and frame-time tours, commit. Rollback means reinstalling the previous manifest.</li>
+    <li><b>Worlds:</b> back up a save before its first run with the pack. Terrain mods only in new worlds. Your Awaken and Azareth worlds stay on vanilla terrain.</li>
+    <li><b>Safety:</b> the installer refuses to touch a game folder a client is running from, the same rule <code>tools/play.sh</code> follows.</li>
+  </ul>
+
+  <h3>Failure register</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Case</th><th>Detection</th><th>Containment and recovery</th><th>Regression test</th></tr></thead>
+    <tbody>
+      <tr><td>A beta mod crashes (Sodium, JEI, Tectonic, Sound Physics, Player Animation Library)</td><td>Smoke tour plus a log scan</td><td>Profiles keep it out; pin the last good build</td><td>Smoke tour on every manifest change</td></tr>
+      <tr><td>An Awaken effect breaks under Sodium or Iris</td><td>Tour shots compared with Awaken alone</td><td>Fix in Awaken; or Lens and the Ultra tier exclude it</td><td>The shot pair stays in the tour</td></tr>
+      <tr><td>Phantom rooms or void in far terrain</td><td>Gate reopen tour</td><td>Far terrain off in instanced dimensions</td><td>Gate tour with Distant Horizons on</td></tr>
+      <tr><td>Stutter while far terrain generates</td><td>p99 during a 60-second flight</td><td>Lower Distant Horizons' CPU preset; pre-generate</td><td>Flight scene in the frame-time tour</td></tr>
+      <tr><td>Memory pressure on 16 GB</td><td>Heap and GC log in a 30-minute tour</td><td>Set an explicit heap for the play run; smaller LOD cache</td><td>Long tour on every tier change</td></tr>
+      <tr><td>Iris crashes on Apple Silicon</td><td>Ultra tour</td><td>Ultra stays hidden on your Mac unless it passes; Lens and Cinematic are unaffected</td><td>Ultra tour on every Iris or pack update</td></tr>
+      <tr><td>Vulkan start fails</td><td>The game detects it itself</td><td>It resets to Default on the next launch (verified)</td><td>None needed</td></tr>
+      <tr><td>A friend joins without the pack</td><td>Version check on join</td><td>Only Awaken is required on the server; every visual mod is optional</td><td>Two-client test, one client bare</td></tr>
+      <tr><td>Biome mod empties Awaken spawns</td><td>Spawn census</td><td>Tags; Terralith only after the census passes</td><td>Census GameTest</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The proposed first list</h3>
+  <p class="small muted">Everything here was checked for a 26.3 NeoForge build today. Green is Awaken's own work; amber outlines are betas; struck-through are left out on purpose.</p>
+  <div class="chips">
+    <span class="chip ours">Awaken</span><span class="chip ours">Lens</span><span class="chip ours">Awakened Body</span><span class="chip ours">music layers</span>
+    <span class="chip beta">Sodium</span><span class="chip">Lithium</span><span class="chip">FerriteCore</span><span class="chip">ImmediatelyFast</span><span class="chip">EntityCulling</span><span class="chip">MoreCulling</span><span class="chip">Dynamic FPS</span>
+    <span class="chip">Distant Horizons</span><span class="chip beta">Tectonic</span><span class="chip">Lithostitched</span>
+    <span class="chip beta">Player Animation Library</span><span class="chip">Camera Overhaul</span><span class="chip">Not Enough Animations</span><span class="chip">3D Skin Layers</span>
+    <span class="chip beta">Sound Physics Remastered</span>
+    <span class="chip beta">JEI</span><span class="chip">Jade</span><span class="chip">AppleSkin</span><span class="chip">Mouse Tweaks</span><span class="chip">Controlling</span>
+    <span class="chip">e4mc</span><span class="chip beta">Simple Voice Chat</span>
+    <span class="chip beta">Iris + one pack (Ultra, experimental)</span>
+  </div>
+  <div class="chips">
+    <span class="chip no">Better Combat (fights Awaken's combat feel)</span><span class="chip no">Combat Roll (Awaken has Dash)</span><span class="chip no">Waystones (Awaken travel)</span><span class="chip no">generic structure packs (dilute Awaken's ruins)</span><span class="chip no">HD textures (clash with 16× art)</span>
+  </div>
+  <p class="small muted">On trial, kept only if they pass the tours: First-person Model, Fresh Animations with EMF and ETF (they may also reanimate Awaken creatures that reuse vanilla bodies), AmbientSounds (may fight Awaken's ambience beds), Shoulder Surfing, Xaero's World Map.</p>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="demo">
+  <span class="eyebrow">6 · Concrete demonstrations</span>
+  <h2>The same moments, today and proposed</h2>
+  <p class="small muted">The "proposed" columns describe behaviour that doesn't exist yet. Nothing in them has been measured.</p>
+
+  <h3>An ordinary evening walk</h3>
+  <div class="walk">
+    <div class="panel"><h4>Today</h4><ol><li>You climb a hill at sunset.</li><li>The game draws 16 chunks; past 256 blocks there's fog.</li><li>Light is vanilla; a Precursor beam appears only once you're close.</li><li>You pick a direction at random.</li></ol></div>
+    <div class="panel after"><h4>Proposed</h4><ol><li>Same hill, in a Tectonic world.</li><li>Distant Horizons draws ranges 2,000+ blocks away; Lens adds warm haze that deepens with distance.</li><li>A beam stands on the far ridge. Zoom shows a ruin.</li><li>You walk there. The world gave you the direction, as plan v2 intends, with no quest marker.</li></ol><p class="small muted">Less work: the decision of where to go is made for you by what you can see.</p></div>
+  </div>
+
+  <h3>The disappointing one: casting looks vanilla</h3>
+  <div class="walk">
+    <div class="panel"><h4>Today</h4><ol><li>You cast a Lightning power.</li><li>Your arms take the trident pose and the body leans.</li><li>Particles and sound fire. A friend would see a trident pose with nothing in hand.</li></ol></div>
+    <div class="panel after"><h4>Proposed</h4><ol><li>The same cast sends a payload Awaken already has a slot for.</li><li>Every nearby client plays the "storm" family animation: a crouch and gather, an overhead release, a recoil.</li><li>Lens blooms the bolt; Sound Physics echoes it off the hills.</li></ol><p class="small muted">Same timing and balance, so nothing to relearn.</p></div>
+  </div>
+
+  <h3>The hard case: a Lightless gate with everything on</h3>
+  <div class="walk">
+    <div class="panel"><h4>Today</h4><ol><li>You enter an A-rank gate that rolled Lightless.</li><li>It's pitch black by design; fine.</li><li>If Distant Horizons were installed now, it could keep a void LOD of this cell and show phantom shapes when the cell is reused.</li></ol></div>
+    <div class="panel after"><h4>Proposed</h4><ol><li>Far terrain is off in the gates dimension, so nothing gets cached.</li><li>Lens uses the gate theme's look but never brightens Lightless, which keeps the modifier honest.</li><li>Under Ultra, the pack's gate settings keep Awaken glows readable in the dark.</li></ol></div>
+  </div>
+
+  <h3>When something is missing</h3>
+  <div class="walk">
+    <div class="panel"><h4>Sodium's beta breaks after an update</h4><ol><li>The smoke tour fails on the manifest bump, before you ever launch.</li><li>The manifest stays on the last good build. Your play copy is untouched.</li></ol></div>
+    <div class="panel"><h4>A friend joins with plain Awaken</h4><ol><li>The server needs only Awaken.</li><li>They see vanilla light and their own render distance. Your casts show today's poses on their screen, because Awaken treats the animation library as optional and falls back cleanly.</li><li>They install the <code>.mrpack</code> later and get the full look; nothing on the server changes.</li></ol></div>
+  </div>
+
+  <h3>The one new screen: the Look switch</h3>
+  <div class="grid2" style="align-items:start">
+    <div class="mock" aria-label="Mockup of the Awaken Look settings screen">
+      <div class="mt">AWAKEN · LOOK</div>
+      <div class="opts">
+        <div class="opt on">SWIFT<small>Horizon and soft light. Built for 120 fps.</small></div>
+        <div class="opt">CINEMATIC<small>Haze, light shafts, a wider horizon. 60+ fps.</small></div>
+        <div class="opt">ULTRA<small>Full shaders with shadows and water. Experimental on Mac.</small></div>
+      </div>
+      <div class="row"><span>LAST 60 S · 4K</span><span>p50 7.9 ms · p99 13.1 ms</span></div>
+      <div class="row"><span>HORIZON</span><span>96 CHUNKS</span></div>
+    </div>
+    <div class="anno">
+      <p><b>1</b> One choice replaces about 40 settings spread over five mods. Each tier sets Sodium, Distant Horizons, Lens and Iris together.</p>
+      <p><b>2</b> The frame-time line uses the harness's numbers, so you can see when a tier doesn't fit your screen. Example values only.</p>
+      <p><b>3</b> Every mod's own menu still works; the switch writes only the keys it owns.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="delivery">
+  <span class="eyebrow">7 · Evaluation and delivery</span>
+  <h2>How we prove it, in stages</h2>
+  <div class="grid2">
+    <div class="panel small">
+      <h3>Fixed scenes</h3>
+      <p>Same seed, position, time and weather every run: overworld hilltop at sunset, dense forest, a full gate fight (legion), a Lightless gate, Lucidium, the Stillpoint cloud sea, Descent stratum 5, and a 60-second flight.</p>
+    </div>
+    <div class="panel small">
+      <h3>What we measure</h3>
+      <p>Frame time p50, p95 and p99; server tick p95; heap peak; log errors. Visual: a 12-shot contact sheet, judged by you once per stage, blind as A/B. Content: spawn census, <code>/locate</code> for every Awaken structure. All 121+ GameTests on every change.</p>
+    </div>
+  </div>
+  <div class="tl">
+    <div><b>0 · Measure</b><span class="small">Frame-time harness, pack manifest and installer, baseline of Awaken alone: OpenGL vs Vulkan, laptop vs 4K, 4 GB vs 6 GB heap, G1 vs ZGC. Then the performance mods only.</span><span class="est">1–2 days</span></div>
+    <div class="gate"><b>Gate</b><span class="small">Two runs of each scene agree within 5%. Awaken alone is recorded. If the SPEC budget already fails, we fix that first.</span></div>
+    <div><b>1 · Fit</b><span class="small">Every tour with Sodium, then Iris, then Distant Horizons. Fix what breaks. Far-terrain policy per dimension. Biome tags.</span><span class="est">2–4 days</span></div>
+    <div class="gate"><b>Gate</b><span class="small">No new log errors; tour shots match Awaken alone; census unchanged; GameTests green.</span></div>
+    <div><b>2 · The First Vista</b> <span class="tag t-v">VERTICAL SLICE</span><span class="small">One complete moment end to end. A new Tectonic world, a far horizon, landmark beams in range, and Lens for the overworld: first as pure shader files, then through the frame graph. The Swift and Cinematic tiers on whichever back end measured faster, and one Ultra attempt.</span><span class="est">4–6 days</span></div>
+    <div class="gate"><b>Gate</b><span class="small">You pick the after shots blind in at least 9 of 12 pairs. Swift holds the SPEC budget. Cinematic meets the target we set after stage 0. If 4K misses badly, render scale comes up for a decision here.</span></div>
+    <div><b>3 · The Body</b><span class="small">Player Animation Library casts for all nine families, synced. Camera and limbs. Awakened Body moves (SPEC first).</span><span class="est">5–8 days</span></div>
+    <div><b>4 · The Sound</b><span class="small">Sound Physics Remastered, music layers per gate theme, a listening session with you to cut or remake sounds.</span><span class="est">3–5 days plus your 15 minutes</span></div>
+    <div><b>5 · Comfort</b><span class="small">JEI and Jade with Awaken plugins, inventory helpers, map decision.</span><span class="est">2 days</span></div>
+    <div><b>6 · Together</b><span class="small">Fix static server maps, decide the story per player, party gates, e4mc, voice, <code>.mrpack</code> export, two-client test.</span><span class="est">1–2 weeks; your design calls change it most</span></div>
+    <div class="gate"><b>Rollback, any stage</b><span class="small">The play copy only changes when you run <code>tools/pack.sh</code>. Reinstalling the previous manifest restores it exactly. Awaken code changes go through normal commits and tests.</span></div>
+  </div>
+  <p class="small muted">The pack stays pinned to 26.3. Moving to 26.4 (Vulkan by default) is its own decision, once Distant Horizons, Sodium and the animation library have ported. Lens and every Awaken change in this plan are built so that move doesn't break them.</p>
+  <p class="small muted">Estimates assume the betas hold. What could change them: Sodium or Iris breaking Awaken's custom geometry (adds days to stage 1), Distant Horizons lacking a per-dimension switch (we'd need its API), and how much of multiplayer you want before 1.0.</p>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="decisions">
+  <span class="eyebrow">8 · Decisions for you</span>
+  <h2>What I need from you</h2>
+  <div class="grid2">
+    <div class="decision"><b>1 · Approve the plan</b><span class="small">Option B in stages, starting with stage 0 (measure) and stage 1 (fit). Nothing in Awaken changes before you say yes.</span><span class="rec small">Recommended: yes.</span></div>
+    <div class="decision"><b>2 · Default look on your Mac</b><span class="small">Swift keeps your 120 fps rule. Cinematic trades it for 60+ fps and a prettier world.</span><span class="rec small">Recommended: Swift by default, Cinematic one click away.</span></div>
+    <div class="decision"><b>3 · Terrain</b><span class="small">Plan v2 kept vanilla terrain. Tectonic now runs on 26.3 (beta) and keeps vanilla biomes. New worlds only?</span><span class="rec small">Recommended: yes, Tectonic in new worlds; Terralith later.</span></div>
+    <div class="decision"><b>4 · Your Mac shader</b><span class="small">Build it as Lens inside Awaken (both renderers, every player), not as an Iris shaderpack (OpenGL only, unsupported on Apple Silicon).</span><span class="rec small">Recommended: Lens; Iris stays an experimental extra.</span></div>
+    <div class="decision"><b>5 · Awakened Body</b><span class="small">Mantle, sprint-slide and a soft landing as rank unlocks. This changes the progression design.</span><span class="rec small">Recommended: yes, as a SPEC proposal you review.</span></div>
+    <div class="decision"><b>6 · Map</b><span class="small">No map, a world map only, or a minimap. A minimap undercuts "direction comes from the world".</span><span class="rec small">Recommended: world map only.</span></div>
+    <div class="decision"><b>7 · Friends</b><span class="small">When do you want to play together, and on your machine (e4mc link) or a server? This sets the priority of stage 6.</span></div>
+    <div class="decision"><b>8 · Test runs</b><span class="small">The harness runs background clients like the autopilot. A true 4K measurement needs a window on your Dell. OK to run those, and when?</span></div>
+  </div>
+</section>
+
+</main>
