@@ -63,7 +63,9 @@ public final class Lucidium {
         Dreamer d = Dreams.dreamer(player);
         if (dreamIndex < 0 || dreamIndex >= d.history.size() || Dreams.isDreaming(player)) return false;
         Planner.Prepared p = Planner.buildNow(player.level().getServer(), player.getUUID(), d.history.get(dreamIndex).plan());
-        return Dreams.enter(player, p, Dreams.Entry.awake()) != null;
+        if (Dreams.enter(player, p, Dreams.Entry.awake()) != null) return true;
+        Planner.discard(player.level().getServer(), p);
+        return false;
     }
 
     /**
@@ -81,7 +83,10 @@ public final class Lucidium {
             prepared = Optional.of(Planner.buildNow(host.level().getServer(), host.getUUID(), plan.get()));
         }
         ActiveDream ad = Dreams.enter(host, prepared.get(), Dreams.Entry.awake());
-        if (ad == null) return false;
+        if (ad == null) {
+            Planner.discard(host.level().getServer(), prepared.get());
+            return false;
+        }
         for (int i = 1; i < players.size(); i++) Dreams.join(players.get(i), ad, Dreams.Entry.awake());
         return true;
     }

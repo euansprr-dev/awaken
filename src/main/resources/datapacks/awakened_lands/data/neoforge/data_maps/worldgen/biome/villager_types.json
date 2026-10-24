@@ -1,0 +1,10 @@
+{
+  "values": {
+    "awaken:glass_steppe": {
+      "villager_type": "minecraft:savanna"
+    },
+    "awaken:shattered_highlands": {
+      "villager_type": "minecraft:taiga"
+    }
+  }
+}

@@ -21,16 +21,16 @@
     "lean_start": 0.5,
     "limbs": {
       "type": "minecraft:uniform",
+      "min_inclusive": 2,
+      "max_inclusive": 4
+    },
+    "limb_start": 0.62,
+    "limb_length": {
+      "type": "minecraft:uniform",
       "min_inclusive": 3,
       "max_inclusive": 5
     },
-    "limb_start": 0.66,
-    "limb_length": {
-      "type": "minecraft:uniform",
-      "min_inclusive": 4,
-      "max_inclusive": 6
-    },
-    "limb_rise": 0.6,
+    "limb_rise": 1.0,
     "twig": {
       "type": "minecraft:uniform",
       "min_inclusive": 2,
@@ -41,7 +41,7 @@
       "min_inclusive": 1,
       "max_inclusive": 2
     },
-    "limb_mass": -1,
+    "limb_mass": 0,
     "crown_mass": 0,
     "branch_provider": {
       "id": "awaken:lumen_wood",
@@ -94,11 +94,11 @@
           "tip": "true"
         }
       },
-      "probability": 0.12,
+      "probability": 0.17,
       "length": {
         "type": "minecraft:uniform",
-        "min_inclusive": 1,
-        "max_inclusive": 5
+        "min_inclusive": 2,
+        "max_inclusive": 6
       }
     },
     {

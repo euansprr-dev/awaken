@@ -83,7 +83,15 @@ public final class RunEvents {
         }
         if (mainLord) Runs.lordDefeated(level, g, l.floor(0, g.plan.floors()), dead, killer);
         else if (annexLord) Runs.lordDefeated(level, g, l.floor(1, 2), dead, killer);
-        if (killer != null) Runs.onKill(killer, g, dead, role);
+        if (killer != null) {
+            Runs.onKill(killer, g, dead, role);
+            // the party on that floor nearby shares the kill: their own kill XP share and their own elite loot roll
+            RunState kr = Runs.run(killer);
+            for (ServerPlayer mate : dev.awaken.core.api.Parties.sharing(killer, dead)) {
+                RunState mr = Runs.run(mate);
+                if (mr.gateId == g.id && mr.area == kr.area && mr.floor == kr.floor) Runs.onKill(mate, g, dead, role);
+            }
+        }
     }
 
     public static void mobGone(ServerLevel level, GateMobs.Key key) {

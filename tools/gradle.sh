@@ -19,3 +19,6 @@ done
 wait $PID 2>/dev/null
 echo "log: $LOG"
 tail -n 40 "$LOG"
+# a -Ptests filter that matches no GameTest stops the server before it starts: say why under the Gradle failure
+grep -m1 -o "TEST FILTER MATCHES NOTHING.*" "$LOG"
+true

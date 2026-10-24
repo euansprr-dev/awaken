@@ -9,10 +9,13 @@
   python3 -I tools/pack.py status <game-dir>             what is installed, hashes, and jars the pack doesn't own
   python3 -I tools/pack.py export <out.mrpack> <profiles> --awaken-jar build/libs/awaken-x.jar
   python3 -I tools/pack.py dhconfig <game-dir> swift|cinematic|default   Distant Horizons settings for a look
+  python3 -I tools/pack.py backend <game-dir> vulkan|opengl|default       the graphics API the game starts with
 
 install writes the Swift Distant Horizons settings when the horizon profile goes into a folder that has none yet
 (an existing DistantHorizons.toml is the player's and is left alone), and copies each chosen profile's config files
-(mods.json "configs") the same way: only when missing, unless --reset-configs. install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
+(mods.json "configs") the same way: only when missing, unless --reset-configs. install also makes Vulkan the graphics
+API unless the player picked one (options.txt preferredGraphicsBackend left at "default" or missing); Vulkan measured
+15-33% faster than OpenGL on Apple Silicon with every pack mod working (docs/perf/vulkan/REPORT.md). install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
 never deletes a jar it didn't put there, and refuses to touch a game folder a client is running from.
 """
 import hashlib
@@ -241,6 +244,9 @@ def cmd_install(game_dir, profiles, reset_configs=False):
     if any(e["slug"] == "distanthorizons" for e in chosen):
         cmd_dhconfig(game_dir, "swift", only_if_missing=True)
     install_configs(game_dir, names, reset_configs)
+    cmd_backend(game_dir, "vulkan", only_if_unset=True)
+    mac_windowing(game_dir)
+    culling_exemptions(game_dir)
     save(mods_dir / MARKER, {"schemaVersion": 1, "profiles": names, "installed": time.strftime("%Y-%m-%d %H:%M"),
                              "lockGenerated": lock["generated"],
                              "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"]} for e in chosen]})
@@ -277,6 +283,76 @@ def cmd_status(game_dir):
     for p in sorted(mods_dir.glob("*.jar")):
         if p.name not in ours:
             print(f"  {'not ours':8} {p.name}")
+
+
+# ------------------------------------------------------------------------------------------------- graphics API
+
+def cmd_backend(game_dir, backend, only_if_unset=False):
+    """Sets options.txt preferredGraphicsBackend. only_if_unset leaves a player's explicit choice (opengl or vulkan)."""
+    game_dir = Path(game_dir)
+    if not only_if_unset and client_running_in(game_dir):
+        raise SystemExit(f"a client is running from {game_dir}: close it first")
+    opts = game_dir / "options.txt"
+    lines = opts.read_text().splitlines() if opts.exists() else []
+    current = next((l.split(":", 1)[1].strip().strip('"') for l in lines if l.startswith("preferredGraphicsBackend:")), None)
+    keep = only_if_unset and current not in (None, "default")
+    if not keep and current != backend:
+        lines = [l for l in lines if not l.startswith("preferredGraphicsBackend:")] + [f'preferredGraphicsBackend:"{backend}"']
+        opts.write_text("\n".join(lines) + "\n")
+        print(f"  graphics API: {backend} (was {current or 'unset'}) in {opts}; takes effect on the next launch")
+    if (current if keep else backend) == "vulkan":
+        early_window_off(game_dir)
+
+
+# Awaken block entities whose effect is far bigger than their block and sits on an invisible anchor inside other
+# blocks (the gate vortex, doorway vortices, checkpoint rings): EntityCulling traces to the block itself, finds it
+# covered, and skips drawing it, so the gate showed its pad and ring with no vortex.
+CULLING_EXEMPT = ["awaken:gate_vortex", "awaken:gate_portal", "awaken:checkpoint_ring"]
+
+
+def culling_exemptions(game_dir):
+    """Adds CULLING_EXEMPT to EntityCulling's block entity whitelist (it writes its file on first launch)."""
+    cfg = game_dir / "config" / "entityculling.json"
+    if not cfg.exists():
+        return
+    data = json.loads(cfg.read_text())
+    wl = data.setdefault("blockEntityWhitelist", [])
+    added = [i for i in CULLING_EXEMPT if i not in wl]
+    if not added:
+        return
+    wl.extend(added)
+    cfg.write_text(json.dumps(data, indent=2) + "\n")
+    print(f"  EntityCulling never culls {', '.join(added)} ({cfg})")
+
+
+def mac_windowing(game_dir):
+    """On a Mac, exclusive fullscreen (Sodium turns it on by default) always takes the built-in display, so with an
+    external monitor the game goes fullscreen on a screen you may not be looking at. Borderless follows the window."""
+    if sys.platform != "darwin":
+        return
+    opts = game_dir / "options.txt"
+    lines = opts.read_text().splitlines() if opts.exists() else []
+    if "exclusiveFullscreen:false" in lines:
+        return
+    lines = [l for l in lines if not l.startswith("exclusiveFullscreen:")] + ["exclusiveFullscreen:false"]
+    opts.write_text("\n".join(lines) + "\n")
+    print(f"  exclusive fullscreen off in {opts} (on a Mac it always picks the built-in display)")
+
+
+def early_window_off(game_dir):
+    """NeoForge's early loading screen can't hand over to Minecraft on Vulkan (MoltenVK): the game freezes at "loading
+    mods" with "the background loading screen renderer seems stuck". Vulkan game folders run without it."""
+    fml = game_dir / "config" / "fml.toml"
+    text = fml.read_text() if fml.exists() else ""
+    if "earlyWindowControl = false" in text:
+        return
+    if "earlyWindowControl" in text:
+        text = "\n".join("earlyWindowControl = false" if l.startswith("earlyWindowControl") else l for l in text.splitlines()) + "\n"
+    else:
+        text = text + ("" if text.endswith("\n") or not text else "\n") + "earlyWindowControl = false\n"
+    fml.parent.mkdir(parents=True, exist_ok=True)
+    fml.write_text(text)
+    print(f"  early loading screen off in {fml} (it freezes on Vulkan)")
 
 
 # ---------------------------------------------------------------------------------------------- Distant Horizons looks
@@ -352,6 +428,8 @@ def main(argv):
         cmd_status(argv[2])
     elif c == "dhconfig" and len(argv) == 4 and argv[3] in ("swift", "cinematic", "default"):
         cmd_dhconfig(argv[2], argv[3])
+    elif c == "backend" and len(argv) == 4 and argv[3] in ("vulkan", "opengl", "default"):
+        cmd_backend(argv[2], argv[3])
     elif c == "export" and len(argv) == 6 and argv[4] == "--awaken-jar":
         cmd_export(argv[2], argv[3], argv[5])
     else:

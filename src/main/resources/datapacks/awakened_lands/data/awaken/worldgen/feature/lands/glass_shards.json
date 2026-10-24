@@ -1,0 +1,14 @@
+{
+  "type": "awaken:glass_shards",
+  "count": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 3,
+    "max_inclusive": 7
+  },
+  "height": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 8,
+    "max_inclusive": 14
+  },
+  "spread": 3.5
+}

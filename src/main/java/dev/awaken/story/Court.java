@@ -81,7 +81,11 @@ final class Court {
                 Progression.count(p, "awaken:story/seed_reached");
                 Beats.fire(p, "seed_reached");
                 Prologue.sync(p);
-                p.level().getServer().execute(() -> AwakenNet.send(p, new StoryPayloads.OpenEnding()));
+                // the world's story has one ending: the first to reach it chooses, later ones are told it
+                p.level().getServer().execute(() -> {
+                    if (StoryWorld.get(p.level().getServer()).ended()) tell(p);
+                    else AwakenNet.send(p, new StoryPayloads.OpenEnding());
+                });
             }
         }
     }
@@ -129,11 +133,21 @@ final class Court {
         }
     }
 
-    /** Re-offer the ending choice if it was lost (disconnect, crash, death screen). */
+    /**
+     * Re-offer the ending choice if it was lost (disconnect, crash, death screen), or tell the world's ending if
+     * someone chose it meanwhile. Also records players who chose before the world kept who reached its ending.
+     */
     static void reofferEnding(ServerPlayer p) {
         StoryProgress s = Prologue.progress(p);
+        StoryWorld w = StoryWorld.get(p.level().getServer());
+        if (s.seen.contains("ending:chosen") && w.ended() && !w.reached(p.getUUID())) {
+            // a save from before schema 2: whoever chose an ending took part in the world's tier
+            w.reached.put(p.getUUID(), w.ascension);
+            w.setDirty();
+        }
         if (Prologue.storyOn() && s.seen.contains("seed:defeated") && !s.seen.contains("ending:chosen")) {
-            AwakenNet.send(p, new StoryPayloads.OpenEnding());
+            if (w.ended()) tell(p);
+            else AwakenNet.send(p, new StoryPayloads.OpenEnding());
         }
     }
 
@@ -153,32 +167,74 @@ final class Court {
 
     // ---- endings ----------------------------------------------------------------------------------------------------
 
-    private record Playing(ServerPlayer p, StoryContent.Ending ending, long start) {}
+    /** An ending playing for one player; {@code chosenBy} names who chose it when the world chose before them. */
+    private record Playing(ServerPlayer p, StoryContent.Ending ending, long start, String chosenBy) {}
 
     private static final List<Playing> PLAYING = new ArrayList<>();
 
     static void choose(ServerPlayer p, String which) {
         StoryProgress s = Prologue.progress(p);
         if (!s.seen.contains("seed:defeated") || s.seen.contains("ending:chosen")) return;
+        StoryWorld w = StoryWorld.get(p.level().getServer());
+        if (w.ended()) {
+            // someone chose first (both stood at the Seed): the world keeps its ending, this player is told it
+            tell(p);
+            return;
+        }
         var endingId = net.minecraft.resources.Identifier.tryParse("awaken:" + which);
         StoryContent.Ending ending = endingId == null ? null : StoryContent.ENDINGS.get(endingId);
         if (ending == null) return;
         s.seen.add("ending:chosen");
         s.seen.add("ending:" + which);
         Prologue.sync(p);
-        StoryWorld w = StoryWorld.get(p.level().getServer());
         w.ending = which;
+        w.endingBy = p.getUUID();
+        w.endingByName = p.getGameProfile().name();
+        w.endingDay = dev.awaken.core.PlayDays.current(p.level().getServer());
+        // the world's one milestone: its effect applies once, whoever and however many reach the Seed after
         switch (ending.effect()) {
-            case "ascension" -> w.ascension++;
+            case "ascension" -> w.ascension = Math.min(10, w.ascension + 1);
             case "calm_gates" -> w.gatesCalm = true;
             case "colour" -> w.colourRestored = true;
             default -> {}
         }
+        w.reached.put(p.getUUID(), w.ascension);
         w.setDirty();
+        finishStory(p);
+        PLAYING.add(new Playing(p, ending, p.level().getGameTime(), ""));
+        // anyone else who stood at the same Seed and was still choosing is told the world's ending now
+        for (ServerPlayer o : p.level().getServer().getPlayerList().getPlayers()) {
+            StoryProgress os = Prologue.progress(o);
+            if (o != p && os.seen.contains("seed:defeated") && !os.seen.contains("ending:chosen")) tell(o);
+        }
+    }
+
+    /**
+     * A player reaches the world's ending after it was chosen: no choice, no second effect. They see the ending the
+     * world chose (with who chose it) and the credits, take part in its Ascension tier, and their own story is done.
+     */
+    static void tell(ServerPlayer p) {
+        StoryProgress s = Prologue.progress(p);
+        StoryWorld w = StoryWorld.get(p.level().getServer());
+        if (!w.ended() || s.seen.contains("ending:chosen")) return;
+        var endingId = net.minecraft.resources.Identifier.tryParse("awaken:" + w.ending);
+        StoryContent.Ending ending = endingId == null ? null : StoryContent.ENDINGS.get(endingId);
+        s.seen.add("ending:chosen");
+        s.seen.add("ending:" + w.ending);
+        s.seen.add("ending:told");
+        Prologue.sync(p);
+        w.reached.put(p.getUUID(), w.ascension);
+        w.setDirty();
+        finishStory(p);
+        String by = w.endingByName.isEmpty() ? "" : w.endingByName.equals(p.getGameProfile().name()) ? "" : w.endingByName;
+        if (ending != null) PLAYING.add(new Playing(p, ending, p.level().getGameTime(), by));
+        else AwakenNet.send(p, new StoryPayloads.Credits(w.ending));
+    }
+
+    private static void finishStory(ServerPlayer p) {
         if (Progression.rank(p) == Rank.S) Progression.passReassessment(p);
         dev.awaken.descent.Descent.completeSeed(p);
         Progression.markNewThing(p, "ending");
-        PLAYING.add(new Playing(p, ending, p.level().getGameTime()));
     }
 
     static void tick(MinecraftServer server) {
@@ -189,11 +245,13 @@ final class Court {
             long t = pl.p().level().getGameTime() - pl.start();
             int index = (int) (t / 100);
             if (t % 100 == 0 && index < pl.ending().lines().size()) {
-                Signal.send(pl.p(), SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal(index == 0 ? pl.ending().title() : ""))
-                        .body(Component.literal(pl.ending().lines().get(index))).priority(10).ttl(95).build());
+                var w = SignalWindow.builder(SignalWindow.Kind.REVELATION, Component.literal(index == 0 ? pl.ending().title() : ""))
+                        .body(Component.literal(pl.ending().lines().get(index))).priority(10).ttl(95);
+                if (index == 0 && !pl.chosenBy().isEmpty()) w.footer(Component.literal("This world's ending: " + pl.chosenBy() + " chose it"));
+                Signal.send(pl.p(), w.build());
             }
             if (t % 100 == 0 && index == pl.ending().lines().size() && "ascension".equals(pl.ending().effect())) {
-                int tier = StoryWorld.get(server).ascension;
+                int tier = StoryWorld.get(server).ascensionOf(pl.p().getUUID());
                 Signal.send(pl.p(), SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Ascension " + tier))
                         .body(Component.literal("Everything that hunts you is stronger now. You learn faster to match."))
                         .row("Monsters", "+" + (30 * Math.min(tier, 10)) + "% health, +" + (15 * Math.min(tier, 10)) + "% damage")

@@ -43,7 +43,21 @@ final class HearthCommands {
             root.then(Commands.literal("hearth")
                     .then(Commands.literal("info").executes(HearthCommands::info))
                     .then(Commands.literal("echoes").executes(HearthCommands::echoes))
-                    .then(Commands.literal("guide").executes(HearthCommands::guide)));
+                    .then(Commands.literal("guide").executes(HearthCommands::guide))
+                    // sharing a Hearth (SPEC "Together"): every player may use these
+                    .then(Commands.literal("members").executes(HearthCommands::members))
+                    .then(Commands.literal("invite").then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                            .executes(HearthCommands::invite)))
+                    .then(Commands.literal("join").then(Commands.argument("owner", StringArgumentType.word())
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(invitersOf(c.getSource()), b))
+                            .executes(HearthCommands::join)))
+                    .then(Commands.literal("leave").executes(c -> leave(c, null))
+                            .then(Commands.argument("owner", StringArgumentType.word())
+                                    .suggests((c, b) -> SharedSuggestionProvider.suggest(sharedOwners(c.getSource()), b))
+                                    .executes(c -> leave(c, StringArgumentType.getString(c, "owner")))))
+                    .then(Commands.literal("remove").then(Commands.argument("member", StringArgumentType.word())
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(memberNames(c.getSource()), b))
+                            .executes(HearthCommands::remove))));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("trial").then(Commands.argument("rank", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("D", "C", "B", "A", "S", "penalty"), b))
@@ -53,7 +67,7 @@ final class HearthCommands {
                     .executes(HearthCommands::arrive))));
             admin.then(Commands.literal("hearth").then(Commands.literal("scan").executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
-                Optional<HearthRecord> h = HearthService.hearthOf(sp);
+                Optional<HearthRecord> h = HearthService.homeOf(sp);
                 if (h.isEmpty()) {
                     c.getSource().sendFailure(Component.literal("You have no Hearth."));
                     return 0;
@@ -80,15 +94,115 @@ final class HearthCommands {
         });
     }
 
+    // ---- sharing ----------------------------------------------------------------------------------------------------
+
+    private static int members(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        List<HearthRecord> mine = HearthData.get(sp.level().getServer()).hearthsOf(sp.getUUID());
+        if (mine.isEmpty()) {
+            c.getSource().sendSuccess(() -> Component.literal("You share no Hearth yet. Place an Anchor, or use a friend's Anchor to ask them."), false);
+            return 0;
+        }
+        for (HearthRecord h : mine) for (String line : Household.describe(sp.level().getServer(), h)) c.getSource().sendSuccess(() -> Component.literal(line), false);
+        return mine.size();
+    }
+
+    private static int invite(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        ServerPlayer who = net.minecraft.commands.arguments.EntityArgument.getPlayer(c, "player");
+        Optional<String> refused = Household.invite(sp, who);
+        if (refused.isPresent()) {
+            c.getSource().sendFailure(Component.literal(refused.get()));
+            return 0;
+        }
+        c.getSource().sendSuccess(() -> Component.literal("Invited " + who.getGameProfile().name() + ". They answer with Y, or /awaken hearth join " + sp.getGameProfile().name()), false);
+        return 1;
+    }
+
+    private static int join(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        String name = StringArgumentType.getString(c, "owner");
+        Optional<HearthRecord> h = byOwnerName(sp, name);
+        if (h.isEmpty() || !Household.invited(sp.level().getServer(), sp.getUUID(), h.get().owner)) {
+            c.getSource().sendFailure(Component.literal("No open invitation from " + name + "."));
+            return 0;
+        }
+        return Household.accept(sp, h.get().owner) ? 1 : 0;
+    }
+
+    private static int leave(CommandContext<CommandSourceStack> c, String ownerName) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        List<HearthRecord> shared = HearthData.get(sp.level().getServer()).memberOf(sp.getUUID());
+        if (ownerName != null) shared = shared.stream().filter(h -> h.ownerName.equalsIgnoreCase(ownerName)).toList();
+        if (shared.isEmpty()) {
+            c.getSource().sendFailure(Component.literal(ownerName == null ? "You don't share anyone's Hearth." : "You don't share " + ownerName + "'s Hearth."));
+            return 0;
+        }
+        if (shared.size() > 1) {
+            c.getSource().sendFailure(Component.literal("You share several Hearths: /awaken hearth leave <owner>"));
+            return 0;
+        }
+        HearthRecord h = shared.get(0);
+        Household.leave(sp.level().getServer(), h, sp.getUUID(), false);
+        c.getSource().sendSuccess(() -> Component.literal("You no longer share " + h.ownerName + "'s Hearth."), false);
+        return 1;
+    }
+
+    private static int remove(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        String name = StringArgumentType.getString(c, "member");
+        Optional<HearthRecord> ho = HearthService.hearthOf(sp);
+        if (ho.isEmpty()) {
+            c.getSource().sendFailure(Component.literal("Only a Hearth's owner can take it back."));
+            return 0;
+        }
+        HearthRecord h = ho.get();
+        UUID who = null;
+        for (var e : h.members.entrySet()) if (name.equalsIgnoreCase(e.getValue()) || name.equalsIgnoreCase(e.getKey().toString())) who = e.getKey();
+        if (who == null || !Household.leave(sp.level().getServer(), h, who, true)) {
+            c.getSource().sendFailure(Component.literal(name + " doesn't share your Hearth."));
+            return 0;
+        }
+        c.getSource().sendSuccess(() -> Component.literal(name + " no longer shares your Hearth."), false);
+        return 1;
+    }
+
+    private static Optional<HearthRecord> byOwnerName(ServerPlayer sp, String name) {
+        for (HearthRecord h : HearthData.get(sp.level().getServer()).all()) if (h.ownerName.equalsIgnoreCase(name)) return Optional.of(h);
+        return Optional.empty();
+    }
+
+    private static List<String> invitersOf(CommandSourceStack src) {
+        List<String> out = new ArrayList<>();
+        if (!(src.getEntity() instanceof ServerPlayer sp)) return out;
+        for (HearthRecord h : HearthData.get(sp.level().getServer()).all()) {
+            if (Household.invited(sp.level().getServer(), sp.getUUID(), h.owner)) out.add(h.ownerName);
+        }
+        return out;
+    }
+
+    private static List<String> sharedOwners(CommandSourceStack src) {
+        List<String> out = new ArrayList<>();
+        if (src.getEntity() instanceof ServerPlayer sp) for (HearthRecord h : HearthData.get(sp.level().getServer()).memberOf(sp.getUUID())) out.add(h.ownerName);
+        return out;
+    }
+
+    private static List<String> memberNames(CommandSourceStack src) {
+        List<String> out = new ArrayList<>();
+        if (src.getEntity() instanceof ServerPlayer sp) HearthService.hearthOf(sp).ifPresent(h -> out.addAll(h.members.values()));
+        return out;
+    }
+
     private static int info(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         ServerPlayer sp = c.getSource().getPlayerOrException();
-        Optional<HearthRecord> ho = HearthService.hearthOf(sp);
+        Optional<HearthRecord> ho = HearthService.homeOf(sp);
         if (ho.isEmpty()) {
             c.getSource().sendSuccess(() -> Component.literal("You have no Hearth. Craft a Hearth Anchor from a Lord's Heart and place it where home should be."), false);
             return 0;
         }
         HearthRecord h = ho.get();
         List<String> lines = new ArrayList<>();
+        if (!h.owner.equals(sp.getUUID())) lines.add("You share " + h.ownerName + "'s Hearth");
         lines.add("Hearth · Tier " + Upgrades.roman(h.tier) + " at " + h.pos.toShortString() + " · radius " + h.radius() + " · Forge " + Upgrades.roman(h.forgeTier));
         if (h.rooms.isEmpty()) lines.add("Rooms: none recognised yet");
         for (Room r : h.rooms) {
@@ -113,7 +227,7 @@ final class HearthCommands {
     /** Opens "Your Hearth" as if the Anchor was used (from anywhere). */
     private static int guide(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         ServerPlayer sp = c.getSource().getPlayerOrException();
-        Optional<HearthRecord> h = HearthService.hearthOf(sp);
+        Optional<HearthRecord> h = HearthService.homeOf(sp);
         if (h.isEmpty()) {
             c.getSource().sendFailure(Component.literal("You have no Hearth. Craft a Hearth Anchor from a Lord's Heart and place it where home should be."));
             return 0;
@@ -214,7 +328,7 @@ final class HearthCommands {
         ServerPlayer sp = c.getSource().getPlayerOrException();
         String npc = StringArgumentType.getString(c, "npc").toLowerCase(Locale.ROOT);
         String id = Townsfolk.get(npc).isPresent() ? npc : Townsfolk.all().keySet().stream().filter(k -> Townsfolk.skin(k).equals(npc)).findFirst().orElse(null);
-        Optional<HearthRecord> h = HearthService.hearthOf(sp);
+        Optional<HearthRecord> h = HearthService.homeOf(sp);
         if (id == null || h.isEmpty()) {
             c.getSource().sendFailure(Component.literal(h.isEmpty() ? "You have no Hearth." : "Nobody called " + npc + "."));
             return 0;

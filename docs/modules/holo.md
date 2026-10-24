@@ -1,9 +1,12 @@
 # Holo UI: the System on your wrist
 
-Design: docs/proposals/holo-ui.md. Package `dev.awaken.holo` (common: the relay) and `dev.awaken.holo.client`
-(everything you see). Built: Phase 1 (panels, pipelines, spring, HUD motion, demo, tour) and Phase 2 (the K menu on
-the wrist, the third-person pose, the relay, the `UiCanvas` split). Not built yet: the inventory (P3), System cards as
-holo panels (P4, waits for the owner), sounds and accessibility polish (P5).
+Design: docs/proposals/holo-ui.md. Package `dev.awaken.holo` (common: the relay, the sound events),
+`dev.awaken.holo.ui` (side-agnostic rules the client follows and GameTests check: timelines, inventory wells, the
+hover tick, the HUD fade) and `dev.awaken.holo.client` (everything you see). Built: Phase 1 (panels, pipelines,
+spring, HUD motion, demo, tour), Phase 2 (the K menu on the wrist, the third-person pose, the relay, the `UiCanvas`
+split), Phase 3 (the inventory) and the first part of Phase 5 (sounds, the hover tick, the tier-1 HUD fade). Not built
+yet: System cards as holo panels (P4, waits for the owner), the rest of P5 (accessibility settings beyond reduced
+motion, the pack perf tour with panels open).
 
 ## What the player sees
 - **K** (with `statusStyle = HOLO`): the off-hand forearm comes in from the lower left (the elbow off-screen), the
@@ -43,7 +46,9 @@ holo panels (P4, waits for the owner), sounds and accessibility polish (P5).
 | 300+ | text types in at Signal's speed ×4, lines 12 ms apart, with a caret |
 | 250 | clicks land from here |
 
-Lens focus (`UiHooks.focus()`) eases from 160 to 450 ms.
+Lens focus (`UiHooks.focus()`) eases from 160 to 450 ms. The inventory plays the same choreography 2.5× faster
+(`HoloTimeline.INVENTORY_SPEED`: open in 180 ms, closed in 100 ms); 370–450 along it (148–180 ms) is where its 3D
+panel has landed and hands over to the flat screen (`HoloTimeline.landed()`).
 
 ## Placement and the spring
 - A panel's size is chosen in **whole framebuffer pixels per unit** (about 45% of the screen width, at most 80% of the
@@ -131,7 +136,8 @@ While the K menu is open the camera holds still. The cursor is a ray through the
 
 ## Network: `awaken:holo_state`
 - C2S `{kind}` (NONE 0, STATUS 1, INVENTORY 2) as a raw VarInt; unknown ids are refused. Sent when the K menu (or the
-  wrist demo) opens or closes, only to a server that knows the channel.
+  wrist demo) or the holo inventory opens or closes, only to a server that knows the channel. Others see the same
+  raised wrist and content-free card for either kind.
 - Server: at most 4 changes per 20 ticks per player; a change over the limit waits and goes out when the window frees
   (the last state always arrives). Relayed as `awaken:holo_state_relay {entityId, kind}` to players tracking the sender
   (never the sender, never players without the channel), and to a player who starts tracking someone with a panel open.
@@ -143,6 +149,21 @@ While the K menu is open the camera holds still. The cursor is a ray through the
 offset (driven only by turn speed) × 0.34 px/°, soft-limited to 2 GUI px (SUBTLE, default) or 4 (FULL), × Screen Effect
 Scale, 0 with View Bobbing off, snapped to framebuffer pixels. A layer cancelled after the push is popped at the end of
 the frame.
+
+## The calm HUD, tier 1 (`CalmHud`, `holo.ui.HudFade`)
+Awaken's always-on HUD beside the hotbar (`awaken:power_bar`, `awaken:level`) fades to **35%** once nothing has needed
+it for **3 s** (60 ticks), over 1.2 s, and comes back to full in **150 ms** the moment something does. "Needed", read
+each tick from public APIs only (no module changed):
+- combat as the System judges it (`SystemHud.inCombat()`: hurt in the last 5 s, or something hostile near);
+- the loadout (`Powers.clientLoadoutOrNull()`): energy below full, a cooldown running, a power active, a slot changed;
+- the profile (`Progression.profile`): level, XP or unspent points changed (fresh XP is worth a look).
+
+The layers themselves are untouched. In `HudMotion.pre` (after its translate) a faded tier-1 layer's event is
+cancelled and the layer is drawn through `FadeGraphics`, a `GuiGraphicsExtractor` on the frame's own GUI render state
+(from the real graphics' pose) that multiplies the alpha of every fill, gradient, text, sprite and blit; then its
+`Post` is fired as the layer manager would (which pops the translate). Item icons can't fade (none in tier 1). The gate
+run HUD is not tier 1: inside a gate the run is the context, and its collapse timer must never dim. Off with
+`hudFade = false`.
 
 ## Cost (autopilot `perf`, 3024×1898, quiet Mac, load ~4–5, window visible)
 | Scene | p50 | p99 |
@@ -184,9 +205,15 @@ The System's cards keep their flat layout, positions, sizes and timing (SignalLa
 vanilla ToastManager) and only change how they draw. The holo module installs `HoloGuiLook` into signal's `HudLook`; it
 draws in the GUI pass with the panel's own `holo_glass` / `holo_glow` shaders on two GUI pipelines
 (`awaken:pipeline/holo_gui_glass`, `holo_gui_glow`, PARTICLE format through `submitGuiElementRenderState`), so a card
-has the panel's glass, hairline edge, brackets, static scan lines and shimmer, one even 36% tint, a faint halo (brighter
-while it scans in) and text as light (four faint cyan copies half a GUI pixel off, no shadow).
-- Toast (`SignalToast`): same 160-wide slot; no slide (`xPos` fixed): vanilla's 600 ms show becomes a scan-in done by
+has the panel's glass, hairline edge, static scan lines and shimmer, one even 40% tint, a faint halo (brighter while it
+scans in) and text as light (four cyan copies half a GUI pixel off at 30%, no shadow). Styles (`HudLook.FRAME`,
+`DRIFT`, `EMITTER`): FRAME adds the K panel's own frame, its additive rim lines and corner brackets just outside the
+card (the bottom ones once the scan has reached them); DRIFT a soft interference band, 10 units tall with a bright line and two
+faint ones trailing it, that drifts down through the card once every 6.5 s (still, a third of the way down, with reduced motion); EMITTER the edge the card is
+projected from, a bright line with a soft skirt that flares as the card arrives. Notices (choice and Accept card, gate
+panel, story line) are FRAME + DRIFT, toasts add EMITTER on their screen side, the Now line is FRAME only (no band, no
+flicker: the calm HUD), the first-power panel FRAME and its cards plain tiles.
+- Toast (`SignalToast`, TOAST = FRAME + DRIFT + EMITTER): same 160-wide slot; no slide (`xPos` fixed): vanilla's 600 ms show becomes a scan-in done by
   270 ms (the text appears as the line passes), its hide a glitch-out in 300 ms. Quiet screens still hide toasts.
 - Choice card and gate panel (`SystemHud`): scan in over the 4 ticks they used to fade in; the gate panel glitches out
   over its 6-tick close. The fold timer line and the keys' arming (8 ticks) are unchanged.
@@ -196,17 +223,86 @@ while it scans in) and text as light (four faint cyan copies half a GUI pixel of
   after another (70 ms apart); the hovered or picked card lights in its family colour. Clicks and 1 / 2 / 3 are as
   before. Lens focus eases to 1 while it is open (300 ms each way).
 - Reduced motion: scan-ins and glitches become fades. `statusStyle = FLAT`, or GUI shaders that fail, keeps every
-  card exactly as it was. Autopilot: `holo style holo|flat|auto`; tour `tools/autopilot/holo-cards.txt`.
+  card exactly as it was. Autopilot: `holo style holo|flat|auto`, `shotnow <name>` (a shot this tick, for the 6-tick
+  glitch-outs); under the autopilot (only) a picked first power stays on screen 12 ticks so the tour can shoot it. Tour
+  `tools/autopilot/holo-cards.txt` (starter scan, open, picked; toast scan, sky, grass, glitch; a real gate panel put
+  away with N; choice; story; night; flat).
+
+## The inventory (P3: `HoloInventoryScreen`, `InventoryLook`, `holo.ui.InventoryWells`)
+- **What opens.** E (or anything that opens vanilla's survival `InventoryScreen`) gets `HoloInventoryScreen`, a
+  subclass swapped in on `ScreenEvent.Opening` when `inventoryStyle = HOLO`, the projected look is drawing
+  (`statusStyle = HOLO`, GUI holo shaders compiled) and the player isn't creative. Only the exact vanilla class is
+  swapped (another mod's inventory screen stays theirs); creative keeps its own screen. Underneath it is vanilla's
+  screen, so every click, drag-spread, shift-click, double-click, number key, the off-hand key, the recipe book, the
+  creative switch and every other mod's container hooks (JEI, Mouse Tweaks) behave exactly as vanilla, from the first
+  frame: the slots are where they always are, whatever is drawn.
+- **The unfold.** The wrist rises and a 3D panel (the third `HoloPanel`, `onScreen`: a plane on which one unit is one
+  GUI pixel, parallel to the screen, never trailing) grows out of the band along the beams, unfolding, and lands on the
+  flat screen's rectangle pixel for pixel. At 148–180 ms the flat face crossfades in as the 3D panel's light goes out;
+  items, your figure and the title (which can't fade) switch at the halfway point, where both faces show them in the
+  same place. Closing hands back: the 3D panel shows again with what the inventory holds now (recorded at close) and
+  folds into the band in 100 ms while the hands are vanilla's again. With reduced motion, or without the world
+  pipelines, there is no 3D panel: the flat face fades in place. A faint steady link stays from the wrist to the flat
+  panel's lower corners while it is open.
+- **The look** (one drawing for both faces, `InventoryLook`, through `GuiCanvas` flat and `HoloGraphics` in 3D): the K
+  panel's glass, tint, halo, rim and 18-unit brackets (`HoloGuiLook.panel` draws HoloRender's settled panel unit for unit
+  in the GUI pass); in place of vanilla's printed slot squares a projected well under every active slot (18×18, the
+  crafting result 26×26 with corner marks; dark glass at 58%, a hairline rim at 22%, the hotbar's at 32%, the hand's
+  slot at 85% with a glow); your figure in a framed alcove standing on a projected floor (a soft blob of light); an
+  arrow of light from the grid to the result, which glows while it holds something; two faint dividers (equipment /
+  pack / hotbar); the crafting title as light; a soft glow under the slot the cursor is on; the recipe button a glass
+  key with an open book traced in light (`HoloBookButton`: vanilla's button stays the one pressed, the key follows it).
+  No dim and no blur: the world stays in view and Lens dims it (`UiHooks.focus`, eased with the timeline).
+- **Not restyled (yet):** the recipe book's own panel, the status-effect list beside the inventory, vanilla's white
+  hover highlight (private in `AbstractContainerScreen`; our glow sits under it).
+- **Fallback:** `inventoryStyle = VANILLA`, `statusStyle = FLAT` or GUI shaders that fail: vanilla's `InventoryScreen`,
+  untouched.
+
+## Sounds (P5: `HoloSounds`, `HoloAudio`; `tools/art/specs/audio_holo.py`)
+One glass voice with the System's UI family (`audio_ui.glass_note`, its small bright room and air), every note from
+D major pentatonic, so nothing here clashes with a toast or a card; what is new is a breath of filtered air sweeping as
+light leaves the wrist and drawn back as it folds. Mastered to the UI loudness (−24 ± 3 dBFS RMS, true peak ≤ −3),
+stereo, Interface slider, non-positional.
+
+| Event | File | When | Sound |
+|---|---|---|---|
+| `holo.open` | `ui_holo_open` | the K menu opens (vol 0.5) | air rising with the arm, a glint as the band flares (140 ms), D5 F#5 A5 D6 as the panel grows and unfolds, a faint B6 with the scan line, D-A left open |
+| `holo.open_quick` | `ui_holo_open_quick` | the inventory opens (0.3) | the same gesture at 2.5×, lighter (it opens often) |
+| `holo.close` | `ui_holo_close` | either folds back (0.4 / 0.22) | D6 A5 F#5 D5 falling, the air drawn in, a soft low knock as it meets the band |
+| `holo.hover` | `ui_holo_hover_1/2` | the cursor comes onto something (0.18) | one tiny glass tick, A6 or D7 |
+| `holo.card` | `ui_holo_card` | a System card arrives while projected | `ui_card`'s own D5 A5 E6 with the scan sweeping down through it and a small fizz at its edge |
+
+- **Card arrival:** `signal.open` (the signal module plays it as a choice card or gate panel arrives) is re-voiced on
+  `PlaySoundEvent` as `holo.card` while the projected look draws, so a card sounds the way it looks and never twice;
+  flat, it is `signal.open` as before. Toasts keep their chime.
+- **Hover tick** (`holo.ui.HoverTick`): once as the cursor comes onto a new target (a K-menu tab; an inventory slot with
+  something in it, or the recipe key), at most every 55 ms (a sweep across the hotbar ticks 3-4 times, not nine), never
+  while the panel still unfolds (the K menu before it takes clicks, the inventory before its face is up) or while a drag
+  spreads items.
+- Opening sounds only on a real open (not a re-layout on resize); closing only when it was open.
+- Rebuild: `python3 tools/art/audio_build.py ui_holo_`, then `audio_mix.py`; spectrograms with
+  `python3 tools/art/audio_sheet.py out.png ui_holo_ --cols 2`.
 
 ## Settings (`awaken-holo-client.toml`)
-`statusStyle` HOLO | FLAT · `hudMotion` OFF | SUBTLE | FULL · `reducedMotion` false.
+`statusStyle` HOLO | FLAT · `inventoryStyle` HOLO | VANILLA · `hudMotion` OFF | SUBTLE | FULL · `hudFade` true ·
+`reducedMotion` false.
 
 ## Tests and tours
-- GameTests: `holo_state_rejects_unknown_kind`, `holo_state_rate_limited`, `holo_state_relays_only_to_trackers`.
+- GameTests: `holo_state_rejects_unknown_kind`, `holo_state_rate_limited`, `holo_state_relays_only_to_trackers`;
+  `holo_inventory_timeline` (the K menu keeps 450/250 ms; the inventory opens in ≤ 180 ms and closes in ≤ 100 ms at
+  60 fps; the flat face only comes up once the 3D panel is in place), `holo_inventory_wells` (on a real player's menu:
+  every slot has its kind, every well surrounds its item, stays inside the 176×166 panel, clears the figure and never
+  overlaps another; exactly one well is the hand's), `holo_hover_tick`, `holo_hud_fade`. The sound events are checked by
+  `audio_events_resolve` (registered, in sounds.json, subtitled, files at 44.1 kHz).
+- `tools/autopilot/holo-inventory.txt`: the inventory frozen along its unfold (both faces, the crossfade), at rest over
+  sky, grass and night, an item carried and dropped into the crafting grid (the result lit), the recipe book open and
+  closed, the fold, third person, the vanilla style and the flat look; the HUD faded and woken; `perf` with it open.
 - `tools/autopilot/holo.txt`: the demo panel, the HUD still and in a sharp turn (Subtle / Off / Full), the K menu
   frozen at 60, 120, 200, 280, 360 and 450 ms, a tab clicked through the real picking path, the menu over a bright
   sky, grass and the night, wide and slim arms, third person back and front, what others see (`holo peek`), then
   `perf holo_open` / `perf holo_none`.
 - `tools/autopilot/holo-hands.txt`: a cast and a slide right after the menu closes, beside the same with no menu.
 - Autopilot lines added: `turn <deg/tick> <ticks>`, `click <x> <y>`, `screen holo [map|codex|truths]`,
-  `screen uiprobe`, `holo demo|at|run|close|hud|arm|peek|clicktab|log`.
+  `screen uiprobe`, `holo demo|at|run|close|hud|arm|peek|clicktab|log`; `holo inv open|click <slot> [shift]|book|close|style holo|vanilla|auto`,
+  `holo fade on|off|auto|idle` (`holo at`, `run`, `close` and `log` act on the inventory while it is the open panel;
+  its `log` adds where the landed panel's corners project against the flat rectangle).

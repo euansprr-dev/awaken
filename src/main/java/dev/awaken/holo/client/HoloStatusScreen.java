@@ -2,6 +2,7 @@ package dev.awaken.holo.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.core.client.AwakenKeys;
+import dev.awaken.holo.ui.HoverTick;
 import dev.awaken.progression.client.StatusSections;
 import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.QuietScreen;
@@ -42,6 +43,8 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
     private int contentHeight;
     private final float[] hit = new float[2];
     private int hoverX = -10000, hoverY = -10000;
+    private final HoverTick hover = new HoverTick();
+    private long lastNanos;
 
     public HoloStatusScreen() {
         this(lastTab);
@@ -105,11 +108,22 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         boolean picked = panel.pick(mouseX, mouseY, hit);
         hoverX = picked ? Math.round(hit[0] - 0.5f) : -10000;
         hoverY = picked ? Math.round(hit[1] - 0.5f) : -10000;
+        tickTabs();
         HoloCanvas canvas = panel.canvas;
         canvas.begin(W, H);
         canvas.tooltipsTo(screen, mouseX, mouseY);
         HoloGraphics gg = g.begin(canvas, W, H);
         draw(gg, hoverX, hoverY, a);
+    }
+
+    /** A glass tick as the cursor comes onto a tab (once the panel takes clicks). */
+    private void tickTabs() {
+        long now = System.nanoTime();
+        float dt = lastNanos == 0 ? 0f : (now - lastNanos) / 1e6f;
+        lastNanos = now;
+        int target = HoverTick.NONE;
+        for (int i = 0; i < tabRects.length; i++) if (tabRects[i].contains(hoverX, hoverY)) target = i;
+        if (hover.update(target, dt, !panel.timeline.clickable())) HoloAudio.hover();
     }
 
     private void draw(HoloGraphics gg, int mouseX, int mouseY, float a) {

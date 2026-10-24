@@ -33,8 +33,8 @@ A biome is only done when it has all six, each readable at its own distance:
   the common trees. Canopies stay within about 12 blocks of the trunk (a feature may write one chunk beyond its own).
   Variety comes from 2–3 sizes and shapes per biome, never one tree copied.
 - **Hero trees** are structures (placed like lairs, `structure_set` in the lands pack, biome tag from the table): the
-  giants you remember and steer by. Rare: roughly one per 300–500 blocks in their biome. Each one costs at most 2 ms to
-  build and never writes outside its reserved box.
+  giants you remember and steer by. Rare: roughly one per 300–500 blocks in their biome. Each one is built once (about
+  2 ms for the largest, see Costs), cached for all its chunks, and never writes outside its reserved box.
 - Logs join `#minecraft:logs` (and `#minecraft:logs_that_burn` where they burn), leaves `#minecraft:leaves`, so gates,
   stars and every vanilla rule treat them as trees. Leaves decay like vanilla.
 - Fuller trees come from art and silhouette, not extra leaf layers: every see-through leaf pixel is costly on Apple
@@ -146,9 +146,19 @@ load 14-32, so frame times swing by a millisecond between identical scenes; logs
 ## How to check
 
 - Studio: `tools/terrain/studio.sh <preset>` for maps and numbers; `/awaken terrain visit awaken:<biome>` to stand in one.
-- Every Awakened biome: census test (archetype, fauna, cottage, spirits), a worldgen test that its trees and hero
-  structures place on ground without floating or cutting, a cost bench, and a contact sheet (noon, golden hour, night,
-  from the ground and from 60 blocks up).
+- Every Awakened biome: census test (archetype, fauna, cottage, spirits), a placement test (its injector, ground splices
+  and share of land), a worldgen test that its trees and hero structures place on ground without floating or cutting,
+  a cost bench (shape costs asserted on the fastest of eight seeds: other work on the machine only ever adds time), and
+  a contact sheet (noon, golden hour, night, from the ground and from 60 blocks up).
+- `terrain_lands_placement` reads the lands pack's Lithostitched injectors as data: one per Awakened biome, its
+  archetype among its targets, only vanilla overworld targets, no target claimed twice, a field that exists; every
+  `material_rule/lands/<biome>_surface|_under` spliced first by a modifier of the same name, guarded by its biome. Then
+  it applies the injectors to the vanilla generator the way Lithostitched does (first matching injector wins, the field
+  sampled at the biome's quart corner) on the five studio seeds, 3,072 blocks round the origin every 96, and logs the
+  share of land each Awakened biome takes. Measured 2026-10-24 (vanilla shapes, threshold 0): 21.5% of land on average
+  (19-25% a seed; the archetypes cover 41-46%), of it Elderwood 65%, Glass Steppe 25%, Lumen Forest 7%, Shattered
+  Highlands 2% (windswept hills are rare in vanilla; Tectonic raises them). The studio on the Mac measures the real
+  thing (Tectonic and Lithostitched).
 
 ## The slice as built (2026-10-24)
 
@@ -160,8 +170,9 @@ including the hero trees' `awaken:has_structure/<tree>`, come from the biome tab
 ### Blocks (`terrain.LandsBlocks`)
 
 Elder: `elder_log`, `stripped_elder_log`, `elder_wood`, `stripped_elder_wood`, `elder_planks`, `elder_leaves`,
-`elder_sapling`. Lumen: `lumen_log`, `stripped_lumen_log`, `lumen_wood`, `stripped_lumen_wood`, `veined_lumen_log` (the
-Spire's bark, glowing veins), `lumen_planks`, `lumen_leaves`, `lumen_sapling`, `lumen_moss` (carpet), `lumen_cap`
+`elder_leaves_gold` (the warm tone of crown tops), `elder_sapling`. Lumen: `lumen_log`, `stripped_lumen_log`,
+`lumen_wood` (limbs and boughs: a darker slate bark, so branches read as wood under the pads, not as beams),
+`stripped_lumen_wood`, `veined_lumen_log` (the Spire's bark, glowing veins, bark on every face), `lumen_planks`, `lumen_leaves`, `lumen_sapling`, `lumen_moss` (carpet), `lumen_cap`
 (cross plant, light 4: the forest floor's only real light, a soft pool round each cluster), `lumen_vines` (hanging,
 vanilla `HangingMossBlock`; the tip ends in a glowing bulb). Logs and woods are in `#awaken:elder_logs` /
 `#awaken:lumen_logs` → `#minecraft:logs_that_burn`; leaves `#minecraft:leaves`; stripping and fire are NeoForge data
@@ -170,8 +181,9 @@ own particle pool covers them) and no ambient sound. Elder leaves are untinted.
 
 **Glow without overdraw or light.** Lumen leaves are a normal cutout leaf cube plus one-pixel (sides) or 2×2 (top and
 bottom) *solid* emissive faces laid 0.05 px in front of the leaf face, sampling the solid `lumen_glow` tile, so the
-glow costs no alpha-tested overdraw (Apple GPUs) and keeps its colour at every mip level. Three equally weighted variants
-(two speckled, one plain) keep the extra quads to about twice a vanilla leaf. Lumen moss does the same on its top.
+glow costs no alpha-tested overdraw (Apple GPUs) and keeps its colour at every mip level. Few and bright (two spores on
+the top, one under, one on each side, on half the blocks; the other half plain): with the Lens look's bloom they read
+as a soft glow, where many small ones read as a starfield. The extra quads come to about 1.6× a vanilla leaf. Lumen moss does the same on its top.
 Caps, vine tips and the veined log use vanilla's `cross_emissive`-style overlay layer (few blocks).
 
 ### Trees (lands pack `worldgen/feature/lands/*`, Awaken placers in `terrain.tree`)
@@ -182,16 +194,17 @@ Caps, vine tips and the veined log use vanilla's `cross_emissive`-style overlay 
   masses' size (`limb_mass`, `crown_mass` added to the foliage radius). Limbs, roots and twigs are the `branch_provider`
   (bark on all sides).
 - `awaken:cloud_foliage_placer`: an ellipsoid mass (domed `height` above, `depth` × height below, `ragged` edge,
-  optional `hollow` core, `hang` drooping leaves). It only keeps leaves that reach wood within six steps through other
+  optional `hollow` core, `hang` drooping leaves; `top_provider` gives the part above `top_from` of its height other
+  leaves, e.g. a noise-picked warm tone). It only keeps leaves that reach wood within six steps through other
   leaves (a walk out from the logs already in the mass), which is vanilla's decay rule: no leaf is born decaying and no
   leaf hangs loose at the ragged edge (both checked by `terrain_lands_trees_grow`).
 - `awaken:hanging_vines` decorator: strands under leaves with air below, `body` down to `tip`.
 
 | Tree | Trunk | Height | Crown | Extras |
 |---|---|---|---|---|
-| `lands/elder` | 2×2 elder log, root flare | 18–26 | 3–5 limbs from half height, masses r 3–4 on limbs and top: a layered gold crown | gold litter, shelf mushrooms, moss/podzol ring |
+| `lands/elder` | 2×2 elder log, root flare | 18–26 | 3–5 limbs from half height, masses r 3–4 on limbs and top: a layered crown; its top gold where a slow noise runs high (`top_provider`, about a third of the wood) | gold litter, shelf mushrooms, moss/podzol ring |
 | `lands/young_elder` | 1×1, leans up to 2 | 9–13 | 1–2 short limbs, r 2–3 | litter |
-| `lands/lumen` | 2×2 lumen log | 10–16 | 3–5 near-level limbs, flat pads r 3–4 one block over the twigs | glowing vines, lumen moss and caps round the foot |
+| `lands/lumen` | 2×2 lumen log | 10–16 | 2–4 slate limbs climbing at 45°, broad flat pads r 3–4 over them | a curtain of glowing vines (17% of pad undersides, 2–6 long), lumen moss and caps round the foot |
 | `lands/small_lumen` | 1×1 | 6–9 | 2–3 limbs, pads r 2–3 | short vines |
 | `lands/fallen_elder`, `lands/fallen_lumen` | vanilla `fallen_tree` | 5–11 / 4–8 long | – | moss carpet / lumen moss on top, mushrooms / caps |
 
@@ -226,51 +239,183 @@ plants, snow, water and leaves (never logs, ground or anything built); trunk and
 real ground (so roots wall down a slope and sink into a hump: nothing floats); ground cover (Elder: moss, podzol, gold
 litter, ferns; Spire: lumen moss and caps) is laid round the foot first.
 
-- **Elder Colossus**: trunk 6–9 across swelling into the roots, 55–85 tall with a slow sway; 5–7 buttress roots arching
-  8–15 out; 4–6 great limbs from 44–78% of the height, 14–24 long, near level then rising; on each a cumulus mass (one
-  big hollow ellipsoid and 2–4 puffs) at the end, one along it and two on side branches; three or four leaders round a
-  deliberately small top crown, so the sky reaches the trunk between the limbs (sky light beside the trunk 12; with a
-  big crown over it, 4–6, and the trunk read as a black pole).
-- **Lumen Spire**: a three-lobed trunk twisting like rope, 30–45 tall, veined lumen log (glowing veins); 4–6 roots;
-  two small pad tiers on the way up; 6–8 crown limbs rising then drooping with pads along them and one over the
-  middle; a curtain of glowing vines from the crown (20% of the open leaf undersides, 2–6 long, up to 5 longer toward
+- **Elder Colossus**: a trunk 6–9 across that swells to twice that at the ground, deeply fluted there, with a slow
+  sway, all bark (`elder_wood`: no end grain on its ledges), ending inside its dome (it never pokes through: on far
+  terrain a trunk above the crown read as a thin post); crown top 55–90 above the foot; 6–8 buttress roots arching 9–17 out; one broad
+  umbrella dome (radius 24–30) of billowing masses (a big hollow ellipsoid and two or three puffs each) carried on 6–8
+  great limbs from 46–76% of the height, two boughs off each, and 4–5 leaders; the upper masses gold. The dome is
+  open round the trunk's head and pierced by four shafts between the limbs, so the sky reaches the bark under it (sky
+  light beside the trunk 12; under a closed dome 0–6, and the trunk read as a black pole).
+- **Lumen Spire**: a three-lobed trunk twisting like rope, 40–52 tall (three times the canopy, so it reads from afar), veined lumen log (glowing veins); 4–6 roots;
+  two small pad tiers on the way up; 6–8 slender slate limbs rising then drooping with pads along them and one over the
+  middle; a curtain of glowing vines from the crown (24% of the open leaf undersides, 2–7 long, up to 5 longer toward
   the rim).
 - Rarity: `random_spread` spacing 26 chunks (Colossus) and 22 (Spire), the site anywhere within 4 chunks of the
   candidate where the biome is right (checked first), the land dry, the footprint level (≤ 3 steps over 10/6 blocks)
   and the root ring within 10/6 of the centre's height. Inside their biome that is roughly one per 300–500 blocks.
 - `/awaken terrain hero <tree> [seed]` grows one where you stand; `/awaken terrain herovisit <tree> [distance above]`
-  stands you south of the nearest generated one, looking at it, and logs the sky light beside its trunk.
+  stands you south of the nearest generated one, looking at it (from the sea's surface when that ground is water), and
+  logs the sky light beside its trunk.
 
 ### Checks
 
 GameTests: `terrain_lands_blocks`, `terrain_lands_trees_grow` (6 seeds of each data tree on a platform: grows, wood
 and canopy, no leaf born decaying, nothing loose, reach ≤ 13, height range), `terrain_lands_biomes`,
-`terrain_hero_blueprints` (8 seeds each: sizes, nothing disconnected, few persistent leaves, cost),
+`terrain_hero_blueprints` (8 seeds each: sizes, the Colossus trunk ending inside its crown, nothing disconnected, few
+persistent leaves; cost: the fastest seed ≤ 8 ms, so a loaded machine can't fail it; fastest, average and worst logged),
 `terrain_hero_builds_in_box` (a Colossus on a slope and a Spire, chunk by chunk: inside the box, on the ground,
-nothing loose, no decaying leaves, cost per chunk), `terrain_hero_sites` (site search on a real overworld).
-Tour: `tools/autopilot/lands-slice.txt` (run with `PACK=perf,world TECTONIC=awakened`), light probe
-`tools/autopilot/lands-probe.txt`.
+nothing loose, no decaying leaves; cost per chunk logged, not asserted), `terrain_hero_sites` (site search on a real
+overworld). Data-tree cost is logged, not asserted.
+Tours: `tools/autopilot/lands-slice.txt` (run with `PACK=perf,world TECTONIC=awakened`), far terrain
+`tools/autopilot/lands-far.txt` (`PACK=perf,horizon,world DH=swift`: the hero trees from 300–600 blocks), frame times
+`tools/autopilot/lands-perf.txt`, light probe `tools/autopilot/lands-probe.txt`.
 
-### Costs (measured 2026-10-24, machine shared with other builds: compare within a run)
+**Lens: Swift and Cinematic.** The two looks differ only by Cinematic's light shafts (`lens_shafts`), which need the
+sun on screen and open sky round it. Looking away from the sun, or at golden hour with the sun behind the canopy or
+below the hills, the two shots are the same image; the slice tour shoots the A/B into the afternoon sun (time 11000,
+west, 18° up) through the Elderwood canopy.
+
+### Costs (measured 2026-10-24, machine shared with 3 other builds: compare within a run)
 
 - Frame time, `tools/autopilot/lands-perf.txt`, 2880×1800, perf + world pack, Tectonic `awakened`, each Awakened
-  forest beside its vanilla archetype in the same run, two passes (p50): Elderwood (dense, beside a Colossus, noon)
-  12.78 / 8.62 ms against old-growth birch 12.26 / 7.99; Lumen Forest (night) 8.74 / 8.29 against dark forest 8.35 /
-  9.02. Within about half a millisecond of their archetypes. That took trimming: before, 6–8 trees a chunk with 55%
-  Elders (about 3,000 leaf blocks a chunk) cost Elderwood 2 ms more than birch.
-- Hero blueprints (`terrain_hero_blueprints`, 8 seeds after warm-up): Colossus 3.1–3.8 ms average (worst 5.7) on a
-  quiet machine, up to 8 ms while other builds load it; Spire 1.4–2.1 ms (worst 3.6). Built once per tree and cached. Placement into a live level
-  (`terrain_hero_builds_in_box`, block updates and light included, so above worldgen's cost): Colossus ~14,500 blocks
-  over 16 chunks at 1.5–2.1 ms a chunk on average (worst 7–8), Spire ~3,400 blocks over 9 chunks at 0.6–1.1 ms. The
-  Colossus blueprint is above the plan's 2 ms ceiling; it is paid once per tree, on a worker thread.
-- Data trees (`terrain_lands_trees_grow`): Elder ~160 logs and ~700 leaves, young elder 24 / 113, Lumen tree 115 / 237,
-  small Lumen 35 / 97.
+  forest beside its vanilla archetype in the same run, two passes, p50 (load in brackets). After the polish pass:
+  Elderwood (dense, 45 blocks from a Colossus, noon) 10.22 (29) / 14.49 (37) ms against old-growth birch 9.53 (28) /
+  12.66 (37); Lumen Forest (night) 12.59 (32) / 11.56 (28) against dark forest 13.54 (34) / 10.94 (26). Lumen stays
+  within a millisecond of its archetype either way; Elderwood beside a Colossus is now 0.7–1.8 ms over birch (before the
+  polish 0.5–0.6, with a Colossus half the size: its dome is ~28,600 blocks now, see-through leaves). Absolute numbers
+  sit above the 9.1 ms Swift budget only because of the load; the earlier quiet runs were 5.8–8.5 ms. Before the slice
+  trimmed them, 6–8 trees a chunk with 55% Elders (about 3,000 leaf blocks a chunk) cost Elderwood 2 ms more than birch.
+- Hero blueprints (`terrain_hero_blueprints`, 8 seeds after 3 warm-up builds, four runs): Colossus 1.82–3.13 ms for
+  the fastest seed, 3.8–5.4 average, 6.1–11.7 worst; Spire 0.56–0.88 fastest, 0.67–1.14 average. The Colossus is
+  ~26,000 cells (twice the first one); at ~70 ns a cell (written once, every leaf visited once by the distance pass, no
+  per-cell hashing or trig outside the masses' rims) that is 1.8 ms on a quiet core, and it rises with machine load.
+  Reliably under 2 ms would mean a smaller crown, which is the thing it must not be. It is paid once per tree (one
+  per 300–500 blocks), cached for all its 25 chunks, on a worldgen worker thread.
+- Placement into a live level (`terrain_hero_builds_in_box`, block updates and light included, so above worldgen's
+  cost): Colossus ~28,600–29,500 blocks over 25 chunks at 1.7–2.1 ms a chunk on average (worst 5.7–6.5) on a quieter
+  machine, 4–7 ms (worst 19–34) while three builds run; Spire ~3,600 blocks over 9 chunks at 0.9–1.6 ms (worst 3–7).
+- Data trees (`terrain_lands_trees_grow`): Elder ~160 logs and ~700 leaves, young elder 24 / 113, Lumen tree 92 / 272
+  (fewer, shorter limbs than the slice's 115 / 237), small Lumen 36 / 96.
 
 ### Known gaps
 
 - Air, sound and the Lens look are other builders' (falling leaves already list `awaken:elder_leaves`; Lumen motes and
   the ambience beds are not in yet). Fireflies and caps are the only night life of Lumen Forest so far.
-- Distant Horizons with the hero trees is untested (blueprints are thread-safe and cached, but not measured there).
+- The pale flat land beside the Lumen canopy in the first slice sheet's golden-hour view from above is vanilla
+  `minecraft:beach` (dry sand at sea level, `/awaken terrain at` and a survey of that view), not a seam: the Awakened
+  forests still meet vanilla shores directly. A shore treatment of their own is for a later biome pass.
+- Far terrain (Distant Horizons, `DH=swift`): the Colossus's dome reads on the horizon at 450–600 blocks as one broad
+  umbrella (its LOD keeps the shape, flattened, and the colour); the Spire is thin and faint at 300 blocks and lost
+  behind terrain at 450 (first check, before it grew to 40–52); at night its glow does not carry that far.
 - The studio's `visit` now prefers a sizeable dry patch; on Tectonic worlds a biome's nearest patch can still be a
   mountainside, so the slice tour shoots Elderwood beside its Colossus.
 
+
+## The second pair as built (2026-10-24): Glass Steppe and Shattered Highlands
+
+Generated like the slice: blocks, models, loot, recipes, tags, data maps, lang and every lands pack file by
+`tools/content/lands2_content.py` (called from `lands_content.py`, so one run writes both), textures by
+`tools/art/specs/lands2.py` (`python3 tools/art/build_all.py lands2`; preview `python3 tools/art/specs/lands2.py preview
+<dir>`), the two ambience beds by `tools/art/specs/audio_lands.py`. Code: `terrain.glass` (Glass Steppe), `terrain.fault`
+(Shattered Highlands), `terrain.landmark` (the Gate Scar and the Shard Drift, `awaken:landmark`), `terrain.client.LandsMotes`
+(their air). Biome table rows, looks and air rows as for the slice.
+
+### Glass Steppe (Sunscorch; replaces savanna and savanna plateau in the field)
+
+Plains melted to glass where gates broke long ago.
+
+- **Blocks** (`terrain.glass.GlassBlocks`): `glassbark_log`, `stripped_glassbark_log`, `glassbark_wood`,
+  `stripped_glassbark_wood`, `glassbark_planks`, `glassbark_leaves`, `glassbark_sapling` (bleached driftwood bark with
+  beads of amber resin turned to glass; amber leaves, fixed colours, cutout, not translucent); `fused_glass` (the bare
+  ground: an ivory glaze broken into a crackle of plates, three variants turned every way); `sunshard` (glass grown into
+  crystal: flat facets, an amber heart, two or three amber specks per face as emissive model faces); `sunshard_cluster`
+  (slivers of sunshard in the grass, cross model with glowing tips); `scorched_glass` (black glass split by amber cracks:
+  each straight run of a crack is one emissive face, 6-7 a face). No block light anywhere.
+- **Ground**: sun-gold grass (`#cfb35a`, foliage `#c8a24a`), fused glass where the lands pack's noise `lands/glass`
+  passes 0.3 (patches tens of blocks across, about a fifth of the ground) with a second layer of glass and sandstone
+  under it, coarse dirt in dusty streaks: a material rule (`worldgen/material_rule/lands/glass_steppe_surface`,
+  `_under`) spliced first into the overworld's `biome_surface` and `under_biome_surface` by Lithostitched
+  `set_material_rule` modifiers, so the surface pass lays it and far terrain shows it.
+- **Silhouette**: glass shard spires (`awaken:glass_shards`): clusters of 3-7 hexagonal sunshard prisms 8-14 tall (a
+  small kind 3-7), all leaning roughly one way as if one blast threw them, glass spattered round their feet; one in four
+  chunks, the small ones one in two. Every spire's foot reaches down to the ground.
+- **Trees**: *Glassbark* (1x1, leaning, 2-3 rising limbs, flat amber pads: an acacia's sweep in bleached wood) and a
+  *tall* one (3-4 limbs), with `limbed_trunk_placer` and `cloud_foliage_placer`; a fallen glassbark now and then. Half a
+  tree a chunk: it stays a steppe. Saplings grow them.
+- **Mirror pools** (`awaken:mirror_pool`, one in seven chunks, before vegetation): shallow water on a bed of scorched
+  glass (dark and glossy by day, the amber cracks glowing up through it at night), ringed with fused glass and slivers;
+  the water's level is the rim's lowest ground, and a pool only forms where the ground is level enough to hold it.
+- **Air**: glints, by day: where the sun reaches glass (`#awaken:lands/glints`) a four-pointed star blinks on the face
+  the camera sees (`LandsMotes`, kind `glint`); amber leaves off the glassbarks.
+- **Night**: the spires' amber specks, the scars' and pools' amber cracks, the clusters' tips.
+- **Sound**: `amb.glass_steppe` (warm wind over dry grass, glass ticking and ringing faintly as it warms), the biome's
+  `minecraft:audio/ambient_sounds` loop.
+- **Lens** (`glass_steppe`): bleached and high-key (exposure 1.04, saturation 0.92), warm, a strong sun glow (1.25),
+  heat haze starting close (0.46 from 0.22).
+- **Landmark: the Gate Scar** (`terrain.landmark.GateScar`): a bowl 30-50 across and 7-10 deep, black scorched glass at
+  its heart and in radial cracks running out through the ivory glass, a raised rim, 8-12 rays of splashed glass out
+  across the grass to nearly twice its radius, 10-16 sunshard spires round the rim leaning outward (three or four of
+  them 18-28 tall), and in the middle the gate's broken ring of deepslate stumps, one fallen across the floor, sunshard
+  growing out of them, one crystal standing where the gate stood. The ground is reshaped column by column from each
+  column's own ground and its distance from the centre (chunks agree without seeing each other); the voxels then go into
+  air, plants and water only, standing columns continued down to the ground. Sites: dry steppe at least 12 above the
+  sea (the bowl stays dry), ground within 5 at 16 out and 8 at 28 out. `random_spread` spacing 28, separation 10.
+
+### Shattered Highlands (Crag; replaces windswept hills, windswept gravelly hills and stony peaks in the field)
+
+Mountains split along lines of light.
+
+- **Blocks** (`terrain.fault.FaultBlocks`): `faultstone` (dark violet slate split by jagged cyan cracks: the cracks
+  are emissive model faces, about 8 a face, with a violet bleed in the base texture so the band reads violet from far
+  off), `fault_seam` (crystal split open on light: the whole cube emissive, no block light), `riven_shale` (layered
+  blue-grey rock with a rust band, a pillar block).
+- **Ground**: riven shale on steep slopes and over about half of the rest (the vanilla `surface` noise), a little
+  gravel scree, cool sage grass (`#7c8b68`) on the flats (material rule as above).
+- **Faults** (`terrain.fault.FaultLinesFeature`, `awaken:fault_lines`, once a chunk before vegetation): a fault runs
+  along the zero line of the pack's noise `lands/fault` (base octave -8 roughened by four finer octaves, so lines run
+  jagged like cracks, about 5 crossings per km of travel). A column's distance to the line is the noise over its slope
+  (the noise sampled on a 2-block lattice and blended), so a fault keeps its width wherever it runs; a threshold on the
+  noise itself swelled into fields where the noise was flat (measured: 20-block runs, 120 at worst). Within 1.6 blocks
+  of the line: faultstone three deep, the seam within 0.55 (the line's glowing core). Where the noise `lands/fault_trench`
+  rises the fault widens (to 4.4 either side) and opens into a V-shaped trench up to 9 deep, its floor and the walls the
+  deeper columns beside it expose relined. Every decision comes from the noises and the column itself: a fault runs on
+  across chunk borders whole, and never reads what a neighbour chunk did. Never into water, never down to the sea; snow
+  never settles on faultstone or the seam (`#minecraft:cannot_support_snow_layer`), so the lines run on through snow.
+- **Silhouette**: rock shards hanging over the faults (`awaken:floating_shard`, tried in one chunk in two, built only
+  where a line passes within six blocks and only into open air): an upturned point of riven shale 2-4 across,
+  faultstone in its lower half, the seam at its tip, turf on one in three, 7-20 above the ground; a chip of rubble
+  beside it. Sparse spruce and pine, riven shale boulders.
+- **Air**: at night sparks rise off the faults (`#awaken:lands/faults`), cyan and violet, flickering and bending with
+  the wind; by day grains of dust ride the wind low over the rock (`LandsMotes`, kind `fault`).
+- **Sound**: `amb.shattered_highlands` (a cold high wind, the faults' low hum of two close tones beating slowly,
+  rock crackling and ticking).
+- **Lens** (`shattered_highlands`): crisp and clear (haze 0.24 from 0.55), contrast 1.14, violet-tinged shadows and
+  split tone, bloom from 0.52 so the faults bloom at night.
+- **Landmark: the Shard Drift** (`terrain.landmark.ShardDrift`): 7-12 floating shards strung along a fault: a great
+  one 10-13 across over the line itself, 20-28 up, smaller ones before and after it rising toward the drift's ends like a
+  wave, each the upturned point of shale and faultstone with the seam's light at its tip, a third grassed with roots
+  hanging from the rim, rubble drifting between. The site search walks onto the line along the fault noise (Newton
+  steps); the start samples the ground under each shard once, so every chunk builds the same drift at the same
+  heights. Everything here floats on purpose. `random_spread` spacing 22, separation 8.
+
+### Commands
+
+`/awaken terrain landmark <gate_scar|shard_drift> [seed]` builds one where you stand; `/awaken terrain landmarkvisit
+<landmark> [distance above]` stands you south of the nearest generated one, looking at it; `/awaken terrain lands2cost`
+prints what this pair's worldgen has cost since the server started (calls, average and total per feature and landmark,
+measured on the worldgen threads as chunks generate).
+
+### Checks
+
+GameTests: `terrain_lands2_blocks`, `terrain_lands2_trees_grow`, `terrain_lands2_biomes`, `terrain_glass_features`
+(spires stand and stay near their centre, pools hold their water and never spill), `terrain_fault_noise` (the studio
+numbers: band share, width, crossings per km, how much opens), `terrain_fault_features` (a real open stretch of fault
+on nine chunks painted one by one: only band columns touched, floors lined, the seam on the line, depth within the V, no
+bigger step at a chunk border than inside one; shards in open air, well clear of the ground, the seam at their tips),
+`terrain_landmark_shapes` (eight seeds each: a scar 30-50 across and 7-11 deep with 8-12 rays, its spires, the gate's
+stumps and the crystal where the gate stood, nothing standing unjoined; a drift's shards, the great one, the seam at
+the tips, every shard hanging; the fastest seed within the 2 ms hero budget: 0.63 ms a scar and 0.90 ms a drift in the
+cloud VM, 2026-10-24), `terrain_landmark_builds_in_box` (a Gate Scar on a slope and a Shard Drift chunk by chunk:
+everything inside the box, the crystal standing on the ground, the heart deep and black, the drift's lowest rock clear of
+the ground), `terrain_landmark_sites`. Tours: `tools/autopilot/lands-biomes2.txt` (looks),
+`tools/autopilot/lands-biomes2-perf.txt` (frame times and worldgen cost).

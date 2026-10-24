@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
  * ground cover it lays round its foot.
  */
 public enum HeroTree implements StringRepresentable {
-    ELDER_COLOSSUS("elder_colossus", 5, 3, 13, 10, 20, 40) {
+    ELDER_COLOSSUS("elder_colossus", 5, 3, 13, 10, 20, 46) {
         @Override
         Blueprint shape(long seed) {
             return ElderColossus.build(seed);
@@ -27,7 +27,7 @@ public enum HeroTree implements StringRepresentable {
 
         @Override
         BlockState[] blocks() {
-            return palette(LandsBlocks.ELDER_LOG.get(), LandsBlocks.ELDER_WOOD.get(), LandsBlocks.ELDER_LEAVES.get(), null,
+            return palette(LandsBlocks.ELDER_LOG.get(), LandsBlocks.ELDER_WOOD.get(), LandsBlocks.ELDER_LEAVES.get(), LandsBlocks.ELDER_LEAVES_GOLD.get(), null,
                     Blocks.MOSS_CARPET.defaultBlockState());
         }
     },
@@ -45,7 +45,8 @@ public enum HeroTree implements StringRepresentable {
 
         @Override
         BlockState[] blocks() {
-            return palette(LandsBlocks.VEINED_LUMEN_LOG.get(), LandsBlocks.LUMEN_WOOD.get(), LandsBlocks.LUMEN_LEAVES.get(), LandsBlocks.LUMEN_VINES.get(),
+            return palette(LandsBlocks.VEINED_LUMEN_LOG.get(), LandsBlocks.LUMEN_WOOD.get(), LandsBlocks.LUMEN_LEAVES.get(), LandsBlocks.LUMEN_LEAVES.get(),
+                    LandsBlocks.LUMEN_VINES.get(),
                     LandsBlocks.LUMEN_MOSS.get().defaultBlockState());
         }
     };
@@ -101,8 +102,8 @@ public enum HeroTree implements StringRepresentable {
         return s[code];
     }
 
-    private static BlockState[] palette(Block log, Block wood, Block leaves, Block vines, BlockState moss) {
-        BlockState[] s = new BlockState[Blueprint.LEAF_PERSISTENT + 1];
+    private static BlockState[] palette(Block log, Block wood, Block leaves, Block leaves2, Block vines, BlockState moss) {
+        BlockState[] s = new BlockState[Blueprint.CODES];
         BlockState air = Blocks.AIR.defaultBlockState();
         java.util.Arrays.fill(s, air);
         s[Blueprint.LOG] = log.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
@@ -113,6 +114,10 @@ public enum HeroTree implements StringRepresentable {
             s[Blueprint.LEAF_D1 + d - 1] = leaves.defaultBlockState().setValue(LeavesBlock.DISTANCE, d).setValue(LeavesBlock.PERSISTENT, false);
         }
         s[Blueprint.LEAF_PERSISTENT] = leaves.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+        for (int d = 1; d <= 6; d++) {
+            s[Blueprint.LEAF2_D1 + d - 1] = leaves2.defaultBlockState().setValue(LeavesBlock.DISTANCE, d).setValue(LeavesBlock.PERSISTENT, false);
+        }
+        s[Blueprint.LEAF2_PERSISTENT] = leaves2.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
         if (vines != null) {
             s[Blueprint.VINE] = vines.defaultBlockState().setValue(HangingMossBlock.TIP, false);
             s[Blueprint.VINE_TIP] = vines.defaultBlockState().setValue(HangingMossBlock.TIP, true);

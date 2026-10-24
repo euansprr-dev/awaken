@@ -47,6 +47,10 @@ public final class Machines {
             player.sendOverlayMessage(Component.literal("The machine is silent. (The Above is turned off in this world.)"));
             return;
         }
+        if (!mayUse(player, be)) {
+            player.sendOverlayMessage(Component.literal("This machine answers to " + ownerName(player, be) + ". Share their Hearth to use it."));
+            return;
+        }
         Panel panel = panel(player, be);
         if (panel != null) AwakenNet.send(player, new AboveNet.OpenPanel(panel));
     }
@@ -70,11 +74,34 @@ public final class Machines {
         };
     }
 
+    /**
+     * Who may work a machine (SPEC "Together"): anyone if it has no owner (ruin machines, old saves), its owner, anyone
+     * who shares a Hearth with its owner, and anyone standing it inside a Hearth they belong to.
+     */
+    public static boolean mayUse(ServerPlayer player, MachineBlockEntity be) {
+        java.util.UUID owner = be.owner();
+        if (owner == null || owner.equals(player.getUUID()) || player.isCreative()) return true;
+        if (dev.awaken.core.api.HearthHooks.shareHearth(player, owner)) return true;
+        if (be.getLevel() instanceof net.minecraft.server.level.ServerLevel sl && sl.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+            var home = dev.awaken.core.api.HearthHooks.nearest(sl, be.getBlockPos(), 96);
+            return home.isPresent() && dev.awaken.core.api.HearthHooks.inside(sl, be.getBlockPos()) && dev.awaken.core.api.HearthHooks.belongs(player, home.get());
+        }
+        return false;
+    }
+
+    private static String ownerName(ServerPlayer player, MachineBlockEntity be) {
+        var o = be.owner() == null ? null : player.level().getServer().getPlayerList().getPlayer(be.owner());
+        if (o != null) return o.getGameProfile().name();
+        var cached = player.level().getServer().services().nameToIdCache().get(be.owner());
+        return cached.map(net.minecraft.server.players.NameAndId::name).orElse("someone else");
+    }
+
     /** A panel button came back from the client. */
     public static void action(ServerPlayer player, BlockPos pos, String action, int index) {
         if (!AwakenConfig.ABOVE.get()) return;
         if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 8 * 8) return;
         if (!player.level().isLoaded(pos) || !(player.level().getBlockEntity(pos) instanceof MachineBlockEntity be)) return;
+        if (!mayUse(player, be)) return;
         MachineType t = be.type();
         boolean keepOpen = true;
         if (t == null) {

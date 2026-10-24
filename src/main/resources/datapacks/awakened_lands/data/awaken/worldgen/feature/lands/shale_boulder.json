@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:block_blob",
+  "state": {
+    "id": "awaken:riven_shale",
+    "properties": {
+      "axis": "y"
+    }
+  },
+  "can_place_on": {
+    "type": "minecraft:matching_blocks",
+    "blocks": [
+      "minecraft:grass_block",
+      "awaken:riven_shale",
+      "minecraft:stone",
+      "minecraft:dirt",
+      "minecraft:gravel"
+    ]
+  }
+}

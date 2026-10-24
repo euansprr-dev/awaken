@@ -21,11 +21,13 @@ import java.util.UUID;
 
 /**
  * The world's gates, cells and claims (world-global SavedData, {@code <world>/data/awaken/gates.dat}).
- * Cells: never-used ones come from {@code nextCell}; released cells wait in {@code releasedCells} until their region
- * files are deleted while the level is closed, then return to {@code freeCells} on the next start.
+ * Cells: never-used ones come from {@code nextCell}; released cells wait in {@code releasedCells} until their chunks are
+ * erased while the server runs (once out of memory) or their region files are deleted while the level is closed, then
+ * return to {@code freeCells}. Schema 2 adds each cell's generation (how often it was reused while running): entities
+ * saved with an older generation are stale and leave when loaded.
  */
 public final class GateRegistry extends SavedData {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
 
     private int nextId = 1;
     private int nextCell = 0;
@@ -34,11 +36,12 @@ public final class GateRegistry extends SavedData {
     private final Map<Integer, GateRecord> gates = new TreeMap<>();
     private final Map<String, Claim> pending = new LinkedHashMap<>();
     private final Set<String> done = new LinkedHashSet<>();
+    private final Map<Integer, Integer> cellGen = new java.util.HashMap<>();
 
     public GateRegistry() {}
 
     private record Data(int schema, int nextId, int nextCell, List<Integer> free, List<Integer> released, List<GateRecord> gates,
-                        List<Claim> pending, List<String> done) {
+                        List<Claim> pending, List<String> done, Map<String, Integer> gens) {
         static final Codec<Data> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("schema").forGetter(Data::schema),
                 Codec.INT.fieldOf("next_id").forGetter(Data::nextId),
@@ -47,7 +50,8 @@ public final class GateRegistry extends SavedData {
                 Codec.INT.listOf().fieldOf("released_cells").forGetter(Data::released),
                 GateRecord.CODEC.listOf().fieldOf("gates").forGetter(Data::gates),
                 Claim.CODEC.listOf().fieldOf("pending").forGetter(Data::pending),
-                Codec.STRING.listOf().fieldOf("done").forGetter(Data::done)
+                Codec.STRING.listOf().fieldOf("done").forGetter(Data::done),
+                Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("cell_gen", Map.of()).forGetter(Data::gens)
         ).apply(i, Data::new));
     }
 
@@ -60,9 +64,18 @@ public final class GateRegistry extends SavedData {
         for (GateRecord g : d.gates) r.gates.put(g.id, g);
         for (Claim c : d.pending) r.pending.put(c.id(), c);
         r.done.addAll(d.done);
+        d.gens.forEach((k, v) -> {
+            try {
+                r.cellGen.put(Integer.parseInt(k), v);
+            } catch (NumberFormatException ignored) {}
+        });
         return r;
-    }, r -> new Data(SCHEMA, r.nextId, r.nextCell, List.copyOf(r.freeCells), List.copyOf(r.releasedCells),
-            List.copyOf(r.gates.values()), List.copyOf(r.pending.values()), List.copyOf(r.done)));
+    }, r -> {
+        Map<String, Integer> gens = new LinkedHashMap<>();
+        r.cellGen.forEach((k, v) -> gens.put(Integer.toString(k), v));
+        return new Data(SCHEMA, r.nextId, r.nextCell, List.copyOf(r.freeCells), List.copyOf(r.releasedCells),
+                List.copyOf(r.gates.values()), List.copyOf(r.pending.values()), List.copyOf(r.done), gens);
+    });
 
     public static final SavedDataType<GateRegistry> TYPE = new SavedDataType<>(Awaken.id("gates"), GateRegistry::new, CODEC);
 
@@ -142,12 +155,29 @@ public final class GateRegistry extends SavedData {
         return releasedCells;
     }
 
+    /** Cells ready to be handed out again (read-only view). */
+    public List<Integer> freeCells() {
+        return java.util.Collections.unmodifiableList(freeCells);
+    }
+
     /** A released cell whose region files are gone can be used again. */
     public void cellFreed(int cell) {
         if (releasedCells.remove(cell)) {
             freeCells.add(cell);
             setDirty();
         }
+    }
+
+    /** A released cell whose chunks were erased while running: free again, and a new generation for its entities. */
+    public void cellRecycled(int cell) {
+        if (!releasedCells.contains(cell) || byCell(cell) != null) return;
+        cellGen.merge(cell, 1, Integer::sum);
+        cellFreed(cell);
+    }
+
+    /** How many times this cell was reused while the server ran (0 = never). */
+    public int cellGen(int cell) {
+        return cellGen.getOrDefault(cell, 0);
     }
 
     public int cellsInUse() {

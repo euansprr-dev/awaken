@@ -140,7 +140,7 @@ public final class GateVortexBlockEntity extends BlockEntity {
             case BROKEN -> m = GateVortex.BROKEN;
             case CLEARED, RELEASED -> m = GateVortex.SPENT;
             default -> {
-                if (dev.awaken.core.api.StoryHooks.gatesCalm(server)) m = GateVortex.CALM;
+                if (dev.awaken.core.api.StoryHooks.gatesCalm(server, g.owner)) m = GateVortex.CALM;
                 else if (!g.neverBreaks(server) && g.breaksIn(PlayDays.current(server)) <= 1) {
                     m = GateVortex.WARNING;
                     w = g.breaksIn(PlayDays.current(server)) == 0 ? 100 : 55;

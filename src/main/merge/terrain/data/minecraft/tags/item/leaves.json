@@ -1,6 +1,8 @@
 {
   "values": [
     "awaken:elder_leaves",
-    "awaken:lumen_leaves"
+    "awaken:elder_leaves_gold",
+    "awaken:lumen_leaves",
+    "awaken:glassbark_leaves"
   ]
 }

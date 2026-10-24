@@ -36,7 +36,7 @@ public final class HearthNow {
     private static List<NowHooks.Suggestion> suggest(ServerPlayer p) {
         List<NowHooks.Suggestion> out = new ArrayList<>();
         if (!Progression.profile(p).awakened()) return out;
-        var home = HearthService.hearthOf(p);
+        var home = HearthService.homeOf(p);
         if (home.isEmpty()) {
             if (holds(p, HearthContent.HEARTH_ANCHOR_ITEM.get())) {
                 out.add(NowHooks.Suggestion.of("hearth:place", 72, "Place your Hearth Anchor where you want your home"));

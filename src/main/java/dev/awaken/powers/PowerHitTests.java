@@ -99,7 +99,9 @@ final class PowerHitTests {
             if (since[0] == 20 && type.mode == PowerType.Mode.CHANNEL) Casting.stop(p, type.id.toString(), Running.Why.RELEASED);
         });
         h.startSequence()
-                .thenIdle(5) // the forced test chunks start ticking and the bodies settle on the floor
+                // the bodies settle on the floor; they tick from the start (every test starts once its area entity-ticks,
+                // AwakenTests: a body in a chunk that didn't yet was knocked back but never moved)
+                .thenIdle(5)
                 .thenExecute(() -> {
                     for (var e : bodies.entrySet()) {
                         hp.put(e.getKey(), e.getValue().getHealth());

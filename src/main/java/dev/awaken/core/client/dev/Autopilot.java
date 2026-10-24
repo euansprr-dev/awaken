@@ -6,6 +6,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
@@ -40,11 +41,14 @@ import java.util.Map;
  * look &lt;yaw&gt; &lt;pitch&gt;
  * turn &lt;degrees per tick&gt; &lt;ticks&gt;             a steady turn that keeps going while later lines run (a sharp turn)
  * key &lt;awaken key name&gt;                        press one of the mod's keys (status, accept, dismiss, ...)
- * screen status|map|codex|holo|uiprobe|close|experimental  holo: the holo K menu (status/map/codex stay flat);
+ * screen status|map|codex|holo|uiprobe|look|settings|close|experimental  holo: the holo K menu (status/map/codex stay flat);
+ *                                                look: the Look switch (AWAKEN · LOOK); settings: Awaken's client
+ *                                                settings section (Mods → AWAKEN → Config), with its Look row;
  *                                                uiprobe: every Ui/Glass primitive on black, for pixel checks;
  *                                                experimental: vanilla's experimental-settings prompt (it should answer itself)
  * click &lt;x&gt; &lt;y&gt;                                 a left click on the open screen at GUI coordinates
  * holo &lt;args&gt;                                    the holo module's test lines (HoloClient.autopilot): demo, at, run, hud, log
+ * compat &lt;args&gt;                                  the companion plugins' lines (CompatClient.autopilot): inventory, jei ..., press, discovered, map
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
  * camera first|back|front                        the F5 views
  * fps &lt;label&gt;                                     logs the frames of the last second
@@ -54,8 +58,13 @@ import java.util.Map;
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
  * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
- * lensdebug 0..3                                 Lens debug views: normal, pass-through, depth masks, far depth
+ * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
+ *                                                else straight through the switch)
+ * lensdebug 0..4                                 Lens debug views: normal, pass-through, depth masks, far depth, haze
+ * fardepth share|auto                           Distant Horizons shares its depth with Lens on every graphics API (to
+ *                                                check it on Vulkan), or again only on the one it was checked on
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
+ * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments)
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
  * </pre>
@@ -108,6 +117,33 @@ public final class Autopilot {
             Awaken.LOG.info("[autopilot] App Nap off for this run");
         } catch (RuntimeException | LinkageError e) {
             Awaken.LOG.warn("[autopilot] could not keep the process awake: {}", e.toString());
+        }
+    }
+
+    /**
+     * Tours run on the MacBook's own display, never on an external monitor (an external 4K display changes every frame
+     * time and the owner works there): the window moves to the built-in display, or the primary one if none is named so.
+     */
+    private static void onBuiltInDisplay(Minecraft mc) {
+        if (!com.mojang.blaze3d.platform.MacosUtil.IS_MACOS) return;
+        try {
+            long window = mc.getWindow().handle();
+            int target = org.lwjgl.sdl.SDLVideo.SDL_GetPrimaryDisplay();
+            java.nio.IntBuffer displays = org.lwjgl.sdl.SDLVideo.SDL_GetDisplays();
+            if (displays != null) {
+                for (int i = 0; i < displays.remaining(); i++) {
+                    String name = org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(displays.get(i));
+                    if (name != null && name.startsWith("Built-in")) target = displays.get(i);
+                }
+                org.lwjgl.sdl.SDLStdinc.SDL_free(displays);
+            }
+            if (target != 0 && org.lwjgl.sdl.SDLVideo.SDL_GetDisplayForWindow(window) != target) {
+                int centred = org.lwjgl.sdl.SDLVideo.SDL_WINDOWPOS_CENTERED_DISPLAY(target);
+                org.lwjgl.sdl.SDLVideo.SDL_SetWindowPosition(window, centred, centred);
+                Awaken.LOG.info("[autopilot] window moved to {}", org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(target));
+            }
+        } catch (RuntimeException | LinkageError e) {
+            Awaken.LOG.warn("[autopilot] could not choose the display: {}", e.toString());
         }
     }
 
@@ -173,6 +209,7 @@ public final class Autopilot {
             mc.options.enableVsync().set(false);
             mc.options.framerateLimit().set(260);
             mc.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
+            onBuiltInDisplay(mc);
         }
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
@@ -280,6 +317,10 @@ public final class Autopilot {
                 waitTicks = 2;
             }
             case "holo" -> Awaken.LOG.info("[autopilot] holo {}: {}", arg.trim(), dev.awaken.holo.client.HoloClient.autopilot(arg));
+            case "compat" -> {
+                Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
+                waitTicks = 10;
+            }
             case "key" -> {
                 KeyMapping k = KEYS.get(arg.trim());
                 if (k == null) Awaken.LOG.warn("[autopilot] unknown key {}", arg);
@@ -292,6 +333,18 @@ public final class Autopilot {
                 else if (arg.trim().equals("map")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.GATE_MAP));
                 else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
                 else if (arg.trim().equals("uiprobe")) mc.gui.setScreen(new UiProbeScreen());
+                else if (arg.trim().equals("look")) mc.gui.setScreen(new dev.awaken.compat.client.LookScreen(null));
+                else if (arg.trim().equals("settings")) {
+                    // Awaken's settings as Mods → AWAKEN → Config builds them, opened at the client section (its Look row)
+                    var mod = ModList.get().getModContainerById(Awaken.MODID).orElseThrow();
+                    Screen top = mod.getCustomExtension(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class).orElseThrow().createScreen(mod, null);
+                    var client = net.neoforged.fml.config.ModConfigs.getModConfigs(Awaken.MODID).stream()
+                            .filter(c -> c.getFileName().equals(Awaken.MODID + "-client.toml")).findFirst().orElseThrow();
+                    mc.gui.setScreen(top instanceof net.neoforged.neoforge.client.gui.ConfigurationScreen cs
+                            ? dev.awaken.compat.client.LookSettings.section(cs, net.neoforged.fml.config.ModConfig.Type.CLIENT, client,
+                                    net.minecraft.network.chat.Component.literal("AWAKEN · client settings"))
+                            : top);
+                }
                 else if (arg.trim().startsWith("holo")) {
                     String t = arg.trim().length() > 4 ? arg.trim().substring(4).trim() : "status";
                     var tab = switch (t) {
@@ -335,6 +388,12 @@ public final class Autopilot {
                         msg -> Awaken.LOG.info("[autopilot] screenshot {}", name));
                 waitTicks = 10;
             }
+            case "shotnow" -> { // a shot this tick, without "shot"'s 3-tick settle (for moments shorter than that)
+                String name = arg.trim();
+                Screenshot.grab(mc.gameDirectory, name + ".png", mc.gameRenderer.mainRenderTarget(), 1,
+                        msg -> Awaken.LOG.info("[autopilot] screenshot {}", name));
+                waitTicks = 1;
+            }
             case "camera" -> { // first | back | front
                 String v = arg.trim();
                 mc.options.setCameraType(v.equals("back") ? net.minecraft.client.CameraType.THIRD_PERSON_BACK
@@ -361,22 +420,36 @@ public final class Autopilot {
                 for (var b : ManagementFactory.getGarbageCollectorMXBeans()) gc.append(gc.isEmpty() ? "" : ",").append(b.getName());
                 StringBuilder mods = new StringBuilder();
                 for (var m : ModList.get().getMods()) mods.append(mods.isEmpty() ? "" : ",").append(m.getModId());
-                Awaken.LOG.info("[autopilot] info backend={} driver={} device={} fb={}x{} window={}x{} rd={} sd={} heapMax={}MB gc={} mods={}",
-                        d.backendName(), d.driverInfo(), d.name(), mc.getWindow().getWidth(), mc.getWindow().getHeight(),
+                Awaken.LOG.info("[autopilot] info backend={} driver={} device={} display={} fb={}x{} window={}x{} rd={} sd={} heapMax={}MB gc={} mods={}",
+                        d.backendName(), d.driverInfo(), d.name(),
+                        org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(org.lwjgl.sdl.SDLVideo.SDL_GetDisplayForWindow(mc.getWindow().handle())).replace(' ', '_'),
+                        mc.getWindow().getWidth(), mc.getWindow().getHeight(),
                         mc.getWindow().getScreenWidth(), mc.getWindow().getScreenHeight(), mc.options.renderDistance().get(),
                         mc.options.simulationDistance().get(), Runtime.getRuntime().maxMemory() >> 20, gc, mods);
             }
-            case "window" -> { // window <width> <height>, in points
+            case "window" -> { // window <width> <height>, in points, on the Mac's own display
                 String[] w = arg.trim().split("\\s+");
                 mc.getWindow().setWindowed(Integer.parseInt(w[0]), Integer.parseInt(w[1]));
+                onBuiltInDisplay(mc);
                 waitTicks = 20;
             }
             case "lens" -> {
                 dev.awaken.core.AwakenConfig.Client.LENS.set(dev.awaken.core.AwakenConfig.Client.LensLook.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
                 waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
             }
+            case "lookswitch" -> {
+                var tier = dev.awaken.compat.Look.Tier.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT));
+                boolean took = mc.gui.screen() instanceof dev.awaken.compat.client.LookScreen look ? look.pick(tier)
+                        : dev.awaken.compat.client.LookSwitch.apply(tier);
+                Awaken.LOG.info("[autopilot] look {}: {}", tier, took ? "applied" : "not available here");
+                waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
+            }
             case "lensdebug" -> {
                 dev.awaken.lens.client.LensClient.debug(Integer.parseInt(arg.trim()));
+                waitTicks = 10;
+            }
+            case "fardepth" -> {
+                dev.awaken.compat.client.CompatClient.shareFarDepthEverywhere("share".equals(arg.trim()));
                 waitTicks = 10;
             }
             case "opt" -> { // opt renderDistance|simulationDistance <n>

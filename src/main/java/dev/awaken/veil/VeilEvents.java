@@ -40,6 +40,7 @@ final class VeilEvents {
         bus.addListener(VeilEvents::onLogout);
         bus.addListener(VeilEvents::onDeath);
         bus.addListener(VeilEvents::onDamage);
+        bus.addListener(VeilEvents::onBodyIncoming);
         bus.addListener(VeilEvents::onDrops);
         bus.addListener(VeilEvents::onJoin);
         bus.addListener(VeilEvents::onGameMode);
@@ -124,6 +125,18 @@ final class VeilEvents {
         } else if (e instanceof Mannequin) {
             Projection.onBodyHurt(e, event.getSource(), event.getInflictedDamage());
         }
+    }
+
+    /**
+     * A projected Body takes no hits from players (SPEC "Together"): not from its own spirit, never from a party
+     * member, and from anyone else only while the world allows PvP. Its death would really kill its owner.
+     */
+    private static void onBodyIncoming(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof Mannequin m) || m.level().isClientSide()) return;
+        if (!(event.getSource().getEntity() instanceof ServerPlayer attacker)) return;
+        BodyTag tag = m.getExistingData(VeilContent.BODY_TAG.get()).orElse(BodyTag.NONE);
+        if (!tag.isBody()) return;
+        if (!Projection.playerMayHurtBody(attacker, tag.owner())) event.setCanceled(true);
     }
 
     private static void onDrops(LivingDropsEvent event) {
@@ -219,9 +232,10 @@ final class VeilEvents {
         if (event.getEntity() instanceof ServerPlayer sp && !sp.isCreative() && protectedSpot(event.getLevel(), event.getPos())) event.setCanceled(true);
     }
 
-    private static void onStopped(ServerStoppedEvent event) {
+    static void onStopped(ServerStoppedEvent event) {
         Projection.LIVE.clear();
         Projection.TRANSIT.clear();
+        Projection.clearPendingDeaths();
         Meditation.STATES.clear();
         Meditation.LAST_HURT.clear();
         Possession.WORN.clear();

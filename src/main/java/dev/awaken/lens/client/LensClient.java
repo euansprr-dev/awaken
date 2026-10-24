@@ -45,7 +45,7 @@ public final class LensClient {
     static final Identifier FAR_DEPTH = Awaken.id("textures/effect/lens_far_depth.png");
 
     private static LensParams params;
-    /** Development: 0 normal; 1 pass-through; 2 depth masks; 3 far-terrain depth raw (autopilot lensdebug). */
+    /** Development: 0 normal; 1 pass-through; 2 depth masks; 3 far-terrain depth raw; 4 haze amount (autopilot lensdebug). */
     private static int debug;
     private static boolean active, snap = true, zeroToOne;
     private static ResourceKey<Level> lookFor;
@@ -69,7 +69,7 @@ public final class LensClient {
     private static final Matrix4f viewProj = new Matrix4f();
 
     public static void debug(int mode) {
-        debug = Math.clamp(mode, 0, 3);
+        debug = Math.clamp(mode, 0, 4);
         Awaken.LOG.info("[lens] debug view {}", debug);
     }
 
@@ -248,7 +248,7 @@ public final class LensClient {
         params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 fog.renderDistanceEnd, fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
                 UiHooks.focus(),
-                FarTerrain.active(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far());
+                FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far());
         params.uploadIfChanged();
     }
 

@@ -122,6 +122,7 @@ public final class Runs {
         p.setData(GatesRegistry.RUN.get(), run);
         g.party.add(p.getUUID());
         g.inside.add(p.getUUID());
+        if (g.inside.size() > 1) company(server, g);
         GateService.setState(server, g, GateState.ACTIVE);
         GateRegistry.get(server).setDirty();
         BlockPos e = GateService.entrance(g, 0, 1);
@@ -149,6 +150,14 @@ public final class Runs {
         DirectorLog.log(p, "gate", "entered gate " + g.id + " (run " + run.runIndex + ")");
         arrive(p, g, 0, 1);
         return true;
+    }
+
+    /** Two or more inside at once: nobody's run in this gate is a solo run any more. */
+    static void company(MinecraftServer server, GateRecord g) {
+        for (java.util.UUID u : g.inside) {
+            ServerPlayer o = server.getPlayerList().getPlayer(u);
+            if (o != null && run(o).gateId == g.id) run(o).company = true;
+        }
     }
 
     /** Puts the player on a floor (already teleported there): resets the floor clock and wakes the floor. */
@@ -214,6 +223,8 @@ public final class Runs {
         }
         if (w.area() != run.area || w.floorNo() != run.floor) arrive(p, g, w.area(), w.floorNo());
         FloorLayout f = w.floor();
+        // at the bars of a room your party is sealed in: you're let through (SPEC "Together")
+        if (Rooms.admitAtBars(gl, p, g, f)) return;
         Room r = w.room();
         if (r != null) {
             Rooms.enter(gl, p, g, f, r, w.x(), w.z());
@@ -471,7 +482,8 @@ public final class Runs {
             // bosses_killed / bosses_killed_unarmed are counted by the mobs module for every boss, Gate Lords included
             if (plan.is(Twist.RED_GATE)) Progression.setCounter(p, "awaken:latent/red_gate_cleared", 1);
             if (!run.scoutedAtEntry && t - run.startedAt <= 20 * 60 * 20) Progression.setCounter(p, "awaken:gate_cleared_unscouted_fast", 1);
-            if (g.party.size() == 1 && !Twists.echoesSeen(g)) Progression.count(p, "awaken:gates_solo_no_echo");
+            // solo: nobody else was inside with you at any point of this run (the party set only ever grows)
+            if (!run.company && !Twists.echoesSeen(g)) Progression.count(p, "awaken:gates_solo_no_echo");
             mem.twistStreak = plan.twist() != Twist.NONE ? mem.twistStreak + 1 : 0;
             if (mem.twistStreak >= 3) Progression.setCounter(p, "awaken:latent/three_twists_row", 1);
             if (mem.themesCleared.add(plan.theme().id)) Progression.markNewThing(p, "gate theme " + plan.theme().displayName);
@@ -597,6 +609,7 @@ public final class Runs {
                 lost(p, run, "The gate collapsed behind you. Your Satchel came with you.");
             } else {
                 g.inside.add(p.getUUID());
+                if (g.inside.size() > 1) company(server, g);
                 GateRegistry.get(server).setDirty();
                 // the floor's clock stood still while you were away: no backlog of pressure waves on return
                 if (run.leftAt >= 0) {

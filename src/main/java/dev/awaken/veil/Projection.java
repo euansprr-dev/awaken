@@ -460,9 +460,24 @@ public final class Projection {
         DamageSource source = s.bodyDiedSource;
         end(sp, EndReason.BODY_DIED);
         if (source == null || !sp.isAlive()) return;
+        // a Body felled by a player who may not hurt it (a friend, or anyone with PvP off) never takes its owner along
+        if (source.getEntity() instanceof ServerPlayer by && !playerMayHurtBody(by, sp.getUUID())) return;
         sp.setHealth(1F);
         PENDING_DEATH.put(sp.getUUID(), new PendingDeath(source, 100));
         tryPendingDeath(sp);
+    }
+
+    /** Whether {@code attacker} may hurt the Body of {@code owner}: PvP on, not its own spirit, not in the owner's party. */
+    static boolean playerMayHurtBody(ServerPlayer attacker, UUID owner) {
+        if (attacker.getUUID().equals(owner)) return false;
+        if (!attacker.level().isPvpAllowed()) return false;
+        ServerPlayer o = attacker.level().getServer().getPlayerList().getPlayer(owner);
+        return o == null || !dev.awaken.core.api.PartyHooks.sameParty(attacker, o);
+    }
+
+    /** Server stop: deaths owed by Bodies belong to the world that stopped. */
+    static void clearPendingDeaths() {
+        PENDING_DEATH.clear();
     }
 
     /** A death owed by a Body: applied as soon as the player can be hurt (not mid-teleport). */

@@ -48,6 +48,10 @@
       "burn_odds": 60,
       "ignite_odds": 30
     },
+    "awaken:elder_leaves_gold": {
+      "burn_odds": 60,
+      "ignite_odds": 30
+    },
     "awaken:lumen_leaves": {
       "burn_odds": 60,
       "ignite_odds": 30
@@ -59,6 +63,30 @@
     "awaken:lumen_vines": {
       "burn_odds": 100,
       "ignite_odds": 15
+    },
+    "awaken:glassbark_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_glassbark_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:glassbark_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_glassbark_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:glassbark_planks": {
+      "burn_odds": 20,
+      "ignite_odds": 5
+    },
+    "awaken:glassbark_leaves": {
+      "burn_odds": 60,
+      "ignite_odds": 30
     }
   }
 }

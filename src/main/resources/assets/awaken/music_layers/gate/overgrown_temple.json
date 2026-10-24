@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/overgrown_temple",
+  "source": "music",
+  "title": "Overgrown Temple",
+  "bpm": 60,
+  "beats": 4,
+  "bars": 16,
+  "key": "G",
+  "mode": "dorian",
+  "sampleRate": 44100,
+  "frames": 2822400,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_overgrown_temple_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "A warm pad, the wooden flute's tune twice, fireflies chirping, forest air."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_overgrown_temple_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "Kalimba circling, a hand drum, strings trembling on the fifth."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_overgrown_temple_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Frame drums running in sixteenths, taiko, a plucked bass."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_overgrown_temple_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Root Saint: a choir, the brass and the flute trading the tune, a drum on every bar."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.59,
+      "lufs": -18.25,
+      "truePeak": -4.76
+    },
+    "tension": {
+      "rms": -19.58,
+      "lufs": -17.38,
+      "truePeak": -5.06
+    },
+    "combat": {
+      "rms": -18.56,
+      "lufs": -16.69,
+      "truePeak": -1.43
+    },
+    "lord": {
+      "rms": -17.57,
+      "lufs": -15.54,
+      "truePeak": -1.64
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.59,
+      "truePeak": -4.76
+    },
+    "tension": {
+      "rms": -23.2,
+      "truePeak": -7.91
+    },
+    "combat": {
+      "rms": -21.18,
+      "truePeak": -2.05
+    },
+    "lord": {
+      "rms": -21.11,
+      "truePeak": -5.32
+    }
+  }
+}

@@ -73,7 +73,8 @@ public final class DayJournal {
         boolean nearBed = false;
         var cfg = sp.getRespawnConfig();
         if (cfg != null && cfg.respawnData().dimension().equals(level.dimension()) && cfg.respawnData().pos().distSqr(pos) <= 36) nearBed = true;
-        boolean nearHearth = HearthHooks.hearthOf(sp).map(h -> level.dimension() == net.minecraft.world.level.Level.OVERWORLD && h.distSqr(pos) <= 144).orElse(false);
+        boolean nearHearth = level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+                && HearthHooks.hearthsOf(sp).stream().anyMatch(h -> h.distSqr(pos) <= 144);
         w.home = (nearBed || nearHearth) ? w.home + 1 : 0;
         if (w.home == 5) capture(sp, Snapshot.Kind.HOME, nearBed ? cfg.respawnData().pos().above() : pos, nearBed ? "your bed" : "your Hearth");
 
@@ -192,8 +193,9 @@ public final class DayJournal {
     public static boolean othersBase(ServerPlayer sp, ServerLevel level, BlockPos pos) {
         MinecraftServer server = level.getServer();
         if (LucidiumWorld.get(server).otherBedNear(sp.getUUID(), level.dimension(), pos, OTHERS_RADIUS)) return true;
+        java.util.Set<java.util.UUID> household = HearthHooks.household(sp);
         for (ServerPlayer other : server.getPlayerList().getPlayers()) {
-            if (other == sp) continue;
+            if (other == sp || household.contains(other.getUUID())) continue; // a Hearth you share is your base too
             var cfg = other.getRespawnConfig();
             if (cfg != null && cfg.respawnData().dimension().equals(level.dimension())
                     && cfg.respawnData().pos().distSqr(pos) <= OTHERS_RADIUS * OTHERS_RADIUS) return true;
@@ -203,8 +205,7 @@ public final class DayJournal {
         }
         Optional<BlockPos> near = HearthHooks.nearest(level, pos, OTHERS_RADIUS);
         if (near.isPresent()) {
-            Optional<BlockPos> mine = HearthHooks.hearthOf(sp);
-            if (mine.isEmpty() || !mine.get().equals(near.get())) return true;
+            if (!HearthHooks.belongs(sp, near.get())) return true;
         }
         return false;
     }
