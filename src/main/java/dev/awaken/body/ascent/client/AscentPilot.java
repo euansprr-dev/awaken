@@ -69,6 +69,7 @@ public final class AscentPilot {
             }
             case "rec" -> ClipRecorder.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Integer.parseInt(a[3]) : 2);
             case "route" -> AscentRoutes.line(a);
+            case "lensmotion" -> dev.awaken.body.client.feel.FeelDirector.lensMotionOn = !a[1].equals("off");
             case "double" -> {
                 doubleKey = key(a[1]);
                 doubleAge = 0;

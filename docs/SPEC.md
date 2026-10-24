@@ -837,7 +837,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   dither; five passes, three of them at 960×600 or smaller, after two one-pixel passes for the far-depth trust) and
   `awaken:lens_cinematic` (adds light shafts). It runs
   first in the player's post-effect list, so gameplay effects (dreams, blight, the Veil) still draw on top, and
-  re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 16×1
+  re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 32×1
   texture (`awaken:lens_params`), written once a frame in `ViewportEvent.RenderFog` at LOWEST priority: the look, the
   depth range (26.3 is reversed-Z; zero-to-one depth differs between OpenGL and Vulkan), the final fog colour and
   distances, the sun's screen position and the sunrise colour. Looks per dimension live in
@@ -852,7 +852,13 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 carries the Holo UI
   focus (`UiHooks.focus()`, 0..1 while a holo panel is open): the world more than about 2–3 blocks away dims to ~60%
   and cools, while the panel's glass (it writes depth) and its text stay bright; the first-person arm dims with the
-  world, since its depth lives in a separate target post chains can't read. Texel 15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
+  world, since its depth lives in a separate target post chains can't read. Texel 15 is far terrain's planes. Texel 16
+  is motion (`LensClient.motion(strength, dirX, dirY)`, fed by the Ascent's Feel Director, §17.6): r strength 0..1,
+  g/b the heading on screen (0..1 from the bottom left). The composite pass, only while strength > 0, takes 6 taps
+  along the line to the heading (sharp at the heading, the smear growing toward the frame's edges) and 2 more for a
+  touch of chroma at the rim; strength is eased per frame by real time, scaled by the FOV-effects slider, and 0 while
+  a story override or the tear runs (Lens off: nothing; FxScreen's speed lines stay the fallback). Measured on the M4
+  (Vulkan, 2880×1658): p50 +0.16 ms on Swift, +0.08 ms on Cinematic. Texels 17-31 are free. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
   the scene's length and fades back to the plain frame (the look rests at neutral while Lens is off) before stepping
   aside again (client config `lensInScenes`, default true; never with an Iris shaderpack). Callers carry on without the
   look when Lens can't draw (`LensClient.active()`).
@@ -1884,6 +1890,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **Latency** (`ascent_latency`, the gate's latency tours as a test): a real swing from a block 20 up, a release and a
   30-block fall to a hard landing, every state message reaching the server 300 ms (6 ticks) after its positions: no
   refusal, no move sent back, no fall damage, the state ends, the arrival still counts as by movement.
+- **The Lens's sense of speed**: from 1.2 blocks a tick in an airborne state, smoothstepped to full at 3, the Feel
+  Director hands the Lens the strength and the heading on screen (projected by the camera's own matrix); none with
+  reduced motion, on the ground, or when heading away from the view (§14, texel 16).
 - **Wings in first person**: your own wings are drawn from the body, only the outer half of the span (the root would
   sit on the camera; Phase 0 drew it and got white wedges), the cut edge fading in over 0.15 of the span, the body at
   60% of its alpha and the glow at 45% (this close, full strength read as solid blades). They show at the edges of

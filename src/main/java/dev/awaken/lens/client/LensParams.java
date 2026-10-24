@@ -4,12 +4,12 @@ import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 
 /**
- * The 16×1 texture Lens's shaders read their parameters from (post chains only take static uniforms, so values that
+ * The 32×1 texture Lens's shaders read their parameters from (post chains only take static uniforms, so values that
  * change every frame travel this way). Each texel is four 8-bit values; the layout is documented in
  * {@code lens_composite.fsh}. Uploads only when a byte actually changed.
  */
 final class LensParams {
-    static final int WIDTH = 16;
+    static final int WIDTH = 32;
     final DynamicTexture texture;
     private final int[] packed = new int[WIDTH], uploaded = new int[WIDTH];
     private boolean dirty = true;
@@ -20,7 +20,7 @@ final class LensParams {
 
     void write(int debug, float[] look, float far, boolean zeroToOne, float sunU, float sunV, float sunVisible, float sunsetStrength,
             float sunsetR, float sunsetG, float sunsetB, float fogR, float fogG, float fogB, float fogEnd, float environmentalEnd,
-            float tear, float crush, float bloomBoost, float focus,
+            float tear, float crush, float bloomBoost, float focus, float motion, float motionX, float motionY,
             boolean farActive, boolean farReadable, boolean farReverseZ, boolean farZeroToOne, float farNear, float farFar) {
         int f = Math.clamp(Math.round(far), 0, 65535);
         int u = Math.clamp(Math.round((sunU + 1f) / 3f * 65535f), 0, 65535), v = Math.clamp(Math.round((sunV + 1f) / 3f * 65535f), 0, 65535);
@@ -50,6 +50,9 @@ final class LensParams {
         // 15: far terrain's near plane (1/16 block) and far plane (blocks)
         int fn = Math.clamp(Math.round(farNear * 16f), 0, 65535), ff = Math.clamp(Math.round(farFar), 0, 65535);
         packed[15] = bytes(fn >> 8, fn & 255, ff >> 8, ff & 255);
+        // 16: moving fast through the air (LensClient.motion): r strength, g/b the heading on screen (0..1, from the
+        // bottom left); 17-31 free
+        packed[16] = pack(motion, motionX, motionY, 0f);
         for (int i = 0; i < WIDTH; i++) {
             if (packed[i] != uploaded[i]) {
                 dirty = true;

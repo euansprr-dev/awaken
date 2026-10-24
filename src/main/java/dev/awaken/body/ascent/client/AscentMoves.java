@@ -142,6 +142,14 @@ public final class AscentMoves {
         return state == AscentState.NONE ? 0 : K.speed();
     }
 
+    /** The velocity the state keeps (blocks a tick), into {@code out}; zero on the ground. */
+    public static void velocity(double[] out) {
+        boolean on = state != AscentState.NONE;
+        out[0] = on ? K.vx : 0;
+        out[1] = on ? K.vy : 0;
+        out[2] = on ? K.vz : 0;
+    }
+
     // ---- input ----------------------------------------------------------------------------------------------------
 
     static void onInput(MovementInputUpdateEvent e) {
