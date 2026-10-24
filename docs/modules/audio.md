@@ -107,9 +107,10 @@ combat 0.6, lord 1.5; falling because the music got more intense (duck) 2, 1.5, 
 (release) 10, 8, 6, 4. Ramps are per sample, so nothing clicks.
 
 **On the client** (`LayerPlayer`, one per slot): the context starts 2 s after the level loads (a teleport stops every
-sound). A vanilla song that is playing fades out in 1.5 s first (never a stage cue: the layers wait for it). While the
-layers sound, vanilla's music manager is told there is no situational music, so nothing doubles up; when they let go,
-the next vanilla song waits its full delay. After 150 s of continuous calm the bed rests (fades in 12 s, the channel
+sound). A vanilla song that is playing fades out in 1.5 s first (never a stage cue: the layers wait for it; a song a
+teleport already silenced doesn't count, though the music manager may hold it for seconds). While the layers sound,
+vanilla's music manager is told there is no situational music, so nothing doubles up; when they let go, the next
+vanilla song waits its full delay. After 150 s of continuous calm the bed rests (fades in 12 s, the channel
 goes back to the music manager, so the theme's composed track may come after its usual 3-10 minutes); it returns at
 the next tension or a new floor. Leaving the context fades in 4 s, death in 2.5 s. Cues: a stage cue takes the
 channel (the layers fade in 1.5 s); an ordinary one only while they are calm (the bed fades in 3 s), never during
@@ -213,8 +214,10 @@ the server plays in the world); music and the other UI sounds are stereo. Every 
   grep `[audio] layers` (server decisions, the client's phases and every 5 s the mixer's real gains).
   `tools/autopilot/sound-spr.txt` with `PACK=sound`: Sound Physics Remastered's own logs in open air, a stone chamber
   and a gate hall (see "Room acoustics").
-- Listening sheet: `python3 tools/art/audio_listen.py [date]` writes `docs/audio/listening-<date>.html` (a minute per
-  theme through every level, mixed as the game mixes; each stem alone; keep / remake / cut with notes, exported as JSON).
+- Listening sheet: `python3 tools/art/audio_listen.py [date] [--page]` writes `docs/audio/listening-<date>.html` (a
+  minute per theme through every level, mixed as the game mixes, under the theme's aim, with a strip of the levels that
+  seeks; each stem alone under its intent; keep / remake / cut with notes, an unmarked stem taking its mix's verdict,
+  exported as JSON). `--page` rewrites only the page from the MP3s already there.
 - Rebuild: `python3 tools/art/audio_build.py [prefix...]` (all ~6 min; a theme's stems: `layer_<theme>`, about 2 min
   each), then `audio_mix.py` (also measures every layered context's mix at every level) and
   `python3 tools/art/audio_sheet.py out.png music_cue_` (spectrogram contact sheet).

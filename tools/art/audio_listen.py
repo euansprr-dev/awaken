@@ -1,16 +1,20 @@
 """The listening sheet for the owner's session on the layered gate music (Awakened Pack stage 4, "The Sound").
 
-    python3 tools/art/audio_listen.py [date]      default: today; writes docs/audio/listening-<date>.html and
-                                                   docs/audio/listening-<date>/*.mp3 next to it
+    python3 tools/art/audio_listen.py [date] [--page]   default: today; writes docs/audio/listening-<date>.html and
+                                                         docs/audio/listening-<date>/*.mp3 next to it
+                                                         --page: only the page, from the MP3s already there
 
 For every gate theme (from its manifest, assets/awaken/music_layers/gate/<theme>.json):
   - a "journey" (about 70 s): the stems mixed exactly as the game mixes them (LayerPlayer + StemMixer: each level's
     gains, each stem's attack / duck / release, a Lord's fall letting go in 3 s), walking calm -> tension -> combat ->
-    Lord -> the Lord falls -> calm, so one listen answers "does this theme's music rise and fall right?";
+    Lord -> the Lord falls -> calm, so one listen answers "does this theme's music rise and fall right?"; a strip
+    under it shows the level playing and jumps to one on a click;
   - each stem alone (20 s from the loop's start), to judge a layer by itself.
-Every entry has keep / remake / cut and a note field; choices stay in the browser (localStorage) and export as JSON
-or as text to paste back. The page works from file:// with plain <audio> elements (no server, no Web Audio fetches).
-MP3 (not the game's Ogg Vorbis) so any browser plays it, Safari included.
+Every entry has keep / remake / cut, the line on what it is for (the theme's aim, each stem's intent) and a note
+field; choices stay in the browser (localStorage) and export as JSON or as text to paste back. A stem left unmarked
+exports with its mix's verdict ("from": "mix"), so fourteen marks decide every new sound. The page works from file://
+with plain <audio> elements (no server, no Web Audio fetches). MP3 (not the game's Ogg Vorbis) so any browser plays
+it, Safari included.
 """
 import datetime
 import html
@@ -35,6 +39,8 @@ DOCS = os.path.join(ROOT, "docs/audio")
 JOURNEY = [(0.0, "calm", "calm (the bed fades in)"), (12.0, "tension", "a monster hunts you"), (24.0, "combat", "blows traded"),
            (38.0, "lord", "the Lord"), (52.0, "fell", "the Lord falls"), (60.0, "calm", "calm again")]
 JOURNEY_END = 70.0
+# the strip under each mix: what each stretch of the journey is called there
+SEGMENT = {"calm": "calm", "tension": "tension", "combat": "combat", "lord": "Lord", "fell": "it falls"}
 VICTORY = 3.0
 STEM_EXCERPT = 20.0
 LEVELS = ["calm", "tension", "combat", "lord"]
@@ -115,7 +121,7 @@ def voices(c):
     return f"{c['key'][:-1]} {c['mode'].capitalize()}, {c['bpm']} bpm in {c['beats']}, a {c['bars']}-bar loop ({L.loop_seconds(c):.0f} s)"
 
 
-def build(date):
+def build(date, audio=True):
     folder = f"listening-{date}"
     out_dir = os.path.join(DOCS, folder)
     os.makedirs(out_dir, exist_ok=True)
@@ -123,22 +129,23 @@ def build(date):
     for tid, c in L.THEMES.items():
         path = os.path.join(ASSETS, "awaken/music_layers/gate", tid + ".json")
         man = json.load(open(path))
-        stems = stem_audio(man)
-        jy = journey(man, stems)
         jfile = f"{tid}_journey.mp3"
-        mp3(os.path.join(out_dir, jfile), jy)
-        sfiles = []
-        for s, a in zip(man["stems"], stems):
-            f = f"{tid}_{s['name']}.mp3"
-            mp3(os.path.join(out_dir, f), excerpt(a), kbps=96)
-            sfiles.append(f)
+        sfiles = [f"{tid}_{s['name']}.mp3" for s in man["stems"]]
+        if audio:
+            stems = stem_audio(man)
+            mp3(os.path.join(out_dir, jfile), journey(man, stems))
+            for f, a in zip(sfiles, stems):
+                mp3(os.path.join(out_dir, f), excerpt(a), kbps=96)
+        missing = [f for f in [jfile] + sfiles if not os.path.exists(os.path.join(out_dir, f))]
+        if missing:
+            sys.exit(f"{tid}: no {', '.join(missing)} in docs/audio/{folder} (run without --page)")
         meas = man.get("measured", {})
-        cards.append(dict(id=tid, title=c["title"], line=voices(c), room=c["room"], journey=f"{folder}/{jfile}",
+        cards.append(dict(id=tid, title=c["title"], line=voices(c), room=c["room"], aim=c["aim"], journey=f"{folder}/{jfile}",
                           stems=[dict(name=s["name"], file=f"{folder}/{f}", intent=s["intent"],
                                       fades=f"in {s['attack']:g} s · duck {s['duck']:g} s · out {s['release']:g} s")
                                  for s, f in zip(man["stems"], sfiles)],
                           loud=" · ".join(f"{k} {v['rms']:.1f} dB" for k, v in meas.items())))
-        print(f"  {tid}: journey + {len(sfiles)} stems")
+        print(f"  {tid}: journey + {len(sfiles)} stems" + ("" if audio else " (page only)"))
     page = render(date, cards)
     with open(os.path.join(DOCS, f"listening-{date}.html"), "w") as f:
         f.write(page)
@@ -146,10 +153,24 @@ def build(date):
     print(f"wrote docs/audio/listening-{date}.html and {len(os.listdir(out_dir))} files ({size:.1f} MB)")
 
 
+def clock(s):
+    return f"{int(s) // 60}:{int(s) % 60:02d}"
+
+
+def timeline():
+    """The strip under a mix: one segment per stretch of the journey (width = its share), a playhead over them."""
+    e = html.escape
+    ends = [t for t, _, _ in JOURNEY[1:]] + [JOURNEY_END]
+    segs = "".join(f'<button type="button" class="seg lv-{lv}" style="flex-grow:{end - t:g}" data-t="{t:g}" data-end="{end:g}" '
+                   f'title="{clock(t)} {e(lbl)}">{e(SEGMENT[lv])}</button>' for (t, lv, lbl), end in zip(JOURNEY, ends))
+    return f'<div class="timeline" data-total="{JOURNEY_END:g}" aria-label="the levels of this mix: click one to hear it">{segs}' \
+           f'<span class="head" aria-hidden="true"></span></div>'
+
+
 def render(date, cards):
     e = html.escape
-    marks = "".join(f'<li><b>{e(t)}</b> {e(lbl)}</li>' for (s, lv, lbl) in JOURNEY
-                    for t in [f"{int(s) // 60}:{int(s) % 60:02d}"])
+    marks = "".join(f'<li><span class="dot lv-{lv}"></span><b>{clock(s)}</b> {e(lbl)}</li>' for s, lv, lbl in JOURNEY)
+    strip = timeline()
     body = []
     for i, c in enumerate(cards):
         stems = "".join(f"""
@@ -163,15 +184,18 @@ def render(date, cards):
     <section class="card" id="{e(c['id'])}">
       <header><span class="n">{i + 1:02d}</span><h2>{e(c['title'])}</h2><p class="line">{e(c['line'])} · room: {e(c['room'])}</p></header>
       <div class="row journey" data-id="{e(c['id'])}.mix">
-        <div class="what"><span class="tag strong">the mix</span><span class="intent">One minute through every level, faded as the game fades it.
-          Does it rise with the danger and settle after?</span><span class="meta">{e(c['loud'])} (gated RMS)</span></div>
-        <audio controls preload="none" src="{e(c['journey'])}"></audio>
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">{e(c['aim'])}</span>
+          <span class="meta">every level in {JOURNEY_END:g} s, faded as the game fades it · {e(c['loud'])} (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="{e(c['journey'])}"></audio>{strip}</div>
         {verdict()}
       </div>
-      <details><summary>each layer alone (20 s)</summary>{stems}</details>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>{stems}</details>
     </section>""")
+    stems = sum(len(c["stems"]) for c in cards)
+    minutes = round(len(cards) * JOURNEY_END / 60)
     return TEMPLATE.replace("%DATE%", e(date)).replace("%MARKS%", marks).replace("%CARDS%", "".join(body)) \
-        .replace("%KEY%", f"awaken-listening-{date}").replace("%COUNT%", str(len(cards) * 5))
+        .replace("%KEY%", f"awaken-listening-{date}").replace("%THEMES%", str(len(cards))) \
+        .replace("%STEMS%", str(stems)).replace("%MINUTES%", str(minutes))
 
 
 def verdict():
@@ -188,7 +212,8 @@ TEMPLATE = """<!doctype html>
 <title>The Sound: listening</title>
 <style>
 :root { --bg:#f6f4ef; --card:#fffdf8; --ink:#1d1c1a; --soft:#6b665d; --line:#e4dfd4; --accent:#2e6bd8; --keep:#2f8a4e;
-  --remake:#b7791f; --cut:#b83a3a; --chip:#efe9dd; }
+  --remake:#b7791f; --cut:#b83a3a; --chip:#efe9dd;
+  --lv-calm:#5b7393; --lv-tension:#a86a12; --lv-combat:#b8442c; --lv-lord:#6a43b5; --lv-fell:#2f7d55; }
 @media (prefers-color-scheme: dark) { :root { --bg:#14161a; --card:#1c1f25; --ink:#ece9e2; --soft:#a29d93; --line:#2c3038;
   --accent:#7fb0ff; --keep:#5cc27f; --remake:#e0a548; --cut:#ef6b6b; --chip:#262a32; } }
 * { box-sizing:border-box; }
@@ -201,6 +226,9 @@ h1 { font-size:26px; margin:0 0 4px; letter-spacing:-0.01em; }
 .intro ol { margin:6px 0 6px 20px; padding:0; }
 .marks { display:flex; flex-wrap:wrap; gap:6px 14px; list-style:none; padding:0; margin:8px 0 0; color:var(--soft); font-size:13px; }
 .marks b { color:var(--ink); font-variant-numeric:tabular-nums; }
+.dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+.lv-calm { background:var(--lv-calm); } .lv-tension { background:var(--lv-tension); } .lv-combat { background:var(--lv-combat); }
+.lv-lord { background:var(--lv-lord); } .lv-fell { background:var(--lv-fell); }
 .bar { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 0; display:flex; gap:10px; align-items:center;
   flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:16px; }
 .bar .progress { font-variant-numeric:tabular-nums; color:var(--soft); margin-right:auto; }
@@ -220,11 +248,26 @@ button:hover { border-color:var(--accent); }
 .intent { flex:1 1 300px; }
 .meta { color:var(--soft); font-size:12px; flex-basis:100%; }
 audio { width:100%; height:36px; }
+.player { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.timeline { position:relative; display:flex; height:24px; border-radius:6px; overflow:hidden; }
+.seg { flex-basis:0; min-width:0; border:0; border-radius:0; padding:0 5px; font-size:11px; line-height:24px; color:#fff;
+  text-align:left; white-space:nowrap; overflow:hidden; }
+.seg + .seg { box-shadow:inset 1px 0 0 var(--card); }
+.seg.now { font-weight:600; box-shadow:inset 0 -3px 0 rgba(255,255,255,.85); }
+.seg:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.head { position:absolute; top:0; bottom:0; left:0; width:2px; margin-left:-1px; background:var(--ink);
+  box-shadow:0 0 0 1px var(--card); pointer-events:none; opacity:0; }
+.timeline.live .head { opacity:1; }
 .verdict { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
 .choices { display:flex; gap:6px; }
 .choices button[aria-pressed=true][data-v=keep] { background:var(--keep); border-color:var(--keep); color:#fff; }
 .choices button[aria-pressed=true][data-v=remake] { background:var(--remake); border-color:var(--remake); color:#fff; }
 .choices button[aria-pressed=true][data-v=cut] { background:var(--cut); border-color:var(--cut); color:#fff; }
+/* a layer nobody marked shows the verdict it takes from its mix */
+.choices button[data-inherit=true] { border-style:dashed; }
+.choices button[data-inherit=true][data-v=keep] { border-color:var(--keep); color:var(--keep); }
+.choices button[data-inherit=true][data-v=remake] { border-color:var(--remake); color:var(--remake); }
+.choices button[data-inherit=true][data-v=cut] { border-color:var(--cut); color:var(--cut); }
 .note { flex:1 1 220px; min-width:0; font:inherit; padding:6px 10px; border-radius:8px; border:1px solid var(--line);
   background:var(--bg); color:var(--ink); }
 details summary { cursor:pointer; color:var(--accent); padding:8px 0 2px; }
@@ -236,11 +279,15 @@ textarea { width:100%; min-height:160px; font:13px/1.4 ui-monospace, Menlo, mono
 <body>
 <main>
 <h1>The Sound: listening</h1>
-<p class="sub">AWAKEN · Awakened Pack stage 4 · %DATE% · layered gate music, 14 themes</p>
+<p class="sub">AWAKEN · Awakened Pack stage 4 · %DATE% · layered gate music: %THEMES% themes, %STEMS% new stems</p>
 <div class="intro">
-  <p><b>Fifteen minutes.</b> For each gate theme, play <b>the mix</b>: about a minute that walks through every level the way
-  the game does, with the game's own fades. Mark it <b>keep</b>, <b>remake</b> or <b>cut</b>, and say why in the note when it
-  isn't a keep. The layers alone are under each card if one part bothers you (optional).</p>
+  <p><b>About %MINUTES% minutes.</b> For each gate theme, play <b>the mix</b>: a minute and ten seconds that walks through
+  every level the way the game does, with the game's own fades. The line above it says what the theme is for: does it
+  sound like that, rise with the danger and settle after? Mark it <b>keep</b>, <b>remake</b> or <b>cut</b>, and say why in
+  the note when it isn't a keep. The strip under the player shows the level you're hearing; click one to jump to it.</p>
+  <p>The %STEMS% layers under the cards are every new sound in this stage. A layer you leave unmarked takes its mix's
+  verdict (shown dashed), so fourteen marks decide them all; open the layers only when one part bothers you, and mark
+  that one on its own.</p>
   <ul class="marks">%MARKS%</ul>
   <p>In the game: inside a gate the music becomes four stems played together. The bed while you explore; a tension layer
   when something hunts you or the gate's pressure rises; drums and bass in a fight; the theme's tune stated big for a Lord.
@@ -249,7 +296,7 @@ textarea { width:100%; min-height:160px; font:13px/1.4 ui-monospace, Menlo, mono
   Remastered; everything else gets the room it's in (that part is heard in game, not here).</p>
   <p>Your choices stay in this browser. When you're done, <b>Export</b> and send me the file (or the text).</p>
 </div>
-<div class="bar"><span class="progress" id="progress">0 of %COUNT% marked</span>
+<div class="bar"><span class="progress" id="progress">mixes 0 of %THEMES% · layers marked on their own 0 of %STEMS%</span>
   <button id="export">Export choices (.json)</button><button id="text">Show as text</button></div>
 %CARDS%
 <textarea id="out" hidden readonly></textarea>
@@ -260,36 +307,67 @@ textarea { width:100%; min-height:160px; font:13px/1.4 ui-monospace, Menlo, mono
   var state = {};
   try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} update(); }
+  function isMix(id) { return /\\.mix$/.test(id); }
+  // a layer's own verdict, else its mix's ("from": "mix")
+  function verdictOf(id) {
+    var own = (state[id] || {}).v;
+    if (own || isMix(id)) return { v: own || "", from: "" };
+    var mix = (state[id.slice(0, id.lastIndexOf(".")) + ".mix"] || {}).v;
+    return { v: mix || "", from: mix ? "mix" : "" };
+  }
   function update() {
-    var rows = document.querySelectorAll(".row[data-id]"), done = 0, total = rows.length;
-    rows.forEach(function (r) { if ((state[r.dataset.id] || {}).v) done++; });
-    document.getElementById("progress").textContent = done + " of " + total + " marked";
+    var mixes = 0, nm = 0, own = 0, nl = 0;
+    document.querySelectorAll(".row[data-id]").forEach(function (r) {
+      var id = r.dataset.id, marked = !!(state[id] || {}).v, d = verdictOf(id);
+      if (isMix(id)) { nm++; if (marked) mixes++; } else { nl++; if (marked) own++; }
+      r.querySelectorAll(".choices button").forEach(function (b) {
+        b.setAttribute("aria-pressed", marked && d.v === b.dataset.v ? "true" : "false");
+        b.setAttribute("data-inherit", d.from && d.v === b.dataset.v ? "true" : "false");
+      });
+    });
+    document.getElementById("progress").textContent = "mixes " + mixes + " of " + nm + " · layers marked on their own " + own + " of " + nl;
   }
   document.querySelectorAll(".row[data-id]").forEach(function (row) {
-    var id = row.dataset.id, s = state[id] || {};
+    var id = row.dataset.id;
     row.querySelectorAll(".choices button").forEach(function (b) {
-      b.setAttribute("aria-pressed", s.v === b.dataset.v ? "true" : "false");
       b.addEventListener("click", function () {
         var cur = state[id] || {};
         cur.v = cur.v === b.dataset.v ? "" : b.dataset.v;
         state[id] = cur;
-        row.querySelectorAll(".choices button").forEach(function (o) { o.setAttribute("aria-pressed", o.dataset.v === cur.v ? "true" : "false"); });
         save();
       });
     });
     var note = row.querySelector(".note");
-    note.value = s.note || "";
+    note.value = (state[id] || {}).note || "";
     note.addEventListener("input", function () { var cur = state[id] || {}; cur.note = note.value; state[id] = cur; save(); });
   });
   // one sound at a time
   document.addEventListener("play", function (ev) {
     document.querySelectorAll("audio").forEach(function (a) { if (a !== ev.target) a.pause(); });
   }, true);
+  // the strip under each mix: a playhead over the level that plays; a click jumps to a level
+  document.querySelectorAll(".journey").forEach(function (row) {
+    var audio = row.querySelector("audio"), line = row.querySelector(".timeline");
+    var head = line.querySelector(".head"), segs = line.querySelectorAll(".seg"), total = +line.dataset.total, raf = 0;
+    function show() {
+      var t = audio.currentTime || 0;
+      head.style.left = Math.min(100, t / total * 100) + "%";
+      line.classList.toggle("live", t > 0);
+      segs.forEach(function (s) { s.classList.toggle("now", t > 0 && t >= +s.dataset.t && t < +s.dataset.end); });
+    }
+    function frame() { show(); raf = audio.paused ? 0 : requestAnimationFrame(frame); }
+    audio.addEventListener("play", function () { if (!raf) raf = requestAnimationFrame(frame); });
+    ["timeupdate", "seeked", "ended"].forEach(function (k) { audio.addEventListener(k, show); });
+    segs.forEach(function (s) {
+      s.addEventListener("click", function () { audio.currentTime = +s.dataset.t; audio.play(); show(); });
+    });
+  });
   function rows() {
     var out = [];
     document.querySelectorAll(".row[data-id]").forEach(function (r) {
-      var s = state[r.dataset.id] || {};
-      out.push({ id: r.dataset.id, verdict: s.v || "", note: s.note || "" });
+      var id = r.dataset.id, d = verdictOf(id), e = { id: id, verdict: d.v, note: (state[id] || {}).note || "" };
+      if (d.from) e.from = d.from;
+      out.push(e);
     });
     return out;
   }
@@ -302,8 +380,10 @@ textarea { width:100%; min-height:160px; font:13px/1.4 ui-monospace, Menlo, mono
   });
   document.getElementById("text").addEventListener("click", function () {
     var t = document.getElementById("out");
-    t.value = rows().filter(function (r) { return r.verdict || r.note; })
-      .map(function (r) { return r.id + ": " + (r.verdict || "-") + (r.note ? " - " + r.note : ""); }).join("\\n") || "(nothing marked yet)";
+    // a layer that only follows its mix is left out: the line says so
+    var lines = rows().filter(function (r) { return (r.verdict && !r.from) || r.note; })
+      .map(function (r) { return r.id + ": " + (r.verdict || "-") + (r.from ? " (as its mix)" : "") + (r.note ? " - " + r.note : ""); });
+    t.value = lines.length ? lines.join("\\n") + "\\n(layers not listed take their mix's verdict)" : "(nothing marked yet)";
     t.hidden = false; t.focus(); t.select();
   });
   update();
@@ -314,4 +394,5 @@ textarea { width:100%; min-height:160px; font:13px/1.4 ui-monospace, Menlo, mono
 """
 
 if __name__ == "__main__":
-    build(sys.argv[1] if len(sys.argv) > 1 else datetime.date.today().isoformat())
+    args = [a for a in sys.argv[1:] if a != "--page"]
+    build(args[0] if args else datetime.date.today().isoformat(), audio="--page" not in sys.argv)

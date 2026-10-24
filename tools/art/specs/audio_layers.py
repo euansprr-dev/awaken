@@ -280,6 +280,7 @@ STRAIGHT_FILL = [(0, 1.0), (1, 0.7), (2, 0.9), (2.5, 0.6), (3, 0.8), (3.5, 0.9)]
 THEMES = {
     "bell_crypt": dict(
         title="Bell Crypt", bpm=54, beats=4, bars=12, key="D3", mode="phrygian", room="cathedral",
+        aim="Dread under stone: the crypt tolls for you, growing heavier rather than faster; the Bell Warden is the great bell waking.",
         prog=[(0, 2), (1, 2), (3, 2), (0, 2), (6, 2), (0, 2)],
         intent={"bed": "A buried drone, monks humming 'o', the sigh tolled on bells; the crypt breathing.",
                 "tension": "A low bell every bar, strings trembling on D against E-flat, a slow heartbeat.",
@@ -308,6 +309,7 @@ THEMES = {
     ),
     "fungal_hollow": dict(
         title="Fungal Hollow", bpm=66, beats=3, bars=16, key="F3", mode="lydian", room="hall",
+        aim="Strange, gentle wonder in three: a glowing hollow that breathes; the Mother of Spores swells it into a towering Lydian choir.",
         prog=[(0, 2), (1, 2), (0, 2), (1, 2), (5, 2), (1, 2), (2, 2), (1, 2)],
         intent={"bed": "A warm pad, a breathy flute floating on the raised fourth, marimba drops, spores popping.",
                 "tension": "Marimba circling in 6/8, a plucked B under F that doesn't settle, vibes on the fourth.",
@@ -337,6 +339,7 @@ THEMES = {
     ),
     "ember_mines": dict(
         title="Ember Mines", bpm=60, beats=4, bars=16, key="E3", mode="hijaz", room="cave",
+        aim="Heat and labour deep in the rock: the oud's Hijaz line over far anvils, hammered into a march when the Ember Tyrant comes.",
         prog=[(0, 4), (1, 2), (0, 2), (3, 4), (1, 2), (0, 2)],
         intent={"bed": "Two drones in the rock, dark strings, the oud tune (E F G# A) now and then, embers ticking.",
                 "tension": "The oud worrying E against F in eighths, far anvils, strings trembling.",
@@ -364,6 +367,7 @@ THEMES = {
     ),
     "drowned_archive": dict(
         title="Drowned Archive", bpm=58, beats=4, bars=16, key="A2", mode="aeolian", room="cave",
+        aim="A library under water: damped, slow and sinking, even a fight heard as if through the tide; the Archivist rises out of it.",
         prog=[(0, 2), (5, 2), (2, 2), (6, 2), (3, 2), (5, 2), (0, 2), (4, 2)],
         intent={"bed": "Damped felt piano breaking the chords, low strings, drips and bubbles, water overhead.",
                 "tension": "A low piano ostinato, a cluster trembling in the strings, glass notes sinking.",
@@ -392,6 +396,7 @@ THEMES = {
     ),
     "clockwork_foundry": dict(
         title="Clockwork Foundry", bpm=72, beats=4, bars=16, key="C3", mode="dorian", room="room",
+        aim="A machine room that keeps time: ticking, precise, a little sinister; the Gearwright Colossus is the whole works at full drive.",
         prog=[(0, 2), (3, 2), (0, 2), (6, 2), (4, 2), (3, 2), (2, 2), (3, 2)],
         intent={"bed": "An escapement ticking, a music box turning over, strings, steam in the pipes.",
                 "tension": "The ticks double, a pizzicato bass stalks, strings tremble on a second.",
@@ -418,6 +423,7 @@ THEMES = {
     ),
     "glass_desert": dict(
         title="Glass Desert", bpm=50, beats=4, bars=12, key="E3", mode="phrygian", room="air",
+        aim="Vast, empty heat and ringing glass, slow as a mirage; the Glass Serpent's fight should glitter and cut, never turn muddy.",
         prog=[(0, 4), (1, 2), (0, 2), (6, 2), (5, 1), (0, 1)],
         intent={"bed": "Glass harmonica fifths, ringing glass bowls, sand wind; the tune once, slow.",
                 "tension": "The oud ostinato under it, a low E, the F bowl ringing a half step above.",
@@ -445,6 +451,7 @@ THEMES = {
     ),
     "hive": dict(
         title="Hive", bpm=76, beats=4, bars=16, key="F2", mode="aeolian", room="room",
+        aim="Warm, busy and faintly wrong: wings everywhere, a second swarm a half step off; the Hive Regent brings the swarm's full weight.",
         prog=[(0, 2), (5, 2), (6, 2), (0, 2), (3, 2), (5, 2), (4, 2), (6, 2)],
         intent={"bed": "Wings as a fluttering drone, strings, the marimba tune, honey dripping.",
                 "tension": "The hexagonal pizzicato pattern, and a second swarm a half step up: agitated.",
@@ -468,6 +475,7 @@ THEMES = {
     ),
     "overgrown_temple": dict(
         title="Overgrown Temple", bpm=60, beats=4, bars=16, key="G2", mode="dorian", room="hall",
+        aim="Old, green and calm, a holy place the forest took back; the Root Saint's fight is solemn and rooted, not frantic.",
         prog=[(0, 2), (3, 2), (0, 2), (6, 2), (2, 2), (3, 2), (4, 2), (3, 2)],
         intent={"bed": "A warm pad, the wooden flute's tune twice, fireflies chirping, forest air.",
                 "tension": "Kalimba circling, a hand drum, strings trembling on the fifth.",
@@ -494,6 +502,7 @@ THEMES = {
     ),
     "lantern_night_market": dict(
         title="Lantern Night Market", bpm=84, beats=4, bars=16, key="D3", mode="ionian", room="room",
+        aim="The friendly one: a night market you'd want to linger in; a fight here stays playful, the Lantern Broker a showman.",
         prog=[(0, 2), (5, 2), (3, 2), (4, 2), (0, 2), (5, 2), (3, 2), (4, 2)],
         intent={"bed": "The friendly one: felt piano in quarters, the koto tune and its answer.",
                 "tension": "A shaker, a plucked bass, bells: the market gets busy (rarely a threat here).",
@@ -520,6 +529,7 @@ THEMES = {
     ),
     "frost_monastery": dict(
         title="Frost Monastery", bpm=50, beats=4, bars=12, key="B2", mode="aeolian", room="cathedral",
+        aim="Cold, vast and devout: a far chant in a stone hall with snow outside; the Abbot of Frost answers with the full choir.",
         prog=[(0, 4), (5, 2), (0, 2), (3, 2), (4, 1), (0, 1)],
         intent={"bed": "A hummed fifth in a huge stone room, ice bells, cold wind; the chant once, far off.",
                 "tension": "Low sung pulses on 'u', ice bells circling high, a soft drum on every bar.",
@@ -545,6 +555,7 @@ THEMES = {
     ),
     "mirror_palace": dict(
         title="Mirror Palace", bpm=64, beats=4, bars=16, key="C3", mode="lydian", room="air",
+        aim="Elegant and disorienting: every phrase mirrored, nothing quite where you hear it; the Mirror Knight duels in reflections.",
         prog=[(0, 2), (1, 2), (0, 2), (1, 2), (5, 2), (1, 2), (4, 2), (1, 2)],
         intent={"bed": "A glass harmonica chord, a palindrome in glass with its reflection an octave up, half a beat late.",
                 "tension": "Reversed swells into every other bar line, a glass ostinato.",
@@ -570,6 +581,7 @@ THEMES = {
     ),
     "precursor_lab": dict(
         title="Precursor Lab", bpm=90, beats=4, bars=16, key="F#2", mode="aeolian", room="room",
+        aim="Clinical and ancient: a machine still counting in the dark; Unit Zero is its countdown at full power.",
         prog=[(0, 2), (5, 2), (2, 2), (6, 2), (3, 2), (5, 2), (0, 2), (4, 2)],
         intent={"bed": "A soft FM arpeggiator, a pad, the mains hum, the sigh in signal-blue glass.",
                 "tension": "A sine pulse in eighths, a low drum, glass on the minor second.",
@@ -596,6 +608,7 @@ THEMES = {
     ),
     "nightmare": dict(
         title="Nightmare", bpm=52, beats=4, bars=12, key="C#3", mode="aeolian", room="cave",
+        aim="The gate meant to frighten: a lullaby with one wrong note and a limping heart; the Sleeper is the dream coming apart.",
         prog=[(0, 2), (5, 2), (0, 2), (1, 2), (3, 2), (1, 2)],
         intent={"bed": "Cluster strings, a buried drone, the damp music box's lullaby with its one wrong note, whispers.",
                 "tension": "A heartbeat on every bar, reversed piano sucking into the bar lines.",
@@ -622,6 +635,7 @@ THEMES = {
     ),
     "sky_archipelago": dict(
         title="Sky Archipelago", bpm=66, beats=4, bars=16, key="D3", mode="lydian", room="air",
+        aim="Open air and lift, the most hopeful gate; the Sky Leviathan is huge and soaring, never grim.",
         prog=[(0, 2), (1, 2), (0, 2), (1, 2), (5, 2), (4, 2), (1, 2), (0, 2)],
         intent={"bed": "Airy strings and fifths, the high flute's tune and its answer, wind.",
                 "tension": "A glass arpeggio, a soft pulse, strings trembling on the raised fourth.",
