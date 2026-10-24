@@ -155,10 +155,14 @@ load 14-32, so frame times swing by a millisecond between identical scenes; logs
   `material_rule/lands/<biome>_surface|_under` spliced first by a modifier of the same name, guarded by its biome. Then
   it applies the injectors to the vanilla generator the way Lithostitched does (first matching injector wins, the field
   sampled at the biome's quart corner) on the five studio seeds, 3,072 blocks round the origin every 96, and logs the
-  share of land each Awakened biome takes. Measured 2026-10-24 (vanilla shapes, threshold 0): 21.5% of land on average
-  (19-25% a seed; the archetypes cover 41-46%), of it Elderwood 65%, Glass Steppe 25%, Lumen Forest 7%, Shattered
-  Highlands 2% (windswept hills are rare in vanilla; Tectonic raises them). The studio on the Mac measures the real
-  thing (Tectonic and Lithostitched).
+  share of land each Awakened biome takes, how much of its archetypes each claims, and the field's deciles over the
+  archetypes' land (for tuning: the field is terrain-blind). Measured 2026-10-24 with the tuned thresholds (SPEC §15):
+  41.5% of land on vanilla shapes (36-45% a seed; the archetypes cover 52-55%), of it Elderwood 52%, Glass Steppe
+  20%, Frost Spires 10%, Lumen Forest 8%, Mirror Marsh 6%, Shattered Highlands 4%; the test wants 34-48%. With
+  Tectonic's `awakened` preset (the `/awaken terrain survey` grids of the five studio seeds, taken on a dedicated
+  server with the pack's world profile): 40.6% of land (28-50% a seed), Elderwood 17.4%, Glass Steppe 8.5%, Frost
+  Spires 6.8%, Shattered Highlands 4.6%, Lumen Forest 2.5%, Mirror Marsh 0.7% (swamps are rare on Tectonic's land).
+  The survey runs from the server console too (round the world spawn).
 
 ## The slice as built (2026-10-24)
 
@@ -223,8 +227,9 @@ order across biomes: the feature sorter rejects cycles), the archetype's trees s
   `#a3c4ca`, sky `#7fa3e4`. Vegetation: lumen moss patches (carpet over grass, caps, ferns), 4–6 trees a chunk (55%
   Lumen tree, 42% small, 3% fallen; no huge mushrooms, their brown and orange caps broke the teal), grass, lumen caps, firefly bushes everywhere (not only by
   water), litter, mushrooms. No forest flowers.
-- Placement: Lithostitched `replace_partially` where `awaken:lands/awakening` ≥ 0: Elderwood for forest, birch forest,
-  old-growth birch and flower forest; Lumen Forest for dark forest.
+- Placement: Lithostitched `replace_partially` where `awaken:lands/awakening` passes the biome's threshold (SPEC §15:
+  Elderwood −0.22, Lumen Forest −0.34): Elderwood for forest, birch forest, old-growth birch and flower forest; Lumen
+  Forest for dark forest.
 
 ### Hero trees (structures, `terrain.hero`)
 
@@ -320,7 +325,7 @@ Generated like the slice: blocks, models, loot, recipes, tags, data maps, lang a
 (Shattered Highlands), `terrain.landmark` (the Gate Scar and the Shard Drift, `awaken:landmark`), `terrain.client.LandsMotes`
 (their air). Biome table rows, looks and air rows as for the slice.
 
-### Glass Steppe (Sunscorch; replaces savanna and savanna plateau in the field)
+### Glass Steppe (Sunscorch; replaces savanna, savanna plateau and windswept savanna in the field)
 
 Plains melted to glass where gates broke long ago.
 
@@ -361,7 +366,7 @@ Plains melted to glass where gates broke long ago.
   air, plants and water only, standing columns continued down to the ground. Sites: dry steppe at least 12 above the
   sea (the bowl stays dry), ground within 5 at 16 out and 8 at 28 out. `random_spread` spacing 28, separation 10.
 
-### Shattered Highlands (Crag; replaces windswept hills, windswept gravelly hills and stony peaks in the field)
+### Shattered Highlands (Crag; replaces windswept hills, windswept gravelly hills, windswept forest and stony peaks in the field)
 
 Mountains split along lines of light.
 

@@ -26,6 +26,7 @@ import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,8 +50,12 @@ final class PlacementTests {
     static final long[] STUDIO_SEEDS = {777L, 20261024L, 4242L, 1337L, 90210L};
     /** How far round the origin, and how finely, each seed is surveyed (the studio: 3072 at 32). */
     private static final int RADIUS = 3072, STEP = 96;
-    /** The share of land the Awakened biomes take on the studio seeds, mean over the five (plan: about 40%). */
-    static final double SHARE_MIN = 0.05, SHARE_MAX = 0.60;
+    /**
+     * The share of land the Awakened biomes take on the studio seeds, mean over the five (plan: about 40%). Tuned
+     * 2026-10-24 to 41.5% here and 40.6% under Tectonic's {@code awakened} preset; a threshold or target change that
+     * moves it far either way fails.
+     */
+    static final double SHARE_MIN = 0.34, SHARE_MAX = 0.48;
 
     /**
      * Which overworld rule each part of an Awakened biome's ground goes first in: its top above water, what lies under
@@ -121,6 +126,10 @@ final class PlacementTests {
         Map<Identifier, DensityFunction> fields = new HashMap<>();
         for (Injector in : injectors) fields.computeIfAbsent(in.field(), f -> functions.getOrThrow(ResourceKey.create(Registries.DENSITY_FUNCTION, f)).value());
         Map<String, Integer> byBiome = new TreeMap<>();
+        // per Awakened biome: of its archetypes' land, how much it claims (the rest stays vanilla)
+        Map<String, Integer> archetypeLand = new TreeMap<>();
+        float[] field = new float[1 << 16];
+        int sampled = 0;
         StringBuilder log = new StringBuilder();
         double sum = 0;
         long t0 = System.currentTimeMillis();
@@ -138,9 +147,12 @@ final class PlacementTests {
                     for (Injector in : injectors) {
                         if (!in.targets().contains(key)) continue;
                         targets++;
+                        archetypeLand.merge(in.replacement().identifier().getPath(), 1, Integer::sum);
                         // Lithostitched samples the field at the biome's quart corner
                         float v = rs.sampleBlockValueUncached(fields.get(in.field()), QuartPos.toBlock(QuartPos.fromBlock(x)),
                                 QuartPos.toBlock(QuartPos.fromBlock(y)), QuartPos.toBlock(QuartPos.fromBlock(z)));
+                        if (sampled == field.length) field = Arrays.copyOf(field, sampled * 2);
+                        field[sampled++] = v;
                         if (v < in.min() || v > in.max()) break;
                         awakened++;
                         byBiome.merge(in.replacement().identifier().getPath(), 1, Integer::sum);
@@ -155,9 +167,14 @@ final class PlacementTests {
         double mean = sum / STUDIO_SEEDS.length;
         int total = byBiome.values().stream().mapToInt(Integer::intValue).sum();
         StringBuilder split = new StringBuilder();
-        byBiome.forEach((b, n) -> split.append(String.format(Locale.ROOT, " %s %.0f%%", b, n * 100.0 / Math.max(1, total))));
-        Awaken.LOG.info("[terrain] lands placement (vanilla shapes, {} blocks round the origin every {}):{} mean {}%; of it:{}; {} ms",
-                RADIUS, STEP, log, String.format(Locale.ROOT, "%.1f", mean * 100), split, System.currentTimeMillis() - t0);
+        byBiome.forEach((b, n) -> split.append(String.format(Locale.ROOT, " %s %.0f%% (%.0f%% of its archetypes)", b, n * 100.0 / Math.max(1, total),
+                n * 100.0 / Math.max(1, archetypeLand.getOrDefault(b, 0)))));
+        // the field over the archetypes' land (it is terrain-blind: the same under Tectonic), for tuning the thresholds
+        Arrays.sort(field, 0, sampled);
+        StringBuilder deciles = new StringBuilder();
+        for (int d = 1; d <= 9; d++) deciles.append(String.format(Locale.ROOT, " %.2f", sampled == 0 ? 0 : field[sampled * d / 10]));
+        Awaken.LOG.info("[terrain] lands placement (vanilla shapes, {} blocks round the origin every {}):{} mean {}%; of it:{}; the field's deciles there:{}; {} ms",
+                RADIUS, STEP, log, String.format(Locale.ROOT, "%.1f", mean * 100), split, deciles, System.currentTimeMillis() - t0);
         for (Identifier id : lands) h.assertTrue(byBiome.getOrDefault(id.getPath(), 0) > 0, id + " is placed on the studio seeds");
         h.assertTrue(mean >= SHARE_MIN && mean <= SHARE_MAX, "Awakened biomes take " + Math.round(mean * 100) + "% of the land (want "
                 + Math.round(SHARE_MIN * 100) + "-" + Math.round(SHARE_MAX * 100) + "%)");

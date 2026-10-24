@@ -809,9 +809,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
   it off). Test: `terrain_lands_pack_new_worlds_only`.
 - Placed today (2026-10-24): Elderwood (replaces forest, birch, old-growth birch and flower forest), Lumen Forest
-  (dark forest), Glass Steppe (savanna, savanna plateau), Shattered Highlands (windswept hills, windswept gravelly
-  hills, stony peaks), Frost Spires (snowy plains, snowy taiga, grove, ice spikes) and Mirror Marsh (swamp, mangrove
-  swamp), all where the awakening field ≥ 0.
+  (dark forest), Glass Steppe (savanna, savanna plateau, windswept savanna), Shattered Highlands (windswept hills,
+  windswept gravelly hills, windswept forest, stony peaks), Frost Spires (snowy plains, snowy taiga, grove, ice
+  spikes) and Mirror Marsh (swamp, mangrove swamp), each where the awakening field passes its threshold (below).
 - An Awakened biome's own ground is a material rule in the lands pack (`worldgen/material_rule/lands/<biome>_surface`
   and `_under`), spliced first into the overworld's `biome_surface` and `under_biome_surface` by Lithostitched
   `set_material_rule` modifiers (`injection_type: prepend`, guarded by its biome), so the surface pass lays it and far
@@ -859,7 +859,14 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 - Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
-  are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+  are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds. Tuned 2026-10-24
+  (`AWAKENING` in `tools/content/lands_content.py`): Elderwood −0.22, Glass Steppe and Frost Spires −0.27, Lumen
+  Forest and Shattered Highlands −0.34, Mirror Marsh −0.41 (the field's deciles over the archetypes' land run −0.41,
+  −0.27, −0.17, −0.09, −0.01, 0.07, 0.15, 0.25, 0.40, so −0.27 claims about 80%). Forests are the commonest archetype,
+  so Elderwood takes less of them and stays one Awakened biome among six; the rare archetypes give more. Measured:
+  40.6% of land under Tectonic's `awakened` preset (28–50% a seed; 24.2% when every threshold was 0), 41.5% on
+  vanilla shapes; about a fifth to a third of each archetype stays vanilla. `terrain_lands_placement` fails outside
+  34–48% on vanilla shapes.
   `terrain_lands_placement` holds the injectors to the biome table (one per Awakened biome, its archetype among its
   vanilla targets, no target claimed twice, ground splices guarded by their biome) and measures the share on the
   five studio seeds by applying the injectors to the vanilla generator as Lithostitched does.

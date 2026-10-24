@@ -437,9 +437,10 @@ def pack(lc):
     landmarks(lc)
     mc = lc.mc
     lc.write(f"{P}/awaken/lithostitched/biome_injector/lands/glass_steppe.json",
-             lc.injector("glass_steppe", [mc("savanna"), mc("savanna_plateau")]))
+             lc.injector("glass_steppe", [mc("savanna"), mc("savanna_plateau"), mc("windswept_savanna")]))
     lc.write(f"{P}/awaken/lithostitched/biome_injector/lands/shattered_highlands.json",
-             lc.injector("shattered_highlands", [mc("windswept_hills"), mc("windswept_gravelly_hills"), mc("stony_peaks")]))
+             lc.injector("shattered_highlands", [mc("windswept_hills"), mc("windswept_gravelly_hills"), mc("windswept_forest"),
+                                                     mc("stony_peaks")]))
 
 
 if __name__ == "__main__":

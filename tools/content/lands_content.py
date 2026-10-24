@@ -591,9 +591,19 @@ def biomes():
     return {"elderwood": elder, "lumen_forest": lumen}
 
 
+# Where each Awakened biome takes its archetypes' land: the awakening field at least this (SPEC §15). Tuned 2026-10-24
+# toward 40% of land on the five studio seeds with Tectonic's `awakened` preset (24% at 0 for all). The field over the
+# archetypes' land has the deciles -0.41 -0.27 -0.17 -0.09 -0.01 0.07 0.15 0.25 0.40 (terrain_lands_placement logs
+# them), so -0.27 claims about 80% of them. Forests are the commonest archetype: Elderwood takes less of them, so it
+# stays one Awakened biome among six; the rare archetypes (dark forest, the windswept hills, swamps) give more, so their
+# Awakened biome is there to be found.
+AWAKENING = {"elderwood": -0.22, "glass_steppe": -0.27, "frost_spires": -0.27, "lumen_forest": -0.34,
+             "shattered_highlands": -0.34, "mirror_marsh": -0.41}
+
+
 def injector(name, targets):
     return {"type": "lithostitched:replace_partially", "dimension": mc("overworld"), "targets": targets,
-            "replacement": aw(name), "parameters": {"awaken:lands/awakening": {"min_inclusive": 0.0}}}
+            "replacement": aw(name), "parameters": {"awaken:lands/awakening": {"min_inclusive": AWAKENING[name]}}}
 
 
 # Hero trees: one candidate per spacing x spacing chunks, kept where the site search finds its biome and level ground
