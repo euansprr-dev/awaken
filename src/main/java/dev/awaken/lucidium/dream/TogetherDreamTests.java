@@ -98,7 +98,7 @@ public final class TogetherDreamTests {
             };
             int building;
             try {
-                building = cellsComeBack(h, server, a, b);
+                building = cellsComeBack(h, server, a, b, aside);
             } catch (RuntimeException e) {
                 cleanup.run();
                 throw e;
@@ -111,7 +111,8 @@ public final class TogetherDreamTests {
     }
 
     /** The synchronous part: returns the cell of a build that was cancelled while it compiles in the background. */
-    private static int cellsComeBack(GameTestHelper h, net.minecraft.server.MinecraftServer server, ServerPlayer a, ServerPlayer b) {
+    private static int cellsComeBack(GameTestHelper h, net.minecraft.server.MinecraftServer server, ServerPlayer a, ServerPlayer b,
+                                     List<Integer> aside) {
         Planner.Prepared pa = Planner.prepareNow(a), pb = Planner.prepareNow(b); // tonight's plans, as built at dusk
         int ca = pa.blueprint().cell, cb = pb.blueprint().cell;
         h.assertTrue(ca != cb, "each plan has its own cell");
@@ -135,9 +136,16 @@ public final class TogetherDreamTests {
         h.assertTrue(again == ca && Cells.issued() == issued, "the next dream takes a returned cell, not a new one");
         Cells.release(server, again);
 
-        // a build thrown away while it is still compiling gives its cell back when it completes (in the background)
+        // a build thrown away while it is still compiling gives its cell back when it completes (in the background);
+        // the morning let every other player's unused plan go too, so their cells wait aside and the build takes b's
+        while (Cells.freeCount() > 0) {
+            int c = Cells.allocate(server);
+            if (c != cb) aside.add(c);
+        }
+        Cells.release(server, cb);
         Planner.request(a, "test");
-        h.assertTrue(planned(a) && !Cells.isFree(cb), "a new build takes b's returned cell");
+        h.assertTrue(planned(a), "a new build starts");
+        h.assertFalse(Cells.isFree(cb), "and takes b's returned cell");
         Planner.invalidate(a);
         return cb;
     }
