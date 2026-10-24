@@ -9,10 +9,13 @@
   python3 -I tools/pack.py status <game-dir>             what is installed, hashes, and jars the pack doesn't own
   python3 -I tools/pack.py export <out.mrpack> <profiles> --awaken-jar build/libs/awaken-x.jar
   python3 -I tools/pack.py dhconfig <game-dir> swift|cinematic|default   Distant Horizons settings for a look
+  python3 -I tools/pack.py backend <game-dir> vulkan|opengl|default       the graphics API the game starts with
 
 install writes the Swift Distant Horizons settings when the horizon profile goes into a folder that has none yet
 (an existing DistantHorizons.toml is the player's and is left alone), and copies each chosen profile's config files
-(mods.json "configs") the same way: only when missing, unless --reset-configs. install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
+(mods.json "configs") the same way: only when missing, unless --reset-configs. install also makes Vulkan the graphics
+API unless the player picked one (options.txt preferredGraphicsBackend left at "default" or missing); Vulkan measured
+15-33% faster than OpenGL on Apple Silicon with every pack mod working (docs/perf/vulkan/REPORT.md). install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
 never deletes a jar it didn't put there, and refuses to touch a game folder a client is running from.
 """
 import hashlib
@@ -241,6 +244,7 @@ def cmd_install(game_dir, profiles, reset_configs=False):
     if any(e["slug"] == "distanthorizons" for e in chosen):
         cmd_dhconfig(game_dir, "swift", only_if_missing=True)
     install_configs(game_dir, names, reset_configs)
+    cmd_backend(game_dir, "vulkan", only_if_unset=True)
     save(mods_dir / MARKER, {"schemaVersion": 1, "profiles": names, "installed": time.strftime("%Y-%m-%d %H:%M"),
                              "lockGenerated": lock["generated"],
                              "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"]} for e in chosen]})
@@ -277,6 +281,25 @@ def cmd_status(game_dir):
     for p in sorted(mods_dir.glob("*.jar")):
         if p.name not in ours:
             print(f"  {'not ours':8} {p.name}")
+
+
+# ------------------------------------------------------------------------------------------------- graphics API
+
+def cmd_backend(game_dir, backend, only_if_unset=False):
+    """Sets options.txt preferredGraphicsBackend. only_if_unset leaves a player's explicit choice (opengl or vulkan)."""
+    game_dir = Path(game_dir)
+    if not only_if_unset and client_running_in(game_dir):
+        raise SystemExit(f"a client is running from {game_dir}: close it first")
+    opts = game_dir / "options.txt"
+    lines = opts.read_text().splitlines() if opts.exists() else []
+    current = next((l.split(":", 1)[1].strip().strip('"') for l in lines if l.startswith("preferredGraphicsBackend:")), None)
+    if only_if_unset and current not in (None, "default"):
+        return
+    if current == backend:
+        return
+    lines = [l for l in lines if not l.startswith("preferredGraphicsBackend:")] + [f'preferredGraphicsBackend:"{backend}"']
+    opts.write_text("\n".join(lines) + "\n")
+    print(f"  graphics API: {backend} (was {current or 'unset'}) in {opts}; takes effect on the next launch")
 
 
 # ---------------------------------------------------------------------------------------------- Distant Horizons looks
@@ -352,6 +375,8 @@ def main(argv):
         cmd_status(argv[2])
     elif c == "dhconfig" and len(argv) == 4 and argv[3] in ("swift", "cinematic", "default"):
         cmd_dhconfig(argv[2], argv[3])
+    elif c == "backend" and len(argv) == 4 and argv[3] in ("vulkan", "opengl", "default"):
+        cmd_backend(argv[2], argv[3])
     elif c == "export" and len(argv) == 6 and argv[4] == "--awaken-jar":
         cmd_export(argv[2], argv[3], argv[5])
     else:
