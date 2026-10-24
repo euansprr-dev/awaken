@@ -16,8 +16,8 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | Milestone | Builder (model) | Branch / worktree | State |
 |---|---|---|---|
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
-| M2 the opening in blockout | Director (Opus xhigh) | — | starts as soon as the Ascent's Runner tier is on build/awaken-v1 |
-| M3 alive | Citizens (Opus xhigh + Sonnet data) | — | next after M1 if the Runner tier hasn't landed (decision 20) |
+| M2 the opening in blockout | Director (Opus xhigh) | — | next: when the Runner tier is on build/awaken-v1 AND M3 has finished (one builder at a time) |
+| M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | running (brief: briefs/M3-alive.md) |
 | M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
@@ -105,3 +105,7 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   slate mass from above, the wall one heavy grey, all vanilla blocks up close (→ M4). Interim: the prologue's Bell Crypt
   gate opens in Choir Square in Carillon worlds (until M2). Watch: a Distant Horizons + Sodium meshing glitch drew
   floating windows once (tour 1; not the city's blocks). New flake seen on CI: gates_build_break_hold.
+- 2026-10-25: the Ascent's Runner tier is done on pack/ascent (CI green d6d86e91; MovementHooks.wallRunning/hanging;
+  route replay `pilot route rec|play|stop`, SPEC §17.6); it reaches build/awaken-v1 through the pack session in ~1–3 h.
+  So by decision 20, M3 started now; M2 follows M3. M3 moved the Association wake/Registry scenes to M2 and leaves
+  rooftop runners and rooftop chases until the Ascent's moves are in.
