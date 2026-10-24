@@ -158,6 +158,9 @@ public final class AscentServer {
         };
     }
 
+    /** States refused since the server started (tests and the bench read it). */
+    static int refusals;
+
     static void onState(ServerPlayer p, AscentPayloads.State msg) {
         AscentState s = AscentState.byId(msg.state());
         if (s == null) return;
@@ -165,6 +168,7 @@ public final class AscentServer {
         boolean refuse = !allowed(p, s) || p.isPassenger() || p.isSpectator() || !dev.awaken.body.BodyConfig.ascent()
                 || s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z());
         if (refuse && s != AscentState.NONE) {
+            refusals++;
             AwakenNet.send(p, new AscentPayloads.Stop(s.ordinal()));
             dev.awaken.Awaken.LOG.debug("[ascent] refused {} for {}", s, p.getPlainTextName());
             s = AscentState.NONE;

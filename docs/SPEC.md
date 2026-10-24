@@ -1862,6 +1862,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   allowance, so above ~1.7 b/t that move is sent back once (a rubber band, not a kick). The floating kick exists only
   on dedicated servers with allow-flight off; AscentServer resets its count every tick a state runs, before vanilla
   counts (to be seen on a dedicated server).
+- **Latency** (`ascent_latency`, the gate's latency tours as a test): a real swing from a block 20 up, a release and a
+  30-block fall to a hard landing, every state message reaching the server 300 ms (6 ticks) after its positions: no
+  refusal, no move sent back, no fall damage, the state ends, the arrival still counts as by movement.
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
   hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
   Leaper together (`HorizonHooks.addReach`).
