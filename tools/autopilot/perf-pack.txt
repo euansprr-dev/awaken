@@ -1,0 +1,208 @@
+# Frame-time scenes for the Awakened Pack (docs/plan-pack.html, stage 0): same seed, places and times every run.
+# Logs '[autopilot] perf <scene> ...'; compare runs with tools/perf-report.py. Run it on a quiet machine:
+# builds or other games running at the same time cost frames. Window 1440x900 points (2880x1800 pixels on Retina).
+world perfpack creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+# 1 the horizon: high above spawn at sunset, looking out (spectator, so nothing falls)
+cmd gamemode spectator
+cmd tp @s 0.5 190 0.5 90 12
+cmd time set 12600
+wait 300
+perf vista_sunset 15
+shot pack_vista_sunset
+cmd tp @s 0.5 190 0.5 -90 12
+wait 100
+perf vista_sunset_west 10
+shot pack_vista_sunset_west
+# 2 flight: 30 s over new terrain at 20 blocks a second (chunk generation, far terrain building under load)
+cmd time set 6000
+cmd tp @s 0.5 150 0.5 90 10
+wait 60
+perfstart flight
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+perfend
+cmd gamemode creative
+# 3 the flat platform from tools/autopilot/perf.txt (the old baseline)
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -40 150 -48 39 150 -1 minecraft:smooth_stone
+cmd fill -40 150 0 39 150 63 minecraft:smooth_stone
+cmd fill -40 151 -48 39 155 -1 minecraft:air
+cmd fill -40 151 0 39 155 63 minecraft:air
+cmd fill -40 156 -48 39 160 -1 minecraft:air
+cmd fill -40 156 0 39 160 63 minecraft:air
+cmd fill -40 161 -48 39 165 -1 minecraft:air
+cmd fill -40 161 0 39 165 63 minecraft:air
+cmd fill -40 166 -48 39 170 -1 minecraft:air
+cmd fill -40 166 0 39 170 63 minecraft:air
+cmd fill -40 171 -48 39 175 -1 minecraft:air
+cmd fill -40 171 0 39 175 63 minecraft:air
+cmd fill -40 176 -48 39 180 -1 minecraft:air
+cmd fill -40 176 0 39 180 63 minecraft:air
+cmd fill -40 181 -48 39 185 -1 minecraft:air
+cmd fill -40 181 0 39 185 63 minecraft:air
+cmd fill -40 186 -48 39 190 -1 minecraft:air
+cmd fill -40 186 0 39 190 63 minecraft:air
+cmd fill -40 191 -48 39 195 -1 minecraft:air
+cmd fill -40 191 0 39 195 63 minecraft:air
+cmd fill -40 196 -48 39 200 -1 minecraft:air
+cmd fill -40 196 0 39 200 63 minecraft:air
+wait 100
+look 0 0
+perf overworld_platform 10
+# 4 gates seen from outside, by day and by night
+cmd awaken gate showcase S open
+wait 60
+look 0 -10
+perf gate_S_close 10
+shot pack_gate_s
+cmd awaken gate showcase clear
+cmd awaken gate showcase SOVEREIGN open
+wait 60
+cmd time set 18000
+wait 40
+perf gate_sovereign_night 10
+cmd awaken gate showcase clear
+cmd time set 6000
+# 5 every creature at once
+cmd tp @s 0.5 151 0.5 0 0
+cmd awaken fauna lineup all
+wait 100
+look 0 10
+perf all_creatures_lineup 10
+cmd kill @e[type=!minecraft:player,distance=..80]
+# 6 the heaviest casts, measured through the whole effect
+cmd summon minecraft:husk -2.5 151 4.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk -2.5 151 6.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk -2.5 151 8.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk -0.5 151 4.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk -0.5 151 6.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk -0.5 151 8.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 1.5 151 4.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 1.5 151 6.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 1.5 151 8.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 3.5 151 4.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 3.5 151 6.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 3.5 151 8.5 {PersistenceRequired:1b,attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+wait 20
+look 0 8
+cmd awaken admin power reset
+perfstart cast_legion
+cmd awaken admin power cast legion
+wait 40
+perfend
+cmd awaken admin power reset
+perfstart cast_storm_call
+cmd awaken admin power cast storm_call
+wait 40
+perfend
+cmd awaken admin power reset
+perfstart cast_nova
+cmd awaken admin power cast nova
+wait 40
+perfend
+cmd awaken admin power reset
+perfstart cast_overload
+cmd awaken admin power cast overload
+wait 40
+perfend
+cmd kill @e[type=!minecraft:player,distance=..80]
+# 7 the Well at night
+cmd awaken landmark goto well
+wait 60
+cmd time set 18000
+wait 60
+perf well_night 10
+cmd time set 6000
+# 8 the other dimensions
+cmd awaken descent go 5
+wait 200
+perf descent_5 10
+shot pack_descent_5
+cmd awaken descent go 0
+wait 100
+cmd awaken veil stillpoint
+wait 200
+perf stillpoint 10
+shot pack_stillpoint
+cmd awaken veil return
+wait 100
+cmd awaken dream now
+wait 300
+perf lucidium 10
+shot pack_lucidium
+cmd awaken dream wake
+wait 100
+quit

@@ -63,6 +63,9 @@ neoForge {
             environment 'SDL_MAC_BACKGROUND_APP', '1'
             environment 'SDL_WINDOW_ACTIVATE_WHEN_SHOWN', '0'
             systemProperty 'apple.awt.UIElement', 'true'
+            // frame-time experiments (tools/autopilot.sh with XMX=6G ZGC=1): the client's heap and garbage collector
+            if (project.hasProperty('xmx')) jvmArgument "-Xmx${project.property('xmx')}"
+            if (project.hasProperty('zgc')) jvmArgument '-XX:+UseZGC'
         }
 
         server {
