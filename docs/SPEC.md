@@ -1878,6 +1878,10 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **Latency** (`ascent_latency`, the gate's latency tours as a test): a real swing from a block 20 up, a release and a
   30-block fall to a hard landing, every state message reaching the server 300 ms (6 ticks) after its positions: no
   refusal, no move sent back, no fall damage, the state ends, the arrival still counts as by movement.
+- **Wings in first person**: your own wings are drawn from the body, only the outer half of the span (the root would
+  sit on the camera; Phase 0 drew it and got white wedges), the cut edge fading in over 0.15 of the span, the body at
+  60% of its alpha and the glow at 45% (this close, full strength read as solid blades). They show at the edges of
+  view: the tips flick into the top corners on a beat, the outer wing rises into view in a banked turn.
 - **Moving air** (`core.api.AirHooks`, for the Wilds' updraft pylons and windways): sources registered on both sides
   add an acceleration (blocks a tick²) at the feet; the client's free states take it after their own step (the carry
   ×1, wings ×1.25, flight ×0.6; a rope none). Sources read only what both sides have (blocks, block entities,

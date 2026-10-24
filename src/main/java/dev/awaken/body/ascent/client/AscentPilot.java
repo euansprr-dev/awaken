@@ -276,6 +276,10 @@ public final class AscentPilot {
                     press(JUMP, 2);
                     phase = 2;
                     mark = age;
+                } else if (st != AscentState.GLIDE && age - mark > 6) {
+                    // the first air jump is the Leaper's double jump: the next one opens the wings
+                    press(JUMP, 2);
+                    mark = age;
                 }
             }
             case 2 -> {

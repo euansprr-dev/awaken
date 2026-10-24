@@ -37,6 +37,8 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         boolean open;
         // what this frame draws (the renderers run after every submit, so each slot keeps its own)
         float dSpread, dBeat, dSweep;
+        /** Drawn for your own eyes (first person): only the outer feathers, faded in, never the root at the camera. */
+        boolean dFirst;
         // light, not cloth: a see-through body tinted toward the Signal's cyan, and a soft halo of glow over it
         final SubmitNodeCollector.CustomGeometryRenderer body = (pose, vc) -> wings(pose, vc, this, 0x94A8DCFF, 1F);
         final SubmitNodeCollector.CustomGeometryRenderer glow = (pose, vc) -> wings(pose, vc, this, 0x3C7FC0FF, 1.07F);
@@ -165,6 +167,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         if (spread < 0.01F) return;
         poseStack.pushPose();
         getParentModel().body.translateAndRotate(poseStack);
+        w.dFirst = false;
         draw(poseStack, out, w, spread, beat, sweep);
         poseStack.popPose();
     }
@@ -175,6 +178,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         if (w == null) return false;
         float spread = Mth.lerp(pt, w.spreadO, w.spread), beat = Mth.lerp(pt, w.beatO, w.beat), sweep = Mth.lerp(pt, w.sweepO, w.sweep);
         if (spread < 0.01F) return false;
+        w.dFirst = true;
         draw(ps, out, w, spread, beat, sweep);
         return true;
     }
@@ -205,16 +209,20 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     private static final float[] U = {0F, 0.3F, 0.66F, 1F};
 
     private static void wings(PoseStack.Pose pose, VertexConsumer vc, Wings w, int argb, float scale) {
-        wing(pose, vc, 1, w.dSpread, w.dBeat, w.dSweep, argb, scale);
-        wing(pose, vc, -1, w.dSpread, w.dBeat, w.dSweep, argb, scale);
+        wing(pose, vc, 1, w.dSpread, w.dBeat, w.dSweep, argb, scale, w.dFirst);
+        wing(pose, vc, -1, w.dSpread, w.dBeat, w.dSweep, argb, scale, w.dFirst);
     }
+
+    /** First person: no feathers inside this much of the span (they'd sit on the camera), faded in over the next 0.15. */
+    private static final float FIRST_CUT = 0.5F;
 
     /**
      * One wing, side +1 (the player's left, model +x) or -1. The leading edge's three bones turn from folded (down the
      * back) to open (out to the side, a little up) with {@code spread}; a beat swings the whole wing about the shoulder,
      * the outer bones lagging; speed sweeps the outer wing back.
      */
-    private static void wing(PoseStack.Pose pose, VertexConsumer vc, int side, float spread, float beat, float sweep, int argb, float scale) {
+    private static void wing(PoseStack.Pose pose, VertexConsumer vc, int side, float spread, float beat, float sweep, int argb, float scale,
+                             boolean first) {
         float s = side;
         // bone directions: folded and open, mixed by spread (x outward, y down, z back)
 
@@ -256,9 +264,16 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             // primaries part at the tip: every other one shorter, all a little spread toward the tip
             if (u > 0.68F && (i & 1) == 1) len *= 0.8F;
             float tx = x + s * 0.05F * u, ty = y + fy * len, tz = z + fz * len;
-            if (i > 0) {
+            if (i > 0 && (!first || pu >= FIRST_CUT)) {
                 float u0 = side < 0 ? 1 - pu : pu, u1 = side < 0 ? 1 - u : u;
-                quad(pose, vc, col, px, py, pz, u0, 0, x, y, z, u1, 0, tx, ty, tz, u1, 1, ptx, pty, ptz, u0, 1);
+                int c = col;
+                if (first) {
+                    // fade the cut edge in: the body by its alpha, the additive glow (which ignores alpha) by its colour
+                    // and lighter overall: this close, at full strength they read as solid blades, not light
+                    float fade = Math.min(1F, (pu - FIRST_CUT) / 0.15F);
+                    c = scale > 1F ? 0xFF000000 | scaled(col, fade * 0.45F) : ((int) (((col >>> 24) & 255) * fade * 0.6F) << 24) | (col & 0xFFFFFF);
+                }
+                quad(pose, vc, c, px, py, pz, u0, 0, x, y, z, u1, 0, tx, ty, tz, u1, 1, ptx, pty, ptz, u0, 1);
             }
             px = x;
             py = y;
@@ -271,6 +286,10 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     }
 
     private static final int STRIPS = 14;
+
+    private static int scaled(int rgb, float f) {
+        return (int) (((rgb >> 16) & 255) * f) << 16 | (int) (((rgb >> 8) & 255) * f) << 8 | (int) ((rgb & 255) * f);
+    }
 
     /** Feather length along the span: short at the shoulder, longest mid-wing, tapering to a rounded tip. */
     private static float feather(float u) {
