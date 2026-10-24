@@ -88,15 +88,16 @@ MN_REACH = pose(ground=False, lean=-6, rl=(-22, 0, 4), rk=40, ll=(8, 0, -4), lk=
 MN_PULL = pose(ground=False, rise=1, lean=24, rl=(-86, 0, 4), rk=120, ll=(16, 0, -4), lk=30, ra=(-72, -22, 6), re=120, la=(-72, 22, -6), le=120)
 MN_PUSH = pose(ground=False, lean=32, rl=(-72, 0, 4), rk=105, ll=(22, 0, -4), lk=50, ra=(-16, -4, 16), re=15, la=(-16, 4, -16), le=15)
 MN_STAND = pose(lean=10, rl=(-10, 0, 3), rk=25, ll=(6, 0, -3), lk=15, ra=(-8, 0, 8), re=20, la=(-8, 0, -8), le=20)
-clip("body_mantle", [(0, MN_REACH, "linear"), (2, MN_PULL, "easeinoutsine"), (4, MN_PUSH, "easeoutquad"), (6, MN_STAND, "easeinoutsine"),
-                     (7, MN_STAND, "linear")], 10, note="reach, pull with a knee driving up, press, stand")
+clip("body_mantle", [(0, MN_REACH, "linear"), (1.5, nudge(MN_REACH, rise=0.5, ra=(4, 0, 0), la=(4, 0, 0)), "easeoutsine"),
+                     (3, MN_PULL, "easeinoutsine"), (4.5, MN_PUSH, "easeoutquad"), (6.5, MN_STAND, "easeinoutsine"),
+                     (7.5, MN_STAND, "linear")], 11, note="reach, pull with a knee driving up, press, stand")
 
 # Tactical sprint: leaning hard into it, knees high, arms pumping with the hands kept low (bent elbows, short swing).
 # One stride pair every 8 ticks, looped for as long as it lasts (BodyRules.TAC_TICKS), then a settle.
-TS_A = pose(lean=24, twist=8, rl=(-64, 0, 2), rk=98, ll=(38, 0, -2), lk=72, ra=(42, 0, 8), re=82, la=(-32, 12, -6), le=88)
-TS_B = pose(lean=24, rl=(-18, 0, 2), rk=64, ll=(4, 0, -2), lk=18, ra=(4, 0, 8), re=86, la=(4, 0, -8), le=86)
-TS_C = pose(lean=24, twist=-8, rl=(38, 0, 2), rk=72, ll=(-64, 0, -2), lk=98, ra=(-32, -12, 6), re=88, la=(42, 0, -8), le=82)
-TS_D = pose(lean=24, rl=(4, 0, 2), rk=18, ll=(-18, 0, -2), lk=64, ra=(4, 0, 8), re=86, la=(4, 0, -8), le=86)
+TS_A = pose(lean=30, twist=10, rl=(-76, 0, 2), rk=105, ll=(42, 0, -2), lk=78, ra=(50, 0, 8), re=84, la=(-40, 14, -6), le=92)
+TS_B = pose(lean=30, rl=(-22, 0, 2), rk=70, ll=(4, 0, -2), lk=18, ra=(4, 0, 8), re=88, la=(4, 0, -8), le=88)
+TS_C = pose(lean=30, twist=-10, rl=(42, 0, 2), rk=78, ll=(-76, 0, -2), lk=105, ra=(-40, -14, 6), re=92, la=(50, 0, -8), le=84)
+TS_D = pose(lean=30, rl=(4, 0, 2), rk=18, ll=(-22, 0, -2), lk=70, ra=(4, 0, 8), re=88, la=(4, 0, -8), le=88)
 clip("body_sprint", [(0, TS_A, "linear"), (2, TS_B, "easeinoutsine"), (4, TS_C, "easeinoutsine"), (6, TS_D, "easeinoutsine"),
                      (8, TS_A, "easeinoutsine")], 8, loop=True, note="hard lean, high knees, arms pumping low")
 clip("body_sprint_end", [(0, TS_B, "linear")], 6, end=0, note="settles out of body_sprint")
