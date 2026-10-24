@@ -30,6 +30,7 @@ final class StoryTests {
 
     static void register() {
         RitualTests.register();
+        TogetherTests.register();
         AwakenTests.register("story_triggers", 20, h -> {
             Profile p = new Profile();
             h.assertFalse(Beats.triggered(p, "counter:awaken:gates_cleared>=1"), "no gates yet");
@@ -192,26 +193,32 @@ final class StoryTests {
             h.succeed();
         });
 
-        // New Game+: each Ascension tier makes monsters sturdier and XP richer; allies stay as they are.
+        // New Game+: each Ascension tier makes monsters sturdier and XP richer for a player who took part in it (SPEC
+        // "Together": the world's tier, never above the player's own); allies stay as they are.
         AwakenTests.registerIsolated("story_ascension_scales_the_world", 40, h -> {
             ServerLevel level = h.getLevel();
             StoryWorld w = StoryWorld.get(level.getServer());
             int before = w.ascension;
+            var reachedBefore = java.util.Map.copyOf(w.reached);
             Vec3 at = h.absoluteVec(new Vec3(1.5, 1, 1.5));
             try {
                 w.ascension = 0;
-                LivingEntity calm = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 10, new MobRole(MobRole.Role.NORMAL, 10, "awaken:bell_crypt", Optional.empty(), ""), EnumSet.noneOf(dev.awaken.core.Forces.Tag.class));
                 ServerPlayer a = h.makeMockServerPlayerInLevel();
                 Progression.awaken(a);
+                a.teleportTo(level, at.x + 1, at.y, at.z, java.util.Set.of(), 0F, 0F, true);
+                LivingEntity calm = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 10, new MobRole(MobRole.Role.NORMAL, 10, "awaken:bell_crypt", Optional.empty(), ""), EnumSet.noneOf(dev.awaken.core.Forces.Tag.class));
                 double xa = Progression.profile(a).xp();
                 Progression.grantXp(a, 10, Progression.XpSource.COMMAND);
                 xa = Progression.profile(a).xp() - xa;
+                a.teleportTo(level, at.x + 1, at.y, at.z + 300, java.util.Set.of(), 0F, 0F, true);
 
                 w.ascension = 2;
-                LivingEntity hard = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 10, new MobRole(MobRole.Role.NORMAL, 10, "awaken:bell_crypt", Optional.empty(), ""), EnumSet.noneOf(dev.awaken.core.Forces.Tag.class));
-                LivingEntity ally = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 10, new MobRole(MobRole.Role.ECHO, 10, "", Optional.empty(), ""), EnumSet.noneOf(dev.awaken.core.Forces.Tag.class));
                 ServerPlayer b = h.makeMockServerPlayerInLevel();
                 Progression.awaken(b);
+                w.reached.put(b.getUUID(), 2); // b reached the world's ending at tier 2
+                b.teleportTo(level, at.x + 1, at.y, at.z, java.util.Set.of(), 0F, 0F, true);
+                LivingEntity hard = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 10, new MobRole(MobRole.Role.NORMAL, 10, "awaken:bell_crypt", Optional.empty(), ""), EnumSet.noneOf(dev.awaken.core.Forces.Tag.class));
+                LivingEntity ally = Mobs.spawn(level, Bestiary.get("toll_ghoul"), at, 10, new MobRole(MobRole.Role.ECHO, 10, "", Optional.empty(), ""), EnumSet.noneOf(dev.awaken.core.Forces.Tag.class));
                 double xb = Progression.profile(b).xp();
                 Progression.grantXp(b, 10, Progression.XpSource.COMMAND);
                 xb = Progression.profile(b).xp() - xb;
@@ -225,8 +232,12 @@ final class StoryTests {
                 calm.discard();
                 hard.discard();
                 ally.discard();
+                level.getServer().getPlayerList().remove(a);
+                level.getServer().getPlayerList().remove(b);
             } finally {
                 w.ascension = before;
+                w.reached.clear();
+                w.reached.putAll(reachedBefore);
             }
             h.succeed();
         });

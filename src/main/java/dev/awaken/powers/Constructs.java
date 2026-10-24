@@ -43,14 +43,20 @@ public final class Constructs {
     private static final int MEMORY = 320;
     private static final Map<UUID, Deque<Placed>> OWNED = new HashMap<>();
 
-    /** Hearth protection: powers never change blocks inside someone else's Hearth (48 blocks). */
+    /**
+     * Hearth protection: powers never change blocks inside the Hearth (48 blocks) of someone you don't share it with.
+     * A Hearth's owner and its members build there freely (SPEC "Together").
+     */
     public static boolean mayChange(ServerPlayer player, BlockPos pos) {
         ServerLevel level = player.level();
         if (!level.isInWorldBounds(pos) || !level.isLoaded(pos)) return false;
         Optional<BlockPos> hearth = HearthHooks.nearest(level, pos, 48);
         if (hearth.isEmpty()) return true;
-        Optional<BlockPos> mine = HearthHooks.hearthOf(player);
-        return mine.isPresent() && mine.get().equals(hearth.get()) && level.dimension() == Level.OVERWORLD;
+        if (level.dimension() != Level.OVERWORLD) return false;
+        if (!HearthHooks.belongs(player, hearth.get())) return false;
+        // where Hearths overlap, every one within 48 must be yours to build on
+        for (BlockPos anchor : HearthHooks.within(level, pos, 48)) if (!HearthHooks.belongs(player, anchor)) return false;
+        return true;
     }
 
     public static boolean canPlace(ServerPlayer player, BlockPos pos) {

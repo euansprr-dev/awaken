@@ -117,9 +117,10 @@ public final class CloneVats {
     }
 
     static void action(ServerPlayer player, MachineBlockEntity be, String action, int index) {
-        if (!action.equals("bind")) return;
+        if (!action.equals("bind") || !Machines.mayUse(player, be)) return;
         Above.data(player).setCloneVat(Optional.of(GlobalPos.of(be.getLevel().dimension(), be.getBlockPos().immutable())));
-        be.setOwner(player.getUUID());
+        // binding never takes a Vat from its owner: a household member shares it (one clone between you)
+        if (be.owner() == null) be.setOwner(player.getUUID());
         Above.sync(player);
         Signal.toast(player, Component.literal("Clone Vat bound"));
     }

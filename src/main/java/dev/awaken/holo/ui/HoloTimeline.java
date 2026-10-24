@@ -1,19 +1,34 @@
-package dev.awaken.holo.client;
+package dev.awaken.holo.ui;
 
 /**
- * The open and close timeline of a wrist panel (docs/proposals/holo-ui.md §5), in milliseconds along the opening:
+ * The open and close timeline of a wrist panel (docs/proposals/holo-ui.md §5), in milliseconds along the K menu's
+ * opening (its choreography):
  * <pre>
  *   0–120   the arm rises            80–200  the band flares
  *   140–370 the panel grows out of the wrist into its place, unfolding (Y, then X); the scan line sweeps
  *   300–450 text types in            from 250 clicks land
+ *   370–450 the panel lands (a panel that hands over to a flat screen, the inventory, crossfades to it here)
  * </pre>
  * Closing plays the same curves backward, 1.8× faster (250 ms). Pressing the key again while it opens skips to open.
- * With reduced motion the panel fades in place instead of unfolding.
+ * With reduced motion the panel fades in place instead of unfolding. {@link #speed} plays the same choreography faster
+ * (the inventory: 2.5×, open in 180 ms, closed in 100 ms). Plain floats: side-agnostic, so GameTests check the curves.
  */
 public final class HoloTimeline {
     public static final float OPEN_MS = 450f, CLOSE_MS = 250f;
+    /** The inventory's speed: the K menu's choreography in 180 ms (docs/proposals/holo-ui.md principle 3). */
+    public static final float INVENTORY_SPEED = 2.5f;
+    /** Choreography ms per real ms. */
+    public final float speed;
     private float t;
-    private boolean active, closing;
+    private boolean active, closing, frozen;
+
+    public HoloTimeline() {
+        this(1f);
+    }
+
+    public HoloTimeline(float speed) {
+        this.speed = speed;
+    }
 
     public void open() {
         if (!active) t = 0;
@@ -36,7 +51,7 @@ public final class HoloTimeline {
         if (active && !closing) t = OPEN_MS;
     }
 
-    /** Jumps to a moment (the autopilot photographs fixed moments). */
+    /** Jumps to a moment along the choreography (the autopilot photographs fixed moments). */
     public void seek(float ms) {
         active = true;
         closing = false;
@@ -47,19 +62,19 @@ public final class HoloTimeline {
         this.frozen = frozen;
     }
 
-    private boolean frozen;
-
+    /** Advances by {@code dtMs} real milliseconds. */
     public void advance(float dtMs) {
         if (!active || frozen) return;
+        float d = dtMs * speed;
         if (closing) {
-            t -= dtMs * (OPEN_MS / CLOSE_MS);
+            t -= d * (OPEN_MS / CLOSE_MS);
             if (t <= 0) {
                 t = 0;
                 active = false;
                 closing = false;
             }
         } else {
-            t = Math.min(OPEN_MS, t + dtMs);
+            t = Math.min(OPEN_MS, t + d);
         }
     }
 
@@ -75,8 +90,19 @@ public final class HoloTimeline {
         return active && !closing && t >= OPEN_MS;
     }
 
+    /** Where along the choreography it is (K menu milliseconds). */
     public float ms() {
         return t;
+    }
+
+    /** Real milliseconds the whole opening takes at this speed. */
+    public float openRealMs() {
+        return OPEN_MS / speed;
+    }
+
+    /** Real milliseconds a close from fully open takes at this speed. */
+    public float closeRealMs() {
+        return CLOSE_MS / speed;
     }
 
     public boolean clickable() {
@@ -85,16 +111,16 @@ public final class HoloTimeline {
 
     // ---- curves ---------------------------------------------------------------------------------------------------
 
-    static float clamp01(float v) {
+    public static float clamp01(float v) {
         return v < 0 ? 0 : v > 1 ? 1 : v;
     }
 
-    static float easeOut(float v) {
+    public static float easeOut(float v) {
         float u = 1 - clamp01(v);
         return 1 - u * u * u;
     }
 
-    static float easeInOut(float v) {
+    public static float easeInOut(float v) {
         v = clamp01(v);
         return v * v * (3 - 2 * v);
     }
@@ -159,6 +185,14 @@ public final class HoloTimeline {
     public float beamBoost(boolean reduced) {
         if (reduced) return 0;
         return clamp01((t - 110f) / 50f) * (1 - clamp01((t - 250f) / 110f));
+    }
+
+    /**
+     * 0..1: the panel has grown into its place and settles (370–450). A panel that hands over to a flat screen (the
+     * inventory) crossfades here: the flat screen comes up by this, the 3D panel goes down by it.
+     */
+    public float landed() {
+        return easeInOut((t - 370f) / 80f);
     }
 
     /** How much the open panel holds attention (Lens focus): eased with the glass. */

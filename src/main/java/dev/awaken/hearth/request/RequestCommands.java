@@ -35,7 +35,7 @@ final class RequestCommands {
             var req = Commands.literal("request");
             req.then(Commands.literal("offer").executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
-                if (HearthService.hearthOf(sp).isEmpty()) return fail(c, "You need a Hearth Anchor first.");
+                if (HearthService.homeOf(sp).isEmpty()) return fail(c, "You need a Hearth Anchor first.");
                 boolean ok = Requests.offerNow(sp);
                 return ok ? ok(c, "Offered: see the toast, the tracker and the Status screen (K)") : fail(c, "No free slot, or nothing you could be asked for yet.");
             }));
@@ -60,7 +60,7 @@ final class RequestCommands {
             }));
             req.then(Commands.literal("deliver").executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
-                Optional<HearthRecord> h = HearthService.hearthOf(sp);
+                Optional<HearthRecord> h = HearthService.homeOf(sp);
                 if (h.isEmpty()) return fail(c, "You need a Hearth Anchor first.");
                 boolean any = Requests.onAnchorUsed(sp, HearthService.levelOf(sp.level().getServer(), h.get()), h.get());
                 return any ? ok(c, "Delivered") : fail(c, "Nothing to deliver.");
@@ -94,7 +94,7 @@ final class RequestCommands {
         ServerPlayer sp = c.getSource().getPlayerOrException();
         RequestState st = Requests.state(sp);
         long day = PlayDays.current(sp.level().getServer());
-        if (HearthService.hearthOf(sp).isEmpty()) {
+        if (HearthService.homeOf(sp).isEmpty()) {
             c.getSource().sendSuccess(() -> Component.literal("The Anchor asks for things once you have one: craft a Hearth Anchor."), false);
             return 0;
         }

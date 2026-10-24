@@ -31,6 +31,7 @@ public final class VeilModule {
         VeilCommands.register();
         VeilLessons.register(); // meditation and the Veil taught in play (level road flags)
         VeilTests.register();
+        TogetherVeilTests.register();
     }
 
     static final Map<UUID, Long> REFUSED = new HashMap<>();

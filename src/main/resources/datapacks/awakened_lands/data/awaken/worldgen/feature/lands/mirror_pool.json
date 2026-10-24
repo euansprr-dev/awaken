@@ -1,0 +1,8 @@
+{
+  "type": "awaken:mirror_pool",
+  "radius": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 3,
+    "max_inclusive": 7
+  }
+}

@@ -290,6 +290,8 @@ public final class Dreams {
         ActiveDream ad = ACTIVE.remove(cell);
         if (ad != null) ad.cleanup();
         DreamChunkGenerator.unregister(cell);
+        // the cell is dreamed in again once its chunks are out of memory and erased (no restart needed)
+        if (ad != null) dev.awaken.lucidium.world.Cells.release(ad.level.getServer(), cell);
     }
 
     private static String summarize(DreamPlan plan, DreamState st) {

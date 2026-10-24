@@ -1,0 +1,14 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "targets": [
+    "minecraft:savanna",
+    "minecraft:savanna_plateau"
+  ],
+  "replacement": "awaken:glass_steppe",
+  "parameters": {
+    "awaken:lands/awakening": {
+      "min_inclusive": 0.0
+    }
+  }
+}

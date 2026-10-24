@@ -14,7 +14,8 @@ import java.util.Set;
  * never constant. Off / Subtle (default, ~2 GUI px) / Full (4 px), scaled by vanilla's Screen Effect Scale and off
  * with View Bobbing off. Vanilla's layers (hotbar, hearts, crosshair) are never moved, and neither are Awaken's
  * full-screen overlays (screen flashes, the reveal vignette, the Veil's flash and its meditation ring around the
- * crosshair). The translate is snapped to framebuffer pixels so text never shimmers.
+ * crosshair). The translate is snapped to framebuffer pixels so text never shimmers. Tier-1 layers that {@link CalmHud}
+ * fades are drawn from here, after the translate, through its fading graphics.
  */
 final class HudMotion {
     private HudMotion() {}
@@ -67,10 +68,16 @@ final class HudMotion {
     static void pre(RenderGuiLayerEvent.Pre e) {
         Identifier id = e.getName();
         if (!Awaken.MODID.equals(id.getNamespace()) || STILL.contains(id)) return;
-        if (dx == 0 && dy == 0) return;
-        e.getGuiGraphics().pose().pushMatrix();
-        e.getGuiGraphics().pose().translate(dx, dy);
-        pushed++;
+        if (dx != 0 || dy != 0) {
+            e.getGuiGraphics().pose().pushMatrix();
+            e.getGuiGraphics().pose().translate(dx, dy);
+            pushed++;
+        }
+        // tier 1 fades when idle: drawn here through the fading graphics (last listener, so nothing after us is skipped)
+        if (CalmHud.TIER_1.contains(id)) {
+            float a = CalmHud.alpha();
+            if (a < 0.995f) CalmHud.drawFaded(e, a);
+        }
     }
 
     static void post(RenderGuiLayerEvent.Post e) {

@@ -1,0 +1,15 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "targets": [
+    "minecraft:windswept_hills",
+    "minecraft:windswept_gravelly_hills",
+    "minecraft:stony_peaks"
+  ],
+  "replacement": "awaken:shattered_highlands",
+  "parameters": {
+    "awaken:lands/awakening": {
+      "min_inclusive": 0.0
+    }
+  }
+}

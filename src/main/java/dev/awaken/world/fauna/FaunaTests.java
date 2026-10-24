@@ -204,8 +204,8 @@ final class FaunaTests {
             box(level, lit, true);
             List<AwakenMob> crowd = new ArrayList<>();
             h.startSequence()
-                    // the light engine runs behind the block changes: wait until the rooms are really dark and lit
-                    .thenWaitUntil(() -> lightSettled(h, level, dark, lit))
+                    // the light engine runs behind the block changes: the rooms must be really dark and lit
+                    .thenExecute(() -> lightSettled(h, level, dark, lit))
                     .thenExecute(() -> {
                         clearFauna(level, p);
                         FaunaRules.timeOverride = 6000L;
@@ -356,7 +356,7 @@ final class FaunaTests {
             ServerPlayer p = realPlayer(h, new BlockPos(-6, UP, 0));
             List<AwakenMob> hunter = new ArrayList<>();
             h.startSequence()
-                    .thenWaitUntil(() -> lightSettled(h, level, dark, lit))
+                    .thenExecute(() -> lightSettled(h, level, dark, lit))
                     .thenExecute(() -> {
                         p.setPos(Vec3.atBottomCenterOf(dark));
                         h.assertTrue(FaunaMob.inDarkness(p), "a player in a dark room is fair game");
@@ -540,8 +540,10 @@ final class FaunaTests {
         h.assertTrue(why(level, id, pos, rnd, p) != null, what);
     }
 
-    /** The light engine trails block changes by a few ticks; wait until the sealed room is dark and the lit one bright. */
+    /** Once the light engine has caught up with both {@link #box}es: the sealed room is dark and the lit one bright. */
     static void lightSettled(GameTestHelper h, ServerLevel level, BlockPos dark, BlockPos lit) {
+        AwakenTests.awaitLight(h, dark.offset(-2, 0, -2), dark.offset(2, 0, 2));
+        AwakenTests.awaitLight(h, lit.offset(-2, 0, -2), lit.offset(2, 0, 2));
         h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.SKY, dark) == 0
                 && level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, dark) == 0, "the sealed room is dark");
         h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, lit) >= 10

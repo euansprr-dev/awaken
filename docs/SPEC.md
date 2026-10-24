@@ -285,11 +285,17 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   rule, once at mod init), `site(server)` (centre, core and blend radii, street Y, the river's centre line, whether the
   basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
+- `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
+  tier, radius, members, foundedFrom)` with `has(UUID)`, `hearthsOf(MinecraftServer, UUID)` / `hearthsOf(ServerPlayer)`,
+  `home(ServerPlayer)`, `isMember(ServerPlayer, BlockPos anchor)`, `isMember(MinecraftServer, UUID player, UUID owner)`,
+  `hearthAt(ServerLevel, BlockPos)`; plus `anchor`, `atHome`, `hasRoom`, `isSanctuary`, `inRoom`, `ownedEchoes`.
 - `dev.awaken.core.audio.MusicLayers` — the layered music: `register(Slot, priority, name, Provider)` (a provider names a
   player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null; it may set the given
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
-- `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
+- `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
+  `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
+  `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise).
@@ -664,7 +670,7 @@ Plan v2 · gate interiors and D–B tuning (details in docs/modules/gates.md "In
 Plan v2 · first launch: vanilla's "experimental settings" prompt (shown because the mod adds worldgen) is answered for
 the player (client config `skipExperimentalWarning`, default on).
 
-Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 and P2):
+Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1, P2, P3 and P5's sounds and HUD fade):
 - K opens the menu on the wrist when `statusStyle = HOLO` (default) and both holo pipelines compiled; otherwise the
   flat StatusScreen. `screen status|map|codex` in the autopilot stay flat; `screen holo` opens the holo one.
 - Timeline: arm 0–120 ms, band flare 60–200 (peak ×2.5 at 140), beams from the wrist with an opening surge 110–360
@@ -709,8 +715,31 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   is a still card (no scan, no glitch). Only reading screens raise `UiHooks.focus`; toasts, cards and the Now line never
   dim the world. `statusStyle = FLAT` (or GUI shaders that fail) keeps everything flat. With a first power pending, K
   opens the first-power choice in either style.
+- The inventory (P3): E opens vanilla's survival `InventoryScreen` as a holo panel when `inventoryStyle = HOLO` and the
+  projected look draws (`statusStyle = HOLO`, GUI holo shaders compiled); creative and other mods' inventory screens
+  are never swapped. It is a subclass of vanilla's screen (swapped on `ScreenEvent.Opening`), so every click, drag,
+  shift-click, number key, the recipe book and other mods' container hooks are vanilla's, live from the first frame.
+  It plays the K menu's choreography at 2.5× (open in 180 ms, closed in 100 ms): the wrist rises, a 3D panel grows out
+  of the band and lands on the flat screen's rectangle pixel for pixel (one unit = one GUI pixel), and the flat face
+  crossfades in at 148–180 ms (items, figure and title switch halfway); closing, the 3D panel folds back holding what
+  the inventory holds then. Reduced motion (or no world pipelines): the flat face fades in place. The face is the K
+  panel's glass, tint, halo, rim and brackets drawn unit for unit in the GUI pass, projected wells instead of slot
+  squares (18×18, the result 26×26; the hotbar brighter, the hand's slot lit), the figure on a projected floor, an
+  arrow of light to the result, the title as light, the recipe button a glass key; no dim or blur (Lens dims through
+  `UiHooks.focus`). Others see the wrist (`holo_state` INVENTORY). `inventoryStyle = VANILLA` (or the flat look) leaves
+  vanilla's screen untouched. Not restyled yet: the recipe book's panel and the status-effect list.
+- Sounds (P5): `holo.open` (K menu, volume 0.5), `holo.open_quick` (inventory, 0.3), `holo.close` (0.4 / 0.22),
+  `holo.hover` (0.18), `holo.card`; synthesised by `tools/art/specs/audio_holo.py` in the System's glass voice (D major
+  pentatonic), UI loudness (−24 ± 3 dBFS RMS, true peak ≤ −3), Interface slider. While the projected look draws,
+  `signal.open` (a card arriving) plays as `holo.card` instead, never both. The hover tick sounds once per new target
+  (a K-menu tab, an inventory slot holding something, the recipe key), at most every 55 ms, never while a panel still
+  unfolds or a drag spreads items.
+- Calm HUD tier 1 (P5): `awaken:power_bar` and `awaken:level` fade to 35% after 3 s with nothing needing them (out of
+  combat as `SystemHud.inCombat` judges it, energy full, no cooldown or active power, no slot, level, XP or point
+  change), over 1.2 s, and return in 150 ms. Drawn through an alpha-multiplying graphics around the unchanged layers;
+  the gate run HUD never fades (its collapse timer must stay readable).
 - Client settings (`awaken-holo-client.toml`): `statusStyle` (the projected look for the K menu, the System's cards and
-  the first-power choice), `hudMotion`, `reducedMotion`.
+  the first-power choice), `inventoryStyle` (HOLO | VANILLA), `hudMotion`, `hudFade` (on), `reducedMotion`.
 
 Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
 docs/modules/onboarding.md "The Ritual of the Bell"):
@@ -758,6 +787,12 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
+- Ticks are not time on the GameTest server (it never waits between ticks), so no test waits a tick count for work
+  done on other threads. Every test starts once its force-loaded 5x5 chunks entity-tick, and light levels are read
+  after `AwakenTests.awaitLight` (the light engine has taken every block change so far); both wait in real time, at
+  most 30 s, by running the chunk system's main-thread queue. Timing budgets assert on the fastest of a few runs.
+  A test that needs untouched ground owns fresh ground away from the test grid (plots sit 6 blocks apart).
+- `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -990,12 +1025,39 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   loads the pack and records the flag; a world made before the flag existed lacks it, so the game skips the pack there
   and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
   it off). Test: `terrain_lands_pack_new_worlds_only`.
-- Placed today (2026-10-24, the vertical slice): Elderwood (replaces forest, birch, old-growth birch and flower forest)
-  and Lumen Forest (replaces dark forest), both where the awakening field ≥ 0. Every other row of the table is planned.
+- Placed today (2026-10-24): Elderwood (replaces forest, birch, old-growth birch and flower forest), Lumen Forest
+  (dark forest), Glass Steppe (savanna, savanna plateau) and Shattered Highlands (windswept hills, windswept gravelly
+  hills, stony peaks), all where the awakening field ≥ 0. Frost Spires and Mirror Marsh are planned.
+- An Awakened biome's own ground is a material rule in the lands pack (`worldgen/material_rule/lands/<biome>_surface`
+  and `_under`), spliced first into the overworld's `biome_surface` and `under_biome_surface` by Lithostitched
+  `set_material_rule` modifiers (`injection_type: prepend`, guarded by its biome), so the surface pass lays it and far
+  terrain shows it. Glass Steppe: fused glass where the noise `awaken:lands/glass` ≥ 0.3, else sun-gold grass; Shattered
+  Highlands: riven shale on steep ground and where the `minecraft:surface` noise ≥ −0.05, else grass.
+- Shattered Highlands' faults (`terrain.fault.FaultLinesFeature`, `awaken:fault_lines`, local modifications, once a
+  chunk over its own columns): the zero line of `awaken:lands/fault` (octave −8, five octaves); a column's distance to
+  it is the noise over its slope (sampled on a 2-block lattice, bilinear), faultstone within 1.6 blocks (three deep),
+  the seam within 0.55; where `awaken:lands/fault_trench` passes 0.15 the fault widens (by up to 2.8 a side) and opens
+  into a V trench up to 9 deep. Decisions come from the noises and the column only (continuous across chunk borders);
+  never into water or down to the sea. Faultstone and the seam are in `#minecraft:cannot_support_snow_layer`.
+- Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift"`,
+  `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass Steppe; a glassed
+  bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its ground column by
+  column from each column's own ground and its distance from the centre; the Shard Drift (Shattered Highlands; 7–12
+  floating shards along a fault; spacing 22, separation 8) walks its site onto the fault line and samples the ground
+  under each shard once at the start. Both place voxels into air, plants and water only and never write outside their
+  box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms on the fastest of eight seeds, as
+  `terrain_landmark_shapes` asserts; features ≤ 0.5 ms a chunk on average);
+  `/awaken terrain lands2cost` reports what they cost on the worldgen threads.
+- Air for the second pair: an air.json biome rule's `motes.kind` hands the spot to `terrain.client.LandsMotes`
+  (cap 120 × the leaves' frame-budget scale): `glint` (Glass Steppe, by day: a star blinking on sunlit glass of
+  `#awaken:lands/glints`) and `fault` (Shattered Highlands: sparks off `#awaken:lands/faults` at night, dust by day).
 - Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
   are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+  `terrain_lands_placement` holds the injectors to the biome table (one per Awakened biome, its archetype among its
+  vanilla targets, no target claimed twice, ground splices guarded by their biome) and measures the share on the
+  five studio seeds by applying the injectors to the vanilla generator as Lithostitched does.
 - The biome table (stage 1): `tools/terrain/biomes.py` is the one source (`write`; `check` fails on a stale file, a
   vanilla overworld biome without a row or a lands-pack biome without one). Base Awaken data refers to biomes only
   through the tags it writes, listing vanilla biomes exactly as before: `awaken:fauna/<group>` (one per fauna spawn
@@ -1069,6 +1131,124 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
   Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Together (multiplayer; pack plan stage 6, Euan's decisions 2026-10-24)
+
+"Story starts together, shared Hearth with members with options to expand one into multiple over time." The audit and
+what was fixed: docs/multiplayer-audit.md. Every rule here holds for one player alone exactly as before (a party of
+one, a Hearth with no members, a world whose story only they reach); `together_old_saves_load_the_same` checks it.
+
+Parties and the bridges:
+- `core.api.PartyHooks` (the city's v0 hook, verbatim): `members(Player)` (the player included), `sameParty(Player,
+  Player)`. Until the guild module installs real parties, gates installs the rule: a player's party is everyone inside
+  the gate run they are in, plus everyone who shares a Hearth with them; alone, a party of one. Sealing and shared
+  rewards ask `PartyHooks` only.
+- `core.api.HearthHooks` gains `belongs`, `hearthsOf`, `household`, `shareHearth`, `within`; `hearthOf` is the
+  player's home (their own Hearth, else the first they share). `core.api.StoryHooks` gains `gatesCalm(server, owner)`
+  and `ascension(player)` / `ascensionOf(player)`. `core.api.MobHooks` gains `bondedTo(entity)`.
+- Dedicated server: client-sent actions are rate-limited per player (`core.Throttle`); `/awaken as <player> <any awaken
+  command>` runs it for that player (game masters, the console, command blocks; `<player>` is a name or a selector, as
+  vanilla's player arguments take it, never a UUID); `core.RegionRecycler` erases a batch
+  of chunks from region files while running, once none is in memory on two checks at least 10 s apart (written as "no
+  data" through the level's own chunk IO worker), so gate and dream cells are reused without a restart.
+
+A shared Hearth (members, and growing into several):
+- A Hearth has one owner and any number of members (`HearthRecord` household, schema 1; a Hearth saved before it
+  loads with none). A player owns at most one Hearth and may be a member of any number.
+- Joining: the owner runs `/awaken hearth invite <player>` (a choice card, open 2 minutes; `/awaken hearth join
+  <owner>` answers it too), or someone who doesn't share a Hearth uses its Anchor and the owner, if online, gets a
+  choice card "<name> asks to share your Hearth" (once per 30 s per asker). Leaving: `/awaken hearth leave [owner]`;
+  the owner takes it back with `/awaken hearth remove <member>`; `/awaken hearth members` lists them.
+- Members, like the owner: use the Anchor (the guide, request deliveries, waking there: the Hearth whose Anchor you used
+  last, `HearthPlayer` schema 2 `respawn_hearth`), rest and heal there, build there with powers, see there with spirit
+  sight (and their household's beds are not hidden), get its Trophy Hall bonus, are served by its townsfolk, get its
+  break warnings, "The Hearth held" and the Hearth Shield of anyone online who holds the perk, and may build its Anchor
+  and Forge upgrades (paying themselves). Only the owner moves the Anchor, invites and removes, and has Oren's cottage;
+  role pads are worked by the owner's Echoes.
+- The town follows the household: townsfolk arrive and leave by the highest rank among its owner and members online,
+  every member online hears who came, and a member's rank-up is celebrated when they are home (`cheers`).
+- When an owner breaks their Anchor, the household is kept (`HearthData` schema 2 `kept`) and shares it again where the
+  Anchor next takes root. An owner moving home this way may always place it again, and it never becomes a sister home.
+- Growing into several Hearths: from Hearth tier III a member's own Anchor founds a sister home: its founder owns it and
+  everyone else of the first Hearth (owner and members) is a member of it (`founded_from`). One sister at tier III,
+  two at IV, three at V. Before that, a member who owns no Hearth is told the rule when placing an Anchor: share until
+  tier III, or leave to found an unrelated one.
+- Public API (`dev.awaken.hearth.Hearth`): `record HearthInfo(UUID owner, String ownerName, BlockPos anchor, int tier,
+  int radius, List<UUID> members, Optional<UUID> foundedFrom)` with `has(UUID)`; `hearthsOf(MinecraftServer, UUID)` and
+  `hearthsOf(ServerPlayer)` (own first, then shared, in join order; works for offline players); `home(ServerPlayer)`;
+  `isMember(ServerPlayer, BlockPos anchor)`; `isMember(MinecraftServer, UUID player, UUID hearthOwner)`;
+  `hearthAt(ServerLevel, BlockPos)`. `hasRoom`, `anchor` and `atHome` read the home Hearth.
+- Above machines answer to their owner, anyone who shares a Hearth with the owner, and anyone using one that stands
+  inside a Hearth they belong to (machines with no owner, ruins and old saves, answer to everyone); binding a Clone
+  Vat never changes its owner, so a household shares one clone.
+- A Hearth member's kill near friends: see "Shared rewards" below (Echo binding is one bind roll per player).
+
+The world's story (one story, shared; friends who join late go at their own pace):
+- One ending per world. The first player to choose at the Seed decides it (`StoryWorld` schema 2: who chose, the
+  play-day, and every player who reached it with the Ascension tier they took part in). Anyone who reaches the Seed
+  after that gets no choice card: they are told the world's ending (its lines, "This world's ending: <name> chose it",
+  the credits) and their own story finishes as before (the Sovereign Reassessment, the Endless, a new thing). Players
+  still choosing at the same Seed when the first one chooses are told at once.
+- The ending's effect applies once: "Become the Signal" raises the world's Ascension tier by one (the world's only
+  milestone; nothing raises it per player), "Break the Signal" calms the gates, "Wake up" restores the colour.
+- Own tier: the Ascension tier a player meets is min(world tier, the tier recorded when they reached the ending), 0
+  before that. A creature is scaled when it appears for the nearest player within 64 blocks (the world's tier when
+  nobody is near) and keeps that tier (`awaken_ascension`); every hit between it and another player is evened out to
+  that player's own tier: its melee ×(1 + 0.15·mine)/(1 + 0.15·its), the player's hits on it ×(1 + 0.3·its)/(1 +
+  0.3·mine). XP is ×(1 + 0.15·own tier). Projectiles were never scaled and aren't evened out.
+- Calm gates: a gate never breaks once the world's gates are calm, unless it was rolled for a player who hasn't reached
+  the world's ending: theirs still break (and look it). A gate with no owner follows the world.
+- Old saves: a schema 1 world records each player who chose an ending as having reached it at the world's tier when
+  they log in, so a single-player world plays exactly as before.
+- The Rival's beats are one player's scenes: only that player sees Vael (`VaelEntity` keeps its viewer).
+- Admin: `/awaken admin story ending` tells the ending once the world has one; `/awaken admin story ending reset` gives
+  the world its story back (tests and tours).
+
+Gates in a party:
+- Sealing: when an arena or the Lord's room seals behind someone, party members of the same run on the same floor
+  within 48 blocks step through with them; a party member who reaches the bars of a sealed room their party is fighting
+  in is let through.
+- Size: n = players of the gate on that floor (1 to 4). Room groups get +35% monsters per extra player (rounded) and +1
+  elite per two extra players; the Lord +50% health per extra player (its hoard is already one per player). Scripted
+  gates (the story's) never scale.
+- "Solo" (the `gates_solo_no_echo` counter) means nobody else was inside the gate at any point of your run
+  (`RunState` schema 2 `company`), not that the gate's all-time party set has one name.
+- The Director rolls per owner: the 1 to 4 standing gates are counted per player (a gate with no owner on record counts
+  for whoever is near, as before); a gate rolled for someone never forms within 256 blocks of a Hearth they don't own
+  or share, and a gate whose break comes due within 256 blocks of a Hearth its owner doesn't share (one placed after
+  the gate formed) folds away instead of breaking. A veteran's A-rank gates and breaks never land on a newcomer's home.
+- Cells: a released gate cell is erased and reused while the server runs (`RegionRecycler`); the registry (schema 2)
+  keeps each cell's generation, entities stamp theirs (`awaken_cell_gen`), and one saved with an older generation of
+  its cell leaves when loaded. The stop-time cleanup still deletes whatever was left.
+
+Shared rewards (credit the party in range; separate rolls per player; `core.api.Parties.sharing` is the one rule for
+who: party members online, alive, not spectating, in the same level within 32 blocks of the kill):
+- A gate kill: every party member of that run on the same floor within 32 blocks gets their own kill XP share (from
+  their own floor budget, so a party never earns more per player than alone) and their own elite loot roll into their
+  own Satchel. Credit falls back to whoever last hurt the creature (fire, a fall, an Echo finishing it).
+- Descent kills and overworld (home) kills: party members within 32 blocks get the same XP, each through their own
+  budget. A bindable kill leaves each party member within 32 blocks their own lingering Echo (their own bind roll).
+
+The Veil, the Lucidium and the rest:
+- A projected Body takes no damage from players: never from its own spirit or a party member, and from anyone else only
+  while the world's `pvp` game rule is on. A Body felled by a player who may not hurt it never takes its owner along.
+- Only its owner possesses a bonded mount (as with tamed pets; `MobHooks.bondedTo`).
+- Overworld creatures' content level follows the group: the lowest level among awakened players within 48 blocks of
+  the spawn decides (then the nearest player within 128, as before).
+- The cast-fail sound plays to the caster only.
+- Rate limits: Journal actions 4 a second, reality checks one per 10 ticks, the playtest "unfair death" flag one per
+  2 s; background dream builds at most 3 per player per 1000 ticks, whatever asks for them.
+- Lucidium cells are reused: when a dream ends its cell is erased (the chunks it generated, once out of memory) and
+  handed to the next dream; anything but a player loaded from disk in the Lucidium stays only if it belongs to the
+  dream running in its cell. A plan that is never dreamed gives its cell back the same way: thrown away at morning,
+  replaced when its player changes their intention (a build still compiling gives it back when it completes), or taken
+  by someone who then couldn't enter it. A sleeper about to dream a plan the planner lets go keeps it, and their night
+  gives it back if they never dream it. A cell is handed out again only once every chunk it generated is erased,
+  including chunks that were still generating when it was let go.
+- Statics cleared on server stop: Echo duty bookkeeping, breaks near Hearths, Bodies' owed deaths, Hearth offers and
+  invitations, throttles, queued region erasures.
 
 ---------------------------------------------------------------------------------------------------------------------
 

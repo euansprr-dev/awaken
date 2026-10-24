@@ -133,8 +133,9 @@ class Awakened:
         self.add, self.drop, self.heroes, self.planned = tuple(add), tuple(drop), tuple(heroes), planned
 
 
-# The hero trees (dev.awaken.terrain.hero.HeroTree): giant trees built as structures, only in the biomes that list them.
-HEROES = ("elder_colossus", "lumen_spire")
+# The hero trees (dev.awaken.terrain.hero.HeroTree): giant trees built as structures, only in the biomes that list them;
+# and the landmarks (dev.awaken.terrain.landmark.Landmark), placed the same way.
+HEROES = ("elder_colossus", "lumen_spire", "gate_scar", "shard_drift")
 
 
 AWAKENED = [
@@ -142,8 +143,10 @@ AWAKENED = [
     Awakened("elderwood", "greenwild", "old_growth_birch_forest", add=("awaken:has_lair/briar_sow",), heroes=("elder_colossus",)),
     # Duskwood: the dark forest's life in a forest that glows at night, under the Lumen Spires
     Awakened("lumen_forest", "duskwood", "dark_forest", heroes=("lumen_spire",)),
-    Awakened("glass_steppe", "sunscorch", "savanna", planned=True),              # or desert
-    Awakened("shattered_highlands", "crag", "windswept_hills", planned=True),    # or stony_peaks
+    # Sunscorch: the savanna's life on plains melted to glass where gates broke, round the Gate Scars
+    Awakened("glass_steppe", "sunscorch", "savanna", heroes=("gate_scar",)),
+    # Crag: the windswept hills' life on mountains split along lines of light, under the Shard Drifts
+    Awakened("shattered_highlands", "crag", "windswept_hills", heroes=("shard_drift",)),
     Awakened("frost_spires", "frostwild", "grove", planned=True),               # or snowy_plains
     Awakened("mirror_marsh", "mire", "swamp", planned=True),
 ]

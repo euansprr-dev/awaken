@@ -118,9 +118,10 @@ public final class Upgrades {
         Signal.send(sp, w.ttl(20 * 12).build());
     }
 
+    /** Builds the next Anchor tier of {@code owner}'s Hearth; its owner or any member may (they pay). */
     public static void upgradeAnchor(ServerPlayer sp, java.util.UUID owner) {
-        Optional<HearthRecord> ho = HearthService.hearthOf(sp);
-        if (ho.isEmpty() || !ho.get().owner.equals(owner) || ho.get().tier >= HearthRecord.MAX_TIER) return;
+        Optional<HearthRecord> ho = HearthData.get(sp.level().getServer()).of(owner).filter(r -> r.belongs(sp.getUUID()));
+        if (ho.isEmpty() || ho.get().tier >= HearthRecord.MAX_TIER) return;
         HearthRecord h = ho.get();
         Def next = anchorTier(h.tier + 1);
         Rank rank = Progression.rank(sp);
@@ -149,7 +150,7 @@ public final class Upgrades {
 
     public static void offerForgeUpgrade(ServerPlayer sp, ServerLevel level, BlockPos forgePos) {
         Optional<HearthRecord> ho = HearthData.get(level.getServer()).containing(forgePos, level.dimension().identifier().toString());
-        if (ho.isEmpty() || !ho.get().owner.equals(sp.getUUID())) {
+        if (ho.isEmpty() || !ho.get().belongs(sp.getUUID())) {
             Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Forge"))
                     .body(Component.literal("A forge works best at home. Inside your Hearth, with an anvil and an armour stand in the same room, it can temper your gear."))
                     .ttl(20 * 8).build());
@@ -189,7 +190,7 @@ public final class Upgrades {
     }
 
     static void upgradeForge(ServerPlayer sp, ServerLevel level, BlockPos forgePos) {
-        Optional<HearthRecord> ho = HearthService.hearthOf(sp);
+        Optional<HearthRecord> ho = HearthService.sharedAt(sp, forgePos);
         if (ho.isEmpty() || ho.get().forgeTier >= HearthRecord.MAX_FORGE_TIER) return;
         HearthRecord h = ho.get();
         Def next = forgeTier(h.forgeTier + 1);
@@ -239,7 +240,7 @@ public final class Upgrades {
     public static void offerTemper(ServerPlayer sp, ServerLevel level, BlockPos at, InteractionHand hand, String source) {
         ItemStack stack = sp.getItemInHand(hand);
         boolean oren = "oren".equals(source);
-        Optional<HearthRecord> ho = HearthService.hearthOf(sp);
+        Optional<HearthRecord> ho = oren ? HearthService.sharedAt(sp, at).or(() -> HearthService.homeOf(sp)) : HearthService.homeOf(sp);
         boolean armory = ho.isPresent() && (oren ? ho.get().hasRoom(RoomType.ARMORY) : hasArmoryAround(ho.get(), at)
                 || ho.get().roomAt(at, RoomType.ARMORY).isPresent());
         int cap = ho.map(h -> temperCap(h, armory)).orElse(1);

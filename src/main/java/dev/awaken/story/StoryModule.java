@@ -74,6 +74,7 @@ public final class StoryModule {
         bus.addListener(PlayerTickEvent.Post.class, Beats::onTick);
         bus.addListener(BreakBlockEvent.class, Prologue::onBreak);
         bus.addListener(LivingIncomingDamageEvent.class, Prologue::onIncomingDamage);
+        bus.addListener(LivingIncomingDamageEvent.class, Ascension::onIncomingDamage);
         bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, Ritual::onDamagePre);
         bus.addListener(ServerTickEvent.Post.class, Ritual::onServerTick);
         bus.addListener(EntityJoinLevelEvent.class, Court::onJoin);
@@ -106,6 +107,12 @@ public final class StoryModule {
             @Override public boolean gatesCalm(MinecraftServer server) { return StoryWorld.get(server).gatesCalm; }
             @Override public boolean colourRestored(MinecraftServer server) { return StoryWorld.get(server).colourRestored; }
             @Override public int ascension(MinecraftServer server) { return StoryWorld.get(server).ascension; }
+            @Override public int ascension(ServerPlayer p) { return StoryWorld.get(p.level().getServer()).ascensionOf(p.getUUID()); }
+            @Override public boolean gatesCalm(MinecraftServer server, java.util.Optional<java.util.UUID> owner) {
+                StoryWorld w = StoryWorld.get(server);
+                // a gate rolled for someone who hasn't reached the world's ending still breaks: their story isn't over
+                return w.gatesCalm && owner.map(w::reached).orElse(true);
+            }
             @Override public java.util.Optional<String> refusesScriptedGate(ServerPlayer p, String gateId) {
                 return Prologue.storyOn() ? Ritual.refuses(p, gateId) : java.util.Optional.empty();
             }
@@ -184,7 +191,8 @@ public final class StoryModule {
                 StoryWorld w = StoryWorld.get(p.level().getServer());
                 c.getSource().sendSuccess(() -> Component.literal("Prologue " + s.prologue + " · seen " + s.seen.size()
                         + " · Sovereigns " + s.sovereignsDefeated.size() + "/8 · Seed open " + Court.seedOpen(p)
-                        + " · ending '" + w.ending + "' · ascension " + w.ascension), false);
+                        + " · ending '" + w.ending + "'" + (w.endingByName.isEmpty() ? "" : " (chosen by " + w.endingByName + ")")
+                        + " · ascension " + w.ascension + " (yours " + w.ascensionOf(p.getUUID()) + ")"), false);
                 return 1;
             }));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
@@ -204,9 +212,24 @@ public final class StoryModule {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 Prologue.progress(p).seen.add("seed:defeated");
                 Prologue.progress(p).seen.remove("ending:chosen");
-                AwakenNet.send(p, new StoryPayloads.OpenEnding());
+                // the world keeps one ending: once chosen, this tells it ("ending reset" lets the world choose again)
+                if (StoryWorld.get(p.level().getServer()).ended()) Court.tell(p);
+                else AwakenNet.send(p, new StoryPayloads.OpenEnding());
                 return 1;
-            }));
+            }).then(Commands.literal("reset").executes(c -> {
+                StoryWorld w = StoryWorld.get(c.getSource().getServer());
+                w.ending = "";
+                w.endingBy = null;
+                w.endingByName = "";
+                w.endingDay = -1;
+                w.ascension = 0;
+                w.gatesCalm = false;
+                w.colourRestored = false;
+                w.reached.clear();
+                w.setDirty();
+                c.getSource().sendSuccess(() -> Component.literal("The world's story has no ending again."), true);
+                return 1;
+            })));
             adminStory.then(Commands.literal("prologue").executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 StoryProgress s = Prologue.progress(p);

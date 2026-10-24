@@ -1,0 +1,45 @@
+{
+  "holo.open": {
+    "subtitle": "subtitles.awaken.holo.open",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_open"
+      }
+    ]
+  },
+  "holo.open_quick": {
+    "subtitle": "subtitles.awaken.holo.open_quick",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_open_quick"
+      }
+    ]
+  },
+  "holo.close": {
+    "subtitle": "subtitles.awaken.holo.close",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_close"
+      }
+    ]
+  },
+  "holo.hover": {
+    "subtitle": "subtitles.awaken.holo.hover",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_hover_1"
+      },
+      {
+        "name": "awaken:ui_holo_hover_2"
+      }
+    ]
+  },
+  "holo.card": {
+    "subtitle": "subtitles.awaken.holo.card",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_card"
+      }
+    ]
+  }
+}
