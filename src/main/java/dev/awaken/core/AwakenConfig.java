@@ -78,6 +78,13 @@ public final class AwakenConfig {
                 .comment("Answer vanilla's \"experimental settings\" prompt for you. AWAKEN's dimensions come from data packs,",
                         "which vanilla calls experimental; the prompt otherwise blocks every new world.")
                 .define("skipExperimentalWarning", true);
+        /** AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom) or CINEMATIC (adds light shafts). */
+        public enum LensLook { OFF, SWIFT, CINEMATIC }
+
+        public static final ModConfigSpec.EnumValue<LensLook> LENS = C
+                .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps)",
+                        "or CINEMATIC (adds light shafts from the sun). It steps aside while an Iris shaderpack is on.")
+                .defineEnum("lens", LensLook.SWIFT);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}

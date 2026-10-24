@@ -567,3 +567,15 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 - Looks: Swift (default; the SPEC budget above), Cinematic (p50 ≥ 60 fps, p99 ≤ 25 ms at 4K, to confirm after the
   baseline), Ultra (Iris, experimental: OpenGL only and unsupported on Apple Silicon by Iris).
 - Terrain mods (Tectonic) only in new worlds; existing worlds keep vanilla terrain. Maps: a world map, no minimap.
+- Lens (`dev.awaken.lens`), AWAKEN's light layer: the post chains `awaken:lens_swift` (haze, bloom, grade, vignette,
+  dither; five passes, three of them at 960×600 or smaller) and `awaken:lens_cinematic` (adds light shafts). It runs
+  first in the player's post-effect list, so gameplay effects (dreams, blight, the Veil) still draw on top, and
+  re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 16×1
+  texture (`awaken:lens_params`), written once a frame in `ViewportEvent.RenderFog` at LOWEST priority: the look, the
+  depth range (26.3 is reversed-Z; zero-to-one depth differs between OpenGL and Vulkan), the final fog colour and
+  distances, the sun's screen position and the sunrise colour. Looks per dimension live in
+  `assets/awaken/lens/looks.json` (schemaVersion 1; exact id, then `prefix*`, then `default`) and ease into each other
+  over about 1.5 s. Lens never lifts shadows (exposure ≤ 1.05) and backs off where the game's own fog is thick.
+  It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT (default) | CINEMATIC.
+- Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
+  finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.

@@ -137,6 +137,8 @@ configurations {
 dependencies {
     // dev.awaken.compat: far terrain off inside gates, dreams and other instanced dimensions (pack/lock.json pins the same build)
     compileOnly "maven.modrinth:distanthorizons:3.3.4-26.3"
+    // Lens steps aside while an Iris shaderpack is on (the Ultra look)
+    compileOnly "maven.modrinth:iris:1.11.7+26.3-neoforge"
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

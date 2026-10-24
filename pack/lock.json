@@ -3,7 +3,7 @@
  "minecraft": "26.3",
  "loader": "neoforge",
  "neoforge": "26.3.0.95",
- "generated": "2026-10-24 08:42",
+ "generated": "2026-10-24 09:02",
  "files": [
   {
    "slug": "3dskinlayers",
@@ -259,7 +259,7 @@
     "ultra"
    ],
    "dependencyOf": [],
-   "why": "Shaderpacks, experimental on Apple Silicon."
+   "why": "Shaderpacks, experimental. 1.11.7 pins Sodium 0.9.2, which crashes on NeoForge 26.3.0.95: Ultra waits for an Iris update."
   },
   {
    "slug": "jade",
@@ -479,15 +479,15 @@
    "slug": "sodium",
    "title": "Sodium",
    "projectId": "AANobbMI",
-   "versionId": "VHtnT9Q4",
-   "version": "mc26.3-0.9.2-neoforge",
-   "channel": "release",
-   "published": "2026-09-15",
-   "file": "sodium-neoforge-0.9.2+mc26.3.jar",
-   "url": "https://cdn.modrinth.com/data/AANobbMI/versions/VHtnT9Q4/sodium-neoforge-0.9.2%2Bmc26.3.jar",
-   "size": 1208169,
-   "sha1": "9015607e5ae2c5b9692ebf05113f9caca6ec41bf",
-   "sha512": "f5b62730bbee7d116a83c765b8e7cdb660da97ab7f122f180293eda3e56b5ca4d701b0bf18c36f087e9a7349f8ec113f1f8c0d462a8893c551a2f3e163bd0cb8",
+   "versionId": "SS023RVV",
+   "version": "mc26.3-0.9.3-beta.1-neoforge",
+   "channel": "beta",
+   "published": "2026-10-15",
+   "file": "sodium-neoforge-0.9.3-beta.1+mc26.3.jar",
+   "url": "https://cdn.modrinth.com/data/AANobbMI/versions/SS023RVV/sodium-neoforge-0.9.3-beta.1%2Bmc26.3.jar",
+   "size": 1209577,
+   "sha1": "c9412897122afb33007f6c0d6ee1b2248a9ebcf7",
+   "sha512": "92cdb344cb8049993685e3d81498411d4e6965a8f054c912a297bfe550937ed4792b7c1cb4efea5b5ac9c0e6c32aea777389207e481f008ce6f176b5ae6aab93",
    "client": "required",
    "server": "unsupported",
    "profiles": [
@@ -497,7 +497,7 @@
    "dependencyOf": [
     "iris"
    ],
-   "why": "Faster chunk rendering."
+   "why": "Faster chunk rendering. 0.9.3-beta.1: 0.9.2 crashes on NeoForge 26.3.0.95 (LevelExtractor mixin, 2026-10-24)."
   },
   {
    "slug": "sound-physics-remastered",
