@@ -26,10 +26,12 @@ a small holo card, one at a time.
 
 1. **Diegetic in motion, precise at rest.** Panels move like objects while they open, close or follow your view.
    While you read or click, they hold still, and clicks land exactly where you aim.
-2. **Write it once, show it anywhere.** Every K-menu section is already written once against Awaken's own `Ui`
-   toolkit (signal/client/Ui.java), which measures, draws and handles clicks from the same code. Give `Ui` a canvas it
-   draws through, and the same sections render flat in 2D or on a 3D panel. Nothing gets rewritten twice, and the
-   flat screen remains the fallback.
+2. **Write it once, show it anywhere.** Most K-menu sections are written once against Awaken's own `Ui` toolkit
+   (signal/client/Ui.java), which measures, draws and handles clicks from the same code. Give `Ui` a canvas it draws
+   through, and those sections render flat in 2D or on a 3D panel. Nothing gets rewritten twice, and the flat screen
+   remains the fallback. Not every tab is `Ui` yet: the Gate Map (gates and the Above's lairs), Powers and the Descent
+   ledger draw straight to `GuiGraphicsExtractor` (`render(g, x, y, width, ...)`). Until they are ported to `Ui`, the
+   panel hosts them through `HoloGraphics`, a `GuiGraphicsExtractor` that records their flat drawing onto the panel.
 3. **Never slow down a frequent action.** The inventory opens in at most 180 ms, and clicks work from the first frame.
    The K menu may take 350–450 ms because it's opened less often; pressing K again skips the animation.
 4. **Calm by default.** HUD motion is driven only by how fast the camera turns, never constant. It stays within a few
@@ -87,7 +89,11 @@ a small holo card, one at a time.
   - `GuiCanvas`, which keeps today's 2D output pixel for pixel;
   - `HoloCanvas`, which writes the same primitives into the panel's pose.
 - MEASURE and CLICK modes don't change. CLICK gets its coordinates from HoloInput in panel units.
-- Three call sites use `ui.g()` directly (CoreSections, RequestSection). Move them onto canvas calls.
+- Three call sites use `ui.g()` directly (CoreSections, RequestSection). Move them onto canvas calls (`ui.fill`,
+  `ui.item`, `ui.canvas()`).
+- Sections outside `Ui` (Gate Map, Powers, Descent) are hosted through `HoloGraphics` for now (status 2026-10-24); a
+  render-to-texture host has no hook in 26.3: the GUI renders all its state in one pass into the main target at the
+  end of the frame.
 
 ### 4. Input
 - While a HoloScreen is open, the camera holds still. The cursor position becomes a ray through the inverse of
@@ -98,7 +104,7 @@ a small holo card, one at a time.
 
 ### 5. The K menu
 - `HoloStatusScreen` hosts the same tabs and sections as StatusScreen (StatusSections' registry) on a WRIST→VIEW
-  panel. The flat StatusScreen remains as a client option (`statusStyle = HOLO | FLAT`), and the automatic fallback
+  panel: the `Ui` sections through the canvas, the three flat ones through `HoloGraphics` (see §3). The flat StatusScreen remains as a client option (`statusStyle = HOLO | FLAT`), and the automatic fallback
   if a holo pipeline fails to compile.
 - Timeline:
 
@@ -175,7 +181,8 @@ a small holo card, one at a time.
   first and third person, front camera; inventory open and closed; a sharp turn with sway on and off.
 - GameTests cover the holo_state payload: rate limit, relay only to tracking players, rejection of an unknown kind.
 - Acceptance:
-  - every StatusScreen section renders on the panel with nothing clipped;
+  - every StatusScreen section renders on the panel with nothing clipped (`Ui` sections natively, the Gate Map,
+    Powers and Descent through `HoloGraphics` until they are ported);
   - clicks hit the right button (the tour clicks known button positions with a new autopilot `click` command);
   - the flat fallback still works;
   - pack perf tour with the K menu open: +0.3 ms or less;
