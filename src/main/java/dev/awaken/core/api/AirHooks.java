@@ -13,8 +13,9 @@ public final class AirHooks {
     private AirHooks() {}
 
     /**
-     * Scale, in blocks a tick²: gravity is 0.08 and a glide sinks about 0.12 a tick, so an updraft of 0.1 to 0.14 up
-     * lifts a glide and a windway of 0.04 to 0.08 along carries one.
+     * Scale, in blocks a tick², applied every tick on top of the state's own step (so it adds up fast): gravity is 0.08;
+     * an updraft of 0.045 up climbs open wings 2-4 blocks a second (0.13 shot them up 58 blocks in 5 s); a windway of
+     * 0.02-0.03 along carries a glide.
      */
     @FunctionalInterface
     public interface Source {

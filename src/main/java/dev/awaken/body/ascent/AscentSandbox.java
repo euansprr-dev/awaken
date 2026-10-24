@@ -51,6 +51,14 @@ final class AscentSandbox {
         for (int y = top + 1; y <= top + 4; y++) for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) {
             set(level, o.getX() + dx, y, o.getZ() + dz, Blocks.AIR.defaultBlockState());
         }
+        // an updraft pylon off the tower's side: glide off the deck, swing round into the column, ride it back up
+        int vx = o.getX() + sx * 14 + fx * 8, vz = o.getZ() + sz * 14 + fz * 8;
+        int vg = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, vx, vz);
+        // a 3x3 pillar 13 high with the vent on top, so the column (34 up) reaches past the deck
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+            for (int y = vg - 1; y <= vg + 13; y++) set(level, vx + dx, y, vz + dz, y % 6 == 0 && (dx != 0 || dz != 0) ? trim : stone);
+        }
+        set(level, vx, vg + 13, vz, AscentContent.UPDRAFT_VENT.get().defaultBlockState());
         // the grove: giant trees down the lane, alternating sides
         int n = 0;
         for (int i = 0; i < TREES; i++) {

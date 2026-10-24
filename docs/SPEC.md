@@ -1876,8 +1876,14 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **Moving air** (`core.api.AirHooks`, for the Wilds' updraft pylons and windways): sources registered on both sides
   add an acceleration (blocks a tick²) at the feet; the client's free states take it after their own step (the carry
   ×1, wings ×1.25, flight ×0.6; a rope none). Sources read only what both sides have (blocks, block entities,
-  entities, synced data) and allocate nothing. Scale: an updraft of 0.10-0.14 up lifts a glide (0.12 climbs >5 blocks
-  in 5 s), a windway of 0.04-0.08 along carries one.
+  entities, synced data) and allocate nothing. Scale (applied every tick, so it adds up): an updraft of 0.045 up climbs
+  open wings 2-4 blocks a second (0.13 shot them up 58 in 5 s); a windway of 0.02-0.03 along carries a glide.
+- **The updraft vent** (`awaken:updraft_vent`, a Precursor grate, light 10, pickaxe): a column of rising air, radius
+  3.5, 34 high from its top, lift 0.045 to 24 up then fading to 0 at the top, 35% less at the rim; columns don't stack
+  (the strongest counts). Drawn as 16 pale streaks rising up the column, turned to face you, fading where the lift
+  fades (one draw a vent, seen from 160); heard as a soft rising rush every 2.5-4 s near it (`ascent.updraft`).
+  Client side the loaded vents are a list their block entities join, so the air costs a list walk. The sandbox puts
+  one on a 13-high pillar off the tower's side (its column reaches past the deck). The Wilds' pylons stand on them.
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
   hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
   Leaper together (`HorizonHooks.addReach`).

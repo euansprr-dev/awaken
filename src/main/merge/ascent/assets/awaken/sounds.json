@@ -107,5 +107,14 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "ascent.updraft": {
+    "subtitle": "subtitles.awaken.ascent.updraft",
+    "sounds": [
+      {
+        "name": "awaken:ascent_updraft",
+        "attenuation_distance": 20
+      }
+    ]
   }
 }

@@ -19,6 +19,7 @@ feathers. Never the body's cloth-and-grit alone, never a vanilla sound.
 - flap:         one wing beat: a low whomp of air and a feather rustle
 - boom:         the sonic boom's crack: a double crack (the shock's two edges) and a long low rumble
 - land:         coming down out of the air: a heavy settle and a skid of grit
+- updraft:      an updraft vent's breath: air drawn up a column, a soft rush rising in pitch, a hollow low under it
 - remember:     "your body remembers": a long inhale of air under a slow rising chord of glass (G, D, G, D), the wings
                 shaking out and the body settling as the top note lands (1.7 s in, when the wings open)
 
@@ -215,6 +216,15 @@ def land(seed):
     return finish(x, 0.15, 7000)
 
 
+def updraft(seed):
+    n = K.ns(3.2)
+    x = at(n, 0.0, sweep(3.0, 260, 1100, 0.6, seed + 1, 0.45, 1.4)) * 0.6               # the rush, rising
+    x += at(n, 0.2, sweep(2.6, 900, 2600, 1.2, seed + 2, 0.5, 1.6)) * 0.18             # its thin top
+    hollow = norm(K.lowpass(K.noise(K.ns(3.0), "brown", seed + 3), 140, 2)) * K.adsr(K.ns(3.0), 0.6, 0.4, 0.7, 1.2)
+    x += at(n, 0.0, hollow) * 0.35
+    return finish(x, 0.3, 7000)
+
+
 def remember(seed):
     n = K.ns(4.8)
     x = at(n, 0.0, sweep(3.0, 180, 820, 0.7, seed + 1, 0.75, 1.6)) * 0.3                 # the air drawing in
@@ -239,6 +249,7 @@ SOUNDS_SPEC = [
     ("ascent_boom", boom, -17.0, "ascent.boom", "A sonic boom", 1.0, 96),
     ("ascent_land", land, -20.0, "ascent.land", "Someone lands hard", 1.0, 20),
     ("ascent_remember", remember, -21.0, "ascent.remember", "A body remembers", 1.0, 24),
+    ("ascent_updraft", updraft, -22.0, "ascent.updraft", "Air rushes upward", 1.0, 20),
 ]
 
 

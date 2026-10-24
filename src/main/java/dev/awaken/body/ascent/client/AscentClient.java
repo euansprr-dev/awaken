@@ -28,6 +28,8 @@ public final class AscentClient {
         modBus.addListener(AscentClient::onPayloads);
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(AscentContent.MOTE.get(), MoteParticle.Provider::new));
         modBus.addListener(AscentClient::onAddLayers);
+        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) ->
+                e.registerBlockEntityRenderer(AscentContent.UPDRAFT_VENT_BE.get(), UpdraftRenderer::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_flow"), AscentFlow::render));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
@@ -47,6 +49,7 @@ public final class AscentClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             AscentMoves.reset();
             AscentScene.reset();
+            dev.awaken.body.ascent.Updrafts.clear();
             AscentRemote.reset();
             AscentPilot.stop();
             AscentRoutes.stop();

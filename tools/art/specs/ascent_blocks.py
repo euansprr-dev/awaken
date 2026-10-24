@@ -1,0 +1,149 @@
+"""The Ascent's blocks (docs/SPEC.md §17.6): the updraft vent, a Precursor grate that breathes a column of rising air
+(the Wilds' pylons stand on them). Pixel art in the mod's palette: the Precursor's dark slate round a grate whose gaps
+glow with the Signal's cyan, and a band of light round its sides.
+
+    python3 tools/art/build_all.py ascent_blocks        textures
+    python3 tools/art/specs/ascent_blocks.py content    blockstate, model, item model, loot table, name, pickaxe tag
+"""
+import json
+import math
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))
+import pixelart as P  # noqa: E402
+from pixelart import Canvas, ramp, rng_for  # noqa: E402
+
+ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
+RES = os.path.join(ROOT, "src/main/resources")
+ASSETS = os.path.join(RES, "assets/awaken")
+MERGE = os.path.join(ROOT, "src/main/merge/ascent")
+
+P.RAMPS.update({
+    "ventglow": ["#0d3b5c", "#1d6f9e", "#3fa6d8", "#7fd3ff", "#c4ecff", "#f2fbff"],
+})
+
+
+def canvas(fill):
+    c = Canvas()
+    for y in range(16):
+        for x in range(16):
+            c.set(x, y, fill(x, y))
+    return c
+
+
+def vent_top():
+    """A round grate: a slate rim, four bars across, light in the gaps (brightest at the centre)."""
+    st, gl = ramp("precursor"), ramp("ventglow")
+    rng = rng_for("ascent_updraft_vent_top")
+    base, glow = Canvas(), Canvas()
+    for y in range(16):
+        for x in range(16):
+            r = math.hypot(x - 7.5, y - 7.5)
+            bar = (y % 4) == 1
+            if r > 6.6:
+                c = st[2 + (1 if rng.random() < 0.3 else 0) - (1 if (x + 2 * y) % 9 == 0 else 0)]
+            elif r > 5.6:
+                c = st[4]
+            elif bar:
+                c = st[3] if x % 5 else st[4]
+            else:
+                k = 4 if r < 2.2 else 3 if r < 4.2 else 2
+                c = gl[k]
+                glow.set(x, y, gl[k + 1])
+            base.set(x, y, c)
+    return base, glow
+
+
+def vent_side():
+    """Slate with a band of light round it near the top, where the air is drawn in."""
+    st, gl = ramp("precursor"), ramp("ventglow")
+    rng = rng_for("ascent_updraft_vent_side")
+    base, glow = Canvas(), Canvas()
+    for y in range(16):
+        for x in range(16):
+            if y in (3, 4):
+                c = gl[3] if y == 3 else gl[2]
+                glow.set(x, y, gl[4] if y == 3 else gl[3])
+            elif y in (2, 5):
+                c = st[4]
+            else:
+                c = st[1 + (1 if rng.random() < 0.35 else 0) + (1 if (x * 3 + y) % 11 == 0 else 0)]
+            base.set(x, y, c)
+    for x in (3, 8, 13):
+        base.set(x, 9, st[0])
+        base.set(x, 10, st[0])
+    return base, glow
+
+
+def textures():
+    t = {}
+    t["ascent_updraft_vent_top"], t["ascent_updraft_vent_top_glow"] = vent_top()
+    t["ascent_updraft_vent_side"], t["ascent_updraft_vent_side_glow"] = vent_side()
+    return t
+
+
+def build(out):
+    for name, c in textures().items():
+        out.block(name, c)
+
+
+# ---- content ---------------------------------------------------------------------------------------------------------
+
+SIDES = ("down", "up", "north", "south", "west", "east")
+
+
+def _write(path, data):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+
+
+def _merge(path, data):
+    cur = {}
+    if os.path.exists(path):
+        with open(path) as f:
+            cur = json.load(f)
+    if "values" in data and isinstance(cur.get("values"), list):
+        cur["values"] += [v for v in data["values"] if v not in cur["values"]]
+    else:
+        cur.update(data)
+    _write(path, cur)
+
+
+def vent_model():
+    b = lambda n: f"awaken:block/{n}"  # noqa: E731
+    faces = {d: {"texture": "#side", "cullface": d} for d in SIDES}
+    faces["up"] = {"texture": "#top", "cullface": "up"}
+    glow = {d: {"texture": "#side_glow", "cullface": d} for d in ("north", "south", "west", "east")}
+    glow["up"] = {"texture": "#top_glow", "cullface": "up"}
+    return {"parent": "minecraft:block/block",
+            "textures": {"particle": b("ascent_updraft_vent_side"), "top": b("ascent_updraft_vent_top"),
+                         "side": b("ascent_updraft_vent_side"), "top_glow": b("ascent_updraft_vent_top_glow"),
+                         "side_glow": b("ascent_updraft_vent_side_glow")},
+            "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces},
+                         {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up",
+                          "faces": glow}]}
+
+
+def content():
+    name = "updraft_vent"
+    _write(os.path.join(ASSETS, f"models/block/{name}.json"), vent_model())
+    _write(os.path.join(ASSETS, f"blockstates/{name}.json"), {"variants": {"": {"model": f"awaken:block/{name}"}}})
+    _write(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": f"awaken:block/{name}"}})
+    _write(os.path.join(RES, f"data/awaken/loot_table/blocks/{name}.json"), {
+        "type": "minecraft:block", "random_sequence": f"awaken:blocks/{name}",
+        "pools": [{"rolls": 1, "bonus_rolls": 0, "entries": [{"type": "minecraft:item", "name": f"awaken:{name}"}],
+                   "conditions": [{"condition": "minecraft:survives_explosion"}]}]})
+    _merge(os.path.join(MERGE, "assets/awaken/lang/en_us.json"), {f"block.awaken.{name}": "Updraft Vent"})
+    _merge(os.path.join(MERGE, "data/minecraft/tags/block/mineable/pickaxe.json"), {"values": [f"awaken:{name}"]})
+    print("ascent_blocks: content written for", name)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "content":
+        content()
+    else:
+        print(__doc__)

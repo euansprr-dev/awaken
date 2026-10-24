@@ -74,13 +74,29 @@ final class AscentTests {
         h.assertTrue(boomAt > 0 && -d.y < 60, "a 60 degree dive booms within 60 blocks (at tick " + boomAt + ", " + -d.y + " down)");
         // an updraft (moving air, 0.12 up) under open wings turns the sink into a climb
         AscentRules.Kin u = new AscentRules.Kin().set(0, 0, 0, 0, -0.1, 1.1);
-        double[] lift = {0, 0.12, 0};
+        double[] lift = {0, Updrafts.LIFT, 0};
         double uy0 = u.y;
         for (int t = 0; t < 100; t++) {
             AscentRules.glideStep(u, 0, 6);
             AscentRules.air(u, lift, AscentRules.AIR_GLIDE);
         }
-        h.assertTrue(u.y > uy0 + 5, "a glide in an updraft climbs (" + (u.y - uy0) + " in 5 s)");
+        h.assertTrue(u.y > uy0 + 8 && u.y < uy0 + 22, "a glide in a vent's heart climbs a thermal's 2-4 blocks a second ("
+                + (u.y - uy0) + " in 5 s, " + u.speed() + " b/t)");
+        // an updraft vent's column: full lift near the vent, less at the rim, fading out above FULL, none outside
+        net.minecraft.core.BlockPos vent = new net.minecraft.core.BlockPos(0, 64, 0);
+        double heart = Updrafts.liftOf(vent, 0.5, 70, 0.5), rim = Updrafts.liftOf(vent, 0.5 + Updrafts.RADIUS - 0.1, 70, 0.5);
+        h.assertTrue(Math.abs(heart - Updrafts.LIFT) < 1e-9 && rim > heart * 0.6 && rim < heart * 0.7, "heart " + heart + ", rim " + rim);
+        h.assertTrue(Updrafts.liftOf(vent, 0.5, 65 + Updrafts.HEIGHT - 2, 0.5) < heart * 0.25 && Updrafts.liftOf(vent, 0.5, 66 + Updrafts.HEIGHT, 0.5) == 0
+                && Updrafts.liftOf(vent, 4.6, 70, 0.5) == 0, "the column ends at its top and its rim");
+        Updrafts.add(h.getLevel(), vent);
+        double[] air = new double[3];
+        try {
+            h.assertTrue(dev.awaken.core.api.AirHooks.sample(h.getLevel(), 0.5, 70, 0.5, air) && Math.abs(air[1] - Updrafts.LIFT) < 1e-9,
+                    "AirHooks hears the vent: " + air[1]);
+        } finally {
+            Updrafts.remove(h.getLevel(), vent);
+        }
+        h.assertFalse(dev.awaken.core.api.AirHooks.sample(h.getLevel(), 0.5, 70, 0.5, air), "and not once it's gone");
         AscentRules.Kin c = new AscentRules.Kin().set(0, 0, 0, 0, 0, 2.0);
         double y0 = c.y;
         for (int t = 0; t < 30; t++) AscentRules.glideStep(c, 0, -40);
