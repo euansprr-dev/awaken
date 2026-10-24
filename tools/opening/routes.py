@@ -387,6 +387,16 @@ def keep_off_edges(city, route):
                 break
 
 
+def ridge_way(route, first, last, points):
+    """Replaces the points from `first` to `last` (both included, matched by position) with a designed way."""
+    key = lambda p: (p[0], p[1], p[2])
+    ks = [k for k, p in enumerate(route.points) if key(p) == first]
+    ke = [k for k, p in enumerate(route.points) if key(p) == last]
+    if not ks or not ke or ke[0] < ks[0]:
+        raise SystemExit(f'{route.name}: the way to replace from {first} to {last} is not in the route')
+    route.points[ks[0]:ke[0] + 1] = [[x, f, z, m] for x, f, z, m in points]
+
+
 def quay_points(city, route, x_near, z0, z1, feet):
     """Along a lower quay that bends with the water: the middle of the walk every few blocks (the planner's runs join
     them round the bollards)."""
@@ -473,6 +483,11 @@ def design(city, plan):
     to_points(r, path, skip_first=True)
     lips(stage, r)
     keep_off_edges(city, r)
+    # the last warehouse before the crane: the planner climbs its gable up the east eave (a sprint arriving there goes
+    # over); up its steps two in from the end and along the ridge onto the bridge instead, as a runner would
+    ridge_way(r, (-87.5, 19.0, -19.5), (-86.5, 22.5, -17.5), [
+        (-90.5, 19.0, -19.5, 'run'), (-90.5, 20.0, -18.5, 'jump'), (-90.5, 21.0, -17.5, 'jump'),
+        (-90.5, 22.5, -16.5, 'mantle'), (-88.5, 22.5, -16.5, 'run'), (-86.5, 22.5, -17.5, 'run')])
     # the arm: run to the trolley, drop to a hang on its south face, shimmy past, climb back up, on to the tower
     r.add(-73.5, 23.0, -25.5, 'run')
     r.add(-73.5, 21.45, -24.5, 'hang')
@@ -554,16 +569,16 @@ def design(city, plan):
     r.add(-84.5, -3.0, -41.5, 'run')
     r.add(-84.5, -3.0, -40.5, 'run')
     r.add(-84.5, -6.4, -37.5, 'swim')       # off the lower quay into the canal's mouth
-    r.add(-84.5, -6.4, -33.6, 'swim')
-    r.add(-84.5, -3.0, -32.5, 'climb')      # up the mouth's ladder (its column: on it, the driver climbs)
+    r.add(-83.5, -6.4, -33.6, 'swim')
+    r.add(-83.5, -3.0, -32.5, 'climb')      # up the mouth's ladder (a ladder point is its own column: the driver climbs)
     r.add(-84.5, -3.0, -31.5, 'run')
     street_points(r, city, [(-82.5, -6.5), (-82.5, -4.5)], near=-3.0)
     r.add(-79.5, -6.4, -4.5, 'swim')        # the Bell Bridge is in the river beside you: across
     r.add(-63.5, -6.4, -4.5, 'swim')
-    r.add(-63.5, -3.0, -4.5, 'climb')       # the far bank's water ladder
+    r.add(-62.5, -3.0, -4.5, 'climb')       # the far bank's water ladder (M1's, on the lower quay's face)
     r.add(-61.5, -3.0, -3.5, 'run')
     r.add(-60.5, -3.0, -3.5, 'run')
-    r.add(-60.5, 1.0, -3.5, 'climb')        # and the quay wall's
+    r.add(-59.5, 1.0, -3.5, 'climb')        # and the quay wall's
     r.add(-58.5, 1.0, -3.5, 'run')
     routes.append(r)
     r = Route('act3_canal', 3, 'canal')

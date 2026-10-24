@@ -150,7 +150,9 @@ final class RouteDriver {
         switch (m) {
             case RUN, WALK -> {
                 boolean step = p.horizontalCollision && ground;
-                keys(true, false, false, false, step, false, m == OpeningRoutes.Move.RUN && dxz > 1.2);
+                // brake into a sharp turn (a sprint arriving at a corner by an eave carries on over it)
+                boolean brake = dxz < 2.5 && sharpTurn();
+                keys(true, false, false, false, step, false, m == OpeningRoutes.Move.RUN && dxz > 1.2 && !brake);
             }
             // a hop up a step: no sprint close in (a sprint-jump carries the body on, off the side of a gable)
             case JUMP -> keys(true, false, false, false, ground && (dxz < 1.5 || p.horizontalCollision), false, dxz > 2.5);
@@ -201,6 +203,15 @@ final class RouteDriver {
             case CLIMB -> dxz < 2.0 && Math.abs(dy) < 0.3;
             default -> dxz < 0.7;
         };
+    }
+
+    /** The way turns by more than 60 degrees at the point being run to. */
+    private static boolean sharpTurn() {
+        if (i < 1 || i + 1 >= route.points().size()) return false;
+        Vec3 a = world(i - 1), b = world(i), c = world(i + 1);
+        double ax = b.x - a.x, az = b.z - a.z, bx = c.x - b.x, bz = c.z - b.z;
+        double la = Math.sqrt(ax * ax + az * az), lb = Math.sqrt(bx * bx + bz * bz);
+        return la > 1e-3 && lb > 1e-3 && (ax * bx + az * bz) / (la * lb) < 0.5;
     }
 
     private static double r1(double v) {

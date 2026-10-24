@@ -22,23 +22,17 @@ cmd time set 1500
 cmd effect give @s minecraft:saturation infinite 10 true
 cmd effect give @s minecraft:resistance infinite 10 true
 camera back
-cmd awaken opening drive act1_roof rec
-wait 420
-shot m2_rerec_a1roof_hang
-wait 480
 cmd awaken opening drive act2_roof rec
 wait 240
-shot m2_rerec_a2roof_gable
+shot m2_rerec_a2roof_ridge
 wait 200
 shot m2_rerec_a2roof_crane
-wait 360
+wait 460
 camera first
-cmd awaken opening drive act1_canal rec
-wait 600
-shot m2_rerec_a1canal_quay
-wait 500
 cmd awaken opening drive act2_canal rec
 wait 200
 shot m2_rerec_a2canal_ladder
-wait 500
+wait 300
+shot m2_rerec_a2canal_farbank
+wait 300
 quit
