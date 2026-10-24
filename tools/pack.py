@@ -7,8 +7,10 @@
   python3 -I tools/pack.py remove <game-dir>             take out exactly what install put there
   python3 -I tools/pack.py status <game-dir>             what is installed, hashes, and jars the pack doesn't own
   python3 -I tools/pack.py export <out.mrpack> <profiles> --awaken-jar build/libs/awaken-x.jar
+  python3 -I tools/pack.py dhconfig <game-dir> swift|cinematic|default   Distant Horizons settings for a look
 
-install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
+install writes the Swift Distant Horizons settings when the horizon profile goes into a folder that has none yet
+(an existing DistantHorizons.toml is the player's and is left alone). install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
 never deletes a jar it didn't put there, and refuses to touch a game folder a client is running from.
 """
 import hashlib
@@ -206,6 +208,8 @@ def cmd_install(game_dir, profiles):
         if not (dst.exists() and sha512(dst) == e["sha512"]):
             shutil.copyfile(src, dst)
             print(f"  installed {e['file']}")
+    if any(e["slug"] == "distanthorizons" for e in chosen):
+        cmd_dhconfig(game_dir, "swift", only_if_missing=True)
     save(mods_dir / MARKER, {"schemaVersion": 1, "profiles": names, "installed": time.strftime("%Y-%m-%d %H:%M"),
                              "lockGenerated": lock["generated"],
                              "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"]} for e in chosen]})
@@ -242,6 +246,26 @@ def cmd_status(game_dir):
     for p in sorted(mods_dir.glob("*.jar")):
         if p.name not in ours:
             print(f"  {'not ours':8} {p.name}")
+
+
+# ---------------------------------------------------------------------------------------------- Distant Horizons looks
+
+def cmd_dhconfig(game_dir, preset, only_if_missing=False):
+    """Writes config/DistantHorizons.toml from DH's own default file with one look's keys changed."""
+    import re
+    target = Path(game_dir) / "config" / "DistantHorizons.toml"
+    if only_if_missing and target.exists():
+        return
+    text = (ROOT / "pack" / "dh" / "default.toml").read_text()
+    if preset != "default":
+        changes = {k: v for k, v in load(ROOT / "pack" / "dh" / f"{preset}.json").items() if not k.startswith("_")}
+        for key, value in changes.items():
+            text, n = re.subn(rf"(?m)^(\s*){re.escape(key)} = .*$", lambda m: f"{m.group(1)}{key} = {value}", text)
+            if n != 1:
+                raise SystemExit(f"DistantHorizons.toml: expected one '{key}', found {n}")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text)
+    print(f"  Distant Horizons: {preset} settings in {target}")
 
 
 # ------------------------------------------------------------------------------------------------------------- export
@@ -287,6 +311,8 @@ def main(argv):
         cmd_remove(argv[2])
     elif c == "status" and len(argv) == 3:
         cmd_status(argv[2])
+    elif c == "dhconfig" and len(argv) == 4 and argv[3] in ("swift", "cinematic", "default"):
+        cmd_dhconfig(argv[2], argv[3])
     elif c == "export" and len(argv) == 6 and argv[4] == "--awaken-jar":
         cmd_export(argv[2], argv[3], argv[5])
     else:

@@ -8,6 +8,7 @@
 #   BACKEND=vulkan|opengl   graphics API for this run
 #   XMX=6G  ZGC=1           client heap size and garbage collector
 #   LENS=off|swift|cinematic  Awaken's light layer (unset: whatever run-autopilot's client config says)
+#   DH=swift|cinematic|default  Distant Horizons settings (pack/dh/); unset leaves them
 cd "$(dirname "$0")/.."
 SCRIPT=${1:?script}
 T=${2:-900}
@@ -30,6 +31,8 @@ if [ -n "$LENS" ]; then
   sed -i '' '/^lens = /d' $CFG
   echo "lens = \"${(U)LENS}\"" >> $CFG
 fi
+# DH=swift|cinematic|default rewrites Distant Horizons' settings for this run
+[ -n "$DH" ] && { python3 -I tools/pack.py dhconfig run-autopilot "$DH" > /dev/null || exit 1; }
 GRADLE_ARGS=()
 [ -n "$XMX" ] && GRADLE_ARGS+=("-Pxmx=$XMX")
 [ -n "$ZGC" ] && GRADLE_ARGS+=("-Pzgc")

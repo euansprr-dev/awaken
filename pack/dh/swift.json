@@ -1,0 +1,12 @@
+{
+  "_about": "Distant Horizons for the Swift look on an M4 at Retina size: half the default radius, two-block detail, no SSAO, AA, textured LODs or extra cloud layers. Measured in docs/perf (batch 3).",
+  "lodChunkRenderDistanceRadius": "128",
+  "maxHorizontalResolution": "\"TWO_BLOCKS\"",
+  "verticalQuality": "\"LOW\"",
+  "horizontalQuality": "\"LOW\"",
+  "enableSsao": "false",
+  "enableAntiAliasing": "false",
+  "enableTexturedLods": "false",
+  "enableMultiLayerClouds": "false",
+  "numberOfThreads": "4"
+}
