@@ -101,11 +101,94 @@ first hour, ~140 over the game; an anomaly every ~9 outdoor minutes, a rift tear
 (C drops to .065 to keep level 50 at ~56 h), so the balanced player reaches 135 at ~101 h, matching the ~100-hour story.
 The Seed's level requirement is unchanged.
 
+## The Ritual of the Bell (the awakening as a cinematic, 2026-10-24)
+
+Euan's ask: the death becomes a ritual under a godlike boss, the scene waits for everyone in multiplayer, it feels
+magical and cinematic and ties into Lens, and the black stays for the whole "Will you accept?". Then: he never got past
+the first room without armour, so the hall is the crypt's first and only room and nothing in it kills until the End.
+Design and storyboard: `docs/proposals/the-ritual.md`. An original homage: Awaken's own god, rules and words.
+
+**The gate.** `Prologue.openFirstGate` asks `GateHooks.openScripted(.., floors 1)`, which builds `Gates.ritualPlan`:
+one floor, boss `awaken:the_seated_one` (`GatePlan.RITUAL_BOSS`, content version 3), so nothing else can roll it. The
+floor is an antechamber (the start room, the entrance sigil; you arrive here and gather) and the hall (room type
+RITUAL, set piece RITUAL_HALL, 3x3 slots, vault 27 at the nave and 18 at the side walls). `gates.world.PiecesRitual` paints
+it and is the one source of every position: a colonnade of basalt pillars, twelve plinths for the kneeling statues
+(six a side, facing the aisle), a brick aisle with gold edging, the rune ring (radius 7-9, eight segments) round the
+altar with its three plates (radius 5, one toward the doors, two behind), the great bronze bell hung over the altar,
+the dais (three steps from w 33) and the throne carved into the far wall (backrest, armrests, invisible barriers where
+the Seated One's legs are) under a sunburst of gold and bronze. Candles on the plinths, posts down the nave and the
+side walls, the altar, the dais steps and the armrests; soul-fire braziers before the dais; invisible fill lamps
+(light 10) on a 6-block grid at head height, light 11 over each plate. `RitualHall` (`Gates.ritualHall`) hands the
+director all of it in world positions. Players can't edit it, the run HUD and the gate card say nothing about floors,
+and the gate's Now lines are the story's. Old scripted crypts (the Bell Warden, three floors) are untouched.
+
+**The director** (`story.Ritual`, state in `RitualData`, `data/awaken/ritual.dat` schema 1; ticks in brackets):
+| Beat | What happens |
+|---|---|
+| WAITING | the cast is brought (the Seated One on its throne, twelve statues kneeling). The doors close when every unawakened player in the story who is online is inside the hall (3 s grace for the last one), or 90 s after the first came in. Those in the antechamber are drawn in; those outside get their own crypt 15 s later. Now: "Go through the doors" / "Waiting for N hunters…" / outside, "A bell is calling · N m". |
+| DOORS (190) | the doors grind shut (0-28), every flame dies (34), black but for the god's runes and the glow behind it, the candles light one by one down the nave toward the throne and the hidden fill lamps with them (80-183), so the line lights the hall and reaches the god |
+| BOW (190) | the bell; "BOW." carved in light (12); kneel by 132 or the nearest statue glares (132) and strikes (146, 7 damage) |
+| RING (360) | "RING."; plates light at 40, 140, 240 (each with its own bell note), 80 ticks to stand on each; whoever doesn't is watched by every statue |
+| JUDGED (80) | "BE JUDGED.", two tolls |
+| WAKING (170) | the camera is held on its face; the eyes open (bloom at 58), the head turns to the nearest player, dust falls, the statues rise (92-152) |
+| JUDGEMENT (800) | the gaze at 30, 200, 370, 540, 690 (a red line fills for 45 ticks, then burns along it: 7); statues advance on someone, wind up 25 ticks (a red sector fills) and swing (8, reach 3.8, +-55 degrees), every 45 ticks, at most 2 + players/2 at once; rune-ring segments warn 30 ticks, then open into pits for 70 (3 every 15 ticks, thrown out), every 120 from 220 |
+| END (231) | the hand rises (0), the hall's light drains into its palm from the doors to the throne (40-190), [ERROR] (195), the hand closes (222), everyone at once is at the question (230) |
+| DONE | its eyes close; the gate is released (with a far bell) once nobody is at the question for it |
+Time is processed by elapsed ticks with every moment in between fired in order (a lag spike or a test's fast-forward
+skips nothing). While the whole party is away the beat holds, and when someone is back it plays again from its start.
+A relog mid-ritual lands on the beat it is on; a player back after the end goes straight to the question.
+
+**Nothing kills before the End.** `Ritual.onDamagePre` (LivingDamageEvent.Pre, lowest) clamps every hit on an
+unawakened player in a ritual gate, or sealed in a ritual, to leave half a heart; `/kill` still works. The hits still
+hurt, throw you and flash. Old crypts and the no-gates fallback keep the old "killing blow becomes the question".
+
+**Multiplayer: the story starts together.** The first trigger opens one ritual crypt and points every other
+unawakened player online at it (`Prologue.joinCrypt`); a later trigger joins a crypt whose doors are still open; nobody
+waits for anybody at the question. Awakened players and players whose story points elsewhere are refused at the gate
+(`StoryHooks.refusesScriptedGate`).
+
+**The cast** (`mobs.Ritual`): the Seated One (seated about 22 blocks; its entity stands on the dais top, so anything
+measured from it is at floor level; box 9x22, tracking range 16) and the statues, role RITUAL, no AI, can't be hurt,
+never a kill, trophy, Echo or boss. Their stages are synced (`stage`, `since`); the client plays the matching clips.
+
+**The god is seen** (review, 2026-10-24: "within two seconds you know a colossal seated god is there"). The director
+sets the Seated One's key light and runes per beat (numbers in SPEC §13; synced on the entity, eased on the client):
+pale marble while the candles burn, nearly black when every flame dies (only its halo, crown, collar and veins of light
+burn), lit again as the candle line reaches the dais, its runes waking beat by beat until its eyes open. Behind it a
+great warm glow on the wall makes it a silhouette from the antechamber; two dusty shafts fall from the vault onto its
+lap once the hall is lit; every candle of the line carries a flame; the eyes are a block across, with a halo round the
+face, and the camera frames the face as they open (FOV x0.4). None of it needs Lens.
+
+**On the screen** (`story.client.Ritual*`): Lens looks `awaken:ritual` (crushed blacks, gold highlights, vignette .62,
+bloom 1.45 from .42) and `awaken:void` through `LensClient.override/clearOverride`; texel 13 carries the tear from
+black (a radial reveal with a blazing rim, 36 ticks on Accept), crushed blacks and extra bloom (the eyes opening, the
+gaze, the drain). The camera is drawn toward the throne as the candles light, held on its face while the eyes open
+and on its palm at the end (input held only then, with a letterbox and the HUD hidden); shakes and FOV punches follow
+`cameraShake`, flashes follow `screenFlashes`. The words are carved over the dais a letter at a time; a plain line
+under the crosshair says what each rule asks ("Kneel. Hold Shift.", "Stand on the plate that lights.", "Read the red.
+Move."). Telegraphs, the gaze's beam, the eyes, the palm and the motes are additive meshes. Lens plays the scene like
+a cutscene even when it's off (client config `lensInScenes`, default true; fades back to the plain frame after); with
+a shaderpack (or `lensInScenes = false`) the scene plays the same with the game's own frame and the tear falls back to
+a fade. The scene is the whole screen: from the doors to just after the tear, toasts wait and AWAKEN's HUD steps aside
+(vanilla's hearts stay for the Judgement).
+
+**The black.** From the death until the answer: infinite Blindness (re-applied every second while asked, and on
+login), the Void look, a heartbeat every 1.7 s, a cold bed, blue motes. The System's words ("You died inside a gate
+and kept thinking. Few do.") are typed large in the dark; the card holds only "Will you accept?" and its keys, and
+nothing else is on screen. Accept or `/awaken story skip` lifts it: the tear frame is the tear and the world alone;
+the toasts and the first-power cards come after.
+
+**Sounds** (`tools/art/specs/ritual_sounds.py`, events `story.ritual.*`): bell, doors, flames_out, candle, words, eyes,
+gaze_charge, gaze_fire, statue_rise, swing, impact, pit, rumble, drain, close, heartbeat, tear, void.
+
+**Tours.** `tools/autopilot/ritual.txt` photographs every beat in first and third person, the void, the tear and the
+first power; admin commands `/awaken admin story ritual hall|start|beat <1-7>|plate <0-2>|status`.
+
 ## How to try it
 
 - Fresh survival world: the full flow (`tools/autopilot/onboarding.txt` scripts it, with screenshots).
-- `/awaken admin story prologue` opens the Bell Crypt now; `/awaken admin story enter` walks in; `/damage @s 1000`
-  inside is the scripted death.
+- `/awaken admin story prologue` opens the Bell Crypt now; `/awaken admin story enter` walks in; then
+  `/awaken admin story ritual hall`, `... ritual start` and `... ritual beat 7` run the Ritual of the Bell to its end.
 - `/awaken powers starter` shows the cards again; `/awaken powers starter 2` picks the second;
   `/awaken admin powers starter reset` clears the choice (powers you own stay).
 - `/awaken admin levels 5` walks the road; `/awaken why` lists every unlock, bank payout and first-power roll.

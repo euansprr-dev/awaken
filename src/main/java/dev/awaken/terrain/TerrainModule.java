@@ -11,6 +11,8 @@ public final class TerrainModule {
         LandsBlocks.init(modBus);
         dev.awaken.terrain.tree.LandsTrees.init(modBus);
         dev.awaken.terrain.hero.HeroWorldgen.init(modBus);
+        dev.awaken.terrain.city.CityBasinSetup.init(modBus);
+        dev.awaken.terrain.city.CityBasinTests.register();
         TerrainCommands.register();
         TerrainTests.register();
         BiomeTableTests.register();

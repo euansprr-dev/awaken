@@ -24,6 +24,7 @@ final class GatesNow {
         RunState run = Runs.run(p);
         GateRecord inGate = Runs.gateOf(p);
         if (run.active() && inGate != null) {
+            if (inGate.plan.ritual()) return out; // the story's hall: the story says what's next
             int floors = run.area == 0 ? inGate.plan.floors() : 2;
             if (run.clearedFloor(run.area, run.floor)) {
                 out.add(NowHooks.Suggestion.of("gate:shrine", 80, "Rest Shrine: leave with your loot, or go deeper"));

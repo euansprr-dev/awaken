@@ -1,0 +1,10 @@
+{
+  "type": "lithostitched:wrap_noise_router",
+  "dimension": "minecraft:overworld",
+  "target": "final_density",
+  "wrapper_function": {
+    "type": "awaken:city_basin",
+    "mode": "density",
+    "input": {"type": "lithostitched:wrapped_marker"}
+  }
+}

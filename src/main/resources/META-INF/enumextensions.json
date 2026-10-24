@@ -11,6 +11,12 @@
       "name": "AWAKEN_FAUNA_WATER",
       "constructor": "(Ljava/lang/String;Ljava/lang/String;IZZI)V",
       "parameters": ["awaken:fauna_water", "AWW", 10, true, false, 64]
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "AWAKEN_HOLO_WRIST",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {"class": "dev/awaken/holo/client/HoloArmPose", "field": "WRIST_POSE"}
     }
   ]
 }

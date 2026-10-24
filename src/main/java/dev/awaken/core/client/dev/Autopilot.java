@@ -38,8 +38,13 @@ import java.util.Map;
  * wait &lt;ticks&gt;
  * cmd &lt;command without slash&gt;
  * look &lt;yaw&gt; &lt;pitch&gt;
+ * turn &lt;degrees per tick&gt; &lt;ticks&gt;             a steady turn that keeps going while later lines run (a sharp turn)
  * key &lt;awaken key name&gt;                        press one of the mod's keys (status, accept, dismiss, ...)
- * screen status|close|experimental             experimental: vanilla's experimental-settings prompt (it should answer itself)
+ * screen status|map|codex|holo|uiprobe|close|experimental  holo: the holo K menu (status/map/codex stay flat);
+ *                                                uiprobe: every Ui/Glass primitive on black, for pixel checks;
+ *                                                experimental: vanilla's experimental-settings prompt (it should answer itself)
+ * click &lt;x&gt; &lt;y&gt;                                 a left click on the open screen at GUI coordinates
+ * holo &lt;args&gt;                                    the holo module's test lines (HoloClient.autopilot): demo, at, run, hud, log
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
  * camera first|back|front                        the F5 views
  * fps &lt;label&gt;                                     logs the frames of the last second
@@ -65,6 +70,8 @@ public final class Autopilot {
     private static WorldCreationUiState.SelectedGameMode createMode;
     private static String createSeed;
     private static String shotPending;
+    private static float turnStep;
+    private static int turnTicks;
     // perf: frame-to-frame times of the scene being measured, preallocated so measuring costs no allocation per frame
     private static final long[] FRAMES = new long[1 << 15];
     private static int frameCount;
@@ -169,6 +176,11 @@ public final class Autopilot {
         }
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
+        if (turnTicks > 0 && mc.player != null) {
+            turnTicks--;
+            mc.player.setYRot(mc.player.getYRot() + turnStep);
+            mc.player.setYHeadRot(mc.player.getYRot());
+        }
         if (waitTicks > 0) {
             waitTicks--;
             return;
@@ -254,6 +266,20 @@ public final class Autopilot {
                 mc.player.setYHeadRot(Float.parseFloat(r[0]));
                 mc.player.setXRot(Float.parseFloat(r[1]));
             }
+            case "turn" -> { // turn <degrees per tick> <ticks>
+                String[] r = arg.trim().split("\\s+");
+                turnStep = Float.parseFloat(r[0]);
+                turnTicks = Integer.parseInt(r[1]);
+            }
+            case "click" -> { // click <x> <y>, GUI coordinates, left button
+                if (mc.gui.screen() == null) return false;
+                String[] r = arg.trim().split("\\s+");
+                var ev = new net.minecraft.client.input.MouseButtonEvent(Double.parseDouble(r[0]), Double.parseDouble(r[1]), new MouseButtonInfo(1, 0));
+                mc.gui.screen().mouseClicked(ev, false);
+                mc.gui.screen().mouseReleased(ev);
+                waitTicks = 2;
+            }
+            case "holo" -> Awaken.LOG.info("[autopilot] holo {}: {}", arg.trim(), dev.awaken.holo.client.HoloClient.autopilot(arg));
             case "key" -> {
                 KeyMapping k = KEYS.get(arg.trim());
                 if (k == null) Awaken.LOG.warn("[autopilot] unknown key {}", arg);
@@ -265,6 +291,17 @@ public final class Autopilot {
                 else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
                 else if (arg.trim().equals("map")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.GATE_MAP));
                 else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
+                else if (arg.trim().equals("uiprobe")) mc.gui.setScreen(new UiProbeScreen());
+                else if (arg.trim().startsWith("holo")) {
+                    String t = arg.trim().length() > 4 ? arg.trim().substring(4).trim() : "status";
+                    var tab = switch (t) {
+                        case "map" -> dev.awaken.progression.client.StatusSections.Tab.GATE_MAP;
+                        case "codex" -> dev.awaken.progression.client.StatusSections.Tab.CODEX;
+                        case "truths" -> dev.awaken.progression.client.StatusSections.Tab.TRUTHS;
+                        default -> dev.awaken.progression.client.StatusSections.Tab.STATUS;
+                    };
+                    mc.gui.setScreen(new dev.awaken.holo.client.HoloStatusScreen(tab));
+                }
                 else if (arg.trim().equals("experimental")) {
                     // vanilla's own world-creation prompt, as a new world would show it: ExperimentalWarning should answer it
                     var back = mc.gui.screen();

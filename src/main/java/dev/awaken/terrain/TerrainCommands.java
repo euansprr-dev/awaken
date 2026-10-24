@@ -30,8 +30,9 @@ import java.util.concurrent.CompletableFuture;
  * {@code /awaken terrain ...}, the terrain studio (game masters only): {@code survey <name> [radius] [step]} samples the
  * land around you into {@code terrain/<name>.json} for tools/terrain/survey.py; {@code visit <biome|#tag>} stands you in
  * the heart of the nearest surface patch of that biome; {@code lookout [radius]} takes you to the highest ground nearby;
- * {@code at} prints the biome, ground height and climate where you stand; {@code hero <tree> [seed]} grows a hero tree
- * where you stand and {@code herovisit <tree> [distance above]} stands you before the nearest generated one. The searches run off the main thread and
+ * {@code at} prints the biome, ground height and climate where you stand; {@code city} goes to the city site;
+ * {@code hero <tree> [seed]} grows a hero tree where you stand and {@code herovisit <tree> [distance above]} stands you
+ * before the nearest generated one. The searches run off the main thread and
  * log {@code [terrain]} lines the autopilot can wait on.
  */
 final class TerrainCommands {
@@ -65,6 +66,21 @@ final class TerrainCommands {
                                         .executes(c -> heroVisit(c, tree, IntegerArgumentType.getInteger(c, "distance"),
                                                 IntegerArgumentType.getInteger(c, "above")))))));
             }
+            t.then(Commands.literal("city").executes(c -> {
+                // the city site (Carillon's basin): print it and stand at its centre
+                ServerPlayer sp = c.getSource().getPlayerOrException();
+                var site = dev.awaken.terrain.api.CityBasin.site(c.getSource().getServer()).orElse(null);
+                if (site == null) {
+                    c.getSource().sendFailure(Component.literal("No city site in this world"));
+                    return 0;
+                }
+                ServerLevel level = c.getSource().getServer().overworld();
+                stand(sp, level, site.x(), site.z(), 1, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+                Awaken.LOG.info("[terrain] city site {} {} street {} carved {}", site.x(), site.z(), site.streetY(), site.basinCarved());
+                c.getSource().sendSuccess(() -> Component.literal("City site " + site.x() + ", " + site.z() + " (street " + site.streetY()
+                        + (site.basinCarved() ? ", basin carved)" : ", basin not carved)")), false);
+                return 1;
+            }));
             root.then(t);
         });
     }

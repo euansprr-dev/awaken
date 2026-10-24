@@ -2,6 +2,7 @@ package dev.awaken.story;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenConfig;
+import dev.awaken.core.AwakenNet;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.MobHooks;
@@ -11,6 +12,7 @@ import dev.awaken.progression.Counters;
 import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
+import dev.awaken.story.net.StoryPayloads;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -41,7 +43,7 @@ final class Prologue {
 
     static final String ACCEPT_ACTION = "story:accept_only";
     private static final ResourceKey<Level> STILLPOINT = ResourceKey.create(Registries.DIMENSION, Awaken.id("stillpoint"));
-    private static final int GATE_AFTER_TICKS = 20 * 60 * 2;
+    static final int GATE_AFTER_TICKS = 20 * 60 * 2;
 
     static StoryProgress progress(ServerPlayer p) {
         return p.getData(StoryModule.PROGRESS.get());
@@ -60,6 +62,7 @@ final class Prologue {
             if (s.prologue != StoryProgress.Prologue.DONE && s.prologue != StoryProgress.Prologue.ACCEPTING) {
                 s.prologue = StoryProgress.Prologue.DONE;
                 sync(p);
+                if (Ritual.storyGate(p) >= 0) AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.NONE));
             }
             // awakened some other way while the question was open: never leave the black on for good
             if (s.prologue == StoryProgress.Prologue.ACCEPTING) liftTheBlack(p);
@@ -104,10 +107,17 @@ final class Prologue {
 
     static void openFirstGate(ServerPlayer p, StoryProgress s) {
         if (p.level().dimension() != Level.OVERWORLD) return;
+        // the story starts together: a Bell Crypt someone online is already walking to (its doors still open) is yours too
+        String shared = sharedCrypt(p);
+        if (!shared.isEmpty()) {
+            joinCrypt(p, s, shared);
+            return;
+        }
         Vec3 look = p.getLookAngle().multiply(1, 0, 1).normalize();
         if (look.lengthSqr() < 0.01) look = new Vec3(1, 0, 0);
         BlockPos near = BlockPos.containing(p.position().add(look.scale(55)));
-        var id = GateHooks.openScripted(p, "awaken:bell_crypt", 0, near, 3);
+        // one floor: the Ritual of the Bell's hall (docs/proposals/the-ritual.md); old worlds keep their three-floor crypt
+        var id = GateHooks.openScripted(p, "awaken:bell_crypt", 0, near, 1);
         if (id.isEmpty()) {
             // Gates disabled or unavailable: awaken here instead so nobody gets stuck.
             DirectorLog.log(p, "story", "prologue: no gates available, asking to accept in place");
@@ -119,6 +129,37 @@ final class Prologue {
         s.prologueSince = p.level().getGameTime();
         sync(p);
         DirectorLog.log(p, "story", "prologue: opened the Bell Crypt " + id.get() + " near " + near.toShortString());
+        Signal.toast(p, Component.literal("[ERROR] … gate detected … [ERROR]"));
+        // everyone else online who hasn't awakened is called to the same crypt
+        for (ServerPlayer o : p.level().getServer().getPlayerList().getPlayers()) {
+            if (o == p || Progression.profile(o).awakened() || !storyOn()) continue;
+            StoryProgress os = progress(o);
+            if (os.prologue == StoryProgress.Prologue.NOT_STARTED || os.prologue == StoryProgress.Prologue.GLITCHED) joinCrypt(o, os, id.get());
+        }
+    }
+
+    /** A ritual Bell Crypt an online player in the story is walking to and whose doors haven't closed, or "". */
+    static String sharedCrypt(ServerPlayer p) {
+        for (ServerPlayer o : p.level().getServer().getPlayerList().getPlayers()) {
+            if (o == p) continue;
+            StoryProgress os = progress(o);
+            if (os.prologue != StoryProgress.Prologue.GATE_OPEN || Ritual.storyGate(o) < 0) continue;
+            int gate = Ritual.storyGate(o);
+            String state = GateHooks.get(p.level().getServer().overworld(), os.prologueGate).map(GateHooks.GateView::state).orElse("RELEASED");
+            if (!(state.equals("BUILDING") || state.equals("READY") || state.equals("ACTIVE") || state.equals("OPEN"))) continue;
+            var st = RitualData.get(p.level().getServer()).rituals.get(gate);
+            if (st == null || st.beat == Ritual.Beat.WAITING) return os.prologueGate;
+        }
+        return "";
+    }
+
+    /** Points this player's story at a Bell Crypt someone else opened. */
+    static void joinCrypt(ServerPlayer p, StoryProgress s, String gate) {
+        s.prologue = StoryProgress.Prologue.GATE_OPEN;
+        s.prologueGate = gate;
+        s.prologueSince = p.level().getGameTime();
+        sync(p);
+        DirectorLog.log(p, "story", "prologue: called to the shared Bell Crypt " + gate);
         Signal.toast(p, Component.literal("[ERROR] … gate detected … [ERROR]"));
     }
 
@@ -135,6 +176,8 @@ final class Prologue {
                 event.setCanceled(true);
                 return;
             }
+            // the ritual's hall clamps every hit instead (Ritual.onDamagePre): only its hand kills
+            if (Ritual.protects(p)) return;
             boolean inGate = GateHooks.inGate(p) || s.prologue == StoryProgress.Prologue.GATE_OPEN && !s.prologueGate.isEmpty() && GateHooks.inGate(p);
             if (inGate && event.getAmount() >= p.getHealth()) {
                 event.setCanceled(true);
@@ -163,14 +206,22 @@ final class Prologue {
     static void beginAcceptance(ServerPlayer p, StoryProgress s) {
         s.prologue = StoryProgress.Prologue.ACCEPTING;
         s.prologueSince = p.level().getGameTime();
-        Vec3 back = gateMouth(p, s).orElse(p.position());
+        java.util.Optional<Vec3> mouth = gateMouth(p, s).or(() -> Ritual.mouthOf(p.level().getServer(), s.prologueGate));
+        Vec3 back;
         if (p.level().dimension() == Level.OVERWORLD && !GateHooks.inGate(p)) back = p.position();
+        else if (mouth.isPresent()) back = mouth.get();
+        else if (GateHooks.inGate(p)) {
+            // nothing to come back to: wake at the world's spawn rather than at gate-world coordinates
+            var spawn = p.level().getServer().overworld().getRespawnData().pos();
+            back = Vec3.atBottomCenterOf(p.level().getServer().overworld().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn));
+        } else back = p.position();
         s.returnX = back.x;
         s.returnY = back.y;
         s.returnZ = back.z;
         sync(p);
         holdTheBlack(p);
         p.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 20 * 30, 4, false, false));
+        AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.VOID, voidWords())); // the Void look, the heartbeat
         // the damage event that got us here is still running: move the player on the next tick
         dev.awaken.core.Later.run(p.level().getServer(), 1, () -> {
             if (p.isRemoved()) return;
@@ -189,13 +240,27 @@ final class Prologue {
         return GateHooks.get(p.level().getServer().overworld(), s.prologueGate).map(g -> Vec3.atBottomCenterOf(g.mouth()));
     }
 
+    static final String QUESTION = "Will you accept?";
+
+    /**
+     * In the black the System's words are the scene's (drawn large in the dark by the ritual's HUD); the card holds only
+     * the question and its keys, so nothing on screen says the same thing twice and no caption lingers after the answer.
+     */
     static void askToAccept(ServerPlayer p) {
         var r = StoryContent.revelation("prologue_accept");
         // both keys accept: the card says so, in the story's own voice
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.REVELATION,
+        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.TRUTH,
                         Component.literal(r == null ? "You have met the conditions." : r.title()))
-                .body(Component.literal(r == null ? "Will you accept?" : r.body()))
+                .body(Component.literal(QUESTION))
                 .choice(ACCEPT_ACTION, "Accept", "Accept anyway").priority(10).ttl(20 * 60).build());
+    }
+
+    /** What the System says in the black: the revelation's body without its question (the card asks it). */
+    static String voidWords() {
+        var r = StoryContent.revelation("prologue_accept");
+        String body = r == null ? "You died inside a gate and kept thinking. Few do." : r.body().strip();
+        if (body.endsWith(QUESTION)) body = body.substring(0, body.length() - QUESTION.length()).strip();
+        return body;
     }
 
     /** Waking is worth at least this level, whatever the prologue banked (plan v2 §4.1: level 2–3 on waking). */
@@ -206,6 +271,7 @@ final class Prologue {
         if (!ACCEPT_ACTION.equals(action)) return;
         StoryProgress s = progress(p);
         if (s.prologue != StoryProgress.Prologue.ACCEPTING || Progression.profile(p).awakened()) return;
+        boolean ritual = Ritual.storyGate(p) >= 0;
         Progression.awaken(p); // pays everything the prologue banked: kills, floors, the Satchel's claim
         Progression.topUpToLevel(p, WAKE_LEVEL, Progression.XpSource.STORY);
         s.prologue = StoryProgress.Prologue.DONE;
@@ -216,10 +282,12 @@ final class Prologue {
         p.teleportTo(overworld, s.returnX, s.returnY, s.returnZ, Set.<Relative>of(), p.getYRot(), 0, true);
         p.setHealth(p.getMaxHealth());
         liftTheBlack(p);
-        // what's true: the Bell Crypt is scripted and never breaks, so there's no hurry to go back in
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(accepted ? "Accepted." : "Accepted anyway."))
-                .body(Component.literal("The gate will wait. It never breaks."))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).priority(9).build());
+        AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.TEAR)); // the black tears open from the centre
+        // what's true: the old three-floor Bell Crypt is scripted and never breaks, so there's no hurry to go back in;
+        // the ritual's hall is spent (it comes down behind you), so there's nothing to add
+        var accept = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(accepted ? "Accepted." : "Accepted anyway."));
+        if (!ritual) accept.body(Component.literal("The gate will wait. It never breaks."));
+        Signal.send(p, accept.presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).priority(9).build());
     }
 
     /**
@@ -227,7 +295,7 @@ final class Prologue {
      * tracker's "Bell Crypt · floor N". Floors cleared elsewhere don't count: the counter is only read while inside it.
      */
     static void trackCrypt(ServerPlayer p, StoryProgress s) {
-        if (s.prologueGate.isEmpty()) return;
+        if (s.prologueGate.isEmpty() || Ritual.storyGate(p) >= 0) return; // the ritual's hall has no floors to track
         long floors = Progression.profile(p).counter(Counters.FLOORS_CLEARED);
         var run = dev.awaken.gates.Gates.activeRun(p);
         if (run.isPresent() && String.valueOf(run.get().gateId()).equals(s.prologueGate)) {
@@ -239,7 +307,7 @@ final class Prologue {
 
     /** The next Bell Crypt floor to fight, or 0 when the story's gate is done (cleared, released) or unknown. */
     static int cryptNextFloor(ServerPlayer p, StoryProgress s) {
-        if (s.prologueGate.isEmpty()) return 0;
+        if (s.prologueGate.isEmpty() || Ritual.storyGate(p) >= 0) return 0; // the ritual's hall is never a floor to go back to
         var view = GateHooks.get(p.level().getServer().overworld(), s.prologueGate);
         if (view.isEmpty()) return 0;
         String state = view.get().state();
@@ -254,10 +322,16 @@ final class Prologue {
             liftTheBlack(p); // onAnswer bails out for an already awakened player
             return;
         }
+        boolean inRitual = s.prologue == StoryProgress.Prologue.RITUAL || Ritual.inRitualGate(p);
         Progression.awaken(p);
         Progression.topUpToLevel(p, WAKE_LEVEL, Progression.XpSource.STORY);
         s.prologue = StoryProgress.Prologue.DONE;
         sync(p);
+        if (inRitual) {
+            // skipped from inside the sealed hall: out through the gate's mouth, the scene ends here
+            dev.awaken.gates.Gates.forceExtract(p, true);
+            AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.NONE));
+        }
     }
 
     /**
@@ -276,9 +350,14 @@ final class Prologue {
         if (now != null && now.isInfiniteDuration()) p.removeEffect(MobEffects.BLINDNESS);
     }
 
-    /** On login: still at the question, still in the dark. */
+    /** On login: still at the question, still in the dark; or back in the ritual where it is now. */
     static void onLogin(ServerPlayer p) {
-        if (progress(p).prologue == StoryProgress.Prologue.ACCEPTING && !Progression.profile(p).awakened()) holdTheBlack(p);
+        if (progress(p).prologue == StoryProgress.Prologue.ACCEPTING && !Progression.profile(p).awakened()) {
+            holdTheBlack(p);
+            AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.VOID, voidWords()));
+            return;
+        }
+        if (!Progression.profile(p).awakened()) Ritual.onLogin(p);
     }
 
     static boolean storyOn() {

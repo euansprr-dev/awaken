@@ -19,7 +19,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
  * ground cover it lays round its foot.
  */
 public enum HeroTree implements StringRepresentable {
-    ELDER_COLOSSUS("elder_colossus", 5, 3, 13, 10, 20) {
+    ELDER_COLOSSUS("elder_colossus", 5, 3, 13, 10, 20, 40) {
         @Override
         Blueprint shape(long seed) {
             return ElderColossus.build(seed);
@@ -31,7 +31,7 @@ public enum HeroTree implements StringRepresentable {
                     Blocks.MOSS_CARPET.defaultBlockState());
         }
     },
-    LUMEN_SPIRE("lumen_spire", 3, 2, 8, 6, 10) {
+    LUMEN_SPIRE("lumen_spire", 3, 2, 8, 6, 10, 20) {
         @Override
         Blueprint shape(long seed) {
             Blueprint bp = LumenSpire.build(seed);
@@ -59,15 +59,18 @@ public enum HeroTree implements StringRepresentable {
     final int ring, maxRing;
     /** How far round the foot the tree lays its own ground cover. */
     final int groundRadius;
+    /** About how far its crown reaches from the trunk (kept clear of the city reserve). */
+    final int reach;
     private volatile BlockState[] states;
 
-    HeroTree(String id, int footprint, int maxStep, int ring, int maxRing, int groundRadius) {
+    HeroTree(String id, int footprint, int maxStep, int ring, int maxRing, int groundRadius, int reach) {
         this.id = id;
         this.footprint = footprint;
         this.maxStep = maxStep;
         this.ring = ring;
         this.maxRing = maxRing;
         this.groundRadius = groundRadius;
+        this.reach = reach;
     }
 
     @Override

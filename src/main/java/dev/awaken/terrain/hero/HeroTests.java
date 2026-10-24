@@ -79,47 +79,65 @@ public final class HeroTests {
 
         // A whole Colossus on a slope and a whole Spire on flat ground, chunk by chunk as worldgen does: everything inside
         // the reserved box, standing on the ground, nothing loose; the cost per chunk is logged.
+        // Far from every other test (thousands of blocks out, its own chunks), and it waits for the light engine before it
+        // ends: a Colossus is ten thousand blocks of light updates, and tests that read light levels (dark rooms,
+        // torchlight) must not run in its shadow or behind its backlog.
         AwakenTests.registerIsolated("terrain_hero_builds_in_box", 1200, h -> {
             ServerLevel level = h.getLevel();
-            BlockPos origin = h.absolutePos(new BlockPos(0, 2, 0));
-            int cx0 = origin.getX() >> 4, cz0 = origin.getZ() >> 4;
-            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, true);
-            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.getChunk(cx0 + dx, cz0 + dz);
             StringBuilder log = new StringBuilder();
-            for (HeroTree tree : HeroTree.values()) {
-                boolean slope = tree == HeroTree.ELDER_COLOSSUS;
-                int r = tree == HeroTree.ELDER_COLOSSUS ? 44 : 26;
-                ground(level, origin, r, slope);
-                BlockPos foot = origin.above(slope ? 0 : 0);
-                HeroPiece piece = new HeroPiece(tree, foot, 424242L); // builds and caches the blueprint: the chunks below only place it
-                BoundingBox box = piece.getBoundingBox();
-                int chunks = 0, placed = 0;
-                double worst = 0, total = 0;
-                for (int ccx = box.minX() >> 4; ccx <= box.maxX() >> 4; ccx++) {
-                    for (int ccz = box.minZ() >> 4; ccz <= box.maxZ() >> 4; ccz++) {
-                        BoundingBox clip = new BoundingBox(ccx << 4, level.getMinY(), ccz << 4, (ccx << 4) + 15, level.getMaxY(), (ccz << 4) + 15);
-                        long t0 = System.nanoTime();
-                        placed += piece.build(level, clip);
-                        double ms = (System.nanoTime() - t0) / 1e6;
-                        total += ms;
-                        worst = Math.max(worst, ms);
-                        chunks++;
-                    }
-                }
-                Check c = check(level, origin, r, box);
-                String what = tree.getSerializedName();
-                h.assertTrue(placed > (slope ? 6000 : 1500), what + " built " + placed + " blocks");
-                h.assertTrue(c.outside == 0, what + ": " + c.outside + " blocks outside its box (first " + c.firstOutside + ")");
-                h.assertTrue(c.loose == 0, what + ": " + c.loose + " blocks hang loose (first " + c.firstLoose + ")");
-                h.assertTrue(c.decaying == 0, what + ": " + c.decaying + " leaves born decaying");
-                h.assertTrue(c.grounded > 20, what + " stands on the ground (" + c.grounded + " columns)");
-                log.append(String.format(" %s: %d blocks over %d chunks, %.2f ms per chunk avg, %.2f worst (live level);", what, placed, chunks,
-                        total / chunks, worst));
-                wipe(level, origin, r);
-            }
-            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, false);
-            Awaken.LOG.info("[terrain] hero builds:{}", log);
-            h.succeed();
+            HeroTree[] trees = HeroTree.values();
+            BlockPos[] origins = new BlockPos[trees.length];
+            HeroPiece[] pieces = new HeroPiece[trees.length];
+            int[] placedBy = new int[trees.length];
+            h.startSequence()
+                    .thenExecute(() -> {
+                        for (int n = 0; n < trees.length; n++) {
+                            HeroTree tree = trees[n];
+                            BlockPos origin = origins[n] = h.absolutePos(new BlockPos(0, 2, 0)).offset(6000 + 400 * n, 0, 6000);
+                            int cx0 = origin.getX() >> 4, cz0 = origin.getZ() >> 4;
+                            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, true);
+                            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.getChunk(cx0 + dx, cz0 + dz);
+                            // a slope under the Colossus's roots (they must wall down to it), level ground under the Spire
+                            ground(level, origin, tree == HeroTree.ELDER_COLOSSUS ? 20 : 12, tree == HeroTree.ELDER_COLOSSUS);
+                            HeroPiece piece = pieces[n] = new HeroPiece(tree, origin, 424242L); // builds and caches the blueprint
+                            BoundingBox box = piece.getBoundingBox();
+                            int chunks = 0;
+                            double worst = 0, total = 0;
+                            for (int ccx = box.minX() >> 4; ccx <= box.maxX() >> 4; ccx++) {
+                                for (int ccz = box.minZ() >> 4; ccz <= box.maxZ() >> 4; ccz++) {
+                                    BoundingBox clip = new BoundingBox(ccx << 4, level.getMinY(), ccz << 4, (ccx << 4) + 15, level.getMaxY(), (ccz << 4) + 15);
+                                    long t0 = System.nanoTime();
+                                    placedBy[n] += piece.build(level, clip);
+                                    double ms = (System.nanoTime() - t0) / 1e6;
+                                    total += ms;
+                                    worst = Math.max(worst, ms);
+                                    chunks++;
+                                }
+                            }
+                            log.append(String.format(" %s: %d blocks over %d chunks, %.2f ms per chunk avg, %.2f worst (live level);",
+                                    tree.getSerializedName(), placedBy[n], chunks, total / chunks, worst));
+                        }
+                    })
+                    // let the light engine work through ten thousand blocks before the next batch reads light levels
+                    .thenIdle(200)
+                    .thenExecute(() -> {
+                        for (int n = 0; n < trees.length; n++) {
+                            HeroTree tree = trees[n];
+                            int r = tree == HeroTree.ELDER_COLOSSUS ? 44 : 26;
+                            Check c = check(level, origins[n], r, pieces[n].getBoundingBox());
+                            String what = tree.getSerializedName();
+                            h.assertTrue(placedBy[n] > (tree == HeroTree.ELDER_COLOSSUS ? 6000 : 1500), what + " built " + placedBy[n] + " blocks");
+                            h.assertTrue(c.outside == 0, what + ": " + c.outside + " blocks outside its box (first " + c.firstOutside + ")");
+                            h.assertTrue(c.loose == 0, what + ": " + c.loose + " blocks hang loose (first " + c.firstLoose + ")");
+                            h.assertTrue(c.decaying == 0, what + ": " + c.decaying + " leaves born decaying");
+                            h.assertTrue(c.grounded > 20, what + " stands on the ground (" + c.grounded + " columns)");
+                            // left standing out there (no test comes near); the chunks let go
+                            int cx0 = origins[n].getX() >> 4, cz0 = origins[n].getZ() >> 4;
+                            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, false);
+                        }
+                        Awaken.LOG.info("[terrain] hero builds:{}", log);
+                    })
+                    .thenSucceed();
         });
 
         // Sites on a real overworld: the search finds level, dry ground in the right biome (here the archetypes' forests:

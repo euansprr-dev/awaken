@@ -60,6 +60,8 @@ void main() {
     vec3 c = texture(InSampler, texCoord).rgb;
     vec4 p0 = P(0), p1 = P(1), g = P(3), shadowT = P(4), highT = P(5), b = P(6), h = P(7), hz = P(8), sunset = P(9);
     vec4 fogColor = P(10), fogDist = P(11), p12 = P(12), sunPos = P(2);
+    // 13: the story's moments: r the tear from black (0 off), g crushed blacks, b extra bloom (LensParams)
+    vec4 rit = P(13);
     float farPlane = max((p1.r * 255.0 * 256.0 + p1.g * 255.0), 16.0);
     float depth = texture(DepthSampler, texCoord).r;
     bool sky = depth < 1.0e-7;
@@ -95,7 +97,7 @@ void main() {
 
     // bloom (a tight and a wide layer) and light shafts, screen-blended so nothing clips to white
     vec3 glow = texture(BloomSampler, texCoord).rgb * 0.55 + texture(WideSampler, texCoord).rgb * 0.9;
-    c = screen(c, glow * b.r * 2.0);
+    c = screen(c, glow * (b.r + rit.b) * 2.0);
     // the sun's halo: light scattering around the disc, warm at sunset, gone when hills or trees hide the sun
     if (p1.b > 0.0 && p12.r > 0.0) {
         vec2 sun = vec2((sunPos.r * 255.0 * 256.0 + sunPos.g * 255.0) / 65535.0, (sunPos.b * 255.0 * 256.0 + sunPos.a * 255.0) / 65535.0) * 3.0 - 1.0;
@@ -119,6 +121,17 @@ void main() {
     c += (highT.rgb - vec3(luma(highT.rgb))) * l * l * shadowT.a;
     c = clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0);
     c = mix(vec3(luma(c)), c, g.b * 2.0);
+    // crushed blacks: the darks fall to black and the light that's left looks brighter against them
+    float crush = rit.g * 0.2;
+    c = max(c - crush, 0.0) / (1.0 - crush);
+
+    // 14: an open holo panel holds the eye (UiHooks.focus): the world past arm's reach dims and cools; the panel's
+    // glass writes its own depth a block or so away, so it and its text stay bright
+    float focus = P(14).r;
+    if (focus > 0.0) {
+        float k = focus * (sky ? 1.0 : smoothstep(1.8, 3.0, d));
+        c = mix(c, mix(vec3(luma(c)), c, 0.5) * vec3(0.8, 0.88, 1.0) * 0.6, k);
+    }
 
     // vignette, rounder on wide screens
     vec2 v = (texCoord - 0.5) * vec2(OutSize.x / OutSize.y, 1.0) * 0.82;
@@ -128,6 +141,18 @@ void main() {
     vec2 q = gl_FragCoord.xy;
     float n = fract(sin(dot(q, vec2(12.9898, 78.233))) * 43758.5453) + fract(sin(dot(q, vec2(39.3468, 11.135))) * 24634.6345) - 1.0;
     c += n / 255.0;
+
+    // the tear: the black opens from the centre with a ragged, blazing edge (the awakening)
+    if (rit.r > 0.0) {
+        float t = (rit.r * 255.0 - 1.0) / 254.0;
+        vec2 tq = (texCoord - 0.5) * vec2(OutSize.x / OutSize.y, 1.0);
+        float r = length(tq);
+        float a = atan(tq.y, tq.x);
+        float edge = t * t * 1.3 + (sin(a * 7.0 + t * 11.0) * 0.5 + 0.5) * 0.06 * (1.0 - t) + sin(a * 19.0 - t * 5.0) * 0.015;
+        float open = smoothstep(edge + 0.002, edge - 0.035, r);
+        float rim = exp(-abs(r - edge) * 55.0) * (1.0 - t * 0.6);
+        c = c * open + vec3(0.62, 0.84, 1.0) * rim * 1.4 * step(0.001, t);
+    }
     fragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
 
     // development views (texel 0 red byte; 255 = normal)

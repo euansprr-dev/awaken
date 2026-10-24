@@ -66,6 +66,8 @@ public final class GateCard {
 
     public static void send(ServerPlayer p, GateRecord g) {
         GatePlan plan = g.plan;
+        // the story's hall says nothing once its ritual is done (the bell's last toll and its collapse say it)
+        if (plan.ritual() && (!g.state.enterable() || Progression.profile(p).awakened())) return;
         long today = PlayDays.current(p.level().getServer());
         int per = Progression.stat(p, Stat.PER);
         boolean scouted = Gates.isScouted(p, g.id);
@@ -82,10 +84,18 @@ public final class GateCard {
             if (g.wandering()) {
                 long left = Math.max(0, g.expiresAt - GateService.now(p.level().getServer())) / 1200;
                 w.row("Fades in", left < 1 ? "under a minute" : left + " min");
-            } else {
-                w.row("Breaks in", g.scripted ? "never" : g.neverBreaks(p.level().getServer()) ? "never · the gates are calm"
+            } else if (!g.scripted) {
+                // a scripted gate never breaks and has no clock to show: its card tells its story instead
+                w.row("Breaks in", g.neverBreaks(p.level().getServer()) ? "never · the gates are calm"
                         : in == 0 ? "today" : in + " play-day" + (in > 1 ? "s" : ""));
             }
+        }
+        if (plan.ritual()) {
+            // the story's gate: no layout, no modifiers, no floors to count. Only a bell, somewhere far down.
+            w.body(Component.literal("A bell tolls, far below. It sounds like it's waiting."));
+            w.footer(Component.literal("Walk in to enter"));
+            Signal.send(p, w.ttl(20 * 9).priority(3).build());
+            return;
         }
         w.row("Omen", plan.theme().omen);
         if (scouted) w.row("Theme", plan.theme().displayName);
