@@ -20,8 +20,17 @@ public final class CorePayloads {
 
     static void register(RegisterPayloadHandlersEvent event) {
         event.registrar("1").playToServer(FlagUnfair.TYPE, FlagUnfair.STREAM_CODEC, (msg, ctx) -> {
-            // each flag writes a log line and a toast: one every two seconds is plenty for a key press
-            if (ctx.player() instanceof ServerPlayer sp && Throttle.allow(sp, "flag_unfair", 40)) Playtest.flagUnfair(sp);
+            if (ctx.player() instanceof ServerPlayer sp) flagUnfair(sp);
         });
+    }
+
+    /**
+     * A playtester flags their last death (SPEC "Together", rate limits): each flag writes a log line and a toast, so
+     * one every two seconds per player is plenty for a key press. Returns whether it was handled.
+     */
+    public static boolean flagUnfair(ServerPlayer sp) {
+        if (!Throttle.allow(sp, "flag_unfair", 40)) return false;
+        Playtest.flagUnfair(sp);
+        return true;
     }
 }

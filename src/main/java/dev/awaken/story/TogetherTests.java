@@ -221,10 +221,15 @@ final class TogetherTests {
             h.succeed();
         });
 
-        // Dedicated server: per-player throttles, and "/awaken as <player>" runs a command for that player.
+        // Dedicated server: per-player throttles (the playtest flag among them), and "/awaken as <player>" runs a command
+        // for that player (by name, as vanilla's player arguments take it: mock players all share one name, so these two
+        // have their own).
         AwakenTests.register("together_server_throttle_and_as", 40, h -> {
-            ServerPlayer p = player(h, h.absoluteVec(new Vec3(1.5, 1, 1.5)));
-            ServerPlayer q = player(h, h.absoluteVec(new Vec3(2.5, 1, 1.5)));
+            AwakenTests.Live lp = AwakenTests.survivalPlayer(h, "AsCaller", new BlockPos(1, 1, 1));
+            AwakenTests.Live lq = AwakenTests.survivalPlayer(h, "AsTarget", new BlockPos(2, 1, 1));
+            ServerPlayer p = lp.player(), q = lq.player();
+            Progression.awaken(p);
+            Progression.awaken(q);
             try {
                 h.assertTrue(Throttle.allow(p, "test_once", 40), "the first press passes");
                 h.assertFalse(Throttle.allow(p, "test_once", 40), "a second within the window doesn't");
@@ -232,16 +237,25 @@ final class TogetherTests {
                 int ok = 0;
                 for (int i = 0; i < 10; i++) if (Throttle.allowBurst(p, "test_burst", 4, 20)) ok++;
                 h.assertTrue(ok == 4, "a burst of 4 per second, got " + ok);
+                // the playtest "unfair death" key: one flag per two seconds each
+                int fp = 0, fq = 0;
+                for (int i = 0; i < 5; i++) {
+                    if (dev.awaken.core.CorePayloads.flagUnfair(p)) fp++;
+                    if (dev.awaken.core.CorePayloads.flagUnfair(q)) fq++;
+                }
+                h.assertTrue(fp == 1 && fq == 1, "unfair-death flags: one each, got " + fp + " and " + fq);
                 var server = h.getLevel().getServer();
-                int levelBefore = Progression.profile(q).level();
+                int levelBefore = Progression.profile(q).level(), callerBefore = Progression.profile(p).level();
                 try {
-                    server.getCommands().getDispatcher().execute("awaken as " + q.getUUID() + " admin levels 2", server.createCommandSourceStack());
+                    server.getCommands().getDispatcher().execute("awaken as AsTarget admin levels 2", server.createCommandSourceStack());
                 } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
                     h.fail("/awaken as failed: " + e.getMessage());
                 }
                 h.assertTrue(Progression.profile(q).level() >= levelBefore + 2, "the console raised that player's level: " + Progression.profile(q).level());
+                h.assertTrue(Progression.profile(p).level() == callerBefore, "and only that player's");
             } finally {
-                remove(h, p, q);
+                lp.leave();
+                lq.leave();
             }
             h.succeed();
         });
