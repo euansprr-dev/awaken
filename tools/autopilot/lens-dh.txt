@@ -1,5 +1,7 @@
 # Lens and Distant Horizons diagnosis: one place, one moment, every Lens state. Run with PACK=perf,horizon DH=swift.
-# Shots: off, swift, pass-through (the chain runs but copies the frame), depth masks, raw far depth, off again.
+# Shots: off, swift, pass-through (the chain runs but copies the frame), depth masks, raw far depth (blue = Lens reads
+# it), the haze each pixel gets (a ring would be a step in brightness at the end of the vanilla render distance), off
+# again; then the same west, and Cinematic.
 world lensdh creative 20261024
 waitworld
 gui 0
@@ -48,5 +50,19 @@ shot dh_8_swift_west
 lensdebug 2
 wait 20
 shot dh_9_masks_west
+lensdebug 4
+wait 20
+shot dh_10_haze_west
+lensdebug 3
+wait 20
+shot dh_11_fardepth_west
+lensdebug 0
+lens cinematic
+wait 80
+shot dh_12_cinematic_west
+look 0 10
+lensdebug 4
+wait 20
+shot dh_13_haze_north
 lensdebug 0
 quit

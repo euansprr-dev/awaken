@@ -722,9 +722,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `assets/awaken/lens/looks.json` (schemaVersion 1; exact id, then `prefix*`, then `default`) and ease into each other
   over about 1.5 s. Lens never lifts shadows (exposure ≤ 1.05) and backs off where the game's own fog is thick.
   It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT (default) | CINEMATIC.
-  With Distant Horizons drawing, Lens adds no distance haze (DH fogs its own terrain and turns vanilla fog off; Lens
-  hazing only the near terrain drew a ring where it ends): the same-moment A/B tour (tools/autopilot/lens-dh.txt)
-  showed far terrain intact with Lens on, and DH's depth texture already cleared by post-effect time.
+  With Distant Horizons drawing, Lens hazes far terrain by DH's own depth (Lens and far terrain, below); only where
+  it can't read that depth does it add no distance haze while DH draws, since hazing only the near terrain would draw
+  a ring where it ends.
   Story moments override the place's look (`LensClient.override(lookId, fadeTicks)` / `clearOverride`) with named
   looks from the same files (`awaken:ritual`, `awaken:void`); texel 13 carries the tear from black (`LensClient.tear`,
   0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 carries the Holo UI
@@ -740,10 +740,26 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   both.
 - Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
   finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
-- Lens and far terrain: Distant Horizons draws without the game's depth, so Lens reads DH's own depth through
-  `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
-  and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
-  distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
+- Lens and far terrain: Distant Horizons draws without the game's depth, so Lens samples DH's own depth texture
+  through `compat.client.FarTerrain` (texture `awaken:lens_far_depth`), with no copy: DH 3.3.4's Blaze renderer (the
+  default engine on 26.3) clears that texture only at the start of its own pass (right after
+  `DhApiBeforeTextureClearEvent`), so after it draws, the texture holds this frame's far terrain through the post
+  effects. (The earlier reading "DH clears its depth before post effects" came from Lens sampling its own 1×1
+  placeholder: `IDhApiRenderProxy.getDhDepthTextureBlazeWrapper().getWrappedMcObject()` is a reused `Object[]`
+  {GpuTexture, GpuTextureView, GpuSampler}, which FarTerrain didn't unpack.) FarTerrain re-points from
+  `DhApiBeforeRenderEvent` every frame without allocating and from `DhApiAfterColorDepthTextureCreatedEvent` (DH's
+  resize, inside its pass setup, before anything samples), and never hands a post pass a closed view. DH's clip
+  planes come from its projection matrix (`dhProjectionMatrix` m22/m23), not the event's `nearClipPlane` (DH clamps the
+  matrix's near plane to 7.5 blocks). DH builds a reverse-Z matrix for 0..1 depth even where the device maps -1..1
+  (OpenGL without clip control), so the shader turns stored depth back to NDC with the device's range (texel 0 g)
+  before DH's convention. Params: texel 15 the planes (near in 1/16 block, far in blocks); texel 0 b far terrain drawn
+  in the last 0.2 s, texel 0 a bit 0 reverse-Z, bit 1 zero-to-one, bit 2 Lens reads the depth. Far terrain is hazed by
+  its real distance (aerial perspective deepening to 8× the render distance: DH keeps the fog's `renderDistanceEnd` at
+  the vanilla value and pushes only the start and the environmental fog out of reach, so the haze runs on across the
+  end of the vanilla render distance without a step), and never counts as open sky for bloom, light shafts or the sun
+  halo. Where DH has no texture to share (its OpenGL engine; bit 2 clear) Lens adds no distance haze while DH draws.
+  Debug views (`lensdebug`): 3 raw far depth (blue while Lens reads it), 4 the haze each pixel gets (a ring would show
+  as a step in brightness). Proof: tools/autopilot/lens-dh.txt. Params texels: 13 the ritual, 14 Holo.
 
 ---------------------------------------------------------------------------------------------------------------------
 

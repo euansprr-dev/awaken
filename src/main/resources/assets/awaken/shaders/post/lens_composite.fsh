@@ -41,17 +41,20 @@ float viewDistance(float depth, float zFar, bool zeroToOne) {
     return 2.0 * zFar * zNear / (ndc * (zFar - zNear) + (zFar + zNear));
 }
 
-// far terrain's view distance from its own projection: forward or reverse Z, 0..1 or -1..1 depth
-float farDistance(float depth, float zNear, float zFar, int flags) {
+// far terrain's view distance from its own projection (forward or reverse Z, built for 0..1 or -1..1 depth). The
+// stored depth comes back to the projection's z through the device's own depth range: Distant Horizons builds a 0..1
+// matrix even where the device maps -1..1 (OpenGL without clip control).
+float farDistance(float depth, float zNear, float zFar, int flags, bool deviceZeroToOne) {
     bool reverse = (flags & 1) != 0, zeroToOne = (flags & 2) != 0;
-    if (zeroToOne) return reverse ? zNear * zFar / (depth * (zFar - zNear) + zNear) : zNear * zFar / (zFar - depth * (zFar - zNear));
-    float ndc = depth * 2.0 - 1.0;
-    return reverse ? 2.0 * zFar * zNear / (ndc * (zFar - zNear) + (zFar + zNear))
-                   : 2.0 * zFar * zNear / ((zFar + zNear) - ndc * (zFar - zNear));
+    float z = deviceZeroToOne ? depth : depth * 2.0 - 1.0;
+    if (zeroToOne) return reverse ? zNear * zFar / (z * (zFar - zNear) + zNear) : zNear * zFar / (zFar - z * (zFar - zNear));
+    return reverse ? 2.0 * zFar * zNear / (z * (zFar - zNear) + (zFar + zNear))
+                   : 2.0 * zFar * zNear / ((zFar + zNear) - z * (zFar - zNear));
 }
 
-// far terrain (Distant Horizons) draws with its own depth; true where it drew this pixel
+// far terrain (Distant Horizons) draws with its own depth; true where it drew this pixel (bit 2: Lens can read it)
 bool farHit(float depth, int flags) {
+    if ((flags & 4) == 0) return false;
     bool reverse = (flags & 1) != 0;
     return reverse ? depth > 1.0e-6 : depth < 0.999999;
 }
@@ -75,7 +78,7 @@ void main() {
         if (farHit(fd, flags)) {
             vec4 p15 = P(15);
             float fNear = (p15.r * 255.0 * 256.0 + p15.g * 255.0) / 16.0, fFar = p15.b * 255.0 * 256.0 + p15.a * 255.0;
-            d = farDistance(fd, max(fNear, 0.05), max(fFar, fNear + 1.0), flags);
+            d = farDistance(fd, max(fNear, 0.05), max(fFar, fNear + 1.0), flags, p0.g > 0.5);
             sky = false;
             farTerrain = true;
         }
@@ -85,9 +88,9 @@ void main() {
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
     if (farTerrain) haze = min(1.0, haze + smoothstep(rdEnd, rdEnd * 8.0, d) * 0.45 * step(0.001, h.r));
-    // Far terrain is drawing but its depth isn't readable here (Distant Horizons clears it before post effects):
-    // then distance is Distant Horizons' own fog. Hazing only the near terrain would draw a ring where it ends.
-    if (p0.b > 0.5 && !farTerrain) haze = 0.0;
+    // Far terrain is drawing but Lens can't read its depth (Distant Horizons' OpenGL engine shares none): then distance
+    // is Distant Horizons' own fog. Hazing only the near terrain would draw a ring where it ends.
+    if (p0.b > 0.5 && (int(p0.a * 255.0 + 0.5) & 4) == 0) haze = 0.0;
     // underwater, in lava or blind, the game's own fog already hides the distance
     haze *= clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0);
     vec3 hazeColor = mix(fogColor.rgb, hz.rgb, h.b);
@@ -166,7 +169,14 @@ void main() {
         vec3 m = vd < 1.0e-7 ? (farHere ? vec3(1.0, 0.1, 0.1) : vec3(0.1, 0.2, 1.0)) : vec3(0.1, 0.9, 0.2);
         fragColor = vec4(mix(texture(InSampler, texCoord).rgb, m, 0.6), 1.0);
     } else if (dbg == 3) {
+        // raw far depth: r its fine bands, g the depth, b 1 while Lens reads it (0.4: drawing but unreadable)
         float fd = texture(FarDepthSampler, texCoord).r;
-        fragColor = vec4(vec3(fract(fd * 16.0), fd, p0.b), 1.0);                       // raw far depth
+        bool readable = (int(p0.a * 255.0 + 0.5) & 4) != 0;
+        fragColor = vec4(fract(fd * 16.0), fd, p0.b * (readable ? 1.0 : 0.4), 1.0);
+    } else if (dbg == 4) {
+        // the haze each pixel gets, grey from none to full: far terrain warm, open sky blue. A ring at the end of the
+        // vanilla render distance would show as a step in brightness here.
+        vec3 tint = farTerrain ? vec3(1.0, 0.82, 0.66) : sky ? vec3(0.6, 0.75, 1.0) : vec3(1.0);
+        fragColor = vec4(tint * (0.08 + 0.92 * haze), 1.0);
     }
 }

@@ -19,8 +19,9 @@ layout(location = 0) out vec4 fragColor;
 
 vec4 P(int i) { return texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 
-// far terrain (Distant Horizons) draws with its own depth; true where it drew this pixel
+// far terrain (Distant Horizons) draws with its own depth; true where it drew this pixel (bit 2: Lens can read it)
 bool farHit(float depth, int flags) {
+    if ((flags & 4) == 0) return false;
     bool reverse = (flags & 1) != 0;
     return reverse ? depth > 1.0e-6 : depth < 0.999999;
 }

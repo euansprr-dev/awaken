@@ -54,7 +54,7 @@ import java.util.Map;
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
  * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
- * lensdebug 0..3                                 Lens debug views: normal, pass-through, depth masks, far depth
+ * lensdebug 0..4                                 Lens debug views: normal, pass-through, depth masks, far depth, haze
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
