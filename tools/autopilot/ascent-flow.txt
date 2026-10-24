@@ -19,7 +19,8 @@ wait 20
 screen close
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd tp @s 0.5 152 0.5 0 0
-wait 20
+# new terrain loads slower: let the chunks under the floor load before filling
+wait 100
 cmd fill -30 150 -12 30 150 250 minecraft:grass_block
 cmd fill -30 151 -12 30 160 250 minecraft:air
 cmd tp @s 0.5 151 0.5 0 0

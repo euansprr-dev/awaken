@@ -30,7 +30,7 @@ public final class AscentPilot {
     private static float aimYaw, aimPitch, aimStepYaw, aimStepPitch;
     private static int aimTicks;
     private static String script = "";
-    private static int age, count, target, phase, mark;
+    private static int age, count, target, phase, mark, misses;
     private static float laneYaw;
 
     static void line(String line) {
@@ -58,7 +58,7 @@ public final class AscentPilot {
             case "run" -> {
                 script = a[1];
                 target = a.length > 2 ? Integer.parseInt(a[2]) : 4;
-                age = count = phase = mark = 0;
+                age = count = phase = mark = misses = 0;
                 laneYaw = p.getYRot();
             }
             case "rec" -> ClipRecorder.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Integer.parseInt(a[3]) : 2);
@@ -167,7 +167,11 @@ public final class AscentPilot {
                     press(TETHER, 2);
                     phase = 2;
                 }
-                if (phase == 2 && p.onGround()) phase = 0;
+                if (phase == 2 && p.onGround()) {
+                    // landed without a swing (a missed rope, a trunk in the face): turn off the line, as a player would
+                    if (AscentMoves.missAt > AscentMoves.biteAt) laneYaw += (count % 2 == 0 ? 35F : -35F) * (++misses % 2 == 0 ? -1 : 1);
+                    phase = 0;
+                }
             }
             case TETHER -> {
                 p.setXRot(Mth.approach(p.getXRot(), -8F, 3F));
@@ -187,6 +191,7 @@ public final class AscentPilot {
                     phase = 3;
                 }
             }
+            case ZIP -> press(TETHER, 2);
             case CARRY -> {
                 p.setXRot(Mth.approach(p.getXRot(), -12F, 4F));
                 press(FORWARD, 2);

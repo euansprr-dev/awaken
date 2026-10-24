@@ -129,6 +129,21 @@ public final class AscentAnchors {
         return h.getLocation().add(f.getStepX() * 0.06, f.getStepY() * 0.06, f.getStepZ() * 0.06);
     }
 
+    /**
+     * The block an anchor point bit (the point sits a hair off one of its faces): the neighbouring cell, within 0.15,
+     * that has collision there. Null when none does (the block is gone).
+     */
+    public static net.minecraft.core.@Nullable BlockPos blockOf(Level level, double ax, double ay, double az) {
+        net.minecraft.core.BlockPos.MutableBlockPos c = new net.minecraft.core.BlockPos.MutableBlockPos();
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+            double x = ax + d.getStepX() * 0.15, y = ay + d.getStepY() * 0.15, z = az + d.getStepZ() * 0.15;
+            c.set(Math.floor(x), Math.floor(y), Math.floor(z));
+            var shape = level.getBlockState(c).getCollisionShape(level, c);
+            if (!shape.isEmpty()) return c.immutable();
+        }
+        return null;
+    }
+
     /** The floor under a point, or {@code y - maxDown} when there is none within reach. */
     public static double floorUnder(Level level, Entity who, double x, double y, double z, double maxDown) {
         Vec3 from = new Vec3(x, y - 0.5, z), to = new Vec3(x, y - maxDown, z);

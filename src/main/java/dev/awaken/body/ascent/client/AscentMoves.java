@@ -44,6 +44,8 @@ public final class AscentMoves {
 
     // the rope
     static double ax, ay, az, len, lenTarget;
+    /** The block the rope bit (null: it bit nothing we could find, so it is never "gone"). */
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos anchorBlock;
     /** Ticks until a fired rope bites (it flies out first: the anticipation); 0 once it holds. */
     static int ropeTravel;
     static boolean ropeTaut;
@@ -376,6 +378,7 @@ public final class AscentMoves {
         ax = a.x();
         ay = a.y();
         az = a.z();
+        anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
         double dx = ax - hx, dy = ay - hy, dz = az - hz;
         double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (v != null) K.set(hx, hy, hz, v.x, v.y, v.z);
@@ -444,7 +447,7 @@ public final class AscentMoves {
             boolean wrap = snag != null && snag.y > hand.y - 1 && hand.distanceTo(snag) >= AscentRules.TETHER_MIN + 1;
             if (wrap) {
                 wrap(p, snag, hand.distanceTo(snag));
-            } else if (snag != null || p.level().getBlockState(net.minecraft.core.BlockPos.containing(ax, ay, az)).isAir() && anchorGone(p)) {
+            } else if (snag != null || anchorGone(p)) {
                 trace(snag == null ? "rope cut (anchor gone)" : String.format("rope cut (snag %.1f off, %.1f under the hand)",
                         hand.distanceTo(snag), hand.y - snag.y));
                 AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.7F, 1.4F);
@@ -481,6 +484,7 @@ public final class AscentMoves {
         ax = at.x;
         ay = at.y;
         az = at.z;
+        anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
         len = length;
         lenTarget = Math.min(lenTarget, length);
         trace(String.format("rope wraps (%.1f)", length));
@@ -490,13 +494,9 @@ public final class AscentMoves {
         ClientPacketDistributor.sendToServer(new AscentPayloads.State(state.ordinal(), ax, ay, az, (float) len));
     }
 
-    /** The anchor's block is gone (broken, or a leaf that decayed): checked only when the anchor point reads air. */
+    /** The block the rope bit is gone (broken, or a leaf that decayed): its cell has no collision any more. */
     private static boolean anchorGone(LocalPlayer p) {
-        // the anchor sits a hair off the face, so its own cell is air: look one step back into the block it bit
-        Vec3 hand = new Vec3(K.x, K.y, K.z);
-        Vec3 a = new Vec3(ax, ay, az);
-        Vec3 into = a.add(a.subtract(hand).normalize().scale(0.3));
-        return p.level().getBlockState(net.minecraft.core.BlockPos.containing(into)).isAir();
+        return anchorBlock != null && p.level().getBlockState(anchorBlock).getCollisionShape(p.level(), anchorBlock).isEmpty();
     }
 
     private static void bite(LocalPlayer p, float strength) {

@@ -1851,8 +1851,10 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **The rope wraps** (soft failure, not a cut): checked every 2 ticks, something solid (never leaves) across the rope's
   middle becomes the new anchor (the face it meets from the hand, 0.06 off it) and the rope shortens to the hand's
   distance from it; the swing goes on about the new point (a strain, a small spark; the server re-checks the anchor).
-  Only a snag below the hand, or one closer than 4, lets go into the carry. (Before: 5 of 8 swings in the sandbox lane
-  were cut on the giant trunks.)
+  Only a snag below the hand, or one closer than 4, lets go into the carry; the rope is "gone" only when the block it
+  bit (remembered at the bite and at each wrap, `AscentAnchors.blockOf`) has no collision any more. (Before: 5 of 8
+  swings in the sandbox lane were cut, mostly by a false "gone" once the swing passed its anchor; after: none, six
+  releases chained without touching the ground, 197 blocks in 12.7 s, so 300 in about 19 s.)
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
   hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
   Leaper together (`HorizonHooks.addReach`).
