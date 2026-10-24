@@ -16,20 +16,20 @@ screen close
 window 1440 900
 info
 hud off
-# ---- Elderwood ----
-cmd awaken terrain visit awaken:elderwood
+# ---- Elderwood (round the nearest Elder Colossus, which stands where the biome has room) ----
+cmd awaken terrain herovisit elder_colossus 45 0
 wait 400
 cmd awaken terrain at
-look 30 -10
+look 180 -10
 wait 60
 shot lands_elder_noon_ground
 perf lands_elderwood 8
-look 210 -14
+look 110 -6
 wait 40
 shot lands_elder_noon_ground_b
 cmd time set 12400
 wait 60
-look 30 -10
+look 180 -10
 wait 20
 shot lands_elder_golden_ground
 lens cinematic
@@ -40,10 +40,10 @@ cmd time set 18000
 wait 60
 shot lands_elder_night_ground
 cmd gamemode spectator
-cmd tp @s ~ ~60 ~
+cmd awaken terrain herovisit elder_colossus 110 60
 wait 300
 cmd time set 6000
-look 30 25
+look 200 22
 wait 60
 shot lands_elder_noon_above
 cmd time set 12400
@@ -93,7 +93,7 @@ cmd time set 6000
 cmd locate structure awaken:elder_colossus
 cmd locate structure awaken:lumen_spire
 cmd gamemode spectator
-cmd awaken terrain herovisit elder_colossus 80 2
+cmd awaken terrain herovisit elder_colossus 130 28
 wait 400
 shot lands_colossus_far
 cmd awaken terrain herovisit elder_colossus 90 40

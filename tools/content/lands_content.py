@@ -346,7 +346,7 @@ LEAF_LITTER = weighted(*[(state(mc("leaf_litter"), facing=f, segment_amount=n), 
 
 
 def tree(trunk, branch, leaves, *, base, ra, rb, width, lean, lean_start, limbs, limb_start, limb_length, limb_rise, twig,
-         flare, radius, height, depth, hollow, ragged, hang, decorators, size, offset=0):
+         flare, radius, height, depth, hollow, ragged, hang, decorators, size, offset=0, limb_mass=-1, crown_mass=0):
     return {
         "type": mc("tree"),
         "below_trunk_provider": mc("soil_beneath_tree"),
@@ -354,6 +354,7 @@ def tree(trunk, branch, leaves, *, base, ra, rb, width, lean, lean_start, limbs,
         "trunk_placer": {"type": aw("limbed_trunk_placer"), "base_height": base, "height_rand_a": ra, "height_rand_b": rb,
                          "width": width, "lean": lean, "lean_start": lean_start, "limbs": limbs, "limb_start": limb_start,
                          "limb_length": limb_length, "limb_rise": limb_rise, "twig": twig, "root_flare": flare,
+                         "limb_mass": limb_mass, "crown_mass": crown_mass,
                          "branch_provider": state(branch, axis="y")},
         "foliage_provider": leaves_state(leaves),
         "foliage_placer": {"type": aw("cloud_foliage_placer"), "radius": radius, "offset": offset, "height": height, "depth": depth,
@@ -381,9 +382,9 @@ def features():
     f = {}
     # Elder: a tall pale 2x2 column, clean below, a high crown of two to four billowing masses on rising limbs
     f["lands/elder"] = tree(aw("elder_log"), aw("elder_wood"), aw("elder_leaves"), base=18, ra=4, rb=4, width=2,
-                            lean=uniform(0, 1), lean_start=0.55, limbs=uniform(3, 5), limb_start=0.6, limb_length=uniform(3, 6),
-                            limb_rise=0.8, twig=uniform(2, 3), flare=uniform(2, 3), radius=uniform(4, 5), height=uniform(2, 3),
-                            depth=0.55, hollow=0.0, ragged=0.4, hang=0.12,
+                            lean=uniform(0, 1), lean_start=0.55, limbs=uniform(3, 5), limb_start=0.5, limb_length=uniform(3, 6),
+                            limb_rise=0.75, twig=uniform(2, 3), flare=uniform(2, 3), radius=uniform(3, 4), height=uniform(2, 3),
+                            depth=0.5, hollow=0.0, ragged=0.45, hang=0.12, limb_mass=0, crown_mass=0,
                             decorators=[on_ground(LEAF_LITTER, 5, 70), {"type": mc("shelf_mushroom"), "probability": 0.25},
                                         ground_ring(weighted((state(mc("moss_block")), 3), (state(mc("podzol"), snowy=False), 2),
                                                              (state(mc("coarse_dirt")), 1)))],

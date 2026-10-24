@@ -37,6 +37,8 @@
       "min_inclusive": 0,
       "max_inclusive": 1
     },
+    "limb_mass": -1,
+    "crown_mass": 0,
     "branch_provider": {
       "id": "awaken:elder_wood",
       "properties": {

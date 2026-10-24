@@ -97,10 +97,10 @@ final class ElderColossus {
         double la = r.nextDouble() * Math.PI * 2;
         for (int k = 0; k < leaders; k++) {
             la += Math.PI * 2 / leaders + (r.nextDouble() - 0.5) * 0.6;
-            double ll = 8 + r.nextInt(5);
+            double ll = 9 + r.nextInt(5);
             double ex = tx + Math.cos(la) * ll, ez = tz + Math.sin(la) * ll, ey = h + 3 + r.nextInt(4);
             bp.tube(tx, h - 6, tz, ex, ey, ez, 1.4, 0.7, Blueprint.WOOD);
-            mass(bp, r, seed + 101L * k, ex, ey, ez, 1.0, 5.0 + r.nextDouble() * 1.5, 3.0);
+            mass(bp, r, seed + 101L * k, ex, ey, ez, 1.0, 6.0 + r.nextDouble() * 1.5, 3.2);
         }
         bp.tube(tx, h - 2, tz, tx, h + 2, tz, 1.4, 1.0, Blueprint.WOOD);
         // a small crown right over the trunk: the sky must reach the trunk between the limbs, or the giant stands in its own shade

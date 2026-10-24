@@ -41,6 +41,8 @@
       "min_inclusive": 1,
       "max_inclusive": 2
     },
+    "limb_mass": -1,
+    "crown_mass": 0,
     "branch_provider": {
       "id": "awaken:lumen_wood",
       "properties": {

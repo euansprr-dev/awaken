@@ -24,13 +24,13 @@
       "min_inclusive": 3,
       "max_inclusive": 5
     },
-    "limb_start": 0.6,
+    "limb_start": 0.5,
     "limb_length": {
       "type": "minecraft:uniform",
       "min_inclusive": 3,
       "max_inclusive": 6
     },
-    "limb_rise": 0.8,
+    "limb_rise": 0.75,
     "twig": {
       "type": "minecraft:uniform",
       "min_inclusive": 2,
@@ -41,6 +41,8 @@
       "min_inclusive": 2,
       "max_inclusive": 3
     },
+    "limb_mass": 0,
+    "crown_mass": 0,
     "branch_provider": {
       "id": "awaken:elder_wood",
       "properties": {
@@ -60,8 +62,8 @@
     "type": "awaken:cloud_foliage_placer",
     "radius": {
       "type": "minecraft:uniform",
-      "min_inclusive": 4,
-      "max_inclusive": 5
+      "min_inclusive": 3,
+      "max_inclusive": 4
     },
     "offset": 0,
     "height": {
@@ -69,9 +71,9 @@
       "min_inclusive": 2,
       "max_inclusive": 3
     },
-    "depth": 0.55,
+    "depth": 0.5,
     "hollow": 0.0,
-    "ragged": 0.4,
+    "ragged": 0.45,
     "hang": 0.12
   },
   "minimum_size": {

@@ -47,6 +47,8 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
             Codec.floatRange(0.0F, 3.0F).fieldOf("limb_rise").forGetter(p -> p.limbRise),
             IntProviders.codec(0, 5).optionalFieldOf("twig", ConstantInt.ZERO).forGetter(p -> p.twig),
             IntProviders.codec(0, 4).optionalFieldOf("root_flare", ConstantInt.ZERO).forGetter(p -> p.rootFlare),
+            Codec.intRange(-3, 3).optionalFieldOf("limb_mass", -1).forGetter(p -> p.limbMass),
+            Codec.intRange(-3, 3).optionalFieldOf("crown_mass", 0).forGetter(p -> p.crownMass),
             BlockStateProvider.CODEC.fieldOf("branch_provider").forGetter(p -> p.branchProvider)
     ).apply(i, LimbedTrunkPlacer::new));
 
@@ -59,11 +61,13 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
     private final float limbRise;
     private final IntProvider twig;
     private final IntProvider rootFlare;
+    /** Added to the foliage radius of the masses on the limbs and of the crown on the trunk's top. */
+    private final int limbMass, crownMass;
     private final Holder<BlockStateProvider> branchProvider;
 
     public LimbedTrunkPlacer(int baseHeight, int heightRandA, int heightRandB, int width, IntProvider lean, float leanStart, IntProvider limbs,
                              float limbStart, IntProvider limbLength, float limbRise, IntProvider twig, IntProvider rootFlare,
-                             Holder<BlockStateProvider> branchProvider) {
+                             int limbMass, int crownMass, Holder<BlockStateProvider> branchProvider) {
         super(baseHeight, heightRandA, heightRandB);
         this.width = width;
         this.lean = lean;
@@ -74,6 +78,8 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
         this.limbRise = limbRise;
         this.twig = twig;
         this.rootFlare = rootFlare;
+        this.limbMass = limbMass;
+        this.crownMass = crownMass;
         this.branchProvider = branchProvider;
     }
 
@@ -135,14 +141,14 @@ public final class LimbedTrunkPlacer extends TrunkPlacer {
             }
             if (end == null) continue;
             twigs(level, trunkSetter, random, tree, end);
-            out.add(new FoliagePlacer.FoliageAttachment(end, -1, false));
+            out.add(new FoliagePlacer.FoliageAttachment(end, limbMass, false));
         }
 
         // the crown on top of the trunk
         BlockPos top = origin.offset(ox[treeHeight], treeHeight, oz[treeHeight]);
         for (int dx = 0; dx < w; dx++) for (int dz = 0; dz < w; dz++) placeBranch(level, trunkSetter, random, tree, top.offset(dx, 0, dz), Direction.Axis.Y);
         twigs(level, trunkSetter, random, tree, w == 2 ? top.offset(random.nextInt(2), 0, random.nextInt(2)) : top);
-        out.add(new FoliagePlacer.FoliageAttachment(top, 0, w == 2));
+        out.add(new FoliagePlacer.FoliageAttachment(top, crownMass, w == 2));
         return out;
     }
 
