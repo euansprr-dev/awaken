@@ -107,7 +107,16 @@ final class CitizensCommands {
                         + "stalls open %d/%d | events %d | repairs %d | time of day %d",
                 c.roster.citizens, c.ledger.count(CitizensData.INSIDE), c.ledger.count(CitizensData.WALK), c.ledger.count(CitizensData.STAND),
                 c.crowd.bodies.size(), lit, d.lamps.length, broken, open, d.stallOpen.length, d.events.size(), d.repairs.size(), c.tod());
-        Awaken.LOG.info("[citizens] info: {} | {}", s, c.line());
+        // who is out and about, by district
+        int[] out = new int[8];
+        for (int i = 0; i < c.roster.citizens; i++) {
+            if (!c.ledger.position(i, c.ledger.tmp)) continue;
+            int dd = CityPlan.get().district((int) Math.floor(c.ledger.tmp[0] - c.ledger.cx), (int) Math.floor(c.ledger.tmp[2] - c.ledger.cz));
+            out[Math.clamp(dd, 0, 7)]++;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int k = 1; k < 8; k++) sb.append(' ').append(CityPlan.DISTRICTS[k]).append('=').append(out[k]);
+        Awaken.LOG.info("[citizens] info: {} | out by district:{} | {}", s, sb, c.line());
         return say(src, s);
     }
 
