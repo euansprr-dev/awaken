@@ -52,6 +52,7 @@ public final class HearthModule {
 
         HearthService.init();
         HearthNow.register();
+        dev.awaken.hearth.guide.Guide.init(modBus);
         Offers.init();
         Later.init();
         Echoes.init();
@@ -88,6 +89,7 @@ public final class HearthModule {
                 .orElse(null));
         HearthCommands.register();
         HearthTests.register();
+        dev.awaken.hearth.guide.GuideTests.register();
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {
