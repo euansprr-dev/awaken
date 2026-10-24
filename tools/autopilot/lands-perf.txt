@@ -1,5 +1,6 @@
 # Awakened Lands slice frame times (docs/modules/lands.md): the densest Elderwood (beside its nearest Colossus) at noon
-# and the densest Lumen Forest at night, after the chunks round the camera have finished generating.
+# and the densest Lumen Forest at night, after the chunks round the camera have finished generating, each beside its
+# vanilla archetype measured in the same run (the machine's load moves every number; compare within a run).
 # Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/lands-perf.txt 1200
 world landsperf777 creative 777
 waitworld
@@ -15,17 +16,49 @@ screen close
 window 1440 900
 hud off
 info
+cmd time set 6000
 cmd awaken terrain herovisit elder_colossus 45 0
-wait 900
+wait 700
 look 180 -8
 wait 100
-perf lands_elderwood_dense 12
-shot perf_elderwood
-cmd time set 18000
-cmd awaken terrain visit awaken:lumen_forest
-wait 900
+perf lands_elderwood_dense 10
+cmd awaken terrain visit minecraft:old_growth_birch_forest
+wait 700
 look 30 -8
 wait 100
-perf lands_lumen_dense_night 12
-shot perf_lumen
+perf vanilla_old_growth_birch 10
+cmd time set 18000
+cmd awaken terrain visit awaken:lumen_forest
+wait 700
+look 30 -8
+wait 100
+perf lands_lumen_dense_night 10
+cmd awaken terrain visit minecraft:dark_forest
+wait 700
+look 30 -8
+wait 100
+perf vanilla_dark_forest_night 10
+# a second pass: the machine's load drifts, so each pair is measured twice
+cmd time set 6000
+cmd awaken terrain herovisit elder_colossus 45 0
+wait 700
+look 180 -8
+wait 100
+perf lands_elderwood_dense_2 10
+cmd awaken terrain visit minecraft:old_growth_birch_forest
+wait 700
+look 30 -8
+wait 100
+perf vanilla_old_growth_birch_2 10
+cmd time set 18000
+cmd awaken terrain visit awaken:lumen_forest
+wait 700
+look 30 -8
+wait 100
+perf lands_lumen_dense_night_2 10
+cmd awaken terrain visit minecraft:dark_forest
+wait 700
+look 30 -8
+wait 100
+perf vanilla_dark_forest_night_2 10
 quit

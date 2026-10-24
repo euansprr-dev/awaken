@@ -107,8 +107,8 @@ own particle pool covers them) and no ambient sound. Elder leaves are untinted.
 
 **Glow without overdraw or light.** Lumen leaves are a normal cutout leaf cube plus one-pixel (sides) or 2×2 (top and
 bottom) *solid* emissive faces laid 0.05 px in front of the leaf face, sampling the solid `lumen_glow` tile, so the
-glow costs no alpha-tested overdraw (Apple GPUs) and keeps its colour at every mip level. Three weighted variants
-(two speckled, one plain) keep the extra quads to about 2.5× a vanilla leaf. Lumen moss does the same on its top.
+glow costs no alpha-tested overdraw (Apple GPUs) and keeps its colour at every mip level. Three equally weighted variants
+(two speckled, one plain) keep the extra quads to about twice a vanilla leaf. Lumen moss does the same on its top.
 Caps, vine tips and the veined log use vanilla's `cross_emissive`-style overlay layer (few blocks).
 
 ### Trees (lands pack `worldgen/feature/lands/*`, Awaken placers in `terrain.tree`)
@@ -141,10 +141,10 @@ order across biomes: the feature sorter rejects cycles), the archetype's trees s
 
 - **Elderwood** (old-growth birch forest): grass `#8ab35c`, foliage `#a9b64c`, dry foliage `#d9a53c` (the leaf litter
   is gold), water `#4aa7c9`, warm fog `#d8d8bf`, sky `#88b2f4`. Vegetation: moss patches (moss block, carpet, ferns,
-  litter), 6–8 trees a chunk (55% Elder, 42% young, 3% fallen), forest flowers and wildflowers, bushes, grass, ferns
+  litter), 5–7 trees a chunk (47% Elder, 50% young, 3% fallen), forest flowers and wildflowers, bushes, grass, ferns
   and large ferns, dense gold litter, mushrooms, pumpkins, cane, fireflies by water.
 - **Lumen Forest** (dark forest): grass `#40735f`, foliage `#2f8076`, dry foliage `#5f8a8c`, water `#2a93a6`, fog
-  `#a3c4ca`, sky `#7fa3e4`. Vegetation: lumen moss patches (carpet over grass, caps, ferns), 5–7 trees a chunk (55%
+  `#a3c4ca`, sky `#7fa3e4`. Vegetation: lumen moss patches (carpet over grass, caps, ferns), 4–6 trees a chunk (55%
   Lumen tree, 42% small, 3% fallen; no huge mushrooms, their brown and orange caps broke the teal), grass, lumen caps, firefly bushes everywhere (not only by
   water), litter, mushrooms. No forest flowers.
 - Placement: Lithostitched `replace_partially` where `awaken:lands/awakening` ≥ 0: Elderwood for forest, birch forest,
@@ -187,4 +187,27 @@ and canopy, no leaf born decaying, nothing loose, reach ≤ 13, height range), `
 nothing loose, no decaying leaves, cost per chunk), `terrain_hero_sites` (site search on a real overworld).
 Tour: `tools/autopilot/lands-slice.txt` (run with `PACK=perf,world TECTONIC=awakened`), light probe
 `tools/autopilot/lands-probe.txt`.
+
+### Costs (measured 2026-10-24, machine shared with other builds: compare within a run)
+
+- Frame time, `tools/autopilot/lands-perf.txt`, 2880×1800, perf + world pack, Tectonic `awakened`, each Awakened
+  forest beside its vanilla archetype in the same run, two passes (p50): Elderwood (dense, beside a Colossus, noon)
+  12.78 / 8.62 ms against old-growth birch 12.26 / 7.99; Lumen Forest (night) 8.74 / 8.29 against dark forest 8.35 /
+  9.02. Within about half a millisecond of their archetypes. That took trimming: before, 6–8 trees a chunk with 55%
+  Elders (about 3,000 leaf blocks a chunk) cost Elderwood 2 ms more than birch.
+- Hero blueprints (`terrain_hero_blueprints`, 8 seeds after warm-up): Colossus 3.1–3.8 ms average (worst 5.7),
+  Spire 1.4–2.1 ms (worst 3.6), built once per tree and cached. Placement into a live level
+  (`terrain_hero_builds_in_box`, block updates and light included, so above worldgen's cost): Colossus ~14,500 blocks
+  over 16 chunks at 1.5–2.1 ms a chunk on average (worst 7–8), Spire ~3,400 blocks over 9 chunks at 0.6–1.1 ms. The
+  Colossus blueprint is above the plan's 2 ms ceiling; it is paid once per tree, on a worker thread.
+- Data trees (`terrain_lands_trees_grow`): Elder ~160 logs and ~700 leaves, young elder 24 / 113, Lumen tree 115 / 237,
+  small Lumen 35 / 97.
+
+### Known gaps
+
+- Air, sound and the Lens look are other builders' (falling leaves already list `awaken:elder_leaves`; Lumen motes and
+  the ambience beds are not in yet). Fireflies and caps are the only night life of Lumen Forest so far.
+- Distant Horizons with the hero trees is untested (blueprints are thread-safe and cached, but not measured there).
+- The studio's `visit` now prefers a sizeable dry patch; on Tectonic worlds a biome's nearest patch can still be a
+  mountainside, so the slice tour shoots Elderwood beside its Colossus.
 

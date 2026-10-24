@@ -72,7 +72,7 @@
       "max_inclusive": 3
     },
     "depth": 0.5,
-    "hollow": 0.0,
+    "hollow": 0.35,
     "ragged": 0.45,
     "hang": 0.12
   },

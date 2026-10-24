@@ -121,7 +121,7 @@ def lumen_leaves_models():
     write(f"{ASSETS}/blockstates/lumen_leaves.json", {"variants": {"": [
         {"model": aw("block/lumen_leaves_specks_a"), "weight": 2},
         {"model": aw("block/lumen_leaves_specks_b"), "weight": 2},
-        {"model": aw("block/lumen_leaves"), "weight": 1}]}})
+        {"model": aw("block/lumen_leaves"), "weight": 2}]}})
 
 
 def lumen_moss_models():
@@ -384,7 +384,7 @@ def features():
     f["lands/elder"] = tree(aw("elder_log"), aw("elder_wood"), aw("elder_leaves"), base=18, ra=4, rb=4, width=2,
                             lean=uniform(0, 1), lean_start=0.55, limbs=uniform(3, 5), limb_start=0.5, limb_length=uniform(3, 6),
                             limb_rise=0.75, twig=uniform(2, 3), flare=uniform(2, 3), radius=uniform(3, 4), height=uniform(2, 3),
-                            depth=0.5, hollow=0.0, ragged=0.45, hang=0.12, limb_mass=0, crown_mass=0,
+                            depth=0.5, hollow=0.35, ragged=0.45, hang=0.12, limb_mass=0, crown_mass=0,
                             decorators=[on_ground(LEAF_LITTER, 5, 70), {"type": mc("shelf_mushroom"), "probability": 0.25},
                                         ground_ring(weighted((state(mc("moss_block")), 3), (state(mc("podzol"), snowy=False), 2),
                                                              (state(mc("coarse_dirt")), 1)))],
@@ -422,7 +422,7 @@ def features():
     # tree mixes (random selectors pick a placed tree per spot)
     f["lands/elderwood_trees"] = {"type": mc("random_selector"), "default": aw("lands/young_elder"), "features": [
         {"chance": 0.03, "feature": aw("lands/fallen_elder")},
-        {"chance": 0.55, "feature": aw("lands/elder")}]}
+        {"chance": 0.47, "feature": aw("lands/elder")}]}
     f["lands/lumen_trees"] = {"type": mc("random_selector"), "default": aw("lands/small_lumen"), "features": [
         {"chance": 0.03, "feature": aw("lands/fallen_lumen")},
         {"chance": 0.55, "feature": aw("lands/lumen")}]}
@@ -480,8 +480,8 @@ def placed():
         sap = aw("elder_sapling") if "elder" in name else aw("lumen_sapling")
         p[f"lands/{name}"] = {"feature": aw("lands/" + name), "placement": [
             {"type": mc("block_predicate_filter"), "predicate": {"type": mc("would_survive"), "state": state(sap, stage=0)}}]}
-    p["lands/elderwood_trees"] = trees_placed(aw("lands/elderwood_trees"), [(6, 3), (7, 4), (8, 2)], aw("elder_sapling"))
-    p["lands/lumen_trees"] = trees_placed(aw("lands/lumen_trees"), [(5, 3), (6, 4), (7, 2)], aw("lumen_sapling"))
+    p["lands/elderwood_trees"] = trees_placed(aw("lands/elderwood_trees"), [(5, 3), (6, 4), (7, 2)], aw("elder_sapling"))
+    p["lands/lumen_trees"] = trees_placed(aw("lands/lumen_trees"), [(4, 3), (5, 4), (6, 2)], aw("lumen_sapling"))
     p["lands/elder_moss_patch"] = {"feature": aw("lands/elder_moss_patch"), "placement": [
         {"type": mc("count"), "count": uniform(0, 2)}, {"type": mc("in_square")},
         {"type": mc("heightmap"), "heightmap": "MOTION_BLOCKING_NO_LEAVES"}, {"type": mc("biome")}]}

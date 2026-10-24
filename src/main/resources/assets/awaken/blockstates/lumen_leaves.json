@@ -11,7 +11,7 @@
       },
       {
         "model": "awaken:block/lumen_leaves",
-        "weight": 1
+        "weight": 2
       }
     ]
   }
