@@ -258,8 +258,8 @@ Tour: `tools/autopilot/lands-slice.txt` (run with `PACK=perf,world TECTONIC=awak
   12.78 / 8.62 ms against old-growth birch 12.26 / 7.99; Lumen Forest (night) 8.74 / 8.29 against dark forest 8.35 /
   9.02. Within about half a millisecond of their archetypes. That took trimming: before, 6–8 trees a chunk with 55%
   Elders (about 3,000 leaf blocks a chunk) cost Elderwood 2 ms more than birch.
-- Hero blueprints (`terrain_hero_blueprints`, 8 seeds after warm-up): Colossus 3.1–3.8 ms average (worst 5.7),
-  Spire 1.4–2.1 ms (worst 3.6), built once per tree and cached. Placement into a live level
+- Hero blueprints (`terrain_hero_blueprints`, 8 seeds after warm-up): Colossus 3.1–3.8 ms average (worst 5.7) on a
+  quiet machine, up to 8 ms while other builds load it; Spire 1.4–2.1 ms (worst 3.6). Built once per tree and cached. Placement into a live level
   (`terrain_hero_builds_in_box`, block updates and light included, so above worldgen's cost): Colossus ~14,500 blocks
   over 16 chunks at 1.5–2.1 ms a chunk on average (worst 7–8), Spire ~3,400 blocks over 9 chunks at 0.6–1.1 ms. The
   Colossus blueprint is above the plan's 2 ms ceiling; it is paid once per tree, on a worker thread.
