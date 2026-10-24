@@ -32,6 +32,17 @@ final class HoloRender {
     static final int ORDER = 9100;
     private static final int FULL_BRIGHT = LightCoordsUtil.FULL_BRIGHT;
     private static final OnTopCollector ON_TOP = new OnTopCollector();
+    /**
+     * Item normals as the GUI lights them. The level pass keeps its own lighting (two world-fixed lights), so instead of
+     * switching the lights we turn the normals: vanilla lights GUI items with the level lights rotated by a fixed pose
+     * (Lighting: ITEMS_FLAT, ITEMS_3D), and dot(R·L, n) = dot(L, Rᵀ·n), so normals through Rᵀ (and the GUI's y flip)
+     * light exactly like an inventory slot. (In the Nether the second light differs, so 3D items shade a little off.)
+     */
+    private static final org.joml.Matrix3f FLAT_NORMALS = new org.joml.Matrix3f(new Matrix4f()
+            .rotationY((float) (-Math.PI / 8)).rotateX((float) (Math.PI * 3.0 / 4.0))).transpose().scale(1, -1, 1);
+    private static final org.joml.Matrix3f BLOCK_NORMALS = new org.joml.Matrix3f(new Matrix4f()
+            .scaling(1.0F, -1.0F, 1.0F).rotateYXZ(1.0821041F, 3.2375858F, 0.0F)
+            .rotateYXZ((float) (-Math.PI / 8), (float) (Math.PI * 3.0 / 4.0), 0.0F)).transpose().scale(1, -1, 1);
 
     /** Per-panel render caches. */
     static final class Draw {
@@ -244,6 +255,7 @@ final class HoloRender {
             // never hides its back faces
             ps.translate(cv.itemXY[i * 2] + 8, cv.itemXY[i * 2 + 1] + 8, 10);
             ps.scale(16, -16, 4);
+            ps.last().normal().set(st.usesBlockLight() ? BLOCK_NORMALS : FLAT_NORMALS);
             st.submit(ps, out, FULL_BRIGHT, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 0);
             ps.popPose();
         }

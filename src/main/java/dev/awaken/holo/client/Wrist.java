@@ -61,7 +61,10 @@ final class Wrist {
     private static final Vector3f TMP = new Vector3f();
     private static final Matrix4f BASIS4 = new Matrix4f();
 
-    /** Builds the forearm's transform (model units → hand-view metres) for a raise of {@code a} into {@link #M}. */
+    /**
+     * Builds the forearm's transform into {@link #M}: blocks (what a ModelPart renders in; its cubes divide by 16
+     * themselves) → hand-view metres, for a raise of {@code a}.
+     */
     private static void armMatrix(float a, int side, boolean slim) {
         // basis: model +Y runs elbow → hand, the outer face (+X on the left arm, -X on the right) looks at FACE
         Y.set(side < 0 ? DIR.x : -DIR.x, DIR.y, DIR.z);
@@ -77,8 +80,7 @@ final class Wrist {
         M.identity().translate(T);
         M.rotate(Axis.XP.rotationDegrees(-38f * down));
         M.mul(BASIS4.set(BASIS));
-        M.scale(1 / 16f);
-        M.translate(-cx, -(BAND_Y0 + BAND_Y1) / 2f, 0);
+        M.translate(-cx / 16f, -(BAND_Y0 + BAND_Y1) / 32f, 0);
     }
 
     /** RenderHandEvent at HIGH: replaces both hands while a holo menu is open or animating. */
@@ -124,6 +126,7 @@ final class Wrist {
         if (bandGlow > 0.01f) {
             pose.pushPose();
             pose.mulPose(M);
+            pose.scale(1 / 16f, 1 / 16f, 1 / 16f); // the band is built in model units
             e.getSubmitNodeCollector().submitCustomGeometry(pose, HoloPipelines.glow(), BAND);
             pose.popPose();
         }

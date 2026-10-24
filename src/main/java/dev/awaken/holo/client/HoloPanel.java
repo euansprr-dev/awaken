@@ -31,7 +31,7 @@ public final class HoloPanel {
     /** Target width as a fraction of the screen. */
     public float screenFrac = 0.62f;
     /** Extra turn toward the centre and lean back, degrees. */
-    public float turn = 7f, lean = 4f;
+    public float turn = 2.5f, lean = 2f;
     /** Lower draw layers first (the demo under the K menu). */
     final int layer;
 
