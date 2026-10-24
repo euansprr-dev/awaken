@@ -42,8 +42,8 @@ import java.util.List;
  * unfolding from a band on your wrist, the wrist other players see, and the calm HUD. One frame:
  * <ol>
  *   <li>level extract: view facts ({@link ViewMath}), springs, timelines and panel placement; the demo records;</li>
- *   <li>GUI extract: HUD layers sway ({@link HudMotion}); an open {@link HoloStatusScreen} records its panel, an
- *       opening {@link HoloInventoryScreen} its 3D face;</li>
+ *   <li>GUI extract: HUD layers sway and the tier-1 ones fade when idle ({@link HudMotion}, {@link CalmHud}); an open
+ *       {@link HoloStatusScreen} records its panel, an opening {@link HoloInventoryScreen} its 3D face;</li>
  *   <li>level render: {@link HoloRender} replays the panels in the always-on-top phase;</li>
  *   <li>hand pass: {@link Wrist} draws the raised forearm and its band.</li>
  * </ol>
@@ -242,6 +242,7 @@ public final class HoloClient {
 
     private static void onTick() {
         HoloConfig.refresh();
+        CalmHud.tick();
         Wrist.tickEnd(wristClosing());
         // tell the server which panel the wrist shows (it relays to whoever can see us, at most 4 a second)
         HoloKind want = opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
@@ -265,6 +266,7 @@ public final class HoloClient {
         CameraRenderState cam = e.getRenderState().cameraRenderState;
         ViewMath.update(cam);
         HudMotion.update(cam.yRot, cam.xRot, dt);
+        CalmHud.frame(dt * 1000f);
         HoloOthers.advance(dt * 1000f);
         easeReadFocus(dt);
         UiHooks.setFocus(FOCUS_OWNER, (float) focus());
@@ -325,7 +327,8 @@ public final class HoloClient {
      * Autopilot {@code holo ...} lines: {@code demo 0|1|2}, {@code at <ms>} (freeze the open panel's timeline at a
      * moment along the K menu's choreography; the inventory plays it 2.5× faster), {@code run}, {@code close},
      * {@code hud off|subtle|full}, {@code log}; {@code inv open|click <slot> [shift]|book|close|style holo|vanilla|auto}
-     * (E's screen, a click on a menu slot or the recipe key through its input path, closing it, its style).
+     * (E's screen, a click on a menu slot or the recipe key through its input path, closing it, its style),
+     * {@code fade on|off|idle} (the tier-1 HUD fade, {@code idle}: as if nothing had happened for a while).
      */
     public static String autopilot(String args) {
         String[] a = args.trim().split("\\s+");
@@ -372,6 +375,15 @@ public final class HoloClient {
                         return "unknown holo inv line: " + args;
                     }
                 }
+            }
+            case "fade" -> {
+                switch (a[1]) {
+                    case "idle" -> CalmHud.idleNow();
+                    case "auto" -> HoloConfig.forcedHudFade = null;
+                    default -> HoloConfig.forcedHudFade = a[1].equals("on");
+                }
+                HoloConfig.refresh();
+                return String.format(java.util.Locale.ROOT, "hud fade %s alpha=%.2f", HoloConfig.hudFade ? "on" : "off", CalmHud.alpha());
             }
             case "hud" -> {
                 HoloConfig.forcedHudMotion = HoloConfig.HudMotion.valueOf(a[1].toUpperCase(java.util.Locale.ROOT));
@@ -430,5 +442,6 @@ public final class HoloClient {
         DEMO.timeline.hold(false);
         DEMO.timeline.close();
         sent = HoloKind.NONE;
+        CalmHud.reset();
     }
 }

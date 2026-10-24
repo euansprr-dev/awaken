@@ -3,6 +3,7 @@ package dev.awaken.holo;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.holo.ui.HoloTimeline;
 import dev.awaken.holo.ui.HoverTick;
+import dev.awaken.holo.ui.HudFade;
 import dev.awaken.holo.ui.InventoryWells;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,7 +17,8 @@ import java.util.function.Predicate;
 
 /**
  * GameTests for the holo module's rules: {@code awaken:holo_state} (unknown kinds, the rate limit, who hears about it)
- * and the side-agnostic rules the client follows ({@code holo.ui}): the inventory's timeline and wells, the hover tick.
+ * and the side-agnostic rules the client follows ({@code holo.ui}): the inventory's timeline and wells, the hover tick,
+ * the tier-1 HUD fade.
  */
 final class HoloTests {
     private HoloTests() {}
@@ -144,6 +146,28 @@ final class HoloTests {
             h.assertFalse(t.update(2, 200f, false), "and it doesn't tick late for the target it already noted");
             t.reset();
             h.assertTrue(t.update(5, 0f, false), "a freshly opened panel ticks for the first target at once");
+            h.succeed();
+        });
+
+        AwakenTests.register("holo_hud_fade", 20, h -> {
+            HudFade f = new HudFade();
+            h.assertTrue(f.alpha() > 0.9999f, "full to begin with");
+            for (int i = 0; i < HudFade.IDLE_TICKS - 1; i++) f.tick(false);
+            f.advance(5000f);
+            h.assertTrue(f.alpha() > 0.9999f, "nothing fades before " + HudFade.IDLE_TICKS + " quiet ticks");
+            f.tick(false);
+            f.advance(HudFade.FADE_OUT_MS / 2);
+            h.assertTrue(f.alpha() < 0.99f && f.alpha() > HudFade.IDLE_ALPHA + 0.01f, "fading slowly, was " + f.alpha());
+            f.advance(HudFade.FADE_OUT_MS);
+            h.assertTrue(Math.abs(f.alpha() - HudFade.IDLE_ALPHA) < 1e-4f, "rests at 35%, was " + f.alpha());
+            f.advance(60_000f);
+            h.assertTrue(f.alpha() >= HudFade.IDLE_ALPHA - 1e-4f, "never below 35%");
+            f.tick(true);
+            f.advance(HudFade.FADE_IN_MS);
+            h.assertTrue(f.alpha() > 0.9999f, "back to full within " + HudFade.FADE_IN_MS + " ms of being needed");
+            f.tick(false);
+            f.advance(1000f);
+            h.assertTrue(f.alpha() > 0.9999f, "the quiet wait starts over after anything happens");
             h.succeed();
         });
 
