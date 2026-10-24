@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/fault_seam"
+      },
+      {
+        "model": "awaken:block/fault_seam",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/fault_seam",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/fault_seam",
+        "y": 270
+      }
+    ]
+  }
+}

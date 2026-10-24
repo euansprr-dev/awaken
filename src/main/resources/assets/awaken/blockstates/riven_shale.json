@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "awaken:block/riven_shale_horizontal",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "awaken:block/riven_shale"
+    },
+    "axis=z": {
+      "model": "awaken:block/riven_shale_horizontal",
+      "x": 90
+    }
+  }
+}

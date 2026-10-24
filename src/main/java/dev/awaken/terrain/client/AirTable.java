@@ -37,8 +37,11 @@ final class AirTable {
         static final LeafStyle DEFAULT = new LeafStyle(false, new int[]{0, 2}, 1F, 1F, -1);
     }
 
-    /** Glowing motes rising instead of (or as well as) leaves. */
-    record MoteStyle(int color, float rate, boolean night) {}
+    /**
+     * Glowing motes rising instead of (or as well as) leaves. {@code kind} null: the Lumen Forest's motes; otherwise the
+     * second pair's air ({@link LandsMotes}: {@code glint}, {@code fault}).
+     */
+    record MoteStyle(int color, float rate, boolean night, @Nullable String kind) {}
 
     /** What a biome does to the air. color -1: leaves keep their own colour. */
     record BiomeStyle(float rate, int color, float colorMix, int @Nullable [] sprites, float size, @Nullable MoteStyle motes) {
@@ -84,7 +87,8 @@ final class AirTable {
                     MoteStyle motes = null;
                     if (o.has("motes")) {
                         JsonObject m = o.getAsJsonObject("motes");
-                        motes = new MoteStyle(color(m, "color"), num(m, "rate", 1F), m.has("night") && m.get("night").getAsBoolean());
+                        motes = new MoteStyle(color(m, "color"), num(m, "rate", 1F), m.has("night") && m.get("night").getAsBoolean(),
+                                m.has("kind") ? m.get("kind").getAsString() : null);
                     }
                     BIOME_STYLE.add(new BiomeStyle(num(o, "rate", 1F), color(o, "color"), num(o, "colorMix", 0.75F),
                             o.has("sprites") ? ints(o, "sprites", null) : null, num(o, "size", 1F), motes));

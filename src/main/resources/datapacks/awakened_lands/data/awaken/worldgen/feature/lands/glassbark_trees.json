@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:random_selector",
+  "default": "awaken:lands/glassbark",
+  "features": [
+    {
+      "chance": 0.08,
+      "feature": "awaken:lands/fallen_glassbark"
+    },
+    {
+      "chance": 0.32,
+      "feature": "awaken:lands/tall_glassbark"
+    }
+  ]
+}

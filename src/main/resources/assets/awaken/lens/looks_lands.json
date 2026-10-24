@@ -36,6 +36,40 @@
       "sunsetWarmth": 0.75,
       "sunGlow": 0.9
     },
+    "biome:awaken:glass_steppe": {
+      "_name": "Glass Steppe: bleached and high-key, warm light, a strong sun glow and heat haze over the glass",
+      "exposure": 1.04,
+      "contrast": 1.06,
+      "saturation": 0.92,
+      "warmth": 0.16,
+      "shadowTint": [
+        0.5,
+        0.44,
+        0.38
+      ],
+      "highlightTint": [
+        1.0,
+        0.94,
+        0.8
+      ],
+      "splitTone": 0.1,
+      "vignette": 0.1,
+      "bloom": 0.95,
+      "bloomThreshold": 0.55,
+      "skyBloom": 0.45,
+      "shafts": 0.5,
+      "haze": 0.46,
+      "hazeStart": 0.22,
+      "hazeTint": [
+        1.0,
+        0.9,
+        0.72
+      ],
+      "hazeTintMix": 0.55,
+      "hazeDesaturate": 0.22,
+      "sunsetWarmth": 0.85,
+      "sunGlow": 1.25
+    },
     "biome:awaken:lumen_forest": {
       "_name": "Lumen: cool teal shadows, the glow blooms at night, a low blue mist",
       "exposure": 1.0,
@@ -69,6 +103,40 @@
       "hazeDesaturate": 0.15,
       "sunsetWarmth": 0.35,
       "sunGlow": 0.6
+    },
+    "biome:awaken:shattered_highlands": {
+      "_name": "Shattered Highlands: crisp high air, violet-tinged shadows, the faults blooming at night",
+      "exposure": 1.0,
+      "contrast": 1.14,
+      "saturation": 1.04,
+      "warmth": -0.05,
+      "shadowTint": [
+        0.42,
+        0.38,
+        0.62
+      ],
+      "highlightTint": [
+        0.95,
+        0.96,
+        1.0
+      ],
+      "splitTone": 0.18,
+      "vignette": 0.16,
+      "bloom": 1.0,
+      "bloomThreshold": 0.52,
+      "skyBloom": 0.25,
+      "shafts": 0.45,
+      "haze": 0.24,
+      "hazeStart": 0.55,
+      "hazeTint": [
+        0.72,
+        0.72,
+        0.95
+      ],
+      "hazeTintMix": 0.4,
+      "hazeDesaturate": 0.1,
+      "sunsetWarmth": 0.6,
+      "sunGlow": 0.85
     },
     "biome:minecraft:badlands": {
       "_name": "Red rock: rust shadows, hot light, dust",

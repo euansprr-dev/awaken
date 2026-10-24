@@ -68,6 +68,16 @@ LOOKS = {
         "highlightTint": [0.75, 0.95, 1.0], "splitTone": 0.16, "vignette": 0.2, "bloom": 1.0, "bloomThreshold": 0.5,
         "skyBloom": 0.2, "shafts": 0.4, "haze": 0.42, "hazeStart": 0.3, "hazeTint": [0.45, 0.75, 0.85],
         "hazeTintMix": 0.55, "hazeDesaturate": 0.15, "sunsetWarmth": 0.35, "sunGlow": 0.6}),
+    "glass_steppe": ("Glass Steppe: bleached and high-key, warm light, a strong sun glow and heat haze over the glass", {
+        "exposure": 1.04, "contrast": 1.06, "saturation": 0.92, "warmth": 0.16, "shadowTint": [0.5, 0.44, 0.38],
+        "highlightTint": [1.0, 0.94, 0.8], "splitTone": 0.1, "vignette": 0.1, "bloom": 0.95, "bloomThreshold": 0.55,
+        "skyBloom": 0.45, "shafts": 0.5, "haze": 0.46, "hazeStart": 0.22, "hazeTint": [1.0, 0.9, 0.72],
+        "hazeTintMix": 0.55, "hazeDesaturate": 0.22, "sunsetWarmth": 0.85, "sunGlow": 1.25}),
+    "shattered_highlands": ("Shattered Highlands: crisp high air, violet-tinged shadows, the faults blooming at night", {
+        "exposure": 1.0, "contrast": 1.14, "saturation": 1.04, "warmth": -0.05, "shadowTint": [0.42, 0.38, 0.62],
+        "highlightTint": [0.95, 0.96, 1.0], "splitTone": 0.18, "vignette": 0.16, "bloom": 1.0, "bloomThreshold": 0.52,
+        "skyBloom": 0.25, "shafts": 0.45, "haze": 0.24, "hazeStart": 0.55, "hazeTint": [0.72, 0.72, 0.95],
+        "hazeTintMix": 0.4, "hazeDesaturate": 0.1, "sunsetWarmth": 0.6, "sunGlow": 0.85}),
 }
 
 BIOMES = {
@@ -86,6 +96,8 @@ BIOMES = {
     "pale": ["pale_garden"],
     "elderwood": ["awaken:elderwood"],
     "lumen": ["awaken:lumen_forest"],
+    "glass_steppe": ["awaken:glass_steppe"],
+    "shattered_highlands": ["awaken:shattered_highlands"],
 }
 
 
