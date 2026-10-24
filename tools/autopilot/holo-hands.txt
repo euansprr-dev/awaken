@@ -1,0 +1,89 @@
+# Holo UI and the other first-person hand hooks (docs/modules/holo.md "Hands"): a cast and an Awakened Body slide
+# right after the K menu closes. From the first tick of a close the hands are vanilla's again, so CastAnims and the
+# Body's hand poses draw their own hands while the forearm lowers. A "shot" lands about 3 ticks after its line, a
+# "cmd" waits 5. Survival on a smooth-stone course at y 200 facing +z (the body tour's), empty hands.
+# Run: tools/autopilot.sh tools/autopilot/holo-hands.txt
+world holo_hands survival 4242
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin rankup
+wait 10
+cmd awaken admin rankup
+wait 40
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd gamerule fall_damage false
+cmd fill -12 199 -8 12 199 40 minecraft:smooth_stone
+cmd fill -12 200 -8 12 216 40 minecraft:air
+cmd tp @s 0.5 200 0.5 0 12
+wait 400
+screen close
+camera first
+
+# a cast with no menu, for comparison
+cmd awaken admin power reset
+wait 8
+cmd awaken admin power cast haymaker
+shot hands_01_cast_plain
+wait 2
+shot hands_02_cast_plain_later
+wait 40
+
+# a cast already under way as the menu closes: its own arm from the first tick of the close
+cmd awaken admin power reset
+screen holo
+wait 30
+cmd awaken admin power cast haymaker
+holo close
+shot hands_03_cast_while_closing
+wait 2
+shot hands_04_cast_closed
+wait 40
+
+# a cast right after closing
+cmd awaken admin power reset
+screen holo
+wait 30
+holo close
+cmd awaken admin power cast haymaker
+shot hands_05_cast_after_close
+wait 2
+shot hands_06_cast_after_close_later
+wait 40
+
+# a slide right after closing (the body tour's frames 2, 5 and 9)
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+screen holo
+wait 30
+holo close
+cmd awaken body try slide
+wait 7
+shot hands_07_slide_after_close_2
+wait 0
+shot hands_08_slide_after_close_5
+wait 1
+shot hands_09_slide_after_close_9
+cmd awaken body try release
+wait 20
+
+# the same slide with no menu, for comparison
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 7
+shot hands_10_slide_plain_2
+wait 0
+shot hands_11_slide_plain_5
+quit

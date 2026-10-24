@@ -303,7 +303,7 @@ final class CoreSections {
                 Ui.Flow row = ui.flow();
                 if (row.button("Choose " + d.name(), d.colour(), true)) send("path", ids.get(i));
                 row.end();
-                if (ui.drawing()) ui.g().fill(ui.x, top, ui.x + 2, ui.y() - 3, Glass.a(d.colour(), 0.9f));
+                ui.fill(ui.x, top, ui.x + 2, ui.y() - 3, Glass.a(d.colour(), 0.9f));
                 if (i < ids.size() - 1) ui.rule();
             }
         }
@@ -487,7 +487,7 @@ final class CoreSections {
                 ui.gap(((e.getValue().size() + cols - 1) / cols) * (CARD_H + GAP) + 4);
             }
             if (!ui.drawing()) return;
-            var g = ui.g();
+            var g = ui.canvas();
             for (var entry : all) { // threads first, under the cards
                 int[] a = pos.get(entry.id());
                 for (String link : entry.links()) {
@@ -510,17 +510,17 @@ final class CoreSections {
                 }
                 boolean cut = SignalText.wrap(text, cardW - 10, f::width).size() > 2 || f.width(head) > cardW - 10;
                 if (hover && cut) {
-                    g.setTooltipForNextFrame(f, f.split(Component.literal(head + "\n" + text), 220), ui.mouseX(), ui.mouseY());
+                    g.tooltip(f, f.split(Component.literal(head + "\n" + text), 220), ui.mouseX(), ui.mouseY());
                 }
             }
         }
 
         /** A simple stepped line (GUI has no diagonal primitive). */
-        private static void line(net.minecraft.client.gui.GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, int col) {
+        private static void line(dev.awaken.signal.client.UiCanvas g, int x0, int y0, int x1, int y1, int col) {
             int mxp = (x0 + x1) / 2;
-            g.horizontalLine(Math.min(x0, mxp), Math.max(x0, mxp), y0, col);
-            g.verticalLine(mxp, Math.min(y0, y1), Math.max(y0, y1), col);
-            g.horizontalLine(Math.min(mxp, x1), Math.max(mxp, x1), y1, col);
+            g.hLine(Math.min(x0, mxp), Math.max(x0, mxp), y0, col);
+            g.vLine(mxp, Math.min(y0, y1), Math.max(y0, y1), col);
+            g.hLine(Math.min(mxp, x1), Math.max(mxp, x1), y1, col);
         }
     }
 }
