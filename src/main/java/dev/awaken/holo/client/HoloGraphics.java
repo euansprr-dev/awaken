@@ -92,7 +92,7 @@ public final class HoloGraphics extends GuiGraphicsExtractor implements UiCanvas
 
     @Override
     public void enableScissor(int x0, int y0, int x1, int y1) {
-        super.enableScissor(x0, y0, x1, y1);
+        // the canvas clips; vanilla's scissor stack (which allocates) is never drawn here
         at(a, x0, y0);
         at(b, x1, y1);
         canvas.pushClip(a.x, a.y, b.x, b.y);
@@ -100,7 +100,6 @@ public final class HoloGraphics extends GuiGraphicsExtractor implements UiCanvas
 
     @Override
     public void disableScissor() {
-        super.disableScissor();
         canvas.popClip();
     }
 
