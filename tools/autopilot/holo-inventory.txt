@@ -1,0 +1,167 @@
+# The holo inventory (docs/modules/holo.md "The inventory", "The calm HUD, tier 1"): E's screen frozen along its
+# unfold ("holo at <ms>" is K-menu choreography time; the inventory plays it 2.5x faster, so 450 = 180 ms): the wrist
+# rising, the 3D panel growing out of the band and landing on the flat screen's rectangle, the crossfade to the flat
+# face (370-450: the landed panel and the flat face must agree to a pixel; "holo log" prints both rectangles), then
+# open at rest over sky, grass and night; logs carried out of the hotbar and dropped into the crafting grid (the
+# result lit) and the result shift-clicked into the pack, all through the screen's own input path; the recipe book
+# opened and closed (the inventory moves, the panel follows); the 100 ms fold; third person (the beams from your
+# character's wrist) and what others see; the vanilla style and the flat look (vanilla's own screen, untouched); the
+# HUD faded when idle and woken by a hit; then frame times with the inventory open and closed. Survival (creative
+# keeps its own screen). GUI scale 0 (auto). Sound is muted under the autopilot: listen by hand (docs/handoff).
+# A "shot" lands about 3 ticks after its line and the next line waits 10 more; "shotnow" shoots this tick.
+# Run: tools/autopilot.sh tools/autopilot/holo-inventory.txt
+world autopilot_holo_inventory survival 1234
+waitworld
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd weather clear
+look 20 4
+gui 0
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:short_grass
+cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:tall_grass
+cmd kill @e[type=!minecraft:player,distance=..64]
+# a lived-in inventory: armour, a shield in the off hand, tools, stacks, logs to craft with
+cmd clear @s
+cmd item replace entity @s armor.head with minecraft:iron_helmet
+cmd item replace entity @s armor.chest with minecraft:iron_chestplate
+cmd item replace entity @s armor.legs with minecraft:iron_leggings
+cmd item replace entity @s armor.feet with minecraft:iron_boots
+cmd item replace entity @s weapon.offhand with minecraft:shield
+cmd item replace entity @s hotbar.0 with minecraft:diamond_sword
+cmd item replace entity @s hotbar.1 with minecraft:iron_pickaxe
+cmd item replace entity @s hotbar.2 with minecraft:bow
+cmd item replace entity @s hotbar.3 with minecraft:torch 64
+cmd item replace entity @s hotbar.4 with minecraft:bread 12
+cmd item replace entity @s hotbar.8 with minecraft:oak_log 16
+cmd item replace entity @s inventory.0 with minecraft:arrow 48
+cmd item replace entity @s inventory.4 with minecraft:cobblestone 64
+cmd item replace entity @s inventory.9 with minecraft:iron_ingot 23
+cmd item replace entity @s inventory.13 with minecraft:redstone 37
+cmd item replace entity @s inventory.20 with minecraft:ender_pearl 5
+wait 40
+
+# --- E: the wrist rises, the 3D panel grows out of the band, lands, and the flat face takes over ---
+holo inv open
+holo at 0
+shotnow inv_00_t0
+holo at 60
+shot inv_01_arm
+holo at 140
+shot inv_02_flare
+holo at 200
+shot inv_03_grow
+holo at 280
+shot inv_04_unfold
+holo at 370
+shot inv_05_landed
+holo log
+holo at 410
+shot inv_06_handover
+holo log
+holo at 450
+shot inv_07_open
+holo log
+holo run
+wait 10
+
+# --- open, at rest: over the sky, over grass, at night ---
+look 20 -30
+wait 5
+shot inv_10_sky
+look 20 40
+wait 5
+shot inv_11_grass
+look 20 4
+cmd time set 18000
+wait 10
+shot inv_12_night
+cmd time set 6000
+wait 10
+
+# --- the real input path: logs out of the hotbar (menu slot 44), into the crafting grid (slot 1), the result taken ---
+holo inv click 44
+shot inv_20_carried
+holo inv click 1
+shot inv_21_result_lit
+holo inv click 0 shift
+shot inv_22_shift_crafted
+
+# --- the recipe book: the inventory moves aside, the panel follows ---
+holo inv book
+wait 5
+shot inv_30_book_open
+holo log
+holo inv book
+wait 5
+shot inv_31_book_closed
+
+# --- closing: the 3D panel folds back into the band in 100 ms (2 ticks) ---
+holo close
+shotnow inv_40_fold_a
+shotnow inv_40_fold_b
+shotnow inv_40_fold_c
+wait 20
+shot inv_41_closed
+
+# --- third person: the beams from your character's wrist; then what others see (holo peek) ---
+camera back
+wait 10
+holo inv open
+holo at 200
+shot inv_50_3p_grow
+holo at 450
+shot inv_51_3p_open
+holo run
+holo peek on
+camera front
+wait 10
+shot inv_52_peek_front
+holo peek off
+holo inv close
+camera first
+wait 20
+
+# --- the vanilla style, and the flat look: vanilla's own screen, untouched ---
+holo inv style vanilla
+holo inv open
+wait 10
+shot inv_60_style_vanilla
+holo inv close
+holo inv style auto
+holo style flat
+holo inv open
+wait 10
+shot inv_61_look_flat
+holo inv close
+holo style auto
+wait 20
+
+# --- the calm HUD: faded when nothing needs it, back the moment something does ---
+holo fade on
+holo hud off
+shot inv_70_hud_full
+holo fade idle
+wait 40
+shot inv_71_hud_faded
+cmd damage @s 1
+wait 4
+shot inv_72_hud_woken
+holo fade auto
+holo hud subtle
+wait 40
+
+# --- frame times: the inventory open (the flat face; the 3D panel is gone once landed) and closed ---
+holo inv open
+wait 20
+perf holo_inventory_open 10
+holo inv close
+wait 20
+perf holo_inventory_none 10
+quit

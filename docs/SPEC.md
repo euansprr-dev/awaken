@@ -659,7 +659,7 @@ Plan v2 · gate interiors and D–B tuning (details in docs/modules/gates.md "In
 Plan v2 · first launch: vanilla's "experimental settings" prompt (shown because the mod adds worldgen) is answered for
 the player (client config `skipExperimentalWarning`, default on).
 
-Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 and P2):
+Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1, P2, P3 and P5's sounds and HUD fade):
 - K opens the menu on the wrist when `statusStyle = HOLO` (default) and both holo pipelines compiled; otherwise the
   flat StatusScreen. `screen status|map|codex` in the autopilot stay flat; `screen holo` opens the holo one.
 - Timeline: arm 0–120 ms, band flare 60–200 (peak ×2.5 at 140), beams from the wrist with an opening surge 110–360
@@ -704,8 +704,31 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   is a still card (no scan, no glitch). Only reading screens raise `UiHooks.focus`; toasts, cards and the Now line never
   dim the world. `statusStyle = FLAT` (or GUI shaders that fail) keeps everything flat. With a first power pending, K
   opens the first-power choice in either style.
+- The inventory (P3): E opens vanilla's survival `InventoryScreen` as a holo panel when `inventoryStyle = HOLO` and the
+  projected look draws (`statusStyle = HOLO`, GUI holo shaders compiled); creative and other mods' inventory screens
+  are never swapped. It is a subclass of vanilla's screen (swapped on `ScreenEvent.Opening`), so every click, drag,
+  shift-click, number key, the recipe book and other mods' container hooks are vanilla's, live from the first frame.
+  It plays the K menu's choreography at 2.5× (open in 180 ms, closed in 100 ms): the wrist rises, a 3D panel grows out
+  of the band and lands on the flat screen's rectangle pixel for pixel (one unit = one GUI pixel), and the flat face
+  crossfades in at 148–180 ms (items, figure and title switch halfway); closing, the 3D panel folds back holding what
+  the inventory holds then. Reduced motion (or no world pipelines): the flat face fades in place. The face is the K
+  panel's glass, tint, halo, rim and brackets drawn unit for unit in the GUI pass, projected wells instead of slot
+  squares (18×18, the result 26×26; the hotbar brighter, the hand's slot lit), the figure on a projected floor, an
+  arrow of light to the result, the title as light, the recipe button a glass key; no dim or blur (Lens dims through
+  `UiHooks.focus`). Others see the wrist (`holo_state` INVENTORY). `inventoryStyle = VANILLA` (or the flat look) leaves
+  vanilla's screen untouched. Not restyled yet: the recipe book's panel and the status-effect list.
+- Sounds (P5): `holo.open` (K menu, volume 0.5), `holo.open_quick` (inventory, 0.3), `holo.close` (0.4 / 0.22),
+  `holo.hover` (0.18), `holo.card`; synthesised by `tools/art/specs/audio_holo.py` in the System's glass voice (D major
+  pentatonic), UI loudness (−24 ± 3 dBFS RMS, true peak ≤ −3), Interface slider. While the projected look draws,
+  `signal.open` (a card arriving) plays as `holo.card` instead, never both. The hover tick sounds once per new target
+  (a K-menu tab, an inventory slot holding something, the recipe key), at most every 55 ms, never while a panel still
+  unfolds or a drag spreads items.
+- Calm HUD tier 1 (P5): `awaken:power_bar` and `awaken:level` fade to 35% after 3 s with nothing needing them (out of
+  combat as `SystemHud.inCombat` judges it, energy full, no cooldown or active power, no slot, level, XP or point
+  change), over 1.2 s, and return in 150 ms. Drawn through an alpha-multiplying graphics around the unchanged layers;
+  the gate run HUD never fades (its collapse timer must stay readable).
 - Client settings (`awaken-holo-client.toml`): `statusStyle` (the projected look for the K menu, the System's cards and
-  the first-power choice), `hudMotion`, `reducedMotion`.
+  the first-power choice), `inventoryStyle` (HOLO | VANILLA), `hudMotion`, `hudFade` (on), `reducedMotion`.
 
 Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
 docs/modules/onboarding.md "The Ritual of the Bell"):

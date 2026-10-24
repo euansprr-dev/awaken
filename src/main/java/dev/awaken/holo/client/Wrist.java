@@ -3,6 +3,7 @@ package dev.awaken.holo.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import dev.awaken.holo.ui.HoloTimeline;
 import dev.awaken.signal.client.Glass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
@@ -104,6 +105,9 @@ final class Wrist {
     static void onHand(RenderHandEvent e) {
         HoloPanel p = HoloClient.wristPanel();
         if (p == null || !p.timeline.active() || p.anchor != HoloPanel.Anchor.WRIST) return;
+        // the band draws in the holo pipelines: without them (the inventory can still be holo through its GUI ones)
+        // the hands stay vanilla's
+        if (!HoloPipelines.ok()) return;
         // from the first tick of a close the re-equip owns the hands' height: let the event (and the hooks after us) run
         boolean handsBack = p.timeline.closing() && closeTicks >= 1;
         if (!handsBack) e.setCanceled(true);
