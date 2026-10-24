@@ -241,6 +241,22 @@ The tour (third person, camera behind the caster, target straight ahead) showed 
 
   Poses the power does to the body look the same in every family: a dash (the Velocity burst), hover (a slow bob),
   slam (both arms up, held; then fists into the ground) and the flurry (palms in turn, 40 ticks).
+
+  **Bent elbows and knees (optional: Bendable Cuboids 2.1.0, mod id `bendable_cuboids`, also in `feel`)**. The library
+  carries a per-bone `bend`; Bendable Cuboids draws it (one bend about the middle of each limb box; no code from us).
+  Every clip has a `_bent` twin and `PalCasts` plays the twin while `bendable_cuboids` is loaded, the straight clip
+  otherwise. The spec gives each pose elbow and knee flexion (elbows fold on wind-ups and gathers, knees on crouches and
+  plants: the chambered fist, the cupped gather at the hip, palms together, the hand at the temple, Shadow's low
+  crouch, the slam landing). In the twin the upper arm or thigh turns away from the bend just enough to keep the hand
+  or foot on the line the straight limb points along, and the feet are grounded again, so a pose means the same with
+  or without bends; the hand is only pulled in. Signs as the mod draws them: `bend` < 0 folds a forearm towards the
+  arm's front, > 0 folds a shin back. Checked in game (powers-fx-body tour, PACK=feel and PACK=perf,feel with Lens):
+  - limbs bend in third person and in the front camera; first-person arms stay straight and where they were (the mod
+    resets bends for the hand pass, and `CastAnims` still draws the arms);
+  - armour (iron chestplate and leggings): the leggings and the chestplate's sleeves bend with the limb. A bent knee
+    shows a small step and a dark wedge at the joint (the inflated armour box meets itself), visible close up from
+    behind, not at play distance; nothing pokes through. Sleeves only cover the upper arm, so the bent forearm is skin;
+  - stable next to Sodium, 3D Skin Layers and Lens: no new errors in the log.
 - **Reach**: events flagged `FxEvent.REACH` draw the power's real hit volume (`scale` = the radius or cone range the
   damage code used, `aux` = a cone's half angle or a line's width). The catalog passes the same locals to both;
   `power_fx_reach_matches_hits` checks rings and cones against where mobs actually get hit.
@@ -305,4 +321,4 @@ with player bones only, one-shots ease out and wind-ups loop, and every power's 
 - Budgets as in section 5; effects beyond 72 blocks are not built.
 - An effect flagged REACH shows the true hit volume; tests hold visuals to the damage code.
 - Optional client dependency: Player Animation Library (full-body cast clips per family); without it, the vanilla
-  poses. Never required, never bundled; no packets of its own.
+  poses. Never required, never bundled; no packets of its own. With Bendable Cuboids too, the clips' bent twins play.
