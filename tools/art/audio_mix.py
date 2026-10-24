@@ -4,6 +4,11 @@
     python3 tools/art/audio_mix.py --fix      re-encode the files outside their target with the right gain
     python3 tools/art/audio_mix.py --ref      measure a few vanilla sounds from the launcher's assets (calibration)
 
+The layered music's stems (sounds/layers/layer_*.ogg) are parts, not pieces: the music rule applies to what the
+player hears, the mix of a context's stems at each intensity level (gains from its manifest,
+assets/awaken/music_layers/**.json). The report measures every level's mix; a stem alone only has to stay under the
+music's true-peak ceiling. --fix never touches stems (re-render the group: audio_build.py layer_<theme>).
+
 Measures gated RMS (100 ms blocks; silence and tails below -60 dBFS, or 20 dB under the mean, are left out), integrated
 loudness (BS.1770 LUFS) and true peak (x4 oversampled). The category comes from the file name prefix. Targets were set
 from vanilla's own files (the --ref numbers): its music sits around -16 to -20 dBFS RMS, UI clicks and the level-up
@@ -29,11 +34,13 @@ TARGETS = {
     "ui": (-24.0, 3.0, -3.0, 5),
     "amb": (-28.0, 3.0, -6.0, 4),
     "sfx": (-20.0, 4.0, -1.0, 4),
+    "layer": (-24.0, 12.0, -1.0, 1),  # a stem alone: any sensible level, the music's ceiling; the mixes are checked below
 }
+MANIFESTS = os.path.join(ROOT, "src/main/resources/assets/awaken/music_layers")
 
 
 def category(name):
-    for p in ("music", "ui", "amb"):
+    for p in ("music", "ui", "amb", "layer"):
         if name.startswith(p + "_"):
             return p
     return "sfx"
@@ -70,7 +77,7 @@ def report(fix=False):
     for f in files:
         m, x = measure(f)
         bad = verdict(m)
-        if bad and fix:
+        if bad and fix and m["cat"] != "layer":
             tgt, tol, ceil, q = TARGETS[m["cat"]]
             y = K.master(x, tgt, ceil)
             K.write_ogg(f, y, q)
@@ -87,6 +94,7 @@ def report(fix=False):
         lines.append(f"{cat:5s} {len(ms):3d} files  RMS {min(r):.1f}..{max(r):.1f} (target {tgt:.0f}±{tol:.0f})  "
                      f"max TP {max(m['tp'] for m in ms):.1f} (ceiling {ceil:.0f})  "
                      f"{sum(m['dur'] for m in ms):.0f} s")
+    worst += layered_mixes(lines)
     lines.append(f"{len(files)} files, {worst} outside target" if files else "no .ogg files")
     text = "\n".join(lines)
     print(text)
@@ -94,6 +102,36 @@ def report(fix=False):
     with open(os.path.join(ROOT, "build/audio-loudness.txt"), "w") as fh:
         fh.write(text + "\n")
     return 1 if worst else 0
+
+
+def layered_mixes(lines):
+    """Every layered context's mix at every level (the music rule), from the manifests. Returns the failures."""
+    tgt, tol, ceil, _ = TARGETS["music"]
+    bad = 0
+    paths = sorted(glob.glob(os.path.join(MANIFESTS, "**/*.json"), recursive=True))
+    if not paths:
+        return 0
+    lines.append("")
+    lines.append(f"layered music: each level's mix (music rule {tgt:.0f}+-{tol:.0f} dBFS RMS, true peak <= {ceil:.0f})")
+    for p in paths:
+        man = json.load(open(p))
+        stems = []
+        for s in man["stems"]:
+            ns, path = s["file"].split(":", 1)
+            stems.append(K.stereo(K.read_audio(os.path.join(ROOT, "src/main/resources/assets", ns, "sounds", path + ".ogg"))))
+        n = min(len(x) for x in stems)
+        if any(len(x) != man["frames"] for x in stems):
+            lines.append(f"  {man['id']}: stems are not all {man['frames']} frames: {[len(x) for x in stems]}")
+            bad += 1
+        row = []
+        for lv in man["levels"]:
+            mix = sum(x[:n] * g for x, g in zip(stems, lv["gains"]) if g)
+            r, tp = K.gated_rms(mix), K.true_peak(mix)
+            ok = abs(r - tgt) <= tol and tp <= ceil + 0.05
+            bad += not ok
+            row.append(f"{lv['name']} {r:5.1f}/{tp:4.1f}{'' if ok else ' OUT'}")
+        lines.append(f"  {man['id']:34s} " + "  ".join(row))
+    return bad
 
 
 def reference():

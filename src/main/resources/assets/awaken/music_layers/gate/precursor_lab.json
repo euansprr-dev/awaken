@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/precursor_lab",
+  "source": "music",
+  "title": "Precursor Lab",
+  "bpm": 90,
+  "beats": 4,
+  "bars": 16,
+  "key": "F#",
+  "mode": "aeolian",
+  "sampleRate": 44100,
+  "frames": 1881600,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_precursor_lab_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "A soft FM arpeggiator, a pad, the mains hum, the sigh in signal-blue glass."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_precursor_lab_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "A sine pulse in eighths, a low drum, glass on the minor second."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_precursor_lab_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Drums with a sixteenth-note hat of ticks, an FM bass, brass stabs."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_precursor_lab_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "Unit Zero: the sigh repeated in glass like a countdown, brass under it, a choir on 'e'."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.56,
+      "lufs": -17.81,
+      "truePeak": -5.56
+    },
+    "tension": {
+      "rms": -19.54,
+      "lufs": -17.55,
+      "truePeak": -2.0
+    },
+    "combat": {
+      "rms": -18.52,
+      "lufs": -17.15,
+      "truePeak": -1.72
+    },
+    "lord": {
+      "rms": -17.53,
+      "lufs": -15.99,
+      "truePeak": -1.89
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.56,
+      "truePeak": -5.56
+    },
+    "tension": {
+      "rms": -23.2,
+      "truePeak": -4.19
+    },
+    "combat": {
+      "rms": -22.01,
+      "truePeak": -6.45
+    },
+    "lord": {
+      "rms": -20.79,
+      "truePeak": -6.35
+    }
+  }
+}

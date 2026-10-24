@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/glass_desert",
+  "source": "music",
+  "title": "Glass Desert",
+  "bpm": 50,
+  "beats": 4,
+  "bars": 12,
+  "key": "E",
+  "mode": "phrygian",
+  "sampleRate": 44100,
+  "frames": 2540160,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_glass_desert_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "Glass harmonica fifths, ringing glass bowls, sand wind; the tune once, slow."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_glass_desert_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "The oud ostinato under it, a low E, the F bowl ringing a half step above."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_glass_desert_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Frame drums and a low drum, a metallic plucked bass, a shaker in the wind."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_glass_desert_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Glass Serpent: a choir, the harmonica tune high, a gong bell and sub every two bars."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.56,
+      "lufs": -17.44,
+      "truePeak": -4.56
+    },
+    "tension": {
+      "rms": -19.56,
+      "lufs": -17.12,
+      "truePeak": -3.5
+    },
+    "combat": {
+      "rms": -18.55,
+      "lufs": -16.97,
+      "truePeak": -1.62
+    },
+    "lord": {
+      "rms": -17.56,
+      "lufs": -15.86,
+      "truePeak": -1.54
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.56,
+      "truePeak": -4.56
+    },
+    "tension": {
+      "rms": -23.54,
+      "truePeak": -7.15
+    },
+    "combat": {
+      "rms": -21.04,
+      "truePeak": -1.31
+    },
+    "lord": {
+      "rms": -21.17,
+      "truePeak": -4.79
+    }
+  }
+}

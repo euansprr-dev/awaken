@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/mirror_palace",
+  "source": "music",
+  "title": "Mirror Palace",
+  "bpm": 64,
+  "beats": 4,
+  "bars": 16,
+  "key": "C",
+  "mode": "lydian",
+  "sampleRate": 44100,
+  "frames": 2646000,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_mirror_palace_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "A glass harmonica chord, a palindrome in glass with its reflection an octave up, half a beat late."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_mirror_palace_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "Reversed swells into every other bar line, a glass ostinato."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_mirror_palace_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Taiko, glass struck on two and four (the raised fourth), a plucked bass."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_mirror_palace_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Mirror Knight: a choir, the palindrome and its reflection stated, a bell, a sub."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.57,
+      "lufs": -18.2,
+      "truePeak": -4.22
+    },
+    "tension": {
+      "rms": -19.53,
+      "lufs": -17.13,
+      "truePeak": -3.06
+    },
+    "combat": {
+      "rms": -18.52,
+      "lufs": -17.24,
+      "truePeak": -1.58
+    },
+    "lord": {
+      "rms": -17.54,
+      "lufs": -15.9,
+      "truePeak": -1.82
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.57,
+      "truePeak": -4.22
+    },
+    "tension": {
+      "rms": -23.03,
+      "truePeak": -5.0
+    },
+    "combat": {
+      "rms": -21.19,
+      "truePeak": -3.2
+    },
+    "lord": {
+      "rms": -21.14,
+      "truePeak": -5.24
+    }
+  }
+}
