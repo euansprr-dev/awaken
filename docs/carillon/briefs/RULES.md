@@ -16,6 +16,9 @@ The plan is docs/plan-carillon.html; the source of truth is docs/SPEC.md §16. T
   `/Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh build tools/gradle.sh 900 build`
   `/Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh build tools/gradle.sh 1200 runGameTestServer`
   `/Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh <script> [timeout]`
+  `/Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh <script> [timeout]` for a tour that
+  measures no frame times (movement soaks, shot-only tours): one build may run beside it.
+  Keep every tour ≤ 15 minutes; split long soaks so builds get turns between them.
   Set `SLOT_WHO=<your spike or workstream>`. Run these in the background (`run_in_background`) when they may take
   more than 2 minutes, and wait for the notification rather than polling.
 - Never launch the game client yourself (no runClient). Tours (tools/autopilot.sh) are approved: the window opens
