@@ -167,8 +167,11 @@ final class RouteDriver {
             }
             case HANG -> {
                 if (dy < -0.5) {
-                    // lower into a hang: walk to the edge holding sneak
-                    keys(!hang, false, false, false, false, true, false);
+                    // lower into a hang: come to a stop first (sneak at a run is a slide, off the edge), then walk to
+                    // the edge holding sneak
+                    boolean fast = p.isSprinting() || !p.isShiftKeyDown() && p.getDeltaMovement().horizontalDistance() > 0.06;
+                    if (hang || fast) keys(false, false, false, false, false, false, false);
+                    else keys(true, false, false, false, false, true, false);
                 } else {
                     // jump into the wall: the hands find its ledge; then climb out (jump with nothing held)
                     keys(!hang, false, false, false, hang ? age % 6 < 3 : ground && (dxz < 1.5 || p.horizontalCollision), false, false);

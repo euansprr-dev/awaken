@@ -125,17 +125,20 @@ def crane(stage):
     # rails off the south side where the hands go
     for x in range(-79, -61):
         stage.clear(x, 23, -25)
-    # the trolley: a dark block with its hook frame, two blocks long, on top of the arm
+    # the trolley, two blocks long: its carriage at head height on a plate down the arm's north side. Upright you can't
+    # get past it on top; the arm's south lip stays clear under it (the hands need half a block over a lip), so the
+    # way past is hanging from that lip
     for x in (-71, -70):
-        stage.put(x, 23, -26, 'stripped_dark_oak_log[axis=x]', FULL)
-        stage.put(x, 24, -26, 'dark_oak_trapdoor[facing=north,half=bottom,open=false]', THIN)
+        stage.put(x, 23, -26, 'dark_oak_trapdoor[facing=south,half=bottom,open=true]', THIN)
+        stage.put(x, 24, -26, 'stripped_dark_oak_log[axis=x]', FULL)
     # the old rope post on the arm's tower end goes (one obstacle on the arm: the trolley)
     stage.clear(-65, 23, -26)
     # a ladder up the cab's west face, from the arm onto the cab's roof
     ladder(stage, -62, -26, 23, 24, 'west')
-    # bronze handholds mark where to drop and where to climb
-    stage.put(-74, 22, -25, 'waxed_exposed_cut_copper_slab[type=top]', FULL)
-    stage.put(-67, 22, -25, 'waxed_exposed_cut_copper_slab[type=top]', FULL)
+    # bronze set into the arm marks where to drop and where to climb (flush: a lip that stood out would be an inside
+    # corner on the way along)
+    stage.put(-74, 22, -26, 'waxed_exposed_cut_copper', FULL)
+    stage.put(-67, 22, -26, 'waxed_exposed_cut_copper', FULL)
 
 
 def ladder(stage, x, z, ry0, ry1, facing):
@@ -322,7 +325,13 @@ def off_stalls(x, z):
 
 
 def street_points(route, city, pts, move='run', near=1.0):
-    """Ground waypoints joined by the planner's runs (round a stall, onto a bridge's deck): what a runner on the street does."""
+    """Ground waypoints joined by the planner's runs (round a stall, onto a bridge's deck): what a runner on the street does.
+    A ladder standing in the walk (up a quay's wall) is a thing to run round: its rungs catch a body brushing past."""
+    lo = int(math.floor(near)) - 1
+
+    def avoid(x, z):
+        return off_stalls(x, z) or any(city.kind(x, ry, z) == LADDER for ry in range(lo, lo + 3))
+
     for x, z in pts:
         if not route.points:
             route.add(x, ground_feet(city, x, z, near), z, move)
@@ -332,7 +341,9 @@ def street_points(route, city, pts, move='run', near=1.0):
         if (int(math.floor(a[0])), int(math.floor(a[2]))) == (tx, tz):
             continue
         goal = (lambda tx, tz: (lambda n: abs(n[0] - tx) <= 1 and abs(n[1] - tz) <= 1 and n[2] <= 2 * 3))(tx, tz)
-        path, cost, n = runner_path(city, BOX, a, goal, (tx, tz), min_feet=None, limit=60000, avoid=off_stalls)
+        ends = {(int(math.floor(a[0])), int(math.floor(a[2]))), (tx, tz)}  # a ladder's foot can be where a leg starts
+        path, cost, n = runner_path(city, BOX, a, goal, (tx, tz), min_feet=None, limit=60000,
+                                    avoid=lambda x, z: (x, z) not in ends and avoid(x, z))
         if path is None:
             # an unreachable waypoint (inside a stall or a doorway): skip it, the next one carries the line
             print(f'   {route.name}: skips waypoint ({x:.1f}, {z:.1f})')
