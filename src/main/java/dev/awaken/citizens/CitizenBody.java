@@ -38,7 +38,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
     /** Flags: fading out (leaving view or going in), carrying a crate on the back, hurt. */
     public static final int F_FADING = 1, F_CRATE = 2, F_HURT = 4, F_BAG = 8;
     static final double BASE_SPEED = 0.25;
-    private static final double ARRIVE = 0.5 * 0.5, DOOR_ARRIVE = 0.85 * 0.85;
+    private static final double ARRIVE = 0.5 * 0.5, DOOR_ARRIVE = 1.05 * 1.05;
     static final int FADE_TICKS = 14;
 
     int rec = -1;
@@ -145,8 +145,18 @@ public class CitizenBody extends PathfinderMob implements Npc {
         refZ = getZ();
     }
 
-    void hold(EquipmentSlot slot, ItemStack stack) {
-        if (!ItemStack.matches(getItemBySlot(slot), stack)) setItemSlot(slot, stack);
+    private int heldMain = -1, heldOff = -1;
+
+    /** Holds a prop (Props code) in a hand; only a change touches the equipment. */
+    void hold(EquipmentSlot slot, int prop) {
+        if (slot == EquipmentSlot.MAINHAND) {
+            if (prop == heldMain) return;
+            heldMain = prop;
+        } else {
+            if (prop == heldOff) return;
+            heldOff = prop;
+        }
+        setItemSlot(slot, Props.stack(prop));
     }
 
     void gesture(Act a, int ticks) {

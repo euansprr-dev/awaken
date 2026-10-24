@@ -1024,28 +1024,28 @@ final class CityEvents {
     void show(CitizenBody b, int i, long now) {
         int role = d.role[i];
         Act act = Act.NONE;
-        ItemStack main = ItemStack.EMPTY, off = ItemStack.EMPTY;
+        int main = Props.NONE, off = Props.NONE;
         boolean walking = d.state[i] == WALK;
         switch (role) {
             case Roles.THIEF_SNEAK -> act = Act.NONE;
             case Roles.PICKPOCKET -> act = walking ? Act.NONE : Act.LOOK_AROUND;
             case Roles.THIEF_FLEE -> {
                 act = Act.THIEF_RUN;
-                main = bagDropped(i) ? ItemStack.EMPTY : CitizensContent.STOLEN_BAG.get().getDefaultInstance();
+                main = bagDropped(i) ? Props.NONE : Props.BAG;
             }
             case Roles.THIEF_CAUGHT -> act = walking ? Act.HURT : Act.SURRENDER;
             case Roles.WATCH_CHASE, Roles.WATCH_ESCORT -> {
                 act = Act.HALBERD;
-                main = CitizensContent.WATCH_HALBERD.get().getDefaultInstance();
+                main = Props.HALBERD;
             }
             case Roles.GATE_GUARD -> {
                 act = walking ? Act.HALBERD : Act.HALBERD_STAND;
-                main = CitizensContent.WATCH_HALBERD.get().getDefaultInstance();
+                main = Props.HALBERD;
             }
             case Roles.SHOUT -> act = Act.POINT_SHOUT;
             case Roles.BUCKET -> {
                 act = walking ? Act.NONE : Act.BUCKET_PASS;
-                main = new ItemStack(Items.WATER_BUCKET);
+                main = Props.BUCKET;
             }
             case Roles.TRAPPED -> act = Act.TRAPPED;
             case Roles.CLEAR -> act = walking ? Act.NONE : Act.SET_DOWN;

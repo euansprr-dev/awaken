@@ -1,0 +1,180 @@
+# Carillon Milestone 3 (docs/carillon/briefs/M3-alive.md): a day in Carillon, one light tour (shots only, no perf).
+# Run: PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=M3-alive \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m3.txt 900
+# A new world with Carillon (seed as M1's, so M1's framings fit). Dawn, noon, dusk and night in every district; the
+# lamplighter's avenue before and after dusk; a stall opening while the clock runs; the Works on fire with its bucket
+# line; a citizen greeting the player by name. The clock is frozen between scenes (citizens still walk, work and
+# dwell; a clock jump seats everyone where that hour wants them, as the ledger does after a /time set).
+world carillonM3 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+cmd awaken citizens info
+# ---- dawn: lamps going out, the bakers' chimneys smoking over the roofs
+cmd time set 23400
+cmd awaken city view sky_nw_low
+wait 400
+shot m3_dawn_sky
+cmd awaken citizens show lamplighter
+wait 100
+shot m3_dawn_lamplighter
+cmd awaken citizens show baker
+wait 80
+shot m3_dawn_baker
+cmd awaken city view bellwatch
+wait 100
+shot m3_dawn_bellwatch
+cmd awaken city view quay
+wait 100
+shot m3_dawn_quay
+cmd awaken city view terrace
+wait 100
+shot m3_dawn_terrace
+# ---- morning: a stall opening, the clock running for a minute
+cmd time set 560
+cmd awaken citizens show stall
+wait 40
+cmd gamerule advance_time true
+wait 40
+shot m3_stall_before
+wait 420
+shot m3_stall_opening
+wait 420
+shot m3_stall_open
+cmd gamerule advance_time false
+# ---- noon in every district
+cmd time set 6000
+cmd awaken city view square
+wait 160
+shot m3_noon_square
+cmd awaken city view market
+wait 110
+shot m3_noon_market
+cmd awaken city view bellwatch
+wait 110
+shot m3_noon_bellwatch
+cmd awaken city view quay
+wait 110
+shot m3_noon_quay
+cmd awaken citizens show porter
+wait 80
+shot m3_noon_porter
+cmd awaken city view works
+wait 110
+shot m3_noon_works
+cmd awaken citizens show smith
+wait 80
+shot m3_noon_smith
+cmd awaken city view garden
+wait 110
+shot m3_noon_garden
+cmd awaken citizens show washer
+wait 80
+shot m3_noon_washer
+cmd awaken city view terrace
+wait 110
+shot m3_noon_terrace
+cmd awaken citizens show teodor
+wait 80
+shot m3_noon_teodor
+cmd awaken city view wallring
+wait 110
+shot m3_noon_wallring
+cmd awaken citizens show crier
+wait 80
+shot m3_noon_crier
+# ---- a name said back: the city knows you now
+cmd awaken citizens renown known
+cmd awaken citizens show oren
+wait 100
+cmd awaken citizens greet
+wait 14
+shot m3_greet_oren
+cmd awaken citizens show stallkeeper
+wait 100
+cmd awaken citizens greet
+wait 14
+shot m3_greet_stallkeeper
+# ---- an event in progress: fire in the Works, the bucket line forming
+cmd awaken city view works
+wait 40
+cmd awaken citizens event fire
+wait 20
+cmd awaken citizens show event
+wait 500
+shot m3_fire_line
+wait 300
+shot m3_fire_later
+# ---- dusk: the lamplighter's avenue before and after, and a lamplighter at work
+cmd time set 11400
+cmd awaken citizens show lamps
+wait 80
+shot m3_lamps_before
+cmd time set 12900
+cmd awaken citizens show lamplighter
+wait 120
+shot m3_dusk_lamplighter
+cmd time set 14200
+cmd awaken citizens show lamps
+wait 80
+shot m3_lamps_after
+cmd awaken city view square
+wait 110
+shot m3_dusk_square
+cmd awaken city view bellwatch
+wait 100
+shot m3_dusk_bellwatch
+cmd awaken city view quay
+wait 100
+shot m3_dusk_quay
+cmd awaken city view works
+wait 100
+shot m3_dusk_works
+cmd awaken city view garden
+wait 100
+shot m3_dusk_garden
+cmd awaken citizens show tavernkeeper
+wait 80
+shot m3_dusk_tavern
+# ---- night: the Watch with lanterns, a burglary, the city from above
+cmd time set 17000
+cmd awaken citizens show watch
+wait 100
+shot m3_night_watch
+cmd awaken city view market
+wait 100
+shot m3_night_market
+cmd awaken city view terrace
+wait 100
+shot m3_night_terrace
+cmd awaken city view wallring
+wait 100
+shot m3_night_wallring
+cmd awaken citizens event burglary
+wait 700
+cmd awaken citizens show event
+wait 60
+shot m3_night_burglary
+wait 200
+shot m3_night_chase
+cmd awaken city view studio_spire
+wait 120
+shot m3_night_studio_spire
+cmd awaken city view sky_nw_low
+wait 200
+shot m3_night_sky
+cmd awaken citizens info
+quit

@@ -105,12 +105,19 @@ final class CitizenWork implements Ledger.Work {
 
     @Override
     public void arrived(int i, int place, long now) {
-        byte k = r.pKind[place];
-        int tod = c.tod();
-        if (k == P_STALL_KEEPER && tod >= STALLS_OPEN && tod < STALLS_CLOSE) {
-            int s = stallOf(place, true);
-            if (s >= 0 && d.stallOpen[s] == 0) {
-                d.stallOpen[s] = 1;
+        if (r.pKind[place] == P_STALL_KEEPER) stalls(c.tod());
+    }
+
+    /** A stall is open while its hours run and one of its keepers is behind the counter; closed otherwise. */
+    private void stalls(int tod) {
+        boolean hours = tod >= STALLS_OPEN && tod < STALLS_CLOSE;
+        for (int s = 0; s < r.stalls.size(); s++) {
+            int keeperPlace = r.stalls.get(s).keeper();
+            boolean present = false;
+            for (int i = 0; i < r.citizens && !present; i++) present = d.place[i] == keeperPlace && d.state[i] == STAND && d.role[i] == 0;
+            byte want = (byte) (hours && present ? 1 : 0);
+            if (d.stallOpen[s] != want) {
+                d.stallOpen[s] = want;
                 stallAnim[s] = 0;
                 d.setDirty();
             }
@@ -151,18 +158,7 @@ final class CitizenWork implements Ledger.Work {
 
     @Override
     public void left(int i, int place, long now) {
-        if (r.pKind[place] != P_STALL_KEEPER) return;
-        int tod = c.tod();
-        if (tod < STALLS_CLOSE - 900 && tod >= STALLS_OPEN) return;
-        int s = stallOf(place, true);
-        if (s < 0 || d.stallOpen[s] == 0) return;
-        // the last keeper out closes up
-        for (int j = 0; j < r.citizens; j++) {
-            if (j != i && d.place[j] == place && d.state[j] == STAND) return;
-        }
-        d.stallOpen[s] = 0;
-        stallAnim[s] = 0;
-        d.setDirty();
+        // the last keeper out closes up (stalls() sees nobody behind the counter)
     }
 
     @Override
@@ -191,8 +187,12 @@ final class CitizenWork implements Ledger.Work {
         }
         lastClock = clk;
         lastGame = now;
-        // hour bells, a little after each hour (06:00..22:00)
-        if (tod % 1000 == 0 && tod <= 16000) ringHour(now, tod);
+        // hour bells as each hour comes round (06:00..22:00); never twice for one hour, never for a clock jump
+        int hour = tod / 1000;
+        if (hour != lastHour && lastHour >= 0 && tod % 1000 < 200 && tod <= 16200 && !jumped) ringHour(now, hour * 1000);
+        lastHour = hour;
+        jumped = false;
+        if (now % 40 == 9) stalls(tod);
         peal(now);
         reconcileLamps(2);
         reconcileStalls(now);
@@ -205,8 +205,12 @@ final class CitizenWork implements Ledger.Work {
         if (now % 600 == 0) darkDirty = true; // dusk and dawn change what "dark at night" means
     }
 
+    private int lastHour = -1;
+    private boolean jumped;
+
     /** The clock jumped (a command, a sleep): lamps, stalls and lines as that hour has them, as if the work were done. */
     void byTime(int tod) {
+        jumped = true;
         boolean night = tod >= NIGHT_FROM && tod < NIGHT_TO;
         for (int k = 0; k < d.lamps.length; k++) if (d.lamps[k] != LAMP_BROKEN) d.lamps[k] = night ? LAMP_LIT : LAMP_OUT;
         boolean open = tod >= STALLS_OPEN + 300 && tod < STALLS_CLOSE;
@@ -804,8 +808,8 @@ final class CitizenWork implements Ledger.Work {
     void show(CitizenBody b, int i, long now) {
         if (d.role[i] == Roles.REPAIR) {
             b.setAct(d.state[i] == STAND ? Act.TROWEL : Act.NONE);
-            b.hold(EquipmentSlot.MAINHAND, CitizensContent.MASON_TROWEL.get().getDefaultInstance());
-            b.hold(EquipmentSlot.OFFHAND, EMPTY);
+            b.hold(EquipmentSlot.MAINHAND, Props.TROWEL);
+            b.hold(EquipmentSlot.OFFHAND, Props.NONE);
             b.setFlag(CitizenBody.F_CRATE, false);
             return;
         }
@@ -820,7 +824,7 @@ final class CitizenWork implements Ledger.Work {
         int place = d.place[i];
         byte pk = place >= 0 ? r.pKind[place] : -1;
         Act act = Act.NONE;
-        ItemStack main = EMPTY, off = EMPTY;
+        int main = Props.NONE, off = Props.NONE;
         boolean crate = false;
         boolean hurt = d.hurtUntil[i] > now;
         if (hurt) {
@@ -836,39 +840,39 @@ final class CitizenWork implements Ledger.Work {
                 case BAKER -> {
                     if (d.carry[i] != 0) {
                         act = Act.TRAY;
-                        main = stack(CitizensContent.BREAD_BASKET.get().getDefaultInstance());
+                        main = Props.BREAD;
                     }
                 }
                 case WATCH -> {
                     act = Act.HALBERD;
-                    main = stack(CitizensContent.WATCH_HALBERD.get().getDefaultInstance());
-                    if (night) off = stack(CitizensContent.HAND_LANTERN.get().getDefaultInstance());
+                    main = Props.HALBERD;
+                    if (night) off = Props.LANTERN;
                 }
                 case LAMPLIGHTER -> {
                     if (l.act(i) == ROUND) {
-                        main = stack(CitizensContent.LAMPLIGHTER_POLE.get().getDefaultInstance());
-                        if (night || tod > 11000) off = stack(CitizensContent.HAND_LANTERN.get().getDefaultInstance());
+                        main = Props.POLE;
+                        if (night || tod > 11000) off = Props.LANTERN;
                     }
                 }
                 case RUNNER -> {
                     if (l.act(i) == ROUND) {
                         act = Act.RUN;
-                        off = stack(CitizensContent.COURIER_SATCHEL.get().getDefaultInstance());
+                        off = Props.SATCHEL;
                     }
                 }
-                case CRIER -> off = stack(CitizensContent.CRIER_SCROLL.get().getDefaultInstance());
+                case CRIER -> off = Props.SCROLL;
                 case WASHER -> {
-                    if (pk == P_LINE || pk == P_WASH) main = stack(CitizensContent.LAUNDRY_BASKET.get().getDefaultInstance());
+                    if (pk == P_LINE || pk == P_WASH) main = Props.LAUNDRY;
                 }
                 default -> {
                     if (night && (job == TAVERNKEEPER || job == RESIDENT) && (i & 3) == 0)
-                        off = stack(CitizensContent.HAND_LANTERN.get().getDefaultInstance());
+                        off = Props.LANTERN;
                 }
             }
         } else if (st == STAND) {
             switch (pk) {
                 case P_LAMP -> {
-                    main = stack(CitizensContent.LAMPLIGHTER_POLE.get().getDefaultInstance());
+                    main = Props.POLE;
                     act = d.dwellUntil[i] > 0 ? Act.LAMP_LIGHT : Act.HANDS_BEHIND;
                 }
                 case P_BELL -> {
@@ -887,12 +891,12 @@ final class CitizenWork implements Ledger.Work {
                 }
                 case P_ANVIL -> {
                     act = Act.HAMMER;
-                    main = stack(CitizensContent.SMITH_HAMMER.get().getDefaultInstance());
+                    main = Props.HAMMER;
                 }
                 case P_WASH -> act = Act.SCRUB;
                 case P_LINE -> {
                     act = Act.HANG;
-                    main = stack(CitizensContent.LAUNDRY_BASKET.get().getDefaultInstance());
+                    main = Props.LAUNDRY;
                 }
                 case P_PICKUP -> {
                     if (job == BOATMAN) act = Act.HAUL;
@@ -903,12 +907,12 @@ final class CitizenWork implements Ledger.Work {
                 }
                 case P_POST -> {
                     act = Act.HALBERD_STAND;
-                    main = stack(CitizensContent.WATCH_HALBERD.get().getDefaultInstance());
-                    if (night) off = stack(CitizensContent.HAND_LANTERN.get().getDefaultInstance());
+                    main = Props.HALBERD;
+                    if (night) off = Props.LANTERN;
                 }
                 case P_CRIER -> {
                     act = Act.PROCLAIM;
-                    off = stack(CitizensContent.CRIER_SCROLL.get().getDefaultInstance());
+                    off = Props.SCROLL;
                 }
                 case P_SIT -> act = Act.SIT;
                 case P_PLAY -> act = Act.PLAY;
@@ -918,14 +922,14 @@ final class CitizenWork implements Ledger.Work {
                 default -> {
                     if (job == MASON) {
                         act = Act.TROWEL;
-                        main = stack(CitizensContent.MASON_TROWEL.get().getDefaultInstance());
+                        main = Props.TROWEL;
                     } else if (job == WATCH) {
                         act = Act.HALBERD_STAND;
-                        main = stack(CitizensContent.WATCH_HALBERD.get().getDefaultInstance());
-                        if (night) off = stack(CitizensContent.HAND_LANTERN.get().getDefaultInstance());
+                        main = Props.HALBERD;
+                        if (night) off = Props.LANTERN;
                     } else if (job == ARCHIVIST) {
                         act = Act.READ;
-                        main = stack(CitizensContent.LEDGER_BOOK.get().getDefaultInstance());
+                        main = Props.BOOK;
                     } else if (job == CHILD) {
                         act = Act.PLAY;
                     } else {
@@ -941,10 +945,6 @@ final class CitizenWork implements Ledger.Work {
         b.hold(EquipmentSlot.OFFHAND, off);
         b.setFlag(CitizenBody.F_CRATE, crate);
         b.setFlag(CitizenBody.F_HURT, hurt);
-    }
-
-    private static ItemStack stack(ItemStack s) {
-        return s;
     }
 
     private int bellOfPlace(int place) {
