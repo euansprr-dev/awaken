@@ -765,9 +765,11 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `tools/pack.py lock` into `pack/lock.json` (exact files and SHA-512, required dependencies, a dependency's own
   version pin). `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
   what it installed, and refuses while a client runs there. GameTests never load the pack: they test Awaken alone.
-- Far view (`compat.FarView`): far-terrain mods draw in vanilla dimensions and `awaken:stillpoint` only. In every other
-  `awaken:` dimension (gate and dream cells, trials, the Halo, the Descent) Distant Horizons renders nothing and gets
-  empty columns instead of running Awaken's chunk generators. Test: `compat_far_view_policy`.
+- Instanced dimensions (`compat.Instanced`): every `awaken:` dimension but `awaken:stillpoint` (gate and dream cells,
+  trials, the Halo, the Descent's strata, the Endless). Companions that draw or remember a place stay out of them.
+  Far view (`compat.FarView`): far-terrain mods draw in vanilla dimensions and the Stillpoint only; in instanced ones
+  Distant Horizons renders nothing and gets empty columns instead of running Awaken's chunk generators. Test:
+  `compat_instanced_dimensions`.
 - Frame time is measured, not guessed: autopilot `perf <label> <s>`, `perfstart`/`perfend`, `info`; fixed scenes in
   `tools/autopilot/perf-pack.txt` at a 1440×900-point window; results and comparisons in `docs/perf/`
   (`tools/perf-report.py`). Every perf line carries the machine's load; runs that disagree by more than 5% on p50 are
@@ -818,6 +820,66 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
+- Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling, Dynamic FPS and Xaero's
+  World Map. Xaero's World Map stays only until Carillon's own Atlas ships; no minimap, ever (direction comes from the
+  world). AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
+  log errors). Tours turn Dynamic FPS off in `run-autopilot/config/dynamic_fps.json` (it drops a background window to
+  1 fps or none). JEI and Jade are compiled against as `compileOnly` from Modrinth's Maven by version id (the builds
+  `pack/lock.json` pins); their plugins (`compat.client.jei`, `compat.jade`, `compat.client.jade`) are found by their
+  annotations and nothing else in Awaken refers to them.
+- The spoiler rule (`compat.Discovered`, attachment `awaken:discovered`, schemaVersion 1, copyOnDeath, synced to its
+  owner): an Awaken item is **discovered**, for good, once (1) it has been in the player's inventory or on their cursor,
+  (2) it is the result of a recipe in their recipe book (Awaken recipes unlock when you hold an ingredient, by the level
+  road, the Hearth Anchor and town requests), or (3) Awaken's own records name it: a scanned blueprint names its
+  machine, the Frame Forge's blueprint names the four Frame pieces and six modules. Checked every 40 ticks per player
+  (staggered, allocation-free) and at login; the set only grows. Vanilla and other mods' items are never guarded. Items
+  looted into the Satchel or Deep Pack count once they reach the inventory. The guard is off in creative and spectator
+  and when `spoiler_guard` (`awaken-compat-client.toml`) is off. Every viewer asks the same rule (`compat.SpoilerRule`,
+  plain Awaken code taking any player): an item shows when it isn't Awaken's or is discovered, a recipe when any of its
+  key items shows, a creature's details once the Codex has it, and disguises are never named. `compat.Reveal` keeps a
+  viewer's hidden set in step and reports only what changed, so a discovery appears at once and nothing else is
+  touched. `/awaken compat discovered [check|reset|all]`. Tests: `compat_spoiler_rule` (the record),
+  `compat_spoiler_guard` (the rule and the reveal as the record grows, game modes, the Codex, disguises).
+- JEI (`compat.client.jei`): Awaken's categories draw the System's glass (`signal.client.Glass.panel`, dark glass slots,
+  a framed result in the recipe's accent, no JEI border): **Awaken Crafting** (every `awaken:` crafting-table recipe,
+  moved out of JEI's Crafting tab, with the level road step that teaches it and, for Hunter gear, rank, set and set
+  bonus; the crafting table's transfer works), **Fabricator** (the twelve blueprints, parts from `MachineType`),
+  **Frame Forge** (Frames and modules, 50 essence), **Tempering** (levels I–VI at the Forge, Oren's terms), **Hearth
+  Upgrades** (Anchor tiers II–V, Forge tiers II–III, rank and discount), **Echo Duty** (a Mine Echo's haul and chances by
+  Anchor tier), **Essence** (charging a cell, feeding the reactor), **Core Fusing** (four shards into a core) and
+  **Codex** (pages for key items and the six Hunter sets). The recipes are read from those systems' public constants
+  (`compat.client.jei.Recipes`, the only place compat reads them). The guard (`SpoilerGuard`): undiscovered Awaken items
+  are hidden from the list and from recipe slots (JEI's ingredient visibility, both contexts; a slot whose every
+  choice is hidden still shows them, as vanilla's recipe book does); Awaken's recipes are hidden until their key item is
+  discovered (a machine by itself, tempering by the Forge, a Codex page by its item); recipes in other categories (JEI's
+  anvil, other mods') until any of their Awaken outputs is; a category whose stations are all hidden hides itself.
+  Applied on the client tick only when the record, the game mode or the setting changes; a new client player (respawn,
+  another dimension) keeps the current view up to 40 ticks until the server re-sends its record, which never shrinks.
+- Jade (`compat.jade` server data, `compat.client.jade`): Awaken targets wear the Jade theme `awaken:system` (the
+  System's glass as a nine-slice sprite, `tools/art/compat_ui.py`) and an accent bar in the target's colour (setting
+  `jade_system_style`). Gate cores: "D-rank gate", state, break clock, omen, then exactly what the gate card shows that
+  player (layout from PER 20, modifiers from 40, floors from 60, theme and Lord once scouted; the ritual hall only its
+  bell) and the next PER threshold. Precursor machines: who built it, power (reactor essence or the reactors in range),
+  a clone ready or growing, Launch Ring frames; the Fabricator counts known blueprints. Broken machines keep their name
+  until the blueprint is yours; doors say the rank they open for; Hearth Anchor: owner, tier, reach, Forge; role pads;
+  Trophy Mounts. Creatures: temperament from the fauna role (and "Hostile now"), level and rank (from the spawn's
+  content level) and role (Elite, Warden, Gate Lord...); a creature the Codex doesn't have yet shows only "Not in your
+  Codex yet". Townsfolk: job, whose town, the rank they came at. Jade never names mimics, dormant statues, the
+  ritual's Seated One and statues or Veil marks, and decoys show their name only. Server facts come from
+  `compat.LookAt` (plain Awaken code); without Jade on the server the client-only lines remain. Tests:
+  `compat_look_at_gate_rule`, `compat_look_at_machines`, `compat_look_at_creatures`.
+- Xaero's World Map is shut in instanced dimensions (`compat.WorldMaps`, 2026-10-24): a map of every chunk in view
+  would read a gate's layout before PER 20 may, and a reused cell would show an earlier gate's rooms. 1.47.1 has no
+  setting to skip a dimension (its ignore list is hard-coded, `MapProcessor.dimensionsToIgnore`; "load/update chunks"
+  are global per config profile; per-player server profiles need a permissions mod; no API), so Awaken uses the
+  control Xaero supports for servers: its own No World Map effect (`xaeroworldmap:no_world_map`, registered while
+  Xaero's common option `register_status_effects` is on, its default). A player in an instanced dimension carries it
+  (ambient, no particles, no HUD icon; the inventory lists it as "No World Map"), renewed every 40 ticks for 100 and
+  taken off when they change dimension; an effect an operator gave is never touched. Xaero's map screen then reads
+  "The map is disabled with a potion effect". Xaero still records those chunks into that dimension's own cache (the
+  overworld map is never touched). The effect lives in the server's registry: single player always has it, a dedicated
+  server needs Xaero's World Map installed (it is server-optional). Without Xaero nothing registers. Autopilot
+  `compat map` reports it. Test: `compat_world_map_rule`. Until Carillon's Atlas replaces Xaero.
 
 ---------------------------------------------------------------------------------------------------------------------
 
