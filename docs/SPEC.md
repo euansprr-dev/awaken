@@ -777,8 +777,11 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   the vanilla value and pushes only the start and the environmental fog out of reach, so the haze runs on across the
   end of the vanilla render distance without a step), and never counts as open sky for bloom, light shafts or the sun
   halo. Where DH has no texture to share (its OpenGL engine; bit 2 clear) Lens adds no distance haze while DH draws.
+  DH's own clouds (it turns vanilla's off) write its depth too, so they haze by their distance like far terrain.
   Debug views (`lensdebug`): 3 raw far depth (blue while Lens reads it), 4 the haze each pixel gets (a ring would show
-  as a step in brightness). Proof: tools/autopilot/lens-dh.txt. Params texels: 13 the ritual, 14 Holo.
+  as a step in brightness). Proof: tools/autopilot/lens-dh.txt (2026-10-24, OpenGL on the M4, DH Swift, render
+  distance 16: depth read, far terrain intact, haze across the vanilla edge within ~0.03 of itself away from
+  silhouettes; logs/lens-dh-sheet.jpg). Params texels: 13 the ritual, 14 Holo.
 - The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers, and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
   for the rest. Opened with U (`key.awaken.look`, Awaken's key category), from Awaken's settings (Mods → AWAKEN →

@@ -1,7 +1,8 @@
-# The Look switch (AWAKEN · LOOK): open the screen, switch tiers, the same sunset vista under each.
-# Run with the pack so the Distant Horizons lines show: PACK=perf,horizon DH=swift tools/autopilot.sh tools/autopilot/look.txt
+# The Look switch (AWAKEN · LOOK): open the screen, switch tiers, the same sunset vista under each. Screenshots only
+# (a light tour; the frame-time line is measured in look-perf.txt). Run with the pack so the Distant Horizons lines show:
+# PACK=perf,horizon DH=swift tools/autopilot.sh tools/autopilot/look.txt
 # Shots: the screen on Swift, on Cinematic, Ultra refused with its reason; the scene on Cinematic, Swift and Lens off;
-# the screen again after two perf scenes (its frame-time line has a minute of data).
+# Awaken's settings with the Look row.
 world look creative 20261024
 waitworld
 gui 0
@@ -42,12 +43,9 @@ shot look_5_scene_swift
 lens off
 wait 60
 shot look_6_scene_lens_off
-lookswitch cinematic
-perf look_cinematic 15
-lookswitch swift
-perf look_swift 15
-screen look
-wait 30
-shot look_7_screen_after_perf
+# Awaken's settings, client section: the Look row under Lens opens the switch
+screen settings
+wait 20
+shot look_7_settings
 screen close
 quit
