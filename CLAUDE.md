@@ -8,6 +8,9 @@ Design: `docs/plan.html` (player-facing plan) and `docs/SPEC.md` (implementation
   It sets `JAVA_HOME` (JDK 25 on the MEDIA SSD), `GRADLE_USER_HOME=/Volumes/MEDIA/.gradle-home`, logs to `logs/`.
   - Compile + jar: `tools/gradle.sh 900 build`
   - GameTests (headless server, no window, no sound): `tools/gradle.sh 1200 runGameTestServer`
+  - While you iterate, run only your tests: `tools/gradle.sh 900 runGameTestServer -Ptests=terrain_,anomaly_`
+    (comma-separated name prefixes; a filter that matches nothing fails with a clear message). Run the full suite
+    once at hand-off; CI also runs it on every push (`.github/workflows/gametests.yml`).
 - Never launch the game client (`runClient`) without asking the owner first: it steals focus and plays sound on his Mac.
 - The project lives on the external SSD. Don't write big files to the internal disk.
 
