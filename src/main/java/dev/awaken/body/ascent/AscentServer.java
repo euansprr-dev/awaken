@@ -43,6 +43,11 @@ public final class AscentServer {
         AwakenNet.send(p, new AscentPayloads.Tiers(tiers(p)));
     }
 
+    /** The client heard its tiers (Ascent.has on the client reads them). */
+    public static void clientTiers(int bits) {
+        Ascent.clientTiers = bits;
+    }
+
     static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
         if (e.getEntity() instanceof ServerPlayer p) syncTiers(p);
     }
@@ -109,8 +114,10 @@ public final class AscentServer {
 
     static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
-        AscentMotion m = p.getExistingDataOrNull(AscentContent.MOTION);
-        if (m == null || !m.state.airborne()) return;
+        AscentMotion m = motion(p);
+        // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
+        m.mark(Ascent.moving(p, m));
+        if (!m.state.airborne()) return;
         if (p.isPassenger() || p.isSpectator() || !p.isAlive()) {
             end(p, m);
             return;
@@ -123,6 +130,11 @@ public final class AscentServer {
         // a body that has stood on the ground for a while is not in the air, whatever its client last said
         m.groundTicks = p.onGround() ? m.groundTicks + 1 : 0;
         if (m.groundTicks > 20) end(p, m);
+    }
+
+    /** A block placed: for 20 seconds nothing counts as arriving by movement (a tower is not a route). */
+    static void onPlace(net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p && !e.isCanceled()) motion(p).placedAt = now(p);
     }
 
     /** No fall damage out of an airborne state: chaining never hurts (SPEC §17; Phase 1 turns hard landings into rolls). */

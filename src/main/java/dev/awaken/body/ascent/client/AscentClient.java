@@ -59,7 +59,10 @@ public final class AscentClient {
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
         event.register(AscentPayloads.Seen.TYPE, (msg, ctx) -> AscentRemote.seen(msg));
         event.register(AscentPayloads.SeenEvent.TYPE, (msg, ctx) -> AscentRemote.event(msg));
-        event.register(AscentPayloads.Tiers.TYPE, (msg, ctx) -> AscentMoves.tiers = msg.bits());
+        event.register(AscentPayloads.Tiers.TYPE, (msg, ctx) -> {
+            AscentMoves.tiers = msg.bits();
+            dev.awaken.body.ascent.AscentServer.clientTiers(msg.bits());
+        });
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
     }
 

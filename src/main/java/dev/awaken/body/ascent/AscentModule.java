@@ -24,6 +24,7 @@ public final class AscentModule {
         bus.addListener(AscentServer::onLogin);
         bus.addListener(AscentServer::onRespawn);
         bus.addListener(AscentServer::onDimension);
+        bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, AscentServer::onPlace);
         AscentCommands.register();
         AscentTests.register();
     }

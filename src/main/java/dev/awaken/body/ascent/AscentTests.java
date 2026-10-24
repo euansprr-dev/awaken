@@ -15,6 +15,7 @@ final class AscentTests {
         AwakenTests.register("ascent_swing_energy", 20, AscentTests::swingEnergy);
         AwakenTests.register("ascent_glide_numbers", 20, AscentTests::glideNumbers);
         AwakenTests.register("ascent_soar_speeds", 20, AscentTests::soarSpeeds);
+        AwakenTests.register("ascent_tiers_and_arrival", 40, AscentTests::tiersAndArrival);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -72,6 +73,34 @@ final class AscentTests {
         double y0 = c.y;
         for (int t = 0; t < 30; t++) AscentRules.glideStep(c, 0, -40);
         h.assertTrue(c.y - y0 > 10 && c.speed() < 1.6, "pulling up from 2.0 climbed " + (c.y - y0) + " and kept " + c.speed());
+        h.succeed();
+    }
+
+    /**
+     * The API: a grant brings every tier under it, once, and listeners hear each new one; arriving "by movement" needs
+     * a third of the last stretch in a movement state and no block placed (a tower never counts).
+     */
+    private static void tiersAndArrival(GameTestHelper h) {
+        net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        java.util.List<Ascent.Tier> heard = new java.util.ArrayList<>();
+        Ascent.onGranted((pl, t) -> {
+            if (pl == p) heard.add(t);
+        });
+        h.assertTrue(Ascent.highest(p) == null, "a Runner holds no tier");
+        h.assertTrue(Ascent.grant(p, Ascent.Tier.WINGS, "test"), "wings granted");
+        h.assertTrue(Ascent.has(p, Ascent.Tier.TETHER) && Ascent.has(p, Ascent.Tier.LEAPER) && !Ascent.has(p, Ascent.Tier.SKYBORN),
+                "wings bring the tiers under them, not above");
+        h.assertTrue(heard.equals(java.util.List.of(Ascent.Tier.TETHER, Ascent.Tier.LEAPER, Ascent.Tier.WINGS)), "heard each once: " + heard);
+        h.assertFalse(Ascent.grant(p, Ascent.Tier.LEAPER, "test"), "nothing new");
+        AscentMotion m = AscentServer.motion(p);
+        for (int i = 0; i < 300; i++) m.mark(i % 2 == 0);
+        h.assertTrue(Ascent.arrivedByMovement(p, 10), "half the time swinging is arriving by movement");
+        m.placedAt = AscentServer.now(p);
+        h.assertFalse(Ascent.arrivedByMovement(p, 10), "a block placed: a tower, not a route");
+        m.placedAt = Long.MIN_VALUE / 2;
+        for (int i = 0; i < 300; i++) m.mark(i % 5 == 0);
+        h.assertFalse(Ascent.arrivedByMovement(p, 10), "a fifth of the time is a walk");
+        h.getLevel().getServer().getPlayerList().remove(p);
         h.succeed();
     }
 

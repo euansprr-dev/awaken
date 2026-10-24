@@ -279,6 +279,12 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
   the hall), `isRitual(server, gateId)`.
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
+- `dev.awaken.body.ascent.Ascent` — the Ascent's ladder (§17): `enum Tier {TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN}`,
+  `has(Player, Tier)` (both sides), `highest(Player)`, `grant(ServerPlayer, Tier, String source)` (grants that tier and
+  every one under it, saved, synced; true when new), `onGranted(BiConsumer<ServerPlayer, Tier>)` (each new tier once,
+  lowest first), `state(ServerPlayer)` (`AscentState`), `arrivedByMovement(ServerPlayer, int seconds ≤ 20)` (a third
+  of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
+  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves.
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -1412,6 +1418,10 @@ is what the Ascent decided while building it.
   cuts in, ending the Runner move); a jump at a runnable wall goes to the wall-run, not the wings; flying free off a
   rope (CARRY), a jump at a wall hands the body to the wall-run with the rope's speed.
 - `core.api.MovementHooks` gains `wallRunning(Player)` and `hanging(Player)` (both sides; existing methods unchanged).
+- The Ascent's public API is `dev.awaken.body.ascent.Ascent` (§12). The ladder's record stays the movement module's own
+  attachment (`AscentMemory`, saved, kept through death; schema 1 holds the tiers) rather than a field of progression's
+  Profile: the module that moves the body owns what it may do. "Arrived by movement" is a 20-second trail of bits per
+  player (moving by Ascent state or Runner move, or not) and the last block placed (`BlockEvent.EntityPlaceEvent`).
 
 ---------------------------------------------------------------------------------------------------------------------
 
