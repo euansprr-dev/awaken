@@ -73,7 +73,7 @@ public final class LandmarkTests {
         AwakenTests.registerIsolated("terrain_glass_features", 600, LandmarkTests::glassFeatures);
         AwakenTests.register("terrain_fault_noise", 200, LandmarkTests::faultNoise);
         AwakenTests.registerIsolated("terrain_fault_features", 800, LandmarkTests::faultFeatures);
-        AwakenTests.register("terrain_landmark_shapes", 200, LandmarkTests::shapes);
+        AwakenTests.registerIsolated("terrain_landmark_shapes", 200, LandmarkTests::shapes); // timed: a batch of its own
         AwakenTests.registerIsolated("terrain_landmark_builds_in_box", 1200, LandmarkTests::builds);
         AwakenTests.register("terrain_landmark_sites", 600, LandmarkTests::sites);
     }
