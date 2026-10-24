@@ -8,7 +8,8 @@
 #                hollow follower, shadow self
 #   3 mobs:      signal echo (HUMAN, own skin), mirror shade, memory mimic, court shadow (MIMIC: wear your skin)
 # Rows 2 and 3 are frozen (tick freeze) for the shots: the ghosts vanish after a second without a route, and the
-# mimics need a few AI ticks to copy you first.
+# mimics need a few AI ticks to copy you first. /summon refuses the ghosts and the follower (noSummon), so they come
+# from /awaken admin spawn.
 # Run: tools/autopilot.sh tools/autopilot/avatars.txt
 world autopilot_avatars creative 4242
 waitworld
@@ -49,11 +50,11 @@ wait 10
 
 # --- row 2: the ghosts, the shades and the shadow ---
 cmd tick freeze
-cmd summon awaken:training_ghost ~5 ~ ~5 {Rotation:[180f,0f]}
-cmd summon awaken:echo_ghost ~3 ~ ~5 {Rotation:[180f,0f]}
+cmd awaken admin spawn awaken:training_ghost ~5 ~ ~5 {Rotation:[180f,0f]}
+cmd awaken admin spawn awaken:echo_ghost ~3 ~ ~5 {Rotation:[180f,0f]}
 cmd summon awaken:gate_shade ~1 ~ ~5 {owner:"00000000-0000-0000-0000-00000000000b",NoAI:1b,Rotation:[180f,0f]}
 cmd summon awaken:gate_shade ~-1 ~ ~5 {owner:"00000000-0000-0000-0000-000000000012",NoAI:1b,Rotation:[180f,0f]}
-cmd summon awaken:hollow_follower ~-3 ~ ~5 {NoAI:1b,Rotation:[180f,0f]}
+cmd awaken admin spawn awaken:hollow_follower ~-3 ~ ~5 {NoAI:1b,Rotation:[180f,0f]}
 cmd summon awaken:shadow_self ~-5 ~ ~5 {NoAI:1b,Rotation:[180f,0f]}
 wait 40
 shot avatars_02_spirits_day
