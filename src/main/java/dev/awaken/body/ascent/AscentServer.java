@@ -272,6 +272,7 @@ public final class AscentServer {
     static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         AscentMotion m = motion(p);
+        TetherVow.tick(p, now(p));
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
         boolean moving = Ascent.moving(p, m);
         m.mark(moving);

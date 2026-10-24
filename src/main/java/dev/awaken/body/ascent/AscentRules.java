@@ -302,6 +302,18 @@ public final class AscentRules {
         return false;
     }
 
+    // ---- moving air (core.api.AirHooks) -------------------------------------------------------------------------------
+
+    /** How much of the air each free state takes: the carry all of it, open wings more (they catch it), flight less. */
+    public static final double AIR_CARRY = 1.0, AIR_GLIDE = 1.25, AIR_SOAR = 0.6;
+
+    /** The air's push for one tick (blocks a tick², summed by AirHooks), scaled by the state's share. */
+    public static void air(Kin k, double[] a, double share) {
+        k.vx += a[0] * share;
+        k.vy += a[1] * share;
+        k.vz += a[2] * share;
+    }
+
     // ---- carry ------------------------------------------------------------------------------------------------------
 
     /** One tick of flying free after letting go: gravity, light drag, and input that bends the path without adding speed. */

@@ -17,6 +17,8 @@ public record AscentMemory(int schemaVersion, int tiers, List<Integer> mastery, 
     public static final int SCHEMA = 2;
     /** flags: the first load in a world has been settled (an old world's tiers given back by rank, once). */
     public static final int SETTLED = 1;
+    /** flags: the Tether Vow was kept (the mast reached; SPEC §17.7). */
+    public static final int VOW_KEPT = 2;
     public static final AscentMemory EMPTY = new AscentMemory(SCHEMA, 0, List.of(), 0, 0);
 
     public static final MapCodec<AscentMemory> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(

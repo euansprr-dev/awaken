@@ -22,11 +22,16 @@ public final class AscentModule {
         // before the body's own roll (LOW): an airborne state's landing never hurts
         bus.addListener(EventPriority.HIGH, AscentServer::onFall);
         bus.addListener(AscentServer::onLogin);
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> {
+            if (e.getEntity() instanceof net.minecraft.server.level.ServerPlayer p) TetherVow.forget(p);
+        });
         bus.addListener(AscentServer::onRespawn);
         bus.addListener(AscentServer::onDimension);
         bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, AscentServer::onPlace);
         AscentCommands.register();
         AscentTests.register();
+        // updraft vents are moving air for the free states (the list is filled on the client only)
+        dev.awaken.core.api.AirHooks.register(Updrafts::airAt);
         // the Horizon's sky sites ("needs Wings"): Wings, or a rope and the Leaper's air moves, get you up there
         dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS)
                 && (Ascent.has(p, Ascent.Tier.WINGS) || Ascent.has(p, Ascent.Tier.TETHER) && Ascent.has(p, Ascent.Tier.LEAPER)));
@@ -45,6 +50,7 @@ public final class AscentModule {
         r.playToClient(AscentPayloads.Tiers.TYPE, AscentPayloads.Tiers.STREAM_CODEC);
         r.playToClient(AscentPayloads.Pilot.TYPE, AscentPayloads.Pilot.STREAM_CODEC);
         r.playToClient(AscentPayloads.Remember.TYPE, AscentPayloads.Remember.STREAM_CODEC);
+        r.playToClient(AscentPayloads.Vow.TYPE, AscentPayloads.Vow.STREAM_CODEC);
         r.playToClient(AscentPayloads.Stop.TYPE, AscentPayloads.Stop.STREAM_CODEC);
     }
 }

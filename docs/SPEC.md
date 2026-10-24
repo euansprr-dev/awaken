@@ -286,7 +286,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   every one under it, saved, synced; true when new), `onGranted(BiConsumer<ServerPlayer, Tier>)` (each new tier once,
   lowest first), `state(ServerPlayer)` (`AscentState`), `arrivedByMovement(ServerPlayer, int seconds ≤ 20)` (a third
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
-  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves.
+  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
+  (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -1855,6 +1856,11 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   wings unfold for 2.3 s with one slow beat, then "Your body remembers." and the tiers given ("The line · The leap ·
   Wings · The sky") in the Holo look, about 6.5 s in all. Others nearby see the light and the wings and hear the swell
   (`EV_REMEMBER`). `/awaken ascent remember` replays it (dev).
+- **A zip to a top** (any zip, the vow's too): when the block the rope bit has two cells of room over it (a ledge, a
+  pylon, a branch), arriving pulls the body up and onto it: the rise needed (+0.5) as upward speed (at most 1.1), the
+  zip's sideways speed dropped, and for 14 ticks a pull toward the block's centre, gentle against the face while the
+  feet are under its top, then over the edge (one push at arrival was stopped by the face below the top). A face with
+  more wall over it still gets the old hop off it.
 - **The rope wraps** (soft failure, not a cut): checked every 2 ticks, something solid (never leaves) across the rope's
   middle becomes the new anchor (the face it meets from the hand, 0.06 off it) and the rope shortens to the hand's
   distance from it; the swing goes on about the new point (a strain, a small spark; the server re-checks the anchor).
@@ -1872,6 +1878,18 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **Latency** (`ascent_latency`, the gate's latency tours as a test): a real swing from a block 20 up, a release and a
   30-block fall to a hard landing, every state message reaching the server 300 ms (6 ticks) after its positions: no
   refusal, no move sent back, no fall damage, the state ends, the arrival still counts as by movement.
+- **Moving air** (`core.api.AirHooks`, for the Wilds' updraft pylons and windways): sources registered on both sides
+  add an acceleration (blocks a tick²) at the feet; the client's free states take it after their own step (the carry
+  ×1, wings ×1.25, flight ×0.6; a rope none). Sources read only what both sides have (blocks, block entities,
+  entities, synced data) and allocate nothing. Scale (applied every tick, so it adds up): an updraft of 0.045 up climbs
+  open wings 2-4 blocks a second (0.13 shot them up 58 in 5 s); a windway of 0.02-0.03 along carries a glide.
+- **The updraft vent** (`awaken:updraft_vent`, a Precursor grate, light 10, pickaxe): a column of rising air, radius
+  3.5, 34 high from its top, lift 0.045 to 24 up then fading to 0 at the top, 35% less at the rim; columns don't stack
+  (the strongest counts). Drawn as 24 soft filaments of pale air rising up the column (6-10 long, 0.3 a tick), turned
+  to face you, over a faint haze its width, both fading where the lift fades (additive: strength in the colour, not
+  alpha; one draw a vent, seen from 160); heard as a soft rising rush every 2.5-4 s near it (`ascent.updraft`).
+  Client side the loaded vents are a list their block entities join, so the air costs a list walk. The sandbox puts
+  one on a 13-high pillar off the tower's side (its column reaches past the deck). The Wilds' pylons stand on them.
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
   hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
   Leaper together (`HorizonHooks.addReach`).
@@ -1881,6 +1899,30 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   it back through the same keys from the same start (a `tp` command, then 20 ticks to settle). Playing logs where the
   run ended against the recording's end ("off by d"), so a tour can tell a route that still works from one a change
   broke. Record from standing still; at most five minutes.
+
+### 17.7 The Tether Vow (the rope, earned at the first vault)
+- Who: awake, in the overworld, without the rope, the `ascent` option on. Where: a Precursor vault's forecourt (local
+  x 4-18, z 0-3, feet 1-5 over the floor: between the pylons, before the sealed door, which no low rank can open; every
+  vault qualifies until one is kept, so the first one reached is where it happens). Checked once a second per player.
+- The vault's turn is read from its pylons' own blocks at the front corners (the amber lights at local y 20, the trim at
+  19, the polished cornice at 11: at least 4 of the 6); terrain can't fake them, and a vault dug into a hill keeps them
+  (open air at the back corners, the first try, failed on the first real spawn vault). The vault's box is its piece's
+  (the structure start's is padded by 12). A layout from before the vault redesign reads as none and is skipped. `TetherVow.Site` maps local to world like
+  `PrecursorRuinPiece`.
+- The call (3 s): the Lens takes the vow's look (`awaken:vow` in `lens/looks_ascent.json`: cold light, deep blue
+  shadows, vignette, bloom), the wind ducks, a low glass note swells (`ascent.vow_call`), the vault's light gathers off
+  the paving and drifts toward the mast; "The vault knows you."
+- The line: the server gives TETHER (`Ascent.grant(..., "tether vow")`) and names the line's end: a plate round the
+  nearer pylon's spire (inner one first; weathering may have taken some). The client throws the rope there for the
+  player (`AscentMoves.zipTo`, a zip held until it arrives, key or no key; the server checks its anchor as always),
+  with `ascent.vow_line` and a launch kick: "The line is yours.", then "Hold <key> to throw the line. Let go to fly."
+  (the key's own name), the look easing back, then "Reach the beacon mast." while a ring of light pulses at the mast.
+  No plate left: the rope is given without the pull.
+- Kept: feet 15+ over the floor within 5 of the mast's line, within 2 minutes and 64 blocks: `ascent.remember`, full
+  Flow, "Vow kept.", 10 Tether mastery, a fifth of a level's XP (DISCOVERY), counter `awaken:ascent_vow_kept`, flag
+  `VOW_KEPT` in the record. Lapsed: "The mast will wait." (the rope stays; nothing is lost).
+- `ascent_tether_vow` builds a vault from its blueprint in each turn and checks the turn, the forecourt, the pylon
+  anchor (real to the server, the line clear) and the mast, then runs the director: call, line, kept.
 
 ---------------------------------------------------------------------------------------------------------------------
 

@@ -20,6 +20,10 @@ public final class AscentContent {
     static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Awaken.MODID);
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
+    static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Awaken.MODID);
+    static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
+    static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>> BLOCK_ENTITIES =
+            DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Awaken.MODID);
 
     /** Saved with the player and kept through death: the tiers held. */
     public static final Supplier<AttachmentType<AscentMemory>> MEMORY = ATTACHMENTS.register("ascent_memory",
@@ -41,6 +45,19 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> BOOM = sound("ascent.boom");
     public static final DeferredHolder<SoundEvent, SoundEvent> LAND = sound("ascent.land");
     public static final DeferredHolder<SoundEvent, SoundEvent> REMEMBER = sound("ascent.remember");
+    public static final DeferredHolder<SoundEvent, SoundEvent> UPDRAFT = sound("ascent.updraft");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VOW_CALL = sound("ascent.vow_call");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VOW_LINE = sound("ascent.vow_line");
+
+    /** A Precursor grate that breathes a column of rising air (the Wilds' pylons stand on them; SPEC §17.6). */
+    public static final net.neoforged.neoforge.registries.DeferredBlock<UpdraftVentBlock> UPDRAFT_VENT = BLOCKS.registerBlock("updraft_vent",
+            UpdraftVentBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_CYAN).strength(3.5F, 9F)
+                    .requiresCorrectToolForDrops().sound(net.minecraft.world.level.block.SoundType.DEEPSLATE_TILES).lightLevel(s -> 10));
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem> UPDRAFT_VENT_ITEM =
+            ITEMS.registerSimpleBlockItem(UPDRAFT_VENT);
+    public static final Supplier<net.minecraft.world.level.block.entity.BlockEntityType<UpdraftVentBlockEntity>> UPDRAFT_VENT_BE =
+            BLOCK_ENTITIES.register("updraft_vent", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(UpdraftVentBlockEntity::new,
+                    UPDRAFT_VENT.get()));
 
     /** Motes of the Signal's light: sparks where a rope bites, feathers off the wings, the shock ring's grit. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MOTE = PARTICLES.register("ascent_mote", () -> new SimpleParticleType(false));
@@ -53,5 +70,8 @@ public final class AscentContent {
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
         PARTICLES.register(modBus);
+        BLOCKS.register(modBus);
+        ITEMS.register(modBus);
+        BLOCK_ENTITIES.register(modBus);
     }
 }

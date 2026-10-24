@@ -107,5 +107,32 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "ascent.updraft": {
+    "subtitle": "subtitles.awaken.ascent.updraft",
+    "sounds": [
+      {
+        "name": "awaken:ascent_updraft",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.vow_call": {
+    "subtitle": "subtitles.awaken.ascent.vow_call",
+    "sounds": [
+      {
+        "name": "awaken:ascent_vow_call",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.vow_line": {
+    "subtitle": "subtitles.awaken.ascent.vow_line",
+    "sounds": [
+      {
+        "name": "awaken:ascent_vow_line",
+        "attenuation_distance": 24
+      }
+    ]
   }
 }

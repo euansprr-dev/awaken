@@ -1,6 +1,7 @@
 package dev.awaken.body.ascent;
 
 import dev.awaken.core.test.AwakenTests;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 
 /**
@@ -19,6 +20,7 @@ final class AscentTests {
         AwakenTests.register("ascent_chains_and_mastery", 40, AscentTests::chainsAndMastery);
         AwakenTests.registerIsolated("ascent_no_kicks", 60, AscentTests::noKicks);
         AwakenTests.registerIsolated("ascent_latency", 60, AscentTests::latency);
+        AwakenTests.registerIsolated("ascent_tether_vow", 200, AscentTests::tetherVow);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -72,6 +74,31 @@ final class AscentTests {
             if (d.speed() >= AscentRules.BOOM_SPEED) boomAt = t;
         }
         h.assertTrue(boomAt > 0 && -d.y < 60, "a 60 degree dive booms within 60 blocks (at tick " + boomAt + ", " + -d.y + " down)");
+        // an updraft (moving air, 0.12 up) under open wings turns the sink into a climb
+        AscentRules.Kin u = new AscentRules.Kin().set(0, 0, 0, 0, -0.1, 1.1);
+        double[] lift = {0, Updrafts.LIFT, 0};
+        double uy0 = u.y;
+        for (int t = 0; t < 100; t++) {
+            AscentRules.glideStep(u, 0, 6);
+            AscentRules.air(u, lift, AscentRules.AIR_GLIDE);
+        }
+        h.assertTrue(u.y > uy0 + 8 && u.y < uy0 + 22, "a glide in a vent's heart climbs a thermal's 2-4 blocks a second ("
+                + (u.y - uy0) + " in 5 s, " + u.speed() + " b/t)");
+        // an updraft vent's column: full lift near the vent, less at the rim, fading out above FULL, none outside
+        net.minecraft.core.BlockPos vent = new net.minecraft.core.BlockPos(0, 64, 0);
+        double heart = Updrafts.liftOf(vent, 0.5, 70, 0.5), rim = Updrafts.liftOf(vent, 0.5 + Updrafts.RADIUS - 0.1, 70, 0.5);
+        h.assertTrue(Math.abs(heart - Updrafts.LIFT) < 1e-9 && rim > heart * 0.6 && rim < heart * 0.7, "heart " + heart + ", rim " + rim);
+        h.assertTrue(Updrafts.liftOf(vent, 0.5, 65 + Updrafts.HEIGHT - 2, 0.5) < heart * 0.25 && Updrafts.liftOf(vent, 0.5, 66 + Updrafts.HEIGHT, 0.5) == 0
+                && Updrafts.liftOf(vent, 4.6, 70, 0.5) == 0, "the column ends at its top and its rim");
+        Updrafts.add(h.getLevel(), vent);
+        double[] air = new double[3];
+        try {
+            h.assertTrue(dev.awaken.core.api.AirHooks.sample(h.getLevel(), 0.5, 70, 0.5, air) && Math.abs(air[1] - Updrafts.LIFT) < 1e-9,
+                    "AirHooks hears the vent: " + air[1]);
+        } finally {
+            Updrafts.remove(h.getLevel(), vent);
+        }
+        h.assertFalse(dev.awaken.core.api.AirHooks.sample(h.getLevel(), 0.5, 70, 0.5, air), "and not once it's gone");
         AscentRules.Kin c = new AscentRules.Kin().set(0, 0, 0, 0, 0, 2.0);
         double y0 = c.y;
         for (int t = 0; t < 30; t++) AscentRules.glideStep(c, 0, -40);
@@ -322,6 +349,88 @@ final class AscentTests {
             AscentServer.onState(f.p, st.rope ? new AscentPayloads.State(st.ordinal(), ax, ay, az, (float) len)
                     : new AscentPayloads.State(st.ordinal(), 0, 0, 0, 0));
             it.remove();
+        }
+    }
+
+    /**
+     * The Tether Vow on a real vault built from its blueprint in each of the four turns: the turn is read back from the
+     * pylons, the forecourt is where the blueprint says, the line's anchor on the pylon top is real to the server's check
+     * and clear from the forecourt; then the director: the call, the line (the rope given), the vow kept at the mast.
+     */
+    private static void tetherVow(GameTestHelper h) {
+        net.minecraft.server.level.ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(new BlockPos(0, 1, 0)).above(120);
+        var size = dev.awaken.above.ruin.RuinBuilder.size(dev.awaken.above.ruin.RuinKind.VAULT);
+        var box = new net.minecraft.world.level.levelgen.structure.BoundingBox(o.getX(), o.getY(), o.getZ(),
+                o.getX() + size.x() - 1, o.getY() + size.y() - 1, o.getZ() + size.z() - 1);
+        net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        try {
+            for (int rot = 0; rot < 4; rot++) {
+                TetherVow.Site site = new TetherVow.Site(box, rot);
+                wipe(level, box);
+                dev.awaken.above.ruin.RuinBuilder.build(dev.awaken.above.ruin.RuinKind.VAULT, 4242L + rot, 1, new dev.awaken.above.ruin.RuinBuilder.Sink() {
+                    @Override
+                    public void set(int x, int y, int z, net.minecraft.world.level.block.state.BlockState state) {
+                        level.setBlock(site.world(x, y, z), state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                    }
+
+                    @Override
+                    public void fillDown(int x, int y, int z, net.minecraft.world.level.block.state.BlockState state, int depth) {
+                        level.setBlock(site.world(x, y, z), state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                    }
+
+                    @Override
+                    public void chest(int x, int y, int z, net.minecraft.core.Direction facing,
+                                      net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable> table) {
+                        level.setBlock(site.world(x, y, z), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState(),
+                                net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                    }
+                });
+                // dug into a hill: stone packed round the back corners above the roof (the first real spawn vault was)
+                for (int x : new int[]{0, 1, 2, 3, 19, 20, 21, 22}) for (int z = 18; z <= 22; z++) for (int y = 9; y <= 16; y++) {
+                    level.setBlock(site.world(x, y, z), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),
+                            net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                }
+                h.assertTrue(TetherVow.rotationOf(level, box) == rot, "turn " + rot + " read back as " + TetherVow.rotationOf(level, box));
+                BlockPos fore = site.world(11, 1, 2);
+                h.assertTrue(site.inForecourt(fore.getX() + 0.5, fore.getY(), fore.getZ() + 0.5)
+                        && !site.inForecourt(site.world(11, 1, 8).getX() + 0.5, fore.getY(), site.world(11, 1, 8).getZ() + 0.5),
+                        "the forecourt, not the antechamber, in turn " + rot);
+                p.snapTo(fore.getX() + 0.5, fore.getY(), fore.getZ() + 0.5, 0, 0);
+                double[] top = TetherVow.pylonTop(level, site, p.getX(), p.getZ());
+                h.assertTrue(top != null && AscentServer.anchorReal(p, top[0], top[1], top[2]), "a real anchor on the pylon top in turn " + rot);
+                h.assertTrue(AscentAnchors.clear(level, p, p.position().add(0, AscentRules.HAND_HEIGHT, 0), top[0], top[1], top[2]),
+                        "the line to the pylon is clear in turn " + rot);
+                h.assertTrue(TetherVow.atMast(site, site.mast().getX() + 0.5, box.minY() + 16, site.mast().getZ() + 1.5)
+                        && !TetherVow.atMast(site, fore.getX() + 0.5, fore.getY(), fore.getZ() + 0.5), "the mast in turn " + rot);
+            }
+            // the director: awake, no rope, in the forecourt of the last vault built
+            dev.awaken.progression.Progression.awaken(p);
+            h.assertTrue(TetherVow.eligible(p), "an awakened player without the rope is offered the vow");
+            TetherVow.Site site = new TetherVow.Site(box, 3);
+            long now = AscentServer.now(p);
+            TetherVow.begin(p, site, now);
+            TetherVow.tick(p, now + TetherVow.CALL_TICKS - 1);
+            h.assertFalse(Ascent.has(p, Ascent.Tier.TETHER), "the call comes before the line");
+            TetherVow.tick(p, now + TetherVow.CALL_TICKS);
+            h.assertTrue(Ascent.has(p, Ascent.Tier.TETHER) && !Ascent.has(p, Ascent.Tier.LEAPER), "the line gives the rope (only)");
+            BlockPos m = site.mast();
+            p.snapTo(m.getX() + 0.5, box.minY() + 16, m.getZ() + 0.5, 0, 0);
+            TetherVow.tick(p, now + TetherVow.CALL_TICKS + 40);
+            h.assertTrue(!TetherVow.running(p) && (p.getData(AscentContent.MEMORY).flags() & AscentMemory.VOW_KEPT) != 0, "the vow is kept at the mast");
+            h.assertFalse(TetherVow.eligible(p), "and never offered again");
+        } finally {
+            TetherVow.forget(p);
+            wipe(level, box);
+            level.getServer().getPlayerList().remove(p);
+        }
+        h.succeed();
+    }
+
+    private static void wipe(net.minecraft.server.level.ServerLevel level, net.minecraft.world.level.levelgen.structure.BoundingBox box) {
+        net.minecraft.world.level.block.state.BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        for (BlockPos q : BlockPos.betweenClosed(box.minX(), box.minY() - 2, box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+            level.setBlock(q, air, net.minecraft.world.level.block.Block.UPDATE_CLIENTS | net.minecraft.world.level.block.Block.UPDATE_SKIP_ALL_SIDEEFFECTS);
         }
     }
 
