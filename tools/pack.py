@@ -303,7 +303,12 @@ def cmd_dhconfig(game_dir, preset, only_if_missing=False):
 
 def env(e):
     side = lambda v: "required" if v == "required" else ("optional" if v == "optional" else "unsupported")
-    return {"client": side(e["client"]), "server": side(e["server"])}
+    client, server = side(e["client"]), side(e["server"])
+    # single player runs the server inside the client: a launcher must never skip a mod the server runs
+    # (Lithostitched is "client unsupported" on Modrinth, yet Tectonic needs it in every single-player world)
+    if client == "unsupported" and server != "unsupported":
+        client = server
+    return {"client": client, "server": server}
 
 
 def cmd_export(out, profiles, awaken_jar):

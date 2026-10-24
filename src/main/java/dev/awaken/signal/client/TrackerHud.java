@@ -119,15 +119,20 @@ final class TrackerHud {
         g.pose().translate(r.x(), r.y());
         g.pose().scale((float) s, (float) s);
         int w0 = (int) Math.round(r.w() / s), h0 = (int) Math.round(r.h() / s);
-        g.fill(0, 0, w0, h0, Glass.a(Glass.GLASS, 0.55f));
-        g.fill(0, 0, 1, h0, Glass.a(Glass.EDGE, 0.8f));
+        if (HudLook.holo()) {
+            // always on: a still card (no scan, no glitch), only the line's own fade when it changes
+            HudLook.card(g, 0, 0, w0, h0, Glass.EDGE, 1f, 1f, 0f);
+        } else {
+            g.fill(0, 0, w0, h0, Glass.a(Glass.GLASS, 0.55f));
+            g.fill(0, 0, 1, h0, Glass.a(Glass.EDGE, 0.8f));
+        }
         int ty = 3;
         if (line1 != null) {
-            g.text(font, line1, 4, ty, Glass.a(colour1, Math.max(0.35f, alpha)), true);
-            if (!compass.isEmpty()) g.text(font, compass, 4 + font.width(line1), ty, Glass.a(Glass.EDGE, 1f), true);
+            HudLook.text(g, font, line1, 4, ty, Glass.a(colour1, Math.max(0.35f, alpha)), true);
+            if (!compass.isEmpty()) HudLook.text(g, font, compass, 4 + font.width(line1), ty, Glass.a(Glass.EDGE, 1f), true);
             ty += SignalLayout.LINE;
         }
-        if (line2 != null) g.text(font, line2, 4, ty, Glass.a(Glass.AMBER, 1f), true);
+        if (line2 != null) HudLook.text(g, font, line2, 4, ty, Glass.a(Glass.AMBER, 1f), true);
         g.pose().popMatrix();
     }
 }

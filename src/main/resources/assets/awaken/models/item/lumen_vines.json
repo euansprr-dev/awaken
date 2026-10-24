@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:block/lumen_vines_tip",
+    "layer1": {
+      "sprite": "awaken:block/lumen_vines_tip_glow",
+      "neoforge_data": {
+        "light_emission": 15
+      }
+    }
+  }
+}

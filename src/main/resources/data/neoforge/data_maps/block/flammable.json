@@ -1,0 +1,64 @@
+{
+  "values": {
+    "awaken:elder_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_elder_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:elder_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_elder_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:lumen_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_lumen_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:lumen_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:stripped_lumen_wood": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:veined_lumen_log": {
+      "burn_odds": 5,
+      "ignite_odds": 5
+    },
+    "awaken:elder_planks": {
+      "burn_odds": 20,
+      "ignite_odds": 5
+    },
+    "awaken:lumen_planks": {
+      "burn_odds": 20,
+      "ignite_odds": 5
+    },
+    "awaken:elder_leaves": {
+      "burn_odds": 60,
+      "ignite_odds": 30
+    },
+    "awaken:lumen_leaves": {
+      "burn_odds": 60,
+      "ignite_odds": 30
+    },
+    "awaken:lumen_moss": {
+      "burn_odds": 20,
+      "ignite_odds": 60
+    },
+    "awaken:lumen_vines": {
+      "burn_odds": 100,
+      "ignite_odds": 15
+    }
+  }
+}

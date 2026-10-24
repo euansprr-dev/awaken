@@ -1,10 +1,19 @@
 package dev.awaken.core;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.CompoundTagArgument;
+import net.minecraft.commands.arguments.ResourceArgument;
+import net.minecraft.commands.arguments.coordinates.Vec3Argument;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.commands.SummonCommand;
+import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.util.ArrayList;
@@ -31,6 +40,12 @@ public final class AwakenCommands {
             c.getSource().sendSuccess(() -> Component.literal("Play-day " + day), false);
             return (int) day;
         }));
+        // dev: /summon for any entity type, even the ones it refuses (noSummon: ghosts, followers), for tours
+        root.then(Commands.literal("admin").requires(admin()).then(Commands.literal("spawn")
+                .then(Commands.argument("entity", ResourceArgument.resource(event.getBuildContext(), Registries.ENTITY_TYPE))
+                        .then(Commands.argument("pos", Vec3Argument.vec3()).executes(c -> spawn(c, new CompoundTag(), true))
+                                .then(Commands.argument("nbt", CompoundTagArgument.compoundTag())
+                                        .executes(c -> spawn(c, CompoundTagArgument.getCompoundTag(c, "nbt"), false)))))));
         for (var c : CONTRIBUTORS) c.accept(root, event.getBuildContext());
         var node = event.getDispatcher().register(root);
         // "/awaken as <player> <any awaken command>": every subcommand that acts on its caller acts on that player, so
@@ -40,6 +55,13 @@ public final class AwakenCommands {
                     var p = net.minecraft.commands.arguments.EntityArgument.getPlayer(c, "player");
                     return c.getSource().withEntity(p).withPosition(p.position()).withRotation(p.getRotationVector()).withLevel(p.level());
                 }))));
+    }
+
+    private static int spawn(CommandContext<CommandSourceStack> c, CompoundTag nbt, boolean finalize) throws CommandSyntaxException {
+        Entity e = SummonCommand.createEntity(c.getSource(), ResourceArgument.getResource(c, "entity", Registries.ENTITY_TYPE),
+                Vec3Argument.getVec3(c, "pos"), nbt, finalize);
+        c.getSource().sendSuccess(() -> Component.literal("Spawned " + e.getDisplayName().getString()), false);
+        return 1;
     }
 
     /** Requirement for debug/admin subcommands. */

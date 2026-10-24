@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.powers.PowerRegistry;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.Starter;
+import dev.awaken.signal.client.HudLook;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -19,9 +20,11 @@ import java.util.List;
 /**
  * "Choose your first power": three cards side by side (icon, name in the family colour, family, one line of what it
  * does). Click a card or press 1 / 2 / 3. Esc closes it for now; the Now tracker and the next login bring it back.
- * Sized to fit the smallest auto GUI scale (378 × 246 GUI px) and doesn't pause the game.
+ * Sized to fit the smallest auto GUI scale (378 × 246 GUI px) and doesn't pause the game. With the System's projected
+ * look ({@link HudLook}, the holo module) the panel and its three cards are projected glass that scan in, the hovered
+ * card lit in its family colour; layout, clicks and keys are the same.
  */
-final class StarterScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
+final class StarterScreen extends Screen implements dev.awaken.signal.client.QuietScreen, dev.awaken.signal.client.ReadingScreen {
     private static final int EDGE = 0xFF7FC3FF, LANTERN = 0xFFFFCF7A, TITLE = 0xFFF4F6FB, LABEL = 0xFFAFC2D8, DIM = 0xFF6F8299;
     private static final int CARD_H = 104;
 
@@ -30,6 +33,7 @@ final class StarterScreen extends Screen implements dev.awaken.signal.client.Qui
     private int hovered = -1;
     private @Nullable String picked;
     private int pickedAge;
+    private long openedAt;
 
     StarterScreen(List<String> ids) {
         super(Component.translatable("screen.awaken.first_power"));
@@ -46,6 +50,7 @@ final class StarterScreen extends Screen implements dev.awaken.signal.client.Qui
         px = (width - pw) / 2;
         py = (height - ph) / 2;
         cw = (pw - 16 - 2 * 6) / Math.max(1, cards.size());
+        if (openedAt == 0) openedAt = System.nanoTime();
     }
 
     private int cardX(int i) {
@@ -66,12 +71,17 @@ final class StarterScreen extends Screen implements dev.awaken.signal.client.Qui
 
     @Override
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
-        g.fillGradient(0, 0, width, height, 0x90050810, 0xB0050810);
+        if (HudLook.holo()) g.fillGradient(0, 0, width, height, 0x50050810, 0x78050810); // light: the world shows through
+        else g.fillGradient(0, 0, width, height, 0x90050810, 0xB0050810);
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
         super.extractRenderState(g, mouseX, mouseY, a);
+        if (HudLook.holo()) {
+            projected(g, mouseX, mouseY);
+            return;
+        }
         g.fill(px, py, px + pw, py + ph, 0xE80F1724);
         g.outline(px, py, pw, ph, 0xB07FC3FF);
         g.centeredText(font, title, px + pw / 2, py + 8, TITLE);
@@ -90,6 +100,50 @@ final class StarterScreen extends Screen implements dev.awaken.signal.client.Qui
             for (int l = 0; l < Math.min(3, lines.size()); l++) g.text(font, lines.get(l), px + 10, dy + l * 10, LABEL, false);
         }
         g.centeredText(font, Component.literal("Click a card or press 1 · 2 · 3     Esc: later"), px + pw / 2, py + ph - 12, DIM);
+    }
+
+    /** The projected look: the panel scans in, then the cards one after another; the hovered one lights up. */
+    private void projected(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        float ms = (System.nanoTime() - openedAt) / 1e6f;
+        float reveal = Math.min(1f, ms / 320f);
+        HudLook.card(g, px, py, pw, ph, EDGE, 1f, reveal, 0f);
+        g.enableScissor(px, py, px + pw, py + (int) Math.ceil(ph * (1 - Math.pow(1 - reveal, 3))));
+        HudLook.centered(g, font, title.getString(), px + pw / 2, py + 8, TITLE, true);
+        HudLook.centered(g, font, "The Signal offers three. Take one now; more come later.", px + pw / 2, py + 18, LABEL, true);
+        hovered = picked == null ? cardAt(mouseX, mouseY) : -1;
+        for (int i = 0; i < cards.size(); i++) {
+            float r = Math.min(1f, Math.max(0f, (ms - 160f - i * 70f) / 260f));
+            if (r > 0) projectedCard(g, i, cards.get(i), r);
+        }
+        int dy = cardY() + CARD_H + 6;
+        PowerType focus = hovered >= 0 ? cards.get(hovered) : null;
+        if (picked != null) {
+            HudLook.centered(g, font, "Waking it up…", px + pw / 2, dy + 4, LANTERN, true);
+        } else if (focus != null) {
+            List<FormattedCharSequence> lines = font.split(Component.literal(focus.description), pw - 20);
+            for (int l = 0; l < Math.min(3, lines.size()); l++) HudLook.text(g, font, lines.get(l), px + 10, dy + l * 10, LABEL, false);
+        }
+        HudLook.centered(g, font, "Click a card or press 1 · 2 · 3     Esc: later", px + pw / 2, py + ph - 12, DIM, true);
+        g.disableScissor();
+    }
+
+    private void projectedCard(GuiGraphicsExtractor g, int i, PowerType t, float reveal) {
+        int x = cardX(i), y = cardY();
+        boolean on = i == hovered || t.id.toString().equals(picked);
+        int family = 0xFF000000 | t.family.colour;
+        HudLook.card(g, x, y, cw, CARD_H, on ? family : 0x5A7090, 1f, reveal, 0f);
+        if (on) HudLook.glow(g, x, y, cw, CARD_H, family, 1f);
+        if (reveal < 0.6f) return; // the words come once the scan has passed them
+        HudLook.text(g, font, String.valueOf(i + 1), x + 4, y + 4, on ? LANTERN : DIM, false);
+        g.blitSprite(RenderPipelines.GUI_TEXTURED, PowerHud.icon(t), x + cw / 2 - 12, y + 8, 24, 24);
+        HudLook.centered(g, font, t.name, x + cw / 2, y + 38, family, true);
+        HudLook.centered(g, font, t.family.label, x + cw / 2, y + 49, DIM, true);
+        String blurb = Starter.BLURB.getOrDefault(t.id.toString(), "");
+        List<FormattedCharSequence> lines = font.split(Component.literal(blurb), cw - 10);
+        for (int l = 0; l < Math.min(4, lines.size()); l++) {
+            FormattedCharSequence line = lines.get(l);
+            HudLook.text(g, font, line, x + (cw - font.width(line)) / 2, y + 63 + l * 10, TITLE, false);
+        }
     }
 
     private void drawCard(GuiGraphicsExtractor g, int i, PowerType t) {

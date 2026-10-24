@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "tip=false": {
+      "model": "awaken:block/lumen_vines"
+    },
+    "tip=true": {
+      "model": "awaken:block/lumen_vines_tip"
+    }
+  }
+}

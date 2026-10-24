@@ -27,6 +27,11 @@ cmd awaken holo demo panel
 wait 30
 shot holo_01_demo_view
 holo log
+# the external-texture primitive (HoloCanvas/UiCanvas.texture): a map's parchment on the demo panel
+holo tex on
+wait 5
+shot holo_07_demo_texture
+holo tex off
 
 # --- the HUD at rest, then a sharp turn ---
 shot holo_02_hud_still
@@ -93,6 +98,35 @@ wait 30
 shot holo_27_read_night
 cmd time set 6000
 wait 20
+
+# --- placement regression: at rest the open panel sits in the same place 30, 60 and 120 ticks after opening, after
+# closing and opening again, and after a GUI-scale change (compare the "holo log" centres and the shots) ---
+screen close
+wait 20
+screen holo
+wait 30
+holo log
+shot holo_30_rest_030
+wait 27
+holo log
+shot holo_31_rest_060
+wait 57
+holo log
+shot holo_32_rest_120
+screen close
+wait 10
+screen holo
+wait 40
+holo log
+shot holo_33_rest_after_toggle
+gui 2
+wait 20
+holo log
+shot holo_34_rest_gui2
+gui 0
+wait 20
+holo log
+shot holo_35_rest_gui0_again
 
 # --- arms: wide and slim ---
 holo arm wide
