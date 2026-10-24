@@ -212,7 +212,9 @@ final class CitizensCommands {
             return 0;
         }
         double[] eye = vantage(c, at[0], at[2], 7.0);
-        double ex = eye[0], ez = eye[1], ey = Math.max(at[1] - 1.2, c.ledger.streetY + liftAt(c, ex, ez) + 1.0);
+        // on the street (a step up at most), looking up at a roof when that's where it is
+        double ground = c.ledger.streetY + liftAt(c, ex(eye), eye[1]) + 1.0;
+        double ex = eye[0], ez = eye[1], ey = Math.clamp(at[1] - 1.2, ground, ground + 2.5);
         float yaw = (float) Math.toDegrees(Math.atan2(-(at[0] - ex), at[2] - ez));
         float pitch = (float) -Math.toDegrees(Math.atan2(at[1] - (ey + 1.62), Math.max(0.5, Math.hypot(at[0] - ex, at[2] - ez))));
         p.teleportTo(c.level, ex, ey, ez, Set.of(), yaw, pitch, true);
@@ -312,6 +314,10 @@ final class CitizensCommands {
             if (k == CityPlan.PLOT || k == CityPlan.LANDMARK || k == CityPlan.WALL) return false;
         }
         return true;
+    }
+
+    private static double ex(double[] eye) {
+        return eye[0];
     }
 
     private static int liftAt(Citizens c, double x, double z) {
