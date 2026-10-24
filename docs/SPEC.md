@@ -1350,6 +1350,96 @@ with `playtestMode` each logout writes it to playtest.jsonl (`xp_sources`). XP b
 Tests: `wilds_ward_rules`, `wilds_arrival_history`, `wilds_discovery_pays`, `landmark_horizon_line`, and the Horizon box
 in the System's layout test.
 
+### Gate Rig (gates, plan section 7 "Gate rooms: the room is the puzzle"; branch pack/gate-rig)
+
+A small layer under the painter that gives a room a staged timeline. Pure geometry in `gates.world` (`RigRoom`,
+`RigRooms`, `RigCollapse`, `RigMirrors`, `RigWells`, `RigBeam`), shared by the painter, the server and the solvability
+checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's director.
+
+- **Content version 4** (`GatePlan.CONTENT_VERSION`): each ordinary floor (never the Lord's floor or the ritual hall) of
+  a theme with an archetype gets one rig room. Ember Mines, Glass Desert, Bell Crypt: Collapse Run. Mirror Palace:
+  Mirror Hall. Precursor Lab: Mirror Hall or Gravity Wells (per floor, by hash). Sky Archipelago, Nightmare: Gravity
+  Wells. The room is a NORMAL or ELITE room on the critical path (not the start or the end), at most 2x2 slots, every
+  door at its floor; the biggest that fits, ties by the room's seed. It loses its set piece and becomes RECT. Every
+  choice is a per-room hash after the version 3 rooms are built, never the builder's random stream: version 3 plans
+  build exactly as before, and in a version 4 plan every room without a rig is what version 3 built. READY gates
+  nobody entered rebuild on version 4 at start, as for every version bump.
+- **The model:** a *group* is a set of blocks swapped together between their painted (rest) state and an active state
+  (a group with no blocks is a flag the archetype reads); a *track* is a timeline of beats (WARN, APPLY, RESTORE) on
+  groups, looping or not; a *trigger* starts a track: a player in a box (ZONE, PLATE), the light reaching a block
+  (BEAM) or a fight in the room (ENCOUNTER: its monsters alive). A once trigger latches for good; the others fire again
+  after their track ends and their cooldown passes.
+- **The director** runs every tick for rig rooms with someone in them or with a track running. Beats play by elapsed
+  game time, everything between two ticks in order (catch-up after lag, up to 8 loops a tick). A RESET track whose
+  room empties (or a fight's track when the fight ends) stops and puts back every group it changed; KEEP tracks play
+  on. A block that rises back (RISE) or a mirror that swings (SPIN) is drawn by the client first and placed after
+  6 or 5 ticks, never inside a player (it waits for them to step off).
+- **Saved:** `FloorState.rig` (`RigState`, schema 1): per rig room the tracks running (start time, last tick played),
+  the groups applied, the latched triggers and when the others may fire again; the floor's cave-in waves. Blocks are
+  saved with their chunks. After a start, rooms saved mid-track come back to life and finish or reset. Positions
+  and states follow from the plan, so a relog or a restart continues exactly.
+- **What the client sees:** `gate_rig_scene` (the rig rooms of your floor: lenses, seals, wells, whether a room surges;
+  sent on arrival, login and leaving) and `gate_rig_cue` (one moment: WARN, FALL, RISE, SPIN, SHATTER, IGNITE, DROP,
+  SURGE, PIT, CAVE with cells and block states), sent to everyone within 96 blocks. Moving blocks are drawn with the
+  game's own block models (`submitMovingBlock`), light with the rig's render type `awaken_rig_light` (additive,
+  depth-tested, no depth write, the lightning shaders with their improved-transparency set; cores near white so Lens
+  blooms them; vanilla lightning if the pipeline fails). Own particles only: `gate_rig_grit`, `gate_rig_spark`,
+  `gate_rig_glint`, `gate_rig_shard`, `gate_rig_mote`. Own sounds `gate.rig.*` (tools/art/specs/audio_rig.py).
+- **Collapse Run:** the room is a pit (its floor at the band's bottom, 4 below the room's floor: magma in the Ember
+  Mines, sand in the Glass Desert, void glass in the Bell Crypt) crossed by a 4-wide causeway along the two door axes
+  (only rooms with exactly those two doors). Rows are steps along it from the entry; 2 rows at each end are landings
+  that never fall. Stepping onto the first falling row from either end starts that direction's run: row k falls at
+  lead + (k - 2) x beat (beat 5 ticks at E and D, 4 from C; lead 24 / 20), its cracks glowing 10 ticks before.
+  Bridges (2 rows, from D, never at E) drop for 12 ticks (16 from B) at the end of every 40-tick period while the run
+  lasts; gaps (1 row, 2 from B; from D) are pre-cut and jumped. The far end holds 40 ticks, then the causeway knits
+  back from the far end, a row a tick, and the run can start again after 40 ticks. The room has no monsters and no
+  cache. Falling in: 4 ticks in the pit and it throws you back to the landing your run started from, facing the way
+  on, for 3 + 8% of your health (`awaken:gate_rubble`); monsters that fall in take 4 every second.
+  Solvability (`RigCollapse.solve`): a runner at 0.26 blocks a tick (a sprint is 0.28) from the first falling row,
+  jumping gaps of at most 2, waiting on the row before a bridge for a window it can cross (up from 8 ticks into the
+  period to 4 ticks before it drops), must leave every row 6 ticks before it falls, both ways. The builder tries 4
+  variants, each gentler (no gaps or bridges, a longer lead), and drops the room if none passes.
+- **Mirror Hall:** a lens in a wall throws a beam one block above the floor; the seal sits in the wall beside the door
+  that leads on (slot offset 3 or 12), and that door is barred with light. Mirrors stand on pedestals at the hall's
+  lattice (slot offsets 3, 6, 9, 12; never on a door axis or near a feature); a mirror is one-sided, its face to a
+  diagonal (turn 0..3: NE, SE, SW, NW); its back stops the light. Using one turns it a quarter clockwise (at most
+  every 7 ticks); the light is traced through the real blocks every tick, stopped by anything with a collision shape
+  and by the room's walls. When it reaches the seal the hall latches: the seal lights (IGNITE), the bars fall 24 ticks
+  later. The puzzle is built from the seed by walking a path of turns from the lens to the seal (2 mirrors at E and D,
+  3 at C, 4 from B, at most 3 in a 1x1 room); every mirror on it starts wrong, 1 to 3 decoys stand off the light's
+  path, and the hall never starts solved. The beam burns monsters in it every half second for 3 + 1.5 x rank and 3 s
+  of fire (`awaken:gate_light`, credited to whoever last turned a mirror). Players walk through it unharmed.
+  In halls of 2 slots or more a pavilion stands against a wall with no doorway near it: 5 by 9 inside, mirror walls 4
+  high, its front of cracked mirror (`gate_mirror_cracked`), a cache inside. `gate_mirror` and `gate_mirror_cracked` are
+  in `awaken:mirror`, so Ghost Step walks through them (its mirror range); 9 deep, so a step from anywhere within its
+  reach lands inside. Someone inside latches the pavilion: 30 ticks later its cracked front shatters for everyone.
+  Solvability: the solution witness routes the light to the seal, traced by the same `RigBeam`.
+- **Gravity Wells:** only rooms whose way through is straight (the door you come in by faces the door that leads on),
+  every side door opening onto a ledge, at least 7 high. Chasms 5 to 6 wide (7 from B), their floor 4 down: one in a
+  1-slot room, two in a 2-slot room with 4-row ledges at the ends. Over each chasm a well, the chasm and a row of
+  ledge either side, floor to a flat ceiling: inside it gravity turns over (`gate_well_gravity`, -2 x base, stratum
+  7's attribute way), so you fall up, walk the ceiling across and drop softly as you step out (safe fall +24 for
+  3 s). Its rims glow on the floor and on the ceiling (`gate_well_rim`), and the ceiling over a well is laid like a
+  floor. While the room's monsters live, it surges: warned 30 ticks ahead, then everything in the room falls to the
+  ceiling for 60 ticks, every 280 ticks, monsters too. Someone falling up has their eyes at the other end of their
+  body (the camera hangs 1.62 below the ceiling) and is drawn upside down for everyone; the client predicts your own
+  flip (it sets the same modifier the moment you step in), and the camera tips 5 degrees and back over 0.7 s
+  (none with camera shake off; the FOV-effects slider scales it and a 7% FOV breath). Solvability: a breadth-first walk
+  over the floor and the ceiling reaches the exit's ledge, and without the wells it can't.
+- **Collapse Timer** (the modifier) now drops real blocks: once a floor's time is up, every 2 s for each player still on
+  it and not in a safe room, three blocks of ceiling (one where they are heading, two within 5) crack for a second,
+  fall, and land as rubble (never on a door axis, a doorway or a feature): 2 + 6% of health to a player under one,
+  4 to a monster. Waves are counted in the floor's rig state.
+- **Protection:** inside a gate a player who isn't in creative breaks nothing but their powers' constructs (block tag
+  `awaken:gate_breakable`): every painted block is protected, the Kit's dressing and the set pieces as much as the
+  palette. Nothing is placed in a gate by a player (the placement event, which also covers fire, stripped logs and
+  other block changes an item makes), and buckets neither pour nor scoop there. Powers' constructs still form.
+- **Tours:** `/awaken gate interior goto rig` stands in the rig room's doorway; `/awaken gate rig start` starts its first
+  track, `/awaken gate rig solve` turns a Mirror Hall's mirrors to their solution.
+- **Tests:** `gates_rig_collapse_run`, `gates_rig_mirror_hall`, `gates_rig_gravity_wells` (each: the archetype's
+  solvability check on every rig room of 1,000 seeded gates, every rank and layout; the same plan builds the same rig,
+  version 3 builds none; the server running it in the test level), `gates_rig_protection`.
+
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 
 The world is drawn at a lower resolution and rebuilt to the screen's; menus, the HUD and all GUI text stay native.

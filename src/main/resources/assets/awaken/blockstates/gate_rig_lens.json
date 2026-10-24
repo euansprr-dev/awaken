@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/gate_rig_lens"
+    },
+    "facing=east": {
+      "model": "awaken:block/gate_rig_lens",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/gate_rig_lens",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/gate_rig_lens",
+      "y": 270
+    }
+  }
+}

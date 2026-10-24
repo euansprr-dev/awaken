@@ -40,6 +40,8 @@ public final class FloorState {
     public boolean collapsed;
     /** Rooms whose doors are barred right now (arenas in a fight). */
     public final Set<Integer> locked = new LinkedHashSet<>();
+    /** The Gate Rig's rooms on this floor: tracks, swapped groups, latches (SPEC §17). */
+    public RigState rig = new RigState();
 
     private record Sets(List<Integer> triggered, List<Integer> cleared, List<Integer> solved, List<Integer> lanterns, List<Integer> locked) {
         static final Codec<Sets> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -76,8 +78,9 @@ public final class FloorState {
             Sets.CODEC.fieldOf("sets").forGetter(f -> new Sets(List.copyOf(f.triggered), List.copyOf(f.clearedRooms),
                     List.copyOf(f.puzzlesSolved), List.copyOf(f.lanternsTaken), List.copyOf(f.locked))),
             Maps.CODEC.fieldOf("maps").forGetter(f -> new Maps(str(f.waves), str(f.runes), str(f.water))),
-            Flags.CODEC.fieldOf("flags").forGetter(f -> new Flags(f.enteredAt, f.pressureWaves, f.warden, f.alarm, f.shrineOpen, f.spiritDone, f.collapsed))
-    ).apply(i, (s, m, fl) -> {
+            Flags.CODEC.fieldOf("flags").forGetter(f -> new Flags(f.enteredAt, f.pressureWaves, f.warden, f.alarm, f.shrineOpen, f.spiritDone, f.collapsed)),
+            RigState.CODEC.optionalFieldOf("rig").forGetter(f -> f.rig.empty() ? java.util.Optional.empty() : java.util.Optional.of(f.rig))
+    ).apply(i, (s, m, fl, rig) -> {
         FloorState f = new FloorState();
         f.triggered.addAll(s.triggered);
         f.clearedRooms.addAll(s.cleared);
@@ -94,6 +97,7 @@ public final class FloorState {
         f.shrineOpen = fl.shrineOpen;
         f.spiritDone = fl.spiritDone;
         f.collapsed = fl.collapsed;
+        rig.ifPresent(r -> f.rig = r);
         return f;
     }));
 

@@ -14,6 +14,8 @@
     "awaken:gate_lab_panel",
     "awaken:gate_lab_rack",
     "awaken:gate_void_glass",
-    "awaken:gate_signal_lamp"
+    "awaken:gate_signal_lamp",
+    "awaken:gate_mirror_cracked",
+    "awaken:gate_well_rim"
   ]
 }

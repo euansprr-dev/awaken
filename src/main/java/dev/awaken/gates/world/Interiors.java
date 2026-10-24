@@ -24,9 +24,12 @@ import java.util.Set;
  * gate's id or where its rooms are:
  * <ul>
  *   <li>{@code /awaken gate interior enter}: walk into the newest standing gate (yours first);</li>
- *   <li>{@code /awaken gate interior goto <start|piece|shrine|ante|lord>}: inside a gate, stand where that place reads
+ *   <li>{@code /awaken gate interior goto <start|piece|shrine|ante|lord|rig>}: inside a gate, stand where that place reads
  *   best (the first room facing the way on, the doorway of the floor's biggest set piece, the room before the Shrine
- *   facing its blue door, the antechamber facing the arena, the arena's doorway facing the Lord's spot).</li>
+ *   facing its blue door, the antechamber facing the arena, the arena's doorway facing the Lord's spot, the Gate Rig's
+ *   room from its doorway);</li>
+ *   <li>{@code /awaken gate rig <start|solve>}: on your floor, start the rig room's first track as if its trigger fired,
+ *   or turn a Mirror Hall's mirrors to their solution (tours shoot the moments without playing them).</li>
  * </ul>
  */
 public final class Interiors {
@@ -38,10 +41,36 @@ public final class Interiors {
                 .then(Commands.literal("enter").executes(Interiors::enter))
                 .then(Commands.literal("goto").then(Commands.argument("spot", StringArgumentType.word())
                         .suggests((c, b) -> {
-                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord")) b.suggest(s);
+                            for (String s : List.of("start", "piece", "small", "shrine", "ante", "lord", "rig")) b.suggest(s);
                             return b.buildFuture();
                         })
                         .executes(c -> go(c, StringArgumentType.getString(c, "spot"))))))));
+        AwakenCommands.add((root, ctx) -> root.then(Commands.literal("gate").then(Commands.literal("rig").requires(AwakenCommands.admin())
+                .then(Commands.literal("start").executes(c -> rig(c, false)))
+                .then(Commands.literal("solve").executes(c -> rig(c, true))))));
+    }
+
+    private static int rig(CommandContext<CommandSourceStack> c, boolean solve) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        RunState run = Runs.run(p);
+        GateRecord g = run.active() ? GateRegistry.get(c.getSource().getServer()).gate(run.gateId) : null;
+        ServerLevel gl = GateService.gateLevel(c.getSource().getServer());
+        FloorLayout f = g == null ? null : GateLayout.of(g.plan).floor(run.area, run.floor);
+        Room r = null;
+        if (f != null) for (Room o : f.rooms) if (o.rig != null) r = o;
+        if (r == null || gl == null) {
+            c.getSource().sendFailure(Component.literal("No Gate Rig room on this floor."));
+            return 0;
+        }
+        if (!solve) return dev.awaken.gates.run.RigDirector.force(gl, g, f, r) ? 1 : 0;
+        if (r.rig.kind != RigRoom.Kind.MIRROR_HALL) {
+            c.getSource().sendFailure(Component.literal("Only a Mirror Hall can be solved."));
+            return 0;
+        }
+        for (RigMirrors.Mirror m : r.rig.mirrors.mirrors()) {
+            gl.setBlock(GateService.world(g, f, m.x(), r.dy + RigMirrors.BEAM_DY, m.z()), RigRooms.mirror(m.solution()), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
+        return 1;
     }
 
     private static int enter(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -130,6 +159,14 @@ public final class Interiors {
                 if (r == null || r.pathOut == null) return null;
                 if (r.pathIn != null) return lookFrom(f, r, r.pathIn, 2, 0, r.pathOut.centerX(), f.baseY + r.pathOut.y + 2.5, r.pathOut.centerZ());
                 return lookFrom(f, r, r.pathOut, -5, 0, r.pathOut.centerX(), f.baseY + r.pathOut.y + 2.5, r.pathOut.centerZ());
+            }
+            case "rig" -> {
+                r = null;
+                for (Room o : f.rooms) if (o.rig != null) r = o;
+                if (r == null || r.pathIn == null) return null;
+                // in its doorway, looking down the room toward the way on
+                Room.Door out = r.pathOut != null ? r.pathOut : r.pathIn;
+                return lookFrom(f, r, r.pathIn, 0, 0, out.centerX(), f.baseY + r.dy + 1.5, out.centerZ());
             }
             case "lord" -> {
                 r = f.room(f.end);
