@@ -9,6 +9,7 @@
 #   XMX=6G  ZGC=1           client heap size and garbage collector
 #   LENS=off|swift|cinematic  Awaken's light layer (unset: whatever run-autopilot's client config says)
 #   DH=swift|cinematic|default  Distant Horizons settings (pack/dh/); unset leaves them
+#   RD=<chunks>             vanilla render distance for this run
 cd "$(dirname "$0")/.."
 SCRIPT=${1:?script}
 T=${2:-900}
@@ -24,6 +25,8 @@ OPTS=run-autopilot/options.txt
 touch $OPTS
 sed -i '' '/^preferredGraphicsBackend:/d' $OPTS
 echo "preferredGraphicsBackend:\"${BACKEND:-default}\"" >> $OPTS
+# RD=<chunks> sets the vanilla render distance for this run (with Distant Horizons drawing the rest)
+if [ -n "$RD" ]; then sed -i '' '/^renderDistance:/d' $OPTS; echo "renderDistance:$RD" >> $OPTS; fi
 # LENS=off|swift|cinematic sets Awaken's light layer for this run (unset leaves the client config as it is)
 if [ -n "$LENS" ]; then
   CFG=run-autopilot/config/awaken-client.toml
