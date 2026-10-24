@@ -421,7 +421,7 @@ public final class RunnerMoves {
             return;
         }
         // a lip in reach: the climb carries you into the hang
-        if (tryGrab(p, in, level, ctx, now)) {
+        if (tryGrab(p, in, level, ctx, now, true)) {
             sendEnd(Move.WALL_CLIMB);
             runClimb = false;
             runEnd = now;
@@ -470,6 +470,11 @@ public final class RunnerMoves {
 
     /** Airborne toward an edge whose top is 1.2–2.4 above the feet (facing it within 50°, moving or pressing toward it). */
     private static boolean tryGrab(LocalPlayer p, ClientInput in, BlockGetter level, CollisionContext ctx, int now) {
+        return tryGrab(p, in, level, ctx, now, false);
+    }
+
+    /** {@code onWall}: climbing the face itself (pressed flat to it), so no need to be moving toward it. */
+    private static boolean tryGrab(LocalPlayer p, ClientInput in, BlockGetter level, CollisionContext ctx, int now, boolean onWall) {
         if (now < regrabAt || p.isUsingItem()) return false;
         float yaw = p.getYRot();
         double fx = -Mth.sin(yaw * Mth.DEG_TO_RAD), fz = Mth.cos(yaw * Mth.DEG_TO_RAD);
@@ -478,13 +483,13 @@ public final class RunnerMoves {
         int sign = (axis == 0 ? fx : fz) > 0 ? 1 : -1;
         Vec3 v = p.getDeltaMovement();
         double toward = (axis == 0 ? v.x : v.z) * sign;
-        if (!(toward >= 0.04 || in.keyPresses.forward() && toward > -0.02)) return false;
+        if (!onWall && !(toward >= 0.04 || in.keyPresses.forward() && toward > -0.02)) return false;
         RunnerRules.Edge e = RunnerRules.findEdge(level, ctx, M, p.getX(), p.getY(), p.getZ(), axis, sign, RunnerRules.HANG_REACH,
                 RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
         if (e == null) return false;
         if (state == State.RUN) {
             state = State.NONE;
-            ClientMoves.trace("wall-run ends (ledge ahead) after " + runAge);
+            ClientMoves.trace((runClimb ? "wall climb" : "wall-run") + " ends (ledge ahead) after " + runAge);
         }
         startHang(p, e, BodyPayloads.HANG_GRAB, now);
         return true;

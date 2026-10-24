@@ -29,6 +29,8 @@ public final class AscentPilot {
     private static final int[] HOLD = new int[8];
     private static float aimYaw, aimPitch, aimStepYaw, aimStepPitch;
     private static int aimTicks;
+    /** Keys were pressed last tick (released once when the holds run out). */
+    private static boolean holding;
     private static String script = "";
     private static int age, count, target, phase, mark, misses;
     private static float laneYaw;
@@ -111,8 +113,14 @@ public final class AscentPilot {
         }
         boolean any = false;
         for (int i = 0; i < HOLD.length; i++) if (HOLD[i] > 0) any = true;
-        if (!any && script.isEmpty()) return;
+        if (!any && script.isEmpty()) {
+            // the last hold ran out: let go of its keys once (a later press is then a new press)
+            if (holding) apply();
+            holding = false;
+            return;
+        }
         apply();
+        holding = true;
         for (int i = 0; i < HOLD.length; i++) if (HOLD[i] > 0) HOLD[i]--;
     }
 

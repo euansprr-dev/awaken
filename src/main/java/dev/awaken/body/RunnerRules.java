@@ -78,10 +78,11 @@ public final class RunnerRules {
     /**
      * Wall Stride's vertical run (SPEC §17.2): facing a wall (within {@link #CLIMB_MAX_ANGLE} of its normal, within
      * {@link #CLIMB_REACH}), early in a jump, holding forward: {@link #CLIMB_TICKS} ticks up it at {@link #CLIMB_VY},
-     * easing off over the last three (about three blocks), into the ledge's grab when one comes in reach. A jump kicks
+     * easing off over the last three (about 3.7 blocks: a lip six up is caught), into the ledge's grab when one comes in
+     * reach. A jump kicks
      * back off it ({@link #CLIMB_KICK_OUT} out, {@link #CLIMB_KICK_UP} up) and turns you round.
      */
-    public static final int CLIMB_TICKS = 10;
+    public static final int CLIMB_TICKS = 12;
     public static final double CLIMB_VY = 0.34, CLIMB_REACH = 0.45, CLIMB_MAX_ANGLE = 35, CLIMB_KICK_OUT = 0.42, CLIMB_KICK_UP = 0.4;
     static final double COS_CLIMB = Math.cos(Math.toRadians(CLIMB_MAX_ANGLE));
 

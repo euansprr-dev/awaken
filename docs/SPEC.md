@@ -1622,8 +1622,9 @@ is what the Ascent decided while building it.
   80 ticks (links ×0.8 as usual), grip 50 lifting +0.04, then sink to −0.14. Every Runner runs on any collision face,
   glass and leaves included. The old client lift (`ClientCasting.wallRun`) is gone.
 - Wall Stride's vertical run (`Move.WALL_CLIMB`, appended; clip `body_wallclimb`): with the power, facing a wall (within
-  35° of its normal, within 0.45), early in a jump (falling no faster than 0.15) and holding forward: 10 ticks up it at
-  0.34 b/t easing off over the last three (about three blocks), once an airtime and never on the same wall twice before
+  35° of its normal, within 0.45), early in a jump (falling no faster than 0.15) and holding forward: 12 ticks up it at
+  0.34 b/t easing off over the last three (about 3.7 blocks: a lip 6 above the floor is caught; 10 ticks left it 2.4
+  over the feet, out of reach), once an airtime and never on the same wall twice before
   landing. A lip in reach on the way is grabbed (the climb carries into the hang); jump kicks back off it (0.42 out,
   0.40 up) and turns the view round over 6 ticks, a wall jump that can link into a run on the wall behind. The server
   checks the power and the wall in front where it saw the body; grit and footfalls every 4 ticks; a Runner link.

@@ -155,7 +155,7 @@ final class RunnerTests {
         h.startSequence().thenIdle(2).thenExecute(() -> {
             double rise = 0;
             for (int t = 0; t < RunnerRules.CLIMB_TICKS; t++) rise += RunnerRules.climbTarget(t);
-            h.assertTrue(rise > 2.6 && rise < 3.4 && RunnerRules.climbTarget(RunnerRules.CLIMB_TICKS) == 0, "a climb rises " + rise);
+            h.assertTrue(rise > 3.4 && rise < 4.0 && RunnerRules.climbTarget(RunnerRules.CLIMB_TICKS) == 0, "a climb rises " + rise);
             long now = h.getLevel().getServer().overworld().getGameTime();
             Vec3 s = at(o, -11.68, 2.5, 14);
             double plane = o.getX() - 12;
