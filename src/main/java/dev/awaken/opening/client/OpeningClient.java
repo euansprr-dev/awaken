@@ -77,11 +77,15 @@ public final class OpeningClient {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(OpeningPayloads.Scene.TYPE, (msg, ctx) -> onScene(msg));
             e.register(OpeningPayloads.Cue.TYPE, (msg, ctx) -> onCue(msg));
+            e.register(OpeningPayloads.Drive.TYPE, (msg, ctx) -> RouteDriver.start(msg));
         });
         modBus.addListener(RegisterGuiLayersEvent.class, OpeningHud::register);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
-        bus.addListener(ClientTickEvent.Pre.class, e -> viewKey());
+        bus.addListener(ClientTickEvent.Pre.class, e -> {
+            viewKey();
+            RouteDriver.tick();
+        });
         // last, so the shots' angles win over shakes and rolls from elsewhere
         bus.addListener(EventPriority.LOWEST, ViewportEvent.ComputeCameraAngles.class, OpeningCamera::angles);
         bus.addListener(EventPriority.HIGH, ViewportEvent.ComputeCameraAngles.class, OpeningClient::shake);
@@ -102,6 +106,7 @@ public final class OpeningClient {
     }
 
     static void reset() {
+        RouteDriver.stop("logout");
         OpeningCamera.reset();
         OpeningHud.reset();
         OpeningFx.reset();

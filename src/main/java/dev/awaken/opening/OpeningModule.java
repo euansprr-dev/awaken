@@ -126,6 +126,7 @@ public final class OpeningModule {
         var r = e.registrar("1");
         r.playToClient(OpeningPayloads.Scene.TYPE, OpeningPayloads.Scene.STREAM_CODEC);
         r.playToClient(OpeningPayloads.Cue.TYPE, OpeningPayloads.Cue.STREAM_CODEC);
+        r.playToClient(OpeningPayloads.Drive.TYPE, OpeningPayloads.Drive.STREAM_CODEC);
         r.playToServer(OpeningPayloads.Ready.TYPE, OpeningPayloads.Ready.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer p) OpeningDirector.onReady(p, msg);
         });
@@ -264,6 +265,10 @@ public final class OpeningModule {
                 c.getSource().sendSuccess(() -> Component.literal("Opening world state reset (bridge, stage, group); " + n + " chunks repainted."), true);
                 return 1;
             }));
+            // development: a route driven by its points on your own client (rec: recorded as a golden run)
+            opening.then(Commands.literal("drive").requires(AwakenCommands.admin())
+                    .then(Commands.argument("route", StringArgumentType.word()).executes(c -> drive(c.getSource(), StringArgumentType.getString(c, "route"), false))
+                            .then(Commands.literal("rec").executes(c -> drive(c.getSource(), StringArgumentType.getString(c, "route"), true)))));
             opening.then(Commands.literal("tour").requires(AwakenCommands.admin())
                     .then(Commands.argument("shots", BoolArgumentType.bool()).executes(c -> {
                         tourShots = BoolArgumentType.getBool(c, "shots");
@@ -284,6 +289,18 @@ public final class OpeningModule {
                 + (st.pulled ? " (pulled)" : "") + " · world: gate '" + w.gate + "', bridge " + (w.bridgeDown ? "down" : "up")
                 + ", stage v" + w.stage + ", first arrival " + w.firstArrival + ", cinematic " + w.cinematicAt;
         src.sendSuccess(() -> Component.literal(msg), false);
+        return 1;
+    }
+
+    private static int drive(CommandSourceStack src, String route, boolean rec) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        OpeningPlaces at = OpeningPlaces.get();
+        if (at == null || OpeningRoutes.get().route(route) == null) {
+            src.sendFailure(Component.literal("No route " + route + " (or no city): " + OpeningRoutes.get().routes.stream().map(OpeningRoutes.Route::name).toList()));
+            return 0;
+        }
+        OpeningStage.ensure(src.getServer().overworld(), at);
+        AwakenNet.send(p, new OpeningPayloads.Drive(route, rec, at.origin()));
         return 1;
     }
 

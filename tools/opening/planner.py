@@ -116,7 +116,8 @@ class Planner:
                     continue
                 for g in lands:
                     dy = g - f
-                    reach = 4.0 + max(0.0, -dy) * 0.3
+                    # centre to centre: a diagonal leaves more of each block to take off from and land on
+                    reach = (4.0 if dx == 0 or dz == 0 else 4.4) + max(0.0, -dy) * 0.3
                     if dy > 1.01 or dy < -6 or h > min(5.2, reach) or (dy > 0.5 and h > 3.6):
                         continue
                     if self.arc_clear(x, z, f, nx, nz, g, h):
@@ -184,3 +185,38 @@ class Planner:
                     prev[v] = (u, m)
                     heapq.heappush(pq, (nd + math.hypot(v[0] - gx, v[1] - gz) / SPRINT, nd, v))
         return None, None, n
+
+
+class Builder(Planner):
+    """The same runner, with a carpenter along: where no roof meets the line, a plank can be laid at the feet's height
+    (a bridge), at a price per plank so the city's own roofs are preferred. Never below min_feet (the street)."""
+
+    def __init__(self, city, box, min_feet=6.0, plank_cost=0.45, avoid=None):
+        super().__init__(city, box, avoid)
+        self.min_feet = min_feet
+        self.plank_cost = plank_cost
+
+    def moves(self, node):
+        for v, cost, m in super().moves(node):
+            if v[2] / 2.0 < self.min_feet:
+                continue
+            yield v, cost, m
+        x, z, f2 = node
+        f = f2 / 2.0
+        for dx in (-1, 0, 1):
+            for dz in (-1, 0, 1):
+                if dx == 0 and dz == 0:
+                    continue
+                nx, nz = x + dx, z + dz
+                x0, z0, x1, z1 = self.box
+                if not (x0 <= nx <= x1 and z0 <= nz <= z1) or (self.avoid and self.avoid(nx, nz)):
+                    continue
+                for nf in (f, f - 0.5, f - 1.0):
+                    if nf < self.min_feet:
+                        continue
+                    # an open cell to lay a plank in: nothing where the plank goes, room for a body over it
+                    if not self.clear(nx, nz, nf - 0.5, nf + 1.8):
+                        continue
+                    if dx and dz and not (self.clear(x + dx, z, nf - 0.4, nf + 1.8) and self.clear(x, z + dz, nf - 0.4, nf + 1.8)):
+                        continue
+                    yield (nx, nz, int(round(nf * 2))), math.hypot(dx, dz) * (1.0 / SPRINT + self.plank_cost), 'plank'

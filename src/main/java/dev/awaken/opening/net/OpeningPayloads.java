@@ -103,6 +103,24 @@ public final class OpeningPayloads {
         }
     }
 
+    /**
+     * Server → client (development: tours and golden runs): drive a route by its points with this client's own keys
+     * ({@code rec}: record it as a golden run with the Ascent's route recorder). {@code origin} is Carillon's centre.
+     */
+    public record Drive(String route, boolean rec, Vec3 origin) implements CustomPacketPayload {
+        public static final Type<Drive> TYPE = new Type<>(Awaken.id("opening_drive"));
+        public static final StreamCodec<ByteBuf, Drive> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(64), Drive::route,
+                ByteBufCodecs.BOOL, Drive::rec,
+                Vec3.STREAM_CODEC, Drive::origin,
+                Drive::new);
+
+        @Override
+        public Type<Drive> type() {
+            return TYPE;
+        }
+    }
+
     // what the client reports
     /** The sky shot landed and the first-run view question (if any) is answered. */
     public static final int READY_SKY = 0;

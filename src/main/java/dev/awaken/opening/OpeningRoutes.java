@@ -27,7 +27,9 @@ public final class OpeningRoutes {
 
     /** How a point is reached from the one before. */
     public enum Move {
-        RUN, JUMP, DROP, MANTLE, CLIMB, SWIM, WALLRUN_L, WALLRUN_R, WALLJUMP, HANG, SHIMMY, LEDGE_UP, SLIDE, WALK;
+        RUN, JUMP, DROP, MANTLE, CLIMB, SWIM, WALLRUN_L, WALLRUN_R, WALLJUMP, HANG, SHIMMY, LEDGE_UP, SLIDE, WALK,
+        /** A sprint-jump over a gap (JUMP is a hop up onto the next block). */
+        LEAP;
 
         static Move of(String s) {
             try {
@@ -40,7 +42,7 @@ public final class OpeningRoutes {
         /** The key a hesitating runner is shown for this move (the Runner's eye, second time). */
         public String key() {
             return switch (this) {
-                case JUMP, MANTLE, LEDGE_UP, WALLJUMP -> "jump";
+                case JUMP, LEAP, MANTLE, LEDGE_UP, WALLJUMP -> "jump";
                 case WALLRUN_L, WALLRUN_R -> "sprint+jump";
                 case HANG, DROP -> "sneak";
                 case SHIMMY -> "left/right";
