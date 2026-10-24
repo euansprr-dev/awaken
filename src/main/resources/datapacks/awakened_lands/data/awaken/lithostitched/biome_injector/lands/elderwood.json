@@ -1,9 +1,16 @@
 {
   "type": "lithostitched:replace_partially",
   "dimension": "minecraft:overworld",
-  "targets": ["minecraft:forest", "minecraft:birch_forest", "minecraft:old_growth_birch_forest", "minecraft:flower_forest"],
+  "targets": [
+    "minecraft:forest",
+    "minecraft:birch_forest",
+    "minecraft:old_growth_birch_forest",
+    "minecraft:flower_forest"
+  ],
   "replacement": "awaken:elderwood",
   "parameters": {
-    "awaken:lands/awakening": {"min_inclusive": 0.0}
+    "awaken:lands/awakening": {
+      "min_inclusive": 0.0
+    }
   }
 }

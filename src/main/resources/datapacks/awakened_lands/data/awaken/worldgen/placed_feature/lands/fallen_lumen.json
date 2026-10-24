@@ -1,0 +1,17 @@
+{
+  "feature": "awaken:lands/fallen_lumen",
+  "placement": [
+    {
+      "type": "minecraft:block_predicate_filter",
+      "predicate": {
+        "type": "minecraft:would_survive",
+        "state": {
+          "id": "awaken:lumen_sapling",
+          "properties": {
+            "stage": "0"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross_emissive",
+  "textures": {
+    "cross": "awaken:block/lumen_cap",
+    "cross_emissive": "awaken:block/lumen_cap_glow"
+  }
+}

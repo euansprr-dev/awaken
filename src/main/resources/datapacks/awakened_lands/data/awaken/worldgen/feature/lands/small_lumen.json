@@ -1,0 +1,127 @@
+{
+  "type": "minecraft:tree",
+  "below_trunk_provider": "minecraft:soil_beneath_tree",
+  "trunk_provider": {
+    "id": "awaken:lumen_log",
+    "properties": {
+      "axis": "y"
+    }
+  },
+  "trunk_placer": {
+    "type": "awaken:limbed_trunk_placer",
+    "base_height": 6,
+    "height_rand_a": 1,
+    "height_rand_b": 2,
+    "width": 1,
+    "lean": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 0,
+      "max_inclusive": 1
+    },
+    "lean_start": 0.4,
+    "limbs": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 2,
+      "max_inclusive": 3
+    },
+    "limb_start": 0.65,
+    "limb_length": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 2,
+      "max_inclusive": 3
+    },
+    "limb_rise": 0.5,
+    "twig": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 1,
+      "max_inclusive": 2
+    },
+    "root_flare": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 0,
+      "max_inclusive": 1
+    },
+    "branch_provider": {
+      "id": "awaken:lumen_wood",
+      "properties": {
+        "axis": "y"
+      }
+    }
+  },
+  "foliage_provider": {
+    "id": "awaken:lumen_leaves",
+    "properties": {
+      "distance": "7",
+      "persistent": "false",
+      "waterlogged": "false"
+    }
+  },
+  "foliage_placer": {
+    "type": "awaken:cloud_foliage_placer",
+    "radius": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 2,
+      "max_inclusive": 3
+    },
+    "offset": 0,
+    "height": 1,
+    "depth": 0.6,
+    "hollow": 0.0,
+    "ragged": 0.3,
+    "hang": 0.25
+  },
+  "minimum_size": {
+    "type": "minecraft:two_layers_feature_size",
+    "limit": 1,
+    "lower_size": 0,
+    "upper_size": 1,
+    "min_clipped_height": 5
+  },
+  "decorators": [
+    {
+      "type": "awaken:hanging_vines",
+      "body": {
+        "id": "awaken:lumen_vines",
+        "properties": {
+          "tip": "false"
+        }
+      },
+      "tip": {
+        "id": "awaken:lumen_vines",
+        "properties": {
+          "tip": "true"
+        }
+      },
+      "probability": 0.05,
+      "length": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 1,
+        "max_inclusive": 2
+      }
+    },
+    {
+      "type": "minecraft:place_on_ground",
+      "block_state_provider": {
+        "type": "minecraft:weighted",
+        "entries": [
+          {
+            "data": {
+              "id": "awaken:lumen_moss"
+            },
+            "weight": 12
+          },
+          {
+            "data": {
+              "id": "awaken:lumen_cap"
+            },
+            "weight": 1
+          }
+        ]
+      },
+      "height": 2,
+      "radius": 2,
+      "tries": 12
+    }
+  ],
+  "ignore_vines": true
+}

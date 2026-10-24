@@ -8,6 +8,8 @@ public final class TerrainModule {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(LandsPack::onAddPackFinders);
+        LandsBlocks.init(modBus);
+        dev.awaken.terrain.tree.LandsTrees.init(modBus);
         TerrainCommands.register();
         TerrainTests.register();
     }
