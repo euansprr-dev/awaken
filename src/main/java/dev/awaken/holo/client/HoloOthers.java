@@ -165,9 +165,13 @@ public final class HoloOthers {
                 SELF_WRIST.set(T);
                 selfWristFrame = HoloClient.frame();
             }
-            // the hologram rises above the wrist and a little ahead of the body, so it clears the head from behind
+            // the hologram floats beside the body on the wrist's side, a little ahead and above it: it never covers
+            // the face from the front and still shows past the shoulder from behind
             float yaw = (float) Math.toRadians(state.bodyRot);
-            CARD_OFFSET.set(-(float) Math.sin(yaw) * 0.32f, 0, (float) Math.cos(yaw) * 0.32f);
+            float fx = -(float) Math.sin(yaw), fz = (float) Math.cos(yaw);   // forward
+            float lx = (float) Math.cos(yaw), lz = (float) Math.sin(yaw);    // the body's left
+            float sideSign = arm == HumanoidArm.LEFT ? 1f : -1f;
+            CARD_OFFSET.set(fx * 0.16f + lx * sideSign * 0.40f, 0, fz * 0.16f + lz * sideSign * 0.40f);
             var cam = Minecraft.getInstance().gameRenderer.mainCamera().rotation();
             cam.transformInverse(CARD_OFFSET); // into the billboard's own axes
             m.translation(T).rotate(cam).scale(S.x);
@@ -224,7 +228,7 @@ public final class HoloOthers {
         Matrix4f g = M3.set(m).translate(0, 0, 0.16f);
         softRect(vc, g, 0, 0, 0.05f * a, 0.05f * a, 0.10f, Glass.a(Glass.EDGE, 0.95f * a), clear);
         if (!showCard) return;
-        float hw = 0.30f * a, hh = 0.17f * (0.3f + 0.7f * a), cy = 0.30f * a + CARD_OFFSET.y, cx = CARD_OFFSET.x * a, cz = CARD_OFFSET.z * a;
+        float hw = 0.30f * a, hh = 0.17f * (0.3f + 0.7f * a), cy = 0.14f * a + CARD_OFFSET.y, cx = CARD_OFFSET.x * a, cz = CARD_OFFSET.z * a;
         // the cone from the wrist to the sheet's bottom edge
         int coneNear = Glass.a(Glass.EDGE, 0.40f * a);
         vc.addVertex(m, 0, 0.03f, 0).setColor(coneNear);

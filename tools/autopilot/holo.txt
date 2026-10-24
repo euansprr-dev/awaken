@@ -1,7 +1,7 @@
 # Holo UI tour (docs/modules/holo.md): the demo VIEW panel; the HUD still, then a sharp turn with HUD motion
 # Subtle / Off / Full; the K menu unfolding from the wrist at fixed moments (frozen with "holo at <ms>"), open,
 # a tab clicked through the real ray-picking path, first person, third person back and front, the wide and slim
-# arm; then frame times with and without the panel. GUI scale 0 (auto).
+# arm, what other players see (holo peek); then frame times with and without the panel. GUI scale 0 (auto).
 # Run: tools/autopilot.sh tools/autopilot/holo.txt
 world autopilot_holo creative 1234
 waitworld
@@ -95,6 +95,14 @@ shot holo_20_k_third_back
 camera front
 wait 10
 shot holo_21_k_third_front
+# what other players see: your raised wrist, its glow and a content-free hologram (never the panel)
+holo peek on
+wait 3
+shot holo_23_others_see_front
+camera back
+wait 5
+shot holo_24_others_see_back
+holo peek off
 camera first
 wait 5
 
