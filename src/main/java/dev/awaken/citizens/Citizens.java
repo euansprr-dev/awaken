@@ -171,7 +171,11 @@ final class Citizens {
     void hurt(CitizenBody b, int rec, DamageSource source) {
         if (source.getEntity() instanceof ServerPlayer p) {
             if (events.hitByPlayer(p, b, rec)) return;
-            if (roster.isCitizen(rec)) recognition.witness(p, Recognition.HIT_CITIZEN, b.blockPosition(), -3);
+            if (!roster.isCitizen(rec)) return;
+            recognition.witness(p, Recognition.HIT_CITIZEN, b.blockPosition(), -3);
+            String line = Lines.get().pick(CitizenWork.mixHash(rec * 31L + level.getGameTime()), tod(), "event.hit");
+            CitizensNet.say(p, b, line, 50, 2);
+            b.lookAt(p, 80);
         }
     }
 
