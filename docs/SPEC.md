@@ -991,12 +991,39 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   loads the pack and records the flag; a world made before the flag existed lacks it, so the game skips the pack there
   and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
   it off). Test: `terrain_lands_pack_new_worlds_only`.
-- Placed today (2026-10-24, the vertical slice): Elderwood (replaces forest, birch, old-growth birch and flower forest)
-  and Lumen Forest (replaces dark forest), both where the awakening field ≥ 0. Every other row of the table is planned.
+- Placed today (2026-10-24): Elderwood (replaces forest, birch, old-growth birch and flower forest), Lumen Forest
+  (dark forest), Glass Steppe (savanna, savanna plateau) and Shattered Highlands (windswept hills, windswept gravelly
+  hills, stony peaks), all where the awakening field ≥ 0. Frost Spires and Mirror Marsh are planned.
+- An Awakened biome's own ground is a material rule in the lands pack (`worldgen/material_rule/lands/<biome>_surface`
+  and `_under`), spliced first into the overworld's `biome_surface` and `under_biome_surface` by Lithostitched
+  `set_material_rule` modifiers (`injection_type: prepend`, guarded by its biome), so the surface pass lays it and far
+  terrain shows it. Glass Steppe: fused glass where the noise `awaken:lands/glass` ≥ 0.3, else sun-gold grass; Shattered
+  Highlands: riven shale on steep ground and where the `minecraft:surface` noise ≥ −0.05, else grass.
+- Shattered Highlands' faults (`terrain.fault.FaultLinesFeature`, `awaken:fault_lines`, local modifications, once a
+  chunk over its own columns): the zero line of `awaken:lands/fault` (octave −8, five octaves); a column's distance to
+  it is the noise over its slope (sampled on a 2-block lattice, bilinear), faultstone within 1.6 blocks (three deep),
+  the seam within 0.55; where `awaken:lands/fault_trench` passes 0.15 the fault widens (by up to 2.8 a side) and opens
+  into a V trench up to 9 deep. Decisions come from the noises and the column only (continuous across chunk borders);
+  never into water or down to the sea. Faultstone and the seam are in `#minecraft:cannot_support_snow_layer`.
+- Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift"`,
+  `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass Steppe; a glassed
+  bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its ground column by
+  column from each column's own ground and its distance from the centre; the Shard Drift (Shattered Highlands; 7–12
+  floating shards along a fault; spacing 22, separation 8) walks its site onto the fault line and samples the ground
+  under each shard once at the start. Both place voxels into air, plants and water only and never write outside their
+  box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms on the fastest of eight seeds, as
+  `terrain_landmark_shapes` asserts; features ≤ 0.5 ms a chunk on average);
+  `/awaken terrain lands2cost` reports what they cost on the worldgen threads.
+- Air for the second pair: an air.json biome rule's `motes.kind` hands the spot to `terrain.client.LandsMotes`
+  (cap 120 × the leaves' frame-budget scale): `glint` (Glass Steppe, by day: a star blinking on sunlit glass of
+  `#awaken:lands/glints`) and `fault` (Shattered Highlands: sparks off `#awaken:lands/faults` at night, dust by day).
 - Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
   are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+  `terrain_lands_placement` holds the injectors to the biome table (one per Awakened biome, its archetype among its
+  vanilla targets, no target claimed twice, ground splices guarded by their biome) and measures the share on the
+  five studio seeds by applying the injectors to the vanilla generator as Lithostitched does.
 - The biome table (stage 1): `tools/terrain/biomes.py` is the one source (`write`; `check` fails on a stale file, a
   vanilla overworld biome without a row or a lands-pack biome without one). Base Awaken data refers to biomes only
   through the tags it writes, listing vanilla biomes exactly as before: `awaken:fauna/<group>` (one per fauna spawn

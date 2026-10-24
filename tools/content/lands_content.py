@@ -11,6 +11,7 @@ import importlib.util
 import json
 import os
 import random
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "../.."))
@@ -23,6 +24,11 @@ PACK = os.path.join(RES, "datapacks/awakened_lands/data")
 _spec = importlib.util.spec_from_file_location("lands_art", os.path.join(ROOT, "tools/art/specs/lands.py"))
 art = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(art)
+
+# the second pair of Awakened biomes (Glass Steppe, Shattered Highlands) has its own generator, called at the hooks below
+_spec2 = importlib.util.spec_from_file_location("lands2_content", os.path.join(HERE, "lands2_content.py"))
+lands2 = importlib.util.module_from_spec(_spec2)
+_spec2.loader.exec_module(lands2)
 
 WRITTEN = []
 
@@ -225,6 +231,7 @@ def block_assets():
     write(f"{ASSETS}/models/item/lumen_vines.json", {"parent": mc("item/generated"), "textures": {
         "layer0": aw("block/lumen_vines_tip"), "layer1": {"sprite": aw("block/lumen_vines_tip_glow"), "neoforge_data": {"light_emission": 15}}}})
     write(f"{ASSETS}/items/lumen_vines.json", {"model": {"type": mc("model"), "model": aw("item/lumen_vines")}})
+    lands2.block_assets(sys.modules[__name__])
 
 
 # =====================================================================================================================
@@ -296,6 +303,7 @@ def block_data():
         "minecraft:leaves": btags["minecraft:leaves"],
         "minecraft:saplings": btags["minecraft:saplings"],
     }
+    lands2.tags(sys.modules[__name__], btags, itags)
     for kind, tags in (("block", btags), ("item", itags)):
         for tag, values in tags.items():
             ns, path = tag.split(":")
@@ -309,6 +317,7 @@ def block_data():
         flammable[aw(name)] = {"burn_odds": 60, "ignite_odds": 30}
     flammable[aw("lumen_moss")] = {"burn_odds": 20, "ignite_odds": 60}
     flammable[aw("lumen_vines")] = {"burn_odds": 100, "ignite_odds": 15}
+    lands2.flammable(sys.modules[__name__], flammable)
     write(f"{RES}/data/neoforge/data_maps/block/flammable.json", {"values": flammable})
     strip = {}
     for kind in ("elder", "lumen"):
@@ -319,10 +328,13 @@ def block_data():
                     {"if_true": {"type": mc("matching_blocks"), "blocks": aw(src)},
                      "then": {"type": mc("copy_properties"), "source": {"id": aw(dst), "properties": {"axis": "y"}}}}]},
                 "item_damage_per_use": 1, "sound": mc("item.axe.strip")}}
+    lands2.strip_map(sys.modules[__name__], strip)
     write(f"{RES}/data/neoforge/data_maps/block/transformables.json", {"values": strip})
     lang = {f"block.awaken.{k}": v for k, v in NAMES.items()}
     lang["biome.awaken.elderwood"] = "Elderwood"
     lang["biome.awaken.lumen_forest"] = "Lumen Forest"
+    lands2.lang(sys.modules[__name__], lang)
+    lands2.block_data(sys.modules[__name__])
     # the terrain module's lang file is shared (wind and leaves add their subtitles): keep what others wrote
     path = f"{MERGE}/assets/awaken/lang/en_us.json"
     try:
@@ -596,6 +608,7 @@ def pack():
     write(f"{PACK}/awaken/lithostitched/biome_injector/lands/elderwood.json",
           injector("elderwood", [mc("forest"), mc("birch_forest"), mc("old_growth_birch_forest"), mc("flower_forest")]))
     write(f"{PACK}/awaken/lithostitched/biome_injector/lands/lumen_forest.json", injector("lumen_forest", [mc("dark_forest")]))
+    lands2.pack(sys.modules[__name__])
 
 
 if __name__ == "__main__":
