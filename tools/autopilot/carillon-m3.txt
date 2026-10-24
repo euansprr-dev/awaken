@@ -153,7 +153,16 @@ shot m3_dusk_garden
 cmd awaken citizens show tavernkeeper
 wait 80
 shot m3_dusk_tavern
-# ---- night: the Watch with lanterns, a burglary, the city from above
+# ---- in the last light: a burglary, the thief running for it
+cmd time set 13700
+cmd awaken citizens event burglary
+wait 700
+cmd awaken citizens show event
+wait 60
+shot m3_dusk_burglary
+wait 200
+shot m3_dusk_chase
+# ---- night: the Watch with lanterns, the city from above
 cmd time set 17000
 cmd awaken citizens show watch
 wait 100
@@ -167,14 +176,7 @@ shot m3_night_terrace
 cmd awaken city view wallring
 wait 100
 shot m3_night_wallring
-cmd time set 13700
-cmd awaken citizens event burglary
-wait 700
-cmd awaken citizens show event
-wait 60
-shot m3_night_burglary
-wait 200
-shot m3_night_chase
+cmd time set 18000
 cmd awaken city view studio_spire
 wait 120
 shot m3_night_studio_spire
