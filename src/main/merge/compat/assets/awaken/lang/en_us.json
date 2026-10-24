@@ -75,5 +75,6 @@
   "config.jade.plugin_awaken.trophy": "Trophy Mounts",
   "config.jade.plugin_awaken.creature": "Creatures: temperament, level, rank",
   "config.jade.plugin_awaken.townsperson": "Townsfolk: job and town",
-  "jade.theme.awaken.system": "AWAKEN System"
+  "jade.theme.awaken.system": "AWAKEN System",
+  "key.awaken.look": "Look: Swift · Cinematic · Ultra"
 }

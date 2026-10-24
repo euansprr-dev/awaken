@@ -19,6 +19,10 @@ Looks (contact sheets compared pair by pair):
   noise is MoltenVK's "Metal does not support disabling primitive restart" warning.
 - Distant Horizons: on Vulkan, Lens reads DH's depth texture as one constant value (OpenGL: cleared to 0). Not chased
   further; Far Sight will replace DH and own its depth.
+  Later the same day (pack/look): this run predates e719e4d, the fix that unpacks DH's texture, so Lens was sampling its
+  own 1×1 placeholder, created without data (0 on OpenGL, whatever the memory held on Vulkan), not DH's depth. DH's
+  real depth on Vulkan is unchecked: until tools/autopilot/lens-dh.txt checks it there, DH shares it with Lens only on
+  OpenGL, and Lens trusts a far depth only once it proves itself (SPEC §14, Lens and far terrain).
 
 Verdict: Vulkan is the pack's default from this commit (tools/pack.py install; SPEC §14).
 
