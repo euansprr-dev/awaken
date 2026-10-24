@@ -109,7 +109,7 @@ public final class AscentServer {
         if (given != 0) {
             // a moment after arriving (the client plays it once the player is free: no screen, on the ground)
             dev.awaken.core.Later.run(p.level().getServer(), 60, () -> {
-                if (!p.hasDisconnected()) AwakenNet.send(p, new AscentPayloads.Remember(given));
+                if (!p.hasDisconnected()) AwakenNet.send(p, new AscentPayloads.Remember(given, AscentPayloads.REMEMBER));
             });
         }
     }

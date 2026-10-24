@@ -30,6 +30,8 @@ public final class AscentModule {
         bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, AscentServer::onPlace);
         AscentCommands.register();
         AscentTests.register();
+        // sky platforms: the ladder of rings and the Wings core, placed once as each platform loads (SPEC §17.9)
+        dev.awaken.above.ruin.SkyRig.register(bus);
         // updraft vents are moving air for the free states (the list is filled on the client only)
         dev.awaken.core.api.AirHooks.register(Updrafts::airAt);
         // the Horizon's sky sites ("needs Wings"): Wings, or a rope and the Leaper's air moves, get you up there

@@ -31,11 +31,13 @@ final class AscentCommands {
             ascent.then(Commands.literal("remember").executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 int bits = AscentServer.tiers(p);
-                AwakenNet.send(p, new AscentPayloads.Remember(bits != 0 ? bits : 0b111));
+                AwakenNet.send(p, new AscentPayloads.Remember(bits != 0 ? bits : 0b111, AscentPayloads.REMEMBER));
                 return 1;
             }));
             // the Tether Vow at the world's spawn vault: there, wait for its chunks, then stand in its forecourt (tours)
             ascent.then(Commands.literal("vow").then(Commands.literal("goto").executes(c -> vowGoto(c.getSource()))));
+            // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
+            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource()))));
             ascent.then(Commands.literal("pilot").then(Commands.argument("line", StringArgumentType.greedyString())
                     .executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
@@ -53,6 +55,46 @@ final class AscentCommands {
         for (AscentPayloads.Tier tier : AscentPayloads.Tier.values()) if (tier.in(t)) sb.append(sb.isEmpty() ? "" : ", ").append(tier.name().toLowerCase());
         src.sendSuccess(() -> Component.literal("Ascent tiers: " + (sb.isEmpty() ? "none (Runner)" : sb)).withStyle(ChatFormatting.AQUA), false);
         return t;
+    }
+
+    private static int skyGoto(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
+        // vanilla's own search: only starts that really generated
+        var sky = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
+                .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.STRUCTURE, dev.awaken.Awaken.id("precursor_sky_platform")));
+        if (sky.isEmpty()) {
+            src.sendFailure(Component.literal("No sky platform structure"));
+            return 0;
+        }
+        var near = level.getChunkSource().getGenerator().findNearestMapStructure(level, net.minecraft.core.HolderSet.direct(sky.get()),
+                p.blockPosition(), 100, false);
+        if (near == null) {
+            src.sendFailure(Component.literal("No sky platform within 1600 blocks"));
+            return 0;
+        }
+        var at = near.getFirst();
+        int chx = at.getX() >> 4, chz = at.getZ() >> 4;
+        for (int x = -3; x <= 3; x++) for (int z = -3; z <= 3; z++) level.getChunk(chx + x, chz + z);
+        for (int x = -3; x <= 3; x++) for (int z = -3; z <= 3; z++) {
+            for (var start : level.getChunk(chx + x, chz + z).getAllStarts().entrySet()) {
+                if (!(start.getKey() instanceof dev.awaken.above.ruin.PrecursorRuinStructure prs) || prs.kind() != dev.awaken.above.ruin.RuinKind.SKY) continue;
+                var box = start.getValue().getPieces().getFirst().getBoundingBox();
+                int cx = box.minX() + 24, cz = box.minZ() + 24, deckY = box.minY() + 12;
+                if (!level.getBlockState(new net.minecraft.core.BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) {
+                    dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+                }
+                var l = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
+                var first = l.rings().getLast();
+                int fg = dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz);
+                p.teleportTo(level, first.getX() + 0.5, fg, first.getZ() + 0.5, java.util.Set.of(), 0, -80, true);
+                dev.awaken.Awaken.LOG.info("[ascent] sky goto: the platform at {}, {} (deck {}), under its first ring {}", cx, cz, deckY,
+                        first.toShortString());
+                return 1;
+            }
+        }
+        src.sendFailure(Component.literal("Found a platform near " + at.toShortString() + " but no start in its chunks"));
+        return 0;
     }
 
     private static int vowGoto(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

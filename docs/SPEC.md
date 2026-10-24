@@ -1963,6 +1963,49 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   is a Flow link and 2 Skyborn mastery. (Pilot `double <key>` taps like a player for tours; the autopilot's own command
   round trip put taps 11 ticks apart.)
 
+### 17.9 Phase 2: Wings, the sky platform's way up and its core
+- **The rig** (`above.ruin.SkyRig`): placed once on each sky platform the first time its start chunk loads (queued on
+  `ChunkEvent.Load`, built on a later server tick once the core's and the chain's columns are loaded; done when the
+  core is there), so old worlds' platforms get it too and the blueprint never changes. From the deck's centre (cx, deck,
+  cz): a pier of trim three cells wide on the (+x, +z) diagonal from 7 to 12 out (local a, b in 7..12, |a - b| <= 1),
+  the rim's trim studs on it cleared; a chain from under its end (12, 12) down to the lowest ring. The diagonal: the
+  blueprint's four torn-up islands hang 19 out on each side (up to 3 off the line, 3.8 wide) with their tether chains
+  along that line back to the rim, in any turn; the first rig ran out along +x, under the east island and its tether,
+  which cut ropes, blocked zips and left no room to stand on the pier. `ascent_sky_rig` checks every rig cell is 3+
+  clear of any island's edge and under no tether.
+- **Rings** (`awaken:anchor_ring`, unbreakable, light 12): from 9 under the deck down to 26 over the ground under the
+  chain (the lowest of four columns 5 out diagonally), evenly spaced at most 22 apart, each 3 off the chain a quarter
+  turn round from the last (+z, +x, -z, -x), joined to it by a chain stub. Each is nearly overhead from a hang under the
+  one below it (a vertical zip, below). Over water the lowest ring gets a 5x5 buoy at the surface to stand and throw from
+  (the Ascent stands aside while swimming).
+- **The perch**: the top ring stands in a 3x3 of plating (trim corners), its stub on the chain's side. From the hang
+  under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
+  of the pier's end (7 up) pulls the body onto the pier.
+- **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
+  without Wings who came up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
+  last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
+  with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
+  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told, at most once a minute,
+  that the core answers only to the long way (`awaken.ascent.core.dark`). It breathes a ring of light every 3 s. The
+  platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The rope's moves for a ladder** (§17.6 rope, both sides):
+  - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
+    up to it rather than swinging.
+  - *Ceiling hang*: a zip that bites an underside hangs there on a rope 2.6 long, still, ready to throw again; unless
+  - *the ledge vault*: the underside is a floor's (full blocks with two cells of room on them, at least two together)
+    with an open edge within 3 cells, tried first toward the side the zip came up from. Then the body vaults it: out
+    past the edge's face (the head kept under the ledge), up beside the face until the feet clear the top, then in
+    onto it (up to 40 ticks; any other move takes over). A zip to a face with room over it vaults the same way over that
+    face's edge (a ledge, a pylon, the pier). Lone rings and branches still give the hang. The vault ends with the
+    landing (left set, the next carry pulled toward the old ledge).
+  - *Pass-through*: for 20 ticks after letting go of a rope, a throw passes through the block it held (you throw past
+    the ring you hung under to the next one up).
+  - *Zip stall*: a zip pressed against something, moving under 0.05 a tick for 10 ticks, lets go (never pinned).
+- Dev: `/awaken ascent sky goto` (the nearest platform that really generated, by vanilla's own search; rigs it if not
+  yet; puts you on the ground under the lowest ring); pilot `run climb` climbs the rings, the perch and the pier, walks
+  round the cabin to its door and in, and ends when the core gives Wings (`tools/autopilot/ascent-sky.txt`: from a buoy
+  at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)

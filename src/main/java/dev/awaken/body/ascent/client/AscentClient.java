@@ -86,7 +86,7 @@ public final class AscentClient {
         });
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
         event.register(AscentPayloads.Stop.TYPE, (msg, ctx) -> AscentMoves.refused(msg.state()));
-        event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits()));
+        event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits(), msg.mode()));
         event.register(AscentPayloads.Vow.TYPE, (msg, ctx) -> VowScene.on(msg));
         event.register(AscentPayloads.Record.TYPE, (msg, ctx) -> AscentNotes.record(msg.chain()));
     }

@@ -1,5 +1,6 @@
-"""The Ascent's blocks (docs/SPEC.md §17.6): the updraft vent, a Precursor grate that breathes a column of rising air
-(the Wilds' pylons stand on them). Pixel art in the mod's palette: the Precursor's dark slate round a grate whose gaps
+"""The Ascent's blocks (docs/SPEC.md §17.6, §17.9): the updraft vent, a Precursor grate that breathes a column of rising
+air (the Wilds' pylons stand on them); the anchor ring, a glowing ring for the rope (the sky platforms' ladders); the
+wing core, a sky platform's heart (a glyph of two wings in light). Pixel art in the mod's palette: the Precursor's dark slate round a grate whose gaps
 glow with the Signal's cyan, and a band of light round its sides.
 
     python3 tools/art/build_all.py ascent_blocks        textures
@@ -77,10 +78,56 @@ def vent_side():
     return base, glow
 
 
+def anchor_ring():
+    """Slate with a ring of light on every face: something to aim a rope at from far below."""
+    st, gl = ramp("precursor"), ramp("ventglow")
+    rng = rng_for("ascent_anchor_ring")
+    base, glow = Canvas(), Canvas()
+    for y in range(16):
+        for x in range(16):
+            r = math.hypot(x - 7.5, y - 7.5)
+            if 4.4 <= r <= 6.4:
+                k = 4 if 5.0 <= r <= 5.8 else 3
+                base.set(x, y, gl[k])
+                glow.set(x, y, gl[k + 1])
+            elif r < 2.2:
+                base.set(x, y, gl[2])
+                glow.set(x, y, gl[3])
+            else:
+                base.set(x, y, st[1 + (1 if rng.random() < 0.3 else 0) + (1 if r > 7.2 else 0)])
+    return base, glow
+
+
+def wing_core():
+    """Pale light in a slate frame: two wings rising from a bright orb."""
+    st, gl = ramp("precursor"), ramp("ventglow")
+    base, glow = Canvas(), Canvas()
+    for y in range(16):
+        for x in range(16):
+            edge = x in (0, 15) or y in (0, 15)
+            if edge:
+                base.set(x, y, st[3])
+                continue
+            dx, dy = abs(x - 7.5), 15 - y
+            # a wing on each side: a band rising outward from the centre, feathered toward the tips
+            wing = 1.5 < dx < 7 and abs(dy - (4 + dx * 0.9)) < 1.6 - dx * 0.12
+            centre = math.hypot(dx, dy - 5.5) < 2.1
+            if wing or centre:
+                k = 5 if centre else 4
+                base.set(x, y, gl[k])
+                glow.set(x, y, gl[k])
+            else:
+                base.set(x, y, gl[1] if (x + y) % 2 == 0 else st[2])
+                glow.set(x, y, gl[0])
+    return base, glow
+
+
 def textures():
     t = {}
     t["ascent_updraft_vent_top"], t["ascent_updraft_vent_top_glow"] = vent_top()
     t["ascent_updraft_vent_side"], t["ascent_updraft_vent_side_glow"] = vent_side()
+    t["ascent_anchor_ring"], t["ascent_anchor_ring_glow"] = anchor_ring()
+    t["ascent_wing_core"], t["ascent_wing_core_glow"] = wing_core()
     return t
 
 
@@ -128,7 +175,19 @@ def vent_model():
                           "faces": glow}]}
 
 
+def glow_cube(name):
+    b = f"awaken:block/ascent_{name}"
+    return {"parent": "minecraft:block/block", "textures": {"particle": b, "all": b, "glow": b + "_glow"},
+            "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": {d: {"texture": "#all", "cullface": d} for d in SIDES}},
+                         {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up",
+                          "faces": {d: {"texture": "#glow", "cullface": d} for d in SIDES}}]}
+
+
 def content():
+    for name in ("anchor_ring", "wing_core"):
+        _write(os.path.join(ASSETS, f"models/block/{name}.json"), glow_cube(name))
+        _write(os.path.join(ASSETS, f"blockstates/{name}.json"), {"variants": {"": {"model": f"awaken:block/{name}"}}})
+        _write(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": f"awaken:block/{name}"}})
     name = "updraft_vent"
     _write(os.path.join(ASSETS, f"models/block/{name}.json"), vent_model())
     _write(os.path.join(ASSETS, f"blockstates/{name}.json"), {"variants": {"": {"model": f"awaken:block/{name}"}}})

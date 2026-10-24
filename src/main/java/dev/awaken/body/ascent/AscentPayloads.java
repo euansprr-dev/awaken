@@ -84,10 +84,17 @@ public final class AscentPayloads {
         @Override public Type<Stop> type() { return TYPE; }
     }
 
-    /** Server → client: play "your body remembers" for these tiers (an old world's first load, SPEC §17.6). */
-    public record Remember(int bits) implements CustomPacketPayload {
+    /** Remember's modes: an old world's tiers given back, or wings given at a sky platform's core. */
+    public static final int REMEMBER = 0, GIFT_WINGS = 1;
+
+    /**
+     * Server → client: a scene of tiers given: "your body remembers" (an old world's first load, SPEC §17.6) or "wings
+     * of light" (a sky platform's core, §17.9), by {@code mode}.
+     */
+    public record Remember(int bits, int mode) implements CustomPacketPayload {
         public static final Type<Remember> TYPE = new Type<>(Awaken.id("ascent_remember"));
-        public static final StreamCodec<ByteBuf, Remember> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Remember::bits, Remember::new);
+        public static final StreamCodec<ByteBuf, Remember> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Remember::bits,
+                ByteBufCodecs.VAR_INT, Remember::mode, Remember::new);
         @Override public Type<Remember> type() { return TYPE; }
     }
 

@@ -302,6 +302,13 @@ public final class AscentRules {
         return false;
     }
 
+    /**
+     * Straight up (SPEC §17.6): a rope thrown at something more than {@link #ZIP_UP_MIN_RISE} above and nearly overhead
+     * (sideways under {@link #ZIP_UP_SLOPE} of the rise) zips up to it; arriving under its underside the body hangs on a
+     * rope {@link #CEILING_HANG} long, still, ready to throw again (a ladder of rings, a branch, a keel).
+     */
+    public static final double ZIP_UP_MIN_RISE = 6, ZIP_UP_SLOPE = 0.45, CEILING_HANG = 2.6;
+
     // ---- Aether (Skyborn's flight meter; SPEC §17.8) ------------------------------------------------------------------
 
     /**
