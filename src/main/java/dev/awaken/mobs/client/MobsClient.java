@@ -9,5 +9,6 @@ public final class MobsClient {
     public static void init(IEventBus modBus) {
         modBus.addListener(AwRenderers::layers);
         modBus.addListener(AwRenderers::renderers);
+        modBus.addListener(RitualRenderers::renderers);
     }
 }

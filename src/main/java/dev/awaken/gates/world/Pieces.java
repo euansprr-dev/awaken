@@ -78,12 +78,14 @@ public final class Pieces {
 
     /** An obstacle stands on this column (cover, stacks, statues): not walkable, no spawns. */
     public static boolean blocks(Room r, int x, int z) {
+        if (r.piece == SetPiece.RITUAL_HALL) return PiecesRitual.blocks(r, x, z);
         if (r.piece == null || clear(r, x, z)) return false;
         return r.piece.arena ? PiecesArenas.blocks(r, x, z) : PiecesRooms.blocks(r, x, z);
     }
 
     /** Walking surface relative to the room's floor, or {@link #KEEP}. */
     public static int floorDelta(Room r, int x, int z) {
+        if (r.piece == SetPiece.RITUAL_HALL) return PiecesRitual.floorDelta(r, x, z);
         if (r.piece == null || clear(r, x, z)) return r.piece != null && r.piece.arena ? 0 : KEEP;
         return r.piece.arena ? PiecesArenas.floorDelta(r, x, z) : PiecesRooms.floorDelta(r, x, z);
     }
@@ -91,6 +93,7 @@ public final class Pieces {
     /** Raises (or lowers) the ceiling over this column. */
     public static int ceilingDelta(Room r, int x, int z) {
         if (r.piece == null) return 0;
+        if (r.piece == SetPiece.RITUAL_HALL) return PiecesRitual.ceilingDelta(r, x, z);
         return r.piece.arena ? PiecesArenas.ceilingDelta(r, x, z) : PiecesRooms.ceilingDelta(r, x, z);
     }
 
@@ -101,19 +104,19 @@ public final class Pieces {
 
     /** The piece dresses this wall face itself (no recessed panel here). */
     public static boolean wallClaim(Room r, int x, int z, int d) {
-        if (r.piece == null) return false;
+        if (r.piece == null || r.piece.ritual) return false;
         return r.piece.arena ? PiecesArenas.wallClaim(r, x, z, d) : PiecesRooms.wallClaim(r, x, z, d);
     }
 
     /** Paints a wall face the piece claimed. True when it did. */
     public static boolean paintWall(GatePainter.Ctx c, int bx, int bz, int x, int z, int od) {
-        if (c.r.piece == null) return false;
+        if (c.r.piece == null || c.r.piece.ritual) return false;
         return c.r.piece.arena ? PiecesArenas.paintWall(c, bx, bz, x, z, od) : PiecesRooms.paintWall(c, bx, bz, x, z, od);
     }
 
     /** Something standing in a wall niche (row rel above the floor), or null for the kit's own. */
     public static BlockState niche(GatePainter.Ctx c, int x, int z, int rel, int d, boolean big) {
-        if (c.r.piece == null) return null;
+        if (c.r.piece == null || c.r.piece.ritual) return null;
         return c.r.piece.arena ? PiecesArenas.niche(c, x, z, rel, d, big) : null;
     }
 
@@ -122,7 +125,7 @@ public final class Pieces {
      * ceil = the ceiling block's Y). Returns true when the column is the piece's and the default furniture must not go in.
      */
     public static boolean paint(GatePainter.Ctx c, int bx, int bz, int x, int z, int walk, int ceil, int fo) {
-        if (c.r.piece == null) return false;
+        if (c.r.piece == null || c.r.piece.ritual) return false;
         return c.r.piece.arena ? PiecesArenas.paint(c, bx, bz, x, z, walk, ceil, fo) : PiecesRooms.paint(c, bx, bz, x, z, walk, ceil, fo);
     }
 

@@ -47,6 +47,24 @@ docs/modules/power-fx.md "Move twists"). No invincibility frames: Dash stays the
   back feet first (legs out, a hand trailing, the body down the slide's line while the head keeps looking); the roll is a
   tucked shoulder roll over the landing; the mantle reaches up with both arms, then leans over the lip; the tactical sprint
   leans in with a longer stride. Others learn of a move from `body_seen` (players within 96 blocks).
+- **Full-body clips** (optional: with the Player Animation Library installed, the pack's `feel` profile). Each move plays
+  a keyframed clip instead of the poses above; with Bendable Cuboids too, its `_bent` twin with real elbows and knees.
+  Clips come from `tools/art/specs/body_moves.py` (`assets/awaken/player_animations/body_moves.json`; names in
+  `BodyClips`; `preview` draws frame strips and a sheet of every move straight and bent, `check` fails on an arm inside
+  the body); they must read with straight limbs too.
+  - slide: reclined feet first, the lead leg out along the ground, the other knee tucked, the off hand trailing on the
+    ground, the main arm up in a guard; looped (a slight tremble) for as long as the slide runs, then a settle to standing;
+  - slide-cancel jump: a tucked lift (knees up, arms thrown forward), opening for the landing;
+  - roll: a full tuck (knees to chest, arms round the shins, chin down) turning once through along the floor in about
+    eight ticks, then opening into a crouch-stand;
+  - mantle: both arms reach over the lip, pull the chest over as one knee drives up onto the ledge, press down, stand;
+  - tactical sprint: a hard forward lean, knees high, arms pumping short and low with bent elbows; looped while it lasts.
+  `BodyAnims` starts them through `core.api.PlayerClips` (installed by the powers module's library gateway, `PalCasts`,
+  on its own layer above the cast clips; a no-op without the library, and then `BodyAnims` keeps the vanilla poses). They
+  start from the same signals as the poses: the local player's prediction and `body_seen` for everyone else; a held
+  clip ends when the local move ends, or when another player's crawl pose or sprint flag goes (after a 3-tick grace for
+  the sync), and a slide that ends in the air lets go into the slide-cancel jump. No new packets. First person is
+  untouched (the library's first-person mode is off; `BodyCamera` moves the view as before).
 - **First person** (`BodyCamera`, `ViewportEvent.ComputeCameraAngles`, FOV event, hand event): the roll dips the view 32°
   and swings it back; the mantle lifts the eyes to the lip then tips over it, hands reaching up; the slide drops to crawl
   eye height, tilts 7.5° with a faint ground judder and +7% FOV; the slide-cancel kicks the view up; the tactical sprint
@@ -77,6 +95,9 @@ copied on death); an old save that already holds a move hears about it once, 3 s
   lines a move's frame up with an autopilot shot. `/awaken body forget`. In autopilot runs every move's start and end
   (and why it ended) is logged as `[body] t<tick> ...`.
 - Autopilot: `tools/autopilot.sh tools/autopilot/body.txt` (every move in first and third person, the twists, the Status line).
+  Its `clip_*` shots film each move close up (camera 2.5 blocks behind, 3.5 in front), timed from the `[body]` traces, a
+  side view by turning the head mid-move, and again in iron armour: run it with `PACK=feel` for the clips (both
+  libraries) and plain for the poses. Offline: `python3 tools/art/specs/body_moves.py preview DIR`.
 - Sounds: `python3 tools/art/specs/audio_body.py`; dust: `python3 tools/art/build_all.py body`.
 
 ## Tests (`tools/gradle.sh 1200 runGameTestServer`)
@@ -90,17 +111,20 @@ under its ceiling), `body_slide_gap_and_wall` (crawl box passes a 1-block gap a 
 a horse, an elytra, Low Gravity, perks), `body_nothing_before_awakening`, `body_unlocks_announced_once` (and a save and load),
 `body_tactical_sprint` (modifier on and off, +25%, hunger, stop, cast, riding, recharge), `body_momentum_hit_bands` (walk 10,
 sprint ×1.096, tactical ×1.18, slide ×1.3, more knockback, a weak swing nothing). In powers: `powers_twist_slide_punch_lineup`,
-`powers_twist_smoke_trail_lineup`, `powers_twist_dash_out_and_chain_refund`.
+`powers_twist_smoke_trail_lineup`, `powers_twist_dash_out_and_chain_refund`. `body_clips`: every clip the body plays is in
+the generated file with its bent twin, held moves loop, the rest ease out, only the twin's limbs bend.
 
 ## Later (not in v1)
 
 A dive, a single wall kick at B, a "Flow" bonus for chaining moves, enemy telegraphs and lunges, better air control at A.
-The Player Animation Library (when the pack has it) could replace the vanilla-pose approximations.
+Clips for the momentum hit and the trip.
 
 ## Known gaps
 
 - Nobody has played it with real hands yet: judged by tests and autopilot frames. The sounds were judged by spectrogram only.
-- Vanilla's player model has no knees, so the slide and the roll are poses of rigid limbs (sitting back; a tucked flip).
+- Without the Player Animation Library and Bendable Cuboids the player model has no knees, so the slide and the roll are
+  poses of rigid limbs (sitting back; a tucked flip). With both, armour bends with the limbs (the knee shows a small step
+  close up). A clip's legs replace the walking legs, so the sprint's stride is the clip's own pace, not the ground speed.
 - The client can't see a power's no-fall window (server-only), so after Dash or Meteor Dive a sprinting landing may play the
   roll's look although the power already cancelled the fall. Flight and Hover landings are recognised (flight within 7 s).
 - A dedicated server's players see another player's slide pose from the server's forced pose; their dust and lean come from

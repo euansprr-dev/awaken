@@ -48,7 +48,20 @@ public final class LensClient {
     private static int debug;
     private static boolean active, snap = true, zeroToOne;
     private static ResourceKey<Level> lookFor;
+    // the camera's biome when it has a look of its own (null otherwise), sampled every 10 ticks
+    private static String biomeFor;
+    private static int biomeClock;
     private static final float[] current = Look.neutral(), target = Look.neutral();
+    // a story moment's look over the dimension's (the Ritual of the Bell: awaken:ritual, awaken:void), its easing rate
+    private static @org.jspecify.annotations.Nullable String overrideLook;
+    private static boolean overrideChanged;
+    private static float ease = 0.06f;
+    // a story scene keeps Lens on although the setting is off (a cutscene): after it, this many ticks to fade to neutral
+    private static int linger;
+    private static boolean wasOff;
+    private static final float[] NEUTRAL = Look.neutral();
+    // texel 13: the tear from black (progress per tick), crushed blacks and extra bloom, eased toward their targets
+    private static float tear, tearStep, crush, crushTarget, bloomBoost, bloomTarget;
     // reused every frame: the sun's direction and where it lands on screen
     private static final Vector3f sunDir = new Vector3f();
     private static final Vector4f clip = new Vector4f();
@@ -63,7 +76,8 @@ public final class LensClient {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("lens_looks"),
                 (ResourceManagerReloadListener) manager -> {
                     Looks.reload(manager);
-                    lookFor = null; // re-resolve the current dimension's look
+                    lookFor = null; // re-resolve the current place's look
+                    biomeFor = null;
                 }));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         // after every other fog listener (Blight, the Veil): Lens hazes toward the fog the player actually sees
@@ -75,12 +89,20 @@ public final class LensClient {
         LocalPlayer player = mc.player;
         if (player == null || mc.level == null) {
             lookFor = null;
+            biomeFor = null;
             snap = true;
             active = false;
+            overrideLook = null;
+            linger = 0;
+            tear = tearStep = crush = crushTarget = bloomBoost = bloomTarget = 0f;
             return;
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
-        boolean on = setting != AwakenConfig.Client.LensLook.OFF && !Companions.shaderPackActive();
+        boolean off = setting == AwakenConfig.Client.LensLook.OFF;
+        // a story scene's look plays like a cutscene even with Lens off (unless the player said no), then fades out
+        boolean scene = overrideLook != null || tearStep > 0 || linger > 0;
+        if (linger > 0) linger--;
+        boolean on = (!off || scene && scenesAllowed()) && !Companions.shaderPackActive();
         Identifier want = !on ? null : setting == AwakenConfig.Client.LensLook.CINEMATIC ? CINEMATIC : SWIFT;
         // the server replaces this list whenever it syncs post effects, so Lens re-asserts itself every tick, first
         List<Identifier> effects = player.getActivePostEffects();
@@ -97,14 +119,91 @@ public final class LensClient {
         active = want != null;
 
         ResourceKey<Level> dim = mc.level.dimension();
-        if (dim != lookFor) {
-            Looks.resolve(dim.identifier().toString(), target);
-            lookFor = dim;
+        String biome = biomeFor;
+        if (dim != lookFor || ++biomeClock >= 10) {
+            biomeClock = 0;
+            biome = mc.level.getBiome(mc.gameRenderer.mainCamera().blockPosition()).unwrapKey()
+                    .map(k -> k.identifier().toString()).filter(Looks::hasBiome).orElse(null);
         }
-        // ease into a new place's look over about a second and a half (a hard cut on joining a world)
-        float k = snap ? 1f : 0.06f;
+        boolean placeChanged = dim != lookFor || !java.util.Objects.equals(biome, biomeFor);
+        if (placeChanged || overrideChanged || off != wasOff) {
+            // a new dimension eases in over about 1.5 s, one biome's look into another's over about 3 s; a story scene
+            // keeps the pace override/clearOverride set
+            if (placeChanged && !overrideChanged && overrideLook == null) ease = dim != lookFor ? 0.06f : 0.03f;
+            // with Lens off the look rests at neutral, so a scene eases in from (and back out to) the plain frame
+            if (overrideLook != null) Looks.resolve(overrideLook, null, target);
+            else if (off) System.arraycopy(NEUTRAL, 0, target, 0, Look.SIZE);
+            else Looks.resolve(dim.identifier().toString(), biome, target);
+            lookFor = dim;
+            biomeFor = biome;
+            overrideChanged = false;
+            wasOff = off;
+        }
+        // a hard cut on joining a world
+        float k = snap ? 1f : ease;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
         snap = false;
+        if (tearStep > 0) {
+            tear = Math.min(1f, tear + tearStep);
+            if (tear >= 1f) {
+                tear = 0f; // fully open: the frame is the game's again
+                tearStep = 0f;
+            }
+        }
+        crush += (crushTarget - crush) * 0.08f;
+        bloomBoost += (bloomTarget - bloomBoost) * (bloomTarget > bloomBoost ? 0.35f : 0.05f);
+    }
+
+    /**
+     * A story moment's look in place of the dimension's (an id in looks.json, such as {@code awaken:ritual}), eased in
+     * over about {@code fadeTicks}. It plays even while Lens is off, for the scene's length (client config
+     * {@code lensInScenes}); never while a shaderpack is on, where callers carry on without it ({@link #active()}).
+     */
+    public static void override(String lookId, int fadeTicks) {
+        if (lookId.equals(overrideLook)) return;
+        overrideLook = lookId;
+        overrideChanged = true;
+        ease = rate(fadeTicks);
+    }
+
+    /** Back to the dimension's own look over about {@code fadeTicks} (with Lens off: to the plain frame, then off). */
+    public static void clearOverride(int fadeTicks) {
+        if (overrideLook == null) return;
+        overrideLook = null;
+        overrideChanged = true;
+        ease = rate(fadeTicks);
+        linger = Math.max(linger, fadeTicks + 10);
+    }
+
+    /** Whether story scenes may turn Lens on while it's off (client config {@code lensInScenes}). */
+    private static boolean scenesAllowed() {
+        try {
+            return AwakenConfig.Client.LENS_IN_SCENES.get();
+        } catch (IllegalStateException notLoaded) {
+            return true;
+        }
+    }
+
+    /** The black opens from the centre over {@code ticks} (the awakening); the frame stays black until it starts. */
+    public static void tear(int ticks) {
+        tear = 0.0001f;
+        tearStep = 1f / Math.max(1, ticks);
+    }
+
+    /** Crushed blacks (0..1) and extra bloom (0..1, eased up fast and down slowly) for the ritual's moments. */
+    public static void ritual(float crushTo, float bloomTo) {
+        crushTarget = Math.clamp(crushTo, 0f, 1f);
+        bloomTarget = Math.clamp(bloomTo, 0f, 1f);
+    }
+
+    /** Whether Lens is drawing this frame (off, or stepped aside for a shaderpack, means callers use their fallbacks). */
+    public static boolean active() {
+        return active;
+    }
+
+    private static float rate(int fadeTicks) {
+        // about 95% of the way after fadeTicks
+        return fadeTicks <= 1 ? 1f : (float) (1.0 - Math.pow(0.05, 1.0 / fadeTicks));
     }
 
     private static void ensureParams() {
@@ -146,8 +245,8 @@ public final class LensClient {
         }
         var fog = e.getFogData();
         params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
-                fog.renderDistanceEnd, fog.environmentalEnd, FarTerrain.active(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(),
-                FarTerrain.near(), FarTerrain.far());
+                fog.renderDistanceEnd, fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
+                FarTerrain.active(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far());
         params.uploadIfChanged();
     }
 

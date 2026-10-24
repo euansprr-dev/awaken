@@ -1,0 +1,37 @@
+[09:24:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=OpenGL driver=4.1 Metal - 90.5 device=Apple M4 fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,entityculling,immediatelyfast,awaken,ferritecore,conditional_mixin,transition,dynamic_fps,lithium,sodium,moreculling,trender,cloth_config,neoforge,dynamic_fps_common
+[09:24:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[09:24:27] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset 15
+[09:24:42] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf vista_sunset recorded no frames
+[09:24:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset_west 10
+[09:24:58] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf vista_sunset_west recorded no frames
+[09:25:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart flight
+[09:25:35] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf flight recorded no frames
+[09:25:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:25:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf overworld_platform 10
+[09:25:59] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf overworld_platform recorded no frames
+[09:26:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_S_close 10
+[09:26:12] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf gate_S_close recorded no frames
+[09:26:19] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_sovereign_night 10
+[09:26:29] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf gate_sovereign_night recorded no frames
+[09:26:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf all_creatures_lineup 10
+[09:26:45] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf all_creatures_lineup recorded no frames
+[09:26:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_legion
+[09:26:53] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf cast_legion recorded no frames
+[09:26:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:26:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_storm_call
+[09:26:55] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf cast_storm_call recorded no frames
+[09:26:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:26:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_nova
+[09:26:58] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf cast_nova recorded no frames
+[09:26:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:26:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_overload
+[09:27:01] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf cast_overload recorded no frames
+[09:27:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:27:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf well_night 10
+[09:27:18] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf well_night recorded no frames
+[09:27:28] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf descent_5 10
+[09:27:38] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf descent_5 recorded no frames
+[09:27:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf stillpoint 10
+[09:28:05] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf stillpoint recorded no frames
+[09:28:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf lucidium 10
+[09:28:36] [Render thread/WARN] [de.aw.Awaken/]: [autopilot] perf lucidium recorded no frames

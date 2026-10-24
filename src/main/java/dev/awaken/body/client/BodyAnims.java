@@ -1,8 +1,10 @@
 package dev.awaken.body.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import dev.awaken.body.BodyClips;
 import dev.awaken.body.BodyRules;
 import dev.awaken.body.Move;
+import dev.awaken.core.api.PlayerClips;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -20,6 +22,13 @@ import org.joml.Quaternionf;
  * and the pose stack. The slide is feet first, sitting low with the lead leg out and a hand trailing; the roll is a
  * tucked shoulder roll over the landing; the mantle reaches up both arms, then leans over the lip; the tactical
  * sprint leans in with a longer stride. Fixed slots, nothing allocated per frame.
+ * <p>
+ * With the Player Animation Library installed (optional), each move plays a full-body clip instead
+ * ({@link BodyClips}, through {@link PlayerClips}; bent elbows and knees with Bendable Cuboids): the slide held for as
+ * long as it runs, then settling or a tucked lift out of a slide-cancel; the roll a full tuck turning through; the
+ * mantle a reach, pull and press; the tactical sprint a looped stride. The vanilla poses below then step aside for that
+ * player (only the slide's facing and its crawl-to-sit fix stay on the render state). Other players' moves play from
+ * the same signals as before: the server's Seen message to start, their pose and sprint flag to end.
  */
 final class BodyAnims {
     private BodyAnims() {}
@@ -29,6 +38,10 @@ final class BodyAnims {
         int move;
         float start;
         float yaw;
+        /** A library clip is drawing this one; the vanilla poses leave it alone. */
+        boolean clip;
+        /** A held clip's move just ended: next tick picks how it lets go (a slide's jump-out or its settle). */
+        boolean ending;
     }
 
     private static final Anim[] SLOTS = new Anim[32];
@@ -46,11 +59,22 @@ final class BodyAnims {
         a.move = move.ordinal();
         a.start = ClientMoves.ticks;
         a.yaw = yaw;
+        a.ending = false;
+        a.clip = PlayerClips.available() && PlayerClips.play(entityId, BodyClips.of(move), move == Move.TACTICAL_SPRINT ? 3 : move == Move.SLIDE ? 2 : 1);
     }
 
     static void stop(int entityId, Move move) {
         Anim a = find(entityId);
-        if (a != null && a.move == move.ordinal()) a.entity = -1;
+        if (a == null || a.move != move.ordinal()) return;
+        if (a.clip && BodyClips.held(move)) a.ending = true; // let go next tick, once a jump-out has left the ground
+        else a.entity = -1;
+    }
+
+    /** A held clip lets go: a slide settles up to standing or, already in the air, lifts out in a tuck. */
+    private static void letGo(Anim a, @org.jspecify.annotations.Nullable Entity e) {
+        String clip = a.move == Move.SLIDE.ordinal() ? e != null && !e.onGround() ? BodyClips.SLIDE_JUMP : BodyClips.SLIDE_END : BodyClips.SPRINT_END;
+        if (!PlayerClips.play(a.entity, clip, 2)) PlayerClips.stop(a.entity);
+        a.entity = -1;
     }
 
     static void tick() {
@@ -58,7 +82,18 @@ final class BodyAnims {
         for (Anim a : SLOTS) {
             if (a.entity < 0) continue;
             float age = ClientMoves.ticks - a.start;
-            if (age > length(a.move) + 2) {
+            if (a.clip && BodyClips.held(Move.byId(a.move))) {
+                Entity e = mc.level == null ? null : mc.level.getEntity(a.entity);
+                boolean remote = mc.player == null || a.entity != mc.player.getId();
+                // other players' held moves end as their crawl pose or their sprint does (ours end through stop())
+                // (after a few ticks: the Seen message can arrive before their pose or sprint flag has synced)
+                boolean over = a.ending || e == null || age > length(a.move) + 2
+                        || remote && age >= 3 && (a.move == Move.SLIDE.ordinal() ? !e.hasPose(Pose.SWIMMING) : !e.isSprinting());
+                if (over) {
+                    letGo(a, e);
+                    continue;
+                }
+            } else if (age > length(a.move) + 2) {
                 a.entity = -1;
                 continue;
             }
@@ -74,7 +109,10 @@ final class BodyAnims {
     }
 
     static void reset() {
-        for (Anim a : SLOTS) a.entity = -1;
+        for (Anim a : SLOTS) {
+            if (a.entity >= 0 && a.clip) PlayerClips.stop(a.entity);
+            a.entity = -1;
+        }
     }
 
     private static int length(int move) {
@@ -104,7 +142,7 @@ final class BodyAnims {
     /** The slot drawing this player now, or null; a remote slide ends with its crawl pose. */
     private static Anim live(Entity e) {
         Anim a = find(e.getId());
-        if (a == null) return null;
+        if (a == null || a.clip) return a; // a clip's end is decided in tick()
         if (a.move == Move.SLIDE.ordinal() && !e.hasPose(Pose.SWIMMING)) {
             a.entity = -1;
             return null;
@@ -122,6 +160,18 @@ final class BodyAnims {
         if (!(entity instanceof Player) || !(state instanceof HumanoidRenderState s)) return;
         Anim a = live(entity);
         if (a == null) return;
+        if (a.clip) {
+            // the clip poses every limb; vanilla still must not draw a crawl or a crouch under it, and a slide faces its way
+            if (a.ending) return;
+            s.isCrouching = false;
+            if (a.move == Move.SLIDE.ordinal() && entity.hasPose(Pose.SWIMMING)) {
+                s.swimAmount = 0;
+                s.isVisuallySwimming = false;
+                s.yRot = Mth.clamp(Mth.wrapDegrees(s.yRot + s.bodyRot - a.yaw), -80F, 80F);
+                s.bodyRot = a.yaw;
+            }
+            return;
+        }
         float age = ClientMoves.ticks + s.partialTick - a.start;
         boolean right = s.mainArm == HumanoidArm.RIGHT;
         switch (Move.byId(a.move)) {
@@ -170,7 +220,7 @@ final class BodyAnims {
     static void onPre(RenderPlayerEvent.Pre<?> e) {
         AvatarRenderState s = e.getRenderState();
         Anim a = find(s.id);
-        if (a == null) return;
+        if (a == null || a.clip) return; // a clip moves the whole figure itself
         float age = ClientMoves.ticks + s.partialTick - a.start;
         float yaw = s.bodyRot * Mth.DEG_TO_RAD;
         // forward (the way the body faces) and the axis across it: turning about it tips the top forward

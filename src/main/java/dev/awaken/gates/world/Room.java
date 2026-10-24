@@ -12,7 +12,9 @@ import java.util.List;
 public final class Room {
     public enum Type {
         START, NORMAL, ELITE, CACHE, PUZZLE, SHRINE, BOSS, HALL, HUB, ARENA, CAVERN, ANTE, KEY, INNER_GATE, MARKET,
-        SPIRIT, SHAFT, ANNEX_EXIT;
+        SPIRIT, SHAFT, ANNEX_EXIT,
+        /** The Ritual of the Bell's hall: the story's ritual director owns it (no monsters, no seal, no Lord). */
+        RITUAL;
 
         /** Rooms that spawn monsters when first entered. */
         public boolean combat() {
@@ -24,7 +26,7 @@ public final class Room {
 
         /** Safe rooms: no pressure waves spawn inside. */
         public boolean safe() {
-            return this == START || this == SHRINE || this == MARKET || this == ANNEX_EXIT;
+            return this == START || this == SHRINE || this == MARKET || this == ANNEX_EXIT || this == RITUAL;
         }
     }
 

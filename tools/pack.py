@@ -4,13 +4,15 @@
   python3 -I tools/pack.py lock                          resolve pack/mods.json against Modrinth into pack/lock.json
   python3 -I tools/pack.py list                          what the lock pins, by profile
   python3 -I tools/pack.py install <game-dir> <profiles>  e.g. install run-autopilot perf,horizon  (all = every profile)
+  python3 -I tools/pack.py install <game-dir> <profiles> --reset-configs   also overwrite the pack's config files
   python3 -I tools/pack.py remove <game-dir>             take out exactly what install put there
   python3 -I tools/pack.py status <game-dir>             what is installed, hashes, and jars the pack doesn't own
   python3 -I tools/pack.py export <out.mrpack> <profiles> --awaken-jar build/libs/awaken-x.jar
   python3 -I tools/pack.py dhconfig <game-dir> swift|cinematic|default   Distant Horizons settings for a look
 
 install writes the Swift Distant Horizons settings when the horizon profile goes into a folder that has none yet
-(an existing DistantHorizons.toml is the player's and is left alone). install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
+(an existing DistantHorizons.toml is the player's and is left alone), and copies each chosen profile's config files
+(mods.json "configs") the same way: only when missing, unless --reset-configs. install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
 never deletes a jar it didn't put there, and refuses to touch a game folder a client is running from.
 """
 import hashlib
@@ -189,15 +191,41 @@ def marker_of(mods_dir):
     return load(m) if m.exists() else {"files": []}
 
 
-def cmd_install(game_dir, profiles):
+def profile_configs(names):
+    """The config files mods.json gives the chosen profiles: (source under the repo, target under the game folder)."""
+    spec = load(MODS)
+    return [(c["source"], c["target"]) for c in spec.get("configs", []) if c["profile"] in names]
+
+
+def install_configs(game_dir, names, reset):
+    for source, target in profile_configs(names):
+        src, dst = ROOT / source, Path(game_dir) / target
+        if not src.exists():
+            print(f"  config {source} not in this checkout yet: skipped")
+            continue
+        if dst.exists() and not reset:
+            continue  # the player's (a mod may also have rewritten it with comments): leave it
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dst)
+        print(f"  config {target} from {source}")
+
+
+def cmd_install(game_dir, profiles, reset_configs=False):
     game_dir = Path(game_dir)
     if client_running_in(game_dir):
         raise SystemExit(f"a client is running from {game_dir}: close it first")
     lock = load(LOCK)
     chosen, names = select(lock, profiles)
     mods_dir = game_dir / "mods"
-    mods_dir.mkdir(parents=True, exist_ok=True)
     old = marker_of(mods_dir)
+    # terrain mods reshape every chunk generated from now on: an old world would get seams where new land meets old,
+    # so the world profile only goes into a folder whose worlds were all made with it (or that has none yet)
+    saves = game_dir / "saves"
+    has_worlds = saves.is_dir() and any(p.is_dir() for p in saves.iterdir())
+    if "world" in names and has_worlds and "world" not in old.get("profiles", []):
+        raise SystemExit(f"{game_dir} has worlds made without the world profile; terrain mods would seam them. "
+                         "Use a fresh game folder (tools/play.sh --pack uses run-pack).")
+    mods_dir.mkdir(parents=True, exist_ok=True)
     keep = {e["file"] for e in chosen}
     for f in old["files"]:  # take out what an earlier install put here and this selection no longer wants
         p = mods_dir / f["file"]
@@ -212,6 +240,7 @@ def cmd_install(game_dir, profiles):
             print(f"  installed {e['file']}")
     if any(e["slug"] == "distanthorizons" for e in chosen):
         cmd_dhconfig(game_dir, "swift", only_if_missing=True)
+    install_configs(game_dir, names, reset_configs)
     save(mods_dir / MARKER, {"schemaVersion": 1, "profiles": names, "installed": time.strftime("%Y-%m-%d %H:%M"),
                              "lockGenerated": lock["generated"],
                              "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"]} for e in chosen]})
@@ -296,6 +325,9 @@ def cmd_export(out, profiles, awaken_jar):
         for cfg in sorted((ROOT / "pack" / "config").glob("**/*")) if (ROOT / "pack" / "config").exists() else []:
             if cfg.is_file():
                 z.write(cfg, "overrides/config/" + str(cfg.relative_to(ROOT / "pack" / "config")))
+        for source, target in profile_configs(names):  # e.g. the Awakened Tectonic preset as config/tectonic.json
+            if (ROOT / source).exists():
+                z.write(ROOT / source, "overrides/" + target)
     print(f"wrote {out}: {len(chosen)} mods + {jar.name} ({', '.join(names)})")
 
 
@@ -307,8 +339,8 @@ def main(argv):
         cmd_lock()
     elif c == "list":
         cmd_list()
-    elif c == "install" and len(argv) == 4:
-        cmd_install(argv[2], argv[3])
+    elif c == "install" and len(argv) in (4, 5) and (len(argv) == 4 or argv[4] == "--reset-configs"):
+        cmd_install(argv[2], argv[3], reset_configs=len(argv) == 5)
     elif c == "remove" and len(argv) == 3:
         cmd_remove(argv[2])
     elif c == "status" and len(argv) == 3:

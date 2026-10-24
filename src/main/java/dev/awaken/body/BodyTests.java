@@ -64,7 +64,44 @@ import java.util.Map;
 final class BodyTests {
     private BodyTests() {}
 
+    /**
+     * The moves' optional full-body clips (Player Animation Library): every clip the body plays is in the generated file
+     * with its Bendable Cuboids twin, held moves loop and the rest ease out, and only the twin bends (elbows forward,
+     * knees back).
+     */
+    private static void clips(GameTestHelper h) {
+        com.google.gson.JsonObject anims;
+        try (java.io.InputStream in = BodyTests.class.getResourceAsStream("/" + BodyClips.FILE)) {
+            h.assertTrue(in != null, "missing " + BodyClips.FILE + " (python3 tools/art/specs/body_moves.py build)");
+            anims = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8))
+                    .getAsJsonObject().getAsJsonObject("animations");
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+        for (Move m : Move.values()) h.assertTrue(BodyClips.ALL.contains(BodyClips.of(m)), m + " has a clip");
+        for (String base : BodyClips.ALL) {
+            for (String name : new String[]{base, base + "_bent"}) {
+                h.assertTrue(anims.has(name), name + " is missing from " + BodyClips.FILE);
+                com.google.gson.JsonObject a = anims.getAsJsonObject(name);
+                boolean loops = a.has("loop") && a.get("loop").getAsBoolean();
+                h.assertTrue(loops == (base.equals(BodyClips.SLIDE) || base.equals(BodyClips.SPRINT)), name + (loops ? " loops but ends" : " should loop"));
+                if (!loops) h.assertTrue(a.has("player_animation_library"), name + " eases back to the vanilla pose (endTick)");
+                for (var bone : a.getAsJsonObject("bones").entrySet()) {
+                    com.google.gson.JsonObject b = bone.getValue().getAsJsonObject();
+                    if (!b.has("bend")) continue;
+                    h.assertTrue(name.endsWith("_bent") && bone.getKey().matches("(right|left)_(arm|leg)"), name + ": only the bent twin's limbs bend");
+                    for (var key : b.getAsJsonObject("bend").entrySet()) {
+                        float v = key.getValue().getAsJsonObject().getAsJsonArray("vector").get(0).getAsFloat();
+                        h.assertTrue(bone.getKey().endsWith("arm") ? v <= 0 && v >= -150 : v >= 0 && v <= 150, name + " " + bone.getKey() + " bends the wrong way: " + v);
+                    }
+                }
+            }
+        }
+        h.succeed();
+    }
+
     static void register() {
+        AwakenTests.register("body_clips", 20, BodyTests::clips);
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
