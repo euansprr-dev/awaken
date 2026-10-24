@@ -216,6 +216,8 @@ final class CitizensCommands {
         float yaw = (float) Math.toDegrees(Math.atan2(-(at[0] - ex), at[2] - ez));
         float pitch = (float) -Math.toDegrees(Math.atan2(at[1] - (ey + 1.62), Math.max(0.5, Math.hypot(at[0] - ex, at[2] - ez))));
         p.teleportTo(c.level, ex, ey, ez, Set.of(), yaw, pitch, true);
+        Awaken.LOG.info("[citizens] show {}: camera at {} {} {}", what, String.format(Locale.ROOT, "%.1f", ex), String.format(Locale.ROOT, "%.1f", ey),
+                String.format(Locale.ROOT, "%.1f", ez));
         Awaken.LOG.info("[citizens] show {}: {} at {} {} {}", what, label, String.format(Locale.ROOT, "%.1f", at[0]),
                 String.format(Locale.ROOT, "%.1f", at[1]), String.format(Locale.ROOT, "%.1f", at[2]));
         return say(src, "Showing " + label);
@@ -240,7 +242,7 @@ final class CitizensCommands {
         if (job < 0) return -1;
         int best = -1, bestScore = -1;
         for (int i = 0; i < r.citizens; i++) {
-            if (r.job[i] != job) continue;
+            if (r.job[i] != job || d.role[i] != 0) continue;
             int score = 0;
             if (d.state[i] == CitizensData.STAND) score = 3;
             else if (d.state[i] == CitizensData.WALK) score = 2;
@@ -261,7 +263,7 @@ final class CitizensCommands {
         CityPlan plan = CityPlan.get();
         int cx = c.ledger.cx, cz = c.ledger.cz;
         double bestScore = Double.MAX_VALUE;
-        double[] best = {x + want, z};
+        double[] best = null;
         for (int a = 0; a < 32; a++) {
             double ang = a * Math.PI / 16;
             for (double dist = 4; dist <= 11; dist += 1) {
@@ -279,6 +281,19 @@ final class CitizensCommands {
                 }
             }
         }
+        if (best != null) return best;
+        // nothing with a clear line: the nearest open ground
+        double bd = Double.MAX_VALUE;
+        best = new double[]{x, z};
+        for (int ox = -12; ox <= 12; ox++) for (int oz = -12; oz <= 12; oz++) {
+            int ix = (int) Math.floor(x - cx) + ox, iz = (int) Math.floor(z - cz) + oz;
+            if (!open(plan.kind(ix, iz))) continue;
+            double dd = Math.abs(Math.hypot(ox, oz) - 5);
+            if (dd < bd) {
+                bd = dd;
+                best = new double[]{ix + cx + 0.5, iz + cz + 0.5};
+            }
+        }
         return best;
     }
 
@@ -287,9 +302,12 @@ final class CitizensCommands {
     }
 
     private static boolean clear(CityPlan plan, double ax, double az, double bx, double bz) {
-        int n = (int) Math.ceil(Math.hypot(bx - ax, bz - az) * 2);
+        double len = Math.hypot(bx - ax, bz - az);
+        int n = (int) Math.ceil(len * 2);
         for (int s = 1; s < n; s++) {
             double t = s / (double) n;
+            if (t * len < 1.6) continue; // the target may stand in a doorway or on a roof edge
+
             byte k = plan.kind((int) Math.floor(ax + (bx - ax) * t), (int) Math.floor(az + (bz - az) * t));
             if (k == CityPlan.PLOT || k == CityPlan.LANDMARK || k == CityPlan.WALL) return false;
         }

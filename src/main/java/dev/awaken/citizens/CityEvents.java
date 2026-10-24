@@ -1213,10 +1213,17 @@ final class CityEvents {
             }
         }
         if (e.kind() == FIRE) {
+            // the flames on the roof if any, else over the door
             int door = dd[7];
-            out[0] = c.net.x[door];
-            out[1] = c.net.y[door] + 4;
-            out[2] = c.net.z[door];
+            if (dd[8] != Integer.MIN_VALUE) {
+                out[0] = dd[8] + 0.5;
+                out[1] = dd[9];
+                out[2] = dd[10] + 0.5;
+            } else {
+                out[0] = c.net.x[door];
+                out[1] = c.net.y[door] + 4;
+                out[2] = c.net.z[door];
+            }
             return true;
         }
         if (e.kind() == CART) {

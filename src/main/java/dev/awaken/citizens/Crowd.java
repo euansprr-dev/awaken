@@ -181,8 +181,10 @@ final class Crowd {
             // coming out of a door: start a step out of it toward the street, and open it behind them
             int out = nx >= 0 ? nx : g.adj[g.adjStart[a]];
             double len = Math.max(1e-6, g.len(a, out));
-            tmp[0] = g.x[a] + (g.x[out] - g.x[a]) / len * 0.9;
-            tmp[2] = g.z[a] + (g.z[out] - g.z[a]) / len * 0.9;
+            // a step and a half out: clear of the door's own cell and its panel
+            double step = Math.min(1.5, len);
+            tmp[0] = g.x[a] + (g.x[out] - g.x[a]) / len * step;
+            tmp[2] = g.z[a] + (g.z[out] - g.z[a]) / len * step;
             yaw = (float) (Math.toDegrees(Math.atan2(g.z[out] - g.z[a], g.x[out] - g.x[a])) - 90.0);
             openDoorAt(a, 30);
         }

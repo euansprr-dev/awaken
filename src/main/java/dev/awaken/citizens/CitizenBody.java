@@ -440,7 +440,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
             c.crowd.stuck++;
         } else if (stuck && tickCount - stuckSince >= 200) {
             // ten seconds and nowhere: put them on their next node, but never in front of anyone
-            if (c.crowd.unseen(level, this) || tickCount - stuckSince >= 600) {
+            if (c.crowd.unseen(level, this) || tickCount - stuckSince >= 300) {
                 rescue(c, l);
                 c.crowd.rescues++;
                 stuck = false;
