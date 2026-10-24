@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/lumen_leaves_specks_a",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/lumen_leaves_specks_b",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/lumen_leaves",
+        "weight": 2
+      }
+    ]
+  }
+}

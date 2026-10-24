@@ -1,0 +1,56 @@
+{
+  "type": "minecraft:vegetation_patch",
+  "surface": "floor",
+  "depth": 1,
+  "vertical_range": 5,
+  "extra_bottom_block_chance": 0.0,
+  "extra_edge_column_chance": 0.4,
+  "ground_state": {
+    "id": "minecraft:grass_block",
+    "properties": {
+      "snowy": "false"
+    }
+  },
+  "replaceable": "#minecraft:moss_replaceable",
+  "vegetation_chance": 0.85,
+  "xz_radius": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 3,
+    "max_inclusive": 6
+  },
+  "vegetation_feature": {
+    "feature": {
+      "type": "minecraft:simple_block",
+      "to_place": {
+        "type": "minecraft:weighted",
+        "entries": [
+          {
+            "data": {
+              "id": "awaken:lumen_moss"
+            },
+            "weight": 70
+          },
+          {
+            "data": {
+              "id": "awaken:lumen_cap"
+            },
+            "weight": 4
+          },
+          {
+            "data": {
+              "id": "minecraft:fern"
+            },
+            "weight": 8
+          },
+          {
+            "data": {
+              "id": "minecraft:short_grass"
+            },
+            "weight": 6
+          }
+        ]
+      }
+    },
+    "placement": []
+  }
+}
