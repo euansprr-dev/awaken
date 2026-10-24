@@ -649,7 +649,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 
 ## 15. Awakened Lands (terrain, biomes, trees, living foliage; plan in docs/plan-lands.html, approved 2026-10-24)
 
-- Shape comes from Tectonic (MIT), pinned in the pack's `world` profile with an Awakened preset; Awaken never forks it
+- Shape comes from Tectonic (MIT), pinned in the pack's `world` profile with the Awakened preset `pack/tectonic/awakened.json`
+  (chosen in the studio 2026-10-24: scale 1.35, boost 0.25, erosion 0.2, ridges 0.22, continents 0.08, ocean offset
+  −0.55; results in pack/tectonic/README.md); Awaken never forks it
   unless the studio demands it. Terralith and Continents are never used (their licence bans AI projects). World height
   stays vanilla (−64 to 320); 384 only if the studio shows peaks capped.
 - Awakened biomes take about 40% of the land. The first six: Elderwood (Greenwild), Lumen Forest (Duskwood), Glass
