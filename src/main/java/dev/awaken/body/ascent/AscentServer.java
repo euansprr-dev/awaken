@@ -269,7 +269,10 @@ public final class AscentServer {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         AscentMotion m = motion(p);
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
-        m.mark(Ascent.moving(p, m));
+        boolean moving = Ascent.moving(p, m);
+        m.mark(moving);
+        // the Wilds' "how you arrived" hears the ladder's states (a swing, a leap, a glide, flight, a wall-run, a hang)
+        if (moving) dev.awaken.core.api.ArrivalHooks.report(p, dev.awaken.core.api.ArrivalHooks.Way.ASCENT, 5);
         if (m.chain > 0 && now(p) - m.lastLinkAt > CHAIN_GAP) payChain(p, m, now(p));
         if (!m.state.airborne()) return;
         if (p.isPassenger() || p.isSpectator() || !p.isAlive()) {

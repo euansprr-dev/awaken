@@ -27,6 +27,9 @@ public final class AscentModule {
         bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, AscentServer::onPlace);
         AscentCommands.register();
         AscentTests.register();
+        // the Horizon's sky sites ("needs Wings"): Wings, or a rope and the Leaper's air moves, get you up there
+        dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS)
+                && (Ascent.has(p, Ascent.Tier.WINGS) || Ascent.has(p, Ascent.Tier.TETHER) && Ascent.has(p, Ascent.Tier.LEAPER)));
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

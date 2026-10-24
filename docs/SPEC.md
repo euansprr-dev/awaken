@@ -1853,6 +1853,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   distance from it; the swing goes on about the new point (a strain, a small spark; the server re-checks the anchor).
   Only a snag below the hand, or one closer than 4, lets go into the carry. (Before: 5 of 8 swings in the sandbox lane
   were cut on the giant trunks.)
+- **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
+  hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
+  Leaper together (`HorizonHooks.addReach`).
 - **Routes** (dev; golden runs for Carillon's TryDriver and the Ascent's regressions; `AscentRoutes`): pilot lines
   `route rec <name>` / `route play <name>` / `route stop` record a run tick by tick (movement keys, the movement key,
   yaw and pitch) to `<game dir>/awaken-routes/<name>.route` (text: a start line, one line a tick, an end line) and play
