@@ -11,13 +11,22 @@ shot 01_glitch
 cmd awaken admin story prologue
 wait 400
 shot 02_pillar
-# walk in (the story's own gate)
+# walk in (the story's own gate): the Ritual of the Bell's antechamber, then the hall (tools/autopilot/ritual.txt
+# photographs every beat; here it is skipped to its end)
 cmd awaken admin story enter
 wait 120
-shot 03_bell_crypt_floor1
-# the killing blow becomes the question: Stillpoint, the Accept card ("[Y] Accept · [N] Accept anyway")
+shot 03_bell_crypt_antechamber
+# nothing in the hall kills before the End: a killing blow leaves half a heart
 cmd damage @s 1000
-wait 100
+wait 20
+shot 03b_half_a_heart
+cmd awaken admin story ritual hall
+wait 40
+cmd awaken admin story ritual start
+wait 20
+cmd awaken admin story ritual beat 7
+# the hand closes on you: the Stillpoint in the dark, the Accept card ("[Y] Accept · [N] Accept anyway")
+wait 330
 shot 04_accept_card
 key accept
 # back at the gate's mouth: "Accepted. The gate will wait. It never breaks." and level 2 (the prologue's bank)

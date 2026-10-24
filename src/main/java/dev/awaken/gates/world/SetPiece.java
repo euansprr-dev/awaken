@@ -87,12 +87,17 @@ public enum SetPiece {
     ARENA_LAB(Theme.PRECURSOR_LAB),
     ARENA_DREAM(Theme.NIGHTMARE),
     ARENA_SKY(Theme.SKY_ARCHIPELAGO),
-    ARENA_ABYSS(Theme.ABYSSAL_SHRINE);
+    ARENA_ABYSS(Theme.ABYSSAL_SHRINE),
+
+    // ---- the prologue's ritual hall: the scripted ritual Bell Crypt's one room, never picked for any other ----------
+    RITUAL_HALL(Theme.BELL_CRYPT, true);
 
     public final Theme theme;
     public final int minArea, minHeight;
     public final Room.Shape shape;
     public final boolean arena;
+    /** The Ritual of the Bell's hall ({@link PiecesRitual}): only the ritual plan builds it. */
+    public final boolean ritual;
 
     SetPiece(Theme theme, int minArea, int minHeight, Room.Shape shape) {
         this.theme = theme;
@@ -100,6 +105,16 @@ public enum SetPiece {
         this.minHeight = minHeight;
         this.shape = shape;
         this.arena = false;
+        this.ritual = false;
+    }
+
+    SetPiece(Theme theme, boolean ritual) {
+        this.theme = theme;
+        this.minArea = 9;
+        this.minHeight = PiecesRitual.VAULT_H;
+        this.shape = Room.Shape.RECT;
+        this.arena = false;
+        this.ritual = ritual;
     }
 
     SetPiece(Theme theme) {
@@ -110,6 +125,7 @@ public enum SetPiece {
         // Leviathan's (radius 28) is islands over a cloud sea, corners included
         this.shape = theme == Theme.SKY_ARCHIPELAGO ? Room.Shape.ISLANDS : Room.Shape.ROUND;
         this.arena = true;
+        this.ritual = false;
     }
 
     /**
@@ -136,7 +152,7 @@ public enum SetPiece {
     /** The room set pieces of a theme, in a stable order. */
     public static java.util.List<SetPiece> roomPieces(Theme t) {
         java.util.List<SetPiece> out = new java.util.ArrayList<>();
-        for (SetPiece p : values()) if (!p.arena && p.theme == t) out.add(p);
+        for (SetPiece p : values()) if (!p.arena && !p.ritual && p.theme == t) out.add(p);
         return out;
     }
 }

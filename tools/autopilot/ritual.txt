@@ -1,0 +1,122 @@
+# The Ritual of the Bell (docs/proposals/the-ritual.md): every beat in first and third person, the void, the tear and a
+# first power. A fresh SURVIVAL world; commands only skip waiting and walking (ritual hall/start/beat/plate are
+# /awaken admin story ritual ..., admin-only). Beats are jumped to so every shot lands on its moment.
+world ritual survival 4242
+waitworld
+gui 0
+wait 100
+cmd awaken admin story prologue
+wait 300
+shot r00_gate_mouth
+cmd awaken admin story enter
+wait 60
+shot r01_antechamber
+cmd awaken admin story ritual hall
+wait 12
+shot r02_hall
+camera back
+wait 3
+shot r02_hall_third
+camera first
+# beat 1: the doors grind shut, every flame dies, the candles light toward the throne (3 s after the last one is in)
+cmd awaken admin story ritual start
+wait 14
+shot r03_doors_closing
+wait 26
+shot r04_black
+wait 50
+shot r05_candles
+wait 55
+shot r06_candles_throne
+# beat 2: BOW (standing: the nearest statue glares and strikes)
+cmd awaken admin story ritual beat 2
+wait 40
+shot r07_bow_word
+camera back
+wait 5
+shot r07_bow_word_third
+camera first
+wait 92
+shot r08_glare
+wait 8
+shot r09_strike
+# RING: the first plate lights; stand on it
+cmd awaken admin story ritual beat 3
+wait 48
+cmd awaken admin story ritual plate 0
+wait 12
+shot r10_plate
+camera back
+wait 5
+shot r10_plate_third
+camera first
+# BE JUDGED
+cmd awaken admin story ritual beat 4
+wait 24
+shot r11_be_judged
+# beat 3: the waking (the camera is held on its face)
+cmd awaken admin story ritual beat 5
+wait 40
+shot r12_eyes_opening
+wait 22
+shot r13_eyes_open
+camera back
+wait 5
+shot r13_eyes_open_third
+camera first
+wait 48
+shot r14_statues_rise
+# beat 4: the Judgement
+cmd awaken admin story ritual beat 6
+wait 52
+shot r15_gaze_charge
+camera back
+wait 3
+shot r15_gaze_charge_third
+camera first
+wait 22
+shot r16_gaze_fire
+# frame time with the Seated One, twelve statues, the telegraphs and Lens (perf-report.py reads these lines)
+perf ritual_judgement 5
+wait 10
+camera back
+shot r17_swing_third
+camera first
+wait 150
+shot r18_pits
+# beat 5: the end (the hand rises, the light drains into it, the hand closes)
+cmd awaken admin story ritual beat 7
+wait 60
+shot r19_hand_rises
+camera back
+wait 5
+shot r19_hand_rises_third
+camera first
+wait 85
+shot r20_drain
+wait 52
+shot r21_error
+wait 28
+shot r22_closed
+# beat 6: the void (the System's words in the dark, the question's card)
+wait 120
+shot r23_void
+camera back
+wait 5
+shot r23_void_third
+camera first
+# beat 7: Accept. The black tears open from the centre and you wake at the crypt's mouth
+key accept
+wait 10
+shot r24_tear
+wait 40
+shot r25_awake
+wait 30
+shot r25b_toasts_after
+wait 60
+shot r26_first_power_cards
+cmd awaken powers starter 1
+screen close
+wait 40
+shot r27_first_power
+quit
