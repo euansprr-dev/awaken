@@ -74,6 +74,8 @@ final class CuePlayer {
             log(p.cue, "skipped: music is off");
             return;
         }
+        // the layered music holds the channel: a stage cue makes it fade, an ordinary one waits unless it is calm
+        if (!LayerPlayer.MUSIC.yieldTo(p.cue)) return;
         if (mm.getCurrentMusicTranslationKey() != null) {
             if (!p.cue.stage) return; // wait for the song to end
             mm.stopPlaying();
@@ -88,20 +90,31 @@ final class CuePlayer {
     }
 
     /**
-     * While our cue plays somewhere whose own music is "none", keep it: vanilla would otherwise stop the song the
-     * moment it saw no situational music. Once it ends, the place's own music (or silence) takes over.
+     * Who has the music channel, every tick, before vanilla's music manager decides:
+     * <ol>
+     *   <li>our cue, while it plays (somewhere whose own music is "none" vanilla would otherwise stop it the moment
+     *   it saw no situational music; once it ends the place's own music, or silence, takes over);</li>
+     *   <li>the layered music, while it sounds: vanilla is told there is no situational music, so no song starts on
+     *   top of it (and one that was playing has already been faded out);</li>
+     *   <li>otherwise vanilla, as always.</li>
+     * </ol>
      */
     static void onSelectMusic(SelectMusicEvent e) {
-        if (playingMusic == null || e.getMusic() != null) return;
         SoundInstance now = e.getPlayingMusic();
-        if (now != null && now.getIdentifier().equals(AudioSounds.cue(playingCue).getId())
+        if (playingMusic != null && now != null && now.getIdentifier().equals(AudioSounds.cue(playingCue).getId())
                 && Minecraft.getInstance().getSoundManager().isActive(now)) {
-            e.setMusic(playingMusic);
+            if (e.getMusic() == null) e.setMusic(playingMusic);
+            return;
         }
+        if (LayerPlayer.MUSIC.ownsChannel()) e.setMusic(null);
     }
 
     static Cue playing() {
         return playingCue;
+    }
+
+    static boolean playingStage() {
+        return playingCue != null && playingCue.stage;
     }
 
     static void clear() {

@@ -78,6 +78,16 @@ public final class Gates {
                 Satchel.count(r.satchel), r.satchelXp, r.kills, t));
     }
 
+    /**
+     * How hard the player's current floor pushes (SPEC section 7, the run HUD's word): 0 calm, 1 stirring, 2 waves,
+     * 3 the Warden is here; 0 outside a run. The layered music's tension listens to it.
+     */
+    public static int pressure(ServerPlayer p) {
+        GateRecord g = Runs.gateOf(p);
+        if (g == null) return 0;
+        return dev.awaken.gates.run.Pressure.stage(g, GateService.now(p.level().getServer()) - Runs.run(p).floorStartedAt);
+    }
+
     /** In the gate dimension (inside a live cell). Works for any entity. */
     public static boolean isInGate(Entity e) {
         if (!GateService.isGateLevel(e.level())) return false;
