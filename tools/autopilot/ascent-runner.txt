@@ -1,0 +1,114 @@
+# The Ascent, Phase 1a: the Runner tier on S3's course (wall-runs, a wall-jump chain, hangs, shimmy, ledge jumps,
+# the climb and the lower), each recorded as a clip with its new clips, sounds and grit. "awaken body try <script>"
+# presses the keys through the real input path; clips: python3 -I tools/ascent/clip.py run-autopilot/clips/<name>.
+world ascent_runner survival 4243
+waitworld
+window 1440 900
+gui 0
+hud off
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd gamerule fall_damage false
+cmd fill -16 199 -4 42 199 44 minecraft:smooth_stone
+cmd tp @s 0.5 200 0.5 0 12
+wait 40
+cmd awaken body course
+wait 100
+screen close
+
+# ---- wallrun_tp ----
+cmd awaken body try release
+camera back
+cmd tp @s -11.68 202 0.5 0 12
+wait 15
+cmd awaken ascent pilot rec wallrun_tp 70 3
+cmd awaken body try wallrun
+wait 78
+
+# ---- wallrun_fp ----
+cmd awaken body try release
+camera first
+cmd tp @s -11.68 202 0.5 0 12
+wait 15
+cmd awaken ascent pilot rec wallrun_fp 60 3
+cmd awaken body try wallrun
+wait 68
+
+# ---- chain_tp ----
+cmd awaken body try release
+camera back
+cmd tp @s -11.68 202 0.5 0 12
+wait 15
+cmd awaken ascent pilot rec chain_tp 110 3
+cmd awaken body try chain
+wait 118
+
+# ---- hang_tp ----
+cmd awaken body try release
+camera back
+cmd tp @s 3.5 200 18.2 0 12
+wait 15
+cmd awaken ascent pilot rec hang_tp 70 3
+cmd awaken body try hang
+wait 78
+
+# ---- hang_fp ----
+cmd awaken body try release
+camera first
+cmd tp @s 3.5 200 18.2 0 12
+wait 15
+cmd awaken ascent pilot rec hang_fp 60 3
+cmd awaken body try hang
+wait 68
+
+# ---- shimmy_tp ----
+cmd awaken body try release
+camera back
+cmd tp @s 4.5 200 18.2 0 12
+wait 15
+cmd awaken ascent pilot rec shimmy_tp 90 3
+cmd awaken body try shimmy
+wait 98
+
+# ---- ledgeup_tp ----
+cmd awaken body try release
+camera back
+cmd tp @s 3.5 200 18.2 0 12
+wait 15
+cmd awaken ascent pilot rec ledgeup_tp 80 3
+cmd awaken body try ledgeup
+wait 88
+
+# ---- ledgeback_tp ----
+cmd awaken body try release
+camera back
+cmd tp @s -3.0 200 2.0 90 12
+wait 15
+cmd awaken ascent pilot rec ledgeback_tp 80 3
+cmd awaken body try ledgeback
+wait 88
+
+# ---- climb_tp ----
+cmd awaken body try release
+camera back
+cmd tp @s 7.3 200 18.2 0 12
+wait 15
+cmd awaken ascent pilot rec climb_tp 80 3
+cmd awaken body try climb
+wait 88
+
+# ---- lower_tp ----
+cmd awaken body try release
+camera back
+cmd tp @s 5.5 211 19.85 180 12
+wait 15
+cmd awaken ascent pilot rec lower_tp 80 3
+cmd awaken body try lower
+wait 88
+info
+quit

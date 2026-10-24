@@ -1,0 +1,57 @@
+# Wall Stride's vertical run: up a 6-high wall into the hang, and up a 10-high wall with a kick back off it.
+# Clips: python3 -I tools/ascent/clip.py run-autopilot/clips/<name>.
+world ascent_climb survival 4243
+waitworld
+window 1440 900
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken admin power learn wall_run
+wait 10
+screen close
+cmd tp @s 0.5 200 0.5 0 12
+wait 100
+cmd fill -16 199 -4 42 199 44 minecraft:smooth_stone
+cmd tp @s 0.5 200 0.5 0 12
+wait 40
+cmd awaken body course
+wait 100
+screen close
+# two walls south of the course: a lip 6 up, and 10 high
+cmd fill 1 200 -6 4 205 -6 minecraft:stone_bricks
+cmd fill 8 200 -6 11 209 -6 minecraft:stone_bricks
+cmd fill -2 199 -8 14 199 -1 minecraft:smooth_stone
+
+# ---- up into the hang ----
+camera back
+cmd tp @s 2.5 200 -4.4 180 -10
+wait 20
+cmd awaken ascent pilot rec climb_tp 60 2
+cmd awaken ascent pilot hold forward 14
+cmd awaken ascent pilot hold jump 10
+wait 65
+cmd awaken ascent pilot hold sneak 3
+wait 30
+
+# ---- up the tall wall and a kick back off it ----
+cmd tp @s 9.5 200 -4.4 180 -10
+wait 20
+cmd awaken ascent pilot rec climbkick_tp 60 2
+cmd awaken ascent pilot hold forward 9
+cmd awaken ascent pilot hold jump 3
+wait 4
+cmd awaken ascent pilot hold jump 2
+wait 55
+info
+quit

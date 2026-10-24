@@ -75,6 +75,15 @@ final class BodyCamera {
             pitch += 2F * a;
             roll += 0.9F * a * Mth.sin(t * 0.8F);
         }
+        // a wall-run rolls the view away from the wall (SPEC §16.3: wallRunRoll, 5° by default)
+        float w = hold(t, RunnerMoves.runStart, RunnerMoves.runEnd, RunnerMoves.state == RunnerMoves.State.RUN, 4F, 6F);
+        if (w > 0) {
+            float yr = mc.player.getYRot() * Mth.DEG_TO_RAD;
+            double rx = -Mth.cos(yr), rz = -Mth.sin(yr); // the view's right
+            double wx = RunnerMoves.runAxis == 0 ? RunnerMoves.runSide : 0, wz = RunnerMoves.runAxis == 2 ? RunnerMoves.runSide : 0;
+            float wr = dev.awaken.body.client.feel.FeelConfig.wallRunRoll();
+            roll += (rx * wx + rz * wz > 0 ? -wr : wr) * w;
+        }
         if (pitch != 0) e.setPitch(e.getPitch() + pitch);
         if (roll != 0) e.setRoll(e.getRoll() + roll);
     }
@@ -104,6 +113,11 @@ final class BodyCamera {
         if (s > 0) {
             ps.translate(0.04F * s, -0.1F * s, 0.1F * s);
             ps.rotateDegrees(Axis.ZP, -6F * s);
+        }
+        // spike S3: hanging, both hands are up on the lip
+        if (RunnerMoves.hanging()) {
+            ps.translate(0, 0.42F, -0.18F);
+            ps.rotateDegrees(Axis.XP, -32F);
         }
         float m = t - ClientMoves.mantleStart;
         if (m >= 0 && m < BodyRules.MANTLE_TICKS + 4) {

@@ -35,8 +35,18 @@ public final class BodyRules {
     /** Movement speed ×(1 + this) on top of the sprint (attribute modifier, total multiplier). */
     public static final double TAC_SPEED = 0.25;
     public static final int TAC_TICKS = 60;
-    /** Ticks after it ends before it can run again. */
+    /** Ticks after it ends before it can run again (rank E; {@link #tacRecharge} shortens it by rank). */
     public static final int TAC_RECHARGE = 80;
+
+    /** Ranks improve the moves (SPEC §16.3): the tactical sprint recharges 10 ticks sooner a rank, down to 30. */
+    public static int tacRecharge(dev.awaken.progression.Rank rank) {
+        return Math.max(30, TAC_RECHARGE - 10 * rank.ordinal());
+    }
+
+    /** The slide's cooldown, 2 ticks shorter a rank, down to 10. */
+    public static int slideCooldown(dev.awaken.progression.Rank rank) {
+        return Math.max(10, SLIDE_COOLDOWN - 2 * rank.ordinal());
+    }
     /** The second tap of the sprint key must come within this many ticks of the first. */
     public static final int TAC_DOUBLE_TAP = 7;
     public static final float TAC_EXHAUSTION = 0.4F;

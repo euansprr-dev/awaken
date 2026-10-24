@@ -78,13 +78,16 @@ final class BodyTests {
         } catch (java.io.IOException ex) {
             throw new IllegalStateException(ex);
         }
-        for (Move m : Move.values()) h.assertTrue(BodyClips.ALL.contains(BodyClips.of(m)), m + " has a clip");
+        for (Move m : Move.values()) if (!m.runner()) h.assertTrue(BodyClips.ALL.contains(BodyClips.of(m)), m + " has a clip");
+        // the Runner's moves pick theirs by variant: every one is in the file
+        for (String c : BodyClips.RUNNER) h.assertTrue(BodyClips.ALL.contains(c), c + " is listed");
         for (String base : BodyClips.ALL) {
             for (String name : new String[]{base, base + "_bent"}) {
                 h.assertTrue(anims.has(name), name + " is missing from " + BodyClips.FILE);
                 com.google.gson.JsonObject a = anims.getAsJsonObject(name);
                 boolean loops = a.has("loop") && a.get("loop").getAsBoolean();
-                h.assertTrue(loops == (base.equals(BodyClips.SLIDE) || base.equals(BodyClips.SPRINT)), name + (loops ? " loops but ends" : " should loop"));
+                h.assertTrue(loops == (base.equals(BodyClips.SLIDE) || base.equals(BodyClips.SPRINT) || BodyClips.loops(base)),
+                        name + (loops ? " loops but ends" : " should loop"));
                 if (!loops) h.assertTrue(a.has("player_animation_library"), name + " eases back to the vanilla pose (endTick)");
                 for (var bone : a.getAsJsonObject("bones").entrySet()) {
                     com.google.gson.JsonObject b = bone.getValue().getAsJsonObject();
@@ -105,13 +108,18 @@ final class BodyTests {
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
-        AwakenTests.register("body_soft_landing_damage", 60, BodyTests::softLanding);
+        AwakenTests.register("body_soft_landing_damage", 60, h -> withoutKit(h, BodyTests::softLanding));
+        AwakenTests.register("body_soft_landing_before_awakening", 60, BodyTests::softLandingRunner);
         AwakenTests.register("body_soft_landing_never_stacks", 100, BodyTests::softLandingNeverStacks);
-        AwakenTests.register("body_nothing_before_awakening", 60, BodyTests::nothingBeforeAwakening);
-        AwakenTests.register("body_unlocks_announced_once", 60, BodyTests::announcedOnce);
+        // the old rule (vanilla until the awakening, ranks unlock) holds with the Runner's Kit switched off
+        AwakenTests.register("body_nothing_before_awakening", 60, h -> withoutKit(h, BodyTests::nothingBeforeAwakening));
+        AwakenTests.register("body_unlocks_announced_once", 60, h -> withoutKit(h, BodyTests::announcedOnce));
+        AwakenTests.register("body_runners_kit_from_the_start", 60, BodyTests::kitFromTheStart);
+        AwakenTests.register("body_ranks_improve_moves", 20, BodyTests::ranksImprove);
         AwakenTests.register("body_tactical_sprint", 240, BodyTests::tacticalSprint);
         AwakenTests.registerIsolated("body_momentum_hit_bands", 100, BodyTests::momentumBands);
         AwakenTests.registerIsolated("body_slide_trips_small_foes", 100, BodyTests::slideTrips);
+        RunnerTests.register(); // spike S3
     }
 
     // ---- helpers ----------------------------------------------------------------------------------------------------
@@ -195,7 +203,8 @@ final class BodyTests {
             at(h, d, 0.5, 1, 0.5, 0F);
             h.assertTrue(BodyServer.startMantle(c, 0F, ok.x(), ok.y(), ok.z()), "rank C mantles the 1.5 ledge");
             h.assertTrue(Progression.profile(c).counter("awaken:body_mantle") == 1, "the climb is counted");
-            h.assertFalse(BodyServer.startMantle(d, 0F, ok.x(), ok.y(), ok.z()), "rank D has no mantle yet");
+            // the Runner's Kit: every rank mantles (SPEC §16.3; without the kit, D had to wait for C)
+            h.assertTrue(BodyServer.startMantle(d, 0F, ok.x(), ok.y(), ok.z()), "rank D mantles too");
             ServerPlayer c2 = player(h, Rank.C);
             at(h, c2, 2.5, 1, 0.5, 0F);
             h.assertFalse(BodyServer.startMantle(c2, 0F, ok.x() + 2, ok.y() + 0.5, ok.z()), "the server refuses a ledge that isn't there");
@@ -415,6 +424,17 @@ final class BodyTests {
         done(h, vanilla, standing, sprint, crouch);
     }
 
+    /** With the Runner's Kit a body rolls before the awakening too (sprinting into the fall). */
+    static void softLandingRunner(GameTestHelper h) {
+        ServerPlayer runner = player(h, null);
+        runner.setSprinting(true);
+        for (double d : new double[]{6, 9, 12}) {
+            int rolled = BodyRules.fallDamage(d - BodyRules.ROLL_SAFE_EXTRA, 3, BodyRules.ROLL_DAMAGE);
+            h.assertTrue(fall(runner, d) == rolled, "a Runner rolls at " + d + " before the awakening: " + rolled);
+        }
+        done(h, runner);
+    }
+
     /** The roll never adds to a power's own landing, a mount's fall, an elytra landing or gate Low Gravity. */
     static void softLandingNeverStacks(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -459,10 +479,63 @@ final class BodyTests {
     // ---- awakening and unlocks --------------------------------------------------------------------------------------
 
     /** Before the awakening the body is vanilla: no move starts, no roll, no momentum, nothing announced. */
+    /** Runs a test under the old rule (the Runner's Kit off), putting the switch back whatever happens. */
+    static void withoutKit(GameTestHelper h, java.util.function.Consumer<GameTestHelper> test) {
+        BodyConfig.kitOverride = false;
+        try {
+            test.accept(h);
+        } finally {
+            BodyConfig.kitOverride = null;
+        }
+    }
+
+    /**
+     * The Runner's Kit (SPEC §16.3): every move from the first second, before the awakening; the System only speaks
+     * of them from the awakening on, once, all together.
+     */
+    static void kitFromTheStart(GameTestHelper h) {
+        floor(h, -1, 2, -1, 2, 3);
+        ServerPlayer p = player(h, null);
+        at(h, p, 0.5, 1, 0.5, 0F);
+        for (Move m : Move.values()) h.assertTrue(Body.unlocked(p, m), m + " is everyone's");
+        p.setSprinting(true);
+        BodyServer.assist(p, Move.SLIDE, 40);
+        h.assertTrue(BodyServer.startSlide(p, 0F, false), "a slide before the awakening");
+        h.assertFalse(BodyServer.announce(p), "the System is silent before the awakening");
+        Progression.awaken(p);
+        BodyMemory mem = Body.memory(p);
+        for (Move m : Move.values()) {
+            if (m.runner()) h.assertFalse(mem.announced(m), m + " is found, not told");
+            else h.assertTrue(mem.announced(m), m + " announced at the awakening");
+        }
+        h.assertFalse(BodyServer.announce(p), "never twice");
+        done(h, p);
+    }
+
+    /** Ranks improve the moves: longer runs at D, a fifth link at C, a faster shimmy and longer ledge jumps at B, shorter recharges. */
+    static void ranksImprove(GameTestHelper h) {
+        h.assertTrue(RunnerRules.runLength(0, Rank.E) == 35 && RunnerRules.runLength(0, Rank.D) == 40, "a run lasts 35, 40 from D");
+        h.assertTrue(RunnerRules.links(Rank.D) == 4 && RunnerRules.links(Rank.C) == 5, "4 links, 5 from C");
+        h.assertTrue(RunnerRules.shimmy(Rank.C) == RunnerRules.SHIMMY && Math.abs(RunnerRules.shimmy(Rank.B) * 20 - 2.2) < 1e-9, "shimmy 1.6, 2.2 b/s from B");
+        h.assertTrue(RunnerRules.ledgeUp(Rank.B) == RunnerRules.LEDGE_UP + 1 && RunnerRules.ledgeSide(Rank.B) == RunnerRules.LEDGE_SIDE + 1, "ledge reach +1 from B");
+        h.assertTrue(BodyRules.tacRecharge(Rank.E) == BodyRules.TAC_RECHARGE && BodyRules.tacRecharge(Rank.A) < BodyRules.tacRecharge(Rank.B)
+                && BodyRules.tacRecharge(Rank.SOVEREIGN) == 30, "the tactical sprint recharges faster by rank, to 30");
+        h.assertTrue(BodyRules.slideCooldown(Rank.E) == BodyRules.SLIDE_COOLDOWN && BodyRules.slideCooldown(Rank.SOVEREIGN) == 10, "the slide's cooldown by rank, to 10");
+        // Wall Stride: 80 ticks, grip 50 lifting +0.04, then a sink to -0.14
+        h.assertTrue(RunnerRules.runLength(0, Rank.E, true) == 80 && RunnerRules.runGrip(0, true) == 50, "Wall Stride runs 80, grips 50");
+        h.assertTrue(Math.abs(RunnerRules.runTarget(0, 80, 50, true) - 0.04) < 1e-9 && Math.abs(RunnerRules.runTarget(80, 80, 50, true) + 0.14) < 1e-9,
+                "Wall Stride lifts +0.04, sinks to -0.14");
+        h.succeed();
+    }
+
     static void nothingBeforeAwakening(GameTestHelper h) {
         ServerPlayer p = player(h, null);
         p.setSprinting(true);
         for (Move m : Move.values()) {
+            if (m.runner()) {
+                h.assertFalse(Body.unlocked(p, m), m + " is off without the kit");
+                continue;
+            }
             h.assertFalse(Body.unlocked(p, m), m + " is locked");
             BodyServer.assist(p, m, 40); // even with the dev command's help
             boolean started = switch (m) {
@@ -470,6 +543,7 @@ final class BodyTests {
                 case SLIDE -> BodyServer.startSlide(p, 0F, false);
                 case MANTLE -> BodyServer.startMantle(p, 0F, p.getX(), p.getY() + 1.5, p.getZ() + 1);
                 case ROLL -> fall(p, 9) != BodyRules.fallDamage(9, 3, 1);
+                default -> false;
             };
             h.assertFalse(started, m + " doesn't trigger");
         }

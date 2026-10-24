@@ -16,6 +16,61 @@ final class BodyMotion {
     int trippedCount;
     // mantle
     long mantleUntil;
+    // ---- spike S3: the Runner's Kit ----
+    // wall-run
+    long runUntil, runEndedAt = Long.MIN_VALUE / 2, lastWallJumpAt = Long.MIN_VALUE / 2;
+    int runAxis, runSide, runMiss, links;
+    double runPlane;
+    long lastWall;
+    /** Walls run since the last landing (fresh starts never reuse one). */
+    final long[] walls = new long[8];
+    int wallCount;
+    // hang
+    boolean hanging, shimmying;
+    int hangAxis, hangSign, hangMiss;
+    double hangTop;
+    long hangSince, hangEndedAt = Long.MIN_VALUE / 2, hangQuietUntil;
+    /** The hold the server last accepted (the spike's fallback re-check and its diagnostics). */
+    double hangX, hangY, hangZ;
+    int hangFallbacks;
+    boolean hangExplained;
+    // the server's own recent positions (a claimed start must be one of them)
+    final double[] hist = new double[RunnerRules.HISTORY * 3];
+    int histAt, histCount;
+    // the bench's view of the trial in progress
+    boolean tStarted, tAccepted, tRefused, tEnded, tCorrected;
+    int tRuns, tGrabs;
+
+    boolean runner() {
+        return runUntil != 0 || hanging;
+    }
+
+    boolean ranWall(long id) {
+        for (int i = 0; i < wallCount; i++) if (walls[i] == id) return true;
+        return false;
+    }
+
+    void addWall(long id) {
+        if (wallCount < walls.length) walls[wallCount++] = id;
+    }
+
+    void record(double x, double y, double z) {
+        hist[histAt * 3] = x;
+        hist[histAt * 3 + 1] = y;
+        hist[histAt * 3 + 2] = z;
+        histAt = (histAt + 1) % RunnerRules.HISTORY;
+        if (histCount < RunnerRules.HISTORY) histCount++;
+    }
+
+    /** Whether the server saw the feet near (x, y, z) in its last ticks. */
+    boolean saw(double x, double y, double z, double tol) {
+        for (int i = 0; i < histCount; i++) {
+            double dx = hist[i * 3] - x, dy = hist[i * 3 + 1] - y, dz = hist[i * 3 + 2] - z;
+            if (dx * dx + dz * dz <= tol * tol && Math.abs(dy) <= tol) return true;
+        }
+        return false;
+    }
+
     // anything
     long lastMove = Long.MIN_VALUE, lastGlide = Long.MIN_VALUE / 2;
     /** The dev command's stand-in for input: the next {@code assistMove} within the window skips the input checks. */
@@ -23,7 +78,7 @@ final class BodyMotion {
     long assistUntil;
 
     boolean active() {
-        return tacUntil != 0 || slideUntil != 0 || mantleUntil != 0;
+        return tacUntil != 0 || slideUntil != 0 || mantleUntil != 0 || runUntil != 0 || hanging;
     }
 
     boolean assisted(Move m, long now) {
