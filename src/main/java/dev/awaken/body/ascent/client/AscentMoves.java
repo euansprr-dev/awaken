@@ -40,6 +40,8 @@ public final class AscentMoves {
     static int tiers;
     /** The six mastery levels, 4 bits each (AscentMemory.Track order), from the server. */
     static int mastery;
+    /** The server has sent the levels once this session (later changes are levels gained). */
+    static boolean masterySynced;
     static final AscentRules.Kin K = new AscentRules.Kin();
     private static final double[] S = new double[3], AIR = new double[3];
 
@@ -860,6 +862,7 @@ public final class AscentMoves {
         forget();
         tiers = 0;
         mastery = 0;
+        masterySynced = false;
         AscentFlow.reset();
         ticks = 0;
         fireAt = biteAt = releaseAt = launchAt = deployAt = foldAt = boomAt = landAt = flapAt = bonkAt = missAt = soarAt = -100;

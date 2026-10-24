@@ -1842,9 +1842,13 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`).
 - **Mastery** per track (RUNNER, TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN): each link adds its points to its track
   (rope fire 2, launch 3, wings 2, boom 6, Leaper moves 2, slam 3, flap 1, Runner 1-2); level = floor(√(points / 25)),
-  max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (client, predicted):
+  max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (predicted, the
+  server agreeing where it checks; the Runner's wall-run +1 tick a level, below):
   rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
   dash +2% a Leaper level, glide drag −2% a Wings level.
+- **A level gained** shows as one quiet line over the hotbar for 5.5 s ("Tether mastery III · the line reaches
+  further"; `AscentNotes`), never a toast; the first sync of a session only fills the client's copy. Runner mastery:
+  a wall-run lasts a tick longer a level (both sides; ranks and Wall Stride still set the base).
 - **The record**: `AscentMemory` schema 2 = tiers + mastery points (list, Track order) + chainBest + flags (1 = settled);
   schema 1 reads as no mastery yet and not settled. Kept through death.
 - **Old worlds, first load** (`AscentServer.settle`, once per player, on login): an awakened player of rank B or above is
