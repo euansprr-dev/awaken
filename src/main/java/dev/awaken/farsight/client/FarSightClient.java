@@ -33,7 +33,7 @@ import org.joml.Vector3f;
 import java.util.Locale;
 
 /**
- * Far Sight on the client (SPEC §16): Awaken's own far terrain, rings of predicted heights drawn right after the sky.
+ * Far Sight on the client (SPEC §20): Awaken's own far terrain, rings of predicted heights drawn right after the sky.
  * Stage 0 predicts from the integrated server's generator (singleplayer); a client on a remote server draws nothing
  * yet. Off unless turned on (autopilot {@code farsight on}, or {@code -Dawaken.farsight=true}), and never while
  * Distant Horizons is installed, since both would draw far terrain and report it to Lens.
@@ -227,9 +227,17 @@ public final class FarSightClient {
         }
     }
 
-    /** Autopilot: {@code farsight on|off|status}. */
+    /** Development view: 0 normal, 1 generated-layer cells tinted magenta (autopilot {@code farsight debug <n>}). */
+    static int debug;
+
+    /** Autopilot: {@code farsight on|off|status|debug <n>}. */
     public static String autopilot(String arg) {
-        switch (arg.trim()) {
+        String a = arg.trim();
+        if (a.startsWith("debug")) {
+            debug = a.length() > 5 ? Integer.parseInt(a.substring(5).trim()) : 0;
+            return "debug view " + debug;
+        }
+        switch (a) {
             case "on" -> {
                 enabled = true;
                 if (ModList.get().isLoaded("distanthorizons")) return "on, but Distant Horizons is installed: Far Sight stays off";
@@ -241,7 +249,7 @@ public final class FarSightClient {
             case "status" -> {
             }
             default -> {
-                return "unknown: " + arg.trim() + " (on|off|status)";
+                return "unknown: " + arg.trim() + " (on|off|status|debug <n>)";
             }
         }
         return status();
@@ -256,9 +264,9 @@ public final class FarSightClient {
         cpuNanos = 0;
         cpuFrames = 0;
         return String.format(Locale.ROOT,
-                "%s gpu_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d estimate=%.1fus/column exact=%.1fus/column (%d/%d columns) vram=%dMB",
+                "%s gpu_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d estimate=%.1fus/column exact=%.1fus/column (%d/%d columns) generated=%d/%d vram=%dMB",
                 drawing() ? "drawing" : enabled ? "on" : "off", renderer.gpuMillis(), cpu, rings, workers.queued(), renderer.pieces, renderer.cells,
                 ec == 0 ? 0.0 : workers.estimateNanos.get() / 1000.0 / ec, xc == 0 ? 0.0 : workers.exactNanos.get() / 1000.0 / xc, ec, xc,
-                (field.memoryBytes() + renderer.memoryBytes()) >> 20);
+                field.genUploaded, field.genAsked, (field.memoryBytes() + renderer.memoryBytes()) >> 20);
     }
 }

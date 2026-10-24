@@ -1130,7 +1130,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 
 ---------------------------------------------------------------------------------------------------------------------
 
-## 16. Far Sight (Awaken's own far terrain; plan https://claude.ai/artifact/LvAoTbYB82o6ggcHS73rX1, approved 2026-10-24)
+## 20. Far Sight (Awaken's own far terrain; plan https://claude.ai/artifact/LvAoTbYB82o6ggcHS73rX1, approved 2026-10-24)
 
 - Module `dev.awaken.farsight` (common: `Rings`, `FarColumns`, `FarPalette`, `FarWorkers`; client: `farsight.client`).
   Stage 0 is a proof: off unless turned on (autopilot `farsight on|off|status`, or `-Dawaken.farsight=true`), never

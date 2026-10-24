@@ -1,4 +1,4 @@
-// AWAKEN Far Sight (dev.awaken.farsight, SPEC §16): what the far-terrain shaders share. The rings' atlases are
+// AWAKEN Far Sight (dev.awaken.farsight, SPEC §20): what the far-terrain shaders share. The rings' atlases are
 // 256 x (256*7) RGBA8 texels, one 256x256 block per ring (ring k's block starts at row 256k), addressed toroidally:
 // height texel r, g the drawn top (+2048), b the water's depth (0 on land), a known; colour texel the cell's colour;
 // shade texel the smoothed normal's x and z and the valley shade (baked by farsight_bake). A predicted forest's colour
@@ -10,7 +10,8 @@ layout(std140) uniform FarFrame {
                         // blocks from the camera), w the dither band over which it fades in
     vec4 FarFog;        // x, y Far Sight's horizon fog start and end; z the camera's y; w sea level
     vec4 FarSun;        // xyz the light's direction (world space)
-    vec4 FarCam;        // the camera's x and z modulo 4096 (block texture stays put as it moves), y its y
+    vec4 FarCam;        // the camera's x and z modulo 4096 (block texture stays put as it moves), y its y; w the debug
+                        // view (1: generated-layer cells magenta)
     vec4 FarRing[7];    // per ring: x, z of the window's first cell (blocks from the camera), cell size, 1 if placed
     ivec4 FarTexel[7];  // per ring: the window's first cell as a texel (x, z), the ring's first atlas row
 };

@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 
 /**
- * Draws the rings (SPEC §16) right after the sky, before any chunk: real chunks then simply draw over far terrain, so
+ * Draws the rings (SPEC §20) right after the sky, before any chunk: real chunks then simply draw over far terrain, so
  * the two never fight over depth. Every ring is the same grid; its window, minus the window of the ring inside it, is
  * cut into pieces of at most 64×64 cells, and a piece is drawn only if it is in view and not entirely under the real
  * chunks. One shared index buffer serves every piece: cell {@code i} of a piece is vertices {@code 12i..12i+11}, a
@@ -193,7 +193,8 @@ final class FarRenderer implements AutoCloseable {
             Std140Builder u = Std140Builder.intoBuffer(view.data());
             u.putMat4f(viewRotation).putVec4(a, b, clipStart, clipBand).putVec4(fogStart, fogEnd, (float) camY, seaLevel)
                     .putVec4(sun.x, sun.y, sun.z, 0f)
-                    .putVec4((float) (camX - Math.floor(camX / 4096.0) * 4096.0), (float) camY, (float) (camZ - Math.floor(camZ / 4096.0) * 4096.0), 0f);
+                    .putVec4((float) (camX - Math.floor(camX / 4096.0) * 4096.0), (float) camY, (float) (camZ - Math.floor(camZ / 4096.0) * 4096.0),
+                            FarSightClient.debug);
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putVec4(originX[r], originZ[r], Rings.cellSize(r), field.valid[r] ? 1f : 0f);
             }

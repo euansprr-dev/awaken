@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Feeds the generated layer (SPEC §16): every chunk that loads, and every chunk saved after a change (that is how
+ * Feeds the generated layer (SPEC §20): every chunk that loads, and every chunk saved after a change (that is how
  * edits come back), is summed into a {@link FarChunk} and kept in the level's {@link FarStore}. Events only note the
  * chunk; the summing happens on the server tick within {@link #BUDGET_NANOS} (the chunk is read, nothing else), so a
  * burst of loads spreads over ticks. Runs only while something draws far terrain ({@link FarStore#collecting}).

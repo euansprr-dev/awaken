@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * What a biome's ground looks like from kilometres away (SPEC §16): one colour per biome, worked out once from its
+ * What a biome's ground looks like from kilometres away (SPEC §20): one colour per biome, worked out once from its
  * archetype (an Awakened biome stands in for a vanilla one, {@link BiomeTable#archetype}) and its own grass and foliage
  * colours. Forests read darker than open grass because the canopy is what shows. Snow, rock on steep slopes and
  * sun shading are applied per cell and per pixel, not here. Real chunks' top blocks ({@link #block}) take their map

@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * The worker threads that predict far terrain (SPEC §16): a few low-priority daemon threads, never the server tick or
+ * The worker threads that predict far terrain (SPEC §20): a few low-priority daemon threads, never the server tick or
  * the render thread. Jobs are patches, served in priority order (the caller's number: coarsest ring first, then
  * nearest), and a job whose patch has left its window by the time a worker reaches it is dropped unsampled.
  * Finished patches wait in {@link #done} for the owner to drain; their buffers are pooled.

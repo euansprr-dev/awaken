@@ -17,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
- * Landmarks on the horizon (SPEC §16): the few things worth seeing from kilometres away, drawn by Far Sight as tall
+ * Landmarks on the horizon (SPEC §20): the few things worth seeing from kilometres away, drawn by Far Sight as tall
  * glowing columns that far terrain can hide. A module adds a {@link Source} once at init; sources are asked on the
  * server tick (every {@link #REFRESH_TICKS}) for what stands within Far Sight's reach of each player, and the client
  * draws the result. Gate pillars come from {@link Gates#near} (beyond the 1.5 km the gates draw their own pillars);

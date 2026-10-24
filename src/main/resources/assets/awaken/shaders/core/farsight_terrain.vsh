@@ -62,6 +62,7 @@ bool cellAt(int r, ivec2 t, out float h, out vec3 col, out float water) {
     col = c.rgb;
     float a = floor(c.a * 255.0 + 0.5);
     if (!generated && a < 254.5) canopy(r, t, (a - 15.0) / 16.0, h, col);
+    if (generated && FarCam.w > 0.5) col = vec3(1.0, 0.0, 1.0);
     return hv.a > 0.5;
 }
 

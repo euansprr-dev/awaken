@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
- * One real chunk as far terrain sees it (SPEC §16, the generated layer): 8×8 cells of 2×2 blocks, ring 0's size. Each
+ * One real chunk as far terrain sees it (SPEC §20, the generated layer): 8×8 cells of 2×2 blocks, ring 0's size. Each
  * cell keeps its highest top (leaves and water count: from afar a forest is its canopy, a lake its surface), the
  * water's depth there and the average colour of its top blocks. Coarser cells are summed from these.
  *

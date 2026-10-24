@@ -19,7 +19,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
- * The rings' data on the client (SPEC §16): each ring's window, the patch every slot holds, and three RGBA8 atlases of
+ * The rings' data on the client (SPEC §20): each ring's window, the patch every slot holds, and three RGBA8 atlases of
  * {@code 256 × (256·7)} texels, one 256×256 block per ring, addressed toroidally (a world cell's texel is its
  * coordinate masked to 255, so a moving window only rewrites the strip that came into view):
  * <ul>
@@ -56,6 +56,8 @@ final class FarField implements AutoCloseable {
     private final double[] centreX = new double[Rings.RINGS], centreZ = new double[Rings.RINGS], hiddenR = new double[Rings.RINGS];
     /** Rings whose heights changed since the last bake. */
     int dirty;
+    /** Generated-layer jobs asked for, and patches of it uploaded with something in them (status). */
+    int genAsked, genUploaded;
     volatile int epoch;
 
     private final ByteBuffer zeros, staging;
@@ -163,6 +165,7 @@ final class FarField implements AutoCloseable {
                 workers.submit(level, ring, px, pz, epoch, priority, wanted);
                 if (store != null && store.mayHave(px * pb, pz * pb, (px + 1) * pb - 1, (pz + 1) * pb - 1)) {
                     genQueued[ring][slot] = 1;
+                    genAsked++;
                     workers.submitGenerated(level, ring, px, pz, epoch, priority - 0.5f, wanted);
                 }
             }
@@ -192,6 +195,7 @@ final class FarField implements AutoCloseable {
                 continue;
             }
             genQueued[r][slot] = 1;
+            genAsked++;
             workers.submitGenerated(level, r, px, pz, epoch, priority(r, px, pz, camX, camZ) - 0.5f, wanted);
         }
     }
@@ -201,6 +205,7 @@ final class FarField implements AutoCloseable {
         int slot = Rings.slot(px, pz);
         if (expect[ring].get(slot) != Rings.key(px, pz)) return;
         genQueued[ring][slot] = 1;
+        genAsked++;
         workers.submitGenerated(level, ring, px, pz, epoch, priority(ring, px, pz, camX, camZ) - 0.5f, wanted);
     }
 
@@ -228,6 +233,7 @@ final class FarField implements AutoCloseable {
             int x = (p.px * Rings.PATCH) & Rings.MASK, y = p.ring * Rings.SIZE + ((p.pz * Rings.PATCH) & Rings.MASK);
             upload(enc, genHeight, p.height, x, y);
             upload(enc, genColour, p.colour, x, y);
+            genUploaded++;
             // a built-up patch can stand above its prediction: widen what culling assumes
             hi[p.ring][slot] = (short) Math.max(hi[p.ring][slot] & 0xFFFF, p.range & 0xFFFF);
             dirty |= 1 << p.ring;

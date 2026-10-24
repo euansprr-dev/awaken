@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.stream.Stream;
 
 /**
- * The generated layer's memory (SPEC §16): every real chunk far terrain has seen in one level, as {@link FarChunk}s,
+ * The generated layer's memory (SPEC §20): every real chunk far terrain has seen in one level, as {@link FarChunk}s,
  * grouped in regions of 32×32 chunks. Regions live in memory while used (at most {@link #RESIDENT}) and on disk in
  * {@code <world>/awaken/farsight/<namespace>/<dimension>/r.<x>.<z>.dat} (compressed NBT, versioned), so a return trip
  * shows what was there before any chunk loads. Written on the server thread, read by the far-terrain workers.

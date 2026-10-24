@@ -1,7 +1,7 @@
 package dev.awaken.farsight;
 
 /**
- * Far Sight's clipmap layout (SPEC §16): {@link #RINGS} nested square windows of {@link #SIZE}×{@link #SIZE} cells
+ * Far Sight's clipmap layout (SPEC §20): {@link #RINGS} nested square windows of {@link #SIZE}×{@link #SIZE} cells
  * centred on the camera. Ring k's cells are {@code 2 << k} blocks wide (2 to 128), so each ring reaches twice as far as
  * the one inside it (ring 6: about 16 km). Every window snaps to whole patches of {@link #PATCH}×{@link #PATCH} cells,
  * the unit heights are predicted and uploaded in. Pure integer maths, the same on every side.

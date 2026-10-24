@@ -16,7 +16,7 @@ import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Predicted far terrain, straight from the world generator and without building a chunk (SPEC §16). Far cells take
+ * Predicted far terrain, straight from the world generator and without building a chunk (SPEC §20). Far cells take
  * one sample of the noise router's {@code chunk_surface_level} (the generator's own surface estimate); cells within
  * about a kilometre take the exact base height ({@code getBaseHeight}, sea floor included). The biome comes from the
  * biome source and the colour from {@link FarPalette}; below sea level a cell is water at sea level. Terrain mods that
