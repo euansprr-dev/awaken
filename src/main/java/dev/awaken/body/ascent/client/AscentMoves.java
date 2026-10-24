@@ -42,6 +42,9 @@ public final class AscentMoves {
     static int mastery;
     /** The server has sent the levels once this session (later changes are levels gained). */
     static boolean masterySynced;
+    /** Skyborn's Aether (0..1, SPEC §17.8), predicted here; the server keeps its own at the cheapest drain. */
+    static double aether = 1;
+    static int aetherOutAt = -100;
     static final AscentRules.Kin K = new AscentRules.Kin();
     private static final double[] S = new double[3], AIR = new double[3];
 
@@ -242,10 +245,13 @@ public final class AscentMoves {
                     }
                     AscentRules.soarStep(K, yaw, pitch, fwd, right, jump, sneak, k.sprint(), S);
                     boomCheck(p);
+                    aetherDrain = k.sprint() ? AscentRules.AETHER_BOOST
+                            : fwd <= 0 && K.hspeed() < 0.45 ? AscentRules.AETHER_HOVER : AscentRules.AETHER_CRUISE;
                 }
             }
         }
         if (jumpPressed) lastJumpPress = ticks;
+        aetherTick(p);
         // moving air (updrafts, windways): the free states feel it from the next tick
         double share = switch (state) {
             case CARRY -> AscentRules.AIR_CARRY;
@@ -723,7 +729,36 @@ public final class AscentMoves {
         AscentSounds.local(p, AscentContent.WINGS_FOLD.get(), 0.7F, 1F);
     }
 
+    /** This tick's drain (set by the flight step), and the meter's tick: drained in flight, refilled out of it. */
+    private static double aetherDrain;
+
+    private static void aetherTick(LocalPlayer p) {
+        if (!has(AscentPayloads.Tier.SKYBORN)) return;
+        boolean flying = state == AscentState.SOAR;
+        BlockPos eye = BlockPos.containing(p.getEyePosition());
+        boolean sun = p.level().isBrightOutside() && p.level().canSeeSky(eye);
+        boolean updraft = dev.awaken.body.ascent.Updrafts.liftAt(p.level(), p.getX(), p.getY(), p.getZ()) > 0;
+        aether = Math.max(0, AscentRules.aetherStep(aether, flying, aetherDrain, sun, updraft, lv(dev.awaken.body.ascent.AscentMemory.Track.SKYBORN)));
+        aetherDrain = AscentRules.AETHER_CRUISE;
+        if (flying && aether <= 0) skyLetsGo(p);
+    }
+
+    /** Out of Aether in flight: the wings stop beating and hold a glide (never a drop). */
+    private static void skyLetsGo(LocalPlayer p) {
+        aetherOutAt = ticks;
+        trace("out of aether: the wings hold a glide");
+        AscentSounds.local(p, AscentContent.WINGS_FOLD.get(), 0.7F, 0.75F);
+        AscentRules.glideCatch(K, p.getYRot(), p.getXRot());
+        setState(p, AscentState.GLIDE);
+    }
+
     private static void startSoar(LocalPlayer p) {
+        if (aether < AscentRules.AETHER_START) {
+            // not enough to lift: a weak beat that catches nothing
+            AscentSounds.local(p, AscentContent.FLAP.get(), 0.4F, 0.7F);
+            aetherOutAt = ticks;
+            return;
+        }
         if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         boolean fromGlide = state == AscentState.GLIDE;
         soarAt = ticks;
@@ -737,6 +772,7 @@ public final class AscentMoves {
     private static void flap(LocalPlayer p) {
         flapAt = ticks;
         AscentFlow.gain(0.02F);
+        aether -= AscentRules.AETHER_FLAP;
         K.vy = Math.max(K.vy, 0) + AscentRules.SOAR_FLAP;
         AscentSounds.local(p, AscentContent.FLAP.get(), 0.9F, 0.9F + p.getRandom().nextFloat() * 0.15F);
         event(AscentPayloads.EV_FLAP, 0);
@@ -837,6 +873,10 @@ public final class AscentMoves {
         trace("server refused " + s);
         if (s.rope) {
             setState(p, AscentState.CARRY);
+        } else if (s == AscentState.SOAR) {
+            // the server's Aether ran out first: hold a glide, as at our own empty
+            aether = 0;
+            skyLetsGo(p);
         } else {
             end(p, "refused", false);
         }
@@ -863,6 +903,7 @@ public final class AscentMoves {
         tiers = 0;
         mastery = 0;
         masterySynced = false;
+        aether = 1;
         AscentFlow.reset();
         ticks = 0;
         fireAt = biteAt = releaseAt = launchAt = deployAt = foldAt = boomAt = landAt = flapAt = bonkAt = missAt = soarAt = -100;

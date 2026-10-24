@@ -13,6 +13,9 @@ final class AscentMotion {
     int chain;
     long lastLinkAt = Long.MIN_VALUE / 2, styleMinuteAt = Long.MIN_VALUE / 2;
     double stylePaid;
+    /** Skyborn's Aether as the server keeps it (the cheapest drain: a fair flight is never refused), and time aloft. */
+    double aether = 1;
+    int aloft;
 
     // ---- how the player got here (Ascent.arrivedByMovement) ----
     /** The trail's length: 20 seconds of ticks, a bit each (moving by Ascent or Runner, or not). */

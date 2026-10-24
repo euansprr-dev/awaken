@@ -162,6 +162,31 @@ public final class AscentServer {
         };
     }
 
+    /** Aether's overdraft the server allows before it folds a flight (the client's sun and updraft can differ a little). */
+    static final double AETHER_TOLERANCE = 0.15;
+
+    /**
+     * The server's Aether: drained at the cheapest rate while flying, refilled as the client's is. A flight past empty
+     * by more than the tolerance is folded back to a glide (the client folds its own at empty first). Time aloft is
+     * Skyborn mastery (a point every 5 s).
+     */
+    static void aether(ServerPlayer p, AscentMotion m) {
+        if (!Ascent.has(p, Ascent.Tier.SKYBORN)) return;
+        boolean flying = m.state == AscentState.SOAR;
+        net.minecraft.core.BlockPos eye = net.minecraft.core.BlockPos.containing(p.getEyePosition());
+        boolean sun = p.level().isBrightOutside() && p.level().canSeeSky(eye);
+        boolean updraft = Updrafts.liftAt(p.level(), p.getX(), p.getY(), p.getZ()) > 0;
+        int lvl = p.getData(AscentContent.MEMORY).level(AscentMemory.Track.SKYBORN);
+        m.aether = AscentRules.aetherStep(m.aether, flying, AscentRules.AETHER_CRUISE, sun, updraft, lvl);
+        if (flying && m.aether < -AETHER_TOLERANCE) {
+            AwakenNet.send(p, new AscentPayloads.Stop(AscentState.SOAR.ordinal()));
+            m.state = AscentState.GLIDE;
+            m.aether = 0;
+            show(p, new AscentPayloads.Seen(p.getId(), AscentState.GLIDE.ordinal(), 0, 0, 0));
+        }
+        if (flying && ++m.aloft % 100 == 0) link(p, AscentMemory.Track.SKYBORN, 1);
+    }
+
     /** States refused since the server started (tests and the bench read it). */
     static int refusals;
 
@@ -170,7 +195,8 @@ public final class AscentServer {
         if (s == null) return;
         AscentMotion m = motion(p);
         boolean refuse = !allowed(p, s) || p.isPassenger() || p.isSpectator() || !dev.awaken.body.BodyConfig.ascent()
-                || s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z());
+                || s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z())
+                || s == AscentState.SOAR && m.state != AscentState.SOAR && m.aether < AscentRules.AETHER_START - AETHER_TOLERANCE;
         if (refuse && s != AscentState.NONE) {
             refusals++;
             AwakenNet.send(p, new AscentPayloads.Stop(s.ordinal()));
@@ -277,6 +303,7 @@ public final class AscentServer {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         AscentMotion m = motion(p);
         TetherVow.tick(p, now(p));
+        aether(p, m);
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
         boolean moving = Ascent.moving(p, m);
         m.mark(moving);

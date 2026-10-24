@@ -302,6 +302,25 @@ public final class AscentRules {
         return false;
     }
 
+    // ---- Aether (Skyborn's flight meter; SPEC §17.8) ------------------------------------------------------------------
+
+    /**
+     * Per tick, as a share of a full meter: cruising drains it in a minute, boosting in about 19 s, hovering in 38 s,
+     * and each wingbeat takes 1.2%. Out of flight it fills in the sun in 20 s, in shade or at night in 90 s; an
+     * updraft fills it in 6 s even while flying. Flight needs 8% to begin. Skyborn mastery trims the drain 3% a level.
+     */
+    public static final double AETHER_CRUISE = 1.0 / 1200, AETHER_BOOST = 3.2 / 1200, AETHER_HOVER = 1.6 / 1200, AETHER_FLAP = 0.012;
+    public static final double AETHER_SUN = 1.0 / 400, AETHER_SHADE = 1.0 / 1800, AETHER_UPDRAFT = 1.0 / 120;
+    public static final double AETHER_START = 0.08, MASTERY_AETHER = 0.03;
+
+    /** One tick of the meter: the drain while flying (a rate above), the refill out of it or in an updraft. */
+    public static double aetherStep(double a, boolean flying, double drain, boolean sun, boolean updraft, int skybornLevel) {
+        if (flying) a -= drain * (1 - MASTERY_AETHER * skybornLevel);
+        if (updraft) a += AETHER_UPDRAFT;
+        else if (!flying) a += sun ? AETHER_SUN : AETHER_SHADE;
+        return Math.min(1, a);
+    }
+
     // ---- moving air (core.api.AirHooks) -------------------------------------------------------------------------------
 
     /** How much of the air each free state takes: the carry all of it, open wings more (they catch it), flight less. */

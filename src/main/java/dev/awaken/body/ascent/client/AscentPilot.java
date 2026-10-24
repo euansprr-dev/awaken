@@ -19,6 +19,7 @@ import net.minecraft.util.Mth;
  * run &lt;script&gt; [n]          a manoeuvre that watches the state: swing (n swings down the lane), glide, boom, soar
  * rec &lt;name&gt; &lt;ticks&gt; [n]     film a clip (every n-th frame)
  * route rec|play|stop [name] record a run's keys and view, or play one back from its start ({@link AscentRoutes})
+ * aether &lt;0..1&gt;              set this client's Aether (to film the meter and its empty)
  * stop                       let go of everything
  * </pre>
  */
@@ -65,6 +66,7 @@ public final class AscentPilot {
             }
             case "rec" -> ClipRecorder.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Integer.parseInt(a[3]) : 2);
             case "route" -> AscentRoutes.line(a);
+            case "aether" -> AscentMoves.aether = Math.max(0, Math.min(1, Double.parseDouble(a[1])));
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
         }

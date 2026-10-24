@@ -21,6 +21,7 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_no_kicks", 60, AscentTests::noKicks);
         AwakenTests.registerIsolated("ascent_latency", 60, AscentTests::latency);
         AwakenTests.registerIsolated("ascent_tether_vow", 200, AscentTests::tetherVow);
+        AwakenTests.register("ascent_aether", 40, AscentTests::aether);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -432,6 +433,51 @@ final class AscentTests {
         for (BlockPos q : BlockPos.betweenClosed(box.minX(), box.minY() - 2, box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
             level.setBlock(q, air, net.minecraft.world.level.block.Block.UPDATE_CLIENTS | net.minecraft.world.level.block.Block.UPDATE_SKIP_ALL_SIDEEFFECTS);
         }
+    }
+
+    /**
+     * Aether (SPEC §17.8): a minute of cruise, about 19 s of boost, 20 s to fill in the sun, an updraft filling it even
+     * in flight, mastery trimming the drain; the server folds a flight it can't afford into a glide, and won't start one.
+     */
+    private static void aether(GameTestHelper h) {
+        int cruise = ticksToEmpty(AscentRules.AETHER_CRUISE, 0), boost = ticksToEmpty(AscentRules.AETHER_BOOST, 0);
+        h.assertTrue(Math.abs(cruise - 1200) <= 1 && Math.abs(boost - 375) <= 1, "cruise " + cruise + " ticks, boost " + boost);
+        h.assertTrue(ticksToEmpty(AscentRules.AETHER_CRUISE, 10) > 1700, "ten Skyborn levels stretch a cruise past 85 s");
+        double a = 0;
+        int t = 0;
+        while (a < 1 && t < 10000) {
+            a = AscentRules.aetherStep(a, false, 0, true, false, 0);
+            t++;
+        }
+        h.assertTrue(Math.abs(t - 400) <= 1, "fills in the sun in " + t + " ticks");
+        h.assertTrue(AscentRules.aetherStep(0.5, true, AscentRules.AETHER_CRUISE, true, true, 0) > 0.5, "an updraft fills it in flight");
+        net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        try {
+            Ascent.grant(p, Ascent.Tier.SKYBORN, "test");
+            AscentMotion m = AscentServer.motion(p);
+            m.aether = AscentRules.AETHER_START - AscentServer.AETHER_TOLERANCE - 0.01;
+            AscentServer.onState(p, new AscentPayloads.State(AscentState.SOAR.ordinal(), 0, 0, 0, 0));
+            h.assertTrue(m.state != AscentState.SOAR, "no flight from a meter the server knows is empty (" + m.aether + ")");
+            m.aether = 0.5;
+            AscentServer.onState(p, new AscentPayloads.State(AscentState.SOAR.ordinal(), 0, 0, 0, 0));
+            h.assertTrue(m.state == AscentState.SOAR, "flight with half a meter");
+            m.aether = -AscentServer.AETHER_TOLERANCE - 0.01;
+            AscentServer.aether(p, m);
+            h.assertTrue(m.state == AscentState.GLIDE, "a flight past empty folds into a glide");
+        } finally {
+            h.getLevel().getServer().getPlayerList().remove(p);
+        }
+        h.succeed();
+    }
+
+    private static int ticksToEmpty(double drain, int level) {
+        double a = 1;
+        int t = 0;
+        while (a > 0 && t < 100000) {
+            a = AscentRules.aetherStep(a, true, drain, false, false, level);
+            t++;
+        }
+        return t;
     }
 
     /** Flight cruises near 1.25, boosts near 2.25, and hovers to a stop. */

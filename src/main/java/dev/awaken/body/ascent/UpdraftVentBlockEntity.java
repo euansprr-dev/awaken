@@ -6,8 +6,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * An updraft vent's column. Nothing saved: the column is the block's (radius and height in {@link Updrafts}). On the
- * client each loaded vent is listed with {@link Updrafts}, so the moving air costs a short list walk, not block reads.
+ * An updraft vent's column. Nothing saved: the column is the block's (radius and height in {@link Updrafts}). Each side
+ * lists its loaded vents with {@link Updrafts} (the client for the moving air, the server for Aether's refill), so a
+ * query is a short list walk, not block reads.
  */
 public class UpdraftVentBlockEntity extends BlockEntity {
     private int soundIn;
@@ -19,18 +20,18 @@ public class UpdraftVentBlockEntity extends BlockEntity {
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level != null && level.isClientSide()) Updrafts.add(level, worldPosition);
+        if (level != null) Updrafts.add(level, worldPosition);
     }
 
     @Override
     public void setRemoved() {
-        if (level != null && level.isClientSide()) Updrafts.remove(level, worldPosition);
+        if (level != null) Updrafts.remove(level, worldPosition);
         super.setRemoved();
     }
 
     @Override
     public void onChunkUnloaded() {
-        if (level != null && level.isClientSide()) Updrafts.remove(level, worldPosition);
+        if (level != null) Updrafts.remove(level, worldPosition);
         super.onChunkUnloaded();
     }
 

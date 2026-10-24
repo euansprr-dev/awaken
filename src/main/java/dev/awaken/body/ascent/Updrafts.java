@@ -9,8 +9,8 @@ import java.util.List;
 /**
  * Updraft vents as moving air (core.api.AirHooks; SPEC §17.6): a column of radius {@link #RADIUS} rising
  * {@link #HEIGHT} from the vent's top, full strength to {@link #FULL} and fading to nothing at the top, a little weaker
- * toward its rim. Client side the loaded vents are a short list (vents register as their block entities load), so a
- * sample walks it with no block reads and no allocation.
+ * toward its rim. Each side lists its loaded vents (they register as their block entities load), so a sample walks a
+ * short list with no block reads and no allocation. The server's list feeds Aether's refill; AirHooks is the client's.
  */
 public final class Updrafts {
     private Updrafts() {}
@@ -59,6 +59,16 @@ public final class Updrafts {
         double rim = 1 - 0.35 * r2 / (RADIUS * RADIUS);
         return LIFT * up * rim;
     }
+
+    /** The strongest vent's lift at the feet (0 outside every column), on either side. */
+    public static double liftAt(Level level, double x, double y, double z) {
+        double[] out = SCRATCH.get();
+        out[1] = 0;
+        airAt(level, x, y, z, out);
+        return out[1];
+    }
+
+    private static final ThreadLocal<double[]> SCRATCH = ThreadLocal.withInitial(() -> new double[3]);
 
     /** AirHooks source: every loaded vent's lift at the feet (strongest wins, columns don't stack). */
     static void airAt(Level level, double x, double y, double z, double[] out) {

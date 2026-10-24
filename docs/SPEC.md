@@ -1934,6 +1934,20 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - `ascent_tether_vow` builds a vault from its blueprint in each turn and checks the turn, the forecourt, the pylon
   anchor (real to the server, the line clear) and the mast, then runs the director: call, line, kept.
 
+### 17.8 Phase 4a: Aether (Skyborn's flight meter)
+- Flight (SOAR) runs on Aether, 0..1: cruising drains a full meter in 60 s, boosting in ~19 s, hovering in ~38 s, each
+  wingbeat 1.2%. Out of flight it fills in the sun (sky over the eyes, a bright sky) in 20 s, in shade or at night in
+  90 s; inside an updraft's column it fills in 6 s, even while flying. Flight needs 8% to begin (less: a weak beat that
+  catches nothing). Skyborn mastery trims the drain 3% a level.
+- Empty in flight: the wings stop beating and hold a glide (never a drop). The client predicts its meter; the server
+  keeps its own at the cheapest drain (it can't see boosts), so a fair flight is never refused. It refuses a flight
+  start it can't afford (under 8% by more than 0.15) and folds a flight 0.15 past empty into a glide (`Stop(SOAR)`,
+  which the client takes as its own empty). Time aloft earns Skyborn mastery (a point every 5 s).
+- Shown as a 2-pixel gold line in the gap between the hearts and the XP bar while flying or not full (over the XP
+  bar's own edge it was too faint to read) (fading out once full on the ground),
+  flickering under 20% in flight, dimmed for a moment when a flight is refused for want of it.
+- `ascent_aether` holds those numbers and the server's refusals.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
