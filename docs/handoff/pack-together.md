@@ -6,7 +6,9 @@ the story starts together, friends share one Hearth as members, and a Hearth can
 ## Done
 - **The WIP (ebf8841) finished.** It built as it was; its one failing test (`together_server_throttle_and_as`) passed
   a UUID to `/awaken as`, which vanilla's player argument never takes. The test now names its two players.
-- **origin/build/awaken-v1 merged in** (2e05a76: the CI workflow, the cloud hand-off, holo cards, lands polish).
+- **origin/build/awaken-v1 merged in**, twice: 2e05a76 (the CI workflow, the cloud hand-off, holo cards, lands
+  polish), then 90801b4 (adaptive gate music) when it moved during the session. One SPEC §12 conflict: both sides
+  added an API line; both are kept.
 - **All 17 audit items are fixed**, each with GameTests of two or more players; the audit doc lists them per item with
   the player count, and a "Deferred" section for what is left.
 - **Found and fixed while testing:**
@@ -80,14 +82,17 @@ Entity)` (who of the party shares a kill; `Parties.SHARE_RANGE` 32).
 - Test reach (behaviour is in place): no GameTest stands in the Descent dimension for its kill sharing (same
   `Parties.sharing` as the tested home kills), and the stop test can't fill hearth `Breaks.ACTIVE` or Echo `Duty`
   before clearing them.
-- Not this branch: earlier tests leave awakened mock players and blocks at the shared isolated-test spot, which can
-  trip order-dependent tests (`gates_surface_respects_builds` failed once locally for that reason; it is on
-  pack/throughput's list). The Together tests now clean up after themselves.
+- Not this branch: earlier tests leave awakened mock players and blocks at the shared isolated-test spot, which trips
+  order-dependent tests. `gates_surface_respects_builds` failed twice locally that way (each time right after
+  `hearth_cottage_is_a_sanctuary`); pack/throughput's fix for it (bb3dc21) is ported here unchanged. The Together tests
+  clean up after themselves. `fauna_p3_caves_spawn` failed once locally: it is on the hand-off's known-flake list until
+  pack/throughput lands.
 
 ## Tours for the Mac
 No new looks, so no screenshot tour. Worth one manual two-client LAN session before release: invite and share a
 Hearth, a party gate (sealing, shared kills), and a shared dream.
 
 ## CI
-Built and tested in the cloud VM (JDK 25.0.5 from foojay): `./gradlew build runGameTestServer`, "All 346 required tests
-passed" on the final code. GitHub Actions: see the run for this commit on pack/together.
+Built and tested in the cloud VM (JDK 25.0.5 from foojay): `./gradlew build runGameTestServer`, "All 352 required tests
+passed" on the final merged code (346 before pack/sound's tests came in with the second merge). GitHub Actions: the
+GameTests run for this branch's head on pack/together.
