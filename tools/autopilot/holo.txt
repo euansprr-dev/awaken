@@ -1,0 +1,104 @@
+# Holo UI tour (docs/modules/holo.md): the demo VIEW panel; the HUD still, then a sharp turn with HUD motion
+# Subtle / Off / Full; the K menu unfolding from the wrist at fixed moments (frozen with "holo at <ms>"), open,
+# a tab clicked through the real ray-picking path, first person, third person back and front, the wide and slim
+# arm; then frame times with and without the panel. GUI scale 0 (auto).
+# Run: tools/autopilot.sh tools/autopilot/holo.txt
+world autopilot_holo creative 1234
+waitworld
+cmd gamerule send_command_feedback false
+cmd time set 6000
+cmd weather clear
+look 20 4
+gui 0
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken signal demo now
+wait 40
+
+# --- the demo panel ---
+cmd awaken holo demo panel
+wait 30
+shot holo_01_demo_view
+holo log
+
+# --- the HUD at rest, then a sharp turn ---
+shot holo_02_hud_still
+holo hud subtle
+turn 14 8
+shot holo_03_turn_subtle
+holo log
+wait 30
+look 20 4
+wait 20
+holo hud off
+turn 14 8
+shot holo_04_turn_off
+holo log
+wait 30
+look 20 4
+wait 20
+holo hud full
+turn 14 8
+shot holo_05_turn_full
+holo log
+wait 30
+look 20 4
+holo hud subtle
+wait 30
+shot holo_06_hud_settled
+holo log
+cmd awaken holo demo off
+wait 10
+
+# --- the K menu from the wrist, frozen at moments of the timeline ---
+screen holo
+holo at 60
+shot holo_10_k_060_arm
+holo at 120
+shot holo_11_k_120_band
+holo at 200
+shot holo_12_k_200_unfold
+holo at 280
+shot holo_13_k_280_scan
+holo at 360
+shot holo_14_k_360_type
+holo at 450
+shot holo_15_k_450_open
+holo run
+wait 20
+holo clicktab 1
+wait 10
+shot holo_16_k_truths_clicked
+holo clicktab 0
+wait 10
+shot holo_17_k_status
+
+# --- arms: wide and slim ---
+holo arm wide
+wait 5
+shot holo_18_arm_wide
+holo arm slim
+wait 5
+shot holo_19_arm_slim
+holo arm auto
+
+# --- third person ---
+camera back
+wait 10
+shot holo_20_k_third_back
+camera front
+wait 10
+shot holo_21_k_third_front
+camera first
+wait 5
+
+# --- frame times: the same view with and without the K menu ---
+perf holo_open 10
+screen close
+wait 40
+shot holo_22_closed
+perf holo_none 10
+quit
