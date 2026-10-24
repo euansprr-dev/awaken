@@ -240,7 +240,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
             return;
         }
         if (st == STAND) {
-            if (d.dwellUntil[rec] > 0 && now >= d.dwellUntil[rec]) {
+            if (d.role[rec] == 0 && d.dwellUntil[rec] > 0 && now >= d.dwellUntil[rec]) {
                 l.afterDwell(rec, now);
                 return;
             }

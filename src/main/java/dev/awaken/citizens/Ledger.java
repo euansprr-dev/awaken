@@ -425,7 +425,7 @@ final class Ledger {
         int k = segIndex(i);
         int p = d.place[i];
         d.dwellUntil[i] = 0;
-        if (k < 0) return;
+        if (k < 0 || p < 0 || d.role[i] != 0) return;
         work.dwellEnd(i, p, now);
         byte a = r.segAct[k];
         int t = r.segTarget[k];
