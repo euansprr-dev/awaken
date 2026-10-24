@@ -1,5 +1,6 @@
 package dev.awaken.holo.client;
 
+import dev.awaken.holo.ui.HoloTimeline;
 import dev.awaken.signal.client.Glass;
 import net.minecraft.client.Minecraft;
 import org.joml.Matrix4f;

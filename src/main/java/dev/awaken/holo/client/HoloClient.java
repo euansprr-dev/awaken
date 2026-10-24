@@ -4,6 +4,7 @@ import com.google.common.reflect.TypeToken;
 import dev.awaken.core.api.UiHooks;
 import dev.awaken.holo.HoloKind;
 import dev.awaken.holo.HoloNet;
+import dev.awaken.holo.ui.HoloTimeline;
 import dev.awaken.progression.client.ProgressionClient;
 import dev.awaken.progression.client.StatusScreen;
 import net.minecraft.client.Minecraft;

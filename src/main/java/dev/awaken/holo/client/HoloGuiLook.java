@@ -2,6 +2,7 @@ package dev.awaken.holo.client;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import dev.awaken.holo.ui.HoloTimeline;
 import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.HudLook;
 import net.minecraft.client.gui.Font;

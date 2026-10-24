@@ -3,6 +3,7 @@ package dev.awaken.holo.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import dev.awaken.holo.ui.HoloTimeline;
 import dev.awaken.signal.client.Glass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;

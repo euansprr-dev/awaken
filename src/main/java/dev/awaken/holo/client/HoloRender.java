@@ -3,6 +3,7 @@ package dev.awaken.holo.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.core.AwakenConfig;
+import dev.awaken.holo.ui.HoloTimeline;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
