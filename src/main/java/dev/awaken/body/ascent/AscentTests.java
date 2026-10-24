@@ -72,6 +72,15 @@ final class AscentTests {
             if (d.speed() >= AscentRules.BOOM_SPEED) boomAt = t;
         }
         h.assertTrue(boomAt > 0 && -d.y < 60, "a 60 degree dive booms within 60 blocks (at tick " + boomAt + ", " + -d.y + " down)");
+        // an updraft (moving air, 0.12 up) under open wings turns the sink into a climb
+        AscentRules.Kin u = new AscentRules.Kin().set(0, 0, 0, 0, -0.1, 1.1);
+        double[] lift = {0, 0.12, 0};
+        double uy0 = u.y;
+        for (int t = 0; t < 100; t++) {
+            AscentRules.glideStep(u, 0, 6);
+            AscentRules.air(u, lift, AscentRules.AIR_GLIDE);
+        }
+        h.assertTrue(u.y > uy0 + 5, "a glide in an updraft climbs (" + (u.y - uy0) + " in 5 s)");
         AscentRules.Kin c = new AscentRules.Kin().set(0, 0, 0, 0, 0, 2.0);
         double y0 = c.y;
         for (int t = 0; t < 30; t++) AscentRules.glideStep(c, 0, -40);

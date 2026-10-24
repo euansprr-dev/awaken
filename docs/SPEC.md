@@ -286,7 +286,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   every one under it, saved, synced; true when new), `onGranted(BiConsumer<ServerPlayer, Tier>)` (each new tier once,
   lowest first), `state(ServerPlayer)` (`AscentState`), `arrivedByMovement(ServerPlayer, int seconds ≤ 20)` (a third
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
-  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves.
+  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
+  (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -1872,6 +1873,11 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **Latency** (`ascent_latency`, the gate's latency tours as a test): a real swing from a block 20 up, a release and a
   30-block fall to a hard landing, every state message reaching the server 300 ms (6 ticks) after its positions: no
   refusal, no move sent back, no fall damage, the state ends, the arrival still counts as by movement.
+- **Moving air** (`core.api.AirHooks`, for the Wilds' updraft pylons and windways): sources registered on both sides
+  add an acceleration (blocks a tick²) at the feet; the client's free states take it after their own step (the carry
+  ×1, wings ×1.25, flight ×0.6; a rope none). Sources read only what both sides have (blocks, block entities,
+  entities, synced data) and allocate nothing. Scale: an updraft of 0.10-0.14 up lifts a glide (0.12 climbs >5 blocks
+  in 5 s), a windway of 0.04-0.08 along carries one.
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
   hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
   Leaper together (`HorizonHooks.addReach`).

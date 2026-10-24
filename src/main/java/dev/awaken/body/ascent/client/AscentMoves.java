@@ -40,7 +40,7 @@ public final class AscentMoves {
     /** The six mastery levels, 4 bits each (AscentMemory.Track order), from the server. */
     static int mastery;
     static final AscentRules.Kin K = new AscentRules.Kin();
-    private static final double[] S = new double[3];
+    private static final double[] S = new double[3], AIR = new double[3];
 
     // the rope
     static double ax, ay, az, len, lenTarget;
@@ -237,6 +237,14 @@ public final class AscentMoves {
             }
         }
         if (jumpPressed) lastJumpPress = ticks;
+        // moving air (updrafts, windways): the free states feel it from the next tick
+        double share = switch (state) {
+            case CARRY -> AscentRules.AIR_CARRY;
+            case GLIDE -> AscentRules.AIR_GLIDE;
+            case SOAR -> AscentRules.AIR_SOAR;
+            default -> 0;
+        };
+        if (share > 0 && dev.awaken.core.api.AirHooks.sample(p.level(), K.x, K.y, K.z, AIR)) AscentRules.air(K, AIR, share);
         if (state != AscentState.NONE) apply(p, in);
         else sent = false;
     }
