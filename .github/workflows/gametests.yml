@@ -1,0 +1,50 @@
+# Runs AWAKEN's GameTests on GitHub's Linux machines, so the owner's Mac only compiles and runs screenshot tours.
+# Every push to an active branch runs the full suite; a newer push to the same branch cancels the older run.
+# The repo's default branch is build/awaken-v1, so its Gradle cache (Minecraft, NeoForge) serves every branch.
+name: GameTests
+
+on:
+  push:
+    branches: ['build/**', 'pack/**', 'lands/**', 'carillon/main']
+  workflow_dispatch:
+
+concurrency:
+  group: gametests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gametests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: ./gradlew --console=plain build
+
+      - name: GameTests
+        run: ./gradlew --console=plain runGameTestServer
+
+      - name: Summary
+        if: always()
+        run: |
+          f=run/logs/latest.log
+          if [ -f "$f" ]; then
+            { echo '```'; grep -E 'required tests|failed at' "$f" | tail -40; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No GameTest server log." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gametest-logs
+          path: run/logs/
+          retention-days: 7

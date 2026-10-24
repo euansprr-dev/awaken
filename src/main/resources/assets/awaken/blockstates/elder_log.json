@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "awaken:block/elder_log_horizontal",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "awaken:block/elder_log"
+    },
+    "axis=z": {
+      "model": "awaken:block/elder_log_horizontal",
+      "x": 90
+    }
+  }
+}

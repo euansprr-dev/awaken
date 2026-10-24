@@ -1,0 +1,324 @@
+package dev.awaken.terrain.hero;
+
+import dev.awaken.Awaken;
+import dev.awaken.core.test.AwakenTests;
+import dev.awaken.terrain.LandsBlocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BiomeTags;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
+
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
+/** The hero trees: their blueprints and what it costs to build them, a full build in its box, and their sites. */
+public final class HeroTests {
+    private HeroTests() {}
+
+    public static void register() {
+        // Every blueprint from eight seeds is the tree the art direction describes, and what building one costs.
+        AwakenTests.register("terrain_hero_blueprints", 100, h -> {
+            StringBuilder log = new StringBuilder();
+            for (HeroTree tree : HeroTree.values()) {
+                double total = 0, worst = 0;
+                int seeds = 8;
+                for (long warm = 101; warm <= 103; warm++) tree.build(warm); // the JIT first, then the clock
+                for (long seed = 1; seed <= seeds; seed++) {
+                    long t0 = System.nanoTime();
+                    Blueprint bp = tree.build(seed * 1_000_003L);
+                    double ms = (System.nanoTime() - t0) / 1e6;
+                    total += ms;
+                    worst = Math.max(worst, ms);
+                    Shape s = shape(bp);
+                    String what = tree.getSerializedName() + " seed " + seed + " (" + s + ")";
+                    h.assertTrue(s.loose == 0, what + ": loose leaves left in the blueprint");
+                    h.assertTrue(s.disconnected == 0, what + ": " + s.disconnected + " cells not joined to the ground");
+                    if (tree == HeroTree.ELDER_COLOSSUS) {
+                        h.assertTrue(s.trunkTop >= 55 && s.trunkTop <= 86, what + " trunk top " + s.trunkTop);
+                        h.assertTrue(s.width12 >= 6 && s.width12 <= 10, what + " trunk " + s.width12 + " across");
+                        h.assertTrue(s.rootReach >= 8 && s.rootReach <= 17, what + " roots reach " + s.rootReach);
+                        h.assertTrue(s.leafReach >= 18 && s.leafReach <= bp.extent, what + " canopy reaches " + s.leafReach);
+                        h.assertTrue(s.leaves >= 4000, what + " leaves " + s.leaves);
+                    } else {
+                        h.assertTrue(s.trunkTop >= 30 && s.trunkTop <= 46, what + " trunk top " + s.trunkTop);
+                        h.assertTrue(s.leafReach >= 9 && s.leafReach <= bp.extent, what + " crown reaches " + s.leafReach);
+                        h.assertTrue(s.vines >= 60 && s.tips >= 15, what + " vines " + s.vines + " (" + s.tips + " tips)");
+                    }
+                    h.assertTrue(s.persistent * 5 <= s.leaves, what + ": " + s.persistent + " of " + s.leaves + " leaves too far from wood");
+                    if (seed == 1) log.append(String.format(" %s: top %d, %d across, roots %d, canopy %d, %d leaves (%d persistent), %d vines, %d cells;",
+                            tree.getSerializedName(), s.trunkTop, s.width12, s.rootReach, s.leafReach, s.leaves, s.persistent, s.vines, s.cells));
+                }
+                log.append(String.format(" %s blueprint %.2f ms avg, %.2f ms worst;", tree.getSerializedName(), total / seeds, worst));
+                h.assertTrue(total / seeds <= 20, tree + " blueprint costs " + total / seeds + " ms");
+            }
+            Awaken.LOG.info("[terrain] hero blueprints:{}", log);
+            h.succeed();
+        });
+
+        // A whole Colossus on a slope and a whole Spire on flat ground, chunk by chunk as worldgen does: everything inside
+        // the reserved box, standing on the ground, nothing loose; the cost per chunk is logged.
+        // Far from every other test (thousands of blocks out, its own chunks), and it waits for the light engine before it
+        // ends: a Colossus is ten thousand blocks of light updates, and tests that read light levels (dark rooms,
+        // torchlight) must not run in its shadow or behind its backlog.
+        AwakenTests.registerIsolated("terrain_hero_builds_in_box", 1200, h -> {
+            ServerLevel level = h.getLevel();
+            StringBuilder log = new StringBuilder();
+            HeroTree[] trees = HeroTree.values();
+            BlockPos[] origins = new BlockPos[trees.length];
+            HeroPiece[] pieces = new HeroPiece[trees.length];
+            int[] placedBy = new int[trees.length];
+            h.startSequence()
+                    .thenExecute(() -> {
+                        for (int n = 0; n < trees.length; n++) {
+                            HeroTree tree = trees[n];
+                            BlockPos origin = origins[n] = h.absolutePos(new BlockPos(0, 2, 0)).offset(6000 + 400 * n, 0, 6000);
+                            int cx0 = origin.getX() >> 4, cz0 = origin.getZ() >> 4;
+                            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, true);
+                            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.getChunk(cx0 + dx, cz0 + dz);
+                            // a slope under the Colossus's roots (they must wall down to it), level ground under the Spire
+                            ground(level, origin, tree == HeroTree.ELDER_COLOSSUS ? 20 : 12, tree == HeroTree.ELDER_COLOSSUS);
+                            HeroPiece piece = pieces[n] = new HeroPiece(tree, origin, 424242L); // builds and caches the blueprint
+                            BoundingBox box = piece.getBoundingBox();
+                            int chunks = 0;
+                            double worst = 0, total = 0;
+                            for (int ccx = box.minX() >> 4; ccx <= box.maxX() >> 4; ccx++) {
+                                for (int ccz = box.minZ() >> 4; ccz <= box.maxZ() >> 4; ccz++) {
+                                    BoundingBox clip = new BoundingBox(ccx << 4, level.getMinY(), ccz << 4, (ccx << 4) + 15, level.getMaxY(), (ccz << 4) + 15);
+                                    long t0 = System.nanoTime();
+                                    placedBy[n] += piece.build(level, clip);
+                                    double ms = (System.nanoTime() - t0) / 1e6;
+                                    total += ms;
+                                    worst = Math.max(worst, ms);
+                                    chunks++;
+                                }
+                            }
+                            log.append(String.format(" %s: %d blocks over %d chunks, %.2f ms per chunk avg, %.2f worst (live level);",
+                                    tree.getSerializedName(), placedBy[n], chunks, total / chunks, worst));
+                        }
+                    })
+                    // let the light engine work through ten thousand blocks before the next batch reads light levels
+                    .thenIdle(200)
+                    .thenExecute(() -> {
+                        for (int n = 0; n < trees.length; n++) {
+                            HeroTree tree = trees[n];
+                            int r = tree == HeroTree.ELDER_COLOSSUS ? 44 : 26;
+                            Check c = check(level, origins[n], r, pieces[n].getBoundingBox());
+                            String what = tree.getSerializedName();
+                            h.assertTrue(placedBy[n] > (tree == HeroTree.ELDER_COLOSSUS ? 6000 : 1500), what + " built " + placedBy[n] + " blocks");
+                            h.assertTrue(c.outside == 0, what + ": " + c.outside + " blocks outside its box (first " + c.firstOutside + ")");
+                            h.assertTrue(c.loose == 0, what + ": " + c.loose + " blocks hang loose (first " + c.firstLoose + ")");
+                            h.assertTrue(c.decaying == 0, what + ": " + c.decaying + " leaves born decaying");
+                            h.assertTrue(c.grounded > 20, what + " stands on the ground (" + c.grounded + " columns)");
+                            // left standing out there (no test comes near); the chunks let go
+                            int cx0 = origins[n].getX() >> 4, cz0 = origins[n].getZ() >> 4;
+                            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, false);
+                        }
+                        Awaken.LOG.info("[terrain] hero builds:{}", log);
+                    })
+                    .thenSucceed();
+        });
+
+        // Sites on a real overworld: the search finds level, dry ground in the right biome (here the archetypes' forests:
+        // the GameTest world has no Lithostitched, so nothing places the Awakened biomes), and rare enough.
+        AwakenTests.register("terrain_hero_sites", 400, h -> {
+            ServerLevel level = h.getLevel();
+            var access = level.registryAccess();
+            Holder<NoiseGeneratorSettings> settings = access.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD);
+            var preset = access.lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+            MultiNoiseBiomeSource source = MultiNoiseBiomeSource.createFromPreset(preset);
+            NoiseBasedChunkGenerator gen = new NoiseBasedChunkGenerator(source, settings);
+            long seed = 777L;
+            RandomState random = RandomState.create(access.lookupOrThrow(Registries.NOISE), seed, settings.value());
+            var sampler = random.createClimateSampler(SamplerContext.builder().enableCaches().build());
+            var resolver = source.createResolver(sampler);
+            var sets = access.lookupOrThrow(Registries.STRUCTURE_SET);
+            StringBuilder log = new StringBuilder();
+            for (HeroTree tree : HeroTree.values()) {
+                var spread = (RandomSpreadStructurePlacement) sets.getOrThrow(net.minecraft.resources.ResourceKey.create(Registries.STRUCTURE_SET,
+                        Awaken.id(tree.getSerializedName()))).value().placement();
+                h.assertTrue(spread.spacing() * 16 >= 300 && spread.spacing() * 16 <= 500, tree + ": one candidate per " + spread.spacing() * 16 + " blocks");
+                int found = 0, candidates = 0;
+                for (int i = 0; i < 6; i++) {
+                    for (int j = 0; j < 6; j++) {
+                        ChunkPos chunk = spread.getPotentialStructureChunk(seed, i * spread.spacing(), j * spread.spacing());
+                        candidates++;
+                        var ctx = new Structure.GenerationContext(access, gen, source, sampler, random, level.getServer().getStructureTemplateManager(),
+                                seed, chunk, level, b -> b.is(BiomeTags.IS_FOREST));
+                        BlockPos at = HeroStructure.findSite(ctx, tree);
+                        if (at == null) continue;
+                        found++;
+                        Holder<Biome> b = resolver.getNoiseBiome(QuartPos.fromBlock(at.getX()), QuartPos.fromBlock(at.getY()), QuartPos.fromBlock(at.getZ()));
+                        h.assertTrue(b.is(BiomeTags.IS_FOREST), tree + " site in " + b.getRegisteredName());
+                        int top = gen.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.WORLD_SURFACE_WG, level, random);
+                        int floor = gen.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.OCEAN_FLOOR_WG, level, random);
+                        h.assertTrue(top == floor && top > gen.getSeaLevel(), tree + " site on dry land at " + at.toShortString());
+                        h.assertTrue(at.getY() <= top + 1 && at.getY() >= top + 1 - tree.maxStep, tree + " foot at the ground: " + at.getY() + " over " + top);
+                    }
+                }
+                log.append(String.format(" %s: %d of %d candidates;", tree.getSerializedName(), found, candidates));
+                h.assertTrue(found >= 1, tree + " finds sites in forests (" + found + " of " + candidates + ")");
+            }
+            Awaken.LOG.info("[terrain] hero sites:{}", log);
+            h.succeed();
+        });
+    }
+
+    /** Measurements of a blueprint. */
+    static final class Shape {
+        int trunkTop, width12, rootReach, leafReach, leaves, persistent, vines, tips, loose, cells, disconnected;
+
+        @Override
+        public String toString() {
+            return "top " + trunkTop + ", " + width12 + " across, roots " + rootReach + ", canopy " + leafReach + ", " + leaves + " leaves, "
+                    + persistent + " persistent, " + vines + " vines, " + cells + " cells";
+        }
+    }
+
+    static Shape shape(Blueprint bp) {
+        Shape s = new Shape();
+        int area = 0;
+        for (int x = -bp.extent; x <= bp.extent; x++) {
+            for (int z = -bp.extent; z <= bp.extent; z++) {
+                for (int y = bp.minY; y <= bp.maxY; y++) {
+                    byte c = bp.get(x, y, z);
+                    if (c == Blueprint.EMPTY) continue;
+                    s.cells++;
+                    int reach = (int) Math.round(Math.sqrt(x * x + z * z));
+                    if (c == Blueprint.LOG) {
+                        s.trunkTop = Math.max(s.trunkTop, y);
+                        if (y == 12) area++;
+                    } else if (c == Blueprint.WOOD && y == bp.minY) s.rootReach = Math.max(s.rootReach, reach);
+                    else if (c == Blueprint.LEAF) s.loose++;
+                    else if (Blueprint.leaf(c)) {
+                        s.leaves++;
+                        if (c == Blueprint.LEAF_PERSISTENT) s.persistent++;
+                        s.leafReach = Math.max(s.leafReach, reach);
+                    } else if (c == Blueprint.VINE || c == Blueprint.VINE_TIP) {
+                        s.vines++;
+                        if (c == Blueprint.VINE_TIP) s.tips++;
+                    }
+                }
+            }
+        }
+        s.width12 = (int) Math.round(2 * Math.sqrt(area / Math.PI)); // the trunk's mean width twelve blocks up
+        // every cell joins the ground face to face through other cells (from the bottom of the trunk and roots)
+        int n = bp.cells.length, sxz = bp.sx * bp.sx;
+        boolean[] seen = new boolean[n];
+        int[] queue = new int[n];
+        int head = 0, tail = 0;
+        for (int i = 0; i < sxz; i++) {
+            if (bp.cells[i] != Blueprint.EMPTY) {
+                seen[i] = true;
+                queue[tail++] = i;
+            }
+        }
+        while (head < tail) {
+            int i = queue[head++];
+            int z = i % bp.sx, x = (i / bp.sx) % bp.sx, y = i / sxz;
+            int[] nb = {x + 1 < bp.sx ? i + bp.sx : -1, x > 0 ? i - bp.sx : -1, z + 1 < bp.sx ? i + 1 : -1, z > 0 ? i - 1 : -1,
+                    y + 1 < bp.sy ? i + sxz : -1, y > 0 ? i - sxz : -1};
+            for (int j : nb) {
+                if (j < 0 || seen[j] || bp.cells[j] == Blueprint.EMPTY) continue;
+                seen[j] = true;
+                queue[tail++] = j;
+            }
+        }
+        for (int i = 0; i < n; i++) if (bp.cells[i] != Blueprint.EMPTY && !seen[i]) s.disconnected++;
+        return s;
+    }
+
+    /** Clears the area and lays grass over dirt: flat at origin.y - 1, or rising one block every four along x. */
+    static void ground(ServerLevel level, BlockPos origin, int r, boolean slope) {
+        wipe(level, origin, r);
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int x = -r; x <= r; x++) {
+            int top = slope ? Math.floorDiv(x, 4) : 0;
+            for (int z = -r; z <= r; z++) {
+                for (int y = -14; y < top - 1; y++) level.setBlock(m.setWithOffset(origin, x, y, z), Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
+                level.setBlock(m.setWithOffset(origin, x, top - 1, z), Blocks.GRASS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS);
+            }
+        }
+    }
+
+    static void wipe(ServerLevel level, BlockPos origin, int r) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int y = 110; y >= -14; y--) {
+            for (int x = -r; x <= r; x++) {
+                for (int z = -r; z <= r; z++) {
+                    m.setWithOffset(origin, x, y, z);
+                    if (!level.getBlockState(m).isAir()) level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
+        }
+    }
+
+    static final class Check {
+        int outside, loose, decaying, grounded;
+        BlockPos firstOutside, firstLoose;
+    }
+
+    private static boolean material(BlockState s) {
+        return s.is(BlockTags.LOGS) || s.is(BlockTags.LEAVES) || s.is(LandsBlocks.LUMEN_VINES.get());
+    }
+
+    /** Walks the built tree face to face from the wood that rests on the ground; checks the box and the leaves. */
+    static Check check(ServerLevel level, BlockPos origin, int r, BoundingBox box) {
+        Check c = new Check();
+        Set<BlockPos> tree = new HashSet<>();
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        Set<Long> columns = new HashSet<>();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int y = -14; y <= 110; y++) {
+            for (int x = -r; x <= r; x++) {
+                for (int z = -r; z <= r; z++) {
+                    BlockState s = level.getBlockState(m.setWithOffset(origin, x, y, z));
+                    if (!material(s)) continue;
+                    BlockPos p = m.immutable();
+                    tree.add(p);
+                    if (!box.isInside(p) && c.outside++ == 0) c.firstOutside = p.subtract(origin);
+                    if (s.is(BlockTags.LEAVES) && s.getValue(LeavesBlock.DISTANCE) >= LeavesBlock.DECAY_DISTANCE && !s.getValue(LeavesBlock.PERSISTENT)) c.decaying++;
+                    if (s.is(BlockTags.LOGS)) {
+                        BlockState below = level.getBlockState(p.below());
+                        if (below.is(Blocks.DIRT) || below.is(Blocks.GRASS_BLOCK) || below.is(Blocks.PODZOL) || below.is(Blocks.MOSS_BLOCK)) {
+                            queue.add(p);
+                            columns.add(((long) p.getX() << 32) | (p.getZ() & 0xffffffffL));
+                        }
+                    }
+                }
+            }
+        }
+        c.grounded = columns.size();
+        Set<BlockPos> seen = new HashSet<>(queue);
+        while (!queue.isEmpty()) {
+            BlockPos p = queue.poll();
+            for (Direction d : Direction.values()) {
+                BlockPos n = p.relative(d);
+                if (tree.contains(n) && seen.add(n)) queue.add(n);
+            }
+        }
+        for (BlockPos p : tree) if (!seen.contains(p) && c.loose++ == 0) c.firstLoose = p.subtract(origin);
+        return c;
+    }
+}

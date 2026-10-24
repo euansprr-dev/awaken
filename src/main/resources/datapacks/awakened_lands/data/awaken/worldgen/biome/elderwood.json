@@ -101,7 +101,9 @@
       },
       "modifier": "overlay"
     },
-    "minecraft:visual/sky_color": "#7aa5ff"
+    "minecraft:visual/fog_color": "#d8d8bf",
+    "minecraft:visual/sky_color": "#88b2f4",
+    "minecraft:visual/water_fog_color": "#0f3b49"
   },
   "carvers": [
     "minecraft:cave",
@@ -110,10 +112,10 @@
   ],
   "downfall": 0.6,
   "effects": {
-    "water_color": "#3d9fd6",
-    "grass_color": "#7fb85a",
-    "foliage_color": "#d9b54a",
-    "dry_foliage_color": "#a8743c"
+    "water_color": "#4aa7c9",
+    "grass_color": "#8ab35c",
+    "foliage_color": "#a9b64c",
+    "dry_foliage_color": "#d9a53c"
   },
   "features": [
     [],
@@ -170,10 +172,14 @@
       "minecraft:glow_lichen",
       "minecraft:forest_flowers",
       "minecraft:wildflowers_birch_forest",
-      "minecraft:birch_tall",
+      "awaken:lands/elder_moss_patch",
+      "awaken:lands/elderwood_trees",
       "minecraft:patch_bush",
       "minecraft:flower_default",
       "minecraft:patch_grass_forest",
+      "awaken:lands/elder_ferns",
+      "awaken:lands/elder_large_ferns",
+      "awaken:lands/elder_leaf_litter",
       "minecraft:brown_mushroom_normal",
       "minecraft:red_mushroom_normal",
       "minecraft:patch_pumpkin",

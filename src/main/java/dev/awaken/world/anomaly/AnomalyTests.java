@@ -311,6 +311,8 @@ final class AnomalyTests {
 
     private static void closeTheRift(GameTestHelper h, ServerLevel level, MinecraftServer server, BlockPos g, ServerPlayer p) {
         {
+            // isolated tests reuse the same spots: an earlier test's shards on this ground would read as a payout
+            discardItems(level, g);
             AnomalyData data = AnomalyData.get(server);
             Anomaly a = Rifts.open(level, p, g, data, true);
             RiftEntity e = Rifts.entity(level, a);
@@ -325,7 +327,9 @@ final class AnomalyTests {
                 h.assertTrue(e.hurtServer(level, src, 5), "strike " + (i + 1));
             }
             h.assertFalse(e.hurtServer(level, src, 5), "strikes closer than " + Rifts.HIT_COOLDOWN + " ticks don't count");
-            h.assertTrue(totalXp(prof) == before && !a.paid && shardsNear(level, g) == 0, "nothing paid while it stands");
+            h.assertTrue(totalXp(prof) == before, "no XP while it stands: " + (totalXp(prof) - before));
+            h.assertTrue(!a.paid, "not marked paid while it stands");
+            h.assertTrue(shardsNear(level, g) == 0, "no shards while it stands: " + shardsNear(level, g));
             e.lastHit = Long.MIN_VALUE / 2;
             h.assertTrue(e.hurtServer(level, src, 5), "the last strike");
             double gained = totalXp(prof) - before;

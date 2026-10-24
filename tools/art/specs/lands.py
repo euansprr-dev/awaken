@@ -14,7 +14,7 @@ RAMPS = {
     # Elderwood: pale silver-cream bark with dark fissures, warm cream heartwood, gold-green leaves
     "elder_bark": ["#2f2a24", "#4c463d", "#716a5e", "#968e7e", "#b9b19d", "#d8d0bb", "#ece6d2"],
     "elder_wood": ["#5a4630", "#7d6444", "#a3875e", "#c4a97c", "#dcc59a", "#efe0bd"],
-    "elder_leaf": ["#1f3012", "#30481a", "#456224", "#5f7c2c", "#829435", "#aaa83f", "#d6c35a"],
+    "elder_leaf": ["#2b3a12", "#43561a", "#5f7321", "#818f29", "#a6a935", "#cbbd46", "#ecd668"],
     # Lumen Forest: ash-white bark, blue-grey heartwood, deep teal leaves with glowing specks
     "lumen_bark": ["#3b4550", "#56616d", "#77828e", "#9aa4ae", "#bcc4cb", "#dbe1e5", "#f0f3f5"],
     "lumen_wood": ["#36404c", "#4e5a68", "#6a7786", "#8995a3", "#a9b3bf", "#c9d1da"],
@@ -232,6 +232,126 @@ def lumen_cap(seed):
     return c, g
 
 
+def stripped_top(wood_ramp, seed):
+    """End grain of a stripped log: the same rings, a heartwood rim instead of bark."""
+    c = log_top("lumen_bark" if wood_ramp.startswith("lumen") else "elder_bark", wood_ramp, seed)
+    w = rp(wood_ramp)
+    rng = rng_for("stripped_top", seed)
+    for i in range(16):
+        for x, y in ((i, 0), (i, 15), (0, i), (15, i)):
+            c.set(x, y, w[2] if rng.random() < 0.7 else w[1])
+    return c
+
+
+def sapling(leaf_ramp, bark_ramp, seed, glow=None):
+    """A sapling for the cross model: a pale stem that forks once, leaf tufts lit from the top-left."""
+    c = Canvas()
+    lf, bk = rp(leaf_ramp), rp(bark_ramp)
+    rng = rng_for("sapling", seed)
+    x = 7.5
+    for y in range(15, 5, -1):
+        if y < 11 and rng.random() < 0.3:
+            x += rng.choice((-0.6, 0.6))
+        xi = int(round(x))
+        c.set(xi, y, bk[5] if y % 3 else bk[4])
+        if y > 12:
+            c.set(xi + 1, y, bk[3])
+    top = int(round(x))
+    for sign in (-1, 1):
+        for i in range(3):
+            c.set(top + sign * (i + 1), 8 - i, bk[4])
+    # tufts: rounded clusters at the fork tips and the crown
+    for cx, cy, r in ((top - 4, 5, 2.6), (top + 4, 4, 2.8), (top, 2, 2.4)):
+        for yy in range(16):
+            for xx in range(16):
+                d = math.hypot(xx - cx, (yy - cy) * 1.15)
+                if d <= r + rng.uniform(-0.4, 0.3):
+                    lit = (xx - cx) + (yy - cy) < -1
+                    idx = len(lf) - 1 if lit else (len(lf) - 3 if d < r * 0.6 else len(lf) - 4)
+                    c.set(xx, yy, lf[max(1, min(len(lf) - 1, idx))])
+    if glow:
+        gr = [hex_rgba(h) for h in RAMPS[glow]]
+        lit = [(xx, yy) for yy in range(8) for xx in range(16) if c.get(xx, yy)[3] > 0]
+        rng.shuffle(lit)
+        for xx, yy in lit[:4]:
+            c.set(xx, yy, gr[rng.randrange(1, 3)])
+    return c
+
+
+def lumen_vines(seed, tip):
+    """Hanging lumen vines for the cross model: beaded strands of deep teal; a tip ends each strand in a glowing bulb.
+    Returns (vines, glow layer or None)."""
+    c = Canvas()
+    g = Canvas() if tip else None
+    lf = rp("lumen_leaf")
+    gl = [hex_rgba(h) for h in RAMPS["lumen_glow"]]
+    rng = rng_for("vines", seed, tip)
+    for sx in (3, 7, 10, 13):
+        x = sx + rng.choice((-1, 0, 0, 1))
+        end = 16 if not tip else rng.randrange(8, 13)
+        for y in range(0, end):
+            if rng.random() < 0.15:
+                x = max(1, min(13, x + rng.choice((-1, 1))))
+            bead = (y + sx) % 3 == 0
+            c.set(x, y, lf[5] if bead else lf[3] if y % 2 else lf[4])
+            if bead and rng.random() < 0.6:
+                c.set(x + rng.choice((-1, 1)), y, lf[2])
+        if tip:
+            # the bulb: a 2x3 drop that glows from inside
+            for dy in range(3):
+                for dx in (0, 1):
+                    px, py = x + dx, end + dy
+                    if py < 16:
+                        core = dy == 1
+                        c.set(px, py, shade(gl[0], 0.8 if core else 0.55))
+                        g.set(px, py, gl[2] if core else gl[1])
+    return c, g
+
+
+def veined_bark(seed):
+    """Lumen Spire bark: the ash-white bark with two or three glowing veins winding up it (base, glow layer). The
+    veins wander but always continue from row to row, so stacked blocks read as one unbroken vein."""
+    c = bark("lumen_bark", seed, fissures=3)
+    g = Canvas()
+    gl = [hex_rgba(h) for h in RAMPS["lumen_glow"]]
+    rng = rng_for("veins", seed)
+    for start in (3, 11):
+        x = start
+        for y in range(16):
+            # tileable vertically: the vein ends where it began (it returns over the last rows)
+            if y < 12 and rng.random() < 0.3:
+                x += rng.choice((-1, 1))
+            elif y >= 12 and x != start:
+                x += 1 if start > x else -1
+            px = x % 16
+            c.set(px, y, shade(gl[0], 0.45))
+            if (y * 7 + start) % 9 < 2:
+                continue  # the glow breaks now and then: a vein of light, not a neon tube
+            g.set(px, y, gl[0] if (y + start) % 6 else gl[1])
+    return c, g
+
+
+def glow_tile():
+    """A solid glow tile: the emissive pixels of Lumen models sample it, so every mip level keeps the same colour."""
+    c = Canvas()
+    gl = [hex_rgba(h) for h in RAMPS["lumen_glow"]]
+    rng = rng_for("glow", "tile")
+    for y in range(16):
+        for x in range(16):
+            c.set(x, y, gl[1] if rng.random() < 0.7 else gl[2])
+    return c
+
+
+def speck_pixels(name):
+    """The glowing pixels of a speck layer (lumen_leaves_glow, lumen_moss_glow) as (x, y) texture coordinates; the
+    content generator turns each into a tiny emissive model face over the matching dim pixel of the base texture."""
+    if name == "lumen_leaves":
+        _, g = leaves("lumen_leaf", "lumen", holes=0.24, glow="lumen_glow")
+    else:
+        _, g = moss_carpet("lumen_moss", "lumen", glow="lumen_glow")
+    return [(x, y) for y in range(16) for x in range(16) if g.get(x, y)[3] > 0]
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Falling leaf sprites (white, tinted per tree at spawn; four tumble frames each)
 
@@ -306,6 +426,20 @@ def build(out):
     cap, glow = lumen_cap("lumen")
     out.block("lumen_cap", cap)
     out.block("lumen_cap_glow", glow)
+    out.block("stripped_elder_log_top", stripped_top("elder_wood", "elder"))
+    out.block("stripped_lumen_log", stripped("lumen_wood", "lumen"))
+    out.block("stripped_lumen_log_top", stripped_top("lumen_wood", "lumen"))
+    out.block("elder_sapling", sapling("elder_leaf", "elder_bark", "elder"))
+    out.block("lumen_sapling", sapling("lumen_leaf", "lumen_bark", "lumen", glow="lumen_glow"))
+    vine, _ = lumen_vines("lumen", False)
+    out.block("lumen_vines", vine)
+    vine, glow = lumen_vines("lumen", True)
+    out.block("lumen_vines_tip", vine)
+    out.block("lumen_vines_tip_glow", glow)
+    out.block("lumen_glow", glow_tile())
+    veins, glow = veined_bark("spire")
+    out.block("veined_lumen_log", veins)
+    out.block("veined_lumen_log_glow", glow)
     for i, shape in enumerate(("oval", "long", "round", "edge")):
         out.particle(f"falling_leaf_{i}", leaf_sprite("leaf", shape))
     out.particle("falling_leaf_4", elder_leaf_sprite())

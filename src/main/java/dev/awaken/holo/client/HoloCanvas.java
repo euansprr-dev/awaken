@@ -42,6 +42,12 @@ public final class HoloCanvas implements UiCanvas {
     final float[] spriteRect = new float[MAX_SPRITES * 4];
     final int[] spriteColour = new int[MAX_SPRITES];
     int spriteCount;
+    static final int MAX_TEXTURES = 16;
+    final Identifier[] textures = new Identifier[MAX_TEXTURES];
+    final float[] textureRect = new float[MAX_TEXTURES * 4]; // x, y, w, h in units
+    final float[] textureUv = new float[MAX_TEXTURES * 4];   // u0, v0, u1, v1
+    final int[] textureColour = new int[MAX_TEXTURES];
+    int textureCount;
 
     private final float[] clips = new float[MAX_CLIP * 4];
     private int clipDepth;
@@ -57,7 +63,8 @@ public final class HoloCanvas implements UiCanvas {
         for (int i = 0; i < texts; i++) text[i] = null;
         for (int i = 0; i < itemCount; i++) items[i] = null;
         for (int i = 0; i < spriteCount; i++) sprites[i] = null;
-        fills = texts = itemCount = spriteCount = 0;
+        for (int i = 0; i < textureCount; i++) textures[i] = null;
+        fills = texts = itemCount = spriteCount = textureCount = 0;
         clipDepth = 0;
         cx0 = 0;
         cy0 = 0;
@@ -75,7 +82,7 @@ public final class HoloCanvas implements UiCanvas {
     }
 
     public boolean isEmpty() {
-        return fills == 0 && texts == 0 && itemCount == 0 && spriteCount == 0;
+        return fills == 0 && texts == 0 && itemCount == 0 && spriteCount == 0 && textureCount == 0;
     }
 
     // ---- clipping -------------------------------------------------------------------------------------------------
@@ -190,6 +197,29 @@ public final class HoloCanvas implements UiCanvas {
         spriteCount++;
     }
 
+    /**
+     * Part of an external texture as one tinted quad (see {@link UiCanvas#texture}); clipped like a sprite (faded at a
+     * clip's top and bottom, dropped when outside it sideways). At most {@link #MAX_TEXTURES} a frame.
+     */
+    public void textureF(Identifier texture, float x, float y, float w, float h, float u0, float v0, float u1, float v1, int argb) {
+        if (textureCount >= MAX_TEXTURES || texture == null) return;
+        float a = rowAlpha(y, y + h);
+        if (a <= 0.02f || x + w <= cx0 || x >= cx1) return;
+        if (a < 1f) argb = ((Math.round((argb >>> 24) * a)) << 24) | (argb & 0xFFFFFF);
+        int o = textureCount * 4;
+        textures[textureCount] = texture;
+        textureRect[o] = x;
+        textureRect[o + 1] = y;
+        textureRect[o + 2] = w;
+        textureRect[o + 3] = h;
+        textureUv[o] = u0;
+        textureUv[o + 1] = v0;
+        textureUv[o + 2] = u1;
+        textureUv[o + 3] = v1;
+        textureColour[textureCount] = argb;
+        textureCount++;
+    }
+
     // ---- UiCanvas -------------------------------------------------------------------------------------------------
 
     @Override
@@ -232,6 +262,11 @@ public final class HoloCanvas implements UiCanvas {
     @Override
     public void sprite(Identifier sprite, int x, int y, int w, int h, int argb) {
         spriteF(sprite, x, y, w, h, argb);
+    }
+
+    @Override
+    public void texture(Identifier texture, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+        textureF(texture, x, y, w, h, u0, v0, u1, v1, argb);
     }
 
     @Override

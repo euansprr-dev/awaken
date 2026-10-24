@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:fallen_tree",
+  "trunk_provider": {
+    "id": "awaken:lumen_log",
+    "properties": {
+      "axis": "y"
+    }
+  },
+  "log_length": {
+    "type": "minecraft:uniform",
+    "min_inclusive": 4,
+    "max_inclusive": 8
+  },
+  "stump_decorators": [],
+  "log_decorators": [
+    {
+      "type": "minecraft:attached_to_logs",
+      "block_provider": {
+        "id": "awaken:lumen_moss"
+      },
+      "directions": [
+        "up"
+      ],
+      "probability": 0.45
+    },
+    {
+      "type": "minecraft:attached_to_logs",
+      "block_provider": {
+        "id": "awaken:lumen_cap"
+      },
+      "directions": [
+        "up"
+      ],
+      "probability": 0.1
+    }
+  ]
+}

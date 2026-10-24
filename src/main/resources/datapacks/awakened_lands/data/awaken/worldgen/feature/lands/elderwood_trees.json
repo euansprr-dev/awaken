@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:random_selector",
+  "default": "awaken:lands/young_elder",
+  "features": [
+    {
+      "chance": 0.03,
+      "feature": "awaken:lands/fallen_elder"
+    },
+    {
+      "chance": 0.47,
+      "feature": "awaken:lands/elder"
+    }
+  ]
+}

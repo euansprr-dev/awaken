@@ -25,7 +25,6 @@ import net.minecraft.client.renderer.entity.state.AllayRenderState;
 import net.minecraft.client.renderer.entity.state.FoxRenderState;
 import net.minecraft.client.renderer.entity.state.ParrotRenderState;
 import net.minecraft.util.Mth;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.animal.bee.AdultBeeModel;
 import net.minecraft.client.model.animal.golem.IronGolemModel;
 import net.minecraft.client.model.animal.polarbear.PolarBearModel;
@@ -56,8 +55,6 @@ import net.minecraft.client.model.monster.witch.WitchModel;
 import net.minecraft.client.model.monster.wither.WitherBossModel;
 import net.minecraft.client.model.monster.zombie.DrownedModel;
 import net.minecraft.client.model.monster.zombie.ZombieModel;
-import net.minecraft.client.model.player.PlayerModel;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.ArmorModelSet;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -67,7 +64,6 @@ import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.entity.layers.BreezeWindLayer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.BeeRenderState;
 import net.minecraft.client.renderer.entity.state.BreezeRenderState;
 import net.minecraft.client.renderer.entity.state.CreakingRenderState;
@@ -94,7 +90,6 @@ import net.minecraft.client.renderer.entity.state.ZombieRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.illager.AbstractIllager;
 import net.minecraft.world.entity.monster.piglin.PiglinArmPose;
@@ -147,7 +142,7 @@ final class AwRenderers {
             case BOGGED -> skeleton(ctx, d, ModelLayers.BOGGED, ModelLayers.BOGGED_ARMOR);
             case PIGLIN -> piglin(ctx, d, ModelLayers.PIGLIN, ModelLayers.PIGLIN_ARMOR);
             case PIGLIN_BRUTE -> piglin(ctx, d, ModelLayers.PIGLIN_BRUTE, ModelLayers.PIGLIN_BRUTE_ARMOR);
-            case MIMIC, HUMAN -> player(ctx, d);
+            case MIMIC, HUMAN -> new AwSkinRenderer(ctx, d); // never AvatarRenderState: see SkinnedMobRenderer
             case ENDERMAN -> new AwMobRenderer<EndermanRenderState, EndermanModel<EndermanRenderState>>(ctx, d, new EndermanModel<>(ctx.bakeLayer(ModelLayers.ENDERMAN)), 0.5F,
                     EndermanRenderState::new, (m, s, pt, l) -> s.isCreepy = m.getTarget() != null || l.telegraph > 0);
             case VINDICATOR -> illager(ctx, d, ModelLayers.VINDICATOR);
@@ -330,22 +325,6 @@ final class AwRenderers {
                 PiglinRenderState::new, s -> AwRender.base(d), (m, s, pt, l) -> {
                     s.isBrute = d.model == dev.awaken.mobs.def.Model.PIGLIN_BRUTE;
                     s.armPose = m.isAggressive() && !m.getMainHandItem().isEmpty() ? PiglinArmPose.ATTACKING_WITH_MELEE_WEAPON : PiglinArmPose.DEFAULT;
-                });
-    }
-
-    private static final Identifier STEVE = Identifier.withDefaultNamespace("textures/entity/player/wide/steve.png");
-
-    private static AwHumanoidRenderer<AvatarRenderState, PlayerModel> player(EntityRendererProvider.Context ctx, MobDef d) {
-        boolean mimic = d.model == dev.awaken.mobs.def.Model.MIMIC;
-        Identifier own = AwRender.skin(d);
-        return new AwHumanoidRenderer<>(ctx, d, new PlayerModel(ctx.bakeLayer(ModelLayers.PLAYER), false),
-                ArmorModelSet.bake(ModelLayers.PLAYER_ARMOR, ctx.getModelSet(), part -> new PlayerModel(part, false)),
-                AvatarRenderState::new, s -> mimic ? s.skin.body().texturePath() : own, (m, s, pt, l) -> {
-                    s.id = m.getId();
-                    if (!mimic) return;
-                    Entity copied = l.mimic >= 0 && Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getEntity(l.mimic) : null;
-                    if (copied instanceof AbstractClientPlayer p) s.skin = p.getSkin();
-                    s.showCape = false;
                 });
     }
 
