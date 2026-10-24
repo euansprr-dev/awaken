@@ -617,6 +617,24 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   whose story points elsewhere, can't walk in (`StoryHooks.refusesScriptedGate`).
 - The Seated One and the twelve statues (`mobs.Ritual`, role RITUAL) have no AI of their own, can't be hurt and never
   count as kills, trophies, Echoes or bosses. The gate is released once nobody is at the question for it any more.
+- The god is seen at every beat (2026-10-24 review: a player who has never seen the hall knows within two seconds a
+  colossal seated god is there, before its eyes open). `SeatedOne` carries a synced key light (0..15, eased on the
+  client) and runes (0..100) set by the director: key 11 while waiting, 2 when every flame dies, back to 15 as the
+  candle line reaches the dais (2 + 13·(t-80)/90 ticks into DOORS), 15 through the Judgement, down to 7 as the End
+  drains it, 0 after (block light only). Runes (the emissive layer `the_seated_one_runes.png`: halo, crown, collar,
+  pendant, chest sigil, veins of light) 30 waiting, 45 in the black, then 55 / 65 / 80 for BOW / RING / BE JUDGED, 80→100
+  as the eyes open, 100 through the Judgement (breathing), drained to 15 by the hand's close. The renderer lights the
+  colossus with the key light, never darker than the dais candles. Client effects, all without Lens: a great warm glow
+  on the wall behind the throne (the god stands dark against it), two dusty shafts from the vault onto its lap (once the
+  hall is lit), a flame on every candle of the candle line, eyes a block across (4x3 model px at x4) with a face halo
+  and a long glint, and the camera framing the face as they open (FOV x0.4 at the peak, pull 0.95). The hall's hidden
+  fill lamps light with the candle line (3 ticks after the candles beside them), so the line lights the nave.
+- The scene is the whole screen: from the doors closing until 3 s after the tear, toasts wait (re-shown after, one
+  every half second, at most 12) and AWAKEN's HUD layers step aside in the hall (vanilla's hearts stay for the
+  Judgement); while the camera is held everything does. In the black only the System's words (the revelation's body
+  without its question, drawn large and typed by the scene) and the question's card (a TRUTH card: the question and
+  its keys, no caption) show; the tear frame is the tear and the world only. The gate card says nothing for a spent
+  ritual hall and shows no "Breaks in" row for scripted gates.
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
@@ -657,7 +675,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Story moments override the dimension's look (`LensClient.override(lookId, fadeTicks)` / `clearOverride`) with named
   looks from the same file (`awaken:ritual`, `awaken:void`); texel 13 carries the tear from black (`LensClient.tear`,
   0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 is the Holo UI focus's;
-  15 is far terrain's planes. Callers carry on without the look when Lens is off (`LensClient.active()`).
+  15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
+  the scene's length and fades back to the plain frame (the look rests at neutral while Lens is off) before stepping
+  aside again (client config `lensInScenes`, default true; never with an Iris shaderpack). Callers carry on without the
+  look when Lens can't draw (`LensClient.active()`).
 - Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
   finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens reads DH's own depth through

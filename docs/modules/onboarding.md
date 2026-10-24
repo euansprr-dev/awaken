@@ -126,7 +126,7 @@ and the gate's Now lines are the story's. Old scripted crypts (the Bell Warden, 
 | Beat | What happens |
 |---|---|
 | WAITING | the cast is brought (the Seated One on its throne, twelve statues kneeling). The doors close when every unawakened player in the story who is online is inside the hall (3 s grace for the last one), or 90 s after the first came in. Those in the antechamber are drawn in; those outside get their own crypt 15 s later. Now: "Go through the doors" / "Waiting for N hunters…" / outside, "A bell is calling · N m". |
-| DOORS (190) | the doors grind shut (0-28), every flame dies (34), black, the candles light one by one down the nave toward the throne (80-180), the fill lamps (184) |
+| DOORS (190) | the doors grind shut (0-28), every flame dies (34), black but for the god's runes and the glow behind it, the candles light one by one down the nave toward the throne and the hidden fill lamps with them (80-183), so the line lights the hall and reaches the god |
 | BOW (190) | the bell; "BOW." carved in light (12); kneel by 132 or the nearest statue glares (132) and strikes (146, 7 damage) |
 | RING (360) | "RING."; plates light at 40, 140, 240 (each with its own bell note), 80 ticks to stand on each; whoever doesn't is watched by every statue |
 | JUDGED (80) | "BE JUDGED.", two tolls |
@@ -151,6 +151,14 @@ waits for anybody at the question. Awakened players and players whose story poin
 measured from it is at floor level; box 9x22, tracking range 16) and the statues, role RITUAL, no AI, can't be hurt,
 never a kill, trophy, Echo or boss. Their stages are synced (`stage`, `since`); the client plays the matching clips.
 
+**The god is seen** (review, 2026-10-24: "within two seconds you know a colossal seated god is there"). The director
+sets the Seated One's key light and runes per beat (numbers in SPEC §13; synced on the entity, eased on the client):
+pale marble while the candles burn, nearly black when every flame dies (only its halo, crown, collar and veins of light
+burn), lit again as the candle line reaches the dais, its runes waking beat by beat until its eyes open. Behind it a
+great warm glow on the wall makes it a silhouette from the antechamber; two dusty shafts fall from the vault onto its
+lap once the hall is lit; every candle of the line carries a flame; the eyes are a block across, with a halo round the
+face, and the camera frames the face as they open (FOV x0.4). None of it needs Lens.
+
 **On the screen** (`story.client.Ritual*`): Lens looks `awaken:ritual` (crushed blacks, gold highlights, vignette .62,
 bloom 1.45 from .42) and `awaken:void` through `LensClient.override/clearOverride`; texel 13 carries the tear from
 black (a radial reveal with a blazing rim, 36 ticks on Accept), crushed blacks and extra bloom (the eyes opening, the
@@ -158,11 +166,17 @@ gaze, the drain). The camera is drawn toward the throne as the candles light, he
 and on its palm at the end (input held only then, with a letterbox and the HUD hidden); shakes and FOV punches follow
 `cameraShake`, flashes follow `screenFlashes`. The words are carved over the dais a letter at a time; a plain line
 under the crosshair says what each rule asks ("Kneel. Hold Shift.", "Stand on the plate that lights.", "Read the red.
-Move."). Telegraphs, the gaze's beam, the eyes, the palm and the motes are additive meshes. Without Lens (off, or a
-shaderpack) the scene plays the same with the game's own frame; the tear falls back to a fade.
+Move."). Telegraphs, the gaze's beam, the eyes, the palm and the motes are additive meshes. Lens plays the scene like
+a cutscene even when it's off (client config `lensInScenes`, default true; fades back to the plain frame after); with
+a shaderpack (or `lensInScenes = false`) the scene plays the same with the game's own frame and the tear falls back to
+a fade. The scene is the whole screen: from the doors to just after the tear, toasts wait and AWAKEN's HUD steps aside
+(vanilla's hearts stay for the Judgement).
 
 **The black.** From the death until the answer: infinite Blindness (re-applied every second while asked, and on
-login), the Void look, a heartbeat every 1.7 s, a cold bed, blue motes. Accept or `/awaken story skip` lifts it.
+login), the Void look, a heartbeat every 1.7 s, a cold bed, blue motes. The System's words ("You died inside a gate
+and kept thinking. Few do.") are typed large in the dark; the card holds only "Will you accept?" and its keys, and
+nothing else is on screen. Accept or `/awaken story skip` lifts it: the tear frame is the tear and the world alone;
+the toasts and the first-power cards come after.
 
 **Sounds** (`tools/art/specs/ritual_sounds.py`, events `story.ritual.*`): bell, doors, flames_out, candle, words, eyes,
 gaze_charge, gaze_fire, statue_rise, swing, impact, pit, rumble, drain, close, heartbeat, tear, void.
