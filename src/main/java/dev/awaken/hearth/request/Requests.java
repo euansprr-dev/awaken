@@ -155,7 +155,7 @@ public final class Requests {
         ServerLevel level = sp.level();
         if (level.dimension() == Level.OVERWORLD && sp.getBlockY() < st.lowestY) st.lowestY = sp.getBlockY();
         if (!HearthService.enabled() || !Progression.profile(sp).awakened()) return;
-        Optional<HearthRecord> home = HearthService.hearthOf(sp);
+        Optional<HearthRecord> home = HearthService.homeOf(sp);
         boolean dirty = forgeCredit(sp, st, home);
         if (home.isEmpty()) {
             if (dirty) sync(sp);
@@ -472,7 +472,7 @@ public final class Requests {
     static List<NowHooks.Suggestion> suggest(ServerPlayer sp) {
         RequestState st = state(sp);
         if (st.active.isEmpty()) return List.of();
-        Optional<HearthRecord> home = HearthService.hearthOf(sp);
+        Optional<HearthRecord> home = HearthService.homeOf(sp);
         if (home.isEmpty()) return List.of();
         BlockPos anchor = home.get().pos;
         boolean near = sp.level().dimension() == Level.OVERWORLD && sp.blockPosition().closerThan(anchor, 6);
@@ -551,7 +551,7 @@ public final class Requests {
 
     /** Known: the townsfolk come to the Anchor to watch, and the nearest has a word for it. */
     static void townWatches(ServerPlayer sp, ServerLevel level, BlockPos anchor) {
-        Optional<HearthRecord> h = HearthService.hearthOf(sp);
+        Optional<HearthRecord> h = HearthService.sharedAt(sp, anchor);
         if (h.isEmpty()) return;
         TownNpc nearest = null;
         double best = Double.MAX_VALUE;

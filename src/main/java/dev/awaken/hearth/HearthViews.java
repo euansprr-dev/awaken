@@ -30,9 +30,10 @@ public final class HearthViews {
 
     static HearthView build(ServerPlayer sp) {
         HearthPlayer hp = HearthService.player(sp);
-        Optional<HearthRecord> ho = HearthService.hearthOf(sp);
+        Optional<HearthRecord> ho = HearthService.homeOf(sp);
         long now = sp.level().getGameTime();
-        Map<UUID, Duty.Assignment> duties = ho.map(h -> Duty.assignments(hp, h)).orElse(Map.of());
+        // pads are worked by the owner's Echoes: a member's Echoes never show as on duty at a shared Hearth
+        Map<UUID, Duty.Assignment> duties = ho.filter(h -> h.owner.equals(sp.getUUID())).map(h -> Duty.assignments(hp, h)).orElse(Map.of());
         List<HearthView.EchoView> echoes = new ArrayList<>();
         for (EchoRecord e : hp.echoes) {
             Duty.Assignment a = duties.get(e.id());

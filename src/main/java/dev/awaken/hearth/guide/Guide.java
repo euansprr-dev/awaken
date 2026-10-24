@@ -90,7 +90,10 @@ public final class Guide {
         Signal.onAction(ACTION, (player, action, yes) -> {
             if (action.equals(Cottage.ACTION)) Cottage.answer(player, yes);
         });
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> OPEN.remove(e.getEntity().getUUID()));
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            OPEN.remove(e.getEntity().getUUID());
+            SHOWN.remove(e.getEntity().getUUID());
+        });
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             // a cottage finished while its owner was away still counts as their one free cottage
             if (e.getEntity() instanceof ServerPlayer sp && HearthService.hearthOf(sp).map(h -> h.cottage != null).orElse(false)) {
@@ -114,7 +117,7 @@ public final class Guide {
             return;
         }
         if (!HearthService.enabled()) return;
-        Optional<HearthRecord> ho = HearthService.hearthOf(sp);
+        Optional<HearthRecord> ho = shown(sp);
         if (ho.isEmpty()) return;
         HearthRecord h = ho.get();
         switch (action) {
@@ -144,6 +147,7 @@ public final class Guide {
         }
         HearthService.player(sp).tips.add(TIP_SEEN);
         OPEN.add(sp.getUUID());
+        SHOWN.put(sp.getUUID(), h.owner);
         h.scheduleScan(level.getGameTime(), 1); // fresh rooms in a moment: the screen updates when the scan ends
         AwakenNet.send(sp, new Show(build(sp, h), true));
     }
@@ -151,7 +155,20 @@ public final class Guide {
     /** Pushes fresh numbers to an open screen (after a scan, an upgrade, the cottage). */
     public static void refresh(ServerPlayer sp) {
         if (!OPEN.contains(sp.getUUID())) return;
-        HearthService.hearthOf(sp).ifPresent(h -> AwakenNet.send(sp, new Show(build(sp, h), false)));
+        shown(sp).ifPresent(h -> AwakenNet.send(sp, new Show(build(sp, h), false)));
+    }
+
+    /** Which Hearth each open screen shows (a member may open a sister home's Anchor): owner uuid. */
+    private static final java.util.Map<java.util.UUID, java.util.UUID> SHOWN = new java.util.HashMap<>();
+
+    /** The Hearth the player's screen shows: the one whose Anchor they used, else their home. */
+    static Optional<HearthRecord> shown(ServerPlayer sp) {
+        java.util.UUID owner = SHOWN.get(sp.getUUID());
+        if (owner != null) {
+            Optional<HearthRecord> h = dev.awaken.hearth.HearthData.get(sp.level().getServer()).of(owner).filter(r -> r.belongs(sp.getUUID()));
+            if (h.isPresent()) return h;
+        }
+        return HearthService.homeOf(sp);
     }
 
     public static boolean isOpen(ServerPlayer sp) {

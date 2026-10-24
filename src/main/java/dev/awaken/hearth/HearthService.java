@@ -98,7 +98,10 @@ public final class HearthService {
             activeScan = null;
             scanQueue.clear();
             REST.clear();
+            Breaks.clear();
+            Duty.clear();
         });
+        Household.init();
     }
 
     /** The world's feature flag. Safe to call before the config has loaded (defaults to on). */
@@ -114,8 +117,19 @@ public final class HearthService {
         return HearthData.get(server);
     }
 
+    /** The Hearth this player owns (only the owner may move it, invite to it or have Oren build there). */
     public static Optional<HearthRecord> hearthOf(ServerPlayer player) {
         return data(player.level().getServer()).of(player.getUUID());
+    }
+
+    /** The Hearth this player lives at: their own, else the first one they are a member of (SPEC "Together"). */
+    public static Optional<HearthRecord> homeOf(ServerPlayer player) {
+        return data(player.level().getServer()).home(player.getUUID());
+    }
+
+    /** The Hearth whose radius holds {@code pos}, if this player belongs to it (owner or member). */
+    public static Optional<HearthRecord> sharedAt(ServerPlayer player, BlockPos pos) {
+        return data(player.level().getServer()).containing(pos, OVERWORLD).filter(h -> h.belongs(player.getUUID()));
     }
 
     public static HearthPlayer player(Player p) {
@@ -155,32 +169,42 @@ public final class HearthService {
             sp.sendOverlayMessage(Component.literal("This land is " + other.get().ownerName + "'s Hearth."));
             return false;
         }
+        // a member's own Anchor founds a sister home of the Hearth they share, once its tier allows one
+        Optional<String> refused = Household.refusesOwnAnchor(d, sp.getUUID());
+        if (refused.isPresent()) {
+            sp.sendOverlayMessage(Component.literal(refused.get()));
+            return false;
+        }
         return true;
     }
 
     public static void onAnchorPlaced(ServerPlayer sp, ServerLevel level, BlockPos pos) {
         HearthData d = data(level.getServer());
         if (d.of(sp.getUUID()).isPresent() || level.dimension() != Level.OVERWORLD) return;
+        HearthRecord base = Household.sisterBase(d, sp.getUUID());
         HearthRecord r = new HearthRecord(sp.getUUID(), sp.getGameProfile().name(), pos.immutable(), OVERWORLD);
         r.createdDay = PlayDays.current(level.getServer());
         r.scanAt = level.getGameTime() + 20;
         r.announceFirstScan = true;
         r.placedAt = level.getGameTime();
         d.put(r);
+        Household.restoreKept(level.getServer(), d, r);
+        if (base != null) Household.founded(level.getServer(), r, base);
         HearthPlayer hp = player(sp);
         hp.respawnAtHearth = true;
         level.playSound(null, pos, HearthContent.SND_ANCHOR.get(), SoundSource.BLOCKS, 1f, 1f);
         level.sendParticles(HearthContent.HEARTH_EMBER.get(), pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, 40, 0.6, 0.6, 0.6, 0.02);
         // A toast shows the title and the first sentence: keep both short. The rest is in Recent messages.
-        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Home exists"))
-                .body(Component.literal("Within " + r.radius() + " blocks: yours. You wake here, you heal here, and people will come. "
-                        + "Use the Anchor for a guide to your Hearth."))
+        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(base != null ? "A second home" : "Home exists"))
+                .body(Component.literal("Within " + r.radius() + " blocks: yours" + (base != null ? " and your household's" : "")
+                        + ". You wake here, you heal here, and people will come. Use the Anchor for a guide to your Hearth."))
                 .ttl(20 * 8).priority(4).build());
         unlockFurnitureRecipes(sp);
         if (Progression.profile(sp).awakened()) Progression.markNewThing(sp, "hearth");
-        DirectorLog.log(sp, "hearth", "anchor placed at " + pos.toShortString());
+        DirectorLog.log(sp, "hearth", "anchor placed at " + pos.toShortString() + (base != null ? " (a sister of " + base.ownerName + "'s)" : ""));
         Town.onHearthCreated(sp, level, r);
         HearthViews.refresh(sp);
+        Household.refresh(level.getServer(), r);
         Cottage.afterAnchorPlaced(sp);
     }
 
@@ -203,11 +227,12 @@ public final class HearthService {
             if (canPlaceAnchor(sp, level, pos)) onAnchorPlaced(sp, level, pos);
             return;
         }
-        if (!r.get().owner.equals(sp.getUUID())) {
-            sp.sendOverlayMessage(Component.literal("This is " + r.get().ownerName + "'s Hearth. It's warm here."));
+        if (!r.get().belongs(sp.getUUID())) {
+            Household.askAtAnchor(sp, r.get());
             return;
         }
         player(sp).respawnAtHearth = true;
+        player(sp).respawnHearth = r.get().owner;
         if (dev.awaken.hearth.request.Requests.onAnchorUsed(sp, level, r.get())) return; // carried a request home: deliver first
         Guide.open(sp, level, r.get());
     }
@@ -217,17 +242,25 @@ public final class HearthService {
         Optional<HearthRecord> r = d.at(pos, level.dimension().identifier().toString());
         if (r.isEmpty()) return;
         HearthRecord h = r.get();
+        List<ServerPlayer> household = Household.online(level.getServer(), h);
         Duty.releaseAll(level, h);
         Town.dissolve(level, h);
+        d.keep(h); // the members share it again when the owner places the Anchor anew
         d.remove(h.owner);
         if (activeScan != null && activeScan.hearth() == h) activeScan = null;
         owner(level.getServer(), h).ifPresent(sp -> {
-            player(sp).respawnAtHearth = false;
+            player(sp).respawnAtHearth = homeOf(sp).isPresent() && player(sp).respawnAtHearth;
             Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Your Anchor went cold."))
                     .body(Component.literal("Place it again wherever home should be. The town will follow.")).build());
-            Trophies.applyHallBonus(sp, null);
-            HearthViews.refresh(sp);
         });
+        for (ServerPlayer sp : household) {
+            if (!sp.getUUID().equals(h.owner)) {
+                if (homeOf(sp).isEmpty()) player(sp).respawnAtHearth = false;
+                Signal.toast(sp, Component.literal(h.ownerName + "'s Anchor went cold. You'll share it again where it takes root."));
+            }
+            Trophies.applyHallBonus(sp, homeOf(sp).orElse(null));
+            HearthViews.refresh(sp);
+        }
     }
 
     // ---- pads and room-relevant changes ------------------------------------------------------------------------------
@@ -327,8 +360,9 @@ public final class HearthService {
         if (level.dimension() != Level.OVERWORLD) return false;
         Optional<HearthRecord> h = data(level.getServer()).containing(pos, OVERWORLD);
         if (h.isEmpty() || !Breaks.active(h.get())) return false;
-        ServerPlayer owner = level.getServer().getPlayerList().getPlayer(h.get().owner);
-        return owner != null && Progression.hasPerk(owner, Perks.HEARTH_SHIELD);
+        // the shield is anyone's in the household who holds the perk and is online
+        for (ServerPlayer p : Household.online(level.getServer(), h.get())) if (Progression.hasPerk(p, Perks.HEARTH_SHIELD)) return true;
+        return false;
     }
 
     private static void onGrief(EntityMobGriefingEvent e) {
@@ -354,15 +388,25 @@ public final class HearthService {
     private static void onSetSpawn(PlayerSetSpawnEvent e) {
         // Sleeping in a bed elsewhere moves your respawn there; using your Anchor brings it back.
         if (e.getEntity() instanceof ServerPlayer sp && !e.isForced()) {
-            Optional<HearthRecord> h = hearthOf(sp);
+            Optional<HearthRecord> h = wakeHearth(sp);
             if (h.isEmpty() || e.getNewSpawn() == null || !h.get().contains(e.getNewSpawn())) player(sp).respawnAtHearth = false;
         }
+    }
+
+    /** The Hearth this player wakes at: the shared one whose Anchor they used last, else their home. */
+    public static Optional<HearthRecord> wakeHearth(ServerPlayer sp) {
+        UUID chosen = player(sp).respawnHearth;
+        if (chosen != null) {
+            Optional<HearthRecord> h = data(sp.level().getServer()).of(chosen).filter(r -> r.belongs(sp.getUUID()));
+            if (h.isPresent()) return h;
+        }
+        return homeOf(sp);
     }
 
     private static void onRespawnPosition(PlayerRespawnPositionEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer sp) || e.isFromEndFight() || !enabled()) return;
         if (!player(sp).respawnAtHearth) return;
-        Optional<HearthRecord> h = hearthOf(sp);
+        Optional<HearthRecord> h = wakeHearth(sp);
         if (h.isEmpty()) return;
         ServerLevel level = levelOf(sp.level().getServer(), h.get());
         Vec3 spot = safeSpotNear(level, h.get().pos);
@@ -395,15 +439,16 @@ public final class HearthService {
                 h.ownerName = sp.getGameProfile().name();
                 dirty(sp.level().getServer());
             }
-            Trophies.applyHallBonus(sp, h);
         });
+        Household.onLogin(sp);
+        homeOf(sp).ifPresent(h -> Trophies.applyHallBonus(sp, h));
         Auras.refresh(sp);
         HearthViews.refresh(sp);
     }
 
     private static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer sp)) return;
-        hearthOf(sp).ifPresent(h -> Trophies.applyHallBonus(sp, h));
+        homeOf(sp).ifPresent(h -> Trophies.applyHallBonus(sp, h));
         Auras.refresh(sp);
         HearthViews.refresh(sp);
     }
@@ -511,9 +556,13 @@ public final class HearthService {
         ServerPlayer owner = server.getPlayerList().getPlayer(h.owner);
         if (loaded) {
             Town.upkeep(level, h, owner, now);
+            // role pads are worked by the owner's Echoes (members' Echoes march with them)
             if (owner != null) Duty.upkeep(owner, level, h, now);
         }
-        if (owner != null && server.getTickCount() % 100 < 20) Breaks.check(owner, level, h);
+        if (server.getTickCount() % 100 < 20) {
+            List<ServerPlayer> home = h.members.isEmpty() ? (owner == null ? List.of() : List.of(owner)) : Household.online(server, h);
+            if (!home.isEmpty()) Breaks.check(home, level, h);
+        }
     }
 
     /** Called when a room scan finishes: store rooms, update trophy bonuses, tell the owner about new rooms. */
@@ -545,10 +594,13 @@ public final class HearthService {
                             .ttl(20 * 6).build());
                 }
             }
-            Trophies.applyHallBonus(sp, h);
+        });
+        // the Trophy Hall's bonus is everyone's who lives here
+        for (ServerPlayer sp : Household.online(server, h)) {
+            if (homeOf(sp).orElse(null) == h) Trophies.applyHallBonus(sp, h);
             HearthViews.refresh(sp);
             Guide.refresh(sp);
-        });
+        }
     }
 
     /** Starts a full scan right now (commands and tests). */

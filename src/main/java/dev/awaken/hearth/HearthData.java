@@ -16,23 +16,87 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Every Hearth in the world, one per player. Stored with the overworld's data. */
+/**
+ * Every Hearth in the world, one owned per player; any player may also be a member of others' Hearths (SPEC
+ * "Together"). Stored with the overworld's data. Schema 2 adds the households kept while an owner's Anchor is cold.
+ */
 public final class HearthData extends SavedData {
-    public static final int SCHEMA = 1;
+    public static final int SCHEMA = 2;
+
+    /** The members a Hearth had when its Anchor was broken: they share it again when the owner places it anew. */
+    record Kept(UUID owner, List<HearthRecord.Member> members) {
+        static final Codec<Kept> CODEC = RecordCodecBuilder.create(i -> i.group(
+                net.minecraft.core.UUIDUtil.CODEC.fieldOf("owner").forGetter(Kept::owner),
+                HearthRecord.Member.CODEC.listOf().fieldOf("members").forGetter(Kept::members)
+        ).apply(i, Kept::new));
+    }
 
     public static final Codec<HearthData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(d -> SCHEMA),
-            HearthRecord.CODEC.listOf().fieldOf("hearths").forGetter(d -> List.copyOf(d.byOwner.values()))
+            HearthRecord.CODEC.listOf().fieldOf("hearths").forGetter(d -> List.copyOf(d.byOwner.values())),
+            Kept.CODEC.listOf().optionalFieldOf("kept", List.of()).forGetter(d -> List.copyOf(d.kept.values()))
     ).apply(i, HearthData::new));
 
     public static final SavedDataType<HearthData> TYPE = new SavedDataType<>(Awaken.id("hearths"), HearthData::new, CODEC);
 
     private final Map<UUID, HearthRecord> byOwner = new LinkedHashMap<>();
+    private final Map<UUID, Kept> kept = new LinkedHashMap<>();
 
     public HearthData() {}
 
-    private HearthData(int schema, List<HearthRecord> list) {
+    private HearthData(int schema, List<HearthRecord> list, List<Kept> keptList) {
         for (HearthRecord r : list) byOwner.put(r.owner, r);
+        for (Kept k : keptList) kept.put(k.owner(), k);
+    }
+
+    // ---- membership -------------------------------------------------------------------------------------------------
+
+    /** The Hearth this player lives at: their own, else the first they are a member of (no allocation). */
+    public Optional<HearthRecord> home(UUID player) {
+        HearthRecord own = byOwner.get(player);
+        if (own != null) return Optional.of(own);
+        for (HearthRecord r : byOwner.values()) if (r.members.containsKey(player)) return Optional.of(r);
+        return Optional.empty();
+    }
+
+    /** Every Hearth this player belongs to: their own first, then the ones they are a member of. */
+    public List<HearthRecord> hearthsOf(UUID player) {
+        List<HearthRecord> out = new ArrayList<>(2);
+        HearthRecord own = byOwner.get(player);
+        if (own != null) out.add(own);
+        for (HearthRecord r : byOwner.values()) if (r.members.containsKey(player)) out.add(r);
+        return out;
+    }
+
+    /** The Hearths this player is a member of (not their own). */
+    public List<HearthRecord> memberOf(UUID player) {
+        List<HearthRecord> out = new ArrayList<>(1);
+        for (HearthRecord r : byOwner.values()) if (r.members.containsKey(player)) out.add(r);
+        return out;
+    }
+
+    /** Hearths founded from this owner's Hearth as sister homes. */
+    public int sistersOf(UUID owner) {
+        int n = 0;
+        for (HearthRecord r : byOwner.values()) if (owner.equals(r.foundedFrom)) n++;
+        return n;
+    }
+
+    /** Keeps a household while its Anchor is cold. */
+    void keep(HearthRecord h) {
+        if (h.members.isEmpty()) return;
+        List<HearthRecord.Member> m = new ArrayList<>();
+        h.members.forEach((id, name) -> m.add(new HearthRecord.Member(id, name == null ? "" : name)));
+        kept.put(h.owner, new Kept(h.owner, m));
+        setDirty();
+    }
+
+    /** The household kept for this owner (removed: it is handed back once). */
+    List<HearthRecord.Member> takeKept(UUID owner) {
+        Kept k = kept.remove(owner);
+        if (k == null) return List.of();
+        setDirty();
+        return k.members();
     }
 
     public static HearthData get(MinecraftServer server) {

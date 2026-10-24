@@ -868,3 +868,34 @@ Parties and the bridges:
   of chunks from region files while running, once none is in memory on two checks at least 10 s apart (written as "no
   data" through the level's own chunk IO worker), so gate and dream cells are reused without a restart.
 
+A shared Hearth (members, and growing into several):
+- A Hearth has one owner and any number of members (`HearthRecord` household, schema 1; a Hearth saved before it
+  loads with none). A player owns at most one Hearth and may be a member of any number.
+- Joining: the owner runs `/awaken hearth invite <player>` (a choice card, open 2 minutes; `/awaken hearth join
+  <owner>` answers it too), or someone who doesn't share a Hearth uses its Anchor and the owner, if online, gets a
+  choice card "<name> asks to share your Hearth" (once per 30 s per asker). Leaving: `/awaken hearth leave [owner]`;
+  the owner takes it back with `/awaken hearth remove <member>`; `/awaken hearth members` lists them.
+- Members, like the owner: use the Anchor (the guide, request deliveries, waking there: the Hearth whose Anchor you used
+  last, `HearthPlayer` schema 2 `respawn_hearth`), rest and heal there, build there with powers, see there with spirit
+  sight (and their household's beds are not hidden), get its Trophy Hall bonus, are served by its townsfolk, get its
+  break warnings, "The Hearth held" and the Hearth Shield of anyone online who holds the perk, and may build its Anchor
+  and Forge upgrades (paying themselves). Only the owner moves the Anchor, invites and removes, and has Oren's cottage;
+  role pads are worked by the owner's Echoes.
+- The town follows the household: townsfolk arrive and leave by the highest rank among its owner and members online,
+  every member online hears who came, and a member's rank-up is celebrated when they are home (`cheers`).
+- When an owner breaks their Anchor, the household is kept (`HearthData` schema 2 `kept`) and shares it again where the
+  Anchor next takes root.
+- Growing into several Hearths: from Hearth tier III a member's own Anchor founds a sister home: its founder owns it and
+  everyone else of the first Hearth (owner and members) is a member of it (`founded_from`). One sister at tier III,
+  two at IV, three at V. Before that, a member who owns no Hearth is told the rule when placing an Anchor: share until
+  tier III, or leave to found an unrelated one.
+- Public API (`dev.awaken.hearth.Hearth`): `record HearthInfo(UUID owner, String ownerName, BlockPos anchor, int tier,
+  int radius, List<UUID> members, Optional<UUID> foundedFrom)` with `has(UUID)`; `hearthsOf(MinecraftServer, UUID)` and
+  `hearthsOf(ServerPlayer)` (own first, then shared, in join order; works for offline players); `home(ServerPlayer)`;
+  `isMember(ServerPlayer, BlockPos anchor)`; `isMember(MinecraftServer, UUID player, UUID hearthOwner)`;
+  `hearthAt(ServerLevel, BlockPos)`. `hasRoom`, `anchor` and `atHome` read the home Hearth.
+- Above machines answer to their owner, anyone who shares a Hearth with the owner, and anyone using one that stands
+  inside a Hearth they belong to (machines with no owner, ruins and old saves, answer to everyone); binding a Clone
+  Vat never changes its owner, so a household shares one clone.
+- A Hearth member's kill near friends: see "Shared rewards" below (Echo binding is one bind roll per player).
+
