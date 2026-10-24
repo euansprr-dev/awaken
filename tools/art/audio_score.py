@@ -198,12 +198,46 @@ def i_whisper(f0, dur, vel, seed, vowel="u"):
     return x / (np.std(x) + 1e-9) * K.swell(n, 0.35, 1.2) * vel * 0.3
 
 
+def i_fmbass(f0, dur, vel, seed, index=1.6, t60=0.6):
+    """A round FM bass for driving ostinatos: the bite (index) falls away fast, the body stays."""
+    n = K.ns(dur + 0.25)
+    ie = index * (0.35 + 0.65 * K.perc(n, 0.002, t60 * 0.5)) * (0.7 + 0.6 * vel)
+    ph = K.phase(f0, n)
+    y = np.sin(2 * np.pi * ph + ie * np.sin(2 * np.pi * ph))
+    env = K.adsr(n, 0.004, 0.08, 0.75, 0.2) * K.perc(n, 0.002, max(t60 * 2.5, dur + 0.3))
+    return K.lowpass(y * env, 900 + 900 * vel, 2) * vel
+
+
+def i_pulse(f0, dur, vel, seed, t60=0.4, bright=0.3):
+    """A soft synth pulse (sine with a little 2nd and 3rd): the Precursor Lab's machines."""
+    n = K.ns(min(dur, t60 * 1.5) + 0.05)
+    t = K.tvec(n)
+    x = np.sin(2 * np.pi * f0 * t) + bright * 0.5 * np.sin(4 * np.pi * f0 * t) + bright * 0.25 * np.sin(6 * np.pi * f0 * t)
+    return x * K.perc(n, 0.006, t60) * vel
+
+
+def i_staccato(f0, dur, vel, seed, bright=0.5):
+    """Short bowed strings (spiccato), an ostinato voice."""
+    n = K.ns(dur + 0.18)
+    return K.strings(f0, n, 4, seed, bright) * K.adsr(n, 0.012, 0.06, 0.65, 0.14) * vel
+
+
+def i_taiko(f0, dur, vel, seed, t60=1.1):
+    """A big low drum: a falling body, the stick's thud and a long low bloom (danger, held back)."""
+    n = K.ns(t60 * 1.4)
+    body = K.sine(K.glide(n, f0 * 1.9, f0), n) * K.perc(n, 0.002, t60)
+    bloom = K.sine(f0 * 0.5, n) * K.perc(n, 0.02, t60 * 1.2) * 0.4
+    skin = K.bandnoise(n, 120 + f0 * 1.5, 1.0, seed) * K.perc(n, 0.001, 0.09)
+    return (body + bloom + 0.45 * skin) * vel
+
+
 INSTR = {
     "piano": i_piano, "glass": i_glass, "bell": i_bell, "fmbell": i_fmbell, "pluck": i_pluck, "koto": i_koto,
     "marimba": i_marimba, "vibes": i_vibes, "musicbox": i_musicbox, "flute": i_flute, "harmonica": i_harmonica,
     "pad": i_pad, "strings": i_strings, "choir": i_choir, "drone": i_drone, "sub": i_sub, "brass": i_brass,
     "drum": i_drum, "frame": i_frame, "shaker": i_shaker, "tick": i_tick, "clank": i_clank, "drip": i_drip,
-    "bubble": i_bubble, "chirp": i_chirp, "whisper": i_whisper,
+    "bubble": i_bubble, "chirp": i_chirp, "whisper": i_whisper, "fmbass": i_fmbass, "pulse": i_pulse,
+    "staccato": i_staccato, "taiko": i_taiko,
 }
 
 _IRS = {}

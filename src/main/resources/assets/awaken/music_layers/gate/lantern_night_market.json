@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/lantern_night_market",
+  "source": "music",
+  "title": "Lantern Night Market",
+  "bpm": 84,
+  "beats": 4,
+  "bars": 16,
+  "key": "D",
+  "mode": "ionian",
+  "sampleRate": 44100,
+  "frames": 2016000,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_lantern_night_market_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "The friendly one: felt piano in quarters, the koto tune and its answer."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_lantern_night_market_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "A shaker, a plucked bass, bells: the market gets busy (rarely a threat here)."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_lantern_night_market_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "A frame drum, a quick shaker, the koto running, a bouncing bass."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_lantern_night_market_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Lantern Broker: the tune on a horn, a choir, a drum and a bell; still a little playful."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.54,
+      "lufs": -18.74,
+      "truePeak": -4.5
+    },
+    "tension": {
+      "rms": -19.56,
+      "lufs": -17.83,
+      "truePeak": -1.69
+    },
+    "combat": {
+      "rms": -18.57,
+      "lufs": -16.82,
+      "truePeak": -1.32
+    },
+    "lord": {
+      "rms": -17.57,
+      "lufs": -15.52,
+      "truePeak": -1.63
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.54,
+      "truePeak": -4.5
+    },
+    "tension": {
+      "rms": -21.87,
+      "truePeak": -2.39
+    },
+    "combat": {
+      "rms": -21.04,
+      "truePeak": -1.88
+    },
+    "lord": {
+      "rms": -20.97,
+      "truePeak": -5.56
+    }
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/nightmare",
+  "source": "music",
+  "title": "Nightmare",
+  "bpm": 52,
+  "beats": 4,
+  "bars": 12,
+  "key": "C#",
+  "mode": "aeolian",
+  "sampleRate": 44100,
+  "frames": 2442462,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_nightmare_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "Cluster strings, a buried drone, the damp music box's lullaby with its one wrong note, whispers."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_nightmare_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "A heartbeat on every bar, reversed piano sucking into the bar lines."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_nightmare_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Taiko that keeps the heartbeat's limp, cluster stabs, a low piano hammering."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_nightmare_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Sleeper: a choir in clusters, the lullaby high and more out of tune, the heart racing."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.59,
+      "lufs": -18.91,
+      "truePeak": -6.48
+    },
+    "tension": {
+      "rms": -19.58,
+      "lufs": -17.86,
+      "truePeak": -5.71
+    },
+    "combat": {
+      "rms": -18.56,
+      "lufs": -17.31,
+      "truePeak": -2.85
+    },
+    "lord": {
+      "rms": -17.56,
+      "lufs": -15.99,
+      "truePeak": -2.03
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.59,
+      "truePeak": -6.48
+    },
+    "tension": {
+      "rms": -23.18,
+      "truePeak": -7.73
+    },
+    "combat": {
+      "rms": -21.08,
+      "truePeak": -4.4
+    },
+    "lord": {
+      "rms": -21.54,
+      "truePeak": -5.78
+    }
+  }
+}

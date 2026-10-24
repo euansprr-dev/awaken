@@ -106,7 +106,7 @@ final class StarterScreen extends Screen implements dev.awaken.signal.client.Qui
     private void projected(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         float ms = (System.nanoTime() - openedAt) / 1e6f;
         float reveal = Math.min(1f, ms / 320f);
-        HudLook.card(g, px, py, pw, ph, EDGE, 1f, reveal, 0f);
+        HudLook.card(g, px, py, pw, ph, EDGE, 1f, reveal, 0f, HudLook.FRAME);
         g.enableScissor(px, py, px + pw, py + (int) Math.ceil(ph * (1 - Math.pow(1 - reveal, 3))));
         HudLook.centered(g, font, title.getString(), px + pw / 2, py + 8, TITLE, true);
         HudLook.centered(g, font, "The Signal offers three. Take one now; more come later.", px + pw / 2, py + 18, LABEL, true);
@@ -131,7 +131,7 @@ final class StarterScreen extends Screen implements dev.awaken.signal.client.Qui
         int x = cardX(i), y = cardY();
         boolean on = i == hovered || t.id.toString().equals(picked);
         int family = 0xFF000000 | t.family.colour;
-        HudLook.card(g, x, y, cw, CARD_H, on ? family : 0x5A7090, 1f, reveal, 0f);
+        HudLook.card(g, x, y, cw, CARD_H, on ? family : 0x5A7090, 1f, reveal, 0f, 0);
         if (on) HudLook.glow(g, x, y, cw, CARD_H, family, 1f);
         if (reveal < 0.6f) return; // the words come once the scan has passed them
         HudLook.text(g, font, String.valueOf(i + 1), x + 4, y + 4, on ? LANTERN : DIM, false);

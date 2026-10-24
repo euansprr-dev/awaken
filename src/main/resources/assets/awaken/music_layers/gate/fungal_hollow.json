@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/fungal_hollow",
+  "source": "music",
+  "title": "Fungal Hollow",
+  "bpm": 66,
+  "beats": 3,
+  "bars": 16,
+  "key": "F",
+  "mode": "lydian",
+  "sampleRate": 44100,
+  "frames": 1924364,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_fungal_hollow_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "A warm pad, a breathy flute floating on the raised fourth, marimba drops, spores popping."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_fungal_hollow_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "Marimba circling in 6/8, a plucked B under F that doesn't settle, vibes on the fourth."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_fungal_hollow_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Frame drums in three, a low drum, a bouncing plucked bass, spores bursting."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_fungal_hollow_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "Mother of Spores: a choir in Lydian, the flute tune high, strings and a drum every bar."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.59,
+      "lufs": -18.41,
+      "truePeak": -5.03
+    },
+    "tension": {
+      "rms": -19.55,
+      "lufs": -17.32,
+      "truePeak": -2.34
+    },
+    "combat": {
+      "rms": -18.55,
+      "lufs": -16.55,
+      "truePeak": -1.11
+    },
+    "lord": {
+      "rms": -17.58,
+      "lufs": -15.44,
+      "truePeak": -1.35
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.59,
+      "truePeak": -5.03
+    },
+    "tension": {
+      "rms": -23.18,
+      "truePeak": -3.61
+    },
+    "combat": {
+      "rms": -21.16,
+      "truePeak": -1.51
+    },
+    "lord": {
+      "rms": -21.42,
+      "truePeak": -5.97
+    }
+  }
+}

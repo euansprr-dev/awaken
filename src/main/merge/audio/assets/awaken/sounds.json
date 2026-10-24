@@ -508,5 +508,23 @@
         "type": "event"
       }
     ]
+  },
+  "music.layers": {
+    "subtitle": "subtitles.awaken.music.layers",
+    "sounds": [
+      {
+        "name": "awaken:layers/layer_bell_crypt_bed",
+        "stream": true
+      }
+    ]
+  },
+  "amb.layers": {
+    "subtitle": "subtitles.awaken.amb.layers",
+    "sounds": [
+      {
+        "name": "awaken:amb_well",
+        "stream": true
+      }
+    ]
   }
 }

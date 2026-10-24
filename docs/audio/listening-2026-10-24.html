@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Sound: listening</title>
+<style>
+:root { --bg:#f6f4ef; --card:#fffdf8; --ink:#1d1c1a; --soft:#6b665d; --line:#e4dfd4; --accent:#2e6bd8; --keep:#2f8a4e;
+  --remake:#b7791f; --cut:#b83a3a; --chip:#efe9dd;
+  --lv-calm:#5b7393; --lv-tension:#a86a12; --lv-combat:#b8442c; --lv-lord:#6a43b5; --lv-fell:#2f7d55; }
+@media (prefers-color-scheme: dark) { :root { --bg:#14161a; --card:#1c1f25; --ink:#ece9e2; --soft:#a29d93; --line:#2c3038;
+  --accent:#7fb0ff; --keep:#5cc27f; --remake:#e0a548; --cut:#ef6b6b; --chip:#262a32; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width:980px; margin:0 auto; padding:28px 16px 80px; }
+h1 { font-size:26px; margin:0 0 4px; letter-spacing:-0.01em; }
+.sub { color:var(--soft); margin:0 0 20px; }
+.intro { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:18px; }
+.intro p { margin:6px 0; }
+.intro ol { margin:6px 0 6px 20px; padding:0; }
+.marks { display:flex; flex-wrap:wrap; gap:6px 14px; list-style:none; padding:0; margin:8px 0 0; color:var(--soft); font-size:13px; }
+.marks b { color:var(--ink); font-variant-numeric:tabular-nums; }
+.dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+.lv-calm { background:var(--lv-calm); } .lv-tension { background:var(--lv-tension); } .lv-combat { background:var(--lv-combat); }
+.lv-lord { background:var(--lv-lord); } .lv-fell { background:var(--lv-fell); }
+.bar { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 0; display:flex; gap:10px; align-items:center;
+  flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:16px; }
+.bar .progress { font-variant-numeric:tabular-nums; color:var(--soft); margin-right:auto; }
+button { font:inherit; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:6px 12px;
+  cursor:pointer; }
+button:hover { border-color:var(--accent); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+.card header { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.card h2 { font-size:19px; margin:0; }
+.card .n { color:var(--soft); font-variant-numeric:tabular-nums; }
+.card .line { margin:0; color:var(--soft); font-size:13px; flex-basis:100%; }
+.row { display:grid; grid-template-columns: 1fr; gap:8px; padding:12px 0; border-top:1px solid var(--line); }
+.row:first-of-type { border-top:none; }
+.what { display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; }
+.tag { background:var(--chip); border-radius:6px; padding:1px 8px; font-size:13px; }
+.tag.strong { background:var(--accent); color:var(--bg); }
+.intent { flex:1 1 300px; }
+.meta { color:var(--soft); font-size:12px; flex-basis:100%; }
+audio { width:100%; height:36px; }
+.player { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.timeline { position:relative; display:flex; height:24px; border-radius:6px; overflow:hidden; }
+.seg { flex-basis:0; min-width:0; border:0; border-radius:0; padding:0 5px; font-size:11px; line-height:24px; color:#fff;
+  text-align:left; white-space:nowrap; overflow:hidden; }
+.seg + .seg { box-shadow:inset 1px 0 0 var(--card); }
+.seg.now { font-weight:600; box-shadow:inset 0 -3px 0 rgba(255,255,255,.85); }
+.seg:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.head { position:absolute; top:0; bottom:0; left:0; width:2px; margin-left:-1px; background:var(--ink);
+  box-shadow:0 0 0 1px var(--card); pointer-events:none; opacity:0; }
+.timeline.live .head { opacity:1; }
+.verdict { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.choices { display:flex; gap:6px; }
+.choices button[aria-pressed=true][data-v=keep] { background:var(--keep); border-color:var(--keep); color:#fff; }
+.choices button[aria-pressed=true][data-v=remake] { background:var(--remake); border-color:var(--remake); color:#fff; }
+.choices button[aria-pressed=true][data-v=cut] { background:var(--cut); border-color:var(--cut); color:#fff; }
+/* a layer nobody marked shows the verdict it takes from its mix */
+.choices button[data-inherit=true] { border-style:dashed; }
+.choices button[data-inherit=true][data-v=keep] { border-color:var(--keep); color:var(--keep); }
+.choices button[data-inherit=true][data-v=remake] { border-color:var(--remake); color:var(--remake); }
+.choices button[data-inherit=true][data-v=cut] { border-color:var(--cut); color:var(--cut); }
+.note { flex:1 1 220px; min-width:0; font:inherit; padding:6px 10px; border-radius:8px; border:1px solid var(--line);
+  background:var(--bg); color:var(--ink); }
+details summary { cursor:pointer; color:var(--accent); padding:8px 0 2px; }
+textarea { width:100%; min-height:160px; font:13px/1.4 ui-monospace, Menlo, monospace; background:var(--card); color:var(--ink);
+  border:1px solid var(--line); border-radius:8px; padding:10px; }
+@media (min-width:760px) { .row { grid-template-columns: 1.1fr 1fr; align-items:center; } .row .verdict { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<main>
+<h1>The Sound: listening</h1>
+<p class="sub">AWAKEN · Awakened Pack stage 4 · 2026-10-24 · layered gate music: 14 themes, 56 new stems</p>
+<div class="intro">
+  <p><b>About 16 minutes.</b> For each gate theme, play <b>the mix</b>: a minute and ten seconds that walks through
+  every level the way the game does, with the game's own fades. The line above it says what the theme is for: does it
+  sound like that, rise with the danger and settle after? Mark it <b>keep</b>, <b>remake</b> or <b>cut</b>, and say why in
+  the note when it isn't a keep. The strip under the player shows the level you're hearing; click one to jump to it.</p>
+  <p>The 56 layers under the cards are every new sound in this stage. A layer you leave unmarked takes its mix's
+  verdict (shown dashed), so fourteen marks decide them all; open the layers only when one part bothers you, and mark
+  that one on its own.</p>
+  <ul class="marks"><li><span class="dot lv-calm"></span><b>0:00</b> calm (the bed fades in)</li><li><span class="dot lv-tension"></span><b>0:12</b> a monster hunts you</li><li><span class="dot lv-combat"></span><b>0:24</b> blows traded</li><li><span class="dot lv-lord"></span><b>0:38</b> the Lord</li><li><span class="dot lv-fell"></span><b>0:52</b> the Lord falls</li><li><span class="dot lv-calm"></span><b>1:00</b> calm again</li></ul>
+  <p>In the game: inside a gate the music becomes four stems played together. The bed while you explore; a tension layer
+  when something hunts you or the gate's pressure rises; drums and bass in a fight; the theme's tune stated big for a Lord.
+  It follows the Music slider, never plays over vanilla's music, rests after two and a half minutes of calm, and fades on
+  the way out and on death. The System's voice, the UI, the music and the Ritual's voices stay dry under Sound Physics
+  Remastered; everything else gets the room it's in (that part is heard in game, not here).</p>
+  <p>Your choices stay in this browser. When you're done, <b>Export</b> and send me the file (or the text).</p>
+</div>
+<div class="bar"><span class="progress" id="progress">mixes 0 of 14 · layers marked on their own 0 of 56</span>
+  <button id="export">Export choices (.json)</button><button id="text">Show as text</button></div>
+
+    <section class="card" id="bell_crypt">
+      <header><span class="n">01</span><h2>Bell Crypt</h2><p class="line">D Phrygian, 54 bpm in 4, a 12-bar loop (53 s) · room: cathedral</p></header>
+      <div class="row journey" data-id="bell_crypt.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Dread under stone: the crypt tolls for you, growing heavier rather than faster; the Bell Warden is the great bell waking.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/bell_crypt_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="bell_crypt.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">A buried drone, monks humming &#x27;o&#x27;, the sigh tolled on bells; the crypt breathing.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/bell_crypt_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="bell_crypt.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">A low bell every bar, strings trembling on D against E-flat, a slow heartbeat.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/bell_crypt_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="bell_crypt.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Taiko under the vault, iron clanks, an eighth-note string ostinato, brass stabs.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/bell_crypt_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="bell_crypt.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The choir opens to &#x27;a&#x27;, the sigh in slow brass, the great bell every two bars.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/bell_crypt_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="fungal_hollow">
+      <header><span class="n">02</span><h2>Fungal Hollow</h2><p class="line">F Lydian, 66 bpm in 3, a 16-bar loop (44 s) · room: hall</p></header>
+      <div class="row journey" data-id="fungal_hollow.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Strange, gentle wonder in three: a glowing hollow that breathes; the Mother of Spores swells it into a towering Lydian choir.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/fungal_hollow_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="fungal_hollow.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">A warm pad, a breathy flute floating on the raised fourth, marimba drops, spores popping.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/fungal_hollow_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="fungal_hollow.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">Marimba circling in 6/8, a plucked B under F that doesn&#x27;t settle, vibes on the fourth.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/fungal_hollow_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="fungal_hollow.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Frame drums in three, a low drum, a bouncing plucked bass, spores bursting.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/fungal_hollow_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="fungal_hollow.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">Mother of Spores: a choir in Lydian, the flute tune high, strings and a drum every bar.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/fungal_hollow_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="ember_mines">
+      <header><span class="n">03</span><h2>Ember Mines</h2><p class="line">E Hijaz, 60 bpm in 4, a 16-bar loop (64 s) · room: cave</p></header>
+      <div class="row journey" data-id="ember_mines.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Heat and labour deep in the rock: the oud&#x27;s Hijaz line over far anvils, hammered into a march when the Ember Tyrant comes.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/ember_mines_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="ember_mines.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">Two drones in the rock, dark strings, the oud tune (E F G# A) now and then, embers ticking.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/ember_mines_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="ember_mines.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">The oud worrying E against F in eighths, far anvils, strings trembling.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/ember_mines_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="ember_mines.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Taiko and anvils, an FM bass on E and F, brass stabs on the Hijaz chord.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/ember_mines_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="ember_mines.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Ember Tyrant: the horn tune stated, a choir on the fifth, an anvil every two bars.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/ember_mines_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="drowned_archive">
+      <header><span class="n">04</span><h2>Drowned Archive</h2><p class="line">A Aeolian, 58 bpm in 4, a 16-bar loop (66 s) · room: cave</p></header>
+      <div class="row journey" data-id="drowned_archive.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">A library under water: damped, slow and sinking, even a fight heard as if through the tide; the Archivist rises out of it.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/drowned_archive_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="drowned_archive.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">Damped felt piano breaking the chords, low strings, drips and bubbles, water overhead.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/drowned_archive_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="drowned_archive.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">A low piano ostinato, a cluster trembling in the strings, glass notes sinking.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/drowned_archive_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="drowned_archive.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Drums heard through water, sub pulses in eighths, spiccato strings.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/drowned_archive_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="drowned_archive.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Drowned Archivist: a choir on &#x27;u&#x27;, the sinking tune in glass, strings above.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/drowned_archive_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="clockwork_foundry">
+      <header><span class="n">05</span><h2>Clockwork Foundry</h2><p class="line">C Dorian, 72 bpm in 4, a 16-bar loop (53 s) · room: room</p></header>
+      <div class="row journey" data-id="clockwork_foundry.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">A machine room that keeps time: ticking, precise, a little sinister; the Gearwright Colossus is the whole works at full drive.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.5 dB · tension -19.5 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/clockwork_foundry_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="clockwork_foundry.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">An escapement ticking, a music box turning over, strings, steam in the pipes.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/clockwork_foundry_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="clockwork_foundry.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">The ticks double, a pizzicato bass stalks, strings tremble on a second.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/clockwork_foundry_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="clockwork_foundry.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Drums and girder clanks, a running plucked bass, brass stabs on the off-beat.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/clockwork_foundry_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="clockwork_foundry.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Gearwright Colossus: C G A G hammered in the brass every two bars, bells, a choir.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/clockwork_foundry_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="glass_desert">
+      <header><span class="n">06</span><h2>Glass Desert</h2><p class="line">E Phrygian, 50 bpm in 4, a 12-bar loop (58 s) · room: air</p></header>
+      <div class="row journey" data-id="glass_desert.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Vast, empty heat and ringing glass, slow as a mirage; the Glass Serpent&#x27;s fight should glitter and cut, never turn muddy.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/glass_desert_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="glass_desert.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">Glass harmonica fifths, ringing glass bowls, sand wind; the tune once, slow.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/glass_desert_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="glass_desert.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">The oud ostinato under it, a low E, the F bowl ringing a half step above.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/glass_desert_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="glass_desert.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Frame drums and a low drum, a metallic plucked bass, a shaker in the wind.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/glass_desert_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="glass_desert.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Glass Serpent: a choir, the harmonica tune high, a gong bell and sub every two bars.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/glass_desert_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="hive">
+      <header><span class="n">07</span><h2>Hive</h2><p class="line">F Aeolian, 76 bpm in 4, a 16-bar loop (51 s) · room: room</p></header>
+      <div class="row journey" data-id="hive.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Warm, busy and faintly wrong: wings everywhere, a second swarm a half step off; the Hive Regent brings the swarm&#x27;s full weight.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/hive_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="hive.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">Wings as a fluttering drone, strings, the marimba tune, honey dripping.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/hive_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="hive.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">The hexagonal pizzicato pattern, and a second swarm a half step up: agitated.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/hive_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="hive.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Drums in sixteenths like a swarm, spiccato strings, brass stabs.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/hive_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="hive.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Hive Regent: a choir on &#x27;e&#x27;, the tune in brass, marimba running, a taiko.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/hive_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="overgrown_temple">
+      <header><span class="n">08</span><h2>Overgrown Temple</h2><p class="line">G Dorian, 60 bpm in 4, a 16-bar loop (64 s) · room: hall</p></header>
+      <div class="row journey" data-id="overgrown_temple.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Old, green and calm, a holy place the forest took back; the Root Saint&#x27;s fight is solemn and rooted, not frantic.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/overgrown_temple_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="overgrown_temple.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">A warm pad, the wooden flute&#x27;s tune twice, fireflies chirping, forest air.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/overgrown_temple_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="overgrown_temple.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">Kalimba circling, a hand drum, strings trembling on the fifth.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/overgrown_temple_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="overgrown_temple.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Frame drums running in sixteenths, taiko, a plucked bass.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/overgrown_temple_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="overgrown_temple.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Root Saint: a choir, the brass and the flute trading the tune, a drum on every bar.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/overgrown_temple_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="lantern_night_market">
+      <header><span class="n">09</span><h2>Lantern Night Market</h2><p class="line">D Ionian, 84 bpm in 4, a 16-bar loop (46 s) · room: room</p></header>
+      <div class="row journey" data-id="lantern_night_market.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">The friendly one: a night market you&#x27;d want to linger in; a fight here stays playful, the Lantern Broker a showman.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.5 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/lantern_night_market_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="lantern_night_market.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">The friendly one: felt piano in quarters, the koto tune and its answer.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/lantern_night_market_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="lantern_night_market.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">A shaker, a plucked bass, bells: the market gets busy (rarely a threat here).</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/lantern_night_market_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="lantern_night_market.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">A frame drum, a quick shaker, the koto running, a bouncing bass.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/lantern_night_market_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="lantern_night_market.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Lantern Broker: the tune on a horn, a choir, a drum and a bell; still a little playful.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/lantern_night_market_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="frost_monastery">
+      <header><span class="n">10</span><h2>Frost Monastery</h2><p class="line">B Aeolian, 50 bpm in 4, a 12-bar loop (58 s) · room: cathedral</p></header>
+      <div class="row journey" data-id="frost_monastery.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Cold, vast and devout: a far chant in a stone hall with snow outside; the Abbot of Frost answers with the full choir.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.5 dB · tension -19.5 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/frost_monastery_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="frost_monastery.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">A hummed fifth in a huge stone room, ice bells, cold wind; the chant once, far off.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/frost_monastery_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="frost_monastery.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">Low sung pulses on &#x27;u&#x27;, ice bells circling high, a soft drum on every bar.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/frost_monastery_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="frost_monastery.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Taiko under the vaults, spiccato strings on B and F#, small bells on the off-beats.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/frost_monastery_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="frost_monastery.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Abbot of Frost: the chant in unison and in octaves, the great bell, a sub.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/frost_monastery_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="mirror_palace">
+      <header><span class="n">11</span><h2>Mirror Palace</h2><p class="line">C Lydian, 64 bpm in 4, a 16-bar loop (60 s) · room: air</p></header>
+      <div class="row journey" data-id="mirror_palace.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Elegant and disorienting: every phrase mirrored, nothing quite where you hear it; the Mirror Knight duels in reflections.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.5 dB · combat -18.5 dB · lord -17.5 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/mirror_palace_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="mirror_palace.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">A glass harmonica chord, a palindrome in glass with its reflection an octave up, half a beat late.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/mirror_palace_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="mirror_palace.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">Reversed swells into every other bar line, a glass ostinato.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/mirror_palace_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="mirror_palace.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Taiko, glass struck on two and four (the raised fourth), a plucked bass.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/mirror_palace_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="mirror_palace.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Mirror Knight: a choir, the palindrome and its reflection stated, a bell, a sub.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/mirror_palace_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="precursor_lab">
+      <header><span class="n">12</span><h2>Precursor Lab</h2><p class="line">F# Aeolian, 90 bpm in 4, a 16-bar loop (43 s) · room: room</p></header>
+      <div class="row journey" data-id="precursor_lab.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Clinical and ancient: a machine still counting in the dark; Unit Zero is its countdown at full power.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.5 dB · combat -18.5 dB · lord -17.5 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/precursor_lab_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="precursor_lab.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">A soft FM arpeggiator, a pad, the mains hum, the sigh in signal-blue glass.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/precursor_lab_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="precursor_lab.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">A sine pulse in eighths, a low drum, glass on the minor second.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/precursor_lab_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="precursor_lab.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Drums with a sixteenth-note hat of ticks, an FM bass, brass stabs.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/precursor_lab_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="precursor_lab.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">Unit Zero: the sigh repeated in glass like a countdown, brass under it, a choir on &#x27;e&#x27;.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/precursor_lab_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="nightmare">
+      <header><span class="n">13</span><h2>Nightmare</h2><p class="line">C# Aeolian, 52 bpm in 4, a 12-bar loop (55 s) · room: cave</p></header>
+      <div class="row journey" data-id="nightmare.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">The gate meant to frighten: a lullaby with one wrong note and a limping heart; the Sleeper is the dream coming apart.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/nightmare_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="nightmare.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">Cluster strings, a buried drone, the damp music box&#x27;s lullaby with its one wrong note, whispers.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/nightmare_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="nightmare.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">A heartbeat on every bar, reversed piano sucking into the bar lines.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/nightmare_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="nightmare.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Taiko that keeps the heartbeat&#x27;s limp, cluster stabs, a low piano hammering.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/nightmare_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="nightmare.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Sleeper: a choir in clusters, the lullaby high and more out of tune, the heart racing.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/nightmare_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+    <section class="card" id="sky_archipelago">
+      <header><span class="n">14</span><h2>Sky Archipelago</h2><p class="line">D Lydian, 66 bpm in 4, a 16-bar loop (58 s) · room: air</p></header>
+      <div class="row journey" data-id="sky_archipelago.mix">
+        <div class="what"><span class="tag strong">the mix</span><span class="intent">Open air and lift, the most hopeful gate; the Sky Leviathan is huge and soaring, never grim.</span>
+          <span class="meta">every level in 70 s, faded as the game fades it · calm -20.6 dB · tension -19.6 dB · combat -18.6 dB · lord -17.6 dB (gated RMS)</span></div>
+        <div class="player"><audio controls preload="none" src="listening-2026-10-24/sky_archipelago_journey.mp3"></audio><div class="timeline" data-total="70" aria-label="the levels of this mix: click one to hear it"><button type="button" class="seg lv-calm" style="flex-grow:12" data-t="0" data-end="12" title="0:00 calm (the bed fades in)">calm</button><button type="button" class="seg lv-tension" style="flex-grow:12" data-t="12" data-end="24" title="0:12 a monster hunts you">tension</button><button type="button" class="seg lv-combat" style="flex-grow:14" data-t="24" data-end="38" title="0:24 blows traded">combat</button><button type="button" class="seg lv-lord" style="flex-grow:14" data-t="38" data-end="52" title="0:38 the Lord">Lord</button><button type="button" class="seg lv-fell" style="flex-grow:8" data-t="52" data-end="60" title="0:52 the Lord falls">it falls</button><button type="button" class="seg lv-calm" style="flex-grow:10" data-t="60" data-end="70" title="1:00 calm again">calm</button><span class="head" aria-hidden="true"></span></div></div>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <details><summary>each layer alone (20 s) · unmarked, a layer takes the mix's verdict</summary>
+        <div class="row" data-id="sky_archipelago.bed">
+          <div class="what"><span class="tag">bed</span><span class="intent">Airy strings and fifths, the high flute&#x27;s tune and its answer, wind.</span>
+            <span class="meta">in 6 s · duck 2 s · out 10 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/sky_archipelago_bed.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="sky_archipelago.tension">
+          <div class="what"><span class="tag">tension</span><span class="intent">A glass arpeggio, a soft pulse, strings trembling on the raised fourth.</span>
+            <span class="meta">in 3 s · duck 1.5 s · out 8 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/sky_archipelago_tension.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="sky_archipelago.combat">
+          <div class="what"><span class="tag">combat</span><span class="intent">Taiko, brass stabs, a plucked bass running in eighths.</span>
+            <span class="meta">in 0.6 s · duck 1.5 s · out 6 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/sky_archipelago_combat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="sky_archipelago.lord">
+          <div class="what"><span class="tag">lord</span><span class="intent">The Sky Leviathan: a choir, the tune in the brass, high strings.</span>
+            <span class="meta">in 1.5 s · duck 1.5 s · out 4 s</span></div>
+          <audio controls preload="none" src="listening-2026-10-24/sky_archipelago_lord.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+<textarea id="out" hidden readonly></textarea>
+</main>
+<script>
+(function () {
+  var KEY = "awaken-listening-2026-10-24";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} update(); }
+  function isMix(id) { return /\.mix$/.test(id); }
+  // a layer's own verdict, else its mix's ("from": "mix")
+  function verdictOf(id) {
+    var own = (state[id] || {}).v;
+    if (own || isMix(id)) return { v: own || "", from: "" };
+    var mix = (state[id.slice(0, id.lastIndexOf(".")) + ".mix"] || {}).v;
+    return { v: mix || "", from: mix ? "mix" : "" };
+  }
+  function update() {
+    var mixes = 0, nm = 0, own = 0, nl = 0;
+    document.querySelectorAll(".row[data-id]").forEach(function (r) {
+      var id = r.dataset.id, marked = !!(state[id] || {}).v, d = verdictOf(id);
+      if (isMix(id)) { nm++; if (marked) mixes++; } else { nl++; if (marked) own++; }
+      r.querySelectorAll(".choices button").forEach(function (b) {
+        b.setAttribute("aria-pressed", marked && d.v === b.dataset.v ? "true" : "false");
+        b.setAttribute("data-inherit", d.from && d.v === b.dataset.v ? "true" : "false");
+      });
+    });
+    document.getElementById("progress").textContent = "mixes " + mixes + " of " + nm + " · layers marked on their own " + own + " of " + nl;
+  }
+  document.querySelectorAll(".row[data-id]").forEach(function (row) {
+    var id = row.dataset.id;
+    row.querySelectorAll(".choices button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var cur = state[id] || {};
+        cur.v = cur.v === b.dataset.v ? "" : b.dataset.v;
+        state[id] = cur;
+        save();
+      });
+    });
+    var note = row.querySelector(".note");
+    note.value = (state[id] || {}).note || "";
+    note.addEventListener("input", function () { var cur = state[id] || {}; cur.note = note.value; state[id] = cur; save(); });
+  });
+  // one sound at a time
+  document.addEventListener("play", function (ev) {
+    document.querySelectorAll("audio").forEach(function (a) { if (a !== ev.target) a.pause(); });
+  }, true);
+  // the strip under each mix: a playhead over the level that plays; a click jumps to a level
+  document.querySelectorAll(".journey").forEach(function (row) {
+    var audio = row.querySelector("audio"), line = row.querySelector(".timeline");
+    var head = line.querySelector(".head"), segs = line.querySelectorAll(".seg"), total = +line.dataset.total, raf = 0;
+    function show() {
+      var t = audio.currentTime || 0;
+      head.style.left = Math.min(100, t / total * 100) + "%";
+      line.classList.toggle("live", t > 0);
+      segs.forEach(function (s) { s.classList.toggle("now", t > 0 && t >= +s.dataset.t && t < +s.dataset.end); });
+    }
+    function frame() { show(); raf = audio.paused ? 0 : requestAnimationFrame(frame); }
+    audio.addEventListener("play", function () { if (!raf) raf = requestAnimationFrame(frame); });
+    ["timeupdate", "seeked", "ended"].forEach(function (k) { audio.addEventListener(k, show); });
+    segs.forEach(function (s) {
+      s.addEventListener("click", function () { audio.currentTime = +s.dataset.t; audio.play(); show(); });
+    });
+  });
+  function rows() {
+    var out = [];
+    document.querySelectorAll(".row[data-id]").forEach(function (r) {
+      var id = r.dataset.id, d = verdictOf(id), e = { id: id, verdict: d.v, note: (state[id] || {}).note || "" };
+      if (d.from) e.from = d.from;
+      out.push(e);
+    });
+    return out;
+  }
+  document.getElementById("export").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify({ sheet: KEY, exported: new Date().toISOString(), entries: rows() }, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = KEY + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  document.getElementById("text").addEventListener("click", function () {
+    var t = document.getElementById("out");
+    // a layer that only follows its mix is left out: the line says so
+    var lines = rows().filter(function (r) { return (r.verdict && !r.from) || r.note; })
+      .map(function (r) { return r.id + ": " + (r.verdict || "-") + (r.from ? " (as its mix)" : "") + (r.note ? " - " + r.note : ""); });
+    t.value = lines.length ? lines.join("\n") + "\n(layers not listed take their mix's verdict)" : "(nothing marked yet)";
+    t.hidden = false; t.focus(); t.select();
+  });
+  update();
+})();
+</script>
+</body>
+</html>
