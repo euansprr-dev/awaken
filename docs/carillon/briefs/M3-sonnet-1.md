@@ -285,106 +285,114 @@ check summary, and the commit hash.
 
 ## Result
 
-Done: `tools/city/citizens.py` (about 3,200 lines, Python 3 + numpy + PIL) writes
-`src/main/resources/data/awaken/city/citizens.json` (one line, 97.3 KB, sha-pinned to plan.json by `planSha256`). It
-reads plan.json only (CityBasin is not touched). `python3 -I tools/city/citizens.py` writes and prints stats (about 3 s),
-`check` runs the checks (about 5 s, exit 1 on a failure), `preview` also writes `build/city/citizens-top.png`.
+Done: `tools/city/citizens.py` (about 3,400 lines, Python 3 + numpy + PIL) writes
+`src/main/resources/data/awaken/city/citizens.json` (one line, 98.3 KB, `planSha256` of plan.json). It reads plan.json
+only. `python3 -I tools/city/citizens.py` writes and prints stats (about 3 s), `check` runs the checks (about 5 s, exit 1
+on a failure), `preview` also writes `build/city/citizens-top.png`.
 
 ### Checks (`check`, all pass)
 ```
-ok   1 counts: 240 citizens, jobs ok, 4 named, 96 households {1: 18, 2: 30, 3: 33, 4: 12, 5: 3}, 47 groups
-ok   2 places: 487 places, 797 spots, 16 with approach 1
-ok   3 reachability: 240 citizens x their targets, 70 routes
-ok   4 feasibility: 1183 transitions, worst margins: 1t stallkeeper#44, 5t miller#202, 6t porter#25, 9t child#216, 14t porter#31, 16t stallkeeper#50, 19t porter#25, 19t watch#92, 19t runner#140, 21t washer#110
-ok   5 caps: 106 stand places, peak occupancy 5
-ok   6 lamps: 78 lamps in 8 routes (longest tour 304 blocks), at pace 0.215/tick x slowest speed 1.02: light round ends 636 ticks before 13600, out round 1085 before 1800
-ok   7 determinism: two generations identical (99660 bytes)
-ok   8 size: 97.3 KB (limit 400 KB)
-ok   9 structure (more of the brief): ...routes, washplaces, lines, smithies, bakeries, quay, bells, taverns...
+ok   1 counts: 240 citizens, jobs ok, 4 named, 96 households {1: 21, 2: 28, 3: 30, 4: 12, 5: 5}, 47 groups
+ok   2 places: 491 places, 805 spots, 16 with approach 1
+ok   3 reachability: 240 citizens x their targets, 80 routes
+ok   4 feasibility: 1601 transitions, worst margins: 5t miller#202, 10t crier#97, 11t crier#96, 11t child#207, 12t porter#23, 13t crier#99, 16t washer#112, 16t child#213, 17t porter#15, 18t resident#234
+ok   5 caps: 109 stand places, peak occupancy 5
+ok   6 lamps: 78 lamps in 8 routes (longest tour 304 blocks), at the run 0.135/tick x slowest speed 1.06: light round ends 147 ticks before 13600, out round 299 before 1800
+ok   7 determinism: two generations identical (100651 bytes)
+ok   8 size: 98.3 KB (limit 400 KB)
+ok   9 structure (more of the brief): ...
 ```
 Check 9 is mine: it re-derives the rest of the brief's geometry rules from the JSON (patrol stop spacing 25-60 by graph,
-route sizes, wash spots touch water and are 2 apart, lines have plots at both ends and are 8 apart and within 40 of a
-washplace, smithies 30 apart with the door on a street or lane, bakeries and quay as specified, each place's node is the
-nearest by walking, no two places share a cell, the lane rule on every spot, a household per named citizen).
-The JSON is also checked against `Roster.java` (the Java reader): same field names and shapes.
+route sizes, wash spots touch water and are 2 apart, lines have plots at both ends, are 8 apart and within 40 of a wash
+place, smithies 30 apart with the door on a street or lane, bakeries and quay as specified, no two places share a cell, the
+lane rule on every spot, a household per named citizen, spots within 14 blocks of the node when the approach is 1 and 36
+otherwise). Check 4 includes the builder's worst-case rule (below). The JSON parses with `Roster.java`.
 
 ### Stats
 ```
-per job (count, mean / max home -> work walking distance, blocks)
-lamplighter 8 59.1/145.1   bellringer 7 82.6/138.4   porter 18 54.6/87.8    stallkeeper 20 75.3/114.3
-baker 10 65.9/129.3        smith 8 57.1/99.9         watch 24 31.6/137.7    crier 5 92.8/125.3
-boatman 8 97.5/137.7       washer 14 56.2/125.4      mason 10 41.1/55.4     runner 10 38.7/98.6
-shopkeeper 30 79.1/151.4   tavernkeeper 14 49.0/95.8 clerk 8 86.8/141.6     archivist 2 58.8/65.6
-healer 4 63.2/65.6         miller 4 48.2/92.9        child 16 -               resident 20 -
-(route jobs measure to the nearest place of the route, porters to their pickup; 6 of 204 workers are over 140)
-households by size: 1: 18, 2: 30, 3: 33, 4: 12, 5: 3 (96; the four named are single households with no family name)
-places by kind: lamp 78, stall_keeper 10, stall_front 10, bell 6, door 149, tavern_out 14, shop_door 30, stand 116,
-  anvil 4, wash 12, line 4, pickup 2, mill 2, post 3, sit 13, crier 15, landmark 4, play 15 (487)
-routes by kind: lamps 8, patrol 12, scout 1, crier 5, courier 3, drops 6, sit 1, errand 31, play 3 (70)
+per job (count, mean / max home -> work walking distance, blocks; route jobs: to the nearest place of the route, porters: to
+their pickup; the most is 125)
+lamplighter 8 36/88   bellringer 7 55/98     porter 18 83/108     stallkeeper 20 79/123  baker 10 62/123
+smith 8 29/124        watch 24 43/123        crier 5 105/121      boatman 8 95/125       washer 14 57/95
+mason 10 68/121       runner 10 38/120       shopkeeper 30 72/112 tavernkeeper 14 61/115 clerk 8 77/107
+archivist 2 56/59     healer 4 63/66         miller 4 83/122      child 16 -             resident 20 -
+households by size: 1: 21, 2: 28, 3: 30, 4: 12, 5: 5 (96; the four named are single households with no family name)
+places by kind: lamp 78, stall_keeper 10, stall_front 10, bell 6, door 149, tavern_out 14, shop_door 30, stand 120,
+  anvil 4, wash 12, line 4, pickup 2, mill 2, post 3, sit 13, crier 15, landmark 4, play 15 (491)
+routes by kind: lamps 8, patrol 12, scout 1, crier 5, courier 3, drops 6, sit 1, errand 41, play 3 (80)
 schedule segments per citizen: 3: 33, 4: 55, 5: 56, 6: 88, 7: 8 (never fewer than 3 or more than 9)
-starts pushed back to fit a walk: 19 citizens, at most 400 ticks (median 200)
+starts pushed back to fit a walk: 17 citizens, at most 2450 ticks (the criers; median 300)
 ```
 
+### The feasibility rules (check 4; the generator and the check use the same ones)
+Walking is 0.088 x speed blocks a tick everywhere, over the street graph (node to node plus the last blocks to the spot).
+For every pair of consecutive segments (the day wraps) the walk from the earlier one's last place to the next one's first
+must fit the earlier one's duration (less 100 ticks, except after a round/carry/wander: then the walk is from the stop of
+the route farthest from the target and there is no 100). On top of the builder's rule: after a round/carry/wander, a stay
+at a place (home, inside, stand) must hold the worst walk in + 200 ticks standing + the walk on to the next segment's first
+place. A wander's first stop is the route place nearest (straight line) to where the citizen is, so the walk in is to that
+place, and the wander must hold walk in + 100 + the walk from that place to the next target. Where a stay or a walk does not
+fit, the generator moves starts (in 50s): first the stay begins earlier if the route before it has time to spare, else
+the segment after it begins later. That is the "starts pushed back": 17 citizens, mostly the criers and 2 residents.
+
 ### What I decided (the brief conflicted with itself or with the plan's geometry)
-1. **Leading `0 home` is merged into the day's last `home`.** Check 4 read literally gives `0 home -> 600 carry` only 500
-   ticks (44 blocks) for the walk, and only 1 to 7 houses lie that close to the cranes, the race or the Choir. The day wraps,
-   so a schedule that starts with its first work segment (say `[479 carry, ...]`) and ends with `[14143 home]` keeps the
-   citizen at home from 06:00 until they set out, exactly as `0 home` meant. This is why most schedules have 3-6 segments
-   and few start at 0. (Night watch still starts at 0 with the round; lamplighters, see 2.)
-2. **Lamplighters.** (a) Their first `home` is at about 2300 (after the out round has finished) instead of 0; the out round
-   carries over midnight (23100 + jitter, finishes before 1800), and the next segment must start after it. (b) Check 6 can
-   only pass at the plan's walking pace: even the best cut of the 78 lamps into 8 tours leaves tours of 179-304 blocks, which
-   at the 0.088 stroll need 2,000-3,500 ticks of walking against a 2,300-tick window. So check 6 is measured at 0.215 blocks a
-   tick (4.3 blocks a second, the plan's own edge pace) times the slowest lamplighter's speed (1.02); every other check uses
-   0.088. **The Java builder: let a lamplighter walk his rounds at least that fast (about 2.5x the stroll), or the
-   lamps are lit late.** The lamp routes are one short tour of all 78 lamps cut at its longest jumps (8-12 lamps each,
-   tours 179-304 blocks); each starts at the end lamp nearest its lamplighter's home (checked), and lamplighter speeds are
-   drawn from 1.00-1.08.
-3. **Walks that still do not fit are pushed back** (the later start moves in 50s): 19 citizens, at most 400 ticks. It is the
-   washers' line-to-wash-place walk (lines are 76-110 blocks from the canal's wash places) and a few errand/tavern legs.
-4. **Wanderers and loops.** For a `wander` the walk in is to its nearest place (the brief's order is random, so the first
-   stop is the Java's seeded pick; the data guarantees at least one is near), the walk out is from any place (all must be
-   in reach); a loop is left from any stop (all must be in reach); a round starts (`alt`) at the stop nearest where the
-   citizen comes from; night watchmen use the same stop for both rounds.
-5. **Errand routes: 31, not 7.** The 7 per-district routes (stall fronts for the market, else tavern_out + benches + a
-   few corner stands) are first; where a district's is too far for a transition (smiths 700 ticks, millers 800, ...) there are
-   24 local routes of the 4-7 eligible places nearest the citizen's workplace, so that every errand fits its gap. Eligible
-   places are shop_door, tavern_out, sit, stall_front and the stands. I also added about 30 errand-corner `stand` places (cap 2)
-   so that every workplace has at least 5 eligible places within 40 blocks.
-6. **Washers.** 7 per washplace. The canal washplace has 6 wash places on both banks of the Washers' Bridge; the race one has
-   6 on the race's south bank only (the north bank is cut off by the mills; the graph reaches it only the long way round).
+1. **Leading `0 home` is merged into the day's last `home`.** Read literally check 4 gives `0 home -> 600 carry` only
+   500 ticks (44 blocks) for the walk, and only 1 to 7 houses lie that close to the cranes, the race or the Choir. The day
+   wraps, so a schedule that starts with its first work segment and ends with `home` keeps the citizen at home from 06:00
+   until they set out, exactly as `0 home` meant. This is why most schedules have 3-6 segments and few start at 0.
+2. **Lamplighters.** (a) Their first `home` is at about 2300 (after the out round has finished), not 0: the out round carries
+   over midnight. (b) Check 6 can only pass at a run: the best cut of the 78 lamps into 8 tours leaves tours of 179-304
+   blocks, which at the 0.088 stroll need 2,000-3,500 ticks against a 2,300-tick window. So check 6 is measured at 0.135
+   (`RUN_PACE`, the game's lamplighter run) x the slowest lamplighter's speed (1.06); lamplighter speeds are drawn from
+   1.05-1.08. (c) A long tour's light round starts before 11200 (10,998 to 11,269 jitter included) so that it ends before
+   13600. Lamp rounds are `fix`ed: no walk pushes them. Each tour starts at the end lamp nearest its lamplighter's home
+   (checked), who lives within about 90 blocks of it.
+3. **Courier loops are compact on purpose** (checked by the stay rule: a runner stands at a tavern between the two rounds
+   and must have time to get there from the farthest stop and back): Roost, Association and 3 junctions, all within about
+   200 blocks of the north-bank tavern at the North Bridge (plot 253), which is the usual tavern of the 99 houses around it;
+   the runners live there (mean home to nearest stop 38 blocks).
+4. **Wanderers and loops.** The walk in to a wander is to its nearest place; the walk out is from any place (all must be in
+   reach); a loop is left from any stop; a round starts (`alt`) at the stop nearest where the citizen comes from; night
+   watchmen use the same stop for both rounds.
+5. **Errand routes: 41, not 7.** The 7 per-district routes (stall fronts for the market, else tavern_out + benches + a few
+   corner stands) come first; where one is too far for a transition (smiths 700 ticks, millers 800, the stays above) there
+   are 34 local routes of the 4-7 eligible places nearest the citizen's workplace or home. Eligible places are shop_door,
+   tavern_out, sit, stall_front and the stands. About 35 extra `stand` places (cap 2, at street corners) exist only to be
+   errand destinations, so every workplace and every home that needs one has at least 5 eligible places within 40-45 blocks.
+6. **Washers.** 7 per washplace. The canal washplace has 6 wash places on both banks of the Washers' Bridge; the race one
+   has 6 on the race's south bank only (the north bank is cut off by the mills; the graph reaches it only the long way round).
    Lanes across a lane/alley/street between plots are scarce near the canal, so there are **4 laundry lines (1 at the canal,
-   3 at the race)**, all within 40 blocks of a wash place; 12 wash places and 4 lines (cap 2) cannot seat 14 washers at
-   once, so: the washers whose wash place is nearest a line are *hangers* (line segments 2800 and 8200 as in the template),
-   the others only wash, and the 7th of each washplace is a *tender* who stands at a line while the hangers are at their
-   wash places and takes the first hanger's wash place while they hang.
+   3 at the race)**, all within 40 blocks of a wash place. 12 wash places and 4 lines (cap 2) cannot seat 14 washers at
+   once, so: the washers whose wash place is nearest a line are *hangers* (line at 2800 and 8200 as in the template), the
+   others only wash, and the 7th of each washplace is a *tender* who stands at a line while the hangers are at their wash
+   places and takes the first hanger's wash place while they hang.
 7. **Bakeries.** The second baker of a bakery is `inside` the bakery door where the template says `stand bakery front`
-   (the front is cap 1). The quay and bellwatch bakeries are the plots that best meet "its nearest 2 stall fronts are within a
-   123-block walk of its front" (the carry -> front leg of check 4).
-8. **Taverns.** A citizen's `tavern` is their nearest tavern_out by walking (children: -1). When it is full the next
-   nearest of the three (within 60 blocks of the nearest's distance) is used, else `inside` the usual tavern's door
-   (53 of 150 visits). Tavernkeepers stand at their own.
+   (the front is cap 1). The quay and bellwatch bakeries are the plots that best meet "its nearest 2 stall fronts are
+   within a 123-block walk of its front".
+8. **Taverns.** A citizen's `tavern` is their nearest tavern_out by walking (children: -1). When it is full the next nearest
+   of the three (within 60 blocks of the nearest's distance) is used, else `inside` the usual tavern's door (65 of 144 visits).
 9. **Patrol loops.** 6 of the 12 patrol routes are real loops of 5-6 junction stops; the other 6 could not close within 25-60
    by graph, so they run out and back along a street: 5 distinct stops listed as `s0 s1 s2 s3 s4 s3 s2 s1` (8 entries; the
-   loop closes `s1 -> s0`). 7 day watchmen and 10 night watchmen walk them (2 on some). The scout loop (Mira) is the three
-   gate posts and four Wallring stands by angle. All 4 landmark places (roost, association, choir, market_hall) exist;
-   the choir and market_hall ones are not used by any schedule.
+   loop closes `s1 -> s0`). 7 day watchmen and 10 night watchmen walk them. The scout loop (Mira) is the three gate posts
+   and four Wallring stands by angle. Crier loops run Choir post, then two neighbouring district plazas (ring order
+   bellwatch, quay, works, garden, terrace). All 4 landmark places (roost, association, choir, market_hall) exist; the choir
+   and market_hall ones are not used by any schedule.
 10. **Names.** The brief's surname list has 64; 91 households need their own, so `FAMILIES_EXTRA` adds 30 in the same vein
     (5 related pairs share a surname, picked among households whose homes are within 45 blocks). Named citizens have family
     "" and a household of one.
-11. **Places.** `node` for a non-door place is the nearest *junction* node (not a door or landmark node, which are for going
-    inside) by walking over walkable cells. Crossed-by-LOWQUAY cells are not walkable (they sit 4 below the street, with
-    ladders), so washplaces, quay and taverns avoid the lower quay; bridge decks (over water or lowquay) are walkable.
-    "Narrow street" for the lane rule = a LANE/ALLEY cell, or a cell on any plan street narrower than 6, or less than 6 open
-    cells across. `ref` is -1 except for door (plot id), landmark/bell/post (landmark id), lamp (lamp index),
-    stall_keeper/stall_front (stall index), anvil/tavern_out/shop_door/bakery-front stand (plot id).
-    The stalls' `colour` is an awning index 0-7 (no two neighbours alike). `bells`: ringers stand on the tower's south face.
-    Coordinates in `smithies.block`, `washplaces.tub`, `quay.crates` and `lines.a/b` are integer cell coordinates (x, ry, z with
-    ry = the ground's ry; the anvil/cauldron/crate sits on top), not block centres.
-12. **`work`**: a place id for bellringer (bell), stallkeeper (stall_keeper), baker (bakery door), smith (anvil), gate watch (post),
-    boatman (pickup), washer (their wash place), mason (yard), shopkeeper (shop door), tavernkeeper (tavern door),
-    clerk/archivist/healer (association landmark), miller (mill); a route id for lamplighter (lamp route), porter (the drops route),
-    patrol/night/scout watch, crier and runner (courier route); -1 for children and residents. The child's `play` route and the
-    resident's bench are in the schedule only.
+11. **Places.** `node` for a non-door place is the nearest *junction* node by walking over walkable cells (door and landmark
+    nodes are for going inside), unless a spot would then be too far for the game (approach 1: at most 14 blocks from the node;
+    straight: at most 36), in which case the nearest node that fits (the two mills, in the end). The lower quay (4 below the
+    street, ladders) is not walkable ground; bridge decks are. "Narrow street" for the lane rule = a LANE/ALLEY cell, or a
+    cell on any plan street narrower than 6, or less than 6 open cells across. `ref` is -1 except for door (plot id),
+    landmark/bell/post (landmark id), lamp (lamp index), stall_keeper/stall_front (stall index), anvil/tavern_out/shop_door/
+    bakery-front stand (plot id). The stalls' `colour` is an awning index 0-7 (no two neighbours alike). Ringers stand on the
+    tower's south face. Coordinates in `smithies.block`, `washplaces.tub`, `quay.crates` and `lines.a/b` are integer cell
+    coordinates (x, ry, z with ry = the ground's ry; the anvil/cauldron/crate sits on top), not block centres.
+12. **`work`**: a place id for bellringer (bell), stallkeeper (stall_keeper), baker (bakery door), smith (anvil), gate watch
+    (post), boatman (pickup), washer (their wash place), mason (yard), shopkeeper (shop door), tavernkeeper (tavern door),
+    clerk/archivist/healer (association landmark), miller (mill); a route id for lamplighter (lamp route), porter (the drops
+    route), patrol/night/scout watch, crier and runner (courier route); -1 for children and residents. The child's `play`
+    route and the resident's bench are in the schedule only.
 13. Citizens' ids are ordered by job (lamplighters 0-7, bellringers 8-14, ...). Oren is smith 63, Mira 71, Teodor 194, Sun 196.
     Healers other than Sun have their whole day shifted by a seeded +-600 (rounded to 100) before the usual jitter.

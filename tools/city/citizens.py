@@ -16,8 +16,9 @@ Where the brief's templates could not hold as written (the brief's own checks ar
   * walks that still overrun their gap push the later start back in 50s (and stay within a few hundred ticks);
   * wanderers (errands, play) are reached at their nearest place and left from any of them; loops are left from any
     stop; a round's start is the stop nearest where the citizen comes from;
-  * lamp rounds are timed at the plan's walking pace (0.215 blocks a tick), not the 0.088 stroll: 78 lamps cannot be
+  * lamp rounds are timed at a run (RUN_PACE 0.135 blocks a tick, the game's), not the 0.088 stroll: 78 lamps cannot be
     walked by 8 lamplighters at the stroll inside the dusk and dawn windows (the best split has tours of 180-300 blocks);
+    the light round of a long tour starts a little before 11200 so that it ends before 13600;
   * errand routes: the 7 per-district ones, plus local routes of the nearest eligible places where a district's is too far;
   * junction stands for patrols and couriers are the nearest standing cells to the junction that keep clear of the
     streets' centre lines; patrol loops that cannot close are walked out and back (a stop repeats in the list).
@@ -52,6 +53,7 @@ WALKABLE = {AVENUE, STREET, LANE, ALLEY, SQUARE, PLAZA, QUAY, STAIR, RING, TRAIN
 WATER = {RIVER, CANAL, WATERGATE, RACE}
 WALK = 4.3            # blocks per second the plan's edge seconds were made with
 STROLL = 0.088        # blocks per tick a citizen strolls at (speed 1.0)
+RUN_PACE = 0.135      # blocks per tick lamplighters (and runners on their courier round) go at (speed 1.0)
 DAY = 24000
 
 JOBS = ['lamplighter', 'bellringer', 'porter', 'stallkeeper', 'baker', 'smith', 'watch', 'crier', 'boatman', 'washer',
@@ -454,6 +456,13 @@ class Builder:
         mid = min(spots, key=lambda s: (math.hypot(s[0] - cx, s[1] - cz), spots.index(s)))
         if node is None:
             node, _ = c.nearest_node(mid[0], mid[1])
+            if not self.reach_ok(node, spots):
+                # the nearest node is too far from a spot for the game to path the last blocks: the nearest that is not
+                for alt in sorted((n for n in c.main if c.nodes[n][3] == 'junction'),
+                                  key=lambda n: (math.hypot(c.nodes[n][0] - mid[0], c.nodes[n][2] - mid[1]), n))[:60]:
+                    if self.reach_ok(alt, spots):
+                        node = alt
+                        break
         approach = max(c.approach(node, s) for s in spots)
         pid = len(self.places)
         self.places.append({'kind': kind, 'node': node, 'x': mid[0], 'z': mid[1], 'ry': c.lift_at(mid[0], mid[1]),
@@ -463,6 +472,12 @@ class Builder:
             for s in spots:
                 self.used.add(c.cell(s[0], s[1]))
         return pid
+
+    def reach_ok(self, node, spots):
+        """A straight way from the node to every spot may be up to 36 blocks long; one the game must path, 14."""
+        nd = self.c.nodes[node]
+        far = max(math.hypot(s[0] - nd[0], s[1] - nd[2]) for s in spots)
+        return far <= (36.0 if all(self.c.approach(node, s) == 0 for s in spots) else 14.0)
 
     def free(self, x, z):
         return self.c.cell(x, z) not in self.used
@@ -1163,27 +1178,34 @@ class Builder:
     def build_errand_corners(self):
         """Places to run errands to: wherever fewer than 5 eligible places lie within 40 blocks' walk of a workplace, add
         stands (cap 2) at the nearest street corners until there are."""
-        c = self.c
         anchors = [s_['anvil'] for s_ in self.smithies] + list(self.mill_places) + list(self.yard_places) + list(self.quay_pickups) \
             + [w['places'][0] for w in self.washplaces] + [ln['place'] for ln in self.lines] \
             + [self.landmark('association'), self.landmark('choir')] + [s_['keeper'] for s_ in self.stalls] \
             + [b['place'] for b in self.bells] + [sh['stand'] for sh in self.shops[::6]]
-        pool = [n for n in self.junctions(lambda x, z, d: True) if self.junction_stand(n) is not None]
         for a in anchors:
-            row = c.row(self.places[a]['node'])
-            stands = [p for p in self._jstand.values() if p is not None]
-            have = sum(1 for p, pl in enumerate(self.places) if (pl['kind'] in ('tavern_out', 'sit', 'shop_door', 'stall_front') or p in stands)
-                       and self.wd(p, a) <= 40)
-            if have >= 5:
+            self.ensure_corners(a, 40.0, 5)
+
+    def ensure_corners(self, a, radius, need):
+        """At least `need` eligible places within `radius` blocks' walk of place a (a place id or a house door): corner
+        stands (cap 2), 12 apart, are added at the nearest street corners if there are fewer."""
+        c = self.c
+        if not hasattr(self, '_corner_pool'):
+            self._corner_pool = [n for n in self.junctions(lambda x, z, d: True) if self.junction_stand(n) is not None]
+        row = c.row(self.pn(a))
+        ca = self.cost(a)
+        stands = [p for p in self._jstand.values() if p is not None]
+        have = sum(1 for p, pl in enumerate(self.places) if (pl['kind'] in ('tavern_out', 'sit', 'shop_door', 'stall_front') or p in stands)
+                   and self.wd(p, a) <= radius)
+        if have >= need:
+            return
+        for n in sorted((n for n in self._corner_pool if n not in self._jstand), key=lambda n: (row[self.snode(n)], n)):
+            if have >= need or row[self.snode(n)] + ca > radius - 2:
+                break
+            # keep new corners 12 apart from the ones already there
+            if any(self.gd(n, m) < 12 for m in self._jstand if self._jstand[m] is not None and abs(c.nodes[m][0] - c.nodes[n][0]) < 14 and abs(c.nodes[m][2] - c.nodes[n][2]) < 14):
                 continue
-            for n in sorted((n for n in pool if n not in self._jstand), key=lambda n: (row[self.snode(n)], n)):
-                if have >= 5 or row[self.snode(n)] + self.cost(a) > 38:
-                    break
-                # keep new corners 12 apart from the ones already there
-                if any(self.gd(n, m) < 12 for m in self._jstand if self._jstand[m] is not None and abs(c.nodes[m][0] - c.nodes[n][0]) < 14 and abs(c.nodes[m][2] - c.nodes[n][2]) < 14):
-                    continue
-                self.stand_at_node(n)
-                have += 1
+            self.stand_at_node(n)
+            have += 1
 
     def build_scout_courier(self):
         c = self.c
@@ -1202,7 +1224,7 @@ class Builder:
         self.scout = [p for _, p in sorted(gates + pts, key=lambda t: (t[0] + 90) % 360)]
         # couriers: Roost, Association, then 3-4 junction stands, loop
         roost, assoc = self.landmark('roost'), self.landmark('association')
-        specs = [[(-100, -12), (0, -70), (-60, 60)], [(70, -120), (150, -30), (40, 40)], [(0, 0), (-100, 60), (40, 150), (-150, 40)]]
+        specs = [[(-138, -108), (-95, -100), (-40, -105)], [(-120, -140), (-90, -130), (-60, -160)], [(-110, -80), (-95, -160), (-50, -140)]]
         self.courier = []
         pool = self.junctions(lambda x, z, d: self.junction_stand(c.nearest_node(x, z)[0]) is not None)
         pool = [n for n in pool if self.junction_stand(n) is not None]
@@ -1292,7 +1314,7 @@ class Builder:
                 j = i + sz
                 if j > n:
                     break
-                cost = seglen(i, j) + 3.6 * sz
+                cost = seglen(i, j) / (RUN_PACE * 1.07) + 40 * sz     # ticks of a light round
                 sub = f(j, r - 1)
                 val = max(cost, sub[0])
                 if val < bst[0] - 1e-9:
@@ -1333,13 +1355,11 @@ class Builder:
         self.patrol_routes = [self.add_route('patrol', p['places']) for p in self.patrols]
         self.scout_route = self.add_route('scout', self.scout)
         rcentre = {d['key']: d['id'] for d in c.P['districts']}
-        order = ['bellwatch', 'quay', 'terrace', 'garden', 'works']
+        order = ['bellwatch', 'quay', 'works', 'garden', 'terrace']   # a ring, so each loop visits two neighbouring plazas
         self.crier_routes = []
         for k in range(5):
-            a, b = order[k], order[(k + 2) % 5]
-            pa = self.crier_plaza[a][0]
-            pb = self.crier_plaza[b][1]
-            self.crier_routes.append(self.add_route('crier', [self.crier_first[k], pa, pb]))
+            a, b = order[k], order[(k + 1) % 5]
+            self.crier_routes.append(self.add_route('crier', [self.crier_first[k], self.crier_plaza[a][0], self.crier_plaza[b][1]]))
         self.courier_routes = [self.add_route('courier', stops) for stops in self.courier]
         # the porters' drops: all ten stall fronts in a walk around the square; one per bakery: its two nearest fronts
         fronts = [s['front'] for s in self.stalls]
@@ -1368,14 +1388,14 @@ class Builder:
             self.district_errand[dk] = self.add_route('errand', pl)
         self._errand_cache = {tuple(sorted(r['places'])): r['id'] for r in self.routes if r['kind'] == 'errand'}
 
-    def errand_route(self, all_a, any_group):
+    def errand_route(self, all_a, each_a):
         """An errand route (a district's, else a local one of the nearest eligible places) with every place within the
-        limit of every anchor in all_a [(place, blocks)] and at least one place within the limit of every anchor in
-        any_group (the walk into the errand is to its first, nearest place). None if there is no such route."""
+        limit of every anchor in all_a [(place, blocks)] (the walk out of it) and, for every anchor in each_a, at least one
+        place within its limit (the walk in is to the nearest place). None if there is no such route."""
         def fits(pl):
             if not all(self.wd(p, a) <= lim for p in pl for a, lim in all_a):
                 return False
-            return not any_group or any(all(self.wd(p, a) <= lim for a, lim in any_group) for p in pl)
+            return all(any(self.wd(p, a) <= lim for p in pl) for a, lim in each_a)
         for rid in [r_['id'] for r_ in self.routes if r_['kind'] == 'errand']:
             if fits(self.routes[rid]['places']):
                 return rid
@@ -1383,14 +1403,15 @@ class Builder:
         ok = [p for p in el if all(self.wd(p, a) <= lim for a, lim in all_a)]
         if len(ok) < 4:
             return None
-        anchors = list(all_a) + list(any_group)
-        first = [p for p in ok if all(self.wd(p, a) <= lim for a, lim in any_group)]
-        if any_group and not first:
-            return None
         pick = []
-        if first:
-            first.sort(key=lambda p: (sum(self.wd(p, a) for a, _ in any_group), p))
-            pick.append(first[0])
+        for a, lim in each_a:
+            if any(self.wd(p, a) <= lim for p in pick):
+                continue
+            near = sorted((p for p in ok if self.wd(p, a) <= lim), key=lambda p: (self.wd(p, a), p))
+            if not near:
+                return None
+            pick.append(near[0])
+        anchors = list(all_a) + list(each_a)
         rest = sorted((p for p in ok if p not in pick), key=lambda p: (sum(self.wd(p, a) for a, _ in anchors), p))
         pick += rest[:7 - len(pick)]
         cx = sum(self.places[p]['x'] for p in pick) / len(pick)
@@ -1402,8 +1423,6 @@ class Builder:
         rid = self.add_route('errand', pick)
         self._errand_cache[key] = rid
         return rid
-
-
 
 
 # ======================================================================================================================
@@ -1419,8 +1438,9 @@ NAMED = {('smith', 0): ('oren', 2), ('watch', 0): ('mira', 1), ('archivist', 0):
 NAMED_GIVEN = {'oren': 'Oren', 'mira': 'Mira', 'teodor': 'Teodor', 'sun': 'Sun'}
 
 
-def S(start, act, target=-1, alt=-1, dwell=0, flags=0, tag=''):
-    return {'s': start, 'a': act, 't': target, 'alt': alt, 'd': dwell, 'f': flags, 'tag': tag}
+def S(start, act, target=-1, alt=-1, dwell=0, flags=0, tag='', fix=False):
+    """One segment. `fix`: its start may not be pushed later (the lamp rounds are timed by dusk and dawn)."""
+    return {'s': start, 'a': act, 't': target, 'alt': alt, 'd': dwell, 'f': flags, 'tag': tag, 'fix': fix}
 
 
 class Population:
@@ -1457,7 +1477,7 @@ class Population:
             if job == 'runner':
                 cit['speed'] = 1.0
             if job == 'lamplighter':
-                cit['speed'] = round(r.uniform(1.0, 1.08), 2)
+                cit['speed'] = round(r.uniform(1.05, 1.08), 2)
             cits.append(cit)
             return cit
         for i in range(8):
@@ -1548,9 +1568,11 @@ class Population:
         sg = []
         if job == 'lamplighter':
             r = B.lamp_clusters[cit['cluster']]['route']
+            # the light round starts at 11200 unless the tour is too long to end before 13600 (150 ticks to spare for jitter)
+            light = min(11200, int((13600 - 150 - B.route_len(r) / (RUN_PACE * cit['speed']) - 40 * len(B.routes[r]['places'])) // 50) * 50)
             sg = [S(2300, 'home', H), S(7000, 'wander', E, -1, ERRAND_DWELL, 0, 'err'), S(9000, 'home', H),
-                  S(11200, 'round', r, -2, 40, 2), S(14800, 'stand', T, tag='tav'), S(16800, 'home', H),
-                  S(23100, 'round', r, -2, 30, 0)]
+                  S(light, 'round', r, -2, 40, 2, fix=True), S(14800, 'stand', T, tag='tav'), S(16800, 'home', H),
+                  S(23100, 'round', r, -2, 30, 0, fix=True)]
         elif job == 'bellringer':
             bell = B.bells[cit['bell']]['place']
             sg = [S(7800, 'stand', bell), S(16300, 'home', H), S(23500, 'stand', bell)]
@@ -1693,53 +1715,143 @@ class Population:
             return None if sg['t'] is None else B.routes[sg['t']]['places']
         raise ValueError(a)
 
-    def margins(self, segs, speed, starts=None):
-        """[(margin_in_ticks, index_of_earlier_segment)] for every consecutive pair incl. the wrap; None entries (errand
-        placeholders) are skipped. starts: the (jittered) start times to use, default the segments' own."""
+    def xz(self, p):
+        if isinstance(p, tuple):
+            pl = self.c.plots[p[1]]
+            return pl['doorX'] + 0.5, pl['doorZ'] + 0.5
+        return self.B.places[p]['x'], self.B.places[p]['z']
+
+    def near_place(self, e, places):
+        """The place of a route nearest (straight line) to where a citizen is: a wander's first stop."""
+        x, z = self.xz(e)
+        return min(places, key=lambda q: (math.hypot(self.B.places[q]['x'] - x, self.B.places[q]['z'] - z), q))
+
+    def walk_ticks(self, ends, nxt, speed):
+        """Ticks to stroll from the farthest of `ends` to the next segment's start (the nearest place for a wander, the
+        nearest stop for a round whose start is still free). None while an errand is a placeholder."""
         B = self.B
+        s_ = self.starts(nxt)
+        if ends is None or s_ is None:
+            return None
+        if nxt['a'] == 'wander':
+            w = max(B.wd(e, self.near_place(e, s_)) for e in ends)
+        elif nxt['a'] == 'round' and nxt['alt'] in (-2, -3):
+            w = min(max(B.wd(x, y) for x in ends) for y in s_)
+        else:
+            w = max(B.wd(x, y) for x in ends for y in s_)
+        return w / (STROLL * speed)
+
+    def wander_ticks(self, ends, wand, nxt, speed):
+        """The walk in to a wander's first stop plus the walk on from it to the next start, in ticks, worst over where the
+        citizen starts from (None while the route is a placeholder)."""
+        B = self.B
+        places = self.starts(wand)
+        s_ = self.starts(nxt)
+        if ends is None or places is None or s_ is None:
+            return None
+        worst = 0.0
+        for e in ends:
+            p = self.near_place(e, places)
+            if nxt['a'] == 'round' and nxt['alt'] in (-2, -3):
+                out = min(B.wd(p, y) for y in s_)
+            else:
+                out = max(B.wd(p, y) for y in s_)
+            worst = max(worst, B.wd(e, p) + out)
+        return worst / (STROLL * speed)
+
+    def margins(self, segs, speed, starts=None, kinds=False):
+        """[(margin_in_ticks, index)] over the day, errand placeholders skipped. Per pair of consecutive segments (index =
+        the earlier): the walk from the earlier's last place to the next start must fit the earlier's duration (less 100,
+        except after a round/carry/wander, which can be anywhere on its route: then the walk is from the farthest stop).
+        Per run (round/carry/wander, then a stay at a place, then whatever follows; index = the stay): the farthest stop's
+        walk to the stay, 200 ticks standing and the walk on must fit the stay's duration. starts: the (jittered) start
+        times to use, default the segments' own."""
         n = len(segs)
         out = []
         st = starts if starts is not None else [q['s'] for q in segs]
         for i in range(n):
             a, b = segs[i], segs[(i + 1) % n]
-            e, s_ = self.ends(a), self.starts(b)
-            if e is None or s_ is None:
+            walk = self.walk_ticks(self.ends(a), b, speed)
+            if walk is None:
+                if a['a'] == 'wander' and b['a'] in ('home', 'inside', 'stand') and n > 2:
+                    # an errand still to be chosen: at the very least the stay after it must fit its own walk on
+                    w2 = self.walk_ticks(self.ends(b), segs[(i + 2) % n], speed)
+                    if w2 is not None:
+                        m2 = ((st[(i + 2) % n] - st[(i + 1) % n]) % DAY or DAY) - w2 - 200 - 900   # 900: a nearby errand's return
+                        out.append((m2, (i + 1) % n, 'stay') if kinds else (m2, (i + 1) % n))
                 continue
             gap = (st[(i + 1) % n] - st[i]) % DAY
-            if n == 1:
-                gap = DAY
-            if (b['a'] == 'round' and b['alt'] in (-2, -3)) or b['a'] == 'wander':
-                walk = min(max(B.wd(x, y) for x in e) for y in s_) / (STROLL * speed)
-            else:
-                walk = max(B.wd(x, y) for x in e for y in s_) / (STROLL * speed)
             allow = gap - (0 if a['a'] in ('round', 'carry', 'wander') else 100)
-            out.append((allow - walk, i))
+            out.append((allow - walk, i, 'walk') if kinds else (allow - walk, i))
+            if b['a'] == 'wander' and n > 2:
+                # into the first stop, 100 ticks there and on to the next target must fit the wander
+                ww = self.wander_ticks(self.ends(a), b, segs[(i + 2) % n], speed)
+                if ww is not None:
+                    m2 = ((st[(i + 2) % n] - st[(i + 1) % n]) % DAY or DAY) - ww - 100
+                    out.append((m2, (i + 1) % n, 'stay') if kinds else (m2, (i + 1) % n))
+            elif a['a'] in ('round', 'carry', 'wander') and b['a'] in ('home', 'inside', 'stand') and n > 2:
+                c_ = segs[(i + 2) % n]
+                w2 = self.walk_ticks(self.ends(b), c_, speed)
+                if w2 is not None:
+                    dur = (st[(i + 2) % n] - st[(i + 1) % n]) % DAY or DAY
+                    m2 = dur - w2 - walk - 200
+                    out.append((m2, (i + 1) % n, 'stay') if kinds else (m2, (i + 1) % n))
         return out
 
     def deficit(self, segs, speed):
         """Total ticks by which the day's walks overrun their gaps (errand placeholders skipped)."""
         return sum(-m for m, _ in self.margins(segs, speed) if m < 0)
 
-    def push(self, segs, speed, limit=1500):
-        """Moves later starts back (in 50s) until every walk fits its gap, never past the next start; returns the
-        segments (copied) or None. Stands for \"people who live farther away set out earlier / arrive a little later\"."""
+    def push(self, segs, speed, limit=1500, slack=0):
+        """Moves later starts back (in 50s, taking later starts along) until every walk fits its gap (with `slack` ticks to
+        spare); returns the segments (copied) or None. Stands for people who live farther away setting out earlier or
+        arriving a little later."""
         segs = [dict(q) for q in segs]
         n = len(segs)
         moved = 0
-        for _ in range(60):
-            mg = [(m, i) for m, i in self.margins(segs, speed) if m < 0]
+        for _ in range(300):
+            mg = [t for t in self.margins(segs, speed, kinds=True) if t[0] < slack]
             if not mg:
                 return segs
-            m, i = min(mg, key=lambda t: t[1])
+            m, i, kind = min(mg, key=lambda t: (t[1], t[2]))
+            shift = int(math.ceil((slack - m) / 50.0)) * 50
+            if kind == 'stay':
+                # a stay too short for the walks round it: first try setting out for it earlier (the route before it has
+                # time to spare), else the segment after it starts later
+                walk_m = next((t[0] for t in self.margins(segs, speed, kinds=True) if t[1] == (i - 1) % n and t[2] == 'walk'), 0)
+                prev_s = segs[(i - 1) % n]['s']
+                room = min(walk_m, segs[i]['s'] - prev_s - 200) if i > 0 else 0
+                early = int(min(shift, room) // 50) * 50
+                if early >= 50:
+                    segs[i]['s'] -= early
+                    moved += early
+                    if moved > limit:
+                        return None
+                    continue
             j = (i + 1) % n
-            shift = int(math.ceil(-m / 50.0)) * 50
+            if segs[j].get('fix'):
+                # a fixed start: the stay before it begins earlier instead, if the day allows
+                if i > 0 and segs[i]['s'] - shift >= segs[i - 1]['s'] + 200 and kind == 'walk':
+                    segs[i]['s'] -= shift
+                    moved += shift
+                    continue
+                return None
             moved += shift
-            top = segs[(j + 1) % n]['s'] - 200 if (j + 1) % n != 0 else DAY - 100
-            if j == n - 1:
-                top = DAY - 100
-            if moved > limit or segs[j]['s'] + shift > top or (j == 0 and segs[j]['s'] + shift > segs[1 % n]['s'] - 200):
+            if moved > limit:
                 return None
             segs[j]['s'] += shift
+            k = j
+            while True:
+                nk = (k + 1) % n
+                if nk == 0 or nk == j:
+                    break
+                if segs[nk]['s'] < segs[k]['s'] + 200:
+                    segs[nk]['s'] = segs[k]['s'] + 200
+                    k = nk
+                else:
+                    break
+            if segs[n - 1]['s'] > DAY - 100 or (j == 0 and n > 1 and segs[0]['s'] > segs[1]['s'] - 200):
+                return None
         return None
 
     # -- work assignments that need the routes ----------------------------------------------------------------------------------
@@ -1811,7 +1923,7 @@ class Population:
             return 0.0
         return min(self.B.wd(a, ('h', plot)) for a in an)
 
-    def allowed_homes(self, cit, pool, extra=300, pre=200.0, commute_cap=150.0):
+    def allowed_homes(self, cit, pool, extra=300, pre=200.0, commute_cap=125.0):
         """Plots at which the citizen's day fits after pushing starts back by at most (the least any home needs) + extra
         ticks: [(deficit, commute, plot)] best first. Errand placeholders are skipped."""
         sp = cit['speed']
@@ -1827,13 +1939,16 @@ class Population:
                 if min(dd[0], dd[-1]) > min(dd) + 0.05:
                     continue
             sg = self.segments(cit, ('h', plot))
+            if lamp_pl is not None and any(m < 0 and sg[(i + 1) % len(sg)].get('fix') for m, i, _ in self.margins(sg, sp, kinds=True)):
+                continue
             rows.append((self.deficit(sg, sp), com, plot))
         if not rows:
             return []
+        capped = [r for r in rows if r[1] <= commute_cap]
+        if len(capped) >= 8:
+            rows = capped
         base = min(r[0] for r in rows)
-        near = [r for r in rows if r[0] <= base + extra]
-        within = [r for r in near if r[1] <= commute_cap]
-        out = within if len(within) >= 8 else near
+        out = [r for r in rows if r[0] <= base + extra]
         out.sort()
         return out
 
@@ -2212,7 +2327,7 @@ class Population:
         return -1
 
     # -- the final days: errands, round starts, pushes, jitter, caps ---------------------------------------------------------------
-    def errand_anchors(self, sg, i, speed, factor):
+    def errand_anchors(self, sg, i, speed, factor, stay=True):
         """(all_a, any_group): limits every errand place must meet (the walk out to the next target) and the limits the
         nearest place must meet together (the walk in from the previous one)."""
         n = len(sg)
@@ -2220,14 +2335,21 @@ class Population:
         gap_prev = (sg[i]['s'] - prev['s']) % DAY
         gap_next = (nxt['s'] - sg[i]['s']) % DAY
         allow_prev = gap_prev - (0 if prev['a'] in ('round', 'carry', 'wander') else 100)
-        any_g, all_a = [], []
+        all_a, each_a = [], []
         pe = self.ends(prev)
         if pe is not None:
-            any_g = [(e, max(1.0, allow_prev) * STROLL * speed * factor) for e in pe]
+            each_a = [(e, max(1.0, allow_prev) * STROLL * speed * factor) for e in pe]
         ns = self.starts(nxt)
         if ns is not None:
-            all_a = [(s_, max(1.0, gap_next) * STROLL * speed * factor) for s_ in ns]
-        return all_a, any_g
+            room = gap_next
+            if stay and nxt['a'] in ('home', 'inside', 'stand'):
+                # the stay after an errand must also fit the walk in, 200 ticks standing and the walk on
+                nn = sg[(i + 2) % n]
+                w2 = self.walk_ticks(self.ends(nxt), nn, speed)
+                if w2 is not None:
+                    room = min(room, ((nn['s'] - nxt['s']) % DAY or DAY) - 200 - w2)
+            all_a += [(s_, max(1.0, room) * STROLL * speed * factor) for s_ in ns]
+        return all_a, each_a
 
     def assign_errands(self, cit, sg):
         B = self.B
@@ -2235,10 +2357,24 @@ class Population:
             if q['tag'] != 'err' or q['t'] is not None:
                 continue
             rid = None
-            for factor in (0.9, 1.0, 1.6, 3.0):
-                rid = B.errand_route(*self.errand_anchors(sg, i, cit['speed'], factor))
-                if rid is not None:
+            # a route that also leaves the stay after it long enough; else any that fits the gap (the stay is then pushed)
+            for attempt in range(2):
+                for factor in (0.9, 1.0):
+                    rid = B.errand_route(*self.errand_anchors(sg, i, cit['speed'], factor, True))
+                    if rid is not None:
+                        break
+                if rid is not None or attempt:
                     break
+                # none near enough: make corner stands near the closest anchor (the home, usually) and look again
+                anchors = self.errand_anchors(sg, i, cit['speed'], 0.9, True)[0]
+                if anchors:
+                    a_, lim = min(anchors, key=lambda t: t[1])
+                    B.ensure_corners(a_, min(lim, 45.0), 5)
+            if rid is None:
+                for factor, stay in ((0.9, False), (1.0, False), (1.6, False), (3.0, False)):
+                    rid = B.errand_route(*self.errand_anchors(sg, i, cit['speed'], factor, stay))
+                    if rid is not None:
+                        break
             assert rid is not None, f'no errand route for citizen {cit["id"]} ({cit["job"]})'
             q['t'] = rid
         return sg
@@ -2311,7 +2447,7 @@ class Population:
             sg = self.assign_round_starts(cit, sg)
             pushed = self.push(sg, cit['speed'])
             if pushed is None:
-                pushed = self.push(sg, cit['speed'], limit=4000)
+                pushed = self.push(sg, cit['speed'], limit=8000)
             assert pushed is not None, f'citizen {cit["id"]} ({cit["job"]}) cannot make their day'
             cit['pushed'] = max(q2['s'] - q1['s'] for q1, q2 in zip(sg, pushed))
             sg = pushed
@@ -2630,7 +2766,6 @@ def generate(verbose=False):
 # ======================================================================================================================
 #  checks, stats, preview
 # ======================================================================================================================
-BRISK = 0.215     # blocks per tick: the plan's own walking pace (4.3 blocks/s); lamplighters make their rounds at it
 
 
 class Checker:
@@ -2765,9 +2900,18 @@ class Checker:
                 for b in range(a + 1, len(sp)):
                     if math.hypot(sp[a][0] - sp[b][0], sp[a][1] - sp[b][1]) < 0.9:
                         errs.append(f'place {pid} spots closer than 0.9')
+            ap = max(C.approach(pl['node'], s_) for s_ in pl['spots'])
+            nd = C.nodes[pl['node']]
+            far = max(math.hypot(s_[0] - nd[0], s_[1] - nd[2]) for s_ in pl['spots'])
+            if far > (36.0 if ap == 0 else 14.0):
+                errs.append(f'place {pid} ({kind}) spots are {far:.1f} from the node with approach {ap}')
             if kind not in ('door', 'landmark') and C.nearest_node(pl['x'], pl['z'])[0] != pl['node']:
-                errs.append(f'place {pid} ({kind}) node is not the nearest by walking')
-            ap = max(C.approach(pl['node'], s) for s in pl['spots'])
+                nn = C.nearest_node(pl['x'], pl['z'])[0]
+                nnd = C.nodes[nn]
+                nfar = max(math.hypot(s_[0] - nnd[0], s_[1] - nnd[2]) for s_ in pl['spots'])
+                nap = max(C.approach(nn, s_) for s_ in pl['spots'])
+                if nfar <= (36.0 if nap == 0 else 14.0):
+                    errs.append(f'place {pid} ({kind}) node is not the nearest by walking')
             if ap != pl['approach']:
                 errs.append(f'place {pid} approach flag')
         ap1 = sum(1 for p in self.pl if p['approach'])
@@ -2792,21 +2936,43 @@ class Checker:
             return [self.routes[t]['places'][alt]]
         return self.routes[t]['places']
 
+    def near_place(self, e, places):
+        x, z = self.pl[e]['x'], self.pl[e]['z']
+        return min(places, key=lambda q: (math.hypot(self.pl[q]['x'] - x, self.pl[q]['z'] - z), q))
+
+    def starts_to(self, p, nxt):
+        """Walk from place p to the next segment's start (nearest stop of a round, any for the rest), blocks."""
+        s_ = self.starts(nxt)
+        return max(self.wd(p, y) for y in s_)
+
+    def walk_ticks(self, e, nxt, speed):
+        s_ = self.starts(nxt)
+        if ACTS[nxt[1]] == 'wander':
+            w = max(self.wd(x, self.near_place(x, s_)) for x in e)
+        else:
+            w = max(self.wd(x, y) for x in e for y in s_)
+        return w / (STROLL * speed)
+
     def margins(self, q):
         sg = self.o['schedules'][q['id']]
         n = len(sg)
         out = []
+        moving = ('round', 'carry', 'wander')
         for i in range(n):
             a, b = sg[i], sg[(i + 1) % n]
             gap = (b[0] - a[0]) % DAY
-            e, s_ = self.ends(a), self.starts(b)
-            if ACTS[b[1]] == 'wander':
-                walk = min(max(self.wd(x, y) for x in e) for y in s_)
-            else:
-                walk = max(self.wd(x, y) for x in e for y in s_)
-            walk /= STROLL * q['speed']
-            allow = gap - (0 if ACTS[a[1]] in ('round', 'carry', 'wander') else 100)
-            out.append((allow - walk, i))
+            walk = self.walk_ticks(self.ends(a), b, q['speed'])
+            allow = gap - (0 if ACTS[a[1]] in moving else 100)
+            out.append((allow - walk, i, 'walk'))
+            c_ = sg[(i + 2) % n]
+            dur = (c_[0] - b[0]) % DAY or DAY
+            if ACTS[b[1]] == 'wander' and n > 2:
+                places = self.starts(b)
+                worst = max(self.wd(e, self.near_place(e, places)) + self.starts_to(self.near_place(e, places), c_) for e in self.ends(a))
+                out.append((dur - worst / (STROLL * q['speed']) - 100, (i + 1) % n, 'stay'))
+            elif ACTS[a[1]] in moving and ACTS[b[1]] in ('home', 'inside', 'stand') and n > 2:
+                w2 = self.walk_ticks(self.ends(b), c_, q['speed'])
+                out.append((dur - w2 - walk - 200, (i + 1) % n, 'stay'))
         return out
 
     # 3 ----------------------------------------------------------------------------------------------------------------
@@ -2849,7 +3015,7 @@ class Checker:
                 errs.append(f'citizen {q["id"]} schedule not strictly sorted')
             if not all(0 <= s_[0] < DAY for s_ in sg):
                 errs.append(f'citizen {q["id"]} start out of the day')
-            for m, i in self.margins(q):
+            for m, i, kind in self.margins(q):
                 worst.append((m, q['id'], JOBS[q['job']], i))
                 if m < 0:
                     errs.append(f'citizen {q["id"]} ({JOBS[q["job"]]}) segment {i}: {m:.0f} ticks')
@@ -2908,7 +3074,7 @@ class Checker:
                 if ACTS[seg[1]] != 'round':
                     continue
                 pl = self.routes[seg[2]]['places']
-                walk = sum(self.wd(a, b) for a, b in zip(pl, pl[1:])) / (BRISK * slow)
+                walk = sum(self.wd(a, b) for a, b in zip(pl, pl[1:])) / (RUN_PACE * slow)
                 dwell = seg[4] * len(pl)
                 finish = seg[0] + walk + dwell
                 if seg[5] & 2:
@@ -2926,7 +3092,7 @@ class Checker:
             if dd[0] > min(dd) + 0.05:
                 errs.append(f'lamplighter {q["id"]}: first lamp is not the nearest to home')
         longest = max(sum(self.wd(a, b) for a, b in zip(r['places'], r['places'][1:])) for r in lamp_routes)
-        return self.rec('6 lamps', not errs, f'78 lamps in 8 routes (longest tour {longest:.0f} blocks), at pace {BRISK}/tick x slowest speed {slow}: '
+        return self.rec('6 lamps', not errs, f'78 lamps in 8 routes (longest tour {longest:.0f} blocks), at the run {RUN_PACE}/tick x slowest speed {slow}: '
                         f'light round ends {worst_l:.0f} ticks before 13600, out round {worst_o:.0f} before 1800' +
                         ('; ' + '; '.join(errs[:5]) if errs else ''))
 
