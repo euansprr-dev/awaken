@@ -32,6 +32,10 @@ import org.joml.Vector3f;
  *       travelling pulse and the System's diamond on the inside of the wrist; it flares as the panel leaves it;</li>
  *   <li>the main hand (or the item in it) sinking out of view the way vanilla lowers it on an item swap.</li>
  * </ul>
+ * Closing gives the hands back at once: from the first tick of the close the events go through untouched (vanilla's
+ * re-equip raises the hands from where the menu left them, and every other hand hook runs again, so a cast or a move
+ * right after the menu draws its own hands); only the lowering forearm is still drawn here, and the off-hand item
+ * waits below until the forearm has gone.
  * {@link #emitter} is where the panel starts its unfold.
  */
 final class Wrist {
@@ -52,6 +56,8 @@ final class Wrist {
     private static final Matrix3f BASIS = new Matrix3f();
     private static final Vector3f X = new Vector3f(), Y = new Vector3f(), Z = new Vector3f(), T = new Vector3f(), TMP = new Vector3f();
     private static long drawnFrame = -1;
+    /** Client ticks since the close began (-1: not closing). From 1 the hands are vanilla's again. */
+    private static int closeTicks = -1;
     /** Autopilot: draw the arm with this skin (wide or slim) instead of the player's. */
     static PlayerSkin forcedSkin;
     private static float glow, flare;
@@ -98,7 +104,9 @@ final class Wrist {
     static void onHand(RenderHandEvent e) {
         HoloPanel p = HoloClient.wristPanel();
         if (p == null || !p.timeline.active() || p.anchor != HoloPanel.Anchor.WRIST) return;
-        e.setCanceled(true);
+        // from the first tick of a close the re-equip owns the hands' height: let the event (and the hooks after us) run
+        boolean handsBack = p.timeline.closing() && closeTicks >= 1;
+        if (!handsBack) e.setCanceled(true);
         Minecraft mc = Minecraft.getInstance();
         long frame = HoloClient.frame();
         if (frame == drawnFrame) return; // both hands fire; draw once
@@ -147,7 +155,35 @@ final class Wrist {
 
         // the main hand sinks out of view (vanilla's own transforms, at a lowered height)
         float drop = Math.min(1f, a);
-        if (drop < 0.999f) mainHand(e, ps, avatar, renderer, -side, drop, light, skin);
+        if (!handsBack && drop < 0.999f) mainHand(e, ps, avatar, renderer, -side, drop, light, skin);
+    }
+
+    /**
+     * The menu started closing: both hands go to vanilla's lowered re-equip height (where the menu left the main hand),
+     * so vanilla raises them from there.
+     */
+    static void handsBack() {
+        var player = Minecraft.getInstance().player;
+        if (player == null) return;
+        player.itemUsed(net.minecraft.world.InteractionHand.MAIN_HAND);
+        player.itemUsed(net.minecraft.world.InteractionHand.OFF_HAND);
+        closeTicks = 0;
+    }
+
+    /** Client tick start: counts the close's ticks (before the player's tick, so no frame sees a half-reset height). */
+    static void tickStart(boolean closing) {
+        if (!closing) {
+            closeTicks = -1;
+            return;
+        }
+        if (closeTicks < 0) handsBack(); // a close that didn't come through closeStatusPanel (the wrist demo)
+        closeTicks++;
+    }
+
+    /** Client tick end: while the forearm lowers, the off-hand item stays down (it would cross the forearm). */
+    static void tickEnd(boolean closing) {
+        var player = Minecraft.getInstance().player;
+        if (closing && player != null) player.itemUsed(net.minecraft.world.InteractionHand.OFF_HAND);
     }
 
     private static void mainHand(RenderHandEvent e, PlayerRenderState ps, AvatarRenderState avatar, AvatarRenderer<?> renderer,

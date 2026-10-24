@@ -73,6 +73,7 @@ public final class HoloClient {
         bus.addListener(EventPriority.LOWEST, RenderGuiLayerEvent.Pre.class, HudMotion::pre);
         bus.addListener(EventPriority.HIGHEST, RenderGuiLayerEvent.Post.class, HudMotion::post);
         bus.addListener(EventPriority.LOWEST, RenderGuiEvent.Post.class, HudMotion::endFrame);
+        bus.addListener(ClientTickEvent.Pre.class, e -> Wrist.tickStart(wristClosing()));
         bus.addListener(ClientTickEvent.Post.class, e -> onTick());
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> HoloPipelines.recheck());
@@ -129,7 +130,14 @@ public final class HoloClient {
 
     static void closeStatusPanel() {
         STATUS.timeline.hold(false);
+        boolean was = STATUS.timeline.active() && !STATUS.timeline.closing();
         STATUS.timeline.close();
+        if (was) Wrist.handsBack();
+    }
+
+    private static boolean wristClosing() {
+        HoloPanel w = wristPanel();
+        return w != null && w.anchor == HoloPanel.Anchor.WRIST && w.timeline.closing();
     }
 
     static void pressFlash(double x, double y) {
@@ -156,6 +164,7 @@ public final class HoloClient {
 
     private static void onTick() {
         HoloConfig.refresh();
+        Wrist.tickEnd(wristClosing());
         // tell the server which panel the wrist shows (it relays to whoever can see us, at most 4 a second)
         HoloKind want = STATUS.timeline.active() && !STATUS.timeline.closing() ? HoloKind.STATUS
                 : DEMO.anchor == HoloPanel.Anchor.WRIST && DEMO.timeline.active() && !DEMO.timeline.closing() ? HoloKind.STATUS : HoloKind.NONE;
