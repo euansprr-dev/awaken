@@ -1,7 +1,8 @@
 # The Awakened Body: every move mid-motion, in first and third person. The autopilot can't hold keys, so
 # "awaken body try <move> [delay]" makes the client press the move's keys itself (exactly the path real input takes).
 # One run per frame: a shot lands about (6 + wait - delay) ticks into the driver's script, so each frame is its own run.
-# A survival world (creative players can fly, so they never roll), a smooth-stone course at y 200 facing +z.
+# A survival world (creative players can fly, so they never roll), a smooth-stone course at y 200 facing +z. Fall damage
+# is off so a roll's frames show no hurt flash (the roll still happens: the fall event fires before the damage).
 world body survival 4242
 waitworld
 gui 0
@@ -21,7 +22,7 @@ cmd awaken admin rankup
 wait 40
 screen close
 cmd effect give @s minecraft:saturation 100000 10 true
-cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamerule fall_damage false
 cmd fill -12 199 -8 12 199 40 minecraft:smooth_stone
 cmd fill -12 200 -8 12 216 40 minecraft:air
 cmd tp @s 0.5 200 0.5 0 12
