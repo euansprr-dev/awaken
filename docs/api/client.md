@@ -381,13 +381,21 @@ if (body != null) {
 }
 ```
 - A subclass of `Mannequin` with its own `EntityType` gets a plain object on the client, not `ClientMannequin`, so it will not use
-  the avatar renderer. For a *moving* player-skinned mob, use your own `Mob` + `HumanoidMobRenderer<YourMob, AvatarRenderState, PlayerModel>`
-  with `new PlayerModel(ctx.bakeLayer(ModelLayers.PLAYER /* or PLAYER_SLIM */), slim)`, sync a `ResolvableProfile`
-  (`EntityDataSerializers.RESOLVABLE_PROFILE`), and in `extractRenderState` set
-  `state.skin = ctx.getPlayerSkinRenderCache().getOrDefault(profile).playerSkin();` and return `state.skin.body().texturePath()` from
-  `getTextureLocation` (that is what `AvatarRenderer` does).
+  the avatar renderer. For a *moving* player-skinned mob, use your own `Mob` + `dev.awaken.core.client.skin.SkinnedMobRenderer`
+  (SPEC §12), sync a `ResolvableProfile` (`EntityDataSerializers.RESOLVABLE_PROFILE`), and in `extractRenderState` call
+  `state.wear(ctx.getPlayerSkinRenderCache().getOrDefault(profile).playerSkin())` (texture and slim or wide).
+- **Never give a non-player renderer an `AvatarRenderState`** (e.g. `HumanoidMobRenderer<YourMob, AvatarRenderState, PlayerModel>`):
+  `EntityRenderDispatcher.submit` looks the renderer up from the state (`getRenderer(S)`), and any `AvatarRenderState` goes to the
+  vanilla player `AvatarRenderer` picked by `state.skin.model()`. Your renderer's `extractRenderState` runs (it is picked by entity
+  type) but its `submit`, `getTextureLocation`, `getRenderType`, `getModelTint`, `scale` and layers never do; the body draws
+  `state.skin` (default slim Steve unless set). A plain `HumanoidModel` on `ModelLayers.PLAYER`/`PLAYER_SLIM` renders the hat,
+  jacket, sleeves and pants (children of head, body, arms and legs in `PlayerModel.createMesh`). To pick wide or slim per state,
+  set `this.model` in `submit` before `super.submit` (as `AgeableMobRenderer` does); that needs a `MobRenderer` parent, because
+  `HumanoidMobRenderer`'s parent `AgeableMobRenderer.submit` resets the model to the adult one.
 Verified: `src/net/minecraft/world/entity/decoration/Mannequin.java`, `src/net/minecraft/client/entity/ClientMannequin.java`,
 `src/net/minecraft/client/renderer/entity/{EntityRenderDispatcher,player/AvatarRenderer}.java`,
+`src/net/minecraft/client/renderer/entity/{AgeableMobRenderer,HumanoidMobRenderer,MobRenderer,LivingEntityRenderer}.java`,
+`src/net/minecraft/client/model/player/PlayerModel.java`, `src/net/minecraft/client/model/geom/LayerDefinitions.java`,
 `src/net/minecraft/client/renderer/PlayerSkinRenderCache.java`, `src/net/minecraft/world/item/component/ResolvableProfile.java`,
 `src/net/minecraft/world/entity/{Entity,EntityTypes,EntityType}.java`.
 

@@ -297,6 +297,14 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
+- `dev.awaken.core.client.skin` (client) — `SkinnedMobRenderer<T extends Mob, S extends SkinRenderState>`, `SkinModel`,
+  `SkinRenderState` (`wear(PlayerSkin)`, `wear(texture, slim)`, overlay toggles): the renderer for every non-player body
+  with a player-format skin (townsfolk, training ghost, gate shades, Shadow Self, HUMAN and MIMIC mobs). The player mesh
+  is picked per state (wide or slim, as the skin says); subclasses add their own tint, see-through, scale and layers.
+  **Rule: a non-player entity never uses `AvatarRenderState` in 26.3.** `EntityRenderDispatcher.getRenderer(state)`
+  sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
+  extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
+  townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
 
 ---------------------------------------------------------------------------------------------------------------------
 
