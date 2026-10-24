@@ -116,7 +116,7 @@ final class SignalToast implements Toast {
         boolean closing = wanted == Visibility.HIDE;
         float reveal = closing ? 1f : Math.min(1f, portion / 0.45f);
         float glitch = closing ? Math.min(1f, (1f - portion) / 0.5f) : 0f;
-        HudLook.card(g, 0, 0, w, h, colour, 1f, reveal, glitch);
+        HudLook.card(g, 0, 0, w, h, colour, 1f, reveal, glitch, HudLook.TOAST);
         if (glitch >= 1f) return;
         float a = 1f - glitch * glitch;
         float e = 1f - (1f - reveal) * (1f - reveal) * (1f - reveal); // the card's own ease
