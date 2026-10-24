@@ -402,7 +402,6 @@ public class CitizenBody extends PathfinderMob implements Npc {
         double best = Double.MAX_VALUE;
         ServerPlayer near = null;
         for (ServerPlayer p : level.players()) {
-            if (p.isSpectator()) continue;
             double dd = p.distanceToSqr(this);
             if (dd < best) {
                 best = dd;
