@@ -545,3 +545,25 @@ the player (client config `skipExperimentalWarning`, default on).
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 14. The Awakened Pack (companion mods; plan in docs/plan-pack.html, approved 2026-10-24)
+
+- Awaken stays mixin-free and plays the same with no companion mod installed. Integrations live in `dev.awaken.compat`;
+  each class is loaded only when its mod is present (`ModList` check), compiled against the mod as `compileOnly` from
+  Modrinth's Maven, never bundled or required.
+- The pack is `pack/mods.json` (profiles: perf, horizon, feel, sound, comfort, together, ultra, tools), pinned by
+  `tools/pack.py lock` into `pack/lock.json` (exact files and SHA-512, required dependencies, a dependency's own
+  version pin). `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
+  what it installed, and refuses while a client runs there. GameTests never load the pack: they test Awaken alone.
+- Far view (`compat.FarView`): far-terrain mods draw in vanilla dimensions and `awaken:stillpoint` only. In every other
+  `awaken:` dimension (gate and dream cells, trials, the Halo, the Descent) Distant Horizons renders nothing and gets
+  empty columns instead of running Awaken's chunk generators. Test: `compat_far_view_policy`.
+- Frame time is measured, not guessed: autopilot `perf <label> <s>`, `perfstart`/`perfend`, `info`; fixed scenes in
+  `tools/autopilot/perf-pack.txt` at a 1440×900-point window; results and comparisons in `docs/perf/`
+  (`tools/perf-report.py`). Every perf line carries the machine's load; runs that disagree by more than 5% on p50 are
+  re-run.
+- Looks: Swift (default; the SPEC budget above), Cinematic (p50 ≥ 60 fps, p99 ≤ 25 ms at 4K, to confirm after the
+  baseline), Ultra (Iris, experimental: OpenGL only and unsupported on Apple Silicon by Iris).
+- Terrain mods (Tectonic) only in new worlds; existing worlds keep vanilla terrain. Maps: a world map, no minimap.

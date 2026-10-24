@@ -27,7 +27,11 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // Modrinth's Maven, only for the optional mods Awaken talks to (compileOnly: never bundled, never required)
+    exclusiveContent {
+        forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
 }
 
 base {
@@ -131,6 +135,9 @@ configurations {
 }
 
 dependencies {
+    // dev.awaken.compat: far terrain off inside gates, dreams and other instanced dimensions (pack/lock.json pins the same build)
+    compileOnly "maven.modrinth:distanthorizons:3.3.4-26.3"
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
