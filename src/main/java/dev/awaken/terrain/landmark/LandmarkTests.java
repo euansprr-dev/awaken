@@ -463,7 +463,7 @@ public final class LandmarkTests {
             if (seed == 1) log.append(String.format(" gate scar: %d across, depth %.1f, %d spire blocks, top %d;", Math.round(p.radius * 2), p.depth, spire, b[4]));
         }
         log.append(String.format(" gate scar plan %.2f ms fastest, %.2f avg, %.2f worst;", best, total / 8, worst));
-        h.assertTrue(best <= SHAPE_MS, "a gate scar plan costs " + best + " ms at its fastest");
+        h.assertTrue(best <= AwakenTests.cpuBudget(SHAPE_MS), "a gate scar plan costs " + best + " ms at its fastest (budget " + AwakenTests.cpuBudget(SHAPE_MS) + ")");
         total = 0;
         worst = 0;
         best = Double.MAX_VALUE;
@@ -489,7 +489,7 @@ public final class LandmarkTests {
             if (seed == 1) log.append(String.format(" shard drift: %d shards, the great one %.1f across, %d rock blocks;", shards.length, shards[0].radius() * 2, cells));
         }
         log.append(String.format(" shard drift %.2f ms fastest, %.2f avg, %.2f worst;", best, total / 8, worst));
-        h.assertTrue(best <= SHAPE_MS, "a shard drift costs " + best + " ms at its fastest");
+        h.assertTrue(best <= AwakenTests.cpuBudget(SHAPE_MS), "a shard drift costs " + best + " ms at its fastest (budget " + AwakenTests.cpuBudget(SHAPE_MS) + ")");
         Awaken.LOG.info("[terrain] landmark shapes:{}", log);
         h.succeed();
     }

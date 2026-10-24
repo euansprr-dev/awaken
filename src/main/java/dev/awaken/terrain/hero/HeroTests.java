@@ -75,7 +75,7 @@ public final class HeroTests {
                 log.append(String.format(" %s blueprint %.2f ms fastest, %.2f avg, %.2f worst;", tree.getSerializedName(), best, total / seeds, worst));
                 // other work on the machine only ever adds time: the fastest seed is the honest cost. The 8 ms budget
                 // is the M4's; GitHub's 2-core runners run about 2x slower, so CI gets 3x headroom (still a regression guard)
-                double budget = System.getenv("CI") != null ? 24 : 8;
+                double budget = AwakenTests.cpuBudget(8);
                 h.assertTrue(best <= budget, tree + " blueprint costs " + best + " ms at its fastest (budget " + budget + ")");
             }
             Awaken.LOG.info("[terrain] hero blueprints:{}", log);
