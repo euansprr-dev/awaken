@@ -97,8 +97,9 @@ treats every spot as that biome: a showcase aid), `/awaken terrain wind status|f
 nearest dark forest by `/awaken terrain visit minecraft:dark_forest`, seed 777; the Mac carried other builders' work,
 load 14-32, so frame times swing by a millisecond between identical scenes; logs in `run-autopilot/lands-*-1/`):
 - Frame time p50, everything on (waving, falling leaves normal): 5.8-8.5 ms in the cost run (the forced Elderwood
-  air at the cap 9.0 ms, load 30) and 7.4-8.0 ms in the first perf run: under the 9.1 ms Swift budget. In the third
-  run (load 17-31 throughout) every setting, leaves off and waving off included, swung between 7.4 and 12.8 ms, so its
+  air at the cap 9.0 ms, load 30) and 7.8-8.0 ms in the first perf run (one pair at load 19 read 11.1 and 11.6 ms,
+  leaves on and off alike): under the 9.1 ms Swift budget. In the third run (load 17-31 throughout) every setting,
+  leaves off and waving off included, swung between 8.0 and 12.8 ms, so its
   p50s say more about the machine than the feature. Leaves normal vs off and waving on vs off, alternated 2-4 times
   each in all three runs, never differ by more than that swing, in either direction: the frame cost is below what
   `perf` resolves on this machine today, which is why the CPU is counted directly (next line).
