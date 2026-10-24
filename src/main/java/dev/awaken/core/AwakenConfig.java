@@ -83,8 +83,9 @@ public final class AwakenConfig {
 
         public static final ModConfigSpec.EnumValue<LensLook> LENS = C
                 .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps)",
-                        "or CINEMATIC (adds light shafts from the sun). It steps aside while an Iris shaderpack is on.")
-                .defineEnum("lens", LensLook.SWIFT);
+                        "or CINEMATIC (adds light shafts from the sun). It steps aside while an Iris shaderpack is on.",
+                        "Off by default for now: with Distant Horizons installed it can hide far terrain (being fixed).")
+                .defineEnum("lens", LensLook.OFF);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}
