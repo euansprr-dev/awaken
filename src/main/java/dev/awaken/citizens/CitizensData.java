@@ -114,7 +114,8 @@ public final class CitizensData extends SavedData {
             World.CODEC.fieldOf("world").forGetter(World::of),
             Event.CODEC.listOf().fieldOf("events").forGetter(d -> d.events),
             Memory.CODEC.listOf().fieldOf("memories").forGetter(d -> d.memories),
-            LONGS.fieldOf("days").forGetter(d -> new long[]{d.lastPlayDay, d.gossipDay, d.eventDay, d.nextEventId})
+            LONGS.fieldOf("days").forGetter(d -> new long[]{d.lastPlayDay, d.gossipDay, d.eventDay, d.nextEventId}),
+            LONGS.optionalFieldOf("lights", new long[0]).forGetter(d -> d.lights)
     ).apply(i, CitizensData::new));
 
     public static final SavedDataType<CitizensData> TYPE = new SavedDataType<>(Awaken.id("citizens"), CitizensData::new, CODEC);
@@ -139,6 +140,8 @@ public final class CitizensData extends SavedData {
     long[] bellPos = new long[0];
     /** Chimney tops found, as pairs (plot id, BlockPos.asLong); -1 position = the plot has none. */
     long[] chimneys = new long[0];
+    /** Lantern lights in the world right now (Lanterns): cleared on start, so none is ever left behind. */
+    long[] lights = new long[0];
 
     final List<Event> events = new ArrayList<>();
     final List<Memory> memories = new ArrayList<>();
@@ -146,6 +149,11 @@ public final class CitizensData extends SavedData {
 
     public CitizensData() {
         Arrays.fill(safety, (byte) 80);
+    }
+
+    private CitizensData(int schema, String roster, Records r, World w, List<Event> events, List<Memory> memories, long[] days, long[] lights) {
+        this(schema, roster, r, w, events, memories, days);
+        this.lights = lights.clone();
     }
 
     private CitizensData(int schema, String roster, Records r, World w, List<Event> events, List<Memory> memories, long[] days) {

@@ -147,6 +147,10 @@ public class CitizenBody extends PathfinderMob implements Npc {
 
     private int heldMain = -1, heldOff = -1;
 
+    int heldOff() {
+        return heldOff;
+    }
+
     /** Holds a prop (Props code) in a hand; only a change touches the equipment. */
     void hold(EquipmentSlot slot, int prop) {
         if (slot == EquipmentSlot.MAINHAND) {

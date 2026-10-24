@@ -33,6 +33,7 @@ final class Citizens {
     final CitizenWork work;
     final CityEvents events;
     final Recognition recognition;
+    final Lanterns lanterns;
     /** Spectators get bodies round them too (tours fly in spectator). */
     final boolean spectatorsEmbody = true;
 
@@ -55,6 +56,7 @@ final class Citizens {
         work = new CitizenWork(this);
         events = new CityEvents(this);
         recognition = new Recognition(this);
+        lanterns = new Lanterns(this);
         ledger.work = work;
         startGame = level.getGameTime();
         Awaken.LOG.info(String.format(Locale.ROOT, "[citizens] Carillon's %d citizens up in %.1f ms (%d inside, %d bakes)", roster.citizens,
@@ -103,6 +105,7 @@ final class Citizens {
     static void stop() {
         Citizens c = active;
         if (c != null) {
+            c.lanterns.stop();
             c.crowd.despawnAll();
             c.work.stop();
         }
@@ -143,6 +146,7 @@ final class Citizens {
         work.tick(now, tod);
         events.tick(now, tod);
         recognition.tick(now, tod);
+        lanterns.tick(now);
         managerNs = System.nanoTime() - t0;
     }
 
