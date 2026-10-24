@@ -1,0 +1,3 @@
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://discovery.minecraftservices.com/minecraft/client due to Connect timed out
+Caused by: java.net.SocketTimeoutException: Connect timed out
+com.mojang.renderpearl.api.device.SurfaceException: Cannot acquire minimized window

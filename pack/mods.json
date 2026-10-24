@@ -193,5 +193,13 @@
       ],
       "why": "Profiler for frame and tick spikes."
     }
+  ],
+  "configs": [
+    {
+      "profile": "world",
+      "source": "pack/tectonic/awakened.json",
+      "target": "config/tectonic.json",
+      "why": "The Awakened Tectonic preset (Awakened Lands studio): continents with real ranges, less sea. Tectonic reads it once at startup."
+    }
   ]
 }

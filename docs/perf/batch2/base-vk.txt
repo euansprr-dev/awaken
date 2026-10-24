@@ -1,0 +1,65 @@
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[09:18:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,awaken,neoforge
+[09:18:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[09:19:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset 15
+[09:19:19] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset frames=1792 avg_fps=119.2 p50=8.28ms p95=12.76ms p99=15.58ms max=20.60ms tick_p95=8.75ms heap=953/4096MB fb=2880x1800 load=6.3 occluded=false
+[09:19:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset_west 10
+[09:19:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_sunset_west frames=1145 avg_fps=114.0 p50=8.32ms p95=14.11ms p99=21.36ms max=61.12ms tick_p95=8.25ms heap=818/4096MB fb=2880x1800 load=5.8 occluded=false
+[09:19:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart flight
+[09:20:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf flight frames=3560 avg_fps=107.9 p50=8.33ms p95=15.81ms p99=29.88ms max=158.11ms tick_p95=29.49ms heap=1368/4096MB fb=2880x1800 load=8.5 occluded=false
+[09:20:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:20:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf overworld_platform 10
+[09:20:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf overworld_platform frames=1165 avg_fps=116.0 p50=8.32ms p95=15.48ms p99=18.88ms max=104.68ms tick_p95=11.32ms heap=1135/4096MB fb=2880x1800 load=8.2 occluded=false
+[09:20:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_S_close 10
+[09:20:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_S_close frames=1196 avg_fps=119.1 p50=8.49ms p95=12.51ms p99=15.52ms max=38.37ms tick_p95=4.80ms heap=1501/4096MB fb=2880x1800 load=8.0 occluded=false
+[09:20:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_sovereign_night 10
+[09:21:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf gate_sovereign_night frames=1197 avg_fps=119.2 p50=8.28ms p95=11.84ms p99=15.79ms max=43.18ms tick_p95=4.48ms heap=1128/4096MB fb=2880x1800 load=7.2 occluded=false
+[09:21:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf all_creatures_lineup 10
+[09:21:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf all_creatures_lineup frames=1178 avg_fps=117.4 p50=8.25ms p95=14.89ms p99=17.23ms max=41.51ms tick_p95=9.22ms heap=1382/4096MB fb=2880x1800 load=6.0 occluded=false
+[09:21:28] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_legion
+[09:21:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cast_legion frames=279 avg_fps=119.1 p50=8.24ms p95=12.32ms p99=15.25ms max=29.49ms tick_p95=8.26ms heap=1181/4096MB fb=2880x1800 load=5.9 occluded=false
+[09:21:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:21:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_storm_call
+[09:21:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cast_storm_call frames=279 avg_fps=119.3 p50=8.31ms p95=12.70ms p99=14.84ms max=17.12ms tick_p95=8.31ms heap=1487/4096MB fb=2880x1800 load=6.0 occluded=false
+[09:21:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:21:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_nova
+[09:21:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cast_nova frames=264 avg_fps=112.5 p50=8.30ms p95=14.52ms p99=27.28ms max=36.25ms tick_p95=9.77ms heap=778/4096MB fb=2880x1800 load=6.0 occluded=false
+[09:21:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:21:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart cast_overload
+[09:21:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf cast_overload frames=271 avg_fps=115.6 p50=7.85ms p95=15.05ms p99=18.34ms max=25.04ms tick_p95=19.27ms heap=1124/4096MB fb=2880x1800 load=5.6 occluded=false
+[09:21:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[09:21:45] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf well_night 10
+[09:21:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf well_night frames=1155 avg_fps=115.1 p50=8.31ms p95=12.38ms p99=25.90ms max=99.23ms tick_p95=5.65ms heap=942/4096MB fb=2880x1800 load=6.1 occluded=false
+[09:22:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf descent_5 10
+[09:22:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf descent_5 frames=1204 avg_fps=119.9 p50=8.39ms p95=13.57ms p99=16.23ms max=21.44ms tick_p95=1.46ms heap=1599/4096MB fb=2880x1800 load=5.5 occluded=false
+[09:22:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf stillpoint 10
+[09:22:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf stillpoint frames=1153 avg_fps=114.9 p50=8.32ms p95=14.13ms p99=25.77ms max=47.61ms tick_p95=1.43ms heap=993/4096MB fb=2880x1800 load=4.4 occluded=false
+[09:23:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf lucidium 10
+[09:23:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf lucidium frames=1185 avg_fps=118.0 p50=8.30ms p95=11.79ms p99=15.23ms max=59.74ms tick_p95=2.00ms heap=920/4096MB fb=2880x1800 load=4.2 occluded=false
