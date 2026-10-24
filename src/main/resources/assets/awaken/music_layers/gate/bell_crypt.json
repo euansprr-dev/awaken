@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/bell_crypt",
+  "source": "music",
+  "title": "Bell Crypt",
+  "bpm": 54,
+  "beats": 4,
+  "bars": 12,
+  "key": "D",
+  "mode": "phrygian",
+  "sampleRate": 44100,
+  "frames": 2352000,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_bell_crypt_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "A buried drone, monks humming 'o', the sigh tolled on bells; the crypt breathing."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_bell_crypt_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "A low bell every bar, strings trembling on D against E-flat, a slow heartbeat."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_bell_crypt_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Taiko under the vault, iron clanks, an eighth-note string ostinato, brass stabs."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_bell_crypt_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The choir opens to 'a', the sigh in slow brass, the great bell every two bars."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.6,
+      "lufs": -18.59,
+      "truePeak": -5.89
+    },
+    "tension": {
+      "rms": -19.59,
+      "lufs": -17.81,
+      "truePeak": -4.31
+    },
+    "combat": {
+      "rms": -18.57,
+      "lufs": -16.87,
+      "truePeak": -2.41
+    },
+    "lord": {
+      "rms": -17.57,
+      "lufs": -15.7,
+      "truePeak": -2.0
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.6,
+      "truePeak": -5.89
+    },
+    "tension": {
+      "rms": -23.42,
+      "truePeak": -6.43
+    },
+    "combat": {
+      "rms": -21.07,
+      "truePeak": -5.48
+    },
+    "lord": {
+      "rms": -21.24,
+      "truePeak": -5.89
+    }
+  }
+}

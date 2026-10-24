@@ -145,6 +145,10 @@ dependencies {
     compileOnly "maven.modrinth:iris:1.11.7+26.3-neoforge"
     // full-body cast clips (powers/client/fx/PalCasts). The version id, not "1.2.8": that number resolves to the 26.1 build
     compileOnly "maven.modrinth:player-animation-library:xJ30QmpE"
+    // the comfort profile's plugins (compat.jei, compat.jade): version ids, the exact builds pack/lock.json pins
+    // (JEI 31.14.0.72, Jade 26.3.5+neoforge)
+    compileOnly "maven.modrinth:jei:kLsKOFxv"
+    compileOnly "maven.modrinth:jade:dVB8U7Td"
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

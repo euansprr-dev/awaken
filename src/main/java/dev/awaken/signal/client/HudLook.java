@@ -14,6 +14,13 @@ import net.minecraft.util.FormattedCharSequence;
 public final class HudLook {
     private HudLook() {}
 
+    /** Card styles for the projected look (ignored flat). */
+    public static final int FRAME = 1, DRIFT = 2, EMITTER = 4;
+    /** A System notice: the K panel's frame (edge glow, corner brackets) and a slow interference band. */
+    public static final int NOTICE = FRAME | DRIFT;
+    /** A toast: a notice projected from its edge. */
+    public static final int TOAST = NOTICE | EMITTER;
+
     /** A projected look for the System's cards (installed by the holo module). */
     public interface Look {
         /** Whether it draws right now (its style chosen and its shaders compiled). */
@@ -21,9 +28,11 @@ public final class HudLook {
 
         /**
          * A glass card. {@code reveal} 0..1 scans it in from the top (1: whole); {@code glitch} 0..1 takes it out
-         * (0: whole). {@code alpha} is the caller's own fade.
+         * (0: whole). {@code alpha} is the caller's own fade. {@code style}: {@link #FRAME} the K panel's edge glow and
+         * corner brackets, {@link #DRIFT} a slow interference band (still with reduced motion), {@link #EMITTER} a
+         * projection edge on the left that flares as the card arrives.
          */
-        void card(GuiGraphicsExtractor g, int x, int y, int w, int h, int accent, float alpha, float reveal, float glitch);
+        void card(GuiGraphicsExtractor g, int x, int y, int w, int h, int accent, float alpha, float reveal, float glitch, int style);
 
         /** A soft light around a rectangle (a hovered tile). */
         void glow(GuiGraphicsExtractor g, int x, int y, int w, int h, int accent, float strength);
@@ -46,9 +55,14 @@ public final class HudLook {
         return look != null && look.enabled();
     }
 
-    /** A card: the projected one, or {@link Glass#card} as before. */
+    /** A System notice card ({@link #NOTICE}): the projected one, or {@link Glass#card} as before. */
     public static void card(GuiGraphicsExtractor g, int x, int y, int w, int h, int accent, float alpha, float reveal, float glitch) {
-        if (holo()) look.card(g, x, y, w, h, accent, alpha, reveal, glitch);
+        card(g, x, y, w, h, accent, alpha, reveal, glitch, NOTICE);
+    }
+
+    /** A card in a given style: the projected one, or {@link Glass#card} as before. */
+    public static void card(GuiGraphicsExtractor g, int x, int y, int w, int h, int accent, float alpha, float reveal, float glitch, int style) {
+        if (holo()) look.card(g, x, y, w, h, accent, alpha, reveal, glitch, style);
         else Glass.card(g, x, y, w, h, accent, alpha);
     }
 

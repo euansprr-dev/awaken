@@ -47,6 +47,10 @@ public final class AudioSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WELL = reg("amb.well");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_RUIN_NIGHT = reg("amb.ruin_night");
 
+    // the layered music (one event per slot; the client streams a context's stems itself, the event only resolves)
+    public static final DeferredHolder<SoundEvent, SoundEvent> MUSIC_LAYERS = reg("music.layers");
+    public static final DeferredHolder<SoundEvent, SoundEvent> AMB_LAYERS = reg("amb.layers");
+
     private static final List<DeferredHolder<SoundEvent, SoundEvent>> CUES = new ArrayList<>();
 
     static {

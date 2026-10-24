@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/clockwork_foundry",
+  "source": "music",
+  "title": "Clockwork Foundry",
+  "bpm": 72,
+  "beats": 4,
+  "bars": 16,
+  "key": "C",
+  "mode": "dorian",
+  "sampleRate": 44100,
+  "frames": 2352000,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_clockwork_foundry_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "An escapement ticking, a music box turning over, strings, steam in the pipes."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_clockwork_foundry_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "The ticks double, a pizzicato bass stalks, strings tremble on a second."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_clockwork_foundry_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Drums and girder clanks, a running plucked bass, brass stabs on the off-beat."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_clockwork_foundry_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Gearwright Colossus: C G A G hammered in the brass every two bars, bells, a choir."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.54,
+      "lufs": -18.16,
+      "truePeak": -5.34
+    },
+    "tension": {
+      "rms": -19.54,
+      "lufs": -17.34,
+      "truePeak": -3.63
+    },
+    "combat": {
+      "rms": -18.55,
+      "lufs": -17.12,
+      "truePeak": -1.92
+    },
+    "lord": {
+      "rms": -17.56,
+      "lufs": -15.86,
+      "truePeak": -1.65
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.54,
+      "truePeak": -5.34
+    },
+    "tension": {
+      "rms": -23.42,
+      "truePeak": -8.84
+    },
+    "combat": {
+      "rms": -21.15,
+      "truePeak": -2.8
+    },
+    "lord": {
+      "rms": -21.03,
+      "truePeak": -5.87
+    }
+  }
+}

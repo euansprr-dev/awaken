@@ -24,7 +24,9 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 @Mod(value = Awaken.MODID, dist = Dist.CLIENT)
 public final class AwakenClient {
     public AwakenClient(IEventBus modBus, ModContainer container) {
-        container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        // NeoForge's config screen; Awaken's client section also opens the Look switch (compat.client.LookSettings)
+        container.registerExtensionPoint(IConfigScreenFactory.class, (mod, parent) -> new ConfigurationScreen(mod, parent,
+                (screen, type, config, title) -> dev.awaken.compat.client.LookSettings.section(screen, type, config, title)));
         CoreClient.init(modBus);
         dev.awaken.core.client.dev.Autopilot.init(); // inert unless -Dawaken.autopilot is set
         SignalClient.init(modBus);
