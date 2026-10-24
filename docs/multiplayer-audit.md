@@ -1,5 +1,9 @@
 # Multiplayer audit (pack plan stage 6, "Together")
 
+**Euan's decisions (2026-10-24):** the story **starts together** (the prologue and the Ritual of the Bell are shared,
+see docs/proposals/the-ritual.md), and friends share **one Hearth as members**, with a way to grow it into several
+Hearths over time.
+
 Read-only audit of `pack/awakened-pack` at c63adfb, 2026-10-24. It covers what breaks, or behaves wrongly, when 2–4
 players share one world (LAN, an e4mc link, or a dedicated server). Paths are under `src/main/java/dev/awaken/`.
 "Unverified" means it was read in the code but not tried in a game.
