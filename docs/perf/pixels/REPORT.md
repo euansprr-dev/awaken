@@ -104,7 +104,12 @@ FSR and RCAS expect a finished, display-referred frame. No Lens artefacts in any
 
 ## Distant Horizons
 
-<!-- filled from the pixels-dh tour -->
+Checked with `tools/autopilot/pixels-dh.txt` (pack perf + horizon, DH Swift, RD 16, the sunset vista after a
+minute of DH generation): no errors and no attachment-size failures. DH's far terrain draws at 0.67 and 0.5 with
+Lens's haze over it, aligned with the vanilla terrain (rivers and coasts land in the same place in every shot): DH
+draws into the main target it's handed, so it follows the lower resolution like everything else. DH was still
+generating LODs, so the horizon changes a little between the three shots taken two seconds apart. Shots only, no
+timing: Far Sight will replace DH.
 
 ## Next
 

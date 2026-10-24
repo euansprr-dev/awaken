@@ -1264,8 +1264,8 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
 - How: for the world pass the main target and the hand's depth target (`hud3DTarget`) lend themselves smaller
   textures: their own colour and depth are set aside and the low-resolution ones put in their place, on the same
   objects, with `width`/`height` to match. Everything that holds the main target (the level renderer and its frame
-  graph, the sky renderer, Sodium, Distant Horizons, NeoForge's render stages, post chains) draws at the lower
-  resolution without knowing. After the post effects the real textures go back and the upscaler fills the main
+  graph, the sky renderer, Sodium, Distant Horizons (checked: pixels-dh tour), NeoForge's render stages, post chains)
+  draws at the lower resolution without knowing. After the post effects the real textures go back and the upscaler fills the main
   colour; the GUI then clears depth and draws on top, native. The `Globals` UBO's `ScreenSize` stays the window's
   (line widths keep their screen-pixel width).
 - Lens runs before the upscale, at render scale, with every other post effect: its depth is the world's own, its
