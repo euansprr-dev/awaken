@@ -349,7 +349,7 @@ K_STRIKE = pose(lean=14, shift=1.5, twist=-26, ra=(-94, -6, 0), ra_aim=True, la=
 K_FOLLOW = pose(K_STRIKE, lean=11, twist=-20, ra=(-90, -6, 0))
 K_SETTLE = pose(K_STRIKE, lean=6, shift=0.5, twist=-10, ra=(-62, -4, 0), ra_aim=False, la=(14, 0, -8), rl=(16, 0, 6), ll=(-12, 0, -6))
 cast("kinetic", [(0, NEUTRAL, "linear"), (2, K_LOAD, "easeoutquad"), (4, K_STRIKE, "easeoutexpo"),
-                 (7, K_FOLLOW, "easeinoutsine"), (9, K_SETTLE, "easeinoutsine")], 12, 2,
+                 (8, K_FOLLOW, "easeinoutsine"), (10, K_SETTLE, "easeinoutsine")], 13, 2,
      "grounded punch: coil, hips and chest snap round, straight fist, off fist chambered")
 K_WIND = pose(K_LOAD, lean=-7, twist=38, ra=(44, 0, 16), la=(-70, -30, 0), rl=(22, 0, 9), ll=(-16, 0, -9))
 hold("hold_kinetic", K_WIND, [nudge(K_WIND, twist=2, ra=(3, 0, 0)), nudge(K_WIND, twist=-1.5, ra=(-2, 0, 1))], 6,
@@ -362,7 +362,7 @@ V_BURST = pose(lean=40, shift=2, ra=(58, 0, 20), la=(58, 0, -20), rl=(34, 0, 3),
 V_CARRY = pose(V_BURST, lean=34, ra=(50, 0, 18), la=(50, 0, -18), rl=(26, 0, 3), ll=(-22, 0, -3))
 V_SETTLE = pose(lean=16, shift=0.5, ra=(24, 0, 10), la=(24, 0, -10), rl=(10, 0, 2), ll=(-8, 0, -2))
 cast("velocity", [(0, NEUTRAL, "linear"), (1, V_LOAD, "easeoutquad"), (3, V_BURST, "easeoutexpo"),
-                  (7, V_CARRY, "easeinoutsine"), (9, V_SETTLE, "easeinoutsine")], 12, 1,
+                  (8, V_CARRY, "easeinoutsine"), (10, V_SETTLE, "easeinoutsine")], 13, 1,
      "sprinter's burst: hard forward lean, arms swept back, long stride")
 hold("hold_velocity", V_LOAD, [nudge(V_LOAD, lean=2, rise=0.3), nudge(V_LOAD, lean=-1)], 6, "crouched to go")
 
@@ -432,7 +432,7 @@ T_LOCK = pose(twist=-36, ra=(-92, 0, 0), ra_aim=True, la=(-80, 40, 0), rl=(12, 0
 T_KICK = pose(T_LOCK, lean=-8, shift=-1, ra=(-114, 0, 0))
 T_SETTLE = pose(T_LOCK, lean=-1, twist=-32, ra=(-94, 0, 0))
 cast("tech", [(0, NEUTRAL, "linear"), (2, T_TAP, "easeoutquad"), (4, T_LOCK, "easeoutexpo"), (5, T_KICK, "easeoutexpo"),
-              (8, T_SETTLE, "easeoutcubic"), (9, T_SETTLE, "linear")], 12, 2,
+              (8, T_SETTLE, "easeoutcubic"), (10, T_SETTLE, "linear")], 13, 2,
      "tap the wrist device, lock on, recoil")
 hold("hold_tech", T_LOCK, [nudge(T_LOCK, ra=(-1, 0.6, 0)), nudge(T_LOCK, ra=(0.8, -0.6, 0))], 4, "locked on, servo jitter")
 

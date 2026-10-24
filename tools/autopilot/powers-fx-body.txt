@@ -1,8 +1,9 @@
 # Full-body cast clips (Player Animation Library, optional): every family, behind the caster, in front of it and
 # three-quarters on (the head turned 50 degrees off the body, so the camera sees the body from the side). Instant
-# powers are cast with their key, so prediction starts the clip at once; a shot lands about 7 ticks in (_1, _q: the
-# follow-through) or 11 (_2: the recovery). Channels go through the admin cast, which holds the wind-up. Run it twice:
-# PACK=feel tools/autopilot.sh tools/autopilot/powers-fx-body.txt (the clips) and plain (the vanilla poses).
+# powers are cast with their key, so prediction starts the clip at once; the earliest shot the autopilot can take
+# lands about 10 ticks in (_1, _q: the held follow-through), _2 about 14 (the recovery). Channels go through the
+# admin cast, which holds the wind-up. Run it twice: PACK=feel tools/autopilot.sh tools/autopilot/powers-fx-body.txt
+# (the clips) and plain (the vanilla poses).
 world powerfx creative 4242
 waitworld
 gui 0
