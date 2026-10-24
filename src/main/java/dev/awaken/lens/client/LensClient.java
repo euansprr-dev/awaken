@@ -44,6 +44,8 @@ public final class LensClient {
     static final Identifier FAR_DEPTH = Awaken.id("textures/effect/lens_far_depth.png");
 
     private static LensParams params;
+    /** Development: 0 normal; 1 pass-through; 2 depth masks; 3 far-terrain depth raw (autopilot lensdebug). */
+    private static int debug;
     private static boolean active, snap = true, zeroToOne;
     private static ResourceKey<Level> lookFor;
     private static final float[] current = Look.neutral(), target = Look.neutral();
@@ -51,6 +53,11 @@ public final class LensClient {
     private static final Vector3f sunDir = new Vector3f();
     private static final Vector4f clip = new Vector4f();
     private static final Matrix4f viewProj = new Matrix4f();
+
+    public static void debug(int mode) {
+        debug = Math.clamp(mode, 0, 3);
+        Awaken.LOG.info("[lens] debug view {}", debug);
+    }
 
     public static void init(IEventBus modBus) {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("lens_looks"),
@@ -138,7 +145,7 @@ public final class LensClient {
             sunset = glow.w();
         }
         var fog = e.getFogData();
-        params.write(current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
+        params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 fog.renderDistanceEnd, fog.environmentalEnd, FarTerrain.active(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(),
                 FarTerrain.near(), FarTerrain.far());
         params.uploadIfChanged();

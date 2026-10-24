@@ -126,4 +126,19 @@ void main() {
     float n = fract(sin(dot(q, vec2(12.9898, 78.233))) * 43758.5453) + fract(sin(dot(q, vec2(39.3468, 11.135))) * 24634.6345) - 1.0;
     c += n / 255.0;
     fragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
+
+    // development views (texel 0 red byte; 255 = normal)
+    int dbg = int(p0.r * 255.0 + 0.5);
+    if (dbg == 1) {
+        fragColor = vec4(texture(InSampler, texCoord).rgb, 1.0);                      // the frame, untouched
+    } else if (dbg == 2) {
+        float vd = texture(DepthSampler, texCoord).r;
+        bool farHere = p0.b > 0.5 && farHit(texture(FarDepthSampler, texCoord).r, int(p0.a * 255.0 + 0.5));
+        // blue: open sky by the game's depth; red: far terrain by DH's depth; green: the game's own geometry
+        vec3 m = vd < 1.0e-7 ? (farHere ? vec3(1.0, 0.1, 0.1) : vec3(0.1, 0.2, 1.0)) : vec3(0.1, 0.9, 0.2);
+        fragColor = vec4(mix(texture(InSampler, texCoord).rgb, m, 0.6), 1.0);
+    } else if (dbg == 3) {
+        float fd = texture(FarDepthSampler, texCoord).r;
+        fragColor = vec4(vec3(fract(fd * 16.0), fd, p0.b), 1.0);                       // raw far depth
+    }
 }
