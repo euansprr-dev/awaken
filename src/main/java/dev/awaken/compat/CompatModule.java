@@ -6,13 +6,16 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 
 /**
  * Optional companions from the Awakened Pack (docs/plan-pack.html). Each integration class is only loaded when its mod
- * is present, so Awaken runs exactly the same without any of them.
+ * is present, so Awaken runs exactly the same without any of them. The spoiler guard's record ({@link Discovered}) is
+ * plain Awaken state and always runs, so a recipe viewer installed later finds the player's discoveries already there.
  */
 public final class CompatModule {
     private CompatModule() {}
 
     public static void init(IEventBus modBus) {
         modBus.addListener(CompatModule::setup);
+        Discovered.init(modBus);
+        CompatCommands.register();
         CompatTests.register();
     }
 
