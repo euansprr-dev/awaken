@@ -21,7 +21,7 @@ It reads as the plan's diorama: voxel trees, water by depth, sand terraces, clou
   tint, no per-frame allocation; DynamicTexture or render target; a GuiCanvas twin where it fits) and multi-owner
   focus `UiHooks.setFocus(owner, value)` / `clearFocus(owner)` (max wins; Lens reads focus() into texel 14). Exact
   signatures arrive when merge 2 lands on build/awaken-v1.
-- Tours: the vanilla tutorial toast ("Move with W, A, S and D") covers shots; W9 sets tutorialStep:none for tours.
+- Tours: the vanilla tutorial toast covered spike shots; tools/autopilot.sh already writes tutorialStep:none on carillon/main (from build/awaken-v1 a205b77), only the spike branches predate it.
 
 ## S1 City: ADJUST (W1, W8, W3)
 Checked: 6 commits on carillon/spike-city (…c36561c), tree clean; tour-3 shots reviewed (s_bell, s_dusk_bell, s_square,
@@ -49,5 +49,4 @@ s_laundry, r_sky, r_bell_solid). Machine load 5–32 all session, so frame numbe
   (glass panes read as glass; tripwire clicks), lit windows, roof variety; chimney smoke as client particles; night
   needs more than lanterns. Everything vanilla reads as "a good vanilla build", not a mod: the Carillon kit is required.
 - Other: bee nests in cleared trees left orphan block entities (fixed in the writer). Neighbouring vanilla trees leak
-  leaves into city chunks: keep features out of the reservation (terrain session's reserved()). Tours: the tutorial
-  toast covers shots (W9: tutorialStep:none).
+  leaves into city chunks: keep features out of the reservation (terrain session's reserved()).
