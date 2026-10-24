@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "dev.awaken.turbo.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "dev.awaken.turbo.TurboMixinPlugin",
+  "mixins": [],
+  "client": [
+    "VulkanRenderPipelineMixin",
+    "GlslCompilerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

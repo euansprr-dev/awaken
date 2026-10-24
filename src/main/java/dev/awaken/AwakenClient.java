@@ -48,5 +48,6 @@ public final class AwakenClient {
         dev.awaken.compat.client.CompatClient.init(modBus);
         dev.awaken.terrain.client.TerrainClient.init(modBus);
         dev.awaken.holo.client.HoloClient.init(modBus);
+        dev.awaken.turbo.Turbo.init(modBus); // internals under the Turbo contract; inert unless its probe passes
     }
 }

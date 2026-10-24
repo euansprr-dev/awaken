@@ -45,8 +45,8 @@ neoForge {
     // Specify the version of NeoForge to use.
     version = project.neo_version
 
-    // This line is optional. Access Transformers are automatically detected
-    // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+    // Turbo's access transformers (CLAUDE.md, the Turbo contract): applied to the game in dev runs and shipped in the jar
+    accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
 
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
@@ -72,6 +72,13 @@ neoForge {
             // frame-time experiments (tools/autopilot.sh with XMX=6G ZGC=1): the client's heap and garbage collector
             if (project.hasProperty('xmx')) jvmArgument "-Xmx${project.property('xmx')}"
             if (project.hasProperty('zgc')) jvmArgument '-XX:+UseZGC'
+            // Turbo switches for experiments (tools/autopilot.sh TURBO=pipelineCache=on,shaderOpt=off; SPEC §16)
+            if (project.hasProperty('turbo')) systemProperty 'awaken.turbo', project.property('turbo')
+            // MoltenVK settings for experiments (tools/autopilot.sh MVK=USE_MTLHEAP=1,...): MVK_CONFIG_<name>=<value>
+            if (project.hasProperty('mvk')) project.property('mvk').toString().split(',').each { kv ->
+                def (k, v) = kv.split('=', 2) as List
+                environment "MVK_CONFIG_${k}", v
+            }
         }
 
         server {

@@ -309,6 +309,11 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
   extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
   townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
+- `dev.awaken.turbo.Turbo` (client, §16) — `compute()` (the compute bridge, null when Turbo is off), `on()`, `why()`,
+  `isVulkan()`, `deviceExtensions()` / `enabledDeviceExtensions()`. `TurboCompute`: `program(name, glsl, storageBuffers,
+  pushBytes)`, `buffer(label, GpuBuffer usage bits, size)` (a `TurboBuffer`, a real `VulkanGpuBuffer` RenderPasses draw
+  from), `frame()` / `async()` passes (`update`, `fill`, `dispatch`), `done(ticket)`, `awaitOnGpu(ticket)`,
+  `awaitOnCpu(ticket, timeout)`. `TurboSwitches.on(Feature)` and `TurboVersions.problem()` for other Turbo features.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -1064,4 +1069,61 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
   Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 16. Turbo (Minecraft internals under contract; Far Sight plan path 2, approved 2026-10-24)
+
+Euan, 2026-10-24, on the Far Sight plan's four paths: "I'm open to all of them … I'm really open to anything for making
+this absolutely peak"; then "Go ahead with Far Sight build out along with pixels and turbo bridge". The Turbo contract
+(CLAUDE.md, Code style) replaces the no-internals rule for this work only: one package (`dev.awaken.turbo`), never
+required (a public-API fallback, off when its probe fails), version-locked, kept only with a measured win, an access
+transformer before a mixin and never reflection.
+
+- **Doors.** One access-transformer line opens `FrontendGpuDevice.backend` (the Vulkan device; everything behind it is
+  public: `vkDevice()`, `vma()`, the queues, `VulkanCommandEncoder.execute/waitSemaphore/queueForDestroy`, the public
+  `VulkanGpuBuffer` constructor). Mixins live in `awaken.turbo.mixins.json` (package `dev.awaken.turbo.mixin`), applied
+  by `TurboMixinPlugin` only on a verified build with their switch on; every handler passes through when its own probe
+  fails. Other Turbo configs (pixels) point their `plugin` at the same class.
+- **Version lock.** `TurboVersions.VERIFIED`: Minecraft 26.3 with NeoForge 26.3.0.95. Anything else: `[turbo] off:
+  Minecraft <v> is not verified for Turbo`, no mixin applied.
+- **Switches.** `config/awaken-turbo.properties` (`name=on|off`) and `-Dawaken.turbo=name=on,...` (tours: `TURBO=`),
+  read once at launch: `turbo` (master, on), `compute` (on), `pipelineCache`, `shaderOpt` (each on only after its
+  measured win, see docs/perf/turbo/REPORT.md), `demo` (off).
+- **Probe** (render thread, first frame): master switch, version lock, Vulkan backend, then a self-test (a compute
+  shader writes 256 values on the background queue, the CPU reads them back and checks each). One log line either way:
+  `[turbo] on: Vulkan on <GPU> (<driver>), MC …; self-test N µs; background queue …` or `[turbo] off: <why>`. It also
+  logs the device's full extension list and the ones Minecraft enabled (`VK_EXT_metal_objects`: available, not enabled
+  by 26.3; the pixels session's MetalFX step has to ask for it at device creation).
+- **Compute bridge** (`TurboCompute`, render thread only). GLSL 450 compute compiled with LWJGL's shaderc (performance
+  level), pipelines on Minecraft's VkDevice, storage buffers bound with push descriptors (set 0, bindings 0..n-1) and up
+  to 128 bytes of push constants. Buffers come from Minecraft's VMA with STORAGE + the asked-for VERTEX / INDEX /
+  INDIRECT + both copies, wrapped as `TurboBuffer extends VulkanGpuBuffer`, so normal RenderPipelines draw from them
+  (`setVertexBuffer`, `setIndexBuffer`, `drawIndexedIndirect`) and the CommandEncoder writes and copies them. When the
+  compute queue is another family the buffers are CONCURRENT across both (no ownership transfers); on the M4 it is the
+  same family. Closing a buffer frees it once no frame and no background pass uses it.
+  - `frame()`: a command buffer from the encoder's own per-frame pool, opened with Minecraft's full barrier and closed
+    with compute/transfer writes → every later read, then `VulkanCommandEncoder.execute`: it runs in this frame's
+    submission ahead of every command recorded after it. Never inside a render pass.
+  - `async()`: the compute queue (nothing in 26.3 submits there), a Turbo timeline semaphore; `close()` returns the
+    ticket. `awaitOnGpu(ticket)` = the encoder's `waitSemaphore` (the rest of the frame waits on the GPU); `done` polls;
+    `awaitOnCpu` for tests. Background passes never write a buffer frames draw from: double-buffer, swap after the
+    ticket.
+- **Demo** (`/awaken turbo demo on|off`, switch `demo`): right after the sky, one frame pass builds a 256 x 256 grid
+  (vertices in POSITION_COLOR layout, indices appended with an atomic counter, the indexed-indirect arguments) and a
+  normal RenderPipeline (`awaken:pipeline/turbo_grid`, vanilla `core/position_color`) draws it with
+  `drawIndexedIndirect` in the same frame. GPU time from Minecraft's timestamp queries, one `[turbo] demo` line per 600
+  frames. Gate: drawn in the same frame with no hitch on Vulkan; on OpenGL Turbo is off and the game is unchanged.
+- **Launch-time experiments**, each behind its own switch, kept only with a measured win (launch to title, the first
+  world's join and worst frame, p99 over the first 30 s; `[turbo] bench` lines, `tools/turbo-bench.sh`):
+  - `pipelineCache`: one VkPipelineCache (`VulkanRenderPipeline.compile` makes four `vkCreateGraphicsPipelines` calls
+    per pipeline with cache 0; the mixin passes the cache). File `awaken-turbo/pipeline-cache-<mc>-<neoforge>.bin` in
+    the game folder: Awaken's 16-byte header (magic, schema 1, length) + the driver's blob, used only when vendor,
+    device and cache UUID match. Saved at the title screen, 3,600 frames into a world and when the game stops; compiles
+    share a read lock, saving takes the write lock.
+  - `shaderOpt`: `GlslCompiler` compiles at shaderc level 0; on Vulkan the mixin asks for the performance level
+    (OpenGL keeps level 0).
+  - MoltenVK settings (`MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS`, `SHOULD_MAXIMIZE_CONCURRENT_COMPILATION`,
+    `USE_MTLHEAP`): environment only, so only `tools/play.sh`, tours (`MVK=`) and launchers like Prism can set them.
+- **Results and decisions:** docs/perf/turbo/REPORT.md.
 

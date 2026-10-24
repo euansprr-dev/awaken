@@ -12,6 +12,8 @@
 #   RD=<chunks>             vanilla render distance for this run
 #   TECTONIC=<preset>       Tectonic settings from pack/tectonic/<preset>.json (unset: Tectonic's defaults)
 #   CITY=on                 ask for the city basin before Carillon exists (terrain's dev switch)
+#   TURBO=pipelineCache=on,shaderOpt=off   Turbo switches for this run (SPEC §16; "off" turns Turbo off)
+#   MVK=USE_MTLHEAP=1,...   MoltenVK settings for this run (each becomes MVK_CONFIG_<name> in the client's environment)
 cd "$(dirname "$0")/.."
 SCRIPT=${1:?script}
 T=${2:-900}
@@ -56,6 +58,8 @@ else rm -f run-autopilot/config/awaken-terrain-dev.properties; fi
 GRADLE_ARGS=()
 [ -n "$XMX" ] && GRADLE_ARGS+=("-Pxmx=$XMX")
 [ -n "$ZGC" ] && GRADLE_ARGS+=("-Pzgc")
+[ -n "$TURBO" ] && GRADLE_ARGS+=("-Pturbo=$TURBO")
+[ -n "$MVK" ] && GRADLE_ARGS+=("-Pmvk=$MVK")
 cp "$SCRIPT" run-autopilot/script.txt
 rm -f run-autopilot/screenshots/*.png
 rm -rf run-autopilot/saves   # every tour starts from a fresh world

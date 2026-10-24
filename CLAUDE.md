@@ -43,6 +43,17 @@ tools/                   gradle.sh, sim/ (pacing simulator), art/ (texture + sou
 ## Code style
 - Java 25, records for data, `final` classes where sensible, no reflection hacks, no mixins unless unavoidable
   (if needed: `src/main/resources/awaken.mixins.json`, coordinate first).
+- **The Turbo contract** (Far Sight plan, approved 2026-10-24: "I'm open to all of them … I'm really open to anything
+  for making this absolutely peak", then "Go ahead with Far Sight build out along with pixels and turbo bridge").
+  Minecraft internals are allowed only under these rules (SPEC §16):
+  1. One place: internals live only in `dev.awaken.turbo` (and its subpackages), with their own mixin configs
+     (`awaken.turbo.mixins.json`, …) and the access-transformer lines in `META-INF/accesstransformer.cfg`.
+  2. Never required: every feature has a public-API fallback and switches itself off when its probe fails (wrong
+     backend, unknown version, failed self-test). The game never crashes because of Turbo.
+  3. Version-locked: Turbo turns on only for the Minecraft and NeoForge versions in `TurboVersions.VERIFIED`. After an update
+     it stays off until its tests and tours pass again and the versions are added.
+  4. Earned: a feature stays only with a measured win on the owner's Mac (docs/perf/turbo/REPORT.md).
+  5. Least force: an access transformer before a mixin, never reflection.
 - Codecs for everything saved; `StreamCodec` for everything sent. Version every saved structure (`schemaVersion`).
 - Server is authoritative. Client code lives in `...client` subpackages or `XxxClient` classes, never referenced from
   common code paths that run on a dedicated server.

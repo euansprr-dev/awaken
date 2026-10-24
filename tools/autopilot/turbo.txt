@@ -1,0 +1,34 @@
+# Turbo bridge (SPEC §16). Turbo logs its own numbers: the probe ("[turbo] on:" or "[turbo] off: <why>"), the device's
+# extensions, and "[turbo] bench" lines for launch to title, join to first frame and the first 30 s in the world
+# (p50/p99/p99.5/max). The tour keeps still through those 30 s, then shows the compute-built demo grid drawn after the
+# sky (a shot, and frame times with the demo on and off). tools/turbo-bench.sh runs it once per variant.
+world turbo creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+info
+look 0 10
+wait 460
+cmd awaken turbo status
+cmd tp @s 0.5 190 0.5 0 30
+wait 80
+cmd awaken turbo demo on
+wait 80
+shot turbo_demo_on
+perf demo_on 10
+cmd awaken turbo status
+cmd awaken turbo demo off
+wait 40
+shot turbo_demo_off
+perf demo_off 10
+quit
