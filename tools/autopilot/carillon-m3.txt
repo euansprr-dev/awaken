@@ -131,6 +131,14 @@ wait 100
 cmd awaken citizens greet
 wait 14
 shot m3_greet_stallkeeper
+# ---- a pickpocket at a stall, the cry going up
+cmd awaken city view square
+wait 60
+cmd awaken citizens event pickpocket
+wait 500
+cmd awaken citizens show event
+wait 40
+shot m3_noon_pickpocket
 # ---- an event in progress: fire in the Works, the bucket line forming
 cmd awaken city view works
 wait 40
@@ -180,13 +188,15 @@ cmd awaken citizens show tavernkeeper
 wait 80
 shot m3_dusk_tavern
 # ---- in the last light: a burglary, the thief running for it
-cmd time set 13700
+cmd time set 12300
 cmd awaken citizens event burglary
-wait 700
+wait 450
 cmd awaken citizens show event
-wait 60
+wait 30
 shot m3_dusk_burglary
-wait 200
+wait 120
+cmd awaken citizens show event
+wait 30
 shot m3_dusk_chase
 # ---- night: the Watch with lanterns, the districts, the city from above
 cmd time set 17000

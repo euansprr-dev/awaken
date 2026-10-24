@@ -7,6 +7,12 @@ import dev.awaken.Awaken;
 import dev.awaken.city.CityPlan;
 import dev.awaken.core.AwakenCommands;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
@@ -234,12 +240,19 @@ final class CitizensCommands {
             src.sendFailure(Component.literal("Nothing to show for " + what));
             return 0;
         }
-        double[] eye = anchor != null ? vantage(c, anchor[0], anchor[1], want) : vantage(c, at[0], at[2], want);
+        double[] eye = anchor != null ? vantage(c, anchor[0], c.ledger.streetY + 2.2, anchor[1], want) : vantage(c, at[0], at[1], at[2], want);
         // on the street (a step up at most), looking up at a roof when that's where it is
         double ground = c.ledger.streetY + liftAt(c, ex(eye), eye[1]) + 1.0;
         double ex = eye[0], ez = eye[1], ey = Math.clamp(at[1] - 1.2, ground, ground + 2.5);
+        double lookY = at[1];
+        if (anchor != null) {
+            // a roof: from the roof's own height across the street, looking down between the flames and the street,
+            // so the fire and the bucket line under it share the frame
+            ey = Math.max(ground, at[1] - 1);
+            lookY = (at[1] + ground) / 2 + 1;
+        }
         float yaw = (float) Math.toDegrees(Math.atan2(-(at[0] - ex), at[2] - ez));
-        float pitch = (float) -Math.toDegrees(Math.atan2(at[1] - (ey + 1.62), Math.max(0.5, Math.hypot(at[0] - ex, at[2] - ez))));
+        float pitch = (float) -Math.toDegrees(Math.atan2(lookY - (ey + 1.62), Math.max(0.5, Math.hypot(at[0] - ex, at[2] - ez))));
         p.teleportTo(c.level, ex, ey, ez, Set.of(), yaw, pitch, true);
         Awaken.LOG.info("[citizens] show {}: camera at {} {} {}", what, String.format(Locale.ROOT, "%.1f", ex), String.format(Locale.ROOT, "%.1f", ey),
                 String.format(Locale.ROOT, "%.1f", ez));
@@ -338,11 +351,12 @@ final class CitizensCommands {
     }
 
     /** An open spot 4-11 blocks from a point with a clear line of open ground to it, nearest to {@code want}. */
-    static double[] vantage(Citizens c, double x, double z, double want) {
+    static double[] vantage(Citizens c, double x, double y, double z, double want) {
         CityPlan plan = CityPlan.get();
         int cx = c.ledger.cx, cz = c.ledger.cz;
         double bestScore = Double.MAX_VALUE;
         double[] best = null;
+        Vec3 target = new Vec3(x, y, z);
         for (int a = 0; a < 32; a++) {
             double ang = a * Math.PI / 16;
             for (double dist = 4; dist <= Math.max(11, want + 4); dist += 1) {
@@ -350,6 +364,9 @@ final class CitizensCommands {
                 int ix = (int) Math.floor(px - cx), iz = (int) Math.floor(pz - cz);
                 if (!open(plan.kind(ix, iz))) continue;
                 if (!clear(plan, x - cx, z - cz, px - cx, pz - cz)) continue;
+                // the plan doesn't know the painter's jetties, stalls, posts and trees: the real blocks must leave
+                // the camera standing free and the target in sight
+                if (!seen(c, Math.floor(px) + 0.5, c.ledger.streetY + plan.lift(ix, iz) + 1.0, Math.floor(pz) + 0.5, target)) continue;
                 // room round the camera: not pressed against a wall or a drainpipe
                 int room = 0;
                 for (int ox = -2; ox <= 2; ox++) for (int oz = -2; oz <= 2; oz++) if (open(plan.kind(ix + ox, iz + oz))) room++;
@@ -374,6 +391,18 @@ final class CitizensCommands {
             }
         }
         return best;
+    }
+
+    /** A camera with its feet at (x, feetY, z) stands in free air and sees the target. */
+    private static boolean seen(Citizens c, double x, double feetY, double z, Vec3 target) {
+        BlockPos feet = BlockPos.containing(x, feetY, z);
+        for (int dy = 0; dy <= 1; dy++) {
+            BlockPos q = feet.above(dy);
+            if (!c.level.getBlockState(q).getCollisionShape(c.level, q).isEmpty()) return false;
+        }
+        Vec3 eye = new Vec3(x, feetY + 1.62, z);
+        BlockHitResult hit = c.level.clip(new ClipContext(eye, target, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()));
+        return hit.getType() == HitResult.Type.MISS || hit.getLocation().distanceToSqr(target) < 2.25;
     }
 
     private static boolean open(byte k) {

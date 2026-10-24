@@ -88,7 +88,7 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         s.hasPrev = s.blend < 1f && prev != Act.NONE && CitizenClips.sample(prev, body.tickCount - body.pStart + partial, s.prevPose);
         if (s.crate) {
             if (crate == null) crate = new ItemStack(CitizensContent.PORTER_CRATE.get());
-            itemModelResolver.updateForLiving(s.backItem, crate, ItemDisplayContext.FIXED, body);
+            itemModelResolver.updateForLiving(s.backItem, crate, ItemDisplayContext.NONE, body);
         }
         else s.backItem.clear();
         s.height = body.getBbHeight();
@@ -186,8 +186,9 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
             var m = getParentModel();
             m.root().translateAndRotate(pose);
             m.body.translateAndRotate(pose);
-            pose.translate(0f, 0.36f, 0.42f);
-            pose.scale(0.62f, 0.62f, 0.62f);
+            // between the shoulder blades (+z is the back here, as for the cape), a whole crate wider than the torso
+            pose.translate(0f, 0.34f, 0.45f);
+            pose.scale(0.6f, 0.6f, 0.6f);
             s.backItem.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, s.outlineColor);
             pose.popPose();
         }
