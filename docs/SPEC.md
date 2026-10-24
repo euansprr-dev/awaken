@@ -297,6 +297,14 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
+- `dev.awaken.core.client.skin` (client) — `SkinnedMobRenderer<T extends Mob, S extends SkinRenderState>`, `SkinModel`,
+  `SkinRenderState` (`wear(PlayerSkin)`, `wear(texture, slim)`, overlay toggles): the renderer for every non-player body
+  with a player-format skin (townsfolk, training ghost, gate shades, Shadow Self, HUMAN and MIMIC mobs). The player mesh
+  is picked per state (wide or slim, as the skin says); subclasses add their own tint, see-through, scale and layers.
+  **Rule: a non-player entity never uses `AvatarRenderState` in 26.3.** `EntityRenderDispatcher.getRenderer(state)`
+  sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
+  extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
+  townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
 - Carillon hooks (§16.9, v0): `CityHooks`, `CitizenHooks`, `RenownHooks`, `EconomyHooks`, `PartyHooks`, `OpeningHooks`,
   `AtlasHooks`. Defaults behave as a classic world with no city.
 
@@ -985,7 +993,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   they leave early by route distance. Path slots: 4 at once, 6 above ~60 bodies in a world, walk straight after 2 s
   without one. Route tables are baked per destination on first use. Rescue teleport after 10 s stuck, only out of every
   player's view. Spawn at 56 blocks, remove past 64, ≤ 8 spawns per 10-tick pass. Witness line-of-sight checks run per
-  event or in the ledger, never per tick. Rendering uses a HumanoidRenderState subclass (never AvatarRenderState).
+  event or in the ledger, never per tick. Rendering uses `core.client.skin.SkinnedMobRenderer` + `SkinRenderState` (never AvatarRenderState).
 - 12 jobs (lamplighter, bellringer, porter, stallkeeper, baker, smith, watch, crier, boatman, washer, mason, runner);
   schedules on the vanilla day clock, seeded per citizen.
 - Events per play-day budget: burglary ~1 (night; thief flees on the roof graph), pickpocket 0–2, fire ~1/5 play-days,

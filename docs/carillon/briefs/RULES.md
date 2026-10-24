@@ -24,14 +24,12 @@ The plan is docs/plan-carillon.html; the source of truth is docs/SPEC.md §16. T
   /Volumes/MEDIA/Awaken/.ref/neo and /Volumes/MEDIA/Awaken/.ref/assets. 26.3 is not 1.21.1. A compile error costs more
   than a grep.
 - GameTests can flake under machine load: re-run once before calling something broken. Known timing flakes under
-  load: `gates_interior_build_budget`, `fauna_p3_caves_spawn`.
+  load: `gates_interior_build_budget`, `fauna_p3_caves_spawn`, `anomaly_rift_close_pays_once`.
 - Lens: cutscenes use `LensClient.override(lookId, fadeTicks)` / `clearOverride()` (a story override wins over biome and
   dimension looks). Carillon's own looks go in `assets/awaken/lens/looks_carillon.json`; never edit looks.json.
 - Player-shaped entities (26.3 trap): `EntityRenderDispatcher` routes ANY `AvatarRenderState` to the vanilla player
-  renderer, so a mob renderer's texture, render type, tint, scale and layers never run (townsfolk drew as Steve). For
-  non-player humanoids use a `HumanoidRenderState` subclass + a `HumanoidModel` baked from the PLAYER/PLAYER_SLIM layer
-  (being fixed and written into SPEC on pack/avatar-render by the main session). Setting `state.skin` is only a fallback
-  for opaque, untinted figures.
+  renderer, so a mob renderer's texture, tint, translucency, scale and layers never run. Non-player humanoids use
+  `core.client.skin.SkinnedMobRenderer<T, S extends SkinRenderState>` with `state.wear(texture, slim)` (SPEC §12).
 - Autopilot traps: docs in the repo and memory say every tour must `cmd awaken admin awaken`, then
   `cmd awaken powers starter 1` + `screen close`, or the first-power screen covers the shots. `quit` saves.
 
