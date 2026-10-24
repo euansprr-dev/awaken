@@ -73,6 +73,7 @@ final class Rival {
         VaelEntity v = StoryModule.VAEL.get().create(level, EntitySpawnReason.TRIGGERED);
         if (v == null) return null;
         v.snapTo(at.getX() + 0.5, y, at.getZ() + 0.5, p.getYRot() + 180, 0);
+        v.viewer = p.getUUID(); // the beat is this player's: nobody else nearby sees Vael
         level.addFreshEntity(v);
         return v;
     }

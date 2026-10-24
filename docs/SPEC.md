@@ -899,3 +899,24 @@ A shared Hearth (members, and growing into several):
   Vat never changes its owner, so a household shares one clone.
 - A Hearth member's kill near friends: see "Shared rewards" below (Echo binding is one bind roll per player).
 
+The world's story (one story, shared; friends who join late go at their own pace):
+- One ending per world. The first player to choose at the Seed decides it (`StoryWorld` schema 2: who chose, the
+  play-day, and every player who reached it with the Ascension tier they took part in). Anyone who reaches the Seed
+  after that gets no choice card: they are told the world's ending (its lines, "This world's ending: <name> chose it",
+  the credits) and their own story finishes as before (the Sovereign Reassessment, the Endless, a new thing). Players
+  still choosing at the same Seed when the first one chooses are told at once.
+- The ending's effect applies once: "Become the Signal" raises the world's Ascension tier by one (the world's only
+  milestone; nothing raises it per player), "Break the Signal" calms the gates, "Wake up" restores the colour.
+- Own tier: the Ascension tier a player meets is min(world tier, the tier recorded when they reached the ending), 0
+  before that. A creature is scaled when it appears for the nearest player within 64 blocks (the world's tier when
+  nobody is near) and keeps that tier (`awaken_ascension`); every hit between it and another player is evened out to
+  that player's own tier: its melee ×(1 + 0.15·mine)/(1 + 0.15·its), the player's hits on it ×(1 + 0.3·its)/(1 +
+  0.3·mine). XP is ×(1 + 0.15·own tier). Projectiles were never scaled and aren't evened out.
+- Calm gates: a gate never breaks once the world's gates are calm, unless it was rolled for a player who hasn't reached
+  the world's ending: theirs still break (and look it). A gate with no owner follows the world.
+- Old saves: a schema 1 world records each player who chose an ending as having reached it at the world's tier when
+  they log in, so a single-player world plays exactly as before.
+- The Rival's beats are one player's scenes: only that player sees Vael (`VaelEntity` keeps its viewer).
+- Admin: `/awaken admin story ending` tells the ending once the world has one; `/awaken admin story ending reset` gives
+  the world its story back (tests and tours).
+
