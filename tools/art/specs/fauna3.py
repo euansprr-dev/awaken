@@ -4,7 +4,8 @@
                                                    whistle, the bridle overlays of the Frost Stag and the Dune Ray) and
                                                    src/main/java/dev/awaken/mobs/client/anim/Fauna3Data.java
     python3 tools/art/specs/fauna3.py content      biome modifiers, loot tables, item models, lang, lairs (structures,
-                                                   sets, biome tags), recipes, requests, level-road steps, gear tags
+                                                   sets), recipes, requests, level-road steps, gear tags (biomes:
+                                                   tools/terrain/biomes.py)
     python3 tools/art/specs/fauna3.py sounds       every voice (synthesised with fauna_sounds.py's DSP) merged into
                                                    src/main/merge/fauna/assets/awaken/sounds.json, subtitles in lang
     python3 tools/art/specs/fauna3.py preview DIR [ids]
@@ -2048,25 +2049,15 @@ def build(out):
 # ---------------------------------------------------------------------------------------------------------------------
 # Content: spawns, loot, items, lang, lairs, recipes, requests, the level road, gear tags
 
-RIVERS = ["minecraft:river", "minecraft:frozen_river"]
-LAKES = ["minecraft:plains", "minecraft:sunflower_plains", "minecraft:meadow", "minecraft:forest", "minecraft:birch_forest", "minecraft:flower_forest",
-         "minecraft:dark_forest", "minecraft:taiga", "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga", "minecraft:cherry_grove",
-         "minecraft:savanna", "minecraft:jungle", "minecraft:swamp", "minecraft:snowy_plains", "minecraft:snowy_taiga"]
-OCEANS = ["minecraft:ocean", "minecraft:lukewarm_ocean", "minecraft:warm_ocean", "minecraft:cold_ocean", "minecraft:deep_ocean",
-          "minecraft:deep_lukewarm_ocean", "minecraft:deep_cold_ocean"]
-DEEP = ["minecraft:deep_ocean", "minecraft:deep_lukewarm_ocean", "minecraft:deep_cold_ocean", "minecraft:deep_frozen_ocean"]
-DRIPSTONE = ["minecraft:dripstone_caves"]
-LUSH = ["minecraft:lush_caves"]
-DEEP_DARK = ["minecraft:deep_dark"]
-
+# Spawners per modifier (biomes: the tag #awaken:fauna/<group> of the biome table, tools/terrain/biomes.py)
 SPAWNS = {
-    "fauna_tidewater_rivers": (RIVERS, [("glimmerfin", 30, 4, 6), ("brook_otter", 14, 1, 2)]),
-    "fauna_tidewater_lakes": (LAKES, [("glimmerfin", 8, 3, 5)]),
-    "fauna_tidewater_ocean": (OCEANS, [("breathbell", 20, 2, 3), ("tidesteed", 12, 1, 2), ("glimmerfin", 6, 3, 5)]),
-    "fauna_tidewater_deep": (DEEP, [("lantern_maw", 1, 1, 1)]),
-    "fauna_hollows_dripstone": (DRIPSTONE, [("chime_cricket", 26, 1, 3), ("drip_lurker", 22, 1, 2), ("thousandfoot", 1, 1, 1)]),
-    "fauna_hollows_lush": (LUSH, [("wickling", 26, 2, 3), ("chime_cricket", 12, 1, 2)]),
-    "fauna_hollows_deep_dark": (DEEP_DARK, [("hushling", 24, 2, 3), ("chime_cricket", 6, 1, 1)]),
+    "fauna_tidewater_rivers": [("glimmerfin", 30, 4, 6), ("brook_otter", 14, 1, 2)],
+    "fauna_tidewater_lakes": [("glimmerfin", 8, 3, 5)],
+    "fauna_tidewater_ocean": [("breathbell", 20, 2, 3), ("tidesteed", 12, 1, 2), ("glimmerfin", 6, 3, 5)],
+    "fauna_tidewater_deep": [("lantern_maw", 1, 1, 1)],
+    "fauna_hollows_dripstone": [("chime_cricket", 26, 1, 3), ("drip_lurker", 22, 1, 2), ("thousandfoot", 1, 1, 1)],
+    "fauna_hollows_lush": [("wickling", 26, 2, 3), ("chime_cricket", 12, 1, 2)],
+    "fauna_hollows_deep_dark": [("hushling", 24, 2, 3), ("chime_cricket", 6, 1, 1)],
 }
 
 DROPS = {
@@ -2082,10 +2073,11 @@ DROPS = {
     "thousandfoot": [("awaken:hollow_chitin", 3, 5, 1.0, True), ("awaken:hollow_crystal", 2, 3, 1.0, True), ("minecraft:amethyst_shard", 2, 4, 1.0, False)],
 }
 
-# Lairs: beast -> (style, spacing, separation, salt, biomes, step, terrain adaptation)
+# Lairs: beast -> (style, spacing, separation, salt, step, terrain adaptation); biomes: the biome table's tag
+# #awaken:has_lair/<beast> (tools/terrain/biomes.py)
 LAIRS = {
-    "lantern_maw": ("sunken_shrine", 96, 40, 318274911, DEEP, "surface_structures", "beard_thin"),
-    "thousandfoot": ("crystal_nest", 96, 40, 742019385, DRIPSTONE + LUSH, "underground_structures", "none"),
+    "lantern_maw": ("sunken_shrine", 96, 40, 318274911, "surface_structures", "beard_thin"),
+    "thousandfoot": ("crystal_nest", 96, 40, 742019385, "underground_structures", "none"),
 }
 
 # What the System may ask you to bring to the Anchor (data/awaken/awaken/request/<item>.json, the requests module's format)
@@ -2153,11 +2145,8 @@ def merge_tag(path, values):
 def content():
     import fauna as F
     ms = creatures()
-    for name, (biomes, spawners) in SPAWNS.items():
-        F.write_json(os.path.join(RES, "data/awaken/neoforge/biome_modifier", name + ".json"), {
-            "type": "neoforge:add_spawns", "biomes": biomes,
-            "spawners": [{"type": "awaken:" + i, "weight": w, "count": {"type": "minecraft:uniform", "min_inclusive": lo, "max_inclusive": hi}}
-                         for i, w, lo, hi in spawners]})
+    for name, spawners in SPAWNS.items():
+        F.spawn_modifier(name, spawners)
     F.DROPS.update(DROPS)
     lang = {}
     for m in ms:
@@ -2178,14 +2167,13 @@ def content():
     lang["awaken.fauna.whistle.sound"] = "Hunter's whistle"
     lang["subtitles.awaken.fauna.mount_whistle"] = "Hunter's whistle blows"
     merge_lang(lang)
-    for beast, (style, spacing, separation, salt, biomes, step, adapt) in LAIRS.items():
+    for beast, (style, spacing, separation, salt, step, adapt) in LAIRS.items():
         F.write_json(os.path.join(RES, "data/awaken/worldgen/structure/lair", beast + ".json"), {
             "type": "awaken:fauna_lair", "lair": style, "biomes": "#awaken:has_lair/" + beast, "step": step,
             "spawn_overrides": {}, "terrain_adaptation": adapt})
         F.write_json(os.path.join(RES, "data/awaken/worldgen/structure_set/lair", beast + ".json"), {
             "structures": [{"structure": "awaken:lair/" + beast, "weight": 1}],
             "placement": {"type": "minecraft:random_spread", "spacing": spacing, "separation": separation, "salt": salt}})
-        F.write_json(os.path.join(RES, "data/awaken/tags/worldgen/biome/has_lair", beast + ".json"), {"values": biomes})
     tag_path = os.path.join(RES, "data/awaken/tags/worldgen/structure/fauna_lairs.json")
     tags = json.load(open(tag_path))
     for beast in LAIRS:

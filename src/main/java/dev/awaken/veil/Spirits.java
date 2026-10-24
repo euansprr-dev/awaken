@@ -6,11 +6,13 @@ import dev.awaken.progression.Counters;
 import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
+import dev.awaken.terrain.api.BiomeTable;
 import dev.awaken.veil.entity.VeilSpirit;
 import dev.awaken.veil.net.VeilPayloads;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -61,6 +63,18 @@ public final class Spirits {
         for (var e : SignalLines.SPIRITS.entrySet()) BY_BIOME.computeIfAbsent(e.getValue().biomeHint(), k -> new ArrayList<>()).add(e.getKey());
     }
 
+    /**
+     * Spirits that would stand in this biome: by its own id first, then as the vanilla biome it stands in for (an
+     * Awakened biome's archetype, from the biome table), whose name the hints know.
+     */
+    public static List<String> forBiome(Holder<Biome> biome) {
+        String own = idOf(biome);
+        List<String> exact = BY_BIOME.get(own);
+        if (exact != null) return exact;
+        ResourceKey<Biome> archetype = BiomeTable.archetype(biome);
+        return forBiome(archetype == null ? own : archetype.identifier().toString());
+    }
+
     /** Spirits that would stand in this biome: exact match first, otherwise the longest hint the biome's name contains. */
     public static List<String> forBiome(String biomeId) {
         List<String> exact = BY_BIOME.get(biomeId);
@@ -91,8 +105,9 @@ public final class Spirits {
                 int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, xz[0], xz[1]);
                 // surface first: one spirit per cell
                 boolean placed = false;
-                String biome = biomeAt(level, new BlockPos(xz[0], surface, xz[1]));
-                String id = SpiritPlacer.choose(seed, cx, cz, forBiome(biome));
+                Holder<Biome> top = level.getBiome(new BlockPos(xz[0], surface, xz[1]));
+                String biome = idOf(top);
+                String id = SpiritPlacer.choose(seed, cx, cz, forBiome(top));
                 if (id != null && !isUnderground(id)) {
                     out.add(new Spot(id, id + "@" + cx + "," + cz, new Vec3(xz[0] + 0.5, surface + 0.1, xz[1] + 0.5), biome));
                     placed = true;
@@ -100,8 +115,9 @@ public final class Spirits {
                 if (placed) continue;
                 for (int y : DEPTHS) {
                     if (y >= surface - 8 || y < level.getMinY() + 4) continue;
-                    String deep = biomeAt(level, new BlockPos(xz[0], y, xz[1]));
-                    String did = SpiritPlacer.choose(seed, cx, cz, forBiome(deep));
+                    Holder<Biome> under = level.getBiome(new BlockPos(xz[0], y, xz[1]));
+                    String deep = idOf(under);
+                    String did = SpiritPlacer.choose(seed, cx, cz, forBiome(under));
                     if (did != null && isUnderground(did)) {
                         out.add(new Spot(did, did + "@" + cx + "," + cz + "," + y, new Vec3(xz[0] + 0.5, airNear(level, xz[0], y, xz[1]), xz[1] + 0.5), deep));
                         break;
@@ -130,8 +146,7 @@ public final class Spirits {
         return y;
     }
 
-    static String biomeAt(ServerLevel level, BlockPos pos) {
-        Holder<Biome> b = level.getBiome(pos);
+    static String idOf(Holder<Biome> b) {
         return b.unwrapKey().map(k -> k.identifier().toString()).orElse("minecraft:plains");
     }
 

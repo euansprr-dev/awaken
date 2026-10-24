@@ -1,8 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:dripstone_caves"
-  ],
+  "biomes": "#awaken:fauna/hollows_dripstone",
   "spawners": [
     {
       "type": "awaken:chime_cricket",

@@ -1,10 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:jungle",
-    "minecraft:sparse_jungle",
-    "minecraft:bamboo_jungle"
-  ],
+  "biomes": "#awaken:fauna/canopy",
   "spawners": [
     {
       "type": "awaken:dart_frog",

@@ -1,0 +1,8 @@
+{
+  "type": "awaken:hero_tree",
+  "tree": "elder_colossus",
+  "biomes": "#awaken:has_structure/elder_colossus",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

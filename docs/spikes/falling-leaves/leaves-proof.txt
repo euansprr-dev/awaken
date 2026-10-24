@@ -1,0 +1,80 @@
+# Leaves in the air (docs/modules/lands.md "Leaves in the air"): falling leaves in a dark forest with the real wind and
+# with a forced gust, leaves settling on the ground, gold leaves in the Elderwood, Lumen motes at night.
+# Run: PACK=perf tools/autopilot.sh docs/spikes/falling-leaves/leaves-proof.txt 1500 ; sheets: motion_sheet.py
+world leaves777 creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken terrain waving status
+cmd awaken terrain leaves status
+cmd gamemode spectator
+cmd awaken fauna goto duskwood
+wait 400
+cmd awaken terrain wind status
+cmd awaken terrain leaves status
+# 1 under the canopy, the real wind: four frames ~13 ticks apart
+look 30 -8
+wait 100
+shot air_real_1
+shot air_real_2
+shot air_real_3
+shot air_real_4
+cmd awaken terrain wind status
+cmd awaken terrain leaves status
+# 2 a forced gust (showcase aid): leaves stream with it
+cmd awaken terrain wind force 0.8 0.9
+wait 160
+shot air_gust_1
+shot air_gust_2
+shot air_gust_3
+shot air_gust_4
+cmd awaken terrain leaves status
+# 3 settling: looking down at the forest floor
+cmd awaken terrain wind force 0.35 0.0
+look 30 55
+wait 200
+shot settle_1
+wait 15
+shot settle_2
+wait 15
+shot settle_3
+wait 15
+shot settle_4
+cmd awaken terrain wind real
+# 4 the Elderwood (placeholder biome, birch leaves, gold air)
+cmd awaken terrain visit awaken:elderwood
+wait 400
+look 60 -5
+wait 100
+cmd awaken terrain leaves status
+shot elder_1
+shot elder_2
+shot elder_3
+shot elder_4
+# 5 Lumen motes at night (the Lumen Forest is built on lands/slice: its air rule forced here, in the dark forest)
+cmd awaken fauna goto duskwood
+wait 300
+cmd time set 18000
+cmd awaken terrain leaves biome awaken:lumen_forest
+look 30 -5
+wait 300
+cmd awaken terrain leaves status
+shot motes_1
+shot motes_2
+shot motes_3
+shot motes_4
+cmd awaken terrain leaves biome clear
+cmd time set 6000
+quit

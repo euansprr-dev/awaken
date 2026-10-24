@@ -41,9 +41,13 @@ repo/
 
 ### AWAKEN ###
 /run-autopilot/
+/run-studio/
 .ref/
 /logs/
 *.log
 .claude/worktrees/
 
 awaken-registry.json
+
+### Python ###
+__pycache__/

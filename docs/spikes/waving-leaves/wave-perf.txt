@@ -1,0 +1,80 @@
+# Waving leaves spike, frame cost (docs/spikes/waving-leaves.md). Run: PACK=perf tools/autopilot.sh docs/spikes/waving-leaves/wave-perf.txt 1800
+# Same two cameras as wave-proof.txt. The shader's own cost without reloads (debug 1: the shader runs but finds no
+# wind and exits early; debug 2: full shader, amplitude 0), then waving on against Sodium's own shader (off, which
+# reloads resources), alternated twice so drift in the machine's load shows up as disagreement.
+world wave777 creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken terrain waving status
+cmd gamemode spectator
+cmd awaken fauna goto duskwood
+wait 500
+look 30 -12
+wait 60
+shot v2_on_ground_1
+shot v2_on_ground_2
+shot v2_on_ground_3
+shot v2_on_ground_4
+cmd tp @s ~ ~14 ~
+look 30 35
+wait 120
+shot v2_on_canopy_1
+shot v2_on_canopy_2
+shot v2_on_canopy_3
+shot v2_on_canopy_4
+perf c_on_a 15
+cmd awaken terrain waving debug 1
+wait 40
+perf c_still_a 15
+cmd awaken terrain waving debug 2
+wait 40
+perf c_zero_a 15
+cmd awaken terrain waving debug 0
+wait 40
+perf c_on_b 15
+cmd awaken terrain waving debug 1
+wait 40
+perf c_still_b 15
+cmd awaken terrain waving debug 0
+cmd awaken terrain waving off
+wait 500
+perf c_off_a 15
+cmd tp @s ~ ~-14 ~
+look 30 -12
+wait 80
+perf g_off_a 15
+cmd awaken terrain waving on
+wait 500
+perf g_on_a 15
+cmd tp @s ~ ~14 ~
+look 30 35
+wait 120
+perf c_on_c 15
+cmd awaken terrain waving off
+wait 500
+perf c_off_b 15
+cmd tp @s ~ ~-14 ~
+look 30 -12
+wait 80
+perf g_off_b 15
+cmd awaken terrain waving on
+wait 500
+perf g_on_b 15
+cmd tp @s ~ ~14 ~
+look 30 35
+wait 120
+perf c_on_d 15
+quit

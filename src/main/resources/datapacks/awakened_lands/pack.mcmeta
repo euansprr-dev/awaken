@@ -1,0 +1,12 @@
+{
+  "features": {
+    "enabled": [
+      "awaken:awakened_lands"
+    ]
+  },
+  "pack": {
+    "description": "Awakened Lands: Awaken's biomes, trees and landmarks (new worlds only)",
+    "max_format": 121,
+    "min_format": 121
+  }
+}

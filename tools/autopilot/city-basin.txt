@@ -1,0 +1,47 @@
+# The city basin (docs/SPEC.md §15): the site, flat at street level, the river channel, the blend out to the natural
+# terrain; a survey map around it. Run: CITY=on PACK=perf,world TECTONIC=awakened RD=24 tools/autopilot.sh tools/autopilot/city-basin.txt 1500
+world city777 creative 777
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd gamemode spectator
+cmd awaken terrain city
+wait 400
+cmd awaken terrain survey city 1024 8
+wait 900
+hud off
+cmd tp @s ~ ~150 ~
+wait 400
+look 0 60
+wait 60
+shot city_aerial_south
+look 180 35
+wait 40
+shot city_aerial_north
+look 90 25
+wait 40
+shot city_oblique_west
+cmd awaken terrain city
+wait 200
+cmd tp @s ~-72 ~3 ~-10
+look 0 10
+wait 100
+shot city_river_south
+look 180 10
+wait 40
+shot city_river_north
+cmd tp @s ~-60 ~25 ~
+look -90 15
+wait 100
+shot city_street_east
+quit

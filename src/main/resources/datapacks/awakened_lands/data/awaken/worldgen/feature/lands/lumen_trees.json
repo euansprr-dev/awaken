@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:random_selector",
+  "default": "awaken:lands/small_lumen",
+  "features": [
+    {
+      "chance": 0.03,
+      "feature": "awaken:lands/fallen_lumen"
+    },
+    {
+      "chance": 0.55,
+      "feature": "awaken:lands/lumen"
+    }
+  ]
+}
