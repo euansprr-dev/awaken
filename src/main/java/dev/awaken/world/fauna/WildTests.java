@@ -549,10 +549,10 @@ final class WildTests {
         }
     }
 
-    /** Hundreds of spawn attempts at every family's patch around one player: no role ever passes its cap. */
     /** Rounds of {@link #hammer} that take one creature per patch per turn before the packs. */
     private static final int SINGLE_ROUNDS = 4;
 
+    /** Hundreds of spawn attempts at every family's patch around one player: no role ever passes its cap. */
     private static void hammer(GameTestHelper h, ServerLevel level, ServerPlayer p, List<BlockPos> patches, List<FaunaMob> made, long time) {
         FaunaRules.timeOverride = time;
         try {
