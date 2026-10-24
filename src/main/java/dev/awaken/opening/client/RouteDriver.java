@@ -127,6 +127,9 @@ final class RouteDriver {
             best = d;
             since = 0;
         } else if (++since > 80) {
+            Awaken.LOG.info("[opening] drive {} stuck going for {} {} ({}, {}, {}) from ({}, {}, {}): ground {} hang {} water {} ladder {} wall {}",
+                    route.name(), i, m, r1(t.x - origin.x), r1(t.y - origin.y), r1(t.z - origin.z), r1(pos.x - origin.x), r1(pos.y - origin.y),
+                    r1(pos.z - origin.z), ground, hang, water, ladder, p.horizontalCollision);
             stop("stuck");
             return;
         }
@@ -148,14 +151,19 @@ final class RouteDriver {
             case MANTLE -> keys(true, false, false, false, ground && (dxz < 1.2 || p.horizontalCollision), false, true);
             case DROP -> keys(true, false, false, false, false, false, dxz > 1.0);
             case SLIDE -> keys(true, false, false, false, false, dxz < 3.0, true);
-            case LEAP -> keys(true, false, false, false, ground && edgeAhead(p, dir), false, true);
+            case LEAP -> {
+                // jump at the edge: no floor a step ahead, or past the middle of the take-off block
+                Vec3 from = world(i - 1);
+                double along = (pos.x - from.x) * dir.x + (pos.z - from.z) * dir.z;
+                keys(true, false, false, false, ground && (edgeAhead(p, dir) || along > 0.35), false, true);
+            }
             case HANG -> {
                 if (dy < -0.5) {
                     // lower into a hang: walk to the edge holding sneak
                     keys(!hang, false, false, false, false, true, false);
                 } else {
-                    // jump into the wall: the hands find its ledge; then climb out
-                    keys(!hang, false, false, false, hang ? age % 6 < 3 : ground && dxz < 1.8, false, !hang);
+                    // jump into the wall: the hands find its ledge; then climb out (jump with nothing held)
+                    keys(!hang, false, false, false, hang ? age % 6 < 3 : ground && (dxz < 1.5 || p.horizontalCollision), false, false);
                 }
             }
             case SHIMMY -> {
@@ -188,14 +196,16 @@ final class RouteDriver {
         };
     }
 
+    private static double r1(double v) {
+        return Math.round(v * 10) / 10.0;
+    }
+
     /** No floor a step ahead at the feet: the edge of a gap, jump now. */
     private static boolean edgeAhead(LocalPlayer p, Vec3 dir) {
         var level = p.level();
-        double ax = p.getX() + dir.x * 0.55, az = p.getZ() + dir.z * 0.55;
+        double ax = p.getX() + dir.x * 0.5, az = p.getZ() + dir.z * 0.5;
         BlockPos below = BlockPos.containing(ax, p.getY() - 0.3, az);
-        BlockPos below2 = below.below();
-        return level.getBlockState(below).getCollisionShape(level, below).isEmpty()
-                && level.getBlockState(below2).getCollisionShape(level, below2).isEmpty();
+        return level.getBlockState(below).getCollisionShape(level, below).isEmpty();
     }
 
     private static void keys(boolean fwd, boolean back, boolean left, boolean right, boolean jump, boolean sneak, boolean sprint) {

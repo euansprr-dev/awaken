@@ -131,6 +131,8 @@ def crane(stage):
         stage.put(x, 24, -26, 'dark_oak_trapdoor[facing=north,half=bottom,open=false]', THIN)
     # the old rope post on the arm's tower end goes (one obstacle on the arm: the trolley)
     stage.clear(-65, 23, -26)
+    # a ladder up the cab's west face, from the arm onto the cab's roof
+    ladder(stage, -62, -26, 23, 24, 'west')
     # bronze handholds mark where to drop and where to climb
     stage.put(-74, 22, -25, 'waxed_exposed_cut_copper_slab[type=top]', FULL)
     stage.put(-67, 22, -25, 'waxed_exposed_cut_copper_slab[type=top]', FULL)
@@ -188,6 +190,16 @@ def runner_path(city, box, start, goal, centre, min_feet=None, build=False, plan
         raise SystemExit(f'no floor at the start {start}')
     path, cost, n = P.search(s, goal, centre, limit=limit)
     return path, cost, n
+
+
+def run_built(city, box, start, goal_node, name):
+    """The plain runner (no planks) from start to the Builder's goal over the city as built: the route's real moves."""
+    gx, gz, gf2 = goal_node
+    goal = lambda n: abs(n[0] - gx) <= 1 and abs(n[1] - gz) <= 1 and abs(n[2] - gf2) <= 2
+    path, cost, n = runner_path(city, box, start, goal, (gx, gz), min_feet=None, limit=400000)
+    if path is None:
+        raise SystemExit(f'{name}: the road as built cannot be run (expanded {n})')
+    return path
 
 
 def lay_planks(stage, path, gap_every=7):
@@ -299,8 +311,22 @@ def ground_feet(city, x, z, near=1.0):
 
 
 def street_points(route, city, pts, move='run', near=1.0):
+    """Ground waypoints joined by the planner's runs (round a stall, onto a bridge's deck): what a runner on the street does."""
     for x, z in pts:
-        route.add(x, ground_feet(city, x, z, near), z, move)
+        if not route.points:
+            route.add(x, ground_feet(city, x, z, near), z, move)
+            continue
+        a = route.end()
+        tx, tz = int(math.floor(x)), int(math.floor(z))
+        if (int(math.floor(a[0])), int(math.floor(a[2]))) == (tx, tz):
+            continue
+        goal = (lambda tx, tz: (lambda n: abs(n[0] - tx) <= 1 and abs(n[1] - tz) <= 1 and n[2] <= 2 * 3))(tx, tz)
+        path, cost, n = runner_path(city, BOX, a, goal, (tx, tz), min_feet=None, limit=60000)
+        if path is None:
+            # an unreachable waypoint (inside a stall or a doorway): skip it, the next one carries the line
+            print(f'   {route.name}: skips waypoint ({x:.1f}, {z:.1f})')
+            continue
+        to_points(route, path, skip_first=True)
 
 
 # ---- the design ---------------------------------------------------------------------------------------------------------
@@ -319,6 +345,8 @@ def design(city, plan):
     crane(stage)
     # the far bank: a ladder from the east lower quay up the quay wall (south of the Bell Bridge, where the swim lands)
     ladder(stage, -60, -4, -3, 0, 'west')
+    # the canal's mouth: a ladder out of the water onto the lower quay's south side
+    ladder(stage, -84, -33, -7, -4, 'north')
     streets = Streets(plan)
     routes = []
 
@@ -334,6 +362,9 @@ def design(city, plan):
         raise SystemExit('act1_roof: no high road')
     planks = lay_planks(stage, path)
     decorate(stage, planks)
+    # the route is what a runner does on the road as built (the gaps are leaps now)
+    a1_goal = path[-1][0]
+    path = run_built(city, (-185, -135, -110, -15), (-169.5, 28.0, -112.5), a1_goal, 'act1_roof')
     to_points(r, path)
     routes.append(r)
     a1_end = r.end()
@@ -349,6 +380,7 @@ def design(city, plan):
         raise SystemExit('act2_roof: no way to the crane')
     planks = lay_planks(stage, path)
     decorate(stage, planks)
+    path = run_built(city, (-140, -60, -76, 0), a1_end, path[-1][0], 'act2_roof')
     to_points(r, path, skip_first=True)
     # the arm: run to the trolley, drop to a hang on its south face, shimmy past, climb back up, on to the tower
     r.add(-73.5, 23.0, -25.5, 'run')
@@ -362,11 +394,16 @@ def design(city, plan):
     # ---------------- Act 3 · the market, rooftop: up onto the crane's cab, over the Market Hall, a drop into the square
     r = Route('act3_roof', 3, 'roof')
     r.add(*a2_end, 'run')
-    path, cost, n = runner_path(city, (-64, -60, 0, 0), a2_end, in_square, (0, 0), min_feet=None, build=True, plank_cost=0.5)
+    # up the crane's cab by its ladder, onto its roof
+    r.add(-62.5, 25.0, -25.5, 'climb')
+    cab = (-60.5, 25.0, -25.5)
+    r.add(*cab, 'run')
+    path, cost, n = runner_path(city, (-64, -60, 0, 0), cab, in_square, (0, 0), min_feet=None, build=True, plank_cost=0.5)
     if path is None:
         raise SystemExit('act3_roof: no way into the square')
     planks = lay_planks(stage, path, gap_every=9)
     decorate(stage, planks)
+    path = run_built(city, (-64, -60, 0, 0), cab, path[-1][0], 'act3_roof')
     to_points(r, path, skip_first=True)
     routes.append(r)
 
@@ -394,19 +431,22 @@ def design(city, plan):
     r.add(-170.5, 8.0, -123.5, 'run')
     r.add(-170.5, 8.0, -125.5, 'run')
     r.add(*stair_bottom, 'run')
-    street_points(r, city, sr[:k1 + 1])
+    first = next(k for k, (x, z) in enumerate(sr) if not (-179 <= x <= -169 and -127 <= z <= -122))
+    r.add(-177.5, 1.0, -121.0, 'run')
+    street_points(r, city, sr[first:k1 + 1])
     routes.append(r)
     r = Route('act2_street', 2, 'street')
     street_points(r, city, sr[k1:k2 + 1])
     routes.append(r)
     r = Route('act3_street', 3, 'street')
-    street_points(r, city, sr[k2:])
+    street_points(r, city, [p for p in sr[k2:] if math.hypot(p[0], p[1]) > 26] + [(-17.0, 15.0)])
     routes.append(r)
 
     # ---------------- the canal routes: down the stair, the streets to the river, the lower quay, the water
     r = Route('act1_canal', 1, 'canal')
     r.add(*stair_bottom, 'run')
-    a = streets.near(stair_bottom[0], stair_bottom[2])
+    r.add(-177.5, 1.0, -121.0, 'run')
+    a = streets.near(-177.5, -119.0)
     b = streets.near(-90, -142)
     street_points(r, city, streets.path(a, b))
     r.add(-88.5, 1.0, -142.5, 'run')
@@ -417,23 +457,25 @@ def design(city, plan):
     routes.append(r)
     r = Route('act2_canal', 2, 'canal')
     r.add(-85.5, -3.0, -41.5, 'run')
-    r.add(-85.5, -6.4, -38.5, 'swim')       # into the canal's mouth
-    r.add(-85.5, -6.4, -31.5, 'swim')
-    r.add(-85.5, -3.0, -29.5, 'climb')      # out by the quay's water ladder
-    r.add(-84.5, -3.0, -6.5, 'run')
-    r.add(-81.5, -6.4, -4.5, 'swim')        # the Bell Bridge is in the river behind you: across
-    r.add(-64.5, -6.4, -4.5, 'swim')
+    r.add(-85.5, -3.0, -40.5, 'run')
+    r.add(-85.5, -6.4, -37.5, 'swim')       # off the lower quay into the canal's mouth
+    r.add(-84.5, -6.4, -33.6, 'swim')
+    r.add(-84.5, -3.0, -33.5, 'climb')      # up the mouth's ladder
+    r.add(-84.5, -3.0, -31.5, 'run')
+    street_points(r, city, [(-82.5, -6.5), (-82.5, -4.5)], near=-3.0)
+    r.add(-79.5, -6.4, -4.5, 'swim')        # the Bell Bridge is in the river beside you: across
+    r.add(-63.5, -6.4, -4.5, 'swim')
     r.add(-63.5, -3.0, -4.5, 'climb')       # the far bank's water ladder
-    r.add(-61.5, -3.0, -4.5, 'run')
-    r.add(-60.5, 1.0, -4.5, 'climb')        # and the quay wall's
-    r.add(-58.5, 1.0, -4.5, 'run')
+    r.add(-61.5, -3.0, -3.5, 'run')
+    r.add(-60.5, -3.0, -3.5, 'run')
+    r.add(-60.5, 1.0, -3.5, 'climb')        # and the quay wall's
+    r.add(-58.5, 1.0, -3.5, 'run')
     routes.append(r)
     r = Route('act3_canal', 3, 'canal')
     r.add(-58.5, 1.0, -4.5, 'run')
     a = streets.near(-58, -6)
-    b = streets.near(-20, -6)
-    street_points(r, city, streets.path(a, b))
-    r.add(-20.5, 1.0, -3.5, 'run')
+    b = streets.near(-28, -8)
+    street_points(r, city, streets.path(a, b) + [(-22.0, -6.0)])
     routes.append(r)
     return stage, routes
 

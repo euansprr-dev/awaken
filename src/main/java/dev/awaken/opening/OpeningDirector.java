@@ -61,12 +61,18 @@ final class OpeningDirector {
 
     /** Where each runner last moved, and when (the idle pull): transient. */
     static final Map<UUID, long[]> MOVED = new HashMap<>();
+    /** The cinematic whose burst the citizens were told of; whether they know the Bell Bridge is down (this session). */
+    private static long burstFor = -1;
+    private static boolean bridgeTold;
+
     /** Arrivals waiting for the story's gate to finish forming: player → when the pull began. */
     private static final Map<UUID, Long> PULLING = new HashMap<>();
 
     static void forget() {
         MOVED.clear();
         PULLING.clear();
+        burstFor = -1;
+        bridgeTold = false;
     }
 
     // ---- who --------------------------------------------------------------------------------------------------------
@@ -314,7 +320,8 @@ final class OpeningDirector {
         }
         // Act 2: the Bell Bridge goes into the river as you come to it, not on a timer
         if (!w.bridgeDown && (st.act >= 2 || pos.distanceTo(at.bellBridge()) < BRIDGE_NEAR)) {
-            OpeningStage.dropBridge(server.overworld(), at);
+            // the gate pulses first: its shockwave crosses the Quay and takes the bridge as it arrives
+            dev.awaken.core.Later.run(server, 22, () -> OpeningStage.dropBridge(server.overworld(), at));
             w.bridgeDown = true;
             w.setDirty();
             Vec3 mid = at.bellBridge();
@@ -416,6 +423,11 @@ final class OpeningDirector {
             p.teleportTo(server.overworld(), back.x, Math.max(back.y, c.y), back.z, Set.<Relative>of(), p.getYRot(), p.getXRot(), false);
         }
         long now = now(p);
+        // the light throws the square's people back (the second toll), once for the group
+        if (w.cinematicAt >= 0 && now == w.cinematicAt + 60 && burstFor != w.cinematicAt) {
+            burstFor = w.cinematicAt;
+            CitizenHooks.post(server.overworld(), Awaken.id("gate_burst"), at.square());
+        }
         if (w.cinematicAt >= 0 && now >= w.cinematicAt + CINEMATIC) {
             if ((now - w.cinematicAt - CINEMATIC) % 10 == 0) pull(p, at);
         } else if (w.cinematicAt >= 0 && now == w.cinematicAt) {
@@ -606,6 +618,12 @@ final class OpeningDirector {
 
     /** On login: the scene where it stands (the sky mid-flight, the wait, the bed, the Registry), or the beginning. */
     static void onLogin(ServerPlayer p) {
+        MinecraftServer server = p.level().getServer();
+        // the Bell Bridge stays in the river: the citizens' routes keep off it after a restart too
+        if (!bridgeTold && OpeningPlaces.get() != null && OpeningWorld.get(server).bridgeDown) {
+            bridgeTold = true;
+            CitizenHooks.post(server.overworld(), Awaken.id("bell_bridge_down"), BlockPos.ZERO);
+        }
         Prologue b = beat(p);
         if (b == Prologue.NOT_STARTED || b == Prologue.GLITCHED) {
             maybeBegin(p);

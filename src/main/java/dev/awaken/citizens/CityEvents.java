@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,8 +44,8 @@ import static dev.awaken.citizens.CitizensData.WALK;
  * stall stock, repairs for the masons. Citizens are hurt, never killed.
  */
 final class CityEvents {
-    static final List<String> KINDS = List.of("burglary", "pickpocket", "fire", "cart", "tremor");
-    static final int BURGLARY = 0, PICKPOCKET = 1, FIRE = 2, CART = 3, TREMOR = 4;
+    static final List<String> KINDS = List.of("burglary", "pickpocket", "fire", "cart", "tremor", "rush", "infirmary");
+    static final int BURGLARY = 0, PICKPOCKET = 1, FIRE = 2, CART = 3, TREMOR = 4, RUSH = 5, INFIRMARY = 6;
     // phases
     static final int P_GO = 0, P_INSIDE = 1, P_FLEE = 2, P_CAUGHT = 3, P_DONE = 9;
     static final Identifier CAUGHT_THIEF = Awaken.id("caught_thief"), RETURNED = Awaken.id("returned_goods"),
@@ -118,8 +119,179 @@ final class CityEvents {
 
     /** CitizenHooks.post: another module tells the city something happened near it. */
     void post(Identifier event, BlockPos pos) {
-        String kind = event.getPath().replace("gate_", "");
-        if (kind.equals("tremor")) start("tremor", null, c.level.getGameTime());
+        long now = c.level.getGameTime();
+        switch (event.getPath()) {
+            // Carillon's opening (SPEC §16.4)
+            case "bell_wrong" -> bellWrong(pos);
+            case "gate_rush" -> rush(pos, now, false);
+            case "gate_burst" -> rush(pos, now, true);
+            case "bell_bridge_down" -> bellBridgeDown();
+            case "infirmary_wake" -> infirmary(pos, now);
+            case "infirmary_done" -> {
+                for (CitizensData.Event e : List.copyOf(d.events)) if (e.kind() == INFIRMARY && e.phase() != P_DONE) finish(e, now);
+            }
+            default -> {
+                String kind = event.getPath().replace("gate_", "");
+                if (kind.equals("tremor")) start("tremor", null, now);
+            }
+        }
+    }
+
+    // ---- the opening (SPEC §16.4): the bell rings wrong, the market runs, the bridge falls, the infirmary ----------------
+
+    private static final String[] BELL_LINES = {"The great bell?", "That's not the hour...", "Look - the square!",
+            "What is that light?", "Something's wrong with the Choir.", "Get inside!"};
+    private static final String[] RUSH_LINES = {"Run!", "Away from the square!", "It's a gate - a gate in the square!",
+            "Don't look at it, run!", "Mind the children!", "The Watch is closing the square!"};
+
+    /** The great bell out of time: everyone near a player stops, turns to the square and points; some say so. */
+    private void bellWrong(BlockPos square) {
+        long seed = CitizenWork.mixHash(c.level.getGameTime() * 7 + 3);
+        int k = 0;
+        for (CitizenBody b : List.copyOf(c.crowd.bodies)) {
+            if (b.nearestSq > 72 * 72) continue;
+            b.gesture(Act.POINT_SHOUT, 50 + (int) Math.floorMod(seed >>> (k % 40), 30L));
+            b.getLookControl().setLookAt(square.getX() + 0.5, square.getY() + 30, square.getZ() + 0.5, 40f, 40f);
+            if (k % 3 == 0) {
+                String line = BELL_LINES[(int) Math.floorMod(seed + k, (long) BELL_LINES.length)];
+                c.recognition.aloud(b, line, 50, 2, 28, c.level.getGameTime());
+            }
+            k++;
+        }
+        c.work.alarm(square.getX(), square.getZ(), 6);
+    }
+
+    /**
+     * The market runs (Act 3), or the arrival's light throws the square's people back ({@code burst}): citizens near the
+     * square run west toward the river (toward the runners coming in), more called out of the market's doors; the Watch
+     * go to the square's mouths and stand there. Ends by itself after a minute and a half.
+     */
+    private void rush(BlockPos square, long now, boolean burst) {
+        CitizensData.Event live = null;
+        for (CitizensData.Event e : d.events) if (e.kind() == RUSH && e.phase() != P_DONE) live = e;
+        int id = live != null ? live.id() : newId();
+        double sx = square.getX() + 0.5, sz = square.getZ() + 0.5;
+        int sqNode = c.net.nearest(sx, sz, true);
+        long seed = CitizenWork.mixHash(now * 17 + 41);
+        double[] tmp = new double[3];
+        int fled = 0, called = 0;
+        List<int[]> cand = new ArrayList<>();
+        for (int i = 0; i < r.citizens; i++) {
+            if (d.role[i] != 0 || d.hurtUntil[i] > 0 || !r.named[i].isEmpty() || r.job[i] == Roster.WATCH) continue;
+            boolean out = l.position(i, tmp);
+            double dd = out ? Math.hypot(tmp[0] - sx, tmp[2] - sz) : Double.MAX_VALUE;
+            if (out && dd <= (burst ? 40 : 90)) cand.add(new int[]{(int) dd, i, 1});
+            else if (!burst && d.state[i] == INSIDE && l.body[i] == null && r.pDistrict[Math.max(0, r.home[i])] == CityPlan.MARKET) cand.add(new int[]{500, i, 0});
+        }
+        cand.sort((a, b) -> Integer.compare(a[0], b[0]));
+        for (int[] cnd : cand) {
+            if (fled + called >= 26) break;
+            int i = cnd[1];
+            int goal = nodeWest(sqNode, 70, 130, seed + i);
+            if (goal < 0) continue;
+            if (cnd[2] == 0) {
+                // called out of a market door near the square, out of anyone's sight
+                int at = nodeAround(sqNode, 18, 38, seed * 3 + i);
+                if (at < 0) continue;
+                d.at[i] = at;
+                d.next[i] = -1;
+                d.prog[i] = 0;
+                d.spot[i] = -1;
+                d.place[i] = -1;
+                called++;
+            } else fled++;
+            send(i, goal, Roles.FLEE, id);
+            CitizenBody b = body(i);
+            if (b != null) {
+                if (burst && b.distanceToSqr(sx, b.getY(), sz) < 30 * 30) {
+                    // thrown back by the light
+                    Vec3 away = new Vec3(b.getX() - sx, 0, b.getZ() - sz);
+                    double len = Math.max(0.5, away.length());
+                    b.setDeltaMovement(away.x / len * 0.9, 0.45, away.z / len * 0.9);
+                    b.gesture(Act.HURT, 24);
+                }
+                if ((fled + called) % 4 == 1) c.recognition.aloud(b, RUSH_LINES[(int) Math.floorMod(seed + i, (long) RUSH_LINES.length)], 50, 2, 30, now);
+            }
+        }
+        // the Watch close the square's mouths
+        if (live == null) {
+            List<Integer> watch = nearestWatch(sx, sz, 6, 260);
+            for (int w = 0; w < watch.size(); w++) {
+                double ang = Math.PI * 2 * w / Math.max(1, watch.size()) + 0.4;
+                int mouth = c.net.nearest(sx + Math.cos(ang) * 38, sz + Math.sin(ang) * 38, true);
+                send(watch.get(w), mouth, Roles.GATE_GUARD, id);
+            }
+            c.work.alarm(sx, sz, 30);
+            put(new CitizensData.Event(id, RUSH, P_GO, now, now + 20L * 90, new int[]{sqNode}));
+            news("rush", "Choir Square");
+        }
+        Awaken.LOG.info("[citizens] the square {}: {} ran, {} called out", burst ? "throws its people back" : "runs", fled, called);
+    }
+
+    /** A junction west of {@code from} (toward the river) at a walking distance in [lo, hi], seeded; or any, or -1. */
+    private int nodeWest(int from, double lo, double hi, long seed) {
+        StreetNet.Column col = c.net.columnNow(from);
+        double fx = c.net.x[from];
+        int count = 0;
+        for (int i = 0; i < c.net.n; i++) {
+            if (c.net.kind[i] == StreetNet.JUNCTION && col.dm()[i] >= lo * 10 && col.dm()[i] <= hi * 10 && c.net.x[i] < fx - 30) count++;
+        }
+        if (count == 0) return nodeAround(from, lo, hi, seed);
+        int pick = (int) Math.floorMod(CitizenWork.mixHash(seed), (long) count);
+        for (int i = 0; i < c.net.n; i++) {
+            if (c.net.kind[i] != StreetNet.JUNCTION || col.dm()[i] < lo * 10 || col.dm()[i] > hi * 10 || c.net.x[i] >= fx - 30) continue;
+            if (pick-- == 0) return i;
+        }
+        return -1;
+    }
+
+    private void stepRush(int k, CitizensData.Event e, long now) {
+        if (now >= e.until()) finish(e, now);
+    }
+
+    /** The Bell Bridge is in the river: nobody's route crosses it any more (world state: it stays down). */
+    void bellBridgeDown() {
+        String[] tags = CityPlan.get().streetGraph.etag();
+        int closed = 0;
+        for (int e = 0; e < Math.min(tags.length, c.net.ea.length); e++) {
+            if (tags[e].equals("bell_bridge")) {
+                c.net.setOff(e, true);
+                closed++;
+            }
+        }
+        Awaken.LOG.info("[citizens] the Bell Bridge is down: {} street edges closed", closed);
+    }
+
+    /**
+     * Someone wakes in the infirmary: Sun the healer at the bedside and an Association officer (a Watch citizen in the
+     * Association's colours) at its foot, held there until the opening says they're done.
+     */
+    private void infirmary(BlockPos side, long now) {
+        int id = newId();
+        int sun = r.namedIndex("sun");
+        List<Integer> watch = nearestWatch(side.getX(), side.getZ(), 1, 600);
+        int officer = watch.isEmpty() ? -1 : watch.get(0);
+        int[] who = {sun, officer};
+        double[][] at = {{side.getX() + 0.5, side.getY(), side.getZ() - 0.4}, {side.getX() - 1.2, side.getY(), side.getZ() + 1.6}};
+        for (int k = 0; k < 2; k++) {
+            int i = who[k];
+            if (i < 0 || d.role[i] != 0) continue;
+            l.release(i);
+            d.role[i] = Roles.ATTEND;
+            d.event[i] = id;
+            d.state[i] = STAND;
+            d.place[i] = -1;
+            d.spot[i] = -1;
+            d.at[i] = c.net.nearest(at[k][0], at[k][2], false);
+            l.rx[i] = at[k][0];
+            l.ry[i] = at[k][1];
+            l.rz[i] = at[k][2];
+            CitizenBody b = body(i);
+            if (b != null) b.teleportTo(at[k][0], at[k][1], at[k][2]);
+            d.setDirty();
+        }
+        put(new CitizensData.Event(id, INFIRMARY, P_GO, now, now + 20L * 60 * 4, who));
+        Awaken.LOG.info("[citizens] infirmary: Sun {} and an officer {} at the bed", sun, officer);
     }
 
     /** Starts an event now; near the player when one is given (commands), else where the city's plan puts it. */
@@ -1004,6 +1176,10 @@ final class CityEvents {
             case PICKPOCKET -> stepPickpocket(k, e, now);
             case FIRE -> stepFire(k, e, now);
             case CART -> stepCart(k, e, now);
+            case RUSH -> stepRush(k, e, now);
+            case INFIRMARY -> {
+                if (now >= e.until()) finish(e, now);
+            }
             default -> stepTremor(k, e, now);
         }
     }
@@ -1019,7 +1195,8 @@ final class CityEvents {
     void roleArrived(int i, long now) {
         int role = d.role[i];
         if (role == Roles.THIEF_FLEE || role == Roles.WATCH_CHASE) return; // the steps decide
-        if (role == Roles.WATCH_ESCORT || role == Roles.CLEAR || role == Roles.GATE_GUARD || role == Roles.BUCKET) d.state[i] = STAND;
+        if (role == Roles.WATCH_ESCORT || role == Roles.CLEAR || role == Roles.GATE_GUARD || role == Roles.BUCKET || role == Roles.FLEE
+                || role == Roles.ATTEND) d.state[i] = STAND;
     }
 
     // ---- what event bodies show ----------------------------------------------------------------------------------------
@@ -1051,6 +1228,8 @@ final class CityEvents {
                 main = Props.BUCKET;
             }
             case Roles.TRAPPED -> act = Act.TRAPPED;
+            case Roles.FLEE -> act = walking ? Act.RUN : Act.LOOK_AROUND;
+            case Roles.ATTEND -> act = r.namedIndex("sun") == i ? Act.TALK : Act.HANDS_BEHIND;
             case Roles.CLEAR -> act = walking ? Act.NONE : Act.SET_DOWN;
             default -> {}
         }
