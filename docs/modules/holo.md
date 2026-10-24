@@ -159,6 +159,45 @@ The holo K menu costs 0.06–0.25 ms more than the flat one (the layout is the s
 Urgent System cards as holo panels would be a `HoloPanel` with `Anchor.VIEW` recorded through `Ui.draw(UiCanvas, ...)`
 (`HoloCanvas` already takes any `Ui` content), with the System v2 rules (SPEC §13) deciding when one shows.
 
+## External textures on a panel (`UiCanvas.texture`)
+`void texture(Identifier texture, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb)` on
+`UiCanvas` (and `HoloCanvas.textureF(...)` with float coordinates): part of a whole texture, tinted, as one quad in
+the panel's display list (at most 16 a frame, drawn with the sprites; no allocation per frame; a submit is made only
+when a slot's texture changes). The texture is any Identifier the TextureManager knows: a `DynamicTexture` or a
+registered render target, updated by its owner only when its picture changes. `GuiCanvas` draws the same texture and
+UVs with a plain blit, so the flat fallback shows it too; `HoloGraphics` records it like any other call.
+```java
+// in a section's render, on whichever canvas it was given (ui.canvas())
+canvas.texture(ATLAS_DIORAMA, x, y, 96, 64, 0f, 0f, 1f, 1f, 0xFFFFFFFF);
+```
+Tour: holo.txt `holo tex on` shows a map's parchment on the demo panel (holo_07_demo_texture).
+
+## Focus (`core.api.UiHooks`)
+`UiHooks.setFocus(Object owner, float value)` reports one source's focus (0..1), `UiHooks.clearFocus(Object owner)`
+drops it, and `UiHooks.focus()` is the largest of all sources (Lens dims the world by it). Owners are compared by
+identity and take one of 8 slots the first time they report above 0, so reporting every frame allocates nothing.
+Holo reports one value each frame (the K menu, the wrist demo, an open reading screen). Toasts, cards and the Now line
+never report. `installFocus(DoubleSupplier)` still works and counts as one more source.
+
+## System cards (`signal.client.HudLook`, `HoloGuiLook`)
+The System's cards keep their flat layout, positions, sizes and timing (SignalLayout, ChoiceDeck, ToastBurst, the
+vanilla ToastManager) and only change how they draw. The holo module installs `HoloGuiLook` into signal's `HudLook`; it
+draws in the GUI pass with the panel's own `holo_glass` / `holo_glow` shaders on two GUI pipelines
+(`awaken:pipeline/holo_gui_glass`, `holo_gui_glow`, PARTICLE format through `submitGuiElementRenderState`), so a card
+has the panel's glass, hairline edge, brackets, static scan lines and shimmer, one even 36% tint, a faint halo (brighter
+while it scans in) and text as light (four faint cyan copies half a GUI pixel off, no shadow).
+- Toast (`SignalToast`): same 160-wide slot; no slide (`xPos` fixed): vanilla's 600 ms show becomes a scan-in done by
+  270 ms (the text appears as the line passes), its hide a glitch-out in 300 ms. Quiet screens still hide toasts.
+- Choice card and gate panel (`SystemHud`): scan in over the 4 ticks they used to fade in; the gate panel glitches out
+  over its 6-tick close. The fold timer line and the keys' arming (8 ticks) are unchanged.
+- Story lines: a projected strip behind the words, scanned in with the first page, glitched out with the fade.
+- The Now line (`TrackerHud`): a still card, never animated beyond its own fade on change.
+- The first-power choice (`StarterScreen`, a `ReadingScreen`): the panel scans in over 320 ms, then the three cards one
+  after another (70 ms apart); the hovered or picked card lights in its family colour. Clicks and 1 / 2 / 3 are as
+  before. Lens focus eases to 1 while it is open (300 ms each way).
+- Reduced motion: scan-ins and glitches become fades. `statusStyle = FLAT`, or GUI shaders that fail, keeps every
+  card exactly as it was. Autopilot: `holo style holo|flat|auto`; tour `tools/autopilot/holo-cards.txt`.
+
 ## Settings (`awaken-holo-client.toml`)
 `statusStyle` HOLO | FLAT · `hudMotion` OFF | SUBTLE | FULL · `reducedMotion` false.
 

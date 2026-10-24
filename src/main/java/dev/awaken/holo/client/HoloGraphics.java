@@ -182,6 +182,13 @@ public final class HoloGraphics extends GuiGraphicsExtractor implements UiCanvas
     }
 
     @Override
+    public void texture(Identifier texture, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+        at(a, x, y);
+        float s = scale();
+        canvas.textureF(texture, a.x, a.y, w * s, h * s, u0, v0, u1, v1, argb);
+    }
+
+    @Override
     public void tooltip(Font font, List<? extends FormattedCharSequence> lines, int x, int y) {
         canvas.tooltip(font, lines, x, y);
     }
