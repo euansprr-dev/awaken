@@ -21,13 +21,13 @@ cmd gamemode spectator
 cmd tp @s 0.5 190 0.5 90 12
 cmd time set 12600
 wait 1200
-pixels 1.0 fsr
+pixels 1.0 sharp
 wait 30
 shot px_dh_100
-pixels 0.67 fsr
+pixels 0.67 sharp
 wait 30
 shot px_dh_067
-pixels 0.5 fsr
+pixels 0.5 sharp
 wait 30
 shot px_dh_050
 pixels config

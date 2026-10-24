@@ -23,7 +23,7 @@ public final class Pixels {
 
     // settings as of the last tick (config, or the autopilot's override)
     private static float scale = 1f;
-    private static PixelsConfig.Upscaler upscaler = PixelsConfig.Upscaler.FSR;
+    private static PixelsConfig.Upscaler upscaler = PixelsConfig.Upscaler.SHARP;
     private static float forcedScale = -1f;
     private static PixelsConfig.@Nullable Upscaler forcedUpscaler;
     // -1 unknown, 0 off (logged why), 1 on

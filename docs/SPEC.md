@@ -1271,10 +1271,21 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
 - Lens runs before the upscale, at render scale, with every other post effect: its depth is the world's own, its
   bloom and haze get cheaper with the pixels, and FSR expects a finished, display-referred frame.
 - Upscalers (`PixelsPipelines`, full-screen passes on vanilla's `core/screenquad`, both graphics APIs, registered
-  optional): BILINEAR (one linear tap) and FSR, a port of AMD FidelityFX FSR 1.0 (MIT; the notice is in each shader):
-  EASU (edge-adaptive Lanczos-2, 12 texel taps, dering clamp) from the world's resolution into a screen-sized
-  intermediate, then RCAS (contrast-adaptive sharpening with noise detection, strength exp2(-0.2) = 0.87) into the
-  main target. A pipeline that doesn't compile falls back: FSR to bilinear, bilinear to native.
+  optional; each pass clears its target rather than loading it, which is free on a tile-based GPU):
+  SHARP (default): one pass, bilinear plus FSR 1's RCAS (contrast-adaptive sharpening with noise detection,
+  strength exp2(-0.2) = 0.87) from a ring one world pixel apart. FSR: a port of AMD FidelityFX FSR 1.0 (MIT; the
+  notice is in each shader), with EASU (edge-adaptive Lanczos-2, 12 texel taps, dering clamp) into a screen-sized
+  intermediate, then RCAS into the main target. BILINEAR: one linear tap. A pipeline that doesn't compile falls back:
+  FSR and SHARP to bilinear, bilinear to native.
+- Measured (docs/perf/pixels/REPORT.md, M4 at 2880×1658, Vulkan, RD 32, Lens Swift): GPU time saved a frame with
+  SHARP: 0.75 saves 0.9–1.6 ms (10–14%), 0.67 saves 1.2–2.1 ms (13–19%), 0.5 saves 1.5–2.2 ms (22–25%). Frame p50
+  fell 0.8–1.8 ms where the GPU was the limit; p99 doesn't move (its spikes are CPU work). The upscale costs bilinear
+  0.12 ms, SHARP 0.24 ms, FSR 1.21 ms, so on Apple's GPU FSR eats most of what 0.67 saves (only 16–23% of the world
+  pass scales with pixels; the rest is geometry). Fine block textures soften at every scale; GUI text never changes.
+- Defaults (decided 2026-10-24 from those numbers): `renderScale` 1.0 (off), `upscaler` SHARP. Recommended:
+  1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at 120 Hz or on the CPU, doesn't pay
+  for the softer textures); 0.75 with SHARP on a 4K screen (the pixel-bound part grows 1.73×: an estimate until a
+  Dell run, which needs Euan's OK).
 - Holo: panels draw inside the world (the level's always-on-top phase), so at render scale their text would be
   upscaled with it (measured: softer, with RCAS fringes at 0.67). While a panel holds the player's attention
   (`UiHooks.focus() > 0`: the K menu, a reading screen) the world renders native, so panel text, Lens's bloom on the
@@ -1282,8 +1293,9 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   cards and the HUD are GUI and always native.
 - Safety: both hooks must be seen in one frame before the first swap; a frame that ends with the target still lent
   (`RenderFrameEvent.Post`) gets it back and turns Pixels off for the session, as does any exception in a pass.
-- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off) and `upscaler` FSR |
-  BILINEAR. Autopilot `pixels <scale> [fsr|bilinear] | config | state` overrides them for a tour (not saved). Tours:
+- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off) and `upscaler` SHARP |
+  FSR | BILINEAR. Autopilot `pixels <scale> [sharp|fsr|bilinear] | config | state` overrides them for a tour (not
+  saved). Tours:
   `tools/autopilot/pixels.txt` (the measurement), `pixels-smoke.txt`, `pixels-dh.txt`; crops: `tools/pixels-crops.py`.
   `pixels gpu on|reset|<label>` (measurement only) writes GPU timestamps before the world, after the post effects and
   after the upscale, and logs the world pass's and the upscale's GPU time per label (`PixelsTiming`): on a busy Mac
