@@ -31,7 +31,7 @@ final class HoloGuiLook implements HudLook.Look {
     private static final int TINT = 0x040912;
     private static final float TINT_ALPHA = 0.40f;
     private static final int GLOW_RGB = 0x7FDCFF;
-    private static final float GLOW_ALPHA = 0.26f;
+    private static final float GLOW_ALPHA = 0.30f;
     /** The interference band: one slow pass through the card every {@code DRIFT_S} seconds, {@code DRIFT_H} units tall. */
     private static final float DRIFT_S = 6.5f, DRIFT_H = 5f;
     private static final float[] DX = {-0.5f, 0.5f, -0.5f, 0.5f}, DY = {-0.5f, -0.5f, 0.5f, 0.5f};
@@ -60,7 +60,7 @@ final class HoloGuiLook implements HudLook.Look {
         Matrix3x2f pose = new Matrix3x2f(g.pose());
         int rgb = accent & 0xFFFFFF;
         // a soft light around the card, as if it were cast: faint at rest (a calm HUD), brighter while it scans in
-        int haloCol = argb(rgb, (0.14f + 0.30f * (1f - reveal)) * alpha * reveal);
+        int haloCol = argb(rgb, (0.20f + 0.30f * (1f - reveal)) * alpha * reveal);
         float m = 8f;
         g.submitGuiElementRenderState(new Quad(HoloPipelines.GUI_GLOW, pose, x - m, y - m, x + w + m, y + h * reveal + m,
                 -m, -m, w + m, h * reveal + m, haloCol, haloCol, w, Math.max(1, Math.round(h * reveal))));
@@ -127,9 +127,16 @@ final class HoloGuiLook implements HudLook.Look {
         long period = (long) (DRIFT_S * 1e9);
         float ph = reduced ? 0.35f : (System.nanoTime() % period) / (float) period;
         float cy = y - DRIFT_H + ph * (h + 2 * DRIFT_H);
-        int peak = argb(rgb | 0x181818, 0.13f * alpha), none = rgb & 0xFFFFFF;
+        int peak = argb(rgb | 0x303030, 0.20f * alpha), none = rgb & 0xFFFFFF;
         band(g, pose, x + 1, w - 2, cy - DRIFT_H, cy, none, peak, y, y + seen);
         band(g, pose, x + 1, w - 2, cy, cy + DRIFT_H, peak, none, y, y + seen);
+        // its bright interference line, and two faint ones trailing it
+        for (int i = 0; i < 3; i++) {
+            float ly = cy - i * 2.2f;
+            if (ly - 0.6f < y || ly + 0.6f > y + seen) continue;
+            int lc = argb(rgb | 0x404040, (i == 0 ? 0.30f : 0.12f) * alpha);
+            g.submitGuiElementRenderState(hLine(pose, x + 1, ly - 0.6f, x + w - 1, ly + 0.6f, lc));
+        }
     }
 
     /** One half of the band, clipped to [lo, hi], its colours interpolated at the cut. */

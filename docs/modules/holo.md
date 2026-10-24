@@ -185,10 +185,10 @@ vanilla ToastManager) and only change how they draw. The holo module installs `H
 draws in the GUI pass with the panel's own `holo_glass` / `holo_glow` shaders on two GUI pipelines
 (`awaken:pipeline/holo_gui_glass`, `holo_gui_glow`, PARTICLE format through `submitGuiElementRenderState`), so a card
 has the panel's glass, hairline edge, static scan lines and shimmer, one even 40% tint, a faint halo (brighter while it
-scans in) and text as light (four cyan copies half a GUI pixel off at 26%, no shadow). Styles (`HudLook.FRAME`,
+scans in) and text as light (four cyan copies half a GUI pixel off at 30%, no shadow). Styles (`HudLook.FRAME`,
 `DRIFT`, `EMITTER`): FRAME adds the K panel's own frame, its additive rim lines and corner brackets just outside the
-card (the bottom ones once the scan has reached them); DRIFT a soft interference band, 10 units tall, that drifts down
-through the card once every 6.5 s (still, a third of the way down, with reduced motion); EMITTER the edge the card is
+card (the bottom ones once the scan has reached them); DRIFT a soft interference band, 10 units tall with a bright line and two
+faint ones trailing it, that drifts down through the card once every 6.5 s (still, a third of the way down, with reduced motion); EMITTER the edge the card is
 projected from, a bright line with a soft skirt that flares as the card arrives. Notices (choice and Accept card, gate
 panel, story line) are FRAME + DRIFT, toasts add EMITTER on their screen side, the Now line is FRAME only (no band, no
 flicker: the calm HUD), the first-power panel FRAME and its cards plain tiles.
