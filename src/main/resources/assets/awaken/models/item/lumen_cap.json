@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:block/lumen_cap",
+    "layer1": {
+      "sprite": "awaken:block/lumen_cap_glow",
+      "neoforge_data": {
+        "light_emission": 15
+      }
+    }
+  }
+}
