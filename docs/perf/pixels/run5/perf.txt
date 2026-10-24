@@ -1,0 +1,225 @@
+[23:21:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] window moved to Built-in Retina Display
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/minecraft:overworld
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:gates
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/minecraft:the_nether
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_8
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stillpoint
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/minecraft:the_end
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_10
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_2
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_4
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:halo
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:lucidium
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_3
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_7
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_1
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:trials
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_5
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:endless
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_6
+[23:21:27] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_9
+[23:21:29] [Render thread/INFO] [de.aw.Awaken/]: [pixels] render hooks in place
+[23:21:30] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 1708x960
+[23:21:51] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1800
+[23:21:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=Built-in_Retina_Display fb=2880x1800 window=1440x900 rd=32 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,lithium,sodium,entityculling,trender,cloth_config,moreculling,immediatelyfast,awaken,ferritecore,neoforge,conditional_mixin,transition
+[23:21:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[23:21:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels state: scale 1.00, FSR, ready
+[23:21:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels state
+[23:22:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_0 5
+[23:22:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_0 frames=311 avg_fps=55.5 p50=13.52ms p95=23.03ms p99=64.77ms max=1045.26ms tick_p95=22.88ms heap=1395/4096MB fb=2880x1800 load=9.3 occluded=false minimized=false
+[23:22:48] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_100_0 samples=312 world_p50=12.92ms world_p95=15.86ms world_p99=22.07ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:22:48] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 2160x1350, SHARP to the screen
+[23:22:50] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 2160x1244, SHARP to the screen
+[23:22:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_075s_1 5
+[23:22:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_075s_1 frames=409 avg_fps=81.1 p50=12.26ms p95=14.42ms p99=16.33ms max=22.52ms tick_p95=10.97ms heap=1764/4096MB fb=2880x1658 load=9.0 occluded=false minimized=false
+[23:22:56] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_075s_1 samples=410 world_p50=11.39ms world_p95=13.01ms world_p99=13.62ms upscale_p50=0.24ms upscale_p99=0.42ms
+[23:22:56] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:22:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_2 5
+[23:23:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_2 frames=348 avg_fps=69.1 p50=13.77ms p95=20.06ms p99=34.01ms max=106.64ms tick_p95=41.33ms heap=1193/4096MB fb=2880x1658 load=7.8 occluded=false minimized=false
+[23:23:03] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_100_2 samples=349 world_p50=13.46ms world_p95=15.02ms world_p99=15.79ms upscale_p50=0.00ms upscale_p99=0.01ms
+[23:23:03] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, SHARP to the screen
+[23:23:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_067s_3 5
+[23:23:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_067s_3 frames=438 avg_fps=87.1 p50=11.48ms p95=12.96ms p99=13.70ms max=15.44ms tick_p95=7.14ms heap=1499/4096MB fb=2880x1658 load=7.4 occluded=false minimized=false
+[23:23:10] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_067s_3 samples=439 world_p50=10.65ms world_p95=11.61ms world_p99=12.28ms upscale_p50=0.23ms upscale_p99=0.37ms
+[23:23:10] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:23:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_4 5
+[23:23:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_4 frames=407 avg_fps=80.8 p50=12.88ms p95=15.43ms p99=16.87ms max=70.47ms tick_p95=11.21ms heap=1804/4096MB fb=2880x1658 load=7.2 occluded=false minimized=false
+[23:23:17] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_100_4 samples=408 world_p50=12.57ms world_p95=14.38ms world_p99=15.34ms upscale_p50=0.00ms upscale_p99=0.01ms
+[23:23:17] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, FSR to the screen
+[23:23:19] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_067f_5 5
+[23:23:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_067f_5 frames=590 avg_fps=117.0 p50=8.36ms p95=12.28ms p99=14.98ms max=31.76ms tick_p95=21.71ms heap=2119/4096MB fb=2880x1658 load=6.4 occluded=false minimized=false
+[23:23:24] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_067f_5 samples=591 world_p50=6.54ms world_p95=7.48ms world_p99=8.11ms upscale_p50=1.21ms upscale_p99=1.49ms
+[23:23:24] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:23:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_6 5
+[23:23:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_6 frames=591 avg_fps=117.2 p50=8.46ms p95=9.63ms p99=10.38ms max=14.25ms tick_p95=5.94ms heap=2426/4096MB fb=2880x1658 load=6.0 occluded=false minimized=false
+[23:23:31] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_100_6 samples=592 world_p50=8.00ms world_p95=8.45ms world_p99=8.88ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:23:31] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, BILINEAR to the screen
+[23:23:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_067b_7 5
+[23:23:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_067b_7 frames=600 avg_fps=119.0 p50=8.29ms p95=9.99ms p99=14.52ms max=56.79ms tick_p95=9.52ms heap=1320/4096MB fb=2880x1658 load=5.4 occluded=false minimized=false
+[23:23:38] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_067b_7 samples=601 world_p50=6.51ms world_p95=7.02ms world_p99=7.36ms upscale_p50=0.11ms upscale_p99=0.19ms
+[23:23:38] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:23:41] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_8 5
+[23:23:46] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_8 frames=533 avg_fps=105.9 p50=8.75ms p95=12.34ms p99=29.63ms max=64.87ms tick_p95=32.05ms heap=1597/4096MB fb=2880x1658 load=5.5 occluded=false minimized=false
+[23:23:46] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_100_8 samples=534 world_p50=8.27ms world_p95=9.93ms world_p99=11.90ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:23:46] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, SHARP to the screen
+[23:23:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_050s_9 5
+[23:23:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_050s_9 frames=593 avg_fps=117.8 p50=8.39ms p95=12.02ms p99=14.06ms max=70.10ms tick_p95=16.81ms heap=1876/4096MB fb=2880x1658 load=7.1 occluded=false minimized=false
+[23:23:53] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_050s_9 samples=594 world_p50=6.23ms world_p95=8.23ms world_p99=9.10ms upscale_p50=0.23ms upscale_p99=0.38ms
+[23:23:53] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:23:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_10 5
+[23:24:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_10 frames=557 avg_fps=110.5 p50=8.72ms p95=11.11ms p99=15.58ms max=65.07ms tick_p95=14.70ms heap=2155/4096MB fb=2880x1658 load=6.8 occluded=false minimized=false
+[23:24:00] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_100_10 samples=558 world_p50=8.22ms world_p95=9.35ms world_p99=11.27ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:24:00] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, FSR to the screen
+[23:24:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_050f_11 5
+[23:24:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_050f_11 frames=568 avg_fps=112.7 p50=8.32ms p95=13.68ms p99=15.91ms max=77.40ms tick_p95=21.48ms heap=2430/4096MB fb=2880x1658 load=7.0 occluded=false minimized=false
+[23:24:07] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_050f_11 samples=569 world_p50=5.93ms world_p95=7.92ms world_p99=9.22ms upscale_p50=1.21ms upscale_p99=3.43ms
+[23:24:07] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:24:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_12 5
+[23:24:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf vista_100_12 frames=543 avg_fps=107.6 p50=8.70ms p95=12.30ms p99=14.61ms max=86.85ms tick_p95=13.56ms heap=1284/4096MB fb=2880x1658 load=7.5 occluded=false minimized=false
+[23:24:14] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu vista_100_12 samples=544 world_p50=8.23ms world_p95=11.38ms world_p99=12.61ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:24:17] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 2160x1244, SHARP to the screen
+[23:24:19] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, SHARP to the screen
+[23:24:21] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, FSR to the screen
+[23:24:24] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, BILINEAR to the screen
+[23:24:26] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, SHARP to the screen
+[23:24:28] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, FSR to the screen
+[23:24:40] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:24:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_0 5
+[23:24:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_0 frames=480 avg_fps=95.3 p50=10.06ms p95=13.89ms p99=16.68ms max=53.26ms tick_p95=11.47ms heap=1674/4096MB fb=2880x1658 load=7.2 occluded=false minimized=false
+[23:24:47] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_100_0 samples=481 world_p50=9.27ms world_p95=12.30ms world_p99=13.97ms upscale_p50=0.00ms upscale_p99=0.01ms
+[23:24:47] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 2160x1244, SHARP to the screen
+[23:24:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_075s_1 5
+[23:24:55] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_075s_1 frames=509 avg_fps=101.0 p50=9.19ms p95=13.98ms p99=17.16ms max=65.79ms tick_p95=11.86ms heap=1940/4096MB fb=2880x1658 load=7.5 occluded=false minimized=false
+[23:24:55] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_075s_1 samples=510 world_p50=8.15ms world_p95=11.93ms world_p99=13.15ms upscale_p50=0.24ms upscale_p99=0.94ms
+[23:24:55] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:24:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_2 5
+[23:25:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_2 frames=482 avg_fps=95.8 p50=10.01ms p95=13.27ms p99=19.20ms max=53.95ms tick_p95=9.61ms heap=2183/4096MB fb=2880x1658 load=6.9 occluded=false minimized=false
+[23:25:02] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_100_2 samples=483 world_p50=9.31ms world_p95=11.68ms world_p99=13.77ms upscale_p50=0.00ms upscale_p99=0.02ms
+[23:25:02] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, SHARP to the screen
+[23:25:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_067s_3 5
+[23:25:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_067s_3 frames=541 avg_fps=107.4 p50=8.81ms p95=12.38ms p99=15.62ms max=71.47ms tick_p95=9.26ms heap=2428/4096MB fb=2880x1658 load=6.6 occluded=false minimized=false
+[23:25:09] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_067s_3 samples=542 world_p50=7.77ms world_p95=10.19ms world_p99=12.37ms upscale_p50=0.23ms upscale_p99=0.85ms
+[23:25:09] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:25:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_4 5
+[23:25:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_4 frames=506 avg_fps=100.3 p50=9.80ms p95=10.98ms p99=11.64ms max=74.21ms tick_p95=6.61ms heap=1182/4096MB fb=2880x1658 load=6.3 occluded=false minimized=false
+[23:25:16] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_100_4 samples=507 world_p50=9.11ms world_p95=9.50ms world_p99=9.85ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:25:16] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, FSR to the screen
+[23:25:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_067f_5 5
+[23:25:23] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_067f_5 frames=527 avg_fps=104.5 p50=9.39ms p95=10.59ms p99=11.93ms max=67.18ms tick_p95=4.38ms heap=1425/4096MB fb=2880x1658 load=6.3 occluded=false minimized=false
+[23:25:23] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_067f_5 samples=528 world_p50=7.45ms world_p95=7.85ms world_p99=7.99ms upscale_p50=1.22ms upscale_p99=1.44ms
+[23:25:23] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:25:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_6 5
+[23:25:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_6 frames=518 avg_fps=102.8 p50=9.68ms p95=10.77ms p99=11.47ms max=12.22ms tick_p95=3.71ms heap=1681/4096MB fb=2880x1658 load=6.0 occluded=false minimized=false
+[23:25:30] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_100_6 samples=519 world_p50=9.02ms world_p95=9.35ms world_p99=9.46ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:25:30] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, BILINEAR to the screen
+[23:25:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_067b_7 5
+[23:25:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_067b_7 frames=606 avg_fps=120.2 p50=8.60ms p95=13.08ms p99=14.15ms max=14.87ms tick_p95=4.41ms heap=1966/4096MB fb=2880x1658 load=6.0 occluded=false minimized=false
+[23:25:38] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_067b_7 samples=607 world_p50=7.40ms world_p95=7.80ms world_p99=7.98ms upscale_p50=0.13ms upscale_p99=0.34ms
+[23:25:38] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:25:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_8 5
+[23:25:45] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_8 frames=513 avg_fps=101.8 p50=9.74ms p95=11.78ms p99=13.66ms max=17.49ms tick_p95=29.09ms heap=2215/4096MB fb=2880x1658 load=5.6 occluded=false minimized=false
+[23:25:45] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_100_8 samples=514 world_p50=9.05ms world_p95=9.77ms world_p99=10.15ms upscale_p50=0.00ms upscale_p99=0.01ms
+[23:25:45] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, SHARP to the screen
+[23:25:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_050s_9 5
+[23:25:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_050s_9 frames=605 avg_fps=119.9 p50=8.60ms p95=14.90ms p99=15.61ms max=15.82ms tick_p95=3.80ms heap=2480/4096MB fb=2880x1658 load=5.1 occluded=false minimized=false
+[23:25:52] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_050s_9 samples=606 world_p50=6.57ms world_p95=6.97ms world_p99=7.08ms upscale_p50=0.23ms upscale_p99=0.29ms
+[23:25:52] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:25:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_10 5
+[23:25:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_10 frames=514 avg_fps=102.0 p50=9.64ms p95=10.83ms p99=11.96ms max=66.94ms tick_p95=4.07ms heap=1188/4096MB fb=2880x1658 load=4.7 occluded=false minimized=false
+[23:25:59] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_100_10 samples=515 world_p50=9.00ms world_p95=9.27ms world_p99=9.48ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:25:59] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, FSR to the screen
+[23:26:01] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_050f_11 5
+[23:26:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_050f_11 frames=593 avg_fps=117.5 p50=8.55ms p95=11.49ms p99=14.43ms max=16.09ms tick_p95=4.05ms heap=1457/4096MB fb=2880x1658 load=4.4 occluded=false minimized=false
+[23:26:06] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_050f_11 samples=594 world_p50=6.53ms world_p95=6.84ms world_p99=7.03ms upscale_p50=1.21ms upscale_p99=1.46ms
+[23:26:06] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:26:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_12 5
+[23:26:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf grove_100_12 frames=520 avg_fps=103.1 p50=9.63ms p95=10.67ms p99=11.71ms max=12.97ms tick_p95=3.70ms heap=1705/4096MB fb=2880x1658 load=4.2 occluded=false minimized=false
+[23:26:13] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu grove_100_12 samples=521 world_p50=9.00ms world_p95=9.23ms world_p99=9.43ms upscale_p50=0.00ms upscale_p99=0.01ms
+[23:26:16] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 2160x1244, SHARP to the screen
+[23:26:18] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, SHARP to the screen
+[23:26:20] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, FSR to the screen
+[23:26:23] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, BILINEAR to the screen
+[23:26:25] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, SHARP to the screen
+[23:26:27] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, FSR to the screen
+[23:27:00] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:27:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_0 5
+[23:27:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_0 frames=605 avg_fps=120.2 p50=8.27ms p95=11.52ms p99=14.38ms max=15.44ms tick_p95=4.50ms heap=2542/4096MB fb=2880x1658 load=5.8 occluded=false minimized=false
+[23:27:07] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_100_0 samples=606 world_p50=6.43ms world_p95=6.66ms world_p99=6.83ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:27:07] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 2160x1244, SHARP to the screen
+[23:27:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_075s_1 5
+[23:27:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_075s_1 frames=597 avg_fps=118.4 p50=8.31ms p95=10.67ms p99=14.39ms max=79.04ms tick_p95=5.01ms heap=1300/4096MB fb=2880x1658 load=5.2 occluded=false minimized=false
+[23:27:14] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_075s_1 samples=598 world_p50=5.33ms world_p95=5.66ms world_p99=5.94ms upscale_p50=0.24ms upscale_p99=0.31ms
+[23:27:14] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:27:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_2 5
+[23:27:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_2 frames=533 avg_fps=100.8 p50=8.29ms p95=13.07ms p99=15.51ms max=765.69ms tick_p95=8.93ms heap=1528/4096MB fb=2880x1658 load=5.0 occluded=false minimized=false
+[23:27:22] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_100_2 samples=534 world_p50=6.46ms world_p95=6.98ms world_p99=9.66ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:27:22] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, SHARP to the screen
+[23:27:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_067s_3 5
+[23:27:29] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_067s_3 frames=525 avg_fps=98.6 p50=8.81ms p95=14.05ms p99=15.26ms max=862.64ms tick_p95=7.93ms heap=1743/4096MB fb=2880x1658 load=4.6 occluded=false minimized=false
+[23:27:29] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_067s_3 samples=526 world_p50=5.11ms world_p95=5.73ms world_p99=5.96ms upscale_p50=0.24ms upscale_p99=0.33ms
+[23:27:29] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:27:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_4 5
+[23:27:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_4 frames=585 avg_fps=116.1 p50=8.29ms p95=14.29ms p99=17.72ms max=54.22ms tick_p95=14.27ms heap=1982/4096MB fb=2880x1658 load=4.7 occluded=false minimized=false
+[23:27:36] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_100_4 samples=586 world_p50=6.77ms world_p95=7.70ms world_p99=8.62ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:27:36] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, FSR to the screen
+[23:27:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_067f_5 5
+[23:27:44] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_067f_5 frames=604 avg_fps=119.9 p50=8.55ms p95=14.41ms p99=15.45ms max=30.29ms tick_p95=6.18ms heap=2195/4096MB fb=2880x1658 load=4.6 occluded=false minimized=false
+[23:27:44] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_067f_5 samples=605 world_p50=5.05ms world_p95=5.40ms world_p99=5.61ms upscale_p50=1.22ms upscale_p99=1.49ms
+[23:27:44] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:27:46] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_6 5
+[23:27:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_6 frames=595 avg_fps=118.1 p50=9.00ms p95=10.66ms p99=11.22ms max=98.21ms tick_p95=4.25ms heap=2374/4096MB fb=2880x1658 load=4.7 occluded=false minimized=false
+[23:27:51] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_100_6 samples=596 world_p50=6.46ms world_p95=6.65ms world_p99=6.78ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:27:51] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, BILINEAR to the screen
+[23:27:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_067b_7 5
+[23:27:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_067b_7 frames=602 avg_fps=119.4 p50=8.85ms p95=11.14ms p99=14.91ms max=38.15ms tick_p95=8.65ms heap=2554/4096MB fb=2880x1658 load=4.3 occluded=false minimized=false
+[23:27:58] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_067b_7 samples=603 world_p50=5.65ms world_p95=6.09ms world_p99=6.36ms upscale_p50=0.13ms upscale_p99=0.24ms
+[23:27:58] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:28:00] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_8 5
+[23:28:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_8 frames=595 avg_fps=118.0 p50=8.71ms p95=13.01ms p99=14.51ms max=91.91ms tick_p95=4.57ms heap=2731/4096MB fb=2880x1658 load=4.3 occluded=false minimized=false
+[23:28:05] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_100_8 samples=596 world_p50=6.49ms world_p95=6.77ms world_p99=6.90ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:28:05] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, SHARP to the screen
+[23:28:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_050s_9 5
+[23:28:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_050s_9 frames=588 avg_fps=116.8 p50=8.46ms p95=12.91ms p99=16.52ms max=49.05ms tick_p95=4.06ms heap=1356/4096MB fb=2880x1658 load=4.2 occluded=false minimized=false
+[23:28:12] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_050s_9 samples=589 world_p50=4.70ms world_p95=6.13ms world_p99=10.30ms upscale_p50=0.28ms upscale_p99=0.42ms
+[23:28:12] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:28:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_10 5
+[23:28:19] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_10 frames=596 avg_fps=118.2 p50=8.35ms p95=13.07ms p99=14.91ms max=16.09ms tick_p95=4.29ms heap=1530/4096MB fb=2880x1658 load=3.8 occluded=false minimized=false
+[23:28:19] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_100_10 samples=597 world_p50=6.43ms world_p95=7.02ms world_p99=10.50ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:28:19] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, FSR to the screen
+[23:28:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_050f_11 5
+[23:28:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_050f_11 frames=593 avg_fps=117.7 p50=8.29ms p95=11.67ms p99=15.44ms max=61.76ms tick_p95=5.02ms heap=1741/4096MB fb=2880x1658 load=3.6 occluded=false minimized=false
+[23:28:26] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_050f_11 samples=594 world_p50=4.40ms world_p95=4.68ms world_p99=4.93ms upscale_p50=1.22ms upscale_p99=1.34ms
+[23:28:26] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:28:29] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_12 5
+[23:28:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf ground_100_12 frames=605 avg_fps=120.0 p50=8.26ms p95=10.88ms p99=14.53ms max=15.37ms tick_p95=3.56ms heap=1972/4096MB fb=2880x1658 load=3.6 occluded=false minimized=false
+[23:28:34] [Render thread/INFO] [de.aw.Awaken/]: [pixels] gpu ground_100_12 samples=606 world_p50=6.40ms world_p95=6.59ms world_p99=6.73ms upscale_p50=0.00ms upscale_p99=0.00ms
+[23:28:36] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 2160x1244, SHARP to the screen
+[23:28:38] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, SHARP to the screen
+[23:28:41] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, FSR to the screen
+[23:28:43] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1930x1111, BILINEAR to the screen
+[23:28:45] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, SHARP to the screen
+[23:28:48] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, FSR to the screen
+[23:28:53] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:29:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels state: scale 0.50, SHARP, ready
+[23:29:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels state
+[23:29:06] [Render thread/INFO] [de.aw.Awaken/]: [pixels] world 1440x829, SHARP to the screen
+[23:29:11] [Render thread/INFO] [de.aw.Awaken/]: [pixels] native 2880x1658
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/minecraft:overworld
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:gates
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/minecraft:the_nether
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_8
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stillpoint
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/minecraft:the_end
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_10
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_2
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_4
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:halo
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:lucidium
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_3
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_7
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_1
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:trials
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_5
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:endless
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_6
+[23:29:16] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[pixels]'/awaken:stratum_9
