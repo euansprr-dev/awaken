@@ -1,0 +1,90 @@
+[23:36:29] [main/INFO] [awaken/turbo/]: [turbo] mixins: verified build (MC 26.3, NeoForge 26.3.0.95; turbo=on compute=on pipelineCache=on shaderOpt=off demo=off)
+[23:36:34] [Worker-Main-1/INFO] [awaken/turbo/]: [turbo] pipeline cache on: 5181 KB from /Volumes/MEDIA/Awaken/.claude/worktrees/elegant-dubinsky-b8d9b7/run-autopilot/awaken-turbo/pipeline-cache-26.3-26.3.0.95.bin
+[23:36:34] [Render thread/INFO] [awaken/turbo/]: [turbo] device extensions: 130 available, 7 enabled by Minecraft; VK_EXT_metal_objects available, not enabled; enabled: VK_EXT_calibrated_timestamps VK_EXT_vertex_attribute_divisor VK_KHR_dynamic_rendering VK_KHR_portability_subset VK_KHR_push_descriptor VK_KHR_swapchain VK_KHR_synchronization2; available only: VK_AMD_gpu_shader_half_float VK_AMD_negative_viewport_height VK_AMD_shader_image_load_store_lod VK_AMD_shader_trinary_minmax VK_EXT_4444_formats VK_EXT_buffer_device_address VK_EXT_debug_marker VK_EXT_depth_clip_control VK_EXT_descriptor_indexing VK_EXT_extended_dynamic_state VK_EXT_extended_dynamic_state2 VK_EXT_extended_dynamic_state3 VK_EXT_external_memory_host VK_EXT_external_memory_metal VK_EXT_fragment_shader_interlock VK_EXT_global_priority VK_EXT_global_priority_query VK_EXT_hdr_metadata VK_EXT_host_image_copy VK_EXT_host_query_reset VK_EXT_image_2d_view_of_3d VK_EXT_image_robustness VK_EXT_index_type_uint8 VK_EXT_inline_uniform_block VK_EXT_line_rasterization VK_EXT_load_store_op_none VK_EXT_memory_budget VK_EXT_metal_objects VK_EXT_pipeline_creation_cache_control VK_EXT_pipeline_creation_feedback VK_EXT_pipeline_robustness VK_EXT_post_depth_coverage VK_EXT_private_data VK_EXT_robustness2 VK_EXT_sample_locations VK_EXT_scalar_block_layout VK_EXT_separate_stencil_usage VK_EXT_shader_atomic_float VK_EXT_shader_demote_to_helper_invocation VK_EXT_shader_stencil_export VK_EXT_shader_subgroup_ballot VK_EXT_shader_subgroup_vote VK_EXT_shader_viewport_index_layer VK_EXT_subgroup_size_control VK_EXT_swapchain_maintenance1 VK_EXT_texel_buffer_alignment VK_EXT_texture_compression_astc_hdr VK_EXT_tooling_info VK_GOOGLE_display_timing VK_IMG_format_pvrtc VK_INTEL_shader_integer_functions2 VK_KHR_16bit_storage VK_KHR_8bit_storage VK_KHR_bind_memory2 VK_KHR_buffer_device_address VK_KHR_calibrated_timestamps VK_KHR_copy_commands2 VK_KHR_create_renderpass2 VK_KHR_dedicated_allocation VK_KHR_deferred_host_operations VK_KHR_depth_stencil_resolve VK_KHR_descriptor_update_template VK_KHR_device_group VK_KHR_driver_properties VK_KHR_dynamic_rendering_local_read VK_KHR_external_fence VK_KHR_external_memory VK_KHR_external_semaphore VK_KHR_format_feature_flags2 VK_KHR_fragment_shader_barycentric VK_KHR_get_memory_requirements2 VK_KHR_global_priority VK_KHR_image_format_list VK_KHR_imageless_framebuffer VK_KHR_incremental_present VK_KHR_index_type_uint8 VK_KHR_line_rasterization VK_KHR_load_store_op_none VK_KHR_maintenance1 VK_KHR_maintenance2 VK_KHR_maintenance3 VK_KHR_maintenance4 VK_KHR_maintenance5 VK_KHR_maintenance6 VK_KHR_maintenance7 VK_KHR_maintenance8 VK_KHR_maintenance9 VK_KHR_map_memory2 VK_KHR_multiview VK_KHR_present_id VK_KHR_present_id2 VK_KHR_present_wait VK_KHR_present_wait2 VK_KHR_relaxed_block_layout VK_KHR_robustness2 VK_KHR_sampler_mirror_clamp_to_edge VK_KHR_sampler_ycbcr_conversion VK_KHR_separate_depth_stencil_layouts VK_KHR_shader_draw_parameters VK_KHR_shader_expect_assume VK_KHR_shader_float16_int8 VK_KHR_shader_float_controls VK_KHR_shader_float_controls2 VK_KHR_shader_fma VK_KHR_shader_integer_dot_product VK_KHR_shader_maximal_reconvergence VK_KHR_shader_non_semantic_info VK_KHR_shader_relaxed_extended_instruction VK_KHR_shader_subgroup_extended_types VK_KHR_shader_subgroup_rotate VK_KHR_shader_subgroup_uniform_control_flow VK_KHR_shader_terminate_invocation VK_KHR_spirv_1_4 VK_KHR_storage_buffer_storage_class VK_KHR_swapchain_maintenance1 VK_KHR_swapchain_mutable_format VK_KHR_timeline_semaphore VK_KHR_uniform_buffer_standard_layout VK_KHR_variable_pointers VK_KHR_vertex_attribute_divisor VK_KHR_vulkan_memory_model VK_KHR_zero_initialize_workgroup_memory VK_NV_fragment_shader_barycentric
+[23:36:35] [Render thread/INFO] [awaken/turbo/]: [turbo] on: Vulkan on Apple M4 (1.2.350 MoltenVK 1.4.2), MC 26.3, NeoForge 26.3.0.95; self-test 207738 µs; background queue is its own queue (family 3); turbo=on compute=on pipelineCache=on shaderOpt=off demo=off
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[mvk-warn] VK_ERROR_FEATURE_NOT_PRESENT: Metal does not support disabling primitive restart.
+[23:36:38] [Render thread/INFO] [awaken/turbo/]: [turbo] bench launch_to_title=10395ms [turbo=on compute=on pipelineCache=on shaderOpt=off demo=off]
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:overworld
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:endless
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_6
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_4
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_7
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_1
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:trials
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_9
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_8
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_2
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stillpoint
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_5
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:halo
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:the_nether
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:gates
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:lucidium
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_3
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_10
+[23:36:39] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:the_end
+[23:36:42] [Render thread/INFO] [awaken/turbo/]: [turbo] bench join_to_first_frame=1085ms
+[23:37:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=Built-in_Retina_Display fb=1708x960 window=854x480 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,awaken,neoforge
+[23:37:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[23:37:12] [Render thread/INFO] [awaken/turbo/]: [turbo] bench first30s frames=3600 p50=8.32ms p99=14.87ms p99.5=15.56ms max=47.6ms over16.7=13 over33=1 [turbo=on compute=on pipelineCache=on shaderOpt=off demo=off]
+[23:37:26] [Render thread/INFO] [awaken/turbo/]: [turbo] Turbo: on. MC 26.3, NeoForge 26.3.0.95; turbo=on compute=on pipelineCache=on shaderOpt=off demo=off. Pipeline cache: on, loaded 5181 KB, 936 pipeline compiles through it, saved 5181 KB. Demo: off; no frames yet
+[23:37:31] [Render thread/INFO] [awaken/turbo/]: [turbo] Turbo demo on: a compute-built 256 x 256 grid 8 blocks below you, drawn after the sky
+[23:37:34] [Render thread/INFO] [awaken/turbo/]: [turbo] demo 600 frames: CPU 123.0 µs, GPU compute 98.5 µs, GPU draw 112.3 µs per frame
+[23:37:35] [IO-Worker-3/INFO] [de.aw.Awaken/]: [autopilot] screenshot turbo_demo_on
+[23:37:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf demo_on 10
+[23:37:36] [Render thread/INFO] [awaken/turbo/]: [turbo] demo 600 frames: CPU 62.4 µs, GPU compute 97.5 µs, GPU draw 107.7 µs per frame
+[23:37:40] [Render thread/INFO] [awaken/turbo/]: [turbo] demo 600 frames: CPU 65.3 µs, GPU compute 97.2 µs, GPU draw 107.5 µs per frame
+[23:37:42] [Render thread/INFO] [awaken/turbo/]: [turbo] demo 600 frames: CPU 42.0 µs, GPU compute 90.6 µs, GPU draw 90.8 µs per frame
+[23:37:45] [Render thread/INFO] [awaken/turbo/]: [turbo] demo 600 frames: CPU 37.2 µs, GPU compute 84.5 µs, GPU draw 93.1 µs per frame
+[23:37:46] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf demo_on frames=2141 avg_fps=213.2 p50=4.48ms p95=6.45ms p99=8.60ms max=40.20ms tick_p95=4.44ms heap=851/4096MB fb=1708x960 load=6.0 occluded=false minimized=false
+[23:37:46] [Render thread/INFO] [awaken/turbo/]: [turbo] Turbo: on. MC 26.3, NeoForge 26.3.0.95; turbo=on compute=on pipelineCache=on shaderOpt=off demo=off. Pipeline cache: on, loaded 5181 KB, 936 pipeline compiles through it, saved 5181 KB. Demo: on; now 186 frames: CPU 40.4 µs, GPU compute 86.4 µs, GPU draw 92.2 µs per frame; before: 600 frames: CPU 37.2 µs, GPU compute 84.5 µs, GPU draw 93.1 µs per frame
+[23:37:46] [Render thread/INFO] [awaken/turbo/]: [turbo] Turbo demo off. off; now 243 frames: CPU 38.9 µs, GPU compute 85.6 µs, GPU draw 91.3 µs per frame; before: 600 frames: CPU 37.2 µs, GPU compute 84.5 µs, GPU draw 93.1 µs per frame
+[23:37:49] [IO-Worker-1/INFO] [de.aw.Awaken/]: [autopilot] screenshot turbo_demo_off
+[23:37:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf demo_off 10
+[23:37:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf demo_off frames=1814 avg_fps=180.7 p50=4.81ms p95=8.66ms p99=9.81ms max=33.32ms tick_p95=8.33ms heap=1010/4096MB fb=1708x960 load=5.5 occluded=false minimized=false
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:overworld
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:endless
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_6
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_4
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_7
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_1
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:trials
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_9
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_8
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_2
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stillpoint
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_5
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:halo
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:the_nether
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:gates
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:lucidium
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_3
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_10
+[23:38:00] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:the_end

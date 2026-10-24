@@ -1,0 +1,58 @@
+[22:48:07] [main/INFO] [awaken/turbo/]: [turbo] mixins: verified build (MC 26.3, NeoForge 26.3.0.95; turbo=on compute=on pipelineCache=on shaderOpt=on demo=off)
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://discovery.minecraftservices.com/minecraft/client due to Connect timed out
+Caused by: java.net.SocketTimeoutException: Connect timed out
+[22:49:11] [Render thread/INFO] [awaken/turbo/]: [turbo] off: the backend is OpenGL, not Vulkan
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:overworld
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:lucidium
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:the_nether
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_8
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_9
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:trials
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:gates
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:halo
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_3
+[22:49:50] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:the_end
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_5
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_10
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_4
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_7
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_2
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:endless
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_6
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_1
+[22:49:51] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stillpoint
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://discovery.minecraftservices.com/minecraft/client due to Connect timed out
+Caused by: java.net.SocketTimeoutException: Connect timed out
+[22:50:14] [Render thread/INFO] [awaken/turbo/]: [turbo] bench join_to_first_frame=3304ms
+[22:50:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info backend=OpenGL driver=4.1 Metal - 90.5 device=Apple M4 fb=1708x960 window=854x480 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,awaken,neoforge
+[22:50:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] info
+[22:50:44] [Render thread/INFO] [awaken/turbo/]: [turbo] bench first30s frames=1981 p50=13.84ms p99=32.56ms p99.5=67.91ms max=223.4ms over16.7=581 over33=18 [turbo=on compute=on pipelineCache=on shaderOpt=on demo=off mvk=SHOULD_MAXIMIZE_CONCURRENT_COMPILATION=1,USE_MTLHEAP=1,USE_METAL_ARGUMENT_BUFFERS=1]
+[22:50:58] [Render thread/INFO] [awaken/turbo/]: [turbo] Turbo: the backend is OpenGL, not Vulkan. MC 26.3, NeoForge 26.3.0.95; turbo=on compute=on pipelineCache=on shaderOpt=on demo=off. Pipeline cache: not used yet. Demo: off; no frames yet
+[22:51:02] [Render thread/INFO] [awaken/turbo/]: [turbo] Turbo demo: Turbo is off (the backend is OpenGL, not Vulkan)
+[22:51:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf demo_on 10
+[22:51:12] [IO-Worker-3/INFO] [de.aw.Awaken/]: [autopilot] screenshot turbo_demo_on
+[22:51:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf demo_on frames=595 avg_fps=59.4 p50=15.59ms p95=25.27ms p99=35.11ms max=211.90ms tick_p95=353.53ms heap=631/4096MB fb=1708x960 load=40.7 occluded=false minimized=false
+[22:51:18] [Render thread/INFO] [awaken/turbo/]: [turbo] Turbo: the backend is OpenGL, not Vulkan. MC 26.3, NeoForge 26.3.0.95; turbo=on compute=on pipelineCache=on shaderOpt=on demo=off. Pipeline cache: not used yet. Demo: off; no frames yet
+[22:51:18] [Render thread/INFO] [awaken/turbo/]: [turbo] Turbo demo off. off; no frames yet
+[22:51:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf demo_off 10
+[22:51:28] [IO-Worker-3/INFO] [de.aw.Awaken/]: [autopilot] screenshot turbo_demo_off
+[22:51:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf demo_off frames=566 avg_fps=56.4 p50=16.66ms p95=26.21ms p99=30.94ms max=257.97ms tick_p95=319.98ms heap=675/4096MB fb=1708x960 load=41.8 occluded=false minimized=false
+[22:51:37] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:overworld
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:lucidium
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:the_nether
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_8
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_9
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:trials
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:gates
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:halo
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_3
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/minecraft:the_end
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_5
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_10
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_4
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_7
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_2
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:endless
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_6
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stratum_1
+[22:51:45] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[turbo]'/awaken:stillpoint

@@ -303,8 +303,11 @@ public final class TurboCompute {
             this.async = async;
         }
 
-        /** The raw command buffer, for Turbo features that record their own commands (timestamps). */
-        VkCommandBuffer commandBuffer() {
+        /**
+         * The raw command buffer, for Turbo features that record their own Vulkan commands into the pass (Pixels). The
+         * pass's own barriers still apply: everything before it is done when it starts, and later commands see its writes.
+         */
+        public VkCommandBuffer commandBuffer() {
             return cb;
         }
 

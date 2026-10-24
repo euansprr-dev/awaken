@@ -16,7 +16,8 @@ public final class TurboMixinPlugin implements IMixinConfigPlugin {
     /** Mixin class simple name → the switch that owns it. */
     private static final Map<String, TurboSwitches.Feature> FEATURES = Map.of(
             "VulkanRenderPipelineMixin", TurboSwitches.Feature.PIPELINE_CACHE,
-            "GlslCompilerMixin", TurboSwitches.Feature.SHADER_OPT);
+            "GlslCompilerMixin", TurboSwitches.Feature.SHADER_OPT,
+            "VulkanFeatureSetsMixin", TurboSwitches.Feature.METAL_OBJECTS);
 
     @Override
     public void onLoad(String mixinPackage) {

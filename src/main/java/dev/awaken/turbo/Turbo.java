@@ -5,8 +5,10 @@ import com.mojang.brigadier.Command;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.device.GpuDevice;
+import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.mojang.renderpearl.backend.vulkan.VulkanCommandEncoder;
 import com.mojang.renderpearl.backend.vulkan.VulkanDevice;
+import com.mojang.renderpearl.backend.vulkan.VulkanGpuTexture;
 import com.mojang.renderpearl.frontend.FrontendCommandEncoder;
 import com.mojang.renderpearl.frontend.FrontendGpuDevice;
 import java.io.IOException;
@@ -34,7 +36,8 @@ import org.lwjgl.util.shaderc.Shaderc;
  * self-test passes (a compute shader fills a buffer that is read back and checked). Otherwise it logs one
  * {@code [turbo] off: <why>} line and every feature stays out of the way: the game runs exactly as without Turbo.
  * <p>For other modules: {@link #compute()} (null when off), {@link #on()}, {@link #why()},
- * {@link #deviceExtensions()} and {@link #enabledDeviceExtensions()}.
+ * {@link #deviceExtensions()} and {@link #enabledDeviceExtensions()}; for Turbo features that drive Vulkan themselves,
+ * {@link #vulkanDevice()} and {@link #vkImage}.
  */
 public final class Turbo {
     private Turbo() {}
@@ -84,6 +87,21 @@ public final class Turbo {
     public static Set<String> enabledDeviceExtensions() {
         TurboDevice d = device;
         return d == null ? Set.of() : d.enabled;
+    }
+
+    /**
+     * Minecraft's Vulkan device for Turbo features that drive Vulkan themselves (Pixels): null unless this is a verified
+     * build on the Vulkan backend. Render thread; runs the probe if it hasn't run yet.
+     */
+    public static @Nullable VulkanDevice vulkanDevice() {
+        if (!probed) probe();
+        TurboDevice d = device;
+        return d == null ? null : d.vulkan;
+    }
+
+    /** The VkImage behind a texture on the Vulkan backend, else 0. */
+    public static long vkImage(GpuTexture texture) {
+        return texture instanceof VulkanGpuTexture v ? v.vkImage() : 0L;
     }
 
     /** True when Minecraft runs on its Vulkan backend (worker-thread safe; false before the device exists). */

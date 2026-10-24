@@ -1269,12 +1269,15 @@ transformer before a mixin and never reflection.
   Minecraft <v> is not verified for Turbo`, no mixin applied.
 - **Switches.** `config/awaken-turbo.properties` (`name=on|off`) and `-Dawaken.turbo=name=on,...` (tours: `TURBO=`),
   read once at launch: `turbo` (master, on), `compute` (on), `pipelineCache`, `shaderOpt` (each on only after its
-  measured win, see docs/perf/turbo/REPORT.md), `demo` (off).
+  measured win, see docs/perf/turbo/REPORT.md), `metalObjects` (off; asks for `VK_EXT_metal_objects` at device creation
+  as one more optional FeatureSet, for Pixels' MetalFX), `demo` (off).
 - **Probe** (render thread, first frame): master switch, version lock, Vulkan backend, then a self-test (a compute
   shader writes 256 values on the background queue, the CPU reads them back and checks each). One log line either way:
   `[turbo] on: Vulkan on <GPU> (<driver>), MC …; self-test N µs; background queue …` or `[turbo] off: <why>`. It also
   logs the device's full extension list and the ones Minecraft enabled (`VK_EXT_metal_objects`: available, not enabled
-  by 26.3; the pixels session's MetalFX step has to ask for it at device creation).
+  by 26.3; switch `metalObjects` asks for it). For Turbo features that drive Vulkan themselves (Pixels):
+  `Turbo.vulkanDevice()`, `Turbo.vkImage(GpuTexture)`, `TurboCompute.Pass.commandBuffer()` (raw commands inside a pass).
+  GameTest `turbo_version_lock_current` fails after any Minecraft or NeoForge bump until Turbo is re-verified.
 - **Compute bridge** (`TurboCompute`, render thread only). GLSL 450 compute compiled with LWJGL's shaderc (performance
   level), pipelines on Minecraft's VkDevice, storage buffers bound with push descriptors (set 0, bindings 0..n-1) and up
   to 128 bytes of push constants. Buffers come from Minecraft's VMA with STORAGE + the asked-for VERTEX / INDEX /

@@ -28,6 +28,8 @@ public final class TurboSwitches {
         PIPELINE_CACHE("pipelineCache", false),
         /** shaderc's performance optimisation for Minecraft's own shaders (mixin on GlslCompiler). */
         SHADER_OPT("shaderOpt", false),
+        /** Ask for VK_EXT_metal_objects at device creation (Pixels' MetalFX; off until MetalFX earns its place). */
+        METAL_OBJECTS("metalObjects", false),
         /** The compute-built grid drawn after the sky (a dev showcase, also /awaken turbo demo). */
         DEMO("demo", false);
 
