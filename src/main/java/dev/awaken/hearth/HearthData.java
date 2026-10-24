@@ -82,13 +82,17 @@ public final class HearthData extends SavedData {
         return n;
     }
 
-    /** Keeps a household while its Anchor is cold. */
+    /** Keeps a household while its Anchor is cold (also with no members: its owner is moving home, never founding). */
     void keep(HearthRecord h) {
-        if (h.members.isEmpty()) return;
         List<HearthRecord.Member> m = new ArrayList<>();
         h.members.forEach((id, name) -> m.add(new HearthRecord.Member(id, name == null ? "" : name)));
         kept.put(h.owner, new Kept(h.owner, m));
         setDirty();
+    }
+
+    /** Whether this player broke their own Anchor and hasn't placed it again (they are moving home). */
+    boolean movingHome(UUID owner) {
+        return kept.containsKey(owner);
     }
 
     /** The household kept for this owner (removed: it is handed back once). */

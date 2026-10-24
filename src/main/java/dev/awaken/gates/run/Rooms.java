@@ -299,7 +299,11 @@ public final class Rooms {
     }
 
     static boolean inRoom(ServerLevel level, ServerPlayer p, FloorLayout f, Room r) {
-        Where w = Where.at(level.getServer(), p.blockPosition());
+        return inRoomAt(level, p.blockPosition(), f, r);
+    }
+
+    static boolean inRoomAt(ServerLevel level, BlockPos pos, FloorLayout f, Room r) {
+        Where w = Where.at(level.getServer(), pos);
         return w != null && w.floor() != null && w.area() == f.area && w.floorNo() == f.floor && w.room() != null && w.room().id == r.id;
     }
 

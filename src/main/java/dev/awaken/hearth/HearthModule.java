@@ -122,6 +122,7 @@ public final class HearthModule {
                 .orElse(null));
         HearthCommands.register();
         HearthTests.register();
+        TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();
     }
 

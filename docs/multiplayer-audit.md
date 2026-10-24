@@ -1,5 +1,9 @@
 # Multiplayer audit (pack plan stage 6, "Together")
 
+**Status (2026-10-24, branch `pack/together`): every item below is fixed.** The rules are in SPEC "Together"; the
+GameTests are named `together_*`. What each fix does is listed under "Fixed" at the end; the audit text is kept as it
+was written.
+
 **Euan's decisions (2026-10-24):** the story **starts together** (the prologue and the Ritual of the Bell are shared,
 see docs/proposals/the-ritual.md), and friends share **one Hearth as members**, with a way to grow it into several
 Hearths over time.
@@ -71,3 +75,48 @@ players share one world (LAN, an e4mc link, or a dedicated server). Paths are un
 plan.html:853 promises party gates for up to four with separate loot rolls, shared dreams, Veil co-op ("one of you
 guards the bodies"), a shared or separate Hearth, and friends who join late progressing at their own pace (line 1248).
 plan-v2 kept single player first (lines 174, 182). SPEC has no co-op section yet.
+
+## Fixed (pack/together, 2026-10-24)
+Parties first: `core.api.PartyHooks` (the city's hook, verbatim) with an interim rule installed by gates (`GateParty`):
+your party is everyone inside your gate run plus everyone who shares a Hearth with you.
+
+1. **World story.** One ending per world (`StoryWorld` schema 2); later players are told it (`Court.tell`), never
+   overwrite it. Become the Signal raises the world's Ascension once. Each player meets min(world tier, own tier):
+   creatures are scaled for the nearest player and every hit with another player is evened out to that player's
+   tier (`story/Ascension`), XP too (`Progression.xpScale`). Calm gates still break for an owner who hasn't reached
+   the ending (`StoryHooks.gatesCalm(server, owner)`). Old saves record their chooser on login.
+   Tests: `together_story_one_ending_per_world`, `together_story_late_friend_own_tier`, `together_story_calm_gates_per_owner`.
+2. **Bodies.** No player damage unless PvP is on and the attacker is neither the owner nor in the owner's party; a
+   friend-felled Body never kills its owner (`VeilEvents.onBodyIncoming`, `Projection.playerMayHurtBody`).
+   Test: `together_veil_bodies_spare_friends`.
+3. **Sealing.** Party members on the floor within 48 step through as an arena or Lord's room seals; one who reaches
+   the bars is let in (`Rooms.gatherParty`, `Rooms.admitAtBars`). Test: `together_gates_sealing_brings_the_party`.
+4. **Shared Hearth.** Owner + members (`HearthRecord` household, `Household`), invite / join / leave / remove /
+   members commands and asking at the Anchor; members use the Anchor, wake there, build with powers, see with spirit
+   sight, share the town, requests, breaks, Trophy Hall and upgrades. Sister homes from tier III (one per tier above
+   II). API: `Hearth.hearthsOf`, `Hearth.home`, `Hearth.isMember`, `Hearth.hearthAt`, `Hearth.HearthInfo`.
+   Tests: `together_hearth_members_share`, `together_hearth_sister_home`.
+5. **Director per owner.** The 1–4 cap counts your own gates; your gates never form within 256 of a Hearth you don't
+   share, and one that comes due there folds instead of breaking. Test: `together_gates_director_per_owner`.
+6. **Above machines** answer to their owner and the owner's household (and to anyone using one inside a Hearth they
+   belong to); binding a Clone Vat never changes its owner (`Machines.mayUse`). Covered in `together_hearth_members_share`.
+7. **Shared rewards.** Gate kills credit the party on the floor within 32 (own kill XP share, own elite roll);
+   Descent and home kills share XP; Echo binding gives each party member in range their own lingering Echo. Gates
+   scale with the party: +35% monsters and +1 elite per two per extra player, the Lord +50% health per extra player.
+   Tests: `together_gates_kill_credits_the_party`, `together_gates_scale_with_the_party`.
+8. JournalAction 4/s, dream builds 3 per player per 1000 ticks, reality checks 1 per 10 ticks (`core.Throttle`).
+   Lucidium cells are erased and reused after each dream (`Cells.release`, `core.RegionRecycler`); stale dream
+   entities leave on load. Test: `together_cells_reused_while_running`, `together_server_throttle_and_as`.
+9. Released gate cells are erased and reused while running (`GateService.recycleWhileRunning`), with a per-cell
+   generation so stale entities leave on load (`GateRegistry` schema 2). Test: `together_cells_reused_while_running`.
+10. `/awaken as <player> <any awaken command>` (game masters and the console). Test: `together_server_throttle_and_as`.
+11. RealityCheck and FlagUnfair are throttled (as in 8).
+12. Possession checks a bonded mount's owner (`MobHooks.bondedTo`). Test: `together_fauna_follow_the_group`.
+13. Fauna level follows the lowest awakened player within 48 of the spawn. Test: `together_fauna_follow_the_group`.
+14. The cast-fail sound goes to the caster only. Test: `together_powers_fizzle_is_private`.
+15. Duty, hearth `Breaks.ACTIVE`, `Projection.PENDING_DEATH`, Hearth offers and invitations are cleared on server stop.
+16. "Solo" means nobody else was inside during your run (`RunState` schema 2 `company`). Test: `together_gates_solo_means_alone`.
+17. The Rival's Vael is visible to its own player only (`VaelEntity.broadcastToPlayer`). Test: `together_story_rival_scene_is_private`.
+
+Old single-player saves: `together_old_saves_load_the_same` (story, Hearth, Hearth player data, gate run; a party of one).
+

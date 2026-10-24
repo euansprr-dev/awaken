@@ -181,7 +181,8 @@ public final class HearthService {
     public static void onAnchorPlaced(ServerPlayer sp, ServerLevel level, BlockPos pos) {
         HearthData d = data(level.getServer());
         if (d.of(sp.getUUID()).isPresent() || level.dimension() != Level.OVERWORLD) return;
-        HearthRecord base = Household.sisterBase(d, sp.getUUID());
+        // moving one's own Hearth never founds a sister home; otherwise a member's Anchor founds one where it may
+        HearthRecord base = d.movingHome(sp.getUUID()) ? null : Household.sisterBase(d, sp.getUUID());
         HearthRecord r = new HearthRecord(sp.getUUID(), sp.getGameProfile().name(), pos.immutable(), OVERWORLD);
         r.createdDay = PlayDays.current(level.getServer());
         r.scanAt = level.getGameTime() + 20;

@@ -29,6 +29,8 @@ public final class GatesModule {
         GateLiveTests.register();
         GateHookTests.register();
         dev.awaken.gates.run.RunRegressionTests.register();
+        dev.awaken.gates.run.TogetherRunTests.register();
+        TogetherGateTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent e) {

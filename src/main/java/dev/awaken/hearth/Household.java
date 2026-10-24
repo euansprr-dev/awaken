@@ -149,7 +149,8 @@ public final class Household {
     /** Why a member can't raise an Anchor of their own here, or empty if they can (alone, or as a sister home). */
     static Optional<String> refusesOwnAnchor(HearthData d, UUID player) {
         List<HearthRecord> shared = d.memberOf(player);
-        if (shared.isEmpty() || sisterBase(d, player) != null) return Optional.empty();
+        // an owner moving their own Hearth always may, even while sharing others' (their household's sister homes)
+        if (shared.isEmpty() || d.movingHome(player) || sisterBase(d, player) != null) return Optional.empty();
         HearthRecord first = shared.get(0);
         if (first.tier < SISTER_TIER) {
             return Optional.of("You share " + first.ownerName + "'s Hearth. At Tier " + Upgrades.roman(SISTER_TIER)

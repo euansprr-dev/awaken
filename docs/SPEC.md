@@ -910,7 +910,7 @@ A shared Hearth (members, and growing into several):
 - The town follows the household: townsfolk arrive and leave by the highest rank among its owner and members online,
   every member online hears who came, and a member's rank-up is celebrated when they are home (`cheers`).
 - When an owner breaks their Anchor, the household is kept (`HearthData` schema 2 `kept`) and shares it again where the
-  Anchor next takes root.
+  Anchor next takes root. An owner moving home this way may always place it again, and it never becomes a sister home.
 - Growing into several Hearths: from Hearth tier III a member's own Anchor founds a sister home: its founder owns it and
   everyone else of the first Hearth (owner and members) is a member of it (`founded_from`). One sister at tier III,
   two at IV, three at V. Before that, a member who owns no Hearth is told the rule when placing an Anchor: share until

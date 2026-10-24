@@ -62,6 +62,38 @@ public final class AwakenTests {
         PENDING.add(new Pending(name, FUNCTIONS.register(name, () -> withLoadedArea(test)), maxTicks, true));
     }
 
+    /** A real survival player at {@code relative} (mock players are always creative): its packets land in its channel. */
+    public record Live(net.minecraft.server.level.ServerPlayer player, io.netty.channel.embedded.EmbeddedChannel channel) {
+        /** Every packet sent to this player so far, oldest first (drains the channel). */
+        public java.util.List<Object> sent() {
+            java.util.List<Object> out = new ArrayList<>();
+            Object m;
+            while ((m = channel.readOutbound()) != null) out.add(m);
+            return out;
+        }
+
+        public void leave() {
+            player.level().getServer().getPlayerList().remove(player);
+        }
+    }
+
+    /** A survival player that the server sees as online (for rules that skip creative players). */
+    public static Live survivalPlayer(GameTestHelper h, String name, net.minecraft.core.BlockPos relative) {
+        var level = h.getLevel();
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), name), false);
+        var player = new net.minecraft.server.level.ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        var channel = new io.netty.channel.embedded.EmbeddedChannel(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        player.connection.markClientLoaded();
+        var at = h.absolutePos(relative);
+        if (player.level() != level) player.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(), 0, 0, true);
+        player.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        return new Live(player, channel);
+    }
+
     public static void init(IEventBus modBus) {
         RegistryDump.register();
         WorldgenTests.register();
