@@ -51,9 +51,9 @@ def main(argv):
         print(f"{'AB'[i] if len(runs) > 1 else '-'} {p}\n  {describe(info)}")
     names = list(dict.fromkeys(n for scenes, _ in runs for n in scenes))
     if len(runs) == 1:
-        head = ["scene", "fps", "p50 ms", "p95 ms", "p99 ms", "max ms", "tick p95", "heap MB"]
+        head = ["scene", "fps", "p50 ms", "p95 ms", "p99 ms", "max ms", "tick p95", "heap MB", "load"]
         rows = [[n, f"{s['avg_fps']:.0f}", f"{s['p50']:.2f}", f"{s['p95']:.2f}", f"{s['p99']:.2f}", f"{s['max']:.1f}",
-                 s.get("tick_p95", "-"), s.get("heap", "-")] for n, s in ((n, runs[0][0][n]) for n in names)]
+                 s.get("tick_p95", "-"), s.get("heap", "-"), s.get("load", "-")] for n, s in ((n, runs[0][0][n]) for n in names)]
     else:
         head = ["scene", "A p50", "B p50", "Δ p50", "A p99", "B p99", "Δ p99"]
         rows = []
