@@ -86,6 +86,8 @@ neoForge {
         gameTestServer {
             type = "gameTestServer"
             programArguments.addAll '--tests', 'awaken:*'
+            // -Ptests=terrain_,anomaly_ registers only the tests whose names start with one of these prefixes (AwakenTests)
+            if (project.hasProperty('tests')) systemProperty 'awaken.tests', project.property('tests').toString()
             // -PpowerAudit casts every damaging power at a line-up and logs who it hit (PowerHitTests)
             if (project.hasProperty('powerAudit')) systemProperty 'awaken.powerAudit', 'true'
             // -PmotionDiag records the server paths of a few creatures (Fauna3Tests, diagnostic)

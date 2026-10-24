@@ -121,9 +121,13 @@ public final class HeroTests {
                                     tree.getSerializedName(), placedBy[n], chunks, total / chunks, worst));
                         }
                     })
-                    // let the light engine work through ten thousand blocks before the next batch reads light levels
-                    .thenIdle(200)
                     .thenExecute(() -> {
+                        // the light engine works through ten thousand blocks before the next batch: wait until it has (a
+                        // fixed 200 ticks of a GameTest server that never waits between ticks can be no time at all)
+                        for (HeroPiece piece : pieces) {
+                            BoundingBox b = piece.getBoundingBox();
+                            AwakenTests.awaitLight(h, new BlockPos(b.minX(), 0, b.minZ()), new BlockPos(b.maxX(), 0, b.maxZ()));
+                        }
                         for (int n = 0; n < trees.length; n++) {
                             HeroTree tree = trees[n];
                             int r = tree == HeroTree.ELDER_COLOSSUS ? 44 : 26;

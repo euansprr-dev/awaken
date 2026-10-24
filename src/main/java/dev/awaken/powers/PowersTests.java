@@ -298,15 +298,8 @@ final class PowersTests {
 
     // ---- the smoke test runs alone: its area powers would otherwise hit other tests' mobs ------------------------------
 
-    private static net.neoforged.neoforge.registries.DeferredHolder<java.util.function.Consumer<GameTestHelper>, java.util.function.Consumer<GameTestHelper>> SMOKE;
-
     static void registerIsolated(net.neoforged.bus.api.IEventBus modBus) {
-        SMOKE = AwakenTests.FUNCTIONS.register("powers_cast_every_power", () -> PowersTests::castEveryPower);
-        modBus.addListener(net.neoforged.neoforge.event.RegisterGameTestsEvent.class, e -> {
-            var env = e.registerEnvironment(dev.awaken.Awaken.id("powers_isolated"));
-            e.registerTest(dev.awaken.Awaken.id("powers_cast_every_power"), new net.minecraft.gametest.framework.FunctionGameTestInstance(SMOKE.key(),
-                    new net.minecraft.gametest.framework.TestData<>(env, net.minecraft.resources.Identifier.withDefaultNamespace("empty"), 200, 0, true)));
-        });
+        AwakenTests.registerBare("powers_cast_every_power", "powers_isolated", 200, PowersTests::castEveryPower);
     }
 
     /** Casts every power once on a fake player with a zombie in front: nothing may throw, nothing may linger. */

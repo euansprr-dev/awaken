@@ -753,6 +753,12 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
+- Ticks are not time on the GameTest server (it never waits between ticks), so no test waits a tick count for work
+  done on other threads. Every test starts once its force-loaded 5x5 chunks entity-tick, and light levels are read
+  after `AwakenTests.awaitLight` (the light engine has taken every block change so far); both wait in real time, at
+  most 30 s, by running the chunk system's main-thread queue. Timing budgets assert on the fastest of a few runs.
+  A test that needs untouched ground owns fresh ground away from the test grid (plots sit 6 blocks apart).
+- `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 ---------------------------------------------------------------------------------------------------------------------
 
