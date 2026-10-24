@@ -289,6 +289,22 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise).
+- `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
+  glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
+  installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
+  the player reads (the first-power choice): with the projected look the world dims behind it (`UiHooks.focus`).
+- `dev.awaken.signal.client.UiCanvas.texture(Identifier, x, y, w, h, u0, v0, u1, v1, argb)` (client) — part of a whole
+  texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
+- `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
+  (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
+- `dev.awaken.core.client.skin` (client) — `SkinnedMobRenderer<T extends Mob, S extends SkinRenderState>`, `SkinModel`,
+  `SkinRenderState` (`wear(PlayerSkin)`, `wear(texture, slim)`, overlay toggles): the renderer for every non-player body
+  with a player-format skin (townsfolk, training ghost, gate shades, Shadow Self, HUMAN and MIMIC mobs). The player mesh
+  is picked per state (wide or slim, as the skin says); subclasses add their own tint, see-through, scale and layers.
+  **Rule: a non-player entity never uses `AvatarRenderState` in 26.3.** `EntityRenderDispatcher.getRenderer(state)`
+  sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
+  extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
+  townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -639,7 +655,17 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   Scale, off without View Bobbing, snapped to framebuffer pixels. Vanilla layers never move.
 - `UiHooks.focus()` (0..1) eases with the open panel for Lens. Lens may also tell panels apart by depth: the glass writes
   its real distance (≈0.6 m) into the main depth.
-- Client settings (`awaken-holo-client.toml`): `statusStyle`, `hudMotion`, `reducedMotion`.
+- System cards (`HudLook`, drawn in the GUI pass with the panel's own shaders on GUI pipelines): toasts, the choice and
+  gate cards, story lines, the Now line and the first-power choice are projected glass (hairline edge, brackets, static
+  scan lines, one even tint, a faint halo) with text as light. Positions, sizes, timing and every System v2 rule are
+  unchanged (the look never moves or resizes a card). A card scans in from the top behind a bright line over the time
+  it used to fade in (toasts: vanilla's 600 ms show, done by 270 ms, without the slide), and glitches out in three bands
+  that slip ≤ 3.5 GUI px and fade (toasts: in 300 ms of vanilla's hide); reduced motion makes both a fade. The Now line
+  is a still card (no scan, no glitch). Only reading screens raise `UiHooks.focus`; toasts, cards and the Now line never
+  dim the world. `statusStyle = FLAT` (or GUI shaders that fail) keeps everything flat. With a first power pending, K
+  opens the first-power choice in either style.
+- Client settings (`awaken-holo-client.toml`): `statusStyle` (the projected look for the K menu, the System's cards and
+  the first-power choice), `hudMotion`, `reducedMotion`.
 
 Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
 docs/modules/onboarding.md "The Ritual of the Bell"):
@@ -738,6 +764,14 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   file, e.g. looks_lands.json, never edit looks.json). Key `biome:<id>` wins where the camera's biome matches (sampled
   every 10 ticks; biome-to-biome changes ease over ~3 s, dimension changes over ~1.5 s); a story override wins over
   both.
+- The pack runs on Vulkan (2026-10-24, Euan: "just apply this if it's better"). `tools/pack.py install` writes
+  `preferredGraphicsBackend:"vulkan"` into options.txt unless the player chose one (left at "default" or missing);
+  `pack.py backend <game-dir> vulkan|opengl|default` sets it outright, and players switch back in Video Settings →
+  Graphics API. Measured on the M4 with every pack profile's mods (perf, horizon, feel), back to back under the same
+  load: p50 15-33% lower than OpenGL, Holo, Lens and the whole Ritual matching (docs/perf/vulkan/REPORT.md). The
+  .mrpack doesn't ship options.txt (a launcher would overwrite the player's settings), so its players pick Vulkan in
+  Video Settings. Known: Lens reads Distant Horizons' depth as a constant on Vulkan (cleared on OpenGL); Far Sight
+  replaces DH and owns its depth.
 - Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
   finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens reads DH's own depth through
