@@ -48,3 +48,6 @@ repo/
 .claude/worktrees/
 
 awaken-registry.json
+
+### Python ###
+__pycache__/
