@@ -109,3 +109,7 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   route replay `pilot route rec|play|stop`, SPEC §17.6); it reaches build/awaken-v1 through the pack session in ~1–3 h.
   So by decision 20, M3 started now; M2 follows M3. M3 moved the Association wake/Registry scenes to M2 and leaves
   rooftop runners and rooftop chases until the Ascent's moves are in.
+- 2026-10-25: M1 landed on build/awaken-v1 (a1110aec; SPEC now §16 Carillon, §17 The Ascent, §18 Pixels; §19–20
+  reserved). build/awaken-v1 merged into carillon/main (9fee4177: wilds-base wards, gate-rig, biomes-3, pixels). Wards
+  vs civic protection: no overlap (wards cover #awaken:warded sites + 12 blocks; terrain keeps those sites out of
+  CityBasin.reserved, which reaches well past the wall). Euan's test rule added: one GameTest per mechanism, suite once.

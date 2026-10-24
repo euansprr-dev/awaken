@@ -66,7 +66,7 @@ your name. This is Euan's second play session: "the city alive: citizens at work
    - every station is reachable;
    - every event resolves, and no thief gets stuck;
    - the ledger round-trips through a save.
-   Run them locally with `-Ptests=citizens_` and push for CI.
+   One test per mechanism (Euan); run them locally with `-Ptests=citizens_` and push: CI runs the full suite.
 8. **One `slot.sh light` tour (≤ 15 min), "a day in Carillon".** Dawn, noon, dusk and night in each district; the
    lamplighter's street before and after dusk; a stall opening; an event in progress; a citizen greeting the player by
    name. Reuse M1's studio framings where they fit.
