@@ -576,9 +576,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   distances, the sun's screen position and the sunrise colour. Looks per dimension live in
   `assets/awaken/lens/looks.json` (schemaVersion 1; exact id, then `prefix*`, then `default`) and ease into each other
   over about 1.5 s. Lens never lifts shadows (exposure ≤ 1.05) and backs off where the game's own fog is thick.
-  It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT | CINEMATIC; **OFF by default
-  until the Distant Horizons fix lands** (2026-10-24: with DH installed, Lens on can hide far terrain; SWIFT becomes
-  the default again once the vista A/B tour shows far terrain intact).
+  It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT (default) | CINEMATIC.
+  With Distant Horizons drawing, Lens adds no distance haze (DH fogs its own terrain and turns vanilla fog off; Lens
+  hazing only the near terrain drew a ring where it ends): the same-moment A/B tour (tools/autopilot/lens-dh.txt)
+  showed far terrain intact with Lens on, and DH's depth texture already cleared by post-effect time.
 - Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
   finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens reads DH's own depth through

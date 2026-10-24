@@ -83,6 +83,9 @@ void main() {
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
     if (farTerrain) haze = min(1.0, haze + smoothstep(rdEnd, rdEnd * 8.0, d) * 0.45 * step(0.001, h.r));
+    // Far terrain is drawing but its depth isn't readable here (Distant Horizons clears it before post effects):
+    // then distance is Distant Horizons' own fog. Hazing only the near terrain would draw a ring where it ends.
+    if (p0.b > 0.5 && !farTerrain) haze = 0.0;
     // underwater, in lava or blind, the game's own fog already hides the distance
     haze *= clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0);
     vec3 hazeColor = mix(fogColor.rgb, hz.rgb, h.b);
