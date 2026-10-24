@@ -1,0 +1,23 @@
+world lands777 creative 777
+waitworld
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+cmd awaken terrain herovisit elder_colossus 16 1
+wait 400
+cmd awaken terrain herovisit elder_colossus 16 1
+wait 100
+shot probe_colossus_foot
+cmd awaken terrain herovisit lumen_spire 40 30
+wait 300
+cmd awaken terrain herovisit lumen_spire 40 30
+wait 60
+shot probe_spire
+quit

@@ -1,0 +1,13 @@
+{
+  "type": "lithostitched:replace_partially",
+  "dimension": "minecraft:overworld",
+  "targets": [
+    "minecraft:dark_forest"
+  ],
+  "replacement": "awaken:lumen_forest",
+  "parameters": {
+    "awaken:lands/awakening": {
+      "min_inclusive": 0.0
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "awaken:block/veined_lumen_log_horizontal",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "awaken:block/veined_lumen_log"
+    },
+    "axis=z": {
+      "model": "awaken:block/veined_lumen_log_horizontal",
+      "x": 90
+    }
+  }
+}
