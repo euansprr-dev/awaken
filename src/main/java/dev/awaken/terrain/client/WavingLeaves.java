@@ -20,7 +20,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.TextureAtlasStitchedEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
@@ -53,7 +52,6 @@ public final class WavingLeaves {
         modBus.addListener(WavingLeaves::addPack);
         modBus.addListener(WavingLeaves::markLeafModels);
         modBus.addListener(WavingLeaves::atlasStitched);
-        NeoForge.EVENT_BUS.addListener(WavingLeaves::frame);
         NeoForge.EVENT_BUS.addListener(WavingLeaves::commands);
     }
 
@@ -106,10 +104,10 @@ public final class WavingLeaves {
         if (e.getAtlas().location().equals(TextureAtlas.LOCATION_BLOCKS)) WindTexels.onBlockAtlasStitched(e.getAtlas());
     }
 
-    private static void frame(RenderFrameEvent.Pre e) {
+    /** Once a frame, after {@link ClientWind} is set: the wind for the shader. */
+    static void frame(Minecraft mc) {
         if (!packOffered || Companions.shaderPackActive()) return;
-        Minecraft mc = Minecraft.getInstance();
-        WindTexels.write(mc, e.getPartialTick().getGameTimeDeltaPartialTick(false));
+        WindTexels.write(mc);
     }
 
     /** {@code /awaken terrain waving on|off|status|debug <0..2>} (client side): switch and reload, or say why it is off. */

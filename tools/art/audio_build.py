@@ -29,7 +29,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "../.."))
 SOUNDS = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds")
 MERGE = os.path.join(ROOT, "src/main/merge")
 BIOMES = os.path.join(ROOT, "src/main/resources/data/awaken/worldgen/biome")
-SPECS = ["audio_ui", "audio_amb", "audio_music"]
+SPECS = ["audio_ui", "audio_amb", "audio_music", "audio_lands"]
 
 
 class Snd:
@@ -48,7 +48,8 @@ class Snd:
 
 class Evt:
     """One sound event. files: [(file name, weight, volume)], refs: [(event id, weight, volume)] (other events,
-    vanilla or ours). attenuation: blocks for positional sounds. folder: which merge folder owns the entry."""
+    vanilla or ours). attenuation: blocks for positional sounds. folder: which merge folder owns the entry ("audio",
+    "core" for the System events it re-voices, or another module's folder, whose files are updated, not replaced)."""
 
     def __init__(self, id, subtitle, files=(), refs=(), stream=False, attenuation=None, folder="audio", pitch=1.0):
         self.id, self.subtitle, self.files, self.refs = id, subtitle, list(files), list(refs)
@@ -117,20 +118,32 @@ def write_json(path, data):
 def write_events(events, lang_extra):
     audio = OrderedDict()
     lang = OrderedDict()
+    others = OrderedDict()  # another module's folder: {folder: (sounds, lang)}, merged into what is already there
     core_path = os.path.join(MERGE, "core/assets/awaken/sounds.json")
     core = json.load(open(core_path), object_pairs_hook=OrderedDict)
     for e in events:
         if e.folder == "core":
             assert e.id in core, f"{e.id} is not an existing core event"
             core[e.id] = e.json()  # keeps its existing subtitle key (core's lang has it)
-        else:
+        elif e.folder == "audio":
             audio[e.id] = e.json()
             lang[e.key()] = e.subtitle
+        else:
+            snd, lng = others.setdefault(e.folder, (OrderedDict(), OrderedDict()))
+            snd[e.id] = e.json()
+            lng[e.key()] = e.subtitle
     lang.update(lang_extra)
     write_json(os.path.join(MERGE, "audio/assets/awaken/sounds.json"), audio)
     write_json(os.path.join(MERGE, "audio/assets/awaken/lang/en_us.json"), lang)
     write_json(core_path, core)
-    print(f"events: {len(audio)} in merge/audio, {sum(e.folder == 'core' for e in events)} replaced in merge/core")
+    for folder, (snd, lng) in others.items():
+        for rel, add in (("assets/awaken/sounds.json", snd), ("assets/awaken/lang/en_us.json", lng)):
+            path = os.path.join(MERGE, folder, rel)
+            data = json.load(open(path), object_pairs_hook=OrderedDict) if os.path.exists(path) else OrderedDict()
+            data.update(add)
+            write_json(path, data)
+    print(f"events: {len(audio)} in merge/audio, {sum(e.folder == 'core' for e in events)} replaced in merge/core"
+          + "".join(f", {len(v[0])} in merge/{k}" for k, v in others.items()))
 
 
 def patch_biomes(music):

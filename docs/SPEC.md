@@ -794,13 +794,27 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 - Life: wind from world time and seed (same for every player, no packets) drives falling leaves (a fixed client pool,
   about 150 at once, scaled by the frame budget), petals, dust and leaf rustle. Waving leaves only if the Sodium spike
   proves them safe; if not, wind, leaves and sound ship without them.
+- Wind (`dev.awaken.terrain.Wind`, common): salt = fingerprint of the hashed world seed through the level's
+  BiomeManager (server and clients agree); a heading per 2000 ticks with a 400-tick turn, headings from a slow noise;
+  steady 0..1 (0.2 + 0.45 noise over 170 s, + 0.3 rain, + 0.3 thunder); gust fronts 0..1 rolling downwind at
+  7 blocks/s; strength = min(1, steady (0.6 + 0.8 gust) + 0.25 gust). One field per client feeds the waving shader,
+  the falling leaves and the rustle. Tests: `terrain_wind_deterministic`, `terrain_wind_ranges`.
+- Falling leaves (`terrain.client.FallingLeaves`): Awaken's own particle, spawned from leaves with air below 6-32
+  blocks out (70% toward the view), chance 0.06 × biome rate × leaf rate × (0.25 + 1.5 strength); caps 60/150/300 by
+  client setting `falling_leaves` = off|low|normal|high (default normal) × a frame-budget scale (1 at ≥ 50 fps,
+  0.25 by 30 fps); tinted from the leaf's BlockColors tint over its texture's average; tumble, flutter, wind drift,
+  1-3 s rest, 1 s fade. Per-block and per-biome rules in `assets/awaken/lands/air.json` (schemaVersion 1): forests
+  1.0, elsewhere 0.5, cherry 0 (vanilla petals), Elderwood 3.0 gold, Lumen Forest motes at night only.
+- Leaf rustle (`terrain.client.LeafRustle`): `amb.lands_rustle` under canopy and `amb.lands_wind_high` high and in the
+  open, volumes from the wind and a 16-column canopy ring; client setting `leaf_rustle` (default on).
 - Waving leaves (spike done 2026-10-24, docs/spikes/waving-leaves.md: safe, cost within noise, at most ~0.05 ms p50 in
   a dense dark forest): `dev.awaken.terrain.client`. A built-in client pack (`resourcepacks/awaken_waving_leaves`)
   replaces Sodium's terrain vertex shader, offered only when Sodium is exactly 0.9.3-beta.1+mc26.3 with terrain shader
   sources of a known SHA-256, Iris is absent and client setting `waving_leaves` (`awaken-terrain-client.toml`, default
   on) is on; otherwise nothing is installed (vanilla renderer: no waving). Marker: every `LeavesBlock` model is wrapped
-  after baking with vertex colour alpha 254 (textures untouched). Wind: 4 texels at the block atlas's bottom-right
-  corner written each frame (signature, time mod 256 s, camera, wind); the terrain wind model feeds them later.
+  after baking with vertex colour alpha 254 (textures untouched). Wind: texels at the block atlas's bottom-right
+  corner written each frame (signature, time mod 2048 s, camera, wind, the gust profile along the wind from
+  `terrain.Wind`): 22 texels.
   Amplitude 0.11 blocks at full wind and gust. `/awaken terrain waving on|off|status` (client).
 - Budgets: forest p50 within the Swift budget at 2880×1800 (the darkest Tectonic forest already measured 8.7 ms on
   2026-10-24, so new foliage pays for itself); any feature ≤ 0.5 ms per chunk on average, hero-tree structures ≤ 2 ms;

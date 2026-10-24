@@ -10,8 +10,10 @@ public final class TerrainModule {
         modBus.addListener(LandsPack::onAddPackFinders);
         dev.awaken.terrain.city.CityBasinSetup.init(modBus);
         dev.awaken.terrain.city.CityBasinTests.register();
+        TerrainSounds.init(modBus);
         TerrainCommands.register();
         TerrainTests.register();
         BiomeTableTests.register();
+        WindTests.register();
     }
 }
