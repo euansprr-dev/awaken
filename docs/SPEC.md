@@ -1423,6 +1423,20 @@ is what the Ascent decided while building it.
   Profile: the module that moves the body owns what it may do. "Arrived by movement" is a 20-second trail of bits per
   player (moving by Ascent state or Runner move, or not) and the last block placed (`BlockEvent.EntityPlaceEvent`).
 
+### 17.3 Phase 1b: the Leaper and the server's checks
+- The Leaper (tier D-C), no new keys, each once an airtime (back on landing and when a rope bites), from any airborne
+  body that isn't on a wall or a ledge: jump in the air = a double jump (+0.52 on top of any rise; it comes before the
+  wings: a second jump opens them), sprint in the air = an air dash along the look's heading at max(0.95, 1.33 × your
+  horizontal speed) with a lift of 0.08, sneak with 4+ blocks under you = a dive slam (horizontal speed ×0.25, straight
+  down at 1.7). Each goes into the carry with the swing's momentum, so a release can chain into a dash and a slam.
+  A slam's landing: within 3.5 blocks, creatures take 3 + 3 × the landing speed (falling off to 40% at the edge) and
+  are thrown out; players only where the world's PvP rule allows; your own tamed creatures never. The server applies it
+  only with the Leaper tier, out of an airborne state a moment ago.
+- The server's checks (more to come with the latency tours): a rope's anchor must be within 50 of where the server has
+  the body and sit on a block's collision (`AscentServer.anchorReal`); a state the tiers don't allow, the `ascent` world
+  option off, riding or spectating are refused with `AscentPayloads.Stop`, and the client lets go (a refused rope
+  becomes the carry: never a yank back).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)

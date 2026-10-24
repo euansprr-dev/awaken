@@ -50,6 +50,14 @@ public final class AscentRules {
     /** A zip pulls you toward the anchor: acceleration per tick, top speed, and where it lets go. */
     public static final double ZIP_ACCEL = 0.24, ZIP_SPEED = 1.45, ZIP_ARRIVE = 2.2;
 
+    // ---- the Leaper's air moves (tier D-C) -------------------------------------------------------------------------
+    /** A double jump: once an airtime, this much up on top of any rise you still have. */
+    public static final double DOUBLE_JUMP = 0.52;
+    /** An air dash: once an airtime, along the look's heading at this speed (or a third faster than you were going). */
+    public static final double DASH_SPEED = 0.95, DASH_GAIN = 1.33, DASH_LIFT = 0.08;
+    /** A dive slam: from at least this high, straight down at this speed; the landing's shock reaches this far. */
+    public static final double SLAM_MIN_HEIGHT = 4, SLAM_SPEED = 1.7, SLAM_RADIUS = 3.5;
+
     // ---- carry: the momentum you keep after letting go ------------------------------------------------------------
     public static final double CARRY_DRAG_H = 0.988, CARRY_DRAG_V = 0.98;
     /** Air control: input bends the path, never speeds it past what you had (or this, when slow). */

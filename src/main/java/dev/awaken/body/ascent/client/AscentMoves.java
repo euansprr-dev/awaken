@@ -47,7 +47,11 @@ public final class AscentMoves {
     static boolean ropeTaut;
     static double tension;
     // input edges
-    private static boolean tetherWas, jumpWas, sneakWas;
+    private static boolean tetherWas, jumpWas, sneakWas, sprintWas;
+    /** The Leaper's air moves used this airtime (bits: 1 double jump, 2 air dash), back on landing or a rope's bite. */
+    static int airMovesUsed;
+    /** A dive slam is falling: its landing shakes the ground. */
+    static boolean slamming;
     private static int lastJumpPress = -100;
     // last tick's request to vanilla, to see what a collision took
     private static double lastX, lastY, lastZ, wantDx, wantDy, wantDz;
@@ -120,11 +124,13 @@ public final class AscentMoves {
         ClientInput in = e.getInput();
         Input k = in.keyPresses;
         boolean tether = AwakenKeys.MOVEMENT.isDown() && mc.gui.screen() == null;
-        boolean jump = k.jump(), sneak = k.shift();
+        boolean jump = k.jump(), sneak = k.shift(), sprint = k.sprint();
         boolean tetherPressed = tether && !tetherWas, jumpPressed = jump && !jumpWas, sneakPressed = sneak && !sneakWas;
+        boolean sprintPressed = sprint && !sprintWas;
         tetherWas = tether;
         jumpWas = jump;
         sneakWas = sneak;
+        sprintWas = sprint;
         double fwd = (k.forward() ? 1 : 0) - (k.backward() ? 1 : 0);
         double right = (k.right() ? 1 : 0) - (k.left() ? 1 : 0);
         if (off(p)) {
@@ -139,10 +145,13 @@ public final class AscentMoves {
             case NONE -> {
                 // a Runner move (a wall-run, a hang) holds the body: only the rope cuts in
                 boolean runner = dev.awaken.body.client.RunnerMoves.busy();
+                if (p.onGround()) airMovesUsed = 0;
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER)) {
                     fire(p);
                 } else if (runner) {
                     // the Runner's own jumps (a wall jump, a ledge jump)
+                } else if (!p.onGround() && leaperMove(p, jumpPressed, sprintPressed, sneakPressed, true)) {
+                    // a double jump, an air dash or a dive slam took the body into the carry
                 } else if (jumpPressed && !p.onGround() && has(AscentPayloads.Tier.WINGS) && canDeploy(p)
                         && !dev.awaken.body.client.RunnerMoves.wallBeside(p)) {
                     startGlide(p);
@@ -176,6 +185,9 @@ public final class AscentMoves {
                     p.setDeltaMovement(K.vx, K.vy, K.vz);
                     end(p, "onto a wall", true);
                     return;
+                } else if (leaperMove(p, jumpPressed, sprintPressed, sneakPressed, false)) {
+                    // the move set this tick's velocity; the carry flies it
+                    AscentRules.carryStep(K, yaw, fwd, right, S);
                 } else if (jumpPressed && has(AscentPayloads.Tier.WINGS) && canDeploy(p)) {
                     startGlide(p);
                 } else {
@@ -444,6 +456,7 @@ public final class AscentMoves {
     }
 
     private static void bite(LocalPlayer p, float strength) {
+        airMovesUsed = 0;
         if (state == AscentState.TETHER) {
             // a tug along the swing, the way you look: chaining ropes keeps you moving
             double lx = -Mth.sin(p.getYRot() * Mth.DEG_TO_RAD), lz = Mth.cos(p.getYRot() * Mth.DEG_TO_RAD);
@@ -503,6 +516,58 @@ public final class AscentMoves {
         trace("launch");
         toCarry(p, "launched");
         AscentRules.carryStep(K, p.getYRot(), 0, 0, S);
+    }
+
+    // ---- the Leaper ---------------------------------------------------------------------------------------------------
+
+    /**
+     * The Leaper's air moves, once each an airtime: jump for a double jump, sprint for an air dash along the look's
+     * heading, sneak (high enough) for a dive slam. From NONE they start the carry with the body's own motion. True when
+     * one went off.
+     */
+    private static boolean leaperMove(LocalPlayer p, boolean jumpPressed, boolean sprintPressed, boolean sneakPressed, boolean fromNone) {
+        if (!has(AscentPayloads.Tier.LEAPER) || p.onGround()) return false;
+        boolean dbl = jumpPressed && (airMovesUsed & 1) == 0 && !dev.awaken.body.client.RunnerMoves.wallBeside(p);
+        boolean dash = sprintPressed && (airMovesUsed & 2) == 0;
+        boolean dive = sneakPressed && !slamming && heightAboveGround(p) >= AscentRules.SLAM_MIN_HEIGHT;
+        if (!dbl && !dash && !dive) return false;
+        if (fromNone) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        if (dbl) {
+            airMovesUsed |= 1;
+            K.vy = Math.max(K.vy, 0) + AscentRules.DOUBLE_JUMP;
+            AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.6F, 1.3F);
+            AscentFx.ring(p.getX(), p.getY() + 0.1, p.getZ(), new Vec3(0, 1, 0), 0.35F);
+            event(AscentPayloads.EV_DOUBLE, 0);
+            FeelDirector.flap();
+            trace("double jump");
+        } else if (dash) {
+            airMovesUsed |= 2;
+            double yaw = p.getYRot() * Mth.DEG_TO_RAD, fx = -Math.sin(yaw), fz = Math.cos(yaw);
+            double speed = Math.max(AscentRules.DASH_SPEED, K.hspeed() * AscentRules.DASH_GAIN);
+            K.vx = fx * speed;
+            K.vz = fz * speed;
+            K.vy = Math.max(K.vy, AscentRules.DASH_LIFT);
+            AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.75F, 1.15F);
+            AscentFx.ring(p.getX(), p.getY() + 0.9, p.getZ(), new Vec3(fx, 0, fz), 0.3F);
+            event(AscentPayloads.EV_DASH, (float) speed);
+            FeelDirector.dash();
+            trace(String.format("air dash %.2f", speed));
+        } else {
+            slamming = true;
+            K.vx *= 0.25;
+            K.vz *= 0.25;
+            K.vy = -AscentRules.SLAM_SPEED;
+            AscentSounds.local(p, AscentContent.WINGS_FOLD.get(), 0.8F, 0.7F);
+            event(AscentPayloads.EV_DIVE, 0);
+            FeelDirector.dive();
+            trace("dive slam");
+        }
+        if (fromNone) setState(p, AscentState.CARRY);
+        return true;
+    }
+
+    private static double heightAboveGround(LocalPlayer p) {
+        return p.getY() - AscentAnchors.floorUnder(p.level(), p, p.getX(), p.getY() + 0.5, p.getZ(), 40);
     }
 
     // ---- wings --------------------------------------------------------------------------------------------------------
@@ -569,7 +634,17 @@ public final class AscentMoves {
         end(p, "landed", true);
         if (wings) foldAt = ticks;
         AscentSounds.local(p, AscentContent.LAND.get(), Math.min(1F, 0.3F + landSpeed * 0.5F), wings ? 1.1F : 1F);
-        FeelDirector.land(landSpeed);
+        if (slamming) {
+            // the dive slam's landing: the ground answers, and everything near is thrown
+            slamming = false;
+            AscentSounds.local(p, AscentContent.BOOM.get(), 0.7F, 1.35F);
+            AscentFx.ring(p.getX(), p.getY() + 0.15, p.getZ(), new Vec3(0, 1, 0), 0.5F);
+            FeelDirector.slam(landSpeed);
+            event(AscentPayloads.EV_SLAM_LAND, landSpeed);
+        } else {
+            FeelDirector.land(landSpeed);
+        }
+        airMovesUsed = 0;
         event(AscentPayloads.EV_LAND, landSpeed);
         // the run carries on: keep a share of the speed into the first steps (a roll when it's a hard landing)
         if (h > 0.3) {
@@ -616,6 +691,19 @@ public final class AscentMoves {
         ClientPacketDistributor.sendToServer(new AscentPayloads.Event(what, speed));
     }
 
+    /** The server refused the state we're in: let go (a rope's speed carries on; the server never yanks you back). */
+    static void refused(int stateId) {
+        LocalPlayer p = Minecraft.getInstance().player;
+        AscentState s = AscentState.byId(stateId);
+        if (p == null || s == null || s != state) return;
+        trace("server refused " + s);
+        if (s.rope) {
+            setState(p, AscentState.CARRY);
+        } else {
+            end(p, "refused", false);
+        }
+    }
+
     // ---- lifecycle ----------------------------------------------------------------------------------------------------
 
     static void tick() {
@@ -623,6 +711,8 @@ public final class AscentMoves {
     }
 
     static void forget() {
+        slamming = false;
+        airMovesUsed = 0;
         state = AscentState.NONE;
         stateAge = 0;
         sent = false;

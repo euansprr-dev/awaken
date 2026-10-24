@@ -79,7 +79,11 @@ public final class AscentServer {
         AscentState s = AscentState.byId(msg.state());
         if (s == null) return;
         AscentMotion m = motion(p);
-        if (!allowed(p, s) || p.isPassenger() || p.isSpectator()) {
+        boolean refuse = !allowed(p, s) || p.isPassenger() || p.isSpectator() || !dev.awaken.body.BodyConfig.ascent()
+                || s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z());
+        if (refuse && s != AscentState.NONE) {
+            AwakenNet.send(p, new AscentPayloads.Stop(s.ordinal()));
+            dev.awaken.Awaken.LOG.debug("[ascent] refused {} for {}", s, p.getPlainTextName());
             s = AscentState.NONE;
         }
         if (s == AscentState.NONE && m.state != AscentState.NONE) m.endedAt = now(p);
@@ -94,8 +98,45 @@ public final class AscentServer {
         show(p, new AscentPayloads.Seen(p.getId(), s.ordinal(), m.ax, m.ay, m.az));
     }
 
+    /**
+     * A rope's anchor is real: within the rope's reach (plus the ground the body covered while the packet travelled) of
+     * where the server has the body, and the point sits on a block's collision (it is placed a hair off the face it bit).
+     */
+    static boolean anchorReal(ServerPlayer p, double ax, double ay, double az) {
+        double reach = AscentRules.TETHER_RANGE + 6;
+        if (p.distanceToSqr(ax, ay, az) > reach * reach) return false;
+        net.minecraft.world.phys.AABB probe = new net.minecraft.world.phys.AABB(ax - 0.12, ay - 0.12, az - 0.12, ax + 0.12, ay + 0.12, az + 0.12);
+        for (var shape : p.level().getBlockCollisions(null, probe)) {
+            if (!shape.isEmpty()) return true;
+        }
+        return false;
+    }
+
     static void onEvent(ServerPlayer p, AscentPayloads.Event msg) {
+        if (msg.what() == AscentPayloads.EV_SLAM_LAND) slam(p, Math.min(3F, Math.max(0F, msg.speed())));
         show(p, new AscentPayloads.SeenEvent(p.getId(), msg.what(), msg.speed()));
+    }
+
+    /**
+     * A dive slam lands: creatures within reach are hurt by how hard you came down and thrown out from you. Only with
+     * the Leaper tier and out of an airborne state a moment ago; players only where the world allows PvP.
+     */
+    static void slam(ServerPlayer p, float speed) {
+        AscentMotion m = motion(p);
+        if (!Ascent.has(p, Ascent.Tier.LEAPER) || !(m.state.airborne() || now(p) - m.endedAt < SOFT_LANDING)) return;
+        ServerLevel level = p.level();
+        double r = AscentRules.SLAM_RADIUS;
+        float damage = 3F + 3F * speed;
+        for (var e : level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, p.getBoundingBox().inflate(r, 1.5, r), e -> e != p && e.isAlive())) {
+            if (e instanceof net.minecraft.world.entity.player.Player other && (!level.isPvpAllowed() || other.isSpectator())) continue;
+            if (e instanceof net.minecraft.world.entity.OwnableEntity own && p.getUUID().equals(own.getOwnerReference() == null ? null : own.getOwnerReference().getUUID())) continue;
+            double dx = e.getX() - p.getX(), dz = e.getZ() - p.getZ(), d = Math.sqrt(dx * dx + dz * dz);
+            if (d > r) continue;
+            float falloff = (float) (1 - d / r * 0.6);
+            var source = p.damageSources().playerAttack(p);
+            e.hurtServer(level, source, damage * falloff);
+            if (d > 1e-3) e.knockback(0.6 + 0.5 * speed * falloff, -dx / d, -dz / d, source, damage * falloff);
+        }
     }
 
     static void end(ServerPlayer p, AscentMotion m) {

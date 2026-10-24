@@ -41,5 +41,6 @@ public final class AscentModule {
         r.playToClient(AscentPayloads.SeenEvent.TYPE, AscentPayloads.SeenEvent.STREAM_CODEC);
         r.playToClient(AscentPayloads.Tiers.TYPE, AscentPayloads.Tiers.STREAM_CODEC);
         r.playToClient(AscentPayloads.Pilot.TYPE, AscentPayloads.Pilot.STREAM_CODEC);
+        r.playToClient(AscentPayloads.Stop.TYPE, AscentPayloads.Stop.STREAM_CODEC);
     }
 }

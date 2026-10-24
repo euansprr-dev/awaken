@@ -111,6 +111,25 @@ public final class FeelDirector {
         crackIn = 6;
     }
 
+    /** An air dash: a sharp shove forward (the frame widens, the view dips into it). */
+    public static void dash() {
+        kick(1.6F);
+        fovPunch += 0.09F;
+    }
+
+    /** A dive slam starting: the view tips down as you fold. */
+    public static void dive() {
+        kick(4F);
+        fovPunch += 0.05F;
+    }
+
+    /** A dive slam's landing: the heaviest landing there is. */
+    public static void slam(float speed) {
+        kick(Math.min(9F, 4F + speed * 3F));
+        shake = Math.max(shake, Math.min(1.6F, 0.8F + speed * 0.4F));
+        if (!FeelConfig.reduced()) flash = Math.max(flash, 0.12F);
+    }
+
     public static void land(float speed) {
         kick(Math.min(7F, 2.5F + speed * 3.5F));
         if (speed > 0.8F) shake = Math.max(shake, Math.min(0.9F, speed * 0.4F));

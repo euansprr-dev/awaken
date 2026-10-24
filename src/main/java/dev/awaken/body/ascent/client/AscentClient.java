@@ -64,6 +64,7 @@ public final class AscentClient {
             dev.awaken.body.ascent.AscentServer.clientTiers(msg.bits());
         });
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
+        event.register(AscentPayloads.Stop.TYPE, (msg, ctx) -> AscentMoves.refused(msg.state()));
     }
 
     private static void tick() {

@@ -79,6 +79,16 @@ public final class AscentRemote {
             }
             case AscentPayloads.EV_CATCH -> AscentSounds.local(e, AscentContent.ROPE_STRAIN.get(), 0.6F, 0.9F);
             case AscentPayloads.EV_LAND -> AscentSounds.local(e, AscentContent.LAND.get(), Math.min(1F, 0.3F + msg.speed() * 0.5F), 1F);
+            case AscentPayloads.EV_DOUBLE, AscentPayloads.EV_DASH -> {
+                AscentSounds.local(e, AscentContent.LAUNCH.get(), 0.6F, msg.what() == AscentPayloads.EV_DOUBLE ? 1.3F : 1.15F);
+                AscentFx.ring(e.getX(), e.getY() + (msg.what() == AscentPayloads.EV_DOUBLE ? 0.1 : 0.9), e.getZ(),
+                        msg.what() == AscentPayloads.EV_DOUBLE ? new net.minecraft.world.phys.Vec3(0, 1, 0) : e.getLookAngle(), 0.3F);
+            }
+            case AscentPayloads.EV_DIVE -> AscentSounds.local(e, AscentContent.WINGS_FOLD.get(), 0.8F, 0.7F);
+            case AscentPayloads.EV_SLAM_LAND -> {
+                AscentSounds.local(e, AscentContent.BOOM.get(), 0.7F, 1.35F);
+                AscentFx.ring(e.getX(), e.getY() + 0.15, e.getZ(), new net.minecraft.world.phys.Vec3(0, 1, 0), 0.5F);
+            }
             case AscentPayloads.EV_BOOM -> {
                 AscentSounds.local(e, AscentContent.BOOM.get(), 1F, 1F);
                 AscentFx.ring(e.getX(), e.getY() + 0.9, e.getZ(), e.getDeltaMovement(), 1F);
