@@ -68,4 +68,7 @@ Glass Steppe and Shattered Highlands, the second pair of Awakened biomes (docs/m
 
 ## CI
 
-See the last section, filled when the run is green.
+Green: GameTests run 40103382422 on d50bca5 (https://github.com/euansprr-dev/awaken/actions/runs/40103382422), all
+required tests passed. The full local run on c00ea0e passed too (334 required tests, `./gradlew build
+runGameTestServer`). Earlier red runs on c6c7250 (40101536432, two attempts) failed only on the two flakes
+`pack/throughput` fixes.
