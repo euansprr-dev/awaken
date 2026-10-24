@@ -1,0 +1,19 @@
+{
+  "text": "Read a Precursor log you haven't read.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:precursor_logs_read",
+    "value": 1
+  },
+  "reward": {
+    "stat": "INT"
+  },
+  "expires_days": 3,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 8,
+  "requires": [
+    "level:4"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "text": "Open a fallen star before it burns out.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:stars_opened",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.2
+  },
+  "expires_days": 3,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 6,
+  "requires": [
+    "level:3"
+  ]
+}

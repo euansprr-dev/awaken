@@ -1,0 +1,18 @@
+{
+  "text": "I go where the map ends.",
+  "hint": "Reach eight landmarks.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:landmarks_reached",
+    "value": 8
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:move_speed",
+        "amount": 0.04
+      }
+    ]
+  },
+  "min_rank": "E"
+}
