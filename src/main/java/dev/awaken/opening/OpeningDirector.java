@@ -60,7 +60,7 @@ final class OpeningDirector {
     static final int WAKE_END = 20 * 38, WAKE_MAX = 20 * 120;
 
     /** Where each runner last moved, and when (the idle pull): transient. */
-    private static final Map<UUID, long[]> MOVED = new HashMap<>();
+    static final Map<UUID, long[]> MOVED = new HashMap<>();
     /** Arrivals waiting for the story's gate to finish forming: player → when the pull began. */
     private static final Map<UUID, Long> PULLING = new HashMap<>();
 
