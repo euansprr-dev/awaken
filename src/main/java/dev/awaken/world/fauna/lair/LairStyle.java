@@ -1,12 +1,12 @@
 package dev.awaken.world.fauna.lair;
 
 import com.mojang.serialization.Codec;
+import dev.awaken.terrain.api.BiomeTable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.tags.BiomeTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.Biomes;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Locale;
@@ -51,6 +51,8 @@ public enum LairStyle implements StringRepresentable {
     public final boolean highland;
     /** P3: where it is placed (the sea floor and caves have their own site search and no terrain flattening in caves). */
     public final Placement placement;
+    /** The biomes where it wears its second look: {@code #awaken:lair_style/<style>} (the biome table). */
+    private final TagKey<Biome> secondLook;
 
     LairStyle(String beast, String title, int denX, int denY, int denZ, int radius, boolean wet, int maxSlope) {
         this.beast = beast;
@@ -63,6 +65,7 @@ public enum LairStyle implements StringRepresentable {
         this.maxSlope = maxSlope;
         this.highland = beast.equals("stonehorn");
         this.placement = beast.equals("lantern_maw") ? Placement.SEABED : beast.equals("thousandfoot") ? Placement.CAVE : Placement.SURFACE;
+        this.secondLook = BiomeTable.tag("lair_style/" + name().toLowerCase(Locale.ROOT));
     }
 
     @Override
@@ -74,17 +77,13 @@ public enum LairStyle implements StringRepresentable {
         return centre.offset(denX, denY, denZ);
     }
 
-    /** The look that fits the biome it was placed in: red sand in the badlands, snow on the cold ground, pale oak. */
+    /**
+     * The look that fits the biome it was placed in (1 where the biome table's {@code #awaken:lair_style/<style>} lists
+     * it): red sand in the badlands, snow on the cold ground, pale oak, coral in the warm deep, a mossy nest under the
+     * lush caves. Styles without a second look have no tag.
+     */
     public int variant(Holder<Biome> biome) {
-        return switch (this) {
-            case GLASS_HOLLOW -> biome.is(BiomeTags.IS_BADLANDS) ? 1 : 0;
-            case ANTLER_GROVE -> biome.is(Biomes.SNOWY_TAIGA) || biome.is(Biomes.SNOWY_PLAINS) || biome.is(Biomes.GROVE) || biome.is(Biomes.SNOWY_SLOPES) ? 1 : 0;
-            case SILK_HOLLOW -> biome.is(Biomes.PALE_GARDEN) ? 1 : 0;
-            case RAMS_CAIRN -> biome.is(Biomes.FROZEN_PEAKS) || biome.is(Biomes.JAGGED_PEAKS) || biome.is(Biomes.SNOWY_SLOPES) ? 1 : 0;
-            case SUNKEN_SHRINE -> biome.is(Biomes.DEEP_LUKEWARM_OCEAN) || biome.is(Biomes.WARM_OCEAN) ? 1 : 0; // coral in the warm deep
-            case CRYSTAL_NEST -> biome.is(Biomes.LUSH_CAVES) ? 1 : 0; // a mossy nest under the lush caves
-            default -> 0;
-        };
+        return biome.is(secondLook) ? 1 : 0;
     }
 
     public static @Nullable LairStyle byBeast(String beast) {

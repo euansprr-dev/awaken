@@ -9,8 +9,8 @@ Numbers (docs/SPEC.md §15):
   land        share of samples above sea level
   relief      max - min ground height in each 512-block window: median and 90th percentile
   high        share of land above y 120 / 160 / 200 / 250
-  per_km      distinct landscapes per kilometre (biomes grouped by look; rivers, beaches and seas left out),
-              averaged over eight rays from the centre
+  per_km      distinct landscapes per kilometre of mostly-land ray (biomes grouped by look; rivers, beaches and
+              seas left out), averaged over eight rays from the centre
   changes_km  landscape changes per kilometre on the same rays
   awakened    share of land in awaken: biomes
 """
@@ -114,8 +114,10 @@ def stats(g):
         # distinct biomes in each whole kilometre of the ray, averaged
         per = max(1, int(1000 // step))
         chunks = [ray[i:i + per] for i in range(0, len(ray), per) if len(ray[i:i + per]) == per]
-        if chunks:
-            per_km.append(statistics.mean(len(set(ch) - {None}) for ch in chunks))
+        # only kilometres that are mostly land: open sea is not "the same landscape"
+        land_chunks = [ch for ch in chunks if sum(1 for v in ch if v is not None) >= len(ch) / 2]
+        if land_chunks:
+            per_km.append(statistics.mean(len(set(ch) - {None}) for ch in land_chunks))
         land_ray = [v for v in ray if v is not None]
         changes_km.append(sum(1 for i in range(1, len(land_ray)) if land_ray[i] != land_ray[i - 1]) / length_km)
     out["per_km"] = statistics.mean(per_km) if per_km else 0

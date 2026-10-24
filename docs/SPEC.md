@@ -276,6 +276,8 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.core.PlayDays` — current play-day counter.
 - `dev.awaken.mobs.Mobs` — `spawnScaled(ServerLevel, EntityType, pos, level, modifiers)`, rosters by theme.
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
+- `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
+  its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers).
@@ -659,13 +661,23 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
   are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
-- The biome table (stage 1): `tools/terrain/biomes.py` is the one source. Base Awaken data refers to biomes only through
-  tags (`#awaken:fauna/<group>` in the fauna biome modifiers, `awaken:has_lair/<beast>`, `awaken:lair_style/<style>`,
-  `awaken:cottage/<plan>`), listing vanilla biomes. The lands pack adds each Awakened biome to the same tags (tags
-  merge across packs) plus every vanilla and `c:` tag its archetype is in, and to `awaken:archetype/<vanilla biome>`.
-  Code that still reasons by biome name (spirits) asks `dev.awaken.terrain.api.BiomeTable.archetype(biome)` first.
-  A census GameTest fails if an Awakened biome lacks an archetype, a fauna group, a cottage plan or spirits.
- within about 12 blocks of the trunk (a feature may write one chunk beyond its own);
+- The biome table (stage 1): `tools/terrain/biomes.py` is the one source (`write`; `check` fails on a stale file, a
+  vanilla overworld biome without a row or a lands-pack biome without one). Base Awaken data refers to biomes only
+  through the tags it writes, listing vanilla biomes exactly as before: `awaken:fauna/<group>` (one per fauna spawn
+  modifier, which names `#awaken:fauna/<group>`), `awaken:has_lair/<beast>`, `awaken:lair_style/<style>` (where a lair
+  wears its second look: red sand, snow, pale oak, coral, moss; the Glass Hollow's keeps `#minecraft:is_badlands`) and
+  `awaken:cottage/<plan>` (every overworld biome has one; another mod's biome falls back to the old vanilla and `c:`
+  tag checks). The lands pack adds each Awakened biome to the same tags (tags merge across packs) plus every
+  `minecraft:`, `c:` and `awaken:` biome tag its archetype is in (nested tags resolved, so vanilla structures and the
+  Precursor ruins come too), to `awaken:archetype/<vanilla biome>`, and gives it the archetype's villager type; the
+  script owns every biome tag of the lands pack. An Awakened row is its archetype, its family (the fauna group it joins,
+  even where the archetype lacks it) and tags to add or drop: Elderwood is the old growth birch forest plus the
+  Greenwild and the Briar Sow's lair. Code that still reasons by biome name (spirits) asks
+  `dev.awaken.terrain.api.BiomeTable.archetype(biome)` first. `terrain_biome_table_census` fails if an Awakened biome
+  lacks an archetype, a fauna group (and live spawns), a cottage plan or spirits, or is not in `#minecraft:is_overworld`;
+  `terrain_biome_table_parity` holds every vanilla overworld biome to the spawners, lairs, cottage plan and lair looks
+  it had before the table.
+- Trees: data trees keep canopies within about 12 blocks of the trunk (a feature may write one chunk beyond its own);
   giant hero trees are structures. No ticking or growing trees. Awaken logs and leaves join `#minecraft:logs` and
   `#minecraft:leaves`. Vanilla leaf textures are untouched; Awaken trees get their own art.
 - Life: wind from world time and seed (same for every player, no packets) drives falling leaves (a fixed client pool,

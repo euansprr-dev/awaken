@@ -1,8 +1,8 @@
 {
   "values": [
+    "minecraft:birch_forest",
     "minecraft:cherry_grove",
     "minecraft:flower_forest",
-    "minecraft:birch_forest",
     "minecraft:old_growth_birch_forest"
   ]
 }

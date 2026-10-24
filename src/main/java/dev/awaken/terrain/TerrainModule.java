@@ -12,5 +12,6 @@ public final class TerrainModule {
         dev.awaken.terrain.tree.LandsTrees.init(modBus);
         TerrainCommands.register();
         TerrainTests.register();
+        BiomeTableTests.register();
     }
 }

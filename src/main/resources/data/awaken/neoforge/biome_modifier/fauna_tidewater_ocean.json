@@ -1,14 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:ocean",
-    "minecraft:lukewarm_ocean",
-    "minecraft:warm_ocean",
-    "minecraft:cold_ocean",
-    "minecraft:deep_ocean",
-    "minecraft:deep_lukewarm_ocean",
-    "minecraft:deep_cold_ocean"
-  ],
+  "biomes": "#awaken:fauna/tidewater_ocean",
   "spawners": [
     {
       "type": "awaken:breathbell",

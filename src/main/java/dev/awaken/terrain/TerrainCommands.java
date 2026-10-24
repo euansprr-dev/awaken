@@ -99,7 +99,7 @@ final class TerrainCommands {
                         c.getSource().sendFailure(Component.literal("No surface " + label + " within 8192 blocks"));
                         return;
                     }
-                    stand(sp, level, spot.x(), spot.z(), 0);
+                    stand(sp, level, spot.x(), spot.z(), 0, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
                     Awaken.LOG.info("[terrain] visit {} at {} {} {} ({})", label, spot.x(), spot.floor(), spot.z(), Survey.id(spot.biome()));
                     c.getSource().sendSuccess(() -> Component.literal("Visiting " + Survey.id(spot.biome()) + " at "
                             + spot.x() + ", " + spot.z()), false);
@@ -120,7 +120,7 @@ final class TerrainCommands {
                         c.getSource().sendFailure(Component.literal("No dry ground within " + radius + " blocks"));
                         return;
                     }
-                    stand(sp, level, spot.x(), spot.z(), 2);
+                    stand(sp, level, spot.x(), spot.z(), 2, Heightmap.Types.MOTION_BLOCKING);
                     Awaken.LOG.info("[terrain] lookout at {} {} {} ({})", spot.x(), spot.floor(), spot.z(), Survey.id(spot.biome()));
                     c.getSource().sendSuccess(() -> Component.literal("Lookout at " + spot.x() + ", " + spot.floor() + ", " + spot.z()), false);
                 }, level.getServer());
@@ -143,10 +143,10 @@ final class TerrainCommands {
         return 1;
     }
 
-    /** Stands the player on the real ground (trees ignored) at (x, z), lifted {@code above} blocks. */
-    private static void stand(ServerPlayer sp, ServerLevel level, int x, int z, int above) {
+    /** Stands the player at (x, z) on the given surface (the ground under trees, or the treetops for a lookout). */
+    private static void stand(ServerPlayer sp, ServerLevel level, int x, int z, int above, Heightmap.Types surface) {
         level.getChunk(x >> 4, z >> 4);
-        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        int y = level.getHeight(surface, x, z);
         sp.teleportTo(level, x + 0.5, y + 0.1 + above, z + 0.5, Set.<Relative>of(), sp.getYRot(), sp.getXRot(), true);
     }
 }
