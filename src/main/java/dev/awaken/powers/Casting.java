@@ -58,8 +58,10 @@ public final class Casting {
             player.setDeltaMovement(Vec3.ZERO);
             if (player.connection != null) player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), Vec3.ZERO));
         }
-        if (!reason.equals("busy")) {
-            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), PowerSounds.FAIL.get(), SoundSource.PLAYERS, 0.35f, 1f);
+        if (!reason.equals("busy") && player.connection != null) {
+            // only the caster hears their own fizzle (others nearby would hear every cooldown press)
+            player.connection.send(new net.minecraft.network.protocol.game.ClientboundSoundPacket(PowerSounds.FAIL, SoundSource.PLAYERS,
+                    player.getX(), player.getY(), player.getZ(), 0.35f, 1f, player.getRandom().nextLong()));
         }
     }
 

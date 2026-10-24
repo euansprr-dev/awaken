@@ -50,6 +50,11 @@ public final class MobsSpawner implements MobHooks.Spawner {
     }
 
     @Override
+    public java.util.Optional<java.util.UUID> bondedTo(net.minecraft.world.entity.Entity e) {
+        return e instanceof dev.awaken.mobs.entity.WildMount m ? java.util.Optional.ofNullable(m.owner()) : java.util.Optional.empty();
+    }
+
+    @Override
     public boolean peaceful(net.minecraft.world.entity.Entity e) {
         if (!(e instanceof dev.awaken.mobs.entity.FaunaMob f)) return false;
         var r = f.faunaRole();

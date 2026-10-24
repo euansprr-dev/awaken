@@ -65,7 +65,9 @@ public final class Possession {
             Signal.toast(sp, Component.literal("The living won't let you in yet. (C-rank)"));
             return;
         }
-        if (m instanceof TamableAnimal t && t.isTame() && !t.isOwnedBy(sp)) {
+        if ((m instanceof TamableAnimal t && t.isTame() && !t.isOwnedBy(sp))
+                || dev.awaken.core.api.MobHooks.bondedTo(m).map(o -> !o.equals(sp.getUUID())).orElse(false)) {
+            // someone's pet, or someone's bonded mount
             Signal.toast(sp, Component.literal("That one belongs to someone. It won't let you in."));
             return;
         }

@@ -74,6 +74,7 @@ public final class DreamEvents {
         bus.addListener(DreamEvents::onServerStopping);
         bus.addListener(DreamEvents::onServerStopped);
         bus.addListener(DreamEvents::onServerAboutToStart);
+        bus.addListener(DreamEvents::onEntityJoin);
         PlayDays.onMorning((server, day) -> {
             Planner.morning();
             // the night is over: tonight's intentions are spent
@@ -271,5 +272,18 @@ public final class DreamEvents {
     private static void onServerAboutToStart(ServerAboutToStartEvent event) {
         Cells.wipe(event.getServer());
         Planner.clearAll();
+    }
+
+    /**
+     * Cells are reused (Cells.release): an entity saved with an earlier dream's chunks must not walk into the next one.
+     * Anything but a player loaded from disk in the Lucidium stays only if it belongs to the dream running in its cell.
+     */
+    private static void onEntityJoin(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent e) {
+        if (!e.loadedFromDisk() || e.getLevel().isClientSide() || e.getLevel().dimension() != dev.awaken.lucidium.LucidiumContent.LUCIDIUM) return;
+        net.minecraft.world.entity.Entity ent = e.getEntity();
+        if (ent instanceof net.minecraft.world.entity.player.Player) return;
+        int cell = dev.awaken.lucidium.world.Cells.cellAt(ent.getBlockX(), ent.getBlockZ());
+        ActiveDream ad = cell < 0 ? null : Dreams.ACTIVE.get(cell);
+        if (ad == null || !ad.isDreamEntity(ent)) e.setCanceled(true);
     }
 }

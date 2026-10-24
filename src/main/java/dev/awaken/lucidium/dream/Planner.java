@@ -91,6 +91,9 @@ public final class Planner {
                 fears, d.intention(day), vision, profile.path());
     }
 
+    /** At most this many background dream builds per player per play-day hour (1000 ticks), whatever asks for them. */
+    static final int BUILDS_PER_WINDOW = 3;
+
     /** Starts preparing tonight's dream if it isn't ready or being built. */
     public static void request(ServerPlayer player, String why) {
         UUID id = player.getUUID();
@@ -99,6 +102,8 @@ public final class Planner {
         if (ready(player).isPresent() || BUILDING.containsKey(id)) return;
         Long nothing = NOTHING.get(id);
         if (nothing != null && nothing == day) return;
+        // each build compiles a dream in the background and takes a cell: changing one's mind can't make a server busy
+        if (!dev.awaken.core.Throttle.allowBurst(player, "dream_build", BUILDS_PER_WINDOW, 1000)) return;
         DreamPlanner.Input in = input(player);
         Optional<DreamPlan> plan = DreamPlanner.plan(in);
         if (plan.isEmpty()) {

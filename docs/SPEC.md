@@ -944,3 +944,18 @@ Shared rewards (credit the party in range; separate rolls per player):
 - Descent kills and overworld (home) kills: party members within 32 blocks get the same XP, each through their own
   budget. A bindable kill leaves each party member within 32 blocks their own lingering Echo (their own bind roll).
 
+The Veil, the Lucidium and the rest:
+- A projected Body takes no damage from players: never from its own spirit or a party member, and from anyone else only
+  while the world's `pvp` game rule is on. A Body felled by a player who may not hurt it never takes its owner along.
+- Only its owner possesses a bonded mount (as with tamed pets; `MobHooks.bondedTo`).
+- Overworld creatures' content level follows the group: the lowest level among awakened players within 48 blocks of
+  the spawn decides (then the nearest player within 128, as before).
+- The cast-fail sound plays to the caster only.
+- Rate limits: Journal actions 4 a second, reality checks one per 10 ticks, the playtest "unfair death" flag one per
+  2 s; background dream builds at most 3 per player per 1000 ticks, whatever asks for them.
+- Lucidium cells are reused: when a dream ends its cell is erased (the chunks it generated, once out of memory) and
+  handed to the next dream; anything but a player loaded from disk in the Lucidium stays only if it belongs to the
+  dream running in its cell.
+- Statics cleared on server stop: Echo duty bookkeeping, breaks near Hearths, Bodies' owed deaths, Hearth offers and
+  invitations, throttles, queued region erasures.
+
