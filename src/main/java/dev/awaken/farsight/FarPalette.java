@@ -1,9 +1,13 @@
 package dev.awaken.farsight;
 
 import dev.awaken.terrain.api.BiomeTable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,7 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * What a biome's ground looks like from kilometres away (SPEC §16): one colour per biome, worked out once from its
  * archetype (an Awakened biome stands in for a vanilla one, {@link BiomeTable#archetype}) and its own grass and foliage
  * colours. Forests read darker than open grass because the canopy is what shows. Snow, rock on steep slopes and
- * sun shading are applied per cell and per pixel, not here. Thread-safe: the predictor's workers share it.
+ * sun shading are applied per cell and per pixel, not here. Real chunks' top blocks ({@link #block}) take their map
+ * colour, with grass, leaves and water tinted by their biome the same way. Thread-safe: the workers share it.
  */
 public final class FarPalette {
     private FarPalette() {}
@@ -23,6 +28,8 @@ public final class FarPalette {
     static final int TEMPERATE = 0x79C05A;
 
     private static final Map<Holder<Biome>, Integer> GROUND = new ConcurrentHashMap<>();
+    /** Per biome: its lawn (grass blocks) and leaves colour, packed as lawn << 32 | leaves. */
+    private static final Map<Holder<Biome>, Long> TINTS = new ConcurrentHashMap<>();
 
     /** The biome's ground colour, 0xRRGGBB. */
     public static int ground(Holder<Biome> biome) {
@@ -51,16 +58,44 @@ public final class FarPalette {
     /** Forgets every colour (a resource reload can change the colour maps). */
     public static void clear() {
         GROUND.clear();
+        TINTS.clear();
+    }
+
+    /**
+     * A real top block's colour from afar, 0xRRGGBB, or -1 for air: its map colour, but grass, leaves and water tinted
+     * by the biome as the game tints them (map colours are flat).
+     */
+    public static int block(BlockState state, BlockGetter level, BlockPos pos, Holder<Biome> biome) {
+        MapColor mc = state.getMapColor(level, pos);
+        if (mc == MapColor.NONE) return -1;
+        if (mc == MapColor.WATER) return water(biome);
+        if (mc == MapColor.GRASS || mc == MapColor.PLANT) {
+            Long t = TINTS.get(biome);
+            if (t == null) {
+                int grass = grass(biome.value()), foliage = foliage(biome.value(), grass);
+                t = (long) scale(grass, 0.68f) << 32 | scale(foliage, 0.56f) & 0xFFFFFFFFL;
+                TINTS.put(biome, t);
+            }
+            return mc == MapColor.GRASS ? (int) (t >>> 32) : (int) (long) t;
+        }
+        return scale(mc.col, 0.85f);
+    }
+
+    private static int grass(Biome b) {
+        int grass = b.getGrassColor(0, 0) & 0xFFFFFF;
+        return grass == 0 || grass == 0xFF00FF ? TEMPERATE : grass;
+    }
+
+    private static int foliage(Biome b, int grass) {
+        int foliage = b.getFoliageColor() & 0xFFFFFF;
+        return foliage == 0 || foliage == 0xFF00FF ? grass : foliage;
     }
 
     private static int compute(Holder<Biome> holder) {
         Biome b = holder.value();
         ResourceKey<Biome> key = BiomeTable.archetype(holder);
         String a = key == null ? "" : key.identifier().getPath();
-        int grass = b.getGrassColor(0, 0) & 0xFFFFFF;
-        if (grass == 0 || grass == 0xFF00FF) grass = TEMPERATE;
-        int foliage = b.getFoliageColor() & 0xFFFFFF;
-        if (foliage == 0 || foliage == 0xFF00FF) foliage = grass;
+        int grass = grass(b), foliage = foliage(b, grass);
         // the grass and leaf textures are grey tinted by these colours: their average is about this bright
         int lawn = scale(grass, 0.68f), canopy = scale(foliage, 0.56f);
         if (a.contains("badlands")) return a.startsWith("eroded") ? TERRACOTTA : RED_SAND;

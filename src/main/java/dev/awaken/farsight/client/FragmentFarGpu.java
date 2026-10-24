@@ -27,7 +27,9 @@ final class FragmentFarGpu implements FarGpu {
                 .createRenderPass(() -> "awaken far sight bake", field.shadeView, Optional.empty())) {
             pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.BAKE));
             pass.setUniform("FarBake", buffer);
-            pass.setUniform("HeightSampler", field.heightView, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+            var nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+            pass.setUniform("HeightSampler", field.heightView, nearest);
+            pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
             pass.draw(3, 1, 0, 0);
         }
         ubo.rotate();

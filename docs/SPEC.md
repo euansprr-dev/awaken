@@ -1089,6 +1089,20 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   dark forest, 10 jungle, so they meet the real treetops where the chunks end), snow where the biome is cold enough at
   that height. Patches the real chunks will always hide are never
   sampled. Instanced dimensions get no far view (`compat.FarView`); only dimensions with the overworld sky draw it.
+- Generated layer (stage 1): real chunks win over the prediction. Each chunk that loads, and each chunk saved after a
+  change (that is how edits come back), is noted by `FarCollector` and summed on the server tick within 1.5 ms per
+  tick into a `FarChunk`: 8×8 cells of 2×2 blocks, each the highest `MOTION_BLOCKING` top (leaves and water count),
+  the water's depth (`MOTION_BLOCKING` − `OCEAN_FLOOR`, water where at least half the columns are) and the average
+  colour of the top blocks (map colours; grass, leaves and water tinted by their biome as the prediction is). Only
+  while something draws far terrain (`FarStore.collecting`: the singleplayer client today). `FarStore` keeps them per
+  level in regions of 32×32 chunks, at most 64 resident, on disk in `<world>/awaken/farsight/<ns>/<dim>/r.<x>.<z>.dat`
+  (compressed NBT through a Codec, `schemaVersion` 1; another version is ignored and re-learned), written on
+  autosave and when the server stops, so a return trip shows what was there before any chunk loads. On the client
+  the generated layer has its own two atlases (height and colour, same layout); a ring cell takes it where seen
+  (cells up to 16 blocks from the 2-block cells inside one chunk; wider cells from the chunks they cover once a
+  quarter are known), else the prediction. A changed chunk re-reads every ring's patch over it.
+- Water: a height texel's b byte is the water's depth (0 on land; predicted as sea level − ground, generated from the
+  heightmaps); shallows show a sandy floor through the water, deep water keeps its biome colour.
 - Drawing: in `RenderLevelStageEvent.AfterSky`, into the main colour target, before any chunk, so real chunks draw
   over it with no depth fight. One pipeline, no vertex buffer: each ring's window minus the next finer window is cut
   into pieces of at most 64×64 cells, culled on the CPU (frustum, and wholly under the real chunks), each one draw of
@@ -1109,5 +1123,6 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   distance on both graphics APIs. `FarTerrain.renderDistanceFog` records vanilla's render-distance end before Far
   Sight moves it; Lens's params texel 11 carries that end while far terrain draws.
 - Tests: `farsight_rings_nest` (windows nest with blend room, on whole cells, hysteresis), `farsight_columns_predict`
-  (every ring's patch filled from the level's generator, water at sea level). The A/B tour is
+  (every ring's patch filled from the level's generator, water at sea level), `farsight_generated_layer` (a pillar
+  and a pool summed from a real chunk, through the disk cache, read back as a ring 0 patch). The A/B tour is
   `tools/autopilot/farsight-ab.txt`, run per setup by `tools/farsight-ab.sh`; results in `docs/perf/far-sight/`.

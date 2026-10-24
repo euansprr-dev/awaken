@@ -6,6 +6,7 @@ import dev.awaken.Awaken;
 import dev.awaken.compat.FarView;
 import dev.awaken.compat.client.FarTerrain;
 import dev.awaken.farsight.FarPalette;
+import dev.awaken.farsight.FarStore;
 import dev.awaken.farsight.FarWorkers;
 import dev.awaken.farsight.Rings;
 import net.minecraft.client.Minecraft;
@@ -46,7 +47,7 @@ public final class FarSightClient {
 
     /** Where far terrain starts: this far inside the render distance it dithers in, over the same distance. */
     static final int CLIP_BAND = 32;
-    private static final int UPLOADS_PER_FRAME = 48;
+    private static final int UPLOADS_PER_FRAME = 48, CHANGES_PER_FRAME = 1024;
 
     private static boolean enabled = Boolean.getBoolean("awaken.farsight");
     private static FarField field;
@@ -88,6 +89,7 @@ public final class FarSightClient {
     }
 
     private static void unbind() {
+        FarStore.collecting = false;
         workers.clear();
         if (field != null) field.reset();
         bound = null;
@@ -124,12 +126,20 @@ public final class FarSightClient {
             ringsDone = 0;
             horizonLogged = false;
         }
+        // the integrated server sums real chunks into the generated layer while Far Sight draws
+        FarStore.collecting = true;
+        FarStore store = FarStore.of(level);
         Vec3 cam = e.getLevelRenderState().cameraRenderState.pos;
         float clipStart = Math.max(0, rd * 16 - CLIP_BAND);
         // coarsest first: a window's first patches queue ahead of the finer rings'
         int far = Rings.RINGS - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
-        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, clipStart, level, workers);
+        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, clipStart, level, store, workers);
+        for (int i = 0; i < CHANGES_PER_FRAME; i++) {
+            long chunk = store.pollChanged();
+            if (chunk == Long.MIN_VALUE) break;
+            field.chunkChanged(net.minecraft.world.level.ChunkPos.getX(chunk), net.minecraft.world.level.ChunkPos.getZ(chunk), cam.x, cam.z, level, workers);
+        }
         if (farWindow != Long.MIN_VALUE && farWindow != Rings.key(field.winX[far], field.winZ[far])) {
             // a jump (or 2 km of travel): time the new horizon from here
             bindNanos = System.nanoTime();
@@ -140,7 +150,7 @@ public final class FarSightClient {
         for (int i = 0; i < UPLOADS_PER_FRAME; i++) {
             FarWorkers.Patch p = workers.poll();
             if (p == null) break;
-            field.accept(p);
+            if (field.accept(p) && field.again) field.regenerate(p.ring, p.px, p.pz, cam.x, cam.z, level, workers);
             workers.recycle(p);
         }
         logProgress();

@@ -28,7 +28,10 @@ void main() {
     if (horizontal < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) discard;
     vec3 c = vColor;
     if (vWater > 0.5) {
-        // water catches the sky toward grazing angles
+        // shallows show their sandy floor through the water; deep water keeps its colour; all of it catches the sky
+        // toward grazing angles
+        vec3 shallow = mix(vec3(0.80, 0.76, 0.58) * (vColor.r + vColor.g + vColor.b) / 1.2, vColor * 1.5, 0.5);
+        c = mix(shallow, vColor, smoothstep(1.0, 9.0, vWater));
         float facing = abs(normalize(vRel).y);
         c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55);
     }

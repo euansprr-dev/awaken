@@ -16,10 +16,12 @@ layout(std140) uniform FarDraw {
 uniform sampler2D HeightSampler;
 uniform sampler2D ColorSampler;
 uniform sampler2D ShadeSampler;
+uniform sampler2D GenHeightSampler;    // the generated layer: what the real chunks seen there show; wins where it has a cell
+uniform sampler2D GenColorSampler;
 
 layout(location = 0) out vec3 vColor;
 layout(location = 1) out vec3 vRel;
-layout(location = 2) out float vWater;
+layout(location = 2) out float vWater;  // the water's depth in blocks (0 on land)
 
 const vec3 ROCK = vec3(0.50, 0.49, 0.47);
 
@@ -32,6 +34,17 @@ bool inWindow(ivec2 l) {
     return l.x >= 0 && l.y >= 0 && l.x < 256 && l.y < 256;
 }
 
+// one texel's cell: the generated layer where it has one, else the prediction
+bool cellAt(ivec2 t, out float h, out vec3 col, out float water) {
+    vec4 hv = texelFetch(GenHeightSampler, t, 0);
+    bool generated = hv.a > 0.5;
+    if (!generated) hv = texelFetch(HeightSampler, t, 0);
+    h = farHeight(hv);
+    water = floor(hv.b * 255.0 + 0.5);
+    col = generated ? texelFetch(GenColorSampler, t, 0).rgb : texelFetch(ColorSampler, t, 0).rgb;
+    return hv.a > 0.5;
+}
+
 // ring r's cell under a point (blocks from the camera), if that ring has it
 bool sampleAt(int r, vec2 p, out float h, out vec3 col, out vec4 shade, out float water) {
     h = 0.0;
@@ -42,11 +55,7 @@ bool sampleAt(int r, vec2 p, out float h, out vec3 col, out vec4 shade, out floa
     ivec2 l = ivec2(floor((p - FarRing[r].xy) / FarRing[r].z));
     if (!inWindow(l)) return false;
     ivec2 t = texelOf(r, l);
-    vec4 hv = texelFetch(HeightSampler, t, 0);
-    if (hv.a < 0.5) return false;
-    h = farHeight(hv);
-    water = hv.b > 0.002 ? 1.0 : 0.0;
-    col = texelFetch(ColorSampler, t, 0).rgb;
+    if (!cellAt(t, h, col, water)) return false;
     shade = texelFetch(ShadeSampler, t, 0);
     return true;
 }
@@ -56,11 +65,7 @@ bool sampleAt(int r, vec2 p, out float h, out vec3 col, out vec4 shade, out floa
 bool cellValue(int r, ivec2 l, out float h, out vec3 col, out vec4 shade, out float water) {
     vec2 centre = FarRing[r].xy + (vec2(l) + 0.5) * FarRing[r].z;
     ivec2 t = texelOf(r, l);
-    vec4 hv = texelFetch(HeightSampler, t, 0);
-    bool own = hv.a > 0.5;
-    h = farHeight(hv);
-    water = hv.b > 0.002 ? 1.0 : 0.0;
-    col = texelFetch(ColorSampler, t, 0).rgb;
+    bool own = cellAt(t, h, col, water);
     shade = texelFetch(ShadeSampler, t, 0);
     float e = float(min(min(l.x, l.y), min(255 - l.x, 255 - l.y)));
     float w = own ? clamp((14.0 - e) / 12.0, 0.0, 1.0) : 1.0;

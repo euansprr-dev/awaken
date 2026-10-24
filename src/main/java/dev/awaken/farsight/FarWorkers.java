@@ -16,9 +16,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * Finished patches wait in {@link #done} for the owner to drain; their buffers are pooled.
  */
 public final class FarWorkers {
-    /** One patch's texels and where they go. */
+    /** One patch's texels and where they go: predicted, or from the real chunks seen there ({@code generated}). */
     public static final class Patch {
         public int ring, px, pz, epoch, range;
+        public boolean generated;
         public final int[] height = new int[Rings.PATCH * Rings.PATCH], colour = new int[Rings.PATCH * Rings.PATCH];
     }
 
@@ -28,7 +29,7 @@ public final class FarWorkers {
         boolean wanted(int ring, int px, int pz, int epoch);
     }
 
-    private record Job(ServerLevel level, int ring, int px, int pz, int epoch, float priority, Wanted still) {}
+    private record Job(ServerLevel level, int ring, int px, int pz, int epoch, float priority, Wanted still, boolean generated) {}
 
     private final PriorityBlockingQueue<Job> queue = new PriorityBlockingQueue<>(512, Comparator.comparingDouble(Job::priority));
     private final ConcurrentLinkedQueue<Patch> done = new ConcurrentLinkedQueue<>(), free = new ConcurrentLinkedQueue<>();
@@ -50,7 +51,13 @@ public final class FarWorkers {
     /** Asks for patch (px, pz) of ring {@code ring}; lower {@code priority} first. */
     public void submit(ServerLevel level, int ring, int px, int pz, int epoch, float priority, Wanted still) {
         if (!started) start();
-        queue.add(new Job(level, ring, px, pz, epoch, priority, still));
+        queue.add(new Job(level, ring, px, pz, epoch, priority, still, false));
+    }
+
+    /** Asks for the generated layer of patch (px, pz): what the real chunks seen there show (a {@link FarStore} read). */
+    public void submitGenerated(ServerLevel level, int ring, int px, int pz, int epoch, float priority, Wanted still) {
+        if (!started) start();
+        queue.add(new Job(level, ring, px, pz, epoch, priority, still, true));
     }
 
     /** Drops every queued job (a new world, a new dimension, far view turned off). */
@@ -103,22 +110,29 @@ public final class FarWorkers {
             }
             if (!job.still().wanted(job.ring(), job.px(), job.pz(), job.epoch())) continue;
             try {
+                Patch p = free.poll();
+                if (p == null) p = new Patch();
+                p.ring = job.ring();
+                p.px = job.px();
+                p.pz = job.pz();
+                p.epoch = job.epoch();
+                p.generated = job.generated();
+                if (job.generated()) {
+                    FarStore store = FarStore.peek(job.level());
+                    p.range = store == null ? -1 : store.patch(job.ring(), job.px(), job.pz(), p.height, p.colour);
+                    done.add(p);
+                    continue;
+                }
                 if (job.level() != bound) {
                     bound = job.level();
                     columns = FarColumns.of(bound);
                 }
-                Patch p = free.poll();
-                if (p == null) p = new Patch();
                 long t0 = System.nanoTime();
                 p.range = columns.patch(job.ring(), job.px(), job.pz(), p.height, p.colour);
                 long dt = System.nanoTime() - t0;
                 boolean exact = job.ring() < Rings.EXACT_RINGS;
                 (exact ? exactColumns : estimateColumns).addAndGet(Rings.PATCH * Rings.PATCH);
                 (exact ? exactNanos : estimateNanos).addAndGet(dt);
-                p.ring = job.ring();
-                p.px = job.px();
-                p.pz = job.pz();
-                p.epoch = job.epoch();
                 done.add(p);
             } catch (RuntimeException e) {
                 // a generator that can't be sampled off-thread: leave the patch unknown, keep the worker alive

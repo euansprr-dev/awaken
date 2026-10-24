@@ -28,7 +28,8 @@ import org.jspecify.annotations.Nullable;
 public final class FarColumns {
     /** Heights are stored 16-bit, offset so the deepest world still fits. */
     public static final int HEIGHT_OFFSET = 2048;
-    public static final int WATER = 1;
+    /** Deepest water a height texel records (its b byte: 0 land, else the depth in blocks). */
+    public static final int MAX_DEPTH = 255;
 
     private final ChunkGenerator generator;
     private final RandomState random;
@@ -72,7 +73,7 @@ public final class FarColumns {
     /**
      * Fills one patch of ring {@code ring}: {@code height[i]} and {@code colour[i]} for its 16×16 cells, row by row,
      * as the RGBA8 texels the client uploads (ABGR ints). Height texel: r, g the drawn top (+{@link #HEIGHT_OFFSET}),
-     * b flags ({@link #WATER}), a 255 (known). Colour texel: r, g, b the colour, a 255. Returns min and max top as
+     * b the water's depth (0 on land), a 255 (known). Colour texel: r, g, b the colour, a 255. Returns min and max top as
      * {@code min << 16 | max} (offset), for culling.
      */
     public int patch(int ring, int px, int pz, int[] height, int[] colour) {
@@ -100,7 +101,8 @@ public final class FarColumns {
                 }
                 int h = Math.clamp(top + HEIGHT_OFFSET, 0, 65535);
                 int k = j * Rings.PATCH + i;
-                height[k] = 255 << 24 | (water ? WATER : 0) << 16 | (h & 255) << 8 | h >> 8;
+                int depth = water ? Math.clamp(seaLevel - ground, 1, MAX_DEPTH) : 0;
+                height[k] = 255 << 24 | depth << 16 | (h & 255) << 8 | h >> 8;
                 colour[k] = 255 << 24 | (rgb & 255) << 16 | (rgb >> 8 & 255) << 8 | rgb >> 16 & 255;
                 min = Math.min(min, h);
                 max = Math.max(max, h);

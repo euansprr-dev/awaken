@@ -2,12 +2,21 @@ package dev.awaken.farsight;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.test.AwakenTests;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.QuartPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.chunk.LevelChunk;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-/** Far Sight's layout and its predictor, without a client: the rings nest, and the generator fills a patch. */
+/**
+ * Far Sight without a client: the rings nest, the generator fills a patch, and real chunks fill the generated layer
+ * through the disk cache.
+ */
 final class FarSightTests {
     private FarSightTests() {}
 
@@ -66,11 +75,54 @@ final class FarSightTests {
                     int top = FarColumns.top(height[i]);
                     h.assertTrue(top != Integer.MIN_VALUE, "ring " + r + " cell " + i + " is known");
                     h.assertTrue(top >= minY && top <= maxY, "ring " + r + " cell " + i + " top " + top + " inside the world");
-                    boolean water = (height[i] >> 16 & 255) == FarColumns.WATER;
+                    boolean water = (height[i] >> 16 & 255) > 0;
                     h.assertTrue(!water || top == columns.seaLevel(), "ring " + r + " water lies at sea level");
                     h.assertTrue(colour[i] >>> 24 == 255, "ring " + r + " cell " + i + " has a colour");
                 }
             }
+            h.succeed();
+        });
+
+        // The generated layer: a real chunk summed into 2-block cells (a stone pillar's top, a pool's surface and depth),
+        // kept through the disk cache, and read back as a ring 0 patch.
+        AwakenTests.registerIsolated("farsight_generated_layer", 100, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            int x0 = (o.getX() & ~15) + 4, z0 = (o.getZ() & ~15) + 4, y0 = o.getY() + 2;
+            // the pillar: chunk cell (2, 2), 12 high; the pool: cell (4, 2), 3 deep on a stone floor
+            for (int y = y0; y < y0 + 12; y++) {
+                for (int k = 0; k < 4; k++) level.setBlockAndUpdate(new BlockPos(x0 + (k & 1), y, z0 + (k >> 1)), Blocks.STONE.defaultBlockState());
+            }
+            for (int k = 0; k < 4; k++) {
+                int x = x0 + 4 + (k & 1), z = z0 + (k >> 1);
+                level.setBlockAndUpdate(new BlockPos(x, y0, z), Blocks.STONE.defaultBlockState());
+                for (int y = y0 + 1; y <= y0 + 3; y++) level.setBlockAndUpdate(new BlockPos(x, y, z), Blocks.WATER.defaultBlockState());
+            }
+            LevelChunk chunk = level.getChunkAt(new BlockPos(x0, y0, z0));
+            FarChunk c = FarChunk.of(chunk);
+            int pillar = 2 * FarChunk.SIDE + 2, pool = 2 * FarChunk.SIDE + 4;
+            h.assertTrue(FarChunk.top(c.cell()[pillar]) == y0 + 12, "the pillar's top: " + FarChunk.top(c.cell()[pillar]) + " not " + (y0 + 12));
+            h.assertTrue(FarChunk.depth(c.cell()[pillar]) == 0 && c.colour()[pillar] != 0, "the pillar is dry stone");
+            h.assertTrue(FarChunk.top(c.cell()[pool]) == y0 + 4 && FarChunk.depth(c.cell()[pool]) == 3,
+                    "the pool: top " + FarChunk.top(c.cell()[pool]) + ", depth " + FarChunk.depth(c.cell()[pool]));
+            var biome = chunk.getNoiseBiome(QuartPos.fromBlock(x0 + 4), QuartPos.fromBlock(y0 + 3), QuartPos.fromBlock(z0));
+            h.assertTrue(c.colour()[pool] == FarPalette.water(biome), "the pool takes its biome's water colour");
+
+            // through the disk cache and back
+            FarStore.of(level).put(c);
+            FarStore.closeAll();
+            FarStore again = FarStore.of(level);
+            FarChunk back = again.get(c.x(), c.z());
+            h.assertTrue(back != null && Arrays.equals(back.cell(), c.cell()) && Arrays.equals(back.colour(), c.colour()),
+                    "the chunk comes back from disk unchanged");
+
+            // ring 0's patch over it shows the pillar where the prediction would have shown flat ground
+            int[] height = new int[Rings.PATCH * Rings.PATCH], colour = new int[Rings.PATCH * Rings.PATCH];
+            int px = Math.floorDiv(x0, Rings.patchBlocks(0)), pz = Math.floorDiv(z0, Rings.patchBlocks(0));
+            h.assertTrue(again.patch(0, px, pz, height, colour) != -1, "a ring 0 patch over the chunk has cells");
+            int i = (Math.floorMod(z0, Rings.patchBlocks(0)) / 2) * Rings.PATCH + Math.floorMod(x0, Rings.patchBlocks(0)) / 2;
+            h.assertTrue(FarColumns.top(height[i]) == y0 + 12, "the patch's pillar cell: " + FarColumns.top(height[i]));
+            FarStore.closeAll();
             h.succeed();
         });
     }

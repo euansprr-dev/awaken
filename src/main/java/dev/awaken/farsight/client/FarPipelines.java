@@ -34,11 +34,14 @@ final class FarPipelines {
             .withUniform("ColorSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("ShadeSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("GenHeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("GenColorSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .build();
 
     static final BindGroupLayout BAKE_INPUTS = BindGroupLayout.builder()
             .withUniform("FarBake", UniformType.UNIFORM_BUFFER)
             .withUniform("HeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("GenHeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .build();
 
     static final RenderPipeline TERRAIN = RenderPipeline.builder()

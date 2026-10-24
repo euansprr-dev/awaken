@@ -214,6 +214,8 @@ final class FarRenderer implements AutoCloseable {
                 pass.setUniform("HeightSampler", field.heightView, nearest);
                 pass.setUniform("ColorSampler", field.colourView, nearest);
                 pass.setUniform("ShadeSampler", field.shadeView, nearest);
+                pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
+                pass.setUniform("GenColorSampler", field.genColourView, nearest);
                 pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
                 pass.setIndexBuffer(indices, IndexType.SHORT);
                 for (int i = 0; i < pieces; i++) {

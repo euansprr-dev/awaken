@@ -2,20 +2,24 @@
 #extension GL_ARB_separate_shader_objects : require
 
 // AWAKEN Far Sight bake (the fragment-pass FarGpu): each cell's smoothed normal and valley shade, from the 5x5 cells
-// around it in its own ring (wrapping inside the ring's block; a cell not known yet counts as level with this one).
-// The outermost cells wrap to the far side of the window, but those are drawn from the coarser ring anyway.
+// around it in its own ring, generated where seen, else predicted (wrapping inside the ring's block; a cell not known
+// yet counts as level with this one). The outermost cells wrap to the far side of the window, but those are drawn
+// from the coarser ring anyway.
 layout(std140) uniform FarBake {
     ivec4 Bake;
 };
 
 uniform sampler2D HeightSampler;
+uniform sampler2D GenHeightSampler;    // the generated layer wins where it has a cell
 
 layout(location = 0) in vec2 texel;
 
 layout(location = 0) out vec4 fragColor;
 
 float heightAt(ivec2 t, int dx, int dz, float fallback) {
-    vec4 h = texelFetch(HeightSampler, ivec2((t.x + dx) & 255, (t.y & ~255) | ((t.y + dz) & 255)), 0);
+    ivec2 at = ivec2((t.x + dx) & 255, (t.y & ~255) | ((t.y + dz) & 255));
+    vec4 h = texelFetch(GenHeightSampler, at, 0);
+    if (h.a < 0.5) h = texelFetch(HeightSampler, at, 0);
     if (h.a < 0.5) return fallback;
     return floor(h.r * 255.0 + 0.5) * 256.0 + floor(h.g * 255.0 + 0.5) - 2048.0;
 }
