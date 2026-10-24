@@ -19,7 +19,8 @@ final class LensParams {
     }
 
     void write(float[] look, float far, boolean zeroToOne, float sunU, float sunV, float sunVisible, float sunsetStrength,
-            float sunsetR, float sunsetG, float sunsetB, float fogR, float fogG, float fogB, float fogEnd, float environmentalEnd) {
+            float sunsetR, float sunsetG, float sunsetB, float fogR, float fogG, float fogB, float fogEnd, float environmentalEnd,
+            float tear, float crush, float bloomBoost) {
         int f = Math.clamp(Math.round(far), 0, 65535);
         int u = Math.clamp(Math.round((sunU + 1f) / 3f * 65535f), 0, 65535), v = Math.clamp(Math.round((sunV + 1f) / 3f * 65535f), 0, 65535);
         packed[0] = pack(1f, zeroToOne ? 1f : 0f, 0f, 0f);
@@ -36,6 +37,10 @@ final class LensParams {
         int rd = Math.clamp(Math.round(fogEnd), 0, 65535), env = Math.clamp(Math.round(environmentalEnd), 0, 65535);
         packed[11] = bytes(rd >> 8, rd & 255, env >> 8, env & 255);
         packed[12] = pack(look[Look.SUN_GLOW], 0f, 0f, 0f);
+        // 13: the story's moments (LensClient.override/tear): r the tear from black (0 off, 1..255 its progress),
+        // g crushed blacks, b extra bloom. 14 belongs to the Holo UI focus; 15 is free.
+        int t = tear <= 0f ? 0 : 1 + Math.clamp(Math.round(tear * 254f), 0, 254);
+        packed[13] = bytes(t, b(crush), b(bloomBoost), 0);
         for (int i = 0; i < WIDTH; i++) {
             if (packed[i] != uploaded[i]) {
                 dirty = true;

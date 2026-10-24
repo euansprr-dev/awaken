@@ -332,6 +332,73 @@
       "hazeDesaturate": 0.1,
       "sunsetWarmth": 0.0,
       "sunGlow": 1.0
+    },
+    "awaken:ritual": {
+      "_name": "The Ritual of the Bell (a story moment, not a dimension): crushed blacks, gold in the highlights, a heavy vignette, the candles blooming",
+      "contrast": 1.15,
+      "saturation": 1.04,
+      "warmth": 0.22,
+      "shadowTint": [
+        0.38,
+        0.33,
+        0.4
+      ],
+      "highlightTint": [
+        1.0,
+        0.82,
+        0.5
+      ],
+      "splitTone": 0.24,
+      "vignette": 0.5,
+      "bloom": 1.35,
+      "bloomThreshold": 0.45,
+      "skyBloom": 0.0,
+      "shafts": 0.0,
+      "haze": 0.06,
+      "hazeStart": 0.6,
+      "hazeTint": [
+        0.16,
+        0.11,
+        0.08
+      ],
+      "hazeTintMix": 0.55,
+      "hazeDesaturate": 0.25,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0
+    },
+    "awaken:void": {
+      "_name": "The Void (a story moment): the dark of the question, almost nothing visible, a cold vignette",
+      "exposure": 0.62,
+      "contrast": 1.18,
+      "saturation": 0.55,
+      "warmth": -0.35,
+      "shadowTint": [
+        0.3,
+        0.4,
+        0.62
+      ],
+      "highlightTint": [
+        0.7,
+        0.82,
+        1.0
+      ],
+      "splitTone": 0.3,
+      "vignette": 0.9,
+      "bloom": 1.2,
+      "bloomThreshold": 0.5,
+      "skyBloom": 0.0,
+      "shafts": 0.0,
+      "haze": 0.7,
+      "hazeStart": 0.02,
+      "hazeTint": [
+        0.02,
+        0.03,
+        0.06
+      ],
+      "hazeTintMix": 0.85,
+      "hazeDesaturate": 0.6,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.0
     }
   }
 }

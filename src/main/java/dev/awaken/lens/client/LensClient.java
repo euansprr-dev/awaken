@@ -44,6 +44,12 @@ public final class LensClient {
     private static boolean active, snap = true, zeroToOne;
     private static ResourceKey<Level> lookFor;
     private static final float[] current = Look.neutral(), target = Look.neutral();
+    // a story moment's look over the dimension's (the Ritual of the Bell: awaken:ritual, awaken:void), its easing rate
+    private static @org.jspecify.annotations.Nullable String overrideLook;
+    private static boolean overrideChanged;
+    private static float ease = 0.06f;
+    // texel 13: the tear from black (progress per tick), crushed blacks and extra bloom, eased toward their targets
+    private static float tear, tearStep, crush, crushTarget, bloomBoost, bloomTarget;
     // reused every frame: the sun's direction and where it lands on screen
     private static final Vector3f sunDir = new Vector3f();
     private static final Vector4f clip = new Vector4f();
@@ -67,6 +73,8 @@ public final class LensClient {
             lookFor = null;
             snap = true;
             active = false;
+            overrideLook = null;
+            tear = tearStep = crush = crushTarget = bloomBoost = bloomTarget = 0f;
             return;
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
@@ -87,14 +95,65 @@ public final class LensClient {
         active = want != null;
 
         ResourceKey<Level> dim = mc.level.dimension();
-        if (dim != lookFor) {
-            Looks.resolve(dim.identifier().toString(), target);
+        if (dim != lookFor || overrideChanged) {
+            Looks.resolve(overrideLook != null ? overrideLook : dim.identifier().toString(), target);
             lookFor = dim;
+            overrideChanged = false;
         }
         // ease into a new place's look over about a second and a half (a hard cut on joining a world)
-        float k = snap ? 1f : 0.06f;
+        float k = snap ? 1f : ease;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
         snap = false;
+        if (tearStep > 0) {
+            tear = Math.min(1f, tear + tearStep);
+            if (tear >= 1f) {
+                tear = 0f; // fully open: the frame is the game's again
+                tearStep = 0f;
+            }
+        }
+        crush += (crushTarget - crush) * 0.08f;
+        bloomBoost += (bloomTarget - bloomBoost) * (bloomTarget > bloomBoost ? 0.35f : 0.05f);
+    }
+
+    /**
+     * A story moment's look in place of the dimension's (an id in looks.json, such as {@code awaken:ritual}), eased in
+     * over about {@code fadeTicks}. Nothing happens while Lens is off or a shaderpack is on; callers carry on without it.
+     */
+    public static void override(String lookId, int fadeTicks) {
+        if (lookId.equals(overrideLook)) return;
+        overrideLook = lookId;
+        overrideChanged = true;
+        ease = rate(fadeTicks);
+    }
+
+    /** Back to the dimension's own look over about {@code fadeTicks}. */
+    public static void clearOverride(int fadeTicks) {
+        if (overrideLook == null) return;
+        overrideLook = null;
+        overrideChanged = true;
+        ease = rate(fadeTicks);
+    }
+
+    /** The black opens from the centre over {@code ticks} (the awakening); the frame stays black until it starts. */
+    public static void tear(int ticks) {
+        tear = 0.0001f;
+        tearStep = 1f / Math.max(1, ticks);
+    }
+
+    /** Crushed blacks (0..1) and extra bloom (0..1, eased up fast and down slowly) for the ritual's moments. */
+    public static void ritual(float crushTo, float bloomTo) {
+        crushTarget = Math.clamp(crushTo, 0f, 1f);
+        bloomTarget = Math.clamp(bloomTo, 0f, 1f);
+    }
+
+    /** Whether Lens is drawing this frame (off, or stepped aside for a shaderpack, means callers use their fallbacks). */
+    public static boolean active() {
+        return active;
+    }
+
+    private static float rate(int fadeTicks) {
+        // about 95% of the way after fadeTicks
+        return fadeTicks <= 1 ? 1f : (float) (1.0 - Math.pow(0.05, 1.0 / fadeTicks));
     }
 
     private static void ensureParams() {
@@ -135,7 +194,7 @@ public final class LensClient {
         }
         var fog = e.getFogData();
         params.write(current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
-                fog.renderDistanceEnd, fog.environmentalEnd);
+                fog.renderDistanceEnd, fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost);
         params.uploadIfChanged();
     }
 

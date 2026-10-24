@@ -554,7 +554,7 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   Bell Crypts from before (the Bell Warden, three floors) keep their floors and today's death. `GateHooks.openScripted`
   with 1 floor asks for the ritual plan.
 - The ritual director (`story.Ritual`, saved in `data/awaken/ritual.dat`, schema 1) runs one timeline per hall: WAITING
-  (until every unawakened player in the story who is online is in the hall, or 90 s after the first came in; 1.5 s grace
+  (until every unawakened player in the story who is online is in the hall, or 90 s after the first came in; 3 s grace
   for the last one), DOORS 9.5 s, BOW 9.5 s (kneel within 6 s or the nearest statue strikes), RING 18 s (three plates,
   4 s each to stand on), BE JUDGED 4 s, WAKING 8.5 s, JUDGEMENT 40 s (the gaze every ~8.5 s, statue swings every 2.25 s,
   at most 2 + players/2 at once, rune-ring pits every 6 s), END 11.5 s (the hand closes at 11.1 s, everyone dies at

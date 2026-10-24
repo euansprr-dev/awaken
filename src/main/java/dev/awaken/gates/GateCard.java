@@ -89,9 +89,9 @@ public final class GateCard {
         }
         if (plan.ritual()) {
             // the story's gate: no layout, no modifiers, no floors to count. Only a bell, somewhere far down.
-            w.body(Component.literal(g.state.enterable() ? "A bell tolls, far below. It sounds like it's waiting."
-                    : "Silent now. Whatever rang here is done."));
-            w.footer(Component.literal(g.state.enterable() ? "Walk in to enter" : ""));
+            boolean done = !g.state.enterable() || Progression.profile(p).awakened();
+            w.body(Component.literal(done ? "Silent now. Whatever rang here is done." : "A bell tolls, far below. It sounds like it's waiting."));
+            w.footer(Component.literal(done ? "" : "Walk in to enter"));
             Signal.send(p, w.ttl(20 * 9).priority(3).build());
             return;
         }

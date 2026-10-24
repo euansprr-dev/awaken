@@ -228,6 +228,9 @@ public final class StoryModule {
                 c.getSource().sendSuccess(() -> Component.literal(ok ? "Ritual beat " + Ritual.Beat.values()[n] : "No sealed ritual for you."), false);
                 return ok ? 1 : 0;
             })));
+            ritual.then(Commands.literal("hall").executes(c -> Ritual.place(c.getSource().getPlayerOrException(), -1) ? 1 : 0));
+            ritual.then(Commands.literal("plate").then(Commands.argument("k", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 2))
+                    .executes(c -> Ritual.place(c.getSource().getPlayerOrException(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "k")) ? 1 : 0)));
             ritual.then(Commands.literal("status").executes(c -> {
                 String st = Ritual.status(c.getSource().getPlayerOrException());
                 c.getSource().sendSuccess(() -> Component.literal(st), false);

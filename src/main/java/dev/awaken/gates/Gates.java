@@ -141,10 +141,10 @@ public final class Gates {
         return RitualHall.of(s, GateRegistry.get(s).gate(gateId));
     }
 
-    /** Whether this gate is the story's ritual Bell Crypt. */
+    /** Whether this gate is the story's ritual Bell Crypt (and still stands: a released one is nothing any more). */
     public static boolean isRitual(MinecraftServer s, int gateId) {
         GateRecord g = GateRegistry.get(s).gate(gateId);
-        return g != null && g.plan.ritual();
+        return g != null && g.plan.ritual() && g.state != GateState.RELEASED;
     }
 
     /**

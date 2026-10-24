@@ -80,7 +80,7 @@ final class Ritual {
     /** The wait for everyone: after the first player is in the hall, the doors close after this long regardless. */
     static final int WAIT_TIMEOUT = 20 * 90;
     /** A moment for the last one in to take a step before the doors grind shut. */
-    static final int WAIT_GRACE = 30;
+    static final int WAIT_GRACE = 60;
     /** Rule BOW: kneel within this window after the word appears. */
     static final int BOW_WORD = 12, BOW_DEADLINE = BOW_WORD + 120, BOW_STRIKE = BOW_DEADLINE + 14;
     /** Rule RING: each plate lights at RING_FIRST + k * RING_STEP and must be stood on within RING_WINDOW. */
@@ -103,6 +103,8 @@ final class Ritual {
 
     /** Tests move the director's clock forward without waiting. */
     static long clockOffset;
+    /** Tests: the test level's chunks never reach entity-ticking within one tick, so the cast is brought regardless. */
+    static boolean castAnywhere;
 
     static long now(MinecraftServer server) {
         return server.overworld().getGameTime() + clockOffset;
@@ -234,26 +236,33 @@ final class Ritual {
         return l;
     }
 
-    /** Finds the Seated One and the statues again (after a restart), or brings them. */
+    /**
+     * Finds the Seated One and the statues again (after a restart) or brings them. Only once the hall's entities are
+     * loaded (a chunk loads before its entities do): never a second god because the first wasn't back yet.
+     */
     private static void cast(RitualData data, RitualData.State st, Live l) {
         ServerLevel level = l.hall.level();
-        if (l.seated == null || l.seated.isRemoved()) {
-            l.seated = st.seated.map(level::getEntity).filter(e -> e instanceof SeatedOne).map(e -> (SeatedOne) e).orElse(null);
-            if (l.seated == null) {
-                l.seated = dev.awaken.mobs.Ritual.spawnSeated(level, l.hall.throne(), l.hall.throneYaw());
-                st.seated = l.seated == null ? Optional.empty() : Optional.of(l.seated.getUUID());
-                data.setDirty();
-            }
-        }
-        boolean lost = l.statues.size() != l.hall.statues().size();
+        boolean lost = l.seated == null || l.seated.isRemoved() || l.statues.size() != l.hall.statues().size();
         for (RitualStatue s : l.statues) lost |= s.isRemoved();
         if (!lost) return;
+        if (!castAnywhere && (!level.isPositionEntityTicking(BlockPos.containing(l.hall.throne())) || !level.isPositionEntityTicking(BlockPos.containing(l.hall.doorway())))) return;
+        net.minecraft.world.phys.AABB box = l.hall.hall().inflate(2, 4, 2);
+        if (l.seated == null || l.seated.isRemoved()) {
+            l.seated = null;
+            for (SeatedOne s : level.getEntitiesOfClass(SeatedOne.class, box)) {
+                if (l.seated == null && (st.seated.isEmpty() || st.seated.get().equals(s.getUUID()) || level.getEntity(st.seated.get()) == null)) l.seated = s;
+                else if (s != l.seated) s.discard();
+            }
+            if (l.seated == null) l.seated = dev.awaken.mobs.Ritual.spawnSeated(level, l.hall.throne(), l.hall.throneYaw());
+            st.seated = l.seated == null ? Optional.empty() : Optional.of(l.seated.getUUID());
+            data.setDirty();
+        }
         l.statues.clear();
+        List<RitualStatue> there = new ArrayList<>(level.getEntitiesOfClass(RitualStatue.class, box));
         for (int i = 0; i < l.hall.statues().size(); i++) {
             RitualStatue s = null;
             if (i < st.statues.size()) {
-                Entity e = level.getEntity(st.statues.get(i));
-                if (e instanceof RitualStatue rs && !rs.isRemoved()) s = rs;
+                for (RitualStatue rs : there) if (rs.getUUID().equals(st.statues.get(i))) s = rs;
             }
             if (s == null) {
                 RitualHall.Statue at = l.hall.statues().get(i);
@@ -263,8 +272,10 @@ final class Ritual {
                 else st.statues.add(s.getUUID());
                 data.setDirty();
             }
+            there.remove(s);
             l.statues.add(s);
         }
+        for (RitualStatue extra : there) extra.discard(); // strays from a lost save: twelve kneel here, never more
     }
 
     // ---- the tick ---------------------------------------------------------------------------------------------------
@@ -421,6 +432,7 @@ final class Ritual {
     // ---- the timeline -----------------------------------------------------------------------------------------------
 
     private static void enter(RitualData.State st, Live l, Beat beat, long start) {
+        if (st.beat != beat) dev.awaken.Awaken.LOG.info("[story] ritual of gate {}: {} -> {} (party {})", st.gate, st.beat, beat, st.party.size());
         st.beat = beat;
         st.beatStart = start;
         l.lastAge = -1;
@@ -957,6 +969,10 @@ final class Ritual {
         if (unanswered > 0 && since < 20 * 60 * 10) return;
         GateHooks.release(server.overworld(), Integer.toString(st.gate));
         if (!Gates.isRitual(server, st.gate) || GateHooks.get(server.overworld(), Integer.toString(st.gate)).map(v -> v.state().equals("RELEASED")).orElse(true)) {
+            // the crypt folds away, and far below, the bell sounds once more
+            if (!st.mouth.equals(BlockPos.ZERO)) {
+                server.overworld().playSound(null, st.mouth, RitualSounds.BELL.get(), net.minecraft.sounds.SoundSource.AMBIENT, 6F, 0.5F);
+            }
             data.rituals.remove(st.gate);
             LIVE.remove(st.gate);
             data.setDirty();
@@ -1174,6 +1190,16 @@ final class Ritual {
         restartBeat(st, l, now(server));
         data.setDirty();
         for (ServerPlayer o : present(server, st, l)) sendScene(o, st, l, now(server));
+        return true;
+    }
+
+    /** Tours: steps through the doors (into the nave, facing the throne), or onto plate k (0..2). */
+    static boolean place(ServerPlayer p, int plate) {
+        int gate = storyGate(p);
+        RitualHall hall = gate < 0 ? null : hall(p.level().getServer(), gate);
+        if (hall == null || ritualGateHere(p) != gate) return false;
+        Vec3 at = plate < 0 ? hall.doorway().add(0, 0, 6) : hall.plates().get(Math.clamp(plate, 0, 2));
+        p.teleportTo(hall.level(), at.x, at.y, at.z, java.util.Set.<Relative>of(), 0F, 0F, true);
         return true;
     }
 

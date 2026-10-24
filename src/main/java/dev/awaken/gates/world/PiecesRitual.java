@@ -214,7 +214,7 @@ public final class PiecesRitual {
 
     // ---- lights -----------------------------------------------------------------------------------------------------
 
-    private static volatile BlockState CANDLE4, CANDLE3, CANDLE2, SOUL_FIRE, FILL, FILL_PLATE;
+    private static volatile BlockState CANDLE4, CANDLE3, CANDLE2, SOUL_FIRE, FILL, FILL_PLATE, HIGH;
 
     private static void states() {
         if (FILL != null) return;
@@ -223,7 +223,8 @@ public final class PiecesRitual {
         CANDLE2 = GatePainter.state("minecraft:white_candle[candles=2,lit=true]");
         SOUL_FIRE = GatePainter.state("minecraft:soul_fire");
         FILL_PLATE = GatePainter.state("minecraft:light[level=11]");
-        FILL = GatePainter.state("minecraft:light[level=10]");
+        FILL = GatePainter.state("minecraft:light[level=12]");
+        HIGH = GatePainter.state("minecraft:light[level=10]");
     }
 
     /** The candle, fire or lamp in this column, or null. Order is 0 at the doors and 1 at the throne. */
@@ -253,6 +254,11 @@ public final class PiecesRitual {
         // fill: an invisible lamp on a coarse grid at head height, so the hall reads at default brightness
         if (!blocks(r, x, z) && plateAt(r, x, z) < 0 && Math.floorMod((int) Math.floor(au), 6) == 2 && Math.floorMod(w, 6) == 3)
             return new Light(x, floorDelta(r, x, z) + 3, z, FILL, order, true);
+        // high lamps by the pillars' heads and along the far wall, so the vault, the ribs and the sunburst read
+        if (Math.abs(au - (PILLAR_U - 2)) < 0.01) {
+            for (int row : PILLAR_ROWS) if (w == row) return new Light(x, WALL_H - 5, z, HIGH, order, true);
+        }
+        if (w == 40 && (Math.abs(au - 10.5) < 0.01 || Math.abs(au - 12.5) < 0.01)) return new Light(x, DAIS_H + 16, z, HIGH, 1.0, true);
         // and one over each plate, so the three read from anywhere in the nave
         for (int k = 0; k < 3; k++) {
             double[] p = plate(r, k);
@@ -384,7 +390,7 @@ public final class PiecesRitual {
         }
         if (altarBlock(r, x, z)) {
             boolean corner = au > 1 && Math.abs(w + 0.5 - ALTAR_W) > 1;
-            c.set(bx, walk, bz, corner ? s("minecraft:raw_gold_block") : s("minecraft:chiseled_polished_blackstone"));
+            c.set(bx, walk, bz, corner ? s("awaken:gate_bell_bronze") : s("minecraft:chiseled_polished_blackstone"));
         }
         if (brazier(r, x, z)) {
             c.set(bx, walk, bz, s("minecraft:chiseled_polished_blackstone"));
@@ -418,7 +424,7 @@ public final class PiecesRitual {
         }
         if (fd > 0) return s("minecraft:polished_blackstone_bricks");
         if (au < 2.5 && w < RING_IN + ALTAR_W - 14) return s("minecraft:polished_blackstone_bricks"); // the aisle
-        if (Math.abs(au - 2.5) < 0.6 && w < ALTAR_W - RING_OUT) return s("minecraft:raw_gold_block");  // its gold edging
+        if (Math.abs(au - 2.5) < 0.6 && w < ALTAR_W - RING_OUT) return s("awaken:gate_bell_bronze");  // its aged-gold edging
         if (Math.floorMod(w, 6) == 0 && au < 15) return s("minecraft:polished_deepslate");
         return ((int) Math.floor(au) + w) % 2 == 0 ? s("minecraft:polished_blackstone") : s("minecraft:deepslate_tiles");
     }

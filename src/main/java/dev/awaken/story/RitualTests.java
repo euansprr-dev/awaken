@@ -48,6 +48,9 @@ final class RitualTests {
         p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         p.connection.markClientLoaded();
         Prologue.progress(p).prologue = StoryProgress.Prologue.GLITCHED;
+        // mock players appear at 0,0,0, which is inside gate cell 0 while the test level stands in for the gate world
+        Vec3 home = h.absoluteVec(new Vec3(1.5, 2, 1.5));
+        p.teleportTo(h.getLevel(), home.x, home.y, home.z, Set.<Relative>of(), 0, 0, true);
         return p;
     }
 
@@ -57,6 +60,7 @@ final class RitualTests {
         MinecraftServer server = level.getServer();
         GateService.useTestLevel(level);
         Ritual.clockOffset = 0;
+        Ritual.castAnywhere = true;
         GateRecord g = null;
         List<ServerPlayer> players = new ArrayList<>();
         try {
@@ -86,6 +90,7 @@ final class RitualTests {
             }
             if (g != null) GateService.release(server, g);
             Ritual.clockOffset = 0;
+            Ritual.castAnywhere = false;
             GateService.useTestLevel(null);
         }
     }
@@ -273,6 +278,18 @@ final class RitualTests {
             Ritual.onLogin(p);
             h.assertTrue(Prologue.progress(p).prologue == StoryProgress.Prologue.ACCEPTING, "back after the end: asked to accept");
         })).thenSucceed());
+
+        // The cast's bodies parse with every clip the renderers play and the bones the effects measure.
+        AwakenTests.register("story_ritual_cast_rigs", 20, h -> {
+            var seated = dev.awaken.mobs.client.anim.HeroRig.get("the_seated_one");
+            var statue = dev.awaken.mobs.client.anim.HeroRig.get("ritual_statue");
+            h.assertTrue(seated != null && statue != null, "both rigs are built (tools/art/specs/ritual_art.py)");
+            for (String c : List.of("dormant", "wake", "awake", "gaze", "raise", "close", "sleep")) h.assertTrue(seated.clip(c) != null, "the Seated One plays " + c);
+            for (String b : List.of("head", "hand_r", "lid_l", "lid_r", "fingers_r")) h.assertTrue(seated.bone(b) >= 0, "the Seated One has a " + b);
+            for (String c : List.of("kneel", "rise", "stand", "walk", "windup", "strike", "recover")) h.assertTrue(statue.clip(c) != null, "a statue plays " + c);
+            h.assertTrue(statue.bone("head") >= 0 && statue.bone("glaive") >= 0, "a statue has a head and a glaive");
+            h.succeed();
+        });
 
         // Saves from before the ritual decode cleanly; the new state round-trips; an unknown one falls back.
         AwakenTests.register("story_ritual_old_saves", 20, h -> {
