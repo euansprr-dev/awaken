@@ -285,7 +285,8 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   rule, once at mod init), `site(server)` (centre, core and blend radii, street Y, the river's centre line, whether the
   basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
-- `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
+- `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
+  `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together"), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise).
@@ -845,4 +846,25 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
   Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## Together (multiplayer; pack plan stage 6, Euan's decisions 2026-10-24)
+
+"Story starts together, shared Hearth with members with options to expand one into multiple over time." The audit and
+what was fixed: docs/multiplayer-audit.md. Every rule here holds for one player alone exactly as before (a party of
+one, a Hearth with no members, a world whose story only they reach); `together_old_saves_load_the_same` checks it.
+
+Parties and the bridges:
+- `core.api.PartyHooks` (the city's v0 hook, verbatim): `members(Player)` (the player included), `sameParty(Player,
+  Player)`. Until the guild module installs real parties, gates installs the rule: a player's party is everyone inside
+  the gate run they are in, plus everyone who shares a Hearth with them; alone, a party of one. Sealing and shared
+  rewards ask `PartyHooks` only.
+- `core.api.HearthHooks` gains `belongs`, `hearthsOf`, `household`, `shareHearth`, `within`; `hearthOf` is the
+  player's home (their own Hearth, else the first they share). `core.api.StoryHooks` gains `gatesCalm(server, owner)`
+  and `ascension(player)` / `ascensionOf(player)`. `core.api.MobHooks` gains `bondedTo(entity)`.
+- Dedicated server: client-sent actions are rate-limited per player (`core.Throttle`); `/awaken as <player> <any awaken
+  command>` runs it for that player (game masters, the console, command blocks); `core.RegionRecycler` erases a batch
+  of chunks from region files while running, once none is in memory on two checks at least 10 s apart (written as "no
+  data" through the level's own chunk IO worker), so gate and dream cells are reused without a restart.
 

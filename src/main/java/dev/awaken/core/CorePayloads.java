@@ -20,7 +20,8 @@ public final class CorePayloads {
 
     static void register(RegisterPayloadHandlersEvent event) {
         event.registrar("1").playToServer(FlagUnfair.TYPE, FlagUnfair.STREAM_CODEC, (msg, ctx) -> {
-            if (ctx.player() instanceof ServerPlayer sp) Playtest.flagUnfair(sp);
+            // each flag writes a log line and a toast: one every two seconds is plenty for a key press
+            if (ctx.player() instanceof ServerPlayer sp && Throttle.allow(sp, "flag_unfair", 40)) Playtest.flagUnfair(sp);
         });
     }
 }

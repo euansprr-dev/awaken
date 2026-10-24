@@ -32,7 +32,14 @@ public final class AwakenCommands {
             return (int) day;
         }));
         for (var c : CONTRIBUTORS) c.accept(root, event.getBuildContext());
-        event.getDispatcher().register(root);
+        var node = event.getDispatcher().register(root);
+        // "/awaken as <player> <any awaken command>": every subcommand that acts on its caller acts on that player, so
+        // the server console (and command blocks) can run the admin tools for someone (SPEC "Together", dedicated server)
+        event.getDispatcher().register(Commands.literal("awaken").then(Commands.literal("as").requires(admin())
+                .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player()).redirect(node, c -> {
+                    var p = net.minecraft.commands.arguments.EntityArgument.getPlayer(c, "player");
+                    return c.getSource().withEntity(p).withPosition(p.position()).withRotation(p.getRotationVector()).withLevel(p.level());
+                }))));
     }
 
     /** Requirement for debug/admin subcommands. */
