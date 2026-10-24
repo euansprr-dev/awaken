@@ -71,6 +71,11 @@ public final class HoloClient {
         bus.addListener(EventPriority.HIGH, RenderHandEvent.class, Wrist::onHand);
         // push last, pop first: nothing after us can cancel the layer and strand the translate
         bus.addListener(EventPriority.LOWEST, RenderGuiLayerEvent.Pre.class, HudMotion::pre);
+        // the K menu is worked with the cursor; the crosshair would only sit on the panel's edge
+        bus.addListener(RenderGuiLayerEvent.Pre.class, e -> {
+            if (e.getName().equals(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR)
+                    && Minecraft.getInstance().gui.screen() instanceof HoloStatusScreen) e.setCanceled(true);
+        });
         bus.addListener(EventPriority.HIGHEST, RenderGuiLayerEvent.Post.class, HudMotion::post);
         bus.addListener(EventPriority.LOWEST, RenderGuiEvent.Post.class, HudMotion::endFrame);
         bus.addListener(ClientTickEvent.Pre.class, e -> Wrist.tickStart(wristClosing()));

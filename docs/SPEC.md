@@ -600,7 +600,8 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   closing replays it backward in 250 ms; K while opening skips to open.
 - Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 272×228 K panel is 5 px/unit
   at 3024×1964), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
-  (-0.43, +0.15) of the half-screen (left of the crosshair, up and right of the wrist), yawed 7° toward the wrist and
+  (-0.455, +0.19) of the half-screen (left of the centre, up and right of the wrist, clear of the forearm; the crosshair
+  is hidden while the holo menu is open), yawed 7° toward the wrist and
   leaning 3° back (third person: at least -0.50 aside, 80% size). Material: 38–50% glass (denser toward the wrist),
   static scan lines, a slow shimmer (no strobing), a hairline edge with brackets and an additive halo. Readability
   overrides sheerness: a feathered dark bed (58% over the glass) behind every text block, white body text, System-blue

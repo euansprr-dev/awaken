@@ -43,7 +43,7 @@ final class Wrist {
 
     // the raised forearm in hand-view space (metres, x right, y up, -z ahead), for the left arm; mirrored for the right:
     // the wrist in the lower left, the forearm running in from beyond the left edge toward the centre
-    private static final float WX = -0.425f, WY = -0.30f, WZ = -0.62f;
+    private static final float WX = -0.425f, WY = -0.32f, WZ = -0.62f;
     private static final Vector3f DIR = new Vector3f(0.80f, 0.34f, -0.50f).normalize(); // elbow → hand
     private static final Vector3f FACE = new Vector3f(0.12f, 0.50f, 0.86f);             // where the inside of the wrist looks
     /** A little smaller than vanilla's first-person arm, so the forearm reads as a forearm at this distance. */

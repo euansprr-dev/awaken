@@ -49,8 +49,11 @@ Lens focus (`UiHooks.focus()`) eases from 160 to 450 ms.
   height): 1 unit = 1 GUI pixel of layout, so `Ui` sections fit unchanged and text stays crisp (at 3024×1964 the
   272×228 K panel draws at 5 px per unit). Recomputed every frame from the level projection, so sprint FOV and cast
   punches never swell it; vanilla's view bob and hurt tilt (folded into the level projection) are undone.
-- Rest: centre at (-0.43, +0.15) of the half-screen, 0.62 m ahead, parallel to the screen and then yawed 7° toward the
-  wrist and leaned back 3° (the yaw reads as a panel turned to the arm that casts it; text stays crisp). In third
+- Rest: centre at (-0.455, +0.19) of the half-screen, 0.62 m ahead, parallel to the screen and then yawed 7° toward the
+  wrist and leaned back 3° (the yaw reads as a panel turned to the arm that casts it; text stays crisp). That keeps its
+  right edge just left of the screen's centre and its bottom clear of the raised forearm (the hand pass draws over
+  everything, so an overlap would cover text). The vanilla crosshair is hidden while the holo K menu is open (the
+  cursor works it). In third
   person it sits at least as far as -0.50 and at 80% of the size so the character with its raised wrist stays in view.
 - Spring: critically damped, exact per-frame solution, ω = 5.83 / 0.20 s (settles in 200 ms); the shown lag is
   soft-clamped to 4° (`4·tanh(o/4)`), the state to 8°. Turns over 60° in a frame (teleport, respawn) snap.
