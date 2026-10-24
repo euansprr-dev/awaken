@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Landmarks (plan v2 §4.3/P2): the Well and the Precursor ruins made findable and worth finding. Discovery when you
- * reach one, a Now line once you have a reason to go, the Scanner's sky sweep, faint markers at dusk and at night, and a
+ * reach one, a Horizon line once you have a reason to go, the Scanner's sky sweep, faint markers at dusk and at night, and a
  * rumour line for the town. See docs/modules/landmarks.md.
  */
 public final class LandmarkModule {
@@ -32,16 +32,16 @@ public final class LandmarkModule {
         });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
             LandmarkMarkers.forget(e.getEntity().getUUID());
-            LandmarkNow.forget(e.getEntity().getUUID());
+            LandmarkHorizon.forget(e.getEntity().getUUID());
         });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerChangedDimensionEvent.class, e -> LandmarkMarkers.forget(e.getEntity().getUUID()));
         NeoForge.EVENT_BUS.addListener(ServerStoppingEvent.class, e -> {
             LandmarkMarkers.clear();
-            LandmarkNow.clear();
+            LandmarkHorizon.clear();
         });
         Scanning.addEchoSource(LandmarkModule::echoes);
         Scanning.setVisitedRuins((p, pos) -> Landmarks.reached(p, Landmarks.ruinIdAt(pos)));
-        LandmarkNow.register();
+        LandmarkHorizon.register();
         dev.awaken.core.api.WorldHooks.installRumours(p -> Landmarks.enabled()
                 ? Landmarks.rumour(p).map(r -> new dev.awaken.core.api.WorldHooks.Rumour(r.id(), r.title(), r.body()))
                 : java.util.Optional.empty());

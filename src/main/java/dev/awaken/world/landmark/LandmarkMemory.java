@@ -21,7 +21,7 @@ import java.util.Set;
  */
 public final class LandmarkMemory {
     public static final int SCHEMA = 2;
-    /** Plenty for a long game; the oldest reached ruins are forgotten first (they only mean "no Now line, no omen"). */
+    /** Plenty for a long game; the oldest reached ruins are forgotten first (they only mean "no Horizon line, no omen"). */
     static final int MAX_REACHED = 512;
 
     final Set<String> reached = new LinkedHashSet<>();

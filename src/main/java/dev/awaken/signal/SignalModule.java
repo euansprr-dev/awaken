@@ -23,6 +23,7 @@ public final class SignalModule {
         bus.addListener(SignalModule::onServerTick);
         bus.addListener((ServerStoppingEvent e) -> {
             NowSync.clear();
+            HorizonSync.clear();
             SignalCommands.clear();
         });
         SignalCommands.register();
@@ -35,6 +36,7 @@ public final class SignalModule {
         r.playToClient(SignalPayloads.Toast.TYPE, SignalPayloads.Toast.STREAM_CODEC);
         r.playToClient(SignalPayloads.Pending.TYPE, SignalPayloads.Pending.STREAM_CODEC);
         r.playToClient(SignalPayloads.Now.TYPE, SignalPayloads.Now.STREAM_CODEC);
+        r.playToClient(SignalPayloads.Horizon.TYPE, SignalPayloads.Horizon.STREAM_CODEC);
         r.playToServer(SignalPayloads.Answer.TYPE, SignalPayloads.Answer.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Signal.answer(sp, msg.action(), msg.accepted());
         });
@@ -43,22 +45,29 @@ public final class SignalModule {
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         NowSync.forget(p.getUUID());
+        HorizonSync.forget(p.getUUID());
         PendingChoices.sync(p); // folded: they show in the tracker and the Status screen, not as cards
         NowSync.update(p);
+        HorizonSync.update(p);
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
         NowSync.forget(e.getEntity().getUUID());
+        HorizonSync.forget(e.getEntity().getUUID());
         SignalCommands.forget(e.getEntity().getUUID());
     }
 
     private static void onChangedDimension(PlayerEvent.PlayerChangedDimensionEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p) NowSync.update(p);
+        if (e.getEntity() instanceof ServerPlayer p) {
+            NowSync.update(p);
+            HorizonSync.update(p);
+        }
     }
 
     private static void onServerTick(ServerTickEvent.Post e) {
         var server = e.getServer();
         NowSync.tick(server);
+        HorizonSync.tick(server);
         if (server.getTickCount() % 100 == 37) {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) PendingChoices.sweep(p);
         }

@@ -2,41 +2,38 @@ package dev.awaken.world.landmark;
 
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.HearthHooks;
-import dev.awaken.core.api.NowHooks;
+import dev.awaken.core.api.HorizonHooks;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
-import dev.awaken.world.anomaly.Spots;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The landmarks' line in the Now tracker: the nearest landmark the player hasn't reached and has a reason to visit
- * ("The Well · 600 m SE" from level 10, since its first stratum plays at content level 17; a sealed vault from level 4,
- * the spawn vault from awakening for the Scanner in its antechamber...), as an idea (30). A landmark a grove's spirit
- * whispered about comes first and a little higher (38) for ten minutes. Never at home inside a Hearth, never in a gate.
- * The search is cached per player (10 s, or 48 blocks walked).
+ * The landmarks' sites for the Horizon line (SPEC §17; until then they were a Now line that gates and requests
+ * outranked): every landmark the player hasn't reached and has a reason to visit ("The Well" from level 10, since its
+ * first stratum plays at content level 17; a sealed vault from level 4, the spawn vault from awakening...). A sky
+ * platform needs a way up ({@link HorizonHooks#WINGS}) rather than a level: until the player has one it is only ever a
+ * tease. A landmark a grove's spirit whispered about is raised for ten minutes ("Whispered: Sealed Vault"). Never at
+ * home inside a Hearth, never in a gate. The search is cached per player (10 s, or 48 blocks walked).
  */
-final class LandmarkNow {
-    private LandmarkNow() {}
+final class LandmarkHorizon {
+    private LandmarkHorizon() {}
 
-    static final int PRIORITY = 30, WHISPERED = 38;
     static final int CACHE_TICKS = 200, CACHE_MOVE = 48;
 
-    private record Pick(Landmarks.Landmark landmark, boolean whispered) {}
-
-    private record Cached(long at, BlockPos from, Optional<Pick> pick) {}
+    private record Cached(long at, BlockPos from, List<Landmarks.Landmark> sites, String whispered) {}
 
     private static final Map<UUID, Cached> CACHE = new HashMap<>();
 
     static void register() {
-        NowHooks.register(LandmarkNow::suggest);
+        HorizonHooks.register(LandmarkHorizon::sites);
     }
 
     static void forget(UUID id) {
@@ -47,7 +44,7 @@ final class LandmarkNow {
         CACHE.clear();
     }
 
-    static List<NowHooks.Suggestion> suggest(ServerPlayer p) {
+    static List<HorizonHooks.Site> sites(ServerPlayer p) {
         if (p.level().dimension() != Level.OVERWORLD || !Landmarks.enabled()) return List.of();
         Profile prof = Progression.profile(p);
         if (!prof.awakened() || GateHooks.inGate(p)) return List.of();
@@ -56,27 +53,35 @@ final class LandmarkNow {
         long now = p.level().getGameTime();
         Cached c = CACHE.get(p.getUUID());
         if (c == null || now - c.at() > CACHE_TICKS || now < c.at() || c.from().distSqr(me) > CACHE_MOVE * CACHE_MOVE) {
-            c = new Cached(now, me, pick(p, now));
+            c = build(p, now);
             CACHE.put(p.getUUID(), c);
-            // a landmark the System points you at is one you've heard of: it goes on the Gate Map
-            c.pick().ifPresent(k -> {
-                if (Landmarks.memory(p).place(k.landmark().id(), k.landmark().kind(), k.landmark().pos())) Landmarks.sync(p);
-            });
         }
-        if (c.pick().isEmpty()) return List.of();
-        Pick k = c.pick().get();
-        Landmarks.Landmark l = k.landmark();
-        if (Landmarks.reached(p, l.id())) return List.of(); // reached since the cache was built
-        String text = (k.whispered() ? "Whispered: " : "") + l.kind().display + " · " + Spots.where(me, l.pos());
-        return List.of(NowHooks.Suggestion.at("landmark:" + l.id(), k.whispered() ? WHISPERED : PRIORITY, text, l.pos()));
+        List<HorizonHooks.Site> out = new ArrayList<>(c.sites().size());
+        for (Landmarks.Landmark l : c.sites()) {
+            if (Landmarks.reached(p, l.id())) continue; // reached since the cache was built
+            boolean whispered = l.id().equals(c.whispered());
+            String need = l.kind() == LandmarkKind.SKY_PLATFORM ? HorizonHooks.WINGS : "";
+            out.add(new HorizonHooks.Site("landmark:" + l.id(), (whispered ? "Whispered: " : "") + l.kind().display, l.pos(), need, whispered));
+        }
+        return out;
     }
 
-    private static Optional<Pick> pick(ServerPlayer p, long now) {
+    private static Cached build(ServerPlayer p, long now) {
         LandmarkMemory m = Landmarks.memory(p);
-        List<Landmarks.Landmark> all = Landmarks.around(p, Landmarks.NEAR, 6);
-        if (!m.whispered.isEmpty() && now - m.whisperedAt < Landmarks.WHISPER_LIFE && !m.reached(m.whispered)) {
-            for (Landmarks.Landmark l : all) if (l.id().equals(m.whispered)) return Optional.of(new Pick(l, true));
+        int level = Progression.profile(p).level();
+        BlockPos me = p.blockPosition();
+        String whispered = !m.whispered.isEmpty() && now - m.whisperedAt < Landmarks.WHISPER_LIFE && !m.reached(m.whispered) ? m.whispered : "";
+        List<Landmarks.Landmark> sites = new ArrayList<>();
+        for (Landmarks.Landmark l : Landmarks.around(p, Landmarks.NEAR, 6)) {
+            if (m.reached(l.id()) || !Landmarks.inRange(me, l)) continue;
+            boolean sky = l.kind() == LandmarkKind.SKY_PLATFORM;
+            if (sky || level >= l.reasonLevel() || l.id().equals(whispered)) sites.add(l);
         }
-        return Landmarks.pick(all, p.blockPosition(), m::reached, Progression.profile(p).level(), true).map(l -> new Pick(l, false));
+        // the nearest one you can go to now is one you've heard of: it goes on the Gate Map
+        Landmarks.pick(sites, me, m::reached, level, true).filter(l -> l.kind() != LandmarkKind.SKY_PLATFORM || HorizonHooks.can(p, HorizonHooks.WINGS))
+                .ifPresent(l -> {
+                    if (m.place(l.id(), l.kind(), l.pos())) Landmarks.sync(p);
+                });
+        return new Cached(now, me, List.copyOf(sites), whispered);
     }
 }

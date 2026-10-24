@@ -359,6 +359,14 @@ final class SignalTests {
                             check(bad, at + " tracker", tr, cross, w, hgt);
                             for (Rect t : toasts) if (tr.intersects(t)) bad.add(at + " tracker under a toast " + tr);
                             if (tr.intersects(SignalLayout.choice(w, hgt, s, 2, true).rect())) bad.add(at + " tracker meets the card");
+                            // the Horizon line: under the tracker, or in its place when the tracker is empty
+                            for (Rect above : new Rect[]{null, tr}) {
+                                Rect hz = SignalLayout.horizon(w, hgt, s, textW, above, lowered);
+                                check(bad, at + " horizon", hz, cross, w, hgt);
+                                for (Rect t : toasts) if (hz.intersects(t)) bad.add(at + " horizon under a toast " + hz);
+                                if (hz.intersects(SignalLayout.choice(w, hgt, s, 2, true).rect())) bad.add(at + " horizon meets the card");
+                                if (above != null && hz.intersects(above)) bad.add(at + " horizon covers the tracker " + hz);
+                            }
                         }
                     }
                 }
