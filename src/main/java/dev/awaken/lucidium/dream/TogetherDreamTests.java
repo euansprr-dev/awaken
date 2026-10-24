@@ -21,11 +21,24 @@ import java.util.List;
 public final class TogetherDreamTests {
     private TogetherDreamTests() {}
 
-    /** A mock player with one remembered place, so the planner has something to dream of. */
+    /**
+     * A mock player with one remembered place, so the planner has something to dream of (told as the journal tells it:
+     * joining at night asked for a dream before there was anything to dream of).
+     */
     private static ServerPlayer dreamer(GameTestHelper h) {
         ServerPlayer p = h.makeMockServerPlayerInLevel();
-        Dreams.dreamer(p).snapshots.add(new Snapshot("missing_file", Snapshot.Kind.MANUAL, 1, "minecraft:overworld", BlockPos.ZERO, "nowhere", "", 0));
+        Snapshot place = new Snapshot("missing_file", Snapshot.Kind.MANUAL, 1, "minecraft:overworld", BlockPos.ZERO, "nowhere", "", 0);
+        Dreams.dreamer(p).snapshots.add(place);
+        Planner.journalChanged(p, place);
         return p;
+    }
+
+    /**
+     * A build started: still compiling, or already done (a compile that finishes before its callback is attached
+     * completes on the server thread at once).
+     */
+    private static boolean planned(ServerPlayer p) {
+        return Planner.building(p) || Planner.ready(p).isPresent();
     }
 
     private static void leave(GameTestHelper h, ServerPlayer... ps) {
@@ -61,11 +74,11 @@ public final class TogetherDreamTests {
                 for (int i = 0; i < 5; i++) {
                     Planner.invalidate(a);
                     Planner.request(a, "test");
-                    if (Planner.building(a)) builds++;
+                    if (planned(a)) builds++;
                 }
                 h.assertTrue(builds == Planner.BUILDS_PER_WINDOW, "dream builds: " + Planner.BUILDS_PER_WINDOW + " per window, got " + builds);
                 Planner.request(b, "test");
-                h.assertTrue(Planner.building(b), "the other player's dream still builds: their own allowance");
+                h.assertTrue(planned(b), "the other player's dream still builds: their own allowance");
             } finally {
                 leave(h, a, b);
             }
@@ -124,7 +137,7 @@ public final class TogetherDreamTests {
 
         // a build thrown away while it is still compiling gives its cell back when it completes (in the background)
         Planner.request(a, "test");
-        h.assertTrue(Planner.building(a) && !Cells.isFree(cb), "a new build takes b's returned cell");
+        h.assertTrue(planned(a) && !Cells.isFree(cb), "a new build takes b's returned cell");
         Planner.invalidate(a);
         return cb;
     }
