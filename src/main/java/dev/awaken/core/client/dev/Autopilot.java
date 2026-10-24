@@ -60,6 +60,8 @@ import java.util.Map;
  * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
  * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
  *                                                else straight through the switch)
+ * pixels &lt;scale&gt; [fsr|sharp|bilinear]|config|state  Pixels' render scale and upscaler for the following scenes (not saved)
+ * pixels gpu on|off|reset|&lt;label&gt;              GPU time of the world pass and the upscale (timestamps), logged per label
  * lensdebug 0..4                                 Lens debug views: normal, pass-through, depth masks, far depth, haze
  * fardepth share|auto                           Distant Horizons shares its depth with Lens on every graphics API (to
  *                                                check it on Vulkan), or again only on the one it was checked on
@@ -443,6 +445,10 @@ public final class Autopilot {
                         : dev.awaken.compat.client.LookSwitch.apply(tier);
                 Awaken.LOG.info("[autopilot] look {}: {}", tier, took ? "applied" : "not available here");
                 waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
+            }
+            case "pixels" -> { // pixels <scale> [fsr|sharp|bilinear] | config | state | gpu ...: Pixels for the following scenes
+                Awaken.LOG.info("[autopilot] pixels {}: {}", arg.trim(), dev.awaken.turbo.pixels.Pixels.autopilot(arg));
+                if (!arg.trim().startsWith("gpu")) waitTicks = 10;
             }
             case "lensdebug" -> {
                 dev.awaken.lens.client.LensClient.debug(Integer.parseInt(arg.trim()));
