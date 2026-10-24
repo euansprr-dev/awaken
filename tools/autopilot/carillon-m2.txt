@@ -1,0 +1,110 @@
+# Carillon Milestone 2 (docs/carillon/briefs/M2-opening.md): the opening in blockout, the milestone's light tour.
+# Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=16 SLOT_WHO=M2-opening \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m2.txt 900
+# A new world, the opening played through: the card and the sky shot (it saves its own frames, m2_sky_a..g: four in the
+# flight, the hand-off, the view question, the eyes), the bell ringing wrong and the light, the three acts of the
+# rooftop run played back from their golden runs (tools/opening/golden, recorded by /awaken opening drive <route> rec;
+# each logs "[ascent] route ... off by d"), the arrival's cinematic, the Ritual's end and the Void, the infirmary, the
+# Registry, then the street and canal routes' golden runs played back after.
+world carillonM2 survival 20261024
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+# ---- the card, the sky, into your eyes (the question is answered by the tour: first person)
+wait 540
+shot m2_bell_a
+wait 16
+shot m2_bell_b
+wait 50
+shot m2_light_roost
+cmd awaken opening status
+# ---- the run: the rooftop golden runs, act by act
+cmd awaken ascent pilot route play ../tools/opening/golden/act1_roof
+wait 150
+shot m2_act1_a
+wait 160
+shot m2_act1_b
+wait 420
+cmd awaken opening status
+cmd awaken ascent pilot route play ../tools/opening/golden/act2_roof
+wait 170
+shot m2_act2_a
+wait 60
+shot m2_act2_bridge
+wait 200
+shot m2_act2_crane
+wait 300
+cmd awaken ascent pilot route play ../tools/opening/golden/act3_roof
+wait 130
+shot m2_act3_rush
+wait 120
+shot m2_act3_square
+# ---- the arrival (alone: the cinematic plays at once)
+wait 40
+shot m2_arrival_a
+wait 50
+shot m2_arrival_b
+wait 50
+shot m2_arrival_c
+wait 50
+shot m2_arrival_d
+wait 160
+shot m2_hall
+cmd awaken opening status
+# ---- the Ritual's end and the Void (the Ritual is the story's, already toured: straight to its end)
+cmd awaken admin story ritual start
+wait 60
+cmd awaken admin story ritual beat 7
+wait 300
+shot m2_void
+key accept
+wait 70
+shot m2_wake_a
+wait 110
+shot m2_wake_b
+wait 140
+shot m2_wake_c
+wait 220
+shot m2_wake_d
+wait 140
+shot m2_infirmary
+cmd awaken opening status
+# ---- the Registry
+cmd awaken opening beat lens
+wait 40
+shot m2_registry_lens
+wait 140
+shot m2_registry_licence
+wait 120
+shot m2_registry_wristband
+wait 60
+shot m2_registry_status
+screen close
+wait 60
+shot m2_registry_power
+cmd awaken powers starter 1
+wait 40
+screen close
+wait 120
+shot m2_registry_yours
+wait 100
+cmd awaken opening status
+# ---- the street and canal routes' golden runs, played back
+cmd effect give @s minecraft:resistance infinite 10 true
+cmd awaken ascent pilot route play ../tools/opening/golden/act1_street
+wait 880
+cmd awaken ascent pilot route play ../tools/opening/golden/act2_street
+wait 360
+cmd awaken ascent pilot route play ../tools/opening/golden/act3_street
+wait 330
+cmd awaken ascent pilot route play ../tools/opening/golden/act1_canal
+wait 700
+cmd awaken ascent pilot route play ../tools/opening/golden/act2_canal
+wait 540
+cmd awaken ascent pilot route play ../tools/opening/golden/act3_canal
+wait 220
+quit

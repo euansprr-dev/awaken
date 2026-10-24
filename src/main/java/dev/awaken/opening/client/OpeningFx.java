@@ -191,14 +191,14 @@ final class OpeningFx {
         double d = Math.sqrt((column.x - cx) * (column.x - cx) + (column.z - cz) * (column.z - cz));
         float far = (float) Mth.clamp(d / 120.0, 1.0, 2.6);
         Vec3 a = new Vec3(column.x, bottom, column.z), b = new Vec3(column.x, TOP, column.z);
-        beam(vc, a, b, (2.4F + land * 6 + bloom * 6) * far * 0.7F, argb(Math.min(1F, 0.85F * beat), 0xF4FAFF));
-        beam(vc, a, b, (8F + land * 14 + bloom * 16) * far, argb(Math.min(1F, 0.30F * beat), 0x8FC8FF));
-        beam(vc, a, b, (26F + bloom * 30) * far, argb(Math.min(1F, 0.07F * beat), 0x6FA8FF));
+        beam(vc, a, b, (2.4F + land * 6 + bloom * 4) * far * 0.7F, argb(Math.min(1F, 0.85F * beat), 0xF4FAFF));
+        beam(vc, a, b, (8F + land * 14 + bloom * 9) * far, argb(Math.min(0.6F, 0.30F * beat), 0x8FC8FF));
+        beam(vc, a, b, (26F + bloom * 14) * far, argb(Math.min(0.12F, 0.07F * beat), 0x6FA8FF));
         if (since >= 8) {
             // where it meets the ground: a pool of light and a flare
             float pool = 4.5F + 1.2F * Mth.sin(t * 0.21F) + land * 10 + bloom * 9;
             disc(vc, column.x, baseY + 0.08, column.z, pool, argb(Math.min(1F, 0.5F * beat), 0xCFE8FF));
-            flare(vc, column.x, baseY + 1.2, column.z, 3.5F + land * 14 + bloom * 10, argb(Math.min(1F, 0.6F * beat + land), 0xFFFFFF));
+            flare(vc, column.x, baseY + 1.2, column.z, 3.5F + land * 14 + bloom * 6, argb(Math.min(0.8F, 0.5F * beat + land), 0xFFFFFF));
             // motes rising along it
             for (int i = 0; i < 26; i++) {
                 float k = (i * 0.618034F + t * 0.006F * (1 + (i % 3))) % 1F;
@@ -223,8 +223,8 @@ final class OpeningFx {
         double vx = column.x - cx, vz = column.z - cz;
         double vl = Math.sqrt(vx * vx + vz * vz);
         double nx = vl < 1e-6 ? 1 : -vz / vl, nz = vl < 1e-6 ? 0 : vx / vl;
-        ribbon(vc, bottom, nx, nz, (3.0F + bloom * 5) * far, argb(Math.min(0.9F, 0.62F * beat), 0xF0F8FF));
-        ribbon(vc, bottom, nx, nz, (11F + bloom * 14) * far, argb(Math.min(0.6F, 0.2F * beat), 0xA6D2FF));
+        ribbon(vc, bottom, nx, nz, (3.0F + bloom * 3) * far, argb(Math.min(0.9F, 0.62F * beat), 0xF0F8FF));
+        ribbon(vc, bottom, nx, nz, (11F + bloom * 7) * far, argb(Math.min(0.45F, 0.2F * beat), 0xA6D2FF));
     }
 
     /** A vertical ribbon on the column, bright on its axis and clear at its edges, thinning toward the sky. */
