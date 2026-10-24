@@ -1,12 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:plains",
-    "minecraft:sunflower_plains",
-    "minecraft:meadow",
-    "minecraft:forest",
-    "minecraft:dappled_forest"
-  ],
+  "biomes": "#awaken:fauna/greenwild",
   "spawners": [
     {
       "type": "awaken:lumen_moth",

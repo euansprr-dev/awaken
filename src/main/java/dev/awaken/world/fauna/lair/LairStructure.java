@@ -42,6 +42,8 @@ public class LairStructure extends Structure {
 
     @Override
     protected Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext ctx) {
+        // the city keeps its basin (Carillon; terrain's city reserve)
+        if (dev.awaken.terrain.api.CityBasin.reserved(ctx.chunkPos().getMinBlockX() + 8, ctx.chunkPos().getMinBlockZ() + 8)) return Optional.empty();
         Site site = findSite(ctx, style);
         if (site == null) return Optional.empty();
         long seed = site.seed;

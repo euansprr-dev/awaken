@@ -1,0 +1,27 @@
+# Terrain survey only (fast preset comparison): five seeds into terrain/s<seed>.json, no shots.
+# Run: tools/terrain/studio.sh <preset> survey
+world survey777 creative 777
+waitworld
+cmd awaken terrain survey s777 3072 32
+wait 900
+leave
+world survey20261024 creative 20261024
+waitworld
+cmd awaken terrain survey s20261024 3072 32
+wait 900
+leave
+world survey4242 creative 4242
+waitworld
+cmd awaken terrain survey s4242 3072 32
+wait 900
+leave
+world survey1337 creative 1337
+waitworld
+cmd awaken terrain survey s1337 3072 32
+wait 900
+leave
+world survey90210 creative 90210
+waitworld
+cmd awaken terrain survey s90210 3072 32
+wait 900
+quit

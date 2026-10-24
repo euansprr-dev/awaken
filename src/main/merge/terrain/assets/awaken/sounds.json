@@ -1,0 +1,18 @@
+{
+  "amb.lands_rustle": {
+    "subtitle": "subtitles.awaken.amb.lands_rustle",
+    "sounds": [
+      {
+        "name": "awaken:amb_lands_rustle"
+      }
+    ]
+  },
+  "amb.lands_wind_high": {
+    "subtitle": "subtitles.awaken.amb.lands_wind_high",
+    "sounds": [
+      {
+        "name": "awaken:amb_lands_wind_high"
+      }
+    ]
+  }
+}

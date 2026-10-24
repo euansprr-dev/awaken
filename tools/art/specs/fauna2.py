@@ -1,8 +1,8 @@
 """The Awakened layer, part two (P2): the six new biome families' creatures and the named beasts' lairs.
 
     python3 tools/art/build_all.py fauna2          textures (skin + glow layers, eggs, beast parts, family materials)
-    python3 tools/art/specs/fauna2.py content      biome modifiers (P2's), loot tables, item models, lang, lair structures,
-                                                   structure sets and biome tags (src/main/...)
+    python3 tools/art/specs/fauna2.py content      biome modifiers (P2's), loot tables, item models, lang, lair structures
+                                                   and structure sets (src/main/...; their biomes: tools/terrain/biomes.py)
     python3 tools/art/specs/fauna2.py preview DIR  every P2 creature on its real model (three day views, one night
                                                    view with the glow layer) and a size line-up with a player bar
 
@@ -1495,23 +1495,15 @@ def build(out):
 # ---------------------------------------------------------------------------------------------------------------------
 # Content: biome modifiers, loot tables, item models, lang, lairs. Weights are relative inside the fauna category.
 
-MIRE = ["minecraft:swamp", "minecraft:mangrove_swamp"]
-CANOPY = ["minecraft:jungle", "minecraft:sparse_jungle", "minecraft:bamboo_jungle"]
-DUSKWOOD = ["minecraft:dark_forest", "minecraft:pale_garden"]
-BLOSSOM = ["minecraft:cherry_grove", "minecraft:flower_forest", "minecraft:birch_forest", "minecraft:old_growth_birch_forest"]
-BLOSSOM_EDGE = ["minecraft:meadow", "minecraft:sunflower_plains"]
-CRAG = ["minecraft:stony_peaks", "minecraft:jagged_peaks", "minecraft:frozen_peaks", "minecraft:windswept_hills", "minecraft:windswept_gravelly_hills",
-        "minecraft:stony_shore"]
-SPORE = ["minecraft:mushroom_fields"]
-
+# Spawners per modifier (biomes: the tag #awaken:fauna/<group> of the biome table, tools/terrain/biomes.py)
 SPAWNS = {
-    "fauna_mire": (MIRE, [("bogwick", 26, 2, 4), ("mudskipper", 24, 2, 3), ("bog_toad", 18, 1, 2), ("mire_mother", 1, 1, 1)]),
-    "fauna_canopy": (CANOPY, [("dart_frog", 28, 2, 3), ("crested_basilisk", 18, 1, 2), ("canopy_prowler", 22, 1, 2), ("plumed_coil", 1, 1, 1)]),
-    "fauna_duskwood": (DUSKWOOD, [("gloam_snail", 26, 1, 3), ("hollow_owl", 14, 1, 1), ("thornling", 24, 2, 3), ("weaver_queen", 1, 1, 1)]),
-    "fauna_blossom": (BLOSSOM, [("petalwing", 30, 2, 4), ("honey_bear", 14, 1, 2), ("lumen_moth", 14, 2, 3), ("empress_moth", 1, 1, 1)]),
-    "fauna_blossom_meadow": (BLOSSOM_EDGE, [("petalwing", 12, 1, 3)]),
-    "fauna_crag": (CRAG, [("scree_marmot", 26, 2, 3), ("peak_kite", 16, 1, 2), ("crag_ram", 18, 1, 3), ("stonehorn", 1, 1, 1)]),
-    "fauna_spore": (SPORE, [("shroomlet", 30, 2, 4), ("sporeback_snail", 20, 1, 2), ("mycelord", 1, 1, 1)]),
+    "fauna_mire": [("bogwick", 26, 2, 4), ("mudskipper", 24, 2, 3), ("bog_toad", 18, 1, 2), ("mire_mother", 1, 1, 1)],
+    "fauna_canopy": [("dart_frog", 28, 2, 3), ("crested_basilisk", 18, 1, 2), ("canopy_prowler", 22, 1, 2), ("plumed_coil", 1, 1, 1)],
+    "fauna_duskwood": [("gloam_snail", 26, 1, 3), ("hollow_owl", 14, 1, 1), ("thornling", 24, 2, 3), ("weaver_queen", 1, 1, 1)],
+    "fauna_blossom": [("petalwing", 30, 2, 4), ("honey_bear", 14, 1, 2), ("lumen_moth", 14, 2, 3), ("empress_moth", 1, 1, 1)],
+    "fauna_blossom_meadow": [("petalwing", 12, 1, 3)],
+    "fauna_crag": [("scree_marmot", 26, 2, 3), ("peak_kite", 16, 1, 2), ("crag_ram", 18, 1, 3), ("stonehorn", 1, 1, 1)],
+    "fauna_spore": [("shroomlet", 30, 2, 4), ("sporeback_snail", 20, 1, 2), ("mycelord", 1, 1, 1)],
 }
 
 # Materials: (item, min, max, chance, looting). A chance below 1 is a killed-by-player roll.
@@ -1546,21 +1538,19 @@ MATERIAL_NAMES = {"mire_hide": "Mire Hide", "mire_glowsac": "Mire Glowsac", "can
                   "dusk_shell": "Dusk Shell", "dusk_feather": "Dusk Feather", "blossom_dust": "Blossom Dust", "blossom_fur": "Blossom Fur",
                   "crag_horn": "Crag Horn", "crag_feather": "Crag Feather", "spore_dust": "Spore Dust", "spore_gel": "Spore Gel"}
 
-# Lairs: beast -> (style, spacing, separation, salt, biomes). Spacing in chunks: 112 = 1,792 blocks, 96 = 1,536; the
-# mushroom fields are rare islands, so the Mycelord's set is denser (40 = 640 blocks) or its lair would almost never be.
+# Lairs: beast -> (style, spacing, separation, salt). Spacing in chunks: 112 = 1,792 blocks, 96 = 1,536; the mushroom
+# fields are rare islands, so the Mycelord's set is denser (40 = 640 blocks) or its lair would almost never be. Where a
+# lair may stand is the biome table's tag #awaken:has_lair/<beast> (tools/terrain/biomes.py).
 LAIRS = {
-    "briar_sow": ("wallow", 112, 48, 371920451, F.GREENWILD),
-    "dune_wyrm": ("glass_hollow", 112, 48, 593017722, F.SUNSCORCH),
-    "old_antler": ("antler_grove", 112, 48, 820374615, ["minecraft:taiga", "minecraft:snowy_taiga", "minecraft:old_growth_pine_taiga",
-                                                         "minecraft:old_growth_spruce_taiga", "minecraft:grove", "minecraft:snowy_plains",
-                                                         "minecraft:windswept_forest"]),
-    "mire_mother": ("toad_throne", 96, 40, 145882309, MIRE),
-    "plumed_coil": ("serpent_shrine", 96, 40, 672910384, CANOPY),
-    "weaver_queen": ("silk_hollow", 96, 40, 238475611, DUSKWOOD),
-    "empress_moth": ("petal_bower", 96, 40, 904716253, BLOSSOM),
-    "stonehorn": ("rams_cairn", 96, 40, 517382946, ["minecraft:stony_peaks", "minecraft:jagged_peaks", "minecraft:frozen_peaks",
-                                                     "minecraft:windswept_hills", "minecraft:windswept_gravelly_hills"]),
-    "mycelord": ("spore_ring", 40, 16, 763018245, SPORE),
+    "briar_sow": ("wallow", 112, 48, 371920451),
+    "dune_wyrm": ("glass_hollow", 112, 48, 593017722),
+    "old_antler": ("antler_grove", 112, 48, 820374615),
+    "mire_mother": ("toad_throne", 96, 40, 145882309),
+    "plumed_coil": ("serpent_shrine", 96, 40, 672910384),
+    "weaver_queen": ("silk_hollow", 96, 40, 238475611),
+    "empress_moth": ("petal_bower", 96, 40, 904716253),
+    "stonehorn": ("rams_cairn", 96, 40, 517382946),
+    "mycelord": ("spore_ring", 40, 16, 763018245),
 }
 
 
@@ -1573,11 +1563,8 @@ def merge_lang(entries):
 
 def content():
     ms = creatures()
-    for name, (biomes, spawners) in SPAWNS.items():
-        F.write_json(os.path.join(RES, "data/awaken/neoforge/biome_modifier", name + ".json"), {
-            "type": "neoforge:add_spawns", "biomes": biomes,
-            "spawners": [{"type": "awaken:" + i, "weight": w, "count": {"type": "minecraft:uniform", "min_inclusive": lo, "max_inclusive": hi}}
-                         for i, w, lo, hi in spawners]})
+    for name, spawners in SPAWNS.items():
+        F.spawn_modifier(name, spawners)
     F.DROPS.update(DROPS)
     lang = {}
     for m in ms:
@@ -1593,14 +1580,13 @@ def content():
         F.item_model(mid)
         lang["item.awaken." + mid] = MATERIAL_NAMES[mid]
     merge_lang(lang)
-    for beast, (style, spacing, separation, salt, biomes) in LAIRS.items():
+    for beast, (style, spacing, separation, salt) in LAIRS.items():
         F.write_json(os.path.join(RES, "data/awaken/worldgen/structure/lair", beast + ".json"), {
             "type": "awaken:fauna_lair", "lair": style, "biomes": "#awaken:has_lair/" + beast, "step": "surface_structures",
             "spawn_overrides": {}, "terrain_adaptation": "beard_thin"})
         F.write_json(os.path.join(RES, "data/awaken/worldgen/structure_set/lair", beast + ".json"), {
             "structures": [{"structure": "awaken:lair/" + beast, "weight": 1}],
             "placement": {"type": "minecraft:random_spread", "spacing": spacing, "separation": separation, "salt": salt}})
-        F.write_json(os.path.join(RES, "data/awaken/tags/worldgen/biome/has_lair", beast + ".json"), {"values": biomes})
     F.write_json(os.path.join(RES, "data/awaken/tags/worldgen/structure/fauna_lairs.json"), {"values": ["awaken:lair/" + b for b in LAIRS]})
     print(f"fauna2: {len(ms)} creatures, {len(SPAWNS)} biome modifiers, {len(MATERIALS)} materials, {len(LAIRS)} lairs")
 

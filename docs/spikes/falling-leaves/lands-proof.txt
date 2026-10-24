@@ -1,0 +1,128 @@
+# Living foliage on the Awakened Tectonic preset (docs/modules/lands.md "Leaves in the air"): leaves in the air in a
+# forest with the real wind and a forced gust, the settle, the Elderwood's gold, Lumen motes at night, then frame
+# times in the densest dark forest: falling leaves normal vs off, waving on vs off (alternated).
+# Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh docs/spikes/falling-leaves/lands-proof.txt 2400
+world lands777 creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken terrain waving status
+cmd awaken terrain leaves status
+cmd gamemode spectator
+# 1 an oak and birch forest, looking in from a little above the floor: the real wind, four frames ~13 ticks apart
+cmd awaken terrain visit minecraft:forest
+wait 400
+cmd tp @s ~ ~3 ~
+look 40 8
+wait 160
+cmd awaken terrain wind status
+cmd awaken terrain leaves status
+shot forest_real_1
+shot forest_real_2
+shot forest_real_3
+shot forest_real_4
+cmd awaken terrain wind status
+# 2 a forced gust (showcase aid): the leaves stream
+cmd awaken terrain wind force 0.85 0.9
+wait 140
+shot forest_gust_1
+shot forest_gust_2
+shot forest_gust_3
+shot forest_gust_4
+cmd awaken terrain leaves status
+# 3 the settle: looking down at the floor from 4 blocks up, frames 15 ticks apart
+cmd awaken terrain wind force 0.3 0.0
+cmd tp @s ~ ~1 ~
+look 40 60
+wait 240
+shot settle_1
+wait 15
+shot settle_2
+wait 15
+shot settle_3
+wait 15
+shot settle_4
+cmd awaken terrain wind real
+# 4 the Elderwood (placeholder: birch leaves, gold air): in the air, and on the ground
+cmd awaken terrain visit awaken:elderwood
+wait 400
+cmd tp @s ~ ~3 ~
+look 40 8
+wait 200
+cmd awaken terrain leaves status
+shot elder_1
+shot elder_2
+shot elder_3
+shot elder_4
+look 40 60
+wait 200
+shot elder_floor_1
+wait 15
+shot elder_floor_2
+# 5 frame times in the heart of the nearest dark forest, at eye level
+cmd awaken terrain visit minecraft:dark_forest
+wait 500
+look 40 0
+wait 200
+cmd awaken terrain leaves status
+perf df_wave_leaves_a 15
+cmd awaken terrain leaves amount off
+wait 120
+perf df_wave_noleaves_a 15
+cmd awaken terrain leaves amount normal
+wait 200
+perf df_wave_leaves_b 15
+cmd awaken terrain leaves amount off
+wait 120
+perf df_wave_noleaves_b 15
+cmd awaken terrain leaves amount normal
+cmd awaken terrain waving off
+wait 500
+perf df_still_leaves_a 15
+cmd awaken terrain leaves amount off
+wait 120
+perf df_still_noleaves_a 15
+cmd awaken terrain leaves amount normal
+cmd awaken terrain waving on
+wait 500
+perf df_wave_leaves_c 15
+cmd awaken terrain leaves amount off
+wait 120
+perf df_wave_noleaves_c 15
+cmd awaken terrain leaves amount normal
+cmd awaken terrain waving off
+wait 500
+perf df_still_leaves_b 15
+cmd awaken terrain leaves amount off
+wait 120
+perf df_still_noleaves_b 15
+cmd awaken terrain leaves amount normal
+cmd awaken terrain waving on
+wait 500
+cmd awaken terrain leaves status
+shot df_view
+# 6 Lumen motes at night (the Lumen Forest is built on lands/slice: its air rule forced here, in the dark forest)
+cmd time set 18000
+cmd awaken terrain leaves biome awaken:lumen_forest
+wait 300
+cmd awaken terrain leaves status
+shot motes_1
+shot motes_2
+shot motes_3
+shot motes_4
+perf df_night_motes 15
+cmd awaken terrain leaves biome clear
+cmd time set 6000
+quit
