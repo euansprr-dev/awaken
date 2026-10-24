@@ -116,10 +116,19 @@ public final class Casting {
         if (!deferred) startCooldown(player, l, type, owned, st);
         Progression.count(player, type.family.counter());
         if (type.dashLike) onDash(player, st);
+        if (carries(type)) dev.awaken.core.api.ArrivalHooks.report(player, dev.awaken.core.api.ArrivalHooks.Way.POWER, MOVE_HOLD);
         MoveTwists.afterCast(c, cost, now); // the Awakened Body's chains and family twists
         st.markCombatIfFoesNear(player);
         Powers.markDirty(player);
         return PowerType.Result.OK;
+    }
+
+    /** A power's move counts as movement for this long after its cast (SPEC §17 "how you arrived"). */
+    static final int MOVE_HOLD = 40;
+
+    /** Whether a power carries its caster: the movement slot's powers, dashes, and Hover (the one active that flies you). */
+    static boolean carries(PowerType type) {
+        return type.slot == PowerType.Slot.MOVEMENT || type.dashLike || type.id.getPath().equals("hover");
     }
 
     static float costOf(ServerPlayer player, PowerType type, int variant) {
@@ -332,6 +341,8 @@ public final class Casting {
                 }
             }
             if (!r.stopping()) {
+                // flight and hover keep counting as a power's move for as long as they run
+                if (carries(r.c.type)) dev.awaken.core.api.ArrivalHooks.report(player, dev.awaken.core.api.ArrivalHooks.Way.POWER, 10);
                 PowerType prevCtx = Mastery.enter(r.c.type);
                 try {
                     if (r.onTick != null) r.onTick.tick(r);
