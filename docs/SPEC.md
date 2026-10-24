@@ -1447,6 +1447,15 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   without one. Route tables are baked per destination on first use. Rescue teleport after 10 s stuck, only out of every
   player's view. Spawn at 56 blocks, remove past 64, ≤ 8 spawns per 10-tick pass. Witness line-of-sight checks run per
   event or in the ledger, never per tick. Rendering uses `core.client.skin.SkinnedMobRenderer` + `SkinRenderState` (never AvatarRenderState).
+- Decided in M3 (2026-10-25; details docs/carillon/milestones/M3-alive.md): the roster is generated data
+  (tools/city/citizens.py → data/awaken/city/citizens.json: 240 citizens, 96 households, 47 workplace groups, 14 taverns,
+  8 thieves; Oren, Mira, Teodor and Sun named). Inside the wall at night a monster can spawn only near a dark lamp (a
+  lamp the lamplighter didn't light, or one broken). Until boats and rooftop routes exist, boatmen work as quay hands
+  and runners run street errands. Recognition tiers Stranger / Familiar / Known have provisional thresholds; a minimal
+  `RenownHooks` lives in citizens until a renown module replaces it. `core.client.skin.SkinnedMobRenderer` has a
+  protected constructor taking the subclass's own wide/slim models (citizens pose their own model). Planned for M4: the
+  roster grows to ~400–480 records (density away from the market), and the 46 house plots M1 left with unusable doors are
+  fixed in the plan. Known bug: a gate tremor's gate id isn't saved with the event.
 - 12 jobs (lamplighter, bellringer, porter, stallkeeper, baker, smith, watch, crier, boatman, washer, mason, runner);
   schedules on the vanilla day clock, seeded per citizen.
 - Events per play-day budget: burglary ~1 (night; thief flees on the roof graph), pickpocket 0–2, fire ~1/5 play-days,

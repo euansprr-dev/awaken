@@ -16,8 +16,8 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | Milestone | Builder (model) | Branch / worktree | State |
 |---|---|---|---|
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
-| M2 the opening in blockout | Director (Opus xhigh) | — | next, when M3 finishes (the Runner tier is on build since c5117925 and in carillon/main) |
-| M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | running (brief: briefs/M3-alive.md) |
+| M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | running (brief: briefs/M2-opening.md) |
+| M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
 | M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
@@ -116,3 +116,10 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 - 2026-10-25: the Ascent's Runner tier landed on build/awaken-v1 (c5117925: Runner moves, MovementHooks.wallRunning/
   hanging, routes + golden runs, SPEC §17) and is merged into carillon/main (c4210481). Kept decision 20's order: M3
   (started shortly before) finishes first; M2 starts right after.
+- 2026-10-25: M3 reviewed and merged. Checked: 29 commits, tree clean, CI green on 4701a6d (401 tests; two earlier red
+  runs were its events test painting stalls into the shared GameTest world, fixed); outside citizens only the init lines
+  and SkinnedMobRenderer's constructor made protected. Ticks: ledger p95 0.02–0.06 ms, 40 bodies p95 0.59–0.65 ms. Shots
+  reviewed (market at noon, porters with crates, lamps before/after dusk, the Watch calling the hour, the Works fire): the
+  market quarter and the night lamps read as a living town; elsewhere thin (1–3 people a street), vanilla wares (→ M4:
+  roster ~400–480, lit windows, kit, crowd murmur). Open risk: the events test sprints the server ~9,000 ticks, which may
+  time out gate builds in tests running alongside (a simulated clock would fix it). M2 started.
