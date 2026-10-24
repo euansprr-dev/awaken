@@ -449,6 +449,19 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
   by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
 - Config `features.landmarks` switches discovery, hints, rumours and markers off.
 
+Plan v2 · the Hearth guide (details in docs/modules/hearth.md):
+- Using your own Anchor opens the "Your Hearth" screen (a QuietScreen): tier, radius, rest healing and respawn; a card per
+  room (what it gives, a ticked furniture checklist, the missing furniture's recipe, the one-line rule, why it isn't
+  recognised); the town; the next upgrade with have/need, built from the screen or the accept key (re-validated on the
+  server). The radius shows for 8 s as a ground-level ember ring.
+- Stairs and slabs close gaps like doors and panes (a stair or slab roof is a roof). Why a room isn't recognised comes from
+  a second bounded fill inside the scan's budget: sees the sky, a hole in the roof, an opening at x y z, too big, missing X.
+- The Anchor teaches the Hearth furniture recipes when it takes root. The Now tracker teaches one line at a time: "Use the
+  Anchor for a guide", then the next room with live ticks, then why a room isn't counted yet.
+- Oren's cottage: offered once per player (a choice card after the first Anchor), free, never built over anything a player
+  made (only terrain, plants and up to three natural trees give way); 9×9 outside, 7×7×4 inside, ten biome palettes,
+  raised over ~7 s; its room is a Sanctuary on completion.
+
 Plan v2 · Anchor requests (details in docs/modules/requests.md):
 - Once a player has a Hearth Anchor, the System asks for materials they can really get (sightings, vanilla stats, depth,
   rank): one request at a time, two from C-rank, offered quietly with a one play-day ttl, renewed per free slot each
