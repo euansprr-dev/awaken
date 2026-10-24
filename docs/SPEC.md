@@ -282,6 +282,14 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise).
+- `dev.awaken.core.client.skin` (client) — `SkinnedMobRenderer<T extends Mob, S extends SkinRenderState>`, `SkinModel`,
+  `SkinRenderState` (`wear(PlayerSkin)`, `wear(texture, slim)`, overlay toggles): the renderer for every non-player body
+  with a player-format skin (townsfolk, training ghost, gate shades, Shadow Self, HUMAN and MIMIC mobs). The player mesh
+  is picked per state (wide or slim, as the skin says); subclasses add their own tint, see-through, scale and layers.
+  **Rule: a non-player entity never uses `AvatarRenderState` in 26.3.** `EntityRenderDispatcher.getRenderer(state)`
+  sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
+  extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
+  townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
 
 ---------------------------------------------------------------------------------------------------------------------
 
