@@ -75,7 +75,6 @@ public final class CitizensContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_DISTRICT = sound("city.bell.district");
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_ALARM = sound("city.bell.alarm");
     public static final DeferredHolder<SoundEvent, SoundEvent> HANDBELL = sound("city.handbell");
-    public static final DeferredHolder<SoundEvent, SoundEvent> SHOUT = sound("city.shout");
 
     private static DeferredItem<Item> prop(String name) {
         return ITEMS.registerSimpleItem(name, p -> p.stacksTo(1));
