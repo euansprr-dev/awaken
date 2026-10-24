@@ -3,7 +3,8 @@
 
 Rows are the A/B tour's moments (tools/autopilot/farsight-ab.txt), columns the far-terrain setups, each cell the
 setup's shot of that moment (from tools/farsight-ab.sh: docs/perf/far-sight/shots/<setup>/<shot>.jpg).
-Usage: tools/farsight-sheet.py <out.jpg> <setup> [<setup> ...] [--shots ab_3_noon_west,ab_6_ground,...]
+Usage: tools/farsight-sheet.py <out.jpg> <setup> [<setup> ...] [--shots ab_3_noon_west,ab_6_low_west,...]
+(CELL_W and CELL_H set the cell size, 720x450 by default.)
 """
 import os
 import sys
@@ -11,7 +12,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "docs", "perf", "far-sight", "shots")
-CELL_W, CELL_H, LABEL = 720, 450, 34
+CELL_W, CELL_H, LABEL = int(os.environ.get("CELL_W", 720)), int(os.environ.get("CELL_H", 450)), 34
 
 
 def font(size):

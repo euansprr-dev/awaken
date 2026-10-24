@@ -1,0 +1,51 @@
+# Far Sight's generated layer (stage 1), looked at (a light tour: screenshots only). Run with PACK=perf LENS=swift.
+# An edit near spawn (a 64x64 gold slab at y 140) is saved, then seen from 1.6 km away, where its chunks are not loaded:
+# it shows only if real chunks reach far terrain and edits come back on save. Then the world is left and opened again:
+# the slab must be there within 2 s, from the disk cache, before anything near it loads.
+world farsightgen creative 4242
+waitworld
+gui 0
+farsight on
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+cmd gamemode spectator
+cmd tp @s 64.5 160 64.5 0 60
+wait 200
+cmd fill 32 140 32 95 140 95 minecraft:gold_block
+wait 20
+shot gen_0_slab_near
+cmd save-all
+wait 100
+farsight status
+# 1.6 km south, looking back north at it
+cmd tp @s 64.5 220 1664.5 180 6
+wait 400
+shot gen_1_slab_from_afar
+farsight status
+# the real world where chunks exist: the edge of the render distance, from above spawn
+cmd tp @s 64.5 200 64.5 90 12
+wait 200
+shot gen_2_edge_west
+cmd tp @s 64.5 220 1664.5 180 6
+wait 100
+leave
+wait 100
+world farsightgen
+waitworld
+gui 0
+farsight on
+wait 40
+shot gen_3_rejoined_2s
+wait 200
+shot gen_4_rejoined_12s
+farsight status
+quit
