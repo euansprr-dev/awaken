@@ -1,7 +1,7 @@
 # Awakened Body — proposal for review
 
-Status: **proposal, not built.** From the approved pack plan (docs/plan-pack.html, decision 5: "yes, as a SPEC
-proposal you review"). Nothing here goes into SPEC or code until Euan says yes or changes it.
+Status: **approved by Euan on 2026-10-24 ("the awakened body moves look good, build them"); being built on branch
+`pack/awakened-body`.** Open questions take the defaults below: the System announces each unlock, and players who have not awakened keep exactly vanilla movement.
 
 ## Why
 
