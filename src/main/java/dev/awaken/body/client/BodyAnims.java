@@ -86,8 +86,9 @@ final class BodyAnims {
                 Entity e = mc.level == null ? null : mc.level.getEntity(a.entity);
                 boolean remote = mc.player == null || a.entity != mc.player.getId();
                 // other players' held moves end as their crawl pose or their sprint does (ours end through stop())
+                // (after a few ticks: the Seen message can arrive before their pose or sprint flag has synced)
                 boolean over = a.ending || e == null || age > length(a.move) + 2
-                        || remote && (a.move == Move.SLIDE.ordinal() ? !e.hasPose(Pose.SWIMMING) : !e.isSprinting());
+                        || remote && age >= 3 && (a.move == Move.SLIDE.ordinal() ? !e.hasPose(Pose.SWIMMING) : !e.isSprinting());
                 if (over) {
                     letGo(a, e);
                     continue;

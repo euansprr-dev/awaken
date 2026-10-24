@@ -277,7 +277,8 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
-  `MovementHooks` (the body's moves for powers).
+  `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
+  Animation Library is installed; a no-op otherwise).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -526,6 +527,9 @@ Awakened Body (module `body`, docs/modules/body.md; approved 2026-10-24, widened
   unlock is one toast in the same tick as the awakening or rank-up (it joins that burst), remembered in `awaken:body_memory`
   (schema 1, kept through death); old saves hear theirs once after login. Status › THE BODY lists the moves you have.
 - Off while riding, sleeping, projecting, meditating, flying or gliding. No invincibility frames anywhere.
+- Looks with the Player Animation Library (optional): each move plays a full-body clip (tools/art/specs/body_moves.py;
+  bent elbows and knees with Bendable Cuboids) through `core.api.PlayerClips`, from the same prediction and `body_seen`
+  signals, no new packets; without it the vanilla-model poses stay. First person unchanged.
 - Soft landing: landing from ≥ 3 blocks while sprinting or crouching rolls: safe fall +3, ×0.6 beyond. One LivingFallEvent
   listener (LOW, never sees a cancelled fall), so a power's landing, a mount, an elytra never roll; where Low Gravity or jet
   boots already give ≥ +3 safe fall, or a perk ≤ ×0.6, the kinder rule wins and nothing stacks.
