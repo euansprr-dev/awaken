@@ -49,6 +49,7 @@ public final class Awaken {
         dev.awaken.core.audio.AudioModule.init(modBus);
         dev.awaken.compat.CompatModule.init(modBus);
         dev.awaken.terrain.TerrainModule.init(modBus);
+        dev.awaken.holo.HoloModule.init(modBus);
     }
 
     public static Identifier id(String path) {

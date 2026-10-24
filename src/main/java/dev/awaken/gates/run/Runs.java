@@ -105,6 +105,13 @@ public final class Runs {
             Signal.toast(p, Component.literal(g.state == GateState.BUILDING ? "The gate is still forming." : "The gate won't open."));
             return false;
         }
+        if (g.scripted) {
+            var refused = dev.awaken.core.api.StoryHooks.refusesScriptedGate(p, Integer.toString(g.id));
+            if (refused.isPresent()) {
+                Signal.toast(p, Component.literal(refused.get()));
+                return false;
+            }
+        }
         RunState run = new RunState();
         run.gateId = g.id;
         run.area = 0;
@@ -122,6 +129,15 @@ public final class Runs {
                 TeleportTransition.PLAY_PORTAL_SOUND));
         gl.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 1F);
         GatePlan plan = g.plan;
+        if (plan.ritual()) {
+            // the story's hall: no floors, no Shrine, nothing to plan for. The story speaks from here on.
+            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(plan.theme().displayName))
+                    .body(Component.literal("Doors stand open ahead. Something beyond them is very still."))
+                    .footer(Component.literal("Go through.")).priority(4).ttl(20 * 8).build());
+            DirectorLog.log(p, "gate", "entered the ritual gate " + g.id + " (run " + run.runIndex + ")");
+            arrive(p, g, 0, 1);
+            return true;
+        }
         var w = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(plan.rank().label + "-rank · " + plan.theme().displayName))
                 .row("Floor", "1 of " + plan.floors())
                 .row("Layout", plan.layout().displayName + " · " + plan.layout().hint);

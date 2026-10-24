@@ -21,6 +21,13 @@ final class FloorBuilder {
 
     static GateLayout build(GatePlan plan) {
         List<FloorLayout> main = new ArrayList<>();
+        if (plan.ritual()) {
+            // the Ritual of the Bell: one floor, the antechamber you arrive in and the hall beyond its doors
+            Builder b = new Builder(plan, plan.theme(), 0, 1, Hash.of(plan.seed(), 0, 1));
+            b.ritualFloor();
+            main.add(b.finish());
+            return new GateLayout(plan, main, List.of());
+        }
         for (int f = 1; f <= plan.floors(); f++) {
             Builder b = new Builder(plan, plan.theme(), 0, f, Hash.of(plan.seed(), 0, f));
             if (f == plan.floors()) b.bossFloor(false);
@@ -403,6 +410,20 @@ final class FloorBuilder {
             connect(e1, cav);
         }
 
+        /**
+         * The ritual floor: the antechamber (the start room, where everyone gathers) south into the hall (3x3 slots).
+         * The hall is the floor's end; the floor counts as the Lord's floor, so nothing about it is "cleared".
+         */
+        void ritualFloor() {
+            bossFloor = true;
+            grid(3, 4);
+            int a = add(Room.Type.START, Room.Shape.RECT, 1, 0, 1, 1, 0);
+            int hall = add(Room.Type.RITUAL, Room.Shape.RECT, 0, 1, 3, 3, 0);
+            connect(a, hall);
+            start = a;
+            end = hall;
+        }
+
         /** Boss floor: a short approach and the arena. Annex boss floors get a smaller arena (the inner gate's keeper). */
         void bossFloor(boolean smallArena) {
             bossFloor = true;
@@ -524,6 +545,11 @@ final class FloorBuilder {
             java.util.Set<SetPiece> usedBig = java.util.EnumSet.noneOf(SetPiece.class);
             int turn = (int) Math.floorMod(Hash.of(seed, 61, floor), 997L);
             for (Room r : rooms) {
+                if (r.type == Room.Type.RITUAL) {
+                    r.piece = SetPiece.RITUAL_HALL;
+                    r.shape = r.piece.shape;
+                    continue;
+                }
                 if (r.type == Room.Type.BOSS) {
                     r.piece = SetPiece.arenaFor(lordTheme());
                     r.shape = r.piece.shape;
@@ -665,6 +691,7 @@ final class FloorBuilder {
             if (plan.contentVersion() >= 2) {
                 // version 2 rooms are taller: a single room is 12 wide, so 8 to 10 high gives it the proportions of a hall
                 int v2 = switch (r.type) {
+                    case RITUAL -> PiecesRitual.VAULT_H;
                     case BOSS -> r.gw >= 3 ? 17 : 13;
                     case ARENA, HUB -> 12;
                     case CAVERN -> 14;

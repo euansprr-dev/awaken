@@ -45,5 +45,6 @@ public final class AwakenClient {
         dev.awaken.lens.client.LensClient.init(modBus);
         dev.awaken.compat.client.CompatClient.init(modBus);
         dev.awaken.terrain.client.TerrainClient.init(modBus);
+        dev.awaken.holo.client.HoloClient.init(modBus);
     }
 }

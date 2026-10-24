@@ -78,6 +78,10 @@ public final class AwakenConfig {
                 .comment("Answer vanilla's \"experimental settings\" prompt for you. AWAKEN's dimensions come from data packs,",
                         "which vanilla calls experimental; the prompt otherwise blocks every new world.")
                 .define("skipExperimentalWarning", true);
+        public static final ModConfigSpec.BooleanValue LENS_IN_SCENES = C
+                .comment("Story scenes (the awakening's ritual, the black and the tear) turn Lens on for their length even when",
+                        "Lens is off, like a cutscene, and hand the frame back after. Never while an Iris shaderpack is on.")
+                .define("lensInScenes", true);
         /** AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom) or CINEMATIC (adds light shafts). */
         public enum LensLook { OFF, SWIFT, CINEMATIC }
 

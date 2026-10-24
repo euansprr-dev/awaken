@@ -38,6 +38,7 @@ public final class InteriorTests {
     static void register() {
         registerArenaTest();
         registerLightTest();
+        RitualHallTests.register();
         // The P3 targets hold: the gates the game builds today are the gates tools/sim/pacing_sim.py was run on
         // (tools/sim/gate_tuning.json), and that run met its targets (tools/sim/pacing_results.json "gate_checks").
         // Changing floors, room counts, elites or modifiers fails this until the export is copied and the sim re-run.
@@ -112,6 +113,15 @@ public final class InteriorTests {
                         }
                     }
                 }
+            }
+            // the ritual hall is only ever the story's ritual gate: check its doorway the same way
+            GateLayout ritual = GateTestAccess.build(dev.awaken.gates.Gates.ritualPlan(0xB311L));
+            for (Room r : ritual.main.get(0).rooms) {
+                if (r.piece == null) continue;
+                seen.add(r.piece);
+                String why = reachable(ritual.main.get(0), r, paintRoom(ritual, ritual.main.get(0), r, 9));
+                h.assertTrue(why == null, "the ritual hall: " + why);
+                checked++;
             }
             for (SetPiece p : SetPiece.values()) h.assertTrue(seen.contains(p), "set piece " + p + " is built somewhere (" + checked + " rooms checked)");
             h.succeed();
@@ -264,6 +274,12 @@ public final class InteriorTests {
      * Lord's arena. A flood fill like the game's: emitters out, each step costing max(1, the block's dampening).
      */
     static List<Integer> floorLight(FloorLayout f, Map<Long, BlockState> b, boolean path) {
+        java.util.Set<Integer> onPath = new java.util.HashSet<>(f.criticalPath());
+        return floorLight(f, b, r -> path ? onPath.contains(r.id) && r.type != Room.Type.BOSS : r.type == Room.Type.BOSS);
+    }
+
+    /** Block light where you stand in the rooms {@code want} picks. */
+    static List<Integer> floorLight(FloorLayout f, Map<Long, BlockState> b, java.util.function.Predicate<Room> want) {
         int x0 = -16, z0 = -16, y0 = f.baseY - Cells.BAND_BELOW;
         int W = (f.w + 2) * 16, D = (f.h + 2) * 16, H = Cells.BAND_BELOW + Cells.BAND_ABOVE;
         BlockState[] grid = new BlockState[W * D * H];
@@ -308,11 +324,9 @@ public final class InteriorTests {
                 }
             }
         }
-        java.util.Set<Integer> onPath = new java.util.HashSet<>(f.criticalPath());
         List<Integer> out = new ArrayList<>();
         for (Room r : f.rooms) {
-            boolean want = path ? onPath.contains(r.id) && r.type != Room.Type.BOSS : r.type == Room.Type.BOSS;
-            if (!want) continue;
+            if (!want.test(r)) continue;
             int walk = f.baseY + r.dy;
             for (int x = r.x0(); x <= r.x1(); x++) {
                 for (int z = r.z0(); z <= r.z1(); z++) {

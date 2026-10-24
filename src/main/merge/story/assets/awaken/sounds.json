@@ -1,0 +1,165 @@
+{
+  "story.ritual.bell": {
+    "subtitle": "subtitles.awaken.story.ritual.bell",
+    "sounds": [
+      {
+        "name": "awaken:ritual/bell",
+        "stream": true,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "story.ritual.doors": {
+    "subtitle": "subtitles.awaken.story.ritual.doors",
+    "sounds": [
+      {
+        "name": "awaken:ritual/doors",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "story.ritual.flames_out": {
+    "subtitle": "subtitles.awaken.story.ritual.flames_out",
+    "sounds": [
+      {
+        "name": "awaken:ritual/flames_out",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "story.ritual.candle": {
+    "subtitle": "subtitles.awaken.story.ritual.candle",
+    "sounds": [
+      {
+        "name": "awaken:ritual/candle",
+        "volume": 0.5,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "story.ritual.words": {
+    "subtitle": "subtitles.awaken.story.ritual.words",
+    "sounds": [
+      {
+        "name": "awaken:ritual/words"
+      }
+    ]
+  },
+  "story.ritual.eyes": {
+    "subtitle": "subtitles.awaken.story.ritual.eyes",
+    "sounds": [
+      {
+        "name": "awaken:ritual/eyes",
+        "stream": true,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "story.ritual.gaze_charge": {
+    "subtitle": "subtitles.awaken.story.ritual.gaze_charge",
+    "sounds": [
+      {
+        "name": "awaken:ritual/gaze_charge",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "story.ritual.gaze_fire": {
+    "subtitle": "subtitles.awaken.story.ritual.gaze_fire",
+    "sounds": [
+      {
+        "name": "awaken:ritual/gaze_fire",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "story.ritual.statue_rise": {
+    "subtitle": "subtitles.awaken.story.ritual.statue_rise",
+    "sounds": [
+      {
+        "name": "awaken:ritual/statue_rise",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "story.ritual.swing": {
+    "subtitle": "subtitles.awaken.story.ritual.swing",
+    "sounds": [
+      {
+        "name": "awaken:ritual/swing",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "story.ritual.impact": {
+    "subtitle": "subtitles.awaken.story.ritual.impact",
+    "sounds": [
+      {
+        "name": "awaken:ritual/impact",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "story.ritual.pit": {
+    "subtitle": "subtitles.awaken.story.ritual.pit",
+    "sounds": [
+      {
+        "name": "awaken:ritual/pit",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "story.ritual.rumble": {
+    "subtitle": "subtitles.awaken.story.ritual.rumble",
+    "sounds": [
+      {
+        "name": "awaken:ritual/rumble",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "story.ritual.drain": {
+    "subtitle": "subtitles.awaken.story.ritual.drain",
+    "sounds": [
+      {
+        "name": "awaken:ritual/drain",
+        "stream": true
+      }
+    ]
+  },
+  "story.ritual.close": {
+    "subtitle": "subtitles.awaken.story.ritual.close",
+    "sounds": [
+      {
+        "name": "awaken:ritual/close"
+      }
+    ]
+  },
+  "story.ritual.heartbeat": {
+    "subtitle": "subtitles.awaken.story.ritual.heartbeat",
+    "sounds": [
+      {
+        "name": "awaken:ritual/heartbeat",
+        "volume": 0.8
+      }
+    ]
+  },
+  "story.ritual.tear": {
+    "subtitle": "subtitles.awaken.story.ritual.tear",
+    "sounds": [
+      {
+        "name": "awaken:ritual/tear"
+      }
+    ]
+  },
+  "story.ritual.void": {
+    "subtitle": "subtitles.awaken.story.ritual.void",
+    "sounds": [
+      {
+        "name": "awaken:ritual/void",
+        "volume": 0.5,
+        "stream": true
+      }
+    ]
+  }
+}

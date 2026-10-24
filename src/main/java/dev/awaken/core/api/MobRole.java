@@ -10,7 +10,8 @@ import java.util.Optional;
  * floor kills, Hearth uses it to decide what can be bound as an Echo, trophies come from BOSS.
  */
 public record MobRole(Role role, int contentLevel, String theme, Optional<String> bossId, String gateId) {
-    public enum Role { NONE, NORMAL, ELITE, WARDEN, BOSS, BREAK, ECHO, NIGHTMARE, SPIRIT;
+    /** RITUAL: the prologue's Seated One and its statues: scripted, unkillable, never a kill, a trophy, an Echo or a boss count. */
+    public enum Role { NONE, NORMAL, ELITE, WARDEN, BOSS, BREAK, ECHO, NIGHTMARE, SPIRIT, RITUAL;
         public static final Codec<Role> CODEC = dev.awaken.core.Codecs.lenientEnum(Role.class, NONE); }
 
     public static final MobRole NONE = new MobRole(Role.NONE, 0, "", Optional.empty(), "");

@@ -29,6 +29,7 @@ final class StoryTests {
     private StoryTests() {}
 
     static void register() {
+        RitualTests.register();
         AwakenTests.register("story_triggers", 20, h -> {
             Profile p = new Profile();
             h.assertFalse(Beats.triggered(p, "counter:awaken:gates_cleared>=1"), "no gates yet");
@@ -52,8 +53,9 @@ final class StoryTests {
             h.succeed();
         });
 
-        // The whole prologue against the real gates module: the Bell Crypt opens, the killing blow inside becomes the
-        // question, Accept brings you back out at the gate. (The GameTest server has no datapack dimensions: the test level
+        // The whole prologue against the real gates module, on an OLD Bell Crypt (three floors, no ritual hall: a world in
+        // the middle of the prologue from before the Ritual of the Bell): the killing blow inside becomes the question,
+        // Accept brings you back out at the gate. The ritual's own path is in RitualTests. (The GameTest server has no datapack dimensions: the test level
         // stands in for the gate world for one tick, and there is no Stillpoint to visit.)
         AwakenTests.registerIsolated("story_prologue_through_the_bell_crypt", 600, h -> {
             ServerLevel level = h.getLevel();
@@ -68,7 +70,11 @@ final class StoryTests {
                         GateService.useTestLevel(level);
                         try {
                             s.prologue = StoryProgress.Prologue.GLITCHED;
-                            Prologue.openFirstGate(p, s);
+                            var old = GateHooks.openScripted(p, "awaken:bell_crypt", 0, p.blockPosition().offset(55, 0, 0), 3);
+                            h.assertTrue(old.isPresent(), "an old-style Bell Crypt opens");
+                            s.prologue = StoryProgress.Prologue.GATE_OPEN;
+                            s.prologueGate = old.get();
+                            s.prologueSince = level.getGameTime();
                             h.assertTrue(s.prologue == StoryProgress.Prologue.GATE_OPEN && !s.prologueGate.isEmpty(), "the first gate opened, prologue " + s.prologue);
                             var view = GateHooks.get(level, s.prologueGate);
                             h.assertTrue(view.isPresent() && view.get().theme().equals("awaken:bell_crypt") && view.get().rank() == 0
