@@ -48,7 +48,7 @@ FADES = {
     "combat": (0.6, 1.5, 6.0),
     "lord": (1.5, 1.5, 4.0),
 }
-TP_CEILING = -1.0          # every level's mix, after encoding
+TP_CEILING = -1.0          # every level's mix and every stem alone, after encoding
 TP_MASTER = TP_CEILING - 0.8  # before encoding: room for the encoder's overshoot
 QUALITY = 1                # Vorbis q1 (~80 kbps stereo): 56 loops of a minute
 TAIL = 12.0                # rendered past the loop's end, then folded back onto its start
@@ -711,7 +711,8 @@ def master_group(stems, ceiling_db=TP_MASTER):
         stems = [s * a for s, a in zip(stems, scale)]
         need = np.ones(L // block + (1 if L % block else 0))
         ceil = K.dbamp(ceiling_db)
-        for name, gains, target in LEVELS:
+        checks = [gains for name, gains, target in LEVELS] + [tuple(float(i == k) for i in range(len(stems))) for k in range(len(stems))]
+        for gains in checks:  # every level's mix, and every stem alone (each may be heard by itself mid-crossfade)
             pk = _peaks_os(mix(stems, gains, [1.0] * len(stems)), block)
             need = np.minimum(need, np.minimum(1.0, ceil / np.maximum(pk, 1e-12)))
         if need.min() > 0.999:
@@ -766,7 +767,7 @@ class Group:
             dec = [K.read_audio(os.path.join(SOUNDS, f + ".ogg")) for f in self.files]
             assert all(len(d) == loop_frames(self.c) for d in dec), f"{self.tid}: decoded length differs from the loop"
             lv = measure_levels(dec)
-            worst = max(v[2] for v in lv.values())
+            worst = max(max(v[2] for v in lv.values()), max(K.true_peak(d) for d in dec))
             if worst <= TP_CEILING - 0.05:
                 break
             stems = [s * K.dbamp(TP_CEILING - 0.15 - worst) for s in stems]  # the encoder overshot: trim and encode again

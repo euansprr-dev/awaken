@@ -93,9 +93,9 @@
       "truePeak": -4.5
     },
     "tension": {
-      "rms": -19.57,
-      "lufs": -17.84,
-      "truePeak": -1.68
+      "rms": -19.56,
+      "lufs": -17.83,
+      "truePeak": -1.69
     },
     "combat": {
       "rms": -18.57,
@@ -119,7 +119,7 @@
     },
     "combat": {
       "rms": -21.04,
-      "truePeak": -0.99
+      "truePeak": -1.88
     },
     "lord": {
       "rms": -20.97,

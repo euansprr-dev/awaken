@@ -95,17 +95,17 @@
     "tension": {
       "rms": -19.55,
       "lufs": -17.32,
-      "truePeak": -2.31
+      "truePeak": -2.34
     },
     "combat": {
       "rms": -18.55,
       "lufs": -16.55,
-      "truePeak": -1.16
+      "truePeak": -1.11
     },
     "lord": {
       "rms": -17.58,
-      "lufs": -15.43,
-      "truePeak": -1.12
+      "lufs": -15.44,
+      "truePeak": -1.35
     }
   },
   "measuredStems": {
@@ -119,7 +119,7 @@
     },
     "combat": {
       "rms": -21.16,
-      "truePeak": -1.06
+      "truePeak": -1.51
     },
     "lord": {
       "rms": -21.42,
