@@ -3,5 +3,11 @@
   "subtitles.awaken.body.sprint": "Body pushes off",
   "subtitles.awaken.body.slide": "Body slides",
   "subtitles.awaken.body.mantle": "Body climbs a ledge",
-  "subtitles.awaken.body.impact": "Heavy hit"
+  "subtitles.awaken.body.impact": "Heavy hit",
+  "subtitles.awaken.body.wallstep": "Footsteps along a wall",
+  "subtitles.awaken.body.walljump": "Body kicks off a wall",
+  "subtitles.awaken.body.grab": "Body catches a ledge",
+  "subtitles.awaken.body.shimmy": "Hands slide along a ledge",
+  "subtitles.awaken.body.climb": "Body climbs over a ledge",
+  "subtitles.awaken.body.drop": "Body lets go of a ledge"
 }

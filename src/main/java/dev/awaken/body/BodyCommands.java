@@ -31,6 +31,26 @@ final class BodyCommands {
                                     .executes(c -> tryMove(c.getSource(), StringArgumentType.getString(c, "move"),
                                             com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "delay")))));
             body.then(admin);
+            // spike S3: the latency knob, the test course, the bench
+            body.then(Commands.literal("latency").requires(AwakenCommands.admin())
+                    .then(Commands.argument("ms", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 1000)).executes(c -> {
+                        RunnerServer.latencyTicks = Math.round(com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "ms") / 50F);
+                        c.getSource().sendSuccess(() -> Component.literal("Runner starts wait " + RunnerServer.latencyTicks + " ticks"), false);
+                        return 1;
+                    })));
+            body.then(Commands.literal("course").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                RunnerServer.build(p.level(), p.blockPosition());
+                c.getSource().sendSuccess(() -> Component.literal("Runner course built at " + RunnerServer.course.toShortString()), false);
+                return 1;
+            }));
+            body.then(Commands.literal("bench").requires(AwakenCommands.admin())
+                    .then(Commands.argument("what", StringArgumentType.word())
+                            .then(Commands.argument("count", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 200))
+                                    .then(Commands.argument("ms", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 1000))
+                                            .executes(c -> bench(c, true, false))
+                                            .then(Commands.literal("now").executes(c -> bench(c, false, false)))
+                                            .then(Commands.literal("press").executes(c -> bench(c, true, true)))))));
             body.then(Commands.literal("forget").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 p.setData(BodyContent.MEMORY, BodyMemory.EMPTY);
@@ -39,6 +59,16 @@ final class BodyCommands {
             }));
             root.then(body);
         });
+    }
+
+    private static int bench(com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, boolean history, boolean press)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        int ticks = RunnerServer.startBench(p, StringArgumentType.getString(c, "what"),
+                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "count"),
+                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "ms"), history, press);
+        if (ticks == 0) c.getSource().sendFailure(Component.literal("Unknown bench or no course (/awaken body course)"));
+        return ticks;
     }
 
     private static int list(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

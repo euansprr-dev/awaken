@@ -57,6 +57,7 @@ public final class BodyClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ClientMoves.reset();
             BodyAnims.reset();
+            RunnerFx.reset();
             TryDriver.release();
         });
         Body.installClient(new Body.ClientQuery() {
@@ -64,13 +65,20 @@ public final class BodyClient {
             @Override public boolean tacticalSprinting() { return ClientMoves.tac; }
             @Override public boolean mantling() { return ClientMoves.mantling; }
             @Override public @Nullable Vec3 slideDirection() { return ClientMoves.slideDirection(); }
+            @Override public boolean wallRunning() { return RunnerMoves.state == RunnerMoves.State.RUN; }
+            @Override public boolean hanging() { return RunnerMoves.hanging(); }
         }, ClientMoves::fell);
         MovementHooks.installClient(new MovementHooks.ClientAccess() {
             @Override public void castStarting(net.minecraft.world.entity.player.Player p, String powerId, String family, boolean motionPredicted) {
                 ClientMoves.castStarting(p, powerId, family, motionPredicted);
             }
+
+            @Override public boolean ownsMovementKey(net.minecraft.world.entity.player.Player p) {
+                return dev.awaken.body.ascent.client.AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.TETHER);
+            }
         });
         StatusSections.add(StatusSections.Tab.STATUS, new BodySection());
+        dev.awaken.body.ascent.client.AscentClient.init(modBus);
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
@@ -84,6 +92,7 @@ public final class BodyClient {
         if (mc.level == null || mc.player == null) return;
         ClientMoves.ticks++;
         BodyAnims.tick();
+        RunnerFx.tick();
         TryDriver.tick();
     }
 
@@ -97,7 +106,18 @@ public final class BodyClient {
         switch (msg.what()) {
             case BodyPayloads.SEEN_TRIP -> BodyFx.hitBurst(e, dx, dz, true);
             case BodyPayloads.SEEN_MOMENTUM -> BodyFx.hitBurst(e, dx, dz, false);
+            case BodyPayloads.SEEN_RUNNER_END -> {
+                if (e != mc.player) BodyAnims.runnerEnd(e.getId());
+            }
             default -> {
+                int clip = msg.what() - BodyPayloads.SEEN_CLIP;
+                if (clip >= 0 && clip < dev.awaken.body.BodyClips.RUNNER.size()) {
+                    if (e != mc.player) {
+                        BodyAnims.runner(e.getId(), dev.awaken.body.BodyClips.RUNNER.get(clip));
+                        RunnerFx.seen(e, dev.awaken.body.BodyClips.RUNNER.get(clip), msg.yaw());
+                    }
+                    return;
+                }
                 Move m = Move.byId(msg.what());
                 if (m == null || e == mc.player) return;
                 BodyAnims.play(e.getId(), m, msg.yaw());

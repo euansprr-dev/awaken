@@ -281,6 +281,12 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
   the hall), `isRitual(server, gateId)`.
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
+- `dev.awaken.body.ascent.Ascent` — the Ascent's ladder (§17): `enum Tier {TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN}`,
+  `has(Player, Tier)` (both sides), `highest(Player)`, `grant(ServerPlayer, Tier, String source)` (grants that tier and
+  every one under it, saved, synced; true when new), `onGranted(BiConsumer<ServerPlayer, Tier>)` (each new tier once,
+  lowest first), `state(ServerPlayer)` (`AscentState`), `arrivedByMovement(ServerPlayer, int seconds ≤ 20)` (a third
+  of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
+  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves.
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -1497,9 +1503,171 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 - Machine share: Carillon agents run Gradle and tours through `tools/carillon/slot.sh` (≤ 3 builds at once; a tour runs
   alone with no Carillon build beside it).
 
-## 17. The Ascent (plan in docs/plan-ascent.html, brief docs/ascent/BRIEF.md, approved 2026-10-24)
 
-### The Wilds (plan §6; module `wilds`, first part: what doesn't wait on the movement tiers)
+---------------------------------------------------------------------------------------------------------------------
+
+## 17. The Ascent (movement as the reward; plan in docs/plan-ascent.html, brief docs/ascent/BRIEF.md, approved 2026-10-24)
+
+The body's states above the ground, climbed as a ladder (Runner → Tether → Leaper → Wings → Skyborn → Sovereign), the
+world built to be crossed, and gate rooms that move. Built once, in the body module (`dev.awaken.body.ascent`, client
+`...ascent.client`, the Feel Director in `dev.awaken.body.client.feel`). The bar every part must pass is BRIEF.md's
+nine-point "genuinely magical" list.
+
+### 17.1 Phase 0: the feel spike (2026-10-24)
+Throwaway in its tuning, not in its structure: the states, physics and feel below are the skeleton Phase 1 builds on.
+
+States (`AscentState`, ordinal = network id, new ones only at the end): NONE, TETHER (on a rope), ZIP (pulled along a
+rope), CARRY (flying free with a move's momentum), GLIDE (wings), SOAR (momentum flight). Each airborne state keeps its
+own velocity and sets the body's motion every tick in the movement-input event (HIGH priority, before the Awakened
+Body's moves, which stand aside while one runs); vanilla's collision moves the body; what vanilla's air control would add
+from the keys is taken off first. A collision shows up next tick as the body ending short: that part of the velocity is
+gone; a landing ends the state; a teleport (over 3 blocks off) ends it.
+
+Controls (no new keys): the movement key (Left Alt) fires and holds the rope once the Tether tier is held, and the
+movement slot's power steps aside (`MovementHooks.ClientAccess.ownsMovementKey`, default false). Letting go flies on
+(CARRY); jump on the rope jumps off it; forward pumps the swing near the bottom of the arc; sideways turns it; sneak
+reels in. Jump in the air (falling, 2.2+ above the floor) opens the wings; jump while gliding takes flight; sneak while
+gliding folds them into a dive. In flight: forward cruises along the look, sprint boosts, jump climbs, sneak sinks, no
+forward hovers; a jump with no forward is a wing beat. A double-tap of jump in the air without wings takes flight.
+
+Numbers (`AscentRules`, blocks and ticks; gravity 0.08 everywhere):
+- Rope: reach 44, shortest 3, pulls on the hand 1.55 above the feet. Air drag 0.0025 a tick. Pump 0.016 a tick at
+  forward, full from 30° below the anchor's level down to the bottom. Steer 0.012. Sneak reels in 0.34 a tick. Top
+  speed 2.6. The arc's lowest point keeps 1.8 above the floor (the higher of the floor under you and under the arc's
+  bottom, taken 1.5 off the anchor toward you so its own trunk isn't the floor); a rope longer than that reels in at
+  1.2 a tick as it bites (the yank into the swing). The bite tugs 0.22 along the swing in the way you look. A swing
+  may scrape the floor for 5 ticks; the 6th on the ground lands it. An anchor less than 2 above the hand zips instead
+  of swinging (accel 0.24, top 1.45, lets go within 2.2 with a hop up of at least 0.48). A rope flies out for 1-3
+  ticks (distance / 16) before it bites. The integrator moves the hand along the rope's sphere on a great circle
+  (energy kept but for drag and input: GameTest `ascent_swing_energy`).
+- Anchors: the look's own ray (reach 44) wins when it hits 6+ above the eye (aimed swing) or under 2 above and at
+  least 4 away (aimed zip). Anything else (sky, a trunk a few blocks up, a wall closer than 4) asks the assist: 25 rays
+  climbing 20-62° above the horizon, straight ahead and up to 28° either side, scored ahead (≥0.45 of the facing) ×
+  rise near 14 × reach near 13 (gaussian, 9 wide) × off to one side of your line (full from 3.5 to 9 out, a quarter
+  dead ahead: the arc's bottom passes under the anchor, so a trunk dead ahead would swing you into itself). A low
+  direct hit 4+ away swings as it is only when the assist finds nothing.
+- Release window: letting go while rising in the front half of the arc, best 52° past the bottom (±30°), adds up to
+  ×1.06. Jumping off: ×1.12 horizontal and +0.46 up. A rope is cut only by something solid across its middle (from
+  1.5 off the hand to 3 short of the anchor; checked every 4 ticks: it wraps its own trunk as you swing round it) or
+  by its anchor block going. Leaves never cut a rope.
+- Carry: horizontal drag 0.988, vertical 0.98 (vanilla's 0.91 would eat the swing); input bends the path by 0.02 a
+  tick and never adds speed beyond what you had (or 0.24 when slow).
+- Glide: speed changes by -dir.y × 0.08 - 0.0062 × speed² a tick (dives gain, climbs pay); the path turns 16% of the
+  way to the look a tick at full authority (25% of that below 0.9 b/t); below 0.42 it stalls and sags. Opening the
+  wings keeps 45% of a fall's descent and turns half the rest forward. A 6° glide holds ~1.16 b/t (ratio ~9.5).
+- Sonic boom: crossing 2.2 b/t in a glide or flight; arms again below 1.6.
+- Soar: thrust 0.0098 (cruise ≈ 1.25), boost 0.032 (≈ 2.25), drag 0.0063 × speed², path turn 0.2, top 3.2; hover bleeds
+  ×0.88 a tick, climbs at 0.32, sinks at 0.36; a wing beat lifts 0.38.
+
+Server (Phase 0): takes the client's state (`AscentPayloads.State`) when the tiers allow it (else NONE), shows it to
+players within 160 (`Seen`, `SeenEvent` for one-off moments: fire, launch, deploy, boom, land, flap, catch). While a
+state is airborne it resets fall distance and `connection.resetFlyingTicks()` each tick (never mayFly, which would give
+the client creative flight on a double jump); a landing in an airborne state or within 15 ticks after one takes no
+fall damage (soft failure; Phase 1 turns hard landings into rolls with the body's roll). A body on the ground 20 ticks
+while its client still says airborne is ended by the server. Phase 1 adds the checks (anchors really there, speed caps
+per tier, history-based position checks as Carillon's S3 proved).
+
+Tiers: a bit per `AscentPayloads.Tier` (TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN) in `AscentMemory` (saved, kept
+through death, schema 1). Phase 0 grants them only by `/awaken ascent grant <all|none|tether|wings|skyborn>` (game
+masters); `/awaken ascent sandbox` grows 14 giant trees (26-38 tall, branches, persistent leaves) down a lane ahead and a
+46-tall launch tower under you. `/awaken ascent pilot <line>` drives the tour pilot (scripted keys) and the clip recorder.
+
+Feel (the Feel Director, one client voice): camera roll capped at the comfort setting (5° default) (banked into turns at 1.5 × the yaw rate; on a rope,
+leaning with the rope's angle across the view, 9° per unit), halved in third person; FOV × (1 + 0.17 × smoothstep of
+speed 0.4-2.4) times vanilla's FOV-effects slider, plus punches; a damped pitch spring for moments (bite, catch, launch,
+deploy, flap, land, bonk); a faint tremor above 1.7 b/t and shake on the boom and hard landings, both off with Awaken's
+camera-shake setting; light streaks at the frame's edge above 1.0 b/t (first person); the boom flashes the frame, cuts
+the wind out for 7 ticks, then cracks. Everything starts on the predicted state, never the server's answer. Wind is one
+listener-relative loop, louder and higher with speed. Comfort lives in `config/awaken-feel-client.toml`: cameraRoll
+0-7.5 (5), speedFov 0-1 (1, times vanilla's FOV-effects slider), movementShake (on; also off with Awaken's
+cameraShake), reducedMotion (off: on removes streaks, air motes, the boom flash and the tremor, and halves the roll).
+Camera Overhaul (pack, optional) is switched off through its own public settings (`Configuration.get().general
+.enabled`, never saved) while an Ascent state is airborne, and put back after (decision 6; compileOnly, the one class
+`body.client.feel.CameraOverhaulPause`).
+
+Look (no vanilla particles or render types reused for the shapes): the rope is a ribbon of `textures/ascent/rope.png`
+(white core, braided cyan strands, a deep-blue rim for daylight) plus an additive glow; it flies out rippling, sags
+while slack, and falls away from the hand when let go. Contrails trail the wingtips (wings open, over 0.55 b/t) or the
+hands (over 0.85). Motes of air stream past your eyes above 0.7 b/t. A rope's bite flashes a four-point flare and throws
+`awaken:ascent_mote` sparks; the boom throws a ring of shocked air across the line of flight and a cone of vapour. Wings
+are a render layer on the player model (`WingLayer`): three jointed bones a side, 21 overlapping flight feathers and two
+rows of coverts (`textures/ascent/wing.png`), unfolding from the back, beating, swept back by speed, folding on landing;
+drawn translucent (a Signal-cyan tint) plus a faint additive glow; the trailing edge is fourteen feathers whose
+outer ones alternate short, so the primaries part at the tip; hovering, they beat slowly every 18 ticks. Your own wings
+and contrails are not drawn in first person (whole, they fill the frame's lower corners; Phase 1 gives first person
+light at the edges instead). The whole figure turns with the state
+(`AscentAnims`): along the rope while swinging (pivot at the shoulder), belly down along the line of flight on wings,
+banked into turns, upright when hovering, one forward flip after letting go of a rope; the limbs come from
+`player_animations/ascent_moves.json` (tools/art/specs/ascent_moves.py: swing, zip, flip, fall, glide, soar, hover, each
+with a `_bent` twin). Sounds: tools/art/specs/audio_ascent.py, eleven events under `ascent.*`.
+
+Tours: tools/autopilot/ascent-spike.txt records clips (run-autopilot/clips/<name>/ frames with their game times;
+`python3 -I tools/ascent/clip.py <dir>` makes a real-time mp4 and a contact sheet).
+
+### 17.2 Phase 1a: the Runner tier (the ground floor of the ladder; Carillon's §16.3 built here)
+Carillon's spike S3 (carillon/spike-runner) is folded in: `RunnerRules`, `RunnerServer`, `client.RunnerMoves`, its tests
+and course (`/awaken body course`, the latency knob and bench stay as dev tools). §16.3 is the requirement; what follows
+is what the Ascent decided while building it.
+- The Runner's Kit is a world option, `config/awaken-body.toml` (SYNCED): `runnersKit` (on). On: every body move for
+  everyone from the first second (roll, tactical sprint, slide, mantle, wall-run, wall jump, ledge hang, shimmy, ledge
+  jump), ranks improve them. Off: the old rule (vanilla until the awakening, ranks unlock roll/sprint E, slide D,
+  mantle C; no Runner moves; the server refuses them). `ascent` (on) is the Ascent's feature flag in the same file.
+- The System announces the body's moves at the awakening, once, in one toast (roll, sprint, slide, mantle); never
+  before it, and the Runner's own moves are found, not told.
+- Ranks (`Body.runnerRank`: the rank, E before the awakening): wall-run 35 ticks, 40 from D; wall-jump links 4, 5 from
+  C; shimmy 1.6 b/s, 2.2 from B; ledge jump reach up 2.5 / sideways 3, +1 each from B; tactical sprint recharge
+  80 − 10 a rank (to 30); slide cooldown 20 − 2 a rank (to 10). Client and server use the same table.
+- Wall Stride: the power `awaken:wall_run` (id kept for saves) is now "Wall Stride", a rank-D passive with no effect
+  of its own: the body reads it (`Body.wallStride`: `Powers.owns` on the server, the client's loadout) and its runs last
+  80 ticks (links ×0.8 as usual), grip 50 lifting +0.04, then sink to −0.14. Every Runner runs on any collision face,
+  glass and leaves included. The old client lift (`ClientCasting.wallRun`) is gone.
+- Wall Stride's vertical run (`Move.WALL_CLIMB`, appended; clip `body_wallclimb`): with the power, facing a wall (within
+  35° of its normal, within 0.45), early in a jump (falling no faster than 0.15) and holding forward: 12 ticks up it at
+  0.34 b/t easing off over the last three (about 3.7 blocks: a lip 6 above the floor is caught; 10 ticks left it 2.4
+  over the feet, out of reach), once an airtime and never on the same wall twice before
+  landing. A lip in reach on the way is grabbed (the climb carries into the hang); jump kicks back off it (0.42 out,
+  0.40 up) and turns the view round over 6 ticks, a wall jump that can link into a run on the wall behind. The server
+  checks the power and the wall in front where it saw the body; grit and footfalls every 4 ticks; a Runner link.
+- The hold: feet 1.55 under the lip (S3's 1.85 put first-person eyes under the lip, staring at the face). The lip is
+  found by `RunnerRules.ledgeTop`: of the collision tops in the band with 0.5 of air over them, the one nearest the
+  hold's height (S3's mantle-style probe refused any ledge with another ledge a block above it).
+- S3's open bug (the server's hanging body 0.58 low after an upward grab) is the server's own physics: 26.3 players are
+  `AUTHORITATIVE_SIDE_AND_SERVER`, so the server runs `travel()` (gravity) on its copy between packets, and a still
+  client only sends a reminder every 20 ticks. While a body hangs (and in every airborne Ascent state) the server zeroes
+  its copy's motion after its tick: no drift, no bob for watchers.
+- Look: the moves play Player Animation Library clips from tools/art/specs/body_moves.py (`BodyClips.RUNNER`, network
+  index = `Seen` code − 32): `body_wallrun_l/_r` (loops, with `_end` settles), `body_walljump`, `body_grab`,
+  `body_hang` (loop), `body_shimmy_l/_r` (loops), `body_ledge_up`, `body_ledge_side_l/_r`, `body_ledge_back`,
+  `body_lower`, `body_mantle` for the climb out. `_l`/`_r`: the wall (or the way) on the left or right. Others see the
+  variant the server picks from the move's geometry; `Seen` 31 ends a Runner move (its loop settles); a catch settles
+  into the hang loop after its clip. Every wall-run footfall (each 4 ticks) knocks grit of the wall's own colour off the
+  face; sounds: `body.wallstep`, `body.walljump`, `body.grab`, `body.shimmy`, `body.climb`, `body.drop`
+  (tools/art/specs/audio_body.py). The wall-run's camera roll is the client option `wallRunRoll` (0-7.5, 5) in
+  `awaken-feel-client.toml`.
+- One movement system: while a Runner move holds the body the Ascent's wings and flight don't start (the rope still
+  cuts in, ending the Runner move); a jump at a runnable wall goes to the wall-run, not the wings; flying free off a
+  rope (CARRY), a jump at a wall hands the body to the wall-run with the rope's speed.
+- `core.api.MovementHooks` gains `wallRunning(Player)` and `hanging(Player)` (both sides; existing methods unchanged).
+- The Ascent's public API is `dev.awaken.body.ascent.Ascent` (§12). The ladder's record stays the movement module's own
+  attachment (`AscentMemory`, saved, kept through death; schema 1 holds the tiers) rather than a field of progression's
+  Profile: the module that moves the body owns what it may do. "Arrived by movement" is a 20-second trail of bits per
+  player (moving by Ascent state or Runner move, or not) and the last block placed (`BlockEvent.EntityPlaceEvent`).
+
+### 17.3 Phase 1b: the Leaper and the server's checks
+- The Leaper (tier D-C), no new keys, each once an airtime (back on landing and when a rope bites), from any airborne
+  body that isn't on a wall or a ledge: jump in the air = a double jump (+0.52 on top of any rise; it comes before the
+  wings: a second jump opens them), sprint in the air = an air dash along the look's heading at max(0.95, 1.33 × your
+  horizontal speed) with a lift of 0.08, sneak with 4+ blocks under you = a dive slam (horizontal speed ×0.25, straight
+  down at 1.7). Each goes into the carry with the swing's momentum, so a release can chain into a dash and a slam.
+  A slam's landing: within 3.5 blocks, creatures take 3 + 3 × the landing speed (falling off to 40% at the edge) and
+  are thrown out; players only where the world's PvP rule allows; your own tamed creatures never. The server applies it
+  only with the Leaper tier, out of an airborne state a moment ago.
+- The server's checks (more to come with the latency tours): a rope's anchor must be within 50 (54 since mastery, §17.6) of where the server has
+  the body and sit on a block's collision (`AscentServer.anchorReal`); a state the tiers don't allow, the `ascent` world
+  option off, riding or spectating are refused with `AscentPayloads.Stop`, and the client lets go (a refused rope
+  becomes the carry: never a yank back).
+
+### 17.4 The Wilds (plan §6; module `wilds`, first part: what doesn't wait on the movement tiers)
 
 Precursor wards (`wilds.ward`, config `features.wards`):
 - A site in the structure tag `#awaken:warded` (vaults, the spawn vault, ocean labs, monoliths) has a ward: its structure
@@ -1566,7 +1734,7 @@ with `playtestMode` each logout writes it to playtest.jsonl (`xp_sources`). XP b
 Tests: `wilds_ward_rules`, `wilds_arrival_history`, `wilds_discovery_pays`, `landmark_horizon_line`, and the Horizon box
 in the System's layout test.
 
-### Gate Rig (gates, plan section 7 "Gate rooms: the room is the puzzle"; branch pack/gate-rig)
+### 17.5 Gate Rig (gates, plan section 7 "Gate rooms: the room is the puzzle"; branch pack/gate-rig)
 
 A small layer under the painter that gives a room a staged timeline. Pure geometry in `gates.world` (`RigRoom`,
 `RigRooms`, `RigCollapse`, `RigMirrors`, `RigWells`, `RigBeam`), shared by the painter, the server and the solvability
@@ -1655,6 +1823,66 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **Tests:** `gates_rig_collapse_run`, `gates_rig_mirror_hall`, `gates_rig_gravity_wells` (each: the archetype's
   solvability check on every rig room of 1,000 seeded gates, every rank and layout; the same plan builds the same rig,
   version 3 builds none; the server running it in the test level), `gates_rig_protection`.
+
+### 17.6 Phase 1c: Flow, chains and mastery
+- **Flow** (client, 0..1; `AscentFlow`): each move adds to it, less as it fills (+a × (1 − flow/2), ×1.25 once a chain
+  is three links long): a rope's bite 0.08, a release 0.04 + 0.12 × the release window, a launch 0.10 + 0.06 × the
+  window, the wings opening 0.06, a flap 0.02, the boom 0.25, a Leaper move 0.08, a slam's landing 0.10, a wall-run
+  0.07, a wall jump 0.09, a ledge grab 0.03, a ledge jump 0.06. A wall taken hard (a bonk) takes 0.35 and the chain.
+  Standing still on the ground drains it 0.015 a tick after 25 idle ticks (full to empty in ~3 s); in the air or on a
+  wall it holds, then drains 0.002 a tick after 80 idle ticks. What it pays (small on purpose, never a wall): the
+  pump ×(1 + 0.25 × flow), the carry's horizontal drag 0.988 → 0.988 + 0.004 × flow. Shown as one line of light between
+  the XP bar and the hotbar (grows from the middle, whiter as it fills, flares at each link, its ends burn while a chain
+  runs); hidden before awakening.
+- **Chains** (server; `AscentServer.link`): links are a rope that bit (counted when the server accepts its state), a launch, the wings opening (Wings
+  held), the boom, a double jump, an air dash, a dive, a slam's landing (Leaper held), a flap (Skyborn held), and the
+  Runner's wall-run, wall jump, ledge jump (2 points each) and ledge grab (1). Links more than 50 ticks apart end the
+  chain. A finished chain of 3+ links pays style XP once awake: xpToNext × 0.0012 × min(links, 25), at most 1.5% of a
+  level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`).
+- **Mastery** per track (RUNNER, TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN): each link adds its points to its track
+  (rope fire 2, launch 3, wings 2, boom 6, Leaper moves 2, slam 3, flap 1, Runner 1-2); level = floor(√(points / 25)),
+  max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (client, predicted):
+  rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
+  dash +2% a Leaper level, glide drag −2% a Wings level.
+- **The record**: `AscentMemory` schema 2 = tiers + mastery points (list, Track order) + chainBest + flags (1 = settled);
+  schema 1 reads as no mastery yet and not settled. Kept through death.
+- **Old worlds, first load** (`AscentServer.settle`, once per player, on login): an awakened player of rank B or above is
+  given Wings (with Tether and Leaper), A or above Skyborn; anyone else is settled with nothing (later tiers come from
+  their deeds and trials, §17.4-17.5). Three seconds after login the client is sent `Remember`, and it plays
+  **"your body remembers"** once the player is free (no screen, on the ground, not moving by rope or wings; at most
+  30 s later wherever they are): the wind ducks, a synthesised swell (`ascent.remember`: an inhale of air under a
+  rising chord of glass), light rising around the body for 4 s, at 1.7 s the view lifts, the frame breathes out and the
+  wings unfold for 2.3 s with one slow beat, then "Your body remembers." and the tiers given ("The line · The leap ·
+  Wings · The sky") in the Holo look, about 6.5 s in all. Others nearby see the light and the wings and hear the swell
+  (`EV_REMEMBER`). `/awaken ascent remember` replays it (dev).
+- **The rope wraps** (soft failure, not a cut): checked every 2 ticks, something solid (never leaves) across the rope's
+  middle becomes the new anchor (the face it meets from the hand, 0.06 off it) and the rope shortens to the hand's
+  distance from it; the swing goes on about the new point (a strain, a small spark; the server re-checks the anchor).
+  Only a snag below the hand, or one closer than 4, lets go into the carry; the rope is "gone" only when the block it
+  bit (remembered at the bite and at each wrap, `AscentAnchors.blockOf`) has no collision any more. (Before: 5 of 8
+  swings in the sandbox lane were cut, mostly by a false "gone" once the swing passed its anchor; after: none, six
+  releases chained without touching the ground, 197 blocks in 12.7 s, so 300 in about 19 s.)
+- **0 kicks** (`ascent_no_kicks`): the server's real movement checks (skipped for a singleplayer host, so tours can't
+  show them) on a survival player flying an Ascent state for 15 s at 1.25, 2.25 and 3.2 blocks a tick, back and forth,
+  one position a client tick and then in lag bursts of up to five client ticks: no move is sent back, no disconnect.
+  Known limit (vanilla): six or more client ticks arriving in one server tick (a 300 ms stall) count as one packet's
+  allowance, so above ~1.7 b/t that move is sent back once (a rubber band, not a kick). The floating kick exists only
+  on dedicated servers with allow-flight off; AscentServer resets its count every tick a state runs, before vanilla
+  counts (to be seen on a dedicated server).
+- **Latency** (`ascent_latency`, the gate's latency tours as a test): a real swing from a block 20 up, a release and a
+  30-block fall to a hard landing, every state message reaching the server 300 ms (6 ticks) after its positions: no
+  refusal, no move sent back, no fall damage, the state ends, the arrival still counts as by movement.
+- **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
+  hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
+  Leaper together (`HorizonHooks.addReach`).
+- **Routes** (dev; golden runs for Carillon's TryDriver and the Ascent's regressions; `AscentRoutes`): pilot lines
+  `route rec <name>` / `route play <name>` / `route stop` record a run tick by tick (movement keys, the movement key,
+  yaw and pitch) to `<game dir>/awaken-routes/<name>.route` (text: a start line, one line a tick, an end line) and play
+  it back through the same keys from the same start (a `tp` command, then 20 ticks to settle). Playing logs where the
+  run ended against the recording's end ("off by d"), so a tour can tell a route that still works from one a change
+  broke. Record from standing still; at most five minutes.
+
+---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 
