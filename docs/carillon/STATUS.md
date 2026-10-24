@@ -90,3 +90,8 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 - 2026-10-24 evening: resumed on the lean plan. build/awaken-v1 4c9ffb7 merged into carillon/main (SPEC end-of-file
   conflict: "Together" before §16); compiles. SPEC §16 gets decisions 14–19 and the G0 numbers; RULES.md gets the lean
   rules; CI runs on carillon/m* too. The Ascent has Carillon's run requirements (§16.3 + the S3 findings). M1 started.
+- 2026-10-24: The Ascent confirmed the Runner tier = its Phase 1, built to §16.3 as written: press-in-the-air wall-run
+  trigger, server checks from S3's 12-position history, the 0.58 upward-grab Y fixed, MovementHooks.wallRunning/hanging
+  added (existing methods unchanged), and `/awaken ascent pilot route record|play <name>` (per-tick keys + look through
+  the real input path) for M2's golden runs. Phase 1 starts after Euan's swing session (Phase 0 is on
+  claude/ascent-7dcb3a); it pings once when the Runner tier lands on build/awaken-v1. M2 waits for that ping.
