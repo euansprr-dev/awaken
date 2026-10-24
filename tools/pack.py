@@ -246,6 +246,7 @@ def cmd_install(game_dir, profiles, reset_configs=False):
     install_configs(game_dir, names, reset_configs)
     cmd_backend(game_dir, "vulkan", only_if_unset=True)
     mac_windowing(game_dir)
+    culling_exemptions(game_dir)
     save(mods_dir / MARKER, {"schemaVersion": 1, "profiles": names, "installed": time.strftime("%Y-%m-%d %H:%M"),
                              "lockGenerated": lock["generated"],
                              "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"]} for e in chosen]})
@@ -301,6 +302,27 @@ def cmd_backend(game_dir, backend, only_if_unset=False):
         print(f"  graphics API: {backend} (was {current or 'unset'}) in {opts}; takes effect on the next launch")
     if (current if keep else backend) == "vulkan":
         early_window_off(game_dir)
+
+
+# Awaken block entities whose effect is far bigger than their block and sits on an invisible anchor inside other
+# blocks (the gate vortex, doorway vortices, checkpoint rings): EntityCulling traces to the block itself, finds it
+# covered, and skips drawing it, so the gate showed its pad and ring with no vortex.
+CULLING_EXEMPT = ["awaken:gate_vortex", "awaken:gate_portal", "awaken:checkpoint_ring"]
+
+
+def culling_exemptions(game_dir):
+    """Adds CULLING_EXEMPT to EntityCulling's block entity whitelist (it writes its file on first launch)."""
+    cfg = game_dir / "config" / "entityculling.json"
+    if not cfg.exists():
+        return
+    data = json.loads(cfg.read_text())
+    wl = data.setdefault("blockEntityWhitelist", [])
+    added = [i for i in CULLING_EXEMPT if i not in wl]
+    if not added:
+        return
+    wl.extend(added)
+    cfg.write_text(json.dumps(data, indent=2) + "\n")
+    print(f"  EntityCulling never culls {', '.join(added)} ({cfg})")
 
 
 def mac_windowing(game_dir):
