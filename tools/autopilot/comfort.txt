@@ -1,0 +1,156 @@
+# Comfort tour (Awakened Pack stage 5, docs/plan-pack.html): JEI, Jade and Xaero's World Map with Awaken's plugins.
+#   PACK=comfort tools/autopilot.sh tools/autopilot/comfort.txt
+# Survival, so the spoiler guard is on (creative sees everything). Shots:
+#   01-02  JEI beside the inventory on a fresh player: Awaken's items hidden, the guard's count in the log
+#   03-04  after picking things up: they (and the recipes they teach) appear
+#   05-13  each Awaken JEI category, in the System's glass
+#   14-20  Jade on a gate, machines, a broken machine, a creature, the Hearth Anchor and a townsperson
+#   21-22  Xaero's World Map in the overworld and inside a gate
+# Read the log for [compat] lines (guard counts, plugin start) and for errors from any comfort mod.
+world autopilot_comfort survival 4242
+waitworld
+gui 0
+window 1440 900
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule mob_griefing false
+cmd awaken admin awaken
+wait 100
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:saturation infinite 1 true
+info
+
+# ---- JEI on a fresh player ------------------------------------------------------------------------------------------
+cmd clear @s
+cmd awaken compat discovered reset
+wait 80
+compat discovered
+compat inventory
+wait 20
+compat jei search
+compat jei count
+shot comfort_01_jei_fresh
+compat jei search @awaken
+wait 10
+shot comfort_02_jei_fresh_awaken_filter
+screen close
+
+# ---- after picking things up --------------------------------------------------------------------------------------
+cmd give @s awaken:essence_shard 12
+cmd give @s awaken:lord_heart 1
+cmd give @s minecraft:leather 8
+cmd give @s minecraft:string 6
+cmd give @s minecraft:bone 4
+cmd give @s awaken:precursor_scanner 1
+wait 100
+compat discovered
+compat inventory
+wait 20
+compat jei search @awaken
+compat jei count
+shot comfort_03_jei_discovered
+compat jei recipes awaken:wildhide_chestplate
+wait 20
+shot comfort_04_jei_wildhide_recipe
+screen close
+compat jei search
+
+# ---- every Awaken category (everything discovered, so each has pages) -------------------------------------------
+cmd awaken admin blueprint all
+cmd awaken compat discovered all
+wait 60
+compat jei category crafting
+wait 20
+shot comfort_05_cat_crafting
+compat jei category fabricator
+wait 20
+shot comfort_06_cat_fabricator
+compat jei category frame_forge
+wait 20
+shot comfort_07_cat_frame_forge
+compat jei category tempering
+wait 20
+shot comfort_08_cat_tempering
+compat jei category hearth_upgrade
+wait 20
+shot comfort_09_cat_hearth_upgrade
+compat jei category echo_duty
+wait 20
+shot comfort_10_cat_echo_duty
+compat jei category essence
+wait 20
+shot comfort_11_cat_essence
+compat jei category core_fusing
+wait 20
+shot comfort_12_cat_core_fusing
+compat jei category codex
+wait 20
+shot comfort_13_cat_codex
+screen close
+
+# ---- Jade -----------------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open D
+wait 340
+cmd awaken compat stand gate
+wait 60
+shot comfort_14_jade_gate
+cmd awaken gate hop
+wait 60
+cmd tp @s ~ ~ ~ 0 0
+cmd awaken compat place essence_reactor
+cmd tp @s ~ ~ ~ 90 0
+cmd awaken compat place gate_scanner
+cmd tp @s ~ ~ ~ 0 0
+wait 60
+look 0 35
+wait 30
+shot comfort_15_jade_reactor
+look 90 35
+wait 30
+shot comfort_16_jade_machine_powered
+look 180 35
+wait 5
+cmd setblock ^ ^ ^3 awaken:broken_machine[machine=observatory]
+wait 30
+shot comfort_17_jade_broken_machine
+look 270 0
+wait 5
+cmd summon awaken:gloomstalker ^ ^ ^4 {NoAI:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
+wait 120
+look 270 12
+wait 20
+shot comfort_18_jade_creature
+look 0 18
+wait 5
+cmd awaken admin request anchor
+wait 120
+shot comfort_19_jade_hearth_anchor
+cmd awaken compat stand townsfolk
+wait 40
+shot comfort_20_jade_townsperson
+
+# ---- Xaero's World Map: the overworld, then inside a gate ---------------------------------------------------------
+compat press gui.xaero_open_map
+wait 80
+shot comfort_21_map_overworld
+screen close
+wait 10
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E bell_crypt
+wait 320
+cmd awaken gate interior enter
+wait 240
+compat press gui.xaero_open_map
+wait 80
+shot comfort_22_map_inside_gate
+screen close
+cmd awaken gate leave
+wait 100
+quit

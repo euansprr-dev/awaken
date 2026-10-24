@@ -744,6 +744,55 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
+- Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling, Dynamic FPS and Xaero's
+  World Map. Xaero's World Map stays only until Carillon's own Atlas ships; no minimap, ever (direction comes from the
+  world). AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
+  log errors). Tours turn Dynamic FPS off in `run-autopilot/config/dynamic_fps.json` (it drops a background window to
+  1 fps or none). JEI and Jade are compiled against as `compileOnly` from Modrinth's Maven by version id (the builds
+  `pack/lock.json` pins); their plugins (`compat.client.jei`, `compat.jade`, `compat.client.jade`) are found by their
+  annotations and nothing else in Awaken refers to them.
+- The spoiler rule (`compat.Discovered`, attachment `awaken:discovered`, schemaVersion 1, copyOnDeath, synced to its
+  owner): an Awaken item is **discovered**, for good, once (1) it has been in the player's inventory or on their cursor,
+  (2) it is the result of a recipe in their recipe book (Awaken recipes unlock when you hold an ingredient, by the level
+  road, the Hearth Anchor and town requests), or (3) Awaken's own records name it: a scanned blueprint names its
+  machine, the Frame Forge's blueprint names the four Frame pieces and six modules. Checked every 40 ticks per player
+  (staggered, allocation-free) and at login; the set only grows. Vanilla and other mods' items are never guarded. Items
+  looted into the Satchel or Deep Pack count once they reach the inventory. On the client the guard is off in creative
+  and spectator and when `spoiler_guard` (`awaken-compat-client.toml`) is off. `/awaken compat discovered
+  [check|reset|all]`. Test: `compat_spoiler_rule`.
+- JEI (`compat.client.jei`): Awaken's categories draw the System's glass (`signal.client.Glass.panel`, dark glass slots,
+  a framed result in the recipe's accent, no JEI border): **Awaken Crafting** (every `awaken:` crafting-table recipe,
+  moved out of JEI's Crafting tab, with the level road step that teaches it and, for Hunter gear, rank, set and set
+  bonus; the crafting table's transfer works), **Fabricator** (the twelve blueprints, parts from `MachineType`),
+  **Frame Forge** (Frames and modules, 50 essence), **Tempering** (levels I–VI at the Forge, Oren's terms), **Hearth
+  Upgrades** (Anchor tiers II–V, Forge tiers II–III, rank and discount), **Echo Duty** (a Mine Echo's haul and chances by
+  Anchor tier), **Essence** (charging a cell, feeding the reactor), **Core Fusing** (four shards into a core) and
+  **Codex** (pages for key items and the six Hunter sets). The recipes are read from those systems' public constants
+  (`compat.client.jei.Recipes`, the only place compat reads them). The guard (`SpoilerGuard`): undiscovered Awaken items
+  are hidden from the list and from recipe slots (JEI's ingredient visibility, both contexts; a slot whose every
+  choice is hidden still shows them, as vanilla's recipe book does); Awaken's recipes are hidden until their key item is
+  discovered (a machine by itself, tempering by the Forge, a Codex page by its item); recipes in other categories (JEI's
+  anvil, other mods') until any of their Awaken outputs is; a category whose stations are all hidden hides itself.
+  Applied on the client tick only when the record, the game mode or the setting changes.
+- Jade (`compat.jade` server data, `compat.client.jade`): Awaken targets wear the Jade theme `awaken:system` (the
+  System's glass as a nine-slice sprite, `tools/art/compat_ui.py`) and an accent bar in the target's colour (setting
+  `jade_system_style`). Gate cores: "D-rank gate", state, break clock, omen, then exactly what the gate card shows that
+  player (layout from PER 20, modifiers from 40, floors from 60, theme and Lord once scouted; the ritual hall only its
+  bell) and the next PER threshold. Precursor machines: who built it, power (reactor essence or the reactors in range),
+  a clone ready or growing, Launch Ring frames; the Fabricator counts known blueprints. Broken machines keep their name
+  until the blueprint is yours; doors say the rank they open for; Hearth Anchor: owner, tier, reach, Forge; role pads;
+  Trophy Mounts. Creatures: temperament from the fauna role (and "Hostile now"), level and rank (from the spawn's
+  content level) and role (Elite, Warden, Gate Lord...); a creature the Codex doesn't have yet shows only "Not in your
+  Codex yet". Townsfolk: job, whose town, the rank they came at. Jade never names mimics, dormant statues, the
+  ritual's Seated One and statues or Veil marks, and decoys show their name only. Server facts come from
+  `compat.LookAt` (plain Awaken code); without Jade on the server the client-only lines remain. Tests:
+  `compat_look_at_gate_rule`, `compat_look_at_machines`, `compat_look_at_creatures`.
+- Xaero's World Map and instanced dimensions: there is no supported way to keep 1.47.1 from mapping a dimension. Its
+  ignore list is hard-coded (`MapProcessor.dimensionsToIgnore`, one entry), the map writer has no dimension filter, its
+  "load/update chunks" options are global per config profile, and it has no API for other mods; anything else would be
+  a mixin or reflection, which Awaken doesn't do. So Xaero maps gate cells, dream cells, the strata and trial wings
+  like any dimension, each in its own per-dimension cache (the overworld map is never touched), and a reused gate cell
+  can show an earlier gate's rooms until it is walked again. Accepted until Carillon's Atlas replaces Xaero.
 
 ---------------------------------------------------------------------------------------------------------------------
 
