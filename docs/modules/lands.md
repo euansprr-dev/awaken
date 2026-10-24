@@ -145,7 +145,7 @@ order across biomes: the feature sorter rejects cycles), the archetype's trees s
   and large ferns, dense gold litter, mushrooms, pumpkins, cane, fireflies by water.
 - **Lumen Forest** (dark forest): grass `#40735f`, foliage `#2f8076`, dry foliage `#5f8a8c`, water `#2a93a6`, fog
   `#a3c4ca`, sky `#7fa3e4`. Vegetation: lumen moss patches (carpet over grass, caps, ferns), 5–7 trees a chunk (55%
-  Lumen tree, 40% small, 3% fallen, 2% huge brown mushroom), grass, lumen caps, firefly bushes everywhere (not only by
+  Lumen tree, 42% small, 3% fallen; no huge mushrooms, their brown and orange caps broke the teal), grass, lumen caps, firefly bushes everywhere (not only by
   water), litter, mushrooms. No forest flowers.
 - Placement: Lithostitched `replace_partially` where `awaken:lands/awakening` ≥ 0: Elderwood for forest, birch forest,
   old-growth birch and flower forest; Lumen Forest for dark forest.

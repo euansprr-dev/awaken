@@ -424,7 +424,6 @@ def features():
         {"chance": 0.03, "feature": aw("lands/fallen_elder")},
         {"chance": 0.55, "feature": aw("lands/elder")}]}
     f["lands/lumen_trees"] = {"type": mc("random_selector"), "default": aw("lands/small_lumen"), "features": [
-        {"chance": 0.02, "feature": {"feature": mc("huge_brown_mushroom"), "placement": []}},
         {"chance": 0.03, "feature": aw("lands/fallen_lumen")},
         {"chance": 0.55, "feature": aw("lands/lumen")}]}
     # ground

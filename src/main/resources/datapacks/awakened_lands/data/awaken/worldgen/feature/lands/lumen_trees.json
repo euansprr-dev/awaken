@@ -3,13 +3,6 @@
   "default": "awaken:lands/small_lumen",
   "features": [
     {
-      "chance": 0.02,
-      "feature": {
-        "feature": "minecraft:huge_brown_mushroom",
-        "placement": []
-      }
-    },
-    {
       "chance": 0.03,
       "feature": "awaken:lands/fallen_lumen"
     },

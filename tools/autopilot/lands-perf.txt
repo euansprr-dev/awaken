@@ -1,0 +1,31 @@
+# Awakened Lands slice frame times (docs/modules/lands.md): the densest Elderwood (beside its nearest Colossus) at noon
+# and the densest Lumen Forest at night, after the chunks round the camera have finished generating.
+# Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/lands-perf.txt 1200
+world landsperf777 creative 777
+waitworld
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+info
+cmd awaken terrain herovisit elder_colossus 45 0
+wait 900
+look 180 -8
+wait 100
+perf lands_elderwood_dense 12
+shot perf_elderwood
+cmd time set 18000
+cmd awaken terrain visit awaken:lumen_forest
+wait 900
+look 30 -8
+wait 100
+perf lands_lumen_dense_night 12
+shot perf_lumen
+quit
