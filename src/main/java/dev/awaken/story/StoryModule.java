@@ -63,6 +63,7 @@ public final class StoryModule {
     public static void init(IEventBus modBus) {
         ATTACHMENTS.register(modBus);
         ENTITIES.register(modBus);
+        RitualSounds.init(modBus);
         ITEMS.register(modBus);
         modBus.addListener(StoryModule::attributes);
         modBus.addListener(StoryModule::payloads);
