@@ -1,0 +1,19 @@
+{
+  "text": "Slay the guardian that rises from a fallen star.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:star_guardians_slain",
+    "value": 1
+  },
+  "reward": {
+    "stat": "STR"
+  },
+  "expires_days": 3,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 4,
+  "requires": [
+    "level:5"
+  ]
+}

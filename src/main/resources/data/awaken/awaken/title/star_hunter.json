@@ -1,0 +1,15 @@
+{
+  "name": "Star-Hunter",
+  "description": "Slew three of the fallen stars' guardians.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:star_guardians_slain",
+    "value": 3
+  },
+  "perks": [
+    {
+      "id": "awaken:crit_chance",
+      "amount": 0.02
+    }
+  ]
+}

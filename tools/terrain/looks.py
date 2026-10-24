@@ -78,6 +78,16 @@ LOOKS = {
         "highlightTint": [0.95, 0.96, 1.0], "splitTone": 0.18, "vignette": 0.16, "bloom": 1.0, "bloomThreshold": 0.52,
         "skyBloom": 0.25, "shafts": 0.45, "haze": 0.24, "hazeStart": 0.55, "hazeTint": [0.72, 0.72, 0.95],
         "hazeTintMix": 0.4, "hazeDesaturate": 0.1, "sunsetWarmth": 0.6, "sunGlow": 0.85}),
+    "frost_spires": ("Frost Spires: cold clear light, blue shadows, the aurora's green and violet in the split tone, the spires blooming at night", {
+        "exposure": 1.0, "contrast": 1.12, "saturation": 1.06, "warmth": -0.14, "shadowTint": [0.36, 0.5, 0.74],
+        "highlightTint": [0.82, 1.0, 0.95], "splitTone": 0.24, "vignette": 0.14, "bloom": 1.05, "bloomThreshold": 0.5,
+        "skyBloom": 0.5, "shafts": 0.35, "haze": 0.3, "hazeStart": 0.4, "hazeTint": [0.72, 0.86, 1.0],
+        "hazeTintMix": 0.45, "hazeDesaturate": 0.12, "sunsetWarmth": 0.3, "sunGlow": 0.8}),
+    "mirror_marsh": ("Mirror Marsh: still and dark, deep shadows, a silver-green mist low and close, the moonblooms blooming at night", {
+        "exposure": 0.98, "contrast": 1.14, "saturation": 0.88, "warmth": -0.04, "shadowTint": [0.3, 0.36, 0.38],
+        "highlightTint": [0.88, 0.96, 0.92], "splitTone": 0.14, "vignette": 0.24, "bloom": 1.0, "bloomThreshold": 0.52,
+        "skyBloom": 0.3, "shafts": 0.3, "haze": 0.5, "hazeStart": 0.18, "hazeTint": [0.6, 0.68, 0.66],
+        "hazeTintMix": 0.55, "hazeDesaturate": 0.3, "sunsetWarmth": 0.4, "sunGlow": 0.6}),
 }
 
 BIOMES = {
@@ -98,6 +108,8 @@ BIOMES = {
     "lumen": ["awaken:lumen_forest"],
     "glass_steppe": ["awaken:glass_steppe"],
     "shattered_highlands": ["awaken:shattered_highlands"],
+    "frost_spires": ["awaken:frost_spires"],
+    "mirror_marsh": ["awaken:mirror_marsh"],
 }
 
 

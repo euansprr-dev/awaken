@@ -4,12 +4,13 @@
   "targets": [
     "minecraft:windswept_hills",
     "minecraft:windswept_gravelly_hills",
+    "minecraft:windswept_forest",
     "minecraft:stony_peaks"
   ],
   "replacement": "awaken:shattered_highlands",
   "parameters": {
     "awaken:lands/awakening": {
-      "min_inclusive": 0.0
+      "min_inclusive": -0.34
     }
   }
 }

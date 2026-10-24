@@ -39,6 +39,7 @@ Hard rules:
 | `world` | shared overworld worldgen hooks (biome modifiers, structure sets) used by descent/above/story |
 | `body` | the Awakened Body: soft landing, tactical sprint, slide, mantle; momentum hits and trips; `core.api.MovementHooks` |
 | `terrain` | Awakened Lands (§15): the biome table, Awakened biomes and their placement, trees, ground cover, wind and falling leaves, biome looks and sound, the terrain studio commands |
+| `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -261,7 +262,8 @@ then New Game+ "Ascension" tiers.
 ## 11. Config (`awaken-common.toml` / server)
 
 difficulty: STORY | HUNTER (default) | HARDLINE | HARDCORE · storyLength: 0.5 | 1.0 | 1.5 · features: gates, descent,
-lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed · playtestMode (off).
+lucidium, veil, above, hearth, story, anomalies, landmarks, wards, wilds (bools) · cameraShake · signalTypeSpeed ·
+playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the rest of `AwakenConfig.Client`.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -298,7 +300,11 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
-  Animation Library is installed; a no-op otherwise).
+  Animation Library is installed; a no-op otherwise). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
+  movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
+  `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
+- `dev.awaken.progression.Progression.xpLedger(player)` — XP by `XpSource` and by world-XP source key (§17 telemetry).
 - `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
   glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
   installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
@@ -482,8 +488,9 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
   synced to its owner).
 - The Gate Map marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
   named by the Now tracker.
-- The Now tracker names the nearest unreached landmark once there is a reason to go (Well from level 10, vault and
-  monolith 4, spawn vault 2, ocean lab 6, sky platform 20); never inside a Hearth or a gate. Mira tells one landmark
+- The Horizon line (§17; until then the Now tracker) names the nearest unreached landmark once there is a reason to go
+  (Well from level 10, vault and monolith 4, spawn vault 2, ocean lab 6; a sky platform once you have a way up, teased
+  before); never inside a Hearth or a gate. Mira tells one landmark
   rumour a day when no gate is worth one (`core.api.WorldHooks.landmarkRumour`).
 - Faint light shafts over ruins at dusk (fainter at night) and the Well's pillars at night, within 288 blocks; nothing
   by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
@@ -1021,35 +1028,64 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   and its terrain and tags never change. The pack shows in the Data Packs screen at world creation (players may turn
   it off). Test: `terrain_lands_pack_new_worlds_only`.
 - Placed today (2026-10-24): Elderwood (replaces forest, birch, old-growth birch and flower forest), Lumen Forest
-  (dark forest), Glass Steppe (savanna, savanna plateau) and Shattered Highlands (windswept hills, windswept gravelly
-  hills, stony peaks), all where the awakening field ≥ 0. Frost Spires and Mirror Marsh are planned.
+  (dark forest), Glass Steppe (savanna, savanna plateau, windswept savanna), Shattered Highlands (windswept hills,
+  windswept gravelly hills, windswept forest, stony peaks), Frost Spires (snowy plains, snowy taiga, grove, ice
+  spikes) and Mirror Marsh (swamp, mangrove swamp), each where the awakening field passes its threshold (below).
 - An Awakened biome's own ground is a material rule in the lands pack (`worldgen/material_rule/lands/<biome>_surface`
   and `_under`), spliced first into the overworld's `biome_surface` and `under_biome_surface` by Lithostitched
   `set_material_rule` modifiers (`injection_type: prepend`, guarded by its biome), so the surface pass lays it and far
-  terrain shows it. Glass Steppe: fused glass where the noise `awaken:lands/glass` ≥ 0.3, else sun-gold grass; Shattered
-  Highlands: riven shale on steep ground and where the `minecraft:surface` noise ≥ −0.05, else grass.
+  terrain shows it; a biome that owns its whole floor, under water too, has a `_floor` rule spliced first into the
+  overworld's `surface` instead. Glass Steppe: fused glass where the noise `awaken:lands/glass` ≥ 0.3, else sun-gold
+  grass; Shattered Highlands: riven shale on steep ground and where the `minecraft:surface` noise ≥ −0.05, else grass;
+  Frost Spires: hoarfrost where `awaken:lands/rime` ≥ −0.3, else grass (snow never settles on hoarfrost); Mirror
+  Marsh (`_floor`): still water at y 62 where `minecraft:surface_swamp` ≥ −0.2 (vanilla's swamp rule with more of the
+  noise), mirepeat on dry floor where `awaken:lands/peat` ≥ −0.45, else grass, mirepeat under water and under it all.
+  A block in a material rule is a block id or an `{"id", "properties"}` map (26.3's `BlockState` codec; never
+  `Name`/`Properties`), and 26.3 has no `all_of` condition: conditions nest.
 - Shattered Highlands' faults (`terrain.fault.FaultLinesFeature`, `awaken:fault_lines`, local modifications, once a
   chunk over its own columns): the zero line of `awaken:lands/fault` (octave −8, five octaves); a column's distance to
   it is the noise over its slope (sampled on a 2-block lattice, bilinear), faultstone within 1.6 blocks (three deep),
   the seam within 0.55; where `awaken:lands/fault_trench` passes 0.15 the fault widens (by up to 2.8 a side) and opens
   into a V trench up to 9 deep. Decisions come from the noises and the column only (continuous across chunk borders);
   never into water or down to the sea. Faultstone and the seam are in `#minecraft:cannot_support_snow_layer`.
-- Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift"`,
-  `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass Steppe; a glassed
-  bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its ground column by
-  column from each column's own ground and its distance from the centre; the Shard Drift (Shattered Highlands; 7–12
-  floating shards along a fault; spacing 22, separation 8) walks its site onto the fault line and samples the ground
-  under each shard once at the start. Both place voxels into air, plants and water only and never write outside their
-  box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms on the fastest of eight seeds, as
+- Landmarks that are not trees are structures of type `awaken:landmark` (`"landmark": "gate_scar" | "shard_drift" |
+  "aurora_spire"`, `terrain.landmark`), biomes from the table's `awaken:has_structure/<landmark>`: the Gate Scar (Glass
+  Steppe; a glassed bowl 30–50 across, spires round its rim, the gate's stumps; spacing 28, separation 10) reshapes its
+  ground column by column from each column's own ground and its distance from the centre; the Shard Drift (Shattered
+  Highlands; 7–12 floating shards along a fault; spacing 22, separation 8) walks its site onto the fault line and
+  samples the ground under each shard once at the start; the Aurora Spire (Frost Spires; a frostspar needle 42–58 tall
+  on a frozen tarn 17–27 across, 4–6 lesser needles and rim sheaves, branches at about 55°; spacing 26, separation 9)
+  freezes its tarn level with the centre's ground column by column (cut or built up at most 5, packed ice two layers
+  at least, a hoarfrost ring). The Gate Scar and the Aurora Spire share one level-site search
+  (`LandmarkStructure.levelSite`: dry, at least 12 / 2 over the sea, within 5 / 4 of the centre's height at 16 / 12
+  out and 8 / 6 at 28 / 20 out, 50 / 70 under the build limit). All place voxels into air, plants, snow and water only
+  and never write outside their box; shapes are cached (8 each). Budgets as hero trees (shape ≤ 2 ms on the fastest of eight seeds, as
   `terrain_landmark_shapes` asserts; features ≤ 0.5 ms a chunk on average);
-  `/awaken terrain lands2cost` reports what they cost on the worldgen threads.
-- Air for the second pair: an air.json biome rule's `motes.kind` hands the spot to `terrain.client.LandsMotes`
-  (cap 120 × the leaves' frame-budget scale): `glint` (Glass Steppe, by day: a star blinking on sunlit glass of
-  `#awaken:lands/glints`) and `fault` (Shattered Highlands: sparks off `#awaken:lands/faults` at night, dust by day).
+  `/awaken terrain landscost` reports what they cost on the worldgen threads.
+- Air for the second and third pairs: an air.json biome rule's `motes.kind` hands the spot to
+  `terrain.client.LandsMotes` (cap 120 × the leaves' frame-budget scale): `glint` (Glass Steppe, by day: a star
+  blinking on sunlit glass of `#awaken:lands/glints`), `fault` (Shattered Highlands: sparks off `#awaken:lands/faults`
+  at night, dust by day), `frost` (Frost Spires: snow blown sideways on the wind, thicker in gusts; at night three in
+  ten spots a cold glint on `#awaken:lands/frost_glints`) and `mist` (Mirror Marsh: wisps just over open water, 0.35 +
+  0.65 × night of the spots).
+- Hero trees may stand in water: `HeroTree.wetDepth` (0 for dry-land trees; the Weeping Matriarch 3) lets the site
+  search accept ground under at most that much water and no deeper than that below the sea (`HeroStructure.standing`);
+  the piece ends hanging strands at the water's surface (the last one above it a tip) and asks the tree what floats on
+  open water under its crown (`HeroTree.onWater`: the Matriarch's moonblooms). The Weeping Matriarch (Mirror Marsh;
+  trunk 4–6 across and 22–30 tall on 6–9 prop roots, 5–7 bowing limbs under low domes, a curtain of tendrils, about
+  45 across; spacing 24, separation 9) keeps every tube at least 0.9 thick: within 0.87 of an axis every cell joins the
+  axis face to face, so no block touches the tree only at an edge.
 - Placement: Lithostitched `replace_partially` injectors swap a vanilla biome for an Awakened one where the
   `awaken:lands/awakening` density function (a low-frequency noise, patches roughly 500–1,500 blocks across) passes a
   threshold, so Awakened lands come in regions you walk into, each in the climate of the biome it replaces. Thresholds
-  are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds.
+  are tuned with the studio until Awakened biomes cover about 40% of land on the five studio seeds. Tuned 2026-10-24
+  (`AWAKENING` in `tools/content/lands_content.py`): Elderwood −0.22, Glass Steppe and Frost Spires −0.27, Lumen
+  Forest and Shattered Highlands −0.34, Mirror Marsh −0.41 (the field's deciles over the archetypes' land run −0.41,
+  −0.27, −0.17, −0.09, −0.01, 0.07, 0.15, 0.25, 0.40, so −0.27 claims about 80%). Forests are the commonest archetype,
+  so Elderwood takes less of them and stays one Awakened biome among six; the rare archetypes give more. Measured:
+  40.6% of land under Tectonic's `awakened` preset (28–50% a seed; 24.2% when every threshold was 0), 41.5% on
+  vanilla shapes; about a fifth to a third of each archetype stays vanilla. `terrain_lands_placement` fails outside
+  34–48% on vanilla shapes.
   `terrain_lands_placement` holds the injectors to the biome table (one per Awakened biome, its archetype among its
   vanilla targets, no target claimed twice, ground splices guarded by their biome) and measures the share on the
   five studio seeds by applying the injectors to the vanilla generator as Lithostitched does.
@@ -1246,6 +1282,73 @@ The Veil, the Lucidium and the rest:
   invitations, throttles, queued region erasures.
 
 ## 17. The Ascent (plan in docs/plan-ascent.html, brief docs/ascent/BRIEF.md, approved 2026-10-24)
+
+### The Wilds (plan §6; module `wilds`, first part: what doesn't wait on the movement tiers)
+
+Precursor wards (`wilds.ward`, config `features.wards`):
+- A site in the structure tag `#awaken:warded` (vaults, the spawn vault, ocean labs, monoliths) has a ward: its structure
+  box grown by 12 blocks on every side. `#awaken:warded_sky` (sky platforms) reaches 48 further down, so a tower stalls
+  well under the deck. New structure sites (Tether Spires) join a tag; sites placed by code (hero-tree caches) register
+  a `core.api.WardHooks.Source`. Existing ruins have wards at once: the box comes from the saved structure start.
+- Inside a ward, outside every Hearth's radius, a block a survival or adventure player places crumbles 3 s (60 ticks)
+  later: still the same block, it is removed (water stays where it was waterlogged) and the item that placed it goes back
+  to them (inventory, else at their feet; if they left, where it stood). Containers drop what was put in them, as
+  breaking would; a shulker box keeps its contents in the returned item. Creative and spectators build freely. The first
+  ward block a player places teaches it with a toast (flag `awaken:ward_noticed`). Pending crumbles all crumble when the
+  server stops; a block whose chunk unloaded first stays.
+- Inside a ward a block in `#awaken:ward_sealed` (every Precursor building block plus the deepslate and blackstone
+  dressing ruins build with) can't be broken by a player, an explosion or a piston (pistons inside a ward never move).
+  The vault's sealed chamber is enclosed in those blocks, so a rank door can't be dug around. Natural ground still digs.
+- Its own look and sound, never vanilla: `awaken:ward_spark` (a thread of the Signal's #7FC3FF light) and `awaken:ward_grain`
+  (a chip tinted by the block's map colour), built on the client from one `ward_fx` event (mark, crumble, hold); sounds
+  `wilds.ward_mark`, `wilds.ward_crumble`, `wilds.ward_hold` (tools/art/specs/audio_wilds.py; sprites tools/art/specs/wilds.py).
+
+How you arrived (`wilds.arrival`, behind `core.api.ArrivalHooks`; config `features.wilds`):
+- Every tick the server reads each player's way of moving; a quarter second keeps its most telling way (in `Way` order:
+  STILL < WALK < SPRINT < SWIM < CLIMB < RIDE < AIRBORNE < POWER < ASCENT < BUILT) and 80 of them (20 s) are kept.
+  BUILT: standing on (any corner of the feet) or climbing a block the player placed in the last 10 minutes (last 512
+  placements). POWER: 2 s after a cast of a movement-slot power, a dash or Hover, and every tick Flight or Hover runs.
+  ASCENT is for the movement tiers to report. Nothing is saved.
+- A visit: stepping into a ward opens it with the window's verdict (no BUILT in the 20 s that led there); a BUILT sample
+  while inside spoils it; it ends after 5 s outside. Outside any ward the window is the verdict. No record: movement.
+- `awaken:arrived_by_movement` (loot condition, the chest's opener) gates a site's best roll. Route records and Flow XP
+  pay through `ArrivalHooks.byMovement` too when they land.
+
+The Horizon line (`core.api.HorizonHooks`; signal `HorizonSync`, `TrackerHud`):
+- A second HUD card under the Now tracker (or in its place), in the Horizon's pale sea-green (#9FE6D6), drawn through
+  `HudLook` (the calm FRAME card with the projected look): "△ Sealed Vault  ↗ 420 m". Its own client setting
+  `horizonLine`; nothing in the Now tracker (gates 45, requests 42, unspent points 55) can take it.
+- Sources list the sites near a player; each names a need (empty: on foot; `wings` for the sky). The line is the nearest
+  site the player can reach (`Reach` answers: the Flight power, a Frame with Jet Boots and essence; later the tiers),
+  a raised one (a spirit's whisper) first. A tease (the nearest site they can't reach: "Sky Platform · needs Wings",
+  dimmer, the need in amber) takes the line 15 s in every 5 minutes, staggered per player. Synced every 40 ticks when
+  changed; the client draws the compass.
+- Landmarks moved from the Now tracker (priority 30) to the Horizon line: the same reason-to-go levels, except a sky
+  platform waits for its need instead of level 20 (teased until then). Never inside a Hearth, never in a gate.
+
+Discovery that pays:
+- Biome discoveries: the first time an awakened player stands in a biome of a vanilla dimension (overworld, Nether,
+  End), `Progression.discover("biome/<ns>/<path>", 0.1)`, a toast with the biome's name, counter
+  `awaken:biomes_discovered`. Checked every 2 s per player, only when the biome underfoot changed.
+- `awaken:lairs_heard` counts each beast kind whose lair a player learns (`awaken:lair_heard/<beast>` stays the flag).
+- The counters that fed nothing now feed content (data/awaken/awaken/): Truths `i_go_where_the_map_ends` (8 landmarks),
+  `i_close_what_tears_open` (5 rifts), `i_follow_the_lights` (3 spirit caches + 3 groves), `i_read_what_they_left` (8 logs +
+  a door, from D), `when_the_sky_falls_i_am_there` (3 stars + a guardian); Titles Wayfarer (12 biomes), Cartographer (15
+  landmarks), Riftwarden (10 rifts), Starcatcher (5 stars), Star-Hunter (3 guardians), Grove-Keeper (8 groves), The
+  Spirits' Guest (5 caches), Anomalist (20 anomalies), Lorekeeper (12 logs), Keybearer (4 doors), Tracker (4 lairs heard);
+  eleven exploration directives (a new landmark, two new biomes, a rift, a star, a star's guardian, a procession, a grove,
+  two anomalies, a log, a door from D, a lair heard of).
+- Sky platforms have their own table `chests/precursor_sky`: charged essence cells, alloy, wind charges, phantom
+  membranes, feathers, slow falling, ender pearls, Jet Boots (4 in 105), a little diamond; never the ground vaults'
+  scrap, redstone, copper or other Frame modules. Its best rolls (by movement only): 2 Power Core Shards always, then a
+  1000-essence cell or Jet Boots (8 in 12). The vault, monolith and ocean lab tables each gain a best roll of 1 shard.
+
+Telemetry: `Progression.grantXp` records every grant (after scaling) in the player's `awaken:xp_ledger` (schema 1, saved,
+kept through death, not synced) by `XpSource`, and world XP again by its own source key. `/awaken xp` prints the split;
+with `playtestMode` each logout writes it to playtest.jsonl (`xp_sources`). XP banked before awakening shows as STORY.
+
+Tests: `wilds_ward_rules`, `wilds_arrival_history`, `wilds_discovery_pays`, `landmark_horizon_line`, and the Horizon box
+in the System's layout test.
 
 ### Gate Rig (gates, plan section 7 "Gate rooms: the room is the puzzle"; branch pack/gate-rig)
 

@@ -1,0 +1,16 @@
+{
+  "text": "Walk two biomes you've never set foot in.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:biomes_discovered",
+    "value": 2
+  },
+  "reward": {
+    "levels": 0.15
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": true,
+  "weight": 12
+}

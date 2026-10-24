@@ -1,0 +1,19 @@
+{
+  "text": "Learn where a beast makes its lair.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:lairs_heard",
+    "value": 1
+  },
+  "reward": {
+    "stat": "PER"
+  },
+  "expires_days": 3,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 6,
+  "requires": [
+    "level:3"
+  ]
+}

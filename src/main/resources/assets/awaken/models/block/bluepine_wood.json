@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/bluepine_log",
+    "side": "awaken:block/bluepine_log"
+  }
+}

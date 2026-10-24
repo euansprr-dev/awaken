@@ -1,0 +1,16 @@
+{
+  "text": "Close the next rift tear that opens near you.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:rifts_closed",
+    "value": 1
+  },
+  "reward": {
+    "stat": "VIT"
+  },
+  "expires_days": 2,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 8
+}

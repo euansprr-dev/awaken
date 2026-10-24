@@ -27,7 +27,7 @@ public enum LandmarkKind {
 
     public final String id;
     public final String display;
-    /** From this level the player has a reason to go (the Now line and the spirit's whisper wait for it). */
+    /** From this level the player has a reason to go (the Horizon line and the spirit's whisper wait for it). */
     public final int reasonLevel;
     /** The discovery toast's detail line. */
     public final String found;

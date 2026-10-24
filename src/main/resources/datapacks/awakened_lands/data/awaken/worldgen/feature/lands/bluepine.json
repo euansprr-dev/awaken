@@ -1,0 +1,81 @@
+{
+  "type": "minecraft:tree",
+  "below_trunk_provider": "minecraft:soil_beneath_tree",
+  "trunk_provider": {
+    "id": "awaken:bluepine_log",
+    "properties": {
+      "axis": "y"
+    }
+  },
+  "trunk_placer": {
+    "type": "awaken:limbed_trunk_placer",
+    "base_height": 11,
+    "height_rand_a": 3,
+    "height_rand_b": 2,
+    "width": 1,
+    "lean": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 0,
+      "max_inclusive": 1
+    },
+    "lean_start": 0.6,
+    "limbs": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 6,
+      "max_inclusive": 9
+    },
+    "limb_start": 0.25,
+    "limb_length": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 2,
+      "max_inclusive": 4
+    },
+    "limb_rise": 0.15,
+    "twig": 1,
+    "root_flare": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 0,
+      "max_inclusive": 1
+    },
+    "limb_mass": 0,
+    "crown_mass": -1,
+    "taper": 0.6,
+    "branch_provider": {
+      "id": "awaken:bluepine_wood",
+      "properties": {
+        "axis": "y"
+      }
+    }
+  },
+  "foliage_provider": {
+    "id": "awaken:bluepine_leaves",
+    "properties": {
+      "distance": "7",
+      "persistent": "false",
+      "waterlogged": "false"
+    }
+  },
+  "foliage_placer": {
+    "type": "awaken:cloud_foliage_placer",
+    "radius": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 2,
+      "max_inclusive": 3
+    },
+    "offset": 0,
+    "height": 1,
+    "depth": 0.5,
+    "hollow": 0.0,
+    "ragged": 0.2,
+    "hang": 0.3
+  },
+  "minimum_size": {
+    "type": "minecraft:two_layers_feature_size",
+    "limit": 1,
+    "lower_size": 0,
+    "upper_size": 1,
+    "min_clipped_height": 9
+  },
+  "decorators": [],
+  "ignore_vines": true
+}

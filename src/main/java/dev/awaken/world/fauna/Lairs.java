@@ -192,6 +192,9 @@ public final class Lairs {
     // ---- finding and hearing of lairs ---------------------------------------------------------------------------------
 
     /** The player stands in a lair: remembered as found, paid once. */
+    /** How many kinds of beast this player has learned the lair of (Titles and directives read it). */
+    public static final String LAIRS_HEARD = "awaken:lairs_heard";
+
     static boolean found(ServerPlayer p, LairRegistry.Entry e) {
         FaunaState s = p.getData(FaunaModule.STATE.get());
         FaunaState.KnownLair k = s.lair(e.key());
@@ -212,6 +215,7 @@ public final class Lairs {
     /** Remembers a lair for this player (the tracker reads it) and marks the beast's lair as heard of (the Codex). */
     static void know(ServerPlayer p, long key, String beast, BlockPos pos, boolean found) {
         p.setData(FaunaModule.STATE.get(), p.getData(FaunaModule.STATE.get()).withLair(new FaunaState.KnownLair(beast, key, pos, found)));
+        if (Progression.profile(p).counter("awaken:lair_heard/" + beast) == 0) Progression.count(p, LAIRS_HEARD); // beast kinds heard of
         Progression.setCounter(p, "awaken:lair_heard/" + beast, 1);
     }
 

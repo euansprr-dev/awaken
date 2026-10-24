@@ -23,8 +23,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * {@code /awaken landmark ...}: {@code why} (anyone: the landmarks around you, which you've reached, which one the Now
- * tracker suggests and why, the recent decisions), and for game masters {@code near} (the full list with ids within
+ * {@code /awaken landmark ...}: {@code why} (anyone: the landmarks around you, which you've reached, what the Horizon
+ * line shows and why, the recent decisions), and for game masters {@code near} (the full list with ids within
  * 1,500 blocks, spending more terrain samples), {@code markers} (resend your markers now), {@code check} (look around
  * for landmarks now), {@code goto <kind>} (stand south of the nearest one, facing it) and {@code forget} (forget the
  * landmarks you reached; discoveries stay paid).
@@ -75,7 +75,7 @@ final class LandmarkCommands {
                 m.places.clear();
                 m.whispered = "";
                 Landmarks.sync(p);
-                LandmarkNow.forget(p.getUUID());
+                LandmarkHorizon.forget(p.getUUID());
                 Scanning.forget(p.getUUID());
                 c.getSource().sendSuccess(() -> Component.literal("Forgot " + n + " landmark(s) you had reached."), false);
                 return n;
@@ -139,9 +139,9 @@ final class LandmarkCommands {
                     + " · " + why + (budget > 6 ? " · " + l.id() : "");
             c.getSource().sendSuccess(() -> Component.literal(line), false);
         }
-        var now = LandmarkNow.suggest(p);
-        c.getSource().sendSuccess(() -> Component.literal(now.isEmpty() ? "Now tracker: no landmark line (at home, in a gate, or nothing worth it yet)"
-                : "Now tracker: " + now.get(0).text().getString()), false);
+        var line = dev.awaken.core.api.HorizonHooks.collect(p);
+        c.getSource().sendSuccess(() -> Component.literal(line.isEmpty() ? "Horizon line: nothing (at home, in a gate, or nothing worth it yet)"
+                : "Horizon line: " + line.get().name() + (line.get().tease() ? " · needs " + line.get().need() + " (a tease)" : "")), false);
         int logged = 0;
         for (var e : DirectorLog.recent(p.getUUID(), 40)) {
             if (!e.system().equals("landmark")) continue;

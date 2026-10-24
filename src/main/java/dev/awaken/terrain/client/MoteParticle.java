@@ -15,12 +15,14 @@ import org.joml.Quaternionf;
  * <ul>
  * <li>a <b>glint</b>: sun caught on glass for a blink, a four-pointed star that swells and is gone, where it was born;</li>
  * <li>a <b>spark</b>: the fault's light breaking loose, rising fast and flickering, bending with the wind;</li>
- * <li>a <b>dust</b> mote: a grain of the split rock carried low on the wind (lit by the world, not glowing).</li>
+ * <li>a <b>dust</b> mote: a grain of the split rock carried low on the wind (lit by the world, not glowing);</li>
+ * <li>a <b>snow</b> fleck: blown sideways on the wind, fast in a gust, settling slowly (lit by the world);</li>
+ * <li>a <b>mist</b> wisp: a big soft breath of mist lying low on still water, drifting with the air and fading slowly.</li>
  * </ul>
  * Moves itself (no collision, nothing allocated per tick or frame).
  */
 final class MoteParticle extends net.minecraft.client.particle.SingleQuadParticle {
-    static final int GLINT = 0, SPARK = 1, DUST = 2;
+    static final int GLINT = 0, SPARK = 1, DUST = 2, SNOW = 3, MIST = 4;
 
     private final int kind;
     private final float baseSize, baseAlpha;
@@ -38,18 +40,25 @@ final class MoteParticle extends net.minecraft.client.particle.SingleQuadParticl
         this.baseSize = size;
         this.quadSize = kind == GLINT ? 0F : size;
         this.setColor(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F);
-        this.baseAlpha = kind == DUST ? 0.55F : 1F;
+        this.baseAlpha = switch (kind) {
+            case DUST -> 0.55F;
+            case SNOW -> 0.9F;
+            case MIST -> 0.1F + random.nextFloat() * 0.08F;
+            default -> 1F;
+        };
         this.alpha = 0F;
         this.lifetime = switch (kind) {
             case GLINT -> 6 + random.nextInt(9);
             case SPARK -> 30 + random.nextInt(40);
+            case SNOW -> 30 + random.nextInt(30);
+            case MIST -> 140 + random.nextInt(120);
             default -> 90 + random.nextInt(90);
         };
         this.phase = random.nextFloat() * Mth.TWO_PI;
         this.flicker = 0.3F + random.nextFloat() * 0.4F;
         this.roll = this.oRoll = kind == GLINT ? random.nextFloat() * 0.6F - 0.3F : random.nextFloat() * Mth.TWO_PI;
         this.yd = kind == SPARK ? 0.035 + random.nextFloat() * 0.05 : 0;
-        this.light = kind == DUST ? readLight() : LightCoordsUtil.FULL_BRIGHT;
+        this.light = kind == GLINT || kind == SPARK ? LightCoordsUtil.FULL_BRIGHT : readLight();
     }
 
     @Override
@@ -97,6 +106,34 @@ final class MoteParticle extends net.minecraft.client.particle.SingleQuadParticl
             float inOut = Math.min(1F, Math.min(life * 10F, (1F - life) * 3F));
             alpha = baseAlpha * inOut * (1F - flicker + flicker * Mth.abs(Mth.sin(phase * 2.9F)));
             quadSize = baseSize * (0.6F + 0.4F * (1F - life));
+            return;
+        }
+        if (kind == SNOW) {
+            // blown sideways: toward the wind's speed fast, sinking slowly, a flutter across the wind
+            float speed = 0.08F + 0.35F * strength;
+            xd += (dirX * speed - xd) * 0.2;
+            zd += (dirZ * speed - zd) * 0.2;
+            x += xd - dirZ * Mth.sin(phase * 1.9F) * 0.015;
+            y += -0.015 - 0.01 * Mth.sin(phase * 0.7F);
+            z += zd + dirX * Mth.sin(phase * 1.9F) * 0.015;
+            roll += 0.06F;
+            alpha = baseAlpha * Math.min(1F, Math.min(life * 8F, (1F - life) * 5F));
+            if ((age & 3) == 0) light = readLight();
+            return;
+        }
+        if (kind == MIST) {
+            // lying low on the water: barely moving with the air, swelling as it fades in and thinning as it goes
+            float speed = 0.004F + 0.02F * strength;
+            xd += (dirX * speed - xd) * 0.02;
+            zd += (dirZ * speed - zd) * 0.02;
+            x += xd;
+            y += Mth.sin(phase * 0.21F) * 0.002;
+            z += zd;
+            roll += 0.002F;
+            float s = Mth.sin(life * Mth.PI);
+            alpha = baseAlpha * s;
+            quadSize = baseSize * (0.8F + 0.3F * life);
+            if ((age & 15) == 0) light = readLight();
             return;
         }
         // dust: carried low on the wind, rising and falling a little

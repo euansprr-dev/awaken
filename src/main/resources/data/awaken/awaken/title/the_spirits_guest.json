@@ -1,0 +1,15 @@
+{
+  "name": "The Spirits' Guest",
+  "description": "Followed five processions to their caches.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:spirit_caches",
+    "value": 5
+  },
+  "perks": [
+    {
+      "id": "awaken:cord_length",
+      "amount": 8
+    }
+  ]
+}

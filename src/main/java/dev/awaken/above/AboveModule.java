@@ -26,6 +26,10 @@ public final class AboveModule {
         dev.awaken.above.ruin.RuinBlocks.init(modBus);
         AboveItems.init(modBus);
         AboveSounds.init();
+        // the Horizon line: a Frame with Jet Boots (and essence to burn) takes you to the sky sites
+        dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS)
+                && dev.awaken.above.frame.FrameModules.has(dev.awaken.above.frame.FrameModules.mask(p), dev.awaken.above.frame.FrameModule.JET_BOOTS)
+                && dev.awaken.above.power.EssenceCellItem.carried(p) > 0);
         Above.initAttachments(modBus);
         AboveWorldgen.init(modBus);
         modBus.addListener(AboveNet::register);

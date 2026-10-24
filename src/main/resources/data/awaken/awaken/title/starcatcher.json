@@ -1,0 +1,15 @@
+{
+  "name": "Starcatcher",
+  "description": "Opened five fallen stars.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:stars_opened",
+    "value": 5
+  },
+  "perks": [
+    {
+      "id": "awaken:loot_bonus",
+      "amount": 0.05
+    }
+  ]
+}

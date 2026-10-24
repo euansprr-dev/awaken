@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "awaken:block/weepwood_log",
+    "side": "awaken:block/weepwood_log"
+  }
+}

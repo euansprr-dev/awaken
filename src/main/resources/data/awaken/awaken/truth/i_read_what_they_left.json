@@ -1,0 +1,24 @@
+{
+  "text": "I read what they left behind.",
+  "hint": "Read eight Precursor logs and open a sealed door.",
+  "condition": {
+    "type": "all",
+    "of": [
+      {
+        "type": "counter",
+        "counter": "awaken:precursor_logs_read",
+        "value": 8
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:precursor_doors_opened",
+        "value": 1
+      }
+    ]
+  },
+  "reward": {
+    "stat": "INT",
+    "stat_amount": 2
+  },
+  "min_rank": "D"
+}

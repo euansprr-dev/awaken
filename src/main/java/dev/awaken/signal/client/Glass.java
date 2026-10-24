@@ -21,6 +21,8 @@ public final class Glass {
     public static final int GOOD = 0x8FF0C0;
     public static final int VIOLET = 0xB48CFF;
     public static final int LANTERN = 0xF2A541;
+    /** The Horizon line's light: a pale sea-green, the far side of the System's blue. */
+    public static final int HORIZON = 0x9FE6D6;
 
     /** Colour with alpha in [0,1]. */
     public static int a(int rgb, float alpha) {

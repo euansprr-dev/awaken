@@ -7,6 +7,8 @@ themselves stay even, and the gusts you hear are the game's.
   amb_lands_wind_high  deep wind high up: a slow-moving low howl, a rumble, a faint whistle in the gusts
   amb_glass_steppe     Glass Steppe's biome bed (minecraft:audio/ambient_sounds loop): warm wind, dry grass, glass ticking
   amb_shattered_highlands  Shattered Highlands' bed: high cold wind, the faults' low hum, rock crackling
+  amb_frost_spires     Frost Spires' bed: a thin whistling wind, snow hissing across the crust, ice chiming and creaking
+  amb_mirror_marsh     Mirror Marsh's bed: a near silence over still water, a low drone, drips, a far call now and then
 """
 import numpy as np
 
@@ -122,12 +124,73 @@ def shattered_highlands(seed):
     return K.loop_seamless(K.lowpass(x, 8000, 2), 2.0)
 
 
+def frost_spires(seed):
+    """Frost Spires: a thin wind whistling through the spires (a narrow band sliding high), snow hissing across the
+    crust in the gusts, and the crystals answering: high ice chimes, sparse and far apart, and the odd deep creak of
+    ice settling."""
+    L = 14.0
+    n = K.ns(L)
+    r = K.rng(seed)
+    gust = 0.5 + 0.5 * K.smooth_noise(n, 0.18, seed + 1)
+    cen = 1150 * 2 ** (0.5 * K.smooth_noise(n, 0.22, seed + 2))
+    whistle = _norm(_sweep(K.noise(n, "pink", seed + 3), cen, 7.0)) * gust ** 1.5
+    body = _norm(K.lowpass(K.noise(n, "pink", seed + 4), 380, 2)) * (0.5 + 0.5 * gust)
+    hiss = _norm(K.bandpass(K.noise(n, "white", seed + 5), 6500, 0.9)) * gust ** 2
+    chimes = np.zeros(n)
+    notes = [K.hz(K.midi(m)) for m in ("F#6", "A6", "C#7", "E7", "F#7", "A7")]
+    for k in range(14):
+        t0 = r.uniform(0, L - 2.0)
+        f = notes[int(r.integers(len(notes)))] * 2 ** (r.normal(0, 6) / 1200)
+        g = K.glass(f, K.ns(2.0), bright=0.25, t60=r.uniform(1.0, 2.0), seed=seed + 40 + k, hit=r.uniform(0.2, 0.8))
+        s = K.ns(t0)
+        chimes[s:s + len(g)] += g[: n - s] * r.uniform(0.15, 1.0) ** 2
+    creak = np.zeros(n)
+    for k in range(3):
+        t0 = r.uniform(0, L - 1.2)
+        g = K.bandnoise(K.ns(0.9), r.uniform(90, 160), 6.0, seed + 60 + k) * K.swell(K.ns(0.9), 0.3, 2.0)
+        s = K.ns(t0)
+        creak[s:s + len(g)] += g[: n - s] * r.uniform(0.4, 1.0)
+    x = 0.3 * whistle + 0.36 * body + 0.14 * hiss + 0.14 * _norm(chimes) + 0.06 * _norm(creak)
+    return K.loop_seamless(K.lowpass(x, 10000, 2), 2.0)
+
+
+def mirror_marsh(seed):
+    """Mirror Marsh: deliberately still. A low soft drone over the water (two near tones, breathing), the faintest air,
+    slow drips into still water now and then, and once or twice a far hollow call from across the marsh."""
+    L = 16.0
+    n = K.ns(L)
+    r = K.rng(seed)
+    t = K.tvec(n)
+    f1, f2 = 73.0, 73.0 + 1.0 / L
+    drone = np.sin(2 * np.pi * f1 * t) + 0.7 * np.sin(2 * np.pi * f2 * t) + 0.18 * np.sin(2 * np.pi * 219.0 * t + 0.4)
+    drone *= 0.6 + 0.4 * (0.5 + 0.5 * K.smooth_noise(n, 0.08, seed + 1))
+    air = _norm(K.lowpass(K.noise(n, "pink", seed + 2), 260, 2)) * (0.5 + 0.5 * K.smooth_noise(n, 0.1, seed + 3))
+    drips = np.zeros(n)
+    for k in range(9):
+        t0 = r.uniform(0, L - 0.6)
+        f = r.uniform(900, 1700)
+        g = K.sine(K.glide(K.ns(0.25), f, f * 1.6), K.ns(0.25)) * K.perc(K.ns(0.25), 0.001, 0.12)
+        s = K.ns(t0)
+        drips[s:s + len(g)] += g[: n - s] * r.uniform(0.3, 1.0)
+    calls = np.zeros(n)
+    for k in range(2):
+        t0 = r.uniform(1.0, L - 2.5)
+        f = r.uniform(310, 380)
+        g = K.flute(f, K.ns(1.4), breath=0.5, seed=seed + 70 + k) * K.adsr(K.ns(1.4), 0.25, 0.3, 0.6, 0.6)
+        s = K.ns(t0)
+        calls[s:s + len(g)] += g[: n - s]
+    x = 0.4 * _norm(drone) + 0.3 * air + 0.16 * _norm(drips) + 0.14 * _norm(K.lowpass(calls, 1800, 2))
+    return K.loop_seamless(K.lowpass(x, 6000, 2), 2.5)
+
+
 def sounds(Snd):
     return [
         Snd("amb_lands_rustle", rustle, rms=-28.0, seed=41, mono=True),
         Snd("amb_lands_wind_high", wind_high, rms=-28.0, seed=42, mono=True),
         Snd("amb_glass_steppe", glass_steppe, rms=-29.0, seed=43, mono=True),
         Snd("amb_shattered_highlands", shattered_highlands, rms=-28.0, seed=44, mono=True),
+        Snd("amb_frost_spires", frost_spires, rms=-29.0, seed=45, mono=True),
+        Snd("amb_mirror_marsh", mirror_marsh, rms=-30.0, seed=46, mono=True),
     ]
 
 
@@ -137,6 +200,8 @@ def events(Evt):
         Evt("amb.lands_wind_high", "Wind blows high", files=["amb_lands_wind_high"], folder="terrain"),
         Evt("amb.glass_steppe", "Glass ticks in the heat", files=["amb_glass_steppe"], folder="terrain"),
         Evt("amb.shattered_highlands", "The faults hum", files=["amb_shattered_highlands"], folder="terrain"),
+        Evt("amb.frost_spires", "Ice chimes in the wind", files=["amb_frost_spires"], folder="terrain"),
+        Evt("amb.mirror_marsh", "Still water drips", files=["amb_mirror_marsh"], folder="terrain"),
     ]
 
 

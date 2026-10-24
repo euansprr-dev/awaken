@@ -1,0 +1,29 @@
+{
+  "wilds.ward_mark": {
+    "subtitle": "subtitles.awaken.wilds.ward_mark",
+    "sounds": [
+      {
+        "name": "awaken:wilds_ward_mark",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "wilds.ward_crumble": {
+    "subtitle": "subtitles.awaken.wilds.ward_crumble",
+    "sounds": [
+      {
+        "name": "awaken:wilds_ward_crumble",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "wilds.ward_hold": {
+    "subtitle": "subtitles.awaken.wilds.ward_hold",
+    "sounds": [
+      {
+        "name": "awaken:wilds_ward_hold",
+        "attenuation_distance": 16
+      }
+    ]
+  }
+}

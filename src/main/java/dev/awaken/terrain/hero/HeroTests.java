@@ -3,6 +3,7 @@ package dev.awaken.terrain.hero;
 import dev.awaken.Awaken;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.terrain.LandsBlocks;
+import dev.awaken.terrain.mire.MireBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -13,6 +14,7 @@ import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
 import net.minecraft.world.level.block.Block;
@@ -32,8 +34,12 @@ import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
-/** The hero trees: their blueprints and what it costs to build them, a full build in its box, and their sites. */
+/**
+ * The hero trees: their blueprints and what it costs to build them, a full build in its box (the Matriarch in shallow
+ * water, never hanging a tendril into it), and their sites.
+ */
 public final class HeroTests {
     private HeroTests() {}
 
@@ -56,17 +62,30 @@ public final class HeroTests {
                     String what = tree.getSerializedName() + " seed " + seed + " (" + s + ")";
                     h.assertTrue(s.loose == 0, what + ": loose leaves left in the blueprint");
                     h.assertTrue(s.disconnected == 0, what + ": " + s.disconnected + " cells not joined to the ground");
-                    if (tree == HeroTree.ELDER_COLOSSUS) {
-                        h.assertTrue(s.top >= 55 && s.top <= 100, what + " top " + s.top); // an umbrella: the crown top sits near the trunk's height
-                        h.assertTrue(s.trunkTop < s.top - 4, what + ": the trunk (" + s.trunkTop + ") ends inside the crown (" + s.top + ")");
-                        h.assertTrue(s.width12 >= 6 && s.width12 <= 10, what + " trunk " + s.width12 + " across");
-                        h.assertTrue(s.rootReach >= 9 && s.rootReach <= 20, what + " roots reach " + s.rootReach);
-                        h.assertTrue(s.leafReach >= 24 && s.leafReach < bp.extent, what + " canopy reaches " + s.leafReach);
-                        h.assertTrue(s.leaves >= 8000 && s.gold > 0 && s.gold < s.leaves, what + " leaves " + s.leaves + ", gold " + s.gold);
-                    } else {
-                        h.assertTrue(s.trunkTop >= 40 && s.trunkTop <= 55, what + " trunk top " + s.trunkTop);
-                        h.assertTrue(s.leafReach >= 9 && s.leafReach <= bp.extent, what + " crown reaches " + s.leafReach);
-                        h.assertTrue(s.vines >= 60 && s.tips >= 15, what + " vines " + s.vines + " (" + s.tips + " tips)");
+                    switch (tree) {
+                        case ELDER_COLOSSUS -> {
+                            h.assertTrue(s.top >= 55 && s.top <= 100, what + " top " + s.top); // an umbrella: the crown top sits near the trunk's height
+                            h.assertTrue(s.trunkTop < s.top - 4, what + ": the trunk (" + s.trunkTop + ") ends inside the crown (" + s.top + ")");
+                            h.assertTrue(s.width12 >= 6 && s.width12 <= 10, what + " trunk " + s.width12 + " across");
+                            h.assertTrue(s.rootReach >= 9 && s.rootReach <= 20, what + " roots reach " + s.rootReach);
+                            h.assertTrue(s.leafReach >= 24 && s.leafReach < bp.extent, what + " canopy reaches " + s.leafReach);
+                            h.assertTrue(s.leaves >= 8000 && s.gold > 0 && s.gold < s.leaves, what + " leaves " + s.leaves + ", gold " + s.gold);
+                        }
+                        case LUMEN_SPIRE -> {
+                            h.assertTrue(s.trunkTop >= 40 && s.trunkTop <= 55, what + " trunk top " + s.trunkTop);
+                            h.assertTrue(s.leafReach >= 9 && s.leafReach <= bp.extent, what + " crown reaches " + s.leafReach);
+                            h.assertTrue(s.vines >= 60 && s.tips >= 15, what + " vines " + s.vines + " (" + s.tips + " tips)");
+                        }
+                        case WEEPING_MATRIARCH -> {
+                            // low and wide: a weeping dome about 40 across over a short trunk, a cage of prop roots under it
+                            h.assertTrue(s.trunkTop >= 16 && s.trunkTop <= 32, what + " trunk top " + s.trunkTop);
+                            h.assertTrue(s.top <= 40, what + " top " + s.top);
+                            h.assertTrue(s.width12 >= 4 && s.width12 <= 9, what + " trunk " + s.width12 + " across");
+                            h.assertTrue(s.rootReach >= 6 && s.rootReach <= 13, what + " prop roots reach " + s.rootReach);
+                            h.assertTrue(s.leafReach >= 16 && s.leafReach < bp.extent, what + " crown reaches " + s.leafReach);
+                            h.assertTrue(s.leafReach * 2 > s.top, what + " is wider (" + s.leafReach * 2 + ") than tall (" + s.top + ")");
+                            h.assertTrue(s.vines >= 300 && s.tips >= 60, what + " tendrils " + s.vines + " (" + s.tips + " tips)");
+                        }
                     }
                     h.assertTrue(s.persistent * 5 <= s.leaves, what + ": " + s.persistent + " of " + s.leaves + " leaves too far from wood");
                     if (seed == 1) log.append(String.format(" %s: top %d, %d across, roots %d, canopy %d, %d leaves (%d persistent), %d vines, %d cells;",
@@ -102,8 +121,13 @@ public final class HeroTests {
                             int cx0 = origin.getX() >> 4, cz0 = origin.getZ() >> 4;
                             for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.setChunkForced(cx0 + dx, cz0 + dz, true);
                             for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) level.getChunk(cx0 + dx, cz0 + dz);
-                            // a slope under the Colossus's roots (they must wall down to it), level ground under the Spire
-                            ground(level, origin, tree == HeroTree.ELDER_COLOSSUS ? 20 : 12, tree == HeroTree.ELDER_COLOSSUS);
+                            // a slope under the Colossus's roots (they must wall down to it), level ground under the Spire, shallow
+                            // water under the Matriarch (its foot is the first block over the ground, as its site search gives)
+                            switch (tree) {
+                                case ELDER_COLOSSUS -> ground(level, origin, 20, true);
+                                case LUMEN_SPIRE -> ground(level, origin, 12, false);
+                                case WEEPING_MATRIARCH -> pond(level, origin, 30, 2);
+                            }
                             HeroPiece piece = pieces[n] = new HeroPiece(tree, origin, 424242L); // builds and caches the blueprint
                             BoundingBox box = piece.getBoundingBox();
                             int chunks = 0;
@@ -132,10 +156,27 @@ public final class HeroTests {
                         }
                         for (int n = 0; n < trees.length; n++) {
                             HeroTree tree = trees[n];
-                            int r = tree == HeroTree.ELDER_COLOSSUS ? 44 : 26;
+                            int r = switch (tree) {
+                                case ELDER_COLOSSUS -> 44;
+                                case LUMEN_SPIRE -> 26;
+                                case WEEPING_MATRIARCH -> 30;
+                            };
                             Check c = check(level, origins[n], r, pieces[n].getBoundingBox());
                             String what = tree.getSerializedName();
                             h.assertTrue(placedBy[n] > (tree == HeroTree.ELDER_COLOSSUS ? 6000 : 1500), what + " built " + placedBy[n] + " blocks");
+                            if (tree == HeroTree.WEEPING_MATRIARCH) {
+                                // the pond's water is the two layers over the peat: a tendril there would have replaced it
+                                int wet = 0;
+                                BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+                                for (int x = -r; x <= r; x++) {
+                                    for (int z = -r; z <= r; z++) {
+                                        for (int y = 0; y < 2; y++) if (level.getBlockState(m.setWithOffset(origins[n], x, y, z)).is(MireBlocks.WEEPWOOD_TENDRILS.get())) wet++;
+                                    }
+                                }
+                                h.assertTrue(wet == 0, what + ": " + wet + " tendrils hang into the water");
+                                h.assertTrue(c.strands >= 200, what + " hangs a curtain of " + c.strands + " tendrils");
+                                h.assertTrue(c.floating >= 3, what + ": " + c.floating + " moonblooms float under its crown");
+                            }
                             h.assertTrue(c.outside == 0, what + ": " + c.outside + " blocks outside its box (first " + c.firstOutside + ")");
                             h.assertTrue(c.loose == 0, what + ": " + c.loose + " blocks hang loose (first " + c.firstLoose + ")");
                             h.assertTrue(c.decaying == 0, what + ": " + c.decaying + " leaves born decaying");
@@ -149,8 +190,9 @@ public final class HeroTests {
                     .thenSucceed();
         });
 
-        // Sites on a real overworld: the search finds level, dry ground in the right biome (here the archetypes' forests:
-        // the GameTest world has no Lithostitched, so nothing places the Awakened biomes), and rare enough.
+        // Sites on a real overworld: the search finds level ground in the right biome (here the archetypes: forests, and the
+        // swamps for the Matriarch; the GameTest world has no Lithostitched, so nothing places the Awakened biomes), dry
+        // or, for a tree that stands in water, shallow enough.
         AwakenTests.register("terrain_hero_sites", 400, h -> {
             ServerLevel level = h.getLevel();
             var access = level.registryAccess();
@@ -168,26 +210,33 @@ public final class HeroTests {
                 var spread = (RandomSpreadStructurePlacement) sets.getOrThrow(net.minecraft.resources.ResourceKey.create(Registries.STRUCTURE_SET,
                         Awaken.id(tree.getSerializedName()))).value().placement();
                 h.assertTrue(spread.spacing() * 16 >= 300 && spread.spacing() * 16 <= 500, tree + ": one candidate per " + spread.spacing() * 16 + " blocks");
+                Predicate<Holder<Biome>> valid = tree == HeroTree.WEEPING_MATRIARCH
+                        ? b -> b.is(Biomes.SWAMP) || b.is(Biomes.MANGROVE_SWAMP) : b -> b.is(BiomeTags.IS_FOREST);
+                // candidates whose region has the biome (swamps are rare on one vanilla seed's sample: the search is what's tested)
                 int found = 0, candidates = 0;
-                for (int i = 0; i < 6; i++) {
-                    for (int j = 0; j < 6; j++) {
+                for (int i = -15; i <= 15 && candidates < 36; i++) {
+                    for (int j = -15; j <= 15 && candidates < 36; j++) {
                         ChunkPos chunk = spread.getPotentialStructureChunk(seed, i * spread.spacing(), j * spread.spacing());
+                        Holder<Biome> here = resolver.getNoiseBiome(QuartPos.fromBlock(chunk.getMiddleBlockX()), QuartPos.fromBlock(gen.getSeaLevel()),
+                                QuartPos.fromBlock(chunk.getMiddleBlockZ()));
+                        if (!valid.test(here)) continue;
                         candidates++;
                         var ctx = new Structure.GenerationContext(access, gen, source, sampler, random, level.getServer().getStructureTemplateManager(),
-                                seed, chunk, level, b -> b.is(BiomeTags.IS_FOREST));
+                                seed, chunk, level, valid);
                         BlockPos at = HeroStructure.findSite(ctx, tree);
                         if (at == null) continue;
                         found++;
                         Holder<Biome> b = resolver.getNoiseBiome(QuartPos.fromBlock(at.getX()), QuartPos.fromBlock(at.getY()), QuartPos.fromBlock(at.getZ()));
-                        h.assertTrue(b.is(BiomeTags.IS_FOREST), tree + " site in " + b.getRegisteredName());
+                        h.assertTrue(valid.test(b), tree + " site in " + b.getRegisteredName());
                         int top = gen.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.WORLD_SURFACE_WG, level, random);
                         int floor = gen.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.OCEAN_FLOOR_WG, level, random);
-                        h.assertTrue(top == floor && top > gen.getSeaLevel(), tree + " site on dry land at " + at.toShortString());
-                        h.assertTrue(at.getY() <= top + 1 && at.getY() >= top + 1 - tree.maxStep, tree + " foot at the ground: " + at.getY() + " over " + top);
+                        h.assertTrue(HeroStructure.standing(tree, top, floor, gen.getSeaLevel()), tree + " site on ground it stands on at " + at.toShortString()
+                                + " (top " + top + ", ground " + floor + ")");
+                        h.assertTrue(at.getY() <= floor + 1 && at.getY() >= floor + 1 - tree.maxStep, tree + " foot at the ground: " + at.getY() + " over " + floor);
                     }
                 }
                 log.append(String.format(" %s: %d of %d candidates;", tree.getSerializedName(), found, candidates));
-                h.assertTrue(found >= 1, tree + " finds sites in forests (" + found + " of " + candidates + ")");
+                h.assertTrue(found >= 1, tree + " finds sites in its archetypes (" + found + " of " + candidates + ")");
             }
             Awaken.LOG.info("[terrain] hero sites:{}", log);
             h.succeed();
@@ -197,11 +246,13 @@ public final class HeroTests {
     /** Measurements of a blueprint. */
     static final class Shape {
         int top, trunkTop, width12, rootReach, leafReach, leaves, persistent, gold, vines, tips, loose, cells, disconnected;
+        /** The first cell not joined to the ground, and its code (for the failure message). */
+        String firstDisconnected = "";
 
         @Override
         public String toString() {
             return "top " + top + ", trunk " + trunkTop + ", " + width12 + " across, roots " + rootReach + ", canopy " + leafReach + ", " + leaves + " leaves ("
-                    + gold + " gold, " + persistent + " persistent), " + vines + " vines, " + cells + " cells";
+                    + gold + " gold, " + persistent + " persistent), " + vines + " vines, " + cells + " cells" + firstDisconnected;
         }
     }
 
@@ -257,7 +308,11 @@ public final class HeroTests {
                 queue[tail++] = j;
             }
         }
-        for (int i = 0; i < n; i++) if (bp.cells[i] != Blueprint.EMPTY && !seen[i]) s.disconnected++;
+        for (int i = 0; i < n; i++) {
+            if (bp.cells[i] == Blueprint.EMPTY || seen[i] || s.disconnected++ > 0) continue;
+            int z = i % bp.sx - bp.extent, x = (i / bp.sx) % bp.sx - bp.extent, y = i / sxz + bp.minY;
+            s.firstDisconnected = ", first not joined: code " + bp.cells[i] + " at " + x + "," + y + "," + z;
+        }
         return s;
     }
 
@@ -270,6 +325,22 @@ public final class HeroTests {
             for (int z = -r; z <= r; z++) {
                 for (int y = -14; y < top - 1; y++) level.setBlock(m.setWithOffset(origin, x, y, z), Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
                 level.setBlock(m.setWithOffset(origin, x, top - 1, z), Blocks.GRASS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS);
+            }
+        }
+    }
+
+    /** Mirepeat over dirt, its top at origin.y - 1, under {@code depth} blocks of still water walled in at the rim. */
+    static void pond(ServerLevel level, BlockPos origin, int r, int depth) {
+        wipe(level, origin, r);
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int x = -r; x <= r; x++) {
+            for (int z = -r; z <= r; z++) {
+                boolean rim = Math.abs(x) == r || Math.abs(z) == r;
+                for (int y = -14; y < -1; y++) level.setBlock(m.setWithOffset(origin, x, y, z), Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
+                level.setBlock(m.setWithOffset(origin, x, -1, z), MireBlocks.MIREPEAT.get().defaultBlockState(), Block.UPDATE_CLIENTS);
+                for (int y = 0; y < depth; y++) {
+                    level.setBlock(m.setWithOffset(origin, x, y, z), rim ? Blocks.DIRT.defaultBlockState() : Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
             }
         }
     }
@@ -287,12 +358,16 @@ public final class HeroTests {
     }
 
     static final class Check {
-        int outside, loose, decaying, grounded;
+        int outside, loose, decaying, grounded, strands, floating;
         BlockPos firstOutside, firstLoose;
     }
 
+    private static boolean strand(BlockState s) {
+        return s.is(LandsBlocks.LUMEN_VINES.get()) || s.is(MireBlocks.WEEPWOOD_TENDRILS.get());
+    }
+
     private static boolean material(BlockState s) {
-        return s.is(BlockTags.LOGS) || s.is(BlockTags.LEAVES) || s.is(LandsBlocks.LUMEN_VINES.get());
+        return s.is(BlockTags.LOGS) || s.is(BlockTags.LEAVES) || strand(s);
     }
 
     /** Walks the built tree face to face from the wood that rests on the ground; checks the box and the leaves. */
@@ -306,14 +381,17 @@ public final class HeroTests {
             for (int x = -r; x <= r; x++) {
                 for (int z = -r; z <= r; z++) {
                     BlockState s = level.getBlockState(m.setWithOffset(origin, x, y, z));
+                    if (s.is(MireBlocks.MOONBLOOM.get())) c.floating++;
                     if (!material(s)) continue;
                     BlockPos p = m.immutable();
                     tree.add(p);
                     if (!box.isInside(p) && c.outside++ == 0) c.firstOutside = p.subtract(origin);
+                    if (strand(s)) c.strands++;
                     if (s.is(BlockTags.LEAVES) && s.getValue(LeavesBlock.DISTANCE) >= LeavesBlock.DECAY_DISTANCE && !s.getValue(LeavesBlock.PERSISTENT)) c.decaying++;
                     if (s.is(BlockTags.LOGS)) {
                         BlockState below = level.getBlockState(p.below());
-                        if (below.is(Blocks.DIRT) || below.is(Blocks.GRASS_BLOCK) || below.is(Blocks.PODZOL) || below.is(Blocks.MOSS_BLOCK)) {
+                        if (below.is(Blocks.DIRT) || below.is(Blocks.GRASS_BLOCK) || below.is(Blocks.PODZOL) || below.is(Blocks.MOSS_BLOCK)
+                                || below.is(MireBlocks.MIREPEAT.get())) {
                             queue.add(p);
                             columns.add(((long) p.getX() << 32) | (p.getZ() & 0xffffffffL));
                         }

@@ -1,4 +1,4 @@
-package dev.awaken.terrain.glass;
+package dev.awaken.terrain.block;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,13 +11,14 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * Sunshard clusters: little slivers of glass standing in the steppe grass (cross model, emissive tips). They stand on
- * any soil, sand or sturdy top, like a plant, and pop off when what they stand on goes.
+ * Little slivers of crystal standing in the ground like plants (cross model, emissive tips): the steppe's sunshard
+ * clusters and the Frost Spires' frostspar. They stand on any soil, sand, snow or sturdy top and pop off when what they
+ * stand on goes.
  */
-public class ShardClusterBlock extends VegetationBlock {
+public class CrystalClusterBlock extends VegetationBlock {
     private static final VoxelShape SHAPE = Block.column(12.0, 0.0, 12.0);
 
-    public ShardClusterBlock(Properties properties) {
+    public CrystalClusterBlock(Properties properties) {
         super(properties);
     }
 
