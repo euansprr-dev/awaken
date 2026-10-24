@@ -339,8 +339,8 @@ def hold(name, base, jitters, period, note):
 
 # ---------------------------------------------------------------------------------------------------------------------
 # The nine families. Each cast is short: the wind-up is two or three ticks because the effect leaves at the start of
-# the clip (the server sends the effect and the pose together); the release lands by tick 3-5; the rest is
-# follow-through and the library's fade back.
+# the clip (the server sends the effect and the pose together); the release lands by tick 3-5 and is held a few ticks
+# (a pose on screen for a tick or two never reads); then the library's fade back.
 
 # Kinetic: a grounded punch. Wide stance, the chest coils away from the target, then the hips and chest snap round,
 # the fist drives straight at the target and the off fist chambers at the hip.
@@ -349,7 +349,7 @@ K_STRIKE = pose(lean=14, shift=1.5, twist=-26, ra=(-94, -6, 0), ra_aim=True, la=
 K_FOLLOW = pose(K_STRIKE, lean=11, twist=-20, ra=(-90, -6, 0))
 K_SETTLE = pose(K_STRIKE, lean=6, shift=0.5, twist=-10, ra=(-62, -4, 0), ra_aim=False, la=(14, 0, -8), rl=(16, 0, 6), ll=(-12, 0, -6))
 cast("kinetic", [(0, NEUTRAL, "linear"), (2, K_LOAD, "easeoutquad"), (4, K_STRIKE, "easeoutexpo"),
-                 (6, K_FOLLOW, "easeinoutsine"), (7, K_SETTLE, "easeinoutsine")], 10, 2,
+                 (7, K_FOLLOW, "easeinoutsine"), (9, K_SETTLE, "easeinoutsine")], 12, 2,
      "grounded punch: coil, hips and chest snap round, straight fist, off fist chambered")
 K_WIND = pose(K_LOAD, lean=-7, twist=38, ra=(44, 0, 16), la=(-70, -30, 0), rl=(22, 0, 9), ll=(-16, 0, -9))
 hold("hold_kinetic", K_WIND, [nudge(K_WIND, twist=2, ra=(3, 0, 0)), nudge(K_WIND, twist=-1.5, ra=(-2, 0, 1))], 6,
@@ -362,7 +362,7 @@ V_BURST = pose(lean=40, shift=2, ra=(58, 0, 20), la=(58, 0, -20), rl=(34, 0, 3),
 V_CARRY = pose(V_BURST, lean=34, ra=(50, 0, 18), la=(50, 0, -18), rl=(26, 0, 3), ll=(-22, 0, -3))
 V_SETTLE = pose(lean=16, shift=0.5, ra=(24, 0, 10), la=(24, 0, -10), rl=(10, 0, 2), ll=(-8, 0, -2))
 cast("velocity", [(0, NEUTRAL, "linear"), (1, V_LOAD, "easeoutquad"), (3, V_BURST, "easeoutexpo"),
-                  (6, V_CARRY, "easeinoutsine"), (7, V_SETTLE, "easeinoutsine")], 10, 1,
+                  (7, V_CARRY, "easeinoutsine"), (9, V_SETTLE, "easeinoutsine")], 12, 1,
      "sprinter's burst: hard forward lean, arms swept back, long stride")
 hold("hold_velocity", V_LOAD, [nudge(V_LOAD, lean=2, rise=0.3), nudge(V_LOAD, lean=-1)], 6, "crouched to go")
 
@@ -386,7 +386,7 @@ E_THRUST = pose(lean=14, shift=1.5, ra=(-92, -12, 0), la=(-92, 12, 0), ra_aim=Tr
 E_HOLD = pose(E_THRUST, lean=11, ra=(-90, -12, 0), la=(-90, 12, 0))
 E_SETTLE = pose(E_THRUST, lean=5, shift=0.5, ra=(-62, -14, 0), la=(-62, 14, 0), ra_aim=False, la_aim=False, rl=(12, 0, 6), ll=(-8, 0, -6))
 cast("energy", [(0, NEUTRAL, "linear"), (3, E_GATHER, "easeoutquad"), (5, E_THRUST, "easeoutexpo"),
-                (8, E_HOLD, "easeinoutsine"), (9, E_SETTLE, "easeinoutsine")], 12, 3,
+                (9, E_HOLD, "easeinoutsine"), (10, E_SETTLE, "easeinoutsine")], 13, 3,
      "gather cupped at the hip, both palms thrust out along the aim")
 E_CHARGE = pose(E_GATHER, lean=-6, twist=34, ra=(30, 0, 10), la=(-30, 54, 0), rl=(16, 0, 10), ll=(-8, 0, -10))
 hold("hold_energy", E_CHARGE, [nudge(E_CHARGE, ra=(3, 2, 0), la=(-3, -2, 0), rise=0.3), nudge(E_CHARGE, ra=(-2, -1, 0), la=(2, 1, 0))], 4,
