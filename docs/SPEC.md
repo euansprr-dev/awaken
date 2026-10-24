@@ -273,6 +273,9 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.core.Forces` — force/environment tags on entities and damage.
 - `dev.awaken.core.PlayDays` — current play-day counter.
 - `dev.awaken.mobs.Mobs` — `spawnScaled(ServerLevel, EntityType, pos, level, modifiers)`, rosters by theme.
+- `dev.awaken.mobs.Ritual` — the Ritual of the Bell's cast: `spawnSeated`, `spawnStatue` (stages set on the entities).
+- `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
+  the hall), `isRitual(server, gateId)`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours).
 
@@ -542,6 +545,30 @@ Plan v2 · gate interiors and D–B tuning (details in docs/modules/gates.md "In
 
 Plan v2 · first launch: vanilla's "experimental settings" prompt (shown because the mod adds worldgen) is answered for
 the player (client config `skipExperimentalWarning`, default on).
+
+Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
+docs/modules/onboarding.md "The Ritual of the Bell"):
+- The story's Bell Crypt is one floor: an antechamber (the start room, the entrance sigil) and, through its doors, the
+  hall (3x3 slots, vault 27, room type RITUAL, set piece RITUAL_HALL, painted by `gates.world.PiecesRitual`). The plan is
+  marked by its boss `awaken:the_seated_one` (`GatePlan.RITUAL_BOSS`, content version 3); nothing rolls it. Scripted
+  Bell Crypts from before (the Bell Warden, three floors) keep their floors and today's death. `GateHooks.openScripted`
+  with 1 floor asks for the ritual plan.
+- The ritual director (`story.Ritual`, saved in `data/awaken/ritual.dat`, schema 1) runs one timeline per hall: WAITING
+  (until every unawakened player in the story who is online is in the hall, or 90 s after the first came in; 1.5 s grace
+  for the last one), DOORS 9.5 s, BOW 9.5 s (kneel within 6 s or the nearest statue strikes), RING 18 s (three plates,
+  4 s each to stand on), BE JUDGED 4 s, WAKING 8.5 s, JUDGEMENT 40 s (the gaze every ~8.5 s, statue swings every 2.25 s,
+  at most 2 + players/2 at once, rune-ring pits every 6 s), END 11.5 s (the hand closes at 11.1 s, everyone dies at
+  11.5 s), DONE. Time is processed by elapsed ticks with everything in between fired in order; the beat holds while the
+  whole party is away and plays again from its start when someone is back.
+- Nothing kills before the End: every hit on an unawakened player in a ritual gate (or sealed in a ritual) is clamped in
+  `LivingDamageEvent.Pre` to leave half a heart; `/kill` still works. The old "killing blow inside the gate becomes the
+  question" path is kept for old crypts and the no-gates fallback.
+- StoryProgress schema 2 adds the prologue state RITUAL (sealed in). The story starts together: the first trigger opens
+  one ritual crypt and points every other unawakened player online at it; a later trigger joins a crypt whose doors are
+  still open; whoever isn't inside when the doors close gets their own crypt 15 s later. Awakened players, and players
+  whose story points elsewhere, can't walk in (`StoryHooks.refusesScriptedGate`).
+- The Seated One and the twelve statues (`mobs.Ritual`, role RITUAL) have no AI of their own, can't be hurt and never
+  count as kills, trophies, Echoes or bosses. The gate is released once nobody is at the question for it any more.
 
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.

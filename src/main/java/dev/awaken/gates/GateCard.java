@@ -87,6 +87,14 @@ public final class GateCard {
                         : in == 0 ? "today" : in + " play-day" + (in > 1 ? "s" : ""));
             }
         }
+        if (plan.ritual()) {
+            // the story's gate: no layout, no modifiers, no floors to count. Only a bell, somewhere far down.
+            w.body(Component.literal(g.state.enterable() ? "A bell tolls, far below. It sounds like it's waiting."
+                    : "Silent now. Whatever rang here is done."));
+            w.footer(Component.literal(g.state.enterable() ? "Walk in to enter" : ""));
+            Signal.send(p, w.ttl(20 * 9).priority(3).build());
+            return;
+        }
         w.row("Omen", plan.theme().omen);
         if (scouted) w.row("Theme", plan.theme().displayName);
         if (per >= 20 || scouted) w.row("Layout", plan.layout().displayName);

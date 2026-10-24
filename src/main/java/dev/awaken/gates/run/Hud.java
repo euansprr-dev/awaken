@@ -51,7 +51,8 @@ public final class Hud {
             return;
         }
         GateRecord g = GateRegistry.get(p.level().getServer()).gate(run.gateId);
-        if (g == null) {
+        if (g == null || g.plan.ritual()) {
+            // the ritual's hall shows no run HUD: no floors, no Satchel, nothing between you and the scene
             clear(p);
             return;
         }

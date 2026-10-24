@@ -128,6 +128,26 @@ public final class Gates {
     }
 
     /**
+     * The Ritual of the Bell (docs/proposals/the-ritual.md): the story's first gate as one floor, the antechamber and the
+     * hall of the Seated One. Marked by its boss ({@link GatePlan#RITUAL_BOSS}), never by a layout or a twist.
+     */
+    public static GatePlan ritualPlan(long seed) {
+        return new GatePlan(Hash.mix(seed), GatePlan.CONTENT_VERSION, Rank.E, Theme.BELL_CRYPT, Layout.LABYRINTH, List.of(), Twist.NONE,
+                1, GatePlan.RITUAL_BOSS, Theme.OVERGROWN_TEMPLE, 0);
+    }
+
+    /** The ritual hall of a ritual gate, in world positions, or empty (no such gate, not a ritual gate, no gate world). */
+    public static Optional<RitualHall> ritualHall(MinecraftServer s, int gateId) {
+        return RitualHall.of(s, GateRegistry.get(s).gate(gateId));
+    }
+
+    /** Whether this gate is the story's ritual Bell Crypt. */
+    public static boolean isRitual(MinecraftServer s, int gateId) {
+        GateRecord g = GateRegistry.get(s).gate(gateId);
+        return g != null && g.plan.ritual();
+    }
+
+    /**
      * Opens a scripted gate 16–24 blocks in front of the player (story prologue). It never breaks and doesn't count
      * toward the Director's 1–4. Returns the gate id (-1 if no gate dimension).
      */

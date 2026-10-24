@@ -73,6 +73,8 @@ public final class StoryModule {
         bus.addListener(PlayerTickEvent.Post.class, Beats::onTick);
         bus.addListener(BreakBlockEvent.class, Prologue::onBreak);
         bus.addListener(LivingIncomingDamageEvent.class, Prologue::onIncomingDamage);
+        bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, Ritual::onDamagePre);
+        bus.addListener(ServerTickEvent.Post.class, Ritual::onServerTick);
         bus.addListener(EntityJoinLevelEvent.class, Court::onJoin);
         bus.addListener(LivingDeathEvent.class, Court::onDeath);
         bus.addListener(ServerTickEvent.Post.class, e -> {
@@ -95,6 +97,7 @@ public final class StoryModule {
         bus.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> {
             Court.forget();
             Rival.forget();
+            Ritual.forget();
         });
         RankHooks.onRankUp(Rival::onRankUp);
         Progression.onNewThing(Beats::onNewThing);
@@ -102,6 +105,9 @@ public final class StoryModule {
             @Override public boolean gatesCalm(MinecraftServer server) { return StoryWorld.get(server).gatesCalm; }
             @Override public boolean colourRestored(MinecraftServer server) { return StoryWorld.get(server).colourRestored; }
             @Override public int ascension(MinecraftServer server) { return StoryWorld.get(server).ascension; }
+            @Override public java.util.Optional<String> refusesScriptedGate(ServerPlayer p, String gateId) {
+                return Prologue.storyOn() ? Ritual.refuses(p, gateId) : java.util.Optional.empty();
+            }
             @Override public java.util.Optional<String> seedSealed(ServerPlayer p) {
                 if (!Prologue.storyOn()) return java.util.Optional.empty();
                 int left = 8 - Prologue.progress(p).sovereignsDefeated().size();
@@ -109,6 +115,8 @@ public final class StoryModule {
                         : java.util.Optional.of("The Hollow Court still holds the Seed shut. " + left + " Sovereign" + (left == 1 ? "" : "s") + " remain.");
             }
         });
+        // Now tracker: the ritual's hall (waiting for everyone; the bell calling the others)
+        dev.awaken.core.api.NowHooks.register(Ritual::now);
         // Now tracker: the story's gate waits for you; say which floor is next
         dev.awaken.core.api.NowHooks.register(p -> {
             if (!Progression.profile(p).awakened() || dev.awaken.core.api.GateHooks.inGate(p)) return List.of();
@@ -142,6 +150,8 @@ public final class StoryModule {
         r.playToClient(StoryPayloads.OpenEnding.TYPE, StoryPayloads.OpenEnding.STREAM_CODEC);
         r.playToClient(StoryPayloads.Credits.TYPE, StoryPayloads.Credits.STREAM_CODEC);
         r.playToClient(StoryPayloads.Seen.TYPE, StoryPayloads.Seen.STREAM_CODEC);
+        r.playToClient(StoryPayloads.RitualScene.TYPE, StoryPayloads.RitualScene.STREAM_CODEC);
+        r.playToClient(StoryPayloads.RitualCue.TYPE, StoryPayloads.RitualCue.STREAM_CODEC);
         r.playToServer(StoryPayloads.ChooseEnding.TYPE, StoryPayloads.ChooseEnding.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer p) Court.choose(p, msg.which());
         });
@@ -204,6 +214,25 @@ public final class StoryModule {
                 Prologue.openFirstGate(p, s);
                 return 1;
             }));
+            // the Ritual of the Bell (autopilot tours): close the doors now, jump to a beat, or say where it is
+            var ritual = Commands.literal("ritual");
+            ritual.then(Commands.literal("start").executes(c -> {
+                boolean ok = Ritual.forceStart(c.getSource().getPlayerOrException());
+                c.getSource().sendSuccess(() -> Component.literal(ok ? "The doors close." : "No ritual hall waiting here."), false);
+                return ok ? 1 : 0;
+            }));
+            ritual.then(Commands.literal("beat").then(Commands.argument("n", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 7)).executes(c -> {
+                int n = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "n");
+                boolean ok = Ritual.jump(c.getSource().getPlayerOrException(), n);
+                c.getSource().sendSuccess(() -> Component.literal(ok ? "Ritual beat " + Ritual.Beat.values()[n] : "No sealed ritual for you."), false);
+                return ok ? 1 : 0;
+            })));
+            ritual.then(Commands.literal("status").executes(c -> {
+                String st = Ritual.status(c.getSource().getPlayerOrException());
+                c.getSource().sendSuccess(() -> Component.literal(st), false);
+                return 1;
+            }));
+            adminStory.then(ritual);
             // walk into the story's gate without finding it (autopilot scripts): the gates module's own command does it
             adminStory.then(Commands.literal("enter").executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();

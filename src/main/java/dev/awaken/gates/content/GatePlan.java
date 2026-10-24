@@ -20,8 +20,15 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
     /**
      * Bump when generation changes: READY gates nobody entered are rebuilt on the new version. 2: the interiors' art
      * pass (set pieces, Lord arenas, taller rooms) and deeper floors that push back harder (docs/modules/gates.md).
+     * 3: the prologue's ritual plan (boss {@link #RITUAL_BOSS}) is built as the Ritual of the Bell's single hall.
      */
-    public static final int CONTENT_VERSION = 2;
+    public static final int CONTENT_VERSION = 3;
+
+    /**
+     * The boss id that marks the story's ritual Bell Crypt (docs/proposals/the-ritual.md). Nothing rolls it: the Director
+     * and every other plan use a theme's own Lord. Old scripted Bell Crypts (the Bell Warden) keep their three floors.
+     */
+    public static final String RITUAL_BOSS = "awaken:the_seated_one";
 
     public static final Codec<GatePlan> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.LONG.fieldOf("seed").forGetter(GatePlan::seed),
@@ -40,6 +47,11 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
     public GatePlan {
         modifiers = List.copyOf(modifiers);
         floors = Math.max(1, Math.min(6, floors));
+    }
+
+    /** The prologue's ritual gate: one floor, the antechamber and the hall of the Seated One. */
+    public boolean ritual() {
+        return contentVersion >= 3 && theme == Theme.BELL_CRYPT && RITUAL_BOSS.equals(boss);
     }
 
     public boolean has(Modifier m) {

@@ -162,6 +162,7 @@ public final class GatePainter {
 
         void column(int bx, int bz) {
             int x = gx * 16 + bx, z = gz * 16 + bz;
+            if (r.piece == SetPiece.RITUAL_HALL && PiecesRitual.column(this, bx, bz, x, z)) return;
             Room.Door door = RoomGeometry.tunnel(r, x, z);
             boolean in = RoomGeometry.inside(r, x, z);
             if (door != null && !(in && door.y == r.dy && RoomGeometry.depth(door, x, z) >= RoomGeometry.INSET

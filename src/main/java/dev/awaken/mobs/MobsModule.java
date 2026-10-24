@@ -17,6 +17,7 @@ public final class MobsModule {
     public static void init(IEventBus modBus) {
         Awaken.LOG.info("[mobs] bestiary: {} creatures", Bestiary.all().size());
         MobTypes.init(modBus);
+        Ritual.init(modBus);
         MobSounds.init(modBus);
         MobLoot.init(modBus);
         MobsEvents.init(modBus);

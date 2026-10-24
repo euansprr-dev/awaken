@@ -9,7 +9,11 @@ import java.util.Set;
 
 /** Per-player story state (saved, kept on death, synced to its owner). */
 public final class StoryProgress {
-    public enum Prologue { NOT_STARTED, GLITCHED, GATE_OPEN, ACCEPTING, DONE;
+    /**
+     * RITUAL: sealed in the Ritual of the Bell's hall (story/Ritual) until the Seated One's hand closes. Saved by name:
+     * a save from before this state never holds it, a save from after it read by an older build falls back to NOT_STARTED.
+     */
+    public enum Prologue { NOT_STARTED, GLITCHED, GATE_OPEN, RITUAL, ACCEPTING, DONE;
         public static final Codec<Prologue> CODEC = dev.awaken.core.Codecs.lenientEnum(Prologue.class, NOT_STARTED); }
 
     Prologue prologue = Prologue.NOT_STARTED;
@@ -26,8 +30,8 @@ public final class StoryProgress {
     public Set<String> seen() { return seen; }
     public Set<String> sovereignsDefeated() { return sovereignsDefeated; }
 
-    /** 1: v2 adds the Bell Crypt floor tracker (defaults for older saves). */
-    static final int SCHEMA = 1;
+    /** 1: v2 adds the Bell Crypt floor tracker (defaults for older saves). 2: the RITUAL prologue state (no new fields). */
+    static final int SCHEMA = 2;
 
     private record Crypt(int schema, int floor, int cleared, long counterSeen) {
         static final Crypt NONE = new Crypt(SCHEMA, 0, 0, -1);
