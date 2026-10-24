@@ -199,8 +199,11 @@ public final class Director {
         if (!Progression.profile(p).awakened() && !force) return null;
         if (p.level().dimension() != Level.OVERWORLD) return null;
         GateRegistry reg = GateRegistry.get(server);
+        // the cap is per owner (SPEC "Together"): a friend's gates nearby don't use up yours, and yours aren't theirs
         int standing = 0;
-        for (GateRecord g : reg.near(p.blockPosition(), MAX_DIST, true)) if (!g.scripted && !g.wandering()) standing++;
+        for (GateRecord g : reg.near(p.blockPosition(), MAX_DIST, true)) {
+            if (!g.scripted && !g.wandering() && ownedBy(g, p)) standing++;
+        }
         double chance = standing == 0 ? 1.0 : standing < 2 ? 0.3 : standing < 4 ? 0.08 : 0.0;
         double r = p.getRandom().nextDouble();
         if (!force && r >= chance) {
@@ -226,6 +229,8 @@ public final class Director {
             BlockPos c = surfaceEstimate(over, x, z);
             if (c == null) continue;
             if (!reg.near(c, 96, false).isEmpty()) continue;
+            // never within a break's reach of a Hearth the player doesn't share: a veteran's gates stay off a newcomer's home
+            if (nearForeignHearth(over, c, p)) continue;
             spot = c;
             int d = (int) Math.round(((Math.toDegrees(Math.atan2(Math.sin(angle), Math.cos(angle))) + 90 + 360) % 360) / 45.0) % 8;
             dir = DIRS[d];
@@ -251,6 +256,20 @@ public final class Director {
         g.nearHearth = HearthHooks.nearest(over, spot, 256).isPresent();
         for (String line : roll.trace()) DirectorLog.log(p, "gate", "#" + id + " " + line.replaceAll("\\s+", " "));
         return g;
+    }
+
+    /** Gates made before owners were counted (none on record) count for whoever is near, as they always did. */
+    static boolean ownedBy(GateRecord g, ServerPlayer p) {
+        return g.owner.isEmpty() || g.owner.get().equals(p.getUUID());
+    }
+
+    /** Reach of a break around a Hearth (the warning radius): a gate rolled for someone else never forms inside it. */
+    public static final int FOREIGN_HEARTH_RADIUS = 256;
+
+    /** Whether {@code pos} lies within {@link #FOREIGN_HEARTH_RADIUS} of a Hearth this player doesn't own or share. */
+    static boolean nearForeignHearth(ServerLevel level, BlockPos pos, ServerPlayer p) {
+        for (BlockPos anchor : HearthHooks.within(level, pos, FOREIGN_HEARTH_RADIUS)) if (!HearthHooks.belongs(p, anchor)) return true;
+        return false;
     }
 
     /** Height from the generator (no chunk load); null over oceans, rivers and beaches. */

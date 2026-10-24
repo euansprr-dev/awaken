@@ -122,10 +122,7 @@ final class AnomalyP2Tests {
             BlockPos g = AnomalyTests.platform(h, 12, 12);
             ServerPlayer p = AnomalyTests.awakenedPlayer(h, g.offset(9, 0, 0));
             Progression.discover(p, AnomalyKind.FALLEN_STAR.discoveryKey(), 0.1); // so the reward below is the star's alone
-            h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
-                    .thenExecute(() -> starRun(h, level, server, g, p))
-                    .thenSucceed();
+            h.startSequence().thenExecute(() -> starRun(h, level, server, g, p)).thenSucceed();
         });
     }
 
@@ -208,7 +205,6 @@ final class AnomalyP2Tests {
             BlockPos g = AnomalyTests.platform(h, -12, -12);
             ServerPlayer p = AnomalyTests.awakenedPlayer(h, g.offset(30, 0, 0)); // too far to wake a guardian
             h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
                     .thenExecute(() -> {
                         AnomalyData data = AnomalyData.get(server);
                         clearOthers(level, p, g);
@@ -260,18 +256,27 @@ final class AnomalyP2Tests {
 
     // ---- shimmer grove ------------------------------------------------------------------------------------------------
 
-    /** A grassy platform (radius 12) for groves: flowers need soil. */
+    /**
+     * A grassy platform (radius 12) for groves: flowers need soil. Flowers grow on the surface (the heightmap), and test
+     * plots sit 6 blocks apart under whatever neighbouring tests built high above them, so the sky over the meadow is
+     * opened too.
+     */
     static BlockPos meadow(GameTestHelper h, int dx, int dz) {
         ServerLevel level = h.getLevel();
         BlockPos c = h.absolutePos(new BlockPos(dx, 3, dz));
         BlockState dirt = Blocks.DIRT.defaultBlockState(), grass = Blocks.GRASS_BLOCK.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos q = new BlockPos.MutableBlockPos();
         for (int x = -12; x <= 12; x++) {
             for (int z = -12; z <= 12; z++) {
                 for (int y = -3; y <= -1; y++) level.setBlock(c.offset(x, y, z), dirt, 3);
                 level.setBlock(c.offset(x, 0, z), grass, 3);
                 for (int y = 1; y <= 8; y++) level.setBlock(c.offset(x, y, z), air, 3);
+                for (q.set(c.getX() + x, c.getY() + 9, c.getZ() + z); q.getY() < level.getMaxY(); q.move(0, 1, 0)) {
+                    if (!level.getBlockState(q).isAir()) level.setBlock(q, air, 2);
+                }
             }
         }
+        AnomalyTests.assertTicks(h, c, 12, "the meadow ticks");
         return c;
     }
 
@@ -282,7 +287,6 @@ final class AnomalyP2Tests {
             BlockPos g = meadow(h, 0, 0);
             ServerPlayer p = AnomalyTests.awakenedPlayer(h, g.offset(11, 0, 0));
             h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the meadow ticks"))
                     .thenExecute(() -> {
                         Landmarks.testOverrides(g.offset(300, 0, 400), true);
                         try {
@@ -331,7 +335,8 @@ final class AnomalyP2Tests {
                     for (BlockPos q : BlockPos.betweenClosed(g.offset(-8, 1, -8), g.offset(8, 1, 8))) {
                         if (level.getBlockState(q).is(BlockTags.SMALL_FLOWERS)) flowers++;
                     }
-                    h.assertTrue(flowers >= 4, "flowers spring up: " + flowers);
+                    h.assertTrue(flowers >= 4, "flowers spring up: " + flowers + " (surface under the heart at y "
+                            + Spots.surface(level, g.getX(), g.getZ()).getY() + ", meadow at " + g.getY() + ")");
                     p.removeEffect(MobEffects.REGENERATION);
                     Groves.bend(level, a, 0);
                     h.assertTrue(p.hasEffect(MobEffects.REGENERATION), "and mend whoever stands among them");

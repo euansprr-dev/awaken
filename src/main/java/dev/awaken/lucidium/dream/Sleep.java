@@ -61,6 +61,8 @@ public final class Sleep {
         public boolean entered;
         public Outcome outcome = Outcome.NONE;
         Planner.Prepared prepared;
+        /** The planner let {@link #prepared} go while this sleeper held it: the night gives its cell back unless dreamed. */
+        boolean ownsPlan;
         boolean preloaded;
     }
 
@@ -75,7 +77,7 @@ public final class Sleep {
 
     static void onPlayerTick(ServerPlayer sp) {
         if (!sp.isSleeping()) {
-            SESSIONS.remove(sp.getUUID());
+            end(sp.level().getServer(), SESSIONS.remove(sp.getUUID()));
             return;
         }
         if (sp.level().dimension() == LucidiumContent.LUCIDIUM || Dreams.isDreaming(sp)) return;
@@ -131,7 +133,7 @@ public final class Sleep {
         s.wbtb = d.wbtbUntil > 0 && now <= d.wbtbUntil;
         boolean intention = !d.intention(day).isEmpty();
         boolean sanctuary = dev.awaken.hearth.Hearth.isSanctuary(sp.level(), s.bed) || blockNear((ServerLevel) sp.level(), s.bed, 6, 3, MEDITATION_MAT);
-        boolean homeBed = HearthHooks.hearthOf(sp).map(h -> h.distSqr(s.bed) <= 48 * 48).orElse(false);
+        boolean homeBed = HearthHooks.hearthsOf(sp).stream().anyMatch(h -> h.distSqr(s.bed) <= 48 * 48);
         double chance = Lucidity.dreamChance(Progression.stat(sp, Stat.SPI), sanctuary, homeBed, intention, s.wbtb);
         if (d.dreams == 0) chance = 1.0; // the first night always dreams
         s.roll = sp.getRandom().nextDouble() < chance;
@@ -161,7 +163,11 @@ public final class Sleep {
     }
 
     private static void enterFromSleep(ServerPlayer host, Session s) {
+        MinecraftServer server = host.level().getServer();
         Planner.Prepared prepared = Planner.take(host).orElse(s.prepared);
+        // a newer plan is ready than the one this sleeper was left holding: the old one is never dreamed
+        if (s.ownsPlan && prepared != s.prepared) Planner.discard(server, s.prepared);
+        s.ownsPlan = false; // the plan entered belongs to the dream now
         s.entered = true;
         List<ServerPlayer> guests = new ArrayList<>();
         for (ServerPlayer other : ((ServerLevel) host.level()).players()) {
@@ -175,6 +181,7 @@ public final class Sleep {
         host.stopSleepInBed(true, true);
         ActiveDream ad = Dreams.enter(host, prepared, new Dreams.Entry(true, s.bed, null, s.wbtb));
         if (ad == null) {
+            Planner.discard(server, prepared);
             s.outcome = Outcome.NOT_READY;
             Signal.toast(host, Component.translatable("hud.awaken.slept_deeply"));
             return;
@@ -305,8 +312,29 @@ public final class Sleep {
         return findNear(level, center, r, ry, test).isPresent();
     }
 
+    /** A sleeper lies down with this session (the player tick does it in play; tests call it). */
+    static void lieDown(ServerPlayer sp, Session s) {
+        SESSIONS.put(sp.getUUID(), s);
+    }
+
     static void forget(ServerPlayer sp) {
-        SESSIONS.remove(sp.getUUID());
+        end(sp.level().getServer(), SESSIONS.remove(sp.getUUID()));
+    }
+
+    /** The planner drops a plan: a sleeper about to dream it takes it over (true), so it isn't erased under them. */
+    static boolean adopt(Planner.Prepared p) {
+        for (Session s : SESSIONS.values()) {
+            if (!s.entered && s.prepared == p) {
+                s.ownsPlan = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A night ends: a plan it took over and never dreamed gives its cell back. */
+    private static void end(MinecraftServer server, Session s) {
+        if (s != null && s.ownsPlan && s.prepared != null) Planner.discard(server, s.prepared);
     }
 
     static void reset() {

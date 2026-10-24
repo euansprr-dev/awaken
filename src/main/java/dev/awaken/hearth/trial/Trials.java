@@ -568,7 +568,7 @@ public final class Trials {
         }
         if (dest == null || dest.dimension() == DIMENSION) {
             dest = server.overworld();
-            pos = HearthService.hearthOf(sp).map(h -> HearthService.safeSpotNear(server.overworld(), h.pos))
+            pos = HearthService.wakeHearth(sp).map(h -> HearthService.safeSpotNear(server.overworld(), h.pos))
                     .orElse(Vec3.atBottomCenterOf(server.overworld().getRespawnData().pos()));
         }
         sp.teleport(new TeleportTransition(dest, pos, Vec3.ZERO, yaw, 0f, TeleportTransition.PLAY_PORTAL_SOUND));

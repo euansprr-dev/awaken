@@ -254,7 +254,10 @@ public final class ProgressionModule {
         if (dead instanceof Enemy && isHome(sp.level())) {
             var role = dev.awaken.core.api.MobRole.of(dead);
             int contentLevel = role.role() == dev.awaken.core.api.MobRole.Role.NONE ? 0 : Math.max(0, role.contentLevel());
-            homeXp(sp, XpBudget.KILL, KILL_XP * Math.min(2.0, dead.getMaxHealth() / 20.0), contentLevel);
+            double xp = KILL_XP * Math.min(2.0, dead.getMaxHealth() / 20.0);
+            homeXp(sp, XpBudget.KILL, xp, contentLevel);
+            // the party nearby shares the kill (SPEC "Together"), each through their own home budget
+            for (ServerPlayer mate : dev.awaken.core.api.Parties.sharing(sp, dead)) homeXp(mate, XpBudget.KILL, xp, contentLevel);
         }
         if (!p.awakened()) return;
         Progression.count(sp, Counters.KILLS);

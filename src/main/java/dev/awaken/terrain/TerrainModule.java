@@ -17,8 +17,15 @@ public final class TerrainModule {
         TerrainCommands.register();
         TerrainTests.register();
         BiomeTableTests.register();
+        PlacementTests.register();
         LandsTests.register();
         dev.awaken.terrain.hero.HeroTests.register();
         WindTests.register();
+        // the second pair of Awakened biomes: Glass Steppe and Shattered Highlands, and their landmarks
+        dev.awaken.terrain.glass.GlassLands.init(modBus);
+        dev.awaken.terrain.fault.FaultLands.init(modBus);
+        dev.awaken.terrain.landmark.LandmarkWorldgen.init(modBus);
+        dev.awaken.terrain.landmark.LandmarkCommands.register();
+        dev.awaken.terrain.landmark.LandmarkTests.register();
     }
 }

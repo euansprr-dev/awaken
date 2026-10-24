@@ -12,8 +12,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Spirit sight never reveals another player's base: nothing within 48 blocks of someone else's Hearth or bed is ever
- * sent. Checked on the server, so the client cannot be talked into an x-ray.
+ * Spirit sight never reveals another player's base: nothing within 48 blocks of a Hearth you don't share, or of the bed
+ * of someone you don't share a Hearth with, is ever sent. Checked on the server, so the client cannot be talked into an
+ * x-ray. A Hearth's members see there as its owner does (SPEC "Together").
  */
 public final class RevealFilter {
     public static final int RADIUS = 48;
@@ -58,7 +59,9 @@ public final class RevealFilter {
      */
     public static RevealFilter build(ServerLevel level, ServerPlayer viewer, Vec3 center, int radius) {
         List<BlockPos> zones = new ArrayList<>();
-        Optional<BlockPos> own = level.dimension() == Level.OVERWORLD ? HearthHooks.hearthOf(viewer) : Optional.empty();
+        // every Hearth you own or share is yours to see in
+        List<BlockPos> own = level.dimension() == Level.OVERWORLD ? HearthHooks.hearthsOf(viewer) : List.of();
+        java.util.Set<java.util.UUID> household = HearthHooks.household(viewer);
         int reach = radius + RADIUS;
         int half = Math.max(8, radius / 2);
         // nearest() returns one Hearth, so probe across the disc: your own Hearth must never hide someone else's
@@ -66,12 +69,12 @@ public final class RevealFilter {
         for (int[] p : probes) {
             BlockPos probe = BlockPos.containing(center.x + p[0], center.y, center.z + p[1]);
             HearthHooks.nearest(level, probe, reach).ifPresent(h -> {
-                if (own.map(o -> !o.equals(h)).orElse(true) && !zones.contains(h)) zones.add(h.immutable());
+                if (!own.contains(h) && !zones.contains(h)) zones.add(h.immutable());
             });
         }
         double reach2 = (double) reach * reach;
         for (ServerPlayer other : level.getServer().getPlayerList().getPlayers()) {
-            if (other == viewer) continue;
+            if (other == viewer || household.contains(other.getUUID())) continue;
             var cfg = other.getRespawnConfig();
             if (cfg != null && cfg.respawnData().dimension() == level.dimension()) {
                 BlockPos bed = cfg.respawnData().pos();
@@ -79,7 +82,7 @@ public final class RevealFilter {
             }
             if (level.dimension() == Level.OVERWORLD) {
                 HearthHooks.hearthOf(other).ifPresent(h -> {
-                    if (h.distToCenterSqr(center) <= reach2 && !zones.contains(h) && own.map(o -> !o.equals(h)).orElse(true)) zones.add(h.immutable());
+                    if (h.distToCenterSqr(center) <= reach2 && !zones.contains(h) && !own.contains(h)) zones.add(h.immutable());
                 });
             }
         }

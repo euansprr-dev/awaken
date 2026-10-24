@@ -13,13 +13,16 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Holo UI, common half (docs/modules/holo.md): the {@code awaken:holo_state} relay that lets other players see your
- * wrist come up, and {@code /awaken holo demo}. Everything you see on a panel is client side ({@code holo.client}).
+ * wrist come up, the panels' sound events, and {@code /awaken holo demo}. Everything you see on a panel is client side
+ * ({@code holo.client}); the side-agnostic rules it follows (timelines, wells, hover ticks, the HUD fade) live in
+ * {@code holo.ui}, where GameTests check them.
  */
 public final class HoloModule {
     private HoloModule() {}
 
     public static void init(IEventBus modBus) {
         modBus.addListener(HoloNet::register);
+        HoloSounds.register(modBus);
         NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> HoloRelay.flush(e.getServer(), HoloRelay.SEND));
         NeoForge.EVENT_BUS.addListener(PlayerEvent.StartTracking.class, e -> {
             if (e.getEntity() instanceof ServerPlayer tracker) HoloRelay.onStartTracking(tracker, e.getTarget());

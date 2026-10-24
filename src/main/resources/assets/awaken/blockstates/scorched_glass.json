@@ -1,0 +1,51 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/scorched_glass_0"
+      },
+      {
+        "model": "awaken:block/scorched_glass_0",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/scorched_glass_0",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/scorched_glass_0",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/scorched_glass_1"
+      },
+      {
+        "model": "awaken:block/scorched_glass_1",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/scorched_glass_1",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/scorched_glass_1",
+        "y": 270
+      },
+      {
+        "model": "awaken:block/scorched_glass_2"
+      },
+      {
+        "model": "awaken:block/scorched_glass_2",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/scorched_glass_2",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/scorched_glass_2",
+        "y": 270
+      }
+    ]
+  }
+}

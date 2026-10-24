@@ -76,7 +76,7 @@ public final class Trophies {
         be.setTrophy(hung);
         if (!sp.hasInfiniteMaterials()) held.shrink(1);
         level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 1f, 0.8f);
-        Optional<HearthRecord> home = HearthService.hearthOf(sp).filter(h -> h.contains(pos));
+        Optional<HearthRecord> home = HearthService.sharedAt(sp, pos);
         boolean newBoss = home.map(h -> !h.hallTrophies.contains(d.bossId())).orElse(false);
         if (firstHang) {
             Progression.count(sp, COUNTER_PLACED);

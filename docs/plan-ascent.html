@@ -1,0 +1,410 @@
+<title>The Ascent</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an altitude rail on the left (the ladder as heights, Y 64 to the Above) beside one reading column. */
+:root{
+  --bg:#f2f5f8; --panel:#ffffff; --ink:#0f1a28; --muted:#566273; --line:#d6dde6;
+  --aether:#127e9c; --aether-soft:#dcf0f6; --gold:#9c6f12; --gold-soft:#f6ecd5; --ember:#b23a26; --ember-soft:#f8e2dd; --leaf:#2f7d4a; --leaf-soft:#e0f1e6;
+  --display:"Unbounded", "Avenir Next", "Segoe UI", sans-serif;
+  --body:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0a111b; --panel:#111b28; --ink:#e4ecf5; --muted:#93a1b3; --line:#243244;
+  --aether:#4cc3e2; --aether-soft:#10303c; --gold:#e2b450; --gold-soft:#33280f; --ember:#ef7b62; --ember-soft:#3a1a14; --leaf:#6cc98b; --leaf-soft:#12301d; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0a111b; --panel:#111b28; --ink:#e4ecf5; --muted:#93a1b3; --line:#243244;
+  --aether:#4cc3e2; --aether-soft:#10303c; --gold:#e2b450; --gold-soft:#33280f; --ember:#ef7b62; --ember-soft:#3a1a14; --leaf:#6cc98b; --leaf-soft:#12301d; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)} .rail{display:none}}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:40px;height:100vh}
+.rail .scale{position:relative;border-left:2px solid var(--line);margin-left:8px;padding-left:16px;display:flex;flex-direction:column;gap:18px}
+.rail a{color:var(--muted);text-decoration:none;font-size:13px;display:block}
+.rail a:hover,.rail a:focus-visible{color:var(--aether)}
+.rail .y{font:500 11px/1 var(--mono);color:var(--aether);letter-spacing:.04em;display:block;margin-bottom:3px}
+.rail .tick{position:relative}
+.rail .tick::before{content:"";position:absolute;left:-23px;top:3px;width:12px;height:2px;background:var(--line)}
+main{min-width:0;padding-top:40px}
+header.hero{padding:8px 0 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--aether)}
+h1{font:700 clamp(34px,6vw,58px)/1.02 var(--display);letter-spacing:-.01em;margin:14px 0 14px;text-wrap:balance}
+h1 span{color:var(--gold)}
+.lede{font-size:18px;max-width:64ch;color:var(--ink)}
+.lede em{color:var(--muted);font-style:normal}
+h2{font:700 22px/1.2 var(--display);margin:56px 0 6px;text-wrap:balance}
+h2 .n{font:500 13px var(--mono);color:var(--aether);margin-right:10px;vertical-align:3px}
+h3{font:600 17px/1.3 var(--body);margin:28px 0 8px;text-wrap:balance}
+p{max-width:72ch;margin:8px 0}
+.small{font-size:13px;color:var(--muted)}
+ul{max-width:72ch;padding-left:20px;margin:8px 0}
+li{margin:3px 0}
+code,.mono{font-family:var(--mono);font-size:.88em}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.k{font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
+.keep{background:var(--leaf-soft);color:var(--leaf)} .extend{background:var(--aether-soft);color:var(--aether)} .replace{background:var(--ember-soft);color:var(--ember)} .verify{background:var(--gold-soft);color:var(--gold)}
+.note{border-left:3px solid var(--aether);background:var(--panel);padding:12px 16px;margin:16px 0;max-width:76ch;border-radius:0 6px 6px 0}
+.note.gold{border-color:var(--gold)} .note.ember{border-color:var(--ember)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.card h4{margin:0 0 6px;font:600 15px var(--body)}
+.card p,.card ul{margin:4px 0;font-size:14px}
+/* the ladder */
+.ladder{display:flex;flex-direction:column-reverse;gap:10px;margin:18px 0}
+.rung{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+@media (max-width:560px){.rung{grid-template-columns:minmax(0,1fr)}}
+.rung .alt{font:500 12px/1.4 var(--mono);color:var(--aether)}
+.rung .alt b{display:block;font:700 17px/1.2 var(--display);color:var(--ink);margin-bottom:4px}
+.rung.sov{border-color:var(--gold);background:linear-gradient(0deg,var(--panel),var(--gold-soft))}
+.rung.sov .alt{color:var(--gold)}
+.rung h4{margin:0 0 4px;font:600 15px var(--body)}
+.rung .row{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13.5px;color:var(--muted);margin-top:6px}
+.rung .row b{color:var(--ink);font-weight:600}
+/* walkthroughs */
+.ba{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:10px 0 22px}
+.ba .card h4{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.ba .before h4{color:var(--ember)} .ba .after h4{color:var(--leaf)}
+ol{max-width:72ch;padding-left:22px} ol li{margin:4px 0}
+/* holo mockup */
+.holo{background:#08131d;color:#cfeefa;border:1px solid #2b6d84;border-radius:4px;padding:16px 18px;font:500 13px/1.55 var(--mono);box-shadow:0 0 0 1px #0d2a36 inset,0 0 24px rgba(76,195,226,.18);max-width:520px;position:relative}
+.holo::before,.holo::after{content:"";position:absolute;width:14px;height:14px;border:2px solid #63d3f0}
+.holo::before{left:-3px;top:-3px;border-right:0;border-bottom:0} .holo::after{right:-3px;bottom:-3px;border-left:0;border-top:0}
+.holo .t{color:#7fdcf5;letter-spacing:.1em;text-transform:uppercase;font-size:11px}
+.holo .lit{color:#ffffff;text-shadow:0 0 6px rgba(127,220,245,.8)} .holo .dim{color:#5b8797} .holo .gold{color:#f1c86a;text-shadow:0 0 6px rgba(241,200,106,.6)}
+.holo .bar{height:6px;background:#12303c;border-radius:3px;margin:4px 0 10px;overflow:hidden} .holo .bar i{display:block;height:100%;background:linear-gradient(90deg,#2aa9cb,#8ff0ff)}
+.mockrow{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin:14px 0}
+pre.mermaid{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;overflow-x:auto}
+.decision{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin:8px 0}
+.decision .num{font:700 18px var(--display);color:var(--aether)}
+.decision p{margin:2px 0}
+.decision .rec{color:var(--leaf);font-weight:600}
+a{color:var(--aether)}
+:focus-visible{outline:2px solid var(--aether);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+<nav class="rail" aria-label="Sections">
+  <div class="scale">
+    <div class="tick"><span class="y">Y 320</span><a href="#decisions">Decisions for you</a></div>
+    <div class="tick"><span class="y">Y 275</span><a href="#delivery">Testing and delivery</a></div>
+    <div class="tick"><span class="y">Y 200</span><a href="#walkthroughs">Before and after</a></div>
+    <div class="tick"><span class="y">Y 160</span><a href="#gates">Gate rooms</a></div>
+    <div class="tick"><span class="y">Y 120</span><a href="#wilds">The Wilds</a></div>
+    <div class="tick"><span class="y">Y 100</span><a href="#feel">The feel</a></div>
+    <div class="tick"><span class="y">Y 90</span><a href="#ascent">The Ascent</a></div>
+    <div class="tick"><span class="y">Y 80</span><a href="#options">Three ways</a></div>
+    <div class="tick"><span class="y">Y 70</span><a href="#audit">What's there today</a></div>
+    <div class="tick"><span class="y">Y 64</span><a href="#brief">The brief</a></div>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">AWAKEN · plan for approval · 24 Oct 2026</div>
+  <h1>The Ascent: from runner to <span>sovereign of the sky</span></h1>
+  <p class="lede">Make moving through the world the reward in itself. You start as a fast, grounded Runner. You end as a radiant, winged overlord diving out of the clouds. Each new way of moving opens places you've been staring at for hours. Between the gates sits a world built to be crossed with style. Inside them are rooms where the room itself is the puzzle. <em>Nothing here is built yet; this page asks for your go.</em></p>
+</header>
+
+<!-- 1 -->
+<h2 id="brief"><span class="n">1</span>The brief, as I understand it</h2>
+<div class="grid2">
+  <div class="card"><h4>The job</h4><p>Make Awaken more than a gate crawler: a world where the time between gates feels like a big part of the game. Movement is the spine of the progression, all the way to godlike flight.</p></div>
+  <div class="card"><h4>The pain</h4><p>In creative it looks good, but "what do you do between gates?" has no strong answer. Movement feels the same as vanilla. Flight is creative flight. Gates vary by mob more than by how you play.</p></div>
+  <div class="card"><h4>What you're reaching for</h4><p>Moving alone is satisfying, the way Spider-Man's swinging or Titanfall's wall-running is. You unlock more and more of it, up to flying like an angel and wrecking enemies from above. The map is full of places that need your movement. Gates have mirror rooms, gravity flips, collapses, chases and gauntlets.</p></div>
+  <div class="card"><h4>Your ideas, treated as leads</h4><p>Grapple swinging on trees, a sonic boom, parkour gauntlets, chases, light/mirror rooms, gravity flips, collapsing floors, and movement unlocks that open new gates. The real problem you named: "you can just put blocks wherever you want".</p></div>
+</div>
+
+<h3>"Magical", in terms we can check</h3>
+<div class="tbl"><table>
+<tr><th>Result</th><th>What you'd notice</th></tr>
+<tr><td class="k"><span class="pill keep">Strong</span></td><td>You take the long way on purpose. Crossing 300 blocks of forest by sprint → slide → swing → release → glide feels better than any shortcut. You can do it without looking at the HUD. Each new tier makes you look at the map again ("I can get up <i>there</i> now"). In a gate you stop and work out how the room works. The first time you fly feels like a scene, not a toggle.</td></tr>
+<tr><td class="k"><span class="pill verify">Weak</span></td><td>New moves that are faster numbers on the same animation. Flight that's creative flight with particles. Places that need a move but are just as easy to tower up to. Puzzles that are the rune line again with new paint.</td></tr>
+<tr><td class="k"><span class="pill replace">Unacceptable</span></td><td>Rubber-banding or kicks while moving fast. Motion sickness with no way to turn it down. Fps below the 120 target on your Dell. Vanilla-looking particles that read as an add-on. Your existing worlds breaking.</td></tr>
+</table></div>
+
+<h3>Constraints I'm keeping</h3>
+<ul>
+  <li><b>Already approved:</b> everyone is a Runner from the first second, and ranks <i>improve</i> moves (Carillon, 24 Oct). Below, that's the ground floor of the ladder. Your new ask, "unlock more and more", is the floors above it.</li>
+  <li>NeoForge 26.3, server-authoritative, client-predicted movement. No mixins outside the approved Turbo contract. GameTests on every change; CI runs them.</li>
+  <li>The 120 fps target on the M4 and the Dell. Every feature must look like it belongs to Awaken, never vanilla re-skins.</li>
+  <li>Building stays a core Minecraft freedom. We don't ban blocks; we make movement the better way, and only Precursor places push back.</li>
+  <li>Existing worlds keep working. Old gates keep their content version.</li>
+</ul>
+<p class="small"><b>Not in scope:</b> porting a parkour mod (none run on 26.3), PvP balance, removing elytra, new dimensions beyond the trial gates below, and the city itself (Carillon is paused; its Runner work folds in here).</p>
+
+<!-- 2 -->
+<h2 id="audit"><span class="n">2</span>What's actually there today</h2>
+<p>Three read-only audits of <code>build/awaken-v1</code> at <code>41492e5</code>, each claim checked against the code. The headline: Awaken already has a lot of movement and a lot of places, but they don't connect.</p>
+<div class="tbl"><table>
+<tr><th>Piece</th><th>What it really does</th><th>Evidence</th><th>So</th><th></th></tr>
+<tr><td class="k">Flight (A-rank power)</td><td>Vanilla creative flight: an attribute plus <code>flying=true</code>, drained by energy (about 25 s at INT 10). No pose, no banking, no momentum, no wind sound.</td><td class="mono">FlightPowers.java:54-59,109-139</td><td>The rank's biggest reward is its thinnest power.</td><td><span class="pill replace">replace</span></td></tr>
+<tr><td class="k">Grapple (E)</td><td>One straight-line yank toward any solid block within 28. No rope, no swing, no hold; the cable is drawn for 9 ticks.</td><td class="mono">TechPowers.java:49-55,108-152</td><td>The Spider-Man fantasy isn't possible yet.</td><td><span class="pill replace">replace</span></td></tr>
+<tr><td class="k">Hover / "Glide"</td><td>Hover is 5 s of slow creative flight. "Glide" is Hover plus Slow Falling. There's no Glide power and no Blink power: both are variants.</td><td class="mono">FlightPowers.java:47-52,90-107</td><td>No real gliding exists.</td><td><span class="pill replace">replace</span></td></tr>
+<tr><td class="k">Wall Run (D passive)</td><td>Client-only lift against a wall for 40 ticks. Other players see nothing; no clip, sound or camera roll.</td><td class="mono">ClientCasting.java:133-149</td><td>Feels like a glitch, not a move.</td><td><span class="pill replace">replace</span></td></tr>
+<tr><td class="k">Dash, Leap, Jet Burst, Ember Step</td><td>Single velocity impulses with decent FX (speed lines, FOV punch). Visuals arrive one round trip after the motion; sounds are vanilla.</td><td class="mono">VelocityPowers / KineticPowers / FxRecipes</td><td>Good bones; feel is late and borrowed.</td><td><span class="pill extend">extend</span></td></tr>
+<tr><td class="k">Teleport moves</td><td>Blink, Shadow Step, Lightning Step, Ghost Step and Echo Swap are server teleports with no prediction.</td><td class="mono">Moves.teleport</td><td>Always a round-trip lag.</td><td><span class="pill extend">extend</span></td></tr>
+<tr><td class="k">Awakened Body</td><td>Roll, tactical sprint, slide and mantle. Predicted, with server history checks, real PAL clips with bends, own sounds, dust and camera. Momentum hits.</td><td class="mono">dev.awaken.body</td><td>The best-feeling movement in the game, and the foundation.</td><td><span class="pill keep">keep</span></td></tr>
+<tr><td class="k">Carillon's runner prototype</td><td>Wall-run, wall jump (chains climb), ledge hang, shimmy and coyote time all work. History-based server checks: no rubber-banding at 150 ms, and a hang never trips the floating kick. Its own verdict: stiff, silent, "an add-on, not a mod".</td><td class="mono">carillon/spike-runner, S3-runner.md</td><td>The mechanics are proven; the feel isn't.</td><td><span class="pill extend">extend</span></td></tr>
+<tr><td class="k">Feel tools</td><td>FxScreen (flash, impact frames, FOV punch, kick, speed lines as a GUI layer), CombatFeel (shake, hit-stop), BodyCamera roll, Lens overrides. Camera Overhaul is in the pack with no coordination.</td><td class="mono">FxScreen, CombatFeel, BodyCamera</td><td>Four camera sources stack with no shared budget.</td><td><span class="pill extend">extend</span></td></tr>
+<tr><td class="k">Movement in progression</td><td>The starter never offers a movement power. Flight comes only from a random A-rank core. Movement outside fights earns 0 mastery. Most movement counters feed nothing.</td><td class="mono">Starter.java:44, Mastery.java:25-29</td><td>Movement isn't a reward; it's loot.</td><td><span class="pill replace">replace</span></td></tr>
+<tr><td class="k">Overworld sites</td><td>About ten systems: ruins, the Well, anomalies, fauna and lairs, Veil, dreams, Hearth, terrain heroes. Nearly all are "walk to a marker, fight or open a chest".</td><td class="mono">world/, above/ruin, anomaly/Spots.java</td><td>Plenty of places, no traversal.</td><td><span class="pill extend">extend</span></td></tr>
+<tr><td class="k">Sky platforms</td><td>Fixed at Y 262–269, deck about Y 275. Signposted from level 20 ("Bring wings."), but nothing gets you up until Jet Boots (about level 37, by blueprint luck) or A-rank Flight. Same loot as a ground vault. A block tower counts as "reached".</td><td class="mono">PrecursorRuinStructure.java:26,56</td><td>The one movement place is broken three ways.</td><td><span class="pill replace">replace</span></td></tr>
+<tr><td class="k">Terrain heroes</td><td>The Elder Colossus (55–90 tall), the Lumen Spire, and the Shard Drift floating shards. Pure scenery: no loot, discovery or Now line.</td><td class="mono">terrain/ (no Progression calls)</td><td>The best vertical shapes in the game do nothing.</td><td><span class="pill extend">extend</span></td></tr>
+<tr><td class="k">Anti-cheese</td><td>No block protection anywhere in the overworld. Rank doors can be dug around with any pickaxe. Inside gates, decorative blocks outside the palette can be broken, and anything can be placed.</td><td class="mono">AboveBlocks.java:37-39, GateEvents.java:200-223</td><td>Your exact worry is real.</td><td><span class="pill replace">replace</span></td></tr>
+<tr><td class="k">Exploration signal</td><td>The HUD draws only the top Now suggestion. Unspent points (55), any gate within 400 m (45) or a request (42) hides every exploration hint (30). No directive is about exploring.</td><td class="mono">TrackerHud.java:20,66</td><td>The world's invitations never reach you.</td><td><span class="pill extend">extend</span></td></tr>
+<tr><td class="k">Gate rooms</td><td>15 themes, 8 layouts, 14 modifiers, 8 twists, 15 Lords with 3 phases each. One real puzzle (a "lights out" rune line). No moving blocks, no triggers, no gravity rooms. "Collapse Timer" drops no blocks. No Lord changes its arena. No gate needs a move.</td><td class="mono">gates/world, run/Modifiers.java:293-348</td><td>Variety lives in mobs and rules, not rooms.</td><td><span class="pill extend">extend</span></td></tr>
+<tr><td class="k">Ritual hall</td><td>Pits that open and close, timed plates, staged events that catch up after lag, saved-and-restored block swaps, telegraphs.</td><td class="mono">story/Ritual.java, PiecesRitual</td><td>The machinery for living rooms already exists.</td><td><span class="pill keep">keep</span></td></tr>
+<tr><td class="k">Time split</td><td>The pacing sim puts about 52% of play in gates and trials and 48% in the overworld (10% of it walking to gates). Gates give 54% of XP. The game logs no XP by source, so the real split is unmeasured.</td><td class="mono">tools/sim/pacing_sim.py</td><td>Half the game is the part with the least design.</td><td><span class="pill verify">measure</span></td></tr>
+</table></div>
+
+<h3>Why it doesn't feel magical yet: six root causes</h3>
+<div class="tbl"><table>
+<tr><th>Symptom</th><th>Cause</th><th>Evidence</th><th>What would prove it wrong</th><th>Fix</th></tr>
+<tr><td>Moves end the instant they start</td><td><b>Movement is impulses, not states.</b> No momentum carries from one move to the next; there's no swinging, gliding or flying physics, only velocity kicks and creative flight.</td><td>Every movement power is a one-shot impulse, a teleport or the creative-flight attribute.</td><td>A tour where chained impulses already feel fluid. They don't: the prototype called its own result "stiff".</td><td>One movement state machine with real momentum (§4)</td></tr>
+<tr><td>Moves feel like an add-on</td><td><b>The feel is late and borrowed.</b> Effects aren't predicted (they arrive one round trip late), sounds are vanilla, flight has no animation, and four camera sources fight.</td><td>FxClient predicts only the pose. Sounds are remapped vanilla events. There are no flight or swing clips.</td><td>Feel improving with fixed timing alone, no new assets.</td><td>The Feel Director (§5)</td></tr>
+<tr><td>Movement isn't a reward</td><td><b>Progression doesn't know about movement.</b> Random cores, no traversal mastery, unused counters.</td><td>Starter pool, Mastery rule, counter consumers.</td><td>Players chasing movement cores anyway.</td><td>The Ascent ladder with mastery (§4)</td></tr>
+<tr><td>"Just place blocks"</td><td><b>No traversal grammar in the world.</b> Every place can be walked or towered to; sky platforms don't move or push back.</td><td>No place/break handlers, fixed-Y platforms.</td><td>Players preferring towers even with a fun route. That's why routes must be faster <i>and</i> rewarded.</td><td>The Wilds: wards, anchors, currents (§6)</td></tr>
+<tr><td>Nothing to do between gates</td><td><b>The world's invitations are muted.</b> One HUD line, low priorities, no exploration directives, terrain heroes inert.</td><td>The Now priorities table, the counters with no consumers.</td><td>You ignoring exploration hints even when they show.</td><td>The Horizon line and site rewards (§6)</td></tr>
+<tr><td>Gates feel alike after a few</td><td><b>Rooms can't change.</b> The painter is static; there's no trigger or timed-event layer in gates.</td><td>No setBlock in boss or ability code. One puzzle type.</td><td>New mobs alone keeping gates fresh. They haven't.</td><td>The Gate Rig and room archetypes (§7)</td></tr>
+</table></div>
+
+<!-- 3 -->
+<h2 id="options"><span class="n">3</span>Three ways to do it</h2>
+<div class="grid2">
+  <div class="card"><h4>A · Polish what's there</h4><p>Give Flight a pose and banking, add a swing to Grapple, put wards on ruins, add exploration directives.</p><p class="small"><b>Gets:</b> quick visible wins. <b>Loses:</b> movement stays a pile of separate powers with no ladder and no flow between moves. Gates stay static. It wouldn't change how the game feels.</p></div>
+  <div class="card" style="border-color:var(--aether)"><h4>B · One body, one ladder, a world built for it <span class="pill extend">recommended</span></h4><p>Merge the Body moves, the Runner kit and the movement powers into one movement system with momentum and states. Climb it through the Ascent. Give the world a traversal grammar (anchors, currents, wards, sites). Give gates a rig for living rooms and movement-keyed gates.</p><p class="small">Reuses the Body's prediction and server checks, the prototype's proven moves, the Ritual's machinery, PAL clips, Lens and the Holo UI.</p></div>
+  <div class="card"><h4>C · Engine-level conversion</h4><p>A custom player rig with procedural animation and IK, a moving world (drifting islands with real collision), Turbo GPU effects.</p><p class="small"><b>Gets:</b> the ceiling. <b>Loses:</b> weeks of risk on 26.3 internals for gains that B gets most of. I take only two pieces from it: wings as a model layer, and a Lens "motion" look.</p></div>
+</div>
+<p><b>Why B:</b> the audit shows the problem isn't a lack of moves (there are 17 movement powers and moves) or a lack of places (about ten systems). It's that the moves don't flow, aren't earned, and don't open the world, and that rooms can't change. B attacks those causes directly and reuses the parts that already feel good. <b>What would change my mind:</b> if Phase 0's swing and glide prototypes feel stiff even with the Feel Director, the bottleneck is animation fidelity, and we'd pull in more of C (a custom rig) early.</p>
+
+<!-- 4 -->
+<h2 id="ascent"><span class="n">4</span>The Ascent: the ladder</h2>
+<p>One movement system, climbed in six tiers. Each tier adds a new <i>state</i> of the body, with its own physics, animation, sound and camera. It's <b>earned by a deed in the world</b> (a place, a Lord, a trial), not by a random core, and its moves level up with <b>traversal mastery</b>. Ranks still improve everything, as approved.</p>
+
+<div class="ladder">
+  <div class="rung"><div class="alt"><b>Runner</b>Ground · from the first second</div><div><h4>Sprint, tactical sprint, slide, roll, mantle, wall-run, wall jump, ledge hang, shimmy</h4><p>Everything grounded, with coyote time and input buffering. The Body moves plus the runner prototype's wall work, rebuilt with full feel: wall-run sparks and grip sound, a ledge-hang clip, a third-person-aware hang camera. <b>Wall Stride</b> replaces the Wall Run power, as Carillon decided.</p><div class="row"><span><b>Earned:</b> awakening (vanilla before it, unless you choose the city start later)</span><span><b>Mastery:</b> distance run without stopping, wall chains</span></div></div></div>
+  <div class="rung"><div class="alt"><b>Tether</b>Treetops · E–D</div><div><h4>Swing, zip, reel, slingshot, yank</h4><p>A real rope. Fire at any solid block (trees, cliffs, ruins), swing like a pendulum, pump at the bottom of the arc to gain speed, and let go to launch with all that momentum. Reel in or out, zip straight up, chain anchor to anchor without touching the ground. Hit a mob to yank it, or yank yourself to a big one.</p><div class="row"><span><b>Earned:</b> the Tether Vow, a short trial in the first vault you find</span><span><b>Mastery:</b> swings chained, momentum kept</span></div></div></div>
+  <div class="rung"><div class="alt"><b>Leaper</b>Cliffs · D–C</div><div><h4>Air dash, double jump, wall kick, dive slam, updraft riding</h4><p>Dash and Leap become air moves inside the same state machine, so a swing release can go into an air dash and a dive slam. Updraft pylons lift you.</p><div class="row"><span><b>Earned:</b> a Leaper gate (a gauntlet gate, §7)</span><span><b>Mastery:</b> airtime chains, landing quality</span></div></div></div>
+  <div class="rung"><div class="alt"><b>Wings</b>Sky platforms · C–B</div><div><h4>Wings of light, real gliding, the sonic boom</h4><p>Wings unfold from your back (a model layer with its own animation, not Slow Falling). Pitch down to dive and build speed, pull up to climb by trading that speed away, and ride thermals and wind currents. Past a speed threshold, the <b>sonic boom</b> fires: a visible shock ring, a Lens flash, the sound cutting out, then a crack.</p><div class="row"><span><b>Earned:</b> reaching your first sky platform the hard way (Tether + Leaper), where its Precursor core gives you the wings</span><span><b>Mastery:</b> glide distance, near-misses, booms</span></div></div></div>
+  <div class="rung"><div class="alt"><b>Skyborn</b>The clouds · A</div><div><h4>True flight</h4><p>Momentum flight, not creative flight: hover, cruise, boost, banking with camera roll, barrel rolls, and a dive with a boom. You cast while airborne, and aerial combat has its own enemies. It runs on <b>Aether</b>, a flight meter that recharges in sunlight and in updrafts, so flight is generous but not endless.</p><div class="row"><span><b>Earned:</b> the Sky Leviathan's Ascension trial (the Sky Archipelago Lord, rebuilt as a flight fight)</span><span><b>Mastery:</b> time aloft, aerial kills</span></div></div></div>
+  <div class="rung sov"><div class="alt"><b>Sovereign</b>Above · endgame</div><div><h4>God form: the angel overlord</h4><p>For about 30 seconds: radiant wings, an aura, slowed time around you, a Judgement Fall from altitude that shatters the ground, and hover-casting with every power amplified. The camera pulls back and Lens turns gold. Enemies flee. It echoes the Seated One: you become what killed you.</p><div class="row"><span><b>Earned:</b> the story's last arc (the Hollow Court and the Seed)</span><span><b>Use:</b> an ultimate on a long cooldown, charged by mastery</span></div></div></div>
+</div>
+
+<div class="note"><b>Flow, the glue.</b> Chain moves without stopping and a quiet <b>Flow</b> meter fills: a little more speed, softer landings, a faint Lens shimmer, and style XP. Stop or bonk and it fades. Flow is what makes "taking the long way" pay, and it's the skill players get to show off.</div>
+
+<!-- 5 -->
+<h2 id="feel"><span class="n">5</span>The feel: why games make moving satisfying</h2>
+<p>These are patterns from games known for movement (Insomniac's Spider-Man swinging, Titanfall 2's wall-running and slide-hops, Breath of the Wild's paraglider and stamina, Mirror's Edge's first-person momentum, Celeste's input forgiveness). They're design references from shipped games, not measured claims, and Phase 0 tests each one here.</p>
+<div class="tbl"><table>
+<tr><th>Principle</th><th>What it means in Awaken</th></tr>
+<tr><td class="k">Momentum is kept and rewarded</td><td>Speed carries from slide to swing to release to glide. Good timing <i>adds</i> speed (a pump at the swing's bottom, a slide-hop). Nothing resets you to zero unless you crash.</td></tr>
+<tr><td class="k">Anticipation, action, follow-through</td><td>Every move has a wind-up (crouch before a leap, an arm drawn back before a tether shot), the action, and a recovery (a roll, a wing fold). PAL clips with bends, generated from specs like the body clips.</td></tr>
+<tr><td class="k">Speed you can feel, not just see</td><td>FOV widens with speed. Wind rises in pitch and volume. Light streaks and contrails form, the camera trembles a little at the top speeds, and a Lens motion look adds faint radial haze at the edges. Each is tuned so you feel speed without nausea.</td></tr>
+<tr><td class="k">Generous input</td><td>Coyote time, input buffers, magnetism to anchors and ledges (the tether snaps to the best anchor near your aim), auto-mantle at the end of a swing.</td></tr>
+<tr><td class="k">Soft failure</td><td>Chaining never hurts. A missed swing drops you into a glide or a roll, not fall damage. Punish crashing into walls, not trying.</td></tr>
+<tr><td class="k">Sound carries the weight</td><td>Synthesised sounds for each state: the rope's creak and snap, cloth and wind, the wings' whoomph, the boom's crack, landings by surface.</td></tr>
+<tr><td class="k">Skill shows</td><td>Flow, near-miss flashes, records on routes, and a ghost of your best line. Other players see your rope, wings and contrails.</td></tr>
+<tr><td class="k">Comfort is a setting, not a compromise</td><td>Camera roll 0–7.5° (5° default), FOV effects on the existing slider, reduced motion, and no screen shake for those who don't want it.</td></tr>
+</table></div>
+<h3>The Feel Director</h3>
+<p>One client system owns camera roll, FOV, shake, speed lines, wind and Lens motion for every movement state, with a <b>shared budget</b>, so the Body camera, FxScreen, CombatFeel and Camera Overhaul stop stacking. It's <b>predicted</b>: effects start on your input, not when the server answers. Other players get the same visuals through the Body's existing "seen" sync.</p>
+
+<!-- 6 -->
+<h2 id="wilds"><span class="n">6</span>The Wilds: a world built to be crossed</h2>
+<h3>A grammar of places, each tied to a tier</h3>
+<div class="tbl"><table>
+<tr><th>Place</th><th>What it is</th><th>Movement</th><th>What you get</th></tr>
+<tr><td class="k">Tether Spires</td><td>Precursor pylons with anchor rings, in forests, ravines and on cliffs. A swing route climbs to a cache at the top, with a race line and a ghost.</td><td>Tether</td><td>Mastery shards, movement cores, a record</td></tr>
+<tr><td class="k">Sky platforms, rebuilt</td><td>Chains of anchors hang down to grappling height, updraft pylons stand beside them, and wind currents link nearby platforms. The deck is now a reward room.</td><td>Tether + Leaper to reach; Wings to cross between platforms</td><td>The <b>Wings</b> at the first one; afterwards, sky-only loot (feathers of light, Aether cells)</td></tr>
+<tr><td class="k">Hero trees</td><td>The Elder Colossus becomes a swing playground with a crown cache and a vista point (a Lens look). The Lumen Spire gets a glowing night route up its trunk.</td><td>Tether, Wings</td><td>Caches, a discovery, a vista Truth</td></tr>
+<tr><td class="k">Windways</td><td>Visible streams of air between landmarks: glide into one and it carries you hundreds of blocks.</td><td>Wings</td><td>Fast travel you fly yourself</td></tr>
+<tr><td class="k">Ravine runs</td><td>Wall-run walls and ledges down canyon sides, ending in a cache at the bottom.</td><td>Runner</td><td>Early game, from the first day</td></tr>
+<tr><td class="k">Skyfall chases</td><td>A falling star or fleeing spirit you must chase across terrain before it fades, at night.</td><td>Any; faster tiers win more</td><td>Anomaly rewards, scaled by how fast you caught it</td></tr>
+<tr><td class="k">Shard Drift</td><td>The existing floating shards become a stepping-stone course with a crystal at the top.</td><td>Leaper, Wings</td><td>Crystal loot</td></tr>
+</table></div>
+
+<h3>"You can just place blocks": the answer</h3>
+<p>We don't ban building. Three things together make movement the better way:</p>
+<ol>
+  <li><b>Precursor wards (lore: the Signal rejects foreign matter).</b> Only around Precursor sites (ruins, spires, sky platforms, hero-tree caches), blocks you place crumble after 3 seconds and drop back to you. Rank-door walls become unbreakable inside the ward. Your Hearth and the open world are untouched.</li>
+  <li><b>Distance, speed and time.</b> Sky decks sit 150+ blocks up, routes are timed, and chases fade. A tower would take minutes; the movement route takes 30 seconds.</li>
+  <li><b>The reward is for the route.</b> A cache's best roll, the route's record and its Flow XP pay only when you arrive by movement. The server tracks how you got there (the last 20 s of movement states). A tower still gets you there, just without the prize.</li>
+</ol>
+
+<h3>The world asks you out</h3>
+<ul>
+  <li><b>The Horizon line:</b> a second HUD line, just for exploration. It shows the nearest site you <i>can</i> reach with your current tier and, once in a while, a tease of one you can't yet ("needs Wings"). Gates and requests no longer hide it.</li>
+  <li><b>Real rewards:</b> movement cores, mastery shards, and sky-only loot that ground vaults can't drop. The ten counters that feed nothing now feed Truths, Titles and new <b>exploration directives</b>. Biome discoveries, promised in plan-v2 but never built, finally land.</li>
+  <li><b>Pressure stays:</b> ignored gates still break and spread blight near your Hearth, so the world keeps setting part of your agenda.</li>
+</ul>
+
+<!-- 7 -->
+<h2 id="gates"><span class="n">7</span>Gate rooms: the room is the puzzle</h2>
+<p><b>The Gate Rig</b> is a small layer under the painter, built from the Ritual's proven pieces. It gives a room a staged timeline of saved-and-restored block swaps, with smooth block-display animation on top. Triggers fire from plates, positions, a light beam reaching a block, runes or an encounter. Everything follows from the gate plan, so a gate generates the same every time and survives a relog. New rooms ship as gate content version 4; old gates keep version 3.</p>
+<div class="tbl"><table>
+<tr><th>Room</th><th>Themes</th><th>What you do</th><th>How it works</th><th>Needs</th></tr>
+<tr><td class="k">Mirror Hall</td><td>Mirror Palace, Precursor Lab</td><td>Rotate mirrors to route a beam of light to the seal. Beams burn mobs, so you can route light through a fight. Your spirit walks through mirrors into hidden rooms; that was promised in plan.html but the tag was wrong.</td><td>Mirror blocks with facing, a beam traced each tick and drawn with Lens bloom.</td><td>Any; Spirit for secrets</td></tr>
+<tr><td class="k">Gravity Wells</td><td>Sky Archipelago, Precursor Lab, Nightmare</td><td>Switch which way is down: walk the ceiling, fall "up" into the next room, flip mid-fight.</td><td>Gravity zones, like stratum 7's tides.</td><td>Any</td></tr>
+<tr><td class="k">Collapse Run</td><td>Ember Mines, Glass Desert, Bell Crypt</td><td>The floor crumbles behind and under you on a beat. Sprint, slide and jump to the far door before it's gone. The "Collapse Timer" modifier finally drops real blocks.</td><td>Timed block removals (the Ritual's pits), magma or void below.</td><td>Runner</td></tr>
+<tr><td class="k">Chase</td><td>Treasure twist, Hive, Lantern Market</td><td>A Hoarder or thief flees along a route that needs your movement. Catch it before the exit.</td><td>An entity following a path, with a route built from the room's set pieces.</td><td>Faster tiers catch it sooner</td></tr>
+<tr><td class="k">Gauntlet</td><td>Clockwork Foundry, Frost Monastery</td><td>Timed pistons, crushers, collapsing ledges and wall-run walls, with checkpoint rings, a timer and a medal.</td><td>Staged block swaps, the checkpoint ring system, and your ghost.</td><td>Runner, Leaper</td></tr>
+<tr><td class="k">Tether Vault</td><td>Overgrown Temple, Hive, Drowned Archive</td><td>An abyss with anchor rings. Swing across while the vault guard fights you midair.</td><td>Anchor blocks plus Tether physics.</td><td>Tether</td></tr>
+<tr><td class="k">Rising Tide</td><td>Drowned Archive</td><td>The water climbs and the room tilts toward you. Climb the shelves before it takes you.</td><td>Staged water fill (Flooding exists) plus ledge routes.</td><td>Runner</td></tr>
+<tr><td class="k">Toll Bridges</td><td>Bell Crypt</td><td>Bridges exist only while the bell rings. Cross in rhythm.</td><td>The bell's toll events plus timed block swaps.</td><td>Runner</td></tr>
+<tr><td class="k">Lantern Dark</td><td>Lantern Market, Nightmare</td><td>Stay out of the moving lantern light, or the room wakes.</td><td>A light-beam check plus Stealth Halls rules.</td><td>Any</td></tr>
+</table></div>
+<ul>
+  <li><b>Lords change their arenas:</b> phase 2 cracks the floor into a collapse run; phase 3 flips gravity or floods the room. They use the same Rig.</li>
+  <li><b>Movement-keyed gates:</b> once you have a tier, the Director starts rolling gates built around it. Sky gates are islands in the void, Tether gates are vertical shafts, and Gauntlet gates are speed tests. Their card says what they need. You can see them before you can finish them, which is the "I'll come back with wings" feeling.</li>
+  <li><b>Ascension trials:</b> each tier is earned in a hand-built trial gate staged like the Ritual (the Tether Vow, the Leaper's Gauntlet, the Wingborn, the Leviathan's Sky). Each is a cinematic first time, not a toast.</li>
+  <li><b>Gate rules fixed:</b> every painted block is protected, not just the palette, and placing inside a gate is limited to your own constructs.</li>
+</ul>
+
+<!-- architecture -->
+<h2 id="arch"><span class="n">8</span>How it fits together</h2>
+<pre class="mermaid">
+flowchart LR
+  IN["Your input: keys, aim, timing"] --> SM["Movement state machine (client, predicted): Runner · Tether · Leaper · Wings · Skyborn · Sovereign"]
+  SM --> PHYS["Physics per state: momentum, rope, lift, drag"]
+  PHYS --> NET["Move start and state sync, one payload per change"]
+  NET --> SRV["Server checks against recent history: anchors real, Aether, speed caps, no kick (mayFly while airborne states run)"]
+  SRV -->|ok| SYNC["Others see you: rope, wings, trails"]
+  SRV -->|refused| CORR["Soft correction: velocity blended, never a teleport back"]
+  SM --> FEEL["Feel Director: camera, FOV, wind, trails, PAL clips, Lens motion look; one shared budget"]
+  SRV --> ASC["Ascent progress (saved): tiers, mastery, Flow, how you arrived"]
+  ASC --> WILD["The Wilds: sites, wards, Horizon line, rewards"]
+  ASC --> GATE["Director: movement-keyed gates, Ascension trials"]
+  GATE --> RIG["Gate Rig: staged block swaps, triggers, Lord arenas"]
+</pre>
+<div class="tbl"><table>
+<tr><th>Part</th><th>Where</th><th>Saved as</th><th>Old worlds</th></tr>
+<tr><td class="k">Movement state machine</td><td><code>dev.awaken.body</code> grows into the one movement module. Powers keep their slots but drive body states through <code>core.api.MovementHooks</code>, which gains <code>state()</code>, <code>wallRunning</code> and <code>hanging</code>.</td><td>Transient per tick; nothing saved mid-swing</td><td>Same keys and slots</td></tr>
+<tr><td class="k">Ascent progress</td><td><code>progression</code> Profile gets an <code>ascent</code> record: tier, mastery per tier, Flow best and route records.</td><td>Codec with <code>schemaVersion</code></td><td>Tiers granted by your rank on first load (B and above get Wings, A gets Skyborn) with a "your body remembers" scene</td></tr>
+<tr><td class="k">Wards and sites</td><td><code>world</code> and <code>above.ruin</code> gain a ward radius per site. A new <code>wilds</code> package holds spires, windways and chases.</td><td>Structure data plus SavedData for ward and route records</td><td>New sites only in newly generated chunks; existing ruins get wards on load</td></tr>
+<tr><td class="k">Gate Rig and rooms</td><td><code>gates.world</code> (pure geometry, like PiecesRitual) plus <code>gates.run.Rig</code> (timeline and triggers)</td><td>FloorState gains rig state (<code>schemaVersion</code>)</td><td>Content version 3 gates unchanged</td></tr>
+<tr><td class="k">Feel Director</td><td><code>body.client.feel</code>, reading FxScreen, CombatFeel and Lens through their APIs</td><td>Client config (comfort sliders)</td><td>n/a</td></tr>
+</table></div>
+
+<h3>What could go wrong</h3>
+<div class="tbl"><table>
+<tr><th>Risk</th><th>How we catch it</th><th>What happens instead</th><th>Test</th></tr>
+<tr><td class="k">The server kicks you for floating</td><td>The vanilla rule only kicks players who can't fly, so airborne states grant <code>mayFly</code> while they run. Server pushes call the post-impulse grace (today none do).</td><td>No kick, ever</td><td>A GameTest flies for 60 s in open air: 0 kicks</td></tr>
+<tr><td class="k">Rubber-banding at speed</td><td>History-based server checks (the prototype showed 0 at 150 ms); speed caps per tier</td><td>Velocity blended toward the server's answer, never a snap back</td><td>Simulated 150 and 300 ms latency tours</td></tr>
+<tr><td class="k">Outrunning chunk loading</td><td>Speed caps per tier (Skyborn boost about 2.2 blocks/tick, the elytra's range); Far Sight shows what's ahead</td><td>The boom is a burst, not a cruise speed</td><td>A 2 km flight tour at render distance 16: no holes on screen</td></tr>
+<tr><td class="k">Motion sickness</td><td>Comfort settings from day one</td><td>Roll, FOV effects and shake all scale to 0</td><td>The settings screen, plus a tour with every option at 0</td></tr>
+<tr><td class="k">Frame time</td><td>Wings and trails are one draw each; particle caps; Lens motion only adds to an existing pass</td><td>Drop trail density before fps</td><td>The Dell at render distance 16: p50 stays within +0.5 ms</td></tr>
+<tr><td class="k">Elytra, mounts and dreams collide with flight</td><td>States refuse to start while riding or elytra-flying; dream flight hands over cleanly</td><td>The state simply doesn't start</td><td>A GameTest per combination</td></tr>
+<tr><td class="k">Camera Overhaul fights our roll</td><td>Its roll pauses while our states own the camera (through its config), or it leaves the pack</td><td>One camera voice</td><td>A tour with it installed</td></tr>
+<tr><td class="k">A puzzle can't be solved</td><td>Every room archetype has a pure solvability check, like the rune line</td><td>The generator rerolls the room</td><td>A GameTest per archetype, across 1,000 seeds</td></tr>
+</table></div>
+
+<!-- walkthroughs -->
+<h2 id="walkthroughs"><span class="n">9</span>Before and after, same moments</h2>
+<p class="small">The "after" columns describe planned, unbuilt behaviour.</p>
+<h3>1 · Getting to a gate 300 blocks away (an ordinary evening)</h3>
+<div class="ba">
+  <div class="card before"><h4>Today</h4><p>Sprint across the forest for about 70 seconds, jump over roots, maybe tactical sprint. Arrive. It's travel time.</p></div>
+  <div class="card after"><h4>With the Ascent</h4><p>Slide down the slope into a swing off the first big oak, pump, release over the river into an air dash, then a second swing and a roll landing. Flow fills, the wind rises, and Lens shimmers at the edges. You arrive in 25 seconds, grinning, and the gate pillar has been in view the whole way.</p></div>
+</div>
+<h3>2 · The sky platform (the case that disappoints today)</h3>
+<div class="ba">
+  <div class="card before"><h4>Today</h4><p>The Now line says "The Sky Platform · Bring wings." at level 20. There's no way up for another 17 levels, unless you tower 200 blocks. You arrive to the same chests as a ground vault.</p></div>
+  <div class="card after"><h4>With the Ascent</h4><p>The Horizon line says "Sky platform · 640 m · reachable". Anchor chains hang down from the keel. You swing up chain to chain, catch an updraft pylon and air-dash onto the deck. Blocks you placed on the way crumble in the ward. On the deck, the core opens: the Wingborn trial, and you walk out with wings. The next platform is a glide away on a windway.</p></div>
+</div>
+<h3>3 · A Mirror Palace gate (a difficult room)</h3>
+<div class="ba">
+  <div class="card before"><h4>Today</h4><p>Static mirror walls as decoration, a rune line, mobs. You win by fighting.</p></div>
+  <div class="card after"><h4>With the Ascent</h4><p>A beam enters from a crystal. You rotate three mirrors to route it while Mirror Knights rush you. The light burns them, so you route it through the fight. A mirror with a crack leads your spirit into a hidden room. In phase 2 the Lord shatters the floor into a collapse run.</p></div>
+</div>
+<h3>4 · Lag and a tower (things going wrong)</h3>
+<div class="ba">
+  <div class="card before"><h4>Today</h4><p>No airborne movement to rubber-band. Towers reach everything.</p></div>
+  <div class="card after"><h4>With the Ascent</h4><p>At 250 ms ping your swing keeps its line, and the server's small correction is blended in over a few ticks. A friend who towers to the platform watches the blocks crumble at the ward edge. They still get there by tower outside it, but the cache's best roll and the route record only pay for arriving by movement.</p></div>
+</div>
+
+<h3>What you'd see</h3>
+<div class="mockrow">
+  <div class="holo" role="img" aria-label="Mockup of the Ascent panel in the K menu">
+    <div class="t">K · Ascent</div>
+    <div class="lit">TETHER · rank 3</div>
+    <div class="bar"><i style="width:62%"></i></div>
+    <div class="dim">mastery 62% · next: rope +6, pump +4%</div>
+    <div class="lit" style="margin-top:6px">LEAPER · rank 1</div>
+    <div class="bar"><i style="width:18%"></i></div>
+    <div class="gold" style="margin-top:6px">WINGS · sealed</div>
+    <div class="dim">"A sky platform's core will answer you."</div>
+  </div>
+  <div class="holo" role="img" aria-label="Mockup of the Now and Horizon lines" style="max-width:420px">
+    <div class="t">HUD · top left</div>
+    <div class="lit">◇ E-rank gate · 212 m</div>
+    <div class="lit" style="color:#bfe9f6">⌁ Horizon · Tether Spire · 340 m</div>
+    <div class="dim" style="margin-top:8px">The Flow meter sits under the hotbar while you chain moves, and fades when you stop.</div>
+  </div>
+</div>
+<p class="small">Mockups for illustration; the real panels use the Holo glass and glow you already have.</p>
+
+<!-- delivery -->
+<h2 id="delivery"><span class="n">10</span>Testing and delivery</h2>
+<h3>How we know it's better</h3>
+<ul>
+  <li><b>Baseline first:</b> XP-by-source and time-by-activity telemetry (none exists today), plus a recorded tour of today's flight, grapple and the 300-block crossing, so "after" has something to beat.</li>
+  <li><b>Physics GameTests</b> (on CI):
+    <ul>
+      <li>the rope keeps its length;</li>
+      <li>a swing's energy matches the pendulum within 5%;</li>
+      <li>the glide's sink rate and dive speed;</li>
+      <li>Aether drain;</li>
+      <li>the server refuses fake anchors;</li>
+      <li>60 s of airborne states without a kick;</li>
+      <li>wards crumble placed blocks and leave the Hearth alone;</li>
+      <li>every room archetype is solvable across 1,000 seeds.</li>
+    </ul>
+  </li>
+  <li><b>Feel tours</b> (on the Mac): frame sequences of each move from first and third person, turned into short clips you can watch (tours make stills; clips need an ffmpeg step, which I'll verify). Plus the 300-block crossing timed before and after.</li>
+  <li><b>Your hands:</b> feel can't be judged from screenshots. I'd ask for three 10-minute sessions in a sandbox world: swing, glide and flight. See decision 5.</li>
+  <li><b>Performance gates:</b> the Dell at render distance 16 holds 120 fps p50 with wings and trails on, and p99.5 doesn't drop more than 10% from today's 89.</li>
+</ul>
+
+<h3>Phases</h3>
+<p class="small">Estimated at the pace this project has actually moved (the whole mod was built in about 30 hours of builder time). These are ranges, not promises. Code work can run in cloud sessions; tours and your feel sessions need the Mac.</p>
+<div class="tbl"><table>
+<tr><th>Phase</th><th>Builds</th><th>Gate to pass</th><th>Builder time</th></tr>
+<tr><td class="k">0 · Feel spike</td><td>Throwaway: the rope swing, glide with a placeholder wing, momentum flight and the Feel Director's camera and wind, in a sandbox world</td><td>Your first feel session says "yes, that". If it's stiff, pull in more animation work (option C) before building on it.</td><td>~half a day</td></tr>
+<tr><td class="k">1 · One Body + Tether</td><td>The state machine; the Runner kit folded in from Carillon's prototype with full feel; Wall Stride; Tether for real; Flow; Ascent progress and mastery; the comfort settings</td><td>The 300-block crossing in under 30 s by movement; 0 kicks; latency tours clean</td><td>1–2 days</td></tr>
+<tr><td class="k">2 · The Wilds + Wings</td><td>Wards; Tether Spires; sky platforms rebuilt with anchors, updrafts and the Wings core; windways; hero-tree routes; the Horizon line; exploration directives; biome discoveries; telemetry</td><td>A seeded world route reaches 3 sites by movement; a tower can't take ward loot; the sky platform is reachable at level ~20</td><td>1–2 days</td></tr>
+<tr><td class="k">3 · Gate Rig + rooms</td><td>The Rig; six archetypes first (mirror, gravity, collapse, chase, gauntlet, tether), then the rest; Lords changing arenas; movement-keyed gates; the first two Ascension trials; gate block protection</td><td>Solvable across 1,000 seeds; each archetype's clip reviewed; old gates unchanged</td><td>2–3 days</td></tr>
+<tr><td class="k">4 · Skyborn + Sovereign</td><td>Momentum flight with Aether; aerial enemies and combat; the Leviathan trial; god form with its scene</td><td>Your flight session; the Dell holds 120 fps in god form</td><td>1–2 days</td></tr>
+<tr><td class="k">5 · Pacing and polish</td><td>The pacing sim learns the tiers; rewards tuned from telemetry; doc fixes found by the audits</td><td>The sim hits its level targets; you play the full ladder</td><td>~1 day</td></tr>
+</table></div>
+<p>Each phase has a feature flag: <code>ascent</code>, <code>wards</code>, <code>wilds</code> and <code>gateRig</code> in the common config. Turning one off returns that part to today's behaviour without breaking saves. Rollback trigger: any kick, any save that won't load, or fps below the gate on the Dell.</p>
+
+<h3>Risks I can't settle on paper</h3>
+<ul>
+  <li><b>Wings as a model layer:</b> the exact 26.3 event for adding a layer to player renderers needs checking in the sources. <span class="pill verify">verify in Phase 0</span></li>
+  <li><b>Clips from tours:</b> whether ffmpeg is available, or tours stay stills. <span class="pill verify">verify</span></li>
+  <li><b>Chunk loading at Skyborn speed</b> on a busy machine. The speed caps may need tuning. <span class="pill verify">measure</span></li>
+  <li><b>Moving platforms</b> are staged block swaps with animation on top, not smooth moving collision (vanilla has none). If that reads as choppy, gauntlets lean on crushers and collapses instead. <span class="pill verify">Phase 3 clip review</span></li>
+</ul>
+
+<!-- decisions -->
+<h2 id="decisions"><span class="n">11</span>Decisions for you</h2>
+<div class="decision"><div class="num">1</div><div><p><b>Approve option B</b>, starting with Phase 0's feel spike.</p><p class="rec">Recommended: yes.</p></div></div>
+<div class="decision"><div class="num">2</div><div><p><b>The ladder's shape:</b> Runner from the start (as already approved for Carillon), then Tether, Leaper, Wings, Skyborn and Sovereign, each earned by a deed or trial, not only by rank.</p><p class="rec">Recommended: yes. Wings around C–B, true flight at A, god form at the story's end.</p></div></div>
+<div class="decision"><div class="num">3</div><div><p><b>Precursor wards:</b> blocks you place crumble near Precursor sites only, and rank-door walls become unbreakable there.</p><p class="rec">Recommended: yes. Your Hearth and the open world stay free.</p></div></div>
+<div class="decision"><div class="num">4</div><div><p><b>Carillon's Runner workstream:</b> fold it into this plan, so movement is built once by one team. Carillon then builds the city on top.</p><p class="rec">Recommended: yes.</p></div></div>
+<div class="decision"><div class="num">5</div><div><p><b>Feel sessions:</b> three 10-minute hands-on sessions (swing, glide, flight) at Phases 0, 1 and 4. You said you'd rather test at the end, but feel is the one thing screenshots can't judge.</p><p class="rec">Recommended: yes, just these three.</p></div></div>
+<div class="decision"><div class="num">6</div><div><p><b>Camera Overhaul:</b> keep it and pause its roll while our moves own the camera, or drop it from the pack.</p><p class="rec">Recommended: keep it, paused during our moves.</p></div></div>
+<div class="decision"><div class="num">7</div><div><p><b>Where it runs:</b> code in Awaken cloud sessions (your credit), tours and feel sessions on the Mac.</p><p class="rec">Recommended: cloud for Phases 1–4 code; Phase 0 on the Mac, because it's mostly feel.</p></div></div>
+
+<p class="small" style="margin-top:40px">Sources: three code audits of build/awaken-v1 at 41492e5 (24 Oct 2026); docs/SPEC.md; carillon/spike-runner's S3 report; tools/sim/pacing_sim.py run in memory (balanced player, 150 runs, seed 42). Game-feel references are patterns from shipped games, to be tested here, not measured claims.</p>
+</main>
+</div>

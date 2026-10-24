@@ -29,6 +29,9 @@ public final class MobHooks {
 
         /** Whether this is a peaceful overworld creature (ambient or grazing) that powers' waves shouldn't hurt unprovoked. */
         default boolean peaceful(net.minecraft.world.entity.Entity e) { return false; }
+
+        /** The player a creature is bonded to (a bonded mount), if any: only they may ride or possess it. */
+        default java.util.Optional<java.util.UUID> bondedTo(net.minecraft.world.entity.Entity e) { return java.util.Optional.empty(); }
     }
 
     private static Spawner spawner = new Fallback();
@@ -47,6 +50,11 @@ public final class MobHooks {
 
     public static boolean peaceful(net.minecraft.world.entity.Entity e) {
         return spawner.peaceful(e);
+    }
+
+    /** The player this creature is bonded to (a bonded mount), if any. */
+    public static java.util.Optional<java.util.UUID> bondedTo(net.minecraft.world.entity.Entity e) {
+        return spawner.bondedTo(e);
     }
 
     /** Applies SPEC section 2 scaling to any living entity and tags its role. */
@@ -71,11 +79,29 @@ public final class MobHooks {
         e.setData(CoreApi.MOB_ROLE.get(), role);
     }
 
-    /** The world's Ascension tier for a hostile role (0 for allies, spirits and when no story is installed), at most 10. */
+    /** Persistent-data key: the Ascension tier a hostile creature was scaled for (the story evens it out per player). */
+    public static final String ASCENSION_TAG = "awaken_ascension";
+    /** Players within this many blocks decide the tier a new creature is scaled for. */
+    public static final double ASCENSION_RANGE = 64;
+
+    /**
+     * The Ascension tier for a hostile role (0 for allies, spirits and when no story is installed), at most 10: the
+     * tier the nearest player meets (the world's tier, never above their own: SPEC "Together"), or the world's tier when
+     * nobody is near. The tier is remembered on the creature so hits to and from other players can be evened out.
+     */
     public static int ascension(LivingEntity e, MobRole role) {
         if (role.role() == MobRole.Role.ECHO || role.role() == MobRole.Role.SPIRIT || role.role() == MobRole.Role.NONE) return 0;
         if (!(e.level() instanceof ServerLevel sl)) return 0;
-        return Math.clamp(StoryHooks.ascension(sl.getServer()), 0, 10);
+        var near = sl.getNearestPlayer(e.getX(), e.getY(), e.getZ(), ASCENSION_RANGE, false);
+        int tier = near instanceof net.minecraft.server.level.ServerPlayer sp ? StoryHooks.ascensionOf(sp)
+                : Math.clamp(StoryHooks.ascension(sl.getServer()), 0, 10);
+        e.getPersistentData().putInt(ASCENSION_TAG, tier);
+        return tier;
+    }
+
+    /** The tier this creature was scaled for, or -1 if it never was (vanilla creatures, or scaled before the tag existed). */
+    public static int scaledAscension(LivingEntity e) {
+        return e.getPersistentData().getIntOr(ASCENSION_TAG, -1);
     }
 
     /** New Game+: each Ascension tier gives hostile creatures +30% health... */

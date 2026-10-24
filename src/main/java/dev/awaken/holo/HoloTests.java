@@ -1,14 +1,25 @@
 package dev.awaken.holo;
 
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.holo.ui.HoloTimeline;
+import dev.awaken.holo.ui.HoverTick;
+import dev.awaken.holo.ui.HudFade;
+import dev.awaken.holo.ui.InventoryWells;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.Slot;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
-/** GameTests for the {@code awaken:holo_state} rules: unknown kinds, the rate limit, and who hears about it. */
+/**
+ * GameTests for the holo module's rules: {@code awaken:holo_state} (unknown kinds, the rate limit, who hears about it)
+ * and the side-agnostic rules the client follows ({@code holo.ui}): the inventory's timeline and wells, the hover tick,
+ * the tier-1 HUD fade.
+ */
 final class HoloTests {
     private HoloTests() {}
 
@@ -58,6 +69,106 @@ final class HoloTests {
                 h.assertTrue(HoloRelay.kind(p) == HoloKind.INVENTORY, "the last change arrives once the window frees");
                 HoloRelay.forget(p);
             });
+        });
+
+        AwakenTests.register("holo_inventory_timeline", 20, h -> {
+            HoloTimeline k = new HoloTimeline(), inv = new HoloTimeline(HoloTimeline.INVENTORY_SPEED);
+            h.assertTrue(Math.abs(k.openRealMs() - 450f) < 0.01f && Math.abs(k.closeRealMs() - 250f) < 0.01f, "the K menu keeps 450 / 250 ms");
+            h.assertTrue(inv.openRealMs() <= 180.01f, "the inventory opens in at most 180 ms, was " + inv.openRealMs());
+            // played frame by frame at 60 fps: fully open within 180 ms (one frame of rounding), landing only once grown
+            inv.open();
+            float ms = 0, lastLanded = 0;
+            boolean grownBeforeLanding = true;
+            while (!inv.fullyOpen() && ms < 1000) {
+                inv.advance(1000f / 60f);
+                ms += 1000f / 60f;
+                float landed = inv.landed();
+                h.assertTrue(landed >= lastLanded, "the flat face only ever comes up while opening");
+                if (landed > 0 && inv.grow(false) < 0.999f) grownBeforeLanding = false;
+                lastLanded = landed;
+            }
+            h.assertTrue(ms <= 180f + 1000f / 60f, "fully open after " + ms + " ms");
+            h.assertTrue(grownBeforeLanding, "the 3D panel is in its place before the flat face takes over");
+            h.assertTrue(inv.landed() == 1f, "landed when open");
+            inv.seek(300f);
+            h.assertTrue(inv.landed() == 0f, "nothing hands over while it still unfolds");
+            inv.seek(HoloTimeline.OPEN_MS);
+            inv.close();
+            ms = 0;
+            while (inv.active() && ms < 1000) {
+                inv.advance(1000f / 60f);
+                ms += 1000f / 60f;
+            }
+            h.assertTrue(ms <= 100f + 1000f / 60f, "the inventory folds away in 100 ms, took " + ms);
+            h.succeed();
+        });
+
+        AwakenTests.register("holo_inventory_wells", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            Map<InventoryWells.Kind, Integer> count = new EnumMap<>(InventoryWells.Kind.class);
+            List<int[]> wells = new ArrayList<>();
+            for (Slot s : p.inventoryMenu.slots) {
+                InventoryWells.Kind k = InventoryWells.kind(s);
+                count.merge(k, 1, Integer::sum);
+                int x = InventoryWells.x(s, k), y = InventoryWells.y(s, k), n = InventoryWells.size(k);
+                h.assertTrue(x >= 0 && y >= 0 && x + n <= 176 && y + n <= 166, "slot " + s.index + "'s well is inside the panel");
+                h.assertTrue(x < s.x && y < s.y && x + n > s.x + 16 && y + n > s.y + 16, "slot " + s.index + "'s well surrounds its item");
+                // your figure's alcove (vanilla draws the player in 26,8 - 75,78) is never under a well
+                h.assertFalse(x < 75 && x + n > 26 && y < 78 && y + n > 8, "slot " + s.index + "'s well clears the figure");
+                for (int[] o : wells) {
+                    h.assertFalse(x < o[0] + o[2] && o[0] < x + n && y < o[1] + o[2] && o[1] < y + n, "slot " + s.index + "'s well overlaps another");
+                }
+                wells.add(new int[] {x, y, n});
+            }
+            h.assertTrue(count.equals(Map.of(InventoryWells.Kind.RESULT, 1, InventoryWells.Kind.CRAFT, 4, InventoryWells.Kind.ARMOR, 4,
+                    InventoryWells.Kind.MAIN, 27, InventoryWells.Kind.HOTBAR, 9, InventoryWells.Kind.OFFHAND, 1)), "every slot of the menu has its kind: " + count);
+            p.getInventory().setSelectedSlot(3);
+            int selected = 0;
+            for (Slot s : p.inventoryMenu.slots) {
+                if (!InventoryWells.selected(s, p.getInventory())) continue;
+                selected++;
+                h.assertTrue(s.getContainerSlot() == 3, "the lit well is the hand's");
+            }
+            h.assertTrue(selected == 1, "exactly one well is the hand's, was " + selected);
+            h.succeed();
+        });
+
+        AwakenTests.register("holo_hover_tick", 20, h -> {
+            HoverTick t = new HoverTick();
+            // sweeping across a full hotbar in 160 ms ticks about four times, not nine
+            int ticks = 0;
+            for (int i = 0; i < 9; i++) if (t.update(i, 20f, false)) ticks++;
+            h.assertTrue(ticks >= 3 && ticks <= 4, "a sweep across nine slots ticks 3-4 times, was " + ticks);
+            h.assertFalse(t.update(8, 200f, false), "staying on the same target never ticks again");
+            h.assertFalse(t.update(HoverTick.NONE, 200f, false), "nothing under the cursor is silent");
+            h.assertTrue(t.update(8, 200f, false), "coming back onto it after a pause ticks");
+            h.assertFalse(t.update(2, 200f, true), "a quiet frame (unfolding, a drag) never ticks");
+            h.assertFalse(t.update(2, 200f, false), "and it doesn't tick late for the target it already noted");
+            t.reset();
+            h.assertTrue(t.update(5, 0f, false), "a freshly opened panel ticks for the first target at once");
+            h.succeed();
+        });
+
+        AwakenTests.register("holo_hud_fade", 20, h -> {
+            HudFade f = new HudFade();
+            h.assertTrue(f.alpha() > 0.9999f, "full to begin with");
+            for (int i = 0; i < HudFade.IDLE_TICKS - 1; i++) f.tick(false);
+            f.advance(5000f);
+            h.assertTrue(f.alpha() > 0.9999f, "nothing fades before " + HudFade.IDLE_TICKS + " quiet ticks");
+            f.tick(false);
+            f.advance(HudFade.FADE_OUT_MS / 2);
+            h.assertTrue(f.alpha() < 0.99f && f.alpha() > HudFade.IDLE_ALPHA + 0.01f, "fading slowly, was " + f.alpha());
+            f.advance(HudFade.FADE_OUT_MS);
+            h.assertTrue(Math.abs(f.alpha() - HudFade.IDLE_ALPHA) < 1e-4f, "rests at 35%, was " + f.alpha());
+            f.advance(60_000f);
+            h.assertTrue(f.alpha() >= HudFade.IDLE_ALPHA - 1e-4f, "never below 35%");
+            f.tick(true);
+            f.advance(HudFade.FADE_IN_MS);
+            h.assertTrue(f.alpha() > 0.9999f, "back to full within " + HudFade.FADE_IN_MS + " ms of being needed");
+            f.tick(false);
+            f.advance(1000f);
+            h.assertTrue(f.alpha() > 0.9999f, "the quiet wait starts over after anything happens");
+            h.succeed();
         });
 
         AwakenTests.register("holo_state_relays_only_to_trackers", 200, h -> {

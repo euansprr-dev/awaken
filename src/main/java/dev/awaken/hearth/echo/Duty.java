@@ -58,6 +58,14 @@ public final class Duty {
     private record Containers(long at, List<BlockPos> list) {}
     private static final Map<UUID, Containers> CONTAINERS = new HashMap<>();
 
+    /** Server stop: forget live Echo bookkeeping (entity ids belong to the world that stopped). */
+    public static void clear() {
+        DEFEND.clear();
+        INSTALLED.clear();
+        TRAINING.clear();
+        CONTAINERS.clear();
+    }
+
     // ---- assignment (pure) ------------------------------------------------------------------------------------------
 
     /**

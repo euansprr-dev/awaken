@@ -73,8 +73,10 @@ public final class HeroTests {
                             tree.getSerializedName(), s.trunkTop, s.width12, s.rootReach, s.leafReach, s.leaves, s.persistent, s.vines, s.cells));
                 }
                 log.append(String.format(" %s blueprint %.2f ms fastest, %.2f avg, %.2f worst;", tree.getSerializedName(), best, total / seeds, worst));
-                // other work on the machine only ever adds time: the fastest seed is the honest cost
-                h.assertTrue(best <= 8, tree + " blueprint costs " + best + " ms at its fastest");
+                // other work on the machine only ever adds time: the fastest seed is the honest cost. The 8 ms budget
+                // is the M4's; GitHub's 2-core runners run about 2x slower, so CI gets 3x headroom (still a regression guard)
+                double budget = System.getenv("CI") != null ? 24 : 8;
+                h.assertTrue(best <= budget, tree + " blueprint costs " + best + " ms at its fastest (budget " + budget + ")");
             }
             Awaken.LOG.info("[terrain] hero blueprints:{}", log);
             h.succeed();
@@ -121,9 +123,13 @@ public final class HeroTests {
                                     tree.getSerializedName(), placedBy[n], chunks, total / chunks, worst));
                         }
                     })
-                    // let the light engine work through ten thousand blocks before the next batch reads light levels
-                    .thenIdle(200)
                     .thenExecute(() -> {
+                        // the light engine works through ten thousand blocks before the next batch: wait until it has (a
+                        // fixed 200 ticks of a GameTest server that never waits between ticks can be no time at all)
+                        for (HeroPiece piece : pieces) {
+                            BoundingBox b = piece.getBoundingBox();
+                            AwakenTests.awaitLight(h, new BlockPos(b.minX(), 0, b.minZ()), new BlockPos(b.maxX(), 0, b.maxZ()));
+                        }
                         for (int n = 0; n < trees.length; n++) {
                             HeroTree tree = trees[n];
                             int r = tree == HeroTree.ELDER_COLOSSUS ? 44 : 26;

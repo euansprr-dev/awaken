@@ -1,0 +1,345 @@
+# Pixels' decisive measurement (SPEC §18, docs/perf/pixels/REPORT.md). In each scene every scaled setting is measured
+# between two native windows (native, 0.75 sharp, native, 0.67 sharp, native, 0.67 FSR, native, 0.67 bilinear, native,
+# 0.5 sharp, native, 0.5 FSR, native), so the drift of a world still loading at RD 32 and of a busy machine cancels:
+# tools/pixels-report.py compares each with the mean of its two neighbours. Each window logs frame times ('perf') and
+# the GPU time of the world pass and of the upscale ('[pixels] gpu', timestamp queries). Then a shot at each setting.
+# Scenes: the perf-pack's sunset vista from 190 m, a grove close up (foliage, the hand), a ground vista on dry land;
+# then the K menu (Holo draws inside the world, so the world renders native while it holds focus) and a flat text
+# screen, shots only.
+# Run: SLOT_WHO=pixels PACK=perf RD=32 slot.sh tour tools/autopilot.sh tools/autopilot/pixels.txt
+# (Euan's settings: Vulkan, render distance 32, Lens Swift, no Distant Horizons.) Window 1440x900 points.
+world pixels creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+lens swift
+pixels state
+pixels gpu on
+hud off
+# 1 the sunset vista (perf-pack scene 1)
+cmd gamemode spectator
+cmd tp @s 0.5 190 0.5 90 12
+cmd time set 12600
+wait 900
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf vista_100_0 5
+pixels gpu vista_100_0
+pixels 0.75 sharp
+wait 30
+pixels gpu reset
+perf vista_075s_1 5
+pixels gpu vista_075s_1
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf vista_100_2 5
+pixels gpu vista_100_2
+pixels 0.67 sharp
+wait 30
+pixels gpu reset
+perf vista_067s_3 5
+pixels gpu vista_067s_3
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf vista_100_4 5
+pixels gpu vista_100_4
+pixels 0.67 fsr
+wait 30
+pixels gpu reset
+perf vista_067f_5 5
+pixels gpu vista_067f_5
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf vista_100_6 5
+pixels gpu vista_100_6
+pixels 0.67 bilinear
+wait 30
+pixels gpu reset
+perf vista_067b_7 5
+pixels gpu vista_067b_7
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf vista_100_8 5
+pixels gpu vista_100_8
+pixels 0.5 sharp
+wait 30
+pixels gpu reset
+perf vista_050s_9 5
+pixels gpu vista_050s_9
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf vista_100_10 5
+pixels gpu vista_100_10
+pixels 0.5 fsr
+wait 30
+pixels gpu reset
+perf vista_050f_11 5
+pixels gpu vista_050f_11
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf vista_100_12 5
+pixels gpu vista_100_12
+pixels 1.0 sharp
+wait 20
+shot px_vista_100
+pixels 0.75 sharp
+wait 20
+shot px_vista_075s
+pixels 0.67 sharp
+wait 20
+shot px_vista_067s
+pixels 0.67 fsr
+wait 20
+shot px_vista_067f
+pixels 0.67 bilinear
+wait 20
+shot px_vista_067b
+pixels 0.5 sharp
+wait 20
+shot px_vista_050s
+pixels 0.5 fsr
+wait 20
+shot px_vista_050f
+
+# 2 a grove close up: leaves, grass, the hand
+cmd time set 6000
+cmd gamemode creative
+cmd tp @s 0.5 151 0.5 0 0
+wait 20
+cmd fill -24 150 -4 24 150 40 minecraft:grass_block
+cmd fill -24 151 -4 24 166 40 minecraft:air
+cmd place feature minecraft:fancy_oak -6 151 14
+cmd place feature minecraft:fancy_oak 7 151 18
+cmd place feature minecraft:birch 0 151 26
+cmd place feature minecraft:oak 11 151 7
+cmd place feature minecraft:oak -11 151 8
+cmd place feature minecraft:birch -3 151 34
+cmd fill -24 151 -4 24 151 40 minecraft:short_grass replace minecraft:air
+hud on
+wait 100
+look 0 4
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf grove_100_0 5
+pixels gpu grove_100_0
+pixels 0.75 sharp
+wait 30
+pixels gpu reset
+perf grove_075s_1 5
+pixels gpu grove_075s_1
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf grove_100_2 5
+pixels gpu grove_100_2
+pixels 0.67 sharp
+wait 30
+pixels gpu reset
+perf grove_067s_3 5
+pixels gpu grove_067s_3
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf grove_100_4 5
+pixels gpu grove_100_4
+pixels 0.67 fsr
+wait 30
+pixels gpu reset
+perf grove_067f_5 5
+pixels gpu grove_067f_5
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf grove_100_6 5
+pixels gpu grove_100_6
+pixels 0.67 bilinear
+wait 30
+pixels gpu reset
+perf grove_067b_7 5
+pixels gpu grove_067b_7
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf grove_100_8 5
+pixels gpu grove_100_8
+pixels 0.5 sharp
+wait 30
+pixels gpu reset
+perf grove_050s_9 5
+pixels gpu grove_050s_9
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf grove_100_10 5
+pixels gpu grove_100_10
+pixels 0.5 fsr
+wait 30
+pixels gpu reset
+perf grove_050f_11 5
+pixels gpu grove_050f_11
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf grove_100_12 5
+pixels gpu grove_100_12
+pixels 1.0 sharp
+wait 20
+shot px_grove_100
+pixels 0.75 sharp
+wait 20
+shot px_grove_075s
+pixels 0.67 sharp
+wait 20
+shot px_grove_067s
+pixels 0.67 fsr
+wait 20
+shot px_grove_067f
+pixels 0.67 bilinear
+wait 20
+shot px_grove_067b
+pixels 0.5 sharp
+wait 20
+shot px_grove_050s
+pixels 0.5 fsr
+wait 20
+shot px_grove_050f
+
+# 3 a ground vista on dry land, far from spawn
+hud off
+cmd awaken gate hop
+wait 600
+look 0 -2
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf ground_100_0 5
+pixels gpu ground_100_0
+pixels 0.75 sharp
+wait 30
+pixels gpu reset
+perf ground_075s_1 5
+pixels gpu ground_075s_1
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf ground_100_2 5
+pixels gpu ground_100_2
+pixels 0.67 sharp
+wait 30
+pixels gpu reset
+perf ground_067s_3 5
+pixels gpu ground_067s_3
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf ground_100_4 5
+pixels gpu ground_100_4
+pixels 0.67 fsr
+wait 30
+pixels gpu reset
+perf ground_067f_5 5
+pixels gpu ground_067f_5
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf ground_100_6 5
+pixels gpu ground_100_6
+pixels 0.67 bilinear
+wait 30
+pixels gpu reset
+perf ground_067b_7 5
+pixels gpu ground_067b_7
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf ground_100_8 5
+pixels gpu ground_100_8
+pixels 0.5 sharp
+wait 30
+pixels gpu reset
+perf ground_050s_9 5
+pixels gpu ground_050s_9
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf ground_100_10 5
+pixels gpu ground_100_10
+pixels 0.5 fsr
+wait 30
+pixels gpu reset
+perf ground_050f_11 5
+pixels gpu ground_050f_11
+pixels 1.0 sharp
+wait 30
+pixels gpu reset
+perf ground_100_12 5
+pixels gpu ground_100_12
+pixels 1.0 sharp
+wait 20
+shot px_ground_100
+pixels 0.75 sharp
+wait 20
+shot px_ground_075s
+pixels 0.67 sharp
+wait 20
+shot px_ground_067s
+pixels 0.67 fsr
+wait 20
+shot px_ground_067f
+pixels 0.67 bilinear
+wait 20
+shot px_ground_067b
+pixels 0.5 sharp
+wait 20
+shot px_ground_050s
+pixels 0.5 fsr
+wait 20
+shot px_ground_050f
+
+# 4 the K menu and a flat text-heavy screen, over the grove: the three K-menu shots should match
+cmd tp @s 0.5 151 0.5 0 4
+hud on
+wait 60
+pixels 1.0 sharp
+screen holo
+wait 80
+shot px_kmenu_100
+pixels 0.67 sharp
+wait 30
+shot px_kmenu_067s
+pixels 0.5 sharp
+wait 30
+shot px_kmenu_050s
+pixels state
+screen close
+wait 30
+shot px_kmenu_closed_050s
+screen codex
+wait 30
+shot px_codex_050s
+pixels 1.0 sharp
+wait 30
+shot px_codex_100
+screen close
+pixels config
+quit

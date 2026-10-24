@@ -80,8 +80,9 @@ final class HomeMachines {
 
     static boolean nearHearth(ServerPlayer player, MachineBlockEntity be) {
         if (be.getLevel().dimension() != Level.OVERWORLD) return false;
-        Optional<BlockPos> h = HearthHooks.hearthOf(player);
-        return h.isPresent() && h.get().distSqr(be.getBlockPos()) <= (double) RELAY_RANGE * RELAY_RANGE;
+        // any Hearth you own or share counts as home (SPEC "Together")
+        for (BlockPos h : HearthHooks.hearthsOf(player)) if (h.distSqr(be.getBlockPos()) <= (double) RELAY_RANGE * RELAY_RANGE) return true;
+        return false;
     }
 
     static Panel relayPanel(ServerPlayer player, MachineBlockEntity be) {
