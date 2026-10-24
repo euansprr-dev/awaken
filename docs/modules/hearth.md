@@ -76,7 +76,8 @@ still gets the old notice and its Y. Status-screen glass with a lantern edge, on
 - Oren's cottage offer on top until it stands (Raise it / Try again / being built);
 - ROOMS: the rule in one line (from `RoomScanner.MAX_EXTENT` and the gap closers), then a card per `RoomType`: name and
   status (Built · x y z, Built ×N, Not yet), what it gives (`RoomType.does`), a checklist with item icons (✓ when that
-  furniture is anywhere in the radius; the last line "all of it in one closed, roofed room"), the real recipe of each
+  furniture is anywhere in the radius; the last line "all of it in one room"), the rule in one line ("A closed, roofed
+  room: walls, a roof, a door; at most 32 wide."), the real recipe of each
   missing piece of Hearth furniture drawn as a grid (tag slots cycle; read from the server's recipe manager), the reason
   it isn't recognised (amber), and "Oren built this one. Build the rest yourself." on the cottage's Sanctuary;
 - TOWN: who lives here, who comes next and at which rank;
@@ -105,21 +106,25 @@ declined; the screen keeps the offer). Yes starts a job:
   4 or cut up 2, the rim may rise 1; it keeps 2 blocks from the Anchor and 3 from the Spire. Anything a player makes
   (planks, cobble, farmland, paths, placed leaves, chests) rejects the spot. None in 40 tries → a notice ("No room for a
   cottage... clear a patch about 12 blocks across... then ask again in your Hearth") and the screen's Try again.
-- *Build*: trees one a tick, then the plants and the bumps in one pass, then four blocks a tick (about six seconds) in
-  order foundation → walls → plate and ceiling → roof → chimney → furnishing, layer by layer and row by row, each row
-  with its material's place sound and embers on new blocks; Oren walks to the door and swings a mace as a hammer. It never
+- *Build*: trees one a tick, then the plants and the bumps in one pass, then four blocks a tick (about seven seconds) in
+  order foundation → walls → plate and ceiling → roof → chimney → furnishing, layer by layer and row by row, a row's
+  material's place sound at most every three ticks and embers on new blocks; Oren walks to the door and swings a mace as a hammer. It never
   replaces a block that isn't terrain or a plant (someone building there meanwhile keeps it). The server stopping
   mid-build places the rest at once. On completion: the Anchor chime, "Oren's cottage · Your first Sanctuary is up.",
   `HearthRecord.cottage` (a cell inside, saved) and a rescan, so "Sanctuary recognised" follows within a second.
-- *Design* (`CottagePlan`, local frame, turned to face the Anchor): 9 × 9 on a stone-brick plinth that fills down to
-  the ground; log corner posts and door posts and mid posts; a stone lower course with weathered patches; plank walls;
-  seven glass-pane windows with open trapdoor shutters; a log wall plate; a plank ceiling (so the room is closed whatever
-  the roof does); a 45° stair gable roof with a one-block overhang, a slab-capped ridge and an attic window in each gable;
-  a chimney on the right gable with a campfire on top and a stove behind the wall; two lanterns hanging under the front
-  eave and a door step or a dirt path toward the Anchor. Inside (7 × 7 × 3): a bed under the back window with a barrel
-  nightstand and a lantern, the Meditation Mat, a 3 × 3 rug, a hanging lantern, a chest, a crafting table, a smoker, two
-  bookshelves and potted plants. Ten biome palettes (meadow, taiga/snowy/cold, birch, jungle, savanna, desert, badlands,
-  swamp/dark forest, mangrove, cherry) set the planks, posts, stone, roof, door, shutters, chimney and bed and rug colours.
+- *Design* (`CottagePlan`, local frame, turned to face the Anchor): 9 × 9 on a stone plinth that fills down to the
+  ground; log corner, door and mid posts; a stone lower course with weathered patches; plank walls four high; seven
+  two-tall windows with open trapdoor shutters, flower boxes under the two front ones and a light over the door; a log
+  wall plate; a plank ceiling (so the room is closed whatever the roof does); a 45° stair gable roof with a one-block
+  overhang, thick gable edges (upside-down stairs under the edge), a slab-capped ridge whose log beam shows at both
+  gables, and an attic window in each gable; a chimney on the right gable with a campfire on top and a stove behind the
+  wall; two lanterns hanging under the front eave; a step or a dirt path toward the Anchor. Inside (7 × 7 × 4): a bed under
+  the back window with a barrel nightstand and a lantern, the Meditation Mat, a 3 × 3 rug, a hanging lantern, a chest, a
+  crafting table, a smoker, a bookcase and potted plants. Ten biome palettes (meadow, taiga/snowy/cold, birch, jungle,
+  savanna, desert, badlands, swamp/dark forest, mangrove, cherry) set the planks, posts, stone, roof, door, shutters,
+  chimney, step and bed and rug colours (the desert: pale sandstone, spruce beams and a clay-red acacia roof).
+  Previews: the GameTest dumps every palette to `run/structures/cottage_<palette>.json`;
+  `python3 tools/art/specs/structures.py preview DIR cottage` draws them (two angles, day and night).
 
 **Costs that fall** (`Costs`, `Upgrades`). Price ×0.85 per rank you hold above the upgrade's tier (compounding, rounded up,
 never below 1). Anchor tiers II-V (D, C, B, A): radius 48/56/64/72/80, faster rest healing; mostly overworld materials plus a
@@ -236,8 +241,8 @@ a Sanctuary) · `hearth_cottage_offer_once` (one card, never twice, not after a 
 4. The Anchor teaches the Hearth's furniture recipes (Meditation Mat, Forge, Trophy Mount, the five role pads) when it
    takes root, whatever the level.
 5. Oren's cottage: offered once per player (a choice card six seconds after the first Anchor), free, never on anything a
-   player made: only terrain, plants, natural leaves and up to three natural trees give way. 9 × 9 outside, 7 × 7 × 3
-   inside, ten biome palettes, four blocks a tick (~6 s). Its room is a Sanctuary on completion. No paid cottages yet.
+   player made: only terrain, plants, natural leaves and up to three natural trees give way. 9 × 9 outside, 7 × 7 × 4
+   inside, ten biome palettes, four blocks a tick (~7 s). Its room is a Sanctuary on completion. No paid cottages yet.
 6. The Now tracker teaches the Hearth one line at a time: "Use the Anchor for a guide" (74 for ten minutes, then 56) until
    the screen is opened once; then the next room with live ticks (50); a why-line for a room being built (62). Lines are
    chosen server side to fit 148 px (100 with a compass), toasts' first sentences 144 px.

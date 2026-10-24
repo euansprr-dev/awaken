@@ -38,6 +38,8 @@ import java.util.Optional;
 final class HearthScreen extends Screen implements QuietScreen {
     private static final int MAX_W = 520, MAX_H = 340, HEAD = 30, SCROLLBAR = 6, ICON = 12, SLOT = 13, ROW = 13;
     private static final int DIM = 0x4A5A72;
+    /** The scanner's rule in one line. */
+    private static final String RULE = "A closed, roofed room: walls, a roof, a door; at most " + RoomScanner.MAX_EXTENT + " wide.";
 
     private GuideData data;
     private final Map<Identifier, ItemStack> stacks = new HashMap<>();
@@ -173,8 +175,8 @@ final class HearthScreen extends Screen implements QuietScreen {
         facts(ui);
         cottage(ui);
         section(ui, "ROOMS");
-        ui.text("A room is closed and roofed: walls, a roof and a door, at most " + RoomScanner.MAX_EXTENT
-                + " blocks wide. Doors, glass panes, fences, slabs and stairs close gaps. Build it; the Hearth notices.", Glass.a(Glass.LABEL, 1f));
+        ui.text("Build a room, put its furniture inside, and the Hearth notices: no menus. Doors, glass panes, fences, walls, "
+                + "slabs and stairs close gaps.", Glass.a(Glass.LABEL, 1f));
         ui.gap(4);
         for (RoomType t : RoomType.values()) {
             room(ui, t);
@@ -235,6 +237,7 @@ final class HearthScreen extends Screen implements QuietScreen {
             in.text(t.does, Glass.a(Glass.TEXT, 0.9f));
             in.gap(2);
             checklist(in, t, c, built);
+            if (!built) in.text(RULE, Glass.a(Glass.LABEL, 0.85f));
             if (!built) {
                 for (Furniture f : t.furniture) if ((c.have() & f.bit()) == 0) recipe(in, f);
             }
@@ -257,7 +260,7 @@ final class HearthScreen extends Screen implements QuietScreen {
             ok.add(built || (c.have() & f.bit()) != 0);
         }
         icons.add(new ItemStack(Items.OAK_DOOR));
-        labels.add("all of it in one closed, roofed room");
+        labels.add("all of it in one room");
         ok.add(built);
         int x = ui.x, y = ui.y(), right = ui.x + ui.width;
         for (int i = 0; i < icons.size(); i++) {
