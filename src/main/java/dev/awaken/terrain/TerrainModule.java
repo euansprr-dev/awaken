@@ -10,5 +10,6 @@ public final class TerrainModule {
         modBus.addListener(LandsPack::onAddPackFinders);
         TerrainCommands.register();
         TerrainTests.register();
+        BiomeTableTests.register();
     }
 }

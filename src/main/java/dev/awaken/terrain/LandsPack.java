@@ -17,6 +17,9 @@ import net.neoforged.neoforge.event.AddPackFindersEvent;
 final class LandsPack {
     private LandsPack() {}
 
+    /** The pack's id in the pack repository (a built-in pack of the mod). */
+    static final String ID = "mod/awaken:datapacks/awakened_lands";
+
     static void onAddPackFinders(AddPackFindersEvent e) {
         e.addPackFinders(Awaken.id("datapacks/awakened_lands"), PackType.SERVER_DATA, Component.literal("Awakened Lands"),
                 PackSource.BUILT_IN, false, Pack.Position.TOP);

@@ -1,11 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:forest",
-    "minecraft:birch_forest",
-    "minecraft:old_growth_birch_forest",
-    "minecraft:dappled_forest"
-  ],
+  "biomes": "#awaken:fauna/greenwild_woods",
   "spawners": [
     {
       "type": "awaken:frost_stag",

@@ -23,7 +23,7 @@ final class TerrainTests {
     static void register() {
         AwakenTests.register("terrain_lands_pack_new_worlds_only", 20, h -> {
             var server = h.getLevel().getServer();
-            var pack = server.getPackRepository().getPack("mod/awaken:datapacks/awakened_lands");
+            var pack = server.getPackRepository().getPack(LandsPack.ID);
             h.assertTrue(pack != null, "the Awakened Lands pack is offered");
             var wants = pack.getRequestedFeatures();
             // a world made before the flag existed has only vanilla's flags: the pack can never load there

@@ -1,23 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:plains",
-    "minecraft:sunflower_plains",
-    "minecraft:meadow",
-    "minecraft:forest",
-    "minecraft:birch_forest",
-    "minecraft:flower_forest",
-    "minecraft:dark_forest",
-    "minecraft:taiga",
-    "minecraft:old_growth_pine_taiga",
-    "minecraft:old_growth_spruce_taiga",
-    "minecraft:cherry_grove",
-    "minecraft:savanna",
-    "minecraft:jungle",
-    "minecraft:swamp",
-    "minecraft:snowy_plains",
-    "minecraft:snowy_taiga"
-  ],
+  "biomes": "#awaken:fauna/tidewater_lakes",
   "spawners": [
     {
       "type": "awaken:glimmerfin",
