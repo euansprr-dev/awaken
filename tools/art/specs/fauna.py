@@ -1,7 +1,8 @@
 """The Awakened layer's overworld creatures (world module, fauna): every texture, the content JSON, and a 3D preview.
 
     python3 tools/art/build_all.py fauna          textures (skin + glow layers, own-model textures, eggs, parts, GUI pulse)
-    python3 tools/art/specs/fauna.py content      biome modifiers, loot tables, item models, lang (src/main/...)
+    python3 tools/art/specs/fauna.py content      biome modifiers, loot tables, item models, lang (src/main/...; the
+                                                  modifiers' biomes: tools/terrain/biomes.py)
     python3 tools/art/specs/fauna.py preview DIR  renders every creature on its real model (day, night, line-up) to DIR
 
 The creature list is read from mobs/def/FaunaBestiary.java. Box layouts mirror the Java models box for box:
@@ -1377,23 +1378,15 @@ def build(out):
 # ---------------------------------------------------------------------------------------------------------------------
 # Content: biome modifiers, loot tables, item models, lang. Weights are relative inside the fauna category of a biome.
 
-# P2 handed the dark forest to Duskwood and the cherry grove, flower and birch forests to Blossomwood (fauna2.py).
-GREENWILD = ["minecraft:plains", "minecraft:sunflower_plains", "minecraft:meadow", "minecraft:forest", "minecraft:dappled_forest"]
-WOODS = ["minecraft:forest", "minecraft:birch_forest", "minecraft:old_growth_birch_forest", "minecraft:dappled_forest"]
-SUNSCORCH = ["minecraft:desert", "minecraft:savanna", "minecraft:savanna_plateau", "minecraft:windswept_savanna", "minecraft:badlands",
-             "minecraft:eroded_badlands", "minecraft:wooded_badlands"]
-FROSTWILD = ["minecraft:taiga", "minecraft:snowy_taiga", "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga",
-             "minecraft:grove", "minecraft:snowy_plains", "minecraft:snowy_slopes", "minecraft:ice_spikes", "minecraft:windswept_forest"]
-TAIGA = ["minecraft:taiga", "minecraft:old_growth_pine_taiga", "minecraft:old_growth_spruce_taiga", "minecraft:windswept_forest"]
-CAVES = ["minecraft:dripstone_caves", "minecraft:lush_caves"]
-
+# Spawners per modifier: data/awaken/neoforge/biome_modifier/<name>.json, spawning in the biomes of the tag
+# #awaken:fauna/<group> (the name without "fauna_"). Which biomes those are is the biome table's: tools/terrain/biomes.py.
 SPAWNS = {
-    "fauna_greenwild": (GREENWILD, [("lumen_moth", 30, 2, 4), ("bloom_sprite", 20, 1, 2), ("mossback", 14, 1, 2), ("gloomstalker", 22, 1, 2), ("briar_sow", 1, 1, 1)]),
-    "fauna_greenwild_woods": (WOODS, [("frost_stag", 8, 1, 2), ("frostfinch", 8, 2, 4)]),
-    "fauna_sunscorch": (SUNSCORCH, [("glass_scarab", 30, 2, 3), ("dune_ray", 22, 1, 2), ("gloomstalker", 20, 1, 2), ("dune_wyrm", 1, 1, 1)]),
-    "fauna_frostwild": (FROSTWILD, [("frostfinch", 26, 3, 5), ("frost_stag", 22, 1, 3), ("wisp_hound", 22, 2, 3), ("old_antler", 1, 1, 1)]),
-    "fauna_frostwild_taiga": (TAIGA, [("lumen_moth", 14, 2, 3)]),
-    "fauna_caves": (CAVES, [("gloomstalker", 10, 1, 2), ("wisp_hound", 10, 2, 2)]),
+    "fauna_greenwild": [("lumen_moth", 30, 2, 4), ("bloom_sprite", 20, 1, 2), ("mossback", 14, 1, 2), ("gloomstalker", 22, 1, 2), ("briar_sow", 1, 1, 1)],
+    "fauna_greenwild_woods": [("frost_stag", 8, 1, 2), ("frostfinch", 8, 2, 4)],
+    "fauna_sunscorch": [("glass_scarab", 30, 2, 3), ("dune_ray", 22, 1, 2), ("gloomstalker", 20, 1, 2), ("dune_wyrm", 1, 1, 1)],
+    "fauna_frostwild": [("frostfinch", 26, 3, 5), ("frost_stag", 22, 1, 3), ("wisp_hound", 22, 2, 3), ("old_antler", 1, 1, 1)],
+    "fauna_frostwild_taiga": [("lumen_moth", 14, 2, 3)],
+    "fauna_caves": [("gloomstalker", 10, 1, 2), ("wisp_hound", 10, 2, 2)],
 }
 
 # Materials: (item, min, max, chance, looting). A chance below 1 is a killed-by-player roll.
@@ -1466,13 +1459,18 @@ LANG = {
 }
 
 
+def spawn_modifier(name, spawners):
+    """One add_spawns modifier; its biomes are the biome table's tag #awaken:fauna/<group> (tools/terrain/biomes.py)."""
+    write_json(os.path.join(RES, "data/awaken/neoforge/biome_modifier", name + ".json"), {
+        "type": "neoforge:add_spawns", "biomes": "#awaken:fauna/" + name[len("fauna_"):],
+        "spawners": [{"type": "awaken:" + i, "weight": w, "count": {"type": "minecraft:uniform", "min_inclusive": lo, "max_inclusive": hi}}
+                     for i, w, lo, hi in spawners]})
+
+
 def content():
     ms = fauna()
-    for name, (biomes, spawners) in SPAWNS.items():
-        write_json(os.path.join(RES, "data/awaken/neoforge/biome_modifier", name + ".json"), {
-            "type": "neoforge:add_spawns", "biomes": biomes,
-            "spawners": [{"type": "awaken:" + i, "weight": w, "count": {"type": "minecraft:uniform", "min_inclusive": lo, "max_inclusive": hi}}
-                         for i, w, lo, hi in spawners]})
+    for name, spawners in SPAWNS.items():
+        spawn_modifier(name, spawners)
     lang = dict(LANG)
     for m in ms:
         write_json(os.path.join(RES, "data/awaken/loot_table/entities", m["id"] + ".json"), loot_table(m))

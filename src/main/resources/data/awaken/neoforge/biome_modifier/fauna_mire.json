@@ -1,9 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp"
-  ],
+  "biomes": "#awaken:fauna/mire",
   "spawners": [
     {
       "type": "awaken:bogwick",

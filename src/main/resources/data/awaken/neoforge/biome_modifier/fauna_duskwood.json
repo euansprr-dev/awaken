@@ -1,9 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:dark_forest",
-    "minecraft:pale_garden"
-  ],
+  "biomes": "#awaken:fauna/duskwood",
   "spawners": [
     {
       "type": "awaken:gloam_snail",

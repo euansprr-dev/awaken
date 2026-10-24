@@ -1,9 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:dripstone_caves",
-    "minecraft:lush_caves"
-  ],
+  "biomes": "#awaken:fauna/caves",
   "spawners": [
     {
       "type": "awaken:gloomstalker",

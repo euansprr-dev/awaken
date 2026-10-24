@@ -1,8 +1,6 @@
 {
   "type": "neoforge:add_spawns",
-  "biomes": [
-    "minecraft:deep_dark"
-  ],
+  "biomes": "#awaken:fauna/hollows_deep_dark",
   "spawners": [
     {
       "type": "awaken:hushling",
