@@ -64,5 +64,15 @@ final class HoloDemo {
         g.item(held, x + 2, iy + 2);
         g.text(font, held.getHoverName().getString(), x + 26, iy + 2, Glass.a(Glass.TITLE, 1f), false);
         g.text(font, "Bound to slot 1  ·  ready", x + 26, iy + 11, Glass.a(Glass.LABEL, 1f), false);
+        if (showTexture) {
+            // the external-texture primitive (Carillon's Atlas diorama uses it): a map's parchment, its middle half
+            int tw = 44, tx = x + w - tw;
+            g.texture(DEMO_TEXTURE, tx, iy - 2, tw, tw * 3 / 4, 0.25f, 0.25f, 0.75f, 0.625f, 0xFFFFFFFF);
+        }
     }
+
+    /** Autopilot: show a demo texture on the demo panel ({@code holo tex on|off}). */
+    static boolean showTexture;
+    private static final net.minecraft.resources.Identifier DEMO_TEXTURE =
+            net.minecraft.resources.Identifier.withDefaultNamespace("textures/map/map_background.png");
 }

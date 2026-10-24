@@ -36,6 +36,7 @@ public final class HoloConfig {
     static boolean reducedMotion;
     /** Overrides for the autopilot (null = use the config). */
     static HudMotion forcedHudMotion;
+    static StatusStyle forcedStyle;
 
     static void register() {
         try {
@@ -48,7 +49,7 @@ public final class HoloConfig {
     static void refresh() {
         try {
             if (!SPEC.isLoaded()) return;
-            statusStyle = STATUS_STYLE.get();
+            statusStyle = forcedStyle != null ? forcedStyle : STATUS_STYLE.get();
             hudMotion = forcedHudMotion != null ? forcedHudMotion : HUD_MOTION.get();
             reducedMotion = REDUCED_MOTION.get();
         } catch (RuntimeException e) {

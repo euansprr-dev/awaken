@@ -462,14 +462,17 @@ public final class SystemHud {
         g.pose().translate(r.x(), r.y());
         g.pose().scale((float) card.scale(), (float) card.scale());
         int accent = w.kind() == SignalWindow.Kind.WARNING ? Glass.WARN : Glass.AMBER;
-        Glass.card(g, 0, 0, w0, h0, accent, alpha);
+        boolean holo = HudLook.holo();
+        // projected: the card scans in over the same 4 ticks the flat one fades in; its text shows as the scan passes
+        HudLook.card(g, 0, 0, w0, h0, accent, holo ? 1f : alpha, alpha, 0f);
+        if (holo) g.enableScissor(0, 0, w0, revealed(h0, alpha));
         int tx = 7, ty = 4;
         for (String line : m.question()) {
-            g.text(font, line, tx, ty, Glass.a(Glass.TITLE, alpha), true);
+            HudLook.text(g, font, line, tx, ty, Glass.a(Glass.TITLE, alpha), true);
             ty += SignalLayout.LINE;
         }
         if (card.extra()) {
-            g.text(font, m.body(), tx, ty, Glass.a(Glass.TEXT, 0.8f * alpha), false);
+            HudLook.text(g, font, m.body(), tx, ty, Glass.a(Glass.TEXT, 0.8f * alpha), false);
             ty += SignalLayout.LINE;
         }
         ty += 2;
@@ -478,15 +481,22 @@ public final class SystemHud {
         keyLine(g, font, key(AwakenKeys.DISMISS), SignalText.noLabel(w), tx, ty + SignalLayout.LINE, tw, Glass.LABEL, keys);
         float left = 1f - Math.min(1f, (c.age() + pt) / ChoiceDeck.FOLD_TICKS);
         g.horizontalLine(2, 2 + Math.round((w0 - 3) * left), h0 - 1, Glass.a(accent, 0.55f * alpha));
+        if (holo) g.disableScissor();
         g.pose().popMatrix();
         return r;
     }
 
+    /** How much of a card of height {@code h} the projected scan-in has drawn at {@code reveal} (its ease-out). */
+    static int revealed(int h, float reveal) {
+        float r = Math.min(1f, Math.max(0f, reveal));
+        return (int) Math.ceil(h * (1f - (1f - r) * (1f - r) * (1f - r)));
+    }
+
     private static void keyLine(GuiGraphicsExtractor g, Font font, String keyName, String label, int x, int y, int tw, int accent, float alpha) {
         String key = "[" + SignalText.ellipsize(keyName, 40, font::width) + "]";
-        g.text(font, key, x, y, Glass.a(accent, alpha), false);
+        HudLook.text(g, font, key, x, y, Glass.a(accent, alpha), false);
         int lx = x + font.width(key) + 4;
-        g.text(font, SignalText.ellipsize(label, tw - (lx - x), font::width), lx, y, Glass.a(Glass.TITLE, alpha), false);
+        HudLook.text(g, font, SignalText.ellipsize(label, tw - (lx - x), font::width), lx, y, Glass.a(Glass.TITLE, alpha), false);
     }
 
     private static Rect drawPanel(GuiGraphicsExtractor g, Font font, Panel p, int sw, int sh, double s, float pt) {
@@ -496,17 +506,27 @@ public final class SystemHud {
         Rect r = card.rect();
         float age = p.age + pt;
         float alpha = Math.min(1f, age / OPEN_TICKS);
-        if (p.closingAt >= 0) alpha = Math.max(0f, 1f - (age - p.closingAt) / CLOSE_TICKS);
+        float reveal = alpha, glitch = 0f;
+        if (p.closingAt >= 0) {
+            alpha = Math.max(0f, 1f - (age - p.closingAt) / CLOSE_TICKS);
+            reveal = 1f;
+            glitch = 1f - alpha;
+        }
         if (alpha <= 0.01f) return r;
+        boolean holo = HudLook.holo();
         int w0 = SignalLayout.PANEL_W, h0 = SignalLayout.panelHeight(card.lines(), card.extra());
         int tw = card.textWidth();
         int accent = accent(w);
         g.pose().pushMatrix();
         g.pose().translate(r.x(), r.y());
         g.pose().scale((float) card.scale(), (float) card.scale());
-        Glass.card(g, 0, 0, w0, h0, accent, alpha);
+        HudLook.card(g, 0, 0, w0, h0, accent, holo ? 1f : alpha, reveal, glitch);
+        if (holo) {
+            g.pose().translate(HudLook.shake(glitch), 0);
+            g.enableScissor(0, 0, w0, revealed(h0, reveal));
+        }
         int tx = 7, ty = 4;
-        g.text(font, SignalText.ellipsize(w.title().getString(), tw, font::width), tx, ty, Glass.a(accent, alpha), true);
+        HudLook.text(g, font, SignalText.ellipsize(w.title().getString(), tw, font::width), tx, ty, Glass.a(accent, alpha), true);
         ty += SignalLayout.LINE + 1;
         List<PanelLine> lines = m.lines();
         int room = card.lines();
@@ -515,28 +535,29 @@ public final class SystemHud {
         for (int i = 0; i < show; i++) {
             PanelLine l = lines.get(i);
             if (l.right().isEmpty()) {
-                g.text(font, SignalText.ellipsize(l.left(), tw, font::width), tx, ty, Glass.a(Glass.TEXT, alpha), false);
+                HudLook.text(g, font, SignalText.ellipsize(l.left(), tw, font::width), tx, ty, Glass.a(Glass.TEXT, alpha), false);
             } else {
                 String label = SignalText.ellipsize(l.left(), Math.max(30, tw / 2), font::width);
                 int lw = font.width(label);
                 String value = SignalText.ellipsize(l.right(), tw - lw - 6, font::width);
-                g.text(font, label, tx, ty, Glass.a(Glass.LABEL, alpha), false);
-                g.text(font, value, tx + tw - font.width(value), ty, Glass.a(Glass.TITLE, alpha), false);
+                HudLook.text(g, font, label, tx, ty, Glass.a(Glass.LABEL, alpha), false);
+                HudLook.text(g, font, value, tx + tw - font.width(value), ty, Glass.a(Glass.TITLE, alpha), false);
             }
             ty += SignalLayout.LINE;
         }
         if (cut) {
             String more = "+" + (lines.size() - show) + " more · " + key(AwakenKeys.STATUS);
-            g.text(font, SignalText.ellipsize(more, tw, font::width), tx, ty, Glass.a(Glass.LABEL, alpha), false);
+            HudLook.text(g, font, SignalText.ellipsize(more, tw, font::width), tx, ty, Glass.a(Glass.LABEL, alpha), false);
             ty += SignalLayout.LINE;
         }
         if (card.extra()) {
-            g.text(font, SignalText.ellipsize(m.footer(), tw, font::width), tx, ty, Glass.a(Glass.EDGE, 0.85f * alpha), false);
+            HudLook.text(g, font, SignalText.ellipsize(m.footer(), tw, font::width), tx, ty, Glass.a(Glass.EDGE, 0.85f * alpha), false);
         }
         if (p.closingAt < 0 && w.ttlTicks() > 0) {
             float left = 1f - Math.min(1f, age / Math.max(60, w.ttlTicks()));
             g.horizontalLine(2, 2 + Math.round((w0 - 3) * left), h0 - 1, Glass.a(accent, 0.5f * alpha));
         }
+        if (holo) g.disableScissor();
         g.pose().popMatrix();
         return r;
     }
@@ -548,7 +569,12 @@ public final class SystemHud {
         Rect r = layout.rect();
         float age = st.age + pt;
         float alpha = st.first ? Math.min(1f, age / 3f) : 1f;
-        if (st.closingAt >= 0) alpha = Math.max(0f, 1f - (age - st.closingAt) / STORY_FADE);
+        float reveal = alpha, glitch = 0f;
+        if (st.closingAt >= 0) {
+            alpha = Math.max(0f, 1f - (age - st.closingAt) / STORY_FADE);
+            reveal = 1f;
+            glitch = 1f - alpha;
+        }
         if (alpha <= 0.01f) return;
         int typed = (int) Math.floor(age * Math.max(0.5, typeSpeed()));
         int w0 = (int) Math.floor(r.w() / layout.scale());
@@ -560,8 +586,14 @@ public final class SystemHud {
         g.pose().scale((float) layout.scale(), (float) layout.scale());
         int h0 = SignalLayout.storyHeight(st.lines.size());
         int bx = (w0 - widest) / 2 - 4;
-        g.fill(bx, 0, bx + widest + 8, h0, Glass.a(0x05080F, 0.42f * alpha));
         int colour = st.titleChunk ? Glass.VIOLET : Glass.TITLE;
+        if (HudLook.holo()) {
+            // a projected strip behind the words (pages after the first keep it; only the words change)
+            HudLook.card(g, bx, 0, widest + 8, h0, st.titleChunk ? Glass.VIOLET : Glass.EDGE, 1f, reveal, glitch);
+            g.pose().translate(HudLook.shake(glitch), 0);
+        } else {
+            g.fill(bx, 0, bx + widest + 8, h0, Glass.a(0x05080F, 0.42f * alpha));
+        }
         int ty = SignalLayout.STORY_PAD + 1;
         int left = typed;
         for (String line : st.lines) {
@@ -569,7 +601,7 @@ public final class SystemHud {
             String part = full.substring(0, Math.max(0, Math.min(full.length(), left)));
             left -= line.length();
             int lx = (w0 - font.width(full)) / 2; // centred on the whole line so it doesn't shift while typing
-            if (!part.isEmpty()) g.text(font, part, lx, ty, Glass.a(colour, alpha), true);
+            if (!part.isEmpty()) HudLook.text(g, font, part, lx, ty, Glass.a(colour, alpha), true);
             ty += SignalLayout.LINE;
         }
         g.pose().popMatrix();

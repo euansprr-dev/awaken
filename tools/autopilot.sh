@@ -25,8 +25,9 @@ elif [ -f run-autopilot/mods/.awaken-pack.json ]; then
 fi
 OPTS=run-autopilot/options.txt
 touch $OPTS
+# BACKEND=vulkan|opengl|default: tours run on Vulkan like players do (the pack's API since 2026-10-24); opengl for A/Bs
 sed -i '' '/^preferredGraphicsBackend:/d' $OPTS
-echo "preferredGraphicsBackend:\"${BACKEND:-default}\"" >> $OPTS
+echo "preferredGraphicsBackend:\"${BACKEND:-vulkan}\"" >> $OPTS
 # RD=<chunks> sets the vanilla render distance for this run (Distant Horizons draws the rest); 16 when unset
 sed -i '' '/^renderDistance:/d' $OPTS
 echo "renderDistance:${RD:-16}" >> $OPTS

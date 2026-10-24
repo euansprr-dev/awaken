@@ -77,6 +77,14 @@ public final class GuiCanvas implements UiCanvas {
         g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, w, h, argb);
     }
 
+    /** UVs go to vanilla's blit as texels of a notional R×R texture (it divides by the texture size). */
+    private static final int R = 1 << 14;
+
+    @Override
+    public void texture(Identifier texture, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+        g.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u0 * R, v0 * R, w, h, Math.round((u1 - u0) * R), Math.round((v1 - v0) * R), R, R, argb);
+    }
+
     @Override
     public void tooltip(Font font, List<? extends FormattedCharSequence> lines, int x, int y) {
         g.setTooltipForNextFrame(font, lines, x, y);
