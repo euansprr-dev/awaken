@@ -29,12 +29,9 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /** The hero trees: their blueprints and what it costs to build them, a full build in its box, and their sites. */
 public final class HeroTests {
@@ -95,7 +92,6 @@ public final class HeroTests {
             BlockPos[] origins = new BlockPos[trees.length];
             HeroPiece[] pieces = new HeroPiece[trees.length];
             int[] placedBy = new int[trees.length];
-            CompletableFuture<?>[] lit = new CompletableFuture<?>[1];
             h.startSequence()
                     .thenExecute(() -> {
                         for (int n = 0; n < trees.length; n++) {
@@ -125,18 +121,13 @@ public final class HeroTests {
                                     tree.getSerializedName(), placedBy[n], chunks, total / chunks, worst));
                         }
                     })
-                    // let the light engine work through ten thousand blocks before the next batch reads light levels: wait
-                    // until it has (200 ticks of a GameTest server that never waits between ticks can be no time at all)
                     .thenExecute(() -> {
-                        List<CompletableFuture<?>> all = new ArrayList<>();
+                        // the light engine works through ten thousand blocks before the next batch: wait until it has (a
+                        // fixed 200 ticks of a GameTest server that never waits between ticks can be no time at all)
                         for (HeroPiece piece : pieces) {
                             BoundingBox b = piece.getBoundingBox();
-                            all.add(AwakenTests.lightCaughtUp(level, new BlockPos(b.minX(), 0, b.minZ()), new BlockPos(b.maxX(), 0, b.maxZ())));
+                            AwakenTests.awaitLight(h, new BlockPos(b.minX(), 0, b.minZ()), new BlockPos(b.maxX(), 0, b.maxZ()));
                         }
-                        lit[0] = CompletableFuture.allOf(all.toArray(CompletableFuture[]::new));
-                    })
-                    .thenWaitUntil(() -> AwakenTests.await(h, lit[0]::isDone, "the light engine works through both trees"))
-                    .thenExecute(() -> {
                         for (int n = 0; n < trees.length; n++) {
                             HeroTree tree = trees[n];
                             int r = tree == HeroTree.ELDER_COLOSSUS ? 44 : 26;

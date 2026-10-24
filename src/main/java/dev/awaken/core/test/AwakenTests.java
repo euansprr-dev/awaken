@@ -58,8 +58,9 @@ public final class AwakenTests {
 
     /**
      * Tests land at arbitrary coordinates and often straddle a chunk border; the neighbouring chunk may not be
-     * entity-ticking, which hides its entities from area searches. Force-load the chunks around every test and start it
-     * once they tick (the batch's end releases them: GameTestRunner unforces every forced chunk).
+     * entity-ticking, which hides its entities from area searches and freezes them in place. Force-load the chunks around
+     * every test and start it once they all tick (the batch's end releases them: GameTestRunner unforces every forced
+     * chunk).
      */
     private static Consumer<GameTestHelper> withLoadedArea(Consumer<GameTestHelper> test) {
         return h -> {
@@ -70,31 +71,35 @@ public final class AwakenTests {
             // load them now rather than waiting on the chunk workers: under load (builds running beside the test server)
             // async loading took over a minute and tests waiting for "entity ticking" timed out
             for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) level.getChunk(cx + dx, cz + dz);
-            awaitEntityTicking(level, cx, cz);
+            // loaded is not entity-ticking: that also needs the ring two chunks round each one loaded, which the chunk
+            // workers generate in the background, and the promotion then runs on the main-thread queue
+            h.assertTrue(settle(level, () -> areaTicking(level, cx, cz), "the test area entity-ticks"), "the test area entity-ticks within 30 s");
             // Note: don't defer the body with runAfterDelay. Vanilla iterates its scheduled callbacks while running them,
             // so scheduling from inside one can run entries twice. Tests that need settled chunks delay their own actions.
             test.accept(h);
         };
     }
 
-    /** Real time the area round a test may take to become entity-ticking before the test runs anyway. */
-    private static final long TICKING_DEADLINE_NS = 30_000_000_000L;
+    /** Real time a test waits for the server's background work (chunk promotion, the light engine) before it fails. */
+    private static final long SETTLE_DEADLINE_NS = 30_000_000_000L;
 
     /**
-     * Loaded is not ticking: a forced chunk becomes entity-ticking once the chunk system's main-thread queue has run its
-     * ticket and its neighbours' futures. The GameTest server ticks as fast as it can, so on a 2-core CI runner that took
-     * longer than whole tick budgets ("the platform ticks" timed out at 2400 ticks). Run that queue here, as
-     * {@code getChunk} does while it waits, until the 5x5 area ticks (at most 30 s), so every test starts on ticking ground.
+     * Ticks are not time on a GameTest server: it never waits between ticks, so on a busy machine or a CI runner whole
+     * tick budgets pass before the chunk workers and the light engine, which run on other threads and are scheduled from
+     * the main-thread queue, have caught up ("the platform ticks" timed out at 2400 ticks, a 30-tick light wait read a
+     * room that was still lit). Instead of counting ticks, wait for the state itself: run that queue here, as
+     * {@code getChunk} does while it waits, until {@code done} holds or 30 s of real time pass. True if it holds; a wait
+     * of a second or more is logged with {@code what}, so a slow machine's logs show how long the state really took.
      */
-    private static void awaitEntityTicking(ServerLevel level, int cx, int cz) {
-        long deadline = System.nanoTime() + TICKING_DEADLINE_NS;
-        while (!areaTicking(level, cx, cz)) {
-            if (System.nanoTime() > deadline) {
-                Awaken.LOG.warn("[tests] chunks round {}, {} still not entity-ticking after 30 s", cx, cz);
-                return;
-            }
+    private static boolean settle(ServerLevel level, BooleanSupplier done, String what) {
+        long start = System.nanoTime();
+        while (!done.getAsBoolean()) {
+            if (System.nanoTime() - start > SETTLE_DEADLINE_NS) return false;
             if (!level.getChunkSource().pollTask()) LockSupport.parkNanos(1_000_000L);
         }
+        long ms = (System.nanoTime() - start) / 1_000_000L;
+        if (ms >= 1000) Awaken.LOG.info("[tests] {}: waited {} ms", what, ms);
+        return true;
     }
 
     private static boolean areaTicking(ServerLevel level, int cx, int cz) {
@@ -121,37 +126,22 @@ public final class AwakenTests {
         PENDING.add(new Pending(name, FUNCTIONS.register(name, () -> test), maxTicks, env));
     }
 
-    /** Real time each waiting tick of {@link #await} takes at least. */
-    static final long WAIT_TICK_MS = 10;
-
     /**
-     * For {@code thenWaitUntil}: passes once {@code done} holds; until then each attempt sleeps a little and fails with
-     * {@code what}. The light engine and chunk/entity loading work on other threads, while the GameTest server ticks as
-     * fast as it can (it never waits between ticks), so a fixed number of ticks, or a test's tick budget, can be well
-     * under a second on a busy machine or a 2-core CI runner. Waiting for the state itself, with each waiting tick at
-     * least {@value #WAIT_TICK_MS} ms that leave the CPU to those workers, makes a tick budget real time.
+     * Fails the test unless the light engine works through every block change made so far in the chunks under the box
+     * (absolute corners, any order) within 30 s of real time. It lights on its own thread, well behind the block changes,
+     * so read light levels after this, never after a fixed number of ticks: its tasks run in order per chunk, and a
+     * chunk's "pending tasks" marker completes after the light update that took the changes queued before it.
      */
-    public static void await(GameTestHelper h, BooleanSupplier done, String what) {
-        if (done.getAsBoolean()) return;
-        try {
-            Thread.sleep(WAIT_TICK_MS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        h.assertTrue(done.getAsBoolean(), what);
-    }
-
-    /**
-     * Completes once the light engine has worked through every change queued so far in the chunks under the box: its
-     * tasks run in order per chunk, and a chunk's "pending tasks" marker runs after the light update that took them.
-     */
-    public static CompletableFuture<Void> lightCaughtUp(ServerLevel level, BlockPos a, BlockPos b) {
+    public static void awaitLight(GameTestHelper h, BlockPos a, BlockPos b) {
+        ServerLevel level = h.getLevel();
         var engine = level.getChunkSource().getLightEngine();
         List<CompletableFuture<?>> all = new ArrayList<>();
         for (int cx = Math.min(a.getX(), b.getX()) >> 4; cx <= Math.max(a.getX(), b.getX()) >> 4; cx++) {
             for (int cz = Math.min(a.getZ(), b.getZ()) >> 4; cz <= Math.max(a.getZ(), b.getZ()) >> 4; cz++) all.add(engine.waitForPendingTasks(cx, cz));
         }
-        return CompletableFuture.allOf(all.toArray(CompletableFuture[]::new));
+        CompletableFuture<Void> caughtUp = CompletableFuture.allOf(all.toArray(CompletableFuture[]::new));
+        String what = "the light engine catches up with the blocks between " + a.toShortString() + " and " + b.toShortString();
+        h.assertTrue(settle(level, caughtUp::isDone, what), what + " within 30 s");
     }
 
     public static void init(IEventBus modBus) {
