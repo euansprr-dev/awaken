@@ -142,6 +142,12 @@ final class HoloInventoryScreen extends InventoryScreen {
         if (contentShown()) super.extractSlots(g, mx, my);
     }
 
+    /** No tooltip for an item this face doesn't show yet (the cursor resting on a slot as E is pressed). */
+    @Override
+    protected void extractTooltip(GuiGraphicsExtractor g, int mx, int my) {
+        if (contentShown()) super.extractTooltip(g, mx, my);
+    }
+
     /** The 3D panel's face, recorded while it is on screen (opening) and once more as it folds back (closing). */
     private void recordFace() {
         if (!threeD()) return;
