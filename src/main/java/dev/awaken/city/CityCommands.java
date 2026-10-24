@@ -74,10 +74,36 @@ final class CityCommands {
         }
         ServerPlayer p = src.getPlayerOrException();
         ServerLevel level = src.getServer().overworld();
-        p.teleportTo(level, l.cx + v.x(), l.streetY + v.ry(), l.cz + v.z(), Set.of(), v.yaw(), v.pitch(), true);
+        // street views stand on open ground: the nearest street, square or quay cell to the named spot
+        double ex = v.x(), ey = v.ry(), ez = v.z();
+        if (v.ry() < 30) {
+            int[] cell = openCell(l.plan, (int) Math.floor(v.x()), (int) Math.floor(v.z()));
+            ex = cell[0] + 0.5;
+            ez = cell[1] + 0.5;
+            ey = l.plan.lift(cell[0], cell[1]) + 1.0 + Math.max(0, v.ry() - 1.0 - l.plan.lift((int) Math.floor(v.x()), (int) Math.floor(v.z())));
+        }
+        CityViews.View at = new CityViews.View(ex, ey, ez, v.tx(), v.tr(), v.tz());
+        p.teleportTo(level, l.cx + at.x(), l.streetY + at.ry(), l.cz + at.z(), Set.of(), at.yaw(), at.pitch(), true);
         dev.awaken.Awaken.LOG.info("[city] view {} at {} {} {} yaw {} pitch {}", name, l.cx + v.x(), l.streetY + v.ry(), l.cz + v.z(),
                 v.yaw(), v.pitch());
         return 1;
+    }
+
+    /** The nearest cell (spiralling out) that is open ground with open ground round it, not under a building. */
+    static int[] openCell(CityPlan p, int x, int z) {
+        for (int r = 0; r <= 20; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    int cx = x + dx, cz = z + dz;
+                    if (!CityPlan.walkable(p.kind(cx, cz))) continue;
+                    int open = 0;
+                    for (int[] d : CityPainter.NB) if (CityPlan.walkable(p.kind(cx + 2 * d[0], cz + 2 * d[1]))) open++;
+                    if (open >= 2) return new int[]{cx, cz};
+                }
+            }
+        }
+        return new int[]{x, z};
     }
 
     private static int repaint(CommandSourceStack src, int radius) {

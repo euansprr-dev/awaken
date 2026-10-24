@@ -209,6 +209,28 @@ final class CityBlocks {
     static final BlockState[] DIORITE_WALL_RUN = {of("minecraft:diorite_wall[up=false,east=low,west=low]"),
             of("minecraft:diorite_wall[up=false,north=low,south=low]")};
     static final BlockState CHAIN_Y = of("minecraft:iron_chain[axis=y]");
+
+    /** Connected runs, indexed by a mask of neighbours: 1 north, 2 east, 4 south, 8 west (the painter sets shapes). */
+    static final BlockState[] SPRUCE_FENCES = connected("minecraft:spruce_fence", false);
+    static final BlockState[] STONE_WALLS = connected("minecraft:stone_brick_wall", true);
+    static final BlockState[] DIORITE_WALLS = connected("minecraft:diorite_wall", true);
+
+    private static BlockState[] connected(String id, boolean wall) {
+        BlockState[] out = new BlockState[16];
+        for (int m = 0; m < 16; m++) {
+            StringBuilder sb = new StringBuilder(id).append('[');
+            String on = wall ? "low" : "true", off = wall ? "none" : "false";
+            sb.append("north=").append((m & 1) != 0 ? on : off).append(",east=").append((m & 2) != 0 ? on : off)
+                    .append(",south=").append((m & 4) != 0 ? on : off).append(",west=").append((m & 8) != 0 ? on : off);
+            if (wall) sb.append(",up=").append(m == 5 || m == 10 ? "false" : "true");
+            out[m] = of(sb.append(']').toString());
+        }
+        return out;
+    }
+
+    /** Ladders by the side they face (away from the wall they hang on), and one in water. */
+    static final BlockState[] LADDER = dirs("minecraft:ladder[facing=%s]");
+    static final BlockState[] LADDER_WET = dirs("minecraft:ladder[facing=%s,waterlogged=true]");
     static final BlockState ROD = of("minecraft:lightning_rod[facing=up]");
     static final BlockState COPPER_ROD = of("minecraft:waxed_lightning_rod[facing=up]");
     static final BlockState BELL = of("minecraft:bell[attachment=ceiling,facing=west]");

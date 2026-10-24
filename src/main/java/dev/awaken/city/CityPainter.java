@@ -94,6 +94,7 @@ public final class CityPainter {
             }
             case RIVER -> waterColumn(c, b, x, z, RIVER_FLOOR);
             case CANAL, RACE -> waterColumn(c, b, x, z, CANAL_FLOOR);
+            case LOWQUAY -> lowQuay(c, b, x, z);
             default -> land(c, b, x, z, k);
         }
     }
@@ -103,6 +104,45 @@ public final class CityPainter {
         b.set(x, floor, z, c.pct(x, z, 3) < 30 ? GRAVEL : STONE);
         b.column(x, floor + 1, WATERLINE, z, WATER);
         b.column(x, WATERLINE + 1, CLEAR_TOP, z, AIR);
+        // a ladder out of the river onto the lower quay, here and there
+        int side = ladderSide(c, x, z, LOWQUAY, 7);
+        if (side >= 0) {
+            b.set(x, WATERLINE, z, LADDER_WET[side]);
+            b.column(x, WATERLINE + 1, LOW_QUAY, z, LADDER[side]);
+        }
+    }
+
+    /** The lower quay along the river (a bas-port): three blocks above the water, four below the street. */
+    static final int LOW_QUAY = -4;
+
+    static void lowQuay(Ctx c, CityBuffer b, int x, int z) {
+        b.plate(x, z);
+        boolean face = nextToWater(c.plan, x, z);
+        for (int ry = RIVER_FLOOR; ry < LOW_QUAY; ry++) {
+            b.set(x, ry, z, face ? (ry >= WATERLINE - 1 ? MOSSY_STONE_BRICKS : STONE_BRICKS) : STONE);
+        }
+        b.set(x, LOW_QUAY, z, face ? POLISHED_ANDESITE : (c.pct(x, z, 5) < 20 ? CRACKED_STONE_BRICKS : STONE_BRICKS));
+        b.column(x, LOW_QUAY + 1, CLEAR_TOP, z, AIR);
+        if (face && c.pct(x, z, 9) < 5) b.set(x, LOW_QUAY + 1, z, WALL_POST); // mooring bollards
+        // ladders up the quay wall to the street, here and there
+        int side = ladderSide(c, x, z, QUAY, 11);
+        if (side >= 0) b.column(x, LOW_QUAY + 1, 0, z, LADDER[side]);
+    }
+
+    /**
+     * Whether this cell carries a ladder up the wall of a neighbour of the given kind: about one cell in 25 along the
+     * wall, never two side by side. Returns the side the ladder faces (away from that wall), or -1.
+     */
+    static int ladderSide(Ctx c, int x, int z, byte wallKind, int salt) {
+        CityPlan p = c.plan;
+        for (int d = 0; d < 4; d++) {
+            int[] o = NB[d];
+            if (p.kind(x + o[0], z + o[1]) != wallKind) continue;
+            int along = (o[0] == 0 ? x : z);
+            if (Math.floorMod(along * 7 + Ctx.shape(o[0] == 0 ? z : x, 0, salt), 29) != 0) return -1;
+            return (d + 2) & 3;
+        }
+        return -1;
     }
 
     static boolean nextToWater(CityPlan p, int x, int z) {
@@ -147,7 +187,7 @@ public final class CityPainter {
         };
         b.set(x, lift, z, top);
         b.column(x, lift + 1, CLEAR_TOP, z, AIR);
-        if (rail) b.set(x, lift + 1, z, DIORITE_WALL_POST);
+        if (rail) b.set(x, lift + 1, z, DIORITE_WALLS[railMask(p, x, z)]);
         if (k == STAIR) stair(c, b, x, z, lift);
         else if (k == GARDEN) gardenCell(c, b, x, z, lift);
         else if (k == YARD) yardCell(c, b, x, z, lift, dist);
@@ -176,6 +216,19 @@ public final class CityPainter {
 
     static final int[][] NB = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
+    /** Whether a terrace cell carries a parapet (the same rule its neighbours use, so the runs join up). */
+    static boolean railAt(CityPlan p, int x, int z) {
+        int lift = p.lift(x, z);
+        byte k = p.kind(x, z);
+        return lift > 0 && k != STAIR && k != PLOT && k != LANDMARK && lowerNeighbour(p, x, z, lift) && parapet(p, x, z, lift);
+    }
+
+    static int railMask(CityPlan p, int x, int z) {
+        int m = 0;
+        for (int d = 0; d < 4; d++) if (railAt(p, x + NB[d][0], z + NB[d][1])) m |= 1 << d;
+        return m;
+    }
+
     static BlockState terraceWall(Ctx c, int x, int ry, int z) {
         int h = c.pct(x, z, 70 + ry);
         if (ry == 0) return POLISHED_DIORITE;
@@ -195,7 +248,7 @@ public final class CityPainter {
             boolean side = (s.down() == N || s.down() == S) ? (x == s.x0() || x == s.x1()) : (z == s.z0() || z == s.z1());
             BlockState[] stairs = p.district(x, z) == TERRACE || lift > 0 ? DIORITE_STAIR : STONE_STAIR;
             b.set(x, lift, z, side ? POLISHED_DIORITE : stairs[up]);
-            if (side) b.set(x, lift + 1, z, DIORITE_WALL_POST);
+            if (side) b.set(x, lift + 1, z, DIORITE_WALLS[s.down() == N || s.down() == S ? 5 : 10]);
             return;
         }
     }
@@ -317,8 +370,22 @@ public final class CityPainter {
             b.set(x, top + 1, z, STONE_BRICKS);
             if (((x + z) & 1) == 0) b.set(x, top + 2, z, STONE_BRICKS);
         } else if (inner) {
-            b.set(x, top + 1, z, WALL_POST);
+            int m = 0;
+            for (int d = 0; d < 4; d++) if (innerParapet(p, x + NB[d][0], z + NB[d][1])) m |= 1 << d;
+            b.set(x, top + 1, z, STONE_WALLS[m]);
         }
+    }
+
+    /** A wall cell on the curtain's inner face (no outside neighbour, an inside one). */
+    static boolean innerParapet(CityPlan p, int x, int z) {
+        if (p.kind(x, z) != WALL) return false;
+        boolean outer = false, inner = false;
+        for (int[] d : NB) {
+            byte n = p.kind(x + d[0], z + d[1]);
+            if (n == VOID) outer = true;
+            else if (n != WALL && n != WATERGATE && n != LANDMARK) inner = true;
+        }
+        return inner && !outer;
     }
 
     // ---- outside the wall -----------------------------------------------------------------------------------

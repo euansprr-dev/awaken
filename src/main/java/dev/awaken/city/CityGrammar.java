@@ -274,7 +274,8 @@ final class CityGrammar {
                 b.set(x, g + 3, z, LANTERN_HANGING);
             }
             // a drainpipe at the front's far corner on tall houses (a way down from the roof)
-            if (p.storeys() >= 3 && t == base.length(sd) - 1 && walkable(plan.kind(x, z))) {
+            byte under = plan.kind(x, z);
+            if (p.storeys() >= 3 && t == base.length(sd) - 1 && (under == AVENUE || under == STREET || under == LANE || under == ALLEY)) {
                 b.column(x, g + 1, g + p.eave() - 1, z, CHAIN_Y);
             }
         }
@@ -444,20 +445,22 @@ final class CityGrammar {
         int roll = Ctx.shape(p.id(), 7, 77);
         boolean works = st.tallChimney();
         if (!works && (roll >= 55 || p.roof() == CityPlan.Roof.FLAT)) return;
-        if (works && roll >= 45) return;
+        if (works && roll >= 28) return;
         int cxp, czp;
         if (p.ridgeX()) {
-            cxp = roll % 2 == 0 ? up.x0 + 1 : up.x1 - 1;
-            czp = (up.z0 + up.z1) / 2 + (works ? 0 : 0);
+            cxp = roll % 2 == 0 ? up.x0 + 1 : up.x1 - (works ? 2 : 1);
+            czp = (up.z0 + up.z1) / 2;
         } else {
-            czp = roll % 2 == 0 ? up.z0 + 1 : up.z1 - 1;
+            czp = roll % 2 == 0 ? up.z0 + 1 : up.z1 - (works ? 2 : 1);
             cxp = (up.x0 + up.x1) / 2;
         }
-        if (x != cxp || z != czp) return;
+        // a works smokestack is 2x2 and stands well clear of the roof; a house chimney is one brick stack
+        int size = works ? 2 : 1;
+        if (x < cxp || x >= cxp + size || z < czp || z >= czp + size) return;
         int span = p.ridgeX() ? up.d() : up.w();
-        int top = e + rise(p.steep(), (span + 1) / 2) + (works ? 9 + roll % 6 : 2);
+        int top = e + rise(p.steep(), (span + 1) / 2) + (works ? 14 + roll % 7 : 2);
         BlockState brick = st.wall() == CINNABAR_BRICKS ? CINNABAR_BRICKS : BRICKS;
-        for (int y = e; y <= top; y++) b.set(x, y, z, brick);
-        b.set(x, top + 1, z, works ? POLISHED_BLACKSTONE_BRICKS : POT);
+        for (int y = e; y <= top; y++) b.set(x, y, z, works && (top - y) == 2 ? POLISHED_BLACKSTONE_BRICKS : brick);
+        b.set(x, top + 1, z, works ? STONE_SLAB : POT);
     }
 }

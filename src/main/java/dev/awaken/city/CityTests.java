@@ -32,7 +32,7 @@ final class CityTests {
      * The plan's SHA-256. A changed plan changes every new world's city and its graphs: regenerate it on purpose
      * ({@code python3 -I tools/city/plan.py}), then update this pin in the same commit.
      */
-    static final String PLAN_SHA256 = "45ee0fc43da6af6b0df6b608058733752b9bec7c38b799c96952a70eb0339005";
+    static final String PLAN_SHA256 = "711a4c1d60b48e293827b00ee5b23e1fb003e77bc93cabc1fae562faa8e981a0";
 
     /** A city placed at (x, z) for tests (carved, so no plate fill is asked of a GameTest world). */
     static CityLayout layoutAt(int x, int z) {

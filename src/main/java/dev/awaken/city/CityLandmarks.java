@@ -466,7 +466,7 @@ final class CityLandmarks {
         }
         int top = walk + 15;
         b.set(x, top, z, SPRUCE_PLANKS);
-        if (edge) b.set(x, top + 1, z, SPRUCE_FENCE);
+        if (edge) b.set(x, top + 1, z, SPRUCE_FENCES[ringMask(up, x, z)]);
         Box cap = new Box(up.x0() + 2, up.z0() + 2, up.x1() - 2, up.z1() - 2);
         pyramid(b, cap, x, z, top + 3, COPPER, 2);
         // the lookout posts carrying the cap
@@ -491,7 +491,7 @@ final class CityLandmarks {
         b.set(x, walk - 1, z, SPRUCE_PLANKS);
         b.set(x, walk - 2, z, (x & 1) == 0 ? CORBEL[N] : AIR);
         if (in == 0 && (z == box.z0() || z == box.z1())) {
-            b.set(x, walk, z, SPRUCE_FENCE);
+            b.set(x, walk, z, SPRUCE_FENCES[(x > box.x0() ? 8 : 0) | (x < box.x1() ? 2 : 0)]);
             if ((x & 1) == 0) b.column(x, walk + 1, walk + 2, z, SPRUCE_FENCE);
         }
         b.set(x, walk + 3, z, SPRUCE.slab());
@@ -514,7 +514,7 @@ final class CityLandmarks {
         }
         b.set(x, walk - 1, z, SPRUCE_PLANKS);
         // the loft on the north-west half, the terrace on the south-east
-        boolean loft = (x - box.x0()) + (z - box.z0()) < (box.w() + box.d()) / 2 - 1;
+        boolean loft = roostLoft(box, x, z);
         if (loft) {
             Box lb = new Box(box.x0(), box.z0(), box.x0() + box.w() / 2, box.z0() + box.d() / 2);
             if (lb.contains(x, z)) {
@@ -526,9 +526,38 @@ final class CityLandmarks {
                 pyramid(b, lb, x, z, walk + 8, COPPER, 2);
             }
         }
-        if (in == 0 && !loft) b.set(x, walk, z, SPRUCE_FENCE);
+        if (in == 0 && !loft) {
+            int m = 0;
+            for (int d = 0; d < 4; d++) {
+                int nx = x + CityPainter.NB[d][0], nz = z + CityPainter.NB[d][1];
+                if (box.side(nx, nz) >= 0 && !roostLoft(box, nx, nz)) m |= 1 << d;
+            }
+            b.set(x, walk, z, SPRUCE_FENCES[m]);
+        }
         // lanterns at the terrace's corners
         if (box.corner(x, z) && !loft) b.set(x, walk + 1, z, LANTERN);
+    }
+
+    static boolean roostLoft(Box box, int x, int z) {
+        return (x - box.x0()) + (z - box.z0()) < (box.w() + box.d()) / 2 - 1;
+    }
+
+    /** Neighbours of a box's perimeter cell that are on the perimeter too (a railing that runs round it). */
+    static int ringMask(Box box, int x, int z) {
+        int m = 0;
+        for (int d = 0; d < 4; d++) if (box.side(x + CityPainter.NB[d][0], z + CityPainter.NB[d][1]) >= 0) m |= 1 << d;
+        return m;
+    }
+
+    /** A slender octagonal needle from row `from`, `height` tall, starting `r0` wide (Bellwatch's slate spires). */
+    static void needle(CityBuffer b, Box box, int x, int z, int from, int height, double r0, BlockState mat, BlockState band) {
+        double cx = (box.x0() + box.x1()) / 2.0, cz = (box.z0() + box.z1()) / 2.0;
+        double dx = x - cx, dz = z - cz;
+        for (int k = 0; k < height; k++) {
+            double r = r0 * Math.pow(1 - k / (double) height, 0.9) + 0.3;
+            if (octagon(dx, dz, r, r * 0.6)) b.set(x, from + k, z, k % 9 == 0 ? band : mat);
+        }
+        if (Math.abs(dx) < 0.6 && Math.abs(dz) < 0.6) b.column(x, from + height, from + height + 1, z, COPPER_ROD);
     }
 
     // ---- the district bell towers -----------------------------------------------------------------------------
@@ -576,7 +605,7 @@ final class CityLandmarks {
         int crown = g + belfry + 7;
         double dx = x - cx, dz = z - cz;
         switch (style) {
-            case "bellwatch" -> pyramid(b, box, x, z, crown, SLATE, 3);
+            case "bellwatch" -> needle(b, box, x, z, crown, 22, box.w() / 2.0, DEEPSLATE_TILES, POLISHED_DEEPSLATE);
             case "works" -> pyramid(b, box, x, z, crown, CINNABAR, 1);
             case "quay" -> {
                 Box lb = new Box(box.x0() + 2, box.z0() + 2, box.x1() - 2, box.z1() - 2);

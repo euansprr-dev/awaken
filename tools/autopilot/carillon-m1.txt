@@ -109,6 +109,13 @@ shot studio_garden_tower
 cmd awaken city view studio_terrace_tower
 wait 120
 shot studio_terrace_tower
+# Lens A/B where tall buildings meet the sky (tour 1 showed walls vanishing against the sky with DH on)
+lens off
+wait 40
+shot m1_lens_off_terrace_tower
+lens swift
+wait 40
+shot m1_lens_swift_terrace_tower
 # dusk over the old town, the same sky view (how the night palette starts)
 cmd time set 12600
 cmd awaken city view sky_nw_low

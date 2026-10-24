@@ -36,10 +36,10 @@ MASK = (1 << 64) - 1
 
 # ---- ground kinds (one byte per cell; dev.awaken.city.CityPlan mirrors these) ------------------------------------
 VOID, FREE, YARD, GARDEN, PLOT, AVENUE, STREET, LANE, ALLEY, SQUARE, PLAZA, QUAY, RIVER, CANAL, WALL, LANDMARK, \
-    STAIR, WATERGATE, TRAINING, RACE, RING = range(21)
+    STAIR, WATERGATE, TRAINING, RACE, RING, LOWQUAY = range(22)
 KIND_NAMES = ['void', 'free', 'yard', 'garden', 'plot', 'avenue', 'street', 'lane', 'alley', 'square', 'plaza', 'quay',
-              'river', 'canal', 'wall', 'landmark', 'stair', 'watergate', 'training', 'race', 'ring']
-WALKABLE = {AVENUE, STREET, LANE, ALLEY, SQUARE, PLAZA, QUAY, STAIR, RING, TRAINING}
+              'river', 'canal', 'wall', 'landmark', 'stair', 'watergate', 'training', 'race', 'ring', 'lowquay']
+WALKABLE = {AVENUE, STREET, LANE, ALLEY, SQUARE, PLAZA, QUAY, STAIR, RING, TRAINING, LOWQUAY}
 WATER = {RIVER, CANAL, WATERGATE, RACE}
 RANK_KIND = {1: AVENUE, 2: STREET, 3: LANE, 4: ALLEY}
 
@@ -95,7 +95,8 @@ def read_river():
 
 RIVER_PTS = read_river()
 RIVER_HALF = 9.0
-QUAY_W = 6.0
+QUAY_W = 7.0          # a lower quay 3 wide by the water (4 below the street), then the street-level promenade
+LOW_QUAY_W = 3.0
 CANAL_PTS = [(-73, -34), (-100, -38), (-120, -30), (-126, 0), (-118, 22), (-90, 26), (-68, 24)]
 CANAL_HALF = 3.5
 RACE_Z = 118
@@ -224,6 +225,7 @@ class Plan:
         quay = cityish & (((rd >= RIVER_HALF) & (rd < RIVER_HALF + QUAY_W)) | ((cd >= CANAL_HALF) & (cd < CANAL_HALF + 3)))
         self.kind[quay & (self.kind != WALL)] = QUAY
         self.kind[cityish & (cd < CANAL_HALF) & (depth >= WALL_HALF)] = CANAL
+        self.kind[cityish & (rd >= RIVER_HALF) & (rd < RIVER_HALF + LOW_QUAY_W) & (self.kind == QUAY)] = LOWQUAY
         river = cityish & (rd < RIVER_HALF)
         self.kind[river & (self.kind == WALL)] = WATERGATE
         self.kind[river & (self.kind != WATERGATE)] = RIVER
@@ -370,7 +372,7 @@ class Plan:
         cranes = []
         for cz in (-26, 8):
             rx = int(round(river_x(cz)))
-            qx = rx + int(RIVER_HALF) + 3
+            qx = rx + int(RIVER_HALF + LOW_QUAY_W) + 2
             cranes.append({'kind': 'crane', 'box': [qx - 2, cz - 3, qx + 4, cz + 3], 'h': 24})
             cranes.append({'kind': 'boom', 'box': [rx - 6, cz - 1, qx - 3, cz + 1], 'h': 22})
             self.put_box(qx - 2, cz - 3, qx + 4, cz + 3, LANDMARK, only={FREE, QUAY})
@@ -577,6 +579,7 @@ class Plan:
         'wallring': dict(w=(6, 10), d=(6, 9), st=(2, 3), gap=0.55, gapw=(3, 6), roofs=(('gable', 100),)),
     }
     FRONT_RANK = {SQUARE: 0, PLAZA: 1, AVENUE: 1, STREET: 2, RING: 2, QUAY: 2, LANE: 3, ALLEY: 4, STAIR: 3, TRAINING: 5}
+    # (the lower quay is no frontage: houses face the street-level promenade above it)
 
     def pack(self):
         """Plots grow from the street: every free cell beside public ground is a seed (avenues and the square first);
@@ -865,7 +868,7 @@ class Plan:
             ring.append((rad * math.cos(a), rad * math.sin(a)))
         for p, q in zip(ring, ring[1:]):
             lines.append((p, q, 'walk', None))
-        for off in (-(RIVER_HALF + 3), RIVER_HALF + 3):
+        for off in (-(RIVER_HALF + LOW_QUAY_W + 2), RIVER_HALF + LOW_QUAY_W + 2):
             pts = offset_line(RIVER_PTS, off)
             for p, q in zip(pts, pts[1:]):
                 lines.append((p, q, 'walk', None))
@@ -1383,7 +1386,7 @@ def preview(p, path_top, path_graph):
            STREET: (192, 188, 178), LANE: (170, 164, 152), ALLEY: (150, 144, 134), SQUARE: (226, 220, 204),
            PLAZA: (210, 204, 190), QUAY: (176, 170, 160), RIVER: (54, 92, 140), CANAL: (64, 104, 150), WALL: (110, 110, 116),
            LANDMARK: (200, 160, 90), STAIR: (230, 226, 210), WATERGATE: (70, 90, 120), TRAINING: (196, 178, 140),
-           RACE: (64, 104, 150), RING: (184, 180, 170)}
+           RACE: (64, 104, 150), RING: (184, 180, 170), LOWQUAY: (150, 146, 138)}
     for j in range(N_CELLS):
         for i in range(N_CELLS):
             k = int(p.kind[j, i])

@@ -32,7 +32,7 @@ public final class CityPlan {
     // ground kinds, one byte per cell (tools/city/plan.py writes the same numbers)
     public static final byte VOID = 0, FREE = 1, YARD = 2, GARDEN = 3, PLOT = 4, AVENUE = 5, STREET = 6, LANE = 7,
             ALLEY = 8, SQUARE = 9, PLAZA = 10, QUAY = 11, RIVER = 12, CANAL = 13, WALL = 14, LANDMARK = 15, STAIR = 16,
-            WATERGATE = 17, TRAINING = 18, RACE = 19, RING = 20;
+            WATERGATE = 17, TRAINING = 18, RACE = 19, RING = 20, LOWQUAY = 21;
     public static final String[] DISTRICTS = {"none", "market", "bellwatch", "quay", "terrace", "works", "garden", "wallring"};
     public static final int MARKET = 1, BELLWATCH = 2, QUAY_D = 3, TERRACE = 4, WORKS = 5, GARDEN_D = 6, WALLRING = 7;
     public static final int N = 0, E = 1, S = 2, W = 3;
@@ -363,7 +363,7 @@ public final class CityPlan {
 
     public static boolean walkable(byte k) {
         return k == AVENUE || k == STREET || k == LANE || k == ALLEY || k == SQUARE || k == PLAZA || k == QUAY || k == STAIR
-                || k == RING || k == TRAINING;
+                || k == RING || k == TRAINING || k == LOWQUAY;
     }
 
     /** The inside of the wall: everything the city owns (its plots, streets, water, the wall itself). */

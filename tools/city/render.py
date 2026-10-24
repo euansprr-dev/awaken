@@ -2,6 +2,8 @@
 """Draws a painted city dump (/awaken city dump, or the city_studio_dump GameTest) from the sky, in block colours.
 
   python3 -I tools/city/render.py <city-dump.bin> <out-dir> [scale]
+  python3 -I tools/city/render.py <city-dump.bin> <out.png> crop <x0> <z0> <x1> <z1> [scale] [elev]
+                                     a close-up of one area (plan coordinates), from the north-west
 
 Writes <out-dir>/render-top.png (straight down, north up, hill-shaded by height) and <out-dir>/render-nw.png (from the
 north-west, about 40 degrees down, looking south-east across the spire: the opening's sky shot, without fog or Lens).
@@ -255,6 +257,16 @@ def render_oblique(vox, pal, ymin, ox, oz, out, scale, elev=38.0, sky=(176, 200,
 
 
 def main():
+    if len(sys.argv) > 3 and sys.argv[3] == 'crop':
+        path, out = sys.argv[1], sys.argv[2]
+        x0, z0, x1, z1 = (int(v) for v in sys.argv[4:8])
+        scale = float(sys.argv[8]) if len(sys.argv) > 8 else 6.0
+        elev = float(sys.argv[9]) if len(sys.argv) > 9 else 38.0
+        vox, pal, ymin, ox, oz = load(path)
+        sub = vox[:, max(0, z0 + oz):z1 + oz, max(0, x0 + ox):x1 + ox]
+        render_oblique(sub, pal, ymin, ox - max(0, x0 + ox), oz - max(0, z0 + oz), out, scale, elev=elev)
+        print('wrote', out)
+        return
     path, outdir = sys.argv[1], sys.argv[2]
     scale = float(sys.argv[3]) if len(sys.argv) > 3 else 2.0
     os.makedirs(outdir, exist_ok=True)
