@@ -58,8 +58,12 @@ cmd gamerule advance_time false
 # ---- noon in every district
 cmd time set 6000
 cmd awaken city view square
-wait 160
+wait 120
+cmd awaken citizens window start noon_square
+wait 400
 shot m3_noon_square
+cmd awaken citizens window end
+cmd awaken citizens info
 cmd awaken city view market
 wait 110
 shot m3_noon_market
@@ -163,6 +167,7 @@ shot m3_night_terrace
 cmd awaken city view wallring
 wait 100
 shot m3_night_wallring
+cmd time set 13700
 cmd awaken citizens event burglary
 wait 700
 cmd awaken citizens show event
