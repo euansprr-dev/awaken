@@ -6,7 +6,7 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.commands.GpuQueryPool;
 import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.renderpearl.api.pipeline.IndexType;
 import com.mojang.renderpearl.api.textures.FilterMode;
@@ -58,6 +58,12 @@ final class FarRenderer implements AutoCloseable {
     private final FrustumIntersection frustum = new FrustumIntersection();
     private final Matrix4f cull = new Matrix4f();
     private final float[] originX = new float[Rings.RINGS], originZ = new float[Rings.RINGS];
+    // GPU time of Far Sight's passes: timestamps before and after, read back three frames later (diagnostics only)
+    private final GpuQueryPool[] timers = new GpuQueryPool[3];
+    private int timerFrame;
+    private boolean timing = true;
+    private double gpuNanos;
+    private int gpuFrames;
 
     FarRenderer() {
         int cellsPerPiece = PIECE * PIECE;
@@ -220,6 +226,44 @@ final class FarRenderer implements AutoCloseable {
         drawUbo.rotate();
     }
 
+    /** Opens this frame's GPU timing (before the bake), after reading the result of three frames ago. */
+    void timeStart() {
+        if (!timing) return;
+        try {
+            int i = timerFrame % timers.length;
+            if (timers[i] == null) {
+                timers[i] = RenderSystem.getDevice().createTimestampQueryPool(2);
+            } else if (timerFrame >= timers.length) {
+                var v = timers[i].getValues(0, 2);
+                if (v[0].isPresent() && v[1].isPresent()) {
+                    gpuNanos += (v[1].getAsLong() - v[0].getAsLong()) * (double) RenderSystem.getDevice().getDeviceInfo().timestampPeriod();
+                    gpuFrames++;
+                }
+            }
+            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[i], 0);
+        } catch (RuntimeException e) {
+            timing = false;
+        }
+    }
+
+    void timeEnd() {
+        if (!timing) return;
+        try {
+            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], 1);
+        } catch (RuntimeException e) {
+            timing = false;
+        }
+        timerFrame++;
+    }
+
+    /** Mean GPU milliseconds per frame since the last call, or -1 if nothing was timed. */
+    double gpuMillis() {
+        double ms = gpuFrames == 0 ? -1 : gpuNanos / gpuFrames / 1e6;
+        gpuNanos = 0;
+        gpuFrames = 0;
+        return ms;
+    }
+
     /** The depth texture Lens reads (null before the first frame). */
     GpuTexture depthTexture() {
         return depth;
@@ -234,6 +278,7 @@ final class FarRenderer implements AutoCloseable {
         frameUbo.close();
         drawUbo.close();
         indices.close();
+        for (GpuQueryPool t : timers) if (t != null) t.close();
         if (depthView != null) depthView.close();
         if (depth != null) depth.close();
         depth = null;

@@ -2,7 +2,8 @@
 # setup. Run on Vulkan with LENS=swift and PACK=perf, once per setup:
 #   vanilla RD 16 and RD 32 (RD=32), Distant Horizons Swift (PACK=perf,horizon DH=swift), and Far Sight (this script
 #   with its "farsight off" line turned on). tools/farsight-ab.sh runs each setup and files its results.
-# Logs '[autopilot] perf <scene> ...' and Far Sight's ring timings; shots are 2880x1800 (1440x900 points, Retina).
+# Logs '[autopilot] perf <scene> ...', Far Sight's ring timings and its own GPU and CPU time per scene (farsight status
+# before and after each); shots are 2880x1800 (1440x900 points, Retina).
 world farsightab creative 777
 waitworld
 gui 0
@@ -31,31 +32,38 @@ farsight status
 # 2 the vista at noon and at sunset, high above spawn, east and west
 cmd tp @s 0.5 200 0.5 90 8
 wait 300
+farsight status
 perf vista_noon_west 10
+farsight status
 shot ab_3_noon_west
 look -90 8
 wait 60
+farsight status
 perf vista_noon_east 10
+farsight status
 shot ab_4_noon_east
 cmd time set 12600
 look 90 8
 wait 60
+farsight status
 perf vista_sunset_west 10
+farsight status
 shot ab_5_sunset_west
 cmd time set 6000
-# 3 on the ground, looking out (dry land: the seed may spawn at sea)
-cmd awaken gate hop
+# 3 low over the land, looking out across it (the camera stays in spectator, so no tree or hill can block it)
+cmd tp @s 0.5 110 0.5 90 2
 wait 200
-look 0 0
+farsight status
+perf low 10
+farsight status
+shot ab_6_low_west
+look -90 2
 wait 40
-perf ground 10
-shot ab_6_ground
-look 180 0
-wait 40
-shot ab_7_ground_back
+shot ab_7_low_east
 # 4 flight: 30 s west at 20 blocks a second, 150 up; shots along the way show any seam between rings
 cmd tp @s 0.5 150 0.5 90 10
 wait 100
+farsight status
 perfstart flight
 cmd tp @s ~-20 ~ ~
 wait 15
@@ -120,6 +128,7 @@ wait 15
 cmd tp @s ~-20 ~ ~
 wait 15
 perfend
+farsight status
 shot ab_10_flight_end
 farsight status
 info

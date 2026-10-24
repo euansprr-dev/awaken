@@ -60,6 +60,9 @@ public final class FarSightClient {
     private static boolean horizonLogged;
     private static float fogStart, fogEnd;
     private static final Vector3f sun = new Vector3f();
+    // the render thread's time in afterSky, for status
+    private static long cpuNanos;
+    private static int cpuFrames;
 
     public static void init(IEventBus modBus) {
         modBus.addListener(RegisterRenderPipelinesEvent.class, FarPipelines::onRegister);
@@ -105,6 +108,7 @@ public final class FarSightClient {
             if (bound != null) unbind();
             return;
         }
+        long t0 = System.nanoTime();
         if (field == null) {
             field = new FarField();
             renderer = new FarRenderer();
@@ -140,6 +144,7 @@ public final class FarSightClient {
             workers.recycle(p);
         }
         logProgress();
+        renderer.timeStart();
         if (field.dirty != 0) {
             gpu.bake(field, field.dirty);
             field.dirty = 0;
@@ -156,11 +161,17 @@ public final class FarSightClient {
         if (sun.y < 0f) sun.negate();
         fogEnd = horizon();
         fogStart = fogEnd * 0.5f;
-        if (RenderSystem.getProjectionMatrixBuffer() == null || RenderSystem.getShaderFog() == null) return;
+        if (RenderSystem.getProjectionMatrixBuffer() == null || RenderSystem.getShaderFog() == null) {
+            renderer.timeEnd();
+            return;
+        }
         renderer.draw(field, main, e.getModelViewMatrix(), cam.y, sun, fogStart, fogEnd, clipStart, CLIP_BAND, level.getSeaLevel(),
                 RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap());
+        renderer.timeEnd();
         FarTerrain.report(renderer.depthTexture(), FarRenderer.NEAR, FarRenderer.FAR, true, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
         lastDrawNanos = System.nanoTime();
+        cpuNanos += lastDrawNanos - t0;
+        cpuFrames++;
     }
 
     /** How far Far Sight is fogged out: the coarsest ring's reach, less the most its window can lag the camera. */
@@ -229,9 +240,12 @@ public final class FarSightClient {
         StringBuilder rings = new StringBuilder();
         for (int r = 0; r < Rings.RINGS; r++) rings.append(r == 0 ? "" : ",").append(field.missing[r]);
         long ec = workers.estimateColumns.get(), xc = workers.exactColumns.get();
+        double cpu = cpuFrames == 0 ? -1 : cpuNanos / 1e6 / cpuFrames;
+        cpuNanos = 0;
+        cpuFrames = 0;
         return String.format(Locale.ROOT,
-                "%s missing=[%s] queued=%d pieces=%d cells=%d estimate=%.1fus/column exact=%.1fus/column (%d/%d columns) gpu=%dMB",
-                drawing() ? "drawing" : enabled ? "on" : "off", rings, workers.queued(), renderer.pieces, renderer.cells,
+                "%s gpu_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d estimate=%.1fus/column exact=%.1fus/column (%d/%d columns) vram=%dMB",
+                drawing() ? "drawing" : enabled ? "on" : "off", renderer.gpuMillis(), cpu, rings, workers.queued(), renderer.pieces, renderer.cells,
                 ec == 0 ? 0.0 : workers.estimateNanos.get() / 1000.0 / ec, xc == 0 ? 0.0 : workers.exactNanos.get() / 1000.0 / xc, ec, xc,
                 (field.memoryBytes() + renderer.memoryBytes()) >> 20);
     }
