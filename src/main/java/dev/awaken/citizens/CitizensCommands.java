@@ -33,7 +33,8 @@ import java.util.Set;
 final class CitizensCommands {
     private CitizensCommands() {}
 
-    static final List<String> SHOW = List.of("lamplighter", "bellringer", "porter", "stallkeeper", "baker", "smith", "watch",
+    static final List<String> SHOW = List.of("crowd_market", "crowd_bellwatch", "crowd_quay", "crowd_terrace", "crowd_works",
+            "crowd_garden", "crowd_wallring", "lamplighter", "bellringer", "porter", "stallkeeper", "baker", "smith", "watch",
             "crier", "boatman", "washer", "mason", "runner", "shopkeeper", "tavernkeeper", "child", "resident", "stall", "event",
             "oren", "mira", "teodor", "sun", "lamps", "laundry");
 
@@ -165,6 +166,8 @@ final class CitizensCommands {
         Roster r = c.roster;
         double[] at = new double[3];
         boolean found = false;
+        double want = 7;
+        double[] anchor = null;
         String label = what;
         switch (what) {
             case "stall" -> {
@@ -175,7 +178,16 @@ final class CitizensCommands {
                 found = true;
             }
             case "event" -> {
-                if (!c.data.events.isEmpty()) found = c.events.where(c.data.events.getLast(), at);
+                if (!c.data.events.isEmpty()) {
+                    CitizensData.Event e = c.data.events.getLast();
+                    found = c.events.where(e, at);
+                    if (e.kind() == CityEvents.FIRE) {
+                        // stand back in the street in front of the house, looking up at its roof
+                        want = 13;
+                        int door = e.data()[7];
+                        anchor = new double[]{c.net.x[door], c.net.z[door]};
+                    }
+                }
             }
             case "lamps" -> {
                 // a lamp on the busiest stretch of avenue (the one with the most lamps within 40 blocks)
@@ -201,7 +213,9 @@ final class CitizensCommands {
                 }
             }
             default -> {
-                int pick = pickCitizen(c, what);
+                int pick = what.startsWith("crowd_") ? crowdIn(c, java.util.Arrays.asList(CityPlan.DISTRICTS).indexOf(what.substring(6)))
+                        : pickCitizen(c, what);
+                if (what.startsWith("crowd_")) want = 10;
                 if (pick >= 0) {
                     label = describe(c, pick);
                     CitizenBody b = l.body[pick];
@@ -220,7 +234,7 @@ final class CitizensCommands {
             src.sendFailure(Component.literal("Nothing to show for " + what));
             return 0;
         }
-        double[] eye = vantage(c, at[0], at[2], 7.0);
+        double[] eye = anchor != null ? vantage(c, anchor[0], anchor[1], want) : vantage(c, at[0], at[2], want);
         // on the street (a step up at most), looking up at a roof when that's where it is
         double ground = c.ledger.streetY + liftAt(c, ex(eye), eye[1]) + 1.0;
         double ex = eye[0], ez = eye[1], ey = Math.clamp(at[1] - 1.2, ground, ground + 2.5);
@@ -242,7 +256,7 @@ final class CitizensCommands {
         }
     }
 
-    /** A citizen of that job (or that name) at work now: standing at a workplace beats walking beats inside. */
+    /** A citizen of that job (or that name) at work now: at the job's own station beats any stand beats walking beats inside. */
     static int pickCitizen(Citizens c, String what) {
         Roster r = c.roster;
         CitizensData d = c.data;
@@ -253,16 +267,70 @@ final class CitizensCommands {
         if (job < 0) return -1;
         int best = -1, bestScore = -1;
         for (int i = 0; i < r.citizens; i++) {
-            if (r.job[i] != job || d.role[i] != 0) continue;
+            if (r.job[i] != job || d.role[i] != 0 || d.hurtUntil[i] > 0) continue;
             int score = 0;
+            int place = d.place[i];
+            byte pk = place >= 0 ? r.pKind[place] : -1;
             if (d.state[i] == CitizensData.STAND) score = 3;
             else if (d.state[i] == CitizensData.WALK) score = 2;
-            int place = d.place[i];
-            if (score == 3 && place >= 0 && r.pKind[place] != Roster.P_DOOR && r.pKind[place] != Roster.P_TAVERN_OUT && r.pKind[place] != Roster.P_SIT)
-                score = 4;
-            if (d.dwellUntil[i] > 0) score = 3; // mid-stop on a round: they'll walk on soon
+            if (score == 3 && pk != Roster.P_DOOR && pk != Roster.P_TAVERN_OUT && pk != Roster.P_SIT && pk != Roster.P_LANDMARK) score = 4;
+            if (d.state[i] != CitizensData.INSIDE && own(job, pk, c.ledger.act(i))) score += 3;
+            if (d.dwellUntil[i] > 0) score -= 1; // they'll walk on soon
+            score = score * 1000 + (int) Math.floorMod(CitizenWork.mixHash(i), 997L);
             if (score > bestScore) {
                 bestScore = score;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    /** The job's own work: the place kind (or act) that shows it. */
+    private static boolean own(int job, byte pk, byte act) {
+        return switch (job) {
+            case Roster.LAMPLIGHTER -> pk == Roster.P_LAMP;
+            case Roster.BELLRINGER -> pk == Roster.P_BELL;
+            case Roster.PORTER -> pk == Roster.P_STALL_FRONT || pk == Roster.P_PICKUP || act == Roster.CARRY;
+            case Roster.STALLKEEPER -> pk == Roster.P_STALL_KEEPER;
+            case Roster.BAKER -> pk == Roster.P_STAND;
+            case Roster.SMITH -> pk == Roster.P_ANVIL;
+            case Roster.WATCH -> pk == Roster.P_POST || act == Roster.ROUND;
+            case Roster.CRIER -> pk == Roster.P_CRIER;
+            case Roster.BOATMAN -> pk == Roster.P_PICKUP;
+            case Roster.WASHER -> pk == Roster.P_WASH || pk == Roster.P_LINE;
+            case Roster.MASON -> pk == Roster.P_STAND;
+            case Roster.MILLER -> pk == Roster.P_MILL;
+            case Roster.CHILD -> pk == Roster.P_PLAY;
+            case Roster.RESIDENT -> pk == Roster.P_SIT;
+            case Roster.SHOPKEEPER -> pk == Roster.P_SHOP_DOOR;
+            case Roster.TAVERNKEEPER -> pk == Roster.P_TAVERN_OUT;
+            case Roster.RUNNER -> act == Roster.ROUND;
+            default -> pk == Roster.P_STAND;
+        };
+    }
+
+    /** Where most people of a district are out right now: the citizen with the most others within 16 blocks. */
+    static int crowdIn(Citizens c, int district) {
+        Ledger l = c.ledger;
+        double[] pos = new double[3];
+        int n = c.roster.citizens;
+        double[] xs = new double[n], zs = new double[n];
+        boolean[] in = new boolean[n];
+        for (int i = 0; i < n; i++) {
+            if (!l.position(i, pos)) continue;
+            int dd = CityPlan.get().district((int) Math.floor(pos[0] - l.cx), (int) Math.floor(pos[2] - l.cz));
+            if (dd != district) continue;
+            in[i] = true;
+            xs[i] = pos[0];
+            zs[i] = pos[2];
+        }
+        int best = -1, bestCount = -1;
+        for (int i = 0; i < n; i++) {
+            if (!in[i]) continue;
+            int count = 0;
+            for (int j = 0; j < n; j++) if (in[j] && (xs[i] - xs[j]) * (xs[i] - xs[j]) + (zs[i] - zs[j]) * (zs[i] - zs[j]) < 16 * 16) count++;
+            if (count > bestCount) {
+                bestCount = count;
                 best = i;
             }
         }
@@ -277,7 +345,7 @@ final class CitizensCommands {
         double[] best = null;
         for (int a = 0; a < 32; a++) {
             double ang = a * Math.PI / 16;
-            for (double dist = 4; dist <= 11; dist += 1) {
+            for (double dist = 4; dist <= Math.max(11, want + 4); dist += 1) {
                 double px = x + Math.cos(ang) * dist, pz = z + Math.sin(ang) * dist;
                 int ix = (int) Math.floor(px - cx), iz = (int) Math.floor(pz - cz);
                 if (!open(plan.kind(ix, iz))) continue;

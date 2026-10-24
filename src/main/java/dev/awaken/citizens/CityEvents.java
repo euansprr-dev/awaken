@@ -78,11 +78,13 @@ final class CityEvents {
     void tick(long now, int tod) {
         long day = PlayDays.current(c.server);
         if (day != plannedDay) planDay(day);
-        if (lastTod >= 0 && !c.level.players().isEmpty()) {
+        int step = lastTod < 0 ? 0 : Math.floorMod(tod - lastTod, Ledger.DAY);
+        if (step > 0 && step < 600 && !c.level.players().isEmpty()) {
+            // only time that really passed starts planned events (a clock jump skips them)
             for (int[] p : plan) {
                 if (p[2] != 0) continue;
-                boolean crossed = lastTod <= tod ? p[1] > lastTod && p[1] <= tod : p[1] > lastTod || p[1] <= tod;
-                if (crossed && tod - lastTod < 600) {
+                int ahead = Math.floorMod(p[1] - lastTod, Ledger.DAY);
+                if (ahead > 0 && ahead <= step) {
                     p[2] = 1;
                     start(KINDS.get(p[0]), null, now);
                 }

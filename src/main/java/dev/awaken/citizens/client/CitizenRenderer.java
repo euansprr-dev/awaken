@@ -129,7 +129,11 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
             collector.submitTextBackground(pose, -w / 2f - 3, top - 2, w / 2f + 3, 1, bg, net.minecraft.client.gui.Font.DisplayMode.NORMAL, s.lightCoords);
             for (int k = 0; k < lines; k++) {
                 var line = s.speech.get(k);
-                collector.submitText(pose, -font.width(line) / 2f, top + k * lh, line, false, net.minecraft.client.gui.Font.DisplayMode.NORMAL,
+                float x = -font.width(line) / 2f, y = top + k * lh;
+                // a faint copy seen through posts and awnings, then the line itself
+                collector.submitText(pose, x, y, line, false, net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
+                        net.minecraft.util.LightCoordsUtil.FULL_BRIGHT, (a / 3) << 24 | 0xFFFFFF, 0, 0);
+                collector.submitText(pose, x, y, line, false, net.minecraft.client.gui.Font.DisplayMode.NORMAL,
                         net.minecraft.util.LightCoordsUtil.FULL_BRIGHT, a << 24 | 0xFFFFFF, 0, 0);
             }
         } else {
