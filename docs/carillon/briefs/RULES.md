@@ -3,6 +3,19 @@
 The plan is docs/plan-carillon.html; the source of truth is docs/SPEC.md §16. The orchestrator is the session
 "btw: kind of a side question…" ([8b9253]); it owns SPEC §16, the `core.api` hooks, carillon/main and all merges.
 
+## Lean build (decisions 14–19, 2026-10-24)
+- One builder at a time, one milestone each, briefed from a file. Report ONCE, at the end of your milestone. Don't
+  poll, and don't message other sessions; the Carillon session does all coordination.
+- Models: Opus at extra-high effort decides the look and the feel. Sonnet does data, generators (tools/city/), tests,
+  docs and reports. An Opus builder may start ONE Sonnet subagent at a time (Agent tool, model sonnet) for that kind of
+  work, briefed from a file it writes under docs/carillon/briefs/, in the same worktree, never building at the same time.
+- Tests: GameTests only where breakage is silent (named in your brief), run locally with
+  `-Ptests=<your prefix>`; the full suite runs on GitHub CI when you push your branch
+  (`git -C <worktree> push -u origin <branch>`; CI runs on carillon/**; read the result with `gh run list --branch
+  <branch>` / `gh run view`). Re-run the known flakes before blaming yourself.
+- Tours: one short `slot.sh light` screenshot tour per milestone (≤ 15 min). A measuring `tour` only when the brief says.
+- Generate content with scripts: tokens go into a generator once, not into each of 800 buildings.
+
 ## Where you work
 - Only in your own worktree, given as an absolute path in your brief. Start every Bash command with
   `cd <your worktree> &&`, use `git -C <your worktree>`, and absolute paths in file tools. Never call EnterWorktree.

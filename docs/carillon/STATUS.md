@@ -4,38 +4,30 @@ Plan: docs/plan-carillon.html (artifact https://claude.ai/artifact/SpBBMyKg3n7GH
 2026-10-24 with every recommendation, including the Runner's Kit change (SPEC §16.0.1). Source of truth: SPEC §16.
 Orchestrator: session "btw: kind of a side question…" (local_fe8b1e52…, ListAgents ref [8b9253]).
 
-## PAUSED (2026-10-24, ~19:50)
+## RESUMED on the lean plan (2026-10-24 evening)
 
-Euan paused Carillon to save his usage window (relayed by the main session, which offered "Carillon city" as
-non-essential: the game plays fine without the city, classic start). Nothing on build/awaken-v1 changed. No agent is
-running; no Carillon lock is held. Everything is committed:
+Euan resumed Carillon with the lean build (docs/plan-carillon-lean.html, decisions 14–19 in SPEC §16.0): one builder at a
+time per milestone, Opus at extra-high effort for look and feel, Sonnet for data, generators, tests and docs; GameTests
+only where breakage is silent, on GitHub CI (carillon/main and carillon/m*); one `slot.sh light` tour per milestone;
+perf once at the end of Detail; Euan's three play sessions are the quality gate. Stage 0 and gate G0 are closed (verdicts
+below; SPEC §16 numbers updated). The Runner's Kit belongs to The Ascent (session "The Ascent", local_47a3f561); spike
+S3 is its starting point. MMO-lite is deferred; party gates and shared credit landed on build via PartyHooks.
 
-| Spike | Branch head | Gate G0 |
-|---|---|---|
-| S1 city | carillon/spike-city c36561c | ADJUST (reviewed) |
-| S2 camera | carillon/spike-camera 7582f98 | GO within limits (reviewed) |
-| S3 runner | carillon/spike-runner 7a184a7 | report committed as the builder left it (WIP); NOT reviewed yet |
-| S4 crowd | carillon/spike-crowd 3dd907d | GO (reviewed) |
-| S5 atlas | carillon/spike-atlas 2a4672f | GO, own build (reviewed) |
-| S6 basin | on build/awaken-v1 (terrain session) | done |
+| Milestone | Builder (model) | Branch / worktree | State |
+|---|---|---|---|
+| M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | running (brief: briefs/M1-city.md) |
+| M2 the opening in blockout | Director (Opus xhigh) | — | waits for the Ascent's Runner tier on build/awaken-v1 |
+| M3 alive | Citizens (Opus xhigh + Sonnet data) | — | after M2 (Euan's play 1) |
+| M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
+| M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
-carillon/main: 5ba1131 (decision-13 set complete: ritual, holo 1–2, lands + slice, avatar-render merged). The last
-merge (avatar-render, 5ba1131) is committed but its compile check was stopped by the pause: compile first on resume.
-Paused elsewhere and not to wait on: pack/together's PartyHooks copy and the Hearth membership API.
-
-To resume: (1) merge build/awaken-v1 into carillon/main and compile; (2) review S3 (report in
-/Volumes/MEDIA/Awaken-c-runner/docs/carillon/spikes/S3-runner.md: all moves work, ledge hang and shimmy with a
-server-Y caveat; history-based server checks give zero rubber-banding at 150 ms; the jump-held wall-run trigger fires
-off 1-block steps); (3) close G0: update SPEC §16 numbers marked (G0), write briefs W1–W9 from spikes/G0-notes.md,
-republish the plan page with measured numbers; (4) start Stage 1.
-
-## Stage 0 (spikes), gate G0 next
+## Stage 0 (spikes): closed at G0
 
 | Spike | Question | Worktree / branch | State |
 |---|---|---|---|
 | S1 city | paint cost per chunk, frame cost, look of a Bellwatch slice | /Volumes/MEDIA/Awaken-c-city · carillon/spike-city (c36561c) | **ADJUST**: generation fine (city 2–5% of pregen); whole city always in view at RD 16 → solid cores, district density, RD ≤ 12 + DH for the sky shot; overhead look needs roof palette, plan hierarchy, landmarks, kit |
 | S2 camera | sky shot through a camera entity, no mixin, smooth | /Volumes/MEDIA/Awaken-c-camera · carillon/spike-camera (7582f98) | **GO within limits**: no mixin, seamless hand-off, Lens runs; Sodium warm p99 15.6 ms; camera ≤ 215 from the player, below y 320; pre-warm behind the card (SPEC §16.4) |
-| S3 runner | wall-run, hang, ledge jump on the body pattern; latency; accidental triggers | /Volumes/MEDIA/Awaken-c-runner · carillon/spike-runner (7a184a7) | stopped at the pause; report committed, not reviewed |
+| S3 runner | wall-run, hang, ledge jump on the body pattern; latency; accidental triggers | /Volumes/MEDIA/Awaken-c-runner · carillon/spike-runner (7a184a7) | **handed to The Ascent** (decision 15); report committed as left; findings in SPEC §16.3 |
 | S4 crowd | 240 ledger + 40 bodies: tick and frame cost | /Volumes/MEDIA/Awaken-c-crowd · carillon/spike-crowd (3dd907d) | **GO**: ledger free, 40 bodies 0.3 ms/tick p50 and ≤ 1.2 ms frame; 2 stuck per play-day; movement rules in SPEC §16.5 |
 | S5 atlas | picture-in-picture diorama + clouds cost; reuse Diorama or not | /Volumes/MEDIA/Awaken-c-atlas · carillon/spike-atlas (2a4672f) | **GO, build our own**: +0.7–1.0 ms open, 83 ms cold open; mesh memory to bound (see spikes/G0-notes.md) |
 | S6 basin | city basin at spawn | Awakened Lands session, pack/awakened-lands (07d24ce, fb39078) | **done**: API landed, 300/300 GameTests, verified on seed 777 (site 1178, 828 on a peninsula; flat y 70 to 330, eased by 700; river carved to y 57, water to 63, terraced banks) |
@@ -95,3 +87,6 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   anomaly_rift_close_pays_once.
 - 2026-10-24 ~19:50: Carillon paused by Euan (usage window). S3 stopped and its report committed as WIP (7a184a7); the
   avatar-render merge's compile check stopped; no agents running, no locks held. See PAUSED above to resume.
+- 2026-10-24 evening: resumed on the lean plan. build/awaken-v1 4c9ffb7 merged into carillon/main (SPEC end-of-file
+  conflict: "Together" before §16); compiles. SPEC §16 gets decisions 14–19 and the G0 numbers; RULES.md gets the lean
+  rules; CI runs on carillon/m* too. The Ascent has Carillon's run requirements (§16.3 + the S3 findings). M1 started.

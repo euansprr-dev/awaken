@@ -1254,8 +1254,9 @@ The Veil, the Lucidium and the rest:
 
 Euan approved the plan on 2026-10-24 with every recommendation ("Go with all recommendations and the full plan"), and
 confirmed the movement change in the same message ("ranks improving the moves … everyone a 'Runner' from the first
-second … the Wall Run power becomes 'Wall Stride'"). Numbers marked (G0) are provisional until Stage 0 measures them;
-the orchestrator updates them here at gate G0.
+second … the Wall Run power becomes 'Wall Stride'"). Revised the same day for a lean build (docs/plan-carillon-lean.html,
+decisions 14–19). Stage 0 closed at gate G0 on 2026-10-24; the measured values replaced the provisional ones (G0 marks
+below now cite what was measured; details in docs/carillon/spikes/G0-notes.md).
 
 ### 16.0 Decisions (approved)
 1. The Runner's Kit works from the first second; ranks improve moves instead of unlocking them; Wall Run → Wall Stride;
@@ -1280,6 +1281,20 @@ the orchestrator updates them here at gate G0.
     fresh session take over at any gate.
 13. pack/ritual, pack/body-anims, pack/holo-ui and pack/awakened-lands merge into build/awaken-v1 first; Carillon
     workstreams branch from carillon/main rebased on that. Stage 0 spikes are throwaway and start at once.
+Added for the lean build (approved by Euan, 2026-10-24):
+14. Stage 0 is closed with its verdicts (S1 adjust, S2 go within limits, S4 go, S5 go and build our own, S6 done).
+15. The Runner's Kit moves to The Ascent (docs/plan-ascent.html), which builds all movement once; §16.3 is Carillon's
+    requirement for the run, and spike S3 (carillon/spike-runner) is the Ascent's starting point.
+16. MMO-lite (§16.6–16.7 beyond witnessing) is deferred until the opening, the city, its people and the Atlas ship.
+    Party gates and shared credit already landed through `PartyHooks` (see "Together").
+17. One builder at a time, a fresh session per milestone, briefed from a file; the Carillon session reviews each diff
+    and merges into carillon/main; each playable milestone merges into build/awaken-v1 through the pack session.
+18. Models: Opus at extra-high effort for everything that decides the look or the feel (the city's plan, painter,
+    grammar, landmarks and detail kit; the opening; citizens' visible life; the Atlas; art direction). Sonnet for data,
+    generators (tools/city/), tests, docs and reports.
+19. Tests: GameTests only where breakage is silent, on GitHub CI (push carillon/* branches); locally only a builder's
+    own prefix (-Ptests=<prefix>). One short `slot.sh light` screenshot tour per milestone. Perf once, at the end of
+    Detail. Euan's three play sessions (the opening in blockout, the city alive, the detail) are the quality gate.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1306,8 +1321,14 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   graph (edges carry the move they need; door and stair links). Plan hash checked by GameTest.
 - Placed only in vanilla blocks + the Carillon kit (~35 blocks of our own); no third-party blocks.
 - Climbable language: bronze trim, dark beams and drainpipes can be held; plain plaster and glass can't.
-- Pregenerated at world creation (~1,250 chunks, ≤ 30 s on the M4 (G0)) behind the opening card; graphs saved with the
-  world; generator changes never touch a built city.
+- Pregenerated at world creation (~1,250 chunks, ≤ 30 s on a quiet M4; G0 measured 11–28 s for terrain + city, the
+  city 2–5% of it; Distant Horizons holds its LOD building until the pregen ends) behind the opening card; graphs saved
+  with the world; generator changes never touch a built city.
+- Drawing (G0, spike S1: a 480-block city sits inside RD 16 from anywhere in it, so all of it is always drawn): houses
+  have solid cores (dark fill behind windows, sealed attics) except the ~60 enterable buildings; geometry density
+  varies by district (dense only where the run needs it); the painter writes straight into chunk sections (never
+  setBlock), sets pane/fence/stair connections itself, keeps pieces ≤ 14×14 with a 2-block margin, places no block
+  entities in bulk and ≤ 4–5 light sources per chunk.
 - Terrain (agreed with Awakened Lands, 2026-10-24): `dev.awaken.terrain.api.CityBasin` picks the site deterministically
   from the seed at server start (land within ~1,500 of the origin) and flattens it: `CitySite(x, z, coreRadius 330,
   blendRadius 700, streetY 70, riverPath, basinCarved)`; `CityBasin.site(server)`, `CityBasin.reserved(x, z)` (core + 48,
@@ -1318,7 +1339,11 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   landmarks, the spawn vault ring, the Well) to `reserved()`. Spawn is placed in the city by Carillon through
   `LevelEvent.CreateSpawnPosition`; terrain never sets spawn.
 
-### 16.3 The Runner's Kit (W2; base numbers, ranks improve them)
+### 16.3 The Runner's Kit (built by The Ascent; Carillon's requirements for the run)
+- G0 handover from spike S3 (carillon/spike-runner, report docs/carillon/spikes/S3-runner.md there): every move works
+  on the body framework; checking a claimed start against the server's last 12 positions (not the current one) gave zero
+  rubber-banding at 150 ms; the wall-run trigger must be a jump PRESS, not held (held fires off any 1-block step beside a
+  wall); hangs reached from below need the server-Y fix (0.58 low after an upward approach).
 - No new keys: sprint, jump, sneak and movement keys only. Moves are appended at the end of `Move` (saved ordinals).
 - Wall-run: sprint + jump along a wall within 35° of parallel, ≥ 1.5 blocks above ground, wall ≥ 2 tall. 35 ticks:
   10-tick grip (vertical target +0.06 easing to 0), then the target eases (smoothstep) to −0.26 b/t (approach 0.35 per
@@ -1358,7 +1383,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   lamps, boats): citizens draw only within 128 blocks.
 
 ### 16.5 Citizens (W4)
-- Ledger: 240 records (G0), sliced 12 per tick; ≤ 0.5 ms/tick. Bodies within ~56 blocks: ≤ 40 per player, ≤ 96 per
+- Ledger: 240 records, sliced 12 per tick; ≤ 0.5 ms/tick (G0: p95 0.015–0.04 ms in game). Bodies within ~56 blocks: ≤ 40 per player, ≤ 96 per
   world; walk the street graph; brains tick every max(1, d²/256) ticks; ≤ 4 pathfinding at once; ≤ 1.5 ms/tick.
 - Movement (G0, from spike S4): bodies are never saved (the ledger is the truth); they walk the street graph on
   keep-right lanes with no vanilla goals, using vanilla pathing only for the last few blocks or to get unstuck; they
@@ -1408,15 +1433,17 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 - `MovementHooks` gains `wallRunning`, `hanging` (W2 adds them).
 
 ### 16.10 Budgets
-- Perf profile, RD 16, busiest market at noon: p50 ≤ 10 ms (platform 5.3 measured + city blocks 1.5 + 40 citizens 2.0 +
-  signs of life 0.4 + Holo 0.3 (G0)); rest of the city ≥ 110 fps p50. Horizon-swift: city ≤ +3 ms over the same spot
+- Perf profile, RD 16, busiest market at noon: p50 ≤ 10 ms (platform 5.3 measured + city blocks ≤ 2.8 with solid cores
+  and district density (G0 measured +2.1–3.5 on a loaded machine) + 40 citizens ≤ 1.2 (G0 measured) + signs of life 0.4
+  + Holo 0.3); rest of the city ≥ 110 fps p50. Measured once, quiet, at the end of Detail. Horizon-swift: city ≤ +3 ms over the same spot
   without it. Golden run p99 ≤ 20 ms, no frame > 50 ms. Sky shot ≥ 60 fps p99. Server: whole city ≤ 2.5 ms/tick avg;
   tick p95 ≤ 25 ms holds.
 
 ### 16.11 Process
-- Stages and gates: 0 spikes → G0; 1 foundations in blockout → G1; 2 alive → G2; 3 detail → G3 (art bar); 4 MMO-lite →
-  G4; 5 polish → G5 (ship to build/awaken-v1). Cut line: Stage 4 slips before the opening does.
-- Branches: carillon/main (integration), carillon/<workstream>, carillon/spike-<name> (never merged). Briefs in
-  docs/carillon/briefs/, status in docs/carillon/STATUS.md, spike reports in docs/carillon/spikes/.
+- Milestones (lean, decisions 14–19): M1 the city in blockout → M2 the opening in blockout (after the Ascent's Runner
+  tier lands; Euan's play 1) → M3 alive (Euan's play 2) → M4 detail (perf; Euan's play 3) → M5 the Atlas → later
+  MMO-lite → polish. Each playable milestone merges into build/awaken-v1 through the pack session.
+- Branches: carillon/main (integration), carillon/m<N>-<name> per milestone, carillon/spike-<name> (never merged).
+  Briefs in docs/carillon/briefs/, status in docs/carillon/STATUS.md, spike reports in docs/carillon/spikes/.
 - Machine share: Carillon agents run Gradle and tours through `tools/carillon/slot.sh` (≤ 3 builds at once; a tour runs
   alone with no Carillon build beside it).
