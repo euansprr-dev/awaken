@@ -49,7 +49,8 @@ final class AudioLayerTests {
     static void register() {
         AwakenTests.register("audio_layers_intensity", 40, AudioLayerTests::intensity);
         AwakenTests.register("audio_layers_manifests", 40, AudioLayerTests::manifests);
-        AwakenTests.register("audio_layers_loudness", 20 * 60 * 6, AudioLayerTests::loudness);
+        // the test server ticks as fast as it can, so ticks are no clock: a generous ceiling, the work runs on its own thread
+        AwakenTests.register("audio_layers_loudness", 20 * 60 * 60 * 4, AudioLayerTests::loudness);
         AwakenTests.register("audio_layers_watch", 80, AudioLayerTests::watch);
         AwakenTests.register("audio_layers_payload", 40, AudioLayerTests::payload);
         AwakenTests.register("compat_spr_dry_list", 40, AudioLayerTests::sprDryList);
@@ -204,9 +205,28 @@ final class AudioLayerTests {
      * peak under -1 dBTP; each stem alone under -1 dBTP; JOrbis decodes exactly the loop's frames. Runs off-thread.
      */
     static void loudness(GameTestHelper h) {
-        CompletableFuture<List<String>> job = CompletableFuture.supplyAsync(() -> {
+        CompletableFuture<List<String>> job = new CompletableFuture<>();
+        Thread worker = new Thread(() -> {
+            try {
+                job.complete(measureAll());
+            } catch (Throwable e) {
+                job.completeExceptionally(e);
+            }
+        }, "awaken-loudness-test");
+        worker.setDaemon(true);
+        worker.start();
+        h.succeedWhen(() -> {
+            h.assertTrue(job.isDone(), "measuring the layered music");
+            List<String> problems = job.join();
+            h.assertTrue(problems.isEmpty(), String.join("; ", problems));
+        });
+    }
+
+    static List<String> measureAll() {
+        {
             List<String> problems = new ArrayList<>();
             StringBuilder report = new StringBuilder();
+            long t0 = System.nanoTime();
             for (Theme t : Theme.values()) {
                 Identifier ctx = GateMusic.contextOf(t);
                 if (ctx == null) continue;
@@ -246,24 +266,18 @@ final class AudioLayerTests {
                     if (me.truePeak() > MUSIC_TP + 0.05) problems.add(String.format("%s %s: true peak %.2f dBTP", t.id, Intensity.name(l), me.truePeak()));
                     if (me.lufs() < -30 || me.lufs() > -10) problems.add(String.format("%s %s: %.1f LUFS", t.id, Intensity.name(l), me.lufs()));
                 }
+                report.append(String.format(java.util.Locale.ROOT, "  (%.0f s)", (System.nanoTime() - t0) / 1e9));
             }
             Awaken.LOG.info("[audio] layered music loudness (level RMS/true peak):{}", report);
             return problems;
-        });
-        h.succeedWhen(() -> {
-            h.assertTrue(job.isDone(), "measuring the layered music");
-            List<String> problems = job.join();
-            h.assertTrue(problems.isEmpty(), String.join("; ", problems));
-        });
+        }
     }
 
     // ---- the server's watch on real mobs -----------------------------------------------------------------------------
 
     static void watch(GameTestHelper h) {
         ServerLevel level = h.getLevel();
-        ServerPlayer p = h.makeMockServerPlayerInLevel();
-        p.setGameMode(GameType.SURVIVAL);
-        p.connection.markClientLoaded(); // otherwise a fresh player cannot be hurt
+        ServerPlayer p = survivalPlayer(h);
         BlockPos base = h.absolutePos(new BlockPos(1, 1, 1));
         p.snapTo(base.getX() + 0.5, base.getY(), base.getZ() + 0.5);
         Intensity.Signals s = new Intensity.Signals();
@@ -317,7 +331,29 @@ final class AudioLayerTests {
         husk.discard();
         pig.discard();
         LayerWatch.forget(p.getUUID());
+        level.getServer().getPlayerList().remove(p);
         h.succeed();
+    }
+
+    /**
+     * A connected mock player that really is in survival: the helper's own mock reports creative whatever its game
+     * mode, and monsters never target a creative player.
+     */
+    static ServerPlayer survivalPlayer(GameTestHelper h) {
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "sound-test"), false);
+        ServerPlayer player = new ServerPlayer(h.getLevel().getServer(), h.getLevel(), cookie.gameProfile(), cookie.clientInformation()) {
+            @Override
+            public GameType gameMode() {
+                return GameType.SURVIVAL;
+            }
+        };
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        new io.netty.channel.embedded.EmbeddedChannel(connection);
+        h.getLevel().getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        GameType.SURVIVAL.updatePlayerAbilities(player.getAbilities());
+        player.connection.markClientLoaded(); // otherwise a fresh player cannot be hurt
+        return player;
     }
 
     static void payload(GameTestHelper h) {
