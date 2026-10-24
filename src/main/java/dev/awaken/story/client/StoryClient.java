@@ -21,6 +21,7 @@ public final class StoryClient {
         modBus.addListener(StoryClient::renderers);
         modBus.addListener(StoryClient::payloads);
         CodexEntries.addSource(StoryClient::codex);
+        RitualClient.init(modBus);
     }
 
     private static void renderers(EntityRenderersEvent.RegisterRenderers e) {
@@ -30,6 +31,8 @@ public final class StoryClient {
     private static void payloads(RegisterClientPayloadHandlersEvent e) {
         e.register(StoryPayloads.OpenEnding.TYPE, (msg, ctx) -> Minecraft.getInstance().gui.setScreen(new EndingScreen()));
         e.register(StoryPayloads.Credits.TYPE, (msg, ctx) -> Minecraft.getInstance().gui.setScreen(new CreditsScreen(msg.endingTitle())));
+        e.register(StoryPayloads.RitualScene.TYPE, (msg, ctx) -> RitualClient.onScene(msg));
+        e.register(StoryPayloads.RitualCue.TYPE, (msg, ctx) -> RitualClient.onCue(msg));
         e.register(StoryPayloads.Seen.TYPE, (msg, ctx) -> {
             SEEN.clear();
             SEEN.addAll(msg.entries());

@@ -95,6 +95,10 @@ public final class HeroRig {
                 HeroRig r = parse(src);
                 m.put(r.id, r);
             }
+            for (String[] src : RitualData.SOURCES) { // the Ritual of the Bell's cast (tools/art/specs/ritual_art.py)
+                HeroRig r = parse(src);
+                m.put(r.id, r);
+            }
             all = java.util.Collections.unmodifiableMap(m);
         }
         return all;

@@ -1,4 +1,22 @@
 {
   "entity.awaken.vael": "Vael",
-  "item.awaken.vael_spawn_egg": "Vael Spawn Egg"
+  "item.awaken.vael_spawn_egg": "Vael Spawn Egg",
+  "subtitles.awaken.story.ritual.bell": "Great bell tolls",
+  "subtitles.awaken.story.ritual.doors": "Stone doors grind shut",
+  "subtitles.awaken.story.ritual.flames_out": "Every flame dies",
+  "subtitles.awaken.story.ritual.candle": "Candle lights",
+  "subtitles.awaken.story.ritual.words": "A rule is carved in light",
+  "subtitles.awaken.story.ritual.eyes": "The Seated One opens its eyes",
+  "subtitles.awaken.story.ritual.gaze_charge": "The Seated One's gaze gathers",
+  "subtitles.awaken.story.ritual.gaze_fire": "The gaze sears",
+  "subtitles.awaken.story.ritual.statue_rise": "Statues rise",
+  "subtitles.awaken.story.ritual.swing": "Stone weapon swings",
+  "subtitles.awaken.story.ritual.impact": "Stone weapon strikes",
+  "subtitles.awaken.story.ritual.pit": "The floor collapses",
+  "subtitles.awaken.story.ritual.rumble": "The hall shakes",
+  "subtitles.awaken.story.ritual.drain": "Light drains into its palm",
+  "subtitles.awaken.story.ritual.close": "The hand closes",
+  "subtitles.awaken.story.ritual.heartbeat": "Heartbeat",
+  "subtitles.awaken.story.ritual.tear": "The darkness tears open",
+  "subtitles.awaken.story.ritual.void": "Cold, dark stillness"
 }

@@ -274,6 +274,9 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
 - `dev.awaken.core.Forces` — force/environment tags on entities and damage.
 - `dev.awaken.core.PlayDays` — current play-day counter.
 - `dev.awaken.mobs.Mobs` — `spawnScaled(ServerLevel, EntityType, pos, level, modifiers)`, rosters by theme.
+- `dev.awaken.mobs.Ritual` — the Ritual of the Bell's cast: `spawnSeated`, `spawnStatue` (stages set on the entities).
+- `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
+  the hall), `isRitual(server, gateId)`.
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
@@ -595,6 +598,50 @@ Plan v2 · gate interiors and D–B tuning (details in docs/modules/gates.md "In
 Plan v2 · first launch: vanilla's "experimental settings" prompt (shown because the mod adds worldgen) is answered for
 the player (client config `skipExperimentalWarning`, default on).
 
+Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
+docs/modules/onboarding.md "The Ritual of the Bell"):
+- The story's Bell Crypt is one floor: an antechamber (the start room, the entrance sigil) and, through its doors, the
+  hall (3x3 slots, vault 27, room type RITUAL, set piece RITUAL_HALL, painted by `gates.world.PiecesRitual`). The plan is
+  marked by its boss `awaken:the_seated_one` (`GatePlan.RITUAL_BOSS`, content version 3); nothing rolls it. Scripted
+  Bell Crypts from before (the Bell Warden, three floors) keep their floors and today's death. `GateHooks.openScripted`
+  with 1 floor asks for the ritual plan.
+- The ritual director (`story.Ritual`, saved in `data/awaken/ritual.dat`, schema 1) runs one timeline per hall: WAITING
+  (until every unawakened player in the story who is online is in the hall, or 90 s after the first came in; 3 s grace
+  for the last one), DOORS 9.5 s, BOW 9.5 s (kneel within 6 s or the nearest statue strikes), RING 18 s (three plates,
+  4 s each to stand on), BE JUDGED 4 s, WAKING 8.5 s, JUDGEMENT 40 s (the gaze every ~8.5 s, statue swings every 2.25 s,
+  at most 2 + players/2 at once, rune-ring pits every 6 s), END 11.5 s (the hand closes at 11.1 s, everyone dies at
+  11.5 s), DONE. Time is processed by elapsed ticks with everything in between fired in order; the beat holds while the
+  whole party is away and plays again from its start when someone is back.
+- Nothing kills before the End: every hit on an unawakened player in a ritual gate (or sealed in a ritual) is clamped in
+  `LivingDamageEvent.Pre` to leave half a heart; `/kill` still works. The old "killing blow inside the gate becomes the
+  question" path is kept for old crypts and the no-gates fallback.
+- StoryProgress schema 2 adds the prologue state RITUAL (sealed in). The story starts together: the first trigger opens
+  one ritual crypt and points every other unawakened player online at it; a later trigger joins a crypt whose doors are
+  still open; whoever isn't inside when the doors close gets their own crypt 15 s later. Awakened players, and players
+  whose story points elsewhere, can't walk in (`StoryHooks.refusesScriptedGate`).
+- The Seated One and the twelve statues (`mobs.Ritual`, role RITUAL) have no AI of their own, can't be hurt and never
+  count as kills, trophies, Echoes or bosses. The gate is released once nobody is at the question for it any more.
+- The god is seen at every beat (2026-10-24 review: a player who has never seen the hall knows within two seconds a
+  colossal seated god is there, before its eyes open). `SeatedOne` carries a synced key light (0..15, eased on the
+  client) and runes (0..100) set by the director: key 11 while waiting, 2 when every flame dies, back to 15 as the
+  candle line reaches the dais (2 + 13·(t-80)/90 ticks into DOORS), 15 through the Judgement, down to 7 as the End
+  drains it, 0 after (block light only). Runes (the emissive layer `the_seated_one_runes.png`: halo, crown, collar,
+  pendant, chest sigil, veins of light) 30 waiting, 60 in the black, then 62 / 70 / 82 for BOW / RING / BE JUDGED, 82→100
+  as the eyes open, 100 through the Judgement (breathing), drained to 15 by the hand's close. The renderer lights the
+  colossus with the key light, never darker than the dais candles. Client effects, all without Lens: a great warm glow
+  on the wall behind the throne (the god stands dark against it), two dusty shafts from the vault onto its lap (once the
+  hall is lit), a flame on every candle of the candle line, eyes a block across (4x3 model px at x4) with a face halo
+  and a long glint, and the camera framing the face as they open (FOV x0.4 at the peak, pull 0.95; while the candle
+  line reaches it the view is drawn up to the whole colossus, pull 0.55). The bell over the altar hangs from 17 (was
+  13) so its bronze never hides the face from the doors. The black and the tear show no hand. The hall's hidden
+  fill lamps light with the candle line (3 ticks after the candles beside them), so the line lights the nave.
+- The scene is the whole screen: from the doors closing until 4 s after the tear, toasts wait (re-shown after, one
+  every half second, at most 12, one recipe toast) and AWAKEN's HUD layers step aside in the hall (vanilla's hearts stay for the
+  Judgement); while the camera is held everything does. In the black only the System's words (the revelation's body
+  without its question, drawn large and typed by the scene) and the question's card (a TRUTH card: the question and
+  its keys, no caption) show; the tear frame is the tear and the world only. The gate card says nothing for a spent
+  ritual hall and shows no "Breaks in" row for scripted gates.
+
 Tests: GameTests that spawn mobs use still, fire-proof mobs and let a fresh test area tick a few frames before acting,
 so results never depend on AI wandering, daylight or chunk-ticking timing.
 
@@ -635,9 +682,17 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   With Distant Horizons drawing, Lens adds no distance haze (DH fogs its own terrain and turns vanilla fog off; Lens
   hazing only the near terrain drew a ring where it ends): the same-moment A/B tour (tools/autopilot/lens-dh.txt)
   showed far terrain intact with Lens on, and DH's depth texture already cleared by post-effect time.
+  Story moments override the place's look (`LensClient.override(lookId, fadeTicks)` / `clearOverride`) with named
+  looks from the same files (`awaken:ritual`, `awaken:void`); texel 13 carries the tear from black (`LensClient.tear`,
+  0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 is the Holo UI focus's;
+  15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
+  the scene's length and fades back to the plain frame (the look rests at neutral while Lens is off) before stepping
+  aside again (client config `lensInScenes`, default true; never with an Iris shaderpack). Callers carry on without the
+  look when Lens can't draw (`LensClient.active()`).
 - Lens looks load from every `assets/<namespace>/lens/*.json`, merged by key in path order (modules add their own
   file, e.g. looks_lands.json, never edit looks.json). Key `biome:<id>` wins where the camera's biome matches (sampled
-  every 10 ticks; biome-to-biome changes ease over ~3 s, dimension changes over ~1.5 s).
+  every 10 ticks; biome-to-biome changes ease over ~3 s, dimension changes over ~1.5 s); a story override wins over
+  both.
 - Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
   finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens reads DH's own depth through
