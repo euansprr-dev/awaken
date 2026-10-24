@@ -720,8 +720,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   showed far terrain intact with Lens on, and DH's depth texture already cleared by post-effect time.
   Story moments override the place's look (`LensClient.override(lookId, fadeTicks)` / `clearOverride`) with named
   looks from the same files (`awaken:ritual`, `awaken:void`); texel 13 carries the tear from black (`LensClient.tear`,
-  0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 is the Holo UI focus's;
-  15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
+  0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 carries the Holo UI
+  focus (`UiHooks.focus()`, 0..1 while a holo panel is open): the world more than about 2–3 blocks away dims to ~60%
+  and cools, while the panel's glass (it writes depth) and its text stay bright; the first-person arm dims with the
+  world, since its depth lives in a separate target post chains can't read. Texel 15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
   the scene's length and fades back to the plain frame (the look rests at neutral while Lens is off) before stepping
   aside again (client config `lensInScenes`, default true; never with an Iris shaderpack). Callers carry on without the
   look when Lens can't draw (`LensClient.active()`).

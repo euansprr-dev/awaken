@@ -5,6 +5,7 @@ import dev.awaken.Awaken;
 import dev.awaken.compat.Companions;
 import dev.awaken.compat.client.FarTerrain;
 import dev.awaken.core.AwakenConfig;
+import dev.awaken.core.api.UiHooks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -246,6 +247,7 @@ public final class LensClient {
         var fog = e.getFogData();
         params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 fog.renderDistanceEnd, fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
+                UiHooks.focus(),
                 FarTerrain.active(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far());
         params.uploadIfChanged();
     }
