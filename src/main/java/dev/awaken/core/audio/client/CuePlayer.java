@@ -29,6 +29,7 @@ final class CuePlayer {
 
     private static Pending pending;
     private static Cue playingCue;
+    private static boolean songActive;
     private static Music playingMusic;
     private static ClientLevel lastLevel;
     private static int ticks, levelAge;
@@ -101,6 +102,7 @@ final class CuePlayer {
      */
     static void onSelectMusic(SelectMusicEvent e) {
         SoundInstance now = e.getPlayingMusic();
+        songActive = now != null && Minecraft.getInstance().getSoundManager().isActive(now);
         if (playingMusic != null && now != null && now.getIdentifier().equals(AudioSounds.cue(playingCue).getId())
                 && Minecraft.getInstance().getSoundManager().isActive(now)) {
             if (e.getMusic() == null) e.setMusic(playingMusic);
@@ -111,6 +113,11 @@ final class CuePlayer {
 
     static Cue playing() {
         return playingCue;
+    }
+
+    /** Whether vanilla's music manager has a song that is really sounding (a teleport stops it without telling it). */
+    static boolean songActive() {
+        return songActive;
     }
 
     static boolean playingStage() {
