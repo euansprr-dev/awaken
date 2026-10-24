@@ -9,6 +9,7 @@ import dev.awaken.gates.GateRecord;
 import dev.awaken.gates.GateRegistry;
 import dev.awaken.gates.GateService;
 import dev.awaken.gates.GatesRegistry;
+import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Twist;
 import dev.awaken.gates.entity.EchoGhost;
@@ -24,6 +25,7 @@ import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -561,12 +563,9 @@ public final class Twists {
 
     static void placePortal(ServerLevel level, GateRecord g, FloorLayout f, Room r, Room.Feature at, BlockState portal) {
         int cx = at == null ? r.centerX() : at.x(), cz = at == null ? r.centerZ() + 3 : at.z();
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = 0; dy <= 2; dy++) {
-                BlockPos p = GateService.world(g, f, cx + dx, r.dy + dy, cz);
-                level.setBlock(p, portal, Block.UPDATE_ALL);
-            }
-        }
+        // one opening, three wide and three tall, drawn as a single vortex in the gate's colours
+        ((GateBlocks.Portal) portal.getBlock()).place(level, GateService.world(g, f, cx, r.dy, cz), Direction.Axis.X, 3, 3,
+                g.plan.rank().ordinal());
         BlockPos c = GateService.world(g, f, cx, r.dy + 1, cz);
         level.sendParticles(ParticleTypes.END_ROD, c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5, 40, 1, 1, 1, 0.05);
         level.playSound(null, c, SoundEvents.END_PORTAL_SPAWN, SoundSource.BLOCKS, 0.8F, 1.2F);
@@ -575,9 +574,14 @@ public final class Twists {
     static void openRift(ServerLevel level, GateRecord g, FloorLayout f, Room arena) {
         Room.Feature rift = arena.feature(Room.FeatureKind.RIFT_WALL);
         if (rift == null) return;
+        // the near layer breaks away; the far layer becomes the rift, one opening drawn as a single red vortex
+        Direction.Axis axis = rift.index() == 1 || rift.index() == 3 ? Direction.Axis.Z : Direction.Axis.X;
+        GateBlocks.Portal portal = (GateBlocks.Portal) GatesRegistry.RIFT.get();
+        int rank = g.plan.rank().ordinal();
         for (int[] b : FeatureBlocks.riftWall(arena, rift)) {
             BlockPos p = GateService.world(g, f, b[0], arena.dy + b[1], b[2]);
-            level.setBlock(p, b[3] == 1 ? Blocks.AIR.defaultBlockState() : GatesRegistry.RIFT.get().defaultBlockState(), Block.UPDATE_ALL);
+            boolean anchor = b[1] == 0 && (axis == Direction.Axis.X ? b[0] == rift.x() : b[2] == rift.z());
+            level.setBlock(p, b[3] == 1 ? Blocks.AIR.defaultBlockState() : portal.opening(axis, rank, anchor), Block.UPDATE_ALL);
         }
         BlockPos c = GateService.world(g, f, rift.x(), arena.dy + 2, rift.z());
         level.playSound(null, c, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 1.5F, 0.6F);

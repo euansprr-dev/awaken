@@ -31,9 +31,9 @@ import org.jspecify.annotations.Nullable;
 public final class GateVortexRenderer implements BlockEntityRenderer<GateVortexBlockEntity, GateVortexRenderer.State> {
     static final Identifier ATLAS = Awaken.id("textures/entity/gate_vortex.png");
     static final Identifier SHARD = Awaken.id("textures/entity/gate_shard.png");
-    private static final RenderType GLOW = RenderTypes.entityTranslucentEmissive(ATLAS);
+    static final RenderType GLOW = RenderTypes.entityTranslucentEmissive(ATLAS);
     /** The dark heart writes depth (the emissive glow can't), so clouds behind the gate don't show through it. */
-    private static final RenderType HEART = RenderTypes.entityTranslucent(ATLAS);
+    static final RenderType HEART = RenderTypes.entityTranslucent(ATLAS);
     private static final RenderType ROCK = RenderTypes.entityCutout(SHARD);
     /** Ticks in the animation clock's loop (an hour), so float time stays precise. */
     private static final long LOOP = 72000L;
@@ -95,7 +95,7 @@ public final class GateVortexRenderer implements BlockEntityRenderer<GateVortexB
     }
 
     /** Emissive translucent vertices (full bright, normal facing the viewer's side). */
-    private record Glow(PoseStack.Pose pose, VertexConsumer vc) implements GateVortex.Sink {
+    record Glow(PoseStack.Pose pose, VertexConsumer vc) implements GateVortex.Sink {
         @Override
         public void vertex(float x, float y, float z, float u, float v, int argb, float nx, float ny, float nz) {
             vc.addVertex(pose, x, y, z).setColor(argb).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(LightCoordsUtil.FULL_BRIGHT)

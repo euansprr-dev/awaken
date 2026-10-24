@@ -43,6 +43,56 @@ final class GateExteriorTests {
     static final int UP = 96;
 
     static void register() {
+        AwakenTests.register("gates_doorway_one_surface", 40, h -> {
+            // an exit (3x3 along x) and a rift (3x4 along z): one anchor each with its renderer, every other block
+            // invisible and untargetable, and walking in still counts on every block
+            ServerLevel level = h.getLevel();
+            BlockPos base = h.absolutePos(new BlockPos(2, 1, 2));
+            GateBlocks.Portal exit = (GateBlocks.Portal) GatesRegistry.EXIT.get();
+            GateBlocks.Portal rift = (GateBlocks.Portal) GatesRegistry.RIFT.get();
+            exit.place(level, base, net.minecraft.core.Direction.Axis.X, 3, 3, 3);
+            rift.place(level, base.offset(0, 0, 4), net.minecraft.core.Direction.Axis.Z, 3, 4, 3);
+            int[][] spans = {{-1, 1, 0, 2, 0, 0}, {0, 0, 0, 3, 3, 5}};
+            for (int k = 0; k < 2; k++) {
+                int anchors = 0, blocks = 0;
+                for (BlockPos p : BlockPos.betweenClosed(base.offset(spans[k][0], spans[k][2], spans[k][4]), base.offset(spans[k][1], spans[k][3], spans[k][5]))) {
+                    BlockState st = level.getBlockState(p);
+                    h.assertTrue(st.getBlock() instanceof GateBlocks.Portal, "doorway block at " + p.toShortString() + ": " + st);
+                    blocks++;
+                    boolean anchor = st.getValue(GateBlocks.Portal.ROLE) == GateBlocks.Portal.Role.ANCHOR;
+                    if (anchor) {
+                        anchors++;
+                        h.assertTrue(level.getBlockEntity(p) instanceof GatePortalBlockEntity, "the anchor carries the renderer");
+                        h.assertTrue(p.getY() == base.getY(), "the anchor is the bottom of the middle column");
+                    } else {
+                        h.assertTrue(level.getBlockEntity(p) == null, "only the anchor has a block entity");
+                    }
+                    h.assertTrue(st.getRenderShape() == net.minecraft.world.level.block.RenderShape.INVISIBLE, "drawn as one surface, not per block");
+                    h.assertTrue(st.getShape(level, p).isEmpty(), "no outline to aim at");
+                    h.assertTrue(!st.getEntityInsideCollisionShape(level, p, null).isEmpty(), "walking in still counts");
+                    h.assertTrue(st.getValue(GateBlocks.Portal.RANK) == 3, "carries the gate's rank colour");
+                }
+                h.assertTrue(blocks == (k == 0 ? 9 : 12) && anchors == 1, "one anchor in " + blocks + " blocks (" + anchors + ")");
+            }
+            h.assertTrue(GatesRegistry.EXIT.get().defaultBlockState().getRenderShape() == net.minecraft.world.level.block.RenderShape.MODEL,
+                    "old doorways (default state) keep their per-block look");
+            // an old exit (3x3 of default blocks) redraws itself as one opening, whichever block ticks
+            for (BlockPos p : BlockPos.betweenClosed(base.offset(-1, 0, 0), base.offset(1, 3, 5))) level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+            for (BlockPos p : BlockPos.betweenClosed(base.offset(-1, 0, 0), base.offset(1, 2, 0))) level.setBlock(p, exit.defaultBlockState(), 3);
+            exit.upgradeLegacy(level, base.offset(1, 2, 0));
+            int oldAnchors = 0;
+            for (BlockPos p : BlockPos.betweenClosed(base.offset(-1, 0, 0), base.offset(1, 2, 0))) {
+                BlockState st = level.getBlockState(p);
+                h.assertTrue(st.getValue(GateBlocks.Portal.ROLE) != GateBlocks.Portal.Role.LEGACY, "upgraded at " + p.toShortString());
+                if (st.getValue(GateBlocks.Portal.ROLE) == GateBlocks.Portal.Role.ANCHOR) {
+                    oldAnchors++;
+                    h.assertTrue(p.equals(base) && level.getBlockEntity(p) instanceof GatePortalBlockEntity, "the old opening's anchor is its bottom middle");
+                }
+            }
+            h.assertTrue(oldAnchors == 1, "one anchor after the upgrade");
+            for (BlockPos p : BlockPos.betweenClosed(base.offset(-1, 0, 0), base.offset(1, 3, 5))) level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+            h.succeed();
+        });
         AwakenTests.registerIsolated("gates_vortex_footprint_all_ranks", 200, h -> {
             ServerLevel level = h.getLevel();
             BlockPos ground = h.absolutePos(new BlockPos(0, UP, 0));
@@ -382,6 +432,19 @@ final class GateExteriorTests {
                     sb.append(r).append("]}");
                 }
             }
+        }
+        // doorways inside a gate: exits at three ranks (3 tall) and a red rift (4 tall), as GatePortalRenderer draws them
+        for (int[] d : new int[][]{{0, 3, 0}, {2, 3, 0}, {4, 3, 0}, {3, 4, 1}}) {
+            GateVortex.Look l = GateVortex.Look.forDoorway(d[0], d[2] == 1, 99L + d[0], 1.42F, d[1] * 0.5F - 0.04F, 1F);
+            sb.append(",{\"rank\":").append(d[0]).append(",\"mode\":\"").append(d[2] == 1 ? "rift" : "doorway").append("\",\"t\":0.6")
+                    .append(",\"rx\":").append(l.size().rx()).append(",\"ry\":").append(l.size().ry()).append(",\"cy\":").append(d[1] * 0.5F)
+                    .append(",\"quads\":[");
+            StringBuilder q = new StringBuilder();
+            GateVortex.emitSurface(l, 0.6F, 1, (x, y, z, u, v, argb, nx, ny, nz) -> {
+                if (q.length() > 0) q.append(',');
+                q.append(String.format(Locale.ROOT, "%.3f,%.3f,%.3f,%.4f,%.4f,%d", x, y, z, u, v, argb));
+            });
+            sb.append(q).append("],\"shards\":[]}");
         }
         sb.append("]}");
         try {

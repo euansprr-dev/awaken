@@ -267,6 +267,18 @@ Glowing parts are emissive overlays (`light_emission` model elements).
 - Tour: `tools/autopilot/interiors.txt` (integrator) opens a gate of every theme with `/awaken gate open`, walks in with
   `/awaken gate interior enter` and stands at each spot with `/awaken gate interior goto <start|piece|small|shrine|ante|lord>`.
 
+### Doorways inside a gate
+
+The exit after the Lord, the way back from a second gate, inner gates and rifts are openings 3 wide (3 tall, 4 for inner
+gates and rifts), placed whole by `GateBlocks.Portal.place` (or painted with `opening(...)`). The bottom block of the
+middle column is the ANCHOR: its block entity (`GatePortalBlockEntity`, no data) is drawn by `GatePortalRenderer` as one
+vortex across the opening, `GateVortex.Look.forDoorway` (the surface gate's geometry at the opening's size, no rock
+shards), heart first so it hides what is behind. Colours follow the gate's rank (`rank` in the block state); rifts are
+red-rimmed. The other blocks are PART: invisible, no outline, still a full block for walking in. Painted inner gates get
+their anchor's block entity from `GateChunkGenerator.fill`. Doorways from before (`role=legacy`, the old per-block
+texture) upgrade on a random tick (`Portal.upgradeLegacy`). GameTest `gates_doorway_one_surface`; the frames test exports
+doorway frames for the offline preview.
+
 ## Tuning (P3: D–B)
 
 Pushing deeper is now harder in the game, not only in the simulator: version 2 floors carry more monsters and more

@@ -66,6 +66,7 @@ public final class GatesClient {
         e.registerEntityRenderer(GatesRegistry.HOLLOW.get(), ShadeRenderer::new);
         e.registerEntityRenderer(GatesRegistry.HOARDER.get(), ZombieRenderer::new);
         e.registerBlockEntityRenderer(GatesRegistry.VORTEX_BE.get(), GateVortexRenderer::new);
+        e.registerBlockEntityRenderer(GatesRegistry.PORTAL_BE.get(), GatePortalRenderer::new);
     }
 
     private static void layers(RegisterGuiLayersEvent e) {

@@ -3,6 +3,8 @@ package dev.awaken.gates.world;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.Awaken;
+import dev.awaken.gates.GatePortalBlockEntity;
+import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.gates.content.GatePlan;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -29,6 +31,7 @@ import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -88,6 +91,8 @@ public final class GateChunkGenerator extends ChunkGenerator {
         int[] top = new int[256];
         BlockState[] topState = new BlockState[256];
         Arrays.fill(top, Integer.MIN_VALUE);
+        // doorway anchors painted in this chunk (an inner gate's): they need their block entity, which sections don't make
+        List<BlockPos> anchors = new ArrayList<>(0);
         try {
             GatePainter.paint(layout, cell, chunkX, chunkZ, (x, y, z, state) -> {
                 if (y < minY || y > maxY) return;
@@ -99,6 +104,9 @@ public final class GateChunkGenerator extends ChunkGenerator {
                     acquired[si] = s;
                 }
                 s.setBlockState(x, SectionPos.sectionRelative(y), z, state, false);
+                if (state.getBlock() instanceof GateBlocks.Portal && state.getValue(GateBlocks.Portal.ROLE) == GateBlocks.Portal.Role.ANCHOR) {
+                    anchors.add(new BlockPos(chunkX * 16 + x, y, chunkZ * 16 + z));
+                }
                 int idx = x + z * 16;
                 if (y > top[idx]) {
                     top[idx] = y;
@@ -108,6 +116,7 @@ public final class GateChunkGenerator extends ChunkGenerator {
         } finally {
             for (LevelChunkSection s : acquired) if (s != null) s.release();
         }
+        for (BlockPos a : anchors) chunk.setBlockEntity(new GatePortalBlockEntity(a, chunk.getBlockState(a)));
         Heightmap ocean = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.OCEAN_FLOOR_WG);
         Heightmap surface = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
         for (int i = 0; i < 256; i++) {

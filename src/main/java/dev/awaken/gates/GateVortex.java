@@ -130,9 +130,21 @@ public final class GateVortex {
      * One gate's look. {@code open} 0..1 grows the vortex while it forms; {@code warn} 0..1 how close the break is;
      * {@code fade} 0..1 an overall alpha (distance fade).
      */
-    public record Look(int rank, int mode, boolean red, long seed, float open, float warn, float fade) {
+    public record Look(int rank, int mode, boolean red, long seed, float open, float warn, float fade, @Nullable Size doorway) {
+        public Look(int rank, int mode, boolean red, long seed, float open, float warn, float fade) {
+            this(rank, mode, red, seed, open, warn, fade, null);
+        }
+
+        /**
+         * A doorway inside a gate (the exit, the way back, an inner gate, a rift): the same surface in the gate's rank
+         * colours at the opening's own size, without the rock shards that orbit a surface gate.
+         */
+        public static Look forDoorway(int rank, boolean red, long seed, float halfWidth, float halfHeight, float fade) {
+            return new Look(rank, OPEN, red, seed, 1F, 0F, fade, new Size(halfWidth, halfHeight));
+        }
+
         public Size size() {
-            return GateVortex.size(rank);
+            return doorway != null ? doorway : GateVortex.size(rank);
         }
     }
 
@@ -273,7 +285,7 @@ public final class GateVortex {
         float flick = 0.86F + 0.14F * (float) Math.sin(time * 9.1F + 1.7F * (float) Math.sin(time * 2.3F));
         int rim = withAlpha(mix(p.rim, WARN_RED, 0.45F * warnPulse), Math.min(1F, (0.95F + 0.25F * warnPulse) * flick * fade * openArms));
         rim(out, rx, ry, 0.05F * side, time, broken ? 0.5F : 0.22F, rim);
-        emitShardGlows(l, time, side, out);
+        if (l.doorway() == null) emitShardGlows(l, time, side, out);
         // 6. motes pulled in from the land and the air
         motes(out, l, sz, rx, ry, time, 0.07F * side, p, fade * openArms);
         // 7. cracks over the pad: spreading while the break comes, red once broken

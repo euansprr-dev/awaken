@@ -6,6 +6,7 @@ import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Modifier;
 import dev.awaken.gates.content.Palette;
 import dev.awaken.gates.content.Theme;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -906,10 +907,17 @@ public final class GatePainter {
 
         void innerGate(Room.Feature ft, int x0, int z0) {
             BlockState frame = GatesRegistry.FRAME.get().defaultBlockState();
-            BlockState core = GatesRegistry.INNER.get().defaultBlockState();
+            // one opening drawn as a single vortex: the bottom of the middle column is its anchor (its block entity is
+            // added by the chunk generator)
+            GateBlocks.Portal inner = (GateBlocks.Portal) GatesRegistry.INNER.get();
+            Direction.Axis axis = ft.index() == 1 ? Direction.Axis.Z : Direction.Axis.X;
+            int rank = plan.rank().ordinal();
             int y = floorY + ft.y();
             for (int[] b : FeatureBlocks.innerGateFrame(ft)) put(b[0], y + b[1], b[2], x0, z0, frame);
-            for (int[] b : FeatureBlocks.innerGatePortal(ft)) put(b[0], y + b[1], b[2], x0, z0, core);
+            for (int[] b : FeatureBlocks.innerGatePortal(ft)) {
+                boolean anchor = b[1] == 0 && (axis == Direction.Axis.X ? b[0] == ft.x() : b[2] == ft.z());
+                put(b[0], y + b[1], b[2], x0, z0, inner.opening(axis, rank, anchor));
+            }
         }
 
         void riftWall(Room.Feature ft, int x0, int z0) {

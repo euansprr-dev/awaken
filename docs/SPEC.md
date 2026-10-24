@@ -522,6 +522,10 @@ Plan v2 · overworld structures (details in docs/modules/structures.md):
 - Ruin sizes: vault 23×24×23, monolith 17×46×17, ocean lab 31×22×31, sky platform 49×26×49; pieces carry a blueprint
   version. The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
 - The Gate Map shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
+- Doorways inside a gate (the exit after the Lord, the way back, inner gates, rifts) are one opening drawn as a single
+  vortex in the gate's rank colours (rifts red-rimmed) by the anchor block's renderer (`awaken:gate_portal`, the bottom of
+  the middle column); the other blocks are invisible and untargetable but still let you walk in. Doorways placed before
+  this (state `role=legacy`) redraw themselves on a random tick.
 
 Plan v2 · gate interiors and D–B tuning (details in docs/modules/gates.md "Interiors", "Tuning"):
 - Gate content version 2 (`GatePlan.CONTENT_VERSION`): every theme has its own room dressing, 3–4 set pieces and a Lord's

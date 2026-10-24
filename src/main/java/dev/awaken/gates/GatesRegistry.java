@@ -201,6 +201,11 @@ public final class GatesRegistry {
     public static final Supplier<net.minecraft.world.level.block.entity.BlockEntityType<GateVortexBlockEntity>> VORTEX_BE =
             BLOCK_ENTITIES.register("gate_vortex", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(GateVortexBlockEntity::new, CORE.get()));
 
+    /** The anchor of a doorway inside a gate (exit, way back, inner gate, rift): its renderer draws the whole opening. */
+    public static final Supplier<net.minecraft.world.level.block.entity.BlockEntityType<GatePortalBlockEntity>> PORTAL_BE =
+            BLOCK_ENTITIES.register("gate_portal", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(GatePortalBlockEntity::new,
+                    EXIT.get(), RIFT.get(), INNER.get(), RETURN.get()));
+
     // ---- entities ---------------------------------------------------------------------------------------------------
 
     public static final DeferredHolder<EntityType<?>, EntityType<GateShade>> SHADE = ENTITIES.registerEntityType("gate_shade",
