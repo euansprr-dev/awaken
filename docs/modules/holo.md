@@ -18,9 +18,10 @@ holo panels (P4, waits for the owner), sounds and accessibility polish (P5).
   while the arm is up, exactly as vanilla lowers it on an item swap.
 - **The panel is light, not a slab**: 38–50% glass (denser toward the bottom, where it is projected from), static scan
   lines three units apart, a slow two-wave shimmer (no strobing), a hairline emissive edge with corner brackets and an
-  additive halo around it. Readability wins over sheerness: every block of text sits on a feathered dark bed (58% dark
-  on top of the glass, 7-unit feather; touching lines merge into one field per paragraph, column or grid), body text
-  is white, labels pale blue, headers System blue with a soft glow, all with a shadow; content is 272×228 GUI units at
+  additive halo around it. Text is emitted light, not print: no drop shadow; each line has four faint cyan copies
+  half a unit off diagonally under it (20% alpha, a soft halo on every stroke), body text cyan-white, labels pale blue,
+  headers System blue with a soft additive glow. Readability comes from one even tint over the whole content area
+  (38% near-black on top of the glass, feathered over 14 units toward the rim, no per-line boxes); content is 272×228 GUI units at
   5 framebuffer px per unit on the owner's 3024×1964 (25% larger than the flat menu's GUI scale 4). Checked over a
   bright sky, grass and the night with Lens on its default (holo.txt shots 25–27).
 - **Other players** see your forearm come up across your chest (a third-person pose on the vanilla model), a brighter
@@ -67,15 +68,15 @@ Lens focus (`UiHooks.focus()`) eases from 160 to 450 ms.
   panels go to the always-on-top phase instead (`alwaysOnTopGizmos`, which NeoForge renders whenever it has submits);
   that costs two full-screen passes (its own depth, then the merge), ~1.5 ms at 3024×1898 on the owner's Mac, which is
   why it isn't the default. One submit order per layer keeps them in sequence: beams, cone, scan dots and halo
-  (additive) → glass, text beds and fills → GUI sprites → items → text (vanilla `SEE_THROUGH` text, always with a
-  shadow) → additive top glow (frame, corner brackets, glints, scan line, header glow, carets, press ring). Frame lines keep their on-screen thickness while the unfold squashes the panel.
+  (additive) → glass, the content tint and fills → GUI sprites → items → text glow copies → text (vanilla
+  `SEE_THROUGH` text, no shadow) → additive top glow (frame, corner brackets, glints, scan line, header glow, carets, press ring). Frame lines keep their on-screen thickness while the unfold squashes the panel.
 - Pipelines (registered optional; if either fails, K stays flat):
   - `awaken:pipeline/holo_glass`: translucent, full-bright, no depth test, writes depth (later translucent world
     stays behind it, and Lens, which reads depth, sees a panel at its real distance). PARTICLE format; UV0 = panel
     units, UV2 = panel size. The shader draws the glass (alpha 0.38 at the top to 0.50 at the bottom), a top sheen, a
     soft inner edge glow, a glint every nine seconds, static scan lines, a slow shimmer, a ~1.5 framebuffer-pixel
-    hairline edge (`fwidth`), corner brackets and a static grain. UV2 = 0 is a flat fill; text beds are flat fills
-    whose outer 7 units fade to clear.
+    hairline edge (`fwidth`), corner brackets and a static grain. UV2 = 0 is a flat fill; the content tint is a flat
+    fill whose outer 14 units fade to clear.
   - `awaken:pipeline/holo_glow`: true additive (ONE, ONE; alpha untouched), no depth. Shapes by UV2: flat, halo
     around a w×h rectangle, round blob, line.
 - Items: drawn through `OnTopCollector`, which routes an item's submits into the same phase (flattened and lifted 10

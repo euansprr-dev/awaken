@@ -603,9 +603,10 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 a
   (-0.455, +0.19) of the half-screen (left of the centre, up and right of the wrist, clear of the forearm; the crosshair
   is hidden while the holo menu is open), yawed 7° toward the wrist and
   leaning 3° back (third person: at least -0.50 aside, 80% size). Material: 38–50% glass (denser toward the wrist),
-  static scan lines, a slow shimmer (no strobing), a hairline edge with brackets and an additive halo. Readability
-  overrides sheerness: a feathered dark bed (58% over the glass) behind every text block, white body text, System-blue
-  headers with a glow, shadows always on; it must read over sky, grass and night without Lens.
+  static scan lines, a slow shimmer (no strobing), a hairline edge with brackets and an additive halo. Text is light,
+  not print: no drop shadow, a soft cyan halo (four faint offset copies), cyan-white body text, System-blue headers
+  with a glow. Readability overrides sheerness: one even feathered tint (38% over the glass) across the content area,
+  never per-line boxes; it must read over sky, grass and night without Lens.
   Drawn in the main pass's translucent custom geometry (the glass writes depth, so later water, particles, clouds and
   weather stay behind it); under Improved Transparency in the always-on-top phase. Budget: the holo K menu is within
   0.06–0.25 ms of the flat one at 3024×1898.

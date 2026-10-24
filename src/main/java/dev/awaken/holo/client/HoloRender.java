@@ -52,6 +52,8 @@ final class HoloRender {
         final PoseStack stack = new PoseStack(), view = new PoseStack();
         CustomFeatureRenderer.Submit halo, glass, top, sprites, beam;
         final TextFeatureRenderer.Submit[] text = new TextFeatureRenderer.Submit[HoloCanvas.MAX_TEXT];
+        // each line's glow: GLOW_TAPS faint offset copies under it
+        final TextFeatureRenderer.Submit[] glow = new TextFeatureRenderer.Submit[HoloCanvas.MAX_TEXT * GLOW_TAPS];
         final PrefixText[] seq = new PrefixText[HoloCanvas.MAX_TEXT];
         final float[] key = new float[HoloCanvas.MAX_TEXT * 3];
         final int[] keyColour = new int[HoloCanvas.MAX_TEXT];
@@ -64,11 +66,6 @@ final class HoloRender {
         // headers (x, y, width) for their glow
         final float[] headers = new float[48 * 3];
         int headerCount;
-        // the dark beds behind text lines (x0, y0, x1, y1), and each line's full width (cached by its text)
-        final float[] beds = new float[HoloCanvas.MAX_TEXT * 4];
-        int bedCount;
-        final float[] widths = new float[HoloCanvas.MAX_TEXT];
-        final Object[] widthOf = new Object[HoloCanvas.MAX_TEXT];
         RenderType spriteType;
 
         Draw(HoloPanel p) {
@@ -127,12 +124,11 @@ final class HoloRender {
                 c.order(base + 2).submitSpecial(key, d.sprites);
             }
             items(c, d, base + 3);
-            text(c, d, base + 4);
+            text(c, d, base + 4); // glow copies at base + 4, the text at base + 5
         } else {
             d.caretCount = 0;
-            d.bedCount = 0;
         }
-        c.order(base + 5).submitSpecial(key, d.top);
+        c.order(base + 6).submitSpecial(key, d.top);
     }
 
     // ---- glass ----------------------------------------------------------------------------------------------------
@@ -144,48 +140,15 @@ final class HoloRender {
         if (ga <= 0.004f) return;
         int bg = (Math.round(255 * ga) << 24) | (p.accent & 0xFFFFFF);
         quad(vc, m, 0, 0, p.w, p.h, 0, 0, p.w, p.h, bg, bg, p.w, p.h);
-        // a calm dark field behind every line of text, feathered out, so text reads over any sky, grass or night;
-        // the panel's edges and glow stay light
-        int bed = mulAlpha(0xFF040912, 0.58f * ga), clear = 0x00040912;
-        mergeBeds(d);
-        for (int i = 0; i < d.bedCount; i++) {
-            int o = i * 4;
-            softQuad(vc, m, d.beds[o], d.beds[o + 1], d.beds[o + 2], d.beds[o + 3], 7f, bed, clear);
-        }
+        // one even tint over the whole content area, feathered out toward the rim (no per-line boxes), so the light
+        // text reads over any sky, grass or night while the edges stay light
+        float in = 3f, f = 14f;
+        softQuad(vc, m, in + f, in + f, p.w - in - f, p.h - in - f, f, mulAlpha(0xFF040912, 0.38f * ga), 0x00040912);
         HoloCanvas cv = p.canvas;
         for (int i = 0; i < cv.fills; i++) {
             int o = i * 4;
             int top = mulAlpha(cv.fillTop[i], ga), bottom = mulAlpha(cv.fillBottom[i], ga);
             quad(vc, m, cv.fill[o], cv.fill[o + 1], cv.fill[o + 2], cv.fill[o + 3], 0, 0, 0, 0, top, bottom, 0, 0);
-        }
-    }
-
-    /** Joins text beds that touch (within a few units) into one block per paragraph, column or grid, in place. */
-    private static void mergeBeds(Draw d) {
-        float gapX = 14f, gapY = 5f; // a grid's columns join into one field; paragraphs a section apart stay apart
-        float[] b = d.beds;
-        boolean merged = true;
-        while (merged) {
-            merged = false;
-            for (int i = 0; i < d.bedCount; i++) {
-                int o = i * 4;
-                for (int j = i + 1; j < d.bedCount; j++) {
-                    int q = j * 4;
-                    if (b[q] > b[o + 2] + gapX || b[q + 2] < b[o] - gapX || b[q + 1] > b[o + 3] + gapY || b[q + 3] < b[o + 1] - gapY) continue;
-                    b[o] = Math.min(b[o], b[q]);
-                    b[o + 1] = Math.min(b[o + 1], b[q + 1]);
-                    b[o + 2] = Math.max(b[o + 2], b[q + 2]);
-                    b[o + 3] = Math.max(b[o + 3], b[q + 3]);
-                    int last = (d.bedCount - 1) * 4;
-                    b[q] = b[last];
-                    b[q + 1] = b[last + 1];
-                    b[q + 2] = b[last + 2];
-                    b[q + 3] = b[last + 3];
-                    d.bedCount--;
-                    j--;
-                    merged = true;
-                }
-            }
         }
     }
 
@@ -387,7 +350,7 @@ final class HoloRender {
      */
     static int holoColour(int argb) {
         int rgb = argb & 0xFFFFFF, a = argb & 0xFF000000;
-        if (rgb == dev.awaken.signal.client.Glass.TEXT || rgb == dev.awaken.signal.client.Glass.TITLE) return a | 0xFFFFFF;
+        if (rgb == dev.awaken.signal.client.Glass.TEXT || rgb == dev.awaken.signal.client.Glass.TITLE) return a | 0xEAF9FF; // cyan-white
         if (rgb == dev.awaken.signal.client.Glass.LABEL) return a | 0xC6D8EE;
         if (rgb == dev.awaken.signal.client.Glass.EDGE) return a | 0xA6DCFF;
         return argb;
@@ -461,8 +424,8 @@ final class HoloRender {
         float window = HoloTimeline.OPEN_MS - 300f;
         d.caretCount = 0;
         d.headerCount = 0;
-        d.bedCount = 0;
-        var out = c.order(order);
+        var glowOut = c.order(order);
+        var out = c.order(order + 1);
         float ga = p.glassAlpha * p.fade;
         for (int i = 0; i < cv.texts; i++) {
             PrefixText seq = d.seq[i];
@@ -481,7 +444,7 @@ final class HoloRender {
             int colour = mulAlpha(holoColour(cv.textColour[i]), ga);
             if ((colour >>> 24) < 26) continue; // the text shader drops alpha under 0.1
             boolean header = isHeader(cv.textColour[i]);
-            boolean shadow = true; // light text on a thin sheet over a bright world needs its shadow
+            boolean shadow = false; // emitted light, not print: a soft glow under it instead of vanilla's hard shadow
             float scale = cv.textScale[i];
             int k = i * 3;
             TextFeatureRenderer.Submit s = d.text[i];
@@ -500,6 +463,13 @@ final class HoloRender {
                 s = new TextFeatureRenderer.Submit(pose, net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH, FULL_BRIGHT,
                         new TextFeatureRenderer.Content.Text(tx, ty, seq, shadow, colour, 0, 0));
                 d.text[i] = s;
+                // the glow: faint cyan copies a little off each way, so every stroke gets a soft halo
+                int glowColour = mulAlpha(header ? HEADER_GLOW : TEXT_GLOW, (colour >>> 24) / 255f);
+                for (int g = 0; g < GLOW_TAPS; g++) {
+                    d.glow[i * GLOW_TAPS + g] = new TextFeatureRenderer.Submit(pose, net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
+                            FULL_BRIGHT, new TextFeatureRenderer.Content.Text(tx + GLOW_DX[g] / scale, ty + GLOW_DY[g] / scale, seq,
+                            false, glowColour, 0, 0));
+                }
                 d.key[k] = x;
                 d.key[k + 1] = y;
                 d.key[k + 2] = scale;
@@ -507,20 +477,10 @@ final class HoloRender {
                 d.keyShadow[i] = shadow;
             }
             if (scale != 1f) d.scaled[i].set(p.pose).translate(x, y, 0).scale(scale, scale, 1);
+            if (((colour >>> 24) * GLOW_ALPHA) >= 26) { // under 0.1 the text shader drops it anyway
+                for (int g = 0; g < GLOW_TAPS; g++) glowOut.submitSpecial(key, d.glow[i * GLOW_TAPS + g]);
+            }
             out.submitSpecial(key, s);
-            Object src = cv.text[i];
-            if (d.widthOf[i] == null || !d.widthOf[i].equals(src)) {
-                d.widths[i] = src instanceof String str ? font.width(str) : font.width((net.minecraft.util.FormattedCharSequence) src);
-                d.widthOf[i] = src;
-            }
-            if (d.bedCount < HoloCanvas.MAX_TEXT) {
-                int o = d.bedCount * 4;
-                d.beds[o] = x - 2;
-                d.beds[o + 1] = y - 1.5f;
-                d.beds[o + 2] = x + d.widths[i] * scale + 2;
-                d.beds[o + 3] = y + 9 * scale + 0.5f;
-                d.bedCount++;
-            }
             if (header && d.headerCount < 48) {
                 d.headers[d.headerCount * 3] = x;
                 d.headers[d.headerCount * 3 + 1] = y;
@@ -534,6 +494,13 @@ final class HoloRender {
             }
         }
     }
+
+    // the text glow: four taps half a unit off diagonally (≈2–3 framebuffer pixels), faint cyan; headers a little bluer
+    static final int GLOW_TAPS = 4;
+    private static final float[] GLOW_DX = {-0.5f, 0.5f, -0.5f, 0.5f}, GLOW_DY = {-0.5f, -0.5f, 0.5f, 0.5f};
+    private static final float GLOW_ALPHA = 0.20f;
+    private static final int TEXT_GLOW = (Math.round(255 * GLOW_ALPHA) << 24) | 0x7FDCFF;
+    private static final int HEADER_GLOW = (Math.round(255 * GLOW_ALPHA) << 24) | 0x5CC4FF;
 
     private static double signalSpeed() {
         try {
