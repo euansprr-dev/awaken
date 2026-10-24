@@ -22,7 +22,8 @@ cmd awaken powers starter
 shot cards_01_starter_scan
 wait 20
 shot cards_02_starter_open
-click 257 221
+# card 1 at GUI scale 7 (3024×1898 auto): the panel is 372×196 centred in 432×271
+click 95 119
 wait 1
 shot cards_03_starter_picked
 wait 60
@@ -48,8 +49,17 @@ wait 40
 cmd awaken signal demo panel
 wait 10
 shot cards_22_panel
-wait 160
-shot cards_23_panel_glitch
+# its 9 s run out: a few frames around the close to catch the glitch
+wait 150
+shot cards_23a_panel_end
+wait 0
+shot cards_23b_panel_end
+wait 0
+shot cards_23c_panel_end
+wait 0
+shot cards_23d_panel_end
+wait 0
+shot cards_23e_panel_end
 wait 40
 cmd awaken signal demo story
 wait 30

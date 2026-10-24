@@ -84,7 +84,7 @@ public final class HoloClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> HoloPipelines.recheck());
         bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> HoloOthers.clear());
-        UiHooks.installFocus(HoloClient::focus);
+        // reported each frame (UiHooks.setFocus); other sources (the Atlas) report beside it
         ProgressionClient.installStatusOpener(HoloClient::statusScreen);
     }
 
@@ -166,6 +166,8 @@ public final class HoloClient {
         return Math.max(f, HoloTimeline.easeInOut(readFocus));
     }
 
+    private static final Object FOCUS_OWNER = new Object();
+
     /** A projected reading screen (the first-power choice) is open: 0..1, eased over 300 ms each way. */
     private static float readFocus;
 
@@ -200,6 +202,7 @@ public final class HoloClient {
         HudMotion.update(cam.yRot, cam.xRot, dt);
         HoloOthers.advance(dt * 1000f);
         easeReadFocus(dt);
+        UiHooks.setFocus(FOCUS_OWNER, (float) focus());
         boolean reduced = HoloConfig.reducedMotion;
         if (demoMode != 0) HoloDemo.record(DEMO);
         for (HoloRender.Draw d : DRAWS) {
@@ -278,6 +281,7 @@ public final class HoloClient {
             }
             case "peek" -> HoloOthers.peekSelf = a[1].equals("on");
             case "glow" -> HoloRender.glowOn = a[1].equals("on");
+            case "tex" -> HoloDemo.showTexture = a[1].equals("on");
             case "style" -> { // style holo|flat|auto: the projected look on or off (K menu, System cards, first power)
                 HoloConfig.forcedStyle = a[1].equals("auto") ? null : HoloConfig.StatusStyle.valueOf(a[1].toUpperCase(java.util.Locale.ROOT));
                 HoloConfig.refresh();
@@ -312,6 +316,7 @@ public final class HoloClient {
     }
 
     private static void reset() {
+        UiHooks.setFocus(FOCUS_OWNER, 0f);
         HoloOthers.clear();
         demoMode = 0;
         DEMO.timeline.hold(false);

@@ -286,6 +286,10 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
   installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
   the player reads (the first-power choice): with the projected look the world dims behind it (`UiHooks.focus`).
+- `dev.awaken.signal.client.UiCanvas.texture(Identifier, x, y, w, h, u0, v0, u1, v1, argb)` (client) — part of a whole
+  texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
+- `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
+  (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
 
 ---------------------------------------------------------------------------------------------------------------------
 
