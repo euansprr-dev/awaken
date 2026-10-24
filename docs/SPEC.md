@@ -952,6 +952,13 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 ### 16.5 Citizens (W4)
 - Ledger: 240 records (G0), sliced 12 per tick; ≤ 0.5 ms/tick. Bodies within ~56 blocks: ≤ 40 per player, ≤ 96 per
   world; walk the street graph; brains tick every max(1, d²/256) ticks; ≤ 4 pathfinding at once; ≤ 1.5 ms/tick.
+- Movement (G0, from spike S4): bodies are never saved (the ledger is the truth); they walk the street graph on
+  keep-right lanes with no vanilla goals, using vanilla pathing only for the last few blocks or to get unstuck; they
+  always return to the street node before the next edge; they stand on reserved spots sized to each station's staff;
+  they leave early by route distance. Path slots: 4 at once, 6 above ~60 bodies in a world, walk straight after 2 s
+  without one. Route tables are baked per destination on first use. Rescue teleport after 10 s stuck, only out of every
+  player's view. Spawn at 56 blocks, remove past 64, ≤ 8 spawns per 10-tick pass. Witness line-of-sight checks run per
+  event or in the ledger, never per tick. Rendering uses a HumanoidRenderState subclass (never AvatarRenderState).
 - 12 jobs (lamplighter, bellringer, porter, stallkeeper, baker, smith, watch, crier, boatman, washer, mason, runner);
   schedules on the vanilla day clock, seeded per citizen.
 - Events per play-day budget: burglary ~1 (night; thief flees on the roof graph), pickpocket 0–2, fire ~1/5 play-days,

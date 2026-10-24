@@ -50,3 +50,27 @@ s_laundry, r_sky, r_bell_solid). Machine load 5–32 all session, so frame numbe
   needs more than lanterns. Everything vanilla reads as "a good vanilla build", not a mod: the Carillon kit is required.
 - Other: bee nests in cleared trees left orphan block entities (fixed in the writer). Neighbouring vanilla trees leak
   leaves into city chunks: keep features out of the reservation (terrain session's reserved()).
+
+## S4 Crowd: GO (W4)
+Checked: 7 commits on carillon/spike-crowd (…3dd907d), tree clean; shots in docs/carillon/spikes/s4/ on that branch
+reviewed (street, roof, plaza, cap 96, dusk, night). Citizens render with their own skins (the state.skin fix); crowds
+gather at stalls; the time-lapse empties the streets at night.
+- Ledger: 240 records p95 0.015–0.04 ms/tick in game (2,400 records p95 0.006 ms on the bench): effectively free.
+- Bodies (40 at noon): tick p50 0.14 ms headless (load 5) / 0.30 ms in game (load 12–13), p95 up to 1.3 ms in game;
+  ~3.5 µs per body, all vanilla movement and collision. 96 bodies p95 0.45–0.69 ms. Budget 1.5 ms holds.
+- Frame: 40 citizens in view cost ≤ ~1.2 ms p50 (budget 2.0); frame time tracked machine load more than citizens.
+- Stuck: 2 per sprinted play-day after two fixes (from 12): walk back onto the street node before an edge; pause on
+  reserved spots. Keep-right lanes cut head-on blocks from 4 to 0–1 per noon window.
+- Accepted for W4 (now in SPEC §16.5): 6 path slots above ~60 bodies in a world (4 below; walk straight after 2 s
+  without one); reserved standing spots per node sized to each station's staff; always return to the node before the
+  next edge; leave early by route distance; route tables baked per destination on first use (≈2,500 nodes); bodies
+  never saved (the ledger is the truth); goal-less bodies on keep-right lanes, vanilla pathing only for the last few
+  blocks or to get unstuck; rescue teleport after 10 s only out of the player's view; a reachability GameTest for
+  every door and stall (the grid graph missed 47 houses until doors were counted).
+- Not to reuse from TownNpc: its renderer (Steve; a String per entity per frame), random-stroll / walk-home / door goals
+  (full pathfinds), follow range 24 / tracking 10, persistence (duplicates on reload), always-on nameplates,
+  invulnerability (SPEC §16.0.7: hurt, never killed).
+- Look gaps (W4/W8): 4 skins over 240 people read as clones (seeded skin layers needed), vanilla walk, no job props,
+  pop-in at 56–64 blocks down straight streets (fade in, or spawn just out of sight).
+- Budget note for G1: citizens ≈ 1.2 ms + city blocks with solid cores ≈ 3.5 ms (S1, noisy) + platform 5.3 + life 0.4
+  + Holo 0.3 ≈ 10.7 ms against the market's 10 ms: re-measure quiet in W1/W4 before deciding where to give.

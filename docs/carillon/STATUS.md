@@ -11,7 +11,7 @@ Orchestrator: session "btw: kind of a side question…" (local_fe8b1e52…, List
 | S1 city | paint cost per chunk, frame cost, look of a Bellwatch slice | /Volumes/MEDIA/Awaken-c-city · carillon/spike-city (c36561c) | **ADJUST**: generation fine (city 2–5% of pregen); whole city always in view at RD 16 → solid cores, district density, RD ≤ 12 + DH for the sky shot; overhead look needs roof palette, plan hierarchy, landmarks, kit |
 | S2 camera | sky shot through a camera entity, no mixin, smooth | /Volumes/MEDIA/Awaken-c-camera · carillon/spike-camera | running |
 | S3 runner | wall-run, hang, ledge jump on the body pattern; latency; accidental triggers | /Volumes/MEDIA/Awaken-c-runner · carillon/spike-runner | running |
-| S4 crowd | 240 ledger + 40 bodies: tick and frame cost | /Volumes/MEDIA/Awaken-c-crowd · carillon/spike-crowd | running |
+| S4 crowd | 240 ledger + 40 bodies: tick and frame cost | /Volumes/MEDIA/Awaken-c-crowd · carillon/spike-crowd (3dd907d) | **GO**: ledger free, 40 bodies 0.3 ms/tick p50 and ≤ 1.2 ms frame; 2 stuck per play-day; movement rules in SPEC §16.5 |
 | S5 atlas | picture-in-picture diorama + clouds cost; reuse Diorama or not | /Volumes/MEDIA/Awaken-c-atlas · carillon/spike-atlas (2a4672f) | **GO, build our own**: +0.7–1.0 ms open, 83 ms cold open; mesh memory to bound (see spikes/G0-notes.md) |
 | S6 basin | city basin at spawn | Awakened Lands session, pack/awakened-lands (07d24ce, fb39078) | **done**: API landed, 300/300 GameTests, verified on seed 777 (site 1178, 828 on a peninsula; flat y 70 to 330, eased by 700; river carved to y 57, water to 63, terraced banks) |
 
