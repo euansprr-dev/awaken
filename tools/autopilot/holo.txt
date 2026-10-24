@@ -16,6 +16,9 @@ cmd awaken powers starter 1
 wait 20
 screen close
 cmd awaken signal demo now
+# clear the grass around the player so the view is open and no block outline sits in the shots
+cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:short_grass
+cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:tall_grass
 wait 40
 
 # --- the demo panel ---
@@ -95,10 +98,16 @@ shot holo_21_k_third_front
 camera first
 wait 5
 
-# --- frame times: the same view with and without the K menu ---
+# --- frame times: the same view with and without the K menu, twice over (the Mac is shared) ---
 perf holo_open 10
 screen close
 wait 40
 shot holo_22_closed
 perf holo_none 10
+screen holo
+wait 30
+perf holo_open_b 10
+screen close
+wait 30
+perf holo_none_b 10
 quit

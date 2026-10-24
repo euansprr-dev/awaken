@@ -47,8 +47,8 @@ final class HoloRender {
     /** Per-panel render caches. */
     static final class Draw {
         final HoloPanel p;
-        final PoseStack stack = new PoseStack();
-        CustomFeatureRenderer.Submit halo, glass, top, sprites;
+        final PoseStack stack = new PoseStack(), view = new PoseStack();
+        CustomFeatureRenderer.Submit halo, glass, top, sprites, beam;
         final TextFeatureRenderer.Submit[] text = new TextFeatureRenderer.Submit[HoloCanvas.MAX_TEXT];
         final PrefixText[] seq = new PrefixText[HoloCanvas.MAX_TEXT];
         final float[] key = new float[HoloCanvas.MAX_TEXT * 3];
@@ -88,6 +88,11 @@ final class HoloRender {
             d.halo = new CustomFeatureRenderer.Submit(d.stack.last(), HoloPipelines.glow(), (pose, vc) -> halo(d, pose, vc));
             d.glass = new CustomFeatureRenderer.Submit(d.stack.last(), HoloPipelines.glass(), (pose, vc) -> glass(d, pose, vc));
             d.top = new CustomFeatureRenderer.Submit(d.stack.last(), HoloPipelines.glow(), (pose, vc) -> top(d, pose, vc));
+        }
+        if (p.beam > 0.01f) {
+            d.view.last().pose().set(ViewMath.VIEW_TO_WORLD).mul(ViewMath.UNBOB);
+            if (d.beam == null) d.beam = new CustomFeatureRenderer.Submit(d.view.last(), HoloPipelines.glow(), (pose, vc) -> beam(d, pose, vc));
+            c.order(base).submitSpecial(OnTopCollector.ON_TOP, d.beam);
         }
         c.order(base).submitSpecial(OnTopCollector.ON_TOP, d.halo);
         c.order(base + 1).submitSpecial(OnTopCollector.ON_TOP, d.glass);
@@ -145,37 +150,40 @@ final class HoloRender {
         // edges: bright while the frame draws itself, settling to a faint rim
         float settle = 1f - p.glassAlpha;
         float ea = p.edgeAlpha * (0.16f + 0.55f * settle);
+        // line thickness in units, held constant on screen while the panel is squashed by its unfold
+        float kx = 1f / Math.max(0.05f, p.sx), ky = 1f / Math.max(0.05f, p.sy);
         if (ea > 0.004f) {
             int col = mulAlpha(p.accent | 0xFF000000, ea);
-            float t = 2.2f;
-            line(vc, m, 0, -t, w, t, col);
-            line(vc, m, 0, h - t, w, h + t, col);
-            lineV(vc, m, -t, 0, t, h, col);
-            lineV(vc, m, w - t, 0, w + t, h, col);
+            float tx = 2.2f * kx, ty = 2.2f * ky;
+            line(vc, m, 0, -ty, w, ty, col);
+            line(vc, m, 0, h - ty, w, h + ty, col);
+            lineV(vc, m, -tx, 0, tx, h, col);
+            lineV(vc, m, w - tx, 0, w + tx, h, col);
         }
         // corner brackets just outside the frame: the System's mark, as on the flat panels
         float ba = p.edgeAlpha * (0.42f + 0.4f * settle);
         if (ba > 0.004f) {
             int col = mulAlpha(p.accent | 0xFF000000, ba);
-            float o = 3.5f, len = Math.min(18f, Math.min(w, h) / 4f), t = 2.4f;
-            line(vc, m, -o, -o - t, -o + len, -o + t, col);
-            lineV(vc, m, -o - t, -o, -o + t, -o + len, col);
-            line(vc, m, w + o - len, -o - t, w + o, -o + t, col);
-            lineV(vc, m, w + o - t, -o, w + o + t, -o + len, col);
-            line(vc, m, -o, h + o - t, -o + len, h + o + t, col);
-            lineV(vc, m, -o - t, h + o - len, -o + t, h + o, col);
-            line(vc, m, w + o - len, h + o - t, w + o, h + o + t, col);
-            lineV(vc, m, w + o - t, h + o - len, w + o + t, h + o, col);
+            float len = Math.min(18f, Math.min(w, h) / 4f);
+            float ox = 3.5f * kx, oy = 3.5f * ky, lx = len * Math.min(kx, 3f), ly = len * Math.min(ky, 3f), tx = 2.4f * kx, ty = 2.4f * ky;
+            line(vc, m, -ox, -oy - ty, -ox + lx, -oy + ty, col);
+            lineV(vc, m, -ox - tx, -oy, -ox + tx, -oy + ly, col);
+            line(vc, m, w + ox - lx, -oy - ty, w + ox, -oy + ty, col);
+            lineV(vc, m, w + ox - tx, -oy, w + ox + tx, -oy + ly, col);
+            line(vc, m, -ox, h + oy - ty, -ox + lx, h + oy + ty, col);
+            lineV(vc, m, -ox - tx, h + oy - ly, -ox + tx, h + oy, col);
+            line(vc, m, w + ox - lx, h + oy - ty, w + ox, h + oy + ty, col);
+            lineV(vc, m, w + ox - tx, h + oy - ly, w + ox + tx, h + oy, col);
         }
         // corner glints while it unfolds
         float glint = p.edgeAlpha * settle;
         if (glint > 0.01f) {
             int col = mulAlpha(0xFFCFEAFF, 0.6f * glint);
-            float r = 9;
-            blob(vc, m, 0, 0, r, col);
-            blob(vc, m, w, 0, r, col);
-            blob(vc, m, 0, h, r, col);
-            blob(vc, m, w, h, r, col);
+            float rx = 9 * kx, ry = 9 * ky;
+            blob(vc, m, 0, 0, rx, ry, col);
+            blob(vc, m, w, 0, rx, ry, col);
+            blob(vc, m, 0, h, rx, ry, col);
+            blob(vc, m, w, h, rx, ry, col);
         }
         // the scan line: a bright core and a fading wake above it
         if (p.scan >= 0) {
@@ -201,6 +209,27 @@ final class HoloRender {
         }
     }
 
+    private static final org.joml.Vector3f BA = new org.joml.Vector3f(), BS = new org.joml.Vector3f(), BM = new org.joml.Vector3f();
+
+    /** A ribbon of light from the wrist to the rising panel, turned to face the eye, widening as it goes. */
+    private static void beam(Draw d, PoseStack.Pose pose, VertexConsumer vc) {
+        HoloPanel p = d.p;
+        Matrix4f m = pose.pose();
+        var a = p.beamFrom;
+        var b = p.beamTo;
+        BA.set(b).sub(a);
+        BM.set(a).add(b).mul(0.5f);
+        BS.set(BA).cross(BM);
+        if (BS.lengthSquared() < 1e-12f) return;
+        BS.normalize();
+        float w0 = 0.004f, w1 = 0.020f;
+        int core = mulAlpha(0xFFBFE3FF, 0.85f * p.beam), edge = mulAlpha(p.accent | 0xFF000000, 0.55f * p.beam);
+        vc.addVertex(m, a.x - BS.x * w0, a.y - BS.y * w0, a.z - BS.z * w0).setUv(-0.8f, -1).setColor(core).setUv2(-2, 0);
+        vc.addVertex(m, b.x - BS.x * w1, b.y - BS.y * w1, b.z - BS.z * w1).setUv(0.8f, -1).setColor(edge).setUv2(-2, 0);
+        vc.addVertex(m, b.x + BS.x * w1, b.y + BS.y * w1, b.z + BS.z * w1).setUv(0.8f, 1).setColor(edge).setUv2(-2, 0);
+        vc.addVertex(m, a.x + BS.x * w0, a.y + BS.y * w0, a.z + BS.z * w0).setUv(-0.8f, 1).setColor(core).setUv2(-2, 0);
+    }
+
     private static void line(VertexConsumer vc, Matrix4f m, float x0, float y0, float x1, float y1, int col) {
         quad(vc, m, x0, y0, x1, y1, -0.8f, -1, 0.8f, 1, col, col, -2, 0);
     }
@@ -214,7 +243,11 @@ final class HoloRender {
     }
 
     private static void blob(VertexConsumer vc, Matrix4f m, float cx, float cy, float r, int col) {
-        quad(vc, m, cx - r, cy - r, cx + r, cy + r, -1, -1, 1, 1, col, col, -1, 0);
+        blob(vc, m, cx, cy, r, r, col);
+    }
+
+    private static void blob(VertexConsumer vc, Matrix4f m, float cx, float cy, float rx, float ry, int col) {
+        quad(vc, m, cx - rx, cy - ry, cx + rx, cy + ry, -1, -1, 1, 1, col, col, -1, 0);
     }
 
     /** An axis-aligned quad in panel units; top/bottom colours make vertical gradients. */

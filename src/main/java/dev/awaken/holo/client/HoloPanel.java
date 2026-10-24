@@ -27,7 +27,7 @@ public final class HoloPanel {
     public int w = 320, h = 200;
     public int accent = Glass.EDGE;
     /** Rest centre as a fraction of the half-screen (x right, y up) and distance in metres. */
-    public float restX = -0.10f, restY = 0.05f, dist = 0.62f;
+    public float restX = -0.10f, restY = 0.08f, dist = 0.62f;
     /** Target width as a fraction of the screen. */
     public float screenFrac = 0.62f;
     /** Extra turn toward the centre and lean back, degrees. */
@@ -39,6 +39,9 @@ public final class HoloPanel {
 
     /** Units → camera-relative world, as last drawn (picking uses it). */
     final Matrix4f pose = new Matrix4f();
+    /** The lift-off beam in view space: from the wrist emitter to the panel's bottom edge; its strength 0..1. */
+    final Vector3f beamFrom = new Vector3f(), beamTo = new Vector3f();
+    float beam;
     /** Framebuffer pixels per unit, as last drawn. */
     int ppu = 1;
     boolean drawn;
@@ -70,12 +73,13 @@ public final class HoloPanel {
         scan = t.scan(reduced);
         typeMs = t.typing(reduced);
         band = t.band();
+        beam = anchor == Anchor.WRIST ? t.beam(reduced) : 0;
         fade = t.ms() < 150 ? 0 : 1;
     }
 
     /** Whole framebuffer pixels per unit so the panel is about {@link #screenFrac} of the width and fits the height. */
     private int choosePpu() {
-        int byW = Math.round(screenFrac * (thirdPerson ? 0.72f : 1f) * ViewMath.fbW / w);
+        int byW = Math.round(screenFrac * (thirdPerson ? 0.62f : 1f) * ViewMath.fbW / w);
         int byH = (int) Math.floor(0.80f * ViewMath.fbH / h);
         return Math.max(1, Math.min(byW, byH));
     }
@@ -88,7 +92,7 @@ public final class HoloPanel {
         ppu = choosePpu();
         float unit = ppu * ViewMath.metresPerPixel(dist);
         // rest centre in view space and the turn that faces it to the eye
-        float rx = thirdPerson ? Math.min(restX, -0.42f) : restX;
+        float rx = thirdPerson ? Math.min(restX, -0.50f) : restX;
         float cx = rx * ViewMath.tanX * dist, cy = restY * ViewMath.tanY * dist;
         float face = (float) Math.atan2(-cx, dist), tilt = (float) Math.atan2(cy, dist);
         float l = anchor == Anchor.WRIST ? Math.max(0f, Math.min(1f, leave)) : 1f;
@@ -96,14 +100,21 @@ public final class HoloPanel {
         // starting laid back along the forearm and standing up as it goes
         v.set(cx, cy, -dist);
         rotateBySpring(v);
-        if (l < 1f) v.set(wrist.set(wristView).lerp(v, l));
+        // it rises from just above the wrist: its bottom edge sits on the beam's tip and it grows upward, the pivot
+        // moving to its centre as it reaches rest
+        if (l < 1f) v.set(wrist.set(wristView).lerp(v, 0.12f + 0.88f * l));
+        float pivot = 1f - 0.5f * l;
         m.identity().translate(v);
         m.rotateY((float) Math.toRadians(-spring.yaw()));
         m.rotateX((float) Math.toRadians(-spring.pitch()));
         m.rotateY((face + (float) Math.toRadians(turn)) * l);
-        m.rotateX((tilt - (float) Math.toRadians(lean)) * l - (float) Math.toRadians(70) * (1 - l));
+        m.rotateX((tilt - (float) Math.toRadians(lean)) * l - (float) Math.toRadians(28) * (1 - l));
         m.scale(unit * sx, -unit * sy, unit);
-        m.translate(-w / 2f, -h / 2f, 0);
+        m.translate(-w / 2f, -h * pivot, 0);
+        if (anchor == Anchor.WRIST) {
+            beamFrom.set(wristView);
+            m.transformPosition(beamTo.set(w / 2f, h, 0));
+        }
         // view → world, with vanilla's bob undone
         pose.set(ViewMath.VIEW_TO_WORLD).mul(ViewMath.UNBOB).mul(m);
         drawn = true;

@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -25,61 +26,68 @@ import org.joml.Vector3f;
  * {@link RenderHandEvent} listener cancels both vanilla hands (so CastAnims at LOW and Lucidium's reality check at
  * NORMAL don't run: NeoForge skips cancelled events for listeners that don't ask for them) and draws instead:
  * <ul>
- *   <li>the off-hand forearm raised across the view, the back of the wrist turned toward the eye, with the player's
- *       own skin and sleeve (wide or slim model, whatever the renderer is);</li>
- *   <li>a thin band of System light around the wrist in the additive glow pipeline, flaring as the panel leaves it;</li>
+ *   <li>the off-hand forearm raised in from the lower left, foreshortened, the back of the wrist turned up toward the
+ *       eye, with the player's own skin and sleeve (wide or slim model, whatever the renderer is);</li>
+ *   <li>the System's wrist device: a dark strap whose top is a tiny glass face (the panel shader: hairline edge,
+ *       brackets), glowing seams, an emitter that flares as the panel lifts off it;</li>
  *   <li>the main hand (or the item in it) sinking out of view the way vanilla lowers it on an item swap.</li>
  * </ul>
- * The band's centre ({@link #band}) is also where the panel starts its unfold.
+ * {@link #emitter} is where the panel starts its unfold.
  */
 final class Wrist {
     private Wrist() {}
 
     // the raised forearm in hand-view space (metres, x right, y up, -z ahead), for the left arm; mirrored for the right
-    private static final float WX = -0.165f, WY = -0.285f, WZ = -0.56f;
-    private static final Vector3f DIR = new Vector3f(0.80f, 0.30f, -0.44f).normalize(); // elbow → hand
-    private static final Vector3f FACE = new Vector3f(0.05f, 0.62f, 0.78f);           // where the back of the wrist looks
-    /** Along the arm (model units from the shoulder pivot): the band and the hand's end. */
-    private static final float BAND_Y0 = 7.0f, BAND_Y1 = 8.3f;
+    private static final float WX = -0.19f, WY = -0.335f, WZ = -0.66f;
+    private static final Vector3f DIR = new Vector3f(0.60f, 0.24f, -0.76f).normalize(); // elbow → hand
+    private static final Vector3f FACE = new Vector3f(0.05f, 0.80f, 0.60f);            // where the back of the wrist looks
+    /** A little smaller than vanilla's first-person arm, so the forearm reads as a forearm at this distance. */
+    private static final float SCALE = 0.80f;
+    /** The device along the arm (model units from the shoulder pivot; the hand ends at 10). */
+    private static final float BAND_Y0 = 6.9f, BAND_Y1 = 8.4f, PAD = 0.32f;
 
-    private static final Matrix4f M = new Matrix4f(), CANCEL = new Matrix4f();
+    private static final Matrix4f M = new Matrix4f(), CANCEL = new Matrix4f(), BASIS4 = new Matrix4f();
     private static final Matrix3f BASIS = new Matrix3f();
-    private static final Vector3f X = new Vector3f(), Y = new Vector3f(), Z = new Vector3f(), T = new Vector3f();
+    private static final Vector3f X = new Vector3f(), Y = new Vector3f(), Z = new Vector3f(), T = new Vector3f(), TMP = new Vector3f();
     private static long drawnFrame = -1;
     /** Autopilot: draw the arm with this skin (wide or slim) instead of the player's. */
-    static net.minecraft.world.entity.player.PlayerSkin forcedSkin;
-    private static float bandGlow;
+    static PlayerSkin forcedSkin;
+    private static float glow, flare;
     private static float armX0, armX1; // the arm's cross-section in model units (wide or slim)
-    private static final SubmitNodeCollector.CustomGeometryRenderer BAND = Wrist::band;
+    private static int outer;          // the outer face's side in model x: +1 on the left arm, -1 on the right
+    private static final SubmitNodeCollector.CustomGeometryRenderer STRAP = Wrist::strap, LIGHT = Wrist::light;
 
-    /** The band's centre in hand-view space for a raise of {@code a} (0 down, 1 up) on {@code side} (-1 left, 1 right). */
+    /** The wrist's centre in hand-view space for a raise of {@code a} (0 down, 1 up) on {@code side} (-1 left, 1 right). */
     static void band(float a, int side, Vector3f out) {
         float down = 1 - a;
         out.set(side < 0 ? WX : -WX, WY - 0.55f * down, WZ + 0.10f * down);
     }
 
-    private static final Vector3f TMP = new Vector3f();
-    private static final Matrix4f BASIS4 = new Matrix4f();
+    /** Just above the device's face, where the panel lifts off (hand-view space). */
+    static void emitter(float a, int side, Vector3f out) {
+        band(a, side, out);
+        out.add(side < 0 ? FACE.x * 0.16f : -FACE.x * 0.16f, FACE.y * 0.16f, FACE.z * 0.16f);
+    }
 
     /**
      * Builds the forearm's transform into {@link #M}: blocks (what a ModelPart renders in; its cubes divide by 16
      * themselves) → hand-view metres, for a raise of {@code a}.
      */
     private static void armMatrix(float a, int side, boolean slim) {
-        // basis: model +Y runs elbow → hand, the outer face (+X on the left arm, -X on the right) looks at FACE
+        // basis: model +Y runs elbow → hand, the outer face (+X on the left arm, -X on the right) looks toward FACE
         Y.set(side < 0 ? DIR.x : -DIR.x, DIR.y, DIR.z);
         T.set(side < 0 ? FACE.x : -FACE.x, FACE.y, FACE.z);
-        X.set(T).sub(TMP.set(Y).mul(T.dot(Y))).normalize(); // the outer face's direction, square to the arm
-        if (side > 0) X.negate();                            // the right arm's outer side is model -X
+        X.set(T).sub(TMP.set(Y).mul(T.dot(Y))).normalize();
+        if (side > 0) X.negate();
         Z.set(X).cross(Y);
         BASIS.set(X, Y, Z);
-        // lowered: the same arm sunk below the view and tilted down
         float down = 1 - a;
         float cx = slim ? (side < 0 ? 0.5f : -0.5f) : (side < 0 ? 1.0f : -1.0f);
         band(a, side, T);
         M.identity().translate(T);
-        M.rotate(Axis.XP.rotationDegrees(-38f * down));
+        M.rotate(Axis.XP.rotationDegrees(-38f * down)); // lowered: sunk below the view and tilted down
         M.mul(BASIS4.set(BASIS));
+        M.scale(SCALE);
         M.translate(-cx / 16f, -(BAND_Y0 + BAND_Y1) / 32f, 0);
     }
 
@@ -119,17 +127,19 @@ final class Wrist {
         else renderer.renderRightHand(pose, e.getSubmitNodeCollector(), light, skin, avatar.showRightSleeve);
         pose.popPose();
 
-        // the band, in the arm's own space
+        // the device, in the arm's model units; the strap after the arm, the light after the strap
         armX0 = slim ? (side < 0 ? -1f : -2f) : (side < 0 ? -1f : -3f);
         armX1 = slim ? (side < 0 ? 2f : 1f) : (side < 0 ? 3f : 1f);
-        bandGlow = t.band() * Math.min(1f, a * 1.2f);
-        if (bandGlow > 0.01f) {
-            pose.pushPose();
-            pose.mulPose(M);
-            pose.scale(1 / 16f, 1 / 16f, 1 / 16f); // the band is built in model units
-            e.getSubmitNodeCollector().submitCustomGeometry(pose, HoloPipelines.glow(), BAND);
-            pose.popPose();
-        }
+        outer = side < 0 ? 1 : -1;
+        float b = t.band();
+        glow = Math.min(1f, b) * Math.min(1f, a * 1.2f);
+        flare = Math.max(0f, b - 1f) * Math.min(1f, a * 1.2f);
+        pose.pushPose();
+        pose.mulPose(M);
+        pose.scale(1 / 16f, 1 / 16f, 1 / 16f);
+        e.getSubmitNodeCollector().order(1).submitCustomGeometry(pose, HoloPipelines.glass(), STRAP);
+        if (glow + flare > 0.01f) e.getSubmitNodeCollector().order(2).submitCustomGeometry(pose, HoloPipelines.glow(), LIGHT);
+        pose.popPose();
 
         // the main hand sinks out of view (vanilla's own transforms, at a lowered height)
         float drop = Math.min(1f, a);
@@ -158,73 +168,93 @@ final class Wrist {
         pose.popPose();
     }
 
-    // ---- the band ---------------------------------------------------------------------------------------------------
+    // ---- the device -------------------------------------------------------------------------------------------------
 
     private static final Vector3f FN = new Vector3f(), FC = new Vector3f();
 
-    /** Draws the ring's faces that look at the eye (no depth test: back faces would show through the arm). */
-    private static void band(PoseStack.Pose pose, VertexConsumer vc) {
-        float g = bandGlow;
-        int core = Glass.a(Glass.EDGE, Math.min(1f, 0.55f * g));
-        int hot = Glass.a(0xCFEAFF, Math.min(1f, 0.30f * g));
-        float pad = 0.42f;
-        float x0 = armX0 - pad, x1 = armX1 + pad, z0 = -2f - pad, z1 = 2f + pad;
-        float y0 = BAND_Y0, y1 = BAND_Y1, ym = (y0 + y1) / 2f;
+    /** Whether the face with this model-space normal and centre looks at the eye (the hand pass has no depth for us). */
+    private static boolean facing(Matrix4f m, float nx, float nz, float cx, float cy, float cz) {
+        m.transformDirection(FN.set(nx, 0, nz));
+        m.transformPosition(FC.set(cx, cy, cz));
+        return FN.dot(FC) < 0;
+    }
+
+    /** The strap: dark sides, and on the back of the wrist a small glass face drawn by the panel shader. */
+    private static void strap(PoseStack.Pose pose, VertexConsumer vc) {
         Matrix4f m = pose.pose();
-        // four faces: outer (+x), inner (-x), front (-z), back (+z); each a line shape across the band's height
-        face(vc, m, x1, z0, x1, z1, y0, y1, 1, 0, 0, core);
-        face(vc, m, x0, z1, x0, z0, y0, y1, -1, 0, 0, core);
-        face(vc, m, x0, z0, x1, z0, y0, y1, 0, 0, -1, core);
-        face(vc, m, x1, z1, x0, z1, y0, y1, 0, 0, 1, core);
-        // a soft bloom on whichever side faces the eye most, and a hot core line on it
-        float best = -1;
-        int bx = 0;
-        for (int i = 0; i < 4; i++) {
-            float nx = i == 0 ? 1 : i == 1 ? -1 : 0, nz = i == 2 ? -1 : i == 3 ? 1 : 0;
-            m.transformDirection(FN.set(nx, 0, nz)).normalize();
-            m.transformPosition(FC.set(i == 0 ? x1 : i == 1 ? x0 : (x0 + x1) / 2, ym, i == 2 ? z0 : i == 3 ? z1 : 0));
-            float facing = -FN.dot(FC.normalize());
-            if (facing > best) {
-                best = facing;
-                bx = i;
-            }
+        float x0 = armX0 - PAD, x1 = armX1 + PAD, z0 = -2f - PAD, z1 = 2f + PAD, y0 = BAND_Y0, y1 = BAND_Y1, ym = (y0 + y1) / 2;
+        int dark = 0xF00A111C, darker = 0xF0060A12;
+        float xo = outer > 0 ? x1 : x0, xi = outer > 0 ? x0 : x1;
+        // the face: UV in quarter units so the shader's integer size keeps its proportions
+        if (facing(m, outer, 0, xo, ym, 0)) {
+            int w = Math.round((z1 - z0) * 4), h = Math.round((y1 - y0) * 4);
+            int c = 0xFF000000 | (Glass.EDGE & 0xFFFFFF);
+            vc.addVertex(m, xo, y0, z0).setUv(0, 0).setColor(c).setUv2(w, h);
+            vc.addVertex(m, xo, y1, z0).setUv(0, h).setColor(c).setUv2(w, h);
+            vc.addVertex(m, xo, y1, z1).setUv(w, h).setColor(c).setUv2(w, h);
+            vc.addVertex(m, xo, y0, z1).setUv(w, 0).setColor(c).setUv2(w, h);
         }
-        float nx = bx == 0 ? 1 : bx == 1 ? -1 : 0, nz = bx == 2 ? -1 : bx == 3 ? 1 : 0;
-        float fx = bx == 0 ? x1 + 0.05f : bx == 1 ? x0 - 0.05f : (x0 + x1) / 2, fz = bx == 2 ? z0 - 0.05f : bx == 3 ? z1 + 0.05f : 0;
-        // tangent along the face
-        float tx = nz != 0 ? 1 : 0, tz = nx != 0 ? 1 : 0;
-        float half = nz != 0 ? (x1 - x0) / 2 : (z1 - z0) / 2;
-        blob(vc, m, fx, ym, fz, tx, tz, half * 1.6f, 2.6f, Glass.a(Glass.EDGE, Math.min(1f, 0.22f * g)));
-        line(vc, m, fx, ym, fz, tx, tz, half, 0.42f, hot);
+        side(vc, m, xi, z0, xi, z1, y0, y1, -outer, 0, darker);
+        side(vc, m, x0, z0, x1, z0, y0, y1, 0, -1, dark);
+        side(vc, m, x0, z1, x1, z1, y0, y1, 0, 1, dark);
     }
 
-    private static void face(VertexConsumer vc, Matrix4f m, float ax, float az, float bx, float bz, float y0, float y1,
-            float nx, float ny, float nz, int colour) {
-        m.transformDirection(FN.set(nx, ny, nz));
-        m.transformPosition(FC.set((ax + bx) / 2, (y0 + y1) / 2, (az + bz) / 2));
-        if (FN.dot(FC) >= 0) return; // faces away from the eye
-        // u stays inside ±0.8 so the line shape doesn't fade at the ring's corners
-        vertex(vc, m, ax, y0, az, -0.8f, -1, colour, -2);
-        vertex(vc, m, bx, y0, bz, 0.8f, -1, colour, -2);
-        vertex(vc, m, bx, y1, bz, 0.8f, 1, colour, -2);
-        vertex(vc, m, ax, y1, az, -0.8f, 1, colour, -2);
+    private static void side(VertexConsumer vc, Matrix4f m, float ax, float az, float bx, float bz, float y0, float y1, float nx, float nz, int colour) {
+        if (!facing(m, nx, nz, (ax + bx) / 2, (y0 + y1) / 2, (az + bz) / 2)) return;
+        vc.addVertex(m, ax, y0, az).setUv(0, 0).setColor(colour).setUv2(0, 0);
+        vc.addVertex(m, ax, y1, az).setUv(0, 0).setColor(colour).setUv2(0, 0);
+        vc.addVertex(m, bx, y1, bz).setUv(0, 0).setColor(colour).setUv2(0, 0);
+        vc.addVertex(m, bx, y0, bz).setUv(0, 0).setColor(colour).setUv2(0, 0);
     }
 
-    private static void blob(VertexConsumer vc, Matrix4f m, float cx, float cy, float cz, float tx, float tz, float halfW, float halfH, int colour) {
-        vertex(vc, m, cx - tx * halfW, cy - halfH, cz - tz * halfW, -1, -1, colour, -1);
-        vertex(vc, m, cx + tx * halfW, cy - halfH, cz + tz * halfW, 1, -1, colour, -1);
-        vertex(vc, m, cx + tx * halfW, cy + halfH, cz + tz * halfW, 1, 1, colour, -1);
-        vertex(vc, m, cx - tx * halfW, cy + halfH, cz - tz * halfW, -1, 1, colour, -1);
+    /** Seams of light along the strap's edges, the emitter on its face, and the flare as the panel lifts off. */
+    private static void light(PoseStack.Pose pose, VertexConsumer vc) {
+        Matrix4f m = pose.pose();
+        float x0 = armX0 - PAD, x1 = armX1 + PAD, z0 = -2f - PAD, z1 = 2f + PAD, y0 = BAND_Y0, y1 = BAND_Y1, ym = (y0 + y1) / 2;
+        float xo = outer > 0 ? x1 + 0.03f : x0 - 0.03f;
+        int seam = Glass.a(Glass.EDGE, Math.min(1f, 0.55f * glow + 0.3f * flare));
+        float th = 0.22f;
+        // seams on the visible faces (outer, front, back)
+        if (facing(m, outer, 0, xo, ym, 0)) {
+            seamX(vc, m, xo, z0, z1, y0, th, seam);
+            seamX(vc, m, xo, z0, z1, y1, th, seam);
+        }
+        if (facing(m, 0, -1, (x0 + x1) / 2, ym, z0)) {
+            seamZ(vc, m, x0, x1, z0 - 0.03f, y0, th, seam);
+            seamZ(vc, m, x0, x1, z0 - 0.03f, y1, th, seam);
+        }
+        if (facing(m, 0, 1, (x0 + x1) / 2, ym, z1)) {
+            seamZ(vc, m, x0, x1, z1 + 0.03f, y0, th, seam);
+            seamZ(vc, m, x0, x1, z1 + 0.03f, y1, th, seam);
+        }
+        // the emitter: a bright node on the face, a soft bloom, and the flare
+        float ox = xo + outer * 0.05f;
+        blob(vc, m, ox, ym, 0, 0.55f, Glass.a(0xE6F4FF, Math.min(1f, 0.85f * glow + 0.4f * flare)));
+        blob(vc, m, ox, ym, 0, 2.4f, Glass.a(Glass.EDGE, Math.min(1f, 0.16f * glow + 0.22f * flare)));
+        if (flare > 0.01f) blob(vc, m, ox + outer * 0.2f, ym, 0, 6.5f, Glass.a(Glass.EDGE, Math.min(1f, 0.16f * flare)));
     }
 
-    private static void line(VertexConsumer vc, Matrix4f m, float cx, float cy, float cz, float tx, float tz, float halfW, float halfH, int colour) {
-        vertex(vc, m, cx - tx * halfW, cy - halfH, cz - tz * halfW, -1, -1, colour, -2);
-        vertex(vc, m, cx + tx * halfW, cy - halfH, cz + tz * halfW, 1, -1, colour, -2);
-        vertex(vc, m, cx + tx * halfW, cy + halfH, cz + tz * halfW, 1, 1, colour, -2);
-        vertex(vc, m, cx - tx * halfW, cy + halfH, cz - tz * halfW, -1, 1, colour, -2);
+    /** A seam along the outer face (it runs in z at height y). */
+    private static void seamX(VertexConsumer vc, Matrix4f m, float x, float z0, float z1, float y, float th, int c) {
+        vc.addVertex(m, x, y - th, z0).setUv(-0.8f, -1).setColor(c).setUv2(-2, 0);
+        vc.addVertex(m, x, y - th, z1).setUv(0.8f, -1).setColor(c).setUv2(-2, 0);
+        vc.addVertex(m, x, y + th, z1).setUv(0.8f, 1).setColor(c).setUv2(-2, 0);
+        vc.addVertex(m, x, y + th, z0).setUv(-0.8f, 1).setColor(c).setUv2(-2, 0);
     }
 
-    private static void vertex(VertexConsumer vc, Matrix4f m, float x, float y, float z, float u, float v, int colour, int shape) {
-        vc.addVertex(m, x, y, z).setUv(u, v).setColor(colour).setUv2(shape, 0);
+    /** A seam along a front or back face (it runs in x at height y). */
+    private static void seamZ(VertexConsumer vc, Matrix4f m, float x0, float x1, float z, float y, float th, int c) {
+        vc.addVertex(m, x0, y - th, z).setUv(-0.8f, -1).setColor(c).setUv2(-2, 0);
+        vc.addVertex(m, x1, y - th, z).setUv(0.8f, -1).setColor(c).setUv2(-2, 0);
+        vc.addVertex(m, x1, y + th, z).setUv(0.8f, 1).setColor(c).setUv2(-2, 0);
+        vc.addVertex(m, x0, y + th, z).setUv(-0.8f, 1).setColor(c).setUv2(-2, 0);
+    }
+
+    /** A round light lying on the outer face (the y–z plane), centred at (x, y, z). */
+    private static void blob(VertexConsumer vc, Matrix4f m, float x, float y, float z, float r, int c) {
+        vc.addVertex(m, x, y - r, z - r).setUv(-1, -1).setColor(c).setUv2(-1, 0);
+        vc.addVertex(m, x, y + r, z - r).setUv(-1, 1).setColor(c).setUv2(-1, 0);
+        vc.addVertex(m, x, y + r, z + r).setUv(1, 1).setColor(c).setUv2(-1, 0);
+        vc.addVertex(m, x, y - r, z + r).setUv(1, -1).setColor(c).setUv2(-1, 0);
     }
 }

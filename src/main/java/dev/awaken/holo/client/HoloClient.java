@@ -196,11 +196,11 @@ public final class HoloClient {
         if (demoMode == 2 && !DEMO.timeline.active()) demoMode = 0;
     }
 
-    /** The band on the wrist, as a point in the level's view space (the hand pass has its own field of view). */
+    /** Just above the wrist device, as a point in the level's view space (the hand pass has its own field of view). */
     private static void wristView(HoloPanel p, Vector3f out) {
         Minecraft mc = Minecraft.getInstance();
         int side = mc.player != null && mc.player.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? 1 : -1;
-        Wrist.band(Math.min(1f, p.timeline.arm()), side, out);
+        Wrist.emitter(Math.min(1f, p.timeline.arm()), side, out);
         float k = ViewMath.tanY / ViewMath.tanYHand;
         out.x *= k;
         out.y *= k;
@@ -266,8 +266,12 @@ public final class HoloClient {
                 return String.format(java.util.Locale.ROOT, "clicked %.1f,%.1f -> tab %s", gui[0], gui[1], screen.tab());
             }
             case "log" -> {
-                return String.format(java.util.Locale.ROOT, "hud dx=%.2f dy=%.2f lag=%.2f/%.2f ppu=%d t=%.0f", HudMotion.dx(), HudMotion.dy(),
-                        p.spring.yaw(), p.spring.pitch(), p.ppu, p.timeline.ms());
+                org.joml.Vector3f c = new org.joml.Vector3f();
+                p.pose.transformPosition(p.w / 2f, p.h / 2f, 0, c);
+                return String.format(java.util.Locale.ROOT, "hud dx=%.2f dy=%.2f lag=%.2f/%.2f ppu=%d t=%.0f sx=%.3f sy=%.3f leave=%.2f edges=%.2f "
+                        + "glass=%.2f beam=%.2f wrist=%s centre(world-rel)=%s anchor=%s", HudMotion.dx(), HudMotion.dy(),
+                        p.spring.yaw(), p.spring.pitch(), p.ppu, p.timeline.ms(), p.sx, p.sy, p.timeline.leave(HoloConfig.reducedMotion),
+                        p.edgeAlpha, p.glassAlpha, p.beam, WRIST, c, p.anchor);
             }
             default -> {
                 return "unknown holo line: " + args;

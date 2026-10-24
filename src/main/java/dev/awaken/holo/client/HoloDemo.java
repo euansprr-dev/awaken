@@ -15,7 +15,7 @@ import net.minecraft.world.item.Items;
 final class HoloDemo {
     private HoloDemo() {}
 
-    static final int W = 236, H = 150;
+    static final int W = 236, H = 132;
     private static final HoloGraphics G = HoloGraphics.create();
     private static final ItemStack FALLBACK = new ItemStack(Items.DIAMOND_SWORD);
 

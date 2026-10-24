@@ -149,6 +149,13 @@ public final class HoloTimeline {
         return t - 300f;
     }
 
+    /** The beam that carries the panel off the wrist: rises with the lift-off and fades as it settles. */
+    public float beam(boolean reduced) {
+        if (reduced) return 0;
+        float up = clamp01((t - 120f) / 50f), down = 1 - clamp01((t - 290f) / 90f);
+        return up * down;
+    }
+
     /** How much the open panel holds attention (Lens focus): eased with the glass. */
     public float focus() {
         return active ? easeInOut((t - 160f) / 290f) : 0f;
