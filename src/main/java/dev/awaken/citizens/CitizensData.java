@@ -115,8 +115,23 @@ public final class CitizensData extends SavedData {
             Event.CODEC.listOf().fieldOf("events").forGetter(d -> d.events),
             Memory.CODEC.listOf().fieldOf("memories").forGetter(d -> d.memories),
             LONGS.fieldOf("days").forGetter(d -> new long[]{d.lastPlayDay, d.gossipDay, d.eventDay, d.nextEventId}),
-            LONGS.optionalFieldOf("lights", new long[0]).forGetter(d -> d.lights)
+            LONGS.optionalFieldOf("lights", new long[0]).forGetter(d -> d.lights),
+            Timing.CODEC.optionalFieldOf("timing", Timing.EMPTY).forGetter(Timing::of)
     ).apply(i, CitizensData::new));
+
+    /** The ledger's timing and event spots (see the fields). */
+    record Timing(long[] lastGame, long[] lastClock, int cursor, int[] roleSpot) {
+        static final Timing EMPTY = new Timing(new long[0], new long[0], 0, new int[0]);
+        static final Codec<Timing> CODEC = RecordCodecBuilder.create(i -> i.group(
+                LONGS.fieldOf("lastGame").forGetter(Timing::lastGame), LONGS.fieldOf("lastClock").forGetter(Timing::lastClock),
+                Codec.INT.fieldOf("cursor").forGetter(Timing::cursor), INTS.fieldOf("roleSpot").forGetter(Timing::roleSpot)
+        ).apply(i, Timing::new));
+
+        static Timing of(CitizensData d) {
+            if (d.beforeSave != null) d.beforeSave.accept(d);
+            return new Timing(d.lastGame, d.lastClock, d.cursor, d.roleSpot);
+        }
+    }
 
     public static final SavedDataType<CitizensData> TYPE = new SavedDataType<>(Awaken.id("citizens"), CitizensData::new, CODEC);
 
@@ -142,6 +157,13 @@ public final class CitizensData extends SavedData {
     long[] chimneys = new long[0];
     /** Lantern lights in the world right now (Lanterns): cleared on start, so none is ever left behind. */
     long[] lights = new long[0];
+    /** The ledger's timing (each record's last update, game time and clock) and slice cursor, and event spots (x, y, z
+     *  hundredths; MIN_VALUE x = none): saved so a loaded ledger runs on exactly as it would have. */
+    long[] lastGame = new long[0], lastClock = new long[0];
+    int cursor;
+    int[] roleSpot = new int[0];
+    /** Set by the ledger before saving (Citizens keeps it current). */
+    java.util.function.Consumer<CitizensData> beforeSave;
 
     final List<Event> events = new ArrayList<>();
     final List<Memory> memories = new ArrayList<>();
@@ -151,9 +173,14 @@ public final class CitizensData extends SavedData {
         Arrays.fill(safety, (byte) 80);
     }
 
-    private CitizensData(int schema, String roster, Records r, World w, List<Event> events, List<Memory> memories, long[] days, long[] lights) {
+    private CitizensData(int schema, String roster, Records r, World w, List<Event> events, List<Memory> memories, long[] days, long[] lights,
+                         Timing timing) {
         this(schema, roster, r, w, events, memories, days);
         this.lights = lights.clone();
+        this.lastGame = timing.lastGame().clone();
+        this.lastClock = timing.lastClock().clone();
+        this.cursor = timing.cursor();
+        this.roleSpot = timing.roleSpot().clone();
     }
 
     private CitizensData(int schema, String roster, Records r, World w, List<Event> events, List<Memory> memories, long[] days) {

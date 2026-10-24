@@ -31,6 +31,8 @@ final class StreetNet {
     final float[] elen, elane;
     /** Edges closed for now (a jam from a runaway cart; later the Bell Bridge). */
     final boolean[] eoff;
+    /** Nodes in the graph's main piece (the plan has two tiny islands nobody should be sent to). */
+    final boolean[] main;
     private final Int2ObjectOpenHashMap<Column> columns = new Int2ObjectOpenHashMap<>();
     private int bakesThisTick;
     long bakes, bakeNanos;
@@ -69,6 +71,26 @@ final class StreetNet {
             adjEdge[fill[ea[e]]++] = e;
             adj[fill[eb[e]]] = ea[e];
             adjEdge[fill[eb[e]]++] = e;
+        }
+        // the main piece: everything reachable from the best-connected node
+        main = new boolean[n];
+        int hub = 0;
+        for (int i = 1; i < n; i++) if (deg[i] > deg[hub]) hub = i;
+        int[] stack = new int[n];
+        int top = 0;
+        if (n > 0) {
+            stack[top++] = hub;
+            main[hub] = true;
+        }
+        while (top > 0) {
+            int u = stack[--top];
+            for (int k = adjStart[u]; k < adjStart[u + 1]; k++) {
+                int v = adj[k];
+                if (!main[v]) {
+                    main[v] = true;
+                    stack[top++] = v;
+                }
+            }
         }
     }
 
@@ -267,7 +289,7 @@ final class StreetNet {
         int best = -1;
         double bd = Double.MAX_VALUE;
         for (int i = 0; i < n; i++) {
-            if (junctionsOnly && kind[i] != JUNCTION) continue;
+            if (junctionsOnly && kind[i] != JUNCTION || !main[i]) continue;
             double d = (x[i] - px) * (x[i] - px) + (z[i] - pz) * (z[i] - pz);
             if (d < bd) {
                 bd = d;

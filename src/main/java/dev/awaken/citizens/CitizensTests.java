@@ -65,6 +65,7 @@ final class CitizensTests {
         }
         Awaken.LOG.info("[citizens] day test: {} segments, {} missed, arrivals {}, late {}, early {}, noRoute {}, overflow {}, {} columns, {} ms",
                 segs, missed.size(), l.arrivals, l.late, l.early, l.noRoute, l.overflow, g.columns(), String.format("%.0f", ms));
+        for (String m : missed) Awaken.LOG.info("[citizens] day test missed: {}", m);
         h.assertTrue(missed.isEmpty(), missed.size() + " schedule targets never reached: " + missed.subList(0, Math.min(8, missed.size())));
         h.assertTrue(l.noRoute == 0, "every walk had a route (" + l.noRoute + " without)");
         h.succeed();
@@ -86,10 +87,12 @@ final class CitizensTests {
                 continue;
             }
             for (int s = r.spotStart[p]; s < r.spotStart[p + 1]; s++) {
-                double dx = r.spotX[s] - (g.x[node]), dz = r.spotZ[s] - (g.z[node]);
-                if (Math.hypot(dx, dz) > 14) bad.add("place " + p + " spot " + s + " is " + (int) Math.hypot(dx, dz) + " blocks from its node");
+                // a straight walk along open street may be long; a path through obstacles only the last few blocks
+                double dist = Math.hypot(r.spotX[s] - g.x[node], r.spotZ[s] - g.z[node]);
+                if (dist > (r.pPath[p] ? 14 : 36)) bad.add("place " + p + " spot " + s + " is " + (int) dist + " blocks from its node");
                 byte k = plan.kind((int) Math.floor(r.spotX[s]), (int) Math.floor(r.spotZ[s]));
-                if (r.pKind[p] != Roster.P_DOOR && !CityPlan.walkable(k)) bad.add("place " + p + " (" + Roster.PLACE_KINDS[r.pKind[p]] + ") spot " + s + " on " + k);
+                boolean door = r.pKind[p] == Roster.P_DOOR || r.pKind[p] == Roster.P_LANDMARK;
+                if (!door && !CityPlan.walkable(k)) bad.add("place " + p + " (" + Roster.PLACE_KINDS[r.pKind[p]] + ") spot " + s + " on " + k);
             }
         }
         for (int route = 0; route < r.routePlaces.length; route++) {
@@ -107,7 +110,12 @@ final class CitizensTests {
     private static void roundTrip(GameTestHelper h) {
         Roster r = Roster.get();
         h.assertTrue(r != null, "the roster is in the jar");
-        StreetNet g = net(r);
+        StreetNet g = net(r), g2 = net(r);
+        // every column baked up front in both nets, so neither waits on the bake budget and they stay in step
+        for (int p = 0; p < r.places; p++) {
+            g.columnNow(r.pNode[p]);
+            g2.columnNow(r.pNode[p]);
+        }
         CitizensData d = new CitizensData();
         Ledger l = new Ledger(r, g, d, 0, 0, 70, 0, 5000);
         for (long t = 1; t <= 3000; t++) {
@@ -121,13 +129,13 @@ final class CitizensTests {
         CitizensData.Memory m = d.memory(java.util.UUID.nameUUIDFromBytes(new byte[]{1}), "Tester", true);
         m.know[3] = 40;
         m.deeds.add(new CitizensData.Deed("awaken:caught_thief", 2, 4, 1));
+        l.store();
         DynamicOps<Tag> ops = NbtOps.INSTANCE;
         Tag saved = CitizensData.CODEC.encodeStart(ops, d).getOrThrow();
         CitizensData back = CitizensData.CODEC.parse(ops, saved).getOrThrow();
         Tag again = CitizensData.CODEC.encodeStart(ops, back).getOrThrow();
         h.assertTrue(saved.equals(again), "the saved ledger reads back identically");
         // both run on the same
-        StreetNet g2 = net(r);
         Ledger l2 = new Ledger(r, g2, back, 0, 0, 70, 3000, 8000);
         h.assertTrue(!l2.fresh, "a saved ledger for this roster is reused, not re-seated");
         for (long t = 3001; t <= 6000; t++) {

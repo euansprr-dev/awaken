@@ -87,6 +87,7 @@ final class Ledger {
         boolean fresh = !r.sha256.equals(d.roster) || d.records() != n || d.lamps.length != r.lampPlace.length
                 || d.stallOpen.length != r.stalls.size() || d.cloths.length != r.lines.size() || d.bellPos.length != r.bells.size();
         this.fresh = fresh;
+        d.beforeSave = data -> store();
         if (fresh) {
             d.size(n, r.lampPlace.length, r.stalls.size(), r.lines.size(), r.bells.size());
             d.roster = r.sha256;
@@ -102,6 +103,18 @@ final class Ledger {
             }
             d.setDirty();
         } else {
+            // where each record's last update left it, so a loaded ledger runs on exactly as it would have
+            if (d.lastGame.length == n) System.arraycopy(d.lastGame, 0, lastGame, 0, n);
+            if (d.lastClock.length == n) System.arraycopy(d.lastClock, 0, lastClock, 0, n);
+            cursor = Math.floorMod(d.cursor, n);
+            if (d.roleSpot.length == n * 3) {
+                for (int i = 0; i < n; i++) {
+                    if (d.roleSpot[i * 3] == Integer.MIN_VALUE) continue;
+                    rx[i] = d.roleSpot[i * 3] / 100.0;
+                    ry[i] = d.roleSpot[i * 3 + 1] / 100.0;
+                    rz[i] = d.roleSpot[i * 3 + 2] / 100.0;
+                }
+            }
             // spots are rebuilt from the saved claims
             for (int i = 0; i < n; i++) {
                 int s = d.spot[i];
@@ -201,11 +214,14 @@ final class Ledger {
         d.setDirty();
     }
 
-    /** Heads a record for a place (staying put if it's already there). */
+    /** Heads a record for a place (staying put if it's already there: that counts as arriving). */
     void goTo(int i, int place) {
         if (place < 0) return;
         boolean same = place == d.place[i] && (d.state[i] == STAND || d.state[i] == INSIDE) && d.at[i] == r.pNode[place];
-        if (same) return;
+        if (same) {
+            work.arrived(i, place, lastGame[i]);
+            return;
+        }
         release(i);
         d.place[i] = place;
         d.goal[i] = r.pNode[place];
@@ -287,7 +303,7 @@ final class Ledger {
         if (nx == s) return;
         int k = r.segBase[i] + nx;
         int until = Math.floorMod(r.segStart[k] - tod, DAY);
-        if (until > 4000) return; // far off: nothing to check
+        if (until > 9000) return; // far off: nothing to check
         int target = firstPlace(i, nx);
         if (target < 0) return;
         if (d.state[i] == INSIDE && d.at[i] == r.pNode[target] && target == d.place[i]) return;
@@ -298,7 +314,8 @@ final class Ledger {
             return;
         }
         if (dist < 0) dist = 0;
-        double travel = dist / speed(i) + LEAVE_MARGIN + (r.pPath[target] ? 60 : 0);
+        // at the pace of the next thing (a runner off duty walks)
+        double travel = dist / speed(i, r.segAct[k]) + LEAVE_MARGIN + (r.pPath[target] ? 60 : 0);
         if (until <= travel) {
             early++;
             startSegment(i, nx, now);
@@ -306,7 +323,11 @@ final class Ledger {
     }
 
     float speed(int i) {
-        boolean run = r.job[i] == Roster.RUNNER && act(i) == ROUND || d.role[i] != 0 && Roles.runs(d.role[i]);
+        return speed(i, act(i));
+    }
+
+    float speed(int i, byte act) {
+        boolean run = r.job[i] == Roster.RUNNER && act == ROUND || d.role[i] != 0 && Roles.runs(d.role[i]);
         return (run ? RUN_SPEED : WALK_SPEED) * r.speed[i];
     }
 
@@ -556,6 +577,22 @@ final class Ledger {
         int c = 0;
         for (int i = 0; i < n; i++) if (d.state[i] == state && r.isCitizen(i)) c++;
         return c;
+    }
+
+    /** Before a save: the transient timing and event spots go into the data. */
+    void store() {
+        if (d.lastGame.length != n) d.lastGame = new long[n];
+        if (d.lastClock.length != n) d.lastClock = new long[n];
+        System.arraycopy(lastGame, 0, d.lastGame, 0, n);
+        System.arraycopy(lastClock, 0, d.lastClock, 0, n);
+        d.cursor = cursor;
+        if (d.roleSpot.length != n * 3) d.roleSpot = new int[n * 3];
+        for (int i = 0; i < n; i++) {
+            boolean set = !Double.isNaN(rx[i]);
+            d.roleSpot[i * 3] = set ? (int) Math.round(rx[i] * 100) : Integer.MIN_VALUE;
+            d.roleSpot[i * 3 + 1] = set ? (int) Math.round(ry[i] * 100) : 0;
+            d.roleSpot[i * 3 + 2] = set ? (int) Math.round(rz[i] * 100) : 0;
+        }
     }
 
     void resetCounters() {
