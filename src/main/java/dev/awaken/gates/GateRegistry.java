@@ -155,6 +155,11 @@ public final class GateRegistry extends SavedData {
         return releasedCells;
     }
 
+    /** Cells ready to be handed out again (read-only view). */
+    public List<Integer> freeCells() {
+        return java.util.Collections.unmodifiableList(freeCells);
+    }
+
     /** A released cell whose region files are gone can be used again. */
     public void cellFreed(int cell) {
         if (releasedCells.remove(cell)) {

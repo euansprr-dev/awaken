@@ -152,19 +152,9 @@ final class GateEvents {
             return;
         }
         if (!GateService.isGateLevel(e.getLevel())) return;
-        if (!(e.getEntity() instanceof net.minecraft.world.entity.player.Player) && e.getLevel() instanceof ServerLevel gl) {
-            // cells are reused while running: an entity saved with an older use of its cell leaves when loaded
-            int cell = dev.awaken.gates.world.Cells.cellAt(e.getEntity().getBlockX(), e.getEntity().getBlockZ());
-            if (cell >= 0) {
-                int gen = GateRegistry.get(gl.getServer()).cellGen(cell);
-                var data = e.getEntity().getPersistentData();
-                if (e.loadedFromDisk()) {
-                    if (data.getIntOr(CELL_GEN, 0) != gen) {
-                        e.setCanceled(true);
-                        return;
-                    }
-                } else if (gen > 0) data.putInt(CELL_GEN, gen);
-            }
+        if (e.getLevel() instanceof ServerLevel gl && staleInCell(gl, e.getEntity(), e.loadedFromDisk())) {
+            e.setCanceled(true);
+            return;
         }
         // an Inverted puppet saved with its chunk (server stop) is only a statue now: its player gets a fresh one
         if (e.loadedFromDisk() && e.getEntity().getPersistentData().getBooleanOr("awaken_gate_puppet", false)) {
@@ -176,6 +166,22 @@ final class GateEvents {
 
     /** Persistent-data key: the generation of the cell an entity in the gate world belongs to. */
     static final String CELL_GEN = "awaken_cell_gen";
+
+    /**
+     * Cells are reused while running (SPEC "Together"): a new entity in a reused cell is stamped with the cell's
+     * generation, and one loaded from disk with an older generation belongs to an earlier gate there. Returns whether
+     * the entity is stale and must leave. Players are never stale.
+     */
+    static boolean staleInCell(ServerLevel gl, Entity ent, boolean loadedFromDisk) {
+        if (ent instanceof net.minecraft.world.entity.player.Player) return false;
+        int cell = dev.awaken.gates.world.Cells.cellAt(ent.getBlockX(), ent.getBlockZ());
+        if (cell < 0) return false;
+        int gen = GateRegistry.get(gl.getServer()).cellGen(cell);
+        var data = ent.getPersistentData();
+        if (loadedFromDisk) return data.getIntOr(CELL_GEN, 0) != gen;
+        if (gen > 0) data.putInt(CELL_GEN, gen);
+        return false;
+    }
 
     private static void onLeave(EntityLeaveLevelEvent e) {
         if (e.getLevel().isClientSide() || !GateService.isGateLevel(e.getLevel())) return;

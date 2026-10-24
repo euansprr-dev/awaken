@@ -71,26 +71,43 @@ final class TogetherGateTests {
             h.succeed();
         });
 
-        AwakenTests.register("together_cells_reused_while_running", 40, h -> {
-            var server = h.getLevel().getServer();
-            // gate cells: once erased while running, a released cell is free again and its entities' generation moves on
+        // A dedicated server reuses gate cells while running: the cell of a's finished gate is erased and becomes b's,
+        // a monster saved from a's run leaves when its chunk loads, b's own monster there stays.
+        AwakenTests.registerIsolated("together_cells_reused_while_running", 60, h -> {
+            ServerLevel level = h.getLevel();
+            var server = level.getServer();
             GateRegistry reg = GateRegistry.get(server);
-            int cell = reg.allocateCell();
-            int gen = reg.cellGen(cell);
-            reg.releaseCell(cell);
-            reg.cellRecycled(cell);
-            h.assertTrue(reg.cellGen(cell) == gen + 1, "a recycled cell has a new generation");
-            h.assertFalse(reg.releasedCells().contains(cell), "and is free again");
-            h.assertTrue(reg.hasFreeCell(), "it can be handed out again");
-            h.assertTrue(RegionRecycler.square(0, 0, 32).length == 1024, "a cell's erase batch is its 32 x 32 chunks");
-
-            // dream cells: a cell whose dream ended comes back for the next dream
-            int first = dev.awaken.lucidium.world.Cells.allocate();
-            dev.awaken.lucidium.world.Cells.release(server, first);
-            int next = dev.awaken.lucidium.world.Cells.allocate();
-            h.assertTrue(next == first, "the next dream reuses the cell (" + next + " vs " + first + ")");
-            dev.awaken.lucidium.world.Cells.release(server, next);
+            ServerPlayer a = GateLiveTests.player(h), b = GateLiveTests.player(h);
+            net.minecraft.world.entity.Entity fromA = null, fromB = null;
+            try {
+                int cell = reg.allocateCell(); // a's gate
+                int gen = reg.cellGen(cell);
+                fromA = inCell(level, cell);
+                h.assertFalse(GateEvents.staleInCell(level, fromA, false), "a monster of a's run takes form");
+                reg.releaseCell(cell); // a's gate is done
+                reg.cellRecycled(cell); // its chunks were erased while running
+                h.assertTrue(reg.cellGen(cell) == gen + 1, "a recycled cell has a new generation");
+                h.assertTrue(!reg.releasedCells().contains(cell) && reg.freeCells().contains(cell), "and is free again for b's gate");
+                fromB = inCell(level, cell);
+                h.assertFalse(GateEvents.staleInCell(level, fromB, false), "b's monster takes form there");
+                h.assertTrue(GateEvents.staleInCell(level, fromA, true), "a's monster saved from the old gate leaves when loaded");
+                h.assertFalse(GateEvents.staleInCell(level, fromB, true), "b's stays when its chunk loads again");
+                h.assertFalse(GateEvents.staleInCell(level, a, true) || GateEvents.staleInCell(level, b, true), "players never leave");
+                h.assertTrue(RegionRecycler.square(0, 0, 32).length == 1024, "a cell's erase batch is its 32 x 32 chunks");
+            } finally {
+                if (fromA != null) fromA.discard();
+                if (fromB != null) fromB.discard();
+                server.getPlayerList().remove(a);
+                server.getPlayerList().remove(b);
+            }
             h.succeed();
         });
+    }
+
+    /** A monster (never added to the world) standing in the given gate cell. */
+    private static net.minecraft.world.entity.Entity inCell(ServerLevel level, int cell) {
+        var z = net.minecraft.world.entity.EntityTypes.ZOMBIE.create(level, net.minecraft.world.entity.EntitySpawnReason.TRIGGERED);
+        z.setPos(dev.awaken.gates.world.Cells.originX(cell) + 40.5, 200, dev.awaken.gates.world.Cells.originZ(cell) + 40.5);
+        return z;
     }
 }
