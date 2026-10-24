@@ -52,7 +52,6 @@ def main(argv):
     runs = [parse(p) for p in paths]
     for i, (p, (_, info)) in enumerate(zip(paths, runs)):
         print(f"{'AB'[i] if len(runs) > 1 else '-'} {p}\n  {describe(info)}")
-    names = list(dict.fromkeys(n for scenes, _ in runs for n in scenes))
     # a scene macOS throttled (window covered, display asleep) runs at ~10 fps: flag it rather than trust it
     for scenes, _ in runs:
         for n in [n for n, s in scenes.items() if s.get("empty")]:
@@ -60,6 +59,7 @@ def main(argv):
             del scenes[n]
         for s in scenes.values():
             s["throttled"] = s.get("occluded") == "true" or abs(s["p50"] - 100.0) < 3.0
+    names = list(dict.fromkeys(n for scenes, _ in runs for n in scenes))
     if len(runs) == 1:
         head = ["scene", "fps", "p50 ms", "p95 ms", "p99 ms", "max ms", "tick p95", "heap MB", "load"]
         rows = [[n, f"{s['avg_fps']:.0f}", f"{s['p50']:.2f}", f"{s['p95']:.2f}", f"{s['p99']:.2f}", f"{s['max']:.1f}",
