@@ -17,7 +17,8 @@ arm's y > 0 turns it outward, y < 0 across the chest). A pose is written in figu
   rise    px up (after the feet are put on the ground)     shift  px forward;  side  px toward the main hand
   twist   chest yaw, + turns the chest toward the main hand (the shoulders go with it, the head stays on target)
   ra, la  main / off arm (x, y, z), body-relative; an aimed arm (ra_aim / la_aim) is world-relative and follows the
-          look pitch, so it points at what the player looks at whatever the lean or twist
+          look (pitch, and the head's yaw off the body, as vanilla's bow pose does), so it points at what the player
+          looks at whatever the lean or twist
   rl, ll  main-side / off-side leg (x, y, z), world-relative: the legs stay where they are when the body leans
   head_z  head roll, + toward the main hand (the head always keeps the player's look; a lean is taken out of it)
   ground  True: the figure is raised or lowered so the lowest foot is on the ground (then rise is added)
@@ -39,6 +40,8 @@ import fauna_rig as R  # noqa: E402
 
 OUT_REL = "assets/awaken/player_animations/power_casts.json"
 AIM = "q.head_x_rotation"  # the look pitch in degrees (+ down), the same value vanilla puts on the head
+# how far the head is turned off the body (degrees, + toward the right hand), the yaw vanilla's bow pose adds to its arms
+YAW = "math.min_angle(q.head_y_rotation - q.body_y_rotation)"
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -84,22 +87,24 @@ WAIST = 12.0  # the library turns the whole figure (its "body" bone) about the w
 
 
 class V:
-    """A channel value: const + k * look pitch (k = 0 or 1), or disabled (the vanilla value stays)."""
-    __slots__ = ("c", "k", "off")
+    """A channel value: const + k * look pitch + ky * head yaw off the body (k, ky = 0 or 1), or disabled (the vanilla
+    value stays)."""
+    __slots__ = ("c", "k", "ky", "off")
 
-    def __init__(self, c=0.0, k=0, off=False):
-        self.c, self.k, self.off = float(c), k, off
+    def __init__(self, c=0.0, k=0, off=False, ky=0):
+        self.c, self.k, self.ky, self.off = float(c), k, ky, off
 
-    def at(self, pitch=0.0):
-        return self.c + self.k * pitch
+    def at(self, pitch=0.0, yaw=0.0):
+        return self.c + self.k * pitch + self.ky * yaw
 
     def json(self):
         if self.off:
             return "pal.disabled"
         c = round(self.c, 2)
-        if self.k == 0:
+        if self.k == 0 and self.ky == 0:
             return int(c) if c == int(c) else c
-        return f"{AIM} {'+' if c >= 0 else '-'} {abs(c):g}"
+        term = AIM if self.k else YAW
+        return f"{term} {'+' if c >= 0 else '-'} {abs(c):g}"
 
 
 OFF = V(off=True)
@@ -117,7 +122,7 @@ def bake(p):
     for name, key, aim, sgn in (("right_arm", "ra", "ra_aim", 1), ("left_arm", "la", "la_aim", -1)):
         x, y, z = p[key]
         if p[aim]:
-            rot = (V(x - lean, 1), V(y), V(z - brz))
+            rot = (V(x - lean, 1), V(y, ky=1), V(z - brz))
         else:
             rot = (V(x), V(y + twist), V(z))
         b[name] = {"rotation": rot, "position": (V(sgn * sx), OFF, V(sgn * sz))}
@@ -232,7 +237,8 @@ class Clip:
                 if not axes:
                     continue
                 neutral = bake(NEUTRAL)[bone][target]
-                moving = any(abs(r[1][i].c - neutral[i].c) > 1e-3 or r[1][i].k != neutral[i].k for r in rows for i in axes)
+                moving = any(abs(r[1][i].c - neutral[i].c) > 1e-3 or r[1][i].k != neutral[i].k or r[1][i].ky != neutral[i].ky
+                             for r in rows for i in axes)
                 if not moving:
                     continue
                 out.setdefault(bone, {})[target] = rows
@@ -301,7 +307,8 @@ def lerp_bones(a, b, u):
         out[bone] = {}
         for target in a[bone]:
             va, vb = a[bone][target], b[bone][target]
-            out[bone][target] = tuple(OFF if x.off else V(x.c + (y.c - x.c) * u, x.k + (y.k - x.k) * u) for x, y in zip(va, vb))
+            out[bone][target] = tuple(OFF if x.off else V(x.c + (y.c - x.c) * u, x.k + (y.k - x.k) * u, ky=x.ky + (y.ky - x.ky) * u)
+                                      for x, y in zip(va, vb))
     return out
 
 

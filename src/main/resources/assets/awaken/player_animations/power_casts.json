@@ -195,7 +195,7 @@
       "0.2": {
        "vector": [
         "q.head_x_rotation - 108",
-        -6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 6",
         0
        ],
        "easing": "easeoutexpo"
@@ -203,7 +203,7 @@
       "0.4": {
        "vector": [
         "q.head_x_rotation - 101",
-        -6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 6",
         0
        ],
        "easing": "easeinoutsine"
@@ -587,7 +587,7 @@
       "0.1": {
        "vector": [
         "q.head_x_rotation - 108",
-        -6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 6",
         0
        ],
        "easing": "easeoutexpo"
@@ -595,7 +595,7 @@
       "0.3": {
        "vector": [
         "q.head_x_rotation - 101",
-        -6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 6",
         0
        ],
        "easing": "easeinoutsine"
@@ -3033,14 +3033,14 @@
       "0": {
        "vector": [
         "q.head_x_rotation - 108",
-        6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 6",
         -6
        ]
       },
       "0.1333": {
        "vector": [
         "q.head_x_rotation - 111",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         -6
        ],
        "easing": "easeinoutsine"
@@ -3048,7 +3048,7 @@
       "0.2667": {
        "vector": [
         "q.head_x_rotation - 106",
-        4,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 4",
         -6
        ],
        "easing": "easeinoutsine"
@@ -3056,7 +3056,7 @@
       "0.4": {
        "vector": [
         "q.head_x_rotation - 108",
-        6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 6",
         -6
        ],
        "easing": "easeinoutsine"
@@ -3210,7 +3210,7 @@
       "0": {
        "vector": [
         "q.head_x_rotation - 108",
-        6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 6",
         -6
        ]
       }
@@ -3447,7 +3447,7 @@
       "0.25": {
        "vector": [
         "q.head_x_rotation - 106",
-        -12,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 12",
         0
        ],
        "easing": "easeoutexpo"
@@ -3455,7 +3455,7 @@
       "0.45": {
        "vector": [
         "q.head_x_rotation - 101",
-        -12,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 12",
         0
        ],
        "easing": "easeinoutsine"
@@ -3531,7 +3531,7 @@
       "0.25": {
        "vector": [
         "q.head_x_rotation - 106",
-        12,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 12",
         0
        ],
        "easing": "easeoutexpo"
@@ -3539,7 +3539,7 @@
       "0.45": {
        "vector": [
         "q.head_x_rotation - 101",
-        12,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 12",
         0
        ],
        "easing": "easeinoutsine"
@@ -3839,7 +3839,7 @@
       "0.1": {
        "vector": [
         "q.head_x_rotation - 106",
-        -12,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 12",
         0
        ],
        "easing": "easeoutexpo"
@@ -3847,7 +3847,7 @@
       "0.3": {
        "vector": [
         "q.head_x_rotation - 101",
-        -12,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 12",
         0
        ],
        "easing": "easeinoutsine"
@@ -3907,7 +3907,7 @@
       "0.1": {
        "vector": [
         "q.head_x_rotation - 106",
-        12,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 12",
         0
        ],
        "easing": "easeoutexpo"
@@ -3915,7 +3915,7 @@
       "0.3": {
        "vector": [
         "q.head_x_rotation - 101",
-        12,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 12",
         0
        ],
        "easing": "easeinoutsine"
@@ -5906,7 +5906,7 @@
       "0.45": {
        "vector": [
         "q.head_x_rotation - 98",
-        -4,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 4",
         0
        ],
        "easing": "easeoutexpo"
@@ -5914,7 +5914,7 @@
       "0.6": {
        "vector": [
         "q.head_x_rotation - 95",
-        -4,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 4",
         0
        ],
        "easing": "easeoutsine"
@@ -6265,7 +6265,7 @@
       "0.3": {
        "vector": [
         "q.head_x_rotation - 98",
-        -4,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 4",
         0
        ],
        "easing": "easeoutexpo"
@@ -6273,7 +6273,7 @@
       "0.45": {
        "vector": [
         "q.head_x_rotation - 95",
-        -4,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 4",
         0
        ],
        "easing": "easeoutsine"
@@ -7034,7 +7034,7 @@
       "0.5": {
        "vector": [
         "q.head_x_rotation - 70",
-        -6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 6",
         0
        ],
        "easing": "easeoutback"
@@ -7075,7 +7075,7 @@
       "0.5": {
        "vector": [
         "q.head_x_rotation - 70",
-        6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 6",
         0
        ],
        "easing": "easeoutback"
@@ -7295,7 +7295,7 @@
       "0.4": {
        "vector": [
         "q.head_x_rotation - 70",
-        -6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 6",
         0
        ],
        "easing": "easeoutback"
@@ -7328,7 +7328,7 @@
       "0.4": {
        "vector": [
         "q.head_x_rotation - 70",
-        6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 6",
         0
        ],
        "easing": "easeoutback"
@@ -7917,7 +7917,7 @@
       "0.2": {
        "vector": [
         "q.head_x_rotation - 92",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ],
        "easing": "easeoutexpo"
@@ -7925,7 +7925,7 @@
       "0.25": {
        "vector": [
         "q.head_x_rotation - 106",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ],
        "easing": "easeoutexpo"
@@ -7933,7 +7933,7 @@
       "0.4": {
        "vector": [
         "q.head_x_rotation - 93",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ],
        "easing": "easeoutcubic"
@@ -7941,7 +7941,7 @@
       "0.5": {
        "vector": [
         "q.head_x_rotation - 93",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ]
       }
@@ -8379,7 +8379,7 @@
       "0.1": {
        "vector": [
         "q.head_x_rotation - 92",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ],
        "easing": "easeoutexpo"
@@ -8387,7 +8387,7 @@
       "0.15": {
        "vector": [
         "q.head_x_rotation - 106",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ],
        "easing": "easeoutexpo"
@@ -8395,7 +8395,7 @@
       "0.3": {
        "vector": [
         "q.head_x_rotation - 93",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ],
        "easing": "easeoutcubic"
@@ -8403,7 +8403,7 @@
       "0.4": {
        "vector": [
         "q.head_x_rotation - 93",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ]
       }
@@ -8698,14 +8698,14 @@
       "0": {
        "vector": [
         "q.head_x_rotation - 92",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ]
       },
       "0.06667": {
        "vector": [
         "q.head_x_rotation - 93",
-        0.6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0.6",
         0
        ],
        "easing": "easeinoutsine"
@@ -8713,7 +8713,7 @@
       "0.1333": {
        "vector": [
         "q.head_x_rotation - 91.2",
-        -0.6,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 0.6",
         0
        ],
        "easing": "easeinoutsine"
@@ -8721,7 +8721,7 @@
       "0.2": {
        "vector": [
         "q.head_x_rotation - 92",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ],
        "easing": "easeinoutsine"
@@ -8932,7 +8932,7 @@
       "0": {
        "vector": [
         "q.head_x_rotation - 92",
-        0,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 0",
         0
        ]
       }
@@ -11132,7 +11132,7 @@
       "0.1": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11148,7 +11148,7 @@
       "0.3": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11164,7 +11164,7 @@
       "0.5": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11180,7 +11180,7 @@
       "0.7": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11196,7 +11196,7 @@
       "0.9": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11212,7 +11212,7 @@
       "1.1": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11228,7 +11228,7 @@
       "1.3": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11244,7 +11244,7 @@
       "1.5": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11260,7 +11260,7 @@
       "1.7": {
        "vector": [
         "q.head_x_rotation - 104",
-        -8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) - 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11464,7 +11464,7 @@
       "0.2": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11480,7 +11480,7 @@
       "0.4": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11496,7 +11496,7 @@
       "0.6": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11512,7 +11512,7 @@
       "0.8": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11528,7 +11528,7 @@
       "1": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11544,7 +11544,7 @@
       "1.2": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11560,7 +11560,7 @@
       "1.4": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11576,7 +11576,7 @@
       "1.6": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
@@ -11592,7 +11592,7 @@
       "1.8": {
        "vector": [
         "q.head_x_rotation - 104",
-        8,
+        "math.min_angle(q.head_y_rotation - q.body_y_rotation) + 8",
         0
        ],
        "easing": "easeoutquad"
