@@ -27,8 +27,8 @@ import org.jspecify.annotations.Nullable;
  */
 public final class UpdraftRenderer implements BlockEntityRenderer<UpdraftVentBlockEntity, UpdraftRenderer.State> {
     static final Identifier STREAM = Awaken.id("textures/ascent/stream.png");
-    private static final int STREAKS = 16;
-    private static @Nullable RenderType type;
+    private static final int STREAKS = 24;
+    private static @Nullable RenderType type, haze;
 
     public static final class State extends BlockEntityRenderState {
         float time;
@@ -53,10 +53,31 @@ public final class UpdraftRenderer implements BlockEntityRenderer<UpdraftVentBlo
 
     @Override
     public void submit(State state, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
-        if (type == null) type = RenderTypes.energySwirl(STREAM, 0, 0);
+        if (type == null) {
+            type = RenderTypes.energySwirl(STREAM, 0, 0);
+            haze = RenderTypes.energySwirl(AscentRender.GLOW, 0, 0);
+        }
         float time = state.time;
         double cx = state.camX, cz = state.camZ;
+        out.submitCustomGeometry(pose, haze, (p, vc) -> haze(p, vc, cx, cz));
         out.submitCustomGeometry(pose, type, (p, vc) -> streaks(p, vc, time, cx, cz));
+    }
+
+    /** The column's extent: a faint sheet of light its width, turned to face you, fading in at the vent and out up top. */
+    private static void haze(PoseStack.Pose pose, VertexConsumer vc, double camX, double camZ) {
+        double tl = Math.sqrt(camX * camX + camZ * camZ);
+        if (tl < 1e-3) return;
+        double r = Updrafts.RADIUS, rx = -camZ / tl * r, rz = camX / tl * r;
+        double[] ys = {1, 4, 1 + Updrafts.FULL, 1 + Updrafts.HEIGHT};
+        int[] as = {0x00, 0x0A, 0x07, 0x00};
+        for (int k = 0; k < 3; k++) {
+            int lo = tint(0xD8F2FF, as[k] / 255F), hi = tint(0xD8F2FF, as[k + 1] / 255F);
+            // the glow texture runs across in v: left edge 0, right edge 1
+            vert(vc, pose, 0.5 - rx, ys[k + 1], 0.5 - rz, 0.5F, 0, hi);
+            vert(vc, pose, 0.5 + rx, ys[k + 1], 0.5 + rz, 0.5F, 1, hi);
+            vert(vc, pose, 0.5 + rx, ys[k], 0.5 + rz, 0.5F, 1, lo);
+            vert(vc, pose, 0.5 - rx, ys[k], 0.5 - rz, 0.5F, 0, lo);
+        }
     }
 
     private static void streaks(PoseStack.Pose pose, VertexConsumer vc, float time, double camX, double camZ) {
@@ -66,26 +87,32 @@ public final class UpdraftRenderer implements BlockEntityRenderer<UpdraftVentBlo
             double ang = i * 2.39996 + time * 0.004 * (i % 2 == 0 ? 1 : -1);
             double r = Updrafts.RADIUS * 0.85 * Math.sqrt(0.08 + 0.92 * frac(i * 0.618034));
             double x = 0.5 + Math.cos(ang) * r, z = 0.5 + Math.sin(ang) * r;
-            double speed = 0.32 + 0.22 * frac(i * 0.4142), len = 3.5 + 3 * frac(i * 0.7321);
+            double speed = 0.3 + 0.2 * frac(i * 0.4142), len = 6 + 4 * frac(i * 0.7321);
             double y0 = 1 + ((time * speed + frac(i * 0.5772) * (top + len)) % (top + len)) - len;
             double y1 = y0 + len;
             if (y1 < 1) continue;
             // stronger low in the column, gone where the lift is gone
             double mid = Mth.clamp((y0 + y1) / 2 - 1, 0, top);
-            float a = (float) ((mid <= Updrafts.FULL ? 1 : 1 - (mid - Updrafts.FULL) / (top - Updrafts.FULL)) * 0.55);
+            float a = (float) ((mid <= Updrafts.FULL ? 1 : 1 - (mid - Updrafts.FULL) / (top - Updrafts.FULL)) * 0.42);
             if (a <= 0.02F) continue;
             // a ribbon turned toward the camera round the vertical
             double tx = camX - (x - 0.5), tz = camZ - (z - 0.5), tl = Math.sqrt(tx * tx + tz * tz);
             if (tl < 1e-3) continue;
-            double w = 0.16 + 0.1 * frac(i * 0.29);
+            double w = 0.3 + 0.22 * frac(i * 0.29);
             double rx = -tz / tl * w, rz = tx / tl * w;
-            int c = ((int) (a * 255) << 24) | 0xD8F2FF;
+            int c = tint(0xD8F2FF, a);
             float bottom = (float) Math.max(1, y0);
             vert(vc, pose, x - rx, y1, z - rz, 0, 0, c);
             vert(vc, pose, x + rx, y1, z + rz, 1, 0, c);
             vert(vc, pose, x + rx, bottom, z + rz, 1, 1, c);
             vert(vc, pose, x - rx, bottom, z - rz, 0, 1, c);
         }
+    }
+
+    /** Additive light ignores alpha (ONE, ONE): the strength goes into the colour itself. */
+    private static int tint(int rgb, float a) {
+        int r = (int) (((rgb >> 16) & 255) * a), g = (int) (((rgb >> 8) & 255) * a), b = (int) ((rgb & 255) * a);
+        return 0xFF000000 | r << 16 | g << 8 | b;
     }
 
     private static double frac(double v) {

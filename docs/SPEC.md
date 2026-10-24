@@ -1880,8 +1880,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   open wings 2-4 blocks a second (0.13 shot them up 58 in 5 s); a windway of 0.02-0.03 along carries a glide.
 - **The updraft vent** (`awaken:updraft_vent`, a Precursor grate, light 10, pickaxe): a column of rising air, radius
   3.5, 34 high from its top, lift 0.045 to 24 up then fading to 0 at the top, 35% less at the rim; columns don't stack
-  (the strongest counts). Drawn as 16 pale streaks rising up the column, turned to face you, fading where the lift
-  fades (one draw a vent, seen from 160); heard as a soft rising rush every 2.5-4 s near it (`ascent.updraft`).
+  (the strongest counts). Drawn as 24 soft filaments of pale air rising up the column (6-10 long, 0.3 a tick), turned
+  to face you, over a faint haze its width, both fading where the lift fades (additive: strength in the colour, not
+  alpha; one draw a vent, seen from 160); heard as a soft rising rush every 2.5-4 s near it (`ascent.updraft`).
   Client side the loaded vents are a list their block entities join, so the air costs a list walk. The sandbox puts
   one on a 13-high pillar off the tower's side (its column reaches past the deck). The Wilds' pylons stand on them.
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a

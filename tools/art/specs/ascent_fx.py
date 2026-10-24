@@ -13,8 +13,8 @@ Layout the renderer expects (dev.awaken.body.ascent.client.AscentRender, WingLay
 - wing.png    u from the shoulder (0) to the tip (1), v from the leading edge (0) to the trailing edge (1): coverts
               along the leading edge, long flight feathers trailing, scalloped tips, a rounded wingtip
 - wing_glow.png  the wing's own shape blurred into a halo, premultiplied (drawn additive over the wing)
-- stream.png  an updraft's rising streak: u across (0..1), v from the head (0, top) to the tail (1): a bright soft head
-              and a long thinning tail of air, premultiplied (drawn additive, scrolling up the column)
+- stream.png  a filament of an updraft's rising air: u across (0..1), v from the top (0) to the bottom (1): soft across,
+              tapering in at both ends, a little brighter toward the top, premultiplied (drawn additive, scrolling up)
 """
 import math
 import os
@@ -77,20 +77,18 @@ def glow():
 
 
 def stream():
+    """A filament of rising air: soft across, tapering in at both ends, a little brighter toward the top."""
     w, h = 16, 128
     u = (np.arange(w) + 0.5) / w
     v = (np.arange(h) + 0.5) / h
     U, V = np.meshgrid(u, v)
     across = (U - 0.5) * 2
-    # a head near the top, a tail that thins and fades toward the bottom
-    width = 0.28 + 0.5 * np.exp(-((V - 0.08) / 0.06) ** 2)
-    body = np.exp(-(across / np.maximum(0.05, width * (1 - 0.7 * V))) ** 2)
-    along = np.exp(-((V - 0.08) / 0.05) ** 2) * 0.6 + np.clip(1 - V, 0, 1) ** 1.6 * 0.55
-    along *= np.clip(V / 0.04, 0, 1)
-    a = np.clip(body * along, 0, 1)
-    rgb = np.ones((h, w, 3)) * (0.82 + 0.18 * np.exp(-((V - 0.08) / 0.08) ** 2))[..., None]
-    rgb[..., 0] *= 0.86
-    rgb[..., 1] *= 0.95
+    body = np.exp(-(across / (0.55 - 0.25 * V)) ** 2)
+    along = np.clip(V / 0.18, 0, 1) ** 0.8 * np.clip((1 - V) / 0.45, 0, 1) ** 1.2 * (1.0 - 0.35 * V)
+    a = np.clip(body * along * 0.9, 0, 1)
+    rgb = np.ones((h, w, 3))
+    rgb[..., 0] *= 0.84
+    rgb[..., 1] *= 0.94
     return _premul(rgb, a)
 
 
