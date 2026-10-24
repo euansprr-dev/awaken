@@ -49,6 +49,8 @@ public final class AscentMoves {
     /** Ticks until a fired rope bites (it flies out first: the anticipation); 0 once it holds. */
     static int ropeTravel;
     static boolean ropeTaut;
+    /** A line thrown for you (the vow's): held until it arrives, key or no key. */
+    static boolean heldForYou;
     static double tension;
     // input edges
     private static boolean tetherWas, jumpWas, sneakWas, sprintWas;
@@ -183,7 +185,7 @@ public final class AscentMoves {
                 }
             }
             case ZIP -> {
-                if (!tether) {
+                if (!tether && !heldForYou) {
                     toCarry(p, "zip let go");
                     carry(yaw, fwd, right);
                 } else {
@@ -416,6 +418,33 @@ public final class AscentMoves {
         // the first tick runs now
         if (state == AscentState.TETHER) tetherTick(p, p.getYRot(), 0, 0, false);
         else zipTick(p, p.getYRot());
+        return true;
+    }
+
+    /**
+     * The Tether Vow's line (SPEC §17.7): thrown for you, straight to a point (a zip), the same rope the key throws.
+     * False when the body can't take it (no rope yet, riding, swimming...).
+     */
+    static boolean zipTo(LocalPlayer p, double x, double y, double z) {
+        if (!has(AscentPayloads.Tier.TETHER) || off(p)) return false;
+        fireAt = ticks;
+        AscentSounds.local(p, AscentContent.ROPE_FIRE.get(), 0.9F, 0.9F);
+        event(AscentPayloads.EV_FIRE, 0);
+        double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
+        if (state == AscentState.NONE) K.set(hx, hy, hz, p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        else K.set(hx, hy, hz, K.vx, K.vy, K.vz);
+        ax = x;
+        ay = y;
+        az = z;
+        anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
+        double dist = Math.sqrt((ax - hx) * (ax - hx) + (ay - hy) * (ay - hy) + (az - hz) * (az - hz));
+        ropeTravel = Mth.clamp((int) Math.ceil(dist / 16), 1, 3);
+        ropeTaut = false;
+        len = lenTarget = dist;
+        setState(p, AscentState.ZIP);
+        heldForYou = true;
+        if (p.onGround()) K.vy = Math.max(K.vy, 0.3);
+        trace(String.format("the vow's line, zip %.1f", dist));
         return true;
     }
 
@@ -733,6 +762,7 @@ public final class AscentMoves {
 
     private static void setState(LocalPlayer p, AscentState s) {
         if (s == state) return;
+        heldForYou = false;
         AscentState was = state;
         state = s;
         stateAge = 0;
@@ -774,6 +804,7 @@ public final class AscentMoves {
 
     static void forget() {
         slamming = false;
+        heldForYou = false;
         airMovesUsed = 0;
         state = AscentState.NONE;
         stateAge = 0;

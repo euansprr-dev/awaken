@@ -12,11 +12,19 @@
   "subtitles.awaken.ascent.land": "Someone lands hard",
   "subtitles.awaken.ascent.remember": "A body remembers",
   "subtitles.awaken.ascent.updraft": "Air rushes upward",
+  "subtitles.awaken.ascent.vow_call": "A vault hums",
+  "subtitles.awaken.ascent.vow_line": "A line of light is given",
   "awaken.ascent.remember.title": "Your body remembers.",
   "awaken.ascent.tier.tether": "The line",
   "awaken.ascent.tier.leaper": "The leap",
   "awaken.ascent.tier.wings": "Wings",
   "awaken.ascent.tier.skyborn": "The sky",
   "awaken.ascent.tier.sovereign": "The crown",
-  "block.awaken.updraft_vent": "Updraft Vent"
+  "block.awaken.updraft_vent": "Updraft Vent",
+  "awaken.ascent.vow.call": "The vault knows you.",
+  "awaken.ascent.vow.line": "The line is yours.",
+  "awaken.ascent.vow.how": "Hold %s to throw the line. Let go to fly.",
+  "awaken.ascent.vow.mast": "Reach the beacon mast.",
+  "awaken.ascent.vow.kept": "Vow kept.",
+  "awaken.ascent.vow.lapsed": "The mast will wait."
 }

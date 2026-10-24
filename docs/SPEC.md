@@ -1895,6 +1895,30 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   run ended against the recording's end ("off by d"), so a tour can tell a route that still works from one a change
   broke. Record from standing still; at most five minutes.
 
+### 17.7 The Tether Vow (the rope, earned at the first vault)
+- Who: awake, in the overworld, without the rope, the `ascent` option on. Where: a Precursor vault's forecourt (local
+  x 4-18, z 0-3, feet 1-5 over the floor: between the pylons, before the sealed door, which no low rank can open; every
+  vault qualifies until one is kept, so the first one reached is where it happens). Checked once a second per player.
+- The vault's turn is read from its pylons' own blocks at the front corners (the amber lights at local y 20, the trim at
+  19, the polished cornice at 11: at least 4 of the 6); terrain can't fake them, and a vault dug into a hill keeps them
+  (open air at the back corners, the first try, failed on the first real spawn vault). The vault's box is its piece's
+  (the structure start's is padded by 12). A layout from before the vault redesign reads as none and is skipped. `TetherVow.Site` maps local to world like
+  `PrecursorRuinPiece`.
+- The call (3 s): the Lens takes the vow's look (`awaken:vow` in `lens/looks_ascent.json`: cold light, deep blue
+  shadows, vignette, bloom), the wind ducks, a low glass note swells (`ascent.vow_call`), the vault's light gathers off
+  the paving and drifts toward the mast; "The vault knows you."
+- The line: the server gives TETHER (`Ascent.grant(..., "tether vow")`) and names the line's end: a plate round the
+  nearer pylon's spire (inner one first; weathering may have taken some). The client throws the rope there for the
+  player (`AscentMoves.zipTo`, a zip held until it arrives, key or no key; the server checks its anchor as always),
+  with `ascent.vow_line` and a launch kick: "The line is yours.", then "Hold <key> to throw the line. Let go to fly."
+  (the key's own name), the look easing back, then "Reach the beacon mast." while a ring of light pulses at the mast.
+  No plate left: the rope is given without the pull.
+- Kept: feet 15+ over the floor within 5 of the mast's line, within 2 minutes and 64 blocks: `ascent.remember`, full
+  Flow, "Vow kept.", 10 Tether mastery, a fifth of a level's XP (DISCOVERY), counter `awaken:ascent_vow_kept`, flag
+  `VOW_KEPT` in the record. Lapsed: "The mast will wait." (the rope stays; nothing is lost).
+- `ascent_tether_vow` builds a vault from its blueprint in each turn and checks the turn, the forecourt, the pylon
+  anchor (real to the server, the line clear) and the mast, then runs the director: call, line, kept.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)

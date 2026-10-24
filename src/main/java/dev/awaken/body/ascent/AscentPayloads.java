@@ -89,6 +89,25 @@ public final class AscentPayloads {
         @Override public Type<Remember> type() { return TYPE; }
     }
 
+    /**
+     * Server → client: the Tether Vow's stage (TetherVow.CALL, LINE, KEPT, LAPSED). (ax, ay, az): where the line takes
+     * the body (LINE; NaN for none); (mx, my, mz): the beacon mast (CALL, LINE).
+     */
+    public record Vow(int stage, double ax, double ay, double az, double mx, double my, double mz) implements CustomPacketPayload {
+        public static final Type<Vow> TYPE = new Type<>(Awaken.id("ascent_vow"));
+        public static final StreamCodec<ByteBuf, Vow> STREAM_CODEC = StreamCodec.of((buf, m) -> {
+            ByteBufCodecs.VAR_INT.encode(buf, m.stage);
+            buf.writeDouble(m.ax);
+            buf.writeDouble(m.ay);
+            buf.writeDouble(m.az);
+            buf.writeDouble(m.mx);
+            buf.writeDouble(m.my);
+            buf.writeDouble(m.mz);
+        }, buf -> new Vow(ByteBufCodecs.VAR_INT.decode(buf), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readDouble(),
+                buf.readDouble(), buf.readDouble()));
+        @Override public Type<Vow> type() { return TYPE; }
+    }
+
     /** Server → client (dev, autopilot): run a line of the pilot (scripted input for tours). */
     public record Pilot(String line) implements CustomPacketPayload {
         public static final Type<Pilot> TYPE = new Type<>(Awaken.id("ascent_pilot"));

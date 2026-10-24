@@ -34,6 +34,8 @@ public final class AscentClient {
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_flow"), AscentFlow::render));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, dev.awaken.Awaken.id("ascent_scene"), AscentScene::render));
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, dev.awaken.Awaken.id("ascent_vow"), VowScene::render));
         FeelDirector.init(modBus);
         var bus = NeoForge.EVENT_BUS;
         // before the Awakened Body's own moves: an airborne state owns the body and the body's moves stand aside
@@ -49,6 +51,7 @@ public final class AscentClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             AscentMoves.reset();
             AscentScene.reset();
+            VowScene.reset();
             dev.awaken.body.ascent.Updrafts.clear();
             AscentRemote.reset();
             AscentPilot.stop();
@@ -76,6 +79,7 @@ public final class AscentClient {
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
         event.register(AscentPayloads.Stop.TYPE, (msg, ctx) -> AscentMoves.refused(msg.state()));
         event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits()));
+        event.register(AscentPayloads.Vow.TYPE, (msg, ctx) -> VowScene.on(msg));
     }
 
     private static void tick() {
@@ -84,6 +88,7 @@ public final class AscentClient {
         AscentMoves.tick();
         AscentFlow.tick(mc.player);
         AscentScene.tick(mc.player);
+        VowScene.tick(mc.player);
         AscentPilot.tick();
         AscentRoutes.tick();
         AscentRemote.tick();

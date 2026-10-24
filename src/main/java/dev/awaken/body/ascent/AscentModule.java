@@ -22,6 +22,9 @@ public final class AscentModule {
         // before the body's own roll (LOW): an airborne state's landing never hurts
         bus.addListener(EventPriority.HIGH, AscentServer::onFall);
         bus.addListener(AscentServer::onLogin);
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> {
+            if (e.getEntity() instanceof net.minecraft.server.level.ServerPlayer p) TetherVow.forget(p);
+        });
         bus.addListener(AscentServer::onRespawn);
         bus.addListener(AscentServer::onDimension);
         bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, AscentServer::onPlace);
@@ -47,6 +50,7 @@ public final class AscentModule {
         r.playToClient(AscentPayloads.Tiers.TYPE, AscentPayloads.Tiers.STREAM_CODEC);
         r.playToClient(AscentPayloads.Pilot.TYPE, AscentPayloads.Pilot.STREAM_CODEC);
         r.playToClient(AscentPayloads.Remember.TYPE, AscentPayloads.Remember.STREAM_CODEC);
+        r.playToClient(AscentPayloads.Vow.TYPE, AscentPayloads.Vow.STREAM_CODEC);
         r.playToClient(AscentPayloads.Stop.TYPE, AscentPayloads.Stop.STREAM_CODEC);
     }
 }

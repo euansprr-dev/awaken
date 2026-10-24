@@ -46,6 +46,8 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> LAND = sound("ascent.land");
     public static final DeferredHolder<SoundEvent, SoundEvent> REMEMBER = sound("ascent.remember");
     public static final DeferredHolder<SoundEvent, SoundEvent> UPDRAFT = sound("ascent.updraft");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VOW_CALL = sound("ascent.vow_call");
+    public static final DeferredHolder<SoundEvent, SoundEvent> VOW_LINE = sound("ascent.vow_line");
 
     /** A Precursor grate that breathes a column of rising air (the Wilds' pylons stand on them; SPEC §17.6). */
     public static final net.neoforged.neoforge.registries.DeferredBlock<UpdraftVentBlock> UPDRAFT_VENT = BLOCKS.registerBlock("updraft_vent",

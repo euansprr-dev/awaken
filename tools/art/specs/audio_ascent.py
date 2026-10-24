@@ -20,6 +20,8 @@ feathers. Never the body's cloth-and-grit alone, never a vanilla sound.
 - boom:         the sonic boom's crack: a double crack (the shock's two edges) and a long low rumble
 - land:         coming down out of the air: a heavy settle and a skid of grit
 - updraft:      an updraft vent's breath: air drawn up a column, a soft rush rising in pitch, a hollow low under it
+- vow_call:     the Tether Vow's call: a low glass bowl struck under the floor, a fifth above it swelling, air drawn up
+- vow_line:     the line given: a quick rising run of glass (four notes) over a whoosh, a bright ting where it bites
 - remember:     "your body remembers": a long inhale of air under a slow rising chord of glass (G, D, G, D), the wings
                 shaking out and the body settling as the top note lands (1.7 s in, when the wings open)
 
@@ -225,6 +227,24 @@ def updraft(seed):
     return finish(x, 0.3, 7000)
 
 
+def vow_call(seed):
+    n = K.ns(3.6)
+    x = at(n, 0.0, K.glass(98.0, K.ns(3.6), bright=0.25, t60=3.0, seed=seed + 1, hit=0.2)) * 0.5
+    x += at(n, 0.35, K.glass(147.0, K.ns(3.2), bright=0.3, t60=2.6, seed=seed + 2, hit=0.0)) * 0.32
+    x += at(n, 0.9, K.glass(196.0, K.ns(2.6), bright=0.35, t60=2.2, seed=seed + 3, hit=0.0)) * 0.22
+    x += at(n, 0.2, sweep(3.2, 120, 520, 0.6, seed + 4, 0.7, 1.5)) * 0.3                 # the air drawn up
+    return finish(x, 0.5, 6500)
+
+
+def vow_line(seed):
+    n = K.ns(2.4)
+    x = at(n, 0.0, sweep(0.6, 400, 2600, 0.8, seed + 1, 0.15, 1.3)) * 0.45                # the throw
+    for i, f in enumerate((587.3, 784.0, 987.8, 1318.5)):
+        x += at(n, 0.05 + 0.07 * i, K.glass(f, K.ns(2.0), bright=0.45, t60=1.6, seed=seed + 2 + i, hit=0.6)) * (0.2 - 0.02 * i)
+    x += at(n, 0.38, thump(90, 60, 0.25, 0.12, 0.5, 240, seed + 9)) * 0.35               # the bite
+    return finish(x, 0.4, 9000)
+
+
 def remember(seed):
     n = K.ns(4.8)
     x = at(n, 0.0, sweep(3.0, 180, 820, 0.7, seed + 1, 0.75, 1.6)) * 0.3                 # the air drawing in
@@ -250,6 +270,8 @@ SOUNDS_SPEC = [
     ("ascent_land", land, -20.0, "ascent.land", "Someone lands hard", 1.0, 20),
     ("ascent_remember", remember, -21.0, "ascent.remember", "A body remembers", 1.0, 24),
     ("ascent_updraft", updraft, -22.0, "ascent.updraft", "Air rushes upward", 1.0, 20),
+    ("ascent_vow_call", vow_call, -21.0, "ascent.vow_call", "A vault hums", 1.0, 24),
+    ("ascent_vow_line", vow_line, -20.5, "ascent.vow_line", "A line of light is given", 1.0, 24),
 ]
 
 
