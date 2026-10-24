@@ -56,6 +56,8 @@ public final class AscentServer {
     /** Style XP per link of a finished chain (×xpToNext), the most links paid, and the most paid a minute (×xpToNext). */
     static final double STYLE_PER_LINK = 0.0012, STYLE_CAP_MINUTE = 0.015;
     static final int STYLE_MAX_LINKS = 25;
+    /** A new longest chain is told to the player from this many links (shorter ones are just the start). */
+    static final int RECORD_FROM = 6;
 
     /**
      * A move went off (a rope's bite, a launch, wings, a boom, an air move, a wall-run, a wall jump, a ledge grab, a
@@ -81,7 +83,9 @@ public final class AscentServer {
         int chain = m.chain;
         m.chain = 0;
         if (chain < 3) return;
-        p.setData(AscentContent.MEMORY, p.getData(AscentContent.MEMORY).withChain(chain));
+        AscentMemory mem = p.getData(AscentContent.MEMORY);
+        if (chain > mem.chainBest() && chain >= RECORD_FROM) AwakenNet.send(p, new AscentPayloads.Record(chain));
+        p.setData(AscentContent.MEMORY, mem.withChain(chain));
         // style is paid once awake (before that the body is learning, not performing)
         if (!dev.awaken.progression.Progression.profile(p).awakened()) return;
         double toNext = dev.awaken.progression.Curve.xpToNext(dev.awaken.progression.Progression.profile(p).level());

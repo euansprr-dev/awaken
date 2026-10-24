@@ -35,6 +35,13 @@ final class AscentNotes {
         }
     }
 
+    /** A new longest chain. */
+    static void record(int chain) {
+        note = Component.translatable("awaken.ascent.record", chain);
+        at = clock;
+        AscentFlow.gain(0.2F);
+    }
+
     static void tick() {
         clock++;
     }

@@ -1839,7 +1839,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   held), the boom, a double jump, an air dash, a dive, a slam's landing (Leaper held), a flap (Skyborn held), and the
   Runner's wall-run, wall jump, ledge jump (2 points each) and ledge grab (1). Links more than 50 ticks apart end the
   chain. A finished chain of 3+ links pays style XP once awake: xpToNext × 0.0012 × min(links, 25), at most 1.5% of a
-  level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`).
+  level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`); beating
+  it from 6 links up is told (`AscentPayloads.Record`): "Longest chain yet · 12 moves" over the hotbar and a lift of
+  Flow.
 - **Mastery** per track (RUNNER, TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN): each link adds its points to its track
   (rope fire 2, launch 3, wings 2, boom 6, Leaper moves 2, slam 3, flap 1, Runner 1-2); level = floor(√(points / 25)),
   max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (predicted, the

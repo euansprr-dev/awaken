@@ -108,6 +108,13 @@ public final class AscentPayloads {
         @Override public Type<Vow> type() { return TYPE; }
     }
 
+    /** Server → client: a chain of moves beat the player's longest (from six links): its length. */
+    public record Record(int chain) implements CustomPacketPayload {
+        public static final Type<Record> TYPE = new Type<>(Awaken.id("ascent_record"));
+        public static final StreamCodec<ByteBuf, Record> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Record::chain, Record::new);
+        @Override public Type<Record> type() { return TYPE; }
+    }
+
     /** Server → client (dev, autopilot): run a line of the pilot (scripted input for tours). */
     public record Pilot(String line) implements CustomPacketPayload {
         public static final Type<Pilot> TYPE = new Type<>(Awaken.id("ascent_pilot"));
