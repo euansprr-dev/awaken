@@ -53,6 +53,8 @@ import java.util.Map;
  * info                                           logs the renderer, device, framebuffer, heap, GC and loaded mods
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
+ * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
+ * lensdebug 0..3                                 Lens debug views: normal, pass-through, depth masks, far depth
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
@@ -365,6 +367,14 @@ public final class Autopilot {
                 String[] w = arg.trim().split("\\s+");
                 mc.getWindow().setWindowed(Integer.parseInt(w[0]), Integer.parseInt(w[1]));
                 waitTicks = 20;
+            }
+            case "lens" -> {
+                dev.awaken.core.AwakenConfig.Client.LENS.set(dev.awaken.core.AwakenConfig.Client.LensLook.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
+                waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
+            }
+            case "lensdebug" -> {
+                dev.awaken.lens.client.LensClient.debug(Integer.parseInt(arg.trim()));
+                waitTicks = 10;
             }
             case "opt" -> { // opt renderDistance|simulationDistance <n>
                 String[] o = arg.trim().split("\\s+");

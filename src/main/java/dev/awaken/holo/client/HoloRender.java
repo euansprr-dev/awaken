@@ -438,8 +438,9 @@ final class HoloRender {
             ps.pushPose();
             // GUI item space (y flipped, 16 units), flattened in depth and lifted off the glass so the glass's depth
             // never hides its back faces
-            ps.translate(cv.itemXY[i * 2] + 8, cv.itemXY[i * 2 + 1] + 8, 10);
-            ps.scale(16, -16, 4);
+            float sz = cv.itemSize[i];
+            ps.translate(cv.itemXY[i * 2] + sz / 2, cv.itemXY[i * 2 + 1] + sz / 2, 10 * sz / 16);
+            ps.scale(sz, -sz, sz / 4);
             ps.last().normal().set(st.usesBlockLight() ? BLOCK_NORMALS : FLAT_NORMALS);
             st.submit(ps, out, FULL_BRIGHT, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 0);
             ps.popPose();

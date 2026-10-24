@@ -3,6 +3,8 @@ package dev.awaken.hearth;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.hearth.echo.EchoRole;
+import dev.awaken.hearth.room.Furniture;
+import dev.awaken.hearth.room.Miss;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
 import net.minecraft.core.BlockPos;
@@ -46,9 +48,17 @@ public final class HearthRecord {
     public final Map<BlockPos, Integer> mineProgress = new HashMap<>();
     public long createdDay;
     public long itemsHauled, cropsHarvested, oresBrought;
+    /** A cell inside the cottage Oren raised here (null = none): the guide says "Oren built this one". */
+    public BlockPos cottage;
 
     // ---- runtime only -----------------------------------------------------------------------------------------------
     public volatile List<Room> rooms = List.of();
+    /** Furniture in the radius that isn't in a room, and why (from the last scan). */
+    public List<Miss> misses = List.of();
+    /** How many of each {@link Furniture} the radius holds (from the last scan). */
+    public int[] furniture = new int[Furniture.COUNT];
+    /** Game time the Anchor was placed this session (0 = before this server start): the guide's first nudge. */
+    public long placedAt;
     /** Game time after which a rescan should run (0 = not scheduled). */
     public long scanAt = 1;
     public long lastScan;
@@ -84,7 +94,7 @@ public final class HearthRecord {
     }
 
     private record Core(UUID owner, String ownerName, BlockPos pos, String dimension, int tier, int forgeTier, long createdDay,
-                        int pendingCelebration, Optional<BlockPos> spire) {
+                        int pendingCelebration, Optional<BlockPos> spire, Optional<BlockPos> cottage) {
         static final Codec<Core> CODEC = RecordCodecBuilder.create(i -> i.group(
                 UUIDUtil.CODEC.fieldOf("owner").forGetter(Core::owner),
                 Codec.STRING.fieldOf("name").forGetter(Core::ownerName),
@@ -94,7 +104,8 @@ public final class HearthRecord {
                 Codec.INT.optionalFieldOf("forge_tier", 1).forGetter(Core::forgeTier),
                 Codec.LONG.optionalFieldOf("created_day", 0L).forGetter(Core::createdDay),
                 Codec.INT.optionalFieldOf("pending_celebration", -1).forGetter(Core::pendingCelebration),
-                BlockPos.CODEC.optionalFieldOf("spire").forGetter(Core::spire)
+                BlockPos.CODEC.optionalFieldOf("spire").forGetter(Core::spire),
+                BlockPos.CODEC.optionalFieldOf("cottage").forGetter(Core::cottage)
         ).apply(i, Core::new));
     }
 
@@ -120,7 +131,8 @@ public final class HearthRecord {
     }
 
     private Core core() {
-        return new Core(owner, ownerName, pos, dimension, tier, forgeTier, createdDay, pendingCelebration, Optional.ofNullable(spire));
+        return new Core(owner, ownerName, pos, dimension, tier, forgeTier, createdDay, pendingCelebration, Optional.ofNullable(spire),
+                Optional.ofNullable(cottage));
     }
 
     private Town town() {
@@ -138,6 +150,7 @@ public final class HearthRecord {
         r.createdDay = c.createdDay;
         r.pendingCelebration = c.pendingCelebration;
         r.spire = c.spire.orElse(null);
+        r.cottage = c.cottage.orElse(null);
         for (Npc n : t.npcs) {
             r.arrived.add(n.id);
             n.entity.ifPresent(u -> r.npcs.put(n.id, u));

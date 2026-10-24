@@ -11,6 +11,7 @@ uniform sampler2D BloomSampler;      // tight glow, quarter size
 uniform sampler2D WideSampler;       // wide glow, eighth size
 uniform sampler2D SkySampler;        // quarter-size frame: alpha = open, bright sky (hides the sun halo behind hills)
 uniform sampler2D ShaftsSampler;
+uniform sampler2D FarDepthSampler;   // far terrain's depth (Distant Horizons), when it draws
 uniform sampler2D ParamsSampler;
 
 layout(location = 0) in vec2 texCoord;
@@ -40,6 +41,21 @@ float viewDistance(float depth, float zFar, bool zeroToOne) {
     return 2.0 * zFar * zNear / (ndc * (zFar - zNear) + (zFar + zNear));
 }
 
+// far terrain's view distance from its own projection: forward or reverse Z, 0..1 or -1..1 depth
+float farDistance(float depth, float zNear, float zFar, int flags) {
+    bool reverse = (flags & 1) != 0, zeroToOne = (flags & 2) != 0;
+    if (zeroToOne) return reverse ? zNear * zFar / (depth * (zFar - zNear) + zNear) : zNear * zFar / (zFar - depth * (zFar - zNear));
+    float ndc = depth * 2.0 - 1.0;
+    return reverse ? 2.0 * zFar * zNear / (ndc * (zFar - zNear) + (zFar + zNear))
+                   : 2.0 * zFar * zNear / ((zFar + zNear) - ndc * (zFar - zNear));
+}
+
+// far terrain (Distant Horizons) draws with its own depth; true where it drew this pixel
+bool farHit(float depth, int flags) {
+    bool reverse = (flags & 1) != 0;
+    return reverse ? depth > 1.0e-6 : depth < 0.999999;
+}
+
 void main() {
     vec3 c = texture(InSampler, texCoord).rgb;
     vec4 p0 = P(0), p1 = P(1), g = P(3), shadowT = P(4), highT = P(5), b = P(6), h = P(7), hz = P(8), sunset = P(9);
@@ -50,9 +66,26 @@ void main() {
 
     // depth haze: aerial perspective toward the fog colour the game already chose for this place and hour
     float d = sky ? farPlane : viewDistance(depth, farPlane, p0.g > 0.5);
+    bool farTerrain = false;
+    if (sky && p0.b > 0.5) {
+        int flags = int(p0.a * 255.0 + 0.5);
+        float fd = texture(FarDepthSampler, texCoord).r;
+        if (farHit(fd, flags)) {
+            vec4 p15 = P(15);
+            float fNear = (p15.r * 255.0 * 256.0 + p15.g * 255.0) / 16.0, fFar = p15.b * 255.0 * 256.0 + p15.a * 255.0;
+            d = farDistance(fd, max(fNear, 0.05), max(fFar, fNear + 1.0), flags);
+            sky = false;
+            farTerrain = true;
+        }
+    }
     float rdEnd = max(fogDist.r * 255.0 * 256.0 + fogDist.g * 255.0, 16.0);
     float envEnd = fogDist.b * 255.0 * 256.0 + fogDist.a * 255.0;
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
+    // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
+    if (farTerrain) haze = min(1.0, haze + smoothstep(rdEnd, rdEnd * 8.0, d) * 0.45 * step(0.001, h.r));
+    // Far terrain is drawing but its depth isn't readable here (Distant Horizons clears it before post effects):
+    // then distance is Distant Horizons' own fog. Hazing only the near terrain would draw a ring where it ends.
+    if (p0.b > 0.5 && !farTerrain) haze = 0.0;
     // underwater, in lava or blind, the game's own fog already hides the distance
     haze *= clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0);
     vec3 hazeColor = mix(fogColor.rgb, hz.rgb, h.b);
@@ -96,4 +129,19 @@ void main() {
     float n = fract(sin(dot(q, vec2(12.9898, 78.233))) * 43758.5453) + fract(sin(dot(q, vec2(39.3468, 11.135))) * 24634.6345) - 1.0;
     c += n / 255.0;
     fragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
+
+    // development views (texel 0 red byte; 255 = normal)
+    int dbg = int(p0.r * 255.0 + 0.5);
+    if (dbg == 1) {
+        fragColor = vec4(texture(InSampler, texCoord).rgb, 1.0);                      // the frame, untouched
+    } else if (dbg == 2) {
+        float vd = texture(DepthSampler, texCoord).r;
+        bool farHere = p0.b > 0.5 && farHit(texture(FarDepthSampler, texCoord).r, int(p0.a * 255.0 + 0.5));
+        // blue: open sky by the game's depth; red: far terrain by DH's depth; green: the game's own geometry
+        vec3 m = vd < 1.0e-7 ? (farHere ? vec3(1.0, 0.1, 0.1) : vec3(0.1, 0.2, 1.0)) : vec3(0.1, 0.9, 0.2);
+        fragColor = vec4(mix(texture(InSampler, texCoord).rgb, m, 0.6), 1.0);
+    } else if (dbg == 3) {
+        float fd = texture(FarDepthSampler, texCoord).r;
+        fragColor = vec4(vec3(fract(fd * 16.0), fd, p0.b), 1.0);                       // raw far depth
+    }
 }

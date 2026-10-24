@@ -1,0 +1,321 @@
+# The Awakened Body: every move mid-motion, in first and third person. The autopilot can't hold keys, so
+# "awaken body try <move> [delay]" makes the client press the move's keys itself (exactly the path real input takes).
+# One run per frame: a shot lands about (6 + wait - delay) ticks into the driver's script, so each frame is its own run.
+# A survival world (creative players can fly, so they never roll), a smooth-stone course at y 200 facing +z. Fall damage
+# is off so a roll's frames show no hurt flash (the roll still happens: the fall event fires before the damage).
+world body survival 4242
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin rankup
+wait 10
+cmd awaken admin rankup
+wait 40
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd gamerule fall_damage false
+cmd fill -12 199 -8 12 199 40 minecraft:smooth_stone
+cmd fill -12 200 -8 12 216 40 minecraft:air
+cmd tp @s 0.5 200 0.5 0 12
+wait 400
+screen close
+
+# ---- tactical sprint ----
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try sprint
+wait 8
+shot body_sprint_fp
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 8
+shot body_sprint_tp
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 10
+shot body_sprint_side
+
+# ---- slide under a 1-block gap ----
+cmd fill -2 201 4 2 201 6 minecraft:polished_andesite
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 7
+shot body_slide_fp_2
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 10
+shot body_slide_fp_5
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 14
+shot body_slide_fp_9
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 7
+shot body_slide_tp_2
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 10
+shot body_slide_tp_5
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 14
+shot body_slide_tp_9
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 9
+shot body_slide_front_4
+cmd fill -2 201 4 2 201 6 minecraft:air
+
+# ---- the slide-cancel: slide, then jump out with its speed ----
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 13
+shot body_slidejump_tp_2
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 16
+shot body_slidejump_tp_5
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 14
+shot body_slidejump_fp_3
+
+# ---- a slide out of a tactical sprint goes further ----
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try tacslide
+wait 16
+shot body_tacslide_fp
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try tacslide
+wait 16
+shot body_tacslide_tp
+
+# ---- mantle onto a block topped with a slab (1.5) ----
+cmd fill -2 200 4 2 200 6 minecraft:stone_bricks
+cmd fill -2 201 4 2 201 6 minecraft:stone_brick_slab
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 1
+shot body_mantle_fp_1
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 1
+shot body_mantle_fp_3
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 3
+shot body_mantle_fp_5
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle 1
+shot body_mantle_tp_1
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 1
+shot body_mantle_tp_3
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 3
+shot body_mantle_tp_5
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 1
+shot body_mantle_front_3
+cmd fill -2 200 4 2 201 6 minecraft:air
+
+# ---- soft landing: a 10-block drop with crouch held (lands ~17 ticks after the teleport) ----
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 6
+shot body_roll_fp_1
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 9
+shot body_roll_fp_4
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 12
+shot body_roll_fp_7
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 6
+shot body_roll_tp_1
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 9
+shot body_roll_tp_4
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 12
+shot body_roll_tp_7
+
+# ---- a momentum hit: run in and swing (the swing at age 12) ----
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd summon minecraft:husk 0.5 200 5.5 {PersistenceRequired:1b,NoAI:1b,Rotation:[180f,0f]}
+camera first
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 8
+wait 25
+cmd awaken body try hit
+wait 8
+shot body_hit_fp
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd summon minecraft:husk 0.5 200 5.5 {PersistenceRequired:1b,NoAI:1b,Rotation:[180f,0f]}
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 8
+wait 25
+cmd awaken body try hit
+wait 8
+shot body_hit_tp
+cmd kill @e[type=!minecraft:player,distance=..80]
+
+# ---- family twists mid-slide: Kinetic (Brace: the slide-punch), Shadow (Cloak: smoke), Velocity (Dash: further) ----
+camera back
+cmd awaken body try release
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 12
+cmd summon minecraft:husk 0.5 200 8.5 {PersistenceRequired:1b,Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 1.8 200 9.5 {PersistenceRequired:1b,Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd awaken admin power reset
+cmd awaken admin energy full
+wait 20
+cmd awaken body try slide
+wait 9
+cmd awaken admin power cast brace
+shot body_twist_kinetic
+camera back
+cmd awaken body try release
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 12
+cmd summon minecraft:husk 0.5 200 8.5 {PersistenceRequired:1b,Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 1.8 200 9.5 {PersistenceRequired:1b,Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd awaken admin power reset
+cmd awaken admin energy full
+wait 20
+cmd awaken body try slide
+wait 9
+cmd awaken admin power cast cloak
+wait 6
+shot body_twist_shadow
+camera back
+cmd awaken body try release
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 12
+cmd summon minecraft:husk 0.5 200 8.5 {PersistenceRequired:1b,Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd summon minecraft:husk 1.8 200 9.5 {PersistenceRequired:1b,Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0}]}
+cmd awaken admin power reset
+cmd awaken admin energy full
+wait 20
+cmd awaken body try slide
+wait 9
+cmd awaken admin power cast dash
+shot body_twist_velocity
+cmd kill @e[type=!minecraft:player,distance=..80]
+
+# ---- the Status screen's line ----
+camera first
+cmd awaken body try release
+wait 20
+screen status
+wait 10
+shot body_status
+screen close
+quit

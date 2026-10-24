@@ -59,6 +59,20 @@ public final class GuiCanvas implements UiCanvas {
     }
 
     @Override
+    public void itemSized(ItemStack stack, int x, int y, int size) {
+        g.pose().pushMatrix();
+        g.pose().translate(x, y);
+        g.pose().scale(size / 16f, size / 16f);
+        g.item(stack, 0, 0);
+        g.pose().popMatrix();
+    }
+
+    @Override
+    public void itemTooltip(Font font, ItemStack stack, int x, int y) {
+        g.setTooltipForNextFrame(font, stack, x, y);
+    }
+
+    @Override
     public void sprite(Identifier sprite, int x, int y, int w, int h, int argb) {
         g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, w, h, argb);
     }

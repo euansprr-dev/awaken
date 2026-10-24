@@ -29,5 +29,6 @@
   "item.awaken.core_shard": "Power Core Shard",
   "subtitles.awaken.hearth.request_deliver": "Items stream into the Anchor",
   "subtitles.awaken.hearth.request_complete": "The Anchor chimes",
-  "subtitles.awaken.hearth.core_fuse": "Shards fuse"
+  "subtitles.awaken.hearth.core_fuse": "Shards fuse",
+  "screen.awaken.hearth": "Your Hearth"
 }

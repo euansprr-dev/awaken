@@ -61,6 +61,8 @@ final class Prologue {
                 s.prologue = StoryProgress.Prologue.DONE;
                 sync(p);
             }
+            // awakened some other way while the question was open: never leave the black on for good
+            if (s.prologue == StoryProgress.Prologue.ACCEPTING) liftTheBlack(p);
             return;
         }
         if (!storyOn()) return;
@@ -79,6 +81,7 @@ final class Prologue {
                 if (now - s.prologueSince >= GATE_AFTER_TICKS) openFirstGate(p, s);
             }
             case ACCEPTING -> {
+                holdTheBlack(p); // milk, a relog or a command can't lift it before the answer
                 // Waiting for the answer. If the window was missed (relog), ask again every 30 seconds.
                 if (now - s.prologueSince > 20 * 70 && (now - s.prologueSince) % (20 * 70) < 20) askToAccept(p);
             }
@@ -166,7 +169,7 @@ final class Prologue {
         s.returnY = back.y;
         s.returnZ = back.z;
         sync(p);
-        p.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0, false, false));
+        holdTheBlack(p);
         p.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 20 * 30, 4, false, false));
         // the damage event that got us here is still running: move the player on the next tick
         dev.awaken.core.Later.run(p.level().getServer(), 1, () -> {
@@ -212,7 +215,7 @@ final class Prologue {
         ServerLevel overworld = p.level().getServer().overworld();
         p.teleportTo(overworld, s.returnX, s.returnY, s.returnZ, Set.<Relative>of(), p.getYRot(), 0, true);
         p.setHealth(p.getMaxHealth());
-        p.removeEffect(MobEffects.BLINDNESS);
+        liftTheBlack(p);
         // what's true: the Bell Crypt is scripted and never breaks, so there's no hurry to go back in
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(accepted ? "Accepted." : "Accepted anyway."))
                 .body(Component.literal("The gate will wait. It never breaks."))
@@ -248,12 +251,34 @@ final class Prologue {
         StoryProgress s = progress(p);
         if (s.prologue == StoryProgress.Prologue.ACCEPTING) {
             onAnswer(p, ACCEPT_ACTION, true); // also brings the player back from the Stillpoint
+            liftTheBlack(p); // onAnswer bails out for an already awakened player
             return;
         }
         Progression.awaken(p);
         Progression.topUpToLevel(p, WAKE_LEVEL, Progression.XpSource.STORY);
         s.prologue = StoryProgress.Prologue.DONE;
         sync(p);
+    }
+
+    /**
+     * The black (Euan, 2026-10-24): from the death until the answer you can't see past arm's length. An infinite
+     * Blindness is vanilla's 5-block fog with no fade-out; the Lens Void look sits on top of it.
+     */
+    static void holdTheBlack(ServerPlayer p) {
+        MobEffectInstance now = p.getEffect(MobEffects.BLINDNESS);
+        if (now != null && now.isInfiniteDuration()) return;
+        p.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, MobEffectInstance.INFINITE_DURATION, 0, false, false));
+    }
+
+    /** Lifts only the prologue's own black: a timed Blindness from a mob or power runs its course. */
+    static void liftTheBlack(ServerPlayer p) {
+        MobEffectInstance now = p.getEffect(MobEffects.BLINDNESS);
+        if (now != null && now.isInfiniteDuration()) p.removeEffect(MobEffects.BLINDNESS);
+    }
+
+    /** On login: still at the question, still in the dark. */
+    static void onLogin(ServerPlayer p) {
+        if (progress(p).prologue == StoryProgress.Prologue.ACCEPTING && !Progression.profile(p).awakened()) holdTheBlack(p);
     }
 
     static boolean storyOn() {

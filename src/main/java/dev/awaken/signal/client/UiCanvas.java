@@ -27,6 +27,12 @@ public interface UiCanvas {
     /** A 16×16 item icon. */
     void item(ItemStack stack, int x, int y);
 
+    /** An item icon {@code size} px square. */
+    void itemSized(ItemStack stack, int x, int y, int size);
+
+    /** An item's own tooltip for the next frame at the mouse. */
+    void itemTooltip(Font font, ItemStack stack, int x, int y);
+
     /** A GUI-atlas sprite ({@code textures/gui/sprites/...}), tinted. */
     void sprite(Identifier sprite, int x, int y, int w, int h, int argb);
 

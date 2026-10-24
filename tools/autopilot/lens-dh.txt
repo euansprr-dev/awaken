@@ -1,0 +1,52 @@
+# Lens and Distant Horizons diagnosis: one place, one moment, every Lens state. Run with PACK=perf,horizon DH=swift.
+# Shots: off, swift, pass-through (the chain runs but copies the frame), depth masks, raw far depth, off again.
+world lensdh creative 20261024
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken gate hop
+wait 100
+cmd gamemode spectator
+cmd tp @s ~ ~60 ~
+look 0 10
+wait 2400
+lens off
+wait 60
+shot dh_1_off
+lens swift
+lensdebug 0
+wait 80
+shot dh_2_swift
+lensdebug 1
+wait 20
+shot dh_3_passthrough
+lensdebug 2
+wait 20
+shot dh_4_masks
+lensdebug 3
+wait 20
+shot dh_5_fardepth
+lensdebug 0
+lens off
+wait 60
+shot dh_6_off_again
+look 90 10
+wait 40
+shot dh_7_off_west
+lens swift
+wait 80
+shot dh_8_swift_west
+lensdebug 2
+wait 20
+shot dh_9_masks_west
+lensdebug 0
+quit

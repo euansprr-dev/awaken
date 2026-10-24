@@ -1,0 +1,47 @@
+{
+  "body.roll": {
+    "subtitle": "subtitles.awaken.body.roll",
+    "sounds": [
+      {
+        "name": "awaken:body_roll",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "body.sprint": {
+    "subtitle": "subtitles.awaken.body.sprint",
+    "sounds": [
+      {
+        "name": "awaken:body_sprint",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "body.slide": {
+    "subtitle": "subtitles.awaken.body.slide",
+    "sounds": [
+      {
+        "name": "awaken:body_slide",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "body.mantle": {
+    "subtitle": "subtitles.awaken.body.mantle",
+    "sounds": [
+      {
+        "name": "awaken:body_mantle",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "body.impact": {
+    "subtitle": "subtitles.awaken.body.impact",
+    "sounds": [
+      {
+        "name": "awaken:body_impact",
+        "attenuation_distance": 20
+      }
+    ]
+  }
+}

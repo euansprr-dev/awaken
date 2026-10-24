@@ -3,6 +3,7 @@ package dev.awaken.lens.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.awaken.Awaken;
 import dev.awaken.compat.Companions;
+import dev.awaken.compat.client.FarTerrain;
 import dev.awaken.core.AwakenConfig;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -39,8 +40,12 @@ public final class LensClient {
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     /** The texture the chains read as {@code awaken:lens_params} (post chains look under textures/effect/). */
     static final Identifier PARAMS = Awaken.id("textures/effect/lens_params.png");
+    /** Far terrain's depth ({@code awaken:lens_far_depth}): Distant Horizons draws without the game's depth. */
+    static final Identifier FAR_DEPTH = Awaken.id("textures/effect/lens_far_depth.png");
 
     private static LensParams params;
+    /** Development: 0 normal; 1 pass-through; 2 depth masks; 3 far-terrain depth raw (autopilot lensdebug). */
+    private static int debug;
     private static boolean active, snap = true, zeroToOne;
     private static ResourceKey<Level> lookFor;
     private static final float[] current = Look.neutral(), target = Look.neutral();
@@ -48,6 +53,11 @@ public final class LensClient {
     private static final Vector3f sunDir = new Vector3f();
     private static final Vector4f clip = new Vector4f();
     private static final Matrix4f viewProj = new Matrix4f();
+
+    public static void debug(int mode) {
+        debug = Math.clamp(mode, 0, 3);
+        Awaken.LOG.info("[lens] debug view {}", debug);
+    }
 
     public static void init(IEventBus modBus) {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("lens_looks"),
@@ -101,6 +111,7 @@ public final class LensClient {
         if (params != null) return;
         params = new LensParams();
         Minecraft.getInstance().getTextureManager().register(PARAMS, params.texture);
+        Minecraft.getInstance().getTextureManager().register(FAR_DEPTH, dev.awaken.compat.client.FarTerrain.depthTexture());
         zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
         Awaken.LOG.info("[lens] ready ({} depth)", zeroToOne ? "zero-to-one" : "minus-one-to-one");
     }
@@ -134,8 +145,9 @@ public final class LensClient {
             sunset = glow.w();
         }
         var fog = e.getFogData();
-        params.write(current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
-                fog.renderDistanceEnd, fog.environmentalEnd);
+        params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
+                fog.renderDistanceEnd, fog.environmentalEnd, FarTerrain.active(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(),
+                FarTerrain.near(), FarTerrain.far());
         params.uploadIfChanged();
     }
 

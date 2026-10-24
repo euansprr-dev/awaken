@@ -246,10 +246,12 @@ final class FaunaGoals {
 
     /** Dune rays: wide loops a block or two over the sand, the loop's centre drifting slowly. */
     static final class Glide extends Goal {
+        /** How far ahead on its loop the ray steers (radians): far enough that it never reaches the point. */
+        private static final float LEAD = 0.8F;
         private final FaunaMob mob;
-        private float angle;
-        private double cx, cz;
-        private int repath;
+        private double cx, cz, lastX, lastZ;
+        private int t, stuck;
+        private float dir = 1.0F;
         private boolean centred;
 
         Glide(FaunaMob mob) {
@@ -260,6 +262,9 @@ final class FaunaGoals {
         @Override public boolean canUse() { return mob.getTarget() == null && mob.scareTicks <= 0; }
         @Override public boolean canContinueToUse() { return canUse(); }
 
+        /** Steered every tick: a target set every few goal ticks let the ray reach it, halt and surge again. */
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+
         @Override
         public void start() {
             if (!centred) {
@@ -267,15 +272,20 @@ final class FaunaGoals {
                 cz = mob.getZ();
                 centred = true;
             }
+            stuck = 0;
+            lastX = mob.getX();
+            lastZ = mob.getZ();
         }
 
+        /**
+         * Loops round a centre that wanders slowly, always aiming a little ahead of where the ray is on the loop, so it
+         * glides at an even speed and turns smoothly; the loop's size and its height above the dunes breathe slowly.
+         */
         @Override
         public void tick() {
-            if (--repath > 0) return;
-            repath = 8;
-            angle += 0.42F;
-            cx += Mth.cos(angle * 0.07F) * 0.4;
-            cz += Mth.sin(angle * 0.05F) * 0.4;
+            t++;
+            cx += Mth.cos(t * 0.0044F) * 0.025;
+            cz += Mth.sin(t * 0.0031F) * 0.025;
             if (mob.hasHome()) {
                 BlockPos h = mob.getHomePosition();
                 if (h.distToCenterSqr(cx, h.getY(), cz) > 400) {
@@ -283,10 +293,28 @@ final class FaunaGoals {
                     cz = h.getZ();
                 }
             }
-            float r = 6.0F + Mth.sin(angle * 0.3F) * 2.0F;
-            double x = cx + Mth.cos(angle) * r, z = cz + Mth.sin(angle) * r;
-            double y = FaunaMob.groundAt(mob.level(), x, z) + 1.3 + Mth.sin(angle * 0.9F) * 0.4;
-            mob.getMoveControl().setWantedPosition(x, y, z, 0.7);
+            float r = 6.0F + Mth.sin(t * 0.008F) * 2.0F;
+            float lead = (float) Math.atan2(mob.getZ() - cz, mob.getX() - cx) + dir * LEAD;
+            double x = cx + Mth.cos(lead) * r, z = cz + Mth.sin(lead) * r;
+            // held against a wall (it steers into it forever otherwise): a new loop on the far side, the other way round
+            double moved = Math.abs(mob.getX() - lastX) + Math.abs(mob.getZ() - lastZ);
+            lastX = mob.getX();
+            lastZ = mob.getZ();
+            stuck = moved < 0.02 ? stuck + 1 : 0;
+            if (stuck > 40) {
+                stuck = 0;
+                dir = -dir;
+                double ax = mob.getX() - x, az = mob.getZ() - z, len = Math.max(0.01, Math.sqrt(ax * ax + az * az));
+                cx = mob.getX() + ax / len * r;
+                cz = mob.getZ() + az / len * r;
+                lead = (float) Math.atan2(mob.getZ() - cz, mob.getX() - cx) + dir * LEAD;
+                x = cx + Mth.cos(lead) * r;
+                z = cz + Mth.sin(lead) * r;
+            }
+            // over a drop it glides on rather than aiming into the pit (and stalling at the edge)
+            double y = Math.max(FaunaMob.groundAt(mob.level(), x, z), mob.getY() - 2.0) + 1.3 + Mth.sin(t * 0.024F) * 0.4;
+            // an unhurried, even cruise (about 5 blocks a second; it used to surge to 8 and stop)
+            mob.getMoveControl().setWantedPosition(x, y, z, 0.35);
         }
     }
 

@@ -35,6 +35,7 @@ public final class HoloCanvas implements UiCanvas {
     final ItemStack[] items = new ItemStack[MAX_ITEMS];
     final float[] itemXY = new float[MAX_ITEMS * 2];
     final float[] itemAlpha = new float[MAX_ITEMS];
+    final float[] itemSize = new float[MAX_ITEMS];
     int itemCount;
 
     final Identifier[] sprites = new Identifier[MAX_SPRITES];
@@ -159,13 +160,18 @@ public final class HoloCanvas implements UiCanvas {
     }
 
     public void itemF(ItemStack stack, float x, float y) {
+        itemF(stack, x, y, 16f);
+    }
+
+    public void itemF(ItemStack stack, float x, float y, float size) {
         if (itemCount >= MAX_ITEMS || stack == null || stack.isEmpty()) return;
-        float a = rowAlpha(y, y + 16);
-        if (a <= 0.5f || x + 16 <= cx0 || x >= cx1) return; // items can't fade: show only when mostly inside
+        float a = rowAlpha(y, y + size);
+        if (a <= 0.5f || x + size <= cx0 || x >= cx1) return; // items can't fade: show only when mostly inside
         items[itemCount] = stack;
         itemXY[itemCount * 2] = x;
         itemXY[itemCount * 2 + 1] = y;
         itemAlpha[itemCount] = a;
+        itemSize[itemCount] = size;
         itemCount++;
     }
 
@@ -209,6 +215,18 @@ public final class HoloCanvas implements UiCanvas {
     @Override
     public void item(ItemStack stack, int x, int y) {
         itemF(stack, x, y);
+    }
+
+    @Override
+    public void itemSized(ItemStack stack, int x, int y, int size) {
+        itemF(stack, x, y, size);
+    }
+
+    @Override
+    public void itemTooltip(Font font, ItemStack stack, int x, int y) {
+        if (tooltipTarget == null || tooltipShown) return;
+        tooltipShown = true;
+        tooltipTarget.setTooltipForNextFrame(font, stack, tooltipX, tooltipY);
     }
 
     @Override

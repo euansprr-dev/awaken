@@ -25,14 +25,30 @@ public record Room(EnumSet<RoomType> types, BlockPos min, BlockPos max, LongSet 
         return cells.size();
     }
 
-    /** Classifies a room from its contents (pure, used by the scanner and the tests). */
+    /** How many of this furniture the room holds (trophies: different Lords on mounts). */
+    public int count(Furniture f) {
+        return count(f, beds, mats, anvils, forges, stands, trophies.size(), machines, pads);
+    }
+
+    private static int count(Furniture f, int beds, int mats, int anvils, int forges, int stands, int trophies, int machines, int pads) {
+        return switch (f) {
+            case BED -> beds;
+            case MAT -> mats;
+            case ANVIL -> anvils;
+            case FORGE -> forges;
+            case STAND -> stands;
+            case TROPHY -> trophies;
+            case MACHINE -> machines;
+            case PAD -> pads;
+        };
+    }
+
+    /** Classifies a room from its contents with {@link RoomType#furniture} (pure, used by the scanner and the tests). */
     public static EnumSet<RoomType> classify(int beds, int mats, int anvils, int forges, int stands, int trophies, int machines, int pads) {
         EnumSet<RoomType> t = EnumSet.noneOf(RoomType.class);
-        if (beds > 0 && mats > 0) t.add(RoomType.SANCTUARY);
-        if (anvils > 0 && forges > 0 && stands > 0) t.add(RoomType.ARMORY);
-        if (trophies > 0) t.add(RoomType.TROPHY_HALL);
-        if (machines > 0) t.add(RoomType.WORKSHOP);
-        if (pads > 0) t.add(RoomType.BARRACKS);
+        for (RoomType type : RoomType.values()) {
+            if (type.metBy(f -> count(f, beds, mats, anvils, forges, stands, trophies, machines, pads))) t.add(type);
+        }
         return t;
     }
 }

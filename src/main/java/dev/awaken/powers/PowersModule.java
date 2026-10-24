@@ -49,6 +49,7 @@ public final class PowersModule {
         PowersCommands.register();
         PowersTests.register();
         PowerHitTests.register();
+        MoveTwistTests.register(); // the Awakened Body's family twists
         MasteryCommands.register();
         MasteryTests.register();
         StarterTests.register();

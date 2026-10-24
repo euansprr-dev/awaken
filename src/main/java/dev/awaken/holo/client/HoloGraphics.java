@@ -187,6 +187,22 @@ public final class HoloGraphics extends GuiGraphicsExtractor implements UiCanvas
     }
 
     @Override
+    public void itemSized(ItemStack stack, int x, int y, int size) {
+        at(a, x, y);
+        canvas.itemF(stack, a.x, a.y, size * scale());
+    }
+
+    @Override
+    public void itemTooltip(Font font, ItemStack stack, int x, int y) {
+        canvas.itemTooltip(font, stack, x, y);
+    }
+
+    @Override
+    public void setTooltipForNextFrame(Font font, ItemStack stack, int xo, int yo) {
+        canvas.itemTooltip(font, stack, xo, yo);
+    }
+
+    @Override
     public void hLine(int x0, int x1, int y, int argb) {
         horizontalLine(x0, x1, y, argb);
     }

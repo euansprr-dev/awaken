@@ -9,7 +9,7 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.RandomSource;
 
-/** The module's two particles: dark Echo wisps and warm Hearth embers. */
+/** The module's particles: dark Echo wisps, warm Hearth embers and the Hearth guide's marks. */
 public final class HearthParticles {
     private HearthParticles() {}
 
@@ -47,6 +47,68 @@ public final class HearthParticles {
             @Override
             public Particle createParticle(SimpleParticleType o, ClientLevel level, double x, double y, double z, double xa, double ya, double za, RandomSource random) {
                 return new Wisp(level, x, y, z, xa, ya, za, sprites);
+            }
+        }
+    }
+
+    /**
+     * The Hearth guide's marks, built on the ember sprite: {@code ring} is a faint amber mote that hangs at the edge of
+     * the radius and drifts up a little; otherwise a signal-blue spark that pulses on the spot where a room leaks.
+     */
+    public static final class Mark extends SingleQuadParticle {
+        private final SpriteSet sprites;
+        private final boolean ring;
+        private final float baseSize;
+
+        Mark(ClientLevel level, double x, double y, double z, double ya, SpriteSet sprites, boolean ring) {
+            super(level, x, y, z, 0, 0, 0, sprites.first());
+            this.sprites = sprites;
+            this.ring = ring;
+            this.xd = 0;
+            this.yd = ring ? ya + random.nextDouble() * 0.008 : 0;
+            this.zd = 0;
+            this.friction = 0.98f;
+            this.gravity = 0;
+            this.hasPhysics = false;
+            this.lifetime = ring ? 28 + random.nextInt(24) : 18;
+            this.baseSize = quadSize * (ring ? 0.7f + random.nextFloat() * 0.3f : 1.6f);
+            this.quadSize = baseSize;
+            if (ring) setColor(1.0f, 0.78f, 0.42f);
+            else setColor(0.55f, 0.82f, 1.0f);
+            setSpriteFromAge(sprites);
+        }
+
+        @Override
+        protected Layer getLayer() {
+            return Layer.TRANSLUCENT;
+        }
+
+        @Override
+        protected int getLightCoords(float a) {
+            return LightCoordsUtil.FULL_BRIGHT;
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+            setSpriteFromAge(sprites);
+            float t = (float) age / lifetime;
+            // fade in, hold, fade out; the leak mark also swells once
+            alpha = (ring ? 0.55f : 0.9f) * Math.min(1f, Math.min(t * 4f, (1f - t) * 2.5f));
+            if (!ring) quadSize = baseSize * (0.7f + 0.5f * (float) Math.sin(t * Math.PI));
+        }
+
+        public record RingProvider(SpriteSet sprites) implements ParticleProvider<SimpleParticleType> {
+            @Override
+            public Particle createParticle(SimpleParticleType o, ClientLevel level, double x, double y, double z, double xa, double ya, double za, RandomSource random) {
+                return new Mark(level, x, y, z, ya, sprites, true);
+            }
+        }
+
+        public record LeakProvider(SpriteSet sprites) implements ParticleProvider<SimpleParticleType> {
+            @Override
+            public Particle createParticle(SimpleParticleType o, ClientLevel level, double x, double y, double z, double xa, double ya, double za, RandomSource random) {
+                return new Mark(level, x, y, z, 0, sprites, false);
             }
         }
     }

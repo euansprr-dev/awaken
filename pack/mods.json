@@ -89,6 +89,13 @@
       "why": "Full-body cast animations (optional for Awaken)."
     },
     {
+      "slug": "bendable-cuboids",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Bent knees and elbows: renders the bend the Player Animation Library's clips carry (same author). Client only."
+    },
+    {
       "slug": "cameraoverhaul",
       "profiles": [
         "feel"
