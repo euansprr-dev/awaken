@@ -166,7 +166,7 @@ final class CitizensCommands {
                 found = true;
             }
             case "event" -> {
-                if (!c.data.events.isEmpty()) found = c.events.where(c.data.events.getFirst(), at);
+                if (!c.data.events.isEmpty()) found = c.events.where(c.data.events.getLast(), at);
             }
             case "lamps" -> {
                 // a lamp on the busiest stretch of avenue (the one with the most lamps within 40 blocks)
