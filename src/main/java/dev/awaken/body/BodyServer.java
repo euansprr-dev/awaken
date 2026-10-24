@@ -1,6 +1,5 @@
 package dev.awaken.body;
 
-import dev.awaken.Awaken;
 import dev.awaken.body.net.BodyPayloads;
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.api.CoreApi;
@@ -13,7 +12,6 @@ import dev.awaken.veil.Veil;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -22,11 +20,11 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
@@ -39,7 +37,6 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -54,8 +51,6 @@ import java.util.List;
 final class BodyServer {
     private BodyServer() {}
 
-    static final Identifier TAC_ID = Awaken.id("body_tactical_sprint");
-    private static final AttributeModifier TAC_MODIFIER = new AttributeModifier(TAC_ID, BodyRules.TAC_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
     /** The client's half of the one fall path (its own landing roll), installed by the client init. */
     interface ClientFall {
@@ -131,7 +126,7 @@ final class BodyServer {
         if (!m.assisted(Move.TACTICAL_SPRINT, now) && !p.isSprinting()) return false;
         if (!p.isCreative() && p.getFoodData().getFoodLevel() <= 6) return false; // too hungry to sprint at all
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speed != null) speed.addOrUpdateTransientModifier(TAC_MODIFIER);
+        if (speed != null) speed.addOrUpdateTransientModifier(BodyRules.TAC_MODIFIER);
         m.tacUntil = now + BodyRules.TAC_TICKS;
         m.tacNoSprint = 0;
         p.causeFoodExhaustion(BodyRules.TAC_EXHAUSTION);
@@ -143,7 +138,7 @@ final class BodyServer {
     static void endTactical(ServerPlayer p, BodyMotion m, long now, boolean tellClient) {
         if (m.tacUntil == 0) return;
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (speed != null) speed.removeModifier(TAC_ID);
+        if (speed != null) speed.removeModifier(BodyRules.TAC_ID);
         m.tacUntil = 0;
         m.tacReadyAt = now + BodyRules.TAC_RECHARGE;
         m.tacEndedAt = now;
@@ -203,7 +198,7 @@ final class BodyServer {
             mob.setDeltaMovement(v.x * 0.3 + m.slideDirX * 0.32, Math.max(v.y, 0.24), v.z * 0.3 + m.slideDirZ * 0.32);
             mob.needsSync = true;
             p.level().playSound(null, mob.getX(), mob.getY(), mob.getZ(), BodyContent.IMPACT, SoundSource.PLAYERS, 0.6F, 1.35F);
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(mob, new BodyPayloads.Seen(mob.getId(), BodyPayloads.SEEN_TRIP, p.getYRot()));
+            show(mob, null, new BodyPayloads.Seen(mob.getId(), BodyPayloads.SEEN_TRIP, p.getYRot()));
             n++;
         }
         return n;
@@ -244,8 +239,17 @@ final class BodyServer {
         m.lastMove = now;
         Progression.count(p, "awaken:body_" + move.key);
         p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, 1.0F);
-        PacketDistributor.sendToPlayersTrackingEntity(p, new BodyPayloads.Seen(p.getId(), move.ordinal(), yaw));
+        show(p, p, new BodyPayloads.Seen(p.getId(), move.ordinal(), yaw));
     }
+
+    /** Sends to the players near enough to see it (through AwakenNet: test players and other mods' fakes can't take it). */
+    private static void show(Entity at, @Nullable ServerPlayer except, BodyPayloads.Seen msg) {
+        for (ServerPlayer o : ((net.minecraft.server.level.ServerLevel) at.level()).players()) {
+            if (o != except && o.distanceToSqr(at) < SEEN_RANGE * SEEN_RANGE) AwakenNet.send(o, msg);
+        }
+    }
+
+    private static final double SEEN_RANGE = 96;
 
     // ---- ticking ----------------------------------------------------------------------------------------------------
 
@@ -351,7 +355,7 @@ final class BodyServer {
         m.lastMove = now;
         p.level().playSound(null, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), BodyContent.IMPACT,
                 SoundSource.PLAYERS, (float) (0.5 + bonus * 1.5), (float) (1.1 - bonus));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new BodyPayloads.Seen(target.getId(), BodyPayloads.SEEN_MOMENTUM, p.getYRot()));
+        show(target, null, new BodyPayloads.Seen(target.getId(), BodyPayloads.SEEN_MOMENTUM, p.getYRot()));
     }
 
     /** The share a full swing from this player gains right now: running or sliding, by their horizontal speed. */

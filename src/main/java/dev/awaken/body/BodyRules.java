@@ -1,6 +1,9 @@
 package dev.awaken.body;
 
+import dev.awaken.Awaken;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
@@ -37,6 +40,9 @@ public final class BodyRules {
     /** The second tap of the sprint key must come within this many ticks of the first. */
     public static final int TAC_DOUBLE_TAP = 7;
     public static final float TAC_EXHAUSTION = 0.4F;
+    public static final Identifier TAC_ID = Awaken.id("body_tactical_sprint");
+    /** Applied on the server (synced) and predicted on the client with the same id. */
+    public static final AttributeModifier TAC_MODIFIER = new AttributeModifier(TAC_ID, TAC_SPEED, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
     // ---- slide (rank D) ---------------------------------------------------------------------------------------------
     public static final int SLIDE_TICKS = 14;

@@ -24,8 +24,10 @@ public final class Body {
 
     private static @Nullable ClientQuery client;
 
-    public static void installClientQuery(ClientQuery q) {
+    /** The client init installs its answers and its half of the one fall path (its own landing roll). */
+    public static void installClient(ClientQuery q, java.util.function.ObjDoubleConsumer<Player> fall) {
         client = q;
+        BodyServer.clientFall = fall::accept;
     }
 
     /** Whether the player has this move: awakened, and at or above its rank. Players who never awakened move like vanilla. */

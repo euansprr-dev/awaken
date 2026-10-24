@@ -1,0 +1,420 @@
+package dev.awaken.body.client;
+
+import dev.awaken.body.Body;
+import dev.awaken.body.BodyContent;
+import dev.awaken.body.BodyRules;
+import dev.awaken.body.Move;
+import dev.awaken.body.net.BodyPayloads;
+import dev.awaken.core.api.MovementHooks;
+import dev.awaken.progression.Progression;
+import dev.awaken.veil.Veil;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.ClientInput;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Input;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * The local player's moves, predicted. Everything happens in the movement-input event, right after this tick's keys
+ * are read and before vanilla moves the body: a move sets the velocity for the tick (or the input it lets through)
+ * and vanilla's own collision does the rest, so walls, gaps and ledges are the same ones the server checks. Each start
+ * goes to the server once; a refusal stops the move here. Players who never awakened are never touched.
+ */
+public final class ClientMoves {
+    private ClientMoves() {}
+
+    /** Client clock: ticks while in a world. */
+    static int ticks;
+
+    private static boolean shiftWas, jumpWas, sprintWas, jumpSuppressed;
+    private static int sprintTapAt = -100;
+    // tactical sprint
+    static boolean tac;
+    static int tacStart = -100, tacEnd = -100, tacReadyAt;
+    private static int tacNoSprint;
+    // slide
+    static boolean sliding;
+    static int slideStart = -100, slideEnd = -100, slideReadyAt, slideAge, slideJumpAt = -100;
+    private static int slideAir;
+    static double slideX, slideZ, slideV0, slideSpeed;
+    private static double expectH;
+    static boolean slideFromTac;
+    // mantle
+    static boolean mantling;
+    static int mantleStart = -100, mantleEnd = -100, mantleAge;
+    private static double msx, msy, msz;
+    private static BodyRules.@Nullable Ledge ledge;
+    // roll
+    static int rollAt = -100;
+    // a power's flight or an elytra just now: their landings are never rolls
+    private static int lastFly = -1000, lastGlide = -1000;
+    private static final double[] PATH = new double[3];
+    private static final Input[] INPUTS = new Input[128];
+
+    // ---- the input event --------------------------------------------------------------------------------------------
+
+    static void onInput(MovementInputUpdateEvent e) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!(e.getEntity() instanceof LocalPlayer p) || p != mc.player) return;
+        ClientInput in = e.getInput();
+        Input k = in.keyPresses;
+        boolean shift = k.shift(), jump = k.jump(), sprintKey = k.sprint();
+        boolean shiftPressed = shift && !shiftWas, jumpPressed = jump && !jumpWas, sprintPressed = sprintKey && !sprintWas;
+        shiftWas = shift;
+        jumpWas = jump;
+        sprintWas = sprintKey;
+        if (p.mayFly()) lastFly = ticks;
+        if (p.isFallFlying()) lastGlide = ticks;
+        if (!Progression.profile(p).awakened()) {
+            if (tac || sliding || mantling) stopAll(p);
+            return;
+        }
+        if (jumpSuppressed) {
+            if (jump) in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift());
+            else jumpSuppressed = false;
+        }
+        if (mantling) {
+            mantleTick(p);
+            return;
+        }
+        if (sliding) {
+            slideTick(p, in, jumpPressed);
+            return;
+        }
+        boolean off = off(p);
+        if (tac) tacTick(p, off);
+        if (off) return;
+        if (sprintPressed) {
+            if (!tac && ticks - sprintTapAt <= BodyRules.TAC_DOUBLE_TAP) {
+                startTac(p);
+                sprintTapAt = -100;
+            } else {
+                sprintTapAt = ticks;
+            }
+        }
+        if (jumpPressed && !k.backward() && canMantle(p)) {
+            BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
+            if (l != null) {
+                startMantle(p, in, l);
+                return;
+            }
+        }
+        if (shiftPressed && canSlide(p)) startSlide(p, in);
+    }
+
+    static boolean off(LocalPlayer p) {
+        return p.isPassenger() || p.isSleeping() || p.isSpectator() || !p.isAlive() || p.getAbilities().flying || p.isFallFlying()
+                || Veil.isSpirit(p);
+    }
+
+    /** The same keys with jump and shift replaced (cached: nothing allocated per tick). */
+    private static Input with(Input k, boolean jump, boolean shift) {
+        int i = (k.forward() ? 1 : 0) | (k.backward() ? 2 : 0) | (k.left() ? 4 : 0) | (k.right() ? 8 : 0) | (jump ? 16 : 0) | (shift ? 32 : 0)
+                | (k.sprint() ? 64 : 0);
+        Input c = INPUTS[i];
+        if (c == null) INPUTS[i] = c = new Input(k.forward(), k.backward(), k.left(), k.right(), jump, shift, k.sprint());
+        return c;
+    }
+
+    private static void send(Move move, float yaw, double x, double y, double z, double speed, boolean flag) {
+        ClientPacketDistributor.sendToServer(new BodyPayloads.Start(move.ordinal(), yaw, x, y, z, (float) speed, flag));
+    }
+
+    private static void sendEnd(Move move) {
+        ClientPacketDistributor.sendToServer(new BodyPayloads.End(move.ordinal()));
+    }
+
+    private static float yawOf(double dx, double dz) {
+        return (float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
+    }
+
+    // ---- tactical sprint --------------------------------------------------------------------------------------------
+
+    private static void startTac(LocalPlayer p) {
+        if (!Body.unlocked(p, Move.TACTICAL_SPRINT) || p.isInLiquid() || !p.isSprinting() || ticks < tacReadyAt || p.isUsingItem()) return;
+        if (!p.isCreative() && p.getFoodData().getFoodLevel() <= 6) return;
+        tac = true;
+        tacStart = ticks;
+        tacNoSprint = 0;
+        AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speed != null) speed.addOrUpdateTransientModifier(BodyRules.TAC_MODIFIER);
+        send(Move.TACTICAL_SPRINT, p.getYRot(), 0, 0, 0, 0, false);
+        BodyAnims.play(p.getId(), Move.TACTICAL_SPRINT, p.getYRot());
+        BodyFx.sound(p, BodyContent.SPRINT.get(), 0.7F, 1F);
+        BodyFx.kick(p, -Mth.sin(p.getYRot() * Mth.DEG_TO_RAD), Mth.cos(p.getYRot() * Mth.DEG_TO_RAD));
+    }
+
+    private static void tacTick(LocalPlayer p, boolean off) {
+        if (ticks - tacStart >= BodyRules.TAC_TICKS || off || p.isInLiquid() || p.isUsingItem()) {
+            endTac(p, true);
+            return;
+        }
+        tacNoSprint = p.isSprinting() ? 0 : tacNoSprint + 1;
+        if (tacNoSprint > 2) endTac(p, true);
+    }
+
+    static void endTac(LocalPlayer p, boolean tellServer) {
+        if (!tac) return;
+        tac = false;
+        tacEnd = ticks;
+        tacReadyAt = ticks + BodyRules.TAC_RECHARGE;
+        AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speed != null) speed.removeModifier(BodyRules.TAC_ID);
+        BodyAnims.stop(p.getId(), Move.TACTICAL_SPRINT);
+        if (tellServer) sendEnd(Move.TACTICAL_SPRINT);
+    }
+
+    /** The attack key: a swing ends the tactical sprint and lands as normal. */
+    static void onAttackKey() {
+        LocalPlayer p = Minecraft.getInstance().player;
+        if (p != null && tac) endTac(p, true);
+    }
+
+    // ---- slide ------------------------------------------------------------------------------------------------------
+
+    private static boolean canSlide(LocalPlayer p) {
+        return Body.unlocked(p, Move.SLIDE) && p.onGround() && (p.isSprinting() || tac) && !p.isInLiquid() && !p.isUsingItem()
+                && ticks >= slideReadyAt && !mantling;
+    }
+
+    private static void startSlide(LocalPlayer p, ClientInput in) {
+        double hx = p.getX() - p.xo, hz = p.getZ() - p.zo;
+        double hs = Math.sqrt(hx * hx + hz * hz);
+        float yaw = p.getYRot();
+        double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
+        if (hs > 0.08) {
+            dx = hx / hs;
+            dz = hz / hs;
+        }
+        boolean fromTac = tac;
+        if (tac) endTac(p, false); // the slide's own start tells the server
+        slideV0 = BodyRules.slideEntry(hs, fromTac);
+        sliding = true;
+        slideAge = 0;
+        slideAir = 0;
+        slideStart = ticks;
+        slideX = dx;
+        slideZ = dz;
+        slideFromTac = fromTac;
+        // crawl height now, so this very tick already fits under a gap
+        p.setForcedPose(Pose.SWIMMING);
+        p.setPose(Pose.SWIMMING);
+        float slideYaw = yawOf(dx, dz);
+        send(Move.SLIDE, slideYaw, 0, 0, 0, slideV0, fromTac);
+        BodyAnims.play(p.getId(), Move.SLIDE, slideYaw);
+        BodyFx.sound(p, BodyContent.SLIDE.get(), 0.85F, fromTac ? 0.92F : 1F);
+        in.keyPresses = with(in.keyPresses, in.keyPresses.jump(), false); // no sneaking at an edge mid-slide
+        applySlide(p);
+    }
+
+    private static void slideTick(LocalPlayer p, ClientInput in, boolean jumpPressed) {
+        slideAge++;
+        Vec3 v = p.getDeltaMovement();
+        double h = Math.sqrt(v.x * v.x + v.z * v.z);
+        // something else moved the body (a blow, a blast): it wins and the slide lets go
+        if (h > expectH + 0.2 || v.y > 0.3) {
+            endSlide(p, true);
+            return;
+        }
+        if (slideAge > 1 && p.horizontalCollision && !p.minorHorizontalCollision) { // a wall stops it
+            endSlide(p, true);
+            return;
+        }
+        slideAir = p.onGround() ? 0 : slideAir + 1;
+        if (slideAir > 2 || p.isInLiquid() || off(p) || slideAge >= BodyRules.SLIDE_TICKS) {
+            endSlide(p, true);
+            return;
+        }
+        if (jumpPressed) {
+            if (standFits(p)) {
+                jumpOut(p, in);
+                return;
+            }
+            in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift()); // under a gap: no jump into the ceiling
+        }
+        in.keyPresses = with(in.keyPresses, in.keyPresses.jump(), false);
+        applySlide(p);
+    }
+
+    private static void applySlide(LocalPlayer p) {
+        slideSpeed = BodyRules.slideSpeed(slideAge, slideV0);
+        Vec3 v = p.getDeltaMovement();
+        p.setDeltaMovement(slideX * slideSpeed, v.y, slideZ * slideSpeed);
+        // what is left after this tick's ground friction, with room for the player's own input
+        expectH = (slideSpeed + 0.15) * 0.6;
+        BodyFx.slideSpray(p, slideX, slideZ, (float) (slideSpeed / BodyRules.SLIDE_V0));
+    }
+
+    private static boolean standFits(LocalPlayer p) {
+        return p.level().noCollision(p, p.getDimensions(Pose.STANDING).makeBoundingBox(p.position()).deflate(1.0E-7));
+    }
+
+    /** The slide-cancel: up and out with the slide's speed, plus a little. Vanilla's own jump does the rest. */
+    private static void jumpOut(LocalPlayer p, ClientInput in) {
+        double speed = BodyRules.slideSpeed(slideAge, slideV0) + BodyRules.SLIDE_JUMP;
+        endSlide(p, true);
+        p.setPose(Pose.STANDING);
+        Vec3 v = p.getDeltaMovement();
+        p.setDeltaMovement(slideX * speed, v.y, slideZ * speed);
+        if (!in.keyPresses.jump()) in.keyPresses = with(in.keyPresses, true, false);
+        slideJumpAt = ticks;
+        BodyFx.sound(p, BodyContent.SPRINT.get(), 0.6F, 1.25F);
+        BodyFx.kick(p, slideX, slideZ);
+    }
+
+    static void endSlide(LocalPlayer p, boolean tellServer) {
+        if (!sliding) return;
+        sliding = false;
+        slideEnd = ticks;
+        slideReadyAt = ticks + BodyRules.SLIDE_COOLDOWN;
+        if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null); // vanilla keeps a crawl under a gap
+        BodyAnims.stop(p.getId(), Move.SLIDE);
+        if (tellServer) sendEnd(Move.SLIDE);
+    }
+
+    // ---- mantle -----------------------------------------------------------------------------------------------------
+
+    private static boolean canMantle(LocalPlayer p) {
+        return Body.unlocked(p, Move.MANTLE) && p.onGround() && !p.isInLiquid() && !p.isUsingItem() && !p.isBlocking() && !mantling && !sliding;
+    }
+
+    private static void startMantle(LocalPlayer p, ClientInput in, BodyRules.Ledge l) {
+        mantling = true;
+        mantleAge = 0;
+        mantleStart = ticks;
+        msx = p.getX();
+        msy = p.getY();
+        msz = p.getZ();
+        ledge = l;
+        in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift());
+        jumpSuppressed = true; // holding jump through the climb doesn't hop on top
+        float yaw = p.getYRot();
+        send(Move.MANTLE, yaw, l.x(), l.y(), l.z(), 0, false);
+        BodyAnims.play(p.getId(), Move.MANTLE, yaw);
+        BodyFx.sound(p, BodyContent.MANTLE.get(), 0.8F, 1F);
+        double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
+        if (p.level() instanceof net.minecraft.client.multiplayer.ClientLevel cl) {
+            BodyFx.lip(cl, msx + dx * (l.face() + 0.32), l.y(), msz + dz * (l.face() + 0.32), dx, dz);
+        }
+        mantleTick(p);
+    }
+
+    private static void mantleTick(LocalPlayer p) {
+        BodyRules.Ledge l = ledge;
+        if (l == null) {
+            mantling = false;
+            return;
+        }
+        mantleAge++;
+        if (mantleAge > BodyRules.MANTLE_TICKS) {
+            // over the lip: carry on walking
+            mantling = false;
+            mantleEnd = ticks;
+            double fx = l.x() - msx, fz = l.z() - msz, f = Math.sqrt(fx * fx + fz * fz);
+            if (f > 1e-6) p.setDeltaMovement(fx / f * 0.12, 0, fz / f * 0.12);
+            return;
+        }
+        if (mantleAge > 1) {
+            // something stopped the climb: let go and fall back on vanilla
+            BodyRules.mantlePath(msx, msy, msz, l, mantleAge - 1, PATH);
+            double ex = PATH[0] - p.getX(), ey = PATH[1] - p.getY(), ez = PATH[2] - p.getZ();
+            if (ex * ex + ey * ey + ez * ez > 0.5) {
+                mantling = false;
+                mantleEnd = ticks;
+                return;
+            }
+        }
+        BodyRules.mantlePath(msx, msy, msz, l, mantleAge, PATH);
+        p.setDeltaMovement(PATH[0] - p.getX(), PATH[1] - p.getY(), PATH[2] - p.getZ());
+        p.resetFallDistance();
+    }
+
+    // ---- soft landing -----------------------------------------------------------------------------------------------
+
+    /** The client half of the one fall path: this client's own landing. The server decides the damage. */
+    static void fell(Player player, double distance) {
+        Minecraft mc = Minecraft.getInstance();
+        if (player != mc.player || !(player instanceof LocalPlayer p)) return;
+        if (distance < BodyRules.ROLL_MIN_FALL || !Body.unlocked(p, Move.ROLL) || off(p)) return;
+        if (ticks - lastGlide < 10 || ticks - lastFly < 140) return; // an elytra, or a power's own landing
+        boolean held = p.isSprinting() || p.isShiftKeyDown() || mc.options.keyShift.isDown();
+        if (!held) return;
+        AttributeInstance safe = p.getAttribute(Attributes.SAFE_FALL_DISTANCE);
+        double otherSafe = safe == null ? 0 : safe.getValue() - safe.getBaseValue();
+        if (BodyRules.roll(distance, otherSafe, 1.0) == null) return;
+        rollAt = ticks;
+        BodyAnims.play(p.getId(), Move.ROLL, p.getYRot());
+        BodyFx.sound(p, BodyContent.ROLL.get(), 0.9F, 1F);
+        BodyFx.rollRing(p);
+    }
+
+    // ---- the server's word, and powers ------------------------------------------------------------------------------
+
+    static void refused(int moveId) {
+        LocalPlayer p = Minecraft.getInstance().player;
+        Move move = Move.byId(moveId);
+        if (p == null || move == null) return;
+        switch (move) {
+            case TACTICAL_SPRINT -> endTac(p, false);
+            case SLIDE -> {
+                if (sliding) {
+                    endSlide(p, false);
+                    Vec3 v = p.getDeltaMovement();
+                    p.setDeltaMovement(0, v.y, 0);
+                }
+            }
+            case MANTLE -> {
+                mantling = false;
+                mantleEnd = ticks;
+            }
+            case ROLL -> {
+            }
+        }
+    }
+
+    /**
+     * A power key sent a cast. A cast ends the tactical sprint (the server ends its own). A mid-slide cast keeps the
+     * slide going, unless the power moved the body: then its motion wins, along the slide's way when it points
+     * roughly that way, and a Velocity power's goes further.
+     */
+    static void castStarting(Player player, String powerId, String family, boolean motionPredicted) {
+        if (!(player instanceof LocalPlayer p) || p != Minecraft.getInstance().player) return;
+        if (tac) endTac(p, false);
+        if (!sliding || !motionPredicted) return;
+        Vec3 v = p.getDeltaMovement();
+        double h = Math.sqrt(v.x * v.x + v.z * v.z);
+        if (h > 1e-3 && (v.x * slideX + v.z * slideZ) / h > 0.5) {
+            double stretch = "VELOCITY".equals(family) ? MovementHooks.DASH_OUT_STRETCH : 1.0;
+            p.setDeltaMovement(slideX * h * stretch, v.y, slideZ * h * stretch);
+        }
+        endSlide(p, true);
+    }
+
+    static void stopAll(LocalPlayer p) {
+        endTac(p, true);
+        endSlide(p, true);
+        mantling = false;
+    }
+
+    /** Forget everything (logout, a new world). */
+    static void reset() {
+        tac = sliding = mantling = false;
+        jumpSuppressed = false;
+        tacReadyAt = slideReadyAt = 0;
+        rollAt = tacStart = tacEnd = slideStart = slideEnd = mantleStart = mantleEnd = slideJumpAt = -100;
+        ticks = 0;
+    }
+
+    static @Nullable Vec3 slideDirection() {
+        return sliding ? new Vec3(slideX, 0, slideZ) : null;
+    }
+}

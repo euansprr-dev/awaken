@@ -34,8 +34,6 @@ final class MoveTwists {
     /** Slide-punch: reach, half angle, base damage (scaled like the power's own) and pushes. */
     static final double PUNCH_RANGE = 4.5, PUNCH_HALF_ANGLE = 40, PUNCH_KNOCK = 0.9, PUNCH_UP = 0.3;
     static final float PUNCH_DAMAGE = 3F;
-    /** Velocity: how much further a Dash out of a slide carries (applied to the client's predicted motion). */
-    public static final double DASH_STRETCH = 1.3;
     /** Smoke trail: how long it lingers, how wide each puff is, how often it blinds pursuers. */
     static final int SMOKE_TICKS = 60, SMOKE_EVERY = 5;
     static final double SMOKE_RADIUS = 1.8;
@@ -90,7 +88,7 @@ final class MoveTwists {
     /** The Dash out of a slide: a longer streak along the slide's way, and the landing kept safe a little longer. */
     static void dashOut(Cast c, Vec3 dir) {
         Moves.noFall(c, 40);
-        Fx.at(c, FxKind.DASH, c.pos()).dir(dir.scale(1.9 * DASH_STRETCH)).scale(1.35).ticks(12).noAnim().send();
+        Fx.at(c, FxKind.DASH, c.pos()).dir(dir.scale(1.9 * MovementHooks.DASH_OUT_STRETCH)).scale(1.35).ticks(12).noAnim().send();
         Fx.at(c, FxKind.TRAIL, c.pos()).aux(0).ticks(14).noAnim().send();
         c.sound(PowerSounds.WHOOSH, 0.7F, 0.85F);
     }

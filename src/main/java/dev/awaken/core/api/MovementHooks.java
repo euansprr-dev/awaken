@@ -14,6 +14,9 @@ import org.jspecify.annotations.Nullable;
 public final class MovementHooks {
     private MovementHooks() {}
 
+    /** A Velocity Dash out of a slide carries this much further (the client stretches the predicted motion; SPEC §13). */
+    public static final double DASH_OUT_STRETCH = 1.3;
+
     /** Server side, and the client for its own player. */
     public interface Access {
         default boolean sliding(Player p) { return false; }
@@ -41,6 +44,11 @@ public final class MovementHooks {
 
     public static void install(Access a) {
         access = a;
+    }
+
+    /** The installed access (tests swap in a stand-in and put this back in try/finally). */
+    public static Access installed() {
+        return access;
     }
 
     public static void installClient(ClientAccess c) {
