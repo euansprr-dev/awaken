@@ -762,6 +762,16 @@ final class CitizenWork implements Ledger.Work {
                 }
             }
         }
+        if (found == -1 && chimneyKind.containsKey(plot) && chimneyKind.get(plot) != 1) {
+            // a bakery, tavern or forge without a painted chimney still smokes: from the ridge over its middle
+            int x = cx + (pl.x0() + pl.x1()) / 2, z = cz + (pl.z0() + pl.z1()) / 2;
+            for (int y = g + pl.top() + 4; y > g + 2; y--) {
+                if (!level.getBlockState(m.set(x, y, z)).isAir()) {
+                    found = BlockPos.asLong(x, y + 1, z);
+                    break;
+                }
+            }
+        }
         chimneyOf.put(plot, found);
         int n = d.chimneys.length;
         d.chimneys = java.util.Arrays.copyOf(d.chimneys, n + 2);
@@ -932,6 +942,9 @@ final class CitizenWork implements Ledger.Work {
                         main = Props.BOOK;
                     } else if (job == CHILD) {
                         act = Act.PLAY;
+                    } else if (job == BAKER) {
+                        act = Act.SERVE;
+                        main = Props.BREAD;
                     } else {
                         act = (i % 4) == 0 ? Act.LOOK_AROUND : (i % 4) == 1 ? Act.HANDS_BEHIND : Act.ARMS_CROSSED;
                     }
