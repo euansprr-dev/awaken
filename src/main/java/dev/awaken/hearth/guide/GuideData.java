@@ -18,8 +18,9 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
                         List<RoomCard> rooms, List<RecipeView> recipes, List<Person> town, List<Person> coming,
                         Upgrade upgrade, int cottage) {
 
-    /** {@link #cottage}: Oren's offer is open, being built, built, or waiting for open ground. */
-    public static final int COTTAGE_NONE = 0, COTTAGE_OFFER = 1, COTTAGE_BUILDING = 2, COTTAGE_BUILT = 3, COTTAGE_NO_ROOM = 4;
+    /** {@link #cottage}: Oren's offer is open, being built, built, waiting for open ground, or politely declined. */
+    public static final int COTTAGE_NONE = 0, COTTAGE_OFFER = 1, COTTAGE_BUILDING = 2, COTTAGE_BUILT = 3, COTTAGE_NO_ROOM = 4,
+            COTTAGE_DECLINED = 5;
 
     /**
      * One room type: which of its furniture the radius already holds ({@code have}, a bit per Furniture ordinal), whether

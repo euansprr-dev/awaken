@@ -44,8 +44,8 @@ public final class RoomScanner {
     /** A room is at most this many open cells and this wide; anything bigger is "outside". */
     public static final int MAX_CELLS = 4096;
     public static final int MAX_EXTENT = 32;
-    /** Explanations kept per scan (each costs one more bounded fill). */
-    public static final int MAX_MISSES = 16;
+    /** Explanations per scan, and per kind of furniture (each costs one more bounded fill; village beds can't use them up). */
+    public static final int MAX_MISSES = 24, MAX_MISSES_PER_KIND = 4;
     /** How far above the heightmap a slab or trapdoor still counts as a roof. */
     private static final int ROOF_REACH = 24;
 
@@ -71,6 +71,8 @@ public final class RoomScanner {
     private final List<Room> found = new ArrayList<>();
     private final List<Miss> misses = new ArrayList<>();
     private final int[] furniture = new int[Furniture.COUNT];
+    private final int[] diagnosed = new int[Furniture.COUNT];
+    private int fills;
 
     public RoomScanner(ServerLevel level, HearthRecord hearth, Consumer<Scan> onDone) {
         this.level = level;
@@ -119,7 +121,7 @@ public final class RoomScanner {
     private int sweepOne() {
         if (cx > maxCx) {
             phase = Phase.FLOOD;
-            return 1;
+            return 1 + nearestFirst();
         }
         int cost = 1;
         LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
@@ -152,6 +154,27 @@ public final class RoomScanner {
             }
         }
         return cost;
+    }
+
+    /** Floods (and explains) the furniture nearest the Anchor first: that is most likely the owner's own. */
+    private int nearestFirst() {
+        int n = seeds.size();
+        if (n < 2) return 1;
+        Integer[] order = new Integer[n];
+        for (int i = 0; i < n; i++) order[i] = i;
+        BlockPos c = hearth.pos;
+        java.util.Arrays.sort(order, java.util.Comparator.comparingDouble(i -> seeds.get(i).distSqr(c)));
+        List<BlockPos> s = new ArrayList<>(n);
+        IntArrayList k = new IntArrayList(n);
+        for (int i : order) {
+            s.add(seeds.get(i));
+            k.add(seedKinds.getInt(i));
+        }
+        seeds.clear();
+        seeds.addAll(s);
+        seedKinds.clear();
+        seedKinds.addAll(k);
+        return n;
     }
 
     // ---- phase 2: flood fill the enclosed space around each piece of furniture ----------------------------------------
@@ -246,7 +269,9 @@ public final class RoomScanner {
      * in a wall. Bounded like the room fill. Returns its cost.
      */
     private int diagnose(Furniture kind, BlockPos seed, LongOpenHashSet firstFill) {
-        if (misses.size() >= MAX_MISSES) return 1;
+        if (fills >= MAX_MISSES || diagnosed[kind.ordinal()] >= MAX_MISSES_PER_KIND) return 1;
+        fills++;
+        diagnosed[kind.ordinal()]++;
         List<BlockPos> starts = new ArrayList<>();
         if (passable(seed)) starts.add(seed);
         else for (Direction d : DIRS) {

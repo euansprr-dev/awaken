@@ -162,29 +162,30 @@ public final class GuideTests {
                     level.setBlock(base.offset(1, 1, 2), foot.setValue(BedBlock.PART, BedPart.HEAD), 3);
                     level.setBlock(base.offset(3, 1, 3), HearthContent.MEDITATION_MAT.get().defaultBlockState(), 3);
                     HearthService.scanNow(level, rec);
-                    Optional<WhyNot.Reason> roofless = WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses);
+                    Optional<WhyNot.Reason> roofless = WhyNot.of(RoomType.SANCTUARY, rooms(rec, base), misses(rec, base));
+                    String rooflessScan = rec.misses.size() + " misses " + rec.misses.stream().limit(4).toList() + ", rooms " + rec.rooms.stream().map(r -> r.types() + "@" + r.min().toShortString()).toList();
                     // 2. roofed, one wall block missing: an opening there
                     shell(level, base, true);
                     BlockPos gap = base.offset(0, 1, 2);
                     level.setBlock(gap, Blocks.AIR.defaultBlockState(), 3);
                     HearthService.scanNow(level, rec);
-                    Optional<WhyNot.Reason> opening = WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses);
+                    Optional<WhyNot.Reason> opening = WhyNot.of(RoomType.SANCTUARY, rooms(rec, base), misses(rec, base));
                     // 3. closed, but a hole in the roof away from the furniture
                     level.setBlock(gap, Blocks.STONE.defaultBlockState(), 3);
                     BlockPos hole = base.offset(3, 3, 1);
                     level.setBlock(hole, Blocks.AIR.defaultBlockState(), 3);
                     HearthService.scanNow(level, rec);
-                    Optional<WhyNot.Reason> roofHole = WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses);
+                    Optional<WhyNot.Reason> roofHole = WhyNot.of(RoomType.SANCTUARY, rooms(rec, base), misses(rec, base));
                     // 4. closed and roofed, the mat gone: missing a Meditation Mat
                     level.setBlock(hole, Blocks.GLASS.defaultBlockState(), 3);
                     level.setBlock(base.offset(3, 1, 3), Blocks.AIR.defaultBlockState(), 3);
                     HearthService.scanNow(level, rec);
-                    Optional<WhyNot.Reason> missing = WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses);
+                    Optional<WhyNot.Reason> missing = WhyNot.of(RoomType.SANCTUARY, rooms(rec, base), misses(rec, base));
                     // 5. and with the mat back: a Sanctuary, nothing to explain
                     level.setBlock(base.offset(3, 1, 3), HearthContent.MEDITATION_MAT.get().defaultBlockState(), 3);
                     HearthService.scanNow(level, rec);
-                    boolean done = rec.hasRoom(RoomType.SANCTUARY) && WhyNot.of(RoomType.SANCTUARY, rec.rooms, rec.misses).isEmpty();
-                    h.assertTrue(roofless.isPresent() && roofless.get().kind() == WhyNot.Kind.SKY, "roofless: sees the sky, was " + roofless);
+                    boolean done = rooms(rec, base).stream().anyMatch(r -> r.types().contains(RoomType.SANCTUARY)) && WhyNot.of(RoomType.SANCTUARY, rooms(rec, base), misses(rec, base)).isEmpty();
+                    h.assertTrue(roofless.isPresent() && roofless.get().kind() == WhyNot.Kind.SKY, "roofless: sees the sky, was " + roofless + " (" + rooflessScan + ")");
                     h.assertTrue(roofless.get().card().contains("sees the sky") && roofless.get().card().contains("no roof"), "says so: " + roofless.get().card());
                     h.assertTrue(opening.isPresent() && opening.get().kind() == WhyNot.Kind.OPENING && gap.equals(opening.get().at()),
                             "a gap: an opening at " + gap.toShortString() + ", was " + opening);
@@ -218,7 +219,7 @@ public final class GuideTests {
                 Signal.answer(sp, Cottage.ACTION, false);
                 h.assertTrue(HearthService.player(sp).tips.contains(Cottage.TIP_DECLINED) && !Signal.isPending(sp, Cottage.ACTION), "declined");
                 h.assertFalse(Cottage.offer(sp), "not offered again after a no");
-                h.assertTrue(Cottage.state(sp, rec) == GuideData.COTTAGE_OFFER, "the guide still offers it");
+                h.assertTrue(Cottage.state(sp, rec) == GuideData.COTTAGE_DECLINED, "the guide still offers it, lower down");
             } finally {
                 data.remove(sp.getUUID());
             }
@@ -294,6 +295,20 @@ public final class GuideTests {
     /** Count of {@code f} in a room holding exactly {@code t}'s furniture, minus {@code without}. */
     private static int c(RoomType t, Furniture without, Furniture f) {
         return t.uses(f) && f != without ? 1 : 0;
+    }
+
+    /** This test's own rooms and misses (rooms other tests left within the radius don't count). */
+    private static List<Room> rooms(HearthRecord rec, BlockPos base) {
+        return rec.rooms.stream().filter(r -> ours(r.min(), base)).toList();
+    }
+
+    private static List<dev.awaken.hearth.room.Miss> misses(HearthRecord rec, BlockPos base) {
+        return rec.misses.stream().filter(m -> ours(m.seed(), base)).toList();
+    }
+
+    private static boolean ours(BlockPos p, BlockPos base) {
+        return p.getX() >= base.getX() - 1 && p.getX() <= base.getX() + 5 && p.getZ() >= base.getZ() - 1 && p.getZ() <= base.getZ() + 5
+                && Math.abs(p.getY() - base.getY()) <= 5;
     }
 
     /** A 5 × 4 × 5 stone shell (air inside); with a glass roof or open to the sky. */

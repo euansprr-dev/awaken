@@ -118,7 +118,8 @@ public final class Cottage {
         if (JOBS.containsKey(sp.getUUID())) return GuideData.COTTAGE_BUILDING;
         if (h.cottage != null) return GuideData.COTTAGE_BUILT;
         if (hp.tips.contains(TIP_BUILT)) return GuideData.COTTAGE_NONE; // free once: it stands at an old home
-        return hp.tips.contains(TIP_NO_ROOM) ? GuideData.COTTAGE_NO_ROOM : GuideData.COTTAGE_OFFER;
+        if (hp.tips.contains(TIP_NO_ROOM)) return GuideData.COTTAGE_NO_ROOM;
+        return hp.tips.contains(TIP_DECLINED) ? GuideData.COTTAGE_DECLINED : GuideData.COTTAGE_OFFER;
     }
 
     /** Yes: find a spot and raise it. False when it can't start (built before, already building, no Hearth). */

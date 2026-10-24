@@ -60,17 +60,22 @@ recipe the guide shows.
 
 **Why a room isn't recognised** (`room/Miss`, `guide/WhyNot`). When a flood leaks, a second bounded fill of the *covered*
 space around the furniture (open sky counts as a wall) says why, and furniture in the same leaky space shares the answer
-without another fill (≤16 explanations per scan): a covered cell with sky right above it → **it sees the sky above the
+without another fill (the furniture nearest the Anchor is filled first; at most 24 explanations per scan and 4 per kind,
+so a village's beds can't use them up): a covered cell with sky right above it → **it sees the sky above the
 bed (no roof)**; sky beside the space inside its footprint or with a wall right behind it → **a hole in the roof at x y
 z**; sky beside it at the edge → **an opening at x y z** (the covered cell the space leaks through); bigger than 32 →
 **too big (over 32 wide)**. A closed room holding part of a room's furniture → **missing: a Meditation Mat**. The scan
 also counts each piece of furniture in the radius (mounted trophies only; armour stands by an entity query at the end)
 for the guide's ticks. Cost: one extra bounded fill per leaky space, inside the same 12k-per-tick budget.
 
-**The Hearth guide** (`guide/Guide`, `GuideData`, `client/HearthScreen`, `client/GuideClient`). Using your own Anchor
-opens **Your Hearth** (a `QuietScreen`: toasts wait while it's open) instead of a notice; a client without the screen
-still gets the old notice and its Y. Status-screen glass with a lantern edge, one scrolling column laid out with
-`signal.client.Ui`:
+**The Hearth guide** (`guide/Guide`, `GuideData`, `client/HearthScreen`, `client/GuideSections`, `client/GuideClient`).
+Using your own Anchor opens **Your Hearth** (a `QuietScreen`: toasts wait while it's open) instead of a notice; a client
+without the screen still gets the old notice and its Y. `HearthScreen` is only the chrome (Status-screen glass with a
+lantern edge, the header, scrolling, clipping); the content is `UiSection`s in `GuideSections` built only from
+`signal.client.Ui` primitives (no raw drawing), so a future surface that hosts Ui sections can show them. `Ui` gained
+three small primitives for it: `card(accent, body)` (a glass card measured, drawn and clicked in one pass),
+`itemAt`/`Flow.item(stack, label, colour)` (12 px item icons with tooltips, in a wrapping flow) and
+`recipe(w, h, cells, result, count)` (a crafting grid, an arrow, the result).
 - header: YOUR HEARTH, the tier chip, the Anchor's position; then radius, rest healing (and half in a Sanctuary), where
   you respawn;
 - Oren's cottage offer on top until it stands (Raise it / Try again / being built);
@@ -98,7 +103,7 @@ tracker widths (148 px, 100 with a compass) by `GuideTests`.
 
 **Oren's cottage** (`guide/Cottage`, `CottagePlan`). Once per player, six seconds after the Anchor takes root, a choice
 card: "A cottage from Oren? · Free: your first Sanctuary." [Y] Raise it · [N] I'll build my own (no only marks it
-declined; the screen keeps the offer). Yes starts a job:
+declined; the screen keeps the offer, moved to its bottom: "Changed your mind?"). Yes starts a job:
 - *Site*: 112 candidate centres 10–22 blocks from the Anchor, the door facing it, ranked by heightmap flatness and
   distance (one tick), then two full checks a tick: every column of the 12 × 13 box must be terrain (dirt, sand, stone,
   terracotta, gravel, clay, snow, mud...) with only plants, snow, vines and natural (non-persistent) leaves above it, up
@@ -236,8 +241,8 @@ a Sanctuary) · `hearth_cottage_offer_once` (one card, never twice, not after a 
    without the screen. The upgrade is built from the screen's button or the accept key, re-validated on the server.
 2. Stairs and slabs close gaps like doors and panes (a stair or slab roof is a roof); slabs and trapdoors up to 24 blocks
    above the heightmap count as a roof.
-3. Why a room isn't recognised comes from a second bounded fill of the covered space (sky as a wall), ≤16 per scan, in
-   the scan's budget: sees the sky (no roof), a hole in the roof, an opening at x y z, too big (over 32 wide), missing: X.
+3. Why a room isn't recognised comes from a second bounded fill of the covered space (sky as a wall), nearest furniture
+   first, ≤24 per scan and ≤4 per kind, in the scan's budget: sees the sky (no roof), a hole in the roof, an opening at x y z, too big (over 32 wide), missing: X.
 4. The Anchor teaches the Hearth's furniture recipes (Meditation Mat, Forge, Trophy Mount, the five role pads) when it
    takes root, whatever the level.
 5. Oren's cottage: offered once per player (a choice card six seconds after the first Anchor), free, never on anything a

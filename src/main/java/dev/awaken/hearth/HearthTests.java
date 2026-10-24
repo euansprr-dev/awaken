@@ -230,9 +230,12 @@ final class HearthTests {
             h.succeedWhen(() -> {
                 HearthService.scanNow(level, rec);
                 boolean ok = rec.hasRoom(RoomType.SANCTUARY) && Hearth.isSanctuary(level, base.offset(2, 1, 2));
-                if (ok) {
+                if (ok) { // take it all down: other tests share these columns (a leftover Sanctuary confuses them)
                     data.remove(owner);
                     level.removeBlock(rec.pos, false);
+                    for (int x = 0; x < 5; x++) for (int y = 0; y < 4; y++) for (int z = 0; z < 5; z++) {
+                        level.setBlock(base.offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+                    }
                 }
                 h.assertTrue(ok, "the closed room is recognised as a Sanctuary (rooms "
                         + rec.rooms.stream().map(r -> r.types().toString()).toList() + ", hearth found "
