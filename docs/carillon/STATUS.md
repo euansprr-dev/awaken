@@ -20,8 +20,8 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 
 ## Agreements with other sessions (2026-10-24)
 - Main session ("Ultimate mod pack experience", local_95821df4): owns merges into build/awaken-v1 and the body module
-  until W2. body-anims, awakened-body and cast-anims are already in build/awaken-v1 (08d5809). pack/ritual landed
-  (c387982); next pack/holo-ui and pack/awakened-lands when their sessions say green; it pings Carillon with each
+  until W2. body-anims, awakened-body and cast-anims are already in build/awaken-v1 (08d5809). pack/ritual (c387982)
+  and holo part 1 (401f1b0) landed; next holo part 2 and pack/awakened-lands when their sessions say green; it pings Carillon with each
   commit, and carillon/main merges build/awaken-v1 after each. It takes the shared tour lock for its own perf tours.
   W2 notes from it: keep `MovementHooks` stable (powers/MoveTwists uses it); clips come from
   tools/art/specs/body_moves.py (edit the spec, not the JSON); update docs/proposals/awakened-body.md and the SPEC rule
@@ -44,3 +44,6 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 - 2026-10-24: pack/ritual landed on build/awaken-v1 (c387982) and was merged into carillon/main. Wake destination hook:
   story/Prologue + the ritual director (crypt mouth today) → infirmary behind awaken:carillon. Holo lands in two merges
   (1: wristband + visual pass + text glow, the one the Atlas needs; 2: power-pick screen + notifications).
+- 2026-10-24: Holo part 1 (wristband, K menu, text glow, core/api/UiHooks) + Lens dimming (texel 14) landed on
+  build/awaken-v1 (238546c, 401f1b0; 310/310 GameTests) and was merged into carillon/main. Holo part 2 (power-pick
+  screens, notifications) still on pack/holo-ui.
