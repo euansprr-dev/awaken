@@ -1,14 +1,12 @@
 package dev.awaken.compat.client;
 
-import dev.awaken.compat.Discovered;
-import dev.awaken.progression.Progression;
+import dev.awaken.compat.SpoilerRule;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 
 /**
- * The spoiler guard on the client (SPEC §14): one answer for JEI and Jade. Off in creative and spectator (the creative
- * tabs already list everything) and when the player turns {@code spoiler_guard} off.
+ * The spoiler guard on the client (SPEC §14): {@link SpoilerRule} for the local player and their {@code spoiler_guard}
+ * setting, one answer for JEI and Jade. Without a player (menus, loading) nothing is guarded.
  */
 public final class Spoilers {
     private Spoilers() {}
@@ -16,20 +14,12 @@ public final class Spoilers {
     /** True while the guard applies to the local player. */
     public static boolean active() {
         Player p = Minecraft.getInstance().player;
-        return p != null && CompatClientConfig.spoilerGuard() && !p.isCreative() && !p.isSpectator();
-    }
-
-    /** True when this item may be shown: not Awaken's, or discovered, or the guard is off. */
-    public static boolean shows(Item item) {
-        if (!Discovered.isAwaken(item) || !active()) return true;
-        Player p = Minecraft.getInstance().player;
-        return p != null && Discovered.of(p).has(item);
+        return p != null && SpoilerRule.applies(p, CompatClientConfig.spoilerGuard());
     }
 
     /** A creature is known once the Codex has it (its first sighting). */
     public static boolean knowsCreature(String defId) {
         Player p = Minecraft.getInstance().player;
-        if (p == null || !active()) return true;
-        return Progression.profile(p).counter("awaken:discovered/creature/" + defId) > 0;
+        return p == null || SpoilerRule.knowsCreature(p, defId, active());
     }
 }

@@ -793,9 +793,13 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   road, the Hearth Anchor and town requests), or (3) Awaken's own records name it: a scanned blueprint names its
   machine, the Frame Forge's blueprint names the four Frame pieces and six modules. Checked every 40 ticks per player
   (staggered, allocation-free) and at login; the set only grows. Vanilla and other mods' items are never guarded. Items
-  looted into the Satchel or Deep Pack count once they reach the inventory. On the client the guard is off in creative
-  and spectator and when `spoiler_guard` (`awaken-compat-client.toml`) is off. `/awaken compat discovered
-  [check|reset|all]`. Test: `compat_spoiler_rule`.
+  looted into the Satchel or Deep Pack count once they reach the inventory. The guard is off in creative and spectator
+  and when `spoiler_guard` (`awaken-compat-client.toml`) is off. Every viewer asks the same rule (`compat.SpoilerRule`,
+  plain Awaken code taking any player): an item shows when it isn't Awaken's or is discovered, a recipe when any of its
+  key items shows, a creature's details once the Codex has it, and disguises are never named. `compat.Reveal` keeps a
+  viewer's hidden set in step and reports only what changed, so a discovery appears at once and nothing else is
+  touched. `/awaken compat discovered [check|reset|all]`. Tests: `compat_spoiler_rule` (the record),
+  `compat_spoiler_guard` (the rule and the reveal as the record grows, game modes, the Codex, disguises).
 - JEI (`compat.client.jei`): Awaken's categories draw the System's glass (`signal.client.Glass.panel`, dark glass slots,
   a framed result in the recipe's accent, no JEI border): **Awaken Crafting** (every `awaken:` crafting-table recipe,
   moved out of JEI's Crafting tab, with the level road step that teaches it and, for Hunter gear, rank, set and set
@@ -809,7 +813,8 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   choice is hidden still shows them, as vanilla's recipe book does); Awaken's recipes are hidden until their key item is
   discovered (a machine by itself, tempering by the Forge, a Codex page by its item); recipes in other categories (JEI's
   anvil, other mods') until any of their Awaken outputs is; a category whose stations are all hidden hides itself.
-  Applied on the client tick only when the record, the game mode or the setting changes.
+  Applied on the client tick only when the record, the game mode or the setting changes; a new client player (respawn,
+  another dimension) keeps the current view up to 40 ticks until the server re-sends its record, which never shrinks.
 - Jade (`compat.jade` server data, `compat.client.jade`): Awaken targets wear the Jade theme `awaken:system` (the
   System's glass as a nine-slice sprite, `tools/art/compat_ui.py`) and an accent bar in the target's colour (setting
   `jade_system_style`). Gate cores: "D-rank gate", state, break clock, omen, then exactly what the gate card shows that

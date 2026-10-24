@@ -136,6 +136,8 @@ public final class Discovered {
         ATTACHMENTS.register(modBus);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(Discovered::onTick);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(Discovered::onLogin);
+        // the results index holds the server's recipe manager: let it go with the server
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> forget());
     }
 
     /** The player's record (on the client: the copy synced to the local player). */

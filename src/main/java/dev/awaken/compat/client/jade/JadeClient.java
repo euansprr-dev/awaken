@@ -8,10 +8,10 @@ import dev.awaken.above.block.LogTerminalBlock;
 import dev.awaken.above.client.ClientAbove;
 import dev.awaken.above.machine.MachineBlock;
 import dev.awaken.compat.LookAt;
+import dev.awaken.compat.SpoilerRule;
 import dev.awaken.compat.client.CompatClientConfig;
 import dev.awaken.compat.client.Spoilers;
 import dev.awaken.compat.jade.ServerData;
-import dev.awaken.core.api.MobRole;
 import dev.awaken.gates.GateVortex;
 import dev.awaken.gates.GateVortexBlockEntity;
 import dev.awaken.gates.block.GateBlocks;
@@ -24,17 +24,13 @@ import dev.awaken.hearth.town.TownNpc;
 import dev.awaken.mobs.def.FaunaRole;
 import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.mobs.entity.FaunaMob;
-import dev.awaken.mobs.entity.RitualStatue;
-import dev.awaken.mobs.entity.SeatedOne;
 import dev.awaken.progression.Rank;
 import dev.awaken.signal.client.Glass;
-import dev.awaken.veil.block.VeilMarkBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.Entity;
 import snownee.jade.api.Accessor;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.EntityAccessor;
@@ -89,18 +85,11 @@ public final class JadeClient {
 
     // ---- the guard --------------------------------------------------------------------------------------------------
 
-    /** Things Jade must not name at all: naming them would give the trick away. */
+    /** Things Jade must not name at all ({@link SpoilerRule#disguised}): naming them would give the trick away. */
     static boolean hidden(Accessor<?> a) {
         if (!Spoilers.active()) return false;
-        if (a instanceof EntityAccessor ea) {
-            Entity e = ea.getEntity();
-            if (e instanceof SeatedOne || e instanceof RitualStatue) return true;
-            if (e instanceof AwakenMob m) {
-                return m.mimicId() >= 0 || m.flag(AwakenMob.F_DORMANT) || m.syncedRole() == MobRole.Role.RITUAL;
-            }
-        } else if (a instanceof BlockAccessor ba) {
-            return ba.getBlock() instanceof VeilMarkBlock;
-        }
+        if (a instanceof EntityAccessor ea) return SpoilerRule.disguised(ea.getEntity());
+        if (a instanceof BlockAccessor ba) return SpoilerRule.disguised(ba.getBlockState());
         return false;
     }
 

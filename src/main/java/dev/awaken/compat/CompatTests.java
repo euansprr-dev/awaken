@@ -22,25 +22,32 @@ import dev.awaken.gear.Piece;
 import dev.awaken.mobs.Mobs;
 import dev.awaken.mobs.def.Bestiary;
 import dev.awaken.mobs.entity.AwakenMob;
+import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
+import dev.awaken.veil.VeilContent;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * Companion policies, Awaken's side of them: the far-view policy covers every dimension; the spoiler guard's rule says
- * exactly which items a player state counts as discovered; the look-at facts follow the gate card's rule and read
- * machines, creatures and townsfolk right. None of this needs a companion mod installed.
+ * Companion policies, Awaken's side of them: the far-view policy covers every dimension; the
+ * spoiler rule's record (exactly which items a player state counts as discovered) and its guard (what a viewer hides and
+ * brings back as the record grows); the look-at facts follow the gate card's rule and read machines, creatures and
+ * townsfolk right. None of this needs a companion mod installed.
  */
 final class CompatTests {
     private CompatTests() {}
@@ -110,6 +117,65 @@ final class CompatTests {
             Discovered.STREAM_CODEC.encode(buf, found);
             h.assertTrue(Discovered.STREAM_CODEC.decode(buf).items().equals(found.items()), "and syncs intact");
             h.assertTrue(Discovered.isAwaken(CoreApi.LORD_HEART.get()) && !Discovered.isAwaken(Items.DIAMOND), "only Awaken's items are guarded");
+            h.succeed();
+        });
+
+        // The guard (SPEC §14): what the rule lets a player see, and a viewer's hidden set following the record as it grows.
+        AwakenTests.register("compat_spoiler_guard", 40, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            sp.setGameMode(GameType.SURVIVAL);
+            h.assertTrue(SpoilerRule.applies(sp, true) && !SpoilerRule.applies(sp, false), "on in survival, off with the setting off");
+            Item shard = CoreApi.ESSENCE_SHARD.get(), heart = CoreApi.LORD_HEART.get(), iron = Items.IRON_INGOT;
+            List<Item> all = List.of(shard, heart, iron);
+            Reveal<Item> view = new Reveal<>();
+            List<Item> hid = new ArrayList<>(), shown = new ArrayList<>();
+            Runnable update = () -> {
+                hid.clear();
+                shown.clear();
+                boolean guard = SpoilerRule.applies(sp, true);
+                view.update(all, i -> SpoilerRule.shows(sp, i, guard), hid::add, shown::add);
+            };
+
+            update.run();
+            h.assertTrue(hid.equals(List.of(shard, heart)) && shown.isEmpty(), "a fresh player: Awaken's items hidden, iron never: " + hid);
+            update.run();
+            h.assertTrue(hid.isEmpty() && shown.isEmpty(), "nothing changed, nothing reported");
+            sp.getInventory().add(new ItemStack(shard));
+            Discovered.check(sp);
+            update.run();
+            h.assertTrue(shown.equals(List.of(shard)) && hid.isEmpty() && view.isHidden(heart) && view.hiddenCount() == 1,
+                    "the shard appears the moment it is discovered, the heart stays hidden");
+            h.assertTrue(SpoilerRule.showsAny(sp, List.of(heart, shard), true) && !SpoilerRule.showsAny(sp, List.of(heart), true),
+                    "a recipe shows once any of its key items does");
+
+            // creative and spectator list everything; back in survival the undiscovered hides again
+            sp.setGameMode(GameType.CREATIVE);
+            update.run();
+            h.assertTrue(shown.equals(List.of(heart)) && view.hiddenCount() == 0, "creative sees everything");
+            sp.setGameMode(GameType.SPECTATOR);
+            h.assertTrue(!SpoilerRule.applies(sp, true), "spectator too");
+            sp.setGameMode(GameType.SURVIVAL);
+            update.run();
+            h.assertTrue(hid.equals(List.of(heart)), "survival again: only the undiscovered heart hides");
+
+            // a creature's details wait for the Codex
+            h.assertTrue(!SpoilerRule.knowsCreature(sp, "mossback", true) && SpoilerRule.knowsCreature(sp, "mossback", false),
+                    "an unseen creature keeps its details while the guard is on");
+            Progression.setCounter(sp, "awaken:discovered/creature/mossback", 1);
+            h.assertTrue(SpoilerRule.knowsCreature(sp, "mossback", true), "known once the Codex has it");
+
+            // disguises are never named: a dormant statue, the ritual's cast, Veil marks
+            AwakenMob ghoul = Mobs.spawn(h.getLevel(), Bestiary.get("toll_ghoul"), h.absoluteVec(new Vec3(0.5, 1, 0.5)), 10,
+                    new MobRole(MobRole.Role.NORMAL, 10, dev.awaken.mobs.def.Theme.BELL.id, Optional.empty(), ""), Set.of());
+            h.assertTrue(ghoul != null && !SpoilerRule.disguised(ghoul), "an ordinary creature can be named");
+            ghoul.setFlag(AwakenMob.F_DORMANT, true);
+            h.assertTrue(SpoilerRule.disguised(ghoul), "a dormant one is a statue");
+            ghoul.setFlag(AwakenMob.F_DORMANT, false);
+            ghoul.configure(10, new MobRole(MobRole.Role.RITUAL, 10, dev.awaken.mobs.def.Theme.BELL.id, Optional.empty(), ""), Set.of());
+            h.assertTrue(SpoilerRule.disguised(ghoul), "the ritual's cast is never named");
+            ghoul.discard();
+            h.assertTrue(SpoilerRule.disguised(VeilContent.VEIL_MARK.get().defaultBlockState())
+                    && !SpoilerRule.disguised(Blocks.STONE.defaultBlockState()), "Veil marks are for spirit sight only");
             h.succeed();
         });
 

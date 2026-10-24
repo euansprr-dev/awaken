@@ -2,6 +2,8 @@ package dev.awaken.compat.client.jei;
 
 import dev.awaken.Awaken;
 import dev.awaken.compat.Discovered;
+import dev.awaken.compat.Reveal;
+import dev.awaken.compat.SpoilerRule;
 import dev.awaken.compat.client.Spoilers;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.constants.VanillaTypes;
@@ -30,8 +32,9 @@ import java.util.Set;
  * the item list and from recipe slots, and every recipe whose Awaken result is undiscovered is hidden; both come back
  * the moment the record grows. Awaken's own recipes are guarded by their key item (a machine by itself, tempering by the
  * Forge, a Codex page by its item); recipes in other categories (JEI's anvil, other mods') by their Awaken outputs, shown
- * once any of those is discovered. A category whose stations are all hidden hides itself (JEI's own rule). Runs on the
- * client tick, only when the record, the game mode or the setting changes.
+ * once any of those is discovered. A category whose stations are all hidden hides itself (JEI's own rule). The decisions
+ * are {@link SpoilerRule}'s and {@link Reveal} says what changed, so this only translates them into JEI calls, on the
+ * client tick, when the record, the game mode or the setting changes.
  */
 final class SpoilerGuard {
     private SpoilerGuard() {}
@@ -50,10 +53,13 @@ final class SpoilerGuard {
     private static boolean built;
     private static final Map<Item, List<ItemStack>> STACKS = new IdentityHashMap<>();
     private static final List<Guarded> GUARDED = new ArrayList<>();
-    private static final Set<Item> HIDDEN_ITEMS = Collections.newSetFromMap(new IdentityHashMap<>());
-    private static final Set<Guarded> HIDDEN_RECIPES = Collections.newSetFromMap(new IdentityHashMap<>());
+    private static final Reveal<Item> ITEMS = new Reveal<>();
+    private static final Reveal<Guarded> RECIPES = new Reveal<>();
     private static int lastSize = -1;
     private static boolean lastActive;
+    private static Player lastPlayer;
+    private static int resendWait;
+    private static final int RESEND_WAIT = 40;
 
     static void clearOwn() {
         OWN.clear();
@@ -69,22 +75,19 @@ final class SpoilerGuard {
     }
 
     static void start(IJeiRuntime rt) {
+        stop();
         runtime = rt;
-        built = false;
-        STACKS.clear();
-        GUARDED.clear();
-        HIDDEN_ITEMS.clear();
-        HIDDEN_RECIPES.clear();
         lastSize = -1;
     }
 
     static void stop() {
         runtime = null;
         built = false;
+        lastPlayer = null;
         STACKS.clear();
         GUARDED.clear();
-        HIDDEN_ITEMS.clear();
-        HIDDEN_RECIPES.clear();
+        ITEMS.clear();
+        RECIPES.clear();
     }
 
     static IJeiRuntime runtime() {
@@ -102,8 +105,19 @@ final class SpoilerGuard {
         }
         boolean active = Spoilers.active();
         int size = Discovered.of(p).size();
+        if (p != lastPlayer) {
+            // a new client player (respawn, another dimension) starts empty until the server re-sends its record, which
+            // only grows: keep the current view a moment rather than hiding everything for a tick
+            lastPlayer = p;
+            resendWait = size < lastSize ? RESEND_WAIT : 0;
+        }
+        if (resendWait > 0 && size < lastSize) {
+            resendWait--;
+            return;
+        }
+        resendWait = 0;
         if (size == lastSize && active == lastActive) return;
-        apply();
+        apply(p, active);
         lastSize = size;
         lastActive = active;
     }
@@ -145,29 +159,23 @@ final class SpoilerGuard {
                 STACKS.size(), OWN.size(), found.size(), (System.nanoTime() - t0) / 1_000_000);
     }
 
-    private static void apply() {
-        var visibility = runtime.getJeiHelpers().getIngredientVisibility();
+    private static void apply(Player p, boolean guard) {
         List<ItemStack> hide = new ArrayList<>(), show = new ArrayList<>();
-        for (var e : STACKS.entrySet()) {
-            boolean shows = Spoilers.shows(e.getKey());
-            if (shows && HIDDEN_ITEMS.remove(e.getKey())) show.addAll(e.getValue());
-            else if (!shows && HIDDEN_ITEMS.add(e.getKey())) hide.addAll(e.getValue());
-        }
+        ITEMS.update(STACKS.keySet(), item -> SpoilerRule.shows(p, item, guard), item -> hide.addAll(STACKS.get(item)),
+                item -> show.addAll(STACKS.get(item)));
+        var visibility = runtime.getJeiHelpers().getIngredientVisibility();
         if (!hide.isEmpty()) visibility.hideIngredients(VanillaTypes.ITEM_STACK, hide, CONTEXTS);
         if (!show.isEmpty()) visibility.unhideIngredients(VanillaTypes.ITEM_STACK, show, CONTEXTS);
 
         Map<IRecipeType<?>, List<Object>> hideR = new LinkedHashMap<>(), showR = new LinkedHashMap<>();
-        for (Guarded g : GUARDED) {
-            boolean shows = false;
-            for (Item k : g.keys()) if (Spoilers.shows(k)) { shows = true; break; }
-            if (shows && HIDDEN_RECIPES.remove(g)) showR.computeIfAbsent(g.type(), k -> new ArrayList<>()).add(g.recipe());
-            else if (!shows && HIDDEN_RECIPES.add(g)) hideR.computeIfAbsent(g.type(), k -> new ArrayList<>()).add(g.recipe());
-        }
+        RECIPES.update(GUARDED, g -> SpoilerRule.showsAny(p, g.keys(), guard),
+                g -> hideR.computeIfAbsent(g.type(), k -> new ArrayList<>()).add(g.recipe()),
+                g -> showR.computeIfAbsent(g.type(), k -> new ArrayList<>()).add(g.recipe()));
         IRecipeManager rm = runtime.getRecipeManager();
         hideR.forEach((type, list) -> hide(rm, type, list));
         showR.forEach((type, list) -> unhide(rm, type, list));
         Awaken.LOG.info("[compat] JEI spoiler guard applied: {} items hidden (+{} -{}), {} recipes hidden (+{} -{})",
-                HIDDEN_ITEMS.size(), hide.size(), show.size(), HIDDEN_RECIPES.size(),
+                ITEMS.hiddenCount(), hide.size(), show.size(), RECIPES.hiddenCount(),
                 hideR.values().stream().mapToInt(List::size).sum(), showR.values().stream().mapToInt(List::size).sum());
     }
 
