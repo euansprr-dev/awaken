@@ -33,8 +33,8 @@ A biome is only done when it has all six, each readable at its own distance:
   the common trees. Canopies stay within about 12 blocks of the trunk (a feature may write one chunk beyond its own).
   Variety comes from 2–3 sizes and shapes per biome, never one tree copied.
 - **Hero trees** are structures (placed like lairs, `structure_set` in the lands pack, biome tag from the table): the
-  giants you remember and steer by. Rare: roughly one per 300–500 blocks in their biome. Each one costs at most 2 ms to
-  build and never writes outside its reserved box.
+  giants you remember and steer by. Rare: roughly one per 300–500 blocks in their biome. Each one is built once (about
+  2 ms for the largest, see Costs), cached for all its chunks, and never writes outside its reserved box.
 - Logs join `#minecraft:logs` (and `#minecraft:logs_that_burn` where they burn), leaves `#minecraft:leaves`, so gates,
   stars and every vanilla rule treat them as trees. Leaves decay like vanilla.
 - Fuller trees come from art and silhouette, not extra leaf layers: every see-through leaf pixel is costly on Apple
@@ -160,8 +160,9 @@ including the hero trees' `awaken:has_structure/<tree>`, come from the biome tab
 ### Blocks (`terrain.LandsBlocks`)
 
 Elder: `elder_log`, `stripped_elder_log`, `elder_wood`, `stripped_elder_wood`, `elder_planks`, `elder_leaves`,
-`elder_sapling`. Lumen: `lumen_log`, `stripped_lumen_log`, `lumen_wood`, `stripped_lumen_wood`, `veined_lumen_log` (the
-Spire's bark, glowing veins), `lumen_planks`, `lumen_leaves`, `lumen_sapling`, `lumen_moss` (carpet), `lumen_cap`
+`elder_leaves_gold` (the warm tone of crown tops), `elder_sapling`. Lumen: `lumen_log`, `stripped_lumen_log`,
+`lumen_wood` (limbs and boughs: a darker slate bark, so branches read as wood under the pads, not as beams),
+`stripped_lumen_wood`, `veined_lumen_log` (the Spire's bark, glowing veins, bark on every face), `lumen_planks`, `lumen_leaves`, `lumen_sapling`, `lumen_moss` (carpet), `lumen_cap`
 (cross plant, light 4: the forest floor's only real light, a soft pool round each cluster), `lumen_vines` (hanging,
 vanilla `HangingMossBlock`; the tip ends in a glowing bulb). Logs and woods are in `#awaken:elder_logs` /
 `#awaken:lumen_logs` → `#minecraft:logs_that_burn`; leaves `#minecraft:leaves`; stripping and fire are NeoForge data
@@ -170,8 +171,9 @@ own particle pool covers them) and no ambient sound. Elder leaves are untinted.
 
 **Glow without overdraw or light.** Lumen leaves are a normal cutout leaf cube plus one-pixel (sides) or 2×2 (top and
 bottom) *solid* emissive faces laid 0.05 px in front of the leaf face, sampling the solid `lumen_glow` tile, so the
-glow costs no alpha-tested overdraw (Apple GPUs) and keeps its colour at every mip level. Three equally weighted variants
-(two speckled, one plain) keep the extra quads to about twice a vanilla leaf. Lumen moss does the same on its top.
+glow costs no alpha-tested overdraw (Apple GPUs) and keeps its colour at every mip level. Few and bright (two spores on
+the top, one under, one on each side, on half the blocks; the other half plain): with the Lens look's bloom they read
+as a soft glow, where many small ones read as a starfield. The extra quads come to about 1.6× a vanilla leaf. Lumen moss does the same on its top.
 Caps, vine tips and the veined log use vanilla's `cross_emissive`-style overlay layer (few blocks).
 
 ### Trees (lands pack `worldgen/feature/lands/*`, Awaken placers in `terrain.tree`)
@@ -182,16 +184,17 @@ Caps, vine tips and the veined log use vanilla's `cross_emissive`-style overlay 
   masses' size (`limb_mass`, `crown_mass` added to the foliage radius). Limbs, roots and twigs are the `branch_provider`
   (bark on all sides).
 - `awaken:cloud_foliage_placer`: an ellipsoid mass (domed `height` above, `depth` × height below, `ragged` edge,
-  optional `hollow` core, `hang` drooping leaves). It only keeps leaves that reach wood within six steps through other
+  optional `hollow` core, `hang` drooping leaves; `top_provider` gives the part above `top_from` of its height other
+  leaves, e.g. a noise-picked warm tone). It only keeps leaves that reach wood within six steps through other
   leaves (a walk out from the logs already in the mass), which is vanilla's decay rule: no leaf is born decaying and no
   leaf hangs loose at the ragged edge (both checked by `terrain_lands_trees_grow`).
 - `awaken:hanging_vines` decorator: strands under leaves with air below, `body` down to `tip`.
 
 | Tree | Trunk | Height | Crown | Extras |
 |---|---|---|---|---|
-| `lands/elder` | 2×2 elder log, root flare | 18–26 | 3–5 limbs from half height, masses r 3–4 on limbs and top: a layered gold crown | gold litter, shelf mushrooms, moss/podzol ring |
+| `lands/elder` | 2×2 elder log, root flare | 18–26 | 3–5 limbs from half height, masses r 3–4 on limbs and top: a layered crown; its top gold where a slow noise runs high (`top_provider`, about a third of the wood) | gold litter, shelf mushrooms, moss/podzol ring |
 | `lands/young_elder` | 1×1, leans up to 2 | 9–13 | 1–2 short limbs, r 2–3 | litter |
-| `lands/lumen` | 2×2 lumen log | 10–16 | 3–5 near-level limbs, flat pads r 3–4 one block over the twigs | glowing vines, lumen moss and caps round the foot |
+| `lands/lumen` | 2×2 lumen log | 10–16 | 2–4 slate limbs climbing at 45°, broad flat pads r 3–4 over them | a curtain of glowing vines (17% of pad undersides, 2–6 long), lumen moss and caps round the foot |
 | `lands/small_lumen` | 1×1 | 6–9 | 2–3 limbs, pads r 2–3 | short vines |
 | `lands/fallen_elder`, `lands/fallen_lumen` | vanilla `fallen_tree` | 5–11 / 4–8 long | – | moss carpet / lumen moss on top, mushrooms / caps |
 
@@ -226,51 +229,74 @@ plants, snow, water and leaves (never logs, ground or anything built); trunk and
 real ground (so roots wall down a slope and sink into a hump: nothing floats); ground cover (Elder: moss, podzol, gold
 litter, ferns; Spire: lumen moss and caps) is laid round the foot first.
 
-- **Elder Colossus**: trunk 6–9 across swelling into the roots, 55–85 tall with a slow sway; 5–7 buttress roots arching
-  8–15 out; 4–6 great limbs from 44–78% of the height, 14–24 long, near level then rising; on each a cumulus mass (one
-  big hollow ellipsoid and 2–4 puffs) at the end, one along it and two on side branches; three or four leaders round a
-  deliberately small top crown, so the sky reaches the trunk between the limbs (sky light beside the trunk 12; with a
-  big crown over it, 4–6, and the trunk read as a black pole).
-- **Lumen Spire**: a three-lobed trunk twisting like rope, 30–45 tall, veined lumen log (glowing veins); 4–6 roots;
-  two small pad tiers on the way up; 6–8 crown limbs rising then drooping with pads along them and one over the
-  middle; a curtain of glowing vines from the crown (20% of the open leaf undersides, 2–6 long, up to 5 longer toward
+- **Elder Colossus**: a trunk 6–9 across that swells to twice that at the ground, deeply fluted there, with a slow
+  sway, all bark (`elder_wood`: no end grain on its ledges), ending inside its dome (it never pokes through: on far
+  terrain a trunk above the crown read as a thin post); crown top 55–90 above the foot; 6–8 buttress roots arching 9–17 out; one broad
+  umbrella dome (radius 24–30) of billowing masses (a big hollow ellipsoid and two or three puffs each) carried on 6–8
+  great limbs from 46–76% of the height, two boughs off each, and 4–5 leaders; the upper masses gold. The dome is
+  open round the trunk's head and pierced by four shafts between the limbs, so the sky reaches the bark under it (sky
+  light beside the trunk 12; under a closed dome 0–6, and the trunk read as a black pole).
+- **Lumen Spire**: a three-lobed trunk twisting like rope, 40–52 tall (three times the canopy, so it reads from afar), veined lumen log (glowing veins); 4–6 roots;
+  two small pad tiers on the way up; 6–8 slender slate limbs rising then drooping with pads along them and one over the
+  middle; a curtain of glowing vines from the crown (24% of the open leaf undersides, 2–7 long, up to 5 longer toward
   the rim).
 - Rarity: `random_spread` spacing 26 chunks (Colossus) and 22 (Spire), the site anywhere within 4 chunks of the
   candidate where the biome is right (checked first), the land dry, the footprint level (≤ 3 steps over 10/6 blocks)
   and the root ring within 10/6 of the centre's height. Inside their biome that is roughly one per 300–500 blocks.
 - `/awaken terrain hero <tree> [seed]` grows one where you stand; `/awaken terrain herovisit <tree> [distance above]`
-  stands you south of the nearest generated one, looking at it, and logs the sky light beside its trunk.
+  stands you south of the nearest generated one, looking at it (from the sea's surface when that ground is water), and
+  logs the sky light beside its trunk.
 
 ### Checks
 
 GameTests: `terrain_lands_blocks`, `terrain_lands_trees_grow` (6 seeds of each data tree on a platform: grows, wood
 and canopy, no leaf born decaying, nothing loose, reach ≤ 13, height range), `terrain_lands_biomes`,
-`terrain_hero_blueprints` (8 seeds each: sizes, nothing disconnected, few persistent leaves, cost),
+`terrain_hero_blueprints` (8 seeds each: sizes, the Colossus trunk ending inside its crown, nothing disconnected, few
+persistent leaves; cost: the fastest seed ≤ 8 ms, so a loaded machine can't fail it; fastest, average and worst logged),
 `terrain_hero_builds_in_box` (a Colossus on a slope and a Spire, chunk by chunk: inside the box, on the ground,
-nothing loose, no decaying leaves, cost per chunk), `terrain_hero_sites` (site search on a real overworld).
-Tour: `tools/autopilot/lands-slice.txt` (run with `PACK=perf,world TECTONIC=awakened`), light probe
-`tools/autopilot/lands-probe.txt`.
+nothing loose, no decaying leaves; cost per chunk logged, not asserted), `terrain_hero_sites` (site search on a real
+overworld). Data-tree cost is logged, not asserted.
+Tours: `tools/autopilot/lands-slice.txt` (run with `PACK=perf,world TECTONIC=awakened`), far terrain
+`tools/autopilot/lands-far.txt` (`PACK=perf,horizon,world DH=swift`: the hero trees from 300–600 blocks), frame times
+`tools/autopilot/lands-perf.txt`, light probe `tools/autopilot/lands-probe.txt`.
 
-### Costs (measured 2026-10-24, machine shared with other builds: compare within a run)
+**Lens: Swift and Cinematic.** The two looks differ only by Cinematic's light shafts (`lens_shafts`), which need the
+sun on screen and open sky round it. Looking away from the sun, or at golden hour with the sun behind the canopy or
+below the hills, the two shots are the same image; the slice tour shoots the A/B into the afternoon sun (time 11000,
+west, 18° up) through the Elderwood canopy.
+
+### Costs (measured 2026-10-24, machine shared with 3 other builds: compare within a run)
 
 - Frame time, `tools/autopilot/lands-perf.txt`, 2880×1800, perf + world pack, Tectonic `awakened`, each Awakened
-  forest beside its vanilla archetype in the same run, two passes (p50): Elderwood (dense, beside a Colossus, noon)
-  12.78 / 8.62 ms against old-growth birch 12.26 / 7.99; Lumen Forest (night) 8.74 / 8.29 against dark forest 8.35 /
-  9.02. Within about half a millisecond of their archetypes. That took trimming: before, 6–8 trees a chunk with 55%
-  Elders (about 3,000 leaf blocks a chunk) cost Elderwood 2 ms more than birch.
-- Hero blueprints (`terrain_hero_blueprints`, 8 seeds after warm-up): Colossus 3.1–3.8 ms average (worst 5.7) on a
-  quiet machine, up to 8 ms while other builds load it; Spire 1.4–2.1 ms (worst 3.6). Built once per tree and cached. Placement into a live level
-  (`terrain_hero_builds_in_box`, block updates and light included, so above worldgen's cost): Colossus ~14,500 blocks
-  over 16 chunks at 1.5–2.1 ms a chunk on average (worst 7–8), Spire ~3,400 blocks over 9 chunks at 0.6–1.1 ms. The
-  Colossus blueprint is above the plan's 2 ms ceiling; it is paid once per tree, on a worker thread.
-- Data trees (`terrain_lands_trees_grow`): Elder ~160 logs and ~700 leaves, young elder 24 / 113, Lumen tree 115 / 237,
-  small Lumen 35 / 97.
+  forest beside its vanilla archetype in the same run, two passes, p50 (load in brackets). After the polish pass:
+  Elderwood (dense, 45 blocks from a Colossus, noon) 10.22 (29) / 14.49 (37) ms against old-growth birch 9.53 (28) /
+  12.66 (37); Lumen Forest (night) 12.59 (32) / 11.56 (28) against dark forest 13.54 (34) / 10.94 (26). Lumen stays
+  within a millisecond of its archetype either way; Elderwood beside a Colossus is now 0.7–1.8 ms over birch (before the
+  polish 0.5–0.6, with a Colossus half the size: its dome is ~28,600 blocks now, see-through leaves). Absolute numbers
+  sit above the 9.1 ms Swift budget only because of the load; the earlier quiet runs were 5.8–8.5 ms. Before the slice
+  trimmed them, 6–8 trees a chunk with 55% Elders (about 3,000 leaf blocks a chunk) cost Elderwood 2 ms more than birch.
+- Hero blueprints (`terrain_hero_blueprints`, 8 seeds after 3 warm-up builds, four runs): Colossus 1.82–3.13 ms for
+  the fastest seed, 3.8–5.4 average, 6.1–11.7 worst; Spire 0.56–0.88 fastest, 0.67–1.14 average. The Colossus is
+  ~26,000 cells (twice the first one); at ~70 ns a cell (written once, every leaf visited once by the distance pass, no
+  per-cell hashing or trig outside the masses' rims) that is 1.8 ms on a quiet core, and it rises with machine load.
+  Reliably under 2 ms would mean a smaller crown, which is the thing it must not be. It is paid once per tree (one
+  per 300–500 blocks), cached for all its 25 chunks, on a worldgen worker thread.
+- Placement into a live level (`terrain_hero_builds_in_box`, block updates and light included, so above worldgen's
+  cost): Colossus ~28,600–29,500 blocks over 25 chunks at 1.7–2.1 ms a chunk on average (worst 5.7–6.5) on a quieter
+  machine, 4–7 ms (worst 19–34) while three builds run; Spire ~3,600 blocks over 9 chunks at 0.9–1.6 ms (worst 3–7).
+- Data trees (`terrain_lands_trees_grow`): Elder ~160 logs and ~700 leaves, young elder 24 / 113, Lumen tree 92 / 272
+  (fewer, shorter limbs than the slice's 115 / 237), small Lumen 36 / 96.
 
 ### Known gaps
 
 - Air, sound and the Lens look are other builders' (falling leaves already list `awaken:elder_leaves`; Lumen motes and
   the ambience beds are not in yet). Fireflies and caps are the only night life of Lumen Forest so far.
-- Distant Horizons with the hero trees is untested (blueprints are thread-safe and cached, but not measured there).
+- The pale flat land beside the Lumen canopy in the first slice sheet's golden-hour view from above is vanilla
+  `minecraft:beach` (dry sand at sea level, `/awaken terrain at` and a survey of that view), not a seam: the Awakened
+  forests still meet vanilla shores directly. A shore treatment of their own is for a later biome pass.
+- Far terrain (Distant Horizons, `DH=swift`): the Colossus's dome reads on the horizon at 450–600 blocks as one broad
+  umbrella (its LOD keeps the shape, flattened, and the colour); the Spire is thin and faint at 300 blocks and lost
+  behind terrain at 450 (first check, before it grew to 40–52); at night its glow does not carry that far.
 - The studio's `visit` now prefers a sizeable dry patch; on Tectonic worlds a biome's nearest patch can still be a
   mountainside, so the slice tour shoots Elderwood beside its Colossus.
 

@@ -2,7 +2,7 @@
   "parent": "minecraft:block/block",
   "textures": {
     "side": "awaken:block/veined_lumen_log",
-    "end": "awaken:block/lumen_log_top",
+    "end": "awaken:block/veined_lumen_log",
     "glow": "awaken:block/veined_lumen_log_glow",
     "particle": "awaken:block/veined_lumen_log"
   },

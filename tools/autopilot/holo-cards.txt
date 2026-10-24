@@ -1,11 +1,15 @@
-# The System's cards in the projected look (docs/modules/holo.md "System cards"): the first-power choice scanning in
-# and a card picked; a System toast scanning in, at rest and glitching out; the choice card, a gate panel and a story
-# line; the Now line throughout; then the same toast, choice and story flat ("holo style flat") for comparison.
-# A "shot" lands about 3 ticks after its line, a "cmd" waits 5. GUI scale 0 (auto).
+# The System's cards in the projected look (docs/modules/holo.md "System cards"): the first-power choice scanning in,
+# open and picked; a System toast scanning in, at rest over the sky and over grass, and glitching out; a real gate
+# panel (not a toast: no mobs, no choice up) put away with N and glitching out; the choice card scanning in and open;
+# a story line; the toast and the choice card at night; then the same flat ("holo style flat") for comparison.
+# A "shot" lands about 3 ticks after its line and the next line waits 10 more; "shotnow" shoots this tick and waits 1;
+# a "cmd" waits 5. Under the autopilot a picked first power stays on screen 12 ticks. GUI scale 0 (auto).
 # Run: tools/autopilot.sh tools/autopilot/holo-cards.txt
 world autopilot_holo_cards creative 1234
 waitworld
 cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
 cmd time set 6000
 cmd weather clear
 look 20 4
@@ -15,56 +19,85 @@ wait 200
 screen close
 cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:short_grass
 cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:tall_grass
+cmd kill @e[type=!minecraft:player,distance=..64]
 wait 40
 
 # --- the first-power choice ---
 cmd awaken powers starter
 shot cards_01_starter_scan
-wait 20
+wait 10
 shot cards_02_starter_open
 # card 1 at GUI scale 7 (3024×1898 auto): the panel is 372×196 centred in 432×271
 click 95 119
-wait 1
-shot cards_03_starter_picked
+shotnow cards_03_starter_picked
 wait 60
 screen close
 wait 60
 
-# --- a System toast: scanning in, at rest, glitching out (5 s on screen) ---
+# --- a System toast: scanning in, at rest over the sky and over grass, glitching out (5 s on screen) ---
+look 20 -30
+wait 10
 cmd awaken signal demo toast
-shot cards_10_toast_scan
-wait 20
-shot cards_11_toast_rest
-wait 66
-shot cards_12_toast_glitch
+shotnow cards_10_toast_scan
+wait 10
+shot cards_11_toast_sky
+look 20 40
+wait 5
+shot cards_13_toast_grass
+look 20 4
+# it hides 5.6 s after it appeared (600 ms in, 5 s shown): frames every 2 ticks around then
+wait 61
+shotnow cards_12a_toast_out
+wait 1
+shotnow cards_12b_toast_out
+wait 1
+shotnow cards_12c_toast_out
+wait 1
+shotnow cards_12d_toast_out
+wait 1
+shotnow cards_12e_toast_out
+wait 1
+shotnow cards_12f_toast_out
+wait 1
+shotnow cards_12g_toast_out
+wait 1
+shotnow cards_12h_toast_out
 wait 60
 
-# --- the choice card (armed after 8 ticks), a gate panel, a story line ---
-cmd awaken signal demo choice
-shot cards_20_choice_scan
-wait 20
-shot cards_21_choice_open
-key dismiss
-wait 40
+# --- a real gate panel, put away with N (its 6-tick glitch-out) ---
 cmd awaken signal demo panel
 wait 10
 shot cards_22_panel
-# its 9 s run out: a few frames around the close to catch the glitch
-wait 150
-shot cards_23a_panel_end
-wait 0
-shot cards_23b_panel_end
-wait 0
-shot cards_23c_panel_end
-wait 0
-shot cards_23d_panel_end
-wait 0
-shot cards_23e_panel_end
+key dismiss
+shotnow cards_23a_panel_out
+shotnow cards_23b_panel_out
+shotnow cards_23c_panel_out
+wait 40
+
+# --- the choice card (armed after 8 ticks), then a story line ---
+cmd awaken signal demo choice
+shotnow cards_20_choice_scan
+wait 20
+shot cards_21_choice_open
+key dismiss
 wait 40
 cmd awaken signal demo story
 wait 30
 shot cards_24_story
 wait 200
+
+# --- night ---
+cmd time set 18000
+wait 20
+cmd awaken signal demo toast
+wait 12
+shot cards_25_night_toast
+cmd awaken signal demo choice
+wait 20
+shot cards_26_night_choice
+key dismiss
+cmd time set 6000
+wait 160
 
 # --- the same, flat ---
 holo style flat
