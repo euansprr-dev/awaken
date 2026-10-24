@@ -310,6 +310,187 @@ cmd awaken admin power cast dash
 shot body_twist_velocity
 cmd kill @e[type=!minecraft:player,distance=..80]
 
+# ---- the moves' full-body clips (Player Animation Library; bent limbs with Bendable Cuboids), close up ----
+# With neither library these shots show the vanilla-model poses. The camera comes in to 2.5 blocks; a 'side' shot turns
+# the head 90 degrees mid-slide (the slide keeps its way), so the camera sees the body from the side.
+cmd attribute @s minecraft:camera_distance base set 2.5
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 10
+shot clip_slide_tp
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 10
+shot clip_slide_front
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 8
+look 90 12
+shot clip_slide_side
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 14
+shot clip_slidejump_tp
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slidejump
+wait 14
+shot clip_slidejump_front
+cmd fill -2 200 4 2 200 6 minecraft:stone_bricks
+cmd fill -2 201 4 2 201 6 minecraft:stone_brick_slab
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 1
+shot clip_mantle_tp_3
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 3
+shot clip_mantle_tp_5
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 1
+shot clip_mantle_front_3
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 3
+shot clip_mantle_front_5
+cmd fill -2 200 4 2 201 6 minecraft:air
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 9
+shot clip_roll_tp_4
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 12
+shot clip_roll_tp_7
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 15
+shot clip_roll_tp_10
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 9
+shot clip_roll_front_4
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 12
+shot clip_roll_front_7
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 15
+shot clip_roll_front_10
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 9
+shot clip_sprint_tp
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 9
+shot clip_sprint_front
+
+# armour on: does it bend with the limbs or clip?
+cmd item replace entity @s armor.chest with minecraft:iron_chestplate
+cmd item replace entity @s armor.legs with minecraft:iron_leggings
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 10
+shot clip_armour_slide_front
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 25
+cmd awaken body try slide
+wait 8
+look 90 12
+shot clip_armour_slide_side
+camera back
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 25
+wait 25
+cmd tp @s 0.5 210 0.5 0 25
+cmd awaken body try roll
+wait 12
+shot clip_armour_roll_tp
+cmd fill -2 200 4 2 200 6 minecraft:stone_bricks
+cmd fill -2 201 4 2 201 6 minecraft:stone_brick_slab
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 1
+shot clip_armour_mantle_front
+cmd fill -2 200 4 2 201 6 minecraft:air
+camera front
+cmd awaken body try release
+cmd tp @s 0.5 200 0.5 0 12
+wait 125
+cmd awaken body try sprint
+wait 9
+shot clip_armour_sprint_front
+cmd item replace entity @s armor.chest with minecraft:air
+cmd item replace entity @s armor.legs with minecraft:air
+cmd attribute @s minecraft:camera_distance base set 4
+
 # ---- the Status screen's line ----
 camera first
 cmd awaken body try release
