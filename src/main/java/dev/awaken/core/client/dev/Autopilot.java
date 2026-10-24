@@ -60,6 +60,8 @@ import java.util.Map;
  * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
  *                                                else straight through the switch)
  * lensdebug 0..4                                 Lens debug views: normal, pass-through, depth masks, far depth, haze
+ * fardepth share|auto                           Distant Horizons shares its depth with Lens on every graphics API (to
+ *                                                check it on Vulkan), or again only on the one it was checked on
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments)
  * leave                                          save and quit to the title (a following "world" line rejoins)
@@ -408,6 +410,10 @@ public final class Autopilot {
             }
             case "lensdebug" -> {
                 dev.awaken.lens.client.LensClient.debug(Integer.parseInt(arg.trim()));
+                waitTicks = 10;
+            }
+            case "fardepth" -> {
+                dev.awaken.compat.client.CompatClient.shareFarDepthEverywhere("share".equals(arg.trim()));
                 waitTicks = 10;
             }
             case "opt" -> { // opt renderDistance|simulationDistance <n>

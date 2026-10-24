@@ -24,7 +24,8 @@ final class LensParams {
             boolean farActive, boolean farReadable, boolean farReverseZ, boolean farZeroToOne, float farNear, float farFar) {
         int f = Math.clamp(Math.round(far), 0, 65535);
         int u = Math.clamp(Math.round((sunU + 1f) / 3f * 65535f), 0, 65535), v = Math.clamp(Math.round((sunV + 1f) / 3f * 65535f), 0, 65535);
-        // texel 0: b = far terrain drawn, a = its depth (bit 0 reverse-Z, bit 1 zero-to-one, bit 2 Lens can read it)
+        // texel 0: b = far terrain drawn, a = its depth (bit 0 reverse-Z, bit 1 zero-to-one, bit 2 shared with Lens; the
+        // shaders trust a shared depth once it proves itself, pass lens_far_probe)
         packed[0] = bytes(debug == 0 ? 255 : debug, zeroToOne ? 255 : 0, farActive ? 255 : 0,
                 (farReverseZ ? 1 : 0) | (farZeroToOne ? 2 : 0) | (farReadable ? 4 : 0));
         packed[1] = bytes(f >> 8, f & 255, b(sunVisible), b(sunsetStrength));

@@ -742,7 +742,8 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   (e.g. world → pack/tectonic/awakened.json as config/tectonic.json) only when missing, so a player's tuning (or a
   mod's own rewrite) is kept; `install ... --reset-configs` overwrites. The .mrpack export carries them as overrides.
 - Lens (`dev.awaken.lens`), AWAKEN's light layer: the post chains `awaken:lens_swift` (haze, bloom, grade, vignette,
-  dither; five passes, three of them at 960×600 or smaller) and `awaken:lens_cinematic` (adds light shafts). It runs
+  dither; five passes, three of them at 960×600 or smaller, after two one-pixel passes for the far-depth trust) and
+  `awaken:lens_cinematic` (adds light shafts). It runs
   first in the player's post-effect list, so gameplay effects (dreams, blight, the Veil) still draw on top, and
   re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 16×1
   texture (`awaken:lens_params`), written once a frame in `ViewportEvent.RenderFog` at LOWEST priority: the look, the
@@ -751,9 +752,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `assets/awaken/lens/looks.json` (schemaVersion 1; exact id, then `prefix*`, then `default`) and ease into each other
   over about 1.5 s. Lens never lifts shadows (exposure ≤ 1.05) and backs off where the game's own fog is thick.
   It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT (default) | CINEMATIC.
-  With Distant Horizons drawing, Lens hazes far terrain by DH's own depth (Lens and far terrain, below); only where
-  it can't read that depth does it add no distance haze while DH draws, since hazing only the near terrain would draw
-  a ring where it ends.
+  With Distant Horizons drawing, Lens hazes far terrain by DH's own depth (Lens and far terrain, below); only without
+  a trusted far depth (none shared, or not yet proven) does it add no distance haze while DH draws, since hazing only
+  the near terrain would draw a ring where it ends.
   Story moments override the place's look (`LensClient.override(lookId, fadeTicks)` / `clearOverride`) with named
   looks from the same files (`awaken:ritual`, `awaken:void`); texel 13 carries the tear from black (`LensClient.tear`,
   0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 carries the Holo UI
@@ -773,8 +774,8 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Graphics API. Measured on the M4 with every pack profile's mods (perf, horizon, feel), back to back under the same
   load: p50 15-33% lower than OpenGL, Holo, Lens and the whole Ritual matching (docs/perf/vulkan/REPORT.md). The
   .mrpack doesn't ship options.txt (a launcher would overwrite the player's settings), so its players pick Vulkan in
-  Video Settings. Known: Lens reads Distant Horizons' depth as a constant on Vulkan (cleared on OpenGL); Far Sight
-  replaces DH and owns its depth.
+  Video Settings. On Vulkan, Distant Horizons keeps its depth from Lens until it's checked there, so Lens adds no
+  distance haze while DH draws (Lens and far terrain, below); Far Sight replaces DH and owns its depth.
 - Sodium is pinned to 0.9.3-beta.1: 0.9.2 crashes at startup on NeoForge 26.3.0.95 (a LevelExtractor mixin no longer
   finds its target). Iris 1.11.7 requires exactly 0.9.2, so the Ultra look waits for an Iris update.
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens samples DH's own depth texture
@@ -790,16 +791,35 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   matrix's near plane to 7.5 blocks). DH builds a reverse-Z matrix for 0..1 depth even where the device maps -1..1
   (OpenGL without clip control), so the shader turns stored depth back to NDC with the device's range (texel 0 g)
   before DH's convention. Params: texel 15 the planes (near in 1/16 block, far in blocks); texel 0 b far terrain drawn
-  in the last 0.2 s, texel 0 a bit 0 reverse-Z, bit 1 zero-to-one, bit 2 Lens reads the depth. Far terrain is hazed by
+  in the last 0.2 s, texel 0 a bit 0 reverse-Z, bit 1 zero-to-one, bit 2 a depth is shared. Far terrain is hazed by
   its real distance (aerial perspective deepening to 8× the render distance: DH keeps the fog's `renderDistanceEnd` at
   the vanilla value and pushes only the start and the environmental fog out of reach, so the haze runs on across the
   end of the vanilla render distance without a step), and never counts as open sky for bloom, light shafts or the sun
-  halo. Where DH has no texture to share (its OpenGL engine; bit 2 clear) Lens adds no distance haze while DH draws.
-  DH's own clouds (it turns vanilla's off) write its depth too, so they haze by their distance like far terrain.
-  Debug views (`lensdebug`): 3 raw far depth (blue while Lens reads it), 4 the haze each pixel gets (a ring would show
-  as a step in brightness). Proof: tools/autopilot/lens-dh.txt (2026-10-24, OpenGL on the M4, DH Swift, render
-  distance 16: depth read, far terrain intact, haze across the vanilla edge within ~0.03 of itself away from
-  silhouettes; logs/lens-dh-sheet.jpg). Params texels: 13 the ritual, 14 Holo.
+  halo. DH's own clouds (it turns vanilla's off) write its depth too, so they haze by their distance like far terrain.
+  A shared depth must prove itself before Lens trusts it: a depth that reads as one value everywhere (a placeholder,
+  a texture that doesn't sample on this graphics API, one that stays cleared) can't be told from sky, and trusting it
+  would haze the sky as far terrain or leave a ring. Pass `lens_far_probe` (one pixel, first in both chains) samples
+  the far depth at 8×6 points and trusts it once two of them where far terrain drew differ by more than 1e-5; the
+  answer is latched in a persistent 1×1 target (`awaken:lens_far_trust`, written back by a blit) while a depth stays
+  shared (bit 2) and cleared when none is (or when a resource reload rebuilds the chains), so a newly shared depth
+  proves itself again. Once proven, the haze over far terrain eases in over 32 frames. Without a trusted depth (none
+  shared, or not proven yet) Lens adds no distance haze while DH draws and far terrain counts as sky for bloom and
+  shafts. The shaders share these rules in `shaders/include/lens_far.glsl`.
+  Where DH shares its depth: only on the graphics API it was checked on (`DistantHorizonsClient.CHECKED_ON`, OpenGL),
+  and never from its OpenGL engine (none to share). On Vulkan DH keeps it to itself (logged once), so there Lens adds
+  no distance haze while DH draws: never a ring, never a wrong haze. Why unchecked: the Vulkan check
+  (docs/perf/vulkan/REPORT.md, "reads as one constant value") ran on a build without the unpacking fix above (ce91c76
+  predates e719e4d), so it read Lens's own 1×1 placeholder, created without data (0 on OpenGL, whatever the memory
+  held on Vulkan), not DH's depth. Autopilot `fardepth share|auto` shares it on every API for the check: the last
+  shots of tools/autopilot/lens-dh.txt on Vulkan show bands and blue 1 in view 3 if DH's depth works there (then
+  CHECKED_ON takes Vulkan too), blue 0.6 if it reads as one value. `FarTerrain` stays generic (a depth texture, its
+  planes and convention, the frame it drew; no companion types): Awaken's own far terrain reports the same way and
+  proves itself the same way.
+  Debug views (`lensdebug`): 3 raw far depth (blue while far terrain draws: 1 Lens trusts its depth, 0.6 shared but
+  not proven, 0.3 none shared), 4 the haze each pixel gets (a ring would show as a step in brightness). Proof:
+  tools/autopilot/lens-dh.txt (2026-10-24, OpenGL on the M4, DH Swift, render distance 16: depth read, far terrain
+  intact, haze across the vanilla edge within ~0.03 of itself away from silhouettes; logs/lens-dh-sheet.jpg). Params
+  texels: 13 the ritual, 14 Holo.
 - The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers, and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
   for the rest. Opened with U (`key.awaken.look`, Awaken's key category), from Awaken's settings (Mods → AWAKEN →

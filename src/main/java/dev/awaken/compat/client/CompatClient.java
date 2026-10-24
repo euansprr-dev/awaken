@@ -14,4 +14,12 @@ public final class CompatClient {
             if (ModList.get().isLoaded("distanthorizons")) e.enqueueWork(DistantHorizonsClient::init);
         });
     }
+
+    /**
+     * Development (autopilot {@code fardepth share|auto}): Distant Horizons shares its depth with Lens on every graphics
+     * API, so a tour can check it where it isn't checked yet (Vulkan), or again only where it was. Nothing without DH.
+     */
+    public static void shareFarDepthEverywhere(boolean on) {
+        if (ModList.get().isLoaded("distanthorizons")) DistantHorizonsClient.shareEverywhere(on);
+    }
 }

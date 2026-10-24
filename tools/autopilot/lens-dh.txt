@@ -1,7 +1,11 @@
-# Lens and Distant Horizons diagnosis: one place, one moment, every Lens state. Run with PACK=perf,horizon DH=swift.
-# Shots: off, swift, pass-through (the chain runs but copies the frame), depth masks, raw far depth (blue = Lens reads
-# it), the haze each pixel gets (a ring would be a step in brightness at the end of the vanilla render distance), off
-# again; then the same west, and Cinematic.
+# Lens and Distant Horizons diagnosis: one place, one moment, every Lens state. Run with PACK=perf,horizon DH=swift, on
+# both graphics APIs: autopilot's default Vulkan, then BACKEND=opengl.
+# Shots: off, swift, pass-through (the chain runs but copies the frame), depth masks, raw far depth (blue 1 = Lens
+# trusts it, 0.6 = shared but one value so far, 0.3 = none shared), the haze each pixel gets (a ring would be a step in
+# brightness at the end of the vanilla render distance), off again; then the same west, and Cinematic.
+# OpenGL: DH shares its depth and far terrain hazes by its distance. Vulkan: DH keeps it to itself (not checked there),
+# so there's no distance haze while DH draws and view 4 is flat. Shots 14-16 share it on Vulkan anyway (fardepth share):
+# bands in view 3 and blue 1 mean DH's depth works on Vulkan too, blue 0.6 that it reads as one value there.
 world lensdh creative 20261024
 waitworld
 gui 0
@@ -64,5 +68,15 @@ look 0 10
 lensdebug 4
 wait 20
 shot dh_13_haze_north
+fardepth share
+lensdebug 3
+wait 40
+shot dh_14_fardepth_shared_north
+lensdebug 4
+wait 40
+shot dh_15_haze_shared_north
 lensdebug 0
+wait 20
+shot dh_16_cinematic_shared_north
+fardepth auto
 quit

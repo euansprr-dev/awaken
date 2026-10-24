@@ -1,5 +1,14 @@
 {
   "targets": {
+    "awaken:lens_far_probe": {
+      "width": 1,
+      "height": 1
+    },
+    "awaken:lens_far_trust": {
+      "width": 1,
+      "height": 1,
+      "persistent": true
+    },
     "awaken:lens_half": {
       "width": 960,
       "height": 600
@@ -29,6 +38,54 @@
   "passes": [
     {
       "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_far_probe",
+      "inputs": [
+        {
+          "sampler_name": "FarDepth",
+          "location": "awaken:lens_far_depth",
+          "width": 1,
+          "height": 1
+        },
+        {
+          "sampler_name": "Trust",
+          "target": "awaken:lens_far_trust"
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_far_probe"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/blit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_far_probe"
+        }
+      ],
+      "output": "awaken:lens_far_trust",
+      "uniforms": {
+        "BlitConfig": [
+          {
+            "name": "ColorModulate",
+            "type": "vec4",
+            "value": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
       "fragment_shader": "awaken:post/lens_prefilter",
       "inputs": [
         {
@@ -46,6 +103,10 @@
           "location": "awaken:lens_far_depth",
           "width": 1,
           "height": 1
+        },
+        {
+          "sampler_name": "FarTrust",
+          "target": "awaken:lens_far_probe"
         },
         {
           "sampler_name": "Params",
@@ -160,6 +221,10 @@
           "location": "awaken:lens_far_depth",
           "width": 1,
           "height": 1
+        },
+        {
+          "sampler_name": "FarTrust",
+          "target": "awaken:lens_far_probe"
         },
         {
           "sampler_name": "Params",

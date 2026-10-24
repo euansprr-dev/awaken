@@ -8,10 +8,11 @@ import com.mojang.renderpearl.api.textures.GpuTextureView;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 
 /**
- * What a far-terrain mod drew last frame, for Lens: its clip planes, depth convention and depth texture. Lens needs it
- * because Distant Horizons draws far terrain without writing the game's depth, so by the game's depth alone far
- * mountains look like sky (no haze, light shafts shining through them). Plain state: no companion types here, so Lens
- * can read it whether or not Distant Horizons is installed.
+ * What a far-terrain renderer drew last frame, for Lens: its depth texture, clip planes and depth convention. Lens needs
+ * it because far terrain is drawn without writing the game's depth, so by the game's depth alone far mountains look
+ * like sky (no haze, light shafts shining through them). Any renderer reports the same way (Distant Horizons today,
+ * Awaken's own far terrain later): the frame it drew, its planes and convention, and its depth texture when it shares
+ * one. Plain state: no companion types here, so Lens can read it whether or not any of them is installed.
  */
 public final class FarTerrain {
     private FarTerrain() {}
@@ -27,9 +28,11 @@ public final class FarTerrain {
     }
 
     /**
-     * True while Lens samples the companion's own depth. False means the 1×1 placeholder (no texture handed over yet,
-     * or a renderer that has none to share, such as Distant Horizons' OpenGL engine): Lens then can't tell far terrain
-     * from sky and keeps distance haze off while far terrain draws.
+     * True while the renderer shares its depth with Lens. False means the 1×1 placeholder: nothing handed over yet, a
+     * renderer with none to share (Distant Horizons' OpenGL engine), or one that keeps it to itself where it isn't
+     * checked (Distant Horizons on Vulkan). Lens's shaders then trust a shared depth only once it proves itself (two
+     * different depths where far terrain drew, pass lens_far_probe), since one that reads as one value everywhere
+     * can't be told from sky. Without a trusted depth, Lens adds no distance haze while far terrain draws.
      */
     public static boolean readable() {
         return depth != null && depth.real();
