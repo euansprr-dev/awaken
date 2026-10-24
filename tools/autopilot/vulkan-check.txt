@@ -1,0 +1,68 @@
+# Vulkan check (Far Sight plan, wave 1): the same world, places and moments on OpenGL and on Vulkan, to decide whether
+# Vulkan can be the pack's default. Run once per backend with PACK=perf,horizon,feel DH=swift LENS=swift and the frame
+# cap lifted (run-autopilot/options.txt maxFps:260, enableVsync:false): tools/vulkan-check.sh does both.
+# Shots: the Holo K menu (glass, glow text, Lens focus dimming), a third-person cast (the feel mods' bends), the sunset
+# vista with Distant Horizons, the raw far depth (proves DH draws and Lens reads it), west, night. Then frame times.
+world vkcheck creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:short_grass
+cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:tall_grass
+look 20 4
+wait 60
+
+# 1 Holo at spawn: closed, then the K menu open
+shot vk_01_spawn
+screen holo
+wait 40
+shot vk_02_holo_open
+screen close
+wait 30
+
+# 2 a cast seen from behind (Player Animation Library and Bendable Cuboids draw the pose)
+camera back
+wait 10
+cmd awaken admin power reset
+cmd awaken admin power cast nova
+wait 10
+shot vk_03_cast_third
+wait 80
+camera first
+wait 10
+
+# 3 the horizon: high above spawn at sunset, Distant Horizons given 90 s to build
+cmd gamemode spectator
+cmd tp @s 0.5 190 0.5 90 12
+cmd time set 12600
+wait 1800
+shot vk_04_vista
+perf vista 15
+lensdebug 3
+wait 20
+shot vk_05_fardepth
+lensdebug 0
+wait 20
+cmd tp @s 0.5 190 0.5 -90 12
+wait 200
+shot vk_06_west
+perf vista_west 10
+
+# 4 night over the same view
+cmd time set 18000
+wait 60
+shot vk_07_night
+perf night 10
+quit

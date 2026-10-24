@@ -1,0 +1,84 @@
+# Player-shaped bodies (pack/avatar-render): every non-player humanoid that wears a player-format skin, side by side on
+# a sky platform, front on, by day against a striped wall (see-through bodies show the stripes) and by night over a lit
+# floor strip. In 26.3 the dispatcher sends any AvatarRenderState to the vanilla player renderer, so before the fix
+# these draw as default Steve (or the copied skin) with no tint, translucency, scale or layers of their own.
+# Rows, screen left to right (facing south, so +x is screen left):
+#   1 townsfolk: mira, oren, sun, teodor, vael (each its own generated skin)
+#   2 spirits:   training ghost, echo ghost, gate shade (wide owner: efe), gate shade (slim owner: alex),
+#                hollow follower, shadow self
+#   3 mobs:      signal echo (HUMAN, own skin), mirror shade, memory mimic, court shadow (MIMIC: wear your skin)
+# Rows 2 and 3 are frozen (tick freeze) for the shots: the ghosts vanish after a second without a route, and the
+# mimics need a few AI ticks to copy you first. /summon refuses the ghosts and the follower (noSummon), so they come
+# from /awaken admin spawn.
+# Run: tools/autopilot.sh tools/autopilot/avatars.txt
+world autopilot_avatars creative 4242
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_monsters false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd tp @s ~ 200 ~ 0 8
+wait 20
+cmd fill ~-9 ~-1 ~-4 ~9 ~-1 ~10 minecraft:smooth_stone
+cmd fill ~-9 ~ ~-4 ~9 ~6 ~10 minecraft:air
+cmd fill ~-9 ~ ~9 ~9 ~4 ~9 minecraft:white_concrete
+cmd fill ~-9 ~1 ~9 ~9 ~1 ~9 minecraft:red_concrete
+cmd fill ~-9 ~3 ~9 ~9 ~3 ~9 minecraft:blue_concrete
+cmd fill ~-7 ~-1 ~3 ~7 ~-1 ~3 minecraft:sea_lantern
+cmd kill @e[type=!minecraft:player,distance=..40]
+look 0 8
+wait 20
+
+# --- row 1: the townsfolk ---
+cmd summon awaken:townsfolk ~4 ~ ~5 {kind:"mira_scout",NoAI:1b,Rotation:[180f,0f]}
+cmd summon awaken:townsfolk ~2 ~ ~5 {kind:"oren_blacksmith",NoAI:1b,Rotation:[180f,0f]}
+cmd summon awaken:townsfolk ~ ~ ~5 {kind:"sun_healer",NoAI:1b,Rotation:[180f,0f]}
+cmd summon awaken:townsfolk ~-2 ~ ~5 {kind:"teodor_archivist",NoAI:1b,Rotation:[180f,0f]}
+cmd summon awaken:townsfolk ~-4 ~ ~5 {kind:"vael_rival",NoAI:1b,Rotation:[180f,0f]}
+wait 40
+shot avatars_01_townsfolk_day
+cmd tp @e[type=awaken:townsfolk] ~ -100 ~
+wait 10
+
+# --- row 2: the ghosts, the shades and the shadow ---
+cmd tick freeze
+cmd awaken admin spawn awaken:training_ghost ~5 ~ ~5 {Rotation:[180f,0f]}
+cmd awaken admin spawn awaken:echo_ghost ~3 ~ ~5 {Rotation:[180f,0f]}
+cmd summon awaken:gate_shade ~1 ~ ~5 {owner:"00000000-0000-0000-0000-00000000000b",NoAI:1b,Rotation:[180f,0f]}
+cmd summon awaken:gate_shade ~-1 ~ ~5 {owner:"00000000-0000-0000-0000-000000000012",NoAI:1b,Rotation:[180f,0f]}
+cmd awaken admin spawn awaken:hollow_follower ~-3 ~ ~5 {NoAI:1b,Rotation:[180f,0f]}
+cmd summon awaken:shadow_self ~-5 ~ ~5 {NoAI:1b,Rotation:[180f,0f]}
+wait 40
+shot avatars_02_spirits_day
+cmd time set 18000
+wait 40
+shot avatars_03_spirits_night
+cmd time set 6000
+cmd tick unfreeze
+cmd tp @e[type=!minecraft:player,distance=..20] ~ -100 ~
+wait 20
+
+# --- row 3: player-model mobs (the mimics copy you over a few AI ticks, then everything holds still) ---
+cmd summon awaken:signal_echo ~4 ~ ~5 {NoAI:1b,Rotation:[180f,0f]}
+cmd summon awaken:mirror_shade ~1.5 ~ ~5 {Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0d}]}
+cmd summon awaken:memory_mimic ~-1.5 ~ ~5 {Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0d}]}
+cmd summon awaken:court_shadow ~-4 ~ ~5 {Rotation:[180f,0f],attributes:[{id:"minecraft:movement_speed",base:0.0d}]}
+wait 30
+cmd tick freeze
+wait 20
+shot avatars_04_mobs_day
+cmd time set 18000
+wait 40
+shot avatars_05_mobs_night
+cmd time set 6000
+cmd tick unfreeze
+wait 10
+quit
