@@ -44,4 +44,13 @@ is present, and the spoiler record is plain Awaken state. SPEC §14 has the rule
   read "world map open in minecraft:overworld", then "shut in awaken:gates", then "open" again after leaving.
 
 ## CI
-- GameTests workflow on `pack/comfort`: see the run linked from the branch (filled in below once green).
+- Cloud VM, final tree (5bf2109): **all 330 required GameTests passed**. An earlier VM run failed
+  `powers_hits_ground_slam_lineup` once ("ravager did not move"); it passed in the baseline run and in the final one.
+- GitHub run [40101234996](https://github.com/euansprr-dev/awaken/actions/runs/40101234996) on c2daae2: **not green**.
+  Attempt 1 failed `fauna_p2_talents_dark` ("the rooms are dark") and `fauna_p3_talents` ("the grotto is dark");
+  the one re-run (attempt 2) failed only `fauna_p3_talents`, on another light check ("in torchlight the player is
+  safe"). Both are the known light-wait flakes (fixed tick waits for the light engine). They don't touch compat code,
+  `build/awaken-v1` is red on the same kind (runs 40098866370 and 40098403960, `fauna_p3_caves_spawn`), and
+  pack/throughput fixes them at the cause in 74bf971 (green there, run 40101221504). I didn't port that fix: it is
+  four commits of test infrastructure still being finished on its own branch, and the main session had already
+  merged this branch (dc42a65). Once pack/throughput lands, this branch's suite should be green as it is.
