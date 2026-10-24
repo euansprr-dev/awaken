@@ -6,11 +6,13 @@ import dev.awaken.core.audio.Cue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundSource;
 import net.neoforged.neoforge.client.event.SelectMusicEvent;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Plays music cues through vanilla's {@link MusicManager}, so a cue is a song as far as the game is concerned: it
@@ -29,6 +31,8 @@ final class CuePlayer {
 
     private static Pending pending;
     private static Cue playingCue;
+    /** The music manager's song as of its last {@link SelectMusicEvent} (it asks no one while it fades its gain). */
+    private static @Nullable SoundInstance lastSong;
     private static Music playingMusic;
     private static ClientLevel lastLevel;
     private static int ticks, levelAge;
@@ -74,7 +78,9 @@ final class CuePlayer {
             log(p.cue, "skipped: music is off");
             return;
         }
-        if (mm.getCurrentMusicTranslationKey() != null) {
+        // the layered music holds the channel: a stage cue makes it fade, an ordinary one waits unless it is calm
+        if (!LayerPlayer.MUSIC.yieldTo(p.cue)) return;
+        if (songActive()) {
             if (!p.cue.stage) return; // wait for the song to end
             mm.stopPlaying();
         }
@@ -88,26 +94,54 @@ final class CuePlayer {
     }
 
     /**
-     * While our cue plays somewhere whose own music is "none", keep it: vanilla would otherwise stop the song the
-     * moment it saw no situational music. Once it ends, the place's own music (or silence) takes over.
+     * Who has the music channel, every tick, before vanilla's music manager decides:
+     * <ol>
+     *   <li>our cue, while it plays (somewhere whose own music is "none" vanilla would otherwise stop it the moment
+     *   it saw no situational music; once it ends the place's own music, or silence, takes over);</li>
+     *   <li>the layered music, while it sounds: vanilla is told there is no situational music, so no song starts on
+     *   top of it (and one that was playing has already been faded out);</li>
+     *   <li>otherwise vanilla, as always.</li>
+     * </ol>
      */
     static void onSelectMusic(SelectMusicEvent e) {
-        if (playingMusic == null || e.getMusic() != null) return;
         SoundInstance now = e.getPlayingMusic();
-        if (now != null && now.getIdentifier().equals(AudioSounds.cue(playingCue).getId())
+        lastSong = now;
+        if (playingMusic != null && now != null && now.getIdentifier().equals(AudioSounds.cue(playingCue).getId())
                 && Minecraft.getInstance().getSoundManager().isActive(now)) {
-            e.setMusic(playingMusic);
+            if (e.getMusic() == null) e.setMusic(playingMusic);
+            return;
         }
+        if (LayerPlayer.MUSIC.ownsChannel()) e.setMusic(null);
     }
 
     static Cue playing() {
         return playingCue;
     }
 
+    /**
+     * Whether the music manager has a song that really sounds. A teleport stops every sound without telling it, and
+     * while it fades its gain it doesn't look, so it can hold a dead song for seconds: ask the engine about the song
+     * it last named. One it started after asking (another key) is new, so it sounds.
+     */
+    static boolean songActive() {
+        Minecraft mc = Minecraft.getInstance();
+        String key = mc.getMusicManager().getCurrentMusicTranslationKey();
+        if (key == null) return false;
+        SoundInstance s = lastSong;
+        Sound sound = s == null ? null : s.getSound();
+        if (sound == null || !key.equals(sound.getLocation().toShortLanguageKey())) return true;
+        return mc.getSoundManager().isActive(s);
+    }
+
+    static boolean playingStage() {
+        return playingCue != null && playingCue.stage;
+    }
+
     static void clear() {
         pending = null;
         playingCue = null;
         playingMusic = null;
+        lastSong = null;
     }
 
     private static void log(Cue cue, String what) {

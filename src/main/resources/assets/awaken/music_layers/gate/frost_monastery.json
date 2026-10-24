@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/frost_monastery",
+  "source": "music",
+  "title": "Frost Monastery",
+  "bpm": 50,
+  "beats": 4,
+  "bars": 12,
+  "key": "B",
+  "mode": "aeolian",
+  "sampleRate": 44100,
+  "frames": 2540160,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_frost_monastery_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "A hummed fifth in a huge stone room, ice bells, cold wind; the chant once, far off."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_frost_monastery_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "Low sung pulses on 'u', ice bells circling high, a soft drum on every bar."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_frost_monastery_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Taiko under the vaults, spiccato strings on B and F#, small bells on the off-beats."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_frost_monastery_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Abbot of Frost: the chant in unison and in octaves, the great bell, a sub."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.54,
+      "lufs": -17.66,
+      "truePeak": -4.91
+    },
+    "tension": {
+      "rms": -19.54,
+      "lufs": -16.98,
+      "truePeak": -4.91
+    },
+    "combat": {
+      "rms": -18.56,
+      "lufs": -16.5,
+      "truePeak": -3.82
+    },
+    "lord": {
+      "rms": -17.55,
+      "lufs": -15.51,
+      "truePeak": -2.37
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.54,
+      "truePeak": -4.91
+    },
+    "tension": {
+      "rms": -23.5,
+      "truePeak": -7.88
+    },
+    "combat": {
+      "rms": -21.0,
+      "truePeak": -4.93
+    },
+    "lord": {
+      "rms": -21.18,
+      "truePeak": -6.84
+    }
+  }
+}

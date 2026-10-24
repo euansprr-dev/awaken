@@ -32,8 +32,17 @@ wait 60
 look 180 -10
 wait 20
 shot lands_elder_golden_ground
+# into the afternoon sun (west, through the canopy): Cinematic differs from Swift only by its light shafts from the sun
+cmd time set 11000
+look 90 -18
+wait 40
+shot lands_elder_golden_sun_swift
 lens cinematic
 wait 40
+shot lands_elder_golden_sun_cinematic
+cmd time set 12400
+look 180 -10
+wait 20
 shot lands_elder_golden_ground_cinematic
 lens swift
 cmd time set 18000
@@ -122,4 +131,22 @@ shot lands_spire_foot_night
 cmd time set 6000
 wait 40
 shot lands_spire_foot
+# what is the pale flat patch beside the Lumen canopy in the first slice sheet (shot 09)? Stand where that shot was taken
+cmd gamemode spectator
+cmd time set 12400
+cmd tp @s -3337 124 -1832
+wait 300
+look 30 25
+wait 40
+shot lands_patch09_view
+cmd awaken terrain at
+cmd tp @s -3420 124 -1700
+wait 100
+cmd awaken terrain at
+cmd tp @s -3500 124 -1600
+wait 100
+cmd awaken terrain at
+cmd tp @s -3337 124 -1832
+cmd awaken terrain survey patch09 384 16
+wait 600
 quit

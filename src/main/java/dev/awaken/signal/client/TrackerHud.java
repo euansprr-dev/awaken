@@ -121,7 +121,7 @@ final class TrackerHud {
         int w0 = (int) Math.round(r.w() / s), h0 = (int) Math.round(r.h() / s);
         if (HudLook.holo()) {
             // always on: a still card (no scan, no glitch), only the line's own fade when it changes
-            HudLook.card(g, 0, 0, w0, h0, Glass.EDGE, 1f, 1f, 0f);
+            HudLook.card(g, 0, 0, w0, h0, Glass.EDGE, 1f, 1f, 0f, HudLook.FRAME); // the calm HUD: no band, no flicker
         } else {
             g.fill(0, 0, w0, h0, Glass.a(Glass.GLASS, 0.55f));
             g.fill(0, 0, 1, h0, Glass.a(Glass.EDGE, 0.8f));

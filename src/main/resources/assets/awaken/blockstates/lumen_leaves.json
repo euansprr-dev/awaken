@@ -3,11 +3,11 @@
     "": [
       {
         "model": "awaken:block/lumen_leaves_specks_a",
-        "weight": 2
+        "weight": 1
       },
       {
         "model": "awaken:block/lumen_leaves_specks_b",
-        "weight": 2
+        "weight": 1
       },
       {
         "model": "awaken:block/lumen_leaves",

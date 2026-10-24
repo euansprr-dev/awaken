@@ -4,6 +4,8 @@ import dev.awaken.Awaken;
 import dev.awaken.descent.DescentContent;
 import dev.awaken.descent.DescentModule;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -18,6 +20,8 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
+import net.minecraft.world.level.levelgen.structure.BuiltinStructureSets;
+import net.minecraft.world.level.levelgen.structure.StructureSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,10 +105,28 @@ public final class Well {
                 });
     }
 
-    /** First candidate on dry, fairly flat land (estimated from the generator, no chunk loads). */
+    // Settlements that could start near a site: the Well only overwrites replaceable blocks, so a village growing
+    // there kept its houses inside the ring. Six chunks clears the Well's terraces and a village's spread.
+    private static final List<ResourceKey<StructureSet>> KEEP_CLEAR =
+            List.of(BuiltinStructureSets.VILLAGES, BuiltinStructureSets.PILLAGER_OUTPOSTS, BuiltinStructureSets.WOODLAND_MANSIONS);
+    static final int CLEAR_CHUNKS = 6;
+
+    /** Whether a settlement may start within CLEAR_CHUNKS of the site (a structure placement check, no chunk loads). */
+    static boolean nearSettlement(ServerLevel level, BlockPos site) {
+        var state = level.getChunkSource().getGeneratorState();
+        var sets = level.registryAccess().lookupOrThrow(Registries.STRUCTURE_SET);
+        int cx = site.getX() >> 4, cz = site.getZ() >> 4;
+        for (ResourceKey<StructureSet> key : KEEP_CLEAR) {
+            var set = sets.get(key);
+            if (set.isPresent() && state.hasStructureChunkInRange(set.get(), cx, cz, CLEAR_CHUNKS)) return true;
+        }
+        return false;
+    }
+
+    /** First candidate on dry, fairly flat land with no settlement near (estimated from the generator, no chunk loads). */
     static BlockPos pick(List<BlockPos> sites, ChunkGenerator gen, RandomState rs, ServerLevel level) {
         int sea = gen.getSeaLevel();
-        BlockPos fallback = null;
+        BlockPos fallback = null, first = null;
         for (BlockPos s : sites) {
             int[] h = new int[9];
             boolean dry = true;
@@ -120,10 +142,12 @@ public final class Well {
             }
             Arrays.sort(h);
             BlockPos site = new BlockPos(s.getX(), h[4] - 1, s.getZ());
-            if (fallback == null) fallback = site;
-            if (dry && h[8] - h[0] <= 8) return site;
+            boolean clear = !nearSettlement(level, s);
+            if (first == null) first = site;
+            if (fallback == null && clear) fallback = site;
+            if (dry && h[8] - h[0] <= 8 && clear) return site;
         }
-        return fallback;
+        return fallback != null ? fallback : first;
     }
 
     private static void build(MinecraftServer server, WellData data) {

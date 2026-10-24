@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/drowned_archive",
+  "source": "music",
+  "title": "Drowned Archive",
+  "bpm": 58,
+  "beats": 4,
+  "bars": 16,
+  "key": "A",
+  "mode": "aeolian",
+  "sampleRate": 44100,
+  "frames": 2919724,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_drowned_archive_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "Damped felt piano breaking the chords, low strings, drips and bubbles, water overhead."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_drowned_archive_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "A low piano ostinato, a cluster trembling in the strings, glass notes sinking."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_drowned_archive_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Drums heard through water, sub pulses in eighths, spiccato strings."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_drowned_archive_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Drowned Archivist: a choir on 'u', the sinking tune in glass, strings above."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.59,
+      "lufs": -18.48,
+      "truePeak": -6.41
+    },
+    "tension": {
+      "rms": -19.58,
+      "lufs": -17.61,
+      "truePeak": -5.14
+    },
+    "combat": {
+      "rms": -18.57,
+      "lufs": -16.93,
+      "truePeak": -3.61
+    },
+    "lord": {
+      "rms": -17.57,
+      "lufs": -15.72,
+      "truePeak": -2.02
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.59,
+      "truePeak": -6.41
+    },
+    "tension": {
+      "rms": -23.08,
+      "truePeak": -8.58
+    },
+    "combat": {
+      "rms": -21.08,
+      "truePeak": -5.35
+    },
+    "lord": {
+      "rms": -21.2,
+      "truePeak": -5.59
+    }
+  }
+}

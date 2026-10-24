@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/ember_mines",
+  "source": "music",
+  "title": "Ember Mines",
+  "bpm": 60,
+  "beats": 4,
+  "bars": 16,
+  "key": "E",
+  "mode": "hijaz",
+  "sampleRate": 44100,
+  "frames": 2822400,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_ember_mines_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "Two drones in the rock, dark strings, the oud tune (E F G# A) now and then, embers ticking."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_ember_mines_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "The oud worrying E against F in eighths, far anvils, strings trembling."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_ember_mines_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Taiko and anvils, an FM bass on E and F, brass stabs on the Hijaz chord."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_ember_mines_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Ember Tyrant: the horn tune stated, a choir on the fifth, an anvil every two bars."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.59,
+      "lufs": -18.85,
+      "truePeak": -5.46
+    },
+    "tension": {
+      "rms": -19.57,
+      "lufs": -17.7,
+      "truePeak": -4.47
+    },
+    "combat": {
+      "rms": -18.56,
+      "lufs": -17.12,
+      "truePeak": -2.15
+    },
+    "lord": {
+      "rms": -17.56,
+      "lufs": -15.9,
+      "truePeak": -2.6
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.59,
+      "truePeak": -5.46
+    },
+    "tension": {
+      "rms": -23.39,
+      "truePeak": -8.17
+    },
+    "combat": {
+      "rms": -21.13,
+      "truePeak": -3.8
+    },
+    "lord": {
+      "rms": -21.2,
+      "truePeak": -6.19
+    }
+  }
+}

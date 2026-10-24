@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "awaken:gate/sky_archipelago",
+  "source": "music",
+  "title": "Sky Archipelago",
+  "bpm": 66,
+  "beats": 4,
+  "bars": 16,
+  "key": "D",
+  "mode": "lydian",
+  "sampleRate": 44100,
+  "frames": 2565818,
+  "stems": [
+    {
+      "name": "bed",
+      "file": "awaken:layers/layer_sky_archipelago_bed",
+      "attack": 6.0,
+      "duck": 2.0,
+      "release": 10.0,
+      "intent": "Airy strings and fifths, the high flute's tune and its answer, wind."
+    },
+    {
+      "name": "tension",
+      "file": "awaken:layers/layer_sky_archipelago_tension",
+      "attack": 3.0,
+      "duck": 1.5,
+      "release": 8.0,
+      "intent": "A glass arpeggio, a soft pulse, strings trembling on the raised fourth."
+    },
+    {
+      "name": "combat",
+      "file": "awaken:layers/layer_sky_archipelago_combat",
+      "attack": 0.6,
+      "duck": 1.5,
+      "release": 6.0,
+      "intent": "Taiko, brass stabs, a plucked bass running in eighths."
+    },
+    {
+      "name": "lord",
+      "file": "awaken:layers/layer_sky_archipelago_lord",
+      "attack": 1.5,
+      "duck": 1.5,
+      "release": 4.0,
+      "intent": "The Sky Leviathan: a choir, the tune in the brass, high strings."
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rms": -20.5
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "rms": -19.5
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.8,
+        1.0,
+        0.0
+      ],
+      "rms": -18.5
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.45,
+        0.6,
+        0.9,
+        1.0
+      ],
+      "rms": -17.5
+    }
+  ],
+  "measured": {
+    "calm": {
+      "rms": -20.59,
+      "lufs": -17.81,
+      "truePeak": -5.35
+    },
+    "tension": {
+      "rms": -19.57,
+      "lufs": -16.98,
+      "truePeak": -4.97
+    },
+    "combat": {
+      "rms": -18.55,
+      "lufs": -16.81,
+      "truePeak": -2.04
+    },
+    "lord": {
+      "rms": -17.57,
+      "lufs": -15.73,
+      "truePeak": -1.68
+    }
+  },
+  "measuredStems": {
+    "bed": {
+      "rms": -20.59,
+      "truePeak": -5.35
+    },
+    "tension": {
+      "rms": -23.15,
+      "truePeak": -8.27
+    },
+    "combat": {
+      "rms": -21.0,
+      "truePeak": -2.94
+    },
+    "lord": {
+      "rms": -21.66,
+      "truePeak": -6.25
+    }
+  }
+}

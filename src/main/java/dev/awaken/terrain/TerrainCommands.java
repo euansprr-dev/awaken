@@ -142,7 +142,7 @@ final class TerrainCommands {
             if (!below.is(net.minecraft.tags.BlockTags.LOGS) && !below.is(net.minecraft.tags.BlockTags.LEAVES) && !below.canBeReplaced()) break;
             vy--;
         }
-        vy += above;
+        vy = Math.max(vy, level.getSeaLevel() + 1) + above; // over the sea: from its surface, not its floor
         double aim = foot.getY() + top * 0.42 - (vy + 1.62);
         float pitch = (float) -Math.toDegrees(Math.atan2(aim, Math.max(4, distance)));
         sp.teleportTo(level, vx + 0.5, vy + 0.1, vz + 0.5, Set.<Relative>of(), 180.0F, pitch, true);

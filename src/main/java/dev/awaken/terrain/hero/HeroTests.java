@@ -42,7 +42,7 @@ public final class HeroTests {
         AwakenTests.register("terrain_hero_blueprints", 100, h -> {
             StringBuilder log = new StringBuilder();
             for (HeroTree tree : HeroTree.values()) {
-                double total = 0, worst = 0;
+                double total = 0, worst = 0, best = Double.MAX_VALUE;
                 int seeds = 8;
                 for (long warm = 101; warm <= 103; warm++) tree.build(warm); // the JIT first, then the clock
                 for (long seed = 1; seed <= seeds; seed++) {
@@ -51,18 +51,20 @@ public final class HeroTests {
                     double ms = (System.nanoTime() - t0) / 1e6;
                     total += ms;
                     worst = Math.max(worst, ms);
+                    best = Math.min(best, ms);
                     Shape s = shape(bp);
                     String what = tree.getSerializedName() + " seed " + seed + " (" + s + ")";
                     h.assertTrue(s.loose == 0, what + ": loose leaves left in the blueprint");
                     h.assertTrue(s.disconnected == 0, what + ": " + s.disconnected + " cells not joined to the ground");
                     if (tree == HeroTree.ELDER_COLOSSUS) {
-                        h.assertTrue(s.trunkTop >= 55 && s.trunkTop <= 86, what + " trunk top " + s.trunkTop);
+                        h.assertTrue(s.top >= 55 && s.top <= 100, what + " top " + s.top); // an umbrella: the crown top sits near the trunk's height
+                        h.assertTrue(s.trunkTop < s.top - 4, what + ": the trunk (" + s.trunkTop + ") ends inside the crown (" + s.top + ")");
                         h.assertTrue(s.width12 >= 6 && s.width12 <= 10, what + " trunk " + s.width12 + " across");
-                        h.assertTrue(s.rootReach >= 8 && s.rootReach <= 17, what + " roots reach " + s.rootReach);
-                        h.assertTrue(s.leafReach >= 18 && s.leafReach <= bp.extent, what + " canopy reaches " + s.leafReach);
-                        h.assertTrue(s.leaves >= 4000, what + " leaves " + s.leaves);
+                        h.assertTrue(s.rootReach >= 9 && s.rootReach <= 20, what + " roots reach " + s.rootReach);
+                        h.assertTrue(s.leafReach >= 24 && s.leafReach < bp.extent, what + " canopy reaches " + s.leafReach);
+                        h.assertTrue(s.leaves >= 8000 && s.gold > 0 && s.gold < s.leaves, what + " leaves " + s.leaves + ", gold " + s.gold);
                     } else {
-                        h.assertTrue(s.trunkTop >= 30 && s.trunkTop <= 46, what + " trunk top " + s.trunkTop);
+                        h.assertTrue(s.trunkTop >= 40 && s.trunkTop <= 55, what + " trunk top " + s.trunkTop);
                         h.assertTrue(s.leafReach >= 9 && s.leafReach <= bp.extent, what + " crown reaches " + s.leafReach);
                         h.assertTrue(s.vines >= 60 && s.tips >= 15, what + " vines " + s.vines + " (" + s.tips + " tips)");
                     }
@@ -70,8 +72,9 @@ public final class HeroTests {
                     if (seed == 1) log.append(String.format(" %s: top %d, %d across, roots %d, canopy %d, %d leaves (%d persistent), %d vines, %d cells;",
                             tree.getSerializedName(), s.trunkTop, s.width12, s.rootReach, s.leafReach, s.leaves, s.persistent, s.vines, s.cells));
                 }
-                log.append(String.format(" %s blueprint %.2f ms avg, %.2f ms worst;", tree.getSerializedName(), total / seeds, worst));
-                h.assertTrue(total / seeds <= 20, tree + " blueprint costs " + total / seeds + " ms");
+                log.append(String.format(" %s blueprint %.2f ms fastest, %.2f avg, %.2f worst;", tree.getSerializedName(), best, total / seeds, worst));
+                // other work on the machine only ever adds time: the fastest seed is the honest cost
+                h.assertTrue(best <= 8, tree + " blueprint costs " + best + " ms at its fastest");
             }
             Awaken.LOG.info("[terrain] hero blueprints:{}", log);
             h.succeed();
@@ -187,12 +190,12 @@ public final class HeroTests {
 
     /** Measurements of a blueprint. */
     static final class Shape {
-        int trunkTop, width12, rootReach, leafReach, leaves, persistent, vines, tips, loose, cells, disconnected;
+        int top, trunkTop, width12, rootReach, leafReach, leaves, persistent, gold, vines, tips, loose, cells, disconnected;
 
         @Override
         public String toString() {
-            return "top " + trunkTop + ", " + width12 + " across, roots " + rootReach + ", canopy " + leafReach + ", " + leaves + " leaves, "
-                    + persistent + " persistent, " + vines + " vines, " + cells + " cells";
+            return "top " + top + ", trunk " + trunkTop + ", " + width12 + " across, roots " + rootReach + ", canopy " + leafReach + ", " + leaves + " leaves ("
+                    + gold + " gold, " + persistent + " persistent), " + vines + " vines, " + cells + " cells";
         }
     }
 
@@ -205,15 +208,18 @@ public final class HeroTests {
                     byte c = bp.get(x, y, z);
                     if (c == Blueprint.EMPTY) continue;
                     s.cells++;
+                    s.top = Math.max(s.top, y);
                     int reach = (int) Math.round(Math.sqrt(x * x + z * z));
-                    if (c == Blueprint.LOG) {
-                        s.trunkTop = Math.max(s.trunkTop, y);
-                        if (y == 12) area++;
-                    } else if (c == Blueprint.WOOD && y == bp.minY) s.rootReach = Math.max(s.rootReach, reach);
-                    else if (c == Blueprint.LEAF) s.loose++;
+                    if (Blueprint.wood(c)) {
+                        // the trunk: wood round the axis (it sways at most two blocks)
+                        if (x * x + z * z <= 6) s.trunkTop = Math.max(s.trunkTop, y);
+                        if (y == 20 && x * x + z * z <= 49) area++;
+                        if (y == bp.minY) s.rootReach = Math.max(s.rootReach, reach);
+                    } else if (c == Blueprint.LEAF || c == Blueprint.LEAF2) s.loose++;
                     else if (Blueprint.leaf(c)) {
                         s.leaves++;
-                        if (c == Blueprint.LEAF_PERSISTENT) s.persistent++;
+                        if (c == Blueprint.LEAF_PERSISTENT || c == Blueprint.LEAF2_PERSISTENT) s.persistent++;
+                        if (c >= Blueprint.LEAF2_D1) s.gold++;
                         s.leafReach = Math.max(s.leafReach, reach);
                     } else if (c == Blueprint.VINE || c == Blueprint.VINE_TIP) {
                         s.vines++;
@@ -222,7 +228,7 @@ public final class HeroTests {
                 }
             }
         }
-        s.width12 = (int) Math.round(2 * Math.sqrt(area / Math.PI)); // the trunk's mean width twelve blocks up
+        s.width12 = (int) Math.round(2 * Math.sqrt(area / Math.PI)); // the trunk's mean width twenty blocks up
         // every cell joins the ground face to face through other cells (from the bottom of the trunk and roots)
         int n = bp.cells.length, sxz = bp.sx * bp.sx;
         boolean[] seen = new boolean[n];
