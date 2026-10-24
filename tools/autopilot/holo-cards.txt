@@ -1,0 +1,75 @@
+# The System's cards in the projected look (docs/modules/holo.md "System cards"): the first-power choice scanning in
+# and a card picked; a System toast scanning in, at rest and glitching out; the choice card, a gate panel and a story
+# line; the Now line throughout; then the same toast, choice and story flat ("holo style flat") for comparison.
+# A "shot" lands about 3 ticks after its line, a "cmd" waits 5. GUI scale 0 (auto).
+# Run: tools/autopilot.sh tools/autopilot/holo-cards.txt
+world autopilot_holo_cards creative 1234
+waitworld
+cmd gamerule send_command_feedback false
+cmd time set 6000
+cmd weather clear
+look 20 4
+gui 0
+cmd awaken admin awaken
+wait 200
+screen close
+cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:short_grass
+cmd fill ~-12 ~ ~-12 ~12 ~3 ~12 air replace minecraft:tall_grass
+wait 40
+
+# --- the first-power choice ---
+cmd awaken powers starter
+shot cards_01_starter_scan
+wait 20
+shot cards_02_starter_open
+click 257 221
+wait 1
+shot cards_03_starter_picked
+wait 60
+screen close
+wait 60
+
+# --- a System toast: scanning in, at rest, glitching out (5 s on screen) ---
+cmd awaken signal demo toast
+shot cards_10_toast_scan
+wait 20
+shot cards_11_toast_rest
+wait 66
+shot cards_12_toast_glitch
+wait 60
+
+# --- the choice card (armed after 8 ticks), a gate panel, a story line ---
+cmd awaken signal demo choice
+shot cards_20_choice_scan
+wait 20
+shot cards_21_choice_open
+key dismiss
+wait 40
+cmd awaken signal demo panel
+wait 10
+shot cards_22_panel
+wait 160
+shot cards_23_panel_glitch
+wait 40
+cmd awaken signal demo story
+wait 30
+shot cards_24_story
+wait 200
+
+# --- the same, flat ---
+holo style flat
+cmd awaken signal demo toast
+wait 20
+shot cards_30_flat_toast
+wait 140
+cmd awaken signal demo choice
+wait 20
+shot cards_31_flat_choice
+key dismiss
+wait 40
+cmd awaken signal demo story
+wait 30
+shot cards_32_flat_story
+holo style auto
+wait 200
+quit

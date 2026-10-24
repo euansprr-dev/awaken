@@ -60,6 +60,7 @@ public final class HoloClient {
         STATUS.h = HoloStatusScreen.H;
         STATUS.anchor = HoloPanel.Anchor.WRIST;
         modBus.addListener(RegisterRenderPipelinesEvent.class, HoloPipelines::onRegister);
+        dev.awaken.signal.client.HudLook.install(HoloGuiLook.INSTANCE);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, HoloClient::onPayloads);
         modBus.addListener(RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, HoloOthers::modify));
@@ -162,7 +163,16 @@ public final class HoloClient {
     private static double focus() {
         float f = STATUS.timeline.focus();
         if (DEMO.anchor == HoloPanel.Anchor.WRIST) f = Math.max(f, DEMO.timeline.focus());
-        return f;
+        return Math.max(f, HoloTimeline.easeInOut(readFocus));
+    }
+
+    /** A projected reading screen (the first-power choice) is open: 0..1, eased over 300 ms each way. */
+    private static float readFocus;
+
+    private static void easeReadFocus(float dt) {
+        boolean reading = Minecraft.getInstance().gui.screen() instanceof dev.awaken.signal.client.ReadingScreen
+                && dev.awaken.signal.client.HudLook.holo();
+        readFocus = reading ? Math.min(1f, readFocus + dt / 0.3f) : Math.max(0f, readFocus - dt / 0.3f);
     }
 
     // ---- per tick and per frame -----------------------------------------------------------------------------------
@@ -189,6 +199,7 @@ public final class HoloClient {
         ViewMath.update(cam);
         HudMotion.update(cam.yRot, cam.xRot, dt);
         HoloOthers.advance(dt * 1000f);
+        easeReadFocus(dt);
         boolean reduced = HoloConfig.reducedMotion;
         if (demoMode != 0) HoloDemo.record(DEMO);
         for (HoloRender.Draw d : DRAWS) {
@@ -267,6 +278,10 @@ public final class HoloClient {
             }
             case "peek" -> HoloOthers.peekSelf = a[1].equals("on");
             case "glow" -> HoloRender.glowOn = a[1].equals("on");
+            case "style" -> { // style holo|flat|auto: the projected look on or off (K menu, System cards, first power)
+                HoloConfig.forcedStyle = a[1].equals("auto") ? null : HoloConfig.StatusStyle.valueOf(a[1].toUpperCase(java.util.Locale.ROOT));
+                HoloConfig.refresh();
+            }
             case "arm" -> Wrist.forcedSkin = switch (a[1]) {
                 case "slim" -> net.minecraft.client.resources.DefaultPlayerSkin.get(new java.util.UUID(0, 6));
                 case "wide" -> net.minecraft.client.resources.DefaultPlayerSkin.get(new java.util.UUID(0, 15));

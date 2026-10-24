@@ -159,6 +159,25 @@ The holo K menu costs 0.06–0.25 ms more than the flat one (the layout is the s
 Urgent System cards as holo panels would be a `HoloPanel` with `Anchor.VIEW` recorded through `Ui.draw(UiCanvas, ...)`
 (`HoloCanvas` already takes any `Ui` content), with the System v2 rules (SPEC §13) deciding when one shows.
 
+## System cards (`signal.client.HudLook`, `HoloGuiLook`)
+The System's cards keep their flat layout, positions, sizes and timing (SignalLayout, ChoiceDeck, ToastBurst, the
+vanilla ToastManager) and only change how they draw. The holo module installs `HoloGuiLook` into signal's `HudLook`; it
+draws in the GUI pass with the panel's own `holo_glass` / `holo_glow` shaders on two GUI pipelines
+(`awaken:pipeline/holo_gui_glass`, `holo_gui_glow`, PARTICLE format through `submitGuiElementRenderState`), so a card
+has the panel's glass, hairline edge, brackets, static scan lines and shimmer, one even 36% tint, a faint halo (brighter
+while it scans in) and text as light (four faint cyan copies half a GUI pixel off, no shadow).
+- Toast (`SignalToast`): same 160-wide slot; no slide (`xPos` fixed): vanilla's 600 ms show becomes a scan-in done by
+  270 ms (the text appears as the line passes), its hide a glitch-out in 300 ms. Quiet screens still hide toasts.
+- Choice card and gate panel (`SystemHud`): scan in over the 4 ticks they used to fade in; the gate panel glitches out
+  over its 6-tick close. The fold timer line and the keys' arming (8 ticks) are unchanged.
+- Story lines: a projected strip behind the words, scanned in with the first page, glitched out with the fade.
+- The Now line (`TrackerHud`): a still card, never animated beyond its own fade on change.
+- The first-power choice (`StarterScreen`, a `ReadingScreen`): the panel scans in over 320 ms, then the three cards one
+  after another (70 ms apart); the hovered or picked card lights in its family colour. Clicks and 1 / 2 / 3 are as
+  before. Lens focus eases to 1 while it is open (300 ms each way).
+- Reduced motion: scan-ins and glitches become fades. `statusStyle = FLAT`, or GUI shaders that fail, keeps every
+  card exactly as it was. Autopilot: `holo style holo|flat|auto`; tour `tools/autopilot/holo-cards.txt`.
+
 ## Settings (`awaken-holo-client.toml`)
 `statusStyle` HOLO | FLAT · `hudMotion` OFF | SUBTLE | FULL · `reducedMotion` false.
 

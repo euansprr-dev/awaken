@@ -56,12 +56,31 @@ public final class HoloPipelines {
             .withCull(false)
             .build();
 
+    /** The same glass and glow shaders on GUI pipelines, for the System's cards (HoloGuiLook). */
+    public static final RenderPipeline GUI_GLASS = RenderPipeline.builder(RenderPipelines.GUI_SNIPPET)
+            .withLocation(Awaken.id("pipeline/holo_gui_glass"))
+            .withVertexShader(Awaken.id("core/holo_glass"))
+            .withFragmentShader(Awaken.id("core/holo_glass"))
+            .withVertexBinding(0, DefaultVertexFormat.PARTICLE)
+            .build();
+
+    public static final RenderPipeline GUI_GLOW = RenderPipeline.builder(RenderPipelines.GUI_SNIPPET)
+            .withLocation(Awaken.id("pipeline/holo_gui_glow"))
+            .withVertexShader(Awaken.id("core/holo_glow"))
+            .withFragmentShader(Awaken.id("core/holo_glow"))
+            .withVertexBinding(0, DefaultVertexFormat.PARTICLE)
+            .withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE))
+            .build();
+
     private static RenderType glassType, glowType;
     private static int ok = -1; // -1 unknown, 0 failed, 1 compiled
+    private static int guiOk = -1;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(GLASS);
         e.registerOptionalPipeline(GLOW);
+        e.registerOptionalPipeline(GUI_GLASS);
+        e.registerOptionalPipeline(GUI_GLOW);
     }
 
     public static RenderType glass() {
@@ -87,8 +106,22 @@ public final class HoloPipelines {
         return ok == 1;
     }
 
+    /** Whether the GUI pipelines compiled (the System's cards stay flat otherwise). */
+    public static boolean guiOk() {
+        if (guiOk < 0) {
+            try {
+                guiOk = RenderSystem.getCompiledPipelineNullable(GUI_GLASS) != null && RenderSystem.getCompiledPipelineNullable(GUI_GLOW) != null ? 1 : 0;
+            } catch (RuntimeException e) {
+                guiOk = 0;
+            }
+            if (guiOk == 0) Awaken.LOG.warn("[holo] the holo GUI shaders did not load; the System's cards stay flat");
+        }
+        return guiOk == 1;
+    }
+
     /** After a resource reload the pipelines are rebuilt: look again. */
     static void recheck() {
         ok = -1;
+        guiOk = -1;
     }
 }
