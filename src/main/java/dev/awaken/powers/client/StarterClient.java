@@ -22,6 +22,9 @@ public final class StarterClient {
 
     private static List<String> cards = List.of();
     private static boolean wantOpen;
+    /** Development only: under the autopilot the picked card stays on screen this many ticks so a tour can shoot it. */
+    private static final int AUTOPILOT_HOLD = System.getProperty("awaken.autopilot") != null ? 12 : 0;
+    private static int closeIn = -1;
 
     public static void init(IEventBus modBus) {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, StarterClient::payloads);
@@ -43,11 +46,13 @@ public final class StarterClient {
             cards = List.of();
             wantOpen = false;
             Minecraft mc = Minecraft.getInstance();
-            if (mc.gui.screen() instanceof StarterScreen s) s.onClose();
+            if (AUTOPILOT_HOLD > 0) closeIn = AUTOPILOT_HOLD;
+            else if (mc.gui.screen() instanceof StarterScreen s) s.onClose();
         });
     }
 
     private static void tick() {
+        if (closeIn >= 0 && --closeIn < 0 && Minecraft.getInstance().gui.screen() instanceof StarterScreen s) s.onClose();
         if (!wantOpen) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || mc.gui.screen() != null || mc.gui.overlay() != null) return;

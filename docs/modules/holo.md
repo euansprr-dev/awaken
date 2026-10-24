@@ -184,9 +184,15 @@ The System's cards keep their flat layout, positions, sizes and timing (SignalLa
 vanilla ToastManager) and only change how they draw. The holo module installs `HoloGuiLook` into signal's `HudLook`; it
 draws in the GUI pass with the panel's own `holo_glass` / `holo_glow` shaders on two GUI pipelines
 (`awaken:pipeline/holo_gui_glass`, `holo_gui_glow`, PARTICLE format through `submitGuiElementRenderState`), so a card
-has the panel's glass, hairline edge, brackets, static scan lines and shimmer, one even 36% tint, a faint halo (brighter
-while it scans in) and text as light (four faint cyan copies half a GUI pixel off, no shadow).
-- Toast (`SignalToast`): same 160-wide slot; no slide (`xPos` fixed): vanilla's 600 ms show becomes a scan-in done by
+has the panel's glass, hairline edge, static scan lines and shimmer, one even 40% tint, a faint halo (brighter while it
+scans in) and text as light (four cyan copies half a GUI pixel off at 30%, no shadow). Styles (`HudLook.FRAME`,
+`DRIFT`, `EMITTER`): FRAME adds the K panel's own frame, its additive rim lines and corner brackets just outside the
+card (the bottom ones once the scan has reached them); DRIFT a soft interference band, 10 units tall with a bright line and two
+faint ones trailing it, that drifts down through the card once every 6.5 s (still, a third of the way down, with reduced motion); EMITTER the edge the card is
+projected from, a bright line with a soft skirt that flares as the card arrives. Notices (choice and Accept card, gate
+panel, story line) are FRAME + DRIFT, toasts add EMITTER on their screen side, the Now line is FRAME only (no band, no
+flicker: the calm HUD), the first-power panel FRAME and its cards plain tiles.
+- Toast (`SignalToast`, TOAST = FRAME + DRIFT + EMITTER): same 160-wide slot; no slide (`xPos` fixed): vanilla's 600 ms show becomes a scan-in done by
   270 ms (the text appears as the line passes), its hide a glitch-out in 300 ms. Quiet screens still hide toasts.
 - Choice card and gate panel (`SystemHud`): scan in over the 4 ticks they used to fade in; the gate panel glitches out
   over its 6-tick close. The fold timer line and the keys' arming (8 ticks) are unchanged.
@@ -196,7 +202,10 @@ while it scans in) and text as light (four faint cyan copies half a GUI pixel of
   after another (70 ms apart); the hovered or picked card lights in its family colour. Clicks and 1 / 2 / 3 are as
   before. Lens focus eases to 1 while it is open (300 ms each way).
 - Reduced motion: scan-ins and glitches become fades. `statusStyle = FLAT`, or GUI shaders that fail, keeps every
-  card exactly as it was. Autopilot: `holo style holo|flat|auto`; tour `tools/autopilot/holo-cards.txt`.
+  card exactly as it was. Autopilot: `holo style holo|flat|auto`, `shotnow <name>` (a shot this tick, for the 6-tick
+  glitch-outs); under the autopilot (only) a picked first power stays on screen 12 ticks so the tour can shoot it. Tour
+  `tools/autopilot/holo-cards.txt` (starter scan, open, picked; toast scan, sky, grass, glitch; a real gate panel put
+  away with N; choice; story; night; flat).
 
 ## Settings (`awaken-holo-client.toml`)
 `statusStyle` HOLO | FLAT · `hudMotion` OFF | SUBTLE | FULL · `reducedMotion` false.

@@ -61,11 +61,11 @@ LOOKS = {
     "elderwood": ("Gold Elderwood: sun through a high canopy, gold highlights, green-gold shadows, a warm haze, strong shafts", {
         "exposure": 1.02, "contrast": 1.1, "saturation": 1.15, "warmth": 0.14, "shadowTint": [0.45, 0.5, 0.4],
         "highlightTint": [1.0, 0.88, 0.6], "splitTone": 0.14, "vignette": 0.14, "bloom": 0.8, "bloomThreshold": 0.6,
-        "skyBloom": 0.3, "shafts": 0.85, "haze": 0.38, "hazeStart": 0.35, "hazeTint": [0.95, 0.85, 0.6],
+        "skyBloom": 0.3, "shafts": 1.0, "haze": 0.38, "hazeStart": 0.35, "hazeTint": [0.95, 0.85, 0.6],
         "hazeTintMix": 0.45, "hazeDesaturate": 0.08, "sunsetWarmth": 0.75, "sunGlow": 0.9}),
     "lumen": ("Lumen: cool teal shadows, the glow blooms at night, a low blue mist", {
         "exposure": 1.0, "contrast": 1.12, "saturation": 1.1, "warmth": -0.08, "shadowTint": [0.3, 0.5, 0.6],
-        "highlightTint": [0.75, 0.95, 1.0], "splitTone": 0.16, "vignette": 0.2, "bloom": 1.0, "bloomThreshold": 0.5,
+        "highlightTint": [0.75, 0.95, 1.0], "splitTone": 0.16, "vignette": 0.2, "bloom": 1.35, "bloomThreshold": 0.38,
         "skyBloom": 0.2, "shafts": 0.4, "haze": 0.42, "hazeStart": 0.3, "hazeTint": [0.45, 0.75, 0.85],
         "hazeTintMix": 0.55, "hazeDesaturate": 0.15, "sunsetWarmth": 0.35, "sunGlow": 0.6}),
     "glass_steppe": ("Glass Steppe: bleached and high-key, warm light, a strong sun glow and heat haze over the glass", {

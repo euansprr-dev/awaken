@@ -3,19 +3,19 @@ package dev.awaken.terrain.hero;
 import net.minecraft.util.RandomSource;
 
 /**
- * The Lumen Spire (docs/modules/lands.md, "Lumen Forest"): a slender ash-white trunk twisted like rope, 30-45 tall,
+ * The Lumen Spire (docs/modules/lands.md, "Lumen Forest"): a slender ash-white trunk twisted like rope, 40-52 tall,
  * two small tiers on the way up, and on top a broad flat crown of teal pads on radiating limbs, hung with a curtain of
  * glowing vines that grow longer toward the rim. At night the curtain is the brightest thing in the forest.
  */
 final class LumenSpire {
     private LumenSpire() {}
 
-    static final int EXTENT = 22, MIN_Y = -3, MAX_Y = 54;
+    static final int EXTENT = 22, MIN_Y = -3, MAX_Y = 62;
 
     static Blueprint build(long seed) {
         RandomSource r = RandomSource.create(seed);
         Blueprint bp = new Blueprint(EXTENT, MIN_Y, MAX_Y);
-        int h = 30 + r.nextInt(16);
+        int h = 40 + r.nextInt(13); // 40-52: three times the Lumen canopy, so it reads from far terrain
         double r0 = 2.0 + r.nextDouble() * 0.7;
         double twist = 0.18 + r.nextDouble() * 0.08, phase = r.nextDouble() * Math.PI * 2;
         ElderColossus.Trunk trunk = new ElderColossus.Trunk(h, r.nextDouble() * Math.PI * 2, 0.5 + r.nextDouble());
@@ -53,11 +53,11 @@ final class LumenSpire {
             double len = 4 + r.nextInt(3), e = 0.1 + r.nextDouble() * 0.15;
             double sx = trunk.x(hy), sz = trunk.z(hy);
             double ex = sx + Math.cos(a) * len, ey = hy + Math.sin(e) * len, ez = sz + Math.sin(a) * len;
-            bp.tube(sx, hy, sz, ex, ey, ez, 0.9, 0.55, Blueprint.WOOD);
+            bp.tube(sx, hy, sz, ex, ey, ez, 0.7, 0.45, Blueprint.WOOD);
             pad(bp, r, seed + 13L * k, ex, ey, ez, 3.5 + r.nextDouble(), 1.3);
         }
 
-        // the crown: limbs radiating from the top, rising then drooping, pads along them and over the middle
+        // the crown: slender limbs radiating from the top, rising then drooping under their pads, one pad over the middle
         double tx = trunk.x(h), tz = trunk.z(h);
         int limbs = 6 + r.nextInt(3);
         a = r.nextDouble() * Math.PI * 2;
@@ -65,10 +65,10 @@ final class LumenSpire {
             a += Math.PI * 2 / limbs + (r.nextDouble() - 0.5) * 0.3;
             double len = 8 + r.nextInt(5);
             double sy = h - 2 - r.nextInt(3);
-            double mx = tx + Math.cos(a) * len * 0.55, my = sy + 2.2, mz = tz + Math.sin(a) * len * 0.55;
-            double ex = tx + Math.cos(a) * len, ey = sy + 1.2, ez = tz + Math.sin(a) * len;
-            bp.tube(tx, sy, tz, mx, my, mz, 1.0, 0.7, Blueprint.WOOD);
-            bp.tube(mx, my, mz, ex, ey, ez, 0.7, 0.5, Blueprint.WOOD);
+            double mx = tx + Math.cos(a) * len * 0.5, my = sy + 3.2, mz = tz + Math.sin(a) * len * 0.5;
+            double ex = tx + Math.cos(a) * len, ey = sy - 0.5, ez = tz + Math.sin(a) * len;
+            bp.tube(tx, sy, tz, mx, my, mz, 0.75, 0.5, Blueprint.WOOD);
+            bp.tube(mx, my, mz, ex, ey, ez, 0.5, 0.4, Blueprint.WOOD);
             pad(bp, r, seed + 37L * k, mx, my, mz, 3.2 + r.nextDouble(), 1.3);
             pad(bp, r, seed + 37L * k + 5, ex, ey, ez, 4.5 + r.nextDouble() * 1.2, 1.4);
         }
@@ -83,11 +83,11 @@ final class LumenSpire {
         int arm = (int) Math.max(1, rx * 0.6);
         bp.line(ix - arm, iy, iz, ix + arm, iy, iz, Blueprint.WOOD);
         bp.line(ix, iy, iz - arm, ix, iy, iz + arm, Blueprint.WOOD);
-        bp.cloud(seed, x, y, z, rx, up, up * 0.7, 0.0, 0.3);
+        bp.cloud(seed, x, y, z, rx, up, up * 0.7, 0.0, 0.3, Blueprint.LEAF);
     }
 
     /** The curtain: vines hang from the crown's underside, longer toward its rim; shorter from the tiers. */
     static void vines(Blueprint bp, long seed, int h) {
-        bp.hangVines(seed, 0.2, 2, 6, r2 -> r2 > 110 ? 5 : r2 > 50 ? 2 : 0);
+        bp.hangVines(seed, 0.24, 2, 7, r2 -> r2 > 110 ? 5 : r2 > 50 ? 2 : 0);
     }
 }

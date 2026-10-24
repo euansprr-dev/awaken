@@ -46,6 +46,8 @@ public final class LandsBlocks {
     public static final DeferredBlock<RotatedPillarBlock> STRIPPED_ELDER_WOOD = log("stripped_elder_wood", MapColor.SAND, MapColor.SAND);
     public static final DeferredBlock<Block> ELDER_PLANKS = planks("elder_planks", MapColor.SAND);
     public static final DeferredBlock<LeavesBlock> ELDER_LEAVES = leaves("elder_leaves", MapColor.COLOR_LIGHT_GREEN);
+    /** The warm gold tone of crown tops (elder canopies mix it in by noise; the Colossus's high masses). */
+    public static final DeferredBlock<LeavesBlock> ELDER_LEAVES_GOLD = leaves("elder_leaves_gold", MapColor.GOLD);
     public static final DeferredBlock<SaplingBlock> ELDER_SAPLING = sapling("elder_sapling", LandsTrees.ELDER);
 
     // ---- Lumen Forest ------------------------------------------------------------------------------------------------
@@ -100,7 +102,7 @@ public final class LandsBlocks {
 
     /** Every Awakened Lands block, in creative-tab order. */
     public static List<DeferredBlock<? extends Block>> all() {
-        return List.of(ELDER_LOG, STRIPPED_ELDER_LOG, ELDER_WOOD, STRIPPED_ELDER_WOOD, ELDER_PLANKS, ELDER_LEAVES, ELDER_SAPLING,
+        return List.of(ELDER_LOG, STRIPPED_ELDER_LOG, ELDER_WOOD, STRIPPED_ELDER_WOOD, ELDER_PLANKS, ELDER_LEAVES, ELDER_LEAVES_GOLD, ELDER_SAPLING,
                 LUMEN_LOG, STRIPPED_LUMEN_LOG, LUMEN_WOOD, STRIPPED_LUMEN_WOOD, VEINED_LUMEN_LOG, LUMEN_PLANKS, LUMEN_LEAVES, LUMEN_SAPLING,
                 LUMEN_MOSS, LUMEN_CAP, LUMEN_VINES);
     }
