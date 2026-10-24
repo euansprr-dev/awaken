@@ -23,6 +23,9 @@ def parse(path):
             m = PERF.search(line)
             if m:
                 kv = dict(KV.findall(m.group(2)))
+                if "p50" not in kv:  # "recorded no frames": nothing was drawn (a mod paused rendering)
+                    scenes[m.group(1)] = {"empty": True}
+                    continue
                 scenes[m.group(1)] = {k: float(v.rstrip("ms")) if k in ("p50", "p95", "p99", "max", "avg_fps") else v
                                       for k, v in kv.items()}
                 continue
@@ -52,6 +55,9 @@ def main(argv):
     names = list(dict.fromkeys(n for scenes, _ in runs for n in scenes))
     # a scene macOS throttled (window covered, display asleep) runs at ~10 fps: flag it rather than trust it
     for scenes, _ in runs:
+        for n in [n for n, s in scenes.items() if s.get("empty")]:
+            print(f"  {n}: no frames recorded (rendering was paused); left out")
+            del scenes[n]
         for s in scenes.values():
             s["throttled"] = s.get("occluded") == "true" or abs(s["p50"] - 100.0) < 3.0
     if len(runs) == 1:

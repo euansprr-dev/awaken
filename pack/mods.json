@@ -63,9 +63,9 @@
     {
       "slug": "dynamic-fps",
       "profiles": [
-        "perf"
+        "comfort"
       ],
-      "why": "Throttles the game in the background: cooler laptop."
+      "why": "Throttles the game in the background: a cooler laptop. Never in perf runs: it stops drawing while the window is hidden, so a background measurement records no frames."
     },
     {
       "slug": "distanthorizons",

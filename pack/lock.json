@@ -3,7 +3,7 @@
  "minecraft": "26.3",
  "loader": "neoforge",
  "neoforge": "26.3.0.95",
- "generated": "2026-10-24 09:10",
+ "generated": "2026-10-24 09:37",
  "files": [
   {
    "slug": "3dskinlayers",
@@ -151,10 +151,10 @@
    "client": "required",
    "server": "unsupported",
    "profiles": [
-    "perf"
+    "comfort"
    ],
    "dependencyOf": [],
-   "why": "Throttles the game in the background: cooler laptop."
+   "why": "Throttles the game in the background: a cooler laptop. Never in perf runs: it stops drawing while the window is hidden, so a background measurement records no frames."
   },
   {
    "slug": "e4mc",
