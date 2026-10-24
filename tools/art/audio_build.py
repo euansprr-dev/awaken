@@ -9,7 +9,8 @@ src/main/resources/assets/awaken/sounds/, and writes the sound events:
 
     python3 tools/art/audio_build.py                 everything
     python3 tools/art/audio_build.py ui_ amb_rift    only files whose name starts with one of these (JSON is always written)
-    python3 tools/art/audio_build.py --json          only the JSON
+    python3 tools/art/audio_build.py --json          only the JSON (and the layered music manifests)
+    python3 tools/art/audio_build.py layer_hive      one gate theme's layered stems (mastered as a group)
 
 Then: python3 tools/art/audio_mix.py (loudness report) and python3 tools/art/audio_sheet.py (spectrograms).
 """
@@ -29,7 +30,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "../.."))
 SOUNDS = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds")
 MERGE = os.path.join(ROOT, "src/main/merge")
 BIOMES = os.path.join(ROOT, "src/main/resources/data/awaken/worldgen/biome")
-SPECS = ["audio_ui", "audio_amb", "audio_music", "audio_lands"]
+SPECS = ["audio_ui", "audio_amb", "audio_music", "audio_lands", "audio_layers"]
 
 
 class Snd:
@@ -165,21 +166,32 @@ def main(argv):
         events += m.events(Evt)
         lang.update(getattr(m, "LANG", {}))
         biomes.update(getattr(m, "BIOME_MUSIC", {}))
-    names = {s.name for s in sounds}
+    # groups: files mastered together (the layered music's stems), each with a manifest the game reads
+    groups = [g for m in mods for g in getattr(m, "groups", lambda: [])()]
+    names = {s.name for s in sounds} | {f for g in groups for f in g.files}
     for e in events:
         for f in e.files:
             n = f[0] if isinstance(f, tuple) else f
             assert n in names, f"{e.id} points at {n}, which no spec renders"
     if "--json" not in argv:
         todo = [s for s in sounds if not only or any(s.name.startswith(o) for o in only)]
-        print(f"rendering {len(todo)} of {len(sounds)} files")
+        gtodo = [g for g in groups if not only or any(os.path.basename(f).startswith(o) for f in g.files for o in only)]
+        print(f"rendering {len(todo)} of {len(sounds)} files, {len(gtodo)} of {len(groups)} groups")
         for s in todo:
             render(s)
+        for g in gtodo:
+            g.build(K.write_ogg)  # writes its own manifest with what it measured
+    else:
+        for g in groups:
+            g.write_manifest()  # keeps the last measured numbers
     write_events(events, lang)
     patch_biomes(biomes)
     ours = ("music_", "ui_", "amb_")
     stale = [f for f in os.listdir(SOUNDS) if f.endswith(".ogg") and f.startswith(ours) and f[:-4] not in names] \
         if os.path.isdir(SOUNDS) else []
+    layers = os.path.join(SOUNDS, "layers")
+    stale += ["layers/" + f for f in (os.listdir(layers) if os.path.isdir(layers) else [])
+              if f.endswith(".ogg") and "layers/" + f[:-4] not in names]
     if stale:
         print("files no spec renders any more (delete them):", ", ".join(sorted(stale)))
     return 0

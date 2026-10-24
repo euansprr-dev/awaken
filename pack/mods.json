@@ -200,6 +200,12 @@
       "source": "pack/tectonic/awakened.json",
       "target": "config/tectonic.json",
       "why": "The Awakened Tectonic preset (Awakened Lands studio): continents with real ranges, less sea. Tectonic reads it once at startup."
+    },
+    {
+      "profile": "sound",
+      "source": "pack/spr/sound_rates.properties",
+      "target": "config/sound_physics_remastered/sound_rates.properties",
+      "why": "Keeps the System's voice, the UI, the music (cues, tracks, layered stems) and the Ritual's scripted voices dry; everything else of Awaken's gets the room it is in. SPR adds every other sound event to the file on its first start."
     }
   ]
 }

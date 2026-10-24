@@ -13,7 +13,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 
-/** Client entry of the audio module: cues through the music manager, the System's UI rules, ambience beds. */
+/** Client entry of the audio module: cues through the music manager, the layered music, the System's UI rules, ambience beds. */
 public final class AudioClient {
     private AudioClient() {}
 
@@ -22,9 +22,15 @@ public final class AudioClient {
             e.register(AudioNet.PlayCue.TYPE, (msg, ctx) -> CuePlayer.request(Cue.byOrdinal(msg.cue())));
             e.register(AudioNet.PlayUi.TYPE, (msg, ctx) -> AudioUi.server(UiSound.byOrdinal(msg.sound())));
             e.register(AudioNet.Emitters.TYPE, (msg, ctx) -> Ambience.emitters(msg.emitters()));
+            e.register(AudioNet.LayerState.TYPE, (msg, ctx) -> {
+                var slot = dev.awaken.core.audio.MusicLayers.Slot.byOrdinal(msg.slot());
+                if (slot != null) LayerPlayer.of(slot).accept(msg);
+            });
         });
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> {
             AudioUi.tick();
+            LayerPlayer.MUSIC.tick();
+            LayerPlayer.AMBIENCE.tick();
             CuePlayer.tick();
             Ambience.tick();
         });
@@ -35,6 +41,8 @@ public final class AudioClient {
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             CuePlayer.clear();
             Ambience.clear();
+            LayerPlayer.MUSIC.clear();
+            LayerPlayer.AMBIENCE.clear();
         });
     }
 }

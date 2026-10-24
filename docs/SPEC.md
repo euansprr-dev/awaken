@@ -285,6 +285,10 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   rule, once at mod init), `site(server)` (centre, core and blend radii, street Y, the river's centre line, whether the
   basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
+- `dev.awaken.core.audio.MusicLayers` — the layered music: `register(Slot, priority, name, Provider)` (a provider names a
+  player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null; it may set the given
+  `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
+  Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
@@ -590,6 +594,40 @@ Plan v2 · audio (details in docs/modules/audio.md):
 - Gate tracks play 3 : 1 against the biome's vanilla music, 3–10 minutes apart; Descent 2 : 1, 5–15 minutes; the Abyssal
   Shrine is silent. Loudness: music −19 ± 2 dBFS RMS / −1 dBTP, UI −24 ± 3 / −3, ambience −28 ± 3 / −6.
 - The System's sounds share one glass voice in D major pentatonic; the toast chime yields to a specific System sound.
+- Layered music (Awakened Pack stage 4): in a gate run the music is four phase-aligned stems of the gate's theme
+  (bed, tension, combat, lord; each theme in its track's mode, tempo and voices), played as one stream mixed sample by
+  sample. Levels, decided by the server every 10 ticks: **lord** (a boss-role mob alive within 40 blocks that hunts
+  you, or you within 20 of it, or blows traded with it in the last 15 s; holds 10 s), **combat** (you hit a hostile or
+  one hurt you in the last 5 s, or 3+ hostiles hunt you within 16; holds 12 s), **tension** (a hostile hunts you within
+  24, any hostile within 10, the gate's pressure at waves or the Warden, or a Lord alive within 40; holds 8 s), else
+  **calm**. A level rises at once and falls when its hold ends; a boss dying within 64 blocks ends Lord and combat at
+  once. Hostile = an AWAKEN monster role or a vanilla monster (or anything hunting a player), never Echoes, the
+  Ritual's cast or peaceful fauna.
+- Layer gains (bed, tension, combat, lord): calm 1/0/0/0, tension 0.85/1/0/0, combat 0.6/0.8/1/0, lord 0.45/0.6/0.9/1.
+  Per-stem fades, seconds for 0 to 1 (attack / duck when intensity rises / release when it falls): bed 6/2/10, tension
+  3/1.5/8, combat 0.6/1.5/6, lord 1.5/1.5/4; a Lord's fall lets Lord and combat go in 3 s; leaving fades 4 s, death
+  2.5 s. A change is heard within about a second (quarter-second stream reads).
+- The layers take the music channel: a vanilla song playing fades out in 1.5 s first, vanilla sees no situational
+  music while they sound, and its next song waits its full delay after. After 150 s of calm the bed rests (12 s fade,
+  the channel goes back to vanilla, so the gate's composed track may come later) and returns at the next tension or a
+  new floor. A stage cue takes the channel from the layers (1.5 s fade); an ordinary cue only while they are calm
+  (3 s), never during tension, combat or a Lord. The Music slider and the place's music volume apply. No layers in the
+  Abyssal Shrine or the Ritual of the Bell; an annex floor keeps its gate's music.
+- Layer loudness: the music rule applies to each level's mix, not to a stem: calm -20.5, tension -19.5, combat -18.5,
+  Lord -17.5 dBFS gated RMS, every mix ≤ -1 dBTP after encoding; a stem alone ≤ -1 dBTP. Stems are equal-length loops
+  of whole bars (Vorbis q1). GameTests decode the shipped files in Java and check every mix.
+- Contexts are data, open to any module: the context `<ns>:<path>` plays `assets/<ns>/music_layers/<path>.json`
+  (schemaVersion 1: `source` music or ambient, the slider it follows; `frames`; 1-8 equal-length stems each with
+  attack / duck / release; one gain per stem for levels 0-3, a missing level repeating the last). Two slots, each with
+  its own context and level: **music** (takes the music channel, follows the place's music volume, rests and yields to
+  cues as above) and **ambience** (never touches the music channel, never rests or yields). Providers register per
+  slot with a priority (`MusicLayers.register`); every 10 ticks the highest that names a context wins. A provider may
+  report the gate's pressure, pin the level (0-3, instead of the player's intensity) or flag an arrival (the bed
+  returns from its rest). Ids: `awaken:gate/<theme>` (music; provider `gate`, priority 100; none in the Abyssal Shrine
+  or the Ritual). Reserved: `awaken:descent/stratum_<n>` (music); `awaken:city/<district>` for the city's ambience
+  (ambience slot, `source` ambient, priority 100; its levels are the district's crowd, e.g. night / quiet / busy /
+  crowd, pinned by the provider from the district's density; it answers only inside the city site, so it never meets a
+  gate's music).
 
 Plan v2 · overworld structures (details in docs/modules/structures.md):
 - One visual language: three families (gates, Precursor ruins, lairs), each with its own light and palette.

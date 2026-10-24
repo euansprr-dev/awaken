@@ -1,0 +1,72 @@
+# Sound Physics Remastered fit (Awakened Pack stage 4, docs/modules/audio.md "Room acoustics"). Run with the pack's
+# sound profile and SPR's own logs on:
+#   mkdir -p run-autopilot/config/sound_physics_remastered
+#   printf 'debug_logging=true\nenvironment_logging=true\nperformance_logging=true\n' \
+#     > run-autopilot/config/sound_physics_remastered/soundphysics.properties
+#   PACK=sound tools/autopilot.sh tools/autopilot/sound-spr.txt
+# The same four sounds play in open air, in a closed stone chamber (a cave stand-in), and in a gate's great hall, then
+# the gate's layered music plays. Read the log:
+#   "Sound Physics - Debug ... name: '<id>'"            each sound SPR saw (position 0,0,0 = not in the world: dry)
+#   "Sound Physics - Environment ... Final environment" the four reverb sends it chose (more and longer in a hall)
+#   "skipped due to sound rate limit"                   a sound on Awaken's dry list (pack/spr/sound_rates.properties)
+#   "Sound Physics - Profiling ... in <n> ms"           the cost of each evaluation (sound thread)
+world spr_tour creative 4243
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd fill ~-3 199 ~-3 ~3 199 ~3 minecraft:glass
+cmd tp @s ~ 200 ~
+wait 60
+# ---- open air (a glass platform at y 200: nothing near to reflect) -------------------------------------------------
+cmd playsound awaken:power.impact player @s ^ ^ ^4
+wait 30
+cmd playsound awaken:mobs.boss_toll hostile @s ^ ^1 ^6
+wait 30
+cmd playsound awaken:level_up player @s ~ ~ ~
+wait 30
+cmd playsound awaken:signal.warning player @s ~ ~ ~
+wait 40
+shot spr_01_open_air
+# ---- a closed stone chamber, 23 x 9 x 23 (a cave stand-in) ---------------------------------------------------------
+cmd fill ~-12 ~-1 ~-12 ~12 ~9 ~12 minecraft:stone hollow
+wait 40
+cmd playsound awaken:power.impact player @s ^ ^ ^4
+wait 30
+cmd playsound awaken:mobs.boss_toll hostile @s ^ ^1 ^6
+wait 30
+cmd playsound awaken:level_up player @s ~ ~ ~
+wait 30
+cmd playsound awaken:signal.warning player @s ~ ~ ~
+wait 40
+shot spr_02_stone_chamber
+cmd fill ~-12 ~-1 ~-12 ~12 ~9 ~12 minecraft:air
+# ---- a gate's great hall (Bell Crypt set piece), then its layered music -------------------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E bell_crypt
+wait 320
+cmd awaken gate interior enter
+wait 100
+cmd awaken gate interior goto piece
+wait 100
+cmd playsound awaken:power.impact player @s ^ ^ ^4
+wait 30
+cmd playsound awaken:mobs.boss_toll hostile @s ^ ^1 ^6
+wait 30
+cmd playsound awaken:level_up player @s ~ ~ ~
+wait 30
+cmd playsound awaken:signal.warning player @s ~ ~ ~
+wait 40
+shot spr_03_gate_hall
+cmd awaken audio layers
+wait 200
+cmd awaken audio layers
+quit

@@ -1,0 +1,125 @@
+# The Sound tour (Awakened Pack stage 4, docs/modules/audio.md "Layered music"): three gate themes entered for real,
+# each played through calm, a monster hunting you, a fight, its Lord, the Lord's fall and the way out, plus the bed's
+# rest after long calm and a death. Screenshots can't prove sound: the proof is the log. Grep the runAutopilot log for
+#   "[audio] layers server"   the server's decisions (context, level, why)            LayerWatch
+#   "[audio] layers music"    the client's player: phases, targets, and every 5 s the  LayerPlayer
+#                             mixer's real gains ("status: mixing bed=.. tension=..")
+#   "Layered music:"          /awaken audio layers in chat: what the server sees around you
+# The autopilot mutes the game (master 0); music still streams silently, as vanilla's does, so the mixer runs.
+# Read memory/autopilot-tour-gotchas: starter pick, gate hop between gates, Lightless gates.
+world sound_tour creative 20261025
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule immediate_respawn true
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+# sturdy enough to be hunted and hit without dying (until we want to)
+cmd effect give @s minecraft:resistance infinite 3 true
+cmd effect give @s minecraft:regeneration infinite 2 true
+cmd effect give @s minecraft:saturation infinite 0 true
+cmd awaken audio layers
+
+# ---- Bell Crypt (D Phrygian, 54): calm, hunted, a fight, the Lord, its fall, the way out ----------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E bell_crypt
+wait 320
+cmd awaken gate interior enter
+wait 60
+cmd gamemode survival
+wait 140
+cmd awaken audio layers
+shot sound_01_bell_crypt_calm
+cmd summon minecraft:husk ^ ^ ^9
+wait 120
+cmd awaken audio layers
+shot sound_02_bell_crypt_tension
+cmd damage @e[type=minecraft:husk,limit=1,sort=nearest] 1 minecraft:player_attack by @s
+wait 60
+cmd damage @e[type=minecraft:husk,limit=1,sort=nearest] 1 minecraft:player_attack by @s
+wait 120
+cmd awaken audio layers
+shot sound_03_bell_crypt_combat
+cmd kill @e[type=minecraft:husk]
+wait 320
+cmd awaken audio layers
+cmd awaken gate interior goto lord
+wait 200
+cmd awaken audio layers
+cmd damage @e[type=!minecraft:player,distance=..30,sort=nearest,limit=1] 2 minecraft:player_attack by @s
+wait 160
+cmd awaken audio layers
+shot sound_04_bell_crypt_lord
+cmd kill @e[type=!minecraft:player,distance=..40]
+wait 200
+cmd awaken audio layers
+shot sound_05_bell_crypt_lord_fell
+cmd awaken gate leave
+wait 120
+cmd awaken audio layers
+
+# ---- Ember Mines (E Hijaz, 60): long calm, so the bed rests; a monster brings it back --------------------------------
+cmd gamemode creative
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E ember_mines
+wait 320
+cmd awaken gate interior enter
+wait 40
+cmd kill @e[type=!minecraft:player,distance=..48]
+wait 200
+cmd awaken audio layers
+shot sound_06_ember_mines_calm
+# 150 s of calm: the bed fades (12 s) and the channel goes back to the music manager
+wait 3400
+cmd awaken audio layers
+shot sound_07_ember_mines_rest
+cmd gamemode survival
+cmd summon minecraft:husk ^ ^ ^9
+wait 160
+cmd awaken audio layers
+cmd damage @e[type=minecraft:husk,limit=1,sort=nearest] 1 minecraft:player_attack by @s
+wait 160
+cmd awaken audio layers
+shot sound_08_ember_mines_combat
+cmd awaken gate interior goto lord
+wait 200
+cmd awaken audio layers
+shot sound_09_ember_mines_lord
+cmd kill @e[type=!minecraft:player,distance=..40]
+wait 160
+cmd awaken audio layers
+cmd awaken gate leave
+wait 120
+
+# ---- Frost Monastery (B Aeolian, 50): its Lord, then a death inside the gate ----------------------------------------
+cmd gamemode creative
+cmd awaken gate hop
+wait 60
+cmd awaken gate open C frost_monastery
+wait 360
+cmd awaken gate interior enter
+wait 60
+cmd gamemode survival
+wait 160
+cmd awaken audio layers
+shot sound_10_frost_monastery_calm
+cmd awaken gate interior goto lord
+wait 200
+cmd damage @e[type=!minecraft:player,distance=..30,sort=nearest,limit=1] 2 minecraft:player_attack by @s
+wait 160
+cmd awaken audio layers
+shot sound_11_frost_monastery_lord
+cmd effect clear @s minecraft:resistance
+cmd kill @s
+wait 160
+cmd awaken audio layers
+shot sound_12_after_death
+quit
