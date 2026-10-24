@@ -89,6 +89,62 @@ final class Fauna3Tests {
             "fauna_hollows_dripstone", "fauna_hollows_lush", "fauna_hollows_deep_dark");
 
     static void register() {
+        // Diagnostic, only with -PmotionDiag: records 800 ticks of a Tidesteed, a Dune Ray and vanilla controls (a dolphin,
+        // a camel) to run/motion_diag.csv, to judge how smoothly they move (speed jerk, body turn, pitch and surface bob).
+        // Keep the creatures near the platform's middle: past the test's loaded chunks they stop ticking.
+        if (Boolean.getBoolean("awaken.motionDiag")) AwakenTests.registerIsolated("fauna_motion_diag", 900, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos tank = h.absolutePos(new BlockPos(0, UP + 2, 0));
+            Fauna3Commands.buildTank(level, tank, 8, 5, 8);
+            BlockPos sand = h.absolutePos(new BlockPos(0, UP, 22));
+            for (int x = -16; x <= 16; x++) for (int z = -16; z <= 16; z++) {
+                level.setBlock(sand.offset(x, -1, z), Blocks.SANDSTONE.defaultBlockState(), 2);
+                for (int y = 0; y < 8; y++) level.setBlock(sand.offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+            }
+            List<AwakenMob> made = new ArrayList<>();
+            List<net.minecraft.world.entity.Mob> all = new ArrayList<>();
+            all.add(spawn(level, "tidesteed", Vec3.atCenterOf(tank.above(2)), made));
+            all.add(spawn(level, "dune_ray", Vec3.atBottomCenterOf(sand), made));
+            var dolphin = net.minecraft.world.entity.EntityTypes.DOLPHIN.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+            dolphin.snapTo(tank.getX() + 2.5, tank.getY() + 2, tank.getZ() + 2.5);
+            dolphin.setPersistenceRequired();
+            level.addFreshEntity(dolphin);
+            all.add(dolphin);
+            var camel = net.minecraft.world.entity.EntityTypes.CAMEL.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
+            camel.snapTo(sand.getX() + 3.5, sand.getY(), sand.getZ() + 3.5);
+            camel.setPersistenceRequired();
+            level.addFreshEntity(camel);
+            all.add(camel);
+            StringBuilder csv = new StringBuilder("tick,who,x,y,z,body,yrot,xrot,dx,dy,dz,ground,water,extra\n");
+            int[] t = {0};
+            h.onEachTick(() -> {
+                t[0]++;
+                for (net.minecraft.world.entity.Mob m : all) {
+                    if (m == null) continue;
+                    Vec3 v = m.getDeltaMovement();
+                    csv.append(String.format(java.util.Locale.ROOT, "%d,%s,%.4f,%.4f,%.4f,%.2f,%.2f,%.2f,%.4f,%.4f,%.4f,%b,%b%n", t[0],
+                            net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(m.getType()).getPath(), m.getX(), m.getY(), m.getZ(),
+                            m.yBodyRot, m.getYRot(), m.getXRot(), v.x, v.y, v.z, m.onGround(), m.isInWater()));
+                    if (m instanceof AwakenMob am && am.def().id.equals("dune_ray")) {
+                        csv.setLength(csv.length() - 1);
+                        StringBuilder goals = new StringBuilder();
+                        for (var w : am.goalSelector.getAvailableGoals()) if (w.isRunning()) goals.append(w.getGoal().getClass().getSimpleName()).append('+');
+                        csv.append(String.format(java.util.Locale.ROOT, ",want=%b %.1f %.1f %.1f goals=%s%n", am.getMoveControl().hasWanted(),
+                                am.getMoveControl().getWantedX() - am.getX(), am.getMoveControl().getWantedY() - am.getY(), am.getMoveControl().getWantedZ() - am.getZ(), goals));
+                    }
+                }
+            });
+            h.runAfterDelay(800, () -> {
+                try {
+                    java.nio.file.Files.writeString(java.nio.file.Path.of("motion_diag.csv"), csv.toString());
+                } catch (java.io.IOException e) {
+                    throw new RuntimeException(e);
+                }
+                for (net.minecraft.world.entity.Mob m : all) if (m != null) m.discard();
+                h.succeed();
+            });
+        });
+
         AwakenTests.register("fauna_p3_bestiary", 20, h -> {
             List<String> problems = new ArrayList<>();
             Map<Theme, Set<FaunaRole>> families = new EnumMap<>(Theme.class);

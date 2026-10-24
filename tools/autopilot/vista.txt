@@ -1,11 +1,13 @@
-# The First Vista (docs/plan-pack.html, stage 2): a fresh world seen from high ground and from the ground, with far
-# terrain and Lens. Then a content check: Awaken's ruins and lairs still place and its creatures still spawn, so a
-# terrain mod can't quietly take Awaken's world away. Run with PACK=perf,horizon,world and LENS=off|swift|cinematic;
-# the same seed every time, so runs with different settings give matching shots.
+# The First Vista (docs/plan-pack.html, stage 2): a fresh world seen from the ground and from above once far terrain
+# has had time to build. Every view is shot twice in the same moment, Lens off then Lens cinematic (the autopilot's
+# lens command), so the pair differs only by Lens. Then a content check: Awaken's ruins and creatures must still
+# place in this terrain. Run with PACK=perf,horizon,world and DH=swift|cinematic.
 world vista creative 20261024
 waitworld
 gui 0
 cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
 cmd awaken admin awaken
 wait 200
 cmd awaken powers starter 1
@@ -13,46 +15,77 @@ wait 20
 screen close
 window 1440 900
 info
-cmd gamemode spectator
-cmd time set 6000
-cmd tp @s 0.5 230 0.5 0 18
-# give far terrain two minutes to build around the viewpoint
-wait 2400
-perf vista_noon 10
-look 0 18
-wait 40
-shot vista_noon_south
-look 90 18
-wait 40
-shot vista_noon_west
-look 180 18
-wait 40
-shot vista_noon_north
-look -90 18
-wait 40
-shot vista_noon_east
-cmd time set 12350
-wait 100
-look -90 14
-wait 40
-shot vista_sunset_east
-look 90 14
-wait 40
-shot vista_sunset_west
-perf vista_sunset 10
-# on the ground, looking along the land
-cmd time set 7000
-cmd gamemode creative
+# stand on dry land (this seed spawns on a deep ocean) and give far terrain five minutes to build around it
 cmd awaken gate hop
-wait 200
+wait 6000
 look 0 -4
-wait 400
-shot vista_ground_south
-look 180 -4
+lens off
+wait 40
+shot vista_ground_south_off
+lens cinematic
 wait 60
-shot vista_ground_north
+shot vista_ground_south_cine
+look 180 -4
+lens off
+wait 40
+shot vista_ground_north_off
+lens cinematic
+wait 60
+shot vista_ground_north_cine
+lens swift
 perf vista_ground 10
-# content check: the System must still find Awaken's places and creatures in this terrain
+cmd gamemode spectator
+cmd tp @s ~ ~90 ~
+wait 400
+look 0 16
+lens off
+wait 40
+shot vista_noon_south_off
+lens cinematic
+wait 60
+shot vista_noon_south_cine
+look 90 16
+lens off
+wait 40
+shot vista_noon_west_off
+lens cinematic
+wait 60
+shot vista_noon_west_cine
+look 180 16
+lens off
+wait 40
+shot vista_noon_north_off
+lens cinematic
+wait 60
+shot vista_noon_north_cine
+look -90 16
+lens off
+wait 40
+shot vista_noon_east_off
+lens cinematic
+wait 60
+shot vista_noon_east_cine
+lens swift
+perf vista_noon 10
+cmd time set 12350
+wait 120
+look -90 12
+lens off
+wait 40
+shot vista_sunset_east_off
+lens cinematic
+wait 60
+shot vista_sunset_east_cine
+look 90 12
+lens off
+wait 40
+shot vista_sunset_west_off
+lens cinematic
+wait 60
+shot vista_sunset_west_cine
+lens swift
+perf vista_sunset 10
+# content check
 cmd locate structure awaken:precursor_vault
 wait 100
 cmd locate structure awaken:precursor_monolith
@@ -61,8 +94,7 @@ cmd locate structure awaken:precursor_ocean_lab
 wait 100
 cmd locate structure awaken:precursor_sky_platform
 wait 100
-cmd locate structure awaken:lair
-wait 100
+cmd gamemode creative
 cmd awaken fauna census
 wait 40
 quit

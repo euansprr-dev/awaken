@@ -118,7 +118,7 @@ public final class Upgrades {
         Signal.send(sp, w.ttl(20 * 12).build());
     }
 
-    static void upgradeAnchor(ServerPlayer sp, java.util.UUID owner) {
+    public static void upgradeAnchor(ServerPlayer sp, java.util.UUID owner) {
         Optional<HearthRecord> ho = HearthService.hearthOf(sp);
         if (ho.isEmpty() || !ho.get().owner.equals(owner) || ho.get().tier >= HearthRecord.MAX_TIER) return;
         HearthRecord h = ho.get();

@@ -42,6 +42,12 @@
           "use_depth_buffer": true
         },
         {
+          "sampler_name": "FarDepth",
+          "location": "awaken:lens_far_depth",
+          "width": 1,
+          "height": 1
+        },
+        {
           "sampler_name": "Params",
           "location": "awaken:lens_params",
           "width": 16,
@@ -148,6 +154,12 @@
           "sampler_name": "Shafts",
           "target": "awaken:lens_shafts",
           "bilinear": true
+        },
+        {
+          "sampler_name": "FarDepth",
+          "location": "awaken:lens_far_depth",
+          "width": 1,
+          "height": 1
         },
         {
           "sampler_name": "Params",

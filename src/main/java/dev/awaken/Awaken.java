@@ -45,6 +45,7 @@ public final class Awaken {
         StoryModule.init(modBus);
         WorldModule.init(modBus);
         dev.awaken.gear.GearModule.init(modBus);
+        dev.awaken.body.BodyModule.init(modBus);
         dev.awaken.core.audio.AudioModule.init(modBus);
         dev.awaken.compat.CompatModule.init(modBus);
     }

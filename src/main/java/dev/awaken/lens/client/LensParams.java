@@ -20,10 +20,12 @@ final class LensParams {
 
     void write(float[] look, float far, boolean zeroToOne, float sunU, float sunV, float sunVisible, float sunsetStrength,
             float sunsetR, float sunsetG, float sunsetB, float fogR, float fogG, float fogB, float fogEnd, float environmentalEnd,
-            float tear, float crush, float bloomBoost) {
+            float tear, float crush, float bloomBoost,
+            boolean farActive, boolean farReverseZ, boolean farZeroToOne, float farNear, float farFar) {
         int f = Math.clamp(Math.round(far), 0, 65535);
         int u = Math.clamp(Math.round((sunU + 1f) / 3f * 65535f), 0, 65535), v = Math.clamp(Math.round((sunV + 1f) / 3f * 65535f), 0, 65535);
-        packed[0] = pack(1f, zeroToOne ? 1f : 0f, 0f, 0f);
+        // texel 0: b = far terrain drawn, a = its depth convention (bit 0 reverse-Z, bit 1 zero-to-one)
+        packed[0] = bytes(255, zeroToOne ? 255 : 0, farActive ? 255 : 0, (farReverseZ ? 1 : 0) | (farZeroToOne ? 2 : 0));
         packed[1] = bytes(f >> 8, f & 255, b(sunVisible), b(sunsetStrength));
         packed[2] = bytes(u >> 8, u & 255, v >> 8, v & 255);
         packed[3] = pack(look[Look.EXPOSURE] / 2f, look[Look.CONTRAST] / 2f, look[Look.SATURATION] / 2f, look[Look.WARMTH] * 0.5f + 0.5f);
@@ -38,9 +40,12 @@ final class LensParams {
         packed[11] = bytes(rd >> 8, rd & 255, env >> 8, env & 255);
         packed[12] = pack(look[Look.SUN_GLOW], 0f, 0f, 0f);
         // 13: the story's moments (LensClient.override/tear): r the tear from black (0 off, 1..255 its progress),
-        // g crushed blacks, b extra bloom. 14 belongs to the Holo UI focus; 15 is free.
+        // g crushed blacks, b extra bloom. 14 belongs to the Holo UI focus.
         int t = tear <= 0f ? 0 : 1 + Math.clamp(Math.round(tear * 254f), 0, 254);
         packed[13] = bytes(t, b(crush), b(bloomBoost), 0);
+        // 15: far terrain's near plane (1/16 block) and far plane (blocks)
+        int fn = Math.clamp(Math.round(farNear * 16f), 0, 65535), ff = Math.clamp(Math.round(farFar), 0, 65535);
+        packed[15] = bytes(fn >> 8, fn & 255, ff >> 8, ff & 255);
         for (int i = 0; i < WIDTH; i++) {
             if (packed[i] != uploaded[i]) {
                 dirty = true;

@@ -33,7 +33,25 @@ final class Swim {
     }
 
     static SmoothSwimmingLookControl lookControl(Mob mob) {
-        return new SmoothSwimmingLookControl(mob, 10);
+        return new SwimLook(mob);
+    }
+
+    /**
+     * The dolphin's look control, except that while the swimmer travels its body pitch belongs to the swim: watching a
+     * player or glancing around turns only the head. Otherwise the two pull the pitch different ways every tick and,
+     * as the renderer tilts the whole body by it, the swimmer nods as it goes.
+     */
+    static final class SwimLook extends SmoothSwimmingLookControl {
+        SwimLook(Mob mob) {
+            super(mob, 10);
+        }
+
+        @Override
+        public void tick() {
+            float pitch = mob.getXRot();
+            super.tick();
+            if (mob.getMoveControl().hasWanted() && !mob.getNavigation().isDone()) mob.setXRot(pitch);
+        }
     }
 
     static void malus(Mob mob, boolean amphibious) {
@@ -50,6 +68,9 @@ final class Swim {
         mob.moveRelative(mob.getSpeed(), input);
         mob.move(MoverType.SELF, mob.getDeltaMovement());
         mob.setDeltaMovement(mob.getDeltaMovement().scale(0.9));
+        // the swim control lifts every swimmer 0.005 a tick; like the dolphin, an idle one sinks as much, so it hovers
+        // instead of rising to the surface, popping out and dropping back (a lurch every few seconds)
+        if (mob.getTarget() == null) mob.setDeltaMovement(mob.getDeltaMovement().add(0.0, -0.005, 0.0));
     }
 
     /** A fish on dry ground flops toward nowhere in particular (vanilla's AbstractFish). */

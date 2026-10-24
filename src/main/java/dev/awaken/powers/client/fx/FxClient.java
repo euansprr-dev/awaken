@@ -3,6 +3,7 @@ package dev.awaken.powers.client.fx;
 import com.google.common.reflect.TypeToken;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.CastClips;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.powers.fx.FxStyle;
@@ -39,6 +40,7 @@ public final class FxClient {
 
     public static void init(IEventBus modBus) {
         PowerFxConfig.register();
+        CastAnims.init();
         modBus.addListener(RegisterParticleProvidersEvent.class, FxSprites::register);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class,
                 e -> e.register(FxPayloads.Fx.TYPE, (msg, ctx) -> onEvent(msg.e())));
@@ -95,7 +97,7 @@ public final class FxClient {
         if (anim != CastAnim.NONE && e.caster() >= 0) {
             boolean own = mc.player != null && e.caster() == mc.player.getId();
             // the local key press already started this pose; don't restart it when the server echoes it
-            if (!(own && CastAnims.recently(e.caster(), anim, 8))) CastAnims.play(e.caster(), anim, 0);
+            if (!(own && CastAnims.recently(e.caster(), anim, 8))) CastAnims.play(e.caster(), anim, 0, CastClips.family(e));
         }
         try {
             FxRecipes.build(e);
@@ -121,7 +123,7 @@ public final class FxClient {
         if (def == null) return;
         boolean channel = type.mode == PowerType.Mode.CHANNEL;
         CastAnim anim = channel && def.windAnim() != null ? def.windAnim() : def.anim();
-        if (anim != CastAnim.NONE) CastAnims.play(p.getId(), anim, 0);
+        if (anim != CastAnim.NONE) CastAnims.play(p.getId(), anim, 0, type.family);
         if (channel && def.windup() == FxKind.CHARGE && FxWorld.findAttached(p.getId(), Shape.DISC, FxRecipes.E_CHARGE) == null) {
             Vec3 at = p.position();
             if (FxWorld.begin(at.x, at.y, at.z, p.getId() * 7919 + FxWorld.ticks)) {
