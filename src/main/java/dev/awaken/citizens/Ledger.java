@@ -187,8 +187,20 @@ final class Ledger {
                 yield route.length == 0 ? r.home[i] : route[Math.floorMod(Math.max(0, r.segAlt[k]), route.length)];
             }
             case WANDER -> {
+                // the errand nearest where they are first (straight line; the roster checks the walk), then seeded picks
                 int[] route = r.routePlaces[t];
-                yield route.length == 0 ? r.home[i] : route[rnd(i, 50 + s, route.length)];
+                if (route.length == 0) yield r.home[i];
+                int from = d.next[i] >= 0 ? d.next[i] : d.at[i];
+                int best = route[0];
+                double bd = Double.MAX_VALUE;
+                for (int p : route) {
+                    double dd = Math.hypot(r.pX[p] + cx - g.x[from], r.pZ[p] + cz - g.z[from]);
+                    if (dd < bd) {
+                        bd = dd;
+                        best = p;
+                    }
+                }
+                yield best;
             }
             case HOME -> t >= 0 ? t : r.home[i];
             default -> t;
