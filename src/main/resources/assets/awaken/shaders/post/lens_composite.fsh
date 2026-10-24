@@ -125,6 +125,14 @@ void main() {
     float crush = rit.g * 0.2;
     c = max(c - crush, 0.0) / (1.0 - crush);
 
+    // 14: an open holo panel holds the eye (UiHooks.focus): the world past arm's reach dims and cools; the panel's
+    // glass writes its own depth a block or so away, so it and its text stay bright
+    float focus = P(14).r;
+    if (focus > 0.0) {
+        float k = focus * (sky ? 1.0 : smoothstep(1.8, 3.0, d));
+        c = mix(c, mix(vec3(luma(c)), c, 0.5) * vec3(0.8, 0.88, 1.0) * 0.6, k);
+    }
+
     // vignette, rounder on wide screens
     vec2 v = (texCoord - 0.5) * vec2(OutSize.x / OutSize.y, 1.0) * 0.82;
     c *= mix(1.0, smoothstep(0.98, 0.32, length(v)), highT.a);

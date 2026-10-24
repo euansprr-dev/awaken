@@ -104,7 +104,7 @@ final class RequestSection extends UiSection {
         int y = ui.y();
         if (ui.drawing()) {
             ItemStack icon = RequestRules.icon(r.target());
-            if (!icon.isEmpty()) ui.g().item(icon, ui.x, y + 1);
+            if (!icon.isEmpty()) ui.item(icon, ui.x, y + 1);
         }
         ui.textAt(line1, ui.x + ICON + 2, y + 1, ui.width - ICON - 2, Glass.a(colour, 1f), false);
         ui.textAt(line2, ui.x + ICON + 2, y + 10, ui.width - ICON - 2, Glass.a(Glass.LABEL, 1f), false);

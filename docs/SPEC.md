@@ -601,6 +601,42 @@ Plan v2 · gate interiors and D–B tuning (details in docs/modules/gates.md "In
 Plan v2 · first launch: vanilla's "experimental settings" prompt (shown because the mod adds worldgen) is answered for
 the player (client config `skipExperimentalWarning`, default on).
 
+Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 and P2):
+- K opens the menu on the wrist when `statusStyle = HOLO` (default) and both holo pipelines compiled; otherwise the
+  flat StatusScreen. `screen status|map|codex` in the autopilot stay flat; `screen holo` opens the holo one.
+- Timeline: arm 0–120 ms, band flare 60–200 (peak ×2.5 at 140), beams from the wrist with an opening surge 110–360
+  and a faint steady link from 260, the panel grows out of the beams' origin 140–370, unfolds Y 160–280 then X 220–360,
+  glass 230–380, scan line 250–390, text types from 300 (Signal speed ×4, all lines done by 450); clicks from 250;
+  closing replays it backward in 250 ms; K while opening skips to open.
+- Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 272×228 K panel is 5 px/unit
+  at 3024×1964), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
+  (-0.455, +0.19) of the half-screen (left of the centre, up and right of the wrist, clear of the forearm; the crosshair
+  is hidden while the holo menu is open), yawed 7° toward the wrist and
+  leaning 3° back (third person: at least -0.50 aside, 80% size). Material: 38–50% glass (denser toward the wrist),
+  static scan lines, a slow shimmer (no strobing), a hairline edge with brackets and an additive halo. Text is light,
+  not print: no drop shadow, a soft cyan halo (four faint offset copies), cyan-white body text, System-blue headers
+  with a glow. Readability overrides sheerness: one even feathered tint (38% over the glass) across the content area,
+  never per-line boxes; it must read over sky, grass and night without Lens.
+  Drawn in the main pass's translucent custom geometry (the glass writes depth, so later water, particles, clouds and
+  weather stay behind it); under Improved Transparency in the always-on-top phase. Budget: the holo K menu is within
+  0.06–0.25 ms of the flat one at 3024×1898.
+- Spring: critically damped, settles in 200 ms, shown lag ≤ 4° (soft clamp); `reducedMotion` follows directly.
+- Wrist: the off-hand forearm from the lower left at 0.64 scale, the inside of the wrist to the eye, with the System's
+  band (a flush dark strip, two emissive lines, segment nodes with an idle pulse, the diamond emitter; it flares on
+  open). First person replaces both hands (RenderHandEvent HIGH, cancelled) only while opening or open; from the first
+  tick of a close the hands are vanilla's again (re-equip from the lowered height), so casts, Awakened Body moves and
+  other hand hooks right after the menu draw their own hands; only the lowering forearm is still drawn. Third person
+  uses the `AWAKEN_HOLO_WRIST` arm pose (enum extension, forearm across the chest). Others see the pose, a brighter
+  wrist glow and a small content-free hologram card beside the body (depth-tested), never the panel's content.
+- `awaken:holo_state`: kind NONE/STATUS/INVENTORY, unknown ids refused, ≤ 4 changes per 20 ticks per player (later
+  ones wait, the last always arrives), relayed only to trackers that know the channel; reset on respawn/dimension.
+- HUD motion: `awaken:*` layers except full-screen/crosshair ones (`power_fx_screen`, `fauna_reveal_pulse`, `veil`)
+  drift 0.34 px per degree of trailing offset, soft-limited to 2 GUI px (SUBTLE, default) or 4 (FULL), × Screen Effect
+  Scale, off without View Bobbing, snapped to framebuffer pixels. Vanilla layers never move.
+- `UiHooks.focus()` (0..1) eases with the open panel for Lens. Lens may also tell panels apart by depth: the glass writes
+  its real distance (≈0.6 m) into the main depth.
+- Client settings (`awaken-holo-client.toml`): `statusStyle`, `hudMotion`, `reducedMotion`.
+
 Plan v2 · the Ritual of the Bell (the awakening as a cinematic; design docs/proposals/the-ritual.md, details in
 docs/modules/onboarding.md "The Ritual of the Bell"):
 - The story's Bell Crypt is one floor: an antechamber (the start room, the entrance sigil) and, through its doors, the
@@ -687,8 +723,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   showed far terrain intact with Lens on, and DH's depth texture already cleared by post-effect time.
   Story moments override the place's look (`LensClient.override(lookId, fadeTicks)` / `clearOverride`) with named
   looks from the same files (`awaken:ritual`, `awaken:void`); texel 13 carries the tear from black (`LensClient.tear`,
-  0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 is the Holo UI focus's;
-  15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
+  0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 carries the Holo UI
+  focus (`UiHooks.focus()`, 0..1 while a holo panel is open): the world more than about 2–3 blocks away dims to ~60%
+  and cools, while the panel's glass (it writes depth) and its text stay bright; the first-person arm dims with the
+  world, since its depth lives in a separate target post chains can't read. Texel 15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
   the scene's length and fades back to the plain frame (the look rests at neutral while Lens is off) before stepping
   aside again (client config `lensInScenes`, default true; never with an Iris shaderpack). Callers carry on without the
   look when Lens can't draw (`LensClient.active()`).
