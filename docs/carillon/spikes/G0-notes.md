@@ -19,8 +19,14 @@ It reads as the plan's diorama: voxel trees, water by depth, sand terraces, clou
 - Wrist glance: render to a small texture on change, drawn by Holo as one textured quad. Agreed with the Holo session
   (2026-10-24): holo merge 2 adds `HoloCanvas.texture(Identifier tex, x, y, w, h, u0, v0, u1, v1, argb)` (one quad, UV +
   tint, no per-frame allocation; DynamicTexture or render target; a GuiCanvas twin where it fits) and multi-owner
-  focus `UiHooks.setFocus(owner, value)` / `clearFocus(owner)` (max wins; Lens reads focus() into texel 14). Exact
-  signatures arrive when merge 2 lands on build/awaken-v1.
+  focus `UiHooks.setFocus(owner, value)` / `clearFocus(owner)` (max wins; Lens reads focus() into texel 14).
+  Signatures (holo merge 2, pack/holo-ui-merge2 05e61bf, pending the main session's merge into build/awaken-v1):
+  `dev.awaken.signal.client.UiCanvas.texture(Identifier texture, int x, int y, int w, int h, float u0, float v0,
+  float u1, float v1, int argb)` (≤ 16 per frame, no allocation; HoloCanvas also has `textureF(...)` with float
+  coordinates; GuiCanvas blits the same UV); the texture is an Identifier'd DynamicTexture or a registered render
+  target, updated only when the diorama changes. `dev.awaken.core.api.UiHooks.setFocus(Object owner, float value)`,
+  `clearFocus(Object owner)`, `focus()` (client only; owners by identity, ≤ 8; max wins; 0 when none). The Atlas
+  screen calls setFocus(this, 0..1) while open and clearFocus(this) on close.
 - Tours: the vanilla tutorial toast covered spike shots; tools/autopilot.sh already writes tutorialStep:none on carillon/main (from build/awaken-v1 a205b77), only the spike branches predate it.
 
 ## S1 City: ADJUST (W1, W8, W3)
