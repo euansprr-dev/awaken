@@ -34,14 +34,20 @@ public final class Cells {
     private static final java.util.Set<Integer> RECYCLING = new java.util.HashSet<>();
 
     /** A cell for a new dream: a recycled one if any, else a fresh number. Server thread. */
-    public static int allocate() {
-        Integer free = FREE.poll();
-        return free != null ? free : NEXT.getAndIncrement();
+    public static int allocate(MinecraftServer server) {
+        for (Integer free; (free = FREE.poll()) != null; ) {
+            if (!GENERATED.containsKey(free)) return free;
+            release(server, free); // chunks still generating when it was let go landed since: erase those first
+        }
+        return NEXT.getAndIncrement();
     }
 
-    /** The dream in this cell is over: erase what it generated once it is out of memory, then reuse the cell. */
+    /**
+     * The dream in this cell is over, or its plan was never dreamed: erase what it generated once it is out of memory,
+     * then reuse the cell. Releasing a cell that is already free or being erased does nothing.
+     */
     public static void release(MinecraftServer server, int cell) {
-        if (cell < 0 || !RECYCLING.add(cell)) return;
+        if (cell < 0 || FREE.contains(cell) || !RECYCLING.add(cell)) return;
         java.util.Set<Long> chunks = GENERATED.remove(cell);
         net.minecraft.server.level.ServerLevel level = server.getLevel(LucidiumContent.LUCIDIUM);
         if (chunks == null || chunks.isEmpty() || level == null) {
@@ -51,7 +57,10 @@ public final class Cells {
         }
         long[] packed = chunks.stream().mapToLong(Long::longValue).toArray();
         dev.awaken.core.RegionRecycler.eraseWhenUnloaded(level, packed, () -> {
-            if (RECYCLING.remove(cell)) FREE.add(cell);
+            if (!RECYCLING.remove(cell)) return;
+            // chunks that were still generating when the dream ended were recorded meanwhile: erase them too
+            if (GENERATED.containsKey(cell)) release(server, cell);
+            else FREE.add(cell);
         });
     }
 
@@ -63,6 +72,16 @@ public final class Cells {
     /** Cells handed out so far (fresh numbers, not reuses): tests watch it stay small. */
     public static int issued() {
         return NEXT.get();
+    }
+
+    /** Whether this cell is erased and waiting for the next dream (tests). */
+    public static boolean isFree(int cell) {
+        return FREE.contains(cell);
+    }
+
+    /** How many cells wait for the next dream (tests). */
+    public static int freeCount() {
+        return FREE.size();
     }
 
     public static int originX(int cell) {

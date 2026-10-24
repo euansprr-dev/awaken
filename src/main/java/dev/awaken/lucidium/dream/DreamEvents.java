@@ -76,7 +76,7 @@ public final class DreamEvents {
         bus.addListener(DreamEvents::onServerAboutToStart);
         bus.addListener(DreamEvents::onEntityJoin);
         PlayDays.onMorning((server, day) -> {
-            Planner.morning();
+            Planner.morning(server);
             // the night is over: tonight's intentions are spent
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 if (!Dreams.isDreaming(p)) Dreams.dreamer(p).setIntention("", day);

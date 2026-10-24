@@ -112,9 +112,8 @@ public final class LucidiumNet {
         r.playToClient(DreamHud.TYPE, DreamHud.STREAM_CODEC);
         r.playToClient(OpenJournal.TYPE, OpenJournal.STREAM_CODEC);
         r.playToClient(CodexSync.TYPE, CodexSync.STREAM_CODEC);
-        // client-sent actions are rate-limited: a dedicated server never works faster than a person presses keys
         r.playToServer(RealityCheck.TYPE, RealityCheck.STREAM_CODEC, (p, ctx) -> {
-            if (ctx.player() instanceof ServerPlayer sp && dev.awaken.core.Throttle.allow(sp, "reality_check", 10)) Dreams.realityCheck(sp);
+            if (ctx.player() instanceof ServerPlayer sp) realityCheck(sp);
         });
         r.playToServer(Manifest.TYPE, Manifest.STREAM_CODEC, (p, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Dreams.manifest(sp, p.summon());
@@ -123,9 +122,24 @@ public final class LucidiumNet {
             if (ctx.player() instanceof ServerPlayer sp) dev.awaken.lucidium.dream.Sleep.chooseDreamless(sp);
         });
         r.playToServer(JournalAction.TYPE, JournalAction.STREAM_CODEC, (p, ctx) -> {
-            if (ctx.player() instanceof ServerPlayer sp && dev.awaken.core.Throttle.allowBurst(sp, "journal_action", 4, 20)) {
-                JournalActions.handle(sp, p.kind(), p.arg());
-            }
+            if (ctx.player() instanceof ServerPlayer sp) journalAction(sp, p);
         });
+    }
+
+    // client-sent actions are rate-limited per player (SPEC "Together"): a dedicated server never works faster than a
+    // person presses keys
+
+    /** A reality check from the client: at most one per 10 ticks. Returns whether it was handled. */
+    public static boolean realityCheck(ServerPlayer sp) {
+        if (!dev.awaken.core.Throttle.allow(sp, "reality_check", 10)) return false;
+        Dreams.realityCheck(sp);
+        return true;
+    }
+
+    /** A journal action from the client: at most 4 a second. Returns whether it was handled. */
+    public static boolean journalAction(ServerPlayer sp, JournalAction action) {
+        if (!dev.awaken.core.Throttle.allowBurst(sp, "journal_action", 4, 20)) return false;
+        JournalActions.handle(sp, action.kind(), action.arg());
+        return true;
     }
 }

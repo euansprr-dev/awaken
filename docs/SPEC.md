@@ -991,7 +991,11 @@ The Veil, the Lucidium and the rest:
   2 s; background dream builds at most 3 per player per 1000 ticks, whatever asks for them.
 - Lucidium cells are reused: when a dream ends its cell is erased (the chunks it generated, once out of memory) and
   handed to the next dream; anything but a player loaded from disk in the Lucidium stays only if it belongs to the
-  dream running in its cell.
+  dream running in its cell. A plan that is never dreamed gives its cell back the same way: thrown away at morning,
+  replaced when its player changes their intention (a build still compiling gives it back when it completes), or taken
+  by someone who then couldn't enter it. A sleeper about to dream a plan the planner lets go keeps it, and their night
+  gives it back if they never dream it. A cell is handed out again only once every chunk it generated is erased,
+  including chunks that were still generating when it was let go.
 - Statics cleared on server stop: Echo duty bookkeeping, breaks near Hearths, Bodies' owed deaths, Hearth offers and
   invitations, throttles, queued region erasures.
 

@@ -24,5 +24,6 @@ public final class LucidiumModule {
         LucidiumCommands.register();
         dev.awaken.lucidium.dream.DreamLessons.register(); // the first lucid dream taught in play (level road flag)
         LucidiumTests.register();
+        dev.awaken.lucidium.dream.TogetherDreamTests.register();
     }
 }
