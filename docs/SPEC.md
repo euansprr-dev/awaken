@@ -920,3 +920,27 @@ The world's story (one story, shared; friends who join late go at their own pace
 - Admin: `/awaken admin story ending` tells the ending once the world has one; `/awaken admin story ending reset` gives
   the world its story back (tests and tours).
 
+Gates in a party:
+- Sealing: when an arena or the Lord's room seals behind someone, party members of the same run on the same floor
+  within 48 blocks step through with them; a party member who reaches the bars of a sealed room their party is fighting
+  in is let through.
+- Size: n = players of the gate on that floor (1 to 4). Room groups get +35% monsters per extra player (rounded) and +1
+  elite per two extra players; the Lord +50% health per extra player (its hoard is already one per player). Scripted
+  gates (the story's) never scale.
+- "Solo" (the `gates_solo_no_echo` counter) means nobody else was inside the gate at any point of your run
+  (`RunState` schema 2 `company`), not that the gate's all-time party set has one name.
+- The Director rolls per owner: the 1 to 4 standing gates are counted per player (a gate with no owner on record counts
+  for whoever is near, as before); a gate rolled for someone never forms within 256 blocks of a Hearth they don't own
+  or share, and a gate whose break comes due within 256 blocks of a Hearth its owner doesn't share (one placed after
+  the gate formed) folds away instead of breaking. A veteran's A-rank gates and breaks never land on a newcomer's home.
+- Cells: a released gate cell is erased and reused while the server runs (`RegionRecycler`); the registry (schema 2)
+  keeps each cell's generation, entities stamp theirs (`awaken_cell_gen`), and one saved with an older generation of
+  its cell leaves when loaded. The stop-time cleanup still deletes whatever was left.
+
+Shared rewards (credit the party in range; separate rolls per player):
+- A gate kill: every party member of that run on the same floor within 32 blocks gets their own kill XP share (from
+  their own floor budget, so a party never earns more per player than alone) and their own elite loot roll into their
+  own Satchel. Credit falls back to whoever last hurt the creature (fire, a fall, an Echo finishing it).
+- Descent kills and overworld (home) kills: party members within 32 blocks get the same XP, each through their own
+  budget. A bindable kill leaves each party member within 32 blocks their own lingering Echo (their own bind roll).
+

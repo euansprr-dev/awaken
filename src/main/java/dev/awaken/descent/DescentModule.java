@@ -229,7 +229,16 @@ public final class DescentModule {
         }
         if (DescentSpawner.isOurs(dead) && event.getSource().getEntity() instanceof ServerPlayer killer) {
             double f = role.role() == MobRole.Role.ELITE ? 0.05 : 0.012;
-            Progression.grantXp(killer, Curve.xpToNext(Strata.contentLevel(depth)) * f, Progression.XpSource.DESCENT);
+            double xp = Curve.xpToNext(Strata.contentLevel(depth)) * f;
+            Progression.grantXp(killer, xp, Progression.XpSource.DESCENT);
+            // the party nearby shares the kill (SPEC "Together"): each their own share
+            for (java.util.UUID id : dev.awaken.core.api.PartyHooks.members(killer)) {
+                if (id.equals(killer.getUUID())) continue;
+                ServerPlayer mate = level.getServer().getPlayerList().getPlayer(id);
+                if (mate != null && mate.level() == level && mate.isAlive() && !mate.isSpectator() && mate.distanceToSqr(dead) <= 32 * 32) {
+                    Progression.grantXp(mate, xp, Progression.XpSource.DESCENT);
+                }
+            }
         }
     }
 

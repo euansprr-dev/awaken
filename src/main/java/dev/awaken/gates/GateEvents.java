@@ -124,7 +124,8 @@ final class GateEvents {
     private static void onMobDeath(LivingDeathEvent e) {
         LivingEntity dead = e.getEntity();
         if (dead instanceof ServerPlayer || !(dead.level() instanceof ServerLevel level) || e.isCanceled()) return;
-        ServerPlayer killer = e.getSource().getEntity() instanceof ServerPlayer sp ? sp : null;
+        ServerPlayer killer = e.getSource().getEntity() instanceof ServerPlayer sp ? sp
+                : dead.getKillCredit() instanceof ServerPlayer sp ? sp : null; // finished by fire, a fall or an Echo after your hit
         MobRole role = dead.getData(CoreApi.MOB_ROLE.get());
         RunEvents.onMobDeath(level, dead, killer, role);
         if (role.gateId().isEmpty()) return;
@@ -151,6 +152,20 @@ final class GateEvents {
             return;
         }
         if (!GateService.isGateLevel(e.getLevel())) return;
+        if (!(e.getEntity() instanceof net.minecraft.world.entity.player.Player) && e.getLevel() instanceof ServerLevel gl) {
+            // cells are reused while running: an entity saved with an older use of its cell leaves when loaded
+            int cell = dev.awaken.gates.world.Cells.cellAt(e.getEntity().getBlockX(), e.getEntity().getBlockZ());
+            if (cell >= 0) {
+                int gen = GateRegistry.get(gl.getServer()).cellGen(cell);
+                var data = e.getEntity().getPersistentData();
+                if (e.loadedFromDisk()) {
+                    if (data.getIntOr(CELL_GEN, 0) != gen) {
+                        e.setCanceled(true);
+                        return;
+                    }
+                } else if (gen > 0) data.putInt(CELL_GEN, gen);
+            }
+        }
         // an Inverted puppet saved with its chunk (server stop) is only a statue now: its player gets a fresh one
         if (e.loadedFromDisk() && e.getEntity().getPersistentData().getBooleanOr("awaken_gate_puppet", false)) {
             e.setCanceled(true);
@@ -158,6 +173,9 @@ final class GateEvents {
         }
         if (e.loadedFromDisk()) GateMobs.onLoad(e.getEntity());
     }
+
+    /** Persistent-data key: the generation of the cell an entity in the gate world belongs to. */
+    static final String CELL_GEN = "awaken_cell_gen";
 
     private static void onLeave(EntityLeaveLevelEvent e) {
         if (e.getLevel().isClientSide() || !GateService.isGateLevel(e.getLevel())) return;

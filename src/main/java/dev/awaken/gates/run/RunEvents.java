@@ -83,8 +83,24 @@ public final class RunEvents {
         }
         if (mainLord) Runs.lordDefeated(level, g, l.floor(0, g.plan.floors()), dead, killer);
         else if (annexLord) Runs.lordDefeated(level, g, l.floor(1, 2), dead, killer);
-        if (killer != null) Runs.onKill(killer, g, dead, role);
+        if (killer != null) {
+            Runs.onKill(killer, g, dead, role);
+            // the party on that floor nearby shares the kill: their own kill XP share and their own elite loot roll
+            RunState kr = Runs.run(killer);
+            for (java.util.UUID u : dev.awaken.core.api.PartyHooks.members(killer)) {
+                if (u.equals(killer.getUUID())) continue;
+                ServerPlayer mate = level.getServer().getPlayerList().getPlayer(u);
+                if (mate == null || mate.level() != level || !mate.isAlive() || mate.isSpectator()) continue;
+                RunState mr = Runs.run(mate);
+                if (mr.gateId != g.id || mr.area != kr.area || mr.floor != kr.floor) continue;
+                if (mate.distanceToSqr(dead) > SHARE_RANGE * SHARE_RANGE) continue;
+                Runs.onKill(mate, g, dead, role);
+            }
+        }
     }
+
+    /** Party members within this many blocks of a gate kill share it. */
+    public static final double SHARE_RANGE = 32;
 
     public static void mobGone(ServerLevel level, GateMobs.Key key) {
         Rooms.mobGone(level, key);
