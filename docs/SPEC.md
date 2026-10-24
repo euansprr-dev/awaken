@@ -965,7 +965,16 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   (approved proposal; the gate opens in the square via `GateHooks.openScripted`) → the Void → the infirmary → the
   Registry (licence E-rank, the Holo wristband, the Atlas opens with the run revealed, first Directive) → free play.
 - No death in the opening (falls leave ≥ 1 heart). Relog at any beat resumes it. `/awaken opening skip`.
-- Camera: a client-only camera entity through `Minecraft.setCameraEntity` (post effects still come from the player).
+- Camera (G0, from spike S2): one client-only `OpeningCamera` on the marker entity type, never added to the level,
+  carrying the player's eye height, set through `Minecraft.setCameraEntity` and placed every frame from
+  `ViewportEvent.ComputeCameraAngles` at LOWEST priority (no mixin). Hands and the player's own name tag are hidden and
+  the mouse is held (`CalculatePlayerTurnEvent`). One `finish(reason)` path restores the player as camera on
+  completion, skip, camera taken, logout, clone or any exception. The server owns the timeline and sends one message
+  with the start age (a relog resumes mid-flight); the player is never dragged along. The camera stays within ~215
+  blocks of the player, below y 320 and at most ~200 above the ground; the shot flies over the north-west half looking
+  south-east across the spire, and Distant Horizons (or fog, Lens haze and clouds) carries the far half. The first
+  flight is pre-warmed behind the opening card. Life seen from the sky is blocks and particles (lit windows, smoke,
+  lamps, boats): citizens draw only within 128 blocks.
 
 ### 16.5 Citizens (W4)
 - Ledger: 240 records (G0), sliced 12 per tick; ≤ 0.5 ms/tick. Bodies within ~56 blocks: ≤ 40 per player, ≤ 96 per

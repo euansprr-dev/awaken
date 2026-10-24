@@ -80,3 +80,30 @@ gather at stalls; the time-lapse empties the streets at night.
   pop-in at 56–64 blocks down straight streets (fade in, or spawn just out of sight).
 - Budget note for G1: citizens ≈ 1.2 ms + city blocks with solid cores ≈ 3.5 ms (S1, noisy) + platform 5.3 + life 0.4
   + Holo 0.3 ≈ 10.7 ms against the market's 10 ms: re-measure quiet in W1/W4 before deciding where to give.
+
+## S2 Camera: GO within limits (W3)
+Checked: 13 commits on carillon/spike-camera (…7582f98), tree clean; shots reviewed: hand-off before/after (identical
+view, HUD returns: seamless), 200-up without DH (the loaded circle shows as a disc with a fog rim), 250-up with DH
+(complete to the horizon), Lens debug masks mid-flight (Lens runs).
+- No mixin needed. A client-only camera on the marker entity type, never added to the level, carrying the player's eye
+  height (Camera.tick eases eye height toward the camera entity's), placed every frame from ComputeCameraAngles at
+  LOWEST priority (alignWithEntity fires the event before reading xo/getX). Post effects still follow the player.
+- Must handle: hands still draw (hide them); the mouse still turns the player (cancel via CalculatePlayerTurnEvent);
+  the local player stops sending movement packets while another entity is the camera; your own name tag shows.
+- Limits: at y ≥ 320 the ground isn't drawn (section occlusion collapses; vanilla and Sodium); over unloaded chunks
+  nothing draws; chunks exist only around the player, but the render grid and fog follow the camera; vanilla fog is
+  cylindrical (230–256 blocks at RD 16); player-sized entities draw only within 128 blocks and block entities within
+  64, so citizens and bells vanish from the sky.
+- Frames: Sodium warm flight p50 10.0 / p99 15.6 ms (meets ≥ 60 fps p99); cold first flight 17.7 / 29.5 (fails);
+  DH flight 18–20 / 30–36 at load 15–21 (re-measure quiet). The player-teleport fallback is worse (holes, hitches up
+  to 333 ms, server tick p95 101 ms): not used.
+- Rules for W3 (now in SPEC §16.4): one OpeningCamera; one finish(reason) path for completion, skip, camera taken,
+  logout, clone and any exception; the server owns the timeline and sends one message carrying the start age so a
+  relog resumes mid-flight; the camera stays within ~215 blocks of the player, below y 320, at most ~200 above the
+  ground; Carillon's shot flies over the north-west half looking south-east across the spire, with the far half left
+  to Distant Horizons (or the fog ring, Lens haze and clouds without DH); the first flight is pre-warmed behind the
+  opening card. W3 tests the variant where the player waits at Choir Square during the card and takes one teleport to
+  the Roost inside the cloud layer. City life from the sky comes from blocks and particles (lit windows, smoke,
+  lamps, boats), not citizens.
+- Look gaps: the path is one hand-tuned spline over wild terrain, not a designed shot; no Carillon dawn look, no bell,
+  a plain letterbox bar.
