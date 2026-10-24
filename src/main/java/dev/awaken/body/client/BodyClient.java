@@ -52,6 +52,8 @@ public final class BodyClient {
         bus.addListener(InputEvent.InteractionKeyMappingTriggered.class, e -> {
             if (e.isAttack()) ClientMoves.onAttackKey();
         });
+        // a respawn or a new dimension is a new player: whatever was running is over
+        bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> ClientMoves.forgetMoves());
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ClientMoves.reset();
             BodyAnims.reset();

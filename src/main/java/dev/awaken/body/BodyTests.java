@@ -72,7 +72,7 @@ final class BodyTests {
         AwakenTests.register("body_soft_landing_never_stacks", 100, BodyTests::softLandingNeverStacks);
         AwakenTests.register("body_nothing_before_awakening", 60, BodyTests::nothingBeforeAwakening);
         AwakenTests.register("body_unlocks_announced_once", 60, BodyTests::announcedOnce);
-        AwakenTests.register("body_tactical_sprint", 200, BodyTests::tacticalSprint);
+        AwakenTests.register("body_tactical_sprint", 240, BodyTests::tacticalSprint);
         AwakenTests.registerIsolated("body_momentum_hit_bands", 100, BodyTests::momentumBands);
         AwakenTests.registerIsolated("body_slide_trips_small_foes", 100, BodyTests::slideTrips);
     }
@@ -388,6 +388,8 @@ final class BodyTests {
         var src = level.getServer().createCommandSourceStack().withEntity(power).withLevel(level).withSuppressedOutput();
         level.getServer().getCommands().performPrefixedCommand(src, "awaken admin power cast hover");
         level.getServer().getCommands().performPrefixedCommand(src, "awaken admin power cast hover");
+        // a mock player isn't ticked: one player tick lets the toggled-off Hover end (its no-fall window starts there)
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.tick.PlayerTickEvent.Post(power));
         long rolls = Progression.profile(power).counter("awaken:body_roll");
         h.assertTrue(fall(power, 12) == 0, "a power's landing takes nothing");
         h.assertTrue(Progression.profile(power).counter("awaken:body_roll") == rolls, "and is no roll");
@@ -515,7 +517,8 @@ final class BodyTests {
         h.assertFalse(BodyServer.startTactical(r), "not while riding");
         r.stopRiding();
         boat.discard();
-        h.startSequence().thenIdle(BodyRules.TAC_RECHARGE + 1).thenExecute(() -> {
+        // the sprint above was ended at its own 3 s mark (driven ahead of the clock), so the recharge runs from there
+        h.startSequence().thenIdle(BodyRules.TAC_TICKS + BodyRules.TAC_RECHARGE + 2).thenExecute(() -> {
             h.assertTrue(BodyServer.startTactical(p), "ready again after the recharge");
             BodyServer.endTactical(p, BodyServer.motion(p), BodyServer.now(p), false);
             done(h, p, q, c, r);

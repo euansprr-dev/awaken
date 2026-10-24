@@ -225,8 +225,10 @@ public final class ClientMoves {
             endSlide(p, true);
             return;
         }
-        if (slideAge > 1 && p.horizontalCollision && !p.minorHorizontalCollision) { // a wall stops it
+        if (slideAge > 1 && p.horizontalCollision && !p.minorHorizontalCollision) { // a wall stops it, with a thud
             endSlide(p, true);
+            BodyFx.sound(p, BodyContent.IMPACT.get(), 0.35F, 1.45F);
+            BodyFx.kick(p, -slideX, -slideZ);
             return;
         }
         slideAir = p.onGround() ? 0 : slideAir + 1;
@@ -403,6 +405,14 @@ public final class ClientMoves {
         endTac(p, true);
         endSlide(p, true);
         mantling = false;
+    }
+
+    /** The player entity was replaced (respawn, dimension change): moves stop, cooldowns and the clock stay. */
+    static void forgetMoves() {
+        tac = sliding = mantling = false;
+        jumpSuppressed = false;
+        if (tacEnd < tacStart) tacEnd = ticks;
+        if (slideEnd < slideStart) slideEnd = ticks;
     }
 
     /** Forget everything (logout, a new world). */
