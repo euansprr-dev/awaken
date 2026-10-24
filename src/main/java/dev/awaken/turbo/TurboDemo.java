@@ -93,7 +93,7 @@ final class TurboDemo {
     }
 
     static String status() {
-        return (wanted ? "on" : "off") + "; " + last;
+        return (wanted ? "on" : "off") + "; " + (frames > 0 ? "now " + summary() + "; before: " : "") + last;
     }
 
     /** Compiles the shader and makes the buffers ahead of the first drawn frame (the command's frame pays for it). */
@@ -178,10 +178,14 @@ final class TurboDemo {
     }
 
     private static void logStats() {
-        last = String.format(Locale.ROOT, "%d frames: CPU %.1f µs, GPU compute %s, GPU draw %s per frame", frames, cpuNs / 1000.0 / frames,
-                timed == 0 ? "n/a" : String.format(Locale.ROOT, "%.1f µs", computeNs / 1000.0 / timed),
-                timed == 0 ? "n/a" : String.format(Locale.ROOT, "%.1f µs", drawNs / 1000.0 / timed));
+        last = summary();
         TurboVersions.LOG.info("[turbo] demo {}", last);
         cpuNs = computeNs = drawNs = frames = timed = 0;
+    }
+
+    private static String summary() {
+        return String.format(Locale.ROOT, "%d frames: CPU %.1f µs, GPU compute %s, GPU draw %s per frame", frames, cpuNs / 1000.0 / Math.max(frames, 1),
+                timed == 0 ? "n/a" : String.format(Locale.ROOT, "%.1f µs", computeNs / 1000.0 / timed),
+                timed == 0 ? "n/a" : String.format(Locale.ROOT, "%.1f µs", drawNs / 1000.0 / timed));
     }
 }

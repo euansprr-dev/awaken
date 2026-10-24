@@ -83,7 +83,10 @@ public final class PipelineCacheStore {
             if (initial != null) info.pInitialData(initial);
             LongBuffer out = stack.callocLong(1);
             int result = VK12.vkCreatePipelineCache(vkDevice, info, null, out);
-            if (initial != null) MemoryUtil.memFree(initial);
+            if (initial != null) {
+                MemoryUtil.memFree(initial);
+                savedSize = loadedBytes; // the file already holds this much: save again only once it grows
+            }
             if (result != VK12.VK_SUCCESS) {
                 problem = "vkCreatePipelineCache returned " + result;
                 TurboVersions.LOG.warn("[turbo] pipeline cache off: {}", problem);
