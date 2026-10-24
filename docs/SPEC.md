@@ -622,15 +622,17 @@ docs/modules/onboarding.md "The Ritual of the Bell"):
   client) and runes (0..100) set by the director: key 11 while waiting, 2 when every flame dies, back to 15 as the
   candle line reaches the dais (2 + 13·(t-80)/90 ticks into DOORS), 15 through the Judgement, down to 7 as the End
   drains it, 0 after (block light only). Runes (the emissive layer `the_seated_one_runes.png`: halo, crown, collar,
-  pendant, chest sigil, veins of light) 30 waiting, 45 in the black, then 55 / 65 / 80 for BOW / RING / BE JUDGED, 80→100
+  pendant, chest sigil, veins of light) 30 waiting, 60 in the black, then 62 / 70 / 82 for BOW / RING / BE JUDGED, 82→100
   as the eyes open, 100 through the Judgement (breathing), drained to 15 by the hand's close. The renderer lights the
   colossus with the key light, never darker than the dais candles. Client effects, all without Lens: a great warm glow
   on the wall behind the throne (the god stands dark against it), two dusty shafts from the vault onto its lap (once the
   hall is lit), a flame on every candle of the candle line, eyes a block across (4x3 model px at x4) with a face halo
-  and a long glint, and the camera framing the face as they open (FOV x0.4 at the peak, pull 0.95). The hall's hidden
+  and a long glint, and the camera framing the face as they open (FOV x0.4 at the peak, pull 0.95; while the candle
+  line reaches it the view is drawn up to the whole colossus, pull 0.55). The bell over the altar hangs from 17 (was
+  13) so its bronze never hides the face from the doors. The black and the tear show no hand. The hall's hidden
   fill lamps light with the candle line (3 ticks after the candles beside them), so the line lights the nave.
-- The scene is the whole screen: from the doors closing until 3 s after the tear, toasts wait (re-shown after, one
-  every half second, at most 12) and AWAKEN's HUD layers step aside in the hall (vanilla's hearts stay for the
+- The scene is the whole screen: from the doors closing until 4 s after the tear, toasts wait (re-shown after, one
+  every half second, at most 12, one recipe toast) and AWAKEN's HUD layers step aside in the hall (vanilla's hearts stay for the
   Judgement); while the camera is held everything does. In the black only the System's words (the revelation's body
   without its question, drawn large and typed by the scene) and the question's card (a TRUTH card: the question and
   its keys, no caption) show; the tear frame is the tear and the world only. The gate card says nothing for a spent

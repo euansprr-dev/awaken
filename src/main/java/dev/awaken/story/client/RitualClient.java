@@ -5,6 +5,7 @@ import dev.awaken.story.RitualSounds;
 import dev.awaken.story.net.StoryPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
+import net.minecraft.client.gui.components.toasts.RecipeToast;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -18,6 +19,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ToastAddEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -86,13 +88,14 @@ public final class RitualClient {
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, RitualFx::submit);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         NeoForge.EVENT_BUS.addListener(ToastAddEvent.class, RitualClient::onToast);
+        NeoForge.EVENT_BUS.addListener(RenderHandEvent.class, RitualClient::onHand);
     }
 
     // ---- quiet: nothing else on screen while the scene plays --------------------------------------------------------
 
     /** When the tear began (client ticks), or -1. The frame is the tear's alone until a moment after it opens. */
     static long tearAt = -1;
-    static final int TEAR_QUIET = 60;
+    static final int TEAR_QUIET = 80;
     private static final int MAX_WAITING_TOASTS = 12;
     private static final java.util.ArrayDeque<Toast> waitingToasts = new java.util.ArrayDeque<>();
     private static long nextToast;
@@ -112,7 +115,14 @@ public final class RitualClient {
     private static void onToast(ToastAddEvent e) {
         if (!quiet()) return;
         e.setCanceled(true);
+        // vanilla folds every recipe unlocked at once into one toast: one waiting is enough
+        if (e.getToast() instanceof RecipeToast) for (Toast t : waitingToasts) if (t instanceof RecipeToast) return;
         if (waitingToasts.size() < MAX_WAITING_TOASTS) waitingToasts.addLast(e.getToast());
+    }
+
+    /** The black and the tear show no hand: the frame is the dark (and then the world) alone. */
+    private static void onHand(RenderHandEvent e) {
+        if (beat == StoryPayloads.RitualScene.VOID || tearing()) e.setCanceled(true);
     }
 
     /** After the scene: what waited is shown, one every half second. */

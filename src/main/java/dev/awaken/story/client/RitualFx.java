@@ -292,7 +292,7 @@ final class RitualFx {
                 Vec3 p = towardCamera(eye(pt, side), 0.6);
                 flare(vc, p, 1.1F, argb(1F, 1F, 0.97F, Math.min(1, light)));
                 flare(vc, p, 3.6F * l, argb(1F, 0.9F, 0.55F, 0.62F * a));
-                flare(vc, p, 11F * l, argb(1F, 0.72F, 0.32F, 0.2F * a));
+                flare(vc, p, 11F * Math.min(2F, l), argb(1F, 0.72F, 0.32F, 0.16F * a));
             }
             Vec3 c = towardCamera(eyes(pt), 0.8);
             flare(vc, towardCamera(eyes(pt), 1.6), 7F, argb(1F, 0.82F, 0.5F, 0.16F * Math.min(1, light)));
@@ -341,7 +341,7 @@ final class RitualFx {
     private static float backlightLevel(float age) {
         return switch (RitualClient.beat) {
             case RitualClient.WAITING -> 0.55F;
-            case RitualClient.DOORS -> age < 34 ? 0.55F : age < 80 ? 0.22F : 0.22F + 0.6F * Mth.clamp((age - 80) / 90F, 0, 1);
+            case RitualClient.DOORS -> age < 34 ? 0.55F : age < 80 ? 0.45F : 0.45F + 0.37F * Mth.clamp((age - 80) / 90F, 0, 1);
             case RitualClient.BOW, RitualClient.RING -> 0.82F;
             case RitualClient.JUDGED -> 0.95F;
             case RitualClient.WAKING -> age < 50 ? 0.95F : age < 70 ? 0.95F + 0.9F * (age - 50) / 20F : Math.max(1.15F, 1.85F - (age - 70) / 40F);
@@ -587,7 +587,7 @@ final class RitualFx {
     private static void flare(VertexConsumer vc, double px, double py, double pz, float r, int argb) {
         if (r <= 0.001F || (argb >>> 24) == 0) return;
         int rim = alpha0(argb);
-        int n = r < 0.4F ? 6 : 12; // motes are small: six sides read as round
+        int n = r < 1.0F ? 6 : r < 4F ? 10 : 14; // small ones read round with six sides
         for (int i = 0; i < n; i++) {
             float a0 = i * Mth.TWO_PI / n, a1 = (i + 1) * Mth.TWO_PI / n;
             float c0 = Mth.cos(a0) * r, s0 = Mth.sin(a0) * r, c1 = Mth.cos(a1) * r, s1 = Mth.sin(a1) * r;

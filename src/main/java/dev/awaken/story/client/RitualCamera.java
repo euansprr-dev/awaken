@@ -79,9 +79,9 @@ final class RitualCamera {
         int beat = RitualClient.beat;
         float age = RitualClient.beatAge(0);
         if (beat == RitualClient.DOORS) {
-            // drawn toward the throne while the candles light toward it, closing in a little as the line reaches the god
-            target = RitualFx.eyes(0).add(0, -5, 0);
-            pullWant = age < 40 ? 0 : age < 90 ? 0.3F * (age - 40) / 50F : age < 165 ? 0.3F : 0.3F * Math.max(0, 1 - (age - 165) / 25F);
+            // drawn up toward the god while the candles light toward it: the whole colossus is in frame as the line reaches it
+            target = RitualFx.eyes(0).add(0, -4, 0);
+            pullWant = age < 40 ? 0 : age < 100 ? 0.55F * (age - 40) / 60F : age < 165 ? 0.55F : 0.55F * Math.max(0, 1 - (age - 165) / 25F);
             zoomWant = age > 90 && age < 175 ? -0.18F * Math.min(1, (age - 90) / 60F) : 0;
         } else if (beat == RitualClient.WAKING) {
             // the face, framed: a slow push-in until the eyes fill the frame as they open, held, then let go
@@ -94,7 +94,7 @@ final class RitualCamera {
             zoomWant = -0.16F * Math.min(1, age / 220F);
         } else if (beat == RitualClient.JUDGED) {
             target = RitualClient.words;
-            pullWant = 0.12F * Math.min(1, age / 15F);
+            pullWant = 0.45F * Math.min(1, age / 15F);
         }
         pullO = pull;
         pull += (pullWant - pull) * 0.12F;

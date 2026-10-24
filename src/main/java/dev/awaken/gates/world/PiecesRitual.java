@@ -40,8 +40,12 @@ public final class PiecesRitual {
     /** The words appear here: over the dais, in front of the throne, under the bell's line. */
     public static final double WORDS_W = 31.0;
     public static final int WORDS_H = 9;
-    /** The bell over the altar: its lip's height and radius, and how tall it is. */
-    public static final int BELL_LIP = 13, BELL_TALL = 7;
+    /**
+     * The bell over the altar: its lip's height and radius, and how tall it is. Hung high enough that from the doors
+     * the Seated One's face and halo show under it (the line from a standing player at the doors to the eyes passes
+     * the altar at about 13).
+     */
+    public static final int BELL_LIP = 17, BELL_TALL = 7;
     public static final double BELL_R = 3.6;
 
     /** A light the director can put out and light again: floor-local x/z, rows above the floor, its lit state, order 0..1. */

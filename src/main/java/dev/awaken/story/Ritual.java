@@ -495,11 +495,11 @@ final class Ritual {
     static int runes(Beat beat, long age) {
         return switch (beat) {
             case WAITING -> 30;
-            case DOORS -> age < 34 ? 30 : 45; // in the black, the runes are what's left of it
-            case BOW -> 55;
-            case RING -> 65;
-            case JUDGED -> 80;
-            case WAKING -> age < 20 ? 80 : (int) Math.min(100, 80 + 20 * (age - 20) / 44);
+            case DOORS -> age < 34 ? 30 : 60; // in the black, the runes are what's left of it
+            case BOW -> 62;
+            case RING -> 70;
+            case JUDGED -> 82;
+            case WAKING -> age < 20 ? 82 : (int) Math.min(100, 82 + 18 * (age - 20) / 44);
             case JUDGEMENT -> 100;
             case END -> age < DRAIN_FROM ? 100 : (int) Math.max(15, 100 - 85 * (age - DRAIN_FROM) / (CLOSE - DRAIN_FROM));
             case DONE -> 5;
