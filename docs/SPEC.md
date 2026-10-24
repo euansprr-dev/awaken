@@ -707,7 +707,8 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   (`tools/perf-report.py`). Every perf line carries the machine's load; runs that disagree by more than 5% on p50 are
   re-run.
 - Looks: Swift (default; the SPEC budget above), Cinematic (p50 ≥ 60 fps, p99 ≤ 25 ms at 4K, to confirm after the
-  baseline), Ultra (Iris, experimental: OpenGL only and unsupported on Apple Silicon by Iris).
+  baseline), Ultra (Iris, experimental: OpenGL only and unsupported on Apple Silicon by Iris). Chosen with the Look
+  switch (below).
 - Terrain mods (Tectonic) only in new worlds; existing worlds keep vanilla terrain. Maps: a world map, no minimap.
 - Profile config files: `pack/mods.json` "configs" maps a profile to files the installer copies into the game folder
   (e.g. world → pack/tectonic/awakened.json as config/tectonic.json) only when missing, so a player's tuning (or a
@@ -760,6 +761,40 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   halo. Where DH has no texture to share (its OpenGL engine; bit 2 clear) Lens adds no distance haze while DH draws.
   Debug views (`lensdebug`): 3 raw far depth (blue while Lens reads it), 4 the haze each pixel gets (a ring would show
   as a step in brightness). Proof: tools/autopilot/lens-dh.txt. Params texels: 13 the ritual, 14 Holo.
+- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers, and one choice
+  sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
+  for the rest. Opened with U (`key.awaken.look`, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
+  Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
+  default stays SWIFT (client config `lens`). The current tier is read back from the settings (Lens, Iris's shaders
+  switch), not stored twice.
+
+  | Owned key | SWIFT | CINEMATIC | ULTRA |
+  |---|---|---|---|
+  | Lens `lens` (awaken-client.toml) | SWIFT | CINEMATIC | CINEMATIC (steps aside while the shaderpack draws) |
+  | DH `lodChunkRenderDistanceRadius` | 128 | 192 | 192 |
+  | DH `maxHorizontalResolution` | TWO_BLOCKS | BLOCK | BLOCK |
+  | DH `verticalQuality`, `horizontalQuality` | LOW, LOW | MEDIUM, MEDIUM | MEDIUM, MEDIUM |
+  | DH `enableSsao`, `enableTexturedLods` | false | true | true |
+  | DH `enableAntiAliasing` (file only) | false | true | true |
+  | Iris shaders switch | off | off | on |
+  | Sodium, vanilla options | none | none | none |
+
+  DH values are pack/dh/swift.json and cinematic.json (a GameTest compares them); keys the tiers agree on (threads,
+  cloud layers) aren't owned. DH: the six keys its 3.3.4 config API offers are set at once
+  (`IDhApiConfigValue.setValue(value, "AWAKEN Look")`, an API value DH never saves; while it's set, DH's own menu shows
+  those six as "API LOCK", for the rest of that session), and all seven are written into config/DistantHorizons.toml
+  (matched by table and key, every other byte kept; written again on `GameShuttingDownEvent`, since DH can save its
+  in-memory settings over the file meanwhile), so after a restart they're plain DH settings and no API value is set.
+  Anti-aliasing applies when DH next reads its file (its menu or a restart). Sodium: no supported route (its config API
+  only adds option pages; its options file is in use while the game runs), so it keeps its own settings and the
+  screen says so. Iris: `IrisApiConfig.setShadersEnabledAndApply`; the shaderpack stays the player's. Ultra is offered
+  only with an Iris newer than 1.11.7 on the OpenGL renderer; otherwise its card is disabled with the reason (today:
+  Iris 1.11.7 requires Sodium 0.9.2, which crashes on NeoForge 26.3.0.95). The frame-time line: the last 60 s of
+  frame-to-frame times (`RenderFrameEvent.Post` into a 32768-int ring, no allocation), p50 and p99 from a 0.1 ms
+  histogram twice a second while the screen is open, green while they fit the tier's budget (Swift p50 ≤ 9.1 ms and
+  p99 ≤ 16 ms; Cinematic ≤ 16.7 and ≤ 25 ms; Ultra promises none), and "HORIZON n CHUNKS" with DH ("off in this
+  place" in instanced dimensions). Tests: `compat_look_tiers`, `compat_look_dh_file`, `compat_look_ultra_gate`,
+  `compat_look_frame_stats`; tour tools/autopilot/look.txt.
 
 ---------------------------------------------------------------------------------------------------------------------
 

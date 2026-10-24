@@ -40,7 +40,8 @@ import java.util.Map;
  * look &lt;yaw&gt; &lt;pitch&gt;
  * turn &lt;degrees per tick&gt; &lt;ticks&gt;             a steady turn that keeps going while later lines run (a sharp turn)
  * key &lt;awaken key name&gt;                        press one of the mod's keys (status, accept, dismiss, ...)
- * screen status|map|codex|holo|uiprobe|close|experimental  holo: the holo K menu (status/map/codex stay flat);
+ * screen status|map|codex|holo|uiprobe|look|close|experimental  holo: the holo K menu (status/map/codex stay flat);
+ *                                                look: the Look switch (AWAKEN · LOOK);
  *                                                uiprobe: every Ui/Glass primitive on black, for pixel checks;
  *                                                experimental: vanilla's experimental-settings prompt (it should answer itself)
  * click &lt;x&gt; &lt;y&gt;                                 a left click on the open screen at GUI coordinates
@@ -54,6 +55,8 @@ import java.util.Map;
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
  * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
+ * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
+ *                                                else straight through the switch)
  * lensdebug 0..4                                 Lens debug views: normal, pass-through, depth masks, far depth, haze
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
  * leave                                          save and quit to the title (a following "world" line rejoins)
@@ -292,6 +295,7 @@ public final class Autopilot {
                 else if (arg.trim().equals("map")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.GATE_MAP));
                 else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
                 else if (arg.trim().equals("uiprobe")) mc.gui.setScreen(new UiProbeScreen());
+                else if (arg.trim().equals("look")) mc.gui.setScreen(new dev.awaken.compat.client.LookScreen(null));
                 else if (arg.trim().startsWith("holo")) {
                     String t = arg.trim().length() > 4 ? arg.trim().substring(4).trim() : "status";
                     var tab = switch (t) {
@@ -373,6 +377,13 @@ public final class Autopilot {
             }
             case "lens" -> {
                 dev.awaken.core.AwakenConfig.Client.LENS.set(dev.awaken.core.AwakenConfig.Client.LensLook.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
+                waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
+            }
+            case "lookswitch" -> {
+                var tier = dev.awaken.compat.Look.Tier.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT));
+                boolean took = mc.gui.screen() instanceof dev.awaken.compat.client.LookScreen look ? look.pick(tier)
+                        : dev.awaken.compat.client.LookSwitch.apply(tier);
+                Awaken.LOG.info("[autopilot] look {}: {}", tier, took ? "applied" : "not available here");
                 waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
             }
             case "lensdebug" -> {

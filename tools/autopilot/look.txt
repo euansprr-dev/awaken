@@ -1,0 +1,53 @@
+# The Look switch (AWAKEN · LOOK): open the screen, switch tiers, the same sunset vista under each.
+# Run with the pack so the Distant Horizons lines show: PACK=perf,horizon DH=swift tools/autopilot.sh tools/autopilot/look.txt
+# Shots: the screen on Swift, on Cinematic, Ultra refused with its reason; the scene on Cinematic, Swift and Lens off;
+# the screen again after two perf scenes (its frame-time line has a minute of data).
+world look creative 20261024
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 11500
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken gate hop
+wait 100
+cmd gamemode spectator
+cmd tp @s ~ ~50 ~
+look 90 3
+lookswitch swift
+# Distant Horizons builds the horizon
+wait 2400
+screen look
+wait 40
+shot look_1_screen_swift
+lookswitch cinematic
+wait 20
+shot look_2_screen_cinematic
+lookswitch ultra
+wait 20
+shot look_3_screen_ultra_refused
+screen close
+# the wider Cinematic horizon fills in
+wait 900
+shot look_4_scene_cinematic
+lookswitch swift
+wait 80
+shot look_5_scene_swift
+lens off
+wait 60
+shot look_6_scene_lens_off
+lookswitch cinematic
+perf look_cinematic 15
+lookswitch swift
+perf look_swift 15
+screen look
+wait 30
+shot look_7_screen_after_perf
+screen close
+quit
