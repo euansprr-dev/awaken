@@ -5,7 +5,7 @@ name: GameTests
 
 on:
   push:
-    branches: ['build/**', 'pack/**', 'lands/**', 'carillon/main']
+    branches: ['build/**', 'pack/**', 'lands/**', 'carillon/main', 'carillon/m*']
   workflow_dispatch:
 
 concurrency:

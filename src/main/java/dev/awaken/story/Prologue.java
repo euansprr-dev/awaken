@@ -116,6 +116,9 @@ final class Prologue {
         Vec3 look = p.getLookAngle().multiply(1, 0, 1).normalize();
         if (look.lengthSqr() < 0.01) look = new Vec3(1, 0, 0);
         BlockPos near = BlockPos.containing(p.position().add(look.scale(55)));
+        // in Carillon the gate tears open in Choir Square (SPEC §16.4), not 55 blocks into the streets
+        BlockPos square = dev.awaken.core.api.CityHooks.square(p.level());
+        if (square != null) near = square;
         // one floor: the Ritual of the Bell's hall (docs/proposals/the-ritual.md); old worlds keep their three-floor crypt
         var id = GateHooks.openScripted(p, "awaken:bell_crypt", 0, near, 1);
         if (id.isEmpty()) {

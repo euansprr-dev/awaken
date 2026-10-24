@@ -3,6 +3,8 @@
 The awakening felt in the body, and fights that move. Approved by Euan on 2026-10-24 (proposal:
 `docs/proposals/awakened-body.md`, widened the same day toward Call of Duty's movement). Numbers: SPEC §13 "Awakened Body".
 Grounded moves only: anything airborne or long-range stays a power. A player who never awakened moves exactly like vanilla.
+(Superseded by SPEC §16.0.1, approved 2026-10-24: the Runner's Kit works from the first second, airborne base moves are
+allowed, ranks improve moves, and powers are the impossible versions. Applies when the Carillon Runner workstream lands.)
 
 | Unlocks | Move | Input | What happens |
 |---|---|---|---|

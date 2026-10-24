@@ -30,6 +30,14 @@ public record SpawnRingPlacement(int minDistance, int maxDistance, int salt) imp
     }
 
     public ChunkPos target(ChunkGeneratorStructureState state) {
+        // Carillon's worlds: the ring is centred on the city and starts outside its reserve (SPEC §16.2), so the
+        // vault stands in the eased ground round the wall instead of under a street
+        dev.awaken.terrain.api.CitySite city = dev.awaken.terrain.api.CityBasin.current();
+        if (city != null) {
+            int min = city.coreRadius() + dev.awaken.terrain.api.CityBasin.MARGIN + 24;
+            return new SpawnRingPlacement(min, min + Math.max(0, maxDistance - minDistance), salt)
+                    .target(state.getLevelSeed(), new ChunkPos(city.x() >> 4, city.z() >> 4));
+        }
         return target(state.getLevelSeed(), state.getDimensionOrigin());
     }
 
