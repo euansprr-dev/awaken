@@ -187,6 +187,17 @@ The tour (third person, camera behind the caster, target straight ahead) showed 
   from inside (the caster) the shell reads as a wall of light round the horizon, with two more rings of latitude and a
   flash across the ground.
 
+### Move twists (the Awakened Body, `powers/MoveTwists`)
+
+A power cast mid-slide (body state through `core/api/MovementHooks`) adds its family's twist, with ordinary FX events:
+- **Kinetic: slide-punch.** The slide's speed leaves as a wave along it: `CONE` (4.5 blocks, 40°) and a small `SLAM` ring,
+  the Shockwave sound pitched up; foes in the cone are hit for dmg(3) and thrown, bystanders pushed.
+- **Velocity: dash out of a slide.** The client stretches the Dash's predicted motion ×1.3 along the slide; the server adds a
+  longer `DASH` streak (scale 1.35) with a `TRAIL` on the feet and keeps the landing safe 40 ticks.
+- **Shadow: smoke trail.** `SMOKE` puffs (scale 1.1-1.3) every other tick for the rest of the slide, lingering 3 s; pursuers in
+  them lose you. No damage.
+Tour: `tools/autopilot/body.txt` (the twist scenes at the end). Tests: `powers_twist_*` (line-ups, the dash-out, the refund).
+
 ## 4. How it works
 
 - **Server** (`powers/Fx.java`): `Fx.at(cast, FxKind, pos).scale(..).send()` builds one `FxEvent` (kind, style, caster,

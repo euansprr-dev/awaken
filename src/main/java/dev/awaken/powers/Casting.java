@@ -71,6 +71,7 @@ public final class Casting {
         if (owned == null) return PowerType.Result.fail("not_owned");
         if (type.isPassive() || type.behaviour == null) return PowerType.Result.fail("passive");
         if (player.isSpectator() || !player.isAlive()) return PowerType.Result.fail("cannot");
+        dev.awaken.core.api.MovementHooks.castStarting(player); // a cast ends a tactical sprint; it is never held back
         PowerState st = PowerState.of(player);
         long now = now(player);
         if (type.mode == PowerType.Mode.TOGGLE || type.mode == PowerType.Mode.CHANNEL) {
@@ -113,6 +114,7 @@ public final class Casting {
         if (!deferred) startCooldown(player, l, type, owned, st);
         Progression.count(player, type.family.counter());
         if (type.dashLike) onDash(player, st);
+        MoveTwists.afterCast(c, cost, now); // the Awakened Body's chains and family twists
         st.markCombatIfFoesNear(player);
         Powers.markDirty(player);
         return PowerType.Result.OK;
