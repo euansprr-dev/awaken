@@ -48,6 +48,10 @@ public final class LensClient {
     private static int debug;
     private static boolean active, snap = true, zeroToOne;
     private static ResourceKey<Level> lookFor;
+    // the camera's biome when it has a look of its own (null otherwise), sampled every 10 ticks
+    private static String biomeFor;
+    private static int biomeClock;
+    private static float easing = 0.06f;
     private static final float[] current = Look.neutral(), target = Look.neutral();
     // reused every frame: the sun's direction and where it lands on screen
     private static final Vector3f sunDir = new Vector3f();
@@ -63,7 +67,8 @@ public final class LensClient {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("lens_looks"),
                 (ResourceManagerReloadListener) manager -> {
                     Looks.reload(manager);
-                    lookFor = null; // re-resolve the current dimension's look
+                    lookFor = null; // re-resolve the current place's look
+                    biomeFor = null;
                 }));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         // after every other fog listener (Blight, the Veil): Lens hazes toward the fog the player actually sees
@@ -75,6 +80,7 @@ public final class LensClient {
         LocalPlayer player = mc.player;
         if (player == null || mc.level == null) {
             lookFor = null;
+            biomeFor = null;
             snap = true;
             active = false;
             return;
@@ -97,12 +103,21 @@ public final class LensClient {
         active = want != null;
 
         ResourceKey<Level> dim = mc.level.dimension();
-        if (dim != lookFor) {
-            Looks.resolve(dim.identifier().toString(), target);
-            lookFor = dim;
+        String biome = biomeFor;
+        if (dim != lookFor || ++biomeClock >= 10) {
+            biomeClock = 0;
+            biome = mc.level.getBiome(mc.gameRenderer.mainCamera().blockPosition()).unwrapKey()
+                    .map(k -> k.identifier().toString()).filter(Looks::hasBiome).orElse(null);
         }
-        // ease into a new place's look over about a second and a half (a hard cut on joining a world)
-        float k = snap ? 1f : 0.06f;
+        if (dim != lookFor || !java.util.Objects.equals(biome, biomeFor)) {
+            // a new dimension eases in over about 1.5 s; walking from one biome's look into another's over about 3 s
+            easing = dim != lookFor ? 0.06f : 0.03f;
+            Looks.resolve(dim.identifier().toString(), biome, target);
+            lookFor = dim;
+            biomeFor = biome;
+        }
+        // ease into a new place's look (a hard cut on joining a world)
+        float k = snap ? 1f : easing;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
         snap = false;
     }
