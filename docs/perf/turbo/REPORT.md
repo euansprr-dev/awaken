@@ -56,9 +56,28 @@ already keeps compiled Metal shaders between launches, so what MoltenVK's cache 
 The switch stays off by default (the mixin isn't applied). The code stays: drivers on Windows compile native code per
 pipeline, where a cache usually matters; re-measure there before switching it on for anyone.
 
-### Optimised shader compiles (`shaderOpt`) and MoltenVK settings
+### Optimised shader compiles (`shaderOpt`) and MoltenVK settings: both dropped
 
-Bench B: pending.
+| Bench B | Launch to loaded | Join to first frame | First 30 s fps, p50 / p99 / p99.5 / worst | Demo scene on / off |
+|---|---|---|---|---|
+| base | 10,531 ms | 1,208 ms | 185 fps, 4.72 / 11.07 / 12.18 / 34.5 ms | 230 / 206 fps |
+| `shaderOpt` | 11,267 ms | 1,125 ms | 214 fps, 4.07 / 10.17 / 11.28 / 27.8 ms | 139 / 127 fps |
+| MoltenVK settings | 10,934 ms | 1,099 ms | 125 fps, 8.13 / 14.54 / 15.65 / 31.5 ms | 164 / 171 fps |
+
+MoltenVK settings: `USE_METAL_ARGUMENT_BUFFERS=1`, `SHOULD_MAXIMIZE_CONCURRENT_COMPILATION=1`, `USE_MTLHEAP=1`.
+
+- **Launch:** neither is faster to load (11.3 s and 10.9 s against 10.5 s; runs vary by about 1 s). The extra
+  shaderc pass over Minecraft's ~900 pipelines doesn't shorten loading.
+- **In the world:** not decisive either way. On Vulkan the swapchain sometimes holds the display's 120 Hz and sometimes
+  runs free, from run to run and even scene to scene (bench A: two runs at 120, one free; here the `shaderOpt` run's
+  first 30 s ran faster than base and its demo scene slower). Frame rates only compare within one run's regime.
+- **The demo's own GPU time**, which doesn't depend on that, is the same in all three runs (compute 84-90 µs).
+
+No measured win, so both stay off: `shaderOpt` defaults off (its mixin isn't applied), and nothing sets the MoltenVK
+variables (`MVK=` stays an experiment knob for tours).
+
+Bench B's window opened on the Dell U2725QE (the display fix was merged; the same framebuffer, 1708x960, every run on
+the same display, never minimized), so its runs compare with each other, not with bench A.
 
 ## Device extensions (for Pixels' MetalFX)
 
@@ -74,3 +93,6 @@ No mesh shaders, no ray tracing.
   frame hook now switches itself off instead of propagating), the 23:14 `smoke/` run (window minimized by hand).
 - The machine is shared (other sessions' builds and Euan's own client); benches run under the tour lock, so variants in
   one bench share conditions. Launch time varies about 1 s run to run.
+- For Far Sight and Pixels measurements: because the Vulkan swapchain may or may not hold 120 Hz in a given run, compare
+  GPU timestamps (as `[turbo] demo` and Pixels' `PixelsTiming` do) or frame times within one run, not frame rates across
+  runs.
