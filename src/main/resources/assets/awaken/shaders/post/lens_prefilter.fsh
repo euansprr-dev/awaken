@@ -5,6 +5,7 @@
 // the open sky is (what light shafts are made of). Parameters arrive in a small texture (dev.awaken.lens.client.LensParams).
 uniform sampler2D InSampler;     // the frame, bilinear
 uniform sampler2D DepthSampler;  // its depth: reversed-Z, so the sky keeps the cleared 0
+uniform sampler2D FarDepthSampler; // far terrain's depth (Distant Horizons), when it draws
 uniform sampler2D ParamsSampler;
 
 layout(location = 0) in vec2 texCoord;
@@ -18,12 +19,20 @@ layout(location = 0) out vec4 fragColor;
 
 vec4 P(int i) { return texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 
+// far terrain (Distant Horizons) draws with its own depth; true where it drew this pixel
+bool farHit(float depth, int flags) {
+    bool reverse = (flags & 1) != 0;
+    return reverse ? depth > 1.0e-6 : depth < 0.999999;
+}
+
 void main() {
     // four bilinear taps, each the mean of a 2x2 block: a cheap box filter that keeps small lights from flickering
     vec2 t = 1.0 / InSize;
     vec3 c = (texture(InSampler, texCoord + t * vec2(-1.0, -1.0)).rgb + texture(InSampler, texCoord + t * vec2(1.0, -1.0)).rgb
             + texture(InSampler, texCoord + t * vec2(-1.0, 1.0)).rgb + texture(InSampler, texCoord + t * vec2(1.0, 1.0)).rgb) * 0.25;
     float sky = texture(DepthSampler, texCoord).r < 1.0e-7 ? 1.0 : 0.0;
+    vec4 p0 = P(0);
+    if (sky > 0.5 && p0.b > 0.5 && farHit(texture(FarDepthSampler, texCoord).r, int(p0.a * 255.0 + 0.5))) sky = 0.0;
     vec4 b = P(6);                    // r bloom strength/2, g threshold, b sky bloom, a shaft strength
     // keyed on the brightest channel, not luminance: Awaken's glows are saturated (pink vortices, blue runes, red
     // eyes) and luminance alone would never let them bloom; plain white surfaces (clouds, snow) bloom less

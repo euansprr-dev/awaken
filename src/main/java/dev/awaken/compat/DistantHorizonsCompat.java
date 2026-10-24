@@ -6,11 +6,8 @@ import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiLevelType;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGeneratorReturnType;
 import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeRenderEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelLoadEvent;
-import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiCancelableEventParam;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
-import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.api.objects.data.DhApiChunk;
 import dev.awaken.Awaken;
 
@@ -21,32 +18,15 @@ import java.util.function.Consumer;
 /**
  * Distant Horizons draws far terrain from cached LODs. Where {@link FarView} says no (Awaken's instanced dimensions)
  * DH renders nothing and hands back empty columns instead of running Awaken's chunk generators: a cached LOD there
- * would show phantom rooms, and generating one would only burn CPU. Everywhere else it works as normal.
+ * would show phantom rooms, and generating one would only burn CPU. Everywhere else it works as normal. The client
+ * side (hiding the render pass, sharing depth with Lens) is {@code compat.client.DistantHorizonsClient}.
  */
 final class DistantHorizonsCompat {
     private DistantHorizonsCompat() {}
 
-    // the render hook runs every frame: decide once per level, not per frame
-    private static IDhApiLevelWrapper lastLevel;
-    private static boolean lastAllowed = true;
-
     static void init() {
-        DhApi.events.bind(DhApiBeforeRenderEvent.class, new HideInInstances());
         DhApi.events.bind(DhApiLevelLoadEvent.class, new EmptyGenerationInInstances());
         Awaken.LOG.info("[compat] Distant Horizons {}: far terrain off in instanced Awaken dimensions", DhApi.getModVersion());
-    }
-
-    private static final class HideInInstances extends DhApiBeforeRenderEvent {
-        @Override
-        public void beforeRender(DhApiCancelableEventParam<DhApiRenderParam> event) {
-            IDhApiLevelWrapper level = event.value.clientLevelWrapper;
-            if (level == null) return;
-            if (level != lastLevel) {
-                lastLevel = level;
-                lastAllowed = FarView.allowed(level.getDimensionName());
-            }
-            if (!lastAllowed) event.cancelEvent();
-        }
     }
 
     private static final class EmptyGenerationInInstances extends DhApiLevelLoadEvent {
