@@ -62,7 +62,8 @@ wait 300
 shot lens_dream
 cmd awaken dream wake
 wait 100
-cmd execute in minecraft:the_nether run tp @s 0.5 70 0.5 0 5
+cmd gamemode spectator
+cmd execute in minecraft:the_nether run tp @s 0.5 100 0.5 0 25
 wait 300
 shot lens_nether
 quit
