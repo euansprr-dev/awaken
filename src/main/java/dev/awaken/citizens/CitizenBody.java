@@ -66,7 +66,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
     float faceYaw = Float.NaN;
     // client: the clip playing since when, the one before it (crossfade), and when a fade-out began
     public int cAct, cStart, pAct, pStart, fadeStart = -1;
-    public static final float FADE_TICKS_CLIENT = 12f;
+    public static final float FADE_TICKS_CLIENT = 8f;
     // client: what it's saying (wrapped once when it arrives) and until when
     public java.util.@org.jspecify.annotations.Nullable List<net.minecraft.util.FormattedCharSequence> speech;
     public int speechStart, speechUntil, speechKind;
