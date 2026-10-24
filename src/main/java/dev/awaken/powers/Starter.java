@@ -111,6 +111,8 @@ public final class Starter {
     /** Shows the three cards (rolling them the first time). Does nothing once chosen. */
     public static void offer(ServerPlayer p) {
         if (p.isRemoved() || !pending(p)) return;
+        // Carillon's opening offers the first power at the Registry, after the licence and the Holo (SPEC §16.4)
+        if (dev.awaken.core.api.OpeningHooks.inOpening(p) && !"registry".equals(dev.awaken.core.api.OpeningHooks.stage(p))) return;
         State st = state(p);
         if (st.offer().isEmpty()) {
             st = new State(State.SCHEMA, roll(p.getRandom()), "");
