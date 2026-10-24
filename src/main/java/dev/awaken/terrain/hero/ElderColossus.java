@@ -23,8 +23,12 @@ final class ElderColossus {
         int lobes = 6 + r.nextInt(3);
         Trunk trunk = new Trunk(h, r.nextDouble() * Math.PI * 2, 0.6 + r.nextDouble() * 1.2);
 
+        // the dome (centre and size) first: the trunk ends inside it, never through its top
+        double domeY = h * 0.78, dome = 24 + r.nextDouble() * 6;
+        int head = (int) Math.min(h, domeY + dome * 0.08);
+
         // the trunk: bark all round (no end grain on its ledges), fluted, swelling to the ground into the roots
-        for (int y = MIN_Y; y <= h; y++) {
+        for (int y = MIN_Y; y <= head; y++) {
             double t = Math.max(0, y) / (double) h;
             double low = Math.max(0, 16 - Math.max(0, y)) / 16.0;
             double rad = r0 * (1 - 0.42 * Math.pow(t, 1.3)) + low * low * 4.8;
@@ -62,8 +66,6 @@ final class ElderColossus {
             Roots.fin(bp, a, (r.nextDouble() - 0.5) * 0.6, r0 * 0.8, r0 + 6 + r.nextInt(8), 9 + r.nextInt(7), 2.0, 0.6, seed + k);
         }
 
-        // the dome: centre and size
-        double domeY = h * 0.78, dome = 24 + r.nextDouble() * 6;
         int limbs = 6 + r.nextInt(3);
         double a = r.nextDouble() * Math.PI * 2;
         double[] limbAngles = new double[limbs];
@@ -92,19 +94,19 @@ final class ElderColossus {
         }
 
         // the dome's top: leaders from the trunk's head to masses high on the shell
-        double tx = trunk.x(h), tz = trunk.z(h);
+        double tx = trunk.x(head), tz = trunk.z(head);
         int leaders = 4 + r.nextInt(2);
         double la = r.nextDouble() * Math.PI * 2;
         for (int k = 0; k < leaders; k++) {
             la += Math.PI * 2 / leaders + (r.nextDouble() - 0.5) * 0.5;
             double lr = dome * (0.42 + r.nextDouble() * 0.18);
             double ex = tx + Math.cos(la) * lr, ez = tz + Math.sin(la) * lr, ey = domeY + dome * (0.12 + r.nextDouble() * 0.13);
-            bp.tube(tx, h - 8, tz, ex, ey, ez, 1.6, 0.7, Blueprint.WOOD);
+            bp.tube(tx, head - 8, tz, ex, ey, ez, 1.6, 0.7, Blueprint.WOOD);
             mass(bp, r, seed + 101L * k, ex, ey, ez, 1.0, 7.5 + r.nextDouble() * 1.5, 4.5, domeY, dome);
         }
         // an open chimney round the trunk's head (no mass over the trunk) and light shafts between the limbs: the sky reaches
         // the bark all the way down (sky light beside the trunk 12-15; under a closed dome 0-6, and the trunk read black)
-        bp.shaft(tx, tz, trunk.radius(r0, h) + 4.5, (int) (h * 0.35));
+        bp.shaft(tx, tz, trunk.radius(r0, head) + 4.5, (int) (h * 0.35));
         for (int k = 0; k < 4; k++) {
             double sa = gap(limbAngles, k * Math.PI / 2 + r.nextDouble() * 0.6);
             double d = 6 + r.nextDouble() * 3;

@@ -3,19 +3,19 @@ package dev.awaken.terrain.hero;
 import net.minecraft.util.RandomSource;
 
 /**
- * The Lumen Spire (docs/modules/lands.md, "Lumen Forest"): a slender ash-white trunk twisted like rope, 30-45 tall,
+ * The Lumen Spire (docs/modules/lands.md, "Lumen Forest"): a slender ash-white trunk twisted like rope, 40-52 tall,
  * two small tiers on the way up, and on top a broad flat crown of teal pads on radiating limbs, hung with a curtain of
  * glowing vines that grow longer toward the rim. At night the curtain is the brightest thing in the forest.
  */
 final class LumenSpire {
     private LumenSpire() {}
 
-    static final int EXTENT = 22, MIN_Y = -3, MAX_Y = 54;
+    static final int EXTENT = 22, MIN_Y = -3, MAX_Y = 62;
 
     static Blueprint build(long seed) {
         RandomSource r = RandomSource.create(seed);
         Blueprint bp = new Blueprint(EXTENT, MIN_Y, MAX_Y);
-        int h = 30 + r.nextInt(16);
+        int h = 40 + r.nextInt(13); // 40-52: three times the Lumen canopy, so it reads from far terrain
         double r0 = 2.0 + r.nextDouble() * 0.7;
         double twist = 0.18 + r.nextDouble() * 0.08, phase = r.nextDouble() * Math.PI * 2;
         ElderColossus.Trunk trunk = new ElderColossus.Trunk(h, r.nextDouble() * Math.PI * 2, 0.5 + r.nextDouble());

@@ -32,13 +32,15 @@ wait 60
 look 180 -10
 wait 20
 shot lands_elder_golden_ground
-# into the low sun (west): the only place Cinematic differs from Swift is its light shafts from the sun
-look 90 -4
+# into the afternoon sun (west, through the canopy): Cinematic differs from Swift only by its light shafts from the sun
+cmd time set 11000
+look 90 -18
 wait 40
 shot lands_elder_golden_sun_swift
 lens cinematic
 wait 40
 shot lands_elder_golden_sun_cinematic
+cmd time set 12400
 look 180 -10
 wait 20
 shot lands_elder_golden_ground_cinematic

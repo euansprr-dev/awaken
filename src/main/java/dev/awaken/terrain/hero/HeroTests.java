@@ -57,13 +57,14 @@ public final class HeroTests {
                     h.assertTrue(s.loose == 0, what + ": loose leaves left in the blueprint");
                     h.assertTrue(s.disconnected == 0, what + ": " + s.disconnected + " cells not joined to the ground");
                     if (tree == HeroTree.ELDER_COLOSSUS) {
-                        h.assertTrue(s.trunkTop >= 60 && s.trunkTop <= 92, what + " trunk top " + s.trunkTop);
+                        h.assertTrue(s.top >= 55 && s.top <= 100, what + " top " + s.top); // an umbrella: the crown top sits near the trunk's height
+                        h.assertTrue(s.trunkTop < s.top - 4, what + ": the trunk (" + s.trunkTop + ") ends inside the crown (" + s.top + ")");
                         h.assertTrue(s.width12 >= 6 && s.width12 <= 10, what + " trunk " + s.width12 + " across");
                         h.assertTrue(s.rootReach >= 9 && s.rootReach <= 20, what + " roots reach " + s.rootReach);
                         h.assertTrue(s.leafReach >= 24 && s.leafReach < bp.extent, what + " canopy reaches " + s.leafReach);
                         h.assertTrue(s.leaves >= 8000 && s.gold > 0 && s.gold < s.leaves, what + " leaves " + s.leaves + ", gold " + s.gold);
                     } else {
-                        h.assertTrue(s.trunkTop >= 30 && s.trunkTop <= 48, what + " trunk top " + s.trunkTop);
+                        h.assertTrue(s.trunkTop >= 40 && s.trunkTop <= 55, what + " trunk top " + s.trunkTop);
                         h.assertTrue(s.leafReach >= 9 && s.leafReach <= bp.extent, what + " crown reaches " + s.leafReach);
                         h.assertTrue(s.vines >= 60 && s.tips >= 15, what + " vines " + s.vines + " (" + s.tips + " tips)");
                     }
@@ -189,11 +190,11 @@ public final class HeroTests {
 
     /** Measurements of a blueprint. */
     static final class Shape {
-        int trunkTop, width12, rootReach, leafReach, leaves, persistent, gold, vines, tips, loose, cells, disconnected;
+        int top, trunkTop, width12, rootReach, leafReach, leaves, persistent, gold, vines, tips, loose, cells, disconnected;
 
         @Override
         public String toString() {
-            return "top " + trunkTop + ", " + width12 + " across, roots " + rootReach + ", canopy " + leafReach + ", " + leaves + " leaves ("
+            return "top " + top + ", trunk " + trunkTop + ", " + width12 + " across, roots " + rootReach + ", canopy " + leafReach + ", " + leaves + " leaves ("
                     + gold + " gold, " + persistent + " persistent), " + vines + " vines, " + cells + " cells";
         }
     }
@@ -207,6 +208,7 @@ public final class HeroTests {
                     byte c = bp.get(x, y, z);
                     if (c == Blueprint.EMPTY) continue;
                     s.cells++;
+                    s.top = Math.max(s.top, y);
                     int reach = (int) Math.round(Math.sqrt(x * x + z * z));
                     if (Blueprint.wood(c)) {
                         // the trunk: wood round the axis (it sways at most two blocks)
