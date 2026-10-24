@@ -1285,12 +1285,13 @@ Numbers (`AscentRules`, blocks and ticks; gravity 0.08 everywhere):
 - Anchors: the look's own ray (reach 44) wins when it hits 6+ above the eye (aimed swing) or under 2 above and at
   least 4 away (aimed zip). Anything else (sky, a trunk a few blocks up, a wall closer than 4) asks the assist: 25 rays
   climbing 20-62° above the horizon, straight ahead and up to 28° either side, scored ahead (≥0.45 of the facing) ×
-  rise near 14 × reach near 13 (gaussian, 9 wide). A low direct hit 4+ away swings as it is only when the assist finds
-  nothing.
+  rise near 14 × reach near 13 (gaussian, 9 wide) × off to one side of your line (full from 3.5 to 9 out, a quarter
+  dead ahead: the arc's bottom passes under the anchor, so a trunk dead ahead would swing you into itself). A low
+  direct hit 4+ away swings as it is only when the assist finds nothing.
 - Release window: letting go while rising in the front half of the arc, best 52° past the bottom (±30°), adds up to
   ×1.06. Jumping off: ×1.12 horizontal and +0.46 up. A rope is cut only by something solid across its middle (from
   1.5 off the hand to 3 short of the anchor; checked every 4 ticks: it wraps its own trunk as you swing round it) or
-  by its anchor block going.
+  by its anchor block going. Leaves never cut a rope.
 - Carry: horizontal drag 0.988, vertical 0.98 (vanilla's 0.91 would eat the swing); input bends the path by 0.02 a
   tick and never adds speed beyond what you had (or 0.24 when slow).
 - Glide: speed changes by -dir.y × 0.08 - 0.0062 × speed² a tick (dives gain, climbs pay); the path turns 16% of the
