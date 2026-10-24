@@ -4,7 +4,7 @@ package dev.awaken.holo.client;
  * The open and close timeline of a wrist panel (docs/proposals/holo-ui.md §5), in milliseconds along the opening:
  * <pre>
  *   0–120   the arm rises            80–200  the band flares
- *   160–360 the panel unfolds (Y, then X) and leaves the wrist; the scan line sweeps
+ *   140–370 the panel grows out of the wrist into its place, unfolding (Y, then X); the scan line sweeps
  *   300–450 text types in            from 250 clicks land
  * </pre>
  * Closing plays the same curves backward, 1.8× faster (250 ms). Pressing the key again while it opens skips to open.
@@ -121,11 +121,6 @@ public final class HoloTimeline {
         return reduced ? (t > 160 ? 1 : 0) : easeOut((t - 220f) / 140f);
     }
 
-    /** 0 at the wrist, 1 at rest in front of you. */
-    public float leave(boolean reduced) {
-        return reduced ? 1 : easeInOut((t - 150f) / 220f);
-    }
-
     /** The frame and corners show before the glass fills in. */
     public float edges(boolean reduced) {
         return reduced ? clamp01((t - 160f) / 150f) : clamp01((t - 170f) / 60f);
@@ -149,11 +144,21 @@ public final class HoloTimeline {
         return t - 300f;
     }
 
-    /** The beam that carries the panel off the wrist: rises with the lift-off and fades as it settles. */
+    /** How far the panel has grown out of the wrist: 0 at the emitter, 1 in its place. */
+    public float grow(boolean reduced) {
+        return reduced ? 1 : easeOut((t - 140f) / 230f);
+    }
+
+    /** The beams from the wrist to the panel: bright while it opens, a faint steady link while it is open. */
     public float beam(boolean reduced) {
+        if (reduced) return clamp01((t - 300f) / 150f) * 0.35f;
+        return Math.max(beamBoost(false), 0.35f * clamp01((t - 260f) / 120f));
+    }
+
+    /** The opening surge: up from 110 ms, peaking around 200, gone by 360 (also how much wider the beams are). */
+    public float beamBoost(boolean reduced) {
         if (reduced) return 0;
-        float up = clamp01((t - 120f) / 50f), down = 1 - clamp01((t - 290f) / 90f);
-        return up * down;
+        return clamp01((t - 110f) / 50f) * (1 - clamp01((t - 250f) / 110f));
     }
 
     /** How much the open panel holds attention (Lens focus): eased with the glass. */

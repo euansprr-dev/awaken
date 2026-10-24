@@ -42,6 +42,17 @@ public final class HoloOthers {
     private static final Raise[] SLOTS = new Raise[64];
     private static final Raise SELF = new Raise();
     static final ContextKey<Raise> KEY = new ContextKey<>(Awaken.id("holo_raise"));
+    /** Autopilot ({@code holo peek on}): show your own player in third person as other players see it. */
+    static boolean peekSelf;
+    /** Your own wrist this frame (camera-relative world), found by the layer; for the beams in third person. */
+    private static final Vector3f SELF_WRIST = new Vector3f();
+    private static long selfWristFrame = -1;
+
+    static boolean selfWrist(Vector3f out) {
+        if (selfWristFrame < HoloClient.frame() - 1) return false;
+        out.set(SELF_WRIST);
+        return true;
+    }
 
     static {
         for (int i = 0; i < SLOTS.length; i++) SLOTS[i] = new Raise();
@@ -145,23 +156,33 @@ public final class HoloOthers {
             bandX0 = x0 / 16f;
             bandX1 = x1 / 16f;
             collector.submitCustomGeometry(poseStack, RenderTypes.lightning(), BAND);
-            if (r != SELF) {
-                // the card floats beyond the back of the wrist; billboarded so anyone around sees a soft panel of light
-                poseStack.translate((side > 0 ? x1 + 3.5f : x0 - 3.5f) / 16f, 8f / 16f, 0);
-                Matrix4f m = poseStack.last().pose();
-                m.getTranslation(T);
-                m.getScale(S);
-                m.translation(T).rotate(Minecraft.getInstance().gameRenderer.mainCamera().rotation()).scale(S.x);
-                card = p;
-                collector.submitCustomGeometry(poseStack, RenderTypes.lightning(), CARD);
+            // a glow at the wrist and, for anyone else looking, a small content-free hologram above it, billboarded
+            poseStack.translate((x0 + x1) / 32f, 8f / 16f, 0);
+            Matrix4f m = poseStack.last().pose();
+            m.getTranslation(T);
+            m.getScale(S);
+            if (r == SELF) {
+                SELF_WRIST.set(T);
+                selfWristFrame = HoloClient.frame();
             }
+            // the hologram rises above the wrist and a little ahead of the body, so it clears the head from behind
+            float yaw = (float) Math.toRadians(state.bodyRot);
+            CARD_OFFSET.set(-(float) Math.sin(yaw) * 0.32f, 0, (float) Math.cos(yaw) * 0.32f);
+            var cam = Minecraft.getInstance().gameRenderer.mainCamera().rotation();
+            cam.transformInverse(CARD_OFFSET); // into the billboard's own axes
+            m.translation(T).rotate(cam).scale(S.x);
+            card = p;
+            showCard = r != SELF || peekSelf;
+            collector.submitCustomGeometry(poseStack, RenderTypes.lightning(), CARD);
             poseStack.popPose();
         }
     }
 
-    private static final Vector3f T = new Vector3f(), S = new Vector3f();
+    private static final Vector3f T = new Vector3f(), S = new Vector3f(), CARD_OFFSET = new Vector3f();
+    private static final Matrix4f M2 = new Matrix4f(), M3 = new Matrix4f();
     private static final float[] XS = new float[4], YS = new float[4];
     private static float band, bandX0, bandX1, card;
+    private static boolean showCard;
     private static final SubmitNodeCollector.CustomGeometryRenderer BAND = HoloOthers::band;
     private static final SubmitNodeCollector.CustomGeometryRenderer CARD = HoloOthers::card;
 
@@ -171,7 +192,7 @@ public final class HoloOthers {
         float pad = 0.45f / 16f;
         float x0 = bandX0 - pad, x1 = bandX1 + pad, z0 = -2.45f / 16f, z1 = 2.45f / 16f;
         float y0 = 7.2f / 16f, y1 = 8.4f / 16f, ym = (y0 + y1) / 2;
-        int core = Glass.a(Glass.EDGE, 0.55f * a), clear = Glass.a(Glass.EDGE, 0);
+        int core = Glass.a(Glass.EDGE, 0.95f * a), clear = Glass.a(Glass.EDGE, 0);
         Matrix4f m = pose.pose();
         // each face: two strips fading from a bright centre line to nothing at the band's edges
         ring(vc, m, x1, z0, x1, z1, y0, ym, y1, core, clear);
@@ -191,21 +212,52 @@ public final class HoloOthers {
         vc.addVertex(m, ax, y1, az).setColor(clear);
     }
 
-    /** A content-free glow card: a 3×3 grid whose outer ring fades out, with a brighter rim line on top. */
+    /**
+     * At the wrist, in camera-facing space: a soft glow, and (for other players) a small hologram above it with a faint
+     * cone down to the wrist: a framed sheet of light with three bars where text would be, never the panel's content.
+     */
     private static void card(PoseStack.Pose pose, VertexConsumer vc) {
         float a = card;
-        float hw = 0.24f * a, hh = 0.15f * (0.3f + 0.7f * a), soft = 0.07f;
-        int inner = Glass.a(Glass.EDGE, 0.20f * a), rim = Glass.a(0xCFEAFF, 0.45f * a), clear = Glass.a(Glass.EDGE, 0);
         Matrix4f m = pose.pose();
+        int clear = Glass.a(Glass.EDGE, 0);
+        // the wrist glow sits just off the arm toward the viewer, so the arm itself never hides it
+        Matrix4f g = M3.set(m).translate(0, 0, 0.16f);
+        softRect(vc, g, 0, 0, 0.05f * a, 0.05f * a, 0.10f, Glass.a(Glass.EDGE, 0.95f * a), clear);
+        if (!showCard) return;
+        float hw = 0.30f * a, hh = 0.17f * (0.3f + 0.7f * a), cy = 0.30f * a + CARD_OFFSET.y, cx = CARD_OFFSET.x * a, cz = CARD_OFFSET.z * a;
+        // the cone from the wrist to the sheet's bottom edge
+        int coneNear = Glass.a(Glass.EDGE, 0.40f * a);
+        vc.addVertex(m, 0, 0.03f, 0).setColor(coneNear);
+        vc.addVertex(m, cx - hw, cy - hh, cz).setColor(clear);
+        vc.addVertex(m, cx + hw, cy - hh, cz).setColor(clear);
+        vc.addVertex(m, 0, 0.03f, 0).setColor(coneNear);
+        // the sheet sits in its own plane, offset ahead of the body
+        m = M2.set(m).translate(cx, 0, cz);
+        // the sheet, its frame and three bars
+        softRect(vc, m, 0, cy, hw, hh, 0.06f, Glass.a(Glass.EDGE, 0.42f * a), clear);
+        int rim = Glass.a(0xE2F2FF, Math.min(1f, 1.0f * a)), bar = Glass.a(0xCFEAFF, 0.6f * a);
+        float t = 0.009f;
+        rimLine(vc, m, -hw, cy + hh - t, hw, cy + hh + t, rim);
+        rimLine(vc, m, -hw, cy - hh - t, hw, cy - hh + t, rim);
+        rimLine(vc, m, -hw - t, cy - hh, -hw + t, cy + hh, rim);
+        rimLine(vc, m, hw - t, cy - hh, hw + t, cy + hh, rim);
+        for (int i = 0; i < 3; i++) {
+            float y = cy + hh * 0.45f - i * hh * 0.45f, len = hw * (i == 1 ? 1.2f : i == 2 ? 0.8f : 1.5f);
+            rimLine(vc, m, -hw * 0.7f, y - t * 0.8f, -hw * 0.7f + len, y + t * 0.8f, bar);
+        }
+    }
+
+    /** A rectangle of light whose outer ring of width {@code soft} fades to nothing (a 3×3 grid). */
+    private static void softRect(VertexConsumer vc, Matrix4f m, float cx, float cy, float hw, float hh, float soft, int inner, int clear) {
         float[] xs = XS, ys = YS;
-        xs[0] = -hw - soft;
-        xs[1] = -hw;
-        xs[2] = hw;
-        xs[3] = hw + soft;
-        ys[0] = -hh - soft;
-        ys[1] = -hh;
-        ys[2] = hh;
-        ys[3] = hh + soft;
+        xs[0] = cx - hw - soft;
+        xs[1] = cx - hw;
+        xs[2] = cx + hw;
+        xs[3] = cx + hw + soft;
+        ys[0] = cy - hh - soft;
+        ys[1] = cy - hh;
+        ys[2] = cy + hh;
+        ys[3] = cy + hh + soft;
         for (int j = 0; j < 3; j++) {
             for (int i = 0; i < 3; i++) {
                 vc.addVertex(m, xs[i], ys[j], 0).setColor(gridColour(i, j, inner, clear));
@@ -214,9 +266,6 @@ public final class HoloOthers {
                 vc.addVertex(m, xs[i], ys[j + 1], 0).setColor(gridColour(i, j + 1, inner, clear));
             }
         }
-        float t = 0.006f;
-        rimLine(vc, m, -hw, hh - t, hw, hh + t, rim);
-        rimLine(vc, m, -hw, -hh - t, hw, -hh + t, rim);
     }
 
     /** Grid vertex (0..3 each way): the inner four corners are lit, the outer ring is clear. */

@@ -189,9 +189,9 @@ public final class HoloClient {
             }
             p.thirdPerson = !Minecraft.getInstance().options.getCameraType().isFirstPerson();
             p.animate(reduced);
-            float leave = p.anchor == HoloPanel.Anchor.WRIST ? p.timeline.leave(reduced) : 1f;
+            float grow = p.anchor == HoloPanel.Anchor.WRIST ? p.timeline.grow(reduced) : 1f;
             wristView(p, WRIST);
-            p.place(leave, WRIST);
+            p.place(grow, WRIST);
         }
         if (demoMode == 2 && !DEMO.timeline.active()) demoMode = 0;
     }
@@ -251,6 +251,7 @@ public final class HoloClient {
                 HoloConfig.forcedHudMotion = HoloConfig.HudMotion.valueOf(a[1].toUpperCase(java.util.Locale.ROOT));
                 HoloConfig.refresh();
             }
+            case "peek" -> HoloOthers.peekSelf = a[1].equals("on");
             case "arm" -> Wrist.forcedSkin = switch (a[1]) {
                 case "slim" -> net.minecraft.client.resources.DefaultPlayerSkin.get(new java.util.UUID(0, 6));
                 case "wide" -> net.minecraft.client.resources.DefaultPlayerSkin.get(new java.util.UUID(0, 15));
@@ -268,9 +269,9 @@ public final class HoloClient {
             case "log" -> {
                 org.joml.Vector3f c = new org.joml.Vector3f();
                 p.pose.transformPosition(p.w / 2f, p.h / 2f, 0, c);
-                return String.format(java.util.Locale.ROOT, "hud dx=%.2f dy=%.2f lag=%.2f/%.2f ppu=%d t=%.0f sx=%.3f sy=%.3f leave=%.2f edges=%.2f "
+                return String.format(java.util.Locale.ROOT, "hud dx=%.2f dy=%.2f lag=%.2f/%.2f ppu=%d t=%.0f sx=%.3f sy=%.3f grow=%.2f edges=%.2f "
                         + "glass=%.2f beam=%.2f wrist=%s centre(world-rel)=%s anchor=%s", HudMotion.dx(), HudMotion.dy(),
-                        p.spring.yaw(), p.spring.pitch(), p.ppu, p.timeline.ms(), p.sx, p.sy, p.timeline.leave(HoloConfig.reducedMotion),
+                        p.spring.yaw(), p.spring.pitch(), p.ppu, p.timeline.ms(), p.sx, p.sy, p.timeline.grow(HoloConfig.reducedMotion),
                         p.edgeAlpha, p.glassAlpha, p.beam, WRIST, c, p.anchor);
             }
             default -> {

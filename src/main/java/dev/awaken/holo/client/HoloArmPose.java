@@ -29,9 +29,10 @@ public final class HoloArmPose {
         if (p <= 0) return;
         float s = arm == HumanoidArm.LEFT ? 1f : -1f;
         var part = arm == HumanoidArm.LEFT ? model.leftArm : model.rightArm;
-        // forward and up to about chest height, swung in across the body, rolled so the back of the wrist faces up
-        part.xRot = Mth.lerp(p, part.xRot, -1.42f + model.head.xRot * 0.25f);
-        part.yRot = Mth.lerp(p, part.yRot, 0.78f * s);
+        // raised to chest height and swung in across the chest, the wrist turned up toward the eyes: the shoulder and
+        // the arm crossing the body read from behind and from the side
+        part.xRot = Mth.lerp(p, part.xRot, -1.50f + model.head.xRot * 0.15f);
+        part.yRot = Mth.lerp(p, part.yRot, 1.02f * s);
         part.zRot = Mth.lerp(p, part.zRot, 0.10f * s);
     }
 }

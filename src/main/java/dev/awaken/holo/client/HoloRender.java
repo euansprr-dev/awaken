@@ -61,6 +61,9 @@ final class HoloRender {
         // typing carets for this frame (x, y) in units
         final float[] carets = new float[64 * 2];
         int caretCount;
+        // headers (x, y, width) for their glow
+        final float[] headers = new float[48 * 3];
+        int headerCount;
         RenderType spriteType;
 
         Draw(HoloPanel p) {
@@ -74,6 +77,12 @@ final class HoloRender {
         for (Draw d : HoloClient.draws()) {
             HoloPanel p = d.p;
             if (!p.drawn || !visible(p)) continue;
+            if (HoloOthers.peekSelf && p.thirdPerson) continue; // the autopilot is looking at what others see
+            // in third person the beams come from your character's wrist, as the render layer found it this frame
+            if (p.thirdPerson && p.anchor == HoloPanel.Anchor.WRIST && HoloOthers.selfWrist(p.beamFrom)) {
+                // (camera-relative world → view space)
+                ViewMath.WORLD_TO_PANEL_VIEW.transformPosition(p.beamFrom);
+            }
             submitPanel(c, d);
         }
     }
@@ -141,7 +150,7 @@ final class HoloRender {
 
     private static void halo(Draw d, PoseStack.Pose pose, VertexConsumer vc) {
         HoloPanel p = d.p;
-        float a = 0.30f * p.glassAlpha * p.fade + 0.35f * p.edgeAlpha * Math.max(0, p.band - 1);
+        float a = 0.42f * p.glassAlpha * p.fade + 0.35f * p.edgeAlpha * Math.max(0, p.band - 1);
         if (a <= 0.004f) return;
         float mgn = 16;
         int col = mulAlpha(p.accent | 0xFF000000, a);
@@ -154,7 +163,7 @@ final class HoloRender {
         float w = p.w, h = p.h;
         // edges: bright while the frame draws itself, settling to a faint rim
         float settle = 1f - p.glassAlpha;
-        float ea = p.edgeAlpha * (0.16f + 0.55f * settle);
+        float ea = p.edgeAlpha * (0.30f + 0.45f * settle);
         // line thickness in units, held constant on screen while the panel is squashed by its unfold
         float kx = 1f / Math.max(0.05f, p.sx), ky = 1f / Math.max(0.05f, p.sy);
         if (ea > 0.004f) {
@@ -206,6 +215,12 @@ final class HoloRender {
             float r = 4 + 18 * k;
             blob(vc, m, p.flashX, p.flashY, r, mulAlpha(p.accent | 0xFF000000, 0.55f * (1 - k) * (1 - k)));
         }
+        // a soft glow behind the System-blue headers
+        int hg = mulAlpha(p.accent | 0xFF000000, 0.30f * p.glassAlpha * p.fade);
+        for (int i = 0; i < d.headerCount; i++) {
+            float x = d.headers[i * 3], y = d.headers[i * 3 + 1], w0 = d.headers[i * 3 + 2];
+            quad(vc, m, x - 6, y - 4, x + w0 + 6, y + 12, -1, -1, 1, 1, hg, hg, -1, 0);
+        }
         // typing carets
         int caret = mulAlpha(p.accent | 0xFF000000, 0.85f);
         for (int i = 0; i < d.caretCount; i++) {
@@ -221,18 +236,50 @@ final class HoloRender {
         HoloPanel p = d.p;
         Matrix4f m = pose.pose();
         var a = p.beamFrom;
-        var b = p.beamTo;
+        float k = p.beam, boost = p.beamBoost;
+        // the projection cone: a faint sheet of light from the wrist to the panel's bottom edge, fading as it goes
+        int coneNear = mulAlpha(p.accent | 0xFF000000, 0.10f * k + 0.10f * boost), coneFar = p.accent & 0xFFFFFF;
+        vc.addVertex(m, a.x, a.y, a.z).setUv(0, 0).setColor(coneNear).setUv2(0, 0);
+        vc.addVertex(m, p.cornerL.x, p.cornerL.y, p.cornerL.z).setUv(0, 0).setColor(coneFar).setUv2(0, 0);
+        vc.addVertex(m, p.cornerR.x, p.cornerR.y, p.cornerR.z).setUv(0, 0).setColor(coneFar).setUv2(0, 0);
+        vc.addVertex(m, a.x, a.y, a.z).setUv(0, 0).setColor(coneNear).setUv2(0, 0);
+        // two beams to the lower corners, wider and brighter while the panel opens
+        // widths in metres at the panel's distance; a far origin (your character's wrist in third person) widens to match
+        float far = Math.max(1f, a.length() / 0.6f);
+        float w0 = 0.0028f * (1 + boost) * far, w1 = 0.009f * (1 + 2.2f * boost);
+        int core = mulAlpha(0xFFCFEAFF, Math.min(1f, 0.55f * k + 0.45f * boost)), edge = mulAlpha(p.accent | 0xFF000000, Math.min(1f, 0.35f * k + 0.4f * boost));
+        ribbon(vc, m, a, p.cornerL, w0, w1, core, edge);
+        ribbon(vc, m, a, p.cornerR, w0, w1, core, edge);
+        // a few scan dots travelling up each beam
+        float sec = (System.nanoTime() % 3_600_000_000_000L) / 1e9f;
+        for (int b = 0; b < 2; b++) {
+            var c = b == 0 ? p.cornerL : p.cornerR;
+            for (int j = 0; j < 3; j++) {
+                float f = (sec / 2.4f + j / 3f + b * 0.17f) % 1f;
+                float alpha = (float) Math.sin(f * Math.PI) * (0.55f * k + 0.3f * boost);
+                if (alpha < 0.02f) continue;
+                BM.set(a).lerp(c, f);
+                float r = (0.0035f + 0.003f * f) * (far * (1 - f) + f);
+                int col = mulAlpha(0xFFE6F4FF, Math.min(1f, alpha));
+                vc.addVertex(m, BM.x - r, BM.y - r, BM.z).setUv(-1, -1).setColor(col).setUv2(-1, 0);
+                vc.addVertex(m, BM.x - r, BM.y + r, BM.z).setUv(-1, 1).setColor(col).setUv2(-1, 0);
+                vc.addVertex(m, BM.x + r, BM.y + r, BM.z).setUv(1, 1).setColor(col).setUv2(-1, 0);
+                vc.addVertex(m, BM.x + r, BM.y - r, BM.z).setUv(1, -1).setColor(col).setUv2(-1, 0);
+            }
+        }
+    }
+
+    /** A ribbon of light from {@code a} to {@code b}, turned to face the eye (view space), widening as it goes. */
+    private static void ribbon(VertexConsumer vc, Matrix4f m, org.joml.Vector3f a, org.joml.Vector3f b, float w0, float w1, int c0, int c1) {
         BA.set(b).sub(a);
         BM.set(a).add(b).mul(0.5f);
         BS.set(BA).cross(BM);
         if (BS.lengthSquared() < 1e-12f) return;
         BS.normalize();
-        float w0 = 0.004f, w1 = 0.020f;
-        int core = mulAlpha(0xFFBFE3FF, 0.85f * p.beam), edge = mulAlpha(p.accent | 0xFF000000, 0.55f * p.beam);
-        vc.addVertex(m, a.x - BS.x * w0, a.y - BS.y * w0, a.z - BS.z * w0).setUv(-0.8f, -1).setColor(core).setUv2(-2, 0);
-        vc.addVertex(m, b.x - BS.x * w1, b.y - BS.y * w1, b.z - BS.z * w1).setUv(0.8f, -1).setColor(edge).setUv2(-2, 0);
-        vc.addVertex(m, b.x + BS.x * w1, b.y + BS.y * w1, b.z + BS.z * w1).setUv(0.8f, 1).setColor(edge).setUv2(-2, 0);
-        vc.addVertex(m, a.x + BS.x * w0, a.y + BS.y * w0, a.z + BS.z * w0).setUv(-0.8f, 1).setColor(core).setUv2(-2, 0);
+        vc.addVertex(m, a.x - BS.x * w0, a.y - BS.y * w0, a.z - BS.z * w0).setUv(-0.8f, -1).setColor(c0).setUv2(-2, 0);
+        vc.addVertex(m, b.x - BS.x * w1, b.y - BS.y * w1, b.z - BS.z * w1).setUv(0.8f, -1).setColor(c1).setUv2(-2, 0);
+        vc.addVertex(m, b.x + BS.x * w1, b.y + BS.y * w1, b.z + BS.z * w1).setUv(0.8f, 1).setColor(c1).setUv2(-2, 0);
+        vc.addVertex(m, a.x + BS.x * w0, a.y + BS.y * w0, a.z + BS.z * w0).setUv(-0.8f, 1).setColor(c0).setUv2(-2, 0);
     }
 
     private static void line(VertexConsumer vc, Matrix4f m, float x0, float y0, float x1, float y1, int col) {
@@ -262,6 +309,22 @@ final class HoloRender {
         vc.addVertex(m, x0, y1, 0).setUv(u0, v1).setColor(bottom).setUv2(s0, s1);
         vc.addVertex(m, x1, y1, 0).setUv(u1, v1).setColor(bottom).setUv2(s0, s1);
         vc.addVertex(m, x1, y0, 0).setUv(u1, v0).setColor(top).setUv2(s0, s1);
+    }
+
+    /**
+     * The flat palette, lit for a hologram: body text white, labels a pale blue, the System-blue headers brighter (they
+     * also get a glow). Other colours (amber, warnings, rank colours) keep their hue.
+     */
+    static int holoColour(int argb) {
+        int rgb = argb & 0xFFFFFF, a = argb & 0xFF000000;
+        if (rgb == dev.awaken.signal.client.Glass.TEXT || rgb == dev.awaken.signal.client.Glass.TITLE) return a | 0xFFFFFF;
+        if (rgb == dev.awaken.signal.client.Glass.LABEL) return a | 0xC6D8EE;
+        if (rgb == dev.awaken.signal.client.Glass.EDGE) return a | 0xA6DCFF;
+        return argb;
+    }
+
+    static boolean isHeader(int argb) {
+        return (argb & 0xFFFFFF) == dev.awaken.signal.client.Glass.EDGE;
     }
 
     static int mulAlpha(int argb, float k) {
@@ -326,6 +389,7 @@ final class HoloRender {
         float stagger = cv.texts > 1 ? Math.min(12f, 90f / (cv.texts - 1)) : 0f;
         float window = HoloTimeline.OPEN_MS - 300f;
         d.caretCount = 0;
+        d.headerCount = 0;
         var out = c.order(order);
         float ga = p.glassAlpha * p.fade;
         for (int i = 0; i < cv.texts; i++) {
@@ -342,9 +406,10 @@ final class HoloRender {
             }
             seq.limit = limit;
             float x = cv.textXY[i * 2], y = cv.textXY[i * 2 + 1];
-            int colour = mulAlpha(cv.textColour[i], ga);
+            int colour = mulAlpha(holoColour(cv.textColour[i]), ga);
             if ((colour >>> 24) < 26) continue; // the text shader drops alpha under 0.1
-            boolean shadow = cv.textShadow[i];
+            boolean header = isHeader(cv.textColour[i]);
+            boolean shadow = true; // light text on a thin sheet over a bright world needs its shadow
             float scale = cv.textScale[i];
             int k = i * 3;
             TextFeatureRenderer.Submit s = d.text[i];
@@ -371,6 +436,12 @@ final class HoloRender {
             }
             if (scale != 1f) d.scaled[i].set(p.pose).translate(x, y, 0).scale(scale, scale, 1);
             out.submitSpecial(key, s);
+            if (header && d.headerCount < 48) {
+                d.headers[d.headerCount * 3] = x;
+                d.headers[d.headerCount * 3 + 1] = y;
+                d.headers[d.headerCount * 3 + 2] = font.width(seq) * scale;
+                d.headerCount++;
+            }
             if (limit != Integer.MAX_VALUE && limit < seq.length() && d.caretCount < 64) {
                 d.carets[d.caretCount * 2] = x + font.width(seq) * scale;
                 d.carets[d.caretCount * 2 + 1] = y;

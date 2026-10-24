@@ -23,6 +23,8 @@ final class ViewMath {
     static final Matrix4f VIEW_TO_WORLD = new Matrix4f();
     /** The inverse of vanilla's bob and hurt tilt. */
     static final Matrix4f UNBOB = new Matrix4f();
+    /** Camera-relative world → the panels' (unbobbed) view space: the inverse of VIEW_TO_WORLD · UNBOB. */
+    static final Matrix4f WORLD_TO_PANEL_VIEW = new Matrix4f();
     private static final Matrix4f BOB = new Matrix4f();
 
     static void update(CameraRenderState cam) {
@@ -36,6 +38,7 @@ final class ViewMath {
         VIEW_TO_WORLD.rotation(cam.orientation);
         bob(cam, mc);
         BOB.invert(UNBOB);
+        WORLD_TO_PANEL_VIEW.set(VIEW_TO_WORLD).mul(UNBOB).invert();
     }
 
     /** The same transform as GameRenderer.bobHurt + bobView (both private there). */

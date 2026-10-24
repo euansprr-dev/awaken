@@ -13,7 +13,7 @@ import org.joml.Vector4f;
  *   <li>{@code VIEW}: in front of the eye, a little left, facing you with a slight turn toward the centre. It trails the
  *       camera through a {@link Spring}. Its size is set in framebuffer pixels per unit (a whole number, so text stays
  *       crisp) from the real projection each frame, so FOV changes never swell it; vanilla's bob is undone.</li>
- *   <li>{@code WRIST}: the same panel while it leaves the forearm band ({@link Wrist}) and unfolds, then a VIEW.</li>
+ *   <li>{@code WRIST}: the same panel while it grows out of the forearm band ({@link Wrist}) and unfolds, then a VIEW.</li>
  *   <li>{@code WORLD}: drawn by {@link HoloOthers} at a fixed spot in the world (the glow over another player's wrist).</li>
  * </ul>
  */
@@ -27,11 +27,11 @@ public final class HoloPanel {
     public int w = 320, h = 200;
     public int accent = Glass.EDGE;
     /** Rest centre as a fraction of the half-screen (x right, y up) and distance in metres. */
-    public float restX = -0.10f, restY = 0.08f, dist = 0.62f;
-    /** Target width as a fraction of the screen. */
-    public float screenFrac = 0.62f;
-    /** Extra turn toward the centre and lean back, degrees. */
-    public float turn = 2.5f, lean = 2f;
+    public float restX = -0.48f, restY = 0.17f, dist = 0.62f;
+    /** Target width as a fraction of the screen: left of the crosshair, its right edge near the centre. */
+    public float screenFrac = 0.45f;
+    /** Yaw toward the wrist side (the left edge nearer) and lean back (the bottom nearer), degrees. */
+    public float turn = 7f, lean = 3f;
     /** In third person the panel moves aside and shrinks so your raised arm stays in view. */
     boolean thirdPerson;
     /** Lower draw layers first (the demo under the K menu). */
@@ -39,9 +39,9 @@ public final class HoloPanel {
 
     /** Units → camera-relative world, as last drawn (picking uses it). */
     final Matrix4f pose = new Matrix4f();
-    /** The lift-off beam in view space: from the wrist emitter to the panel's bottom edge; its strength 0..1. */
-    final Vector3f beamFrom = new Vector3f(), beamTo = new Vector3f();
-    float beam;
+    /** The projection in view space: from the wrist emitter to the panel's lower corners; its strength and how wide. */
+    final Vector3f beamFrom = new Vector3f(), cornerL = new Vector3f(), cornerR = new Vector3f();
+    float beam, beamBoost;
     /** Framebuffer pixels per unit, as last drawn. */
     int ppu = 1;
     boolean drawn;
@@ -66,54 +66,52 @@ public final class HoloPanel {
             typeMs = Float.MAX_VALUE;
             return;
         }
-        sy = Math.max(0.02f, t.unfoldY(reduced));
-        sx = Math.max(0.035f, t.unfoldX(reduced));
+        sy = Math.max(0.18f, t.unfoldY(reduced));
+        sx = Math.max(0.10f, t.unfoldX(reduced));
         edgeAlpha = t.edges(reduced);
         glassAlpha = t.glass(reduced);
         scan = t.scan(reduced);
         typeMs = t.typing(reduced);
         band = t.band();
         beam = anchor == Anchor.WRIST ? t.beam(reduced) : 0;
+        beamBoost = anchor == Anchor.WRIST ? t.beamBoost(reduced) : 0;
         fade = t.ms() < 150 ? 0 : 1;
     }
 
     /** Whole framebuffer pixels per unit so the panel is about {@link #screenFrac} of the width and fits the height. */
     private int choosePpu() {
-        int byW = Math.round(screenFrac * (thirdPerson ? 0.62f : 1f) * ViewMath.fbW / w);
+        int byW = Math.round(screenFrac * (thirdPerson ? 0.80f : 1f) * ViewMath.fbW / w);
         int byH = (int) Math.floor(0.80f * ViewMath.fbH / h);
         return Math.max(1, Math.min(byW, byH));
     }
 
     /**
-     * Places the panel for this frame in camera-relative world space ({@link #pose}). {@code leave} is 0 at the wrist
-     * and 1 at rest; {@code wristView} is the band in view space (world projection).
+     * Places the panel for this frame in camera-relative world space ({@link #pose}). At rest it is parallel to the
+     * screen (a crisp rectangle), then turned {@link #turn} toward the wrist side and leaned back {@link #lean}, trailing
+     * the camera on the spring. While a WRIST panel opens, {@code grow} (0..1) scales the whole panel up out of
+     * {@code wristView} (the band's emitter, view space): it comes out of the wrist along the beams into its place.
      */
-    void place(float leave, Vector3f wristView) {
+    void place(float grow, Vector3f wristView) {
         ppu = choosePpu();
         float unit = ppu * ViewMath.metresPerPixel(dist);
-        // rest centre in view space and the turn that faces it to the eye
         float rx = thirdPerson ? Math.min(restX, -0.50f) : restX;
         float cx = rx * ViewMath.tanX * dist, cy = restY * ViewMath.tanY * dist;
-        float face = (float) Math.atan2(-cx, dist), tilt = (float) Math.atan2(cy, dist);
-        float l = anchor == Anchor.WRIST ? Math.max(0f, Math.min(1f, leave)) : 1f;
-        // the centre trails the camera on the spring; while leaving the wrist it slides from the band to there,
-        // starting laid back along the forearm and standing up as it goes
         v.set(cx, cy, -dist);
         rotateBySpring(v);
-        // it rises from just above the wrist: its bottom edge sits on the beam's tip and it grows upward, the pivot
-        // moving to its centre as it reaches rest
-        if (l < 1f) v.set(wrist.set(wristView).lerp(v, 0.12f + 0.88f * l));
-        float pivot = 1f - 0.5f * l;
-        m.identity().translate(v);
+        m.identity();
+        float g = anchor == Anchor.WRIST ? Math.max(0.02f, Math.min(1f, grow)) : 1f;
+        if (g < 1f) m.translate(wristView).scale(g).translate(-wristView.x, -wristView.y, -wristView.z);
+        m.translate(v);
         m.rotateY((float) Math.toRadians(-spring.yaw()));
         m.rotateX((float) Math.toRadians(-spring.pitch()));
-        m.rotateY((face + (float) Math.toRadians(turn)) * l);
-        m.rotateX((tilt - (float) Math.toRadians(lean)) * l - (float) Math.toRadians(28) * (1 - l));
+        m.rotateY((float) Math.toRadians(turn));
+        m.rotateX((float) Math.toRadians(-lean));
         m.scale(unit * sx, -unit * sy, unit);
-        m.translate(-w / 2f, -h * pivot, 0);
+        m.translate(-w / 2f, -h / 2f, 0);
         if (anchor == Anchor.WRIST) {
             beamFrom.set(wristView);
-            m.transformPosition(beamTo.set(w / 2f, h, 0));
+            m.transformPosition(cornerL.set(0, h, 0));
+            m.transformPosition(cornerR.set(w, h, 0));
         }
         // view → world, with vanilla's bob undone
         pose.set(ViewMath.VIEW_TO_WORLD).mul(ViewMath.UNBOB).mul(m);
