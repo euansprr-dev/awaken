@@ -1,0 +1,863 @@
+# Full-body cast clips (Player Animation Library, optional): every family, behind the caster, in front of it and
+# three-quarters on (the head turned 50 degrees off the body, so the camera sees the body from the side). Instant
+# powers are cast with their key, so prediction starts the clip at once; the earliest shot the autopilot can take
+# lands about 10 ticks in (_1, _q: the held follow-through), _2 about 14 (the recovery). Channels go through the
+# admin cast, which holds the wind-up. Run it twice: PACK=feel tools/autopilot.sh tools/autopilot/powers-fx-body.txt
+# (the clips) and plain (the vanilla poses).
+world powerfx creative 4242
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd clear @s
+cmd awaken admin power learn shockwave
+cmd awaken admin power learn haymaker
+cmd awaken admin power learn dash
+cmd awaken admin power learn gravity_flip
+cmd awaken admin power learn gravity_well
+cmd awaken admin power learn nova
+cmd awaken admin power learn barrier
+cmd awaken admin power learn echo_swap
+cmd awaken admin power learn foresight
+cmd awaken admin power learn floor
+cmd awaken admin power learn drone
+cmd awaken admin power learn railgun
+cmd awaken admin power learn mend
+cmd awaken admin power learn spirit_palm
+cmd awaken admin power learn ground_slam
+cmd awaken admin power learn hundred_palms
+cmd awaken admin power learn hover
+cmd awaken admin power learn decoy
+cmd tp @s 0.5 200 0.5 0 8
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd fill -12 200 -8 12 216 22 minecraft:air
+wait 40
+
+# shockwave: Kinetic cast
+cmd awaken powers equip 1 shockwave
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_b_shockwave_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_f_shockwave_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+wait 3
+shot body_f_shockwave_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power1
+shot body_f_shockwave_q
+
+# haymaker: Kinetic: the loaded punch held, then the release half
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast haymaker
+shot body_b_haymaker_1
+shot body_b_haymaker_2
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast haymaker
+shot body_f_haymaker_1
+shot body_f_haymaker_2
+
+# dash: Velocity: every dash plays the burst
+cmd awaken powers equip 6 dash
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key movement
+shot body_b_dash_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key movement
+shot body_f_dash_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key movement
+wait 3
+shot body_f_dash_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key movement
+shot body_f_dash_q
+
+# gravity_flip: Flight & Gravity cast
+cmd awaken powers equip 1 gravity_flip
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_b_gravity_flip_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_f_gravity_flip_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+wait 3
+shot body_f_gravity_flip_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power1
+shot body_f_gravity_flip_q
+
+# gravity_well: Flight & Gravity, aimed
+cmd awaken powers equip 2 gravity_well
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+shot body_b_gravity_well_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+shot body_f_gravity_well_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+wait 3
+shot body_f_gravity_well_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power2
+shot body_f_gravity_well_q
+
+# nova: Energy: the gather, then the thrust
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast nova
+shot body_b_nova_1
+shot body_b_nova_2
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast nova
+shot body_f_nova_1
+shot body_f_nova_2
+
+# barrier: Energy cast
+cmd awaken powers equip 1 barrier
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_b_barrier_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_f_barrier_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+wait 3
+shot body_f_barrier_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power1
+shot body_f_barrier_q
+
+# echo_swap: Shadow cast: a decoy first (Mind's clip), then the swap
+cmd awaken powers equip 1 echo_swap
+cmd awaken powers equip 2 decoy
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+wait 15
+key power1
+shot body_b_echo_swap_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+wait 15
+key power1
+shot body_f_echo_swap_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+wait 15
+key power1
+wait 3
+shot body_f_echo_swap_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power2
+wait 15
+key power1
+shot body_f_echo_swap_q
+
+# foresight: Mind cast
+cmd awaken powers equip 2 foresight
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+shot body_b_foresight_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+shot body_f_foresight_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+wait 3
+shot body_f_foresight_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power2
+shot body_f_foresight_q
+
+# floor: Architect cast
+cmd awaken powers equip 1 floor
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_b_floor_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_f_floor_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+wait 3
+shot body_f_floor_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power1
+shot body_f_floor_q
+
+# drone: Tech cast
+cmd awaken powers equip 2 drone
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+shot body_b_drone_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+shot body_f_drone_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+wait 3
+shot body_f_drone_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power2
+shot body_f_drone_q
+
+# railgun: Tech: locked on (held), recoil
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast railgun
+shot body_b_railgun_1
+shot body_b_railgun_2
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast railgun
+shot body_f_railgun_1
+shot body_f_railgun_2
+
+# mend: Spirit cast
+cmd awaken powers equip 1 mend
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_b_mend_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_f_mend_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+wait 3
+shot body_f_mend_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power1
+shot body_f_mend_q
+
+# spirit_palm: Spirit, a palm power
+cmd awaken powers equip 2 spirit_palm
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+shot body_b_spirit_palm_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+shot body_f_spirit_palm_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power2
+wait 3
+shot body_f_spirit_palm_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power2
+shot body_f_spirit_palm_q
+
+# ground_slam: slam: arms up, then fists into the ground
+cmd awaken powers equip 1 ground_slam
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_b_ground_slam_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+shot body_f_ground_slam_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key power1
+wait 3
+shot body_f_ground_slam_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power1
+shot body_f_ground_slam_q
+
+# hundred_palms: the flurry
+cmd awaken powers equip 5 hundred_palms
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key ultimate
+shot body_b_hundred_palms_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key ultimate
+shot body_f_hundred_palms_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+key ultimate
+wait 3
+shot body_f_hundred_palms_2
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key ultimate
+shot body_f_hundred_palms_q
+
+# armour: an iron chestplate and leggings. Bendable Cuboids bends the limb; does the armour bend with it or clip?
+cmd item replace entity @s armor.chest with minecraft:iron_chestplate
+cmd item replace entity @s armor.legs with minecraft:iron_leggings
+cmd awaken powers equip 1 shockwave
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast haymaker
+shot armour_b_haymaker_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast haymaker
+shot armour_f_haymaker_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+cmd awaken admin power cast haymaker
+shot armour_f_haymaker_q
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast nova
+shot armour_b_nova_1
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast nova
+shot armour_f_nova_1
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+cmd awaken admin power cast nova
+shot armour_f_nova_q
+camera front
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+wait 10
+look 50 8
+key power1
+shot armour_f_shockwave_q
+cmd item replace entity @s armor.chest with minecraft:air
+cmd item replace entity @s armor.legs with minecraft:air
+
+# hover: weightless: toggled on once, seen from behind and then in front
+camera back
+cmd fill -12 200 -8 12 216 22 minecraft:air
+cmd fill -12 199 -8 12 199 22 minecraft:smooth_stone
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,DeathLootTable:"minecraft:empty",Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 20
+look 0 8
+cmd awaken admin power cast hover
+wait 10
+shot body_b_hover_1
+camera front
+wait 5
+shot body_f_hover_1
+look 50 8
+wait 5
+shot body_f_hover_q
+
+quit
