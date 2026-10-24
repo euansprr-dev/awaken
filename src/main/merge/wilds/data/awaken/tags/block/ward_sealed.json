@@ -1,0 +1,23 @@
+{
+  "values": [
+    "awaken:precursor_plating",
+    "awaken:precursor_panel",
+    "awaken:precursor_trim",
+    "awaken:precursor_glow_panel",
+    "awaken:precursor_warning_light",
+    "awaken:precursor_void_glass",
+    "awaken:precursor_membrane",
+    "awaken:broken_machine",
+    "awaken:precursor_log_terminal",
+    "awaken:ruin_plating_cracked",
+    "awaken:ruin_plating_mossy",
+    "awaken:ruin_pillar",
+    "awaken:ruin_glyph",
+    "minecraft:polished_deepslate",
+    "minecraft:deepslate_tiles",
+    "minecraft:cracked_deepslate_tiles",
+    "minecraft:cobbled_deepslate",
+    "minecraft:polished_blackstone",
+    "minecraft:polished_blackstone_bricks"
+  ]
+}

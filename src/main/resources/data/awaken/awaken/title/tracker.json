@@ -1,0 +1,15 @@
+{
+  "name": "Tracker",
+  "description": "Learned where four beasts make their lairs.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:lairs_heard",
+    "value": 4
+  },
+  "perks": [
+    {
+      "id": "awaken:secret_glow_range",
+      "amount": 2
+    }
+  ]
+}

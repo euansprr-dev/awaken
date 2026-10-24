@@ -1,0 +1,28 @@
+{
+  "text": "I follow the lights.",
+  "hint": "Find three spirit caches and walk into three shimmer groves.",
+  "condition": {
+    "type": "all",
+    "of": [
+      {
+        "type": "counter",
+        "counter": "awaken:spirit_caches",
+        "value": 3
+      },
+      {
+        "type": "counter",
+        "counter": "awaken:groves_visited",
+        "value": 3
+      }
+    ]
+  },
+  "reward": {
+    "perks": [
+      {
+        "id": "awaken:secret_glow_range",
+        "amount": 3
+      }
+    ]
+  },
+  "min_rank": "E"
+}

@@ -43,10 +43,12 @@ Ruins are identified by their start chunk (`ruin:<x>,<z>`), the Well as `well`.
 - **The Scanner** (`above/scan/Scanning`): its sky sweep now hears the Well too ("Something deep calls from below."),
   merged with the ruins and sorted nearest first (the four nearest), and it skips ruins you have already walked into.
   Beeps rise as you face the one you're pointing at; the omen line names it with a rough distance and a compass point.
-- **The Now tracker** (`LandmarkNow`): the nearest landmark you haven't reached and have a reason to visit, as an idea
-  (priority 30): "The Well · 600 m SE" (ruins within 700 m, the Well within 1,500). One line at most; never at home inside
-  a Hearth (`HearthHooks.inside`), never in a gate; cached per player (10 s or 48 blocks). A landmark a shimmer grove's
-  spirit whispered about comes first, at 38, for 10 minutes: "Whispered: Sealed Vault · 420 m NW".
+- **The Horizon line** (`LandmarkHorizon`, SPEC §17; it was a Now line at priority 30, which gates and requests
+  outranked): every landmark you haven't reached and have a reason to visit is a site (ruins within 700 m, the Well within
+  1,500); the line shows the nearest one you can reach. A sky platform needs a way up (`HorizonHooks.WINGS`) instead of
+  level 20 and is only teased until you have one. Never at home inside a Hearth (`HearthHooks.inside`), never in a gate;
+  cached per player (10 s or 48 blocks). A landmark a shimmer grove's spirit whispered about is raised for 10 minutes:
+  "Whispered: Sealed Vault".
 - **The town's rumours** (`Landmarks.rumour(player)`): one line per landmark kind in Mira's voice ("A sealed bunker to the
   northwest, about 400 blocks. The door hums for some people. Not for me. The front room's open, though."), for the
   nearest landmark you haven't reached, have a reason to visit and haven't been told about; marks it told. **Needs the
@@ -104,8 +106,8 @@ nothing at all by day.
 
 `landmark_discovery_fires_once` (the Well, a gate theme, and a ruin through the real chunk-reference path with a
 structure start registered on the test chunk: each pays once), `landmark_scanner_points_at_nearest_unknown` (the Well
-is heard, nearest first, and goes quiet once reached; a visited ruin goes quiet), `landmark_now_line_gating` (no Well
-line at level 9, "The Well · 500 m SE" at 10, the rumour told once, the whispered line at 38, gone once reached),
+is heard, nearest first, and goes quiet once reached; a visited ruin goes quiet), `landmark_horizon_line` (no Well
+site at level 9, "The Well" at 10, the rumour told once, the whisper raised, gone once reached; the pick and its teases),
 `landmark_markers_and_light` (the light curves, markers only after awakening and within range, payload and memory
 round trips), `landmark_outer_caches` (every ruin kind has one outer cache, vaults' outside the door; the table always
 gives essence and a few useful things).

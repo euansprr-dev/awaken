@@ -60,6 +60,7 @@ public final class SignalClient {
         });
         event.register(SignalPayloads.Pending.TYPE, (msg, ctx) -> SystemHud.pending(msg.entries()));
         event.register(SignalPayloads.Now.TYPE, (msg, ctx) -> NowClient.accept(msg));
+        event.register(SignalPayloads.Horizon.TYPE, (msg, ctx) -> HorizonClient.accept(msg));
     }
 
     private static void onLayers(RegisterGuiLayersEvent event) {
@@ -74,6 +75,7 @@ public final class SignalClient {
 
     private static void tick() {
         NowClient.tick();
+        HorizonClient.tick();
         boolean c = classic();
         if (c != wasClassic) { // switched style in the settings: drop what the other one had on screen
             if (c) SystemHud.clearScreen();
@@ -89,5 +91,6 @@ public final class SignalClient {
         SystemHud.clear();
         RecentLog.clear();
         NowClient.clear();
+        HorizonClient.clear();
     }
 }

@@ -52,6 +52,13 @@ public final class ProgressionModule {
             .sync((holder, to) -> holder == to, Profile.STREAM_CODEC)
             .build());
 
+    /** Where this player's XP came from, by source (SPEC §17 telemetry; read by /awaken xp, never synced). */
+    public static final Supplier<AttachmentType<XpLedger>> XP_LEDGER = ATTACHMENTS.register("xp_ledger", () -> AttachmentType
+            .builder(XpLedger::new)
+            .serialize(XpLedger.MAP_CODEC, l -> !l.isEmpty())
+            .copyOnDeath()
+            .build());
+
     /** Fraction of stats lost to the Strain of climbing (set by the Descent, decays over time). */
     public static final Supplier<AttachmentType<Double>> STRAIN = ATTACHMENTS.register("strain", () -> AttachmentType
             .builder(() -> 0.0)
@@ -86,6 +93,14 @@ public final class ProgressionModule {
             Lessons.forgetAll();
         });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> Lessons.forget(e.getEntity().getUUID()));
+        bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
+            // playtests: where the session's XP came from, for tools/playtest/report.py
+            if (!(e.getEntity() instanceof ServerPlayer sp) || !dev.awaken.core.Playtest.enabled()) return;
+            com.google.gson.JsonObject o = new com.google.gson.JsonObject();
+            Progression.xpLedger(sp).bySource().forEach((k, v) -> o.addProperty(k.name().toLowerCase(), Math.round(v)));
+            Progression.xpLedger(sp).world().forEach((k, v) -> o.addProperty("world/" + k, Math.round(v)));
+            dev.awaken.core.Playtest.log(sp, "xp_sources", o);
+        });
         bus.addListener(RecipeUnlocks::onPlayerTick);
         LevelRoad.init();
         // Truths wait for level 5 (plan v2 §4.6). Players awakened before v2 already hold theirs: never a second set.

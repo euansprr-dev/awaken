@@ -39,6 +39,7 @@ Hard rules:
 | `world` | shared overworld worldgen hooks (biome modifiers, structure sets) used by descent/above/story |
 | `body` | the Awakened Body: soft landing, tactical sprint, slide, mantle; momentum hits and trips; `core.api.MovementHooks` |
 | `terrain` | Awakened Lands (§15): the biome table, Awakened biomes and their placement, trees, ground cover, wind and falling leaves, biome looks and sound, the terrain studio commands |
+| `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -261,7 +262,8 @@ then New Game+ "Ascension" tiers.
 ## 11. Config (`awaken-common.toml` / server)
 
 difficulty: STORY | HUNTER (default) | HARDLINE | HARDCORE · storyLength: 0.5 | 1.0 | 1.5 · features: gates, descent,
-lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed · playtestMode (off).
+lucidium, veil, above, hearth, story, anomalies, landmarks, wards, wilds (bools) · cameraShake · signalTypeSpeed ·
+playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the rest of `AwakenConfig.Client`.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -304,7 +306,11 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
-  Animation Library is installed; a no-op otherwise).
+  Animation Library is installed; a no-op otherwise). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
+  movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
+  `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
+- `dev.awaken.progression.Progression.xpLedger(player)` — XP by `XpSource` and by world-XP source key (§17 telemetry).
 - `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
   glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
   installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
@@ -321,6 +327,8 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   sends any `AvatarRenderState` to the vanilla player renderer chosen by `state.skin`, so the entity's own renderer
   extracts the state and then never draws it: its texture, tint, translucency, scale and layers are all lost (the
   townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
+- Carillon hooks (§16.9, v0): `CityHooks`, `CitizenHooks`, `RenownHooks`, `EconomyHooks`, `PartyHooks`, `OpeningHooks`,
+  `AtlasHooks`. Defaults behave as a classic world with no city.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -488,8 +496,9 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
   synced to its owner).
 - The Gate Map marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
   named by the Now tracker.
-- The Now tracker names the nearest unreached landmark once there is a reason to go (Well from level 10, vault and
-  monolith 4, spawn vault 2, ocean lab 6, sky platform 20); never inside a Hearth or a gate. Mira tells one landmark
+- The Horizon line (§17; until then the Now tracker) names the nearest unreached landmark once there is a reason to go
+  (Well from level 10, vault and monolith 4, spawn vault 2, ocean lab 6; a sky platform once you have a way up, teased
+  before); never inside a Hearth or a gate. Mira tells one landmark
   rumour a day when no gate is worth one (`core.api.WorldHooks.landmarkRumour`).
 - Faint light shafts over ruins at dusk (fainter at night) and the Well's pillars at night, within 288 blocks; nothing
   by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
@@ -565,6 +574,7 @@ Plan v2 · power targeting and visuals (details in docs/modules/powers.md, power
   clip puts them.
 
 Awakened Body (module `body`, docs/modules/body.md; approved 2026-10-24, widened the same day):
+- (Superseded by §16.0.1 when the Carillon Runner workstream lands: everyone moves like a Runner and ranks improve moves.)
 - Unlocks: awakening → soft landing + tactical sprint; D → slide; C → mantle. Never-awakened players move like vanilla. Each
   unlock is one toast in the same tick as the awakening or rank-up (it joins that burst), remembered in `awaken:body_memory`
   (schema 1, kept through death); old saves hear theirs once after login. Status › THE BODY lists the moves you have.
@@ -1280,6 +1290,219 @@ The Veil, the Lucidium and the rest:
 - Statics cleared on server stop: Echo duty bookkeeping, breaks near Hearths, Bodies' owed deaths, Hearth offers and
   invitations, throttles, queued region erasures.
 
+---------------------------------------------------------------------------------------------------------------------
+
+## 16. Carillon (the walled city, the opening run, MMO-lite; plan in docs/plan-carillon.html, approved 2026-10-24)
+
+Euan approved the plan on 2026-10-24 with every recommendation ("Go with all recommendations and the full plan"), and
+confirmed the movement change in the same message ("ranks improving the moves … everyone a 'Runner' from the first
+second … the Wall Run power becomes 'Wall Stride'"). Revised the same day for a lean build (docs/plan-carillon-lean.html,
+decisions 14–19). Stage 0 closed at gate G0 on 2026-10-24; the measured values replaced the provisional ones (G0 marks
+below now cite what was measured; details in docs/carillon/spikes/G0-notes.md).
+
+### 16.0 Decisions (approved)
+1. The Runner's Kit works from the first second; ranks improve moves instead of unlocking them; Wall Run → Wall Stride;
+   server option `runnersKit=false` restores vanilla movement (supersedes the §13 Awakened Body "Unlocks" rule and
+   docs/modules/body.md "grounded moves only" once W2 lands).
+2. Carillon sits at world spawn in **new worlds only**. World option "Classic start" = wild spawn, no opening (today's
+   prologue). Existing worlds never change.
+3. One designed Carillon: the same layout in every world; seeds vary details only (laundry, flower boxes, lit windows,
+   stock).
+4. Friends start together at the Runners' Roost. Stragglers: the gate reaches for a player 5 min after the first
+   arrival, or after 2 min idle.
+5. The Association board shows 3 notices at a time.
+6. Civic blocks are protected; your own plots are free; server option `cityProtection=false`.
+7. Citizens are hurt, never killed permanently; they recover at the infirmary.
+8. Hearth townsfolk (Oren, Mira, Teodor, Sun) live in Carillon first; at Trusted renown each can move to your Hearth.
+9. Map: our own Atlas on the Holo. Diorama may join the pack as an optional client trial; Xaero's leaves the pack plan
+   when the Atlas ships.
+10. Third person: vanilla's behind view plus our View key (flips first ↔ third, skips the front view); the shoulder view
+    (mixin or Shoulder Surfing) is decided at gate G1.
+11. Wall-run camera roll 5° by default, client option 0–7.5°.
+12. The forked planning session ("btw: kind of a side question…") is the orchestrator; docs/carillon/STATUS.md lets a
+    fresh session take over at any gate.
+13. pack/ritual, pack/body-anims, pack/holo-ui and pack/awakened-lands merge into build/awaken-v1 first; Carillon
+    workstreams branch from carillon/main rebased on that. Stage 0 spikes are throwaway and start at once.
+Added for the lean build (approved by Euan, 2026-10-24):
+14. Stage 0 is closed with its verdicts (S1 adjust, S2 go within limits, S4 go, S5 go and build our own, S6 done).
+15. The Runner's Kit moves to The Ascent (docs/plan-ascent.html), which builds all movement once; §16.3 is Carillon's
+    requirement for the run, and spike S3 (carillon/spike-runner) is the Ascent's starting point.
+16. MMO-lite (§16.6–16.7 beyond witnessing) is deferred until the opening, the city, its people and the Atlas ship.
+    Party gates and shared credit already landed through `PartyHooks` (see "Together").
+17. One builder at a time, a fresh session per milestone, briefed from a file; the Carillon session reviews each diff
+    and merges into carillon/main; each playable milestone merges into build/awaken-v1 through the pack session.
+18. Models: Opus at extra-high effort for everything that decides the look or the feel (the city's plan, painter,
+    grammar, landmarks and detail kit; the opening; citizens' visible life; the Atlas; art direction). Sonnet for data,
+    generators (tools/city/), tests, docs and reports.
+19. Tests: GameTests only where breakage is silent, on GitHub CI (push carillon/* branches); locally only a builder's
+    own prefix (-Ptests=<prefix>). One short `slot.sh light` screenshot tour per milestone. Perf once, at the end of
+    Detail. Euan's three play sessions (the opening in blockout, the city alive, the detail) are the quality gate.
+20. Order (Euan, 2026-10-24, via the pack session: "Sounds good. Do that."): if M1 finishes before the Ascent's Runner
+    tier is on build/awaken-v1, M3 (Alive) runs next; M2 (the opening in blockout) starts as soon as the Runner tier
+    lands. Still one builder at a time.
+
+### 16.1 Modules (new packages; same module rules as §1)
+| Module | Owns |
+|---|---|
+| `city` | the authored plan (`data/awaken/city`), per-chunk painter, building grammar, Carillon kit blocks, street and roof graphs, pregeneration, civic protection, spawn placement, `CityHooks` |
+| `citizens` | ledger SavedData, bodies (embodiment), jobs and schedules, city events, job clips, `CitizenHooks` |
+| `opening` | sky camera, run director, arrival (solo/party wait), infirmary wake, Registry scene, skip; new `StoryProgress` states appended; `OpeningHooks` |
+| `renown` | witnessing, gossip, tiers, factions, broadsheet; `RenownHooks` |
+| `economy` | coin (bell marks), shops, Hunter Exchange (escrow), contracts board, housing plots; `EconomyHooks` |
+| `guild` | parties, guilds, halls, Rooftop Circuit, Wall Breach; `PartyHooks` |
+| `atlas` | discovery (server bits), client tile cache, diorama renderer (picture-in-picture), clouds, markers; `AtlasHooks` |
+`body` (W2) adds the Runner's Kit; `powers` turns Wall Run into Wall Stride with its owner; `gates` uses `PartyHooks`
+for sealing and shared rewards; `story` hands the Ritual's end to `opening` in Carillon worlds.
+
+### 16.2 The city
+- Wall about 480 blocks across (radius 240), ~40 high, 10 thick, walkway on top, 24 towers, 4 gatehouses (High Gate N,
+  Dawn Gate E, Mill Gate S, the river gates). Districts: Choir Square + Market Ward (centre; Choir spire ~140 tall),
+  Bellwatch (W, old town), Lantern Quay (the river), High Terrace (N; the Hunter Association, Registry, infirmary,
+  archive, training yard), the Works (S), Garden Ward (E), the Wallring (edge; the Runners' Roost on the NW wall).
+- ~700–900 buildings from the grammar, ~12 hand-made landmarks, ≥ 60 enterable buildings (every building on the run's
+  routes, every shop, taverns, the Association).
+- Generator: authored plan → per-chunk painter (`GatePainter`/`Sink` pattern; each chunk builds only the pieces that
+  touch it) → grammar fills plots (seed varies details, never shape). The same pass writes the street graph and the roof
+  graph (edges carry the move they need; door and stair links). Plan hash checked by GameTest.
+- Placed only in vanilla blocks + the Carillon kit (~35 blocks of our own); no third-party blocks.
+- Decided in M1 (2026-10-25): Choir Square sits at the plan's centre with the Choir on its north edge; the High Terrace is
+  raised 8 blocks (five stairs up); the river has a lower quay at y 66 above water at y 63, with ladders; gatehouses at
+  N, E and S plus two water gates, 24 tower places; fields outside the wall only in carved (basin) worlds; the street
+  graph, roof graph and the opening's street route are generated with the plan (tools/city/plan.py → data/awaken/city/
+  plan.json, schemaVersion 1, hash pinned) and copied into SavedData `awaken:city` at creation; "civic" means
+  everything inside the wall; `respawn_radius` 0 in Carillon worlds (you respawn on the Roost); the pregen covers the
+  painted area plus 2 chunks (1,708 chunks, ~14–15 s with Tectonic + Lithostitched); the spawn vault ring moves to
+  402–522 blocks round the city. Carillon is on by default in new worlds through a built-in pack that requests
+  `awaken:carillon`; turning it off on the Data Packs screen is the Classic start. Until M2, the prologue opens its
+  Bell Crypt gate in Choir Square in Carillon worlds (CityHooks.square).
+- Climbable language: bronze trim, dark beams and drainpipes can be held; plain plaster and glass can't.
+- Pregenerated at world creation (~1,250 chunks, ≤ 30 s on a quiet M4; G0 measured 11–28 s for terrain + city, the
+  city 2–5% of it; Distant Horizons holds its LOD building until the pregen ends) behind the opening card; graphs saved
+  with the world; generator changes never touch a built city.
+- Drawing (G0, spike S1: a 480-block city sits inside RD 16 from anywhere in it, so all of it is always drawn): houses
+  have solid cores (dark fill behind windows, sealed attics) except the ~60 enterable buildings; geometry density
+  varies by district (dense only where the run needs it); the painter writes straight into chunk sections (never
+  setBlock), sets pane/fence/stair connections itself, keeps pieces ≤ 14×14 with a 2-block margin, places no block
+  entities in bulk and ≤ 4–5 light sources per chunk.
+- Terrain (agreed with Awakened Lands, 2026-10-24): `dev.awaken.terrain.api.CityBasin` picks the site deterministically
+  from the seed at server start (land within ~1,500 of the origin) and flattens it: `CitySite(x, z, coreRadius 330,
+  blendRadius 700, streetY 70, riverPath, basinCarved)`; `CityBasin.site(server)`, `CityBasin.reserved(x, z)` (core + 48,
+  allocation-free). It needs Lithostitched (pack world profile); without it `basinCarved` is false and the painter
+  flattens its own ground. Gated by the feature flag `awaken:carillon` (Classic start leaves it off; old worlds never
+  have it). The river inside the core follows the city's fixed path (offsets from the site centre, north = −z). Terrain
+  keeps lairs, ruins, hero trees and biome features out; Carillon wires runtime systems (gate Director, anomalies,
+  landmarks, the spawn vault ring, the Well) to `reserved()`. Spawn is placed in the city by Carillon through
+  `LevelEvent.CreateSpawnPosition`; terrain never sets spawn.
+
+### 16.3 The Runner's Kit (built by The Ascent; Carillon's requirements for the run)
+- G0 handover from spike S3 (carillon/spike-runner, report docs/carillon/spikes/S3-runner.md there): every move works
+  on the body framework; checking a claimed start against the server's last 12 positions (not the current one) gave zero
+  rubber-banding at 150 ms; the wall-run trigger must be a jump PRESS, not held (held fires off any 1-block step beside a
+  wall); hangs reached from below need the server-Y fix (0.58 low after an upward approach).
+- No new keys: sprint, jump, sneak and movement keys only. Moves are appended at the end of `Move` (saved ordinals).
+- Wall-run: sprint + jump along a wall within 35° of parallel, ≥ 1.5 blocks above ground, wall ≥ 2 tall. 35 ticks:
+  10-tick grip (vertical target +0.06 easing to 0), then the target eases (smoothstep) to −0.26 b/t (approach 0.35 per
+  tick); ends ~2 blocks lower after ~11 blocks. Never the same wall twice before landing. Ends when a screen opens.
+- Wall jump: jump during a run: +0.42 up, 0.5 out; landing on another wall starts a run 80% as long; 4 links before
+  you must land.
+- Ledge hang: airborne toward a ledge whose top is 1.2–2.4 above the feet, or sneak at an edge with a drop ≥ 4. Holds
+  indefinitely (sprint-rate hunger); holds while a screen is open. Server checks a solid edge with headroom; hanging
+  cannot trip the floating kick (`noBlocksAround`, verified).
+- Shimmy 1.6 b/s along a continuous edge (turns outside corners). Ledge jump: up ≤ 2.5, sideways ≤ 3 (left/right
+  held), back off the wall; climb out when open above.
+- Jump help: 3 ticks coyote time, 4-tick early-press buffer, edge snap ≤ 0.3.
+- Ranks: D wall-run 40 ticks; C 5 links; B shimmy 2.2 b/s, ledge reach +1; cooldowns of tactical sprint and slide
+  shorten by rank (W2 sets the table here).
+- Wall Stride (replaces the Wall Run power, rank-D passive): 80 ticks, grip 50 (target +0.04), then sink to −0.14;
+  short vertical runs; works on glass and leaves.
+- Camera roll on a wall: 5° default, client option `wallRunRoll` 0–7.5.
+
+### 16.4 The opening (W3)
+- New `StoryProgress` states are appended after the existing ones; players already at DONE never see the opening.
+- Beats: card (city generates) → bells at dawn → sky (≤ 25 s from join to control; skippable after first view by holding
+  jump 1 s) → into your eyes (first-run choice of first/third person) → the bell rings wrong (light column in Choir
+  Square; no waypoint) → the run (3 acts; 3 routes each; street route always ≤ 30 s away) → arrival (solo: 12 s
+  cinematic; party: hold in the square, cinematic 3 s after the last arrival; stragglers per 16.0.4) → the Ritual
+  (approved proposal; the gate opens in the square via `GateHooks.openScripted`) → the Void → the infirmary → the
+  Registry (licence E-rank, the Holo wristband, the Atlas opens with the run revealed, first Directive) → free play.
+- No death in the opening (falls leave ≥ 1 heart). Relog at any beat resumes it. `/awaken opening skip`.
+- Camera (G0, from spike S2): one client-only `OpeningCamera` on the marker entity type, never added to the level,
+  carrying the player's eye height, set through `Minecraft.setCameraEntity` and placed every frame from
+  `ViewportEvent.ComputeCameraAngles` at LOWEST priority (no mixin). Hands and the player's own name tag are hidden and
+  the mouse is held (`CalculatePlayerTurnEvent`). One `finish(reason)` path restores the player as camera on
+  completion, skip, camera taken, logout, clone or any exception. The server owns the timeline and sends one message
+  with the start age (a relog resumes mid-flight); the player is never dragged along. The camera stays within ~215
+  blocks of the player, below y 320 and at most ~200 above the ground; the shot flies over the north-west half looking
+  south-east across the spire, and Distant Horizons (or fog, Lens haze and clouds) carries the far half. The first
+  flight is pre-warmed behind the opening card. Life seen from the sky is blocks and particles (lit windows, smoke,
+  lamps, boats): citizens draw only within 128 blocks.
+
+### 16.5 Citizens (W4)
+- Ledger: 240 records, sliced 12 per tick; ≤ 0.5 ms/tick (G0: p95 0.015–0.04 ms in game). Bodies within ~56 blocks: ≤ 40 per player, ≤ 96 per
+  world; walk the street graph; brains tick every max(1, d²/256) ticks; ≤ 4 pathfinding at once; ≤ 1.5 ms/tick.
+- Movement (G0, from spike S4): bodies are never saved (the ledger is the truth); they walk the street graph on
+  keep-right lanes with no vanilla goals, using vanilla pathing only for the last few blocks or to get unstuck; they
+  always return to the street node before the next edge; they stand on reserved spots sized to each station's staff;
+  they leave early by route distance. Path slots: 4 at once, 6 above ~60 bodies in a world, walk straight after 2 s
+  without one. Route tables are baked per destination on first use. Rescue teleport after 10 s stuck, only out of every
+  player's view. Spawn at 56 blocks, remove past 64, ≤ 8 spawns per 10-tick pass. Witness line-of-sight checks run per
+  event or in the ledger, never per tick. Rendering uses `core.client.skin.SkinnedMobRenderer` + `SkinRenderState` (never AvatarRenderState).
+- 12 jobs (lamplighter, bellringer, porter, stallkeeper, baker, smith, watch, crier, boatman, washer, mason, runner);
+  schedules on the vanilla day clock, seeded per citizen.
+- Events per play-day budget: burglary ~1 (night; thief flees on the roof graph), pickpocket 0–2, fire ~1/5 play-days,
+  runaway cart rare, gate tremor from D-rank, Bell Festival every 10 play-days. Each resolves with or without the player;
+  consequences are world state (patent rule).
+
+### 16.6 Renown (W5)
+- A deed counts only if witnessed (citizens with line of sight within 24 blocks). Gossip spreads once per play-day
+  through households, workplaces and taverns, with decay. Tiers: Stranger, Familiar face, Known, Hunter of note, Hero of
+  Carillon, Legend (thresholds set by W5 from the pacing sim). Factions: Association, Watch, Merchants' Guild, Runners'
+  Guild, Commons; shown on the Holo only after registration and only once met. Bad deeds count.
+
+### 16.7 MMO-lite (W5, W7)
+- Contracts: 3 notices at a time, for your rank and known places only; one taken → a new one next play-day; no expiry.
+- Coin (bell marks), shops stocked by the city's jobs, the Hunter Exchange (escrow; one place at a time), housing (the
+  Roost room from the start = respawn; townhouse plots; guild halls), parties (shared gate entry, credit, Atlas pins),
+  guilds (local to the server), Rooftop Circuit (Training ghost reused), Wall Breach (B-rank set piece, never while
+  nobody is there). Rewards pay once per claim id. Prices hold ±30% over 100 simulated play-days.
+
+### 16.8 Atlas (W6)
+- Server keeps what each player explored: 1 bit per 16×16 cell (attachment, schemaVersion); clears ~64 blocks around
+  the path; a district's bell tower clears the district, the Choir spire the city. Party sharing on request.
+- Client tile cache `<game>/awaken/atlas/<world>/<dim>/` (height + top colour per column; versioned; ≤ 64 MB, oldest
+  first; "Clear Atlas cache" button).
+- Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); wrist glance cached on the Holo.
+  ≤ 2 ms/frame open, ≤ 150 ms to open, glance ≤ 0.3 ms. Markers only for what the player knows.
+
+### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
+- `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
+  `startPoint(ServerPlayer)`, `square(Level)`. Graph types are added at G1.
+- `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
+- `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
+  Identifier faction)`.
+- `EconomyHooks`: `balance(Player)`, `pay(ServerPlayer, long, Identifier claimId)` (once per claim), `charge(ServerPlayer,
+  long)`.
+- `PartyHooks`: `members(Player)` (includes the player), `sameParty(Player, Player)`.
+- `OpeningHooks`: `inOpening(Player)`, `stage(Player)`, `skip(ServerPlayer)`.
+- `AtlasHooks`: `reveal(ServerPlayer, BlockPos, int radius)`, `explored(Player, BlockPos)`.
+- `MovementHooks` gains `wallRunning`, `hanging` (W2 adds them).
+
+### 16.10 Budgets
+- Perf profile, RD 16, busiest market at noon: p50 ≤ 10 ms (platform 5.3 measured + city blocks ≤ 2.8 with solid cores
+  and district density (G0 measured +2.1–3.5 on a loaded machine) + 40 citizens ≤ 1.2 (G0 measured) + signs of life 0.4
+  + Holo 0.3); rest of the city ≥ 110 fps p50. Measured once, quiet, at the end of Detail. Horizon-swift: city ≤ +3 ms over the same spot
+  without it. Golden run p99 ≤ 20 ms, no frame > 50 ms. Sky shot ≥ 60 fps p99. Server: whole city ≤ 2.5 ms/tick avg;
+  tick p95 ≤ 25 ms holds.
+
+### 16.11 Process
+- Milestones (lean, decisions 14–19): M1 the city in blockout → M2 the opening in blockout (after the Ascent's Runner
+  tier lands; Euan's play 1) → M3 alive (Euan's play 2) → M4 detail (perf; Euan's play 3) → M5 the Atlas → later
+  MMO-lite → polish. Each playable milestone merges into build/awaken-v1 through the pack session.
+- Branches: carillon/main (integration), carillon/m<N>-<name> per milestone, carillon/spike-<name> (never merged).
+  Briefs in docs/carillon/briefs/, status in docs/carillon/STATUS.md, spike reports in docs/carillon/spikes/.
+- Machine share: Carillon agents run Gradle and tours through `tools/carillon/slot.sh` (≤ 3 builds at once; a tour runs
+  alone with no Carillon build beside it).
+
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -1437,7 +1660,162 @@ is what the Ascent decided while building it.
   option off, riding or spectating are refused with `AscentPayloads.Stop`, and the client lets go (a refused rope
   becomes the carry: never a yank back).
 
-(§17.4 is the Wilds' and §17.5 the Gate Rig's: docs/ascent/briefs/.)
+### 17.4 The Wilds (plan §6; module `wilds`, first part: what doesn't wait on the movement tiers)
+
+Precursor wards (`wilds.ward`, config `features.wards`):
+- A site in the structure tag `#awaken:warded` (vaults, the spawn vault, ocean labs, monoliths) has a ward: its structure
+  box grown by 12 blocks on every side. `#awaken:warded_sky` (sky platforms) reaches 48 further down, so a tower stalls
+  well under the deck. New structure sites (Tether Spires) join a tag; sites placed by code (hero-tree caches) register
+  a `core.api.WardHooks.Source`. Existing ruins have wards at once: the box comes from the saved structure start.
+- Inside a ward, outside every Hearth's radius, a block a survival or adventure player places crumbles 3 s (60 ticks)
+  later: still the same block, it is removed (water stays where it was waterlogged) and the item that placed it goes back
+  to them (inventory, else at their feet; if they left, where it stood). Containers drop what was put in them, as
+  breaking would; a shulker box keeps its contents in the returned item. Creative and spectators build freely. The first
+  ward block a player places teaches it with a toast (flag `awaken:ward_noticed`). Pending crumbles all crumble when the
+  server stops; a block whose chunk unloaded first stays.
+- Inside a ward a block in `#awaken:ward_sealed` (every Precursor building block plus the deepslate and blackstone
+  dressing ruins build with) can't be broken by a player, an explosion or a piston (pistons inside a ward never move).
+  The vault's sealed chamber is enclosed in those blocks, so a rank door can't be dug around. Natural ground still digs.
+- Its own look and sound, never vanilla: `awaken:ward_spark` (a thread of the Signal's #7FC3FF light) and `awaken:ward_grain`
+  (a chip tinted by the block's map colour), built on the client from one `ward_fx` event (mark, crumble, hold); sounds
+  `wilds.ward_mark`, `wilds.ward_crumble`, `wilds.ward_hold` (tools/art/specs/audio_wilds.py; sprites tools/art/specs/wilds.py).
+
+How you arrived (`wilds.arrival`, behind `core.api.ArrivalHooks`; config `features.wilds`):
+- Every tick the server reads each player's way of moving; a quarter second keeps its most telling way (in `Way` order:
+  STILL < WALK < SPRINT < SWIM < CLIMB < RIDE < AIRBORNE < POWER < ASCENT < BUILT) and 80 of them (20 s) are kept.
+  BUILT: standing on (any corner of the feet) or climbing a block the player placed in the last 10 minutes (last 512
+  placements). POWER: 2 s after a cast of a movement-slot power, a dash or Hover, and every tick Flight or Hover runs.
+  ASCENT is for the movement tiers to report. Nothing is saved.
+- A visit: stepping into a ward opens it with the window's verdict (no BUILT in the 20 s that led there); a BUILT sample
+  while inside spoils it; it ends after 5 s outside. Outside any ward the window is the verdict. No record: movement.
+- `awaken:arrived_by_movement` (loot condition, the chest's opener) gates a site's best roll. Route records and Flow XP
+  pay through `ArrivalHooks.byMovement` too when they land.
+
+The Horizon line (`core.api.HorizonHooks`; signal `HorizonSync`, `TrackerHud`):
+- A second HUD card under the Now tracker (or in its place), in the Horizon's pale sea-green (#9FE6D6), drawn through
+  `HudLook` (the calm FRAME card with the projected look): "△ Sealed Vault  ↗ 420 m". Its own client setting
+  `horizonLine`; nothing in the Now tracker (gates 45, requests 42, unspent points 55) can take it.
+- Sources list the sites near a player; each names a need (empty: on foot; `wings` for the sky). The line is the nearest
+  site the player can reach (`Reach` answers: the Flight power, a Frame with Jet Boots and essence; later the tiers),
+  a raised one (a spirit's whisper) first. A tease (the nearest site they can't reach: "Sky Platform · needs Wings",
+  dimmer, the need in amber) takes the line 15 s in every 5 minutes, staggered per player. Synced every 40 ticks when
+  changed; the client draws the compass.
+- Landmarks moved from the Now tracker (priority 30) to the Horizon line: the same reason-to-go levels, except a sky
+  platform waits for its need instead of level 20 (teased until then). Never inside a Hearth, never in a gate.
+
+Discovery that pays:
+- Biome discoveries: the first time an awakened player stands in a biome of a vanilla dimension (overworld, Nether,
+  End), `Progression.discover("biome/<ns>/<path>", 0.1)`, a toast with the biome's name, counter
+  `awaken:biomes_discovered`. Checked every 2 s per player, only when the biome underfoot changed.
+- `awaken:lairs_heard` counts each beast kind whose lair a player learns (`awaken:lair_heard/<beast>` stays the flag).
+- The counters that fed nothing now feed content (data/awaken/awaken/): Truths `i_go_where_the_map_ends` (8 landmarks),
+  `i_close_what_tears_open` (5 rifts), `i_follow_the_lights` (3 spirit caches + 3 groves), `i_read_what_they_left` (8 logs +
+  a door, from D), `when_the_sky_falls_i_am_there` (3 stars + a guardian); Titles Wayfarer (12 biomes), Cartographer (15
+  landmarks), Riftwarden (10 rifts), Starcatcher (5 stars), Star-Hunter (3 guardians), Grove-Keeper (8 groves), The
+  Spirits' Guest (5 caches), Anomalist (20 anomalies), Lorekeeper (12 logs), Keybearer (4 doors), Tracker (4 lairs heard);
+  eleven exploration directives (a new landmark, two new biomes, a rift, a star, a star's guardian, a procession, a grove,
+  two anomalies, a log, a door from D, a lair heard of).
+- Sky platforms have their own table `chests/precursor_sky`: charged essence cells, alloy, wind charges, phantom
+  membranes, feathers, slow falling, ender pearls, Jet Boots (4 in 105), a little diamond; never the ground vaults'
+  scrap, redstone, copper or other Frame modules. Its best rolls (by movement only): 2 Power Core Shards always, then a
+  1000-essence cell or Jet Boots (8 in 12). The vault, monolith and ocean lab tables each gain a best roll of 1 shard.
+
+Telemetry: `Progression.grantXp` records every grant (after scaling) in the player's `awaken:xp_ledger` (schema 1, saved,
+kept through death, not synced) by `XpSource`, and world XP again by its own source key. `/awaken xp` prints the split;
+with `playtestMode` each logout writes it to playtest.jsonl (`xp_sources`). XP banked before awakening shows as STORY.
+
+Tests: `wilds_ward_rules`, `wilds_arrival_history`, `wilds_discovery_pays`, `landmark_horizon_line`, and the Horizon box
+in the System's layout test.
+
+### 17.5 Gate Rig (gates, plan section 7 "Gate rooms: the room is the puzzle"; branch pack/gate-rig)
+
+A small layer under the painter that gives a room a staged timeline. Pure geometry in `gates.world` (`RigRoom`,
+`RigRooms`, `RigCollapse`, `RigMirrors`, `RigWells`, `RigBeam`), shared by the painter, the server and the solvability
+checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's director.
+
+- **Content version 4** (`GatePlan.CONTENT_VERSION`): each ordinary floor (never the Lord's floor or the ritual hall) of
+  a theme with an archetype gets one rig room. Ember Mines, Glass Desert, Bell Crypt: Collapse Run. Mirror Palace:
+  Mirror Hall. Precursor Lab: Mirror Hall or Gravity Wells (per floor, by hash). Sky Archipelago, Nightmare: Gravity
+  Wells. The room is a NORMAL or ELITE room on the critical path (not the start or the end), at most 2x2 slots, every
+  door at its floor; the biggest that fits, ties by the room's seed. It loses its set piece and becomes RECT. Every
+  choice is a per-room hash after the version 3 rooms are built, never the builder's random stream: version 3 plans
+  build exactly as before, and in a version 4 plan every room without a rig is what version 3 built. READY gates
+  nobody entered rebuild on version 4 at start, as for every version bump.
+- **The model:** a *group* is a set of blocks swapped together between their painted (rest) state and an active state
+  (a group with no blocks is a flag the archetype reads); a *track* is a timeline of beats (WARN, APPLY, RESTORE) on
+  groups, looping or not; a *trigger* starts a track: a player in a box (ZONE, PLATE), the light reaching a block
+  (BEAM) or a fight in the room (ENCOUNTER: its monsters alive). A once trigger latches for good; the others fire again
+  after their track ends and their cooldown passes.
+- **The director** runs every tick for rig rooms with someone in them or with a track running. Beats play by elapsed
+  game time, everything between two ticks in order (catch-up after lag, up to 8 loops a tick). A RESET track whose
+  room empties (or a fight's track when the fight ends) stops and puts back every group it changed; KEEP tracks play
+  on. A block that rises back (RISE) or a mirror that swings (SPIN) is drawn by the client first and placed after
+  6 or 5 ticks, never inside a player (it waits for them to step off).
+- **Saved:** `FloorState.rig` (`RigState`, schema 1): per rig room the tracks running (start time, last tick played),
+  the groups applied, the latched triggers and when the others may fire again; the floor's cave-in waves. Blocks are
+  saved with their chunks. After a start, rooms saved mid-track come back to life and finish or reset. Positions
+  and states follow from the plan, so a relog or a restart continues exactly.
+- **What the client sees:** `gate_rig_scene` (the rig rooms of your floor: lenses, seals, wells, whether a room surges;
+  sent on arrival, login and leaving) and `gate_rig_cue` (one moment: WARN, FALL, RISE, SPIN, SHATTER, IGNITE, DROP,
+  SURGE, PIT, CAVE with cells and block states), sent to everyone within 96 blocks. Moving blocks are drawn with the
+  game's own block models (`submitMovingBlock`), light with the rig's render type `awaken_rig_light` (additive,
+  depth-tested, no depth write, the lightning shaders with their improved-transparency set; cores near white so Lens
+  blooms them; vanilla lightning if the pipeline fails). Own particles only: `gate_rig_grit`, `gate_rig_spark`,
+  `gate_rig_glint`, `gate_rig_shard`, `gate_rig_mote`. Own sounds `gate.rig.*` (tools/art/specs/audio_rig.py).
+- **Collapse Run:** the room is a pit (its floor at the band's bottom, 4 below the room's floor: magma in the Ember
+  Mines, sand in the Glass Desert, void glass in the Bell Crypt) crossed by a 4-wide causeway along the two door axes
+  (only rooms with exactly those two doors). Rows are steps along it from the entry; 2 rows at each end are landings
+  that never fall. Stepping onto the first falling row from either end starts that direction's run: row k falls at
+  lead + (k - 2) x beat (beat 5 ticks at E and D, 4 from C; lead 24 / 20), its cracks glowing 10 ticks before.
+  Bridges (2 rows, from D, never at E) drop for 12 ticks (16 from B) at the end of every 40-tick period while the run
+  lasts; gaps (1 row, 2 from B; from D) are pre-cut and jumped. The far end holds 40 ticks, then the causeway knits
+  back from the far end, a row a tick, and the run can start again after 40 ticks. The room has no monsters and no
+  cache. Falling in: 4 ticks in the pit and it throws you back to the landing your run started from, facing the way
+  on, for 3 + 8% of your health (`awaken:gate_rubble`); monsters that fall in take 4 every second.
+  Solvability (`RigCollapse.solve`): a runner at 0.26 blocks a tick (a sprint is 0.28) from the first falling row,
+  jumping gaps of at most 2, waiting on the row before a bridge for a window it can cross (up from 8 ticks into the
+  period to 4 ticks before it drops), must leave every row 6 ticks before it falls, both ways. The builder tries 4
+  variants, each gentler (no gaps or bridges, a longer lead), and drops the room if none passes.
+- **Mirror Hall:** a lens in a wall throws a beam one block above the floor; the seal sits in the wall beside the door
+  that leads on (slot offset 3 or 12), and that door is barred with light. Mirrors stand on pedestals at the hall's
+  lattice (slot offsets 3, 6, 9, 12; never on a door axis or near a feature); a mirror is one-sided, its face to a
+  diagonal (turn 0..3: NE, SE, SW, NW); its back stops the light. Using one turns it a quarter clockwise (at most
+  every 7 ticks); the light is traced through the real blocks every tick, stopped by anything with a collision shape
+  and by the room's walls. When it reaches the seal the hall latches: the seal lights (IGNITE), the bars fall 24 ticks
+  later. The puzzle is built from the seed by walking a path of turns from the lens to the seal (2 mirrors at E and D,
+  3 at C, 4 from B, at most 3 in a 1x1 room); every mirror on it starts wrong, 1 to 3 decoys stand off the light's
+  path, and the hall never starts solved. The beam burns monsters in it every half second for 3 + 1.5 x rank and 3 s
+  of fire (`awaken:gate_light`, credited to whoever last turned a mirror). Players walk through it unharmed.
+  In halls of 2 slots or more a pavilion stands against a wall with no doorway near it: 5 by 9 inside, mirror walls 4
+  high, its front of cracked mirror (`gate_mirror_cracked`), a cache inside. `gate_mirror` and `gate_mirror_cracked` are
+  in `awaken:mirror`, so Ghost Step walks through them (its mirror range); 9 deep, so a step from anywhere within its
+  reach lands inside. Someone inside latches the pavilion: 30 ticks later its cracked front shatters for everyone.
+  Solvability: the solution witness routes the light to the seal, traced by the same `RigBeam`.
+- **Gravity Wells:** only rooms whose way through is straight (the door you come in by faces the door that leads on),
+  every side door opening onto a ledge, at least 7 high. Chasms 5 to 6 wide (7 from B), their floor 4 down: one in a
+  1-slot room, two in a 2-slot room with 4-row ledges at the ends. Over each chasm a well, the chasm and a row of
+  ledge either side, floor to a flat ceiling: inside it gravity turns over (`gate_well_gravity`, -2 x base, stratum
+  7's attribute way), so you fall up, walk the ceiling across and drop softly as you step out (safe fall +24 for
+  3 s). Its rims glow on the floor and on the ceiling (`gate_well_rim`), and the ceiling over a well is laid like a
+  floor. While the room's monsters live, it surges: warned 30 ticks ahead, then everything in the room falls to the
+  ceiling for 60 ticks, every 280 ticks, monsters too. Someone falling up has their eyes at the other end of their
+  body (the camera hangs 1.62 below the ceiling) and is drawn upside down for everyone; the client predicts your own
+  flip (it sets the same modifier the moment you step in), and the camera tips 5 degrees and back over 0.7 s
+  (none with camera shake off; the FOV-effects slider scales it and a 7% FOV breath). Solvability: a breadth-first walk
+  over the floor and the ceiling reaches the exit's ledge, and without the wells it can't.
+- **Collapse Timer** (the modifier) now drops real blocks: once a floor's time is up, every 2 s for each player still on
+  it and not in a safe room, three blocks of ceiling (one where they are heading, two within 5) crack for a second,
+  fall, and land as rubble (never on a door axis, a doorway or a feature): 2 + 6% of health to a player under one,
+  4 to a monster. Waves are counted in the floor's rig state.
+- **Protection:** inside a gate a player who isn't in creative breaks nothing but their powers' constructs (block tag
+  `awaken:gate_breakable`): every painted block is protected, the Kit's dressing and the set pieces as much as the
+  palette. Nothing is placed in a gate by a player (the placement event, which also covers fire, stripped logs and
+  other block changes an item makes), and buckets neither pour nor scoop there. Powers' constructs still form.
+- **Tours:** `/awaken gate interior goto rig` stands in the rig room's doorway; `/awaken gate rig start` starts its first
+  track, `/awaken gate rig solve` turns a Mirror Hall's mirrors to their solution.
+- **Tests:** `gates_rig_collapse_run`, `gates_rig_mirror_hall`, `gates_rig_gravity_wells` (each: the archetype's
+  solvability check on every rig room of 1,000 seeded gates, every rank and layout; the same plan builds the same rig,
+  version 3 builds none; the server running it in the test level), `gates_rig_protection`.
 
 ### 17.6 Phase 1c: Flow, chains and mastery
 - **Flow** (client, 0..1; `AscentFlow`): each move adds to it, less as it fills (+a × (1 − flow/2), ×1.25 once a chain

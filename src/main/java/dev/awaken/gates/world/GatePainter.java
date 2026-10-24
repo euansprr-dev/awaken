@@ -59,6 +59,7 @@ public final class GatePainter {
         Ctx c = new Ctx(plan, f, r, p, out, gx, gz, yLo, yHi);
         for (int bx = 0; bx < 16; bx++) for (int bz = 0; bz < 16; bz++) c.column(bx, bz);
         c.features();
+        if (r.rig != null) RigRooms.stamp(c);
     }
 
     /** Per-room painting state (one per chunk and floor; never shared between threads). */
@@ -180,6 +181,8 @@ public final class GatePainter {
                 pillarColumn(bx, bz, x, z);
                 return;
             }
+            // a Gate Rig room paints its own interior: pits, causeways, chasms, pedestals
+            if (in && r.rig != null && RigRooms.column(this, bx, bz, x, z)) return;
             if (in) {
                 switch (r.shape) {
                     case SHAFT -> shaftColumn(bx, bz, x, z);

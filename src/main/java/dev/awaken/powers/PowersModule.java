@@ -28,6 +28,8 @@ public final class PowersModule {
         dev.awaken.powers.fx.PowerFx.init(modBus); // power visuals: particle types, FX payload, FX tests
         modBus.addListener(PowersModule::registerPayloads);
         PowerEvents.register(NeoForge.EVENT_BUS);
+        // the Horizon line: Flight takes you to the sky sites
+        dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS) && Powers.owns(p, "awaken:flight"));
         RewardHooks.powerLearner = (player, id) -> {
             Identifier parsed = Identifier.tryParse(id);
             if (parsed != null) Powers.learn(player, parsed, 0);

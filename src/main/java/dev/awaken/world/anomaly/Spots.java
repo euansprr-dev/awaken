@@ -85,6 +85,9 @@ public final class Spots {
         if (d < rules.minDist()) return "too close";
         if (d > rules.maxDist()) return "too far";
         if (Math.abs(ground.getY() - from.getY()) > MAX_RISE) return "too steep";
+        // never inside Carillon (its core plus the reserve margin; SPEC §16.2)
+        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+                && dev.awaken.terrain.api.CityBasin.reserved(ground.getX(), ground.getZ())) return "city";
         if (!level.hasChunksAt(ground.getX() - BOX, ground.getZ() - BOX, ground.getX() + BOX, ground.getZ() + BOX)
                 || !level.isPositionEntityTicking(ground)) return "unloaded";
         if (rules.hearth().near(level, ground, HEARTH_CLEARANCE)) return "hearth";

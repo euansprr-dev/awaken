@@ -1,0 +1,15 @@
+{
+  "name": "Wayfarer",
+  "description": "Walked twelve biomes for the first time.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:biomes_discovered",
+    "value": 12
+  },
+  "perks": [
+    {
+      "id": "awaken:move_speed",
+      "amount": 0.02
+    }
+  ]
+}

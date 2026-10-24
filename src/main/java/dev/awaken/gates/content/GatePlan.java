@@ -21,8 +21,10 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
      * Bump when generation changes: READY gates nobody entered are rebuilt on the new version. 2: the interiors' art
      * pass (set pieces, Lord arenas, taller rooms) and deeper floors that push back harder (docs/modules/gates.md).
      * 3: the prologue's ritual plan (boss {@link #RITUAL_BOSS}) is built as the Ritual of the Bell's single hall.
+     * 4: the Gate Rig's rooms (SPEC §17): a Collapse Run, Mirror Hall or Gravity Wells on each ordinary floor of the
+     * themes that have them; every other room is exactly what version 3 built.
      */
-    public static final int CONTENT_VERSION = 3;
+    public static final int CONTENT_VERSION = 4;
 
     /**
      * The boss id that marks the story's ritual Bell Crypt (docs/proposals/the-ritual.md). Nothing rolls it: the Director

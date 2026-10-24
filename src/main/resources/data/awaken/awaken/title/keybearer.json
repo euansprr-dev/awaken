@@ -1,0 +1,15 @@
+{
+  "name": "Keybearer",
+  "description": "Opened four sealed Precursor doors.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:precursor_doors_opened",
+    "value": 4
+  },
+  "perks": [
+    {
+      "id": "awaken:explosion_resist",
+      "amount": 0.1
+    }
+  ]
+}

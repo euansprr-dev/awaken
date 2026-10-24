@@ -1,0 +1,15 @@
+{
+  "name": "Riftwarden",
+  "description": "Closed ten rift tears.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:rifts_closed",
+    "value": 10
+  },
+  "perks": [
+    {
+      "id": "awaken:force_amp",
+      "amount": 0.04
+    }
+  ]
+}

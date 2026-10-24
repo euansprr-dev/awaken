@@ -1,0 +1,1606 @@
+<title>Carillon</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Silkscreen&display=swap">
+<style>
+/* Layout: one reading column (~70ch) with full-width bands for the storyboard, maps and tables; Awaken's "System glass" palette (plan-v2, plan-pack), dark-first, with bell bronze as the city's own accent. */
+:root {
+  --bg: #0d1420;
+  --panel: #142033;
+  --panel-2: #1a2a42;
+  --line: #2a3d5c;
+  --fg: #dfe8f4;
+  --muted: #93a7c2;
+  --accent: #7fc3ff;
+  --amber: #ffcf7a;
+  --bronze: #e0a86a;
+  --good: #8ff0c0;
+  --warn: #ff8a7a;
+  --violet: #b48cff;
+  --font-display: "Silkscreen", ui-monospace, monospace;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f6fb; --panel: #ffffff; --panel-2: #eaf0f8; --line: #c9d5e6; --fg: #142033; --muted: #4f6380;
+    --accent: #1f6fb8; --amber: #a86400; --bronze: #9a5a1c; --good: #11804f; --warn: #b8322a; --violet: #6a3fc0; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f3f6fb; --panel: #ffffff; --panel-2: #eaf0f8; --line: #c9d5e6; --fg: #142033; --muted: #4f6380;
+  --accent: #1f6fb8; --amber: #a86400; --bronze: #9a5a1c; --good: #11804f; --warn: #b8322a; --violet: #6a3fc0; color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 17px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 72px;
+}
+main { max-width: 940px; margin: 0 auto; display: grid; gap: 56px; }
+section { display: grid; gap: 18px; min-width: 0; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(34px, 6vw, 52px); letter-spacing: 0.02em; font-family: var(--font-display); font-weight: 400; color: var(--bronze); }
+h2 { font-size: 26px; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 19px; color: var(--accent); }
+h4 { margin: 0; font-size: 16px; }
+p, ul, ol { margin: 0; max-width: 70ch; }
+ul, ol { padding-left: 1.2em; display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-display); font-size: 12px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+.lede { font-size: 19px; color: var(--muted); max-width: 66ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.84em; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.tag { display: inline-block; font-family: var(--font-display); font-size: 10px; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 3px; border: 1px solid currentColor; vertical-align: 2px; white-space: nowrap; }
+.t-v { color: var(--good); } .t-r { color: var(--accent); } .t-h { color: var(--amber); } .t-p { color: var(--violet); } .t-x { color: var(--warn); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.callout { border-left: 3px solid var(--amber); background: var(--panel); padding: 14px 18px; border-radius: 0 6px 6px 0; display: grid; gap: 8px; }
+.callout.good { border-left-color: var(--good); }
+.callout.warn { border-left-color: var(--warn); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 700px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); font-weight: 400; background: var(--panel-2); }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+td.grp { font-family: var(--font-display); font-size: 11px; letter-spacing: .08em; color: var(--accent); background: var(--panel-2); }
+td.beat { font-family: var(--font-display); font-size: 12px; letter-spacing: .05em; color: var(--bronze); white-space: nowrap; }
+td.t { font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; color: var(--muted); align-items: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 14px; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); max-width: 100%; overflow-wrap: anywhere; }
+.chip.no { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--warn); }
+.chip.ours { border-color: var(--good); color: var(--good); }
+pre.mermaid { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; overflow-x: auto; margin: 0; }
+.decision { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.decision .rec { color: var(--good); font-weight: 700; }
+.tl { display: grid; gap: 0; border-left: 2px solid var(--line); margin-left: 6px; }
+.tl > div { position: relative; padding: 4px 0 16px 18px; display: grid; gap: 4px; }
+.tl > div::before { content: ""; position: absolute; left: -7px; top: 11px; width: 12px; height: 12px; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); }
+.tl > div.gate::before { border-color: var(--amber); border-radius: 2px; }
+.tl > div > b { font-family: var(--font-display); font-weight: 400; font-size: 13px; letter-spacing: .06em; color: var(--accent); }
+.tl div.gate > b { color: var(--amber); }
+.tl .est { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+
+/* budgets */
+.budget { display: grid; gap: 10px; }
+.brow { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; font-size: 14px; }
+.brow > span:first-child { font-family: var(--font-display); font-size: 11px; letter-spacing: .05em; color: var(--muted); }
+.bar { position: relative; height: 22px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; }
+.bar i.w { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.bar i.c { background: color-mix(in srgb, var(--bronze) 65%, transparent); }
+.bar i.n { background: color-mix(in srgb, var(--violet) 60%, transparent); }
+.bar i.d { background: color-mix(in srgb, var(--good) 45%, transparent); }
+.bar i.s { background: color-mix(in srgb, var(--amber) 55%, transparent); }
+.bar .mark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--fg); }
+.bscale { display: grid; grid-template-columns: 150px 1fr; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.ticks { position: relative; height: 16px; min-width: 0; }
+.ticks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.ticks span:first-child { transform: none; }
+.ticks span:last-child { transform: translateX(-100%); }
+.key { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+
+/* demos */
+.demo { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.demo canvas { width: 100%; display: block; border-radius: 4px; background: var(--panel-2); }
+.demo .cap { font-size: 14px; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.controls button { font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); color: var(--fg); cursor: pointer; }
+.controls button[aria-pressed="true"] { border-color: var(--bronze); color: var(--bronze); box-shadow: inset 0 0 0 1px var(--bronze); }
+.controls .sep { width: 1px; background: var(--line); margin: 2px 4px; }
+svg text { fill: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+
+/* day strip */
+.day { display: grid; gap: 6px; min-width: 640px; }
+.day .row { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; font-size: 13px; }
+.day .row > span:first-child { font-family: var(--font-display); font-size: 11px; letter-spacing: .05em; color: var(--muted); }
+.day .lane { position: relative; height: 22px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 3px; }
+.day .lane i { position: absolute; top: 0; bottom: 0; border-right: 1px solid var(--panel); }
+.day .hours { display: grid; grid-template-columns: 120px 1fr; gap: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+.a-sleep { background: color-mix(in srgb, var(--muted) 25%, transparent); }
+.a-work { background: color-mix(in srgb, var(--bronze) 60%, transparent); }
+.a-walk { background: color-mix(in srgb, var(--accent) 40%, transparent); }
+.a-social { background: color-mix(in srgb, var(--violet) 50%, transparent); }
+.a-event { background: color-mix(in srgb, var(--warn) 60%, transparent); }
+
+/* ladders */
+.ladder { display: grid; gap: 8px; }
+.ladder > div { display: grid; grid-template-columns: 150px 1fr; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.ladder b { font-family: var(--font-display); font-weight: 400; font-size: 12px; letter-spacing: .06em; color: var(--bronze); }
+.roster { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px; }
+.roster .panel h4 { font-family: var(--font-display); font-weight: 400; font-size: 13px; letter-spacing: .06em; color: var(--bronze); }
+.roster dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0; font-size: 14px; }
+.roster dt { color: var(--muted); }
+.roster dd { margin: 0; min-width: 0; }
+
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) {
+  body { font-size: 16px; } table { font-size: 14px; }
+  .brow, .bscale { grid-template-columns: 96px 1fr; }
+  .ladder > div { grid-template-columns: 1fr; gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<main>
+
+<header style="display:grid;gap:14px">
+  <span class="eyebrow">Awaken · City, story and MMO-lite plan · approved 24 Oct 2026 · Stage 0 running</span>
+  <h1>Carillon</h1>
+  <p class="lede">A walled city at the centre of every new world. You begin as a Runner, one of the couriers who carry Carillon's
+    messages over the rooftops, so you are already fit. The first thing you do is cross the city to a gate that just tore open
+    in the market. Then the Ritual, the Hunter Association, the infirmary, and a city that keeps living whether you are there or
+    not. Survival stays the core: once you leave the infirmary you can walk out the gate and build a base.</p>
+  <div class="callout good">
+    <b>Approved on 24 October 2026, with every recommendation.</b>
+    <span class="small">Euan also confirmed the movement change in the same message: everyone is a Runner from the first
+      second, ranks improve moves, and Wall Run becomes Wall Stride. Stage 0 (six spikes) is running. The spec lives in
+      SPEC §16 on <code>carillon/main</code>, and status in <code>docs/carillon/STATUS.md</code>. This page gets the
+      measured numbers at gate G0.</span>
+  </div>
+  <div class="legend">
+    <span><span class="tag t-v">VERIFIED</span> read in our code or the 26.3 sources</span>
+    <span><span class="tag t-r">RESEARCHED</span> outside source, dated</span>
+    <span><span class="tag t-h">TO PROVE</span> a hypothesis Stage 0 measures</span>
+  </div>
+</header>
+
+<section id="ask">
+  <h2>What you asked for, and how we'll know it worked</h2>
+  <p>Your asks, in short:</p>
+  <ul>
+    <li><b>A walled city</b> (Attack on Titan, Solo Leveling) that is extremely detailed and very alive. NPCs do real jobs:
+      carrying goods, a burglary you can chase. Recognition, shops, and the open world all around it.</li>
+    <li><b>Survival stays core and optional at the same time.</b> The game should feel like a mix of survival, MMORPG and
+      adventure. You can still go out and build a base.</li>
+    <li><b>A cinematic entry.</b> The camera comes from above the city, down into your own first- or third-person view, and
+      switching between the two is easy.</li>
+    <li><b>A first goal: reach the portal that opened in the market square.</b> Like the Spider-Man (2018) opening, it takes
+      a few minutes and is less guided. You already have mantle, tactical sprint, slide, a wall-run that sinks as you go,
+      wall-to-wall jumps, and Assassin's Creed edge hangs and edge jumps.</li>
+    <li><b>Arrival.</b> Alone, a cinematic cuts in and you're sucked in. With friends, it waits until everyone arrives. Then
+      the Ritual. The Hunter Association registers you and you wake in the infirmary.</li>
+    <li><b>A map.</b> Diorama, or our own map on the Holo wristband with clouds over places you haven't been.</li>
+    <li><b>Planned with sub-agents per workstream and an orchestrator</b> that keeps them from drifting, with real testing
+      and a polished finish.</li>
+  </ul>
+
+  <h3>The success contract</h3>
+  <p class="small muted">Each line is checked by a test, a tour or a measurement (see "How we prove it"). If the city ships
+    without meeting one, it isn't done.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Area</th><th>Done means</th><th>Checked by</th></tr></thead>
+    <tbody>
+      <tr><td class="grp" colspan="3">The opening</td></tr>
+      <tr><td>Sky shot</td><td>From first join to having control: 25 s or less. You can skip it after watching it once, and a world option skips the whole opening.</td><td>Autopilot timing, GameTest of the skip</td></tr>
+      <tr><td>The run</td><td>A first-timer on the rooftops takes 2 to 4 minutes; the expert golden run takes 60 to 90 s. Every act has three ways through: rooftops, canal, and a street route that needs no parkour.</td><td>Golden-run replays and route-graph check</td></tr>
+      <tr><td>Never stuck</td><td>No death is possible in the opening. From any spot you can reach, the street route is under 30 s away. Relogging at any beat picks up where you left off.</td><td>Route-graph GameTest, one relog test per beat</td></tr>
+      <tr><td>Arrival</td><td>Solo: the cinematic starts on entering the square. Together: it starts within 3 s of the last player arriving. If someone is late or away, the gate pulls them in after a set wait.</td><td>GameTests with fake players</td></tr>
+      <tr><td class="grp" colspan="3">Movement</td></tr>
+      <tr><td>Runner's Kit</td><td>Wall-run, wall jump, ledge hang, shimmy and ledge jump, joining the existing mantle, slide and tactical sprint. No new keys: sprint, jump and sneak do everything.</td><td>One GameTest per move, plus server spoof tests</td></tr>
+      <tr><td>Feel</td><td>No rubber-banding across 30 scripted moves at 100 ms ping. Accidental wall-runs in tight alleys happen in under 1 attempt in 20.</td><td>Latency harness, alley test course</td></tr>
+      <tr><td class="grp" colspan="3">The city</td></tr>
+      <tr><td>Size and detail</td><td>A wall about 480 blocks across, six districts, about 700 to 900 buildings and 12 hand-made landmarks. At least 60 buildings you can enter, and every building on the run's routes.</td><td>City plan report, studio tour</td></tr>
+      <tr><td>Generation</td><td>The same Carillon from the same code every time (the plan's hash is fixed). It is fully generated behind the opening card in 30 s or less on the M4.</td><td>Determinism GameTest, timed world creation</td></tr>
+      <tr><td>Alive</td><td>240 simulated citizens with 12 jobs. Each one keeps their schedule through a simulated play-day. Six kinds of city event, each of which resolves with or without you. Citizens greet you by name once you're Known.</td><td>Schedule and event GameTests, day-timelapse tour</td></tr>
+      <tr><td class="grp" colspan="3">Map, MMO-lite, performance</td></tr>
+      <tr><td>Atlas</td><td>Opens in 150 ms or less and costs 2 ms or less per frame while open. Clouds clear within a second of your arrival. It never shows something you haven't discovered.</td><td>Perf tour, discovery GameTests</td></tr>
+      <tr><td>MMO-lite</td><td>Everything works solo. Parties and guilds work for 2 to 8 players. Items are never duplicated, and prices stay within ±30% over 100 simulated play-days.</td><td>Economy simulation, duplication GameTests</td></tr>
+      <tr><td>Performance</td><td>On the perf profile, the busiest market at noon holds a p50 of 100 fps or more, and the rest of the city 110 or more. The server tick p95 stays at 25 ms or less with the whole city running. With Distant Horizons on, the city adds no more than 3 ms to the same spot without it.</td><td>Perf tours on the bench worktree</td></tr>
+      <tr><td>Survival</td><td>After the infirmary nothing stops you from leaving. Survival outside the walls works as it does today, with vanilla mobs. A "Classic start" world never sees the opening.</td><td>Smoke tour of the classic start</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid2">
+    <div class="panel"><h4>Not in scope</h4>
+      <ul class="small">
+        <li>A server for hundreds of players. "MMO" here means an MMO's shape sized for friends: 1 to 8 players, tested at 4.</li>
+        <li>NPCs that talk through a language model. The spec bans it: everything is local and seeded.</li>
+        <li>Daily logins, real-time timers or anything you can miss forever. The city runs on play-days.</li>
+        <li>A quest list. Never more than three Directives, and no list of undiscovered places.</li>
+        <li>Replacing survival. The city is a hub you can ignore.</li>
+      </ul></div>
+    <div class="panel"><h4>How this was planned</h4>
+      <ul class="small">
+        <li>An audit of our own code: movement, the Ritual, Hearth NPCs, maps, the Holo UI, structures, the prologue,
+          multiplayer, and the perf data. Plus the 26.3 sources for the camera, servers and spawning.</li>
+        <li>Outside research on 31 dated sources: maps, city mods, NPC mods, crowd performance, traversal design, MMO
+          lessons and cutscene tools.</li>
+        <li>The terrain plan (Awakened Lands) and the open branches it has to merge with.</li>
+      </ul></div>
+  </div>
+</section>
+
+<section id="audit">
+  <h2>What exists today</h2>
+  <p>Most of what the city needs has a seed in the code already. The parts that don't are the city itself, citizens with
+    jobs, camera position control and a 3D map.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>System</th><th>What's there</th><th>What the city needs from it</th><th>Gap</th></tr></thead>
+    <tbody>
+      <tr><td>Awakened Body <span class="tag t-v">V</span></td><td>Moves are an append-only <code>Move</code> enum (the saved bits use its ordinals). The client predicts, then the server re-checks the geometry and refuses or corrects. Mantle and slide are gated by rank (slide D, mantle C), and players who never awakened move like vanilla.</td><td>Five new moves on the same pattern. The ledge finder today only sees ledges 1.1 to 1.6 blocks up while standing; hangs need an airborne, hand-height version.</td><td>Medium. Ledge hang is the hardest.</td></tr>
+      <tr><td>Hanging on servers <span class="tag t-v">V</span></td><td>The server's floating kick skips anyone with a block within 1/16 of their box (<code>noBlocksAround</code>), and <code>resetFlyingTicks()</code> is public.</td><td>Hanging on a wall is always next to blocks, so it can't trip the kick.</td><td>None</td></tr>
+      <tr><td>Wall Run power <span class="tag t-v">V</span></td><td>Client physics only: sprinting into a wall while airborne, 40 ticks at most, vertical speed floored at −0.02. There's no real decline. It's a rank-D passive.</td><td>Becomes the supernatural version of the base wall-run, so the two don't overlap.</td><td>A rework plus a spec change</td></tr>
+      <tr><td>Ritual director <span class="tag t-v">V</span></td><td>A saved beat timeline that catches up after lag and holds when the party is away. It has scene and cue payloads, input hold, letterbox, quiet toasts and HUD, the Lens override, tear and ritual looks, and the multiplayer wait (all inside plus 3 s, or 90 s).</td><td>The same machinery runs the sky shot, the arrival, the wait and the infirmary wake.</td><td>Small</td></tr>
+      <tr><td>Camera position <span class="tag t-v">V</span></td><td>The Ritual only turns the camera. In 26.3, <code>Minecraft.setCameraEntity</code> is public and the camera follows that entity's position. Post effects still come from the player's list (<code>GameRenderer.update</code>), so Lens keeps working.</td><td>A client-only camera entity flies the sky-to-eyes spline, with no mixin.</td><td>Small (to prove that DH and chunk culling behave)</td></tr>
+      <tr><td>Hearth town NPCs <span class="tag t-v">V</span></td><td><code>TownNpc</code> strolls within 20 blocks of the Hearth, with no beds and no jobs. It's owned by one Hearth, and only the owner can talk to it. The closest thing to jobs is Echo duties (patrol, haul, farm, spar).</td><td>A new citizen system owned by the world, with schedules, job sites, city-scale routes and off-screen simulation.</td><td>Large (new module)</td></tr>
+      <tr><td>Reputation <span class="tag t-v">V</span></td><td>Hearth request tiers: Known at 6, Trusted 18, Valued 40, Beloved 80. Streaks are forgiving and ignoring a request costs nothing. Mira gives one rumour per play-day.</td><td>City renown reuses the tone and the play-day rhythm, but it builds from what citizens witness.</td><td>Medium</td></tr>
+      <tr><td>Maps <span class="tag t-v">V</span></td><td>The Gate Map is a 150 px top-down square covering 1,600 blocks. <code>MapMarks</code> carries position, colour, label and visited. Landmarks give up to 16 markers within 288 blocks. There's no fog of war.</td><td>The Atlas reuses MapMarks and landmark memory, and adds discovery and a 3D view.</td><td>Large</td></tr>
+      <tr><td>Holo UI <span class="tag t-v">V</span></td><td>Panels are 2D display lists on PARTICLE quads with no depth test, anchored to the view, wrist or world. Budget is about 0.3 ms. 26.3 has <code>PictureInPictureRenderer</code> plus a NeoForge event to add new ones (3D inside screens).</td><td>The Atlas table renders through a picture-in-picture renderer with depth. The wrist shows a cached glance.</td><td>Medium</td></tr>
+      <tr><td>Building in code <span class="tag t-v">V</span></td><td>Gate rooms are pure per-chunk painters through a <code>Sink</code>. Ruins are code, but each touched chunk rebuilds the whole blueprint, which is fine at 23 to 49 blocks. No jigsaw and no NBT templates anywhere.</td><td>A per-chunk city painter that only builds the pieces touching its chunk.</td><td>Large (new module)</td></tr>
+      <tr><td>Prologue and spawn <span class="tag t-v">V</span></td><td>States run NOT_STARTED, GLITCHED, GATE_OPEN, RITUAL, ACCEPTING, DONE. The first gate opens 55 blocks along your look after about 2 minutes. World spawn is never overridden, though NeoForge has <code>LevelEvent.CreateSpawnPosition</code>. A spawn vault sits 240 to 360 blocks out and the Well 400 to 700.</td><td>New states for the sky shot, the run and the wake. The scripted gate opens in the square. The spawn rings move outside the wall.</td><td>Medium</td></tr>
+      <tr><td>Terrain plan <span class="tag t-v">V</span></td><td>Awakened Lands covers about 40% of the world in biome patches 500 to 1,500 blocks across, prefers rolling hills at spawn, and grants lairs and ruins per biome. No city site is reserved.</td><td>A city basin at spawn: flattened, no lairs or ruins, blended out to about 700 blocks. The lands branch owns the blend.</td><td>Coordination</td></tr>
+      <tr><td>Multiplayer <span class="tag t-v">V</span></td><td>Your decisions: the story starts together and friends share one Hearth. Open blockers: arena sealing ignores the party, rewards go to the killer only, and there's one Hearth per owner. There's no party code beyond <code>GateRecord.party</code>.</td><td>Parties and guilds become real systems, and the blockers get fixed on the way.</td><td>Medium</td></tr>
+      <tr><td>Perf data <span class="tag t-v">V</span></td><td>The fauna lineup (about 39 NoAI creatures) measured a p50 of 7.90 ms against 5.30 ms for the bare platform on perf-gl, and 14.22 against 12.21 ms on horizon-swift. That's render cost only.</td><td>The only crowd evidence we have. Citizen AI and pathing are unmeasured.</td><td>Stage 0 measures it</td></tr>
+      <tr><td>Guardrails <span class="tag t-v">V</span></td><td>From SPEC, plan-v2 and STORY: three Directives at most, never a quest list, undiscovered things never listed, play-days only, the patent rule, no LLM, deterministic. Nothing in the story is required. Plan-v2 lists "single-player first" and "multiplayer balancing out of scope".</td><td>Contracts, gossip and guilds are designed to fit inside them (see the MMO-lite section). No code or docs exist for a Hunter Association.</td><td>Spec changes, listed at the end</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="research">
+  <h2>What the outside world says</h2>
+  <p>Checked on 24 October 2026 against Modrinth, CurseForge, GitHub, official docs and developer interviews. The short
+    version: on 26.3 there are no ready-made mods for the citizens, the parkour or the cutscene, so we build those. For the
+    map, though, the model we want exists and its licence lets us use it.</p>
+
+  <h3>Maps</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Option</th><th>On 26.3 NeoForge</th><th>Licence</th><th>What matters for us</th></tr></thead>
+    <tbody>
+      <tr><td><b>Diorama</b> <span class="tag t-r">R</span></td><td>Yes. 0.3.0, released today (24 Oct). Client-only, no dependencies.</td><td>MIT</td><td>An angled voxel map ray traced from the chunks the client already has, with sun shadows. Tiles bake on background threads. Anywhere with no data sits under <b>animated clouds</b>. But it has no marker API, the project is 11 days old with 4 open issues, and clouds clear wherever chunks load, so your whole render distance clears and not just where you walked. (That last point is read from its docs, not tested.)</td></tr>
+      <tr><td>Xaero's World Map <span class="tag t-r">R</span></td><td>Yes. 1.47.1, already on trial in the pack.</td><td>All rights reserved, with modpacks allowed</td><td>Flat 2D map. Unmapped areas are blank, with no clouds.</td></tr>
+      <tr><td>JourneyMap <span class="tag t-r">R</span></td><td>Yes. 6.0.10, with an API branch for 26.3.</td><td>Custom</td><td>Flat 2D map with an API.</td></tr>
+      <tr><td>BlueMap <span class="tag t-r">R</span></td><td>Yes. 5.29.</td><td>MIT</td><td>A 3D web map rendered on the server. Good for a hosted server, not for the wristband.</td></tr>
+      <tr><td class="muted">Map Atlases, Antique Atlas, Surveyor, Dynmap</td><td class="muted">No (26.1.2 at most)</td><td></td><td class="muted">Not available.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>City detail</h3>
+  <div class="grid2">
+    <div class="panel"><h4>On 26.3 <span class="tag t-r">R</span></h4>
+      <div class="chips">
+        <span class="chip">Macaw's Roofs, Windows, Doors, Bridges, Furniture, Lights, Fences, Paths, Stairs, Trapdoors</span>
+        <span class="chip">Rechiseled + Fusion</span><span class="chip">Moog's structures</span>
+        <span class="chip">Towns and Towers (CC-BY-NC-SA)</span><span class="chip">Dungeons and Taverns</span>
+        <span class="chip">Lost Cities (whole-world, not a city at spawn)</span>
+      </div></div>
+    <div class="panel"><h4>Not on 26.3 <span class="tag t-r">R</span></h4>
+      <div class="chips">
+        <span class="chip no">Chipped</span><span class="chip no">Handcrafted</span><span class="chip no">Supplementaries</span>
+        <span class="chip no">Another Furniture</span><span class="chip no">Every Compat</span><span class="chip no">Moonlight Lib</span>
+      </div>
+      <p class="small muted">If the city's generator placed another mod's blocks, the city would depend on that mod forever. So
+        everything the generator places is vanilla or our own Carillon kit. Macaw's can go in a pack profile for your own
+        building.</p></div>
+  </div>
+
+  <h3>Citizens and crowds</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Finding</th><th>Source</th><th>What we take</th></tr></thead>
+    <tbody>
+      <tr><td>MineColonies has no 26.x build (its newest is a 1.21.1 snapshot, 21 Oct). MCA Reborn stops at 26.2. Custom NPCs is dead (last build for 1.16.5). Easy NPC (dialogue, trading) and Guard Villagers are on 26.3. <span class="tag t-r">R</span></td><td>Modrinth, CurseForge, GitHub</td><td>We build our own citizens and borrow ideas: MineColonies' material requests and needs, vanilla's gossip trust.</td></tr>
+      <tr><td>Vanilla villagers: work 2000 to 9000 ticks, gather 9000 to 11000, wander until 12000, then sleep. <span class="tag t-r">R</span></td><td>minecraft.wiki</td><td>The day strip below uses the same clock.</td></tr>
+      <tr><td>Villager brains and pathfinding are the classic hot spot: one 1.14 profile spent 95.7% of each tick in brain code. Paper only fully ticks villagers within 32 blocks. Pufferfish's "DAB" ticks a brain every (distance² / 256) ticks: every tick at 16 blocks, every 16th at 64. <span class="tag t-r">R</span></td><td>Spigot JIRA (2019), Paper and Pufferfish docs</td><td>Distance throttling, a cap on how many pathfind at once, routes along a pre-baked street graph instead of long A*, and abstract simulation off-screen.</td></tr>
+      <tr><td>Nobody publishes safe entity counts. Palworld caps workers at 50 per base because more "raises processing load". Entity Culling (in our perf profile) hides entities behind walls. <span class="tag t-r">R</span></td><td>Palworld docs, Modrinth</td><td>About 40 embodied citizens per player, then measured with spark on the M4. A dense city hides most of them anyway.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Traversal and openings</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Game</th><th>Lesson</th><th>How Carillon uses it</th></tr></thead>
+    <tbody>
+      <tr><td>Marvel's Spider-Man (2018) <span class="tag t-r">R</span></td><td>The opening hides that it's a tutorial behind a goal you care about, with light pop-ups. Hitting a wall becomes a wall-run instead of a crash. The city must not be crossable with one button; districts change how movement works.</td><td>The run has a goal you can see (the light in the square). Each district asks for a different move. Bumping a wall at speed starts a run.</td></tr>
+      <tr><td>Titanfall <span class="tag t-r">R</span></td><td>Titanfall 1's wall-run lasts 1.75 s (3.5 s with the parkour kit perk). A Titanfall-style project tunes a short zero-gravity grip, then gravity easing back, with 7.5° of camera roll. No official Titanfall 2 numbers.</td><td>The base run lasts 1.75 s: a 0.5 s grip, then the sink. The power version lasts longer and doesn't sink. Camera roll is optional.</td></tr>
+      <tr><td>Mirror's Edge <span class="tag t-r">R</span></td><td>"Runner vision" red cues that tune to skill and fade; fixed markers "felt a little bit contrived". No HUD. Momentum is "the fuel".</td><td>The Runner's eye: a soft cue on the next ledge only when you hesitate, fading as you get good. No HUD in the run.</td></tr>
+      <tr><td>Dying Light <span class="tag t-r">R</span></td><td>Over 200 ledge raytraces per frame, made cheap by batching. Three jump-assist algorithms, because players jump too early or too late.</td><td>Batched ledge probes, plus jump-timing help: coyote time, early-press buffering, and a gentle snap to an edge.</td></tr>
+      <tr><td>Assassin's Creed Shadows <span class="tag t-r">R</span></td><td>"Parkour up" goes for the highest point, "parkour down" for the lowest safe one. You hang instead of dropping from very high ledges. Surfaces without handholds can't be climbed, which gives designers control.</td><td>A climbable language: bronze trim, beams and drainpipes mean "you can hold this", and plain plaster doesn't. Sneak at a high edge hangs you instead of dropping you.</td></tr>
+      <tr><td>ParCool (the Minecraft parkour mod) <span class="tag t-r">R</span></td><td>Not on 26.x (stops at 1.21.11). Its top complaints are up to 11 keybinds, about 8 inputs for one chain, and wall-runs firing by accident in tight spaces.</td><td>No new keys at all. A wall-run needs a minimum height above the ground and a wall at least 2 blocks tall.</td></tr>
+      <tr><td>Valheim, Enshrouded, Wynncraft, Hypixel SkyBlock <span class="tag t-r">R</span></td><td>Valheim's raven waits until read, and its spawn stones show the goals. Enshrouded's rescued survivors become your crafters. Wynncraft's discoveries pay off with a cutscene. SkyBlock's skills level from ordinary actions.</td><td>Hearth townsfolk come from citizens you befriend. Climbing a district's bell tower is a discovery with its own little cinematic. Renown grows from what you already do.</td></tr>
+      <tr><td>Cutscene tools <span class="tag t-r">R</span></td><td>CMDCam 2.2.11 is on 26.3 (LGPL, needs CreativeCore): spline camera paths a server can start. ReplayMod and Flashback are Fabric-only.</td><td>CMDCam to sketch the sky shot in Stage 0. The shipped shot is our own camera entity, so the pack needs nothing extra.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="options">
+  <h2>Four ways to build it, and the recommendation</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>A · Assemble mods</th><th>B · Hand-built map</th><th>C · Authored plan, built by code</th><th>D · A big town</th></tr></thead>
+    <tbody>
+      <tr><td>What it is</td><td>MineColonies, MCA, ParCool, a city structure pack and Diorama</td><td>A fixed city schematic, built by hand and shipped as data</td><td>An authored city plan (wall, districts, streets, plots, landmarks) that our generator builds, with a seeded building grammar filling the plots</td><td>A Hearth-sized walled town of about 60 buildings</td></tr>
+      <tr><td>Possible on 26.3 today</td><td class="t-x">No. Most aren't ported.</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td>Control of the opening run</td><td>Low</td><td>Full</td><td>Full: the routes are designed and the same in every world</td><td>Full, but the run is too short</td></tr>
+      <tr><td>Detail per build hour</td><td>Mixed, no single look</td><td>Highest per building, but huge labour for about 800 buildings</td><td>High: landmarks hand-made, the rest from the grammar</td><td>High</td></tr>
+      <tr><td>Iterating and testing</td><td>Hard</td><td>Every change is a re-export</td><td>Code, versioned and covered by GameTests</td><td>Easy</td></tr>
+      <tr><td>Fits Awaken's systems</td><td>Two NPC systems and two parkour systems</td><td>Partly: the city doesn't know its own streets</td><td>Fully: the generator also outputs the street and roof graph that citizens, thieves, races and tests use</td><td>Fully</td></tr>
+      <tr><td>Meets the "holy shit" bar</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout good">
+    <b>Recommended: C, staged.</b>
+    <span>Carillon is one designed place with the same layout in every world, like Spider-Man's New York. Its run routes are
+      designed, testable and shareable between friends. Seeds vary only the small things: laundry, flower boxes, which
+      windows are lit, shop stock. The generator outputs three things from one plan: the blocks, the street graph and the
+      roof graph (the edges between rooftops, each labelled with the move it needs). One graph serves citizens' routes,
+      thieves' escapes, Runner races and the tests that prove every route still works after a change.</span>
+  </div>
+</section>
+
+<section id="opening">
+  <h2>The opening, beat by beat</h2>
+  <p>About eight minutes from first join to free play. Everything after the run already exists as the Ritual proposal;
+    what's new is the sky, the run, the arrival and the wake.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Beat</th><th>Time</th><th>What you see and hear</th><th>What you do</th></tr></thead>
+    <tbody>
+      <tr><td class="beat">World creation</td><td class="t">before</td><td>World options: <b>Start in Carillon</b> (default), <b>Classic start</b>, <b>Skip the opening</b>. While the city generates, a card shows the city's name and a slow bell.</td><td>Choose, then wait 30 s at most.</td></tr>
+      <tr><td class="beat">Bells at dawn</td><td class="t">0:00</td><td>Black screen. One bell. CARILLON in the System's type, with a faint [ERROR] flicker you only half see.</td><td>Watch.</td></tr>
+      <tr><td class="beat">The sky</td><td class="t">0:06</td><td>Above the clouds at dawn, in Lens's Carillon dawn look. The clouds part on the whole walled city: the ring wall, the river, the Choir spire catching first light. Below, the lamplighters are putting out the night lamps street by street.</td><td>Watch. After the first viewing you can hold jump for 1 s to skip.</td></tr>
+      <tr><td class="beat">The descent</td><td class="t">0:16</td><td>One long camera flight over the wall walk, down the river past the Quay cranes, over market stalls opening their shutters, and up to the Runners' Roost. You're standing there with your courier satchel.</td><td>Watch.</td></tr>
+      <tr><td class="beat">Into your eyes</td><td class="t">0:24</td><td>The camera swings behind you and settles. The first time, two cards ask <b>First person</b> or <b>Third person</b>, and your choice is remembered. The View key flips between them at any time, skipping the front-facing view.</td><td>Pick a view.</td></tr>
+      <tr><td class="beat">The bell rings wrong</td><td class="t">0:27</td><td>The Choir's great bell only rings on the hour, but now it rings out of time. A column of light falls into the market square, and people in the street stop and point. The Signal: "[ERROR] … candidate found." There's no waypoint: the light is visible from anywhere.</td><td>Go.</td></tr>
+      <tr><td class="beat">Act 1 · Bellwatch roofs</td><td class="t">~70 s</td><td>Short gaps first, then a chimney to mantle, a steep roof that slides you onto a lower one, a gap too wide for a normal sprint, and the first wall-run between two gables. Pigeons burst off the tiles as you land.</td><td>Sprint, jump, mantle, slide, tactical sprint, wall-run.</td></tr>
+      <tr><td class="beat">Act 2 · The Quay</td><td class="t">~60 s</td><td>As you approach, the gate pulses and the shockwave drops the Bell Bridge into the river. Warehouses line both banks: run along a warehouse face, jump to the crane tower, hang under the crane arm, shimmy along it, and jump to the next roof. Or swim, which is slow, and climb out by a ladder.</td><td>Wall-run, wall jump, hang, shimmy, ledge jump.</td></tr>
+      <tr><td class="beat">Act 3 · Market rush</td><td class="t">~50 s</td><td>Crowds flee toward you while the Watch closes the square. You go over them: stall roofs, awnings, a slide under a fallen beam, a climb up the Association's market balcony, and a drop into the square.</td><td>Everything at once.</td></tr>
+      <tr><td class="beat">Arrival · solo</td><td class="t">12 s</td><td>Control holds. The portal blooms under the spire and the bell tolls three times. Citizens are thrown back, and the light reaches for you: the view stretches, wind roars, and Lens tears to black.</td><td>Watch.</td></tr>
+      <tr><td class="beat">Arrival · together</td><td class="t">varies</td><td>"The gate is drawing breath." Whoever arrives can move inside the square but can't leave it, and the Now line counts the hunters still running. When the last one arrives, after 3 s, the cinematic plays for everyone, framing the whole group. If someone is away or stuck, the light reaches for them wherever they are, 5 minutes after the first arrival or after 2 minutes idle.</td><td>Wait for your friends, or race them.</td></tr>
+      <tr><td class="beat">The Ritual</td><td class="t">~2 min</td><td>The Bell Crypt hall, the Seated One, the scripted end (the approved proposal, unchanged).</td><td>Bow, ring, be judged.</td></tr>
+      <tr><td class="beat">The Void</td><td class="t">you choose</td><td>Black for the whole prompt. "You have met the conditions. Will you accept?" Both buttons accept.</td><td>Accept.</td></tr>
+      <tr><td class="beat">The infirmary</td><td class="t">~40 s</td><td>Blur, then focus (a Lens look). White linen, bells far off. Sun, the healer, and an Association officer: "You walked out of a gate nobody walks out of." Together, the beds are side by side.</td><td>Sit up, look around.</td></tr>
+      <tr><td class="beat">The Registry</td><td class="t">~90 s</td><td>You walk to the Registry hall. The Assessment Lens, a shard of the Choir, reads you, and your Status screen appears for the first time (the existing reveal). The clerk stamps your licence: E-rank. The Holo wristband is fitted and boots. The Atlas opens: clouds everywhere except one clear streak where you ran this morning. Your first Directive follows.</td><td>Walk, look, take the wristband.</td></tr>
+      <tr><td class="beat">Free play</td><td class="t">—</td><td>"The city is yours." The gates are open, the wild is outside, and your room at the Roost is your first home and respawn point.</td><td>Anything.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="demo" id="routeDemo">
+    <div class="controls" role="group" aria-label="Routes shown">
+      <button type="button" id="rt-roof" aria-pressed="true">Rooftop route</button>
+      <button type="button" id="rt-canal" aria-pressed="false">Canal route</button>
+      <button type="button" id="rt-street" aria-pressed="false">Street route</button>
+      <span class="sep"></span>
+      <button type="button" id="rt-dist" aria-pressed="true">Districts</button>
+    </div>
+    <canvas id="routeCanvas" height="560" aria-label="Plan of Carillon from above, with the opening's three routes from the Runners' Roost to the gate in Choir Square"></canvas>
+    <div class="cap">Carillon from above, drawn to scale (the wall is about 480 blocks across). The run starts at the Runners'
+      Roost on the north-west wall and ends at the gate in Choir Square. The rooftop route covers about <span id="roofLen">350</span> blocks of ground, plus
+      the climbing. The canal route trades height for swimming, and the street route crosses at the Mill Bridge because the Bell Bridge falls. The
+      building layout here is illustrative; the real plan comes out of Stage 1.</div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel"><h4>How the run teaches without prompts</h4>
+      <ul class="small">
+        <li><b>Space teaches.</b> Each new move first shows up where it's the only sensible way forward, then it's mixed
+          with the others.</li>
+        <li><b>The Runner's eye</b> only appears if you hesitate: stand still at an edge for 6 s and the next hold pulses
+          once in bronze. It shows up less the better you get, and you can turn it off.</li>
+        <li><b>A key glyph</b> appears near the surface only after a second hesitation, and only once per move.</li>
+        <li><b>Falling only costs time.</b> In the opening no fall hurts you below one heart. A big fall plays a roll
+          landing, and the street route is always close.</li>
+        <li><b>It keeps your first time.</b> Your first-run time becomes a ghost on the Rooftop Circuit later.</li>
+      </ul></div>
+    <div class="panel"><h4>Why a Runner</h4>
+      <p class="small">Carillon's streets are slow and crowded, so the city's messages travel over the roofs. Couriers of
+        the Runners' Guild train from childhood. That's why you can do all of this before any System touches you. Your
+        powers later are the impossible versions of what your body already knows. And the Roost on the wall is the first
+        home you can respawn in.</p>
+      <p class="small muted">It also explains the city's look: the rooftops are a road network of their own, with plank
+        bridges, rope lines and worn bronze handholds.</p></div>
+  </div>
+
+  <pre class="mermaid">
+sequenceDiagram
+  participant A as Player A
+  participant B as Player B
+  participant S as Server (opening director)
+  A->>S: enters Choir Square
+  S-->>A: hold in square, "Waiting for 1 hunter"
+  Note over S: first arrival starts a 5 min clock
+  B->>S: enters Choir Square
+  S->>S: everyone in, wait 3 s
+  S-->>A: arrival cinematic (same timeline)
+  S-->>B: arrival cinematic (same timeline)
+  S->>S: open scripted Bell Crypt for the party
+  Note over A,B: the Ritual (waits for every unawakened player, as approved)
+  </pre>
+</section>
+
+<section id="kit">
+  <h2>The Runner's Kit</h2>
+  <p>Everything works from the first second of a new world, with no new keys: sprint, jump, sneak and the movement keys do
+    it all. Ranks no longer unlock moves. They deepen them. Powers become the impossible versions.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Move</th><th>How you do it</th><th>Numbers (base)</th><th>Server checks</th><th>What rank and powers add</th></tr></thead>
+    <tbody>
+      <tr><td>Mantle, slide, tactical sprint</td><td>As today</td><td>As today (tactical sprint recharges in 80 ticks, slide in 20)</td><td>As today</td><td>Ranks shorten the cooldowns instead of unlocking the moves</td></tr>
+      <tr><td><b>Wall-run</b> <span class="tag t-p">NEW</span></td><td>Sprint and jump along a wall, within 35° of parallel. You must be at least 1.5 blocks above the ground, and the wall at least 2 blocks tall.</td><td>1.75 s total: a 0.5 s grip, then you sink. You end about 2 blocks lower after about 11 blocks along the wall. You can't run the same wall twice until you land.</td><td>Wall contact on every tick, the same window as the slide check, and refused while riding, gliding or meditating</td><td>Rank D: 2.0 s. The <b>Wall Stride</b> power (replacing Wall Run): 4 s, no sink for the first 2.5 s, short vertical runs, and works on glass and leaves</td></tr>
+      <tr><td><b>Wall jump</b> <span class="tag t-p">NEW</span></td><td>Jump during a wall-run</td><td>0.42 up, 0.5 out (blocks per tick). Landing on another wall starts a run 80% as long. Up to 4 links before you must land.</td><td>A wall behind you at the moment of the jump</td><td>Rank C: 5 links. Dash out of a wall jump keeps the chain going</td></tr>
+      <tr><td><b>Ledge hang</b> <span class="tag t-p">NEW</span></td><td>Move toward a ledge whose top is 1.2 to 2.4 blocks above your feet while airborne. Or sneak at an edge with a drop of 4 or more and you lower into a hang instead of falling.</td><td>Hold as long as you like; it costs hunger like sprinting. Grabs ledges, beams, sills and bronze trim.</td><td>A solid edge with headroom. Hanging can't trip the server's floating kick (<span class="tag t-v">V</span> <code>noBlocksAround</code>)</td><td>Grapple onto a ledge drops you straight into a hang</td></tr>
+      <tr><td><b>Shimmy</b> <span class="tag t-p">NEW</span></td><td>Left or right while hanging</td><td>1.6 blocks/s. Turns outside corners and stops at gaps.</td><td>A continuous edge each step</td><td>Rank B: 2.2 blocks/s</td></tr>
+      <tr><td><b>Ledge jump</b> <span class="tag t-p">NEW</span></td><td>Jump while hanging. Nothing held: go up to a ledge up to 2.5 blocks above, or climb out if there's open space. Left or right: to a ledge up to 3 blocks sideways. Back: away from the wall.</td><td>Jumping back is how you climb between two walls, Assassin's Creed style</td><td>A target ledge exists, found again within 1 block</td><td>Rank B: +1 block of reach</td></tr>
+      <tr><td>Jump help <span class="tag t-p">NEW</span></td><td>Automatic</td><td>3 ticks of coyote time, a 4-tick early-press buffer, and an edge snap of up to 0.3 blocks</td><td>None needed (it only shifts timing)</td><td>Dying Light needed three of these too</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="demo">
+    <svg id="wallChart" viewBox="0 0 720 300" role="img" aria-label="Height against time for a base wall-run, a wall-run with one wall jump, and the Wall Stride power"></svg>
+    <div class="legend" id="wallLegend"></div>
+    <div class="cap">Height above where you started, against time, from the movement model (vanilla gravity, 0.98 drag, the
+      numbers above). The base run grips for half a second, then sinks. A wall jump at 1.1 s buys a second, shorter run. The
+      power holds you up and lasts more than twice as long.</div>
+  </div>
+
+  <div class="callout">
+    <b>This changes three approved rules, so they need your yes.</b>
+    <ul class="small">
+      <li>SPEC §4: "never-awakened players move like vanilla" would become "everyone moves like a Runner". A server option,
+        <code>runnersKit=false</code>, brings back vanilla movement for packs that want it.</li>
+      <li>The Awakened Body rule "grounded moves only; anything airborne stays a power" would become "the body knows the
+        move, and powers make it impossible".</li>
+      <li>Rank unlocks would become rank upgrades. The Wall Run power becomes Wall Stride so it can't duplicate the base
+        move. New moves go at the end of the <code>Move</code> enum, so existing saves keep their bits.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="city">
+  <h2>Carillon itself</h2>
+  <p>The lore makes the city a machine. Carillon was built on top of the Choir. Its bells are the Choir's resonators, and
+    they keep the gates calm, which is why the city rings every hour. And it's why the bell rang out of time the morning
+    the Choir found you. The walls exist because gates break and things come through.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>District</th><th>Where</th><th>Character</th><th>What it asks of your body</th></tr></thead>
+    <tbody>
+      <tr><td><b>Choir Square</b> and the Market Ward</td><td>Centre</td><td>The great market under the Choir spire (about 140 blocks tall, visible from everywhere). Stalls, shops, the Association's market hall, the broadsheet board.</td><td>Crowds, awnings, stall roofs</td></tr>
+      <tr><td><b>Bellwatch</b></td><td>West</td><td>The old town. Tight lanes, steep slate roofs, chimneys, laundry lines across alleys, little bell towers. The rooftop playground.</td><td>Gaps, mantles, roof slides</td></tr>
+      <tr><td><b>Lantern Quay</b></td><td>Along the river</td><td>Warehouses, cranes, canals, boats and porters. Lanterns on the water at night.</td><td>Wall-runs, wall jumps, hangs</td></tr>
+      <tr><td><b>High Terrace</b></td><td>North, on a rise</td><td>The Hunter Association: hall, Registry, infirmary, archive, training yard. Stone, banners, Precursor glyph lines.</td><td>Big climbs, long drops</td></tr>
+      <tr><td><b>The Works</b></td><td>South</td><td>Smithies, mills on the river, tanneries, kilns. Smoke and sparks.</td><td>Pipes, beams, scaffolds</td></tr>
+      <tr><td><b>Garden Ward</b></td><td>East</td><td>Wealthier homes, courtyards, orchards, the Dawn Gate.</td><td>Walls, pergolas, quiet routes</td></tr>
+      <tr><td><b>The Wallring</b></td><td>The edge</td><td>The wall itself: about 40 blocks high, 10 thick, a walkway on top, 24 towers, 4 gatehouses. The Runners' Roost, barracks, and farms just outside.</td><td>The long run along the top</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid2">
+    <div class="panel"><h4>How it's built <span class="tag t-v">V</span> pattern</h4>
+      <ul class="small">
+        <li><b>The plan</b> is authored data: the wall line, districts, streets, canals, plots, landmark sites. It's the
+          same in every world, and its hash is checked by a GameTest.</li>
+        <li><b>The painter</b> works per chunk, like the gate rooms (<code>GatePainter</code> and its <code>Sink</code>).
+          Each chunk builds only the pieces that touch it, so cost stays flat however big the city gets.</li>
+        <li><b>The grammar</b> fills each plot: a foundation, 2 to 6 storeys of timber frame, plaster or brick, jettied upper
+          floors (good for hangs), steep roofs with dormers and chimneys, then the details. A seed varies the details and
+          never the shape.</li>
+        <li><b>Landmarks are hand-made:</b> the Choir spire, the Association, the Roost, the four gatehouses, the Bell Bridge,
+          the crane towers, the Works mills. About 12 of them.</li>
+        <li><b>Graphs:</b> the same pass writes the street graph and the roof graph. Edges carry the move they need, plus
+          door and stair links.</li>
+        <li><b>Pregeneration:</b> the whole city and a margin (about 1,250 chunks) generate behind the opening card. After
+          that, generator changes can't break a built city, and the graphs are saved with the world.</li>
+      </ul></div>
+    <div class="panel"><h4>The detail kit</h4>
+      <ul class="small">
+        <li><b>The Carillon kit:</b> about 35 blocks of our own. Roof tiles in slate, clay and copper; timber frames;
+          plaster; shutters; flower boxes; laundry lines; market awnings; crates and sacks; street lamps (lit and unlit);
+          bells; district banners; drainpipes you can climb; signboards; bronze ledge trim.</li>
+        <li><b>The climbable language:</b> bronze trim, dark beams and drainpipes mean "hold me". Plain plaster and glass
+          don't. It's consistent across the whole city.</li>
+        <li><b>Interiors:</b> every building on the run's routes, every shop, taverns, the Association, about 60 at
+          first. Other doors are locked but lit from inside at night.</li>
+        <li><b>Sound:</b> hourly bells, a crowd murmur that follows how many citizens are in a district at that hour,
+          market calls, anvils, gulls, canal water, wind on the wall. Sound Physics (sound profile) adds the alley echo.</li>
+        <li><b>Light:</b> Lens adds Carillon dawn (gold haze) and Carillon night (warm lamp bloom). Distant Horizons draws the
+          whole city from the sky shot and from the hills.</li>
+        <li><b>Life you can see far off:</b> chimney smoke, lit windows, boats moving, pigeon flocks that lift as you run
+          past (client-only, so the server pays nothing).</li>
+      </ul></div>
+  </div>
+  <div class="callout">
+    <b>The terrain needs one change from Awakened Lands.</b>
+    <span class="small">A city basin at world spawn: about 600 blocks across, gently flattened, with no lairs or ruins, and
+      blending out to about 700 blocks. Spawn moves into the city through <code>LevelEvent.CreateSpawnPosition</code>
+      (<span class="tag t-v">V</span> exists in NeoForge). The spawn vault ring (240 to 360 blocks) and the Well (400 to 700)
+      move outside the wall. The lands branch owns the blend, and the city owns everything inside it.</span>
+  </div>
+</section>
+
+<section id="alive">
+  <h2>A city that lives</h2>
+  <p>Every citizen is a person on record, with a home, a job, a day, friends and a memory of you. Only the ones near you
+    have bodies. That's how 240 people can live in Carillon without costing what 240 villagers would.</p>
+  <div class="grid3">
+    <div class="panel"><h4>The ledger <span class="small muted">· everyone</span></h4>
+      <p class="small">240 records (about 48 KB saved). Each knows where it should be at every hour and what it's carrying,
+        and moves along the street graph abstractly. The whole ledger updates in slices: 12 citizens a tick, each one every
+        second. Budget: 0.5 ms a tick.</p></div>
+    <div class="panel"><h4>Bodies <span class="small muted">· near you</span></h4>
+      <p class="small">Within about 56 blocks, a citizen gets a body where the ledger says they are. That's at most 40 near
+        each player and 96 in the world. Bodies walk the street graph, not long A* routes, and brains tick less often the
+        further away they are (Pufferfish's DAB rule). At most 4 pathfind at once. Budget: 1.5 ms a tick.</p></div>
+    <div class="panel"><h4>Signs of life <span class="small muted">· far off</span></h4>
+      <p class="small">Beyond the bodies the city shows its people through the world: lit windows, chimney smoke, shutters
+        and lamps changing state, the district's crowd murmur, boats on the canals, pigeons. No entities, so almost no
+        cost.</p></div>
+  </div>
+
+  <h3>Twelve jobs you can watch</h3>
+  <div class="chips">
+    <span class="chip">Lamplighter: lights every lamp at dusk, and the light really changes</span>
+    <span class="chip">Bellringer: rings the hours and alarms</span>
+    <span class="chip">Porter: crates from Quay to market, carried on the back</span>
+    <span class="chip">Stallkeeper: shutters open at 7, close at dusk</span>
+    <span class="chip">Baker: smoke at dawn, bread on the shelves</span>
+    <span class="chip">Smith: sparks and anvils</span>
+    <span class="chip">Watch: patrols and answers events</span>
+    <span class="chip">Crier: reads the news, including news about you</span>
+    <span class="chip">Boatman: punts passengers along the canals</span>
+    <span class="chip">Washer: laundry lines fill and empty</span>
+    <span class="chip">Mason: rebuilds damage block by block</span>
+    <span class="chip">Runner: other couriers on rooftop routes you can race</span>
+  </div>
+  <p class="small muted">The Lamplighter matters most. A monster can only spawn in a block light of 0, so the lamps are what
+    actually keep the city safe at night. If a lamp is broken and left unlit, that corner of the street can spawn mobs.</p>
+
+  <div class="demo">
+    <div class="table-wrap" style="border:none">
+      <div class="day" id="dayStrip" aria-label="A play-day in the lives of five citizens"></div>
+    </div>
+    <div class="legend">
+      <span><span class="key a-sleep"></span>sleep</span><span><span class="key a-work"></span>work</span>
+      <span><span class="key a-walk"></span>on the way</span><span><span class="key a-social"></span>meals, tavern, home</span>
+      <span><span class="key a-event"></span>event window</span>
+    </div>
+    <div class="cap">A play-day for five citizens, on vanilla's day clock (0 is sunrise; villagers work from 2000 to 9000).
+      Schedules are seeded per citizen, so the city changes from street to street while staying on the same rhythm.</div>
+  </div>
+
+  <h3>Events: the city has its own problems</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Event</th><th>How often</th><th>What happens</th><th>If you help</th><th>If you don't</th></tr></thead>
+    <tbody>
+      <tr><td><b>Burglary</b></td><td>About 1 a play-day, at night</td><td>A thief goes in through a window. A resident wakes up shouting, and the thief flees over the roof graph using the same moves you have.</td><td>Catch them and they drop the bag. Return it and the household remembers you.</td><td>The Watch catches them about half the time. The district feels less safe for a few days.</td></tr>
+      <tr><td><b>Pickpocket</b></td><td>0 to 2 a play-day</td><td>A shout in the market, and a quick chase through the stalls.</td><td>A small reward and a witness.</td><td>The stallkeeper loses stock.</td></tr>
+      <tr><td><b>Fire</b></td><td>About 1 every 5 play-days, in the Works</td><td>Rapid bells. A bucket line forms, and someone is trapped upstairs.</td><td>The rescue is remembered city-wide.</td><td>The building burns and the Mason rebuilds it over two play-days.</td></tr>
+      <tr><td><b>Runaway cart</b></td><td>Rare, on the Quay</td><td>Crates spill and the street jams.</td><td>The porters' thanks.</td><td>It clears on its own.</td></tr>
+      <tr><td><b>Gate tremor</b></td><td>From D-rank, outside the wall</td><td>A small gate breaks near a farm, and the Watch calls for hunters.</td><td>An Association contract, with full rewards.</td><td>The Watch holds it, and the farm loses a field for a while.</td></tr>
+      <tr><td><b>Bell Festival</b></td><td>Every 10 play-days</td><td>Lanterns, music, extra stalls, a rooftop race.</td><td>Prizes, titles, renown.</td><td>It's a party anyway.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">The patent rule holds: thieves and events change world state (district safety, gratitude, stock,
+    repairs) and never another hostile NPC's stats. Citizens can be hurt but never die permanently. They recover at the
+    infirmary. Nothing expires while you're away; the city resolves it without you.</p>
+
+  <h3>Recognition: the city learns your name</h3>
+  <p>A deed only counts if someone saw it. Citizens within sight of what you do remember it: the deed, the play-day and how
+    impressive it was. Each play-day those memories spread through households, workplaces and taverns, and fade a little.
+    So the city hears about you, and soon strangers know your name.</p>
+  <div class="ladder">
+    <div><b>Stranger</b><span class="small">Nobody looks twice.</span></div>
+    <div><b>Familiar face</b><span class="small">Nods in the street. Stallkeepers remember what you bought.</span></div>
+    <div><b>Known</b><span class="small">Greeted by name. The Crier mentions you. Children play "Runner" on the low roofs, copying your moves.</span></div>
+    <div><b>Hunter of note</b><span class="small">Shops hold rare stock for you, and the Watch lets you through closed gates at night. Broadsheet headlines.</span></div>
+    <div><b>Hero of Carillon</b><span class="small">The square cheers when you cross it. Your portrait hangs in the Association hall.</span></div>
+    <div><b>Legend</b><span class="small">A statue in Choir Square, and your name in other towns' rumours. The Hearth hears it first.</span></div>
+  </div>
+  <p class="small">Renown is kept per faction too: the Association, the Watch, the Merchants' Guild, the Runners' Guild and the
+    Commons. It shows on the Holo only after you've been registered, and a faction appears there only once you've met it.
+    Bad deeds count: stealing, breaking civic blocks, hitting citizens. People remember those too.</p>
+
+  <h3>The city's story spine</h3>
+  <p class="small muted">Authored beats tied to your rank, like Vael's (patent rule). Found, not told, and none of them is
+    required.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Rank</th><th>In Carillon</th></tr></thead>
+    <tbody>
+      <tr><td>E</td><td>Registration. The Runners' Guild wants you back for one last delivery, and your old route has changed.</td></tr>
+      <tr><td>D</td><td>The first gate tremor outside the wall, and Vael's approved first line, in a gate near the city. The bells fall out of tune for a night.</td></tr>
+      <tr><td>C</td><td>The burglaries have a pattern: someone is stealing bell metal. An investigation over the roofs ends under the Bellwatch.</td></tr>
+      <tr><td>B</td><td><b>Wall Breach:</b> a colossal gate breaks against the wall, and something huge climbs it. The whole city and every player defends. Wall Stride and Grapple are made for this.</td></tr>
+      <tr><td>A</td><td>The Choir under the city wakes. The archive (Teodor) finds what the bells really do.</td></tr>
+      <tr><td>S and up</td><td>The Deep presses up through Carillon's own bells, and the city has to choose whether to trust you. It ties into the endings at the Seed.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="mmo">
+  <h2>Survivor, hunter, citizen, guild</h2>
+  <p>Four ways to play that stack, and you choose how many. Each one stands on its own, and nothing in a later layer is
+    required by an earlier one.</p>
+  <div class="grid2">
+    <div class="panel"><h4>Survivor <span class="small muted">· today, unchanged</span></h4>
+      <p class="small">Hunger, building, mining, vanilla mobs, nights that are dangerous outside the walls. Your Hearth. You
+        can leave the city after the infirmary and never come back.</p></div>
+    <div class="panel"><h4>Hunter <span class="small muted">· today, with a home</span></h4>
+      <p class="small">Gates, ranks, powers, the Signal. The Association adds a place to register, rank trials (the
+        existing Reassessment), the infirmary, and contracts.</p></div>
+    <div class="panel"><h4>Citizen <span class="small muted">· new</span></h4>
+      <p class="small">Renown, shops, coin, a room at the Roost and then a townhouse, Runner deliveries, races, festivals,
+        and helping when the city has trouble. Townsfolk you befriend can move to your Hearth (Enshrouded's lesson).</p></div>
+    <div class="panel"><h4>Guild <span class="small muted">· new, for friends</span></h4>
+      <p class="small">Parties, guilds with a hall and a crest, guild contracts, the Hunter Exchange between players,
+        rooftop races against each other, and the Wall Breach defended together.</p></div>
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>System</th><th>What it is</th><th>How it stays inside the rules</th></tr></thead>
+    <tbody>
+      <tr><td><b>Contracts</b></td><td>The Association board shows <b>3 notices</b> at a time, picked for your rank and the places you know: clear a gate, a bounty on a beast whose lair you've seen, a rooftop delivery against the clock, an escort, an investigation. Taking one gives you the paper. A new notice appears in its place on the next play-day.</td><td>Three at most, so it's never a quest list. Notices only name places you've discovered and describe the rest vaguely ("a light past the river"). No expiry while you're offline.</td></tr>
+      <tr><td><b>Coin and shops</b></td><td>Bell marks. Shops buy and sell. Stock comes from the city's own jobs (porters really deliver it), so prices move with supply. The Association's exchange buys gate loot.</td><td>Loot moves, never copied. Prices are seeded and play-day based. A 100-play-day simulation keeps them within ±30%.</td></tr>
+      <tr><td><b>Hunter Exchange</b></td><td>With friends: list an item, and another player buys it, even while you're offline. Solo: NPC buyers take what the city needs.</td><td>The item is held in escrow until sold or withdrawn. One GameTest per path proves nothing duplicates.</td></tr>
+      <tr><td><b>Housing</b></td><td>Your room at the Roost (from the start, your respawn). Then a townhouse plot you buy and build in freely. Guild halls for guilds.</td><td>Civic blocks are protected and your plots aren't. A server option turns protection off.</td></tr>
+      <tr><td><b>Parties</b></td><td>Invite from the Holo. Shared gate entry, shared credit, pins on each other's Atlas, a small party strip on the HUD.</td><td>Fixes two multiplayer blockers on the way: arena sealing that ignores the party, and rewards that only go to the killer.</td></tr>
+      <tr><td><b>Guilds</b></td><td>Founded at the Association for coin. A crest banner, a hall, shared storage, guild contracts for bigger gates, and a board of the server's best Rooftop Circuit times.</td><td>Local to the server, with no network calls. Solo players have the Association as their guild.</td></tr>
+      <tr><td><b>Rooftop Circuit</b></td><td>Runner races on the roof graph: timed laps, your own ghost and your first-run ghost (the Training Grounds ghost system, reused). Races against friends.</td><td>Never required. Titles only.</td></tr>
+      <tr><td><b>Wall Breach</b></td><td>The B-rank set piece: a colossal gate against the wall, and a creature climbing it. Every player online can defend.</td><td>Authored and rank-triggered (patent rule). It waits for you: it never happens while nobody is there to see it.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">There are no daily logins, streak punishments or limited-time rewards. A play-day only passes while
+    someone is playing, so the city never moves on without you.</p>
+</section>
+
+<section id="atlas">
+  <h2>The Atlas</h2>
+  <p>A diorama of everywhere you've been, floating over your wrist, with clouds over everything you haven't seen. It
+    takes Diorama's idea (an angled voxel map with sun shadows and clouds over the unknown) and makes it Awaken's own: it
+    lives on the Holo, it knows the city, and the clouds only clear where you've actually been.</p>
+
+  <div class="demo" id="atlasDemo">
+    <div class="controls" role="group" aria-label="Atlas state">
+      <button type="button" id="at-run" aria-pressed="true">After the run</button>
+      <button type="button" id="at-eve" aria-pressed="false">First evening</button>
+      <button type="button" id="at-ten" aria-pressed="false">Ten play-days</button>
+      <span class="sep"></span>
+      <button type="button" id="at-night" aria-pressed="false">Night</button>
+    </div>
+    <canvas id="atlasCanvas" height="520" aria-label="Mock-up of the Atlas: an angled voxel diorama of Carillon with clouds covering unexplored land"></canvas>
+    <div class="cap">A mock-up drawn here in the browser, about 1,000 blocks across. After the run, only the streak you ran
+      and the Association are clear. Climbing a bell tower clears a whole district, Assassin's Creed style but with bells.
+      Markers show only what you've discovered: your Hearth, a gate you've seen, the bell towers you've rung.</div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel"><h4>How it works</h4>
+      <ul class="small">
+        <li><b>What you've explored is kept on the server.</b> One bit per 16×16 cell. A 10,000 × 10,000 block world costs
+          about 49 KB per player. Parties can share it, and it survives a reinstall.</li>
+        <li><b>How it looks is cached on your client:</b> height and top colour per column, sampled from chunks as they
+          load, in versioned tiles under the game folder, capped at 64 MB. If the cache is lost, explored land shows faded
+          until you pass by again.</li>
+        <li><b>The clouds clear where you've been</b> (about 64 blocks around your path), not across your whole render
+          distance. High places clear more: a district's bell tower clears the district, and the Choir spire clears the
+          whole city.</li>
+        <li><b>Markers</b> come from the existing <code>MapMarks</code>, landmark memory, gates, lairs, your Hearth,
+          party members and contracts. Only what you know, ever.</li>
+        <li><b>Drawing:</b> the table view is a screen using 26.3's picture-in-picture renderer (<span class="tag t-v">V</span>
+          <code>PictureInPictureRenderer</code> and its NeoForge event), with depth, orbit, zoom and tilt. The wrist glance is
+          a small cached render on the Holo. Meshes rebuild in slices across frames.</li>
+      </ul></div>
+    <div class="panel"><h4>Diorama, Xaero's and ours</h4>
+      <ul class="small">
+        <li><b>Diorama</b> (MIT, on 26.3 since today) is the look you asked for. It can join the pack now as a trial, on its
+          own, the day you want it.</li>
+        <li>For the Atlas, its MIT licence means we may <b>learn from or reuse its ray-traced baker</b> with its notice kept.
+          Stage 0 decides whether reusing it or writing our own is less work, since it's 11 days old and changing
+          fast.</li>
+        <li>Once the Atlas ships, Xaero's leaves the pack plan's trial list, so there's one map and not two. Diorama can stay
+          as an optional client mod for people who want it.</li>
+      </ul></div>
+  </div>
+</section>
+
+<section id="architecture">
+  <h2>How it fits together</h2>
+  <p>Seven new modules, each owning its package, payloads, commands and GameTests (the CLAUDE.md module rules). They talk
+    only through small public hooks in <code>core.api</code>, written before any builder starts.</p>
+  <pre class="mermaid">
+flowchart LR
+  subgraph Server
+    CITY[city<br/>plan · painter · graphs · protection]
+    CIT[citizens<br/>ledger · bodies · jobs · events]
+    REN[renown<br/>witness · gossip · factions]
+    ECO[economy<br/>coin · shops · exchange · contracts]
+    GLD[guild<br/>parties · guilds · races · breach]
+    OPN[opening<br/>run director · arrival · wake]
+    BODY[body<br/>Runner's Kit]
+    STORY[story<br/>Prologue · Ritual]
+    ATS[atlas<br/>discovery]
+  end
+  subgraph Client
+    CAM[opening client<br/>camera entity · cards]
+    ATC[atlas client<br/>tiles · diorama · clouds]
+    HOLO[holo<br/>wrist · panels]
+    LENS[lens<br/>looks · tear]
+  end
+  CITY -->|street + roof graph| CIT
+  CITY -->|routes · square · spawn| OPN
+  OPN -->|openScripted| STORY
+  CIT -->|deeds seen| REN
+  REN --> ECO
+  ECO --> GLD
+  BODY -->|MovementHooks| OPN
+  OPN -.->|scene payloads| CAM
+  ATS -.->|explored cells · marks| ATC
+  ATC --> HOLO
+  CAM --> LENS
+  </pre>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Hook (core.api)</th><th>Owner</th><th>What callers get</th></tr></thead>
+    <tbody>
+      <tr><td><code>CityHooks</code></td><td>city</td><td><code>district(level, pos)</code>, <code>isCivic(level, pos)</code>, <code>streets()</code>, <code>roofs()</code>, <code>startPoint(player)</code>, <code>square()</code></td></tr>
+      <tr><td><code>CitizenHooks</code></td><td>citizens</td><td><code>witnesses(level, pos, radius)</code>, <code>post(CityEvent)</code>, <code>nearby(level, pos, radius)</code></td></tr>
+      <tr><td><code>RenownHooks</code></td><td>renown</td><td><code>witness(player, Deed, pos)</code>, <code>tier(player)</code>, <code>standing(player, Faction)</code></td></tr>
+      <tr><td><code>EconomyHooks</code></td><td>economy</td><td><code>balance(player)</code>, <code>pay(player, amount, claimId)</code>, <code>charge(...)</code></td></tr>
+      <tr><td><code>PartyHooks</code></td><td>guild</td><td><code>party(player)</code>, <code>sameParty(a, b)</code>. Gates use this for sealing and shared rewards.</td></tr>
+      <tr><td><code>OpeningHooks</code></td><td>opening</td><td><code>stage(player)</code>, <code>inOpening(player)</code>, <code>skip(player)</code></td></tr>
+      <tr><td><code>AtlasHooks</code></td><td>atlas</td><td><code>reveal(player, center, radius)</code>, <code>explored(player, pos)</code></td></tr>
+      <tr><td><code>MovementHooks</code> (extended)</td><td>body</td><td>Adds <code>wallRunning</code>, <code>hanging</code>, <code>chain</code> next to the existing slide, mantle and tactical sprint queries</td></tr>
+      <tr><td class="muted">Existing, reused</td><td class="muted">—</td><td class="muted"><code>GateHooks.openScripted</code>, <code>MapMarks</code>, <code>NowHooks</code>, <code>LensClient.override</code> and <code>tear</code>, <code>UiHooks.focus</code>, the Training ghost, the <code>TryDriver</code> input driver</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="data">
+  <h2>What's saved, where, and for how long</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Data</th><th>Where</th><th class="num">Size</th><th>Lifetime</th><th>Change safety</th></tr></thead>
+    <tbody>
+      <tr><td>City plan</td><td>In the jar (code plus <code>data/awaken/city</code>)</td><td class="num">small</td><td>Per release</td><td>A plan-hash GameTest. A change bumps the plan version.</td></tr>
+      <tr><td>The built city</td><td>The world's region files, pregenerated at creation</td><td class="num">~50 MB <span class="tag t-h">H</span></td><td>The world's</td><td>Never regenerated, so later generator changes can't break a built city</td></tr>
+      <tr><td>Street and roof graphs</td><td><code>SavedData awaken_city</code></td><td class="num">≤ 200 KB</td><td>Written at creation, updated by repairs</td><td><code>schemaVersion</code>; saved with the world so they always match its blocks</td></tr>
+      <tr><td>City state: damage, plots, protection, festivals</td><td><code>SavedData awaken_city</code></td><td class="num">small</td><td>The world's</td><td><code>schemaVersion</code></td></tr>
+      <tr><td>Citizen ledger and their memories of players</td><td><code>SavedData awaken_citizens</code></td><td class="num">~48 KB + ~2 KB per player</td><td>The world's</td><td><code>schemaVersion</code>; citizens never deleted, only moved</td></tr>
+      <tr><td>Renown, factions</td><td>Player attachment</td><td class="num">small</td><td>The player's</td><td><code>schemaVersion</code></td></tr>
+      <tr><td>Wallets, contracts held</td><td>Player attachment</td><td class="num">small</td><td>The player's</td><td>Claim ids: each reward pays once</td></tr>
+      <tr><td>Shop stock, exchange listings and escrow</td><td><code>SavedData awaken_economy</code></td><td class="num">small</td><td>Until sold or withdrawn</td><td>The item lives in exactly one place at a time</td></tr>
+      <tr><td>Parties, guilds, halls</td><td><code>SavedData awaken_guild</code></td><td class="num">small</td><td>Until disbanded</td><td><code>schemaVersion</code></td></tr>
+      <tr><td>Opening progress</td><td><code>StoryProgress</code>, with new states appended</td><td class="num">tiny</td><td>The player's</td><td>Players already at DONE never see it</td></tr>
+      <tr><td>Atlas: what you explored</td><td>Player attachment, 1 bit per 16×16 cell</td><td class="num">~49 KB per 10k² blocks</td><td>The player's</td><td>Shared with the party on request</td></tr>
+      <tr><td>Atlas: how it looks</td><td>Client cache, <code>&lt;game&gt;/awaken/atlas/&lt;world&gt;/&lt;dim&gt;/</code></td><td class="num">≤ 64 MB</td><td>Oldest tiles evicted first, plus a "Clear Atlas cache" button</td><td>Versioned tile header; a bad tile is re-sampled</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">Existing worlds don't change. Carillon only appears in new worlds, like Tectonic. A world that has
+    already been played keeps today's prologue, and nothing in it is migrated.</p>
+</section>
+
+<section id="risks">
+  <h2>What could go wrong</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Risk</th><th>Odds</th><th>Hurts</th><th>What we do</th><th>Early warning</th></tr></thead>
+    <tbody>
+      <tr><td>The city costs too many frames (dense blocks plus citizens)</td><td>Medium</td><td>High</td><td>Plain blocks rather than block entities, Entity Culling (walls hide most citizens), the 40-body cap, signs of life instead of bodies far off</td><td>Stage 0 slice perf</td></tr>
+      <tr><td>Hitches while running fast through dense chunks</td><td>Medium</td><td>High</td><td>Pregenerated city, Sodium, routes kept inside the loaded radius, chunks warmed during the sky shot</td><td>Golden-run p99 and the count of frames over 50 ms</td></tr>
+      <tr><td>Parkour rubber-bands online</td><td>Medium</td><td>High</td><td>The existing client-predict, server-check pattern with tolerance windows</td><td>The latency harness at 100 and 150 ms</td></tr>
+      <tr><td>Wall-runs or grabs fire by accident (ParCool's top complaint)</td><td>Medium</td><td>Medium</td><td>A minimum height, a minimum wall height, an angle limit, and no re-running the same wall</td><td>The alley test course</td></tr>
+      <tr><td>The opening soft-locks (stuck, lost, a friend away)</td><td>Medium</td><td>High</td><td>Street route always within 30 s, the gate reaches for stragglers, a skip command, relog resumes the beat</td><td>Route-graph GameTest</td></tr>
+      <tr><td>The camera entity misbehaves with Distant Horizons or culling</td><td>Low to medium</td><td>Medium</td><td>Stage 0 spike. Fallback: move the held player along the path so chunks stream around them</td><td>Spike S2</td></tr>
+      <tr><td>The city looks procedural, "vanilla with an add-on"</td><td>Medium</td><td>High</td><td>Hand-made landmarks, the grammar's variety, our own kit, studio tours against reference boards</td><td>Gate G3 art bar</td></tr>
+      <tr><td>Citizens get stuck or bunch up</td><td>High</td><td>Medium</td><td>Graph routes. A stuck detector moves them along the graph out of sight. A play-day ledger audit.</td><td>Schedule GameTest, a live stuck counter</td></tr>
+      <tr><td>Tick budget blown by bodies and events</td><td>Medium</td><td>High</td><td>Slicing, DAB-style throttling, pathfinding cap, body cap</td><td>Tick p95 in perf tours</td></tr>
+      <tr><td>Survival players feel forced into a city</td><td>Medium</td><td>Medium</td><td>Classic start, skip, leave any time</td><td>Your call at decision 2</td></tr>
+      <tr><td>Nine workstreams drift apart</td><td>High</td><td>High</td><td>Contracts written first, one orchestrator, a reviewer at every gate, a cut line</td><td>Drift check at each milestone</td></tr>
+      <tr><td>Conflicts with open branches (Ritual, body-anims, Holo, Lands)</td><td>High</td><td>Medium</td><td>Those merge first, and Carillon branches start from the merged base</td><td>The integration build</td></tr>
+      <tr><td>Duplication or exploits in the economy</td><td>Medium</td><td>High</td><td>Escrow, server authority, claim ids</td><td>Duplication GameTests</td></tr>
+      <tr><td>Motion sickness (camera roll, the descent)</td><td>Medium</td><td>Medium</td><td>Roll 5° by default with an off option, skip, reduced-motion respected</td><td>Option tests</td></tr>
+      <tr><td>The machine is overloaded by parallel builders (flaky tests, Gradle memory)</td><td>High</td><td>Medium</td><td>At most 3 builds at once, tours one at a time on the bench, flakes re-run once</td><td>Build logs</td></tr>
+      <tr><td>Your play copy is disturbed</td><td>Low</td><td>High</td><td>Never build in Awaken-play while the client runs (the pack.py check)</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="budgets">
+  <h2>Budgets</h2>
+  <p class="small muted">Measured parts come from batch 3 on the M4 (perf-gl and horizon-swift, the overworld platform). The
+    city parts are budgets, and Stage 0 measures them.</p>
+  <div class="panel budget">
+    <h4>Busiest market at noon, perf profile, render distance 16 (target 10 ms, 100 fps)</h4>
+    <div class="brow"><span>Frame p50</span><div class="bar">
+      <i class="w" style="width:53%" title="Platform 5.3 ms (measured)"></i><i class="c" style="width:15%" title="City blocks 1.5 ms"></i><i class="n" style="width:20%" title="Citizens 2.0 ms"></i><i class="d" style="width:4%" title="Signs of life 0.4 ms"></i><i class="s" style="width:3%" title="Holo 0.3 ms"></i>
+      <span class="mark" style="left:calc(100% - 2px)"></span></div></div>
+    <div class="bscale"><span></span><div class="ticks"><span style="left:0%">0</span><span style="left:25%">2.5</span><span style="left:50%">5</span><span style="left:75%">7.5</span><span style="left:100%">10 ms</span></div></div>
+    <div class="legend">
+      <span><span class="key" style="background:color-mix(in srgb,var(--accent) 55%,transparent)"></span>Platform 5.3 ms <span class="tag t-v">V</span></span>
+      <span><span class="key" style="background:color-mix(in srgb,var(--bronze) 65%,transparent)"></span>City blocks 1.5</span>
+      <span><span class="key" style="background:color-mix(in srgb,var(--violet) 60%,transparent)"></span>40 citizens 2.0</span>
+      <span><span class="key" style="background:color-mix(in srgb,var(--good) 45%,transparent)"></span>Signs of life 0.4</span>
+      <span><span class="key" style="background:color-mix(in srgb,var(--amber) 55%,transparent)"></span>Holo 0.3</span>
+      <span>= 9.5 ms</span>
+    </div>
+  </div>
+  <div class="panel budget">
+    <h4>The same spot with Distant Horizons (horizon-swift; target is no more than +3 ms over the platform)</h4>
+    <div class="brow"><span>Frame p50</span><div class="bar">
+      <i class="w" style="width:73.1%" title="Platform with DH 12.21 ms (measured)"></i><i class="c" style="width:18%" title="City budget 3.0 ms"></i>
+      <span class="mark" style="left:91.1%"></span></div></div>
+    <div class="bscale"><span></span><div class="ticks"><span style="left:0%">0</span><span style="left:23.95%">4</span><span style="left:47.9%">8</span><span style="left:71.86%">12</span><span style="left:100%">16.7 ms</span></div></div>
+    <div class="legend"><span>Platform 12.21 ms <span class="tag t-v">V</span> + city ≤ 3.0 = 15.2 ms, about 66 fps. The 16.7 ms end of the bar is 60 fps.</span></div>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Budget</th><th class="num">Limit</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Server tick, whole city</td><td class="num">≤ 2.5 ms avg</td><td>Ledger 0.5, bodies 1.5, events 0.3, renown and economy 0.2. SPEC's tick p95 of 25 ms or less still holds.</td></tr>
+      <tr><td>Any background job</td><td class="num">≤ 3 ms/tick</td><td>SPEC rule. Gossip runs once per play-day, spread across ticks.</td></tr>
+      <tr><td>The rest of the city (perf profile)</td><td class="num">≥ 110 fps p50</td><td>Rooftops, canal, the wall top</td></tr>
+      <tr><td>Golden run</td><td class="num">p99 ≤ 20 ms</td><td>No frame over 50 ms during the run</td></tr>
+      <tr><td>Sky shot</td><td class="num">≥ 60 fps p99</td><td>It's a cinematic; 120 is the aim</td></tr>
+      <tr><td>Atlas open</td><td class="num">≤ 2 ms/frame</td><td>Opens in 150 ms or less. The wrist glance costs 0.3 ms or less.</td></tr>
+      <tr><td>World creation</td><td class="num">≤ 30 s</td><td>About 1,250 chunks pregenerated behind the card <span class="tag t-h">H</span></td></tr>
+      <tr><td>Bodies</td><td class="num">≤ 40 per player, ≤ 96 total</td><td>Palworld caps at 50 per base for the same reason</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="proof">
+  <h2>How we prove it</h2>
+  <p>Your rule for this build is "no playtest gates; verify with tests and autopilot shots". So every claim in the
+    success contract has an automatic check, and each gate ends with shots and numbers you can look at whenever you
+    like.</p>
+  <div class="grid2">
+    <div class="panel"><h4>GameTests (headless server)</h4>
+      <ul class="small">
+        <li><b>Moves:</b> each new move, each refusal, and spoofed starts the server must reject</li>
+        <li><b>City:</b> the plan hash; a chunk built alone matches the same chunk built in context; protection</li>
+        <li><b>Graphs:</b> every door reachable; three routes per act; the street route within 30 s of every roof node</li>
+        <li><b>Citizens:</b> a simulated play-day in which every citizen reaches every schedule target; events resolve; no thief gets stuck</li>
+        <li><b>Renown and economy:</b> gossip spreads, nothing duplicates, contracts never name undiscovered places, at most 3 notices</li>
+        <li><b>Opening:</b> the state machine, a relog at every beat, the multiplayer wait and the straggler pull (with fake players)</li>
+      </ul></div>
+    <div class="panel"><h4>Autopilot tours (bench worktree, one at a time)</h4>
+      <ul class="small">
+        <li><b>Golden runs:</b> a route bot replays recorded inputs for each route through the existing <code>TryDriver</code>. It checks the arrival time window and the hitch count. A generator change that breaks a route fails here.</li>
+        <li><b>A day in Carillon:</b> dawn, noon, dusk and night shot pairs in every district</li>
+        <li><b>Studio tour:</b> each landmark, framed the same way at every gate so the shots compare</li>
+        <li><b>Perf city:</b> the market at noon, rooftops, canal, wall top and the sky shot, on the perf and horizon profiles</li>
+        <li><b>Atlas:</b> opening, panning and revealing</li>
+      </ul></div>
+    <div class="panel"><h4>Simulations</h4>
+      <ul class="small">
+        <li>The pacing simulator (<code>tools/sim</code>) runs renown and the economy for 100 play-days and checks prices hold within ±30%</li>
+        <li>An event budget per play-day, so the city is busy but not chaotic</li>
+      </ul></div>
+    <div class="panel"><h4>Multiplayer</h4>
+      <ul class="small">
+        <li>Logic through GameTest fake players</li>
+        <li>A latency harness: a headless server with 100 or 150 ms added, and one autopilot client</li>
+        <li>One real two-client smoke at gate G4, only if you say yes, because it opens game windows</li>
+      </ul></div>
+  </div>
+</section>
+
+<section id="team">
+  <h2>Who builds what</h2>
+  <p>One orchestrator and nine builders, each in its own worktree and branch, plus a fresh reviewer at every gate. The
+    orchestrator writes the contracts and keeps the plan. Builders write the code. Nobody touches another builder's
+    package.</p>
+  <div class="roster">
+    <div class="panel"><h4>Orchestrator</h4><dl>
+      <dt>Who</dt><dd>This session, unless you'd rather start a fresh one (decision 12)</dd>
+      <dt>Owns</dt><dd>This plan, SPEC §16 "Carillon", the <code>core.api</code> hooks, the briefs, the <code>carillon/main</code> integration branch, merges, gate reports, your decisions</dd>
+      <dt>Doesn't</dt><dd>Write feature code</dd></dl></div>
+    <div class="panel"><h4>W1 · City Architect</h4><dl>
+      <dt>Package</dt><dd><code>city</code>, <code>data/awaken/city</code></dd>
+      <dt>Branch</dt><dd><code>carillon/city</code> in <code>/Volumes/MEDIA/Awaken-city</code></dd>
+      <dt>Delivers</dt><dd>The plan, painter, grammar, kit blocks, graphs, pregen, protection, spawn</dd>
+      <dt>Done when</dt><dd>Plan hash and graph tests pass, creation takes 30 s or less, the studio tour passes</dd></dl></div>
+    <div class="panel"><h4>W2 · Runner</h4><dl>
+      <dt>Package</dt><dd><code>body</code>, plus the Wall Stride rework in <code>powers</code> with that module's owner</dd>
+      <dt>Branch</dt><dd><code>carillon/runner</code></dd>
+      <dt>Needs</dt><dd><code>pack/body-anims</code> merged (the bent poses)</dd>
+      <dt>Done when</dt><dd>Move tests, the latency harness and the alley course pass</dd></dl></div>
+    <div class="panel"><h4>W3 · Director</h4><dl>
+      <dt>Package</dt><dd><code>opening</code> (new), changes to <code>story</code>, new Lens looks</dd>
+      <dt>Branch</dt><dd><code>carillon/opening</code></dd>
+      <dt>Needs</dt><dd><code>pack/ritual</code> merged</dd>
+      <dt>Done when</dt><dd>The opening GameTests pass, golden runs pass, the sky shot takes 25 s or less</dd></dl></div>
+    <div class="panel"><h4>W4 · Citizens</h4><dl>
+      <dt>Package</dt><dd><code>citizens</code></dd>
+      <dt>Branch</dt><dd><code>carillon/citizens</code></dd>
+      <dt>Delivers</dt><dd>The ledger, bodies, 12 jobs, schedules, events, job animations (Player Animation Library)</dd>
+      <dt>Done when</dt><dd>The day simulation, event tests and tick budget pass</dd></dl></div>
+    <div class="panel"><h4>W5 · Renown and Economy</h4><dl>
+      <dt>Package</dt><dd><code>renown</code>, <code>economy</code></dd>
+      <dt>Branch</dt><dd><code>carillon/renown</code></dd>
+      <dt>Delivers</dt><dd>Witnessing, gossip, factions, the broadsheet, coin, shops, the exchange, contracts, housing</dd>
+      <dt>Done when</dt><dd>Duplication tests pass and the 100-play-day simulation holds</dd></dl></div>
+    <div class="panel"><h4>W6 · Atlas</h4><dl>
+      <dt>Package</dt><dd><code>atlas</code>, plus its host panel in <code>holo</code></dd>
+      <dt>Branch</dt><dd><code>carillon/atlas</code></dd>
+      <dt>Needs</dt><dd><code>pack/holo-ui</code> merged</dd>
+      <dt>Done when</dt><dd>Discovery tests pass and it costs 2 ms or less while open</dd></dl></div>
+    <div class="panel"><h4>W7 · Guild</h4><dl>
+      <dt>Package</dt><dd><code>guild</code>, plus the party fixes in <code>gates</code> with that module's owner</dd>
+      <dt>Branch</dt><dd><code>carillon/guild</code> (Stage 4)</dd>
+      <dt>Delivers</dt><dd>Parties, guilds, halls, the Rooftop Circuit, the Wall Breach</dd>
+      <dt>Done when</dt><dd>Multiplayer fake-player tests and the latency harness pass</dd></dl></div>
+    <div class="panel"><h4>W8 · Art and Sound</h4><dl>
+      <dt>Files</dt><dd><code>tools/art/specs</code>, textures, citizen skins (seeded), sounds, particles</dd>
+      <dt>Branch</dt><dd><code>carillon/art</code></dd>
+      <dt>Delivers</dt><dd>The kit textures, reference boards per district, the bell soundscape</dd>
+      <dt>Done when</dt><dd>Gate G3's art bar passes (your visual quality bar)</dd></dl></div>
+    <div class="panel"><h4>W9 · QA and Perf</h4><dl>
+      <dt>Files</dt><dd>Test fixtures, <code>tools/autopilot/carillon-*.txt</code>, the route bot, the latency harness, perf reports</dd>
+      <dt>Branch</dt><dd><code>carillon/qa</code>; runs on the bench worktree</dd>
+      <dt>Delivers</dt><dd>Every check in "How we prove it"</dd>
+      <dt>Done when</dt><dd>Each gate's report comes from its tools</dd></dl></div>
+    <div class="panel"><h4>Reviewer</h4><dl>
+      <dt>Who</dt><dd>A fresh read-only agent at each gate and before each merge</dd>
+      <dt>Checks</dt><dd>The diff against SPEC §16, the brief and the hooks; the drift list; a code review of the merge</dd>
+      <dt>Can't</dt><dd>Change code. Its findings go to the orchestrator.</dd></dl></div>
+  </div>
+
+  <pre class="mermaid">
+flowchart TB
+  V1[build/awaken-v1] --> R[pack/ritual]
+  V1 --> BA[pack/body-anims]
+  V1 --> HU[pack/holo-ui]
+  V1 --> LA[pack/awakened-lands]
+  R --> M
+  BA --> M
+  HU --> M
+  LA --> M
+  M[carillon/main<br/>SPEC §16 + core.api hooks] --> W1[W1 city]
+  M --> W2[W2 runner]
+  M --> W3[W3 opening]
+  M --> W4[W4 citizens]
+  M --> W5[W5 renown + economy]
+  M --> W6[W6 atlas]
+  M --> W7[W7 guild]
+  M --> W8[W8 art]
+  M --> W9[W9 qa]
+  W1 & W2 & W3 & W4 & W5 & W6 & W7 & W8 & W9 -->|merged in order, full tests, tours| M
+  M -->|gate G5| V1
+  </pre>
+
+  <div class="grid2">
+    <div class="panel"><h4>How drift is stopped</h4>
+      <ul class="small">
+        <li><b>Contracts first.</b> SPEC §16 and the <code>core.api</code> hooks land before any builder starts. A builder
+          that needs a new decision asks the orchestrator, and the decision goes into SPEC in the same commit (the CLAUDE.md
+          rule).</li>
+        <li><b>Briefs as files.</b> <code>docs/carillon/briefs/W1.md</code> and so on: goal, owned files, hooks, tests,
+          budgets, non-goals, and absolute paths (builders lose their working directory).</li>
+        <li><b>A merge order:</b> Runner, City, Director, Citizens, Renown, Atlas, Guild. Each merge runs the full GameTest
+          suite (flakes re-run once), then the tours.</li>
+        <li><b>A drift check at every milestone:</b> the reviewer compares the branch with its brief. Each deviation is
+          either written into SPEC or reverted.</li>
+        <li><b>Status:</b> <code>docs/carillon/STATUS.md</code>, plus this page updated at each gate with shots, numbers and
+          test counts.</li>
+      </ul></div>
+    <div class="panel"><h4>House rules for every agent</h4>
+      <ul class="small">
+        <li>One writer per package. Shared JSON goes through <code>src/main/merge/&lt;module&gt;/</code>.</li>
+        <li>Builds only through <code>tools/gradle.sh</code>, and at most 3 at once.</li>
+        <li>Autopilot tours one at a time, on the bench worktree only.</li>
+        <li>Never launch the game client without asking you. Never build in Awaken-play while it runs. Never edit a script
+          that's running.</li>
+        <li>Verify every API in <code>.ref</code> before using it. A compile error costs more than a grep.</li>
+        <li>Small commits ending with the co-author line.</li>
+        <li>Opus for design-heavy streams (City, Runner, Director, Citizens, Atlas), a cheaper model for mechanical QA and
+          data work.</li>
+      </ul></div>
+  </div>
+</section>
+
+<section id="stages">
+  <h2>Stages</h2>
+  <div class="tl">
+    <div><b>Stage 0 · Spikes</b><span class="est">about 1 week · throwaway code on spike branches</span>
+      <span class="small">Six questions, each answered with numbers.
+        <b>S1</b> A Bellwatch slice
+        (about 128×128): milliseconds per chunk, frame cost, how it looks from the sky with DH.
+        <b>S2</b> The camera entity
+        from 250 blocks up down to the eyes, with DH and Lens on.
+        <b>S3</b> Wall-run, hang and
+        ledge jump on the body framework at 100 ms ping.
+        <b>S4</b> 240 ledger records and
+        40 bodies on a graph (spark).
+        <b>S5</b> A picture-in-picture
+        diorama of 512×512 explored blocks with clouds, and whether reusing Diorama's baker or writing our own is less work.
+        <b>S6</b> A basin at spawn from
+        the lands branch, and the spawn override.</span></div>
+    <div class="gate"><b>Gate G0</b><span class="small">Each spike's numbers against its budget, with shots. For each
+      feature: go, adjust or cut, and the plan is updated.</span></div>
+    <div><b>Stage 1 · Foundations in blockout</b><span class="est">about 3 weeks</span>
+      <span class="small">SPEC §16 final. The whole city as massing: wall, streets, canals, landmarks as plain shapes.
+        Graphs, protection, spawn. The full Runner's Kit. The opening end to end in blockout: sky, run, arrival, the
+        multiplayer wait, the Ritual hookup, the wake, a stub Registry. Atlas discovery data.</span></div>
+    <div class="gate"><b>Gate G1</b><span class="small">The opening plays start to finish in blockout. Golden runs pass,
+      all GameTests pass, perf is within budget. The shoulder-camera question gets decided here.</span></div>
+    <div><b>Stage 2 · Alive</b><span class="est">about 3 weeks</span>
+      <span class="small">Citizens (ledger, bodies, 12 jobs, schedules), events, renown, shops and coin, the Association
+        scenes and the Holo wristband, the Atlas diorama with clouds.</span></div>
+    <div class="gate"><b>Gate G2</b><span class="small">The day-in-Carillon tour, event tests, the tick budget, Atlas
+      perf.</span></div>
+    <div><b>Stage 3 · Detail</b><span class="est">about 3 weeks, overlapping the end of Stage 2</span>
+      <span class="small">Grammar variety, interiors, kit art, finished landmarks, job animations, sound and particles,
+        the Lens looks.</span></div>
+    <div class="gate"><b>Gate G3</b><span class="small">The art bar: studio tour against reference boards. Nothing reads as
+      vanilla with an add-on. Perf re-checked at full detail.</span></div>
+    <div><b>Stage 4 · MMO-lite</b><span class="est">about 3 weeks</span>
+      <span class="small">Contracts, the exchange, housing, parties, guilds, the Rooftop Circuit, the Wall Breach, and the
+        multiplayer blockers fixed.</span></div>
+    <div class="gate"><b>Gate G4</b><span class="small">Economy simulation, duplication tests, the latency harness, and
+      the two-client smoke if you allow it.</span></div>
+    <div><b>Stage 5 · Polish</b><span class="est">about 2 weeks</span>
+      <span class="small">The feel pass on the opening, accessibility (street routes, the Runner's eye, the roll option,
+        subtitles for city sounds, reduced motion), a perf sweep, save tests, final tours.</span></div>
+    <div class="gate"><b>Gate G5 · Ship</b><span class="small">Every line of the success contract is green. Carillon merges
+      into <code>build/awaken-v1</code>.</span></div>
+  </div>
+  <div class="callout">
+    <b>About 15 weeks of calendar time with builders in parallel. An honest range is 3 to 4 months.</b>
+    <span class="small">The cut line: if time runs short, Stage 4 slips and the opening doesn't. Stages 0 to 3 (the opening,
+      the city and its people) are the core. Every stage ends in a playable build, so stopping early still leaves something
+      whole.</span>
+  </div>
+</section>
+
+<section id="decisions">
+  <h2>Decisions (approved)</h2>
+  <p>All thirteen recommendations were approved on 24 October 2026.</p>
+  <div class="grid2">
+    <div class="decision"><b>1 · The Runner's Kit from the first second</b><span class="small">Changes three approved rules:
+      vanilla movement before awakening, grounded-only base moves, and ranks that unlock moves.</span>
+      <span class="rec small">Recommended: yes. Everyone is a Runner, ranks deepen the moves, Wall Run becomes Wall Stride,
+        and a server option brings back vanilla movement.</span></div>
+    <div class="decision"><b>2 · Where Carillon sits</b><span class="small">At spawn in new worlds, as a far-off city, or
+      both.</span>
+      <span class="rec small">Recommended: at spawn in new worlds, plus a Classic start world option (wild spawn, no
+        opening). Existing worlds don't change.</span></div>
+    <div class="decision"><b>3 · One Carillon or a new city per world</b><span class="small">Same layout everywhere, or
+      seeded layouts.</span>
+      <span class="rec small">Recommended: one designed Carillon, with seeded details. The routes stay designed and tested,
+        and friends share a mental map.</span></div>
+    <div class="decision"><b>4 · How friends start</b><span class="small">Together at the Roost, or each at their own start
+      point.</span>
+      <span class="rec small">Recommended: together. One sky shot, then everyone picks a route. Stragglers are pulled in 5
+        minutes after the first arrival, or after 2 minutes idle.</span></div>
+    <div class="decision"><b>5 · The contracts board</b><span class="small">Three notices at a time, or a full board.</span>
+      <span class="rec small">Recommended: three. It keeps "never a quest list" true.</span></div>
+    <div class="decision"><b>6 · Building in the city</b><span class="small">Civic blocks protected, or the whole city
+      open.</span>
+      <span class="rec small">Recommended: protected, with your own plots free and a server option to turn it off.</span></div>
+    <div class="decision"><b>7 · Can citizens die?</b><span class="small">Permanent deaths, or hurt and recovering.</span>
+      <span class="rec small">Recommended: hurt, never dead. They recover at the infirmary.</span></div>
+    <div class="decision"><b>8 · Hearth people come from Carillon</b><span class="small">Oren, Mira, Teodor and Sun live in
+      the city first. At Trusted they can move to your Hearth. This changes how the Hearth gets its people.</span>
+      <span class="rec small">Recommended: yes. Your Hearth fills with people you actually know.</span></div>
+    <div class="decision"><b>9 · The map</b><span class="small">Diorama, Xaero's, or our own Atlas.</span>
+      <span class="rec small">Recommended: our own Atlas on the Holo. Diorama goes in the pack as an optional trial now if you
+        want it, and Xaero's leaves when the Atlas ships.</span></div>
+    <div class="decision"><b>10 · Third person</b><span class="small">Vanilla's behind-the-back view, an over-the-shoulder
+      view (needs a small camera mixin or the Shoulder Surfing mod), or both.</span>
+      <span class="rec small">Recommended: start with vanilla plus our View key, and decide on the shoulder view at gate G1
+        after trying it in the run.</span></div>
+    <div class="decision"><b>11 · Wall-run camera roll</b><span class="small">How much the view tilts on a wall.</span>
+      <span class="rec small">Recommended: 5° by default, with an option from 0 to 7.5°.</span></div>
+    <div class="decision"><b>12 · Who orchestrates</b><span class="small">This session, or a fresh dedicated one.</span>
+      <span class="rec small">Recommended: this session, since it holds all this context. <code>STATUS.md</code> lets a fresh
+        session take over cleanly at any gate.</span></div>
+    <div class="decision"><b>13 · Order against current work</b><span class="small">The Ritual, body-anims, Holo and Lands
+      branches are still open.</span>
+      <span class="rec small">Recommended: they merge first, and Carillon branches start from that base. Stage 0's spikes are
+        throwaway, so they can start right away in parallel.</span></div>
+  </div>
+
+  <div class="callout good">
+    <b>What happened on approval</b>
+    <ol class="small">
+      <li>I write SPEC §16 "Carillon" and the <code>core.api</code> hooks, with your decisions at the top.</li>
+      <li>I write the briefs (<code>docs/carillon/briefs/</code>) and <code>STATUS.md</code>, then create
+        <code>carillon/main</code> from <code>build/awaken-v1</code>.</li>
+      <li>I start the six Stage 0 spikes, each as a builder session in its own worktree, and ask the Awakened Lands session
+        for the basin at spawn.</li>
+      <li>The first report comes at gate G0, with numbers against every budget and shots of the slice, the sky shot and a
+        first wall-run.</li>
+    </ol>
+  </div>
+</section>
+
+<footer class="small muted" style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:6px">
+  <span>Sources: our code at <code>build/awaken-v1</code> 2874184 and the open branches (ritual, holo-ui, awakened-lands,
+    awakened-pack); the 26.3 sources in <code>.ref</code>; research checked 24 Oct 2026 (Modrinth, CurseForge, GitHub,
+    minecraft.wiki, Paper and Pufferfish docs, Ubisoft, Game Developer, GDC, Titanfall wiki, Palworld docs).</span>
+  <span>Companion plans: <code>docs/plan-pack.html</code> (approved), <code>docs/proposals/the-ritual.md</code>,
+    <code>docs/proposals/awakened-body.md</code>, the Awakened Lands terrain plan.</span>
+</footer>
+</main>
+
+<script>
+(() => {
+  'use strict';
+  const root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function tokens() {
+    const s = getComputedStyle(root), g = n => s.getPropertyValue(n).trim();
+    return { bg: g('--bg'), panel: g('--panel'), panel2: g('--panel-2'), line: g('--line'), fg: g('--fg'), muted: g('--muted'),
+      accent: g('--accent'), amber: g('--amber'), bronze: g('--bronze'), good: g('--good'), warn: g('--warn'), violet: g('--violet') };
+  }
+  function isDark() {
+    const t = root.getAttribute('data-theme');
+    if (t) return t === 'dark';
+    return !matchMedia('(prefers-color-scheme: light)').matches;
+  }
+  function rng(seed) {
+    return () => {
+      seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const hex = h => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const css = (c, k = 1) => `rgb(${Math.max(0, Math.min(255, Math.round(c[0] * k)))},${Math.max(0, Math.min(255, Math.round(c[1] * k)))},${Math.max(0, Math.min(255, Math.round(c[2] * k)))})`;
+  const smooth = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+
+  // ---- the city model shared by both maps (blocks; north is -z) ----
+  const RIVER = [[-95,-520],[-95,-320],[-92,-240],[-78,-170],[-70,-110],[-74,-50],[-72,-10],[-66,40],[-80,100],[-110,150],[-150,200],[-190,260],[-215,320],[-260,520]];
+  const CANAL = [[-73,-34],[-100,-38],[-120,-30],[-126,0],[-118,22],[-90,26],[-68,24]];
+  const SQUARE = [8, 0], SQUARE_R = 36, SPIRE = [8, -30], ASSOC = [8, -150], ROOST = [-196, -138];
+  const WALL_R = 240;
+  const AVENUES = [[[8,-36],[8,-238]], [[44,0],[238,0]], [[6,36],[0,238]], [[-26,14],[-62,40]], [[-28,-6],[-120,-14]], [[-56,42],[-200,128]], [[8,-150],[70,-120]]];
+  const BELLS = { bellwatch: [-150,-60], quay: [-104,62], terrace: [64,-118], garden: [150,40], works: [44,150] };
+  const ROUTES = {
+    roof:   [[-196,-138],[-205,-110],[-190,-88],[-176,-70],[-160,-78],[-145,-60],[-150,-38],[-132,-24],[-116,-36],[-100,-44],[-88,-30],[-80,-18],[-62,-16],[-58,-36],[-44,-30],[-34,-12],[-20,-4],[4,0]],
+    canal:  [[-196,-138],[-190,-120],[-162,-100],[-136,-72],[-122,-46],[-118,-32],[-100,-38],[-76,-34],[-62,-30],[-44,-16],[-22,-4],[4,0]],
+    street: [[-192,-132],[-178,-104],[-160,-76],[-150,-44],[-138,-10],[-124,16],[-100,36],[-80,42],[-56,42],[-36,30],[-14,14],[4,0]]
+  };
+  function segDist(px, pz, ax, az, bx, bz) {
+    const dx = bx - ax, dz = bz - az, l = dx * dx + dz * dz;
+    let t = l ? ((px - ax) * dx + (pz - az) * dz) / l : 0; t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - ax - t * dx, pz - az - t * dz);
+  }
+  function polyDist(poly, x, z) { let d = 1e9; for (let i = 1; i < poly.length; i++) d = Math.min(d, segDist(x, z, poly[i-1][0], poly[i-1][1], poly[i][0], poly[i][1])); return d; }
+  function riverX(z) {
+    for (let i = 1; i < RIVER.length; i++) {
+      const [ax, az] = RIVER[i-1], [bx, bz] = RIVER[i];
+      if (z >= az && z <= bz) return ax + (bx - ax) * ((z - az) / (bz - az || 1));
+    }
+    return RIVER[RIVER.length - 1][0];
+  }
+  function district(x, z) {
+    const r = Math.hypot(x, z);
+    if (r > WALL_R - 18) return 'wall';
+    const rx = riverX(z);
+    if (Math.hypot(x - SQUARE[0], z - SQUARE[1]) < 80 && x > rx + 14) return 'market';
+    if (Math.abs(x - rx) < 32 || polyDist(CANAL, x, z) < 16) return 'quay';
+    if (x < rx) return 'bellwatch';
+    const a = Math.atan2(z, x) * 180 / Math.PI;
+    if (a < -40 && a > -150) return 'terrace';
+    if (a > 35 && a < 150) return 'works';
+    return 'garden';
+  }
+  const DIST = {
+    bellwatch: { name: 'BELLWATCH', roof: '#61748c', at: [-168, 4], hmin: 10, hmax: 24, size: [6, 9] },
+    quay:      { name: 'LANTERN QUAY', roof: '#8c6d4f', at: [-104, 92], hmin: 10, hmax: 18, size: [8, 14] },
+    market:    { name: 'MARKET WARD', roof: '#b9844f', at: [62, 30], hmin: 8, hmax: 16, size: [6, 9] },
+    terrace:   { name: 'HIGH TERRACE', roof: '#a9a59b', at: [100, -128], hmin: 14, hmax: 28, size: [8, 12] },
+    works:     { name: 'THE WORKS', roof: '#a0503f', at: [36, 176], hmin: 10, hmax: 22, size: [9, 13] },
+    garden:    { name: 'GARDEN WARD', roof: '#62907a', at: [164, -64], hmin: 8, hmax: 14, size: [6, 8] },
+    wall:      { name: '', roof: '#80838b', hmin: 0, hmax: 0, size: [0, 0] }
+  };
+  function routeLen(p) { let l = 0; for (let i = 1; i < p.length; i++) l += Math.hypot(p[i][0] - p[i-1][0], p[i][1] - p[i-1][1]); return l; }
+  const roofLen = document.getElementById('roofLen');
+  if (roofLen) roofLen.textContent = String(Math.round(routeLen(ROUTES.roof) / 10) * 10);
+
+  // buildings for the plan view, generated once with a fixed seed
+  const BUILDINGS = (() => {
+    const r = rng(7), out = [];
+    for (let gx = -236; gx <= 236; gx += 11) for (let gz = -236; gz <= 236; gz += 11) {
+      const cx = gx + (r() - 0.5) * 3, cz = gz + (r() - 0.5) * 3;
+      const d = district(cx, cz);
+      if (d === 'wall') continue;
+      if (Math.hypot(cx, cz) > WALL_R - 20) continue;
+      if (polyDist(RIVER, cx, cz) < 13 || polyDist(CANAL, cx, cz) < 7) continue;
+      if (Math.hypot(cx - SQUARE[0], cz - SQUARE[1]) < SQUARE_R + 7) continue;
+      if (Math.abs(cx - ASSOC[0]) < 26 && Math.abs(cz - ASSOC[1]) < 18) continue;
+      let av = 1e9; for (const a of AVENUES) av = Math.min(av, segDist(cx, cz, a[0][0], a[0][1], a[1][0], a[1][1]));
+      if (av < 6.5) continue;
+      if (r() < (d === 'garden' ? 0.2 : 0.07)) continue; // courtyards and gardens
+      const [lo, hi] = DIST[d].size;
+      let w = lo + r() * (hi - lo), h = lo + r() * (hi - lo);
+      if (d === 'quay' && r() < 0.5) w = Math.min(15, w * 1.5);
+      out.push({ x: cx, z: cz, w: Math.min(w, 10.5), h: Math.min(h, 10.5), d, k: 0.86 + r() * 0.28 });
+    }
+    return out;
+  })();
+
+  // ---- demo 1: the plan from above ----
+  const routeCanvas = document.getElementById('routeCanvas');
+  const show = { roof: true, canal: false, street: false, dist: true };
+  function drawRoute() {
+    if (!routeCanvas) return;
+    const T = tokens(), dark = isDark();
+    const W = routeCanvas.clientWidth || 600, H = Math.round(Math.min(W, 640));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    routeCanvas.style.height = H + 'px';
+    routeCanvas.width = Math.round(W * dpr); routeCanvas.height = Math.round(H * dpr);
+    const c = routeCanvas.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const S = Math.min(W, H) / 600, ox = W / 2, oz = H / 2;
+    const X = x => ox + x * S, Z = z => oz + z * S;
+    const land = hex(T.panel2), fg = hex(T.fg), accent = hex(T.accent), good = hex(T.good);
+    c.fillStyle = css(mix(land, good, dark ? 0.07 : 0.12)); c.fillRect(0, 0, W, H);
+    // fields outside the wall
+    const fr = rng(3);
+    for (let a = 0; a < 360; a += 4) {
+      const rad = a * Math.PI / 180, rr = 262 + fr() * 26;
+      const x = Math.cos(rad) * rr, z = Math.sin(rad) * rr;
+      if (polyDist(RIVER, x, z) < 26) continue;
+      c.save(); c.translate(X(x), Z(z)); c.rotate(rad);
+      c.fillStyle = css(mix(land, fr() < 0.5 ? [210, 190, 110] : good, dark ? 0.16 : 0.28));
+      c.fillRect(-12 * S, -7 * S, 24 * S, 14 * S); c.restore();
+    }
+    // inside the wall
+    c.beginPath(); c.arc(X(0), Z(0), WALL_R * S, 0, Math.PI * 2); c.fillStyle = css(land); c.fill();
+    // water
+    const water = css(mix(land, accent, dark ? 0.42 : 0.5));
+    const stroke = (poly, w, col) => { c.beginPath(); poly.forEach((p, i) => i ? c.lineTo(X(p[0]), Z(p[1])) : c.moveTo(X(p[0]), Z(p[1]))); c.lineWidth = w * S; c.strokeStyle = col; c.lineCap = 'round'; c.lineJoin = 'round'; c.stroke(); };
+    stroke(RIVER, 18, water); stroke(CANAL, 7, water);
+    // avenues
+    for (const a of AVENUES) stroke(a, 6, css(mix(land, fg, 0.1)));
+    // buildings
+    for (const b of BUILDINGS) {
+      const base = hex(DIST[b.d].roof);
+      c.fillStyle = show.dist ? css(base, b.k) : css(mix(land, fg, 0.28), b.k);
+      c.fillRect(X(b.x - b.w / 2), Z(b.z - b.h / 2), b.w * S, b.h * S);
+    }
+    // square, spire, association, roost, market hall, cranes
+    c.beginPath(); c.arc(X(SQUARE[0]), Z(SQUARE[1]), SQUARE_R * S, 0, Math.PI * 2); c.fillStyle = css(mix(land, fg, 0.16)); c.fill();
+    c.lineWidth = 1.5; c.strokeStyle = T.bronze; c.stroke();
+    const rect = (x, z, w, h, fill, line) => { c.fillStyle = fill; c.fillRect(X(x - w / 2), Z(z - h / 2), w * S, h * S); if (line) { c.lineWidth = 1.5; c.strokeStyle = line; c.strokeRect(X(x - w / 2), Z(z - h / 2), w * S, h * S); } };
+    rect(ASSOC[0], ASSOC[1], 44, 28, css(hex('#c9c4b8'), dark ? 0.85 : 0.95), T.bronze);
+    rect(-22, -8, 14, 10, css(hex('#c9c4b8'), dark ? 0.85 : 0.95), T.bronze);
+    rect(-60, -24, 5, 5, T.bronze); rect(-60, 8, 5, 5, T.bronze);
+    // wall, towers, gatehouses
+    c.beginPath(); c.arc(X(0), Z(0), WALL_R * S, 0, Math.PI * 2); c.lineWidth = Math.max(3, 10 * S); c.strokeStyle = css(mix(land, fg, 0.42)); c.stroke();
+    for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12; rect(Math.cos(a) * WALL_R, Math.sin(a) * WALL_R, 12, 12, css(mix(land, fg, 0.5))); }
+    for (const a of [-90, 0, 90]) { const r = a * Math.PI / 180; rect(Math.cos(r) * WALL_R, Math.sin(r) * WALL_R, 20, 20, css(mix(land, fg, 0.55)), T.bronze); }
+    rect(ROOST[0], ROOST[1], 20, 12, T.bronze);
+    // bridges: the Mill Bridge stands, the Bell Bridge falls
+    stroke([[-84, 42], [-50, 42]], 5, css(mix(land, fg, 0.55)));
+    c.setLineDash([3, 3]); stroke([[-88, -12], [-56, -12]], 5, T.warn); c.setLineDash([]);
+    // routes
+    const drawPath = (pts, col, w, dash) => { c.setLineDash(dash || []); c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(X(p[0]), Z(p[1])) : c.moveTo(X(p[0]), Z(p[1]))); c.lineWidth = w; c.strokeStyle = col; c.lineCap = 'round'; c.lineJoin = 'round'; c.stroke(); c.setLineDash([]); };
+    if (show.street) drawPath(ROUTES.street, T.fg, 2.5, [2, 5]);
+    if (show.canal) drawPath(ROUTES.canal, T.accent, 3, [8, 5]);
+    if (show.roof) {
+      drawPath(ROUTES.roof, T.bg, 7);
+      drawPath(ROUTES.roof, T.bronze, 3.5);
+      [[[-176, -70], '1'], [[-80, -18], '2'], [[-34, -12], '3']].forEach(([p, n]) => {
+        c.beginPath(); c.arc(X(p[0]), Z(p[1]), 10, 0, Math.PI * 2); c.fillStyle = T.bronze; c.fill();
+        c.fillStyle = T.bg; c.font = '11px Silkscreen, ui-monospace, monospace'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(n, X(p[0]), Z(p[1]) + 0.5);
+      });
+    }
+    // the gate: a light in the square
+    const gx = X(SQUARE[0]), gz = Z(SQUARE[1]);
+    const glow = c.createRadialGradient(gx, gz, 0, gx, gz, 26 * S + 10);
+    glow.addColorStop(0, 'rgba(255,255,255,0.95)'); glow.addColorStop(0.3, 'rgba(180,140,255,0.7)'); glow.addColorStop(1, 'rgba(180,140,255,0)');
+    c.fillStyle = glow; c.beginPath(); c.arc(gx, gz, 26 * S + 10, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(X(SPIRE[0]), Z(SPIRE[1]), Math.max(4, 6 * S), 0, Math.PI * 2); c.fillStyle = T.bronze; c.fill();
+    // labels
+    const label = (txt, x, z, col, size, align) => {
+      c.font = `${size || 10}px Silkscreen, ui-monospace, monospace`; c.textAlign = align || 'center'; c.textBaseline = 'middle';
+      c.lineWidth = 3; c.strokeStyle = T.bg; c.strokeText(txt, X(x), Z(z)); c.fillStyle = col || T.fg; c.fillText(txt, X(x), Z(z));
+    };
+    if (show.dist) for (const k of Object.keys(DIST)) if (DIST[k].name) label(DIST[k].name, DIST[k].at[0], DIST[k].at[1], T.fg, W < 520 ? 8 : 10);
+    const small = W < 520 ? 7 : 9;
+    label("START · RUNNERS' ROOST", ROOST[0] + 6, ROOST[1] - 18, T.bronze, small);
+    label('THE GATE', SQUARE[0], SQUARE[1] + 46, T.violet, small);
+    label('CHOIR SPIRE', SPIRE[0] + 10, SPIRE[1] - 12, T.bronze, small, 'left');
+    label('ASSOCIATION', ASSOC[0], ASSOC[1] - 24, T.fg, small);
+    label('BELL BRIDGE FALLS', -72, -30, T.warn, small);
+    label('MILL BRIDGE', -66, 56, T.muted, small);
+    label('HIGH GATE', 0, -WALL_R - 20, T.muted, small);
+    label('DAWN GATE', WALL_R - 10, -24, T.muted, small, 'right');
+    label('MILL GATE', 0, WALL_R + 20, T.muted, small);
+    // scale bar and north
+    const sx = 16, sy = H - 18;
+    c.fillStyle = T.fg; c.fillRect(sx, sy, 100 * S, 2);
+    c.font = '10px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'left'; c.textBaseline = 'bottom'; c.fillText('100 blocks', sx, sy - 4);
+    c.textAlign = 'right'; c.textBaseline = 'top'; c.fillText('N ↑', W - 12, 10);
+  }
+  const btn = id => document.getElementById(id);
+  [['rt-roof', 'roof'], ['rt-canal', 'canal'], ['rt-street', 'street'], ['rt-dist', 'dist']].forEach(([id, k]) => {
+    const b = btn(id); if (!b) return;
+    b.addEventListener('click', () => { show[k] = !show[k]; b.setAttribute('aria-pressed', String(show[k])); drawRoute(); });
+  });
+
+  // ---- demo 2: the wall-run chart ----
+  function sim(entry, runs, jumps) {
+    let y = 0, vy = entry; const pts = [[0, 0]], ends = [];
+    for (let t = 0; t < 90; t++) {
+      let run = null;
+      for (const r of runs) { const stop = r.stop ?? r.start + r.dur; if (t >= r.start && t < stop) run = r; }
+      const jump = (jumps || []).find(j => j[0] === t);
+      if (jump) vy = jump[1];
+      else if (run) {
+        const k = t - run.start;
+        const target = k < run.grip ? run.rise * (1 - k / run.grip) : run.sink * smooth((k - run.grip) / (run.dur - run.grip));
+        vy += (target - vy) * 0.35;
+      } else vy = (vy - 0.08) * 0.98;
+      y += vy; pts.push([(t + 1) / 20, y]);
+      for (const r of runs) if (t + 1 === (r.stop ?? r.start + r.dur)) ends.push([(t + 1) / 20, y]);
+      if (y < -6) break;
+    }
+    return { pts, ends };
+  }
+  function drawChart() {
+    const svg = document.getElementById('wallChart'); if (!svg) return;
+    const W = 720, H = 300, L = 46, R = 16, Tp = 30, B = 36, xmax = 4.5, ymin = -6, ymax = 2;
+    const px = t => L + (t / xmax) * (W - L - R), py = y => Tp + ((ymax - Math.max(ymin, y)) / (ymax - ymin)) * (H - Tp - B);
+    const curves = [
+      { name: 'Base wall-run', col: 'var(--bronze)', d: sim(0.2, [{ start: 0, dur: 35, grip: 10, rise: 0.06, sink: -0.26 }]) },
+      { name: 'Base, with a wall jump at 1.1 s', col: 'var(--accent)', d: sim(0.2, [{ start: 0, dur: 35, grip: 10, rise: 0.06, sink: -0.26, stop: 22 }, { start: 31, dur: 28, grip: 8, rise: 0.04, sink: -0.26 }], [[22, 0.42]]) },
+      { name: 'Wall Stride power', col: 'var(--violet)', d: sim(0.2, [{ start: 0, dur: 80, grip: 50, rise: 0.04, sink: -0.14 }]) }
+    ];
+    let s = '';
+    for (let y = ymin; y <= ymax; y += 2) {
+      s += `<line x1="${L}" x2="${W - R}" y1="${py(y)}" y2="${py(y)}" style="stroke:var(--line);stroke-width:1${y === 0 ? '' : ';stroke-dasharray:2 4'}"/>`;
+      s += `<text x="${L - 8}" y="${py(y) + 4}" text-anchor="end">${y > 0 ? '+' + y : y}</text>`;
+    }
+    for (let t = 0; t <= xmax + 1e-9; t += 0.5) s += `<text x="${px(t)}" y="${H - B + 18}" text-anchor="middle">${t.toFixed(1)}</text>`;
+    s += `<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">seconds</text>`;
+    s += `<text x="${L - 8}" y="12" text-anchor="end">blocks</text>`;
+    for (const cv of curves) {
+      const d = cv.d.pts.map((p, i) => (i ? 'L' : 'M') + px(p[0]).toFixed(1) + ' ' + py(p[1]).toFixed(1)).join(' ');
+      s += `<path d="${d}" style="fill:none;stroke:${cv.col};stroke-width:2.5;stroke-linejoin:round"/>`;
+      for (const e of cv.d.ends) s += `<circle cx="${px(e[0])}" cy="${py(e[1])}" r="4" style="fill:var(--panel);stroke:${cv.col};stroke-width:2"/>`;
+    }
+    svg.innerHTML = s;
+    const base = curves[0].d.ends[0];
+    const leg = document.getElementById('wallLegend');
+    if (leg) leg.innerHTML = curves.map(c => `<span><span class="key" style="background:${c.col}"></span>${c.name}</span>`).join('') +
+      `<span>○ = the run ends and you fall · base run ends ${Math.abs(base[1]).toFixed(1)} blocks lower at ${base[0].toFixed(2)} s</span>`;
+  }
+
+  // ---- demo 3: a citizen's day ----
+  function drawDay() {
+    const el = document.getElementById('dayStrip'); if (!el) return;
+    const rows = [
+      ['LAMPLIGHTER', [[0,700,'work'],[700,1200,'walk'],[1200,8000,'sleep'],[8000,10500,'social'],[10500,11500,'walk'],[11500,13300,'work'],[13300,16000,'social'],[16000,22800,'sleep'],[22800,23300,'walk'],[23300,24000,'work']]],
+      ['PORTER', [[0,1000,'social'],[1000,1500,'walk'],[1500,6000,'work'],[6000,7000,'social'],[7000,11000,'work'],[11000,11500,'walk'],[11500,14000,'social'],[14000,23000,'sleep'],[23000,24000,'social']]],
+      ['STALLKEEPER', [[0,800,'social'],[800,1500,'walk'],[1500,12200,'work'],[12200,12800,'walk'],[12800,15000,'social'],[15000,23500,'sleep'],[23500,24000,'social']]],
+      ['BELLRINGER', (() => { const a = []; for (let h = 0; h < 15000; h += 1000) { a.push([h, h + 160, 'work']); a.push([h + 160, h + 1000, h % 3000 === 0 ? 'walk' : 'social']); } a.push([15000, 15500, 'walk']); a.push([15500, 23500, 'sleep']); a.push([23500, 24000, 'social']); return a; })()],
+      ['THIEF', [[0,9000,'sleep'],[9000,12000,'social'],[12000,13000,'walk'],[13000,16000,'social'],[16000,20000,'event'],[20000,21000,'walk'],[21000,24000,'sleep']]]
+    ];
+    let h = '<div class="hours"><span></span><div class="ticks">' + [[0, '0 sunrise'], [6000, '6000 noon'], [12000, '12000 sunset'], [18000, '18000 midnight'], [24000, '24000']].map(([v, t]) => `<span style="left:${v / 240}%">${t}</span>`).join('') + '</div></div>';
+    for (const [name, segs] of rows) {
+      h += `<div class="row"><span>${name}</span><div class="lane">` + segs.map(([a, b, k]) => `<i class="a-${k}" style="left:${(a / 240).toFixed(2)}%;width:${((b - a) / 240).toFixed(2)}%" title="${k} ${a}–${b}"></i>`).join('') + '</div></div>';
+    }
+    el.innerHTML = h;
+  }
+
+  // ---- demo 4: the Atlas ----
+  const atlasCanvas = document.getElementById('atlasCanvas');
+  const N = 120, CB = 1000 / N;
+  const HEARTH = [360, -300], GATE = [-380, 260], HILL = [-40, -330], LAKE = [300, -250];
+  function vnoise(seed, G) {
+    const r = rng(seed), g = new Float32Array(G * G); for (let i = 0; i < g.length; i++) g[i] = r();
+    return (u, v) => {
+      const x = Math.max(0, Math.min(0.9999, u)) * (G - 1), y = Math.max(0, Math.min(0.9999, v)) * (G - 1);
+      const i = Math.floor(x), j = Math.floor(y), fx = smooth(x - i), fy = smooth(y - j);
+      const a = g[j * G + i], b = g[j * G + i + 1], c = g[(j + 1) * G + i], d = g[(j + 1) * G + i + 1];
+      return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+    };
+  }
+  const cellX = i => (i + 0.5 - N / 2) * CB, cellZ = j => (j + 0.5 - N / 2) * CB;
+  const GRID = (() => {
+    const n1 = vnoise(11, 9), n2 = vnoise(12, 23), n3 = vnoise(13, 15), r = rng(21);
+    const h = new Float32Array(N * N), col = new Array(N * N), kind = new Array(N * N), lit = new Uint8Array(N * N);
+    const roads = [[[240,0],[330,-150],[360,-300]], [[0,240],[-200,330],[-380,260]], [[8,-240],[-40,-330]]];
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const x = cellX(i), z = cellZ(j), u = i / N, v = j / N, rr = Math.hypot(x, z), k = j * N + i;
+      let g = 6 + 22 * n1(u, v) + 8 * n2(u, v);
+      g = g + (8 - g) * smooth((330 - rr) / 110); // the city basin
+      let c = mix([96, 140, 82], [150, 160, 110], n2(u, v)), kd = 'land', hh = g;
+      let road = 1e9; for (const rd of roads) road = Math.min(road, polyDist(rd, x, z));
+      if (polyDist(RIVER, x, z) < 9.5 || polyDist(CANAL, x, z) < 5 || Math.hypot(x - LAKE[0], z - LAKE[1]) < 46) { kd = 'water'; hh = g - 2; c = [70, 120, 170]; }
+      else if (rr > WALL_R - 7 && rr < WALL_R + 7) {
+        const a = Math.atan2(z, x) * 180 / Math.PI;
+        const gate = [-90, 0, 90].some(t => Math.abs(((a - t + 540) % 360) - 180) < 2.6);
+        const tower = Math.abs(((a + 540) % 15) - 7.5) > 6.4;
+        kd = 'wall'; hh = 8 + (gate ? 30 : 40) + (tower && !gate ? 6 : 0); c = [150, 150, 156];
+      } else if (rr < WALL_R - 7) {
+        const d = district(x, z);
+        let av = 1e9; for (const a of AVENUES) av = Math.min(av, segDist(x, z, a[0][0], a[0][1], a[1][0], a[1][1]));
+        if (Math.hypot(x - SQUARE[0], z - SQUARE[1]) < SQUARE_R) { kd = 'plaza'; hh = 8; c = [196, 188, 170]; }
+        else if (Math.hypot(x - SPIRE[0], z - SPIRE[1]) < 7) { kd = 'spire'; hh = 8 + 140; c = hex('#e0a86a'); }
+        else if (Math.abs(x - ASSOC[0]) < 22 && Math.abs(z - ASSOC[1]) < 14) { kd = 'assoc'; hh = 8 + 34; c = [214, 208, 194]; }
+        else if (Object.values(BELLS).some(b => Math.hypot(x - b[0], z - b[1]) < 6)) { kd = 'tower'; hh = 8 + 46; c = hex('#c99a62'); }
+        else if (av < 6 || r() < 0.3) { kd = 'street'; hh = 8; c = [128, 126, 120]; }
+        else { const D = DIST[d]; kd = 'house'; hh = 8 + D.hmin + r() * (D.hmax - D.hmin); c = mix(hex(D.roof), [255, 255, 255], (r() - 0.5) * 0.2); lit[k] = r() < 0.55 ? 1 + Math.floor(r() * 3) : 0; }
+      } else if (Math.hypot(x - HEARTH[0], z - HEARTH[1]) < 34) {
+        if (r() < 0.45) { kd = 'house'; hh = g + 6 + r() * 6; c = [120, 160, 120]; lit[k] = r() < 0.6 ? 1 : 0; } else { kd = 'street'; c = [150, 130, 100]; }
+      } else if (road < 7) { kd = 'road'; c = [160, 138, 100]; }
+      else if (rr < 330) { kd = 'field'; c = (Math.floor((i + j * 0.3) / 2) % 2) ? [190, 175, 96] : [120, 156, 80]; }
+      else if (n3(u, v) > 0.56) { kd = 'forest'; hh = g + 7; c = [52, 98, 62]; }
+      h[k] = hh; col[k] = c; kind[k] = kd;
+    }
+    return { h, col, kind, lit };
+  })();
+  function mask(state) {
+    const m = new Float32Array(N * N);
+    const near = (pts, rad) => { for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) if (polyDist(pts, cellX(i), cellZ(j)) < rad) m[j * N + i] = 1; };
+    const disc = (p, rad) => near([p, p], rad);
+    near(ROUTES.roof, 52); disc(SQUARE, 54); disc(ASSOC, 60); near([[8, -36], [8, -150]], 40);
+    if (state !== 'run') {
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) if (Math.hypot(cellX(i), cellZ(j)) < WALL_R + 8 && district(cellX(i), cellZ(j)) === 'bellwatch') m[j * N + i] = 1;
+      near([ASSOC, [8, -240], HILL], 50); disc(HILL, 92);
+    }
+    if (state === 'ten') {
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const x = cellX(i), z = cellZ(j); if (Math.hypot(x, z) < WALL_R + 10 && !(district(x, z) === 'works' && z > 150)) m[j * N + i] = 1; }
+      near([[240, 0], [330, -150], HEARTH], 56); disc(HEARTH, 100); near([[0, 240], [-200, 330], GATE], 50); disc(GATE, 62); disc(LAKE, 74);
+    }
+    // soften the edge so the clouds part gradually
+    let f = new Float32Array(N * N); for (let k = 0; k < f.length; k++) f[k] = 1 - m[k];
+    for (let pass = 0; pass < 2; pass++) {
+      const o = new Float32Array(N * N);
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+        let s = 0, n = 0;
+        for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const a = i + di, b = j + dj; if (a >= 0 && b >= 0 && a < N && b < N) { s += f[b * N + a]; n++; } }
+        o[j * N + i] = s / n;
+      }
+      f = o;
+    }
+    return f;
+  }
+  const atlas = { state: 'run', night: false, fog: null, terr: null, W: 0, H: 0, dpr: 1, cw: 0, cd: 0, hp: 0, y0: 0, x0: 0 };
+  // the Atlas is a Holo screen, so it keeps the device's own dark glass in both page themes
+  const HOLO = { day: { top: [16, 30, 50], bottom: [9, 18, 32] }, night: { top: [8, 14, 28], bottom: [4, 8, 18] }, ink: '#e9f1ff', halo: '#0b1626', dim: '#93a7c2', bronze: '#e0a86a', good: '#8ff0c0', violet: '#b48cff' };
+  let puff = null;
+  const PUFFS = (() => { // jittered cloud anchors, fixed so the clouds don't reshuffle between states
+    const r = rng(31), out = [];
+    for (let j = 0; j < N; j += 2) for (let i = 0; i < N; i += 2) out.push({ i: Math.min(N - 1, i + Math.floor(r() * 2)), j: Math.min(N - 1, j + Math.floor(r() * 2)), s: 0.75 + r() * 0.7, ph: r() * 6.28, sk: r() });
+    return out;
+  })();
+  function makePuff(day) {
+    const p = document.createElement('canvas'); p.width = 128; p.height = 96; const c = p.getContext('2d');
+    const body = day ? '255,255,255' : '176,192,222';
+    const blob = (x, y, r, a) => { const g = c.createRadialGradient(x, y - r * 0.2, r * 0.1, x, y, r); g.addColorStop(0, `rgba(${body},${a})`); g.addColorStop(0.6, `rgba(${body},${a * 0.75})`); g.addColorStop(1, `rgba(${body},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); };
+    blob(64, 54, 40, 0.95); blob(40, 60, 28, 0.9); blob(90, 60, 30, 0.9); blob(60, 38, 26, 0.85);
+    // shade the underside so each puff reads as a cloud, not a smudge
+    c.globalCompositeOperation = 'source-atop';
+    const s = c.createLinearGradient(0, 30, 0, 92); s.addColorStop(0, 'rgba(0,0,0,0)'); s.addColorStop(1, day ? 'rgba(70,95,135,0.55)' : 'rgba(10,20,45,0.65)');
+    c.fillStyle = s; c.fillRect(0, 0, 128, 96);
+    return p;
+  }
+  function buildAtlas() {
+    if (!atlasCanvas) return;
+    const W = atlasCanvas.clientWidth || 600, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = W / (N + 2), cd = cw * 0.643, hp = (cw / CB) * 0.766;
+    const y0 = Math.max(30, 150 * hp - (N / 2 - 4) * cd + 22), x0 = cw;
+    const H = Math.round(y0 + N * cd + 14);
+    Object.assign(atlas, { W, H, dpr, cw, cd, hp, y0, x0 });
+    atlasCanvas.style.height = H + 'px';
+    atlasCanvas.width = Math.round(W * dpr); atlasCanvas.height = Math.round(H * dpr);
+    atlas.fog = mask(atlas.state);
+    const terr = document.createElement('canvas'); terr.width = atlasCanvas.width; terr.height = atlasCanvas.height;
+    const c = terr.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const night = atlas.night, sky = night ? HOLO.night : HOLO.day;
+    const bgG = c.createLinearGradient(0, 0, 0, H); bgG.addColorStop(0, css(sky.top)); bgG.addColorStop(1, css(sky.bottom));
+    c.fillStyle = bgG; c.fillRect(0, 0, W, H);
+    // a faint holo grid under everything
+    c.strokeStyle = 'rgba(127,195,255,0.07)'; c.lineWidth = 1;
+    for (let i = 0; i <= N; i += 10) { c.beginPath(); c.moveTo(x0 + i * cw, y0); c.lineTo(x0 + i * cw, y0 + N * cd); c.stroke(); }
+    for (let j = 0; j <= N; j += 10) { c.beginPath(); c.moveTo(x0, y0 + j * cd); c.lineTo(x0 + N * cw, y0 + j * cd); c.stroke(); }
+    const f = atlas.fog, { h, col, kind, lit } = GRID;
+    const shade = cl => night ? mix(cl, [22, 34, 70], 0.58) : cl;
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const k = j * N + i, fog = f[k];
+      if (fog > 0.66) continue; // unknown: nothing to draw, the clouds cover it
+      const x = x0 + i * cw, hh = h[k], top = y0 + j * cd - hh * hp;
+      let k2 = 1.06 - Math.max(0, fog - 0.15) * 1.2;
+      // sun from the west: taller neighbours shade the tops beside them
+      const w1 = i > 0 ? h[k - 1] : 0, w2 = i > 1 ? h[k - 2] : 0;
+      if (w1 > hh + 3 || w2 > hh + 9) k2 *= 0.74;
+      const cl = shade(col[k]);
+      if (kind[k] !== 'water') {
+        const fh = Math.max(1, hh * hp);
+        c.fillStyle = css(cl, k2 * 0.58); c.fillRect(x, top + cd, cw + 0.6, fh);
+        c.fillStyle = css(cl, k2 * 0.42); c.fillRect(x, top + cd + fh - Math.min(fh, 1), cw + 0.6, 1);
+      }
+      c.fillStyle = css(cl, k2); c.fillRect(x, top, cw + 0.6, cd + 0.6);
+      if (night && lit[k] && fog < 0.45) {
+        c.fillStyle = 'rgba(255,207,122,0.95)'; const s = Math.max(1, cw * 0.22), fh = Math.max(1, hh * hp);
+        for (let n = 0; n < lit[k]; n++) c.fillRect(x + cw * (0.15 + 0.3 * n), top + cd + fh * 0.3, s, s);
+      }
+      if (night && kind[k] === 'street' && ((i * 7 + j * 3) % 5 === 0) && fog < 0.45) { c.fillStyle = 'rgba(255,214,140,0.9)'; c.fillRect(x + cw * 0.4, top + cd * 0.3, Math.max(1, cw * 0.2), Math.max(1, cw * 0.2)); }
+    }
+    if (night) { // the spire catches the lamplight
+      const sx = x0 + (SPIRE[0] / CB + N / 2) * cw, sy = y0 + (SPIRE[1] / CB + N / 2) * cd - 148 * hp;
+      const g = c.createRadialGradient(sx, sy, 0, sx, sy, cw * 7); g.addColorStop(0, 'rgba(224,168,106,0.75)'); g.addColorStop(1, 'rgba(224,168,106,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(sx, sy, cw * 7, 0, Math.PI * 2); c.fill();
+    }
+    atlas.terr = terr;
+    puff = makePuff(!night);
+    drawAtlas(performance.now());
+  }
+  function toScreen(x, z, hh) { return [atlas.x0 + (x / CB + N / 2) * atlas.cw, atlas.y0 + (z / CB + N / 2) * atlas.cd - hh * atlas.hp]; }
+  function drawAtlas(t) {
+    if (!atlasCanvas || !atlas.terr) return;
+    const c = atlasCanvas.getContext('2d'), { W, dpr, cw, cd, hp, x0, y0 } = atlas;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(atlas.terr, 0, 0); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const f = atlas.fog, tt = reduce ? 0 : t, thin = W < 600;
+    for (let n = 0; n < PUFFS.length; n++) {
+      const q = PUFFS[n]; if (q.sk < 0.3 || (thin && n % 2)) continue;
+      const fog = f[q.j * N + q.i]; if (fog < 0.2) continue;
+      const a = smooth((fog - 0.2) / 0.5);
+      const dx = Math.sin(tt * 0.00022 + q.ph) * cw * 1.4, dy = Math.cos(tt * 0.00017 + q.ph * 1.3) * cd * 0.6;
+      const sz = cw * (thin ? 8.5 : 6.6) * q.s * (0.6 + 0.4 * a);
+      const x = x0 + (q.i + 0.5) * cw + dx - sz / 2, y = y0 + (q.j + 0.5) * cd - 14 * hp + dy - sz * 0.375;
+      c.globalAlpha = a * (0.8 + q.sk * 0.2); c.drawImage(puff, x, y, sz, sz * 0.75);
+    }
+    c.globalAlpha = 1;
+    // markers: only what you know
+    const label = (txt, x, y, col) => { c.font = `${W < 520 ? 8 : 10}px Silkscreen, ui-monospace, monospace`; c.textAlign = 'center'; c.textBaseline = 'bottom'; c.lineWidth = 3; c.strokeStyle = HOLO.halo; c.strokeText(txt, x, y); c.fillStyle = col; c.fillText(txt, x, y); };
+    const diamond = (x, y, s, fill) => { c.beginPath(); c.moveTo(x, y - s); c.lineTo(x + s, y); c.lineTo(x, y + s); c.lineTo(x - s, y); c.closePath(); c.fillStyle = fill; c.fill(); c.lineWidth = 1.5; c.strokeStyle = HOLO.halo; c.stroke(); };
+    const st = atlas.state;
+    let p = toScreen(ASSOC[0], ASSOC[1], 46); diamond(p[0], p[1], 6, HOLO.bronze); label('ASSOCIATION', p[0], p[1] - 9, HOLO.ink);
+    const rung = st === 'run' ? [] : st === 'eve' ? ['bellwatch'] : ['bellwatch', 'quay', 'terrace', 'garden'];
+    for (const b of rung) { p = toScreen(BELLS[b][0], BELLS[b][1], 56); c.beginPath(); c.arc(p[0], p[1], 4.5, 0, Math.PI * 2); c.fillStyle = HOLO.bronze; c.fill(); c.lineWidth = 1.5; c.strokeStyle = HOLO.halo; c.stroke(); }
+    if (rung.length) { p = toScreen(BELLS.bellwatch[0], BELLS.bellwatch[1], 56); label(rung.length > 1 ? 'BELLS RUNG' : 'BELL RUNG', p[0], p[1] - 7, HOLO.bronze); }
+    if (st === 'ten') {
+      p = toScreen(HEARTH[0], HEARTH[1], 20); diamond(p[0], p[1], 6, HOLO.good); label('HEARTH', p[0], p[1] - 9, HOLO.good);
+      p = toScreen(GATE[0], GATE[1], 10);
+      const g = c.createLinearGradient(p[0], p[1], p[0], p[1] - 60); g.addColorStop(0, 'rgba(180,140,255,0.95)'); g.addColorStop(1, 'rgba(180,140,255,0)');
+      c.fillStyle = g; c.fillRect(p[0] - 2.5, p[1] - 60, 5, 60);
+      c.beginPath(); c.arc(p[0], p[1], 5, 0, Math.PI * 2); c.fillStyle = HOLO.violet; c.fill();
+      label('GATE · C', p[0], p[1] - 62, HOLO.violet);
+    }
+    const you = st === 'run' ? [ASSOC[0] + 44, ASSOC[1] + 34, 30] : st === 'eve' ? [HILL[0], HILL[1], 30] : [HEARTH[0] - 40, HEARTH[1] + 30, 20];
+    p = toScreen(you[0], you[1], you[2]);
+    c.beginPath(); c.arc(p[0], p[1], 7, 0, Math.PI * 2); c.lineWidth = 2; c.strokeStyle = HOLO.ink; c.stroke();
+    c.beginPath(); c.moveTo(p[0], p[1] - 4); c.lineTo(p[0] + 3.5, p[1] + 3); c.lineTo(p[0], p[1] + 1.5); c.lineTo(p[0] - 3.5, p[1] + 3); c.closePath(); c.fillStyle = HOLO.ink; c.fill();
+    label('YOU', p[0] + 22, p[1] + 5, HOLO.ink);
+    const status = st === 'run' ? 'ATLAS · after the run · 1 play-day' : st === 'eve' ? 'ATLAS · first evening · the Bellwatch bell rung' : 'ATLAS · ten play-days · Hearth built, a gate found';
+    c.font = '10px "JetBrains Mono", ui-monospace, monospace'; c.textAlign = 'left'; c.textBaseline = 'top';
+    c.fillStyle = 'rgba(11,22,38,0.82)'; c.fillRect(6, 5, c.measureText(status).width + 10, 17);
+    c.fillStyle = HOLO.dim; c.fillText(status, 11, 9);
+  }
+  let raf = 0, last = 0, onScreen = true;
+  function loop(t) { raf = 0; if (!onScreen || reduce) return; if (t - last > 40) { last = t; drawAtlas(t); } raf = requestAnimationFrame(loop); }
+  function startLoop() { if (!raf && !reduce) raf = requestAnimationFrame(loop); }
+  if (atlasCanvas && 'IntersectionObserver' in window) new IntersectionObserver(es => { onScreen = es[0].isIntersecting; if (onScreen) startLoop(); }).observe(atlasCanvas);
+  const states = [['at-run', 'run'], ['at-eve', 'eve'], ['at-ten', 'ten']];
+  states.forEach(([id, s]) => { const b = btn(id); if (!b) return; b.addEventListener('click', () => { atlas.state = s; states.forEach(([o]) => btn(o).setAttribute('aria-pressed', String(o === id))); buildAtlas(); }); });
+  const nb = btn('at-night'); if (nb) nb.addEventListener('click', () => { atlas.night = !atlas.night; nb.setAttribute('aria-pressed', String(atlas.night)); buildAtlas(); });
+
+  // ---- wiring ----
+  function all() { drawRoute(); buildAtlas(); }
+  drawChart(); drawDay(); all(); startLoop();
+  let rz = 0; const later = () => { clearTimeout(rz); rz = setTimeout(all, 120); };
+  if ('ResizeObserver' in window) { let w0 = 0; new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== w0) { w0 = w; later(); } }).observe(document.querySelector('main')); }
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change', all);
+  new MutationObserver(all).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(all);
+})();
+</script>
