@@ -285,6 +285,10 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   rule, once at mod init), `site(server)` (centre, core and blend radii, street Y, the river's centre line, whether the
   basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
+- `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
+  tier, radius, members, foundedFrom)` with `has(UUID)`, `hearthsOf(MinecraftServer, UUID)` / `hearthsOf(ServerPlayer)`,
+  `home(ServerPlayer)`, `isMember(ServerPlayer, BlockPos anchor)`, `isMember(MinecraftServer, UUID player, UUID owner)`,
+  `hearthAt(ServerLevel, BlockPos)`; plus `anchor`, `atHome`, `hasRoom`, `isSanctuary`, `inRoom`, `ownedEchoes`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
@@ -901,7 +905,8 @@ Parties and the bridges:
   player's home (their own Hearth, else the first they share). `core.api.StoryHooks` gains `gatesCalm(server, owner)`
   and `ascension(player)` / `ascensionOf(player)`. `core.api.MobHooks` gains `bondedTo(entity)`.
 - Dedicated server: client-sent actions are rate-limited per player (`core.Throttle`); `/awaken as <player> <any awaken
-  command>` runs it for that player (game masters, the console, command blocks); `core.RegionRecycler` erases a batch
+  command>` runs it for that player (game masters, the console, command blocks; `<player>` is a name or a selector, as
+  vanilla's player arguments take it, never a UUID); `core.RegionRecycler` erases a batch
   of chunks from region files while running, once none is in memory on two checks at least 10 s apart (written as "no
   data" through the level's own chunk IO worker), so gate and dream cells are reused without a restart.
 
