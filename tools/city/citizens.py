@@ -172,6 +172,7 @@ class City:
             blocks = sec * WALK
             self.adj[a].append((b, blocks, m))
             self.adj[b].append((a, blocks, m))
+        self.leaf = [nd[3] in ('door', 'landmark') for nd in self.nodes]
         self.main = self._main_component()
         self.in_main = np.zeros(n, bool)
         self.in_main[self.main] = True
@@ -224,14 +225,23 @@ class City:
 
     # -- the street graph ------------------------------------------------------------------------------------------
     def _main_component(self):
-        seen = {self.landmark_node_raw('choir')}
-        stack = list(seen)
+        """The street graph's main component: the junctions joined by edges (a junction may sit on a door edge), plus every
+        door or landmark node whose edges all lead to junctions of it. A door hanging off another door, or off a junction on
+        an island, is not in it (a body walks the graph through junctions only; door and landmark nodes are its ends)."""
+        nodes = self.nodes
+        leaf = lambda i: nodes[i][3] in ('door', 'landmark')
+        start = next(v for v, _, _ in self.adj[self.landmark_node_raw('choir')] if not leaf(v))
+        seen = {start}
+        stack = [start]
         while stack:
             u = stack.pop()
-            for v, _, _ in self.adj[u]:
-                if v not in seen:
+            for v, _, m in self.adj[u]:
+                if not leaf(v) and v not in seen:
                     seen.add(v)
                     stack.append(v)
+        for i in range(len(nodes)):
+            if leaf(i) and self.adj[i] and all(not leaf(v) and v in seen for v, _, _ in self.adj[i]):
+                seen.add(i)
         return sorted(seen)
 
     def landmark_node_raw(self, lid):
@@ -249,10 +259,11 @@ class City:
             d[src] = 0.0
             heap = [(0.0, src)]
             adj = self.adj
+            leaf = self.leaf
             while heap:
                 du, u = heapq.heappop(heap)
-                if du > d[u]:
-                    continue
+                if du > d[u] or (u != src and leaf[u]):
+                    continue    # a door or landmark node is where a walk ends, never a way through
                 for v, w, _ in adj[u]:
                     nd = du + w
                     if nd < d[v]:
@@ -2979,6 +2990,36 @@ class Checker:
     def reach(self):
         C = self.C
         errs = []
+        # components over the whole street graph, door and landmark nodes as dead ends (a walk never passes through one):
+        # every place's node, and every target of a schedule or route, must be in the biggest
+        nodes = C.nodes
+        isleaf = [nd[3] in ('door', 'landmark') for nd in nodes]
+        nbr = [[] for _ in nodes]
+        for a, b, *_ in C.edges:
+            nbr[a].append(b)
+            nbr[b].append(a)
+        comp = {}
+        for s0 in range(len(nodes)):
+            if isleaf[s0] or s0 in comp:
+                continue
+            comp[s0] = s0
+            stack = [s0]
+            while stack:
+                u = stack.pop()
+                for v in nbr[u]:
+                    if not isleaf[v] and v not in comp:
+                        comp[v] = s0
+                        stack.append(v)
+        sizes = Counter(comp.values())
+        big = sizes.most_common(1)[0][0]
+
+        def usable(n):
+            if isleaf[n]:
+                return bool(nbr[n]) and all(not isleaf[v] and comp.get(v) == big for v in nbr[n])
+            return comp.get(n) == big
+        for pid, pl in enumerate(self.pl):
+            if not usable(pl['node']):
+                errs.append(f'place {pid} ({PLACE_KINDS[pl["kind"]]}) is on node {pl["node"]}, not in the main component')
         for q in self.ct:
             row = C.row(self.pl[q['home']]['node'])
             for seg in self.o['schedules'][q['id']]:
@@ -2991,10 +3032,15 @@ class Checker:
                 else:
                     targets = [seg[2]] + self.routes[seg[3]]['places']
                 for t in targets:
+                    if not usable(self.pl[t]['node']):
+                        errs.append(f'citizen {q["id"]} targets place {t} on node {self.pl[t]["node"]}, which is not in the main component')
                     if not math.isfinite(row[self.pl[t]['node']]):
                         errs.append(f'citizen {q["id"]} cannot reach place {t}')
         for r in self.routes:
             pl = r['places']
+            for t in pl:
+                if not usable(self.pl[t]['node']):
+                    errs.append(f'route {r["id"]} has place {t} on node {self.pl[t]["node"]}, not in the main component')
             for a, b in zip(pl, pl[1:] + (pl[:1] if r['kind'] in ('patrol', 'scout', 'crier', 'courier') else [])):
                 if not math.isfinite(self.wd(a, b)):
                     errs.append(f'route {r["id"]} breaks between {a} and {b}')
