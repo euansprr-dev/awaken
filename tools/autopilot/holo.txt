@@ -1,7 +1,8 @@
 # Holo UI tour (docs/modules/holo.md): the demo VIEW panel; the HUD still, then a sharp turn with HUD motion
 # Subtle / Off / Full; the K menu unfolding from the wrist at fixed moments (frozen with "holo at <ms>"), open,
 # a tab clicked through the real ray-picking path, first person, third person back and front, the wide and slim
-# arm, what other players see (holo peek); then frame times with and without the panel. GUI scale 0 (auto).
+# arm, what other players see (holo peek), the menu over sky, grass and night; then frame times with and without the
+# panel. GUI scale 0 (auto). Hands after a close (casts, slides): tools/autopilot/holo-hands.txt.
 # Run: tools/autopilot.sh tools/autopilot/holo.txt
 world autopilot_holo creative 1234
 waitworld
@@ -78,6 +79,20 @@ shot holo_16_k_truths_clicked
 holo clicktab 0
 wait 10
 shot holo_17_k_status
+
+# --- readability: the same menu over a bright sky, grass and the night (the text beds carry it, not Lens) ---
+look 20 -30
+wait 15
+shot holo_25_read_sky
+look 20 40
+wait 15
+shot holo_26_read_grass
+look 20 4
+cmd time set 18000
+wait 30
+shot holo_27_read_night
+cmd time set 6000
+wait 20
 
 # --- arms: wide and slim ---
 holo arm wide

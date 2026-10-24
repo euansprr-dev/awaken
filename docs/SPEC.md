@@ -594,20 +594,28 @@ the player (client config `skipExperimentalWarning`, default on).
 Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1 and P2):
 - K opens the menu on the wrist when `statusStyle = HOLO` (default) and both holo pipelines compiled; otherwise the
   flat StatusScreen. `screen status|map|codex` in the autopilot stay flat; `screen holo` opens the holo one.
-- Timeline: arm 0–120 ms, band flare 60–200 (peak ×2.5 at 140), a beam from the wrist 120–380, the panel leaves the
-  wrist 150–370 (appearing just above it, growing upward from its bottom edge), unfolds Y 160–280 then X 220–360,
+- Timeline: arm 0–120 ms, band flare 60–200 (peak ×2.5 at 140), beams from the wrist with an opening surge 110–360
+  and a faint steady link from 260, the panel grows out of the beams' origin 140–370, unfolds Y 160–280 then X 220–360,
   glass 230–380, scan line 250–390, text types from 300 (Signal speed ×4, all lines done by 450); clicks from 250;
   closing replays it backward in 250 ms; K while opening skips to open.
-- Panels: whole framebuffer pixels per unit (≈62% of the width, ≤80% of the height; the 344×214 K panel is 5 px/unit
+- Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 272×228 K panel is 5 px/unit
   at 3024×1964), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
-  (-0.10, +0.08) of the half-screen, turned 2.5° in and leaning 2° back (third person: aside at -0.50, 62% size).
+  (-0.43, +0.15) of the half-screen (left of the crosshair, up and right of the wrist), yawed 7° toward the wrist and
+  leaning 3° back (third person: at least -0.50 aside, 80% size). Material: 38–50% glass (denser toward the wrist),
+  static scan lines, a slow shimmer (no strobing), a hairline edge with brackets and an additive halo. Readability
+  overrides sheerness: a feathered dark bed (58% over the glass) behind every text block, white body text, System-blue
+  headers with a glow, shadows always on; it must read over sky, grass and night without Lens.
   Drawn in the main pass's translucent custom geometry (the glass writes depth, so later water, particles, clouds and
   weather stay behind it); under Improved Transparency in the always-on-top phase. Budget: the holo K menu is within
   0.06–0.25 ms of the flat one at 3024×1898.
 - Spring: critically damped, settles in 200 ms, shown lag ≤ 4° (soft clamp); `reducedMotion` follows directly.
-- Wrist: the off-hand arm, at 0.8 scale, with the System's device (a strap whose top is a glass face, seams, an
-  emitter). First person replaces both hands (RenderHandEvent HIGH, cancelled) only while open or animating; third person uses the `AWAKEN_HOLO_WRIST` arm pose (enum extension). Others see the pose, a band and a
-  content-free glow card (depth-tested), never the panel's content.
+- Wrist: the off-hand forearm from the lower left at 0.64 scale, the inside of the wrist to the eye, with the System's
+  band (a flush dark strip, two emissive lines, segment nodes with an idle pulse, the diamond emitter; it flares on
+  open). First person replaces both hands (RenderHandEvent HIGH, cancelled) only while opening or open; from the first
+  tick of a close the hands are vanilla's again (re-equip from the lowered height), so casts, Awakened Body moves and
+  other hand hooks right after the menu draw their own hands; only the lowering forearm is still drawn. Third person
+  uses the `AWAKEN_HOLO_WRIST` arm pose (enum extension, forearm across the chest). Others see the pose, a brighter
+  wrist glow and a small content-free hologram card beside the body (depth-tested), never the panel's content.
 - `awaken:holo_state`: kind NONE/STATUS/INVENTORY, unknown ids refused, ≤ 4 changes per 20 ticks per player (later
   ones wait, the last always arrives), relayed only to trackers that know the channel; reset on respawn/dimension.
 - HUD motion: `awaken:*` layers except full-screen/crosshair ones (`power_fx_screen`, `fauna_reveal_pulse`, `veil`)
