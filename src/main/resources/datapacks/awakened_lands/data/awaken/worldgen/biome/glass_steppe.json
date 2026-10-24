@@ -1,7 +1,13 @@
 {
   "attributes": {
     "minecraft:audio/ambient_sounds": {
-      "loop": "awaken:amb.glass_steppe"
+      "loop": "awaken:amb.glass_steppe",
+      "mood": {
+        "block_search_extent": 8,
+        "offset": 2.0,
+        "sound": "minecraft:ambient.cave",
+        "tick_delay": 6000
+      }
     },
     "minecraft:gameplay/natural_mob_spawns": {
       "argument": {

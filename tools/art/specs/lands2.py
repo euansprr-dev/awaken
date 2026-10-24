@@ -24,7 +24,7 @@ RAMPS = {
     "resin": ["#7a3c06", "#c8700f", "#f2a73a", "#ffd98a"],
     "fused": ["#a89c82", "#bdb197", "#cfc5ad", "#ddd5c1", "#e8e2d2", "#f2eee3"],
     "fused_crack": ["#6f5a3c", "#8a7250", "#a58c66"],
-    "sunshard": ["#8a6430", "#b98a3e", "#d9b16a", "#ecd39c", "#f6e9c8", "#fdf8ea"],
+    "sunshard": ["#a07a3c", "#c9a05a", "#e2c68e", "#f1e2bf", "#f8f1e2", "#fdfbf6"],
     "sun_glow": ["#ff9a26", "#ffb648", "#ffd27a", "#fff0c4"],
     "scorched": ["#0f0a08", "#19110d", "#251a14", "#33251c", "#463428", "#5e4a3a"],
     # Shattered Highlands: violet-slate faultstone, the cyan-violet light in its cracks, blue-grey riven shale
@@ -284,7 +284,7 @@ def sunshard(seed):
     rng = rng_for("sunshard", seed)
     pts = _cells(rng, 6)
     tone = [rng.random() for _ in pts]
-    warm = [rng.random() < 0.35 for _ in pts]
+    warm = [rng.random() < 0.22 for _ in pts]
     n = value_noise(16, 16, rng, scale=4, octaves=2)
     owner = [[0] * 16 for _ in range(16)]
     for y in range(16):
@@ -302,14 +302,15 @@ def sunshard(seed):
                     second = d
             owner[y][x] = bi
             if second - best < 0.45:
-                c.set(x, y, r[5])
+                c.set(x, y, hex_rgba("#f4fbff"))  # facet edges catch a cool white
                 continue
-            v = 0.15 + 0.7 * tone[bi] + 0.15 * n[y][x]
-            col = r[quantize(v, len(r) - 1)]
+            sheen = max(0.0, 1.0 - abs(((x + y) % 16) - 8.0) / 3.0)  # a soft streak of light across the crystal
+            v = 0.3 + 0.45 * tone[bi] + 0.1 * n[y][x] + 0.25 * sheen
+            col = r[quantize(v, len(r))]
             if warm[bi]:
-                col = mix(col, gl[0], 0.35)
+                col = mix(col, gl[0], 0.28)
             c.set(x, y, col)
-    cand = [(x, y) for y in range(16) for x in range(16) if warm[owner[y][x]] and c.get(x, y) != r[5]]
+    cand = [(x, y) for y in range(16) for x in range(16) if warm[owner[y][x]] and c.get(x, y) != hex_rgba("#f4fbff")]
     rng.shuffle(cand)
     for x, y in cand[:3]:
         g.set(x, y, gl[1])

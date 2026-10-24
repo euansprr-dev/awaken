@@ -211,6 +211,7 @@ def tags(lc, btags, itags):
     # what the air reads (terrain.client.LandsMotes): glints catch on glass, sparks rise from the faults
     _add(btags, "awaken:lands/glints", [aw("fused_glass"), aw("sunshard"), aw("sunshard_cluster"), aw("scorched_glass")])
     _add(btags, "awaken:lands/faults", [aw("faultstone"), aw("fault_seam")])
+    _add(btags, "awaken:lands/glint_spires", [aw("sunshard")])
 
 
 def flammable(lc, values):
@@ -374,7 +375,9 @@ def biome(lc, base, *, sky, fog, water, water_fog, grass, foliage, dry, steps, s
     attrs["minecraft:visual/fog_color"] = fog
     attrs["minecraft:visual/water_fog_color"] = water_fog
     if ambience:
-        attrs["minecraft:audio/ambient_sounds"] = {"loop": ambience}
+        # the bed, and the overworld's cave mood kept (a biome's value replaces the dimension's whole)
+        attrs["minecraft:audio/ambient_sounds"] = {"loop": ambience, "mood": {
+            "block_search_extent": 8, "offset": 2.0, "sound": lc.mc("ambient.cave"), "tick_delay": 6000}}
     b["attributes"] = dict(sorted(attrs.items()))
     b["effects"] = {"water_color": water, "grass_color": grass, "foliage_color": foliage, "dry_foliage_color": dry}
     out = [list(s) for s in b["features"]]

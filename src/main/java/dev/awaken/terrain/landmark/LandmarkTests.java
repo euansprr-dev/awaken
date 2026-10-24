@@ -638,16 +638,21 @@ public final class LandmarkTests {
         h.assertTrue(fault != null, "the fault noise exists");
         StringBuilder log = new StringBuilder();
         Predicate<Holder<Biome>> steppe = b -> b.is(net.minecraft.world.level.biome.Biomes.SAVANNA) || b.is(net.minecraft.world.level.biome.Biomes.SAVANNA_PLATEAU);
+        // the highlands' archetypes and the other mountains (the archetypes alone are rare on one vanilla seed's sample)
         Predicate<Holder<Biome>> hills = b -> b.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_HILLS)
-                || b.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_GRAVELLY_HILLS) || b.is(net.minecraft.world.level.biome.Biomes.STONY_PEAKS);
+                || b.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_GRAVELLY_HILLS) || b.is(BiomeTags.IS_MOUNTAIN);
         for (Landmark l : Landmark.values()) {
             var spread = (RandomSpreadStructurePlacement) sets.getOrThrow(ResourceKey.create(Registries.STRUCTURE_SET, Awaken.id(l.getSerializedName()))).value().placement();
             h.assertTrue(spread.spacing() * 16 >= 300 && spread.spacing() * 16 <= 600, l + ": one candidate per " + spread.spacing() * 16 + " blocks");
             Predicate<Holder<Biome>> valid = l == Landmark.GATE_SCAR ? steppe : hills;
+            // candidates whose region has the biome (a vanilla seed's sample is mostly lowland: the search is what's tested)
             int found = 0, candidates = 0;
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8; j++) {
+            for (int i = -15; i <= 15 && candidates < 40; i++) {
+                for (int j = -15; j <= 15 && candidates < 40; j++) {
                     ChunkPos chunk = spread.getPotentialStructureChunk(seed, i * spread.spacing(), j * spread.spacing());
+                    Holder<Biome> here = resolver.getNoiseBiome(QuartPos.fromBlock(chunk.getMiddleBlockX()), QuartPos.fromBlock(100),
+                            QuartPos.fromBlock(chunk.getMiddleBlockZ()));
+                    if (!valid.test(here)) continue;
                     candidates++;
                     var ctx = new Structure.GenerationContext(access, gen, source, sampler, random, level.getServer().getStructureTemplateManager(),
                             seed, chunk, level, valid);

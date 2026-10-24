@@ -36,6 +36,8 @@ final class LandsMotes {
     static final int CAP = 120;
     static final TagKey<Block> GLINTS = TagKey.create(Registries.BLOCK, Awaken.id("lands/glints"));
     static final TagKey<Block> FAULTS = TagKey.create(Registries.BLOCK, Awaken.id("lands/faults"));
+    /** What glints up a spire's side (a sunshard spire); everything else of #GLINTS glints on its top. */
+    private static final TagKey<Block> SPIRE = TagKey.create(Registries.BLOCK, Awaken.id("lands/glint_spires"));
     private static final Identifier[] GLINT = {Awaken.id("glint_0"), Awaken.id("glint_1")};
     private static final Identifier SPARK = Awaken.id("fault_spark");
     private static final Identifier[] DUST = {Awaken.id("dust_0"), Awaken.id("dust_1")};
@@ -80,11 +82,12 @@ final class LandsMotes {
         BlockState s = level.getBlockState(POS.set(bx, top, bz));
         if (!s.is(GLINTS)) return null;
         double x, y, z;
-        // a spire: somewhere up its side, on the face toward the camera
-        int k = RNG.nextInt(Math.max(1, Math.min(12, top - Mth.floor(cam.y) + 12)));
-        int sy = top - k;
-        boolean side = k > 0 && level.getBlockState(POS.set(bx, sy, bz)).is(GLINTS);
-        if (side) {
+        // a spire (sunshard standing over the ground): somewhere up its side, on the face toward the camera; else the
+        // glass of the ground, on its top
+        boolean spire = s.is(SPIRE) && level.getBlockState(POS.set(bx, top - 1, bz)).is(SPIRE);
+        int sy = spire ? top - RNG.nextInt(Math.max(1, Math.min(14, top - Mth.floor(cam.y) + 14))) : top;
+        if (spire && !level.getBlockState(POS.set(bx, sy, bz)).is(SPIRE)) return null;
+        if (spire && RNG.nextBoolean()) {
             double dx = cam.x - (bx + 0.5), dz = cam.z - (bz + 0.5);
             int ox = Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 1 : -1) : 0, oz = ox == 0 ? (dz > 0 ? 1 : -1) : 0;
             if (!level.getBlockState(POS.set(bx + ox, sy, bz + oz)).isAir()) return null;

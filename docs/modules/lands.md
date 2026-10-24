@@ -274,3 +274,109 @@ Tour: `tools/autopilot/lands-slice.txt` (run with `PACK=perf,world TECTONIC=awak
 - The studio's `visit` now prefers a sizeable dry patch; on Tectonic worlds a biome's nearest patch can still be a
   mountainside, so the slice tour shoots Elderwood beside its Colossus.
 
+
+## The second pair as built (2026-10-24): Glass Steppe and Shattered Highlands
+
+Generated like the slice: blocks, models, loot, recipes, tags, data maps, lang and every lands pack file by
+`tools/content/lands2_content.py` (called from `lands_content.py`, so one run writes both), textures by
+`tools/art/specs/lands2.py` (`python3 tools/art/build_all.py lands2`; preview `python3 tools/art/specs/lands2.py preview
+<dir>`), the two ambience beds by `tools/art/specs/audio_lands.py`. Code: `terrain.glass` (Glass Steppe), `terrain.fault`
+(Shattered Highlands), `terrain.landmark` (the Gate Scar and the Shard Drift, `awaken:landmark`), `terrain.client.LandsMotes`
+(their air). Biome table rows, looks and air rows as for the slice.
+
+### Glass Steppe (Sunscorch; replaces savanna and savanna plateau in the field)
+
+Plains melted to glass where gates broke long ago.
+
+- **Blocks** (`terrain.glass.GlassBlocks`): `glassbark_log`, `stripped_glassbark_log`, `glassbark_wood`,
+  `stripped_glassbark_wood`, `glassbark_planks`, `glassbark_leaves`, `glassbark_sapling` (bleached driftwood bark with
+  beads of amber resin turned to glass; amber leaves, fixed colours, cutout, not translucent); `fused_glass` (the bare
+  ground: an ivory glaze broken into a crackle of plates, three variants turned every way); `sunshard` (glass grown into
+  crystal: flat facets, an amber heart, two or three amber specks per face as emissive model faces); `sunshard_cluster`
+  (slivers of sunshard in the grass, cross model with glowing tips); `scorched_glass` (black glass split by amber cracks:
+  each straight run of a crack is one emissive face, 6-7 a face). No block light anywhere.
+- **Ground**: sun-gold grass (`#cfb35a`, foliage `#c8a24a`), fused glass where the lands pack's noise `lands/glass`
+  passes 0.3 (patches tens of blocks across, about a fifth of the ground) with a second layer of glass and sandstone
+  under it, coarse dirt in dusty streaks: a material rule (`worldgen/material_rule/lands/glass_steppe_surface`,
+  `_under`) spliced first into the overworld's `biome_surface` and `under_biome_surface` by Lithostitched
+  `set_material_rule` modifiers, so the surface pass lays it and far terrain shows it.
+- **Silhouette**: glass shard spires (`awaken:glass_shards`): clusters of 3-7 hexagonal sunshard prisms 8-14 tall (a
+  small kind 3-7), all leaning roughly one way as if one blast threw them, glass spattered round their feet; one in four
+  chunks, the small ones one in two. Every spire's foot reaches down to the ground.
+- **Trees**: *Glassbark* (1x1, leaning, 2-3 rising limbs, flat amber pads: an acacia's sweep in bleached wood) and a
+  *tall* one (3-4 limbs), with `limbed_trunk_placer` and `cloud_foliage_placer`; a fallen glassbark now and then. Half a
+  tree a chunk: it stays a steppe. Saplings grow them.
+- **Mirror pools** (`awaken:mirror_pool`, one in seven chunks, before vegetation): shallow water on a bed of scorched
+  glass (dark and glossy by day, the amber cracks glowing up through it at night), ringed with fused glass and slivers;
+  the water's level is the rim's lowest ground, and a pool only forms where the ground is level enough to hold it.
+- **Air**: glints, by day: where the sun reaches glass (`#awaken:lands/glints`) a four-pointed star blinks on the face
+  the camera sees (`LandsMotes`, kind `glint`); amber leaves off the glassbarks.
+- **Night**: the spires' amber specks, the scars' and pools' amber cracks, the clusters' tips.
+- **Sound**: `amb.glass_steppe` (warm wind over dry grass, glass ticking and ringing faintly as it warms), the biome's
+  `minecraft:audio/ambient_sounds` loop.
+- **Lens** (`glass_steppe`): bleached and high-key (exposure 1.04, saturation 0.92), warm, a strong sun glow (1.25),
+  heat haze starting close (0.46 from 0.22).
+- **Landmark: the Gate Scar** (`terrain.landmark.GateScar`): a bowl 30-50 across and 7-10 deep, black scorched glass at
+  its heart and in radial cracks running out through the ivory glass, a raised rim, 8-12 rays of splashed glass out
+  across the grass to nearly twice its radius, 10-16 sunshard spires round the rim leaning outward (three or four of
+  them 18-28 tall), and in the middle the gate's broken ring of deepslate stumps, one fallen across the floor, sunshard
+  growing out of them, one crystal standing where the gate stood. The ground is reshaped column by column from each
+  column's own ground and its distance from the centre (chunks agree without seeing each other); the voxels then go into
+  air, plants and water only, standing columns continued down to the ground. Sites: dry steppe at least 12 above the
+  sea (the bowl stays dry), ground within 5 at 16 out and 8 at 28 out. `random_spread` spacing 28, separation 10.
+
+### Shattered Highlands (Crag; replaces windswept hills, windswept gravelly hills and stony peaks in the field)
+
+Mountains split along lines of light.
+
+- **Blocks** (`terrain.fault.FaultBlocks`): `faultstone` (dark violet slate split by jagged cyan cracks: the cracks
+  are emissive model faces, about 8 a face, with a violet bleed in the base texture so the band reads violet from far
+  off), `fault_seam` (crystal split open on light: the whole cube emissive, no block light), `riven_shale` (layered
+  blue-grey rock with a rust band, a pillar block).
+- **Ground**: riven shale on steep slopes and over about half of the rest (the vanilla `surface` noise), a little
+  gravel scree, cool sage grass (`#7c8b68`) on the flats (material rule as above).
+- **Faults** (`terrain.fault.FaultLinesFeature`, `awaken:fault_lines`, once a chunk before vegetation): a fault runs
+  along the zero line of the pack's noise `lands/fault` (base octave -8 roughened by four finer octaves, so lines run
+  jagged like cracks, about 5 crossings per km of travel). A column's distance to the line is the noise over its slope
+  (the noise sampled on a 2-block lattice and blended), so a fault keeps its width wherever it runs; a threshold on the
+  noise itself swelled into fields where the noise was flat (measured: 20-block runs, 120 at worst). Within 1.6 blocks
+  of the line: faultstone three deep, the seam within 0.55 (the line's glowing core). Where the noise `lands/fault_trench`
+  rises the fault widens (to 4.4 either side) and opens into a V-shaped trench up to 9 deep, its floor and the walls the
+  deeper columns beside it expose relined. Every decision comes from the noises and the column itself: a fault runs on
+  across chunk borders whole, and never reads what a neighbour chunk did. Never into water, never down to the sea; snow
+  never settles on faultstone or the seam (`#minecraft:cannot_support_snow_layer`), so the lines run on through snow.
+- **Silhouette**: rock shards hanging over the faults (`awaken:floating_shard`, tried in one chunk in two, built only
+  where a line passes within six blocks and only into open air): an upturned point of riven shale 2-4 across,
+  faultstone in its lower half, the seam at its tip, turf on one in three, 7-20 above the ground; a chip of rubble
+  beside it. Sparse spruce and pine, riven shale boulders.
+- **Air**: at night sparks rise off the faults (`#awaken:lands/faults`), cyan and violet, flickering and bending with
+  the wind; by day grains of dust ride the wind low over the rock (`LandsMotes`, kind `fault`).
+- **Sound**: `amb.shattered_highlands` (a cold high wind, the faults' low hum of two close tones beating slowly,
+  rock crackling and ticking).
+- **Lens** (`shattered_highlands`): crisp and clear (haze 0.24 from 0.55), contrast 1.14, violet-tinged shadows and
+  split tone, bloom from 0.52 so the faults bloom at night.
+- **Landmark: the Shard Drift** (`terrain.landmark.ShardDrift`): 7-12 floating shards strung along a fault: a great
+  one 10-13 across over the line itself, 20-28 up, smaller ones before and after it rising toward the drift's ends like a
+  wave, each the upturned point of shale and faultstone with the seam's light at its tip, a third grassed with roots
+  hanging from the rim, rubble drifting between. The site search walks onto the line along the fault noise (Newton
+  steps); the start samples the ground under each shard once, so every chunk builds the same drift at the same
+  heights. Everything here floats on purpose. `random_spread` spacing 22, separation 8.
+
+### Commands
+
+`/awaken terrain landmark <gate_scar|shard_drift> [seed]` builds one where you stand; `/awaken terrain landmarkvisit
+<landmark> [distance above]` stands you south of the nearest generated one, looking at it; `/awaken terrain lands2cost`
+prints what this pair's worldgen has cost since the server started (calls, average and total per feature and landmark,
+measured on the worldgen threads as chunks generate).
+
+### Checks
+
+GameTests: `terrain_lands2_blocks`, `terrain_lands2_trees_grow`, `terrain_lands2_biomes`, `terrain_glass_features`
+(spires stand and stay near their centre, pools hold their water and never spill), `terrain_fault_noise` (the studio
+numbers: band share, width, crossings per km, how much opens), `terrain_fault_features` (a real open stretch of fault
+on nine chunks painted one by one: only band columns touched, floors lined, the seam on the line, depth within the V, no
+bigger step at a chunk border than inside one; shards in open air, well clear of the ground, the seam at their tips),
+`terrain_landmark_shapes`, `terrain_landmark_builds_in_box` (a Gate Scar on a slope and a Shard Drift chunk by chunk:
+everything inside the box, the crystal standing on the ground, the heart deep and black, the drift's lowest rock clear of
+the ground), `terrain_landmark_sites`. Tours: `tools/autopilot/lands-biomes2.txt` (looks),
+`tools/autopilot/lands-biomes2-perf.txt` (frame times and worldgen cost).
