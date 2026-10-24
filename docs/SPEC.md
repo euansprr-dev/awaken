@@ -39,6 +39,7 @@ Hard rules:
 | `world` | shared overworld worldgen hooks (biome modifiers, structure sets) used by descent/above/story |
 | `body` | the Awakened Body: soft landing, tactical sprint, slide, mantle; momentum hits and trips; `core.api.MovementHooks` |
 | `terrain` | Awakened Lands (§15): the biome table, Awakened biomes and their placement, trees, ground cover, wind and falling leaves, biome looks and sound, the terrain studio commands |
+| `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -261,7 +262,8 @@ then New Game+ "Ascension" tiers.
 ## 11. Config (`awaken-common.toml` / server)
 
 difficulty: STORY | HUNTER (default) | HARDLINE | HARDCORE · storyLength: 0.5 | 1.0 | 1.5 · features: gates, descent,
-lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed · playtestMode (off).
+lucidium, veil, above, hearth, story, anomalies, landmarks, wards, wilds (bools) · cameraShake · signalTypeSpeed ·
+playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the rest of `AwakenConfig.Client`.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -298,7 +300,11 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
-  Animation Library is installed; a no-op otherwise).
+  Animation Library is installed; a no-op otherwise). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
+  movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
+  `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
+- `dev.awaken.progression.Progression.xpLedger(player)` — XP by `XpSource` and by world-XP source key (§17 telemetry).
 - `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
   glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
   installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
@@ -482,8 +488,9 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
   synced to its owner).
 - The Gate Map marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
   named by the Now tracker.
-- The Now tracker names the nearest unreached landmark once there is a reason to go (Well from level 10, vault and
-  monolith 4, spawn vault 2, ocean lab 6, sky platform 20); never inside a Hearth or a gate. Mira tells one landmark
+- The Horizon line (§17; until then the Now tracker) names the nearest unreached landmark once there is a reason to go
+  (Well from level 10, vault and monolith 4, spawn vault 2, ocean lab 6; a sky platform once you have a way up, teased
+  before); never inside a Hearth or a gate. Mira tells one landmark
   rumour a day when no gate is worth one (`core.api.WorldHooks.landmarkRumour`).
 - Faint light shafts over ruins at dusk (fainter at night) and the Well's pillars at night, within 288 blocks; nothing
   by day. Every ruin has an outer cache (2–4 essence). The Scanner hears the Well and skips ruins already reached.
@@ -1244,6 +1251,75 @@ The Veil, the Lucidium and the rest:
   including chunks that were still generating when it was let go.
 - Statics cleared on server stop: Echo duty bookkeeping, breaks near Hearths, Bodies' owed deaths, Hearth offers and
   invitations, throttles, queued region erasures.
+
+## 17. The Ascent (plan in docs/plan-ascent.html, brief docs/ascent/BRIEF.md, approved 2026-10-24)
+
+### The Wilds (plan §6; module `wilds`, first part: what doesn't wait on the movement tiers)
+
+Precursor wards (`wilds.ward`, config `features.wards`):
+- A site in the structure tag `#awaken:warded` (vaults, the spawn vault, ocean labs, monoliths) has a ward: its structure
+  box grown by 12 blocks on every side. `#awaken:warded_sky` (sky platforms) reaches 48 further down, so a tower stalls
+  well under the deck. New structure sites (Tether Spires) join a tag; sites placed by code (hero-tree caches) register
+  a `core.api.WardHooks.Source`. Existing ruins have wards at once: the box comes from the saved structure start.
+- Inside a ward, outside every Hearth's radius, a block a survival or adventure player places crumbles 3 s (60 ticks)
+  later: still the same block, it is removed (water stays where it was waterlogged) and the item that placed it goes back
+  to them (inventory, else at their feet; if they left, where it stood). Containers drop what was put in them, as
+  breaking would; a shulker box keeps its contents in the returned item. Creative and spectators build freely. The first
+  ward block a player places teaches it with a toast (flag `awaken:ward_noticed`). Pending crumbles all crumble when the
+  server stops; a block whose chunk unloaded first stays.
+- Inside a ward a block in `#awaken:ward_sealed` (every Precursor building block plus the deepslate and blackstone
+  dressing ruins build with) can't be broken by a player, an explosion or a piston (pistons inside a ward never move).
+  The vault's sealed chamber is enclosed in those blocks, so a rank door can't be dug around. Natural ground still digs.
+- Its own look and sound, never vanilla: `awaken:ward_spark` (a thread of the Signal's #7FC3FF light) and `awaken:ward_grain`
+  (a chip tinted by the block's map colour), built on the client from one `ward_fx` event (mark, crumble, hold); sounds
+  `wilds.ward_mark`, `wilds.ward_crumble`, `wilds.ward_hold` (tools/art/specs/audio_wilds.py; sprites tools/art/specs/wilds.py).
+
+How you arrived (`wilds.arrival`, behind `core.api.ArrivalHooks`; config `features.wilds`):
+- Every tick the server reads each player's way of moving; a quarter second keeps its most telling way (in `Way` order:
+  STILL < WALK < SPRINT < SWIM < CLIMB < RIDE < AIRBORNE < POWER < ASCENT < BUILT) and 80 of them (20 s) are kept.
+  BUILT: standing on (any corner of the feet) or climbing a block the player placed in the last 10 minutes (last 512
+  placements). POWER: 2 s after a cast of a movement-slot power, a dash or Hover, and every tick Flight or Hover runs.
+  ASCENT is for the movement tiers to report. Nothing is saved.
+- A visit: stepping into a ward opens it with the window's verdict (no BUILT in the 20 s that led there); a BUILT sample
+  while inside spoils it; it ends after 5 s outside. Outside any ward the window is the verdict. No record: movement.
+- `awaken:arrived_by_movement` (loot condition, the chest's opener) gates a site's best roll. Route records and Flow XP
+  pay through `ArrivalHooks.byMovement` too when they land.
+
+The Horizon line (`core.api.HorizonHooks`; signal `HorizonSync`, `TrackerHud`):
+- A second HUD card under the Now tracker (or in its place), in the Horizon's pale sea-green (#9FE6D6), drawn through
+  `HudLook` (the calm FRAME card with the projected look): "△ Sealed Vault  ↗ 420 m". Its own client setting
+  `horizonLine`; nothing in the Now tracker (gates 45, requests 42, unspent points 55) can take it.
+- Sources list the sites near a player; each names a need (empty: on foot; `wings` for the sky). The line is the nearest
+  site the player can reach (`Reach` answers: the Flight power, a Frame with Jet Boots and essence; later the tiers),
+  a raised one (a spirit's whisper) first. A tease (the nearest site they can't reach: "Sky Platform · needs Wings",
+  dimmer, the need in amber) takes the line 15 s in every 5 minutes, staggered per player. Synced every 40 ticks when
+  changed; the client draws the compass.
+- Landmarks moved from the Now tracker (priority 30) to the Horizon line: the same reason-to-go levels, except a sky
+  platform waits for its need instead of level 20 (teased until then). Never inside a Hearth, never in a gate.
+
+Discovery that pays:
+- Biome discoveries: the first time an awakened player stands in a biome of a vanilla dimension (overworld, Nether,
+  End), `Progression.discover("biome/<ns>/<path>", 0.1)`, a toast with the biome's name, counter
+  `awaken:biomes_discovered`. Checked every 2 s per player, only when the biome underfoot changed.
+- `awaken:lairs_heard` counts each beast kind whose lair a player learns (`awaken:lair_heard/<beast>` stays the flag).
+- The counters that fed nothing now feed content (data/awaken/awaken/): Truths `i_go_where_the_map_ends` (8 landmarks),
+  `i_close_what_tears_open` (5 rifts), `i_follow_the_lights` (3 spirit caches + 3 groves), `i_read_what_they_left` (8 logs +
+  a door, from D), `when_the_sky_falls_i_am_there` (3 stars + a guardian); Titles Wayfarer (12 biomes), Cartographer (15
+  landmarks), Riftwarden (10 rifts), Starcatcher (5 stars), Star-Hunter (3 guardians), Grove-Keeper (8 groves), The
+  Spirits' Guest (5 caches), Anomalist (20 anomalies), Lorekeeper (12 logs), Keybearer (4 doors), Tracker (4 lairs heard);
+  eleven exploration directives (a new landmark, two new biomes, a rift, a star, a star's guardian, a procession, a grove,
+  two anomalies, a log, a door from D, a lair heard of).
+- Sky platforms have their own table `chests/precursor_sky`: charged essence cells, alloy, wind charges, phantom
+  membranes, feathers, slow falling, ender pearls, Jet Boots (4 in 105), a little diamond; never the ground vaults'
+  scrap, redstone, copper or other Frame modules. Its best rolls (by movement only): 2 Power Core Shards always, then a
+  1000-essence cell or Jet Boots (8 in 12). The vault, monolith and ocean lab tables each gain a best roll of 1 shard.
+
+Telemetry: `Progression.grantXp` records every grant (after scaling) in the player's `awaken:xp_ledger` (schema 1, saved,
+kept through death, not synced) by `XpSource`, and world XP again by its own source key. `/awaken xp` prints the split;
+with `playtestMode` each logout writes it to playtest.jsonl (`xp_sources`). XP banked before awakening shows as STORY.
+
+Tests: `wilds_ward_rules`, `wilds_arrival_history`, `wilds_discovery_pays`, `landmark_horizon_line`, and the Horizon box
+in the System's layout test.
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 
