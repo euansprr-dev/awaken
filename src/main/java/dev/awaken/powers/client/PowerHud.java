@@ -1,5 +1,6 @@
 package dev.awaken.powers.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.Awaken;
 import dev.awaken.powers.Loadout;
 import dev.awaken.powers.PowerRegistry;
@@ -129,21 +130,39 @@ final class PowerHud {
         g.pose().popMatrix();
     }
 
+    /** A key's name short enough for a slot (4 characters at most): "Z", "M4", "LMB", "LAlt", "Spc". */
     static String keyLabel(int slot) {
+        InputConstants.Key key = ClientCasting.key(slot).getKey();
+        if (key.getType() == InputConstants.Type.MOUSE) {
+            // by button number, not by name (the name is "Button 4" and would cut to "Butt")
+            return switch (key.getValue()) {
+                case InputConstants.MOUSE_BUTTON_LEFT -> "LMB";
+                case InputConstants.MOUSE_BUTTON_MIDDLE -> "MMB";
+                case InputConstants.MOUSE_BUTTON_RIGHT -> "RMB";
+                default -> "M" + key.getValue();
+            };
+        }
         String s = ClientCasting.key(slot).getTranslatedKeyMessage().getString();
         if (s.length() <= 3) return s.toUpperCase();
         String lower = s.toLowerCase();
-        if (lower.startsWith("left ")) return "L" + abbreviate(s.substring(5));
-        if (lower.startsWith("right ")) return "R" + abbreviate(s.substring(6));
-        return abbreviate(s);
+        if (lower.startsWith("left ")) return "L" + abbreviate(s.substring(5), 3);
+        if (lower.startsWith("right ")) return "R" + abbreviate(s.substring(6), 3);
+        return abbreviate(s, 4);
     }
 
-    private static String abbreviate(String s) {
-        return switch (s.toLowerCase()) {
+    private static String abbreviate(String s, int max) {
+        String a = switch (s.toLowerCase()) {
             case "alt" -> "Alt";
+            case "option" -> "Opt";
+            case "command", "cmd" -> "Cmd";
             case "shift" -> "Sh";
-            case "control", "ctrl" -> "Ct";
-            default -> s.length() > 4 ? s.substring(0, 4) : s;
+            case "control", "ctrl" -> "Ctl";
+            case "space" -> "Spc";
+            case "caps lock" -> "Caps";
+            case "backspace" -> "Bksp";
+            case "enter", "return" -> "Ret";
+            default -> s;
         };
+        return a.length() > max ? a.substring(0, max) : a;
     }
 }
