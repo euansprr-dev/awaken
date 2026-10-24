@@ -49,8 +49,10 @@ final class AudioLayerTests {
     static void register() {
         AwakenTests.register("audio_layers_intensity", 40, AudioLayerTests::intensity);
         AwakenTests.register("audio_layers_manifests", 40, AudioLayerTests::manifests);
-        // the test server ticks as fast as it can, so ticks are no clock: a generous ceiling, the work runs on its own thread
-        AwakenTests.register("audio_layers_loudness", 20 * 60 * 60 * 4, AudioLayerTests::loudness);
+        // the test server ticks as fast as it can, so ticks are no clock: a generous ceiling, the work runs on its own thread.
+        // A batch of its own: decoding every stem loads the CPU and the heap for a minute, which would skew the timing
+        // budgets of the tests sharing its batch (terrain_hero_blueprints went from 5.7 to 12-15 ms on CI).
+        AwakenTests.registerIsolated("audio_layers_loudness", 20 * 60 * 60 * 4, AudioLayerTests::loudness);
         AwakenTests.register("audio_layers_watch", 80, AudioLayerTests::watch);
         AwakenTests.register("audio_layers_payload", 40, AudioLayerTests::payload);
         AwakenTests.register("compat_spr_dry_list", 40, AudioLayerTests::sprDryList);
