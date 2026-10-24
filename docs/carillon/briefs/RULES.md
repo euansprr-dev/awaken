@@ -23,7 +23,10 @@ The plan is docs/plan-carillon.html; the source of truth is docs/SPEC.md §16. T
 - Before using any Minecraft or NeoForge API: check docs/api/*.md, then grep /Volumes/MEDIA/Awaken/.ref/src,
   /Volumes/MEDIA/Awaken/.ref/neo and /Volumes/MEDIA/Awaken/.ref/assets. 26.3 is not 1.21.1. A compile error costs more
   than a grep.
-- GameTests can flake under machine load: re-run once before calling something broken.
+- GameTests can flake under machine load: re-run once before calling something broken. Known timing flakes under
+  load: `gates_interior_build_budget`, `fauna_p3_caves_spawn`.
+- Lens: cutscenes use `LensClient.override(lookId, fadeTicks)` / `clearOverride()` (a story override wins over biome and
+  dimension looks). Carillon's own looks go in `assets/awaken/lens/looks_carillon.json`; never edit looks.json.
 - Autopilot traps: docs in the repo and memory say every tour must `cmd awaken admin awaken`, then
   `cmd awaken powers starter 1` + `screen close`, or the first-power screen covers the shots. `quit` saves.
 
