@@ -120,22 +120,20 @@ public final class RunRegressionTests {
         AwakenTests.registerIsolated("gates_surface_respects_builds", 40, h -> {
             ServerLevel level = h.getLevel();
             // The check looks 14 blocks round (the largest gate) and 64 for a Hearth, and test plots sit 6 blocks apart on
-            // a grid that earlier batches leave their chests, planks, torches and Hearths on: own fresh ground well off it.
+            // a grid where earlier tests leave their chests, planks, torches and Hearths: own fresh ground well off it,
+            // loaded for this check (it skips columns that aren't loaded, and it all runs within this tick)
             BlockPos ground = h.absolutePos(new BlockPos(4, 0, 4)).offset(-3000, 0, -3000);
-            int c0x = (ground.getX() - 16) >> 4, c1x = (ground.getX() + 16) >> 4, c0z = (ground.getZ() - 16) >> 4, c1z = (ground.getZ() + 16) >> 4;
-            for (int cx = c0x; cx <= c1x; cx++) for (int cz = c0z; cz <= c1z; cz++) level.setChunkForced(cx, cz, true);
-            try {
-                h.assertTrue(Overworld.untouched(level, ground, 0), "open ground is fine");
-                BlockPos chest = ground.offset(1, 1, 1);
-                level.setBlock(chest, Blocks.CHEST.defaultBlockState(), 3);
-                h.assertFalse(Overworld.untouched(level, ground, 0), "a chest next to it: not here");
-                level.removeBlock(chest, false);
-                level.setBlock(chest, Blocks.OAK_PLANKS.defaultBlockState(), 3);
-                h.assertFalse(Overworld.untouched(level, ground, 0), "a plank wall: not here");
-                level.removeBlock(chest, false);
-            } finally {
-                for (int cx = c0x; cx <= c1x; cx++) for (int cz = c0z; cz <= c1z; cz++) level.setChunkForced(cx, cz, false);
+            for (int cx = (ground.getX() - 16) >> 4; cx <= (ground.getX() + 16) >> 4; cx++) {
+                for (int cz = (ground.getZ() - 16) >> 4; cz <= (ground.getZ() + 16) >> 4; cz++) level.getChunk(cx, cz);
             }
+            h.assertTrue(Overworld.untouched(level, ground, 0), "open ground is fine");
+            BlockPos chest = ground.offset(1, 1, 1);
+            level.setBlock(chest, Blocks.CHEST.defaultBlockState(), 3);
+            h.assertFalse(Overworld.untouched(level, ground, 0), "a chest next to it: not here");
+            level.removeBlock(chest, false);
+            level.setBlock(chest, Blocks.OAK_PLANKS.defaultBlockState(), 3);
+            h.assertFalse(Overworld.untouched(level, ground, 0), "a plank wall: not here");
+            level.removeBlock(chest, false);
             h.succeed();
         });
     }
