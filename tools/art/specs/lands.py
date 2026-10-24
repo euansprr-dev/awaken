@@ -15,9 +15,13 @@ RAMPS = {
     "elder_bark": ["#2f2a24", "#4c463d", "#716a5e", "#968e7e", "#b9b19d", "#d8d0bb", "#ece6d2"],
     "elder_wood": ["#5a4630", "#7d6444", "#a3875e", "#c4a97c", "#dcc59a", "#efe0bd"],
     "elder_leaf": ["#2b3a12", "#43561a", "#5f7321", "#818f29", "#a6a935", "#cbbd46", "#ecd668"],
+    # the warm crown tops: amber-gold, deeper shadows so a gold crown still reads as foliage
+    "elder_leaf_gold": ["#3a320e", "#5c5015", "#82721d", "#a89127", "#c9ad33", "#e2c647", "#f7df70"],
     # Lumen Forest: ash-white bark, blue-grey heartwood, deep teal leaves with glowing specks
     "lumen_bark": ["#3b4550", "#56616d", "#77828e", "#9aa4ae", "#bcc4cb", "#dbe1e5", "#f0f3f5"],
     "lumen_wood": ["#36404c", "#4e5a68", "#6a7786", "#8995a3", "#a9b3bf", "#c9d1da"],
+    # limbs and boughs (lumen_wood): the bark in shade, slate-blue, so branches read as wood under the pads, not beams
+    "lumen_limb": ["#1f2630", "#2d3642", "#3f4a58", "#55616f", "#6c7887", "#8794a2", "#a3aebb"],
     "lumen_leaf": ["#04191c", "#08292e", "#0d3c42", "#135159", "#1b6a72", "#27878d", "#3aa6a8"],
     "lumen_glow": ["#3fd6e0", "#7ff0f2", "#c8fffb", "#ffffff"],
     "lumen_moss": ["#061a1b", "#0b2a2b", "#123c3c", "#1a5050", "#246664", "#307d78"],
@@ -338,7 +342,7 @@ def glow_tile():
     rng = rng_for("glow", "tile")
     for y in range(16):
         for x in range(16):
-            c.set(x, y, gl[1] if rng.random() < 0.7 else gl[2])
+            c.set(x, y, gl[2] if rng.random() < 0.65 else gl[1])  # bright: few specks, each one glows
     return c
 
 
@@ -414,6 +418,9 @@ def build(out):
     out.block("elder_planks", planks("elder_wood", "elder"))
     leaf, _ = leaves("elder_leaf", "elder", holes=0.2)
     out.block("elder_leaves", leaf)
+    leaf, _ = leaves("elder_leaf_gold", "elder_gold", holes=0.2)
+    out.block("elder_leaves_gold", leaf)
+    out.block("lumen_wood", bark("lumen_limb", "lumen_limb", fissures=4))
     out.block("lumen_log", bark("lumen_bark", "lumen", fissures=3))
     out.block("lumen_log_top", log_top("lumen_bark", "lumen_wood", "lumen"))
     out.block("lumen_planks", planks("lumen_wood", "lumen"))

@@ -30,7 +30,7 @@
       "min_inclusive": 2,
       "max_inclusive": 3
     },
-    "limb_rise": 0.7,
+    "limb_rise": 1.0,
     "twig": {
       "type": "minecraft:uniform",
       "min_inclusive": 1,
@@ -94,11 +94,11 @@
           "tip": "true"
         }
       },
-      "probability": 0.08,
+      "probability": 0.12,
       "length": {
         "type": "minecraft:uniform",
         "min_inclusive": 1,
-        "max_inclusive": 3
+        "max_inclusive": 4
       }
     },
     {
