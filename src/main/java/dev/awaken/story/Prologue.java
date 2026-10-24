@@ -306,10 +306,16 @@ final class Prologue {
             liftTheBlack(p); // onAnswer bails out for an already awakened player
             return;
         }
+        boolean inRitual = s.prologue == StoryProgress.Prologue.RITUAL || Ritual.inRitualGate(p);
         Progression.awaken(p);
         Progression.topUpToLevel(p, WAKE_LEVEL, Progression.XpSource.STORY);
         s.prologue = StoryProgress.Prologue.DONE;
         sync(p);
+        if (inRitual) {
+            // skipped from inside the sealed hall: out through the gate's mouth, the scene ends here
+            dev.awaken.gates.Gates.forceExtract(p, true);
+            AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.NONE));
+        }
     }
 
     /**

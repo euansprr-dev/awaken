@@ -65,6 +65,12 @@ final class RitualHud {
 
     static void plate(int ticks) {}
 
+    /** A new beat: the last rule's line goes. */
+    static void newBeat() {
+        wordId = -1;
+        errorFrom = -1;
+    }
+
     static void error(int ticks) {
         errorFrom = RitualClient.ticks;
         errorUntil = RitualClient.ticks + ticks;

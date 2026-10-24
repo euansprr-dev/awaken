@@ -249,13 +249,13 @@ final class RitualFx {
         float light = eyeLight(pt);
         if (light > 0.01F) {
             for (int side = -1; side <= 1; side += 2) {
-                Vec3 p = towardCamera(eye(pt, side), 0.35);
-                flare(vc, p, 0.32F, argb(1F, 1F, 0.97F, 0.88F * Math.min(1, light)));
-                flare(vc, p, 1.4F * light, argb(1F, 0.86F, 0.5F, 0.45F * Math.min(1.5F, light)));
-                flare(vc, p, 4.5F * Math.min(1.6F, light), argb(1F, 0.7F, 0.32F, 0.12F * Math.min(1.5F, light)));
+                Vec3 p = towardCamera(eye(pt, side), 0.6);
+                flare(vc, p, 0.55F, argb(1F, 1F, 0.97F, Math.min(1, light)));
+                flare(vc, p, 2.2F * Math.min(1.6F, light), argb(1F, 0.9F, 0.55F, 0.55F * Math.min(1.5F, light)));
+                flare(vc, p, 7F * Math.min(1.6F, light), argb(1F, 0.75F, 0.35F, 0.16F * Math.min(1.5F, light)));
             }
-            Vec3 c = eyes(pt);
-            streak(vc, c, 7.5F * Math.min(1.8F, light), 0.22F, argb(1F, 0.85F, 0.55F, 0.3F * Math.min(1.5F, light)));
+            Vec3 c = towardCamera(eyes(pt), 0.8);
+            streak(vc, c, 13F * Math.min(1.8F, light), 0.3F, argb(1F, 0.9F, 0.6F, 0.45F * Math.min(1.5F, light)));
         }
         for (RitualClient.Cue c : RitualClient.CUES) {
             if (!c.live) continue;
@@ -287,13 +287,13 @@ final class RitualFx {
         float half = c.f;
         Vec3 a = c.a, b = c.b;
         float pulse = 0.75F + 0.25F * Mth.sin(age * 0.9F);
-        groundStrip(vc, a, b, half, 0, 1, argb(1F, 0.18F, 0.06F, 0.55F));
-        groundStrip(vc, a, b, half * 0.9F, 0, fill, argb(1F, 0.3F, 0.1F, (0.6F + 0.4F * fill) * pulse));
-        groundStrip(vc, a, b, half * 0.25F, Math.max(0, fill - 0.08F), fill, argb(1F, 0.95F, 0.8F, 1F));
+        groundStrip(vc, a, b, half, 0, 1, argb(1F, 0.06F, 0.03F, 0.55F));
+        groundStrip(vc, a, b, half * 0.9F, 0, fill, argb(1F, 0.1F, 0.05F, (0.65F + 0.35F * fill) * pulse));
+        groundStrip(vc, a, b, half * 0.25F, Math.max(0, fill - 0.08F), fill, argb(1F, 0.85F, 0.7F, 1F));
         // the edges, sharp
         Vec3 n = side(a, b);
-        groundStrip(vc, a.add(n.scale(half)), b.add(n.scale(half)), 0.08F, 0, 1, argb(1F, 0.35F, 0.15F, 1F));
-        groundStrip(vc, a.subtract(n.scale(half)), b.subtract(n.scale(half)), 0.08F, 0, 1, argb(1F, 0.35F, 0.15F, 1F));
+        groundStrip(vc, a.add(n.scale(half)), b.add(n.scale(half)), 0.08F, 0, 1, argb(1F, 0.15F, 0.08F, 1F));
+        groundStrip(vc, a.subtract(n.scale(half)), b.subtract(n.scale(half)), 0.08F, 0, 1, argb(1F, 0.15F, 0.08F, 1F));
     }
 
     /** The gaze fires: a white-hot beam from the eyes sweeping down the line, and the floor burning behind it. */
@@ -320,9 +320,9 @@ final class RitualFx {
         if (e != null) o = e.getPosition(pt);
         double yaw = Math.atan2(c.b.z - o.z, c.b.x - o.x);
         float flash = age > c.ticks ? 1 - (age - c.ticks) / 6F : 0;
-        sector(vc, o, yaw, Math.toRadians(55), c.f, 1.0F, argb(1F, 0.2F, 0.06F, 0.5F + 0.5F * flash));
-        sector(vc, o, yaw, Math.toRadians(55), c.f * fill, 1.0F, argb(1F, 0.4F, 0.12F, 0.6F + 0.4F * fill));
-        sectorEdge(vc, o, yaw, Math.toRadians(55), c.f, argb(1F, 0.5F, 0.2F, 1F));
+        sector(vc, o, yaw, Math.toRadians(55), c.f, 1.0F, argb(1F, 0.08F, 0.03F, 0.5F + 0.5F * flash));
+        sector(vc, o, yaw, Math.toRadians(55), c.f * fill, 1.0F, argb(1F, 0.16F, 0.06F, 0.6F + 0.4F * fill));
+        sectorEdge(vc, o, yaw, Math.toRadians(55), c.f, argb(1F, 0.25F, 0.1F, 1F));
     }
 
     /** A segment of the rune ring: warning (pulsing red), open (a glowing pit), closing. */
@@ -388,7 +388,7 @@ final class RitualFx {
         float age = RitualClient.beatAge(pt);
         if (age < 30) return;
         float grow = Mth.clamp((age - 30) / 190F, 0, 1);
-        Vec3 p = towardCamera(palm(pt), 1.4);
+        Vec3 p = towardCamera(palm(pt), 3.2).add(0, 1.2, 0); // the light gathers in front of the open palm, never behind the hand
         flare(vc, p, 0.6F + grow * 2.2F, argb(1F, 1F, 0.96F, 0.95F));
         flare(vc, p, 2F + grow * 9F, argb(1F, 0.9F, 0.6F, 0.35F + 0.3F * grow));
         flare(vc, p, 6F + grow * 22F, argb(1F, 0.8F, 0.5F, 0.08F + 0.14F * grow));
@@ -404,21 +404,20 @@ final class RitualFx {
     private static void motes(VertexConsumer vc) {
         for (int i = 0; i < MOTES; i++) {
             if (life[i] <= 0) continue;
-            float x = (float) (Mth.lerp(pt, px[i], mx[i]) + originX), y = Mth.lerp(pt, py[i], my[i]), z = (float) (Mth.lerp(pt, pz[i], mz[i]) + originZ);
+            double x = Mth.lerp(pt, px[i], mx[i]) + originX, y = Mth.lerp(pt, py[i], my[i]), z = Mth.lerp(pt, pz[i], mz[i]) + originZ;
             float t = life[i] / (float) maxLife[i];
             float fade = Math.min(1, t * 4) * Math.min(1, (1 - t) * 6 + 0.2F);
-            Vec3 p = new Vec3(x, y, z);
             switch (kind[i]) {
-                case DUST -> flare(vc, p, 0.09F, argb(1F, 0.85F, 0.7F, 0.35F * fade));
+                case DUST -> flare(vc, x, y, z, 0.09F, argb(1F, 0.85F, 0.7F, 0.45F * fade));
                 case DRAIN -> {
-                    flare(vc, p, 0.16F, argb(1F, 0.97F, 0.82F, 0.9F * fade));
-                    flare(vc, p, 0.55F, argb(1F, 0.8F, 0.45F, 0.25F * fade));
+                    flare(vc, x, y, z, 0.16F, argb(1F, 0.97F, 0.82F, 0.95F * fade));
+                    flare(vc, x, y, z, 0.55F, argb(1F, 0.8F, 0.45F, 0.35F * fade));
                 }
                 case VOID -> {
-                    flare(vc, p, 0.07F, argb(0.65F, 0.85F, 1F, 0.9F * fade));
-                    flare(vc, p, 0.3F, argb(0.3F, 0.5F, 1F, 0.22F * fade));
+                    flare(vc, x, y, z, 0.07F, argb(0.65F, 0.85F, 1F, 0.95F * fade));
+                    flare(vc, x, y, z, 0.3F, argb(0.3F, 0.5F, 1F, 0.3F * fade));
                 }
-                case EMBER -> flare(vc, p, 0.08F, argb(1F, 0.8F, 0.4F, 0.8F * fade));
+                case EMBER -> flare(vc, x, y, z, 0.08F, argb(1F, 0.8F, 0.4F, 0.9F * fade));
                 default -> {}
             }
         }
@@ -453,16 +452,20 @@ final class RitualFx {
 
     /** A soft round glow facing the camera: bright in the middle, nothing at the rim (a fan of quads). */
     private static void flare(VertexConsumer vc, Vec3 p, float r, int argb) {
+        flare(vc, p.x, p.y, p.z, r, argb);
+    }
+
+    private static void flare(VertexConsumer vc, double px, double py, double pz, float r, int argb) {
         if (r <= 0.001F || (argb >>> 24) == 0) return;
         int rim = alpha0(argb);
         int n = r < 0.4F ? 6 : 12; // motes are small: six sides read as round
         for (int i = 0; i < n; i++) {
             float a0 = i * Mth.TWO_PI / n, a1 = (i + 1) * Mth.TWO_PI / n;
             float c0 = Mth.cos(a0) * r, s0 = Mth.sin(a0) * r, c1 = Mth.cos(a1) * r, s1 = Mth.sin(a1) * r;
-            v(vc, p.x, p.y, p.z, argb);
-            v(vc, p.x, p.y, p.z, argb);
-            v(vc, p.x + RIGHT.x * c1 + UP.x * s1, p.y + RIGHT.y * c1 + UP.y * s1, p.z + RIGHT.z * c1 + UP.z * s1, rim);
-            v(vc, p.x + RIGHT.x * c0 + UP.x * s0, p.y + RIGHT.y * c0 + UP.y * s0, p.z + RIGHT.z * c0 + UP.z * s0, rim);
+            v(vc, px, py, pz, argb);
+            v(vc, px, py, pz, argb);
+            v(vc, px + RIGHT.x * c1 + UP.x * s1, py + RIGHT.y * c1 + UP.y * s1, pz + RIGHT.z * c1 + UP.z * s1, rim);
+            v(vc, px + RIGHT.x * c0 + UP.x * s0, py + RIGHT.y * c0 + UP.y * s0, pz + RIGHT.z * c0 + UP.z * s0, rim);
         }
     }
 

@@ -76,7 +76,9 @@ shot r15_gaze_charge_third
 camera first
 wait 22
 shot r16_gaze_fire
-wait 110
+# frame time with the Seated One, twelve statues, the telegraphs and Lens (perf-report.py reads these lines)
+perf ritual_judgement 5
+wait 10
 camera back
 shot r17_swing_third
 camera first

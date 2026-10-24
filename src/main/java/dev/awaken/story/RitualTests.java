@@ -279,6 +279,18 @@ final class RitualTests {
             h.assertTrue(Prologue.progress(p).prologue == StoryProgress.Prologue.ACCEPTING, "back after the end: asked to accept");
         })).thenSucceed());
 
+        // /awaken story skip from inside the sealed hall: awake, out of the gate, and the hall is spent.
+        AwakenTests.registerIsolated("story_ritual_skip_leaves_the_hall", 200, h -> h.startSequence().thenExecute(() -> withRitual(h, 1, r -> {
+            ServerPlayer p = r.players().getFirst();
+            startHere(h, r);
+            advance(r, Ritual.Beat.DOORS.length + 20);
+            Prologue.skip(p);
+            h.assertTrue(Progression.profile(p).awakened() && Prologue.progress(p).prologue == StoryProgress.Prologue.DONE, "skipped: awake");
+            h.assertFalse(Runs.run(p).active(), "and out of the gate");
+            advance(r, 1);
+            h.assertTrue(Ritual.beatName(r.server(), r.gate().id).equals("DONE"), "nobody is left in the hall: it's spent, " + Ritual.beatName(r.server(), r.gate().id));
+        })).thenSucceed());
+
         // The cast's bodies parse with every clip the renderers play and the bones the effects measure.
         AwakenTests.register("story_ritual_cast_rigs", 20, h -> {
             var seated = dev.awaken.mobs.client.anim.HeroRig.get("the_seated_one");

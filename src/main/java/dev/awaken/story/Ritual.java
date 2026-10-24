@@ -310,6 +310,12 @@ final class Ritual {
                 continue;
             }
             List<ServerPlayer> here = present(server, st, l);
+            if (here.isEmpty() && nobodyLeft(server, st)) {
+                // everyone sealed in has gone another way (skipped, awakened by a command): the hall is spent
+                enter(st, l, Beat.DONE, now);
+                done(server, data, st, l);
+                continue;
+            }
             if (here.isEmpty()) {
                 // the whole party is away: hold the scene, and play the beat again from its start when someone is back
                 st.beatStart = now - Math.max(0, l.lastAge);
@@ -326,6 +332,15 @@ final class Ritual {
             }
             run(server, data, st, l, here, now);
         }
+    }
+
+    /** Nobody of the party is still sealed in (all online and none of them in RITUAL any more). */
+    private static boolean nobodyLeft(MinecraftServer server, RitualData.State st) {
+        for (UUID u : st.party) {
+            ServerPlayer p = server.getPlayerList().getPlayer(u);
+            if (p == null || Prologue.progress(p).prologue == StoryProgress.Prologue.RITUAL) return false;
+        }
+        return true;
     }
 
     /** Party members online and in the hall's gate. */

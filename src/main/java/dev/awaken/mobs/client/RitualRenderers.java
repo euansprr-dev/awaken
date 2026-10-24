@@ -166,7 +166,7 @@ final class RitualRenderers {
                 best = Math.max(best, level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, p));
             }
             int eyes = (int) (RitualAnchors.eyeLight(e, 0) * 3);
-            return Math.min(15, best + 1 + eyes);
+            return best <= 0 ? eyes : Math.min(15, best + 3 + eyes); // pale marble against the black, dark when every flame dies
         }
     }
 
@@ -278,7 +278,6 @@ final class RitualRenderers {
             Vec3 cam = Minecraft.getInstance().gameRenderer.mainCamera().position();
             RitualAnchors.Seen seen = RitualAnchors.of(s.entityId);
             RitualModel m = getParentModel();
-            RitualAnchors.frame++;
             if (seated) {
                 if (m.measure(pose, "head", seatedEyeL[0], seatedEyeL[1], seatedEyeL[2], v)) seen.left = new Vec3(cam.x + v.x, cam.y + v.y, cam.z + v.z);
                 if (m.measure(pose, "head", seatedEyeR[0], seatedEyeR[1], seatedEyeR[2], v)) seen.right = new Vec3(cam.x + v.x, cam.y + v.y, cam.z + v.z);
@@ -286,7 +285,7 @@ final class RitualRenderers {
             } else if (m.measure(pose, "head", statueEye[0], statueEye[1], statueEye[2], v)) {
                 seen.left = new Vec3(cam.x + v.x, cam.y + v.y, cam.z + v.z);
             }
-            seen.frame = RitualAnchors.frame;
+            seen.seenAt = net.minecraft.util.Util.getMillis();
             RitualAnchors.forgetOld();
         }
     }

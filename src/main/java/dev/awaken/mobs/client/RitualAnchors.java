@@ -17,23 +17,24 @@ public final class RitualAnchors {
 
     static final class Seen {
         Vec3 left = Vec3.ZERO, right = Vec3.ZERO, palm = Vec3.ZERO;
-        long frame;
+        long seenAt;
     }
 
     private static final Map<Integer, Seen> SEEN = new HashMap<>();
-    static long frame;
 
     static Seen of(int entity) {
         return SEEN.computeIfAbsent(entity, k -> new Seen());
     }
 
     static void forgetOld() {
-        if (SEEN.size() > 64) SEEN.values().removeIf(s -> frame - s.frame > 200);
+        long now = net.minecraft.util.Util.getMillis();
+        if (SEEN.size() > 64) SEEN.values().removeIf(s -> now - s.seenAt > 10_000);
     }
 
+    /** Measured in the last quarter second (it was drawn), or null. */
     private static @Nullable Seen fresh(int entity) {
         Seen s = SEEN.get(entity);
-        return s == null || frame - s.frame > 8 ? null : s;
+        return s == null || net.minecraft.util.Util.getMillis() - s.seenAt > 250 ? null : s;
     }
 
     /** Between the two eyes. */

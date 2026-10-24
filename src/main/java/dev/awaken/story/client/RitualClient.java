@@ -99,7 +99,10 @@ public final class RitualClient {
 
     public static void onScene(StoryPayloads.RitualScene s) {
         int was = beat;
-        if (s.beat() != was) for (Cue c : CUES) c.live = false; // a word or a telegraph never outlives its beat
+        if (s.beat() != was) {
+            for (Cue c : CUES) c.live = false; // a word or a telegraph never outlives its beat
+            RitualHud.newBeat();
+        }
         beat = s.beat();
         beatStart = ticks - s.age();
         if (s.seated() >= 0) seated = s.seated();
