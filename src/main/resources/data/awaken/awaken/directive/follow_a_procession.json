@@ -1,0 +1,16 @@
+{
+  "text": "Follow a spirit procession to its cache.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:spirit_caches",
+    "value": 1
+  },
+  "reward": {
+    "stat": "SPI"
+  },
+  "expires_days": 3,
+  "min_rank": "E",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 6
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Lorekeeper",
+  "description": "Read twelve Precursor logs.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:precursor_logs_read",
+    "value": 12
+  },
+  "perks": [
+    {
+      "id": "awaken:cooldown_reduction",
+      "amount": 0.03
+    }
+  ]
+}

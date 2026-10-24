@@ -6,7 +6,7 @@ import dev.awaken.above.ruin.RuinKind;
 import dev.awaken.above.scan.Scanning;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.GateHooks;
-import dev.awaken.core.api.NowHooks;
+import dev.awaken.core.api.HorizonHooks;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.progression.Curve;
 import dev.awaken.progression.Profile;
@@ -47,7 +47,7 @@ final class LandmarkTests {
     static void register() {
         discoveryOnce();
         scannerPoints();
-        nowLineGating();
+        horizonLine();
         markersAndLight();
         outerCaches();
     }
@@ -162,23 +162,25 @@ final class LandmarkTests {
         });
     }
 
-    // ---- the Now line -------------------------------------------------------------------------------------------------
+    // ---- the Horizon line ---------------------------------------------------------------------------------------------
 
-    static void nowLineGating() {
-        AwakenTests.registerIsolated("landmark_now_line_gating", 200, h -> {
+    static void horizonLine() {
+        AwakenTests.registerIsolated("landmark_horizon_line", 200, h -> {
             BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));
             ServerPlayer p = awakened(h, at);
             Landmarks.testOverrides(at.offset(400, 0, 300), true);
             try {
                 Progression.topUpToLevel(p, 9, Progression.XpSource.COMMAND);
-                LandmarkNow.forget(p.getUUID());
-                h.assertTrue(LandmarkNow.suggest(p).isEmpty(), "level 9: no reason to go to the Well yet (its first stratum plays at 17)");
+                LandmarkHorizon.forget(p.getUUID());
+                h.assertTrue(LandmarkHorizon.sites(p).isEmpty(), "level 9: no reason to go to the Well yet (its first stratum plays at 17)");
                 h.assertTrue(Landmarks.rumour(p).isEmpty() && Landmarks.whisper(p).isEmpty(), "nor rumours or whispers about it");
                 Progression.topUpToLevel(p, 10, Progression.XpSource.COMMAND);
-                LandmarkNow.forget(p.getUUID());
-                List<NowHooks.Suggestion> s = LandmarkNow.suggest(p);
-                h.assertTrue(s.size() == 1 && s.get(0).id().equals("landmark:well") && s.get(0).priority() == LandmarkNow.PRIORITY
-                        && s.get(0).text().getString().equals("The Well · 500 m SE") && s.get(0).where().isPresent(), "level 10: " + describe(s));
+                LandmarkHorizon.forget(p.getUUID());
+                List<HorizonHooks.Site> s = LandmarkHorizon.sites(p);
+                h.assertTrue(s.size() == 1 && s.get(0).id().equals("landmark:well") && s.get(0).name().equals("The Well") && s.get(0).need().isEmpty(),
+                        "level 10: " + s);
+                var line = HorizonHooks.pick(s, p.blockPosition(), n -> false, 1000, 0);
+                h.assertTrue(line.isPresent() && !line.get().tease() && line.get().where().equals(at.offset(400, 0, 300)), "the Horizon line names it: " + line);
                 // the town's rumour, told once
                 var rumour = Landmarks.rumour(p);
                 h.assertTrue(rumour.isPresent() && rumour.get().title().equals("The Well, to the southeast") && rumour.get().body().contains("about 500 blocks"),
@@ -191,25 +193,33 @@ final class LandmarkTests {
                 // a spirit's whisper raises it
                 var w = Landmarks.whisper(p);
                 h.assertTrue(w.isPresent() && w.get().contains("500 m SE"), "the spirit whispers: " + w);
-                List<NowHooks.Suggestion> ws = LandmarkNow.suggest(p);
-                h.assertTrue(ws.size() == 1 && ws.get(0).priority() == LandmarkNow.WHISPERED && ws.get(0).text().getString().startsWith("Whispered: The Well"),
-                        "whispered: " + describe(ws));
+                List<HorizonHooks.Site> ws = LandmarkHorizon.sites(p);
+                h.assertTrue(ws.size() == 1 && ws.get(0).raised() && ws.get(0).name().equals("Whispered: The Well"), "whispered: " + ws);
                 // reached: gone
                 LandmarkWatch.reach(p, LandmarkKind.WELL, "well");
-                h.assertTrue(LandmarkNow.suggest(p).isEmpty(), "once you've been there, the line goes");
+                h.assertTrue(LandmarkHorizon.sites(p).isEmpty(), "once you've been there, the line goes");
                 h.assertTrue(Landmarks.memory(p).whispered().isEmpty(), "and the whisper is spent");
                 h.assertTrue(Landmarks.memory(p).places().size() == 1, "still one place on the map, now reached");
             } finally {
                 Landmarks.testOverrides(null, false);
             }
+            // the pick: the nearest site you can reach, raised ones first; a sky site waits for wings, teased now and then
+            BlockPos o = BlockPos.ZERO;
+            var vault = new HorizonHooks.Site("v", "Sealed Vault", o.offset(300, 0, 0), "", false);
+            var sky = new HorizonHooks.Site("s", "Sky Platform", o.offset(100, 0, 0), HorizonHooks.WINGS, false);
+            var whispered = new HorizonHooks.Site("m", "Whispered: Monolith", o.offset(600, 0, 0), "", true);
+            long calm = HorizonHooks.TEASE_FOR + 10, tease = 5;
+            h.assertTrue(HorizonHooks.pick(List.of(vault, sky), o, n -> false, calm, 0).map(HorizonHooks.Line::id).orElse("").equals("v"), "no wings: the vault");
+            h.assertTrue(HorizonHooks.pick(List.of(vault, sky), o, n -> true, calm, 0).map(HorizonHooks.Line::id).orElse("").equals("s"), "wings: the nearer sky");
+            var t = HorizonHooks.pick(List.of(vault, sky), o, n -> false, tease, 0);
+            h.assertTrue(t.isPresent() && t.get().tease() && t.get().id().equals("s") && t.get().need().equals(HorizonHooks.WINGS), "now and then, a tease: " + t);
+            h.assertTrue(HorizonHooks.pick(List.of(sky), o, n -> false, calm, 0).isEmpty(), "nothing reachable, no tease window: no line");
+            h.assertTrue(HorizonHooks.pick(List.of(vault, whispered), o, n -> false, calm, 0).map(HorizonHooks.Line::id).orElse("").equals("m"), "a whisper outranks nearer");
+            int teasing = 0;
+            for (long time = 0; time < HorizonHooks.TEASE_EVERY; time += 20) if (HorizonHooks.teasing(time, 12345)) teasing++;
+            h.assertTrue(teasing * 20 == HorizonHooks.TEASE_FOR, "teases are rare: " + teasing * 20 + " ticks in " + HorizonHooks.TEASE_EVERY);
             h.succeed();
         });
-    }
-
-    private static String describe(List<NowHooks.Suggestion> s) {
-        List<String> out = new ArrayList<>();
-        for (NowHooks.Suggestion x : s) out.add(x.id() + " " + x.priority() + " \"" + x.text().getString() + "\"");
-        return out.toString();
     }
 
     // ---- markers ------------------------------------------------------------------------------------------------------

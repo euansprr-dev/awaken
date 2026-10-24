@@ -1,0 +1,15 @@
+{
+  "name": "Grove-Keeper",
+  "description": "Walked into eight shimmer groves.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:groves_visited",
+    "value": 8
+  },
+  "perks": [
+    {
+      "id": "awaken:energy_regen",
+      "amount": 0.05
+    }
+  ]
+}

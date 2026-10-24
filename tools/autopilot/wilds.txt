@@ -1,0 +1,95 @@
+# The Wilds, first part (SPEC §17): a Precursor ward taking back a placed block (the mark, then the crumble: grains in
+# the block's colour, the Signal's light rising), a vault wall that holds, and the Horizon line under the Now tracker
+# (a vault to walk to, then a sky platform's tease). `/awaken wilds place` and `strike` act as a survival player would;
+# `/awaken wilds why` prints the ward, the last 20 s of movement and the Horizon line. A light tour (screenshots only).
+world wilds creative 7311
+waitworld
+gui 0
+cmd awaken admin awaken
+wait 60
+screen close
+cmd awaken powers starter 1
+wait 20
+cmd time set 6000
+cmd time pause
+
+# ---- the Horizon line ----
+# level 4+: a sealed vault is worth the walk (before reaching it, which takes it off the line)
+cmd awaken admin xp 4000
+cmd awaken landmark goto vault
+wait 60
+cmd tp @s ~ ~ ~250
+look 180 0
+wait 120
+# the Horizon card under the Now card (or alone): "△ Sealed Vault  ↑ 298 m" in the Horizon's sea-green
+shot 01_horizon_vault
+look 0 0
+wait 40
+shot 02_horizon_vault_behind
+
+# ---- a vault's ward ----
+cmd awaken landmark goto vault
+wait 60
+# 48 blocks south of it; walk in to 16 from its centre (inside its ward, before the forecourt)
+cmd tp @s ~ ~ ~-32
+wait 40
+cmd gamemode survival
+cmd give @s minecraft:cobblestone 16
+look 180 55
+wait 20
+cmd awaken wilds place
+wait 3
+# the ward takes note: a few threads of light lift off the block's top edges, a glassy tick
+shot 03_ward_mark
+wait 52
+shot 04_ward_crumble_start
+wait 4
+# grains of cobblestone grey fall and bounce, blue light rises out of where it stood; the stone is back in the hotbar
+shot 05_ward_crumble
+wait 10
+shot 06_ward_after
+cmd awaken wilds why
+wait 20
+shot 07_wilds_why
+# the vault's front wall: the pick's blow is refused (sparks off the faces, a deep hum, "The ward holds.")
+cmd tp @s ~ ~ ~-6
+look 180 10
+wait 20
+cmd awaken wilds strike
+wait 3
+shot 08_ward_holds
+gui 1
+cmd gamemode creative
+
+# ---- a tease ----
+# a sky platform with nothing walkable near: the line stays empty until this player's tease window (15 s in 5 min)
+cmd awaken landmark goto sky_platform
+cmd tp @s ~ ~ ~250
+wait 120
+shot 09_horizon_sky_none
+wait 280
+shot 10_tease_a
+wait 280
+shot 11_tease_b
+wait 280
+shot 12_tease_c
+wait 280
+shot 13_tease_d
+wait 280
+shot 14_tease_e
+wait 280
+shot 15_tease_f
+wait 280
+shot 16_tease_g
+wait 280
+shot 17_tease_h
+wait 280
+shot 18_tease_i
+wait 280
+shot 19_tease_j
+wait 280
+shot 20_tease_k
+wait 280
+# one of 10-21 shows "△ Sky Platform · needs Wings  ↑ 298 m": dimmer name, the need in amber
+shot 21_tease_l
+quit

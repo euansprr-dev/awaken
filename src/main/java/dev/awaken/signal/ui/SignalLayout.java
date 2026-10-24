@@ -187,4 +187,16 @@ public final class SignalLayout {
         int bh = Math.max(1, lines) * LINE + 4;
         return new Rect(MARGIN, lowered ? TRACKER_LOWERED_Y : MARGIN, (int) Math.round(bw * s), (int) Math.round(bh * s));
     }
+
+    /** Space between the tracker and the Horizon line under it. */
+    public static final int HORIZON_GAP = 2;
+
+    /**
+     * The Horizon line's box (SPEC §17): one line, the tracker's width rules, just under the tracker's box
+     * ({@code above}; null when the tracker shows nothing, and the Horizon takes its place).
+     */
+    public static Rect horizon(int w, int h, double scale, int textW, Rect above, boolean lowered) {
+        Rect slot = tracker(w, h, scale, textW, 1, lowered);
+        return above == null ? slot : new Rect(slot.x(), above.bottom() + HORIZON_GAP, slot.w(), slot.h());
+    }
 }
