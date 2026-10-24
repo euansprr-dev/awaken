@@ -1620,7 +1620,13 @@ is what the Ascent decided while building it.
 - Wall Stride: the power `awaken:wall_run` (id kept for saves) is now "Wall Stride", a rank-D passive with no effect
   of its own: the body reads it (`Body.wallStride`: `Powers.owns` on the server, the client's loadout) and its runs last
   80 ticks (links ×0.8 as usual), grip 50 lifting +0.04, then sink to −0.14. Every Runner runs on any collision face,
-  glass and leaves included. The old client lift (`ClientCasting.wallRun`) is gone. Short vertical runs: pending.
+  glass and leaves included. The old client lift (`ClientCasting.wallRun`) is gone.
+- Wall Stride's vertical run (`Move.WALL_CLIMB`, appended; clip `body_wallclimb`): with the power, facing a wall (within
+  35° of its normal, within 0.45), early in a jump (falling no faster than 0.15) and holding forward: 10 ticks up it at
+  0.34 b/t easing off over the last three (about three blocks), once an airtime and never on the same wall twice before
+  landing. A lip in reach on the way is grabbed (the climb carries into the hang); jump kicks back off it (0.42 out,
+  0.40 up) and turns the view round over 6 ticks, a wall jump that can link into a run on the wall behind. The server
+  checks the power and the wall in front where it saw the body; grit and footfalls every 4 ticks; a Runner link.
 - The hold: feet 1.55 under the lip (S3's 1.85 put first-person eyes under the lip, staring at the face). The lip is
   found by `RunnerRules.ledgeTop`: of the collision tops in the band with 0.5 of air over them, the one nearest the
   hold's height (S3's mantle-style probe refused any ledge with another ledge a block above it).

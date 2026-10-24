@@ -203,7 +203,8 @@ final class AscentTests {
      */
     private static void noKicks(GameTestHelper h) {
         net.minecraft.core.BlockPos base = h.absolutePos(net.minecraft.core.BlockPos.ZERO);
-        double x = base.getX() + 0.5, y = base.getY() + 60, z = base.getZ() + 0.5;
+        // high over the test's own ground: real terrain where the test lands (CI's hills reached y 64) never in the way
+        double x = base.getX() + 0.5, y = h.getLevel().getMaxY() - 40, z = base.getZ() + 0.5;
         Flyer f = Flyer.at(h, x, y, z);
         try {
             Ascent.grant(f.p, Ascent.Tier.SKYBORN, "test");
@@ -247,7 +248,7 @@ final class AscentTests {
      */
     private static void latency(GameTestHelper h) {
         net.minecraft.core.BlockPos base = h.absolutePos(net.minecraft.core.BlockPos.ZERO);
-        double x0 = base.getX() + 0.5, y0 = base.getY() + 40, z0 = base.getZ() + 0.5;
+        double x0 = base.getX() + 0.5, y0 = h.getLevel().getMaxY() - 40, z0 = base.getZ() + 0.5;
         net.minecraft.core.BlockPos block = net.minecraft.core.BlockPos.containing(x0, y0 + 22, z0 + 12);
         h.getLevel().setBlock(block, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
         double ax = block.getX() + 0.5, ay = block.getY() - 0.05, az = block.getZ() + 0.5;

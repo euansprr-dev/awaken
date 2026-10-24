@@ -3,6 +3,7 @@ package dev.awaken.body;
 import dev.awaken.Awaken;
 import dev.awaken.body.net.BodyPayloads;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.progression.Rank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -22,6 +23,7 @@ final class RunnerTests {
         AwakenTests.register("runner_numbers", 20, RunnerTests::numbers);
         AwakenTests.registerIsolated("runner_course_probes", 120, RunnerTests::courseProbes);
         AwakenTests.registerIsolated("runner_server_checks", 120, RunnerTests::serverChecks);
+        AwakenTests.registerIsolated("runner_wall_climb", 120, RunnerTests::wallClimb);
         AwakenTests.registerIsolated("runner_hang_no_float_kick", 400, RunnerTests::hangNoFloatKick);
         AwakenTests.registerIsolated("runner_probe_cost", 200, RunnerTests::probeCost);
         // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
@@ -137,6 +139,50 @@ final class RunnerTests {
 
     static BodyPayloads.Run run(Move move, int flag, float yaw, Vec3 s, double tx, double ty, double tz, int axis, int sign) {
         return new BodyPayloads.Run(move.ordinal(), flag, yaw, s.x, s.y, s.z, tx, ty, tz, axis, sign);
+    }
+
+    /**
+     * Wall Stride's vertical run (SPEC §17.2): the rules (a wall in front only when facing it, about three blocks of
+     * rise), and the server: refused without the power, accepted with it on a real wall in front, never the same wall
+     * twice before landing, and a kick off it is a wall jump.
+     */
+    static void wallClimb(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        RunnerServer.build(level, o);
+        RunnerServer.fromHistory = true;
+        RunnerServer.latencyTicks = 0;
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            double rise = 0;
+            for (int t = 0; t < RunnerRules.CLIMB_TICKS; t++) rise += RunnerRules.climbTarget(t);
+            h.assertTrue(rise > 2.6 && rise < 3.4 && RunnerRules.climbTarget(RunnerRules.CLIMB_TICKS) == 0, "a climb rises " + rise);
+            long now = h.getLevel().getServer().overworld().getGameTime();
+            Vec3 s = at(o, -11.68, 2.5, 14);
+            double plane = o.getX() - 12;
+            var ctx = net.minecraft.world.phys.shapes.CollisionContext.empty();
+            var m0 = new BlockPos.MutableBlockPos();
+            RunnerRules.Wall ahead = RunnerRules.wallAhead(level, ctx, m0, s.x, s.y, s.z, 90F, RunnerRules.CLIMB_REACH);
+            h.assertTrue(ahead != null && ahead.axis() == 0 && ahead.side() == -1, "the west wall is ahead facing west: " + ahead);
+            h.assertTrue(RunnerRules.wallAhead(level, ctx, m0, s.x, s.y, s.z, 0F, RunnerRules.CLIMB_REACH) == null, "facing along it, no wall ahead");
+            ServerPlayer a = BodyTests.player(h, Rank.D);
+            a.snapTo(s.x, s.y, s.z, 90F, 0F);
+            a.setOnGround(false);
+            BodyMotion m = BodyServer.motion(a);
+            h.assertFalse(RunnerServer.startClimb(a, m, run(Move.WALL_CLIMB, 0, 90F, s, 0, plane, 0, 0, -1), now), "no climb without Wall Stride");
+            dev.awaken.powers.Powers.learn(a, net.minecraft.resources.Identifier.parse(RunnerRules.STRIDE_POWER), 0);
+            h.assertTrue(Body.wallStride(a), "Wall Stride learned");
+            h.assertTrue(RunnerServer.startClimb(a, m, run(Move.WALL_CLIMB, 0, 90F, s, 0, plane, 0, 0, -1), now), "a climb on a real wall in front");
+            h.assertTrue(RunnerServer.wallJump(a, m, run(Move.WALL_JUMP, 0, 90F, s, 0, plane, 0, 0, -1), now + 4), "a kick off the climb");
+            h.assertFalse(RunnerServer.startClimb(a, m, run(Move.WALL_CLIMB, 0, 90F, s, 0, plane, 0, 0, -1), now + 8), "never the same wall twice");
+            Vec3 mid = at(o, -10.0, 2.5, 14);
+            ServerPlayer b = BodyTests.player(h, Rank.D);
+            dev.awaken.powers.Powers.learn(b, net.minecraft.resources.Identifier.parse(RunnerRules.STRIDE_POWER), 0);
+            b.snapTo(mid.x, mid.y, mid.z, 90F, 0F);
+            h.assertFalse(RunnerServer.startClimb(b, BodyServer.motion(b), run(Move.WALL_CLIMB, 0, 90F, mid, 0, plane, 0, 0, -1), now),
+                    "a climb claimed away from the wall");
+            h.getLevel().getServer().getPlayerList().remove(a);
+            h.getLevel().getServer().getPlayerList().remove(b);
+        }).thenSucceed();
     }
 
     static void serverChecks(GameTestHelper h) {

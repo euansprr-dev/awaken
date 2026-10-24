@@ -74,6 +74,21 @@ public final class RunnerRules {
     public static final int HISTORY = 12;
     /** Ticks the server keeps a run going past the client's length; ticks without wall contact before it ends one. */
     public static final int RUN_GRACE = 6, RUN_MISS = 5;
+
+    /**
+     * Wall Stride's vertical run (SPEC §17.2): facing a wall (within {@link #CLIMB_MAX_ANGLE} of its normal, within
+     * {@link #CLIMB_REACH}), early in a jump, holding forward: {@link #CLIMB_TICKS} ticks up it at {@link #CLIMB_VY},
+     * easing off over the last three (about three blocks), into the ledge's grab when one comes in reach. A jump kicks
+     * back off it ({@link #CLIMB_KICK_OUT} out, {@link #CLIMB_KICK_UP} up) and turns you round.
+     */
+    public static final int CLIMB_TICKS = 10;
+    public static final double CLIMB_VY = 0.34, CLIMB_REACH = 0.45, CLIMB_MAX_ANGLE = 35, CLIMB_KICK_OUT = 0.42, CLIMB_KICK_UP = 0.4;
+    static final double COS_CLIMB = Math.cos(Math.toRadians(CLIMB_MAX_ANGLE));
+
+    /** The vertical run's rise at tick {@code age}. */
+    public static double climbTarget(int age) {
+        return age < CLIMB_TICKS - 3 ? CLIMB_VY : CLIMB_VY * Math.max(0, CLIMB_TICKS - age) / 3.0;
+    }
     /** The hang is re-checked every this many ticks; this many failed checks in a row end it. */
     public static final int HANG_CHECK = 4, HANG_MISS = 3;
 
@@ -191,6 +206,16 @@ public final class RunnerRules {
             return null;
         }
         return wallOn(level, ctx, m, px, py, pz, axis, 0, reach, tx, tz);
+    }
+
+    /** The wall in front of a body facing {@code yaw}: the facing within {@link #CLIMB_MAX_ANGLE} of an axis. */
+    public static @Nullable Wall wallAhead(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m,
+                                           double px, double py, double pz, float yaw, double reach) {
+        probes++;
+        double fx = -Mth.sin(yaw * Mth.DEG_TO_RAD), fz = Mth.cos(yaw * Mth.DEG_TO_RAD);
+        if (Math.abs(fx) >= COS_CLIMB) return wallOn(level, ctx, m, px, py, pz, 0, fx > 0 ? 1 : -1, reach, 0, 0);
+        if (Math.abs(fz) >= COS_CLIMB) return wallOn(level, ctx, m, px, py, pz, 2, fz > 0 ? 1 : -1, reach, 0, 0);
+        return null;
     }
 
     /** The wall on one side (side 0: the nearer of both) of the body along the normal axis. */

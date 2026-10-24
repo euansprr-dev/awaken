@@ -59,6 +59,7 @@ final class RunnerServer {
             case LEDGE_HANG -> startHang(p, m, msg, now);
             case SHIMMY -> shimmy(p, m, msg, now);
             case LEDGE_JUMP -> ledgeJump(p, m, msg, now);
+            case WALL_CLIMB -> startClimb(p, m, msg, now);
             default -> false;
         };
         if (bench != null && bench.target == move.ordinal()) {
@@ -104,6 +105,30 @@ final class RunnerServer {
         p.causeFoodExhaustion(0.05F);
         BodyServer.didClip(p, m, Move.WALL_RUN, msg.yaw(), BodyContent.WALLSTEP, 0.6F, now,
                 BodyClips.wallOnLeft(msg.yaw(), w.axis(), w.side()) ? BodyClips.WALLRUN_L : BodyClips.WALLRUN_R);
+        return true;
+    }
+
+    /**
+     * Wall Stride's vertical run: with the power, a wall in front where the body was (once a wall before landing).
+     * The server keeps it as a run (its window, its wall) so a kick off it is a wall jump like any other.
+     */
+    static boolean startClimb(ServerPlayer p, BodyMotion m, BodyPayloads.Run msg, long now) {
+        if (m.hanging || !Body.wallStride(p)) return false;
+        double[] s = from(p, m, msg);
+        if (s == null) return false;
+        RunnerRules.Wall w = RunnerRules.wallOn(p.level(), CollisionContext.of(p), M, s[0], s[1], s[2], msg.axis(), msg.sign(),
+                RunnerRules.CLIMB_REACH + RunnerRules.SERVER_TOL, 0, 0);
+        if (w == null || Math.abs(w.plane() - msg.ty()) > 0.1 || m.ranWall(w.id())) return false;
+        m.runUntil = now + RunnerRules.CLIMB_TICKS + RunnerRules.RUN_GRACE;
+        m.runAxis = w.axis();
+        m.runSide = w.side();
+        m.runPlane = w.plane();
+        m.runMiss = 0;
+        m.lastWall = w.id();
+        m.addWall(w.id());
+        p.resetFallDistance();
+        p.causeFoodExhaustion(0.05F);
+        BodyServer.didClip(p, m, Move.WALL_CLIMB, msg.yaw(), BodyContent.WALLSTEP, 0.6F, now, BodyClips.WALLCLIMB);
         return true;
     }
 
@@ -254,7 +279,7 @@ final class RunnerServer {
         if (m == null) return;
         long now = BodyServer.now(p);
         switch (move) {
-            case WALL_RUN -> {
+            case WALL_RUN, WALL_CLIMB -> {
                 endRun(m, now);
                 BodyServer.showRunnerEnd(p);
             }

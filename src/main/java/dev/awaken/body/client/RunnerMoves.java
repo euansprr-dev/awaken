@@ -51,6 +51,8 @@ public final class RunnerMoves {
     private static boolean runStride;
     static int runAxis, runSide;
     static double runPlane, runVy, runSpeed, runTx, runTz;
+    /** The run is Wall Stride's vertical run up a wall in front (not along one); one an airtime. */
+    static boolean runClimb, climbUsed;
     private static long lastWall;
     private static final long[] walls = new long[8];
     private static int wallCount, links, chainUntil = -100;
@@ -134,7 +136,8 @@ public final class RunnerMoves {
         CollisionContext ctx = CollisionContext.of(p);
         switch (state) {
             case RUN -> {
-                runTick(p, in, k, jumpPressed, shiftPressed, level, ctx, now);
+                if (runClimb) climbTick(p, in, jumpPressed, shiftPressed, level, ctx, now);
+                else runTick(p, in, k, jumpPressed, shiftPressed, level, ctx, now);
                 return true;
             }
             case HANG -> {
@@ -153,6 +156,7 @@ public final class RunnerMoves {
             if (now >= regrabAt && tryGrab(p, in, level, ctx, now)) return true;
             boolean chain = now <= chainUntil && links > 0;
             boolean intent = airPress ? now - airJumpAt <= RunnerRules.BUFFER : k.jump();
+            if (intent && !chain && tryClimb(p, in, k, level, ctx, now)) return true;
             if ((chain || intent && p.isSprinting()) && tryRun(p, in, level, ctx, chain ? links : 0, now)) return true;
             if (jumpPressed && now - groundAt <= RunnerRules.COYOTE && !jumpedOff && p.getDeltaMovement().y <= 0) {
                 p.jumpFromGround(); // coyote time: the jump you meant at the edge
@@ -177,6 +181,7 @@ public final class RunnerMoves {
     /** The landing tick: the chain is over, and a jump pressed just before landing goes off now (the buffer). */
     private static void landed(LocalPlayer p, ClientInput in, Input k, int now) {
         links = 0;
+        climbUsed = false;
         wallCount = 0;
         chainUntil = -100;
         if (state == State.NONE && now - airJumpAt <= RunnerRules.BUFFER && !k.jump()) {
@@ -192,7 +197,7 @@ public final class RunnerMoves {
             case WALL_RUN -> dev.awaken.body.ascent.client.AscentFlow.gain(0.07F);
             case WALL_JUMP -> dev.awaken.body.ascent.client.AscentFlow.gain(0.09F);
             case LEDGE_HANG -> dev.awaken.body.ascent.client.AscentFlow.gain(0.03F);
-            case LEDGE_JUMP -> dev.awaken.body.ascent.client.AscentFlow.gain(0.06F);
+            case LEDGE_JUMP, WALL_CLIMB -> dev.awaken.body.ascent.client.AscentFlow.gain(0.06F);
             default -> {
             }
         }
@@ -358,9 +363,107 @@ public final class RunnerMoves {
         if (state != State.RUN) return;
         state = State.NONE;
         runEnd = ClientMoves.ticks;
-        ClientMoves.trace("wall-run ends (" + why + ") after " + runAge);
+        ClientMoves.trace((runClimb ? "wall climb" : "wall-run") + " ends (" + why + ") after " + runAge);
         BodyAnims.runnerEnd(p.getId());
-        if (tellServer) sendEnd(Move.WALL_RUN);
+        if (tellServer) sendEnd(runClimb ? Move.WALL_CLIMB : Move.WALL_RUN);
+        runClimb = false;
+    }
+
+    // ---- Wall Stride's vertical run ----------------------------------------------------------------------------------
+
+    /** Up a wall you face, early in a jump, holding forward, with Wall Stride: once an airtime (SPEC §17.2). */
+    private static boolean tryClimb(LocalPlayer p, ClientInput in, Input k, BlockGetter level, CollisionContext ctx, int now) {
+        if (climbUsed || !k.forward() || Minecraft.getInstance().gui.screen() != null || p.isUsingItem() || !Body.wallStride(p)) return false;
+        Vec3 v = p.getDeltaMovement();
+        if (v.y < -0.15) return false;
+        RunnerRules.Wall w = RunnerRules.wallAhead(level, ctx, M, p.getX(), p.getY(), p.getZ(), p.getYRot(), RunnerRules.CLIMB_REACH);
+        if (w == null || ranWall(w.id())) return false;
+        state = State.RUN;
+        runClimb = true;
+        climbUsed = true;
+        runAge = 0;
+        runLink = 0;
+        runLen = RunnerRules.CLIMB_TICKS;
+        runStart = now;
+        runAxis = w.axis();
+        runSide = w.side();
+        runPlane = w.plane();
+        runTx = runTz = runSpeed = 0;
+        runVy = Math.max(v.y, 0.2);
+        runMiss = 0;
+        lastWall = w.id();
+        if (wallCount < walls.length) walls[wallCount++] = w.id();
+        send(Move.WALL_CLIMB, 0, p, 0, w.plane(), 0, w.axis(), w.side());
+        ClientMoves.trace(String.format("wall climb, vy %.2f", v.y));
+        BodyAnims.runner(p.getId(), BodyClips.WALLCLIMB);
+        RunnerFx.step(p, runAxis == 0 ? runSide : 0, runAxis == 2 ? runSide : 0, 0, 0, true);
+        climbApply(p, in, w.gap());
+        return true;
+    }
+
+    private static void climbTick(LocalPlayer p, ClientInput in, boolean jumpPressed, boolean shiftPressed, BlockGetter level,
+                                  CollisionContext ctx, int now) {
+        runAge++;
+        if (Minecraft.getInstance().gui.screen() != null) {
+            endRun(p, true, "screen");
+            return;
+        }
+        if (p.onGround()) {
+            endRun(p, true, "landed");
+            return;
+        }
+        if (shiftPressed) {
+            endRun(p, true, "let go");
+            return;
+        }
+        if (jumpPressed && runAge >= 2) {
+            climbKick(p, now);
+            return;
+        }
+        // a lip in reach: the climb carries you into the hang
+        if (tryGrab(p, in, level, ctx, now)) {
+            sendEnd(Move.WALL_CLIMB);
+            runClimb = false;
+            runEnd = now;
+            return;
+        }
+        if (runAge >= RunnerRules.CLIMB_TICKS) {
+            endRun(p, true, "done");
+            return;
+        }
+        RunnerRules.Wall w = RunnerRules.wallOn(level, ctx, M, p.getX(), p.getY(), p.getZ(), runAxis, runSide, RunnerRules.CLIMB_REACH + 0.1, 0, 0);
+        if (w == null) {
+            endRun(p, true, "over the top");
+            return;
+        }
+        climbApply(p, in, w.gap());
+        if (runAge % 4 == 0) RunnerFx.step(p, runAxis == 0 ? runSide : 0, runAxis == 2 ? runSide : 0, 0, 0, true);
+    }
+
+    private static void climbApply(LocalPlayer p, ClientInput in, double gap) {
+        runVy += (RunnerRules.climbTarget(runAge) - runVy) * 0.5;
+        // the feet stay on the face: pressed gently toward it
+        double nx = runAxis == 0 ? -runSide : 0, nz = runAxis == 2 ? -runSide : 0;
+        double close = Mth.clamp(gap - RunnerRules.RUN_GAP, -0.1, 0.1);
+        inputAccel(p, in, ACC);
+        p.setDeltaMovement(-nx * close - ACC[0], runVy, -nz * close - ACC[1]);
+        p.resetFallDistance();
+    }
+
+    /** A jump off the climb: out from the wall and up, the view turning round to face where you're going. */
+    private static void climbKick(LocalPlayer p, int now) {
+        double nx = runAxis == 0 ? -runSide : 0, nz = runAxis == 2 ? -runSide : 0;
+        send(Move.WALL_JUMP, links, p, 0, runPlane, 0, runAxis, runSide);
+        endRun(p, false, "kick off");
+        p.setDeltaMovement(nx * RunnerRules.CLIMB_KICK_OUT, RunnerRules.CLIMB_KICK_UP, nz * RunnerRules.CLIMB_KICK_OUT);
+        links++;
+        chainUntil = now + 30;
+        ClientMoves.suppressJump();
+        turnTo(yawOf(nx, nz), 6);
+        ClientMoves.trace("climb kick, link " + links);
+        BodyAnims.runner(p.getId(), BodyClips.WALLJUMP);
+        BodyFx.sound(p, BodyContent.WALLJUMP.get(), 0.8F, 1F);
+        RunnerFx.step(p, -nx, -nz, 0, 0, false);
     }
 
     // ---- hang -------------------------------------------------------------------------------------------------------
@@ -717,7 +820,7 @@ public final class RunnerMoves {
         if (p == null) return;
         ClientMoves.trace("server ended " + move);
         switch (move) {
-            case WALL_RUN -> endRun(p, false, "refused");
+            case WALL_RUN, WALL_CLIMB -> endRun(p, false, "refused");
             case LEDGE_HANG, SHIMMY -> {
                 if (hanging()) endHang(p, false, "refused");
             }
@@ -739,6 +842,7 @@ public final class RunnerMoves {
     /** The dev driver starts a script, or the player was replaced: everything lets go at once. */
     static void reset() {
         state = State.NONE;
+        runClimb = climbUsed = false;
         edge = null;
         pathEdge = null;
         shimmying = false;

@@ -127,6 +127,20 @@ clip("body_wallrun_r", wallrun(False), 8, loop=True, note="running along a wall 
 clip("body_wallrun_l_end", [(0, wallrun(True)[1][1], "linear")], 6, end=0, note="settles out of body_wallrun_l")
 clip("body_wallrun_r_end", [(0, wallrun(False)[1][1], "linear")], 6, end=0, note="settles out of body_wallrun_r")
 
+# Wall climb (Wall Stride's vertical run): facing the wall, running up it: a knee driving high with the foot on the face,
+# the other leg pushing off below; the hands reach up the face in turn (overhead arms with the z sign that keeps them
+# clear of the head). One stride pair every 8 ticks, like the wall-run.
+def wallclimb():
+    a = pose(ground=False, lean=-6, rl=(-96, 0, 3), rk=110, ll=(12, 0, -3), lk=40, ra=(-168, 0, -10), re=6, la=(-92, 0, 8), le=14)
+    b = pose(a, rl=(-46, 0, 3), rk=70, ll=(-46, 0, -3), lk=70, ra=(-132, 0, -9), re=10, la=(-128, 0, 9), le=10)
+    c = pose(a, rl=(12, 0, 3), rk=40, ll=(-96, 0, -3), lk=110, ra=(-92, 0, -8), re=14, la=(-168, 0, 10), le=6)
+    d = pose(c, rl=(-46, 0, 3), rk=70, ll=(-46, 0, -3), lk=70, ra=(-128, 0, -9), re=10, la=(-132, 0, 9), le=10)
+    return [(0, a, "linear"), (2, b, "easeinoutsine"), (4, c, "easeinoutsine"), (6, d, "easeinoutsine"), (8, a, "easeinoutsine")]
+
+
+clip("body_wallclimb", wallclimb(), 8, loop=True, note="running up a wall you face: knees driving up, hands reaching up the face in turn")
+clip("body_wallclimb_end", [(0, wallclimb()[1][1], "linear")], 6, end=0, note="settles out of body_wallclimb")
+
 # Wall jump: gather (knees in, arms down and back), then a spring off the wall: legs drive out, arms thrown up and
 # forward, opening into a reach for the next wall.
 WJ_GATHER = pose(ground=False, lean=18, rl=(-70, 0, 4), rk=100, ll=(-60, 0, -4), lk=95, ra=(40, 0, 20), re=40, la=(40, 0, -20), le=40)
@@ -241,7 +255,7 @@ def moves_sheet(out_dir, px=5.0):
     """Every move's key poses, straight (top) and bent (bottom), from the front three-quarter and the side."""
     from PIL import Image, ImageDraw
     beats = {"body_slide": [0], "body_slide_jump": [0, 3, 7], "body_roll": [2, 4.5, 7, 12], "body_mantle": [0, 2, 4, 6],
-             "body_sprint": [0, 2, 4, 6], "body_wallrun_l": [0, 4], "body_walljump": [0, 2, 6], "body_hang": [0],
+             "body_sprint": [0, 2, 4, 6], "body_wallrun_l": [0, 4], "body_wallclimb": [0, 4], "body_walljump": [0, 2, 6], "body_hang": [0],
              "body_grab": [1.5, 5], "body_ledge_up": [2, 4], "body_ledge_back": [2, 4]}
     views = (("front", -35.0, 10.0), ("side", -90.0, 6.0))
     rows = []

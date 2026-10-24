@@ -241,7 +241,7 @@ final class BodyServer {
         Progression.count(p, "awaken:body_" + move.key);
         // the Runner's moves are links in the Ascent's chains and earn the Runner's mastery
         switch (move) {
-            case WALL_RUN, WALL_JUMP, LEDGE_JUMP -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 2);
+            case WALL_RUN, WALL_JUMP, LEDGE_JUMP, WALL_CLIMB -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 2);
             case LEDGE_HANG -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 1);
             default -> {
             }

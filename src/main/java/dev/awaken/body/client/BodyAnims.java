@@ -129,6 +129,7 @@ final class BodyAnims {
             case MANTLE -> BodyRules.MANTLE_TICKS + 3;
             // spike S3: other players' runner poses last this long (the local player's follow its own state)
             case WALL_RUN -> dev.awaken.body.RunnerRules.RUN_TICKS;
+            case WALL_CLIMB -> dev.awaken.body.RunnerRules.CLIMB_TICKS + 2;
             case WALL_JUMP, LEDGE_JUMP -> 10;
             case LEDGE_HANG, SHIMMY -> 60;
             case null -> 0;

@@ -17,7 +17,10 @@ public enum Move {
     WALL_JUMP(Rank.E, "walljump", "Wall jump", "jump during a wall-run", "Jump during a wall-run to kick off; land on another wall to run again."),
     LEDGE_HANG(Rank.E, "hang", "Ledge hang", "jump at a high ledge", "Jump toward a ledge above your head, or sneak forward off a high edge, to hang."),
     SHIMMY(Rank.E, "shimmy", "Shimmy", "left or right while hanging", "Hold left or right while hanging to move along the edge."),
-    LEDGE_JUMP(Rank.E, "ledgejump", "Ledge jump", "jump while hanging", "Jump while hanging: up, sideways with left or right, or back off the wall.");
+    LEDGE_JUMP(Rank.E, "ledgejump", "Ledge jump", "jump while hanging", "Jump while hanging: up, sideways with left or right, or back off the wall."),
+    // ---- Wall Stride (SPEC §17.2) ----
+    WALL_CLIMB(Rank.E, "wallclimb", "Wall climb", "jump at a wall, holding forward (Wall Stride)",
+            "With Wall Stride, jump straight at a wall holding forward to run a few steps up it, into a ledge if one is in reach. Jump to kick back off.");
 
     private static final Move[] VALUES = values();
 

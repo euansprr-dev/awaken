@@ -28,19 +28,20 @@ public final class BodyClips {
     public static final String WALLRUN_L = "body_wallrun_l", WALLRUN_R = "body_wallrun_r", WALLJUMP = "body_walljump",
             GRAB = "body_grab", HANG = "body_hang", SHIMMY_L = "body_shimmy_l", SHIMMY_R = "body_shimmy_r",
             LEDGE_UP = "body_ledge_up", LEDGE_SIDE_L = "body_ledge_side_l", LEDGE_SIDE_R = "body_ledge_side_r",
-            LEDGE_BACK = "body_ledge_back", LOWER = "body_lower";
+            LEDGE_BACK = "body_ledge_back", LOWER = "body_lower", WALLCLIMB = "body_wallclimb";
 
     /** The Runner's clips by network index (a Seen's code minus {@code SEEN_CLIP}); only append. */
     public static final List<String> RUNNER = List.of(WALLRUN_L, WALLRUN_R, WALLJUMP, GRAB, HANG, SHIMMY_L, SHIMMY_R, LEDGE_UP,
-            LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER, MANTLE);
+            LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER, MANTLE, WALLCLIMB);
 
     public static final List<String> ALL = List.of(SLIDE, SLIDE_END, SLIDE_JUMP, ROLL, MANTLE, SPRINT, SPRINT_END,
             WALLRUN_L, WALLRUN_R, WALLRUN_L + "_end", WALLRUN_R + "_end", WALLJUMP, GRAB, HANG, HANG + "_end", SHIMMY_L, SHIMMY_R,
-            SHIMMY_L + "_end", SHIMMY_R + "_end", LEDGE_UP, LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER);
+            SHIMMY_L + "_end", SHIMMY_R + "_end", LEDGE_UP, LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER, WALLCLIMB, WALLCLIMB + "_end");
 
     /** A Runner clip that loops until its move ends (and then plays its {@code _end}). */
     public static boolean loops(String clip) {
-        return clip.equals(WALLRUN_L) || clip.equals(WALLRUN_R) || clip.equals(HANG) || clip.equals(SHIMMY_L) || clip.equals(SHIMMY_R);
+        return clip.equals(WALLRUN_L) || clip.equals(WALLRUN_R) || clip.equals(HANG) || clip.equals(SHIMMY_L) || clip.equals(SHIMMY_R)
+                || clip.equals(WALLCLIMB);
     }
 
     /** Whether the wall a run uses is on the runner's left (facing yaw; the wall's normal axis and side as in RunnerRules.Wall). */
