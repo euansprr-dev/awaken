@@ -119,15 +119,23 @@ public final class RunRegressionTests {
         // A gate never lands on a build.
         AwakenTests.registerIsolated("gates_surface_respects_builds", 40, h -> {
             ServerLevel level = h.getLevel();
-            BlockPos ground = h.absolutePos(new BlockPos(4, 0, 4));
-            h.assertTrue(Overworld.untouched(level, ground, 0), "open ground is fine");
-            BlockPos chest = ground.offset(1, 1, 1);
-            level.setBlock(chest, Blocks.CHEST.defaultBlockState(), 3);
-            h.assertFalse(Overworld.untouched(level, ground, 0), "a chest next to it: not here");
-            level.removeBlock(chest, false);
-            level.setBlock(chest, Blocks.OAK_PLANKS.defaultBlockState(), 3);
-            h.assertFalse(Overworld.untouched(level, ground, 0), "a plank wall: not here");
-            level.removeBlock(chest, false);
+            // The check looks 14 blocks round (the largest gate) and 64 for a Hearth, and test plots sit 6 blocks apart on
+            // a grid that earlier batches leave their chests, planks, torches and Hearths on: own fresh ground well off it.
+            BlockPos ground = h.absolutePos(new BlockPos(4, 0, 4)).offset(-3000, 0, -3000);
+            int c0x = (ground.getX() - 16) >> 4, c1x = (ground.getX() + 16) >> 4, c0z = (ground.getZ() - 16) >> 4, c1z = (ground.getZ() + 16) >> 4;
+            for (int cx = c0x; cx <= c1x; cx++) for (int cz = c0z; cz <= c1z; cz++) level.setChunkForced(cx, cz, true);
+            try {
+                h.assertTrue(Overworld.untouched(level, ground, 0), "open ground is fine");
+                BlockPos chest = ground.offset(1, 1, 1);
+                level.setBlock(chest, Blocks.CHEST.defaultBlockState(), 3);
+                h.assertFalse(Overworld.untouched(level, ground, 0), "a chest next to it: not here");
+                level.removeBlock(chest, false);
+                level.setBlock(chest, Blocks.OAK_PLANKS.defaultBlockState(), 3);
+                h.assertFalse(Overworld.untouched(level, ground, 0), "a plank wall: not here");
+                level.removeBlock(chest, false);
+            } finally {
+                for (int cx = c0x; cx <= c1x; cx++) for (int cz = c0z; cz <= c1z; cz++) level.setChunkForced(cx, cz, false);
+            }
             h.succeed();
         });
     }

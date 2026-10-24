@@ -516,8 +516,10 @@ final class AnomalyTests {
             BlockPos start = g.offset(-5, 0, 0), end = g.offset(5, 0, 0);
             ServerPlayer p = awakenedPlayer(h, start.offset(0, 0, -3));
             AnomalyData data = AnomalyData.get(server);
-            // lights only appear where entities tick: give the force-loaded chunks a moment
-            h.startSequence().thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(g), "the platform ticks"))
+            // lights only appear where entities tick, and they first gather at the start of the path, five blocks west of
+            // the platform's centre and often over a chunk border: the whole path must tick, not just its middle
+            h.startSequence().thenWaitUntil(() -> h.assertTrue(level.isPositionEntityTicking(start) && level.isPositionEntityTicking(g)
+                            && level.isPositionEntityTicking(end), "the path ticks"))
                     .thenExecute(() -> followTheLights(h, level, g, start, end, p, data)).thenSucceed();
         });
     }
@@ -525,7 +527,7 @@ final class AnomalyTests {
     private static void followTheLights(GameTestHelper h, ServerLevel level, BlockPos g, BlockPos start, BlockPos end, ServerPlayer p, AnomalyData data) {
         {
             Anomaly a = Processions.open(level, p, start, end, data);
-            h.assertTrue(a.motes.size() == Processions.MOTES, "five lights");
+            h.assertTrue(a.motes.size() == Processions.MOTES, "five lights: " + a.motes.size());
             long now = level.getGameTime();
             // walk with the lights: each pass they move on while you stay near the lead
             for (int i = 0; i < 40 && a.stage != Anomaly.CACHE; i++) {

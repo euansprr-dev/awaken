@@ -193,7 +193,7 @@ final class FaunaTests {
             h.succeed();
         });
 
-        AwakenTests.registerIsolated("fauna_spawn_rules_in_world", 300, h -> {
+        AwakenTests.registerIsolated("fauna_spawn_rules_in_world", 1200, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 30));
             BlockPos open = h.absolutePos(new BlockPos(0, UP, 0));
@@ -347,7 +347,7 @@ final class FaunaTests {
             });
         });
 
-        AwakenTests.registerIsolated("fauna_hunters_keep_the_light_rule", 400, h -> {
+        AwakenTests.registerIsolated("fauna_hunters_keep_the_light_rule", 1200, h -> {
             ServerLevel level = h.getLevel();
             BlockPos dark = h.absolutePos(new BlockPos(6, UP, 0));
             BlockPos lit = h.absolutePos(new BlockPos(-6, UP, 0));
@@ -540,11 +540,14 @@ final class FaunaTests {
         h.assertTrue(why(level, id, pos, rnd, p) != null, what);
     }
 
-    /** The light engine trails block changes by a few ticks; wait until the sealed room is dark and the lit one bright. */
+    /**
+     * The light engine trails block changes, on its own threads; wait until the sealed room is dark and the lit one bright
+     * (paced: see {@link AwakenTests#await}).
+     */
     static void lightSettled(GameTestHelper h, ServerLevel level, BlockPos dark, BlockPos lit) {
-        h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.SKY, dark) == 0
+        AwakenTests.await(h, () -> level.getBrightness(net.minecraft.world.level.LightLayer.SKY, dark) == 0
                 && level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, dark) == 0, "the sealed room is dark");
-        h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, lit) >= 10
+        AwakenTests.await(h, () -> level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, lit) >= 10
                 && level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, lit.above()) >= 10, "the lit room is bright");
     }
 

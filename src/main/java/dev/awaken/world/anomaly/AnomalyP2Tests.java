@@ -260,16 +260,23 @@ final class AnomalyP2Tests {
 
     // ---- shimmer grove ------------------------------------------------------------------------------------------------
 
-    /** A grassy platform (radius 12) for groves: flowers need soil. */
+    /**
+     * A grassy platform (radius 12) for groves: flowers need soil. Flowers grow on the surface (the heightmap), and test
+     * plots are reused under whatever earlier batches built high above them, so the sky over the meadow is opened too.
+     */
     static BlockPos meadow(GameTestHelper h, int dx, int dz) {
         ServerLevel level = h.getLevel();
         BlockPos c = h.absolutePos(new BlockPos(dx, 3, dz));
         BlockState dirt = Blocks.DIRT.defaultBlockState(), grass = Blocks.GRASS_BLOCK.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos q = new BlockPos.MutableBlockPos();
         for (int x = -12; x <= 12; x++) {
             for (int z = -12; z <= 12; z++) {
                 for (int y = -3; y <= -1; y++) level.setBlock(c.offset(x, y, z), dirt, 3);
                 level.setBlock(c.offset(x, 0, z), grass, 3);
                 for (int y = 1; y <= 8; y++) level.setBlock(c.offset(x, y, z), air, 3);
+                for (q.set(c.getX() + x, c.getY() + 9, c.getZ() + z); q.getY() < level.getMaxY(); q.move(0, 1, 0)) {
+                    if (!level.getBlockState(q).isAir()) level.setBlock(q, air, 2);
+                }
             }
         }
         return c;
@@ -331,7 +338,8 @@ final class AnomalyP2Tests {
                     for (BlockPos q : BlockPos.betweenClosed(g.offset(-8, 1, -8), g.offset(8, 1, 8))) {
                         if (level.getBlockState(q).is(BlockTags.SMALL_FLOWERS)) flowers++;
                     }
-                    h.assertTrue(flowers >= 4, "flowers spring up: " + flowers);
+                    h.assertTrue(flowers >= 4, "flowers spring up: " + flowers + " (surface under the heart at y "
+                            + Spots.surface(level, g.getX(), g.getZ()).getY() + ", meadow at " + g.getY() + ")");
                     p.removeEffect(MobEffects.REGENERATION);
                     Groves.bend(level, a, 0);
                     h.assertTrue(p.hasEffect(MobEffects.REGENERATION), "and mend whoever stands among them");
