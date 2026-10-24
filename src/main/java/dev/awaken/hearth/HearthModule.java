@@ -165,15 +165,6 @@ public final class HearthModule {
         Trophies.onDeath(e, killer, level);
         Echoes.onKill(dead, killer, level);
         // the party in range each get their own chance to bind it (SPEC "Together": separate rolls per player)
-        for (UUID id : dev.awaken.core.api.PartyHooks.members(killer)) {
-            if (id.equals(killer.getUUID())) continue;
-            ServerPlayer mate = level.getServer().getPlayerList().getPlayer(id);
-            if (mate != null && mate.level() == level && mate.isAlive() && !mate.isSpectator() && mate.distanceToSqr(dead) <= PARTY_RANGE * PARTY_RANGE) {
-                Echoes.onKill(dead, mate, level);
-            }
-        }
+        for (ServerPlayer mate : dev.awaken.core.api.Parties.sharing(killer, dead)) Echoes.onKill(dead, mate, level);
     }
-
-    /** Party members within this many blocks of a kill share it. */
-    static final double PARTY_RANGE = 32;
 }

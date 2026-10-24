@@ -257,13 +257,7 @@ public final class ProgressionModule {
             double xp = KILL_XP * Math.min(2.0, dead.getMaxHealth() / 20.0);
             homeXp(sp, XpBudget.KILL, xp, contentLevel);
             // the party nearby shares the kill (SPEC "Together"), each through their own home budget
-            for (java.util.UUID id : dev.awaken.core.api.PartyHooks.members(sp)) {
-                if (id.equals(sp.getUUID())) continue;
-                ServerPlayer mate = sp.level().getServer().getPlayerList().getPlayer(id);
-                if (mate != null && mate.level() == sp.level() && mate.isAlive() && !mate.isSpectator() && mate.distanceToSqr(dead) <= 32 * 32) {
-                    homeXp(mate, XpBudget.KILL, xp, contentLevel);
-                }
-            }
+            for (ServerPlayer mate : dev.awaken.core.api.Parties.sharing(sp, dead)) homeXp(mate, XpBudget.KILL, xp, contentLevel);
         }
         if (!p.awakened()) return;
         Progression.count(sp, Counters.KILLS);

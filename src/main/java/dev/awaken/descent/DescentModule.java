@@ -232,12 +232,8 @@ public final class DescentModule {
             double xp = Curve.xpToNext(Strata.contentLevel(depth)) * f;
             Progression.grantXp(killer, xp, Progression.XpSource.DESCENT);
             // the party nearby shares the kill (SPEC "Together"): each their own share
-            for (java.util.UUID id : dev.awaken.core.api.PartyHooks.members(killer)) {
-                if (id.equals(killer.getUUID())) continue;
-                ServerPlayer mate = level.getServer().getPlayerList().getPlayer(id);
-                if (mate != null && mate.level() == level && mate.isAlive() && !mate.isSpectator() && mate.distanceToSqr(dead) <= 32 * 32) {
-                    Progression.grantXp(mate, xp, Progression.XpSource.DESCENT);
-                }
+            for (ServerPlayer mate : dev.awaken.core.api.Parties.sharing(killer, dead)) {
+                Progression.grantXp(mate, xp, Progression.XpSource.DESCENT);
             }
         }
     }

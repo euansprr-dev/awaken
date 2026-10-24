@@ -286,7 +286,8 @@ lucidium, veil, above, hearth, story (bools) · cameraShake · signalTypeSpeed �
   basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
-  `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together"), `MobHooks`,
+  `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
+  `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise).
@@ -973,7 +974,8 @@ Gates in a party:
   keeps each cell's generation, entities stamp theirs (`awaken_cell_gen`), and one saved with an older generation of
   its cell leaves when loaded. The stop-time cleanup still deletes whatever was left.
 
-Shared rewards (credit the party in range; separate rolls per player):
+Shared rewards (credit the party in range; separate rolls per player; `core.api.Parties.sharing` is the one rule for
+who: party members online, alive, not spectating, in the same level within 32 blocks of the kill):
 - A gate kill: every party member of that run on the same floor within 32 blocks gets their own kill XP share (from
   their own floor budget, so a party never earns more per player than alone) and their own elite loot roll into their
   own Satchel. Credit falls back to whoever last hurt the creature (fire, a fall, an Echo finishing it).
