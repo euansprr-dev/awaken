@@ -60,7 +60,8 @@ final class BodyAnims {
         a.start = ClientMoves.ticks;
         a.yaw = yaw;
         a.ending = false;
-        a.clip = PlayerClips.available() && PlayerClips.play(entityId, BodyClips.of(move), move == Move.TACTICAL_SPRINT ? 3 : move == Move.SLIDE ? 2 : 1);
+        String clip = BodyClips.of(move);
+        a.clip = clip != null && PlayerClips.available() && PlayerClips.play(entityId, clip, move == Move.TACTICAL_SPRINT ? 3 : move == Move.SLIDE ? 2 : 1);
     }
 
     static void stop(int entityId, Move move) {
@@ -113,6 +114,11 @@ final class BodyAnims {
             if (a.entity >= 0 && a.clip) PlayerClips.stop(a.entity);
             a.entity = -1;
         }
+        for (int i = 0; i < RUN_ENTITY.length; i++) {
+            if (RUN_ENTITY[i] >= 0) PlayerClips.stop(RUN_ENTITY[i]);
+            RUN_ENTITY[i] = -1;
+            RUN_CLIP[i] = null;
+        }
     }
 
     private static int length(int move) {
@@ -121,6 +127,10 @@ final class BodyAnims {
             case TACTICAL_SPRINT -> BodyRules.TAC_TICKS;
             case SLIDE -> BodyRules.SLIDE_TICKS + BodyRules.SLIDE_GRACE;
             case MANTLE -> BodyRules.MANTLE_TICKS + 3;
+            // spike S3: other players' runner poses last this long (the local player's follow its own state)
+            case WALL_RUN -> dev.awaken.body.RunnerRules.RUN_TICKS;
+            case WALL_JUMP, LEDGE_JUMP -> 10;
+            case LEDGE_HANG, SHIMMY -> 60;
             case null -> 0;
         };
     }
@@ -158,6 +168,7 @@ final class BodyAnims {
 
     static void modify(Entity entity, EntityRenderState state) {
         if (!(entity instanceof Player) || !(state instanceof HumanoidRenderState s)) return;
+        if (entity == net.minecraft.client.Minecraft.getInstance().player && RunnerMoves.active() && runnerPose(s)) return;
         Anim a = live(entity);
         if (a == null) return;
         if (a.clip) {
@@ -210,7 +221,14 @@ final class BodyAnims {
                 }
             }
             case TACTICAL_SPRINT -> s.walkAnimationSpeed = Math.min(1.6F, s.walkAnimationSpeed * 1.4F);
-            case null -> {
+            case WALL_RUN -> s.walkAnimationSpeed = Math.max(1.1F, s.walkAnimationSpeed);
+            case LEDGE_HANG, SHIMMY -> {
+                s.rightArmPose = HumanoidModel.ArmPose.THROW_TRIDENT;
+                s.leftArmPose = HumanoidModel.ArmPose.THROW_TRIDENT;
+                s.walkAnimationSpeed = 0;
+                s.isCrouching = false;
+            }
+            case null, default -> {
             }
         }
     }
@@ -219,6 +237,11 @@ final class BodyAnims {
 
     static void onPre(RenderPlayerEvent.Pre<?> e) {
         AvatarRenderState s = e.getRenderState();
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player != null && s.id == mc.player.getId() && RunnerMoves.active()) {
+            runnerFigure(e.getPoseStack(), s);
+            return;
+        }
         Anim a = find(s.id);
         if (a == null || a.clip) return; // a clip moves the whole figure itself
         float age = ClientMoves.ticks + s.partialTick - a.start;
@@ -261,7 +284,7 @@ final class BodyAnims {
                 pushed++;
                 tip(ps, 0F, 18F * in, yaw);
             }
-            case null -> {
+            case null, default -> {
             }
         }
     }
@@ -270,6 +293,106 @@ final class BodyAnims {
         if (pushed > 0) {
             e.getPoseStack().popPose();
             pushed--;
+        }
+    }
+
+    // ---- the Runner's clips (Player Animation Library) ---------------------------------------------------------------
+
+    private static final int[] RUN_ENTITY = new int[32];
+    private static final String[] RUN_CLIP = new String[32];
+
+    static {
+        java.util.Arrays.fill(RUN_ENTITY, -1);
+    }
+
+    /** A Runner clip on an entity (the local player from its prediction, others from the server's Seen). */
+    static void runner(int entityId, String clip) {
+        if (!PlayerClips.available()) return;
+        int slot = -1, free = -1;
+        for (int i = 0; i < RUN_ENTITY.length; i++) {
+            if (RUN_ENTITY[i] == entityId) slot = i;
+            else if (RUN_ENTITY[i] < 0 && free < 0) free = i;
+        }
+        if (slot < 0) slot = free < 0 ? 0 : free;
+        // a loop already running stays as it is; a one-shot always starts again
+        if (dev.awaken.body.BodyClips.loops(clip) && clip.equals(RUN_CLIP[slot]) && RUN_ENTITY[slot] == entityId) return;
+        // a body move's clip on the same layer steps aside
+        Anim a = find(entityId);
+        if (a != null) a.entity = -1;
+        if (PlayerClips.play(entityId, clip, clip.equals(dev.awaken.body.BodyClips.HANG) ? 3 : 2)) {
+            RUN_ENTITY[slot] = entityId;
+            RUN_CLIP[slot] = clip;
+        }
+    }
+
+    /** The Runner move is over: a loop settles through its {@code _end}, a one-shot finishes by itself. */
+    static void runnerEnd(int entityId) {
+        for (int i = 0; i < RUN_ENTITY.length; i++) {
+            if (RUN_ENTITY[i] != entityId) continue;
+            String c = RUN_CLIP[i];
+            if (c != null && dev.awaken.body.BodyClips.loops(c)) PlayerClips.play(entityId, c + "_end", 2);
+            RUN_ENTITY[i] = -1;
+            RUN_CLIP[i] = null;
+        }
+    }
+
+    // ---- the Runner's Kit, vanilla-model poses (the local player, from its own prediction; under the clips) ---------
+
+    /** Limbs: a wall-run's quick stride; a hang's arms overhead, legs still, the body square to the wall. */
+    private static boolean runnerPose(HumanoidRenderState s) {
+        switch (RunnerMoves.state) {
+            case RUN -> {
+                s.walkAnimationSpeed = Math.max(1.3F, s.walkAnimationSpeed);
+                s.isCrouching = false;
+                return true;
+            }
+            case HANG, PATH -> {
+                float wy = RunnerMoves.wallYaw();
+                s.yRot = Mth.clamp(Mth.wrapDegrees(s.yRot + s.bodyRot - wy), -80F, 80F);
+                s.bodyRot = wy;
+                s.isCrouching = false;
+                boolean over = RunnerMoves.state == RunnerMoves.State.PATH && RunnerMoves.pathKind == RunnerMoves.CLIMB
+                        && RunnerMoves.pathAge > RunnerMoves.pathLen * 0.45;
+                HumanoidModel.ArmPose arms = over ? HumanoidModel.ArmPose.BLOCK : HumanoidModel.ArmPose.THROW_TRIDENT;
+                s.rightArmPose = arms;
+                s.leftArmPose = arms;
+                s.walkAnimationSpeed = RunnerMoves.shimmying ? 0.35F : 0F;
+                return true;
+            }
+            default -> {
+                return false;
+            }
+        }
+    }
+
+    /** The whole figure: on a wall the body leans out from it, feet to the wall; hanging, the feet tuck in under the hands. */
+    private static void runnerFigure(PoseStack ps, AvatarRenderState s) {
+        float age = ClientMoves.ticks + s.partialTick;
+        switch (RunnerMoves.state) {
+            case RUN -> {
+                double tx = RunnerMoves.runTx, tz = RunnerMoves.runTz;
+                double nx = RunnerMoves.runAxis == 0 ? -RunnerMoves.runSide : 0, nz = RunnerMoves.runAxis == 2 ? -RunnerMoves.runSide : 0;
+                float side = Math.signum((float) (-tz * nx + tx * nz));
+                float in = Math.min(1F, (age - RunnerMoves.runStart) / 4F);
+                ps.pushPose();
+                pushed++;
+                ps.rotate(Q.rotationAxis(22F * side * in * Mth.DEG_TO_RAD, (float) tx, 0, (float) tz));
+            }
+            case HANG, PATH -> {
+                if (RunnerMoves.state == RunnerMoves.State.PATH && RunnerMoves.pathKind == RunnerMoves.CLIMB) {
+                    float u = Mth.clamp(RunnerMoves.pathAge / (float) RunnerMoves.pathLen, 0, 1);
+                    ps.pushPose();
+                    pushed++;
+                    tip(ps, 0.9F, u < 0.45F ? -8F * u / 0.45F : 42F * Mth.sin(Math.min(1F, (u - 0.45F) / 0.85F) * Mth.PI), s.bodyRot * Mth.DEG_TO_RAD);
+                    return;
+                }
+                float sway = RunnerMoves.shimmying ? 2.5F * Mth.sin(age * 0.6F) : 1.2F * Mth.sin(age * 0.12F);
+                ps.pushPose();
+                pushed++;
+                tip(ps, 2.0F, -6F + sway, s.bodyRot * Mth.DEG_TO_RAD);
+            }
+            default -> {
+            }
         }
     }
 

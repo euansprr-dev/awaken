@@ -137,11 +137,17 @@ public final class AscentMoves {
         float yaw = p.getYRot(), pitch = p.getXRot();
         switch (state) {
             case NONE -> {
+                // a Runner move (a wall-run, a hang) holds the body: only the rope cuts in
+                boolean runner = dev.awaken.body.client.RunnerMoves.busy();
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER)) {
                     fire(p);
-                } else if (jumpPressed && !p.onGround() && has(AscentPayloads.Tier.WINGS) && canDeploy(p)) {
+                } else if (runner) {
+                    // the Runner's own jumps (a wall jump, a ledge jump)
+                } else if (jumpPressed && !p.onGround() && has(AscentPayloads.Tier.WINGS) && canDeploy(p)
+                        && !dev.awaken.body.client.RunnerMoves.wallBeside(p)) {
                     startGlide(p);
-                } else if (jumpPressed && has(AscentPayloads.Tier.SKYBORN) && ticks - lastJumpPress <= 7 && !p.onGround()) {
+                } else if (jumpPressed && has(AscentPayloads.Tier.SKYBORN) && ticks - lastJumpPress <= 7 && !p.onGround()
+                        && !dev.awaken.body.client.RunnerMoves.wallBeside(p)) {
                     startSoar(p);
                 }
             }
@@ -165,6 +171,11 @@ public final class AscentMoves {
             case CARRY -> {
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER) && fire(p)) {
                     // swinging again
+                } else if (jumpPressed && dev.awaken.body.client.RunnerMoves.wallBeside(p)) {
+                    // flying free into a wall: hand the body to the Runner, which runs along it this same tick
+                    p.setDeltaMovement(K.vx, K.vy, K.vz);
+                    end(p, "onto a wall", true);
+                    return;
                 } else if (jumpPressed && has(AscentPayloads.Tier.WINGS) && canDeploy(p)) {
                     startGlide(p);
                 } else {

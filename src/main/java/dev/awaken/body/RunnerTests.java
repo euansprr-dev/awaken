@@ -1,0 +1,376 @@
+package dev.awaken.body;
+
+import dev.awaken.Awaken;
+import dev.awaken.body.net.BodyPayloads;
+import dev.awaken.core.test.AwakenTests;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+
+/**
+ * Spike S3 GameTests: the Runner's Kit probes and server checks on the very course the S3 tour runs
+ * ({@link RunnerServer#build}), the hang against the floating kick, the run's numbers, and what the probes cost.
+ */
+final class RunnerTests {
+    private RunnerTests() {}
+
+    static void register() {
+        AwakenTests.register("runner_numbers", 20, RunnerTests::numbers);
+        AwakenTests.registerIsolated("runner_course_probes", 120, RunnerTests::courseProbes);
+        AwakenTests.registerIsolated("runner_server_checks", 120, RunnerTests::serverChecks);
+        AwakenTests.registerIsolated("runner_hang_no_float_kick", 400, RunnerTests::hangNoFloatKick);
+        AwakenTests.registerIsolated("runner_probe_cost", 200, RunnerTests::probeCost);
+        // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
+        // teleport accepted, so every move after it is ignored (see docs/carillon/spikes/S3-runner.md, Open issue)
+    }
+
+    private static final BlockPos.MutableBlockPos M = new BlockPos.MutableBlockPos();
+
+    /** The course's origin (feet level) for a test: up in the air, clear of the terrain other tests stand on. */
+    private static BlockPos origin(GameTestHelper h) {
+        return h.absolutePos(new BlockPos(20, 1, 6)).above(80);
+    }
+
+    private static void finish(GameTestHelper h, BlockPos o, ServerPlayer... ps) {
+        RunnerServer.clear(h.getLevel(), o);
+        BodyTests.done(h, ps);
+    }
+
+    private static Vec3 at(BlockPos o, double x, double y, double z) {
+        return new Vec3(o.getX() + x, o.getY() + y, o.getZ() + z);
+    }
+
+    // ---- numbers ----------------------------------------------------------------------------------------------------
+
+    /** A fresh run from level flight ends ~2 blocks lower over 35 ticks (~11 blocks along); links shrink 35, 28, 22, 18, 14. */
+    static void numbers(GameTestHelper h) {
+        double v = 0, y = 0;
+        for (int t = 0; t < RunnerRules.RUN_TICKS; t++) {
+            v += (RunnerRules.runTarget(t, RunnerRules.RUN_TICKS, RunnerRules.RUN_GRIP) - v) * RunnerRules.RUN_APPROACH;
+            y += v;
+        }
+        h.assertTrue(y < -1.9 && y > -2.8, "a run from level flight ends about 2 lower, was " + String.format("%.2f", y));
+        h.assertTrue(Math.abs(RunnerRules.RUN_SPEED_MIN * RunnerRules.RUN_TICKS - 10.5) < 1.0, "about 11 blocks along at the run's floor speed");
+        int[] want = {35, 28, 22, 18, 14};
+        for (int i = 0; i < want.length; i++) h.assertTrue(RunnerRules.runLength(i) == want[i], "link " + i + " runs " + want[i] + ", was " + RunnerRules.runLength(i));
+        h.assertTrue(RunnerRules.runTarget(0, 35, 10) > 0 && RunnerRules.runTarget(10, 35, 10) == 0 && Math.abs(RunnerRules.runTarget(35, 35, 10) - RunnerRules.RUN_SINK) < 1e-9,
+                "the grip eases from +0.06 to 0, the sink reaches -0.26");
+        h.succeed();
+    }
+
+    // ---- probes on the course -----------------------------------------------------------------------------------------
+
+    static void courseProbes(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        RunnerServer.build(level, o);
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            CollisionContext ctx = CollisionContext.empty();
+            // lane A: the west wall beside the body, facing along it; 30° off still runs, 40° doesn't
+            Vec3 a = at(o, -11.68, 2.5, 14);
+            RunnerRules.Wall w = RunnerRules.findWall(level, ctx, M, a.x, a.y, a.z, 0F, RunnerRules.RUN_REACH);
+            h.assertTrue(w != null && w.axis() == 0 && w.side() == -1 && Math.abs(w.plane() - (o.getX() - 12)) < 1e-6 && w.gap() < 0.05,
+                    "the west wall is found beside the body: " + w);
+            h.assertTrue(RunnerRules.findWall(level, ctx, M, a.x, a.y, a.z, 30F, RunnerRules.RUN_REACH) != null, "30° off the wall still runs");
+            h.assertTrue(RunnerRules.findWall(level, ctx, M, a.x, a.y, a.z, 40F, RunnerRules.RUN_REACH) == null, "40° off the wall doesn't");
+            Vec3 mid = at(o, -10.0, 2.5, 14);
+            h.assertTrue(RunnerRules.findWall(level, ctx, M, mid.x, mid.y, mid.z, 0F, RunnerRules.RUN_REACH) == null, "the middle of the lane is out of reach of both walls");
+            h.assertFalse(RunnerRules.groundWithin(level, ctx, M, a.x, a.y, a.z, RunnerRules.RUN_MIN_HEIGHT), "2.5 up is high enough");
+            Vec3 low = at(o, -11.68, 1.2, 14);
+            h.assertTrue(RunnerRules.groundWithin(level, ctx, M, low.x, low.y, low.z, RunnerRules.RUN_MIN_HEIGHT), "1.2 up is too low to run");
+            // the 2-high garden wall can't cover a body 1.6 up (needs two blocks of wall beside you)
+            Vec3 g = at(o, 38.32, 1.6, 10);
+            h.assertTrue(RunnerRules.findWall(level, ctx, M, g.x, g.y, g.z, 0F, RunnerRules.RUN_REACH) == null, "a 2-high wall is too short to run on 1.6 up");
+            // the fence lane: the fence is no wall, and the wall behind it is out of reach
+            Vec3 f = at(o, 33.95, 1.6, 10);
+            h.assertTrue(RunnerRules.findWall(level, ctx, M, f.x, f.y, f.z, 0F, RunnerRules.RUN_REACH) == null, "a low fence is no wall to run on");
+
+            // warehouse trim 1a (top +3) from a jump's height under the upper trim
+            Vec3 j = at(o, 4.5, 0.9, 18.6);
+            RunnerRules.Edge e = RunnerRules.findEdge(level, ctx, M, j.x, j.y, j.z, 2, 1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+            h.assertTrue(e != null && Math.abs(e.top() - (o.getY() + 3)) < 1e-6 && Math.abs(e.hz() - (o.getZ() + 19 - 0.32)) < 1e-6,
+                    "the trim is a hang, the hold flush with its face: " + e);
+            h.assertTrue(RunnerRules.climbOut(level, ctx, M, e) == null, "no climbing out under the upper trim (one block of room)");
+            RunnerRules.Edge up = RunnerRules.findEdge(level, ctx, M, e.hx(), e.hy(), e.hz(), 2, 1, 0.6, RunnerRules.HANG_DROP + 0.4,
+                    RunnerRules.HANG_DROP + RunnerRules.LEDGE_UP, 0, 0.2);
+            h.assertTrue(up != null && Math.abs(up.top() - (o.getY() + 5)) < 1e-6, "the upper trim is a ledge jump up (+2): " + up);
+            // the open part of trim 1b: climb out
+            Vec3 c = at(o, 13.5, 1.15, 18.68);
+            RunnerRules.Edge open = RunnerRules.edgeNear(level, ctx, M, c.x, c.y, c.z, 2, 1, o.getY() + 3, 0.3, 0.2);
+            double[] stand = open == null ? null : RunnerRules.climbOut(level, ctx, M, open);
+            h.assertTrue(stand != null && Math.abs(stand[1] - (o.getY() + 3)) < 1e-6, "trim 1b is open above: climb out onto it");
+            // a fence-topped wall and a plain face are never edges
+            Vec3 fw = at(o, 33.95, 0.5, 10);
+            h.assertTrue(RunnerRules.findEdge(level, ctx, M, fw.x, fw.y, fw.z, 0, -1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2) == null,
+                    "a fence is never grabbed");
+            Vec3 face = at(o, -11.68, 2, 14);
+            h.assertTrue(RunnerRules.findEdge(level, ctx, M, face.x, face.y, face.z, 0, -1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2) == null,
+                    "a plain wall face has no edge");
+            // the corner of trim 1b: past its east end, the side trim's face is found facing -x
+            Vec3 q = at(o, 16.63, 1.15, 19.32);
+            RunnerRules.Edge corner = RunnerRules.findEdge(level, ctx, M, q.x, q.y, q.z, 0, -1, 0.35, 1.55, 2.15, 0, 0.2);
+            h.assertTrue(corner != null && Math.abs(corner.hx() - (o.getX() + 16.32)) < 1e-6, "round the outside corner onto the side trim: " + corner);
+            // sneak-lower off the roof's front edge (drop 11); the launch platform (drop 2) is too low
+            Vec3 roof = at(o, 5.5, 11, 19.75);
+            RunnerRules.Edge lower = RunnerRules.lowerEdge(level, ctx, M, roof.x, roof.y, roof.z, 180F);
+            h.assertTrue(lower != null && lower.sign() == 1 && Math.abs(lower.hy() - (roof.y - RunnerRules.HANG_DROP)) < 1e-6, "the roof edge lowers into a hang: " + lower);
+            Vec3 plat = at(o, -10.5, 2, 8.0); // at the platform's very edge: only the drop (2) says no
+            h.assertTrue(RunnerRules.lowerEdge(level, ctx, M, plat.x, plat.y, plat.z, 0F) == null, "a 2-block drop is no reason to hang");
+            // edge snap: falling at a 0.25 step lifts onto it; a 0.5 one doesn't (that is a jump)
+            BlockPos snow = o.offset(0, 0, -3), slab = o.offset(2, 0, -3);
+            level.setBlockAndUpdate(snow, net.minecraft.world.level.block.Blocks.SNOW.defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS, 3));
+            level.setBlockAndUpdate(slab, net.minecraft.world.level.block.Blocks.SMOOTH_STONE_SLAB.defaultBlockState());
+            Vec3 f1 = at(o, 0.5, 0.05, -3.31), f2 = at(o, 2.5, 0.05, -3.31);
+            double lift = RunnerRules.snapLift(level, ctx, M, f1.x, f1.y, f1.z, 0, 0.2);
+            h.assertTrue(Math.abs(lift - 0.202) < 0.01, "falling at a 0.25 step snaps up 0.2, was " + lift);
+            h.assertTrue(Double.isNaN(RunnerRules.snapLift(level, ctx, M, f2.x, f2.y, f2.z, 0, 0.2)), "a half-block step is out of the snap's reach");
+            finish(h, o);
+        });
+    }
+
+    // ---- the server's checks ------------------------------------------------------------------------------------------
+
+    static BodyPayloads.Run run(Move move, int flag, float yaw, Vec3 s, double tx, double ty, double tz, int axis, int sign) {
+        return new BodyPayloads.Run(move.ordinal(), flag, yaw, s.x, s.y, s.z, tx, ty, tz, axis, sign);
+    }
+
+    static void serverChecks(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        RunnerServer.build(level, o);
+        RunnerServer.fromHistory = true;
+        RunnerServer.latencyTicks = 0;
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            long now = h.getLevel().getServer().overworld().getGameTime();
+            // a run on the west wall: accepted once, never the same wall twice before landing
+            ServerPlayer a = BodyTests.player(h, null);
+            Vec3 s = at(o, -11.68, 2.5, 14);
+            a.snapTo(s.x, s.y, s.z, 0F, 0F);
+            a.setOnGround(false);
+            BodyMotion m = BodyServer.motion(a);
+            double plane = o.getX() - 12;
+            h.assertTrue(RunnerServer.startRun(a, m, run(Move.WALL_RUN, 0, 0F, s, 0, plane, 0, 0, -1), now), "a run on a real wall is accepted");
+            RunnerServer.onEnd(a, Move.WALL_RUN);
+            h.assertFalse(RunnerServer.startRun(a, m, run(Move.WALL_RUN, 0, 0F, s, 0, plane, 0, 0, -1), now + 5), "never the same wall twice before landing");
+            // a link without a wall jump, and a claimed wall that isn't there
+            ServerPlayer b = BodyTests.player(h, null);
+            Vec3 mid = at(o, -10.0, 2.5, 14);
+            b.snapTo(mid.x, mid.y, mid.z, 0F, 0F);
+            BodyMotion mb = BodyServer.motion(b);
+            h.assertFalse(RunnerServer.startRun(b, mb, run(Move.WALL_RUN, 0, 0F, mid, 0, plane, 0, 0, -1), now), "a run claimed in the lane's middle is refused");
+            // a claimed start far from anywhere the server saw the body is refused even where a wall is
+            h.assertFalse(RunnerServer.startRun(b, mb, run(Move.WALL_RUN, 0, 0F, s, 0, plane, 0, 0, -1), now), "a start the server never saw is refused");
+            // wall jump during the run, a link onto the east wall, then the fifth link is refused
+            ServerPlayer c = BodyTests.player(h, null);
+            c.snapTo(s.x, s.y, s.z, 0F, 0F);
+            BodyMotion mc = BodyServer.motion(c);
+            h.assertTrue(RunnerServer.startRun(c, mc, run(Move.WALL_RUN, 0, 0F, s, 0, plane, 0, 0, -1), now), "run");
+            h.assertTrue(RunnerServer.wallJump(c, mc, run(Move.WALL_JUMP, 0, 0F, s, 0, plane, 0, 0, -1), now + 8), "a wall jump with the wall behind");
+            Vec3 east = at(o, -8.32, 3.2, 17);
+            c.snapTo(east.x, east.y, east.z, 0F, 0F);
+            h.assertTrue(RunnerServer.startRun(c, mc, run(Move.WALL_RUN, 1, 0F, east, 0, o.getX() - 8, 0, 0, 1), now + 14), "link 1 on the east wall");
+            Vec3 midAir = at(o, -10.0, 3.0, 20);
+            c.snapTo(midAir.x, midAir.y, midAir.z, 0F, 0F);
+            h.assertFalse(RunnerServer.wallJump(c, mc, run(Move.WALL_JUMP, 1, 0F, midAir, 0, o.getX() - 8, 0, 0, 1), now + 20), "a wall jump with no wall behind is refused");
+            // four links used: the next kick off a wall is refused (land first)
+            mc.links = RunnerRules.LINKS;
+            Vec3 west = new Vec3(s.x, s.y, s.z + 10);
+            c.snapTo(west.x, west.y, west.z, 0F, 0F);
+            h.assertFalse(RunnerServer.wallJump(c, mc, run(Move.WALL_JUMP, RunnerRules.LINKS, 0F, west, 0, plane, 0, 0, -1), now + 22), "no fifth wall jump");
+            // hang on the trim: accepted; a claimed hang where there's no edge is refused; up to the upper trim
+            ServerPlayer d = BodyTests.player(h, null);
+            Vec3 jump = at(o, 3.5, 0.9, 18.6);
+            d.snapTo(jump.x, jump.y, jump.z, 0F, 0F);
+            BodyMotion md = BodyServer.motion(d);
+            Vec3 hold = at(o, 3.5, 3 - RunnerRules.HANG_DROP, 19 - 0.32);
+            h.assertTrue(RunnerServer.startHang(d, md, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, jump, hold.x, hold.y, hold.z, 2, 1), now), "a grab at the trim");
+            h.assertTrue(md.hanging, "the server holds the hang");
+            d.snapTo(hold.x, hold.y, hold.z, 0F, 0F);
+            Vec3 upHold = at(o, 3.5, 5 - RunnerRules.HANG_DROP, 19 - 0.32);
+            h.assertFalse(RunnerServer.ledgeJump(d, md, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_UP, 0F, hold, upHold.x, upHold.y + 2, upHold.z, 2, 1), now + 10),
+                    "a ledge jump to a ledge that isn't there is refused");
+            h.assertTrue(RunnerServer.ledgeJump(d, md, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_UP, 0F, hold, upHold.x, upHold.y, upHold.z, 2, 1), now + 12),
+                    "up to the upper trim");
+            ServerPlayer e = BodyTests.player(h, null);
+            Vec3 bare = at(o, -11.68, 2, 14);
+            e.snapTo(bare.x, bare.y, bare.z, 0F, 0F);
+            h.assertFalse(RunnerServer.startHang(e, BodyServer.motion(e), run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 90F, bare, bare.x, bare.y, bare.z, 0, -1), now),
+                    "a hang claimed on a bare wall is refused");
+            finish(h, o, a, b, c, d, e);
+        });
+    }
+
+    // ---- the floating kick ------------------------------------------------------------------------------------------
+
+    /**
+     * Vanilla kicks a player whose client reports floating (not descending, not standing) for 80 ticks, but only when
+     * {@code noBlocksAround}: the box grown 1/16 (and 0.55 down) is all air. A hang is flush with its face (2/100 off),
+     * so that is never true. Here a body hangs on the trim and on the crane arm (air under it) for 220 ticks with the
+     * server's own hang check running; the predicate is vanilla's own, called on the server's box every tick. The
+     * GameTest server allows flight (vanilla's kick can't fire here), so the predicate is the evidence; a body 0.6 off
+     * the same face is the control.
+     */
+    static void hangNoFloatKick(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        RunnerServer.build(level, o);
+        int[] floating = new int[2], ticks = {0};
+        ServerPlayer[] ps = new ServerPlayer[2];
+        Vec3[] holds = new Vec3[2];
+        float[] food = new float[2];
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            // the trim (face below it) and the crane arm (air under the beam: the face is only the beam's own block)
+            holds[0] = at(o, 3.5, 3 - RunnerRules.HANG_DROP, 19 - 0.32);
+            holds[1] = at(o, 11 - 0.32, 4 - RunnerRules.HANG_DROP, 15.5);
+            float[] yaws = {0F, -90F};
+            int[][] dirs = {{2, 1}, {0, 1}};
+            for (int i = 0; i < 2; i++) {
+                ServerPlayer p = BodyTests.player(h, null);
+                Vec3 v = holds[i];
+                p.snapTo(v.x, v.y, v.z, yaws[i], 0F);
+                p.setOnGround(false);
+                BodyMotion m = BodyServer.motion(p);
+                ps[i] = p;
+                food[i] = p.getFoodData().getSaturationLevel() + p.getFoodData().getFoodLevel();
+                h.assertTrue(RunnerServer.startHang(p, m, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, yaws[i], v, v.x, v.y, v.z, dirs[i][0], dirs[i][1]),
+                        BodyServer.now(p)), "hang " + i + " accepted: " + RunnerRules.whyNot(level, net.minecraft.world.phys.shapes.CollisionContext.of(p),
+                        new BlockPos.MutableBlockPos(), v.x, v.y, v.z, dirs[i][0], dirs[i][1], RunnerRules.HANG_REACH + RunnerRules.SERVER_TOL,
+                        RunnerRules.HANG_LO - 0.3, RunnerRules.HANG_HI + 0.3));
+            }
+        }).thenExecuteFor(220, () -> {
+            ticks[0]++;
+            for (int i = 0; i < 2; i++) {
+                ServerPlayer p = ps[i];
+                if (p == null) continue;
+                Vec3 v = holds[i];
+                p.snapTo(v.x, v.y, v.z, p.getYRot(), 0F); // the client holds the body there
+                p.setDeltaMovement(0, 0, 0);
+                BodyMotion m = BodyServer.motion(p);
+                RunnerServer.tick(p, m, BodyServer.now(p) + ticks[0]);
+                p.getFoodData().tick(p); // the server doesn't tick test players: turn the exhaustion into hunger here
+                if (RunnerRules.noBlocksAround(level, p.getBoundingBox())) floating[i]++;
+            }
+        }).thenExecute(() -> {
+            h.assertTrue(ticks[0] >= 200, "hung for 200+ ticks (" + ticks[0] + ")");
+            for (int i = 0; i < 2; i++) {
+                h.assertTrue(floating[i] == 0, "hang " + i + " looked like floating on " + floating[i] + " ticks");
+                h.assertTrue(BodyServer.motion(ps[i]).hanging, "the server kept hang " + i + " the whole time");
+            }
+            // the control: the same body 0.6 out from the trim's face is floating by vanilla's rule
+            Vec3 off = holds[0].add(0, 0, -0.6);
+            AABB box = ps[0].getBoundingBox().move(off.subtract(ps[0].position()));
+            h.assertTrue(RunnerRules.noBlocksAround(level, box), "0.6 off the face counts as floating (the control)");
+            // hunger at the sprint's rate
+            float after = ps[0].getFoodData().getSaturationLevel() + ps[0].getFoodData().getFoodLevel();
+            h.assertTrue(after < food[0], "hanging costs hunger (" + food[0] + " -> " + after + ")");
+            // vanilla's own reset is public, in case W2 wants belt and braces
+            if (ps[0].connection != null) ps[0].connection.resetFlyingTicks();
+            Awaken.LOG.info("[runner] float kick: {} ticks hanging on a trim and on a crane arm, noBlocksAround true on {} / {} ticks; control 0.6 off: floating",
+                    ticks[0], floating[0], floating[1]);
+            finish(h, o, ps);
+        });
+    }
+
+    // ---- the hang through the server's real tick ----------------------------------------------------------------------
+
+    /** Puts a test player at a spot the way the server does (a teleport the client accepts). */
+    private static void place(ServerPlayer p, Vec3 v) {
+        p.connection.teleport(v.x, v.y, v.z, 0F, 0F);
+        // the teleport's id is the listener's own; try ids until one lands (the accepted one moves the body by 1e-3)
+        for (int id = 0; id < 64 && Math.abs(p.getX() - v.x) < 1e-4; id++) {
+            p.connection.handleAcceptTeleportPacket(new net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket(id, v.x + 1e-3, v.y, v.z, 0F, 0F));
+        }
+    }
+
+    /** One client tick as the server sees it: the position packet, the tick's end, then the connection's own tick. */
+    private static void clientTick(ServerPlayer p, Vec3 v) {
+        if (v != null) p.connection.handleMovePlayer(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos(v.x, v.y, v.z, false, false));
+        p.connection.handleClientTickEnd(net.minecraft.network.protocol.game.ServerboundClientTickEndPacket.INSTANCE);
+        p.connection.tick();
+    }
+
+    /**
+     * The grab exactly as the smoke tour's client did it (jump, grab mid-jump, a 3-tick ease onto the hold, then still),
+     * fed through vanilla's movement handler and the connection's own tick (so PlayerTickEvent and the body's server tick
+     * run as in a game). The hang must hold 40 ticks.
+     */
+    static void hangRealTick(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        RunnerServer.build(level, o);
+        ServerPlayer[] ps = new ServerPlayer[1];
+        Vec3[] path = {at(o, 4.5, 0.42, 18.27), at(o, 4.5, 0.75, 18.37), at(o, 4.5, 0.854, 18.45), at(o, 4.5, 1.046, 18.60), at(o, 4.5, 1.15, 18.68)};
+        int[] k = {0};
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            ServerPlayer p = BodyTests.player(h, null);
+            ps[0] = p;
+            place(p, at(o, 4.5, 0, 18.2));
+            Awaken.LOG.info("[runner] real tick: placed at {}", p.position());
+        }).thenExecuteFor(48, () -> {
+            ServerPlayer p = ps[0];
+            int i = k[0]++;
+            if (i == 1) {
+                Vec3 s = path[1], hold = path[4];
+                RunnerServer.onRun(p, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, hold.x, hold.y, hold.z, 2, 1));
+            }
+            clientTick(p, i < path.length ? path[i] : null);
+            BodyMotion m = BodyServer.motion(p);
+            if (i % 4 == 0) Awaken.LOG.info("[runner] real tick {}: server at ({}, {}, {}), hanging {}", i, String.format("%.3f", p.getX()),
+                    String.format("%.3f", p.getY()), String.format("%.3f", p.getZ()), m.hanging);
+        }).thenExecute(() -> {
+            BodyMotion m = BodyServer.motion(ps[0]);
+            h.assertTrue(m.hanging && m.hangFallbacks == 0, "the grab holds through the real server tick (hanging " + m.hanging + ", fallbacks " + m.hangFallbacks + ")");
+            finish(h, o, ps);
+        });
+    }
+
+    // ---- what the probes cost -----------------------------------------------------------------------------------------
+
+    /** The probes a tick can run beside a wall and under a ledge, timed on the server thread: plain level and the window. */
+    static void probeCost(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        RunnerServer.build(level, o);
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            CollisionContext ctx = CollisionContext.empty();
+            RunnerRules.ProbeWindow win = new RunnerRules.ProbeWindow();
+            Vec3 a = at(o, -11.68, 2.5, 14), j = at(o, 4.5, 0.9, 18.6);
+            int n = 20000;
+            long sink = 0;
+            for (int pass = 0; pass < 2; pass++) { // warm up, then measure
+                long t0 = System.nanoTime();
+                for (int i = 0; i < n; i++) sink += tickProbes(level, ctx, a, j);
+                long plain = System.nanoTime() - t0;
+                long l0 = win.lookups;
+                t0 = System.nanoTime();
+                for (int i = 0; i < n; i++) {
+                    win.begin(level, a.x, a.y, a.z);
+                    sink += tickProbes(win, ctx, a, j);
+                }
+                long windowed = System.nanoTime() - t0;
+                if (pass == 1) Awaken.LOG.info("[runner] probe cost: a tick's probes (wall both sides + ground + edge ahead + climb + up) {} us plain, {} us through the window, {} lookups a tick ({})",
+                        String.format("%.2f", plain / 1e3 / n), String.format("%.2f", windowed / 1e3 / n), (win.lookups - l0) / n, sink);
+            }
+            finish(h, o);
+        });
+    }
+
+    /** What one airborne tick beside a wall and under a ledge probes at most: the run's wall, its ground, the grab ahead. */
+    private static int tickProbes(net.minecraft.world.level.BlockGetter level, CollisionContext ctx, Vec3 a, Vec3 j) {
+        int k = 0;
+        if (RunnerRules.findWall(level, ctx, M, a.x, a.y, a.z, 0F, RunnerRules.RUN_REACH) != null) k++;
+        if (RunnerRules.groundWithin(level, ctx, M, a.x, a.y, a.z, RunnerRules.RUN_MIN_HEIGHT)) k++;
+        RunnerRules.Edge e = RunnerRules.findEdge(level, ctx, M, j.x, j.y, j.z, 2, 1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+        if (e != null) {
+            k++;
+            if (RunnerRules.climbOut(level, ctx, M, e) != null) k++;
+            if (RunnerRules.findEdge(level, ctx, M, e.hx(), e.hy(), e.hz(), 2, 1, 0.6, RunnerRules.HANG_DROP + 0.4, RunnerRules.HANG_DROP + RunnerRules.LEDGE_UP, 0, 0.2) != null) k++;
+        }
+        return k;
+    }
+}

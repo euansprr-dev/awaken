@@ -46,13 +46,13 @@ def loop(name, base, jitters, period, note):
 
 
 # Swing: hanging from the rope hand. The game tilts the body to hang along the rope, so the arm stays along the body.
-SW = pose(ground=False, ra=(-176, 6, -4), re=4, la=(-12, 0, -64), le=30,
+SW = pose(ground=False, ra=(-168, 6, -24), re=4, la=(-12, 0, -64), le=30,
           rl=(14, 0, 4), rk=28, ll=(30, 0, -4), lk=48, twist=-6)
 loop("ascent_swing", SW, [nudge(SW, la=(-8, 0, 6), rl=(-6, 0, 0), ll=(-8, 0, 0)), nudge(SW, la=(6, 0, -4), rl=(6, 0, 0), ll=(8, 0, 0))], 16,
      "the rope arm up, the other out for balance, legs trailing")
 
 # Zip: pulled in along the rope, reaching for it, knees up to land.
-ZP = pose(ground=False, ra=(-150, 8, -6), re=20, la=(-60, -10, -30), le=60, rl=(-48, 0, 6), rk=80, ll=(-30, 0, -6), lk=95)
+ZP = pose(ground=False, ra=(-148, 8, -22), re=20, la=(-60, -10, -30), le=60, rl=(-48, 0, 6), rk=80, ll=(-30, 0, -6), lk=95)
 loop("ascent_zip", ZP, [nudge(ZP, rl=(-6, 0, 0), ll=(6, 0, 0))], 8, "reaching along the pull, knees drawn up")
 
 # Flip: tucked tight while the game turns the body once forward, opening into the fall.

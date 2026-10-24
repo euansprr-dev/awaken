@@ -117,6 +117,9 @@ public final class AscentServer {
         }
         p.resetFallDistance();
         p.connection.resetFlyingTicks();
+        // the client moves this body; the server's own physics between packets (gravity on a hover, a hang on a rope)
+        // would sink its copy here and show everyone else a bob
+        p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         // a body that has stood on the ground for a while is not in the air, whatever its client last said
         m.groundTicks = p.onGround() ? m.groundTicks + 1 : 0;
         if (m.groundTicks > 20) end(p, m);

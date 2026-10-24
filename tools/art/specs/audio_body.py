@@ -141,6 +141,65 @@ def impact(seed):
     return finish(x, 0.1, 5500)
 
 
+# ---- the Runner's Kit (SPEC §16.3) -------------------------------------------------------------------------------------
+
+def wallstep(seed):
+    """A boot striking a wall sideways mid-run: a dull knock, a scuff dragged along the face, a breath of grit."""
+    n = K.ns(0.3)
+    x = at(n, 0.0, thump(150, 95, 0.1, 0.05, 0.6, 420, seed + 1)) * 0.8
+    x += at(n, 0.006, burst(0.07, 2100, 1.2, 0.04, seed + 2)) * 0.55
+    x += at(n, 0.02, grit(0.16, 90, seed + 3, 0.35, 1.5)) * 0.18
+    return finish(x, 0.1)
+
+
+def walljump(seed):
+    """Both feet driving off the wall: a heavy shove, cloth snapping, air pulled past you."""
+    n = K.ns(0.55)
+    x = at(n, 0.0, thump(110, 55, 0.22, 0.11, 0.8, 300, seed + 1)) * 1.0
+    x += at(n, 0.01, burst(0.05, 2400, 1.4, 0.03, seed + 2)) * 0.6
+    x += at(n, 0.03, K.highpass(burst(0.03, 5200, 0.8, 0.012, seed + 3), 3000, 2)) * 0.4
+    x += at(n, 0.05, swish(0.35, 600, 1700, 0.8, seed + 4, 0.2, 1.3)) * 0.3
+    return finish(x, 0.12)
+
+
+def grab(seed):
+    """Catching a ledge: two palms slapping stone a beat apart, the body's weight landing in the arms, cloth settling."""
+    n = K.ns(0.6)
+    slap = lambda sd: K.bandpass(K.noise(K.ns(0.05), "white", sd), 1400, 0.8) * K.perc(K.ns(0.05), 0.0005, 0.025)
+    x = at(n, 0.0, slap(seed + 1)) * 1.3
+    x += at(n, 0.03, slap(seed + 2)) * 1.1
+    x += at(n, 0.05, thump(95, 60, 0.25, 0.12, 0.6, 260, seed + 3)) * 0.75
+    x += at(n, 0.08, swish(0.3, 1200, 600, 0.9, seed + 4, 0.25)) * 0.14
+    return finish(x)
+
+
+def shimmy(seed):
+    """A hand sliding along a ledge: a short dry rasp and a light grip."""
+    n = K.ns(0.3)
+    x = at(n, 0.0, swish(0.18, 2600, 1500, 2.0, seed + 1, 0.3, 1.0)) * 0.4
+    x += at(n, 0.12, K.bandpass(K.noise(K.ns(0.04), "white", seed + 2), 1500, 0.9) * K.perc(K.ns(0.04), 0.0005, 0.02)) * 0.6
+    return finish(x, 0.08)
+
+
+def climb(seed):
+    """Hauling up over a ledge: a strained pull, a knee on stone, a boot setting down."""
+    n = K.ns(0.7)
+    x = at(n, 0.0, swish(0.35, 900, 1500, 0.9, seed + 1, 0.4)) * 0.3
+    x += at(n, 0.2, thump(130, 90, 0.15, 0.07, 0.5, 340, seed + 2)) * 0.6
+    x += at(n, 0.22, grit(0.2, 60, seed + 3, 0.3)) * 0.14
+    x += at(n, 0.48, thump(115, 75, 0.14, 0.08, 0.6, 300, seed + 4)) * 0.7
+    x += at(n, 0.485, burst(0.05, 2300, 1.3, 0.03, seed + 5)) * 0.18
+    return finish(x)
+
+
+def drop(seed):
+    """Letting go of a ledge: the hands peeling off, a rush of air."""
+    n = K.ns(0.4)
+    x = at(n, 0.0, burst(0.04, 1800, 1.1, 0.02, seed + 1)) * 0.5
+    x += at(n, 0.02, swish(0.3, 1600, 500, 0.8, seed + 2, 0.2, 1.4)) * 0.35
+    return finish(x)
+
+
 SOUNDS_SPEC = [
     # file, render, rms (dBFS, sfx -20 ± 4), event, subtitle, volume, attenuation
     ("body_roll", roll, -20.0, "body.roll", "Body rolls", 1.0, 16),
@@ -148,6 +207,12 @@ SOUNDS_SPEC = [
     ("body_slide", slide, -20.5, "body.slide", "Body slides", 1.0, 16),
     ("body_mantle", mantle, -21.0, "body.mantle", "Body climbs a ledge", 1.0, 16),
     ("body_impact", impact, -19.0, "body.impact", "Heavy hit", 1.0, 20),
+    ("body_wallstep", wallstep, -23.0, "body.wallstep", "Footsteps along a wall", 1.0, 16),
+    ("body_walljump", walljump, -20.0, "body.walljump", "Body kicks off a wall", 1.0, 16),
+    ("body_grab", grab, -20.5, "body.grab", "Body catches a ledge", 1.0, 16),
+    ("body_shimmy", shimmy, -24.0, "body.shimmy", "Hands slide along a ledge", 1.0, 12),
+    ("body_climb", climb, -21.0, "body.climb", "Body climbs over a ledge", 1.0, 16),
+    ("body_drop", drop, -23.0, "body.drop", "Body lets go of a ledge", 1.0, 12),
 ]
 
 

@@ -21,7 +21,35 @@ public final class BodyClips {
     /** Looped while the tactical sprint lasts, then {@link #SPRINT_END}. */
     public static final String SPRINT = "body_sprint", SPRINT_END = "body_sprint_end";
 
-    public static final List<String> ALL = List.of(SLIDE, SLIDE_END, SLIDE_JUMP, ROLL, MANTLE, SPRINT, SPRINT_END);
+    /**
+     * The Runner's Kit (SPEC §16.3): loops held while the move lasts (a run, a hang, a shimmy; each with an
+     * {@code _end} settle), one-shots for the rest. "_l" / "_r": the wall, or the way, is on the left or right.
+     */
+    public static final String WALLRUN_L = "body_wallrun_l", WALLRUN_R = "body_wallrun_r", WALLJUMP = "body_walljump",
+            GRAB = "body_grab", HANG = "body_hang", SHIMMY_L = "body_shimmy_l", SHIMMY_R = "body_shimmy_r",
+            LEDGE_UP = "body_ledge_up", LEDGE_SIDE_L = "body_ledge_side_l", LEDGE_SIDE_R = "body_ledge_side_r",
+            LEDGE_BACK = "body_ledge_back", LOWER = "body_lower";
+
+    /** The Runner's clips by network index (a Seen's code minus {@code SEEN_CLIP}); only append. */
+    public static final List<String> RUNNER = List.of(WALLRUN_L, WALLRUN_R, WALLJUMP, GRAB, HANG, SHIMMY_L, SHIMMY_R, LEDGE_UP,
+            LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER, MANTLE);
+
+    public static final List<String> ALL = List.of(SLIDE, SLIDE_END, SLIDE_JUMP, ROLL, MANTLE, SPRINT, SPRINT_END,
+            WALLRUN_L, WALLRUN_R, WALLRUN_L + "_end", WALLRUN_R + "_end", WALLJUMP, GRAB, HANG, HANG + "_end", SHIMMY_L, SHIMMY_R,
+            SHIMMY_L + "_end", SHIMMY_R + "_end", LEDGE_UP, LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER);
+
+    /** A Runner clip that loops until its move ends (and then plays its {@code _end}). */
+    public static boolean loops(String clip) {
+        return clip.equals(WALLRUN_L) || clip.equals(WALLRUN_R) || clip.equals(HANG) || clip.equals(SHIMMY_L) || clip.equals(SHIMMY_R);
+    }
+
+    /** Whether the wall a run uses is on the runner's left (facing yaw; the wall's normal axis and side as in RunnerRules.Wall). */
+    public static boolean wallOnLeft(float yaw, int axis, int side) {
+        double fx = -net.minecraft.util.Mth.sin(yaw * net.minecraft.util.Mth.DEG_TO_RAD), fz = net.minecraft.util.Mth.cos(yaw * net.minecraft.util.Mth.DEG_TO_RAD);
+        // the wall lies toward +side along its axis; your left, facing +z, is +x
+        double wx = axis == 0 ? side : 0, wz = axis == 2 ? side : 0;
+        return wx * fz - wz * fx > 0;
+    }
 
     /** The clip a move starts. */
     public static @Nullable String of(Move m) {
@@ -30,6 +58,7 @@ public final class BodyClips {
             case ROLL -> ROLL;
             case MANTLE -> MANTLE;
             case TACTICAL_SPRINT -> SPRINT;
+            default -> null; // the Runner's moves pick their clip by variant (RUNNER)
         };
     }
 

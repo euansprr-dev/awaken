@@ -1345,3 +1345,41 @@ with a `_bent` twin). Sounds: tools/art/specs/audio_ascent.py, eleven events und
 
 Tours: tools/autopilot/ascent-spike.txt records clips (run-autopilot/clips/<name>/ frames with their game times;
 `python3 -I tools/ascent/clip.py <dir>` makes a real-time mp4 and a contact sheet).
+
+### 17.2 Phase 1a: the Runner tier (the ground floor of the ladder; Carillon's §16.3 built here)
+Carillon's spike S3 (carillon/spike-runner) is folded in: `RunnerRules`, `RunnerServer`, `client.RunnerMoves`, its tests
+and course (`/awaken body course`, the latency knob and bench stay as dev tools). §16.3 is the requirement; what follows
+is what the Ascent decided while building it.
+- The Runner's Kit is a world option, `config/awaken-body.toml` (SYNCED): `runnersKit` (on). On: every body move for
+  everyone from the first second (roll, tactical sprint, slide, mantle, wall-run, wall jump, ledge hang, shimmy, ledge
+  jump), ranks improve them. Off: the old rule (vanilla until the awakening, ranks unlock roll/sprint E, slide D,
+  mantle C; no Runner moves; the server refuses them). `ascent` (on) is the Ascent's feature flag in the same file.
+- The System announces the body's moves at the awakening, once, in one toast (roll, sprint, slide, mantle); never
+  before it, and the Runner's own moves are found, not told.
+- Ranks (`Body.runnerRank`: the rank, E before the awakening): wall-run 35 ticks, 40 from D; wall-jump links 4, 5 from
+  C; shimmy 1.6 b/s, 2.2 from B; ledge jump reach up 2.5 / sideways 3, +1 each from B; tactical sprint recharge
+  80 − 10 a rank (to 30); slide cooldown 20 − 2 a rank (to 10). Client and server use the same table.
+- Wall Stride: the power `awaken:wall_run` (id kept for saves) is now "Wall Stride", a rank-D passive with no effect
+  of its own: the body reads it (`Body.wallStride`: `Powers.owns` on the server, the client's loadout) and its runs last
+  80 ticks (links ×0.8 as usual), grip 50 lifting +0.04, then sink to −0.14. Every Runner runs on any collision face,
+  glass and leaves included. The old client lift (`ClientCasting.wallRun`) is gone. Short vertical runs: pending.
+- The hold: feet 1.55 under the lip (S3's 1.85 put first-person eyes under the lip, staring at the face). The lip is
+  found by `RunnerRules.ledgeTop`: of the collision tops in the band with 0.5 of air over them, the one nearest the
+  hold's height (S3's mantle-style probe refused any ledge with another ledge a block above it).
+- S3's open bug (the server's hanging body 0.58 low after an upward grab) is the server's own physics: 26.3 players are
+  `AUTHORITATIVE_SIDE_AND_SERVER`, so the server runs `travel()` (gravity) on its copy between packets, and a still
+  client only sends a reminder every 20 ticks. While a body hangs (and in every airborne Ascent state) the server zeroes
+  its copy's motion after its tick: no drift, no bob for watchers.
+- Look: the moves play Player Animation Library clips from tools/art/specs/body_moves.py (`BodyClips.RUNNER`, network
+  index = `Seen` code − 32): `body_wallrun_l/_r` (loops, with `_end` settles), `body_walljump`, `body_grab`,
+  `body_hang` (loop), `body_shimmy_l/_r` (loops), `body_ledge_up`, `body_ledge_side_l/_r`, `body_ledge_back`,
+  `body_lower`, `body_mantle` for the climb out. `_l`/`_r`: the wall (or the way) on the left or right. Others see the
+  variant the server picks from the move's geometry; `Seen` 31 ends a Runner move (its loop settles); a catch settles
+  into the hang loop after its clip. Every wall-run footfall (each 4 ticks) knocks grit of the wall's own colour off the
+  face; sounds: `body.wallstep`, `body.walljump`, `body.grab`, `body.shimmy`, `body.climb`, `body.drop`
+  (tools/art/specs/audio_body.py). The wall-run's camera roll is the client option `wallRunRoll` (0-7.5, 5) in
+  `awaken-feel-client.toml`.
+- One movement system: while a Runner move holds the body the Ascent's wings and flight don't start (the rope still
+  cuts in, ending the Runner move); a jump at a runnable wall goes to the wall-run, not the wings; flying free off a
+  rope (CARRY), a jump at a wall hands the body to the wall-run with the rope's speed.
+- `core.api.MovementHooks` gains `wallRunning(Player)` and `hanging(Player)` (both sides; existing methods unchanged).

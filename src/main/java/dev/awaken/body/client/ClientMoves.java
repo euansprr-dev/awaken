@@ -84,10 +84,10 @@ public final class ClientMoves {
         sprintWas = sprintKey;
         if (p.mayFly()) lastFly = ticks;
         if (p.isFallFlying()) lastGlide = ticks;
-        if (!Progression.profile(p).awakened()) {
-            if (tac || sliding || mantling) stopAll(p);
-            return;
-        }
+        // the Runner's Kit (SPEC §16.3): every move from the first second; without it, nothing until the awakening
+        boolean kit = dev.awaken.body.BodyConfig.runnersKit();
+        boolean awakened = kit || Progression.profile(p).awakened();
+        if (!awakened && (tac || sliding || mantling)) stopAll(p);
         if (jumpSuppressed) {
             if (jump) in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift());
             else jumpSuppressed = false;
@@ -100,25 +100,42 @@ public final class ClientMoves {
             slideTick(p, in, jumpPressed);
             return;
         }
-        boolean off = off(p);
-        if (tac) tacTick(p, off);
-        if (off) return;
-        if (sprintPressed) {
-            if (!tac && ticks - sprintTapAt <= BodyRules.TAC_DOUBLE_TAP) {
-                startTac(p);
-                sprintTapAt = -100;
-            } else {
-                sprintTapAt = ticks;
+        if (RunnerMoves.active()) {
+            if (kit) RunnerMoves.onInput(p, in, jumpPressed, shiftPressed);
+            else RunnerMoves.stop(p, "kit off");
+            return;
+        }
+        if (awakened) {
+            boolean off = off(p);
+            if (tac) tacTick(p, off);
+            if (!off) {
+                if (sprintPressed) {
+                    if (!tac && ticks - sprintTapAt <= BodyRules.TAC_DOUBLE_TAP) {
+                        startTac(p);
+                        sprintTapAt = -100;
+                    } else {
+                        sprintTapAt = ticks;
+                    }
+                }
+                if (jumpPressed && !k.backward() && canMantle(p)) {
+                    BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
+                    if (l != null) {
+                        startMantle(p, in, l);
+                        return;
+                    }
+                }
+                if (shiftPressed && canSlide(p)) {
+                    startSlide(p, in);
+                    return;
+                }
             }
         }
-        if (jumpPressed && !k.backward() && canMantle(p)) {
-            BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
-            if (l != null) {
-                startMantle(p, in, l);
-                return;
-            }
-        }
-        if (shiftPressed && canSlide(p)) startSlide(p, in);
+        if (kit) RunnerMoves.onInput(p, in, jumpPressed, shiftPressed);
+    }
+
+    /** A move's own jump (a wall jump, a climb): holding the key through it doesn't hop again on landing. */
+    static void suppressJump() {
+        jumpSuppressed = true;
     }
 
     static boolean off(LocalPlayer p) {
@@ -142,7 +159,7 @@ public final class ClientMoves {
     }
 
     /** The same keys with jump and shift replaced (cached: nothing allocated per tick). */
-    private static Input with(Input k, boolean jump, boolean shift) {
+    static Input with(Input k, boolean jump, boolean shift) {
         int i = (k.forward() ? 1 : 0) | (k.backward() ? 2 : 0) | (k.left() ? 4 : 0) | (k.right() ? 8 : 0) | (jump ? 16 : 0) | (shift ? 32 : 0)
                 | (k.sprint() ? 64 : 0);
         Input c = INPUTS[i];
@@ -193,7 +210,7 @@ public final class ClientMoves {
         trace("tactical sprint ends after " + (ticks - tacStart));
         tac = false;
         tacEnd = ticks;
-        tacReadyAt = ticks + BodyRules.TAC_RECHARGE;
+        tacReadyAt = ticks + BodyRules.tacRecharge(Body.runnerRank(p));
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(BodyRules.TAC_ID);
         BodyAnims.stop(p.getId(), Move.TACTICAL_SPRINT);
@@ -310,7 +327,7 @@ public final class ClientMoves {
         trace("slide ends (" + why + ") after " + slideAge);
         sliding = false;
         slideEnd = ticks;
-        slideReadyAt = ticks + BodyRules.SLIDE_COOLDOWN;
+        slideReadyAt = ticks + BodyRules.slideCooldown(Body.runnerRank(p));
         if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null); // vanilla keeps a crawl under a gap
         BodyAnims.stop(p.getId(), Move.SLIDE);
         if (slideWasSprinting && tellServer && p.input.hasForwardImpulse() && !p.isInLiquid()) p.setSprinting(true);
@@ -419,6 +436,7 @@ public final class ClientMoves {
             }
             case ROLL -> {
             }
+            default -> RunnerMoves.refused(move);
         }
     }
 
@@ -448,6 +466,7 @@ public final class ClientMoves {
 
     /** The player entity was replaced (respawn, dimension change): moves stop, cooldowns and the clock stay. */
     static void forgetMoves() {
+        RunnerMoves.reset();
         tac = sliding = mantling = false;
         jumpSuppressed = false;
         if (tacEnd < tacStart) tacEnd = ticks;
@@ -456,6 +475,7 @@ public final class ClientMoves {
 
     /** Forget everything (logout, a new world). */
     static void reset() {
+        RunnerMoves.reset();
         tac = sliding = mantling = false;
         jumpSuppressed = false;
         tacReadyAt = slideReadyAt = 0;

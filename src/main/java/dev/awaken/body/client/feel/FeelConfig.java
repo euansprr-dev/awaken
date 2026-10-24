@@ -17,6 +17,9 @@ public final class FeelConfig {
     public static final ModConfigSpec.DoubleValue CAMERA_ROLL = B
             .comment("How far the camera rolls into turns and swings, in degrees (0 = never).")
             .defineInRange("cameraRoll", 5.0, 0.0, 7.5);
+    public static final ModConfigSpec.DoubleValue WALL_RUN_ROLL = B
+            .comment("How far the camera rolls away from a wall you run along, in degrees (0 = never).")
+            .defineInRange("wallRunRoll", 5.0, 0.0, 7.5);
     public static final ModConfigSpec.DoubleValue SPEED_FOV = B
             .comment("How much speed widens the view (0..1, times vanilla's FOV effects slider).")
             .defineInRange("speedFov", 1.0, 0.0, 1.0);
@@ -39,6 +42,16 @@ public final class FeelConfig {
     static float roll() {
         try {
             float r = SPEC.isLoaded() ? CAMERA_ROLL.get().floatValue() : 5F;
+            return reduced() ? r * 0.5F : r;
+        } catch (RuntimeException e) {
+            return 5F;
+        }
+    }
+
+    /** The wall-run's roll (degrees); half under reduced motion. */
+    public static float wallRunRoll() {
+        try {
+            float r = SPEC.isLoaded() ? WALL_RUN_ROLL.get().floatValue() : 5F;
             return reduced() ? r * 0.5F : r;
         } catch (RuntimeException e) {
             return 5F;

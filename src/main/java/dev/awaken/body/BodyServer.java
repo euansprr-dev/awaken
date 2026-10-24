@@ -88,7 +88,7 @@ final class BodyServer {
             case TACTICAL_SPRINT -> startTactical(p);
             case SLIDE -> startSlide(p, msg.yaw(), msg.flag());
             case MANTLE -> startMantle(p, msg.yaw(), msg.x(), msg.y(), msg.z());
-            case ROLL -> false;
+            default -> false; // ROLL, and the Runner's Kit (its own Run payload)
         };
         if (!ok) refuse(p, move);
     }
@@ -100,6 +100,7 @@ final class BodyServer {
         long now = now(p);
         if (move == Move.TACTICAL_SPRINT) endTactical(p, m, now, false);
         else if (move == Move.SLIDE) endSlide(p, m, now, false);
+        else if (move.runner()) RunnerServer.onEnd(p, move);
     }
 
     /** Undo what the client predicted: stop a slide where the server has it, put a refused mantle back where it began. */
@@ -140,7 +141,7 @@ final class BodyServer {
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(BodyRules.TAC_ID);
         m.tacUntil = 0;
-        m.tacReadyAt = now + BodyRules.TAC_RECHARGE;
+        m.tacReadyAt = now + BodyRules.tacRecharge(Body.runnerRank(p));
         m.tacEndedAt = now;
         m.lastMove = now;
         if (tellClient) AwakenNet.send(p, new BodyPayloads.Refuse(Move.TACTICAL_SPRINT.ordinal()));
@@ -177,7 +178,7 @@ final class BodyServer {
     static void endSlide(ServerPlayer p, BodyMotion m, long now, boolean tellClient) {
         if (m.slideUntil == 0) return;
         m.slideUntil = 0;
-        m.slideReadyAt = now + BodyRules.SLIDE_COOLDOWN;
+        m.slideReadyAt = now + BodyRules.slideCooldown(Body.runnerRank(p));
         m.lastMove = now;
         // vanilla picks the pose again next tick: still crawling when the slide ended under a gap
         if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null);
@@ -235,15 +236,34 @@ final class BodyServer {
     // ---- shared -----------------------------------------------------------------------------------------------------
 
     /** A move happened: count it, let everyone else see and hear it (the mover's own client already did). */
-    private static void did(ServerPlayer p, BodyMotion m, Move move, float yaw, Holder<SoundEvent> sound, float volume, long now) {
+    static void did(ServerPlayer p, BodyMotion m, Move move, float yaw, Holder<SoundEvent> sound, float volume, long now) {
         m.lastMove = now;
         Progression.count(p, "awaken:body_" + move.key);
         p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, 1.0F);
         show(p, p, new BodyPayloads.Seen(p.getId(), move.ordinal(), yaw));
     }
 
+    /** A Runner move that others see as one of its clips (the variant: which side the wall is on, which way you go). */
+    static void didClip(ServerPlayer p, BodyMotion m, Move move, float yaw, Holder<SoundEvent> sound, float volume, long now, String clip) {
+        m.lastMove = now;
+        Progression.count(p, "awaken:body_" + move.key);
+        p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, 1.0F);
+        showClip(p, clip, yaw);
+    }
+
+    /** Others see this player's Runner clip change (no count, no sound: the hang settling after a catch or a shimmy). */
+    static void showClip(ServerPlayer p, String clip, float yaw) {
+        int i = BodyClips.RUNNER.indexOf(clip);
+        if (i >= 0) show(p, p, new BodyPayloads.Seen(p.getId(), BodyPayloads.SEEN_CLIP + i, yaw));
+    }
+
+    /** Others see this player's Runner move end (its loop settles). */
+    static void showRunnerEnd(ServerPlayer p) {
+        show(p, p, new BodyPayloads.Seen(p.getId(), BodyPayloads.SEEN_RUNNER_END, p.getYRot()));
+    }
+
     /** Sends to the players near enough to see it (through AwakenNet: test players and other mods' fakes can't take it). */
-    private static void show(Entity at, @Nullable ServerPlayer except, BodyPayloads.Seen msg) {
+    static void show(Entity at, @Nullable ServerPlayer except, BodyPayloads.Seen msg) {
         for (ServerPlayer o : ((net.minecraft.server.level.ServerLevel) at.level()).players()) {
             if (o != except && o.distanceToSqr(at) < SEEN_RANGE * SEEN_RANGE) AwakenNet.send(o, msg);
         }
@@ -255,11 +275,9 @@ final class BodyServer {
 
     static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
-        BodyMotion m = p.getExistingDataOrNull(BodyContent.MOTION);
-        if (m == null) {
-            if (p.isFallFlying()) motion(p).lastGlide = now(p);
-            return;
-        }
+        // spike S3: every player keeps a short position history (the runner's claimed starts are checked against it)
+        BodyMotion m = motion(p);
+        RunnerServer.track(p, m);
         if (p.isFallFlying()) m.lastGlide = now(p);
         if (!m.active()) return;
         tick(p, m, now(p));
@@ -289,6 +307,7 @@ final class BodyServer {
             if (now >= m.mantleUntil) m.mantleUntil = 0;
             else m.lastMove = now;
         }
+        if (m.runner()) RunnerServer.tick(p, m, now);
     }
 
     // ---- soft landing: the one fall path ----------------------------------------------------------------------------
@@ -380,10 +399,12 @@ final class BodyServer {
      * Returns whether anything was announced.
      */
     static boolean announce(ServerPlayer p) {
+        // the System speaks from the awakening on; a Runner's body just moves before it
+        if (!dev.awaken.progression.Progression.profile(p).awakened()) return false;
         BodyMemory mem = p.getData(BodyContent.MEMORY);
         List<Move> fresh = new ArrayList<>(2);
         for (Move mv : Move.values()) {
-            if (Body.unlocked(p, mv) && !mem.announced(mv)) {
+            if (!mv.runner() && Body.unlocked(p, mv) && !mem.announced(mv)) { // the Runner's own moves are found, not told
                 fresh.add(mv);
                 mem = mem.with(mv);
             }
