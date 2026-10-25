@@ -2671,6 +2671,34 @@ the slide's own controls (jump out, a power's motion, a push, water) end it as b
   walk's 0.22, a 15-tick glide whose drop never changes by more than 0.014 a tick, the server sliding past 20 ticks
   and no fall; a way across the stairs is no run).
 
+### 17.23 Mantling onto stair tops (Euan's play, 2026-10-25: "I can't mantle up blocks with a stair on it")
+The mantle's lip is the lowest top along the face's edge across the body's width, by the real collision shapes (a
+stair's low half, a slab, any kit block), within 1.1-1.6 over the feet; nothing on that edge more than a step (0.6,
+`BodyRules.MANTLE_STEP`) over it. The feet land a body width past the face on whatever top is there, from the lip's
+height up to a step over it, never lower (no drop behind a thin lip), never a fence or wall top, with 2 blocks of room
+over it. So a 1-block wall topped with a stair facing away or sideways is climbed by its low half (1.5) and stood on by
+its high half (2.0): a body 0.6 wide can't stand on a half 0.5 deep. A stair facing you is a 2-block face and an
+upside-down one a 2-block top: not mantled (the wall-run, the hang and the climb-out take those). Client and server run
+the same `findLedge`. Test: `body_mantle_stair_tops` (all four facings, the upper half, a slab-topped wall, the
+server's check); `body_mantle_ledges` and `body_mantle_gate_walls` unchanged.
+
+### 17.24 The landing slide (Euan's play, 2026-10-25: "sprinting, jump, shift while in air, slide when it touches floor")
+Crouch pressed any time in the air and still held at touchdown slides from the landing (`ClientMoves`, the touchdown
+tick). Needs a running jump: air speed at least 0.15 b/t having sprinted in the air, or 0.28 without the sprint flag (a
+launch). Entry `BodyRules.landSlideEntry`: the slide's own (0.38, 0.46 out of a tactical sprint) or the landing's speed if
+faster, plus a 0.06 kick for the landing, at most 0.6 (slide-hops can't snowball; the 20-tick cooldown holds too): a
+sprint jump's ~0.32 lands into 0.44 (~4.6 blocks against a run's 4.0). The way is the jump's. A landing on a downward run
+becomes a stair slide (§17.22). Not when crouch was let go before touchdown (a normal landing), not onto an edge with no
+floor within 0.6 under a point 0.6 ahead (vanilla's edge-sneak stays), not in water, using an item, mid-move.
+- Falls: a crouch-held landing already counts as the soft landing on the server (§6: safe fall +3, ×0.6 beyond), so a
+  landing slide softens a fall exactly like the roll and never adds damage. On our own client the slide is the landing's
+  look: the roll's animation and sound stay quiet. Others see the server's roll for a tick, then the slide.
+- Server: as any slide, plus the sprint check takes a body that sprinted within 40 ticks (the flag can drop in the air)
+  or whose last move was 0.2 b/t or more. Clips, the run's return after the slide, the Runner and free-run inputs: as
+  before (the free-run's mantle still comes first).
+- Test: `body_land_slide` (a sprint jump's landing speed slides farther than a run's slide, a walk's doesn't, an edge
+  with a drop is no slide, the server takes a sprinted landing and refuses a body that never ran).
+
 ### 17.23 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
 A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
 block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision

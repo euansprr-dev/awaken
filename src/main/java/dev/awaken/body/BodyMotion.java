@@ -79,7 +79,7 @@ final class BodyMotion {
     }
 
     // anything
-    long lastMove = Long.MIN_VALUE, lastGlide = Long.MIN_VALUE / 2;
+    long lastMove = Long.MIN_VALUE, lastGlide = Long.MIN_VALUE / 2, lastSprint = Long.MIN_VALUE / 2;
     /** The dev command's stand-in for input: the next {@code assistMove} within the window skips the input checks. */
     int assistMove = -1;
     long assistUntil;
