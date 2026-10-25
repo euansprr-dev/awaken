@@ -31,6 +31,15 @@ public final class Quests {
         QuestEngine.advance(player, path.substring(0, slash), path.substring(slash + 1), amount);
     }
 
+    /**
+     * Another module's person is talked to ({@code who}: "kestrel", "oren", "bram"): call this first from your own
+     * interaction. True when a Wayfarer chain used the talk (a step, a delivery, an offer card); then say nothing of your
+     * own. False: nothing in the chains wanted them, carry on with your own dialogue.
+     */
+    public static boolean talk(ServerPlayer player, String who) {
+        return dev.awaken.living.wayfarer.Wayfarers.talkAs(player, who, 0);
+    }
+
     /** The chains a player has taken (ids), oldest first. */
     public static List<String> active(Player player) {
         return player.getData(dev.awaken.living.LivingContent.QUESTS.get()).active().stream().map(QuestState.Active::chain).toList();

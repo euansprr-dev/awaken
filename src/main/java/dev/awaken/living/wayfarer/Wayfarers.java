@@ -44,15 +44,23 @@ public final class Wayfarers {
         talk(p, w);
     }
 
-    /** Use on a Wayfarer. */
+    /** Use on a Wayfarer: whatever the chains want with them, else one of their own lines. */
     static void talk(ServerPlayer p, Wayfarer w) {
-        String who = w.who();
-        QuestState s = QuestEngine.state(p);
-        if (!dev.awaken.living.LivingModule.shown(p.level().getServer())) { // pure survival: people, no quests (§21.0.13)
-            Person person = get(who);
-            if (person != null) QuestEngine.sayLine(p, person.idle().get(p.getRandom().nextInt(person.idle().size())));
-            return;
+        if (talkAs(p, w.who(), w.scene())) return;
+        Person person = get(w.who());
+        if (person != null && !person.idle().isEmpty()) {
+            QuestEngine.sayLine(p, person.idle().get(p.getRandom().nextInt(person.idle().size())));
         }
+    }
+
+    /**
+     * Someone the chains know by {@code who} is talked to (a Wayfarer, or another module's person through
+     * {@code Quests.talk}: Kestrel, Oren). True when a chain had something to do: a step moved on or said what it waits
+     * for, a delivery changed hands, Hale read the board, or a chain was offered. False: the person speaks for themself.
+     */
+    public static boolean talkAs(ServerPlayer p, String who, long scene) {
+        if (!dev.awaken.living.LivingModule.shown(p.level().getServer())) return false; // pure survival (§21.0.13)
+        QuestState s = QuestEngine.state(p);
         // a step waiting on this person: talking, or handing over what they asked for
         for (QuestState.Active a : s.active()) {
             QuestDef d = QuestBook.get(a.chain());
@@ -62,26 +70,23 @@ public final class Wayfarers {
             if (o.type().equals("talk") && o.target().equals(who)) {
                 if (QuestEngine.blocked(p, step)) Signal.toast(p, Component.literal(step.needsText().isEmpty() ? step.text() : step.needsText()));
                 else QuestEngine.advance(p, "talk", who, 1);
-                return;
+                return true;
             }
             if (o.type().equals("deliver") && o.target().startsWith(who + "|")) {
-                if (QuestEngine.deliver(p, a.chain(), o.target().substring(who.length() + 1), o.count())) return;
+                if (QuestEngine.deliver(p, a.chain(), o.target().substring(who.length() + 1), o.count())) return true;
                 Signal.toast(p, Component.literal(d.steps().get(a.step()).text()));
-                return;
+                return true;
             }
         }
-        if (who.equals("hale") && dev.awaken.living.bounty.Bounties.board(p)) return;
+        if (who.equals("hale") && dev.awaken.living.bounty.Bounties.board(p)) return true;
         // a chain this person gives that can be taken now
         for (var e : QuestBook.all().entrySet()) {
             QuestDef d = e.getValue();
             if (!d.giver().equals(who) || s.has(e.getKey()) || s.done().contains(e.getKey()) || !Requirements.met(p, d.requires())) continue;
-            offer(p, e.getKey(), d, w.scene());
-            return;
+            offer(p, e.getKey(), d, scene);
+            return true;
         }
-        Person person = get(who);
-        if (person != null && !person.idle().isEmpty()) {
-            QuestEngine.sayLine(p, person.idle().get(p.getRandom().nextInt(person.idle().size())));
-        }
+        return false;
     }
 
     /** A chain offered on a choice card: Y takes it into the Journal, N leaves it (it can be asked for again). */
