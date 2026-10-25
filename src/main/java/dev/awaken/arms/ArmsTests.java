@@ -40,6 +40,34 @@ final class ArmsTests {
         AwakenTests.register("arms_kill_switch", 40, ArmsTests::killSwitch);
         AwakenTests.register("arms_sounds", 20, ArmsTests::sounds);
         AwakenTests.register("arms_stance_rules", 20, ArmsTests::stanceRules);
+        AwakenTests.register("arms_clips", 20, ArmsTests::clips);
+    }
+
+    /** Every move has its third-person clip in the generated file, each with a bent twin; held ones loop, the rest end. */
+    static void clips(GameTestHelper h) {
+        com.google.gson.JsonObject anims;
+        try (var in = ArmsTests.class.getResourceAsStream("/" + ArmsClips.FILE)) {
+            h.assertTrue(in != null, ArmsClips.FILE + " is on the classpath");
+            anims = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8))
+                    .getAsJsonObject().getAsJsonObject("animations");
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+        for (Archetype.Move m : longsword().moves().keySet()) {
+            String c = ArmsClips.of(m);
+            h.assertTrue(c != null && ArmsClips.ALL.contains(c), m + " has a clip");
+        }
+        for (String base : ArmsClips.ALL) {
+            for (String name : new String[]{base, base + "_bent"}) {
+                h.assertTrue(anims.has(name), name + " is missing from " + ArmsClips.FILE);
+                var a = anims.getAsJsonObject(name);
+                boolean loops = a.has("loop") && a.get("loop").getAsBoolean();
+                h.assertTrue(loops == ArmsClips.loops(base), name + (loops ? " loops but should end" : " should loop"));
+            }
+        }
+        h.assertTrue(ArmsClips.dodge(180).equals(ArmsClips.DODGE_BACK) && ArmsClips.dodge(90).equals(ArmsClips.DODGE_RIGHT)
+                && ArmsClips.dodge(-90).equals(ArmsClips.DODGE_LEFT), "a dodge's clip follows its way");
+        h.succeed();
     }
 
     /** A stance drains by one rule on both sides; a focus holds while looked at. */

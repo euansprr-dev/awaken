@@ -1,0 +1,245 @@
+"""Third-person bodies of Arms' moves (Player Animation Library, optional; SPEC §24, docs/modules/arms.md).
+
+    python3 tools/art/build_all.py arms_moves      assets/awaken/player_animations/arms_moves.json
+    python3 tools/art/specs/arms_moves.py build    the same, plus the clipping report
+    python3 tools/art/specs/arms_moves.py preview DIR [clip ...]
+                                                   a frame strip per clip (every tick, three views) and a sheet of
+                                                   every move's key poses, straight and bent
+    python3 tools/art/specs/arms_moves.py check    the clipping report only
+
+Poses are written in power_casts.py's figure terms (see its docstring). Every strike's keys sit on its row of the
+timing table (data/awaken/arms/archetypes.json, read here): the wind-up ends cocked, the blow ends at the end of the
+active ticks, the recovery eases home by the clip's endTick, so the body, the first-person hands, the arc and the
+server's hit all land on the same tick. Authored right-handed (the game mirrors them for a left main arm); every clip
+has a _bent twin for Bendable Cuboids. The game plays them through core.api.PlayerClips
+(dev.awaken.arms.ArmsClips names them; dev.awaken.arms.client.ArmsBodies plays them). Edit the poses here, never
+the JSON.
+"""
+import json
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+import power_casts as P  # noqa: E402
+
+ROOT = P.ROOT
+OUT_REL = "assets/awaken/player_animations/arms_moves.json"
+TABLE = os.path.join(ROOT, "src/main/resources/data/awaken/arms/archetypes.json")
+pose, nudge = P.pose, P.nudge
+
+CLIPS = {}
+
+
+def clip(name, keys, length, loop=False, end=None, note=""):
+    """A clip and its Bendable Cuboids twin."""
+    if name in CLIPS:
+        raise ValueError(f"duplicate clip {name}")
+    CLIPS[name] = P.Clip(name, keys, length, loop, end, note)
+    CLIPS[name + "_bent"] = P.Clip(name + "_bent", keys, length, loop, end, note + " (bent elbows and knees)", bent=True)
+
+
+def held(name, base, jitters, period, note):
+    """A pose held for as long as it lasts (a loop with a small tremble), and its settle back to standing."""
+    n = len(jitters) + 1
+    keys = [(0, base, "linear")] + [(period * (i + 1) / n, j, "easeinoutsine") for i, j in enumerate(jitters)] + [(period, base, "easeinoutsine")]
+    clip(name, keys, period, loop=True, note=note)
+    clip(name + "_end", [(0, base, "linear")], 5, end=0, note="settles out of " + name)
+
+
+def row(move):
+    m = json.load(open(TABLE))["archetypes"][0]["moves"][move]
+    return m["windup"], m["active"], m["recovery"]
+
+
+def strike(name, move, cocked, through, note, settle=None, via=None):
+    """A strike on its row: from the ready stance into the cocked pose by the wind-up's end (eased out; through
+    {@code via} halfway when a straight path would cross the body), hard through the blow by the active ticks' end
+    (eased out hard, as the hands are), held a beat, then home by the endTick."""
+    w, a, r = row(move)
+    keys = [(0, READY, "linear")]
+    if w > 0:
+        if via is not None:
+            keys.append((w * 0.5, via, "easeinoutsine"))
+        keys.append((w, cocked, "easeoutsine"))
+    else:
+        keys[0] = (0, cocked, "linear")
+    keys.append((w + a, through, "easeoutcubic"))
+    hold = w + a + max(1, r // 3)
+    keys.append((hold, settle or nudge(through, lean=-2), "easeoutsine"))
+    end = w + a + r
+    keys.append((end, READY, "easeinoutsine"))
+    clip(name, keys, end + 4, note=note)
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The ready stance between moves: knees soft, blade arm low and forward, off hand up for balance.
+READY = pose(lean=6, rl=(-10, 0, 4), rk=12, ll=(8, 0, -4), lk=10, ra=(-38, 6, 10), re=30, la=(-26, 0, -14), le=40)
+
+# Strike 1, a forehand diagonal (upper right to lower left): the chest turns to the blade side and the arm draws up
+# behind the shoulder; the blow turns the chest through and the arm sweeps down across the body, the off hand pulling
+# back to drive it.
+S1_COCK = pose(lean=2, twist=16, rl=(-14, 0, 6), rk=14, ll=(14, 0, -4), lk=12, ra=(-140, 65, 40), re=60, la=(-40, 0, -22), le=46)
+S1_THRU = pose(lean=14, twist=-34, rl=(-26, 0, 4), rk=24, ll=(16, 0, -6), lk=10, ra=(-58, -62, 8), re=12, la=(-14, 0, -30), le=30)
+# the arm lifts out to the side on its way up (straight up, it would pass in front of the face)
+S1_VIA = pose(lean=4, twist=18, rl=(-12, 0, 5), rk=13, ll=(11, 0, -4), lk=11, ra=(-84, 48, 74), re=44, la=(-34, 0, -18), le=44)
+strike("arms_strike_1", "strike_1", S1_COCK, S1_THRU, "forehand diagonal: drawn up behind the shoulder, swept down across", via=S1_VIA)
+
+# Strike 2, a backhand sweep (left to right): the blade arm crosses the chest to the off side, then sweeps out wide.
+S2_COCK = pose(lean=8, twist=-36, rl=(-12, 0, 4), rk=16, ll=(10, 0, -4), lk=12, ra=(-98, -58, 12), re=30, la=(-20, 0, -26), le=36)
+S2_THRU = pose(lean=10, twist=34, rl=(-20, 0, 6), rk=18, ll=(14, 0, -4), lk=12, ra=(-88, 54, 52), re=10, la=(-40, 0, -14), le=44)
+strike("arms_strike_2", "strike_2", S2_COCK, S2_THRU, "backhand sweep: across the chest, then out wide")
+
+# Strike 3, the overhead finisher: both hands up over the head, leaning back, then a chop down through the front with
+# the weight forward and the knees giving.
+S3_COCK = pose(lean=-8, rise=0.5, rl=(-8, 0, 4), rk=8, ll=(6, 0, -4), lk=8, ra=(-174, 8, 6), re=30, la=(-166, -12, -8), le=34)
+S3_THRU = pose(lean=24, rise=-1, rl=(-36, 0, 4), rk=42, ll=(22, 0, -4), lk=26, ra=(-46, -8, 4), re=6, la=(-46, 8, -4), le=8)
+strike("arms_strike_3", "strike_3", S3_COCK, S3_THRU, "overhead: both hands up, leaning back, a chop down through the front")
+
+# Strike 4 (mastery) and the riposte: a thrust. The blade arm draws back bent at the elbow, the chest turned to the
+# blade side; the blow drives the arm straight with the chest turning in and a lunge onto the lead foot.
+T_COCK = pose(lean=-2, twist=26, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-74, 22, 12), re=96, la=(-38, 0, -20), le=40)
+T_THRU = pose(lean=18, twist=-14, shift=2, rl=(-48, 0, 4), rk=44, ll=(26, 0, -4), lk=8, ra=(-94, -8, 2), re=0, la=(8, 0, -26), le=20)
+strike("arms_strike_4", "strike_4", T_COCK, T_THRU, "thrust: drawn back, then driven straight with a lunge")
+strike("arms_riposte", "riposte", T_COCK, nudge(T_THRU, shift=1, lean=4, rl=(-8, 0, 0)), "riposte: the thrust, deeper")
+
+# The Slipcut, out of a dodge: low and wide, the chest whipping round, the blade flat across the front.
+SC_COCK = pose(lean=14, rise=-1, twist=44, rl=(-20, 0, 8), rk=40, ll=(14, 0, -6), lk=30, ra=(-84, 70, 22), re=24, la=(-30, 0, -30), le=30)
+SC_THRU = pose(lean=18, rise=-1, twist=-40, rl=(-30, 0, 6), rk=44, ll=(18, 0, -6), lk=26, ra=(-102, -54, 20), re=8, la=(-10, 0, -40), le=20)
+strike("arms_slipcut", "slipcut", SC_COCK, SC_THRU, "low and wide out of a dodge, the chest whipping round")
+
+# The heavy: held, the blade drawn down and back to the blade side, knees sunk, trembling; released, a rising cut up
+# across to the off side, the body rising with it.
+HV_DRAW = pose(lean=12, rise=-1.5, twist=40, rl=(-24, 0, 8), rk=38, ll=(16, 0, -6), lk=34, ra=(-12, 62, 30), re=34, la=(-56, 0, -18), le=44)
+held("arms_heavy_charge", HV_DRAW, [nudge(HV_DRAW, ra=(2, 1, 0), rise=0.2), nudge(HV_DRAW, ra=(-2, -1, 0), rise=-0.2)], 4,
+     "the heavy held: blade drawn down and back, knees sunk, trembling")
+HV_THRU = pose(lean=-4, rise=1, twist=-30, rl=(-18, 0, 4), rk=10, ll=(22, 0, -6), lk=12, ra=(-138, -18, 52), re=6, la=(-30, 0, -34), le=30)
+strike("arms_heavy", "heavy", HV_DRAW, HV_THRU, "the heavy released: a rising cut up across to the off side")
+
+# The Execution on a broken foe: both hands high, then the whole weight down into it, the knees nearly to the ground.
+EX_COCK = pose(lean=-10, rise=1, rl=(-10, 0, 4), rk=10, ll=(8, 0, -4), lk=10, ra=(-180, 0, 4), re=20, la=(-178, 0, -4), le=22)
+EX_THRU = pose(lean=34, rise=-3, rl=(-52, 0, 4), rk=74, ll=(30, 0, -4), lk=56, ra=(-38, -12, 2), re=4, la=(-38, 12, -2), le=4)
+strike("arms_execution", "execution", EX_COCK, EX_THRU, "both hands high, then the whole weight down into it",
+       settle=nudge(EX_THRU, lean=-4, rise=0.5))
+
+# The guard, held while the use key is: blade across the front, the off hand braced behind it, knees soft.
+GD = pose(lean=8, rl=(-14, 0, 6), rk=22, ll=(12, 0, -6), lk=18, ra=(-78, -46, 6), re=46, la=(-62, 34, -10), le=60)
+held("arms_guard", GD, [nudge(GD, ra=(1, 0, 0), la=(-1, 0, 0)), nudge(GD, ra=(-1, 0, 0), la=(1, 0, 0))], 8,
+     "the guard: blade across the front, off hand braced, knees soft")
+
+# The dodge (6 ticks): a quick low step away, the arms out for balance, back to the ready stance.
+def dodge(name, legs, tilt, lean, note):
+    step = pose(lean=lean, tilt=tilt, rise=-1, rk=34, lk=34, ra=(-34, 0, 34), re=30, la=(-34, 0, -34), le=30, **legs)
+    clip(name, [(0, READY, "linear"), (2, step, "easeoutcubic"), (4, nudge(step, rise=0.5), "easeoutsine"), (6, READY, "easeinoutsine")], 9,
+         note=note)
+
+
+dodge("arms_dodge_back", dict(rl=(28, 0, 6), ll=(-16, 0, -6)), 0, -14, "a quick step back, arms out")
+dodge("arms_dodge_left", dict(rl=(-6, 0, 14), ll=(0, 0, -30)), -14, 6, "a quick step to the off side")
+dodge("arms_dodge_right", dict(rl=(0, 0, 30), ll=(-6, 0, -14)), 14, 6, "a quick step to the blade side")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Output, checks, previews
+
+def document():
+    return {"format_version": "1.8.0",
+            "__comment": "GENERATED by tools/art/specs/arms_moves.py: edit the poses there, not this file.",
+            "animations": {name: c.json() for name, c in CLIPS.items()}}
+
+
+def write(root=None):
+    path = os.path.join(root or os.path.join(ROOT, "src/main/resources"), OUT_REL)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as fh:
+        json.dump(document(), fh, separators=(",", ":"))
+        fh.write("\n")
+    return path
+
+
+def build(out):
+    """build_all.py entry: writes the clips JSON (no textures)."""
+    write(out.root)
+
+
+def check(limit=1.25, quiet=False):
+    bad = []
+    for name, c in CLIPS.items():
+        worst, at, where = 0.0, 0.0, ""
+        t = 0.0
+        while t <= c.length + 1e-6:
+            for pitch in (0.0, 30.0):
+                d, w = P.penetration(c.sample(t, pitch), pitch)
+                if d > worst:
+                    worst, at, where = d, t, w + (f" (look {pitch:g})" if pitch else "")
+            t += 0.5
+        if worst > limit:
+            bad.append(f"{name}: {where} by {worst:.2f} px at tick {at:g}")
+        elif not quiet and worst > 0.3:
+            print(f"  {name}: {where} {worst:.2f} px at tick {at:g} (allowed)")
+    return bad
+
+
+def moves_sheet(out_dir, px=5.0):
+    """Every move cocked, mid-blow and through, straight (top) and bent (bottom), from the front three-quarter and the side."""
+    from PIL import Image, ImageDraw
+    beats = {}
+    for n in ("arms_strike_1", "arms_strike_2", "arms_strike_3", "arms_strike_4", "arms_heavy", "arms_riposte", "arms_slipcut", "arms_execution"):
+        w, a, _ = row(n[5:])
+        beats[n] = [w, w + a * 0.5, w + a]
+    beats.update({"arms_heavy_charge": [0], "arms_guard": [0], "arms_dodge_back": [2], "arms_dodge_left": [2]})
+    views = (("front", -35.0, 10.0), ("side", -90.0, 6.0))
+    rows = []
+    for suffix in ("", "_bent"):
+        for vname, yaw, pitch in views:
+            cells = []
+            clips = [CLIPS[n + suffix] for n in beats]
+            bounds = P.strip_bounds(clips, yaw, pitch)
+            for n, ts in beats.items():
+                c = CLIPS[n + suffix]
+                cells += [(f"{n[5:]}{suffix} t{t:g}", P.frame_image(c, t, yaw, pitch, px, bounds)) for t in ts]
+            rows.append((f"{vname}{suffix or ' straight'}", cells))
+    w = max(im.width for _, r in rows for _, im in r)
+    h = max(im.height for _, r in rows for _, im in r)
+    cols = max(len(r) for _, r in rows)
+    sheet = Image.new("RGBA", (110 + cols * w, len(rows) * (h + 14)), (20, 22, 28, 255))
+    dr = ImageDraw.Draw(sheet)
+    for j, (label, cells) in enumerate(rows):
+        y = j * (h + 14)
+        dr.text((6, y + h // 2), label, fill=(230, 232, 240, 255))
+        for i, (cap, im) in enumerate(cells):
+            sheet.paste(im, (110 + i * w, y + 14))
+            dr.text((110 + i * w + 4, y + 1), cap, fill=(200, 205, 215, 255))
+    path = os.path.join(out_dir, "moves.png")
+    sheet.save(path)
+    return path
+
+
+def main(argv):
+    cmd = argv[0] if argv else "build"
+    if cmd == "build":
+        path = write()
+        print(f"{len(CLIPS)} clips -> {os.path.relpath(path, ROOT)}")
+        bad = check(quiet=True)
+        for b in bad:
+            print("CLIPPING", b)
+        return 1 if bad else 0
+    if cmd == "check":
+        bad = check()
+        for b in bad:
+            print("CLIPPING", b)
+        print("ok" if not bad else f"{len(bad)} clips clip")
+        return 1 if bad else 0
+    if cmd == "preview":
+        out_dir = argv[1]
+        os.makedirs(out_dir, exist_ok=True)
+        for n in argv[2:]:
+            print(P.strip(CLIPS[n], out_dir))
+        print(moves_sheet(out_dir))
+        return 0
+    raise SystemExit(__doc__)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

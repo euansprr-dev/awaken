@@ -3265,7 +3265,13 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   overhead chop, strike 4 and the riposte thrusts, the heavy a rising cut, the Slipcut a low wide sweep, the Execution
   a raised chop. A held heavy draws back to its start pose and trembles finely as it charges; the guard is vanilla's
   blocking pose eased in over 2 ticks. Reviewed frame by frame with `tools/autopilot/arms-poses.txt` (the autopilot's
-  `arms pose <move> <0..1>` holds the hands still). Third person keeps vanilla's arm swing until S2's clips.
+  `arms pose <move> <0..1>` holds the hands still).
+- **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
+  a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
+  wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
+  it is up, the heavy's draw held while it charges, the dodge back or to a side by its way (mirrored for a left
+  hand). The fighter's own from their prediction, everyone else's from `Seen` MOVE, CHARGE and DODGE. Every clip is
+  checked for an arm through the head or body (under 1.25 px). Without the library: vanilla's arm swing.
 - **Trails and sparks** (`ArmsFx`, on the powers module's effects engine: one budget, one settings page). As a
   blow starts (the end of its wind-up), its arc: a crescent following the hand's own arc about the shoulder, pushed
   out 1.5 blocks ahead of the eye so it faces whoever looks (an arc in the plane of the look is seen edge-on, a line:
@@ -3312,5 +3318,5 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   voice), with the shard and a small view jolt from where it came (vanilla's own tilt stays).
 
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
-kill switch, sounds, stance rules; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
+kill switch, sounds, stance rules, clips; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles.

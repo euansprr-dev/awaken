@@ -118,6 +118,7 @@ final class ArmsServer {
                 if (msg.seq() != s.seq) return;
                 s.chargeStart = now;
                 s.chargeSeq = msg.seq();
+                seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.CHARGE, -1, 0, 0));
             }
             case ArmsPayloads.PRESS_RELEASE -> {
                 if (msg.seq() != s.chargeSeq || s.chargeStart < 0) return;

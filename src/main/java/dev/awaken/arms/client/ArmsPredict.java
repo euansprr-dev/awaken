@@ -138,6 +138,7 @@ public final class ArmsPredict {
         fadeFrom = -100;
         ArmsAudio.swing(p, st, m, cad);
         ArmsFx.move(p, st, m, cad, perfect);
+        ArmsBodies.move(p, m);
     }
 
     /** Ticks into the running move on the hands' clock (hit-stop holds pause it), with the frame's fraction. */
@@ -151,6 +152,7 @@ public final class ArmsPredict {
         ArmsFeel.tick();
         ArmsFx.tick();
         ArmsStances.tick();
+        ArmsBodies.tick();
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
@@ -195,6 +197,7 @@ public final class ArmsPredict {
                 step = -1;
                 ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_CHARGE, p.getYRot(), p.getXRot(), -1));
                 ArmsAudio.charge(p);
+                ArmsBodies.charge(p);
             }
             if (charging && c.min() + (ticks - chargeStart) == c.glint()) ArmsAudio.glint(p);
             if (!charging || c.min() + (ticks - chargeStart) < c.max()) return;
@@ -270,6 +273,7 @@ public final class ArmsPredict {
         fightAt = ticks;
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Dodge(nextSeq(), (float) dodgeX, (float) dodgeZ, p.getX(), p.getY(), p.getZ()));
         ArmsAudio.dodge(p);
+        ArmsBodies.dodge(p, dodgeX, dodgeZ);
         CombatFeedback.kick((float) (dodgeX * fz - dodgeZ * fx) * -2.5F, 0F, (float) (dodgeX * lx + dodgeZ * lz) * 3.5F, 8);
         dodgeTick(p);
     }
@@ -314,6 +318,7 @@ public final class ArmsPredict {
                     move = null;
                     step = -1;
                     charging = false;
+                    ArmsBodies.settle(p);
                 }
             }
             case ArmsPayloads.HIT -> {
@@ -404,7 +409,19 @@ public final class ArmsPredict {
                 Entity e = mc.level.getEntity(s.entity());
                 Archetypes.Loaded st = Archetypes.byIndex(s.aux());
                 Archetype.Move m = Archetype.Move.byId(s.aux2());
-                if (e != null && st != null && m != null) ArmsFx.move(e, st, m, 0, false);
+                if (e != null && st != null && m != null) {
+                    ArmsFx.move(e, st, m, 0, false);
+                    ArmsBodies.move(e, m);
+                }
+            }
+            case ArmsPayloads.CHARGE -> {
+                Entity e = mc.level.getEntity(s.entity());
+                if (e != null) ArmsBodies.charge(e);
+            }
+            case ArmsPayloads.DODGE -> {
+                Entity e = mc.level.getEntity(s.entity());
+                float a = s.aux() * Mth.DEG_TO_RAD;
+                if (e != null) ArmsBodies.dodge(e, Mth.cos(a), Mth.sin(a));
             }
             case ArmsPayloads.HIT -> {
                 Entity by = mc.level.getEntity(s.other());
@@ -430,5 +447,6 @@ public final class ArmsPredict {
         ArmsFeel.reset();
         ArmsFx.reset();
         ArmsStances.reset();
+        ArmsBodies.reset();
     }
 }
