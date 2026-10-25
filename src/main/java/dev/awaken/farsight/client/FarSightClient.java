@@ -27,8 +27,6 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
-import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -52,13 +50,13 @@ public final class FarSightClient {
 
     /** Where far terrain starts: this far inside the render distance it dithers in, over the same distance. */
     static final int CLIP_BAND = 32;
+    /** How far under sea level the lowest ground in view is taken to lie (a sea floor), for what the chunks cover. */
+    static final int SEA_FLOOR = 40;
     /** Valley cloud: its floor above sea level, its depth (blocks) and density per block (SPEC §20). */
     static final float MIST_ABOVE_SEA = 40f, MIST_DEPTH = 46f, MIST_DENSITY = 0.014f;
     private static final int UPLOADS_PER_FRAME = 48, CHANGES_PER_FRAME = 1024;
 
     /** Autopilot's override (null: the client setting decides). {@code -Dawaken.farsight=true} forces it on. */
-    /** The player's chunk fade while a frame borrows it (-1: not borrowed). */
-    private static double savedFade = -1.0;
     private static Boolean forced = Boolean.getBoolean("awaken.farsight") ? Boolean.TRUE : null;
     private static FarField field;
     private static FarRenderer renderer;
@@ -84,32 +82,10 @@ public final class FarSightClient {
                     FarPalette.clear();
                 }));
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterSky.class, FarSightClient::afterSky);
-        // vanilla fades a new chunk section in from the fog colour, which over far terrain is a pale square on every
-        // chunk that arrives; while Far Sight draws, sections appear at once (this frame's options only, never saved)
-        NeoForge.EVENT_BUS.addListener(ExtractLevelRenderStateEvent.class, e -> {
-            if (drawing()) e.getOptionsRenderState().chunkSectionFadeInTime = 0.0;
-        });
-        // Sodium fades its sections the same way but reads the option itself: for the frame's render only (no options
-        // save happens inside it), and not under an open screen, whose sliders would show it
-        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Pre.class, e -> fadeOff());
-        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Post.class, e -> fadeBack());
         // before Lens (LOWEST), which reads vanilla's render-distance end through FarTerrain
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.RenderFog.class, FarSightClient::fog);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> joinNanos = System.nanoTime());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> unbind());
-    }
-
-    private static void fadeOff() {
-        Minecraft mc = Minecraft.getInstance();
-        if (!drawing() || mc.gui.screen() != null) return;
-        savedFade = mc.options.chunkSectionFadeInTime().get();
-        if (savedFade != 0.0) mc.options.chunkSectionFadeInTime().set(0.0);
-    }
-
-    private static void fadeBack() {
-        if (savedFade < 0.0) return;
-        if (savedFade != 0.0) Minecraft.getInstance().options.chunkSectionFadeInTime().set(savedFade);
-        savedFade = -1.0;
     }
 
     /** Whether Far Sight drew in the last quarter second. */
@@ -177,10 +153,15 @@ public final class FarSightClient {
         FarStore store = FarStore.of(level);
         Vec3 cam = e.getLevelRenderState().cameraRenderState.pos;
         float clipStart = Math.max(0, rd * 16 - CLIP_BAND);
+        // the real chunks are culled in 3D (Sodium: a sphere of the render distance), so from high up they cover less
+        // ground than the render distance: horizontally only as far as reaches a sea floor under the camera (16-block
+        // steps, so a climb doesn't churn the windows); the shader hides far terrain only where they are drawn
+        double drop = Math.max(0.0, cam.y - (level.getSeaLevel() - SEA_FLOOR));
+        float covered = (float) (Math.floor(Math.sqrt(Math.max(0.0, clipStart * (double) clipStart - drop * drop)) / 16.0) * 16.0);
         // coarsest first: a window's first patches queue ahead of the finer rings'
         int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
-        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, clipStart, level, store, workers);
+        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, covered, level, store, workers);
         for (int i = 0; i < CHANGES_PER_FRAME; i++) {
             long chunk = store.pollChanged();
             if (chunk == Long.MIN_VALUE) break;
@@ -213,13 +194,13 @@ public final class FarSightClient {
         if ((partsOff & 8) == 0) gpu.bake(field, bake, sun, sun.y > 0.01f);
         field.dirty = 0;
         renderer.timeBaked();
-        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level, mc.levelRenderer, Util.toMillis(mc.gameRenderer.gameRenderState().optionsRenderState.chunkSectionFadeInTime), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
+        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level, mc.levelRenderer, Util.toMillis(mc.options.chunkSectionFadeInTime().get()), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
         float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;
-        renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), clipStart,
+        renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), covered,
                 mc.level.getMinY(), mc.level.getMaxY());
-        renderer.planTrees(field, cam.y, clipStart);
+        renderer.planTrees(field, cam.y, covered);
         if ((partsOff & 2) != 0) renderer.treeDraws = 0;
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
         float rain = mc.level.getRainLevel(partialTick), thunder = mc.level.getThunderLevel(partialTick);
@@ -316,7 +297,7 @@ public final class FarSightClient {
         }
     }
 
-    /** Development view: 0 normal, 1 generated-layer cells tinted magenta (autopilot {@code farsight debug <n>}). */
+    /** Development view: 0 normal, 1 generated-layer cells tinted magenta, 2 far terrain under the chunk mask red (autopilot {@code farsight debug <n>}). */
     static int debug;
     /**
      * Parts switched off for measuring (autopilot {@code farsight part <name> on|off}): 1 the per-pixel erosion detail,

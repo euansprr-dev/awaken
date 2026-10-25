@@ -1407,15 +1407,16 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes
   the generated layer, else the prediction, and over the window's outer 16 cells eases into the next coarser ring's
   surface (bilinear between its corners), exactly at the edge: no crack, no pop. A corner with no data takes the coarser
-  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are,
-  dithering in over 32 blocks at the render distance's edge, and drawn where they aren't shown yet (a 64×64 chunk mask:
-  a chunk counts once its surface section and the three below are meshed). While Far Sight draws, new chunk sections
-  appear at once instead of fading in from the fog colour, a pale square over far terrain on every chunk that arrives
-  (after a jump, along a flight): vanilla's fade through that frame's options render state, Sodium's (which reads the
-  option itself) by lending the option 0 between `RenderFrameEvent.Pre` and `Post`, never under an open screen. No
-  options save happens inside a frame, so the player's setting is never written. (2026-10-26: these squares were first
-  read as water walls at the loaded edge; a Turbo fluid-renderer mixin was built for that, removed no wall, and was
-  dropped.)
+  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are drawn,
+  dithering in over 32 blocks at the render distance's edge: where they are loaded and meshed (a 64×64 chunk mask: a
+  chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
+  camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
+  horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
+  water surface whose floor is too far to draw. The planner and the windows count as covered only the ground the
+  sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
+  over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
+  paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
+  fluid-renderer mixin and a fade override were built for those, removed nothing, and were dropped.)
 - **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
   is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
   plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to

@@ -145,15 +145,23 @@ Hit columns(vec3 rel, vec2 g, float w) {
 void main() {
     float horizontal = length(vRel.xz);
     vec2 rel = vRel.xz + FarCam.xz;                       // blocks from FarCamInt: exact cells, any distance out
-    // under the real chunks it stays hidden, but only where they are there (a fresh teleport, a fast flight)
-    if (horizontal < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
-        ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
-        if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) discard;
-    }
     int flags = vFlags.x;
     bool generated = (flags & 128) != 0, alpine = (flags & 1) != 0;
     float depth = vInfo.r * 255.0;
     bool water = depth > 0.5;
+    // under the real chunks it stays hidden, but only where they are drawn: where they are loaded (a fresh teleport, a
+    // fast flight) and within the render distance as Sodium culls it, in 3D from the camera (seen from high up, the sea
+    // ends well inside the horizontal render distance, and its floor sooner); far water keeps to its own floor's reach,
+    // so a real water surface drawn over a floor too far to draw keeps the far sea under it
+    vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
+    if (length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+        ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
+        if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
+            // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)
+            if (FarCam.w > 1.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
+            discard;
+        }
+    }
     vec3 n = normalize(vNormal);
     vec2 g = -n.xz / max(n.y, 0.12);
     float slope = length(g);

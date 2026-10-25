@@ -28,9 +28,9 @@ float bayer4(vec2 p) {
 }
 
 void main() {
-    float horizontal = length(vRel.xz);
     vec2 rel = vRel.xz + FarCam.xz;
-    if (horizontal < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+    // hidden where the real chunks are drawn: loaded, and within the render distance in 3D, as the terrain
+    if (length(vRel) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) discard;
     }
