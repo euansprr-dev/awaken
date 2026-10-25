@@ -184,3 +184,7 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   Agreed with the Living Wilds (decision 29: the High Gate yard and CityHooks.spot, bounties as the board's first slice,
   Bram's pan line, chain drafts for review). Said yes to Creature life's life layer for citizens (shared API, B3 wires it
   into CitizenModel; client-only, ≤ ~0.1 ms for a crowd, clips win, head tracking only near the player or a partner).
+- 2026-10-25: Euan asked for 3D ladders like the "Smart Ladders" mod (reference /Volumes/MEDIA/carillon-ref/smart-ladders.webp):
+  folded into B2. Required: a model override for minecraft:ladder (rails and rungs; vanilla collision and climb box
+  unchanged). If cheap: hanging ladders that extend down or up with no wall behind. Approved Living Wilds' two chains
+  with edits; added spot bellwatch_cellar (B2 reserves the room under the Knoll); B5 will publish a roof-route chase hook.
