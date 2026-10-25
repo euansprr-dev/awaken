@@ -42,6 +42,33 @@ final class CityLifeTests {
         // decoding ten 48 s stems runs on its own thread; the test server ticks as fast as it can, so a generous ceiling
         AwakenTests.register("citizens_soundscape_beds", 20 * 60 * 60 * 12, CityLifeTests::beds);
         AwakenTests.register("citizens_fauna_rigs", 40, CityLifeTests::rigs);
+        AwakenTests.register("citizens_boatmen_berths", 40, CityLifeTests::berths);
+    }
+
+    /**
+     * (M4 B3b, Euan: a knot of boatmen staring at him) every boatman works a berth of his own on a quay's edge, not a
+     * shared pickup; every berth's boat lies on the river (the client moors its boats there).
+     */
+    private static void berths(GameTestHelper h) {
+        Roster r = Roster.get();
+        h.assertTrue(r != null, "no roster");
+        dev.awaken.city.CityPlan plan = dev.awaken.city.CityPlan.get();
+        java.util.Set<Integer> mine = new java.util.HashSet<>();
+        int boatmen = 0;
+        for (int i = 0; i < r.citizens; i++) {
+            if (r.job[i] != Roster.BOATMAN) continue;
+            boatmen++;
+            int w = r.work[i];
+            h.assertTrue(w >= 0 && r.pKind[w] == Roster.P_MOORING, "boatman " + i + " works place " + w + ", not a berth");
+            h.assertTrue(mine.add(w), "two boatmen share berth " + w);
+        }
+        h.assertTrue(boatmen >= 8 && r.moorings.size() >= boatmen, boatmen + " boatmen, " + r.moorings.size() + " berths");
+        for (Roster.Mooring m : r.moorings) {
+            byte k = plan.kind((int) Math.floor(m.boatX()), (int) Math.floor(m.boatZ()));
+            h.assertTrue(k == dev.awaken.city.CityPlan.RIVER, "the boat of berth " + m.place() + " lies on kind " + k + ", not the river");
+            h.assertTrue(r.pKind[m.place()] == Roster.P_MOORING, "berth " + m.place() + " is not a mooring place");
+        }
+        h.succeed();
     }
 
     // ---- lanterns ----------------------------------------------------------------------------------------------------
@@ -62,6 +89,8 @@ final class CityLifeTests {
         c.work.edits = false;
         CitizenBody b = new CitizenBody(CitizensContent.CITIZEN.get(), level);
         BlockPos feet = h.absolutePos(new BlockPos(2, 1, 2));
+        // isolated tests stand in real terrain: clear the bearer's way (the old path skips a head inside a solid block)
+        for (BlockPos q : BlockPos.betweenClosed(feet.offset(-1, 0, -1), feet.offset(5, 3, 1))) level.setBlock(q, Blocks.AIR.defaultBlockState(), 3);
         b.setPos(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5);
         b.hold(EquipmentSlot.OFFHAND, Props.LANTERN);
         b.nearestSq = 4;
@@ -291,7 +320,8 @@ final class CityLifeTests {
             "city_dog", List.of("idle", "walk", "trot", "sit", "pant", "sniff", "lie"),
             "city_horse", List.of("idle", "walk", "toss"),
             "city_cart", List.of(),
-            "city_boat", List.of("idle", "walk", "drift"));
+            "city_boat", List.of("idle", "walk", "drift"),
+            "city_hand_lantern", List.of("idle"));
 
     /** Every rig parses without problems, carries the clips its brain plays, and every coat (and its blink) is a texture. */
     private static void rigs(GameTestHelper h) {
@@ -301,7 +331,8 @@ final class CityLifeTests {
             try {
                 HeroRig r = HeroRig.parse(src);
                 rigs.put(r.id, r);
-                problems.addAll(r.problems());
+                // a hand lantern has no gait: the rigs' walk-or-fly rule is for bodies
+                for (String q : r.problems()) if (!(r.id.equals("city_hand_lantern") && q.contains("neither walk nor fly"))) problems.add(q);
             } catch (RuntimeException e) {
                 problems.add("a rig fails to parse: " + e.getMessage());
             }
@@ -322,13 +353,14 @@ final class CityLifeTests {
                 String base = "/assets/awaken/textures/entity/city/" + e.getKey() + (v.isEmpty() ? "" : "_" + v);
                 if (missing(base + ".png")) problems.add(base + ".png missing");
                 // living animals blink (the cart and the boats don't); cats' eyes and boats' lanterns glow in the dark
-                boolean thing = e.getKey().equals("city_cart") || e.getKey().equals("city_boat");
+                boolean thing = e.getKey().equals("city_cart") || e.getKey().equals("city_boat") || e.getKey().equals("city_hand_lantern");
                 if (!thing && missing(base + "_blink.png")) problems.add(base + "_blink.png missing");
                 if (e.getKey().equals("city_cat") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (eyeshine)");
                 if (e.getKey().equals("city_boat") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (the bow lantern)");
+                if (e.getKey().equals("city_hand_lantern") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (glass and flame)");
             }
         }
-        h.assertTrue(rigs.size() == CLIPS.size(), "one rig per animal and the cart (" + rigs.keySet() + ")");
+        h.assertTrue(rigs.size() == CLIPS.size(), "one rig per animal, the cart and the hand lantern (" + rigs.keySet() + ")");
         h.assertTrue(problems.isEmpty(), String.join("; ", problems));
         h.succeed();
     }

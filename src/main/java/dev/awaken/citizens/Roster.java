@@ -44,10 +44,10 @@ public final class Roster {
     public static final String[] ACTS = {"home", "inside", "stand", "round", "carry", "wander"};
     // place kinds
     public static final String[] PLACE_KINDS = {"door", "stand", "lamp", "stall_keeper", "stall_front", "bell", "anvil",
-            "wash", "line", "pickup", "post", "crier", "sit", "play", "mill", "landmark", "tavern_out", "shop_door"};
+            "wash", "line", "pickup", "post", "crier", "sit", "play", "mill", "landmark", "tavern_out", "shop_door", "mooring", "net"};
     public static final byte P_DOOR = 0, P_STAND = 1, P_LAMP = 2, P_STALL_KEEPER = 3, P_STALL_FRONT = 4, P_BELL = 5,
             P_ANVIL = 6, P_WASH = 7, P_LINE = 8, P_PICKUP = 9, P_POST = 10, P_CRIER = 11, P_SIT = 12, P_PLAY = 13, P_MILL = 14,
-            P_LANDMARK = 15, P_TAVERN_OUT = 16, P_SHOP_DOOR = 17;
+            P_LANDMARK = 15, P_TAVERN_OUT = 16, P_SHOP_DOOR = 17, P_MOORING = 18, P_NET = 19;
 
     /**
      * A market stall (M4 B3a: a street-life prop, plan.json "props"[part]): its box, the side its counter faces (N 0, E 1,
@@ -121,6 +121,10 @@ public final class Roster {
     public final List<Line> lines;
     public final int[] pickups;
     public final int[][] crates;
+    /** (M4 B3b) The berths along both quays: a boatman's place on the edge, and where his boat lies (plan x, z; yaw). */
+    public final List<Mooring> moorings;
+
+    public record Mooring(int place, float boatX, float boatZ, float yaw) {}
     public final List<Tavern> taverns;
     public final List<Household> households;
     public final List<Group> groups;
@@ -316,6 +320,15 @@ public final class Roster {
         JsonArray cr = q.getAsJsonArray("crates");
         crates = new int[cr.size()][];
         for (int k = 0; k < cr.size(); k++) crates[k] = ints(cr.get(k).getAsJsonArray());
+        List<Mooring> mo = new ArrayList<>();
+        if (o.has("moorings")) {
+            for (JsonElement e : o.getAsJsonArray("moorings")) {
+                JsonObject m = e.getAsJsonObject();
+                JsonArray b = m.getAsJsonArray("boat");
+                mo.add(new Mooring(m.get("place").getAsInt(), b.get(0).getAsFloat(), b.get(1).getAsFloat(), m.get("yaw").getAsFloat()));
+            }
+        }
+        moorings = List.copyOf(mo);
 
         List<Tavern> tv = new ArrayList<>();
         for (JsonElement e : o.getAsJsonArray("taverns")) {
