@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "awaken:block/clay_tiles",
+    "side": "awaken:block/clay_tiles",
+    "top": "awaken:block/clay_tiles"
+  }
+}

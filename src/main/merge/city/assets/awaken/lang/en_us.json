@@ -1,4 +1,19 @@
 {
   "awaken.city.pack": "Carillon",
-  "awaken.city.protected": "Carillon's stones belong to the city."
+  "awaken.city.protected": "Carillon's stones belong to the city.",
+  "block.awaken.slate_tiles": "Slate Tiles",
+  "block.awaken.slate_tile_stairs": "Slate Tile Stairs",
+  "block.awaken.slate_tile_slab": "Slate Tile Slab",
+  "block.awaken.clay_tiles": "Clay Tiles",
+  "block.awaken.clay_tile_stairs": "Clay Tile Stairs",
+  "block.awaken.clay_tile_slab": "Clay Tile Slab",
+  "block.awaken.flower_box": "Flower Box",
+  "block.awaken.shutter": "Shutter",
+  "block.awaken.drainpipe": "Drainpipe",
+  "block.awaken.trellis": "Trellis",
+  "block.awaken.lit_window": "Lit Window",
+  "block.awaken.loading_door": "Loading Door",
+  "block.awaken.hoist_beam": "Hoist Beam",
+  "block.awaken.rope": "Rope",
+  "block.awaken.chimney_bricks": "Chimney Crown"
 }

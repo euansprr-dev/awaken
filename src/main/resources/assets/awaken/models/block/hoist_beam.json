@@ -1,0 +1,70 @@
+{
+  "textures": {
+    "particle": "minecraft:block/stripped_dark_oak_log",
+    "side": "minecraft:block/stripped_dark_oak_log",
+    "end": "minecraft:block/stripped_dark_oak_log_top"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        8,
+        0
+      ],
+      "to": [
+        11,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#end",
+          "uv": [
+            5,
+            5,
+            11,
+            11
+          ]
+        },
+        "up": {
+          "texture": "#side",
+          "uv": [
+            5,
+            0,
+            11,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#side",
+          "uv": [
+            5,
+            0,
+            11,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            5,
+            0,
+            11,
+            16
+          ],
+          "rotation": 90
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            5,
+            0,
+            11,
+            16
+          ],
+          "rotation": 90
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "awaken:block/clay_tile_slab"
+    },
+    "type=top": {
+      "model": "awaken:block/clay_tile_slab_top"
+    },
+    "type=double": {
+      "model": "awaken:block/clay_tiles"
+    }
+  }
+}
