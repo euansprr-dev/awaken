@@ -383,19 +383,21 @@ final class CityWall {
 
     /**
      * The dressed stone of a stretch (courses, quoins, caps, corbels and bands): a warm sandstone against the grey, the
-     * Terrace's pale diorite, the Works' brick.
+     * Terrace's pale diorite, the Works' brick. A plain dressing (the Works) dresses only the two string courses, as whole
+     * bands with their lips: its caps, corbels and merlon caps are stone, it has no quoins and no bands at 6 and 32 (on the
+     * slanted sides every dressed cap and corbel traced the raster's steps).
      */
-    record Dress(BlockState full, BlockState quoin, BlockState slab, Stairs course, Stairs cap) {}
+    record Dress(BlockState full, BlockState quoin, BlockState slab, Stairs course, Stairs cap, Stairs corbel, boolean plain) {}
 
     static final Dress SAND = new Dress(of("minecraft:smooth_sandstone"), of("minecraft:cut_sandstone"),
             of("minecraft:smooth_sandstone_slab[type=bottom]"), Stairs.of("minecraft:smooth_sandstone_stairs", "top"),
-            Stairs.of("minecraft:smooth_sandstone_stairs", "bottom"));
+            Stairs.of("minecraft:smooth_sandstone_stairs", "bottom"), Stairs.of("minecraft:smooth_sandstone_stairs", "top"), false);
     static final Dress PALE = new Dress(of("minecraft:polished_diorite"), of("minecraft:calcite"),
             of("minecraft:polished_diorite_slab[type=bottom]"), Stairs.of("minecraft:polished_diorite_stairs", "top"),
-            Stairs.of("minecraft:polished_diorite_stairs", "bottom"));
-    /** The Works' dressing: muted mud brick, tile courses rather than red lines (red traced the raster's steps). */
-    static final Dress BRICK = new Dress(of("minecraft:mud_bricks"), of("minecraft:mud_bricks"), of("minecraft:mud_brick_slab[type=bottom]"),
-            Stairs.of("minecraft:mud_brick_stairs", "top"), Stairs.of("minecraft:mud_brick_stairs", "bottom"));
+            Stairs.of("minecraft:polished_diorite_stairs", "bottom"), Stairs.of("minecraft:polished_diorite_stairs", "top"), false);
+    /** The Works' dressing: plain, two whole bands of muted mud brick at the courses and the rest in stone. */
+    static final Dress BRICK = new Dress(of("minecraft:mud_bricks"), null, of("minecraft:stone_brick_slab[type=bottom]"),
+            Stairs.of("minecraft:mud_brick_stairs", "top"), CAP, Stairs.of("minecraft:stone_brick_stairs", "top"), true);
 
     static Dress dress(int district) {
         return switch (district) {
@@ -442,7 +444,7 @@ final class CityWall {
      */
     static BlockState stone(Ctx c, Geo g, int x, int ry, int z, boolean inner) {
         Dress dr = dress(g);
-        if (ry == 6 || ry == 32 || !inner && (ry == 15 || ry == 27) || inner && ry == 9) return dr.full();
+        if ((ry == 6 || ry == 32) && !dr.plain() || !inner && (ry == 15 || ry == 27) || inner && ry == 9) return dr.full();
         int h = c.pct(x, z, 400 + ry);
         int pt = patch(g, ry, inner);
         int dist = BEHIND[g.k];
@@ -797,7 +799,7 @@ final class CityWall {
                 if (ry == to) {
                     BlockState cap = shaped(c, dr.cap(), dr.full(), x, ry, z);
                     b.set(x, ry, z, cap != null ? cap : dr.cap().straight()[in]);
-                } else if ((m == 0 && ry % 2 == 0 || m == 2 && ry % 2 == 1) && ry <= 21 && l == (ry <= 9 ? 3 : 2))
+                } else if (dr.quoin() != null && (m == 0 && ry % 2 == 0 || m == 2 && ry % 2 == 1) && ry <= 21 && l == (ry <= 9 ? 3 : 2))
                     b.set(x, ry, z, dr.quoin()); // quoins on the lower stages' front corners; the upper stage plain
                 else b.set(x, ry, z, stone(c, g, x, ry, z, false));
             }
@@ -878,10 +880,10 @@ final class CityWall {
         if (l == 1 && butt) {
             for (int ry = 34; ry <= 38; ry++) b.set(x, ry, z, stone(c, g, x, ry, z, false)); // the buttress runs up into it
         } else {
-            if (corb) b.set(x, tier, z, dr.course().straight()[in]);
+            if (corb) b.set(x, tier, z, dr.corbel().straight()[in]);
             for (int ry = tier + 1; ry <= 38; ry++) {
                 boolean solid = corb || l == 3 && ry >= 36;
-                b.set(x, ry, z, !solid ? AIR : l == 3 && ry == 36 ? dr.full() : stone(c, g, x, ry, z, false));
+                b.set(x, ry, z, !solid ? AIR : l == 3 && ry == 36 && !dr.plain() ? dr.full() : stone(c, g, x, ry, z, false));
             }
         }
         if (l == 1 && !corb && !butt && Math.floorMod(g.u, 9) == 5) b.set(x, 32, z, st("awaken:wall_spout[facing=" + DIR[g.out()] + "]"));

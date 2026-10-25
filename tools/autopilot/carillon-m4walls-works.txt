@@ -1,0 +1,27 @@
+# Carillon M4 Walls, the Works' face (docs/carillon/milestones/M4-walls.md): two shots of the plain dressing, the same
+# world and settings as carillon-m4walls.txt. Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=walls \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m4walls-works.txt 600
+world carillonM4walls creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+cmd gamemode spectator
+cmd time set 6000
+cmd awaken city view walls_works_far
+wait 600
+shot walls_works_far
+cmd awaken city view walls_out_s
+wait 200
+shot walls_out_s
+quit

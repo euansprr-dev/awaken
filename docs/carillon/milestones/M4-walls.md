@@ -116,6 +116,13 @@ No block entities, no loot.
   higher on the inner face, the north faces and the Garden and Quay stretches, and it grows thick at the foot.
 - Shots (tour 7, Vulkan): `walls_out_s`, `walls_gate_yard`, `walls_watergate`.
 
+## Fifth pass (the Works' face, calm)
+- **A plain dressing for the Works.** Only the two string courses (15 and 27) are mud brick, as whole bands with their
+  lips. The buttress caps, corbels and merlon caps are stone, there are no quoins, and there are no bands at 6, 32 or the
+  breastwork. The Works' towers carry whole mud bands every six rows, the wall's two among them, and plain ashlar quoins.
+  The red brick is kept for the watch room on top.
+- Shots (`carillon-m4walls-works.txt`, a two-shot tour): `walls_out_s`, `walls_works_far` (a new view from the fields).
+
 ## Tests (GameTests, one per mechanism; `-Ptests=city_wall_`)
 - `city_wall_grid`: every hold on the wall's faces below the walk sits in an odd row (9,841 holds), the outer courses
   (896 cells) and the inner (529) are whole along every clear stretch, and 23 of 24 sides have a climb line from the
@@ -145,9 +152,6 @@ Three light tours of `tools/autopilot/carillon-m4walls.txt` (B3a's world, seed a
 ## Where it still falls short
 - Close under the inner face of a slanted side, the panels' heads, the corbel table and the band step with the raster and
   read heavy.
-- On the Works' slanted sides the mud brick still traces the buttresses' stepping and the corbel steps. It is calmer than
-  red, but it still reads as lines. The next step would be to dress only the two string courses there and leave the
-  caps and corbels in stone.
 - The ivy's "dark" tone reads blue-black at a distance. Close up, its clumps keep rectangular edges where a patch ends at
   a course.
 
