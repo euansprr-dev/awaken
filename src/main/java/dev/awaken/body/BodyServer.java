@@ -155,7 +155,10 @@ final class BodyServer {
         long now = now(p);
         if (m.slideUntil != 0 || m.mantleUntil != 0 || now < m.slideReadyAt) return false;
         boolean assisted = m.assisted(Move.SLIDE, now);
-        if (!assisted && !p.isSprinting() && m.tacUntil == 0) return false;
+        // a landing slide (SPEC §17.24): the jump's run may have let go of the sprint flag in the air, or a fast landing
+        // (a launch) never had it
+        if (!assisted && !p.isSprinting() && m.tacUntil == 0 && now - m.lastSprint > BodyRules.LAND_SPRINT_WINDOW
+                && p.getKnownMovement().horizontalDistance() < BodyRules.LAND_SLIDE_MIN - 0.08) return false;
         // running down stairs the feet leave each step: a run under them counts as ground
         if (!assisted && !p.onGround() && !BodyRules.stairStart(p.level(), CollisionContext.of(p), STAIRS, p.getX(), p.getY(), p.getZ(),
                 -Mth.sin(yaw * Mth.DEG_TO_RAD), Mth.cos(yaw * Mth.DEG_TO_RAD), FALL)) return false;
@@ -328,6 +331,7 @@ final class BodyServer {
         BodyMotion m = motion(p);
         RunnerServer.track(p, m);
         if (p.isFallFlying()) m.lastGlide = now(p);
+        if (p.isSprinting()) m.lastSprint = now(p);
         if (!m.active()) return;
         tick(p, m, now(p));
     }

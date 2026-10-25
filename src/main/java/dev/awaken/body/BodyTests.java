@@ -112,6 +112,7 @@ final class BodyTests {
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
         AwakenTests.registerIsolated("body_stair_slide", 100, BodyTests::stairSlide);
+        AwakenTests.registerIsolated("body_land_slide", 100, BodyTests::landSlide);
         AwakenTests.register("body_soft_landing_damage", 60, h -> withoutKit(h, BodyTests::softLanding));
         AwakenTests.register("body_soft_landing_before_awakening", 60, BodyTests::softLandingRunner);
         AwakenTests.register("body_soft_landing_never_stacks", 100, BodyTests::softLandingNeverStacks);
@@ -489,6 +490,39 @@ final class BodyTests {
             for (int t = 0; t < 30 && Body.isSliding(p); t++) BodyServer.tick(p, m, ++now);
             h.assertFalse(Body.isSliding(p), "after the run-out the slide ends");
             done(h, p);
+        });
+    }
+
+    /**
+     * SPEC §17.24: a sprint jump landed with crouch held slides from the landing, farther than a slide from a run; a
+     * walk-speed landing doesn't; an edge with a drop ahead is an edge-sneak; the server takes the landing slide from a
+     * body that sprinted a moment ago (the sprint flag can drop in the air) and refuses one that never ran.
+     */
+    static void landSlide(GameTestHelper h) {
+        floor(h, -1, 7, -1, 12, 3);
+        for (int z = 6; z <= 12; z++) h.setBlock(new BlockPos(6, 0, z), Blocks.AIR); // lane 6: the floor ends at z 6
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            double air = 0.32; // a sprint jump's horizontal speed as it lands (0.28 run + 0.2 kick, air drag over ~12 ticks)
+            h.assertTrue(BodyRules.landSlideFast(air, true), "a sprint jump's landing slides");
+            h.assertFalse(BodyRules.landSlideFast(0.1, true) || BodyRules.landSlideFast(0.22, false), "a walk's or a standing hop's doesn't");
+            double v0 = BodyRules.landSlideEntry(air, false);
+            ServerPlayer a = player(h, Rank.D), b = player(h, Rank.D), c = player(h, Rank.D), d = player(h, Rank.D);
+            at(h, a, 0.5, 1, 0.5, 0F);
+            at(h, b, 2.5, 1, 0.5, 0F);
+            double landing = slide(a, v0, true), run = slide(b, BodyRules.SLIDE_V0, true);
+            h.assertTrue(landing > run + 0.5, "the landing slide carries farther: " + String.format("%.2f against %.2f", landing, run));
+            var ctx = CollisionContext.empty();
+            Vec3 flat = h.absoluteVec(new Vec3(4.5, 1, 2.5)), edge = h.absoluteVec(new Vec3(6.5, 1, 5.8));
+            h.assertTrue(BodyRules.groundAhead(h.getLevel(), ctx, flat.x, flat.y, flat.z, 0, 1), "ground ahead on the floor");
+            h.assertFalse(BodyRules.groundAhead(h.getLevel(), ctx, edge.x, edge.y, edge.z, 0, 1), "landing at an edge with a drop ahead is an edge-sneak");
+            // the server: no sprint flag now, but a run a moment ago (the jump); a body that never ran is refused
+            at(h, c, 4.5, 1, 0.5, 0F);
+            at(h, d, 4.5, 1, 8.5, 0F);
+            long now = BodyServer.now(c);
+            BodyServer.motion(c).lastSprint = now - 12;
+            h.assertTrue(!c.isSprinting() && BodyServer.startSlide(c, 0F, false), "the server takes the landing slide of a sprint jump");
+            h.assertFalse(BodyServer.startSlide(d, 0F, false), "and refuses one that never ran");
+            done(h, a, b, c, d);
         });
     }
 

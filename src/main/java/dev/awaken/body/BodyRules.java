@@ -84,6 +84,16 @@ public final class BodyRules {
     /** The server lets a slide run this many ticks past the client's before ending it itself. */
     public static final int SLIDE_GRACE = 6;
 
+    // ---- landing slide (SPEC §17.24) --------------------------------------------------------------------------------
+    /** Crouch pressed in the air and held at touchdown slides from the landing: the landing's speed plus this kick... */
+    public static final double LAND_SLIDE_KICK = 0.06;
+    /** ...at most this entry (so slide-hops don't snowball). */
+    public static final double LAND_SLIDE_MAX = 0.6;
+    /** The air speed (b/t) a landing needs: a sprinted jump's, or a run's without the sprint flag. */
+    public static final double LAND_SLIDE_MIN_SPRINT = 0.15, LAND_SLIDE_MIN = 0.28;
+    /** The server takes a landing slide from a body that sprinted within this many ticks (a jump's air time). */
+    public static final int LAND_SPRINT_WINDOW = 40;
+
     // ---- stair slide (SPEC §17.22) ----------------------------------------------------------------------------------
     /** On a run the slide's speed tends to this (b/t): over a tactical sprint's ~0.35, near the slide's own entry. */
     public static final double STAIR_SPEED = 0.42;
@@ -148,6 +158,28 @@ public final class BodyRules {
     /** Entry speed of a slide that starts at {@code speed}: never below the slide's own, so it always "keeps speed". */
     public static double slideEntry(double speed, boolean fromTactical) {
         return Math.max(fromTactical ? SLIDE_V0_TACTICAL : SLIDE_V0, Math.min(speed, 0.9));
+    }
+
+    // ---- landing slide ----------------------------------------------------------------------------------------------
+
+    /** Whether a landing at this air speed slides (crouch pressed in the air and held at touchdown). */
+    public static boolean landSlideFast(double airSpeed, boolean sprinted) {
+        return airSpeed >= (sprinted ? LAND_SLIDE_MIN_SPRINT : LAND_SLIDE_MIN);
+    }
+
+    /** A landing slide's entry speed: the slide's own (or the landing's, if faster) plus the landing's kick. */
+    public static double landSlideEntry(double airSpeed, boolean fromTactical) {
+        return Math.min(LAND_SLIDE_MAX, slideEntry(airSpeed, fromTactical) + LAND_SLIDE_KICK);
+    }
+
+    /**
+     * Whether there's ground to slide onto 0.6 ahead of feet at (x, y, z) going (dx, dz): a floor within 0.6 under
+     * them (a stair run's next step counts) or anything in the way. Crouching onto an edge with a drop ahead is
+     * vanilla's edge-sneak, never a slide.
+     */
+    public static boolean groundAhead(BlockGetter level, CollisionContext ctx, double x, double y, double z, double dx, double dz) {
+        double ax = x + dx * 0.6, az = z + dz * 0.6;
+        return blocked(level, ctx, new BlockPos.MutableBlockPos(), ax - 0.15, y - 0.6, az - 0.15, ax + 0.15, y + 0.4, az + 0.15);
     }
 
     // ---- stair slide ------------------------------------------------------------------------------------------------
