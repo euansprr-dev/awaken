@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "_doc": "Arms' one timing table (SPEC §24). Ticks at 20 a second; recovery scales with attack speed. The server's hits, the first- and third-person clips, the trails and the sounds all read these rows. Swing poses are degrees of the held weapon in first person: yaw (left -), pitch (down +), roll; lunge in blocks.",
+  "archetypes": [
+    {
+      "id": "longsword",
+      "name": "Longsword",
+      "baseSpeed": 1.6,
+      "guard": {"deflect": 4, "reduction": 0.7, "heavyReduction": 0.5, "angle": 120, "breakTicks": 15, "lockout": 8},
+      "dodge": {"ticks": 6, "distance": 2.6, "evade": 5, "perfect": 3, "charges": 2, "recharge": 24, "slow": 8},
+      "chain": ["strike_1", "strike_2", "strike_3"],
+      "masteryChain": ["strike_4"],
+      "buffer": 5,
+      "late": 6,
+      "moves": {
+        "strike_1": {"windup": 2, "active": 2, "recovery": 6, "cadence": [6, 9], "motion": 0.9, "posture": 4, "arc": 100, "reach": 3.0, "hitstop": 45,
+          "swing": {"from": [-55, 18, -25], "to": [62, -8, 20], "lunge": 0.15}},
+        "strike_2": {"windup": 2, "active": 2, "recovery": 6, "cadence": [6, 9], "motion": 0.95, "posture": 4, "arc": 100, "reach": 3.0, "hitstop": 45,
+          "swing": {"from": [60, 10, 30], "to": [-58, -4, -20], "lunge": 0.15}},
+        "strike_3": {"windup": 3, "active": 2, "recovery": 8, "motion": 1.4, "posture": 8, "arc": 60, "reach": 3.2, "hitstop": 70, "finisher": true,
+          "swing": {"from": [5, -70, 0], "to": [0, 55, 0], "lunge": 0.3}},
+        "strike_4": {"windup": 3, "active": 2, "recovery": 10, "motion": 1.7, "posture": 10, "arc": 30, "reach": 3.6, "hitstop": 70, "finisher": true,
+          "swing": {"from": [0, 0, 0], "to": [0, 5, 0], "lunge": 0.6}},
+        "heavy": {"windup": 0, "active": 3, "recovery": 10, "motion": 1.8, "posture": 14, "arc": 80, "reach": 3.3, "hitstop": 90,
+          "charge": {"min": 6, "glint": 16, "max": 24, "glintMotion": 2.4, "glintPosture": 20, "glintHitstop": 110},
+          "swing": {"from": [-20, 60, -40], "to": [25, -70, 30], "lunge": 0.4}},
+        "riposte": {"windup": 1, "active": 2, "recovery": 8, "motion": 2.5, "posture": 20, "arc": 40, "reach": 3.4, "hitstop": 90, "window": 12,
+          "swing": {"from": [0, 10, 0], "to": [0, 0, 0], "lunge": 0.7}},
+        "slipcut": {"windup": 1, "active": 2, "recovery": 7, "motion": 1.2, "posture": 6, "arc": 120, "reach": 3.0, "hitstop": 45, "window": 6,
+          "swing": {"from": [-70, 0, -10], "to": [70, 0, 10], "lunge": 0.25}},
+        "execution": {"windup": 2, "active": 3, "recovery": 14, "motion": 4.0, "posture": 0, "arc": 40, "reach": 3.4, "hitstop": 220, "bossCap": 0.08,
+          "swing": {"from": [0, -80, 0], "to": [0, 70, 0], "lunge": 0.5}}
+      }
+    }
+  ]
+}
