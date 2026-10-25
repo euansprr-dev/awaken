@@ -353,19 +353,18 @@ final class ArmsServer {
                 if (by instanceof LivingEntity attacker && e.getDamageSource().getDirectEntity() == by) {
                     addPosture(attacker, kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT, p);
                 }
-                sound(p, SoundEvents.ANVIL_LAND, 0.55F, 1.9F);
-                sound(p, SoundEvents.TRIDENT_HIT, 0.8F, 1.6F);
+                soundForOthers(p, SoundEvents.ANVIL_LAND, 0.55F, 1.9F);
                 answer(p, s, ArmsPayloads.DEFLECT, by);
             }
             case BLOCK -> {
                 e.setBlockedDamage(incoming * g.reduction());
-                sound(p, SoundEvents.SHIELD_BLOCK.value(), 0.9F, 1.3F);
+                soundForOthers(p, SoundEvents.SHIELD_BLOCK.value(), 0.9F, 1.3F);
                 answer(p, s, ArmsPayloads.BLOCK, by);
             }
             case GUARD_BREAK -> {
                 e.setBlockedDamage(incoming * g.heavyReduction());
                 s.guardBreak = true; // after this blow resolves: the guard drops and can't rise for a moment
-                sound(p, SoundEvents.SHIELD_BREAK.value(), 0.9F, 0.9F);
+                soundForOthers(p, SoundEvents.SHIELD_BREAK.value(), 0.9F, 0.9F);
                 answer(p, s, ArmsPayloads.GUARD_BREAK, by);
             }
             case PASS -> e.setBlocked(false);
@@ -486,7 +485,7 @@ final class ArmsServer {
         s.cadence = 0;
         s.buffered = null;
         p.causeFoodExhaustion(0.1F);
-        sound(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.4F, 1.8F);
+        soundForOthers(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.4F, 1.8F);
         seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.DODGE, -1, (int) (Mth.atan2(s.dodgeZ, s.dodgeX) * Mth.RAD_TO_DEG), 0));
     }
 
@@ -571,6 +570,11 @@ final class ArmsServer {
         for (ServerPlayer o : p.level().players()) {
             if (o != p && o.distanceToSqr(p) < 48 * 48) AwakenNet.send(o, msg);
         }
+    }
+
+    /** Heard by everyone near but the fighter, whose client already played it on its own prediction or result. */
+    private static void soundForOthers(ServerPlayer p, SoundEvent sound, float volume, float pitch) {
+        p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
     }
 
     private static void sound(Entity at, SoundEvent sound, float volume, float pitch) {
