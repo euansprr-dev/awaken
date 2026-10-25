@@ -35,55 +35,60 @@ public final class AscentFp {
 
     // ---- the moments ------------------------------------------------------------------------------------------------
 
+    /** A moment's view clip, unless first person's moves are switched off (feel settings: firstPersonMoves). */
+    private static void play(String clip) {
+        if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) FirstPerson.play(clip);
+    }
+
     static void fired() {
-        FirstPerson.play("fp_rope_fire");
+        play("fp_rope_fire");
     }
 
     static void released() {
-        FirstPerson.play("fp_rope_release");
+        play("fp_rope_release");
     }
 
     static void launched() {
-        FirstPerson.play("fp_rope_launch");
+        play("fp_rope_launch");
     }
 
     static void wingsOpen() {
-        FirstPerson.play("fp_wings_open");
+        play("fp_wings_open");
     }
 
     /** A wing beat in a glide or flight (and the beat that takes flight). */
     static void beat() {
-        FirstPerson.play("fp_wing_beat");
+        play("fp_wing_beat");
     }
 
     static void doubleJump() {
-        FirstPerson.play("fp_double_jump");
+        play("fp_double_jump");
     }
 
     static void dash() {
-        FirstPerson.play("fp_air_dash");
+        play("fp_air_dash");
     }
 
     /** A dive slam (or the Sovereign's Judgement Fall) begins: the fists go up. */
     static void dive() {
-        FirstPerson.play("fp_dive");
+        play("fp_dive");
     }
 
     static void slamLand() {
         FirstPerson.stop("fp_dive");
-        FirstPerson.play("fp_slam_land");
+        play("fp_slam_land");
     }
 
     static void roll() {
-        FirstPerson.play("fp_barrel_roll");
+        play("fp_barrel_roll");
     }
 
     static void boom() {
-        FirstPerson.play("fp_boom");
+        play("fp_boom");
     }
 
     static void ascend() {
-        FirstPerson.play("fp_sovereign_ascend");
+        play("fp_sovereign_ascend");
     }
 
     // ---- the stances ------------------------------------------------------------------------------------------------

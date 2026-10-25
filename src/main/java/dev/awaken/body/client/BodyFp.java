@@ -27,6 +27,11 @@ final class BodyFp {
 
     // ---- the one-shots ----------------------------------------------------------------------------------------------
 
+    /** A move's view clip, unless first person's moves are switched off (feel settings: firstPersonMoves). */
+    static void play(String clip) {
+        if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) FirstPerson.play(clip);
+    }
+
     /** Our own body started a clip (third person): play its first-person counterpart. */
     static void clip(String clip) {
         String fp = switch (clip) {
@@ -46,7 +51,7 @@ final class BodyFp {
             FirstPerson.stop(BodyClips.FP_LAND_SOFT);
             FirstPerson.stop(BodyClips.FP_LAND_HARD);
         }
-        FirstPerson.play(fp);
+        play(fp);
     }
 
     /** The wall the run that just ended was on, as you faced it then. */
@@ -59,25 +64,25 @@ final class BodyFp {
     static void landed(double speed) {
         if (FirstPerson.playing(BodyClips.FP_ROLL)) return;
         ClientMoves.trace(String.format("first person: landing at %.2f (%s)", speed, speed > HARD_LANDING ? "hard" : "soft"));
-        FirstPerson.play(speed > HARD_LANDING ? BodyClips.FP_LAND_HARD : BodyClips.FP_LAND_SOFT);
+        play(speed > HARD_LANDING ? BodyClips.FP_LAND_HARD : BodyClips.FP_LAND_SOFT);
     }
 
     static void vault() {
-        FirstPerson.play(BodyClips.FP_VAULT);
+        play(BodyClips.FP_VAULT);
     }
 
     static void leap() {
-        FirstPerson.play(BodyClips.FP_LEAP);
+        play(BodyClips.FP_LEAP);
     }
 
     static void slideJump() {
-        FirstPerson.play(BodyClips.FP_SLIDE_JUMP);
+        play(BodyClips.FP_SLIDE_JUMP);
     }
 
     /** Each tick of a stair slide: the trailing hand knocks each step it passes. */
     static void stairTick(LocalPlayer p) {
         int floor = Mth.floor(p.getY() * 2); // half steps: slabs too
-        if (stairFloor != Integer.MIN_VALUE && floor < stairFloor) FirstPerson.play(BodyClips.FP_STAIR_BUMP);
+        if (stairFloor != Integer.MIN_VALUE && floor < stairFloor) play(BodyClips.FP_STAIR_BUMP);
         stairFloor = floor;
     }
 

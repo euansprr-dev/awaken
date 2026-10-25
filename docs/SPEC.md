@@ -3287,8 +3287,19 @@ of the plan). No mixins.
   up in a dive slam); wings, arms out flat at the frame's edges trembling with speed (swept out of the frame folding into
   a dive); flight, one fist forward on a boost, palms down in a hover, arms sweeping up to climb, swept back cruising; in
   the Sovereign's form the arms are tinted gold (`FirstPerson.View.tint`).
-- Test: `anims_fp_clips` (the file reads, every clip the body plays is in it, every one-shot gives the hands back).
-  Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3), PACK=feel, HUD on.
-- P1-P3 built. Next: P4 touches, P5 station scenes, P6 the rest. The casts (powers) still draw their own first-person
+- **Touches** (P4, `anims.client.Touches`, `anims.AnimsClips`): quick hand moments from the game's own interaction
+  events (client side), so every module's blocks get them by what they are: a door, trapdoor or gate (`DoorBlock`,
+  `TrapDoorBlock`, `FenceGateBlock`) pushed with a palm (`fp_push`), a lever thrown (`fp_lever`), a button pressed
+  (`fp_button`), a chest, barrel, ender chest or shulker box's lid lifted with both hands (`fp_lid`; the screen opens at
+  once and covers it in single player), berries or a plant that breaks at a touch (no hardness, no collision: flowers,
+  ferns, grass, the Living Wilds' herbs) pinched and plucked (`fp_pluck`), an animal stroked with an empty hand
+  (`fp_pet`), a meal from a bowl held up with the free hand under it (a stance while eating). At most 9 ticks each; the
+  action never waits; a swing cuts them; with the main hand full the off hand does it (each has an `_off` twin), with both
+  full nothing. Settings (feel): `firstPersonMoves` (P1-P3) and `firstPersonTouches` (P4), both on.
+- Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
+  hands back). Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
+  `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
+  PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys.
+- P1-P4 built. Next: P5 station scenes, P6 the rest. The casts (powers) still draw their own first-person
   arms (`CastAnims`); folding them into Hands is the powers module's step, coordinated with the combat plan.
 

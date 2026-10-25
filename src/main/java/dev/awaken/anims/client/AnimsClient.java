@@ -21,7 +21,16 @@ public final class AnimsClient {
     public static void init(IEventBus modBus) {
         FirstPerson.install(Hands.INSTANCE);
         var bus = NeoForge.EVENT_BUS;
-        bus.addListener(ClientTickEvent.Post.class, e -> Hands.tick());
+        bus.addListener(ClientTickEvent.Post.class, e -> {
+            Hands.tick();
+            Touches.tick();
+        });
+        // touches (P4): the game's own interaction events, client side
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock.class, Touches::rightClickBlock);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock.class, Touches::leftClickBlock);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, Touches::entityInteract);
+        bus.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, Touches::interactionKey);
+        FirstPerson.view(Touches::viewPose);
         bus.addListener(RenderFrameEvent.Pre.class, e -> WorldBody.frame());
         bus.addListener(ExtractLevelRenderStateEvent.class, WorldBody::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, WorldBody::onSubmit);

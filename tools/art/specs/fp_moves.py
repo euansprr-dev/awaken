@@ -291,6 +291,45 @@ clip("fp_sovereign_ascend", 16, fists=True,
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Touches (P4; SPEC §24): quick hand moments on things you use, played the moment you use them (the action never waits).
+# Each is the main hand's; its "_off" twin does the same with the off hand, for when the main hand holds something.
+TOUCHES = []
+
+
+def touch(name, length, keys, events=(), note=""):
+    """A one-handed touch and its off-hand twin (mirrored, in from and back out under the frame)."""
+    clip(name, length, fists=True, main=keys, events=events, note=note)
+    off = [(t, OFF_OUT if h == REST_FIST else mf(h), e) for t, h, e in keys]
+    clip(name + "_off", length, fists=True, off=off, events=events, note=note + " (the off hand)")
+    TOUCHES.append(name)
+
+
+# A door, trapdoor or gate: the palm on its edge, pushing it through its swing.
+touch("fp_push", 8, [(0, REST_FIST, "linear"), (2, fist(0.1, -0.12, -0.95), "easeoutcubic"), (4, fist(0.14, -0.14, -1.12), "easeinoutsine"),
+                     (8, REST_FIST, "easeinoutsine")], events=[(2, "touch")], note="a palm pushes the door through")
+# A lever: gripped and thrown.
+touch("fp_lever", 8, [(0, REST_FIST, "linear"), (2, fist(0.12, -0.2, -0.86), "easeoutcubic"), (4, fist(0.22, -0.44, -0.8), "easeinquad"),
+                      (8, REST_FIST, "easeinoutsine")], events=[(4, "throw")], note="the lever thrown")
+# A button: one press.
+touch("fp_button", 6, [(0, REST_FIST, "linear"), (2, fist(0.08, -0.08, -1.0), "easeoutcubic"), (3, fist(0.08, -0.08, -0.95), "easeinoutsine"),
+                       (6, REST_FIST, "easeinoutsine")], events=[(2, "press")], note="a finger press")
+# A plant (a herb, a flower, berries): pinched, plucked with a little shake, carried down to the hip.
+touch("fp_pluck", 9, [(0, REST_FIST, "linear"), (2, fist(0.14, -0.46, -0.84), "easeoutcubic"), (4, fist(0.22, -0.3, -0.9), "easeinoutsine"),
+                      (5, fist(0.24, -0.34, -0.9), "linear"), (7, fist(0.5, -0.62, -0.8), "easeinoutsine"), (9, REST_FIST, "easeinoutsine")],
+      events=[(4, "pluck")], note="pinch, pluck, to the hip")
+# A creature: a hand stroking it, twice.
+touch("fp_pet", 14, [(0, REST_FIST, "linear"), (3, fist(0.12, -0.36, -0.8), "easeoutcubic"), (6, fist(0.0, -0.4, -0.76), "easeinoutsine"),
+                     (9, fist(0.12, -0.36, -0.8), "easeinoutsine"), (11, fist(0.0, -0.4, -0.76), "easeinoutsine"), (14, REST_FIST, "easeinoutsine")],
+      note="a hand strokes the creature")
+# A chest, barrel or cache: both hands lift the lid while the server answers (the screen opens at once).
+LID_A, LID_B = fist(0.2, -0.36, -0.8), fist(0.2, -0.08, -0.86)
+clip("fp_lid", 8, fists=True, main=[(0, REST_FIST, "linear"), (2, LID_A, "easeoutcubic"), (5, LID_B, "easeinoutsine"), (8, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (2, mf(LID_A), "easeoutcubic"), (5, mf(LID_B), "easeinoutsine"), (8, OFF_OUT, "easeinoutsine")],
+     events=[(5, "lift")], note="both hands lift the lid")
+TOUCHES.append("fp_lid")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Output
 
 def document():

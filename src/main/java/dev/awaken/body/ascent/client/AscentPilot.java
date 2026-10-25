@@ -21,6 +21,8 @@ import net.minecraft.util.Mth;
  * route rec|play|stop [name] record a run's keys and view, or play one back from its start ({@link AscentRoutes})
  * aether &lt;0..1&gt;              set this client's Aether (to film the meter and its empty)
  * double &lt;key&gt;               a double tap, as a player's: 2 ticks down, 3 up, 2 down (a barrel roll: double right)
+ * use | attack               one click of the use or attack key (a door, a lever, a plant: the touches, Hands P4)
+ * usehold &lt;ticks&gt;            hold the use key (eating)
  * stop                       let go of everything
  * </pre>
  */
@@ -33,6 +35,8 @@ public final class AscentPilot {
     private static int aimTicks;
     /** A double tap in progress: the key and how far along (-1: none). */
     private static int doubleKey = -1, doubleAge = -1;
+    /** Ticks left holding the use key ("usehold"). */
+    private static int useHold;
     /** Keys were pressed last tick (released once when the holds run out). */
     private static boolean holding;
     private static String script = "";
@@ -80,6 +84,12 @@ public final class AscentPilot {
                 doubleKey = key(a[1]);
                 doubleAge = 0;
             }
+            case "use" -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+            case "attack" -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey());
+            case "usehold" -> {
+                useHold = Integer.parseInt(a[1]);
+                mc.options.keyUse.setDown(true);
+            }
             case "aether" -> AscentMoves.aether = Math.max(0, Math.min(1, Double.parseDouble(a[1])));
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
@@ -111,6 +121,7 @@ public final class AscentPilot {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        if (useHold > 0 && --useHold == 0) mc.options.keyUse.setDown(false);
         if (!script.isEmpty()) {
             age++;
             switch (script) {

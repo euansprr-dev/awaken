@@ -255,6 +255,9 @@ public final class FirstPerson {
         return p != null && p.armsInWorld();
     }
 
+    /** The touches' switch (the feel settings' firstPersonTouches): hands on the things you use. */
+    public static volatile java.util.function.BooleanSupplier touchesOn = () -> true;
+
     /** The comfort setting (the body's reduced motion): halves the procedural layer (look-lag) when true. */
     public static volatile java.util.function.BooleanSupplier reducedMotion = () -> false;
 
