@@ -15,8 +15,8 @@ final class AlpineTests {
 
     static void register() {
         AwakenTests.register("terrain_alpine_erosion", 40, h -> {
-            // a mountainside rising toward +x at 0.6 a block, its ground near y 200 (offset 0.56 there)
-            DensityFunction slope = DensityFunctions.add(DensityFunctions.constant(0.56f),
+            // a mountainside rising toward +x at 0.6 a block, its ground near y 179 (offset 0.4 there), under the summits' knee
+            DensityFunction slope = DensityFunctions.add(DensityFunctions.constant(0.4f),
                     DensityFunctions.mul(DensityFunctions.constant(0.6f / 128f), xCoordinate()));
             DensitySampler s = new ErodedFunction(slope).compileSampler(null);
             SamplerContext ctx = SamplerContext.EMPTY_UNCACHED;
@@ -42,6 +42,10 @@ final class AlpineTests {
             DensitySampler low = new ErodedFunction(DensityFunctions.add(DensityFunctions.constant(-0.5f),
                     DensityFunctions.mul(DensityFunctions.constant(0.6f / 128f), xCoordinate()))).compileSampler(null);
             h.assertTrue(Math.abs(low.sampleValue(ctx, 0, 0, 50) + 0.5f) < 1e-6f, "lowland keeps its shape");
+            // summits round off toward the ceiling instead of flattening on it
+            h.assertTrue(ErodedFunction.summit(ErodedFunction.KNEE) == ErodedFunction.KNEE && ErodedFunction.summit(150f) == 150f, "untouched below the knee");
+            float a = ErodedFunction.summit(260f), b = ErodedFunction.summit(320f), c = ErodedFunction.summit(420f);
+            h.assertTrue(a < b && b < c && c < ErodedFunction.TOP, "higher ground stays higher, under the top: " + a + " " + b + " " + c);
             h.succeed();
         });
 
@@ -65,7 +69,7 @@ final class AlpineTests {
     }
 
     private static float change(DensitySampler s, SamplerContext ctx, int x, int z) {
-        return (s.sampleValue(ctx, x, 0, z) - (0.56f + 0.6f / 128f * x)) * 128f;
+        return (s.sampleValue(ctx, x, 0, z) - (0.4f + 0.6f / 128f * x)) * 128f;
     }
 
     /** The block x coordinate as a density function (a gradient along x with slope 1). */

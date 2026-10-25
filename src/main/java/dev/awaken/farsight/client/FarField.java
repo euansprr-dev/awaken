@@ -7,7 +7,9 @@ import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.awaken.Awaken;
 import dev.awaken.farsight.FarColumns;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import dev.awaken.farsight.FarStore;
+import dev.awaken.farsight.FarTrees;
 import dev.awaken.farsight.FarWorkers;
 import dev.awaken.farsight.Rings;
 import net.minecraft.server.level.ServerLevel;
@@ -64,6 +66,20 @@ final class FarField implements AutoCloseable {
     int genAsked, genUploaded;
     volatile int epoch;
 
+    /**
+     * The far forests ({@link FarTrees}): per ring 1-4 slot, two runs of {@link FarTrees#MAX} trees (predicted, then the
+     * real chunks'), 16 bytes each, in one texel buffer the tree shader reads; and how many each run holds.
+     */
+    final GpuBuffer trees;
+    final int[][] treeCount = new int[Rings.RINGS][SLOTS * 2];
+    static final int TREE_BYTES = 16, TREE_RINGS = FarTrees.LAST_RING - FarTrees.FIRST_RING + 1;
+    private final ByteBuffer treeStaging = MemoryUtil.memAlloc(FarTrees.MAX * TREE_BYTES).order(ByteOrder.LITTLE_ENDIAN);
+
+    /** A tree run's index in the buffer (runs of {@link FarTrees#MAX} trees). */
+    static int treeRun(int ring, int slot, boolean generated) {
+        return ((ring - FarTrees.FIRST_RING) * SLOTS + slot) * 2 + (generated ? 1 : 0);
+    }
+
     private final ByteBuffer zeros, staging;
     private final FarWorkers.Wanted wanted = this::wanted;
 
@@ -88,6 +104,8 @@ final class FarField implements AutoCloseable {
         genInfoView = device.createTextureView(genInfo);
         genCrownView = device.createTextureView(genCrown);
         shadeView = device.createTextureView(shade);
+        trees = device.createBuffer(() -> "awaken far sight trees", GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM_TEXEL_BUFFER,
+                (long) TREE_RINGS * SLOTS * 2 * FarTrees.MAX * TREE_BYTES);
         for (int r = 0; r < Rings.RINGS; r++) {
             expect[r] = new AtomicLongArray(SLOTS);
             for (int i = 0; i < SLOTS; i++) expect[r].set(i, NONE);
@@ -114,6 +132,7 @@ final class FarField implements AutoCloseable {
                 asked[r][i] = false;
                 genQueued[r][i] = 0;
                 genHi[r][i] = 0;
+                treeCount[r][i * 2] = treeCount[r][i * 2 + 1] = 0;
             }
         }
         clearAll();
@@ -175,6 +194,7 @@ final class FarField implements AutoCloseable {
                     asked[ring][slot] = false;
                     genQueued[ring][slot] = 0;
                     genHi[ring][slot] = 0;
+                    treeCount[ring][slot * 2] = treeCount[ring][slot * 2 + 1] = 0;
                 }
                 if (ready[ring][slot] || isHidden) continue;
                 missingNow++;
@@ -266,6 +286,7 @@ final class FarField implements AutoCloseable {
             upload(enc, genColour, p.colour, x, y);
             upload(enc, genInfo, p.info, x, y);
             upload(enc, genCrown, p.crown, x, y);
+            uploadTrees(enc, p, slot, true);
             genUploaded++;
             // a built-up patch can stand above its prediction: culling assumes the higher of the two
             genHi[p.ring][slot] = (short) (p.range & 0xFFFF);
@@ -283,6 +304,7 @@ final class FarField implements AutoCloseable {
         upload(enc, colour, p.colour, x, y);
         upload(enc, info, p.info, x, y);
         upload(enc, crown, p.crown, x, y);
+        uploadTrees(enc, p, slot, false);
         ready[p.ring][slot] = true;
         lo[p.ring][slot] = (short) (p.range >>> 16);
         hi[p.ring][slot] = (short) (p.range & 0xFFFF);
@@ -299,6 +321,17 @@ final class FarField implements AutoCloseable {
         for (int t : texels) staging.putInt(t);
         staging.flip();
         enc.writeToTexture(into, staging, 0, 0, x, y, Rings.PATCH, Rings.PATCH);
+    }
+
+    private void uploadTrees(CommandEncoder enc, FarWorkers.Patch p, int slot, boolean generated) {
+        if (!FarTrees.plants(p.ring)) return;
+        treeCount[p.ring][slot * 2 + (generated ? 1 : 0)] = p.treeCount;
+        if (p.treeCount == 0) return;
+        treeStaging.clear();
+        for (int i = 0; i < p.treeCount * FarTrees.INTS; i++) treeStaging.putInt(p.trees[i]);
+        treeStaging.flip();
+        long at = (long) treeRun(p.ring, slot, generated) * FarTrees.MAX * TREE_BYTES;
+        enc.writeToBuffer(trees.slice(at, (long) p.treeCount * TREE_BYTES), treeStaging);
     }
 
     private void uploadHeights(CommandEncoder enc, GpuTexture into, int[] texels, int x, int y) {
@@ -320,15 +353,17 @@ final class FarField implements AutoCloseable {
     }
 
     int memoryBytes() {
-        return WIDTH * HEIGHT * (2 * 2 + 4 * 7);
+        return WIDTH * HEIGHT * (2 * 2 + 4 * 7) + (int) trees.size();
     }
 
     @Override
     public void close() {
         for (GpuTextureView v : new GpuTextureView[]{heightView, colourView, infoView, crownView, genHeightView, genColourView, genInfoView, genCrownView, shadeView}) v.close();
         for (GpuTexture t : new GpuTexture[]{height, colour, info, crown, genHeight, genColour, genInfo, genCrown, shade}) t.close();
+        trees.close();
         MemoryUtil.memFree(zeros);
         MemoryUtil.memFree(staging);
+        MemoryUtil.memFree(treeStaging);
         Awaken.LOG.info("[farsight] released the ring atlases");
     }
 }

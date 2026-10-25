@@ -108,15 +108,18 @@ bool surfaceAt(int r, vec2 p, out Corner c) {
     return false;
 }
 
-void hide() {
-    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-    vRel = vec3(0.0);
-    vNormal = vec3(0.0, 1.0, 0.0);
-    vColor = vec3(0.0);
-    vInfo = vec4(0.0);
-    vCrown = vec4(0.0);
-    vFlags = ivec2(0);
-    vCell = 1.0;
+// nothing known here yet (the first second, before even the horizon ring has arrived): open sea, which the horizon fog
+// and the coarse ring's first patches soon replace. Never a collapsed vertex: those leave slivers across the screen.
+Corner sea() {
+    Corner c;
+    c.h = FarFog.w;
+    c.n = vec2(0.0);
+    c.col = vec3(0.17, 0.27, 0.42);
+    c.info = vec4(64.0 / 255.0, 0.0, 0.0, 1.0);
+    c.crown = vec4(0.0, 0.0, 0.0, 1.0);
+    c.flags = 0;
+    c.shape = 0;
+    return c;
 }
 
 void main() {
@@ -130,6 +133,8 @@ void main() {
     float m = r < 6 ? clamp((MORPH - e) / (MORPH - 2.0), 0.0, 1.0) : 0.0;
     Corner c;
     bool own = cornerAt(r, l, c);
+    // the outermost ring has nothing coarser: its far edge takes the corner just inside
+    if (!own && r == 6) own = cornerAt(r, min(l, ivec2(255)), c);
     if (!own) m = 1.0;
     if (m > 0.0) {
         Corner k;
@@ -145,8 +150,7 @@ void main() {
                 c = k;
             }
         } else if (!own) {
-            hide();
-            return;
+            c = sea();
         }
     }
     vec3 n = vec3(c.n.x, 0.0, c.n.y);

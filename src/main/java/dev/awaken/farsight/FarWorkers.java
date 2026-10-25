@@ -22,6 +22,9 @@ public final class FarWorkers {
         public boolean generated;
         public final int[] height = new int[Rings.PATCH * Rings.PATCH], colour = new int[Rings.PATCH * Rings.PATCH],
                 info = new int[Rings.PATCH * Rings.PATCH], crown = new int[Rings.PATCH * Rings.PATCH];
+        /** The patch's trees ({@link FarTrees}), rings 1-4. */
+        public final int[] trees = new int[FarTrees.MAX * FarTrees.INTS];
+        public int treeCount;
     }
 
     /** Whether a patch is still in its window for that epoch. Called on the workers, so it must be cheap and thread-safe. */
@@ -117,16 +120,29 @@ public final class FarWorkers {
             p.epoch = job.epoch();
             p.generated = job.generated();
             try {
+                p.treeCount = 0;
+                if (job.level() != bound) {
+                    bound = job.level();
+                    columns = FarColumns.of(bound);
+                }
                 if (job.generated()) {
                     FarStore store = FarStore.peek(job.level());
                     p.range = store == null ? -1 : store.patch(job.ring(), job.px(), job.pz(), p.height, p.colour, p.info, p.crown);
-                } else {
-                    if (job.level() != bound) {
-                        bound = job.level();
-                        columns = FarColumns.of(bound);
+                    if (p.range >= 0 && FarTrees.plants(job.ring())) {
+                        // the real chunks' trees, shaped as their biome grows them
+                        int s = Rings.cellSize(job.ring());
+                        for (int k = 0; k < p.crown.length; k++) {
+                            if (p.height[k] == 0) continue;
+                            int x = (job.px() * Rings.PATCH + (k & 15)) * s, z = (job.pz() * Rings.PATCH + (k >> 4)) * s;
+                            int shape = FarPalette.look(columns.biome(x, (int) FarColumns.unpackHeight(p.height[k]), z)).shape();
+                            p.crown[k] = p.crown[k] & 0xFFFFFF | shape << 24;
+                        }
+                        p.treeCount = FarTrees.plant(job.ring(), job.px(), job.pz(), p.height, p.colour, p.info, p.crown, columns.seaLevel(), p.trees);
                     }
+                } else {
                     long t0 = System.nanoTime(), p0 = columns.probes;
                     p.range = columns.patch(job.ring(), job.px(), job.pz(), p.height, p.colour, p.info, p.crown);
+                    p.treeCount = FarTrees.plant(job.ring(), job.px(), job.pz(), p.height, p.colour, p.info, p.crown, columns.seaLevel(), p.trees);
                     columnNanos.addAndGet(System.nanoTime() - t0);
                     columnCount.addAndGet(Rings.PATCH * Rings.PATCH);
                     probes.addAndGet(columns.probes - p0);

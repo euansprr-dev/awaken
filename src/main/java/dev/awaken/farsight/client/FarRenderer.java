@@ -15,6 +15,7 @@ import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.awaken.farsight.FarColumns;
 import dev.awaken.farsight.FarLandmarks;
+import dev.awaken.farsight.FarTrees;
 import dev.awaken.farsight.Rings;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import org.joml.FrustumIntersection;
@@ -59,8 +60,27 @@ final class FarRenderer implements AutoCloseable {
     /** Index buffers by piece width (8, 16, .. 64 cells), each 64 rows tall; also the landmarks' quads. */
     private final GpuBuffer[] widths = new GpuBuffer[WIDTHS];
     private final GpuBuffer quads;
+    /** Far forests: one tree run's triangles (5 quads a tree), each run's patch origin, and the frame's draws. */
+    static final int TREE_VERTS = 20, TREE_INDICES = 30, COMMAND_BYTES = 20;
+    private final GpuBuffer treeIndices;
+    private final MappableRingBuffer treeSlots = new MappableRingBuffer(() -> "awaken far sight tree slots",
+            GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM_TEXEL_BUFFER, FarField.TREE_RINGS * Rings.PATCHES * Rings.PATCHES * 16);
+    private final MappableRingBuffer treeCommands = new MappableRingBuffer(() -> "awaken far sight tree draws",
+            GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_INDIRECT_PARAMETERS, FarField.TREE_RINGS * Rings.PATCHES * Rings.PATCHES * 2 * COMMAND_BYTES);
+    /** This frame's tree draws: index count and first vertex per run in view. */
+    private final int[] treeCount = new int[FarField.TREE_RINGS * Rings.PATCHES * Rings.PATCHES * 2], treeVertex = new int[treeCount.length];
+    int treeDraws, treesDrawn;
+    /** Multi-draw indirect where the backend has it (Vulkan); a draw per run elsewhere (OpenGL 4.1 has none). */
+    private final boolean indirect = "Vulkan".equalsIgnoreCase(RenderSystem.getDevice().getDeviceInfo().backendName());
     private GpuTexture depth;
     private GpuTextureView depthView;
+    /**
+     * Which real chunks the client has (R8, 64×64, by chunk coordinate masked to 63): far terrain stays hidden under
+     * the real chunks only where they are there, so a teleport or a fast flight never opens a hole to the sky.
+     */
+    private final GpuTexture chunks;
+    private final GpuTextureView chunksView;
+    private final ByteBuffer chunkBytes = MemoryUtil.memCalloc(64 * 64);
 
     // the frame's pieces: ring, first cell (window-local), width and height in cells
     private final int[] pRing = new int[MAX_DRAWS], pX = new int[MAX_DRAWS], pZ = new int[MAX_DRAWS], pW = new int[MAX_DRAWS], pH = new int[MAX_DRAWS];
@@ -72,7 +92,7 @@ final class FarRenderer implements AutoCloseable {
     private final GpuQueryPool[] timers = new GpuQueryPool[3];
     private int timerFrame;
     private boolean timing = true;
-    private double gpuNanos;
+    private double gpuNanos, bakeNanos;
     private int gpuFrames;
 
     FarRenderer() {
@@ -100,6 +120,32 @@ final class FarRenderer implements AutoCloseable {
         data.flip();
         quads = RenderSystem.getDevice().createBuffer(() -> "awaken far sight quads", GpuBuffer.USAGE_INDEX, data);
         MemoryUtil.memFree(data);
+        ByteBuffer ti = MemoryUtil.memAlloc(FarTrees.MAX * TREE_INDICES * 2).order(ByteOrder.nativeOrder());
+        for (int t = 0; t < FarTrees.MAX; t++) {
+            for (int q = 0; q < 5; q++) {
+                int v = t * TREE_VERTS + q * 4;
+                ti.putShort((short) v).putShort((short) (v + 1)).putShort((short) (v + 2)).putShort((short) (v + 2)).putShort((short) (v + 3)).putShort((short) v);
+            }
+        }
+        ti.flip();
+        treeIndices = RenderSystem.getDevice().createBuffer(() -> "awaken far sight tree triangles", GpuBuffer.USAGE_INDEX, ti);
+        MemoryUtil.memFree(ti);
+        chunks = RenderSystem.getDevice().createTexture(() -> "awaken far sight chunks", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
+                GpuFormat.R8_UNORM, 64, 64, 1, 1);
+        chunksView = RenderSystem.getDevice().createTextureView(chunks);
+    }
+
+    /** Marks which chunks within {@code radius} of chunk (cx, cz) the client has. A 64×64 sweep at most: cheap. */
+    void chunks(net.minecraft.world.level.chunk.ChunkSource source, int cx, int cz, int radius) {
+        radius = Math.min(radius, 31);
+        for (int dz = -radius; dz <= radius; dz++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                int x = cx + dx, z = cz + dz;
+                chunkBytes.put(((z & 63) << 6) | (x & 63), source.hasChunk(x, z) ? (byte) 255 : 0);
+            }
+        }
+        chunkBytes.clear();
+        RenderSystem.getDevice().createCommandEncoder().writeToTexture(chunks, chunkBytes, 0, 0, 0, 0, 64, 64);
     }
 
     /** Far Sight's depth texture at the main target's size, recreated when the window is. */
@@ -143,6 +189,48 @@ final class FarRenderer implements AutoCloseable {
                 rect(field, r, s, hx1, hz0, Rings.SIZE, hz1, camY, hiddenWithin, minY, maxY);
             } else {
                 rect(field, r, s, 0, 0, Rings.SIZE, Rings.SIZE, camY, hiddenWithin, minY, maxY);
+            }
+        }
+    }
+
+    /**
+     * Decides this frame's tree runs: for rings 1-4, every patch in view, not wholly under the real chunks and not wholly
+     * inside the finer ring's window (its own trees stand there), draws its predicted run and its real chunks' run.
+     */
+    void planTrees(FarField field, double camY, float hiddenWithin) {
+        treeDraws = 0;
+        treesDrawn = 0;
+        for (int r = FarTrees.FIRST_RING; r <= FarTrees.LAST_RING; r++) {
+            if (!field.valid[r]) continue;
+            int pb = Rings.patchBlocks(r);
+            // the finer ring's window, blocks from the camera
+            float ix0 = Float.MAX_VALUE, iz0 = Float.MAX_VALUE, ix1 = -Float.MAX_VALUE, iz1 = -Float.MAX_VALUE;
+            if (field.valid[r - 1]) {
+                ix0 = originX[r - 1];
+                iz0 = originZ[r - 1];
+                ix1 = ix0 + Rings.SIZE * Rings.cellSize(r - 1);
+                iz1 = iz0 + Rings.SIZE * Rings.cellSize(r - 1);
+            }
+            for (int j = 0; j < Rings.PATCHES; j++) {
+                for (int i = 0; i < Rings.PATCHES; i++) {
+                    int px = field.winX[r] + i, pz = field.winZ[r] + j, slot = Rings.slot(px, pz);
+                    int pred = field.treeCount[r][slot * 2], gen = field.treeCount[r][slot * 2 + 1];
+                    if (pred == 0 && gen == 0) continue;
+                    float ax = originX[r] + i * pb, az = originZ[r] + j * pb, bx = ax + pb, bz = az + pb;
+                    if (ax >= ix0 && az >= iz0 && bx <= ix1 && bz <= iz1) continue;
+                    float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
+                    if (fx * fx + fz * fz < hiddenWithin * hiddenWithin) continue;
+                    int lo = (field.lo[r][slot] & 0xFFFF) - FarColumns.HEIGHT_BASE - 2, hi = field.top(r, slot) - FarColumns.HEIGHT_BASE + 40;
+                    if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
+                    for (int layer = 0; layer < 2; layer++) {
+                        int n = layer == 0 ? pred : gen;
+                        if (n == 0) continue;
+                        treeCount[treeDraws] = n * TREE_INDICES;
+                        treeVertex[treeDraws] = FarField.treeRun(r, slot, layer == 1) * FarTrees.MAX * TREE_VERTS;
+                        treeDraws++;
+                        treesDrawn += n;
+                    }
+                }
             }
         }
     }
@@ -266,6 +354,7 @@ final class FarRenderer implements AutoCloseable {
                 pass.setUniform("GenCrownSampler", field.genCrownView, nearest);
                 pass.setUniform("ShadeSampler", field.shadeView, nearest);
                 pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+                pass.setUniform("ChunkSampler", chunksView, nearest);
                 int bound = -1;
                 for (int i = 0; i < pieces; i++) {
                     int k = pW[i] / 8 - 1;
@@ -275,6 +364,46 @@ final class FarRenderer implements AutoCloseable {
                     }
                     pass.setUniform("FarDraw", draws.slice((long) i * align, 16));
                     pass.drawIndexed(pW[i] * pH[i] * INDICES_PER_CELL, 1, 0, 0, 0);
+                }
+            }
+            if (treeDraws > 0) {
+                GpuBuffer slots = treeSlots.currentBuffer();
+                try (var view = slots.map(false, true)) {
+                    ByteBuffer d = view.data();
+                    for (int r = FarTrees.FIRST_RING; r <= FarTrees.LAST_RING; r++) {
+                        int pb = Rings.patchBlocks(r);
+                        for (int j = 0; j < Rings.PATCHES; j++) {
+                            for (int i = 0; i < Rings.PATCHES; i++) {
+                                int px = field.winX[r] + i, pz = field.winZ[r] + j;
+                                int at = ((r - FarTrees.FIRST_RING) * Rings.PATCHES * Rings.PATCHES + Rings.slot(px, pz)) * 16;
+                                d.putInt(at, px * pb).putInt(at + 4, pz * pb).putInt(at + 8, r).putInt(at + 12, 0);
+                            }
+                        }
+                    }
+                }
+                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TREES));
+                pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
+                pass.setUniform("Fog", RenderSystem.getShaderFog());
+                pass.setUniform("FarFrame", frame);
+                pass.setUniform("Trees", field.trees);
+                pass.setUniform("TreeSlots", slots);
+                pass.setUniform("ShadeSampler", field.shadeView, nearest);
+                pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
+                pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+                pass.setUniform("ChunkSampler", chunksView, nearest);
+                pass.setIndexBuffer(treeIndices, IndexType.SHORT);
+                if (indirect) {
+                    GpuBuffer commands = treeCommands.currentBuffer();
+                    try (var view = commands.map(false, true)) {
+                        ByteBuffer d = view.data();
+                        for (int i = 0; i < treeDraws; i++) {
+                            int at = i * COMMAND_BYTES;
+                            d.putInt(at, treeCount[i]).putInt(at + 4, 1).putInt(at + 8, 0).putInt(at + 12, treeVertex[i]).putInt(at + 16, 0);
+                        }
+                    }
+                    pass.drawIndexedIndirect(commands.slice(0, (long) treeDraws * COMMAND_BYTES), treeDraws);
+                } else {
+                    for (int i = 0; i < treeDraws; i++) pass.drawIndexed(treeCount[i], 1, 0, treeVertex[i], 0);
                 }
             }
             if (marks > 0) {
@@ -291,6 +420,8 @@ final class FarRenderer implements AutoCloseable {
         frameUbo.rotate();
         drawUbo.rotate();
         markUbo.rotate();
+        treeSlots.rotate();
+        treeCommands.rotate();
     }
 
     /** Opens this frame's GPU timing (before the bake), after reading the result of three frames ago. */
@@ -299,11 +430,13 @@ final class FarRenderer implements AutoCloseable {
         try {
             int i = timerFrame % timers.length;
             if (timers[i] == null) {
-                timers[i] = RenderSystem.getDevice().createTimestampQueryPool(2);
+                timers[i] = RenderSystem.getDevice().createTimestampQueryPool(3);
             } else if (timerFrame >= timers.length) {
-                var v = timers[i].getValues(0, 2);
-                if (v[0].isPresent() && v[1].isPresent()) {
-                    gpuNanos += (v[1].getAsLong() - v[0].getAsLong()) * (double) RenderSystem.getDevice().getDeviceInfo().timestampPeriod();
+                var v = timers[i].getValues(0, 3);
+                if (v[0].isPresent() && v[1].isPresent() && v[2].isPresent()) {
+                    double period = RenderSystem.getDevice().getDeviceInfo().timestampPeriod();
+                    bakeNanos += (v[1].getAsLong() - v[0].getAsLong()) * period;
+                    gpuNanos += (v[2].getAsLong() - v[0].getAsLong()) * period;
                     gpuFrames++;
                 }
             }
@@ -313,20 +446,31 @@ final class FarRenderer implements AutoCloseable {
         }
     }
 
-    void timeEnd() {
+    /** Between the bake and the draw: the bake's share (timestamps land at pass boundaries on Apple GPUs, as here). */
+    void timeBaked() {
         if (!timing) return;
         try {
             RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], 1);
         } catch (RuntimeException e) {
             timing = false;
         }
+    }
+
+    void timeEnd() {
+        if (!timing) return;
+        try {
+            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], 2);
+        } catch (RuntimeException e) {
+            timing = false;
+        }
         timerFrame++;
     }
 
-    /** Mean GPU milliseconds per frame since the last call, or -1 if nothing was timed. */
-    double gpuMillis() {
-        double ms = gpuFrames == 0 ? -1 : gpuNanos / gpuFrames / 1e6;
+    /** Mean GPU milliseconds per frame (all, and the bake's part) since the last call, or -1 if nothing was timed. */
+    double[] gpuMillis() {
+        double[] ms = gpuFrames == 0 ? new double[]{-1, -1} : new double[]{gpuNanos / gpuFrames / 1e6, bakeNanos / gpuFrames / 1e6};
         gpuNanos = 0;
+        bakeNanos = 0;
         gpuFrames = 0;
         return ms;
     }
@@ -347,6 +491,12 @@ final class FarRenderer implements AutoCloseable {
         markUbo.close();
         for (GpuBuffer b : widths) b.close();
         quads.close();
+        treeIndices.close();
+        treeSlots.close();
+        treeCommands.close();
+        chunksView.close();
+        chunks.close();
+        MemoryUtil.memFree(chunkBytes);
         for (GpuQueryPool t : timers) if (t != null) t.close();
         if (depthView != null) depthView.close();
         if (depth != null) depth.close();

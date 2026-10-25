@@ -121,7 +121,7 @@ public final class Erosion {
         return cosTurns(t - 0.25f);
     }
 
-    static int hash(int x, int z, int seed) {
+    public static int hash(int x, int z, int seed) {
         int h = x * 0x27D4EB2D ^ z * 0x165667B1 ^ seed * 0x5BD1E995;
         h ^= h >>> 15;
         h *= 0x2C1B3C6D;
@@ -131,7 +131,7 @@ public final class Erosion {
     }
 
     /** A hash's low 24 bits as 0..1. */
-    static float unit(int h) {
+    public static float unit(int h) {
         return (h & 0xFFFFFF) / 16777216f;
     }
 

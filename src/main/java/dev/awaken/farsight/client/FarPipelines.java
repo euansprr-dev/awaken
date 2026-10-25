@@ -1,6 +1,7 @@
 package dev.awaken.farsight.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
 import com.mojang.renderpearl.api.pipeline.BlendFunction;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
@@ -42,6 +43,7 @@ final class FarPipelines {
             .withUniform("GenCrownSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("ShadeSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("ChunkSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .build();
 
     static final BindGroupLayout BAKE_INPUTS = BindGroupLayout.builder()
@@ -57,6 +59,30 @@ final class FarPipelines {
             .withLocation(Awaken.id("pipeline/farsight_terrain"))
             .withVertexShader(Awaken.id("core/farsight_terrain"))
             .withFragmentShader(Awaken.id("core/farsight_terrain"))
+            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withCull(false)
+            .build();
+
+    static final BindGroupLayout TREE_INPUTS = BindGroupLayout.builder()
+            .withUniform("FarFrame", UniformType.UNIFORM_BUFFER)
+            .withUniform("Trees", UniformType.TEXEL_BUFFER, GpuFormat.RGBA32_UINT)
+            .withUniform("TreeSlots", UniformType.TEXEL_BUFFER, GpuFormat.RGBA32_SINT)
+            .withUniform("ShadeSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("GenHeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("ChunkSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .build();
+
+    /** Far forests: opaque voxel trees from the tree buffer, after the terrain, into the same targets. */
+    static final RenderPipeline TREES = RenderPipeline.builder()
+            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
+            .withBindGroupLayout(BindGroupLayouts.FOG)
+            .withBindGroupLayout(TREE_INPUTS)
+            .withLocation(Awaken.id("pipeline/farsight_trees"))
+            .withVertexShader(Awaken.id("core/farsight_trees"))
+            .withFragmentShader(Awaken.id("core/farsight_trees"))
             .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
             .withColorTargetState(ColorTargetState.DEFAULT)
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
@@ -99,6 +125,7 @@ final class FarPipelines {
         e.registerOptionalPipeline(TERRAIN);
         e.registerOptionalPipeline(BAKE);
         e.registerOptionalPipeline(MARKS);
+        e.registerOptionalPipeline(TREES);
     }
 
     /** Whether both pipelines compiled; checked once per resource load (a failed one would recompile every lookup). */
@@ -106,7 +133,7 @@ final class FarPipelines {
         if (ok < 0) {
             try {
                 ok = RenderSystem.getCompiledPipelineNullable(TERRAIN) != null && RenderSystem.getCompiledPipelineNullable(BAKE) != null
-                        && RenderSystem.getCompiledPipelineNullable(MARKS) != null ? 1 : 0;
+                        && RenderSystem.getCompiledPipelineNullable(MARKS) != null && RenderSystem.getCompiledPipelineNullable(TREES) != null ? 1 : 0;
             } catch (RuntimeException e) {
                 ok = 0;
             }

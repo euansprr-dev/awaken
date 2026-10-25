@@ -168,11 +168,14 @@ public final class FarSightClient {
         int bake = field.dirty | 1 << (bakeTurn++ % Rings.RINGS);
         gpu.bake(field, bake, sun, sun.y > 0.01f);
         field.dirty = 0;
+        renderer.timeBaked();
+        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level.getChunkSource(), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
         float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;
         renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), clipStart,
                 mc.level.getMinY(), mc.level.getMaxY());
+        renderer.planTrees(field, cam.y, clipStart);
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
         float rain = mc.level.getRainLevel(partialTick), thunder = mc.level.getThunderLevel(partialTick);
         float elevation = Math.max(0f, sun.y);
@@ -282,9 +285,10 @@ public final class FarSightClient {
         double cpu = cpuFrames == 0 ? -1 : cpuNanos / 1e6 / cpuFrames;
         cpuNanos = 0;
         cpuFrames = 0;
+        double[] gpu = renderer.gpuMillis();
         return String.format(Locale.ROOT,
-                "%s gpu_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
-                drawing() ? "drawing" : enabled ? "on" : "off", renderer.gpuMillis(), cpu, rings, workers.queued(), renderer.pieces, renderer.cells,
+                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
+                drawing() ? "drawing" : enabled ? "on" : "off", gpu[0], gpu[1], cpu, rings, workers.queued(), renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, (field.memoryBytes() + renderer.memoryBytes()) >> 20);
     }

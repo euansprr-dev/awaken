@@ -4,6 +4,7 @@
 #include <minecraft:fog.glsl>
 #include <awaken:farsight.glsl>
 #include <awaken:farsight_erosion.glsl>
+#include <awaken:farsight_air.glsl>
 
 // AWAKEN Far Sight 2: what far ground looks like, per pixel.
 // - Relief finer than the mesh: Awakened Alpine's erosion octaves between the ring's cell and a few pixels, lit.
@@ -17,6 +18,7 @@
 //   game's own weather fog; at the horizon it fades into the sky. Under the real chunks it stays hidden, dithering in.
 
 uniform sampler2D LightSampler;
+uniform sampler2D ChunkSampler;     // which real chunks the client has (64x64, chunk coordinate masked to 63)
 
 layout(location = 0) in vec3 vRel;
 layout(location = 1) in vec3 vNormal;
@@ -29,7 +31,6 @@ layout(location = 6) in float vCell;
 layout(location = 0) out vec4 fragColor;
 
 const vec3 STONE = vec3(0.50, 0.49, 0.47), SCREE = vec3(0.56, 0.54, 0.51), SNOW = vec3(0.93, 0.95, 0.98);
-const vec3 SHADE_TINT = vec3(0.86, 0.93, 1.14);
 
 float bayer4(vec2 p) {
     ivec2 q = ivec2(p) & 3;
@@ -65,8 +66,12 @@ float snowLine(vec2 world, vec2 g) {
 
 void main() {
     float horizontal = length(vRel.xz);
-    if (horizontal < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) discard;
     vec2 rel = vRel.xz + FarCam.xz;                       // blocks from FarCamInt: exact cells, any distance out
+    // under the real chunks it stays hidden, but only where they are there (a fresh teleport, a fast flight)
+    if (horizontal < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+        ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
+        if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) discard;
+    }
     float y = vRel.y + FarFog.z;
     float footprint = max(fwidth(vRel.x), fwidth(vRel.z)); // blocks a pixel spans here
     int flags = vFlags.x;
@@ -94,15 +99,18 @@ void main() {
         // shallows show their sandy floor through the water; deep water keeps its colour
         vec3 shallow = mix(vec3(0.80, 0.76, 0.58) * (c.r + c.g + c.b) / 1.2, c * 1.5, 0.5);
         c = mix(shallow, c, smoothstep(1.0, 9.0, depth));
-    } else if (!generated) {
-        // stone where the ground is too steep to hold soil; scree beneath the cliffs
+    } else {
+        // stone where the ground is too steep to hold soil; scree beneath the cliffs (the real chunks' colour where seen)
         float edge = 0.25 * (jitter - 0.5) * grain;
-        float rock = smoothstep(ROCK_SLOPE - 0.2, ROCK_SLOPE + 0.1, slope + edge);
-        float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + edge) * (1.0 - rock);
-        if ((flags & 4) != 0) c = mix(c, band(y), smoothstep(0.5, 1.2, slope) * 0.85);
-        else if ((flags & 8) != 0) c = mix(c, STONE, 0.6 + 0.4 * rock);
-        else c = mix(mix(c, SCREE, scree * 0.85), STONE, rock * 0.9);
-        // forests: until trees stand here, a canopy of crowns speckled tree by tree (gone once a tree is under a pixel)
+        float rock = generated ? 0.0 : smoothstep(ROCK_SLOPE - 0.2, ROCK_SLOPE + 0.1, slope + edge);
+        if (!generated) {
+            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + edge) * (1.0 - rock);
+            if ((flags & 4) != 0) c = mix(c, band(y), smoothstep(0.5, 1.2, slope) * 0.85);
+            else if ((flags & 8) != 0) c = mix(c, STONE, 0.6 + 0.4 * rock);
+            else c = mix(mix(c, SCREE, scree * 0.85), STONE, rock * 0.9);
+        }
+        // forests: until trees stand here, a canopy of crowns speckled tree by tree (gone once a tree is under a pixel);
+        // the real chunks' trees where seen, the biome's where predicted
         if (density > 0.0) {
             float treeGrain = 1.0 - smoothstep(2.0, 5.0, footprint);
             float t = farHash(FarCamInt.xz / 4 + ivec2(floor(rel / 4.0)));
@@ -111,7 +119,8 @@ void main() {
         }
         // snow: the alpine snow line (by height, aspect and slope), or a cold biome's gentle ground
         float snow = 0.0;
-        if (alpine) {
+        if (generated) {
+        } else if (alpine) {
             float line = snowLine(world, g) + 8.0 * (jitter - 0.5) * grain;
             snow = smoothstep(line - 3.0, line + 3.0, y) * (1.0 - smoothstep(SNOW_SLOPE - 0.15, SNOW_SLOPE + 0.15, slope + 0.3 * (jitter - 0.5) * grain));
         } else if ((flags & 2) != 0) {
@@ -119,17 +128,12 @@ void main() {
         }
         c = mix(c, SNOW, snow);
         // a block-by-block grain while blocks are bigger than a pixel
-        c *= 1.0 + (farHash(blk) - 0.5) * 0.14 * grain;
-    } else {
-        c *= 1.0 + (farHash(blk) - 0.5) * 0.10 * grain;
+        c *= 1.0 + (farHash(blk) - 0.5) * (generated ? 0.10 : 0.14) * grain;
     }
     if (FarCam.w > 0.5 && generated) c = vec3(1.0, 0.0, 1.0);
 
-    // light: faces shaded as the game shades block faces, a warm key where the sun reaches, a cool shade where it doesn't
-    float face = (n.y + abs(n.x) * 0.6 + abs(n.z) * 0.8) / max(n.y + abs(n.x) + abs(n.z), 1e-3);
-    float sunlit = max(dot(n, FarSun.xyz), 0.0) * vCrown.a;
-    float key = FarSun.w * 0.85;
-    vec3 light = vec3(face) * mix(vec3(1.0), mix(SHADE_TINT * 0.74, FarSunColor.rgb * 1.16, sunlit), key);
+    // light: block-face shading, a warm key where the sun reaches past the ridges, a cool shade where it doesn't
+    vec3 light = farLight(n, max(dot(n, FarSun.xyz), 0.0) * vCrown.a);
     light *= mix(1.0, vInfo.a, 0.8);
     // the terraces: a line where the ground crosses each block of height, on slopes, while a block spans pixels
     float fy = fwidth(y);
@@ -145,19 +149,5 @@ void main() {
     }
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
 
-    // the air between: an exponential atmosphere (density FarAir.x per block at sea level, scale height FarAir.y)
-    float dist = length(vRel);
-    vec3 dir = vRel / max(dist, 1e-3);
-    float hc = FarFog.z - FarFog.w;
-    float below = exp(-max(hc, -200.0) / FarAir.y);
-    float od = abs(dir.y) * dist < 1.0 ? FarAir.x * below * dist
-             : FarAir.x * below * FarAir.y / dir.y * (1.0 - exp(-dist * dir.y / FarAir.y));
-    float t = exp(-max(od, 0.0));
-    float mu = dot(dir, FarSun.xyz);
-    float phase = (1.0 - 0.72 * 0.72) / pow(1.0 + 0.72 * 0.72 - 1.44 * mu, 1.5) * 0.08;
-    vec3 air = FogColor.rgb + FarSunColor.rgb * FarAir.z * phase * FarSun.w;
-    c = mix(air, c, t);
-    // weather (rain, a gate's fog) as the game fogs its own terrain, then the horizon melting into the sky
-    float fog = max(linear_fog_value(dist, FogEnvironmentalStart, FogEnvironmentalEnd), linear_fog_value(horizontal, FarFog.x, FarFog.y));
-    fragColor = vec4(mix(c, FogColor.rgb, fog * FogColor.a), 1.0);
+    fragColor = vec4(farAir(c, vRel), 1.0);
 }
