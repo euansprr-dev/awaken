@@ -7,8 +7,11 @@ package dev.awaken.farsight.client;
  * Each is kept only if it measures better.
  */
 interface FarGpu extends AutoCloseable {
-    /** Derives every cell's normal and valley shade for the rings set in {@code ringMask}: heights in, shade out. */
-    void bake(FarField field, int ringMask);
+    /**
+     * Derives every corner's normal, valley shade and sunlight for the rings set in {@code ringMask}: heights in, shade
+     * out. {@code sun} points toward the light; {@code sunUp} false when it is below the horizon (nothing to shadow).
+     */
+    void bake(FarField field, int ringMask, org.joml.Vector3fc sun, boolean sunUp);
 
     String name();
 

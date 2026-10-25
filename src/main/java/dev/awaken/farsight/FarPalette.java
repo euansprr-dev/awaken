@@ -15,8 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * What a biome's ground looks like from kilometres away (SPEC §20): one colour per biome, worked out once from its
  * archetype (an Awakened biome stands in for a vanilla one, {@link BiomeTable#archetype}) and its own grass and foliage
- * colours. Forests read darker than open grass because the canopy is what shows. Snow, rock on steep slopes and
- * sun shading are applied per cell and per pixel, not here. Real chunks' top blocks ({@link #block}) take their map
+ * colours, and its forest: how densely trees stand, how tall, what shape, what colour (Far Sight 2 draws them as
+ * trees, not as a darker ground). Snow, rock on steep slopes and sun shading are applied per pixel, not here. Real chunks' top blocks ({@link #block}) take their map
  * colour, with grass, leaves and water tinted by their biome the same way. Thread-safe: the workers share it.
  */
 public final class FarPalette {
@@ -27,22 +27,28 @@ public final class FarPalette {
     /** Grass where the client's colour maps aren't loaded (a dedicated server's GameTests). */
     static final int TEMPERATE = 0x79C05A;
 
-    private static final Map<Holder<Biome>, Integer> GROUND = new ConcurrentHashMap<>();
+    /**
+     * A biome from afar: its ground colour; its forest (how densely trees stand, 0..255, how tall their canopy is in
+     * blocks, their shape, and the crown colour); and its flags ({@link #BADLANDS}, {@link #STONY}).
+     */
+    public record Look(int ground, int density, int canopy, int shape, int crown, int flags) {}
+
+    /** Tree shapes the far forests draw: round broadleaf crowns, conifers, tall jungle trees, flat acacia tops. */
+    public static final int BROADLEAF = 0, CONIFER = 1, JUNGLE = 2, ACACIA = 3;
+    /** Look flags. */
+    public static final int BADLANDS = 4, STONY = 8;
+
+    private static final Map<Holder<Biome>, Look> GROUND = new ConcurrentHashMap<>();
     /** Per biome: its lawn (grass blocks) and leaves colour, packed as lawn << 32 | leaves. */
     private static final Map<Holder<Biome>, Long> TINTS = new ConcurrentHashMap<>();
 
     /** The biome's ground colour, 0xRRGGBB. */
     public static int ground(Holder<Biome> biome) {
-        return look(biome) & 0xFFFFFF;
+        return look(biome).ground();
     }
 
-    /** How far its canopy stands above the ground (blocks): what shows of a forest from far away is its treetops. */
-    public static int canopy(Holder<Biome> biome) {
-        return look(biome) >>> 24;
-    }
-
-    private static int look(Holder<Biome> biome) {
-        Integer c = GROUND.get(biome);
+    public static Look look(Holder<Biome> biome) {
+        Look c = GROUND.get(biome);
         if (c == null) {
             c = compute(biome);
             GROUND.put(biome, c);
@@ -91,37 +97,49 @@ public final class FarPalette {
         return foliage == 0 || foliage == 0xFF00FF ? grass : foliage;
     }
 
-    private static int compute(Holder<Biome> holder) {
+    private static Look compute(Holder<Biome> holder) {
         Biome b = holder.value();
         ResourceKey<Biome> key = BiomeTable.archetype(holder);
         String a = key == null ? "" : key.identifier().getPath();
         int grass = grass(b), foliage = foliage(b, grass);
         // the grass and leaf textures are grey tinted by these colours: their average is about this bright
-        int lawn = scale(grass, 0.68f), canopy = scale(foliage, 0.56f);
-        if (a.contains("badlands")) return a.startsWith("eroded") ? TERRACOTTA : RED_SAND;
-        if (a.equals("desert")) return SAND;
-        if (a.equals("beach")) return 0xE0D6A4;
-        if (a.equals("snowy_beach")) return 0xE3E8E8;
-        if (a.equals("stony_shore") || a.equals("stony_peaks")) return STONE;
-        if (a.contains("ocean") || a.contains("river")) return a.startsWith("frozen") ? SNOW : SEABED;
+        int lawn = scale(grass, 0.68f), leaves = scale(foliage, 0.56f);
+        if (a.contains("badlands")) {
+            int ground = a.startsWith("eroded") ? TERRACOTTA : RED_SAND;
+            return a.startsWith("wooded") ? new Look(ground, 40, 6, BROADLEAF, leaves, BADLANDS) : new Look(ground, 0, 0, 0, 0, BADLANDS);
+        }
+        if (a.equals("desert")) return open(SAND);
+        if (a.equals("beach")) return open(0xE0D6A4);
+        if (a.equals("snowy_beach")) return open(0xE3E8E8);
+        if (a.equals("stony_shore") || a.equals("stony_peaks")) return new Look(STONE, 0, 0, 0, 0, STONY);
+        if (a.contains("ocean") || a.contains("river")) return open(a.startsWith("frozen") ? SNOW : SEABED);
         if (a.equals("ice_spikes") || a.equals("snowy_plains") || a.equals("snowy_slopes") || a.equals("frozen_peaks")
-                || a.equals("jagged_peaks")) return SNOW;
-        if (a.equals("snowy_taiga") || a.equals("grove")) return trees(7, mix(SNOW, canopy, 0.35f));
-        if (a.equals("mushroom_fields")) return MYCELIUM;
-        if (a.equals("windswept_gravelly_hills")) return GRAVEL;
-        if (a.equals("windswept_hills")) return mix(lawn, STONE, 0.35f);
-        if (a.equals("pale_garden")) return PALE;
-        if (a.equals("cherry_grove")) return trees(5, mix(0xD9A3B8, lawn, 0.45f));
-        if (a.equals("dark_forest")) return trees(8, scale(canopy, 0.8f));
-        if (a.contains("jungle")) return trees(10, mix(canopy, lawn, 0.3f));
-        if (a.contains("forest") || a.contains("taiga")) return trees(6, mix(canopy, lawn, 0.3f));
-        if (a.contains("swamp")) return trees(3, mix(canopy, lawn, 0.3f));
-        if (a.startsWith("savanna")) return scale(grass, 0.8f);
-        return lawn;
+                || a.equals("jagged_peaks")) return open(SNOW);
+        if (a.equals("snowy_taiga")) return new Look(mix(SNOW, lawn, 0.6f), 150, 8, CONIFER, mix(leaves, SNOW, 0.75f), 0);
+        if (a.equals("grove")) return new Look(SNOW, 140, 9, CONIFER, mix(leaves, SNOW, 0.75f), 0);
+        if (a.equals("mushroom_fields")) return open(MYCELIUM);
+        if (a.equals("windswept_gravelly_hills")) return new Look(GRAVEL, 20, 7, CONIFER, leaves, STONY);
+        if (a.equals("windswept_hills")) return new Look(mix(lawn, STONE, 0.65f), 25, 7, CONIFER, leaves, STONY);
+        if (a.equals("windswept_forest")) return new Look(mix(lawn, STONE, 0.65f), 150, 8, CONIFER, leaves, 0);
+        if (a.equals("windswept_savanna")) return new Look(scale(grass, 0.8f), 30, 6, ACACIA, leaves, 0);
+        if (a.equals("pale_garden")) return new Look(PALE, 210, 9, BROADLEAF, 0x8F9590, 0);
+        if (a.equals("cherry_grove")) return new Look(lawn, 150, 6, BROADLEAF, 0xD9A3B8, 0);
+        if (a.equals("dark_forest")) return new Look(scale(lawn, 0.8f), 235, 8, BROADLEAF, scale(leaves, 0.85f), 0);
+        if (a.equals("sparse_jungle")) return new Look(lawn, 90, 12, JUNGLE, leaves, 0);
+        if (a.contains("jungle")) return new Look(lawn, 230, 16, JUNGLE, leaves, 0);
+        if (a.equals("old_growth_pine_taiga") || a.equals("old_growth_spruce_taiga")) return new Look(scale(lawn, 0.9f), 220, 16, CONIFER, leaves, 0);
+        if (a.contains("taiga")) return new Look(lawn, 190, 8, CONIFER, leaves, 0);
+        if (a.equals("mangrove_swamp")) return new Look(scale(lawn, 0.85f), 200, 8, BROADLEAF, leaves, 0);
+        if (a.contains("swamp")) return new Look(scale(lawn, 0.85f), 110, 6, BROADLEAF, leaves, 0);
+        if (a.contains("forest")) return new Look(lawn, a.equals("flower_forest") ? 140 : 200, 6, BROADLEAF, leaves, 0);
+        if (a.startsWith("savanna")) return new Look(scale(grass, 0.8f), 30, 6, ACACIA, leaves, 0);
+        if (a.equals("meadow")) return new Look(lawn, 8, 8, CONIFER, leaves, 0);
+        if (a.equals("plains") || a.equals("sunflower_plains")) return new Look(lawn, 6, 6, BROADLEAF, leaves, 0);
+        return open(lawn);
     }
 
-    private static int trees(int height, int rgb) {
-        return height << 24 | rgb;
+    private static Look open(int rgb) {
+        return new Look(rgb, 0, 0, 0, 0, 0);
     }
 
     static int scale(int rgb, float k) {

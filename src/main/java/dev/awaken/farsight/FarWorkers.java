@@ -20,7 +20,8 @@ public final class FarWorkers {
     public static final class Patch {
         public int ring, px, pz, epoch, range;
         public boolean generated;
-        public final int[] height = new int[Rings.PATCH * Rings.PATCH], colour = new int[Rings.PATCH * Rings.PATCH];
+        public final int[] height = new int[Rings.PATCH * Rings.PATCH], colour = new int[Rings.PATCH * Rings.PATCH],
+                info = new int[Rings.PATCH * Rings.PATCH], crown = new int[Rings.PATCH * Rings.PATCH];
     }
 
     /** Whether a patch is still in its window for that epoch. Called on the workers, so it must be cheap and thread-safe. */
@@ -33,9 +34,8 @@ public final class FarWorkers {
 
     private final PriorityBlockingQueue<Job> queue = new PriorityBlockingQueue<>(512, Comparator.comparingDouble(Job::priority));
     private final ConcurrentLinkedQueue<Patch> done = new ConcurrentLinkedQueue<>(), free = new ConcurrentLinkedQueue<>();
-    /** Columns sampled and the time it took, per kind (estimate, exact), for the log. */
-    public final AtomicLong estimateColumns = new AtomicLong(), estimateNanos = new AtomicLong(), exactColumns = new AtomicLong(),
-            exactNanos = new AtomicLong();
+    /** Columns predicted, the time it took and the density probes it made, for the status line. */
+    public final AtomicLong columnCount = new AtomicLong(), columnNanos = new AtomicLong(), probes = new AtomicLong();
     private final int threads;
     private boolean started;
 
@@ -109,35 +109,35 @@ public final class FarWorkers {
                 continue;
             }
             if (!job.still().wanted(job.ring(), job.px(), job.pz(), job.epoch())) continue;
+            Patch p = free.poll();
+            if (p == null) p = new Patch();
+            p.ring = job.ring();
+            p.px = job.px();
+            p.pz = job.pz();
+            p.epoch = job.epoch();
+            p.generated = job.generated();
             try {
-                Patch p = free.poll();
-                if (p == null) p = new Patch();
-                p.ring = job.ring();
-                p.px = job.px();
-                p.pz = job.pz();
-                p.epoch = job.epoch();
-                p.generated = job.generated();
                 if (job.generated()) {
                     FarStore store = FarStore.peek(job.level());
-                    p.range = store == null ? -1 : store.patch(job.ring(), job.px(), job.pz(), p.height, p.colour);
-                    done.add(p);
-                    continue;
+                    p.range = store == null ? -1 : store.patch(job.ring(), job.px(), job.pz(), p.height, p.colour, p.info, p.crown);
+                } else {
+                    if (job.level() != bound) {
+                        bound = job.level();
+                        columns = FarColumns.of(bound);
+                    }
+                    long t0 = System.nanoTime(), p0 = columns.probes;
+                    p.range = columns.patch(job.ring(), job.px(), job.pz(), p.height, p.colour, p.info, p.crown);
+                    columnNanos.addAndGet(System.nanoTime() - t0);
+                    columnCount.addAndGet(Rings.PATCH * Rings.PATCH);
+                    probes.addAndGet(columns.probes - p0);
                 }
-                if (job.level() != bound) {
-                    bound = job.level();
-                    columns = FarColumns.of(bound);
-                }
-                long t0 = System.nanoTime();
-                p.range = columns.patch(job.ring(), job.px(), job.pz(), p.height, p.colour);
-                long dt = System.nanoTime() - t0;
-                boolean exact = job.ring() < Rings.EXACT_RINGS;
-                (exact ? exactColumns : estimateColumns).addAndGet(Rings.PATCH * Rings.PATCH);
-                (exact ? exactNanos : estimateNanos).addAndGet(dt);
-                done.add(p);
             } catch (RuntimeException e) {
-                // a generator that can't be sampled off-thread: leave the patch unknown, keep the worker alive
+                // a generator that can't be sampled off-thread: hand the patch back as failed, so its slot is released
+                // (asked again later) and the worker stays alive
                 Awaken.LOG.warn("[farsight] patch {} {},{} failed: {}", job.ring(), job.px(), job.pz(), e.toString());
+                p.range = -2;
             }
+            done.add(p);
         }
     }
 }

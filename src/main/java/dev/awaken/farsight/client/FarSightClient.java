@@ -61,7 +61,8 @@ public final class FarSightClient {
     private static int ringsDone;
     private static boolean horizonLogged;
     private static float fogStart, fogEnd;
-    private static final Vector3f sun = new Vector3f();
+    private static final Vector3f sun = new Vector3f(), sunColour = new Vector3f();
+    private static int bakeTurn;
     // the render thread's time in afterSky, for status
     private static long cpuNanos;
     private static int cpuFrames;
@@ -156,34 +157,52 @@ public final class FarSightClient {
         }
         logProgress();
         renderer.timeStart();
-        if (field.dirty != 0) {
-            gpu.bake(field, field.dirty);
-            field.dirty = 0;
-        }
+        float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        var cameraNow = mc.gameRenderer.mainCamera();
+        float sunAngle = cameraNow.attributeProbe().getValue(EnvironmentAttributes.SUN_ANGLE, partialTick) * (float) (Math.PI / 180.0);
+        // where SkyRenderer puts the sun; below the horizon the moon (opposite) lights the slopes
+        sun.set(0f, 1f, 0f).rotateX(sunAngle).rotateY((float) (-Math.PI / 2));
+        boolean moon = sun.y < 0f;
+        if (moon) sun.negate();
+        // the changed rings at once, and one more each frame in turn, so ridge shadows follow the sun
+        int bake = field.dirty | 1 << (bakeTurn++ % Rings.RINGS);
+        gpu.bake(field, bake, sun, sun.y > 0.01f);
+        field.dirty = 0;
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
         float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;
         renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), clipStart,
                 mc.level.getMinY(), mc.level.getMaxY());
-        float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        float angle = camera.attributeProbe().getValue(EnvironmentAttributes.SUN_ANGLE, partial) * (float) (Math.PI / 180.0);
-        // where SkyRenderer puts the sun; below the horizon the moon (opposite) lights the slopes, the lightmap the rest
-        sun.set(0f, 1f, 0f).rotateX(angle).rotateY((float) (-Math.PI / 2));
-        if (sun.y < 0f) sun.negate();
+        // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
+        float rain = mc.level.getRainLevel(partialTick), thunder = mc.level.getThunderLevel(partialTick);
+        float elevation = Math.max(0f, sun.y);
+        float strength = (moon ? 0.25f : 1f) * smooth(0.0f, 0.18f, elevation) * (1f - rain * 0.85f) * (1f - thunder * 0.5f);
+        float golden = moon ? 0f : 1f - smooth(0.06f, 0.45f, elevation);
+        if (moon) sunColour.set(0.70f, 0.80f, 1.00f);
+        else sunColour.set(1.00f + 0.30f * golden, 0.98f - 0.12f * golden, 0.94f - 0.36f * golden);
+        // the air: clear alpine air sees about 40 km (density per block at sea level); rain and mist thicken it
+        float haze = 1.0e-4f * (1f + 3f * rain);
         fogEnd = horizon();
         fogStart = fogEnd * 0.5f;
         if (RenderSystem.getProjectionMatrixBuffer() == null || RenderSystem.getShaderFog() == null) {
             renderer.timeEnd();
             return;
         }
-        renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, fogStart, fogEnd, clipStart, CLIP_BAND,
-                level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
+        renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, strength, sunColour, golden, haze, rain, fogStart, fogEnd,
+                clipStart, CLIP_BAND, level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
                 FarLandmarks.current(level.dimension()));
         renderer.timeEnd();
         FarTerrain.report(renderer.depthTexture(), FarRenderer.NEAR, FarRenderer.FAR, true, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
+        // Far Sight hazes its own kilometres (aerial perspective at real scale): Lens keeps only its near haze over it
+        FarTerrain.selfHazed(true);
         lastDrawNanos = System.nanoTime();
         cpuNanos += lastDrawNanos - t0;
         cpuFrames++;
+    }
+
+    private static float smooth(float a, float b, float x) {
+        float t = Math.clamp((x - a) / (b - a), 0f, 1f);
+        return t * t * (3f - 2f * t);
     }
 
     /** How far Far Sight is fogged out: the coarsest ring's reach, less the most its window can lag the camera. */
@@ -200,11 +219,11 @@ public final class FarSightClient {
             Awaken.LOG.info("[farsight] ring {} ({} m) ready {} ms after the first frame, {} ms after joining", r, Rings.reach(r),
                     (now - bindNanos) / 1_000_000, joinNanos == 0 ? -1 : (now - joinNanos) / 1_000_000);
         }
-        int far = (1 << Rings.RINGS) - (1 << Rings.EXACT_RINGS);
+        int far = (1 << Rings.RINGS) - (1 << 3);
         if (!horizonLogged && (ringsDone & far) == far) {
             horizonLogged = true;
             Awaken.LOG.info("[farsight] horizon (rings {}-{}, to {} km) ready {} ms after the first frame, {} ms after joining",
-                    Rings.EXACT_RINGS, Rings.RINGS - 1, Rings.reach(Rings.RINGS - 1) / 1000, (now - bindNanos) / 1_000_000,
+                    3, Rings.RINGS - 1, Rings.reach(Rings.RINGS - 1) / 1000, (now - bindNanos) / 1_000_000,
                     joinNanos == 0 ? -1 : (now - joinNanos) / 1_000_000);
         }
         if (ringsDone == (1 << Rings.RINGS) - 1) Awaken.LOG.info("[farsight] all rings ready {} ms after the first frame; {}", (now - bindNanos) / 1_000_000, status());
@@ -259,14 +278,14 @@ public final class FarSightClient {
         if (field == null) return enabled ? "on, not drawn yet" : "off";
         StringBuilder rings = new StringBuilder();
         for (int r = 0; r < Rings.RINGS; r++) rings.append(r == 0 ? "" : ",").append(field.missing[r]);
-        long ec = workers.estimateColumns.get(), xc = workers.exactColumns.get();
+        long cols = workers.columnCount.get();
         double cpu = cpuFrames == 0 ? -1 : cpuNanos / 1e6 / cpuFrames;
         cpuNanos = 0;
         cpuFrames = 0;
         return String.format(Locale.ROOT,
-                "%s gpu_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d estimate=%.1fus/column exact=%.1fus/column (%d/%d columns) generated=%d/%d vram=%dMB",
+                "%s gpu_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
                 drawing() ? "drawing" : enabled ? "on" : "off", renderer.gpuMillis(), cpu, rings, workers.queued(), renderer.pieces, renderer.cells,
-                ec == 0 ? 0.0 : workers.estimateNanos.get() / 1000.0 / ec, xc == 0 ? 0.0 : workers.exactNanos.get() / 1000.0 / xc, ec, xc,
+                cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, (field.memoryBytes() + renderer.memoryBytes()) >> 20);
     }
 }

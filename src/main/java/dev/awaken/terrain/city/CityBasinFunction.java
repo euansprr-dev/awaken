@@ -150,6 +150,21 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
             return street;
         }
 
+        /**
+         * The ground's height (the top face of its highest block) over a column whose natural ground stands at
+         * {@code natural}, as the density mode builds it: for far terrain (Far Sight), which predicts ground without
+         * building chunks.
+         */
+        public float ground(float natural, int x, int z) {
+            float w = weight(x, z);
+            if (w <= 0.0F) return natural;
+            float flat = natural + w * (street + 1 - natural);
+            float rw = riverWeight(x, z);
+            if (rw <= 0.0F) return flat;
+            float channel = channelSurface(riverDistance(x, z)) + 1;
+            return channel >= street + 1 ? flat : Math.min(flat, flat + rw * (channel - flat));
+        }
+
         /** The basin's own density at height y over a column whose ground stands at {@code surface}. */
         static float target(float surface, int y, float natural) {
             if (y < surface - CRUST) return natural;

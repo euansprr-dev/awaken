@@ -19,15 +19,18 @@ import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
- * The rings' data on the client (SPEC §20): each ring's window, the patch every slot holds, and three RGBA8 atlases of
- * {@code 256 × (256·7)} texels, one 256×256 block per ring, addressed toroidally (a world cell's texel is its
- * coordinate masked to 255, so a moving window only rewrites the strip that came into view):
+ * The rings' data on the client (SPEC §20, Far Sight 2): each ring's window, the patch every slot holds, and its
+ * atlases of {@code 256 × (256·7)} texels, one 256×256 block per ring, addressed toroidally (a world grid corner's texel
+ * is its coordinate masked to 255, so a moving window only rewrites the strip that came into view). A texel is the
+ * ring's grid corner {@code (i · cell, j · cell)}, so a coarse ring's corners are every other corner of the finer ring:
  * <ul>
- *   <li>height: r, g the drawn top (+{@link FarColumns#HEIGHT_OFFSET}), b flags, a 255 known / 0 unknown;</li>
- *   <li>colour: r, g, b the ground or water colour;</li>
- *   <li>shade: r, g the smoothed normal's x and z, b valley shade (baked on the GPU by {@link FarGpu});</li>
- *   <li>generated height and colour, laid out the same: what the real chunks seen there show
- *       ({@link dev.awaken.farsight.FarStore}). Where a cell has it, it wins over the prediction.</li>
+ *   <li>height (R16): the ground's top to a sixteenth of a block ({@link FarColumns#packHeight}), 0 unknown;</li>
+ *   <li>colour (RGBA8): the ground's colour, flags in alpha;</li>
+ *   <li>info (RGBA8): water depth, canopy height × 4, tree density;</li>
+ *   <li>crown (RGBA8): the trees' crown colour and shape;</li>
+ *   <li>the same four for the generated layer (what the real chunks seen there show: {@link FarStore}), which wins
+ *       where it has a texel;</li>
+ *   <li>shade (RGBA8, baked on the GPU by {@link FarGpu}): the normal's x and z, valley shade, sun.</li>
  * </ul>
  * A slot whose patch leaves its window is zeroed at once, so the shaders fall back to the coarser ring there until the
  * new patch arrives. Render thread only, except {@link #wanted}, which the workers call.
@@ -35,23 +38,24 @@ import java.util.concurrent.atomic.AtomicLongArray;
 final class FarField implements AutoCloseable {
     static final int WIDTH = Rings.SIZE, HEIGHT = Rings.SIZE * Rings.RINGS;
     private static final long NONE = Long.MIN_VALUE;
-    private static final int TEXEL_BYTES = 4, PATCH_CELLS = Rings.PATCH * Rings.PATCH;
+    private static final int PATCH_CELLS = Rings.PATCH * Rings.PATCH, SLOTS = Rings.PATCHES * Rings.PATCHES;
 
-    final GpuTexture height, colour, shade, genHeight, genColour;
-    final GpuTextureView heightView, colourView, shadeView, genHeightView, genColourView;
+    final GpuTexture height, colour, info, crown, genHeight, genColour, genInfo, genCrown, shade;
+    final GpuTextureView heightView, colourView, infoView, crownView, genHeightView, genColourView, genInfoView, genCrownView, shadeView;
 
     /** Each ring's window: its first patch; {@link #valid} false until placed. */
     final int[] winX = new int[Rings.RINGS], winZ = new int[Rings.RINGS];
     final boolean[] valid = new boolean[Rings.RINGS];
-    /** The patch each slot expects (read by the workers), and whether it has arrived. */
+    /** The patch each slot expects (read by the workers), whether it was asked for, and whether it has arrived. */
     private final AtomicLongArray[] expect = new AtomicLongArray[Rings.RINGS];
-    final boolean[][] ready = new boolean[Rings.RINGS][Rings.PATCHES * Rings.PATCHES];
-    /** Lowest and highest drawn top per slot (offset blocks), for culling. */
-    final short[][] lo = new short[Rings.RINGS][Rings.PATCHES * Rings.PATCHES], hi = new short[Rings.RINGS][Rings.PATCHES * Rings.PATCHES];
-    /** Slots still to arrive per ring (hidden ones excluded), and when each ring first had none left. */
+    private final boolean[][] asked = new boolean[Rings.RINGS][SLOTS];
+    final boolean[][] ready = new boolean[Rings.RINGS][SLOTS];
+    /** Lowest and highest top per slot (whole blocks + {@link FarColumns#HEIGHT_BASE}): predicted, and the generated layer's. */
+    final short[][] lo = new short[Rings.RINGS][SLOTS], hi = new short[Rings.RINGS][SLOTS], genHi = new short[Rings.RINGS][SLOTS];
+    /** Slots still to arrive per ring (hidden ones excluded). */
     final int[] missing = new int[Rings.RINGS];
     /** Generated-layer jobs per slot: 0 none queued, 1 queued, 2 queued and asked again since (run it once more). */
-    private final byte[][] genQueued = new byte[Rings.RINGS][Rings.PATCHES * Rings.PATCHES];
+    private final byte[][] genQueued = new byte[Rings.RINGS][SLOTS];
     /** Each ring's window centre and hidden radius as last placed, for generated-layer refreshes. */
     private final double[] centreX = new double[Rings.RINGS], centreZ = new double[Rings.RINGS], hiddenR = new double[Rings.RINGS];
     /** Rings whose heights changed since the last bake. */
@@ -65,23 +69,31 @@ final class FarField implements AutoCloseable {
 
     FarField() {
         var device = RenderSystem.getDevice();
-        // copy-dst: written in strips; texture-binding: read by the shaders; the shade atlas is also drawn into
-        height = device.createTexture(() -> "awaken far sight heights", 5, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
-        colour = device.createTexture(() -> "awaken far sight colours", 5, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
-        shade = device.createTexture(() -> "awaken far sight shade", 13, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+        int copy = GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING;
+        height = device.createTexture(() -> "awaken far sight heights", copy, GpuFormat.R16_UNORM, WIDTH, HEIGHT, 1, 1);
+        colour = device.createTexture(() -> "awaken far sight colours", copy, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+        info = device.createTexture(() -> "awaken far sight info", copy, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+        crown = device.createTexture(() -> "awaken far sight crowns", copy, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+        genHeight = device.createTexture(() -> "awaken far sight generated heights", copy, GpuFormat.R16_UNORM, WIDTH, HEIGHT, 1, 1);
+        genColour = device.createTexture(() -> "awaken far sight generated colours", copy, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+        genInfo = device.createTexture(() -> "awaken far sight generated info", copy, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+        genCrown = device.createTexture(() -> "awaken far sight generated crowns", copy, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+        shade = device.createTexture(() -> "awaken far sight shade", copy | GpuTexture.USAGE_RENDER_ATTACHMENT, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
         heightView = device.createTextureView(height);
         colourView = device.createTextureView(colour);
-        shadeView = device.createTextureView(shade);
-        genHeight = device.createTexture(() -> "awaken far sight generated heights", 5, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
-        genColour = device.createTexture(() -> "awaken far sight generated colours", 5, GpuFormat.RGBA8_UNORM, WIDTH, HEIGHT, 1, 1);
+        infoView = device.createTextureView(info);
+        crownView = device.createTextureView(crown);
         genHeightView = device.createTextureView(genHeight);
         genColourView = device.createTextureView(genColour);
+        genInfoView = device.createTextureView(genInfo);
+        genCrownView = device.createTextureView(genCrown);
+        shadeView = device.createTextureView(shade);
         for (int r = 0; r < Rings.RINGS; r++) {
-            expect[r] = new AtomicLongArray(Rings.PATCHES * Rings.PATCHES);
-            for (int i = 0; i < Rings.PATCHES * Rings.PATCHES; i++) expect[r].set(i, NONE);
+            expect[r] = new AtomicLongArray(SLOTS);
+            for (int i = 0; i < SLOTS; i++) expect[r].set(i, NONE);
         }
-        zeros = MemoryUtil.memCalloc(WIDTH * Rings.SIZE * TEXEL_BYTES);
-        staging = MemoryUtil.memAlloc(PATCH_CELLS * TEXEL_BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        zeros = MemoryUtil.memCalloc(WIDTH * Rings.SIZE * 4);
+        staging = MemoryUtil.memAlloc(PATCH_CELLS * 4).order(ByteOrder.LITTLE_ENDIAN);
         clearAll();
     }
 
@@ -96,10 +108,12 @@ final class FarField implements AutoCloseable {
         for (int r = 0; r < Rings.RINGS; r++) {
             valid[r] = false;
             missing[r] = 0;
-            for (int i = 0; i < Rings.PATCHES * Rings.PATCHES; i++) {
+            for (int i = 0; i < SLOTS; i++) {
                 expect[r].set(i, NONE);
                 ready[r][i] = false;
+                asked[r][i] = false;
                 genQueued[r][i] = 0;
+                genHi[r][i] = 0;
             }
         }
         clearAll();
@@ -110,32 +124,35 @@ final class FarField implements AutoCloseable {
         CommandEncoder enc = RenderSystem.getDevice().createCommandEncoder();
         for (int r = 0; r < Rings.RINGS; r++) {
             enc.writeToTexture(height, zeros, 0, 0, 0, r * Rings.SIZE, WIDTH, Rings.SIZE);
-            enc.writeToTexture(shade, zeros, 0, 0, 0, r * Rings.SIZE, WIDTH, Rings.SIZE);
             enc.writeToTexture(genHeight, zeros, 0, 0, 0, r * Rings.SIZE, WIDTH, Rings.SIZE);
+            enc.writeToTexture(shade, zeros, 0, 0, 0, r * Rings.SIZE, WIDTH, Rings.SIZE);
         }
     }
 
     /**
      * Places or moves ring {@code ring}'s window around the camera. Slots whose patch left are zeroed and handed the
      * patch that came in; patches the real chunks will always hide (within {@code hiddenWithin} blocks of the window's
-     * centre, wherever the camera sits in it) are never asked for.
+     * centre, wherever the camera sits in it) are asked for only once they could show.
      */
     void place(int ring, double camX, double camZ, double hiddenWithin, ServerLevel level, @Nullable FarStore store, FarWorkers workers) {
         int nx = Rings.windowPatch(camX, ring), nz = Rings.windowPatch(camZ, ring);
+        boolean moved = !valid[ring];
         if (valid[ring]) {
             boolean moveX = nx != winX[ring] && Rings.shouldMove(winX[ring], camX, ring);
             boolean moveZ = nz != winZ[ring] && Rings.shouldMove(winZ[ring], camZ, ring);
-            if (!moveX && !moveZ) return;
             if (!moveX) nx = winX[ring];
             if (!moveZ) nz = winZ[ring];
+            moved = moveX || moveZ;
         }
+        int pb = Rings.patchBlocks(ring);
+        double hidden = hiddenWithin - pb * 1.1;
+        // a window that didn't move still asks for patches that just came out from under the real chunks (the hidden
+        // radius shrinks when the render distance does), but only every few frames: it's a walk over 256 slots
+        if (!moved && hidden == hiddenR[ring] && (frame++ & 15) != ring) return;
         winX[ring] = nx;
         winZ[ring] = nz;
         valid[ring] = true;
-        int pb = Rings.patchBlocks(ring);
         double cx = (nx + Rings.PATCHES / 2.0) * pb, cz = (nz + Rings.PATCHES / 2.0) * pb;
-        // the camera stays within three quarters of a patch of the centre (per axis) before the window moves
-        double hidden = hiddenWithin - pb * 1.1;
         centreX[ring] = cx;
         centreZ[ring] = cz;
         hiddenR[ring] = hidden;
@@ -145,25 +162,29 @@ final class FarField implements AutoCloseable {
             for (int i = 0; i < Rings.PATCHES; i++) {
                 int px = nx + i, pz = nz + j, slot = Rings.slot(px, pz);
                 long key = Rings.key(px, pz);
-                if (expect[ring].get(slot) == key) {
-                    if (!ready[ring][slot] && !isHidden(px, pz, pb, cx, cz, hidden)) missingNow++;
-                    continue;
+                boolean isHidden = isHidden(px, pz, pb, cx, cz, hidden);
+                if (expect[ring].get(slot) != key) {
+                    // a slot that held another patch is zeroed now; a fresh one already is (reset clears the atlases)
+                    if (expect[ring].getAndSet(slot, key) != NONE) {
+                        if (enc == null) enc = RenderSystem.getDevice().createCommandEncoder();
+                        int x = (px * Rings.PATCH) & Rings.MASK, y = ring * Rings.SIZE + ((pz * Rings.PATCH) & Rings.MASK);
+                        enc.writeToTexture(height, zeros, 0, 0, x, y, Rings.PATCH, Rings.PATCH);
+                        enc.writeToTexture(genHeight, zeros, 0, 0, x, y, Rings.PATCH, Rings.PATCH);
+                    }
+                    ready[ring][slot] = false;
+                    asked[ring][slot] = false;
+                    genQueued[ring][slot] = 0;
+                    genHi[ring][slot] = 0;
                 }
-                // a slot that held another patch is zeroed now; a fresh one already is (reset clears the atlases)
-                if (expect[ring].getAndSet(slot, key) != NONE) {
-                    if (enc == null) enc = RenderSystem.getDevice().createCommandEncoder();
-                    int x = (px * Rings.PATCH) & Rings.MASK, y = ring * Rings.SIZE + ((pz * Rings.PATCH) & Rings.MASK);
-                    enc.writeToTexture(height, zeros, 0, 0, x, y, Rings.PATCH, Rings.PATCH);
-                    enc.writeToTexture(genHeight, zeros, 0, 0, x, y, Rings.PATCH, Rings.PATCH);
-                }
-                ready[ring][slot] = false;
-                genQueued[ring][slot] = 0;
-                if (isHidden(px, pz, pb, cx, cz, hidden)) continue;
+                if (ready[ring][slot] || isHidden) continue;
                 missingNow++;
+                if (asked[ring][slot]) continue;
+                asked[ring][slot] = true;
                 // coarsest ring first (the horizon in a second), then nearest the camera
                 float priority = priority(ring, px, pz, camX, camZ);
                 workers.submit(level, ring, px, pz, epoch, priority, wanted);
-                if (store != null && store.mayHave(px * pb, pz * pb, (px + 1) * pb - 1, (pz + 1) * pb - 1)) {
+                if (store != null && store.mayHave((px * Rings.PATCH - 1) * Rings.cellSize(ring), (pz * Rings.PATCH - 1) * Rings.cellSize(ring),
+                        (px + 1) * pb, (pz + 1) * pb)) {
                     genQueued[ring][slot] = 1;
                     genAsked++;
                     workers.submitGenerated(level, ring, px, pz, epoch, priority - 0.5f, wanted);
@@ -171,8 +192,10 @@ final class FarField implements AutoCloseable {
             }
         }
         missing[ring] = missingNow;
-        dirty |= 1 << ring;
+        if (moved) dirty |= 1 << ring;
     }
+
+    private int frame;
 
     private static float priority(int ring, int px, int pz, double camX, double camZ) {
         int pb = Rings.patchBlocks(ring);
@@ -181,22 +204,29 @@ final class FarField implements AutoCloseable {
     }
 
     /**
-     * A real chunk was (re)seen: every ring's patch over it reads the generated layer again, if it is in its window and
-     * not under the real chunks.
+     * A real chunk was (re)seen: every ring's patch whose corners average it reads the generated layer again, if it is
+     * in its window and not under the real chunks.
      */
     void chunkChanged(int chunkX, int chunkZ, double camX, double camZ, ServerLevel level, FarWorkers workers) {
         for (int r = 0; r < Rings.RINGS; r++) {
             if (!valid[r]) continue;
-            int pb = Rings.patchBlocks(r);
-            int px = Math.floorDiv(chunkX * 16, pb), pz = Math.floorDiv(chunkZ * 16, pb), slot = Rings.slot(px, pz);
-            if (expect[r].get(slot) != Rings.key(px, pz) || isHidden(px, pz, pb, centreX[r], centreZ[r], hiddenR[r])) continue;
-            if (genQueued[r][slot] != 0) {
-                genQueued[r][slot] = 2;
-                continue;
+            int pb = Rings.patchBlocks(r), half = Rings.cellSize(r) / 2;
+            // a corner averages the half cell either side of it: the chunk can reach the patch on either side of an edge
+            int x0 = Math.floorDiv(chunkX * 16 - half, pb), x1 = Math.floorDiv(chunkX * 16 + 15 + half, pb);
+            int z0 = Math.floorDiv(chunkZ * 16 - half, pb), z1 = Math.floorDiv(chunkZ * 16 + 15 + half, pb);
+            for (int pz = z0; pz <= z1; pz++) {
+                for (int px = x0; px <= x1; px++) {
+                    int slot = Rings.slot(px, pz);
+                    if (expect[r].get(slot) != Rings.key(px, pz) || isHidden(px, pz, pb, centreX[r], centreZ[r], hiddenR[r])) continue;
+                    if (genQueued[r][slot] != 0) {
+                        genQueued[r][slot] = 2;
+                        continue;
+                    }
+                    genQueued[r][slot] = 1;
+                    genAsked++;
+                    workers.submitGenerated(level, r, px, pz, epoch, priority(r, px, pz, camX, camZ) - 0.5f, wanted);
+                }
             }
-            genQueued[r][slot] = 1;
-            genAsked++;
-            workers.submitGenerated(level, r, px, pz, epoch, priority(r, px, pz, camX, camZ) - 0.5f, wanted);
         }
     }
 
@@ -219,32 +249,40 @@ final class FarField implements AutoCloseable {
 
     /**
      * Uploads one finished patch if it is still wanted; true when it was. A generated one asked for again while it ran
-     * comes back as {@code again}: the caller queues it once more.
+     * comes back as {@code again}: the caller queues it once more. A failed job ({@code range == -2}) releases its slot
+     * so it is asked for again.
      */
     boolean accept(FarWorkers.Patch p) {
         if (!wanted(p.ring, p.px, p.pz, p.epoch)) return false;
         int slot = Rings.slot(p.px, p.pz);
+        int x = (p.px * Rings.PATCH) & Rings.MASK, y = p.ring * Rings.SIZE + ((p.pz * Rings.PATCH) & Rings.MASK);
         if (p.generated) {
             boolean more = genQueued[p.ring][slot] == 2;
             genQueued[p.ring][slot] = 0;
             again = more;
             if (p.range < 0) return true;
             CommandEncoder enc = RenderSystem.getDevice().createCommandEncoder();
-            int x = (p.px * Rings.PATCH) & Rings.MASK, y = p.ring * Rings.SIZE + ((p.pz * Rings.PATCH) & Rings.MASK);
-            upload(enc, genHeight, p.height, x, y);
+            uploadHeights(enc, genHeight, p.height, x, y);
             upload(enc, genColour, p.colour, x, y);
+            upload(enc, genInfo, p.info, x, y);
+            upload(enc, genCrown, p.crown, x, y);
             genUploaded++;
-            // a built-up patch can stand above its prediction: widen what culling assumes
-            hi[p.ring][slot] = (short) Math.max(hi[p.ring][slot] & 0xFFFF, p.range & 0xFFFF);
+            // a built-up patch can stand above its prediction: culling assumes the higher of the two
+            genHi[p.ring][slot] = (short) (p.range & 0xFFFF);
             dirty |= 1 << p.ring;
             return true;
         }
         again = false;
+        if (p.range == -2) {
+            asked[p.ring][slot] = false;
+            return false;
+        }
         if (ready[p.ring][slot]) return false;
         CommandEncoder enc = RenderSystem.getDevice().createCommandEncoder();
-        int x = (p.px * Rings.PATCH) & Rings.MASK, y = p.ring * Rings.SIZE + ((p.pz * Rings.PATCH) & Rings.MASK);
-        upload(enc, height, p.height, x, y);
+        uploadHeights(enc, height, p.height, x, y);
         upload(enc, colour, p.colour, x, y);
+        upload(enc, info, p.info, x, y);
+        upload(enc, crown, p.crown, x, y);
         ready[p.ring][slot] = true;
         lo[p.ring][slot] = (short) (p.range >>> 16);
         hi[p.ring][slot] = (short) (p.range & 0xFFFF);
@@ -263,28 +301,32 @@ final class FarField implements AutoCloseable {
         enc.writeToTexture(into, staging, 0, 0, x, y, Rings.PATCH, Rings.PATCH);
     }
 
-    /** Whether slot (px, pz) of the ring holds its patch's real heights. */
+    private void uploadHeights(CommandEncoder enc, GpuTexture into, int[] texels, int x, int y) {
+        staging.clear();
+        for (int t : texels) staging.putShort((short) t);
+        staging.flip();
+        enc.writeToTexture(into, staging, 0, 0, x, y, Rings.PATCH, Rings.PATCH);
+    }
+
+    /** Whether slot (px, pz) of the ring holds its patch's predicted heights. */
     boolean has(int ring, int px, int pz) {
         int slot = Rings.slot(px, pz);
         return ready[ring][slot] && expect[ring].get(slot) == Rings.key(px, pz);
     }
 
+    /** The slot's highest top (whole blocks + base), the generated layer's if that stands higher. */
+    int top(int ring, int slot) {
+        return Math.max(hi[ring][slot] & 0xFFFF, genHi[ring][slot] & 0xFFFF);
+    }
+
     int memoryBytes() {
-        return 5 * WIDTH * HEIGHT * TEXEL_BYTES;
+        return WIDTH * HEIGHT * (2 * 2 + 4 * 7);
     }
 
     @Override
     public void close() {
-        heightView.close();
-        colourView.close();
-        shadeView.close();
-        genHeightView.close();
-        genColourView.close();
-        height.close();
-        colour.close();
-        genHeight.close();
-        genColour.close();
-        shade.close();
+        for (GpuTextureView v : new GpuTextureView[]{heightView, colourView, infoView, crownView, genHeightView, genColourView, genInfoView, genCrownView, shadeView}) v.close();
+        for (GpuTexture t : new GpuTexture[]{height, colour, info, crown, genHeight, genColour, genInfo, genCrown, shade}) t.close();
         MemoryUtil.memFree(zeros);
         MemoryUtil.memFree(staging);
         Awaken.LOG.info("[farsight] released the ring atlases");

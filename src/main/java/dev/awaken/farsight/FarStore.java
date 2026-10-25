@@ -39,7 +39,7 @@ import java.util.stream.Stream;
  * Chunks that changed queue up in {@link #pollChanged} for whoever draws them.
  */
 public final class FarStore {
-    public static final int SCHEMA = 1, REGION = 32, RESIDENT = 64;
+    public static final int SCHEMA = 2, REGION = 32, RESIDENT = 64;
 
     private record RegionFile(int schemaVersion, List<FarChunk> chunks) {
         static final Codec<RegionFile> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -124,64 +124,77 @@ public final class FarStore {
 
     /**
      * Fills one patch of ring {@code ring} from the real chunks seen there, as texels laid out like
-     * {@link FarColumns#patch}; a cell with too little seen stays 0 (unknown), and the prediction shows instead. A
-     * cell up to 16 blocks wide sums the 2-block cells inside one chunk; a wider one the chunks it covers, once at
-     * least a quarter of them are known. Returns {@code min << 16 | max} of the known tops (offset), or -1 if none.
+     * {@link FarColumns#patch} (its grid corners), each the average of the 2-block cells within half a cell of its
+     * corner; the colour carries {@link FarColumns#GENERATED}, the crown's alpha 255 (the shape is the biome's). A corner
+     * with less than a quarter of its area seen stays 0 (unknown), and the prediction shows instead. Returns
+     * {@code min << 16 | max} of the known tops (whole blocks + {@link FarColumns#HEIGHT_BASE}), or -1 if none.
      */
-    public int patch(int ring, int px, int pz, int[] height, int[] colour) {
+    public int patch(int ring, int px, int pz, int[] height, int[] colour, int[] info, int[] crown) {
         int s = Rings.cellSize(ring), lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
         Sum sum = new Sum();
         for (int j = 0; j < Rings.PATCH; j++) {
             for (int i = 0; i < Rings.PATCH; i++) {
                 int k = j * Rings.PATCH + i;
-                int x0 = (px * Rings.PATCH + i) * s, z0 = (pz * Rings.PATCH + j) * s;
-                long v = s <= 16 ? within(sum.reset(), x0, z0, s) : across(sum.reset(), x0, z0, s);
-                height[k] = 0;
-                colour[k] = 0;
-                if (v == Long.MIN_VALUE) continue;
-                int top = (int) (v >> 40), depth = (int) (v >> 32) & 255, rgb = (int) v & 0xFFFFFF;
-                int h = Math.clamp(top + FarColumns.HEIGHT_OFFSET, 0, 65535);
-                height[k] = 255 << 24 | depth << 16 | (h & 255) << 8 | h >> 8;
-                colour[k] = 255 << 24 | (rgb & 255) << 16 | (rgb >> 8 & 255) << 8 | rgb >> 16 & 255;
-                lo = Math.min(lo, h);
-                hi = Math.max(hi, h);
+                int x = (px * Rings.PATCH + i) * s, z = (pz * Rings.PATCH + j) * s;
+                height[k] = colour[k] = info[k] = crown[k] = 0;
+                if (!sum.reset().over(this, x - s / 2, z - s / 2, s)) continue;
+                float top = (float) sum.top / sum.n;
+                int depth = sum.wet * 2 >= sum.n ? Math.clamp(sum.depth / Math.max(1, sum.wet), 1, FarColumns.MAX_DEPTH) : 0;
+                int canopy = sum.trees == 0 ? 0 : sum.canopy / sum.trees;
+                int density = sum.trees * 255 / sum.n;
+                height[k] = FarColumns.packHeight(top);
+                colour[k] = FarColumns.abgr((int) (sum.r / sum.n) << 16 | (int) (sum.g / sum.n) << 8 | (int) (sum.b / sum.n), FarColumns.GENERATED);
+                info[k] = FarColumns.abgr(depth, Math.min(255, canopy * 4), density, 255);
+                if (sum.trees > 0) crown[k] = FarColumns.abgr((int) (sum.cr / sum.trees) << 16 | (int) (sum.cg / sum.trees) << 8 | (int) (sum.cb / sum.trees), 255);
+                int whole = (int) Math.floor(top) + FarColumns.HEIGHT_BASE;
+                lo = Math.min(lo, whole);
+                hi = Math.max(hi, whole + 1);
             }
         }
         return lo > hi ? -1 : lo << 16 | hi;
     }
 
-    // top << 40 | depth << 32 | rgb, or MIN_VALUE: the s×s blocks at (x0, z0), all inside one chunk
-    private long within(Sum sum, int x0, int z0, int s) {
-        FarChunk c = get(x0 >> 4, z0 >> 4);
-        if (c == null) return Long.MIN_VALUE;
-        int n = s / 2, sx0 = (x0 & 15) / 2, sz0 = (z0 & 15) / 2;
-        for (int dz = 0; dz < n; dz++) for (int dx = 0; dx < n; dx++) sum.add(c, (sz0 + dz) * FarChunk.SIDE + sx0 + dx);
-        return sum.result();
-    }
-
-    // the same over the chunks an s×s cell covers (s a multiple of 16), known once a quarter of them are
-    private long across(Sum sum, int x0, int z0, int s) {
-        int m = s / 16, seen = 0;
-        for (int dz = 0; dz < m; dz++) {
-            for (int dx = 0; dx < m; dx++) {
-                FarChunk c = get((x0 >> 4) + dx, (z0 >> 4) + dz);
-                if (c == null) continue;
-                seen++;
-                for (int i = 0; i < FarChunk.CELLS; i++) sum.add(c, i);
-            }
-        }
-        return seen * 4 < m * m ? Long.MIN_VALUE : sum.result();
-    }
-
-    /** Running averages of 2-block cells: top, colour, and water by majority. */
+    /** Running sums of the 2-block cells over one corner's area: ground, water by majority, trees, colours. */
     private static final class Sum {
-        long top, r, g, b;
-        int n, wet, depth;
+        long top, r, g, b, cr, cg, cb;
+        int n, wet, depth, trees, canopy;
 
         Sum reset() {
-            top = r = g = b = 0;
-            n = wet = depth = 0;
+            top = r = g = b = cr = cg = cb = 0;
+            n = wet = depth = trees = canopy = 0;
             return this;
+        }
+
+        /** Sums the s×s blocks at (x0, z0), cell by cell (2-block cells up to 16, whole chunks past that); true once a quarter is seen. */
+        boolean over(FarStore store, int x0, int z0, int s) {
+            int area;
+            if (s <= 16) {
+                int n2 = Math.max(1, s / 2);
+                area = n2 * n2;
+                FarChunk c = null;
+                int cx = Integer.MIN_VALUE, cz = Integer.MIN_VALUE;
+                for (int dz = 0; dz < n2; dz++) {
+                    for (int dx = 0; dx < n2; dx++) {
+                        int bx = x0 + dx * 2, bz = z0 + dz * 2;
+                        if (bx >> 4 != cx || bz >> 4 != cz) {
+                            cx = bx >> 4;
+                            cz = bz >> 4;
+                            c = store.get(cx, cz);
+                        }
+                        if (c != null) add(c, ((bz & 15) >> 1) * FarChunk.SIDE + ((bx & 15) >> 1));
+                    }
+                }
+            } else {
+                int m = s / 16;
+                area = m * m * FarChunk.CELLS;
+                for (int dz = 0; dz < m; dz++) {
+                    for (int dx = 0; dx < m; dx++) {
+                        FarChunk c = store.get((x0 >> 4) + dx, (z0 >> 4) + dz);
+                        if (c != null) for (int i = 0; i < FarChunk.CELLS; i++) add(c, i);
+                    }
+                }
+            }
+            return n > 0 && n * 4 >= area;
         }
 
         void add(FarChunk c, int i) {
@@ -198,13 +211,14 @@ public final class FarStore {
                 wet++;
                 depth += d;
             }
-        }
-
-        long result() {
-            if (n == 0) return Long.MIN_VALUE;
-            int d = wet * 2 >= n ? Math.clamp(depth / Math.max(1, wet), 1, FarColumns.MAX_DEPTH) : 0;
-            long rgb = (r / n) << 16 | (g / n) << 8 | b / n;
-            return (top / n) << 40 | (long) d << 32 | rgb;
+            int h = FarChunk.canopy(cell), leaf = c.crown()[i];
+            if (h > 0 && leaf != 0) {
+                trees++;
+                canopy += h;
+                cr += leaf >> 16 & 255;
+                cg += leaf >> 8 & 255;
+                cb += leaf & 255;
+            }
         }
     }
 

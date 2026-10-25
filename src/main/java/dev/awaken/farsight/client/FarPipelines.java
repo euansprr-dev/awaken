@@ -19,10 +19,10 @@ import java.util.Optional;
  * Far Sight's pipelines, registered as optional so a driver that can't build them turns Far Sight off instead of
  * failing the resource reload. Neither takes a vertex buffer: every vertex is worked out from its index.
  * <ul>
- *   <li>{@link #TERRAIN}: the rings' columns, quads from one shared index buffer, into the main colour target and Far
- *       Sight's own depth (reversed-Z, the game's convention);</li>
- *   <li>{@link #BAKE}: one triangle over the ring atlases that derives each cell's normal and valley shade (the
- *       fragment-pass implementation of {@link FarGpu});</li>
+ *   <li>{@link #TERRAIN}: the rings as continuous meshes, triangles from one index buffer per piece width, into the main
+ *       colour target and Far Sight's own depth (reversed-Z, the game's convention);</li>
+ *   <li>{@link #BAKE}: one triangle over the ring atlases that derives each corner's normal, valley shade and sunlight
+ *       (the fragment-pass implementation of {@link FarGpu});</li>
  *   <li>{@link #MARKS}: landmarks ({@link dev.awaken.farsight.FarLandmarks}) as glowing columns.</li>
  * </ul>
  */
@@ -34,10 +34,14 @@ final class FarPipelines {
             .withUniform("FarDraw", UniformType.UNIFORM_BUFFER)
             .withUniform("HeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("ColorSampler", UniformType.COMBINED_IMAGE_SAMPLER)
-            .withUniform("ShadeSampler", UniformType.COMBINED_IMAGE_SAMPLER)
-            .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("InfoSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("CrownSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("GenHeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("GenColorSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("GenInfoSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("GenCrownSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("ShadeSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .build();
 
     static final BindGroupLayout BAKE_INPUTS = BindGroupLayout.builder()
@@ -53,7 +57,7 @@ final class FarPipelines {
             .withLocation(Awaken.id("pipeline/farsight_terrain"))
             .withVertexShader(Awaken.id("core/farsight_terrain"))
             .withFragmentShader(Awaken.id("core/farsight_terrain"))
-            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
             .withColorTargetState(ColorTargetState.DEFAULT)
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
             .withCull(false)

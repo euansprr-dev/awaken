@@ -4,30 +4,46 @@
 #include <minecraft:projection.glsl>
 #include <awaken:farsight.glsl>
 
-// AWAKEN Far Sight: one ring piece, no vertex buffer. Cell i of the piece is vertices 12i..12i+11: its flat top, then
-// the wall on the side facing the camera in x, then in z. A wall stands only where this cell is higher than that
-// neighbour, so every visible wall is drawn once, by the higher cell. Near its window's edge a ring eases into the
-// next coarser one, so the two meet without a seam; a cell not predicted yet takes the coarser ring's value. In the
-// near rings a predicted forest grows treetops (a deterministic hash per cell, the same whichever ring asks).
+// AWAKEN Far Sight 2: one ring piece as a continuous mesh, no vertex buffer. Vertex v of a piece is its grid corner
+// (v % 65, v / 65) from the piece's first corner; one index buffer per piece width makes the triangles. A corner takes
+// its ring's ground (the generated layer where the real chunks were seen, else the prediction), and over the window's
+// outer band eases into the next coarser ring's surface (bilinear between its corners), reaching it exactly at the edge,
+// where the coarser ring's mesh begins: the rings meet with no crack and no pop. A corner whose own data hasn't arrived
+// takes the coarser rings' surface whole, so there is never a hole.
 
 layout(std140) uniform FarDraw {
-    ivec4 FarPiece;     // ring, first cell x and z (window-local), width in cells
+    ivec4 FarPiece;     // ring, first corner x and z (window-local)
 };
 
 uniform sampler2D HeightSampler;
 uniform sampler2D ColorSampler;
-uniform sampler2D ShadeSampler;
-uniform sampler2D GenHeightSampler;    // the generated layer: what the real chunks seen there show; wins where it has a cell
+uniform sampler2D InfoSampler;
+uniform sampler2D CrownSampler;
+uniform sampler2D GenHeightSampler;
 uniform sampler2D GenColorSampler;
+uniform sampler2D GenInfoSampler;
+uniform sampler2D GenCrownSampler;
+uniform sampler2D ShadeSampler;
 
-layout(location = 0) out vec3 vColor;  // unlit
-layout(location = 1) out vec3 vRel;
-layout(location = 2) out float vWater; // the water's depth in blocks (0 on land)
-layout(location = 3) out float vLight;
-layout(location = 4) out vec4 vEdge;   // top: blocks from the camera-facing x and z edges, and the steps there (+ up, - down)
-layout(location = 5) out float vDepth; // wall: blocks below its top edge (-1 on tops)
+layout(location = 0) out vec3 vRel;          // blocks from the camera
+layout(location = 1) out vec3 vNormal;
+layout(location = 2) out vec3 vColor;        // the ground's colour
+layout(location = 3) out vec4 vInfo;         // water depth, canopy height, tree density (as stored), valley shade
+layout(location = 4) out vec4 vCrown;        // crown colour, sunlight (1 lit)
+layout(location = 5) flat out ivec2 vFlags;  // colour flags, crown shape
+layout(location = 6) out float vCell;        // this ring's cell size (blocks)
 
-const vec3 ROCK = vec3(0.50, 0.49, 0.47);
+const int STRIDE = 65;
+const float MORPH = 16.0;   // cells of the window's outer band over which a ring eases into the next
+
+struct Corner {
+    float h;
+    vec2 n;        // the normal's x and z
+    vec3 col;
+    vec4 info;     // r depth, g canopy, b density, a valley
+    vec4 crown;    // rgb, a sunlight
+    int flags, shape;
+};
 
 ivec2 texelOf(int r, ivec2 l) {
     ivec4 t = FarTexel[r];
@@ -38,159 +54,111 @@ bool inWindow(ivec2 l) {
     return l.x >= 0 && l.y >= 0 && l.x < 256 && l.y < 256;
 }
 
-// treetops of a predicted forest in rings 0-2: most cells rise a little, the rest are gaps nearer the forest floor
-void canopy(int r, ivec2 t, float trees, inout float h, inout vec3 col) {
-    if (r > 2 || trees < 0.5) return;
-    float k = farHash(t + ivec2(r * 7919, 0));
-    if (k < 0.66) {
-        h += floor(farHash(t.yx + ivec2(31, r)) * 2.5);
-        col *= 1.06;
-    } else {
-        h -= floor(trees * 0.6);
-        col *= 0.72;
-    }
-}
-
-// one texel's cell: the generated layer where it has one, else the prediction (with its treetops)
-bool cellAt(int r, ivec2 t, out float h, out vec3 col, out float water) {
-    vec4 hv = texelFetch(GenHeightSampler, t, 0);
-    bool generated = hv.a > 0.5;
-    if (!generated) hv = texelFetch(HeightSampler, t, 0);
-    h = farHeight(hv);
-    water = floor(hv.b * 255.0 + 0.5);
-    vec4 c = generated ? texelFetch(GenColorSampler, t, 0) : texelFetch(ColorSampler, t, 0);
-    col = c.rgb;
-    float a = floor(c.a * 255.0 + 0.5);
-    if (!generated && a < 254.5) canopy(r, t, (a - 15.0) / 16.0, h, col);
-    if (generated && FarCam.w > 0.5) col = vec3(1.0, 0.0, 1.0);
-    return hv.a > 0.5;
-}
-
-// ring r's cell under a point (blocks from the camera), if that ring has it
-bool sampleAt(int r, vec2 p, out float h, out vec3 col, out vec4 shade, out float water) {
-    h = 0.0;
-    col = vec3(0.0);
-    shade = vec4(0.5, 0.5, 1.0, 1.0);
-    water = 0.0;
-    if (r > 6 || FarRing[r].w < 0.5) return false;
-    ivec2 l = ivec2(floor((p - FarRing[r].xy) / FarRing[r].z));
+// one corner's data: the generated layer where it has it, else the prediction; false if neither has arrived
+bool cornerAt(int r, ivec2 l, out Corner c) {
+    c.h = 0.0; c.n = vec2(0.0); c.col = vec3(0.0); c.info = vec4(0.0); c.crown = vec4(0.0, 0.0, 0.0, 1.0); c.flags = 0; c.shape = 0;
     if (!inWindow(l)) return false;
     ivec2 t = texelOf(r, l);
-    if (!cellAt(r, t, h, col, water)) return false;
-    shade = texelFetch(ShadeSampler, t, 0);
+    float gh = texelFetch(GenHeightSampler, t, 0).r;
+    bool gen = gh > 0.0;
+    float hh = gen ? gh : texelFetch(HeightSampler, t, 0).r;
+    if (hh <= 0.0) return false;
+    c.h = farHeight(hh);
+    vec4 col = gen ? texelFetch(GenColorSampler, t, 0) : texelFetch(ColorSampler, t, 0);
+    vec4 info = gen ? texelFetch(GenInfoSampler, t, 0) : texelFetch(InfoSampler, t, 0);
+    vec4 predCrown = texelFetch(CrownSampler, t, 0);
+    vec4 crown = gen ? texelFetch(GenCrownSampler, t, 0) : predCrown;
+    vec4 shade = texelFetch(ShadeSampler, t, 0);
+    c.col = col.rgb;
+    c.flags = int(col.a * 255.0 + 0.5);
+    // a generated texel keeps the prediction's flags (snow line, cold) as well as its own
+    if (gen) c.flags |= int(texelFetch(ColorSampler, t, 0).a * 255.0 + 0.5) & 127;
+    c.info = vec4(info.rgb, shade.b);
+    c.crown = vec4(crown.rgb, shade.a);
+    c.shape = int(predCrown.a * 255.0 + 0.5);
+    c.n = shade.rg * 2.0 - 1.0;
     return true;
 }
 
-// what cell l of ring r draws: its own value, eased toward the coarser ring over its window's outer 14 cells (fully
-// there in the outer 2), or the coarser rings' value while its own is still being predicted
-bool cellValue(int r, ivec2 l, out float h, out vec3 col, out vec4 shade, out float water) {
-    vec2 centre = FarRing[r].xy + (vec2(l) + 0.5) * FarRing[r].z;
-    ivec2 t = texelOf(r, l);
-    bool own = cellAt(r, t, h, col, water);
-    shade = texelFetch(ShadeSampler, t, 0);
-    float e = float(min(min(l.x, l.y), min(255 - l.x, 255 - l.y)));
-    float w = own ? clamp((14.0 - e) / 12.0, 0.0, 1.0) : 1.0;
-    if (w <= 0.0 || r >= 6) return own;
-    float h2, w2;
-    vec3 c2;
-    vec4 s2;
-    if (sampleAt(r + 1, centre, h2, c2, s2, w2)) {
-        h = mix(h, h2, w);
-        col = mix(col, c2, w);
-        shade = mix(shade, s2, w);
-        water = w > 0.5 ? w2 : water;
+// the surface of ring r (or the next coarser one that has it) under point p (blocks from the camera)
+bool surfaceAt(int r, vec2 p, out Corner c) {
+    for (int k = r; k <= 6; k++) {
+        if (FarRing[k].w < 0.5) continue;
+        vec2 u = (p - FarRing[k].xy) / FarRing[k].z;
+        ivec2 i0 = ivec2(floor(u));
+        vec2 f = u - vec2(i0);
+        Corner a, b, cc, d;
+        bool ka = cornerAt(k, i0, a);
+        bool kb = f.x <= 1e-4 || cornerAt(k, i0 + ivec2(1, 0), b);
+        bool kc = f.y <= 1e-4 || cornerAt(k, i0 + ivec2(0, 1), cc);
+        bool kd = f.x <= 1e-4 || f.y <= 1e-4 || cornerAt(k, i0 + ivec2(1, 1), d);
+        if (!(ka && kb && kc && kd)) continue;
+        if (f.x <= 1e-4) { b = a; d = cc; }
+        if (f.y <= 1e-4) { cc = a; d = b; }
+        float wa = (1.0 - f.x) * (1.0 - f.y), wb = f.x * (1.0 - f.y), wc = (1.0 - f.x) * f.y, wd = f.x * f.y;
+        c.h = a.h * wa + b.h * wb + cc.h * wc + d.h * wd;
+        c.n = a.n * wa + b.n * wb + cc.n * wc + d.n * wd;
+        c.col = a.col * wa + b.col * wb + cc.col * wc + d.col * wd;
+        c.info = a.info * wa + b.info * wb + cc.info * wc + d.info * wd;
+        c.crown = a.crown * wa + b.crown * wb + cc.crown * wc + d.crown * wd;
+        c.flags = a.flags;
+        c.shape = a.shape;
         return true;
     }
-    if (own) return true;
-    return sampleAt(r + 2, centre, h, col, shade, water);
-}
-
-// the neighbour's drawn top: inside the window as that cell draws itself, past the edge from the coarser ring
-bool neighbourTop(int r, ivec2 l, out float h) {
-    float w;
-    vec3 c;
-    vec4 s;
-    if (inWindow(l)) return cellValue(r, l, h, c, s, w);
-    return sampleAt(r + 1, FarRing[r].xy + (vec2(l) + 0.5) * FarRing[r].z, h, c, s, w);
+    return false;
 }
 
 void hide() {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
-    vColor = vec3(0.0);
     vRel = vec3(0.0);
-    vWater = 0.0;
-    vLight = 0.0;
-    vEdge = vec4(0.0);
-    vDepth = -1.0;
+    vNormal = vec3(0.0, 1.0, 0.0);
+    vColor = vec3(0.0);
+    vInfo = vec4(0.0);
+    vCrown = vec4(0.0);
+    vFlags = ivec2(0);
+    vCell = 1.0;
 }
 
 void main() {
     int v = gl_VertexIndex;
-    int cell = v / 12, quad = (v >> 2) % 3, corner = v & 3;
     int r = FarPiece.x;
-    ivec2 l = ivec2(FarPiece.y + cell % FarPiece.w, FarPiece.z + cell / FarPiece.w);
+    ivec2 l = FarPiece.yz + ivec2(v % STRIDE, v / STRIDE);
     float s = FarRing[r].z;
-    vec2 o = FarRing[r].xy + vec2(l) * s;
-    float h, water;
-    vec3 col;
-    vec4 shade;
-    if (!cellValue(r, l, h, col, shade, water)) {
-        hide();
-        return;
-    }
-    float top = h - FarFog.z;
-    // the camera sits at the origin: the cell's sides that face it, in x and in z
-    int sideX = o.x + s * 0.5 < 0.0 ? 1 : -1, sideZ = o.y + s * 0.5 < 0.0 ? 1 : -1;
-    // corners go round the quad: along it (a) 0 1 1 0, up it (b) 1 1 0 0
-    float a = (corner == 1 || corner == 2) ? 1.0 : 0.0;
-    float b = corner < 2 ? 1.0 : 0.0;
-    vec3 pos, n;
-    float face;
-    vEdge = vec4(0.0);
-    vDepth = -1.0;
-    if (quad == 0) {
-        float x = a, z = 1.0 - b;
-        pos = vec3(o.x + x * s, top, o.y + z * s);
-        n = vec3(shade.r * 2.0 - 1.0, 0.0, shade.g * 2.0 - 1.0);
-        n.y = sqrt(max(1.0 - dot(n.xz, n.xz), 0.0));
-        face = 1.0;
-        // the steps at the two camera-facing edges, for the terrace lines (rim where it drops, shadow where it rises)
-        float hx = h, hz = h;
-        neighbourTop(r, l + ivec2(sideX, 0), hx);
-        neighbourTop(r, l + ivec2(0, sideZ), hz);
-        vEdge = vec4((sideX > 0 ? 1.0 - x : x) * s, (sideZ > 0 ? 1.0 - z : z) * s, hx - h, hz - h);
-    } else {
-        bool xWall = quad == 1;
-        int side = xWall ? sideX : sideZ;
-        float hn;
-        if (!neighbourTop(r, l + (xWall ? ivec2(side, 0) : ivec2(0, side)), hn) || hn >= h - 0.01) {
+    vec2 p = FarRing[r].xy + vec2(l) * s;
+    // how far into the outer band: 1 at the window's edge (the coarser ring's surface exactly), 0 inside
+    float e = float(min(min(l.x, l.y), min(256 - l.x, 256 - l.y)));
+    float m = r < 6 ? clamp((MORPH - e) / (MORPH - 2.0), 0.0, 1.0) : 0.0;
+    Corner c;
+    bool own = cornerAt(r, l, c);
+    if (!own) m = 1.0;
+    if (m > 0.0) {
+        Corner k;
+        if (surfaceAt(r + 1, p, k)) {
+            if (own) {
+                c.h = mix(c.h, k.h, m);
+                c.n = mix(c.n, k.n, m);
+                c.col = mix(c.col, k.col, m);
+                c.info = mix(c.info, k.info, m);
+                c.crown = mix(c.crown, k.crown, m);
+                if (m > 0.5) { c.flags = k.flags; c.shape = k.shape; }
+            } else {
+                c = k;
+            }
+        } else if (!own) {
             hide();
             return;
         }
-        float y = mix(hn - FarFog.z, top, b);
-        vDepth = (1.0 - b) * (h - hn);
-        if (xWall) {
-            pos = vec3(side > 0 ? o.x + s : o.x, y, o.y + a * s);
-            n = vec3(float(side), 0.0, 0.0);
-            face = 0.8;
-        } else {
-            pos = vec3(o.x + a * s, y, side > 0 ? o.y + s : o.y);
-            n = vec3(0.0, 0.0, float(side));
-            face = 0.9;
-        }
     }
-    // steep ground is bare rock, whatever grows on the flats around it
-    if (quad == 0 && water < 0.5) {
-        float slope = length(n.xz) / max(n.y, 0.05);
-        col = mix(col, ROCK, smoothstep(0.9, 1.8, slope) * 0.8);
-    }
-    // sun from the slope (soft: the game's own light already sets day and night), valleys a little darker
-    float lambert = max(dot(n, normalize(FarSun.xyz)), 0.0);
-    vLight = face * (0.72 + 0.28 * lambert) * (quad == 0 ? shade.b : mix(1.0, shade.b, 0.5));
-    vColor = col;
-    vRel = pos;
-    vWater = quad == 0 ? water : 0.0;
-    vec4 clip = ProjMat * (FarViewRot * vec4(pos, 1.0));
+    vec3 n = vec3(c.n.x, 0.0, c.n.y);
+    n.y = sqrt(max(1.0 - dot(c.n, c.n), 0.0));
+    vRel = vec3(p.x, c.h - FarFog.z, p.y);
+    vNormal = n;
+    vColor = c.col;
+    vInfo = c.info;
+    vCrown = c.crown;
+    vFlags = ivec2(c.flags, c.shape);
+    vCell = s;
+    vec4 clip = ProjMat * (FarViewRot * vec4(vRel, 1.0));
     clip.z = FarDepth.x + FarDepth.y * clip.w;
     gl_Position = clip;
 }

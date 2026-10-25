@@ -57,6 +57,23 @@ public final class FarTerrain {
         lastFrameNanos = System.nanoTime();
     }
 
+    private static volatile boolean selfHazed;
+    private static volatile long selfHazedNanos;
+
+    /**
+     * A far renderer that draws its own aerial perspective at real distances (Far Sight 2) says so each frame: Lens then
+     * hazes far terrain only as much as the end of the real chunks, and leaves the kilometres past them to it.
+     */
+    public static void selfHazed(boolean value) {
+        selfHazed = value;
+        selfHazedNanos = System.nanoTime();
+    }
+
+    /** Whether far terrain this frame hazes its own distance (reported in the last fifth of a second). */
+    public static boolean selfHazed() {
+        return selfHazed && active() && System.nanoTime() - selfHazedNanos < 200_000_000L;
+    }
+
     private static volatile float renderDistanceFogEnd = -1f;
 
     /**

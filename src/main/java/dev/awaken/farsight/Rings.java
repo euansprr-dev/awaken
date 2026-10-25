@@ -15,8 +15,6 @@ public final class Rings {
     public static final int MASK = SIZE - 1;
     public static final int PATCH = 16;
     public static final int PATCHES = SIZE / PATCH;
-    /** Rings within about a kilometre take the generator's exact base height; farther ones its surface estimate. */
-    public static final int EXACT_RINGS = 3;
 
     public static int cellSize(int ring) {
         return 2 << ring;

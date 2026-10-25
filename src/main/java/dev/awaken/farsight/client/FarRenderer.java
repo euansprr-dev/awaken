@@ -31,10 +31,12 @@ import java.util.OptionalDouble;
 
 /**
  * Draws the rings (SPEC §20) right after the sky, before any chunk: real chunks then simply draw over far terrain, so
- * the two never fight over depth. Every ring is the same grid; its window, minus the window of the ring inside it, is
- * cut into pieces of at most 64×64 cells, and a piece is drawn only if it is in view and not entirely under the real
- * chunks. One shared index buffer serves every piece: cell {@code i} of a piece is vertices {@code 12i..12i+11}, a
- * flat top and the two walls that can face the camera, each worked out in the vertex shader from the atlases.
+ * the two never fight over depth. Every ring is the same grid of corners; its window, minus the window of the ring
+ * inside it, is cut into pieces of at most 64×64 cells, and a piece is drawn only if it is in view and not entirely
+ * under the real chunks. Far Sight 2 draws each piece as one continuous mesh: vertex {@code v} is the piece's corner
+ * {@code (v % 65, v / 65)}, worked out in the vertex shader from the atlases, and the triangles come from one index
+ * buffer per piece width (every width is a multiple of 8 cells: windows move by whole patches), whose first {@code h}
+ * rows make a piece {@code h} cells tall.
  *
  * <p>Far Sight keeps its own depth (reversed-Z, the device's range, near {@link #NEAR}, far {@link #FAR}) in a texture
  * of the main target's size. Nothing else writes it, so it lasts until post effects, where Lens reads it through
@@ -42,17 +44,21 @@ import java.util.OptionalDouble;
  */
 final class FarRenderer implements AutoCloseable {
     static final float NEAR = 1f, FAR = 32768f;
-    static final int PIECE = 64, MAX_DRAWS = 256;
-    private static final int QUADS_PER_CELL = 3, INDICES_PER_CELL = QUADS_PER_CELL * 6;
-    static final int FRAME_SIZE = new Std140SizeCalculator().putMat4f().putVec4().putVec4().putVec4().putVec4().putVec4().get()
-            + Rings.RINGS * 16 * 2;
+    /** The far air's scale height (blocks) and how strongly it scatters sunlight toward the eye. */
+    static final float AIR_SCALE_HEIGHT = 1500f, AIR_SUN = 0.9f;
+    static final int PIECE = 64, MAX_DRAWS = 256, STRIDE = PIECE + 1, WIDTHS = PIECE / 8;
+    private static final int INDICES_PER_CELL = 6;
+    static final int FRAME_SIZE = new Std140SizeCalculator().putMat4f().putVec4().putVec4().putVec4().putVec4().get()
+            + Rings.RINGS * 16 * 2 + 3 * 16;
 
     private final MappableRingBuffer frameUbo = new MappableRingBuffer(() -> "awaken far sight frame", 130, FRAME_SIZE);
     private final int align = Math.max(16, RenderSystem.getDevice().getDeviceInfo().limits().minUniformOffsetAlignment());
     private final MappableRingBuffer drawUbo = new MappableRingBuffer(() -> "awaken far sight draws", 130, MAX_DRAWS * align);
     static final int MAX_MARKS = 48;
     private final MappableRingBuffer markUbo = new MappableRingBuffer(() -> "awaken far sight landmarks", 130, MAX_MARKS * 3 * 16);
-    private final GpuBuffer indices;
+    /** Index buffers by piece width (8, 16, .. 64 cells), each 64 rows tall; also the landmarks' quads. */
+    private final GpuBuffer[] widths = new GpuBuffer[WIDTHS];
+    private final GpuBuffer quads;
     private GpuTexture depth;
     private GpuTextureView depthView;
 
@@ -70,15 +76,29 @@ final class FarRenderer implements AutoCloseable {
     private int gpuFrames;
 
     FarRenderer() {
-        int cellsPerPiece = PIECE * PIECE;
-        ByteBuffer data = MemoryUtil.memAlloc(cellsPerPiece * INDICES_PER_CELL * 2).order(ByteOrder.nativeOrder());
-        for (int q = 0; q < cellsPerPiece * QUADS_PER_CELL; q++) {
+        ByteBuffer data = MemoryUtil.memAlloc(PIECE * PIECE * INDICES_PER_CELL * 2).order(ByteOrder.nativeOrder());
+        for (int k = 0; k < WIDTHS; k++) {
+            int w = (k + 1) * 8;
+            data.clear();
+            for (int j = 0; j < PIECE; j++) {
+                for (int i = 0; i < w; i++) {
+                    int a = j * STRIDE + i, b = a + 1, c = a + STRIDE, d = c + 1;
+                    // alternate the diagonal, so long slopes don't all lean one way
+                    if (((i ^ j) & 1) == 0) data.putShort((short) a).putShort((short) c).putShort((short) d).putShort((short) a).putShort((short) d).putShort((short) b);
+                    else data.putShort((short) a).putShort((short) c).putShort((short) b).putShort((short) b).putShort((short) c).putShort((short) d);
+                }
+            }
+            data.flip();
+            widths[k] = RenderSystem.getDevice().createBuffer(() -> "awaken far sight mesh " + w, GpuBuffer.USAGE_INDEX, data);
+        }
+        // the landmarks' quads: vertices 4q..4q+3 as two triangles
+        data.clear();
+        for (int q = 0; q < MAX_MARKS * 2; q++) {
             int v = q * 4;
-            data.putShort((short) v).putShort((short) (v + 1)).putShort((short) (v + 2))
-                    .putShort((short) (v + 2)).putShort((short) (v + 3)).putShort((short) v);
+            data.putShort((short) v).putShort((short) (v + 1)).putShort((short) (v + 2)).putShort((short) (v + 2)).putShort((short) (v + 3)).putShort((short) v);
         }
         data.flip();
-        indices = RenderSystem.getDevice().createBuffer(() -> "awaken far sight quads", GpuBuffer.USAGE_INDEX, data);
+        quads = RenderSystem.getDevice().createBuffer(() -> "awaken far sight quads", GpuBuffer.USAGE_INDEX, data);
         MemoryUtil.memFree(data);
     }
 
@@ -157,17 +177,17 @@ final class FarRenderer implements AutoCloseable {
     /** Lowest and highest top over the piece's patches ({@code lo << 32 | hi}), or MIN_VALUE if any is missing. */
     private static long range(FarField field, int r, int x, int z, int w, int h) {
         int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
-        for (int pz = z / Rings.PATCH; pz <= (z + h - 1) / Rings.PATCH; pz++) {
-            for (int px = x / Rings.PATCH; px <= (x + w - 1) / Rings.PATCH; px++) {
+        for (int pz = z / Rings.PATCH; pz <= Math.min(Rings.PATCHES - 1, (z + h) / Rings.PATCH); pz++) {
+            for (int px = x / Rings.PATCH; px <= Math.min(Rings.PATCHES - 1, (x + w) / Rings.PATCH); px++) {
                 int wx = field.winX[r] + px, wz = field.winZ[r] + pz;
                 if (!field.has(r, wx, wz)) return Long.MIN_VALUE;
                 int slot = Rings.slot(wx, wz);
-                lo = Math.min(lo, (field.lo[r][slot] & 0xFFFF) - FarColumns.HEIGHT_OFFSET);
-                hi = Math.max(hi, (field.hi[r][slot] & 0xFFFF) - FarColumns.HEIGHT_OFFSET);
+                lo = Math.min(lo, (field.lo[r][slot] & 0xFFFF) - FarColumns.HEIGHT_BASE);
+                hi = Math.max(hi, field.top(r, slot) - FarColumns.HEIGHT_BASE);
             }
         }
-        // walls reach down to a lower neighbour, possibly in the next ring: a little slack below
-        return (long) (lo - 64) << 32 | (hi + 1) & 0xFFFFFFFFL;
+        // the outer band eases into the coarser ring, whose surface between its corners can sit a little apart
+        return (long) (lo - 32) << 32 | (hi + 32) & 0xFFFFFFFFL;
     }
 
     /**
@@ -176,8 +196,8 @@ final class FarRenderer implements AutoCloseable {
      * where it dithers in under the real chunks.
      */
     void draw(FarField field, RenderTarget main, Matrix4fc viewRotation, double camX, double camY, double camZ, Vector3f sun,
-            float fogStart, float fogEnd, float clipStart, float clipBand, int seaLevel, boolean zeroToOne, GpuTextureView lightmap,
-            List<FarLandmarks.Landmark> landmarks) {
+            float sunStrength, Vector3f sunColour, float golden, float haze, float rain, float fogStart, float fogEnd, float clipStart,
+            float clipBand, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks) {
         depth(main);
         // clip.z = A + B * clip.w: Far Sight's own planes on the game's x, y and w (so view bobbing and FOV still apply)
         float a, b;
@@ -191,16 +211,18 @@ final class FarRenderer implements AutoCloseable {
         GpuBuffer frame = frameUbo.currentBuffer();
         try (var view = frame.map(false, true)) {
             Std140Builder u = Std140Builder.intoBuffer(view.data());
+            // the camera as an exact world cell (a multiple of 256) and the rest, so the shaders' world patterns hold anywhere
+            int cellX = (int) Math.floor(camX / 256.0) * 256, cellZ = (int) Math.floor(camZ / 256.0) * 256;
             u.putMat4f(viewRotation).putVec4(a, b, clipStart, clipBand).putVec4(fogStart, fogEnd, (float) camY, seaLevel)
-                    .putVec4(sun.x, sun.y, sun.z, 0f)
-                    .putVec4((float) (camX - Math.floor(camX / 4096.0) * 4096.0), (float) camY, (float) (camZ - Math.floor(camZ / 4096.0) * 4096.0),
-                            FarSightClient.debug);
+                    .putVec4(sun.x, sun.y, sun.z, sunStrength)
+                    .putVec4((float) (camX - cellX), 0f, (float) (camZ - cellZ), FarSightClient.debug);
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putVec4(originX[r], originZ[r], Rings.cellSize(r), field.valid[r] ? 1f : 0f);
             }
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putIVec4((field.winX[r] * Rings.PATCH) & Rings.MASK, (field.winZ[r] * Rings.PATCH) & Rings.MASK, r * Rings.SIZE, 0);
             }
+            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, cellZ, 0, 0);
         }
         GpuBuffer draws = drawUbo.currentBuffer();
         try (var view = draws.map(false, true)) {
@@ -236,12 +258,21 @@ final class FarRenderer implements AutoCloseable {
                 pass.setUniform("FarFrame", frame);
                 pass.setUniform("HeightSampler", field.heightView, nearest);
                 pass.setUniform("ColorSampler", field.colourView, nearest);
-                pass.setUniform("ShadeSampler", field.shadeView, nearest);
+                pass.setUniform("InfoSampler", field.infoView, nearest);
+                pass.setUniform("CrownSampler", field.crownView, nearest);
                 pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
                 pass.setUniform("GenColorSampler", field.genColourView, nearest);
+                pass.setUniform("GenInfoSampler", field.genInfoView, nearest);
+                pass.setUniform("GenCrownSampler", field.genCrownView, nearest);
+                pass.setUniform("ShadeSampler", field.shadeView, nearest);
                 pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-                pass.setIndexBuffer(indices, IndexType.SHORT);
+                int bound = -1;
                 for (int i = 0; i < pieces; i++) {
+                    int k = pW[i] / 8 - 1;
+                    if (k != bound) {
+                        pass.setIndexBuffer(widths[k], IndexType.SHORT);
+                        bound = k;
+                    }
                     pass.setUniform("FarDraw", draws.slice((long) i * align, 16));
                     pass.drawIndexed(pW[i] * pH[i] * INDICES_PER_CELL, 1, 0, 0, 0);
                 }
@@ -253,7 +284,7 @@ final class FarRenderer implements AutoCloseable {
                 pass.setUniform("Fog", RenderSystem.getShaderFog());
                 pass.setUniform("FarFrame", frame);
                 pass.setUniform("FarMarks", markBuffer);
-                pass.setIndexBuffer(indices, IndexType.SHORT);
+                pass.setIndexBuffer(quads, IndexType.SHORT);
                 pass.drawIndexed(marks * 2 * 6, 1, 0, 0, 0);
             }
         }
@@ -314,7 +345,8 @@ final class FarRenderer implements AutoCloseable {
         frameUbo.close();
         drawUbo.close();
         markUbo.close();
-        indices.close();
+        for (GpuBuffer b : widths) b.close();
+        quads.close();
         for (GpuQueryPool t : timers) if (t != null) t.close();
         if (depthView != null) depthView.close();
         if (depth != null) depth.close();
