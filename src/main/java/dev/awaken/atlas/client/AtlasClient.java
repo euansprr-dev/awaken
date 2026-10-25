@@ -45,7 +45,8 @@ public final class AtlasClient {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AtlasNet.Sync.TYPE, (m, ctx) -> AtlasState.get().onSync(m));
             e.register(AtlasNet.Trail.TYPE, (m, ctx) -> AtlasState.get().onTrail(m));
-            e.register(AtlasNet.Regions.TYPE, (m, ctx) -> AtlasState.get().regions = List.copyOf(m.regions()));
+            e.register(AtlasNet.Regions.TYPE, (m, ctx) -> AtlasState.get().onRegions(m.regions()));
+            e.register(AtlasNet.City.TYPE, (m, ctx) -> AtlasState.get().onCity(m));
             e.register(AtlasNet.Pins.TYPE, (m, ctx) -> AtlasState.get().pins = List.copyOf(m.pins()));
         });
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, AtlasClient::commands);

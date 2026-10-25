@@ -84,6 +84,7 @@ final class AtlasPainter {
         AtlasState atlas = AtlasState.get();
         long now = System.nanoTime();
         // finished slices go up first: an upload inside the pass would end the frame
+        atlas.mesh.zones = atlas.zoneView();
         atlas.mesh.update(s.cx(), s.cz(), s.lod(), Discovery.CLIENT, now);
         CommandEncoder enc = device.createCommandEncoder();
         enc.clearColorAndDepthTextures(color, new Vector4f(0f), depth, 0.0);

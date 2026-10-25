@@ -105,6 +105,36 @@ final class AtlasTests {
             }
         });
 
+        // zones: every explored cell goes out named by its Living Wilds region (1-based into the known regions)
+        AwakenTests.register("atlas_zones", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                AtlasData d = Discovery.data(p);
+                d.dim(Discovery.dim(p.level())).clear();
+                d.regions.clear();
+                BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+                Discovery.reveal(p, at, 64);
+                Explored e = d.peek(Discovery.dim(p.level()));
+                Explored.TileBits t = e.tiles().getFirst();
+                byte[] z = Discovery.zones(p, Discovery.live(p), t.tx(), t.tz(), t.bits());
+                if (dev.awaken.living.api.Regions.on(p.level())) {
+                    int named = 0, unnamed = 0;
+                    for (int i = 0; i < z.length; i++) {
+                        if ((t.bits()[i >> 6] & (1L << (i & 63))) == 0) continue;
+                        if (z[i] > 0 && z[i] <= d.regions().size()) named++;
+                        else unnamed++;
+                    }
+                    h.assertTrue(named > 0 && unnamed == 0, "every explored cell has its region: " + named + " named, " + unnamed + " not");
+                } else {
+                    h.assertTrue(z.length == 0, "no zones outside the overworld");
+                }
+                h.succeed();
+            } finally {
+                Discovery.forget(p);
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+        });
+
         // bells: a district's bell clears that district only; the Choir's clears the whole city
         AwakenTests.register("atlas_bell_clears_district", 40, h -> {
             ServerPlayer p = h.makeMockServerPlayerInLevel();

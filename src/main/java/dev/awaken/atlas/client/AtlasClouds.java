@@ -193,9 +193,11 @@ final class AtlasClouds {
                     sa[shadowCount] = a * (1f - night * 0.6f);
                     shadowCount++;
                 }
-                n = add(n, base, wx, 0f, wz, (30f + (r2 - 0.5f) * 6f) * lift, size, a, variant, flip);
-                if (r3 > 0.45f) // a smaller cap on top for volume, nudged up the screen
-                    n = add(n, base, wx + (r2 - 0.5f) * 10f * s, (5f + r1 * 3f) * s, wz - 3f * s, (37f + r1 * 4f) * lift, size * 0.62f, a * 0.95f, (variant + 1) % VARIANTS, !flip);
+                int tone = (hsh >>> 4) & 7;
+                n = add(n, base, wx, 0f, wz, (30f + (r2 - 0.5f) * 6f) * lift, size, a, variant, flip, tone);
+                if (r3 > 0.45f) // a smaller cap on top for volume, nudged up the screen, a touch brighter
+                    n = add(n, base, wx + (r2 - 0.5f) * 10f * s, (5f + r1 * 3f) * s, wz - 3f * s, (37f + r1 * 4f) * lift, size * 0.62f, a * 0.95f,
+                            (variant + 1) % VARIANTS, !flip, Math.max(0, tone - 3));
             }
         }
         for (int k = 0; k < n; k++) {
@@ -246,7 +248,11 @@ final class AtlasClouds {
         return shadowCount;
     }
 
-    private int add(int n, Matrix4f base, float x, float y, float z, float depthLift, float size, float a, int variant, boolean flip) {
+    /**
+     * {@code tone} 0..7 comes from the cell's hash, never from where the puff is drawn: taken from its drifting position
+     * it changed every redraw and the whole blanket flickered.
+     */
+    private int add(int n, Matrix4f base, float x, float y, float z, float depthLift, float size, float a, int variant, boolean flip, int tone) {
         if (n >= MAX_PUFFS) return n;
         base.transformPosition(x, y, z, v);
         px[n] = v.x;
@@ -254,7 +260,7 @@ final class AtlasClouds {
         pz[n] = v.z + depthLift;
         ps[n] = size;
         pa[n] = a;
-        look[n] = (byte) (variant | (flip ? 4 : 0) | ((Float.floatToIntBits(x * 0.37f + z) >>> 7 & 7) << 3));
+        look[n] = (byte) (variant | (flip ? 4 : 0) | (tone << 3));
         return n + 1;
     }
 

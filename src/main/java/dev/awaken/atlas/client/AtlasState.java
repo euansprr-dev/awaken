@@ -37,6 +37,8 @@ final class AtlasState {
     final TileCache cache = new TileCache();
     final AtlasMesh mesh = new AtlasMesh(store);
     final AtlasClouds clouds = new AtlasClouds();
+    /** What the known land belongs to: districts in Carillon, Living Wilds regions outside. */
+    final ZoneMap zones = new ZoneMap();
     /** When each recently explored cell cleared (nanoTime; later for a ripple), so its clouds part over a second. */
     final Long2LongOpenHashMap revealedAt = new Long2LongOpenHashMap();
     /** Cells a bell's ripple will reach later (nanoTime), kept out of the record until then. */
@@ -64,10 +66,12 @@ final class AtlasState {
             mine.clear();
             revealedAt.clear();
             pending.clear();
+            zones.clear();
             mesh.clear(); // slices built from the old record would float as stray land under the clouds
         }
         boolean animate = !m.reset();
-        for (Explored.TileBits t : m.tiles()) {
+        for (AtlasNet.WireTile t : m.tiles()) {
+            zones.put(t.tx(), t.tz(), t.zones());
             long[] old = mine.tile(t.tx(), t.tz()), bits = t.bits().clone();
             if (animate) {
                 for (int w = 0; w < Explored.WORDS; w++) {
@@ -113,6 +117,100 @@ final class AtlasState {
             mesh.changed(cx << 4, cz << 4, 16);
             it.remove();
         }
+    }
+
+    void onCity(AtlasNet.City m) {
+        zones.city(m.present(), m.x(), m.z());
+        mesh.changedAll();
+    }
+
+    void onRegions(List<dev.awaken.atlas.AtlasData.Region> list) {
+        regions = List.copyOf(list);
+        zones.regionsChanged();
+    }
+
+    /** A zone you know, for the table's labels and legend: its name, a line under it, colour, and where its known land is. */
+    record ZoneLabel(int zone, String name, String sub, int colour, double x, double z, int cells) {}
+
+    private List<ZoneLabel> labels = List.of();
+    private int labelsExplored = -1, labelsZones = -1;
+    private long labelsAt;
+
+    /**
+     * Every zone with known land, and the middle of its known land (where its name goes): districts and regions you've
+     * walked, largest first. Worked out from the explored cells when they change, at most twice a second.
+     */
+    List<ZoneLabel> zoneLabels() {
+        int ev = Discovery.CLIENT.version, zv = zones.version();
+        long now = System.nanoTime();
+        if ((ev == labelsExplored && zv == labelsZones) || now - labelsAt < 500_000_000L) return labels;
+        labelsExplored = ev;
+        labelsZones = zv;
+        labelsAt = now;
+        ZoneMap.View view = zoneView();
+        it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<long[]> sums = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
+        for (Explored.TileBits t : Discovery.CLIENT.tiles()) {
+            long[] bits = t.bits();
+            for (int i = 0; i < Explored.TILE * Explored.TILE; i++) {
+                if ((bits[i >> 6] & (1L << (i & 63))) == 0) continue;
+                int bx = (((t.tx() << Explored.TILE_SHIFT) + (i & (Explored.TILE - 1))) << 4) + 8;
+                int bz = (((t.tz() << Explored.TILE_SHIFT) + (i >> Explored.TILE_SHIFT)) << 4) + 8;
+                int zone = view.zone(bx, bz);
+                if (zone == 0) continue;
+                long[] acc = sums.computeIfAbsent(zone, k -> new long[3]);
+                acc[0] += bx;
+                acc[1] += bz;
+                acc[2]++;
+            }
+        }
+        // a zone's name sits on its own known land: the known cell nearest the middle of it (a ring's middle, the
+        // Wallring's, is the city, not the ring)
+        it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<double[]> anchor = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
+        for (Explored.TileBits t : Discovery.CLIENT.tiles()) {
+            long[] bits = t.bits();
+            for (int i = 0; i < Explored.TILE * Explored.TILE; i++) {
+                if ((bits[i >> 6] & (1L << (i & 63))) == 0) continue;
+                int bx = (((t.tx() << Explored.TILE_SHIFT) + (i & (Explored.TILE - 1))) << 4) + 8;
+                int bz = (((t.tz() << Explored.TILE_SHIFT) + (i >> Explored.TILE_SHIFT)) << 4) + 8;
+                int zone = view.zone(bx, bz);
+                long[] acc = zone == 0 ? null : sums.get(zone);
+                if (acc == null) continue;
+                double mx = acc[0] / (double) acc[2], mz = acc[1] / (double) acc[2], d = (bx - mx) * (bx - mx) + (bz - mz) * (bz - mz);
+                double[] best = anchor.get(zone);
+                if (best == null) anchor.put(zone, new double[]{bx, bz, d});
+                else if (d < best[2]) {
+                    best[0] = bx;
+                    best[1] = bz;
+                    best[2] = d;
+                }
+            }
+        }
+        List<ZoneLabel> out = new java.util.ArrayList<>();
+        for (var e : sums.int2ObjectEntrySet()) {
+            int zone = e.getIntKey();
+            long[] a = e.getValue();
+            double[] at = anchor.get(zone);
+            String name, sub;
+            if (zone >= ZoneMap.DISTRICT) {
+                int d = Math.min(ZoneMap.DISTRICT_NAME.length - 1, zone - ZoneMap.DISTRICT);
+                name = ZoneMap.DISTRICT_NAME[d];
+                sub = "Carillon";
+            } else {
+                if (zone - 1 >= regions.size()) continue;
+                var r = regions.get(zone - 1);
+                name = r.name();
+                sub = r.low() == r.high() ? "Lv " + r.low() : "Lv " + r.low() + "–" + r.high();
+            }
+            out.add(new ZoneLabel(zone, name, sub, view.colour(zone), at[0], at[1], (int) a[2]));
+        }
+        out.sort((p, q) -> Integer.compare(q.cells(), p.cells()));
+        labels = List.copyOf(out);
+        return labels;
+    }
+
+    /** The zones as the mesh worker should see them now. */
+    ZoneMap.View zoneView() {
+        return zones.view(regions);
     }
 
     void onTrail(AtlasNet.Trail m) {
@@ -176,6 +274,7 @@ final class AtlasState {
             revealedAt.long2LongEntrySet().removeIf(e -> now - e.getLongValue() > 3_000_000_000L);
         }
         // keep the land round the player built while the table is shut, so opening it is the warm 4–10 ms
+        mesh.zones = zoneView();
         if (!open) mesh.update(mc.player.getX(), mc.player.getZ(), 0, Discovery.CLIENT, System.nanoTime());
     }
 
@@ -221,6 +320,7 @@ final class AtlasState {
         trailStart = 0;
         regions = java.util.List.of();
         pins = java.util.List.of();
+        zones.clear();
         revealPending = false;
         level = null;
     }
