@@ -2275,8 +2275,8 @@ magic.
   and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g without
   leaves. A ring addressed by world block modulo 1024, a 64×64-chunk window centred on the camera's chunk: a chunk
   entering the window clears its slot and is read nearest first (40 a tick), a loaded chunk is read when it arrives
-  (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 5 ticks and the rest of the
-  window 24 a tick in turn (block changes show within a few seconds), and a slot uploads only when its hash changed,
+  (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 10 ticks and the rest of the
+  window 12 a tick in turn (block changes show within about ten seconds; halved for the CPU after L3), and a slot uploads only when its hash changed,
   as whole-width strips (8 chunk rows a tick, every level). Built only where the dimension has the overworld sky.
 - **Light pass** (per pixel of the reduced buffer, from the full-size depth): position and normal from depth (of the
   two neighbours per axis the one continuing the centre's plane; a normal within 0.9 of an axis snaps to it, since
@@ -2302,11 +2302,14 @@ magic.
   √m): the light buffer upsampled by distance (of its 2×2 texels the ones that saw this surface), the normal again at
   full size (from screen derivatives where the pixel's 2×2 quad lies on one surface, the four-tap version only across
   an edge), then a warm key where the sun reaches (noon (1.04, 1.02, 0.97); golden hour, by the sunrise colour's
-  strength × `keyWarmth`, (1.24, 1.0, 0.74); the moon (0.93, 0.98, 1.08)) and a cool shade where it doesn't
-  (`shadeTint` × (1 − `shade`), deepened 30% at golden hour). Faces turned from the sun shade only as it lowers (none
+  strength × `keyWarmth`, (1.30, 1.03, 0.72); the moon (0.93, 0.98, 1.08)) and a cool shade where it doesn't
+  (`shadeTint` × (1 − `shade`), deepened 30% at golden hour and up to 35% with distance, 24 to 160 blocks, so long
+  shadows stay readable across the land; warmed a little at golden hour by light bounced off sunlit ground). Sunlit
+  colour gains up to 16% saturation at golden hour, and the distance haze takes a share of the sunrise colour, so a
+  golden-hour vista reads warmer and richer, not greyer (the orchestrator's note on L1's sheet). Faces turned from the sun shade only as it lowers (none
   at noon, when Minecraft's sun is straight overhead and the game's own face shading stays; all by golden hour). The
   model fades out under solid cover (1 to 7 blocks of it: a ledge is shade, a roofed room is left as the game lit it,
-  torches and all), toward the end of the render distance (75-100%), in the game's thick fog (as the haze does) and
+  torches and all), toward the end of the render distance (85-100%), in the game's thick fog (as the haze does) and
   within 1.45 blocks. Strength: the sun's height (none at the horizon crossing), a faint moon (0.4) by night, rain
   (−85%) and thunder (−50%); 0 where there's no overworld sky. Golden hour is the more of the sunrise colour's strength
   and the sun's height (full below sin 0.1, none above 0.5; the sunrise colour alone only peaks as the sun touches the
@@ -2412,22 +2415,28 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   game's clouds). Rain thickens the cover by up to 0.4. Frame texels 18-19: base height (0: none), cover, the camera's
   x and z plus the wind's drift (0.04 blocks a game tick east) modulo 30720; the cloud colour.
 - Shape (`include/lens_clouds.glsl`): a cumulus layer from 6 blocks under the game's cloud height, 84 blocks thick.
-  One tileable noise texture, `awaken:lens_cloud_noise` (256×256 RGBA, made in the frequency domain by
+  Cover 0.45 leaves most of the sky open between distinct clouds (a coverage threshold of 1 − 0.72 × cover, edges 0.1
+  wide), closing into an overcast deck toward 0.95. One tileable noise texture, `awaken:lens_cloud_noise` (256×256 RGBA, made in the frequency domain by
   `tools/art/specs/lens_clouds.py`: r coverage, g shape, b billows, a wisps), sampled at 3072, 960, 256 and 120 blocks
   a repeat (all dividing 30720), the fine scales shifted with height for depth. Flat-ish bases, tops that rise where a
   cloud is thick, billows and wisps eating the edges.
-- Pass `lens_clouds.fsh` (480×270 on Cinematic, 640×360 on Ultra; then a blit into the persistent
-  `awaken:lens_clouds_hist`): each ray marched through the layer (20 / 32 steps, up to 1200 / 1600 blocks of it, never
-  past nearer terrain), lit by 3 / 5 steps toward the light (doubling from 6 blocks): Beer's law, a powder term (thin
-  sunward edges glow, dense cores darken), a phase of 0.8 + 3 × HG(0.7) (white from every side, a silver lining toward
-  the sun), the sun's colour (warm at golden hour, the moon's at night) and the game's cloud colour as the sky's light
-  on them (brighter toward the tops). Distant cloud melts into the fog colour toward 3000 / 4000 blocks. Accumulated
-  over frames (0.25 / 0.2 new), reprojected where the ray entered the layer. Out: rgb their light (premultiplied), a
+- Pass `lens_clouds.fsh` (640×360 on Cinematic, 960×540 on Ultra; then a blit into the persistent
+  `awaken:lens_clouds_hist`): each ray marched through the layer (28 / 40 steps, up to 800 / 1100 blocks of it, never
+  past nearer terrain), lit by 3 / 5 steps toward the light (doubling from 6 blocks): two octaves of Beer's law (the
+  second, at 55% and a quarter of the extinction, stands in for light scattered many times inside, so bases stay soft
+  grey-white), σ 0.03 per block, a powder term (thin sunward edges glow, dense cores darken), a phase of 0.8 + 3 × HG(0.7) (white from every side, a silver lining toward
+  the sun), the sun's colour (warm at golden hour, the moon's at night) and the sky's light on them (a cool blue with
+  a third of the horizon's colour, by the game's cloud colour; brighter toward the tops). Distant cloud melts into the
+  fog colour from 1500 blocks and is gone at 5000, so the deck never ends in a line. Accumulated over frames (0.15 /
+  0.12 new), reprojected where the ray entered the layer. Out: rgb their light (premultiplied), a
   what shows through.
 - The composite lays them over the sky and over anything farther than where the ray enters their layer, before the
   haze. The bloom prefilter (`lens_prefilter_lit.fsh`) folds them into the sky, so bright edges bloom, and the sky's
   alpha (what the screen-space shafts and the sun's halo read) carries their transmittance: rays break through gaps and
   the halo dims behind a cloud. The light pass darkens the sun on the land under them (to 28% under thick cloud, along
   the light ray through the layer's middle) and in the volumetric beams: moving cloud shadows and beams through gaps.
+- First tour (bad8a542, 480×270, 20 steps, the first cover curve; p50 ms off 7.74, Swift 7.85, Cinematic 10.73, Ultra
+  13.20: the clouds cost no net frame time, since the game's are no longer drawn): too much cover (a stormy deck),
+  dark bellies, a hard line toward the horizon, a noise grid; tuned as above.
 - Tour: `tools/autopilot/lens2-l4.txt` (Swift's clouds against Lens's: noon, golden hour into the sun, cloud shadows
   over Carillon, above the deck, rain, night; the bench).
