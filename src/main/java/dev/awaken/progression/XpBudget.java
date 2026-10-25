@@ -26,12 +26,26 @@ public final class XpBudget {
 
     /** Budget per ~10 minutes, in fractions of a level. Unknown sources (other modules' keys) get the world budget. */
     public static double budget(String source) {
+        Double registered = REGISTERED.get(source);
+        if (registered != null) return registered;
         return switch (source) {
             case KILL -> 0.15;
             case ORE -> 0.06;
             case BUILD -> 0.03;
             default -> 0.25;
         };
+    }
+
+    private static final Map<String, Double> REGISTERED = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** A module's own source and its budget per ~10 minutes, in fractions of a level (SPEC §21.3: "hunt", the crafts). */
+    public static void register(String source, double perTenMinutes) {
+        REGISTERED.put(source, perTenMinutes);
+    }
+
+    /** The current tally of a source (decayed to now), as a share of its budget: above 1 the source is worn. */
+    public static double wear(UUID player, String source, long now) {
+        return tally(player, source, now) / budget(source);
     }
 
     private static final Map<UUID, Map<String, double[]>> TALLY = new HashMap<>();

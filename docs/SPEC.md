@@ -2260,7 +2260,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
    the odds (21.2).
 2. A Hearth calms its land: within its radius + 96 blocks the level is min(region, the household's highest level).
 3. XP: every creature pays by its own level and role (a sheep too); crafts, quests, bounties and camps pay; gate floor
-   rewards ×0.76 (`Curve.WILDS_TRIM`); the balanced player's length holds (sim, 21.3).
+   rewards ×0.80 (`Curve.WILDS_TRIM`); the balanced player's length holds (sim, 21.3).
 4. Plates, damage numbers and the XP stream are on by default (client settings to reduce or turn off).
 5. Level-up is a System moment, compact in a fight, seen by players nearby (never their pane).
 6. Elites in the wild: 5% of neutral and hunter spawns.
@@ -2334,5 +2334,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   below / 8). Paid via `Progression.worldXp(player, "hunt", raw, after)`; the old home kill XP is off while the
   living module pays (`LivingHooks`). Party sharing as before.
 - Budgets registered by modules: `XpBudget.register(source, perTenMinutes)`.
-- Gate floor rewards × `Curve.WILDS_TRIM` (0.76); tools/sim/pacing_sim.py carries the same model.
+- Gate floor rewards × `Curve.WILDS_TRIM` (0.80; everything priced from a floor reward follows: anomalies, camps).
+  Hunting, crafts and camps pay × `LivingModule.wildsRank(rank)` after the budget: 1.0, except C 0.55 (C is the long
+  climb in gates too). tools/sim/pacing_sim.py carries the same model; balanced player: level 5 0.98 h, 10 3.9 h,
+  25 16.8 h, 50 51.2 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.8 h;
+  main power level 5 at player level 48; gate checks unchanged.
 - `Progression.onXpGranted(listener)`: every grant after scaling (player, XP, source, world key), for the stream.

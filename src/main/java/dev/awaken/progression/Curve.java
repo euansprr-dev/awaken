@@ -17,9 +17,15 @@ public final class Curve {
         return 90.0 * Math.pow(Math.max(1, level), 1.45) + 60.0;
     }
 
+    /**
+     * Gate floors pay this share of their v2 reward since the Living Wilds made the open world pay (SPEC §21.3); gate
+     * loot, cores and hearts are unchanged. Mirrors {@code WILDS_TRIM} in tools/sim/pacing_sim.py.
+     */
+    public static final double WILDS_TRIM = 0.80;
+
     /** Total XP one cleared floor of a gate of this rank pays (before the story-length multiplier). */
     public static double floorReward(Rank gateRank, int floor) {
-        return gateRank.share * xpToNext(gateRank.contentLevel) * Math.pow(FLOOR_GROWTH, floor - 1);
+        return gateRank.share * WILDS_TRIM * xpToNext(gateRank.contentLevel) * Math.pow(FLOOR_GROWTH, floor - 1);
     }
 
     /** Mob health multiplier at content level lv (SPEC section 2). */

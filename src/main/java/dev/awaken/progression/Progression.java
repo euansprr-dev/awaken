@@ -112,7 +112,22 @@ public final class Progression {
         }
         amount *= xpScale(player) * (1 + perk(player, Perks.XP_BONUS));
         xpLedger(player).add(source, worldKey, amount);
-        return addXp(player, p, amount);
+        int gained = addXp(player, p, amount);
+        for (XpListener l : XP_LISTENERS) l.granted(player, amount, source, worldKey);
+        return gained;
+    }
+
+    /** Every XP grant to an awakened player, after scaling (SPEC §21.3: the Living Wilds' XP stream). */
+    @FunctionalInterface
+    public interface XpListener {
+        void granted(ServerPlayer player, double xp, XpSource source, @org.jspecify.annotations.Nullable String worldKey);
+    }
+
+    private static final List<XpListener> XP_LISTENERS = new ArrayList<>();
+
+    /** Listens to every grant (after the story-length scale and perks), in the order they happen. */
+    public static void onXpGranted(XpListener listener) {
+        XP_LISTENERS.add(listener);
     }
 
     /** Where this player's XP came from so far, by source (pacing telemetry). */
@@ -195,7 +210,16 @@ public final class Progression {
      * actually granted. Out-levelled content should be tapered by the caller with {@link XpBudget#taper}.
      */
     public static double worldXp(ServerPlayer player, String source, double fractionOfLevel) {
-        double paid = XpBudget.pay(player.getUUID(), source, fractionOfLevel, player.level().getGameTime());
+        return worldXp(player, source, fractionOfLevel, 1.0);
+    }
+
+    /**
+     * {@link #worldXp(ServerPlayer, String, double)} with {@code afterBudget} applied to what the budget pays (a taper or
+     * a bonus by level difference: SPEC §21.3), so a grind still levels off at one budget per 10 minutes. Returns the
+     * fraction of a level granted.
+     */
+    public static double worldXp(ServerPlayer player, String source, double fractionOfLevel, double afterBudget) {
+        double paid = XpBudget.pay(player.getUUID(), source, fractionOfLevel, player.level().getGameTime()) * Math.max(0, afterBudget);
         if (paid > 0) grant(player, paid * Curve.xpToNext(profile(player).level) / xpScale(player), XpSource.WORLD, source);
         return paid;
     }
@@ -207,8 +231,10 @@ public final class Progression {
 
     private static void onLevelUp(ServerPlayer player, Profile p, int gained) {
         dev.awaken.core.Playtest.log(player, "level_up", "level", p.level);
-        player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
-        Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE,
+        // the Living Wilds shows its own moment (and its own sound) when it can; otherwise the toast as ever (SPEC §21.1)
+        boolean moment = dev.awaken.core.api.LivingHooks.levelMoment(player, p.level, gained);
+        if (!moment) player.level().playSound(null, player.blockPosition(), CoreModule.LEVEL_UP.get(), SoundSource.PLAYERS, 0.9f, 1.0f);
+        if (!moment) Signal.send(player, SignalWindow.builder(SignalWindow.Kind.NOTICE,
                         Component.literal(gained > 1 ? "Level " + (p.level - gained) + " → " + p.level : "Level " + p.level))
                 .body(Component.literal("+" + gained * Curve.POINTS_PER_LEVEL + " points to spend · K"))
                 .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 5).build());
