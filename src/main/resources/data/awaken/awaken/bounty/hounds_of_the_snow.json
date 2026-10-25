@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Hounds of the Snow",
+  "band": 1,
+  "objective": {
+    "type": "kill",
+    "target": "awaken:wisp_hound",
+    "count": 6
+  },
+  "levels": 0.25,
+  "essence": 3,
+  "requires": [],
+  "text": "Wisp Hounds have taken to following the winter caravans. Their bite numbs, so keep a fire close."
+}

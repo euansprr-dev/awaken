@@ -19,10 +19,9 @@ public final class Look {
 
     public enum Tier {
         SWIFT("SWIFT", "Horizon and soft light. Built for 120 fps.", LensLook.SWIFT, false, 1000f / 110f, 16f),
-        CINEMATIC("CINEMATIC", "Haze, light shafts, a wider horizon. 60+ fps.", LensLook.CINEMATIC, false, 1000f / 60f, 25f),
-        // Lens stays on CINEMATIC under Ultra: it steps aside while the shaderpack draws and is the look again if the
-        // player turns shaders off in Iris's own menu
-        ULTRA("ULTRA", "Full shaders with shadows and water. Experimental on Mac.", LensLook.CINEMATIC, true, 0f, 0f);
+        CINEMATIC("CINEMATIC", "Sun shadows, warm light, light shafts, a wider horizon. 90+ fps.", LensLook.CINEMATIC, false, 1000f / 90f, 20f),
+        // Lens 2's Ultra (SPEC §22): AWAKEN's own light at full quality, on Vulkan and OpenGL alike; no Iris (OpenGL only)
+        ULTRA("ULTRA", "Cinematic at full quality: longer, finer shadows and light. 60+ fps.", LensLook.ULTRA, false, 1000f / 60f, 25f);
 
         public final String label, blurb;
         public final LensLook lens;
@@ -44,12 +43,13 @@ public final class Look {
         }
     }
 
-    /** Which tier the current settings are, or null when none (Lens off). A shaderpack on means Ultra. */
+    /** Which tier the current settings are, or null when none (Lens off, or an Iris shaderpack drawing instead). */
     public static @Nullable Tier current(LensLook lens, boolean shadersOn) {
-        if (shadersOn) return Tier.ULTRA;
+        if (shadersOn) return null;
         return switch (lens) {
             case SWIFT -> Tier.SWIFT;
             case CINEMATIC -> Tier.CINEMATIC;
+            case ULTRA -> Tier.ULTRA;
             case OFF -> null;
         };
     }

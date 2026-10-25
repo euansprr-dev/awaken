@@ -20,6 +20,9 @@ public final class Body {
         boolean tacticalSprinting();
         boolean mantling();
         @Nullable Vec3 slideDirection();
+        default boolean wallRunning() { return false; }
+        default boolean hanging() { return false; }
+        default boolean stairSliding() { return false; }
     }
 
     private static @Nullable ClientQuery client;
@@ -30,10 +33,31 @@ public final class Body {
         BodyServer.clientFall = fall::accept;
     }
 
-    /** Whether the player has this move: awakened, and at or above its rank. Players who never awakened move like vanilla. */
+    /**
+     * Whether the player has this move. With the Runner's Kit (the default, SPEC §16.3): everyone, from the first
+     * second; ranks improve the moves ({@link #runnerRank}). Without it, the old rule: awakened and at or above the
+     * move's rank, and no Runner moves at all.
+     */
     public static boolean unlocked(Player p, Move m) {
+        if (BodyConfig.runnersKit()) return true;
+        if (m.runner()) return false;
         Profile pr = Progression.profile(p);
         return pr.awakened() && pr.rank().ordinal() >= m.rank.ordinal();
+    }
+
+    /** Whether the player holds Wall Stride (the passive power; the client asks its own loadout). */
+    public static boolean wallStride(Player p) {
+        if (p.level().isClientSide()) {
+            var l = dev.awaken.powers.Powers.clientLoadoutOrNull();
+            return l != null && l.owns(RunnerRules.STRIDE_POWER);
+        }
+        return dev.awaken.powers.Powers.owns(p, RunnerRules.STRIDE_POWER);
+    }
+
+    /** The rank the Runner's moves improve by (E before the awakening). */
+    public static dev.awaken.progression.Rank runnerRank(Player p) {
+        Profile pr = Progression.profile(p);
+        return pr.awakened() ? pr.rank() : dev.awaken.progression.Rank.E;
     }
 
     public static boolean isSliding(Player p) {
@@ -52,6 +76,27 @@ public final class Body {
         if (p.level().isClientSide()) return client != null && client.mantling();
         BodyMotion m = motion(p);
         return m != null && m.mantleUntil != 0;
+    }
+
+    /** Sliding down a run of stairs or slabs (SPEC §17.22). */
+    public static boolean isStairSliding(Player p) {
+        if (p.level().isClientSide()) return client != null && client.stairSliding();
+        BodyMotion m = motion(p);
+        return m != null && m.slideUntil != 0 && m.stairSliding;
+    }
+
+    /** Running along a wall (the Runner's wall-run). */
+    public static boolean isWallRunning(Player p) {
+        if (p.level().isClientSide()) return client != null && client.wallRunning();
+        BodyMotion m = motion(p);
+        return m != null && m.runUntil != 0;
+    }
+
+    /** Hanging from a ledge (or moving between holds). */
+    public static boolean isHanging(Player p) {
+        if (p.level().isClientSide()) return client != null && client.hanging();
+        BodyMotion m = motion(p);
+        return m != null && m.hanging;
     }
 
     /** Overworld game time of the last tick a move ran, or {@link Long#MIN_VALUE}. Server side. */

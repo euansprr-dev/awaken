@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "title": "Murmuration",
+  "family": "creature",
+  "behaviour": "murmuration",
+  "when": {
+    "time": [
+      "dusk"
+    ]
+  },
+  "duration_s": 150,
+  "weight": 2.0,
+  "witness_radius": 64,
+  "tell": "flock",
+  "tell_radius": 28,
+  "rumours": [
+    "The finches are dancing over the water {dir} at dusk. Go and watch. You'll sleep better for it.",
+    "Saw a cloud of birds turning like smoke over the lake {dir}. Felt like it was saying something."
+  ]
+}

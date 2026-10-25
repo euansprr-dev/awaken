@@ -1,0 +1,16 @@
+{
+  "text": "Open a sealed Precursor door.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:precursor_doors_opened",
+    "value": 1
+  },
+  "reward": {
+    "levels": 0.25
+  },
+  "expires_days": 3,
+  "min_rank": "D",
+  "max_rank": "SOVEREIGN",
+  "quick": false,
+  "weight": 8
+}

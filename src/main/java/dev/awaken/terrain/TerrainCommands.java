@@ -28,7 +28,8 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * {@code /awaken terrain ...}, the terrain studio (game masters only): {@code survey <name> [radius] [step]} samples the
- * land around you into {@code terrain/<name>.json} for tools/terrain/survey.py; {@code visit <biome|#tag>} stands you in
+ * land around you (from the server console: round the world spawn) into {@code terrain/<name>.json} for
+ * tools/terrain/survey.py; {@code visit <biome|#tag>} stands you in
  * the heart of the nearest surface patch of that biome; {@code lookout [radius]} takes you to the highest ground nearby;
  * {@code at} prints the biome, ground height and climate where you stand; {@code city} goes to the city site;
  * {@code hero <tree> [seed]} grows a hero tree where you stand and {@code herovisit <tree> [distance above]} stands you
@@ -164,13 +165,13 @@ final class TerrainCommands {
         return 1;
     }
 
-    private static int survey(CommandContext<CommandSourceStack> c, int radius, int step) throws CommandSyntaxException {
-        ServerPlayer sp = c.getSource().getPlayerOrException();
+    private static int survey(CommandContext<CommandSourceStack> c, int radius, int step) {
+        // where the command runs: a player where they stand, the server console at the world spawn (a headless survey)
         String name = StringArgumentType.getString(c, "name");
-        ServerLevel level = sp.level().getServer().overworld();
+        ServerLevel level = c.getSource().getServer().overworld();
         ChunkGenerator gen = level.getChunkSource().getGenerator();
         RandomState rs = level.getChunkSource().randomState();
-        int x = sp.getBlockX(), z = sp.getBlockZ();
+        int x = (int) Math.floor(c.getSource().getPosition().x), z = (int) Math.floor(c.getSource().getPosition().z);
         Path dir = level.getServer().getServerDirectory().resolve("terrain");
         c.getSource().sendSuccess(() -> Component.literal("Surveying " + name + "..."), false);
         CompletableFuture.supplyAsync(() -> {

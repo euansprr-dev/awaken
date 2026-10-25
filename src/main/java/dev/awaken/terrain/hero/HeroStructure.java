@@ -16,8 +16,9 @@ import java.util.Optional;
 
 /**
  * A hero tree (lands pack {@code worldgen/structure/<tree>.json}, placed by a wide random spread). The start chunk is
- * the placement's; the tree may stand up to {@link #SEARCH} chunks from it, wherever its biome is, the land dry and its
- * footprint and root ring level enough. The biome check runs first because it is the cheap one.
+ * the placement's; the tree may stand up to {@link #SEARCH} chunks from it, wherever its biome is, the land dry (or the
+ * water shallow, for a tree that stands in it) and its footprint and root ring level enough. The biome check runs
+ * first because it is the cheap one.
  */
 public class HeroStructure extends Structure {
     public static final MapCodec<HeroStructure> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -58,16 +59,17 @@ public class HeroStructure extends Structure {
                 z += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
             }
             // never in or over the city's basin (Carillon's site; a no-op unless the city is on)
-            if (cityNear(x, z, tree.reach)) continue;
+            if (cityNear(x, z, tree)) continue;
             int top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
             Holder<Biome> b = ctx.biomeResolver().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(top), QuartPos.fromBlock(z));
             if (!ctx.validBiome().test(b)) continue;
-            if (top <= sea || height(ctx, x, z, Heightmap.Types.OCEAN_FLOOR_WG) != top) continue;
-            int f = tree.footprint, lo = top, hi = top;
+            int floor = height(ctx, x, z, Heightmap.Types.OCEAN_FLOOR_WG);
+            if (!standing(tree, top, floor, sea)) continue;
+            int f = tree.footprint, lo = floor, hi = floor;
             boolean ok = true;
             for (int[] k : new int[][]{{f, f}, {-f, f}, {f, -f}, {-f, -f}}) {
-                int hgt = height(ctx, x + k[0], z + k[1], Heightmap.Types.WORLD_SURFACE_WG);
-                if (hgt != height(ctx, x + k[0], z + k[1], Heightmap.Types.OCEAN_FLOOR_WG)) ok = false;
+                int hgt = height(ctx, x + k[0], z + k[1], Heightmap.Types.OCEAN_FLOOR_WG);
+                if (!standing(tree, height(ctx, x + k[0], z + k[1], Heightmap.Types.WORLD_SURFACE_WG), hgt, sea)) ok = false;
                 lo = Math.min(lo, hgt);
                 hi = Math.max(hi, hgt);
             }
@@ -76,7 +78,7 @@ public class HeroStructure extends Structure {
                 double a = k * Math.PI / 4;
                 int rx = x + (int) Math.round(Math.cos(a) * tree.ring), rz = z + (int) Math.round(Math.sin(a) * tree.ring);
                 int hgt = height(ctx, rx, rz, Heightmap.Types.OCEAN_FLOOR_WG);
-                if (Math.abs(hgt - top) > tree.maxRing) ok = false;
+                if (Math.abs(hgt - floor) > tree.maxRing) ok = false;
             }
             if (!ok) continue;
             int foot = lo + 1;
@@ -86,13 +88,19 @@ public class HeroStructure extends Structure {
         return null;
     }
 
-    /** The city reserve under the tree's foot or under any edge of its crown. */
-    private static boolean cityNear(int x, int z, int reach) {
-        if (dev.awaken.terrain.api.CityBasin.reserved(x, z)) return true;
-        for (int[] k : new int[][]{{reach, 0}, {-reach, 0}, {0, reach}, {0, -reach}}) {
-            if (dev.awaken.terrain.api.CityBasin.reserved(x + k[0], z + k[1])) return true;
-        }
-        return false;
+    /**
+     * Ground the tree may stand on, given the first occupied height there ({@code top}, water included) and the ground's
+     * ({@code floor}): dry land over the sea, or for a tree that stands in water, at most {@link HeroTree#wetDepth} of
+     * it over the ground and no deeper than that below the sea.
+     */
+    static boolean standing(HeroTree tree, int top, int floor, int sea) {
+        if (tree.wetDepth == 0) return top == floor && top > sea;
+        return top - floor <= tree.wetDepth && floor >= sea - tree.wetDepth && top >= sea;
+    }
+
+    /** Whether any part of this tree's crown, standing with its foot at (x, z), would reach the city reserve. */
+    public static boolean cityNear(int x, int z, HeroTree tree) {
+        return dev.awaken.terrain.api.CityBasin.reservedWithin(x, z, tree.reach());
     }
 
     private static int height(GenerationContext ctx, int x, int z, Heightmap.Types type) {

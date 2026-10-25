@@ -124,10 +124,17 @@ public final class Well {
     }
 
     /** First candidate on dry, fairly flat land with no settlement near (estimated from the generator, no chunk loads). */
+    static boolean inCity(BlockPos s) {
+        // the whole ring's circle, not points on its edge (they miss the reserve between them)
+        return dev.awaken.terrain.api.CityBasin.reservedWithin(s.getX(), s.getZ(), RING_OUTER);
+    }
+
     static BlockPos pick(List<BlockPos> sites, ChunkGenerator gen, RandomState rs, ServerLevel level) {
         int sea = gen.getSeaLevel();
         BlockPos fallback = null, first = null;
         for (BlockPos s : sites) {
+            // never inside Carillon's reserve, the Well's own ring included (SPEC §16.2)
+            if (inCity(s)) continue;
             int[] h = new int[9];
             boolean dry = true;
             int k = 0;

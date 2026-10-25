@@ -22,6 +22,10 @@ public final class CoreApi {
 
     public static final Supplier<AttachmentType<MobRole>> MOB_ROLE = ATTACHMENTS.register("mob_role",
             () -> AttachmentType.builder(() -> MobRole.NONE).serialize(MobRole.CODEC.fieldOf("role"), r -> r.role() != MobRole.Role.NONE).build());
+    /** What the band reads off a creature (SPEC §21.1): saved, and synced to everyone tracking it. */
+    public static final Supplier<AttachmentType<CreatureTag>> CREATURE_TAG = ATTACHMENTS.register("creature_tag",
+            () -> AttachmentType.builder(() -> CreatureTag.NONE).serialize(CreatureTag.CODEC.fieldOf("tag"), CreatureTag::present)
+                    .sync(CreatureTag.STREAM_CODEC).build());
 
     /** Gate currency: dropped in gates and breaks, spent by the Hearth and the Above. */
     public static final DeferredItem<Item> ESSENCE_SHARD = ITEMS.registerSimpleItem("essence_shard");

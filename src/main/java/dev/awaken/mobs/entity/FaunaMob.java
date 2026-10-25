@@ -26,7 +26,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -120,6 +119,19 @@ public class FaunaMob extends AwakenMob {
         return r == null ? FaunaRole.NEUTRAL : r;
     }
 
+    @Override
+    protected dev.awaken.core.api.CreatureTag.Kind tagKind(MobRole.Role role) {
+        // named beasts are Warden-sized, but the band names them beasts (they pay by their own first-kill rules)
+        if (faunaRole() == FaunaRole.BEAST) return dev.awaken.core.api.CreatureTag.Kind.BEAST;
+        if (role == MobRole.Role.WARDEN || role == MobRole.Role.BOSS) return super.tagKind(role);
+        return switch (faunaRole()) {
+            case AMBIENT -> dev.awaken.core.api.CreatureTag.Kind.AMBIENT;
+            case HUNTER -> dev.awaken.core.api.CreatureTag.Kind.HUNTER;
+            case BEAST -> dev.awaken.core.api.CreatureTag.Kind.BEAST;
+            default -> dev.awaken.core.api.CreatureTag.Kind.NEUTRAL;
+        };
+    }
+
     public FaunaTalent talent() {
         return def().talent;
     }
@@ -138,13 +150,13 @@ public class FaunaMob extends AwakenMob {
         switch (role) {
             case HUNTER -> {
                 goalSelector.addGoal(2, new FaunaGoals.Stalk(this));
-                goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.25, false));
+                goalSelector.addGoal(3, new MobGoals.ToldMelee(this, 1.25, false));
                 goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.8));
                 targetSelector.addGoal(1, new HurtByTargetGoal(this));
                 targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, (t, l) -> inDarkness(t)));
             }
             case NEUTRAL, BEAST -> {
-                goalSelector.addGoal(3, flies ? new MobGoals.FlyHunt(this) : new MeleeAttackGoal(this, 1.15, true));
+                goalSelector.addGoal(3, flies ? new MobGoals.FlyHunt(this) : new MobGoals.ToldMelee(this, 1.15, true));
                 targetSelector.addGoal(1, new HurtByTargetGoal(this));
             }
             case AMBIENT -> { }
@@ -329,7 +341,10 @@ public class FaunaMob extends AwakenMob {
             // Natural spawns, eggs and commands: match the nearest player rather than a gate rank.
             MobDef d = def();
             int lv = Math.max(0, FaunaHooks.server().contentLevel(level.getLevel(), blockPosition(), faunaRole()));
-            configure(lv, new MobRole(d.tier.role, lv, d.theme.id, Optional.empty(), ""), Set.of());
+            // the Living Wilds' elites (SPEC §21.0.6): a neutral or hunter now and then is an elite, two levels up
+            boolean elite = FaunaHooks.server().elite(level.getLevel(), blockPosition(), faunaRole(), getRandom());
+            if (elite) lv += 2;
+            configure(lv, new MobRole(elite ? MobRole.Role.ELITE : d.tier.role, lv, d.theme.id, Optional.empty(), ""), Set.of());
         }
         return super.finalizeSpawn(level, difficulty, reason, data);
     }

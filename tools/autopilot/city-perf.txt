@@ -1,0 +1,103 @@
+# City frame rate (docs/perf/CITY-FPS.md): one tour, alone on the machine, that times Carillon after the 25 Oct fixes
+# (no Distant Horizons, render scale on 4K, the pregen's hold through join, the heightfield's tile uploads).
+# Run (the pack as play.sh --pack installs it, JFR on the client for allocation by thread):
+#   JAVA_TOOL_OPTIONS="-XX:StartFlightRecording=settings=profile,maxsize=400m,filename=<dir>/cp-%p.jfr" \
+#   PACK=perf,feel,sound,comfort,world TECTONIC=awakened RD=24 SLOT_WHO=city-fps \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/city-perf.txt 1500
+# Scenes: the new world's first 45 s; noon in Choir Square on Swift, Cinematic and Ultra at render scale 1.0 and 0.75
+# (SHARP), with the GPU's world-pass time; a 12-chunk walk east down the market (each step a heightfield recentre);
+# night on the Watch's round (lanterns).
+world cityperf creative 20261024
+waitworld
+perfstart join_45s
+wait 900
+perfend
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+cmd time set 6000
+cmd awaken city view square
+wait 300
+pixels gpu on
+# ---- noon, Choir Square: each Look at native and at 0.75
+lookswitch swift
+pixels 1.0 sharp
+wait 60
+pixels gpu reset
+perf square_swift_100 20
+pixels gpu square_swift_100
+lookswitch cinematic
+pixels 1.0 sharp
+wait 60
+pixels gpu reset
+perf square_cine_100 20
+pixels gpu square_cine_100
+shot cp_square_cine_100
+pixels 0.75 sharp
+wait 40
+pixels gpu reset
+perf square_cine_075 20
+pixels gpu square_cine_075
+shot cp_square_cine_075
+lookswitch ultra
+pixels 1.0 sharp
+wait 60
+pixels gpu reset
+perf square_ultra_100 20
+pixels gpu square_ultra_100
+pixels 0.75 sharp
+wait 40
+pixels gpu reset
+perf square_ultra_075 20
+pixels gpu square_ultra_075
+# ---- a walk east down the market on Cinematic, native: twelve chunk crossings, each a heightfield recentre
+lookswitch cinematic
+pixels 1.0 sharp
+cmd awaken city view market
+wait 200
+perfstart walk_east
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+cmd tp @s ~16 ~ ~
+wait 20
+perfend
+# ---- night with the Watch's lanterns (the Carillon session's fix; this is the before)
+cmd time set 17000
+cmd awaken citizens show watch
+wait 200
+perf night_watch_cine 20
+shot cp_night_watch
+cmd awaken citizens info
+pixels config
+quit

@@ -24,6 +24,7 @@ public final class BodyModule {
     private BodyModule() {}
 
     public static void init(IEventBus modBus) {
+        BodyConfig.register();
         BodyContent.register(modBus);
         modBus.addListener(BodyModule::registerPayloads);
         var bus = NeoForge.EVENT_BUS;
@@ -43,6 +44,7 @@ public final class BodyModule {
         MovementHooks.install(new Hooks());
         BodyCommands.register();
         BodyTests.register();
+        dev.awaken.body.ascent.AscentModule.init(modBus);
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -51,7 +53,14 @@ public final class BodyModule {
             if (ctx.player() instanceof ServerPlayer sp) BodyServer.onStart(sp, msg);
         });
         r.playToServer(BodyPayloads.End.TYPE, BodyPayloads.End.STREAM_CODEC, (msg, ctx) -> {
-            if (ctx.player() instanceof ServerPlayer sp) BodyServer.onEnd(sp, msg);
+            if (!(ctx.player() instanceof ServerPlayer sp)) return;
+            Move mv = Move.byId(msg.move());
+            // the runner's ends wait behind the latency knob with their starts, so they never overtake them
+            if (mv != null && mv.runner()) RunnerServer.receive(sp, () -> BodyServer.onEnd(sp, msg));
+            else BodyServer.onEnd(sp, msg);
+        });
+        r.playToServer(BodyPayloads.Run.TYPE, BodyPayloads.Run.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) RunnerServer.receive(sp, () -> RunnerServer.onRun(sp, msg));
         });
         r.playToClient(BodyPayloads.Refuse.TYPE, BodyPayloads.Refuse.STREAM_CODEC);
         r.playToClient(BodyPayloads.Seen.TYPE, BodyPayloads.Seen.STREAM_CODEC);
@@ -65,6 +74,9 @@ public final class BodyModule {
         @Override public boolean mantling(Player p) { return Body.isMantling(p); }
         @Override public long lastMoveTick(Player p) { return Body.lastMoveTick(p); }
         @Override public @Nullable Vec3 slideDirection(Player p) { return Body.slideDirection(p); }
+        @Override public boolean wallRunning(Player p) { return Body.isWallRunning(p); }
+        @Override public boolean hanging(Player p) { return Body.isHanging(p); }
+        @Override public boolean stairSliding(Player p) { return Body.isStairSliding(p); }
 
         /** A cast ends a tactical sprint at once (the cast is never held back); a slide keeps going. */
         @Override public void castStarting(ServerPlayer p) {

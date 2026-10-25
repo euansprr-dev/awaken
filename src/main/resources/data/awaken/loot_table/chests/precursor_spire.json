@@ -1,0 +1,188 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 3,
+        "max": 5
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:essence_shard",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 2,
+              "max": 4
+            }
+          },
+          "weight": 16
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:essence_cell",
+          "modifier": {
+            "type": "minecraft:set_components",
+            "components": {
+              "awaken:essence": 500
+            }
+          },
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:precursor_alloy",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 2
+            }
+          },
+          "weight": 12
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:lead",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 2
+            }
+          },
+          "weight": 8
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:string",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 3,
+              "max": 8
+            }
+          },
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:ender_pearl",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 2
+            }
+          },
+          "weight": 8
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:wind_charge",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 2,
+              "max": 5
+            }
+          },
+          "weight": 8
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:feather",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 2,
+              "max": 6
+            }
+          },
+          "weight": 8
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:precursor_circuit",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 1
+            }
+          },
+          "weight": 6
+        }
+      ]
+    },
+    {
+      "name": "arrived_by_movement",
+      "rolls": 1,
+      "condition": {
+        "type": "awaken:arrived_by_movement"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:core_shard",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 1
+            }
+          },
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "name": "arrived_by_movement_extra",
+      "rolls": 1,
+      "condition": {
+        "type": "awaken:arrived_by_movement"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:essence_cell",
+          "modifier": {
+            "type": "minecraft:set_components",
+            "components": {
+              "awaken:essence": 1000
+            }
+          },
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:core_shard",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 1,
+              "max": 1
+            }
+          },
+          "weight": 2
+        },
+        {
+          "type": "minecraft:empty",
+          "weight": 6
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+# Lens motion (SPEC §14, §17): a steep dive past 2 b/t, first person, Vulkan; Swift then Cinematic, each with a shot of
+# the same moment with the motion on and off, and a perf sample of each (the cost budget is +0.3 ms at full strength).
+world ascent_lens survival 4242
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd tp @s 0.5 152 0.5 0 0
+wait 100
+cmd fill -30 150 -12 30 150 250 minecraft:grass_block
+cmd fill -30 151 -12 30 160 250 minecraft:air
+cmd tp @s 0.5 151 0.5 0 0
+wait 10
+cmd awaken ascent sandbox
+wait 200
+screen close
+cmd fill -3 290 -3 3 290 3 minecraft:polished_deepslate
+cmd tp @s 0.5 291 -2.5 0 10
+camera first
+wait 40
+hud off
+lens swift
+cmd awaken ascent pilot run boom
+wait 75
+shotnow lens_swift_motion_on
+cmd awaken ascent pilot lensmotion off
+wait 6
+shotnow lens_swift_motion_off
+cmd awaken ascent pilot lensmotion on
+perf swift_motion_on 2
+cmd awaken ascent pilot lensmotion off
+perf swift_motion_off 2
+cmd awaken ascent pilot lensmotion on
+wait 200
+cmd awaken ascent pilot stop
+cmd tp @s 0.5 291 -2.5 0 10
+wait 40
+lens cinematic
+cmd awaken ascent pilot run boom
+wait 75
+shotnow lens_cinematic_motion_on
+cmd awaken ascent pilot lensmotion off
+wait 6
+shotnow lens_cinematic_motion_off
+cmd awaken ascent pilot lensmotion on
+perf cinematic_motion_on 2
+cmd awaken ascent pilot lensmotion off
+perf cinematic_motion_off 2
+cmd awaken ascent pilot lensmotion on
+wait 100
+cmd awaken ascent pilot stop
+info
+quit

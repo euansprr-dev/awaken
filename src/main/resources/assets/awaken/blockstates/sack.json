@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "count=1,fill=grain": {
+      "model": "awaken:block/sack_grain_1"
+    },
+    "count=2,fill=grain": {
+      "model": "awaken:block/sack_grain_2"
+    },
+    "count=3,fill=grain": {
+      "model": "awaken:block/sack_grain_3"
+    },
+    "count=1,fill=flour": {
+      "model": "awaken:block/sack_flour_1"
+    },
+    "count=2,fill=flour": {
+      "model": "awaken:block/sack_flour_2"
+    },
+    "count=3,fill=flour": {
+      "model": "awaken:block/sack_flour_3"
+    },
+    "count=1,fill=wool": {
+      "model": "awaken:block/sack_wool_1"
+    },
+    "count=2,fill=wool": {
+      "model": "awaken:block/sack_wool_2"
+    },
+    "count=3,fill=wool": {
+      "model": "awaken:block/sack_wool_3"
+    }
+  }
+}

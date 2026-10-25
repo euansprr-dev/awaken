@@ -88,7 +88,7 @@ final class BodyServer {
             case TACTICAL_SPRINT -> startTactical(p);
             case SLIDE -> startSlide(p, msg.yaw(), msg.flag());
             case MANTLE -> startMantle(p, msg.yaw(), msg.x(), msg.y(), msg.z());
-            case ROLL -> false;
+            default -> false; // ROLL, and the Runner's Kit (its own Run payload)
         };
         if (!ok) refuse(p, move);
     }
@@ -100,6 +100,7 @@ final class BodyServer {
         long now = now(p);
         if (move == Move.TACTICAL_SPRINT) endTactical(p, m, now, false);
         else if (move == Move.SLIDE) endSlide(p, m, now, false);
+        else if (move.runner()) RunnerServer.onEnd(p, move);
     }
 
     /** Undo what the client predicted: stop a slide where the server has it, put a refused mantle back where it began. */
@@ -140,7 +141,7 @@ final class BodyServer {
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(BodyRules.TAC_ID);
         m.tacUntil = 0;
-        m.tacReadyAt = now + BodyRules.TAC_RECHARGE;
+        m.tacReadyAt = now + BodyRules.tacRecharge(p);
         m.tacEndedAt = now;
         m.lastMove = now;
         if (tellClient) AwakenNet.send(p, new BodyPayloads.Refuse(Move.TACTICAL_SPRINT.ordinal()));
@@ -155,7 +156,9 @@ final class BodyServer {
         if (m.slideUntil != 0 || m.mantleUntil != 0 || now < m.slideReadyAt) return false;
         boolean assisted = m.assisted(Move.SLIDE, now);
         if (!assisted && !p.isSprinting() && m.tacUntil == 0) return false;
-        if (!assisted && !p.onGround()) return false;
+        // running down stairs the feet leave each step: a run under them counts as ground
+        if (!assisted && !p.onGround() && !BodyRules.stairStart(p.level(), CollisionContext.of(p), STAIRS, p.getX(), p.getY(), p.getZ(),
+                -Mth.sin(yaw * Mth.DEG_TO_RAD), Mth.cos(yaw * Mth.DEG_TO_RAD), FALL)) return false;
         if (!BodyRules.crawlFits(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ())) return false;
         boolean fromTac = m.tacUntil != 0 || now - m.tacEndedAt <= 3;
         endTactical(p, m, now, false); // the slide takes over from the run
@@ -164,6 +167,7 @@ final class BodyServer {
         m.slideDirX = -Mth.sin(yaw * Mth.DEG_TO_RAD);
         m.slideDirZ = Mth.cos(yaw * Mth.DEG_TO_RAD);
         m.slideFromTac = fromTac && claimTactical;
+        m.stairSliding = false;
         m.trippedCount = 0;
         // the crawl-height box on this side too, so gaps the client slides under are gaps here (and others see it)
         p.setForcedPose(Pose.SWIMMING);
@@ -177,11 +181,43 @@ final class BodyServer {
     static void endSlide(ServerPlayer p, BodyMotion m, long now, boolean tellClient) {
         if (m.slideUntil == 0) return;
         m.slideUntil = 0;
-        m.slideReadyAt = now + BodyRules.SLIDE_COOLDOWN;
+        m.stairSliding = false;
+        m.slideReadyAt = now + BodyRules.slideCooldown(Body.runnerRank(p));
         m.lastMove = now;
         // vanilla picks the pose again next tick: still crawling when the slide ended under a gap
         if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null);
         if (tellClient) AwakenNet.send(p, new BodyPayloads.Refuse(Move.SLIDE.ordinal()));
+    }
+
+    private static final BodyRules.StairProfile STAIRS = new BodyRules.StairProfile();
+    private static final double[] FALL = new double[2], WAY = new double[2];
+
+    /**
+     * A slide on a run of stairs or slabs (SPEC §17.22) goes on while this side sees the run under the body (looked for
+     * the same way the client does), up to {@link BodyRules#STAIR_MAX_TICKS}, then its run-out and the grace; the run's
+     * ride is never a fall. The client's way bends onto the fall line; so does the server's.
+     */
+    private static void stairs(ServerPlayer p, BodyMotion m, long now) {
+        var ctx = CollisionContext.of(p);
+        boolean on = now - m.slideStart <= BodyRules.STAIR_MAX_TICKS + BodyRules.SLIDE_TICKS;
+        if (on && !m.stairSliding) {
+            on = BodyRules.stairStart(p.level(), ctx, STAIRS, p.getX(), p.getY(), p.getZ(), m.slideDirX, m.slideDirZ, FALL);
+            if (on) {
+                m.stairFallX = FALL[0];
+                m.stairFallZ = FALL[1];
+            }
+        } else if (on) {
+            on = BodyRules.stairGoesOn(p.level(), ctx, STAIRS, p.getX(), p.getY(), p.getZ(), m.slideDirX, m.slideDirZ);
+        }
+        m.stairSliding = on;
+        if (!on) return;
+        WAY[0] = m.slideDirX;
+        WAY[1] = m.slideDirZ;
+        BodyRules.stairBend(WAY, m.stairFallX, m.stairFallZ);
+        m.slideDirX = WAY[0];
+        m.slideDirZ = WAY[1];
+        m.slideUntil = Math.max(m.slideUntil, now + BodyRules.STAIR_RUNOUT + BodyRules.SLIDE_GRACE + 2);
+        p.resetFallDistance();
     }
 
     /** Small hostile creatures in the slide's way lose their footing: a stagger, never damage. */
@@ -235,15 +271,48 @@ final class BodyServer {
     // ---- shared -----------------------------------------------------------------------------------------------------
 
     /** A move happened: count it, let everyone else see and hear it (the mover's own client already did). */
-    private static void did(ServerPlayer p, BodyMotion m, Move move, float yaw, Holder<SoundEvent> sound, float volume, long now) {
+    static void did(ServerPlayer p, BodyMotion m, Move move, float yaw, Holder<SoundEvent> sound, float volume, long now) {
         m.lastMove = now;
         Progression.count(p, "awaken:body_" + move.key);
+        // the Runner's moves are links in the Ascent's chains and earn the Runner's mastery
+        switch (move) {
+            case WALL_RUN, WALL_JUMP, LEDGE_JUMP, WALL_CLIMB -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 2);
+            case LEDGE_HANG -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 1);
+            default -> {
+            }
+        }
         p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, 1.0F);
         show(p, p, new BodyPayloads.Seen(p.getId(), move.ordinal(), yaw));
     }
 
+    /** A Runner move that others see as one of its clips (the variant: which side the wall is on, which way you go). */
+    static void didClip(ServerPlayer p, BodyMotion m, Move move, float yaw, Holder<SoundEvent> sound, float volume, long now, String clip) {
+        m.lastMove = now;
+        Progression.count(p, "awaken:body_" + move.key);
+        // the Runner's moves are links in the Ascent's chains and earn the Runner's mastery
+        switch (move) {
+            case WALL_RUN, WALL_JUMP, LEDGE_JUMP -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 2);
+            case LEDGE_HANG -> dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 1);
+            default -> {
+            }
+        }
+        p.level().playSound(p, p.getX(), p.getY(), p.getZ(), sound, SoundSource.PLAYERS, volume, 1.0F);
+        showClip(p, clip, yaw);
+    }
+
+    /** Others see this player's Runner clip change (no count, no sound: the hang settling after a catch or a shimmy). */
+    static void showClip(ServerPlayer p, String clip, float yaw) {
+        int i = BodyClips.RUNNER.indexOf(clip);
+        if (i >= 0) show(p, p, new BodyPayloads.Seen(p.getId(), BodyPayloads.SEEN_CLIP + i, yaw));
+    }
+
+    /** Others see this player's Runner move end (its loop settles). */
+    static void showRunnerEnd(ServerPlayer p) {
+        show(p, p, new BodyPayloads.Seen(p.getId(), BodyPayloads.SEEN_RUNNER_END, p.getYRot()));
+    }
+
     /** Sends to the players near enough to see it (through AwakenNet: test players and other mods' fakes can't take it). */
-    private static void show(Entity at, @Nullable ServerPlayer except, BodyPayloads.Seen msg) {
+    static void show(Entity at, @Nullable ServerPlayer except, BodyPayloads.Seen msg) {
         for (ServerPlayer o : ((net.minecraft.server.level.ServerLevel) at.level()).players()) {
             if (o != except && o.distanceToSqr(at) < SEEN_RANGE * SEEN_RANGE) AwakenNet.send(o, msg);
         }
@@ -255,11 +324,9 @@ final class BodyServer {
 
     static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
-        BodyMotion m = p.getExistingDataOrNull(BodyContent.MOTION);
-        if (m == null) {
-            if (p.isFallFlying()) motion(p).lastGlide = now(p);
-            return;
-        }
+        // spike S3: every player keeps a short position history (the runner's claimed starts are checked against it)
+        BodyMotion m = motion(p);
+        RunnerServer.track(p, m);
         if (p.isFallFlying()) m.lastGlide = now(p);
         if (!m.active()) return;
         tick(p, m, now(p));
@@ -281,6 +348,7 @@ final class BodyServer {
                 endSlide(p, m, now, true);
             } else {
                 m.lastMove = now;
+                stairs(p, m, now);
                 if (((now - m.slideStart) & 1) == 0) trip(p, m);
             }
         }
@@ -289,6 +357,7 @@ final class BodyServer {
             if (now >= m.mantleUntil) m.mantleUntil = 0;
             else m.lastMove = now;
         }
+        if (m.runner()) RunnerServer.tick(p, m, now);
     }
 
     // ---- soft landing: the one fall path ----------------------------------------------------------------------------
@@ -380,10 +449,12 @@ final class BodyServer {
      * Returns whether anything was announced.
      */
     static boolean announce(ServerPlayer p) {
+        // the System speaks from the awakening on; a Runner's body just moves before it
+        if (!dev.awaken.progression.Progression.profile(p).awakened()) return false;
         BodyMemory mem = p.getData(BodyContent.MEMORY);
         List<Move> fresh = new ArrayList<>(2);
         for (Move mv : Move.values()) {
-            if (Body.unlocked(p, mv) && !mem.announced(mv)) {
+            if (!mv.runner() && Body.unlocked(p, mv) && !mem.announced(mv)) { // the Runner's own moves are found, not told
                 fresh.add(mv);
                 mem = mem.with(mv);
             }

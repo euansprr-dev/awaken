@@ -34,6 +34,16 @@ public final class BodyContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> SLIDE = sound("body.slide");
     public static final DeferredHolder<SoundEvent, SoundEvent> MANTLE = sound("body.mantle");
     public static final DeferredHolder<SoundEvent, SoundEvent> IMPACT = sound("body.impact");
+    // the Runner's Kit
+    public static final DeferredHolder<SoundEvent, SoundEvent> WALLSTEP = sound("body.wallstep");
+    public static final DeferredHolder<SoundEvent, SoundEvent> WALLJUMP = sound("body.walljump");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GRAB = sound("body.grab");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SHIMMY = sound("body.shimmy");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CLIMB = sound("body.climb");
+    public static final DeferredHolder<SoundEvent, SoundEvent> DROP = sound("body.drop");
+    // the grip on a climb line (SPEC §17.23)
+    public static final DeferredHolder<SoundEvent, SoundEvent> PIPE_SLIDE = sound("body.pipe_slide");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PIPE_BRAKE = sound("body.pipe_brake");
 
     /** Grit kicked up by the body (slide spray, a roll's ring, chips off a ledge), tinted by the ground it came from. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DUST = PARTICLES.register("body_dust", () -> new SimpleParticleType(false));

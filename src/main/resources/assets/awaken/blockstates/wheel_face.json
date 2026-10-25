@@ -1,0 +1,589 @@
+{
+  "variants": {
+    "cell=0": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=1": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=2": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=3": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=4": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=5": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=6": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=7": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=8": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=9": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=10": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=11": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=12": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=13": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=14": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=15": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=16": {
+      "model": "awaken:block/wheel_face_16"
+    },
+    "cell=17": {
+      "model": "awaken:block/wheel_face_17"
+    },
+    "cell=18": {
+      "model": "awaken:block/wheel_face_18"
+    },
+    "cell=19": {
+      "model": "awaken:block/wheel_face_19"
+    },
+    "cell=20": {
+      "model": "awaken:block/wheel_face_20"
+    },
+    "cell=21": {
+      "model": "awaken:block/wheel_face_21"
+    },
+    "cell=22": {
+      "model": "awaken:block/wheel_face_22"
+    },
+    "cell=23": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=24": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=25": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=26": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=27": {
+      "model": "awaken:block/wheel_face_27"
+    },
+    "cell=28": {
+      "model": "awaken:block/wheel_face_28"
+    },
+    "cell=29": {
+      "model": "awaken:block/wheel_face_29"
+    },
+    "cell=30": {
+      "model": "awaken:block/wheel_face_30"
+    },
+    "cell=31": {
+      "model": "awaken:block/wheel_face_31"
+    },
+    "cell=32": {
+      "model": "awaken:block/wheel_face_32"
+    },
+    "cell=33": {
+      "model": "awaken:block/wheel_face_33"
+    },
+    "cell=34": {
+      "model": "awaken:block/wheel_face_34"
+    },
+    "cell=35": {
+      "model": "awaken:block/wheel_face_35"
+    },
+    "cell=36": {
+      "model": "awaken:block/wheel_face_36"
+    },
+    "cell=37": {
+      "model": "awaken:block/wheel_face_37"
+    },
+    "cell=38": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=39": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=40": {
+      "model": "awaken:block/wheel_face_40"
+    },
+    "cell=41": {
+      "model": "awaken:block/wheel_face_41"
+    },
+    "cell=42": {
+      "model": "awaken:block/wheel_face_42"
+    },
+    "cell=43": {
+      "model": "awaken:block/wheel_face_43"
+    },
+    "cell=44": {
+      "model": "awaken:block/wheel_face_44"
+    },
+    "cell=45": {
+      "model": "awaken:block/wheel_face_45"
+    },
+    "cell=46": {
+      "model": "awaken:block/wheel_face_46"
+    },
+    "cell=47": {
+      "model": "awaken:block/wheel_face_47"
+    },
+    "cell=48": {
+      "model": "awaken:block/wheel_face_48"
+    },
+    "cell=49": {
+      "model": "awaken:block/wheel_face_49"
+    },
+    "cell=50": {
+      "model": "awaken:block/wheel_face_50"
+    },
+    "cell=51": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=52": {
+      "model": "awaken:block/wheel_face_52"
+    },
+    "cell=53": {
+      "model": "awaken:block/wheel_face_53"
+    },
+    "cell=54": {
+      "model": "awaken:block/wheel_face_54"
+    },
+    "cell=55": {
+      "model": "awaken:block/wheel_face_55"
+    },
+    "cell=56": {
+      "model": "awaken:block/wheel_face_56"
+    },
+    "cell=57": {
+      "model": "awaken:block/wheel_face_57"
+    },
+    "cell=58": {
+      "model": "awaken:block/wheel_face_58"
+    },
+    "cell=59": {
+      "model": "awaken:block/wheel_face_59"
+    },
+    "cell=60": {
+      "model": "awaken:block/wheel_face_60"
+    },
+    "cell=61": {
+      "model": "awaken:block/wheel_face_61"
+    },
+    "cell=62": {
+      "model": "awaken:block/wheel_face_62"
+    },
+    "cell=63": {
+      "model": "awaken:block/wheel_face_63"
+    },
+    "cell=64": {
+      "model": "awaken:block/wheel_face_64"
+    },
+    "cell=65": {
+      "model": "awaken:block/wheel_face_65"
+    },
+    "cell=66": {
+      "model": "awaken:block/wheel_face_66"
+    },
+    "cell=67": {
+      "model": "awaken:block/wheel_face_67"
+    },
+    "cell=68": {
+      "model": "awaken:block/wheel_face_68"
+    },
+    "cell=69": {
+      "model": "awaken:block/wheel_face_69"
+    },
+    "cell=70": {
+      "model": "awaken:block/wheel_face_70"
+    },
+    "cell=71": {
+      "model": "awaken:block/wheel_face_71"
+    },
+    "cell=72": {
+      "model": "awaken:block/wheel_face_72"
+    },
+    "cell=73": {
+      "model": "awaken:block/wheel_face_73"
+    },
+    "cell=74": {
+      "model": "awaken:block/wheel_face_74"
+    },
+    "cell=75": {
+      "model": "awaken:block/wheel_face_75"
+    },
+    "cell=76": {
+      "model": "awaken:block/wheel_face_76"
+    },
+    "cell=77": {
+      "model": "awaken:block/wheel_face_77"
+    },
+    "cell=78": {
+      "model": "awaken:block/wheel_face_78"
+    },
+    "cell=79": {
+      "model": "awaken:block/wheel_face_79"
+    },
+    "cell=80": {
+      "model": "awaken:block/wheel_face_80"
+    },
+    "cell=81": {
+      "model": "awaken:block/wheel_face_81"
+    },
+    "cell=82": {
+      "model": "awaken:block/wheel_face_82"
+    },
+    "cell=83": {
+      "model": "awaken:block/wheel_face_83"
+    },
+    "cell=84": {
+      "model": "awaken:block/wheel_face_84"
+    },
+    "cell=85": {
+      "model": "awaken:block/wheel_face_85"
+    },
+    "cell=86": {
+      "model": "awaken:block/wheel_face_86"
+    },
+    "cell=87": {
+      "model": "awaken:block/wheel_face_87"
+    },
+    "cell=88": {
+      "model": "awaken:block/wheel_face_88"
+    },
+    "cell=89": {
+      "model": "awaken:block/wheel_face_89"
+    },
+    "cell=90": {
+      "model": "awaken:block/wheel_face_90"
+    },
+    "cell=91": {
+      "model": "awaken:block/wheel_face_91"
+    },
+    "cell=92": {
+      "model": "awaken:block/wheel_face_92"
+    },
+    "cell=93": {
+      "model": "awaken:block/wheel_face_93"
+    },
+    "cell=94": {
+      "model": "awaken:block/wheel_face_94"
+    },
+    "cell=95": {
+      "model": "awaken:block/wheel_face_95"
+    },
+    "cell=96": {
+      "model": "awaken:block/wheel_face_96"
+    },
+    "cell=97": {
+      "model": "awaken:block/wheel_face_97"
+    },
+    "cell=98": {
+      "model": "awaken:block/wheel_face_98"
+    },
+    "cell=99": {
+      "model": "awaken:block/wheel_face_99"
+    },
+    "cell=100": {
+      "model": "awaken:block/wheel_face_100"
+    },
+    "cell=101": {
+      "model": "awaken:block/wheel_face_101"
+    },
+    "cell=102": {
+      "model": "awaken:block/wheel_face_102"
+    },
+    "cell=103": {
+      "model": "awaken:block/wheel_face_103"
+    },
+    "cell=104": {
+      "model": "awaken:block/wheel_face_104"
+    },
+    "cell=105": {
+      "model": "awaken:block/wheel_face_105"
+    },
+    "cell=106": {
+      "model": "awaken:block/wheel_face_106"
+    },
+    "cell=107": {
+      "model": "awaken:block/wheel_face_107"
+    },
+    "cell=108": {
+      "model": "awaken:block/wheel_face_108"
+    },
+    "cell=109": {
+      "model": "awaken:block/wheel_face_109"
+    },
+    "cell=110": {
+      "model": "awaken:block/wheel_face_110"
+    },
+    "cell=111": {
+      "model": "awaken:block/wheel_face_111"
+    },
+    "cell=112": {
+      "model": "awaken:block/wheel_face_112"
+    },
+    "cell=113": {
+      "model": "awaken:block/wheel_face_113"
+    },
+    "cell=114": {
+      "model": "awaken:block/wheel_face_114"
+    },
+    "cell=115": {
+      "model": "awaken:block/wheel_face_115"
+    },
+    "cell=116": {
+      "model": "awaken:block/wheel_face_116"
+    },
+    "cell=117": {
+      "model": "awaken:block/wheel_face_117"
+    },
+    "cell=118": {
+      "model": "awaken:block/wheel_face_118"
+    },
+    "cell=119": {
+      "model": "awaken:block/wheel_face_119"
+    },
+    "cell=120": {
+      "model": "awaken:block/wheel_face_120"
+    },
+    "cell=121": {
+      "model": "awaken:block/wheel_face_121"
+    },
+    "cell=122": {
+      "model": "awaken:block/wheel_face_122"
+    },
+    "cell=123": {
+      "model": "awaken:block/wheel_face_123"
+    },
+    "cell=124": {
+      "model": "awaken:block/wheel_face_124"
+    },
+    "cell=125": {
+      "model": "awaken:block/wheel_face_125"
+    },
+    "cell=126": {
+      "model": "awaken:block/wheel_face_126"
+    },
+    "cell=127": {
+      "model": "awaken:block/wheel_face_127"
+    },
+    "cell=128": {
+      "model": "awaken:block/wheel_face_128"
+    },
+    "cell=129": {
+      "model": "awaken:block/wheel_face_129"
+    },
+    "cell=130": {
+      "model": "awaken:block/wheel_face_130"
+    },
+    "cell=131": {
+      "model": "awaken:block/wheel_face_131"
+    },
+    "cell=132": {
+      "model": "awaken:block/wheel_face_132"
+    },
+    "cell=133": {
+      "model": "awaken:block/wheel_face_133"
+    },
+    "cell=134": {
+      "model": "awaken:block/wheel_face_134"
+    },
+    "cell=135": {
+      "model": "awaken:block/wheel_face_135"
+    },
+    "cell=136": {
+      "model": "awaken:block/wheel_face_136"
+    },
+    "cell=137": {
+      "model": "awaken:block/wheel_face_137"
+    },
+    "cell=138": {
+      "model": "awaken:block/wheel_face_138"
+    },
+    "cell=139": {
+      "model": "awaken:block/wheel_face_139"
+    },
+    "cell=140": {
+      "model": "awaken:block/wheel_face_140"
+    },
+    "cell=141": {
+      "model": "awaken:block/wheel_face_141"
+    },
+    "cell=142": {
+      "model": "awaken:block/wheel_face_142"
+    },
+    "cell=143": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=144": {
+      "model": "awaken:block/wheel_face_144"
+    },
+    "cell=145": {
+      "model": "awaken:block/wheel_face_145"
+    },
+    "cell=146": {
+      "model": "awaken:block/wheel_face_146"
+    },
+    "cell=147": {
+      "model": "awaken:block/wheel_face_147"
+    },
+    "cell=148": {
+      "model": "awaken:block/wheel_face_148"
+    },
+    "cell=149": {
+      "model": "awaken:block/wheel_face_149"
+    },
+    "cell=150": {
+      "model": "awaken:block/wheel_face_150"
+    },
+    "cell=151": {
+      "model": "awaken:block/wheel_face_151"
+    },
+    "cell=152": {
+      "model": "awaken:block/wheel_face_152"
+    },
+    "cell=153": {
+      "model": "awaken:block/wheel_face_153"
+    },
+    "cell=154": {
+      "model": "awaken:block/wheel_face_154"
+    },
+    "cell=155": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=156": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=157": {
+      "model": "awaken:block/wheel_face_157"
+    },
+    "cell=158": {
+      "model": "awaken:block/wheel_face_158"
+    },
+    "cell=159": {
+      "model": "awaken:block/wheel_face_159"
+    },
+    "cell=160": {
+      "model": "awaken:block/wheel_face_160"
+    },
+    "cell=161": {
+      "model": "awaken:block/wheel_face_161"
+    },
+    "cell=162": {
+      "model": "awaken:block/wheel_face_162"
+    },
+    "cell=163": {
+      "model": "awaken:block/wheel_face_163"
+    },
+    "cell=164": {
+      "model": "awaken:block/wheel_face_164"
+    },
+    "cell=165": {
+      "model": "awaken:block/wheel_face_165"
+    },
+    "cell=166": {
+      "model": "awaken:block/wheel_face_166"
+    },
+    "cell=167": {
+      "model": "awaken:block/wheel_face_167"
+    },
+    "cell=168": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=169": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=170": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=171": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=172": {
+      "model": "awaken:block/wheel_face_172"
+    },
+    "cell=173": {
+      "model": "awaken:block/wheel_face_173"
+    },
+    "cell=174": {
+      "model": "awaken:block/wheel_face_174"
+    },
+    "cell=175": {
+      "model": "awaken:block/wheel_face_175"
+    },
+    "cell=176": {
+      "model": "awaken:block/wheel_face_176"
+    },
+    "cell=177": {
+      "model": "awaken:block/wheel_face_177"
+    },
+    "cell=178": {
+      "model": "awaken:block/wheel_face_178"
+    },
+    "cell=179": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=180": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=181": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=182": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=183": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=184": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=185": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=186": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=187": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=188": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=189": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=190": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=191": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=192": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=193": {
+      "model": "awaken:block/wheel_face_empty"
+    },
+    "cell=194": {
+      "model": "awaken:block/wheel_face_empty"
+    }
+  }
+}

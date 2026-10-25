@@ -17,7 +17,6 @@ import dev.awaken.gates.world.Room;
 import dev.awaken.gates.world.RoomGeometry;
 import dev.awaken.signal.Signal;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -336,14 +335,14 @@ public final class Modifiers {
             for (ServerPlayer p : players) Signal.toast(p, Component.literal("The floor is coming down."));
         }
         if (level.getServer().getTickCount() % 40 != 0) return;
+        // the ceiling really comes down (the Gate Rig's cave-in): blocks fall round everyone still on the floor
         for (ServerPlayer p : players) {
             RunState run = Runs.run(p);
             if (run.clearedFloor(run.area, run.floor)) continue;
             Where w = Where.at(level.getServer(), p.blockPosition());
-            if (w != null && w.room() != null && w.room().type.safe()) continue;
-            level.sendParticles(new BlockParticleOption(ParticleTypes.FALLING_DUST, f.theme.palette().ceiling()), p.getX(), p.getY() + 3, p.getZ(), 30, 2, 0.5, 2, 0);
+            if (w == null || w.room() == null || w.room().type.safe()) continue;
             level.playSound(null, p.blockPosition(), GatesRegistry.SND_COLLAPSE.get(), SoundSource.BLOCKS, 1F, 0.8F);
-            p.hurtServer(level, level.damageSources().fallingBlock(null), 2F + p.getMaxHealth() * 0.06F);
+            RigCaveIn.wave(level, g, f, w.room(), p);
         }
     }
 

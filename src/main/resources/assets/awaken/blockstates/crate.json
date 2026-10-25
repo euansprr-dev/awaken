@@ -1,0 +1,124 @@
+{
+  "variants": {
+    "content=lid": [
+      {
+        "model": "awaken:block/crate_lid_0",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_lid_0",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/crate_lid_1",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_lid_1",
+        "y": 90,
+        "weight": 2
+      }
+    ],
+    "content=apples": [
+      {
+        "model": "awaken:block/crate_apples_0",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_apples_0",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/crate_apples_1",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_apples_1",
+        "y": 90,
+        "weight": 2
+      }
+    ],
+    "content=cabbages": [
+      {
+        "model": "awaken:block/crate_cabbages_0",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_cabbages_0",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/crate_cabbages_1",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_cabbages_1",
+        "y": 90,
+        "weight": 2
+      }
+    ],
+    "content=fish": [
+      {
+        "model": "awaken:block/crate_fish_0",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_fish_0",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/crate_fish_1",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_fish_1",
+        "y": 90,
+        "weight": 2
+      }
+    ],
+    "content=straw": [
+      {
+        "model": "awaken:block/crate_straw_0",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_straw_0",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/crate_straw_1",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_straw_1",
+        "y": 90,
+        "weight": 2
+      }
+    ],
+    "content=bottles": [
+      {
+        "model": "awaken:block/crate_bottles_0",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_bottles_0",
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/crate_bottles_1",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/crate_bottles_1",
+        "y": 90,
+        "weight": 2
+      }
+    ]
+  }
+}

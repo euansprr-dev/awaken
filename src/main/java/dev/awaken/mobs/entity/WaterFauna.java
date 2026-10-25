@@ -16,7 +16,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
@@ -83,7 +82,7 @@ public class WaterFauna extends WildMount {
         if (role == FaunaRole.AMBIENT) goal(2, new Fauna3Goals.SwimFlee(this));
         if (role == FaunaRole.NEUTRAL) {
             goal(2, new Fauna3Goals.SwimHunt(this));
-            goal(3, new MeleeAttackGoal(this, 1.2, true));
+            goal(3, new MobGoals.ToldMelee(this, 1.2, true));
             targetSelector.addGoal(1, new HurtByTargetGoal(this));
         }
         if (Fauna3Kinds.mount(d.id) != null) {

@@ -1,0 +1,70 @@
+# Frame times of the third pair (docs/modules/lands.md): the densest Frost Spires (beside its Aurora Spire, noon: the
+# blown snow at its thickest) and the Mirror Marsh at night (beside its Weeping Matriarch: the mist, the tendrils, the
+# moonblooms), each beside its vanilla archetype in the same run, two passes (the machine's load moves every number:
+# compare within a run). The last lines print what the lands' worldgen cost while the run generated (landscost) and
+# the air's CPU (leaves status).
+# Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/lands-biomes3-perf.txt 1500
+world b3perf777 creative 777
+waitworld
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+info
+cmd gamemode spectator
+cmd time set 6000
+cmd awaken terrain landmarkvisit aurora_spire 40 2
+wait 700
+look 160 -6
+wait 100
+perf b3_frost_spires_dense 10
+cmd awaken terrain visit minecraft:snowy_taiga
+wait 700
+look 30 -6
+wait 100
+perf b3_vanilla_snowy_taiga 10
+cmd time set 18000
+cmd awaken terrain herovisit weeping_matriarch 40 2
+wait 700
+look 160 -6
+wait 100
+perf b3_marsh_dense_night 10
+cmd awaken terrain visit minecraft:swamp
+wait 700
+look 30 -6
+wait 100
+perf b3_vanilla_swamp_night 10
+# a second pass
+cmd time set 6000
+cmd awaken terrain landmarkvisit aurora_spire 40 2
+wait 700
+look 160 -6
+wait 100
+perf b3_frost_spires_dense_2 10
+cmd awaken terrain visit minecraft:snowy_taiga
+wait 700
+look 30 -6
+wait 100
+perf b3_vanilla_snowy_taiga_2 10
+cmd time set 18000
+cmd awaken terrain herovisit weeping_matriarch 40 2
+wait 700
+look 160 -6
+wait 100
+perf b3_marsh_dense_night_2 10
+cmd awaken terrain visit minecraft:swamp
+wait 700
+look 30 -6
+wait 100
+perf b3_vanilla_swamp_night_2 10
+cmd awaken terrain landscost
+cmd awaken terrain leaves status
+wait 20
+quit

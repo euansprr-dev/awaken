@@ -42,6 +42,7 @@ public final class AwakenClient {
         StoryClient.init(modBus);
         WorldClient.init(modBus);
         dev.awaken.gear.client.GearClient.init(modBus);
+        dev.awaken.anims.client.AnimsClient.init(modBus);
         dev.awaken.body.client.BodyClient.init(modBus);
         dev.awaken.core.audio.client.AudioClient.init(modBus);
         dev.awaken.lens.client.LensClient.init(modBus);
@@ -50,5 +51,11 @@ public final class AwakenClient {
         dev.awaken.holo.client.HoloClient.init(modBus);
         dev.awaken.farsight.client.FarSightClient.init(modBus);
         dev.awaken.turbo.pixels.PixelsClient.init(modBus);
+        dev.awaken.wilds.client.WildsClient.init(modBus);
+        dev.awaken.citizens.client.CitizensClient.init(modBus);
+        dev.awaken.opening.client.OpeningClient.init(modBus);
+        dev.awaken.living.client.LivingClient.init(modBus);
+        dev.awaken.atlas.client.AtlasClient.init(modBus);
+        dev.awaken.arms.client.ArmsClient.init(modBus);
     }
 }

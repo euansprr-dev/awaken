@@ -21,8 +21,11 @@ public final class Pixels {
     /** The versions Pixels' hooks were read against and tested on. Any other: off, with one log line. */
     static final String MINECRAFT = "26.3", NEOFORGE = "26.3.0.95";
 
+    /** A game frame this big or bigger is a 4K screen (3840x2160 is 8.3 MP; a 16" MacBook's 3456x2234 is 7.7). */
+    static final long LARGE_SCREEN_PIXELS = 8_000_000L;
+
     // settings as of the last tick (config, or the autopilot's override)
-    private static float scale = 1f;
+    private static float scale = 1f, scale4k = 0.75f;
     private static PixelsConfig.Upscaler upscaler = PixelsConfig.Upscaler.SHARP;
     private static float forcedScale = -1f;
     private static PixelsConfig.@Nullable Upscaler forcedUpscaler;
@@ -35,18 +38,19 @@ public final class Pixels {
         try {
             if (PixelsConfig.SPEC.isLoaded()) {
                 scale = PixelsConfig.RENDER_SCALE.get().floatValue();
+                scale4k = PixelsConfig.RENDER_SCALE_4K.get().floatValue();
                 upscaler = PixelsConfig.UPSCALER.get();
             }
         } catch (RuntimeException e) {
             // keep the last good values
         }
-        if (forcedScale > 0f) scale = forcedScale;
+        if (forcedScale > 0f) scale = scale4k = forcedScale;
         if (forcedUpscaler != null) upscaler = forcedUpscaler;
     }
 
-    /** The world's share of the screen's resolution this frame (1 = native). */
-    static float scale() {
-        return Math.clamp(scale, 0.5f, 1f);
+    /** The world's share of the screen's resolution this frame (1 = native), for a game frame of w by h. */
+    static float scale(int w, int h) {
+        return Math.clamp((long) w * h >= LARGE_SCREEN_PIXELS ? scale4k : scale, 0.5f, 1f);
     }
 
     /** The upscaler that will run: FSR and SHARP fall back to bilinear when their pipelines didn't compile. */
@@ -127,6 +131,7 @@ public final class Pixels {
             }
         }
         refresh();
-        return String.format(Locale.ROOT, "scale %.2f, %s, %s", scale(), upscaler(), failed ? "off (failed)" : usable() ? "ready" : "unavailable");
+        return String.format(Locale.ROOT, "scale %.2f (4K %.2f), %s, %s", scale(1, 1), scale(4096, 2160), upscaler(),
+                failed ? "off (failed)" : usable() ? "ready" : "unavailable");
     }
 }

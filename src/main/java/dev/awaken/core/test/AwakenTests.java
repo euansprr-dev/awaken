@@ -47,6 +47,14 @@ public final class AwakenTests {
             .map(String::strip).filter(s -> !s.isEmpty()).toList();
 
     /** True when the test filter lets this test name through (always, without a filter). */
+    /**
+     * A CPU-time budget measured on Euan's M4, widened 3x on CI (GitHub's 2-core runners set CI=true and run about 2x
+     * slower), so a timing assertion still catches a real regression without failing on a slow machine.
+     */
+    public static double cpuBudget(double m4Millis) {
+        return System.getenv("CI") != null ? m4Millis * 3 : m4Millis;
+    }
+
     public static boolean selected(String name) {
         return FILTER.isEmpty() || FILTER.stream().anyMatch(name::startsWith);
     }
@@ -78,6 +86,19 @@ public final class AwakenTests {
             // so scheduling from inside one can run entries twice. Tests that need settled chunks delay their own actions.
             test.accept(h);
         };
+    }
+
+    /**
+     * Clears the air over a test spot: plots are reused, and an earlier test's floor left high above one roofs it (a
+     * surface creature sees no sky, a lair lays its ring on top of it). From {@code fromDy} to {@code toDy} above
+     * {@code centre}, {@code radius} blocks round it. Call before the test builds anything up there.
+     */
+    public static void clearAbove(ServerLevel level, BlockPos centre, int radius, int fromDy, int toDy) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) for (int dy = fromDy; dy <= toDy; dy++) {
+            m.set(centre.getX() + dx, centre.getY() + dy, centre.getZ() + dz);
+            if (!level.getBlockState(m).isAir()) level.setBlock(m, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+        }
     }
 
     /** Real time a test waits for the server's background work (chunk promotion, the light engine) before it fails. */

@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "flame=0": {
+      "model": "awaken:block/city_fire_0"
+    },
+    "flame=1": {
+      "model": "awaken:block/city_fire_1"
+    },
+    "flame=2": {
+      "model": "awaken:block/city_fire_2"
+    },
+    "flame=3": {
+      "model": "awaken:block/city_fire_3"
+    }
+  }
+}

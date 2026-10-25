@@ -25,6 +25,16 @@ final class GatesNow {
         GateRecord inGate = Runs.gateOf(p);
         if (run.active() && inGate != null) {
             if (inGate.plan.ritual()) return out; // the story's hall: the story says what's next
+            if (inGate.plan.skybornTrial()) {
+                out.add(NowHooks.Suggestion.of("gate:trial", 80, inGate.bossDead ? "The sky is yours: the way out is open"
+                        : "The Sky Leviathan's trial: fly out past the antechamber and bring it down"));
+                return out;
+            }
+            if (inGate.plan.leaperTrial()) {
+                out.add(NowHooks.Suggestion.of("gate:trial", 80, inGate.bossDead ? "The way out is open past the course"
+                        : "The Leaper's Gauntlet: run the course to the far side"));
+                return out;
+            }
             int floors = run.area == 0 ? inGate.plan.floors() : 2;
             if (run.clearedFloor(run.area, run.floor)) {
                 out.add(NowHooks.Suggestion.of("gate:shrine", 80, "Rest Shrine: leave with your loot, or go deeper"));

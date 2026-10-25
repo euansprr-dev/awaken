@@ -1,0 +1,61 @@
+# The Ascent, Phase 1c: "your body remembers" (front and first person) and a swing with the HUD on (the Flow line).
+# Clips land in run-autopilot/clips/<name>/; python3 -I tools/ascent/clip.py run-autopilot/clips/<name> makes the mp4.
+world ascent_flow survival 4242
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 13500
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd tp @s 0.5 152 0.5 0 0
+# new terrain loads slower: let the chunks under the floor load before filling
+wait 100
+cmd fill -30 150 -12 30 150 250 minecraft:grass_block
+cmd fill -30 151 -12 30 160 250 minecraft:air
+cmd tp @s 0.5 151 0.5 0 0
+wait 10
+cmd awaken ascent sandbox
+wait 200
+screen close
+
+# ---- your body remembers, seen from the front (dusk, so the light reads) ----
+hud off
+cmd tp @s 0.5 151 5.5 180 0
+camera front
+wait 40
+cmd awaken ascent pilot rec remember_front 150 3
+cmd awaken ascent remember
+wait 160
+
+# ---- and in first person, with the words ----
+hud on
+camera first
+cmd tp @s 0.5 151 5.5 180 -5
+wait 30
+cmd awaken ascent pilot rec remember_fp 150 3
+cmd awaken ascent remember
+wait 160
+
+# ---- a swing with the HUD on: the Flow line over the hotbar ----
+cmd time set 5000
+cmd awaken ascent pilot stop
+cmd tp @s 0.5 151 5.5 0 -10
+camera first
+wait 40
+cmd awaken ascent pilot rec flow_fp 330 3
+cmd awaken ascent pilot run swing 5
+wait 340
+cmd awaken ascent pilot stop
+info
+quit

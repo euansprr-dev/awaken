@@ -1,0 +1,42 @@
+{
+  "living.scan": {
+    "subtitle": "subtitles.awaken.living.scan",
+    "sounds": [
+      {
+        "name": "awaken:ui_living_scan"
+      }
+    ]
+  },
+  "living.crit": {
+    "subtitle": "subtitles.awaken.living.crit",
+    "sounds": [
+      {
+        "name": "awaken:ui_living_crit"
+      }
+    ]
+  },
+  "living.xp_tick": {
+    "subtitle": "subtitles.awaken.living.xp_tick",
+    "sounds": [
+      {
+        "name": "awaken:ui_living_xp_tick"
+      }
+    ]
+  },
+  "living.level_up": {
+    "subtitle": "subtitles.awaken.living.level_up",
+    "sounds": [
+      {
+        "name": "awaken:ui_living_level_up"
+      }
+    ]
+  },
+  "living.region_enter": {
+    "subtitle": "subtitles.awaken.living.region_enter",
+    "sounds": [
+      {
+        "name": "awaken:ui_living_region_enter"
+      }
+    ]
+  }
+}

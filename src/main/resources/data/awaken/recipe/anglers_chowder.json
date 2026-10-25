@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "awaken_meals",
+  "ingredients": [
+    "minecraft:bowl",
+    "minecraft:cooked_cod",
+    "awaken:moonmoss",
+    "minecraft:baked_potato"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:anglers_chowder"
+  }
+}

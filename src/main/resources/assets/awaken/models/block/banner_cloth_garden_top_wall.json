@@ -1,0 +1,193 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/banner_garden_top",
+    "cloth": "awaken:block/banner_garden_top",
+    "rod": "awaken:block/banner_rod"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        15.5
+      ],
+      "to": [
+        14,
+        14,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            2,
+            14,
+            16
+          ],
+          "texture": "#cloth"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        14,
+        14
+      ],
+      "to": [
+        15,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            14,
+            2
+          ],
+          "texture": "#rod"
+        },
+        "up": {
+          "uv": [
+            0,
+            2,
+            14,
+            4
+          ],
+          "texture": "#rod"
+        },
+        "down": {
+          "uv": [
+            0,
+            2,
+            14,
+            4
+          ],
+          "texture": "#rod"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            2,
+            6
+          ],
+          "texture": "#rod"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            2,
+            6
+          ],
+          "texture": "#rod"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        13.5,
+        14.5
+      ],
+      "to": [
+        1,
+        16.5,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            4,
+            5,
+            7
+          ],
+          "texture": "#rod"
+        },
+        "east": {
+          "uv": [
+            4,
+            4,
+            6,
+            7
+          ],
+          "texture": "#rod"
+        },
+        "west": {
+          "uv": [
+            4,
+            4,
+            6,
+            7
+          ],
+          "texture": "#rod"
+        },
+        "up": {
+          "uv": [
+            4,
+            4,
+            5,
+            6
+          ],
+          "texture": "#rod"
+        }
+      }
+    },
+    {
+      "from": [
+        15,
+        13.5,
+        14.5
+      ],
+      "to": [
+        16,
+        16.5,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            4,
+            5,
+            7
+          ],
+          "texture": "#rod"
+        },
+        "east": {
+          "uv": [
+            4,
+            4,
+            6,
+            7
+          ],
+          "texture": "#rod"
+        },
+        "west": {
+          "uv": [
+            4,
+            4,
+            6,
+            7
+          ],
+          "texture": "#rod"
+        },
+        "up": {
+          "uv": [
+            4,
+            4,
+            5,
+            6
+          ],
+          "texture": "#rod"
+        }
+      }
+    }
+  ]
+}

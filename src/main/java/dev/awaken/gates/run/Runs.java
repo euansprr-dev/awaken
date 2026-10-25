@@ -181,6 +181,7 @@ public final class Runs {
         Twists.arrive(p, g, run, f);
         if (area == 0 && floor < g.plan.floors()) GateService.pregenFloor(server, g, 0, floor + 1);
         if (area == 1 && floor == 1) GateService.pregenFloor(server, g, 1, 2);
+        RigDirector.sendScene(p);
         if (floor > 1 || area == 1) {
             Signal.toast(p, Component.literal((area == 1 ? (g.plan.is(Twist.GATE_WITHIN) ? "Inner gate · " : "Second gate · ") : "")
                     + "Floor " + floor + (f != null && f.bossFloor ? " · the Lord waits" : "")));
@@ -379,6 +380,7 @@ public final class Runs {
         Modifiers.removeFrom(p);
         Twists.leave(p, g);
         p.setData(GatesRegistry.RUN.get(), RunState.none());
+        RigDirector.leave(p);
         if (teleport && p.isAlive()) {
             ServerLevel over = server.overworld();
             BlockPos to = g != null && g.structurePlaced ? g.mouth() : over.getRespawnData().pos();
@@ -453,6 +455,8 @@ public final class Runs {
             RunState run = run(p);
             if (run.gateId != g.id || run.area != f.area || run.floor != f.floor) continue;
             claimLord(p, g, run, f, killer == p, t);
+            // the Sky Leviathan's trial: the Lord fell, the sky is theirs (SPEC §17.18)
+            if (main && g.plan.skybornTrial()) dev.awaken.core.api.TrialHooks.done(p, dev.awaken.core.api.TrialHooks.SKYBORN, 0, 0);
         }
         Twists.lordDefeated(level, g, f, arena);
         GateRegistry.get(server).setDirty();
@@ -550,7 +554,7 @@ public final class Runs {
         if (diff != AwakenConfig.Difficulty.STORY) Progression.fracture(p, FRACTURE_TICKS);
         if (g != null) {
             FloorLayout f = GateLayout.of(g.plan).floor(run.area, run.floor);
-            if (f != null && f.bossFloor) Progression.addInsight(p, g.plan.boss());
+            if (f != null && f.bossFloor) Progression.addInsight(p, g.plan.lordId());
         }
         stashGear(p);
         DirectorLog.log(p, "gate", "died in gate " + run.gateId + " on floor " + label(run.area, run.floor) + " (" + diff + ")");
@@ -618,6 +622,7 @@ public final class Runs {
                     run.leftAt = -1;
                 }
                 Modifiers.applyTo(p, g);
+                RigDirector.sendScene(p);
                 // the Inverted disguise doesn't survive a logout (puppets are never saved): put it back on
                 if (g.plan.is(Twist.INVERTED)) {
                     FloorLayout f = GateLayout.of(g.plan).floor(run.area, run.floor);

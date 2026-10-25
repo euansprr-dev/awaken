@@ -3,12 +3,13 @@
   "dimension": "minecraft:overworld",
   "targets": [
     "minecraft:savanna",
-    "minecraft:savanna_plateau"
+    "minecraft:savanna_plateau",
+    "minecraft:windswept_savanna"
   ],
   "replacement": "awaken:glass_steppe",
   "parameters": {
     "awaken:lands/awakening": {
-      "min_inclusive": 0.0
+      "min_inclusive": -0.27
     }
   }
 }

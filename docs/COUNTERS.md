@@ -4,6 +4,8 @@ Counters that content in data/awaken/awaken/** reads. Each owning module must co
 
 | Counter | Owner | Used by |
 |---|---|---|
+| `awaken:anomalies_seen` | world (anomalies) | directive/witness_anomalies, title/anomalist |
+| `awaken:biomes_discovered` | wilds | directive/explore_biomes, title/wayfarer |
 | `awaken:blocks_placed` | progression | drill/place_100, truth/i_build_what_i_need |
 | `awaken:blocks_placed_in_combat` | powers | path/architect, title/architect |
 | `awaken:boss_floors_no_damage` | gates | directive/boss_flawless, truth/nothing_can_touch_me |
@@ -32,10 +34,13 @@ Counters that content in data/awaken/awaken/** reads. Each owning module must co
 | `awaken:gates_no_hit` | gates | directive/clear_gate_no_hit, title/unwitnessed, truth/i_am_never_caught |
 | `awaken:gates_scouted` | gates (`Gates.markScouted`, called by Veil scouting) | directive/scout_a_gate |
 | `awaken:gates_solo_no_echo` | gates | truth/i_walk_alone |
+| `awaken:groves_visited` | world (anomalies) | directive/walk_a_grove, title/grove_keeper, truth/i_follow_the_lights |
 | `awaken:kills` | progression | drill/kills_20, path/stormbreaker, title/centurion, title/thousand_hands, truth/i_strike_first |
 | `awaken:kills_airborne` | powers | directive/prism_sky |
 | `awaken:kills_overworld_night` | progression | directive/hunt_at_night |
 | `awaken:kills_unarmed` | progression | directive/bare_hands, drill/unarmed_5, path/monk, title/barehanded, truth/my_body_is_a_weapon |
+| `awaken:lairs_heard` | world (fauna) | directive/hear_of_a_lair, title/tracker |
+| `awaken:landmarks_reached` | world (landmarks) | directive/explore_landmark, title/cartographer, truth/i_go_where_the_map_ends |
 | `awaken:latent/creeper_point_blank_survived` | progression (world events) | latent/blast_skin |
 | `awaken:latent/dawn_meditation_above_clouds` | veil | latent/clarity |
 | `awaken:latent/double_gate_cleared` | gates | latent/twin_soul |
@@ -72,12 +77,18 @@ Counters that content in data/awaken/awaken/** reads. Each owning module must co
 | `awaken:power_uses/shadow` | powers | path/shadowbinder |
 | `awaken:power_uses/spirit` | powers | path/warden |
 | `awaken:power_uses/tech` | powers | directive/engineer_drones, drill/tech_10, path/engineer |
+| `awaken:precursor_doors_opened` | above | directive/open_a_door, title/keybearer, truth/i_read_what_they_left |
+| `awaken:precursor_logs_read` | above | directive/read_a_log, title/lorekeeper, truth/i_read_what_they_left |
 | `awaken:reality_checks` | lucidium | directive/reality_checks, drill/reality_3 |
 | `awaken:regimens_done` | progression | title/the_regimen, truth/i_choose_my_path |
+| `awaken:rifts_closed` | world (anomalies) | directive/close_a_rift, title/riftwarden, truth/i_close_what_tears_open |
 | `awaken:secrets_found` | veil | directive/seer_secrets, path/seer, truth/i_see_what_others_miss |
 | `awaken:slept_in_descent` | descent | path/hollow |
+| `awaken:spirit_caches` | world (anomalies) | directive/follow_a_procession, title/the_spirits_guest, truth/i_follow_the_lights |
 | `awaken:spirits_spoken` | veil | directive/talk_to_spirit, path/seer, title/medium, truth/i_listen_to_the_dead |
 | `awaken:sprint_cm` | progression | directive/explore_far, drill/sprint_1k, path/redline, title/marathon, truth/i_am_fast |
+| `awaken:star_guardians_slain` | world (anomalies) | directive/slay_a_star_guardian, title/star_hunter, truth/when_the_sky_falls_i_am_there |
+| `awaken:stars_opened` | world (anomalies) | directive/open_a_star, title/starcatcher, truth/when_the_sky_falls_i_am_there |
 | `awaken:training_laps` | hearth | drill/training_lap |
 | `awaken:training_records` | hearth | directive/training_lap |
 | `awaken:trophies_placed` | hearth | directive/trophy |

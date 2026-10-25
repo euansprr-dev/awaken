@@ -1,0 +1,15 @@
+{
+  "name": "Cartographer",
+  "description": "Reached fifteen landmarks.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:landmarks_reached",
+    "value": 15
+  },
+  "perks": [
+    {
+      "id": "awaken:fall_resist",
+      "amount": 0.15
+    }
+  ]
+}

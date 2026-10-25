@@ -44,7 +44,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
@@ -63,6 +62,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
+import dev.awaken.core.api.Strikes;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashSet;
@@ -85,6 +85,8 @@ public class AwakenMob extends Monster {
     private static final EntityDataAccessor<Integer> DATA_FLAGS = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.INT);
     /** Remaining wind-up ticks of the current telegraph (0 = none). */
     private static final EntityDataAccessor<Integer> DATA_TELEGRAPH = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.INT);
+    /** The class of the blow being told (core.api.Strikes.Kind ordinal; NONE between blows), for the tell's look. */
+    private static final EntityDataAccessor<Byte> DATA_TELL = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.BYTE);
     /** Role ordinal (MobRole.Role) for visuals. */
     private static final EntityDataAccessor<Byte> DATA_ROLE = SynchedEntityData.defineId(AwakenMob.class, EntityDataSerializers.BYTE);
     /** Entity id of the player a MIMIC wears, -1 if none. */
@@ -105,7 +107,7 @@ public class AwakenMob extends Monster {
     private ItemStack stolen = ItemStack.EMPTY;
     int fleeTicks;
     @Nullable Player robbed;
-    private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse;
+    private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks;
     private float auraRadius, auraDamage;
     private BoltKind auraBolt = BoltKind.PLAIN;
     private @Nullable MobEffectInstance auraEffect;
@@ -172,7 +174,7 @@ public class AwakenMob extends Monster {
             goalSelector.addGoal(7, new MobGoals.FlyWander(this));
         } else {
             if (d.has(Trait.RANGED)) goalSelector.addGoal(3, new MobGoals.KeepRange(this, 9.0F));
-            else goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.0, false));
+            else goalSelector.addGoal(3, new MobGoals.ToldMelee(this));
             if (d.has(Trait.LISTENER)) goalSelector.addGoal(4, new MobGoals.SeekSound(this));
             if (d.tier.isBoss()) goalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 1.0));
             goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.8));
@@ -191,6 +193,7 @@ public class AwakenMob extends Monster {
         super.defineSynchedData(b);
         b.define(DATA_FLAGS, 0);
         b.define(DATA_TELEGRAPH, 0);
+        b.define(DATA_TELL, (byte) Strikes.Kind.NONE.ordinal());
         b.define(DATA_ROLE, (byte) 0);
         b.define(DATA_MIMIC, -1);
     }
@@ -199,7 +202,7 @@ public class AwakenMob extends Monster {
     public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason reason, @Nullable SpawnGroupData data) {
         SpawnGroupData out = super.finalizeSpawn(level, difficulty, reason, data);
         MobDef d = def();
-        d.gear.forEach((slot, item) -> setItemSlot(slot, new net.minecraft.world.item.ItemStack(item)));
+        d.gear.forEach((slot, item) -> setItemSlot(slot, gearStack(slot, item)));
         if (getData(CoreApi.MOB_ROLE.get()).role() == MobRole.Role.NONE) {
             // Spawn eggs and summons without a caller: use the theme's home rank.
             configure(d.theme.home.contentLevel, new MobRole(d.tier.role, d.theme.home.contentLevel, d.theme.id,
@@ -209,16 +212,41 @@ public class AwakenMob extends Monster {
         return out;
     }
 
+    /**
+     * What a creature holds is its look, never its strength: a held weapon's attack damage would be added to the def's
+     * and then multiplied by the level scaling (SPEC §2), making three Lords 2-3x their numbers. Armour stays real.
+     */
+    static ItemStack gearStack(EquipmentSlot slot, net.minecraft.world.item.Item item) {
+        ItemStack stack = new ItemStack(item);
+        if (slot == EquipmentSlot.MAINHAND || slot == EquipmentSlot.OFFHAND) {
+            stack.set(net.minecraft.core.component.DataComponents.ATTRIBUTE_MODIFIERS, net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY);
+        }
+        return stack;
+    }
+
     /** Applies scaling, the role and any Forces tags. Called by the spawner after finalizeSpawn. */
     public void configure(int lv, MobRole role, Set<Forces.Tag> tags) {
         MobScaling.apply(this, lv, role, def().tier);
         entityData.set(DATA_ROLE, (byte) role.role().ordinal());
+        // what the band reads (SPEC §21.1): the living module adds titles
+        setData(CoreApi.CREATURE_TAG.get(), new dev.awaken.core.api.CreatureTag(Math.max(1, lv), tagKind(role.role()),
+                role.role() == MobRole.Role.ELITE, dev.awaken.core.api.CreatureTag.of(this).title()));
         for (Forces.Tag t : tags) Forces.tag(this, t);
         syncForceTags();
         if (role.role() == MobRole.Role.WARDEN || role.role() == MobRole.Role.BOSS || role.role() == MobRole.Role.NIGHTMARE) {
             setPersistenceRequired();
             ensureBar();
         }
+    }
+
+    /** What kind of creature the band says this is, for its role (fauna and beasts say their own). */
+    protected dev.awaken.core.api.CreatureTag.Kind tagKind(MobRole.Role role) {
+        return switch (role) {
+            case WARDEN -> dev.awaken.core.api.CreatureTag.Kind.WARDEN;
+            case BOSS, BREAK, NIGHTMARE -> dev.awaken.core.api.CreatureTag.Kind.BOSS;
+            case NONE, SPIRIT, RITUAL, ECHO -> dev.awaken.core.api.CreatureTag.Kind.NONE;
+            default -> dev.awaken.core.api.CreatureTag.Kind.GATE;
+        };
     }
 
     public MobRole role() {
@@ -248,6 +276,51 @@ public class AwakenMob extends Monster {
     public void setTelegraph(int ticks, boolean heavy) {
         entityData.set(DATA_TELEGRAPH, Math.max(0, ticks));
         setFlag(F_HEAVY, heavy && ticks > 0);
+        if (ticks <= 0) entityData.set(DATA_TELL, (byte) Strikes.Kind.NONE.ordinal());
+    }
+
+    /** Tells a blow of this class landing in {@code ticks} (SPEC §24): the wind-up, its look and its sound by class. */
+    public void setTell(int ticks, Strikes.Kind kind) {
+        setTell(ticks, kind, kind == Strikes.Kind.HEAVY || kind == Strikes.Kind.PERILOUS);
+    }
+
+    /** heavyLook: the bigger telegraph look (an ability's own heavy flag). */
+    public void setTell(int ticks, Strikes.Kind kind, boolean heavyLook) {
+        setTelegraph(ticks, heavyLook);
+        entityData.set(DATA_TELL, (byte) (ticks > 0 ? kind : Strikes.Kind.NONE).ordinal());
+    }
+
+    /**
+     * The tell's sound: its class's one voice on every creature (Arms), or our own wind-up for an ability nobody can
+     * answer (a summon, a heal); {@code pitch} colours only that wind-up.
+     */
+    public void playTell(Strikes.Kind kind, boolean heavy, float pitch) {
+        SoundEvent voice = dev.awaken.arms.Arms.tellSound(kind);
+        if (voice != null) playLevelSound(voice, 1.0F, 1.0F);
+        else playLevelSound(heavy ? MobSounds.TELEGRAPH_HEAVY.get() : MobSounds.TELEGRAPH.get(), heavy ? 1.4F : 0.9F, pitch);
+    }
+
+    /** The class of the blow being told, NONE when no blow is (both sides). */
+    public Strikes.Kind tellKind() {
+        Strikes.Kind[] k = Strikes.Kind.values();
+        return k[Math.max(0, Math.min(k.length - 1, entityData.get(DATA_TELL)))];
+    }
+
+    /**
+     * Its stance broken (Arms' posture, SPEC §24): the wind-up in progress ends and it stands still for {@code ticks}.
+     * Bosses stagger too; that is the point of breaking them.
+     */
+    public boolean stagger(int ticks) {
+        if (!isAlive() || flag(F_DECOY)) return false;
+        if (abilities != null) abilities.interrupt();
+        setTelegraph(0, false);
+        staggerTicks = Math.max(staggerTicks, ticks);
+        getNavigation().stop();
+        return true;
+    }
+
+    public boolean staggered() {
+        return staggerTicks > 0;
     }
 
     public MobRole.Role syncedRole() {
@@ -347,6 +420,7 @@ public class AwakenMob extends Monster {
         if (d.model.move == Model.Move.HOP) tickHop();
         if (flag(F_HAUNTED)) tickPhasing(level);
         if (guardTicks > 0 && --guardTicks == 0) setFlag(F_GUARDING, false);
+        if (staggerTicks > 0) staggerTicks--;
         if (frenzyTicks > 0 && --frenzyTicks == 0) endFrenzy();
         if (auraTicks > 0) tickAura(level);
         if (fleeTicks > 0) fleeTicks--;
@@ -465,7 +539,7 @@ public class AwakenMob extends Monster {
     }
 
     public boolean isHeld() {
-        return flag(F_FALLEN) || flag(F_DORMANT) || flag(F_FUSING) || watched || (abilities != null && abilities.holdsStill());
+        return flag(F_FALLEN) || flag(F_DORMANT) || flag(F_FUSING) || watched || staggerTicks > 0 || (abilities != null && abilities.holdsStill());
     }
 
     @Nullable AbilityRunner runner() {
@@ -839,6 +913,8 @@ public class AwakenMob extends Monster {
         l.squish = Mth.lerp(partialTicks, oSquish, squish);
         l.upsideDown = d.has(Trait.UPSIDE_DOWN);
         l.fallen = (flags & F_FALLEN) != 0;
+        l.hurt = hurtTime > 0 && hurtDuration > 0 ? Math.max(0.0F, (hurtTime - partialTicks) / hurtDuration) : 0.0F;
+        l.aggressive = isAggressive();
         return l;
     }
 

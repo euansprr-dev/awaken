@@ -26,7 +26,6 @@ final class ClientCasting {
     private ClientCasting() {}
 
     private static final boolean[] channeling = new boolean[Loadout.SLOTS];
-    private static int wallTicks;
 
     static KeyMapping key(int slot) {
         return switch (slot) {
@@ -48,7 +47,8 @@ final class ClientCasting {
             KeyMapping k = key(slot);
             boolean pressed = false;
             while (k.consumeClick()) pressed = true;
-            if (blocked) {
+            // the body's rope owns the movement key once the Ascent's Tether is held (core.api.MovementHooks)
+            if (blocked || k == AwakenKeys.MOVEMENT && dev.awaken.core.api.MovementHooks.clientOwnsMovementKey(p)) {
                 if (channeling[slot]) release(slot);
                 continue;
             }
@@ -115,7 +115,6 @@ final class ClientCasting {
 
     static void reset() {
         java.util.Arrays.fill(channeling, false);
-        wallTicks = 0;
     }
 
     // ---- client physics for passive movement ------------------------------------------------------------------------
@@ -126,26 +125,8 @@ final class ClientCasting {
         LocalPlayer p = mc.player;
         Loadout l = ClientPowers.loadout();
         if (l == null || l.owned().isEmpty() || p.getAbilities().flying || p.isSpectator()) return;
-        if (l.owns("awaken:wall_run")) wallRun(p);
+        // awaken:wall_run is Wall Stride now: the body's wall-run reads it (body.Body.wallStride)
         if (l.owns("awaken:water_run")) waterRun(p);
-    }
-
-    /** Sprinting into a wall while airborne: run along it for up to 2 s instead of falling. */
-    private static void wallRun(LocalPlayer p) {
-        if (p.onGround()) {
-            wallTicks = 0;
-            return;
-        }
-        boolean forward = p.input.keyPresses.forward();
-        if (p.horizontalCollision && p.isSprinting() && forward && wallTicks < 40) {
-            wallTicks++;
-            Vec3 v = p.getDeltaMovement();
-            Vec3 look = p.getLookAngle();
-            double y = Math.max(v.y, wallTicks < 6 ? 0.12 : -0.02);
-            p.setDeltaMovement(v.x + look.x * 0.04, y, v.z + look.z * 0.04);
-            p.resetFallDistance();
-            if (wallTicks % 3 == 0) dev.awaken.powers.client.fx.FxClient.localTrail(p, dev.awaken.powers.fx.FxStyle.VELOCITY);
-        }
     }
 
     /** Sprinting across water: the surface holds you like ground. */

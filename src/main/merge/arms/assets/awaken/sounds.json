@@ -1,0 +1,453 @@
+{
+  "arms.swish_light": {
+    "subtitle": "subtitles.awaken.arms.swish_light",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_swish_light_0",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_light_1",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_light_2",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_light_3",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "arms.swish_heavy": {
+    "subtitle": "subtitles.awaken.arms.swish_heavy",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_swish_heavy_0",
+        "volume": 0.85,
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_swish_heavy_1",
+        "volume": 0.85,
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_swish_heavy_2",
+        "volume": 0.85,
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "arms.swish_thrust": {
+    "subtitle": "subtitles.awaken.arms.swish_thrust",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_swish_thrust_0",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_thrust_1",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_swish_thrust_2",
+        "volume": 0.75,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "arms.hit_flesh": {
+    "subtitle": "subtitles.awaken.arms.hit_flesh",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_flesh_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_flesh_1",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_flesh_2",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_flesh_3",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_flesh_4",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "arms.hit_flesh_heavy": {
+    "subtitle": "subtitles.awaken.arms.hit_flesh_heavy",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_flesh_heavy_0",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:arms/arms_hit_flesh_heavy_1",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:arms/arms_hit_flesh_heavy_2",
+        "attenuation_distance": 22
+      }
+    ]
+  },
+  "arms.hit_armor": {
+    "subtitle": "subtitles.awaken.arms.hit_armor",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_armor_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:arms/arms_hit_armor_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:arms/arms_hit_armor_2",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:arms/arms_hit_armor_3",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "arms.hit_bone": {
+    "subtitle": "subtitles.awaken.arms.hit_bone",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_bone_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_bone_1",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_bone_2",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_bone_3",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "arms.hit_wood": {
+    "subtitle": "subtitles.awaken.arms.hit_wood",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_wood_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_wood_1",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_wood_2",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "arms.hit_stone": {
+    "subtitle": "subtitles.awaken.arms.hit_stone",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_stone_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:arms/arms_hit_stone_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:arms/arms_hit_stone_2",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "arms.hit_spirit": {
+    "subtitle": "subtitles.awaken.arms.hit_spirit",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_spirit_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_spirit_1",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:arms/arms_hit_spirit_2",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "arms.hit_slime": {
+    "subtitle": "subtitles.awaken.arms.hit_slime",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_slime_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_hit_slime_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_hit_slime_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "arms.deflect": {
+    "subtitle": "subtitles.awaken.arms.deflect",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_deflect_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_deflect_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_deflect_2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_deflect_3",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "arms.block": {
+    "subtitle": "subtitles.awaken.arms.block",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_block_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:arms/arms_block_1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:arms/arms_block_2",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:arms/arms_block_3",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "arms.guard_break": {
+    "subtitle": "subtitles.awaken.arms.guard_break",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_guard_break_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_guard_break_1",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "arms.break": {
+    "subtitle": "subtitles.awaken.arms.break",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_break_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:arms/arms_break_1",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "arms.execution": {
+    "subtitle": "subtitles.awaken.arms.execution",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_execution_0",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:arms/arms_execution_1",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "arms.perfect_dodge": {
+    "subtitle": "subtitles.awaken.arms.perfect_dodge",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_perfect_dodge_0",
+        "volume": 0.7,
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:arms/arms_perfect_dodge_1",
+        "volume": 0.7,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "arms.dodge": {
+    "subtitle": "subtitles.awaken.arms.dodge",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_dodge_0",
+        "volume": 0.6,
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:arms/arms_dodge_1",
+        "volume": 0.6,
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:arms/arms_dodge_2",
+        "volume": 0.6,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "arms.charge": {
+    "subtitle": "subtitles.awaken.arms.charge",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_charge_0",
+        "volume": 0.45,
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:arms/arms_charge_1",
+        "volume": 0.45,
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "arms.glint": {
+    "subtitle": "subtitles.awaken.arms.glint",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_glint_0",
+        "volume": 0.7,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:arms/arms_glint_1",
+        "volume": 0.7,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "arms.tell_light": {
+    "subtitle": "subtitles.awaken.arms.tell_light",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_tell_light_0",
+        "volume": 0.8,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_tell_light_1",
+        "volume": 0.8,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_tell_light_2",
+        "volume": 0.8,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "arms.tell_heavy": {
+    "subtitle": "subtitles.awaken.arms.tell_heavy",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_tell_heavy_0",
+        "volume": 0.9,
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:arms/arms_tell_heavy_1",
+        "volume": 0.9,
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "arms.tell_perilous": {
+    "subtitle": "subtitles.awaken.arms.tell_perilous",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_tell_perilous_0",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:arms/arms_tell_perilous_1",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "arms.tell_grab": {
+    "subtitle": "subtitles.awaken.arms.tell_grab",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_tell_grab_0",
+        "volume": 0.85,
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_tell_grab_1",
+        "volume": 0.85,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "arms.hurt": {
+    "subtitle": "subtitles.awaken.arms.hurt",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hurt_0",
+        "volume": 0.9,
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:arms/arms_hurt_1",
+        "volume": 0.9,
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:arms/arms_hurt_2",
+        "volume": 0.9,
+        "attenuation_distance": 12
+      },
+      {
+        "name": "awaken:arms/arms_hurt_3",
+        "volume": 0.9,
+        "attenuation_distance": 12
+      }
+    ]
+  }
+}

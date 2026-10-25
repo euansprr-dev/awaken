@@ -1,0 +1,83 @@
+# The Gauntlet (SPEC §17.5 "Gauntlet"): a Clockwork Foundry course (C) and a Frost Monastery one (B), seen from the
+# doorway, then stood on each part: the clock starting off the landing, a press coming down (a clip), a ledge cracking
+# and falling, the wall-run, a ring, and the far landing with its medal.
+#
+#   /awaken gate interior goto rig     the rig room's doorway (any floor)
+#   /awaken gate rig at <start|first|gap|ledge|press|wall|ring|last>
+world gauntlet14 survival 20261025
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+
+# ---- Clockwork Foundry (C) -------------------------------------------------------------------------------------------
+# away from spawn first: no gate forms in Carillon's basin, and the hop doesn't leave it
+cmd tp @s 3000 120 3000
+wait 200
+cmd awaken gate hop
+wait 120
+cmd awaken gate open B clockwork_foundry rig
+wait 320
+# by id: a gate the Director opens for you meanwhile would be the newest
+cmd awaken gate enter 1
+wait 200
+cmd awaken gate interior goto rig
+wait 120
+hud off
+shot gauntlet_01_foundry_doorway
+hud on
+cmd awaken gate rig at start
+wait 20
+cmd awaken gate rig at first
+wait 30
+shot gauntlet_02_foundry_clock
+cmd awaken gate rig at press
+wait 4
+cmd awaken ascent pilot rec gauntlet_press 70 1
+wait 80
+cmd awaken gate rig at ledge
+wait 6
+shot gauntlet_03_foundry_ledge_cracks
+wait 14
+shot gauntlet_04_foundry_ledge_falls
+cmd awaken gate rig at wall
+wait 20
+shot gauntlet_05_foundry_wall
+cmd awaken gate rig at ring
+wait 20
+shot gauntlet_06_foundry_ring
+camera back
+cmd awaken gate rig at first
+wait 20
+shot gauntlet_06b_foundry_rings_ahead
+camera first
+cmd awaken gate rig at start
+wait 10
+cmd awaken gate rig at first
+wait 10
+cmd awaken gate rig at last
+wait 12
+shot gauntlet_07_foundry_finish
+camera back
+cmd awaken gate rig at gap
+wait 20
+shot gauntlet_08_foundry_gap_3p
+camera first
+cmd awaken gate leave
+wait 80
+
+perf
+info
+quit

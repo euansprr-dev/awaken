@@ -3,6 +3,11 @@ package dev.awaken.terrain.city;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.terrain.api.CityBasin;
 import dev.awaken.terrain.api.CitySite;
+import dev.awaken.terrain.hero.HeroStructure;
+import dev.awaken.terrain.hero.HeroTree;
+import dev.awaken.terrain.landmark.Landmark;
+import dev.awaken.terrain.landmark.LandmarkStructure;
+import dev.awaken.terrain.landmark.LandmarkWorldgen;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -77,6 +82,48 @@ public final class CityBasinTests {
                 h.assertTrue(!CityBasin.reserved(cx, cz), "no site, no reserve");
                 DensitySampler none = new CityBasinFunction(natural, CityBasinFunction.Mode.DENSITY).compileSampler(NO_NOISE);
                 h.assertTrue(none.sampleValue(ctx, cx + 200, 85, cz) > 0, "no site: the input unchanged");
+            } finally {
+                CityBasin.set(before);
+            }
+            h.succeed();
+        });
+
+        // No hero tree or landmark may stand where any part of it reaches the reserve, in every direction (the old check
+        // looked at four points on the crown's edge and missed the reserve between them), and the reach each declares
+        // covers the blocks it really builds.
+        AwakenTests.register("terrain_city_structures_keep_out", 200, h -> {
+            CitySite before = CityBasin.current();
+            try {
+                CitySite site = SitePicker.site(1000, -2000, true);
+                CityBasin.set(site);
+                int reserve = site.coreRadius() + CityBasin.MARGIN;
+                java.util.Map<String, Object[]> cases = new java.util.LinkedHashMap<>();
+                for (HeroTree t : HeroTree.values()) {
+                    double real = 0;
+                    for (long seed = 1; seed <= 8; seed++) real = Math.max(real, t.build(seed * 1_000_003L).reach());
+                    cases.put(t.getSerializedName(), new Object[]{t.reach(), real, (java.util.function.BiPredicate<Integer, Integer>) (x, z) -> HeroStructure.cityNear(x, z, t)});
+                }
+                for (Landmark l : Landmark.values()) {
+                    double real = 0;
+                    for (long seed = 1; seed <= 8; seed++) real = Math.max(real, LandmarkWorldgen.reachOf(l, seed * 1_000_003L));
+                    cases.put(l.getSerializedName(), new Object[]{l.reach(), real, (java.util.function.BiPredicate<Integer, Integer>) (x, z) -> LandmarkStructure.cityNear(x, z, l)});
+                }
+                for (var e : cases.entrySet()) {
+                    int reach = (Integer) e.getValue()[0];
+                    double real = (Double) e.getValue()[1];
+                    @SuppressWarnings("unchecked")
+                    java.util.function.BiPredicate<Integer, Integer> near = (java.util.function.BiPredicate<Integer, Integer>) e.getValue()[2];
+                    h.assertTrue(real <= reach, e.getKey() + " builds " + real + " blocks from its centre but declares a reach of " + reach);
+                    for (int deg = 0; deg < 360; deg += 5) {
+                        double a = Math.toRadians(deg);
+                        int[] in = {site.x() + (int) Math.round(Math.cos(a) * (reserve + reach - 2)), site.z() + (int) Math.round(Math.sin(a) * (reserve + reach - 2))};
+                        int[] out = {site.x() + (int) Math.round(Math.cos(a) * (reserve + reach + 2)), site.z() + (int) Math.round(Math.sin(a) * (reserve + reach + 2))};
+                        h.assertTrue(near.test(in[0], in[1]), e.getKey() + " standing at " + deg + " degrees with its edge 2 blocks inside the reserve is refused");
+                        h.assertTrue(!near.test(out[0], out[1]), e.getKey() + " standing at " + deg + " degrees with its edge 2 blocks clear of the reserve is allowed");
+                    }
+                }
+                CityBasin.set(null);
+                h.assertTrue(!HeroStructure.cityNear(site.x(), site.z(), HeroTree.ELDER_COLOSSUS), "no city, no reserve");
             } finally {
                 CityBasin.set(before);
             }

@@ -7,9 +7,9 @@
   "profiles": {
     "perf": "Frame rate and memory. Client-side except Lithium and FerriteCore.",
     "horizon": "Far terrain.",
-    "feel": "Camera, limbs and the animation library Awaken's full-body casts use.",
+    "feel": "Camera, limbs, the animation library Awaken's full-body casts use, and Fresh Animations for vanilla creature bodies.",
     "sound": "Room acoustics.",
-    "comfort": "Recipe lookup, block info, inventory help, a world map (no minimap, by design).",
+    "comfort": "Recipe lookup, block info and inventory help. The world map is Awaken's own Atlas (M); no minimap, by design.",
     "together": "Join links and proximity voice.",
     "ultra": "Experimental: Iris shaders (OpenGL only; Iris lists Apple Silicon as unsupported).",
     "tools": "Profiling.",
@@ -103,6 +103,13 @@
       "why": "Camera roll and sway that give movement weight."
     },
     {
+      "slug": "shoulder-surfing-reloaded",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Over-the-shoulder third person (F5 cycles to it): shows the body's full-body move clips. Client only."
+    },
+    {
       "slug": "not-enough-animations",
       "profiles": [
         "feel"
@@ -115,6 +122,27 @@
         "feel"
       ],
       "why": "3D skin layers: players read as people in co-op."
+    },
+    {
+      "slug": "entity-model-features",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Entity Model Features: runs Fresh Animations' models and animations on vanilla creature bodies. Client only. Awaken's own bodies have no .jem models, so it leaves them alone (SPEC §23)."
+    },
+    {
+      "slug": "entitytexturefeatures",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Entity Texture Features: EMF's partner (blinking, emissive and variant textures). Client only."
+    },
+    {
+      "slug": "fresh-animations",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Resource pack: livelier vanilla creatures (breathing, blinking, weight, idle fidgets), and our gate monsters on vanilla bodies with them. Needs EMF and ETF. Our own bodies get Awaken's life layer instead (SPEC §23)."
     },
     {
       "slug": "sound-physics-remastered",
@@ -157,13 +185,6 @@
         "comfort"
       ],
       "why": "Searchable key binds."
-    },
-    {
-      "slug": "xaeros-world-map",
-      "profiles": [
-        "comfort"
-      ],
-      "why": "A world map you open; no minimap."
     },
     {
       "slug": "e4mc",

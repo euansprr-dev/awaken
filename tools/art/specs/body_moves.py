@@ -104,6 +104,180 @@ clip("body_sprint_end", [(0, TS_B, "linear")], 6, end=0, note="settles out of bo
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# The Runner's Kit (SPEC §16.3, §17). The game leans the whole figure (out from a wall on a run, under the hands on a
+# hang); these clips pose the limbs. Clips are authored right-handed: "_l" means the wall (or the way) is on the left.
+
+# Wall-run: a quick high-knee stride with the wall-side hand brushing the wall low and the other arm pumping.
+# One stride pair every 8 ticks (faster than the tactical sprint: you're fighting gravity).
+def wallrun(wall_left):
+    # the wall-side arm: out toward the wall and a little forward, palm on it; the free arm pumps
+    near = (-30, 0, -70) if wall_left else (-30, 0, 70)
+    a = pose(lean=12, twist=-8 if wall_left else 8, rl=(-80, 0, 2), rk=100, ll=(38, 0, -2), lk=70,
+             ra=(48, 0, 8) if wall_left else near, re=80 if wall_left else 30,
+             la=near if wall_left else (48, 0, -8), le=30 if wall_left else 80)
+    b = pose(a, rl=(-20, 0, 2), rk=60, ll=(2, 0, -2), lk=20)
+    c = pose(a, rl=(38, 0, 2), rk=70, ll=(-80, 0, -2), lk=100,
+             ra=(-40, -10, 6) if wall_left else near, la=near if wall_left else (-40, 10, -6))
+    d = pose(c, rl=(2, 0, 2), rk=20, ll=(-20, 0, -2), lk=60)
+    return [(0, a, "linear"), (2, b, "easeinoutsine"), (4, c, "easeinoutsine"), (6, d, "easeinoutsine"), (8, a, "easeinoutsine")]
+
+
+clip("body_wallrun_l", wallrun(True), 8, loop=True, note="running along a wall on the left: high knees, left hand on the wall")
+clip("body_wallrun_r", wallrun(False), 8, loop=True, note="running along a wall on the right: high knees, right hand on the wall")
+clip("body_wallrun_l_end", [(0, wallrun(True)[1][1], "linear")], 6, end=0, note="settles out of body_wallrun_l")
+clip("body_wallrun_r_end", [(0, wallrun(False)[1][1], "linear")], 6, end=0, note="settles out of body_wallrun_r")
+
+# Wall climb (Wall Stride's vertical run): facing the wall, running up it: a knee driving high with the foot on the face,
+# the other leg pushing off below; the hands reach up the face in turn (overhead arms with the z sign that keeps them
+# clear of the head). One stride pair every 8 ticks, like the wall-run.
+def wallclimb():
+    a = pose(ground=False, lean=-6, rl=(-96, 0, 3), rk=110, ll=(12, 0, -3), lk=40, ra=(-168, 0, -10), re=6, la=(-92, 0, 8), le=14)
+    b = pose(a, rl=(-46, 0, 3), rk=70, ll=(-46, 0, -3), lk=70, ra=(-132, 0, -9), re=10, la=(-128, 0, 9), le=10)
+    c = pose(a, rl=(12, 0, 3), rk=40, ll=(-96, 0, -3), lk=110, ra=(-92, 0, -8), re=14, la=(-168, 0, 10), le=6)
+    d = pose(c, rl=(-46, 0, 3), rk=70, ll=(-46, 0, -3), lk=70, ra=(-128, 0, -9), re=10, la=(-132, 0, 9), le=10)
+    return [(0, a, "linear"), (2, b, "easeinoutsine"), (4, c, "easeinoutsine"), (6, d, "easeinoutsine"), (8, a, "easeinoutsine")]
+
+
+clip("body_wallclimb", wallclimb(), 8, loop=True, note="running up a wall you face: knees driving up, hands reaching up the face in turn")
+clip("body_wallclimb_end", [(0, wallclimb()[1][1], "linear")], 6, end=0, note="settles out of body_wallclimb")
+
+# Wall jump: gather (knees in, arms down and back), then a spring off the wall: legs drive out, arms thrown up and
+# forward, opening into a reach for the next wall.
+WJ_GATHER = pose(ground=False, lean=18, rl=(-70, 0, 4), rk=100, ll=(-60, 0, -4), lk=95, ra=(40, 0, 20), re=40, la=(40, 0, -20), le=40)
+WJ_SPRING = pose(ground=False, lean=-6, rl=(18, 0, 6), rk=10, ll=(-8, 0, -6), lk=20, ra=(-145, -10, -30), re=20, la=(-138, 10, 30), le=20)
+WJ_REACH = pose(ground=False, lean=4, rl=(-30, 0, 4), rk=40, ll=(-10, 0, -4), lk=30, ra=(-90, -6, 30), re=30, la=(-90, 6, -30), le=30)
+clip("body_walljump", [(0, WJ_GATHER, "linear"), (2, WJ_SPRING, "easeoutcubic"), (6, WJ_REACH, "easeinoutsine"), (9, WJ_REACH, "linear")], 12,
+     note="gather, spring off the wall, reach for the next")
+
+# Ledge hang (the hold puts the lip just above the shoulders): both hands forward on top of the block, elbows soft,
+# the body hanging long against the face, legs loose with knees soft; a slow sway.
+HG = pose(ground=False, ra=(-112, 4, 10), re=24, la=(-112, -4, -10), le=24, rl=(-8, 0, 3), rk=18, ll=(6, 0, -3), lk=10)
+held("body_hang", HG, [nudge(HG, rl=(-6, 0, 0), ll=(4, 0, 0), rk=6), nudge(HG, rl=(5, 0, 0), ll=(-5, 0, 0), lk=6)], 40,
+     "both hands on the lip, hanging long, legs loose")
+
+# The grab: arms snap up, knees swing in with the catch, then the body settles long under the hands.
+GR_SNAP = pose(ground=False, ra=(-162, 0, -26), re=25, la=(-162, 0, 26), le=25, rl=(-60, 0, 4), rk=90, ll=(-50, 0, -4), lk=85)
+clip("body_grab", [(0, pose(GR_SNAP, ra=(-120, 0, -20), la=(-120, 0, 20)), "linear"), (1.5, GR_SNAP, "easeoutcubic"),
+                   (5, nudge(HG, rl=(-12, 0, 0), ll=(-10, 0, 0)), "easeoutquad"), (8, HG, "easeinoutsine")], 8,
+     note="arms snap up, knees swing in with the catch, settle")
+
+# Shimmy: hand over hand toward the way you move; the legs swing a little the other way.
+def shimmy(left):
+    """One hand reaches along the lip while the other holds; then they swap places."""
+    s = 1 if left else -1
+    # the lead hand (left when going left) reaches out along the edge, the other stays in
+    lead_out = 26
+    a = pose(HG, ra=(-112, 4, 10 + (lead_out if s < 0 else 0)), la=(-112, -4, -10 - (lead_out if s > 0 else 0)),
+             rl=(-8, 0, 3 - 6 * s), ll=(6, 0, -3 - 6 * s))
+    b = pose(HG, ra=(-104, 4, 6 if s > 0 else 18), re=34, la=(-104, -4, -18 if s > 0 else -6), le=34,
+             rl=(-4, 0, 3 + 4 * s), ll=(2, 0, -3 + 4 * s))
+    return [(0, a, "linear"), (4, b, "easeinoutsine"), (8, a, "easeinoutsine")]
+
+
+clip("body_shimmy_l", shimmy(True), 8, loop=True, note="hand over hand to the left")
+clip("body_shimmy_r", shimmy(False), 8, loop=True, note="hand over hand to the right")
+clip("body_shimmy_l_end", [(0, shimmy(True)[0][1], "linear")], 5, end=0, note="settles out of body_shimmy_l")
+clip("body_shimmy_r_end", [(0, shimmy(False)[0][1], "linear")], 5, end=0, note="settles out of body_shimmy_r")
+
+# Ledge jump up: pull, kick, reach high for the next lip, catch.
+LU_PULL = pose(ground=False, ra=(-150, 0, -24), re=90, la=(-150, 0, 24), le=90, rl=(-50, 0, 4), rk=80, ll=(-30, 0, -4), lk=60)
+LU_REACH = pose(ground=False, ra=(-166, 0, -26), re=5, la=(-166, 0, 26), le=5, rl=(10, 0, 3), rk=10, ll=(-6, 0, -3), lk=20)
+clip("body_ledge_up", [(0, HG, "linear"), (2, LU_PULL, "easeinquad"), (4, LU_REACH, "easeoutcubic"), (7, HG, "easeinoutsine")], 8,
+     note="pull, kick, reach high, catch")
+
+# Ledge jump sideways: push off the hands, swing across, reach out with the lead hand, catch.
+def ledge_side(left):
+    s = 1 if left else -1
+    push = pose(ground=False, ra=(-140, 0, -(34 if s < 0 else 24)), re=40, la=(-140, 0, -(-34 if s > 0 else -24)), le=40,
+                rl=(-30, 0, 10 * -s), rk=50, ll=(-20, 0, 10 * -s), lk=50)
+    reach = pose(ground=False, ra=(-162, 0, -(46 if s < 0 else 26)), re=5, la=(-162, 0, -(-46 if s > 0 else -26)), le=5,
+                 rl=(-10, 0, 14 * s), rk=20, ll=(4, 0, 14 * s), lk=20)
+    return [(0, HG, "linear"), (2, push, "easeinquad"), (5, reach, "easeoutcubic"), (8, HG, "easeinoutsine")]
+
+
+clip("body_ledge_side_l", ledge_side(True), 9, note="push off, swing left, reach, catch")
+clip("body_ledge_side_r", ledge_side(False), 9, note="push off, swing right, reach, catch")
+
+# Ledge jump back: a push off the wall with the feet, the body turning away, arms opening to fall or reach.
+LB_PUSH = pose(ground=False, ra=(-150, 0, -26), re=60, la=(-150, 0, 26), le=60, rl=(-90, 0, 4), rk=110, ll=(-85, 0, -4), lk=110)
+LB_OPEN = pose(ground=False, lean=-10, ra=(-60, 0, 70), re=20, la=(-60, 0, -70), le=20, rl=(-30, 0, 8), rk=40, ll=(-10, 0, -8), lk=30)
+clip("body_ledge_back", [(0, HG, "linear"), (2, LB_PUSH, "easeinquad"), (4, LB_OPEN, "easeoutcubic"), (9, LB_OPEN, "linear")], 12,
+     note="feet to the wall, push off, turn away, arms open")
+
+# Lower: crouch at the edge, turn, slide down onto the hands.
+LO_CROUCH = pose(lean=30, rl=(-80, 0, 4), rk=110, ll=(-70, 0, -4), lk=110, ra=(-40, 0, 10), re=40, la=(-40, 0, -10), le=40)
+clip("body_lower", [(0, LO_CROUCH, "linear"), (3, pose(LO_CROUCH, ground=False, ra=(-80, 0, 10), la=(-80, 0, -10)), "easeinoutsine"),
+                    (8, HG, "easeinoutsine")], 8, note="crouch at the edge, turn, down onto the hands")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The grip on a climb line (SPEC §17.23): facing a drainpipe, rope or ladder close in front, both hands on it, the
+# knees bent and the insteps clamping it. The game turns the body to the line and leans it in a touch; these clips pose
+# the limbs. A line is narrow, so both hands meet in front of the chest (arms turned in across, y < 0 for the right).
+
+# Held still: the right hand high, the left at the chest, elbows soft, knees bent round the line.
+PH = pose(ground=False, lean=4, ra=(-158, -16, -4), re=34, la=(-112, 16, 4), le=56,
+          rl=(-42, 0, -6), rk=64, ll=(-20, 0, 6), lk=40)
+held("body_pipe_hold", PH, [nudge(PH, rise=0.2, ra=(-2, 0, 0)), nudge(PH, rise=-0.1, la=(2, 0, 0), rl=(-3, 0, 0))], 40,
+     "holding a line: one hand high, one at the chest, knees round it")
+
+
+def pipe_climb():
+    """Hand over hand: the high hand pulls down to the chest while the low one reaches up past it; the knee on its side
+    drives up to the next clamp. One pair of pulls (1.6 blocks at a ladder's pace) every 8 ticks."""
+    a = pose(PH, ra=(-170, -12, -6), re=18, la=(-104, 18, 6), le=64, rl=(-72, 0, -6), rk=100, ll=(-8, 0, 6), lk=22)
+    b = pose(PH, ra=(-136, -16, -4), re=52, la=(-138, 16, 4), le=48, rl=(-40, 0, -6), rk=60, ll=(-40, 0, 6), lk=60)
+    c = pose(PH, ra=(-104, -18, -6), re=64, la=(-170, 12, 6), le=18, rl=(-8, 0, -6), rk=22, ll=(-72, 0, 6), lk=100)
+    d = pose(c, ra=(-138, -16, -4), re=48, la=(-136, 16, 4), le=52, rl=(-40, 0, -6), rk=60, ll=(-40, 0, 6), lk=60)
+    return a, [(0, a, "linear"), (2, b, "easeinoutsine"), (4, c, "easeinoutsine"), (6, d, "easeinoutsine"), (8, a, "easeinoutsine")]
+
+
+PC_A, PC_KEYS = pipe_climb()
+clip("body_pipe_climb", PC_KEYS, 8, loop=True, note="hand over hand up a line, knees driving to the next clamp")
+clip("body_pipe_climb_end", [(0, PC_A, "linear")], 5, end=0, note="settles out of body_pipe_climb")
+# the free-run's pace (0.3 a tick): the same pulls, a pair every 6 ticks
+clip("body_pipe_climb_fast", [(t * 0.75, k, e) for t, k, e in PC_KEYS], 6, loop=True, note="hand over hand at the free-run's pace")
+clip("body_pipe_climb_fast_end", [(0, PC_A, "linear")], 5, end=0, note="settles out of body_pipe_climb_fast")
+
+# Sliding: the hands loose round the line at the chest, arms longer, the body hanging back off it, the legs wrapped
+# and crossed at the ankles under it; a quick tremble from the line running through the hands.
+PS = pose(ground=False, lean=-10, ra=(-140, -18, -4), re=22, la=(-128, 18, 4), le=26,
+          rl=(-52, 0, -12), rk=74, ll=(-46, 0, 12), lk=78)
+held("body_pipe_slide", PS, [nudge(PS, ra=(2, 0, 0), la=(-2, 0, 0)), nudge(PS, ra=(-2, 0, 0), la=(2, 0, 0), rise=0.15)], 4,
+     "sliding down a line: hands loose, hanging back, legs wrapped")
+
+# The kick off the wall (Jump with back): knees to the chest, feet on the wall, then a shove: the body thrown back
+# and the arms open for the fall (the ledge back-jump's shape, from a line).
+PK_PUSH = pose(ground=False, lean=8, ra=(-150, -10, -10), re=70, la=(-150, 10, 10), le=70, rl=(-96, 0, 4), rk=112, ll=(-90, 0, -4), lk=112)
+PK_OPEN = pose(ground=False, lean=-14, ra=(-56, 0, 72), re=20, la=(-56, 0, -72), le=20, rl=(-28, 0, 8), rk=36, ll=(-8, 0, -8), lk=26)
+clip("body_pipe_kick", [(0, PH, "linear"), (2, PK_PUSH, "easeinquad"), (4, PK_OPEN, "easeoutcubic"), (9, PK_OPEN, "linear")], 12,
+     note="feet to the wall, shove off the line, arms open")
+
+
+def pipe_side(left):
+    """Swung out to a side: a push off the line with the far hand, the body swinging across, the lead hand reaching."""
+    s = 1 if left else -1
+    push = pose(ground=False, lean=4, ra=(-130, -10 if s > 0 else -24, -(10 if s > 0 else 30)), re=40,
+                la=(-130, 24 if s > 0 else 10, 30 if s > 0 else 10), le=40, rl=(-40, 0, 12 * -s), rk=60, ll=(-30, 0, 12 * -s), lk=50)
+    reach = pose(ground=False, lean=0, ra=(-150, 0, -(20 if s > 0 else 70)), re=10, la=(-150, 0, 70 if s > 0 else 20), le=10,
+                 rl=(-20, 0, 16 * s), rk=30, ll=(-6, 0, 16 * s), lk=24)
+    return [(0, PH, "linear"), (2, push, "easeinquad"), (5, reach, "easeoutcubic"), (9, reach, "linear")]
+
+
+clip("body_pipe_side_l", pipe_side(True), 11, note="push off the line, swing left, reach")
+clip("body_pipe_side_r", pipe_side(False), 11, note="push off the line, swing right, reach")
+
+# The hop (Jump alone): knees drive, both hands let go and snatch the line higher up, then the hold again.
+PP_DRIVE = pose(ground=False, lean=6, ra=(-176, -8, -6), re=8, la=(-170, 8, 6), le=12, rl=(-80, 0, -6), rk=104, ll=(-66, 0, 6), lk=96)
+clip("body_pipe_hop", [(0, PH, "linear"), (2, PP_DRIVE, "easeoutcubic"), (5, PH, "easeinoutsine")], 6, note="a lunge up the line")
+
+# The landing at the line's foot: the slide's crouch meets the ground, then the body stands out of it.
+PL_CROUCH = pose(lean=22, ra=(-60, -10, 6), re=40, la=(-56, 10, -6), le=40, rl=(-70, 0, 4), rk=100, ll=(-62, 0, -4), lk=96)
+clip("body_pipe_land", [(0, PS, "linear"), (2, PL_CROUCH, "easeoutcubic"), (5, PL_CROUCH, "linear")], 10, end=5,
+     note="down off the line into a crouch, standing out of it")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Output, checks, previews
 
 def document():
@@ -148,7 +322,9 @@ def moves_sheet(out_dir, px=5.0):
     """Every move's key poses, straight (top) and bent (bottom), from the front three-quarter and the side."""
     from PIL import Image, ImageDraw
     beats = {"body_slide": [0], "body_slide_jump": [0, 3, 7], "body_roll": [2, 4.5, 7, 12], "body_mantle": [0, 2, 4, 6],
-             "body_sprint": [0, 2, 4, 6]}
+             "body_sprint": [0, 2, 4, 6], "body_wallrun_l": [0, 4], "body_wallclimb": [0, 4], "body_walljump": [0, 2, 6], "body_hang": [0],
+             "body_grab": [1.5, 5], "body_ledge_up": [2, 4], "body_ledge_back": [2, 4],
+             "body_pipe_hold": [0], "body_pipe_climb": [0, 4], "body_pipe_slide": [0], "body_pipe_kick": [2, 4], "body_pipe_land": [2]}
     views = (("front", -35.0, 10.0), ("side", -90.0, 6.0))
     rows = []
     for suffix in ("", "_bent"):

@@ -64,11 +64,11 @@ final class VelocityPowers {
                 .variant(Variant.of("Shade", "Lasts twice as long but doesn't burst").dur(2f))
                 .cast(VelocityPowers::afterimage).register();
 
-        PowerType.builder("wall_run", "Wall Run", Family.VELOCITY, Slot.PASSIVE)
+        // Wall Stride (SPEC §16.3): the body's wall-run, longer and flatter; the id stays wall_run so saves keep it
+        PowerType.builder("wall_run", "Wall Stride", Family.VELOCITY, Slot.PASSIVE)
                 .unlock(Rank.D).icon("wall_run")
-                .desc("Sprint along a wall and you run on it for a couple of seconds instead of falling.")
+                .desc("Your wall-runs last four seconds and barely sink: run the length of a street along its walls.")
                 .passive(c -> {
-                    if (c.player.horizontalCollision && c.player.isSprinting() && !c.player.onGround()) c.player.resetFallDistance();
                 }).register();
 
         PowerType.builder("water_run", "Water Run", Family.VELOCITY, Slot.PASSIVE)

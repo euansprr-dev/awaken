@@ -1,0 +1,111 @@
+package dev.awaken.citizens;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LightBlock;
+import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.Arrays;
+
+/**
+ * A hand lantern lights the lane it's carried down: the Watch at night, the lamplighter on the way, a late walker.
+ * Each lantern near a player keeps one invisible light block at the bearer's head, moved as they walk (at most 12 at
+ * once). Every light placed is written to the saved data until it's taken away, so none is ever left behind (a server
+ * that stopped mid-walk clears them when it starts).
+ */
+final class Lanterns {
+    static final int MAX = 12, LEVEL = 11;
+    private static final BlockState LIGHT = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, LEVEL);
+
+    private final Citizens c;
+    private final ServerLevel level;
+    /** Per record: where its lantern's light is (BlockPos.asLong), or Long.MIN_VALUE. */
+    private final long[] at;
+    private int active;
+
+    Lanterns(Citizens c) {
+        this.c = c;
+        this.level = c.level;
+        at = new long[c.ledger.n];
+        Arrays.fill(at, Long.MIN_VALUE);
+        // lights a stopped server left in the world: cleared as their chunks load
+        stale = c.data.lights.clone();
+    }
+
+    private long[] stale;
+
+    void tick(long now) {
+        if (stale.length > 0 && now % 100 == 0) {
+            for (int k = 0; k < stale.length; k++) {
+                if (stale[k] == Long.MIN_VALUE || !level.isLoaded(BlockPos.of(stale[k]))) continue;
+                clear(stale[k]);
+                forget(stale[k]);
+                stale[k] = Long.MIN_VALUE;
+            }
+            boolean any = false;
+            for (long p : stale) any |= p != Long.MIN_VALUE;
+            if (!any) stale = new long[0];
+        }
+        if (now % 5 != 2) return;
+        Ledger l = c.ledger;
+        for (int i = 0; i < l.n; i++) {
+            CitizenBody b = l.body[i];
+            boolean carries = b != null && !b.fading() && b.heldOff() == Props.LANTERN && b.nearestSq < 48 * 48;
+            if (!carries) {
+                if (at[i] != Long.MIN_VALUE) put(i, Long.MIN_VALUE);
+                continue;
+            }
+            BlockPos head = BlockPos.containing(b.getX(), b.getY() + 1.2, b.getZ());
+            long want = head.asLong();
+            if (want == at[i]) continue;
+            if (at[i] == Long.MIN_VALUE && active >= MAX) continue;
+            if (!level.getBlockState(head).isAir()) {
+                BlockPos up = head.above();
+                if (!level.getBlockState(up).isAir()) continue;
+                want = up.asLong();
+                if (want == at[i]) continue;
+            }
+            put(i, want);
+        }
+    }
+
+    private void put(int i, long pos) {
+        if (at[i] != Long.MIN_VALUE) {
+            clear(at[i]);
+            active--;
+            forget(at[i]);
+        }
+        at[i] = pos;
+        if (pos == Long.MIN_VALUE) return;
+        level.setBlock(BlockPos.of(pos), LIGHT, Block.UPDATE_CLIENTS);
+        active++;
+        long[] ls = c.data.lights;
+        c.data.lights = Arrays.copyOf(ls, ls.length + 1);
+        c.data.lights[ls.length] = pos;
+        c.data.setDirty();
+    }
+
+    private void forget(long pos) {
+        long[] ls = c.data.lights;
+        for (int k = 0; k < ls.length; k++) {
+            if (ls[k] != pos) continue;
+            long[] out = new long[ls.length - 1];
+            System.arraycopy(ls, 0, out, 0, k);
+            System.arraycopy(ls, k + 1, out, k, ls.length - k - 1);
+            c.data.lights = out;
+            c.data.setDirty();
+            return;
+        }
+    }
+
+    private void clear(long pos) {
+        BlockPos p = BlockPos.of(pos);
+        if (level.isLoaded(p) && level.getBlockState(p).is(Blocks.LIGHT)) level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+    }
+
+    void stop() {
+        for (int i = 0; i < at.length; i++) if (at[i] != Long.MIN_VALUE) put(i, Long.MIN_VALUE);
+    }
+}

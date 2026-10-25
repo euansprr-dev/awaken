@@ -89,6 +89,7 @@ public final class RitualClient {
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         NeoForge.EVENT_BUS.addListener(ToastAddEvent.class, RitualClient::onToast);
         NeoForge.EVENT_BUS.addListener(RenderHandEvent.class, RitualClient::onHand);
+        dev.awaken.core.api.FirstPerson.view(RitualFp::viewPose);
     }
 
     // ---- quiet: nothing else on screen while the scene plays --------------------------------------------------------
@@ -130,6 +131,15 @@ public final class RitualClient {
         if (waitingToasts.isEmpty() || quiet() || ticks < nextToast) return;
         mc.gui.toastManager().addToast(waitingToasts.removeFirst());
         nextToast = ticks + 10;
+    }
+
+    /**
+     * Another scene takes the frame straight from the Void (Carillon's opening wakes you in the infirmary, no tear):
+     * everything of the ritual's lets go, the end's black included, which otherwise waits for the tear to lift it.
+     */
+    public static void handOff() {
+        reset();
+        LensClient.ritual(0F, 0F);
     }
 
     static void reset() {

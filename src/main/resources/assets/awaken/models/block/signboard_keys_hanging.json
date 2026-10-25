@@ -1,0 +1,180 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/sign_keys_hang",
+    "h": "awaken:block/sign_keys_hang",
+    "f": "awaken:block/sign_keys_flat",
+    "chain": "awaken:block/street_chain"
+  },
+  "elements": [
+    {
+      "from": [
+        7.5,
+        2,
+        2
+      ],
+      "to": [
+        8.5,
+        11,
+        14
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            12,
+            9
+          ],
+          "texture": "#h"
+        },
+        "west": {
+          "uv": [
+            12,
+            0,
+            0,
+            9
+          ],
+          "texture": "#h"
+        },
+        "north": {
+          "uv": [
+            12,
+            0,
+            13,
+            9
+          ],
+          "texture": "#h"
+        },
+        "south": {
+          "uv": [
+            12,
+            0,
+            13,
+            9
+          ],
+          "texture": "#h"
+        },
+        "up": {
+          "uv": [
+            13,
+            0,
+            14,
+            12
+          ],
+          "texture": "#h"
+        },
+        "down": {
+          "uv": [
+            14,
+            0,
+            15,
+            12
+          ],
+          "texture": "#h"
+        }
+      }
+    },
+    {
+      "from": [
+        7.5,
+        11,
+        4
+      ],
+      "to": [
+        8.5,
+        16,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            5
+          ],
+          "texture": "#chain"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            1,
+            5
+          ],
+          "texture": "#chain"
+        },
+        "east": {
+          "uv": [
+            1,
+            0,
+            2,
+            5
+          ],
+          "texture": "#chain"
+        },
+        "west": {
+          "uv": [
+            1,
+            0,
+            2,
+            5
+          ],
+          "texture": "#chain"
+        }
+      }
+    },
+    {
+      "from": [
+        7.5,
+        11,
+        11
+      ],
+      "to": [
+        8.5,
+        16,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            5
+          ],
+          "texture": "#chain"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            1,
+            5
+          ],
+          "texture": "#chain"
+        },
+        "east": {
+          "uv": [
+            1,
+            0,
+            2,
+            5
+          ],
+          "texture": "#chain"
+        },
+        "west": {
+          "uv": [
+            1,
+            0,
+            2,
+            5
+          ],
+          "texture": "#chain"
+        }
+      }
+    }
+  ]
+}

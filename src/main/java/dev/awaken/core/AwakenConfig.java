@@ -37,6 +37,11 @@ public final class AwakenConfig {
             .define("anomalies", true);
     public static final ModConfigSpec.BooleanValue LANDMARKS = B.comment("Landmark discovery, Now hints, Mira's landmark rumours and night markers over ruins")
             .define("landmarks", true);
+    public static final ModConfigSpec.BooleanValue WARDS = B.comment("Precursor wards: blocks placed near Precursor sites crumble after 3 s and come back,",
+                    "and a site's own walls can't be broken (SPEC §17)")
+            .define("wards", true);
+    public static final ModConfigSpec.BooleanValue WILDS = B.comment("The Wilds: how you arrived, the Horizon line, biome discoveries and sky-only rewards (SPEC §17)")
+            .define("wilds", true);
 
     static {
         B.pop();
@@ -71,6 +76,10 @@ public final class AwakenConfig {
         public static final ModConfigSpec.BooleanValue NOW_TRACKER = C
                 .comment("Show the Now tracker: one line in the top-left corner with something you could do next.")
                 .define("nowTracker", true);
+        public static final ModConfigSpec.BooleanValue HORIZON_LINE = C
+                .comment("Show the Horizon line under the Now tracker: the nearest place worth exploring, and now and then one you",
+                        "can't reach yet.")
+                .define("horizonLine", true);
         public static final ModConfigSpec.DoubleValue SYSTEM_SCALE = C
                 .comment("Size of System cards, story lines and the Now tracker (toasts stay vanilla-sized).")
                 .defineInRange("systemScale", 1.0, 0.75, 1.5);
@@ -82,12 +91,16 @@ public final class AwakenConfig {
                 .comment("Story scenes (the awakening's ritual, the black and the tear) turn Lens on for their length even when",
                         "Lens is off, like a cutscene, and hand the frame back after. Never while an Iris shaderpack is on.")
                 .define("lensInScenes", true);
-        /** AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom) or CINEMATIC (adds light shafts). */
-        public enum LensLook { OFF, SWIFT, CINEMATIC }
+        /**
+         * AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom), CINEMATIC (Lens 2: sun
+         * shadows, contact shadows, AO, filmic light, light shafts) or ULTRA (the same at higher quality, SPEC §22).
+         */
+        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA }
 
         public static final ModConfigSpec.EnumValue<LensLook> LENS = C
-                .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps)",
-                        "or CINEMATIC (adds light shafts from the sun). It steps aside while an Iris shaderpack is on.")
+                .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps),",
+                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps) or ULTRA",
+                        "(the same at higher quality; 60+ fps). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
         public static final ModConfigSpec SPEC = C.build();
 

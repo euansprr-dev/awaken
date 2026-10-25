@@ -21,14 +21,31 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
      * Bump when generation changes: READY gates nobody entered are rebuilt on the new version. 2: the interiors' art
      * pass (set pieces, Lord arenas, taller rooms) and deeper floors that push back harder (docs/modules/gates.md).
      * 3: the prologue's ritual plan (boss {@link #RITUAL_BOSS}) is built as the Ritual of the Bell's single hall.
+     * 4: the Gate Rig's rooms (SPEC §17): a Collapse Run, Mirror Hall or Gravity Wells on each ordinary floor of the
+     * themes that have them; every other room is exactly what version 3 built. 5: the Gauntlet (SPEC §17.5) on the
+     * ordinary floors of the Clockwork Foundry and the Frost Monastery, which had no rig room; every other theme builds
+     * exactly as version 4.
      */
-    public static final int CONTENT_VERSION = 3;
+    public static final int CONTENT_VERSION = 5;
 
     /**
      * The boss id that marks the story's ritual Bell Crypt (docs/proposals/the-ritual.md). Nothing rolls it: the Director
      * and every other plan use a theme's own Lord. Old scripted Bell Crypts (the Bell Warden) keep their three floors.
      */
     public static final String RITUAL_BOSS = "awaken:the_seated_one";
+
+    /**
+     * The boss id that marks the Leaper's Gauntlet, an Ascension trial (SPEC §17.10): one Clockwork Foundry floor whose
+     * hall is a Gauntlet ending in a chasm only the leap crosses. Nothing rolls it: the Ascent opens it for a player.
+     */
+    public static final String LEAPER_TRIAL = "awaken:leapers_gauntlet";
+
+    /**
+     * The boss id that marks the Sky Leviathan's trial, Skyborn's Ascension trial (SPEC §17.18): one Sky Archipelago
+     * floor whose arena is open sky (4x4 slots, the full height), its Lord the theme's own Sky Leviathan. Nothing rolls
+     * it: the Ascent opens it for a player.
+     */
+    public static final String SKYBORN_TRIAL = "awaken:sky_leviathans_trial";
 
     public static final Codec<GatePlan> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.LONG.fieldOf("seed").forGetter(GatePlan::seed),
@@ -52,6 +69,21 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
     /** The prologue's ritual gate: one floor, the antechamber and the hall of the Seated One. */
     public boolean ritual() {
         return contentVersion >= 3 && theme == Theme.BELL_CRYPT && RITUAL_BOSS.equals(boss);
+    }
+
+    /** The Leaper's Gauntlet: one floor, an antechamber, the course's hall and the room past it. */
+    public boolean leaperTrial() {
+        return contentVersion >= 5 && theme == Theme.CLOCKWORK_FOUNDRY && LEAPER_TRIAL.equals(boss);
+    }
+
+    /** The Sky Leviathan's trial: one floor, the antechamber and the open-sky arena of the Leviathan. */
+    public boolean skybornTrial() {
+        return contentVersion >= 5 && theme == Theme.SKY_ARCHIPELAGO && SKYBORN_TRIAL.equals(boss);
+    }
+
+    /** The Lord that holds the boss room (a trial's marker names the theme's own Lord). */
+    public String lordId() {
+        return skybornTrial() ? theme.bossId() : boss;
     }
 
     public boolean has(Modifier m) {

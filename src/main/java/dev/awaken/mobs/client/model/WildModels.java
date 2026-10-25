@@ -3,7 +3,7 @@ package dev.awaken.mobs.client.model;
 import dev.awaken.Awaken;
 import dev.awaken.mobs.entity.AwLook;
 import dev.awaken.mobs.entity.FaunaMob;
-import net.minecraft.client.model.EntityModel;
+import dev.awaken.mobs.client.life.LifeModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -45,7 +45,7 @@ public final class WildModels {
 
     // ---- lizard (Mudskipper, Crested Basilisk) ------------------------------------------------------------------------
 
-    public static final class Lizard extends EntityModel<LivingEntityRenderState> {
+    public static final class Lizard extends LifeModel {
         private final ModelPart body, head, crest, sail, tail, tailEnd, legFL, legFR, legHL, legHR;
 
         public Lizard(ModelPart root) {
@@ -83,8 +83,7 @@ public final class WildModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float pos = s.walkAnimationPos * 0.9F;
             float amp = Math.min(1.0F, s.walkAnimationSpeed * 1.6F);
             boolean sprint = has(s, FaunaMob.P_SPRINT);
@@ -136,7 +135,7 @@ public final class WildModels {
 
     // ---- snail (Gloam Snail, Sporeback Snail) -------------------------------------------------------------------------
 
-    public static final class Snail extends EntityModel<LivingEntityRenderState> {
+    public static final class Snail extends LifeModel {
         private final ModelPart foot, head, eyeL, eyeR, shell, garden;
 
         public Snail(ModelPart root) {
@@ -162,8 +161,7 @@ public final class WildModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float amp = Math.min(1.0F, s.walkAnimationSpeed * 2.5F);
             float crawl = Mth.sin(s.walkAnimationPos * 0.8F) * amp;
             boolean tucked = has(s, FaunaMob.P_GRAZE) || has(s, FaunaMob.P_REST) || has(s, FaunaMob.P_GUARD);
@@ -189,7 +187,7 @@ public final class WildModels {
 
     // ---- walking mushroom (Shroomlet, the Mycelord) -----------------------------------------------------------------------
 
-    public static final class Mushroom extends EntityModel<LivingEntityRenderState> {
+    public static final class Mushroom extends LifeModel {
         private final ModelPart body, cap, armL, armR, legL, legR;
 
         public Mushroom(ModelPart root) {
@@ -216,8 +214,7 @@ public final class WildModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float pos = s.walkAnimationPos;
             float amp = Math.min(1.0F, s.walkAnimationSpeed * 1.5F);
             legL.xRot = Mth.cos(pos * 1.3F) * 1.0F * amp;
@@ -250,7 +247,7 @@ public final class WildModels {
 
     // ---- marmot (Scree Marmot) --------------------------------------------------------------------------------------------
 
-    public static final class Marmot extends EntityModel<LivingEntityRenderState> {
+    public static final class Marmot extends LifeModel {
         private final ModelPart body, head, tail, legFL, legFR, legHL, legHR;
 
         public Marmot(ModelPart root) {
@@ -282,8 +279,7 @@ public final class WildModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float pos = s.walkAnimationPos * 0.6662F * 1.6F;
             float amp = Math.min(1.2F, s.walkAnimationSpeed * 1.4F);
             float burrow = look(s).faunaAnim;

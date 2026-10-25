@@ -78,13 +78,16 @@ final class BodyTests {
         } catch (java.io.IOException ex) {
             throw new IllegalStateException(ex);
         }
-        for (Move m : Move.values()) h.assertTrue(BodyClips.ALL.contains(BodyClips.of(m)), m + " has a clip");
+        for (Move m : Move.values()) if (!m.runner()) h.assertTrue(BodyClips.ALL.contains(BodyClips.of(m)), m + " has a clip");
+        // the Runner's moves pick theirs by variant: every one is in the file
+        for (String c : BodyClips.RUNNER) h.assertTrue(BodyClips.ALL.contains(c), c + " is listed");
         for (String base : BodyClips.ALL) {
             for (String name : new String[]{base, base + "_bent"}) {
                 h.assertTrue(anims.has(name), name + " is missing from " + BodyClips.FILE);
                 com.google.gson.JsonObject a = anims.getAsJsonObject(name);
                 boolean loops = a.has("loop") && a.get("loop").getAsBoolean();
-                h.assertTrue(loops == (base.equals(BodyClips.SLIDE) || base.equals(BodyClips.SPRINT)), name + (loops ? " loops but ends" : " should loop"));
+                h.assertTrue(loops == (base.equals(BodyClips.SLIDE) || base.equals(BodyClips.SPRINT) || BodyClips.loops(base)),
+                        name + (loops ? " loops but ends" : " should loop"));
                 if (!loops) h.assertTrue(a.has("player_animation_library"), name + " eases back to the vanilla pose (endTick)");
                 for (var bone : a.getAsJsonObject("bones").entrySet()) {
                     com.google.gson.JsonObject b = bone.getValue().getAsJsonObject();
@@ -102,16 +105,24 @@ final class BodyTests {
 
     static void register() {
         AwakenTests.register("body_clips", 20, BodyTests::clips);
+        AwakenTests.register("body_action_camera", 20, BodyTests::actionCamera);
+        AwakenTests.register("body_free_run", 20, BodyTests::freeRun);
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
-        AwakenTests.register("body_soft_landing_damage", 60, BodyTests::softLanding);
+        AwakenTests.registerIsolated("body_stair_slide", 100, BodyTests::stairSlide);
+        AwakenTests.register("body_soft_landing_damage", 60, h -> withoutKit(h, BodyTests::softLanding));
+        AwakenTests.register("body_soft_landing_before_awakening", 60, BodyTests::softLandingRunner);
         AwakenTests.register("body_soft_landing_never_stacks", 100, BodyTests::softLandingNeverStacks);
-        AwakenTests.register("body_nothing_before_awakening", 60, BodyTests::nothingBeforeAwakening);
-        AwakenTests.register("body_unlocks_announced_once", 60, BodyTests::announcedOnce);
+        // the old rule (vanilla until the awakening, ranks unlock) holds with the Runner's Kit switched off
+        AwakenTests.register("body_nothing_before_awakening", 60, h -> withoutKit(h, BodyTests::nothingBeforeAwakening));
+        AwakenTests.register("body_unlocks_announced_once", 60, h -> withoutKit(h, BodyTests::announcedOnce));
+        AwakenTests.register("body_runners_kit_from_the_start", 60, BodyTests::kitFromTheStart);
+        AwakenTests.register("body_ranks_improve_moves", 20, BodyTests::ranksImprove);
         AwakenTests.register("body_tactical_sprint", 240, BodyTests::tacticalSprint);
         AwakenTests.registerIsolated("body_momentum_hit_bands", 100, BodyTests::momentumBands);
         AwakenTests.registerIsolated("body_slide_trips_small_foes", 100, BodyTests::slideTrips);
+        RunnerTests.register(); // spike S3
     }
 
     // ---- helpers ----------------------------------------------------------------------------------------------------
@@ -195,7 +206,8 @@ final class BodyTests {
             at(h, d, 0.5, 1, 0.5, 0F);
             h.assertTrue(BodyServer.startMantle(c, 0F, ok.x(), ok.y(), ok.z()), "rank C mantles the 1.5 ledge");
             h.assertTrue(Progression.profile(c).counter("awaken:body_mantle") == 1, "the climb is counted");
-            h.assertFalse(BodyServer.startMantle(d, 0F, ok.x(), ok.y(), ok.z()), "rank D has no mantle yet");
+            // the Runner's Kit: every rank mantles (SPEC §16.3; without the kit, D had to wait for C)
+            h.assertTrue(BodyServer.startMantle(d, 0F, ok.x(), ok.y(), ok.z()), "rank D mantles too");
             ServerPlayer c2 = player(h, Rank.C);
             at(h, c2, 2.5, 1, 0.5, 0F);
             h.assertFalse(BodyServer.startMantle(c2, 0F, ok.x() + 2, ok.y() + 0.5, ok.z()), "the server refuses a ledge that isn't there");
@@ -348,6 +360,92 @@ final class BodyTests {
         });
     }
 
+    /**
+     * SPEC §17.22: a slide started on the top of six stairs glides down them (a straight line through the noses, no
+     * stall, no hop per step), faster than walking, the server keeping the slide going past its 14 ticks while it sees
+     * the run, no fall at the bottom, then the run-out and the end. A way 90° off the fall line is not a run.
+     */
+    static void stairSlide(GameTestHelper h) {
+        floor(h, -1, 3, -1, 16, 9);
+        var stair = Blocks.STONE_BRICK_STAIRS.defaultBlockState().setValue(net.minecraft.world.level.block.StairBlock.FACING, net.minecraft.core.Direction.NORTH);
+        for (int x = 0; x <= 2; x++) {
+            for (int z = 0; z <= 2; z++) for (int y = 1; y <= 6; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE); // the top, feet at 7
+            for (int k = 0; k < 6; k++) { // down toward +z: stair k's high back half at 7 - k
+                for (int y = 1; y < 6 - k; y++) h.setBlock(new BlockPos(x, y, 3 + k), Blocks.STONE);
+                h.setBlock(new BlockPos(x, 6 - k, 3 + k), stair);
+            }
+        }
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var level = h.getLevel();
+            var ctx = CollisionContext.empty();
+            BodyRules.StairProfile sp = new BodyRules.StairProfile();
+            double[] fall = new double[2], out = new double[3];
+            Vec3 across = h.absoluteVec(new Vec3(1.5, 7, 2.6));
+            h.assertFalse(BodyRules.stairStart(level, ctx, sp, across.x, across.y, across.z, 1, 0, fall), "sliding across the stairs is no run");
+            ServerPlayer p = player(h, Rank.D);
+            at(h, p, 1.5, 7, 1.0, 0F);
+            BodyServer.assist(p, Move.SLIDE, 40);
+            h.assertTrue(BodyServer.startSlide(p, 0F, false), "the server accepts the slide");
+            BodyMotion m = BodyServer.motion(p);
+            long now = BodyServer.now(p);
+            double[] way = {0, 1};
+            double v = BodyRules.SLIDE_V0, z0 = p.getZ(), bottom = h.absoluteVec(new Vec3(0, 1, 0)).y;
+            boolean stairs = false, serverSaw = false;
+            int age = 0, onRun = 0, reached = -1;
+            double lastDy = Double.NaN, worstJerk = 0, slowest = 9, shallowest = -9;
+            int gliding = 0;
+            StringBuilder path = new StringBuilder();
+            for (int t = 1; t <= 60 && reached < 0; t++) {
+                now++;
+                age++;
+                double y0 = p.getY(), zBefore = p.getZ();
+                if (!stairs && BodyRules.stairStart(level, ctx, sp, p.getX(), p.getY(), p.getZ(), way[0], way[1], fall)) stairs = true;
+                if (stairs) { // exactly the client's tick (ClientMoves.applyStairs)
+                    BodyRules.stairBend(way, fall[0], fall[1]);
+                    v = BodyRules.stairSpeed(v);
+                    if (BodyRules.stairStep(level, ctx, sp, p.getX(), p.getY(), p.getZ(), way[0], way[1], v, out)) {
+                        p.setPos(out[0], p.getY(), out[2]);
+                        p.move(MoverType.SELF, new Vec3(0, out[1] - p.getY(), 0));
+                        onRun++;
+                        double dy = p.getY() - y0;
+                        path.append(String.format(" %.2f/%.2f", p.getZ() - z0, dy));
+                        // the glide, once it has tipped over the top (a real corner) and before the floor
+                        if (gliding > 0 && !sp.last) {
+                            if (gliding > 1) worstJerk = Math.max(worstJerk, Math.abs(dy - lastDy));
+                            shallowest = Math.max(shallowest, dy);
+                        }
+                        if (dy < -0.05 || gliding > 0) gliding++;
+                        if (onRun > 1) slowest = Math.min(slowest, p.getZ() - zBefore);
+                        lastDy = dy;
+                        if (sp.last) stairs = false;
+                    } else {
+                        stairs = false;
+                    }
+                } else {
+                    v = BodyRules.slideSpeed(age, BodyRules.SLIDE_V0);
+                    p.move(MoverType.SELF, new Vec3(way[0] * v, -0.08, way[1] * v));
+                }
+                BodyServer.tick(p, m, now);
+                serverSaw |= MovementHooks.stairSliding(p);
+                if (p.getY() <= bottom + 1e-3) reached = t;
+            }
+            h.assertTrue(reached > 0, "the slide reaches the bottom (feet at " + String.format("%.2f", p.getY() - bottom) + " over it)");
+            double speed = (p.getZ() - z0) / reached;
+            h.assertTrue(speed > 0.3, "faster than walking (0.22 a tick): " + String.format("%.2f", speed) + " over " + reached + " ticks");
+            h.assertTrue(onRun >= 10 && slowest > 0.3, "no stall on the run (" + onRun + " ticks, slowest " + String.format("%.2f", slowest) + ")");
+            h.assertTrue(gliding > 8 && shallowest < -0.25 && worstJerk < 0.05, "a straight glide, no hop per step (" + gliding
+                    + " ticks, shallowest drop " + String.format("%.2f", shallowest) + ", worst change of drop " + String.format("%.3f", worstJerk) + "; z/dy" + path + ")");
+            h.assertTrue(serverSaw && reached > BodyRules.SLIDE_TICKS + BodyRules.SLIDE_GRACE && Body.isSliding(p),
+                    "the server keeps the slide going down the run (" + reached + " ticks)");
+            h.assertTrue(p.fallDistance < 1, "and the ride is no fall (" + p.fallDistance + ")");
+            Awaken.LOG.info("[body_stair_slide] bottom after {} ticks, {} b/t, glide {} ticks, worst change of drop {}, z/dy{}",
+                    reached, String.format("%.2f", speed), gliding, String.format("%.3f", worstJerk), path);
+            for (int t = 0; t < 30 && Body.isSliding(p); t++) BodyServer.tick(p, m, ++now);
+            h.assertFalse(Body.isSliding(p), "after the run-out the slide ends");
+            done(h, p);
+        });
+    }
+
     /** Small hostile creatures in the slide's way stagger; a tall one and a farm animal don't. */
     static void slideTrips(GameTestHelper h) {
         floor(h, -2, 4, -2, 6, 3);
@@ -415,6 +513,17 @@ final class BodyTests {
         done(h, vanilla, standing, sprint, crouch);
     }
 
+    /** With the Runner's Kit a body rolls before the awakening too (sprinting into the fall). */
+    static void softLandingRunner(GameTestHelper h) {
+        ServerPlayer runner = player(h, null);
+        runner.setSprinting(true);
+        for (double d : new double[]{6, 9, 12}) {
+            int rolled = BodyRules.fallDamage(d - BodyRules.ROLL_SAFE_EXTRA, 3, BodyRules.ROLL_DAMAGE);
+            h.assertTrue(fall(runner, d) == rolled, "a Runner rolls at " + d + " before the awakening: " + rolled);
+        }
+        done(h, runner);
+    }
+
     /** The roll never adds to a power's own landing, a mount's fall, an elytra landing or gate Low Gravity. */
     static void softLandingNeverStacks(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -459,10 +568,65 @@ final class BodyTests {
     // ---- awakening and unlocks --------------------------------------------------------------------------------------
 
     /** Before the awakening the body is vanilla: no move starts, no roll, no momentum, nothing announced. */
+    /** Runs a test under the old rule (the Runner's Kit off), putting the switch back whatever happens. */
+    static void withoutKit(GameTestHelper h, java.util.function.Consumer<GameTestHelper> test) {
+        BodyConfig.kitOverride = false;
+        try {
+            test.accept(h);
+        } finally {
+            BodyConfig.kitOverride = null;
+        }
+    }
+
+    /**
+     * The Runner's Kit (SPEC §16.3): every move from the first second, before the awakening; the System only speaks
+     * of them from the awakening on, once, all together.
+     */
+    static void kitFromTheStart(GameTestHelper h) {
+        floor(h, -1, 2, -1, 2, 3);
+        ServerPlayer p = player(h, null);
+        at(h, p, 0.5, 1, 0.5, 0F);
+        for (Move m : Move.values()) h.assertTrue(Body.unlocked(p, m), m + " is everyone's");
+        p.setSprinting(true);
+        BodyServer.assist(p, Move.SLIDE, 40);
+        h.assertTrue(BodyServer.startSlide(p, 0F, false), "a slide before the awakening");
+        h.assertFalse(BodyServer.announce(p), "the System is silent before the awakening");
+        Progression.awaken(p);
+        BodyMemory mem = Body.memory(p);
+        for (Move m : Move.values()) {
+            if (m.runner()) h.assertFalse(mem.announced(m), m + " is found, not told");
+            else h.assertTrue(mem.announced(m), m + " announced at the awakening");
+        }
+        h.assertFalse(BodyServer.announce(p), "never twice");
+        done(h, p);
+    }
+
+    /** Ranks improve the moves: longer runs at D, a fifth link at C, a faster shimmy and longer ledge jumps at B, shorter recharges. */
+    static void ranksImprove(GameTestHelper h) {
+        h.assertTrue(RunnerRules.runLength(0, Rank.E) == 35 && RunnerRules.runLength(0, Rank.D) == 40, "a run lasts 35, 40 from D");
+        h.assertTrue(RunnerRules.links(Rank.D) == 4 && RunnerRules.links(Rank.C) == 5, "4 links, 5 from C");
+        h.assertTrue(RunnerRules.shimmy(Rank.C) == RunnerRules.SHIMMY && Math.abs(RunnerRules.shimmy(Rank.B) * 20 - 2.2) < 1e-9, "shimmy 1.6, 2.2 b/s from B");
+        h.assertTrue(RunnerRules.ledgeUp(Rank.B) == RunnerRules.LEDGE_UP + 1 && RunnerRules.ledgeSide(Rank.B) == RunnerRules.LEDGE_SIDE + 1, "ledge reach +1 from B");
+        h.assertTrue(BodyRules.tacRecharge(Rank.E) == BodyRules.TAC_RECHARGE && BodyRules.tacRecharge(Rank.A) < BodyRules.tacRecharge(Rank.B)
+                && BodyRules.tacRecharge(Rank.SOVEREIGN) == 30, "the tactical sprint recharges faster by rank, to 30");
+        h.assertTrue(BodyRules.tacRecharge(Rank.E, 0.25) == 60 && BodyRules.tacRecharge(Rank.A, 0.25) == 30
+                && BodyRules.tacRecharge(Rank.E, 0.9) == 40, "a recharge perk takes its share of the rank's, at most half, never under 30");
+        h.assertTrue(BodyRules.slideCooldown(Rank.E) == BodyRules.SLIDE_COOLDOWN && BodyRules.slideCooldown(Rank.SOVEREIGN) == 10, "the slide's cooldown by rank, to 10");
+        // Wall Stride: 80 ticks, grip 50 lifting +0.04, then a sink to -0.14
+        h.assertTrue(RunnerRules.runLength(0, Rank.E, true) == 80 && RunnerRules.runGrip(0, true) == 50, "Wall Stride runs 80, grips 50");
+        h.assertTrue(Math.abs(RunnerRules.runTarget(0, 80, 50, true) - 0.04) < 1e-9 && Math.abs(RunnerRules.runTarget(80, 80, 50, true) + 0.14) < 1e-9,
+                "Wall Stride lifts +0.04, sinks to -0.14");
+        h.succeed();
+    }
+
     static void nothingBeforeAwakening(GameTestHelper h) {
         ServerPlayer p = player(h, null);
         p.setSprinting(true);
         for (Move m : Move.values()) {
+            if (m.runner()) {
+                h.assertFalse(Body.unlocked(p, m), m + " is off without the kit");
+                continue;
+            }
             h.assertFalse(Body.unlocked(p, m), m + " is locked");
             BodyServer.assist(p, m, 40); // even with the dev command's help
             boolean started = switch (m) {
@@ -470,6 +634,7 @@ final class BodyTests {
                 case SLIDE -> BodyServer.startSlide(p, 0F, false);
                 case MANTLE -> BodyServer.startMantle(p, 0F, p.getX(), p.getY() + 1.5, p.getZ() + 1);
                 case ROLL -> fall(p, 9) != BodyRules.fallDamage(9, 3, 1);
+                default -> false;
             };
             h.assertFalse(started, m + " doesn't trigger");
         }
@@ -630,5 +795,86 @@ final class BodyTests {
         pig.setNoAi(true);
         h.getLevel().addFreshEntity(pig);
         return pig;
+    }
+
+    /**
+     * The action camera's arm (SPEC §17.13): each pose's shape in order (the ground close, the rope wider, the wings and
+     * flight widest; a slide low; a wall-run over to the open side), the trail capped, and the spring reaching a pose
+     * without overshooting and coming home after.
+     */
+    private static void actionCamera(net.minecraft.gametest.framework.GameTestHelper h) {
+        double[] g = new double[ActionRig.N], rope = new double[ActionRig.N], glide = new double[ActionRig.N], fly = new double[ActionRig.N];
+        double[] slide = new double[ActionRig.N], wall = new double[ActionRig.N], fast = new double[ActionRig.N];
+        ActionRig.target(ActionRig.Pose.GROUND, 0.13, g);
+        ActionRig.target(ActionRig.Pose.ROPE, 0.8, rope);
+        ActionRig.target(ActionRig.Pose.GLIDE, 1.5, glide);
+        ActionRig.target(ActionRig.Pose.FLIGHT, 1.5, fly);
+        ActionRig.target(ActionRig.Pose.SLIDE, 0.4, slide);
+        ActionRig.target(ActionRig.Pose.WALL_RUN, 0.35, wall);
+        ActionRig.target(ActionRig.Pose.FLIGHT, 6, fast);
+        h.assertTrue(g[ActionRig.BACK] == 0 && rope[ActionRig.BACK] > 2 && glide[ActionRig.BACK] > rope[ActionRig.BACK]
+                        && fly[ActionRig.BACK] > glide[ActionRig.BACK] && fly[ActionRig.CENTRE] > 0.5 && slide[ActionRig.UP] < -0.4
+                        && wall[ActionRig.OPEN] == 1 && fast[ActionRig.BACK] == ActionRig.MAX_BACK,
+                "the poses' shapes: ground " + g[0] + ", rope " + rope[0] + ", glide " + glide[0] + ", flight " + fly[0] + ", slide up "
+                        + slide[1] + ", wall open " + wall[2] + ", fastest " + fast[0]);
+        // over to the open side: a wall on the right puts the camera left of you (x is left), on the left, right
+        double[] o = new double[3];
+        ActionRig.shape(-0.75, 0.2, 4, 0, 0, 1, 0, true, o);
+        double leftOf = o[0];
+        ActionRig.shape(-0.75, 0.2, 4, 0, 0, 1, 0, false, o);
+        h.assertTrue(leftOf > 0.75 && o[0] < -0.75, "the open side: " + leftOf + " / " + o[0]);
+        ActionRig.Arm arm = new ActionRig.Arm();
+        double peak = 0;
+        int reach = -1;
+        for (int t = 0; t < 60; t++) {
+            arm.step(glide);
+            peak = Math.max(peak, arm.at[ActionRig.BACK]);
+            if (reach < 0 && Math.abs(arm.at[ActionRig.BACK] - glide[ActionRig.BACK]) < 0.05) reach = t;
+        }
+        h.assertTrue(reach > 5 && reach < 40 && peak <= glide[ActionRig.BACK] + 1e-6, "it trails out to the glide's arm in " + reach
+                + " ticks, never past it (" + peak + ")");
+        int home = -1;
+        for (int t = 0; t < 60 && home < 0; t++) {
+            arm.step(g);
+            if (Math.abs(arm.at[ActionRig.BACK]) < 0.05 && arm.at[ActionRig.BACK] >= -1e-6) home = t;
+        }
+        h.assertTrue(home > 0 && home < 30, "and comes home in " + home + " ticks");
+        h.succeed();
+    }
+    /**
+     * The one-button free-run (SPEC §17.14): the ground ahead read right (a block to vault, a wall to jump at, a fence
+     * left alone, an edge to leap from, a one-block step down not), and jump magnetism's bend capped and only toward
+     * what's nearly ahead.
+     */
+    private static void freeRun(GameTestHelper h) {
+        // five lanes on a floor raised off the ground (an edge needs two blocks of air under it), all run toward +z
+        for (int x = 0; x <= 8; x += 2) {
+            for (int y = 0; y <= 7; y++) for (int z = 0; z <= 2; z++) h.setBlock(new BlockPos(x, y, z), Blocks.AIR);
+            h.setBlock(new BlockPos(x, 3, 0), Blocks.STONE);
+        }
+        h.setBlock(new BlockPos(0, 3, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(0, 4, 1), Blocks.STONE);                         // 1.0: vault
+        for (int y = 3; y <= 6; y++) h.setBlock(new BlockPos(2, y, 1), Blocks.STONE); // 3.0: a wall
+        h.setBlock(new BlockPos(4, 3, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(4, 4, 1), Blocks.OAK_FENCE);                     // 1.5, a fence: nothing
+        h.setBlock(new BlockPos(8, 2, 1), Blocks.STONE);                         // a step down of one: no leap
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        double[] out = new double[1];
+        Vec3 a = h.absoluteVec(new Vec3(0.5, 4, 0.5)), b = h.absoluteVec(new Vec3(0.5, 4, 1.5));
+        double fx = b.x - a.x, fz = b.z - a.z;
+        int[] got = new int[5];
+        for (int i = 0; i < 5; i++) {
+            Vec3 f = h.absoluteVec(new Vec3(i * 2 + 0.5, 4, 0.5));
+            got[i] = RunnerRules.ahead(h.getLevel(), CollisionContext.empty(), m, f.x, f.y, f.z, fx, fz, 0.28, out);
+        }
+        h.assertTrue(got[0] == RunnerRules.AHEAD_VAULT && got[1] == RunnerRules.AHEAD_WALL && got[2] == RunnerRules.AHEAD_NONE
+                        && got[3] == RunnerRules.AHEAD_LEAP && got[4] == RunnerRules.AHEAD_NONE,
+                "vault, wall, fence, edge, step down read as " + java.util.Arrays.toString(got));
+        double[] v = new double[2];
+        double turned = RunnerRules.bend(0, 0, 0, 0.3, 1, 4, RunnerRules.PULL_STEP, v);
+        h.assertTrue(Math.abs(turned - RunnerRules.PULL_STEP) < 1e-9 && Math.abs(Math.hypot(v[0], v[1]) - 0.3) < 1e-9 && v[0] > 0,
+                "a ledge 14° off bends the jump " + turned + "° its way, speed kept");
+        h.assertTrue(RunnerRules.bend(0, 0, 0, 0.3, 4, 4, RunnerRules.PULL_STEP, v) == 0, "one 45° off doesn't pull");
+        h.succeed();
     }
 }

@@ -39,6 +39,8 @@ public record GlassShardsFeature(IntProvider count, IntProvider height, float sp
 
     @Override
     public boolean place(WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos origin) {
+        // never inside Carillon: the city is built over this ground, and nothing here would clear these
+        if (dev.awaken.terrain.api.CityBasin.reservedWithin(origin.getX(), origin.getZ(), 16)) return false;
         long t0 = System.nanoTime();
         try {
             return placeCluster(level, random, origin);
@@ -87,25 +89,8 @@ public record GlassShardsFeature(IntProvider count, IntProvider height, float sp
                 if (random.nextDouble() < 0.12 && level.getBlockState(m.set(gx, gy + 1, gz)).isAir()) level.setBlock(m, cluster, Block.UPDATE_CLIENTS);
             }
         }
-        for (int x = -EXTENT; x <= EXTENT; x++) {
-            for (int z = -EXTENT; z <= EXTENT; z++) {
-                for (int y = v.minY; y <= v.maxY; y++) {
-                    if (v.get(x, y, z) == Voxels.EMPTY) continue;
-                    m.set(ox + x, oy + y, oz + z);
-                    BlockState s = level.getBlockState(m);
-                    if (!s.isAir() && !s.canBeReplaced() && !s.is(GlassBlocks.SUNSHARD_CLUSTER.get())) continue;
-                    level.setBlock(m, shard, Block.UPDATE_CLIENTS);
-                }
-                // each spire's foot continues down to the ground
-                if (v.get(x, -1, z) == SHARD) {
-                    for (int y = oy - 2; y >= oy - 8; y--) {
-                        BlockState s = level.getBlockState(m.set(ox + x, y, oz + z));
-                        if (!s.isAir() && !s.canBeReplaced()) break;
-                        level.setBlock(m, shard, Block.UPDATE_CLIENTS);
-                    }
-                }
-            }
-        }
+        // the spires into air and plants only (and over slivers); each foot continues down to the ground
+        v.place(level, origin, SHARD, shard, 7, s -> s.isAir() || s.canBeReplaced() || s.is(GlassBlocks.SUNSHARD_CLUSTER.get()));
         return tallest > 0;
     }
 

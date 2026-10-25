@@ -1,0 +1,15 @@
+{
+  "name": "Anomalist",
+  "description": "Witnessed twenty anomalies.",
+  "condition": {
+    "type": "counter",
+    "counter": "awaken:anomalies_seen",
+    "value": 20
+  },
+  "perks": [
+    {
+      "id": "awaken:xp_bonus",
+      "amount": 0.02
+    }
+  ]
+}

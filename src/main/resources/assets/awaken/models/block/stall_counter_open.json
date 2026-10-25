@@ -1,0 +1,167 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/stall_counter",
+    "t0": "awaken:block/stall_counter",
+    "t1": "awaken:block/stall_counter_1",
+    "t2": "awaken:block/stall_counter_2",
+    "t3": "awaken:block/stall_counter_3",
+    "t4": "awaken:block/stall_counter_4"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        14,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#t0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#t0",
+          "cullface": "south"
+        },
+        "east": {
+          "uv": [
+            0,
+            2,
+            16,
+            4
+          ],
+          "texture": "#t0",
+          "cullface": "east"
+        },
+        "west": {
+          "uv": [
+            0,
+            2,
+            16,
+            4
+          ],
+          "texture": "#t0",
+          "cullface": "west"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#t1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#t2",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        14,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0,
+            14,
+            14
+          ],
+          "texture": "#t3"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            14,
+            14
+          ],
+          "texture": "#t4"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            14,
+            14
+          ],
+          "texture": "#t4"
+        }
+      }
+    },
+    {
+      "from": [
+        1,
+        2,
+        0
+      ],
+      "to": [
+        15,
+        14,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            14,
+            16
+          ],
+          "texture": "#t0"
+        },
+        "east": {
+          "uv": [
+            14,
+            4,
+            15,
+            16
+          ],
+          "texture": "#t0"
+        },
+        "west": {
+          "uv": [
+            14,
+            4,
+            15,
+            16
+          ],
+          "texture": "#t0"
+        }
+      }
+    }
+  ]
+}

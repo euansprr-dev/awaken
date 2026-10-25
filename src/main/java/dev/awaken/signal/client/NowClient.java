@@ -52,10 +52,13 @@ public final class NowClient {
 
     /** " ↗ 40 m" for a suggestion with a place in the player's dimension; empty otherwise. */
     public static Optional<String> compass(NowHooks.Suggestion s) {
+        return s.where().isEmpty() ? Optional.empty() : compass(s.where().get(), current.dimension());
+    }
+
+    /** " ↗ 40 m" toward {@code at}, when the player stands in {@code dimension} (the Horizon line uses it too). */
+    static Optional<String> compass(BlockPos at, net.minecraft.resources.Identifier dimension) {
         Minecraft mc = Minecraft.getInstance();
-        if (s.where().isEmpty() || mc.player == null) return Optional.empty();
-        if (!mc.player.level().dimension().identifier().equals(current.dimension())) return Optional.empty();
-        BlockPos at = s.where().get();
+        if (mc.player == null || !mc.player.level().dimension().identifier().equals(dimension)) return Optional.empty();
         double dx = at.getX() + 0.5 - mc.player.getX(), dz = at.getZ() + 0.5 - mc.player.getZ();
         double dist = Math.sqrt(dx * dx + dz * dz);
         if (dist < 4) return Optional.of("here");

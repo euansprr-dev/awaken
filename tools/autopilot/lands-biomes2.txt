@@ -136,6 +136,6 @@ wait 60
 shot b2_vanilla_windswept_night
 perf b2_vanilla_windswept_night 8
 cmd awaken terrain leaves status
-cmd awaken terrain lands2cost
+cmd awaken terrain landscost
 wait 20
 quit

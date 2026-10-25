@@ -33,6 +33,8 @@ public final class GateRecord {
     public final Set<UUID> party = new LinkedHashSet<>();
     public final Set<UUID> inside = new LinkedHashSet<>();
     public final List<String> trace = new ArrayList<>();
+    /** Tests only, never saved: stand on the plot as found (reused test plots carry other tests' blocks and Hearths). */
+    public boolean anyGround;
     public boolean scripted;
     public boolean structurePlaced;
     public boolean interiorReady;
@@ -95,7 +97,7 @@ public final class GateRecord {
      * gates of a player who hasn't reached that ending yet: theirs still break (SPEC "Together").
      */
     public boolean neverBreaks(net.minecraft.server.MinecraftServer server) {
-        return scripted || wandering() || dev.awaken.core.api.StoryHooks.gatesCalm(server, owner);
+        return scripted || wandering() || plan.skybornTrial() || dev.awaken.core.api.StoryHooks.gatesCalm(server, owner);
     }
 
     public long breaksIn(long today) {

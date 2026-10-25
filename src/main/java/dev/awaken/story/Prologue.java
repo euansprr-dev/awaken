@@ -59,7 +59,9 @@ final class Prologue {
         trackCrypt(p, s);
         boolean awakened = Progression.profile(p).awakened();
         if (awakened) {
-            if (s.prologue != StoryProgress.Prologue.DONE && s.prologue != StoryProgress.Prologue.ACCEPTING) {
+            // the opening's last beats (the infirmary, the Registry) come after the awakening: the opening ends them
+            boolean afterVoid = s.prologue == StoryProgress.Prologue.WAKE || s.prologue == StoryProgress.Prologue.REGISTRY;
+            if (s.prologue != StoryProgress.Prologue.DONE && s.prologue != StoryProgress.Prologue.ACCEPTING && !afterVoid) {
                 s.prologue = StoryProgress.Prologue.DONE;
                 sync(p);
                 if (Ritual.storyGate(p) >= 0) AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.NONE));
@@ -68,7 +70,7 @@ final class Prologue {
             if (s.prologue == StoryProgress.Prologue.ACCEPTING) liftTheBlack(p);
             return;
         }
-        if (!storyOn()) return;
+        if (!storyOn() || openingOwns(p, s)) return;
         long now = p.level().getGameTime();
         switch (s.prologue) {
             case NOT_STARTED -> {
@@ -92,10 +94,20 @@ final class Prologue {
         }
     }
 
+    /**
+     * In Carillon (SPEC §16.4) the opening starts the story: a player who hasn't begun it (or an older save still
+     * waiting for the old pillar) is the opening's, and the prologue's own first beats never run there.
+     */
+    static boolean openingOwns(ServerPlayer p, StoryProgress s) {
+        return (s.prologue == StoryProgress.Prologue.NOT_STARTED || s.prologue == StoryProgress.Prologue.GLITCHED)
+                && dev.awaken.core.api.CityHooks.startPoint(p) != null;
+    }
+
     /** Punching trees counts as "normal Minecraft" too: the pillar rises a little sooner. */
     static void onBreak(BreakBlockEvent event) {
         if (!(event.getPlayer() instanceof ServerPlayer p) || !storyOn()) return;
         StoryProgress s = progress(p);
+        if (openingOwns(p, s)) return;
         if (s.prologue == StoryProgress.Prologue.GLITCHED && event.getState().is(BlockTags.LOGS)
                 && p.level().getGameTime() - s.prologueSince > 20 * 30) {
             // never teleport or open gates inside the break event: the break is still running
@@ -116,6 +128,7 @@ final class Prologue {
         Vec3 look = p.getLookAngle().multiply(1, 0, 1).normalize();
         if (look.lengthSqr() < 0.01) look = new Vec3(1, 0, 0);
         BlockPos near = BlockPos.containing(p.position().add(look.scale(55)));
+        // (in Carillon the opening opens the story's gate in Choir Square itself: OpeningDirector, SPEC §16.4)
         // one floor: the Ritual of the Bell's hall (docs/proposals/the-ritual.md); old worlds keep their three-floor crypt
         var id = GateHooks.openScripted(p, "awaken:bell_crypt", 0, near, 1);
         if (id.isEmpty()) {
@@ -272,12 +285,22 @@ final class Prologue {
         StoryProgress s = progress(p);
         if (s.prologue != StoryProgress.Prologue.ACCEPTING || Progression.profile(p).awakened()) return;
         boolean ritual = Ritual.storyGate(p) >= 0;
+        // asked before the awakening: the opening's hook counts this player as its own until the Accept
+        boolean opening = dev.awaken.core.api.OpeningHooks.inOpening(p);
         Progression.awaken(p); // pays everything the prologue banked: kills, floors, the Satchel's claim
         Progression.topUpToLevel(p, WAKE_LEVEL, Progression.XpSource.STORY);
-        s.prologue = StoryProgress.Prologue.DONE;
+        s.prologue = opening ? StoryProgress.Prologue.WAKE : StoryProgress.Prologue.DONE;
+        if (opening) s.prologueSince = p.level().getGameTime();
         s.seen.add("revelation:prologue_accept");
         sync(p);
         StoryModule.sendSeen(p); // the Codex shows the acceptance right away, not after a relog
+        if (opening) {
+            // Carillon (SPEC §16.4): you wake in the Association's infirmary, not at the gate's mouth; the opening takes
+            // you there from the black on its next tick (the black stays until its own wake opens your eyes)
+            p.setHealth(p.getMaxHealth());
+            liftTheBlack(p);
+            return;
+        }
         ServerLevel overworld = p.level().getServer().overworld();
         p.teleportTo(overworld, s.returnX, s.returnY, s.returnZ, Set.<Relative>of(), p.getYRot(), 0, true);
         p.setHealth(p.getMaxHealth());

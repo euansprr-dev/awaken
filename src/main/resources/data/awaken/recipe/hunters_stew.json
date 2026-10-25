@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "awaken_meals",
+  "ingredients": [
+    "minecraft:bowl",
+    "minecraft:cooked_beef",
+    "minecraft:carrot",
+    "minecraft:baked_potato",
+    "awaken:sunleaf"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:hunters_stew"
+  }
+}

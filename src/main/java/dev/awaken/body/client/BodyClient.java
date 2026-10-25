@@ -21,8 +21,6 @@ import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
-import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
@@ -36,6 +34,9 @@ public final class BodyClient {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(BodyClient::onPayloads);
+        // the tactical sprint's line, just above the hotbar
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("body_sprint"), SprintBar::render));
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(BodyContent.DUST.get(), BodyDustParticle.Provider::new));
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, BodyAnims::modify));
@@ -44,8 +45,16 @@ public final class BodyClient {
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, BodyCamera::onAngles);
         bus.addListener(ComputeFovModifierEvent.class, BodyCamera::onFov);
-        bus.addListener(RenderFrameEvent.Pre.class, BodyCamera::onFrame);
-        bus.addListener(RenderHandEvent.class, BodyCamera::onHand);
+        // first person (core.api.FirstPerson): the moves' hands, and the grip's hands and feet on the line in the world
+        // (the feel settings' firstPersonMoves switches them all off)
+        dev.awaken.core.api.FirstPerson.view((pt, v) -> {
+            if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) BodyFp.viewPose(pt, v);
+        });
+        dev.awaken.core.api.FirstPerson.reducedMotion = dev.awaken.body.client.feel.FeelConfig::reduced;
+        dev.awaken.core.api.FirstPerson.touchesOn = dev.awaken.body.client.feel.FeelConfig::fpTouches;
+        dev.awaken.core.api.FirstPerson.stationsOn = dev.awaken.body.client.feel.FeelConfig::stations;
+        dev.awaken.core.api.FirstPerson.world("body_grip", 100, (pt, rig) -> dev.awaken.body.client.feel.FeelConfig.fpMoves() && GripView.pose(pt, rig));
+        dev.awaken.core.api.FirstPerson.world("body_moves", 90, (pt, rig) -> dev.awaken.body.client.feel.FeelConfig.fpMoves() && BodyFp.worldPose(pt, rig));
         // around the cast animations' own lean (LOWEST / HIGHEST), so the two nest
         bus.addListener(EventPriority.LOW, RenderPlayerEvent.Pre.class, BodyAnims::onPre);
         bus.addListener(EventPriority.HIGH, RenderPlayerEvent.Post.class, BodyAnims::onPost);
@@ -57,20 +66,36 @@ public final class BodyClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ClientMoves.reset();
             BodyAnims.reset();
+            RunnerFx.reset();
             TryDriver.release();
+            ActionCamera.reset();
+            dev.awaken.body.client.feel.ShoulderView.reset();
         });
+        // the action camera (SPEC §17.13): Shoulder Surfing's view when it's installed, else vanilla's third person
+        dev.awaken.body.client.feel.ShoulderView.init();
+        if (!dev.awaken.body.client.feel.ShoulderView.INSTALLED) {
+            bus.addListener(net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent.class, ActionCamera::onDetached);
+        }
         Body.installClient(new Body.ClientQuery() {
             @Override public boolean sliding() { return ClientMoves.sliding; }
             @Override public boolean tacticalSprinting() { return ClientMoves.tac; }
             @Override public boolean mantling() { return ClientMoves.mantling; }
             @Override public @Nullable Vec3 slideDirection() { return ClientMoves.slideDirection(); }
+            @Override public boolean wallRunning() { return RunnerMoves.state == RunnerMoves.State.RUN; }
+            @Override public boolean hanging() { return RunnerMoves.hanging(); }
+            @Override public boolean stairSliding() { return ClientMoves.sliding && ClientMoves.stairSliding; }
         }, ClientMoves::fell);
         MovementHooks.installClient(new MovementHooks.ClientAccess() {
             @Override public void castStarting(net.minecraft.world.entity.player.Player p, String powerId, String family, boolean motionPredicted) {
                 ClientMoves.castStarting(p, powerId, family, motionPredicted);
             }
+
+            @Override public boolean ownsMovementKey(net.minecraft.world.entity.player.Player p) {
+                return dev.awaken.body.ascent.client.AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.TETHER);
+            }
         });
         StatusSections.add(StatusSections.Tab.STATUS, new BodySection());
+        dev.awaken.body.ascent.client.AscentClient.init(modBus);
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
@@ -84,7 +109,12 @@ public final class BodyClient {
         if (mc.level == null || mc.player == null) return;
         ClientMoves.ticks++;
         BodyAnims.tick();
+        RunnerFx.tick();
         TryDriver.tick();
+        ActionCamera.tick(mc);
+        dev.awaken.body.client.feel.ShoulderView.tick(mc);
+        GripMoves.forget(mc.player);
+        GripView.tick(mc.player);
     }
 
     /** Someone else's move (ours were predicted), a trip or a momentum hit: animate it and kick up its dust. */
@@ -97,7 +127,18 @@ public final class BodyClient {
         switch (msg.what()) {
             case BodyPayloads.SEEN_TRIP -> BodyFx.hitBurst(e, dx, dz, true);
             case BodyPayloads.SEEN_MOMENTUM -> BodyFx.hitBurst(e, dx, dz, false);
+            case BodyPayloads.SEEN_RUNNER_END -> {
+                if (e != mc.player) BodyAnims.runnerEnd(e.getId());
+            }
             default -> {
+                int clip = msg.what() - BodyPayloads.SEEN_CLIP;
+                if (clip >= 0 && clip < dev.awaken.body.BodyClips.RUNNER.size()) {
+                    if (e != mc.player) {
+                        BodyAnims.runner(e.getId(), dev.awaken.body.BodyClips.RUNNER.get(clip));
+                        RunnerFx.seen(e, dev.awaken.body.BodyClips.RUNNER.get(clip), msg.yaw());
+                    }
+                    return;
+                }
                 Move m = Move.byId(msg.what());
                 if (m == null || e == mc.player) return;
                 BodyAnims.play(e.getId(), m, msg.yaw());

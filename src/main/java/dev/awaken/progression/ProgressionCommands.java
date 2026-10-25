@@ -34,6 +34,7 @@ final class ProgressionCommands {
                 return entries.size();
             }));
             root.then(Commands.literal("road").executes(c -> road(c.getSource().getPlayerOrException(), c.getSource())));
+            root.then(Commands.literal("xp").executes(c -> xpSources(c.getSource().getPlayerOrException(), c.getSource())));
             var admin = Commands.literal("admin").requires(AwakenCommands.admin());
             admin.then(Commands.literal("awaken").executes(c -> {
                 Progression.awaken(c.getSource().getPlayerOrException());
@@ -87,6 +88,22 @@ final class ProgressionCommands {
     }
 
     /** /awaken road: the steps around your level with their goals, and the lessons you are on. */
+    /** Where your XP came from so far, biggest first, with world XP split by its own sources (pacing telemetry). */
+    private static int xpSources(ServerPlayer sp, net.minecraft.commands.CommandSourceStack src) {
+        XpLedger l = Progression.xpLedger(sp);
+        double total = l.total();
+        if (total <= 0) {
+            src.sendSuccess(() -> Component.literal("No XP recorded yet."), false);
+            return 0;
+        }
+        src.sendSuccess(() -> Component.literal(String.format("XP so far: %.0f", total)), false);
+        l.bySource().entrySet().stream().sorted(java.util.Map.Entry.<Progression.XpSource, Double>comparingByValue().reversed()).forEach(e ->
+                src.sendSuccess(() -> Component.literal(String.format("  %-10s %8.0f  %4.1f%%", e.getKey().name().toLowerCase(), e.getValue(), 100 * e.getValue() / total)), false));
+        l.world().entrySet().stream().sorted(java.util.Map.Entry.<String, Double>comparingByValue().reversed()).forEach(e ->
+                src.sendSuccess(() -> Component.literal(String.format("    world/%-16s %8.0f", e.getKey(), e.getValue())), false));
+        return (int) Math.min(Integer.MAX_VALUE, Math.round(total));
+    }
+
     private static int road(ServerPlayer sp, net.minecraft.commands.CommandSourceStack src) {
         Profile p = Progression.profile(sp);
         int shown = 0;

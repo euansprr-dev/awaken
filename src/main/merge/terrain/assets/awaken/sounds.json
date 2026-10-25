@@ -30,5 +30,21 @@
         "name": "awaken:amb_shattered_highlands"
       }
     ]
+  },
+  "amb.frost_spires": {
+    "subtitle": "subtitles.awaken.amb.frost_spires",
+    "sounds": [
+      {
+        "name": "awaken:amb_frost_spires"
+      }
+    ]
+  },
+  "amb.mirror_marsh": {
+    "subtitle": "subtitles.awaken.amb.mirror_marsh",
+    "sounds": [
+      {
+        "name": "awaken:amb_mirror_marsh"
+      }
+    ]
   }
 }

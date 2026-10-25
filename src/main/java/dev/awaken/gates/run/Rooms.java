@@ -110,7 +110,7 @@ public final class Rooms {
         int lv = g.scripted ? 0 : Progression.contentLevel(g.plan.rank());
         LivingEntity e;
         if (role == MobRole.Role.BOSS) {
-            String boss = f.area == 1 && g.plan.is(Twist.GATE_WITHIN) ? null : g.plan.boss();
+            String boss = f.area == 1 && g.plan.is(Twist.GATE_WITHIN) ? null : g.plan.lordId();
             e = boss == null ? MobHooks.spawnThemed(level, themeOf(g, f).themeId(), MobRole.Role.WARDEN, pos, lv, tags(g, f), g.key())
                     : MobHooks.spawnBoss(level, boss, pos, lv, g.key());
         } else {
@@ -215,6 +215,7 @@ public final class Rooms {
             case BOSS -> {
                 gatherParty(level, p, g, f, r);
                 lock(level, g, f, r, true);
+                skyEdge(level, g, f);
                 Twists.bossArena(level, p, g, f, r);
             }
             default -> {
@@ -241,6 +242,7 @@ public final class Rooms {
         } else if (r.type == Room.Type.BOSS && !(g.plan.friendly() && f.area == 0) && !(f.area == 0 ? g.bossDead : g.annexBossDead)) {
             gatherParty(level, p, g, f, r);
             lock(level, g, f, r, true);
+            skyEdge(level, g, f);
             if (GateMobs.alive(new GateMobs.Key(g.id, f.area, f.floor, r.id)) == 0) Twists.bossArena(level, p, g, f, r);
         }
     }
@@ -252,6 +254,15 @@ public final class Rooms {
      * An arena or the Lord's room seals: the party isn't locked out (SPEC "Together"). Party members on the same floor
      * nearby who aren't in the room yet step through with the one who triggered it.
      */
+    /** The Sky Leviathan's trial: everyone on the floor reaches the open sky's edge (the Ascent gives flight there). */
+    private static void skyEdge(ServerLevel level, GateRecord g, FloorLayout f) {
+        if (!g.plan.skybornTrial() || f.area != 0) return;
+        for (ServerPlayer o : level.players()) {
+            RunState run = Runs.run(o);
+            if (run.gateId == g.id && run.area == f.area && run.floor == f.floor) dev.awaken.core.api.TrialHooks.atEdge(o, dev.awaken.core.api.TrialHooks.SKYBORN);
+        }
+    }
+
     static void gatherParty(ServerLevel level, ServerPlayer p, GateRecord g, FloorLayout f, Room r) {
         for (java.util.UUID u : List.copyOf(g.inside)) {
             if (u.equals(p.getUUID())) continue;

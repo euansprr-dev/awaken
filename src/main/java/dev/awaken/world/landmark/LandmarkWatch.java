@@ -101,7 +101,7 @@ final class LandmarkWatch {
     }
 
     /**
-     * The player reached landmark {@code id} of {@code kind}: remembered (no more Now line, Scanner omen or marker
+     * The player reached landmark {@code id} of {@code kind}: remembered (no more Horizon line, Scanner omen or marker
      * whisper for it), and the first of its kind is a discovery with a toast. Returns false if it was already known.
      */
     static boolean reach(ServerPlayer p, LandmarkKind kind, String id) {
@@ -116,7 +116,7 @@ final class LandmarkWatch {
         if (at != null) m.place(id, kind, at);
         Landmarks.sync(p);
         if (m.whispered.equals(id)) m.whispered = "";
-        LandmarkNow.forget(p.getUUID());
+        LandmarkHorizon.forget(p.getUUID());
         Scanning.forget(p.getUUID());
         Progression.count(p, "awaken:landmarks_reached");
         boolean fresh = Progression.discover(p, kind.discoveryKey(), Landmarks.DISCOVERY);

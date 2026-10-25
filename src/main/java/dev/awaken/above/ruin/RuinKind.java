@@ -9,7 +9,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 
-/** The four kinds of Precursor ruin in the overworld, plus the guaranteed vault near spawn. */
+/** The five kinds of Precursor ruin in the overworld, plus the guaranteed vault near spawn. */
 public enum RuinKind implements StringRepresentable {
     VAULT("vault", "Sealed Vault", "precursor_vault", "precursor_vaults", PrecursorLogs.Pool.UNKNOWN,
             "Something sealed is waiting."),
@@ -20,7 +20,10 @@ public enum RuinKind implements StringRepresentable {
     MONOLITH("monolith", "Monolith", "precursor_monolith", "precursor_monoliths", PrecursorLogs.Pool.KEEPER,
             "A tall shadow stands over the sand."),
     SPAWN_VAULT("spawn_vault", "Sealed Vault", "precursor_spawn_vault", "precursor_spawn_vault", PrecursorLogs.Pool.UNKNOWN,
-            "Something sealed is close. It's been waiting for you.");
+            "Something sealed is close. It's been waiting for you."),
+    /** A Precursor pylon in the woods with platforms spiralling up it to a crown (SPEC §17.11): a rope's climb. */
+    SPIRE("tether_spire", "Tether Spire", "precursor_tether_spire", "precursor_tether_spires", PrecursorLogs.Pool.ASCENDANT,
+            "Something tall hums between the trees.");
 
     public static final Codec<RuinKind> CODEC = StringRepresentable.fromEnum(RuinKind::values);
 

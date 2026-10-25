@@ -49,6 +49,12 @@ public final class ClientMoves {
     private static double expectH;
     static boolean slideFromTac;
     private static boolean slideWasSprinting;
+    // stair slide (SPEC §17.22): down a run of stairs or slabs on the line through the step noses
+    static boolean stairSliding;
+    private static int stairTicks;
+    private static double stairV, stairFallX, stairFallZ;
+    private static final BodyRules.StairProfile STAIRS = new BodyRules.StairProfile();
+    private static final double[] FALL = new double[2], WAY = new double[2], STEP = new double[3], ACC = new double[2];
     // mantle
     static boolean mantling;
     static int mantleStart = -100, mantleEnd = -100, mantleAge;
@@ -84,10 +90,13 @@ public final class ClientMoves {
         sprintWas = sprintKey;
         if (p.mayFly()) lastFly = ticks;
         if (p.isFallFlying()) lastGlide = ticks;
-        if (!Progression.profile(p).awakened()) {
-            if (tac || sliding || mantling) stopAll(p);
-            return;
-        }
+        // the Runner's Kit (SPEC §16.3): every move from the first second; without it, nothing until the awakening
+        boolean kit = dev.awaken.body.BodyConfig.runnersKit();
+        boolean awakened = kit || Progression.profile(p).awakened();
+        // the one-button free-run (SPEC §17.14): sprint held with forward reads the ground ahead
+        FreeRun.begin(p, k);
+        FreeRun.climb(p);
+        if (!awakened && (tac || sliding || mantling)) stopAll(p);
         if (jumpSuppressed) {
             if (jump) in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift());
             else jumpSuppressed = false;
@@ -100,34 +109,67 @@ public final class ClientMoves {
             slideTick(p, in, jumpPressed);
             return;
         }
-        boolean off = off(p);
-        if (tac) tacTick(p, off);
-        if (off) return;
-        if (sprintPressed) {
-            if (!tac && ticks - sprintTapAt <= BodyRules.TAC_DOUBLE_TAP) {
-                startTac(p);
-                sprintTapAt = -100;
-            } else {
-                sprintTapAt = ticks;
+        if (RunnerMoves.active()) {
+            if (kit) RunnerMoves.onInput(p, in, jumpPressed, shiftPressed);
+            else RunnerMoves.stop(p, "kit off");
+            return;
+        }
+        if (awakened) {
+            boolean off = off(p);
+            if (tac) tacTick(p, off);
+            if (!off) {
+                if (sprintPressed) {
+                    if (!tac && ticks - sprintTapAt <= BodyRules.TAC_DOUBLE_TAP) {
+                        startTac(p);
+                        sprintTapAt = -100;
+                    } else {
+                        sprintTapAt = ticks;
+                    }
+                }
+                if ((jumpPressed || FreeRun.held) && !k.backward() && canMantle(p)) {
+                    BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
+                    if (l != null) {
+                        startMantle(p, in, l);
+                        return;
+                    }
+                }
+                if (shiftPressed && canSlide(p)) {
+                    startSlide(p, in);
+                    return;
+                }
+                if (kit && FreeRun.ground(p, p.level(), CollisionContext.of(p), ticks)) return;
             }
         }
-        if (jumpPressed && !k.backward() && canMantle(p)) {
-            BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
-            if (l != null) {
-                startMantle(p, in, l);
-                return;
-            }
-        }
-        if (shiftPressed && canSlide(p)) startSlide(p, in);
+        if (kit) RunnerMoves.onInput(p, in, jumpPressed, shiftPressed);
+    }
+
+    /** A move's own jump (a wall jump, a climb): holding the key through it doesn't hop again on landing. */
+    static void suppressJump() {
+        jumpSuppressed = true;
     }
 
     static boolean off(LocalPlayer p) {
         return p.isPassenger() || p.isSleeping() || p.isSpectator() || !p.isAlive() || p.getAbilities().flying || p.isFallFlying()
-                || Veil.isSpirit(p);
+                || Veil.isSpirit(p) || dev.awaken.body.ascent.client.AscentMoves.active();
+    }
+
+    /** An Ascent state takes the body into the air (a rope, wings): whatever grounded move was running stops. */
+    public static void ascentStarting(LocalPlayer p) {
+        stopAll(p);
+        lastFly = ticks; // its landing is the Ascent's, never a second roll here
+    }
+
+    /** An Ascent state landed hard: the soft-landing roll's clip, sound and ring (the Ascent decided the landing). */
+    public static void ascentRoll(LocalPlayer p) {
+        rollAt = ticks;
+        trace("roll out of the Ascent");
+        BodyAnims.play(p.getId(), Move.ROLL, p.getYRot());
+        BodyFx.sound(p, BodyContent.ROLL.get(), 0.9F, 1F);
+        BodyFx.rollRing(p);
     }
 
     /** The same keys with jump and shift replaced (cached: nothing allocated per tick). */
-    private static Input with(Input k, boolean jump, boolean shift) {
+    static Input with(Input k, boolean jump, boolean shift) {
         int i = (k.forward() ? 1 : 0) | (k.backward() ? 2 : 0) | (k.left() ? 4 : 0) | (k.right() ? 8 : 0) | (jump ? 16 : 0) | (shift ? 32 : 0)
                 | (k.sprint() ? 64 : 0);
         Input c = INPUTS[i];
@@ -178,7 +220,7 @@ public final class ClientMoves {
         trace("tactical sprint ends after " + (ticks - tacStart));
         tac = false;
         tacEnd = ticks;
-        tacReadyAt = ticks + BodyRules.TAC_RECHARGE;
+        tacReadyAt = ticks + BodyRules.tacRecharge(p);
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(BodyRules.TAC_ID);
         BodyAnims.stop(p.getId(), Move.TACTICAL_SPRINT);
@@ -194,8 +236,16 @@ public final class ClientMoves {
     // ---- slide ------------------------------------------------------------------------------------------------------
 
     private static boolean canSlide(LocalPlayer p) {
-        return Body.unlocked(p, Move.SLIDE) && p.onGround() && (p.isSprinting() || tac) && !p.isInLiquid() && !p.isUsingItem()
+        return Body.unlocked(p, Move.SLIDE) && (p.onGround() || onStairs(p)) && (p.isSprinting() || tac) && !p.isInLiquid() && !p.isUsingItem()
                 && ticks >= slideReadyAt && !mantling;
+    }
+
+    /** Running down stairs the feet leave each step: a slide still starts when a run is under them. */
+    private static boolean onStairs(LocalPlayer p) {
+        Vec3 v = p.getDeltaMovement();
+        double hs = v.horizontalDistance();
+        if (hs < 0.02) return false;
+        return BodyRules.stairStart(p.level(), CollisionContext.of(p), STAIRS, p.getX(), p.getY(), p.getZ(), v.x / hs, v.z / hs, FALL);
     }
 
     private static void startSlide(LocalPlayer p, ClientInput in) {
@@ -217,6 +267,8 @@ public final class ClientMoves {
         slideX = dx;
         slideZ = dz;
         slideFromTac = fromTac;
+        stairSliding = false;
+        stairTicks = 0;
         // crawl height now, so this very tick already fits under a gap
         p.setForcedPose(Pose.SWIMMING);
         p.setPose(Pose.SWIMMING);
@@ -241,15 +293,25 @@ public final class ClientMoves {
             endSlide(p, true, "pushed");
             return;
         }
-        if (slideAge > 1 && p.horizontalCollision && !p.minorHorizontalCollision) { // a wall stops it, with a thud
+        if (!stairSliding && slideAge > 1 && p.horizontalCollision && !p.minorHorizontalCollision) { // a wall stops it, with a thud
             endSlide(p, true, "wall");
             BodyFx.sound(p, BodyContent.IMPACT.get(), 0.35F, 1.45F);
             BodyFx.kick(p, -slideX, -slideZ);
             return;
         }
-        slideAir = p.onGround() ? 0 : slideAir + 1;
-        if (slideAir > 2 || p.isInLiquid() || off(p) || slideAge >= BodyRules.SLIDE_TICKS) {
-            endSlide(p, true, slideAge >= BodyRules.SLIDE_TICKS ? "done" : slideAir > 2 ? "airborne" : "off");
+        // the top of a run (or a slide started on one): the stair slide takes over, its own speed and no time limit
+        if (!stairSliding && stairTicks < BodyRules.STAIR_MAX_TICKS
+                && BodyRules.stairStart(p.level(), CollisionContext.of(p), STAIRS, p.getX(), p.getY(), p.getZ(), slideX, slideZ, FALL)) {
+            stairSliding = true; // the 6 s of run are the whole slide's, landings and all
+            stairV = slideSpeed;
+            stairFallX = FALL[0];
+            stairFallZ = FALL[1];
+            trace("stair slide");
+        }
+        slideAir = p.onGround() || stairSliding ? 0 : slideAir + 1;
+        boolean done = !stairSliding && slideAge >= BodyRules.SLIDE_TICKS;
+        if (slideAir > 2 || p.isInLiquid() || off(p) || done) {
+            endSlide(p, true, done ? "done" : slideAir > 2 ? "airborne" : "off");
             return;
         }
         if (jumpPressed) {
@@ -260,7 +322,47 @@ public final class ClientMoves {
             in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift()); // under a gap: no jump into the ceiling
         }
         in.keyPresses = with(in.keyPresses, in.keyPresses.jump(), false);
-        applySlide(p);
+        if (stairSliding) applyStairs(p, in);
+        else applySlide(p);
+    }
+
+    /**
+     * One tick down the run: the way bends onto the fall line, the speed tends to the run's own, the body moves along
+     * the way here and vanilla's move takes it down onto the line through the step noses (its collisions, its landing).
+     */
+    private static void applyStairs(LocalPlayer p, ClientInput in) {
+        stairTicks++;
+        BodyFp.stairTick(p);
+        WAY[0] = slideX;
+        WAY[1] = slideZ;
+        BodyRules.stairBend(WAY, stairFallX, stairFallZ);
+        slideX = WAY[0];
+        slideZ = WAY[1];
+        stairV = BodyRules.stairSpeed(stairV);
+        if (stairTicks > BodyRules.STAIR_MAX_TICKS
+                || !BodyRules.stairStep(p.level(), CollisionContext.of(p), STAIRS, p.getX(), p.getY(), p.getZ(), slideX, slideZ, stairV, STEP)) {
+            runOut();
+            applySlide(p);
+            return;
+        }
+        p.setPos(STEP[0], p.getY(), STEP[2]);
+        RunnerMoves.inputAccel(p, in, ACC);
+        p.setDeltaMovement(-ACC[0], STEP[1] - p.getY(), -ACC[1]);
+        p.resetFallDistance();
+        slideSpeed = stairV;
+        expectH = 0.15; // only the input's leftover moves the body horizontally after this
+        BodyFx.slideSpray(p, slideX, slideZ, (float) (stairV / BodyRules.SLIDE_V0));
+        if (STAIRS.last) runOut();
+    }
+
+    /** The bottom of a run: the slide's last ticks, its own decay from the speed it has now, carry the body out. */
+    private static void runOut() {
+        if (!stairSliding) return;
+        BodyFp.stairEnd();
+        stairSliding = false;
+        slideAge = BodyRules.SLIDE_TICKS - BodyRules.STAIR_RUNOUT;
+        slideV0 = stairV / (1 - BodyRules.SLIDE_FADE * slideAge / (double) BodyRules.SLIDE_TICKS);
+        trace("stair slide run-out after " + stairTicks);
     }
 
     private static void applySlide(LocalPlayer p) {
@@ -278,13 +380,16 @@ public final class ClientMoves {
 
     /** The slide-cancel: up and out with the slide's speed, plus a little. Vanilla's own jump does the rest. */
     private static void jumpOut(LocalPlayer p, ClientInput in) {
-        double speed = BodyRules.slideSpeed(slideAge, slideV0) + BodyRules.SLIDE_JUMP;
+        boolean riding = stairSliding && !p.onGround(); // on a run's noses the feet may be just off the steps
+        double speed = (stairSliding ? stairV : BodyRules.slideSpeed(slideAge, slideV0)) + BodyRules.SLIDE_JUMP;
         endSlide(p, true, "jump out");
         p.setPose(Pose.STANDING);
         Vec3 v = p.getDeltaMovement();
         p.setDeltaMovement(slideX * speed, v.y, slideZ * speed);
-        if (!in.keyPresses.jump()) in.keyPresses = with(in.keyPresses, true, false);
+        if (riding) p.jumpFromGround();
+        else if (!in.keyPresses.jump()) in.keyPresses = with(in.keyPresses, true, false);
         slideJumpAt = ticks;
+        BodyFp.slideJump();
         trace("slide-cancel jump");
         BodyFx.sound(p, BodyContent.SPRINT.get(), 0.6F, 1.25F);
         BodyFx.kick(p, slideX, slideZ);
@@ -294,8 +399,10 @@ public final class ClientMoves {
         if (!sliding) return;
         trace("slide ends (" + why + ") after " + slideAge);
         sliding = false;
+        stairSliding = false;
+        BodyFp.stairEnd();
         slideEnd = ticks;
-        slideReadyAt = ticks + BodyRules.SLIDE_COOLDOWN;
+        slideReadyAt = ticks + BodyRules.slideCooldown(Body.runnerRank(p));
         if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null); // vanilla keeps a crawl under a gap
         BodyAnims.stop(p.getId(), Move.SLIDE);
         if (slideWasSprinting && tellServer && p.input.hasForwardImpulse() && !p.isInLiquid()) p.setSprinting(true);
@@ -404,6 +511,7 @@ public final class ClientMoves {
             }
             case ROLL -> {
             }
+            default -> RunnerMoves.refused(move);
         }
     }
 
@@ -433,7 +541,8 @@ public final class ClientMoves {
 
     /** The player entity was replaced (respawn, dimension change): moves stop, cooldowns and the clock stay. */
     static void forgetMoves() {
-        tac = sliding = mantling = false;
+        RunnerMoves.reset();
+        tac = sliding = mantling = stairSliding = false;
         jumpSuppressed = false;
         if (tacEnd < tacStart) tacEnd = ticks;
         if (slideEnd < slideStart) slideEnd = ticks;
@@ -441,7 +550,8 @@ public final class ClientMoves {
 
     /** Forget everything (logout, a new world). */
     static void reset() {
-        tac = sliding = mantling = false;
+        RunnerMoves.reset();
+        tac = sliding = mantling = stairSliding = false;
         jumpSuppressed = false;
         tacReadyAt = slideReadyAt = 0;
         rollAt = tacStart = tacEnd = slideStart = slideEnd = mantleStart = mantleEnd = slideJumpAt = -100;

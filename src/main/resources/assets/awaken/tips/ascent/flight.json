@@ -1,0 +1,10 @@
+{
+  "text": "Gliding, press {key.jump} to fly: {key.forward} thrusts, {key.sprint} boosts, {key.jump} and {key.sneak} climb and sink, {key.left}×2 or {key.right}×2 rolls.",
+  "short": "{key.jump} while gliding",
+  "priority": 70,
+  "show_for": 200,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 600,
+  "awake": "after"
+}

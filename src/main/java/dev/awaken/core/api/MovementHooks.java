@@ -6,7 +6,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Awakened Body's moves (roll, tactical sprint, slide, mantle) as other modules see them: powers asks whether the
+ * The Awakened Body's moves (roll, tactical sprint, slide, mantle, and the Runner's wall-run and ledge hang) as other modules see them: powers asks whether the
  * caster is sliding for its family twists and chain refunds, and tells the body when a cast goes out (a cast ends a
  * tactical sprint; a mid-slide cast never ends the slide). Installed by the body module; the defaults know no moves,
  * so powers works the same without it.
@@ -28,6 +28,12 @@ public final class MovementHooks {
         default @Nullable Vec3 slideDirection(Player p) { return null; }
         /** A power is being cast (server, before its checks): a tactical sprint ends and the cast goes off at once. */
         default void castStarting(ServerPlayer p) {}
+        /** Running along a wall (the Runner's wall-run or Wall Stride). */
+        default boolean wallRunning(Player p) { return false; }
+        /** Hanging from a ledge (shimmying, or on the way into or between holds). */
+        default boolean hanging(Player p) { return false; }
+        /** Sliding down a run of stairs or slabs (a slide, so {@link #sliding} is true too; SPEC §17.22). */
+        default boolean stairSliding(Player p) { return false; }
     }
 
     /** Client side: the local player's power key sent a cast. */
@@ -37,6 +43,12 @@ public final class MovementHooks {
          * before the cast's effects are predicted. {@code family} is the power family's enum name.
          */
         default void castStarting(Player p, String powerId, String family, boolean motionPredicted) {}
+
+        /**
+         * The movement key belongs to the body for this player (the Ascent's rope, once the Tether is held): the
+         * movement slot's power steps aside and never casts from it.
+         */
+        default boolean ownsMovementKey(Player p) { return false; }
     }
 
     private static Access access = new Access() {};
@@ -75,11 +87,31 @@ public final class MovementHooks {
         return access.slideDirection(p);
     }
 
+    /** Running along a wall (server side, and the client for its own player). */
+    public static boolean wallRunning(Player p) {
+        return access.wallRunning(p);
+    }
+
+    /** Hanging from a ledge (server side, and the client for its own player). */
+    public static boolean hanging(Player p) {
+        return access.hanging(p);
+    }
+
+    /** Sliding down stairs or slabs (server side, and the client for its own player): first-person animation hooks here. */
+    public static boolean stairSliding(Player p) {
+        return access.stairSliding(p);
+    }
+
     public static void castStarting(ServerPlayer p) {
         access.castStarting(p);
     }
 
     public static void clientCastStarting(Player p, String powerId, String family, boolean motionPredicted) {
         client.castStarting(p, powerId, family, motionPredicted);
+    }
+
+    /** Client: whether the body owns the movement key for its own player (see {@link ClientAccess#ownsMovementKey}). */
+    public static boolean clientOwnsMovementKey(Player p) {
+        return client.ownsMovementKey(p);
     }
 }

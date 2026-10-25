@@ -1,0 +1,665 @@
+<title>AWAKEN Arms</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the Awaken plan-page system (rail + reading column); tick-scale diagrams for timing, a game-frame mockup for the HUD */
+:root{
+  --bg:#f2f5f8; --panel:#ffffff; --ink:#0f1a28; --muted:#566273; --line:#d6dde6; --sky:#e6eef5; --stone:#c9d0d8;
+  --aether:#127e9c; --aether-soft:#dcf0f6; --gold:#9c6f12; --gold-soft:#f6ecd5; --ember:#b23a26; --ember-soft:#f8e2dd;
+  --leaf:#2f7d4a; --leaf-soft:#e0f1e6; --rare:#2d63b8; --rare-soft:#e0e9f8; --epic:#7a3fb0; --epic-soft:#efe4f8;
+  --holo:#3f8fd6; --frame:#1b2736; --frame-ink:#e4ecf5;
+  --display:"Unbounded", "Avenir Next", "Segoe UI", sans-serif;
+  --body:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0a111b; --panel:#111b28; --ink:#e4ecf5; --muted:#93a1b3; --line:#243244; --sky:#16212f; --stone:#2a3646;
+  --aether:#4cc3e2; --aether-soft:#10303c; --gold:#e2b450; --gold-soft:#33280f; --ember:#ef7b62; --ember-soft:#3a1a14;
+  --leaf:#6cc98b; --leaf-soft:#12301d; --rare:#7aa7ef; --rare-soft:#142540; --epic:#b98be6; --epic-soft:#2a1a3a;
+  --holo:#7fc3ff; --frame:#05090f; --frame-ink:#e4ecf5; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0a111b; --panel:#111b28; --ink:#e4ecf5; --muted:#93a1b3; --line:#243244; --sky:#16212f; --stone:#2a3646;
+  --aether:#4cc3e2; --aether-soft:#10303c; --gold:#e2b450; --gold-soft:#33280f; --ember:#ef7b62; --ember-soft:#3a1a14;
+  --leaf:#6cc98b; --leaf-soft:#12301d; --rare:#7aa7ef; --rare-soft:#142540; --epic:#b98be6; --epic-soft:#2a1a3a;
+  --holo:#7fc3ff; --frame:#05090f; --frame-ink:#e4ecf5; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:190px minmax(0,1fr);gap:40px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)} .rail{display:none}}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:40px}
+.rail nav{border-left:2px solid var(--line);margin-left:8px;padding-left:16px;display:flex;flex-direction:column;gap:11px}
+.rail a{color:var(--muted);text-decoration:none;font-size:13px;display:block}
+.rail a:hover,.rail a:focus-visible{color:var(--aether)}
+.rail .y{font:500 11px/1 var(--mono);color:var(--aether);letter-spacing:.04em;display:block;margin-bottom:3px}
+main{min-width:0;padding-top:40px}
+header.hero{padding:8px 0 28px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--aether)}
+h1{font:700 clamp(32px,6vw,54px)/1.04 var(--display);letter-spacing:-.01em;margin:14px 0;text-wrap:balance}
+h1 span{color:var(--gold)}
+.lede{font-size:18px;max-width:66ch}
+h2{font:700 22px/1.2 var(--display);margin:56px 0 8px;text-wrap:balance}
+h2 .n{font:500 13px var(--mono);color:var(--aether);margin-right:10px;vertical-align:3px}
+h3{font:600 17px/1.3 var(--body);margin:28px 0 8px;text-wrap:balance}
+p{max-width:72ch;margin:8px 0}
+.small{font-size:13px;color:var(--muted)}
+ul{max-width:72ch;padding-left:20px;margin:8px 0}
+li{margin:4px 0}
+code,.mono{font-family:var(--mono);font-size:.86em}
+a{color:var(--aether)}
+a:focus-visible{outline:2px solid var(--aether);outline-offset:2px}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font:500 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.k{font-weight:600;white-space:nowrap}
+td.num,th.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
+.p-keep{background:var(--leaf-soft);color:var(--leaf)}
+.p-ext{background:var(--aether-soft);color:var(--aether)}
+.p-build{background:var(--gold-soft);color:var(--gold)}
+.p-fix{background:var(--ember-soft);color:var(--ember)}
+.gap{color:var(--ember);font-weight:600}
+.fig{margin:16px 0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 14px 12px;min-width:0}
+.fig .scroll{overflow-x:auto}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.45;max-width:80ch}
+.t{font:500 10.5px var(--mono);fill:var(--muted)}
+.tl{font:600 12px var(--body);fill:var(--ink)}
+.tb{font:700 13px var(--display);fill:var(--ink)}
+.f-ink{fill:var(--ink)} .f-muted{fill:var(--muted)} .f-line{fill:var(--line)} .f-panel{fill:var(--panel)} .f-bg{fill:var(--bg)} .f-sky{fill:var(--sky)} .f-stone{fill:var(--stone)}
+.f-aether{fill:var(--aether)} .f-aether-s{fill:var(--aether-soft)} .f-gold{fill:var(--gold)} .f-gold-s{fill:var(--gold-soft)}
+.f-ember{fill:var(--ember)} .f-ember-s{fill:var(--ember-soft)} .f-leaf{fill:var(--leaf)} .f-leaf-s{fill:var(--leaf-soft)}
+.f-rare{fill:var(--rare)} .f-epic{fill:var(--epic)} .f-holo{fill:var(--holo)} .f-frame{fill:var(--frame)} .f-fink{fill:var(--frame-ink)}
+.s-ink{stroke:var(--ink)} .s-muted{stroke:var(--muted)} .s-line{stroke:var(--line)} .s-aether{stroke:var(--aether)} .s-gold{stroke:var(--gold)} .s-ember{stroke:var(--ember)} .s-leaf{stroke:var(--leaf)} .s-holo{stroke:var(--holo)} .s-fink{stroke:var(--frame-ink)}
+.nofill{fill:none}
+/* options */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}
+.opt{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.opt.rec{border-color:var(--gold);box-shadow:inset 0 3px 0 var(--gold)}
+.opt h4{font:700 15px/1.3 var(--display);margin:0 0 6px}
+.opt .tag{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.opt p{font-size:13.5px;margin:6px 0}
+.opt .con{color:var(--muted)}
+/* verbs */
+.verbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
+.verb{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.verb .key{display:inline-block;font:500 12px var(--mono);border:1.5px solid var(--ink);border-bottom-width:3px;border-radius:5px;padding:2px 8px;margin:0 4px 6px 0}
+.verb h4{font:700 16px/1.2 var(--display);margin:4px 0 6px}
+.verb p{font-size:13.5px;margin:4px 0}
+/* archetype tiles */
+.arch{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:16px 0}
+.arch figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px 10px;min-width:0}
+.arch svg{display:block;width:100%;height:auto}
+.arch b{display:block;font-size:13px}
+.arch span{display:block;font-size:12px;color:var(--muted);line-height:1.4}
+.arch .slice{border-color:var(--gold);box-shadow:inset 0 3px 0 var(--gold)}
+/* walkthroughs */
+.walk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:12px 0 22px}
+@media (max-width:700px){.walk{grid-template-columns:minmax(0,1fr)}}
+.walk>div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:13.5px;min-width:0}
+.walk .lab{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+.walk .before .lab{color:var(--muted)} .walk .after{border-color:var(--aether)} .walk .after .lab{color:var(--aether)}
+.walk p{margin:4px 0}
+.decide{counter-reset:d;list-style:none;padding:0;max-width:78ch}
+.decide li{counter-increment:d;position:relative;padding:10px 0 10px 40px;border-bottom:1px solid var(--line)}
+.decide li::before{content:counter(d);position:absolute;left:0;top:9px;font:700 12px var(--display);color:var(--gold);width:26px;height:26px;border:1.5px solid var(--gold);border-radius:50%;display:grid;place-items:center}
+.decide .rec{color:var(--leaf);font-weight:600}
+.note{background:var(--aether-soft);border-radius:6px;padding:12px 16px;font-size:14px;max-width:78ch;margin:14px 0}
+.warn{background:var(--ember-soft);border-radius:6px;padding:12px 16px;font-size:14px;max-width:78ch;margin:14px 0}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:700px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:13.5px;min-width:0}
+.box h4{font:600 14px var(--body);margin:0 0 4px}
+@media (prefers-reduced-motion: no-preference){
+  .pulse{animation:pulse 2.4s ease-in-out infinite}
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+</style>
+
+<div class="wrap">
+<aside class="rail" aria-label="Sections">
+  <nav>
+    <a href="#ask"><span class="y">01</span>What you asked for</a>
+    <a href="#today"><span class="y">02</span>What fights are today</a>
+    <a href="#options"><span class="y">03</span>Three ways to do it</a>
+    <a href="#verbs"><span class="y">04</span>Three verbs</a>
+    <a href="#timing"><span class="y">05</span>Timing</a>
+    <a href="#read"><span class="y">06</span>Reading a fight</a>
+    <a href="#feel"><span class="y">07</span>The feel of a hit</a>
+    <a href="#hud"><span class="y">08</span>On screen</a>
+    <a href="#magic"><span class="y">09</span>Weapons and magic</a>
+    <a href="#weapons"><span class="y">10</span>The weapons</a>
+    <a href="#pipeline"><span class="y">11</span>Making 290 of them</a>
+    <a href="#system"><span class="y">12</span>How it's built</a>
+    <a href="#walk"><span class="y">13</span>Before and after</a>
+    <a href="#phases"><span class="y">14</span>Phases and gates</a>
+    <a href="#decide"><span class="y">15</span>Your decisions</a>
+  </nav>
+</aside>
+<main>
+<header class="hero">
+  <div class="eyebrow">AWAKEN · combat plan · for approval · 25 Oct 2026</div>
+  <h1>Arms: every fight a <span>duel you can read</span></h1>
+  <p class="lede">Three verbs on the mouse and the sprint key. Deflects that ring and stagger, dodges that slow the world for a beat, hits with real weight. Sixteen ways to fight and about 290 truly 3D weapons, each with its own ability, many of them fused with your powers. Built on the Ascent's feel, the Holo and the Hands plan, so it reads as one game.</p>
+  <p class="small">Plan only: no game code until you say yes. Full text: <code>docs/combat/PLAN.md</code> on branch <code>pack/combat-plan</code>. Labels: <b>verified</b> means read in the code or the 26.3 jars; <b>proposed</b> means designed, not built, nothing measured.</p>
+</header>
+
+<!-- 01 -->
+<h2 id="ask"><span class="n">01</span>What you asked for</h2>
+<p>A fight should feel like the movement already does: a different game. That means four things, and the plan treats each as a requirement.</p>
+<div class="grid2">
+  <div class="box"><h4>Survive by skill</h4>Parry, block and dodge on every melee weapon, a diamond sword included, so a boss is won by reading it.</div>
+  <div class="box"><h4>Feel every hit</h4>Hitting, being hit and blocking each have their own weight, sound, camera and reaction.</div>
+  <div class="box"><h4>Weapons worth finding</h4>Hundreds of 3D weapons with abilities, merged with the magic, found over time or hunted on purpose.</div>
+  <div class="box"><h4>Simple to play, deep to master</h4>Few keys, combos that flow, and a skill ceiling you climb for months.</div>
+</div>
+<h3>"Magical", as something you can see</h3>
+<div class="tbl"><table>
+<tr><th>Word</th><th>What a player sees or hears</th></tr>
+<tr><td class="k">A satisfying hit</td><td>On the same frame: both bodies freeze 45–220 ms by weight, three layers of sound (swish, the material struck, a sweetener), a camera kick along the swing, sparks of the right material, and the target recoiling in the blow's direction. A dagger and a maul feel different with your eyes closed.</td></tr>
+<tr><td class="k">A satisfying defence</td><td>A deflect rings, throws sparks off both blades and staggers the attacker. A block shudders the weapon in your hands. A perfect dodge slows the attacker for a beat.</td></tr>
+<tr><td class="k">Intuitive</td><td>Attack, guard, dodge. Everything else comes from context: how long you hold, when you press, where your body is.</td></tr>
+<tr><td class="k">A skill ceiling</td><td>Rhythm, deflect timing, perfect dodges, charge releases, cancels, strikes from a slide or a wall, Breaks, and powers woven into the blade.</td></tr>
+<tr><td class="k">"I didn't know this was possible"</td><td>Firing the rope at a Lord, reeling in and landing an Execution. A panicked Heat cast after a deflect that sets the riposte ablaze, and the System naming the Weave you just found.</td></tr>
+</table></div>
+<p class="small"><b>Not in this plan:</b> directional combat (For Honor style), a stamina bar, gore, any change to the Ascent's motion, PvP balance, bows and crossbows (later). <b>Must not break:</b> momentum hits, gear procs, power hit-stop, damage numbers, the free-run, the Ritual's fight, the gate run's rules, the 461 GameTests.</p>
+
+<!-- 02 -->
+<h2 id="today"><span class="n">02</span>What fights are today</h2>
+<p>Melee is vanilla's click-and-wait swing with our multipliers on top. There is no parry, no block of our own and no dodge. We worked a diamond sword against Gate Lords with the real numbers from the code (Lord health ×(1+0.075·lv)×14, damage ×(1+0.04·lv)×1.6, your stats at 3 points a level, full diamond armour).</p>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 290" role="img" aria-label="Seconds to kill each Lord compared with seconds until it kills you while you stand in its reach">
+  <!-- scale: 0..90 s over x 210..730 (5.78 px per s) -->
+  <g class="t">
+    <text x="210" y="272">0 s</text><text x="325" y="272">20</text><text x="441" y="272">40</text><text x="556" y="272">60</text><text x="672" y="272">80</text>
+  </g>
+  <g class="s-line" stroke-width="1">
+    <line x1="210" y1="20" x2="210" y2="258"/><line x1="326" y1="20" x2="326" y2="258"/><line x1="441" y1="20" x2="441" y2="258"/><line x1="557" y1="20" x2="557" y2="258"/><line x1="672" y1="20" x2="672" y2="258"/>
+  </g>
+  <!-- rows: label, kill bar (aether), die bar (ember) -->
+  <g>
+    <text class="tl" x="0" y="40">D Gearwright Colossus</text><text class="t" x="0" y="54">lv 17 · 1,083 HP</text>
+    <rect x="210" y="30" width="357" height="12" rx="2" class="f-aether"/><text class="t" x="573" y="40">61.8 s to kill (103 hits)</text>
+    <rect x="210" y="46" width="35" height="12" rx="2" class="f-ember"/><text class="t" x="251" y="56">~6 s to die · you took 11%</text>
+  </g>
+  <g>
+    <text class="tl" x="0" y="96">D Ember Tyrant*</text><text class="t" x="0" y="110">lv 17 · 956 HP</text>
+    <rect x="210" y="86" width="323" height="12" rx="2" class="f-aether"/><text class="t" x="539" y="96">55.8 s (93 hits)</text>
+    <rect x="210" y="102" width="6" height="12" rx="2" class="f-ember"/><text class="t" x="222" y="112">~1 s · you took 3.6%</text>
+  </g>
+  <g>
+    <text class="tl" x="0" y="152">B Gearwright Colossus</text><text class="t" x="0" y="166">lv 57 · 2,511 HP</text>
+    <rect x="210" y="142" width="376" height="12" rx="2" class="f-aether"/><text class="t" x="592" y="152">65 s (130 hits)</text>
+    <rect x="210" y="158" width="35" height="12" rx="2" class="f-ember"/><text class="t" x="251" y="168">~6 s · you took 11%</text>
+  </g>
+  <g>
+    <text class="tl" x="0" y="208">B Mirror Knight*</text><text class="t" x="0" y="222">lv 57 · 2,216 HP</text>
+    <rect x="210" y="198" width="512" height="12" rx="2" class="f-aether"/><text class="t" x="560" y="194">88.5 s (177 hits)</text>
+    <rect x="210" y="214" width="6" height="12" rx="2" class="f-ember"/><text class="t" x="222" y="224">~1 s · you took 2.3%</text>
+  </g>
+  <g>
+    <rect x="210" y="238" width="10" height="8" class="f-aether"/><text class="t" x="225" y="246">to kill it, perfect full-charge swings</text>
+    <rect x="530" y="238" width="10" height="8" class="f-ember"/><text class="t" x="545" y="246">until its basic melee kills you</text>
+  </g>
+</svg>
+</div>
+<figcaption>Numbers from <code>mobs/MobScaling.java</code>, <code>progression/Progression.java</code> and the bestiary. *Their held netherite axe and diamond sword probably add damage that the level scaling then multiplies (a suspected bug, settled first by a GameTest). Upgrades help little: Sharpness V, temper II and the Trophy Hall take your share from 11% to 19% of a Lord per life.</figcaption>
+</figure>
+<div class="warn"><b>Where it breaks:</b> not in the numbers but in the first unreadable swing. A ground Lord's basic melee is vanilla's: a hit every second in reach with <b>no wind-up</b> and no tell in the creature life layer. It is about 74% of the damage that kills you. The told abilities (14–58 tick wind-ups, marked ground) are the readable minority. A parry added to today's Lords would have nothing fair to read, so the plan changes the enemies too.</div>
+<h3>What's there, and what we do with it</h3>
+<div class="tbl"><table>
+<tr><th>Piece</th><th>What it does now (verified)</th><th>Plan</th></tr>
+<tr><td class="k">Player melee</td><td>Vanilla <code>Player.attack</code>; 16 damage listeners multiply it (momentum, VIT, gear, powers, crafts)</td><td><span class="pill p-ext">extend</span> Arms drives the swing; every listener keeps running</td></tr>
+<tr><td class="k">Defence</td><td>None for melee; Brace, Foresight, Veil Flicker are powers or gear; Dash is forward-only and lost to the rope once you have Tether</td><td><span class="pill p-build">build</span> guard, deflect, dodge</td></tr>
+<tr><td class="k">Hit-stop</td><td>Powers only: freezes the struck body 20–80 ms plus a shake, attacker only</td><td><span class="pill p-ext">extend</span> into one shared feel layer</td></tr>
+<tr><td class="k">Camera</td><td>Four separate writers; the Feel Director owns the Ascent only; the roll dip ignores reduced motion</td><td><span class="pill p-ext">extend</span> one camera voice</td></tr>
+<tr><td class="k">Getting hit</td><td>Vanilla hurt sound and tint; no direction, no low-health cue</td><td><span class="pill p-build">build</span></td></tr>
+<tr><td class="k">Ability telegraphs</td><td>Wind-ups 14–58 ticks, marked ground, aim locks, heavy names shown</td><td><span class="pill p-keep">keep</span> and extend to every attack</td></tr>
+<tr><td class="k">Damage numbers, plates</td><td>Light-stroke numbers by Force; Holo plates with a 10-segment bar</td><td><span class="pill p-ext">extend</span> DEFLECT/BREAK glyphs, posture bar</td></tr>
+<tr><td class="k">Weapons</td><td>18 Hunter items, vanilla-twin stats, flat 2D sprites, no abilities, never dropped; no 3D item anywhere</td><td><span class="pill p-fix">replace</span> with the Arms lines</td></tr>
+<tr><td class="k">Art tools</td><td><code>fauna_rig.py</code> builds 3D cuboid rigs with UVs, painting, clips, checks; audiokit synthesises and masters sound</td><td><span class="pill p-ext">extend</span> into the weapon pipeline</td></tr>
+<tr><td class="k">Animation</td><td>Player Animation Library (MIT, optional) for third-person casts and moves; Hands (first person) is a plan that keeps attacking vanilla</td><td><span class="pill p-ext">extend</span> both; Hands grows to weapons</td></tr>
+<tr><td class="k">Vanilla 26.3</td><td><code>blocks_attacks</code>, <code>attack_range</code>, <code>attack_animation</code>, spears, any-angle model elements, 2D-in-GUI / 3D-in-hand models</td><td><span class="pill p-keep">reuse</span> where it fits</td></tr>
+</table></div>
+
+<!-- 03 -->
+<h2 id="options"><span class="n">03</span>Three ways to do it</h2>
+<div class="opts">
+  <div class="opt"><span class="tag">A · repair</span><h4>Tell, block, shake</h4><p>Wind-ups on every boss swing, a shield-style block and parry on swords, melee hit-stop, a sound pass. About 4–6 hours.</p><p class="con">Bosses become survivable. Swings, weapons and combos stay vanilla: not "a different game".</p></div>
+  <div class="opt rec"><span class="tag">B · recommended</span><h4>Arms, our own combat</h4><p>A combat module with data-driven fighting styles, server-run swings, guard, deflect and dodge on every melee weapon, posture on enemies, one feel layer, generated 3D weapons and Weaves with the powers. Built inside Hands and the Player Animation Library.</p><p class="con">Biggest scope (§14). The slice proves the feel on one weapon family before anything scales, and A's fixes ship inside it.</p></div>
+  <div class="opt"><span class="tag">C · adopt</span><h4>Epic Fight or Better Combat</h4><p>Depend on a combat framework and theme around it.</p><p class="con">Its feel, not ours. Better Combat is All Rights Reserved and fought our feel in the pack review; Epic Fight is GPL-3 with its own animation stack, stamina and no 26.3 release.</p></div>
+</div>
+
+<!-- 04 -->
+<h2 id="verbs"><span class="n">04</span>Three verbs, no new keys</h2>
+<div class="verbs">
+  <div class="verb"><span class="key">Left mouse</span><h4>Strike</h4><p><b>Tap</b>: the weapon's chain of three or four strikes; keep tapping to continue.</p><p><b>Hold</b>: a heavy; release on the glint for a perfect one. Held past full charge with Resonance full: the weapon's <b>Art</b>.</p></div>
+  <div class="verb"><span class="key">Right mouse</span><h4>Guard</h4><p><b>The first 4 ticks</b> after the press deflect. <b>Held</b>: a block. Shields keep vanilla blocking and deflect too.</p></div>
+  <div class="verb"><span class="key">Sprint</span><span class="key">+ ← → ↓</span><h4>Dodge</h4><p>A 6-tick step-roll, 2.6 blocks, two charges. Sprint with forward still runs and free-runs. Vanilla and the Runner never use sprint with back or sideways.</p></div>
+  <div class="verb"><span class="key">Context</span><h4>Everything else</h4><p>Riposte after a deflect, Slipcut after a dodge, Execution on a Broken foe, Undercut from a slide, Plunge from a fall, Wall Cut, Reel Strike on the rope, Swoop from a glide, Weaves with a power.</p></div>
+</div>
+<p class="small">Optional settings: a rebindable Dodge key (unbound) or double-tap a direction; an optional lock-on key (unbound). Soft focus needs no key: the creature you strike becomes your focus, and your strikes turn toward it by at most 15°.</p>
+
+<!-- 05 -->
+<h2 id="timing"><span class="n">05</span>Timing: one table feeds everything</h2>
+<p>Each move is a row of ticks (20 a second). The same row drives the server's hit, the first-person clip, the third-person clip, the trail and the sound, so what you see is what hits. The swing starts on the frame you click: input never waits for an animation.</p>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 330" role="img" aria-label="Tick timelines for a strike, a guard raise and a dodge">
+  <!-- x = 150 + 40*tick, ticks 0..14 -->
+  <g class="t">
+    <text x="146" y="20">0</text><text x="226" y="20">2</text><text x="306" y="20">4</text><text x="386" y="20">6</text><text x="466" y="20">8</text><text x="546" y="20">10</text><text x="626" y="20">12</text><text x="706" y="20">14 ticks</text>
+  </g>
+  <g class="s-line"><line x1="150" y1="26" x2="150" y2="300"/><line x1="230" y1="26" x2="230" y2="300"/><line x1="310" y1="26" x2="310" y2="300"/><line x1="390" y1="26" x2="390" y2="300"/><line x1="470" y1="26" x2="470" y2="300"/><line x1="550" y1="26" x2="550" y2="300"/><line x1="630" y1="26" x2="630" y2="300"/></g>
+  <!-- strike -->
+  <text class="tl" x="0" y="54">Strike 1</text><text class="t" x="0" y="68">Longsword</text>
+  <rect x="150" y="40" width="80" height="24" class="f-sky"/><text class="t" x="158" y="56">wind-up</text>
+  <rect x="230" y="40" width="80" height="24" class="f-ember"/><text class="t" x="240" y="56" style="fill:var(--panel)">active</text>
+  <rect x="310" y="40" width="240" height="24" class="f-stone"/><text class="t" x="318" y="56">recovery</text>
+  <rect x="390" y="68" width="160" height="10" class="f-gold"/><text class="t" x="390" y="92">cadence window: press here for +8% and a faster next strike</text>
+  <path d="M150 34 l0 -6" class="s-ink" stroke-width="2"/><text class="t" x="154" y="34">click: the blade moves now</text>
+  <!-- guard -->
+  <text class="tl" x="0" y="134">Guard</text><text class="t" x="0" y="148">right mouse</text>
+  <rect x="150" y="120" width="160" height="24" class="f-aether"/><text class="t" x="158" y="136" style="fill:var(--panel)">deflect 0–3</text>
+  <rect x="310" y="120" width="420" height="24" class="f-aether-s"/><text class="t" x="318" y="136">block while held: light hits −70%, heavy hits break guard</text>
+  <rect x="310" y="148" width="120" height="10" class="f-leaf"/><text class="t" x="310" y="172">server grace ≤ 3 ticks for latency: the hit waits, a late press still counts</text>
+  <!-- dodge -->
+  <text class="tl" x="0" y="214">Dodge</text><text class="t" x="0" y="228">sprint + ← → ↓</text>
+  <rect x="150" y="200" width="200" height="24" class="f-leaf-s"/><text class="t" x="276" y="216">evade</text>
+  <rect x="150" y="200" width="120" height="24" class="f-leaf"/><text class="t" x="156" y="216" style="fill:var(--panel)">perfect 0–2</text>
+  <rect x="350" y="200" width="200" height="24" class="f-stone"/><text class="t" x="358" y="216">recovery</text>
+  <rect x="390" y="228" width="160" height="10" class="f-gold"/><text class="t" x="390" y="252">strike here: Slipcut</text>
+  <!-- legend -->
+  <text class="t" x="0" y="286">After a deflect: 12 ticks to riposte (×2.5). After a perfect dodge: the attacker alone runs at 0.45 speed for 8 ticks.</text>
+  <text class="t" x="0" y="302">Spam guard: a raise within 8 ticks of a failed deflect can only block (a lockout, not a shrinking window).</text>
+</svg>
+</div>
+<figcaption>Proposed numbers, from the genre's norms (research, PLAN §8): Sekiro's deflect and Elden Ring's buckler are about 200 ms (4 ticks); Elden Ring's roll is about 9 ticks of invulnerability, so 5 is a middle value. All of these are tuned in your first feel session.</figcaption>
+</figure>
+<div class="tbl"><table>
+<tr><th>Longsword move</th><th class="num">Wind-up</th><th class="num">Active</th><th class="num">Recovery</th><th class="num">Damage ×</th><th class="num">Posture</th><th>Note</th></tr>
+<tr><td class="k">Strike 1 · 2</td><td class="num">2</td><td class="num">2</td><td class="num">6</td><td class="num">0.90 · 0.95</td><td class="num">4</td><td>right to left, left to right</td></tr>
+<tr><td class="k">Strike 3</td><td class="num">3</td><td class="num">2</td><td class="num">8</td><td class="num">1.40</td><td class="num">8</td><td>overhead finisher</td></tr>
+<tr><td class="k">Strike 4</td><td class="num">3</td><td class="num">2</td><td class="num">10</td><td class="num">1.70</td><td class="num">10</td><td>thrust, from mastery 2</td></tr>
+<tr><td class="k">Heavy</td><td class="num">6–24</td><td class="num">3</td><td class="num">10</td><td class="num">1.8 (2.4 on glint)</td><td class="num">14 (20)</td><td>glint at 16</td></tr>
+<tr><td class="k">Riposte</td><td class="num">1</td><td class="num">2</td><td class="num">8</td><td class="num">2.5</td><td class="num">20</td><td>after a deflect</td></tr>
+<tr><td class="k">Execution</td><td class="num">2</td><td class="num">3</td><td class="num">14</td><td class="num">4.0</td><td class="num">—</td><td>a heavy on a Broken foe; a Lord loses at most 8% of its health</td></tr>
+</table></div>
+
+<!-- 06 -->
+<h2 id="read"><span class="n">06</span>Reading a fight: every attack tells you how to answer it</h2>
+<p>Every enemy attack gets a class, and every class has its own look and sound, so a fight can be read by eye and by ear. Today's told abilities keep their wind-ups and gain a class; the basic melee gets a tell of at least 8 ticks.</p>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 150" role="img" aria-label="Four attack classes and the right answer to each">
+  <g>
+    <rect x="0" y="10" width="178" height="128" rx="6" class="f-aether-s"/>
+    <circle cx="30" cy="40" r="11" class="f-aether"/><path d="M24 40 l5 5 l9 -10" class="s-fink nofill" stroke-width="2"/>
+    <text class="tb" x="50" y="45">LIGHT</text>
+    <text class="t" x="14" y="72">a glint on the weapon,</text><text class="t" x="14" y="86">a rising whoosh</text>
+    <text class="tl" x="14" y="116">deflect · block · dodge</text>
+  </g>
+  <g>
+    <rect x="194" y="10" width="178" height="128" rx="6" class="f-gold-s"/>
+    <circle cx="224" cy="40" r="11" class="f-gold"/><path d="M224 33 v9 M224 46 v2" class="s-fink" stroke-width="2.4"/>
+    <text class="tb" x="244" y="45">HEAVY</text>
+    <text class="t" x="208" y="72">an amber flare,</text><text class="t" x="208" y="86">a low draw of breath</text>
+    <text class="tl" x="208" y="116">deflect · dodge (breaks guard)</text>
+  </g>
+  <g>
+    <rect x="388" y="10" width="178" height="128" rx="6" class="f-ember-s"/>
+    <circle cx="418" cy="40" r="11" class="f-ember pulse"/><path d="M412 34 l12 12 M424 34 l-12 12" class="s-fink" stroke-width="2.4"/>
+    <text class="tb" x="438" y="45">PERILOUS</text>
+    <text class="t" x="402" y="72">a red flash,</text><text class="t" x="402" y="86">a sharp metallic shriek</text>
+    <text class="tl" x="402" y="116">dodge only</text>
+  </g>
+  <g>
+    <rect x="582" y="10" width="178" height="128" rx="6" class="f-sky"/>
+    <circle cx="612" cy="40" r="11" class="f-muted"/><path d="M606 36 q6 10 12 0" class="s-fink nofill" stroke-width="2.2"/>
+    <text class="tb" x="632" y="45">GRAB</text>
+    <text class="t" x="596" y="72">the body lunges low,</text><text class="t" x="596" y="86">a creak of gripping hands</text>
+    <text class="tl" x="596" y="116">dodge only</text>
+  </g>
+</svg>
+</div>
+</figure>
+<div class="grid2">
+  <div class="box"><h4>Posture (enemies only)</h4>Deflects, heavies, finishers and Undercuts fill a creature's posture: 20 for normal mobs, 40 for elites, 100 per phase for a Lord, draining after 2 s untouched. Full: <b>BREAK</b>. The creature sags for 2–2.5 s, its wind-up is interrupted, and your next heavy is an Execution. There is no stamina bar for you.</div>
+  <div class="box"><h4>Resonance (yours)</h4>One meter from rhythm finishers, deflects, perfect dodges and Breaks. Full, the blade glows and a heavy held past full charge releases the weapon's Art. It shows as a thin arc under the crosshair and nowhere else.</div>
+</div>
+
+<!-- 07 -->
+<h2 id="feel"><span class="n">07</span>The feel of a hit</h2>
+<p>One shared feel layer for melee and powers. The hit-stop that powers already have moves to a public API and gains the attacker's side (hands and camera hold), and the Feel Director becomes the one camera voice for fights, with one comfort setting set.</p>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 210" role="img" aria-label="Hit-stop duration by kind of hit">
+  <!-- x = 200 + 2.4*ms ; 0..230 ms -->
+  <g class="t"><text x="196" y="200">0 ms</text><text x="316" y="200">50</text><text x="436" y="200">100</text><text x="556" y="200">150</text><text x="676" y="200">200</text></g>
+  <g class="s-line"><line x1="200" y1="10" x2="200" y2="186"/><line x1="320" y1="10" x2="320" y2="186"/><line x1="440" y1="10" x2="440" y2="186"/><line x1="560" y1="10" x2="560" y2="186"/><line x1="680" y1="10" x2="680" y2="186"/></g>
+  <g>
+    <text class="tl" x="0" y="26">Light strike</text><rect x="200" y="15" width="108" height="14" rx="2" class="f-aether"/><text class="t" x="314" y="26">45</text>
+    <text class="tl" x="0" y="48">Finisher</text><rect x="200" y="37" width="168" height="14" rx="2" class="f-aether"/><text class="t" x="374" y="48">70</text>
+    <text class="tl" x="0" y="70">Heavy</text><rect x="200" y="59" width="216" height="14" rx="2" class="f-aether"/><text class="t" x="422" y="70">90</text>
+    <text class="tl" x="0" y="92">Perfect heavy</text><rect x="200" y="81" width="264" height="14" rx="2" class="f-gold"/><text class="t" x="470" y="92">110</text>
+    <text class="tl" x="0" y="114">Deflect (both)</text><rect x="200" y="103" width="240" height="14" rx="2" class="f-leaf"/><text class="t" x="446" y="114">100</text>
+    <text class="tl" x="0" y="136">Break</text><rect x="200" y="125" width="384" height="14" rx="2" class="f-ember"/><text class="t" x="590" y="136">160</text>
+    <text class="tl" x="0" y="158">Execution</text><rect x="200" y="147" width="528" height="14" rx="2" class="f-ember"/><text class="t" x="734" y="158">220</text>
+    <text class="t" x="0" y="180">powers today: 20–80</text><rect x="248" y="171" width="144" height="8" rx="2" class="f-stone"/>
+  </g>
+</svg>
+</div>
+<figcaption>Proposed, tuned in the slice. In a sweep through several bodies, one freeze per 4 ticks, so the swing never stalls. Visual only: the server's tick never slows.</figcaption>
+</figure>
+<div class="tbl"><table>
+<tr><th>Layer</th><th>On every connecting hit</th></tr>
+<tr><td class="k">Freeze</td><td>The struck body holds its pose and trembles (exists for powers); your hands and the camera hold too (new).</td></tr>
+<tr><td class="k">Sound</td><td>Swish by blade length, speed and rhythm step (each step a semitone up) · impact by weapon (edge, blunt, point) × target (flesh, armour, stone, wood, glass, ghost, slime) · a sweetener (crit glass, element, Break crack, deflect ring, guard clang, Execution boom). 3–4 seeded variants each, synthesised and mastered with audiokit.</td></tr>
+<tr><td class="k">Camera</td><td>A kick along the swing's plane through the Feel Director; reduced motion halves it; the shoulder view gets a combat pose, a little closer, leaning toward your focus.</td></tr>
+<tr><td class="k">Reaction</td><td>The creature life layer takes the blow's direction and strength, so a dagger flicks a body and a maul folds it.</td></tr>
+<tr><td class="k">Light</td><td>A ribbon trail lying in the blade's plane (a new two-edge shape sampled every frame), sparks of the struck material, the DEFLECT / BREAK / PERFECT glyphs beside the damage numbers.</td></tr>
+<tr><td class="k">Getting hit</td><td>A Holo shard at the screen edge toward the attacker, the camera jolting away from the blow, our own hurt sounds by damage kind; under 30% health a slow heartbeat and a cooled, desaturated edge (a Lens look).</td></tr>
+</table></div>
+
+<!-- 08 -->
+<h2 id="hud"><span class="n">08</span>On screen: nothing new to learn</h2>
+<p>Everything sits on surfaces you already have: the Holo plate, the crosshair, the sprint line, the damage glyphs. Illustrative mockup.</p>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 400" role="img" aria-label="Mockup of the fight view: a Lord with its Holo plate and posture bar, the Resonance arc under the crosshair, a hurt shard at the left edge and dodge charges on the sprint line">
+  <rect x="0" y="0" width="760" height="400" rx="6" class="f-frame"/>
+  <!-- ground -->
+  <path d="M0 300 L760 270 L760 400 L0 400 Z" class="f-fink" opacity=".07"/>
+  <!-- colossus silhouette -->
+  <g class="f-fink" opacity=".22">
+    <rect x="300" y="128" width="130" height="120" rx="14"/>
+    <rect x="330" y="96" width="70" height="44" rx="10"/>
+    <rect x="262" y="138" width="38" height="104" rx="12"/>
+    <rect x="430" y="120" width="40" height="70" rx="12" transform="rotate(-28 450 150)"/>
+    <rect x="318" y="246" width="38" height="50" rx="8"/><rect x="376" y="246" width="38" height="50" rx="8"/>
+  </g>
+  <!-- glint tell on the raised fist -->
+  <g class="s-holo" stroke-width="2"><path d="M478 92 l0 -18 M478 92 l0 18 M478 92 l-18 0 M478 92 l18 0"/></g>
+  <circle cx="478" cy="92" r="4" class="f-holo"/>
+  <text class="t" x="498" y="84" style="fill:var(--holo)">LIGHT tell: a glint, 10 ticks</text>
+  <!-- holo plate -->
+  <g>
+    <rect x="276" y="30" width="200" height="52" rx="3" class="f-holo" opacity=".14"/>
+    <rect x="276" y="30" width="200" height="52" rx="3" class="s-holo nofill" stroke-width="1"/>
+    <text x="286" y="47" class="t" style="fill:var(--frame-ink);font-size:11px">Gearwright Colossus</text>
+    <rect x="438" y="37" width="30" height="14" rx="2" class="f-gold"/><text x="443" y="48" class="t" style="fill:var(--frame);font-size:10px">D 17</text>
+    <!-- 10 health segments -->
+    <g class="f-ember"><rect x="286" y="55" width="16" height="7"/><rect x="304" y="55" width="16" height="7"/><rect x="322" y="55" width="16" height="7"/><rect x="340" y="55" width="16" height="7"/><rect x="358" y="55" width="16" height="7"/><rect x="376" y="55" width="16" height="7"/><rect x="394" y="55" width="16" height="7"/></g>
+    <g class="f-fink" opacity=".25"><rect x="412" y="55" width="16" height="7"/><rect x="430" y="55" width="16" height="7"/><rect x="448" y="55" width="16" height="7"/></g>
+    <!-- posture bar -->
+    <rect x="286" y="67" width="178" height="5" rx="1" class="f-fink" opacity=".18"/>
+    <rect x="286" y="67" width="142" height="5" rx="1" class="f-gold"/>
+    <text x="286" y="96" class="t" style="fill:var(--gold)">posture 80 / 100</text>
+    <!-- focus bracket -->
+    <path d="M268 24 h-6 v64 h6 M484 24 h6 v64 h-6" class="s-fink nofill" stroke-width="1.5" opacity=".8"/>
+  </g>
+  <!-- deflect glyph -->
+  <text x="458" y="150" style="font:700 16px var(--display);fill:var(--leaf)">DEFLECT</text>
+  <text x="472" y="168" class="t" style="fill:var(--frame-ink)">posture +18</text>
+  <!-- crosshair + resonance arc -->
+  <g transform="translate(380 200)">
+    <path d="M-6 0 h12 M0 -6 v12" class="s-fink" stroke-width="1.5"/>
+    <path d="M-22 10 A24 24 0 0 0 22 10" class="s-fink nofill" stroke-width="2" opacity=".2"/>
+    <path d="M-22 10 A24 24 0 0 0 12 20" class="s-holo nofill" stroke-width="2.4"/>
+  </g>
+  <text x="414" y="232" class="t" style="fill:var(--holo)">Resonance 70%</text>
+  <!-- hurt shard -->
+  <path d="M0 150 L22 175 L0 205 Z" class="f-ember" opacity=".8"/>
+  <text x="28" y="182" class="t" style="fill:var(--ember)">hit from the left</text>
+  <!-- hotbar + sprint line with dodge pips -->
+  <g>
+    <rect x="250" y="352" width="260" height="30" rx="3" class="f-fink" opacity=".12"/>
+    <rect x="252" y="354" width="28" height="26" rx="2" class="s-fink nofill" stroke-width="1.5"/>
+    <rect x="320" y="344" width="120" height="2" class="f-holo"/>
+    <circle cx="448" cy="345" r="3" class="f-holo"/><circle cx="458" cy="345" r="3" class="f-fink" opacity=".3"/>
+    <text x="466" y="348" class="t" style="fill:var(--frame-ink)">dodge charges on the sprint line</text>
+  </g>
+  <!-- trail -->
+  <path d="M560 300 Q640 230 700 300" class="s-holo nofill" stroke-width="9" opacity=".25"/>
+  <path d="M560 300 Q640 230 700 300" class="s-fink nofill" stroke-width="1.5" opacity=".6"/>
+  <text x="560" y="326" class="t" style="fill:var(--frame-ink)">blade trail, brighter</text><text x="560" y="340" class="t" style="fill:var(--frame-ink)">at Cadence 2</text>
+</svg>
+</div>
+<figcaption>Illustrative, not a render. The plate, its level chip and the 10 segments exist today (SPEC §21.1); the posture bar, the focus bracket, the Resonance arc, the shard and the dodge pips are new.</figcaption>
+</figure>
+
+<!-- 09 -->
+<h2 id="magic"><span class="n">09</span>Weapons and magic: Weaves</h2>
+<p>For 12 ticks after a deflect, a perfect dodge, a Break or a rhythm finisher, a power you cast fuses with the blade. Four openings times nine families make 36 Weaves, each costing 30% less energy. You find them by doing: the first time, the System names it and the Codex adds it, and undiscovered ones are never listed.</p>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 210" role="img" aria-label="Grid of 36 Weaves: four openings by nine power families, two discovered">
+  <g class="t">
+    <text x="150" y="20">Kinetic</text><text x="216" y="20">Velocity</text><text x="286" y="20">Flight</text><text x="350" y="20">Energy</text><text x="418" y="20">Shadow</text><text x="490" y="20">Mind</text><text x="548" y="20">Architect</text><text x="626" y="20">Tech</text><text x="688" y="20">Spirit</text>
+  </g>
+  <g class="tl"><text x="0" y="52">After a deflect</text><text x="0" y="98">After a perfect dodge</text><text x="0" y="144">After a Break</text><text x="0" y="190">After a finisher</text></g>
+  <!-- grid cells drawn explicitly: x = 146 + 68*i, y = 32 + 46*j -->
+  <g class="f-sky">
+    <rect x="146" y="32" width="60" height="34" rx="4"/><rect x="214" y="32" width="60" height="34" rx="4"/><rect x="282" y="32" width="60" height="34" rx="4"/><rect x="350" y="32" width="60" height="34" rx="4"/><rect x="418" y="32" width="60" height="34" rx="4"/><rect x="486" y="32" width="60" height="34" rx="4"/><rect x="554" y="32" width="60" height="34" rx="4"/><rect x="622" y="32" width="60" height="34" rx="4"/><rect x="690" y="32" width="60" height="34" rx="4"/>
+    <rect x="146" y="78" width="60" height="34" rx="4"/><rect x="214" y="78" width="60" height="34" rx="4"/><rect x="282" y="78" width="60" height="34" rx="4"/><rect x="350" y="78" width="60" height="34" rx="4"/><rect x="418" y="78" width="60" height="34" rx="4"/><rect x="486" y="78" width="60" height="34" rx="4"/><rect x="554" y="78" width="60" height="34" rx="4"/><rect x="622" y="78" width="60" height="34" rx="4"/><rect x="690" y="78" width="60" height="34" rx="4"/>
+    <rect x="146" y="124" width="60" height="34" rx="4"/><rect x="214" y="124" width="60" height="34" rx="4"/><rect x="282" y="124" width="60" height="34" rx="4"/><rect x="350" y="124" width="60" height="34" rx="4"/><rect x="418" y="124" width="60" height="34" rx="4"/><rect x="486" y="124" width="60" height="34" rx="4"/><rect x="554" y="124" width="60" height="34" rx="4"/><rect x="622" y="124" width="60" height="34" rx="4"/><rect x="690" y="124" width="60" height="34" rx="4"/>
+    <rect x="146" y="170" width="60" height="34" rx="4"/><rect x="214" y="170" width="60" height="34" rx="4"/><rect x="282" y="170" width="60" height="34" rx="4"/><rect x="350" y="170" width="60" height="34" rx="4"/><rect x="418" y="170" width="60" height="34" rx="4"/><rect x="486" y="170" width="60" height="34" rx="4"/><rect x="554" y="170" width="60" height="34" rx="4"/><rect x="622" y="170" width="60" height="34" rx="4"/><rect x="690" y="170" width="60" height="34" rx="4"/>
+  </g>
+  <!-- discovered: deflect + Energy (Heat lives in Energy), perfect dodge + Shadow -->
+  <rect x="350" y="32" width="60" height="34" rx="4" class="f-gold"/>
+  <text x="356" y="47" class="t" style="fill:var(--panel)">Ember</text><text x="356" y="60" class="t" style="fill:var(--panel)">Riposte</text>
+  <rect x="418" y="78" width="60" height="34" rx="4" class="f-epic"/>
+  <text x="424" y="93" class="t" style="fill:var(--panel)">After-</text><text x="424" y="106" class="t" style="fill:var(--panel)">image</text>
+  <g class="t" style="font-size:14px">
+    <text x="170" y="54">?</text><text x="238" y="54">?</text><text x="306" y="54">?</text><text x="442" y="54">?</text><text x="510" y="54">?</text><text x="578" y="54">?</text><text x="646" y="54">?</text><text x="714" y="54">?</text>
+    <text x="170" y="100">?</text><text x="238" y="100">?</text><text x="306" y="100">?</text><text x="374" y="100">?</text><text x="510" y="100">?</text><text x="578" y="100">?</text><text x="646" y="100">?</text><text x="714" y="100">?</text>
+    <text x="170" y="146">?</text><text x="238" y="146">?</text><text x="306" y="146">?</text><text x="374" y="146">?</text><text x="442" y="146">?</text><text x="510" y="146">?</text><text x="578" y="146">?</text><text x="646" y="146">?</text><text x="714" y="146">?</text>
+    <text x="170" y="192">?</text><text x="238" y="192">?</text><text x="306" y="192">?</text><text x="374" y="192">?</text><text x="442" y="192">?</text><text x="510" y="192">?</text><text x="578" y="192">?</text><text x="646" y="192">?</text><text x="714" y="192">?</text>
+  </g>
+</svg>
+</div>
+<figcaption>How it looks to a player with two Weaves found (the Codex shows "2 / ??"; this grid is for you, not the player). Ember Riposte: the riposte ignites and rings the ground with fire. Afterimage: a shadow of you finishes the Slipcut.</figcaption>
+</figure>
+<div class="grid2">
+  <div class="box"><h4>Attunement at the Forge</h4>Bind a weapon to a Force (Heat, Charge, Gravity, Spirit, Frost) with essence and a Core Shard. Its abilities take that element, and its hits prime your next power, the way the Gatewrought set already primes your next strike.</div>
+  <div class="box"><h4>Arts</h4>Every fighting style has a default Art; Lord-forged and legendary weapons have their own. Kill the Gearwright Colossus and its maul does the Piston Slam, for you now.</div>
+</div>
+
+<!-- 10 -->
+<h2 id="weapons"><span class="n">10</span>The weapons: sixteen ways to fight</h2>
+<p>A fighting style (an archetype) owns a moveset, a timing table, a reach, a guard, a sound kit and a trail. Every weapon of that style shares its animations and adds its own model, materials, abilities and sometimes an Art. The Longsword is the slice.</p>
+<div class="arch">
+  <figure class="slice"><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M14 46 L96 12 L100 16 L18 50 Z" class="f-stone"/><path d="M22 54 L10 40 M26 38 L36 52" class="s-gold" stroke-width="3"/></svg><b>Longsword</b><span>balanced; the deflect weapon · the slice</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M12 40 L58 22 L60 25 L14 43 Z M62 40 L108 22 L110 25 L64 43 Z" class="f-stone"/></svg><b>Twinblades</b><span>fast, rhythm, dodge-cancels</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M10 48 L94 8 L104 16 L22 56 Z" class="f-stone"/><path d="M18 58 L6 44" class="s-gold" stroke-width="4"/></svg><b>Greatblade</b><span>slow, unshaken on heavies, posture</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M6 44 L100 18" class="s-muted" stroke-width="3"/><path d="M98 12 L114 14 L102 24 Z" class="f-stone"/></svg><b>Spear</b><span>reach, thrusts, the sprint lunge</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M8 50 L88 18" class="s-muted" stroke-width="3"/><path d="M86 8 Q112 10 104 34 Q98 22 86 20 Z" class="f-stone"/></svg><b>Glaive</b><span>sweeping arcs, crowds</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M20 42 L110 20" class="s-ink" stroke-width="2"/><circle cx="20" cy="42" r="7" class="s-gold nofill" stroke-width="2"/></svg><b>Rapier</b><span>precision, riposte crits</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M20 46 Q70 36 110 12 L112 15 Q74 40 22 50 Z" class="f-stone"/><path d="M8 52 L22 47" class="s-ember" stroke-width="4"/></svg><b>Katana</b><span>the sheathe stance and the draw cut</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M14 52 L84 16" class="s-muted" stroke-width="3"/><path d="M76 8 Q102 6 100 32 L84 22 Z" class="f-stone"/></svg><b>Axe</b><span>cleave, breaks guards</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M14 52 L76 22" class="s-muted" stroke-width="3"/><rect x="70" y="6" width="34" height="26" rx="3" class="f-stone" transform="rotate(-26 87 19)"/></svg><b>Maul</b><span>blunt, breaks armour, ground slam</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M20 56 L70 8" class="s-muted" stroke-width="3"/><path d="M68 8 Q104 6 112 34 Q96 18 72 14 Z" class="f-stone"/></svg><b>Scythe</b><span>wide reap, Spirit, cuts Veil spirits</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><rect x="22" y="18" width="30" height="26" rx="8" class="f-stone"/><rect x="66" y="18" width="30" height="26" rx="8" class="f-stone"/><path d="M28 24 h18 M72 24 h18" class="s-gold" stroke-width="2"/></svg><b>Gauntlets</b><span>fist strings, counters that throw</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M10 46 q14 -20 28 0 t28 0 t28 0" class="s-muted nofill" stroke-width="2"/><path d="M92 40 L112 30 L108 44 Z" class="f-stone"/></svg><b>Chain-blade</b><span>mid-range, pulls, pairs with the rope</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M18 40 L52 26 L54 29 L20 43 Z M66 40 L100 26 L102 29 L68 43 Z" class="f-stone"/><path d="M14 44 L22 40 M62 44 L70 40" class="s-ember" stroke-width="3"/></svg><b>Daggers</b><span>backstabs, the shortest dodge</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M60 8 L96 14 L92 44 L60 56 L28 44 L24 14 Z" class="f-stone"/><path d="M60 14 V50" class="s-gold" stroke-width="2"/></svg><b>Shieldblade</b><span>block first, bash</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M14 52 L100 14" class="s-muted" stroke-width="3.5"/><circle cx="102" cy="13" r="7" class="f-aether"/></svg><b>War-staff</b><span>hits charge energy; cheaper Weaves</span></figure>
+  <figure><svg viewBox="0 0 120 60" aria-hidden="true"><path d="M14 46 L30 40" class="s-muted" stroke-width="5"/><path d="M30 40 L108 12" class="s-aether" stroke-width="5" opacity=".75"/><path d="M30 40 L108 12" class="s-fink" stroke-width="1.5" style="stroke:var(--panel)"/></svg><b>Precursor Arm</b><span>Tech: a light blade that grows each strike</span></figure>
+</div>
+<div class="tbl"><table>
+<tr><th>Line</th><th>How you get it</th><th class="num">Weapons</th><th>Rarity</th></tr>
+<tr><td class="k">Forged</td><td>blueprints at the Forge, Hunter tiers E to S (supersedes today's six blades)</td><td class="num">16 × 6 = 96</td><td><span class="pill" style="background:var(--sky);color:var(--muted)">forged</span></td></tr>
+<tr><td class="k">Named</td><td>elites, gate caches, Descent strata, camps, bounties; themed by the 15 gate themes and the regions</td><td class="num">~120</td><td><span class="pill" style="background:var(--rare-soft);color:var(--rare)">rare</span> <span class="pill" style="background:var(--epic-soft);color:var(--epic)">epic</span></td></tr>
+<tr><td class="k">Lord-forged</td><td>one per boss, with a pity timer like Power Cores; in your hands on the kill</td><td class="num">41</td><td><span class="pill p-build">lord-forged</span></td></tr>
+<tr><td class="k">Legendary</td><td>authored and tied to the world: the strata, Lucidium (a blade that reforms each strike), the Veil, Above, the Sovereigns, the Rival</td><td class="num">~30</td><td><span class="pill p-keep" style="background:var(--gold-soft);color:var(--gold)">legendary</span></td></tr>
+<tr><td class="k">All</td><td>each a distinct 3D model that passes the distinctness check</td><td class="num"><b>~290</b></td><td></td></tr>
+</table></div>
+<p class="small">About 48 abilities (Marks) combine a trigger (hit, finisher, deflect, perfect dodge, Break, kill, guard, perfect heavy) with an effect (an element, posture, healing, energy, a short buff). Mastery per style, from use, adds a fourth and fifth strike or a charged deflect to the same inputs. Vanilla swords, axes, tridents and maces get the three verbs and a plain moveset; a diamond sword counts as an E/D weapon.</p>
+
+<!-- 11 -->
+<h2 id="pipeline"><span class="n">11</span>Making 290 of them, to one standard</h2>
+<p>One line of Python per weapon. Generators build everything else, checks reject what falls short, and you review a contact sheet and a listening page per batch of about 40.</p>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 260" role="img" aria-label="Weapon content pipeline from the catalog line to the game, with checks and review">
+  <defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 Z" class="f-muted"/></marker></defs>
+  <rect x="0" y="94" width="130" height="70" rx="5" class="f-gold-s"/><text class="tl" x="10" y="116">arms_catalog</text><text class="t" x="10" y="132">one line a weapon:</text><text class="t" x="10" y="145">style, tier, parts,</text><text class="t" x="10" y="158">Marks, Art, seed</text>
+  <g>
+    <rect x="160" y="6" width="190" height="42" rx="5" class="f-aether-s"/><text class="tl" x="170" y="24">3D model</text><text class="t" x="170" y="39">grammar → boxes → atlas</text>
+    <rect x="160" y="56" width="190" height="42" rx="5" class="f-aether-s"/><text class="tl" x="170" y="74">2D icon</text><text class="t" x="170" y="89">same grammar, 16×16</text>
+    <rect x="160" y="106" width="190" height="42" rx="5" class="f-aether-s"/><text class="tl" x="170" y="124">clips, per style</text><text class="t" x="170" y="139">1st + 3rd person, one table</text>
+    <rect x="160" y="156" width="190" height="42" rx="5" class="f-aether-s"/><text class="tl" x="170" y="174">sounds, per style</text><text class="t" x="170" y="189">audiokit kit + sweetener</text>
+    <rect x="160" y="206" width="190" height="42" rx="5" class="f-aether-s"/><text class="tl" x="170" y="224">data</text><text class="t" x="170" y="239">ArmsData.java, JSON, lang</text>
+  </g>
+  <g class="s-muted" stroke-width="1.3" marker-end="url(#ar)">
+    <path d="M130 118 C146 118 146 27 158 27" class="nofill"/><path d="M130 123 C146 123 146 77 158 77" class="nofill"/><path d="M130 128 L158 127" class="nofill"/><path d="M130 133 C146 133 146 177 158 177" class="nofill"/><path d="M130 138 C146 138 146 227 158 227" class="nofill"/>
+  </g>
+  <rect x="390" y="50" width="200" height="150" rx="5" class="f-ember-s"/>
+  <text class="tl" x="400" y="70">checks, every weapon</text>
+  <text class="t" x="400" y="88">bounds, UVs, texel density</text><text class="t" x="400" y="102">no z-fighting, ≤ 400 quads</text><text class="t" x="400" y="116">distinct from its siblings</text><text class="t" x="400" y="130">blade never in the body</text><text class="t" x="400" y="144">trail covers the hit arc</text><text class="t" x="400" y="158">loudness, hit on the frame</text><text class="t" x="400" y="172">every id resolves</text>
+  <g class="s-muted" stroke-width="1.3" marker-end="url(#ar)"><path d="M350 27 C372 27 372 80 388 84" class="nofill"/><path d="M350 127 L388 127" class="nofill"/><path d="M350 227 C372 227 372 176 388 172" class="nofill"/></g>
+  <rect x="616" y="30" width="144" height="70" rx="5" class="f-leaf-s"/><text class="tl" x="626" y="50">CI GameTests</text><text class="t" x="626" y="66">structure, read</text><text class="t" x="626" y="80">from the classpath</text>
+  <rect x="616" y="150" width="144" height="84" rx="5" class="f-gold-s"/><text class="tl" x="626" y="170">your review</text><text class="t" x="626" y="186">contact sheet,</text><text class="t" x="626" y="200">a Mac tour,</text><text class="t" x="626" y="214">a listening page</text><text class="t" x="626" y="228">per batch of ~40</text>
+  <g class="s-muted" stroke-width="1.3" marker-end="url(#ar)"><path d="M590 100 C604 100 604 66 614 66" class="nofill"/><path d="M590 150 C604 150 604 190 614 190" class="nofill"/></g>
+</svg>
+</div>
+<figcaption>Reuses <code>fauna_rig.py</code> (3D cuboid rigs, UV packing, painting, preview), <code>ladder3d.py</code> (element models with an atlas), the clip language of <code>power_casts.py</code>, audiokit and the listening page. A weapon shows as a 2D icon in the inventory and a full 3D model in the hand, from one item (26.3's display-context select).</figcaption>
+</figure>
+
+<!-- 12 -->
+<h2 id="system"><span class="n">12</span>How it's built</h2>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 330" role="img" aria-label="Current and proposed path of one melee hit">
+  <defs><marker id="ar2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 Z" class="f-muted"/></marker></defs>
+  <text class="tb" x="0" y="20">Today</text>
+  <g>
+    <rect x="0" y="32" width="150" height="44" rx="4" class="f-sky"/><text class="tl" x="10" y="58">click</text>
+    <rect x="200" y="32" width="160" height="44" rx="4" class="f-sky"/><text class="tl" x="210" y="50">vanilla attack</text><text class="t" x="210" y="66">cooldown, crit, sweep</text>
+    <rect x="400" y="32" width="170" height="44" rx="4" class="f-sky"/><text class="tl" x="410" y="50">16 damage listeners</text><text class="t" x="410" y="66">momentum, VIT, gear</text>
+    <rect x="610" y="32" width="150" height="44" rx="4" class="f-sky"/><text class="tl" x="620" y="50">vanilla sound</text><text class="t" x="620" y="66">no freeze, no reaction</text>
+  </g>
+  <g class="s-muted" stroke-width="1.3" marker-end="url(#ar2)"><path d="M150 54 L198 54"/><path d="M360 54 L398 54"/><path d="M570 54 L608 54"/></g>
+  <text class="tb" x="0" y="116">Proposed</text>
+  <g>
+    <rect x="0" y="128" width="150" height="58" rx="4" class="f-aether-s"/><text class="tl" x="10" y="148">client</text><text class="t" x="10" y="163">the clip starts now;</text><text class="t" x="10" y="177">predicted feel</text>
+    <rect x="200" y="128" width="160" height="58" rx="4" class="f-aether-s"/><text class="tl" x="210" y="148">Arms server</text><text class="t" x="210" y="163">legal move? timeline;</text><text class="t" x="210" y="177">arc sweep, active ticks</text>
+    <rect x="400" y="128" width="170" height="58" rx="4" class="f-aether-s"/><text class="tl" x="410" y="148">Arms stage, first</text><text class="t" x="410" y="163">× move, rhythm, level;</text><text class="t" x="410" y="177">posture; then all 16</text>
+    <rect x="610" y="128" width="150" height="58" rx="4" class="f-aether-s"/><text class="tl" x="620" y="148">others see it</text><text class="t" x="620" y="163">arms_seen, 48 blocks;</text><text class="t" x="620" y="177">numbers to you</text>
+  </g>
+  <g class="s-muted" stroke-width="1.3" marker-end="url(#ar2)"><path d="M150 157 L198 157"/><path d="M360 157 L398 157"/><path d="M570 157 L608 157"/></g>
+  <rect x="200" y="210" width="370" height="72" rx="4" class="f-leaf-s"/>
+  <text class="tl" x="210" y="230">incoming: a told attack reaches you</text>
+  <text class="t" x="210" y="246">the server judges: deflect, perfect dodge,</text>
+  <text class="t" x="210" y="260">evade, block or pass; deflect grace holds the hit</text>
+  <text class="t" x="210" y="274">≤ 3 ticks so a press timed to your screen counts</text>
+  <rect x="610" y="210" width="150" height="72" rx="4" class="f-gold-s"/><text class="tl" x="620" y="230">refused or stale</text><text class="t" x="620" y="246">Refuse{seq}:</text><text class="t" x="620" y="260">the clip fades in</text><text class="t" x="620" y="274">3 ticks, no snap</text>
+  <text class="t" x="0" y="306">The server decides every hit and every defence; clients only predict what you see.</text>
+  <text class="t" x="0" y="322">The server switch arms.enabled=false gives back vanilla melee.</text>
+</svg>
+</div>
+</figure>
+<div class="tbl"><table>
+<tr><th>State</th><th>Where</th><th>Saved</th></tr>
+<tr><td class="k">Styles, moves, timing</td><td><code>data/awaken/arms/archetype/*.json</code> (schemaVersion 1), the one timing table</td><td>data</td></tr>
+<tr><td class="k">Weapons, Marks, Arts, Weaves</td><td>generated <code>ArmsData.java</code> + <code>data/awaken/arms/…</code></td><td>code + data</td></tr>
+<tr><td class="k">A weapon's own history</td><td>item component <code>awaken:arms</code> (kills, attunement, temper)</td><td>with the item; loot moves, never copied</td></tr>
+<tr><td class="k">Your mastery, Weaves found</td><td>attachment <code>awaken:arms_memory</code>, kept through death</td><td>yes, versioned</td></tr>
+<tr><td class="k">The fight right now</td><td>move, clock, guard tick, dodge charges, focus, Resonance; enemy posture</td><td>no</td></tr>
+</table></div>
+<p class="small">New shared APIs (added to SPEC §12 when built): <code>core.api.CombatFeedback</code> (hit-stop, kick, impact; powers move onto it), <code>core.api.Engagement</code> (one "in a fight" state instead of four), <code>core.api.FirstPerson</code> (Hands), <code>PlayerClips</code> gains speed and pause, the creature life layer takes a hit direction. Performance: server work only for players mid-move, arc sweeps on 2–3 ticks per move, nothing allocated per tick; a perf tour of a full gate fight must hold p50 ≥ 110 fps.</p>
+
+<!-- 13 -->
+<h2 id="walk"><span class="n">13</span>Before and after</h2>
+<h3>A · Your case: a diamond sword against the D Gearwright Colossus</h3>
+<div class="walk">
+  <div class="before"><span class="lab">Today (from the code)</span><p>It swings every second with no warning. You trade hits and die in about 6 s, at 11% of its health. To win you must avoid about 89% of its basic swings, with no tool to do it.</p></div>
+  <div class="after"><span class="lab">Proposed</span><p>Its arm draws back for 10 ticks with a servo whine and a glint (LIGHT). You press right mouse as the fist falls: a ring, sparks, a 100 ms freeze, its posture jumps. Riposte. The Piston Slam flares amber: deflect or sidestep. Overload Arc flashes red: dodge through it and the Colossus slows for a beat. Five deflects in: BREAK. Hold left mouse: Execution. Target: about 110 s for a steady player, about 60% health left.</p></div>
+</div>
+<h3>B · An ordinary fight in the Wilds: three skeletons and a zombie</h3>
+<div class="walk">
+  <div class="before"><span class="lab">Today</span><p>Click, wait for the cooldown, click. Vanilla sounds. Numbers float up.</p></div>
+  <div class="after"><span class="lab">Proposed</span><p>Tap in rhythm: three strikes, the swish rising each step, a short freeze and a crack of bone on every hit. An arrow is deflected off the blade. The zombie lunges; sprint-left, Slipcut. Three inputs the whole time.</p></div>
+</div>
+<h3>C · A hard case: a crowded gate floor in a pressure wave</h3>
+<div class="walk">
+  <div class="before"><span class="lab">Today</span><p>Hits come from everywhere and none can be answered.</p></div>
+  <div class="after"><span class="lab">Proposed</span><p>Your focus stays on the one you struck; the arc hits everything in it, once each. Two attacks inside one deflect window are both deflected. A red grab from behind can't be deflected; its sound tells you to dodge. Freezes are capped so a sweep through five bodies never stalls.</p></div>
+</div>
+<h3>D · Something missing: a 150 ms server, no animation library, Hands not built yet</h3>
+<div class="walk">
+  <div class="before"><span class="lab">Risk if we ignored it</span><p>Deflects land late and feel random; others see vanilla arms; the first person swings vanilla.</p></div>
+  <div class="after"><span class="lab">Proposed</span><p>Deflect grace makes a press timed to your screen count. Others see keyframed arm poses (no library needed). First person uses the slice's interim redraw. A swing the server refuses fades out instead of snapping.</p></div>
+</div>
+<h3>E · Discovery: a Weave you didn't know existed</h3>
+<div class="walk">
+  <div class="before"><span class="lab">Today</span><p>Powers and the sword never meet, apart from one gear set.</p></div>
+  <div class="after"><span class="lab">Proposed</span><p>You deflect an imp and, panicking, cast Heat: the riposte comes out on fire and rings the ground. "WEAVE · Ember Riposte" types in; the Codex's Weaves page goes from 3 / ?? to 4 / ??. Later a Wayfarer hints at "what frost does after a perfect step".</p></div>
+</div>
+
+<!-- 14 -->
+<h2 id="phases"><span class="n">14</span>Phases and gates</h2>
+<p>A narrow vertical slice first, judged in your hands, then scale. Builder hours at our pace (all of AWAKEN took about 30; Hands is planned at 15–22).</p>
+<figure class="fig">
+<div class="scroll">
+<svg viewBox="0 0 760 330" role="img" aria-label="Phases S0 to S10 with builder hours and gates">
+  <!-- x = 140 + 8*hour (cumulative mid estimate), rows 26 px -->
+  <g class="t"><text x="136" y="16">0 h</text><text x="216" y="16">10</text><text x="296" y="16">20</text><text x="376" y="16">30</text><text x="456" y="16">40</text><text x="536" y="16">50</text><text x="616" y="16">60</text></g>
+  <g class="s-line"><line x1="140" y1="22" x2="140" y2="316"/><line x1="220" y1="22" x2="220" y2="316"/><line x1="300" y1="22" x2="300" y2="316"/><line x1="380" y1="22" x2="380" y2="316"/><line x1="460" y1="22" x2="460" y2="316"/><line x1="540" y1="22" x2="540" y2="316"/><line x1="620" y1="22" x2="620" y2="316"/></g>
+  <g class="tl" style="font-size:11.5px">
+    <text x="0" y="38">S0 Fixes</text><text x="0" y="64">S1 Feel spike</text><text x="0" y="90">S2 The slice</text><text x="0" y="116">S3 Enemies speak</text><text x="0" y="142">S4 Pipeline</text><text x="0" y="168">S5 Styles 2–9</text><text x="0" y="194">S6 Styles 10–16</text><text x="0" y="220">S7 Loot, discovery</text><text x="0" y="246">S8 Weaves, Arts</text><text x="0" y="272">S9 Content batches</text><text x="0" y="298">S10 Together, polish</text>
+  </g>
+  <rect x="140" y="28" width="4" height="14" class="f-ember"/>
+  <rect x="144" y="54" width="40" height="14" class="f-ember"/>
+  <rect x="184" y="80" width="60" height="14" class="f-ember"/>
+  <rect x="244" y="106" width="40" height="14" class="f-aether"/>
+  <rect x="244" y="132" width="48" height="14" class="f-aether"/>
+  <rect x="292" y="158" width="60" height="14" class="f-aether"/>
+  <rect x="292" y="184" width="52" height="14" class="f-aether"/>
+  <rect x="292" y="210" width="40" height="14" class="f-aether"/>
+  <rect x="352" y="236" width="32" height="14" class="f-aether"/>
+  <rect x="384" y="262" width="64" height="14" class="f-aether"/>
+  <rect x="448" y="288" width="24" height="14" class="f-aether"/>
+  <!-- gates -->
+  <g class="f-gold"><path d="M184 50 l6 9 l-6 9 l-6 -9 Z"/><path d="M244 76 l6 9 l-6 9 l-6 -9 Z"/><path d="M284 102 l6 9 l-6 9 l-6 -9 Z"/><path d="M384 232 l6 9 l-6 9 l-6 -9 Z"/></g>
+  <text class="t" x="196" y="64">G1 feel session</text><text class="t" x="256" y="90">G2 tour + feel session: your yes unlocks scale</text><text class="t" x="296" y="116">you play three Lords</text><text class="t" x="396" y="246">feel session 3</text>
+  <text class="t" x="480" y="168">S3 ‖ S4, then S5 ‖ S6 ‖ S7 in parallel</text>
+  <text class="t" x="480" y="182">with 2–3 builders; S9 batches split too</text>
+</svg>
+</div>
+<figcaption>Bars use the middle of each estimate on the proposed schedule, so the axis is wall-clock hours: about 40 at the middle estimates (≈ 57 builder hours in all; range 45–70). Ember: the slice, one builder in order. Gold diamonds: your gates.</figcaption>
+</figure>
+<div class="tbl"><table>
+<tr><th>Phase</th><th>What ships</th><th>CI proves</th><th>You or a Mac tour judge</th><th class="num">Hours</th></tr>
+<tr><td class="k">S0 Fixes</td><td>Settle the held-weapon damage on three Lords; tell the slice Lord's basic swing</td><td><code>mobs_held_weapon_damage</code></td><td>—</td><td class="num">0.5</td></tr>
+<tr><td class="k">S1 Feel spike</td><td>Arms core: input, timeline, server strike, guard, deflect, block, dodge, rhythm, the shared feel layer, deflect grace; Longsword with placeholder clips and sounds; the D Colossus retold with posture; a training dummy</td><td>timeline, hit arc, damage stack intact, deflect (+ 150/300 ms latency), spam lockout, dodge, Break</td><td><b>G1:</b> 20 minutes, dummy then Colossus, diamond sword and the spike weapon: go or no-go on the verbs and windows</td><td class="num">4–6</td></tr>
+<tr><td class="k">S2 The slice</td><td>Hands rig (if not built), 1st and 3rd person Longsword clips, trails, its sound kit, impact light, the camera voice, getting-hit feel, posture on plates, focus, Resonance, Riposte, Slipcut, Execution, its Art, Undercut and Plunge, six forged Longswords in 3D</td><td>all of S1 + assets resolve</td><td><b>G2:</b> tour (first person and shoulder, with and without the pack), listening page, feel session 2</td><td class="num">6–9</td></tr>
+<tr><td class="k">S3 Enemies speak</td><td>Classes and tells for all 41 bosses and the gate creatures; posture everywhere; hit direction in the life layer; the combat simulator; item level; rebalance</td><td><code>mobs_tells</code>, simulator targets</td><td>you play three Lords</td><td class="num">4–6</td></tr>
+<tr><td class="k">S4 Pipeline</td><td>Catalog, models, icons, clips, sounds, previews, every check, CI mirrors</td><td>data and asset tests</td><td>contact sheets</td><td class="num">5–7</td></tr>
+<tr><td class="k">S5 · S6</td><td>Styles 2–9, then 10–16 and the other traversal strikes</td><td>hit-arc rows per style</td><td>a tour per four styles</td><td class="num">6–9 · 5–8</td></tr>
+<tr><td class="k">S7 Loot, discovery</td><td>Marks, named weapons, Lord-forged with pity, the reveal, the Armoury and Weaves in the Codex, Forge blueprints and attunement, mastery</td><td>loot, memory codec</td><td>the reveal moment</td><td class="num">4–6</td></tr>
+<tr><td class="k">S8 Weaves, Arts</td><td>36 Weaves, Arts per style and per Lord</td><td><code>arms_weave</code></td><td>feel session 3</td><td class="num">3–5</td></tr>
+<tr><td class="k">S9 Content</td><td>~290 weapons in batches of ~40</td><td>per batch</td><td>sheet + listening page per batch</td><td class="num">6–10</td></tr>
+<tr><td class="k">S10 Together</td><td>Multiplayer, PvP sanity, key-conflict audit, comfort, perf tour</td><td>crowd budget</td><td>perf tour</td><td class="num">2–4</td></tr>
+</table></div>
+<p class="small"><b>Targets</b> (proposed, set by a new seeded combat simulator, then by you): a player who never defends loses an on-level Lord at least 90% of the time; one who dodges well wins 60%+, one who deflects well 80%+, in 80–120 s; an expert wins 98%+ in under 75 s with half their health; a diamond sword with good deflects beats a D Lord 70%+ in under 140 s; normal mobs still take 3–6 hits. <b>Rollback:</b> everything sits behind <code>arms.enabled</code> and the comfort switches; a no-go at a feel session stops scaling until the windows are fixed.</p>
+
+<!-- 15 -->
+<h2 id="decide"><span class="n">15</span>Your decisions</h2>
+<ol class="decide">
+  <li><b>Invulnerability on the dodge.</b> The SPEC says "no invincibility frames anywhere". Allow 5 evade ticks on the dodge only, and the perfect dodge? <span class="rec">Recommended: yes.</span> Without it the dodge only moves you, which is weaker and less fair.</li>
+  <li><b>The dodge input.</b> Sprint with back, left, right or no direction, on the ground. <span class="rec">Recommended</span>: no new key, and nothing uses it today. Or a dedicated key (Mouse 4?), or double-tapping a direction.</li>
+  <li><b>Guard and deflect on right mouse</b> with any melee weapon. <span class="rec">Recommended: yes.</span></li>
+  <li><b>Hands grows to weapons.</b> Its plan keeps attacking vanilla; Arms weapons would swing through Hands in first person, and its first rig would be built before the slice. <span class="rec">Recommended: yes.</span></li>
+  <li><b>Vanilla swords:</b> the three verbs only <span class="rec">(recommended)</span>, or also our own generated 3D models for vanilla swords and axes.</li>
+  <li><b>The Player Animation Library:</b> stays optional, with keyframed arm poses for players without it <span class="rec">(recommended)</span>, or becomes required.</li>
+  <li><b>Weapon levels:</b> found and forged weapons carry a level that scales like the powers, so they keep pace with Lords; vanilla weapons stay E/D. <span class="rec">Recommended: yes.</span></li>
+  <li><b>Weapons found in a gate:</b> a Lord-forged weapon goes straight into your hands on the kill; the rest stay Satchel loot. <span class="rec">Recommended.</span></li>
+  <li><b>Order:</b> S0 and S1 first, with your feel session as the go or no-go before anything scales. <span class="rec">Recommended.</span></li>
+</ol>
+<div class="note"><b>Borrowing from other mods:</b> AWAKEN's code is All Rights Reserved and the repo is public, so GPL code (Epic Fight, Combat Roll, Spell Engine) and All Rights Reserved code (Better Combat, Wizards) can't be copied, and Simply Swords and MC Dungeons Weapons forbid distribution. MIT and Apache projects (the Player Animation Library, GeckoLib, ReArm, Fryc's Parry, Shield Expansion) could be, with their notices. The plan copies nothing: every number we took from them is a design reference, cited in <code>PLAN.md</code> §8. No Mojang assets.</div>
+</main>
+</div>

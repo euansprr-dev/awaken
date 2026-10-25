@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arms: listening</title>
+<style>
+:root { --bg:#f6f4ef; --card:#fffdf8; --ink:#1d1c1a; --soft:#6b665d; --line:#e4dfd4; --accent:#2e6bd8; --keep:#2f8a4e;
+  --remake:#b7791f; --cut:#b83a3a; --chip:#efe9dd;
+  --lv-calm:#5b7393; --lv-tension:#a86a12; --lv-combat:#b8442c; --lv-lord:#6a43b5; --lv-fell:#2f7d55; }
+@media (prefers-color-scheme: dark) { :root { --bg:#14161a; --card:#1c1f25; --ink:#ece9e2; --soft:#a29d93; --line:#2c3038;
+  --accent:#7fb0ff; --keep:#5cc27f; --remake:#e0a548; --cut:#ef6b6b; --chip:#262a32; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width:980px; margin:0 auto; padding:28px 16px 80px; }
+h1 { font-size:26px; margin:0 0 4px; letter-spacing:-0.01em; }
+.sub { color:var(--soft); margin:0 0 20px; }
+.intro { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:18px; }
+.intro p { margin:6px 0; }
+.intro ol { margin:6px 0 6px 20px; padding:0; }
+.marks { display:flex; flex-wrap:wrap; gap:6px 14px; list-style:none; padding:0; margin:8px 0 0; color:var(--soft); font-size:13px; }
+.marks b { color:var(--ink); font-variant-numeric:tabular-nums; }
+.dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+.lv-calm { background:var(--lv-calm); } .lv-tension { background:var(--lv-tension); } .lv-combat { background:var(--lv-combat); }
+.lv-lord { background:var(--lv-lord); } .lv-fell { background:var(--lv-fell); }
+.bar { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 0; display:flex; gap:10px; align-items:center;
+  flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:16px; }
+.bar .progress { font-variant-numeric:tabular-nums; color:var(--soft); margin-right:auto; }
+button { font:inherit; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:6px 12px;
+  cursor:pointer; }
+button:hover { border-color:var(--accent); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+.card header { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.card h2 { font-size:19px; margin:0; }
+.card .n { color:var(--soft); font-variant-numeric:tabular-nums; }
+.card .line { margin:0; color:var(--soft); font-size:13px; flex-basis:100%; }
+.row { display:grid; grid-template-columns: 1fr; gap:8px; padding:12px 0; border-top:1px solid var(--line); }
+.row:first-of-type { border-top:none; }
+.what { display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; }
+.tag { background:var(--chip); border-radius:6px; padding:1px 8px; font-size:13px; }
+.tag.strong { background:var(--accent); color:var(--bg); }
+.intent { flex:1 1 300px; }
+.meta { color:var(--soft); font-size:12px; flex-basis:100%; }
+audio { width:100%; height:36px; }
+.player { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.timeline { position:relative; display:flex; height:24px; border-radius:6px; overflow:hidden; }
+.seg { flex-basis:0; min-width:0; border:0; border-radius:0; padding:0 5px; font-size:11px; line-height:24px; color:#fff;
+  text-align:left; white-space:nowrap; overflow:hidden; }
+.seg + .seg { box-shadow:inset 1px 0 0 var(--card); }
+.seg.now { font-weight:600; box-shadow:inset 0 -3px 0 rgba(255,255,255,.85); }
+.seg:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.head { position:absolute; top:0; bottom:0; left:0; width:2px; margin-left:-1px; background:var(--ink);
+  box-shadow:0 0 0 1px var(--card); pointer-events:none; opacity:0; }
+.timeline.live .head { opacity:1; }
+.verdict { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.choices { display:flex; gap:6px; }
+.choices button[aria-pressed=true][data-v=keep] { background:var(--keep); border-color:var(--keep); color:#fff; }
+.choices button[aria-pressed=true][data-v=remake] { background:var(--remake); border-color:var(--remake); color:#fff; }
+.choices button[aria-pressed=true][data-v=cut] { background:var(--cut); border-color:var(--cut); color:#fff; }
+/* a layer nobody marked shows the verdict it takes from its mix */
+.choices button[data-inherit=true] { border-style:dashed; }
+.choices button[data-inherit=true][data-v=keep] { border-color:var(--keep); color:var(--keep); }
+.choices button[data-inherit=true][data-v=remake] { border-color:var(--remake); color:var(--remake); }
+.choices button[data-inherit=true][data-v=cut] { border-color:var(--cut); color:var(--cut); }
+.note { flex:1 1 220px; min-width:0; font:inherit; padding:6px 10px; border-radius:8px; border:1px solid var(--line);
+  background:var(--bg); color:var(--ink); }
+details summary { cursor:pointer; color:var(--accent); padding:8px 0 2px; }
+textarea { width:100%; min-height:160px; font:13px/1.4 ui-monospace, Menlo, monospace; background:var(--card); color:var(--ink);
+  border:1px solid var(--line); border-radius:8px; padding:10px; }
+@media (min-width:760px) { .row { grid-template-columns: 1.1fr 1fr; align-items:center; } .row .verdict { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Arms: listening</h1>
+<p class="sub">AWAKEN · weapons and combat · 2026-10-25 · 8 scenes, 25 sounds</p>
+<div class="intro">
+  <p><b>About five minutes.</b> Every sound a fight makes in Arms, built from CC0 recordings (Kenney) and the kit's own
+  synthesis, mastered to sit with vanilla's combat sounds. The checks already passed (loudness, true peak, a blow's
+  transient in its first 6 ms, no clicks, variants that differ, no harshness): they catch a broken sound, not a dull
+  one. That part is yours.</p>
+  <ol>
+    <li><b>The scenes first</b>: each plays a moment of a fight at the game's own timing. Does it feel like steel, like
+    weight, like the moment it is? Mark it <b>keep</b>, <b>remake</b> or <b>cut</b>, and say why in the note.</li>
+    <li><b>Then any sound alone</b> that bothered you in a scene: its variants play one after another (the game takes
+    them in turn so a fight never repeats one sample).</li>
+  </ol>
+  <p>Headphones or good speakers, at the volume you play at. Your choices stay in this browser; <b>Export</b> and send
+  me the file (or the text).</p>
+</div>
+<div class="bar"><span class="progress" id="progress"></span>
+  <button id="export">Export choices (.json)</button><button id="text">Show as text</button></div>
+<section class="card"><header><span class="n">01</span><h2>In a fight</h2>
+  <p class="line">the sounds together, at the timing of the game's rows</p></header>
+      <div class="row" data-id="scene.chain_rhythm">
+        <div class="what"><span class="tag strong">The chain, in rhythm</span><span class="intent">Strike 1, 2, 3 into a zombie, each press on its rhythm window: the swish climbs a semitone a step, the finisher lands heavy.</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/scene_chain_rhythm.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="scene.chain_mashed">
+        <div class="what"><span class="tag strong">The chain, mashed</span><span class="intent">The same chain pressed early every time (buffered to the window, no rhythm): no climb. Should feel flatter, not wrong.</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/scene_chain_mashed.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="scene.deflect">
+        <div class="what"><span class="tag strong">Deflect, then riposte</span><span class="intent">A creature tells a light blow (8 ticks), the guard rises in time: the steel sings, then the riposte&#x27;s thrust lands heavy.</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/scene_deflect.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="scene.heavy">
+        <div class="what"><span class="tag strong">A heavy on the glint</span><span class="intent">The strike key held: the draw creaks, the glint pings at its mark, released on it: the rising cut lands heavy.</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/scene_heavy.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="scene.perilous">
+        <div class="what"><span class="tag strong">Perilous: dodged</span><span class="intent">A boss readies a perilous blow (a shriek nothing else makes), a perfect dodge (the world&#x27;s breath held), a Slipcut.</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/scene_perilous.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="scene.guard_break">
+        <div class="what"><span class="tag strong">A heavy breaks the guard</span><span class="intent">An amber heavy tell, blocked instead of deflected: the guard is crushed aside and the blow gets through.</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/scene_guard_break.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="scene.execution">
+        <div class="what"><span class="tag strong">Break, then Execution</span><span class="intent">Three blows on a golem (stone), its stance gives, the Execution: the biggest blow there is.</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/scene_execution.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="scene.materials">
+        <div class="what"><span class="tag strong">What the blade meets</span><span class="intent">One cut into each body: flesh, armour, bone, wood, stone, a spirit, slime.</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/scene_materials.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+</section>
+<section class="card"><header><span class="n">02</span><h2>Every sound alone</h2>
+  <p class="line">what it is for, and its variants in turn</p></header>
+  <details><summary>25 sounds</summary>
+      <div class="row" data-id="event.swish_light">
+        <div class="what"><span class="tag">swish light</span><span class="intent">A longsword&#x27;s quick strike: a clean, fast pass with the faint whistle of the fuller.</span><span class="meta">4 variants · &quot;Blade swings&quot; · heard to 16 blocks · -15 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/swish_light.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.swish_heavy">
+        <div class="what"><span class="tag">swish heavy</span><span class="intent">A heavy&#x27;s rising cut: slower, deeper, more air moved, a thrum under it.</span><span class="meta">3 variants · &quot;Heavy blade swings&quot; · heard to 18 blocks · -14 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/swish_heavy.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.swish_thrust">
+        <div class="what"><span class="tag">swish thrust</span><span class="intent">A thrust: no arc, a short sharp hiss forward and a snap of the sleeve.</span><span class="meta">3 variants · &quot;Blade thrusts&quot; · heard to 16 blocks · -15 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/swish_thrust.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hit_flesh">
+        <div class="what"><span class="tag">hit flesh</span><span class="intent">Steel into a body: the slice&#x27;s edge, the meat of the blow, the weight under it.</span><span class="meta">5 variants · &quot;Blade strikes&quot; · heard to 18 blocks · -13 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hit_flesh.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hit_flesh_heavy">
+        <div class="what"><span class="tag">hit flesh heavy</span><span class="intent"></span><span class="meta">3 variants · &quot;Heavy blow lands&quot; · heard to 22 blocks · -12 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hit_flesh_heavy.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hit_armor">
+        <div class="what"><span class="tag">hit armor</span><span class="intent">Steel on plate: a hard clank, a short dull ring of the armour, a scrape as the edge skids off.</span><span class="meta">4 variants · &quot;Blade strikes armour&quot; · heard to 20 blocks · -13 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hit_armor.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hit_bone">
+        <div class="what"><span class="tag">hit bone</span><span class="intent">Steel through bone (skeletons): a dry crack, a hollow knock, splinters.</span><span class="meta">4 variants · &quot;Blade cracks bone&quot; · heard to 18 blocks · -13.5 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hit_bone.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hit_wood">
+        <div class="what"><span class="tag">hit wood</span><span class="intent">Steel into wood (the Root Saint, creakings, shields): a solid chunk and a split.</span><span class="meta">3 variants · &quot;Blade bites wood&quot; · heard to 18 blocks · -13.5 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hit_wood.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hit_stone">
+        <div class="what"><span class="tag">hit stone</span><span class="intent">Steel on stone and golem-iron: a hard blunt strike, grit, the low answer of something heavy.</span><span class="meta">3 variants · &quot;Blade strikes stone&quot; · heard to 20 blocks · -13 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hit_stone.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hit_spirit">
+        <div class="what"><span class="tag">hit spirit</span><span class="intent">Steel through a spirit: no flesh, a cold glassy shear and a breath drawn backwards.</span><span class="meta">3 variants · &quot;Blade shears a spirit&quot; · heard to 18 blocks · -14.5 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hit_spirit.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hit_slime">
+        <div class="what"><span class="tag">hit slime</span><span class="intent">Steel into slime: a wet slap and a squelch that closes behind the blade.</span><span class="meta">3 variants · &quot;Blade splits slime&quot; · heard to 16 blocks · -14 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hit_slime.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.deflect">
+        <div class="what"><span class="tag">deflect</span><span class="intent">A deflect: blade meets blade at the perfect moment. A hard bright strike, the steel singing clear for most of a second, sparks, and a rising shimmer that says you did it right.</span><span class="meta">4 variants · &quot;Blow deflected&quot; · heard to 24 blocks · -13 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/deflect.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.block">
+        <div class="what"><span class="tag">block</span><span class="intent">A block: the guard takes the blow. Heavy, dull, the weapon shuddering in your grip; no song.</span><span class="meta">4 variants · &quot;Blow blocked&quot; · heard to 20 blocks · -12.5 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/block.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.guard_break">
+        <div class="what"><span class="tag">guard break</span><span class="intent">A guard broken by a heavy: a crushing clank, the blade wrenched aside (a scrape), a sick detuned ring.</span><span class="meta">2 variants · &quot;Guard broken&quot; · heard to 24 blocks · -12 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/guard_break.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.break">
+        <div class="what"><span class="tag">break</span><span class="intent">A stance breaking (BREAK): something structural gives. A deep fracture, glass-like shards of the guard, a low drop that hangs for a beat.</span><span class="meta">2 variants · &quot;Stance breaks&quot; · heard to 28 blocks · -12 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/break.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.execution">
+        <div class="what"><span class="tag">execution</span><span class="intent">An Execution on a broken foe: the biggest blow there is. The cut, the body&#x27;s whole weight, the steel ringing out over it, the ground answering.</span><span class="meta">2 variants · &quot;Execution&quot; · heard to 32 blocks · -11.5 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/execution.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.perfect_dodge">
+        <div class="what"><span class="tag">perfect dodge</span><span class="intent">A perfect dodge: the world&#x27;s breath held. A rush past your ear pulled backwards into silence, a low dip, one soft high tone; then the room comes back.</span><span class="meta">2 variants · &quot;Perfect dodge&quot; · heard to 12 blocks · -15 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/perfect_dodge.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.dodge">
+        <div class="what"><span class="tag">dodge</span><span class="intent">A dodge: a boot scuff, cloth, a short rush of air.</span><span class="meta">3 variants · &quot;Dodges&quot; · heard to 12 blocks · -15 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/dodge.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.charge">
+        <div class="what"><span class="tag">charge</span><span class="intent">A heavy being held: leather creaking under the grip, a low tension rising, the edge humming.</span><span class="meta">2 variants · &quot;Blade drawn back&quot; · heard to 12 blocks · -15.5 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/charge.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.glint">
+        <div class="what"><span class="tag">glint</span><span class="intent">The glint: release now. One bright clean ping of steel, short so it never covers the release.</span><span class="meta">2 variants · &quot;Blade glints&quot; · heard to 16 blocks · -15 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/glint.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.tell_light">
+        <div class="what"><span class="tag">tell light</span><span class="intent">LIGHT: a short rising draw and a bright tick: deflect it.</span><span class="meta">3 variants · &quot;Creature winds up&quot; · heard to 24 blocks · -15 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/tell_light.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.tell_heavy">
+        <div class="what"><span class="tag">tell heavy</span><span class="intent">HEAVY: a deep drawn breath and an amber hum swelling: deflect or dodge, don&#x27;t block.</span><span class="meta">2 variants · &quot;Creature gathers a heavy blow&quot; · heard to 28 blocks · -14.5 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/tell_heavy.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.tell_perilous">
+        <div class="what"><span class="tag">tell perilous</span><span class="intent">PERILOUS: a sharp metallic shriek, two tones grinding against each other: dodge. Nothing else sounds like it.</span><span class="meta">2 variants · &quot;Creature readies a perilous blow&quot; · heard to 32 blocks · -14 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/tell_perilous.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.tell_grab">
+        <div class="what"><span class="tag">tell grab</span><span class="intent">GRAB: the creak of reaching hands and leather drawn tight: dodge.</span><span class="meta">2 variants · &quot;Creature reaches to grab&quot; · heard to 24 blocks · -15 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/tell_grab.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div>
+      <div class="row" data-id="event.hurt">
+        <div class="what"><span class="tag">hurt</span><span class="intent">You, hit: a blunt blow to the body, the breath knocked out (no voice), a low thump you feel.</span><span class="meta">4 variants · &quot;You&#x27;re hit&quot; · heard to 12 blocks · -14 dBFS</span></div>
+        <audio controls preload="none" src="listening-2026-10-25/hurt.mp3"></audio>
+        <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+      </div></details>
+</section>
+<textarea id="out" hidden readonly></textarea>
+</main>
+<script>
+(function () {
+  var KEY = "awaken-arms-listening-2026-10-25";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} update(); }
+  function update() {
+    var scenes = 0, ns = 0, events = 0, ne = 0;
+    document.querySelectorAll(".row[data-id]").forEach(function (r) {
+      var id = r.dataset.id, v = (state[id] || {}).v || "";
+      if (id.indexOf("scene.") === 0) { ns++; if (v) scenes++; } else { ne++; if (v) events++; }
+      r.querySelectorAll(".choices button").forEach(function (b) {
+        b.setAttribute("aria-pressed", v === b.dataset.v ? "true" : "false");
+      });
+    });
+    document.getElementById("progress").textContent = "scenes " + scenes + " of " + ns + " · sounds " + events + " of " + ne;
+  }
+  document.querySelectorAll(".row[data-id]").forEach(function (row) {
+    var id = row.dataset.id;
+    row.querySelectorAll(".choices button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var cur = state[id] || {};
+        cur.v = cur.v === b.dataset.v ? "" : b.dataset.v;
+        state[id] = cur;
+        save();
+      });
+    });
+    var note = row.querySelector(".note");
+    note.value = (state[id] || {}).note || "";
+    note.addEventListener("input", function () { var cur = state[id] || {}; cur.note = note.value; state[id] = cur; save(); });
+  });
+  document.addEventListener("play", function (ev) {
+    document.querySelectorAll("audio").forEach(function (a) { if (a !== ev.target) a.pause(); });
+  }, true);
+  function entries() {
+    var out = [];
+    document.querySelectorAll(".row[data-id]").forEach(function (r) {
+      var id = r.dataset.id, s = state[id] || {};
+      out.push({ id: id, verdict: s.v || "", note: s.note || "" });
+    });
+    return out;
+  }
+  document.getElementById("export").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify({ sheet: KEY, exported: new Date().toISOString(), entries: entries() }, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = KEY + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  document.getElementById("text").addEventListener("click", function () {
+    var t = document.getElementById("out");
+    var lines = entries().filter(function (r) { return r.verdict || r.note; })
+      .map(function (r) { return r.id + ": " + (r.verdict || "-") + (r.note ? " - " + r.note : ""); });
+    t.value = lines.length ? lines.join("\n") : "(nothing marked yet)";
+    t.hidden = false; t.focus(); t.select();
+  });
+  update();
+})();
+</script>
+</body>
+</html>

@@ -83,7 +83,7 @@ public final class Starter {
             migrate(p);
             if (pending(p)) Later.run(p.level().getServer(), 60, () -> offer(p));
         });
-        NowHooks.register(p -> pending(p)
+        NowHooks.register(p -> pending(p) && !dev.awaken.core.api.OpeningHooks.inOpening(p)
                 ? List.of(NowHooks.Suggestion.of("powers:first_power", 85, "Choose your first power · K"))
                 : List.of());
         Requirements.powerCheck = Starter::meets;
@@ -111,6 +111,8 @@ public final class Starter {
     /** Shows the three cards (rolling them the first time). Does nothing once chosen. */
     public static void offer(ServerPlayer p) {
         if (p.isRemoved() || !pending(p)) return;
+        // Carillon's opening offers the first power at the Registry, after the licence and the Holo (SPEC §16.4)
+        if (dev.awaken.core.api.OpeningHooks.inOpening(p) && !"registry".equals(dev.awaken.core.api.OpeningHooks.stage(p))) return;
         State st = state(p);
         if (st.offer().isEmpty()) {
             st = new State(State.SCHEMA, roll(p.getRandom()), "");

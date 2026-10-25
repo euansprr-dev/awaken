@@ -1,0 +1,134 @@
+# Arms pose filmstrips (SPEC §24): every Longsword move held still at six points (rest into the wind-up, the
+# wind-up's end, mid-blow, the blow's end, mid-recovery, home), against a dark wall with a dummy, for frame-by-frame
+# review of the first-person swings. Generated from the timing table; KEEP=1 reuses the world.
+world armsposes creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+screen close
+hud on
+camera first
+cmd gamemode creative
+cmd tp @s ~ 200 ~ 0 4
+wait 20
+cmd fill ~-6 ~-1 ~-6 ~6 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-6 ~ ~-6 ~6 ~10 ~12 minecraft:air
+cmd fill ~-6 ~ ~9 ~6 ~7 ~9 minecraft:deepslate_tiles
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~ ~ ~3.1 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+wait 60
+shot pose_rest
+arms pose strike_1 0.100
+shot pose_strike_1_0
+arms pose strike_1 0.200
+shot pose_strike_1_1
+arms pose strike_1 0.300
+shot pose_strike_1_2
+arms pose strike_1 0.400
+shot pose_strike_1_3
+arms pose strike_1 0.610
+shot pose_strike_1_4
+arms pose strike_1 0.850
+shot pose_strike_1_5
+arms pose strike_2 0.100
+shot pose_strike_2_0
+arms pose strike_2 0.200
+shot pose_strike_2_1
+arms pose strike_2 0.300
+shot pose_strike_2_2
+arms pose strike_2 0.400
+shot pose_strike_2_3
+arms pose strike_2 0.610
+shot pose_strike_2_4
+arms pose strike_2 0.850
+shot pose_strike_2_5
+arms pose strike_3 0.115
+shot pose_strike_3_0
+arms pose strike_3 0.231
+shot pose_strike_3_1
+arms pose strike_3 0.308
+shot pose_strike_3_2
+arms pose strike_3 0.385
+shot pose_strike_3_3
+arms pose strike_3 0.600
+shot pose_strike_3_4
+arms pose strike_3 0.846
+shot pose_strike_3_5
+arms pose strike_4 0.100
+shot pose_strike_4_0
+arms pose strike_4 0.200
+shot pose_strike_4_1
+arms pose strike_4 0.267
+shot pose_strike_4_2
+arms pose strike_4 0.333
+shot pose_strike_4_3
+arms pose strike_4 0.567
+shot pose_strike_4_4
+arms pose strike_4 0.833
+shot pose_strike_4_5
+arms pose heavy 0.000
+shot pose_heavy_0
+arms pose heavy 0.000
+shot pose_heavy_1
+arms pose heavy 0.115
+shot pose_heavy_2
+arms pose heavy 0.231
+shot pose_heavy_3
+arms pose heavy 0.500
+shot pose_heavy_4
+arms pose heavy 0.808
+shot pose_heavy_5
+arms pose riposte 0.045
+shot pose_riposte_0
+arms pose riposte 0.091
+shot pose_riposte_1
+arms pose riposte 0.182
+shot pose_riposte_2
+arms pose riposte 0.273
+shot pose_riposte_3
+arms pose riposte 0.527
+shot pose_riposte_4
+arms pose riposte 0.818
+shot pose_riposte_5
+arms pose slipcut 0.050
+shot pose_slipcut_0
+arms pose slipcut 0.100
+shot pose_slipcut_1
+arms pose slipcut 0.200
+shot pose_slipcut_2
+arms pose slipcut 0.300
+shot pose_slipcut_3
+arms pose slipcut 0.545
+shot pose_slipcut_4
+arms pose slipcut 0.825
+shot pose_slipcut_5
+arms pose execution 0.053
+shot pose_execution_0
+arms pose execution 0.105
+shot pose_execution_1
+arms pose execution 0.184
+shot pose_execution_2
+arms pose execution 0.263
+shot pose_execution_3
+arms pose execution 0.521
+shot pose_execution_4
+arms pose execution 0.816
+shot pose_execution_5
+arms pose off
+arms guard on
+wait 10
+shot pose_guard
+arms guard off
+wait 6
+arms heavy 30
+wait 14
+shotnow pose_charge
+wait 30
+quit

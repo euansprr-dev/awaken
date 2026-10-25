@@ -31,6 +31,7 @@ public final class GatesModule {
         dev.awaken.gates.run.RunRegressionTests.register();
         dev.awaken.gates.run.TogetherRunTests.register();
         TogetherGateTests.register();
+        RigTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent e) {
@@ -38,6 +39,10 @@ public final class GatesModule {
         r.playToClient(GatePayloads.Beacons.TYPE, GatePayloads.Beacons.STREAM_CODEC);
         r.playToClient(GatePayloads.RunHud.TYPE, GatePayloads.RunHud.STREAM_CODEC);
         r.playToClient(GatePayloads.SatchelView.TYPE, GatePayloads.SatchelView.STREAM_CODEC);
+        r.playToClient(dev.awaken.gates.net.RigPayloads.Scene.TYPE, dev.awaken.gates.net.RigPayloads.Scene.STREAM_CODEC);
+        r.playToClient(dev.awaken.gates.net.RigPayloads.Cue.TYPE, dev.awaken.gates.net.RigPayloads.Cue.STREAM_CODEC);
+        r.playToClient(dev.awaken.gates.net.RigPayloads.Run.TYPE, dev.awaken.gates.net.RigPayloads.Run.STREAM_CODEC);
+        r.playToClient(dev.awaken.gates.net.RigPayloads.Ghost.TYPE, dev.awaken.gates.net.RigPayloads.Ghost.STREAM_CODEC);
         r.playToServer(GatePayloads.OpenSatchel.TYPE, GatePayloads.OpenSatchel.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Hud.sendSatchel(sp, true);
         });

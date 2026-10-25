@@ -1,0 +1,44 @@
+# The Sky Leviathan's trial (SPEC §17.18), run with PACK=feel: the trial gate opened, entered; the antechamber; the
+# arena's open sky (the edge: Skyborn given, "The sky remembers you", the Leviathan rises); flight; the Lord killed by
+# command: the trial done ("The sky is yours"). Log: "[ascent] ... Sky Leviathan".
+world ascent_skytrial2 survival 4246
+waitworld
+window 1440 900
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken ascent grant wings
+cmd awaken ascent trial skyborn
+wait 400
+cmd awaken gate enter 1
+wait 120
+cmd awaken gate interior goto ante
+wait 60
+hud on
+shotnow sky_ante
+cmd awaken gate interior goto lord
+wait 50
+shotnow sky_edge
+cmd awaken ascent pilot run soar
+wait 140
+shotnow sky_flight
+wait 120
+shotnow sky_fight
+cmd kill @e[type=!minecraft:player,distance=..90]
+wait 60
+shotnow sky_done
+wait 260
+shotnow sky_gift
+info
+quit

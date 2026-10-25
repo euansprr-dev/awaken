@@ -49,8 +49,17 @@ public final class Awaken {
         dev.awaken.core.audio.AudioModule.init(modBus);
         dev.awaken.compat.CompatModule.init(modBus);
         dev.awaken.terrain.TerrainModule.init(modBus);
+        dev.awaken.city.CityModule.init(modBus);
+        dev.awaken.citizens.CitizensModule.init(modBus);
+        dev.awaken.opening.OpeningModule.init(modBus);
         dev.awaken.holo.HoloModule.init(modBus);
         dev.awaken.farsight.FarSightModule.init(modBus);
+        dev.awaken.wilds.WildsModule.init(modBus);
+        dev.awaken.living.LivingModule.init(modBus);
+        dev.awaken.lens.LensModule.init(modBus);
+        dev.awaken.anims.AnimsModule.init(modBus);
+        dev.awaken.atlas.AtlasModule.init(modBus);
+        dev.awaken.arms.ArmsModule.init(modBus);
     }
 
     public static Identifier id(String path) {

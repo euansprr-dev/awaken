@@ -1,0 +1,303 @@
+package dev.awaken.living;
+
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import dev.awaken.core.AwakenCommands;
+import dev.awaken.core.api.CreatureTag;
+import dev.awaken.living.api.Regions;
+import dev.awaken.living.combat.LevelMoments;
+import dev.awaken.living.region.RegionMap;
+import dev.awaken.living.region.RegionService;
+import dev.awaken.progression.Progression;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * {@code /awaken living region} (anyone): the region you stand in, its levels and where its heart is.
+ * Admin: {@code regions [radius]} (the regions round you, nearest first), {@code tag} (what the band reads off the creature
+ * you look at), {@code moment} (play the level moment here, for tours).
+ */
+final class LivingCommands {
+    private LivingCommands() {}
+
+    static void register() {
+        AwakenCommands.add((root, ctx) -> {
+            var l = Commands.literal("living");
+            l.then(Commands.literal("region").executes(c -> region(c.getSource().getPlayerOrException())));
+            l.then(Commands.literal("regions").requires(AwakenCommands.admin())
+                    .executes(c -> regions(c.getSource(), c.getSource().getPlayerOrException(), 3000))
+                    .then(Commands.argument("radius", IntegerArgumentType.integer(500, 20000))
+                            .executes(c -> regions(c.getSource(), c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "radius")))));
+            l.then(Commands.literal("tag").requires(AwakenCommands.admin()).executes(c -> tag(c.getSource().getPlayerOrException())));
+            // tours: a blow at the creature you look at (no attack key in the autopilot), a drop in a pillar
+            l.then(Commands.literal("strike").requires(AwakenCommands.admin())
+                    .executes(c -> strike(c.getSource().getPlayerOrException(), 4, false))
+                    .then(Commands.literal("crit").executes(c -> strike(c.getSource().getPlayerOrException(), 9, true)))
+                    .then(Commands.literal("kill").executes(c -> strike(c.getSource().getPlayerOrException(), 100000, false))));
+            l.then(Commands.literal("pillar").requires(AwakenCommands.admin()).executes(c -> pillar(c.getSource().getPlayerOrException())));
+            l.then(Commands.literal("moment").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                LevelMoments.offer(p, Progression.profile(p).level(), 1);
+                return 1;
+            }));
+            // Wayfarers (Phase C): a person here, a talk with the nearest (no use key in the autopilot), a scene now
+            l.then(Commands.literal("wayfarer").requires(AwakenCommands.admin())
+                    .then(Commands.argument("who", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        String who = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "who");
+                        if (dev.awaken.living.wayfarer.Wayfarers.get(who) == null) {
+                            c.getSource().sendFailure(Component.literal("Nobody called " + who + "."));
+                            return 0;
+                        }
+                        Vec3 at = p.position().add(p.getLookAngle().multiply(1, 0, 1).normalize().scale(3));
+                        dev.awaken.living.wayfarer.Scenes.summon(p.level(), who, net.minecraft.core.BlockPos.containing(at));
+                        return 1;
+                    })));
+            l.then(Commands.literal("camp").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var at = dev.awaken.living.wayfarer.Scenes.campStand(p.level().getServer());
+                p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(), 180F, 10F, true);
+                return 1;
+            }));
+            // tours: stand <distance> blocks south of your newest open scene, facing it (to see its flare)
+            l.then(Commands.literal("view").requires(AwakenCommands.admin())
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 400)).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        var scene = dev.awaken.living.wayfarer.Scenes.newest(p);
+                        if (scene == null) return 0;
+                        int d = IntegerArgumentType.getInteger(c, "distance");
+                        ServerLevel level = p.level().getServer().overworld();
+                        int x = scene.getX(), z = scene.getZ() + d;
+                        level.getChunk(x >> 4, z >> 4);
+                        // above the canopy round the spot, on a small glass stand (a tour's camera, never inside leaves)
+                        int y = 0;
+                        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
+                            y = Math.max(y, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x + dx, z + dz));
+                        y += d > 20 ? 6 : 1;
+                        if (d > 20) for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++)
+                            level.setBlock(new net.minecraft.core.BlockPos(x + dx, y - 1, z + dz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
+                        float pitch = (float) -Math.toDegrees(Math.atan2(scene.getY() + 20 - (y + 1.6), d));
+                        p.teleportTo(level, x + 0.5, y, z + 0.5, java.util.Set.of(), 180F, pitch, true);
+                        return 1;
+                    })));
+            l.then(Commands.literal("talk").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var near = p.level().getEntitiesOfClass(dev.awaken.living.wayfarer.Wayfarer.class, p.getBoundingBox().inflate(24));
+                near.sort(java.util.Comparator.comparingDouble(w -> w.distanceToSqr(p)));
+                if (near.isEmpty()) return 0;
+                dev.awaken.living.wayfarer.Wayfarers.talkTo(p, near.getFirst());
+                return 1;
+            }));
+            l.then(Commands.literal("scene").requires(AwakenCommands.admin())
+                    .then(Commands.argument("chain", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        var at = dev.awaken.living.wayfarer.Scenes.force(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "chain"));
+                        c.getSource().sendSuccess(() -> Component.literal(at == null ? "No such chain." : "Scene at " + at.toShortString()), false);
+                        return at == null ? 0 : 1;
+                    })));
+            // the World Pulse (Phase D): start a kind here now, list what's on, end it all
+            l.then(Commands.literal("happen").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        var h = dev.awaken.living.pulse.Pulse.force(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind"));
+                        c.getSource().sendSuccess(() -> Component.literal(h == null ? "No place for it here (or no such kind)." : "Happening " + h.id + " at " + net.minecraft.core.BlockPos.containing(h.centre).toShortString()), false);
+                        return h == null ? 0 : 1;
+                    })));
+            // tours: stand in a fauna land, face the newest happening, or walk up to it
+            l.then(Commands.literal("goto").requires(AwakenCommands.admin())
+                    .then(Commands.argument("land", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        ServerLevel level = p.level().getServer().overworld();
+                        var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BIOME,
+                                dev.awaken.Awaken.id("fauna/" + com.mojang.brigadier.arguments.StringArgumentType.getString(c, "land")));
+                        var found = level.findClosestBiome3d(b -> b.is(tag), p.blockPosition().atY(64), 6400, 32, 64);
+                        if (found == null) {
+                            c.getSource().sendFailure(Component.literal("No such land within 6400 blocks."));
+                            return 0;
+                        }
+                        var at = found.getFirst();
+                        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
+                        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) + 1;
+                        p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), p.getYRot(), 0F, true);
+                        c.getSource().sendSuccess(() -> Component.literal("At " + at.getX() + " " + y + " " + at.getZ()), false);
+                        return 1;
+                    })));
+            l.then(Commands.literal("face").requires(AwakenCommands.admin()).executes(c -> faceHappening(c.getSource().getPlayerOrException(), 0)));
+            l.then(Commands.literal("near").requires(AwakenCommands.admin())
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 200))
+                            .executes(c -> faceHappening(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "distance")))));
+            l.then(Commands.literal("happenings").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var list = dev.awaken.living.pulse.Pulse.get(p.level().getServer()).active();
+                for (var h : list) {
+                    int d = (int) Math.sqrt(h.centre.distanceToSqr(p.position()));
+                    c.getSource().sendSuccess(() -> Component.literal(h.id + " " + h.kind + " · " + d + " m · " + Math.round(h.progress(p.level().getGameTime()) * 100) + "%"), false);
+                }
+                c.getSource().sendSuccess(() -> Component.literal(list.size() + " on · moon " + dev.awaken.living.pulse.Pulse.moon(p.level().getServer().overworld())), false);
+                return 1;
+            }));
+            l.then(Commands.literal("calm").requires(AwakenCommands.admin()).executes(c -> {
+                int n = dev.awaken.living.pulse.Pulse.endAll(c.getSource().getServer());
+                c.getSource().sendSuccess(() -> Component.literal(n + " happenings ended."), false);
+                return n;
+            }));
+            l.then(Commands.literal("ledger").requires(AwakenCommands.admin()).executes(c -> {
+                var lines = dev.awaken.living.population.Ledger.describe(c.getSource().getPlayerOrException());
+                for (String line : lines) c.getSource().sendSuccess(() -> Component.literal(line), false);
+                if (lines.isEmpty()) c.getSource().sendSuccess(() -> Component.literal("No populations near (yet)."), false);
+                return lines.size();
+            }));
+            l.then(Commands.literal("camps").requires(AwakenCommands.admin()).executes(c -> {
+                var lines = dev.awaken.living.camp.Camps.describe(c.getSource().getPlayerOrException());
+                for (String line : lines) c.getSource().sendSuccess(() -> Component.literal(line), false);
+                if (lines.isEmpty()) c.getSource().sendSuccess(() -> Component.literal("No camps near."), false);
+                return lines.size();
+            }));
+            l.then(Commands.literal("nest").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .then(Commands.argument("tier", IntegerArgumentType.integer(1, 5)).executes(c -> {
+                                var camp = dev.awaken.living.camp.Camps.place(c.getSource().getPlayerOrException(),
+                                        com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind"), IntegerArgumentType.getInteger(c, "tier"));
+                                c.getSource().sendSuccess(() -> Component.literal(camp == null ? "No ground for a camp here." : camp.name() + " at " + camp.pos().toShortString()), false);
+                                return camp == null ? 0 : 1;
+                            }))));
+            // crafts (Phase E): a craft's level outright, for tours and tests ("announce": with its level and perk toasts)
+            l.then(Commands.literal("craft").requires(AwakenCommands.admin())
+                    .then(Commands.argument("craft", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .then(Commands.argument("level", IntegerArgumentType.integer(1, 50)).executes(c -> setCraft(c, false))
+                                    .then(Commands.literal("announce").executes(c -> setCraft(c, true))))));
+            l.then(Commands.literal("quests").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var s = dev.awaken.living.quest.QuestEngine.state(p);
+                for (var a : s.active()) {
+                    String line = dev.awaken.living.quest.QuestEngine.line(a);
+                    c.getSource().sendSuccess(() -> Component.literal(a.chain() + " · step " + a.step() + " · " + line), false);
+                }
+                c.getSource().sendSuccess(() -> Component.literal(s.active().size() + " active, " + s.done().size() + " done"), false);
+                return 1;
+            }));
+            root.then(l);
+        });
+    }
+
+    /** Turns the player toward the newest happening; with a distance, first walks them up to that far from it. */
+    private static int faceHappening(ServerPlayer p, int distance) {
+        var list = dev.awaken.living.pulse.Pulse.get(p.level().getServer()).active();
+        if (list.isEmpty()) return 0;
+        var h = list.getLast();
+        ServerLevel level = p.level().getServer().overworld();
+        double px = p.getX(), py, pz = p.getZ();
+        if (distance > 0) {
+            double dx = px - h.centre.x, dz = pz - h.centre.z, len = Math.max(1, Math.sqrt(dx * dx + dz * dz));
+            px = h.centre.x + dx / len * distance;
+            pz = h.centre.z + dz / len * distance;
+        }
+        // a tour's camera: on a small glass stand over the canopy (high for a view from afar, the Hilltop Test)
+        level.getChunk((int) px >> 4, (int) pz >> 4);
+        int top = 0;
+        for (int ox = -2; ox <= 2; ox++) for (int oz = -2; oz <= 2; oz++)
+            top = Math.max(top, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) px + ox, (int) pz + oz));
+        py = top + (distance > 0 ? 3 : 20);
+        for (int ox = -1; ox <= 1; ox++) for (int oz = -1; oz <= 1; oz++)
+            level.setBlock(new net.minecraft.core.BlockPos((int) Math.floor(px) + ox, (int) py - 1, (int) Math.floor(pz) + oz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
+        double dx = h.centre.x - px, dy = h.centre.y + 6 - (py + 1.6), dz = h.centre.z - pz;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        p.teleportTo(level, px, py, pz, java.util.Set.of(), yaw, pitch, true);
+        return 1;
+    }
+
+    private static int region(ServerPlayer p) {
+        if (!(p.level() instanceof ServerLevel level) || !Regions.on(level)) {
+            p.sendSystemMessage(Component.literal("Regions are an overworld thing. Here the world keeps its vanilla danger."));
+            return 0;
+        }
+        Regions.Region r = Regions.regionAt(level, p.getBlockX(), p.getBlockZ());
+        int here = Regions.levelAt(level, p.getBlockX(), p.getBlockZ());
+        RegionMap map = RegionService.map(level.getServer());
+        p.sendSystemMessage(Component.literal(r.name() + " · Lv " + r.low() + "-" + r.high() + " · level " + here + " here"
+                + (r.commons() ? "" : " · heart at " + r.heartX() + " " + r.heartZ())
+                + " · " + (int) Math.sqrt(Math.pow(p.getX() - map.centreX(), 2) + Math.pow(p.getZ() - map.centreZ(), 2)) + " m from the centre"));
+        return 1;
+    }
+
+    private static int regions(CommandSourceStack src, ServerPlayer p, int radius) {
+        if (!(p.level() instanceof ServerLevel level) || !Regions.on(level)) return 0;
+        Map<Long, Regions.Region> found = new LinkedHashMap<>();
+        int step = 150;
+        for (int dx = -radius; dx <= radius; dx += step) {
+            for (int dz = -radius; dz <= radius; dz += step) {
+                if (dx * dx + dz * dz > radius * radius) continue;
+                Regions.Region r = Regions.regionAt(level, p.getBlockX() + dx, p.getBlockZ() + dz);
+                found.putIfAbsent(r.id(), r);
+            }
+        }
+        found.values().stream()
+                .sorted(java.util.Comparator.comparingDouble(r -> Math.pow(r.heartX() - p.getX(), 2) + Math.pow(r.heartZ() - p.getZ(), 2)))
+                .forEach(r -> src.sendSuccess(() -> Component.literal(String.format("%-22s Lv %3d-%-3d %s", r.name(), r.low(), r.high(),
+                        r.commons() ? "(home)" : "heart " + r.heartX() + " " + r.heartZ())), false));
+        return found.size();
+    }
+
+    private static int strike(ServerPlayer p, float damage, boolean crit) {
+        LivingEntity target = looked(p);
+        if (target == null) {
+            p.sendSystemMessage(Component.literal("Look at a creature."));
+            return 0;
+        }
+        if (crit) dev.awaken.living.combat.Hits.markCrit(p);
+        target.hurtServer((ServerLevel) p.level(), p.damageSources().playerAttack(p), damage);
+        return 1;
+    }
+
+    private static int pillar(ServerPlayer p) {
+        Vec3 at = p.getEyePosition().add(p.getViewVector(1).scale(3));
+        var core = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("power_core"));
+        var stack = new net.minecraft.world.item.ItemStack(core == net.minecraft.world.item.Items.AIR ? net.minecraft.world.item.Items.NETHER_STAR : core);
+        var item = new net.minecraft.world.entity.item.ItemEntity(p.level(), at.x, at.y, at.z, stack);
+        item.setData(LivingContent.LOOT_PILLAR.get(), 3);
+        item.setUnlimitedLifetime();
+        p.level().addFreshEntity(item);
+        return 1;
+    }
+
+    private static @org.jspecify.annotations.Nullable LivingEntity looked(ServerPlayer p) {
+        Vec3 eye = p.getEyePosition(), look = p.getViewVector(1).scale(24);
+        var hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(p, eye, eye.add(look),
+                new AABB(eye, eye.add(look)).inflate(1), e -> e instanceof LivingEntity && e != p, 24 * 24);
+        return hit != null && hit.getEntity() instanceof LivingEntity le ? le : null;
+    }
+
+    private static int tag(ServerPlayer p) {
+        Vec3 eye = p.getEyePosition(), look = p.getViewVector(1).scale(24);
+        var hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(p, eye, eye.add(look),
+                new AABB(eye, eye.add(look)).inflate(1), e -> e instanceof LivingEntity && e != p, 24 * 24);
+        if (hit == null) {
+            p.sendSystemMessage(Component.literal("Look at a creature."));
+            return 0;
+        }
+        CreatureTag t = CreatureTag.of(hit.getEntity());
+        p.sendSystemMessage(Component.literal(hit.getEntity().getName().getString() + ": " + (t.present()
+                ? "Lv " + t.level() + " " + t.kind() + (t.elite() ? " ELITE" : "") + (t.title().isEmpty() ? "" : " · " + t.title())
+                : "no tag")));
+        return 1;
+    }
+
+    private static int setCraft(com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, boolean announce)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        var craft = dev.awaken.living.craft.Craft.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "craft"));
+        if (craft == null) {
+            c.getSource().sendFailure(Component.literal("Crafts: hunting, foraging, mining, fishing, smithing, cooking."));
+            return 0;
+        }
+        dev.awaken.living.craft.Crafts.setLevel(c.getSource().getPlayerOrException(), craft, IntegerArgumentType.getInteger(c, "level"), announce);
+        return 1;
+    }
+}

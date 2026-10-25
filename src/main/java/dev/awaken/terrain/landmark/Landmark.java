@@ -2,6 +2,7 @@ package dev.awaken.terrain.landmark;
 
 import com.mojang.serialization.Codec;
 import dev.awaken.terrain.fault.FaultBlocks;
+import dev.awaken.terrain.frost.FrostBlocks;
 import dev.awaken.terrain.glass.GlassBlocks;
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
@@ -11,9 +12,10 @@ import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * The Awakened landmarks that are not trees (docs/modules/lands.md): a Gate Scar in the Glass Steppe and a Shard
- * Drift over the Shattered Highlands' faults. Each knows its palette (voxel code to block) and how far round its
- * centre it reaches, which the site search keeps clear of the city reserve.
+ * The Awakened landmarks that are not trees (docs/modules/lands.md): a Gate Scar in the Glass Steppe, a Shard Drift
+ * over the Shattered Highlands' faults and an Aurora Spire on its frozen tarn in the Frost Spires. Each knows its
+ * palette (voxel code to block) and how far round its centre it reaches, which the site search keeps clear of the city
+ * reserve.
  */
 public enum Landmark implements StringRepresentable {
     GATE_SCAR("gate_scar", 48) {
@@ -34,6 +36,13 @@ public enum Landmark implements StringRepresentable {
                     Blocks.GRASS_BLOCK.defaultBlockState().setValue(GrassBlock.SNOWY, false), Blocks.DIRT.defaultBlockState(),
                     Blocks.HANGING_ROOTS.defaultBlockState(), Blocks.COARSE_DIRT.defaultBlockState()};
         }
+    },
+    AURORA_SPIRE("aurora_spire", 40) {
+        @Override
+        BlockState[] palette() {
+            return new BlockState[]{Blocks.AIR.defaultBlockState(), FrostBlocks.FROSTSPAR.get().defaultBlockState(),
+                    FrostBlocks.FROSTSPAR_CLUSTER.get().defaultBlockState()};
+        }
     };
 
     public static final Codec<Landmark> CODEC = StringRepresentable.fromEnum(Landmark::values);
@@ -51,6 +60,11 @@ public enum Landmark implements StringRepresentable {
     @Override
     public String getSerializedName() {
         return id;
+    }
+
+    /** How far from its centre any block of the landmark can lie (a circle; the city reserve is kept clear of it). */
+    public int reach() {
+        return reach;
     }
 
     abstract BlockState[] palette();

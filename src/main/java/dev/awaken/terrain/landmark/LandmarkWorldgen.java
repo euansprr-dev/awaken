@@ -53,6 +53,13 @@ public final class LandmarkWorldgen {
                 LandsClock.add("gate_scar shape", System.nanoTime() - t0);
                 return p;
             }));
+    private static final LoadingCache<Long, AuroraSpire.Plan> SPIRES = CacheBuilder.newBuilder().maximumSize(8)
+            .build(CacheLoader.from(seed -> {
+                long t0 = System.nanoTime();
+                AuroraSpire.Plan p = AuroraSpire.plan(seed);
+                LandsClock.add("aurora_spire shape", System.nanoTime() - t0);
+                return p;
+            }));
     private static final LoadingCache<DriftKey, Voxels> DRIFTS = CacheBuilder.newBuilder().maximumSize(8)
             .build(CacheLoader.from(k -> {
                 long t0 = System.nanoTime();
@@ -65,8 +72,30 @@ public final class LandmarkWorldgen {
         return SCARS.getUnchecked(seed);
     }
 
+    static AuroraSpire.Plan spire(long seed) {
+        return SPIRES.getUnchecked(seed);
+    }
+
     static Voxels drift(long seed, float angle, int[] ground) {
         return DRIFTS.getUnchecked(new DriftKey(seed, angle, ground));
+    }
+
+    /**
+     * How far from its centre any block of this landmark lies for this seed: its voxels, and the ground the Gate Scar and
+     * the Aurora Spire reshape round them. The reach each landmark declares ({@link Landmark#reach()}) must cover it.
+     */
+    public static double reachOf(Landmark landmark, long seed) {
+        return switch (landmark) {
+            case GATE_SCAR -> {
+                GateScar.Plan p = scar(seed);
+                yield Math.max(p.voxels.reach(), p.groundReach());
+            }
+            case AURORA_SPIRE -> {
+                AuroraSpire.Plan p = spire(seed);
+                yield Math.max(p.voxels.reach(), p.groundReach());
+            }
+            case SHARD_DRIFT -> ShardDrift.build(seed, 0F, new int[0]).reach();
+        };
     }
 
     public static ResourceKey<Structure> structure(Landmark landmark) {

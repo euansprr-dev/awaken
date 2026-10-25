@@ -57,6 +57,14 @@ neoForge {
             gameDirectory = project.file(project.findProperty('gameDir') ?: 'run')
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            // the pack at 4K on a 16 GB Mac hitched with the default heap (a quarter of RAM, 4 GB at 78% and ~400 MB/s of
+            // garbage): give it 8 GB by default, -Pxmx=... to change
+            jvmArgument "-Xmx${project.findProperty('xmx') ?: '8G'}"
+            jvmArgument '-Xms2G'
+            // generational ZGC (docs/perf/CITY-FPS.md): in the city tour G1 paused 5.9 s in total, young pauses up to
+            // 180 ms and a 417 ms full GC at join; ZGC paused 2 ms in total (max 0.7 ms) and was as fast or faster in
+            // every scene. -Pg1 goes back to G1
+            if (!project.hasProperty('g1')) jvmArgument '-XX:+UseZGC'
         }
 
         // Development only: plays a script (run-autopilot/script.txt) in its own game folder and takes screenshots.
@@ -147,6 +155,12 @@ dependencies {
     compileOnly "maven.modrinth:iris:1.11.7+26.3-neoforge"
     // full-body cast clips (powers/client/fx/PalCasts). The version id, not "1.2.8": that number resolves to the 26.1 build
     compileOnly "maven.modrinth:player-animation-library:xJ30QmpE"
+    // the Ascent's Feel Director pauses Camera Overhaul while it owns the camera (body.client.feel.CameraOverhaulPause;
+    // version id of the build pack/lock.json pins, 2.1.2-neoforge+mc.26.3-plus)
+    compileOnly "maven.modrinth:cameraoverhaul:8NAGipZQ"
+    // the action camera drives Shoulder Surfing's over-the-shoulder view through its plugin API
+    // (body.client.feel.ShoulderSurfingPlugin; version id of the build pack/lock.json pins, 26.3-5.2.0+neoforge)
+    compileOnly "maven.modrinth:shoulder-surfing-reloaded:NLtlz49E"
     // the comfort profile's plugins (compat.jei, compat.jade): version ids, the exact builds pack/lock.json pins
     // (JEI 31.14.0.72, Jade 26.3.5+neoforge)
     compileOnly "maven.modrinth:jei:kLsKOFxv"

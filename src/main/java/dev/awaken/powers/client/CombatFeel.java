@@ -3,13 +3,12 @@ package dev.awaken.powers.client;
 import dev.awaken.core.AwakenConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 
 /**
- * Combat feel: camera shake (respects the cameraShake client setting) and hit-stop, a 40-80 ms freeze-frame on the
- * struck entity's render (position, animation and age held, with a small tremble) so heavy hits land.
+ * A power's combat feel: camera shake (respects the cameraShake client setting) and the marks' outlines. The hit-stop
+ * freeze is every blow's one freeze, core.api.CombatFeedback (installed by Arms).
  */
 final class CombatFeel {
     private CombatFeel() {}
@@ -41,37 +40,9 @@ final class CombatFeel {
         e.setRoll(e.getRoll() + amp * 0.6f * (float) Math.sin(time * 6.3 + 2.1));
     }
 
-    /** Render-state modifier for every entity: outline marks and hit-stop. */
+    /** Render-state modifier for every entity: a power's mark outlines it. */
     static void modify(Entity entity, EntityRenderState state) {
         int mark = ClientPowers.markColour(entity.getId());
         if (mark != 0) state.outlineColor = mark;
-        if (ClientPowers.FROZEN.isEmpty()) return;
-        ClientPowers.Freeze f = ClientPowers.FROZEN.get(entity.getId());
-        if (f == null) return;
-        if (System.nanoTime() > f.untilNanos) {
-            ClientPowers.FROZEN.remove(entity.getId());
-            return;
-        }
-        LivingEntityRenderState living = state instanceof LivingEntityRenderState l ? l : null;
-        if (!f.captured) {
-            f.captured = true;
-            f.x = state.x;
-            f.y = state.y;
-            f.z = state.z;
-            f.age = state.ageInTicks;
-            if (living != null) {
-                f.walkPos = living.walkAnimationPos;
-                f.walkSpeed = living.walkAnimationSpeed;
-            }
-        }
-        double tremble = ((System.nanoTime() / 16_000_000L) % 2 == 0 ? 1 : -1) * 0.04;
-        state.x = f.x + tremble;
-        state.y = f.y;
-        state.z = f.z - tremble;
-        state.ageInTicks = f.age;
-        if (living != null) {
-            living.walkAnimationPos = f.walkPos;
-            living.walkAnimationSpeed = f.walkSpeed;
-        }
     }
 }

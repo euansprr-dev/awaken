@@ -146,6 +146,11 @@ public final class FaunaModule {
         if (sp.getData(STATE.get()).revealPending()) Later.run(sp.level().getServer(), 60, () -> Reveal.tryReveal(sp));
     }
 
+    /** Plays a reveal still waiting for this player (Carillon's opening calls it when the city becomes yours). */
+    public static void revealIfPending(ServerPlayer sp) {
+        if (sp.getData(STATE.get()).revealPending()) Later.run(sp.level().getServer(), 30, () -> Reveal.tryReveal(sp));
+    }
+
     private static void onDimension(PlayerEvent.PlayerChangedDimensionEvent e) {
         if (e.getEntity() instanceof ServerPlayer sp && e.getTo() == Level.OVERWORLD && sp.getData(STATE.get()).revealPending()) {
             Later.run(sp.level().getServer(), 20, () -> Reveal.tryReveal(sp));
@@ -167,6 +172,12 @@ public final class FaunaModule {
         @Override
         public int contentLevel(ServerLevel level, BlockPos pos, FaunaRole role) {
             return FaunaRules.contentLevel(level, pos, role);
+        }
+
+        @Override
+        public boolean elite(ServerLevel level, BlockPos pos, FaunaRole role, net.minecraft.util.RandomSource random) {
+            return (role == FaunaRole.NEUTRAL || role == FaunaRole.HUNTER) && dev.awaken.living.api.Regions.on(level)
+                    && random.nextFloat() < dev.awaken.living.LivingModule.ELITE_CHANCE;
         }
 
         @Override

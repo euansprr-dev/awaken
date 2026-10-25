@@ -3,8 +3,8 @@ package dev.awaken.world.landmark;
 import dev.awaken.above.ruin.RuinKind;
 
 /**
- * The kinds of overworld landmark the player can find: the Well (the Descent's entrance), the four Precursor ruin kinds
- * (the spawn vault counts as a vault) and gates (one kind per gate theme, see {@link LandmarkWatch}). The ordinal is
+ * The kinds of overworld landmark the player can find: the Well (the Descent's entrance), the Precursor ruin kinds
+ * (the spawn vault counts as a vault; Tether Spires came last) and gates (one kind per gate theme, see {@link LandmarkWatch}). The ordinal is
  * sent to the client for markers, so new kinds go at the end.
  */
 public enum LandmarkKind {
@@ -23,11 +23,15 @@ public enum LandmarkKind {
     SKY_PLATFORM("sky_platform", "Sky Platform", 20, "Above the clouds",
             "“Something above the clouds, %s”",
             "At dusk there's a light above the clouds %s, about %d blocks. Something up there. Bring wings."),
-    GATE("gate", "Gate", 0, "", "", "");
+    GATE("gate", "Gate", 0, "", "", ""),
+    /** A Tether Spire (SPEC §17.11): it needs the rope (the Horizon line teases it until then), not a level. */
+    TETHER_SPIRE("tether_spire", "Tether Spire", 0, "A climb to a crown",
+            "“A tower that hums among the trees, %s”",
+            "There's a Precursor tower in the woods %s, about %d blocks. Platforms up its side, a light at the top. No stairs.");
 
     public final String id;
     public final String display;
-    /** From this level the player has a reason to go (the Now line and the spirit's whisper wait for it). */
+    /** From this level the player has a reason to go (the Horizon line and the spirit's whisper wait for it). */
     public final int reasonLevel;
     /** The discovery toast's detail line. */
     public final String found;
@@ -56,6 +60,7 @@ public enum LandmarkKind {
             case SKY -> SKY_PLATFORM;
             case OCEAN -> OCEAN_LAB;
             case MONOLITH -> MONOLITH;
+            case SPIRE -> TETHER_SPIRE;
         };
     }
 

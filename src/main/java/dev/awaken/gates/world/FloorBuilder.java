@@ -28,6 +28,20 @@ final class FloorBuilder {
             main.add(b.finish());
             return new GateLayout(plan, main, List.of());
         }
+        if (plan.skybornTrial()) {
+            // the Sky Leviathan's trial: the antechamber and the open sky where the Leviathan is fought on the wing
+            Builder b = new Builder(plan, plan.theme(), 0, 1, Hash.of(plan.seed(), 0, 1));
+            b.skyTrialFloor();
+            main.add(b.finish());
+            return new GateLayout(plan, main, List.of());
+        }
+        if (plan.leaperTrial()) {
+            // the Leaper's Gauntlet: the antechamber, the course's long hall, the room past its chasm
+            Builder b = new Builder(plan, plan.theme(), 0, 1, Hash.of(plan.seed(), 0, 1));
+            b.trialFloor();
+            main.add(b.finish());
+            return new GateLayout(plan, main, List.of());
+        }
         for (int f = 1; f <= plan.floors(); f++) {
             Builder b = new Builder(plan, plan.theme(), 0, f, Hash.of(plan.seed(), 0, f));
             if (f == plan.floors()) b.bossFloor(false);
@@ -424,6 +438,40 @@ final class FloorBuilder {
             end = hall;
         }
 
+        /**
+         * The Leaper's Gauntlet: the antechamber (the start) south into the course's hall (1x3 slots, its doors on one
+         * line: a straight course) and on into the room past it, where the way out opens. The floor counts as the Lord's
+         * floor: nothing about it is "cleared" but the course itself.
+         */
+        void trialFloor() {
+            bossFloor = true;
+            grid(1, 5);
+            int a = add(Room.Type.START, Room.Shape.RECT, 0, 0, 1, 1, 0);
+            int hall = add(Room.Type.NORMAL, Room.Shape.RECT, 0, 1, 1, 3, 0);
+            // a calm room (no monsters, no pressure): the way out opens there
+            int past = add(Room.Type.ANNEX_EXIT, Room.Shape.RECT, 0, 4, 1, 1, 0);
+            connect(a, hall);
+            connect(hall, past);
+            start = a;
+            end = past;
+        }
+
+        /**
+         * The Sky Leviathan's trial: the start, the antechamber (the edge: the arena's air begins past its door) and
+         * the arena, 4x4 slots of islands over the cloud sea at the floor's full height: room to fly the fight.
+         */
+        void skyTrialFloor() {
+            bossFloor = true;
+            grid(4, 6);
+            int a = add(Room.Type.START, Room.Shape.RECT, 1, 0, 1, 1, 0);
+            int ante = add(Room.Type.ANTE, Room.Shape.RECT, 1, 1, 1, 1, 0);
+            int arena = add(Room.Type.BOSS, Room.Shape.ISLANDS, 0, 2, 4, 4, 0);
+            connect(a, ante);
+            connect(ante, arena);
+            start = a;
+            end = arena;
+        }
+
         /** Boss floor: a short approach and the arena. Annex boss floors get a smaller arena (the inner gate's keeper). */
         void bossFloor(boolean smallArena) {
             bossFloor = true;
@@ -516,9 +564,13 @@ final class FloorBuilder {
                 pieces();
                 if (!friendly && !hollow) deeperTypes();
             }
+            // the Gate Rig's room (version 4): chosen by per-room hashes, so every other room stays as version 3 built it
+            if (plan.leaperTrial()) RigRooms.trial(this);
+            else if (plan.contentVersion() >= 4) RigRooms.assign(this);
             for (Room r : rooms) {
                 if (!(friendly || (hollow && r.type != Room.Type.BOSS))) spawns(r);
                 features(r);
+                RigRooms.finish(r);
             }
             if (friendly && area == 0 && !bossFloor) lanterns();
             for (Room r : rooms) spots(r);
@@ -586,9 +638,14 @@ final class FloorBuilder {
         /** Whose arena the boss room is: the Lord (main floor, Double Gate echo) or the inner gate's keeper. */
         private Theme lordTheme() {
             if (area == 1 && plan.twist() == Twist.GATE_WITHIN) return theme;
-            String key = plan.boss();
+            String key = plan.lordId();
             for (Theme t : Theme.values()) if (t.bossId().equals(key)) return t;
             return plan.theme();
+        }
+
+        /** Room ids from the floor's start to its end along the shortest way (empty before both exist). */
+        List<Integer> path() {
+            return new FloorLayoutView(this).path();
         }
 
         /** The critical path: rooms on it, the door that leads on from each, and the last door into the end room. */
@@ -692,7 +749,8 @@ final class FloorBuilder {
                 // version 2 rooms are taller: a single room is 12 wide, so 8 to 10 high gives it the proportions of a hall
                 int v2 = switch (r.type) {
                     case RITUAL -> PiecesRitual.VAULT_H;
-                    case BOSS -> r.gw >= 3 ? 17 : 13;
+                    // the sky trial's arena takes the floor's whole height: the fight is flown
+                    case BOSS -> plan.skybornTrial() ? 27 : r.gw >= 3 ? 17 : 13;
                     case ARENA, HUB -> 12;
                     case CAVERN -> 14;
                     case SHAFT -> 26;
@@ -847,7 +905,7 @@ final class FloorBuilder {
         /** Friendly floors hide three lost lanterns in rooms off the spirit's path. */
         void lanterns() {
             List<Integer> picks = new ArrayList<>();
-            for (Room r : rooms) if (r.type == Room.Type.NORMAL || r.type == Room.Type.CACHE) picks.add(r.id);
+            for (Room r : rooms) if ((r.type == Room.Type.NORMAL || r.type == Room.Type.CACHE) && r.rig == null) picks.add(r.id);
             for (int i = 0; i < 3 && !picks.isEmpty(); i++) {
                 Room r = rooms.get(picks.remove(rnd.nextInt(picks.size())));
                 r.features.add(new Room.Feature(Room.FeatureKind.LANTERN, r.centerX() + 2, 0, r.centerZ() - 2, i));

@@ -1,0 +1,96 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/laundry_2",
+    "line": "awaken:block/laundry_line",
+    "cloth": "awaken:block/laundry_2"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        15,
+        7.75
+      ],
+      "to": [
+        16,
+        15.5,
+        8.25
+      ],
+      "shade": false,
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            0.5
+          ],
+          "texture": "#line"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            0.5
+          ],
+          "texture": "#line"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            0.5
+          ],
+          "texture": "#line"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            0.5
+          ],
+          "texture": "#line"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        4,
+        8
+      ],
+      "to": [
+        16,
+        15,
+        8
+      ],
+      "shade": true,
+      "faces": {
+        "north": {
+          "uv": [
+            16,
+            1,
+            0,
+            12
+          ],
+          "texture": "#cloth"
+        },
+        "south": {
+          "uv": [
+            0,
+            1,
+            16,
+            12
+          ],
+          "texture": "#cloth"
+        }
+      }
+    }
+  ]
+}

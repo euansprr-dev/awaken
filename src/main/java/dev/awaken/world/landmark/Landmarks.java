@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 
 /**
  * Landmarks, the public side (docs/modules/landmarks.md): where they are around a player, which ones the player has
- * reached in person, the nearest one still unknown (for the Now tracker, the Scanner and a grove's spirit), and a rumour
+ * reached in person, the nearest one still unknown (for the Horizon line, the Scanner and a grove's spirit), and a rumour
  * line for the town. Positions of ruins come from {@link RuinLocator} (placement maths, no chunk loads; approximate
  * centres), the Well's from {@link Descent#wellPos}.
  */
@@ -36,7 +36,7 @@ public final class Landmarks {
     public static final int WELL_RANGE = 1500;
     /** First time a player reaches each kind: this fraction of a level ({@code Progression.discover}). */
     public static final double DISCOVERY = 0.15;
-    /** A spirit's whisper keeps its landmark up in the Now tracker this long. */
+    /** A spirit's whisper keeps its landmark up on the Horizon line this long. */
     public static final int WHISPER_LIFE = 10 * 60 * 20;
     static final List<RuinKind> RUINS = List.of(RuinKind.values());
 
@@ -146,13 +146,18 @@ public final class Landmarks {
         Landmark best = null;
         double bestD = Double.MAX_VALUE;
         for (Landmark l : all) {
-            if (known.test(l.id()) || (needReason && level < l.reasonLevel())) continue;
+            if (known.test(l.id()) || (needReason && level < l.reasonLevel()) || !inRange(from, l)) continue;
             double d = Spots.horizontal(from, l.pos());
-            if (d > (l.kind() == LandmarkKind.WELL ? WELL_RANGE : NEAR) || d >= bestD) continue;
+            if (d >= bestD) continue;
             best = l;
             bestD = d;
         }
         return Optional.ofNullable(best);
+    }
+
+    /** Ruins count within {@link #NEAR}, the Well within {@link #WELL_RANGE}. */
+    static boolean inRange(BlockPos from, Landmark l) {
+        return Spots.horizontal(from, l.pos()) <= (l.kind() == LandmarkKind.WELL ? WELL_RANGE : NEAR);
     }
 
     /** The nearest landmark this player hasn't reached (and, with {@code needReason}, has a reason to visit now). */
@@ -162,7 +167,7 @@ public final class Landmarks {
 
     /**
      * What a shimmer grove's spirit says: the nearest unknown landmark the player has a reason to visit ("“Something
-     * sealed, 420 m NW”"). It is remembered, so the Now tracker raises it for {@link #WHISPER_LIFE}. Empty when none.
+     * sealed, 420 m NW”"). It is remembered, so the Horizon line raises it for {@link #WHISPER_LIFE}. Empty when none.
      */
     public static Optional<String> whisper(ServerPlayer p) {
         Optional<Landmark> l = nearestUnknown(p, true);
@@ -171,7 +176,7 @@ public final class Landmarks {
         m.whispered = l.get().id();
         m.whisperedAt = p.level().getGameTime();
         if (m.place(l.get().id(), l.get().kind(), l.get().pos())) sync(p);
-        LandmarkNow.forget(p.getUUID());
+        LandmarkHorizon.forget(p.getUUID());
         return Optional.of(String.format(l.get().kind().whisper, Spots.where(p.blockPosition(), l.get().pos())));
     }
 

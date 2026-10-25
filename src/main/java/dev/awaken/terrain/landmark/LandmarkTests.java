@@ -6,6 +6,7 @@ import dev.awaken.terrain.fault.FaultBlocks;
 import dev.awaken.terrain.fault.FaultNoise;
 import dev.awaken.terrain.fault.FaultLinesFeature;
 import dev.awaken.terrain.fault.FloatingShardFeature;
+import dev.awaken.terrain.frost.FrostBlocks;
 import dev.awaken.terrain.glass.GlassBlocks;
 import dev.awaken.terrain.glass.GlassShardsFeature;
 import dev.awaken.terrain.glass.MirrorPoolFeature;
@@ -55,8 +56,9 @@ import java.util.function.Predicate;
 
 /**
  * The second pair of Awakened biomes (docs/modules/lands.md): Glass Steppe and Shattered Highlands. Their blocks, data
- * trees, biomes, features (nothing floats that should stand, nothing is cut at a chunk border, cost per chunk) and
- * landmarks (in their box, on or over the right ground, cost), and where the landmarks find sites.
+ * trees, biomes, features (nothing floats that should stand, nothing is cut at a chunk border, cost per chunk), and
+ * every landmark (the Frost Spires' Aurora Spire too): in its box, on or over the right ground, cost, and where it finds
+ * sites.
  */
 public final class LandmarkTests {
     private LandmarkTests() {}
@@ -111,7 +113,7 @@ public final class LandmarkTests {
     }
 
     @SafeVarargs
-    private static void is(GameTestHelper h, Block block, TagKey<Block>... tags) {
+    static void is(GameTestHelper h, Block block, TagKey<Block>... tags) {
         for (TagKey<Block> t : tags) h.assertTrue(block.builtInRegistryHolder().is(t), block + " is in #" + t.location());
     }
 
@@ -438,6 +440,7 @@ public final class LandmarkTests {
         for (long warm = 101; warm <= 103; warm++) {
             GateScar.plan(warm);
             ShardDrift.build(warm, 0.3F, new int[16]);
+            AuroraSpire.plan(warm);
         }
         double total = 0, worst = 0, best = Double.MAX_VALUE;
         for (long seed = 1; seed <= 8; seed++) {
@@ -458,12 +461,12 @@ public final class LandmarkTests {
             int stumps = p.voxels.count(GateScar.TILES) + p.voxels.count(GateScar.POLISHED) + p.voxels.count(GateScar.CHISELED);
             h.assertTrue(stumps >= 20, what + ": the gate's stumps stand in the middle (" + stumps + " blocks)");
             h.assertTrue(p.voxels.get(0, p.air(0), 0) == GateScar.SHARD, what + ": a crystal stands where the gate was");
-            int loose = unstood(p.voxels);
+            int loose = unstood(p.voxels, GateScar.CLUSTER);
             h.assertTrue(loose == 0, what + ": " + loose + " cells not joined to a standing column");
             if (seed == 1) log.append(String.format(" gate scar: %d across, depth %.1f, %d spire blocks, top %d;", Math.round(p.radius * 2), p.depth, spire, b[4]));
         }
         log.append(String.format(" gate scar plan %.2f ms fastest, %.2f avg, %.2f worst;", best, total / 8, worst));
-        h.assertTrue(best <= SHAPE_MS, "a gate scar plan costs " + best + " ms at its fastest");
+        h.assertTrue(best <= AwakenTests.cpuBudget(SHAPE_MS), "a gate scar plan costs " + best + " ms at its fastest (budget " + AwakenTests.cpuBudget(SHAPE_MS) + ")");
         total = 0;
         worst = 0;
         best = Double.MAX_VALUE;
@@ -489,13 +492,41 @@ public final class LandmarkTests {
             if (seed == 1) log.append(String.format(" shard drift: %d shards, the great one %.1f across, %d rock blocks;", shards.length, shards[0].radius() * 2, cells));
         }
         log.append(String.format(" shard drift %.2f ms fastest, %.2f avg, %.2f worst;", best, total / 8, worst));
-        h.assertTrue(best <= SHAPE_MS, "a shard drift costs " + best + " ms at its fastest");
+        h.assertTrue(best <= AwakenTests.cpuBudget(SHAPE_MS), "a shard drift costs " + best + " ms at its fastest (budget " + AwakenTests.cpuBudget(SHAPE_MS) + ")");
+        total = 0;
+        worst = 0;
+        best = Double.MAX_VALUE;
+        for (long seed = 1; seed <= 8; seed++) {
+            long t0 = System.nanoTime();
+            AuroraSpire.Plan p = AuroraSpire.plan(seed * 1_000_003L);
+            double ms = (System.nanoTime() - t0) / 1e6;
+            total += ms;
+            worst = Math.max(worst, ms);
+            best = Math.min(best, ms);
+            String what = "aurora spire seed " + seed;
+            Voxels v = p.voxels;
+            int[] b = v.bounds();
+            int spar = v.count(AuroraSpire.SPAR);
+            h.assertTrue(p.tarn >= 8.5 && p.tarn <= 13.5, what + "'s tarn is " + Math.round(p.tarn * 2) + " across");
+            h.assertTrue(b[4] >= 40 && b[4] >= p.height - 3, what + "'s great needle rises " + b[4] + " (" + p.height + " planned)");
+            h.assertTrue(spar >= 1500, what + " has " + spar + " frostspar blocks");
+            // the great needle stands on the tarn's middle; nothing reaches the grid's edge (it would be cut off flat)
+            h.assertTrue(v.get(0, 0, 0) == AuroraSpire.SPAR, what + ": the great needle stands in the middle");
+            int edge = Math.max(Math.max(-b[0], b[3]), Math.max(-b[2], b[5]));
+            h.assertTrue(edge < v.extent, what + " reaches " + edge + " of its " + v.extent + ": nothing cut off");
+            h.assertTrue(v.count(AuroraSpire.CLUSTER) >= 4, what + " has slivers on its ice");
+            int loose = unstood(v, AuroraSpire.CLUSTER);
+            h.assertTrue(loose == 0, what + ": " + loose + " cells not joined to a standing column");
+            if (seed == 1) log.append(String.format(" aurora spire: tarn %d across, %d tall, %d frostspar blocks, reach %d;", Math.round(p.tarn * 2), b[4], spar, edge));
+        }
+        log.append(String.format(" aurora spire %.2f ms fastest, %.2f avg, %.2f worst;", best, total / 8, worst));
+        h.assertTrue(best <= AwakenTests.cpuBudget(SHAPE_MS), "an aurora spire costs " + best + " ms at its fastest (budget " + AwakenTests.cpuBudget(SHAPE_MS) + ")");
         Awaken.LOG.info("[terrain] landmark shapes:{}", log);
         h.succeed();
     }
 
-    /** Cells of a voxel shape that no walk from a standing column's foot reaches face to face. */
-    static int unstood(Voxels v) {
+    /** Cells of a voxel shape (but its loose crystal slivers, {@code cluster}) that no walk from a standing column's foot reaches face to face. */
+    static int unstood(Voxels v, byte cluster) {
         int n = v.cells.length, sxz = v.sx * v.sx;
         boolean[] seen = new boolean[n];
         int[] queue = new int[n];
@@ -522,14 +553,14 @@ public final class LandmarkTests {
             }
         }
         int loose = 0;
-        for (int i = 0; i < n; i++) if (v.cells[i] != Voxels.EMPTY && v.cells[i] != GateScar.CLUSTER && !seen[i]) loose++;
+        for (int i = 0; i < n; i++) if (v.cells[i] != Voxels.EMPTY && v.cells[i] != cluster && !seen[i]) loose++;
         return loose;
     }
 
     /**
-     * A Gate Scar on gently sloping steppe and a Shard Drift over flat rock, chunk by chunk as worldgen does: every
-     * block inside the box; the scar's crystal standing on the ground, its heart black glass well below the plain;
-     * the drift's shards all hanging clear. Cost per chunk logged.
+     * A Gate Scar and an Aurora Spire on gently sloping ground and a Shard Drift over flat rock, chunk by chunk as
+     * worldgen does: every block inside the box; the scar's crystal standing on the ground, its heart black glass well
+     * below the plain; the spire's tarn level ice; the drift's shards all hanging clear. Cost per chunk logged.
      */
     private static void builds(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -541,11 +572,13 @@ public final class LandmarkTests {
             for (int n = 0; n < kinds.length; n++) {
                 BlockPos origin = origins[n] = h.absolutePos(new BlockPos(0, 2, 0)).offset(7000 + 500 * n, 20, 7000);
                 forceChunks(level, origin, 4, true);
-                // ground: grass on dirt on stone, rising one block every ten along x
-                ground(level, origin, 54, kinds[n] == Landmark.GATE_SCAR);
-                LandmarkPiece piece;
-                if (kinds[n] == Landmark.GATE_SCAR) piece = LandmarkPiece.scar(origin, 424242L);
-                else piece = LandmarkPiece.drift(origin, 424242L, 0.6F, new int[16]);
+                // ground: grass on dirt on stone, rising one block every ten along x under what reshapes it
+                ground(level, origin, 54, kinds[n] != Landmark.SHARD_DRIFT);
+                LandmarkPiece piece = switch (kinds[n]) {
+                    case GATE_SCAR -> LandmarkPiece.scar(origin, 424242L);
+                    case SHARD_DRIFT -> LandmarkPiece.drift(origin, 424242L, 0.6F, new int[16]);
+                    case AURORA_SPIRE -> LandmarkPiece.spire(origin, 424242L);
+                };
                 pieces[n] = piece;
                 BoundingBox box = piece.getBoundingBox();
                 int chunks = 0, placed = 0;
@@ -561,7 +594,7 @@ public final class LandmarkTests {
                         chunks++;
                     }
                 }
-                h.assertTrue(placed > (kinds[n] == Landmark.GATE_SCAR ? 3000 : 400), kinds[n] + " built " + placed + " blocks");
+                h.assertTrue(placed > (kinds[n] == Landmark.SHARD_DRIFT ? 400 : 3000), kinds[n] + " built " + placed + " blocks");
                 log.append(String.format(" %s: %d blocks over %d chunks, %.2f ms per chunk avg, %.2f worst (live level);", kinds[n].getSerializedName(),
                         placed, chunks, total / chunks, worst));
             }
@@ -573,13 +606,15 @@ public final class LandmarkTests {
                 String what = kinds[n].getSerializedName();
                 int outside = 0;
                 BlockPos firstOutside = null;
-                Set<Block> mine = kinds[n] == Landmark.GATE_SCAR
-                        ? Set.of(GlassBlocks.SUNSHARD.get(), GlassBlocks.FUSED_GLASS.get(), GlassBlocks.SCORCHED_GLASS.get(), Blocks.DEEPSLATE_TILES)
-                        : Set.of(FaultBlocks.RIVEN_SHALE.get(), FaultBlocks.FAULTSTONE.get(), FaultBlocks.FAULT_SEAM.get());
+                Set<Block> mine = switch (kinds[n]) {
+                    case GATE_SCAR -> Set.of(GlassBlocks.SUNSHARD.get(), GlassBlocks.FUSED_GLASS.get(), GlassBlocks.SCORCHED_GLASS.get(), Blocks.DEEPSLATE_TILES);
+                    case SHARD_DRIFT -> Set.of(FaultBlocks.RIVEN_SHALE.get(), FaultBlocks.FAULTSTONE.get(), FaultBlocks.FAULT_SEAM.get());
+                    case AURORA_SPIRE -> Set.of(FrostBlocks.FROSTSPAR.get(), FrostBlocks.FROSTSPAR_CLUSTER.get(), FrostBlocks.HOARFROST.get(), Blocks.PACKED_ICE);
+                };
                 int r = 56;
                 for (int x = -r; x <= r; x++) {
                     for (int z = -r; z <= r; z++) {
-                        for (int y = -20; y <= 70; y++) {
+                        for (int y = -20; y <= 80; y++) {
                             BlockState s = level.getBlockState(m.setWithOffset(o, x, y, z));
                             if (!mine.contains(s.getBlock())) continue;
                             if (!box.isInside(m) && outside++ == 0) firstOutside = m.immutable().subtract(o);
@@ -587,43 +622,10 @@ public final class LandmarkTests {
                     }
                 }
                 h.assertTrue(outside == 0, what + ": " + outside + " blocks outside its box (first " + firstOutside + ")");
-                if (kinds[n] == Landmark.GATE_SCAR) {
-                    Census c = census(level, o.offset(0, -14, 0), 60, 60, s -> s.is(GlassBlocks.SUNSHARD.get()), s -> s.is(GlassBlocks.SUNSHARD.get()));
-                    h.assertTrue(c.loose == 0, what + ": " + c.loose + " crystal blocks float (first " + c.firstLoose + ")");
-                    // near the heart (between its crystal and the gate's stumps): the bowl is deep and its glass black
-                    boolean black = false;
-                    int deepest = 0;
-                    for (int[] d : new int[][]{{3, 0}, {0, 3}, {-2, 0}, {0, -2}, {2, 2}, {-2, -2}, {2, -2}, {-2, 2}}) {
-                        int hx = o.getX() + d[0], hz = o.getZ() + d[1];
-                        int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, hx, hz) - 1;
-                        if (!level.getBlockState(m.set(hx, top, hz)).is(GlassBlocks.SCORCHED_GLASS.get())) continue;
-                        deepest = Math.max(deepest, o.getY() - 1 - top);
-                        black = true;
-                    }
-                    h.assertTrue(black, what + "'s heart is scorched glass");
-                    h.assertTrue(deepest >= 5, what + "'s bowl is " + deepest + " deep near the heart");
-                } else {
-                    int lowest = Integer.MAX_VALUE, blocks = 0;
-                    for (int x = -r; x <= r; x++) {
-                        for (int z = -r; z <= r; z++) {
-                            for (int y = 0; y <= 70; y++) {
-                                if (mine.contains(level.getBlockState(m.setWithOffset(o, x, y, z)).getBlock())) blocks++;
-                            }
-                        }
-                    }
-                    // the ground under it is flat at o.y - 1: the lowest rock block of the drift
-                    for (int y = 0; y <= 70 && lowest == Integer.MAX_VALUE; y++) {
-                        for (int x = -r; x <= r && lowest == Integer.MAX_VALUE; x++) {
-                            for (int z = -r; z <= r; z++) {
-                                if (mine.contains(level.getBlockState(m.setWithOffset(o, x, y, z)).getBlock())) {
-                                    lowest = y;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    h.assertTrue(blocks >= 400, what + " hangs " + blocks + " blocks of rock");
-                    h.assertTrue(lowest >= 8, what + "'s lowest rock is " + lowest + " over the ground");
+                switch (kinds[n]) {
+                    case GATE_SCAR -> scarBuilt(h, level, o, what);
+                    case SHARD_DRIFT -> driftBuilt(h, level, o, what, mine, r);
+                    case AURORA_SPIRE -> spireBuilt(h, level, o, what, LandmarkWorldgen.spire(424242L), log);
                 }
                 wipe(level, o, r);
                 forceChunks(level, o, 4, false);
@@ -632,9 +634,75 @@ public final class LandmarkTests {
         }).thenSucceed();
     }
 
+    /** The scar's crystal stands on the ground; near the heart (between its crystal and the gate's stumps) the bowl is deep and its glass black. */
+    private static void scarBuilt(GameTestHelper h, ServerLevel level, BlockPos o, String what) {
+        Census c = census(level, o.offset(0, -14, 0), 60, 60, s -> s.is(GlassBlocks.SUNSHARD.get()), s -> s.is(GlassBlocks.SUNSHARD.get()));
+        h.assertTrue(c.loose == 0, what + ": " + c.loose + " crystal blocks float (first " + c.firstLoose + ")");
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        boolean black = false;
+        int deepest = 0;
+        for (int[] d : new int[][]{{3, 0}, {0, 3}, {-2, 0}, {0, -2}, {2, 2}, {-2, -2}, {2, -2}, {-2, 2}}) {
+            int hx = o.getX() + d[0], hz = o.getZ() + d[1];
+            int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, hx, hz) - 1;
+            if (!level.getBlockState(m.set(hx, top, hz)).is(GlassBlocks.SCORCHED_GLASS.get())) continue;
+            deepest = Math.max(deepest, o.getY() - 1 - top);
+            black = true;
+        }
+        h.assertTrue(black, what + "'s heart is scorched glass");
+        h.assertTrue(deepest >= 5, what + "'s bowl is " + deepest + " deep near the heart");
+    }
+
+    /** The drift's shards all hang clear of the flat ground under it (its top at o.y - 1). */
+    private static void driftBuilt(GameTestHelper h, ServerLevel level, BlockPos o, String what, Set<Block> mine, int r) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        int lowest = Integer.MAX_VALUE, blocks = 0;
+        for (int y = 0; y <= 70; y++) {
+            for (int x = -r; x <= r; x++) {
+                for (int z = -r; z <= r; z++) {
+                    if (!mine.contains(level.getBlockState(m.setWithOffset(o, x, y, z)).getBlock())) continue;
+                    blocks++;
+                    lowest = Math.min(lowest, y);
+                }
+            }
+        }
+        h.assertTrue(blocks >= 400, what + " hangs " + blocks + " blocks of rock");
+        h.assertTrue(lowest >= 8, what + "'s lowest rock is " + lowest + " over the ground");
+    }
+
+    /**
+     * On sloping ground the spire's tarn lies level, packed ice at the centre's ground across all of it, a hoarfrost ring
+     * round it, nothing of the frostspar floats, and the great needle stands its height.
+     */
+    private static void spireBuilt(GameTestHelper h, ServerLevel level, BlockPos o, String what, AuroraSpire.Plan p, StringBuilder log) {
+        Census c = census(level, o.offset(0, -14, 0), 40, 90, s -> s.is(FrostBlocks.FROSTSPAR.get()), s -> s.is(FrostBlocks.FROSTSPAR.get()));
+        h.assertTrue(c.loose == 0, what + ": " + c.loose + " frostspar blocks float (first " + c.firstLoose + ")");
+        int tall = c.top - 14;
+        h.assertTrue(tall >= p.height - 4, what + "'s great needle stands " + tall + " (" + p.height + " planned)");
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        int disc = 0, ice = 0, ring = 0, frost = 0, t = (int) Math.ceil(p.tarn + AuroraSpire.RING);
+        for (int x = -t; x <= t; x++) {
+            for (int z = -t; z <= t; z++) {
+                double d = Math.sqrt(x * x + z * z);
+                if (d < p.tarn - 1) {
+                    disc++;
+                    if (level.getBlockState(m.setWithOffset(o, x, -1, z)).is(Blocks.PACKED_ICE)) ice++;
+                } else if (d > p.tarn + 0.5 && d < p.tarn + AuroraSpire.RING - 1) {
+                    ring++;
+                    int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, o.getX() + x, o.getZ() + z) - 1;
+                    BlockState s = level.getBlockState(m.set(o.getX() + x, top, o.getZ() + z));
+                    if (s.is(FrostBlocks.HOARFROST.get()) || s.is(FrostBlocks.FROSTSPAR.get()) || s.is(FrostBlocks.FROSTSPAR_CLUSTER.get())) frost++;
+                }
+            }
+        }
+        // where a needle's foot stands on the ice the ice is under it, so nearly all the disc reads as ice at o.y - 1
+        h.assertTrue(ice >= disc * 0.9, what + "'s tarn lies level: " + ice + " of " + disc + " ice at the centre's ground");
+        h.assertTrue(frost >= ring * 0.8, what + " is ringed with hoarfrost: " + frost + " of " + ring);
+        log.append(String.format(" aurora spire: needle %d tall, tarn %d of %d level, ring %d of %d frosted;", tall, ice, disc, frost, ring));
+    }
+
     /**
      * Sites on a real overworld: a Gate Scar finds dry, level savanna high over the sea; a Shard Drift finds a fault line
-     * in the windswept hills (the GameTest world has no Lithostitched, so nothing places the Awakened biomes: their
+     * in the windswept hills; an Aurora Spire finds dry, level snow for its tarn (the GameTest world has no Lithostitched, so nothing places the Awakened biomes: their
      * archetypes stand in).
      */
     private static void sites(GameTestHelper h) {
@@ -656,10 +724,17 @@ public final class LandmarkTests {
         // the highlands' archetypes and the other mountains (the archetypes alone are rare on one vanilla seed's sample)
         Predicate<Holder<Biome>> hills = b -> b.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_HILLS)
                 || b.is(net.minecraft.world.level.biome.Biomes.WINDSWEPT_GRAVELLY_HILLS) || b.is(BiomeTags.IS_MOUNTAIN);
+        // the Frost Spires' archetypes: the snowy lowlands it awakens
+        Predicate<Holder<Biome>> snow = b -> b.is(net.minecraft.world.level.biome.Biomes.SNOWY_TAIGA) || b.is(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS)
+                || b.is(net.minecraft.world.level.biome.Biomes.GROVE) || b.is(net.minecraft.world.level.biome.Biomes.ICE_SPIKES);
         for (Landmark l : Landmark.values()) {
             var spread = (RandomSpreadStructurePlacement) sets.getOrThrow(ResourceKey.create(Registries.STRUCTURE_SET, Awaken.id(l.getSerializedName()))).value().placement();
             h.assertTrue(spread.spacing() * 16 >= 300 && spread.spacing() * 16 <= 600, l + ": one candidate per " + spread.spacing() * 16 + " blocks");
-            Predicate<Holder<Biome>> valid = l == Landmark.GATE_SCAR ? steppe : hills;
+            Predicate<Holder<Biome>> valid = switch (l) {
+                case GATE_SCAR -> steppe;
+                case SHARD_DRIFT -> hills;
+                case AURORA_SPIRE -> snow;
+            };
             // candidates whose region has the biome (a vanilla seed's sample is mostly lowland: the search is what's tested)
             int found = 0, candidates = 0;
             for (int i = -15; i <= 15 && candidates < 40; i++) {
@@ -672,11 +747,11 @@ public final class LandmarkTests {
                     var ctx = new Structure.GenerationContext(access, gen, source, sampler, random, level.getServer().getStructureTemplateManager(),
                             seed, chunk, level, valid);
                     BlockPos at;
-                    if (l == Landmark.GATE_SCAR) {
-                        at = LandmarkStructure.scarSite(ctx);
-                    } else {
+                    if (l == Landmark.SHARD_DRIFT) {
                         double[] s = LandmarkStructure.driftSite(ctx);
                         at = s == null ? null : new BlockPos((int) s[0], (int) s[2], (int) s[1]);
+                    } else {
+                        at = LandmarkStructure.levelSite(ctx, l);
                     }
                     if (at == null) continue;
                     found++;
@@ -686,10 +761,10 @@ public final class LandmarkTests {
                     int floor = gen.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.OCEAN_FLOOR_WG, level, random);
                     h.assertTrue(top == floor && top > gen.getSeaLevel(), l + " site on dry land at " + at.toShortString());
                     h.assertTrue(at.getY() == top + 1, l + " centre is the first air over the ground: " + at.getY() + " over " + top);
-                    if (l == Landmark.SHARD_DRIFT) {
-                        h.assertTrue(FaultNoise.distance(fault, at.getX(), at.getZ()) < FaultNoise.HALF, l + " hangs over the fault at " + at.toShortString());
-                    } else {
-                        h.assertTrue(top > gen.getSeaLevel() + 12, l + " bowl stays above the sea at " + at.toShortString());
+                    switch (l) {
+                        case SHARD_DRIFT -> h.assertTrue(FaultNoise.distance(fault, at.getX(), at.getZ()) < FaultNoise.HALF, l + " hangs over the fault at " + at.toShortString());
+                        case GATE_SCAR -> h.assertTrue(top > gen.getSeaLevel() + 12, l + " bowl stays above the sea at " + at.toShortString());
+                        case AURORA_SPIRE -> h.assertTrue(top > gen.getSeaLevel() + 2, l + " tarn stays above the sea at " + at.toShortString());
                     }
                 }
             }

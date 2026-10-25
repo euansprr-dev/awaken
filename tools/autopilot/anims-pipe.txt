@@ -1,0 +1,79 @@
+# Hands P1 (SPEC §17.23, §24): the grip on a drainpipe, in first person and in the shoulder view (run with PACK=feel).
+# A stone-brick wall with a drainpipe up its face. Walk into it (grip, climb hand over hand), stop and look down (the
+# feet on the pipe), Shift to slide (hands loose, grit), let go (brake), Jump + back (kick off). Then the same in the
+# shoulder view. Log: "grip ...". Shots: anims_p1_*. The HUD stays on: vanilla draws no hands at all with it hidden.
+world anims_pipe survival 4247
+waitworld
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:slow_falling 6 1 true
+cmd tp @s 0.5 201 0.5 0 8
+wait 100
+cmd fill -4 199 -3 4 199 8 minecraft:smooth_stone
+cmd fill -4 200 -3 4 214 5 minecraft:air
+cmd fill -4 200 6 4 210 6 minecraft:stone_bricks
+cmd fill 0 200 5 0 209 5 awaken:drainpipe[facing=north,part=pipe]
+cmd setblock 0 210 5 awaken:drainpipe[facing=north,part=head]
+cmd tp @s 0.5 200 2.5 0 0
+wait 60
+camera first
+wait 10
+cmd awaken ascent pilot aim 0 -12 5
+wait 10
+info
+# first person: into the pipe and up it
+cmd awaken ascent pilot hold forward 46
+wait 24
+shotnow anims_p1_fp_climb
+wait 12
+# held still: look round, then down at the feet
+cmd awaken ascent pilot aim 0 -35 6
+wait 10
+shotnow anims_p1_fp_hold_up
+cmd awaken ascent pilot aim 0 62 8
+wait 12
+shotnow anims_p1_fp_feet
+cmd awaken ascent pilot aim 0 -10 6
+wait 10
+# Shift: the slide, then the brake
+cmd awaken ascent pilot hold sneak 9
+wait 7
+shotnow anims_p1_fp_slide
+wait 10
+shotnow anims_p1_fp_brake
+wait 6
+# Jump + back: kicked off the wall
+cmd awaken ascent pilot hold jump,back 2
+wait 7
+shotnow anims_p1_fp_kick
+wait 40
+# the shoulder view: the same climb and slide from outside
+cmd tp @s 0.5 200 2.5 0 0
+wait 20
+camera back
+wait 10
+cmd awaken ascent pilot hold forward 24
+wait 16
+shotnow anims_p1_3p_climb
+wait 12
+cmd awaken ascent pilot hold sneak 8
+wait 6
+shotnow anims_p1_3p_slide
+wait 20
+shotnow anims_p1_3p_landed
+info
+quit

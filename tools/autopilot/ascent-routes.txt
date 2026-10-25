@@ -1,0 +1,52 @@
+# The Ascent: routes (golden runs) and the crossing. A scripted ten-swing run down the sandbox lane is recorded as a
+# route (run-autopilot/awaken-routes/lane10.route), then played back from its start; the log's
+# "[ascent] route lane10 done ... off by d" says how close the replay came. The route file's start and end give the
+# crossing speed (blocks a second; the bar is 300 blocks in under 30 s).
+world ascent_routes survival 4242
+waitworld
+window 1440 900
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd tp @s 0.5 152 0.5 0 0
+# new terrain loads slower: let the chunks under the floor load before filling
+wait 100
+cmd fill -30 150 -12 30 150 250 minecraft:grass_block
+cmd fill -30 151 -12 30 160 250 minecraft:air
+cmd tp @s 0.5 151 0.5 0 0
+wait 10
+cmd awaken ascent sandbox
+wait 200
+screen close
+
+# ---- record: ten swings down the lane ----
+cmd tp @s 0.5 151 5.5 0 -10
+camera back
+wait 40
+cmd awaken ascent pilot route rec lane10
+cmd awaken ascent pilot run swing 10
+wait 720
+cmd awaken ascent pilot stop
+cmd awaken ascent pilot route stop
+wait 20
+
+# ---- play it back from its start, filmed ----
+cmd awaken ascent pilot rec lane10_replay 700 4
+cmd awaken ascent pilot route play lane10
+wait 760
+cmd awaken ascent pilot route stop
+info
+quit

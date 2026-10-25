@@ -1,0 +1,38 @@
+# A Tether Spire (SPEC §17.11): the nearest one in a fresh world seen from the woods, then climbed with only the rope:
+# from the plaza's ring up the platforms (a zip to each one's underside vaults you over its lip) to the crown, which
+# times the climb and keeps the spire's records. Third person.
+world spire8 survival 20261026
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5500
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken ascent grant tether
+cmd awaken ascent spire goto
+wait 160
+cmd tp @s ~34 ~10 ~ 90 -32
+wait 80
+hud off
+shot spire_00_from_the_woods
+hud on
+cmd awaken ascent spire goto
+wait 60
+camera back
+cmd awaken ascent pilot rec spire_climb 900 4
+cmd awaken ascent pilot run spire
+wait 920
+shot spire_02_crown
+cmd awaken ascent pilot stop
+info
+quit

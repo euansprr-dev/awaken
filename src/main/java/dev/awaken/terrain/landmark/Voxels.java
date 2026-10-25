@@ -1,6 +1,12 @@
 package dev.awaken.terrain.landmark;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+
 import java.util.Arrays;
+import java.util.function.Predicate;
 
 /**
  * A landmark as a dense voxel grid round its centre (x and z from the centre, y from the first air above the ground
@@ -125,6 +131,81 @@ public final class Voxels {
         }
     }
 
+    /**
+     * A crystal needle from (bx, by, bz) along (dx, dy, dz), {@code length} long: a square section turned 45° (a diamond
+     * in plan) {@code r0} across at the foot, tapering to a point. Walked in half-block steps, each step's centre joined
+     * to the last face to face, so a steep or a slanting needle stays one piece. With {@code standing}, its foot's cells
+     * are standing columns (they continue down to the ground at placement).
+     */
+    public void needle(double bx, double by, double bz, double dx, double dy, double dz, double length, double r0, boolean standing, byte code) {
+        double n = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        dx /= n;
+        dy /= n;
+        dz /= n;
+        int steps = Math.max(1, (int) Math.ceil(length * 2)), px = Integer.MIN_VALUE, py = 0, pz = 0;
+        for (int s = 0; s <= steps; s++) {
+            double t = s / (double) steps, r = r0 * Math.pow(1 - t, 0.9);
+            double cx = bx + dx * length * t, cy = by + dy * length * t, cz = bz + dz * length * t;
+            int ix = (int) Math.floor(cx), iy = (int) Math.floor(cy), iz = (int) Math.floor(cz);
+            if (r >= 0.5) {
+                int span = (int) Math.ceil(r) + 1;
+                for (int x = ix - span; x <= ix + span; x++) {
+                    for (int z = iz - span; z <= iz + span; z++) {
+                        if (Math.abs(x + 0.5 - cx) + Math.abs(z + 0.5 - cz) > r * 1.25) continue;
+                        fill(x, iy, z, code);
+                        if (standing && s == 0) stand(x, iy, z);
+                    }
+                }
+            }
+            fill(ix, iy, iz, code);
+            if (standing && s == 0) stand(ix, iy, iz);
+            if (px != Integer.MIN_VALUE) join(px, py, pz, ix, iy, iz, code);
+            px = ix;
+            py = iy;
+            pz = iz;
+        }
+    }
+
+    /** Cells from a to b, one axis at a time (the longest first), so the run stays joined face to face. */
+    private void join(int ax, int ay, int az, int bx, int by, int bz, byte code) {
+        int x = ax, y = ay, z = az, guard = 0;
+        while ((x != bx || y != by || z != bz) && guard++ < 64) {
+            int ex = Math.abs(bx - x), ey = Math.abs(by - y), ez = Math.abs(bz - z);
+            if (ey >= ex && ey >= ez) y += Integer.signum(by - y);
+            else if (ex >= ez) x += Integer.signum(bx - x);
+            else z += Integer.signum(bz - z);
+            fill(x, y, z, code);
+        }
+    }
+
+    /**
+     * Places every cell of one code (after {@link #seal()}) at {@code origin} + cell as {@code state}, into blocks
+     * {@code soft} accepts only; each standing column's foot then continues down, at most {@code reach} blocks, until it
+     * meets something not soft. A feature's whole shape at once. Returns the blocks set.
+     */
+    public int place(WorldGenLevel level, BlockPos origin, byte code, BlockState state, int reach, Predicate<BlockState> soft) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        int ox = origin.getX(), oy = origin.getY(), oz = origin.getZ(), placed = 0;
+        for (int x = -extent; x <= extent; x++) {
+            for (int z = -extent; z <= extent; z++) {
+                int col = column(x, z);
+                for (int y = colLo[col]; y <= colHi[col]; y++) {
+                    if (cells[index(x, y, z)] != code || !soft.test(level.getBlockState(m.set(ox + x, oy + y, oz + z)))) continue;
+                    level.setBlock(m, state, Block.UPDATE_CLIENTS);
+                    placed++;
+                }
+                int f = foot[col];
+                if (f == NO_FOOT || cells[index(x, f, z)] != code) continue;
+                for (int y = oy + f - 1; y >= oy + f - reach; y--) {
+                    if (!soft.test(level.getBlockState(m.set(ox + x, y, oz + z)))) break;
+                    level.setBlock(m, state, Block.UPDATE_CLIENTS);
+                    placed++;
+                }
+            }
+        }
+        return placed;
+    }
+
     /** Records each column's used range, so placement skips empty air quickly; returns the number of cells in use. */
     public int seal() {
         int used = 0, cols = sx * sx;
@@ -139,6 +220,18 @@ public final class Voxels {
             }
         }
         return used;
+    }
+
+    /** How far from the centre the furthest cell lies, horizontally, after {@link #seal()} (the city reserve is kept this far off). */
+    public double reach() {
+        double m = 0;
+        for (int x = -extent; x <= extent; x++) {
+            for (int z = -extent; z <= extent; z++) {
+                int c = column(x, z);
+                if (colLo[c] <= colHi[c]) m = Math.max(m, Math.hypot(x, z));
+            }
+        }
+        return m;
     }
 
     /** The cells' bounds after {@link #seal()}: minX, minY, minZ, maxX, maxY, maxZ (all 0 when empty). */

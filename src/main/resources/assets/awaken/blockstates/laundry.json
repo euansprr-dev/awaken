@@ -1,0 +1,53 @@
+{
+  "variants": {
+    "axis=x,cloth=0": {
+      "model": "awaken:block/laundry_0"
+    },
+    "axis=z,cloth=0": {
+      "model": "awaken:block/laundry_0",
+      "y": 90
+    },
+    "axis=x,cloth=1": {
+      "model": "awaken:block/laundry_1"
+    },
+    "axis=z,cloth=1": {
+      "model": "awaken:block/laundry_1",
+      "y": 90
+    },
+    "axis=x,cloth=2": {
+      "model": "awaken:block/laundry_2"
+    },
+    "axis=z,cloth=2": {
+      "model": "awaken:block/laundry_2",
+      "y": 90
+    },
+    "axis=x,cloth=3": {
+      "model": "awaken:block/laundry_3"
+    },
+    "axis=z,cloth=3": {
+      "model": "awaken:block/laundry_3",
+      "y": 90
+    },
+    "axis=x,cloth=4": {
+      "model": "awaken:block/laundry_4"
+    },
+    "axis=z,cloth=4": {
+      "model": "awaken:block/laundry_4",
+      "y": 90
+    },
+    "axis=x,cloth=5": {
+      "model": "awaken:block/laundry_5"
+    },
+    "axis=z,cloth=5": {
+      "model": "awaken:block/laundry_5",
+      "y": 90
+    },
+    "axis=x,cloth=6": {
+      "model": "awaken:block/laundry_6"
+    },
+    "axis=z,cloth=6": {
+      "model": "awaken:block/laundry_6",
+      "y": 90
+    }
+  }
+}
