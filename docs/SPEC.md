@@ -3335,19 +3335,39 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   and lights its swings in its tier's colour (the row's `trail`).
 - Until the Forge's blueprints (S7), each is crafted from its tier's Hunter blade between the tier's core and bind
   (a column: core, blade, bind); the recipe unlocks when the blade is held, like every AWAKEN recipe.
-- In the hands a 3D model (`<id>_in_hand`, cuboid elements along vanilla's diagonal, the grip where iron_sword.png's
-  handle is, so vanilla's hand transforms and the swings hold it); in the inventory, on the ground, in frames and on
-  shelves a 16×16 icon drawn from the same parts (`items/<id>.json` selects on the display context, like the
-  trident), with a glow layer for its lit parts.
-- Checked before writing: bounds, at most 400 quads, one texel per unit, no element without faces (the game refuses
-  the model), no coplanar faces, the atlas fits, silhouettes under 85% alike, icons apart in outline or colour.
-  `arms_assets` checks the items, recipes, files and model structure on the classpath; tools/art/model_preview.py
-  renders any item model without the game; tools/autopilot/arms-weapons.txt is the in-game tour.
-- **Look: first pass, being redone.** Euan's review (2026-10-25, against a reference of chunky key art): too thin and
-  noisy. The redo: hand-designed silhouettes from a kit of well-made parts, whole-texel sizes (no part under a unit),
-  bevelled hand-painted faces on hue-shifted ramps instead of noise, diamond gems in frames; each weapon compared
-  with the reference at its angle before it ships. Size in hand awaits his answer (proposed: chunky, about 1.2× a
-  vanilla sword's length).
+- **Sculpted, not built of cubes** (Euan, 2026-10-25: "push it to the maximum... I didn't even know this was possible
+  in MC"). Each weapon is a mesh designed by hand in code (tools/art/mesh.py: blades lofted through real
+  cross-sections, an edge each side, a hollow-ground bevel and a fuller sunk into the flat, tapering to a true point;
+  guards swept along curves; grips turned and bound in wire or straps; cut gems), 2,600–4,800 triangles, at most
+  6,000 (`ArmsTests.MESH_BUDGET`). Written to `arms/weapons/<id>.mesh` (`WeaponMesh`, versioned binary: item-space
+  corners with normal, uv and how far along the weapon each lies; then the points that glow).
+- **Painted texel by texel** in each material's own language (polished ivory, gold, knapped flint with flake scars,
+  tusk, fur, gate-steel, Veil-steel, black scale...), the light worked out continuously and set onto the material's
+  hand-picked hue-shifted ramp with an ordered dither: a smooth form that still reads as pixel art, at 4 texels a
+  unit. Contact shadows where parts meet. Each part unfolds about its own line, so runes, circuits and scales run
+  down straight columns of texels. The texture is the albedo beside a material map (metal, gloss, emissive, flow).
+- **Drawn by our shader** (`arms_weapon` pipeline; `WeaponRenderer`, the `awaken:weapon` special item model): vanilla's
+  two item lights partly banded (painted light, not plastic), metals reflecting a soft studio (a cool sky, a warm
+  floor, a strip light), a gloss highlight, a rim of the weapon's accent, the world's light on all but what glows; a
+  sheen runs hilt to tip every five seconds; emissive parts pulse in order along their flow (runes light in turn up the
+  blade, the circuit climbs, the molten edge runs to the point, the spirit edge flows); an enchantment is our own
+  violet shimmer. Optional pipelines: if a shader pack or driver can't build them, the same mesh draws with vanilla's
+  entity light. The stones carry a soft halo (additive, facing the eye, its falloff in the vertex colours) that
+  breathes slowly and feeds the Lens bloom.
+- **It carries the fight**: the fighter's own blade fills with its accent's light as a heavy charges, flares on the
+  glint and on a perfect heavy, and hums while the Resonance is full (the Art ready); its halos swell with it.
+- **First person**: a hold of its own (`<id>_in_hand.json`, which draws nothing itself): the whole blade standing at
+  the right with its point in view, its flat turned a little to the eye (vanilla's sword sits so close a longsword
+  shows a fragment); the swings move the hand as for any sword. Third person: vanilla's handheld hold. Size: a fifth
+  longer than vanilla's sword (`SCALE` 0.9 of sword units).
+- **Inventory icon** (32×32; `items/<id>.json` selects on the display context like the trident: the icon in the
+  inventory, on the ground, in frames and on shelves): rendered from the same mesh, painted clean (no dither or
+  grain), each pixel the surface's colour at its centre, the silhouette by coverage, vanilla's dark outline.
+- Checked before writing (each weapon: budget, inside the item box, atlas fits, icon present); `arms_assets` reads
+  every mesh with the game's reader (budget, bounds, whole normals, texels in the albedo half), the items, recipes,
+  files and that the hands route to the weapon renderer. tools/art/mesh_render.py renders any weapon with the shader's
+  own terms (turntables, close-ups, and first person with vanilla's exact hand transforms and 70° projection, which
+  matches the game frame); tools/autopilot/arms-weapons.txt is the in-game tour.
 
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;

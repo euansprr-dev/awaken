@@ -254,6 +254,13 @@ public final class ArmsPredict {
         return Mth.clamp((c.min() + (ticks - chargeStart)) / (float) c.max(), 0, 1);
     }
 
+    /** Whether a held heavy is on its glint right now (a release would be perfect). */
+    static boolean glinting() {
+        if (!charging || style == null) return false;
+        Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
+        return heavy != null && heavy.charge().isPresent() && heavy.charge().get().perfect(heavy.charge().get().min() + (ticks - chargeStart));
+    }
+
     // ---- dodge --------------------------------------------------------------------------------------------------------
 
     /** After the body's own input (LOW): the sprint key with no forward on the ground is a dodge. */

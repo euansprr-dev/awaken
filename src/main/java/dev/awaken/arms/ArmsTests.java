@@ -52,10 +52,14 @@ final class ArmsTests {
         AwakenTests.register("arms_assets", 20, ArmsTests::assets);
     }
 
+    /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
+    static final int MESH_BUDGET = 18_000;
+
     /**
      * Every generated weapon: registered with its row's numbers, fighting and guarding with its style, its recipe
-     * loaded, and its files on the classpath; the 3D model inside the game's bounds, at most 400 quads, one texel per
-     * unit on every face of its 64x64 atlas (tools/art/specs/arms_weapons.py checks the rest before writing).
+     * loaded, its files on the classpath, its hands drawn by the weapon renderer; its mesh read by the game's own reader,
+     * inside the item box, within budget, its normals whole and its texels in the albedo half (tools/art/specs/
+     * arms_weapons.py checks the look before writing).
      */
     static void assets(GameTestHelper h) {
         h.assertTrue(ArmsItems.ALL.size() == ArmsData.WEAPONS.size(), "an item per row");
@@ -71,47 +75,41 @@ final class ArmsTests {
             var recipe = ResourceKey.create(Registries.RECIPE, Awaken.id(w.id()));
             h.assertTrue(h.getLevel().getServer().getRecipeManager().byKey(recipe).isPresent(), w.id() + " has its recipe");
             for (String file : new String[]{"items/" + w.id() + ".json", "models/item/" + w.id() + ".json", "models/item/" + w.id() + "_in_hand.json",
-                    "textures/item/arms/" + w.id() + ".png", "textures/item/arms/" + w.id() + "_icon.png", "textures/item/arms/" + w.id() + "_icon_glow.png"}) {
+                    "textures/item/arms/" + w.id() + ".png", "textures/item/arms/" + w.id() + "_icon.png", "arms/weapons/" + w.id() + ".mesh"}) {
                 h.assertTrue(ArmsTests.class.getResource("/assets/awaken/" + file) != null, w.id() + ": " + file + " is on the classpath");
             }
-            com.google.gson.JsonArray elements;
-            try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/models/item/" + w.id() + "_in_hand.json")) {
-                elements = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8))
-                        .getAsJsonObject().getAsJsonArray("elements");
+            com.google.gson.JsonObject fallback = json("/assets/awaken/items/" + w.id() + ".json").getAsJsonObject("model").getAsJsonObject("fallback");
+            com.google.gson.JsonObject special = fallback.getAsJsonObject("model");
+            h.assertTrue("awaken:weapon".equals(special.get("type").getAsString()) && w.id().equals(special.get("weapon").getAsString()),
+                    w.id() + ": the hands draw it with the weapon renderer");
+            WeaponMesh mesh;
+            try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/arms/weapons/" + w.id() + ".mesh")) {
+                mesh = WeaponMesh.read(in);
             } catch (java.io.IOException ex) {
-                throw new IllegalStateException(ex);
+                throw new IllegalStateException(w.id() + ": its mesh doesn't read: " + ex.getMessage(), ex);
             }
-            int quads = 0;
-            for (var el : elements) {
-                var o = el.getAsJsonObject();
-                float[] from = floats(o.getAsJsonArray("from")), to = floats(o.getAsJsonArray("to"));
-                for (int i = 0; i < 3; i++) {
-                    h.assertTrue(from[i] >= -16 && to[i] <= 32 && from[i] < to[i], w.id() + ": an element outside the model's bounds");
-                }
-                h.assertTrue(!o.getAsJsonObject("faces").isEmpty(), w.id() + ": an element without faces (the game refuses the model)");
-                for (var face : o.getAsJsonObject("faces").entrySet()) {
-                    quads++;
-                    float[] uv = floats(face.getValue().getAsJsonObject().getAsJsonArray("uv"));
-                    int[] axes = switch (face.getKey()) {
-                        case "north", "south" -> new int[]{0, 1};
-                        case "east", "west" -> new int[]{2, 1};
-                        default -> new int[]{0, 2};
-                    };
-                    // a 64-texel atlas over 16 uv units: a model unit is a quarter of a uv unit at one texel per unit
-                    boolean density = Math.abs((uv[2] - uv[0]) * 4 - (to[axes[0]] - from[axes[0]])) < 0.01
-                            && Math.abs((uv[3] - uv[1]) * 4 - (to[axes[1]] - from[axes[1]])) < 0.01;
-                    h.assertTrue(density, w.id() + ": a " + face.getKey() + " face off one texel per unit");
+            h.assertTrue(mesh.vertices() <= MESH_BUDGET, w.id() + ": " + mesh.vertices() + " corners (at most " + MESH_BUDGET + ")");
+            float[] b = mesh.bounds();
+            h.assertTrue(b[0] >= -1 && b[1] >= -1 && b[2] >= -1 && b[3] <= 2 && b[4] <= 2 && b[5] <= 2, w.id() + ": the mesh leaves the item box");
+            for (int i = 0; i < mesh.vertices(); i++) {
+                float nx = mesh.normal()[i * 3] / 127F, ny = mesh.normal()[i * 3 + 1] / 127F, nz = mesh.normal()[i * 3 + 2] / 127F;
+                float len = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+                float u = mesh.uv()[i * 2], v = mesh.uv()[i * 2 + 1];
+                if (len < 0.9F || len > 1.1F || u < 0 || u > 0.5F || v < 0 || v > 1) {
+                    h.fail(w.id() + ": corner " + i + " has a broken normal or a texel outside the albedo");
                 }
             }
-            h.assertTrue(quads > 0 && quads <= 400, w.id() + ": " + quads + " quads (at most 400)");
+            for (WeaponMesh.Anchor a : mesh.anchors()) h.assertTrue(a.radius() > 0, w.id() + ": a glow with no size");
         }
         h.succeed();
     }
 
-    private static float[] floats(com.google.gson.JsonArray a) {
-        float[] out = new float[a.size()];
-        for (int i = 0; i < out.length; i++) out[i] = a.get(i).getAsFloat();
-        return out;
+    private static com.google.gson.JsonObject json(String path) {
+        try (var in = ArmsTests.class.getResourceAsStream(path)) {
+            return com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     /** A heavy held through to full charge with the meter full is the Art: the meter spent, its wave reaching past any heavy. */

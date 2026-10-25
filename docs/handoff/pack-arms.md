@@ -16,9 +16,22 @@ short version. Branch `pack/arms` (CI runs the full suite on every push); the se
   server-judged, one timing table (`data/awaken/arms/archetypes.json`).
 - **The feel**: one hit-stop for every blow (`core.api.CombatFeedback`; Powers' hits now use it too), the view's kick,
   the striker's hold; the first-person swings; the HUD's arc, dodge pips and the hurt shard.
-- **The sound kit**: 25 events, 74 files, hybrid (CC0 recordings + synthesis), every file inside the `arms` loudness
+- **The sound kit**: 26 events, 76 files, hybrid (CC0 recordings + synthesis), every file inside the `arms` loudness
   window; the impact chosen by what the blade meets (`core.api.BodyMaterial`); one tell voice per class on every
   creature; a body thump when you are hit.
+- **Trails and sparks** on the powers module's effects engine: every blow's arc as a crescent facing whoever looks,
+  tinted by the weapon, brighter each rhythm step, gold on a perfect heavy; sparks by what the blade met.
+- **Stances on the plates** (`core.api.Stances`): a strained stance's amber strip under the health bar, gold while
+  broken; the fighter's focus wears the plate's bright rim. Snapshots on change, drained by one rule on both sides.
+- **Third person** (Player Animation Library, optional): a full-body clip per move keyed on the timing table, the
+  guard and the heavy's draw held, the dodge by its way; checked for an arm through the body.
+- **The Art** (a full charge with Resonance full: a great sweeping wave), the **Undercut** (a strike out of a slide)
+  and the **Plunge** (a strike in a fall, landing all round).
+- **The six forged Longswords, sculpted**: one per Hunter tier, each a hand-designed mesh (lofted blades with real
+  edges, bevels and fullers, swept guards, wound grips, cut stones), painted texel by texel as pixel art and drawn by
+  our own shader (reflecting metal, a sheen that runs the blade, runes and circuits that light in turn, halos round
+  the stones). The fighter's own blade fills with light as a heavy charges and hums when the Art is ready. Their own
+  first-person hold, icons drawn from the same meshes. Review sheet: `docs/combat/weapons-2026-10-25.png`.
 
 ## Decided without Euan (each in SPEC §24)
 1. **Sounds are hybrid**: Kenney's CC0 Impact Sounds and RPG Audio for the physical transients, the kit's synthesis
@@ -45,6 +58,27 @@ short version. Branch `pack/arms` (CI runs the full suite on every push); the se
     was removed rather than left unused).
 12. **A hurt shard** (a short red arc round the crosshair toward the blow, 24 ticks) for any held item, with a body
     thump and a small jolt; vanilla's own tilt stays.
+13. **Trails face the viewer**: an arc drawn in the plane of the look is seen edge-on (a line), found in the tour; the
+    crescent follows the hand's arc pushed out ahead of the eye instead.
+14. **Weapons are sculpted meshes with our own renderer and shader, not JSON cubes.** Euan's verdict on the cube
+    version and on a chunkier cube prototype: "still very, very blocky... push it to the maximum". NeoForge's OBJ
+    loader would give shapes but vanilla's flat light; a special item renderer drawing our own mesh through our own
+    pipeline gives reflections, sheen, flowing light, halos and a blade that reacts to the fight. The pipelines are
+    optional: a shader pack or driver that can't build them gets the same mesh in vanilla's entity light.
+15. **Pixel art on smooth forms**: light is painted continuously, then set onto hand-picked hue-shifted ramps with an
+    ordered dither, at 4 texels a unit (vanilla blocks are 1); the shader's light is partly banded. That keeps
+    sculpted weapons reading as Minecraft rather than as a different game's assets.
+16. **Each part unfolds about its own line** (a blade's two faces separately, each about its fuller), so runes,
+    circuits and scales are painted on straight columns of texels and stay square.
+17. **A first-person hold of their own**: vanilla's sword sits so close that a longsword shows a slab of blade at rest;
+    ours stand the whole blade at the right with its point in view. Chosen with a preview that reproduces the game's
+    hand projection exactly (checked by overlaying it on a game frame). The swings are unchanged.
+18. **32×32 icons rendered from the mesh**, each pixel the surface colour at its centre (averaging, then snapping to
+    the ramps, both turned pixel art to mud); vanilla's outline. Ground, frames and shelves use the icon too.
+19. **Recipes until the Forge's blueprints (S7)**: the tier's Hunter blade between its core and bind.
+20. **One tier, one concept**: flint and antler (E), tusk and bronze (D), gate-steel and a lit circuit (C), Veil-steel
+    with a spirit edge (B), black scale and molten gold (A), ivory, gold and the Court's runes (S). Every design is a
+    function in `tools/art/specs/arms_weapons.py` with its story in its docstring.
 
 ## How it was verified
 - **GameTests**: the full suite, 475, all green locally (JDK 25 in the container). New: `arms_sounds`,
@@ -60,17 +94,28 @@ short version. Branch `pack/arms` (CI runs the full suite on every push); the se
   every sound alone, keep / remake / cut, export). **This is Euan's to do**: the checks catch a broken sound, not a
   dull one.
 
-## For Euan, when he's back (about 10 minutes)
+- **The weapons**: `python3 tools/art/specs/arms_weapons.py build` (designs, checks, every file);
+  `tools/art/mesh_render.py` renders them with the shader's own terms; `tools/autopilot/arms-weapons.txt` shows each
+  in first person at rest and mid-blow, a charged heavy, on armor stands, in the hotbar, on the ground and at night.
+  `arms_assets` reads every mesh with the game's reader.
+
+## For Euan, when he's back (about 15 minutes)
 1. Open `docs/combat/listening-2026-10-25.html`, play the eight scenes, mark them, export.
 2. Fight something with a sword (strike, hold for the glint, right mouse to deflect, sprint + back to dodge) and say
    whether it feels like steel and weight.
+3. Take the six Longswords from the creative tab (AWAKEN). Hold each in first person, swing, charge a heavy (watch the
+   blade fill with light), look at them at night. Say which designs land and which don't (the designs are cheap to
+   change: each is one function).
 
-## Next (the plan's S2, then S3 onward)
-Trails on every swing; third-person clips (PAL, with the ArmPose fallback); the Art at full Resonance; traversal
-strikes (Undercut, Plunge, Wall Cut, Reel Strike, Swoop); posture bars and the focus bracket on Holo plates (needs
-posture synced to clients); six 3D forged Longswords; then S3 (classes and tells on every boss, posture everywhere,
-the combat simulator, item level) and the pipeline.
+## Next (the rest of S2, then S3 onward)
+S2: the camera voice and comfort switches; the weapons' own particles (embers off Lordscale, wisps off the Veil edge,
+motes round the Sovereign's stones), and a third-person look at PAL in game (verified so far on preview sheets only).
+Then S3 (classes and tells on every boss, posture everywhere, the combat simulator, item level) and the pipeline's
+other fifteen archetypes, which now have a toolkit: a new weapon is a design function and a painter or two.
 
 ## Known
+- The headless tours render on lavapipe (software Vulkan): lighting and colour match, but Lens's bloom and the halos'
+  glow read stronger on a real GPU; judge the glow on the Mac.
+- Trails are subtle against a bright sky (additive light can only brighten); strong at dusk, at night and indoors.
 - `audio_layers_watch` can fail when run with only `-Ptests=arms_,mobs_,audio_`: a concurrent mobs test spawns a boss
   near it (the watch sees a Lord at tick 0). It passes in the full suite; it is the audio test's isolation, not Arms.
