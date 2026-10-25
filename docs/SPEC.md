@@ -3785,6 +3785,17 @@ against it, so a vanilla item plays its designed tempo).
   lunge to 5 blocks; its Art a thrust whose wave runs 12 blocks.
 - **Greatblade** (1.0): wide heavy cleaves (arc 130, reach 3.4), a spinning finisher all round, an overhead mastery
   strike; its Art a great sweep.
+- **Rapier** (1.8): quick thrusts at 3.6 on a 20° arc, a slash finisher; a riposte of motion 3.4 and posture 24 with
+  a 16-tick window, the deflect window 5 ticks: the parry weapon.
+- **Daggers** (2.2): a four-strike chain (two cuts, a stab, a wide finisher) and a fifth stab with mastery; the
+  shortest dodge (5 ticks, 2.2 blocks, recharging in 16) and a Slipcut of 2.8 with an 8-tick window; a blow from
+  behind (the striker more than 120° round from where the body faces) lands ×1.8.
+- **Katana** (1.5): a sweeping chain from the draw; the first strike after the blade has rested 2 s (40 ticks since
+  the last move ended) is drawn from the sheath: ×1.7 motion, ×1.8 posture. The deflect window 5 ticks.
+- **Twinblades** (2.0, a double-ended blade): a fast four-strike chain on tight rhythm windows closing on a spin all
+  round, a fifth spinning back with mastery; its Art a whirl.
+- Style traits (`Archetype.Traits`, optional per style in the table): `backstab`, `drawIdle`, `drawMotion`,
+  `drawPosture` (`ArmsRules.behind`, `ArmsRules.drawn`; test `arms_style_traits`).
 - Third person: `arms_<style>_<move>` clips on each style's own ticks, generated from the authored poses by the move's
   kind (a side cut, an overhead, a thrust, a sweep round), heavier styles leaning and sinking further; the slide's,
   the fall's and the dodge's strikes are every style's. Strike 1's follow-through passes out in front (a waypoint) so
