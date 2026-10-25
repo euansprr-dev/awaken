@@ -21,10 +21,12 @@ Alpine". Page: https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN.
   taller worlds (needs Tectonic's noise settings copied or a mixin; summits round off under the ceiling instead).
 - **Open / follow-ups:**
   1. Lens's sunset dark bands: not seen in the 2026-10-26 golden-hour shots (refshots r1), so not chased further.
-  5. Water walls at the loaded edge: thin pale lines outline the loaded square after a jump or in fast flight (water
-     side faces toward chunks not yet received). The big pale squares were holes in the mask, fixed 2026-10-26 (3D
-     mask). Sodium meshes the chunks in the pack, so hiding the lines needs a hook in Sodium's fluid renderer, not
-     vanilla's (a vanilla-side Turbo mixin was built and dropped: it could not reach them).
+  5. Water walls at the loaded edge: fixed 2026-10-26 by the Turbo water-edge hook in Sodium's fluid renderer
+     (`fs2-wateredge.jpg`: the same jump off and on).
+  7. High camera: the covered radius assumes a sea floor under the camera, so from y 350 over mountains the windows
+     ask for every patch under the chunks (rings 0-1 ~200 missing, ~2,700 queued, load 7-8) and the Ultra runs of
+     2026-10-26 04:00 were too contaminated to judge (Far Sight off itself 14.1 ms). Next: take the ground under the
+     camera (ring 0's height there, less a margin) instead of a sea floor.
   6. Massif scale: the references' peaks fill the frame; ours stand under the world's ceiling (y 320). Taller worlds
      (Tectonic `max_y`) would be a world-design change across modules: Euan's call.
   2. While a brand-new world generates (teleports, fast flight), the server's chunk generation and the workers load the
