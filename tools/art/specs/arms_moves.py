@@ -216,6 +216,10 @@ styled("axe", lean=3)
 styled("maul", lean=6, sink=0.5)
 styled("spear")
 styled("greatblade", lean=5, sink=0.3)
+styled("rapier", lean=-1)
+styled("daggers", lean=4, sink=0.6)
+styled("katana", lean=2, sink=0.2)
+styled("twinblades", lean=3, sink=0.3)
 
 
 # ---------------------------------------------------------------------------------------------------------------------

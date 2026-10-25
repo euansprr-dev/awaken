@@ -13,6 +13,8 @@ final class ArmsState {
     Archetype.@Nullable Move move;
     Archetypes.@Nullable Loaded style;
     long moveStart, moveEnd;
+    /** The running strike was drawn from the sheath (the Katana's draw cut). */
+    boolean drawn;
     int step = -1, cadence, moveSeq, recovery;
     boolean perfectHeavy;
     /** A buffered tap waiting for its window. */

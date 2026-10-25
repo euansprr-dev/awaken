@@ -190,6 +190,7 @@ final class ArmsServer {
     static void begin(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.Move move, int step, int cadence, long now, int seq) {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
+        s.drawn = ArmsRules.drawn(style.def().traits(), move, now - s.moveEnd);
         s.style = style;
         s.move = move;
         s.step = step;
@@ -332,6 +333,15 @@ final class ArmsServer {
         pendingTarget = t.getId();
         pendingMotion = ArmsRules.motion(def, s.cadence, s.perfectHeavy) * (s.move == Archetype.Move.PLUNGE ? s.plungePower : 1);
         pendingPosture = ArmsRules.posture(def, s.cadence, s.perfectHeavy);
+        Archetype.Traits traits = s.style == null ? Archetype.Traits.NONE : s.style.def().traits();
+        if (s.drawn) {
+            pendingMotion *= traits.drawMotion();
+            pendingPosture = Math.round(pendingPosture * traits.drawPosture());
+        }
+        if (traits.backstab() > 1F) {
+            float toStriker = (float) (Mth.atan2(p.getZ() - t.getZ(), p.getX() - t.getX()) * Mth.RAD_TO_DEG) - 90F;
+            if (ArmsRules.behind(t.yBodyRot, toStriker)) pendingMotion *= traits.backstab();
+        }
         pendingCap = def.bossCap();
         pendingLanded = false;
         // a combo's blows come faster than vanilla's half second of immunity: each move strikes each creature once

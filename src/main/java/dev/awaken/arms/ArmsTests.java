@@ -51,6 +51,7 @@ final class ArmsTests {
         AwakenTests.register("arms_plunge", 60, ArmsTests::plungeTest);
         AwakenTests.register("arms_assets", 20, ArmsTests::assets);
         AwakenTests.register("arms_hand_pose", 20, ArmsTests::handPose);
+        AwakenTests.register("arms_style_traits", 20, ArmsTests::styleTraits);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -245,6 +246,21 @@ final class ArmsTests {
         h.assertTrue(worst < 1e-4F, "the view move reproduces the hand's pose (worst element off by " + worst + ")");
         HandPose.viewMove(0.56F, -0.52F, -0.72F, 0, 0, 0, 0, 0, m);
         for (float v : m) h.assertTrue(Math.abs(v) < 1e-6F, "at rest the view move adds nothing");
+        h.succeed();
+    }
+
+    /** The Daggers' backstab and the Katana's draw cut: their rules and their rows. */
+    static void styleTraits(GameTestHelper h) {
+        h.assertTrue(ArmsRules.behind(0F, 180F) && ArmsRules.behind(90F, -60F), "a striker at its back, or well round it, is behind");
+        h.assertTrue(!ArmsRules.behind(0F, 0F) && !ArmsRules.behind(0F, 100F), "ahead of it, or at its side, is not");
+        Archetypes.Loaded daggers = Archetypes.get("daggers"), katana = Archetypes.get("katana");
+        h.assertTrue(daggers != null && daggers.def().traits().backstab() > 1.5F, "the Daggers strike harder from behind");
+        h.assertTrue(katana != null && katana.def().traits().drawIdle() > 0, "the Katana has a draw cut");
+        Archetype.Traits t = katana.def().traits();
+        h.assertTrue(ArmsRules.drawn(t, Archetype.Move.STRIKE_1, t.drawIdle()), "the first strike after it rested is drawn");
+        h.assertTrue(!ArmsRules.drawn(t, Archetype.Move.STRIKE_1, t.drawIdle() - 1), "not before it has rested");
+        h.assertTrue(!ArmsRules.drawn(t, Archetype.Move.STRIKE_2, 1000), "and only the chain's first strike");
+        h.assertTrue(!ArmsRules.drawn(longsword().def().traits(), Archetype.Move.STRIKE_1, 1000), "a Longsword draws nothing");
         h.succeed();
     }
 

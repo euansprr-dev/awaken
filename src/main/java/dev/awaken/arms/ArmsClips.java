@@ -28,8 +28,7 @@ public final class ArmsClips {
      * every move but the slide's, the fall's and the dodge's, which every style shares), else the Longsword's.
      */
     public static @Nullable String of(String style, Archetype.Move move) {
-        if (style.equals(Arms.LONGSWORD) || move == Archetype.Move.UNDERCUT || move == Archetype.Move.PLUNGE || move == Archetype.Move.SLIPCUT
-                || move == Archetype.Move.STRIKE_5) {
+        if (style.equals(Arms.LONGSWORD) || move == Archetype.Move.UNDERCUT || move == Archetype.Move.PLUNGE || move == Archetype.Move.SLIPCUT) {
             return of(move);
         }
         return "arms_" + style + "_" + move.key;

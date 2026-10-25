@@ -17,7 +17,22 @@ import java.util.Optional;
  * {@code data/awaken/arms/archetypes.json} on both sides ({@link Archetypes}).
  */
 public record Archetype(String id, String name, float baseSpeed, Guard guard, Dodge dodge, List<String> chain, List<String> masteryChain,
-                        int buffer, int late, Map<String, MoveDef> moves) {
+                        int buffer, int late, Map<String, MoveDef> moves, Traits traits) {
+
+    /**
+     * What sets a style apart beyond its rows (SPEC §25 "Styles"): a blow from behind multiplied (the Daggers' backstab;
+     * 1 for none), and the draw cut (the Katana: the first strike after the blade has rested this long, in ticks, is
+     * drawn from the sheath, its motion and posture multiplied; 0 for none).
+     */
+    public record Traits(float backstab, int drawIdle, float drawMotion, float drawPosture) {
+        public static final Traits NONE = new Traits(1F, 0, 1F, 1F);
+        static final Codec<Traits> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.FLOAT.optionalFieldOf("backstab", 1F).forGetter(Traits::backstab),
+                Codec.INT.optionalFieldOf("drawIdle", 0).forGetter(Traits::drawIdle),
+                Codec.FLOAT.optionalFieldOf("drawMotion", 1F).forGetter(Traits::drawMotion),
+                Codec.FLOAT.optionalFieldOf("drawPosture", 1F).forGetter(Traits::drawPosture)
+        ).apply(i, Traits::new));
+    }
 
     /** The moves every style may have; the JSON keys are their lower-case names. */
     public enum Move {
@@ -174,7 +189,8 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
             Codec.STRING.listOf().optionalFieldOf("masteryChain", List.of()).forGetter(Archetype::masteryChain),
             Codec.INT.optionalFieldOf("buffer", 5).forGetter(Archetype::buffer),
             Codec.INT.optionalFieldOf("late", 6).forGetter(Archetype::late),
-            Codec.unboundedMap(Codec.STRING, MoveDef.CODEC).fieldOf("moves").forGetter(Archetype::moves)
+            Codec.unboundedMap(Codec.STRING, MoveDef.CODEC).fieldOf("moves").forGetter(Archetype::moves),
+            Traits.CODEC.optionalFieldOf("traits", Traits.NONE).forGetter(Archetype::traits)
     ).apply(i, Archetype::new));
 
     /** The moves by enum, resolved once (the map's keys checked against {@link Move}). */
