@@ -1,6 +1,7 @@
 """The Gate Rig's blocks and particles (docs/SPEC.md §17 "Gate Rig"): the Mirror Hall's turning mirror (a silvered pane
 in a gilt frame, standing at a diagonal), its sun lens and its light seal, the pavilion's cracked mirror, the wells'
-glowing rims, and the rig's own particles (grit, sparks, glints, mirror shards, a well's motes). Pixel art in the
+glowing rims, the Gauntlet's presses (the Foundry's riveted iron, the Monastery's ram of ice) and its running wall, and
+the rig's own particles (grit, sparks, glints, mirror shards, a well's motes). Pixel art in the
 mod's palette, like every texture; the game tints grit, glints and motes per theme.
 
     python3 tools/art/build_all.py gate_rig        textures
@@ -29,6 +30,11 @@ P.RAMPS.update({
     "sealhot": ["#1d5591", "#3c86cc", "#7fc3ff", "#bfe2ff", "#ecf7ff", "#ffffff"],
     "wellstone": ["#120f1c", "#1c1830", "#28223f", "#352d52", "#463c68"],
     "wellglow": ["#4a2a8a", "#7a4fd0", "#a98cff", "#d6c8ff", "#f4efff"],
+    "pressiron": ["#16181c", "#22262c", "#30353d", "#424851", "#5a616b", "#7a828c"],
+    "hazard": ["#3a1e06", "#7a3f0a", "#c46a12", "#f29a2a", "#ffc65a"],
+    "rime": ["#0f2236", "#1d3d5c", "#33648c", "#5a95bf", "#93c6e4", "#d4f0ff"],
+    "runwall": ["#101216", "#181b21", "#21252d", "#2c313a", "#3a404a"],
+    "runglow": ["#5a3a0a", "#a8681a", "#f0a63a", "#ffd88a", "#fff4d8"],
 })
 
 
@@ -166,6 +172,101 @@ def well_rim():
     return base, glow
 
 
+def press_side():
+    """The Foundry's press, its side: dark riveted iron in two plates, an amber hazard band along its foot."""
+    ir, hz = ramp("pressiron"), ramp("hazard")
+    rng = rng_for("gate_press_side")
+
+    def f(x, y):
+        if y >= 13:
+            return hz[3] if (x + y) % 6 < 3 else ir[0]
+        if x in (0, 15) or y == 0:
+            return ir[0]
+        if x == 7 or x == 8:
+            return ir[1] if x == 7 else ir[3]
+        if (x in (2, 5, 10, 13)) and y in (2, 10):
+            return ir[5]
+        return ir[2 + (1 if rng.random() < 0.18 else 0)]
+    return canvas(f)
+
+
+def press_face():
+    """The press's face (top and bottom): a heavy iron plate, cross-braced, its rim chevroned in amber."""
+    ir, hz = ramp("pressiron"), ramp("hazard")
+    rng = rng_for("gate_press_face")
+
+    def f(x, y):
+        edge = min(x, y, 15 - x, 15 - y)
+        if edge == 0:
+            return ir[0]
+        if edge == 1:
+            return hz[3] if (x + y) % 4 < 2 else ir[1]
+        if x == y or x == 15 - y:
+            return ir[4]
+        if (x, y) in ((3, 3), (12, 3), (3, 12), (12, 12)):
+            return ir[5]
+        return ir[2 + (1 if rng.random() < 0.2 else 0)]
+    return canvas(f)
+
+
+def ram_side():
+    """The Monastery's ram, its side: rime-hard ice, clouded and cracked, held in bands of dark iron top and foot."""
+    ri, ir = ramp("rime"), ramp("pressiron")
+    rng = rng_for("gate_frost_ram_side")
+
+    def f(x, y):
+        if y in (0, 1) or y in (14, 15):
+            return ir[1] if y in (0, 15) else ir[3]
+        v = 2 + (1 if rng.random() < 0.35 else 0) + (1 if (x * 3 + y * 5) % 11 == 0 else 0)
+        if (x - y) % 9 == 0 and 3 < y < 12:
+            v = 5
+        return ri[min(5, v)]
+    base = canvas(f)
+    glow = blank()
+    for y in range(3, 13):
+        for x in range(16):
+            if (x - y) % 9 == 0:
+                glow.set(x, y, ri[4])
+    return base, glow
+
+
+def ram_face():
+    """The ram's face: a disc of frost carved with a ring, in its iron frame."""
+    ri, ir = ramp("rime"), ramp("pressiron")
+    rng = rng_for("gate_frost_ram_face")
+
+    def f(x, y):
+        edge = min(x, y, 15 - x, 15 - y)
+        if edge <= 1:
+            return ir[1] if edge == 0 else ir[3]
+        d = math.hypot(x - 7.5, y - 7.5)
+        if abs(d - 4.5) < 0.6:
+            return ri[5]
+        return ri[2 + (1 if rng.random() < 0.3 else 0)]
+    return canvas(f)
+
+
+def run_wall():
+    """The running wall: dark panels with a lit groove through their middle (a wall of them is ruled with light)."""
+    w, g = ramp("runwall"), ramp("runglow")
+    rng = rng_for("gate_run_wall")
+
+    def f(x, y):
+        if y in (7, 8):
+            return g[2] if y == 7 else g[1]
+        if y in (6, 9):
+            return w[0]
+        if x in (0, 8) and y not in (6, 7, 8, 9):
+            return w[0]
+        return w[2 + (1 if rng.random() < 0.15 else 0) + (1 if y in (1, 12) else 0)]
+    base = canvas(f)
+    glow = blank()
+    for x in range(16):
+        glow.set(x, 7, g[4])
+        glow.set(x, 8, g[3])
+    return base, glow
+
+
 def textures():
     t = {"gate_rig_mirror_glass": mirror_glass(), "gate_rig_mirror_back": mirror_back(), "gate_rig_mirror_frame": mirror_frame()}
     t["gate_rig_lens"], t["gate_rig_lens_glow"] = lens_front()
@@ -175,6 +276,10 @@ def textures():
     t["gate_rig_seal_side"] = frame_side("seal")
     t["gate_mirror_cracked"] = mirror_cracked()
     t["gate_well_rim"], t["gate_well_rim_glow"] = well_rim()
+    t["gate_press"], t["gate_press_face"] = press_side(), press_face()
+    t["gate_frost_ram"], t["gate_frost_ram_glow"] = ram_side()
+    t["gate_frost_ram_face"] = ram_face()
+    t["gate_run_wall"], t["gate_run_wall_glow"] = run_wall()
     return t
 
 
@@ -328,9 +433,23 @@ def bright_model(name):
     return {"parent": "minecraft:block/block", "textures": {"particle": t, "all": t}, "elements": [cube({d: "#all" for d in SIDES}, 15)]}
 
 
+def column_model(side, face, glow=None):
+    """A block with its own top and bottom: the sides take {@code side}, top and bottom {@code face}; a glow on the sides."""
+    faces = {d: "#side" for d in SIDES}
+    faces["up"] = faces["down"] = "#face"
+    tex = {"particle": side, "side": side, "face": face}
+    els = [cube(faces)]
+    if glow:
+        tex["glow"] = glow
+        els.append({"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up",
+                    "faces": {d: {"texture": "#glow", "cullface": d} for d in ("north", "south", "east", "west")}})
+    return {"parent": "minecraft:block/block", "textures": tex, "elements": els}
+
+
 FACINGS = (("north", 0), ("east", 90), ("south", 180), ("west", 270))
 NAMES = {"gate_rig_mirror": "Turning Mirror", "gate_rig_lens": "Sun Lens", "gate_rig_seal": "Light Seal",
-         "gate_mirror_cracked": "Cracked Mirror", "gate_well_rim": "Well Rim"}
+         "gate_mirror_cracked": "Cracked Mirror", "gate_well_rim": "Well Rim", "gate_press": "Foundry Press",
+         "gate_frost_ram": "Frost Ram", "gate_run_wall": "Running Wall"}
 
 
 def content():
@@ -350,7 +469,11 @@ def content():
         for f, r in FACINGS for lit in ("false", "true")}})
     _write(os.path.join(ASSETS, "models/block/gate_mirror_cracked.json"), bright_model("gate_mirror_cracked"))
     _write(os.path.join(ASSETS, "models/block/gate_well_rim.json"), glow_model("gate_well_rim"))
-    for name in ("gate_mirror_cracked", "gate_well_rim"):
+    _write(os.path.join(ASSETS, "models/block/gate_press.json"), column_model(b("gate_press"), b("gate_press_face")))
+    _write(os.path.join(ASSETS, "models/block/gate_frost_ram.json"),
+           column_model(b("gate_frost_ram"), b("gate_frost_ram_face"), b("gate_frost_ram_glow")))
+    _write(os.path.join(ASSETS, "models/block/gate_run_wall.json"), glow_model("gate_run_wall"))
+    for name in ("gate_mirror_cracked", "gate_well_rim", "gate_press", "gate_frost_ram", "gate_run_wall"):
         _write(os.path.join(ASSETS, f"blockstates/{name}.json"), {"variants": {"": {"model": b(name)}}})
     for name in NAMES:
         _write(os.path.join(RES, f"data/awaken/loot_table/blocks/{name}.json"), {

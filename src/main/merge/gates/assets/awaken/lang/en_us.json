@@ -115,5 +115,13 @@
   "death.attack.awaken.gate_light": "%1$s was burned by the light",
   "death.attack.awaken.gate_light.player": "%1$s was burned by the light %2$s turned on them",
   "death.attack.awaken.gate_rubble": "%1$s was buried as the gate came down",
-  "death.attack.awaken.gate_rubble.player": "%1$s was buried as the gate came down, fleeing %2$s"
+  "death.attack.awaken.gate_rubble.player": "%1$s was buried as the gate came down, fleeing %2$s",
+  "block.awaken.gate_press": "Foundry Press",
+  "block.awaken.gate_frost_ram": "Frost Ram",
+  "block.awaken.gate_run_wall": "Running Wall",
+  "subtitles.awaken.gate.rig.windup": "A press winds up",
+  "subtitles.awaken.gate.rig.press": "A press slams down",
+  "subtitles.awaken.gate.rig.lift": "A press lifts",
+  "subtitles.awaken.gate.rig.ring": "Checkpoint",
+  "subtitles.awaken.gate.rig.medal": "Course run"
 }

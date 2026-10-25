@@ -51,6 +51,7 @@ public final class GatesClient {
         });
         e.register(dev.awaken.gates.net.RigPayloads.Scene.TYPE, (msg, ctx) -> RigClient.scene(msg));
         e.register(dev.awaken.gates.net.RigPayloads.Cue.TYPE, (msg, ctx) -> RigClient.cue(msg));
+        e.register(dev.awaken.gates.net.RigPayloads.Run.TYPE, (msg, ctx) -> RigRunHud.run(msg));
         e.register(GatePayloads.SatchelView.TYPE, (msg, ctx) -> {
             ClientGates.satchel = List.copyOf(msg.items());
             ClientGates.satchelXp = msg.xp();
@@ -74,6 +75,7 @@ public final class GatesClient {
 
     private static void layers(RegisterGuiLayersEvent e) {
         e.registerAbove(VanillaGuiLayers.EFFECTS, HUD, RunHudLayer::render);
+        e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Awaken.id("gate_rig_clock"), RigRunHud::render);
     }
 
     static void tick(ClientTickEvent.Post e) {

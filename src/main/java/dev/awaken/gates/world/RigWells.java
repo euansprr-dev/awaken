@@ -114,7 +114,7 @@ public final class RigWells {
                 new RigRoom.Beat(SURGE_OFF, RigRoom.Cue.RESTORE, 0))));
         List<RigRoom.Trigger> triggers = List.of(new RigRoom.Trigger(RigRoom.On.ENCOUNTER,
                 new RigRoom.Box(r.x0(), 0, r.z0(), r.x1(), r.height, r.z1()), 0, false, 0));
-        return new RigRoom(RigRoom.Kind.GRAVITY_WELLS, groups, tracks, triggers, null, null, field);
+        return new RigRoom(RigRoom.Kind.GRAVITY_WELLS, groups, tracks, triggers, null, null, field, null);
     }
 
     static BlockState pitFloor(Theme t, Palette p) {

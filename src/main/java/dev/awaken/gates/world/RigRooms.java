@@ -2,6 +2,7 @@ package dev.awaken.gates.world;
 
 import dev.awaken.gates.GatesRegistry;
 import dev.awaken.gates.block.RigBlocks;
+import dev.awaken.gates.content.GatePlan;
 import dev.awaken.gates.content.Palette;
 import dev.awaken.gates.content.Theme;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,13 +19,22 @@ import java.util.List;
 public final class RigRooms {
     private RigRooms() {}
 
-    /** The archetypes a theme's floors can roll (none: the theme keeps its rooms as they were). */
+    /** The archetypes a theme's floors can roll in the current content version. */
     public static List<RigRoom.Kind> kinds(Theme t) {
+        return kinds(t, GatePlan.CONTENT_VERSION);
+    }
+
+    /**
+     * The archetypes a theme's floors can roll in a content version (none: the theme keeps its rooms as they were).
+     * Version 5 adds the Gauntlet to two themes that had none, so a version 4 plan builds exactly as before.
+     */
+    public static List<RigRoom.Kind> kinds(Theme t, int version) {
         return switch (t) {
             case EMBER_MINES, GLASS_DESERT, BELL_CRYPT -> List.of(RigRoom.Kind.COLLAPSE_RUN);
             case MIRROR_PALACE -> List.of(RigRoom.Kind.MIRROR_HALL);
             case PRECURSOR_LAB -> List.of(RigRoom.Kind.MIRROR_HALL, RigRoom.Kind.GRAVITY_WELLS);
             case SKY_ARCHIPELAGO, NIGHTMARE -> List.of(RigRoom.Kind.GRAVITY_WELLS);
+            case CLOCKWORK_FOUNDRY, FROST_MONASTERY -> version >= 5 ? List.of(RigRoom.Kind.GAUNTLET) : List.of();
             default -> List.of();
         };
     }
@@ -37,7 +47,7 @@ public final class RigRooms {
      * builder's random stream, so every other room is exactly what version 3 built.
      */
     static void assign(FloorBuilder.Builder b) {
-        List<RigRoom.Kind> kinds = kinds(b.theme);
+        List<RigRoom.Kind> kinds = kinds(b.theme, b.plan.contentVersion());
         if (kinds.isEmpty() || b.bossFloor) return;
         RigRoom.Kind kind = kinds.get(Hash.range(b.seed, 0x51C, b.floor, kinds.size()));
         List<Integer> path = b.path();
@@ -62,6 +72,7 @@ public final class RigRooms {
                 case COLLAPSE_RUN -> RigCollapse.build(r, b.theme, p, k, b.rank);
                 case MIRROR_HALL -> RigMirrors.build(r, p, k, b.rank);
                 case GRAVITY_WELLS -> RigWells.build(r, b.theme, p, b.rank);
+                case GAUNTLET -> RigGauntlet.build(r, b.theme, p, k, b.rank);
             };
             if (rig != null) {
                 r.rig = rig;
@@ -88,7 +99,8 @@ public final class RigRooms {
         if (rig == null) return;
         r.features.removeIf(f -> f.kind() == Room.FeatureKind.CACHE);
         switch (rig.kind) {
-            case COLLAPSE_RUN -> r.normals = r.elites = r.wave2Normals = r.wave2Elites = 0;
+            // the run is the challenge itself: no monsters on the causeway or the course
+            case COLLAPSE_RUN, GAUNTLET -> r.normals = r.elites = r.wave2Normals = r.wave2Elites = 0;
             case MIRROR_HALL -> {
                 r.pathOut.sealed = true;
                 r.pathOut.ownsBars = true;
@@ -111,12 +123,14 @@ public final class RigRooms {
             }
             case GRAVITY_WELLS -> rig.wells.chasmAt(rig.wells.along(x, z)) >= 0 ? RigWells.PIT_DY + 1 : 0;
             case MIRROR_HALL -> Pieces.KEEP;
+            case GAUNTLET -> rig.course.open(x, z) || rig.course.wall(x, z) ? RigGauntlet.PIT_DY + 1 : 0;
         };
     }
 
-    /** An obstacle on this column: a mirror's pedestal or the pavilion. */
+    /** An obstacle on this column: a mirror's pedestal or the pavilion, a Gauntlet's running wall. */
     public static boolean blocks(Room r, int x, int z) {
         RigRoom rig = r.rig;
+        if (rig.kind == RigRoom.Kind.GAUNTLET) return rig.course.wall(x, z);
         return rig.kind == RigRoom.Kind.MIRROR_HALL && (rig.mirrors.mirrorAt(x, z) != null || rig.mirrors.pavilion(x, z));
     }
 
@@ -154,6 +168,26 @@ public final class RigRooms {
                 // over a well the ceiling is a floor you can walk, its rims lit like the ones below
                 BlockState top = f.wellAt(a) < 0 ? c.ceilingBlock(x, z, ceil) : f.rim(a) ? rim() : ((x + z) & 1) == 0 ? c.p.floor() : c.k.band();
                 c.set(bx, ceil, bz, top);
+            }
+            case GAUNTLET -> {
+                RigGauntlet.Course co = rig.course;
+                c.solidColumn(bx, bz, c.yLo, floorY + RigGauntlet.PIT_DY - 1);
+                c.set(bx, floorY + RigGauntlet.PIT_DY, bz, co.pit());
+                // the drop glows up from under the course (slag in the Foundry, cold cloud in the Monastery), lighting it from below
+                if (co.open(x, z) && Math.floorMod(x + 3 * z, 5) == 0)
+                    c.set(bx, floorY + RigGauntlet.PIT_DY + 1, bz, GatePainter.state("minecraft:light[level=" + (c.theme == Theme.FROST_MONASTERY ? 11 : 9) + "]"));
+                if (co.wall(x, z)) {
+                    // the running wall: up out of the drop to WALL_TOP over the floor
+                    for (int y = floorY + RigGauntlet.PIT_DY + 1; y < floorY + RigGauntlet.WALL_TOP; y++) c.set(bx, y, bz, co.wall());
+                }
+                BlockState tile = co.tileAt(x, z);
+                if (tile != null) c.set(bx, floorY - 1, bz, tile);
+                // over a press, the press itself waits in the ceiling
+                c.set(bx, ceil, bz, co.press(x, z) ? co.ram() : c.ceilingBlock(x, z, ceil));
+                c.solidColumn(bx, bz, ceil + 1, c.yHi);
+                // no fill light where a press comes down or a wall stands
+                if (!co.press(x, z)) c.fill(bx, bz, x, z, co.wall(x, z) ? floorY + RigGauntlet.WALL_TOP : floorY, ceil - floorY);
+                return true;
             }
             case MIRROR_HALL -> {
                 RigMirrors.Puzzle pz = rig.mirrors;

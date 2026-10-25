@@ -17,7 +17,7 @@ import java.util.List;
 public final class RigRoom {
 
     public enum Kind {
-        COLLAPSE_RUN("Collapse Run"), MIRROR_HALL("Mirror Hall"), GRAVITY_WELLS("Gravity Wells");
+        COLLAPSE_RUN("Collapse Run"), MIRROR_HALL("Mirror Hall"), GRAVITY_WELLS("Gravity Wells"), GAUNTLET("Gauntlet");
 
         public final String displayName;
 
@@ -26,8 +26,11 @@ public final class RigRoom {
         }
     }
 
-    /** How the client draws a group's change (the server swaps the blocks; the client draws the motion). */
-    public enum Anim { NONE, FALL, RISE, SPIN, SHATTER, IGNITE }
+    /**
+     * How the client draws a group's change (the server swaps the blocks; the client draws the motion). PRESS comes down
+     * out of the ceiling (the real blocks follow {@link RigGauntlet#PRESS_TICKS} later); LIFT goes back up into it.
+     */
+    public enum Anim { NONE, FALL, RISE, SPIN, SHATTER, IGNITE, PRESS, LIFT }
 
     /**
      * A block that rises back into place, or a mirror swinging round, is drawn by the client for this long before the
@@ -78,9 +81,10 @@ public final class RigRoom {
     public final RigCollapse.Run run;
     public final RigMirrors.Puzzle mirrors;
     public final RigWells.Field wells;
+    public final RigGauntlet.Course course;
 
     RigRoom(Kind kind, List<Group> groups, List<Track> tracks, List<Trigger> triggers, RigCollapse.Run run,
-            RigMirrors.Puzzle mirrors, RigWells.Field wells) {
+            RigMirrors.Puzzle mirrors, RigWells.Field wells, RigGauntlet.Course course) {
         this.kind = kind;
         this.groups = List.copyOf(groups);
         this.tracks = List.copyOf(tracks);
@@ -88,6 +92,7 @@ public final class RigRoom {
         this.run = run;
         this.mirrors = mirrors;
         this.wells = wells;
+        this.course = course;
     }
 
     public Group group(int id) {

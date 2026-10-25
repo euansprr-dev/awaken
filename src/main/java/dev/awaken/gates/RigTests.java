@@ -13,6 +13,7 @@ import dev.awaken.gates.world.FloorLayout;
 import dev.awaken.gates.world.GateLayout;
 import dev.awaken.gates.world.GateTestAccess;
 import dev.awaken.gates.world.RigCollapse;
+import dev.awaken.gates.world.RigGauntlet;
 import dev.awaken.gates.world.RigMirrors;
 import dev.awaken.gates.world.RigRoom;
 import dev.awaken.gates.world.RigRooms;
@@ -51,6 +52,7 @@ final class RigTests {
             Layout.STEALTH_HALLS, Layout.SPIRAL_TOWER, Layout.OPEN_CAVERN, Layout.SHAFT};
 
     static void register() {
+        registerGauntlet();
         AwakenTests.register("gates_rig_collapse_run", 1200, h -> {
             int rooms = sweep(h, RigRoom.Kind.COLLAPSE_RUN, (rig) -> {
                 RigCollapse.Run run = rig.run;
@@ -196,6 +198,98 @@ final class RigTests {
         });
     }
 
+    /**
+     * The Gauntlet (content version 5): every course of 1,000 seeded gates is run by the check's runner with a margin, all
+     * four obstacles turn up, version 4 builds the two themes without one and every other theme exactly as version 5;
+     * then a course run for real: the clock starts off the landing, a ledge falls under you, a press lands on you and
+     * throws you back, the pit throws you back, the far landing stops the clock.
+     */
+    static void registerGauntlet() {
+        AwakenTests.register("gates_rig_gauntlet", 1200, h -> {
+            int[] seen = new int[4];
+            int rooms = sweep(h, RigRoom.Kind.GAUNTLET, (rig) -> {
+                RigGauntlet.Course c = rig.course;
+                int[] s = RigGauntlet.solve(c);
+                h.assertTrue(s[0] >= 3 && s[1] == c.par(), "a runner a little slower than a sprint runs every course (slack " + s[0] + ")");
+                h.assertTrue(c.ledges() + c.presses() + c.runs() + c.gaps() >= 2, "a course has two obstacles at least");
+                if (c.ledges() > 0) seen[0]++;
+                if (c.presses() > 0) seen[1]++;
+                if (c.runs() > 0) seen[2]++;
+                if (c.gaps() > 0) seen[3]++;
+            });
+            // only the long rooms (two slots) hold a course worth a clock: about one gate in five
+            h.assertTrue(rooms >= SEEDS / 8, "Gauntlets turn up on their themes' floors: " + rooms + " in " + SEEDS + " gates");
+            h.assertTrue(seen[0] > 0 && seen[1] > 0 && seen[2] > 0 && seen[3] > 0, "ledges, presses, wall-runs and gaps all turn up: "
+                    + java.util.Arrays.toString(seen));
+            for (int i = 0; i < 60; i++) {
+                Theme t = i % 3 == 0 ? Theme.CLOCKWORK_FOUNDRY : i % 3 == 1 ? Theme.FROST_MONASTERY : Theme.EMBER_MINES;
+                GatePlan v5 = new GatePlan(0x6A11L + i * 104729L, GatePlan.CONTENT_VERSION, Rank.values()[1 + i % 5], t, Layout.LABYRINTH,
+                        List.of(), Twist.NONE, 3, t.bossId(), Theme.HIVE, 0);
+                GateLayout a = GateTestAccess.build(v5.rebuilt(4)), b = GateTestAccess.build(v5);
+                for (int fi = 0; fi < a.main.size(); fi++) {
+                    for (int ri = 0; ri < a.main.get(fi).rooms.size(); ri++) {
+                        Room ra = a.main.get(fi).rooms.get(ri), rb = b.main.get(fi).rooms.get(ri);
+                        if (t != Theme.EMBER_MINES) h.assertTrue(ra.rig == null, "version 4 has no Gauntlet");
+                        else h.assertTrue((ra.rig == null) == (rb.rig == null) && (ra.rig == null || ra.rig.signature() == rb.rig.signature()),
+                                "every other theme builds as version 4 did");
+                    }
+                }
+            }
+            live(h, Theme.CLOCKWORK_FOUNDRY, RigRoom.Kind.GAUNTLET, rig -> rig.course.ledges() > 0 && rig.course.presses() > 0, (level, g, f, r, p) -> {
+                RigGauntlet.Course c = r.rig.course;
+                BlockPos o = GateService.world(g, f, 0, r.dy, 0);
+                Consumer<Integer> at = k -> {
+                    double[] q = c.rowCentre(k);
+                    p.teleportTo(level, o.getX() + q[0], o.getY() + 0.05, o.getZ() + q[1], Set.of(), 0, 0, true);
+                    RigDirector.tickNow(level.getServer());
+                };
+                at.accept(0);
+                at.accept(c.first());
+                h.assertTrue(RigDirector.racing(g, f, r, p), "off the landing the clock starts");
+                RigState.Room st = RigDirector.state(g, f, r);
+                h.assertTrue(st.started.containsKey(0), "and the presses with it");
+                // a ledge: stood on, it cracks; LEDGE_FALL later it falls
+                RigRoom.Cell lc = r.rig.group(0).cells().getFirst();
+                at.accept(c.rowAt(lc.x(), lc.z()));
+                int ledgeTrack = 1;
+                h.assertTrue(st.started.containsKey(ledgeTrack), "a ledge cracks when you land on it");
+                st.started.put(ledgeTrack, GateService.now(level.getServer()) - RigGauntlet.LEDGE_FALL - 1);
+                RigDirector.tickNow(level.getServer());
+                h.assertTrue(level.getBlockState(GateService.world(g, f, lc.x(), r.dy + lc.dy(), lc.z())).isAir(), "and falls");
+                // a press: stood under as it comes down, it lands and throws you back to the start (a fresh run: no ring yet)
+                at.accept(0);
+                at.accept(c.first());
+                RigRoom.Group press = r.rig.group(c.ledges());
+                RigRoom.Cell pc = press.cells().getFirst();
+                p.teleportTo(level, o.getX() + pc.x() + 0.5, o.getY() + 0.05, o.getZ() + pc.z() + 0.5, Set.of(), 0, 0, true);
+                st.started.put(0, GateService.now(level.getServer()) - c.pressAt(0) - 1);
+                RigDirector.tickNow(level.getServer());
+                h.assertTrue(st.applied.contains(press.id()), "the press comes down on its beat");
+                p.teleportTo(level, o.getX() + pc.x() + 0.5, o.getY() + 0.05, o.getZ() + pc.z() + 0.5, Set.of(), 0, 0, true);
+                RigDirector.settleAll(level);
+                h.assertTrue(level.getBlockState(GateService.world(g, f, pc.x(), r.dy + pc.dy(), pc.z())).is(GatesRegistry.PRESS.get()), "it lands");
+                double[] start = c.rowCentre(0);
+                h.assertTrue(Math.abs(p.getX() - (o.getX() + start[0])) < 1 && Math.abs(p.getZ() - (o.getZ() + start[1])) < 1,
+                        "and throws whoever was under it back to the start");
+                // the pit: a few ticks in it and it throws you back too
+                at.accept(0);
+                at.accept(c.first());
+                double[] mid = c.rowCentre(c.first() + 1);
+                p.teleportTo(level, o.getX() + mid[0], o.getY() - 3, o.getZ() + mid[1], Set.of(), 0, 0, true);
+                for (int i = 0; i < 4; i++) RigDirector.tickNow(level.getServer());
+                h.assertTrue(p.getY() > o.getY() - 1, "the pit throws you back out");
+                // the far landing stops the clock
+                at.accept(0);
+                at.accept(c.first());
+                h.assertTrue(RigDirector.racing(g, f, r, p), "a new run starts off the landing");
+                at.accept(c.last());
+                h.assertFalse(RigDirector.racing(g, f, r, p), "the far landing stops the clock");
+                h.assertTrue(dev.awaken.progression.Progression.profile(p).counter("awaken:gauntlet_runs") == 1, "a run counted");
+            });
+            h.succeed();
+        });
+    }
+
     // ---- helpers ----------------------------------------------------------------------------------------------------
 
     /**
@@ -239,11 +333,16 @@ final class RigTests {
 
     /** A gate of the theme whose first floor has a rig room of the kind, stood up in the test level with a player. */
     private static void live(GameTestHelper h, Theme theme, RigRoom.Kind kind, LiveCheck check) {
+        live(h, theme, kind, rig -> true, check);
+    }
+
+    /** As above, the rig room also passing {@code want}. */
+    private static void live(GameTestHelper h, Theme theme, RigRoom.Kind kind, java.util.function.Predicate<RigRoom> want, LiveCheck check) {
         GatePlan plan = null;
         for (int i = 0; i < 400 && plan == null; i++) {
             GatePlan p = GateLiveTests.plan(0x51600L + i * 31L, theme, Layout.LABYRINTH, Twist.NONE, 0);
             FloorLayout f = GateLayout.of(p).floor(0, 1);
-            for (Room r : f.rooms) if (r.rig != null && r.rig.kind == kind) plan = p;
+            for (Room r : f.rooms) if (r.rig != null && r.rig.kind == kind && want.test(r.rig)) plan = p;
         }
         h.assertTrue(plan != null, "a " + theme + " gate with a " + kind + " on its first floor");
         ServerLevel level = h.getLevel();
@@ -254,7 +353,7 @@ final class RigTests {
             g = GateLiveTests.standUp(h, plan, 0, 1);
             FloorLayout f = GateLayout.of(plan).floor(0, 1);
             Room r = null;
-            for (Room o : f.rooms) if (o.rig != null && o.rig.kind == kind) r = o;
+            for (Room o : f.rooms) if (o.rig != null && o.rig.kind == kind && want.test(o.rig)) r = o;
             p = GateLiveTests.player(h);
             check.run(level, g, f, r, p);
         } finally {
