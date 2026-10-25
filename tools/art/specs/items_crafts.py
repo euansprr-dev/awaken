@@ -47,6 +47,7 @@ CRAFT = {
     "dusk":    ["#120a22", "#25113f", "#3c1a62", "#552686", "#7340ac", "#9a66d2"],
     "magenta": ["#4a0a34", "#860f56", "#c01a78", "#ee3c9c", "#ff86c6"],
     "spirit":  ["#0a2c3c", "#145468", "#228c98", "#58d0c8", "#a6f0ea", "#eafffc"],
+    "spiritb": ["#10304e", "#1e5680", "#3a86b4", "#78bce0", "#c2e6fa"],  # the blades behind, cooler and dimmer
     "broth":   ["#566014", "#808a1e", "#aab42c", "#cfca44", "#eadf68", "#fff6b0"],
     "greens":  ["#143a1c", "#2c6a26", "#4a9a38", "#7cc24c", "#aee070", "#d8f4a0"],
     "tea":     ["#2a5478", "#4a82a8", "#7cb0cc", "#a8d2e6", "#d2eaf6", "#f4fcff"],
@@ -359,13 +360,15 @@ def spiritgrass() -> Canvas:
             key = (round(x), round(y))
             if key not in cells or cells[key][0] < t:
                 cells[key] = (t, shade)
+    sb = [col("spiritb", i) for i in range(5)]
     for (x, y), (t, shade) in cells.items():
-        c.set(x, y, sp[5 if t > 0.82 else 4 if t > 0.5 else 3 if t > 0.2 else 2])
+        ramp = sp if shade else sb
+        c.set(x, y, ramp[min(len(ramp) - 1, 5 if t > 0.82 else 4 if t > 0.5 else 3 if t > 0.2 else 2)])
     for (x, y), (t, shade) in list(cells.items()):                  # the shaded side of the tall blades
         if shade and t < 0.7 and c.get(x + 1, y)[3] == 0:
             c.set(x + 1, y, sp[2] if t > 0.3 else sp[1])
     for (x, y, i) in ((5, 14, 1), (6, 14, 2), (7, 14, 3), (8, 14, 4), (9, 14, 3), (10, 14, 2), (11, 14, 1), (7, 13, 3), (8, 13, 4)):
-        c.set(x, y, sp[i])                                          # the roots: a clutch of pale threads
+        c.set(x, y, sp[i] if i < 4 else col("cream", 3))             # the roots: a clutch of pale threads
     out = _outline(c, "#06222e")
     for (x, y, i) in ((6, 0, 3), (11, 4, 4), (2, 2, 4), (14, 11, 2), (1, 9, 2), (12, 8, 3)):       # motes loose in the dark
         if out.get(x, y)[3] == 0 and all(out.get(x + dx, y + dy)[3] == 0 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
@@ -581,45 +584,38 @@ def foragers_salad() -> Canvas:
 
 
 def miners_pasty() -> Canvas:
-    """A half-moon pasty lying tilted: a flat folded edge along the bottom right and a rope of crimping along the curve, the
-    crust golden with an egg-wash shine on the upper left, two steam slits and a few baked-dark patches."""
+    """A half-moon pasty standing on its flat side: a raised rope of crimping along the curve (lit and shadowed twists, a
+    dark seam under it so it stands proud), the crust golden with an egg-wash shine on the upper left, two steam slits,
+    and a darker baked base."""
     c = Canvas()
     pa = [col("pastry", i) for i in range(6)]
-    cx, cy = 7.6, 9.6
-    ang = math.radians(-22)
-    ca, sa = math.cos(ang), math.sin(ang)
-    rx, ry = 7.2, 6.6
+    cx, base, rx, ry = 8.0, 13.0, 7.4, 9.0
     for y in range(16):
         for x in range(16):
-            dx, dy = x + 0.5 - cx, y + 0.5 - cy
-            u, v = dx * ca + dy * sa, -(-dx * sa + dy * ca)       # v up (towards the curve); the flat edge is at v = -1.6
-            if v < -1.6:
+            u, v = (x + 0.5 - cx) / rx, (base - (y + 0.5)) / ry       # v up from the flat base
+            if v < -0.06:
                 continue
-            e = math.hypot(u / rx, (v + 1.6) / (ry + 1.6))
+            e = math.hypot(u, v)
             if e > 1.0:
                 continue
-            lit = -(x - 5.0) * 0.07 - (y - 6.0) * 0.1 - e * 0.15
-            i = 4 if lit > 0.12 else 3 if lit > -0.36 else 2
-            # the crimp: a band along the curve whose pixels alternate light and dark in steps round the arc
-            if e > 0.74:
-                a = math.atan2(v + 1.6, u)
-                step = int(a / math.radians(15))
-                i = {0: 5, 1: 3}.get(step % 2) if lit > -0.2 else {0: 4, 1: 1}.get(step % 2)
-                if e > 0.93:
-                    i = max(1, i - 1)
-            elif v < -0.55:
-                i = 2 if (x + y) % 2 else 1                           # the folded flat edge, in shadow
+            lit = -u * 0.5 + v * 0.6 - e * 0.25
+            if e > 0.8:                                               # the rope: twists by angle, leaning one way
+                a = math.atan2(max(v, 0.0), u)
+                twist = int((a + 0.12) / math.radians(19)) % 2
+                i = (5 if lit > 0.0 else 4) if twist == 0 else (3 if lit > -0.3 else 2)
+            elif e > 0.68:
+                i = 1                                                 # the seam under the rope
+            elif v < 0.12:
+                i = 1 if (x % 2) else 2                               # the baked base
+            else:
+                i = 4 if lit > 0.12 else 3 if lit > -0.25 else 2
             c.set(x, y, pa[i])
-    # baked patches, the egg-wash shine and two slits
-    for (x, y) in ((6, 9), (9, 8), (8, 11), (10, 10), (5, 11)):
-        if c.get(x, y)[3] and c.get(x, y)[:3] != pa[1][:3]:
-            c.set(x, y, pa[2])
-    for (x, y) in ((5, 7), (6, 6), (6, 7), (4, 8)):
+    for (x, y) in ((5, 8), (6, 7), (5, 9), (7, 7)):                   # the egg-wash shine
+        c.set(x, y, col("honey", 5) if (x, y) == (6, 7) else col("honey", 4))
+    for (x, y) in ((7, 10), (8, 9), (10, 9), (11, 8)):              # two parallel steam cuts, a lit lip under each
+        c.set(x, y, col("char", 2))
+    for (x, y) in ((8, 10), (11, 9)):
         c.set(x, y, pa[5])
-    for (x, y) in ((8, 8), (9, 9), (8, 9)):
-        c.set(x, y, pa[0] if (x, y) != (8, 9) else pa[1])
-    for (x, y) in ((10, 6), (11, 7)):
-        c.set(x, y, pa[1])
     return _outline(c)
 
 

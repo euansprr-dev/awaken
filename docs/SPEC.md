@@ -2868,6 +2868,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   systems; the replacements above are this module's own.
 - UI: CRAFTS in the K menu's Status tab (level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
   <level>`. Test `living_crafts`.
+- Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
+  by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
+  colour count, distinct colours and herb silhouettes.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
