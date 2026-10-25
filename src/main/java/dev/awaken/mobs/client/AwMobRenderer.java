@@ -87,6 +87,7 @@ class AwMobRenderer<S extends LivingEntityRenderState, M extends EntityModel<? s
         Life lf = Life.of(l.life, life, mob.getId());
         l.life = lf;
         lf.hurt = l.hurt;
+        lf.entity = mob.getId();
         lf.windup = l.telegraph > 0 ? 1.0F - l.telegraph : -1; // the telegraph counts down its last second to the strike
         lf.aggressive = l.aggressive;
         lf.boss = boss(def);

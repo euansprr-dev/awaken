@@ -12,13 +12,14 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Arms' public face (SPEC §12, §25): which fighting style a weapon fights with, whether it guards, a creature's
- * stance, and the sound of a told blow. Any melee weapon gets the three verbs: a sword (vanilla's, the Hunter blades, other mods' "_sword" items)
- * fights as a plain Longsword until its own style arrives.
+ * stance, and the sound of a told blow. Any melee weapon gets the three verbs: a sword (vanilla's, the Hunter blades,
+ * other mods' "_sword" items) fights as a plain Longsword, an axe as the Axe, the mace as the Maul; our forged weapons
+ * fight with their own row's style.
  */
 public final class Arms {
     private Arms() {}
 
-    public static final String LONGSWORD = "longsword";
+    public static final String LONGSWORD = "longsword", AXE = "axe", MAUL = "maul", SPEAR = "spear", GREATBLADE = "greatblade";
 
     /** The style an item fights with, or null for anything that isn't a melee weapon (tools, bare hands stay vanilla). */
     public static Archetypes.@Nullable Loaded styleOf(ItemStack stack) {
@@ -40,6 +41,11 @@ public final class Arms {
         if (own != null) return own.style();
         String path = id.getPath();
         if (path.endsWith("_sword") || (id.getNamespace().equals("awaken") && path.endsWith("_blade"))) return LONGSWORD;
+        // axes fight as the Axe (a log is still cut outside a fight: the press rule), the mace as the Maul (its smash
+        // from a fall still lands, through vanilla's own attack). Spears and the trident keep their own right mouse
+        // (the charge, the throw) until their style can share it.
+        if (path.endsWith("_axe")) return AXE;
+        if (path.equals("mace")) return MAUL;
         return null;
     }
 

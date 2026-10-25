@@ -39,6 +39,75 @@ public final class TellTests {
             h.succeed();
         });
 
+        // a bolt lands as the class of the ability that fired it, whenever it lands (Arms can answer it: SPEC §25 sim)
+        AwakenTests.register("mobs_bolt_class", 20, h -> {
+            ServerLevel level = h.getLevel();
+            MobDef def = Bestiary.get("toll_ghoul");
+            AwakenMob ghoul = Mobs.spawn(level, def, h.absoluteVec(new Vec3(1.5, 1, 1.5)), 5,
+                    new MobRole(MobRole.Role.NORMAL, 5, def.theme.id, Optional.empty(), ""), Set.of());
+            h.assertTrue(ghoul != null, "a ghoul spawned");
+            AwBolt[] fired = new AwBolt[1];
+            Strikes.deliver(ghoul, Strikes.Kind.HEAVY, () -> {
+                fired[0] = AwBolt.shoot(level, ghoul, ghoul.position().add(0, 1.5, 0), new Vec3(1, 0, 0), dev.awaken.mobs.def.BoltKind.SPIRIT, 3F, null, 0.2);
+                return true;
+            });
+            h.assertTrue(fired[0].strike() == Strikes.Kind.HEAVY, "the bolt carries the class it was fired under");
+            var src = Abilities.source(level, ghoul, fired[0], dev.awaken.mobs.def.BoltKind.SPIRIT);
+            h.assertTrue(Strikes.of(src) == Strikes.Kind.HEAVY, "and lands as it, a Force bolt included (was " + Strikes.of(src) + ")");
+            fired[0].discard();
+            ghoul.discard();
+            h.succeed();
+        });
+
+        // an answered blow (refused: deflected, evaded, blocked whole) brings none of its burn or effects
+        AwakenTests.register("mobs_answered_no_burn", 20, h -> {
+            ServerLevel level = h.getLevel();
+            MobDef def = Bestiary.get("toll_ghoul");
+            AwakenMob ghoul = Mobs.spawn(level, def, h.absoluteVec(new Vec3(1.5, 1, 1.5)), 5,
+                    new MobRole(MobRole.Role.NORMAL, 5, def.theme.id, Optional.empty(), ""), Set.of());
+            Pig answered = EntityTypes.PIG.create(level, EntitySpawnReason.MOB_SUMMONED), struck = EntityTypes.PIG.create(level, EntitySpawnReason.MOB_SUMMONED);
+            answered.setPos(h.absoluteVec(new Vec3(3.5, 1, 1.5)));
+            struck.setPos(h.absoluteVec(new Vec3(3.5, 1, 3.5)));
+            answered.setNoAi(true);
+            struck.setNoAi(true);
+            answered.setPermanentlyInvulnerable(true); // its hurt is refused, as a deflect refuses one
+            level.addFreshEntity(answered);
+            level.addFreshEntity(struck);
+            var poison = new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.POISON, 60, 0);
+            Abilities.hurtBy(level, ghoul, null, answered, 3F, dev.awaken.mobs.def.BoltKind.FIRE, poison);
+            Abilities.hurtBy(level, ghoul, null, struck, 3F, dev.awaken.mobs.def.BoltKind.FIRE, poison);
+            h.assertTrue(!answered.isOnFire() && !answered.hasEffect(net.minecraft.world.effect.MobEffects.POISON), "the answered blow neither burns nor poisons");
+            h.assertTrue(struck.isOnFire() && struck.hasEffect(net.minecraft.world.effect.MobEffects.POISON), "the landed one does both");
+            answered.discard();
+            struck.discard();
+            ghoul.discard();
+            h.succeed();
+        });
+
+        // a broken stance starts no ability until it stands again (the Break is the opening it earned)
+        AwakenTests.register("mobs_broken_idle", 80, h -> {
+            ServerLevel level = h.getLevel();
+            MobDef def = Bestiary.get("crypt_keeper");
+            AwakenMob keeper = Mobs.spawn(level, def, h.absoluteVec(new Vec3(1.5, 1, 1.5)), 5,
+                    new MobRole(MobRole.Role.ELITE, 5, def.theme.id, Optional.empty(), ""), Set.of());
+            h.assertTrue(keeper != null, "a keeper spawned");
+            AbilityRunner runner = new AbilityRunner(keeper); // its own is made on its first server tick
+            keeper.setNoAi(true);
+            Pig pig = EntityTypes.PIG.create(level, EntitySpawnReason.MOB_SUMMONED);
+            pig.setPos(h.absoluteVec(new Vec3(3.5, 1, 1.5)));
+            pig.setNoAi(true);
+            level.addFreshEntity(pig);
+            keeper.setTarget(pig);
+            keeper.stagger(60);
+            for (int i = 0; i < 56; i++) {
+                runner.tick(level);
+                h.assertTrue(keeper.telegraphTicks() == 0, "nothing starts while broken (tick " + i + ")");
+            }
+            pig.discard();
+            keeper.discard();
+            h.succeed();
+        });
+
         // the blow lands only after its tell, and a target that stepped out of reach is missed
         AwakenTests.register("mobs_told_melee", 80, h -> {
             ServerLevel level = h.getLevel();

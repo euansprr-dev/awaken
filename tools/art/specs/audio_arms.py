@@ -212,6 +212,21 @@ def hit_flesh(seed, heavy=False):
     return _blow(layers, 0.42 if heavy else 0.32, drive=1.8 if heavy else 1.5)
 
 
+def hit_blunt(seed):
+    """A maul's head into anything: no edge, all weight. A deep punch through the body, a dull crunch of what gives
+    under it, the ground's answer in the sub; the blunt family the Maul plays for every body but a spirit."""
+    r = K.rng(seed)
+    punch = rec(pick(["impactPunch_heavy_001", "impactPunch_heavy_002", "impactPunch_heavy_003", "impactPunch_heavy_004"], r))
+    soft = rec(pick(["impactSoft_heavy_000", "impactSoft_heavy_002", "impactSoft_heavy_004"], r))
+    layers = [
+        (trim(shift(punch, r.uniform(0.72, 0.82)), 0.34), 0.0, 1.0),
+        (trim(K.lowpass(shift(soft, r.uniform(0.7, 0.8)), 700, 2), 0.3), 0.002, 0.9),
+        (R.crack(seed + 3, r.uniform(0.35, 0.5), 0.25), 0.004, 0.35),
+        (sub(0.32, 95, 38, 0.14, drive=1.9), 0.0, 0.85),
+    ]
+    return _blow(layers, 0.5, drive=1.9)
+
+
 def hit_flesh_heavy(seed):
     return hit_flesh(seed, True)
 
@@ -511,6 +526,20 @@ def hurt(seed):
     return _blow(layers, 0.4, drive=1.6)
 
 
+def heartbeat(seed):
+    """Low health: one slow beat, felt more than heard. The lub (a soft deep thump with a body band small speakers
+    carry), the dub a third of a second later, higher and shorter; nothing bright, nothing that sounds like a blow."""
+    r = K.rng(seed)
+    lag = 0.30 + 0.03 * r.random()
+    b = R.Bus(0.75)
+    for t, f0, f1, g, band in ((0.0, 62, 38, 1.0, 1.0), (lag, 78, 48, 0.7, 0.75)):
+        b.add(sub(0.16, f0, f1, 0.07, drive=1.3), t, g)
+        n = K.ns(0.09)
+        body = R.unit(K.lowpass(K.noise(n, "pink", seed + int(t * 100)), 210, 2)) * K.perc(n, 0.004, 0.05)
+        b.add(body, t + 0.002, 0.35 * band)
+    return R.fade_out(b.render(), 0.08)
+
+
 def _has(name):
     try:
         rec(name)
@@ -550,6 +579,8 @@ EVENTS = OrderedDict([
     ("tell_perilous", (tell_perilous, 2, -14.0, 32, "Creature readies a perilous blow", False, 12.0, 1.0)),
     ("tell_grab", (tell_grab, 2, -15.0, 24, "Creature reaches to grab", False, 12.0, 0.85)),
     ("hurt", (hurt, 4, -14.0, 12, "You're hit", True, 12.0, 0.9)),
+    ("heartbeat", (heartbeat, 2, -16.0, 8, "Heartbeat pounds", False, 12.0, 0.55)),
+    ("hit_blunt", (hit_blunt, 4, -12.0, 22, "Heavy blow crashes home", True, 12.0, 1.0)),
 ])
 
 
@@ -675,8 +706,13 @@ def write_json():
     with open(os.path.join(MERGE, "sounds.json"), "w") as f:
         json.dump(sounds, f, indent=2)
         f.write("\n")
-    with open(os.path.join(MERGE, "lang/en_us.json"), "w") as f:
-        json.dump(lang, f, indent=2, ensure_ascii=False)
+    # merge: the file is shared with the weapons' names (arms_weapons.py); only the kit's own subtitles are replaced
+    lpath = os.path.join(MERGE, "lang/en_us.json")
+    cur = json.load(open(lpath)) if os.path.exists(lpath) else {}
+    cur = OrderedDict((k, v) for k, v in cur.items() if not k.startswith("subtitles.awaken.arms."))
+    cur.update(lang)
+    with open(lpath, "w") as f:
+        json.dump(cur, f, indent=2, ensure_ascii=False)
         f.write("\n")
     print(f"events: {len(sounds)} in merge/arms")
 

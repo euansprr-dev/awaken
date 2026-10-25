@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "_about": "Arms' moments (dev.awaken.arms; SPEC §25 \"Feel\"), merged with looks.json by Lens. Played through LensClient.override for a beat only.",
+  "looks": {
+    "awaken:arms_breath": {
+      "_name": "A perfect dodge: the world drains of colour and holds still for a breath, the frame cool and closed in, light lifting off the blades",
+      "exposure": 0.94,
+      "contrast": 1.12,
+      "saturation": 0.42,
+      "warmth": -0.1,
+      "shadowTint": [0.36, 0.44, 0.56],
+      "highlightTint": [0.86, 0.94, 1.0],
+      "splitTone": 0.2,
+      "vignette": 0.42,
+      "bloom": 1.3,
+      "bloomThreshold": 0.55,
+      "haze": 0.05,
+      "hazeStart": 0.5,
+      "hazeDesaturate": 0.3
+    }
+  }
+}

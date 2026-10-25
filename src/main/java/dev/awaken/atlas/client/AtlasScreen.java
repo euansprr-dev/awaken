@@ -57,9 +57,14 @@ public final class AtlasScreen extends Screen {
     static final int LEGEND_W = 146, ROW = 12, LEGEND_ROWS = 6;
     /** L shows or hides the legend; kept for the session. */
     private static boolean showLegend = true;
+    /** Profiling (dev: {@code /atlas prof <bits>}): parts of the table switched off to measure what each costs. */
+    static int prof;
+    static final int PROF_NO_CARD = 1, PROF_PLAIN_TEXT = 2, PROF_NO_OVERLAY = 4, PROF_NO_FOCUS = 8, PROF_NO_CLOUDS = 16,
+            PROF_NO_LAND = 32, PROF_NO_PIP = 64;
     // the zone chips drawn this frame and their centres, so the hover doesn't repeat one that's right there
     private final int[] placedZones = new int[64], placedAt = new int[128];
     private int placedCount;
+    private long lastInput;
     private static final int BOXES = 96;
     private final int[] regionBoxes = new int[BOXES * 4];
 
@@ -167,7 +172,8 @@ public final class AtlasScreen extends Screen {
             if (Math.abs(flyX - cx) + Math.abs(flyZ - cz) < 0.5) flyX = Double.NaN;
         }
         float age = age();
-        UiHooks.setFocus(this, Math.min(1f, age / 0.25f));
+        if ((prof & PROF_NO_FOCUS) == 0) UiHooks.setFocus(this, Math.min(1f, age / 0.25f));
+        else UiHooks.clearFocus(this);
         // zooming across a level: keep drawing the level we have until the new one is built round the view (it builds
         // on the worker meanwhile), or the land blinks out for a moment
         int want = AtlasMesh.lodFor(zoom);
@@ -191,18 +197,23 @@ public final class AtlasScreen extends Screen {
         int x0 = px0(), y0 = py0(), x1 = px1(), y1 = py1();
         float reveal = Math.min(1f, age / 0.35f);
         // the K panel's projected glass: frame, corner brackets, a slow interference band; scans in as it opens
-        HudLook.card(g, x0, y0, x1 - x0, y1 - y0, Glass.EDGE, 0.92f, reveal, 0f, HudLook.FRAME | HudLook.DRIFT);
+        if ((prof & PROF_NO_CARD) == 0) HudLook.card(g, x0, y0, x1 - x0, y1 - y0, Glass.EDGE, 0.92f, reveal, 0f, HudLook.FRAME | HudLook.DRIFT);
+        else g.fill(x0, y0, x1, y1, 0xE00B1626);
         float time = frozen ? 0f : (now - opened) / 1e9f;
         boolean moving = !frozen || spin != 0f || age < 1.5f || atlas.trailProgress() < 1f || atlas.trailGlow() < 1f && atlas.trailGlow() > 0.35f;
-        g.submitPictureInPictureRenderState(new AtlasRenderState(x0, y0, x1, y1, yaw, tilt, zoom, cx, cy, cz, time, night,
-                moving, lod, age, 0, g.peekScissorStack()));
-        legendLayout(mc, atlas, x0, y0, lod);
-        if (age > 0.45f) markers(g, mc, atlas, x0, y0, x1, y1, lod);
-        if (age > 0.45f) {
-            legend(g, mc, atlas, mouseX, mouseY);
-            hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1);
+        if ((prof & PROF_NO_PIP) == 0)
+            g.submitPictureInPictureRenderState(new AtlasRenderState(x0, y0, x1, y1, yaw, tilt, zoom, cx, cy, cz, time, night,
+                    moving, lod, age, 0, g.peekScissorStack()));
+        if ((prof & PROF_NO_OVERLAY) == 0) {
+            legendLayout(mc, atlas, x0, y0, lod);
+            if (age > 0.45f) markers(g, mc, atlas, x0, y0, x1, y1, lod);
+            if (age > 0.45f) {
+                legend(g, mc, atlas, mouseX, mouseY);
+                hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1);
+            }
         }
         chrome(g, mc, x0, y0, x1, y1, mouseX, mouseY);
+        AtlasState.stats.extract(System.nanoTime() - now);
         super.extractRenderState(g, mouseX, mouseY, pt);
     }
 
@@ -212,14 +223,14 @@ public final class AtlasScreen extends Screen {
         int room = x1 - x0 - font.width(count) - 20;
         String title = "ATLAS" + (where == null ? "" : "  ·  " + where.toUpperCase(Locale.ROOT));
         if (font.width(title) > room) title = font.plainSubstrByWidth(title, room - font.width("…")) + "…";
-        HudLook.text(g, font, title, x0 + 2, MARGIN, INK, false);
-        HudLook.text(g, font, count, x1 - font.width(count) - 2, MARGIN, Glass.LABEL | 0xFF000000, false);
+        text(g, title, x0 + 2, MARGIN, INK, false);
+        text(g, count, x1 - font.width(count) - 2, MARGIN, Glass.LABEL | 0xFF000000, false);
         // compass: north turns with the table
         int ccx = x1 - 18, ccy = y0 + 18;
         double r = Math.toRadians(yaw);
         int nx = ccx + (int) Math.round(-Math.sin(r) * 9), ny = ccy - (int) Math.round(Math.cos(r) * 9 * Math.sin(Math.toRadians(tilt)));
         g.fill(ccx - 1, ccy - 1, ccx + 1, ccy + 1, 0x667FC3FF);
-        HudLook.text(g, font, "N", nx - 2, ny - 4, 0xFF7FC3FF, false);
+        text(g, "N", nx - 2, ny - 4, 0xFF7FC3FF, false);
         // hints and the two buttons
         buttonsY = height - MARGIN - 8;
         String share = "Share with party", clear = "Clear Atlas cache";
@@ -231,14 +242,14 @@ public final class AtlasScreen extends Screen {
                 "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you",
                 "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "drag · right-drag · scroll · C"}) {
             if (x0 + 2 + font.width(hint) < shareX0 - 12) {
-                HudLook.text(g, font, hint, x0 + 2, buttonsY, Glass.LABEL | 0xFF000000, false);
+                text(g, hint, x0 + 2, buttonsY, Glass.LABEL | 0xFF000000, false);
                 break;
             }
         }
         boolean overShare = mouseY >= buttonsY - 2 && mouseY < buttonsY + 10 && mouseX >= shareX0 && mouseX < shareX1;
         boolean overClear = mouseY >= buttonsY - 2 && mouseY < buttonsY + 10 && mouseX >= clearX0 && mouseX < clearX1;
-        HudLook.text(g, font, share, shareX0, buttonsY, overShare ? 0xFFFFFFFF : 0xFF7FC3FF, false);
-        HudLook.text(g, font, clear, clearX0, buttonsY, overClear ? 0xFFFFFFFF : 0xFF93A7C2, false);
+        text(g, share, shareX0, buttonsY, overShare ? 0xFFFFFFFF : 0xFF7FC3FF, false);
+        text(g, clear, clearX0, buttonsY, overClear ? 0xFFFFFFFF : 0xFF93A7C2, false);
     }
 
     /** The district or "Carillon" under the table's centre, if known. */
@@ -376,13 +387,24 @@ public final class AtlasScreen extends Screen {
         return true;
     }
 
+    /** Text as light (the Holo's look), or plain with the profiling switch. */
+    private void text(GuiGraphicsExtractor g, String str, int x, int y, int argb, boolean shadow) {
+        if ((prof & PROF_PLAIN_TEXT) != 0) g.text(font, str, x, y, argb, shadow);
+        else HudLook.text(g, font, str, x, y, argb, shadow);
+    }
+
+    /** Text on a dark plate (chips, the legend): plain, it reads as well there and costs a fraction of the glow. */
+    private void plain(GuiGraphicsExtractor g, String str, int x, int y, int argb) {
+        g.text(font, str, x, y, argb, false);
+    }
+
     /** A name chip on the table: dark glass, a bar in the zone's colour, the name, and a quieter line under it. */
     private void chip(GuiGraphicsExtractor g, String name, String sub, int colour, int x, int y, int w, int h, float alpha) {
         g.fill(x, y, x + w, y + h, Glass.a(0x0B1626, 0.86f * alpha));
         g.fill(x, y, x + 3, y + h, colour);
         g.fill(x + 3, y, x + w, y + 1, Glass.a(colour & 0xFFFFFF, 0.55f * alpha));
-        HudLook.text(g, font, name, x + 8, y + 3, INK, false);
-        HudLook.text(g, font, sub, x + 8, y + 12, Glass.a(colour & 0xFFFFFF, 0.95f * alpha), false);
+        plain(g, name, x + 8, y + 3, INK);
+        plain(g, sub, x + 8, y + 12, Glass.a(colour & 0xFFFFFF, 0.95f * alpha));
     }
 
     /** The zone you're in, then the nearest others: the legend's rows. */
@@ -413,7 +435,7 @@ public final class AtlasScreen extends Screen {
         int x = legendX0, y = legendY0, w = LEGEND_W;
         g.fill(x, y, x + w, legendY1, 0xC80B1626);
         g.fill(x, y, x + w, y + 1, 0x667FC3FF);
-        HudLook.text(g, font, "KNOWN LANDS", x + 6, y + 4, Glass.LABEL | 0xFF000000, false);
+        plain(g, "KNOWN LANDS", x + 6, y + 4, Glass.LABEL | 0xFF000000);
         int here = mc.player == null ? 0 : atlas.zoneView().zone(mc.player.getBlockX(), mc.player.getBlockZ());
         for (int i = 0; i < legendRows.size(); i++) {
             AtlasState.ZoneLabel z = legendRows.get(i);
@@ -424,23 +446,24 @@ public final class AtlasScreen extends Screen {
             String sub = z.zone() == here ? "here" : z.sub();
             int subW = font.width(sub);
             String name = font.plainSubstrByWidth(z.name(), w - 30 - subW);
-            HudLook.text(g, font, name, x + 17, ry, over ? 0xFFFFFFFF : INK, false);
-            HudLook.text(g, font, sub, x + w - 6 - subW, ry, z.zone() == here ? 0xFFE9F1FF : Glass.a(z.colour() & 0xFFFFFF, 0.9f), false);
+            plain(g, name, x + 17, ry, over ? 0xFFFFFFFF : INK);
+            plain(g, sub, x + w - 6 - subW, ry, z.zone() == here ? 0xFFE9F1FF : Glass.a(z.colour() & 0xFFFFFF, 0.9f));
         }
         // the danger key: what a region's colour means
         int ky = legendRowY0 + legendRows.size() * ROW + 6;
-        HudLook.text(g, font, "DANGER", x + 6, ky + 1, Glass.LABEL | 0xFF000000, false);
+        plain(g, "DANGER", x + 6, ky + 1, Glass.LABEL | 0xFF000000);
         int kx = x + 6 + font.width("DANGER") + 6;
         String[] lv = {"1", "8", "20", "45", "80"};
         for (int b = 0; b < ZoneMap.BAND_COLOUR.length; b++) {
             g.fill(kx, ky + 2, kx + 6, ky + 8, ZoneMap.BAND_COLOUR[b]);
-            HudLook.text(g, font, lv[b], kx + 8, ky + 1, Glass.LABEL | 0xFF000000, false);
+            plain(g, lv[b], kx + 8, ky + 1, Glass.LABEL | 0xFF000000);
             kx += 8 + font.width(lv[b]) + 6;
         }
     }
 
     /** Under the cursor: which district or region that land is, and its levels. */
     private void hover(GuiGraphicsExtractor g, Minecraft mc, AtlasState atlas, int mouseX, int mouseY, int x0, int y0, int x1, int y1) {
+        if (spin != 0f || System.nanoTime() - lastInput < 150_000_000L) return; // not while the table is moving under the cursor
         if (mouseX >= legendX0 && mouseX < legendX1 && mouseY >= legendY0 && mouseY < legendY1) return;
         double[] at = new double[3];
         if (!ground(mouseX, mouseY, at)) return;
@@ -470,7 +493,7 @@ public final class AtlasScreen extends Screen {
         g.pose().pushMatrix();
         g.pose().translate(sx, sy);
         g.pose().scale(2f, 2f);
-        HudLook.text(g, font, "?", -font.width("?") / 2, -8, amber, false);
+        text(g, "?", -font.width("?") / 2, -8, amber, false);
         g.pose().popMatrix();
         if (zoom > 0.3f) label(g, name.toUpperCase(Locale.ROOT), sx, sy + 6, Glass.a(Glass.AMBER, 0.9f));
     }
@@ -485,7 +508,7 @@ public final class AtlasScreen extends Screen {
     private void label(GuiGraphicsExtractor g, String text, int cx, int y, int color) {
         int tw = font.width(text);
         g.fill(cx - tw / 2 - 3, y - 2, cx + tw / 2 + 3, y + 9, 0x9A0B1626);
-        HudLook.text(g, font, text, cx - tw / 2, y, color, false);
+        text(g, text, cx - tw / 2, y, color, false);
     }
 
     private static void diamond(GuiGraphicsExtractor g, int x, int y, int r, int color, boolean filled) {
@@ -560,6 +583,7 @@ public final class AtlasScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
+        lastInput = System.nanoTime();
         if (e.button() == InputConstants.MOUSE_BUTTON_RIGHT) {
             // pan in the ground plane, along the view's own right and forward
             double r = Math.toRadians(yaw), k = 1.0 / zoom, fwd = dy / Math.max(0.3, Math.sin(Math.toRadians(tilt)));
@@ -575,6 +599,7 @@ public final class AtlasScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+        lastInput = System.nanoTime();
         zoom = Math.clamp(zoom * (float) Math.pow(1.15, scrollY), 0.04f, 16f);
         return true;
     }

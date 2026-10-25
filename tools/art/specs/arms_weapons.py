@@ -1,23 +1,27 @@
-"""Arms' weapons (SPEC §24 "Weapons"; docs/combat/PLAN.md §4.5, §4.10): sculpted meshes, painted, drawn by our shader.
+"""Arms' weapons (SPEC §25 "Weapons"; docs/combat/PLAN.md §4.5, §4.10; the look: docs/combat/weapon-style.md): built of
+designed boxes at the player's own texel density, painted, drawn by our shader.
 
     python3 tools/art/build_all.py arms_weapons        every file below
     python3 tools/art/specs/arms_weapons.py build      the same, after the checks
     python3 tools/art/specs/arms_weapons.py check      the checks only (each weapon built, nothing written)
     python3 tools/art/specs/arms_weapons.py preview DIR [id]   turntables and a close-up per weapon (mesh_render.py),
                                                                and the review sheet DIR/weapons.png
+    python3 tools/art/specs/arms_weapons.py sheet OUT.png      the contact sheet beside the owner's reference image
 
-Each weapon is designed by hand here, one function per design, from the toolkit in tools/art/mesh.py: a blade lofted
-through its real cross-sections (edges, a hollow-ground bevel, a fuller sunk into the flat) and tapering to a true
-point; guards swept along curves; grips turned on a lathe and bound in wire; cut gems. Every surface is unfolded and
-painted texel by texel in a material's own language (polished ivory, gold, crimson runes, a woven grip...): light is
-worked out continuously, then set onto the material's hand-picked ramp with an ordered dither, so a smooth form still
-reads as pixel art. Where parts meet, a contact shadow is painted in. The material map beside the albedo tells the
-shader (assets/awaken/shaders/core/arms_weapon.fsh) what is metal, how glossy, what glows and in which order.
+Each weapon is designed by hand here, one function per design, from the box toolkit in tools/art/voxel.py: bold parts
+at whole-texel sizes where 1 texel is 1 item unit (a skin pixel), so a weapon sits in the hand at the player's own
+density. A blade is drawn like pixel art in its plane, each texel a material and a depth, so its section steps (a
+thick spine or ribs, thin edges) and its point and notches are whole texels; guards, grips and pommels are boxes, cut
+stones are boxes turned 45 degrees and set in frames. Every face is painted in big flat areas from its material's
+hand-picked ramp: a lit band on the edges that face the painted light, a dark band on those that face away, a contact
+shadow where it meets another part, and a few deliberate details (a highlight streak, wrap bands, scales, a circuit,
+runes, a stone's rings). No per-texel noise. The material map beside the albedo tells the shader
+(assets/awaken/shaders/core/arms_weapon.fsh) what is metal, how glossy, what glows and in which order.
 
 Per weapon this writes: arms/weapons/<id>.mesh (the game's mesh), textures/item/arms/<id>.png (albedo | material),
 the inventory icon rendered from the mesh (<id>_icon.png), the item definition (the mesh in hand, the icon in the
 inventory, on the ground, in frames), its recipe, lang, #minecraft:swords, and its row in the generated ArmsData.java.
-Deterministic: every random choice is seeded.
+Deterministic: nothing is random.
 """
 import json
 import math
@@ -36,6 +40,7 @@ from PIL import Image  # noqa: E402
 import gear as G  # noqa: E402  (the Hunter sets' names)
 import mesh as MS  # noqa: E402
 import mesh_render as MR  # noqa: E402
+import voxel as VX  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
 RES = os.path.join(ROOT, "src/main/resources")
@@ -43,21 +48,39 @@ MERGE = os.path.join(ROOT, "src/main/merge/arms")
 JAVA = os.path.join(ROOT, "src/main/java/dev/awaken/arms/ArmsData.java")
 HAND = (3.0, 3.0, 8.0)  # the grip's centre in item units: where iron_sword.png's handle is, so vanilla's hands fit
 ANGLE = -45.0           # the blade along the item's diagonal, tip to the upper right
-SCALE = 0.9             # sword units to item units: a longsword a fifth longer than vanilla's, not a greatsword
+SCALE = 1.0             # design units to item units: a texel is an item unit (1/16 block), the player's own density
 
 # ---------------------------------------------------------------------------------------------------------------------
 # The catalog: one line per weapon (damage over the player's 1; uses; vanilla rarity; enchantability; repair tag)
 
-LONGSWORD_SPEED = -2.4  # the Longsword's baseSpeed 1.6 (its timing table rows are cut for it)
-CATALOG = [
-    # id                      name                     tier dmg  dur   rarity      ench repair
-    ("wildhide_longsword", "Wildhide Longsword", "E", 4.5, 220, "COMMON", 15, "hunter_core_e"),
-    ("beastbound_longsword", "Beastbound Longsword", "D", 5.5, 500, "UNCOMMON", 12, "hunter_bind_d"),
-    ("gatewrought_longsword", "Gatewrought Longsword", "C", 6.5, 1400, "RARE", 12, "hunter_bind_c"),
-    ("veilwoven_longsword", "Veilwoven Longsword", "B", 7.5, 1900, "EPIC", 15, "hunter_bind_b"),
-    ("lordscale_longsword", "Lordscale Longsword", "A", 8.5, 2300, "EPIC", 15, "hunter_bind_a"),
-    ("sovereign_longsword", "Sovereign Longsword", "S", 9.5, 2800, "EPIC", 18, "hunter_bind_s"),
+# The forged lines, one per fighting style of data/awaken/arms/archetypes.json: (name, damage over the tier's Longsword,
+# the item's attack speed modifier, the vanilla item tag that gives it its enchantments, its recipe's shape). A recipe
+# is always the tier's Hunter blade (X) with its core (C) and bind (B); each style its own shape, so no two share one.
+STYLES = {
+    "longsword": ("Longsword", 0.0, -2.4, "swords", ["C", "X", "B"]),
+    "axe": ("Axe", 1.5, -3.0, "axes", ["XC", " B"]),
+    "maul": ("Maul", 3.0, -3.3, "enchantable/mace", ["CXC", " B "]),
+    "spear": ("Spear", 0.5, -2.9, "spears", ["  X", " C ", "B  "]),
+    "greatblade": ("Greatblade", 2.0, -3.0, "swords", ["XX", "CB"]),
+    "rapier": ("Rapier", 0.0, -2.2, "swords", ["X", "B", "C"]),
+    "daggers": ("Daggers", -1.5, -1.8, "swords", ["XB", "C "]),
+    "katana": ("Katana", 1.0, -2.5, "swords", ["X  ", " B ", "  C"]),
+    "twinblades": ("Twinblades", 0.5, -2.0, "swords", ["XCX", " B "]),
+}
+# The Hunter tiers: (tier, set, name, the Longsword's damage over the player's 1, uses, vanilla rarity, enchantability,
+# repair tag); every style of a tier keeps its uses, rarity, enchantability and repair
+TIERS = [
+    ("E", "wildhide", "Wildhide", 4.5, 220, "COMMON", 15, "hunter_core_e"),
+    ("D", "beastbound", "Beastbound", 5.5, 500, "UNCOMMON", 12, "hunter_bind_d"),
+    ("C", "gatewrought", "Gatewrought", 6.5, 1400, "RARE", 12, "hunter_bind_c"),
+    ("B", "veilwoven", "Veilwoven", 7.5, 1900, "EPIC", 15, "hunter_bind_b"),
+    ("A", "lordscale", "Lordscale", 8.5, 2300, "EPIC", 15, "hunter_bind_a"),
+    ("S", "sovereign", "Sovereign", 9.5, 2800, "EPIC", 18, "hunter_bind_s"),
 ]
+# One row per weapon: (id, name, tier, damage, uses, rarity, enchantability, repair, style, speed); the Longswords first
+CATALOG = [(f"{sid}_{style}", f"{sname} {STYLES[style][0]}", tier, dmg + STYLES[style][1], dur, rarity, ench, repair, style,
+            STYLES[style][2])
+           for style in STYLES for tier, sid, sname, dmg, dur, rarity, ench, repair in TIERS]
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Ramps: dark to light, hue-shifted (shadows cool toward violet, lights warm), the colours a pixel artist would pick
@@ -91,769 +114,1888 @@ def ramp(name):
     return np.array([[int(h[i:i + 2], 16) for i in (1, 3, 5)] for h in RAMPS[name]], dtype=float) / 255.0
 
 
-BAYER = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], dtype=float) / 16.0 - 0.5
+RAMP_NAMES = list(RAMPS)
+RAMP_RGB = [ramp(n) for n in RAMP_NAMES]
 
 
-GRAIN = 1.0  # 1 for the game's texture; 0 paints clean (no dither, no grain) for the icon, where they'd be noise
-
-
-def onto(value, name, dither=0.55):
-    """Sets a continuous value (0 dark .. 1 light, (H, W)) onto a ramp with an ordered dither: pixel art from light."""
-    dither *= GRAIN
-    r = ramp(name)
-    h, w = value.shape
-    d = BAYER[np.arange(h)[:, None] % 4, np.arange(w)[None, :] % 4]
-    idx = np.clip(np.round(np.clip(value, 0, 1) * (len(r) - 1) + d * dither), 0, len(r) - 1).astype(int)
-    return r[idx]
-
-
-def light(normal, key=(-0.35, 0.75, 0.55)):
-    """The painted light: a soft key from the upper left front, wrapped round the form (0..1)."""
-    k = np.asarray(key) / np.linalg.norm(key)
-    return np.clip((normal @ k) * 0.5 + 0.5, 0, 1)
-
-
-def hash01(*a):
-    """A stable value 0..1 per integer cell."""
-    x = np.zeros(np.broadcast(*a).shape, dtype=np.uint64)
-    for k, v in enumerate(a):
-        x ^= (np.asarray(v).astype(np.int64).astype(np.uint64) + np.uint64(0x9E3779B97F4A7C15 * (k + 1) & 0xFFFFFFFFFFFFFFFF))
-        x = (x ^ (x >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
-        x = (x ^ (x >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
-        x ^= x >> np.uint64(31)
-    return (x & np.uint64(0xFFFFFF)).astype(float) / float(0xFFFFFF)
-
-
-# Runes: the Court's script, 3 wide and 5 tall (rows top to bottom)
-RUNES = [
-    ("#..", "##.", "#.#", "#..", "#.."), (".#.", "#.#", ".#.", ".#.", ".#."), ("#.#", "##.", "#..", "##.", "#.#"),
-    ("###", "#..", "##.", "#..", "#.."), (".#.", "##.", ".##", "##.", ".#."), ("#.#", "#.#", ".#.", "#.#", "#.#"),
-    ("##.", "#.#", "##.", "#.#", "##."), (".#.", ".##", ".#.", "##.", ".#."), ("#..", "#.#", "###", "#.#", "..#"),
-]
+def rid(name):
+    return RAMP_NAMES.index(name)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Painting: per texel, a colour and its material (metal, gloss, emissive, flow), by the part's material
+# The painted look (docs/combat/weapon-style.md): per face, flat areas of one ramp step; a band a texel wide along each
+# outer edge, lit where the edge faces the painted light (the blade plane's upper left: up the blade and toward its
+# back), dark where it faces away; a contact shadow where the face runs into another part; then the material's own
+# few details. Everything is a whole ramp step, so nothing is noise.
 
-class Ctx:
-    """What a painter knows of each texel of one part's chart."""
-
-    def __init__(self, part, mask, point, normal, tag, along, rr, cc, du, dv, occl):
-        self.part, self.mask, self.point, self.normal = part, mask, point, normal
-        self.tag, self.along, self.rr, self.cc, self.occl = tag, along, rr, cc, occl
-        self.du, self.dv = du, dv  # texels across from the anchor column, down from the first row
-        self.h, self.w = mask.shape
-        self.y, self.x = np.indices(mask.shape)
+LIGHT = np.array([-0.5, 0.85, 0.0]) / np.linalg.norm([-0.5, 0.85, 0.0])
 
 
-def material(ctx, metal, gloss, emit=0.0, flow=0.0):
-    m = np.zeros((ctx.h, ctx.w, 4))
-    m[..., 0], m[..., 1], m[..., 2], m[..., 3] = metal, gloss, emit, flow
-    return m
+def bands(f):
+    """Per texel: its bevel (ramp steps: +2 a lit edge, +1 an edge across the light, -1/-2 edges in shade), whether it
+    lies in a contact shadow, and which of its four sides are outer edges. A face one texel across in some direction
+    takes no bevel that way (it is all edge: its tone comes from which way it faces). A corner takes the edge that
+    faces the light most squarely."""
+    s = f.dirs @ LIGHT
+    step = np.where(s > 0.3, 2, np.where(s >= -0.3, 1, np.where(s >= -0.7, -1, -2)))
+    edge = (f.code == VX.EDGE) | (f.code == VX.SEAM)
+    for a, b in ((0, 1), (2, 3)):
+        thin = edge[:, a] & edge[:, b]
+        edge[thin, a] = False
+        edge[thin, b] = False
+    w = np.abs(s) + (step > 0) * 1e-3
+    score = np.where(edge, w[None, :], -1.0)
+    band = np.where(edge.any(axis=1), step[score.argmax(axis=1)], 0)
+    contact = (f.code == VX.CONTACT).any(axis=1)
+    return band, contact, edge
 
 
-def paint_gold(ctx):
-    """Polished gold: lit by the form, the light wrapped bright, deeper where parts meet (the shader adds what it
-    reflects)."""
-    v = light(ctx.normal) * 0.8 + 0.16 - ctx.occl * 0.5
-    return onto(v, "gold"), material(ctx, 1.0, 0.85)
+class Mat:
+    """A material: its ramp and base step, metal, gloss, glow (material map), how deep its contact shadow falls and its
+    details (functions of a Tex, run in order)."""
+
+    def __init__(self, ramp_name, base, metal=0.0, gloss=0.3, emit=0.0, details=(), contact=3, bevel=True):
+        self.ramp, self.base, self.metal, self.gloss, self.emit = ramp_name, base, metal, gloss, emit
+        self.details, self.contact, self.bevel = details, contact, bevel
 
 
-def paint_ivory_blade(ctx, look):
-    """The Sovereign's blade: ivory-white steel, gold-edged, its hollow-ground bevels catching the light down the length;
-    the fuller lined in gold, a crimson channel at its floor where the Court's runes burn, each lit in turn up the blade."""
-    t = ctx.tag
-    along = ctx.along
-    base = light(ctx.normal) * 0.5 + 0.46
-    streak = (hash01(ctx.du) - 0.5) * 0.08 * GRAIN                   # polish lines run with the blade
-    bevel = (t > 0.35) & (t < 1.6)
-    v = base + streak + np.where(bevel, 0.16, 0.0) - ctx.occl * 0.5 - (1 - along) * 0.05
-    col = onto(v, "ivory")
-    mat = material(ctx, 0.35, 0.75)
-    edge = t < 0.35                                                    # the edge itself: a gold line
-    col[edge] = onto(light(ctx.normal) * 0.65 + 0.35, "gold")[edge]
-    mat[edge] = (1.0, 0.9, 0.0, 0.0)
-    lip = (t > 2.45) & (t < 2.95)                                      # the fuller's gold lining
-    col[lip] = onto(light(ctx.normal) * 0.6 + 0.3, "gold")[lip]
-    mat[lip] = (1.0, 0.85, 0.0, 0.0)
-    chan = t >= 2.95                                                   # its crimson floor
-    col[chan] = onto(light(ctx.normal) * 0.25 + 0.22, "crimson")[chan]
-    mat[chan] = (0.2, 0.55, 0.0, 0.0)
-    # runes: 3 texels wide on the fuller's middle column, 5 tall, 2 between; each lights a beat after the one below
-    cell, ry = ctx.dv // 7, ctx.dv % 7
-    rx = ctx.du + 1
-    lit = np.zeros(ctx.mask.shape, dtype=bool)
-    for k, rune in enumerate(RUNES):
-        pat = np.array([[ch == "#" for ch in r] for r in rune])
-        sel = ((cell + 3) % len(RUNES) == k) & (ry >= 1) & (ry <= 5) & (rx >= 0) & (rx < 3)
-        lit |= sel & pat[np.clip(ry - 1, 0, 4), np.clip(rx, 0, 2)]
-    runes = lit & chan & (along > 0.12) & (along < 0.74)
-    col[runes] = onto(np.full(ctx.mask.shape, 0.93), "crimson", dither=0.0)[runes]
-    phase = np.clip((cell[runes] + 1) / 24.0, 0.02, 1.0)
-    mat[runes] = np.stack([np.zeros(runes.sum()), np.full(runes.sum(), 0.3), np.ones(runes.sum()), phase], axis=1)
-    return col, mat
+class Tex:
+    """The visible texels of one face as its painter sees them: where each is (design space), its row and column in
+    the design's grid, and what it is painted (ramp, step, metal, gloss, emissive, flow), all changeable."""
+
+    def __init__(self, f, m, clean):
+        k = len(f.P)
+        self.f, self.box, self.m, self.k, self.clean = f, f.box, m, k, clean
+        self.P, self.n = f.P, f.n
+        self.x, self.y, self.z = f.P[:, 0], f.P[:, 1], f.P[:, 2]
+        self.Y = np.floor(self.y + 1e-6).astype(int)
+        self.X = np.floor(self.x + 0.5 + 1e-6).astype(int)
+        self.flat = abs(f.n[2]) > 0.9                    # a face of the blade's plane, front or back
+        self.ramp = np.full(k, rid(m.ramp))
+        self.tone = np.full(k, m.base)
+        self.metal = np.full(k, float(m.metal))
+        self.gloss = np.full(k, float(m.gloss))
+        self.emit = np.full(k, float(m.emit))
+        self.flow = np.zeros(k)
+        self.data = f.box.data
+
+    def top(self, name=None):
+        return len(RAMPS[name or self.m.ramp]) - 1
+
+    def put(self, sel, ramp_name=None, tone=None, metal=None, gloss=None, emit=None, flow=None):
+        if ramp_name is not None:
+            self.ramp[sel] = rid(ramp_name)
+        for arr, v in ((self.tone, tone), (self.metal, metal), (self.gloss, gloss), (self.emit, emit), (self.flow, flow)):
+            if v is not None:
+                arr[sel] = v[sel] if isinstance(v, np.ndarray) and v.shape == (self.k,) else v
 
 
-def paint_weave(ctx):
-    """The Court's void weave: a basket weave of dark violet bands, a sheen on the raised threads."""
-    u = ctx.x + ctx.y
-    w = ctx.x - ctx.y
-    over = ((u // 2) % 2) == ((w // 2) % 2)
-    v = light(ctx.normal) * 0.5 + np.where(over, 0.35, 0.12) - ctx.occl * 0.5
-    return onto(v, "weave", dither=0.3), material(ctx, 0.0, 0.25)
+def colours(t):
+    col = np.zeros((t.k, 3))
+    for r in np.unique(t.ramp):
+        sel = t.ramp == r
+        col[sel] = RAMP_RGB[r][np.clip(t.tone[sel], 0, len(RAMP_RGB[r]) - 1)]
+    return col
 
 
-def paint_gem(ctx, name, glow):
-    """A cut gem: each facet its own value (it sparkles as it turns), a hot heart, glowing of itself."""
-    facet = hash01(np.floor(ctx.cc), np.floor(ctx.rr * 2))
-    v = 0.45 + facet * 0.35 + light(ctx.normal) * 0.25
-    col = onto(v, name, dither=0.2)
-    return col, material(ctx, 0.3, 1.0, glow, 0.0)
-
-
-def paint_metal(ctx, name, metal=1.0, gloss=0.85, lift=0.16, span=0.8):
-    """Any polished metal on its ramp: lit by the form, deeper where parts meet (the shader adds what it reflects)."""
-    v = light(ctx.normal) * span + lift - ctx.occl * 0.5
-    return onto(v, name), material(ctx, metal, gloss)
-
-
-def paint_bone(ctx, name="bone"):
-    """Bone and antler: a warm matte, darker pores in it, worn pale where it stands proud."""
-    pores = hash01(np.floor(ctx.du / 2), np.floor(ctx.dv / 2)) > 0.86
-    v = light(ctx.normal) * 0.6 + 0.3 - ctx.occl * 0.5 - pores * 0.16 * GRAIN
-    return onto(v, name, dither=0.4), material(ctx, 0.0, 0.35)
-
-
-def paint_flint_blade(ctx, look):
-    """Knapped flint: big conchoidal scars struck in from each edge, irregular as real knapping is (each texel belongs
-    to the nearest strike), each scar its own grey, ripples ringing out from where it was struck, a dark ridge where two
-    scars meet; the edges thin enough to glow pale."""
-    rng = np.random.default_rng(7 + int(ctx.part.data.get("y0", 0) * 10) + len(ctx.part.name))
-    h = ctx.mask.shape[0]
-    seeds = []  # strike points on each edge (du far out), irregularly spaced up the blade
-    for side in (-1, 1):
-        v = rng.uniform(0, 4)
-        while v < h:
-            seeds.append((side * rng.uniform(5, 8), v, rng.uniform(-0.5, 0.5)))
-            v += rng.uniform(5, 10)
-    S = np.array(seeds)
-    d = np.hypot((ctx.du[..., None] - S[:, 0]) * 0.8, ctx.dv[..., None] - S[:, 1])  # (H, W, n)
-    order = np.argsort(d, axis=-1)
-    near, second = np.take_along_axis(d, order[..., :1], -1)[..., 0], np.take_along_axis(d, order[..., 1:2], -1)[..., 0]
-    tone = S[order[..., 0], 2]
-    ripple = (np.floor(near / 1.6) % 2) * 0.07
-    ridge = (second - near < 0.9) * -0.18
-    v = light(ctx.normal) * 0.5 + 0.34 + (tone * 0.22 + ripple + ridge) * (0.4 + 0.6 * GRAIN) - ctx.occl * 0.5
-    col = onto(v, "flint", dither=0.25)
-    mat = material(ctx, 0.08, 0.75)
-    edge = ctx.tag < 0.45
-    col[edge] = onto(v * 0.5 + 0.5, "flint", dither=0.0)[edge]
-    return col, mat
-
-
-def paint_hide(ctx):
-    """A hide strap: leather with a grain, a stitched seam down its middle, edges worn dark."""
-    across = ctx.du
-    stitch = (np.abs(across) == 0) & (ctx.dv % 3 == 0)
-    v = light(ctx.normal) * 0.55 + 0.28 - ctx.occl * 0.5 + (hash01(ctx.du, ctx.dv) - 0.5) * 0.1 * GRAIN
-    col = onto(v, "hide", dither=0.4)
-    col[stitch] = onto(np.full(stitch.shape, 0.85), "bone", dither=0.0)[stitch]
-    return col, material(ctx, 0.0, 0.3)
-
-
-def paint_tusk_blade(ctx, look):
-    """Boar tusk ivory: creamy, paling toward the honed edge, fine growth lines down its length; its squared back capped
-    in bronze."""
-    lines = (hash01(np.floor(ctx.cc * 2)) - 0.5) * 0.07 * GRAIN
-    toward_edge = np.clip(1.6 - ctx.tag, 0, 1.6) * 0.08
-    v = light(ctx.normal) * 0.5 + 0.36 + lines + toward_edge - ctx.occl * 0.5
-    col = onto(v, "bone", dither=0.35)
-    mat = material(ctx, 0.0, 0.55)
-    edge = ctx.tag < 0.4
-    col[edge] = onto(v * 0.4 + 0.58, "bone", dither=0.0)[edge]
-    spine = ctx.tag > 4.4
-    col[spine] = onto(light(ctx.normal) * 0.7 + 0.25, "bronze")[spine]
-    mat[spine] = (1.0, 0.75, 0.0, 0.0)
-    return col, mat
-
-
-def paint_pelt(ctx):
-    """Fur: short strands laid one way, light catching their tips."""
-    strand = hash01(ctx.du, np.floor(ctx.dv / 3)) > 0.5
-    v = light(ctx.normal) * 0.5 + 0.22 + strand * 0.14 * GRAIN - ctx.occl * 0.5
-    return onto(v, "pelt", dither=0.5), material(ctx, 0.0, 0.15)
-
-
-def paint_slate_blade(ctx, look):
-    """Gate-steel: slate-blue, ground to a raised rib; the precursors' signal circuit inlaid in the fuller, its light
-    climbing the blade in pulses (each node lights a beat after the one below)."""
-    t = ctx.tag
-    v = light(ctx.normal) * 0.58 + 0.24 + np.where((t > 0.35) & (t < 1.6), 0.12, 0.0) - ctx.occl * 0.5
-    col = onto(v, "slate")
-    mat = material(ctx, 0.8, 0.8)
-    edge = t < 0.35
-    col[edge] = onto(light(ctx.normal) * 0.5 + 0.5, "mirror")[edge]
-    chan = t >= 2.95
-    col[chan] = onto(np.full(chan.shape, 0.12), "signal", dither=0.0)[chan]
-    mat[chan] = (0.3, 0.6, 0.0, 0.0)
-    # the circuit: a trace up the middle, a node every 6 texels with a short branch to one side
-    trace = chan & (ctx.du == 0)
-    node = chan & (ctx.dv % 6 == 0) & (np.abs(ctx.du) <= 1)
-    lit = (trace | node) & (ctx.along > 0.1) & (ctx.along < 0.8)
-    col[lit] = onto(np.full(lit.shape, 0.9), "signal", dither=0.0)[lit]
-    phase = np.clip(ctx.dv[lit] / 80.0, 0.02, 1.0)
-    mat[lit] = np.stack([np.zeros(lit.sum()), np.full(lit.sum(), 0.4), np.ones(lit.sum()), phase], axis=1)
-    return col, mat
-
-
-def paint_ridged(ctx, name, metal=0.2, gloss=0.4):
-    """A ridged grip: bands round it, each lit from above."""
-    v = light(ctx.normal) * 0.6 + 0.2 - ctx.occl * 0.5
-    return onto(v, name), material(ctx, metal, gloss)
-
-
-def paint_veil_blade(ctx, look):
-    """Veil-steel: near-black violet with a sheen that shifts like oil on water down its length; one edge is living
-    spirit light (it flows tip-ward), the other mirror-honed; the point mirror-bright."""
-    t = ctx.tag
-    shimmer = np.sin(ctx.dv * 0.35 + ctx.du * 0.6) * 0.5 + 0.5
-    v = light(ctx.normal) * 0.5 + 0.18 + shimmer * 0.14 * GRAIN - ctx.occl * 0.5
-    col = onto(v, "veil")
-    mat = material(ctx, 0.75, 0.85)
-    edge = t < 0.4
-    spirit = edge & (ctx.point[..., 0] < 0)
-    honed = edge & ~spirit
-    col[honed] = onto(light(ctx.normal) * 0.5 + 0.5, "mirror")[honed]
-    mat[honed] = (1.0, 0.9, 0.0, 0.0)
-    col[spirit] = onto(np.full(spirit.shape, 0.74), "spirit", dither=0.0)[spirit]
-    mat[spirit] = np.stack([np.zeros(spirit.sum()), np.full(spirit.sum(), 0.5), np.full(spirit.sum(), 0.62),
-                            np.clip(ctx.dv[spirit] / 90.0, 0.02, 1.0)], axis=1)
-    tip = ctx.along > 0.9
-    col[tip & ~spirit] = onto(light(ctx.normal) * 0.4 + 0.55, "mirror")[tip & ~spirit]
-    return col, mat
-
-
-def paint_lord_blade(ctx, look):
-    """Lordscale: black scales overlapping down the flats (each rimmed where the light catches it), a central ridge,
-    and edges of molten gold that flow toward the point."""
-    t = ctx.tag
-    row = np.floor(ctx.dv / 3)
-    off = (row % 2) * 2
-    cx = (ctx.du + off) % 4
-    rim = (ctx.dv % 3 == 0) | (cx == 0)
-    v = light(ctx.normal) * 0.5 + 0.22 + rim * 0.24 * (0.5 + 0.5 * GRAIN) - ctx.occl * 0.5
-    col = onto(v, "lord")
-    mat = material(ctx, 0.6, 0.85)
-    edge = t < 0.5
-    col[edge] = onto(np.full(edge.shape, 0.72) + (hash01(ctx.dv) - 0.5) * 0.2 * GRAIN, "ember", dither=0.0)[edge]
-    mat[edge] = np.stack([np.zeros(edge.sum()), np.full(edge.sum(), 0.6), np.full(edge.sum(), 0.8),
-                          np.clip(ctx.dv[edge] / 70.0, 0.02, 1.0)], axis=1)
-    ridge = ctx.du == 0
-    col[ridge & ~edge] = onto(light(ctx.normal) * 0.5 + 0.35, "gold")[ridge & ~edge]
-    mat[ridge & ~edge] = (1.0, 0.85, 0.0, 0.0)
-    return col, mat
-
-
-def paint_scales(ctx, name="lord", rim_name="gold"):
-    """Scales in rows, each rimmed in gold at its lower edge."""
-    row = np.floor(ctx.dv / 2)
-    off = (row % 2)
-    cx = (ctx.du + off) % 3
-    rim = (ctx.dv % 2 == 1) & (cx != 1)
-    v = light(ctx.normal) * 0.5 + 0.2 - ctx.occl * 0.5
-    col = onto(v, name)
-    col[rim] = onto(v * 0.6 + 0.25, rim_name)[rim]
-    mat = material(ctx, 0.6, 0.8)
-    mat[rim] = (1.0, 0.85, 0.0, 0.0)
-    return col, mat
-
-
-PAINTERS = {
-    "gold": lambda c, look: paint_gold(c),
-    "ivory_blade": paint_ivory_blade,
-    "weave": lambda c, look: paint_weave(c),
-    "crimson_gem": lambda c, look: paint_gem(c, "crimson", 0.75),
-    "flint_blade": paint_flint_blade,
-    "bone": lambda c, look: paint_bone(c),
-    "hide": lambda c, look: paint_hide(c),
-    "amber_gem": lambda c, look: paint_gem(c, "amber", 0.7),
-    "tusk_blade": paint_tusk_blade,
-    "bronze": lambda c, look: paint_metal(c, "bronze", 1.0, 0.75),
-    "pelt": lambda c, look: paint_pelt(c),
-    "moss_gem": lambda c, look: paint_gem(c, "moss", 0.6),
-    "slate_blade": paint_slate_blade,
-    "slate": lambda c, look: paint_ridged(c, "slate", 0.3, 0.5),
-    "brass": lambda c, look: paint_metal(c, "brass", 1.0, 0.8),
-    "signal": lambda c, look: (onto(np.full(c.mask.shape, 0.85), "signal", dither=0.0), material(c, 0.0, 0.5, 1.0, 0.5)),
-    "signal_gem": lambda c, look: paint_gem(c, "signal", 0.85),
-    "veil_blade": paint_veil_blade,
-    "mirror": lambda c, look: paint_metal(c, "mirror", 1.0, 0.95, 0.2, 0.75),
-    "obsidian": lambda c, look: paint_ridged(c, "obsidian", 0.4, 0.8),
-    "spirit_gem": lambda c, look: paint_gem(c, "spirit", 0.85),
-    "lord_blade": paint_lord_blade,
-    "lord_scale": lambda c, look: paint_scales(c),
-    "lord": lambda c, look: paint_ridged(c, "lord", 0.6, 0.8),
-    "pearl_gem": lambda c, look: paint_gem(c, "pearl", 0.6),
-}
-
-
-def painter_for(parts, look):
-    """The painter mesh.build calls per part, with contact shadows from every other part painted in."""
-    clouds = {}
-    for p in parts:
-        g = p.grid.reshape(-1, 3)
-        mid = (p.grid[:-1, :-1] + p.grid[1:, 1:]).reshape(-1, 3) / 2 if p.grid.shape[0] > 1 and p.grid.shape[1] > 1 else g
-        clouds[id(p)] = np.concatenate([g, mid])
-
-    def paint(part, mask, point, normal, tag, along, rr, cc, du, dv):
-        others = np.concatenate([clouds[id(o)] for o in parts if o is not part and not o.data.get("no_shadow")]) \
-            if len(parts) > 1 else np.zeros((0, 3))
-        occl = contact(point, normal, others) if len(others) else np.zeros(mask.shape)
-        ctx = Ctx(part, mask, point, normal, tag, along, rr, cc, du, dv, occl)
-        col, mat = PAINTERS[part.mat](ctx, look)
-        alb = np.concatenate([col, np.ones(mask.shape + (1,))], axis=-1)
-        return (np.clip(alb, 0, 1) * 255).astype(np.uint8), (np.clip(mat, 0, 1) * 255).astype(np.uint8)
+def painter(clean=False):
+    def paint(f):
+        m = MATS[f.box.mat]
+        t = Tex(f, m, clean)
+        s = float(f.n @ LIGHT)
+        t.tone += int(s > 0.4) - int(s < -0.4)           # a face turned to the light a step up, away a step down
+        band, contact, edge = bands(f)
+        t.band, t.contact, t.edge = band, contact, edge
+        if m.bevel:
+            t.tone += np.clip(band, -1, 1) if abs(f.n[1]) > 0.9 else band
+        t.tone[contact] = m.base - m.contact
+        for d in m.details:
+            d(t)
+        alb = np.concatenate([colours(t), np.ones((t.k, 1))], axis=1)
+        mat = np.stack([t.metal, t.gloss, t.emit, t.flow], axis=1)
+        return (np.clip(alb, 0, 1) * 255).round().astype(np.uint8), (np.clip(mat, 0, 1) * 255).round().astype(np.uint8)
     return paint
 
 
-def contact(point, normal, others, reach=0.5):
-    """How shadowed each texel is by other parts close in front of it (0..1): a tight contact shadow where parts meet,
-    not a wash over everything near another part."""
-    P = point.reshape(-1, 3)
-    N = normal.reshape(-1, 3)
-    occ = np.zeros(len(P))
-    for s in range(0, len(P), 2048):
-        d = others[None] - P[s:s + 2048, None]                 # (n, m, 3)
-        dist = np.linalg.norm(d, axis=2)
-        facing = np.einsum("nmk,nk->nm", d, N[s:s + 2048]) / np.maximum(dist, 1e-6)
-        near = np.clip(1 - dist / reach, 0, 1) ** 2 * np.clip(facing, 0, 1)
-        occ[s:s + 2048] = np.clip(near.max(axis=1), 0, 1)
-    return occ.reshape(point.shape[:-1])
+# ---- details: each a deliberate mark of its material, a few per part --------------------------------------------------
+
+def streak(period=7, run=4, phase=0):
+    """Steel's highlight: the lit edge of a flat breaks into a run of its lightest step, then rests (a glint, not a
+    stripe)."""
+    def d(t):
+        on = t.flat & (t.band >= 2) & (((t.Y + phase) % period) < run)
+        t.put(on, tone=t.top())
+    return d
+
+
+def wrap(ramp_name, tone, period=3, width=1, twist=1, caps=False):
+    """A strap or wire wound round a grip: bands `width` texels wide every `period` rows, straight round it (twist 0)
+    or climbing (twist 1: each face's texels counted round the box's perimeter, so a band runs on unbroken from one
+    face onto the next)."""
+    def d(t):
+        if abs(t.n[1]) > 0.9 and not caps:
+            return
+        c = t.box.c
+        perim = int(round(4 * (t.box.h[0] + t.box.h[2])))
+        a = np.arctan2(t.x - c[0], t.z - c[2])
+        pa = np.round(a / (2 * math.pi) * perim).astype(int) % perim
+        on = ((t.Y + twist * pa) % period) < width
+        t.put(on, ramp_name=ramp_name, tone=np.clip(tone + t.band, 0, len(RAMPS[ramp_name]) - 1))
+        t.wrapped = on
+    return d
+
+
+def rows(every=2, step=-1, phase=0):
+    """Ribs round a grip: every so many rows a step darker (a groove between ribs)."""
+    def d(t):
+        if abs(t.n[1]) > 0.9:
+            return
+        on = ((t.Y + phase) % every) == 0
+        t.tone[on] += step
+    return d
+
+
+def fur():
+    """Pelt: strands laid down the grip, alternate columns a step apart, the tips light every third row (fur's one
+    pattern)."""
+    def d(t):
+        if abs(t.n[1]) > 0.9:
+            return
+        c = t.box.c
+        perim = int(round(4 * (t.box.h[0] + t.box.h[2])))
+        a = np.arctan2(t.x - c[0], t.z - c[2])
+        pa = np.round(a / (2 * math.pi) * perim).astype(int) % perim
+        t.tone += np.where(pa % 2 == 0, 1, -1)
+        tips = ((t.Y + pa) % 3 == 0) & (pa % 2 == 0)
+        t.tone[tips] += 1
+    return d
+
+
+def gem(core_lift=0, rim=1, glow=1.0):
+    """A cut stone face-on: rings stepping darker from its heart to a dark rim, the heart's upper-left texel the
+    lightest (its sparkle); the facets on its sides darker still. Glows of itself, the heart most. Its colours sit a
+    few steps under the ramp's top: the shader adds the glow on top, and a light albedo would glow white, not red."""
+    def d(t):
+        top = t.top()
+        if not t.flat:
+            t.tone[:] = np.clip(top - 4 + t.band, 0, top)
+            t.emit[:] = t.m.emit * 0.5 * glow
+            return
+        f = t.f
+        dc = np.maximum(np.abs(f.i + 0.5 - f.su / 2), np.abs(f.j + 0.5 - f.sv / 2))
+        ring = np.maximum(np.ceil(dc - 0.5 - 1e-6), 0).astype(int)
+        t.tone[:] = np.clip(top - 2 + core_lift - rim * ring, 0, top)
+        heart = ring == 0
+        if heart.any():
+            idx = np.flatnonzero(heart)
+            spark = idx[np.argmax(t.P[idx] @ LIGHT)]
+            t.tone[spark] = top - 1 + core_lift
+        t.emit[:] = t.m.emit * glow * np.clip(1.0 - 0.3 * ring, 0.3, 1.0)
+    return d
+
+
+def flow_up(y0, y1, lo=0.02):
+    """What glows pulses in order up the weapon: its flow is how far up it lies (the shader's pulse runs along it).
+    A box's own span (data) overrides y0..y1, so one material serves weapons of any length."""
+    def d(t):
+        a, b = t.data.get("span", (y0, y1))
+        t.flow[:] = np.where(t.emit > 0, np.clip((t.y - a) / (b - a), lo, 1.0), 0.0)
+    return d
+
+
+def knap():
+    """Knapped flint: each flake struck off a facet of its own step, three rows high and slanting up from the edge
+    toward the spine (chevrons), the two sides a texel out of step, as flakes struck from each edge meet."""
+    pattern = (1, -1, 0, 1, -1, 0)
+
+    def d(t):
+        if not t.flat:
+            return
+        flake = (t.Y + np.abs(t.X) + (t.X > 0)) // 3
+        t.tone += np.array(pattern)[flake % len(pattern)]
+    return d
+
+
+def growth(every=4):
+    """Tusk: a groove two steps darker down the flat, a texel in from the back (the line it grew along), and a band a
+    step darker across it every few rows (the rings it grew in)."""
+    def d(t):
+        if t.flat:
+            groove = t.X == t.data.get("groove", -1)
+            t.tone[groove] -= 2
+            t.tone[~groove & (t.Y % every == 0)] -= 1
+    return d
+
+
+def scales():
+    """Black scale in rows, three texels a scale, each rimmed a light step along its lower edge where the light finds
+    it; the rows offset side to side, as scales lie."""
+    def d(t):
+        if not t.flat:
+            return
+        rim = ((t.Y + (t.X % 2)) % 3) == 0
+        t.tone[rim] += 2
+        t.metal[rim] = 0.8
+    return d
+
+
+def sheen(period=9):
+    """Veil-steel's oil sheen: a diagonal band of a lighter step sliding down the flats, its trailing side dithered
+    (the material's one pattern)."""
+    def d(t):
+        if not t.flat:
+            return
+        b = (t.Y - 2 * t.X) % period
+        t.tone[b < 2] += 2
+        dither = (b == 2) & (((t.X + t.Y) % 2) == 0)
+        t.tone[dither] += 1
+    return d
+
+
+CHANNEL_RUNES = ("#.#", "##.#", "#..#", "###", "#.##", "##", "#.#.#")
+
+
+def runes(y0, y1, column=0):
+    """The Court's runes burning in the crimson channel down the blade's middle column: the channel a dark crimson,
+    glyphs a texel wide in it (lit and dark texels in a row) with a dark texel between, each glyph lighting a beat
+    after the one below it."""
+    col, glyph = [], []
+    k = 0
+    while len(col) < 64:
+        g = CHANNEL_RUNES[k % len(CHANNEL_RUNES)]
+        col += [ch == "#" for ch in g] + [False]
+        glyph += [k] * (len(g) + 1)
+        k += 1
+    n = max(glyph) + 1
+
+    def d(t):
+        if not t.flat:
+            return
+        a, b = sorted(t.data.get("span", (y0, y1)))
+        chan = (t.X == t.data.get("column", column)) & (t.Y >= a) & (t.Y < b)
+        t.put(chan, ramp_name="crimson", tone=2, metal=0.2, gloss=0.55)
+        r = t.Y - a
+        lit = chan & np.array([col[v] if 0 <= v < len(col) else False for v in r])
+        t.put(lit, tone=t.top("crimson") - 2, emit=1.0, gloss=0.3)
+        phase = np.array([(glyph[v] + 1) / n if 0 <= v < len(glyph) else 0.0 for v in r])
+        t.flow[lit] = np.clip(phase[lit], 0.02, 1.0)
+    return d
+
+
+def circuit(y0, y1, every=4):
+    """The precursors' signal circuit inlaid down the rib: a trace lit along it, a node every few texels, light climbing
+    it in pulses."""
+    def d(t):
+        if not t.flat:
+            return
+        a0, b0 = t.data.get("span", (y0, y1))
+        a, b = sorted((a0, b0))
+        if "row" in t.data:  # run across a head instead: along x on one row, out from the haft
+            ok = (t.Y == t.data["row"]) & (np.abs(t.x) >= a) & (np.abs(t.x) < b)
+            pos = np.abs(t.x)
+            a0, b0 = a, b
+        else:
+            ok = (t.Y >= a) & (t.Y < b)
+            if "column" in t.data:
+                ok &= t.X == t.data["column"]
+            pos = t.y
+        node = ok & ((np.floor(pos + 1e-6).astype(int) - int(a)) % every == 0)
+        t.put(ok, ramp_name="signal", tone=5, emit=0.6, gloss=0.4, metal=0.0)
+        t.put(node, tone=7, emit=1.0)
+        t.flow[ok] = np.clip((pos[ok] - a0) / (b0 - a0), 0.02, 1.0)
+    return d
+
+
+def branches(y0, y1, every=4):
+    """The circuit's branches: at each node a lit texel on the flat either side of the rib."""
+    def d(t):
+        if not t.flat:
+            return
+        a0, b0 = t.data.get("span", (y0, y1))
+        a, b = sorted((a0, b0))
+        c = t.data.get("column", 0)
+        on = (t.Y >= a) & (t.Y < b) & ((t.Y - a) % every == 0) & (np.abs(t.X - c) == t.data.get("branch", 1))
+        t.put(on, ramp_name="signal", tone=6, emit=0.85, gloss=0.4, metal=0.0)
+        t.flow[on] = np.clip((t.y[on] - a0) / (b0 - a0), 0.02, 1.0)
+    return d
+
+
+def panel(ramp_name, step, margin=1, metal=None, gloss=None, faces="flat"):
+    """A face as a field inside a border: the texels at least `margin` in from its edges in another material (the
+    reference's trimmed caps: a band of one metal round a field of another). faces: "flat" (front and back), "all"."""
+    def d(t):
+        if faces == "flat" and not t.flat:
+            return
+        f = t.f
+        inner = (f.i >= margin) & (f.i < f.su - margin) & (f.j >= margin) & (f.j < f.sv - margin) & ~t.contact
+        t.put(inner, ramp_name=ramp_name, tone=np.clip(step + np.clip(t.band, -1, 1), 0, len(RAMPS[ramp_name]) - 1),
+              metal=metal, gloss=gloss)
+    return d
+
+
+def strip(y0, y1, inner=True, ramp_name="signal"):
+    """A lit slot down a pylon's face: its inner column glowing, pulsing up."""
+    def d(t):
+        if not t.flat:
+            return
+        c = t.box.c[0]
+        col = np.floor(c - np.sign(c) * 0.5 + 0.5 + 1e-6) if inner else np.floor(c + np.sign(c) * 0.5 + 0.5)
+        col = t.data.get("column", int(col))
+        a, b = sorted(t.data.get("span", (y0, y1)))
+        on = (t.X == int(col)) & (t.Y >= a) & (t.Y < b)
+        t.put(on, ramp_name=ramp_name, tone=6, emit=0.9, metal=0.0, gloss=0.4)
+        t.flow[on] = np.clip((t.y[on] - a) / max(b - a, 1) * 0.5 + 0.1, 0.02, 1.0)
+    return d
+
+
+
+def edges_of(left=None, right=None):
+    """An edge slab's outer columns, each its own material: (ramp, step, metal, gloss, emissive) or None to leave it;
+    side faces follow the column they bound."""
+    def d(t):
+        rel = t.x - t.box.c[0]
+        half = t.box.h[0]
+        L = rel < -half + 1
+        R = rel > half - 1
+        for sel, spec in ((L, left), (R, right)):
+            if spec is None:
+                continue
+            name, step, metal, gloss, emit = spec
+            band = t.band if emit == 0 else 0
+            t.put(sel, ramp_name=name, tone=np.clip(step + band, 0, len(RAMPS[name]) - 1), metal=metal, gloss=gloss, emit=emit)
+    return d
+
+
+def ridge(column=0, ramp_name="gold", step=5, metal=0.8, gloss=0.85):
+    """A ridge of another metal down a face's column (Lordscale's gold line), lit and shaded with the face."""
+    def d(t):
+        if not t.flat:
+            return
+        on = t.X == column
+        t.put(on, ramp_name=ramp_name, tone=np.clip(step + t.band, 0, len(RAMPS[ramp_name]) - 1), metal=metal, gloss=gloss)
+    return d
+
+
+def tips(ramp_name="gold", step=5, run=2):
+    """Feathers tipped in gold: the last texels of a slat, by its length."""
+    def d(t):
+        base = np.asarray(t.data.get("base", (0, 0)), dtype=float)
+        length = t.data.get("length", 0)
+        r = np.linalg.norm(t.P[:, :2] - base, axis=1)
+        on = r > length - run
+        t.put(on, ramp_name=ramp_name, tone=np.clip(step + t.band, 0, len(RAMPS[ramp_name]) - 1), metal=0.9, gloss=0.85)
+    return d
+
+
+def studs(every=3, phase=1):
+    """Rivets down a cap: every few rows a texel of the lightest step with a dark one under it (a stud and its
+    shadow)."""
+    def d(t):
+        if not t.flat:
+            return
+        on = ((t.Y + phase) % every) == 0
+        t.put(on, tone=t.top())
+        t.put(((t.Y + phase + 1) % every) == 0, tone=t.m.base - 2)
+    return d
+
+
+def katana(edge, hamon, edge_emit=0.0, hamon_emit=0.0):
+    """A curved single-edged blade link, painted in its own turned frame: the spine a step dark, the hardened edge
+    bright in its own material, and between them the hamon, the temper line: an unbroken line of the tier's accent
+    along the edge's side, its tone rising and falling every two rows (its wave). What glows pulses up the blade."""
+    def d(t):
+        if not t.flat:
+            return
+        L = (t.P - t.box.c) @ t.box.R
+        w = int(round(2 * t.box.h[0]))
+        col = np.clip(np.floor(L[:, 0] + t.box.h[0] + 1e-6).astype(int), 0, w - 1)
+        row = np.floor(L[:, 1] + t.box.h[1] + 1e-6).astype(int)
+        t.tone[col == 0] -= 1
+        e_ = col == w - 1
+        t.put(e_, ramp_name=edge[0], tone=np.clip(edge[1] + t.band, 0, len(RAMPS[edge[0]]) - 1), emit=edge_emit, metal=0.7, gloss=0.95)
+        if w >= 3:
+            hm = col == w - 2
+            t.put(hm, ramp_name=hamon[0], tone=np.where((row % 4) < 2, hamon[1], hamon[1] - 1), emit=hamon_emit, metal=0.2, gloss=0.8)
+        a, b = t.data.get("span", (0, 30))
+        t.flow[:] = np.where(t.emit > 0, np.clip((t.y - a) / (b - a), 0.02, 1.0), 0.0)
+    return d
+
+
+def ito(wrap_ramp, wrap_tone, skin_ramp, skin_tone):
+    """A tsuka's binding: the wrap crossing round the handle, a diamond of the skin beneath showing between its
+    crossings every other row, in the middle of each face."""
+    def d(t):
+        if abs(t.n[1]) > 0.9:
+            return
+        c = t.box.c
+        h = np.where(abs(t.n[2]) > 0.9, t.x - c[0], t.z - c[2])
+        skin = (np.abs(h) < 0.5) & (t.Y % 2 == 0)
+        t.put(~skin, ramp_name=wrap_ramp, tone=np.clip(wrap_tone + t.band, 0, len(RAMPS[wrap_ramp]) - 1), metal=0.0, gloss=0.3)
+        t.put(skin, ramp_name=skin_ramp, tone=skin_tone, metal=0.3, gloss=0.6)
+    return d
+
+
+def spiral(every=3, step=-2):
+    """A narwhal's tusk: its spiral climbing round it, a groove a texel wide (on every face, so it winds on unbroken)."""
+    def d(t):
+        h = np.where(abs(t.n[2]) > 0.9, t.x - t.box.c[0], np.where(abs(t.n[0]) > 0.9, -(t.z - t.box.c[2]), 0))
+        on = ((t.Y + np.round(h).astype(int) + (t.n[2] < -0.9) * 2 + (t.n[0] > 0.9) * 1) % every) == 0
+        t.tone[on] += step
+    return d
+
+
+MATS = {
+    # E: Wildhide
+    "flint": Mat("flint", 2, 0.1, 0.7, details=(knap(),)),
+    "flint_edge": Mat("flint", 2, 0.1, 0.7, details=(edges_of(("flint", 7, 0.1, 0.8, 0.0), ("flint", 6, 0.1, 0.8, 0.0)),)),
+    "bone": Mat("bone", 4, 0.0, 0.35),
+    "antler": Mat("bone", 5, 0.0, 0.4),
+    "sinew": Mat("hide", 3, 0.0, 0.3, details=(rows(2, -2),)),
+    "bone_grip": Mat("bone", 4, 0.0, 0.35, details=(wrap("hide", 3, period=3, width=2, twist=0),)),
+    "hide": Mat("hide", 3, 0.0, 0.3),
+    "amber_gem": Mat("amber", 4, 0.2, 0.9, emit=0.5, details=(gem(),), contact=2),
+    # D: Beastbound
+    "tusk": Mat("bone", 5, 0.0, 0.55, details=(growth(),)),
+    "tusk_edge": Mat("bone", 6, 0.0, 0.6),
+    "horn": Mat("bone", 5, 0.0, 0.45),
+    "horn_tip": Mat("bone", 3, 0.0, 0.45),
+    "tooth": Mat("bone", 6, 0.0, 0.5),
+    "bronze": Mat("bronze", 5, 0.3, 0.75),
+    "bronze_back": Mat("bronze", 5, 0.3, 0.75, details=(studs(),)),
+    "pelt": Mat("pelt", 4, 0.0, 0.15, details=(fur(),)),
+    "pelt_wrap": Mat("pelt", 4, 0.0, 0.15, details=(rows(2, -2),)),
+    "moss_gem": Mat("moss", 5, 0.2, 0.9, emit=0.45, details=(gem(),), contact=2),
+    # C: Gatewrought
+    "slate_rib": Mat("slate", 4, 0.5, 0.8, details=(circuit(5, 20),)),
+    "slate_flat": Mat("slate", 4, 0.5, 0.8, details=(edges_of(("mirror", 6, 0.7, 0.95, 0.0), ("mirror", 5, 0.7, 0.95, 0.0)),
+                                                      branches(5, 20))),
+    "slate_bit": Mat("slate", 3, 0.5, 0.8, details=(circuit(3, 10),)),
+    "mirror_edge": Mat("mirror", 6, 0.7, 0.95),
+    "slate": Mat("slate", 3, 0.5, 0.8, details=(streak(),)),
+    "narwhal": Mat("bone", 6, 0.0, 0.6, details=(spiral(),)),
+    "flint_kat": Mat("flint", 2, 0.1, 0.75, details=(katana(("flint", 7), ("bone", 6)),)),
+    "tusk_kat": Mat("bone", 5, 0.0, 0.6, details=(katana(("bone", 7), ("bronze", 5)),)),
+    "slate_kat": Mat("slate", 3, 0.5, 0.85, details=(katana(("mirror", 6), ("signal", 6), hamon_emit=0.8),)),
+    "veil_kat": Mat("veil", 3, 0.6, 0.9, details=(katana(("mirror", 6), ("spirit", 6), hamon_emit=0.75),)),
+    "lord_kat": Mat("lord", 3, 0.5, 0.9, details=(katana(("ember", 6), ("gold", 6), edge_emit=0.8),)),
+    "ivory_kat": Mat("ivory", 6, 0.1, 0.8, details=(katana(("gold", 6), ("crimson", 5), hamon_emit=0.9),)),
+    "ito_e": Mat("hide", 3, 0.0, 0.3, details=(ito("hide", 2, "bone", 6),)),
+    "ito_d": Mat("pelt", 3, 0.0, 0.2, details=(ito("hide", 3, "bone", 5),)),
+    "ito_c": Mat("slate", 2, 0.3, 0.5, details=(ito("slate", 2, "brass", 5),)),
+    "ito_b": Mat("obsidian", 2, 0.3, 0.6, details=(ito("obsidian", 2, "mirror", 5),)),
+    "ito_a": Mat("lord", 2, 0.3, 0.6, details=(ito("lord", 2, "gold", 5),)),
+    "ito_s": Mat("weave", 3, 0.0, 0.3, details=(ito("weave", 2, "gold", 5),)),
+    "signal_line": Mat("signal", 5, 0.0, 0.4, emit=0.7, details=(flow_up(4, 23),), bevel=False),
+    "slate_head": Mat("slate", 2, 0.5, 0.8, details=(panel("slate", 3, margin=1),)),
+    "cap_slot": Mat("brass", 5, 0.4, 0.8, details=(panel("brass", 3, margin=1), strip(20, 27))),
+    "brass": Mat("brass", 5, 0.4, 0.8),
+    "pylon": Mat("brass", 5, 0.4, 0.8, details=(strip(5, 9),)),
+    "slate_grip": Mat("slate", 3, 0.3, 0.5, details=(rows(2, -2),)),
+    "signal_gem": Mat("signal", 5, 0.3, 1.0, emit=0.55, details=(gem(),), contact=2),
+    # B: Veilwoven
+    "veil": Mat("veil", 3, 0.6, 0.85, details=(sheen(),)),
+    "veil_edge": Mat("veil", 3, 0.6, 0.85, details=(edges_of(("spirit", 6, 0.0, 0.5, 0.62), ("mirror", 5, 1.0, 0.95, 0.0)),
+                                                    flow_up(4, 23))),
+    "mirror": Mat("mirror", 5, 0.7, 0.95),
+    "obsidian": Mat("obsidian", 3, 0.4, 0.8),
+    "spirit_gem": Mat("spirit", 5, 0.3, 1.0, emit=0.55, details=(gem(),), contact=2),
+    "spirit_edge": Mat("spirit", 6, 0.0, 0.5, emit=0.62, details=(flow_up(4, 23),), bevel=False),
+    # A: Lordscale
+    "lord": Mat("lord", 3, 0.5, 0.85, details=(scales(), ridge())),
+    "lord_dark": Mat("lord", 2, 0.5, 0.85),
+    "feather": Mat("lord", 3, 0.5, 0.85, details=(scales(), tips())),
+    "ember_edge": Mat("ember", 5, 0.0, 0.6, emit=0.8, details=(flow_up(4, 23),), bevel=False),
+    "gold": Mat("gold", 5, 0.4, 0.85),
+    "gold_cap": Mat("gold", 5, 0.4, 0.85, details=(panel("lord", 3, margin=1, metal=0.5, gloss=0.85),)),
+    "lord_grip": Mat("lord", 3, 0.5, 0.8, details=(scales(),)),
+    "lord_plain": Mat("lord", 3, 0.5, 0.85, details=(scales(),)),
+    "pearl_gem": Mat("pearl", 3, 0.3, 1.0, emit=0.4, details=(gem(),), contact=2),
+    # S: Sovereign
+    "ivory": Mat("ivory", 6, 0.1, 0.75, details=(streak(period=9, run=5, phase=2), runes(5, 20))),
+    "ivory_tip": Mat("ivory", 6, 0.1, 0.75),
+    "ivory_twin": Mat("ivory", 6, 0.1, 0.75, details=(runes(20, 27, column=-3), runes(20, 27, column=3))),
+    "gold_trim": Mat("gold", 5, 0.4, 0.85, details=(panel("crimson", 3, margin=1, metal=0.2, gloss=0.6),)),
+    "gold_edge": Mat("gold", 5, 0.45, 0.9),
+    "weave": Mat("weave", 3, 0.0, 0.25),
+    "weave_grip": Mat("weave", 3, 0.0, 0.25, details=(wrap("gold", 5, period=3, width=1, twist=0),)),
+    "crimson_gem": Mat("crimson", 4, 0.3, 1.0, emit=0.5, details=(gem(),), contact=2),
+}
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Shapes
+# Construction helpers (design space: texels; x across the blade, y up it from the grip's middle, z through its flat)
 
-def fullered(w, t, bevel, fw, depth, lip=0.12):
-    """A blade's cross-section with a fuller sunk into each flat. Tags: 0 the edge, 1 where the bevel meets the flat, 2 the
-    flat, 3 the fuller's lip, 4 its floor."""
-    b = min(bevel, w * 0.42)
-    hw = w / 2
-    fw = min(fw, max(0.0, w - 2 * b - 2 * lip))
-    half = fw / 2
-    top = [(-hw, 0.0, 0), (-hw + b, t / 2, 1), (-half - lip, t / 2, 2), (-half, t / 2 - depth, 3), (0.0, t / 2 - depth * 1.15, 4),
-           (half, t / 2 - depth, 3), (half + lip, t / 2, 2), (hw - b, t / 2, 1)]
-    pts = top + [(hw, 0.0, 0)] + [(x, -y, k) for x, y, k in reversed(top[1:])]
-    return [(x, y) for x, y, _ in pts], [k for _, _, k in pts]
-
-
-def star(points, r_out, r_in, phase=0.0):
-    pts = []
-    for k in range(points * 2):
-        a = phase + math.pi * k / points
-        r = r_out if k % 2 == 0 else r_in
-        pts.append((r * math.sin(a), r * math.cos(a)))
-    return pts
+def blade(segs, core, edge, core_d=3, edge_d=1, part="blade", shift=lambda y: 0, x=0.0, **data):
+    """A blade from the guard up, a segment at a time (y0, y1, width, core width): a thin edge slab the full width and
+    a thick core over its middle, so the section steps from edge to spine in whole texels; segments narrow to the
+    point. shift(y0) moves a segment sideways (a wave); data (a span, a column) goes to every box for its painter."""
+    B = []
+    for y0, y1, w, cw in segs:
+        cx = x + shift(y0)
+        if w > cw:
+            B.append(VX.slab(cx - w / 2, cx + w / 2, y0, y1, edge_d, edge, part, **data))
+        if cw:
+            B.append(VX.slab(cx - cw / 2, cx + cw / 2, y0, y1, core_d, core, part, **data))
+    return B
 
 
-def extrude(name, poly, z0, z1, mat, bevel=0.12, inset=0.85, centre=(0.0, 0.0), crease=30.0):
-    """A flat shape in the (x, y) plane given depth along z, its rims bevelled; capped both ends."""
-    cx, cy = centre
-    zs = [z0, z0 + bevel, z1 - bevel, z1]
-    ks = [inset, 1.0, 1.0, inset]
-    centres = np.array([[cx, cy, z] for z in zs])
-    frames = np.repeat(np.array([[[1.0, 0, 0], [0, 0, 1.0], [0, -1.0, 0]]]), 4, axis=0)  # right x, along z, out -y
-    secs = [[(x * k, -y * k) for x, y in poly] for k in ks]
-    side = MS.sweep(name, centres, frames, secs, np.linspace(0, 1, len(poly), endpoint=False), mat, True, crease)
-    return [side, MS.cap(name + "_back", side, 0, mat), MS.cap(name + "_front", side, 1, mat)]
+def chain(x, y, links, part, side=-1, back=None, stagger=0.0, **data):
+    """Bars end to end from (x, y), each turned a whole angle: links (degrees from straight up, outward positive;
+    length, width, depth, material). side -1 builds the left one (mirror() makes the right). Each starts `back` inside
+    the last (half its width by default), so the joints stay solid. stagger lifts every other link that far off the
+    blade's plane (0.05: unseen), so links of one depth that overlap at a joint never share a plane (a curved blade)."""
+    out = []
+    p = np.array([x, y], dtype=float)
+    for k, (deg, length, width, depth, mat) in enumerate(links):
+        th = math.radians(deg * side)
+        d = np.array([math.sin(th), math.cos(th)])
+        if k:
+            p = p - d * (min(width, length) / 2 if back is None else back)
+        c = p + d * length / 2
+        out.append(VX.rbox((c[0], c[1], stagger * (k % 2)), (width, length, depth), -deg * side, mat, part, base=tuple(p),
+                           length=length, **data))
+        p = p + d * length
+    return out
 
 
-def turn(part, axis, degrees, origin):
-    """Rotates a part's points about an axis through origin."""
-    a = math.radians(degrees)
-    c, s = math.cos(a), math.sin(a)
-    R = {"x": [[1, 0, 0], [0, c, -s], [0, s, c]], "y": [[c, 0, s], [0, 1, 0], [-s, 0, c]], "z": [[c, -s, 0], [s, c, 0], [0, 0, 1]]}[axis]
-    o = np.asarray(origin, dtype=float)
-    part.grid = (part.grid - o) @ np.asarray(R).T + o
-    return part
+def spin(boxes):
+    """The same boxes turned half round the blade's normal (x and y both flip): the far blade of a twinblade, point for
+    point, its edge on the other side. Spans flip so what glows still runs outward from the grip."""
+    R180 = VX.rotz(180)
+    out = []
+    for b in boxes:
+        data = dict(b.data)
+        if "span" in data:
+            data["span"] = tuple(-v for v in data["span"])
+        if "column" in data:
+            data["column"] = -data["column"]
+        if "row" in data:
+            data["row"] = -data["row"] - 1
+        if "base" in data:
+            data["base"] = tuple(-v for v in data["base"])
+        out.append(VX.Box(R180 @ b.c, b.h, b.mat, b.part + "~", R180 @ b.R, b.name + "~", **data))
+    return out
 
 
-def gem(name, centre, radius, depth, mat, sides=8):
-    """A cut gem facing the viewer (axis z): a table each side, a girdle, facets."""
-    prof = [(0.0, -depth / 2), (radius * 0.62, -depth * 0.42), (radius, -depth * 0.12), (radius, depth * 0.12),
-            (radius * 0.62, depth * 0.42), (0.0, depth / 2)]
-    p = MS.lathe(name, prof, sides, mat, origin=(0, 0, 0), crease=12.0, phase=math.pi / sides)
-    turn(p, "x", 90, (0, 0, 0))
-    p.grid = p.grid + np.asarray(centre)
-    return p
+def edge_points(boxes, side=1):
+    """Points along one side (local +x, or -x) of a curved blade's links, for its stream."""
+    return [tuple(b.c + b.R[:, 0] * b.h[0] * side) for b in boxes]
 
 
-def helix(radius, y0, y1, turns, n, phase=0.0):
-    t = np.linspace(0, 1, n)
-    a = phase + t * turns * 2 * math.pi
-    return np.stack([radius * np.cos(a), y0 + (y1 - y0) * t, radius * np.sin(a)], axis=1)
+def fan(x, y, slats, part, side=-1):
+    """Slats radiating from one pivot (a wing's feathers): (degrees from straight up, length, width, depth, material)."""
+    out = []
+    for deg, length, width, depth, mat in slats:
+        th = math.radians(deg * side)
+        d = np.array([math.sin(th), math.cos(th)])
+        c = np.array([x, y]) + d * length / 2
+        out.append(VX.rbox((c[0], c[1], 0.0), (width, length, depth), -deg * side, mat, part, base=(x, y), length=length))
+    return out
+
+
+def both(boxes):
+    """A part and its mirror across the blade."""
+    return boxes + VX.mirror(boxes)
+
+
+def frame(centre, outer_, inner, depth, deg, mat, part):
+    """A square frame turned deg about z (45: a diamond): four bars round a hole inner texels across, the top and
+    bottom bars the full width, the sides between them (no two overlap, so their faces never fight)."""
+    w = (outer_ - inner) / 2
+    R = VX.rotz(deg)
+    c = np.asarray(centre, dtype=float)
+    bars = [((0, (inner + w) / 2), (outer_, w)), ((0, -(inner + w) / 2), (outer_, w)),
+            ((-(inner + w) / 2, 0), (w, inner)), (((inner + w) / 2, 0), (w, inner))]
+    return [VX.Box(c + R @ np.array([lx, ly, 0.0]), np.array([sx, sy, depth]) / 2, mat, part, R, f"{part}:bar")
+            for (lx, ly), (sx, sy) in bars]
+
+
+def grip(y0, y1, mat, width=3, depth=3):
+    return VX.slab(-width / 2, width / 2, y0, y1, depth, mat, "grip")
+
+
+def ring(y0, y1, mat, width=5, depth=5, part=None):
+    return VX.slab(-width / 2, width / 2, y0, y1, depth, mat, part or f"ring{y0}")
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Designs
+# Designs: (boxes, anchors (centre, radius, colour, kind), look); all in design space. The grip runs y -1..3 round
+# the hand, the guard sits on it at y 3, the blade rises from there to about y 22, the pommel hangs to about y -6:
+# about 28 texels, a fifth longer than vanilla's sword (22.6 along its diagonal), the blade two thirds of it.
 
-def sovereign():
-    """The Sovereign Longsword (S): the Court's oath made steel. A long ivory-white spire of a blade, gold-edged, its
-    hollow-ground bevels catching the light; a crimson channel down the fuller where the Court's runes burn in turn; a
-    crown for a guard, its quillons sweeping up into points, a cut crimson stone at its heart; a grip of void weave
-    bound in gold wire; a gold star for a pommel round a second stone."""
-    parts = []
-    # the blade: stations up from the guard; width, thickness and the fuller by height; a true point
-    y0, y1 = 4.1, 22.8
-    n = 34
-    s_ = np.linspace(0, 1, n) ** 0.9
-    secs, tags = [], None
-    for k, f in enumerate(s_):
-        point = max(0.0, (f - 0.74) / 0.26)                         # 0 until the point begins, 1 at the tip
-        taper = (1 - point) ** 1.15 * (1 - 0.25 * point * (1 - point))
-        w = (2.75 - 0.4 * f) * taper if k < n - 1 else 0.0
-        t = (0.86 - 0.36 * f) * (1 - point) ** 0.7 if k < n - 1 else 0.0
-        fw = 0.5 * (1 - smooth(0.66, 0.76, f)) * smooth(0.0, 0.04, f)
-        sec, tags = fullered(w, t, 0.5 * (1 - 0.25 * f), fw, 0.15 * smooth(0.0, 0.3, fw), lip=0.1)
-        secs.append(sec)
-    c, fr = MS.straight(y0, y1, n)
-    c[:, 1] = y0 + (y1 - y0) * s_
-    (fs, ft), (bs, bt) = MS.halves(secs, tags)
-    for name, S, T in (("blade_front", fs, ft), ("blade_back", bs, bt)):
-        parts.append(MS.sweep(name, c, fr, S, T, "ivory_blade", False, crease=28.0, data={"align": len(T) // 2, "y0": y0}))
-    # the crown guard: a bar swept along a curve, its ends rising into points
-    path = np.concatenate([MS.bezier((-5.4, 5.6, 0), (-4.6, 3.0, 0), (-2.0, 2.7, 0), (0, 2.9, 0), 14),
-                           MS.bezier((0, 2.9, 0), (2.0, 2.7, 0), (4.6, 3.0, 0), (5.4, 5.6, 0), 14)[1:]])
-    P, F = MS.transport(path, up=(0, 0, 1))
-    m = len(P)
-    sc = np.concatenate([np.linspace(0.18, 1, m // 2), np.linspace(1, 0.18, m - m // 2)])
-    secs = [[(x * k, y * k) for x, y in diamond_round(1.25, 1.55)] for k in sc]
-    parts.append(MS.sweep("guard", P, F, secs, np.linspace(0, 1, 8, endpoint=False), "gold", True, crease=35.0))
-    for x in (-1.85, 1.85):  # the crown's points, rising off the bar beside the blade
-        gy = np.interp(x, P[:, 0], P[:, 1])
-        parts.append(spike(f"crown_{x}", (x, gy + 0.2, 0), (x * 1.12, gy + 1.5, 0), 0.5, "gold"))
-    # the heart: a gold bezel round a cut crimson stone, rising over the blade's root
-    parts.append(ring("bezel", (0, 3.9, 0), 1.0, 0.78, 1.7, "gold"))
-    parts.append(gem("guard_gem", (0, 3.9, 0), 0.78, 2.0, "crimson_gem"))
-    parts.append(spike("crown_mid", (0, 4.7, 0), (0, 6.2, 0), 0.62, "gold"))
-    # the grip: void weave on a lathe, gold wire wound round it, gold ferrules at each end
-    prof = [(0.0, -2.55), (0.72, -2.55), (0.8, -1.6), (0.84, 0.0), (0.8, 1.6), (0.72, 2.45), (0.0, 2.45)]
-    parts.append(MS.lathe("grip", prof, 10, "weave", crease=70.0))
-    parts.append(MS.tube("wire", helix(0.86, -2.2, 2.1, 4.5, 80), 0.1, 5, "gold", data={"no_shadow": True}))
-    parts.append(ring("ferrule_top", (0, 2.45, 0), 1.0, 0.0, 0.45, "gold", axis="y"))
-    parts.append(ring("ferrule_low", (0, -2.55, 0), 1.0, 0.0, 0.45, "gold", axis="y"))
-    # the pommel: a gold star round the second stone
-    parts += extrude("pommel", star(8, 1.75, 0.85, phase=math.pi / 8), -0.6, 0.6, "gold", centre=(0, -4.2))
-    parts.append(gem("pommel_gem", (0, -4.2, 0), 0.62, 1.7, "crimson_gem"))
-    anchors = [((0, 3.9, 0), 2.4, RAMPS["crimson"][5], 1), ((0, -4.2, 0), 1.9, RAMPS["crimson"][5], 1)]
-    return parts, anchors, dict(accent=RAMPS["crimson"][4], density=4.0, ramps=("ivory", "gold", "crimson", "weave"))
-
-
-def smooth(a, b, x):
-    t = min(1.0, max(0.0, (x - a) / (b - a)))
-    return t * t * (3 - 2 * t)
-
-
-def diamond_round(h, d, n=8):
-    """A rounded diamond section: h across (along the path's right), d deep."""
-    return [((h / 2) * math.cos(2 * math.pi * k / n) * (1 - 0.18 * (k % 2)), (d / 2) * math.sin(2 * math.pi * k / n) * (1 - 0.18 * (k % 2)))
-            for k in range(n)]
-
-
-def spike(name, base, tip, width, mat, sides=6):
-    """A tapering point from base to tip."""
-    path = np.linspace(base, tip, 6)
-    r = np.linspace(width / 2, 0.0, 6) ** 1.0
-    return MS.tube(name, path, r, sides, mat)
-
-
-def ring(name, centre, r_out, r_in, depth, mat, axis="z"):
-    """A bezel or ferrule: a short round band (r_in 0 for a solid boss), facing along its axis."""
-    rr = max(r_in, 0.0)
-    prof = [(rr, -depth / 2), (r_out * 0.92, -depth / 2), (r_out, -depth * 0.25), (r_out, depth * 0.25), (r_out * 0.92, depth / 2), (rr, depth / 2)]
-    p = MS.lathe(name, prof, 16, mat, crease=40.0)
-    if axis == "z":
-        turn(p, "x", 90, (0, 0, 0))
-    p.grid = p.grid + np.asarray(centre)
-    return p
-
-
-def blade(name, mat, y0, y1, n, width, thick, bevel=lambda f: 0.5, fuller=lambda f: 0.0, depth=0.15, shift=lambda f: 0.0,
-          jitter=0.0, seed=0, crease=28.0):
-    """A blade lofted through its cross-sections from y0 (at the guard) to y1 (the point), each a function of how far up
-    (0..1): width, thickness, bevel, fuller width and the centre's shift sideways; jitter knaps the section points.
-    Two faces, each unwrapped about its fuller's line (so anything painted down it stays square)."""
-    fs = np.linspace(0, 1, n) ** 0.9
-    rng = np.random.default_rng(seed)
-    secs, tags = [], None
-    for k, f in enumerate(fs):
-        w, t = (width(f), thick(f)) if k < n - 1 else (0.0, 0.0)
-        fw = fuller(f)
-        sec, tags = fullered(w, t, bevel(f), fw, depth * smooth(0.0, 0.3, fw), lip=0.1)
-        if jitter and w > 0:
-            sec = [(x + rng.uniform(-jitter, jitter), z + rng.uniform(-jitter, jitter) * 0.4) for x, z in sec]
-        secs.append([(x + shift(f), z) for x, z in sec])
-    c, fr = MS.straight(y0, y1, n)
-    c[:, 1] = y0 + (y1 - y0) * fs
-    (fsec, ft), (bsec, bt) = MS.halves(secs, tags)
-    return [MS.sweep(name + "_front", c, fr, fsec, ft, mat, False, crease=crease, data={"align": len(ft) // 2, "y0": y0}),
-            MS.sweep(name + "_back", c, fr, bsec, bt, mat, False, crease=crease, data={"align": len(bt) // 2, "y0": y0})]
-
-
-def block(name, w, d, y0, y1, mat, r=0.2, bevel=0.12, x=0.0, z=0.0):
-    """A bevelled block standing up the y axis, w across and d deep, its ends capped."""
-    sec, tags = MS.rounded(w, d, r)
-    ys = [y0, y0 + bevel, y1 - bevel, y1]
-    ks = [0.86, 1.0, 1.0, 0.86]
-    c, fr = MS.straight(y0, y1, 4, x, z)
-    c[:, 1] = ys
-    side = MS.sweep(name, c, fr, [[(px * k, pz * k) for px, pz in sec] for k in ks], tags, mat, True, crease=35.0)
-    return [side, MS.cap(name + "_low", side, 0, mat), MS.cap(name + "_top", side, 1, mat)]
-
-
-def ribbon(name, radius, y0, y1, turns, width, thick, mat, n=90, phase=0.0):
-    """A flat strap wound round a grip: its broad side lies on the grip, turn after turn."""
-    P = helix(radius + thick / 2, y0, y1, turns, n, phase)
-    T = np.gradient(P, axis=0)
-    T /= np.linalg.norm(T, axis=1, keepdims=True)
-    out = P * [1, 0, 1]
-    out /= np.linalg.norm(out, axis=1, keepdims=True)
-    right = np.cross(T, out)
-    F = np.stack([right, T, out], axis=1)
-    sec, tags = MS.rounded(width, thick, thick * 0.45, 2)
-    return MS.sweep(name, P, F, [sec] * n, tags, mat, True, crease=50.0)
-
-
-def orb(name, centre, radius, mat, sides=8, stretch=1.0, axis=None):
-    """A round cut stone (or bead): a faceted ball, stretched along y if asked."""
-    prof = [(radius * math.sin(a), -radius * stretch * math.cos(a)) for a in np.linspace(0, math.pi, 7)]
-    p = MS.lathe(name, prof, sides, mat, crease=14.0, phase=math.pi / sides)
-    if axis == "z":
-        turn(p, "x", 90, (0, 0, 0))
-    p.grid = p.grid + np.asarray(centre)
-    return p
-
-
-def torus(name, centre, R, r, mat, n=36, sides=8):
-    """A ring in the blade's plane (a pommel's loop)."""
-    a = np.linspace(0, 2 * math.pi, n)
-    P = np.stack([centre[0] + R * np.cos(a), centre[1] + R * np.sin(a), np.full(n, centre[2])], axis=1)
-    return MS.tube(name, P, r, sides, mat, up=(0, 0, 1))
-
-
-def curve(p0, p1, p2, p3, n=16):
-    return MS.bezier(p0, p1, p2, p3, n)
-
-
-def mirror_x(points):
-    return np.asarray(points) * [-1, 1, 1]
-
-
-# ---- E: Wildhide --------------------------------------------------------------------------------------------------
+# ---- E: Wildhide ----------------------------------------------------------------------------------------------------
 
 def wildhide():
     """The Wildhide Longsword (E): the first blade a hunter makes. A leaf of knapped flint, every flake struck off it a
-    facet that glints as it turns, its edges thin enough to glow pale; lashed with sinew between two antler tines that
-    fork up beside it; a bone grip wound in a stitched hide strap; an amber bead for a pommel, warm with its own light,
+    facet of its own grey, its edges thin enough to glow pale; lashed with sinew between two antler tines that fork up
+    beside it off a bone collar; a bone grip wound in a hide strap; an amber bead for a pommel, warm with its own light,
     and a tooth hung from it on a thong."""
-    parts = []
-    w = lambda f: 2.3 + 1.1 * math.sin(math.pi * min(1.0, f / 0.85)) ** 1.4 * (1 - smooth(0.75, 1.0, f) * 0.4)
-    parts += blade("blade", "flint_blade", 3.6, 20.4, 26, lambda f: w(f) * (1 - smooth(0.78, 1.0, f)) ** 0.8 + 0.001,
-                   lambda f: 1.0 - 0.45 * f, bevel=lambda f: 0.75, jitter=0.11, seed=11, crease=18.0)
-    # the sinew lashing at the blade's root, and a bone collar under it
-    parts += block("collar", 2.9, 1.5, 2.4, 3.9, "bone", r=0.5)
-    parts.append(MS.tube("lashing", helix_ellipse(1.5, 0.82, 2.55, 3.75, 3.5, 70), 0.11, 5, "hide", data={"no_shadow": True}))
-    for side in (-1, 1):  # antler tines forking up beside the blade
-        main = curve((side * 1.1, 3.2, 0), (side * 2.6, 3.0, 0.1), (side * 3.4, 4.4, 0.2), (side * 3.0, 6.6, 0.1), 18)
-        parts.append(MS.tube(f"tine_{side}", main, np.linspace(0.42, 0.06, len(main)), 7, "bone"))
-        branch = curve((side * 2.9, 3.6, 0.1), (side * 3.6, 3.7, 0.1), (side * 4.3, 4.2, 0.1), (side * 4.5, 5.2, 0.0), 10)
-        parts.append(MS.tube(f"tine_b_{side}", branch, np.linspace(0.24, 0.04, len(branch)), 6, "bone"))
-    # the grip: bone, wound in hide
-    prof = [(0.0, -2.5), (0.66, -2.5), (0.74, -1.6), (0.78, 0.0), (0.74, 1.6), (0.66, 2.4), (0.0, 2.4)]
-    parts.append(MS.lathe("grip", prof, 10, "bone", crease=70.0))
-    parts.append(ribbon("wrap", 0.76, -2.2, 2.1, 3.2, 0.62, 0.14, "hide"))
-    # the pommel: an amber bead in a bone cup, a tooth on a thong
-    parts.append(MS.lathe("cup", [(0.0, -2.5), (0.8, -2.55), (0.95, -2.9), (0.7, -3.2), (0.0, -3.2)], 10, "bone", crease=50.0))
-    parts.append(orb("bead", (0, -3.85, 0), 0.82, "amber_gem", sides=10))
-    thong = curve((0.3, -3.2, 0.5), (0.9, -3.6, 0.9), (1.2, -4.4, 0.9), (1.0, -5.2, 0.7), 12)
-    parts.append(MS.tube("thong", thong, 0.07, 4, "hide", data={"no_shadow": True}))
-    parts.append(spike("tooth", (1.0, -5.1, 0.7), (0.85, -6.3, 0.6), 0.42, "bone"))
-    anchors = [((0, -3.85, 0), 1.6, RAMPS["amber"][5], 1)]
-    return parts, anchors, dict(accent=RAMPS["amber"][4], density=4.0, ramps=("flint", "bone", "hide", "amber"))
+    B = blade([(4, 8, 3, 1), (8, 18, 5, 3), (18, 20, 3, 1), (20, 22, 1, 1)], "flint", "flint_edge")
+    B.append(VX.slab(-2.5, 2.5, 5, 7, 5, "sinew", "lashing"))
+    B.append(VX.slab(-4.5, 4.5, 3, 5, 5, "bone", "collar"))
+    B += both(chain(-3.5, 4.5, [(40, 5, 2, 3, "antler"), (12, 3, 1, 2, "antler")], "antler"))
+    B += both(chain(-5.2, 6.4, [(-8, 3, 1, 2, "antler")], "tine"))
+    B.append(grip(-1, 3, "bone_grip"))
+    B.append(ring(-2, -1, "bone", part="cup"))
+    B.append(VX.slab(-1.5, 1.5, -5, -2, 3, "amber_gem", "bead"))
+    B.append(VX.slab(1.5, 2.5, -4, -2, 1, "hide", "thong"))
+    B.append(VX.rbox((2.2, -4.9, 0), (1, 2, 2), -15, "antler", "tooth"))
+    anchors = [((0, -3.5, 0), 2.2, RAMPS["amber"][5], 1)]
+    return B, anchors, dict(accent=RAMPS["amber"][4], ramps=("flint", "bone", "hide", "amber"))
 
 
-def helix_ellipse(rx, rz, y0, y1, turns, n):
-    t = np.linspace(0, 1, n)
-    a = t * turns * 2 * math.pi
-    return np.stack([rx * np.cos(a), y0 + (y1 - y0) * t, rz * np.sin(a)], axis=1)
-
-
-# ---- D: Beastbound ------------------------------------------------------------------------------------------------
-
-def cleaver(xl, xr, t, spine, bevel):
-    """A straight-backed blade's section: a squared spine on the left, the cutting edge on the right. Tags: 0 the
-    edge, 1 the bevel, 2 the flat, 5 the spine."""
-    pts = [(xr, 0.0, 0), (xr - bevel, t / 2, 1), ((xl + xr) / 2, t / 2 * 1.05, 2), (xl + 0.25, spine / 2, 2), (xl, spine / 2, 5),
-           (xl, -spine / 2, 5), (xl + 0.25, -spine / 2, 2), ((xl + xr) / 2, -t / 2 * 1.05, 2), (xr - bevel, -t / 2, 1)]
-    return [(x, z) for x, z, _ in pts], [k for _, _, k in pts]
-
+# ---- D: Beastbound ----------------------------------------------------------------------------------------------------
 
 def beastbound():
-    """The Beastbound Longsword (D): a trophy of the hunt. A broad cleaver of boar-tusk ivory, its back squared and
-    capped in bronze and set with teeth, its point clipped up to the spine; two tusks for a guard, curling back to
-    the hand from a riveted bronze collar; a grip wrapped in pelt between bronze rings; a bronze claw gripping a
-    moss-green stone."""
-    parts = []
-    n = 26
-    fs = np.linspace(0, 1, n) ** 0.9
-    y0, y1 = 3.7, 19.8
-    secs, tags = [], None
-    for k, f in enumerate(fs):
-        xl = -1.45 + smooth(0.68, 1.0, f) ** 1.2 * 2.35                  # the spine, straight until it clips up
-        xr = 1.55 + 0.3 * math.sin(math.pi * min(1.0, f / 0.9)) - smooth(0.78, 1.0, f) * 0.65  # the edge's belly
-        if k == n - 1:
-            xl = xr = 0.9
-        t = (1.0 - 0.35 * f) * (1 - smooth(0.85, 1.0, f) * 0.9)
-        sec, tags = cleaver(xl, xr, t, t * 1.25, 0.55)
-        secs.append(sec)
-    c, fr = MS.straight(y0, y1, n)
-    c[:, 1] = y0 + (y1 - y0) * fs
-    parts.append(MS.sweep("blade", c, fr, secs, tags, "tusk_blade", True, crease=30.0))
-    for k, f in enumerate((0.12, 0.27, 0.42, 0.57)):  # teeth on the spine
-        y = y0 + (y1 - y0) * f ** 0.9 + 0.2
-        size = 0.55 - 0.08 * k
-        parts.append(spike(f"tooth_{k}", (-1.4, y, 0), (-2.1, y + 0.55, 0), size, "bone"))
-    parts += block("collar", 3.4, 1.9, 2.3, 3.9, "bronze", r=0.35)
-    for x in (-1.1, 1.1):
-        parts.append(orb(f"rivet_{x}", (x, 3.1, 0.95), 0.26, "bronze", sides=6, axis="z"))
-        parts.append(orb(f"rivet_b{x}", (x, 3.1, -0.95), 0.26, "bronze", sides=6, axis="z"))
-    for side in (-1, 1):  # tusks curling back toward the hand
-        path = curve((side * 1.4, 3.1, 0), (side * 3.4, 3.6, 0), (side * 4.4, 1.6, 0), (side * 3.1, 0.6, 0), 20)
-        parts.append(MS.tube(f"tusk_{side}", path, np.linspace(0.5, 0.07, len(path)), 8, "bone"))
-    prof = [(0.0, -2.5), (0.74, -2.5), (0.86, -1.5), (0.9, 0.0), (0.86, 1.5), (0.74, 2.3), (0.0, 2.3)]
-    parts.append(MS.lathe("grip", prof, 10, "pelt", crease=70.0))
-    for y in (-2.45, -0.2, 2.15):
-        parts.append(ring(f"band_{y}", (0, y, 0), 0.98, 0.0, 0.36, "bronze", axis="y"))
-    # the pommel: a bronze claw round a moss stone
-    parts.append(orb("stone", (0, -3.55, 0), 0.78, "moss_gem", sides=8))
-    for k in range(3):
-        a = k * 2 * math.pi / 3 + 0.3
-        ca, sa = math.cos(a), math.sin(a)
-        path = curve((0.45 * ca, -2.6, 0.45 * sa), (1.15 * ca, -2.9, 1.15 * sa), (1.05 * ca, -3.9, 1.05 * sa), (0.35 * ca, -4.45, 0.35 * sa), 12)
-        parts.append(MS.tube(f"claw_{k}", path, np.linspace(0.3, 0.05, len(path)), 6, "bronze"))
-    anchors = [((0, -3.55, 0), 1.5, RAMPS["moss"][6], 1)]
-    return parts, anchors, dict(accent=RAMPS["moss"][5], density=4.0, ramps=("bone", "bronze", "pelt", "moss"))
+    """The Beastbound Longsword (D): a trophy of the hunt. A broad cleaver of boar-tusk ivory, thick at its back and
+    ground thin to the edge, its back capped in bronze and set with teeth, its point clipped up toward the back; two
+    tusks for a guard, curling back to the hand from a riveted bronze collar; a grip wrapped in pelt between bronze
+    rings; a bronze claw gripping a moss-green stone."""
+    B = [VX.slab(-3.5, -2.5, 5, 18, 5, "bronze_back", "back"),
+         VX.slab(-2.5, 0.5, 4, 19, 3, "tusk", "blade", groove=-1),
+         VX.slab(-2.5, 2.5, 4, 18, 1, "tusk_edge", "blade"),
+         VX.slab(-2.5, 1.5, 18, 19, 1, "tusk_edge", "blade"),
+         VX.slab(-1.5, 0.5, 19, 20, 3, "tusk", "blade"),
+         VX.slab(-1.5, -0.5, 20, 21, 3, "tusk", "blade")]
+    for y in (7, 10.5, 14):  # teeth set in the back, leaning up the blade
+        B.append(VX.rbox((-4.2, y + 0.6, 0), (1, 2, 1), 50, "tooth", "teeth"))
+    B.append(VX.slab(-3.5, 3.5, 3, 5, 5, "bronze", "collar"))
+    for x in (-2, 2):  # rivets through the collar, both faces
+        for z0 in (2.5, -3.5):
+            B.append(VX.box(x - 0.5, x + 0.5, 3.5, 4.5, z0, z0 + 1, "bronze", "rivets"))
+    B += both(chain(-3.0, 4.2, [(70, 3, 2, 3, "horn"), (155, 3, 2, 2, "horn"), (215, 2, 1, 1, "horn_tip")], "tusks"))
+    B.append(grip(-1, 3, "pelt"))
+    B.append(ring(2, 3, "bronze", part="ring_top"))
+    B.append(ring(-2, -1, "bronze", part="claw"))
+    B.append(VX.slab(-1.5, 1.5, -5, -2, 3, "moss_gem", "stone"))
+    for sx in (-1, 1):
+        for sz in (-1, 1):  # the claw's four talons down the stone's corners, their points turned in under it
+            B.append(VX.box(sx * 2 - 0.5, sx * 2 + 0.5, -5, -2, sz * 2 - 0.5, sz * 2 + 0.5, "bronze", "claw"))
+            B.append(VX.box(sx - 0.5, sx + 0.5, -6, -5, sz - 0.5, sz + 0.5, "bronze", "claw"))
+    anchors = [((0, -3.5, 0), 2.2, RAMPS["moss"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["moss"][5], ramps=("bone", "bronze", "pelt", "moss"))
 
 
-# ---- C: Gatewrought -----------------------------------------------------------------------------------------------
+# ---- C: Gatewrought ---------------------------------------------------------------------------------------------------
 
 def gatewrought():
     """The Gatewrought Longsword (C): forged from a Gate's own metal by its precursors' rules. A long straight blade of
-    slate-blue gate-steel ground to a raised rib, its edges mirror-honed, the signal circuit inlaid down its fuller,
-    light climbing it in pulses; the guard a gate in brass, two pylons the blade stands between, signal strips lit in
-    their faces; a ribbed slate grip; a brass ring for a pommel with a signal crystal floating in it."""
-    parts = []
-    parts += blade("blade", "slate_blade", 3.5, 21.6, 30, lambda f: (2.5 - 0.3 * f) * (1 - smooth(0.8, 1.0, f)) ** 0.9 + 0.001,
-                   lambda f: 0.85 - 0.35 * f, bevel=lambda f: 0.5, fuller=lambda f: 0.62 * (1 - smooth(0.7, 0.8, f)) * smooth(0.0, 0.04, f),
-                   depth=0.14)
-    parts += block("bar", 6.2, 1.5, 2.5, 3.5, "brass", r=0.3)
-    for side in (-1, 1):
-        x = side * 2.35
-        parts += block(f"pylon_{side}", 1.0, 1.7, 2.2, 5.4, "brass", r=0.25, x=x)
-        parts += block(f"cap_{side}", 1.35, 2.0, 5.3, 5.8, "brass", r=0.2, x=x)
-        parts += block(f"strip_{side}", 0.34, 1.86, 3.0, 5.0, "signal", r=0.08, x=x)
-    prof = [(0.0, -2.5), (0.7, -2.5)] + [(0.7 + 0.1 * (k % 2), -2.1 + k * 0.42) for k in range(11)] + [(0.7, 2.4), (0.0, 2.4)]
-    parts.append(MS.lathe("grip", prof, 10, "slate", crease=40.0))
-    parts.append(ring("ferrule_top", (0, 2.4, 0), 0.95, 0.0, 0.4, "brass", axis="y"))
-    parts.append(ring("ferrule_low", (0, -2.5, 0), 0.95, 0.0, 0.4, "brass", axis="y"))
-    parts.append(torus("loop", (0, -4.0, 0), 1.15, 0.26, "brass"))
-    parts.append(MS.lathe("neck", [(0.0, -2.6), (0.5, -2.6), (0.42, -2.9), (0.0, -2.9)], 8, "brass"))
-    parts.append(orb("crystal", (0, -4.0, 0), 0.5, "signal_gem", sides=6, stretch=1.7))
-    anchors = [((0, -4.0, 0), 1.6, RAMPS["signal"][6], 1)]
-    return parts, anchors, dict(accent=RAMPS["signal"][5], density=4.0, ramps=("slate", "brass", "signal", "mirror"))
+    slate-blue gate-steel ground to a raised rib, its edges mirror-honed, the signal circuit inlaid down the rib, light
+    climbing it in pulses and branching onto the flats; the guard a gate in brass, two pylons the blade stands between,
+    signal slots lit in their faces under heavy caps; a ribbed slate grip; a brass ring for a pommel with a signal
+    crystal floating in it."""
+    B = blade([(4, 20, 5, 1), (20, 21, 3, 1), (21, 22, 1, 1)], "slate_rib", "slate_flat")
+    B.append(VX.slab(-7.5, 7.5, 3, 5, 5, "brass", "bar"))
+    for s in (-1, 1):
+        B.append(VX.slab(*sorted((s * 4.5, s * 6.5)), 5, 9, 5, "pylon", f"pylon{s}"))
+        B.append(VX.slab(*sorted((s * 3.5, s * 7.5)), 9, 10, 7, "brass", f"cap{s}"))
+    B.append(grip(-1, 3, "slate_grip"))
+    B.append(ring(2, 3, "brass", part="ferrule"))
+    B.append(ring(-1, 0, "brass", part="ferrule_low"))
+    B += VX.sprite(["RRRRR", "R...R", "R...R", "R...R", "RRRRR"], -2, -1, {"R": ("brass", 3, "loop")})
+    B.append(VX.rbox((0, -3.5, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
+    anchors = [((0, -3.5, 0), 2.0, RAMPS["signal"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["signal"][5], ramps=("slate", "brass", "signal", "mirror"))
 
 
-# ---- B: Veilwoven -------------------------------------------------------------------------------------------------
+# ---- B: Veilwoven -----------------------------------------------------------------------------------------------------
+
+VEIL_WAVE = ((4, 0), (7, 1), (10, 0), (13, -1), (16, 0), (19, 1), (20, 0))  # the flame wave: where the blade steps a texel aside
+
+
+def veil_shift(y):
+    o = 0
+    for y0, s in VEIL_WAVE:
+        if y >= y0:
+            o = s
+    return o
+
 
 def veilwoven():
     """The Veilwoven Longsword (B): steel that has been through the Veil and back. A flame-waved blade, near-black
     violet with a sheen that slides like oil down it; one edge is living spirit light, the other mirror-honed; quillons
-    of mirror-silver swept up like wings; an obsidian grip ringed in mirror; a teardrop of mirror holding a spirit
-    stone."""
-    parts = []
-    wave = lambda f: 0.26 * math.sin(f * math.pi * 7.0) * (1 - smooth(0.7, 0.85, f))
-    parts += blade("blade", "veil_blade", 3.6, 21.2, 44, lambda f: (2.5 - 0.2 * f) * (1 - smooth(0.8, 1.0, f)) ** 0.85 + 0.001,
-                   lambda f: 0.8 - 0.32 * f, bevel=lambda f: 0.6, shift=wave)
-    parts += block("heart", 1.9, 1.7, 2.4, 4.0, "mirror", r=0.4)
-    parts.append(gem("heart_gem", (0, 3.2, 0), 0.55, 2.0, "spirit_gem"))
-    for side in (-1, 1):
-        path = curve((side * 0.9, 3.2, 0), (side * 2.6, 3.0, 0), (side * 3.8, 4.0, 0.2), (side * 4.2, 6.4, 0.5), 18)
-        parts.append(MS.tube(f"quillon_{side}", path, np.linspace(0.42, 0.05, len(path)), 7, "mirror"))
-        under = curve((side * 0.9, 2.8, 0), (side * 2.0, 2.4, 0), (side * 2.8, 2.6, 0), (side * 3.2, 3.4, 0.2), 12)
-        parts.append(MS.tube(f"under_{side}", under, np.linspace(0.26, 0.04, len(under)), 6, "mirror"))
-    prof = [(0.0, -2.5), (0.66, -2.5), (0.72, -1.5), (0.76, 0.0), (0.72, 1.5), (0.66, 2.4), (0.0, 2.4)]
-    parts.append(MS.lathe("grip", prof, 10, "obsidian", crease=70.0))
-    for y in (-2.45, -1.0, 0.5, 2.1):
-        parts.append(ring(f"band_{y}", (0, y, 0), 0.86, 0.0, 0.28, "mirror", axis="y"))
-    drop = [(0.0, -2.55), (0.55, -2.7), (0.95, -3.3), (1.0, -3.9), (0.8, -4.5), (0.4, -4.95), (0.0, -5.1)]
-    parts.append(MS.lathe("drop", drop, 12, "mirror", crease=40.0))
-    parts.append(gem("drop_gem", (0, -3.9, 0), 0.6, 2.4, "spirit_gem"))
-    anchors = [((0, 3.2, 0), 1.6, RAMPS["spirit"][6], 1), ((0, -3.9, 0), 1.7, RAMPS["spirit"][6], 1)]
-    return parts, anchors, dict(accent=RAMPS["spirit"][5], density=4.0, ramps=("veil", "mirror", "spirit", "obsidian"))
+    of mirror-silver swept up like wings off a mirror heart holding a spirit stone; an obsidian grip ringed in mirror; a
+    teardrop of mirror holding a second stone."""
+    segs = [(4, 7, 5, 3), (7, 10, 5, 3), (10, 13, 5, 3), (13, 16, 5, 3), (16, 19, 5, 3), (19, 20, 5, 3), (20, 22, 3, 1), (22, 23, 1, 1)]
+    B = blade(segs, "veil", "veil_edge", shift=veil_shift)
+    B.append(VX.slab(-2.5, 2.5, 3, 6, 5, "mirror", "heart"))
+    B.append(VX.rbox((0, 4.5, 0), (3, 3, 7), 45, "spirit_gem", "heart_gem"))
+    B += both(chain(-2.0, 4.5, [(75, 3, 2, 3, "mirror"), (45, 3, 2, 2, "mirror"), (18, 3, 1, 1, "mirror")], "quillons"))
+    B.append(grip(-1, 3, "obsidian"))
+    for y0 in (2, -1):
+        B.append(ring(y0, y0 + 1, "mirror", part=f"band{y0}"))
+    B.append(VX.rbox((0, -3.1, 0), (3, 3, 5), 45, "mirror", "drop"))
+    B.append(VX.rbox((0, -3.1, 0), (2, 2, 7), 45, "spirit_gem", "drop_gem"))
+    anchors = [((0, 4.5, 0), 2.4, RAMPS["spirit"][6], 1), ((0, -3.1, 0), 1.9, RAMPS["spirit"][6], 1)]
+    # the spirit edge (the -x side) lets go of wisps that drift and curl away; the heart stone breathes motes
+    edge = [(-2.5 + veil_shift(y), y + 0.5, 0.0) for y in range(6, 21, 2)]
+    streams = [(WISP, RAMPS["spirit"][6], 5, 0.18, edge), (MOTE, RAMPS["spirit"][7], 2, 1.6, [(0, 4.5, 0)])]
+    return B, anchors, dict(accent=RAMPS["spirit"][5], ramps=("veil", "mirror", "spirit", "obsidian"), streams=streams)
 
 
-# ---- A: Lordscale -------------------------------------------------------------------------------------------------
-
-def wing_shape(span, rise, feathers=4):
-    """A wing's outline in the blade's plane, reaching out and up from the guard, its trailing edge scalloped."""
-    pts = [(0.0, 0.0), (span * 0.35, -0.35), (span * 0.8, 0.2), (span, rise * 0.55), (span * 0.95, rise)]
-    for k in range(feathers):  # back along the trailing edge, a scallop per feather
-        f0 = 1 - (k + 0.5) / feathers
-        pts.append((span * (0.92 * f0 + 0.04), rise * (0.55 + 0.4 * f0) - 0.25))
-        pts.append((span * (0.92 * (f0 - 0.5 / feathers) + 0.04), rise * (0.5 + 0.4 * f0)))
-    pts.append((0.15, 0.9))
-    return pts
-
+# ---- A: Lordscale -----------------------------------------------------------------------------------------------------
 
 def lordscale():
     """The Lordscale Longsword (A): cut from a fallen Lord. A broad blade of black scale, each scale rimmed where the
     light finds it, a gold ridge down its middle, its edges molten gold that flows toward the point; a guard of two
-    wings spread up and out, layered in scale; a grip of black scale banded in gold; a gold claw holding the sky's
-    pearl."""
-    parts = []
-    parts += blade("blade", "lord_blade", 3.8, 21.4, 30, lambda f: (3.3 - 0.55 * f) * (1 - smooth(0.78, 1.0, f)) ** 0.8 + 0.001,
-                   lambda f: 1.0 - 0.45 * f, bevel=lambda f: 0.75)
-    parts += block("heart", 2.6, 1.9, 2.3, 4.2, "lord", r=0.45)
-    parts.append(gem("heart_gem", (0, 3.25, 0), 0.62, 2.2, "pearl_gem"))
-    parts.append(ring("heart_bezel", (0, 3.25, 0), 0.82, 0.62, 2.0, "gold"))
-    for side in (-1, 1):
-        for layer, (span, rise, z, mat) in enumerate(((4.7, 3.5, -0.2, "gold"), (3.9, 2.9, 0.3, "lord_scale"))):
-            pts = [(side * x, y) for x, y in wing_shape(span, rise)]
-            if side < 0:
-                pts = pts[::-1]
-            pts = [(x + side * 1.0, y + 2.9) for x, y in pts]
-            d = 0.7 - 0.25 * layer
-            parts += extrude(f"wing_{side}_{layer}", pts, z - d / 2 + (0 if layer == 0 else 0.0), z + d / 2, mat, bevel=0.1)
-    prof = [(0.0, -2.5), (0.74, -2.5), (0.8, -1.5), (0.84, 0.0), (0.8, 1.5), (0.74, 2.3), (0.0, 2.3)]
-    parts.append(MS.lathe("grip", prof, 10, "lord_scale", crease=70.0))
-    for y in (-2.45, 0.0, 2.2):
-        parts.append(ring(f"band_{y}", (0, y, 0), 0.95, 0.0, 0.34, "gold", axis="y"))
-    parts.append(orb("pearl", (0, -3.6, 0), 0.82, "pearl_gem", sides=10))
-    for k in range(4):
-        a = k * math.pi / 2 + math.pi / 4
-        ca, sa = math.cos(a), math.sin(a)
-        path = curve((0.4 * ca, -2.6, 0.4 * sa), (1.2 * ca, -2.8, 1.2 * sa), (1.1 * ca, -3.9, 1.1 * sa), (0.35 * ca, -4.5, 0.35 * sa), 12)
-        parts.append(MS.tube(f"claw_{k}", path, np.linspace(0.28, 0.04, len(path)), 6, "gold"))
-    anchors = [((0, 3.25, 0), 1.7, RAMPS["pearl"][4], 1), ((0, -3.6, 0), 1.7, RAMPS["pearl"][4], 1)]
-    return parts, anchors, dict(accent=RAMPS["ember"][5], density=4.0, ramps=("lord", "gold", "ember", "pearl"))
+    great wings spread up and out, a gold pinion over layered black feathers tipped in gold; the sky's pearl at their
+    heart; a grip of black scale banded in gold; a gold claw holding a second pearl."""
+    B = blade([(4, 20, 5, 3), (20, 22, 3, 1), (22, 23, 1, 1)], "lord", "ember_edge")
+    B.append(VX.slab(-2.5, 2.5, 3, 6, 5, "lord_dark", "heart"))
+    B += frame((0, 4.5, 0), 4, 2, 7, 45, "gold", "bezel")
+    B.append(VX.rbox((0, 4.5, 0), (2, 2, 6), 45, "pearl_gem", "pearl"))
+    B += both(fan(-2.0, 4.5, [(38, 9, 2, 4, "gold"), (56, 8, 2, 3, "feather"), (74, 7, 2, 2, "feather"), (94, 5, 2, 1, "feather")], "wing"))
+    B.append(grip(-1, 3, "lord_grip"))
+    for y0 in (2, -1):
+        B.append(ring(y0, y0 + 1, "gold", part=f"band{y0}"))
+    B.append(ring(-2, -1, "gold", part="claw"))
+    B.append(VX.slab(-1.5, 1.5, -5, -2, 3, "pearl_gem", "pearl_low"))
+    for sx, sz in ((-1, 0), (1, 0), (0, -1), (0, 1)):  # the claw's talons down the pearl's sides, curling under it
+        B.append(VX.box(sx * 2 - 0.5, sx * 2 + 0.5, -5, -2, sz * 2 - 0.5, sz * 2 + 0.5, "gold", "claw"))
+        B.append(VX.box(sx - 0.5, sx + 0.5, -6, -5, sz - 0.5, sz + 0.5, "gold", "claw"))
+    anchors = [((0, 4.5, 0), 2.2, RAMPS["pearl"][4], 1), ((0, -3.5, 0), 2.2, RAMPS["pearl"][4], 1)]
+    # the molten edges shed embers that rise and cool, more as the blade fills with light
+    streams = [(EMBER, RAMPS["ember"][6], 7, 0.12, [(side * 2.5, y + 0.5, 0.0) for y in range(6, 21, 2)]) for side in (-1, 1)]
+    return B, anchors, dict(accent=RAMPS["ember"][5], ramps=("lord", "gold", "ember", "pearl"), streams=streams)
 
 
-DESIGNS = {"E": wildhide, "D": beastbound, "C": gatewrought, "B": veilwoven, "A": lordscale, "S": sovereign}
+# ---- S: Sovereign -----------------------------------------------------------------------------------------------------
+
+def sovereign():
+    """The Sovereign Longsword (S): the Court's oath made steel. A long ivory-white spire of a blade between gold edges,
+    a crimson channel down its middle where the Court's runes burn in turn; a crown for a guard, its quillons sweeping
+    up into points, a great cut crimson stone at its heart in a raised gold frame; a grip of void weave bound in gold
+    wire; a gold star for a pommel round a second stone."""
+    B = blade([(4, 20, 5, 3), (20, 22, 3, 1), (22, 23, 1, 1)], "ivory", "gold_edge")
+    B.append(VX.slab(-5.5, 5.5, 3, 5, 5, "gold", "guard"))
+    B += both(chain(-5.0, 4.0, [(42, 4, 2, 3, "gold"), (12, 3, 1, 2, "gold")], "quillons"))
+    B += frame((0, 5.5, 0), 5, 3, 9, 45, "gold", "frame")
+    B.append(VX.rbox((0, 5.5, 0), (3, 3, 7), 45, "crimson_gem", "heart"))
+    B.append(grip(-1, 3, "weave_grip"))
+    B.append(ring(2, 3, "gold", part="ferrule"))
+    B.append(ring(-2, -1, "gold", part="ferrule_low"))
+    B.append(VX.slab(-2, 2, -5.5, -1.5, 3, "gold", "star"))
+    B.append(VX.rbox((0, -3.5, 0), (4, 4, 4), 45, "gold", "star_turned"))
+    B.append(VX.rbox((0, -3.5, 0), (2, 2, 7), 0, "crimson_gem", "pommel_gem"))
+    anchors = [((0, 5.5, 0), 2.8, RAMPS["crimson"][5], 1), ((0, -3.5, 0), 2.0, RAMPS["crimson"][5], 1)]
+    # motes hang round the Court's stones and drift up off the burning runes of the channel
+    streams = [(MOTE, RAMPS["crimson"][6], 4, 2.0, [(0, 5.5, 0)]), (MOTE, RAMPS["crimson"][6], 2, 1.6, [(0, -3.5, 0)]),
+               (MOTE, RAMPS["gold"][6], 3, 0.25, [(0, 9.5, 0.0), (0, 19.5, 0.0)])]
+    return B, anchors, dict(accent=RAMPS["crimson"][4], ramps=("ivory", "gold", "crimson", "weave"), streams=streams)
+
+
+# ---- what lifts off a weapon (SPEC §25 "Weapons"): embers, wisps, motes, drawn by the effects engine ----------------
+EMBER, WISP, MOTE = 1, 2, 3
+
+HOLDS = {}  # each style's first-person hold (hold_of below)
+DESIGNS = {("longsword", "E"): wildhide, ("longsword", "D"): beastbound, ("longsword", "C"): gatewrought,
+           ("longsword", "B"): veilwoven, ("longsword", "A"): lordscale, ("longsword", "S"): sovereign}
 # the light of each tier's swings (a bright step of its own glow)
 TRAILS = {"E": "#f1ebd6", "D": "#b9d890", "C": "#7fc3ff", "B": "#c3cbff", "A": "#f3c443", "S": "#ff9080"}
 
+# =====================================================================================================================
+# Batch 1: four more forged lines, each tier's materials and story in another fighting style. Design space as the
+# Longswords': x across (the axe's bit toward -x, the item's upper left), y up from the hand, z through the flat.
+
+def haft(y0, y1, mat, part="haft", width=3, depth=3, **data):
+    return VX.slab(-width / 2, width / 2, y0, y1, depth, mat, part, **data)
+
+
+def bit(x0, cols, core, edge, edge_w=1, core_d=3, edge_d=1, side=-1, part="bit", **data):
+    """An axe's bit from the eye outward: cols (width, y0, y1), each a column group of the core a little taller than the
+    last (so the bit flares from the eye to its edge in whole-texel steps), then the cutting edge: thinner, in its own
+    material, a texel taller at each end than the last group."""
+    B = []
+    x = x0
+    for w, y0, y1 in cols:
+        xa, xb = sorted((x, x + side * w))
+        B.append(VX.slab(xa, xb, y0, y1, core_d, core, part, **data))
+        x += side * w
+    y0, y1 = cols[-1][1] - 1, cols[-1][2] + 1
+    xa, xb = sorted((x, x + side * edge_w))
+    B.append(VX.slab(xa, xb, y0, y1, edge_d, edge, part, **data))
+    return B
+
+
+def langets(y0, y1, mat, depth=5, part="langets"):
+    """Metal strips down the haft's two faces from the head (the reference's copper strip down its shaft)."""
+    return [VX.box(-0.5, 0.5, y0, y1, depth / 2 - 1, depth / 2, mat, part), VX.box(-0.5, 0.5, y0, y1, -depth / 2, -depth / 2 + 1, mat, part)]
+
+
+# ---- Axes: a haft about 23 texels, a broad bit flaring to one side, a spike or a poll to the other ------------------
+
+def wildhide_axe():
+    """The Wildhide Axe (E): a hand-axe of knapped flint, its pale edge struck fresh, lashed with sinew into the top of a
+    bone haft; an antler tine curls up off its back; the grip wound in hide; an amber bead at its foot."""
+    B = [haft(4, 18, "bone"), haft(-4, 4, "bone_grip", "grip")]
+    B += bit(-2.5, [(2, 14, 18), (2, 12, 19), (2, 11, 20)], "flint", "flint_edge", edge_w=2)
+    B.append(VX.slab(-2.5, 2.5, 13, 16, 5, "sinew", "lashing"))
+    B.append(VX.slab(-2.5, 2.5, 17, 18, 5, "sinew", "lashing_top"))
+    B += chain(1.5, 15.0, [(62, 4, 2, 3, "antler"), (24, 3, 1, 2, "antler")], "tine", side=1)
+    B.append(ring(-5, -4, "bone", part="cup"))
+    B.append(VX.slab(-1.5, 1.5, -8, -5, 3, "amber_gem", "bead"))
+    anchors = [((0, -6.5, 0), 2.2, RAMPS["amber"][5], 1)]
+    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-4, 4), focus=(-3, 15))
+
+
+def beastbound_axe():
+    """The Beastbound Axe (D): a bearded bit of boar-tusk ivory, banded with its growth, two teeth set in its top,
+    socketed in a riveted bronze eye with bronze langets down the haft; a bronze hammer poll holding the moss stone; a
+    hide-wrapped haft banded in bronze, pelt round the hand."""
+    B = [haft(3, 19, "hide"), haft(-4, 3, "pelt", "grip")]
+    B += bit(-2.5, [(2, 15, 19), (2, 14, 20), (2, 12, 20), (2, 10, 20)], "tusk", "tusk_edge")
+    for x in (-8.0, -5.0):  # teeth set in the bit's top
+        B.append(VX.rbox((x, 20.7, 0), (1, 2, 1), 20, "tooth", "teeth"))
+    B.append(VX.slab(-2.5, 2.5, 13, 20, 5, "bronze", "eye"))
+    for y in (14.5, 18.5):
+        for z0 in (2.5, -3.5):
+            B.append(VX.box(-0.5, 0.5, y - 0.5, y + 0.5, z0, z0 + 1, "bronze", "rivets"))
+    B += langets(8, 13, "bronze")
+    B.append(VX.slab(2.5, 6.5, 14, 19, 5, "bronze_back", "poll"))
+    B.append(VX.rbox((4.5, 16.5, 0), (2, 2, 7), 45, "moss_gem", "stone"))
+    for y0 in (3, -1):
+        B.append(ring(y0, y0 + 1, "bronze", part=f"band{y0}"))
+    B.append(VX.slab(-2.5, 2.5, -6, -4, 5, "bronze", "foot"))
+    anchors = [((4.5, 16.5, 0), 1.8, RAMPS["moss"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-4, 3), focus=(-2, 15))
+
+
+def gatewrought_axe():
+    """The Gatewrought Axe (C): a squared fan of gate-steel, its edge mirror-honed, the signal circuit running out
+    across it from a brass eye where the crystal sits; a brass back-spike stepped like a pylon's point; a slate haft
+    with the circuit climbing it to the head between brass langets, ribbed round the hand."""
+    B = [haft(3, 19, "slate_rib", span=(4, 13)), haft(-4, 3, "slate_grip", "grip")]
+    B += bit(-3.5, [(2, 14, 18), (2, 13, 19), (2, 12, 20)], "slate_bit", "mirror_edge", row=16, span=(3, 10))
+    B.append(VX.slab(-3.5, 3.5, 13, 19, 5, "brass", "eye"))
+    B.append(VX.rbox((0, 16, 0), (2, 2, 7), 45, "signal_gem", "crystal"))
+    B += [VX.slab(3.5, 6.5, 14, 18, 3, "brass", "spike"), VX.slab(6.5, 8.5, 15, 17, 3, "pylon", "spike_tip", column=7, span=(15, 17)),
+          VX.slab(8.5, 9.5, 15.5, 16.5, 1, "brass", "spike_point")]
+    B += [VX.box(-2.5, -1.5, 9, 13, -1.5, 1.5, "brass", "langets"), VX.box(1.5, 2.5, 9, 13, -1.5, 1.5, "brass", "langets")]
+    B.append(ring(2, 3, "brass", part="ferrule"))
+    B.append(VX.slab(-2.5, 2.5, -6, -4, 5, "brass", "foot"))
+    B.append(VX.rbox((0, -6.5, 0), (2, 2, 2), 45, "signal_gem", "foot_crystal"))
+    anchors = [((0, 16, 0), 1.9, RAMPS["signal"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-4, 3), focus=(-3, 16))
+
+
+def veilwoven_axe():
+    """The Veilwoven Axe (B): a crescent of near-black Veil-steel whose edge is living spirit light, its horns swept
+    back like the Veilwoven's quillons; a mirror spike curving up off its back; the spirit stone in a mirror eye; an
+    obsidian haft ringed in mirror, mirror langets, a mirror drop at its foot."""
+    B = [haft(-4, 19, "obsidian")]
+    B += bit(-2.5, [(2, 14, 18), (2, 13, 19), (2, 12, 20)], "veil", "spirit_edge", span=(11, 21))
+    B += chain(-8.0, 19.5, [(30, 3, 2, 2, "veil"), (8, 3, 1, 1, "spirit_edge")], "horn_up")
+    B += chain(-8.0, 12.5, [(150, 3, 2, 2, "veil"), (172, 3, 1, 1, "spirit_edge")], "horn_low")
+    B.append(VX.slab(-2.5, 2.5, 13, 18, 5, "mirror", "eye"))
+    B.append(VX.rbox((0, 15.5, 0), (3, 3, 7), 45, "spirit_gem", "eye_gem"))
+    B += chain(2.5, 15.5, [(65, 3, 2, 3, "mirror"), (30, 3, 1, 2, "mirror")], "spike", side=1)
+    B += langets(9, 13, "mirror")
+    for y0 in (3, -3):
+        B.append(ring(y0, y0 + 1, "mirror", part=f"band{y0}"))
+    B.append(VX.rbox((0, -6.2, 0), (3, 3, 5), 45, "mirror", "drop"))
+    anchors = [((0, 15.5, 0), 2.2, RAMPS["spirit"][6], 1)]
+    edge = [(-9.0, y + 0.5, 0.0) for y in range(11, 21, 2)]
+    streams = [(WISP, RAMPS["spirit"][6], 4, 0.18, edge), (MOTE, RAMPS["spirit"][7], 2, 1.4, [(0, 15.5, 0)])]
+    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-4, 3), focus=(-3, 15.5), streams=streams)
+
+
+def lordscale_axe():
+    """The Lordscale Axe (A): a broad bearded bit of black scale capped along its top in gold, its edge molten gold
+    running down into the beard; a gold wing for its poll, its feathers black and gold-tipped; the pearl in a
+    gold-framed eye; a black-scale haft banded in gold with gold langets, a gold claw at its foot."""
+    B = [haft(-4, 19, "lord_grip")]
+    cols = [(2, 14, 19), (2, 13, 20), (2, 11, 20), (2, 9, 21)]
+    B += bit(-2.5, cols, "lord_plain", "ember_edge", edge_w=2, span=(8, 22))
+    x = -2.5
+    for w, y0, y1 in cols:  # the gold cap along the bit's top
+        B.append(VX.slab(x - w, x, y1, y1 + 1, 3, "gold", "cap"))
+        x -= w
+    B.append(VX.slab(-2.5, 2.5, 12, 20, 5, "lord_dark", "eye"))
+    B += frame((0, 15.5, 0), 4, 2, 7, 45, "gold", "bezel")
+    B.append(VX.rbox((0, 15.5, 0), (2, 2, 6), 45, "pearl_gem", "pearl"))
+    B += fan(2.0, 15.5, [(48, 7, 2, 4, "gold"), (72, 6, 2, 3, "feather"), (96, 5, 2, 2, "feather")], "wing", side=1)
+    B += langets(8, 12, "gold")
+    for y0 in (3, -3):
+        B.append(ring(y0, y0 + 1, "gold", part=f"band{y0}"))
+    B.append(VX.slab(-2.5, 2.5, -6, -4, 5, "gold", "foot"))
+    B.append(VX.slab(-1, 1, -7, -6, 2, "gold", "foot_claw"))
+    anchors = [((0, 15.5, 0), 2.0, RAMPS["pearl"][4], 1)]
+    streams = [(EMBER, RAMPS["ember"][6], 6, 0.12, [(-12.0, y + 0.5, 0.0) for y in range(9, 21, 2)])]
+    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-4, 3), focus=(-3, 15), streams=streams)
+
+
+def sovereign_axe():
+    """The Sovereign Axe (S): an ivory bit flaring to a gold edge, the Court's runes burning down a crimson channel in
+    its face; a gold crown of two spikes for its back; a great crimson stone in a raised gold diamond at the eye; a
+    void-weave haft bound in gold wire with gold langets, a gold star at its foot."""
+    B = [haft(3, 19, "weave"), haft(-4, 3, "weave_grip", "grip")]
+    B += bit(-2.5, [(2, 14, 18), (2, 13, 19), (3, 11, 21)], "ivory", "gold_edge", column=-7, span=(12, 20))
+    B.append(VX.slab(-9.5, -6.5, 10, 11, 1, "gold_edge", "rim_low"))
+    B.append(VX.slab(-9.5, -6.5, 21, 22, 1, "gold_edge", "rim_top"))
+    B.append(VX.slab(-2.5, 2.5, 13, 18, 5, "gold", "eye"))
+    B += frame((0, 15.5, 0), 5, 3, 9, 45, "gold", "frame")
+    B.append(VX.rbox((0, 15.5, 0), (3, 3, 7), 45, "crimson_gem", "heart"))
+    B += chain(3.0, 16.5, [(55, 3, 2, 3, "gold"), (20, 3, 1, 2, "gold")], "crown", side=1)
+    B += chain(3.0, 14.5, [(110, 3, 2, 3, "gold"), (140, 2, 1, 2, "gold")], "crown_low", side=1)
+    B += langets(8, 12, "gold")
+    for y0 in (3, -3):
+        B.append(ring(y0, y0 + 1, "gold", part=f"band{y0}"))
+    B.append(VX.slab(-1.5, 1.5, -7, -4, 3, "gold", "star"))
+    B.append(VX.rbox((0, -5.5, 0), (3, 3, 4), 45, "gold", "star_turned"))
+    B.append(VX.rbox((0, -5.5, 0), (1, 1, 6), 0, "crimson_gem", "star_gem"))
+    anchors = [((0, 15.5, 0), 2.6, RAMPS["crimson"][5], 1)]
+    streams = [(MOTE, RAMPS["crimson"][6], 4, 1.8, [(0, 15.5, 0)]), (MOTE, RAMPS["gold"][6], 2, 0.25, [(-7, 12.5, 0.0), (-7, 19.5, 0.0)])]
+    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-4, 3), focus=(-3, 15.5), streams=streams)
+
+
+DESIGNS.update({("axe", "E"): wildhide_axe, ("axe", "D"): beastbound_axe, ("axe", "C"): gatewrought_axe,
+                ("axe", "B"): veilwoven_axe, ("axe", "A"): lordscale_axe, ("axe", "S"): sovereign_axe})
+HOLDS["axe"] = ([0, -72, 30], [-2.0, 1.5, -0.6], 0.4)
+
+
+# ---- Mauls: the reference's own: a long haft about 26 texels, a huge block head across its top (a core between two
+# flared caps, a stone in a raised frame at its heart), a heavy pommel; held in two hands --------------------------
+
+HEAD = 23.5  # the head's middle
+
+
+def caps(x0, x1, y0, y1, depth, mat, part="caps"):
+    """The head's two flared ends, mirrored across the haft."""
+    return [VX.slab(-x1, -x0, y0, y1, depth, mat, part), VX.slab(x0, x1, y0, y1, depth, mat, part + "'")]
+
+
+def wildhide_maul():
+    """The Wildhide Maul (E): a great nodule of knapped flint lashed crosswise to a bone haft, sinew bound round it
+    where the haft goes in, an amber bead knotted into the binding; antler burrs ring its ends and two tines rise from
+    them; a bone knob and a hung tooth at its foot."""
+    B = [haft(-5, 21, "bone"), haft(-5, 3, "bone_grip", "grip")]
+    B.append(VX.slab(-5.5, 5.5, 20, 27, 7, "flint", "head"))
+    B += caps(5.5, 6.5, 19, 28, 9, "antler", "burrs")
+    B.append(VX.slab(-1.5, 1.5, 19, 28, 9, "sinew", "binding"))
+    B.append(VX.rbox((0, HEAD, 0), (2, 2, 11), 45, "amber_gem", "bead"))
+    B += both(chain(-6.0, 27.5, [(-20, 3, 1, 3, "antler"), (8, 2, 1, 2, "antler")], "tines"))
+    B.append(VX.slab(-2.5, 2.5, 17, 19, 5, "sinew", "collar"))
+    B.append(VX.slab(-2.5, 2.5, -8, -5, 5, "bone", "knob"))
+    B.append(VX.slab(2.5, 3.5, -8, -6, 1, "hide", "thong"))
+    B.append(VX.rbox((3.0, -9.0, 0), (1, 2, 2), -10, "antler", "tooth"))
+    anchors = [((0, HEAD, 0), 2.0, RAMPS["amber"][5], 1)]
+    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-5, 3), focus=(0, HEAD - 1))
+
+
+def beastbound_maul():
+    """The Beastbound Maul (D): a block of tusk ivory, banded with its growth, held between riveted bronze straps and
+    plated bronze ends; two tusks curl up off its top; the moss stone in a bronze diamond at its heart; a hide haft
+    with bronze langets, pelt round the hands, a bronze claw at its foot."""
+    B = [haft(-5, 21, "hide"), haft(-5, 3, "pelt", "grip")]
+    B.append(VX.slab(-5.5, 5.5, 20, 27, 7, "tusk", "head"))
+    B += caps(5.5, 7.5, 19, 28, 9, "bronze", "ends")
+    B += [VX.slab(-3.5, -2.5, 19.5, 27.5, 8, "bronze_back", "strap"), VX.slab(2.5, 3.5, 19.5, 27.5, 8, "bronze_back", "strap'")]
+    B += frame((0, HEAD, 0), 4, 2, 9, 45, "bronze", "bezel")
+    B.append(VX.rbox((0, HEAD, 0), (2, 2, 8), 45, "moss_gem", "stone"))
+    B += both(chain(-6.0, 27.5, [(-10, 3, 2, 3, "horn"), (25, 3, 2, 2, "horn"), (60, 2, 1, 1, "horn_tip")], "tusks"))
+    B.append(VX.slab(-2.5, 2.5, 18, 20, 5, "bronze", "collar"))
+    B += langets(12, 18, "bronze")
+    B.append(ring(3, 4, "bronze", part="band"))
+    B.append(VX.slab(-2.5, 2.5, -8, -5, 5, "bronze", "foot"))
+    for sx in (-1, 1):
+        B.append(VX.box(sx * 2 - 0.5, sx * 2 + 0.5, -9, -8, -0.5, 0.5, "bronze", "talons"))
+    anchors = [((0, HEAD, 0), 1.9, RAMPS["moss"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-5, 3), focus=(0, HEAD - 1))
+
+
+def gatewrought_maul():
+    """The Gatewrought Maul (C): a Gate's keystone on a staff. A block of slate gate-steel between flared brass caps,
+    a signal slot lit down each cap's face; the crystal at its heart in a raised brass diamond; the circuit climbing the
+    slate haft between brass langets; a brass block for a pommel with a second crystal in it."""
+    B = [haft(-5, 21, "slate_rib", span=(4, 18)), haft(-5, 3, "slate_grip", "grip")]
+    B.append(VX.slab(-4.5, 4.5, 20, 27, 7, "slate_head", "head"))
+    B += [VX.slab(-7.5, -4.5, 19, 28, 9, "cap_slot", "cap", column=-6, span=(20, 27)),
+          VX.slab(4.5, 7.5, 19, 28, 9, "cap_slot", "cap'", column=6, span=(20, 27))]
+    B += frame((0, HEAD, 0), 5, 3, 11, 45, "brass", "frame")
+    B.append(VX.rbox((0, HEAD, 0), (3, 3, 9), 45, "signal_gem", "crystal"))
+    B.append(VX.slab(-2.5, 2.5, 18, 20, 5, "brass", "collar"))
+    B += [VX.box(-2.5, -1.5, 13, 18, -1.5, 1.5, "brass", "langets"), VX.box(1.5, 2.5, 13, 18, -1.5, 1.5, "brass", "langets")]
+    B.append(ring(3, 4, "brass", part="ferrule"))
+    B.append(VX.slab(-2.5, 2.5, -8, -5, 5, "brass", "pommel"))
+    B.append(VX.rbox((0, -6.5, 0), (2, 2, 7), 45, "signal_gem", "pommel_crystal"))
+    anchors = [((0, HEAD, 0), 2.6, RAMPS["signal"][6], 1), ((0, -6.5, 0), 1.6, RAMPS["signal"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-5, 3), focus=(0, HEAD - 1))
+
+
+def veilwoven_maul():
+    """The Veilwoven Maul (B): a block of near-black Veil-steel, oil-sheened, a seam of living spirit light round it
+    either side of its heart; its ends mirror fins swept back like the Veilwoven's quillons; the spirit stone in a mirror
+    frame; an obsidian haft ringed in mirror; a great mirror drop for a pommel holding a second stone."""
+    B = [haft(-5, 21, "obsidian")]
+    B.append(VX.slab(-4.5, 4.5, 20, 27, 7, "veil", "head"))
+    B += [VX.slab(-3.5, -2.5, 19.5, 27.5, 8, "spirit_edge", "seam", span=(19, 28)),
+          VX.slab(2.5, 3.5, 19.5, 27.5, 8, "spirit_edge", "seam'", span=(19, 28))]
+    B += caps(4.5, 6.5, 19, 28, 9, "mirror", "ends")
+    B += both(chain(-6.5, 27.0, [(-40, 3, 2, 3, "mirror"), (-15, 3, 1, 2, "mirror")], "fins"))
+    B += both(chain(-6.5, 20.0, [(-140, 3, 2, 3, "mirror"), (-165, 2, 1, 2, "mirror")], "fins_low"))
+    B += frame((0, HEAD, 0), 4, 2, 9, 45, "mirror", "frame")
+    B.append(VX.rbox((0, HEAD, 0), (2, 2, 8), 45, "spirit_gem", "heart"))
+    B.append(VX.slab(-2.5, 2.5, 18, 20, 5, "mirror", "collar"))
+    B += langets(12, 18, "mirror")
+    for y0 in (3, -5):
+        B.append(ring(y0, y0 + 1, "mirror", part=f"band{y0}"))
+    B.append(VX.rbox((0, -8.0, 0), (4, 4, 5), 45, "mirror", "drop"))
+    B.append(VX.rbox((0, -8.0, 0), (2, 2, 7), 45, "spirit_gem", "drop_gem"))
+    anchors = [((0, HEAD, 0), 2.2, RAMPS["spirit"][6], 1), ((0, -8.0, 0), 1.8, RAMPS["spirit"][6], 1)]
+    streams = [(WISP, RAMPS["spirit"][6], 4, 0.3, [(-3.0, 20.0, 0.0), (-3.0, 23.5, 0.0), (-3.0, 27.0, 0.0), (3.0, 27.0, 0.0),
+                                                  (3.0, 23.5, 0.0), (3.0, 20.0, 0.0)]),
+               (MOTE, RAMPS["spirit"][7], 2, 1.6, [(0, HEAD, 0)])]
+    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-5, 3), focus=(0, HEAD - 1), streams=streams)
+
+
+def lordscale_maul():
+    """The Lordscale Maul (A): a head of black scale between gold caps, molten gold seething in the seams where the
+    plates meet, a gold claw gripping each cap's corners; the pearl in a gold bezel at its heart; a black-scale haft
+    banded in gold, gold langets; a gold claw for a pommel holding a second pearl."""
+    B = [haft(-5, 21, "lord_grip")]
+    B.append(VX.slab(-4.5, 4.5, 20, 27, 7, "lord_plain", "head"))
+    B += [VX.slab(-5.5, -4.5, 19.5, 27.5, 8, "ember_edge", "seam", span=(19, 28)),
+          VX.slab(4.5, 5.5, 19.5, 27.5, 8, "ember_edge", "seam'", span=(19, 28))]
+    B += caps(5.5, 8.5, 19, 28, 9, "gold_cap", "caps")
+    for sx in (-1, 1):
+        for y, deg in ((28.2, 35), (18.8, 145)):  # claws over the caps' corners
+            B.append(VX.rbox((sx * 8.4, y, 0), (1, 3, 5), -sx * deg, "gold", f"claw{sx}{y}"))
+    B += frame((0, HEAD, 0), 5, 3, 9, 45, "gold", "bezel")
+    B.append(VX.rbox((0, HEAD, 0), (3, 3, 8), 45, "pearl_gem", "pearl"))
+    B.append(VX.slab(-2.5, 2.5, 18, 20, 5, "gold", "collar"))
+    B += langets(12, 18, "gold")
+    for y0 in (3, -5):
+        B.append(ring(y0, y0 + 1, "gold", part=f"band{y0}"))
+    B.append(ring(-6, -5, "gold", part="claw_cup"))
+    B.append(VX.slab(-1.5, 1.5, -9, -6, 3, "pearl_gem", "pearl_low"))
+    for sx, sz in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        B.append(VX.box(sx * 2 - 0.5, sx * 2 + 0.5, -9, -6, sz * 2 - 0.5, sz * 2 + 0.5, "gold", "talons"))
+    anchors = [((0, HEAD, 0), 2.6, RAMPS["pearl"][4], 1), ((0, -7.5, 0), 2.0, RAMPS["pearl"][4], 1)]
+    streams = [(EMBER, RAMPS["ember"][6], 5, 0.12, [(side * 5.0, y, 0.0) for y in (20.0, 22.0, 24.0, 26.0, 27.0)]) for side in (-1, 1)]
+    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-5, 3), focus=(0, HEAD - 1), streams=streams)
+
+
+def sovereign_maul():
+    """The Sovereign Maul (S): the reference's hammer made the Court's. An ivory block between flared gold caps
+    trimmed round in crimson, a crown of gold points along its top, the Court's runes burning down two crimson
+    channels either side of a great crimson stone in a raised gold diamond; a void-weave haft bound in gold wire, gold
+    langets; a gold star for a pommel round a second stone."""
+    B = [haft(4, 21, "weave"), haft(-5, 4, "weave_grip", "grip")]
+    B.append(VX.slab(-4.5, 4.5, 20, 27, 7, "ivory_twin", "head"))
+    B += caps(4.5, 7.5, 19, 28, 9, "gold_trim", "caps")
+    for x in (-6.0, 6.0, 0.0):  # the crown's points
+        B.append(VX.rbox((x, 28.4, 0), (2, 2, 3), 45, "gold", f"crown{x}"))
+    B += frame((0, HEAD, 0), 5, 3, 11, 45, "gold", "frame")
+    B.append(VX.rbox((0, HEAD, 0), (3, 3, 9), 45, "crimson_gem", "heart"))
+    B.append(VX.slab(-2.5, 2.5, 18, 20, 5, "gold", "collar"))
+    B += langets(12, 18, "gold")
+    for y0 in (3, -5):
+        B.append(ring(y0, y0 + 1, "gold", part=f"band{y0}"))
+    B.append(VX.slab(-2, 2, -10, -6, 3, "gold", "star"))
+    B.append(VX.rbox((0, -8, 0), (4, 4, 4), 45, "gold", "star_turned"))
+    B.append(VX.rbox((0, -8, 0), (2, 2, 7), 0, "crimson_gem", "star_gem"))
+    anchors = [((0, HEAD, 0), 2.8, RAMPS["crimson"][5], 1), ((0, -8, 0), 2.0, RAMPS["crimson"][5], 1)]
+    streams = [(MOTE, RAMPS["crimson"][6], 4, 2.2, [(0, HEAD, 0)]), (MOTE, RAMPS["crimson"][6], 2, 1.6, [(0, -8, 0)]),
+               (MOTE, RAMPS["gold"][6], 3, 0.25, [(-3, 20.5, 0.0), (-3, 26.5, 0.0)])]
+    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-5, 3), focus=(0, HEAD - 1), streams=streams)
+
+
+DESIGNS.update({("maul", "E"): wildhide_maul, ("maul", "D"): beastbound_maul, ("maul", "C"): gatewrought_maul,
+                ("maul", "B"): veilwoven_maul, ("maul", "A"): lordscale_maul, ("maul", "S"): sovereign_maul})
+HOLDS["maul"] = ([0, -72, 30], [-2.0, 1.0, -0.6], 0.3)
+
+
+# ---- Spears: reach at a glance: a slender shaft about 31 texels (2 by 2, where the other hafts are 3) and a head
+# about 10 long: a leaf, a boar spear's lugs, a fork, a wave, wings, a spire --------------------------------------
+
+def shaft(y0, y1, mat, part="shaft", **data):
+    return VX.slab(-1, 1, y0, y1, 2, mat, part, **data)
+
+
+def collar(y0, y1, mat, width=4, depth=4, part=None):
+    return VX.slab(-width / 2, width / 2, y0, y1, depth, mat, part or f"collar{y0}")
+
+
+def wildhide_spear():
+    """The Wildhide Spear (E): a long leaf of knapped flint, its edges struck pale, lashed with sinew into a bone shaft;
+    an antler tine bound below it for a barb; two hide tassels hang from the lashing; hide round the hand; an amber
+    bead on its butt."""
+    B = [shaft(-10, 21, "bone"), shaft(-4, 3, "bone_grip", "grip")]
+    B += blade([(20, 22, 3, 1), (22, 27, 5, 3), (27, 29, 3, 1), (29, 31, 1, 1)], "flint", "flint_edge")
+    B.append(collar(17, 21, "sinew", part="lashing"))
+    B += chain(2.0, 18.0, [(35, 3, 1, 2, "antler"), (10, 2, 1, 1, "antler")], "barb", side=1)
+    B += [VX.slab(-3.0, -2.0, 12, 17, 1, "hide", "tassel"), VX.slab(-2.0, -1.0, 13, 17, 1, "hide", "tassel'", z=1.5)]
+    B.append(collar(-11, -10, "bone", part="cup"))
+    B.append(VX.rbox((0, -12.4, 0), (2, 2, 2), 45, "amber_gem", "bead"))
+    anchors = [((0, -12.4, 0), 1.6, RAMPS["amber"][5], 1)]
+    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-4, 3), focus=(0, 23))
+
+
+def beastbound_spear():
+    """The Beastbound Spear (D): a boar spear. A broad leaf of tusk ivory on a bronze socket, a bronze crossbar below it
+    to stop the charge, a tooth set upright at each end of it, the moss stone in the socket; a hide shaft with pelt at
+    the hand between bronze ferrules; a bronze spike on its butt."""
+    B = [shaft(-10, 20, "hide"), shaft(-4, 3, "pelt", "grip")]
+    B += blade([(21, 23, 5, 3), (23, 27, 7, 5), (27, 29, 5, 3), (29, 31, 3, 1), (31, 32, 1, 1)], "tusk", "tusk_edge", groove=0)
+    B.append(collar(17, 21, "bronze", part="socket"))
+    B.append(VX.rbox((0, 19, 0), (2, 2, 6), 45, "moss_gem", "stone"))
+    B.append(VX.slab(-5.5, 5.5, 18, 19, 3, "bronze", "lugs"))
+    for x in (-5.0, 5.0):
+        B.append(VX.rbox((x, 20.0, 0), (1, 2, 1), 0, "tooth", f"tooth{x}"))
+    for y0 in (3, -5):
+        B.append(collar(y0, y0 + 1, "bronze", part=f"ferrule{y0}"))
+    B += [collar(-11, -10, "bronze", 3, 3, "butt"), VX.slab(-0.5, 0.5, -13, -11, 1, "bronze", "spike")]
+    anchors = [((0, 19, 0), 1.6, RAMPS["moss"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-4, 3), focus=(0, 23))
+
+
+def gatewrought_spear():
+    """The Gatewrought Spear (C): a fork of gate-steel, two prongs rising from a brass yoke, mirror-edged, the circuit
+    lit up each prong; the signal crystal floats between them; a slate shaft, the circuit climbing it to the yoke,
+    ribbed round the hand; a brass butt with a second crystal."""
+    B = [shaft(-10, 20, "slate_rib", span=(4, 19), column=0), shaft(-4, 3, "slate_grip", "grip")]
+    for x in (-3.0, 3.0):
+        B += blade([(21, 28, 3, 1), (28, 30, 1, 1)], "slate_rib", "slate_flat", x=x, span=(21, 28), column=int(x))
+    B.append(VX.slab(-4.5, 4.5, 19, 21, 4, "brass", "yoke"))
+    B.append(collar(16, 19, "brass", part="socket"))
+    B.append(VX.rbox((0, 25.0, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
+    B.append(collar(3, 4, "brass", part="ferrule"))
+    B.append(collar(-11, -10, "brass", part="butt"))
+    B.append(VX.rbox((0, -12.4, 0), (2, 2, 2), 45, "signal_gem", "butt_crystal"))
+    anchors = [((0, 25.0, 0), 1.8, RAMPS["signal"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-4, 3), focus=(0, 24))
+
+
+SPEAR_WAVE = ((21, 0), (24, 1), (27, 0), (29, -1), (31, 0))
+
+
+def spear_shift(y):
+    o = 0
+    for y0, s_ in SPEAR_WAVE:
+        if y >= y0:
+            o = s_
+    return o
+
+
+def veilwoven_spear():
+    """The Veilwoven Spear (B): a long waved spike of near-black Veil-steel, one edge living spirit light, the other
+    mirror-honed; mirror wings swept back below it like a crescent; the spirit stone in a mirror socket; an obsidian
+    shaft ringed in mirror; a mirror drop on its butt."""
+    B = [shaft(-10, 20, "obsidian")]
+    B += blade([(21, 24, 5, 3), (24, 27, 5, 3), (27, 29, 5, 3), (29, 31, 3, 1), (31, 33, 1, 1)], "veil", "veil_edge", shift=spear_shift,
+               span=(21, 33))
+    B.append(collar(17, 21, "mirror", part="socket"))
+    B.append(VX.rbox((0, 19, 0), (2, 2, 6), 45, "spirit_gem", "stone"))
+    B += both(chain(-2.0, 20.0, [(110, 3, 2, 3, "mirror"), (150, 3, 1, 2, "mirror")], "wings"))
+    for y0 in (14, 3, -5):
+        B.append(collar(y0, y0 + 1, "mirror", 3, 3, f"band{y0}"))
+    B.append(VX.rbox((0, -11.6, 0), (2, 2, 3), 45, "mirror", "drop"))
+    anchors = [((0, 19, 0), 1.6, RAMPS["spirit"][6], 1)]
+    edge = [(-2.5 + spear_shift(y), y + 0.5, 0.0) for y in (21, 23, 25, 27, 28, 30)]
+    streams = [(WISP, RAMPS["spirit"][6], 4, 0.18, edge), (MOTE, RAMPS["spirit"][7], 2, 1.2, [(0, 19, 0)])]
+    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-4, 3), focus=(0, 24), streams=streams)
+
+
+def lordscale_spear():
+    """The Lordscale Spear (A): a broad leaf of black scale, a gold ridge up its middle, its edges molten gold that run
+    to the point; a gold wing spread either side of its socket, black feathers under gold pinions; the pearl in the
+    socket; a black-scale shaft banded in gold; a gold claw on its butt."""
+    B = [shaft(-10, 20, "lord_grip")]
+    B += blade([(21, 23, 3, 1), (23, 28, 5, 3), (28, 30, 3, 1), (30, 31, 1, 1)], "lord", "ember_edge", span=(21, 31))
+    B.append(collar(17, 21, "gold", part="socket"))
+    B.append(VX.rbox((0, 19, 0), (2, 2, 6), 45, "pearl_gem", "pearl"))
+    B += both(fan(-1.5, 19.5, [(58, 6, 2, 3, "gold"), (84, 5, 2, 2, "feather"), (108, 4, 1, 1, "feather")], "wing"))
+    for y0 in (14, 3, -5):
+        B.append(collar(y0, y0 + 1, "gold", 3, 3, f"band{y0}"))
+    B += [collar(-11, -10, "gold", part="cup"), VX.rbox((0, -11.8, 0), (2, 2, 2), 45, "pearl_gem", "pearl_low")]
+    anchors = [((0, 19, 0), 1.6, RAMPS["pearl"][4], 1)]
+    streams = [(EMBER, RAMPS["ember"][6], 5, 0.12, [(side * 2.5, y + 0.5, 0.0) for y in (23, 24, 25, 26, 27)]) for side in (-1, 1)]
+    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-4, 3), focus=(0, 23), streams=streams)
+
+
+def sovereign_spear():
+    """The Sovereign Spear (S): a long ivory spire edged in gold, the Court's runes burning down a crimson channel up
+    its middle; a gold crown for its collar, its points rising round the blade's root, a crimson stone in a gold
+    diamond on it; a void-weave shaft bound in gold wire; a gold star on its butt."""
+    B = [shaft(-10, 20, "weave"), shaft(-4, 3, "weave_grip", "grip")]
+    B += blade([(21, 29, 5, 3), (29, 31, 3, 1), (31, 33, 1, 1)], "ivory", "gold_edge", span=(22, 29), column=0)
+    B.append(collar(17, 21, "gold", 5, 5, "crown"))
+    for x in (-2.0, 2.0):
+        B.append(VX.rbox((x, 21.6, 0), (1, 2, 3), -x * 8, "gold", f"crown_point{x}"))
+    B += frame((0, 19, 0), 4, 2, 7, 45, "gold", "frame")
+    B.append(VX.rbox((0, 19, 0), (2, 2, 6), 45, "crimson_gem", "stone"))
+    for y0 in (3, -5):
+        B.append(collar(y0, y0 + 1, "gold", 3, 3, f"band{y0}"))
+    B.append(VX.slab(-1.5, 1.5, -13, -10, 2, "gold", "star"))
+    B.append(VX.rbox((0, -11.5, 0), (3, 3, 3), 45, "gold", "star_turned"))
+    anchors = [((0, 19, 0), 2.0, RAMPS["crimson"][5], 1)]
+    streams = [(MOTE, RAMPS["crimson"][6], 3, 1.6, [(0, 19, 0)]), (MOTE, RAMPS["gold"][6], 3, 0.25, [(0, 22.5, 0.0), (0, 28.5, 0.0)])]
+    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-4, 3), focus=(0, 23), streams=streams)
+
+
+DESIGNS.update({("spear", "E"): wildhide_spear, ("spear", "D"): beastbound_spear, ("spear", "C"): gatewrought_spear,
+                ("spear", "B"): veilwoven_spear, ("spear", "A"): lordscale_spear, ("spear", "S"): sovereign_spear})
+HOLDS["spear"] = ([0, -72, 30], [-1.5, -1.0, -0.6], 0.4)
+
+
+# ---- Greatblades: about 38 texels; a blade 9 to 11 wide, far broader than a Longsword's 5; a grip of 8 for two hands
+# with a ring between them; above the guard a ricasso (a blunt stretch to choke up on) bound and ended in parrying
+# lugs; and each tier's own outline no Longsword has: a cleaver slab, a hooked back, a window through the blade, a
+# flamberge, a dragon-tail fork, a crown with flame lugs ------------------------------------------------------------
+
+def ricasso(core, wrap, y0=5, y1=11, part="ricasso", wraps=((6, 7), (8, 9)), **data):
+    """The blunt root above the guard: the blade's core 3 wide, bound in bands of another material."""
+    B = [VX.slab(-1.5, 1.5, y0, y1, 3, core, part, **data)]
+    for a, b in wraps:
+        B.append(VX.slab(-2.5, 2.5, a, b, 5, wrap, f"{part}_wrap{a}"))
+    return B
+
+
+def two_hands(mat, ring_mat, y0=-5, y1=3):
+    """The long grip, a ring between the hands."""
+    return [grip(y0, y1, mat), ring(-1, 0, ring_mat, width=5, depth=5, part="grip_ring")]
+
+
+def wildhide_greatblade():
+    """The Wildhide Greatblade (E): a cleaver of knapped flint, a slab broad as two hands with its top struck off at a
+    slant, flakes broken deep out of both edges, the edges pale; its root a sinew-bound ricasso with antler lugs; a bone
+    collar with antlers branching up beside it; a long bone grip in hide; an amber bead in a bone cup."""
+    rows_ = [
+        "efe......",  # 29..30 the slant of the struck top
+        "efffe....",
+        "efffffe..",
+        "efffffffe",  # 26..27
+        "efffffffe",
+        "efffffff.",  # a flake broke deep
+        "efffffffe",
+        "efffffffe",
+        ".fffffffe",  # 21..22
+        "efffffffe",
+        "efffffffe",
+        "efffffff.",
+        "efffffffe",
+        ".fffffffe",  # 16..17
+        "efffffffe",
+        "efffffffe",
+        "efffffff.",
+        "efffffffe",
+        "efffffffe",  # 11..12
+    ]
+    B = VX.sprite(rows_, -4, 30, {"f": ("flint", 3, "blade"), "e": ("flint_edge", 1, "blade")})
+    B += ricasso("flint", "sinew")
+    B += both(chain(-2.5, 10.5, [(70, 3, 1, 2, "antler"), (30, 2, 1, 1, "antler")], "lugs"))
+    B.append(VX.slab(-5.5, 5.5, 3, 5, 5, "bone", "collar"))
+    B += both(chain(-4.5, 4.5, [(40, 5, 2, 3, "antler"), (12, 3, 1, 2, "antler")], "antler"))
+    B += both(chain(-6.0, 6.5, [(80, 2, 1, 1, "antler")], "tine"))
+    B += two_hands("bone_grip", "bone")
+    B.append(ring(-6, -5, "bone", part="cup"))
+    B.append(VX.slab(-1.5, 1.5, -9, -6, 3, "amber_gem", "bead"))
+    anchors = [((0, -7.5, 0), 2.2, RAMPS["amber"][5], 1)]
+    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-5, 3), focus=(0, 10))
+
+
+def beastbound_greatblade():
+    """The Beastbound Greatblade (D): a great tusk blade, thick at its bronze-capped back and ground thin to the edge,
+    rising to a point at its back, where the back curls over into a hook like a boar's tusk; teeth set down the back
+    below it; a pelt-bound ricasso ending in bronze lugs with a tooth upright on each; a riveted bronze collar with
+    tusks curling back to the hands; a long pelt grip; a bronze claw round the moss stone."""
+    B = [VX.slab(-5.5, -4.5, 11, 25, 5, "bronze_back", "back"),
+         VX.slab(-4.5, 1.5, 11, 27, 3, "tusk", "blade", groove=-2),
+         VX.slab(-4.5, 3.5, 11, 26, 1, "tusk_edge", "blade"),
+         VX.slab(-4.5, 2.5, 26, 27, 1, "tusk_edge", "blade"),
+         VX.slab(-4.5, 0.5, 27, 28, 3, "tusk", "blade"),
+         VX.slab(-4.5, -1.5, 28, 29, 3, "tusk", "blade"),
+         VX.slab(-4.5, -2.5, 29, 30, 3, "tusk", "blade")]
+    B += chain(-5.0, 24.5, [(40, 3, 2, 4, "horn"), (115, 3, 2, 2, "horn"), (170, 3, 1, 1, "horn_tip")], "hook")
+    for y in (13, 16, 19):
+        B.append(VX.rbox((-6.2, y + 0.6, 0), (1, 2, 1), 50, "tooth", "teeth"))
+    B += ricasso("tusk", "pelt_wrap")
+    B += [VX.slab(-5.5, -1.5, 10, 11, 3, "bronze", "lug"), VX.slab(1.5, 5.5, 10, 11, 3, "bronze", "lug'")]
+    for x in (-5.0, 5.0):
+        B.append(VX.rbox((x, 12.0, 0), (1, 2, 1), 0, "tooth", f"lug_tooth{x}"))
+    B.append(VX.slab(-4.5, 4.5, 3, 5, 5, "bronze", "collar"))
+    for x in (-3, 0, 3):
+        for z0 in (2.5, -3.5):
+            B.append(VX.box(x - 0.5, x + 0.5, 3.5, 4.5, z0, z0 + 1, "bronze", "rivets"))
+    B += both(chain(-4.0, 4.0, [(70, 4, 2, 3, "horn"), (150, 4, 2, 2, "horn"), (205, 2, 1, 1, "horn_tip")], "tusks"))
+    B += two_hands("pelt", "bronze")
+    B.append(ring(-6, -5, "bronze", part="claw"))
+    B.append(VX.slab(-1.5, 1.5, -9, -6, 3, "moss_gem", "stone"))
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            B.append(VX.box(sx * 2 - 0.5, sx * 2 + 0.5, -9, -6, sz * 2 - 0.5, sz * 2 + 0.5, "bronze", "claw"))
+    anchors = [((0, -7.5, 0), 2.2, RAMPS["moss"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-5, 3), focus=(-1, 10))
+
+
+def gatewrought_greatblade():
+    """The Gatewrought Greatblade (C): a broad blade of gate-steel with a Gate cut through it: an open frame in the
+    blade, the signal circuit lit round its rim and running on down the steel, the crystal floating in the opening; its
+    edges mirror-honed; its point stepped like a precursors' stair; a brass-banded ricasso with brass lugs; the guard a
+    great gate in brass, two pylons under heavy caps; a ribbed slate grip; a brass ring for a pommel round a second
+    crystal."""
+    B = [VX.slab(-3.5, -2.5, 11, 27, 3, "slate", "blade"), VX.slab(2.5, 3.5, 11, 27, 3, "slate", "blade"),
+         VX.slab(-2.5, -1.5, 14, 24, 3, "signal_line", "rim", span=(11, 27)), VX.slab(1.5, 2.5, 14, 24, 3, "signal_line", "rim", span=(11, 27)),
+         VX.slab(-1.5, 1.5, 14, 15, 3, "signal_line", "rim", span=(11, 27)), VX.slab(-1.5, 1.5, 23, 24, 3, "signal_line", "rim", span=(11, 27)),
+         VX.slab(-2.5, 2.5, 11, 14, 3, "slate_rib", "blade", span=(11, 14), column=0),
+         VX.slab(-2.5, 2.5, 24, 27, 3, "slate_rib", "blade", span=(24, 27), column=0),
+         VX.slab(-4.5, -3.5, 11, 26, 1, "mirror_edge", "blade"), VX.slab(3.5, 4.5, 11, 26, 1, "mirror_edge", "blade"),
+         VX.slab(-3.5, 3.5, 27, 28, 3, "slate", "blade"), VX.slab(-2.5, 2.5, 28, 29, 3, "slate", "blade"),
+         VX.slab(-1.5, 1.5, 29, 30, 3, "slate", "blade"), VX.slab(-0.5, 0.5, 30, 31, 3, "slate", "blade")]
+    B.append(VX.rbox((0, 19.0, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
+    B += ricasso("slate_rib", "brass", span=(5, 11), column=0)
+    B += [VX.slab(-5.5, -1.5, 10, 11, 3, "brass", "lug"), VX.slab(1.5, 5.5, 10, 11, 3, "brass", "lug'")]
+    B.append(VX.slab(-8.5, 8.5, 3, 5, 5, "brass", "bar"))
+    for sx in (-1, 1):
+        B.append(VX.slab(*sorted((sx * 5.5, sx * 7.5)), 5, 11, 5, "pylon", f"pylon{sx}", span=(5, 11)))
+        B.append(VX.slab(*sorted((sx * 4.5, sx * 8.5)), 11, 12, 7, "brass", f"cap{sx}"))
+    B += two_hands("slate_grip", "brass")
+    B += VX.sprite(["RRRRR", "R...R", "R...R", "R...R", "RRRRR"], -2, -5, {"R": ("brass", 3, "loop")})
+    B.append(VX.rbox((0, -7.5, 0), (2, 2, 2), 45, "signal_gem", "pommel_crystal"))
+    anchors = [((0, 19.0, 0), 2.4, RAMPS["signal"][6], 1), ((0, -7.5, 0), 1.8, RAMPS["signal"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-5, 3), focus=(0, 15))
+
+
+FLAMBERGE = (9, 7, 5, 7)  # the blade's width two rows at a time: the core alone (5) at the wave's waist
+
+
+def veilwoven_greatblade():
+    """The Veilwoven Greatblade (B): a flamberge of near-black Veil-steel, its edges rippling in and out down its whole
+    length, one edge living spirit light, the other mirror-honed; a mirror-banded ricasso ending in mirror hooks; mirror
+    quillons swept up like wings off a mirror heart holding the spirit stone; a long obsidian grip; a mirror drop round
+    a second stone."""
+    B = [VX.slab(-2.5, 2.5, 11, 27, 3, "veil", "blade")]
+    for k, y0 in enumerate(range(11, 27, 2)):  # the flamberge: the edges swell and draw in, two texels each way
+        w = FLAMBERGE[k % len(FLAMBERGE)]
+        if w > 5:
+            B.append(VX.slab(-w / 2, w / 2, y0, min(y0 + 2, 27), 1, "veil_edge", "blade", span=(11, 31)))
+    B += blade([(27, 29, 5, 3), (29, 31, 3, 1), (31, 32, 1, 1)], "veil", "veil_edge", span=(11, 31))
+    B += ricasso("veil", "mirror")
+    B += both(chain(-2.5, 10.5, [(85, 2, 1, 4, "mirror"), (30, 2, 1, 3, "mirror"), (-10, 2, 1, 2, "spirit_edge")], "hooks"))
+    B.append(VX.slab(-3.5, 3.5, 2, 5, 5, "mirror", "heart"))
+    B.append(VX.rbox((0, 3.5, 0), (3, 3, 7), 45, "spirit_gem", "heart_gem"))
+    B += both(chain(-3.0, 3.5, [(75, 3, 2, 3, "mirror"), (45, 4, 2, 2, "mirror"), (15, 4, 1, 1, "mirror")], "quillons"))
+    B += two_hands("obsidian", "mirror", y1=2)
+    B.append(VX.rbox((0, -7.4, 0), (3, 3, 5), 45, "mirror", "drop"))
+    B.append(VX.rbox((0, -7.4, 0), (2, 2, 7), 45, "spirit_gem", "drop_gem"))
+    anchors = [((0, 3.5, 0), 2.4, RAMPS["spirit"][6], 1), ((0, -7.4, 0), 1.9, RAMPS["spirit"][6], 1)]
+    edge = [(-FLAMBERGE[((y - 11) // 2) % len(FLAMBERGE)] / 2, y + 0.5, 0.0) for y in range(11, 27, 2)]
+    streams = [(WISP, RAMPS["spirit"][6], 6, 0.2, edge), (MOTE, RAMPS["spirit"][7], 2, 1.6, [(0, 3.5, 0)])]
+    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-5, 2), focus=(0, 7), streams=streams)
+
+
+def lordscale_greatblade():
+    """The Lordscale Greatblade (A): a blade of black scale that widens as it rises and ends not in a point but in a
+    dragon's tail fork, two tines splayed either side of a notch; a gold ridge up its middle, its edges molten gold that
+    run out along the tines; a gold-banded ricasso ending in small gold pinions; a guard of two great wings, gold
+    pinions over black feathers, the sky's pearl at their heart; a long black-scale grip; a gold claw round a second
+    pearl."""
+    B = blade([(11, 17, 7, 5), (17, 22, 9, 7), (22, 26, 11, 9)], "lord", "ember_edge", span=(11, 31))
+    for sx in (-1, 1):  # the fork's tines
+        x = sx * 3.0
+        B += chain(x, 25.5, [(16, 5, 3, 4, "lord_plain"), (6, 2, 1, 1, "ember_edge")], f"tine{sx}", side=sx)
+        B.append(VX.rbox((sx * 5.6, 28.0, 0), (1, 4, 2), -sx * 16, "ember_edge", f"tine_edge{sx}", span=(11, 31)))
+    B += ricasso("lord", "gold")
+    B += both(fan(-2.5, 10.5, [(65, 3, 1, 2, "gold"), (95, 2, 1, 1, "gold")], "pinions"))
+    B.append(VX.slab(-3.5, 3.5, 1, 5, 5, "lord_dark", "heart"))
+    B += frame((0, 3.0, 0), 5, 3, 9, 45, "gold", "bezel")
+    B.append(VX.rbox((0, 3.0, 0), (3, 3, 8), 45, "pearl_gem", "pearl"))
+    B += both(fan(-3.0, 3.0, [(36, 11, 2, 4, "gold"), (54, 10, 2, 3, "feather"), (72, 8, 2, 2, "feather"), (92, 6, 2, 1, "feather")], "wing"))
+    B += [grip(-5, 1, "lord_grip"), ring(-2, -1, "gold", part="grip_ring")]
+    B.append(ring(-6, -5, "gold", part="claw"))
+    B.append(VX.slab(-1.5, 1.5, -9, -6, 3, "pearl_gem", "pearl_low"))
+    for sx, sz in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        B.append(VX.box(sx * 2 - 0.5, sx * 2 + 0.5, -9, -6, sz * 2 - 0.5, sz * 2 + 0.5, "gold", "talons"))
+    anchors = [((0, 3.0, 0), 2.6, RAMPS["pearl"][4], 1), ((0, -7.5, 0), 2.2, RAMPS["pearl"][4], 1)]
+    streams = [(EMBER, RAMPS["ember"][6], 8, 0.12, [(side * w, y, 0.0) for w, y in ((3.5, 12.0), (3.5, 15.0), (4.5, 18.0), (4.5, 21.0),
+                                                                              (5.5, 23.0), (5.5, 25.0))]) for side in (-1, 1)]
+    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-5, 1), focus=(0, 7), streams=streams)
+
+
+def sovereign_greatblade():
+    """The Sovereign Greatblade (S): the Court's zweihander. A broad straight ivory blade between gold edges, the Court's
+    runes burning down a crimson channel up its middle, a long point; a ricasso bound in void weave and gold, ending in
+    two pairs of gold lugs shaped like flames; the guard a wide gold crown, its points rising along it and its ends
+    curling up, a great crimson stone in a raised gold diamond at its heart; a long void-weave grip; a gold star round
+    a second stone."""
+    B = blade([(11, 26, 9, 7), (26, 28, 7, 5), (28, 30, 5, 3), (30, 32, 3, 1), (32, 33, 1, 1)], "ivory", "gold_edge",
+              span=(12, 27), column=0)
+    B += ricasso("ivory", "weave_grip", wraps=((6, 10),))
+    for sx in (-1, 1):  # the flame lugs: each a tongue of gold licking up and out, a smaller one inside it
+        B += chain(sx * 2.5, 10.5, [(75, 3, 2, 4, "gold"), (35, 3, 2, 3, "gold"), (0, 3, 1, 2, "gold"), (-25, 2, 1, 1, "gold")],
+                   f"flame{sx}", side=sx)
+        B += chain(sx * 2.5, 8.5, [(80, 2, 1, 2, "gold"), (35, 2, 1, 1, "gold")], f"flame_low{sx}", side=sx)
+    B.append(VX.slab(-7.5, 7.5, 3, 5, 5, "gold", "crown"))
+    for x in (-6.2, -3.0, 3.0, 6.2):  # the crown's points along the bar
+        B.append(VX.rbox((x, 5.4, 0), (2, 2, 3), 45, "gold", f"point{x}"))
+    B += both(chain(-7.0, 4.0, [(20, 3, 2, 4, "gold"), (-15, 2, 1, 2, "gold")], "crown_ends"))
+    B += frame((0, 4.0, 0), 5, 3, 9, 45, "gold", "frame")
+    B.append(VX.rbox((0, 4.0, 0), (3, 3, 7), 45, "crimson_gem", "heart"))
+    B += two_hands("weave_grip", "gold", y1=2)
+    B.append(VX.slab(-2, 2, -9.5, -5.5, 3, "gold", "star"))
+    B.append(VX.rbox((0, -7.5, 0), (4, 4, 4), 45, "gold", "star_turned"))
+    B.append(VX.rbox((0, -7.5, 0), (2, 2, 7), 0, "crimson_gem", "pommel_gem"))
+    anchors = [((0, 4.0, 0), 2.8, RAMPS["crimson"][5], 1), ((0, -7.5, 0), 2.0, RAMPS["crimson"][5], 1)]
+    streams = [(MOTE, RAMPS["crimson"][6], 4, 2.0, [(0, 4.0, 0)]), (MOTE, RAMPS["crimson"][6], 2, 1.6, [(0, -7.5, 0)]),
+               (MOTE, RAMPS["gold"][6], 4, 0.3, [(0.0, 12.5, 0.0), (0.0, 26.5, 0.0)])]
+    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-5, 2), focus=(0, 7), streams=streams)
+
+
+DESIGNS.update({("greatblade", "E"): wildhide_greatblade, ("greatblade", "D"): beastbound_greatblade,
+                ("greatblade", "C"): gatewrought_greatblade, ("greatblade", "B"): veilwoven_greatblade,
+                ("greatblade", "A"): lordscale_greatblade, ("greatblade", "S"): sovereign_greatblade})
+HOLDS["greatblade"] = ([0, -72, 30], [-2.5, -1.0, -0.6], 0.4)
+
+
+# =====================================================================================================================
+# Batch 2: the rapier, the daggers, the katana and the twinblades
+
+# ---- Rapiers: a long needle 3 texels wide stepping to a point 1 wide, about 31 long; a swept, cup or ring hilt over
+# the hand; slender and elegant --------------------------------------------------------------------------------------
+
+def needle(core, edge, y0=4, y1=22, tip=28, **data):
+    """A rapier's blade: three wide with a raised ridge, then the ridge alone to a long point."""
+    return blade([(y0, y1, 3, 1), (y1, tip, 1, 1)], core, edge, **data)
+
+
+def bow(mat, x=2.0, y=4.0, y_end=-2.5, part="bow", depth=1):
+    """A knuckle bow: from the guard round the outside of the hand down to the pommel."""
+    mid = max(1, int(round(y - y_end - 2.5)))
+    return chain(x, y, [(150, 2, 1, depth, mat), (178, mid, 1, depth, mat), (205, 2, 1, depth, mat)], part, side=1, back=0.3,
+                 stagger=0.05)
+
+
+def wildhide_rapier():
+    """The Wildhide Rapier (E): a long three-edged spike of knapped flint set in an antler, the antler's tines swept
+    round the hand for its hilt (one up beside the blade, one back over the knuckles); lashed with sinew; a bone grip
+    wound in hide; an amber bead."""
+    B = needle("flint", "flint_edge")
+    B.append(VX.slab(-1.5, 1.5, 3, 5, 3, "sinew", "lashing"))
+    B.append(VX.slab(-2.5, 2.5, 2, 3, 3, "antler", "collar"))
+    B += chain(-2.0, 2.5, [(60, 3, 1, 2, "antler"), (15, 3, 1, 1, "antler")], "tine")
+    B += bow("antler", 2.0, 2.5, -2.5, depth=2)
+    B.append(grip(-2, 2, "bone_grip"))
+    B.append(VX.slab(-1.5, 1.5, -5, -2, 3, "amber_gem", "bead"))
+    anchors = [((0, -3.5, 0), 1.8, RAMPS["amber"][5], 1)]
+    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-2, 2), focus=(0, 3))
+
+
+def beastbound_rapier():
+    """The Beastbound Rapier (D): a narwhal's tusk for a blade, a long ivory needle with its spiral winding up it,
+    stepping thinner as it goes; a riveted bronze cup over the hand; bronze quillons with a tooth at each end; a pelt
+    grip; the moss stone in the pommel."""
+    B = [VX.slab(-1.5, 1.5, 4, 17, 3, "narwhal", "blade"), VX.slab(-1, 1, 17, 23, 2, "narwhal", "blade"),
+         VX.slab(-0.5, 0.5, 23, 28, 1, "narwhal", "blade")]
+    B += [VX.slab(-3.5, 3.5, 3, 4, 3, "bronze", "cup"), VX.slab(-2.5, 2.5, 3, 4, 5, "bronze", "cup"),
+          VX.slab(-1.5, 1.5, 3, 4, 7, "bronze", "cup")]
+    B += [VX.slab(-4.5, -3.5, 1, 3, 3, "bronze_back", "rim"), VX.slab(3.5, 4.5, 1, 3, 3, "bronze_back", "rim'")]
+    B.append(VX.slab(-6.5, 6.5, 4, 5, 1, "bronze", "quillons"))
+    for x in (-6.0, 6.0):
+        B.append(VX.rbox((x, 6.0, 0), (1, 2, 2), 0, "tooth", f"tooth{x}"))
+    B.append(grip(-2, 3, "pelt"))
+    B.append(ring(-3, -2, "bronze", part="claw"))
+    B.append(VX.rbox((0, -4.0, 0), (2, 2, 3), 45, "moss_gem", "stone"))
+    anchors = [((0, -4.0, 0), 1.6, RAMPS["moss"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-2, 3), focus=(0, 3))
+
+
+def gatewrought_rapier():
+    """The Gatewrought Rapier (C): a needle of gate-steel, the signal circuit lit up its ridge; a ring hilt of brass
+    gate-arcs, a square ring beside the blade's root on each side; straight brass quillons with pylon caps; a brass
+    knuckle bow; a slate grip; a signal crystal for a pommel."""
+    B = needle("slate_rib", "slate_flat", span=(4, 26), column=0)
+    B += frame((-3.0, 6.0, 0), 3, 1, 1, 0, "brass", "ring")
+    B += frame((3.0, 6.0, 0), 3, 1, 1, 0, "brass", "ring'")
+    B.append(VX.slab(-6.5, 6.5, 3, 4, 1, "brass", "quillons"))
+    B += [VX.slab(-7.5, -5.5, 2.5, 4.5, 3, "pylon", "cap", column=-7, span=(2, 5)), VX.slab(5.5, 7.5, 2.5, 4.5, 3, "pylon", "cap'", column=7, span=(2, 5))]
+    B.append(VX.slab(-2.5, 2.5, 2, 3, 3, "brass", "collar"))
+    B += bow("brass", 2.0, 2.5, -2.5)
+    B.append(grip(-2, 2, "slate_grip"))
+    B.append(ring(-3, -2, "brass", width=3, depth=3, part="neck"))
+    B.append(VX.rbox((0, -4.4, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
+    anchors = [((0, -4.4, 0), 1.6, RAMPS["signal"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7)
+
+
+def veilwoven_rapier():
+    """The Veilwoven Rapier (B): a needle of near-black Veil-steel, one edge living spirit light; a swept hilt of
+    mirror crescents curling round the hand, one up, two down and back; the spirit stone at the guard; an obsidian grip;
+    a mirror drop."""
+    B = needle("veil", "veil_edge", span=(4, 28))
+    B.append(VX.slab(-2.5, 2.5, 2, 4, 3, "mirror", "guard"))
+    B.append(VX.rbox((0, 3.0, 0), (2, 2, 5), 45, "spirit_gem", "stone"))
+    B += chain(-2.5, 3.6, [(70, 3, 1, 2, "mirror"), (25, 3, 1, 1, "mirror")], "crescent_up")
+    B += chain(-2.5, 2.0, [(120, 3, 1, 2, "mirror"), (165, 3, 1, 1, "mirror"), (205, 2, 1, 1, "mirror")], "crescent_down", stagger=0.05)
+    B += bow("mirror", 2.5, 2.5, -2.5)
+    B.append(grip(-2, 2, "obsidian"))
+    B.append(VX.rbox((0, -3.4, 0), (2, 2, 3), 45, "mirror", "drop"))
+    anchors = [((0, 3.0, 0), 1.6, RAMPS["spirit"][6], 1)]
+    streams = [(WISP, RAMPS["spirit"][6], 3, 0.15, [(-1.5, y + 0.5, 0.0) for y in range(5, 22, 3)]),
+               (MOTE, RAMPS["spirit"][7], 2, 1.0, [(0, 3.0, 0)])]
+    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-2, 2), focus=(0, 3), streams=streams)
+
+
+def lordscale_rapier():
+    """The Lordscale Rapier (A): a needle of black scale, its edges molten gold that run to the point; a gold cup hilt
+    of two wings folded down over the hand, black feathers under gold pinions; a gold knuckle bow; a black-scale grip;
+    the pearl for a pommel."""
+    B = needle("lord", "ember_edge", span=(4, 28))
+    B.append(VX.slab(-2.5, 2.5, 2, 4, 3, "gold", "guard"))
+    B += both(fan(-2.0, 3.5, [(110, 5, 2, 4, "gold"), (140, 5, 2, 2, "feather"), (168, 4, 1, 1, "feather")], "wing"))
+    B += bow("gold", 2.5, 2.0, -2.5, depth=3)
+    B.append(grip(-2, 2, "lord_grip"))
+    B.append(ring(-3, -2, "gold", width=3, depth=3, part="neck"))
+    B.append(VX.slab(-1.5, 1.5, -6, -3, 3, "pearl_gem", "pearl"))
+    anchors = [((0, -4.5, 0), 1.8, RAMPS["pearl"][4], 1)]
+    streams = [(EMBER, RAMPS["ember"][6], 4, 0.1, [(side * 1.5, y + 0.5, 0.0) for y in range(5, 22, 3)]) for side in (-1, 1)]
+    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-2, 2), focus=(0, 3), streams=streams)
+
+
+def sovereign_rapier():
+    """The Sovereign Rapier (S): an ivory needle edged in gold, the Court's runes burning up its ridge; a gold swept
+    hilt: a ring either side of the blade's root, quillons ending in crown points, a knuckle bow; the crimson stone at
+    the guard; a void-weave grip bound in gold; a small gold star."""
+    B = needle("ivory", "gold_edge", span=(5, 22), column=0)
+    B += frame((-3.0, 6.0, 0), 3, 1, 1, 0, "gold", "ring")
+    B += frame((3.0, 6.0, 0), 3, 1, 1, 0, "gold", "ring'")
+    B.append(VX.slab(-6.5, 6.5, 3, 4, 1, "gold", "quillons"))
+    for x in (-6.5, 6.5):
+        B.append(VX.rbox((x, 4.0, 0), (2, 2, 3), 45, "gold", f"crown{x}"))
+    B.append(VX.slab(-2.5, 2.5, 2, 3, 3, "gold", "collar"))
+    B += frame((0, 3.0, 0), 3, 1, 5, 45, "gold", "setting")
+    B.append(VX.rbox((0, 3.0, 0), (1, 1, 4), 45, "crimson_gem", "stone"))
+    B += bow("gold", 2.5, 2.5, -2.5)
+    B.append(grip(-2, 2, "weave_grip"))
+    B.append(VX.slab(-1.5, 1.5, -5, -2, 2, "gold", "star"))
+    B.append(VX.rbox((0, -3.5, 0), (3, 3, 4), 45, "gold", "star_turned"))
+    anchors = [((0, 3.0, 0), 1.6, RAMPS["crimson"][5], 1)]
+    streams = [(MOTE, RAMPS["crimson"][6], 3, 1.2, [(0, 3.0, 0)]), (MOTE, RAMPS["gold"][6], 2, 0.2, [(0, 6.5, 0.0), (0, 20.5, 0.0)])]
+    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-2, 2), focus=(0, 3), streams=streams)
+
+
+DESIGNS.update({("rapier", "E"): wildhide_rapier, ("rapier", "D"): beastbound_rapier, ("rapier", "C"): gatewrought_rapier,
+                ("rapier", "B"): veilwoven_rapier, ("rapier", "A"): lordscale_rapier, ("rapier", "S"): sovereign_rapier})
+HOLDS["rapier"] = ([0, -72, 30], [-1.5, -1.0, -0.6], 0.48)
+
+
+# ---- Daggers: short and quick, about 15 texels: a wide-backed or curved blade about 9 long, a knuckle guard round
+# the hand ------------------------------------------------------------------------------------------------------------
+
+def wildhide_daggers():
+    """The Wildhide Daggers (E): a skinning knife of knapped flint, thick and straight along its back, its pale edge
+    sweeping up to a point at the back; lashed with sinew; an antler tine bent round the knuckles for a guard; a bone
+    grip wound in hide; an amber nub."""
+    B = [VX.slab(-2.5, 0.5, 3, 9, 3, "flint", "blade"), VX.slab(-2.5, 2.5, 3, 9, 1, "flint_edge", "blade"),
+         VX.slab(-2.5, -0.5, 9, 10, 3, "flint", "blade"), VX.slab(-2.5, 1.5, 9, 10, 1, "flint_edge", "blade"),
+         VX.slab(-2.5, -1.5, 10, 11, 3, "flint", "blade"), VX.slab(-2.5, 0.5, 10, 11, 1, "flint_edge", "blade"),
+         VX.slab(-2.5, -1.5, 11, 12, 1, "flint_edge", "blade")]
+    B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "sinew", "lashing"))
+    B += bow("antler", 3.0, 2.5, -2.5, depth=2)
+    B.append(grip(-2, 2, "bone_grip"))
+    B.append(VX.slab(-1.5, 1.5, -4, -2, 3, "amber_gem", "nub"))
+    anchors = [((0, -3.0, 0), 1.4, RAMPS["amber"][5], 1)]
+    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-2, 2), focus=(0, 4), zoom=1.7)
+
+
+def beastbound_daggers():
+    """The Beastbound Daggers (D): a boar's tusk, curved as it grew, honed along its inside; socketed in a riveted
+    bronze collar; a bronze knuckle bow; a pelt grip; the moss stone for a pommel."""
+    B = chain(0.0, 3.0, [(5, 3, 3, 3, "tusk"), (24, 3, 3, 3, "tusk"), (46, 3, 2, 2, "tusk"), (66, 2, 1, 1, "horn_tip")], "blade",
+              back=0.3, stagger=0.05)
+    B.append(VX.slab(-2.5, 2.5, 2, 4, 5, "bronze", "collar"))
+    for z0 in (2.5, -3.5):
+        B.append(VX.box(-0.5, 0.5, 2.5, 3.5, z0, z0 + 1, "bronze", "rivets"))
+    B += bow("bronze", 3.0, 2.5, -2.5)
+    B.append(grip(-2, 2, "pelt"))
+    B.append(VX.rbox((0, -3.4, 0), (2, 2, 3), 45, "moss_gem", "stone"))
+    anchors = [((0, -3.4, 0), 1.4, RAMPS["moss"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7)
+
+
+def gatewrought_daggers():
+    """The Gatewrought Daggers (C): a wide squared blade of gate-steel, its edges mirror-honed, the circuit lit up its
+    rib; its guard a little gate: a squared brass bow from the cross-bar round the hand to the pommel; a slate grip; a
+    signal crystal."""
+    B = blade([(3, 9, 5, 1), (9, 10, 3, 1), (10, 11, 1, 1)], "slate_rib", "slate_flat", span=(3, 10), column=0, branch=1)
+    B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "brass", "bar"))
+    B += [VX.slab(3.5, 4.5, -3, 3, 1, "brass", "bow"), VX.slab(1.5, 3.5, -3, -2, 1, "brass", "bow_foot")]
+    B.append(grip(-2, 2, "slate_grip"))
+    B.append(ring(-3, -2, "brass", width=3, depth=3, part="neck"))
+    B.append(VX.rbox((0, -4.4, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
+    anchors = [((0, -4.4, 0), 1.4, RAMPS["signal"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7)
+
+
+def veilwoven_daggers():
+    """The Veilwoven Daggers (B): a claw of near-black Veil-steel curving forward like a talon, its tip living spirit
+    light; the spirit stone at its root in a mirror guard; a mirror ring at the pommel for a finger; an obsidian
+    grip."""
+    B = chain(0.0, 3.0, [(8, 3, 3, 3, "veil"), (30, 3, 3, 3, "veil"), (58, 3, 2, 2, "veil"), (88, 2, 1, 1, "spirit_edge")], "blade",
+              side=1, back=0.3, stagger=0.05, span=(3, 11))
+    B.append(VX.slab(-2.5, 2.5, 2, 4, 5, "mirror", "guard"))
+    B.append(VX.rbox((0, 3.0, 0), (2, 2, 7), 45, "spirit_gem", "stone"))
+    B.append(grip(-2, 2, "obsidian"))
+    B += frame((0, -4.0, 0), 4, 2, 2, 0, "mirror", "ring")
+    anchors = [((0, 3.0, 0), 1.4, RAMPS["spirit"][6], 1)]
+    streams = [(WISP, RAMPS["spirit"][6], 3, 0.15, edge_points(B[:4], 1)), (MOTE, RAMPS["spirit"][7], 1, 0.9, [(0, 3.0, 0)])]
+    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7, streams=streams)
+
+
+def lordscale_daggers():
+    """The Lordscale Daggers (A): a broad leaf of black scale, a gold ridge up it, its edges molten gold; a gold claw
+    for its guard, two talons curling down over the knuckles; a black-scale grip; the pearl for a pommel."""
+    B = blade([(3, 8, 5, 3), (8, 10, 3, 1), (10, 11, 1, 1)], "lord", "ember_edge", span=(3, 11))
+    B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "gold", "guard"))
+    for k, x in enumerate((2.5, 3.5)):
+        B += chain(x, 2.5, [(150, 2, 1, 2 - k, "gold"), (185, 3, 1, 2 - k, "gold"), (215, 2, 1, 2 - k, "gold")], f"talon{k}",
+                   side=1, back=0.3, stagger=0.05)
+    B.append(grip(-2, 2, "lord_grip"))
+    B.append(VX.slab(-1.5, 1.5, -5, -2, 3, "pearl_gem", "pearl"))
+    anchors = [((0, -3.5, 0), 1.6, RAMPS["pearl"][4], 1)]
+    streams = [(EMBER, RAMPS["ember"][6], 3, 0.1, [(side * 2.5, y + 0.5, 0.0) for y in (3, 5, 7)]) for side in (-1, 1)]
+    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7, streams=streams)
+
+
+def sovereign_daggers():
+    """The Sovereign Daggers (S): an ivory blade edged in gold, a short crimson channel up it where three runes burn; a
+    crown for a guard, its points rising; a gold knuckle bow; the crimson stone in a gold diamond at the guard; a
+    void-weave grip; a small gold star."""
+    B = blade([(3, 9, 5, 3), (9, 11, 3, 1), (11, 12, 1, 1)], "ivory", "gold_edge", span=(4, 10), column=0)
+    B.append(VX.slab(-3.5, 3.5, 2, 3, 3, "gold", "crown"))
+    for x in (-3.0, 3.0):
+        B.append(VX.rbox((x, 3.4, 0), (1, 1, 2), 45, "gold", f"point{x}"))
+    B += frame((0, 2.5, 0), 3, 1, 5, 45, "gold", "setting")
+    B.append(VX.rbox((0, 2.5, 0), (1, 1, 4), 45, "crimson_gem", "stone"))
+    B += bow("gold", 3.0, 2.5, -2.5)
+    B.append(grip(-2, 2, "weave_grip"))
+    B.append(VX.slab(-1.5, 1.5, -4, -2, 2, "gold", "star"))
+    B.append(VX.rbox((0, -3.0, 0), (2, 2, 4), 45, "gold", "star_turned"))
+    anchors = [((0, 2.5, 0), 1.2, RAMPS["crimson"][5], 1)]
+    streams = [(MOTE, RAMPS["crimson"][6], 2, 1.0, [(0, 2.5, 0)]), (MOTE, RAMPS["gold"][6], 1, 0.2, [(0, 4.5, 0.0), (0, 9.5, 0.0)])]
+    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-2, 2), focus=(0, 4), zoom=1.7, streams=streams)
+
+
+DESIGNS.update({("daggers", "E"): wildhide_daggers, ("daggers", "D"): beastbound_daggers, ("daggers", "C"): gatewrought_daggers,
+                ("daggers", "B"): veilwoven_daggers, ("daggers", "A"): lordscale_daggers, ("daggers", "S"): sovereign_daggers})
+HOLDS["daggers"] = ([0, -72, 30], [-2.5, 3.0, -0.6], 0.76)
+
+
+# ---- Katanas: a gently curved single-edged blade of whole-angle turned links (never a staircase), its hamon painted
+# along the edge in the tier's accent; a disc tsuba; a long tsuka in diamond wrap; about 34 texels ------------------
+
+KATANA_LINKS = ((0, 5, 3, 2), (3, 5, 3, 2), (6, 5, 3, 2), (9, 4, 3, 2), (13, 3, 2, 2), (20, 2, 1, 1))
+
+
+def katana_blade(mat, y0=6.5):
+    """The blade: links curving back toward the spine (the item's upper left), every other one lifted off the plane."""
+    return chain(0.0, y0, [(deg, l, w, d, mat) for deg, l, w, d in KATANA_LINKS], "blade", back=0.3, stagger=0.05, span=(6, 28))
+
+
+def disc(y0, y1, r, mat, part="tsuba"):
+    """A round guard seen from above: an octagon of three crossed slabs, r texels out from the blade."""
+    return [VX.slab(-r, r, y0, y1, 2 * r - 4, mat, part), VX.slab(-(r - 1), r - 1, y0, y1, 2 * r - 2, mat, part),
+            VX.slab(-(r - 2), r - 2, y0, y1, 2 * r, mat, part)]
+
+
+def katana_hilt(wrap, cap, collar):
+    """The tsuka in its wrap, the kashira over its end, the habaki round the blade's root."""
+    return [VX.slab(-1.5, 1.5, -5, 4, 3, wrap, "tsuka"), VX.slab(-2, 2, -6, -5, 4, cap, "kashira"),
+            VX.slab(-2, 2, 5, 7, 4, collar, "habaki")]
+
+
+def wildhide_katana():
+    """The Wildhide Katana (E): a curved blade of knapped flint, its edge struck pale, the hamon a line of bone-white
+    where the flaking stops; a round tsuba of antler bound with sinew; a tsuka of bone wrapped in hide, the bone showing
+    through in diamonds; an antler kashira."""
+    B = katana_blade("flint_kat")
+    B += disc(4, 5, 3.5, "antler")
+    B.append(VX.slab(-2.5, 2.5, 3, 4, 4, "sinew", "seppa"))
+    B += katana_hilt("ito_e", "antler", "sinew")
+    anchors = [((0, -5.5, 0), 0.8, RAMPS["amber"][5], 1)]
+    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-5, 4), focus=(0, 5))
+
+
+def beastbound_katana():
+    """The Beastbound Katana (D): a curved blade of boar-tusk ivory, banded with its growth, a bronze hamon along its
+    edge; a square bronze tsuba with a rivet in each corner; a bronze habaki; a tsuka of bone wrapped in hide; the moss
+    stone in the kashira."""
+    B = katana_blade("tusk_kat")
+    B.append(VX.slab(-3.5, 3.5, 4, 5, 7, "bronze", "tsuba"))
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            B.append(VX.box(sx * 3 - 0.5, sx * 3 + 0.5, 5, 6, sz * 3 - 0.5, sz * 3 + 0.5, "bronze", "rivets"))
+    B += katana_hilt("ito_d", "bronze", "bronze")
+    B.append(VX.rbox((0, -6.6, 0), (2, 2, 2), 45, "moss_gem", "stone"))
+    anchors = [((0, -6.6, 0), 1.2, RAMPS["moss"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-5, 4), focus=(0, 5))
+
+
+def gatewrought_katana():
+    """The Gatewrought Katana (C): a curved blade of gate-steel, its edge mirror-honed, the hamon a line of signal
+    light running up beside it; a brass tsuba cut like a gear; a brass habaki; a tsuka of slate wrapped over brass; a
+    signal crystal in the kashira."""
+    B = katana_blade("slate_kat")
+    B += disc(4, 5, 3.5, "brass")
+    for k in range(8):  # the gear's teeth
+        a = math.radians(k * 45 + 22.5)
+        B.append(VX.Box((4.2 * math.cos(a), 4.5, 4.2 * math.sin(a)), (0.5, 0.5, 0.5), "brass", "teeth", VX.rotz(0) @ np.array(
+            [[math.cos(a), 0, -math.sin(a)], [0, 1, 0], [math.sin(a), 0, math.cos(a)]]), "tooth"))
+    B += katana_hilt("ito_c", "brass", "brass")
+    B.append(VX.rbox((0, -6.6, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
+    anchors = [((0, -6.6, 0), 1.2, RAMPS["signal"][6], 1)]
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-5, 4), focus=(0, 5))
+
+
+def veilwoven_katana():
+    """The Veilwoven Katana (B): a curved blade of near-black Veil-steel, mirror-edged, its hamon a line of living
+    spirit light; a mirror tsuba of four lobes like a quatrefoil; a mirror habaki; a tsuka of obsidian wrapped over
+    mirror; the spirit stone in the kashira."""
+    B = katana_blade("veil_kat")
+    B += [VX.slab(-4.5, 4.5, 4, 5, 3, "mirror", "tsuba"), VX.slab(-1.5, 1.5, 4, 5, 9, "mirror", "tsuba"),
+          VX.slab(-3.5, 3.5, 4, 5, 5, "mirror", "tsuba"), VX.slab(-2.5, 2.5, 4, 5, 7, "mirror", "tsuba")]
+    B += katana_hilt("ito_b", "mirror", "mirror")
+    B.append(VX.rbox((0, -6.6, 0), (2, 2, 2), 45, "spirit_gem", "stone"))
+    anchors = [((0, -6.6, 0), 1.2, RAMPS["spirit"][6], 1)]
+    blade_ = B[:6]
+    streams = [(WISP, RAMPS["spirit"][6], 3, 0.15, edge_points(blade_, 1)), (MOTE, RAMPS["spirit"][7], 1, 0.9, [(0, -6.6, 0)])]
+    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-5, 4), focus=(0, 5), streams=streams)
+
+
+def lordscale_katana():
+    """The Lordscale Katana (A): a curved blade of black scale, its edge molten gold, a gold hamon beside it; a round
+    gold tsuba with a small gold wing rising from each side; a gold habaki; a tsuka of black scale wrapped over gold;
+    the pearl in the kashira."""
+    B = katana_blade("lord_kat")
+    B += disc(4, 5, 3.5, "gold")
+    B += both(fan(-3.0, 5.0, [(50, 4, 1, 2, "gold"), (80, 3, 1, 1, "feather")], "wing"))
+    B += katana_hilt("ito_a", "gold", "gold")
+    B.append(VX.rbox((0, -6.6, 0), (2, 2, 2), 45, "pearl_gem", "pearl"))
+    anchors = [((0, -6.6, 0), 1.2, RAMPS["pearl"][4], 1)]
+    streams = [(EMBER, RAMPS["ember"][6], 5, 0.1, edge_points(B[:6], 1))]
+    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-5, 4), focus=(0, 5), streams=streams)
+
+
+def sovereign_katana():
+    """The Sovereign Katana (S): a curved ivory blade, its edge gold, the hamon a line of crimson that burns; a round
+    gold tsuba crowned with four points; a gold habaki; a tsuka of void weave wrapped over gold; a crimson stone in the
+    gold kashira."""
+    B = katana_blade("ivory_kat")
+    B += disc(4, 5, 3.5, "gold")
+    for x, z in ((-3.0, 0.0), (3.0, 0.0), (0.0, -3.0), (0.0, 3.0)):
+        B.append(VX.Box((x, 5.5, z), (0.5, 0.5, 0.5), "gold", "crown", None, "point"))
+    B += katana_hilt("ito_s", "gold", "gold")
+    B.append(VX.rbox((0, -6.6, 0), (2, 2, 2), 45, "crimson_gem", "stone"))
+    anchors = [((0, -6.6, 0), 1.2, RAMPS["crimson"][5], 1)]
+    streams = [(MOTE, RAMPS["crimson"][6], 3, 0.25, edge_points(B[:6], 1)), (MOTE, RAMPS["crimson"][6], 1, 0.9, [(0, -6.6, 0)])]
+    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-5, 4), focus=(0, 5), streams=streams)
+
+
+DESIGNS.update({("katana", "E"): wildhide_katana, ("katana", "D"): beastbound_katana, ("katana", "C"): gatewrought_katana,
+                ("katana", "B"): veilwoven_katana, ("katana", "A"): lordscale_katana, ("katana", "S"): sovereign_katana})
+HOLDS["katana"] = ([0, -72, 30], [-1.0, -1.0, -0.6], 0.46)
+
+
+# ---- Twinblades: two blades from one grip in the middle, the far one turned half round (its edge on the other side),
+# each with its own guard; the grip short between them, so it never reads as a staff or a spear -------------------
+
+def twin(top, centre):
+    """A twinblade: the near blade and its guard (built upward from the grip), the same turned half round for the far
+    one, and the centre (the grip and what sits on it)."""
+    return top + spin(top) + centre
+
+
+def wildhide_twinblades():
+    """The Wildhide Twinblades (E): two leaves of knapped flint, each lashed with sinew into an antler fork; a bone grip
+    between them wound in hide; an amber bead set in its middle."""
+    top = blade([(6, 9, 3, 1), (9, 15, 5, 3), (15, 17, 3, 1), (17, 19, 1, 1)], "flint", "flint_edge")
+    top += [VX.slab(-3.5, 3.5, 4, 6, 5, "bone", "collar"), VX.slab(-2.5, 2.5, 6, 8, 5, "sinew", "lashing")]
+    top += both(chain(-3.5, 5.0, [(40, 3, 1, 2, "antler"), (12, 2, 1, 1, "antler")], "tines"))
+    centre = [grip(-4, 4, "bone_grip"), VX.rbox((0, 0, 0), (2, 2, 5), 45, "amber_gem", "bead")]
+    anchors = [((0, 0, 0), 1.6, RAMPS["amber"][5], 1)]
+    return twin(top, centre), anchors, dict(accent=RAMPS["amber"][4], grip=(-4, 4), focus=(0, 5))
+
+
+def beastbound_twinblades():
+    """The Beastbound Twinblades (D): two boar tusks curving away from each other (the pair an S), each socketed in a
+    riveted bronze collar; a pelt grip; the moss stone at its middle in a bronze ring."""
+    top = chain(0.0, 5.5, [(5, 4, 3, 3, "tusk"), (20, 4, 3, 3, "tusk"), (38, 3, 2, 2, "tusk"), (56, 2, 1, 1, "horn_tip")], "blade",
+                back=0.3, stagger=0.05)
+    top += [VX.slab(-2.5, 2.5, 4, 6, 5, "bronze", "collar")]
+    for z0 in (2.5, -3.5):
+        top.append(VX.box(-0.5, 0.5, 4.5, 5.5, z0, z0 + 1, "bronze", "rivets"))
+    centre = [grip(-4, 4, "pelt"), ring(-1, 1, "bronze", part="hub"), VX.rbox((0, 0, 0), (2, 2, 7), 45, "moss_gem", "stone")]
+    anchors = [((0, 0, 0), 1.6, RAMPS["moss"][6], 1)]
+    return twin(top, centre), anchors, dict(accent=RAMPS["moss"][5], grip=(-4, 4), focus=(0, 5))
+
+
+def gatewrought_twinblades():
+    """The Gatewrought Twinblades (C): two straight blades of gate-steel, mirror-edged, each between a pair of brass
+    pylons; the signal circuit runs the whole length, up one blade, through the slate grip and up the other."""
+    top = blade([(6, 16, 5, 1), (16, 17, 3, 1), (17, 18, 1, 1)], "slate_rib", "slate_flat", span=(4, 18), column=0)
+    top += [VX.slab(-4.5, 4.5, 4, 6, 5, "brass", "bar")]
+    for sx in (-1, 1):
+        top.append(VX.slab(*sorted((sx * 3.5, sx * 4.5)), 6, 9, 3, "pylon", f"pylon{sx}", span=(6, 9), column=sx * 4))
+        top.append(VX.slab(*sorted((sx * 3.0, sx * 5.0)), 9, 10, 5, "brass", f"cap{sx}"))
+    centre = [VX.slab(-1.5, 1.5, -4, 4, 3, "slate_rib", "grip", span=(-4, 4), column=0), ring(-1, 0, "brass", part="hub")]
+    anchors = []
+    return twin(top, centre), anchors, dict(accent=RAMPS["signal"][5], grip=(-4, 4), focus=(0, 5))
+
+
+def veilwoven_twinblades():
+    """The Veilwoven Twinblades (B): two flame-waved blades of near-black Veil-steel, each with one edge of living
+    spirit light (the far blade's on the far side, so the light winds round the pair); mirror crescents swept back off
+    each guard; an obsidian grip; the spirit stone at its middle in a mirror frame."""
+    segs = [(6, 9, 5, 3), (9, 12, 5, 3), (12, 15, 5, 3), (15, 17, 3, 1), (17, 19, 1, 1)]
+    top = blade(segs, "veil", "veil_edge", shift=lambda y: 1 if 9 <= y < 12 else (-1 if 15 <= y < 17 else 0), span=(4, 19))
+    top.append(VX.slab(-2.5, 2.5, 4, 6, 5, "mirror", "guard"))
+    top += both(chain(-2.5, 5.0, [(70, 3, 2, 3, "mirror"), (110, 3, 1, 2, "mirror")], "crescents"))
+    centre = [grip(-4, 4, "obsidian")] + frame((0, 0, 0), 4, 2, 5, 45, "mirror", "frame") + \
+        [VX.rbox((0, 0, 0), (2, 2, 4), 45, "spirit_gem", "stone")]
+    anchors = [((0, 0, 0), 1.8, RAMPS["spirit"][6], 1)]
+    edge = [(-2.5, y + 0.5, 0.0) for y in (6, 7, 12, 13)]
+    streams = [(WISP, RAMPS["spirit"][6], 3, 0.18, edge), (WISP, RAMPS["spirit"][6], 3, 0.18, [(-x, -y, z) for x, y, z in edge]),
+               (MOTE, RAMPS["spirit"][7], 1, 1.2, [(0, 0, 0)])]
+    return twin(top, centre), anchors, dict(accent=RAMPS["spirit"][5], grip=(-4, 4), focus=(0, 5), streams=streams)
+
+
+def lordscale_twinblades():
+    """The Lordscale Twinblades (A): two broad blades of black scale, gold-ridged, their edges molten gold; at each
+    guard a single gold wing swept back (the two wings on opposite sides, so the pair turns like a dragon's body);
+    the pearl at the grip's middle in a gold bezel; a black-scale grip."""
+    top = blade([(6, 15, 5, 3), (15, 17, 3, 1), (17, 18, 1, 1)], "lord", "ember_edge", span=(6, 18))
+    top.append(VX.slab(-2.5, 2.5, 4, 6, 5, "gold", "guard"))
+    top += fan(-2.0, 5.0, [(55, 7, 2, 3, "gold"), (80, 6, 2, 2, "feather"), (105, 5, 2, 1, "feather")], "wing")
+    centre = [grip(-4, 4, "lord_grip"), VX.slab(-2.5, 2.5, -1, 1, 5, "lord_dark", "hub")] + frame((0, 0, 0), 4, 2, 7, 45, "gold", "bezel") + \
+        [VX.rbox((0, 0, 0), (2, 2, 6), 45, "pearl_gem", "pearl")]
+    anchors = [((0, 0, 0), 1.8, RAMPS["pearl"][4], 1)]
+    pts = [(side * 2.5, y + 0.5, 0.0) for side in (-1, 1) for y in (7, 10, 13)]
+    streams = [(EMBER, RAMPS["ember"][6], 4, 0.12, pts), (EMBER, RAMPS["ember"][6], 4, 0.12, [(-x, -y, z) for x, y, z in pts])]
+    return twin(top, centre), anchors, dict(accent=RAMPS["ember"][5], grip=(-4, 4), focus=(0, 3), streams=streams)
+
+
+def sovereign_twinblades():
+    """The Sovereign Twinblades (S): two ivory blades edged in gold, the Court's runes burning up each; a gold crown at
+    each guard, its quillons sweeping up into points; at the very middle of the grip a great crimson stone in a raised
+    gold diamond; void weave bound in gold either side of it."""
+    top = blade([(6, 16, 5, 3), (16, 18, 3, 1), (18, 19, 1, 1)], "ivory", "gold_edge", span=(7, 16), column=0)
+    top.append(VX.slab(-4.5, 4.5, 4, 6, 5, "gold", "crown"))
+    top += both(chain(-4.0, 5.0, [(45, 3, 2, 3, "gold"), (12, 2, 1, 2, "gold")], "quillons"))
+    centre = [grip(-4, 4, "weave_grip"), VX.slab(-2.5, 2.5, -1.5, 1.5, 5, "gold", "hub")] + frame((0, 0, 0), 5, 3, 9, 45, "gold", "frame") + \
+        [VX.rbox((0, 0, 0), (3, 3, 7), 45, "crimson_gem", "heart")]
+    anchors = [((0, 0, 0), 2.4, RAMPS["crimson"][5], 1)]
+    streams = [(MOTE, RAMPS["crimson"][6], 4, 1.8, [(0, 0, 0)]), (MOTE, RAMPS["gold"][6], 2, 0.25, [(0, 7.5, 0.0), (0, 15.5, 0.0)]),
+               (MOTE, RAMPS["gold"][6], 2, 0.25, [(0, -7.5, 0.0), (0, -15.5, 0.0)])]
+    return twin(top, centre), anchors, dict(accent=RAMPS["crimson"][4], grip=(-4, 4), focus=(0, 3), streams=streams)
+
+
+DESIGNS.update({("twinblades", "E"): wildhide_twinblades, ("twinblades", "D"): beastbound_twinblades,
+                ("twinblades", "C"): gatewrought_twinblades, ("twinblades", "B"): veilwoven_twinblades,
+                ("twinblades", "A"): lordscale_twinblades, ("twinblades", "S"): sovereign_twinblades})
+HOLDS["twinblades"] = ([0, -72, 30], [-0.5, 2.0, -0.6], 0.6)
+
+
 # ---------------------------------------------------------------------------------------------------------------------
-# Building: sword space to item space, the mesh, the icon
+# Building: design space to item space, the mesh, the icon
 
 
 def to_item(P, direction=False):
@@ -863,24 +2005,14 @@ def to_item(P, direction=False):
     return Q if direction else Q * SCALE + np.asarray(HAND)
 
 
-def along(parts):
-    """How far along the weapon each row of each part lies (the sheen's track): by sword-space height, 0 at the pommel."""
-    lo = min(p.grid[..., 1].min() for p in parts)
-    hi = max(p.grid[..., 1].max() for p in parts)
-    for p in parts:
-        p.along = (p.grid[..., 1].mean(axis=1) - lo) / (hi - lo)
-
-
 def make(row, clean=False):
-    """One weapon from its design: (the built mesh, the design's look); clean paints it for the icon."""
-    global GRAIN
-    GRAIN = 0.0 if clean else 1.0
-    tier = row[2]
-    parts, anchors, look = DESIGNS[tier]()
-    along(parts)
+    """One weapon from its design: (the built mesh, the design's look); clean paints it for the icon (the same paint:
+    nothing here is grain, so the icon and the mesh agree)."""
+    boxes, anchors, look = DESIGNS[(row[8], row[2])]()
     item_anchors = [(tuple(to_item(np.array([c]))[0]), r * SCALE, hex_rgb(rgb), kind) for c, r, rgb, kind in anchors]
-    built = MS.build(parts, painter_for(parts, look), density=look["density"], width=128, to_item=to_item, anchors=item_anchors)
-    GRAIN = 1.0
+    built = VX.build(boxes, painter(clean), to_item, width=64, anchors=item_anchors)
+    built.streams = [(kind, hex_rgb(rgb), rate, radius * SCALE, [tuple(q) for q in to_item(np.array(pts))])
+                     for kind, rgb, rate, radius, pts in look.get("streams", [])]
     return built, look
 
 
@@ -911,10 +2043,11 @@ def icon(built, look, size=32):
     # a covered pixel whose centre missed the weapon borrows its nearest hit neighbour's colour
     col = centre.copy()
     for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)):
-        nb, nh = np.roll(np.roll(centre, dy, 0), dx, 1), np.roll(np.roll(hit, dy, 0), dx, 1)
+        nb, nh = np.roll(np.roll(col, dy, 0), dx, 1), np.roll(np.roll(hit, dy, 0), dx, 1)  # (filled ones lend on)
         fill = on & ~hit & nh
         col[fill] = nb[fill]
         hit = hit | fill
+    on &= hit
     out[on, :3] = col[on]
     out[on, 3] = 255
     rim = np.zeros_like(on)
@@ -935,11 +2068,11 @@ def write_all(only=None):
     os.makedirs(mesh_dir, exist_ok=True)
     os.makedirs(tex_dir, exist_ok=True)
     for row in CATALOG:
-        wid, name, tier, dmg, dur, rarity, ench, repair = row
+        wid, name, tier, dmg, dur, rarity, ench, repair, style, speed = row
         lang["item.awaken." + wid] = name
         trail = "0x" + TRAILS[tier].lstrip("#").upper()
-        java_rows.append(f'            new Weapon("{wid}", "longsword", "{tier}", {dmg}F, {LONGSWORD_SPEED}F, {dur}, Rarity.{rarity}, {ench}, "{repair}", {trail})')
-        if tier not in DESIGNS or (only and wid not in only):
+        java_rows.append(f'            new Weapon("{wid}", "{style}", "{tier}", {dmg}F, {speed}F, {dur}, Rarity.{rarity}, {ench}, "{repair}", {trail})')
+        if (style, tier) not in DESIGNS or (only and wid not in only):
             continue
         built, look = make(row)
         MS.write(os.path.join(mesh_dir, wid + ".mesh"), built, hex_rgb(look["accent"]))
@@ -950,19 +2083,22 @@ def write_all(only=None):
         # the hands' base: a particle, no geometry of its own (the mesh draws itself), vanilla's third-person hold and
         # our own first-person one (FIRST_PERSON below)
         _write(os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json"), {
-            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": FIRST_PERSON})
+            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": hold_of(style)})
         _write(os.path.join(RES, "assets/awaken/items", wid + ".json"), {"model": {
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}}],
             "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand", "model": {"type": "awaken:weapon", "weapon": wid}}}})
         _write(os.path.join(RES, "data/awaken/recipe", wid + ".json"), {
-            "type": "minecraft:crafting_shaped", "category": "equipment", "group": "awaken_arms_longsword",
+            "type": "minecraft:crafting_shaped", "category": "equipment", "group": "awaken_arms_" + style,
             "key": {"C": "#awaken:hunter_core_" + tier.lower(), "X": "awaken:" + G.SET[tier] + "_blade", "B": "#awaken:hunter_bind_" + tier.lower()},
-            "pattern": ["C", "X", "B"], "result": {"id": "awaken:" + wid}})
+            "pattern": STYLES[style][4], "result": {"id": "awaken:" + wid}})
         for stale in (wid + "_icon_glow.png",):
             if os.path.exists(os.path.join(tex_dir, stale)):
                 os.remove(os.path.join(tex_dir, stale))
-    _write(os.path.join(MERGE, "data/minecraft/tags/item/swords.json"), {"values": ["awaken:" + row[0] for row in CATALOG]})
+    # vanilla's tags, for its enchantments: each line in its style's tag (Longswords and Greatblades are swords)
+    for tag in sorted({v[3] for v in STYLES.values()}):
+        _write(os.path.join(MERGE, "data/minecraft/tags/item", tag + ".json"),
+               {"values": ["awaken:" + row[0] for row in CATALOG if STYLES[row[8]][3] == tag]})
     lpath = os.path.join(MERGE, "assets/awaken/lang/en_us.json")
     cur = json.load(open(lpath)) if os.path.exists(lpath) else {}
     cur.update(lang)
@@ -978,9 +2114,25 @@ def write_all(only=None):
 # smaller than vanilla's hold, further in. Chosen with mesh_render.render_fp over the game's own frame (it matches
 # vanilla's projection exactly).
 FIRST_PERSON = {
-    "firstperson_righthand": {"rotation": [0, -72, 30], "translation": [0.3, 2.2, -0.6], "scale": [0.6, 0.6, 0.6]},
-    "firstperson_lefthand": {"rotation": [0, 72, -30], "translation": [0.3, 2.2, -0.6], "scale": [0.6, 0.6, 0.6]},
+    # 0.5 (raised 1.3) for the voxel blades (about 28 texels, longer than the lofted ones): at 0.6 their points ran off the top of
+    # the view (tour, 2026-10-26)
+    "firstperson_righthand": {"rotation": [0, -72, 30], "translation": [0.3, 1.3, -0.6], "scale": [0.5, 0.5, 0.5]},
+    "firstperson_lefthand": {"rotation": [0, 72, -30], "translation": [0.3, 1.3, -0.6], "scale": [0.5, 0.5, 0.5]},
 }
+# Each style's own: (rotation, translation, scale) of the right hand (the left mirrors it). The longer the weapon the
+# smaller it is held, so its head or point sits where the Longsword's point does (check() holds every point above the
+# grip inside the view, with the Longsword's own margin to the top).
+HOLDS.update({
+    "longsword": ([0, -72, 30], [0.3, 1.3, -0.6], 0.5),
+})
+
+
+def hold_of(style):
+    if style == "longsword":
+        return FIRST_PERSON
+    rot, tr, sc = HOLDS[style]
+    return {"firstperson_righthand": {"rotation": rot, "translation": tr, "scale": [sc, sc, sc]},
+            "firstperson_lefthand": {"rotation": [rot[0], -rot[1], -rot[2]], "translation": tr, "scale": [sc, sc, sc]}}
 
 JAVA_HEAD = """package dev.awaken.arms;
 
@@ -1048,7 +2200,7 @@ def preview(out_dir, only=None):
     os.makedirs(out_dir, exist_ok=True)
     outs, rows = [], []
     for row in CATALOG:
-        if row[2] not in DESIGNS or (only and row[0] not in only):
+        if (row[8], row[2]) not in DESIGNS or (only and row[0] not in only):
             continue
         built, look = make(row)
         m = {"pos": built.pos / 16.0, "nrm": built.nrm, "uv": built.uv, "along": built.along, "accent": hex_rgb(look["accent"])}
@@ -1072,13 +2224,136 @@ def preview(out_dir, only=None):
     return outs
 
 
+REFERENCE = "/Volumes/MEDIA/arms-ref/weapon-style-ref.webp"  # the owner's look bar (Minecraft Dungeons style)
+
+
+def as_render(built, look):
+    return {"pos": built.pos / 16.0, "nrm": built.nrm, "uv": built.uv, "along": built.along, "accent": hex_rgb(look["accent"])}
+
+
+def upright(m):
+    """The same mesh stood up (the blade turned from the item's diagonal to straight up about the grip), to be seen as
+    the reference sees its hammer."""
+    a = math.radians(-ANGLE)
+    R = np.array([[math.cos(a), -math.sin(a), 0], [math.sin(a), math.cos(a), 0], [0, 0, 1]])
+    c = np.array(HAND) / 16.0
+    return dict(m, pos=(m["pos"] - c) @ R.T, nrm=m["nrm"] @ R.T)
+
+
+def contact_sheet(out, style="longsword"):
+    """The review sheet of one line beside the owner's reference: per weapon, upright turntable frames (front
+    three-quarter, its other side, the back), a close-up of what it's about (its look's focus: a hilt, a head), first
+    person at rest (its style's own hold) and as vanilla's handheld holds it, the same at night (the world's light
+    low: only what glows of itself carries), and the icon at 4x and 1x."""
+    from PIL import ImageDraw
+    bg = np.array([30, 28, 40])
+    rows_ = []
+    for row in CATALOG:
+        if row[8] != style:
+            continue
+        built, look = make(row)
+        rows_.append((row, built, look))
+    H, tw = 300, 170
+    ref_w = 640
+    cols = [("three-quarter", tw), ("other side", tw), ("back", tw)] + \
+        ([("beside its Longsword (one scale)", 250)] if style != "longsword" else []) + \
+        [("close-up", 300), ("first person, at rest", 250), ("vanilla's hold", 250), ("night", tw), ("icon", 170)]
+    W = ref_w + 20 + sum(w for _, w in cols)
+    sheet = Image.new("RGB", (W, 34 + H * len(rows_)), tuple(int(v) for v in bg))
+    d = ImageDraw.Draw(sheet)
+    if os.path.exists(REFERENCE):
+        ref = Image.open(REFERENCE).convert("RGB")
+        sheet.paste(ref.resize((ref_w, int(ref.size[1] * ref_w / ref.size[0]))), (0, 34))
+        crop = ref.crop((420, 220, 760, 680))
+        ch = 34 + H * len(rows_) - (34 + int(ref.size[1] * ref_w / ref.size[0]) + 10)
+        cw = int(crop.size[0] * ch / crop.size[1])
+        sheet.paste(crop.resize((cw, ch)), ((ref_w - cw) // 2, 34 + int(ref.size[1] * ref_w / ref.size[0]) + 10))
+        d.text((8, 10), "the reference (owner's look bar) and its hammer", fill=(230, 226, 240))
+    x = ref_w + 20
+    for name, w in cols:
+        d.text((x + 6, 10), name, fill=(200, 196, 214))
+        x += w
+    for k, (row, built, look) in enumerate(rows_):
+        y0 = 34 + k * H
+        m = as_render(built, look)
+        up = upright(m)
+        tex = built.texture()
+        lo, hi = up["pos"].min(axis=0), up["pos"].max(axis=0)
+        c = (lo + hi) / 2
+        span_x = np.abs(up["pos"][:, [0, 2]] - c[[0, 2]]).sum(axis=1).max() * 2  # what a turn can sweep across
+        sc = min((H - 30) / ((hi[1] - lo[1]) * 16 * 1.12), (tw - 8) / (span_x * 16))
+        x = ref_w + 20
+        for yaw, pitch in ((28, 14), (-34, 12), (180 + 25, 12)):
+            sheet.paste(MR.render(up, tex, yaw, pitch, scale=sc, size=(tw, H), centre=c, time=0.27, bg=bg), (x, y0))
+            x += tw
+        if style != "longsword":  # the tier's Longsword beside it, both at one texel scale, to tell them apart at a glance
+            lrow = next(r for r in CATALOG if r[8] == "longsword" and r[2] == row[2])
+            lb, ll = make(lrow)
+            lup = upright(as_render(lb, ll))
+            both_ = np.concatenate([up["pos"], lup["pos"]])
+            lo2, hi2 = both_.min(axis=0), both_.max(axis=0)
+            sc2 = (H - 30) / ((hi2[1] - lo2[1]) * 16 * 1.12)
+            for mm, tt, w in ((up, tex, 140), (lup, lb.texture(), 110)):
+                c2 = np.array([(mm["pos"][:, 0].min() + mm["pos"][:, 0].max()) / 2, (lo2[1] + hi2[1]) / 2, 0])
+                sheet.paste(MR.render(mm, tt, 28, 14, scale=sc2, size=(w, H), centre=c2, time=0.27, bg=bg), (x, y0))
+                x += w
+        fx, fy = look.get("focus", (0, 3.5))
+        zoom = look.get("zoom", 3.2 * (28.0 / ((hi[1] - lo[1]) * 16)))
+        sheet.paste(MR.render(up, tex, 24, 14, scale=sc * zoom, size=(300, H), centre=np.array([fx, fy, 0]) / 16, time=0.27, bg=bg), (x, y0))
+        x += 300
+        for hold in (held_as(style), MR.HANDHELD_FP):
+            f = MR.render_fp(m, tex, display=hold, size=(960, 540), time=0.27, bg=np.array([88, 96, 112]))
+            sheet.paste(f.crop((480, 0, 960, 540)).resize((250, 281)), (x, y0 + 10))
+            x += 250
+        sheet.paste(MR.render(up, tex, 28, 14, scale=sc, size=(tw, H), centre=c, time=0.27, bg=np.array([8, 9, 16]), light=0.22), (x, y0))
+        x += tw
+        ic = icon(make(row, clean=True)[0], look)
+        big = ic.resize((128, 128), Image.NEAREST)
+        sheet.paste(big, (x + 20, y0 + 40), big)
+        sheet.paste(ic, (x + 70, y0 + 190), ic)
+        d.text((ref_w + 26, y0 + 6), f"{row[1]} ({row[2]})  {len(built.pos) // 3} triangles", fill=(236, 232, 244))
+    sheet.save(out)
+    return out
+
+
+def held_as(style):
+    """A style's first-person hold as mesh_render takes it: (rotation, translation, scale)."""
+    fp = hold_of(style)["firstperson_righthand"]
+    return tuple(fp["rotation"]), tuple(fp["translation"]), fp["scale"][0]
+
+
+def fp_screen(built, style, hand=(0.56, -0.52, -0.72), fov=70.0, aspect=16 / 9):
+    """Where each corner lands on a 16:9 screen in first person at rest (0..1 across and down), the same projection as
+    mesh_render.render_fp; and each corner's height up the weapon in design space."""
+    (rx, ry, rz), t, sc = held_as(style)
+    P = (built.pos / 16.0 - 0.5) * sc
+    P = P @ MR.euler(rx, ry, rz).T + np.asarray(t) / 16.0 + np.asarray(hand)
+    f = 1.0 / math.tan(math.radians(fov) / 2)
+    sx = 0.5 + (P[:, 0] / -P[:, 2]) * f / aspect / 2
+    sy = 0.5 - (P[:, 1] / -P[:, 2]) * f / 2
+    a = math.radians(ANGLE)
+    up = np.array([-math.sin(a), math.cos(a)])  # the design's +y in item space
+    height = (built.pos[:, :2] - np.asarray(HAND[:2])) @ up
+    return sx, sy, height
+
+
+# The Longsword's tuned hold (set in the game, 2026-10-26) leaves its point this far down the screen; no line's head or
+# point may sit higher (render_fp draws the hand a little lower than the game does)
+FP_TOP = 0.42
+
+
 BUDGET = 18_000  # triangle corners per weapon, the same as ArmsTests.MESH_BUDGET
 
 
 def check():
-    """Each weapon built: within budget, inside the item box, its atlas fitting, its icon not empty."""
+    """Each weapon built: within budget, inside the item box, its atlas fitting, no two faces fighting over a plane, its
+    icon not empty; and what ArmsTests.assets checks of the written mesh (texels in the albedo half, every glow sized,
+    every stream's points on the weapon, light lifting off the B, A and S blades and only those)."""
     bad = []
     for row in CATALOG:
+        if (row[8], row[2]) not in DESIGNS:
+            bad.append(f"{row[0]}: no design")
+            continue
         built, look = make(row)
         n = len(built.pos)
         lo, hi = built.pos.min(axis=0) / 16.0, built.pos.max(axis=0) / 16.0
@@ -1088,10 +2363,31 @@ def check():
             bad.append(f"{row[0]}: outside the item box ({lo.round(2)}, {hi.round(2)})")
         if built.albedo.shape[0] > 256:
             bad.append(f"{row[0]}: atlas {built.albedo.shape[0]} tall")
+        for w in sorted(set(VX.WARNINGS)):
+            bad.append(f"{row[0]}: {w}")
+        if built.uv[:, 0].min() < 0 or built.uv[:, 0].max() > 0.5 or built.uv[:, 1].min() < 0 or built.uv[:, 1].max() > 1:
+            bad.append(f"{row[0]}: a texel outside the albedo half")
+        if any(a[1] <= 0 for a in built.anchors):
+            bad.append(f"{row[0]}: a glow with no size")
+        for kind, rgb, rate, radius, pts in built.streams:
+            q = np.array(pts) / 16.0
+            if (q < lo - 0.05).any() or (q > hi + 0.05).any() or rate <= 0 or radius <= 0:
+                bad.append(f"{row[0]}: a stream off the weapon, or with no rate or spread")
+        if True:
+            sx, sy, height = fp_screen(built, row[8])
+            g1 = look.get("grip", (-1, 3))[1]
+            above = height > g1 + (height.max() - g1) / 2  # the outer half of its reach
+            if (sx[above] < 0.02).any() or (sx[above] > 0.98).any() or (sy[above] < FP_TOP).any() or (sy[above] > 0.98).any():
+                bad.append(f"{row[0]}: in first person the outer half of its reach leaves the view "
+                           f"(x {sx[above].min():.2f}..{sx[above].max():.2f}, y {sy[above].min():.2f}..{sy[above].max():.2f})")
+        if (row[2] in ("B", "A", "S")) != bool(built.streams):
+            bad.append(f"{row[0]}: light lifts off the B, A and S blades and only those")
         alpha = np.asarray(icon(make(row, clean=True)[0], look))[..., 3]
         if (alpha > 0).mean() < 0.12:
             bad.append(f"{row[0]}: its icon is nearly empty")
-        print(f"  {row[0]:24s} {n // 3:5d} triangles  atlas {built.albedo.shape[1]}x{built.albedo.shape[0]}")
+        ys = (built.pos[:, :2] - np.asarray(HAND[:2])) @ np.array([-math.sin(math.radians(ANGLE)), math.cos(math.radians(ANGLE))])
+        print(f"  {row[0]:24s} {n // 3:5d} triangles  atlas {built.albedo.shape[1]}x{built.albedo.shape[0]}  "
+              f"{ys.max() - ys.min():4.1f} texels long")
     return bad
 
 
@@ -1109,6 +2405,9 @@ def main(argv):
         return 0
     if cmd == "preview":
         print("\n".join(preview(argv[1] if len(argv) > 1 else ".", argv[2:] or None)))
+        return 0
+    if cmd == "sheet":
+        print(contact_sheet(argv[1] if len(argv) > 1 else "weapons.png", argv[2] if len(argv) > 2 else "longsword"))
         return 0
     raise SystemExit(__doc__)
 

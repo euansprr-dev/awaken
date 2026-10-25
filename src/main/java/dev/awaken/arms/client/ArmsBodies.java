@@ -1,6 +1,7 @@
 package dev.awaken.arms.client;
 
 import dev.awaken.arms.Archetype;
+import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.Arms;
 import dev.awaken.arms.ArmsClips;
 import dev.awaken.core.api.PlayerClips;
@@ -26,8 +27,8 @@ final class ArmsBodies {
     /** The looped clip a player is holding (guard or charge), so each starts once and settles once. */
     private static final Map<Integer, String> HELD = new HashMap<>();
 
-    static void move(Entity e, Archetype.Move move) {
-        String clip = ArmsClips.of(move);
+    static void move(Entity e, Archetypes.Loaded style, Archetype.Move move) {
+        String clip = ArmsClips.of(style.def().id(), move);
         if (clip == null) return;
         HELD.remove(e.getId());
         PlayerClips.play(e.getId(), clip, 1);

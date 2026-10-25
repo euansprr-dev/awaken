@@ -29,6 +29,9 @@
     "awaken:planter",
     "awaken:notice_board",
     "awaken:fishing_net",
-    "awaken:well_windlass"
+    "awaken:well_windlass",
+    "awaken:wall_ivy",
+    "awaken:portcullis",
+    "awaken:wall_shield"
   ]
 }

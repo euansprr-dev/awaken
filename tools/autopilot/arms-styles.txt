@@ -1,0 +1,90 @@
+# Arms: the batch-1 styles in hand (SPEC §25 "Styles"): a vanilla axe (the Axe) and the mace (the Maul), each a
+# chain and a held heavy, first person and third, shots through each blow; the trace logs the move and the pose.
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~ ~ ~2.7 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_axe
+wait 40
+look 0 5
+arms trace 80
+arms strike
+wait 1
+shotnow axe_s1_a
+wait 1
+shotnow axe_s1_b
+wait 8
+arms strike
+wait 2
+shotnow axe_s2
+wait 10
+arms strike
+wait 3
+shotnow axe_s3
+wait 30
+arms heavy 26
+wait 14
+shotnow axe_heavy_draw
+wait 16
+shotnow axe_heavy_blow
+wait 30
+camera back
+arms strike
+wait 2
+shotnow axe_3p_s1
+wait 10
+arms strike
+wait 3
+shotnow axe_3p_s2
+wait 10
+arms strike
+wait 5
+shotnow axe_3p_s3
+wait 30
+camera first
+cmd item replace entity @s weapon.mainhand with minecraft:mace
+wait 30
+arms strike
+wait 2
+shotnow mace_s1
+wait 12
+arms strike
+wait 3
+shotnow mace_s2
+wait 14
+arms strike
+wait 5
+shotnow mace_s3
+wait 30
+camera back
+arms strike
+wait 3
+shotnow mace_3p_s1
+wait 14
+arms strike
+wait 3
+shotnow mace_3p_s2
+wait 14
+arms strike
+wait 6
+shotnow mace_3p_s3
+wait 30
+camera first
+quit

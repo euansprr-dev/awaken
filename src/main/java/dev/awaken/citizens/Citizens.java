@@ -95,9 +95,9 @@ final class Citizens {
                         cd.planHash.substring(0, Math.min(12, cd.planHash.length())), roster.planSha256.substring(0, Math.min(12, roster.planSha256.length())));
                 return;
             }
-            net = StreetNet.of(cd.street, roster.edgeLane);
+            net = StreetNet.of(cd.street, roster.edgeLane).withWall(roster, layout.cx, layout.cz, layout.streetY);
         } else {
-            net = StreetNet.of(CityPlan.get(), layout.cx, layout.cz, layout.streetY, roster.edgeLane);
+            net = StreetNet.of(CityPlan.get(), layout.cx, layout.cz, layout.streetY, roster.edgeLane).withWall(roster, layout.cx, layout.cz, layout.streetY);
         }
         active = new Citizens(level, roster, net, CitizensData.get(server), layout.cx, layout.cz, layout.streetY);
         // a new world's first player logs in before the city's people start (the pregen runs first): send what login

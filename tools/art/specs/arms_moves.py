@@ -48,25 +48,36 @@ def held(name, base, jitters, period, note):
     clip(name + "_end", [(0, base, "linear")], 5, end=0, note="settles out of " + name)
 
 
-def row(move):
-    m = json.load(open(TABLE))["archetypes"][0]["moves"][move]
-    return m["windup"], m["active"], m["recovery"]
+def row(move, style="longsword"):
+    for a in json.load(open(TABLE))["archetypes"]:
+        if a["id"] == style:
+            m = a["moves"][move]
+            return m["windup"], m["active"], m["recovery"]
+    raise KeyError(style)
 
 
-def strike(name, move, cocked, through, note, settle=None, via=None):
+def strike(name, move, cocked, through, note, settle=None, via=None, style="longsword", arc=None):
     """A strike on its row: from the ready stance into the cocked pose by the wind-up's end (eased out; through
     {@code via} halfway when a straight path would cross the body), hard through the blow by the active ticks' end
     (eased out hard, as the hands are), held a beat, then home by the endTick."""
-    w, a, r = row(move)
+    w, a, r = row(move, style)
+    # the blow is centred on the server's hit (the first active tick): it starts half the active early, so the blade
+    # is crossing the target as it lands (SPEC §25 "First person"); the recovery takes up the difference
+    c = max(0.5, w - a * 0.5) if w > 0 else 0
     keys = [(0, READY, "linear")]
     if w > 0:
         if via is not None:
-            keys.append((w * 0.5, via, "easeinoutsine"))
-        keys.append((w, cocked, "easeoutsine"))
+            keys.append((c * 0.5, via, "easeinoutsine"))
+        keys.append((c, cocked, "easeoutsine"))
     else:
         keys[0] = (0, cocked, "linear")
-    keys.append((w + a, through, "easeoutcubic"))
-    hold = w + a + max(1, r // 3)
+    if arc is not None:
+        # the blow passes out in front (a straight blend from cocked to through would sweep the arm through the chest)
+        keys.append((c + a * 0.5, arc, "easeinsine"))
+        keys.append((c + a, through, "easeoutsine"))
+    else:
+        keys.append((c + a, through, "easeoutcubic"))
+    hold = c + a + max(1, r // 3)
     keys.append((hold, settle or nudge(through, lean=-2), "easeoutsine"))
     end = w + a + r
     keys.append((end, READY, "easeinoutsine"))
@@ -81,10 +92,15 @@ READY = pose(lean=6, rl=(-10, 0, 4), rk=12, ll=(8, 0, -4), lk=10, ra=(-38, 6, 10
 # behind the shoulder; the blow turns the chest through and the arm sweeps down across the body, the off hand pulling
 # back to drive it.
 S1_COCK = pose(lean=2, twist=16, rl=(-14, 0, 6), rk=14, ll=(14, 0, -4), lk=12, ra=(-140, 65, 40), re=60, la=(-40, 0, -22), le=46)
-S1_THRU = pose(lean=14, twist=-34, rl=(-26, 0, 4), rk=24, ll=(16, 0, -6), lk=10, ra=(-58, -62, 8), re=12, la=(-14, 0, -30), le=30)
+# (the shoulders turn right through and the arm finishes out past the off side, so the blade reads from behind: the
+# shoulder view is behind you, and a finish across the chest hid the whole blow behind the body)
+S1_THRU = pose(lean=14, twist=-48, rl=(-26, 0, 4), rk=24, ll=(16, 0, -6), lk=10, ra=(-50, -90, 65), re=8, la=(-6, 0, -40), le=26)
 # the arm lifts out to the side on its way up (straight up, it would pass in front of the face)
 S1_VIA = pose(lean=4, twist=18, rl=(-12, 0, 5), rk=13, ll=(11, 0, -4), lk=11, ra=(-84, 48, 74), re=44, la=(-34, 0, -18), le=44)
-strike("arms_strike_1", "strike_1", S1_COCK, S1_THRU, "forehand diagonal: drawn up behind the shoulder, swept down across", via=S1_VIA)
+# half way through the blow: the arm out level in front, the chest turning through
+S1_ARC = pose(lean=8, twist=-10, rl=(-20, 0, 5), rk=18, ll=(15, 0, -5), lk=11, ra=(-80, -35, 75), re=20, la=(-24, 0, -26), le=36)
+strike("arms_strike_1", "strike_1", S1_COCK, S1_THRU, "forehand diagonal: drawn up behind the shoulder, swept down across", via=S1_VIA,
+       arc=S1_ARC)
 
 # Strike 2, a backhand sweep (left to right): the blade arm crosses the chest to the off side, then sweeps out wide.
 S2_COCK = pose(lean=8, twist=-36, rl=(-12, 0, 4), rk=16, ll=(10, 0, -4), lk=12, ra=(-98, -58, 12), re=30, la=(-20, 0, -26), le=36)
@@ -156,6 +172,61 @@ def dodge(name, legs, tilt, lean, note):
 dodge("arms_dodge_back", dict(rl=(28, 0, 6), ll=(-16, 0, -6)), 0, -14, "a quick step back, arms out")
 dodge("arms_dodge_left", dict(rl=(-6, 0, 14), ll=(0, 0, -30)), -14, 6, "a quick step to the off side")
 dodge("arms_dodge_right", dict(rl=(0, 0, 30), ll=(-6, 0, -14)), 14, 6, "a quick step to the blade side")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The other styles (SPEC §25 "Archetypes"): each move's clip on its own style's row (its wind-up and blow on that row's
+# ticks, so the body, the hit and the hands agree), from the poses above by the move's kind: a side cut (S1/S2), an
+# overhead (S3/EX), a thrust (T), a whole sweep round (the Art's). Heavier styles lean further into their blows and
+# sink lower. Named arms_<style>_<move>; a move a style has no clip for plays the Longsword's.
+
+def styled(style, lean=0.0, sink=0.0):
+    k = lambda p: nudge(p, lean=lean, rise=-sink) if (lean or sink) else p
+    table = json.load(open(TABLE))
+    a = next(x for x in table["archetypes"] if x["id"] == style)
+    kinds = {
+        "side1": (S1_COCK, S1_THRU, S1_VIA, S1_ARC), "side2": (S2_COCK, S2_THRU, None, None), "over": (S3_COCK, S3_THRU, None, None),
+        "thrust": (T_COCK, T_THRU, None, None), "round": (AR_DRAW, AR_THRU, None, None), "exec": (EX_COCK, EX_THRU, None, None),
+        "rise": (HV_DRAW, HV_THRU, None, None),
+    }
+    for move, m in a["moves"].items():
+        if move in ("undercut", "plunge", "slipcut"):
+            continue  # the Longsword's own (out of a slide, a fall, a dodge) fit every style
+        sw = m.get("swing", {})
+        tilt_from = sw.get("from", [0, 0, 0])[3] if len(sw.get("from", [])) > 3 else 0
+        if m.get("swish") == "thrust":
+            kind = "thrust"
+        elif move == "execution":
+            kind = "exec"
+        elif m.get("arc", 0) >= 300 and tilt_from > -20 and move != "heavy":
+            kind = "round"
+        elif tilt_from <= -10:
+            kind = "over"
+        elif move == "heavy":
+            kind = "rise"
+        else:
+            # which way the hand travels: right to left is the forehand, left to right the backhand
+            kind = "side1" if sw.get("to", [0])[0] < sw.get("from", [0])[0] else "side2"
+        cocked, thru, via, arc = kinds[kind]
+        strike(f"arms_{style}_{move}", move, k(cocked), k(thru), f"{a['name']}: {move} ({kind})", via=via, style=style,
+               arc=None if arc is None else k(arc))
+
+
+styled("axe", lean=3)
+styled("maul", lean=6, sink=0.5)
+styled("spear")
+styled("greatblade", lean=5, sink=0.3)
+styled("rapier", lean=-1)
+styled("daggers", lean=4, sink=0.6)
+styled("katana", lean=2, sink=0.2)
+styled("twinblades", lean=3, sink=0.3)
+styled("glaive", lean=4, sink=0.2)
+styled("scythe", lean=5, sink=0.3)
+styled("gauntlets", lean=6, sink=0.5)
+styled("chainblade", lean=2)
+styled("shieldblade", lean=3, sink=0.3)
+styled("warstaff", lean=3, sink=0.2)
+styled("precursor", lean=2)
 
 
 # ---------------------------------------------------------------------------------------------------------------------

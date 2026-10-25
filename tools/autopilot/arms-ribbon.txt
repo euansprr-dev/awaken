@@ -1,0 +1,54 @@
+# Arms: the first-person ribbon, frozen just after a strike, in three draw modes (as built, without age fades, loud red).
+world armsribbon creative 779
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd time set 6000
+cmd weather clear 1000000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~14 minecraft:smooth_stone
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+wait 40
+camera first
+look 0 5
+arms trailfreeze on
+arms ribbonmode 0
+arms strike
+wait 8
+arms ribbonstate
+shot rm0_diamond
+wait 20
+arms ribbonmode 1
+arms strike
+wait 8
+shot rm1_diamond
+wait 20
+arms ribbonmode 2
+arms strike
+wait 8
+shot rm2_diamond
+wait 20
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 20
+arms ribbonmode 0
+arms strike
+wait 8
+shot rm0_lord
+wait 20
+arms ribbonmode 1
+arms strike
+wait 8
+shot rm1_lord
+arms ribbonmode 0
+arms trailfreeze off
+quit

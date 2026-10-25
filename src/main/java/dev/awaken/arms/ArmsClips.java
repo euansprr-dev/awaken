@@ -23,7 +23,18 @@ public final class ArmsClips {
     public static final List<String> ALL = List.of("arms_strike_1", "arms_strike_2", "arms_strike_3", "arms_strike_4", "arms_heavy",
             "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT);
 
-    /** The clip a move plays (a fifth strike borrows the first's), or null for one without its own. */
+    /**
+     * The clip a move plays for a style: the style's own on its own row's ticks (arms_<style>_<move>, generated for
+     * every move but the slide's, the fall's and the dodge's, which every style shares), else the Longsword's.
+     */
+    public static @Nullable String of(String style, Archetype.Move move) {
+        if (style.equals(Arms.LONGSWORD) || move == Archetype.Move.UNDERCUT || move == Archetype.Move.PLUNGE || move == Archetype.Move.SLIPCUT) {
+            return of(move);
+        }
+        return "arms_" + style + "_" + move.key;
+    }
+
+    /** The Longsword's clip for a move (a fifth strike borrows the first's), or null for one without its own. */
     public static @Nullable String of(Archetype.Move move) {
         return switch (move) {
             case STRIKE_1, STRIKE_2, STRIKE_3, STRIKE_4 -> "arms_" + move.key;

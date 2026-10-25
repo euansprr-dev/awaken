@@ -16,6 +16,9 @@ final class ArmsContent {
 
     static final Supplier<AttachmentType<ArmsState>> STATE = ATTACHMENTS.register("arms_state", () -> AttachmentType.builder(ArmsState::new).build());
     static final Supplier<AttachmentType<Posture>> POSTURE = ATTACHMENTS.register("arms_posture", () -> AttachmentType.builder(Posture::new).build());
+    /** What a fighter has woven (saved, schemaVersion'd, kept through death). */
+    static final Supplier<AttachmentType<ArmsWeaves.ArmsMemory>> MEMORY = ATTACHMENTS.register("arms_memory",
+            () -> AttachmentType.builder(ArmsWeaves.ArmsMemory::fresh).serialize(ArmsWeaves.ArmsMemory.CODEC).copyOnDeath().build());
 
     static void register(IEventBus modBus) {
         ATTACHMENTS.register(modBus);

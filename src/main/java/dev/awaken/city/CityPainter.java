@@ -33,6 +33,7 @@ public final class CityPainter {
         for (int lz = 0; lz < buf.d; lz++) {
             for (int lx = 0; lx < buf.w; lx++) ground(c, buf, buf.px0 + lx, buf.pz0 + lz);
         }
+        CityWall.approaches(c, buf); // the High Gate's yard and barbican, the roads' lamps and masts (after the ground)
         CityPlan plan = layout.plan;
         for (int id : pieces) {
             if (id < layout.nPlots) {
@@ -86,13 +87,10 @@ public final class CityPainter {
         byte k = p.kind(x, z);
         switch (k) {
             case VOID -> outside(c, b, x, z);
-            case WALL -> wall(c, b, x, z);
+            case WALL -> CityWall.curtain(c, b, x, z);
             case WATERGATE -> {
                 waterColumn(c, b, x, z, RIVER_FLOOR);
-                // the wall arches over the water: open to ry 9, masonry above, a portcullis hanging on the outer line
-                int top = p.wallHeight - 1;
-                for (int ry = 10; ry <= top; ry++) b.set(x, ry, z, ry == 10 ? STONE_SLAB_TOP : wallStone(c, x, ry, z));
-                b.set(x, top + 1, z, POLISHED_ANDESITE);
+                CityWall.waterGate(c, b, x, z);
             }
             case RIVER -> waterColumn(c, b, x, z, RIVER_FLOOR);
             case CANAL, RACE -> waterColumn(c, b, x, z, CANAL_FLOOR);
@@ -208,6 +206,7 @@ public final class CityPainter {
         else if (k == YARD) yardCell(c, b, x, z, lift, dist);
         else if (k == QUAY && face && c.pct(x, z, 9) < 6) b.set(x, 1, z, WALL_POST); // bollards
         if (open(k) && k != STAIR) wallFoot(c, b, x, z, lift);
+        if (k == RING) CityWall.innerBand(c, b, x, z);
     }
 
     /** Open ground: what a retaining wall's foot can stand on (streets, squares, yards, gardens). */
@@ -532,43 +531,6 @@ public final class CityPainter {
         return h < 10 ? MOSSY_STONE_BRICKS : h < 18 ? CRACKED_STONE_BRICKS : h < 24 ? ANDESITE : STONE_BRICKS;
     }
 
-    /** The curtain wall: solid 40 high, a walk on top, merlons on the outer edge and a low parapet on the inner. */
-    static void wall(Ctx c, CityBuffer b, int x, int z) {
-        CityPlan p = c.plan;
-        int top = p.wallHeight - 1;
-        b.plate(x, z);
-        b.column(x, -4, -1, z, STONE);
-        for (int ry = 0; ry < top; ry++) b.set(x, ry, z, ry < 3 ? DEEPSLATE_BRICKS : wallStone(c, x, ry, z));
-        b.set(x, top, z, c.pct(x, z, 30) < 25 ? STONE_BRICKS : POLISHED_ANDESITE);
-        b.column(x, top + 1, CLEAR_TOP, z, AIR);
-        boolean outer = false, inner = false;
-        for (int[] d : NB) {
-            byte n = p.kind(x + d[0], z + d[1]);
-            if (n == VOID) outer = true;
-            else if (n != WALL && n != WATERGATE && n != LANDMARK) inner = true;
-        }
-        if (outer) {
-            b.set(x, top + 1, z, STONE_BRICKS);
-            if (((x + z) & 1) == 0) b.set(x, top + 2, z, STONE_BRICKS);
-        } else if (inner) {
-            int m = 0;
-            for (int d = 0; d < 4; d++) if (innerParapet(p, x + NB[d][0], z + NB[d][1])) m |= 1 << d;
-            b.set(x, top + 1, z, STONE_WALLS[m]);
-        }
-    }
-
-    /** A wall cell on the curtain's inner face (no outside neighbour, an inside one). */
-    static boolean innerParapet(CityPlan p, int x, int z) {
-        if (p.kind(x, z) != WALL) return false;
-        boolean outer = false, inner = false;
-        for (int[] d : NB) {
-            byte n = p.kind(x + d[0], z + d[1]);
-            if (n == VOID) outer = true;
-            else if (n != WALL && n != WATERGATE && n != LANDMARK) inner = true;
-        }
-        return inner && !outer;
-    }
-
     // ---- outside the wall -----------------------------------------------------------------------------------
 
     static void outside(Ctx c, CityBuffer b, int x, int z) {
@@ -578,14 +540,6 @@ public final class CityPainter {
         if (r > l.reach) return;
         double rd = riverDistance(p, x, z);
         if (rd < 13) return; // terrain's river
-        // the wall's outer foot: a corbelled machicolation line high up, read from the sky as the wall's shadow line
-        for (int[] d : NB) {
-            if (p.kind(x + d[0], z + d[1]) == WALL) {
-                int side = d[0] == 0 ? (d[1] < 0 ? S : N) : (d[0] < 0 ? E : W);
-                b.set(x, p.wallHeight - 4, z, STONE_CORBEL[side]);
-                break;
-            }
-        }
         boolean apron = r < p.fieldsFrom;
         if (!l.carved && !apron) return;
         b.plate(x, z);
@@ -602,6 +556,7 @@ public final class CityPainter {
             b.set(x, 0, z, GRASS);
             b.column(x, 1, clear, z, AIR);
             if (c.pct(x, z, 32) < 10) b.set(x, 1, z, SHORT_GRASS);
+            if (apron) CityWall.outerBand(c, b, x, z); // the wall's outer foot and face (the Walls step)
             return;
         }
         // the fields: irregular patches round the city (each column belongs to its nearest seed on a jittered polar
@@ -732,6 +687,10 @@ public final class CityPainter {
 
     static void lamp(Ctx c, CityBuffer b, int[] l) {
         int x = l[0], z = l[1];
+        // (never in a gate's passage: the gatehouse hangs its own lantern there; the Walls step)
+        for (CityPlan.Part p : c.plan.parts)
+            if (p.kind().equals("gate_passage") && x >= p.x0() && x <= p.x1() && z >= p.z0() && z <= p.z1()) return;
+        if (CityWall.pipeAt(c.plan, x, z)) return; // (nor in a drainpipe's way up the wall)
         int g = c.plan.lift(x, z);
         b.set(x, g + 1, z, WALL_POST);
         b.column(x, g + 2, g + 3, z, FENCE);

@@ -213,6 +213,11 @@ public final class LensClient {
         ease = rate(fadeTicks);
     }
 
+    /** The moment's look playing now ({@link #override}), or null for the place's own. */
+    public static @org.jspecify.annotations.Nullable String overriding() {
+        return overrideLook;
+    }
+
     /** Back to the dimension's own look over about {@code fadeTicks} (with Lens off: to the plain frame, then off). */
     public static void clearOverride(int fadeTicks) {
         if (overrideLook == null) return;

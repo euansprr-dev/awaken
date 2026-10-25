@@ -79,6 +79,19 @@ public final class ArmsRules {
         return step < a.chain().size() ? a.chain().get(step) : a.masteryChain().get(step - a.chain().size());
     }
 
+    /**
+     * A blow from behind (the Daggers' backstab): the striker stands more than 120° round from where the struck body
+     * faces (its body yaw, and the yaw from it to the striker; degrees, Minecraft's convention).
+     */
+    public static boolean behind(float bodyYaw, float yawToStriker) {
+        return Math.abs(Mth.wrapDegrees(yawToStriker - bodyYaw)) > 120F;
+    }
+
+    /** The Katana's draw: a chain's first strike after the blade rested {@code idle} ticks (the style's drawIdle; 0: none). */
+    public static boolean drawn(Archetype.Traits t, Archetype.Move move, long idle) {
+        return t.drawIdle() > 0 && move == Archetype.Move.STRIKE_1 && idle >= t.drawIdle();
+    }
+
     /** Damage multiplier of a move at this rhythm count (and a heavy's release). */
     public static float motion(Archetype.MoveDef m, int cadence, boolean perfectHeavy) {
         float base = perfectHeavy && m.charge().isPresent() ? m.charge().get().glintMotion() : m.motion();

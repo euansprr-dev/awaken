@@ -41,8 +41,10 @@ final class BodyCamera {
             float attack = Mth.clamp(r / 2.2F, 0, 1);
             float release = Mth.clamp((r - 2.2F) / (BodyRules.ROLL_TICKS + 3.8F), 0, 1);
             float dip = attack * (1 - release * release * (3 - 2 * release));
-            pitch += 32F * dip;
-            roll += 7F * Mth.sin(r * 0.55F) * dip;
+            // reduced motion halves the dip and its twist like every other roll (SPEC §25 "Feel")
+            float comfort = dev.awaken.body.client.feel.FeelConfig.reduced() ? 0.5F : 1F;
+            pitch += 32F * dip * comfort;
+            roll += 7F * Mth.sin(r * 0.55F) * dip * comfort;
         }
         // mantle: eyes up to the lip, then over it
         float m = t - ClientMoves.mantleStart;

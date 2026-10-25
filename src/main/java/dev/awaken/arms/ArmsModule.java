@@ -38,6 +38,7 @@ public final class ArmsModule {
         ArmsSounds.register(modBus);
         ArmsItems.register(modBus);
         Archetypes.all(); // fail fast on a broken timing table
+        dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
         modBus.addListener(ArmsModule::registerPayloads);
         modBus.addListener(EventPriority.LOW, ArmsModule::guardComponents);
         var bus = NeoForge.EVENT_BUS;
@@ -107,6 +108,23 @@ public final class ArmsModule {
                     + " · dodges " + Math.max(0, s.dodgeCharges) + (s.move == null ? "" : " · " + s.move.key + " (cadence " + s.cadence + ")");
             c.getSource().sendSuccess(() -> Component.literal(line), false);
             return 1;
-        })));
+        }).then(Commands.literal("weave").requires(AwakenCommands.admin())
+                // dev: open a Weave's beat and weave a family at once (tours shoot each shape): /awaken arms weave <1..4> <FAMILY>
+                .then(Commands.argument("opening", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 4))
+                        .then(Commands.argument("family", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            ArmsState s = ArmsServer.state(p);
+                            long now = ArmsServer.now(p);
+                            int opening = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "opening");
+                            if (opening == ArmsWeaves.DODGE) {
+                                s.dodgeFromX = p.getX();
+                                s.dodgeFromY = p.getY();
+                                s.dodgeFromZ = p.getZ();
+                            }
+                            ArmsWeaves.open(p, s, opening, now, -1);
+                            String fam = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "family").toUpperCase(java.util.Locale.ROOT);
+                            ArmsWeaves.INSTANCE.cast(p, fam, null, 3);
+                            return 1;
+                        }))))));
     }
 }

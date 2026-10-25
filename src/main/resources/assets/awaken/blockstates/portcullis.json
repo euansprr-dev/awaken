@@ -1,0 +1,25 @@
+{
+  "variants": {
+    "axis=x,part=top": {
+      "model": "awaken:block/portcullis_top"
+    },
+    "axis=x,part=middle": {
+      "model": "awaken:block/portcullis_middle"
+    },
+    "axis=x,part=bottom": {
+      "model": "awaken:block/portcullis_bottom"
+    },
+    "axis=z,part=top": {
+      "model": "awaken:block/portcullis_top",
+      "y": 90
+    },
+    "axis=z,part=middle": {
+      "model": "awaken:block/portcullis_middle",
+      "y": 90
+    },
+    "axis=z,part=bottom": {
+      "model": "awaken:block/portcullis_bottom",
+      "y": 90
+    }
+  }
+}

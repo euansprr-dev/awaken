@@ -33,7 +33,9 @@ final class CityViews {
     static final java.util.Set<String> ALONG = java.util.Set.of("market", "bellwatch", "works", "wallring", "garden", "market_street");
 
     /** Views taken exactly where they say (indoors, underground): never moved onto open ground. */
-    static final java.util.Set<String> EXACT = java.util.Set.of("cellar", "quay_ladder");
+    static final java.util.Set<String> EXACT = java.util.Set.of("cellar", "quay_ladder", "walls_out_w", "walls_out_nw", "walls_out_e",
+            "walls_out_s", "walls_inner", "walls_inner_high", "walls_walk", "walls_walk_roofed", "walls_climb", "walls_tower",
+            "walls_passage", "walls_watergate", "walls_scaffold", "walls_approach");
 
     static {
         // the sky, at dawn in the tour: over the north-west half, across the spire
@@ -93,5 +95,22 @@ final class CityViews {
         add("laundry_lane", -168.5, 1.0, -10.5, -205, 11, -10.5);
         add("bowl_stalls", -4, 2.0, 27, 8, -1, 12);
         add("canal_lights", -124, 2.0, 23, -84, 6, 25);
+        // the Walls step: the curtain from the fields (Bellwatch's roofed walk, the Roost's stretch, the Garden's, the
+        // Works'), the inner face from the ring, from over the roofs and up a climb line, the walk (open and roofed), a
+        // Bellwatch drum close up, the High Gate's passage looking out, and the north water gate from the river bank
+        add("walls_out_w", -285.9, 7, 34.0, -242.9, 26, -4.0);
+        add("walls_out_nw", -293.3, 10, -64.1, -232.1, 30, -72.5);
+        add("walls_out_e", 236.4, 8, 166.5, 213.4, 26, 116.3);
+        add("walls_out_s", 97.6, 6, 263.7, 57.1, 30, 236.2);
+        add("walls_inner", 225.8, 1.0, 43.9, 223.9, 14, 68.3);
+        add("walls_inner_high", -50.1, 20, 210.1, -66.6, 20, 225.4);
+        add("walls_walk", 181.7, 40.0, 154.8, 161.2, 41, 175.3);
+        add("walls_walk_roofed", -225.9, 40.0, 80.2, -233.4, 41, 52.2);
+        add("walls_climb", 219.0, 2.0, 55.6, 224.6, 22, 63.8);
+        add("walls_tower", -262.7, 10, 34.6, -237.9, 48, 31.3);
+        add("walls_passage", 0.5, 1.0, -235.5, 0.5, 5, -262);
+        add("walls_watergate", -60, 14, -262, -88, 8, -228);
+        add("walls_scaffold", -224.6, 7, 138.9, -212.9, 18, 117.1);
+        add("walls_approach", 9, 4, -318, 0, 22, -244);
     }
 }
