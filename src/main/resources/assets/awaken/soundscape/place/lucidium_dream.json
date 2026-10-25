@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "title": "Lucidium: a shimmering chord and breathing air; clarity follows lucidity (the lucidium module muffles it)",
+  "air": [
+    {"file": "awaken:amb_world_dream_shimmer", "gain": 0.7},
+    {"file": "awaken:amb_world_dream_air", "gain": 0.5}
+  ],
+  "events": [
+    {"sound": "awaken:world.dream_swell", "anchor": "sky", "per_minute": 2, "hush": false,
+     "volume": [0.3, 0.55], "pitch": [0.9, 1.0], "distance": [6, 14]}
+  ]
+}

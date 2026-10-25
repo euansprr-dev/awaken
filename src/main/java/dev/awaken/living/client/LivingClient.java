@@ -62,6 +62,7 @@ public final class LivingClient {
 
     public static void init(IEventBus modBus) {
         LivingClientConfig.register();
+        PulseSound.init();
         JournalSection.register();
         AlmanacSection.register();
         CraftsSection.register();
@@ -102,6 +103,7 @@ public final class LivingClient {
         PILLARS.clear();
         TELLS = List.of();
         PulseFx.reset();
+        PulseSound.reset();
         CraftFx.reset();
         JournalSection.entries = List.of();
         FIGHT.clear();
@@ -178,6 +180,7 @@ public final class LivingClient {
         Minecraft mc = Minecraft.getInstance();
         ticks++;
         LivingClientConfig.read();
+        PulseSound.tick();
         Player p = mc.player;
         if (p == null || mc.level == null) return;
         moment(mc, p);

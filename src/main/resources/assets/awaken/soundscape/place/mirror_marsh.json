@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "title": "Mirror Marsh: deliberately still (its bed is the biome's own loop); it answers you from across the water",
+  "echo": {"chance": 0.35, "delay": [0.6, 1.2], "volume": 0.35, "distance": [14, 22], "pitch": 0.97}
+}

@@ -100,6 +100,9 @@ final class Citizens {
             net = StreetNet.of(CityPlan.get(), layout.cx, layout.cz, layout.streetY, roster.edgeLane);
         }
         active = new Citizens(level, roster, net, CitizensData.get(server), layout.cx, layout.cz, layout.streetY);
+        // a new world's first player logs in before the city's people start (the pregen runs first): send what login
+        // would have (the site, the smoke and lamp lists), or the client's animals, festoons and lamp light never begin
+        for (net.minecraft.server.level.ServerPlayer p : server.getPlayerList().getPlayers()) active.work.sendChimneys(p);
     }
 
     static void stop() {
@@ -147,6 +150,7 @@ final class Citizens {
         events.tick(now, tod);
         recognition.tick(now, tod);
         lanterns.tick(now);
+        Soundscape.count(this, now);
         managerNs = System.nanoTime() - t0;
     }
 

@@ -34,6 +34,8 @@ import java.util.Set;
  * greet                 the nearest citizen with a body speaks to you now
  * bodies on|off, cap n  embodiment switches (measuring)
  * window start|end      a labelled timing window in the log
+ * lanterns blocks|glow  the Watch's lanterns as moving light blocks (pre-B3b, measuring) or drawn light (default);
+ *                       with no argument: light-block writes since the last report
  * </pre>
  */
 final class CitizensCommands {
@@ -65,6 +67,22 @@ final class CitizensCommands {
                     if (!z.crowd.on) z.crowd.despawnAll();
                     return say(c.getSource(), "bodies " + z.crowd.on);
                 })))
+                .then(Commands.literal("lanterns").executes(c -> {
+                    Citizens z = need(c.getSource());
+                    if (z == null) return 0;
+                    long w = Lanterns.writes;
+                    Lanterns.writes = 0;
+                    Awaken.LOG.info("[citizens] lanterns {}: {} light-block writes since the last report, {} lit now",
+                            Lanterns.legacy ? "blocks" : "glow", w, z.lanterns.active());
+                    return say(c.getSource(), "lanterns " + (Lanterns.legacy ? "blocks" : "glow") + ": " + w + " writes, " + z.lanterns.active() + " lit");
+                }).then(Commands.argument("mode", StringArgumentType.word())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("blocks", "glow"), b)).executes(c -> {
+                            Citizens z = need(c.getSource());
+                            if (z == null) return 0;
+                            Lanterns.legacy = StringArgumentType.getString(c, "mode").equals("blocks");
+                            Lanterns.writes = 0;
+                            return say(c.getSource(), "lanterns " + (Lanterns.legacy ? "blocks" : "glow"));
+                        })))
                 .then(Commands.literal("cap").then(Commands.argument("n", IntegerArgumentType.integer(0, 200)).executes(c -> {
                     Citizens z = need(c.getSource());
                     if (z == null) return 0;

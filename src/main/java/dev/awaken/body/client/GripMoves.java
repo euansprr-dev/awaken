@@ -4,6 +4,7 @@ import dev.awaken.body.BodyClips;
 import dev.awaken.body.BodyContent;
 import dev.awaken.body.GripRules;
 import dev.awaken.body.Move;
+import dev.awaken.body.RunnerRules;
 import dev.awaken.body.net.BodyPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -42,6 +44,8 @@ public final class GripMoves {
     static int mode = HOLD;
     /** Vertical speed this tick, blocks a tick (+ up). */
     static double v;
+    /** At a top with nothing to take over it: holding still while forward is held (no climb, no jitter). */
+    private static boolean capped;
     /** The line: where the body holds it, which way it faces, its column and centre. */
     static GripRules.@Nullable Line line;
     /** Distance climbed or slid since the grip began (the hands' cycle runs on it). */
@@ -148,8 +152,9 @@ public final class GripMoves {
         } else if (mode == BRAKE) {
             if (--brakeLeft <= 0) mode = fwd ? CLIMB : HOLD;
         } else {
-            mode = fwd ? CLIMB : HOLD;
+            mode = fwd && !capped ? CLIMB : HOLD;
         }
+        if (!fwd || shift) capped = false;
         boolean free = FreeRun.held;
         switch (mode) {
             case HOP -> v = GripRules.hopStep(hopAge);
@@ -158,13 +163,27 @@ public final class GripMoves {
             case CLIMB -> v += ((free ? GripRules.CLIMB_FREE : GripRules.CLIMB) - v) * 0.6;
             default -> v = Math.abs(v) < 0.005 ? 0 : v * 0.4;
         }
-        // the top: the hands find no more line above. Hand the body to vanilla's own climb, which carries it up to the
-        // eave, where the hang's catch takes the lip (the free-run's climb today, §17.14)
-        if (v > 0 && !GripRules.goesOn(level, M, l.bx(), l.bz(), p.getY() + v)) {
+        // the top: the hands find no more line above, or the head meets what's over it (a cornice, an eave). It always
+        // leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): a lip over it is a hang, from its
+        // outer face (out, then up), and the hang climbs out onto the roof; open air over it hands the body to
+        // vanilla's own climb, up to the eave where the hang's catch takes the lip; under something with neither, the
+        // hands hold still at the top
+        boolean headBlocked = v > 0 && !p.level().noCollision(p, p.getBoundingBox().move(0, v, 0));
+        if (v > 0 && (headBlocked || !GripRules.goesOn(level, M, l.bx(), l.bz(), p.getY() + v))) {
             if (fwd) {
-                end(p, true, "top");
-                p.setDeltaMovement(p.getDeltaMovement().x, free ? GripRules.CLIMB_FREE : GripRules.CLIMB, p.getDeltaMovement().z);
-                return;
+                RunnerRules.Edge lip = GripRules.topLip(level, CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), axis(l), sign(l), 0);
+                if (lip != null) {
+                    end(p, true, "eave");
+                    RunnerMoves.eaveHang(p, lip, now);
+                    return;
+                }
+                if (!headBlocked) {
+                    end(p, true, "top");
+                    p.setDeltaMovement(p.getDeltaMovement().x, free ? GripRules.CLIMB_FREE : GripRules.CLIMB, p.getDeltaMovement().z);
+                    return;
+                }
+                if (!capped) ClientMoves.trace("grip capped: nothing over the top to take");
+                capped = true;
             }
             v = 0;
             if (mode != HOP) mode = HOLD;
@@ -296,6 +315,7 @@ public final class GripMoves {
     /** The grip is over here (the caller told the server, or the server ended it). */
     private static void finish(int now) {
         RunnerMoves.state = RunnerMoves.State.NONE;
+        capped = false;
         endedAt = now;
         line = null;
         mode = HOLD;

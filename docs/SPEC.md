@@ -321,6 +321,14 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null; it may set the given
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
+- `dev.awaken.core.audio.client.Soundscape` (client, world sound): `hush(Object owner, Vec3 at, float radius, float
+  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
+  (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
+  (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city), `natureLevel()` (0..1, how much nature
+  ambience to let through now; AmbientSounds follows it), `overlay(owner, Identifier soundscape, weight, ticks)` (a
+  soundscape over everything while renewed; at most two), `muffle(owner, cutoffHz, natureLeft, ticks)` (the air's
+  filter closed and nature held back while renewed). `/awaken audio world [off|on]` (client).
+  Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
@@ -722,7 +730,75 @@ Plan v2 · audio (details in docs/modules/audio.md):
   or the Ritual). Reserved: `awaken:descent/stratum_<n>` (music); `awaken:city/<district>` for the city's ambience
   (ambience slot, `source` ambient, priority 100; its levels are the district's crowd, e.g. night / quiet / busy /
   crowd, pinned by the provider from the district's density; it answers only inside the city site, so it never meets a
-  gate's music).
+  gate's music). In use since Carillon M4 B3b, with `awaken:city/night` after dark (§16.0 decision 30).
+
+Plan v2 · world sound (Euan approved all seven decisions 2026-10-25; details in docs/sound/PLAN.md, page
+docs/sound/plan.html):
+- Approach C, revised by Euan the same day ("rebuilding from scratch something that already exists very well is not
+  smart"): **AmbientSounds** (in the pack's `sound` profile) plays the world's nature in every biome; AWAKEN's own
+  layer, the **Conductor** (`core/audio`, client in `core.audio.client.world`), plays only what is ours (hushes,
+  hums, magic, places, reactions) and lowers AmbientSounds while one of our moments sounds (`Soundscape.natureLevel()`,
+  applied by `compat.client.AmbientSoundsBridge`). No field recordings of our own. Sound Physics Remastered gives
+  positional sounds their room; Tread Lightly plays footsteps once its spike passes on the Mac (else the Conductor
+  re-voices player steps by surface and armour). Raise Sound Limit Simplified and Sounds (IMB11) stay out.
+- Four layers: **air** (ONE streamed, non-positional stereo sound for the whole Conductor; a Java mixer on vanilla's
+  `JOrbisAudioStream`, the decoder `StemMixer` shares, plays up to six bed layers, two families crossfading, each with
+  up to three layers of co-prime length, through a one-pole low-pass that closes indoors, underwater, in the Veil, in
+  falling snow and in low-lucidity dreams); **textures** (≤ 6 positional mono loops anchored to real blocks,
+  re-anchored with a short crossfade when the enclosure changes and every ~12 s, since Sound Physics judges a loop when
+  it starts); **events** (≤ 10 positional one-shots, ≤ 4 new a second, Poisson timing, call and answer, lulls);
+  **reactions and re-voicing** (`PlaySoundEvent`: rain by the surface it lands on, thunder delayed by distance at 343
+  blocks a second). Event names: positional ones never `<ns>:ambient.*` (Sound Physics skips those).
+- Every overworld biome is in exactly one family tag `#awaken:soundscape/<family>` (16 families: greenwood, blossom,
+  duskwood, conifer, open_grass, dry_warmth, desert, canopy, mire, heights, snowfield, coast, open_sea, river,
+  sporewild, hollows), written by `tools/terrain/biomes.py`; a biome in none falls back by climate. Awakened biomes are
+  their family plus a variant. The Nether and the End keep vanilla's loops. Data: `assets/<ns>/soundscape/<id>.json`
+  (schemaVersion 1); any module adds its own place files.
+- Budgets: 1 streaming channel; ≤ 16 ambient static voices including other modules' registered sources (quietest
+  and farthest stolen first); client main thread ≤ 0.10 ms a tick average, ≤ 0.4 ms worst, no allocation per tick;
+  decoded static world ambience ≤ 48 MB; ≤ 60 MB of new Ogg. Loudness: beds and textures −28 ± 3 dBFS RMS, ≤ −6 dBTP;
+  events −26 ± 3; magic −32 ± 3.
+- Fit: the Conductor plays on the Ambient/Environment slider and never touches the music channel; layered combat or
+  Lord music: beds −4 dB, events halved; a stage cue: beds −3 dB; calm music: no ducking. Inside Carillon the city's
+  soundscape owns the walls and the Conductor yields by the city's weight.
+- Reactions (first numbers, tuned on Euan's ears): a hostile within 24 hushes birds and insects within 32 of it to 10%
+  in 3 s, back over 20 s; insects within 6 of a moving player fall silent and resume 6-10 s after; sprinting, sliding
+  or landing hard within 8 of leaves or tall grass flushes 3-5 birds and silences that tree 15 s; drips for 60-90 s
+  after rain; a power cast within 16 flushes and hushes 10 s.
+- AWAKEN's touches: the hush around open gates (48-96 blocks by rank) spreading as a Break nears; gusts played along
+  `terrain.Wind`'s fronts; the Awakened lands' faint harmony in D major pentatonic (never the System's glass timbre);
+  Mirror Marsh's one delayed answer; PER widens what you hear; dream clarity follows lucidity.
+- Sources: AmbientSounds for nature; for our own sounds vanilla events first (referenced, never copied), then
+  synthesis (`tools/art/audiokit.py`). No recordings (Euan: field recordings would sound out of place with Minecraft).
+- The nature level (0..1, eased down in ~1 s, up over ~5 s): the hush where the listener stands (an open gate 48
+  blocks at E to 108 at S, deeper and 1.4× wider while a break is near, deepest once broken), layered combat or Lord
+  music (0.55), a stage cue (0.5), and AWAKEN's beds sounding near (rift, grove, the Well, ruins, a falling star:
+  × (1 − 0.6 × their level)). AmbientSounds' master volume = the player's own × the level; the player's value is
+  restored on shutdown. Without AmbientSounds the Conductor plays its own nature fallback (Greenwood today); with it,
+  none.
+- Quality gate: five listening batches of ten minutes or less (forest; every land; reactions; below and beyond; the
+  magic); an unmarked entry counts as keep once Euan has opened the page.
+- AWAKEN's own places and moments (built 2026-10-25; sounds synthesised, `tools/art/specs/audio_world.py`):
+  **place soundscapes** `<ns>:place/<biome path>` play wherever the camera's biome has one, with or without
+  AmbientSounds: the Stillpoint (cloud-sea wind, a temple tone, chimes, a far bell about every 40 s), the Halo (station
+  hum, airlocks, far metal, data chirps, lulls of silence), Lucidium's dream (a shimmering chord, reversed swells),
+  Elderwood (the colossi groaning with the wind, gold glints by day), Lumen Forest (a low hum, specks chiming and
+  answering at night). **The Veil** (while projecting): the overlay `awaken:state/veil` (a far choir on D and A, faint
+  glints) and a muffle (1.1 kHz, nature 0.2). **Dreams**: clarity follows lucidity (the air's filter from 900 Hz at
+  lucidity 0 to open at 80). **Living Wilds happenings** heard from afar (`living.client.PulseSound`, from the tells
+  the server already sends): stampede rumble (260 blocks), murmuration wings (200), the Deep Tide's drone (320; a
+  hush 0.3 over 200+), caravan bells (160), the Wild Hunt's horn (400) and its hounds baying (220; a hush 0.1 over 200),
+  kites over a carrion circle (180), a migrating herd lowing (220), a beast duel's roars (260); level = (1 − d/range)²;
+  a happening near lets nature step back (× (1 − 0.6 × 0.8 × its level)). Each air pair or trio repeats together no
+  sooner than 30 minutes (census test). **The hush before a Lord**: a gate room's own one-shots (`gate.ambient.*`)
+  are dropped while the layered music is at the Lord, half of them in combat. **Mirror Marsh answers** (a soundscape's
+  `echo`: chance 0.35, at most one every 2.5 s): a sound you make within 4 blocks (players and blocks sources) comes
+  back 0.6-1.2 s later at 0.35, pitch 0.97, from 14-22 blocks away toward the nearest water; an echo never echoes.
+- AmbientSounds data in our jar (read only by AmbientSounds): `assets/ambientsounds/basic/dimensions/awaken_dimensions.json`
+  mutes it in every `awaken:` dimension (gates, strata, the Veil's Stillpoint, dreams, the Halo: those are ours), and
+  `blockgroups/{rock,grass_block,grass,ice}.json` add our Awakened ground and plants so its region detection hears
+  our biomes (riven shale and faultstone as rock, mirepeat as ground, lumen moss and moonblooms as plants, hoarfrost
+  and frostspar as ice). Awakened biomes inherit their archetype's tags, which AmbientSounds matches.
 
 Plan v2 · overworld structures (details in docs/modules/structures.md):
 - One visual language: three families (gates, Precursor ruins, lairs), each with its own light and palette.
@@ -958,6 +1034,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
+- Sound (world sound, 2026-10-25): the `sound` profile is Sound Physics Remastered (≥ 1.5.2) and **AmbientSounds**
+  6.3.11 with CreativeCore (compiled against as `compileOnly` for `compat.client.AmbientSoundsBridge`); Tread Lightly
+  (and Immersive Thunder Reforged) join once their spike passes on the Mac (profile `soundspike` until then); Raise
+  Sound Limit Simplified and Sounds stay out (docs/sound/PLAN.md §4).
 - Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling and Dynamic FPS. Xaero's
   World Map left it when Carillon's own Atlas shipped (M5, §16.8; M opens the table); no minimap, ever (direction
   comes from the world). `compat.WorldMaps` stays for a player who adds Xaero's themselves, and is silent without it. AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
@@ -1215,7 +1295,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   0.25 by 30 fps); tinted from the leaf's BlockColors tint over its texture's average; tumble, flutter, wind drift,
   1-3 s rest, 1 s fade. Per-block and per-biome rules in `assets/awaken/lands/air.json` (schemaVersion 1): forests
   1.0, elsewhere 0.5, cherry 0 (vanilla petals), Elderwood 3.0 gold, Lumen Forest motes at night only.
-- Leaf rustle (`terrain.client.LeafRustle`): `amb.lands_rustle` under canopy and `amb.lands_wind_high` high and in the
+- Soundscape (world sound): the biome table's `soundscape` column puts every biome in one family tag
+  `awaken:soundscape/<family>`; the Conductor plays the Awakened biomes' beds, so their `minecraft:audio/ambient_sounds`
+  keeps only `mood`.
+- Leaf rustle (played by the world sound Conductor since 2026-10-25, soundscape `awaken:world`): `amb.lands_rustle` under canopy and `amb.lands_wind_high` high and in the
   open, volumes from the wind and a 16-column canopy ring; client setting `leaf_rustle` (default on).
 - Waving leaves (spike done 2026-10-24, docs/spikes/waving-leaves.md: safe, cost within noise, at most ~0.05 ms p50 in
   a dense dark forest): `dev.awaken.terrain.client`. A built-in client pack (`resourcepacks/awaken_waving_leaves`)
@@ -1579,6 +1662,37 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
     The city also gives "Bell Metal" a rooftop chase: B5 (the opening from affordances, which brings citizens' rooftop
     running) publishes named roof routes and a chase hook the Living Wilds calls for its fleeing buyer; until then that
     step waits.
+30. The city's animals, drawn light and soundscape (M4 B3b, 2026-10-25; the B3b builder's calls, for the orchestrator's
+    review and Euan's listening page, docs/audio/carillon-b3b/):
+    - Animals and boats are client-only entities (`citizens.CityCritter`, discarded on a server, never saved): homes and
+      routes from the plan, made within reach (pigeons 56 blocks, gulls 72, cats 40, dogs 48, carts 96, boats 88) and
+      dropped 12 beyond; at most 40 pigeons, 16 gulls, 10 cats, 8 dogs, 4 carts and 8 boats near a player. Carts and
+      rowed boats run on the world clock, so every client sees them in the same place. Dogs: one keeper in seven among
+      residents, children, the Watch, porters, washers, shopkeepers and millers. Boats: one moored every 24 blocks along
+      each quay inside the wall (a quarter left empty, none within 6 of a bridge); two rowed up and down the river, one
+      round the canal; rowing from 23000 to 18000, bow lanterns lit after dusk (a third of the moored ones too).
+    - Hand lanterns and lit street lamps are drawn light (`citizens.client.CityGlow`: an additive core, halo and pool on
+      the ground), never light blocks; `/awaken citizens lanterns blocks|glow` keeps the old path for measuring only.
+      Choir Square's festoons: paper lanterns strung between the bowl's eight lamp posts, lit 12200-19500.
+    - The beds: `awaken:city/<district>` by day and `awaken:city/night` from 12500 to 23300, on the ambience slot. The
+      level is the district's citizens outdoors (counted every 100 ticks) against its busiest hour: calm under 15%,
+      light under 45%, busy under 80%, else packed; one lower in the rain. The night bed is busy 12500-14500 and light
+      to 16500 (the taverns), then calm. Each level's mix sits at -37 to -26 dBFS gated RMS and under -6 dBTP
+      (quieter than the -28 ± 3 ambience rule: the beds lie under the places that sound), and a crowd stem never falls
+      as the level rises.
+    - Every place's sound is mono (positional), the carillon too: it comes from the spire and fades over 320 blocks.
+      At dawn, noon and dusk the Choir plays its tune first and strikes the hour 300 ticks later.
+    - Sources: synthesised (tools/art/specs/audio_city_life.py) except the animals' voices (vanilla's cat, wolf and
+      horse events, referenced by id). This departs from decision 28's "vanilla first": vanilla has no city sounds
+      beyond water, fire and animals. Nature is AmbientSounds' (Euan, 25 Oct 2026, instead of downloading CC0
+      recordings ourselves; the pack's sound profile, 6.3.11 with CreativeCore, client-only). Its own engine plays real
+      birds, crickets and owls where there's greenery, wind 15 blocks above the ground and rain. The client tells the
+      server at login whether it runs the mod (`CitizensNet.Ears`), and such a player hears `awaken:city/as/<district>`
+      and `awaken:city/as/night`: the same beds without our synthetic birds and crickets (generated beside them). The city
+      adds what its engine never does in a paved city, with its recordings by id (`citizens.client.CityNature`):
+      gulls within 64 blocks of the river by day (ours stand down), a gull chorus within 24 now and then, doves over
+      Bellwatch, the Terrace, the Garden Ward and the Wallring by day, owls within 48 of the wall or a bell tower at
+      night. Its files are stereo, so these play unplaced, at a volume falling with distance. Nothing of it is copied.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -2743,6 +2857,34 @@ the slide's own controls (jump out, a power's motion, a push, water) end it as b
   walk's 0.22, a 15-tick glide whose drop never changes by more than 0.014 a tick, the server sliding past 20 ticks
   and no fall; a way across the stairs is no run).
 
+### 17.23 Mantling onto stair tops (Euan's play, 2026-10-25: "I can't mantle up blocks with a stair on it")
+The mantle's lip is the lowest top along the face's edge across the body's width, by the real collision shapes (a
+stair's low half, a slab, any kit block), within 1.1-1.6 over the feet; nothing on that edge more than a step (0.6,
+`BodyRules.MANTLE_STEP`) over it. The feet land a body width past the face on whatever top is there, from the lip's
+height up to a step over it, never lower (no drop behind a thin lip), never a fence or wall top, with 2 blocks of room
+over it. So a 1-block wall topped with a stair facing away or sideways is climbed by its low half (1.5) and stood on by
+its high half (2.0): a body 0.6 wide can't stand on a half 0.5 deep. A stair facing you is a 2-block face and an
+upside-down one a 2-block top: not mantled (the wall-run, the hang and the climb-out take those). Client and server run
+the same `findLedge`. Test: `body_mantle_stair_tops` (all four facings, the upper half, a slab-topped wall, the
+server's check); `body_mantle_ledges` and `body_mantle_gate_walls` unchanged.
+
+### 17.24 The landing slide (Euan's play, 2026-10-25: "sprinting, jump, shift while in air, slide when it touches floor")
+Crouch pressed any time in the air and still held at touchdown slides from the landing (`ClientMoves`, the touchdown
+tick). Needs a running jump: air speed at least 0.15 b/t having sprinted in the air, or 0.28 without the sprint flag (a
+launch). Entry `BodyRules.landSlideEntry`: the slide's own (0.38, 0.46 out of a tactical sprint) or the landing's speed if
+faster, plus a 0.06 kick for the landing, at most 0.6 (slide-hops can't snowball; the 20-tick cooldown holds too): a
+sprint jump's ~0.32 lands into 0.44 (~4.6 blocks against a run's 4.0). The way is the jump's. A landing on a downward run
+becomes a stair slide (§17.22). Not when crouch was let go before touchdown (a normal landing), not onto an edge with no
+floor within 0.6 under a point 0.6 ahead (vanilla's edge-sneak stays), not in water, using an item, mid-move.
+- Falls: a crouch-held landing already counts as the soft landing on the server (§6: safe fall +3, ×0.6 beyond), so a
+  landing slide softens a fall exactly like the roll and never adds damage. On our own client the slide is the landing's
+  look: the roll's animation and sound stay quiet. Others see the server's roll for a tick, then the slide.
+- Server: as any slide, plus the sprint check takes a body that sprinted within 40 ticks (the flag can drop in the air)
+  or whose last move was 0.2 b/t or more. Clips, the run's return after the slide, the Runner and free-run inputs: as
+  before (the free-run's mantle still comes first).
+- Test: `body_land_slide` (a sprint jump's landing speed slides farther than a run's slide, a walk's doesn't, an edge
+  with a drop is no slide, the server takes a sprinted landing and refuses a body that never ran).
+
 ### 17.23 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
 A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
 block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision
@@ -2756,8 +2898,15 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   ticks; Jump alone lunges 1.2 up the line (6 ticks, once per 10); Jump + back kicks off the wall (0.5 out, 0.42 up,
   turning to face out over 5 ticks: the ledge back-jump's numbers); Jump + left/right swings out sideways (0.42 along,
   0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
-  step off. At the top (no line where the hands would go, 1.75 over the feet) forward hands the body to vanilla's climb,
-  whose eave is caught as a hang as before (§17.14). A screen open holds the grip. The rope key still cuts in.
+  step off. **The top** always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): it is
+  reached when there's no line where the hands would go (1.75 over the feet) or the head meets something over it (a
+  cornice, an eave, a coping row). With forward held: (1) a lip over the head, its face out past the body within 1.5
+  of it, its top 1.6-3.2 over the feet, with the way out level and then up to the hold free (`GripRules.topLip`), is a
+  hang from that face: the body goes out from under it, then up (7 ticks, `HANG_EAVE`), and the hang's own climb out
+  (§17.21) puts you on the roof or coping; (2) else, open air over the head hands the body to vanilla's climb, whose
+  eave is caught as a hang as before (§17.14); (3) else the hands hold still at the top (no climb, no jitter) until
+  forward is let go. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
+  `topLip` from where it has the body (plus its tolerance). A screen open holds the grip. The rope key still cuts in.
 - **Motion**: the grip moves the body itself (`move`), its velocity zeroed, so vanilla's ladder cap (0.15 down) doesn't
   hold back the slide on any line, vanilla's ladder included; sideways it eases onto the line at most 0.15 a tick.
 - **Server** (`RunnerServer.grip`): the first Run takes a line in the claimed column where the server saw the body
@@ -2777,7 +2926,9 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   Leaving: view clips `fp_pipe_kick`, `fp_pipe_side_l/_r`, `fp_pipe_land`. Sound: the grip's grab, `body.pipe_slide`
   (palms hissing on the line, every 8 ticks of a slide), `body.pipe_brake`; the line's own grit off the hands while
   sliding, sparks off a metal line at speed; a faint judder in the view.
-- Test: `runner_pipe_grip`. Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
+- Tests: `runner_pipe_grip`; `runner_pipe_cornice` (a drainpipe under a one-block cornice with a roof behind: the lip is
+  the way on, hung from its outer face, taken by the server only from the grip, climbed out onto the roof; a deep
+  ceiling and open air give no lip). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -3704,6 +3855,28 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
 - **Hurt**: a blow of any class landing on a player plays a blunt body thump to that player only (`arms.hurt`, no
   voice), with the shard and a small view jolt from where it came (vanilla's own tilt stays).
 
+**Weapons** (`ArmsItems` from the generated `ArmsData`; tools/art/specs/arms_weapons.py, its catalog the source).
+- The six forged Longswords, one per Hunter tier (Wildhide, Beastbound, Gatewrought, Veilwoven, Lordscale, Sovereign):
+  the tier's Hunter blade plus half a point of damage (4.5 to 9.5 over the player's 1), its uses, rarity and
+  enchantability, the Longsword's speed (−2.4), mended by the tier's repair tag. Each fights with its row's style
+  (`Arms.plainStyle` reads the row before the name rules), is in `#minecraft:swords` (vanilla's sword enchantments)
+  and lights its swings in its tier's colour (the row's `trail`).
+- Until the Forge's blueprints (S7), each is crafted from its tier's Hunter blade between the tier's core and bind
+  (a column: core, blade, bind); the recipe unlocks when the blade is held, like every AWAKEN recipe.
+- In the hands a 3D model (`<id>_in_hand`, cuboid elements along vanilla's diagonal, the grip where iron_sword.png's
+  handle is, so vanilla's hand transforms and the swings hold it); in the inventory, on the ground, in frames and on
+  shelves a 16×16 icon drawn from the same parts (`items/<id>.json` selects on the display context, like the
+  trident), with a glow layer for its lit parts.
+- Checked before writing: bounds, at most 400 quads, one texel per unit, no element without faces (the game refuses
+  the model), no coplanar faces, the atlas fits, silhouettes under 85% alike, icons apart in outline or colour.
+  `arms_assets` checks the items, recipes, files and model structure on the classpath; tools/art/model_preview.py
+  renders any item model without the game; tools/autopilot/arms-weapons.txt is the in-game tour.
+- **Look: first pass, being redone.** Euan's review (2026-10-25, against a reference of chunky key art): too thin and
+  noisy. The redo: hand-designed silhouettes from a kit of well-made parts, whole-texel sizes (no part under a unit),
+  bevelled hand-painted faces on hue-shifted ramps instead of noise, diamond gems in frames; each weapon compared
+  with the reference at its angle before it ships. Size in hand awaits his answer (proposed: chunky, about 1.2× a
+  vanilla sword's length).
+
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
-kill switch, sounds, stance rules, clips, the Art, the Plunge; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
+kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles.

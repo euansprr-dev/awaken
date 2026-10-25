@@ -30,7 +30,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "../.."))
 SOUNDS = os.path.join(ROOT, "src/main/resources/assets/awaken/sounds")
 MERGE = os.path.join(ROOT, "src/main/merge")
 BIOMES = os.path.join(ROOT, "src/main/resources/data/awaken/worldgen/biome")
-SPECS = ["audio_ui", "audio_amb", "audio_music", "audio_lands", "audio_layers", "audio_holo", "audio_living"]
+SPECS = ["audio_ui", "audio_amb", "audio_music", "audio_lands", "audio_layers", "audio_holo", "audio_living", "audio_world"]
 
 
 class Snd:

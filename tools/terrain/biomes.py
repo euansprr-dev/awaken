@@ -10,6 +10,7 @@ the Awakened Lands pack keeps exactly what it had:
     has_lair/<beast>    where that named beast's lair may stand (worldgen/structure/lair/<beast>.json)
     lair_style/<style>  where that lair wears its second look (red sand, snow, pale oak, coral, moss)
     cottage/<plan>      the guide cottage's wood and stone (hearth.guide.CottagePlan)
+    soundscape/<family> the world sound family the Conductor plays (core.audio, docs/sound/PLAN.md §6.2): one each
 The Awakened Lands pack (src/main/resources/datapacks/awakened_lands, new worlds only) adds each Awakened biome to the
 same tags (tags merge across packs), to awaken:archetype/<vanilla biome>, and to every minecraft:, c: and awaken: biome
 tag its archetype is in (nested tags resolved), so code that asks vanilla tags (rifts, gates, the cottage, structures)
@@ -51,6 +52,9 @@ BEASTS = ("briar_sow", "dune_wyrm", "empress_moth", "lantern_maw", "mire_mother"
 LOOKS = ("glass_hollow", "antler_grove", "silk_hollow", "rams_cairn", "sunken_shrine", "crystal_nest")
 # The guide cottage's palettes (hearth.guide.CottagePlan.PALETTES).
 PLANS = ("meadow", "taiga", "birch", "jungle", "savanna", "desert", "badlands", "swamp", "mangrove", "cherry")
+# The world sound families (docs/sound/PLAN.md §6.2; core.audio.world.Families): every overworld biome is in exactly one.
+FAMILIES = ("greenwood", "blossom", "duskwood", "conifer", "open_grass", "dry_warmth", "desert", "canopy", "mire",
+            "heights", "snowfield", "coast", "open_sea", "river", "sporewild", "hollows")
 # Tag references kept in the base tags, so any mod's biome in them is treated as before (red sand in every badlands).
 REFS = {"awaken:lair_style/glass_hollow": ["#minecraft:is_badlands"]}
 
@@ -118,6 +122,66 @@ VANILLA = {
     "wooded_badlands":           ("sunscorch",                                    "dune_wyrm",    "glass_hollow",          "badlands"),
 }
 
+# Each vanilla biome's world sound family (an Awakened biome inherits its archetype's through its tags; add/drop moves it).
+SOUNDSCAPE = {
+    "badlands":                  "desert",
+    "bamboo_jungle":             "canopy",
+    "beach":                     "coast",
+    "birch_forest":              "greenwood",
+    "cherry_grove":              "blossom",
+    "cold_ocean":                "open_sea",
+    "dappled_forest":            "greenwood",
+    "dark_forest":               "duskwood",
+    "deep_cold_ocean":           "open_sea",
+    "deep_dark":                 "hollows",
+    "deep_frozen_ocean":         "open_sea",
+    "deep_lukewarm_ocean":       "open_sea",
+    "deep_ocean":                "open_sea",
+    "desert":                    "desert",
+    "dripstone_caves":           "hollows",
+    "eroded_badlands":           "desert",
+    "flower_forest":             "blossom",
+    "forest":                    "greenwood",
+    "frozen_ocean":              "open_sea",
+    "frozen_peaks":              "heights",
+    "frozen_river":              "river",
+    "grove":                     "snowfield",
+    "ice_spikes":                "snowfield",
+    "jagged_peaks":              "heights",
+    "jungle":                    "canopy",
+    "lukewarm_ocean":            "open_sea",
+    "lush_caves":                "hollows",
+    "mangrove_swamp":            "mire",
+    "meadow":                    "open_grass",
+    "mushroom_fields":           "sporewild",
+    "ocean":                     "open_sea",
+    "old_growth_birch_forest":   "greenwood",
+    "old_growth_pine_taiga":     "conifer",
+    "old_growth_spruce_taiga":   "conifer",
+    "pale_garden":               "duskwood",
+    "plains":                    "open_grass",
+    "river":                     "river",
+    "savanna":                   "dry_warmth",
+    "savanna_plateau":           "dry_warmth",
+    "snowy_beach":               "coast",
+    "snowy_plains":              "snowfield",
+    "snowy_slopes":              "snowfield",
+    "snowy_taiga":               "conifer",
+    "sparse_jungle":             "canopy",
+    "stony_peaks":               "heights",
+    "stony_shore":               "coast",
+    "sulfur_caves":              "hollows",
+    "sunflower_plains":          "open_grass",
+    "swamp":                     "mire",
+    "taiga":                     "conifer",
+    "warm_ocean":                "open_sea",
+    "windswept_forest":          "conifer",
+    "windswept_gravelly_hills":  "heights",
+    "windswept_hills":           "heights",
+    "windswept_savanna":         "dry_warmth",
+    "wooded_badlands":           "desert",
+}
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # The Awakened side: one row per Awakened biome. A biome takes everything its archetype (the vanilla biome it stands
@@ -148,7 +212,8 @@ AWAKENED = [
     # Crag: the windswept hills' life on mountains split along lines of light, under the Shard Drifts
     Awakened("shattered_highlands", "crag", "windswept_hills", heroes=("shard_drift",)),
     # Frostwild: the snowy taiga's life among ice-crystal spires and blue pine giants, round the Aurora Spires
-    Awakened("frost_spires", "frostwild", "snowy_taiga", heroes=("aurora_spire",)),
+    Awakened("frost_spires", "frostwild", "snowy_taiga", add=("awaken:soundscape/snowfield",),
+             drop=("awaken:soundscape/conifer",), heroes=("aurora_spire",)),
     # Mire: the swamp's life on still black water under weeping trees, round the Weeping Matriarchs
     Awakened("mirror_marsh", "mire", "swamp", heroes=("weeping_matriarch",)),
 ]
@@ -171,6 +236,8 @@ def table_tags():
         out["awaken:lair_style/" + name] = []
     for name in PLANS:
         out["awaken:cottage/" + name] = []
+    for name in FAMILIES:
+        out["awaken:soundscape/" + name] = []
     for biome, (groups, lairs, looks, plan) in VANILLA.items():
         b = "minecraft:" + biome
         for g in words(groups):
@@ -180,6 +247,7 @@ def table_tags():
         for s in words(looks):
             out["awaken:lair_style/" + s].append(b)
         out["awaken:cottage/" + plan].append(b)
+        out["awaken:soundscape/" + SOUNDSCAPE[biome]].append(b)
     return {t: REFS.get(t, []) + sorted(v) for t, v in out.items() if v or t in REFS}
 
 
@@ -190,7 +258,7 @@ def tag_path(tag):
 
 def owned_base(rel):
     """Base data files this script owns (relative to src/main/resources/data)."""
-    return any(rel.startswith(os.path.join("awaken", BIOME_TAGS, d) + os.sep) for d in ("fauna", "has_lair", "lair_style", "cottage"))
+    return any(rel.startswith(os.path.join("awaken", BIOME_TAGS, d) + os.sep) for d in ("fauna", "has_lair", "lair_style", "cottage", "soundscape"))
 
 
 def owned_lands(rel):
@@ -323,6 +391,10 @@ def problems():
         errs += [f"{b}: unknown second look {s}" for s in words(looks) if s not in LOOKS]
         if plan not in PLANS:
             errs.append(f"{b}: unknown cottage plan {plan}")
+        if SOUNDSCAPE.get(b) not in FAMILIES:
+            errs.append(f"{b}: needs one world sound family (SOUNDSCAPE)")
+    errs += [f"SOUNDSCAPE row {b} is no vanilla row" for b in SOUNDSCAPE if b not in VANILLA]
+    errs += [f"world sound family {f} has no biome" for f in FAMILIES if f not in SOUNDSCAPE.values()]
     # the spawn modifiers and lair structures read these tags, one each
     mods = os.path.join(BASE, "awaken/neoforge/biome_modifier")
     seen = set()
@@ -373,6 +445,8 @@ def problems():
             errs.append(f"{r.id}: not in its family's group #awaken:fauna/{r.family}")
         if sum(t.startswith("awaken:cottage/") for t in got) != 1:
             errs.append(f"{r.id}: needs exactly one cottage plan")
+        if sum(t.startswith("awaken:soundscape/") for t in got) != 1:
+            errs.append(f"{r.id}: needs exactly one world sound family")
         if "minecraft:is_overworld" not in got:
             errs.append(f"{r.id}: not in #minecraft:is_overworld")
         errs += [f"{r.id}: unknown hero tree {h}" for h in r.heroes if h not in HEROES]

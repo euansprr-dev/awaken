@@ -46,6 +46,9 @@ public final class ClientDream {
         if (!hud.dreaming()) return;
         if (ticksLeft > 0) ticksLeft--;
         shown += (hud.lucidity() - shown) * 0.12f;
+        // world sound: the dream's sound clears as you become lucid (muffled at 0, open by 80)
+        float clarity = net.minecraft.util.Mth.clamp(shown / 80f, 0f, 1f);
+        dev.awaken.core.audio.client.Soundscape.muffle(ClientDream.class, net.minecraft.util.Mth.lerp(clarity * clarity, 900f, 20000f), 1f, 10);
         if (realityCheck > 0) realityCheck--;
         if (signFlash > 0) signFlash--;
     }

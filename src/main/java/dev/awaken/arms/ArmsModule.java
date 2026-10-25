@@ -36,6 +36,7 @@ public final class ArmsModule {
         ArmsConfig.register();
         ArmsContent.register(modBus);
         ArmsSounds.register(modBus);
+        ArmsItems.register(modBus);
         Archetypes.all(); // fail fast on a broken timing table
         modBus.addListener(ArmsModule::registerPayloads);
         modBus.addListener(EventPriority.LOW, ArmsModule::guardComponents);

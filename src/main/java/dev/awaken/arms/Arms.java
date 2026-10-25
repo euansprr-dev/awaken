@@ -31,8 +31,13 @@ public final class Arms {
         return style == null ? null : Archetypes.get(style);
     }
 
-    /** The plain style for an item id (the same rule the default components use before tags exist). */
+    /**
+     * The style for an item id (the same rule the default components use before tags exist): our weapons fight with
+     * their own row's style, every other sword as a plain Longsword.
+     */
     static @Nullable String plainStyle(Identifier id) {
+        ArmsData.Weapon own = ArmsItems.byId(id);
+        if (own != null) return own.style();
         String path = id.getPath();
         if (path.endsWith("_sword") || (id.getNamespace().equals("awaken") && path.endsWith("_blade"))) return LONGSWORD;
         return null;
