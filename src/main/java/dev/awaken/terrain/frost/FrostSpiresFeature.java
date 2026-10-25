@@ -44,6 +44,8 @@ public record FrostSpiresFeature(IntProvider count, IntProvider height, float sp
 
     @Override
     public boolean place(WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos origin) {
+        // never inside Carillon: the city is built over this ground, and nothing here would clear these
+        if (dev.awaken.terrain.api.CityBasin.reservedWithin(origin.getX(), origin.getZ(), 16)) return false;
         long t0 = System.nanoTime();
         try {
             return placeSheaf(level, random, origin);
