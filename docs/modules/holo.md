@@ -200,6 +200,18 @@ identity and take one of 8 slots the first time they report above 0, so reportin
 Holo reports one value each frame (the K menu, the wrist demo, an open reading screen). Toasts, cards and the Now line
 never report. `installFocus(DoubleSupplier)` still works and counts as one more source.
 
+## World plates (`HoloWorld`, `holo.ui.PlateScale`; SPEC §12)
+- Small panels at a world point, facing the camera: the living module's creature plates first. Each is a real
+  `HoloPanel` (anchor WORLD, layers 3–8) with its own `HoloCanvas`, drawn by `HoloRender.submitPlate`, which is
+  `submitPanel` unchanged: the same glass shader, halo, edges and brackets, scan line and see-through text with its glow.
+  No panel, card or HUD output changed when plates arrived (only additions: `submitPlate`, one more submit listener).
+- Queue during `ExtractLevelRenderStateEvent` (`plate(spec, content)`, at most 6); `HoloWorld.submit` places them in the
+  same frame's level pass from the camera's position and orientation (as vanilla's name tags: no bob undo, they sit in
+  the world) and empties the queue.
+- Size: `PlateScale.unit` = max(0.021 m, 2.1 px × fbH/1080 × metres per pixel at that distance): world-sized up close,
+  constant on screen from about 10 blocks out, so 9-unit text is never tiny. Tested by `holo_plate_scale`.
+- Off with `reducedMotion` (`allowed()`), or without the world pipelines (`on()`); never reports `UiHooks.focus`.
+
 ## System cards (`signal.client.HudLook`, `HoloGuiLook`)
 The System's cards keep their flat layout, positions, sizes and timing (SignalLayout, ChoiceDeck, ToastBurst, the
 vanilla ToastManager) and only change how they draw. The holo module installs `HoloGuiLook` into signal's `HudLook`; it

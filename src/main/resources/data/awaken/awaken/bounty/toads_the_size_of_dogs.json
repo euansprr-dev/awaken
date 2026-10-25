@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Toads the Size of Dogs",
+  "band": 1,
+  "objective": {
+    "type": "kill",
+    "target": "awaken:bog_toad",
+    "count": 6
+  },
+  "levels": 0.22,
+  "essence": 2,
+  "requires": [],
+  "text": "The mire toads are swallowing our survey slimes. Strike one and its tongue drags you in, so mind the mud."
+}

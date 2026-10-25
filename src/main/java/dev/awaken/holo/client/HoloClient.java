@@ -80,6 +80,7 @@ public final class HoloClient {
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ExtractLevelRenderStateEvent.class, HoloClient::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, HoloRender::submit);
+        bus.addListener(SubmitCustomGeometryEvent.class, HoloWorld::submit);
         // HIGH: replaces both hands before Lucidium (NORMAL) and CastAnims (LOW), which then don't run
         bus.addListener(EventPriority.HIGH, RenderHandEvent.class, Wrist::onHand);
         // push last, pop first: nothing after us can cancel the layer and strand the translate
