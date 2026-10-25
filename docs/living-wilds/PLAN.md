@@ -33,7 +33,7 @@ The four phases answer these in order.
 
 ---
 
-## 1. Phase B · Everything pays, and you see it (the Holo combat layer, zones, the XP economy)
+## 1. Phase B · Everything pays, and you see it (the Holo combat layer, regions, the XP economy)
 
 ### 1.1 What the player sees
 
@@ -57,7 +57,7 @@ Rules: plates show for the creature you look at (24 blocks; PER 20/40 widen it t
 fight with you (it hurt you or you hurt it in the last 6 s), and for elites and named beasts once seen. At most **4
 plates** at once (nearest threats first). A plate fades 3 s after its fight ends, or 0.6 s after you look away from a
 calm creature. No plates on players, Echoes, citizens or Wayfarers (they get a name line on look only). Plates draw on
-vanilla mobs too (a zombie at night shows its zone level). Same plates inside gates.
+vanilla mobs too (a zombie at night shows its region's level). Same plates inside gates.
 
 **Damage as Holo glyphs** (concept 02). Each hit you deal prints a number written in strokes of light at the hit
 point, drifting up and fading over 700 ms, coloured by Force (kinetic white, heat ember, frost pale blue, charge
@@ -88,43 +88,64 @@ the pane. Rank-ups keep their Reassessment scene.
 legendary amber; a Power Core in its own white-gold), visible 48 blocks, until picked up. Rarity is an item tag
 (`#awaken:rarity/<tier>`).
 
-### 1.2 Zones: the world stops following you (concept 04)
+### 1.2 Regions: the world stops following you (concept 04)
 
-Danger rises with distance from Carillon (in classic worlds, from world spawn), with biome flavour on top. This
-replaces the follow-you scaling for every overworld creature, fauna and vanilla hostiles alike.
+Revised 2026-10-25 after Euan's note on the first draft (distance rings only): "Distance [shouldn't] be the only thing
+[...] otherwise it makes the world too linear [...] it removes the core of what Minecraft is, that you can explore for
+hours and hours [...] less about distance [...] more about different zones and areas."
 
-| Zone | Distance from the city centre | Creature levels | What it's for |
-|---|---|---|---|
-| **The Commons** | wall (240) to 700 | 1-8 | the first hour, the first bounties, a Wayfarer camp; the Briar Sow and kin are its bosses |
-| **The Marches** | 700-1,800 | 8-20 | D-rank country: the rope, mounts, caravans, the first camps |
-| **The Deepwilds** | 1,800-4,000 | 20-45 | C-rank: blight nests, the Weaver, the Mire, Precursor ruins that wake |
-| **The Far Reaches** | 4,000+ | 45 rising to 150 (at ~12,400) | B and beyond: wings and flight country, the oldest nests, the last chains |
+So the overworld is a **patchwork of named regions**, each with its own level, mixed in every direction. Distance from
+Carillon only tilts the odds: a dangerous valley can sit a couple of kilometres from the wall, and a calm one can wait
+five kilometres out. This replaces the follow-you scaling for every overworld creature, fauna and vanilla hostiles
+alike.
 
-- `levelAt(x, z)` is a pure function: the band's curve by distance (linear inside each band) + biome offset (deep
-  dark +10, pale garden +4, jagged and frozen peaks +3, deep ocean +3, dark forest +2, swamp +1, plains −1, mushroom
-  fields 0 and peaceful) + low-frequency noise ±2 (a 512-block scale, so borders wander and tend to follow biome
-  edges). Seeded, allocation-free, thread-safe: worldgen, spawning and the client's Atlas share it.
+- **Regions** are 600-1,400 blocks across: a jittered grid of region hearts about 900 apart, with borders warped by
+  noise so they lean toward rivers, ridges and biome edges. Each has a seeded name from biome grammars ("Rimewold",
+  "Briar Downs", "Ashfen", "the Gloam Reach", "Sunglass Waste", "Willowmere") and a level span of about six, rising from
+  its edge to its heart (Ashfen 30 at the border, 36 at its heart: the deeper in, the worse it gets).
+- **The Commons** is the fixed home region round Carillon (in classic worlds, round world spawn): levels 1-8, the
+  first hour. Its neighbours never go above 20. From the second ring on, anything the odds allow.
+- **The odds by distance** (a region's heart from the city centre):
+
+| Distance | Lv 1-8 | 8-20 | 20-45 | 45-80 | 80+ |
+|---|---|---|---|---|---|
+| The Commons | 100% | | | | |
+| Its neighbours | 40% | 60% | | | |
+| Under 2,000 | 25% | 45% | 25% | 5% | |
+| 2,000-5,000 | 15% | 30% | 30% | 20% | 5% |
+| 5,000+ | 10% | 20% | 25% | 25% | 20% |
+
+- **Biome tilt:** harsh land (pale garden, badlands, jagged and frozen peaks, dark forest) moves a region one band up
+  40% of the time; gentle land (plains, meadow, flower forest, cherry grove, mushroom fields) one band down 40% of the
+  time. The deep dark adds +10 under any region.
+- **Every direction is fair:** bands are dealt from a seeded shuffle per 3×3 block of regions, so each block holds a
+  spread for its distance. No direction is all deadly or all easy, and wherever you wander there is somewhere at your
+  level within a region or two.
+- `levelAt(x, z)` is a pure function: the nearest of 9 jittered hearts after the warp, the region's record (name,
+  band, span, dominant biome sampled once at its heart) from a small cache, then the edge-to-heart curve. Seeded,
+  allocation-free per lookup, thread-safe: worldgen, spawning and the client's Atlas share it.
 - Creature level = `levelAt` + role offset (ambient −2, neutral 0, hunter +1, elite +2, camp heart +3, named beast at
   its lair +3). Mob scaling stays SPEC §2's (`health × (1 + 0.075 lv)`, `damage × (1 + 0.04 lv)`), applied once at
-  spawn as permanent modifiers, so a zombie in the Deepwilds is a level-30 zombie.
+  spawn as permanent modifiers, so a zombie in Ashfen is a level-33 zombie.
 - **Elites in the wild:** 5% of neutral and hunter spawns are Elite (×2.5 health, +2 levels, a rank-coloured rim glow,
   a guaranteed family material, 10% Power Core Shard).
 - **The Hearth calms its land:** inside a Hearth's radius plus 96 blocks, the level is
-  `min(zone, the household's highest level)`, so a base built far out never has nights above you.
-- **Named beasts become each zone's bosses at their lairs** (lairs already sit every ~1,500-1,800 blocks): the Briar Sow
-  at the Commons' edge is a level-9 boss; the same kind deep in the Far Reaches is level 60. Their plate shows their
-  title.
-- **Entering a zone** shows a place caption in the letterbox style Carillon uses ("THE MARCHES · Lv 8-20"), once per
-  zone per play-day. **Far above your level** (zone ≥ your level + 5) the band warns with a choice-free toast in amber
-  ("Danger · creatures here are Lv 24+"), at most once per 10 minutes.
-- **The Atlas shades zones by threat** (concept 04): translucent washes over the diorama that follow the terrain, zone
-  names and level ranges as light text, lairs, nests and Wayfarer camps you know. Until the Atlas (Carillon M5) ships,
-  the K menu's Gate Map draws the same washes as rings.
+  `min(region, the household's highest level)`, so a base built in a hard region never has nights above you.
+- **Named beasts become each region's bosses at their lairs** (lairs already sit every ~1,500-1,800 blocks): a Briar
+  Sow lair in Briar Downs is a level-15 boss; the same kind in the Gloam Reach is level 58. Their plate shows their
+  title ("The Briar Sow · Terror of Briar Downs").
+- **Entering a region** shows a place caption in the letterbox style Carillon uses ("ASHFEN · Lv 30-36"), once per
+  region per play-day. **Far above your level** (region ≥ your level + 5) the caption turns ember and the band warns
+  with an amber toast ("Danger · creatures here are Lv 30+"), at most once per 10 minutes.
+- **The Atlas shows the patchwork** (concept 04): each region tinted by threat with its name and levels as light text,
+  lairs, nests and Wayfarer camps you know. A region shows once you've stood at its edge or heard of it (Mira's
+  rumours, Wayfarers' talk); the rest stays under cloud. Until the Atlas (Carillon M5) ships, the K menu's Gate Map
+  lists the regions you've entered with their levels and directions.
 - Nether and End keep their vanilla danger for now. Gates keep their own content levels (§2).
 
 ### 1.3 The XP economy (numbers from the sim)
 
-Principles: everything you do outside pays something you can see; on-level work in your zone pays fully; grinding one
+Principles: everything you do outside pays something you can see; on-level work in a region at your level pays fully; grinding one
 thing levels off ("worn"), variety stays fresh; gates stay the big jumps and the only source of Lords' hearts, gate
 gear and most Power Cores; the balanced player's story length holds.
 
@@ -137,7 +158,7 @@ gear and most Power Cores; the balanced player's story length holds.
 | Crafts (Phase E) | none | Foraging, Mining, Fishing 0.012 each, Cooking and Smithing 0.007 each, per 10 min |
 | Wayfarer quests (Phase C) | none | 0.06-0.2 of a level per step, a chain's finale ~0.8, once per claim id; plus the chain's relic |
 | Association bounties | none | 0.15-0.3 of a level + essence (coin once Carillon's economy ships), once per claim |
-| Camps and nests (Phase D) | none | 0.4 × floor 1 of the zone's rank, budget 0.10, once per camp per cycle |
+| Camps and nests (Phase D) | none | 0.4 × floor 1 of the region's rank, budget 0.10, once per camp per cycle |
 | Discoveries, anomalies, Directives, Regimen | as today | as today |
 | Gate floors | SHARE (§2) | **× 0.76** (the wilds carry part of the climb; loot, cores and hearts unchanged) |
 
@@ -152,7 +173,7 @@ what counts; Phase B ports it into tools/sim/pacing_sim.py and retunes to its 95
 | Builder | 41.6 → 35.6 | 84.8 → 81.1 | 2% → 19% |
 | **Wanderer** (new: a gate in a third of its cycles, long stretches outside) | not viable today | 32.4 h to 50, 79.7 h to 135 | 38% (+54% from discoveries, anomalies and dailies) |
 
-Hourly, through the mid-game: focused hunting in your zone ≈ 0.55 levels/h, ten levels below your zone ≈ 0.25;
+Hourly, through the mid-game: focused hunting in a region at your level ≈ 0.55 levels/h, ten levels below you ≈ 0.25;
 mixed wilds play (hunting, two crafts, a quest step, a camp) ≈ 0.9; three gate floors ≈ 0.65 (C) to 2.0 (B). So the
 wilds can carry you, and gates make you strong. First hour: level 3 at ~27 min, level 5 at ~54 min (target 45-60).
 
@@ -162,10 +183,11 @@ above use the corrected count, so the comparison is fair; the absolute calibrati
 
 ### 1.4 Systems and data (Phase B)
 
-- `living.zone.ZoneMap` (pure), `Zones` API, zone captions and warnings (server sends a zone id on change, ≤ 1 per 2 s).
-- Spawn hook: `FinalizeSpawnEvent` (verify in 26.3) sets the zone level on fauna and vanilla monsters through
+- `living.region.RegionMap` (pure), `Regions` API, region names (`living.region.Names`, data grammars per biome), captions
+  and warnings (the server sends a region id on change, ≤ 1 per 2 s).
+- Spawn hook: `FinalizeSpawnEvent` (verify in 26.3) sets the region's level on fauna and vanilla monsters through
   `MobRole` (core.api) and applies the scaling modifiers; fauna's `contentLevel` rule switches from the player's level
-  to `Zones.creatureLevel`. Persistent beasts re-level at their lair when it wakes them.
+  to `Regions.creatureLevel`. Persistent beasts re-level at their lair when it wakes them.
 - Kill XP: `ProgressionModule.onDeath` pays by the creature's level and role (every `LivingEntity` with a role or a
   vanilla category, not only `Enemy`), through the existing `XpBudget` with the new table; the taper moves after the
   budget as today. `XpSource` gains HUNT, CRAFT, QUEST (the ledger splits them).
@@ -178,7 +200,7 @@ above use the corrected count, so the comparison is fair; the absolute calibrati
   (`awaken-living-client.toml`): `plates` (on), `damageNumbers` (FULL|CRITS|OFF), `xpStream` (on), `levelMoment`
   (FULL|COMPACT), all honouring `reducedMotion`.
 - Sounds (tools/art audio pipeline, the System's glass voice): `living.scan` (the band reading a creature, very soft),
-  `living.crit`, `living.xp_tick`, `living.level_up`, `living.zone_enter`.
+  `living.crit`, `living.xp_tick`, `living.level_up`, `living.region_enter`.
 
 ---
 
@@ -190,7 +212,7 @@ People out in the wilds, met where they are, in trouble or at work: a climber st
 attack, a hermit who wants a beast's horn, a Precursor scholar at a ruin, a wounded Runner. You find them; nobody
 hands you a list.
 
-- **Found, never forced.** A Wayfarer scene is placed in the world near you in the right zone and level, with a sign
+- **Found, never forced.** A Wayfarer scene is placed in the world near you in a region of the right level, with a sign
   you can see from afar: a distress flare (a red column of light), a caravan's smoke, a lantern on a ledge, a song.
   The Horizon line names it only once you've seen the sign ("△ Wren, stranded ↗ 40 m"). No "!" over heads, no
   waypoint spam.
@@ -203,10 +225,10 @@ hands you a list.
   tracked), written as short journal pages, with the next step in a line. Never an undiscovered quest. The tracked
   step takes the Horizon line.
 - **Association bounties:** three notices at a time on the High Gate quartermaster's board (and the Association's in
-  the city), for your zone and rank only: cull, hunt an elite, bring family materials, clear a camp you've seen. A new
+  the city), for your level and rank only: cull, hunt an elite, bring family materials, clear a camp you've seen. A new
   one next play-day after you take one; no expiry.
 - **World events you stumble on:** a herd migration crossing a ford (packs gather, the herd's beast walks with it), a
-  blight surge (an ignored nest raids, §3), the Wild Hunt (a named beast and its pack sweep a zone at night), caravan
+  blight surge (an ignored nest raids, §3), the Wild Hunt (a named beast and its pack sweep a region at night), caravan
   days (a caravan travels the road from Carillon to an outpost and can be ambushed).
 
 ### 2.2 The twenty chains (hand-written; outlines, full text in Phase C)
@@ -216,28 +238,28 @@ and the Association, the gate inside the walls as the open question, the C-rank 
 Precursors' three paths, the Hollow Court, the Signal). Tone: bright, funny and sincere, then suddenly brutal. No em
 dashes in player text. The Rival (Vael) stays out: the patent rule keeps his beats on rank milestones.
 
-| # | Chain | Zone | Who | What happens | Abilities | Reward |
+| # | Chain | Levels | Who | What happens | Abilities | Reward |
 |---|---|---|---|---|---|---|
-| 1 | **The Last Delivery** | Commons | Kestrel, the Roost | The word you never brought back from the square, and one last bag: through the High Gate to the gatehouse, then on to the Wayfarer camp. Ends with the Roost letting you go. (Shared with Carillon's "Roost's word" thread.) | Runner moves, the first stretch outside | **Courier's Knot** (tactical sprint recharges 25% faster), Runners' Guild renown |
-| 2 | **Ten Sheep Short** | Commons | Hettie, shepherd at the farmstead | Something takes a sheep a night. Read the tracks to a Gloomstalker den, take it by day while they sleep, bring the old ram home. | PER tracking, light, night fighting | **Shepherd's Lantern** (night hunters won't come within 8 blocks), its recipe |
-| 3 | **Moth Lights** | Commons | Ilse, herbalist at the Wayfarer camp | Follow Lumen Moths at night to where they circle buried ore; gather what grows there. Teaches Foraging. | night travel, Foraging, digging | **Lumen Tonic** recipe (night sight without the vignette), Foraging's first perk early |
-| 4 | **Oren's First Steel** | Commons → Marches | Oren, the smith | Ore from three places and a temper at his forge; he complains the whole way. Teaches Mining and Smithing. | Mining, Smithing | **Oren's Mark** (your next blade starts one temper up), Wildhide rivet recipe |
-| 5 | **Wren's Rope** | Marches | Wren, a young Runner | Stranded on a cliff ledge over a ravine after something cut her line; she was carrying a crate of bell bronze, now gone (thread to 10). | the rope (zip, swing, vault) | **Wren's Hook** (your rope reaches 6 further) |
-| 6 | **The Caravan Road** | Marches | the Merchants' Guild | A caravan under attack at dusk on the Sunscorch road; hold the wagons, then see it to the oasis outpost through the night. | powers in a crowd, mounts | **Caravan Writ** (Merchants' Guild shops 15% cheaper), a Power Core Shard |
-| 7 | **The Hermit's Horn** | Marches | Gus, a hermit in the Crags | He wants a Stonehorn shard. The lair is up the cliffs; the horn he makes from it calls herds. | climbing, wall moves, a beast fight | **Herdcaller Horn** (once a play-day: call the nearest herd to stampede along your aim, or calm a charging beast) |
-| 8 | **Pell's Message** | Marches | Pell, a wounded Runner | Legs broken in a fall, with a message for the Association about a gate forming where none should. Get Sun's salve from the city and back before dark, then carry the message. | the run, mounts | **Pell's Spurs** (your mount sprints 15% faster, the whistle reaches 80 further), Association renown |
-| 9 | **The Drowned Bell** | Marches | Ama Voss, Teodor's old student, at a sunken ruin | A Precursor bell under a lake: the Choir had outposts. Dive, scan the machines, and see the bell's resting place with spirit sight. | swimming, the Scanner, the Veil (from 15) | **Voss's Lens** (Scanner range ×2, it hears sunken ruins), Codex pages, Archive renown |
-| 10 | **Bell Metal** | Deepwilds | the Association | The bronze from Wren's crate is being melted in a camp of the Unbound, rogue Awakened who farm gate breaks and hate the bells that calm them. Scout in the Veil, then break the camp. (Carillon's C-rank spine.) | the Veil, stealth, a human fight | title **Bellward**, Bellbronze blade recipe (its ring staggers gate creatures) |
-| 11 | **The Weaver's Bargain** | Deepwilds | a Duskwood tailor, and a spirit | The tailor wants the Weaver Queen's silk; a spirit says the Queen guards a Sleeper's dream-cocoon. Kill her, or bargain. | the Veil, the Lucidium, a beast fight | choose: **Queen's Silk Mantle** (glide drag −20%) or **Dreamthread** (dreams start 15 more lucid) |
-| 12 | **Stilts of the Mire** | Deepwilds | a Mire village on stilts | The Mire Mother woke and the bog rose; children are stranded on toppled huts. Glide them out, then calm or fight her. | wings and glide, the rope | **Mire Charm** (no bog poison, no slowdown on mud), Mire renown |
-| 13 | **The Keeper's Lantern** | Deepwilds | a Keeper's spirit at a monolith | One of those who went Down asks you to carry a lantern of its memory to the Well; the lantern exists only in spirit. | the Veil (cord length puzzles) | title **Lanternbearer**, a Latent (Veil time +20%), a Revelation fragment |
-| 14 | **The Crossing** | Deepwilds | herders at the Antler Grove | The great migration fords the river; the packs wait; the Old Antler walks with the herd. See them across. | mounts, powers, Hunting | **Antler Crown** (herd animals and your mount never flee you; +2 PER) |
-| 15 | **Sun's Bitter Cure** | Deepwilds | Sun, the healer | Wayfarers near a nest are blight-sick. Three herbs from three zones and a meal only a cook can make. | Foraging, Cooking | **Sun's Cure** recipe (clears blight sickness), Healer renown |
-| 16 | **The Relay Spires** | Far Reaches | Ama Voss, again | Ascendant relays on five Tether Spires and a sky platform; align them and the Halo answers once. | Tether, Wings, Skyborn flight | **Relay Key** (travel between spires you've climbed), a Halo lead in the Codex |
-| 17 | **Mother of Nests** | Far Reaches | Wayfarers of the far camps | A nest from an ancient break, grown to tier 5; three stages with Wayfarer allies. | everything you have in a fight | **Ashsteel** recipe, title **Blightbreaker** |
-| 18 | **The Sleeping Village** | Far Reaches | nobody awake | A village where everyone sleeps (the Sleepers' dream leaking). Enter their dreams through their beds and wake them one by one. | the Lucidium (reality checks, manifest) | **Sleeper's Bell** (ring it to end a nightmare at once), title |
-| 19 | **Mira's Last Map** | Far Reaches | Mira, the scout | Light the beacons of five far landmarks for the map she can't finish herself. | exploration, flight | **Mira's Compass** (the Horizon line names one unheard ruin a play-day), an Atlas reveal |
-| 20 | **The Courier Who Never Came Back** | Far Reaches | Kestrel | Kestrel's old partner vanished in the Reaches twenty years ago; his Runner marks still lead across them, ending at what's left of him and the letter he was carrying. To her. | movement mastery (Flow chains, Leaper, wings) | **Last Mark** (Flow drains 30% slower), Kestrel's last line |
+| 1 | **The Last Delivery** | 1-8 | Kestrel, the Roost | The word you never brought back from the square, and one last bag: through the High Gate to the gatehouse, then on to the Wayfarer camp. Ends with the Roost letting you go. (Shared with Carillon's "Roost's word" thread.) | Runner moves, the first stretch outside | **Courier's Knot** (tactical sprint recharges 25% faster), Runners' Guild renown |
+| 2 | **Ten Sheep Short** | 1-8 | Hettie, shepherd at the farmstead | Something takes a sheep a night. Read the tracks to a Gloomstalker den, take it by day while they sleep, bring the old ram home. | PER tracking, light, night fighting | **Shepherd's Lantern** (night hunters won't come within 8 blocks), its recipe |
+| 3 | **Moth Lights** | 1-8 | Ilse, herbalist at the Wayfarer camp | Follow Lumen Moths at night to where they circle buried ore; gather what grows there. Teaches Foraging. | night travel, Foraging, digging | **Lumen Tonic** recipe (night sight without the vignette), Foraging's first perk early |
+| 4 | **Oren's First Steel** | 1-8 → 8-20 | Oren, the smith | Ore from three places and a temper at his forge; he complains the whole way. Teaches Mining and Smithing. | Mining, Smithing | **Oren's Mark** (your next blade starts one temper up), Wildhide rivet recipe |
+| 5 | **Wren's Rope** | 8-20 | Wren, a young Runner | Stranded on a cliff ledge over a ravine after something cut her line; she was carrying a crate of bell bronze, now gone (thread to 10). | the rope (zip, swing, vault) | **Wren's Hook** (your rope reaches 6 further) |
+| 6 | **The Caravan Road** | 8-20 | the Merchants' Guild | A caravan under attack at dusk on the Sunscorch road; hold the wagons, then see it to the oasis outpost through the night. | powers in a crowd, mounts | **Caravan Writ** (Merchants' Guild shops 15% cheaper), a Power Core Shard |
+| 7 | **The Hermit's Horn** | 8-20 | Gus, a hermit in the Crags | He wants a Stonehorn shard. The lair is up the cliffs; the horn he makes from it calls herds. | climbing, wall moves, a beast fight | **Herdcaller Horn** (once a play-day: call the nearest herd to stampede along your aim, or calm a charging beast) |
+| 8 | **Pell's Message** | 8-20 | Pell, a wounded Runner | Legs broken in a fall, with a message for the Association about a gate forming where none should. Get Sun's salve from the city and back before dark, then carry the message. | the run, mounts | **Pell's Spurs** (your mount sprints 15% faster, the whistle reaches 80 further), Association renown |
+| 9 | **The Drowned Bell** | 8-20 | Ama Voss, Teodor's old student, at a sunken ruin | A Precursor bell under a lake: the Choir had outposts. Dive, scan the machines, and see the bell's resting place with spirit sight. | swimming, the Scanner, the Veil (from 15) | **Voss's Lens** (Scanner range ×2, it hears sunken ruins), Codex pages, Archive renown |
+| 10 | **Bell Metal** | 20-45 | the Association | The bronze from Wren's crate is being melted in a camp of the Unbound, rogue Awakened who farm gate breaks and hate the bells that calm them. Scout in the Veil, then break the camp. (Carillon's C-rank spine.) | the Veil, stealth, a human fight | title **Bellward**, Bellbronze blade recipe (its ring staggers gate creatures) |
+| 11 | **The Weaver's Bargain** | 20-45 | a Duskwood tailor, and a spirit | The tailor wants the Weaver Queen's silk; a spirit says the Queen guards a Sleeper's dream-cocoon. Kill her, or bargain. | the Veil, the Lucidium, a beast fight | choose: **Queen's Silk Mantle** (glide drag −20%) or **Dreamthread** (dreams start 15 more lucid) |
+| 12 | **Stilts of the Mire** | 20-45 | a Mire village on stilts | The Mire Mother woke and the bog rose; children are stranded on toppled huts. Glide them out, then calm or fight her. | wings and glide, the rope | **Mire Charm** (no bog poison, no slowdown on mud), Mire renown |
+| 13 | **The Keeper's Lantern** | 20-45 | a Keeper's spirit at a monolith | One of those who went Down asks you to carry a lantern of its memory to the Well; the lantern exists only in spirit. | the Veil (cord length puzzles) | title **Lanternbearer**, a Latent (Veil time +20%), a Revelation fragment |
+| 14 | **The Crossing** | 20-45 | herders at the Antler Grove | The great migration fords the river; the packs wait; the Old Antler walks with the herd. See them across. | mounts, powers, Hunting | **Antler Crown** (herd animals and your mount never flee you; +2 PER) |
+| 15 | **Sun's Bitter Cure** | 20-45 | Sun, the healer | Wayfarers near a nest are blight-sick. Three herbs from three regions and a meal only a cook can make. | Foraging, Cooking | **Sun's Cure** recipe (clears blight sickness), Healer renown |
+| 16 | **The Relay Spires** | 45+ | Ama Voss, again | Ascendant relays on five Tether Spires and a sky platform; align them and the Halo answers once. | Tether, Wings, Skyborn flight | **Relay Key** (travel between spires you've climbed), a Halo lead in the Codex |
+| 17 | **Mother of Nests** | 45+ | Wayfarers of the far camps | A nest from an ancient break, grown to tier 5; three stages with Wayfarer allies. | everything you have in a fight | **Ashsteel** recipe, title **Blightbreaker** |
+| 18 | **The Sleeping Village** | 45+ | nobody awake | A village where everyone sleeps (the Sleepers' dream leaking). Enter their dreams through their beds and wake them one by one. | the Lucidium (reality checks, manifest) | **Sleeper's Bell** (ring it to end a nightmare at once), title |
+| 19 | **Mira's Last Map** | 45+ | Mira, the scout | Light the beacons of five far landmarks for the map she can't finish herself. | exploration, flight | **Mira's Compass** (the Horizon line names one unheard ruin a play-day), an Atlas reveal |
+| 20 | **The Courier Who Never Came Back** | 45+ | Kestrel | Kestrel's old partner vanished in the far regions twenty years ago; his Runner marks still lead across them, ending at what's left of him and the letter he was carrying. To her. | movement mastery (Flow chains, Leaper, wings) | **Last Mark** (Flow drains 30% slower), Kestrel's last line |
 
 Relics are bound to you: one per player per chain, kept on death, never duplicated (claim ids), their story on hover.
 
@@ -245,10 +267,10 @@ Relics are bound to you: one per player per chain, kept on death, never duplicat
 
 - Chains as data: `data/awaken/awaken/quest/<chain>.json` (schema 1): steps with an objective (`talk`, `reach`,
   `kill`, `collect`, `deliver`, `escort`, `protect`, `use` (an ability or tier: `ascent:tether`, `veil`, `dream`,
-  `mount`), `discover`), requirements (`level`, `rank`, `tier`, `zone`), text lines, rewards (claim id
+  `mount`), `discover`), requirements (`level`, `rank`, `tier`, `band`), text lines, rewards (claim id
   `quest/<chain>/<step>`). Lines authored, no language model.
 - Scenes: `living.wayfarer.Scenes` finds a spot for a chain's opening (a cliff face 12+ high with a ledge, a road, a
-  ruin, a lakeshore) within 64-160 blocks in the right zone, like the anomaly spot finder, at most one open scene per
+  ruin, a lakeshore) within 64-160 blocks in a region of the right band, like the anomaly spot finder, at most one open scene per
   player, every ~25-40 outdoor minutes, never with an anomaly running. Scene state is saved (schema 1); a scene you
   leave alone fades after a play-day and comes back elsewhere later.
 - Wayfarers: an NPC entity drawn with `core.client.skin.SkinnedMobRenderer` (Carillon's citizens' renderer, never
@@ -257,7 +279,7 @@ Relics are bound to you: one per player per chain, kept on death, never duplicat
   two or three Wayfarers, a bounty post; safe from spawns within 24 blocks.
 - Journal: a K-menu tab (holo, §5.3), `living.quest.client.JournalPage`; Horizon: one `HorizonHooks.Source` for the
   tracked step (raised); arrival within 32 blocks pings the band and shimmers the target once.
-- Bounties: `living.bounty`, templates in data, three notices per player for their zone and rank, claim once;
+- Bounties: `living.bounty`, templates in data, three notices per player for their level and rank, claim once;
   coin through `EconomyHooks.pay` once Carillon's economy exists, essence and XP until then; renown via
   `RenownHooks.witness` (the quartermaster witnesses the turn-in).
 - World events: `living.event`, scheduled by play-day per region near players, announced only when you're near or a
@@ -280,7 +302,7 @@ Relics are bound to you: one per player per chain, kept on death, never duplicat
   hollow dens at cave mouths, ruins whose machines wake. Clear one and it stays clear for days (ash, then green again);
   an ignored nest grows a tier every 2 play-days while players are around, and at tier 4 it raids the nearest
   Wayfarer camp, outpost or Hearth at night, warned a play-day ahead like a gate break.
-- Vanilla's night stays dangerous: zombies and skeletons still spawn in the dark anywhere (at the zone's level).
+- Vanilla's night stays dangerous: zombies and skeletons still spawn in the dark anywhere (at the region's level).
 
 ### 3.2 The model (cheap by design)
 
@@ -296,7 +318,7 @@ Relics are bound to you: one per player per chain, kept on death, never duplicat
 - **Catch-up, not ticking:** when a region is next visited, counts regrow by play-days elapsed and a pack's hunts are
   settled in one step (each night a pack hunted, the herd lost one; tracks and a carcass mark the last one).
 - **Camps from causes:** a gate break left uncleared for 2 play-days seeds a blight nest at its site (the blight ring is
-  already there); riftborn camps and hollow dens are seeded in the region record (Marches and beyond). Tiers 1-5:
+  already there); riftborn camps and hollow dens are seeded in the region record (level 8 and up). Tiers 1-5:
   +2 levels, +1 wave and a bigger build per tier; the heart is the camp's boss.
 - Budgets: ledger work ≤ 0.3 ms per tick, sliced 16 records a tick; one region generation per tick at most; camp
   builds through the per-chunk painter pattern (`Sink`), ≤ 4 light sources per chunk; saved data
@@ -343,76 +365,78 @@ feeds the Hunter level (through their budgets, §1.3), so a sheep finally leads 
 5. You reach level 3 at ~27 minutes and 4-5 by 40-55. **The Director's first gate opens at level 4, or after 45
    minutes outside**, in the Commons' outer edge (Carillon worlds; classic worlds as today).
 6. Tips through Carillon's `TipHooks` (never a second tips UI): the first plate ("Your band reads what you look at"),
-   the first zone caption, the first bounty, the first Wayfarer sign, the first craft level.
+   the first region caption, the first bounty, the first Wayfarer sign, the first craft level.
 
 ### 5.2 Survival stays the core
 
-Hunger, building, crafting and dangerous nights are unchanged; vanilla animals farm as ever. Zones change levels, not
+Hunger, building, crafting and dangerous nights are unchanged; vanilla animals farm as ever. Regions change levels, not
 what lives where. Quests are found, never assigned; nothing is listed before you find it. World option **Pure
-survival**: no plates, damage numbers, XP stream, quests or bounties (zones, crafts and their perks stay: they're the
+survival**: no plates, damage numbers, XP stream, quests or bounties (regions, crafts and their perks stay: they're the
 world and survival skills).
 
 ### 5.3 Ownership, packages and APIs
 
-New module **`living`** (package `dev.awaken.living`; same module rules as §1): `living.zone`, `living.combat`
+New module **`living`** (package `dev.awaken.living`; same module rules as §1): `living.region`, `living.combat`
 (+`.client`), `living.wayfarer`, `living.quest`, `living.bounty`, `living.event`, `living.population`, `living.camp`,
 `living.craft`; commands `/awaken living ...`; payloads `living:*`; merge folder `src/main/merge/living/`.
 
 New public API (SPEC §12):
-- `dev.awaken.living.api.Zones`: `levelAt(Level, x, z)`, `zoneAt(Level, x, z)`, `creatureLevel(Level, pos, role)`,
+- `dev.awaken.living.api.Regions`: `levelAt(Level, x, z)`, `regionAt(Level, x, z)` (id, name, band, span),
+  `creatureLevel(Level, pos, role)`,
   `bandOf(level)`.
 - `dev.awaken.living.api.Quests`: `active(Player)`, `tracked(Player)`, `advance(ServerPlayer, Identifier objective,
   Object detail)` (other modules report ability uses, e.g. a zip, a Veil entry, a dream).
 - `dev.awaken.living.api.Crafts`: `grant(ServerPlayer, Craft, double)`, `level(Player, Craft)`, `has(Player, Perk)`.
-- `dev.awaken.core.api.LivingHooks` (install-once): `zoneLevel`, `onKill` data for modules that don't depend on living.
+- `dev.awaken.core.api.LivingHooks` (install-once): `regionLevel`, `onKill` data for modules that don't depend on living.
 
 Changes in existing modules (each small, at the seam):
 | Module | Change | Owner to agree |
 |---|---|---|
 | progression | kill XP by creature level and role, new budget table, `XpSource` HUNT/CRAFT/QUEST, gate SHARE trim, Director's first gate at level 4 (Carillon worlds) | orchestrator |
-| world (fauna), mobs | content level from `Zones`; elite variants; herd species leave natural spawns in Living mode; beasts re-level at lairs | orchestrator |
+| world (fauna), mobs | content level from `Regions`; elite variants; herd species leave natural spawns in Living mode; beasts re-level at lairs | orchestrator |
 | holo | a small public world-space glass API (`HoloWorld.plate(...)`), two K-menu tabs (Journal, Crafts) through a tab-provider hook | pack session (holo owner) |
 | compat (Jade) | hide Jade's creature lines while the plate shows them (one source of truth) | orchestrator |
 | wilds | none inside it: the tracked quest is a `HorizonHooks.Source` | Ascent session (informed) |
-| Carillon (city, citizens, opening, atlas, economy, renown) | the gatehouse yard and Hale, Bram's line, bounties on the contracts board, Atlas zone layer (`AtlasHooks`), coin and renown through their hooks, TipHooks | Carillon session |
+| Carillon (city, citizens, opening, atlas, economy, renown) | the gatehouse yard and Hale, Bram's line, bounties on the contracts board, Atlas region layer (`AtlasHooks`), coin and renown through their hooks, TipHooks | Carillon session |
 | anomalies | the Wayfarer scene and the anomaly share one outdoor rhythm (never both at once) | orchestrator |
 
 ### 5.4 Tests (one per mechanism; run with `-Ptests=living_`; CI runs the full suite)
 
 | Phase | Test | Checks |
 |---|---|---|
-| B | `living_zone_map` | bands at their distances, biome offsets, noise bounds, Hearth calm, classic origin |
+| B | `living_region_map` | the Commons and its neighbours, the odds by distance over many regions, every 3×3 block fair, biome tilt, edge-to-heart curve, Hearth calm, classic origin |
 | B | `living_kill_xp` | on-level, above (+40% cap) and below (taper) through the budget; a sheep pays; party share |
 | B | `living_plate_rules` | which creatures get plates, the 4-plate cap, fade timings (pure rules) |
 | C | `living_quest_engine` | a data chain runs start → steps → reward once per claim id; relog keeps it; a tier-gated step waits |
-| C | `living_bounty_board` | three notices for zone and rank, refresh next play-day, claim once |
+| C | `living_bounty_board` | three notices for level and rank, refresh next play-day, claim once |
 | C | `living_scene_finder` | a cliff scene and a road scene find valid spots in a real world, never in a Hearth, ward or the city |
 | D | `living_population_ledger` | deterministic route, bodies within 96 and gone past 128, a kill lowers the count, regrowth and pack catch-up by play-days |
 | D | `living_camp_lifecycle` | a break seeds a nest, clear → stays clear N days, ignored → grows → raid warned a play-day ahead |
 | E | `living_craft_xp` | an action pays craft and Hunter XP through budgets; perks unlock at tiers |
-| all | `living_pure_survival` | the option removes plates, numbers, quests and bounties; zones and crafts stay |
+| all | `living_pure_survival` | the option removes plates, numbers, quests and bounties; regions and crafts stay |
 
 Plus the pacing check in tools/sim (the balanced player's targets hold). One `slot.sh light` tour per phase for
-screenshots (plates in a fight by day and night, the level moment, a zone caption, a scene, a herd and a nest).
+screenshots (plates in a fight by day and night, the level moment, a region caption, a scene, a herd and a nest).
 
 ### 5.5 Risks and performance
 
 - **Frame budget:** plates (≤ 4 glass quads with text), glyphs (≤ 24), XP motes (≤ 64), pillars: target ≤ 0.3 ms a
   frame total; they also draw in gate fights, where SPEC's p50 ≥ 110 fps must hold.
-- **Server:** zone lookup O(1) and allocation-free; one attachment sync per spawn; two tiny event payloads; ledger
+- **Server:** region lookup O(1) and allocation-free; one attachment sync per spawn; two tiny event payloads; ledger
   ≤ 0.3 ms/tick sliced; quests and crafts event-driven. Tick p95 ≤ 25 ms holds.
-- **Distance zones mean travel:** the Far Reaches start 4,000 out. Answered by mounts (level 11), the rope, wings,
-  flight, the Relay Key, Waypoint Pylons; and new chunks far out cost what exploring always costs.
-- **Bases far from spawn:** the Hearth calms its land.
+- **A hard region next door:** a level-30 valley can sit two regions from the wall. The caption turns ember, the
+  band warns, plates show skulls, and the Atlas marks it: a place to come back to, not a trap. The Commons' neighbours
+  never exceed 20.
+- **Bases in hard regions:** the Hearth calms its land.
 - **MMO creep:** found-never-forced scenes, no markers, the Journal limited to what you took, Pure survival.
 - **Two sessions near the same code:** Carillon (the gate yard, Bram, the board, the Atlas) and the pack session (holo
   API) are asked first; the wilds module is untouched.
-- **Old worlds:** zones apply to new spawns; existing persistent beasts re-level when their lair wakes them.
+- **Old worlds:** regions apply to new spawns; existing persistent beasts re-level when their lair wakes them.
 
 ### 5.6 Order and size
 
 One builder at a time per phase, Opus at extra-high effort for the look (the combat layer, scenes, the level moment)
 and the quest writing, Sonnet subagents for data, templates, spawn tables, tests and docs.
-B (combat layer, zones, XP) → C (Wayfarers, quests, bounties: the eight Commons and Marches chains first, then the
+B (combat layer, regions, XP) → C (Wayfarers, quests, bounties: the eight chains for levels 1-20 first, then the
 twelve) → D (living creatures, camps) → E (crafts). Each phase pushes to pack/living-wilds for CI and goes to the
 orchestrator with its CI run id.

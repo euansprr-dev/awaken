@@ -121,15 +121,15 @@ td.num { white-space: nowrap; }
 .r-e { background: var(--rank-e); } .r-d { background: var(--rank-d); } .r-c { background: var(--rank-c); }
 .r-b { background: var(--rank-b); } .r-a { background: var(--rank-a); } .r-s { background: var(--rank-s); }
 
-/* zone strip, drawn to scale by distance from the city centre (0 to 12,400 blocks) */
-.strip { display: grid; gap: 6px; }
-.strip .bar { display: flex; height: 34px; border: 1px solid var(--line); overflow: hidden; }
-.strip .bar span { display: flex; align-items: center; padding-left: 8px; font-family: var(--pixel); font-size: 0.66rem; letter-spacing: 0.06em; color: var(--chip-ink); white-space: nowrap; overflow: hidden; }
-.strip .ticks { position: relative; height: 1.2rem; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
-.strip .ticks span { position: absolute; transform: translateX(-50%); }
-.strip .ticks span:first-child { transform: none; }
-.strip .ticks span:last-child { transform: translateX(-100%); }
 
+.odds { display: grid; gap: 8px; padding: 16px clamp(12px, 2.5vw, 20px); border: 1px solid var(--line); background: var(--glass); }
+.odds-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; margin-bottom: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 2px; vertical-align: -1px; }
+.orow { display: grid; grid-template-columns: minmax(6.5rem, 9rem) 1fr; gap: 10px; align-items: center; }
+.olab { font-size: 0.85rem; color: var(--muted); }
+.obar { display: flex; height: 24px; border: 1px solid var(--line); overflow: hidden; }
+.obar span { flex-grow: 0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.72rem; color: var(--chip-ink); font-variant-numeric: tabular-nums; overflow: hidden; }
 .callout { padding: 14px 18px; border-left: 3px solid var(--amber); background: var(--glass-2); font-size: 0.93rem; }
 .callout b { color: var(--amber); }
 
@@ -156,10 +156,10 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   <span class="eyebrow">Awaken · plan for approval · 25 Oct 2026</span>
   <h1>The Living Wilds</h1>
   <p class="lede">Everything you do outside the gates leads to something, and you see it. Your band reads the creatures
-  you fight, XP streams into it, the land gets more dangerous the further you go from Carillon, people out in the wilds
+  you fight, XP streams into it, the land is a patchwork of named regions, each with its own danger, people out in the wilds
   need your rope and your wings, herds and packs live in their valleys, and six crafts level as you survive. Gates stay
   the big jumps. Survival stays the core.</p>
-  <div class="meta"><span>Four phases, built in order: B · C · D · E</span><span>Becomes SPEC §21 on your yes</span><span>No code written yet</span></div>
+  <div class="meta"><span>Version 2: regions instead of distance rings, after your note</span><span>Four phases, built in order: B · C · D · E</span><span>Becomes SPEC §21 on your yes</span><span>No code written yet</span></div>
   <figure class="hero">
     <div class="frame"><img src="concept/01-holo-nameplate.jpg" alt="First-person view at dusk: a dark fox-like Gloomstalker lunges; a thin glass plate above it reads GLOOMSTALKER, Lv 14, ELITE, with a segmented health bar losing a segment in amber; a cyan line runs from the wrist band to the creature." width="1536" height="1024"></div>
     <figcaption><b>The band reads what you look at.</b> A plate of Holo glass over the creature: name, level in its rank colour, a segmented health bar, the Elite tag. In game it is smaller than drawn here, about the creature's width.</figcaption>
@@ -170,21 +170,21 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   <span class="eyebrow">What your yes covers</span>
   <p class="go">Fifteen decisions, each with my recommendation. <b>"Go with your recommendations"</b> says yes to all of them.</p>
   <ol class="dec">
-    <li><span class="q">Zones replace the follow-you scaling for every overworld creature, fauna and vanilla monsters alike.</span><span class="rec"><b>Yes.</b> Commons 1–8, Marches 8–20, Deepwilds 20–45, Far Reaches 45+, by distance from Carillon (world spawn in classic worlds), with biome flavour and a little noise.</span></li>
-    <li><span class="q">Your Hearth calms the land around it.</span><span class="rec"><b>Yes.</b> Within its radius plus 96 blocks the level never exceeds your household's, so a base far out never has nights above you.</span></li>
+    <li><span class="q">The overworld becomes a patchwork of named regions, each with its own level, replacing the follow-you scaling for every creature, vanilla monsters included.</span><span class="rec"><b>Yes.</b> Revised after your note: distance only tilts the odds, so hard and gentle regions turn up in every direction. The Commons round Carillon (or world spawn) stays 1–8 and its neighbours stay under 20.</span></li>
+    <li><span class="q">Your Hearth calms the land around it.</span><span class="rec"><b>Yes.</b> Within its radius plus 96 blocks the level never exceeds your household's, so a base in a hard region never has nights above you.</span></li>
     <li><span class="q">Rebalance XP: every creature pays by its own level (a sheep too), crafts, quests, bounties and camps pay, and gate floors pay 0.76×.</span><span class="rec"><b>Yes.</b> In the sim the balanced player's story changes by −4%; gates keep every core, heart and piece of gear they drop.</span></li>
     <li><span class="q">Plates, damage numbers and the XP stream are on by default.</span><span class="rec"><b>On</b>, with settings for crits-only numbers, a compact level-up, and off.</span></li>
     <li><span class="q">Level-up becomes a System moment that players nearby can see.</span><span class="rec"><b>Yes.</b> Compact during a fight; the full moment when it ends. Others see the rings and the column, never your pane.</span></li>
     <li><span class="q">Elites in the wild.</span><span class="rec"><b>Yes.</b> One in twenty neutral and hunter spawns: 2.5× health, +2 levels, a sure family material, a 10% shard.</span></li>
     <li><span class="q">A Journal on the Holo, amending SPEC's hard rule "Never a quest list".</span><span class="rec"><b>Yes.</b> It holds only the chains you found and took (5 active, 1 tracked), never anything undiscovered, and nothing floats over anyone's head.</span></li>
-    <li><span class="q">Twenty hand-written quest chains, each with a relic bound to you.</span><span class="rec"><b>Yes</b>, in two drops: the eight Commons and Marches chains first. Relics are kept on death and never duplicated.</span></li>
-    <li><span class="q">Association bounties are the first slice of Carillon's deferred contracts board.</span><span class="rec"><b>Yes.</b> Three notices for your zone and rank, at the High Gate and the Association; paid in essence and XP until coin ships. Agreed with the Carillon session first.</span></li>
+    <li><span class="q">Twenty hand-written quest chains, each with a relic bound to you.</span><span class="rec"><b>Yes</b>, in two drops: the eight chains for levels 1–20 first. Relics are kept on death and never duplicated.</span></li>
+    <li><span class="q">Association bounties are the first slice of Carillon's deferred contracts board.</span><span class="rec"><b>Yes.</b> Three notices for your level and rank, at the High Gate and the Association; paid in essence and XP until coin ships. Agreed with the Carillon session first.</span></li>
     <li><span class="q">Creatures live somewhere: herds, packs, roosts and camps kept in a ledger, and ignored nests raid.</span><span class="rec"><b>Yes.</b> Raids are warned a play-day ahead, like a gate break, and can reach a Hearth.</span></li>
     <li><span class="q">Six crafts, each to level 50, with perks and a Crafts tab; their XP feeds your Hunter level.</span><span class="rec"><b>Yes.</b> Hunting, Foraging, Mining, Fishing, Smithing, Cooking.</span></li>
     <li><span class="q">Jade stops showing creature lines while the plate shows them.</span><span class="rec"><b>Yes.</b> One source of truth on screen; Jade keeps gates, machines and blocks.</span></li>
-    <li><span class="q">A "Pure survival" world option.</span><span class="rec"><b>Yes.</b> It removes plates, numbers, the XP stream, quests and bounties. Zones and crafts stay, because they are the world and survival skills.</span></li>
+    <li><span class="q">A "Pure survival" world option.</span><span class="rec"><b>Yes.</b> It removes plates, numbers, the XP stream, quests and bounties. Regions and crafts stay, because they are the world and survival skills.</span></li>
     <li><span class="q">The first hour: your first Director gate opens at level 4 or after 45 minutes outside, and the Commons get a quartermaster and a Wayfarer camp.</span><span class="rec"><b>Yes.</b> Carillon worlds only; the city parts (the gatehouse yard, Bram's line) are agreed with the Carillon session.</span></li>
-    <li><span class="q">The Nether and the End keep their vanilla danger for now.</span><span class="rec"><b>Yes.</b> Zones are an overworld idea; the other dimensions can get theirs later.</span></li>
+    <li><span class="q">The Nether and the End keep their vanilla danger for now.</span><span class="rec"><b>Yes.</b> Regions are an overworld idea; the other dimensions can get theirs later.</span></li>
   </ol>
 </div>
 
@@ -194,7 +194,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   and the Wilds pay for discoveries. Four things keep it from reading as progression, and each phase answers one.</p>
   <div class="why">
     <div><b>It's invisible</b><span>No numbers, no bars, no "you got something". A sheep pays nothing.</span><em>→ Phase B</em></div>
-    <div><b>The world follows you</b><span>Creatures are always your level minus one, so nowhere is "too dangerous yet" or "where I farm".</span><em>→ Phase B, zones</em></div>
+    <div><b>The world follows you</b><span>Creatures are always your level minus one, so nowhere is "too dangerous yet" or "where I farm".</span><em>→ Phase B, regions</em></div>
     <div><b>No people out there</b><span>Every person lives in the city or your Hearth.</span><em>→ Phase C</em></div>
     <div><b>Spawns are random</b><span>Creatures appear around you instead of living somewhere.</span><em>→ Phase D</em></div>
   </div>
@@ -232,40 +232,38 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
     </div>
   </div>
 
-  <h3>Zones: the world stops following you</h3>
-  <div class="strip" role="img" aria-label="Zone bands by distance from the city centre: Commons to 700 blocks, Marches to 1,800, Deepwilds to 4,000, Far Reaches beyond, drawn to scale up to 12,400 blocks.">
-    <div class="bar">
-      <span class="r-e" style="flex: 0 0 5.65%" title="Commons">1–8</span>
-      <span class="r-d" style="flex: 0 0 8.87%" title="Marches">8–20</span>
-      <span class="r-c" style="flex: 0 0 17.74%" title="Deepwilds">DEEPWILDS 20–45</span>
-      <span class="r-b" style="flex: 1 1 auto">FAR REACHES · 45 rising to 150</span>
-    </div>
-    <div class="ticks"><span style="left:0">0</span><span style="left:5.65%">700</span><span style="left:14.5%">1,800</span><span style="left:32.3%">4,000</span><span style="left:100%">12,400 blocks</span></div>
-  </div>
-  <div class="tbl">
-    <table>
-      <thead><tr><th>Zone</th><th>From the city centre</th><th>Creature levels</th><th>What it's for</th></tr></thead>
-      <tbody>
-        <tr><td><span class="chip r-e">COMMONS</span></td><td class="num">wall (240) – 700</td><td class="num">1 – 8</td><td>The first hour, the first bounties, a Wayfarer camp. The Briar Sow and kin are its bosses.</td></tr>
-        <tr><td><span class="chip r-d">MARCHES</span></td><td class="num">700 – 1,800</td><td class="num">8 – 20</td><td>D-rank country: the rope, mounts, caravans, the first camps.</td></tr>
-        <tr><td><span class="chip r-c">DEEPWILDS</span></td><td class="num">1,800 – 4,000</td><td class="num">20 – 45</td><td>C-rank: blight nests, the Weaver, the Mire, ruins whose machines wake.</td></tr>
-        <tr><td><span class="chip r-b">FAR REACHES</span></td><td class="num">4,000 +</td><td class="num">45 → 150</td><td>B and beyond: wings and flight country, the oldest nests, the last chains.</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <h3>Regions: the world stops following you</h3>
+  <p class="prose">You said distance shouldn't be the only thing, because rings make the world linear and take away what Minecraft is: exploring for hours in any direction.
+  So the overworld is a patchwork of named regions, each with its own level. Distance from Carillon only tilts the odds. A dangerous valley can sit
+  a couple of kilometres from the wall, and a calm one can wait five kilometres out.</p>
   <div class="split">
-    <ul class="points prose">
-      <li><strong>Biome flavour on top:</strong> deep dark +10, pale garden +4, the high peaks and deep ocean +3, dark forest +2, swamp +1, plains −1. A slow noise of ±2 lets borders wander and follow the land.</li>
-      <li><strong>Roles:</strong> ambient −2, neutral 0, hunter +1, elite +2, a camp's heart and a beast at its lair +3. So the Briar Sow at the Commons' edge is a level-9 boss, and the same kind in the Far Reaches is level 60.</li>
-      <li><strong>Crossing into a zone</strong> shows a place caption, "THE MARCHES · Lv 8–20". Far above your level the band warns once: "Danger · creatures here are Lv 24+".</li>
-      <li><strong>Scaling stays SPEC's own</strong> (health 1 + 0.075 per level, damage 1 + 0.04), applied once at spawn: a zombie in the Deepwilds is a level-30 zombie.</li>
-      <li><strong>The Atlas shades zones by threat</strong> once Carillon's Atlas ships; until then the Gate Map draws them as rings.</li>
-    </ul>
     <figure>
-      <div class="frame"><img src="concept/04-atlas-zones.jpg" alt="A holographic diorama map: the walled city at the centre, washes of light for Commons, Marches, Deepwilds and Far Reaches spreading outward, beast lair skulls, a blight nest, a wayfarer camp lantern and a player marker." width="1536" height="1024" loading="lazy"></div>
-      <figcaption><b>The Atlas, shaded by threat.</b> Mood only: the real bands follow distance, biomes and noise.</figcaption>
+      <div class="frame"><img src="concept/04-atlas-zones.jpg" alt="A holographic diorama map: the walled city at the centre of a patchwork of named regions tinted by danger. The Commons 1–8 around the city, Briar Downs 6–12, Rimewold 12–18, Sunglass Waste 22–28, Ashfen 30–36 glowing red, the Gloam Reach 48–55 in violet, and Willowmere 9–14 calm green. Lair skulls, a blight nest, wayfarer lanterns, a player marker, clouds over unexplored edges." width="1536" height="1024" loading="lazy"></div>
+      <figcaption><b>The Atlas, a patchwork.</b> Each region has a name and a level span, and danger is mixed in every direction. Mood only: in the real rule, the Commons' neighbours stay under 20.</figcaption>
     </figure>
+    <ul class="points prose">
+      <li><strong>Regions are 600–1,400 blocks across.</strong> Their borders lean toward rivers, ridges and biome edges. Each gets a seeded name from its land, like Rimewold, Ashfen, the Gloam Reach or Willowmere.</li>
+      <li><strong>The deeper in, the worse it gets.</strong> Each region spans about six levels from its border to its heart: Ashfen is 30 at the edge and 36 in the middle.</li>
+      <li><strong>The Commons is home:</strong> levels 1–8 round Carillon (world spawn in classic worlds), the first hour. Its neighbours never go above 20.</li>
+      <li><strong>The land tilts it.</strong> Harsh land (pale garden, badlands, high peaks, dark forest) often moves a region one band up; gentle land (plains, meadow, flower forest, cherry grove, mushroom fields) one band down. The deep dark adds 10 under anything.</li>
+      <li><strong>Every direction is fair.</strong> Bands are dealt from a seeded shuffle per 3×3 block of regions, so wherever you wander there's somewhere at your level within a region or two.</li>
+    </ul>
   </div>
+  <div class="odds" role="img" aria-label="Chance of each level band for a region, by its distance from the city. The Commons: always 1 to 8. Its neighbours: 40% 1 to 8, 60% 8 to 20. Under 2,000 blocks: 25, 45, 25, 5. From 2,000 to 5,000: 15, 30, 30, 20, 5. Beyond 5,000: 10, 20, 25, 25, 20.">
+    <div class="odds-head"><span class="eyebrow">The odds for a region, by distance from the city</span>
+      <span class="legend"><i class="r-e"></i>1–8 <i class="r-d"></i>8–20 <i class="r-c"></i>20–45 <i class="r-b"></i>45–80 <i class="r-a"></i>80+</span></div>
+    <div class="orow"><span class="olab">The Commons</span><div class="obar"><span class="r-e" style="flex-basis:100%">100%</span></div></div>
+    <div class="orow"><span class="olab">Its neighbours</span><div class="obar"><span class="r-e" style="flex-basis:40%">40</span><span class="r-d" style="flex-basis:60%">60</span></div></div>
+    <div class="orow"><span class="olab">Under 2,000</span><div class="obar"><span class="r-e" style="flex-basis:25%">25</span><span class="r-d" style="flex-basis:45%">45</span><span class="r-c" style="flex-basis:25%">25</span><span class="r-b" style="flex-basis:5%"></span></div></div>
+    <div class="orow"><span class="olab">2,000–5,000</span><div class="obar"><span class="r-e" style="flex-basis:15%">15</span><span class="r-d" style="flex-basis:30%">30</span><span class="r-c" style="flex-basis:30%">30</span><span class="r-b" style="flex-basis:20%">20</span><span class="r-a" style="flex-basis:5%"></span></div></div>
+    <div class="orow"><span class="olab">5,000 +</span><div class="obar"><span class="r-e" style="flex-basis:10%">10</span><span class="r-d" style="flex-basis:20%">20</span><span class="r-c" style="flex-basis:25%">25</span><span class="r-b" style="flex-basis:25%">25</span><span class="r-a" style="flex-basis:20%">20</span></div></div>
+  </div>
+  <ul class="points prose">
+    <li><strong>Roles on top:</strong> ambient −2, neutral 0, hunter +1, elite +2, a camp's heart and a beast at its lair +3. A Briar Sow lair in Briar Downs is a level-15 boss; the same kind in the Gloam Reach is level 58, "Terror of the Gloam Reach" on its plate.</li>
+    <li><strong>Crossing a border</strong> shows a place caption, "ASHFEN · Lv 30–36". Far above your level the caption turns ember and the band warns once: "Danger · creatures here are Lv 30+".</li>
+    <li><strong>Scaling stays SPEC's own</strong> (health 1 + 0.075 per level, damage 1 + 0.04), applied once at spawn: a zombie in Ashfen is a level-33 zombie.</li>
+    <li><strong>The Atlas shows a region</strong> once you've stood at its edge or heard of it from Mira or a Wayfarer; the rest stays under cloud. Until Carillon's Atlas ships, the Gate Map lists the regions you've entered.</li>
+  </ul>
 
   <h3>The XP economy</h3>
   <div class="tbl">
@@ -278,7 +276,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
         <tr><td>Crafts</td><td>—</td><td>Foraging, Mining, Fishing 0.012 each; Cooking, Smithing 0.007 each, per 10 min</td></tr>
         <tr><td>Wayfarer quests</td><td>—</td><td>0.06–0.2 of a level a step, a chain's finale about 0.8, once per claim; plus the relic</td></tr>
         <tr><td>Bounties</td><td>—</td><td>0.15–0.3 of a level and essence (coin once Carillon's economy ships)</td></tr>
-        <tr><td>Camps and nests</td><td>—</td><td>0.4 × floor 1 of the zone's rank, once per camp per cycle</td></tr>
+        <tr><td>Camps and nests</td><td>—</td><td>0.4 × floor 1 of the region's rank, once per camp per cycle</td></tr>
         <tr><td>Gate floors</td><td>SPEC §2 shares</td><td><b>× 0.76</b>; cores, hearts and gear unchanged</td></tr>
       </tbody>
     </table>
@@ -296,8 +294,8 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
     </table>
   </div>
   <p class="prose muted">Hunting, crafts, quests and camps count as "the wilds" here. 200 runs per player in the same model before and after, so the arrows are what changes; Phase B moves the model into
-  <code>tools/sim/pacing_sim.py</code> and retunes against its 95–105 h target. Through the mid-game an hour of focused hunting in your
-  zone pays about 0.55 levels (0.25 ten levels below it), an hour of mixed wilds play about 0.9, and three gate floors 0.65 at C to 2.0 at B.
+  <code>tools/sim/pacing_sim.py</code> and retunes against its 95–105 h target. Through the mid-game an hour of focused hunting in a
+  region at your level pays about 0.55 levels (0.25 ten levels below you), an hour of mixed wilds play about 0.9, and three gate floors 0.65 at C to 2.0 at B.
   The wilds can carry you; gates make you strong. First hour: level 3 at about 27 minutes, level 5 at about 54.</p>
 </section>
 
@@ -309,7 +307,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
       <figcaption><b>Wren's Rope.</b> You saw her flare from the ridge; the Horizon line named her only then.</figcaption>
     </figure>
     <ul class="points prose">
-      <li><strong>Found, never assigned.</strong> A Wayfarer scene is placed near you in the right zone, with a sign you can see from far off: a distress flare, a caravan's smoke, a lantern on a ledge. No "!" over heads, no waypoint spam.</li>
+      <li><strong>Found, never assigned.</strong> A Wayfarer scene is placed near you in a region of the right level, with a sign you can see from far off: a distress flare, a caravan's smoke, a lantern on a ledge. No "!" over heads, no waypoint spam.</li>
       <li><strong>Solved with what you can do:</strong> the rope, the Leaper, wings and flight, powers, the Veil, dreams, PER tracking, mounts, Runner moves. A step that needs a tier you lack says so and waits.</li>
       <li><strong>Rewards that change how you play:</strong> a relic per chain, recipes, titles, Power Core Shards, Atlas reveals, renown with Carillon's factions.</li>
       <li><strong>The Journal</strong> is a new K-menu tab with only the chains you took, as short journal pages. The tracked step takes the Horizon line.</li>
@@ -325,30 +323,30 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
     <table class="quests">
       <thead><tr><th>#</th><th>Chain</th><th>Who</th><th>Uses</th><th>What happens</th><th>Reward</th></tr></thead>
       <tbody>
-        <tr class="zone"><td colspan="6">COMMONS · 1–8</td></tr>
+        <tr class="zone"><td colspan="6">LEVEL 1–8 · THE COMMONS</td></tr>
         <tr><td>1</td><td>The Last Delivery</td><td>Kestrel, the Roost</td><td>Runner moves</td><td>The word you never brought back from the square, and one last bag through the High Gate to the Wayfarer camp. The Roost lets you go. Shared with Carillon's thread.</td><td><span class="relic">Courier's Knot</span>: tactical sprint recharges 25% faster</td></tr>
         <tr><td>2</td><td>Ten Sheep Short</td><td>Hettie, shepherd</td><td>PER tracking, light</td><td>A sheep a night goes missing. Read the tracks to a Gloomstalker den, take it by day while they sleep, bring the old ram home.</td><td><span class="relic">Shepherd's Lantern</span>: night hunters keep 8 blocks away</td></tr>
         <tr><td>3</td><td>Moth Lights</td><td>Ilse, herbalist</td><td>Foraging, night travel</td><td>Follow Lumen Moths to where they circle buried ore, and gather what grows there.</td><td>Lumen Tonic recipe: night sight without the vignette</td></tr>
         <tr><td>4</td><td>Oren's First Steel</td><td>Oren, the smith</td><td>Mining, Smithing</td><td>Ore from three places and a temper at his forge. He complains the whole way.</td><td><span class="relic">Oren's Mark</span>: your next blade starts one temper up</td></tr>
-        <tr class="zone"><td colspan="6">MARCHES · 8–20</td></tr>
+        <tr class="zone"><td colspan="6">LEVEL 8–20</td></tr>
         <tr><td>5</td><td>Wren's Rope</td><td>Wren, a young Runner</td><td>The rope</td><td>Stranded on a cliff ledge after something cut her line. She was carrying a crate of bell bronze, now gone.</td><td><span class="relic">Wren's Hook</span>: your rope reaches 6 further</td></tr>
         <tr><td>6</td><td>The Caravan Road</td><td>Merchants' Guild</td><td>Powers, mounts</td><td>A caravan under attack at dusk; hold the wagons, then see it through the night to the oasis outpost.</td><td><span class="relic">Caravan Writ</span>: Guild shops 15% cheaper; a Power Core Shard</td></tr>
         <tr><td>7</td><td>The Hermit's Horn</td><td>Gus, hermit of the Crags</td><td>Climbing, a beast fight</td><td>He wants a Stonehorn shard from the lair up the cliffs. The horn he makes from it calls herds.</td><td><span class="relic">Herdcaller Horn</span>: once a day, a herd stampedes along your aim</td></tr>
         <tr><td>8</td><td>Pell's Message</td><td>Pell, a wounded Runner</td><td>The run, mounts</td><td>Legs broken, with word of a gate forming where none should. Bring Sun's salve from the city before dark, then carry his message.</td><td><span class="relic">Pell's Spurs</span>: mount sprint +15%, whistle +80 blocks</td></tr>
         <tr><td>9</td><td>The Drowned Bell</td><td>Ama Voss, Teodor's old student</td><td>Swimming, Scanner, the Veil</td><td>A Precursor bell under a lake: the Choir had outposts. Dive, scan, and find its resting place with spirit sight.</td><td><span class="relic">Voss's Lens</span>: Scanner range ×2, hears sunken ruins</td></tr>
-        <tr class="zone"><td colspan="6">DEEPWILDS · 20–45</td></tr>
+        <tr class="zone"><td colspan="6">LEVEL 20–45</td></tr>
         <tr><td>10</td><td>Bell Metal</td><td>The Association</td><td>The Veil, stealth</td><td>Wren's bronze is being melted by the Unbound, rogue Awakened who farm gate breaks and hate the bells. Scout in the Veil, then break the camp. Carillon's C-rank thread.</td><td>Title Bellward; Bellbronze blade recipe</td></tr>
         <tr><td>11</td><td>The Weaver's Bargain</td><td>A tailor, and a spirit</td><td>The Veil, dreams</td><td>The tailor wants the Weaver Queen's silk; a spirit says she guards a Sleeper's dream-cocoon. Kill her, or bargain.</td><td>Choose: <span class="relic">Silk Mantle</span> (glide drag −20%) or <span class="relic">Dreamthread</span></td></tr>
         <tr><td>12</td><td>Stilts of the Mire</td><td>A stilt village</td><td>Wings and glide</td><td>The Mire Mother woke and the bog rose. Glide the children off the toppled huts, then calm her or fight her.</td><td><span class="relic">Mire Charm</span>: no bog poison, no mud slowdown</td></tr>
         <tr><td>13</td><td>The Keeper's Lantern</td><td>A Keeper's spirit</td><td>The Veil, cord puzzles</td><td>One of those who went Down asks you to carry a lantern of its memory to the Well. It exists only in spirit.</td><td>Title Lanternbearer; Veil time +20%</td></tr>
         <tr><td>14</td><td>The Crossing</td><td>Herders</td><td>Mounts, Hunting</td><td>The great migration fords the river, the packs wait, and the Old Antler walks with the herd.</td><td><span class="relic">Antler Crown</span>: herds and your mount never flee you</td></tr>
-        <tr><td>15</td><td>Sun's Bitter Cure</td><td>Sun, the healer</td><td>Foraging, Cooking</td><td>Wayfarers near a nest are blight-sick: three herbs from three zones and a meal only a cook can make.</td><td>Sun's Cure recipe; Healer renown</td></tr>
-        <tr class="zone"><td colspan="6">FAR REACHES · 45+</td></tr>
+        <tr><td>15</td><td>Sun's Bitter Cure</td><td>Sun, the healer</td><td>Foraging, Cooking</td><td>Wayfarers near a nest are blight-sick: three herbs from three regions and a meal only a cook can make.</td><td>Sun's Cure recipe; Healer renown</td></tr>
+        <tr class="zone"><td colspan="6">LEVEL 45 +</td></tr>
         <tr><td>16</td><td>The Relay Spires</td><td>Ama Voss</td><td>Tether, Wings, flight</td><td>Ascendant relays on five Tether Spires and a sky platform. Align them and the Halo answers once.</td><td><span class="relic">Relay Key</span>: travel between spires you've climbed</td></tr>
         <tr><td>17</td><td>Mother of Nests</td><td>The far camps</td><td>Everything you have</td><td>A nest from an ancient break, grown to tier 5. Three stages with Wayfarer allies.</td><td>Ashsteel recipe; title Blightbreaker</td></tr>
         <tr><td>18</td><td>The Sleeping Village</td><td>Nobody awake</td><td>Dreams, manifest</td><td>Everyone sleeps here, the Sleepers' dream leaking out. Wake them one by one from inside their dreams.</td><td><span class="relic">Sleeper's Bell</span>: ends a nightmare at once</td></tr>
         <tr><td>19</td><td>Mira's Last Map</td><td>Mira, the scout</td><td>Exploration, flight</td><td>Light the beacons of five far landmarks for the map she can't finish herself.</td><td><span class="relic">Mira's Compass</span>: names one unheard ruin a day</td></tr>
-        <tr><td>20</td><td>The Courier Who Never Came Back</td><td>Kestrel</td><td>Movement mastery</td><td>Her old partner vanished out here twenty years ago. His Runner marks still lead across the Reaches, to what's left of him and the letter he carried. To her.</td><td><span class="relic">Last Mark</span>: Flow drains 30% slower</td></tr>
+        <tr><td>20</td><td>The Courier Who Never Came Back</td><td>Kestrel</td><td>Movement mastery</td><td>Her old partner vanished out there twenty years ago. His Runner marks still lead across the far regions, to what's left of him and the letter he carried. To her.</td><td><span class="relic">Last Mark</span>: Flow drains 30% slower</td></tr>
       </tbody>
     </table>
   </div>
@@ -366,7 +364,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
       <li><strong>Packs have dens.</strong> By day they sleep there; at night they stalk the herds and you find what they left. Kill a pack and the valley's herd grows.</li>
       <li><strong>Flyers roost on cliffs</strong> and leave at dawn or dusk.</li>
       <li><strong>Hostiles come from places:</strong> blight nests left by broken gates, riftborn camps, hollow dens at cave mouths, ruins whose machines wake. Clear one and it stays clear for days; an ignored nest grows a tier every two play-days and at tier 4 raids, warned a play-day ahead.</li>
-      <li><strong>Vanilla's night stays dangerous</strong>: zombies and skeletons still rise in the dark, at the zone's level.</li>
+      <li><strong>Vanilla's night stays dangerous</strong>: zombies and skeletons still rise in the dark, at the region's level.</li>
     </ul>
     <figure>
       <div class="frame"><img src="concept/06-blight-nest.jpg" alt="Night: a blight nest around a cracked crater of blackstone with a dying red-violet ring, black crystal spires, bone tents and a skull totem, grey dead land against green forest; a hunter crouches behind a mossy boulder, a cyan line from the wrist to a plate reading BLIGHT NEST · Lv 22, GROWING · raids in 2 days." width="1536" height="1024" loading="lazy"></div>
@@ -413,7 +411,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
     <li><div><b>The Commons.</b> Creatures at level 1–3 near the wall: Mossbacks and stags by day, Gloomstalkers at dusk, and a Briar Sow lair at the edge as the Commons' boss.</div></li>
     <li><div><b>The Wayfarer camp</b> about 300 blocks up the road: Ilse and her Moth Lights, Hettie's farmstead and her missing sheep. <div class="t">level 3 at ~27 min</div></div></li>
     <li><div><b>The first gate.</b> The Director opens it at level 4 or after 45 minutes outside, at the Commons' outer edge. <div class="t">level 4–5 by ~40–55 min</div></div></li>
-    <li><div><b>Tips through Carillon's TipHooks</b>, never a second tips system: the first plate, the first zone caption, the first bounty, the first Wayfarer sign, the first craft level.</div></li>
+    <li><div><b>Tips through Carillon's TipHooks</b>, never a second tips system: the first plate, the first region caption, the first bounty, the first Wayfarer sign, the first craft level.</div></li>
   </ol>
 </section>
 
@@ -421,28 +419,28 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   <div class="head"><span class="eyebrow">The line we don't cross</span><h2>Survival stays the core</h2></div>
   <ul class="points prose">
     <li>Hunger, building, crafting and dangerous nights are unchanged. Vanilla animals farm as ever.</li>
-    <li>Zones change how strong things are, not what lives where.</li>
+    <li>Regions change how strong things are, not what lives where.</li>
     <li>Quests are found in the world. Nothing is listed before you find it, and the Journal only keeps what you chose to take.</li>
-    <li><strong>Pure survival</strong> (a world option) turns off plates, numbers, the XP stream, quests and bounties. Zones and crafts stay.</li>
+    <li><strong>Pure survival</strong> (a world option) turns off plates, numbers, the XP stream, quests and bounties. Regions and crafts stay.</li>
   </ul>
 </section>
 
 <section id="build">
   <div class="head"><span class="eyebrow">For the builders</span><h2>Ownership, APIs and what changes</h2></div>
-  <p class="prose">A new module, <code>living</code> (package <code>dev.awaken.living</code>): zone, combat (+client), wayfarer, quest, bounty, event, population,
-  camp, craft. Commands under <code>/awaken living</code>, payloads <code>living:*</code>. New public API in SPEC §12: <code>Zones</code>
-  (levelAt, zoneAt, creatureLevel, bandOf), <code>Quests</code> (active, tracked, advance for abilities other modules report), <code>Crafts</code>
+  <p class="prose">A new module, <code>living</code> (package <code>dev.awaken.living</code>): region, combat (+client), wayfarer, quest, bounty, event, population,
+  camp, craft. Commands under <code>/awaken living</code>, payloads <code>living:*</code>. New public API in SPEC §12: <code>Regions</code>
+  (levelAt, regionAt, creatureLevel, bandOf), <code>Quests</code> (active, tracked, advance for abilities other modules report), <code>Crafts</code>
   (grant, level, has), and <code>core.api.LivingHooks</code>.</p>
   <div class="tbl">
     <table>
       <thead><tr><th>Module</th><th>Change</th><th>Agreed with</th></tr></thead>
       <tbody>
         <tr><td>progression</td><td>Kill XP by creature level and role, the new budget table, XP sources HUNT/CRAFT/QUEST, the gate trim, the first gate at level 4</td><td>Orchestrator</td></tr>
-        <tr><td>world (fauna), mobs</td><td>Content level from Zones, elite variants, herd species leave natural spawns, beasts re-level at their lairs</td><td>Orchestrator</td></tr>
+        <tr><td>world (fauna), mobs</td><td>Content level from Regions, elite variants, herd species leave natural spawns, beasts re-level at their lairs</td><td>Orchestrator</td></tr>
         <tr><td>holo</td><td>A small public world-space glass API for plates; Journal and Crafts tabs through a tab hook</td><td>Pack session</td></tr>
         <tr><td>compat (Jade)</td><td>Hide creature lines while plates show them</td><td>Orchestrator</td></tr>
         <tr><td>wilds</td><td>Nothing inside it; the tracked quest is a Horizon source</td><td>Ascent session</td></tr>
-        <tr><td>Carillon</td><td>The gatehouse yard and Hale, Bram's line, bounties on the contracts board, the Atlas zone layer, coin and renown through their hooks, TipHooks</td><td>Carillon session</td></tr>
+        <tr><td>Carillon</td><td>The gatehouse yard and Hale, Bram's line, bounties on the contracts board, the Atlas region layer, coin and renown through their hooks, TipHooks</td><td>Carillon session</td></tr>
         <tr><td>anomalies</td><td>Wayfarer scenes share the outdoor rhythm; never both at once</td><td>Orchestrator</td></tr>
       </tbody>
     </table>
@@ -455,7 +453,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
         <table>
           <thead><tr><th>Phase</th><th>GameTest</th></tr></thead>
           <tbody>
-            <tr><td>B</td><td><code>living_zone_map</code> · <code>living_kill_xp</code> · <code>living_plate_rules</code></td></tr>
+            <tr><td>B</td><td><code>living_region_map</code> · <code>living_kill_xp</code> · <code>living_plate_rules</code></td></tr>
             <tr><td>C</td><td><code>living_quest_engine</code> · <code>living_bounty_board</code> · <code>living_scene_finder</code></td></tr>
             <tr><td>D</td><td><code>living_population_ledger</code> · <code>living_camp_lifecycle</code></td></tr>
             <tr><td>E</td><td><code>living_craft_xp</code></td></tr>
@@ -469,17 +467,17 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
       <h3>Risks and performance</h3>
       <ul class="points">
         <li><strong>Frame:</strong> plates, glyphs, motes and pillars within 0.3 ms a frame, gate fights included.</li>
-        <li><strong>Server:</strong> zone lookups are free; one sync per spawn; two tiny event payloads; the ledger under 0.3 ms a tick.</li>
-        <li><strong>Travel:</strong> the Far Reaches start 4,000 out; mounts, the rope, wings, flight and the Relay Key answer it.</li>
+        <li><strong>Server:</strong> region lookups are free; one sync per spawn; two tiny event payloads; the ledger under 0.3 ms a tick.</li>
+        <li><strong>A hard region next door:</strong> an ember caption, the band's warning, skulls on plates and the Atlas all say so first. It's a place to come back to, not a trap.</li>
         <li><strong>MMO creep:</strong> found scenes, no markers, a short Journal, Pure survival.</li>
-        <li><strong>Old worlds:</strong> zones apply to new spawns; beasts re-level when their lair wakes them.</li>
+        <li><strong>Old worlds:</strong> regions apply to new spawns; beasts re-level when their lair wakes them.</li>
       </ul>
     </div>
   </div>
 
   <h3>Order</h3>
-  <p class="prose">One builder at a time. <strong>B</strong> the combat layer, zones and XP → <strong>C</strong> Wayfarers, quests and bounties (the eight Commons and Marches
-  chains, then the twelve) → <strong>D</strong> living creatures and camps → <strong>E</strong> crafts. Opus at extra-high effort for the look and the quest
+  <p class="prose">One builder at a time. <strong>B</strong> the combat layer, regions and XP → <strong>C</strong> Wayfarers, quests and bounties (the eight chains for levels 1–20,
+  then the twelve) → <strong>D</strong> living creatures and camps → <strong>E</strong> crafts. Opus at extra-high effort for the look and the quest
   writing; Sonnet for data, spawn tables, tests and docs. Each phase goes to the orchestrator with its CI run.</p>
 </section>
 
