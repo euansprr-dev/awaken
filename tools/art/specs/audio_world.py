@@ -135,20 +135,38 @@ def halo_deep(seed):
 
 
 def dream_shimmer(seed):
+    """Pure tones only (no noise, no buzzy waves): D, A, E and F# as soft sines, each with a twin a hair apart so they
+    beat slowly, a little octave above, breathing in and out (left and right drift apart)."""
     L = 40.0  # 37 s
     n = K.ns(L)
-    chord = sum(K.pad(_hz(m), n, voices=5, seed=seed + i, bright=0.2) for i, m in enumerate(("D3", "A3", "E4", "F#4")))
-    swell = _swells(n, seed + 9, 0.05, 0.5, 1.2)
-    st = K.chorus(_norm(chord) * swell, depth_ms=9.0, rate=0.11, voices=2, seed=seed + 10, mix=0.6)
-    return _loop(K.lowpass(st, 5000, 2), 3.0)
-
+    t = K.tvec(n)
+    r = K.rng(seed)
+    chans = []
+    for c in range(2):
+        x = np.zeros(n)
+        for i, (m, a) in enumerate((("D3", 1.0), ("A3", 0.8), ("E4", 0.55), ("F#4", 0.45), ("A4", 0.25), ("D5", 0.15))):
+            f = _hz(m)
+            beat = (1 + c) * (0.11 + 0.05 * i) / f  # a few cents, different each side
+            breathe = 0.6 + 0.4 * (0.5 + 0.5 * np.sin(2 * np.pi * t / L * (1 + i % 3) + r.uniform(0, 6.28)))
+            x += a * breathe * (np.sin(2 * np.pi * f * t) + 0.7 * np.sin(2 * np.pi * f * (1 + beat * 37) * t + 1.1))
+        chans.append(_norm(x))
+    return _loop(K.lowpass(np.stack(chans, axis=1), 3000, 2), 3.0)
 
 def dream_air(seed):
+    """Slow bell-like tones in D major pentatonic swelling up and fading (long soft attacks, no strike, no noise):
+    the dream drifting. Placed on whole cycles so the loop joins."""
     L = 57.0  # 53 s
     n = K.ns(L)
-    air = _norm(K.bandpass(K.noise(n, "pink", seed + 1), 1700, 0.7)) * _swells(n, seed + 2, 0.06, 0.3, 1.8)
-    return _loop(air, 4.0)
-
+    t = K.tvec(n)
+    r = K.rng(seed)
+    out = np.zeros(n)
+    for k in range(9):
+        f = _hz(PENTA[int(r.integers(len(PENTA)))] + str(int(r.integers(4, 6))))
+        c = r.uniform(4.0, L - 8.0)
+        w = r.uniform(2.5, 4.5)
+        env = np.exp(-0.5 * ((t - c) / w) ** 2)
+        out += env * (np.sin(2 * np.pi * f * t) + 0.25 * np.sin(2 * np.pi * 2 * f * t + 0.6)) * r.uniform(0.4, 1.0)
+    return _loop(K.lowpass(_norm(out), 4000, 2), 4.0)
 
 def veil_choir(seed):
     L = 45.0  # 41 s
@@ -241,10 +259,13 @@ def halo_chirp(seed):
 
 
 def dream_swell(seed):
-    g = _glass_notes(seed, 5, 2, 2.2, 0.3, gap=(0.02, 0.06))
-    ir = K.reverb_ir(t60=3.0, predelay=0.02, bright=0.4, seed=seed)
-    return _norm(K.mono(K.reverse_swell(g, ir)))[: K.ns(3.5)]
-
+    """Two glass notes played backwards (their decay becomes a swell that stops on the strike), with a little of the
+    note heard forwards after it: no reverb tail, so no noise in a dream."""
+    g = _glass_notes(seed, 5, 2, 2.2, 0.3, gap=(0.02, 0.06))[: K.ns(3.2)]
+    g = g * np.exp(-np.arange(len(g)) / K.ns(1.4))
+    rev = g[::-1]
+    tail = 0.25 * g[: K.ns(0.6)] * np.linspace(1, 0, K.ns(0.6))
+    return _norm(np.concatenate([rev, tail]))
 
 def elder_creak(seed):
     r = K.rng(seed)
@@ -263,16 +284,31 @@ def elder_glint(seed):
 
 
 def tell_rumble(seed):
+    """Ten animals galloping: each a three-beat gallop (two quick hooves and a heavier one) at its own pace and phase,
+    hooves a low thud with a little dirt on it, so together they roll into one steady thunder; a ground rumble under
+    it. Distant: no click survives the low-pass."""
     L = 11.0  # 10 s
     n = K.ns(L)
     r = K.rng(seed)
     hooves = np.zeros(n)
-    for h in np.nonzero(r.random(n) < 14.0 / K.SR)[0]:
-        m = min(K.ns(0.08), n - h)
-        hooves[h:h + m] += r.standard_normal(m) * np.exp(-np.arange(m) / (m * 0.2)) * r.uniform(0.3, 1.0)
-    x = 0.6 * _norm(K.lowpass(hooves, 180, 2)) + 0.4 * _norm(K.lowpass(K.noise(n, "brown", seed + 1), 90, 2))
-    return _loop(x, 1.0)
-
+    m = K.ns(0.09)
+    tt = np.arange(m) / K.SR
+    for animal in range(10):
+        stride = r.uniform(0.36, 0.44)  # seconds per stride
+        t0 = r.uniform(0, stride)
+        heavy = r.uniform(0.7, 1.0)
+        while t0 < L:
+            for off, g in ((0.0, 0.55), (0.07, 0.6), (0.16, 1.0)):
+                h = K.ns(t0 + off + r.normal(0, 0.006))
+                if 0 <= h < n - m:
+                    f = r.uniform(55, 85)
+                    thud = np.sin(2 * np.pi * f * tt * (1 - 0.6 * tt / tt[-1])) * np.exp(-tt / 0.025)
+                    dirt = r.standard_normal(m) * np.exp(-tt / 0.012) * 0.25
+                    hooves[h:h + m] += (thud + dirt) * g * heavy
+            t0 += stride * r.uniform(0.97, 1.03)
+    hooves = K.lowpass(hooves, 450, 2)
+    rumble = _norm(K.lowpass(K.noise(n, "brown", seed + 1), 70, 2)) * 0.6
+    return _loop(0.75 * _norm(hooves) + 0.25 * rumble, 1.0)
 
 def tell_wings(seed):
     L = 11.0  # 10 s
@@ -302,19 +338,34 @@ def tell_tide(seed):
 
 
 def tell_bells(seed):
+    """Pack-animal bells on a caravan: three bells of different sizes (hammered metal: clashing, inharmonic overtones,
+    not one clean note), each swinging with its animal's walk so its clapper strikes twice a stride, unevenly, plus a
+    soft rattle of the clapper against the rim between strikes."""
     L = 10.0  # 9 s
     n = K.ns(L)
     r = K.rng(seed)
     out = np.zeros(n)
-    t0 = 0.1
-    while t0 < L - 1.2:
-        f = _hz(("A5", "B5", "D6")[int(r.integers(3))]) * 2 ** (r.normal(0, 10) / 1200)
-        g = K.bell(f, K.ns(1.0), t60=0.6, bright=0.5, seed=seed + int(t0 * 100))
-        s = K.ns(t0)
-        out[s:s + len(g)] += g[: n - s] * r.uniform(0.3, 0.8)
-        t0 += r.uniform(0.25, 0.6)  # a walking pace
-    return _loop(K.lowpass(_norm(out), 7000, 2), 1.0)
-
+    ratios = (1.0, 1.59, 2.14, 2.83, 3.51, 4.62)
+    for b, (f0, size) in enumerate(((620.0, 1.0), (860.0, 0.8), (1180.0, 0.6))):
+        stride = r.uniform(0.85, 1.05)  # a walking pace
+        t0 = r.uniform(0, stride)
+        while t0 < L - 0.2:
+            for half in (0.0, 0.5):
+                at = t0 + stride * half + r.normal(0, 0.03)
+                h = K.ns(at)
+                if not 0 <= h < n:
+                    continue
+                m = min(K.ns(1.2), n - h)
+                f = f0 * 2 ** (r.normal(0, 8) / 1200)
+                amps = np.array([1.0, 0.7, 0.55, 0.4, 0.3, 0.2]) * r.uniform(0.6, 1.0, 6)
+                t60s = [0.9 * size, 0.6 * size, 0.5 * size, 0.35 * size, 0.25 * size, 0.18 * size]
+                ring = K.modal(f, ratios, amps, t60s, m, attack=0.001, seed=seed + b * 1000 + h % 997, detune_cents=7, pair=0.5)
+                clank = K.bandnoise(min(m, K.ns(0.02)), 2600, 1.5, seed + h % 991) * K.perc(min(m, K.ns(0.02)), 0.0005, 0.012)
+                ring[:len(clank)] += 0.3 * clank
+                out[h:h + m] += ring * r.uniform(0.5, 1.0) * size
+            t0 += stride * r.uniform(0.95, 1.05)
+    rattle = K.crackle(n, rate=9.0, seed=seed + 5, bright=0.5, burstiness=0.5) * 0.05
+    return _loop(K.lowpass(_norm(out) + rattle, 7000, 2), 1.0)
 
 def _variants(name, fn, count, seed, rms=-27.0):
     return [Snd_(f"{name}_{k + 1}", (lambda f: (lambda s: f(s)))(fn), rms=rms, seed=seed + k, mono=True) for k in range(count)]
