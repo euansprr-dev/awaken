@@ -162,3 +162,53 @@ Euan: remove Distant Horizons for now; our own far-terrain renderer comes later.
 installs the horizon profile (`--horizon` brings it back), and the next install takes out the DH jar an earlier one
 put there (checked on a scratch folder). That removes cause 3's DH half and the DH part of cause 1. Fix A is no longer
 needed; render distance now carries all the distance on its own.
+
+## Built and measured, 25 Oct evening
+
+Built on pack/city-perf: render scale 0.75 on 4K by default (`renderScale4k`), the pregen's timed `city_hold` ticket
+through join, the Lens heightfield's changed-chunk uploads, and (from the tour below) generational ZGC for the play
+client. The lantern fix went to the Carillon session.
+
+Tour `tools/autopilot/city-perf.txt` on the MacBook (2880×1800, 5.2 MP), Vulkan, the pack without DH (perf, feel,
+sound, world), RD 24, a new world, JFR on the client. Three runs:
+- Run 1 is void: it came up on OpenGL, and the comfort profile's Dynamic FPS held the background window at 60 fps.
+  The first tour in a freshly installed folder falls back to OpenGL; later ones get Vulkan. The same happened to B3a's
+  pack tour today. On OpenGL, Lens Cinematic and Ultra also throw `ArrayIndexOutOfBoundsException` in Sodium's
+  `GlStateManager._bindTexture` (a texture unit past 12). Euan plays on Vulkan, so neither touches him, but tours
+  should drop comfort and check the backend line.
+- Run 2: G1, 4 GB.
+- Run 3: ZGC, 8 GB.
+
+| scene | G1 p50 / p99 / max | ZGC p50 / p99 / max | GPU world pass (G1 run) |
+|---|---|---|---|
+| join, first 45 s | 8.30 / 21.3 / **513** ms | 8.27 / 15.9 / 81 ms | |
+| square, Swift | 8.32 / 14.8 / 79 | 8.27 / 13.5 / 37 | 5.43 ms |
+| square, Cinematic 1.0 | 10.54 / 14.6 / 91 | 10.41 / 13.3 / 38 | 10.00 ms |
+| square, Cinematic 0.75 | 8.30 / 12.6 / 105 | 8.24 / 11.7 / 26 | 7.45 + 0.27 upscale |
+| square, Ultra 1.0 | 14.88 / 20.3 / 95 | 13.73 / 15.8 / 19 | 14.37 ms |
+| square, Ultra 0.75 | 12.47 / 17.2 / 61 | 11.36 / 13.5 / 17 | 11.57 + 0.28 upscale |
+| walk east, 12 chunk crossings | 10.98 / 33.6 / 125 | 10.91 / 21.4 / 33 | |
+| night, the Watch | 10.70 / 14.8 / 91 | 10.81 / 14.5 / 82 | |
+
+- **GC was the hitch.** With G1 the pauses were 5.94 s in total over the tour: median 10 ms, p95 80 ms, p99 141 ms,
+  young pauses of 96–180 ms while standing in the square, and a 417 ms full GC at join (the 513 ms frame). With ZGC
+  they were 2 ms in total, the longest 0.7 ms. Every frame max dropped, and Ultra's p50 got faster. Applied:
+  `runClient` (`play.sh`) uses `-XX:+UseZGC`; `-Pg1` goes back.
+- **The 4K maths.** At 5.2 MP, 0.75 saves 2.3 ms of GPU world on Cinematic and 2.5 ms on Ultra, after its 0.27 ms
+  upscale. That makes the part that scales with pixels about 5.8 ms (Cinematic) and 6.4 ms (Ultra); the rest is
+  fixed. The Dell has 1.6× the pixels:
+  - Ultra native: about 8.0 + 10.2 = 18 ms of GPU, **55 fps**, which is what Euan saw.
+  - Ultra at 0.75: about 14 ms, ~71 fps.
+  - Cinematic native: about 13.5 ms, ~74 fps.
+  - Cinematic at 0.75: about 10 ms, ~100 fps.
+  These are extrapolated from one display; the Dell itself is unmeasured.
+- **Allocation by thread** (JFR, G1 run):
+  - Standing in the city: 62–86 MB/s in total. The render thread is 26–37 MB/s, mostly Sodium and vanilla.
+  - Our own direct allocation in the city is about 1–3 MB/s, mostly citizens' render states.
+  - Join, first 45 s: 380 MB/s, of which 208 MB/s is worldgen workers. The walk (new chunks each second): 507 MB/s.
+  - The pregen: 800 MB/s for 16 s.
+  - So the garbage is new chunks being generated, which Distant Horizons multiplied. `CityBasinFunction` shows
+    under "ours" in a naive count only because it wraps vanilla's density functions; it allocates nothing itself.
+- The heightfield change and the city hold have no before/after in this tour (Lens's uploads don't show in
+  allocation, and the hold acts before the first frame). Both are covered by code review, and `city_pregen_drives_chunks`
+  checks the hold.
