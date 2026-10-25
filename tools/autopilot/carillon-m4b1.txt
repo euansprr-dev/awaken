@@ -1,0 +1,122 @@
+# Carillon M4 step B1 (docs/carillon/briefs/M4-B1-facades.md): the facade grammar and the core kit, one light tour
+# (shots only, no perf). The same world, settings and cameras as M1's tour (carillon-m1.txt), so every shot pairs with
+# its m1_* / studio_* "before"; then one facade close-up per district (facade_*), and the sky again at dusk.
+# Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=M4-B1 \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m4b1.txt 900
+world carillonM4b1 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 23700
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken city info
+hud off
+look -45 12
+wait 60
+shot b1_spawn_roost
+cmd gamemode spectator
+# the sky at dawn: let Distant Horizons read the pregenerated city first
+cmd awaken city view sky_nw
+wait 900
+shot b1_sky_nw
+cmd awaken city view sky_nw_low
+wait 160
+shot b1_sky_nw_low
+cmd awaken city view sky_n
+wait 200
+shot b1_sky_n
+cmd awaken city view sky_w
+wait 200
+shot b1_sky_w
+cmd awaken city view sky_top
+wait 300
+shot b1_sky_top
+# morning light for the streets
+cmd time set 1500
+cmd awaken city view roost_start
+wait 160
+shot b1_roost_start
+cmd awaken city view square
+wait 120
+shot b1_square
+cmd awaken city view market
+wait 100
+shot b1_market
+cmd awaken city view bellwatch
+wait 120
+shot b1_bellwatch
+cmd awaken city view quay
+wait 120
+shot b1_quay
+cmd awaken city view terrace
+wait 120
+shot b1_terrace
+cmd awaken city view works
+wait 120
+shot b1_works
+cmd awaken city view garden
+wait 120
+shot b1_garden
+cmd awaken city view wallring
+wait 120
+shot b1_wallring
+# the facades, one per district, from across the street (new at B1; later steps keep these framings)
+cmd awaken city view facade_bellwatch
+wait 120
+shot b1_facade_bellwatch
+cmd awaken city view facade_quay
+wait 120
+shot b1_facade_quay
+cmd awaken city view facade_market
+wait 120
+shot b1_facade_market
+cmd awaken city view facade_terrace
+wait 120
+shot b1_facade_terrace
+cmd awaken city view facade_garden
+wait 120
+shot b1_facade_garden
+cmd awaken city view facade_works
+wait 120
+shot b1_facade_works
+cmd awaken city view facade_wallring
+wait 120
+shot b1_facade_wallring
+# the studio framings M1 recorded (the roofs and the fabric round each landmark)
+cmd awaken city view studio_spire
+wait 120
+shot b1_studio_spire
+cmd awaken city view studio_association
+wait 120
+shot b1_studio_association
+cmd awaken city view studio_roost
+wait 120
+shot b1_studio_roost
+cmd awaken city view studio_cranes
+wait 120
+shot b1_studio_cranes
+cmd awaken city view studio_bellwatch_tower
+wait 120
+shot b1_studio_bellwatch_tower
+cmd awaken city view studio_garden_tower
+wait 120
+shot b1_studio_garden_tower
+cmd awaken city view studio_terrace_tower
+wait 120
+shot b1_studio_terrace_tower
+# dusk over the old town, the same sky view (the roofscape against a low sun)
+cmd time set 12600
+cmd awaken city view sky_nw_low
+wait 160
+shot b1_sky_dusk
+quit

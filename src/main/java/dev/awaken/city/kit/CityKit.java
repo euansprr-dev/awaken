@@ -43,7 +43,7 @@ public final class CityKit {
 
     // facades
     public static final DeferredBlock<KitBlocks.FlowerBox> FLOWER_BOX = BLOCKS.registerBlock("flower_box", KitBlocks.FlowerBox::new,
-            p -> p.mapColor(MapColor.WOOD).strength(1.0f).sound(SoundType.WOOD).noOcclusion().noLootTable().pushReaction(PushReaction.BLOCK));
+            p -> p.mapColor(MapColor.WOOD).strength(1.0f).sound(SoundType.WOOD).noOcclusion().noLootTable().pushReaction(PushReaction.POPPED));
     public static final DeferredBlock<KitBlocks.Shutter> SHUTTER = BLOCKS.registerBlock("shutter", KitBlocks.Shutter::new,
             p -> p.mapColor(MapColor.WOOD).strength(1.0f).sound(SoundType.WOOD).noOcclusion().noCollision().noLootTable());
     public static final DeferredBlock<KitBlocks.Drainpipe> DRAINPIPE = BLOCKS.registerBlock("drainpipe", KitBlocks.Drainpipe::new,
@@ -60,6 +60,14 @@ public final class CityKit {
             p -> p.mapColor(MapColor.WOOD).strength(0.4f).sound(SoundType.WOOL).noOcclusion().noCollision().noLootTable());
     public static final DeferredBlock<KitBlocks.ChimneyBricks> CHIMNEY_BRICKS = BLOCKS.registerBlock("chimney_bricks", KitBlocks.ChimneyBricks::new,
             stone(MapColor.TERRACOTTA_RED, SoundType.STONE));
+
+    // walls (decision 27: weighted texture variants, so walls never tile)
+    public static final DeferredBlock<KitBlocks.Plaster> PLASTER = BLOCKS.registerBlock("plaster", KitBlocks.Plaster::new,
+            p -> p.mapColor(MapColor.TERRACOTTA_WHITE).strength(1.5f, 6.0f).sound(SoundType.CALCITE).noLootTable());
+    public static final DeferredBlock<KitBlocks.Timber> TIMBER = BLOCKS.registerBlock("timber", KitBlocks.Timber::new,
+            p -> p.mapColor(MapColor.COLOR_BROWN).strength(2.0f).sound(SoundType.WOOD).noLootTable());
+    public static final DeferredBlock<Block> CITY_BRICKS = BLOCKS.registerSimpleBlock("city_bricks", stone(MapColor.COLOR_RED, SoundType.STONE));
+    public static final DeferredBlock<Block> ASHLAR = BLOCKS.registerSimpleBlock("ashlar", stone(MapColor.STONE, SoundType.STONE));
 
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);

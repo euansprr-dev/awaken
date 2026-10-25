@@ -6,6 +6,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -281,6 +282,44 @@ public final class KitBlocks {
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
             b.add(MATERIAL);
+        }
+    }
+
+    /**
+     * Lime-washed plaster, the infill of the timber frames and the Market's pastel fronts. Its blockstate picks one of
+     * several weighted textures per block (SPEC §16.0 decision 27), so a long wall never repeats.
+     */
+    public static final class Plaster extends Block {
+        public enum Colour implements Named { WHITE, CREAM, OCHRE, ROSE, CLAY, MAUVE, OXBLOOD, SAGE }
+
+        public static final EnumProperty<Colour> COLOUR = EnumProperty.create("colour", Colour.class);
+
+        public Plaster(BlockBehaviour.Properties p) {
+            super(p);
+            registerDefaultState(stateDefinition.any().setValue(COLOUR, Colour.WHITE));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(COLOUR);
+        }
+    }
+
+    /** Hewn timber for the frames (posts, beams, beam ends): dark oak or a paler spruce, weighted variants per block. */
+    public static final class Timber extends RotatedPillarBlock {
+        public enum Tone implements Named { DARK, PALE }
+
+        public static final EnumProperty<Tone> TONE = EnumProperty.create("tone", Tone.class);
+
+        public Timber(BlockBehaviour.Properties p) {
+            super(p);
+            registerDefaultState(stateDefinition.any().setValue(AXIS, Direction.Axis.Y).setValue(TONE, Tone.DARK));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            super.createBlockStateDefinition(b);
+            b.add(TONE);
         }
     }
 }

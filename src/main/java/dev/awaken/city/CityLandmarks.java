@@ -667,10 +667,7 @@ final class CityLandmarks {
         if (!box.contains(x, z)) return;
         Plot fake = new Plot(-1, QUAY_D, box.x0(), box.z0(), box.x1(), box.z1(), S, 3, CityPlan.Roof.GABLE, true, true,
                 13, 22, g, Integer.MIN_VALUE, Integer.MIN_VALUE, "mill", false, 7);
-        CityGrammar.Style st = new CityGrammar.Style(COBBLE, DARK_PLANKS, STONE_BRICKS, 0, true, SLATE, false, false, false, false, SMOOTH_SLAB);
-        CityGrammar.groundStorey(c, b, fake, st, box, x, z, g);
-        for (int s = 1; s < 3; s++) CityGrammar.upperStorey(c, b, fake, st, box, x, z, g, s);
-        CityGrammar.roof(c, b, fake, st, box, x, z, g);
+        CityGrammar.building(c, b, fake, CityGrammar.millStyle(), box, x, z, g);
     }
 
     /** A water wheel standing in the mill race: rim, spokes and paddles of dark oak, its top just over the quay. */

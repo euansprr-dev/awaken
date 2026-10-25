@@ -1,0 +1,12 @@
+{
+  "values": [
+    "awaken:slate_tiles",
+    "awaken:slate_tile_stairs",
+    "awaken:slate_tile_slab",
+    "awaken:clay_tiles",
+    "awaken:clay_tile_stairs",
+    "awaken:clay_tile_slab",
+    "awaken:chimney_bricks",
+    "awaken:drainpipe"
+  ]
+}

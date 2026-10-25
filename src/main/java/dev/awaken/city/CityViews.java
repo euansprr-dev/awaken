@@ -63,5 +63,13 @@ final class CityViews {
         add("studio_bellwatch_tower", -118, 36, -30, -150, 40, -62);
         add("studio_garden_tower", 182, 32, 72, 152, 34, 40);
         add("studio_terrace_tower", 102, 38, -98, 72, 40, -128);
+        // M4: one facade close-up per district, from across the street, looking up a row of fronts (B1 onwards)
+        add("facade_bellwatch", -186, 2.5, -29, -200, 10, -33);
+        add("facade_quay", -104, 3, 51, -95, 11, 56);
+        add("facade_market", 81, 2.5, -3, 74, 11, 5);
+        add("facade_terrace", 86.5, 11, -133, 80, 19, -142);
+        add("facade_garden", 147.5, 2.5, -3, 141, 9, 5);
+        add("facade_works", 64, 2.5, 121, 52, 8, 117);
+        add("facade_wallring", 225, 2.5, 2, 219, 7, -6);
     }
 }
