@@ -1,0 +1,130 @@
+# Hands P3 (SPEC §17, §24): the Ascent in first person (run with PACK=feel, HUD on). The sandbox's giant trees for the
+# rope (fire, the hand on the rope, pumping, the release), the high deck for wings and flight (arms out, a beat, the
+# boost's fist, a hover), the Leaper (a double jump, a dash, a dive slam) and the Sovereign (the palms rising, gold
+# hands, the Judgement Fall). Shots: anims_p3_*.
+world anims_ascent survival 4249
+waitworld
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tp @s 0.5 152 0.5 0 0
+wait 100
+cmd fill -30 150 -12 30 150 250 minecraft:grass_block
+cmd fill -30 151 -12 30 160 250 minecraft:air
+cmd tp @s 0.5 151 0.5 0 0
+wait 10
+cmd awaken ascent grant all
+wait 10
+cmd awaken ascent sandbox
+wait 200
+screen close
+camera first
+wait 10
+# ---- the rope ----
+cmd tp @s 0.5 151 5.5 0 -10
+wait 40
+cmd awaken ascent pilot run swing 3
+wait 12
+shotnow anims_p3_rope_0
+wait 12
+shotnow anims_p3_rope_1
+wait 12
+shotnow anims_p3_rope_2
+wait 12
+shotnow anims_p3_rope_3
+wait 12
+shotnow anims_p3_rope_4
+wait 12
+shotnow anims_p3_rope_5
+wait 12
+shotnow anims_p3_rope_6
+wait 12
+shotnow anims_p3_rope_7
+wait 120
+cmd awaken ascent pilot stop
+# ---- wings and flight off the deck ----
+cmd fill -3 290 -3 3 290 3 minecraft:polished_deepslate
+cmd tp @s 0.5 291 -2.5 0 10
+wait 40
+cmd awaken ascent pilot run soar
+wait 28
+shotnow anims_p3_soar_0
+wait 28
+shotnow anims_p3_soar_1
+wait 28
+shotnow anims_p3_soar_2
+wait 28
+shotnow anims_p3_soar_3
+wait 28
+shotnow anims_p3_soar_4
+wait 28
+shotnow anims_p3_soar_5
+wait 28
+shotnow anims_p3_soar_6
+wait 28
+shotnow anims_p3_soar_7
+wait 28
+shotnow anims_p3_soar_8
+wait 28
+shotnow anims_p3_soar_9
+wait 28
+shotnow anims_p3_soar_10
+wait 30
+cmd awaken ascent pilot stop
+# ---- the Leaper: a double jump, an air dash, a dive slam ----
+cmd tp @s 0.5 151 -8.5 0 0
+wait 40
+cmd awaken ascent pilot hold jump 2
+wait 6
+cmd awaken ascent pilot hold jump 2
+wait 2
+shotnow anims_p3_double
+wait 40
+cmd awaken ascent pilot hold jump 2
+wait 6
+cmd awaken ascent pilot hold sprint 2
+wait 2
+shotnow anims_p3_dash
+wait 40
+cmd tp @s 0.5 160 -8.5 0 20
+wait 4
+cmd awaken ascent pilot hold sneak 2
+wait 4
+shotnow anims_p3_dive
+wait 8
+shotnow anims_p3_slam_a
+wait 3
+shotnow anims_p3_slam_b
+wait 40
+# ---- the Sovereign ----
+cmd awaken ascent grant sovereign
+wait 20
+cmd awaken ascent pilot aether 1
+wait 4
+cmd awaken ascent pilot ascend
+wait 8
+shotnow anims_p3_ascend_a
+wait 8
+shotnow anims_p3_ascend_b
+wait 40
+shotnow anims_p3_form
+cmd awaken ascent pilot ascend
+wait 8
+shotnow anims_p3_judgement
+wait 60
+info
+quit

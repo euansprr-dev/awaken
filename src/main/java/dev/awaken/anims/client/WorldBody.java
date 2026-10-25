@@ -67,6 +67,8 @@ final class WorldBody {
     private static boolean broken;
     /** This frame's world body drew arms (vanilla's hands step aside in the hand pass that follows). */
     static boolean armsThisFrame, nearLegsThisFrame;
+    /** The colour the next limb is drawn in (a fist's tint), white otherwise. */
+    private static int rgb = 0xFFFFFF;
 
     static void onExtract(ExtractLevelRenderStateEvent e) {
         pt = e.getDeltaTracker().getGameTimeDeltaPartialTick(false);
@@ -224,7 +226,7 @@ final class WorldBody {
      * A view clip's fist (FirstPerson.View fists): the empty arm on that side drawn rising to (x, y, z) in view space, as
      * the hand pass sees it. Drawn in the main hand's event (the off hand's may not come when it holds nothing).
      */
-    static void drawFist(net.neoforged.neoforge.client.event.RenderHandEvent e, boolean right, float x, float y, float z) {
+    static void drawFist(net.neoforged.neoforge.client.event.RenderHandEvent e, boolean right, float x, float y, float z, int tint) {
         if (broken) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -237,8 +239,10 @@ final class WorldBody {
             RenderType type = RenderTypes.entityTranslucent(mc.player.getSkin().body().texturePath());
             FirstPerson.Limb l = right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM;
             double side = right ? 1 : -1;
+            rgb = tint == 0 ? 0xFFFFFF : tint;
             viewArm(e.getPoseStack(), e.getSubmitNodeCollector(), parts[l.ordinal()], part(model, l), type, e.getPackedLight(), x, y, z,
                     side * FIST_ANCHOR_X, FIST_ANCHOR_Y, FIST_ANCHOR_Z, FIST_REACH, 1F);
+            rgb = 0xFFFFFF;
         } catch (RuntimeException ex) {
             broken = true;
             Awaken.LOG.error("First-person fists failed and are off for this session", ex);
@@ -295,7 +299,7 @@ final class WorldBody {
         ps.rotateDegrees(Axis.YP, 180F - yaw);
         ps.scale(-1F, -1F, 1F);
         ps.translate(-part.x / 16F, -part.y / 16F, -part.z / 16F);
-        int tint = w >= 0.99F ? -1 : (Mth.clamp((int) (w * 255), 0, 255) << 24) | 0xFFFFFF;
+        int tint = (Mth.clamp((int) (w * 255), 0, 255) << 24) | rgb;
         out.submitModel(m, Unit.INSTANCE, ps, type, light, OverlayTexture.NO_OVERLAY, tint, null, 0);
         ps.popPose();
     }

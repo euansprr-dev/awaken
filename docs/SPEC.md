@@ -3277,7 +3277,18 @@ of the plan). No mixins.
   lip (`BodyFp.HANG_*`, swaying; shimmying hand over hand). Legs (world source `body_moves`, 90): out ahead along the
   ground in a slide (down the slope in a stair slide), feet to the wall in a hang. The stair slide tips the view 9°
   down the run (`BodyCamera`).
+- **The Ascent in first person** (P3, `body.ascent.client.AscentFp`): moments, each where the Ascent gives the Feel
+  Director its beat: `fp_rope_fire` (the main arm flings the rope), `fp_rope_release`, `fp_rope_launch`, `fp_wings_open`,
+  `fp_wing_beat` (every beat, the one that takes flight too), `fp_barrel_roll`, `fp_boom` (hands up against it),
+  `fp_double_jump`, `fp_air_dash` (the lead fist punches through), `fp_dive` and `fp_slam_land` (fists up for a dive slam
+  or the Judgement Fall, smashed down on landing), `fp_sovereign_ascend`. Stances: on a rope the main fist holds it at
+  view (0.3, -0.02, -0.72), where AscentRender now starts the rope in first person, the other hand joining to pump
+  (forward) and climbing over it to reel (sneak); a zip, both hands on it; flying free, arms out low for balance (fists
+  up in a dive slam); wings, arms out flat at the frame's edges trembling with speed (swept out of the frame folding into
+  a dive); flight, one fist forward on a boost, palms down in a hover, arms sweeping up to climb, swept back cruising; in
+  the Sovereign's form the arms are tinted gold (`FirstPerson.View.tint`).
 - Test: `anims_fp_clips` (the file reads, every clip the body plays is in it, every one-shot gives the hands back).
-  Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), both PACK=feel with the HUD on.
-- P1 and P2 built. Next: P3 the Ascent, P4 touches, P5 station scenes, P6 the rest.
+  Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3), PACK=feel, HUD on.
+- P1-P3 built. Next: P4 touches, P5 station scenes, P6 the rest. The casts (powers) still draw their own first-person
+  arms (`CastAnims`); folding them into Hands is the powers module's step, coordinated with the combat plan.
 

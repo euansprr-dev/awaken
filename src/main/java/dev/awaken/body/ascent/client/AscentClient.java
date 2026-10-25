@@ -46,6 +46,8 @@ public final class AscentClient {
         var bus = NeoForge.EVENT_BUS;
         // before the Awakened Body's own moves: an airborne state owns the body and the body's moves stand aside
         bus.addListener(EventPriority.HIGH, MovementInputUpdateEvent.class, AscentMoves::onInput);
+        // first person (core.api.FirstPerson): the hands through every state of the ladder
+        dev.awaken.core.api.FirstPerson.view(AscentFp::viewPose);
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(ExtractLevelRenderStateEvent.class, AscentRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, AscentRender::onSubmit);

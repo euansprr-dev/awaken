@@ -230,6 +230,67 @@ clip("fp_stair_bump", 4, off=[(0, REST, "linear"), (1, hand(0, 0.04, 0, 5), "eas
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# The Ascent (P3; SPEC §17). Its held states are fist stances in body.ascent.client.AscentFp (keep these numbers the
+# same there): on a rope the main fist holds it at ROPE_FIST (where the rope leaves the hand, AscentRender), on wings
+# both arms are out flat at the frame's edges (GLIDE_FIST). These are its moments.
+ROPE_FIST = fist(0.3, -0.02, -0.72)
+GLIDE_FIST = fist(0.86, -0.04, -0.86)
+
+# The rope: thrown with the main arm (a forward fling, the wrist flicked), then held where it leaves the hand.
+clip("fp_rope_fire", 6, fists=True, to_stance=True,
+     main=[(0, REST_FIST, "linear"), (2, fist(0.42, -0.08, -1.08), "easeoutcubic"), (6, ROPE_FIST, "easeinoutsine")],
+     events=[(2, "throw")], note="the rope flung out of the hand")
+# Letting go of the rope: the hand opens and drops back to rest.
+clip("fp_rope_release", 10, fists=True, main=[(0, ROPE_FIST, "linear"), (3, fist(0.52, -0.32, -0.9), "easeoutcubic"), (10, REST_FIST, "easeinoutsine")],
+     note="the hand opens off the rope")
+# Jumping off the rope: both arms thrown up and out with the launch.
+clip("fp_rope_launch", 12, fists=True,
+     main=[(0, ROPE_FIST, "linear"), (3, fist(0.62, 0.12, -0.9), "easeoutcubic"), (12, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (3, fist(-0.62, 0.1, -0.9), "easeoutcubic"), (12, OFF_OUT, "easeinoutsine")], note="arms flung up off the rope")
+# The wings open: the hands spread out to the frame's edges as they unfold, into the glide's stance.
+clip("fp_wings_open", 10, fists=True, to_stance=True,
+     main=[(0, REST_FIST, "linear"), (3, fist(0.7, -0.1, -0.9), "easeoutcubic"), (10, GLIDE_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (3, fist(-0.7, -0.1, -0.9), "easeoutcubic"), (10, mf(GLIDE_FIST), "easeinoutsine")],
+     events=[(3, "unfold")], note="hands spread to the edges as the wings unfold")
+# A wing beat: the arms sweep down with it and come back up.
+clip("fp_wing_beat", 10, fists=True, to_stance=True,
+     main=[(0, GLIDE_FIST, "linear"), (3, fist(0.8, -0.36, -0.8), "easeinquad"), (7, fist(0.86, 0.04, -0.86), "easeoutcubic"), (10, GLIDE_FIST, "easeinoutsine")],
+     off=[(0, mf(GLIDE_FIST), "linear"), (3, fist(-0.8, -0.36, -0.8), "easeinquad"), (7, fist(-0.86, 0.04, -0.86), "easeoutcubic"),
+          (10, mf(GLIDE_FIST), "easeinoutsine")], events=[(3, "beat")], note="the arms sweep down with the beat")
+# The barrel roll: the arms tuck in to the chest through it and open out again.
+clip("fp_barrel_roll", 14, fists=True, to_stance=True,
+     main=[(0, GLIDE_FIST, "linear"), (3, fist(0.14, -0.46, -0.7), "easeoutcubic"), (10, fist(0.16, -0.44, -0.7), "linear"), (14, GLIDE_FIST, "easeinoutsine")],
+     off=[(0, mf(GLIDE_FIST), "linear"), (3, fist(-0.14, -0.46, -0.7), "easeoutcubic"), (10, fist(-0.16, -0.44, -0.7), "linear"),
+          (14, mf(GLIDE_FIST), "easeinoutsine")], note="arms tucked through the roll")
+# The sonic boom: the hands come up in front against it for a moment.
+clip("fp_boom", 10, fists=True, to_stance=True,
+     main=[(0, GLIDE_FIST, "linear"), (2, fist(0.24, -0.04, -0.78), "easeoutcubic"), (5, fist(0.26, -0.06, -0.8), "linear"), (10, GLIDE_FIST, "easeinoutsine")],
+     off=[(0, mf(GLIDE_FIST), "linear"), (2, fist(-0.24, -0.04, -0.78), "easeoutcubic"), (5, fist(-0.26, -0.06, -0.8), "linear"),
+          (10, mf(GLIDE_FIST), "easeinoutsine")], events=[(2, "brace")], note="hands raised against the boom")
+# The Leaper's double jump: both arms thrown down to push off the air.
+clip("fp_double_jump", 10, fists=True,
+     main=[(0, REST_FIST, "linear"), (2, fist(0.46, -0.72, -0.75), "easeoutcubic"), (10, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (2, fist(-0.46, -0.72, -0.75), "easeoutcubic"), (10, OFF_OUT, "easeinoutsine")], note="arms thrown down off the air")
+# The air dash: the lead fist punches through ahead.
+clip("fp_air_dash", 10, fists=True,
+     main=[(0, REST_FIST, "linear"), (2, fist(0.12, -0.08, -1.15), "easeoutcubic"), (6, fist(0.14, -0.1, -1.12), "linear"), (10, REST_FIST, "easeinoutsine")],
+     events=[(2, "punch")], note="the lead fist punches through")
+# The dive slam: both fists raised overhead for the drop (held by the dive's stance), then smashed down on landing.
+SLAM_UP = fist(0.2, 0.3, -0.74)
+clip("fp_dive", 6, fists=True, to_stance=True, main=[(0, REST_FIST, "linear"), (4, SLAM_UP, "easeoutcubic"), (6, SLAM_UP, "linear")],
+     off=[(0, OFF_OUT, "linear"), (4, mf(SLAM_UP), "easeoutcubic"), (6, mf(SLAM_UP), "linear")], note="fists raised for the dive")
+clip("fp_slam_land", 12, fists=True,
+     main=[(0, SLAM_UP, "linear"), (2, fist(0.2, -0.42, -0.74), "easeinquad"), (6, fist(0.22, -0.4, -0.76), "linear"), (12, REST_FIST, "easeinoutsine")],
+     off=[(0, mf(SLAM_UP), "linear"), (2, fist(-0.2, -0.42, -0.74), "easeinquad"), (6, fist(-0.22, -0.4, -0.76), "linear"), (12, OFF_OUT, "easeinoutsine")],
+     events=[(2, "impact")], note="fists smashed down with the landing")
+# The Sovereign takes the form: the palms rise as the light gathers.
+clip("fp_sovereign_ascend", 16, fists=True,
+     main=[(0, REST_FIST, "linear"), (4, fist(0.28, -0.32, -0.85), "easeinoutsine"), (12, fist(0.3, 0.24, -0.85), "easeoutsine"), (16, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (4, fist(-0.28, -0.32, -0.85), "easeinoutsine"), (12, fist(-0.3, 0.24, -0.85), "easeoutsine"), (16, OFF_OUT, "easeinoutsine")],
+     events=[(12, "radiant")], note="palms rising as the gold gathers")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Output
 
 def document():

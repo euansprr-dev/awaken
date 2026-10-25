@@ -130,6 +130,8 @@ public final class FirstPerson {
          */
         public final float[] fistMain = new float[4], fistOff = new float[4];
         public boolean drawOff, hideMain, hideOff;
+        /** A colour the fists' arms are tinted (RGB; 0 for none): the Sovereign's gold. */
+        public int tint;
 
         /** Vanilla's resting empty right fist, in view space. */
         public static final float[] REST_FIST = {0.744F, -0.455F, -1.072F};
@@ -141,6 +143,7 @@ public final class FirstPerson {
             java.util.Arrays.fill(fistMain, 0F);
             java.util.Arrays.fill(fistOff, 0F);
             drawOff = hideMain = hideOff = false;
+            tint = 0;
         }
 
         /** Adds a fist (weighted: several sum to their weighted mean). */

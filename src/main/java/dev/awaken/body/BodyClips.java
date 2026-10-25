@@ -56,7 +56,10 @@ public final class BodyClips {
     /** Every first-person clip the body plays (a GameTest holds them to the file). */
     public static final List<String> FP = List.of(FP_PIPE_KICK, FP_PIPE_SIDE_L, FP_PIPE_SIDE_R, FP_PIPE_LAND, FP_LAND_SOFT, FP_LAND_HARD,
             FP_ROLL, FP_VAULT, FP_MANTLE, FP_LEAP, FP_SLIDE_JUMP, FP_WALLJUMP_L, FP_WALLJUMP_R, FP_GRAB, FP_LOWER, FP_LEDGE_UP,
-            FP_LEDGE_SIDE_L, FP_LEDGE_SIDE_R, FP_LEDGE_BACK, FP_STAIR_BUMP);
+            FP_LEDGE_SIDE_L, FP_LEDGE_SIDE_R, FP_LEDGE_BACK, FP_STAIR_BUMP,
+            // the Ascent's (body.ascent.client.AscentFp)
+            "fp_rope_fire", "fp_rope_release", "fp_rope_launch", "fp_wings_open", "fp_wing_beat", "fp_barrel_roll", "fp_boom",
+            "fp_double_jump", "fp_air_dash", "fp_dive", "fp_slam_land", "fp_sovereign_ascend");
 
     /** The Runner's clips by network index (a Seen's code minus {@code SEEN_CLIP}); only append. */
     public static final List<String> RUNNER = List.of(WALLRUN_L, WALLRUN_R, WALLJUMP, GRAB, HANG, SHIMMY_L, SHIMMY_R, LEDGE_UP,
