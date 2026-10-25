@@ -268,11 +268,22 @@ final class CitizensCommands {
         }
         if (frame != null && shown != null) {
             double h = Math.toRadians(shown.getYRot()), fx = -Math.sin(h), fz = Math.cos(h), lx = Math.cos(h), lz = Math.sin(h);
-            double x = shown.getX(), z = shown.getZ(), ex, ez;
-            switch (frame) {
-                case "front" -> { ex = x + fx * 4.5 + lx * 0.6; ez = z + fz * 4.5 + lz * 0.6; }     // in his path, he walks toward us
-                case "side" -> { ex = x + lx * 3.0 + fx * 0.6; ez = z + lz * 3.0 + fz * 0.6; }      // beside him, on his lantern's side
-                default -> { ex = x + fx * 5.5 + lx * 5.5; ez = z + fz * 5.5 + lz * 5.5; }          // about eight blocks off, ahead
+            double x = shown.getX(), z = shown.getZ(), ex = x, ez = z;
+            // candidates in order (forward, left): the first with clear air at the eye and nobody within 1.3 blocks
+            double[][] tries = switch (frame) {
+                case "front" -> new double[][]{{4.5, 0.6}, {4.5, -0.6}, {5.5, 1.2}, {3.5, 0}};      // in his path, he walks toward us
+                case "side" -> new double[][]{{0.6, 3.0}, {1.2, 3.4}, {-0.4, 3.0}, {0.6, -3.0}, {1.5, 4.0}}; // beside him, his lantern's side
+                default -> new double[][]{{5.5, 5.5}, {6.5, 4.0}, {4.0, 6.5}, {5.5, -5.5}};          // about eight blocks off, ahead
+            };
+            for (double[] t : tries) {
+                double cx2 = x + fx * t[0] + lx * t[1], cz2 = z + fz * t[0] + lz * t[1];
+                BlockPos eyeAt = BlockPos.containing(cx2, shown.getY() + 1.6, cz2);
+                boolean air = c.level.getBlockState(eyeAt).isAir() && c.level.getBlockState(eyeAt.below()).isAir();
+                boolean crowded = !c.level.getEntitiesOfClass(CitizenBody.class, new net.minecraft.world.phys.AABB(cx2 - 1.3, shown.getY() - 1, cz2 - 1.3,
+                        cx2 + 1.3, shown.getY() + 3, cz2 + 1.3)).isEmpty();
+                ex = cx2;
+                ez = cz2;
+                if (air && !crowded) break;
             }
             double ey = shown.getY() + 0.05, lookY = shown.getY() + 0.75;
             float yaw = (float) Math.toDegrees(Math.atan2(-(x - ex), z - ez));
@@ -331,14 +342,19 @@ final class CitizensCommands {
             if (score == 3 && pk != Roster.P_DOOR && pk != Roster.P_TAVERN_OUT && pk != Roster.P_SIT && pk != Roster.P_LANDMARK) score = 4;
             if (d.state[i] != CitizensData.INSIDE && own(job, pk, c.ledger.act(i))) score += 3;
             if (d.dwellUntil[i] > 0) score -= 1; // they'll walk on soon
-            score = score * 1000 + (int) Math.floorMod(CitizenWork.mixHash(i), 997L);
+            // (B3b) each call shows the next of the best-placed, not the same one again (tours frame several)
+            score = score * 1000 + (int) Math.floorMod(CitizenWork.mixHash(i + 7919L * showTurn), 997L) - (i == lastShown ? 3000 : 0);
             if (score > bestScore) {
                 bestScore = score;
                 best = i;
             }
         }
+        showTurn++;
+        lastShown = best;
         return best;
     }
+
+    private static int showTurn, lastShown = -1;
 
     /** The job's own work: the place kind (or act) that shows it. */
     private static boolean own(int job, byte pk, byte act) {
@@ -351,7 +367,7 @@ final class CitizensCommands {
             case Roster.SMITH -> pk == Roster.P_ANVIL;
             case Roster.WATCH -> pk == Roster.P_POST || act == Roster.ROUND;
             case Roster.CRIER -> pk == Roster.P_CRIER;
-            case Roster.BOATMAN -> pk == Roster.P_PICKUP;
+            case Roster.BOATMAN -> pk == Roster.P_MOORING || pk == Roster.P_NET;
             case Roster.WASHER -> pk == Roster.P_WASH || pk == Roster.P_LINE;
             case Roster.MASON -> pk == Roster.P_STAND;
             case Roster.MILLER -> pk == Roster.P_MILL;

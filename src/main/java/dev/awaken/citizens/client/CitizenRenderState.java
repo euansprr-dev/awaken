@@ -29,4 +29,6 @@ public final class CitizenRenderState extends SkinRenderState {
     public boolean lifeSlim;
     /** The lantern in the off hand (drawn by the lantern layer), or null. */
     public @org.jspecify.annotations.Nullable LanternHold lantern;
+    /** A rope, a net or a parcel in hand for the clip playing (the held layer draws it), or null. */
+    public @org.jspecify.annotations.Nullable HeldProp held;
 }
