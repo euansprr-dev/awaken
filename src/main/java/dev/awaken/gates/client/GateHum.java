@@ -1,5 +1,6 @@
 package dev.awaken.gates.client;
 
+import dev.awaken.core.audio.client.Soundscape;
 import dev.awaken.gates.GateVortex;
 import dev.awaken.gates.GateVortexBlockEntity;
 import dev.awaken.gates.GatesRegistry;
@@ -36,6 +37,7 @@ final class GateHum {
         }
         if (++clock % 10 != 0) return;
         Vec3 me = mc.player.position();
+        for (GateVortexBlockEntity be : GateVortexBlockEntity.CLIENT_LOADED) hush(be, me);
         for (GateVortexBlockEntity be : List.copyOf(GateVortexBlockEntity.CLIENT_LOADED)) {
             if (be.isRemoved() || be.getLevel() != mc.level || PLAYING.containsKey(be)) continue;
             if (me.distanceToSqr(be.centreX(), be.centreY(), be.centreZ()) > START * START) continue;
@@ -57,6 +59,33 @@ final class GateHum {
             if (gone || ended) done.add(be);
         });
         for (GateVortexBlockEntity be : done) PLAYING.remove(be);
+    }
+
+    /**
+     * The world holds its breath near a gate (world sound, SPEC §13): birds, insects and the nature ambience step back
+     * within 48 blocks of an E-rank gate to 108 of an S-rank, deepest at its heart; wider and deeper while a break is
+     * near, deepest once broken; barely at all when the gates are calm, not at all when spent. Renewed every half
+     * second while the gate is in range, so it lets go on its own when you leave.
+     */
+    private static void hush(GateVortexBlockEntity be, Vec3 me) {
+        if (be.isRemoved() || be.getLevel() != Minecraft.getInstance().level) return;
+        float radius = 48F + 12F * be.rank(), depth;
+        switch (be.mode()) {
+            case GateVortex.WARNING -> {
+                radius *= 1.4F;
+                depth = 0.15F;
+            }
+            case GateVortex.BROKEN -> depth = 0.1F;
+            case GateVortex.FORMING -> depth = 0.6F;
+            case GateVortex.CALM -> depth = 0.85F;
+            case GateVortex.SPENT -> {
+                return;
+            }
+            default -> depth = 0.35F;
+        }
+        Vec3 c = new Vec3(be.centreX(), be.centreY(), be.centreZ());
+        if (me.distanceToSqr(c) > radius * radius) return;
+        Soundscape.hush(be, c, radius, depth, 30);
     }
 
     private static void stopAll(Minecraft mc) {

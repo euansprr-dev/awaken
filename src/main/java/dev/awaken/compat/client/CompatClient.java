@@ -16,6 +16,7 @@ public final class CompatClient {
     public static void init(IEventBus modBus) {
         CompatClientConfig.register();
         LookClient.init(modBus);
+        if (ModList.get().isLoaded("ambientsounds")) AmbientSoundsBridge.init();
         modBus.addListener(FMLClientSetupEvent.class, e -> {
             if (ModList.get().isLoaded("distanthorizons")) e.enqueueWork(DistantHorizonsClient::init);
             if (ModList.get().isLoaded("jei")) e.enqueueWork(dev.awaken.compat.client.jei.JeiHooks::init);

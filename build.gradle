@@ -165,6 +165,10 @@ dependencies {
     // (JEI 31.14.0.72, Jade 26.3.5+neoforge)
     compileOnly "maven.modrinth:jei:kLsKOFxv"
     compileOnly "maven.modrinth:jade:dVB8U7Td"
+    // the sound profile's nature ambience (compat.client.AmbientSoundsBridge lowers it under AWAKEN's moments):
+    // AmbientSounds 6.3.11 and CreativeCore 2.14.24, the builds pack/lock.json pins
+    compileOnly "maven.modrinth:ambientsounds:dCMudV9Z"
+    compileOnly "maven.modrinth:creativecore:Jyax6gDi"
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

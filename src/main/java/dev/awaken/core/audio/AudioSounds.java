@@ -50,6 +50,12 @@ public final class AudioSounds {
     // the layered music (one event per slot; the client streams a context's stems itself, the event only resolves)
     public static final DeferredHolder<SoundEvent, SoundEvent> MUSIC_LAYERS = reg("music.layers");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_LAYERS = reg("amb.layers");
+    /** The world sound Conductor's one stream (the air bed; core.audio.client.AirMixer supplies the audio). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WORLD = reg("amb.world");
+
+    /** World sound's own one-shots (tools/art/specs/audio_world.py ONE_SHOTS; played by the Conductor from soundscape data). */
+    static final String[] WORLD = {"chime", "bell_far", "halo_hiss", "halo_clunk", "halo_chirp", "dream_swell",
+            "elder_creak", "elder_glint", "lumen_chime"};
 
     private static final List<DeferredHolder<SoundEvent, SoundEvent>> CUES = new ArrayList<>();
 
@@ -57,6 +63,7 @@ public final class AudioSounds {
         for (Cue c : Cue.values()) CUES.add(reg(c.eventPath()));
         for (String theme : GATE_THEMES) reg("music.gate." + theme);
         for (int s = 1; s <= STRATA; s++) reg("music.descent." + s);
+        for (String w : WORLD) reg("world." + w);
     }
 
     private static DeferredHolder<SoundEvent, SoundEvent> reg(String path) {

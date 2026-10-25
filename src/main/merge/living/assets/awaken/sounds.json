@@ -38,5 +38,48 @@
         "name": "awaken:ui_living_region_enter"
       }
     ]
+  },
+  "living.tell.horn": {
+    "subtitle": "subtitles.awaken.living.tell.horn",
+    "sounds": [
+      {
+        "name": "awaken:amb_tell_horn_1"
+      },
+      {
+        "name": "awaken:amb_tell_horn_2"
+      }
+    ]
+  },
+  "living.tell.stampede": {
+    "subtitle": "subtitles.awaken.living.tell.stampede",
+    "sounds": [
+      {
+        "name": "awaken:amb_tell_stampede"
+      }
+    ]
+  },
+  "living.tell.wings": {
+    "subtitle": "subtitles.awaken.living.tell.wings",
+    "sounds": [
+      {
+        "name": "awaken:amb_tell_wings"
+      }
+    ]
+  },
+  "living.tell.tide": {
+    "subtitle": "subtitles.awaken.living.tell.tide",
+    "sounds": [
+      {
+        "name": "awaken:amb_tell_tide"
+      }
+    ]
+  },
+  "living.tell.bells": {
+    "subtitle": "subtitles.awaken.living.tell.bells",
+    "sounds": [
+      {
+        "name": "awaken:amb_tell_bells"
+      }
+    ]
   }
 }

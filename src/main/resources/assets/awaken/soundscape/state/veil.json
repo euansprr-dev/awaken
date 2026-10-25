@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "title": "The Veil (an overlay while you project): a far choir, glass glints",
+  "air": [
+    {"file": "awaken:amb_world_veil_choir", "gain": 0.75}
+  ],
+  "events": [
+    {"sound": "awaken:world.chime", "anchor": "sky", "per_minute": 2, "hush": false,
+     "volume": [0.15, 0.3], "pitch": [1.5, 2.0], "distance": [4, 10]}
+  ]
+}

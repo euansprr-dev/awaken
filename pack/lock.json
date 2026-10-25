@@ -45,7 +45,7 @@
     "sound"
    ],
    "dependencyOf": [],
-   "why": "Nature ambience recorded for real: birds, crickets, owls, gulls, wind and rain by biome and weather; the city's own zones (gulls over the river, owls, doves, garden birds, wind on the roofs) reference its sounds by id (SPEC \u00a716.0 decision 30)."
+   "why": "Nature ambience for every biome (Euan, 2026-10-25: use the mod that already does this well); the city's own zones (gulls over the river, owls, doves, garden birds, wind on the roofs) reference its sounds by id (SPEC \u00a716.0 decision 30). AWAKEN's Conductor plays the magic and places and lowers it under AWAKEN's moments (compat.client.AmbientSoundsBridge); our jar mutes it in awaken: dimensions."
   },
   {
    "slug": "appleskin",
@@ -370,6 +370,27 @@
    ],
    "dependencyOf": [],
    "why": "Faster HUD, text and entity drawing."
+  },
+  {
+   "slug": "immersivethunder-reforged",
+   "title": "ImmersiveThunder: Reforged",
+   "projectId": "8qptmVok",
+   "versionId": "n60Bi1Sf",
+   "version": "1.3.8+26.3",
+   "channel": "release",
+   "published": "2026-10-07",
+   "file": "ImmersiveThunder-Reforged-neoforge-26.3-1.3.8.jar",
+   "url": "https://cdn.modrinth.com/data/8qptmVok/versions/n60Bi1Sf/ImmersiveThunder-Reforged-neoforge-26.3-1.3.8.jar",
+   "size": 3295975,
+   "sha1": "5ec90136b6bf82993f7f0eb5f08bb150f8633d86",
+   "sha512": "de67027a26876e6905ab788bbfa6655f87b87e7a020cc150af0d839b549286193ae11bbcc771944d9b36aa5f19a3a16f20952cb1fcddf5f54429473ab3d5af02",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "soundspike"
+   ],
+   "dependencyOf": [],
+   "why": "Thunder delayed by distance; replaces our own thunder re-voicing if the spike is clean."
   },
   {
    "slug": "iris",
@@ -736,6 +757,27 @@
    ],
    "dependencyOf": [],
    "why": "Mountain ranges, deep oceans and valleys; keeps vanilla biomes, so every Awaken spawn and ruin still has a home."
+  },
+  {
+   "slug": "tread-lightly-aspctt",
+   "title": "Tread Lightly",
+   "projectId": "EZLEVAhb",
+   "versionId": "FInO0syt",
+   "version": "1.1.0+26.3",
+   "channel": "release",
+   "published": "2026-09-23",
+   "file": "TreadLightly-1.1.0+26.3-neoforge.jar",
+   "url": "https://cdn.modrinth.com/data/EZLEVAhb/versions/FInO0syt/TreadLightly-1.1.0%2B26.3-neoforge.jar",
+   "size": 5448062,
+   "sha1": "16ee1f488fe57c443df40ac143c391cbedf4a873",
+   "sha512": "a8e9195aea18ea18ec128b85db34bc9962e82882a62e7b8b0b914b10d0e26e5e8c8e30850eab5d5fdc2d34cfddbb1843772b885e68c2ca471dbe45cdf98b2fc6",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "soundspike"
+   ],
+   "dependencyOf": [],
+   "why": "Footsteps by surface, wetness and boots (world sound decision 2); joins the sound profile once the spike passes."
   }
  ]
 }
