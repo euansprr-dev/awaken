@@ -138,6 +138,79 @@ public final class FxClient {
         onEvent(FxEvent.of(FxKind.TRAIL, style, p.position()).caster(p).ticks(12).seed(p.getId()).build());
     }
 
+    // ---- for other modules' weapons (Arms, SPEC §24): the same engine, budget and settings --------------------------
+
+    /**
+     * A blade's arc that moves with {@code wielder}: a crescent about their eyes + {@code offset}, in the plane of
+     * {@code axis0} (angle 0) and {@code axis90} (90 degrees; world-space unit vectors), from {@code startDeg} through
+     * {@code sweepDeg}, at {@code radius} with a band of {@code band} (the blade's length), its head crossing in
+     * {@code sweepTicks}. The local player's own is drawn softer in first person.
+     */
+    public static void slash(Entity wielder, Vec3 offset, Vec3 axis0, Vec3 axis90, float startDeg, float sweepDeg, float radius, float band,
+                             int sweepTicks, int argb) {
+        Shape s = blade(wielder, offset, sweepTicks, argb);
+        if (s == null) return;
+        s.nx = (float) axis0.x;
+        s.ny = (float) axis0.y;
+        s.nz = (float) axis0.z;
+        s.ux = (float) axis90.x;
+        s.uy = (float) axis90.y;
+        s.uz = (float) axis90.z;
+        s.c = (float) Math.toRadians(startDeg);
+        s.range = (float) Math.toRadians(sweepDeg);
+        s.a = radius;
+        s.b = band;
+    }
+
+    /** A thrust's streak that moves with {@code wielder}: from their eyes + {@code offset} along {@code dir}, {@code from}..{@code to} blocks out. */
+    public static void thrust(Entity wielder, Vec3 offset, Vec3 dir, float from, float to, float width, int sweepTicks, int argb) {
+        Shape s = blade(wielder, offset, sweepTicks, argb);
+        if (s == null) return;
+        s.flags |= Shape.THRUST;
+        s.nx = (float) dir.x;
+        s.ny = (float) dir.y;
+        s.nz = (float) dir.z;
+        s.a = (from + to) * 0.5f;
+        s.b = (to - from) * 0.5f;
+        s.c = width;
+    }
+
+    private static @org.jspecify.annotations.Nullable Shape blade(Entity wielder, Vec3 offset, int sweepTicks, int argb) {
+        Vec3 at = wielder.getEyePosition();
+        if (!FxWorld.begin(at.x, at.y, at.z, wielder.getId())) return null;
+        int sweep = Math.max(1, sweepTicks);
+        Shape s = FxWorld.shape(Shape.SLASH, sweep * 2 + 6);
+        if (s == null) return null;
+        s.x = at.x;
+        s.y = at.y;
+        s.z = at.z;
+        s.ex = offset.x;
+        s.ey = offset.y;
+        s.ez = offset.z;
+        s.follow = wielder.getId();
+        s.anchor = Anchors.EYE;
+        s.d = sweep;
+        s.c0 = argb;
+        s.c1 = 0xFFFFFFFF;
+        s.fadeIn = 0;
+        s.fadeOut = 3;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && wielder.getId() == mc.player.getId()) s.flags |= Shape.OWN;
+        return s;
+    }
+
+    /** A wave rolling out along the ground from {@code from}'s feet along {@code dir} to {@code range}, ±{@code halfDeg} wide. */
+    public static void groundWave(Entity from, Vec3 dir, float range, float halfDeg, int ticks, FxStyle style) {
+        onEvent(FxEvent.of(FxKind.CONE, style, from.position()).caster(from).dir(dir).scale(range).aux(halfDeg).ticks(ticks)
+                .seed(from.getId() * 31 + FxWorld.ticks).flag(FxEvent.QUIET, true).build());
+    }
+
+    /** A blade landing at {@code at}, travelling along {@code dir}: sparks, chips or wisps by what it meets. */
+    public static void bladeHit(Vec3 at, Vec3 dir, float size, dev.awaken.core.api.BodyMaterial material) {
+        if (!FxWorld.begin(at.x, at.y, at.z, (int) (at.x * 31 + at.z * 17 + FxWorld.ticks))) return;
+        FxRecipes.bladeHit(at.x, at.y, at.z, dir.x, dir.y, dir.z, size, material);
+    }
+
     /** Cast animations are switched on in the power FX settings. */
     public static boolean animations() {
         return PowerFxConfig.animations();

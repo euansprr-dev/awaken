@@ -28,6 +28,11 @@ final class ArmsState {
     // a held heavy
     long chargeStart = -1;
     int chargeSeq = -1;
+    // a Plunge armed in a fall: its press, when, the furthest it has fallen; and the landing's power once it strikes
+    int plungeSeq = -1;
+    long plungeAt;
+    double plungeFall;
+    float plungePower = 1;
     // guard
     long raisedAt = Long.MIN_VALUE / 2, loweredAt = Long.MIN_VALUE / 2;
     boolean raiseDeflected, lockedOut, guardBreak;

@@ -12,11 +12,14 @@ cmd time set 6000
 cmd awaken admin awaken
 wait 200
 screen close
+window 1280 720
 hud on
 camera first
 cmd gamemode creative
-cmd tp @s ~ 200 ~ 0 8
-wait 20
+wait 300
+screen close
+cmd tp @s ~2000 300 ~ 0 8
+wait 80
 cmd fill ~-8 ~-1 ~-8 ~8 ~-1 ~12 minecraft:smooth_stone
 cmd fill ~-8 ~ ~-8 ~8 ~10 ~12 minecraft:air
 cmd fill ~-8 ~ ~9 ~8 ~7 ~9 minecraft:deepslate_tiles
@@ -74,6 +77,12 @@ arms strike
 shotnow arms_live_strike
 wait 3
 shotnow arms_live_strike_3
+wait 3
+arms strike
+wait 6
+arms strike
+wait 4
+shot arms_plate_stance
 wait 30
 cmd gamemode survival
 cmd damage @s 2 minecraft:mob_attack by @e[type=minecraft:husk,limit=1,sort=nearest]
