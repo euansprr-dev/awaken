@@ -253,6 +253,36 @@ final class CityTests {
             h.succeed();
         });
 
+        // Floating Elder Wood inside the city (M4): the sweep that clears the trees' spill left every bark block ("*_wood")
+        // alone, because the city's own trunks are bark, so a cut elder tree left its limbs hanging. The lands' bark is the
+        // trees' now; the city's trunks, timber and leaves are still its own; and a limb that rests on nothing is found.
+        AwakenTests.register("city_sweep_takes_elder_wood", 40, h -> {
+            for (var b : List.of(dev.awaken.terrain.LandsBlocks.ELDER_WOOD, dev.awaken.terrain.LandsBlocks.ELDER_LOG, dev.awaken.terrain.LandsBlocks.LUMEN_WOOD)) {
+                h.assertTrue(CityWriter.vegetation(b.get().defaultBlockState()), b.getId() + " is the trees' to sweep");
+            }
+            for (BlockState own : new BlockState[]{CityBlocks.OAK_TRUNK, CityBlocks.BIRCH_TRUNK, CityBlocks.CHERRY_TRUNK, CityBlocks.DARK_WOOD,
+                    CityBlocks.SPRUCE_WOOD, CityBlocks.POST[0], CityBlocks.BEAM_X[1], CityBlocks.OAK_LEAVES}) {
+                h.assertTrue(!CityWriter.vegetation(own), own + " is the city's own and stays");
+            }
+            h.assertTrue(CityWriter.vegetation(Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, false)),
+                    "leaves that rot are swept");
+            // a trunk on the ground with a limb touching it corner to corner, and a limb with leaves that rests on nothing
+            it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap blocks = new it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap();
+            byte wood = CityTrees.WOOD, held = (byte) (CityTrees.WOOD | CityTrees.GROUNDED);
+            blocks.put(BlockPos.asLong(0, 64, 0), held);
+            blocks.put(BlockPos.asLong(0, 65, 0), wood);
+            blocks.put(BlockPos.asLong(1, 66, 1), wood);
+            for (int i = 0; i < 3; i++) blocks.put(BlockPos.asLong(8 + i, 80, 8), wood);
+            blocks.put(BlockPos.asLong(11, 81, 8), CityTrees.LEAF);
+            int[] seen = new int[3];
+            int n = CityTrees.groups(blocks, c -> true, (cells, grounded, clipped) -> {
+                seen[grounded ? 0 : 1] += cells.size();
+                if (clipped) seen[2]++;
+            });
+            h.assertTrue(n == 2 && seen[0] == 3 && seen[1] == 4 && seen[2] == 0, "two groups, the trunk's 3 held and the limb's 4 hanging: " + n + " " + Arrays.toString(seen));
+            h.succeed();
+        });
+
         // dev studio: with a request file in the game folder, paint the whole city and dump it for tools/city/render.py
         AwakenTests.register("city_studio_dump", 400, h -> {
             java.nio.file.Path req = h.getLevel().getServer().getServerDirectory().resolve("city-dump.request");

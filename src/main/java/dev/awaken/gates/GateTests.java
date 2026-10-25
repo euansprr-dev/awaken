@@ -313,12 +313,12 @@ final class GateTests {
             var server = level.getServer();
             BlockPos base = h.absolutePos(BlockPos.ZERO).offset(14, 0, 14);
             int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, base.getX(), base.getZ()) - 1;
-            BlockPos ground = new BlockPos(base.getX(), y, base.getZ());
+            BlockPos ground = dryGround(level, new BlockPos(base.getX(), y, base.getZ()));
             GatePlan plan = testPlan(2024, Rank.E, Theme.BELL_CRYPT, Layout.LABYRINTH, Twist.NONE);
             GateRecord g = GateService.create(server, GateRegistry.get(server).nextId(), plan, ground, 0, Optional.empty(), 2, List.of("test"), false);
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(g.state == GateState.READY, "gate became READY, was " + g.state))
+                    .thenWaitUntil(() -> h.assertTrue(g.state == GateState.READY, "gate became READY, was " + g.state + " (trace: " + g.trace + ")"))
                     .thenExecute(() -> {
                         BlockPos core = g.pos.above(3);
                         h.assertTrue(level.getBlockState(core).is(GatesRegistry.CORE.get()), "surface core placed");
@@ -596,5 +596,15 @@ final class GateTests {
             }
         }
         return out;
+    }
+
+    /**
+     * The test plot's surface is wherever the world put it, sometimes water: a gate never forms on wet ground ("no dry
+     * ground at the chosen spot"), so the tests stand it on a dry block of their own with air over it.
+     */
+    static BlockPos dryGround(net.minecraft.server.level.ServerLevel level, BlockPos at) {
+        level.setBlock(at, net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+        for (int dy = 1; dy <= 3; dy++) level.setBlock(at.above(dy), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+        return at;
     }
 }

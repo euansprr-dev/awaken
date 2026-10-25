@@ -335,6 +335,11 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
 - Carillon hooks (§16.9, v0): `CityHooks`, `CitizenHooks`, `RenownHooks`, `EconomyHooks`, `PartyHooks`, `OpeningHooks`,
   `AtlasHooks`. Defaults behave as a classic world with no city.
+- `dev.awaken.core.api.TipHooks` (v0, §16.0 decision 24; docs/carillon/m4/onboarding.md): just-in-time tips. Server:
+  `offer(ServerPlayer, Identifier tip)`, `done(ServerPlayer, Identifier tip)`. Client: `client().offer(tip)` (idempotent,
+  call while the context holds), `done(tip)`, `hold(owner, held)` (cinematics hold every tip), `wants(tip)` (false once
+  retired or tips are off: skip the probe). Installed by the signal module in M4 B6; until then every call does nothing.
+  Tip text and triggers are data; any module may offer its own tips (the Ascent for its tiers).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -1353,6 +1358,26 @@ Added for the lean build (approved by Euan, 2026-10-24):
 20. Order (Euan, 2026-10-24, via the pack session: "Sounds good. Do that."): if M1 finishes before the Ascent's Runner
     tier is on build/awaken-v1, M3 (Alive) runs next; M2 (the opening in blockout) starts as soon as the Runner tier
     lands. Still one builder at a time.
+Milestone 4, approved by Euan on 2026-10-25 ("Go ahead with the full plan and all recommendations"), from the Phase A
+package (docs/carillon/m4/: look-bible.md, story.md, onboarding.md; artifact
+https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
+21. The look bible is the source of truth for the city's look: the city is the course, climbable because of its
+    architecture (the climbing grid, running faces, the movement-tuned dimensions of look-bible §3.10, the seven
+    districts, the height plan, the street-life layer, ~35 kit blocks, twelve landmarks). The opening's routes come from
+    the city's own affordances; the placed stage shrinks to near zero.
+22. The High Terrace is raised from 8 to 12. No jetties on the Quay (its walls are running faces). Market spokes are 5
+    wide (were 6).
+23. The story of the first hour is docs/carillon/m4/story.md: the Void's line stays; the wake says the gate put you back
+    on the stones; new voices Kestrel (Roostmaster) and Bram (Association officer). docs/STORY.md gains a Carillon section.
+24. Onboarding is docs/carillon/m4/onboarding.md: just-in-time tips with the player's real keys through one shared
+    system, `core.api.TipHooks` (tips as data; retire after use; never during cinematics; client option `tips`), the
+    Registry as a walk with Bram ending in a pan to the High Gate, and first-stretch tips that retire at rank D or after
+    three play-days. This reverses §17.2's "the Runner's own moves are found, not told".
+25. One builder at a time: Phase B runs B1 (facade grammar + core kit) → B2 (relief and heights) → B3 (street life,
+    roster 400–480) → B4 (landmarks) → B5 (the opening from affordances) → B6 (story and onboarding) → B7 (quiet perf,
+    tour, Euan's play 3), each step a fresh builder briefed from a file.
+26. Vanilla banners, signs and barrels stay out of the city's fabric (block entities); the kit carries the look. Light at
+    night is mostly emissive, within the light-source budget.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1378,6 +1403,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   touch it) → grammar fills plots (seed varies details, never shape). The same pass writes the street graph and the roof
   graph (edges carry the move they need; door and stair links). Plan hash checked by GameTest.
 - Placed only in vanilla blocks + the Carillon kit (~35 blocks of our own); no third-party blocks.
+- Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
+  logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
+  on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs
+  cities built before the fix).
 - Decided in M1 (2026-10-25): Choir Square sits at the plan's centre with the Choir on its north edge; the High Terrace is
   raised 8 blocks (five stairs up); the river has a lower quay at y 66 above water at y 63, with ladders; gatehouses at
   N, E and S plus two water gates, 24 tower places; fields outside the wall only in carved (basin) worlds; the street
@@ -1400,7 +1429,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 - Terrain (agreed with Awakened Lands, 2026-10-24): `dev.awaken.terrain.api.CityBasin` picks the site deterministically
   from the seed at server start (land within ~1,500 of the origin) and flattens it: `CitySite(x, z, coreRadius 330,
   blendRadius 700, streetY 70, riverPath, basinCarved)`; `CityBasin.site(server)`, `CityBasin.reserved(x, z)` (core + 48,
-  allocation-free). It needs Lithostitched (pack world profile); without it `basinCarved` is false and the painter
+  allocation-free). `CityBasin.reservedWithin(x, z, reach)`: true when any point within `reach` of (x, z) is reserved
+  (a circle test); hero trees and landmarks use it so no part of a crown reaches the reserve. It needs Lithostitched (pack world profile); without it `basinCarved` is false and the painter
   flattens its own ground. Gated by the feature flag `awaken:carillon` (Classic start leaves it off; old worlds never
   have it). The river inside the core follows the city's fixed path (offsets from the site centre, north = −z). Terrain
   keeps lairs, ruins, hero trees and biome features out; Carillon wires runtime systems (gate Director, anomalies,
@@ -1517,6 +1547,14 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 - `OpeningHooks`: `inOpening(Player)`, `stage(Player)`, `skip(ServerPlayer)`.
 - `AtlasHooks`: `reveal(ServerPlayer, BlockPos, int radius)`, `explored(Player, BlockPos)`.
 - `MovementHooks` gains `wallRunning`, `hanging` (W2 adds them).
+- Movement block tags (the city's affordances for the Ascent's free-run and ledge reading; 2026-10-25): the city fills
+  them with every kit and vanilla block it places for each role, B1 for facades and roofs, B3 for street life.
+  `#awaken:runner_ledges` (hang and shimmy: cornices, string courses, sills, beam ends, balcony rails, trim),
+  `#awaken:runner_climbs` (climb up: drainpipes, ivy and trellis, scaffold poles, ladders),
+  `#awaken:runner_lines` (rope and Tether: laundry lines, bunting, crane ropes),
+  `#awaken:runner_soft` (soft landings and bounces: awnings, hay carts),
+  `#awaken:runner_swings` (swing points: bracket signs, flagpoles).
+  The "no" language (fences, spikes) is in none of them.
 
 ### 16.10 Budgets
 - Perf profile, RD 16, busiest market at noon: p50 ≤ 10 ms (platform 5.3 measured + city blocks ≤ 2.8 with solid cores
@@ -1644,7 +1682,8 @@ is what the Ascent decided while building it.
   jump), ranks improve them. Off: the old rule (vanilla until the awakening, ranks unlock roll/sprint E, slide D,
   mantle C; no Runner moves; the server refuses them). `ascent` (on) is the Ascent's feature flag in the same file.
 - The System announces the body's moves at the awakening, once, in one toast (roll, sprint, slide, mantle); never
-  before it, and the Runner's own moves are found, not told.
+  before it. (Superseded by §16.0 decision 24, Euan 2026-10-25: the Runner's moves are taught just in time through
+  `core.api.TipHooks`, with the player's real keys, once, then quiet.)
 - Ranks (`Body.runnerRank`: the rank, E before the awakening): wall-run 35 ticks, 40 from D; wall-jump links 4, 5 from
   C; shimmy 1.6 b/s, 2.2 from B; ledge jump reach up 2.5 / sideways 3, +1 each from B; tactical sprint recharge
   80 − 10 a rank (to 30); slide cooldown 20 − 2 a rank (to 10). Client and server use the same table.
