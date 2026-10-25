@@ -161,7 +161,7 @@ final class RunnerServer {
             if (Math.abs(msg.ty() - (s[1] - RunnerRules.HANG_DROP)) > 0.3) return false;
             e = RunnerRules.edgeNear(p.level(), ctx, M, msg.tx(), msg.ty(), msg.tz(), msg.axis(), msg.sign(), s[1], 0.3, 0.1 + RunnerRules.SERVER_TOL);
             // a real drop under the hold (the column in front of the face)
-            if (e != null && RunnerRules.groundWithin(p.level(), ctx, M, e.hx(), e.top(), e.hz(), RunnerRules.LOWER_DROP)) return false;
+            if (e != null && !RunnerRules.lowerWorth(p.level(), ctx, M, e)) return false;
         } else if (msg.flag() == BodyPayloads.HANG_EAVE) {
             // from a climb line's top up to the lip over it (SPEC §17.23): only from a grip held or just let go
             if (!m.gripping && now - m.gripEndedAt > 6) return false;
