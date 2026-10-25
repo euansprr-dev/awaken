@@ -41,8 +41,10 @@ public final class CityPainter {
                 CityLandmarks.part(c, buf, plan.parts.get(id));
             } else if ((id -= layout.nParts) < layout.nTrees) {
                 tree(c, buf, plan.trees.get(id));
+            } else if ((id -= layout.nTrees) < layout.nLamps) {
+                lamp(c, buf, plan.lamps.get(id));
             } else {
-                lamp(c, buf, plan.lamps.get(id - layout.nTrees));
+                CityProps.prop(c, buf, plan.props.get(id - layout.nLamps));
             }
         }
     }
