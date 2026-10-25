@@ -2684,8 +2684,15 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   ticks; Jump alone lunges 1.2 up the line (6 ticks, once per 10); Jump + back kicks off the wall (0.5 out, 0.42 up,
   turning to face out over 5 ticks: the ledge back-jump's numbers); Jump + left/right swings out sideways (0.42 along,
   0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
-  step off. At the top (no line where the hands would go, 1.75 over the feet) forward hands the body to vanilla's climb,
-  whose eave is caught as a hang as before (§17.14). A screen open holds the grip. The rope key still cuts in.
+  step off. **The top** always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): it is
+  reached when there's no line where the hands would go (1.75 over the feet) or the head meets something over it (a
+  cornice, an eave, a coping row). With forward held: (1) a lip over the head, its face out past the body within 1.5
+  of it, its top 1.6-3.2 over the feet, with the way out level and then up to the hold free (`GripRules.topLip`), is a
+  hang from that face: the body goes out from under it, then up (7 ticks, `HANG_EAVE`), and the hang's own climb out
+  (§17.21) puts you on the roof or coping; (2) else, open air over the head hands the body to vanilla's climb, whose
+  eave is caught as a hang as before (§17.14); (3) else the hands hold still at the top (no climb, no jitter) until
+  forward is let go. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
+  `topLip` from where it has the body (plus its tolerance). A screen open holds the grip. The rope key still cuts in.
 - **Motion**: the grip moves the body itself (`move`), its velocity zeroed, so vanilla's ladder cap (0.15 down) doesn't
   hold back the slide on any line, vanilla's ladder included; sideways it eases onto the line at most 0.15 a tick.
 - **Server** (`RunnerServer.grip`): the first Run takes a line in the claimed column where the server saw the body
@@ -2705,7 +2712,9 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   Leaving: view clips `fp_pipe_kick`, `fp_pipe_side_l/_r`, `fp_pipe_land`. Sound: the grip's grab, `body.pipe_slide`
   (palms hissing on the line, every 8 ticks of a slide), `body.pipe_brake`; the line's own grit off the hands while
   sliding, sparks off a metal line at speed; a faint judder in the view.
-- Test: `runner_pipe_grip`. Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
+- Tests: `runner_pipe_grip`; `runner_pipe_cornice` (a drainpipe under a one-block cornice with a roof behind: the lip is
+  the way on, hung from its outer face, taken by the server only from the grip, climbed out onto the roof; a deep
+  ceiling and open air give no lip). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
 
 ---------------------------------------------------------------------------------------------------------------------
 
