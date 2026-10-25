@@ -132,7 +132,7 @@ figcaption b{color:var(--ink);font-weight:600;display:block;font-size:13px}
 <tr><td class="k">First person today</td><td>Sprint lowers the hands, slide braces them, hang and mantle lift them, the rope lifts one arm; wings show at the frame's edges</td><td class="gap">Whole-hand shifts only, with no owner, so they stack</td></tr>
 <tr><td class="k">Pipes</td><td>Vanilla ladder physics; the free-run pushes up at 0.3 blocks a tick</td><td class="gap">No animation: the body floats</td></tr>
 </tbody></table></div>
-<p class="small">Every new animation keeps the shared rules: ticked state drawn with partial ticks, nothing allocated per frame, blends of 2-4 ticks in and 4-6 out, a small anticipation before big actions, our own sounds and grit, Signal cyan for magic.</p>
+<p class="small">The free-run's feel stays exactly as you approved it: this plan only adds animation to it. Every new animation keeps the shared rules: ticked state drawn with partial ticks, nothing allocated per frame, blends of 2-4 ticks in and 4-6 out, a small anticipation before big actions, our own sounds and grit, Signal cyan for magic.</p>
 
 <h2 id="pipes"><span class="n">02</span>Pipes: the grip</h2>
 <p>A new Runner state, <b>Grip</b>, on every climb line: drainpipes, trellises, hoist ropes, hanging ladders and ladders. Walk or jump into one, or fall past it holding forward, and the body snaps to it. Both hands go round the pipe and the knees clamp it.</p>
@@ -252,7 +252,7 @@ figcaption b{color:var(--ink);font-weight:600;display:block;font-size:13px}
 <div class="tbl"><table>
 <thead><tr><th>Group</th><th>Moves and what your hands do</th></tr></thead>
 <tbody>
-<tr><td class="k">Ground</td><td><b>Tactical sprint</b> hands pump low, in step · <b>Slide</b> lead hand braced, off hand trailing grit, your legs out ahead · <b>Slide-cancel</b> hands thrown up · <b>Roll</b> forearms cross the frame · <b>Vault</b> a palm plants on the top · <b>Mantle</b> both palms slap the lip and press over · <b>Leap</b> arms swing forward · <b>Landing</b> hands drop and spring back; a hard landing puts one hand to the ground</td></tr>
+<tr><td class="k">Ground</td><td><b>Tactical sprint</b> hands pump low, in step · <b>Slide</b> lead hand braced, off hand trailing grit, your legs out ahead · <b>Stair slide</b> the slide with the view tipped down the slope, the off hand skimming each step edge with a bump and a puff of grit; in third person the slide pose tilted to the stairs, heels chattering once a step · <b>Slide-cancel</b> hands thrown up · <b>Roll</b> forearms cross the frame · <b>Vault</b> a palm plants on the top · <b>Mantle</b> both palms slap the lip and press over · <b>Leap</b> arms swing forward · <b>Landing</b> hands drop and spring back; a hard landing puts one hand to the ground</td></tr>
 <tr><td class="k">Walls</td><td><b>Wall-run</b> fingertips brush the wall, grit every 4 ticks · <b>Wall jump</b> the palm shoves off · <b>Wall climb</b> hands slap up the face · <b>Grab / hang</b> both hands slam the lip, fingers over the edge, feet on the wall below · <b>Shimmy</b> hand over hand · <b>Ledge up / side / back / lower / corner</b></td></tr>
 <tr><td class="k">Climb lines</td><td><b>Grip, climb, slide, brake, kick, side swing, hop, top-out</b> (section 02)</td></tr>
 <tr><td class="k">Rope</td><td><b>Fire</b> the arm throws and the wrist flicks · <b>Swing / pump / reel</b> the rope hand high, the other joins to pump, hand over hand to reel · <b>Zip</b> both hands overhead · <b>Release</b> the hand opens and the rope falls away · <b>Flip</b> arms tuck · <b>Carry</b> arms out for balance</td></tr>
@@ -296,7 +296,7 @@ figcaption b{color:var(--ink);font-weight:600;display:block;font-size:13px}
 <thead><tr><th>Phase</th><th>Scope</th><th class="num">Builder time</th></tr></thead>
 <tbody>
 <tr><td class="k">P1 Pipes and the rig</td><td>Hands (one owner), the clip format, spec tool and preview, your legs in view; the Grip state with its server check, third- and first-person clips, sounds and grit</td><td class="num">3-4 h</td></tr>
-<tr><td class="k">P2 Runner's Kit</td><td>Every ground and wall move in first person</td><td class="num">2-3 h</td></tr>
+<tr><td class="k">P2 Runner's Kit</td><td>Every ground and wall move in first person, the stair slide included (its third-person tilt too)</td><td class="num">2-3 h</td></tr>
 <tr><td class="k">P3 The Ascent</td><td>Rope, Leaper, wings, flight, Sovereign, landings</td><td class="num">2-3 h</td></tr>
 <tr><td class="k">P4 Touches</td><td>Doors, levers, herbs, meals, chests, pick-ups, petting</td><td class="num">2-3 h</td></tr>
 <tr><td class="k">P5 Station scenes</td><td>The scene kit and the crafting table, then the Forge, cooking and the Journal. A test checks that a recipe laid out in the scene crafts on the server exactly as in the vanilla screen.</td><td class="num">4-6 h</td></tr>

@@ -18,6 +18,8 @@ Interactions"-level hand moments across the mod; all in the design language we a
 | Creature life | `mobs/client/life` (SPEC §23) | Procedural springs by bone name and temperament | Breath, follow-through, weight; no per-creature code |
 | Climb lines (pipes) | `#minecraft:climbable` + `#awaken:runner_climbs` (drainpipe, trellis, rope, hanging ladder, ladder); `FreeRun.climb` | Vanilla ladder physics; the free-run pushes up at 0.3 b/t with a grip sound | **No animation at all**, 3P or FP: the body floats. Vanilla rules: no keys = drift down 0.15 b/t, Shift = hold |
 
+The free-run's feel is approved as it is (Euan, 25 Oct): this plan adds animation to it, never changes its motion.
+
 Shared rules every new animation keeps: ticked state drawn with partial ticks; fixed slots, nothing allocated per
 frame; 2-4 tick blend in, 4-6 tick blend out (`BodyCamera.hold`); smoothstep for turns, sine quarter-waves for
 thrusts, a small anticipation before any big action; own sounds and own grit (the surface's colour), never vanilla
@@ -118,6 +120,7 @@ they reach the 3P clips through `core.api.PlayerClips`. Added to SPEC §12 when 
 |---|---|---|
 | Ground | Tactical sprint | Hands pump low at the frame's foot, locked to the stride |
 | | Slide | Lead hand braced forward, off hand trails on the ground throwing grit; your legs out ahead |
+| | Stair slide (SPEC §17.22, built on pack/ascent; `MovementHooks` `stairSliding`) | The slide's hands with the view tipped down the slope; the off hand skims the step edges, a small bump and a puff of the stair's grit at each step; your legs out ahead along the slope. 3P: the slide pose (`body_slide`) with the whole figure tipped to the stairs' angle about the across-body axis (`BodyAnims.tip`, eased in over 3 ticks), heels chattering once a step |
 | | Slide-cancel jump | Both hands thrown up, then open for the landing |
 | | Roll | Forearms cross the frame as the view dips (the dip exists) |
 | | Free-run vault | A palm plants on the top with the slap and puff that exist now; the body swings over it |
@@ -191,7 +194,7 @@ clip tour in first person and in the shoulder view, run alone, Gradle wrapped in
 | Phase | Scope | Builder time |
 |---|---|---|
 | P1 Pipes and the rig | Hands (one owner, the five listeners folded in), the FP clip format, spec tool and preview, the body-in-view legs; GRIP (hold, climb, slide, brake, kick, side swing, hop, land, top-out), its server check, 3P and FP clips, sounds, grit. Tests: `runner_pipe_grip` (slide, brake, kick-off, no fall damage), `anims_clip_names` | 3-4 h |
-| P2 The Runner's Kit in FP | Every ground and wall move of §4 | 2-3 h |
+| P2 The Runner's Kit in FP | Every ground and wall move of §4, the stair slide included (3P tilt and FP) | 2-3 h |
 | P3 The Ascent in FP | Rope, Leaper, wings, flight, Sovereign, landings | 2-3 h |
 | P4 Touches | #1, 3, 4, 6, 7, 10, 11 of §5 | 2-3 h |
 | P5 Station scenes | The scene kit (lean-in shot, input, cursor ray, arms in the world, vanilla escape hatch) and the crafting table; then the Forge and anvils, cooking, the Journal. Test: `anims_station_menu` (a recipe laid by the scene's clicks crafts on the server exactly as by the vanilla screen) | 4-6 h |
