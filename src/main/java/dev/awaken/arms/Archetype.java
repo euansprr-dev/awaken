@@ -1,6 +1,7 @@
 package dev.awaken.arms;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jspecify.annotations.Nullable;
 
@@ -39,6 +40,18 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
         }
     }
 
+    /** How a move sounds through the air: a quick cut, a heavy's slow arc, a thrust's straight hiss. */
+    public enum Swish {
+        LIGHT, HEAVY, THRUST;
+
+        public final String key = name().toLowerCase(Locale.ROOT);
+
+        static final Codec<Swish> CODEC = Codec.STRING.comapFlatMap(s -> {
+            for (Swish w : values()) if (w.key.equals(s)) return DataResult.success(w);
+            return DataResult.error(() -> "unknown swish " + s);
+        }, w -> w.key);
+    }
+
     /** The guard: ticks after the raise that deflect, how much a block takes off, its arc, a broken guard's stagger. */
     public record Guard(int deflect, float reduction, float heavyReduction, float angle, int breakTicks, int lockout) {
         static final Codec<Guard> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -64,11 +77,16 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
         ).apply(i, Dodge::new));
     }
 
-    /** The weapon's pose in first person from the swing's start to its end (yaw, pitch, roll in degrees), and its lunge. */
+    /**
+     * The weapon in first person from the swing's start pose to its end pose, and its lunge (blocks). A pose is the
+     * hand's place on screen (x right, y up: blocks from vanilla's resting hand), the blade's roll in the screen's
+     * plane (degrees, + toward the off hand) and optionally the tip's tilt forward (degrees: a chop, a thrust). The
+     * hand travels between poses on an arc about the shoulder.
+     */
     public record Swing(List<Float> from, List<Float> to, float lunge) {
         static final Codec<Swing> CODEC = RecordCodecBuilder.create(i -> i.group(
-                Codec.FLOAT.listOf(3, 3).fieldOf("from").forGetter(Swing::from),
-                Codec.FLOAT.listOf(3, 3).fieldOf("to").forGetter(Swing::to),
+                Codec.FLOAT.listOf(3, 4).fieldOf("from").forGetter(Swing::from),
+                Codec.FLOAT.listOf(3, 4).fieldOf("to").forGetter(Swing::to),
                 Codec.FLOAT.optionalFieldOf("lunge", 0F).forGetter(Swing::lunge)
         ).apply(i, Swing::new));
     }
@@ -92,10 +110,11 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
     /**
      * One move's row. windup, active and recovery in ticks (the hit lands on the active ticks); cadence = the recovery
      * ticks where the next press earns a rhythm step; motion = damage multiplier; posture = what it does to a stance;
-     * arc (degrees) and reach (blocks) = what it hits; window = how long after a deflect or dodge it can be called.
+     * arc (degrees) and reach (blocks) = what it hits; window = how long after a deflect or dodge it can be called;
+     * swish = its sound through the air.
      */
     public record MoveDef(int windup, int active, int recovery, List<Integer> cadence, float motion, int posture, float arc, float reach,
-                          int hitstop, boolean finisher, int window, float bossCap, Optional<Charge> charge, Swing swing) {
+                          int hitstop, boolean finisher, int window, float bossCap, Optional<Charge> charge, Swing swing, Swish swish) {
         static final Codec<MoveDef> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("windup").forGetter(MoveDef::windup),
                 Codec.INT.fieldOf("active").forGetter(MoveDef::active),
@@ -110,7 +129,8 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
                 Codec.INT.optionalFieldOf("window", 0).forGetter(MoveDef::window),
                 Codec.FLOAT.optionalFieldOf("bossCap", 0F).forGetter(MoveDef::bossCap),
                 Charge.CODEC.optionalFieldOf("charge").forGetter(MoveDef::charge),
-                Swing.CODEC.fieldOf("swing").forGetter(MoveDef::swing)
+                Swing.CODEC.fieldOf("swing").forGetter(MoveDef::swing),
+                Swish.CODEC.optionalFieldOf("swish", Swish.LIGHT).forGetter(MoveDef::swish)
         ).apply(i, MoveDef::new));
 
         /** Ticks from the press to the end of the active window. */

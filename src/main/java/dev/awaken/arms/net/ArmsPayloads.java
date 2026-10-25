@@ -39,13 +39,14 @@ public final class ArmsPayloads {
 
     /** What a {@link Result} or {@link Seen} reports. */
     public static final int MOVE = 0, HIT = 1, DEFLECT = 2, BLOCK = 3, GUARD_BREAK = 4, PERFECT_DODGE = 5, EVADE = 6, BREAK = 7,
-            REFUSE = 8, DODGE = 9, RESONANCE = 10;
+            REFUSE = 8, DODGE = 9, RESONANCE = 10, HURT = 11;
 
     /**
      * Server → the player: what their press or guard did. MOVE: the move the server runs for seq (aux = move id,
      * aux2 = cadence); HIT: entity struck (aux = hit-stop ms, aux2 = the move); DEFLECT / BLOCK / GUARD_BREAK /
      * PERFECT_DODGE / EVADE: entity = the attacker; BREAK: entity's stance broke; REFUSE: seq refused; RESONANCE:
-     * aux = the meter.
+     * aux = the meter; HURT: a blow landed on you (entity = who struck, aux = the yaw it came from, aux2 = damage in
+     * tenths).
      */
     public record Result(int seq, int what, int entity, int aux, int aux2) implements CustomPacketPayload {
         public static final Type<Result> TYPE = new Type<>(Awaken.id("arms_result"));

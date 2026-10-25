@@ -1,5 +1,6 @@
 package dev.awaken.mobs.entity;
 
+import dev.awaken.core.api.BodyMaterial;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.Strikes;
 import dev.awaken.core.test.AwakenTests;
@@ -83,6 +84,22 @@ public final class TellTests {
             h.assertTrue(ghoul.staggered() && ghoul.telegraphTicks() == 0 && ghoul.isHeld(), "a stagger ends the tell and holds the body still");
             ghoul.discard();
             pig.discard();
+            h.succeed();
+        });
+
+        AwakenTests.register("mobs_body_materials", 20, h -> {
+            int bone = 0, wood = 0, stone = 0;
+            for (MobDef d : Bestiary.all()) {
+                BodyMaterial m = d.material();
+                if (d.traits.contains(dev.awaken.mobs.def.Trait.HAUNTED)) h.assertTrue(m == BodyMaterial.SPIRIT, d.id + ": a haunted body is a spirit");
+                else if (d.model == dev.awaken.mobs.def.Model.SKELETON) h.assertTrue(m == BodyMaterial.BONE, d.id + ": a skeleton is bone");
+                if (m == BodyMaterial.BONE) bone++;
+                if (m == BodyMaterial.WOOD) wood++;
+                if (m == BodyMaterial.STONE) stone++;
+            }
+            h.assertTrue(bone > 0 && wood > 0 && stone > 0, "the bestiary has bone, wood and stone bodies (" + bone + ", " + wood + ", " + stone + ")");
+            MobDef saint = Bestiary.get("root_saint");
+            h.assertTrue(saint != null && saint.material() == BodyMaterial.WOOD, "the Root Saint is wood");
             h.succeed();
         });
 

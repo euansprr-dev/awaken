@@ -129,7 +129,7 @@ public final class ArmsPredict {
         recovery = ArmsRules.recovery(def, st, p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED));
         buffered = null;
         fadeFrom = -100;
-        ArmsSounds.swing(p, st, m, cad);
+        ArmsAudio.swing(p, st, m, cad);
     }
 
     /** Ticks into the running move on the hands' clock (hit-stop holds pause it), with the frame's fraction. */
@@ -184,9 +184,9 @@ public final class ArmsPredict {
                 movePaused = ArmsFeel.paused();
                 step = -1;
                 ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_CHARGE, p.getYRot(), p.getXRot(), -1));
-                ArmsSounds.charge(p);
+                ArmsAudio.charge(p);
             }
-            if (charging && c.min() + (ticks - chargeStart) == c.glint()) ArmsSounds.glint(p);
+            if (charging && c.min() + (ticks - chargeStart) == c.glint()) ArmsAudio.glint(p);
             if (!charging || c.min() + (ticks - chargeStart) < c.max()) return;
         }
         pressHeld = false;
@@ -258,7 +258,7 @@ public final class ArmsPredict {
         buffered = null;
         fightAt = ticks;
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Dodge(nextSeq(), (float) dodgeX, (float) dodgeZ, p.getX(), p.getY(), p.getZ()));
-        ArmsSounds.dodge(p);
+        ArmsAudio.dodge(p);
         CombatFeedback.kick((float) (dodgeX * fz - dodgeZ * fx) * -2.5F, 0F, (float) (dodgeX * lx + dodgeZ * lz) * 3.5F, 8);
         dodgeTick(p);
     }
@@ -307,7 +307,7 @@ public final class ArmsPredict {
             }
             case ArmsPayloads.HIT -> {
                 fightAt = ticks;
-                ArmsSounds.impact(p, r.entity(), r.aux2(), cadence);
+                ArmsAudio.impact(p, r.entity(), style, r.aux2());
                 if (r.aux() > 0) {
                     CombatFeedback.hitstop(r.entity(), r.aux());
                     CombatFeedback.hold(r.aux());
@@ -315,10 +315,11 @@ public final class ArmsPredict {
                     Archetype.MoveDef def = style == null || m == null ? null : style.move(m);
                     if (def != null) {
                         java.util.List<Float> from = def.swing().from(), to = def.swing().to();
-                        float dy = to.get(0) - from.get(0), dp = to.get(1) - from.get(1);
-                        float n = Math.max(1, (float) Math.sqrt(dy * dy + dp * dp));
+                        // along the blow's travel on screen (y up there, pitch down here)
+                        float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
+                        float n = Math.max(1e-3F, (float) Math.sqrt(dx * dx + dy * dy));
                         float s = Math.min(2.4F, r.aux() / 40F);
-                        CombatFeedback.kick(dy / n * s, dp / n * s, dy / n * s * 0.4F, 6);
+                        CombatFeedback.kick(dx / n * s, -dy / n * s, dx / n * s * 0.4F, 6);
                     }
                 }
             }
@@ -328,20 +329,22 @@ public final class ArmsPredict {
                 CombatFeedback.hitstop(r.entity(), 100);
                 CombatFeedback.hold(100);
                 CombatFeedback.kick(0F, -1.8F, 1.2F, 7);
-                ArmsSounds.deflect(p);
+                ArmsAudio.deflect(p);
             }
             case ArmsPayloads.BLOCK -> {
                 fightAt = ticks;
                 CombatFeedback.kick(0F, 1.2F, 0F, 5);
+                ArmsAudio.block(p);
             }
             case ArmsPayloads.GUARD_BREAK -> {
                 fightAt = ticks;
                 CombatFeedback.kick(0F, 3.5F, -2F, 10);
+                ArmsAudio.guardBreak(p);
             }
             case ArmsPayloads.PERFECT_DODGE -> {
                 fightAt = ticks;
                 CombatFeedback.hitstop(r.entity(), 60);
-                ArmsSounds.perfectDodge(p);
+                ArmsAudio.perfectDodge(p);
             }
             case ArmsPayloads.BREAK -> {
                 BROKEN.put(r.entity(), ticks + r.aux());
@@ -350,9 +353,25 @@ public final class ArmsPredict {
                 CombatFeedback.kick(0F, 2.5F, 0F, 10);
             }
             case ArmsPayloads.RESONANCE -> resonance = r.aux();
+            case ArmsPayloads.HURT -> hurt(p, r.aux(), r.aux2() / 10F);
             default -> { }
         }
     }
+
+    /** A blow landed on us: its thump, the view nudged away from where it came from, the HUD's shard toward it. */
+    private static void hurt(LocalPlayer p, int fromYaw, float damage) {
+        ArmsAudio.hurt(p);
+        if (fromYaw == Integer.MIN_VALUE) return; // no place it came from (a blast's centre is gone, a thorn)
+        hurtYaw = fromYaw;
+        hurtAt = ticks;
+        // vanilla already rolls the view toward the blow; this adds the jolt of its weight, never more than a few degrees
+        float rel = Mth.wrapDegrees(fromYaw - p.getYRot()) * Mth.DEG_TO_RAD;
+        float w = Mth.clamp(damage / 6F, 0.4F, 1.5F);
+        CombatFeedback.kick(-Mth.sin(rel) * 1.6F * w, -Mth.cos(rel) * 1.4F * w, 0F, 7);
+    }
+
+    /** The world yaw a blow on us last came from, and the tick it landed (the HUD's shard). */
+    static int hurtYaw, hurtAt = -1000;
 
     static void onSeen(ArmsPayloads.Seen s) {
         if (s.what() == ArmsPayloads.BREAK) BROKEN.put(s.entity(), ticks + s.aux());

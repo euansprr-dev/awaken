@@ -32,8 +32,8 @@ public final class ArmsRules {
     public static final int DEFLECT_POSTURE_LIGHT = 18, DEFLECT_POSTURE_HEAVY = 26;
     /** The latency hold on a guardable hit is at most this many ticks. */
     public static final int GRACE_MAX = 3;
-    /** Soft focus: how far a strike may turn toward its target, and how far it closes. */
-    public static final float FOCUS_TURN = 15F, FOCUS_CLOSE = 0.6F;
+    /** Soft focus: how far a strike may turn toward its target. */
+    public static final float FOCUS_TURN = 15F;
     /** Hit-stop in a sweep: at most one freeze per this many ticks. */
     public static final int HITSTOP_GAP = 4;
 

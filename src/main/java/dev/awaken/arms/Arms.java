@@ -1,16 +1,18 @@
 package dev.awaken.arms;
 
 import net.minecraft.core.component.DataComponents;
+import dev.awaken.core.api.Strikes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Arms' public face (SPEC §12, §24): which fighting style a weapon fights with, whether it guards, and a creature's
- * stance. Any melee weapon gets the three verbs: a sword (vanilla's, the Hunter blades, other mods' "_sword" items)
+ * Arms' public face (SPEC §12, §24): which fighting style a weapon fights with, whether it guards, a creature's
+ * stance, and the sound of a told blow. Any melee weapon gets the three verbs: a sword (vanilla's, the Hunter blades, other mods' "_sword" items)
  * fights as a plain Longsword until its own style arrives.
  */
 public final class Arms {
@@ -56,5 +58,13 @@ public final class Arms {
     public static boolean broken(LivingEntity e) {
         Posture p = e.getExistingDataOrNull(ArmsContent.POSTURE);
         return p != null && p.broken(ArmsServer.now(e));
+    }
+
+    /**
+     * The sound a creature makes telling a blow of this class (server; the mobs module plays it with the tell). Each
+     * class has one voice on every creature, so the ear learns the answer before the eye does. Null for NONE.
+     */
+    public static @Nullable SoundEvent tellSound(Strikes.Kind kind) {
+        return ArmsSounds.tell(kind);
     }
 }

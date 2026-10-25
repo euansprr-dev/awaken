@@ -120,8 +120,7 @@ final class MobGoals {
             tellLeft = tellTicks(mob, telling);
             mob.setTell(tellLeft, telling);
             mob.getNavigation().stop();
-            boolean heavy = telling == Strikes.Kind.HEAVY;
-            mob.playLevelSound(heavy ? MobSounds.TELEGRAPH_HEAVY.get() : MobSounds.TELEGRAPH.get(), heavy ? 1.1F : 0.55F, heavy ? 0.8F : 1.7F);
+            mob.playTell(telling, telling == Strikes.Kind.HEAVY, 1.0F);
         }
 
         private void release(@Nullable LivingEntity target) {
@@ -213,7 +212,7 @@ final class MobGoals {
                 if (tellLeft < 0) {
                     tellLeft = ToldMelee.tellTicks(mob, Strikes.Kind.LIGHT);
                     mob.setTell(tellLeft, Strikes.Kind.LIGHT);
-                    mob.playLevelSound(MobSounds.TELEGRAPH.get(), 0.55F, 1.7F);
+                    mob.playTell(Strikes.Kind.LIGHT, false, 1.0F);
                 }
                 if (tellLeft > 0) {
                     if (--tellLeft > 0 && (tellLeft & 1) == 0) mob.setTell(tellLeft, Strikes.Kind.LIGHT);

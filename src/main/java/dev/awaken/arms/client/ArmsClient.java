@@ -54,7 +54,10 @@ public final class ArmsClient {
         modBus.addListener(ArmsClient::onExtensions);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(EventPriority.HIGH, InputEvent.InteractionKeyMappingTriggered.class, ArmsPredict::onKey);
-        bus.addListener(ClientTickEvent.Post.class, e -> ArmsPredict.tick());
+        bus.addListener(ClientTickEvent.Post.class, e -> {
+            ArmsPredict.tick();
+            ArmsAutopilot.tick();
+        });
         bus.addListener(EventPriority.LOW, MovementInputUpdateEvent.class, ArmsPredict::onInput);
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, ArmsFeel::onCameraAngles);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ArmsPredict.reset());

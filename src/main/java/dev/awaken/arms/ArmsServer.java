@@ -7,6 +7,7 @@ import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.Strikes;
 import dev.awaken.veil.Veil;
+import net.minecraft.core.Holder;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +30,9 @@ import net.minecraft.world.entity.npc.Npc;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
@@ -181,6 +184,7 @@ final class ArmsServer {
         if (cadence == ArmsRules.CADENCE_MAX && def.finisher()) resonance(p, s, ArmsRules.RESONANCE_CADENCE3);
         AwakenNet.send(p, new ArmsPayloads.Result(seq, ArmsPayloads.MOVE, -1, move.ordinal(), cadence));
         p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true); // the vanilla arm for anyone without the clips
+        soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(cadence));
         seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.MOVE, -1, style.index(), move.ordinal()));
     }
 
@@ -278,6 +282,7 @@ final class ArmsServer {
             pendingBy = pendingTarget = -1;
         }
         if (!pendingLanded) return;
+        p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def), SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
         s.fightAt = now;
         if (s.focus != t.getId()) s.focus = t.getId();
         s.focusSeenAt = now;
@@ -353,18 +358,18 @@ final class ArmsServer {
                 if (by instanceof LivingEntity attacker && e.getDamageSource().getDirectEntity() == by) {
                     addPosture(attacker, kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT, p);
                 }
-                soundForOthers(p, SoundEvents.ANVIL_LAND, 0.55F, 1.9F);
+                soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
                 answer(p, s, ArmsPayloads.DEFLECT, by);
             }
             case BLOCK -> {
                 e.setBlockedDamage(incoming * g.reduction());
-                soundForOthers(p, SoundEvents.SHIELD_BLOCK.value(), 0.9F, 1.3F);
+                soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
                 answer(p, s, ArmsPayloads.BLOCK, by);
             }
             case GUARD_BREAK -> {
                 e.setBlockedDamage(incoming * g.heavyReduction());
                 s.guardBreak = true; // after this blow resolves: the guard drops and can't rise for a moment
-                soundForOthers(p, SoundEvents.SHIELD_BREAK.value(), 0.9F, 0.9F);
+                soundForOthers(p, ArmsSounds.GUARD_BREAK.get(), 1.0F, 1.0F);
                 answer(p, s, ArmsPayloads.GUARD_BREAK, by);
             }
             case PASS -> e.setBlocked(false);
@@ -429,6 +434,28 @@ final class ArmsServer {
         if (e.getEntity().getId() == pendingBy) e.setSweeping(false);
     }
 
+    /** An Arms hit makes its own sound by what it meets, so vanilla's attack sounds stay quiet while one resolves. */
+    static void onSound(PlayLevelSoundEvent.AtPosition e) {
+        if (pendingBy >= 0 && e.getSound() != null && vanillaAttack(e.getSound())) e.setCanceled(true);
+    }
+
+    private static boolean vanillaAttack(Holder<SoundEvent> sound) {
+        SoundEvent s = sound.value();
+        return s == SoundEvents.PLAYER_ATTACK_STRONG || s == SoundEvents.PLAYER_ATTACK_WEAK || s == SoundEvents.PLAYER_ATTACK_CRIT
+                || s == SoundEvents.PLAYER_ATTACK_KNOCKBACK || s == SoundEvents.PLAYER_ATTACK_NODAMAGE || s == SoundEvents.PLAYER_ATTACK_SWEEP;
+    }
+
+    /** A blow that lands on a player tells their client where it came from and how hard (the hurt's sound and kick). */
+    static void onDamaged(LivingDamageEvent.Post e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || !ArmsConfig.enabled() || e.getInflictedDamage() <= 0) return;
+        if (Strikes.of(e.getSource()) == Strikes.Kind.NONE) return;
+        Vec3 from = e.getSource().getSourcePosition();
+        int yaw = from == null ? Integer.MIN_VALUE : (int) (Mth.atan2(from.z - p.getZ(), from.x - p.getX()) * Mth.RAD_TO_DEG) - 90;
+        Entity by = e.getSource().getEntity();
+        AwakenNet.send(p, new ArmsPayloads.Result(state(p).seq, ArmsPayloads.HURT, by == null ? -1 : by.getId(), yaw,
+                Math.round(e.getInflictedDamage() * 10)));
+    }
+
     // ---- guard raises -------------------------------------------------------------------------------------------------
 
     static void onUseStart(LivingEntityUseItemEvent.Start e) {
@@ -485,7 +512,7 @@ final class ArmsServer {
         s.cadence = 0;
         s.buffered = null;
         p.causeFoodExhaustion(0.1F);
-        soundForOthers(p, SoundEvents.PLAYER_ATTACK_SWEEP, 0.4F, 1.8F);
+        soundForOthers(p, ArmsSounds.DODGE.get(), 1.0F, 1.0F);
         seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.DODGE, -1, (int) (Mth.atan2(s.dodgeZ, s.dodgeX) * Mth.RAD_TO_DEG), 0));
     }
 
@@ -544,7 +571,7 @@ final class ArmsServer {
             p.nextBreakAt = now + ArmsRules.BREAK_COOLDOWN;
             p.value = 0;
             Strikes.stagger(target, ticks);
-            sound(target, SoundEvents.ANVIL_BREAK, 0.7F, 0.6F);
+            sound(target, ArmsSounds.BREAK.get(), 1.0F, 1.0F);
             resonance(by, state(by), ArmsRules.RESONANCE_BREAK);
             AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
             seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));

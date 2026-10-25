@@ -141,7 +141,7 @@ public final class AbilityRunner {
             case SUMMON, DECOY, HEAL -> 0.9F;
             default -> 1.0F;
         };
-        mob.playLevelSound(a.heavy() ? MobSounds.TELEGRAPH_HEAVY.get() : MobSounds.TELEGRAPH.get(), a.heavy() ? 1.4F : 0.9F, pitch);
+        mob.playTell(a.strike(), a.heavy(), pitch);
         if (a.heavy()) {
             for (ServerPlayer p : level.players()) {
                 if (p.distanceToSqr(mob) < 24 * 24) p.sendOverlayMessage(net.minecraft.network.chat.Component.literal(a.name()).withColor(mob.def().glow));

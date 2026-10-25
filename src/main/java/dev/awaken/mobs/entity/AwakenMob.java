@@ -290,6 +290,16 @@ public class AwakenMob extends Monster {
         entityData.set(DATA_TELL, (byte) (ticks > 0 ? kind : Strikes.Kind.NONE).ordinal());
     }
 
+    /**
+     * The tell's sound: its class's one voice on every creature (Arms), or our own wind-up for an ability nobody can
+     * answer (a summon, a heal); {@code pitch} colours only that wind-up.
+     */
+    public void playTell(Strikes.Kind kind, boolean heavy, float pitch) {
+        SoundEvent voice = dev.awaken.arms.Arms.tellSound(kind);
+        if (voice != null) playLevelSound(voice, 1.0F, 1.0F);
+        else playLevelSound(heavy ? MobSounds.TELEGRAPH_HEAVY.get() : MobSounds.TELEGRAPH.get(), heavy ? 1.4F : 0.9F, pitch);
+    }
+
     /** The class of the blow being told, NONE when no blow is (both sides). */
     public Strikes.Kind tellKind() {
         Strikes.Kind[] k = Strikes.Kind.values();

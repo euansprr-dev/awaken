@@ -1,6 +1,7 @@
 package dev.awaken.mobs;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.BodyMaterial;
 import dev.awaken.core.api.MobHooks;
 import dev.awaken.core.api.Strikes;
 import dev.awaken.mobs.def.Bestiary;
@@ -28,10 +29,11 @@ public final class MobsModule {
         MobLoot.init(modBus);
         MobsEvents.init(modBus);
         MobHooks.install(new MobsSpawner());
-        // what Arms reads (SPEC §24): the blow a creature is telling, and how its stance breaks
+        // what Arms reads (SPEC §24): the blow a creature is telling, how its stance breaks, what its body is made of
         Strikes.installTells(e -> e instanceof AwakenMob m && m.telegraphTicks() > 0 && m.tellKind() != Strikes.Kind.NONE
                 ? new Strikes.Tell(m.telegraphTicks(), m.tellKind()) : null);
         Strikes.installStaggers(MobsModule::stagger);
+        BodyMaterial.install(e -> e instanceof AwakenMob m ? m.def().material() : null);
         Signal.onAction("mobs", Mobs::onSignalAction);
         MobsCommands.register();
         MobsTests.register();

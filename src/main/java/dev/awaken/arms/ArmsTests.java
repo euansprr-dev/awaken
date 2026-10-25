@@ -38,6 +38,34 @@ final class ArmsTests {
         AwakenTests.register("arms_dodge", 60, ArmsTests::dodge);
         AwakenTests.register("arms_posture_break", 60, ArmsTests::postureBreak);
         AwakenTests.register("arms_kill_switch", 40, ArmsTests::killSwitch);
+        AwakenTests.register("arms_sounds", 20, ArmsTests::sounds);
+    }
+
+    /** A blow sounds like what it meets and how hard it lands; every class of tell has its one voice. */
+    static void sounds(GameTestHelper h) {
+        Archetypes.Loaded a = longsword();
+        Archetype.MoveDef s1 = a.move(Archetype.Move.STRIKE_1), heavy = a.move(Archetype.Move.HEAVY), exec = a.move(Archetype.Move.EXECUTION);
+        h.assertTrue(ArmsSounds.swish(s1) == ArmsSounds.SWISH_LIGHT.get() && ArmsSounds.swish(heavy) == ArmsSounds.SWISH_HEAVY.get()
+                && ArmsSounds.swish(a.move(Archetype.Move.STRIKE_4)) == ArmsSounds.SWISH_THRUST.get(), "cuts, the heavy and the thrust each have their swish");
+        h.assertTrue(ArmsSounds.swishPitch(2) > ArmsSounds.swishPitch(1) && ArmsSounds.swishPitch(0) == 1F, "the rhythm climbs a semitone a step");
+        LivingEntity zombie = put(h, EntityTypes.ZOMBIE, 1, 1, 20);
+        h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_FLESH.get(), "a cut into a zombie is flesh");
+        h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.HEAVY, heavy) == ArmsSounds.HIT_FLESH_HEAVY.get(), "a heavy into it lands heavy");
+        h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.EXECUTION, exec) == ArmsSounds.EXECUTION.get(), "an Execution is its own blow");
+        zombie.getAttribute(Attributes.ARMOR).setBaseValue(15);
+        h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_ARMOR.get(), "plate worn over flesh rings as armour");
+        LivingEntity skeleton = put(h, EntityTypes.SKELETON, 2, 1, 20), golem = put(h, EntityTypes.IRON_GOLEM, 3, 1, 20),
+                slime = put(h, EntityTypes.SLIME, 1, 3, 20), vex = put(h, EntityTypes.VEX, 2, 3, 20);
+        h.assertTrue(ArmsSounds.impact(skeleton, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_BONE.get(), "a skeleton is bone");
+        h.assertTrue(ArmsSounds.impact(golem, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_STONE.get(), "a golem is stone and iron");
+        h.assertTrue(ArmsSounds.impact(slime, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_SLIME.get(), "a slime is slime");
+        h.assertTrue(ArmsSounds.impact(vex, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_SPIRIT.get(), "a vex is a spirit");
+        h.assertTrue(ArmsSounds.impactPitch(golem, heavy) < 1F && ArmsSounds.impactPitch(zombie, s1) == 1F, "a heavy on a hard body lands lower");
+        for (Strikes.Kind k : Strikes.Kind.values()) {
+            h.assertTrue((Arms.tellSound(k) == null) == (k == Strikes.Kind.NONE), k + ": every class of blow has its tell's voice");
+        }
+        for (LivingEntity e : new LivingEntity[]{zombie, skeleton, golem, slime, vex}) e.discard();
+        h.succeed();
     }
 
     static Archetypes.Loaded longsword() {
@@ -329,10 +357,15 @@ final class ArmsTests {
             p.getAttribute(Attributes.ATTACK_SPEED).setBaseValue(1024);
             p.attack(pig);
             h.assertTrue(Math.abs(200 - pig.getHealth() - 7F) < 0.05, "off: vanilla's attack deals the sword's 7, dealt " + (200 - pig.getHealth()));
+            p.startUsingItem(InteractionHand.MAIN_HAND);
+            h.assertTrue(!p.isUsingItem(), "off: a sword raises no guard, as in vanilla");
         } finally {
             ArmsConfig.enabledOverride = null;
         }
         h.assertTrue(Arms.fights(p), "on again");
+        p.startUsingItem(InteractionHand.MAIN_HAND);
+        h.assertTrue(p.isUsingItem() && p.isBlocking(), "on: the sword's guard rises");
+        p.stopUsingItem();
         done(h, p);
     }
 }
