@@ -255,6 +255,9 @@ public final class FirstPerson {
         return p != null && p.armsInWorld();
     }
 
+    /** The station scenes' switch (the feel settings' stationScenes): the crafting table worked by hand. */
+    public static volatile java.util.function.BooleanSupplier stationsOn = () -> true;
+
     /** The touches' switch (the feel settings' firstPersonTouches): hands on the things you use. */
     public static volatile java.util.function.BooleanSupplier touchesOn = () -> true;
 

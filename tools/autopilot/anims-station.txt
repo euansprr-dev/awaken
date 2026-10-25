@@ -1,0 +1,60 @@
+# Hands P5 (SPEC §24): the crafting table's scene (run with PACK=feel, HUD on). Use the table: the view leans in, the
+# grid is the table top. Pick up planks, lay one on each of two squares (the hands lay them), put the rest back, take
+# the sticks (a hand takes them), leave. Filmed with the clip recorder; a still of the worked table. Shots: anims_p5_*.
+world anims_station survival 4253
+waitworld
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:slow_falling 30 1 true
+cmd tp @s 0.5 201 0.5 0 0
+wait 200
+cmd fill -4 199 -4 6 199 8 minecraft:smooth_stone
+cmd fill -4 200 -4 6 206 8 minecraft:air
+cmd fill -4 200 5 6 203 5 minecraft:spruce_planks
+cmd setblock 1 200 3 minecraft:crafting_table
+cmd setblock 3 200 3 minecraft:barrel[facing=up]
+cmd clear @s
+cmd give @s minecraft:oak_planks 4
+camera first
+wait 20
+cmd tp @s 1.5 200 1.6 0 30
+wait 20
+cmd awaken ascent pilot rec station_in 24 3
+cmd awaken ascent pilot use
+wait 30
+shotnow anims_p5_table
+cmd awaken ascent pilot station 37 0
+wait 6
+cmd awaken ascent pilot rec station_lay 50 3
+cmd awaken ascent pilot station 2 1
+wait 14
+cmd awaken ascent pilot station 5 1
+wait 14
+shotnow anims_p5_laid
+cmd awaken ascent pilot station 37 0
+wait 10
+shotnow anims_p5_result
+cmd awaken ascent pilot rec station_take 24 3
+cmd awaken ascent pilot station 0 0
+wait 6
+shotnow anims_p5_take
+wait 20
+screen close
+wait 4
+cmd awaken ascent pilot rec station_out 16 3
+wait 20
+info
+quit

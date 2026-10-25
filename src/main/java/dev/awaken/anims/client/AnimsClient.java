@@ -31,6 +31,9 @@ public final class AnimsClient {
         bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, Touches::entityInteract);
         bus.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, Touches::interactionKey);
         FirstPerson.view(Touches::viewPose);
+        // station scenes (P5): the crafting table worked by hand
+        dev.awaken.anims.client.station.StationClient.init(bus);
+        bus.addListener(ClientTickEvent.Post.class, e -> dev.awaken.anims.client.station.StationClient.tick());
         bus.addListener(RenderFrameEvent.Pre.class, e -> WorldBody.frame());
         bus.addListener(ExtractLevelRenderStateEvent.class, WorldBody::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, WorldBody::onSubmit);

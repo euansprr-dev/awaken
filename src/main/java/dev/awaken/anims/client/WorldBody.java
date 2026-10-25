@@ -55,6 +55,19 @@ final class WorldBody {
     static final double HAND_DISTANCE = 0.85;
     private static final FirstPerson.Limb[] ARMS = {FirstPerson.Limb.RIGHT_ARM, FirstPerson.Limb.LEFT_ARM},
             LEGS = {FirstPerson.Limb.RIGHT_LEG, FirstPerson.Limb.LEFT_LEG};
+    /** The hand pass's field of view (vanilla's: 70°, whatever the player's own). */
+    static final float HAND_FOV = 70F;
+
+    /**
+     * The hand pass draws at its own field of view: a point the world shows at some place on screen must be drawn there
+     * with its view x and y scaled by this (the two fields of view's ratio; 1 at a 70° view with nothing narrowing it).
+     */
+    static float lens(Minecraft mc) {
+        float world = mc.gameRenderer.mainCamera().getFov();
+        if (world <= 1F) return 1F;
+        return (float) (Math.tan(Math.toRadians(HAND_FOV) / 2) / Math.tan(Math.toRadians(world) / 2));
+    }
+
     /** A foot nearer the eye than this is drawn in the hand pass, pushed out to it. */
     static final double LEG_DISTANCE = 1.15;
     private static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
@@ -151,6 +164,8 @@ final class WorldBody {
             Vec3 cam = camera.position();
             PoseStack ps = e.getPoseStack();
             ps.pushPose();
+            float lens = lens(mc);
+            ps.scale(lens, lens, 1F); // where the world puts it on screen, at the hand pass's field of view
             ps.rotate(VIEW.set(camera.rotation()).conjugate()); // world offsets to view space, as the hand pass sees them
             for (FirstPerson.Limb l : LEGS) {
                 int i = l.ordinal(), j = i * 3;
@@ -197,6 +212,9 @@ final class WorldBody {
                 float d = V.length();
                 if (d < 1e-4F) continue;
                 V.mul((float) (HAND_DISTANCE / d));
+                float lens = lens(mc);
+                V.x *= lens;
+                V.y *= lens;
                 // the arm comes up to it from under the frame's corner on its own side
                 double side = l == FirstPerson.Limb.RIGHT_ARM ? 1 : -1;
                 viewArm(ps, e.getSubmitNodeCollector(), parts[i], part(model, l), type, e.getPackedLight(), V.x, V.y, V.z,

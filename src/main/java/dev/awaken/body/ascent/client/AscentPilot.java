@@ -23,6 +23,7 @@ import net.minecraft.util.Mth;
  * double &lt;key&gt;               a double tap, as a player's: 2 ticks down, 3 up, 2 down (a barrel roll: double right)
  * use | attack               one click of the use or attack key (a door, a lever, a plant: the touches, Hands P4)
  * usehold &lt;ticks&gt;            hold the use key (eating)
+ * station &lt;slot&gt; [button]     a click on a slot of the open crafting-table scene (Hands P5)
  * stop                       let go of everything
  * </pre>
  */
@@ -85,6 +86,7 @@ public final class AscentPilot {
                 doubleAge = 0;
             }
             case "use" -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
+            case "station" -> dev.awaken.anims.client.station.StationClient.devClick(Integer.parseInt(a[1]), a.length > 2 ? Integer.parseInt(a[2]) : 0);
             case "attack" -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey());
             case "usehold" -> {
                 useHold = Integer.parseInt(a[1]);

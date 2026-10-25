@@ -52,6 +52,7 @@ public final class BodyClient {
         });
         dev.awaken.core.api.FirstPerson.reducedMotion = dev.awaken.body.client.feel.FeelConfig::reduced;
         dev.awaken.core.api.FirstPerson.touchesOn = dev.awaken.body.client.feel.FeelConfig::fpTouches;
+        dev.awaken.core.api.FirstPerson.stationsOn = dev.awaken.body.client.feel.FeelConfig::stations;
         dev.awaken.core.api.FirstPerson.world("body_grip", 100, (pt, rig) -> dev.awaken.body.client.feel.FeelConfig.fpMoves() && GripView.pose(pt, rig));
         dev.awaken.core.api.FirstPerson.world("body_moves", 90, (pt, rig) -> dev.awaken.body.client.feel.FeelConfig.fpMoves() && BodyFp.worldPose(pt, rig));
         // around the cast animations' own lean (LOWEST / HIGHEST), so the two nest

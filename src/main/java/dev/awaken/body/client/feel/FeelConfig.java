@@ -48,6 +48,10 @@ public final class FeelConfig {
     public static final ModConfigSpec.BooleanValue FP_TOUCHES = B
             .comment("First person: your hands on the things you use (a door pushed, a lever thrown, a chest's lid lifted, a herb plucked).")
             .define("firstPersonTouches", true);
+    public static final ModConfigSpec.BooleanValue STATIONS = B
+            .comment("Station scenes: at a crafting table the view leans in and your hands lay each ingredient on its square of the table",
+                    "(sneak + use for the plain screen).")
+            .define("stationScenes", true);
     public static final ModConfigSpec SPEC = B.build();
 
     public static void register() {
@@ -113,6 +117,15 @@ public final class FeelConfig {
     public static boolean fpMoves() {
         try {
             return !SPEC.isLoaded() || FP_MOVES.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Station scenes (Hands P5). */
+    public static boolean stations() {
+        try {
+            return !SPEC.isLoaded() || STATIONS.get();
         } catch (RuntimeException e) {
             return true;
         }
