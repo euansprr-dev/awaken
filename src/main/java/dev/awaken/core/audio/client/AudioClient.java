@@ -22,7 +22,17 @@ public final class AudioClient {
     public static void init(IEventBus modBus) {
         WorldSound.init(modBus);
         Conductor.music(() -> LayerPlayer.MUSIC.ownsChannel() ? LayerPlayer.MUSIC.level() : -1, CuePlayer::playingStage);
-        Conductor.register(Ambience::voices);
+        Conductor.register(new Conductor.Source() {
+            @Override
+            public int voices() {
+                return Ambience.voices();
+            }
+
+            @Override
+            public float emphasis() {
+                return Ambience.emphasis();
+            }
+        });
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AudioNet.PlayCue.TYPE, (msg, ctx) -> CuePlayer.request(Cue.byOrdinal(msg.cue())));
             e.register(AudioNet.PlayUi.TYPE, (msg, ctx) -> AudioUi.server(UiSound.byOrdinal(msg.sound())));

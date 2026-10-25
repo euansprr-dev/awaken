@@ -180,6 +180,22 @@ Entities are tracked from join/leave events; the Well, ruins and cooling meteors
 
 ## World sound: the Conductor (approved 2026-10-25; plan docs/sound/PLAN.md, SPEC §13 "Plan v2 · world sound")
 
+**Revised 2026-10-25 (Euan):** AmbientSounds (the pack's `sound` profile) plays the world's nature; the Conductor plays
+only what is AWAKEN's and lowers AmbientSounds while one of our moments sounds. With AmbientSounds installed the
+Conductor's own nature soundscapes (`awaken:world`, the families) are off; without it they are the fallback. No field
+recordings.
+
+- **The nature level** (`Soundscape.natureLevel()`, 0..1; down in ~1 s, up over ~5 s): the hush where you stand,
+  layered combat or Lord music (0.55), a stage cue (0.5), and AWAKEN's beds near (`Ambience` reports its loudest bed as
+  emphasis: × (1 − 0.6 emphasis)). `compat.client.AmbientSoundsBridge` sets AmbientSounds' master volume to the
+  player's own × the level (AmbientSounds eases to it), and puts the player's value back on shutdown.
+- **The gate hush** (`gates.client.GateHum`): within 48 blocks of an E-rank gate to 108 of an S-rank (×1.4 while a
+  break is near), depth 0.35 open, 0.15 a break near, 0.1 broken, 0.6 forming, 0.85 calm, none spent; renewed every
+  half second. A hush is full within half its radius and eases out to its edge.
+- **AmbientSounds data in our jar**: `assets/ambientsounds/basic/dimensions/awaken_dimensions.json` mutes it in every
+  `awaken:` dimension; `blockgroups/{rock,grass_block,grass,ice}.json` add our Awakened ground and plants. Test
+  `audio_world_ambientsounds`.
+
 The world's own sound around the listener, everywhere: biomes, places, reactions and magic. Client code in
 `core.audio.client.world`, data in `assets/<ns>/soundscape/**.json` (`core.audio.world.SoundscapeDef`), public hooks in
 `core.audio.client.Soundscape`.
@@ -187,9 +203,9 @@ The world's own sound around the listener, everywhere: biomes, places, reactions
 - **Soundscapes**: `awaken:world` plays everywhere (today: leaves overhead and wind toward the open side, the textures
   terrain's leaf rustle used to play); each overworld biome is in one family tag `#awaken:soundscape/<family>` (16
   families, written by `tools/terrain/biomes.py`'s SOUNDSCAPE column) whose soundscape is `awaken:family/<family>`.
-  A family without a file is silent until it gets one. Built so far: **greenwood** (three synthesised air layers
-  `amb_world_greenwood_a/b/c`, 37/41/53 s, `tools/art/specs/audio_world.py`; owls at night answering each other; a far
-  fox late at night; lulls). Birds and insects wait for the CC0 shortlist (`docs/sound/cc0-shortlist.html`).
+  A family without a file is silent. Built (the fallback without AmbientSounds): **greenwood** (three synthesised air
+  layers `amb_world_greenwood_a/b/c`, 37/41/53 s, `tools/art/specs/audio_world.py`; owls at night answering each
+  other; a far fox late at night; lulls). No more nature families are planned.
 - **Listener**: 24 ring columns (5, 11, 20 blocks) refreshed three a tick: top block kind (leaves, ground, water) and
   height, biome family; canopy share, open sky, underwater, wind (`terrain.client.ClientWind`), height, rain, time.
   Family weights ease over ~10 s; the camera's biome counts four columns.
@@ -208,8 +224,6 @@ The world's own sound around the listener, everywhere: biomes, places, reactions
 - **Tests**: `audio_world_census` (every overworld biome in one family; soundscape files parse; air layers 44.1 kHz
   Vorbis whose lengths repeat no sooner than 30 min together; every sound real; none named `ambient.*`),
   `audio_world_clock` (rates, thinning, answers, lulls, determinism, the day curve).
-- **Compat**: `assets/ambientsounds/basic/dimensions/awaken_dimensions.json` mutes AmbientSounds in `awaken:`
-  dimensions if a player adds it.
 
 ## Mix
 

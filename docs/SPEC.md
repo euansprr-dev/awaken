@@ -318,7 +318,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.core.audio.client.Soundscape` (client, world sound): `hush(Object owner, Vec3 at, float radius, float
   depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
   (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
-  (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city). `/awaken audio world [off|on]` (client).
+  (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city), `natureLevel()` (0..1, how much nature
+  ambience to let through now; AmbientSounds follows it). `/awaken audio world [off|on]` (client).
   Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
@@ -703,11 +704,13 @@ Plan v2 · audio (details in docs/modules/audio.md):
 
 Plan v2 · world sound (Euan approved all seven decisions 2026-10-25; details in docs/sound/PLAN.md, page
 docs/sound/plan.html):
-- Approach C: AWAKEN's own world ambience layer, the **Conductor** (`core/audio`, client in `core.audio.client.world`),
-  plays biomes, places, reactions and magic; Sound Physics Remastered gives positional sounds their room; Tread Lightly
-  plays footsteps once its spike passes on the Mac (else the Conductor re-voices player steps by surface and armour).
-  AmbientSounds is the benchmark in listening batch 1, not shipped; Raise Sound Limit Simplified and Sounds (IMB11)
-  stay out of the pack.
+- Approach C, revised by Euan the same day ("rebuilding from scratch something that already exists very well is not
+  smart"): **AmbientSounds** (in the pack's `sound` profile) plays the world's nature in every biome; AWAKEN's own
+  layer, the **Conductor** (`core/audio`, client in `core.audio.client.world`), plays only what is ours (hushes,
+  hums, magic, places, reactions) and lowers AmbientSounds while one of our moments sounds (`Soundscape.natureLevel()`,
+  applied by `compat.client.AmbientSoundsBridge`). No field recordings of our own. Sound Physics Remastered gives
+  positional sounds their room; Tread Lightly plays footsteps once its spike passes on the Mac (else the Conductor
+  re-voices player steps by surface and armour). Raise Sound Limit Simplified and Sounds (IMB11) stay out.
 - Four layers: **air** (ONE streamed, non-positional stereo sound for the whole Conductor; a Java mixer on vanilla's
   `JOrbisAudioStream`, the decoder `StemMixer` shares, plays up to six bed layers, two families crossfading, each with
   up to three layers of co-prime length, through a one-pole low-pass that closes indoors, underwater, in the Veil, in
@@ -735,13 +738,21 @@ docs/sound/plan.html):
 - AWAKEN's touches: the hush around open gates (48-96 blocks by rank) spreading as a Break nears; gusts played along
   `terrain.Wind`'s fronts; the Awakened lands' faint harmony in D major pentatonic (never the System's glass timbre);
   Mirror Marsh's one delayed answer; PER widens what you hear; dream clarity follows lucidity.
-- Sources: vanilla events first (referenced, never copied); CC0 recordings from Freesound only where vanilla lacks
-  them, each ticked by Euan on the shortlist page (`docs/sound/cc0-shortlist.html`) before download and listed in
-  `docs/sound/SOURCES.md`; synthesis for wind, tones and every magic sound.
+- Sources: AmbientSounds for nature; for our own sounds vanilla events first (referenced, never copied), then
+  synthesis (`tools/art/audiokit.py`). No recordings (Euan: field recordings would sound out of place with Minecraft).
+- The nature level (0..1, eased down in ~1 s, up over ~5 s): the hush where the listener stands (an open gate 48
+  blocks at E to 108 at S, deeper and 1.4× wider while a break is near, deepest once broken), layered combat or Lord
+  music (0.55), a stage cue (0.5), and AWAKEN's beds sounding near (rift, grove, the Well, ruins, a falling star:
+  × (1 − 0.6 × their level)). AmbientSounds' master volume = the player's own × the level; the player's value is
+  restored on shutdown. Without AmbientSounds the Conductor plays its own nature fallback (Greenwood today); with it,
+  none.
 - Quality gate: five listening batches of ten minutes or less (forest; every land; reactions; below and beyond; the
   magic); an unmarked entry counts as keep once Euan has opened the page.
-- Compat: our jar ships inert AmbientSounds dimension data (`assets/ambientsounds/basic/dimensions/awaken_*.json`,
-  `"mute": true` for instanced dimensions), read only if a player adds AmbientSounds.
+- AmbientSounds data in our jar (read only by AmbientSounds): `assets/ambientsounds/basic/dimensions/awaken_dimensions.json`
+  mutes it in every `awaken:` dimension (gates, strata, the Veil's Stillpoint, dreams, the Halo: those are ours), and
+  `blockgroups/{rock,grass_block,grass,ice}.json` add our Awakened ground and plants so its region detection hears
+  our biomes (riven shale and faultstone as rock, mirepeat as ground, lumen moss and moonblooms as plants, hoarfrost
+  and frostspar as ice). Awakened biomes inherit their archetype's tags, which AmbientSounds matches.
 
 Plan v2 · overworld structures (details in docs/modules/structures.md):
 - One visual language: three families (gates, Precursor ruins, lairs), each with its own light and palette.
@@ -977,9 +988,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
-- Sound (world sound, 2026-10-25): the `sound` profile gains Tread Lightly (and Immersive Thunder Reforged) once their
-  spike passes on the Mac beside Sound Physics Remastered (≥ 1.5.2); AmbientSounds, Raise Sound Limit Simplified and
-  Sounds stay out (docs/sound/PLAN.md §4).
+- Sound (world sound, 2026-10-25): the `sound` profile is Sound Physics Remastered (≥ 1.5.2) and **AmbientSounds**
+  6.3.11 with CreativeCore (compiled against as `compileOnly` for `compat.client.AmbientSoundsBridge`); Tread Lightly
+  (and Immersive Thunder Reforged) join once their spike passes on the Mac (profile `soundspike` until then); Raise
+  Sound Limit Simplified and Sounds stay out (docs/sound/PLAN.md §4).
 - Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling and Dynamic FPS. Xaero's
   World Map left it when Carillon's own Atlas shipped (M5, §16.8; M opens the table); no minimap, ever (direction
   comes from the world). `compat.WorldMaps` stays for a player who adds Xaero's themselves, and is silent without it. AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no

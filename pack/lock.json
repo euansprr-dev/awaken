@@ -42,10 +42,10 @@
    "client": "required",
    "server": "unsupported",
    "profiles": [
-    "soundspike"
+    "sound"
    ],
    "dependencyOf": [],
-   "why": "The benchmark for listening batch 1 (decision 3). Never shipped; our jar mutes it in awaken: dimensions."
+   "why": "Nature ambience for every biome (Euan, 2026-10-25: use the mod that already does this well). AWAKEN's Conductor plays the magic and places and lowers it under AWAKEN's moments (compat.client.AmbientSoundsBridge); our jar mutes it in awaken: dimensions."
   },
   {
    "slug": "appleskin",
@@ -172,7 +172,7 @@
    "client": "required",
    "server": "optional",
    "profiles": [
-    "soundspike"
+    "sound"
    ],
    "dependencyOf": [
     "ambientsounds"

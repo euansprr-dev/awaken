@@ -4,6 +4,19 @@ Status: **approved 2026-10-25** (Euan: "Go ahead with all recommendations": all 
 records them under §13 "Plan v2 · world sound", §12 (`Soundscape`), §14 and §15. Branch `pack/world-sound-plan`.
 Approval page: `docs/sound/plan.html`. Hand-off: `docs/handoff/pack-world-sound-plan.md`.
 
+**Revised the same day (Euan, after seeing the recordings shortlist):** *"Let's use AmbientSounds, add it to the sound
+profile ... we also build the hush and the hums and all of our own custom stuff, and then when that plays, maybe the
+ambient sounds play a bit less ... rebuilding from scratch something that already exists very well is not smart."*
+And no field recordings of our own: they would sound out of place with Minecraft. So:
+- **AmbientSounds plays the world's nature** in every biome (it is in the `sound` profile with CreativeCore). Its
+  trade-offs (§4: sound around the head rather than from places; every sound streamed) are accepted.
+- **The Conductor plays only what is ours**: hushes, hums, magic, places, reactions (§6.3's places and §7's touches),
+  and lowers AmbientSounds while one of our moments sounds (`Soundscape.natureLevel()`, applied by
+  `compat.client.AmbientSoundsBridge`). The first one is built: the world holds its breath near a gate.
+- **Decision 3 and decision 5 below are superseded**; §6.2's families stay only as the Conductor's fallback when
+  AmbientSounds isn't installed (Greenwood is built; no more nature families will be). §6.5's CC0 step is dropped;
+  our own sounds are vanilla events and synthesis. The listening batches cover our sounds only.
+
 Euan's brief: *"In every single biome and everything, I want to have like immersive sounds ... maybe we use [existing
 mods] instead of reinventing everything from scratch ... the number one goal here is to make it actually immersive,
 not just like, oh, mobs here, this there, but actually like truly immersive in terms of how it feels to be inside of
@@ -399,12 +412,12 @@ golden seeds).
    footsteps. *Recommended.* (A would be faster but generic and blind to AWAKEN; B rebuilds footsteps for nothing.)
 2. **Footsteps: Tread Lightly** in the `sound` profile, if the Phase 0 spike passes; otherwise our own re-voiced
    steps in P3. *Recommended.*
-3. **AmbientSounds: the benchmark, not shipped.** We A/B against it in batch 1 and adopt it for vanilla nature beds
+3. *(Superseded: AmbientSounds is in the sound profile and plays the nature.)* **AmbientSounds: the benchmark, not shipped.** We A/B against it in batch 1 and adopt it for vanilla nature beds
    only if it wins on your ears (§5). Our jar also ships inert data for it that mutes our instanced dimensions, so a
    player who adds it never hears birds in a gate. *Recommended.*
 4. **No Raise Sound Limit Simplified.** Its asynchronous playback breaks assumptions our music player relies on, it has
    open "music missing" bugs, and our budget fits the vanilla engine. *Recommended: leave it out.*
-5. **CC0 recordings from Freesound** for birds, insects, water and rain on surfaces: about 70 files from a shortlist
+5. *(Superseded: no recordings.)* **CC0 recordings from Freesound** for birds, insects, water and rain on surfaces: about 70 files from a shortlist
    page you tick, nothing downloaded before your yes. Downloads of originals need a free Freesound account's API key
    (yours, or a project account). *Recommended.*
 6. **Listening: five batches of ten minutes or less**, unmarked = keep once you've opened the page. (The gate music

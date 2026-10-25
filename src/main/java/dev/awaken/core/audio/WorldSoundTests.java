@@ -30,6 +30,56 @@ final class WorldSoundTests {
     static void register() {
         AwakenTests.register("audio_world_census", 40, WorldSoundTests::census);
         AwakenTests.register("audio_world_clock", 20, WorldSoundTests::clock);
+        AwakenTests.register("audio_world_ambientsounds", 20, WorldSoundTests::ambientSounds);
+    }
+
+    /**
+     * AmbientSounds plays the nature (the pack's sound profile): our jar's data for it parses, mutes every awaken:
+     * dimension, and names only real blocks; pack/mods.json ships it (and CreativeCore by dependency) in the sound profile.
+     */
+    static void ambientSounds(GameTestHelper h) {
+        List<String> problems = new ArrayList<>();
+        JsonObject dim = AudioTests.json("/assets/ambientsounds/basic/dimensions/awaken_dimensions.json");
+        if (dim == null) problems.add("no awaken_dimensions.json for AmbientSounds");
+        else {
+            if (!dim.has("mute") || !dim.get("mute").getAsBoolean()) problems.add("awaken: dimensions aren't muted");
+            boolean ours = false;
+            for (var n : dim.getAsJsonArray("dimension-names")) ours |= n.getAsString().equals("awaken:");
+            if (!ours) problems.add("the dimension file doesn't name awaken:");
+        }
+        for (String group : List.of("rock", "grass_block", "grass", "ice")) {
+            try (java.io.InputStream in = WorldSoundTests.class.getResourceAsStream("/assets/ambientsounds/basic/blockgroups/" + group + ".json")) {
+                if (in == null) {
+                    problems.add("no blockgroup " + group);
+                    continue;
+                }
+                var arr = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonArray();
+                for (var e : arr) {
+                    Identifier b = Identifier.parse(e.getAsString());
+                    if (!BuiltInRegistries.BLOCK.containsKey(b)) problems.add(group + ": no block " + b);
+                }
+            } catch (java.io.IOException | RuntimeException e) {
+                problems.add(group + ": " + e);
+            }
+        }
+        java.nio.file.Path root = AudioLayerTests.repoRoot();
+        if (root != null) {
+            try {
+                var mods = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(root.resolve("pack/mods.json"))).getAsJsonObject();
+                boolean shipped = false;
+                for (var m : mods.getAsJsonArray("mods")) {
+                    var o = m.getAsJsonObject();
+                    if (o.get("slug").getAsString().equals("ambientsounds")) {
+                        for (var p : o.getAsJsonArray("profiles")) shipped |= p.getAsString().equals("sound");
+                    }
+                }
+                if (!shipped) problems.add("pack/mods.json doesn't ship ambientsounds in the sound profile");
+            } catch (java.io.IOException | RuntimeException e) {
+                problems.add("pack/mods.json: " + e);
+            }
+        }
+        h.assertTrue(problems.isEmpty(), String.join("; ", problems));
+        h.succeed();
     }
 
     static void census(GameTestHelper h) {

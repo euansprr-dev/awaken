@@ -24,6 +24,15 @@ public final class Soundscape {
         Conductor.register(source);
     }
 
+    /**
+     * How much of the world's nature ambience to let through right now (1 all, 0 none): lower while something of
+     * AWAKEN's takes the stage (a hush, combat or Lord music, a stage cue, a rift or the Well near). The AmbientSounds
+     * bridge (compat) scales that mod's volume by it.
+     */
+    public static float natureLevel() {
+        return Conductor.natureLevel();
+    }
+
     /** How much of the world bed to give way at a point (0 none, 1 all): the city reports its walls. */
     public static void yieldWeight(Conductor.Yield weight) {
         Conductor.yieldWeight(weight);

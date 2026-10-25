@@ -8,13 +8,13 @@
     "perf": "Frame rate and memory. Client-side except Lithium and FerriteCore.",
     "horizon": "Far terrain.",
     "feel": "Camera, limbs, the animation library Awaken's full-body casts use, and Fresh Animations for vanilla creature bodies.",
-    "sound": "Room acoustics.",
+    "sound": "Room acoustics and the world's nature ambience (AmbientSounds); AWAKEN's own world sound is in the mod.",
     "comfort": "Recipe lookup, block info and inventory help. The world map is Awaken's own Atlas (M); no minimap, by design.",
     "together": "Join links and proximity voice.",
     "ultra": "Experimental: Iris shaders (OpenGL only; Iris lists Apple Silicon as unsupported).",
     "tools": "Profiling.",
     "world": "New terrain (Tectonic). Only ever installed into a fresh game folder (tools/play.sh --pack): it would seam existing worlds.",
-    "soundspike": "World sound Phase 0 spike only (docs/sound/PLAN.md §11): Tread Lightly, Immersive Thunder Reforged and the AmbientSounds benchmark beside Sound Physics. Never installed by tools/play.sh."
+    "soundspike": "World sound spike only (docs/sound/PLAN.md §11): Tread Lightly and Immersive Thunder Reforged beside Sound Physics. Never installed by tools/play.sh."
   },
   "mods": [
     {
@@ -232,9 +232,9 @@
     {
       "slug": "ambientsounds",
       "profiles": [
-        "soundspike"
+        "sound"
       ],
-      "why": "The benchmark for listening batch 1 (decision 3). Never shipped; our jar mutes it in awaken: dimensions."
+      "why": "Nature ambience for every biome (Euan, 2026-10-25: use the mod that already does this well). AWAKEN's Conductor plays the magic and places and lowers it under AWAKEN's moments (compat.client.AmbientSoundsBridge); our jar mutes it in awaken: dimensions."
     }
   ],
   "configs": [

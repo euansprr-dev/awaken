@@ -54,7 +54,7 @@ public final class Conductor {
     private static BooleanSupplier stageCue = () -> false;
     private static Yield yield = (x, y, z) -> 0.0;
     private static int newThisSecond, secondTicks, ticks;
-    private static float duckBeds = 1F, duckEvents = 1F, yieldNow;
+    private static float duckBeds = 1F, duckEvents = 1F, yieldNow, nature = 1F;
     private static long gameTime;
     private static boolean ambientSoundsLoaded, enabled = true;
     private static String lastEvent = "none yet";
@@ -63,6 +63,11 @@ public final class Conductor {
     public interface Source {
         /** How many voices it holds right now. */
         int voices();
+
+        /** 0..1: how strongly something of AWAKEN's is sounding near the listener (a rift, the Well); nature steps back. */
+        default float emphasis() {
+            return 0F;
+        }
     }
 
     /** How much of the world bed to give way at a point: 0 none, 1 all (the city reports its walls). */
@@ -122,16 +127,18 @@ public final class Conductor {
         HOWNER[slot] = owner;
     }
 
-    /** What is left of a hushable sound at a point (1 = untouched). */
+    /** What is left of a hushable sound at a point (1 = untouched): full depth within half the radius, easing out to its edge. */
     static float hushAt(double x, double y, double z) {
         float left = 1F;
         for (int i = 0; i < MAX_HUSHES; i++) {
             long rest = HUNTIL[i] - gameTime;
             if (rest <= 0) continue;
             double dx = x - HX[i], dy = y - HY[i], dz = z - HZ[i];
-            if (dx * dx + dy * dy + dz * dz > HR[i] * HR[i]) continue;
+            double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (d >= HR[i]) continue;
+            float near = Mth.clamp((float) ((HR[i] - d) / (0.5 * HR[i])), 0F, 1F);
             float k = Mth.clamp(rest / 40F, 0F, 1F); // the last two seconds ease back
-            left = Math.min(left, 1F - (1F - HD[i]) * k);
+            left = Math.min(left, 1F - (1F - HD[i]) * k * near * near * (3F - 2F * near));
         }
         return left;
     }
@@ -159,6 +166,8 @@ public final class Conductor {
         float world = duckBeds * (1F - yieldNow);
 
         pickScapes();
+        float natureGoal = natureGoal(music);
+        nature += (natureGoal - nature) * (natureGoal < nature ? 0.05F : 0.01F);
         float rainMix = AT.rain;
         // the air: one stream; indoors and underwater close its filter
         for (Scape s : SCAPES) {
@@ -203,8 +212,7 @@ public final class Conductor {
             List<SoundscapeDef.Event> evs = s.def.events();
             for (int i = 0; i < evs.size(); i++) {
                 SoundscapeDef.Event e = evs.get(i);
-                KEEP[i] = ambientSoundsLoaded && e.hush() ? 0F
-                        : Mth.clamp(s.weight * e.when().at(AT.dayTime) * rain(e.rain(), rainMix) * duckEvents * (1F - yieldNow), 0F, 1F);
+                KEEP[i] = Mth.clamp(s.weight * e.when().at(AT.dayTime) * rain(e.rain(), rainMix) * duckEvents * (1F - yieldNow), 0F, 1F);
             }
             current = s;
             s.clock.advance(0.05, KEEP, Conductor::fire);
@@ -243,8 +251,34 @@ public final class Conductor {
         lastEvent = String.format(Locale.ROOT, "%s%s at %.0f blocks", e.sound(), answer ? " (answer)" : "", d);
     }
 
-    /** The shared world soundscape at weight 1, and the two strongest families. */
+    /**
+     * How much of the world's nature ambience to let through (1 all, 0 none), eased: down in about a second, back up
+     * over about five. AWAKEN's moments take the stage: a hush where you stand (an open gate, a Break), layered combat
+     * or Lord music, a stage cue, a rift or the Well sounding near. Read by compat's AmbientSounds bridge; the
+     * Conductor's own nature (played only without AmbientSounds) follows the same hush through its events.
+     */
+    public static float natureLevel() {
+        return enabled ? nature : 1F;
+    }
+
+    private static float natureGoal(int music) {
+        float goal = hushAt(AT.x, AT.y, AT.z);
+        if (music >= 2) goal = Math.min(goal, 0.55F);
+        if (stageCue.getAsBoolean()) goal = Math.min(goal, 0.5F);
+        float emphasis = 0F;
+        for (Source src : SOURCES) emphasis = Math.max(emphasis, src.emphasis());
+        return goal * (1F - 0.6F * Mth.clamp(emphasis, 0F, 1F));
+    }
+
+    /**
+     * The shared world soundscape at weight 1, and the two strongest families: the Conductor's own nature, played
+     * only when AmbientSounds isn't installed (with it in the pack, it plays the nature; Euan, 2026-10-25).
+     */
     private static void pickScapes() {
+        if (ambientSoundsLoaded) {
+            for (int i = 0; i < MAX_SCAPES; i++) place(i, null, 0F);
+            return;
+        }
         int first = -1, second = -1;
         float[] w = AT.familyWeight;
         for (int f = 0; f < Families.COUNT; f++) {
@@ -299,6 +333,7 @@ public final class Conductor {
         }
         java.util.Arrays.fill(HUNTIL, 0L);
         java.util.Arrays.fill(HOWNER, null);
+        nature = 1F;
         AT.reset();
     }
 
@@ -318,7 +353,8 @@ public final class Conductor {
         sb.append(AIR.status()).append("; ").append(TEX.status()).append("; ");
         sb.append(String.format(Locale.ROOT, "voices: %d textures, %d events, %d other (budget %d); duck %.2f, yield %.2f; last event %s",
                 TEX.voices(), events, others, VOICE_BUDGET, duckBeds, yieldNow, lastEvent));
-        if (ambientSoundsLoaded) sb.append("; AmbientSounds is loaded: nature events off");
+        sb.append(String.format(Locale.ROOT, "; nature %.2f", nature));
+        if (ambientSoundsLoaded) sb.append(" (AmbientSounds plays the nature; ours is off)");
         if (Soundscapes.count() == 0) sb.append("; no soundscapes loaded");
         return sb.toString();
     }

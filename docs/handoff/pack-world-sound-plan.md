@@ -111,3 +111,34 @@ All seven decisions approved. Built on `pack/world-sound-plan`:
   (`datapacks/awakened_lands/.../has_structure/precursor_tether_spire.json`, the Ascent's); left as it was.
 - The vanilla tags `biomes.py` reads come from the decompiled sources in the cloud: point `AWAKEN_REF` at a folder
   with `assets/data` (the Minecraft sources jar's `data`) and `neo` (NeoForge's sources jar).
+
+## Revised (Euan, same day): AmbientSounds plays the nature, we build only what's ours
+
+*"Let's use AmbientSounds, add it to the sound profile ... we also build the hush and the hums and all of our own
+custom stuff, and then when that plays, maybe the ambient sounds play a bit less ... rebuilding from scratch something
+that already exists very well is not smart."* No field recordings (they'd sound out of place with Minecraft).
+
+Done:
+- **Pack**: AmbientSounds 6.3.11 + CreativeCore 2.14.24 moved into the `sound` profile (lock entries re-profiled only);
+  `soundspike` keeps Tread Lightly and Immersive Thunder Reforged. `build.gradle` compiles against both as
+  `compileOnly` (Modrinth version ids from the lock).
+- **The nature level** `Soundscape.natureLevel()` and `compat.client.AmbientSoundsBridge`: AmbientSounds' master volume
+  = the player's own × the level; the player's value comes back on shutdown.
+- **The gate hush** (`gates.client.GateHum` → `Soundscape.hush`): the world holds its breath near a gate, by rank and
+  state (numbers in SPEC §13 "Plan v2 · world sound").
+- With AmbientSounds installed, the Conductor's own nature (world rustle and wind, Greenwood) is off; it stays as the
+  fallback without it.
+- AmbientSounds data in our jar: our dimensions muted; our Awakened ground and plants added to its block groups.
+- The CC0 shortlist, its page, its tool and SOURCES.md are removed (git history has them). The published shortlist
+  artifact is stale: delete it if Euan wants.
+- Test `audio_world_ambientsounds`; `audio_*`, `terrain_biome_table*` and `compat_*` (28) pass locally.
+
+Superseded above: "Waiting on Euan" item 1 (the shortlist) and "Next for a builder" items about birds, insects and
+Phase 2's nature families. Still waiting on Euan: the Mac runs (the spike now checks Tread Lightly and the thunder
+mod; AmbientSounds plays in every `PACK=sound` run, so listen there, and watch that the gate music never drops out:
+AmbientSounds streams its sounds and the engine has 8 streaming channels).
+
+Next for a builder (all ours, PLAN.md §6.3 and §7): the hums and places (the Veil muffle, the Stillpoint, Lucidium's
+clarity, the Halo, gate rooms and the Lord's hush, the Descent's tells), the Awakened lands in the System's key,
+Living Wilds happenings heard from afar, the hunter's ear; each one also lowers the nature through the Conductor.
+
