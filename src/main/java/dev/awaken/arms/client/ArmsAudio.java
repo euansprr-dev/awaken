@@ -29,7 +29,7 @@ final class ArmsAudio {
         if (e == null) return;
         Archetype.Move move = Archetype.Move.byId(moveId);
         Archetype.MoveDef def = style == null || move == null ? null : style.move(move);
-        play(e, ArmsSounds.impact(e, move, def), 1.0F, ArmsSounds.impactPitch(e, def));
+        play(e, ArmsSounds.impact(e, move, def, style == null ? null : style.id()), 1.0F, ArmsSounds.impactPitch(e, def));
     }
 
     static void deflect(Player p) {

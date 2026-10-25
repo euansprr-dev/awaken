@@ -574,7 +574,8 @@ public class AwakenMob extends Monster {
             setFlag(F_GUARDING, false);
             playSound(net.minecraft.sounds.SoundEvents.SHIELD_BLOCK.value(), 1.0F, 0.8F);
             level.sendParticles(ParticleTypes.CRIT, getX(), getY() + getBbHeight() * 0.6, getZ(), 12, 0.4, 0.4, 0.4, 0.2);
-            if (distanceToSqr(la) < 16) doHurtTarget(level, la);
+            // the counter off a raised guard: the guard was its tell, and it lands as a LIGHT blow (deflect it, block it)
+            if (distanceToSqr(la) < 16) Strikes.deliver(this, Strikes.Kind.LIGHT, () -> doHurtTarget(level, la));
         }
         if (def().has(Trait.REFLECT) && source.getDirectEntity() instanceof Projectile p && p.getOwner() != this && random.nextFloat() < 0.6F) {
             p.setDeltaMovement(p.getDeltaMovement().scale(-1.0));

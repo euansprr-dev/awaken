@@ -42,7 +42,7 @@ Hard rules:
 | `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
 | `anims` | Hands (§24): the first-person system (the world body, the view layer, view clips), `core.api.FirstPerson` |
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
-| `arms` | Weapons and combat (§24): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
+| `arms` | Weapons and combat (§25): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -397,10 +397,20 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.core.api.BodyMaterial` (§24) — what a blade meets: `FLESH, ARMOR, BONE, WOOD, STONE, SPIRIT, SLIME`;
   `of(Entity)` (both sides; armour ≥ 10 over flesh or bone answers ARMOR), `install(Source)` (the mobs module answers for
   its bodies through `MobDef.material()`), vanilla defaults by type.
-- `dev.awaken.core.api.CombatFeedback` (client, §24) — every blow's one feel: `hitstop(entityId, ms)` (the body freezes
+- `dev.awaken.core.api.CombatFeedback` (client, §25) — every blow's one feel: `hitstop(entityId, ms)` (the body freezes
   and trembles), `hold(ms)` (the striker's hands and view), `kick(yaw, pitch, roll, ticks)` (follows camera shake).
-  Installed by Arms; no-op before that and on a dedicated server. Powers' hits use it.
-- `dev.awaken.powers.client.fx.FxClient` (client) — the effects engine for other modules' weapons (§24):
+  Installed by Arms; no-op before that and on a dedicated server. Powers' hits use it. Also `engaged` (the local player
+  is in a fight: the action camera's COMBAT pose) and `blow(entity, dirX, dirZ, strength)` / `blowOn(entity, out)` (a
+  blade's blow's way and weight, read by the Life layer's stagger).
+- `dev.awaken.core.api.WeaveHooks` (server, §25) — `costScale(player)` (a cast's energy share: 0.7 in a Weave's beat)
+  and `cast(player, family, force, level)` (a landed cast); Arms installs the weaver, the powers module's Casting calls
+  both.
+- `dev.awaken.core.api.Strikes` additions (§25): `delivering()` (the class of the blow being delivered now: a bolt
+  fired inside it carries it) and `installClassifier(source -> kind)` (the mobs module classes blows that land after
+  their ability ran: bolts, fangs).
+- `dev.awaken.powers.client.fx.FxClient` (client) — the effects engine for other modules' weapons (§25; also
+  `weaponMote(kind, …, near)`, the light off a weapon, and `tellMark(mark, …)`, an enemy tell's marks; `FxPool.NEAR`
+  draws a sprite close to the eye):
   `slash(wielder, offset, axis0, axis90, startDeg, sweepDeg, radius, band, sweepTicks, argb)` (a blade's crescent that
   moves with the wielder), `thrust(wielder, offset, dir, from, to, width, sweepTicks, argb)`, `bladeHit(at, dir, size,
   BodyMaterial)`. Same budget and settings as the powers' own effects.
@@ -3961,6 +3971,51 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   sword never rises (a sword another mod made to block keeps its own).
 - Off while riding, sleeping, projecting, meditating, flying or gliding; Arms never runs a spectator's melee.
 
+**Styles** (S5 batch 1, the timing table's rows beside the Longsword's; PLAN §4.5): every style has the full set of
+moves (a three-strike chain and a mastery strike, the heavy and its glint, riposte, slipcut, execution, the Art,
+undercut, plunge), its own guard and dodge numbers and its base speed (recovery scales with the item's attack speed
+against it, so a vanilla item plays its designed tempo).
+- **Axe** (0.9; vanilla's axes): chops on a 3-tick wind-up, a finisher cleave from overhead (motion 2.0, posture 18),
+  a hooking mastery strike; the heavy is a guard-breaking hew (posture 24, 34 on the glint); its Art a whirl all round.
+- **Maul** (0.7; the mace): slow heavy swings (wind-up 4), the finisher a slam all round (arc 360, posture 26), the
+  heavy an overhead crash all round (posture 30, 44 on the glint), a plunge that hits harder (motion 1.3); its Art the
+  Earthbreaker's wave. Its blows land blunt (`arms.hit_blunt`) on every body but a spirit.
+- **Spear** (1.1; our forged spears; vanilla's spears and the trident keep their own right mouse, the charge and the
+  throw, until the style can share it): thrusts at 4.2 blocks on a 25° arc, the finisher a wide sweep, the heavy a
+  lunge to 5 blocks; its Art a thrust whose wave runs 12 blocks.
+- **Greatblade** (1.0): wide heavy cleaves (arc 130, reach 3.4), a spinning finisher all round, an overhead mastery
+  strike; its Art a great sweep.
+- **Rapier** (1.8): quick thrusts at 3.6 on a 20° arc, a slash finisher; a riposte of motion 3.4 and posture 24 with
+  a 16-tick window, the deflect window 5 ticks: the parry weapon.
+- **Daggers** (2.2): a four-strike chain (two cuts, a stab, a wide finisher) and a fifth stab with mastery; the
+  shortest dodge (5 ticks, 2.2 blocks, recharging in 16) and a Slipcut of 2.8 with an 8-tick window; a blow from
+  behind (the striker more than 120° round from where the body faces) lands ×1.8.
+- **Katana** (1.5): a sweeping chain from the draw; the first strike after the blade has rested 2 s (40 ticks since
+  the last move ended) is drawn from the sheath: ×1.7 motion, ×1.8 posture. The deflect window 5 ticks.
+- **Twinblades** (2.0, a double-ended blade): a fast four-strike chain on tight rhythm windows closing on a spin all
+  round, a fifth spinning back with mastery; its Art a whirl.
+- **Glaive** (1.0): sweeping arcs of 160° at 3.8 for crowds, a finisher all round, a thrust with mastery.
+- **Scythe** (0.9): wide reaps (150°) that rise and fall, a finisher reaping down across; a spirit struck ×1.6 (it
+  cuts the Veil's spirits).
+- **Gauntlets** (2.4): fist strings (a four-punch chain on 1-tick wind-ups, an uppercut finisher, a fifth with mastery),
+  a dodge of 5 ticks recharging in 18; a riposte that throws the body (knockback 1.3).
+- **Chain-blade** (1.3): lashes at 5 blocks, a thrust to 6, the heavy to 6.5; each blow landed reels the body up to 2
+  blocks in.
+- **Shieldblade** (1.4): block-first, the guard taking 85% (70% of a HEAVY), 150° wide, broken for only 10 ticks; the
+  second strike a shield bash; the riposte a bash that throws (1.0).
+- **War-staff** (1.2): sweeping two-handed blows; each blow landed gives back 3 power energy (`Powers.restoreEnergy`),
+  so a staff fighter's powers come round faster.
+- **Precursor Arm** (1.5, Tech): an energy blade whose reach grows half a block with each step of the chain (2.6 to 3.6
+  by the finisher), the heavy at 4; its Art a wave to 14 blocks.
+- Style traits (`Archetype.Traits`, optional per style in the table): `backstab`, `drawIdle`, `drawMotion`,
+  `drawPosture`, `spirit`, `pull`, `energy`, `reachPerStep`, `riposteThrow` (`ArmsRules.behind`, `ArmsRules.drawn`;
+  the server applies the rest as the blow lands; a Lord, 150 health and up, is neither reeled in nor thrown; test
+  `arms_style_traits`).
+- Third person: `arms_<style>_<move>` clips on each style's own ticks, generated from the authored poses by the move's
+  kind (a side cut, an overhead, a thrust, a sweep round), heavier styles leaning and sinking further; the slide's,
+  the fall's and the dodge's strikes are every style's. Strike 1's follow-through passes out in front (a waypoint) so
+  the arm never crosses the chest, and finishes out past the off side so the blow reads from behind.
+
 **Sounds** (`ArmsSounds`, 26 events `arms.*`, 76 files; tools/art/specs/audio_arms.py).
 - Hybrid by design: CC0 recordings (Kenney's Impact Sounds and RPG Audio, `tools/art/sources/kenney`, CC0 1.0, licence
   files kept) for the physical transients and bodies synthesis renders thin; the audio kit for the air, the steel's ring
@@ -4037,7 +4092,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   Nothing while a screen is open or the game is paused.
 - **It carries the fight**: the fighter's own blade fills with its accent's light as a heavy charges, flares on the
   glint and on a perfect heavy, and hums while the Resonance is full (the Art ready); its halos swell with it.
-- **First person**: a hold of its own (`<id>_in_hand.json`, which draws nothing itself; scale 0.52 for the voxel
+- **First person**: a hold of its own (`<id>_in_hand.json`, which draws nothing itself; scale 0.5 for the voxel
   blades, whose points ran off the top at the lofted ones' 0.6): the whole blade standing at the right with its point
   in view, its flat turned a little to the eye (vanilla's sword sits so close a longsword
   shows a fragment); the swings move the hand as for any sword. Third person: vanilla's handheld hold. Size: a fifth
@@ -4061,6 +4116,29 @@ stance starts no ability until it stands. Tuning for the whole game's pacing (Lo
 fliers in reach, vanilla's flat burn and fang, per-Lord health) is recommended there and waits for Euan's three-Lord
 session (PLAN §6.4 S3 gate): it moves powers players' fights too.
 
+**Weaves** (S8, `ArmsWeaves`; `core.api.WeaveHooks`, §12: the powers module asks it for a cast's energy and tells it
+of each landed cast): for 12 ticks after an opening the blade earned (a deflect, a perfect dodge, a Break, a finisher in
+full rhythm) a power cast fuses with the weapon and costs 30% less. Four openings × nine families = 36 Weaves, each
+named (the deflect's Ripostes: Iron, Gale, Weighted, Ember, Umbral, Mirror, Bulwark, Arc, Soul; the dodge's echoes:
+Quake Step, Slipstream, Falling Star, Flashpoint, Afterimage, Phantom Step, Glass Wake, Ghost Circuit, Wisp Echo; the
+Break's: Sundering, Whirlwind Break, Collapse, Meltdown, Eclipse, Shattered Will, Keystone, Overload, Severance; the
+rhythm's edges: Hammer Rhythm, Tempest Edge, Heavy Hand, Burning Edge, Night Edge, Thought Edge, Mason's Edge, Charged
+Edge, Spirit Edge). The opening is the shape: a deflect bursts a 4-block ring off the meeting of the blades (the
+fighter's attack ×1.2, knocking back); a perfect dodge leaves an echo where the dodge began that strikes 6 ticks later
+(3 blocks); a Break sends the power through the broken body (×1.6, at most 3% of a Lord's health) and holds the Break
+a second longer; a rhythm finisher charges the next three blows within 5 s with 40% more as the power's force. All
+scale a little with the power's level (+8% a level). The family is the element (the power's own Force, else the
+family's: Energy and Tech Charge, Flight and Architect Gravity, Shadow, Mind and Spirit Spirit) and the look (the
+effects engine's style of the family). The first time each is woven the System names it ("WEAVE · Ember Riposte", a
+toast); after that the action bar does. Kept in `awaken:arms_memory` (schemaVersion 1, saved, kept through death; the
+Codex's Weaves page counts it as N / ??, never naming the rest). Test `arms_weave`.
+
+**Item level** (PLAN §7.7, decided by the sim): a weapon's level is its tier. The forged Longswords' damage climbs by
+tier (4.5 to 9.5) and melee already rises with the player's strength, so on-level melee keeps pace with a Lord's
+health; scaling weapons by level as powers scale (sim `--item-level on`) broke the ordinary fight (normal creatures fell
+in 1–2 hits from D up) and let a Tank win at C and A. No extra level is carried.
+
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
-`audio_events_resolve` covers the kit's files and subtitles.
+`audio_events_resolve` covers the kit's files and subtitles. S2/S3: `arms_hand_pose` (the swing on Hands' view layer),
+`arms_assets` (the streams), `mobs_bolt_class`, `mobs_answered_no_burn`, `mobs_broken_idle`.

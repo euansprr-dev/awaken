@@ -1,0 +1,137 @@
+# Arms batch 1 in hand (SPEC §25 "Styles"): every forged Axe, Maul, Spear and Greatblade at rest in first person by
+# day, a strike each for one of every style, and third person.
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~ ~ ~3.2 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+wait 40
+look 0 5
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_axe
+wait 12
+shot b1_axe_wildhide
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_axe
+wait 12
+shot b1_axe_beastbound
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_axe
+wait 12
+shot b1_axe_gatewrought
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_axe
+wait 12
+shot b1_axe_veilwoven
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_axe
+wait 12
+shot b1_axe_lordscale
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_axe
+wait 12
+shot b1_axe_sovereign
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_maul
+wait 12
+shot b1_maul_wildhide
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_maul
+wait 12
+shot b1_maul_beastbound
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 12
+shot b1_maul_gatewrought
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_maul
+wait 12
+shot b1_maul_veilwoven
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_maul
+wait 12
+shot b1_maul_lordscale
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_maul
+wait 12
+shot b1_maul_sovereign
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_spear
+wait 12
+shot b1_spear_wildhide
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_spear
+wait 12
+shot b1_spear_beastbound
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 12
+shot b1_spear_gatewrought
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_spear
+wait 12
+shot b1_spear_veilwoven
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_spear
+wait 12
+shot b1_spear_lordscale
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_spear
+wait 12
+shot b1_spear_sovereign
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_greatblade
+wait 12
+shot b1_greatblade_wildhide
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_greatblade
+wait 12
+shot b1_greatblade_beastbound
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 12
+shot b1_greatblade_gatewrought
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_greatblade
+wait 12
+shot b1_greatblade_veilwoven
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_greatblade
+wait 12
+shot b1_greatblade_lordscale
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_greatblade
+wait 12
+shot b1_greatblade_sovereign
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_axe
+wait 12
+arms strike
+wait 2
+shotnow b1_axe_blow
+wait 30
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_maul
+wait 12
+arms strike
+wait 2
+shotnow b1_maul_blow
+wait 30
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 12
+arms strike
+wait 2
+shotnow b1_spear_blow
+wait 30
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_greatblade
+wait 12
+arms strike
+wait 2
+shotnow b1_greatblade_blow
+wait 30
+camera back
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_axe
+wait 15
+shot b1_axe_3p
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_maul
+wait 15
+shot b1_maul_3p
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 15
+shot b1_spear_3p
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_greatblade
+wait 15
+shot b1_greatblade_3p
+camera first
+quit

@@ -1,0 +1,17 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "group": "awaken_arms_daggers",
+ "key": {
+  "C": "#awaken:hunter_core_a",
+  "X": "awaken:lordscale_blade",
+  "B": "#awaken:hunter_bind_a"
+ },
+ "pattern": [
+  "XB",
+  "C "
+ ],
+ "result": {
+  "id": "awaken:lordscale_daggers"
+ }
+}

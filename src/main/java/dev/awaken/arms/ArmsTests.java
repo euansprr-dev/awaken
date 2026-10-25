@@ -51,6 +51,8 @@ final class ArmsTests {
         AwakenTests.register("arms_plunge", 60, ArmsTests::plungeTest);
         AwakenTests.register("arms_assets", 20, ArmsTests::assets);
         AwakenTests.register("arms_hand_pose", 20, ArmsTests::handPose);
+        AwakenTests.register("arms_style_traits", 20, ArmsTests::styleTraits);
+        AwakenTests.register("arms_weave", 40, ArmsTests::weave);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -72,7 +74,13 @@ final class ArmsTests {
                     .filter(m -> m.attribute().is(Attributes.ATTACK_DAMAGE)).mapToDouble(m -> m.modifier().amount()).sum();
             h.assertTrue(Math.abs(damage - w.damage()) < 1e-4 && stack.getMaxDamage() == w.durability() && stack.getRarity() == w.rarity(),
                     w.id() + " carries its row's damage, uses and rarity");
-            h.assertTrue(stack.is(ItemTags.SWORDS), w.id() + " is a sword to vanilla (its enchantments)");
+            var tag = switch (w.style()) {
+                case Arms.AXE -> ItemTags.AXES;
+                case Arms.MAUL -> ItemTags.MACE_ENCHANTABLE;
+                case Arms.SPEAR -> ItemTags.SPEARS;
+                default -> ItemTags.SWORDS;
+            };
+            h.assertTrue(stack.is(tag), w.id() + " is in " + tag.location() + " to vanilla (its enchantments)");
             var recipe = ResourceKey.create(Registries.RECIPE, Awaken.id(w.id()));
             h.assertTrue(h.getLevel().getServer().getRecipeManager().byKey(recipe).isPresent(), w.id() + " has its recipe");
             for (String file : new String[]{"items/" + w.id() + ".json", "models/item/" + w.id() + ".json", "models/item/" + w.id() + "_in_hand.json",
@@ -194,6 +202,13 @@ final class ArmsTests {
             String c = ArmsClips.of(m);
             h.assertTrue(c != null && ArmsClips.ALL.contains(c), m + " has a clip");
         }
+        // every style's every move resolves to a clip in the file, its own on its own row (tools/art/specs/arms_moves.py)
+        for (Archetypes.Loaded st : Archetypes.all()) {
+            for (Archetype.Move m : st.moves().keySet()) {
+                String c = ArmsClips.of(st.def().id(), m);
+                h.assertTrue(c != null && anims.has(c) && anims.has(c + "_bent"), st.def().id() + " " + m + ": its clip " + c + " is in the file");
+            }
+        }
         for (String base : ArmsClips.ALL) {
             for (String name : new String[]{base, base + "_bent"}) {
                 h.assertTrue(anims.has(name), name + " is missing from " + ArmsClips.FILE);
@@ -235,6 +250,53 @@ final class ArmsTests {
         h.succeed();
     }
 
+    /**
+     * Weaves: 36 distinct names; in the beat after an opening a cast costs 30% less, weaves, and is remembered once;
+     * the opening is spent; past the beat nothing weaves.
+     */
+    static void weave(GameTestHelper h) {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (int o = ArmsWeaves.DEFLECT; o <= ArmsWeaves.RHYTHM; o++) {
+            for (dev.awaken.powers.PowerType.Family f : dev.awaken.powers.PowerType.Family.values()) ids.add(ArmsWeaves.id(o, f));
+        }
+        h.assertTrue(ids.size() == 36, "36 Weaves, each its own name (" + ids.size() + ")");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ArmsState s = ArmsServer.state(p);
+        long now = ArmsServer.now(p);
+        h.assertTrue(ArmsWeaves.INSTANCE.costScale(p) == 1F, "outside a beat a cast costs what it costs");
+        ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, -1);
+        h.assertTrue(Math.abs(ArmsWeaves.INSTANCE.costScale(p) - ArmsWeaves.COST) < 1e-6, "in the beat after a deflect it costs 30% less");
+        ArmsWeaves.INSTANCE.cast(p, "ENERGY", "HEAT", 1);
+        h.assertTrue(p.getData(ArmsContent.MEMORY).weaves().contains("ember_riposte"), "a deflect and a Heat power: Ember Riposte, remembered");
+        h.assertTrue(ArmsWeaves.INSTANCE.costScale(p) == 1F && s.opening == 0, "the opening is spent");
+        ArmsWeaves.open(p, s, ArmsWeaves.DODGE, now - ArmsWeaves.WINDOW - 1, -1);
+        int found = ArmsWeaves.found(p);
+        ArmsWeaves.INSTANCE.cast(p, "SHADOW", null, 1);
+        h.assertTrue(ArmsWeaves.found(p) == found, "past the beat nothing weaves");
+        h.succeed();
+    }
+
+    /** The Daggers' backstab and the Katana's draw cut: their rules and their rows. */
+    static void styleTraits(GameTestHelper h) {
+        h.assertTrue(ArmsRules.behind(0F, 180F) && ArmsRules.behind(90F, -60F), "a striker at its back, or well round it, is behind");
+        h.assertTrue(!ArmsRules.behind(0F, 0F) && !ArmsRules.behind(0F, 100F), "ahead of it, or at its side, is not");
+        Archetypes.Loaded daggers = Archetypes.get("daggers"), katana = Archetypes.get("katana");
+        h.assertTrue(daggers != null && daggers.def().traits().backstab() > 1.5F, "the Daggers strike harder from behind");
+        h.assertTrue(katana != null && katana.def().traits().drawIdle() > 0, "the Katana has a draw cut");
+        Archetype.Traits t = katana.def().traits();
+        h.assertTrue(ArmsRules.drawn(t, Archetype.Move.STRIKE_1, t.drawIdle()), "the first strike after it rested is drawn");
+        h.assertTrue(!ArmsRules.drawn(t, Archetype.Move.STRIKE_1, t.drawIdle() - 1), "not before it has rested");
+        h.assertTrue(!ArmsRules.drawn(t, Archetype.Move.STRIKE_2, 1000), "and only the chain's first strike");
+        h.assertTrue(!ArmsRules.drawn(longsword().def().traits(), Archetype.Move.STRIKE_1, 1000), "a Longsword draws nothing");
+        h.assertTrue(Archetypes.get("scythe").def().traits().spirit() > 1F, "the Scythe cuts spirits deeper");
+        h.assertTrue(Archetypes.get("chainblade").def().traits().pull() > 0F, "the Chain-blade reels them in");
+        h.assertTrue(Archetypes.get("warstaff").def().traits().energy() > 0F, "the War-staff's blows charge power energy");
+        h.assertTrue(Archetypes.get("precursor").def().traits().reachPerStep() > 0F, "the Precursor Arm's blade grows with the chain");
+        h.assertTrue(Archetypes.get("gauntlets").def().traits().riposteThrow() > 0F, "the Gauntlets' riposte throws");
+        h.assertTrue(Archetypes.all().size() == 16, "sixteen styles, as PLAN §4.5 (" + Archetypes.all().size() + ")");
+        h.succeed();
+    }
+
     static void stanceRules(GameTestHelper h) {
         h.assertTrue(ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS, false) == 20, "untouched for its idle time: nothing drains yet");
         h.assertTrue(Math.abs(ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false) - (20 - 20 * ArmsRules.POSTURE_REGEN)) < 1e-4,
@@ -265,6 +327,8 @@ final class ArmsTests {
         h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_FLESH.get(), "a cut into a zombie is flesh");
         h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.HEAVY, heavy) == ArmsSounds.HIT_FLESH_HEAVY.get(), "a heavy into it lands heavy");
         h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.EXECUTION, exec) == ArmsSounds.EXECUTION.get(), "an Execution is its own blow");
+        h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1, Arms.MAUL) == ArmsSounds.HIT_BLUNT.get(), "a maul lands blunt");
+        h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1, Arms.AXE) == ArmsSounds.HIT_FLESH.get(), "an axe cuts as a blade");
         zombie.getAttribute(Attributes.ARMOR).setBaseValue(15);
         h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_ARMOR.get(), "plate worn over flesh rings as armour");
         LivingEntity skeleton = put(h, EntityTypes.SKELETON, 2, 1, 20), golem = put(h, EntityTypes.IRON_GOLEM, 3, 1, 20),

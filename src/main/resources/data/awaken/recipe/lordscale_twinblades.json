@@ -1,0 +1,17 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "group": "awaken_arms_twinblades",
+ "key": {
+  "C": "#awaken:hunter_core_a",
+  "X": "awaken:lordscale_blade",
+  "B": "#awaken:hunter_bind_a"
+ },
+ "pattern": [
+  "XCX",
+  " B "
+ ],
+ "result": {
+  "id": "awaken:lordscale_twinblades"
+ }
+}

@@ -181,7 +181,7 @@ public final class ArmsPredict {
         fadeFrom = -100;
         ArmsAudio.swing(p, st, m, cad);
         ArmsFx.move(p, st, m, cad, perfect);
-        ArmsBodies.move(p, m);
+        ArmsBodies.move(p, st, m);
         if (m == Archetype.Move.ART) ArmsFeel.art();
     }
 
@@ -485,7 +485,7 @@ public final class ArmsPredict {
                 Archetype.Move m = Archetype.Move.byId(s.aux2());
                 if (e != null && st != null && m != null) {
                     ArmsFx.move(e, st, m, 0, false);
-                    ArmsBodies.move(e, m);
+                    ArmsBodies.move(e, st, m);
                 }
             }
             case ArmsPayloads.CHARGE -> {
