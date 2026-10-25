@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carillon soundscape listening</title>
+<style>
+:root { --bg:#f6f4ef; --card:#fffdf8; --ink:#1d1c1a; --soft:#6b665d; --line:#e4dfd4; --accent:#2e6bd8; --keep:#2f8a4e;
+  --remake:#b7791f; --cut:#b83a3a; --chip:#efe9dd;
+  --lv-calm:#5b7393; --lv-tension:#a86a12; --lv-combat:#b8442c; --lv-lord:#6a43b5; --lv-fell:#2f7d55; }
+@media (prefers-color-scheme: dark) { :root { --bg:#14161a; --card:#1c1f25; --ink:#ece9e2; --soft:#a29d93; --line:#2c3038;
+  --accent:#7fb0ff; --keep:#5cc27f; --remake:#e0a548; --cut:#ef6b6b; --chip:#262a32; } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width:980px; margin:0 auto; padding:28px 16px 80px; }
+h1 { font-size:26px; margin:0 0 4px; letter-spacing:-0.01em; }
+.sub { color:var(--soft); margin:0 0 20px; }
+.intro { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:18px; }
+.intro p { margin:6px 0; }
+.intro ol { margin:6px 0 6px 20px; padding:0; }
+.marks { display:flex; flex-wrap:wrap; gap:6px 14px; list-style:none; padding:0; margin:8px 0 0; color:var(--soft); font-size:13px; }
+.marks b { color:var(--ink); font-variant-numeric:tabular-nums; }
+.dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+.lv-calm { background:var(--lv-calm); } .lv-tension { background:var(--lv-tension); } .lv-combat { background:var(--lv-combat); }
+.lv-lord { background:var(--lv-lord); } .lv-fell { background:var(--lv-fell); }
+.bar { position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 0; display:flex; gap:10px; align-items:center;
+  flex-wrap:wrap; border-bottom:1px solid var(--line); margin-bottom:16px; }
+.bar .progress { font-variant-numeric:tabular-nums; color:var(--soft); margin-right:auto; }
+button { font:inherit; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:6px 12px;
+  cursor:pointer; }
+button:hover { border-color:var(--accent); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+.card header { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.card h2 { font-size:19px; margin:0; }
+.card .n { color:var(--soft); font-variant-numeric:tabular-nums; }
+.card .line { margin:0; color:var(--soft); font-size:13px; flex-basis:100%; }
+.row { display:grid; grid-template-columns: 1fr; gap:8px; padding:12px 0; border-top:1px solid var(--line); }
+.row:first-of-type { border-top:none; }
+.what { display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; }
+.tag { background:var(--chip); border-radius:6px; padding:1px 8px; font-size:13px; }
+.tag.strong { background:var(--accent); color:var(--bg); }
+.intent { flex:1 1 300px; }
+.meta { color:var(--soft); font-size:12px; flex-basis:100%; }
+audio { width:100%; height:36px; }
+.player { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.timeline { position:relative; display:flex; height:24px; border-radius:6px; overflow:hidden; }
+.seg { flex-basis:0; min-width:0; border:0; border-radius:0; padding:0 5px; font-size:11px; line-height:24px; color:#fff;
+  text-align:left; white-space:nowrap; overflow:hidden; }
+.seg + .seg { box-shadow:inset 1px 0 0 var(--card); }
+.seg.now { font-weight:600; box-shadow:inset 0 -3px 0 rgba(255,255,255,.85); }
+.seg:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.head { position:absolute; top:0; bottom:0; left:0; width:2px; margin-left:-1px; background:var(--ink);
+  box-shadow:0 0 0 1px var(--card); pointer-events:none; opacity:0; }
+.timeline.live .head { opacity:1; }
+.verdict { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.choices { display:flex; gap:6px; }
+.choices button[aria-pressed=true][data-v=keep] { background:var(--keep); border-color:var(--keep); color:#fff; }
+.choices button[aria-pressed=true][data-v=remake] { background:var(--remake); border-color:var(--remake); color:#fff; }
+.choices button[aria-pressed=true][data-v=cut] { background:var(--cut); border-color:var(--cut); color:#fff; }
+/* a layer nobody marked shows the verdict it takes from its mix */
+.choices button[data-inherit=true] { border-style:dashed; }
+.choices button[data-inherit=true][data-v=keep] { border-color:var(--keep); color:var(--keep); }
+.choices button[data-inherit=true][data-v=remake] { border-color:var(--remake); color:var(--remake); }
+.choices button[data-inherit=true][data-v=cut] { border-color:var(--cut); color:var(--cut); }
+.note { flex:1 1 220px; min-width:0; font:inherit; padding:6px 10px; border-radius:8px; border:1px solid var(--line);
+  background:var(--bg); color:var(--ink); }
+details summary { cursor:pointer; color:var(--accent); padding:8px 0 2px; }
+textarea { width:100%; min-height:160px; font:13px/1.4 ui-monospace, Menlo, monospace; background:var(--card); color:var(--ink);
+  border:1px solid var(--line); border-radius:8px; padding:10px; }
+@media (min-width:760px) { .row { grid-template-columns: 1.1fr 1fr; align-items:center; } .row .verdict { grid-column: 1 / -1; } }
+
+.intro a, .notes a { color:var(--accent); }
+.ab { display:grid; grid-template-columns:auto 1fr; gap:4px 10px; align-items:center; }
+.ab label { color:var(--soft); font-size:12px; }
+.notes h3 { font-size:15px; margin:14px 0 4px; }
+.notes table { border-collapse:collapse; width:100%; font-size:13px; display:block; overflow-x:auto; }
+.notes th, .notes td { text-align:left; border-top:1px solid var(--line); padding:6px 8px; vertical-align:top; }
+.notes td a { color:var(--accent); overflow-wrap:anywhere; }
+.notes li { margin:3px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Carillon: the city's sound</h1>
+<p class="sub">AWAKEN · Carillon M4 B3b · 21 scenes (seven districts at morning, noon and night), 28 sounds alone</p>
+<div class="intro">
+  <p><b>About 13 minutes.</b> Each district has three moments. Play <b>after</b>: what you'd hear standing there
+  with this build. <b>Before</b> is the same spot before it: only the Choir striking the hour, otherwise silence.
+  Mark each moment <b>keep</b>, <b>remake</b> or <b>cut</b>, and say why in the note when it isn't a keep.</p>
+  <p>In the game every sound comes from a place: a quiet bed for the district (it follows how many people are outdoors
+  there now, and turns into the night bed after dark), with fountains, stalls, forges, boats, birds, the Watch's
+  handbell and the carillon at their own places and hours. Rendered here offline from the shipped files, so three
+  things differ from the game: no Sound Physics echo down the lanes, plain stereo panning, and the animals' vanilla
+  voices (cats, dogs, hooves) are left out because they can't be copied into the public repo. Headphones help.</p>
+  <p>Everything but the animals' voices is synthesised. The weak spot is the crowd: <a href="#cc0">the CC0 shortlist</a> below lists real
+  recordings that could replace it, each with its source and licence. Nothing is downloaded until you say yes.</p>
+  <p>Your choices stay in this browser. When you're done, <b>Export</b> and send me the file (or the text).</p>
+</div>
+<div class="bar"><span class="progress" id="progress"></span>
+  <button id="export">Export choices (.json)</button><button id="text">Show as text</button></div>
+<section class="card notes" id="recommend"><h2>Where to start, and my read</h2>
+<p><b>If you have ten minutes:</b> the Market at noon (the city at its busiest), Garden Ward at 06:00 (the dawn
+chorus under the carillon), Lantern Quay at 22:00 (water, a tavern, boats at night). Then any district you mean to cut.</p>
+<p><b>Read this first:</b> these mixes were made in the cloud, where nothing can play sound. I haven't heard them. What
+follows comes from the measurements and the code, and your ears overrule all of it.</p>
+<h3>Recommendations</h3>
+<ol>
+<li><b>Keep the structure:</b> one quiet bed per district that thickens with the crowd and becomes the night bed after
+dark, with every other sound at its own place and hour. Each bed sits 6 to 12 dB under a stall or a fountain heard close,
+so the places carry the detail and the bed only holds the gaps. Measured mixes: about -35 dBFS when a district is
+quiet, up to -28 when the Market is packed.</li>
+<li><b>The crowd is the weak link.</b> Its murmur is made of synthetic formant voices. Far off it reads as people; close
+up it may read as an imitation. Your first yes or no: replace <code>murmur_far</code>, <code>murmur_near</code> and the
+tavern's hum with the CC0 recordings below (gecop's distant chatter, nicoproson's village square, denkmal's tavern).</li>
+<li><b>Add the criers</b> once there are recordings: short market calls cut from the CC0 vendor recordings, played at
+stalls by the goods they sell (B3a's <code>stalls[].good</code>), a few a minute at noon. Synthesis can't make a call
+that sounds human.</li>
+<li><b>If the Market at noon sounds thin,</b> say "louder" in its note. The packed level can rise about 3 dB and still
+pass the beds' test.</li>
+<li><b>Night:</b> the crickets' chirps fall on a regular pattern in the spectrogram. Over the 48 s loop that may be heard
+as a loop. If you hear it, mark the night "remake" and I'll scatter them.</li>
+<li><b>06:00 is quiet on purpose.</b> The forges start at 06:45 and the stalls at 07:00, so dawn is the bed, the birds and
+the carillon. Mark it "remake" if it feels empty rather than early.</li>
+<li><b>Rain is only half done.</b> In rain the bed drops a level (vanilla's rain plays on top), but no awnings drip and
+no gutters run yet. A rain-on-roofs layer is the next thing to add if you want rain to change the city.</li>
+</ol>
+<h3>Fixed while making this page</h3>
+<ul>
+<li>The carillon was a stereo file, so it played unplaced and equally loud anywhere within 420 blocks. It is now mono and
+comes from the spire, fading over 320 blocks. At the Wallring it is faint.</li>
+<li>At 06:00, noon and 18:00 the Choir struck the hour at the same moment its carillon began, and the two played over each
+other (noon is twelve strokes over 28 s). Now the tune plays first and the hour is struck after it, as a clock tower does.</li>
+</ul>
+<h3>Not like the plan</h3>
+<p>Decision 28 put vanilla's sounds first. The game has almost nothing for a city, so this build synthesises
+everything except the animals' voices: cats, dogs and hooves are vanilla's own, played by id (not heard on this page).
+Bells, the carillon and the Choir stay synthetic whatever you choose. If you'd rather hear vanilla's water and fire
+under the fountains and forges, say so on those rows.</p>
+</section>
+
+    <section class="card" id="market">
+      <header><span class="n">01</span><h2>Choir Square and the Market</h2><p class="line">where you stand: on the square&#x27;s floor by the stalls, a fountain to your left</p></header>
+      
+        <div class="row scene" data-id="market.morning">
+          <div class="what"><span class="tag strong">morning · 06:00</span><span class="intent">the dawn carillon, then six strokes; the forges and stalls are still shut</span>
+            <span class="meta">bed awaken:city/market at "quiet" (calm)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/market_morning.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/market_morning_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="market.noon">
+          <div class="what"><span class="tag strong">noon · 12:00</span><span class="intent">the noon carillon, then twelve strokes; the busiest hour outdoors</span>
+            <span class="meta">bed awaken:city/market at "packed" (lord)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/market_noon.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/market_noon_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="market.night">
+          <div class="what"><span class="tag strong">night · 22:00</span><span class="intent">ten strokes; the night bed, taverns, the Watch&#x27;s handbell</span>
+            <span class="meta">bed awaken:city/night at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/market_night.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/market_night_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+    </section>
+    <section class="card" id="bellwatch">
+      <header><span class="n">02</span><h2>Bellwatch</h2><p class="line">where you stand: a stepped lane under the Knoll, its bell tower up the hill</p></header>
+      
+        <div class="row scene" data-id="bellwatch.morning">
+          <div class="what"><span class="tag strong">morning · 06:00</span><span class="intent">the dawn carillon, then six strokes; the forges and stalls are still shut</span>
+            <span class="meta">bed awaken:city/bellwatch at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/bellwatch_morning.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/bellwatch_morning_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="bellwatch.noon">
+          <div class="what"><span class="tag strong">noon · 12:00</span><span class="intent">the noon carillon, then twelve strokes; the busiest hour outdoors</span>
+            <span class="meta">bed awaken:city/bellwatch at "busy" (combat)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/bellwatch_noon.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/bellwatch_noon_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="bellwatch.night">
+          <div class="what"><span class="tag strong">night · 22:00</span><span class="intent">ten strokes; the night bed, taverns, the Watch&#x27;s handbell</span>
+            <span class="meta">bed awaken:city/night at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/bellwatch_night.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/bellwatch_night_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+    </section>
+    <section class="card" id="quay">
+      <header><span class="n">03</span><h2>Lantern Quay</h2><p class="line">where you stand: on the quay&#x27;s edge, water lapping below, boats moored along the wall</p></header>
+      
+        <div class="row scene" data-id="quay.morning">
+          <div class="what"><span class="tag strong">morning · 06:00</span><span class="intent">the dawn carillon, then six strokes; the forges and stalls are still shut</span>
+            <span class="meta">bed awaken:city/quay at "quiet" (calm)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/quay_morning.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/quay_morning_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="quay.noon">
+          <div class="what"><span class="tag strong">noon · 12:00</span><span class="intent">the noon carillon, then twelve strokes; the busiest hour outdoors</span>
+            <span class="meta">bed awaken:city/quay at "packed" (lord)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/quay_noon.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/quay_noon_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="quay.night">
+          <div class="what"><span class="tag strong">night · 22:00</span><span class="intent">ten strokes; the night bed, taverns, the Watch&#x27;s handbell</span>
+            <span class="meta">bed awaken:city/night at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/quay_night.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/quay_night_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+    </section>
+    <section class="card" id="terrace">
+      <header><span class="n">04</span><h2>the High Terrace</h2><p class="line">where you stand: on the Terrace&#x27;s formal walk, gardens behind the houses</p></header>
+      
+        <div class="row scene" data-id="terrace.morning">
+          <div class="what"><span class="tag strong">morning · 06:00</span><span class="intent">the dawn carillon, then six strokes; the forges and stalls are still shut</span>
+            <span class="meta">bed awaken:city/terrace at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/terrace_morning.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/terrace_morning_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="terrace.noon">
+          <div class="what"><span class="tag strong">noon · 12:00</span><span class="intent">the noon carillon, then twelve strokes; the busiest hour outdoors</span>
+            <span class="meta">bed awaken:city/terrace at "packed" (lord)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/terrace_noon.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/terrace_noon_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="terrace.night">
+          <div class="what"><span class="tag strong">night · 22:00</span><span class="intent">ten strokes; the night bed, taverns, the Watch&#x27;s handbell</span>
+            <span class="meta">bed awaken:city/night at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/terrace_night.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/terrace_night_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+    </section>
+    <section class="card" id="works">
+      <header><span class="n">05</span><h2>the Works</h2><p class="line">where you stand: in the yard between two smithies, the mill race behind</p></header>
+      
+        <div class="row scene" data-id="works.morning">
+          <div class="what"><span class="tag strong">morning · 06:00</span><span class="intent">the dawn carillon, then six strokes; the forges and stalls are still shut</span>
+            <span class="meta">bed awaken:city/works at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/works_morning.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/works_morning_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="works.noon">
+          <div class="what"><span class="tag strong">noon · 12:00</span><span class="intent">the noon carillon, then twelve strokes; the busiest hour outdoors</span>
+            <span class="meta">bed awaken:city/works at "packed" (lord)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/works_noon.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/works_noon_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="works.night">
+          <div class="what"><span class="tag strong">night · 22:00</span><span class="intent">ten strokes; the night bed, taverns, the Watch&#x27;s handbell</span>
+            <span class="meta">bed awaken:city/night at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/works_night.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/works_night_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+    </section>
+    <section class="card" id="garden">
+      <header><span class="n">06</span><h2>Garden Ward</h2><p class="line">where you stand: under the cherry trees</p></header>
+      
+        <div class="row scene" data-id="garden.morning">
+          <div class="what"><span class="tag strong">morning · 06:00</span><span class="intent">the dawn carillon, then six strokes; the forges and stalls are still shut</span>
+            <span class="meta">bed awaken:city/garden at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/garden_morning.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/garden_morning_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="garden.noon">
+          <div class="what"><span class="tag strong">noon · 12:00</span><span class="intent">the noon carillon, then twelve strokes; the busiest hour outdoors</span>
+            <span class="meta">bed awaken:city/garden at "packed" (lord)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/garden_noon.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/garden_noon_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="garden.night">
+          <div class="what"><span class="tag strong">night · 22:00</span><span class="intent">ten strokes; the night bed, taverns, the Watch&#x27;s handbell</span>
+            <span class="meta">bed awaken:city/night at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/garden_night.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/garden_night_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+    </section>
+    <section class="card" id="wallring">
+      <header><span class="n">07</span><h2>the Wallring</h2><p class="line">where you stand: inside the ring wall, a tower&#x27;s pigeons above</p></header>
+      
+        <div class="row scene" data-id="wallring.morning">
+          <div class="what"><span class="tag strong">morning · 06:00</span><span class="intent">the dawn carillon, then six strokes; the forges and stalls are still shut</span>
+            <span class="meta">bed awaken:city/wallring at "quiet" (calm)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/wallring_morning.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/wallring_morning_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="wallring.noon">
+          <div class="what"><span class="tag strong">noon · 12:00</span><span class="intent">the noon carillon, then twelve strokes; the busiest hour outdoors</span>
+            <span class="meta">bed awaken:city/wallring at "packed" (lord)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/wallring_noon.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/wallring_noon_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row scene" data-id="wallring.night">
+          <div class="what"><span class="tag strong">night · 22:00</span><span class="intent">ten strokes; the night bed, taverns, the Watch&#x27;s handbell</span>
+            <span class="meta">bed awaken:city/night at "light" (tension)</span></div>
+          <div class="ab"><label>after</label><audio controls preload="none" src="carillon-b3b/wallring_night.mp3"></audio>
+            <label>before</label><audio controls preload="none" src="carillon-b3b/wallring_night_before.mp3"></audio></div>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+    </section>
+    <section class="card" id="alone">
+      <header><h2>Every sound alone</h2><p class="line">mark one here only when it bothers you in a scene</p></header>
+      <details><summary>the beds' 10 stems</summary>
+        <div class="row" data-id="stem.air">
+          <div class="what"><span class="tag">air</span><span class="intent">the city&#x27;s own air: wind over roofs and in the lanes, far off and soft</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_air.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.murmur_far">
+          <div class="what"><span class="tag">murmur_far</span><span class="intent">a crowd heard across a square: many formant voices, no words, darkened by distance</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_murmur_far.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.murmur_near">
+          <div class="what"><span class="tag">murmur_near</span><span class="intent">people a few metres off: the same voices nearer, still never words</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_murmur_near.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.bustle">
+          <div class="what"><span class="tag">bustle</span><span class="intent">footsteps, doors, a barrow, a dropped crate: the work of a street</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_bustle.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.water">
+          <div class="what"><span class="tag">water</span><span class="intent">the river and the canals under everything near the water</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_water.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.works">
+          <div class="what"><span class="tag">works</span><span class="intent">the Works&#x27; yards: distant hammering, a saw, the bellows&#x27; breath</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_works.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.birds">
+          <div class="what"><span class="tag">birds</span><span class="intent">sparrows and swifts over the roofs by day</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_birds.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.crickets">
+          <div class="what"><span class="tag">crickets</span><span class="intent">the night&#x27;s insects in the gardens and the wall&#x27;s grass</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_crickets.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.night_far">
+          <div class="what"><span class="tag">night_far</span><span class="intent">the city asleep: a dog far off, a shutter, the wind in the towers</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_night_far.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="stem.tavern_far">
+          <div class="what"><span class="tag">tavern_far</span><span class="intent">taverns heard across the city at night: laughter and a fiddle through walls</span>
+            <span class="meta">a bed stem alone, 20 s</span></div>
+          <audio controls preload="none" src="carillon-b3b/stem_tavern_far.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+      <details><summary>the 18 places and one-shots</summary>
+        <div class="row" data-id="city.fountain">
+          <div class="what"><span class="tag">fountain</span><span class="intent">the two fountains in Choir Square (a loop at the fountain, heard within 18 blocks)</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_fountain.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.lap">
+          <div class="what"><span class="tag">lap</span><span class="intent">water lapping along both quays (a point every 16 blocks, the nearest three play)</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_lap.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.mill">
+          <div class="what"><span class="tag">mill</span><span class="intent">the mill wheels on the race</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_mill.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.tavern">
+          <div class="what"><span class="tag">tavern</span><span class="intent">a tavern&#x27;s evening through its walls (11000-18500, muffled)</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_tavern.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.anvil">
+          <div class="what"><span class="tag">anvil</span><span class="intent">the four smithies&#x27; hammers, 07:00-16:48</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_anvil.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.bellows">
+          <div class="what"><span class="tag">bellows</span><span class="intent">a forge&#x27;s bellows now and then</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_bellows.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.stall">
+          <div class="what"><span class="tag">stall</span><span class="intent">a stall&#x27;s goods handled, a coin, a crate set down (07:00-17:30)</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_stall.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.boat">
+          <div class="what"><span class="tag">boat</span><span class="intent">boats creaking at their moorings along the river</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_boat.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.songbird">
+          <div class="what"><span class="tag">songbird</span><span class="intent">songbirds in the gardens and the Terrace (a dawn chorus till 07:30)</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_songbird.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.pigeon.coo">
+          <div class="what"><span class="tag">pigeon.coo</span><span class="intent">a flock on the square, a well, a bell tower</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_pigeon_coo.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.pigeon.flutter">
+          <div class="what"><span class="tag">pigeon.flutter</span><span class="intent">a flock bursting up as you run past (and when its tower&#x27;s bell rings)</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_pigeon_flutter.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.gull.call">
+          <div class="what"><span class="tag">gull.call</span><span class="intent">gulls over the river and on the nets</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_gull_call.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.cart.roll">
+          <div class="what"><span class="tag">cart.roll</span><span class="intent">a cart&#x27;s wheels on the stones (vanilla&#x27;s hooves go with it in game)</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_cart_roll.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.cart.bells">
+          <div class="what"><span class="tag">cart.bells</span><span class="intent">a carthorse&#x27;s harness bells when it tosses its head</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_cart_bells.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.handbell">
+          <div class="what"><span class="tag">handbell</span><span class="intent">the Watch&#x27;s handbell on its rounds at night</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_handbell.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.carillon.dawn">
+          <div class="what"><span class="tag">carillon.dawn</span><span class="intent">the Choir&#x27;s carillon at dawn, from the spire</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_carillon_dawn.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.carillon.noon">
+          <div class="what"><span class="tag">carillon.noon</span><span class="intent">the Choir&#x27;s carillon at noon</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_carillon_noon.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div>
+        <div class="row" data-id="city.carillon.dusk">
+          <div class="what"><span class="tag">carillon.dusk</span><span class="intent">the Choir&#x27;s carillon at dusk</span>
+            <span class="meta">every variant, 4 blocks away</span></div>
+          <audio controls preload="none" src="carillon-b3b/city_carillon_dusk.mp3"></audio>
+          <div class="verdict"><div class="choices" role="group">
+            <button data-v="keep">keep</button><button data-v="remake">remake</button><button data-v="cut">cut</button></div>
+            <input class="note" type="text" placeholder="note (what's wrong, what it should be)"></div>
+        </div></details>
+    </section>
+<section class="card notes" id="cc0"><h2>CC0 shortlist: what synthesis can't do well</h2>
+<p>Real recordings licensed <b>Creative Commons 0</b> (public domain: no credit required, safe in a public repo).
+Every licence was read on the sound's own Freesound page on 25 Oct 2026. <b>Nothing has been downloaded</b> and nothing
+will be until you say yes. Then the file goes through our pipeline (trimmed, looped, levelled, mono for places), and
+its source and licence are written next to it. Nobody has listened to these yet, so each one needs a listen for words, traffic and clipping
+before it goes in. Two picks per need, best first; the rest are kept in the milestone report.</p>
+<table>
+<thead><tr><th>Replaces</th><th>Recording</th><th>Why it fits · what to watch</th></tr></thead>
+<tbody>
+<tr><td>the crowd bed: <code>murmur_far</code></td>
+  <td><a href="https://freesound.org/people/gecop/sounds/640254/">geroezemoes.wav</a> by gecop · CC0 · 2:01 · 48 kHz stereo</td>
+  <td>The uploader: "you can not hear exact words only distant chatter". Exactly what we need.</td></tr>
+<tr><td></td>
+  <td><a href="https://freesound.org/people/Erbsland-Music/sounds/625625/">Solothurn, in front of the St. Ursen Cathedral</a> by Erbsland-Music · CC0 · 4:14</td>
+  <td>An old-town square with two fountains. Some passers-by come near the mic.</td></tr>
+<tr><td>the crowd bed: <code>murmur_near</code> (the Market at noon)</td>
+  <td><a href="https://freesound.org/people/nicoproson/sounds/648483/">CROWD village square.wav</a> by nicoproson · CC0 · 4:08 · 96 kHz stereo</td>
+  <td>A Breton village square, long enough to loop without a seam. Close French voices may be understood: use the quieter stretches.</td></tr>
+<tr><td></td>
+  <td><a href="https://freesound.org/people/bushtobazaar/sounds/522583/">Chefchaouen, Morocco (soundscape)</a> by bushtobazaar · CC0 · 7:54</td>
+  <td>Cobbled lanes too narrow for cars: sellers and children. Listen for mopeds.</td></tr>
+<tr><td>market calls (new: criers at the stalls)</td>
+  <td><a href="https://freesound.org/people/ikbenraar/sounds/200294/">Spanish market with shouting market vendor</a> by ikbenraar · CC0 · 1:32 · 48 kHz/24</td>
+  <td>A vendor calling, recorded on a pair of 416s. Spanish words: cut short calls, pitch them, keep them distant.</td></tr>
+<tr><td></td>
+  <td><a href="https://freesound.org/people/timmydes/sounds/706254/">Fish Market Siracusa Sicily</a> by timmydes · CC0 · 1:42</td>
+  <td>A walk through a fish market's shouting: plenty of calls to cut.</td></tr>
+<tr><td>the tavern loop and <code>tavern_far</code></td>
+  <td><a href="https://freesound.org/people/denkmal/sounds/539811/">Tavern_Greece_indoor.wav</a> by denkmal · CC0 · 0:32 · binaural</td>
+  <td>"Incomprehensible murmuring": ideal through a wall. Short, so it needs layering.</td></tr>
+<tr><td></td>
+  <td><a href="https://freesound.org/people/vinjatovix/sounds/178449/">AMB_INT Peckham Pub</a> by vinjatovix · CC0 · 3:33</td>
+  <td>A long pub interior to sit under it. English, and maybe background music: muffled, but check.</td></tr>
+<tr><td>carts on cobbles</td>
+  <td><a href="https://freesound.org/people/giddykipper/sounds/53488/">horse_arches.wav</a> by giddykipper · CC0 · 0:17</td>
+  <td>A horse and carriage on the cobbles of Bruges, under an arch. The hooves come with it (vanilla's would be dropped).</td></tr>
+<tr><td></td>
+  <td><a href="https://freesound.org/people/pnwheeler/sounds/831723/">Road sweeper's rattling cart</a> by pnwheeler · CC0 · 0:06</td>
+  <td>A hand cart's rattle over cobbles, for the porters' barrows.</td></tr>
+<tr><td>water at the quays</td>
+  <td><a href="https://freesound.org/people/bruno.auzet/sounds/838025/">bubble lapping wave on concrete pier</a> by bruno.auzet · CC0 · 1:31 · Schoeps MS</td>
+  <td>Lapping and bubbling against a harbour wall, very clean.</td></tr>
+<tr><td>the fountains</td>
+  <td><a href="https://freesound.org/people/BonnyOrbit/sounds/442481/">Fountain in small town.wav</a> by BonnyOrbit · CC0 · 1:00</td>
+  <td>A village fountain in Ticino, bubbling over stone.</td></tr>
+<tr><td>distant hammering (the Works)</td>
+  <td><a href="https://freesound.org/people/bruno.auzet/sounds/640197/">traditionnal blacksmith</a> by bruno.auzet · CC0 · 5:12 · Schoeps ORTF</td>
+  <td>A traditional forge, fire and gentle hammering. It still sounds right when pushed far off.</td></tr>
+<tr><td>gulls</td>
+  <td><a href="https://freesound.org/people/Kinoton/sounds/468080/">Seagull Swarm at Port</a> by Kinoton · CC0 · 1:50</td>
+  <td>Gulls only, already cleaned: cut into one-shots.</td></tr>
+<tr><td>pigeons (optional)</td>
+  <td><a href="https://freesound.org/people/Sandy-Ogilvie/sounds/717784/">South Leith Parish Church Pigeons</a> by Sandy-Ogilvie · CC0 · 19:05</td>
+  <td>A feeding frenzy, then cooing. Rain later in the file.</td></tr>
+</tbody>
+</table>
+<p>Left out on purpose: Sonniss GDC bundles and BBC Sound Effects (not CC0); uploads that ask for share-alike or no
+redistribution (contrary to how we'd ship them); a harbour file that looks like a re-upload of someone else's; and the
+1930s-60s studio transfers labelled CC0 by craigsmith, whose right to waive them is unclear.</p>
+</section>
+<textarea id="out" hidden readonly></textarea>
+</main>
+<script>
+(function () {
+  var KEY = "awaken-listening-carillon-b3b";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} update(); }
+  function update() {
+    var sc = 0, ns = 0, so = 0, nso = 0;
+    document.querySelectorAll(".row[data-id]").forEach(function (r) {
+      var id = r.dataset.id, v = (state[id] || {}).v || "";
+      if (r.classList.contains("scene")) { ns++; if (v) sc++; } else { nso++; if (v) so++; }
+      r.querySelectorAll(".choices button").forEach(function (b) { b.setAttribute("aria-pressed", v === b.dataset.v ? "true" : "false"); });
+    });
+    document.getElementById("progress").textContent = "scenes " + sc + " of " + ns + " · sounds alone " + so + " of " + nso;
+  }
+  document.querySelectorAll(".row[data-id]").forEach(function (row) {
+    var id = row.dataset.id;
+    row.querySelectorAll(".choices button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var cur = state[id] || {};
+        cur.v = cur.v === b.dataset.v ? "" : b.dataset.v;
+        state[id] = cur;
+        save();
+      });
+    });
+    var note = row.querySelector(".note");
+    note.value = (state[id] || {}).note || "";
+    note.addEventListener("input", function () { var cur = state[id] || {}; cur.note = note.value; state[id] = cur; save(); });
+  });
+  document.addEventListener("play", function (ev) {
+    document.querySelectorAll("audio").forEach(function (a) { if (a !== ev.target) a.pause(); });
+  }, true);
+  function rows() {
+    var out = [];
+    document.querySelectorAll(".row[data-id]").forEach(function (r) {
+      var id = r.dataset.id;
+      out.push({ id: id, verdict: (state[id] || {}).v || "", note: (state[id] || {}).note || "" });
+    });
+    return out;
+  }
+  document.getElementById("export").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify({ sheet: KEY, exported: new Date().toISOString(), entries: rows() }, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = KEY + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+  document.getElementById("text").addEventListener("click", function () {
+    var t = document.getElementById("out");
+    var lines = rows().filter(function (r) { return r.verdict || r.note; })
+      .map(function (r) { return r.id + ": " + (r.verdict || "-") + (r.note ? " - " + r.note : ""); });
+    t.value = lines.length ? lines.join("\n") : "(nothing marked yet)";
+    t.hidden = false; t.focus(); t.select();
+  });
+  update();
+})();
+</script>
+</body>
+</html>
