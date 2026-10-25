@@ -42,6 +42,8 @@ final class BodyAnims {
         boolean clip;
         /** A held clip's move just ended: next tick picks how it lets go (a slide's jump-out or its settle). */
         boolean ending;
+        /** A slide down a run tips the whole figure to the slope (degrees, eased; last tick's and this tick's). */
+        float tilt, tiltO;
     }
 
     private static final Anim[] SLOTS = new Anim[32];
@@ -60,6 +62,7 @@ final class BodyAnims {
         a.start = ClientMoves.ticks;
         a.yaw = yaw;
         a.ending = false;
+        a.tilt = a.tiltO = 0;
         String clip = BodyClips.of(move);
         a.clip = clip != null && PlayerClips.available() && PlayerClips.play(entityId, clip, move == Move.TACTICAL_SPRINT ? 3 : move == Move.SLIDE ? 2 : 1);
     }
@@ -98,6 +101,7 @@ final class BodyAnims {
                 a.entity = -1;
                 continue;
             }
+            if (a.move == Move.SLIDE.ordinal()) slope(a, mc.level == null ? null : mc.level.getEntity(a.entity));
             // other players' slides throw their grit every tick (ours do it as they move)
             if (a.move == Move.SLIDE.ordinal() && mc.level != null && (mc.player == null || a.entity != mc.player.getId())) {
                 Entity e = mc.level.getEntity(a.entity);
@@ -107,6 +111,17 @@ final class BodyAnims {
                 }
             }
         }
+    }
+
+    /** The slope the slide is going down, from how the body moved this tick (ours and others' alike; SPEC §17.22). */
+    private static void slope(Anim a, @org.jspecify.annotations.Nullable Entity e) {
+        a.tiltO = a.tilt;
+        float target = 0;
+        if (e != null) {
+            double dx = e.getX() - e.xo, dz = e.getZ() - e.zo, dy = e.getY() - e.yo, h = Math.sqrt(dx * dx + dz * dz);
+            if (h > 0.05 && dy < -0.02) target = Mth.clamp((float) Math.toDegrees(Math.atan2(-dy, h)), 0F, 40F);
+        }
+        a.tilt += (target - a.tilt) * 0.4F;
     }
 
     static void reset() {
@@ -125,7 +140,8 @@ final class BodyAnims {
         return switch (Move.byId(move)) {
             case ROLL -> BodyRules.ROLL_TICKS;
             case TACTICAL_SPRINT -> BodyRules.TAC_TICKS;
-            case SLIDE -> BodyRules.SLIDE_TICKS + BodyRules.SLIDE_GRACE;
+            // a slide down a run goes on (ours ends through stop(), others' with their crawl pose)
+            case SLIDE -> BodyRules.SLIDE_TICKS + BodyRules.SLIDE_GRACE + BodyRules.STAIR_MAX_TICKS + BodyRules.STAIR_RUNOUT;
             case MANTLE -> BodyRules.MANTLE_TICKS + 3;
             // spike S3: other players' runner poses last this long (the local player's follow its own state)
             case WALL_RUN -> dev.awaken.body.RunnerRules.RUN_TICKS;
@@ -244,12 +260,21 @@ final class BodyAnims {
             return;
         }
         Anim a = find(s.id);
-        if (a == null || a.clip) return; // a clip moves the whole figure itself
-        float age = ClientMoves.ticks + s.partialTick - a.start;
+        if (a == null) return;
         float yaw = s.bodyRot * Mth.DEG_TO_RAD;
+        PoseStack ps = e.getPoseStack();
+        float slope = a.move == Move.SLIDE.ordinal() ? Mth.lerp(s.partialTick, a.tiltO, a.tilt) : 0F;
+        if (a.clip) { // a clip moves the whole figure itself; down a run it is only tipped to the slope
+            if (slope > 0.5F && s.hasPose(Pose.SWIMMING)) {
+                ps.pushPose();
+                pushed++;
+                tip(ps, 0.1F, slope, yaw);
+            }
+            return;
+        }
+        float age = ClientMoves.ticks + s.partialTick - a.start;
         // forward (the way the body faces) and the axis across it: turning about it tips the top forward
         float fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
-        PoseStack ps = e.getPoseStack();
         switch (Move.byId(a.move)) {
             case SLIDE -> {
                 if (!s.hasPose(Pose.SWIMMING)) return;
@@ -257,6 +282,7 @@ final class BodyAnims {
                 float lean = -34F * in; // sitting well back, feet first
                 ps.pushPose();
                 pushed++;
+                if (slope > 0.5F) tip(ps, 0.1F, slope, yaw); // down a run: the whole seat follows the slope
                 // the hips come down to the ground and back a little, so the legs lie along the box's length
                 ps.translate(-fx * 0.2F * in, -0.6F * in, -fz * 0.2F * in);
                 tip(ps, 0.72F, lean, yaw);

@@ -295,7 +295,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   every one under it, saved, synced; true when new), `onGranted(BiConsumer<ServerPlayer, Tier>)` (each new tier once,
   lowest first), `state(ServerPlayer)` (`AscentState`), `arrivedByMovement(ServerPlayer, int seconds ≤ 20)` (a third
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
-  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
+  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves, `stairSliding(Player)` a
+  slide down stairs (§17.22; `sliding` is true too). `core.api.AirHooks`
   (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
   `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
   Shoulder Surfing it flips first person and the shoulder view, §17.13).
@@ -2506,6 +2507,39 @@ free, and the way up in front of the face from the hold to standing height. The 
 `climbOut`. Covered by `runner_roof_climb`: a stair eave on a 3-high wall under a stair slope, a slab eave under a
 slab slope, Carillon's overhanging eave stair on a gentle and a steep gable (`CityGrammar.roof`), and a step with a
 block over it (no climb).
+
+### 17.22 Stair slide (Euan's playtest, 2026-10-25: "if I use the slide whilst I'm on a stair, it actually slides down")
+A slide started on a run of stairs or stepped slabs, or one that reaches the top of a run, slides down it. No new key;
+the slide's own controls (jump out, a power's motion, a push, water) end it as before.
+- **A run** (`BodyRules.stairStart`): along the slide's way, at least two half-block steps down (0.25-0.6 each; a full
+  block or more is an edge, a single step is just a step) ahead within 1.6 of the body's centre, nothing rising and no
+  gap before them, and the run's fall line (the grid side the ground drops most to over 1.25 blocks) within 35° of the
+  way. Read each tick on the line through the body's centre every 1/16 block, from 1.2 behind its rear to 1.6 ahead;
+  each nose that matters is then found exactly (bisection, 1/512). Running down stairs the feet leave each step: a
+  run under them counts as ground for starting a slide (client and server).
+- **The glide**: the body moves along the way, then down onto the straight line through the step noses (its rear edge
+  on the line: never inside a step, never a bump or a hop per step; up to 0.25 a tick back up onto it after a step
+  dropped off), and vanilla's move does the vertical part (its collisions, its landing). On a stair run the drop per
+  tick is exactly speed × slope. The way bends onto the fall line at up to 3° a tick. Speed tends to 0.42 b/t (a
+  tactical sprint is ~0.35, a slide enters at 0.38 / 0.46) at up to 0.012 a tick: a faded slide builds, a tactical one
+  eases down. No 14-tick limit while the run goes on; at most 120 ticks (6 s) of run. The ride is never a fall (fall
+  distance reset on both sides each tick).
+- **The bottom** (`StairProfile.last`): down the last step at the run's own slope onto the floor, then the run-out: the
+  slide's last 8 ticks, its own decay from the speed it has (0.42 → ~0.27, ~2.8 blocks). A landing mid-flight is a
+  bottom; the run-out slides on and, at the next flight's top, the stair slide takes over again. A turn in the run or a
+  wall at its end ends it the same way (the run-out, then the wall's thud). Something in the way of the crawl box mid-
+  run hands it to the run-out at once.
+- **Jump out** keeps the run's speed + 0.15; on the noses (feet just off the steps) the slide jumps itself.
+- **Server**: authoritative as for the slide. It reads the run itself from where it has the body (the same functions,
+  the same bend): while it sees one, the slide's end moves to 16 ticks ahead (run-out 8 + grace 6 + 2), else the slide
+  ends as before and the client is told. Vanilla's move check ignores the vertical difference of the client's line, so
+  the glide is never corrected.
+- **Look**: the third-person slide pose (or its clip) tipped forward to the slope it is going down (from the body's own
+  motion, eased, up to 40°), ours and others' alike. First person: `MovementHooks.stairSliding(Player)` (both sides,
+  `Body.isStairSliding`) for the animation plan to hook into.
+- Test: `body_stair_slide` (six stone-brick stairs, a slide from the top: the bottom in 23 ticks at 0.38 b/t against a
+  walk's 0.22, a 15-tick glide whose drop never changes by more than 0.014 a tick, the server sliding past 20 ticks
+  and no fall; a way across the stairs is no run).
 
 ---------------------------------------------------------------------------------------------------------------------
 
