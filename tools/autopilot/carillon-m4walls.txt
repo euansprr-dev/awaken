@@ -57,6 +57,9 @@ shot walls_out_s
 cmd awaken city view walls_tower
 wait 160
 shot walls_tower
+cmd awaken city view walls_scaffold
+wait 160
+shot walls_scaffold
 cmd awaken city view studio_high_gate
 wait 160
 shot walls_high_gate

@@ -155,6 +155,17 @@ final class CityWall {
         return clearSpan(p, g.k, (centre - 2.5) / SCALE[g.k], (centre + 2.5) / SCALE[g.k], -5.5);
     }
 
+    /**
+     * A stretch under repair (sides 2, 9 and 18, the bay right of the side's middle buttress): scaffolding on the outer
+     * face and fresh stone behind it. Returns the cell's place in the bay (3..7), or -1.
+     */
+    static int scaffold(CityPlan p, Geo g) {
+        if (g.k != 2 && g.k != 9 && g.k != 18) return -1;
+        int m = Math.floorMod(g.u + 1, 8);
+        if (g.u + 1 - m != 0 || m < 3) return -1;
+        return clearSpan(p, g.k, 1.5 / SCALE[g.k], 7.5 / SCALE[g.k], -5.5) ? m : -1;
+    }
+
     /** The arcade's bay index and place in its 7-cell unit (0-1 the pier, 2-6 the opening; 4 its middle). */
     static int bay(Geo g) {
         return Math.floorDiv(g.u + 4, 7);
@@ -429,6 +440,8 @@ final class CityWall {
                 continue;
             }
             BlockState s = stone(c, g, x, ry, z, inner);
+            if (wo <= 1 && ry >= 6 && ry <= 30 && scaffold(p, g) >= 0 && ry != 15 && ry != 27)
+                s = c.pct(x, z, 620 + ry) < 60 ? ASHLAR : c.pct(x, z, 640 + ry) < 50 ? STONE_BRICKS : POLISHED_ANDESITE;
             if (wo <= 1) {
                 int of = (ry == 12 || ry == 24 || (ry >= 18 && ry <= 19) || (ry >= 28 && ry <= 29) || ry >= 20 && ry <= 31) ? outerFace(c, x, ry, z) : -1;
                 if (of >= 0) {
@@ -452,6 +465,11 @@ final class CityWall {
         // the walk (open over the grand stair's last flight)
         b.set(x, top, z, wallSolid(c, g, x, top, z) ? walk(c, g, x, z) : AIR);
         b.column(x, top + 1, CityPainter.CLEAR_TOP, z, AIR);
+        // the inner parapet's second layer, on the walk's last cell (so it joins up on every side; open where a pipe
+        // arrives, and over the grand stair's head)
+        if (wo == 9 && wallSolid(c, g, x, top, z) && !beside(c.plan, x, z, true)) {
+            b.set(x, top + 1, z, STONE_WALLS[parapetMask(c, x, z)]);
+        }
         if (stairSide(g.k) && wo >= 7) stairColumn(c, b, g, x, z);
         else if (wo >= 7 && clear) bayContents(c, b, g, x, z);
         if (wo == 9 && clear) panelLife(c, b, g, x, z);
@@ -571,27 +589,42 @@ final class CityWall {
         }
     }
 
-    /** How high a patch of ivy reaches at this column (0 for none): patches every ~9 along, seeded by the plan. */
+    /**
+     * How high a patch of ivy reaches at this column (0 for none): patches every ~9 along, seeded by the plan, domed but
+     * ragged (each column's top wanders by a few), never shorter than three.
+     */
     static int ivyTop(Geo g, boolean inner) {
+        double off = ivyOff(g, inner);
+        if (off > 1.25) return 0;
+        int salt = inner ? 120 : 130, pu = Math.floorDiv(g.u + 3, 9);
+        int full = 12 + Ctx.shape(pu, g.k, salt + 3) % 18;
+        int top = (int) (full * (1 - 0.55 * off * off)) - Ctx.shape(g.u, g.k, salt + 4) % 4 - (off > 0.9 ? 3 : 0);
+        return top < 3 ? 0 : top;
+    }
+
+    /** How far a column stands from its patch's middle, in half-widths (99 outside any patch). */
+    static double ivyOff(Geo g, boolean inner) {
         int pu = Math.floorDiv(g.u + 3, 9);
         int salt = inner ? 120 : 130;
         int chance = inner ? 55 : g.out() == N ? 45 : BEHIND[g.k] == GARDEN_D ? 40 : 12;
-        if (Ctx.shape(g.k * 64 + pu, 0, salt) >= chance) return 0;
+        if (Ctx.shape(g.k * 64 + pu, 0, salt) >= chance) return 99;
         double centre = pu * 9 - 3 + 4.5 + (Ctx.shape(pu, g.k, salt + 1) % 5 - 2);
         double half = 1.8 + Ctx.shape(pu, g.k, salt + 2) % 4 * 0.7;
-        double off = Math.abs(g.u + 0.5 - centre) / half;
-        if (off > 1.25) return 0;
-        int full = 12 + Ctx.shape(pu, g.k, salt + 3) % 18;
-        return (int) (full * (1 - 0.55 * off * off));
+        return Math.abs(g.u + 0.5 - centre) / half;
     }
 
-    /** Ivy density in a patch: thin at its top and its edges (2 dense, 1 patchy, 0 tendrils, -1 none). */
+    /**
+     * Ivy density in a patch (2 dense, 1 patchy, 0 tendrils, -1 none): tendrils at the top and the edges, a mix of
+     * dense and patchy through the body, the odd gap where stone shows.
+     */
     static int ivyDensity(Geo g, int ry, int topRow, int h) {
         int fromTop = topRow - ry;
         if (fromTop < 0) return -1;
-        if (fromTop == 0) return h < 50 ? 0 : -1;
-        if (fromTop <= 2) return h < 30 ? 0 : 1;
-        return h < 12 ? 1 : 2;
+        if (fromTop == 0) return h < 45 ? 0 : -1;
+        if (fromTop <= 2) return h < 40 ? 0 : 1;
+        if (h >= 94) return -1;
+        boolean edge = ivyOff(g, g.wo() >= 6 || g.d >= 5) > 0.85;
+        return edge ? (h < 30 ? 0 : 1) : h < 55 ? 2 : 1;
     }
 
     static BlockState ivy(int facing, int density, Geo g) {
@@ -656,7 +689,7 @@ final class CityWall {
             if (lip != null) b.set(x, ry, z, lip);
         }
         // ivy on the sheltered faces, from the talus up
-        if (l == 1 && !butt) {
+        if (l == 1 && !butt && scaffold(p, g) < 0) {
             int it = ivyTop(g, false);
             for (int ry = 6; ry <= it + 4; ry++) {
                 if (ry == 15 || ry == 27) continue;
@@ -664,9 +697,37 @@ final class CityWall {
                 if (dens >= 0 && b.get(x, ry, z) == AIR) b.set(x, ry, z, ivy(g.out(), dens, g));
             }
         }
+        if (scaffold(p, g) >= 0) scaffolding(c, b, g, x, z);
         if (roofed(g.k)) hoarding(c, b, g, x, z);
         else parapet(c, b, g, x, z, butt);
     }
+
+    static final int[] DECKS = {10, 18, 26};
+
+    /**
+     * The repairers' scaffold: poles out at the third layer, plank decks at rows 10, 18 and 26 on putlog beams set into the
+     * wall (the beams in odd rows: holds), a ladder up the face through the decks, and a hoist at the top with its rope.
+     */
+    static void scaffolding(Ctx c, CityBuffer b, Geo g, int x, int z) {
+        int l = g.lout(), m = scaffold(c.plan, g), out = g.out(), in = g.in();
+        int axis = (out == E || out == W) ? 1 : 0;
+        boolean ladder = l == 1 && m == 5;
+        if (l == 3 && (m == 3 || m == 7)) {
+            for (int ry = 2; ry <= 30; ry++) b.set(x, ry, z, CityProps.POLE);
+            b.set(x, 31, z, CityProps.POLE_TOP);
+        }
+        for (int dk : DECKS) {
+            if (!(ladder && dk < 26)) b.set(x, dk, z, SPRUCE_SLAB_BOTTOM);
+            if (l == 1 && (m == 3 || m == 7)) b.set(x, dk - 1, z, SPRUCE_LOG[axis]);
+        }
+        if (ladder) for (int ry = 6; ry <= 26; ry++) b.set(x, ry, z, LADDER[out]);
+        if (l == 1 && m == 3) b.set(x, 31, z, CityBlocks.HOIST[out]);
+        if (l == 2 && m == 3) for (int ry = 19; ry <= 31; ry++) b.set(x, ry, z, CityBlocks.ROPE);
+        if (l == 1 && m == 4) b.set(x, DECKS[0] + 1, z, CityProps.CRATES[0]);
+        if (l == 2 && m == 6) b.set(x, DECKS[1] + 1, z, CityProps.SACKS[1][2]);
+    }
+
+    static final BlockState SPRUCE_SLAB_BOTTOM = of("minecraft:spruce_slab[type=bottom]");
 
     static final int[] COURSE_ROWS = {15, 27};
 
@@ -717,6 +778,7 @@ final class CityWall {
             }
         }
         roofCell(b, g, x, z, top);
+        ceiling(b, g, x, z, top);
     }
 
     // ---- the roofed walk ------------------------------------------------------------------------------------------
@@ -749,11 +811,24 @@ final class CityWall {
         b.set(x, y, z, st.straight()[face]);
     }
 
-    /** Over the walk on a roofed side: the roof, posts on the inner parapet, lanterns under the ridge. */
+    /**
+     * Over the walk on a roofed side: the roof, a plank ceiling on tie beams every fourth cell (a covered gallery, not
+     * the roof's underside), lanterns hung from it every sixth.
+     */
     static void roof(Ctx c, CityBuffer b, Geo g, int x, int z) {
         int top = top(c.plan);
         roofCell(b, g, x, z, top);
-        if ((g.wo() == 4) && Math.floorMod(g.u, 8) == 4) b.set(x, roofY(top, 4) - 1, z, LANTERN_HANGING);
+        ceiling(b, g, x, z, top);
+        if (g.wo() == 4 && Math.floorMod(g.u, 6) == 3) b.set(x, CEIL - 1, z, LANTERN_HANGING);
+    }
+
+    static final int CEIL = 44;
+
+    static void ceiling(CityBuffer b, Geo g, int x, int z, int top) {
+        int ly = layer(g);
+        if (ly < -1 || ly > 10 || roofY(top, ly) <= CEIL) return;
+        boolean beam = Math.floorMod(g.u, 4) == 0;
+        b.set(x, CEIL, z, beam ? SPRUCE_LOG[(g.out() == E || g.out() == W) ? 1 : 0] : SPRUCE_SLAB_TOP);
     }
 
     // ---- the ring side --------------------------------------------------------------------------------------------
@@ -787,7 +862,7 @@ final class CityWall {
                 if (post) {
                     b.column(x, top + 1, roofY(top, 10) - 1, z, T_POST[0]);
                 } else {
-                    b.set(x, top + 1, z, lamp ? WALL_POST : STONE_WALLS[parapetMask(c, x, z)]);
+                    b.set(x, top + 1, z, STONE_WALLS[parapetMask(c, x, z)]);
                     if (lamp) b.set(x, top + 2, z, LANTERN);
                 }
             }
@@ -841,17 +916,28 @@ final class CityWall {
         };
     }
 
+    /** Whether a cell is beside a drainpipe's column (on the ring: its parapet opens for the climber). */
+    static boolean beside(CityPlan p, int x, int z, boolean orSelf) {
+        if (orSelf && pipeAt(p, x, z)) return true;
+        for (int[] d : CityPainter.NB) if (pipeAt(p, x + d[0], z + d[1])) return true;
+        return false;
+    }
+
+    /** A cell of the inner parapet (two deep: the ring's first cell and the wall's last), not opened for a pipe. */
+    static boolean parapetCell(Ctx c, int x, int z) {
+        CityPlan p = c.plan;
+        byte k = p.kind(x, z);
+        if (k == LANDMARK) return true;
+        if (k != RING && k != WALL) return false;
+        Geo n = geo(p, x, z);
+        if (k == RING) return n.lin() == 1 && !pipe(p, n);
+        return n.wo() == 9 && wallSolid(c, n, x, top(p), z) && !beside(p, x, z, true);
+    }
+
     /** The inner parapet's connections: toward neighbouring parapet cells. */
     static int parapetMask(Ctx c, int x, int z) {
         int mask = 0;
-        for (int d = 0; d < 4; d++) {
-            int nx = x + CityPainter.NB[d][0], nz = z + CityPainter.NB[d][1];
-            byte k = c.plan.kind(nx, nz);
-            if (k == RING) {
-                Geo n = geo(c.plan, nx, nz);
-                if (n.lin() == 1 && !pipe(c.plan, n)) mask |= 1 << d;
-            } else if (k == LANDMARK) mask |= 1 << d;
-        }
+        for (int d = 0; d < 4; d++) if (parapetCell(c, x + CityPainter.NB[d][0], z + CityPainter.NB[d][1])) mask |= 1 << d;
         return mask;
     }
 

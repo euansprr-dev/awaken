@@ -186,6 +186,7 @@ final class CityTowers {
             if (d >= -5 && d < 5 && !approach(t, x, z)) CityWall.curtain(c, b, x, z);
         }
         if (foot) shaft(c, b, t, x, z);
+        else banners(b, t, x, z);
         ring(c, b, t, x, z);
         top(c, b, t, x, z);
     }
@@ -324,7 +325,7 @@ final class CityTowers {
             boolean lower = ry == 12 || ry == 20 || ry == 28 || ry == t.eave - 13;
             return loop(face, lower ? 1 : 2, storey == 3 ? 1 : 0, stone);
         }
-        if (t.form == SQUARE && quoin(t, x, z, ry) && ry > 6) return t.district == TERRACE ? CALCITE : t.district == WORKS ? BRICKS : ASHLAR;
+        if (t.form == SQUARE && quoin(t, x, z, ry) && ry > 6) return t.district == TERRACE ? POLISHED_DIORITE : t.district == WORKS ? BRICKS : ASHLAR;
         return s;
     }
 
@@ -339,6 +340,18 @@ final class CityTowers {
     static boolean quoin(T t, int x, int z, int ry) {
         double dx = Math.abs(x + 0.5 - t.cx), dz = Math.abs(z + 0.5 - t.cz);
         return ry % 2 == 0 ? dx > t.r - 1 && dz > t.r - 2 : dz > t.r - 1 && dx > t.r - 2;
+    }
+
+    /**
+     * Two long banners of the district, one over the other, on the middle of the tower's field face under its gallery
+     * (painted from the cell in front of the face, so each column still paints alone).
+     */
+    static void banners(CityBuffer b, T t, int x, int z) {
+        int fx = x - NBX[t.out], fz = z - NBZ[t.out], top = t.eave - 7;
+        if (t.inside(x, z, top) || !t.inside(fx, fz, top) || !centred(t, fx, fz, t.out)) return;
+        int design = CityWall.designOf(t.district);
+        for (int s = 0; s < 2; s++)
+            for (int i = 0; i < 3; i++) b.set(x, top - s * 3 - i, z, CityFacadeLife.BANNER[t.out][design][i][0]);
     }
 
     /** The courses round the shaft (rows 15 and 27, the wall's ledges), joined by shape. */
@@ -564,19 +577,27 @@ final class CityTowers {
             b.column(x, walkTop + 1, walkTop + 3, z, AIR);
             if (across == width / 2 && Math.abs(g.d()) < 0.6) b.set(x, walkTop + 3, z, LANTERN_HANGING);
         }
-        // the roof: battlements, the bell-gable (the city's sign over every gate) and braziers at the corners
+        // the top: battlements round a walk, braziers at its corners, and the gate hall's slate hip roof inside them
+        // with a gilded finial (the city's sign over every gate)
         b.set(x, h, z, POLISHED_ANDESITE);
-        boolean rim = CityLandmarks.inset(box, x, z) == 0;
-        if (rim && ((x + z) & 1) == 0) {
+        int ins = CityLandmarks.inset(box, x, z);
+        if (ins == 0) {
             b.set(x, h + 1, z, STONE_BRICKS);
-            b.set(x, h + 2, z, STONE_SLAB);
+            if (((x + z) & 1) == 0) {
+                b.set(x, h + 2, z, STONE_BRICKS);
+                b.set(x, h + 3, z, STONE_SLAB);
+            }
         }
         if ((x == box.x0() + 1 || x == box.x1() - 1) && (z == box.z0() + 1 || z == box.z1() - 1)) b.set(x, h + 1, z, BRAZIER);
-        if (edge >= 3 && along >= length / 2 - 1 && along <= length / 2 + 1) {
-            b.column(x, h + 1, h + 4, z, (along == length / 2 && edge == width / 2 - 1) ? BRONZE : AIR);
-            if (along == length / 2) {
-                b.set(x, h + 1, z, POLISHED_ANDESITE);
-                b.set(x, h + 5, z, edge == width / 2 - 1 ? GILDED : BRONZE);
+        Box hall = new Box(box.x0() + 2, box.z0() + 2, box.x1() - 2, box.z1() - 2);
+        if (hall.contains(x, z)) {
+            CityLandmarks.pyramidHip(b, hall, x, z, h + 1, SLATE_KIT);
+            int hs = (Math.min(hall.w(), hall.d()) + 1) / 2;
+            int dd = Math.min(Math.min(x - hall.x0(), hall.x1() - x), Math.min(z - hall.z0(), hall.z1() - z)) + 1;
+            if (dd >= hs && across == width / 2 - 1 && along == length / 2) {
+                b.set(x, h + hs + 1, z, BRONZE);
+                b.set(x, h + hs + 2, z, GILDED);
+                b.set(x, h + hs + 3, z, COPPER_ROD);
             }
         }
     }
