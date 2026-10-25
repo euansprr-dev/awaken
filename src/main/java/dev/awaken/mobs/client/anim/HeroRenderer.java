@@ -3,6 +3,7 @@ package dev.awaken.mobs.client.anim;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.awaken.Awaken;
+import dev.awaken.mobs.client.life.Life;
 import dev.awaken.mobs.client.model.AwModels;
 import dev.awaken.mobs.client.model.HeroModel;
 import dev.awaken.mobs.def.Ability;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
@@ -37,6 +39,8 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
     private static final float HOLD = 1.0F, FADE = 0.3F;
 
     private final Identifier texture;
+    /** The closed-eyes skin (tools/art: {@code <id>_blink.png}) a blink draws, or null if the creature has none. */
+    private final @Nullable Identifier blink;
     private final int[] windup, strike;
     private final float[] windupSeconds;
     private final int roar, warn;
@@ -44,6 +48,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
     public HeroRenderer(EntityRendererProvider.Context ctx, MobDef def, HeroRig rig) {
         super(ctx, new HeroModel(ctx.bakeLayer(HeroModel.layer(rig.id)), rig), rig.shadow);
         this.texture = Awaken.id("textures/entity/mobs/" + def.id + ".png");
+        this.blink = exists(Awaken.id("textures/entity/mobs/" + def.id + "_blink.png"));
         HeroModel m = getModel();
         List<String> names = FaunaMob.moveNames(def);
         windup = new int[names.size()];
@@ -66,7 +71,16 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
             if (windup[i] < 0) windup[i] = m.clip("windup");
             if (strike[i] < 0) strike[i] = m.clip("strike");
         }
-        addLayer(new Glow(this, Awaken.id("textures/entity/mobs/" + def.id + "_glow.png")));
+        addLayer(new Glow(this, Awaken.id("textures/entity/mobs/" + def.id + "_glow.png"), exists(Awaken.id("textures/entity/mobs/" + def.id + "_glow_blink.png"))));
+    }
+
+    static @Nullable Identifier exists(Identifier id) {
+        return net.minecraft.client.Minecraft.getInstance().getResourceManager().getResource(id).isPresent() ? id : null;
+    }
+
+    static boolean shut(LivingEntityRenderState s) {
+        Life l = Life.from(s);
+        return l != null && l.closed() > 0.5F;
     }
 
     private static @Nullable Ability ability(MobDef d, String name) {
@@ -117,6 +131,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
         s.hurt = l.hurt > 0 ? (1.0F - l.hurt) * mob.hurtDuration / 20.0F : -1;
         s.dying = mob.isDeadOrDying() ? (f.dyingTicks() + partialTicks) / 20.0F : -1;
         if (s.dying >= 0) s.hasRedOverlay = f.dyingTicks() < 8 || mob.hurtTime > 0;
+        live(mob, s, l, f);
     }
 
     /** Sets cueClip / cueTime / cueWeight for a cue that started {@code since} seconds ago. */
@@ -134,8 +149,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
                 float real = windupSeconds[slot];
                 if (real <= 0) { // a move that is a roar
                     s.cueClip = c;
-                    s.cueTime = since;
-                    s.cueWeight = since <= len ? 1.0F : 0.0F;
+                    letGo(s, since, len);
                     return;
                 }
                 s.cueClip = c;
@@ -146,21 +160,46 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
             case FaunaMob.CUE_STRIKE -> {
                 if (slot < 0 || slot >= strike.length) return;
                 s.cueClip = strike[slot];
-                s.cueTime = since;
-                s.cueWeight = since <= m.length(s.cueClip) ? 1.0F : 0.0F;
+                letGo(s, since, m.length(s.cueClip));
             }
             case FaunaMob.CUE_ROAR, FaunaMob.CUE_WARN -> {
                 s.cueClip = stage == FaunaMob.CUE_ROAR ? roar : warn;
-                s.cueTime = since;
-                s.cueWeight = since <= m.length(s.cueClip) ? 1.0F : 0.0F;
+                letGo(s, since, m.length(s.cueClip));
             }
             default -> { }
         }
     }
 
+    /** A one-shot cue plays to its end, then holds its last frame while it fades (no pop). */
+    private static void letGo(HeroRenderState s, float since, float len) {
+        s.cueTime = Math.min(since, len);
+        s.cueWeight = since <= len ? 1.0F : Math.max(0.0F, 1.0F - (since - len) / 0.2F);
+    }
+
+    /** The creature's life: made once, fed this frame's cue, blow and fall, stepped (it also turns the head the slow way). */
+    private void live(AwakenMob mob, HeroRenderState s, AwLook l, FaunaMob f) {
+        HeroModel m = getModel();
+        Life life = Life.of(l.life, m.life(), mob.getId());
+        l.life = life;
+        int stage = FaunaMob.cueStage(f.cue());
+        life.hurt = l.hurt;
+        life.windup = stage == FaunaMob.CUE_WINDUP && s.cueClip >= 0 && s.cueWeight > 0 && s.cueClip != roar
+                ? Mth.clamp(s.cueTime / Math.max(0.01F, m.length(s.cueClip)), 0.0F, 1.0F) : -1;
+        life.roar = s.cueWeight > 0 && s.cueClip >= 0 && (s.cueClip == roar || s.cueClip == warn);
+        life.roarClip = roar >= 0;
+        life.busy = s.cueWeight > 0.05F || s.melee >= 0 || s.hurt >= 0;
+        life.dying = s.dying;
+        life.deathLength = m.length(m.clip("death"));
+        HeroRig rig = m.rig();
+        life.stride = rig.walkStride + (rig.runStride - rig.walkStride) * s.run;
+        life.walk = s.airborne ? 0.0F : s.walk;
+        life.airborne = s.airborne;
+        life.tick(s, true);
+    }
+
     @Override
     public Identifier getTextureLocation(HeroRenderState s) {
-        return texture;
+        return blink != null && shut(s) ? blink : texture;
     }
 
     @Override
@@ -170,7 +209,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
 
     @Override
     protected @Nullable RenderType getRenderType(HeroRenderState s, boolean bodyVisible, boolean forceTransparent, boolean glowing) {
-        if (bodyVisible && look(s).translucent) return RenderTypes.entityTranslucent(texture);
+        if (bodyVisible && look(s).translucent) return RenderTypes.entityTranslucent(getTextureLocation(s));
         return super.getRenderType(s, bodyVisible, forceTransparent, glowing);
     }
 
@@ -198,10 +237,12 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
     /** The creature's emissive layer (eyes, veins, crowns), as bright as its look says (it flares while winding up). */
     private static final class Glow extends RenderLayer<HeroRenderState, HeroModel> {
         private final RenderType type;
+        private final @Nullable RenderType shut;
 
-        Glow(HeroRenderer parent, Identifier texture) {
+        Glow(HeroRenderer parent, Identifier texture, @Nullable Identifier blink) {
             super(parent);
             this.type = RenderTypes.entityTranslucentEmissive(texture);
+            this.shut = blink == null ? null : RenderTypes.entityTranslucentEmissive(blink);
         }
 
         @Override
@@ -211,7 +252,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
             float a = Mth.clamp(l.glow * (l.translucent ? 0.8F : 1.0F), 0.0F, 1.0F);
             if (s.dying >= 0) a *= Math.max(0.0F, 1.0F - s.dying / (NamedBeast.DEATH_TICKS / 20.0F)); // the light goes out as it falls
             if (a <= 0.01F) return;
-            collector.order(2).submitModel(getParentModel(), s, pose, type, LightCoordsUtil.FULL_BRIGHT,
+            collector.order(2).submitModel(getParentModel(), s, pose, shut != null && shut(s) ? shut : type, LightCoordsUtil.FULL_BRIGHT,
                     LivingEntityRenderer.getOverlayCoords(s, 0.0F), ARGB.white(a), null, s.outlineColor);
         }
     }

@@ -463,12 +463,13 @@ def paint_brook_otter(r, P):
         for i in range(f.w):
             f.set(i, 0 if i % 2 == 0 else 1, hexc("#f4ecdc", 220))
     # eyes: bright, dark, alert; a faint amber shine in the glow layer
-    for fname in ("west", "east"):
-        f = P.face("ohead", fname)
-        g = P.face("ohead", fname, glow=True)
-        ex = 0 if fname == "west" else f.w - 1
-        f.set(ex, 1, hexc("#0a0604"))
-        g.set(ex, 1, hexc("#ffd27a", 150))
+    with P.eyes():
+        for fname in ("west", "east"):
+            f = P.face("ohead", fname)
+            g = P.face("ohead", fname, glow=True)
+            ex = 0 if fname == "west" else f.w - 1
+            f.set(ex, 1, hexc("#0a0604"))
+            g.set(ex, 1, hexc("#ffd27a", 150))
     return P.skin, P.glow
 
 
@@ -631,12 +632,13 @@ def paint_tidesteed(r, P):
                 f.set(i, j, hexc("#9ff6ff"))
                 g.set(i, j, hexc("#9ff6ff", 230))
     # eyes: dark and large, a sea-green shine
-    for fname in ("west", "east"):
-        f = P.face("skull", fname)
-        g = P.face("skull", fname, glow=True)
-        for ex in (2, 3):
-            f.set(ex if fname == "west" else f.w - 1 - ex, 2, hexc("#04100c"))
-        g.set(2 if fname == "west" else f.w - 3, 2, hexc("#7fffe0", 200))
+    with P.eyes():
+        for fname in ("west", "east"):
+            f = P.face("skull", fname)
+            g = P.face("skull", fname, glow=True)
+            for ex in (2, 3):
+                f.set(ex if fname == "west" else f.w - 1 - ex, 2, hexc("#04100c"))
+            g.set(2 if fname == "west" else f.w - 3, 2, hexc("#7fffe0", 200))
     # the kelp mane and forelock: ragged olive fronds with bladders
     for nm in ("mane0", "forelock"):
         for fname in ("west", "east"):
@@ -1800,8 +1802,14 @@ def rigs(only=None):
 
 
 def paint(rig, painter):
+    return paint_full(rig, painter)[:2]
+
+
+def paint_full(rig, painter):
+    """(skin, glow, blink): blink is (skin, glow) with the eyes shut, or None (fauna_rig.Painter.eyes)."""
     P = R.Painter(rig, "fauna3|" + rig.id)
-    return painter(rig, P)
+    skin, glow = painter(rig, P)
+    return skin, glow, P.blink()
 
 
 def java(all_rigs):
@@ -2029,9 +2037,12 @@ def bridle_overlay(model):
 def build(out):
     all_rigs = rigs()
     for rid, rig, painter in all_rigs:
-        skin, glow = paint(rig, painter)
+        skin, glow, blink = paint_full(rig, painter)
         out.entity("mobs/" + rid, skin)
         out.entity("mobs/" + rid + "_glow", glow)
+        if blink is not None:  # the eyes shut, for the life layer's blink (SPEC §23)
+            out.entity("mobs/" + rid + "_blink", blink[0])
+            out.entity("mobs/" + rid + "_glow_blink", blink[1])
     for m in creatures():
         out.item(m["id"] + "_spawn_egg", egg(m["id"], m["role"] == "BEAST"))
         for p in m["parts"]:

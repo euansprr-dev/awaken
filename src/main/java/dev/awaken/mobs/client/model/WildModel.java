@@ -2,6 +2,8 @@ package dev.awaken.mobs.client.model;
 
 import dev.awaken.mobs.client.anim.HeroRig;
 import dev.awaken.mobs.client.anim.WildRenderState;
+import dev.awaken.mobs.client.life.Life;
+import dev.awaken.mobs.client.life.LifeRig;
 import dev.awaken.mobs.entity.WildPose;
 import net.minecraft.client.animation.AnimationChannel;
 import net.minecraft.client.animation.AnimationDefinition;
@@ -25,7 +27,8 @@ import java.util.Map;
  * water and the caves need: in water the swim loop ({@code fly}) replaces the walk and runs faster the faster it
  * swims; held poses play their own clips ({@code hang}, {@code chirp}, {@code ripen}, {@code listen}, {@code deflate},
  * {@code carry}, {@code rest}, {@code beached}, {@code ridden}); bones named {@code bridle*} show only on a bridled
- * mount.
+ * mount. Graph weights ease in and out, the fall crossfades from the live pose, and the life layer (SPEC §23) goes on
+ * top, as on {@link HeroModel}.
  */
 public final class WildModel extends EntityModel<WildRenderState> {
     private static final int[] HOLD_BITS = {WildPose.S_HANG, WildPose.S_CHIRP, WildPose.S_RIPEN, WildPose.S_LISTEN, WildPose.S_DEFLATE,
@@ -41,6 +44,7 @@ public final class WildModel extends EntityModel<WildRenderState> {
     private final ModelPart[] bridle;
     private final int[] holds = new int[HOLD_BITS.length];
     private final int idle, walk, run, fly, death, hurt, bite, angry;
+    private final LifeRig life;
 
     public WildModel(ModelPart root, HeroRig rig) {
         super(root, rig.translucent ? RenderTypes::entityTranslucent : RenderTypes::entityCutout);
@@ -76,6 +80,11 @@ public final class WildModel extends EntityModel<WildRenderState> {
         hurt = clip("hurt");
         bite = clip("bite");
         angry = clip("angry");
+        life = LifeRig.of(root, HeroModel.profile(rig.id), rig, idle >= 0);
+    }
+
+    public LifeRig life() {
+        return life;
     }
 
     public HeroRig rig() {
@@ -119,34 +128,52 @@ public final class WildModel extends EntityModel<WildRenderState> {
         if (clip >= 0 && weight > 0.001F) baked.get(clip).apply((long) (seconds * 1000.0F), Math.min(1.0F, weight));
     }
 
+    /** A one-shot clip, holding its last frame while it lets go after it ends (no pop). */
+    private void once(int clip, float time, float weight) {
+        if (clip < 0 || time < 0) return;
+        float over = time - length(clip);
+        if (over < HeroModel.LET_GO) play(clip, Math.min(time, length(clip)), over <= 0 ? weight : weight * (1.0F - over / HeroModel.LET_GO));
+    }
+
     @Override
     public void setupAnim(WildRenderState s) {
         super.setupAnim(s);
         boolean bridled = (s.wild & WildPose.S_BRIDLED) != 0;
         for (ModelPart p : bridle) p.visible = bridled;
+        Life l = Life.from(s);
+        float live = 1.0F;
         if (s.dying >= 0 && death >= 0) {
+            live = 1.0F - Mth.smoothstep(Math.min(1.0F, s.dying / 0.25F));
             play(death, s.dying, 1.0F);
-            return;
+            if (live <= 0) {
+                life.apply(l, s);
+                return;
+            }
         }
-        float t = s.ageInTicks / 20.0F;
+        float t = l != null ? l.idleTime() : s.ageInTicks / 20.0F;
         boolean swimming = (s.wild & WildPose.S_SWIM) != 0 && fly >= 0;
         boolean beached = (s.wild & WildPose.S_BEACHED) != 0;
         boolean hanging = (s.wild & WildPose.S_HANG) != 0;
         float moving = swimming || beached || hanging ? 0.0F : s.walk;
-        play(idle, t, 1.0F - 0.55F * moving);
-        if (angry >= 0) play(angry, t, s.angry * (1.0F - moving));
-        if (swimming) {
-            play(fly, t * (1.0F + Math.min(2.5F, s.speed * 6.0F)), 1.0F);
-        } else if (fly >= 0 && walk < 0 && !beached) {
-            play(fly, t, 1.0F); // a swimmer with no legs, out of water but not stranded (falling): keep swimming
+        float angryW = l != null ? l.ease(0, s.angry, 0.3F) : s.angry;
+        play(idle, t, (1.0F - 0.55F * moving) * live);
+        if (angry >= 0) play(angry, t, angryW * (1.0F - moving) * live);
+        float swimRate = 1.0F + Math.min(2.5F, s.speed * 6.0F);
+        float swimW = l != null ? l.ease(1, swimming ? 1.0F : 0.0F, 0.25F) : swimming ? 1.0F : 0.0F;
+        if (fly >= 0 && walk < 0 && !beached) {
+            play(fly, l != null ? l.clock(0, swimming ? swimRate : 1.0F) : t, live); // no legs: it swims, in water or falling
+        } else if (fly >= 0 && swimW > 0.001F) {
+            play(fly, l != null ? l.clock(0, swimRate) : t * swimRate, swimW * live);
         }
         if (moving > 0.01F) {
-            if (walk >= 0) play(walk, s.gait / rig.walkStride * length(walk), moving * (1.0F - s.run));
-            if (run >= 0) play(run, s.gait / rig.runStride * length(run), moving * s.run);
-            else if (walk >= 0 && s.run > 0) play(walk, s.gait / rig.walkStride * length(walk), moving * s.run);
+            if (walk >= 0) play(walk, s.gait / rig.walkStride * length(walk), moving * (1.0F - s.run) * live);
+            if (run >= 0) play(run, s.gait / rig.runStride * length(run), moving * s.run * live);
+            else if (walk >= 0 && s.run > 0) play(walk, s.gait / rig.walkStride * length(walk), moving * s.run * live);
         }
         for (int i = 0; i < HOLD_BITS.length; i++) {
-            if ((s.wild & HOLD_BITS[i]) != 0) play(holds[i], t, 1.0F);
+            float want = (s.wild & HOLD_BITS[i]) != 0 ? 1.0F : 0.0F;
+            float w = l != null && i + 2 < 12 ? l.ease(i + 2, want, HOLD_BITS[i] == WildPose.S_HANG ? 0.05F : 0.3F) : want;
+            if (w > 0.001F) play(holds[i], t, w * live);
         }
         float lookW = 1.0F - Mth.clamp(s.cueWeight, 0.0F, 1.0F) * 0.7F;
         if (hanging) lookW *= 0.3F;
@@ -157,9 +184,10 @@ public final class WildModel extends EntityModel<WildRenderState> {
             lookParts[i].yRot += yaw * lookYaw[i];
             lookParts[i].xRot += pitch * lookPitch[i];
         }
-        play(s.prevClip, s.prevTime, s.prevWeight);
-        play(s.cueClip, s.cueTime, s.cueWeight);
-        if (s.melee >= 0 && bite >= 0 && s.melee <= length(bite)) play(bite, s.melee, 1.0F);
-        if (s.hurt >= 0 && hurt >= 0 && s.hurt <= length(hurt)) play(hurt, s.hurt, 1.0F);
+        play(s.prevClip, s.prevTime, s.prevWeight * live);
+        play(s.cueClip, s.cueTime, s.cueWeight * live);
+        once(bite, s.melee, live);
+        once(hurt, s.hurt, live);
+        life.apply(l, s);
     }
 }
