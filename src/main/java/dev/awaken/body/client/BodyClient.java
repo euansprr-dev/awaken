@@ -59,7 +59,14 @@ public final class BodyClient {
             BodyAnims.reset();
             RunnerFx.reset();
             TryDriver.release();
+            ActionCamera.reset();
+            dev.awaken.body.client.feel.ShoulderView.reset();
         });
+        // the action camera (SPEC §17.13): Shoulder Surfing's view when it's installed, else vanilla's third person
+        dev.awaken.body.client.feel.ShoulderView.init();
+        if (!dev.awaken.body.client.feel.ShoulderView.INSTALLED) {
+            bus.addListener(net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent.class, ActionCamera::onDetached);
+        }
         Body.installClient(new Body.ClientQuery() {
             @Override public boolean sliding() { return ClientMoves.sliding; }
             @Override public boolean tacticalSprinting() { return ClientMoves.tac; }
@@ -94,6 +101,8 @@ public final class BodyClient {
         BodyAnims.tick();
         RunnerFx.tick();
         TryDriver.tick();
+        ActionCamera.tick(mc);
+        dev.awaken.body.client.feel.ShoulderView.tick(mc);
     }
 
     /** Someone else's move (ours were predicted), a trip or a momentum hit: animate it and kick up its dust. */

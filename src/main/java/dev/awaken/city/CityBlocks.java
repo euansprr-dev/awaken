@@ -255,6 +255,116 @@ final class CityBlocks {
     static final BlockState[] CROPS = {of("minecraft:wheat[age=7]"), of("minecraft:carrots[age=7]"),
             of("minecraft:potatoes[age=7]"), of("minecraft:beetroots[age=3]"), of("minecraft:wheat[age=5]")};
 
+    // ---- Milestone 4: the climbing grid's courses and the kit ----------------------------------------------------
+
+    /**
+     * An upside-down stair run, the profile of every course, cornice and hood (look bible §3.1): the top half sticks out
+     * a full block (the lip, its top on the grid, its face at the cell's outer edge), the bottom half hugs the wall.
+     * Indexed by the side the stair faces, which is toward the wall.
+     */
+    record Course(BlockState[] straight, BlockState[] outerLeft, BlockState[] outerRight) {
+        static Course of(String stairs) {
+            return new Course(dirs(stairs + "[facing=%s,half=top,shape=straight]"),
+                    dirs(stairs + "[facing=%s,half=top,shape=outer_left]"),
+                    dirs(stairs + "[facing=%s,half=top,shape=outer_right]"));
+        }
+
+        /** The piece on an outside corner, its wall-side quarter toward sides a and b (b beside a). */
+        BlockState corner(int a, int b) {
+            return b == ((a + 3) & 3) ? outerLeft[a] : outerRight[a];
+        }
+    }
+
+    static final Course C_STONE = Course.of("minecraft:stone_brick_stairs");
+    static final Course C_DARK = Course.of("minecraft:dark_oak_stairs");
+    static final Course C_SPRUCE = Course.of("minecraft:spruce_stairs");
+    static final Course C_BRONZE = Course.of("minecraft:waxed_exposed_cut_copper_stairs");
+    static final Course C_SANDSTONE = Course.of("minecraft:smooth_sandstone_stairs");
+    static final Course C_QUARTZ = Course.of("minecraft:smooth_quartz_stairs");
+    static final Course C_DIORITE = Course.of("minecraft:polished_diorite_stairs");
+    static final Course C_BLACKSTONE = Course.of("minecraft:polished_blackstone_brick_stairs");
+    static final Course C_BRICK = Course.of("minecraft:brick_stairs");
+    static final Course C_COBBLE = Course.of("minecraft:cobblestone_stairs");
+    static final Course C_VERDIGRIS = Course.of("minecraft:waxed_oxidized_cut_copper_stairs");
+    static final Course C_ANDESITE = Course.of("minecraft:polished_andesite_stairs");
+
+    /** A thin board canopy over a shopfront (B3 swaps in the striped awnings), and the sill board under a loading door. */
+    static final BlockState CANOPY = of("minecraft:dark_oak_slab[type=top]");
+    static final BlockState[] SILL_BOARD = dirs("minecraft:spruce_trapdoor[facing=%s,half=top,open=false]");
+    static final BlockState FASCIA = of("minecraft:dark_oak_planks");
+
+    // ridge caps: a lighter stone on every ridge, the line that breaks the roofscape's mass (bible §3.4)
+    static final BlockState CAP_SMOOTH = SMOOTH_SLAB;
+    static final BlockState CAP_BRICK = of("minecraft:brick_slab[type=bottom]");
+    static final BlockState CAP_QUARTZ = of("minecraft:smooth_quartz_slab[type=bottom]");
+    static final BlockState CAP_ANDESITE = of("minecraft:polished_andesite_slab[type=bottom]");
+    static final BlockState CAP_STONE = STONE_SLAB;
+    static final BlockState[] MOSSY_STAIR = dirs("minecraft:mossy_cobblestone_stairs[facing=%s,half=bottom,shape=straight]");
+    static final BlockState QUARTZ_PILLAR = of("minecraft:quartz_pillar[axis=y]");
+    static final BlockState YELLOW_TERRACOTTA = of("minecraft:yellow_terracotta");
+    static final BlockState RED_TERRACOTTA = of("minecraft:red_terracotta");
+    static final BlockState TERRACOTTA = of("minecraft:terracotta");
+    static final BlockState PINK_TERRACOTTA = of("minecraft:pink_terracotta");
+    static final BlockState LIGHT_GRAY_TERRACOTTA = of("minecraft:light_gray_terracotta");
+
+    // the kit's roofs
+    static final Roof SLATE_KIT = Roof.of("awaken:slate_tiles", "awaken:slate_tile_slab", "awaken:slate_tile_stairs");
+    static final Roof CLAY = Roof.of("awaken:clay_tiles", "awaken:clay_tile_slab", "awaken:clay_tile_stairs");
+    static final Roof TUFF_ROOF = SLATE_TUFF;
+
+    /** Window boxes by style (0 wood, 1 iron, 2 stone), bloom (0 none, 1 red, 2 yellow, 3 blue, 4 pink, 5 white, 6 herbs) and side. */
+    static final String[] BOX_STYLE = {"wood", "iron", "stone"};
+    static final String[] BLOOM = {"none", "red", "yellow", "blue", "pink", "white", "herbs"};
+    static final BlockState[][][] BOX = new BlockState[3][7][];
+    /** Shutters by colour, hinge (0 left, 1 right), half (0 lower, 1 upper) and side. */
+    static final String[] SHUTTER_COLOUR = {"blue", "sage", "oxblood", "natural", "green", "cream"};
+    static final int SH_BLUE = 0, SH_SAGE = 1, SH_OXBLOOD = 2, SH_NATURAL = 3, SH_GREEN = 4, SH_CREAM = 5;
+    static final BlockState[][][][] SHUTTER_KIT = new BlockState[6][2][2][];
+    static final BlockState[] PIPE = dirs("awaken:drainpipe[facing=%s,part=pipe]");
+    static final BlockState[] PIPE_HEAD = dirs("awaken:drainpipe[facing=%s,part=head]");
+    static final BlockState[] PIPE_SHOE = dirs("awaken:drainpipe[facing=%s,part=shoe]");
+    static final BlockState[] TRELLIS = dirs("awaken:trellis[facing=%s,ivy=false]");
+    static final BlockState[] TRELLIS_IVY = dirs("awaken:trellis[facing=%s,ivy=true]");
+    /** Kit windows by style and half (0 lower, 1 upper, 2 single); placed unlit (the households light them, B3). */
+    static final String[] WIN_STYLE = {"leaded", "sash", "arched", "cottage", "warehouse", "barred", "works", "shop", "dormer", "round"};
+    static final int W_LEADED = 0, W_SASH = 1, W_ARCHED = 2, W_COTTAGE = 3, W_WAREHOUSE = 4, W_BARRED = 5, W_WORKS = 6,
+            W_SHOP = 7, W_DORMER = 8, W_ROUND = 9;
+    static final BlockState[][] WINDOW = new BlockState[WIN_STYLE.length][3];
+    static final BlockState[][] LOADING = new BlockState[4][];
+    static final BlockState[] HOIST = dirs("awaken:hoist_beam[facing=%s,pulley=true]");
+    static final BlockState ROPE = of("awaken:rope");
+    static final BlockState[] CROWN = {of("awaken:chimney_bricks[material=brick]"), of("awaken:chimney_bricks[material=mud]"),
+            of("awaken:chimney_bricks[material=stone]")};
+
+    // the walls' kit (decision 27: weighted texture variants per block, so long walls never tile)
+    static final String[] PLASTER_COLOUR = {"white", "cream", "ochre", "rose", "clay", "mauve", "oxblood", "sage"};
+    static final int P_WHITE = 0, P_CREAM = 1, P_OCHRE = 2, P_ROSE = 3, P_CLAY = 4, P_MAUVE = 5, P_OXBLOOD = 6, P_SAGE = 7;
+    static final BlockState[] PLASTER = new BlockState[PLASTER_COLOUR.length];
+    /** Kit timber by tone (0 dark, 1 pale): posts (y), beams along x and along z. */
+    static final BlockState[] T_POST = {of("awaken:timber[axis=y,tone=dark]"), of("awaken:timber[axis=y,tone=pale]")};
+    static final BlockState[] T_BEAM_X = {of("awaken:timber[axis=x,tone=dark]"), of("awaken:timber[axis=x,tone=pale]")};
+    static final BlockState[] T_BEAM_Z = {of("awaken:timber[axis=z,tone=dark]"), of("awaken:timber[axis=z,tone=pale]")};
+    static final BlockState CITY_BRICKS = of("awaken:city_bricks");
+    static final BlockState ASHLAR = of("awaken:ashlar");
+    static final BlockState CHISELED_SANDSTONE = of("minecraft:chiseled_sandstone");
+    static final BlockState CHISELED_QUARTZ = of("minecraft:chiseled_quartz_block");
+
+    static {
+        for (int i = 0; i < PLASTER_COLOUR.length; i++) PLASTER[i] = of("awaken:plaster[colour=" + PLASTER_COLOUR[i] + "]");
+        for (int s = 0; s < 3; s++)
+            for (int k = 0; k < 7; k++) BOX[s][k] = dirs("awaken:flower_box[facing=%s,style=" + BOX_STYLE[s] + ",bloom=" + BLOOM[k] + "]");
+        for (int c = 0; c < SHUTTER_COLOUR.length; c++)
+            for (int h = 0; h < 2; h++)
+                for (int v = 0; v < 2; v++)
+                    SHUTTER_KIT[c][h][v] = dirs("awaken:shutter[facing=%s,colour=" + SHUTTER_COLOUR[c] + ",hinge=" + (h == 0 ? "left" : "right")
+                            + ",half=" + (v == 0 ? "lower" : "upper") + "]");
+        String[] halves = {"lower", "upper", "single"};
+        for (int s = 0; s < WIN_STYLE.length; s++)
+            for (int h = 0; h < 3; h++) WINDOW[s][h] = of("awaken:lit_window[style=" + WIN_STYLE[s] + ",half=" + halves[h] + ",lit=false]");
+        String[] parts = {"lower_left", "lower_right", "upper_left", "upper_right"};
+        for (int i = 0; i < 4; i++) LOADING[i] = dirs("awaken:loading_door[facing=%s,part=" + parts[i] + "]");
+    }
+
     // the market stalls' awnings: wool stairs in stripes
     static final String[] AWNING = {"red", "yellow", "light_blue", "white", "orange", "lime"};
     static final BlockState[][] AWNING_STAIR = new BlockState[AWNING.length][];

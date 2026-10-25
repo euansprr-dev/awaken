@@ -292,6 +292,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
   `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
   (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
+  `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
+  Shoulder Surfing it flips first person and the shoulder view, §17.13).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -856,7 +858,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   distances, the sun's screen position and the sunrise colour. Looks per dimension live in
   `assets/awaken/lens/looks.json` (schemaVersion 1; exact id, then `prefix*`, then `default`) and ease into each other
   over about 1.5 s. Lens never lifts shadows (exposure ≤ 1.05) and backs off where the game's own fog is thick.
-  It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT (default) | CINEMATIC.
+  It steps aside while an Iris shaderpack is on. Client config `lens` = OFF | SWIFT (default) | CINEMATIC | ULTRA;
+  Cinematic and Ultra are Lens 2 since 2026-10-25 (§22: sun shadows from a terrain heightfield, contact shadows, AO,
+  warm/cool light, a filmic curve; chain `awaken:lens_ultra`).
   With Distant Horizons drawing, Lens hazes far terrain by DH's own depth (Lens and far terrain, below); only without
   a trusted far depth (none shared, or not yet proven) does it add no distance haze while DH draws, since hazing only
   the near terrain would draw a ring where it ends.
@@ -871,7 +875,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   along the line to the heading (sharp at the heading, the smear growing toward the frame's edges) and 2 more for a
   touch of chroma at the rim; strength is eased per frame by real time, scaled by the FOV-effects slider, and 0 while
   a story override or the tear runs (Lens off: nothing; FxScreen's speed lines stay the fallback). Measured on the M4
-  (Vulkan, 2880×1658): p50 +0.16 ms on Swift, +0.08 ms on Cinematic. Texels 17-31 are free. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
+  (Vulkan, 2880×1658): p50 +0.16 ms on Swift, +0.08 ms on Cinematic. Texels 17-18 are Lens 2's light (§22); 19-31 are free. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
   the scene's length and fades back to the plain frame (the look rests at neutral while Lens is off) before stepping
   aside again (client config `lensInScenes`, default true; never with an Iris shaderpack). Callers carry on without the
   look when Lens can't draw (`LensClient.active()`).
@@ -1006,13 +1010,13 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 
   | Owned key | SWIFT | CINEMATIC | ULTRA |
   |---|---|---|---|
-  | Lens `lens` (awaken-client.toml) | SWIFT | CINEMATIC | CINEMATIC (steps aside while the shaderpack draws) |
+  | Lens `lens` (awaken-client.toml) | SWIFT | CINEMATIC | ULTRA (Lens 2, §22; was CINEMATIC behind Iris) |
   | DH `lodChunkRenderDistanceRadius` | 128 | 192 | 192 |
   | DH `maxHorizontalResolution` | TWO_BLOCKS | BLOCK | BLOCK |
   | DH `verticalQuality`, `horizontalQuality` | LOW, LOW | MEDIUM, MEDIUM | MEDIUM, MEDIUM |
   | DH `enableSsao`, `enableTexturedLods` | false | true | true |
   | DH `enableAntiAliasing` (file only) | false | true | true |
-  | Iris shaders switch | off | off | on |
+  | Iris shaders switch | off | off | off (was on; Lens 2's Ultra replaced Iris, §22) |
   | Sodium, vanilla options | none | none | none |
 
   DH values are pack/dh/swift.json and cinematic.json (a GameTest compares them); keys the tiers agree on (threads,
@@ -1023,15 +1027,14 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   in-memory settings over the file meanwhile), so after a restart they're plain DH settings and no API value is set.
   Anti-aliasing applies when DH next reads its file (its menu or a restart). Sodium: no supported route (its config API
   only adds option pages; its options file is in use while the game runs), so it keeps its own settings and the
-  screen says so. Iris: `IrisApiConfig.setShadersEnabledAndApply`; the shaderpack stays the player's. Ultra is offered
-  only with an Iris newer than 1.11.7 on the OpenGL renderer; otherwise its card is disabled with the reason, which
-  always says Iris needs OpenGL (and names the API the game runs on, Vulkan for the pack) and, until a newer Iris is
-  installed, Iris's Sodium pin: Iris 1.11.7 pins Sodium 0.9.2, which crashes on NeoForge 26.3.0.95. With a newer Iris
-  on Vulkan it says where to switch (Video Settings → Graphics API, then restart). At most 180 characters, the Look
-  screen's three note lines. The frame-time line: the last 60 s of
+  screen says so. Iris: `IrisApiConfig.setShadersEnabledAndApply`; the shaderpack stays the player's, and every tier
+  turns Iris's shaders off (Lens draws instead). Since Lens 2 (§22) Ultra is Lens's own and offered on every backend;
+  until then it meant Iris on OpenGL, and `Look.ultra` (Iris's availability and its reason, at most 180 characters:
+  Iris needs OpenGL; Iris 1.11.7 pins Sodium 0.9.2, which crashes on NeoForge 26.3.0.95) stays for when a working Iris
+  returns as a fourth choice. The IRIS row says whether a shaderpack draws (Lens steps aside). The frame-time line: the last 60 s of
   frame-to-frame times (`RenderFrameEvent.Post` into a 32768-int ring, no allocation), p50 and p99 from a 0.1 ms
   histogram twice a second while the screen is open, green while they fit the tier's budget (Swift p50 ≤ 9.1 ms and
-  p99 ≤ 16 ms; Cinematic ≤ 16.7 and ≤ 25 ms; Ultra promises none), and "HORIZON n CHUNKS" with DH ("off in this
+  p99 ≤ 16 ms; Cinematic ≤ 11.1 and ≤ 20 ms; Ultra ≤ 16.7 and ≤ 25 ms, §22), and "HORIZON n CHUNKS" with DH ("off in this
   place" in instanced dimensions). Tests: `compat_look_tiers`, `compat_look_dh_file`, `compat_look_ultra_gate`,
   `compat_look_frame_stats`; tour tools/autopilot/look.txt.
 
@@ -1337,7 +1340,8 @@ below now cite what was measured; details in docs/carillon/spikes/G0-notes.md).
 9. Map: our own Atlas on the Holo. Diorama may join the pack as an optional client trial; Xaero's leaves the pack plan
    when the Atlas ships.
 10. Third person: vanilla's behind view plus our View key (flips first ↔ third, skips the front view); the shoulder view
-    (mixin or Shoulder Surfing) is decided at gate G1.
+    (mixin or Shoulder Surfing) is decided at gate G1. Settled 25 Oct 2026: Shoulder Surfing Reloaded (the pack's feel
+    profile), driven by the action camera (§17.13); without it, vanilla's behind view with the action camera's pull-back.
 11. Wall-run camera roll 5° by default, client option 0–7.5°.
 12. The forked planning session ("btw: kind of a side question…") is the orchestrator; docs/carillon/STATUS.md lets a
     fresh session take over at any gate.
@@ -1380,6 +1384,30 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
     tour, Euan's play 3), each step a fresh builder briefed from a file.
 26. Vanilla banners, signs and barrels stay out of the city's fabric (block entities); the kit carries the look. Light at
     night is mostly emissive, within the light-source budget.
+27. Additions to Phase B (Euan, 2026-10-25), all without costly entities where possible (animated textures, particles,
+    emissive layers, weighted model variants):
+    - The kit grows to about 60 blocks: furniture and wares (tables, shelves of goods, sacks, crates, market produce, shop
+      signs with icons) and random texture variants so walls and roofs never tile (variants in B1 for facade and roof
+      blocks; furniture and wares in B3).
+    - Movement for free (B3): waving banners and laundry, flickering lanterns, turning water wheels, chimney smoke, lit
+      windows at night.
+    - Animals (B3): cats on the roofs, pigeon flocks that lift as you run past, dogs following their owners, horses
+      pulling carts down the avenues, boats on the canals.
+    - Interiors you can glimpse (B4): lit rooms behind windows at night, plus full interiors for the tavern, the smithy,
+      the bakery and the Association.
+    - City light (B6/B7): Carillon's Lens looks, warm lamp bloom at night and morning haze over the river
+      (assets/awaken/lens/looks_carillon.json).
+28. The city soundscape (Euan, 2026-10-25), built by B3's builder (no extra builder):
+    - Sources, best first: vanilla sound events referenced and layered (pitch, volume, combinations; never copied);
+      CC0 recordings only for what vanilla lacks (wordless crowd murmur, gulls, water at quays, carts on cobbles,
+      distant hammering, a tavern's hum), each listed with its source and licence and downloaded only after Euan's yes;
+      synthesis (tools/art/specs audio pipeline) only for bells, the Choir's hum, gates and UI.
+    - The mix: a quiet bed per district plus positional one-shots; many variants with random pitch, volume and timing
+      (nothing loops audibly); the crowd bed follows the citizen ledger's count in that district at that hour; dawn,
+      noon, night and rain change it; every sound comes from a place (Sound Physics in the pack); it plugs into
+      core/audio's layer system so it never fights the music.
+    - The gate is Euan's ears: a listening page (each district at morning, noon and night, before/after) published for
+      his approval before B3 merges.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1405,6 +1433,14 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   touch it) → grammar fills plots (seed varies details, never shape). The same pass writes the street graph and the roof
   graph (edges carry the move they need; door and stair links). Plan hash checked by GameTest.
 - Placed only in vanilla blocks + the Carillon kit (~35 blocks of our own); no third-party blocks.
+- Decided in M4 B1 (2026-10-25; details docs/carillon/milestones/M4-B1.md): the climbing grid lives in `CityGrammar` v2
+  (holds only in odd rows of the strip one block in front of a wall; hoods at row 3, the cornice at 5, a box under every
+  upper window and a floor course every storey; courses run across party walls and round corners; climb lines within 5
+  of each end of every street-face run). A face gets the grid only with 3 blocks of open ground in front. Pilasters stay
+  flush (proud ones stop every shimmy). Bellwatch jetties only over lanes 6+ wide, or 4–5 wide on one side. Kit windows
+  replace glass panes on closed houses. Roofs: Bellwatch mostly kit slate, the Market mostly clay. The chimney crown is
+  `chimney_bricks` (the citizens' smoke finder). Avenue tree crowns fill only air. The kit's first 19 blocks carry no
+  block entity and emit no light; walls and roofs use weighted texture variants.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs
@@ -2120,6 +2156,8 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   yet; puts you on the ground under the lowest ring); pilot `run climb` climbs the rings, the perch and the pier, walks
   round the cabin to its door and in, and ends when the core gives Wings (`tools/autopilot/ascent-sky.txt`: from a buoy
   at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
+- Over a forest, rigging opens the canopy under the first ring (leaves and vines within 2 of its column, from the
+  ground up): a throw from the ground sees the ring (a tour stood under birches throwing into leaves).
 
 ### 17.10 Ascension trials: the Leaper's Gauntlet
 - **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) and have swung enough to know it (Tether
@@ -2185,6 +2223,151 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   zip from the near rim onto a vaultable edge; the crown times a climb from the plaza and keeps it, a tower gets
   nothing, the first climb is 10 mastery).
 - Not yet: a race line's ghost on spires, and spires on cliffs and ravines.
+
+### 17.12 The Wilds: windways
+- **What**: streams of air between sky platforms (§17.9) that carry a glide from one deck to the next. Each platform
+  is linked to its nearest within 1,100 (`Windways.MAX_LINK`); a pair has two lanes, one each way, each 10 to the
+  right of the line between the centres (the two ways' tubes stay 20 apart). Never in Carillon's basin (no platform forms there).
+- **A lane** (`Windways.between`): from 34 out of the first platform's centre (past its islands, 19 out), 6 under its
+  deck, so a run off the deck's rim with wings open drops into it; to 5 short of the next platform's centre with the
+  side step (11.2 out: over its deck's rim), 6 over its deck (its islands rise 4 over it). Decks' heights come from
+  the seed alone (`SkyRig.deckY`: the structure's own random draws a seed, a turn, then the height), so a lane reaches
+  platforms far beyond loaded chunks.
+- **The air** (an AirHooks source, `Windways.airOf`; the glide takes it ×1.25, the carry ×1, flight ×0.6): a tube of
+  radius 6; along it 0.018 b/t², up 0.022 against a glide's sink, in toward its heart 0.008 at the rim; full in the
+  heart and 0.4 of it at the rim, rising from 0.15 over the first 40 blocks; over the last 64 it brakes (0.012 back),
+  so the glide comes out under 0.8 b/t over the deck and settles onto it.
+- **The hold** (`Windways.steer`, AscentMoves' glide): in a lane, a look within 35° of its way flies the line toward
+  its heart 16 ahead, bent by 0.35 of the look's offset; a look further off breaks out (the air still pushes). So a
+  glide is carried whatever its exact pitch: about 1.7 b/t (34 blocks a second), 1,000 blocks in about 30 s, set down at
+  about 0.5.
+- **Server**: every 5 s per player (staggered, overworld), the sky platforms within 1,400 (`RuinLocator`, 4 new terrain
+  samples a scan; cached, so later scans finish the search) are linked; the lanes of pairs seen in the last 5 min are the
+  server's, and the ones within 900 of a player (at most 64) go to them (`AscentPayloads.Lanes`) when that set changes.
+  Nothing saved; forgotten when the server stops.
+- **The look** (`WindwayRenderer`): along each lane within 280 of the camera, curls of pale mint-white air (5-11 long,
+  one every 3.2 with a fifth missing) flow at 1.25 b/t, each wavering as it goes and turned to face you, fading with
+  distance and at the lane's ends; a faint sheet of light down its heart shows the line from a deck's edge (gone within
+  10 of you). Brighter round you while it holds you; a rush of air as it takes you, its breath every 3.5 s while it carries you.
+- Dev: `/awaken ascent windway` (the lanes known, the nearest), `/awaken ascent windway goto` (onto the deck of the
+  platform the nearest lane starts from, at its rim on the lane's side, facing along it; checks the deck's height
+  against the seed's); `tools/autopilot/ascent-windway.txt` (Wings, the pilot's `glide` off the rim). Test:
+  `ascent_windway` (the lane's ends; carried the whole way and set down slowly looking along it, 15° under or 15° over;
+  a look 45° away breaks out; AirHooks hears the server's lanes).
+  Tour (seed 4246): the lane took the glide 2 s after the wings opened and carried it 667 blocks in 21 s, out at 0.34
+  b/t 7 over the next deck. From a deck in daylight the lane reads faintly (inside it, plainly).
+- Not yet: windways round spires and other heights, weather that turns them, a ride counted toward Wings mastery.
+
+### 17.13 The feel pass, part 1: the action camera
+Approved 25 Oct 2026 (Euan: the movement should feel "really, really, really good"; first person reads flat and
+vanilla's third person sits right behind you). The over-the-shoulder view follows what the body is doing.
+- **The view**: Shoulder Surfing Reloaded (pack feel profile, client only; `shouldersurfing_plugin.json` names
+  `body.client.feel.ShoulderSurfingPlugin`, the only class that names it). With it installed, a world starts in the
+  shoulder view the first moment after you join (after the opening's shots), once a session, if you're in first person
+  (`shoulderView`, feel settings, default on); first person stays one key away. The View key (the opening's, §16 decision
+  10) asks `core.api.CameraHooks` first, so with Shoulder Surfing it flips first person and the shoulder view and never
+  lands on vanilla's camera right behind you (before, it took every perspective press before Shoulder Surfing saw it).
+- **The arm** (`body.ActionRig`, pure; `body.client.ActionCamera` reads the body once a tick): a pose from the Ascent's
+  state, then the Runner's (a wall-run, a hang or climb), a slide, using an item (aim: nothing added), else the ground.
+  Each pose shapes the shoulder offset (x left, y up, z back), in blocks over the shoulder view's own:
+  ground: back 0.6 of the trail; slide: up -0.55, back half the trail less 0.2; wall-run: over to the open side (away
+  from the wall, 1.2 times the shoulder's width), up 0.2, back 0.6 + 0.6 of the trail; hang and climb: up 0.45, back 0.5;
+  rope: back 2.2 + trail, up 0.8, 0.6 of the way in behind you; zip: back 1.2 + half the trail, up 0.3, 0.3 in; the
+  carry: back 1.5 + trail, up 0.4, 0.4 in; wings: back 2.6 + trail, up 0.6, 0.7 in; flight: back 3.0 + trail, up 0.5,
+  0.8 in. The trail: 2 blocks per block a tick over 0.22 b/t, at most 3; never more than 5.5 back in all. A critically
+  damped spring (0.22 out, 0.32 back) carries it there: it trails out, never overshoots, and is home in under 1.5 s.
+  Reduced motion halves it. After Shoulder Surfing's own offset handlers (sprint, aim, flying), so its aim view holds.
+- **Where you look** in Shoulder Surfing's decoupled camera (its default: the mouse turns the camera, the body faces
+  where it walks): the rope aims along the camera (`ShoulderView.aim`), and in an Ascent state, or holding the rope
+  key, the body takes the camera's look each tick and Shoulder Surfing's interaction state turns it to what you look
+  at, so you steer a swing, a glide and flight with the view. (Found 25 Oct: the rope threw where the body faced.)
+  The autopilot's look is given to the camera too.
+- **Without Shoulder Surfing**: vanilla's third person (behind) takes the arm's pull-back as distance
+  (`CalculateDetachedCameraDistanceEvent`); first person is never touched.
+- **Stands aside** (the arm comes home): through the opening's shots (`OpeningCamera.active()`), as a Veil spirit or
+  possessing, riding, spectating, or with `actionCamera` off (feel settings). Camera Overhaul still pauses in Ascent
+  states (Feel Director); the Feel Director's roll and FOV and BodyCamera's first-person moves are unchanged.
+- Test: `body_action_camera` (each pose's shape in order, the open side, the trail's cap, the spring trailing out
+  without overshoot and coming home). Tour: `tools/autopilot/ascent-camera.txt` (PACK=feel).
+- Next in the feel pass: one-button free-run (§17.14), then weight (landing dip, grab sounds and dust, wind with
+  speed, footstep bob in the shoulder view, a slow beat at a big leap's apex).
+
+### 17.14 The feel pass, part 2: the one-button free-run
+Hold sprint with forward and the body reads the ground ahead and picks the move (`body.client.FreeRun`; the reading
+and the pull are `RunnerRules.ahead` and `RunnerRules.bend`, both sides). The keys still do every move by hand, and the
+server checks every move exactly as before (a free-run move is the same claim a key would make).
+- **On the ground, sprinting** (moving within 37° of the look, over 0.12 b/t; once per 6 ticks), the column 0.45 past
+  the body's front: a top 0.6-1.2 over the feet with two blocks of room over it and over the head is **vaulted** (the
+  jump); a ledge 1.1-1.6 up is **mantled** (when the mantle is yours: sprint held counts as the jump); a wall taller than
+  1.6 is **jumped at** when Wall Stride climbs it or its lip is a hang from the jump's height; with no floor 2 blocks
+  down two ticks ahead (not water) the edge is **leapt from** (the sprint jump). A fence or wall (1.5) is left alone, a
+  step down of one is run down.
+- **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
+  the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
+- **Hanging**, sprint and forward held for 6 ticks climb (the ledge jump's own climb out, or up when looking up).
+- **Jump magnetism**: as any jump leaves the ground (yours or the free-run's), the first lip within 4.5 ahead (a lower
+  roof up to a hang over the jump's top) becomes its target; for 8 ticks the motion turns toward it at most 2.5° a tick,
+  14° in all, never faster, and only while it's within 30° of the way you're going.
+- Setting: `freeRun` (feel settings, default on). Dev: `/awaken body try freerun` (forward and sprint held 15 s).
+  Test: `body_free_run` (a block vaulted, a wall jumped at, a fence left, an edge leapt, a step down not; the pull
+  capped and only toward what's nearly ahead). Tour: `tools/autopilot/ascent-freerun.txt` (PACK=feel): with forward
+  and sprint held, nothing else, the body vaulted a low wall, leapt a 3-block gap, jumped at a 2-high wall, caught its
+  lip and climbed out (6 ticks after the grab), and leapt from the roof's far edge; then the rope zipped ring to ring
+  in the shoulder view.
+- Carillon's handhold roles (`#awaken:runner_ledges`, `runner_climbs`, `runner_lines`, `runner_soft`,
+  `runner_swings`, SPEC §16.9 on carillon/main): ledges and swing points already work by their collision shapes (a
+  sill, a cornice, a beam end is a lip; the rope bites anything solid). Climbs (drainpipes, ivy), lines without
+  collision and soft landings wait for the tags' contents.
+- Not yet: tuning against Euan's notes from his feel session; tips for the free-run (Carillon's TipHooks).
+
+### 17.15 The feel pass, part 3: weight
+- **Landings**: a fall of about two blocks or more (0.55 b/t down on the last airborne tick) outside an Ascent state
+  lands in the view: the Feel Director's pitch kick (2.5° + 2.1° per b/t of fall, at most 7°, its own spring; first person
+  and the shoulder view) and, in the shoulder view, the action camera's arm dropped 0.08-0.32 and sprung back. The
+  Ascent's own landings keep theirs (sound, kick, a roll on hard ones).
+- **Footsteps in the shoulder view**: vanilla's own bob (its view-bobbing setting, its stride and size), at 0.3 of its
+  sway and 0.6 of its dip, added to the shoulder offset; first person keeps vanilla's. Off under reduced motion.
+- **The hand plant**: a free-run vault slaps the top (the grab sound, higher) and puffs dust off it; a ledge caught by
+  a hang already does.
+- **Wind**: the rush of air follows the body's own speed too (a long fall, a fast run), not only an Ascent state's.
+- **The slow beat**: a carry flying 0.7 b/t or faster, 6 or more over the ground, hangs at the top of its arc: 8 ticks
+  at 0.45 of time (the same arc, slower; no steering for the beat), the wind holding its breath, once per 3 s. Big
+  rope launches and the Leaper's air moves get it; never under reduced motion. Test: `ascent_slow_beat`.
+- Not yet: Euan's feel check of the whole pass (camera, free-run, weight).
+
+### 17.16 The Wilds: the hero trees' crowns
+The Elder Colossus and the Lumen Spire (Awakened Lands' hero trees, terrain.hero) each get a route and a crown, once,
+when their chunks first load (`body.ascent.HeroCrowns`, like the sky platforms' rig): laid out from the tree's own
+blueprint (`HeroWorldgen.blueprint`, the cached shape the tree was built from), placed into air only.
+- **The crown**: on the highest cell over the trunk (within 6 of its foot), the Tether Spire's crown block (§17.11) with
+  its site (`SITE_COLOSSUS`, `SITE_LUMEN`; schema 2 saves the site and the foot's height): a climb is timed from the
+  tree's foot (within 22, from 1.5 under its ground to 4.5 over), reached only by moving, kept in the tree's records.
+  The first time: 10 Tether mastery, a fifth of a level (discovery XP) and `awaken:ascent_crowns_reached`; "The Elder
+  Colossus's crown · 23.4 s". A cache beside it (a chest on the same top or one lower; `chests/precursor_spire` for now).
+- **The route**: glowing anchor rings up the trunk, each on a short chain stub 2 out from the bark: the Colossus from 18
+  up every 13, the Lumen Spire from 12 up every 11, each turned round the trunk by the widest of 45°, 30°, 20°, 10°, 0
+  that keeps it a zip from the last (under 0.4 of the rise across), with room to hang under it and three over it;
+  past a tier or a branch it tries up to 6 higher, and it ends where the branches begin. At night the Lumen Spire's
+  rings are a spiral of light to its pads (its night route); on the Colossus they carry you into the dome, whose limbs
+  and masses are the swinging up to the crown. Eight seeds each: the Colossus gets 3-5 rings (to 44-70 up), the Lumen
+  Spire 3-4 (to 34-45 up).
+- **The ward**: placed blocks crumble in the column over the trunk (9 round the crown, from 10 over the foot to 6 over
+  the crown; a `WardHooks.Source` filled as the crowns' block entities load, so it survives restarts).
+- Dev: `/awaken ascent crown grow colossus|lumen [seed]` (grows the tree where you stand and crowns it).
+  Test: `ascent_hero_crowns`. Tour: `tools/autopilot/ascent-crowns.txt` (both trees crowned: a Lumen Spire's crown 53 up
+  over 3 rings, a Colossus's 74 up over 4; the night look of the Lumen's spiral still unseen on screen).
+- Not yet: the Horizon line and landmark finds for hero trees (they are terrain structures, not ruins); the Shard
+  Drift's stepping-stone course; a crown cache of its own.
+
+### 17.17 The Ascent's tips
+Carillon's one tip system (`core.api.TipHooks`, docs/carillon/m4/onboarding.md) carries the Ascent's tips; text in
+`assets/awaken/tips/ascent/` (rope, leaper, wings, flight: `awake: after`; freerun: `any`), every key named by the
+player's own binding. `body.ascent.AscentTips`: each tier's tip is offered as the tier is given (`Ascent.onGranted`:
+the Vow's rope, the Leaper's trial, a sky core's wings, Skyborn's flight) and counted done each time its state begins
+(the server sees TETHER or ZIP, GLIDE, SOAR) or a Leaper move goes off. The free-run's tip is the client's: running at
+a low wall or an edge without holding sprint offers it (`FreeRun`, only while it can still teach), and a free-run move
+counts it done. A gift's scene (`AscentScene`) holds every tip back while it plays. Nothing shows until Carillon
+installs the system.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -2358,3 +2541,164 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   (assets/awaken/tips/living/, read once Carillon's tip system is installed).
 - Dev: `/awaken living region` (anyone), admin `regions [radius]`, `tag`, `strike [crit|kill]`, `pillar`, `moment`.
   Tour `tools/autopilot/living-b.txt`.
+
+## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
+
+Lens's Cinematic and Ultra tiers become a light model of their own: shadows, contact darkness and warm/cool light
+without rendering the world a second time from the sun, built for the M4's tile GPU (few full-size passes, the heavy
+work at reduced size, temporal accumulation). Target: his reference (a golden-hour valley), dialed down a little.
+Swift is unchanged. L1 light and shadow (this section, below); L2 atmosphere and a look per gate theme; L3 water and
+magic.
+
+- **Tiers** (client config `lens` = OFF | SWIFT | CINEMATIC | ULTRA; chains `awaken:lens_swift`, `lens_cinematic`,
+  `lens_ultra`). Budgets on the M4 at 2560×1440, Vulkan, RD 32: where Lens off holds 120 fps, Cinematic 90+ and Ultra
+  60+. The Look switch's Ultra tier is now Lens Ultra (no Iris: Iris is OpenGL-only and its Sodium pin crashes on
+  NeoForge 26.3.0.95), selectable on every backend; its budgets are Cinematic p50 ≤ 11.1 ms / p99 ≤ 20 ms and Ultra
+  ≤ 16.7 / ≤ 25 ms. With an Iris shaderpack on, no tier is current and Lens steps aside as before.
+- **Chain** (Cinematic, Ultra): far-depth probe and trust (two 1-px passes) → **sun map** (`lens_sunmap.fsh`, L2) →
+  **light** (`lens_light.fsh`, 960×540 on Cinematic, 1440×810 on Ultra since the L2 tour; uniform `LensConfig.Quality`
+  1 or 2) → blit
+  into the persistent `awaken:lens_hist` → Lens's bloom and shafts passes → **composite** (`lens_composite_lit.fsh` =
+  the Swift composite's body, `include/lens_composite.glsl`, with `LENS_LIGHT` defined) → blit. 13 passes against
+  Swift's 9; full-size passes stay two (composite and its blit), as before. Measured at L1 (no sun map yet), the extra
+  cost barely changed between Cinematic's and Ultra's light buffer, so it's per-pass and full-size work, not tracing:
+  L2 folds volumetric light into the light pass and the fog glow into the composite instead of adding passes. 26.3 post targets are RGBA8 only and fixed-size (or screen-size), so values that need precision travel in
+  float textures (below) and the light buffer packs its distance into two bytes.
+- **Frame texture** `awaken:lens_frame` (`LensFrame`, 24×1 RGBA32F, written in `RenderLevelStageEvent.AfterLevel`,
+  just before the post effects, nothing allocated): 0-3 inverse view-projection, 4-7 view-projection, 8-11 last
+  frame's view-projection (all camera-relative; the projection carries the frame's own view bob, hurt tilt and nausea
+  warp, rebuilt exactly as `GameRenderer.renderLevel` does from `CameraRenderState`, so reprojection doesn't swim while
+  walking), 12 the camera in the heightfield ring (x, z modulo 1024; y absolute; w a frame counter), 13 the camera's
+  move since last frame and whether history is usable (not after a teleport over 24 blocks, a gap over 0.25 s, a new
+  dimension or the chain starting), 14 toward the light and its strength, 15 the heightfield (size, highest surface,
+  trusted radius 496 blocks), 16 zero-to-one depth, moon, rain, near plane. Layout in `shaders/include/lens_frame.glsl`.
+- **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RG16F, mips 1-4 hold the max of their 2×2; about
+  5.6 MB on the GPU and the same off-heap mirror): from the client chunks' own heightmaps (26.3 sends MOTION_BLOCKING
+  and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g without
+  leaves. A ring addressed by world block modulo 1024, a 64×64-chunk window centred on the camera's chunk: a chunk
+  entering the window clears its slot and is read nearest first (40 a tick), a loaded chunk is read when it arrives
+  (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 5 ticks and the rest of the
+  window 24 a tick in turn (block changes show within a few seconds), and a slot uploads only when its hash changed,
+  as whole-width strips (8 chunk rows a tick, every level). Built only where the dimension has the overworld sky.
+- **Light pass** (per pixel of the reduced buffer, from the full-size depth): position and normal from depth (of the
+  two neighbours per axis the one continuing the centre's plane; a normal within 0.9 of an axis snaps to it, since
+  block faces are axis-aligned), then:
+  - **Sun shadow from the heightfield**: march from the surface (nudged 0.06 along its normal) toward the light, 24
+    steps on Cinematic / 40 on Ultra, each longer than the last (to about 250 blocks), far steps testing a whole max
+    cell (mip by the stride) so a stride can't skip a ridge; solid → shadow, through leaves the light fades
+    (exp(-0.9 × stride)) for flecks under trees. Stops above the window's highest surface or past the trusted radius.
+    A heightmap counts a slab, stair or carpet as a whole block, so a surface's own column only counts from a block
+    above it; a point more than a block under its column's solid top (a roof, a cave) gets no sun.
+  - **Contact shadows**: 6 / 12 steps through the depth buffer toward the light, 0.35 to 3 blocks (longer far off):
+    mobs, grass, slabs and block edges the heightfield can't hold. Within 96 blocks.
+  - **Ambient occlusion**: 6 / 10 cosine-weighted samples in a 0.9-block hemisphere against the depth buffer. Within
+    96 blocks.
+  - **Temporal accumulation**: each frame uses fresh noise (interleaved gradient noise stepped per frame) and blends
+    into last frame's result reprojected by the frame matrices (0.14 new on Cinematic, 0.1 on Ultra); of the 2×2
+    history texels only those that saw the same distance count (disocclusion), dithered into 8 bits so slow changes
+    still move. Out: r sun, g ambient occlusion, b volumetric light (L2), a the distance in one byte (log2(d+1)/13,
+    about 3.6% steps; 0 for sky); texels of the history and of the upsample count when within 1.5 steps.
+  - Never within 1.25 blocks (the first-person hand, whose depth 26.3 merges into the main depth while post effects
+    run, and the holo glass at 0.62 m): not shadowed, never an occluder.
+- **Composite light** (before the haze; the frame is display-encoded, so a multiplier m on linear light is applied as
+  √m): the light buffer upsampled by distance (of its 2×2 texels the ones that saw this surface), the normal again at
+  full size (from screen derivatives where the pixel's 2×2 quad lies on one surface, the four-tap version only across
+  an edge), then a warm key where the sun reaches (noon (1.04, 1.02, 0.97); golden hour, by the sunrise colour's
+  strength × `keyWarmth`, (1.24, 1.0, 0.74); the moon (0.93, 0.98, 1.08)) and a cool shade where it doesn't
+  (`shadeTint` × (1 − `shade`), deepened 30% at golden hour). Faces turned from the sun shade only as it lowers (none
+  at noon, when Minecraft's sun is straight overhead and the game's own face shading stays; all by golden hour). The
+  model fades out under solid cover (1 to 7 blocks of it: a ledge is shade, a roofed room is left as the game lit it,
+  torches and all), toward the end of the render distance (75-100%), in the game's thick fog (as the haze does) and
+  within 1.45 blocks. Strength: the sun's height (none at the horizon crossing), a faint moon (0.4) by night, rain
+  (−85%) and thunder (−50%); 0 where there's no overworld sky. Golden hour is the more of the sunrise colour's strength
+  and the sun's height (full below sin 0.1, none above 0.5; the sunrise colour alone only peaks as the sun touches the
+  horizon). Ambient occlusion applies everywhere, by day and night,
+  fading out from 48 to 96 blocks. It only darkens, so the never-lift rule holds.
+- **Filmic curve** (`filmic`, in place of the plain contrast clamp): past white, colour runs toward white instead of
+  clipping its hue; the top tenth rolls off with tanh (white itself within 3% of white); contrast is an S around
+  mid-grey with the look's slope there, then a black point of 0.45 × (contrast − 1), as deep as the plain contrast's,
+  so night and shade keep their depth. Not on the open sky, where the sun's glow keeps its soft blow-out (a shoulder
+  there showed the sun's square disc).
+- **Look fields** (looks*.json, inherited from `default`; texels 17-19): `light` 1.0, `shade` 0.32, `shadeTint`
+  [0.86, 0.93, 1.14], `keyWarmth` 0.8, `ao` 0.65, `filmic` 1.0; L2: `mist` 0.5, `mistHeight` 48 (blocks), `fogGlow`
+  0.15, `skyGlow` 0.6. Texel 19: r mist, g mistHeight/256, b fogGlow/2, a skyGlow.
+- **Debug views** (`lensdebug`, Cinematic/Ultra): 5 the light buffer (r sun, g AO), 6 normals with direct sun, 7 the
+  light alone (grey 0.5 = unchanged), 8 the classic Cinematic (no Lens 2 light, plain contrast) on the same frame, for
+  before/after shots.
+- **Not used**: mediump. Desktop GLSL 330 through shaderc and SPIRV-Cross gives MoltenVK no half-precision path, so the
+  bandwidth savings come from RGBA8 targets at reduced size instead. A real shadow map (rendering the world from the
+  sun) is out of scope: the heightfield covers terrain, trees and buildings; contact shadows cover mobs.
+- Tour: `tools/autopilot/lens2-l1.txt` (a lab plot with trees, pillars, a gazebo, slabs, carpets, mobs and a torch-lit
+  room; Carillon at golden hour into and away from the sun; noon; night; the holo menu; debug views; a frame-time bench
+  of off / Swift / Cinematic / Ultra at 2560×1440, RD 32). L1 measured (busy Carillon vista at golden hour, p50/p99
+  ms): off 10.59/15.30, Swift 11.20/17.18, Cinematic 13.01/17.95, Ultra 13.16/18.36: Cinematic +2.4 ms over off,
+  Ultra +2.6 ms, inside both budgets. A four-way diagnostic (`lens2-diag.txt`, one pillar, the light buffer facing N, E,
+  S, W) proved the shadow direction from every side.
+- The heightfield uploads dirty strips round the ring from where the last tick stopped (8 a tick), so a row that keeps
+  changing near the camera can't starve the rest.
+
+**L2, atmosphere**
+- **Sun map** (`lens_sunmap.fsh`, `awaken:lens_sunmap`, 512×512 cells of 2 blocks on Cinematic, 1024×1024 of 1 block
+  on Ultra, rebuilt every frame): for each column of the heightfield ring, the height above which the sun reaches it
+  (the highest ridge, roof or canopy toward the sun less the light's drop over the distance), solid in r/g and with
+  leaves in b/a (two bytes each, -256..768 blocks in 1/64 steps). Its march (24 / 32 steps, max mips by stride) stops
+  as soon as nothing further toward the sun could rise above what it has, so most stop in a few steps.
+- **Volumetric light** (in the light pass, its blue channel; it replaces adding a pass): along each view ray to the
+  surface (or 192 / 320 blocks into the sky), 8 / 16 jittered samples of the sun map (lit, in a shadow, or under
+  leaves at 35%) in a mist lying on the land: thickest at the height of the ground under the camera (its heightfield
+  column; sea level 63 where unknown) and thinning above it, exp(-(y - ground) / mistHeight), so valleys fill and the
+  air over a mountain stays clear (at sea level only, it vanished wherever the land is high); optical depth 0.0016 per
+  block × `mist` × the look's `shafts` × the light's strength, sent toward the eye by a Henyey-Greenstein phase (g 0.6,
+  plus a 0.06 floor), so beams show strongest toward the sun and the air away from it stays clear. Accumulated over
+  frames (0.2 new on Cinematic, 0.15 on Ultra). The composite adds it (screen) in the light's colour × 1.6, and keeps
+  the screen-space shafts at half (0.7) for what the sun map can't hold: clouds crossing the sun. Classic (view 8)
+  shows the old shafts alone.
+- **Fog glow** (lights glowing in haze, the gates' light pools): the shafts pass (quarter size, its g/b/a) spreads the
+  wide bloom layer again over two rings of six taps (3.5% and 7.5% of the screen out) and the centre; the composite
+  adds it tinted toward the haze colour, × `fogGlow` × 3. (At L2's tour it sat in the full-size composite with nine
+  taps a pixel: too costly, and too diffuse to read as light pools.)
+- **Sky scattering**: the sky, and the haze over terrain, brighten around the light's direction (pow(μ, 5) × 0.3 +
+  pow(μ, 40) × 0.4 in the light's colour, × `skyGlow`, wider and warmer at golden hour). Clouds are in the depth
+  buffer, so they take the key and shade like terrain (their sunlit tops warm, their undersides cool).
+- **Gate looks**: each theme's biome (`awaken:gate_<theme>`) has a look of its own, `biome:awaken:gate_<theme>` in
+  `assets/awaken/lens/looks_gates.json` (all 15 themes; the camera's biome picks it as for any biome, so no new sync).
+  Every field is written out (a biome look inherits from `default`, the overworld). No sun in gates (`light` 0, `mist`
+  0); their magic is the grade, haze toward the theme's colour, `ao` 0.5-0.85 and `fogGlow` 0.3 (Sky Archipelago) to 1.3
+  (Lantern Night Market). Swift uses the same looks for its grade and haze (fogGlow and ao need Cinematic).
+- **Ambient particles** (`LensParticles`, types `awaken:lens_mote|ember|frost|spore|wisp|breath` registered by
+  `LensModule` on both sides, sprites from `tools/art/specs/lens_fx.py`: smooth white light sprites, tinted per place,
+  never vanilla's): spawned on the client within about 12 blocks of the camera (more ahead), only on Cinematic (half)
+  and Ultra, scaled by the Particles setting (Minimal: none), never during a story scene. Each gate theme has its mix
+  (Ember Mines embers and ash, Fungal Hollow teal and violet spores, Hive honey spores, Frost Monastery falling frost,
+  Spirit themes wisps, Drowned Archive rising motes, ...); the Nether has embers; the overworld by day has dust that
+  spawns only in sunlit air (a CPU march of the heightfield mirror toward the sun) and glints when it's between you and
+  the sun. Your breath shows every 3-4 s in first person in the Frost Monastery and wherever it snows. Embers, spores,
+  wisps and dust are full bright (Lens's bloom picks them up); frost and breath take the world's light. Gate rates are
+  ×1.5 the table's since the L2 tour, and every kind half as big again (they read as specks).
+- L2 measured (same vista as L1, p50/p99 ms): off 9.00/13.61, Swift 8.94/14.12, Cinematic 13.13/23.75, Ultra
+  16.14/23.66. Ultra holds 60; Cinematic (+4.1 ms) missed 90, so after that tour: the fog glow moved to the quarter-size
+  shafts pass, normals from screen derivatives, Cinematic's light buffer 960×540 (24 sun, 6 contact, 8 volume steps),
+  Ultra's 1440×810. Measured again in L3's tour.
+
+**L3, water and magic** (looks: `water` 0.6, `heat` 0, `frost` 0, `glow` 0.6 by default; texel 20: r water, g heat,
+b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
+- **Water**: the heightfield marks open-water columns (a solid top at the block's base + 0.75, exact in half floats up
+  to y 512; the occluder loses nothing). A pixel whose surface lies on such a column's water level (base + 0.889) is
+  water; where water draws without depth the pixel shows what's under it, and the reflection sits where the view ray
+  crossed the water's surface. Rippling normals (two sines each way, by world position and time), Schlick Fresnel
+  (F0 0.02). The reflection: the frame where the reflected ray meets open sky on screen, else the fog's colour; on
+  Ultra a 20-step screen-space march of the reflected ray against the depth buffer (nearest first, fading at the
+  frame's edge) reflects the scene itself. The sun's glint (pow(R·L, 240) × 5, none in the water's own shade) in the
+  light's colour: the reference's glinting river. × `water` and the fog fade. Only where the heightfield is built (an
+  overworld sky).
+- **Emissive glow**: AWAKEN's glows (bright, saturated, not a warm hue: runes, vortices, the Signal's blue, eyes, the
+  gate pillars) bloom up to 2.5× as much as lit surfaces of the same brightness (the prefilter, by `glow`; all tiers),
+  and keep their light in Lens 2's shade (the shade's weight × (1 − glowness × `glow`)). They glow through fog
+  because the bloom is made before the haze and the fog glow spreads it. No creature was repainted.
+- **Heat shimmer** (`heat`: the Nether 0.45, Ember Mines 0.55, Glass Desert 0.4): the frame is read through rippling
+  offsets (up to about 0.2% of the screen, more in the lower frame), Cinematic and Ultra only.
+- **Frost** (`frost`: Frost Monastery 0.6): frost creeps in from the frame's edges (a band up to 11% of the height ×
+  frost, deeper at the corners, crystalline refraction in it and a pale rime with fine streaks over it).
+- `glow` 0.9 for the Spirit and Charge themes and the Mirror Palace, 0.8 for the Ember Mines.
+- Tour: `tools/autopilot/lens2-l3.txt` (a pool in the lab into the sun, glowing creatures at dusk and night,
+  Carillon's river, the Ember Mines' shimmer, the Frost Monastery's frost, the bench).

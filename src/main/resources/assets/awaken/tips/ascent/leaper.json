@@ -1,0 +1,10 @@
+{
+  "text": "In the air: {key.jump} jumps again, {key.sprint} dashes, and {key.sneak} high up dives to a slam.",
+  "short": "{key.jump} in the air",
+  "priority": 70,
+  "show_for": 160,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 600,
+  "awake": "after"
+}

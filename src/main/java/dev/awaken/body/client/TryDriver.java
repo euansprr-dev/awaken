@@ -60,6 +60,11 @@ final class TryDriver {
                 set(o.keyShift, true);
                 end = 100;
             }
+            case "freerun" -> { // hold forward and sprint: the free-run picks every move
+                set(o.keyUp, true);
+                set(o.keySprint, true);
+                end = 300;
+            }
             case "sprint" -> { // run, double-tap sprint, keep running
                 set(o.keyUp, true);
                 set(o.keySprint, age <= 2 || (age >= 5 && age <= 7));

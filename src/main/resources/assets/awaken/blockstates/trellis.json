@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,ivy=false": {
+      "model": "awaken:block/trellis"
+    },
+    "facing=east,ivy=false": {
+      "model": "awaken:block/trellis",
+      "y": 90
+    },
+    "facing=south,ivy=false": {
+      "model": "awaken:block/trellis",
+      "y": 180
+    },
+    "facing=west,ivy=false": {
+      "model": "awaken:block/trellis",
+      "y": 270
+    },
+    "facing=north,ivy=true": {
+      "model": "awaken:block/trellis_ivy"
+    },
+    "facing=east,ivy=true": {
+      "model": "awaken:block/trellis_ivy",
+      "y": 90
+    },
+    "facing=south,ivy=true": {
+      "model": "awaken:block/trellis_ivy",
+      "y": 180
+    },
+    "facing=west,ivy=true": {
+      "model": "awaken:block/trellis_ivy",
+      "y": 270
+    }
+  }
+}

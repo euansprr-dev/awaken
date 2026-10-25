@@ -33,6 +33,8 @@ public final class GateRecord {
     public final Set<UUID> party = new LinkedHashSet<>();
     public final Set<UUID> inside = new LinkedHashSet<>();
     public final List<String> trace = new ArrayList<>();
+    /** Tests only, never saved: stand on the plot as found (reused test plots carry other tests' blocks and Hearths). */
+    public boolean anyGround;
     public boolean scripted;
     public boolean structurePlaced;
     public boolean interiorReady;

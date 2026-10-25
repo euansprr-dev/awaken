@@ -119,10 +119,9 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         // the cards where they were last frame (the panel only moves when its content grows)
         hovered = cardAt(mouseX, mouseY);
         buildRows();
-        boolean why = hovered == 2 && !ultra.available();
-        String shown = why ? ultra.reason() : note;
-        // room for the longer of the two, so hovering Ultra doesn't move the panel
-        String room = !ultra.available() && ultra.reason().length() > note.length() ? ultra.reason() : note;
+        // every tier runs everywhere since Lens 2's Ultra (SPEC §22); the note is the last choice's
+        boolean why = false;
+        String shown = note, room = note;
         List<FormattedCharSequence> noteLines = shown.isEmpty() ? List.of() : font.split(Component.literal(shown), innerW);
         int noteRoom = room.isEmpty() ? 0 : 3 + Math.min(3, font.split(Component.literal(room), innerW).size()) * LINE;
         // two rules, a line per row, the note
@@ -166,7 +165,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
 
     private void card(GuiGraphicsExtractor g, int i, Tier t, @Nullable Tier current, boolean holo, float reveal) {
         int x = cardX(i), y = cardsY;
-        boolean on = t == current, hover = i == hovered, can = t != Tier.ULTRA || ultra.available();
+        boolean on = t == current, hover = i == hovered, can = true;
         int edge = on ? Glass.a(Glass.GOOD, 1f) : hover && can ? Glass.a(Glass.EDGE, 1f) : 0xFF4A5D78;
         if (holo) {
             HudLook.card(g, x, y, cw, ch, edge, can ? 1f : 0.7f, reveal, 0f);
@@ -202,6 +201,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             case OFF -> "off";
             case SWIFT -> "Swift";
             case CINEMATIC -> "Cinematic";
+            case ULTRA -> "Ultra";
         };
         if (Companions.shaderPackActive()) lens += ", stepping aside for the shaderpack";
         add("LENS", lens, Glass.TEXT);
@@ -214,9 +214,8 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             add("DISTANT HORIZONS", same ? "set for " + current.pretty() : "its own settings (changed in its menu)", Glass.TEXT);
         }
         add("SODIUM", LookSwitch.SODIUM ? "keeps its own settings: no supported way to set them" : "not installed", Glass.LABEL);
-        String iris = !Companions.irisLoaded() ? "not installed" : !ultra.available() ? "can't run Ultra here"
-                : Companions.irisShadersEnabled() ? "shaders on (your shaderpack)" : "shaders off";
-        add("IRIS", iris, Companions.irisLoaded() && ultra.available() ? Glass.TEXT : Glass.LABEL);
+        String iris = !Companions.irisLoaded() ? "not installed" : Companions.irisShadersEnabled() ? "shaders on (Lens steps aside)" : "shaders off";
+        add("IRIS", iris, Glass.LABEL);
     }
 
     private void add(String label, String value, int colour) {

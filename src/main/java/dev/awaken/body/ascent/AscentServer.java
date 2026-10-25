@@ -206,6 +206,7 @@ public final class AscentServer {
         if (s == AscentState.NONE && m.state != AscentState.NONE) m.endedAt = now(p);
         // a rope that bit is a link (counted here, once the server has checked its anchor)
         boolean newRope = s.rope && !m.state.rope;
+        if (s != m.state) AscentTips.used(p, s);
         m.state = s;
         if (newRope) link(p, AscentMemory.Track.TETHER, 2);
         m.ax = msg.x();
@@ -249,7 +250,10 @@ public final class AscentServer {
                 if (Ascent.has(p, Ascent.Tier.WINGS) && st.wings) link(p, AscentMemory.Track.WINGS, 6);
             }
             case AscentPayloads.EV_DOUBLE, AscentPayloads.EV_DASH, AscentPayloads.EV_DIVE -> {
-                if (Ascent.has(p, Ascent.Tier.LEAPER)) link(p, AscentMemory.Track.LEAPER, 2);
+                if (Ascent.has(p, Ascent.Tier.LEAPER)) {
+                    link(p, AscentMemory.Track.LEAPER, 2);
+                    dev.awaken.core.api.TipHooks.done(p, AscentTips.LEAPER);
+                }
             }
             case AscentPayloads.EV_SLAM_LAND -> {
                 if (Ascent.has(p, Ascent.Tier.LEAPER)) link(p, AscentMemory.Track.LEAPER, 3);
@@ -310,6 +314,7 @@ public final class AscentServer {
         AscentMotion m = motion(p);
         TetherVow.tick(p, now(p));
         AscentTrials.tick(p, now(p));
+        WindwaysServer.tick(p, now(p));
         aether(p, m);
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
         boolean moving = Ascent.moving(p, m);

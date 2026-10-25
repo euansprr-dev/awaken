@@ -1,0 +1,196 @@
+{
+  "variants": {
+    "axis=y,tone=dark": [
+      {
+        "model": "awaken:block/timber_dark_00",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/timber_dark_01",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_dark_10",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_dark_21",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_dark_30",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_dark_31",
+        "weight": 1
+      }
+    ],
+    "axis=x,tone=dark": [
+      {
+        "model": "awaken:block/timber_dark_00_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/timber_dark_01_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_dark_10_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_dark_21_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_dark_30_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_dark_31_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 1
+      }
+    ],
+    "axis=z,tone=dark": [
+      {
+        "model": "awaken:block/timber_dark_00_horizontal",
+        "x": 90,
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/timber_dark_01_horizontal",
+        "x": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_dark_10_horizontal",
+        "x": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_dark_21_horizontal",
+        "x": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_dark_30_horizontal",
+        "x": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_dark_31_horizontal",
+        "x": 90,
+        "weight": 1
+      }
+    ],
+    "axis=y,tone=pale": [
+      {
+        "model": "awaken:block/timber_pale_00",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/timber_pale_01",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_pale_10",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_pale_21",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_pale_30",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_pale_31",
+        "weight": 1
+      }
+    ],
+    "axis=x,tone=pale": [
+      {
+        "model": "awaken:block/timber_pale_00_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/timber_pale_01_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_pale_10_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_pale_21_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_pale_30_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_pale_31_horizontal",
+        "x": 90,
+        "y": 90,
+        "weight": 1
+      }
+    ],
+    "axis=z,tone=pale": [
+      {
+        "model": "awaken:block/timber_pale_00_horizontal",
+        "x": 90,
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/timber_pale_01_horizontal",
+        "x": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_pale_10_horizontal",
+        "x": 90,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/timber_pale_21_horizontal",
+        "x": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_pale_30_horizontal",
+        "x": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/timber_pale_31_horizontal",
+        "x": 90,
+        "weight": 1
+      }
+    ]
+  }
+}

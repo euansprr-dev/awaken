@@ -43,6 +43,7 @@ public final class CityModule {
 
     public static void init(IEventBus modBus) {
         FEATURE_TYPES.register(modBus);
+        dev.awaken.city.kit.CityKit.register(modBus);
         modBus.addListener(CityModule::onAddPackFinders);
         CityProtection.registerConfig();
         City.init();

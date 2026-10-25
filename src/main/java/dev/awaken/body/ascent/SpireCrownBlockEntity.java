@@ -34,9 +34,12 @@ import java.util.UUID;
  * climbed it (schema 1); the start times are not.
  */
 public class SpireCrownBlockEntity extends BlockEntity {
-    static final int SCHEMA = 1, KEEP = 5;
-    /** The deck: within this of the crown block's centre. The plaza: within this of the column's foot. */
-    static final double DECK = 2.6, PLAZA = 7.0;
+    static final int SCHEMA = 2, KEEP = 5;
+    /** The deck: within this of the crown block's centre. The plaza: within this of the column's foot (a hero tree's ground). */
+    static final double DECK = 2.6, PLAZA = 7.0, HERO_PLAZA = 22.0;
+    /** Which site it crowns (SPEC §17.11, §17.16): a Tether Spire, the Elder Colossus, the Lumen Spire. */
+    public static final int SITE_SPIRE = 0, SITE_COLOSSUS = 1, SITE_LUMEN = 2;
+    private int site = SITE_SPIRE, ground = Integer.MIN_VALUE;
     /** A climb longer than this (or with no start seen) is still a climb, just not timed. */
     static final int LONGEST = 20 * 120;
 
@@ -57,9 +60,37 @@ public class SpireCrownBlockEntity extends BlockEntity {
         super(AscentContent.SPIRE_CROWN_BE.get(), pos, state);
     }
 
-    /** The plaza's floor under this crown (the blueprint's levels). */
+    /** The plaza's floor under this crown (a spire's blueprint levels; a hero tree's foot). */
     int plazaY() {
-        return worldPosition.getY() - (RuinBuilder.SPIRE_CROWN + 1 - RuinBuilder.SPIRE_PLAZA);
+        return site != SITE_SPIRE && ground != Integer.MIN_VALUE ? ground : worldPosition.getY() - (RuinBuilder.SPIRE_CROWN + 1 - RuinBuilder.SPIRE_PLAZA);
+    }
+
+    double plaza() {
+        return site == SITE_SPIRE ? PLAZA : HERO_PLAZA;
+    }
+
+    public int site() {
+        return site;
+    }
+
+    /** A hero tree's crown: which tree, and its foot's height (HeroCrowns places it). */
+    void site(int site, int ground) {
+        this.site = site;
+        this.ground = ground;
+        setChanged();
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.unward(worldPosition);
     }
 
     public List<Run> records() {
@@ -74,7 +105,9 @@ public class SpireCrownBlockEntity extends BlockEntity {
         for (ServerPlayer p : sl.players()) {
             if (p.isSpectator()) continue;
             double dx = p.getX() - cx, dz = p.getZ() - cz, h = Math.sqrt(dx * dx + dz * dz);
-            if (h <= PLAZA && p.getY() >= floor + 0.5 && p.getY() < floor + 3.5) be.leftPlaza.put(p.getUUID(), now);
+            // a spire's plaza is flat; a tree's foot is roots and ground, a little up and down
+            double lo = be.site == SITE_SPIRE ? 0.5 : -1.5, hi = be.site == SITE_SPIRE ? 3.5 : 4.5;
+            if (h <= be.plaza() && p.getY() >= floor + lo && p.getY() < floor + hi) be.leftPlaza.put(p.getUUID(), now);
             else if (h <= DECK && Math.abs(p.getY() - pos.getY()) < 1.5) be.reached(p, now);
         }
     }
@@ -101,19 +134,31 @@ public class SpireCrownBlockEntity extends BlockEntity {
         }
         setChanged();
         AscentServer.link(p, AscentMemory.Track.TETHER, first ? 10 : 2);
-        dev.awaken.progression.Progression.count(p, "awaken:ascent_spires_climbed");
+        dev.awaken.progression.Progression.count(p, site == SITE_SPIRE ? "awaken:ascent_spires_climbed" : "awaken:ascent_crowns_reached");
+        if (first && site != SITE_SPIRE) {
+            // a hero tree's crown the first time: a find, and a fifth of a level
+            dev.awaken.progression.Progression.grantXp(p, dev.awaken.progression.Curve.xpToNext(dev.awaken.progression.Progression.profile(p).level()) * 0.2,
+                    dev.awaken.progression.Progression.XpSource.DISCOVERY);
+        }
         p.level().playSound(null, worldPosition, AscentContent.VOW_CALL.get(), net.minecraft.sounds.SoundSource.BLOCKS, 1F, best ? 1.35F : 1.15F);
         Run top = records.isEmpty() ? null : records.getFirst();
         String time = ticks > 0 ? String.format("%.1f s", ticks / 20.0) : "";
         String line = mine == null && !best ? "" : best && mine == null ? "your first time up" : best ? String.format("a new best (was %.1f s)", mine.ticks() / 20.0)
                 : String.format("your best %.1f s", mine.ticks() / 20.0);
-        String record = top == null ? "" : top.who().equals(p.getUUID()) ? "the spire's record is yours"
-                : String.format("the spire's record %.1f s, %s", top.ticks() / 20.0, top.name());
-        Signal.toast(p, Component.translatable("awaken.ascent.spire.climbed", time.isEmpty() ? "" : " · " + time));
+        String what = site == SITE_SPIRE ? "spire" : "tree";
+        String record = top == null ? "" : top.who().equals(p.getUUID()) ? "the " + what + "'s record is yours"
+                : String.format("the %s's record %.1f s, %s", what, top.ticks() / 20.0, top.name());
+        String key = switch (site) {
+            case SITE_COLOSSUS -> "awaken.ascent.crown.colossus";
+            case SITE_LUMEN -> "awaken.ascent.crown.lumen";
+            default -> "awaken.ascent.spire.climbed";
+        };
+        Signal.toast(p, Component.translatable(key, time.isEmpty() ? "" : " · " + time));
         StringBuilder sub = new StringBuilder();
         for (String s : new String[]{line, record}) if (!s.isEmpty()) sub.append(sub.isEmpty() ? "" : " · ").append(s);
         if (!sub.isEmpty()) p.sendSystemMessage(Component.literal(sub.toString()), true);
-        dev.awaken.core.DirectorLog.log(p, "ascent", "a Tether Spire climbed" + (time.isEmpty() ? "" : " in " + time)
+        dev.awaken.core.DirectorLog.log(p, "ascent", (site == SITE_SPIRE ? "a Tether Spire climbed" : site == SITE_COLOSSUS
+                ? "the Elder Colossus's crown reached" : "the Lumen Spire's crown reached") + (time.isEmpty() ? "" : " in " + time)
                 + " at " + worldPosition.toShortString() + (first ? " (first time)" : ""));
     }
 
@@ -126,6 +171,8 @@ public class SpireCrownBlockEntity extends BlockEntity {
     protected void saveAdditional(ValueOutput out) {
         super.saveAdditional(out);
         out.putInt("schema", SCHEMA);
+        out.putInt("site", site);
+        if (ground != Integer.MIN_VALUE) out.putInt("ground", ground);
         out.store("records", Run.CODEC.listOf(), List.copyOf(records));
         out.store("climbed", UUIDUtil.CODEC.listOf(), List.copyOf(climbed));
     }
@@ -135,6 +182,8 @@ public class SpireCrownBlockEntity extends BlockEntity {
         super.loadAdditional(in);
         records.clear();
         climbed.clear();
+        site = in.getIntOr("site", SITE_SPIRE);
+        ground = in.getIntOr("ground", Integer.MIN_VALUE);
         in.read("records", Run.CODEC.listOf()).ifPresent(records::addAll);
         in.read("climbed", UUIDUtil.CODEC.listOf()).ifPresent(climbed::addAll);
     }

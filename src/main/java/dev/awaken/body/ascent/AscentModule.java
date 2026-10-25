@@ -23,7 +23,10 @@ public final class AscentModule {
         bus.addListener(EventPriority.HIGH, AscentServer::onFall);
         bus.addListener(AscentServer::onLogin);
         bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> {
-            if (e.getEntity() instanceof net.minecraft.server.level.ServerPlayer p) TetherVow.forget(p);
+            if (e.getEntity() instanceof net.minecraft.server.level.ServerPlayer p) {
+                TetherVow.forget(p);
+                WindwaysServer.forget(p.getUUID());
+            }
         });
         bus.addListener(AscentServer::onRespawn);
         bus.addListener(AscentServer::onDimension);
@@ -32,10 +35,17 @@ public final class AscentModule {
         AscentTests.register();
         // sky platforms: the ladder of rings and the Wings core, placed once as each platform loads (SPEC §17.9)
         dev.awaken.above.ruin.SkyRig.register(bus);
+        // the hero trees' crowns and ring routes, placed once as each tree loads (SPEC §17.16)
+        HeroCrowns.register(bus);
         // the Ascension trials staged in gates: the leap given at the Leaper's Gauntlet (SPEC §17.10)
         AscentTrials.register();
+        // each tier's tip as it's given (Carillon's tip system; SPEC §17.17)
+        AscentTips.register();
         // updraft vents are moving air for the free states (the list is filled on the client only)
         dev.awaken.core.api.AirHooks.register(Updrafts::airAt);
+        // windways between sky platforms: lanes found round each player, synced to them (SPEC §17.12)
+        dev.awaken.core.api.AirHooks.register(Windways::airAt);
+        bus.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> WindwaysServer.clear());
         // the Horizon's sky sites ("needs Wings"): Wings, or a rope and the Leaper's air moves, get you up there
         dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS)
                 && (Ascent.has(p, Ascent.Tier.WINGS) || Ascent.has(p, Ascent.Tier.TETHER) && Ascent.has(p, Ascent.Tier.LEAPER)));
@@ -59,5 +69,6 @@ public final class AscentModule {
         r.playToClient(AscentPayloads.Vow.TYPE, AscentPayloads.Vow.STREAM_CODEC);
         r.playToClient(AscentPayloads.Record.TYPE, AscentPayloads.Record.STREAM_CODEC);
         r.playToClient(AscentPayloads.Stop.TYPE, AscentPayloads.Stop.STREAM_CODEC);
+        r.playToClient(AscentPayloads.Lanes.TYPE, AscentPayloads.Lanes.STREAM_CODEC);
     }
 }

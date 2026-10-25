@@ -51,8 +51,16 @@ final class LensParams {
         int fn = Math.clamp(Math.round(farNear * 16f), 0, 65535), ff = Math.clamp(Math.round(farFar), 0, 65535);
         packed[15] = bytes(fn >> 8, fn & 255, ff >> 8, ff & 255);
         // 16: moving fast through the air (LensClient.motion): r strength, g/b the heading on screen (0..1, from the
-        // bottom left); 17-31 free
+        // bottom left)
         packed[16] = pack(motion, motionX, motionY, 0f);
+        // 17-18: Lens 2's light (SPEC §22): r light, g shade, b ambient occlusion, a filmic; then the shade's tint (/2, so
+        // a cool tint can lift blue a little) and the key light's warmth
+        packed[17] = pack(look[Look.LIGHT], look[Look.SHADE], look[Look.AO], look[Look.FILMIC]);
+        packed[18] = pack(look[Look.SHADE_TINT] / 2f, look[Look.SHADE_TINT + 1] / 2f, look[Look.SHADE_TINT + 2] / 2f, look[Look.KEY_WARMTH]);
+        // 19: Lens 2's atmosphere: r mist, g its scale height (/256 blocks), b fog glow (/2), a sky glow
+        packed[19] = pack(look[Look.MIST], look[Look.MIST_HEIGHT] / 256f, look[Look.FOG_GLOW] / 2f, look[Look.SKY_GLOW]);
+        // 20: water and magic: r reflections on water, g heat shimmer, b frost at the edges, a emissive glow; 21-31 free
+        packed[20] = pack(look[Look.WATER], look[Look.HEAT], look[Look.FROST], look[Look.GLOW]);
         for (int i = 0; i < WIDTH; i++) {
             if (packed[i] != uploaded[i]) {
                 dirty = true;
