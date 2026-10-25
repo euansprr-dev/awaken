@@ -164,3 +164,8 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 - 2026-10-25: Euan approved M4 Phase A directly: "Go ahead with the full plan and all recommendations". Recorded as SPEC
   §16.0 decisions 21–26; §17.2's "found, not told" marked superseded; `core.api.TipHooks` v0 added (no-op until B6, so
   the Ascent can wire its tips now). carillon/m4-look merged. B1 (facade grammar + core kit) started.
+- 2026-10-25: floating Elder Wood fixed and merged (carillon/m4-elderfix f457c82e). Source: the city's vegetation sweep
+  skipped every *_wood block (the city's own trunks are vanilla bark), so elder trees' bark limbs stayed hanging when the
+  sweep cleared their trunks (33 floating groups on one seed, 7 inside the wall). Also closed: the 4-point crown probe
+  (CityBasin.reservedWithin). Scan after: 0 floaters in 1970 chunks. Existing worlds need `/awaken city tidy`. CI red only
+  on unrelated flakes (fauna_p2_families_spawn, fauna_natural_spawning_end_to_end, gates_hooks_view_stabilise_calm).

@@ -1400,6 +1400,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   touch it) → grammar fills plots (seed varies details, never shape). The same pass writes the street graph and the roof
   graph (edges carry the move they need; door and stair links). Plan hash checked by GameTest.
 - Placed only in vanilla blocks + the Carillon kit (~35 blocks of our own); no third-party blocks.
+- Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
+  logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
+  on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs
+  cities built before the fix).
 - Decided in M1 (2026-10-25): Choir Square sits at the plan's centre with the Choir on its north edge; the High Terrace is
   raised 8 blocks (five stairs up); the river has a lower quay at y 66 above water at y 63, with ladders; gatehouses at
   N, E and S plus two water gates, 24 tower places; fields outside the wall only in carved (basin) worlds; the street
@@ -1422,7 +1426,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 - Terrain (agreed with Awakened Lands, 2026-10-24): `dev.awaken.terrain.api.CityBasin` picks the site deterministically
   from the seed at server start (land within ~1,500 of the origin) and flattens it: `CitySite(x, z, coreRadius 330,
   blendRadius 700, streetY 70, riverPath, basinCarved)`; `CityBasin.site(server)`, `CityBasin.reserved(x, z)` (core + 48,
-  allocation-free). It needs Lithostitched (pack world profile); without it `basinCarved` is false and the painter
+  allocation-free). `CityBasin.reservedWithin(x, z, reach)`: true when any point within `reach` of (x, z) is reserved
+  (a circle test); hero trees and landmarks use it so no part of a crown reaches the reserve. It needs Lithostitched (pack world profile); without it `basinCarved` is false and the painter
   flattens its own ground. Gated by the feature flag `awaken:carillon` (Classic start leaves it off; old worlds never
   have it). The river inside the core follows the city's fixed path (offsets from the site centre, north = −z). Terrain
   keeps lairs, ruins, hero trees and biome features out; Carillon wires runtime systems (gate Director, anomalies,
