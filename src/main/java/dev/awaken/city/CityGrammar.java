@@ -67,8 +67,9 @@ final class CityGrammar {
                         crow, true, wall, 30, false, false);
             }
             case QUAY_D -> {
-                BlockState wall = w < 45 ? CITY_BRICKS : w < 70 ? MUD_BRICKS : w < 85 ? SPRUCE_PLANKS : DARK_PLANKS;
-                boolean boarded = wall == SPRUCE_PLANKS || wall == DARK_PLANKS;
+                // brick and mud-brick warehouses; a few boarded ones (spruce boards on dark timber: dark oak boards read as a hole)
+                BlockState wall = w < 50 ? CITY_BRICKS : w < 78 ? MUD_BRICKS : SPRUCE_PLANKS;
+                boolean boarded = wall == SPRUCE_PLANKS;
                 yield new Style(QUAY_D, pick(v, ASHLAR, COBBLE, ASHLAR), wall, boarded, 0,
                         r < 45 ? SPRUCE : r < 75 ? DARK_OAK : MUD, CAP_BRICK,
                         C_STONE, C_DARK, C_STONE, ASHLAR, CHISELED_STONE_BRICKS, null,
@@ -679,12 +680,13 @@ final class CityGrammar {
         boolean foreign = (bs >= 0 || f.up.outside(x, z) >= 0 || f.up.diagNS(x, z) >= 0) && underForeignJetty(f.plan, p, x, z);
         if (bs >= 0 && outsideOk(f.plan.kind(x, z)) && !shared(f.plan, p, bs, x, z)) groundPlane(f, b, bs, x, z, g, foreign);
         if (foreign) return;
+        if (!outsideOk(f.plan.kind(x, z))) return;
         int us = f.up.outside(x, z);
-        if (us >= 0 && outsideOk(f.plan.kind(x, z))) {
+        if (us >= 0) {
             if (!shared(f.plan, p, us, x, z)) upperPlane(f, b, us, x, z, g);
-            return;
+        } else if (f.up.diagNS(x, z) >= 0) {
+            corner(f, b, x, z, g);
         }
-        else if (us < 0 && p.storeys() >= 1 && f.up.diagNS(x, z) >= 0 && outsideOk(f.plan.kind(x, z))) corner(f, b, x, z, g);
     }
 
     static boolean outsideOk(byte k) {
