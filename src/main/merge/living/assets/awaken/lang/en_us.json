@@ -33,5 +33,20 @@
   "happening.awaken.murmuration": "Murmuration",
   "happening.awaken.rolling_storm": "The Rolling Storm",
   "happening.awaken.stampede": "Stampede",
-  "happening.awaken.wild_hunt": "The Wild Hunt"
+  "happening.awaken.wild_hunt": "The Wild Hunt",
+  "item.awaken.sunleaf": "Sunleaf",
+  "item.awaken.frostcap": "Frostcap",
+  "item.awaken.emberroot": "Emberroot",
+  "item.awaken.moonmoss": "Moonmoss",
+  "item.awaken.duskbloom": "Duskbloom",
+  "item.awaken.spiritgrass": "Spiritgrass",
+  "item.awaken.herb_broth": "Herb Broth",
+  "item.awaken.frostcap_tea": "Frostcap Tea",
+  "item.awaken.ember_skewer": "Ember Skewer",
+  "item.awaken.moonmoss_soup": "Moonmoss Soup",
+  "item.awaken.hunters_stew": "Hunter's Stew",
+  "item.awaken.foragers_salad": "Forager's Salad",
+  "item.awaken.miners_pasty": "Miner's Pasty",
+  "item.awaken.anglers_chowder": "Angler's Chowder",
+  "item.awaken.spirit_tea": "Spirit Tea"
 }

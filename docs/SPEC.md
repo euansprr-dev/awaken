@@ -2789,9 +2789,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Catch-up (when a population takes bodies after days away): herds +1 a day (+2 while their pack is wiped out), packs
   +1 per 2 days (+1 per 4 once wiped), roosts +1 a day; each night a pack lived its herd lost one (never under 2).
 - Natural spawning leaves the herd species to the ledger (`LivingHooks.ledgered`, read by `FaunaRules.verdict`:
-  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before. Game rule
-  `awaken:living_herds` (default on): off, herds spawn naturally again and the ledger keeps only packs and roosts; the
-  GameTest server starts with it off, so the fauna tests see natural herds as before (`living_ledger` checks the rule).
+  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before.
 - Dev: `/awaken living ledger`. Test `living_ledger`.
 
 ### 21.8 Camps and nests (Phase D, as built 2026-10-25)
@@ -2817,6 +2815,49 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   tomorrow night"), and the next night (14000-14400) 4 + tier of its creatures come 24 blocks short of the target,
   toward it.
 - Dev: `/awaken living camps`, `nest <kind> <tier>`. Test `living_camp`.
+
+### 21.9 Crafts (Phase E, as built 2026-10-25)
+- Six crafts (`living.craft.Craft`), levels 1-50, craft XP to the next level 40·c^1.3 + 40; attachment `awaken:crafts`
+  (schema 1, kept through death, synced to its owner: craft XP per craft, kinds hunted). A craft level is a toast; a
+  perk opening is a toast that names it (counter `awaken:craft_perks`).
+- Each paying action also pays the Hunter level 0.008 of a level (pacing_sim CRAFT_ACTION) through its craft's budget
+  (forage 0.012, mine 0.012, fish 0.012, cook 0.007, smith 0.007 per 10 min, × the rank's wild share), and the craft
+  XP shrinks by the same share the budget kept back, so a farm levels off on both. Hunting rides the kill's "hunt"
+  budget (its craft XP divided by how worn that is).
+- Sources: Hunting, a kill: 4 + 0.3 × level (+20 an elite, +60 a beast, +30 the first of a kind). Foraging: a ripe
+  plant 12 (and its herb), a flower or fern 2, a mushroom 4, berries picked 5. Mining: an ore 10 (deepslate 15).
+  Fishing: a catch 15. Smithing: a temper at the Forge 40 (hearth's `awaken:use/temper`, through `Quests.advance`),
+  an anvil job 12, a tool, weapon or armour crafted 8, a Field Forge mend 8. Cooking: food crafted 8, smelted 6 each.
+- Herbs are no new blocks: a natural plant (short and tall grass, ferns, small flowers) is ripe on a day by a pure hash
+  of its column and the clock's day: 3% (6% with Root Sense). Harvested, it gives the land's herb: sunleaf (most
+  lands), frostcap (frostwild), emberroot (sunscorch), moonmoss (mire), duskbloom (duskwood, canopy), spiritgrass (10%
+  anywhere). Nine meals from them (shapeless recipes, a bowl back where there was one): herb broth (Regeneration 20 s),
+  frostcap tea (Resistance 60 s), ember skewer (Strength 60 s), moonmoss soup (Night Vision 120 s), hunter's stew
+  (Strength and Speed 120 s), forager's salad (Regeneration 30 s), miner's pasty (Haste 180 s), angler's chowder (Water
+  Breathing 120 s, Dolphin's Grace 60 s), spirit tea (Luck 120 s).
+- Perks (5 · 10 · 20 · 30 · 40 · 50), all live:
+  - Hunting: Field Dressing (animals: a hide or more meat 33%), Tracks (client: glowing pawprints of creatures the band
+    read, 30 s), Weak Spot (crits ×1.15 on kinds killed 20+), Stalker (sneak attacks on a creature not targeting you
+    ×1.5), Trophy (beast parts twice), Apex (×1.1 to elites and beasts).
+  - Foraging: Herb Glint (client: a sea-green shimmer on ripe plants within 16), Wild Larder (+1 berries, glow berries,
+    mushrooms), Root Sense (6% ripe), Seed Keeper (grass 4%: pumpkin, melon, beetroot or torchflower seeds), Bloom (by
+    day among 3+ flowers, a Bloom Sprite comes, 30% each 10 s, none within 16), Wildheart (Regeneration in forests).
+  - Mining: Clean Strike (ores +1 15%), Ore Sense (client: every 4 s with a pick in hand, ores within 6 pulse through
+    stone as glass outlines, 3 s), Vein Sight (Ore Sense 10), Deep Ear (stone and deepslate ×1.1 break speed), Deep Vein
+    (deepslate ores +1 25%), Heart of Stone (below y 0, damage ×0.85).
+  - Fishing: Calm Water (+1 fish 20%), Shimmer (a treasure 10%: name tag, saddle, nautilus shell, book, bottle o'
+    enchanting), Deep Lungs (air lasts twice as long), Storm Caller (+1 in the rain), Pearl Diver (prismarine shard 8%,
+    ender pearl 2%), Leviathan Line (catches pay the Hunter level twice).
+  - Smithing: Patch (anvil jobs a level cheaper), Fine Edge (crafted gear +10% max durability), Field Forge (an iron
+    ingot on a lit campfire mends the off-hand item by a quarter), Masterwork (Unbreaking I 10%), Keen (weapons
+    Sharpness I 20%), Signature ("Made by <name>" lore).
+  - Cooking: Hearty (+1 saturation from cooked food and meals), Campfire Feast (eating by a lit campfire feeds players
+    within 6), Hunter's Stew (meals' strengths ×1.5 long), Long Meals (+2 saturation), Spirit Tea (`awaken:energy_regen`
+    +0.25 for 2 min after a cooked meal), Banquet (+the food's saturation again).
+  The plan's Tidewater bait, sigil slot, temper discount and an apex phase read moved out: they need other modules'
+  systems; the replacements above are this module's own.
+- UI: CRAFTS in the K menu's Status tab (level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
+  <level>`. Test `living_crafts`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 

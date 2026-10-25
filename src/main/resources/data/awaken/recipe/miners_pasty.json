@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "awaken_meals",
+  "ingredients": [
+    "minecraft:wheat",
+    "minecraft:wheat",
+    "minecraft:cooked_porkchop",
+    "awaken:emberroot"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:miners_pasty"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "awaken_meals",
+  "ingredients": [
+    "minecraft:stick",
+    "awaken:emberroot",
+    "#minecraft:meat"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:ember_skewer"
+  }
+}
