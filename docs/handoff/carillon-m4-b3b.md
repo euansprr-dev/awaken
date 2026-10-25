@@ -28,7 +28,11 @@ the orchestrator merges. Nothing was force-pushed.
 | 40196485904 | 979148e6 (Mac WIP) | failure (see above) |
 | 40197683663 | 4c611862 (tests + registration) | **success: all 474 required tests passed** |
 | 40198394383, 40198528452, 40198834469 | 2860d25c, 77f78ecd, 56248d6a | cancelled by the next push |
-| 40199359967 | 6bb77eeb (boats) | see the last line of this section |
+| 40199359967 | 6bb77eeb (boats) | cancelled by the next push |
+| **40199679593** | **ea175081** (boats, docs, the boatman's drift) | **success** |
+
+Locally, the full suite on ea175081 (JDK 25 in the cloud VM): all 474 required tests passed. The commit after
+ea175081 only fills in this table (docs).
 
 ## Run the tour (on the Mac; the cloud has no client)
 In the B3b worktree, or any checkout of the branch:
@@ -54,5 +58,3 @@ It measures frame times, so it needs the `tour` slot and the machine to itself. 
 3. If Euan says yes to CC0: download only the files he picks, record the source and licence beside each, run them through
    the audio pipeline (trim, loop, level, mono for places), add the criers at the stalls by their goods.
 4. Rain on the city (dripping awnings, running gutters): not built; the bed only drops a level in rain.
-
-CI on 6bb77eeb and on the docs commit after it: see the next lines (written when the runs finished).
