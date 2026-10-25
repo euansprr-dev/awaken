@@ -2321,6 +2321,16 @@ blueprint (`HeroWorldgen.blueprint`, the cached shape the tree was built from), 
 - Not yet: the Horizon line and landmark finds for hero trees (they are terrain structures, not ruins); the Shard
   Drift's stepping-stone course; a crown cache of its own.
 
+### 17.17 The Ascent's tips
+Carillon's one tip system (`core.api.TipHooks`, docs/carillon/m4/onboarding.md) carries the Ascent's tips; text in
+`assets/awaken/tips/ascent/` (rope, leaper, wings, flight: `awake: after`; freerun: `any`), every key named by the
+player's own binding. `body.ascent.AscentTips`: each tier's tip is offered as the tier is given (`Ascent.onGranted`:
+the Vow's rope, the Leaper's trial, a sky core's wings, Skyborn's flight) and counted done each time its state begins
+(the server sees TETHER or ZIP, GLIDE, SOAR) or a Leaper move goes off. The free-run's tip is the client's: running at
+a low wall or an edge without holding sprint offers it (`FreeRun`, only while it can still teach), and a free-run move
+counts it done. A gift's scene (`AscentScene`) holds every tip back while it plays. Nothing shows until Carillon
+installs the system.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)

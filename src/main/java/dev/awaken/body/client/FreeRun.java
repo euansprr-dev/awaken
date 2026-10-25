@@ -42,7 +42,11 @@ final class FreeRun {
 
     /** On the ground, running: a vault, a jump at a wall or a leap from an edge. True when it jumped. */
     static boolean ground(LocalPlayer p, BlockGetter level, CollisionContext ctx, int now) {
-        if (!held || !p.onGround() || !p.isSprinting() || now - groundJumpAt < 6) return false;
+        if (!held) {
+            tip(p, level, ctx);
+            return false;
+        }
+        if (!p.onGround() || !p.isSprinting() || now - groundJumpAt < 6) return false;
         Vec3 v = p.getDeltaMovement();
         double h = Math.sqrt(v.x * v.x + v.z * v.z);
         if (h < 0.12) return false;
@@ -57,6 +61,7 @@ final class FreeRun {
             default -> null;
         };
         if (why == null) return false;
+        dev.awaken.core.api.TipHooks.client().done(dev.awaken.body.ascent.AscentTips.FREERUN);
         if (what == RunnerRules.AHEAD_VAULT && p.level() instanceof net.minecraft.client.multiplayer.ClientLevel cl) {
             // the hand planted on the top: a slap and a puff off it (weight, SPEC §17.15)
             double tx = p.getX() + fx * (0.3 + RunnerRules.AHEAD_REACH), tz = p.getZ() + fz * (0.3 + RunnerRules.AHEAD_REACH);
@@ -67,6 +72,20 @@ final class FreeRun {
         groundJumpAt = now;
         ClientMoves.trace("free-run: " + why);
         return true;
+    }
+
+    /**
+     * Running at a low wall or an edge without the free-run: its tip (while it can still teach; no reading once it's
+     * retired or tips are off).
+     */
+    private static void tip(LocalPlayer p, BlockGetter level, CollisionContext ctx) {
+        if (!p.onGround() || !p.isSprinting() || !FeelConfig.freeRun() || !dev.awaken.core.api.TipHooks.client().wants(dev.awaken.body.ascent.AscentTips.FREERUN)) return;
+        Vec3 v = p.getDeltaMovement();
+        double h = Math.sqrt(v.x * v.x + v.z * v.z);
+        if (h < 0.12) return;
+        float yaw = p.getYRot() * Mth.DEG_TO_RAD;
+        int what = RunnerRules.ahead(level, ctx, M, p.getX(), p.getY(), p.getZ(), -Mth.sin(yaw), Mth.cos(yaw), h, OUT);
+        if (what == RunnerRules.AHEAD_VAULT || what == RunnerRules.AHEAD_LEAP) dev.awaken.core.api.TipHooks.client().offer(dev.awaken.body.ascent.AscentTips.FREERUN);
     }
 
     /** A wall's top a hang can reach from a jump's height: worth jumping at without Wall Stride. */
