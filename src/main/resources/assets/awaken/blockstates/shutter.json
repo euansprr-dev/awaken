@@ -1,0 +1,364 @@
+{
+  "variants": {
+    "colour=blue,facing=north,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_blue_lower_left"
+    },
+    "colour=blue,facing=east,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_blue_lower_left",
+      "y": 90
+    },
+    "colour=blue,facing=south,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_blue_lower_left",
+      "y": 180
+    },
+    "colour=blue,facing=west,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_blue_lower_left",
+      "y": 270
+    },
+    "colour=blue,facing=north,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_blue_lower_right"
+    },
+    "colour=blue,facing=east,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_blue_lower_right",
+      "y": 90
+    },
+    "colour=blue,facing=south,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_blue_lower_right",
+      "y": 180
+    },
+    "colour=blue,facing=west,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_blue_lower_right",
+      "y": 270
+    },
+    "colour=blue,facing=north,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_blue_upper_left"
+    },
+    "colour=blue,facing=east,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_blue_upper_left",
+      "y": 90
+    },
+    "colour=blue,facing=south,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_blue_upper_left",
+      "y": 180
+    },
+    "colour=blue,facing=west,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_blue_upper_left",
+      "y": 270
+    },
+    "colour=blue,facing=north,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_blue_upper_right"
+    },
+    "colour=blue,facing=east,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_blue_upper_right",
+      "y": 90
+    },
+    "colour=blue,facing=south,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_blue_upper_right",
+      "y": 180
+    },
+    "colour=blue,facing=west,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_blue_upper_right",
+      "y": 270
+    },
+    "colour=sage,facing=north,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_sage_lower_left"
+    },
+    "colour=sage,facing=east,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_sage_lower_left",
+      "y": 90
+    },
+    "colour=sage,facing=south,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_sage_lower_left",
+      "y": 180
+    },
+    "colour=sage,facing=west,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_sage_lower_left",
+      "y": 270
+    },
+    "colour=sage,facing=north,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_sage_lower_right"
+    },
+    "colour=sage,facing=east,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_sage_lower_right",
+      "y": 90
+    },
+    "colour=sage,facing=south,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_sage_lower_right",
+      "y": 180
+    },
+    "colour=sage,facing=west,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_sage_lower_right",
+      "y": 270
+    },
+    "colour=sage,facing=north,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_sage_upper_left"
+    },
+    "colour=sage,facing=east,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_sage_upper_left",
+      "y": 90
+    },
+    "colour=sage,facing=south,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_sage_upper_left",
+      "y": 180
+    },
+    "colour=sage,facing=west,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_sage_upper_left",
+      "y": 270
+    },
+    "colour=sage,facing=north,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_sage_upper_right"
+    },
+    "colour=sage,facing=east,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_sage_upper_right",
+      "y": 90
+    },
+    "colour=sage,facing=south,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_sage_upper_right",
+      "y": 180
+    },
+    "colour=sage,facing=west,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_sage_upper_right",
+      "y": 270
+    },
+    "colour=oxblood,facing=north,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_oxblood_lower_left"
+    },
+    "colour=oxblood,facing=east,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_oxblood_lower_left",
+      "y": 90
+    },
+    "colour=oxblood,facing=south,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_oxblood_lower_left",
+      "y": 180
+    },
+    "colour=oxblood,facing=west,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_oxblood_lower_left",
+      "y": 270
+    },
+    "colour=oxblood,facing=north,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_oxblood_lower_right"
+    },
+    "colour=oxblood,facing=east,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_oxblood_lower_right",
+      "y": 90
+    },
+    "colour=oxblood,facing=south,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_oxblood_lower_right",
+      "y": 180
+    },
+    "colour=oxblood,facing=west,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_oxblood_lower_right",
+      "y": 270
+    },
+    "colour=oxblood,facing=north,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_oxblood_upper_left"
+    },
+    "colour=oxblood,facing=east,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_oxblood_upper_left",
+      "y": 90
+    },
+    "colour=oxblood,facing=south,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_oxblood_upper_left",
+      "y": 180
+    },
+    "colour=oxblood,facing=west,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_oxblood_upper_left",
+      "y": 270
+    },
+    "colour=oxblood,facing=north,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_oxblood_upper_right"
+    },
+    "colour=oxblood,facing=east,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_oxblood_upper_right",
+      "y": 90
+    },
+    "colour=oxblood,facing=south,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_oxblood_upper_right",
+      "y": 180
+    },
+    "colour=oxblood,facing=west,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_oxblood_upper_right",
+      "y": 270
+    },
+    "colour=natural,facing=north,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_natural_lower_left"
+    },
+    "colour=natural,facing=east,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_natural_lower_left",
+      "y": 90
+    },
+    "colour=natural,facing=south,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_natural_lower_left",
+      "y": 180
+    },
+    "colour=natural,facing=west,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_natural_lower_left",
+      "y": 270
+    },
+    "colour=natural,facing=north,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_natural_lower_right"
+    },
+    "colour=natural,facing=east,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_natural_lower_right",
+      "y": 90
+    },
+    "colour=natural,facing=south,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_natural_lower_right",
+      "y": 180
+    },
+    "colour=natural,facing=west,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_natural_lower_right",
+      "y": 270
+    },
+    "colour=natural,facing=north,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_natural_upper_left"
+    },
+    "colour=natural,facing=east,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_natural_upper_left",
+      "y": 90
+    },
+    "colour=natural,facing=south,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_natural_upper_left",
+      "y": 180
+    },
+    "colour=natural,facing=west,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_natural_upper_left",
+      "y": 270
+    },
+    "colour=natural,facing=north,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_natural_upper_right"
+    },
+    "colour=natural,facing=east,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_natural_upper_right",
+      "y": 90
+    },
+    "colour=natural,facing=south,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_natural_upper_right",
+      "y": 180
+    },
+    "colour=natural,facing=west,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_natural_upper_right",
+      "y": 270
+    },
+    "colour=green,facing=north,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_green_lower_left"
+    },
+    "colour=green,facing=east,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_green_lower_left",
+      "y": 90
+    },
+    "colour=green,facing=south,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_green_lower_left",
+      "y": 180
+    },
+    "colour=green,facing=west,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_green_lower_left",
+      "y": 270
+    },
+    "colour=green,facing=north,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_green_lower_right"
+    },
+    "colour=green,facing=east,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_green_lower_right",
+      "y": 90
+    },
+    "colour=green,facing=south,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_green_lower_right",
+      "y": 180
+    },
+    "colour=green,facing=west,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_green_lower_right",
+      "y": 270
+    },
+    "colour=green,facing=north,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_green_upper_left"
+    },
+    "colour=green,facing=east,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_green_upper_left",
+      "y": 90
+    },
+    "colour=green,facing=south,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_green_upper_left",
+      "y": 180
+    },
+    "colour=green,facing=west,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_green_upper_left",
+      "y": 270
+    },
+    "colour=green,facing=north,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_green_upper_right"
+    },
+    "colour=green,facing=east,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_green_upper_right",
+      "y": 90
+    },
+    "colour=green,facing=south,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_green_upper_right",
+      "y": 180
+    },
+    "colour=green,facing=west,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_green_upper_right",
+      "y": 270
+    },
+    "colour=cream,facing=north,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_cream_lower_left"
+    },
+    "colour=cream,facing=east,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_cream_lower_left",
+      "y": 90
+    },
+    "colour=cream,facing=south,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_cream_lower_left",
+      "y": 180
+    },
+    "colour=cream,facing=west,half=lower,hinge=left": {
+      "model": "awaken:block/shutter_cream_lower_left",
+      "y": 270
+    },
+    "colour=cream,facing=north,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_cream_lower_right"
+    },
+    "colour=cream,facing=east,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_cream_lower_right",
+      "y": 90
+    },
+    "colour=cream,facing=south,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_cream_lower_right",
+      "y": 180
+    },
+    "colour=cream,facing=west,half=lower,hinge=right": {
+      "model": "awaken:block/shutter_cream_lower_right",
+      "y": 270
+    },
+    "colour=cream,facing=north,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_cream_upper_left"
+    },
+    "colour=cream,facing=east,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_cream_upper_left",
+      "y": 90
+    },
+    "colour=cream,facing=south,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_cream_upper_left",
+      "y": 180
+    },
+    "colour=cream,facing=west,half=upper,hinge=left": {
+      "model": "awaken:block/shutter_cream_upper_left",
+      "y": 270
+    },
+    "colour=cream,facing=north,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_cream_upper_right"
+    },
+    "colour=cream,facing=east,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_cream_upper_right",
+      "y": 90
+    },
+    "colour=cream,facing=south,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_cream_upper_right",
+      "y": 180
+    },
+    "colour=cream,facing=west,half=upper,hinge=right": {
+      "model": "awaken:block/shutter_cream_upper_right",
+      "y": 270
+    }
+  }
+}

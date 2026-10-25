@@ -1,0 +1,136 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/drainpipe",
+    "pipe": "awaken:block/drainpipe"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        0,
+        11
+      ],
+      "to": [
+        10,
+        16,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pipe",
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#pipe",
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#pipe",
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#pipe",
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#pipe",
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#pipe",
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        12,
+        10
+      ],
+      "to": [
+        11,
+        13,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pipe",
+          "uv": [
+            10,
+            6,
+            16,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#pipe",
+          "uv": [
+            10,
+            6,
+            16,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#pipe",
+          "uv": [
+            10,
+            6,
+            16,
+            7
+          ]
+        },
+        "up": {
+          "texture": "#pipe",
+          "uv": [
+            10,
+            0,
+            16,
+            6
+          ]
+        },
+        "down": {
+          "texture": "#pipe",
+          "uv": [
+            10,
+            0,
+            16,
+            6
+          ]
+        }
+      }
+    }
+  ]
+}

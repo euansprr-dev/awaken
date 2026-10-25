@@ -1,0 +1,67 @@
+{
+  "textures": {
+    "particle": "awaken:block/shutter_green_lower",
+    "t": "awaken:block/shutter_green_lower"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        14
+      ],
+      "to": [
+        8,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#t",
+          "uv": [
+            8,
+            0,
+            0,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#t",
+          "uv": [
+            6,
+            0,
+            8,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            2,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#t",
+          "uv": [
+            0,
+            0,
+            8,
+            2
+          ]
+        },
+        "down": {
+          "texture": "#t",
+          "uv": [
+            0,
+            14,
+            8,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

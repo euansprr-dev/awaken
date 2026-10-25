@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "material=brick": {
+      "model": "awaken:block/chimney_bricks_brick"
+    },
+    "material=mud": {
+      "model": "awaken:block/chimney_bricks_mud"
+    },
+    "material=stone": {
+      "model": "awaken:block/chimney_bricks_stone"
+    }
+  }
+}
