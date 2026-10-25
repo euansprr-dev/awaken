@@ -291,6 +291,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
   `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
   (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
+  `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
+  Shoulder Surfing it flips first person and the shoulder view, §17.13).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -1327,7 +1329,8 @@ below now cite what was measured; details in docs/carillon/spikes/G0-notes.md).
 9. Map: our own Atlas on the Holo. Diorama may join the pack as an optional client trial; Xaero's leaves the pack plan
    when the Atlas ships.
 10. Third person: vanilla's behind view plus our View key (flips first ↔ third, skips the front view); the shoulder view
-    (mixin or Shoulder Surfing) is decided at gate G1.
+    (mixin or Shoulder Surfing) is decided at gate G1. Settled 25 Oct 2026: Shoulder Surfing Reloaded (the pack's feel
+    profile), driven by the action camera (§17.13); without it, vanilla's behind view with the action camera's pull-back.
 11. Wall-run camera roll 5° by default, client option 0–7.5°.
 12. The forked planning session ("btw: kind of a side question…") is the orchestrator; docs/carillon/STATUS.md lets a
     fresh session take over at any gate.
@@ -2076,6 +2079,8 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   yet; puts you on the ground under the lowest ring); pilot `run climb` climbs the rings, the perch and the pier, walks
   round the cabin to its door and in, and ends when the core gives Wings (`tools/autopilot/ascent-sky.txt`: from a buoy
   at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
+- Over a forest, rigging opens the canopy under the first ring (leaves and vines within 2 of its column, from the
+  ground up): a throw from the ground sees the ring (a tour stood under birches throwing into leaves).
 
 ### 17.10 Ascension trials: the Leaper's Gauntlet
 - **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) and have swung enough to know it (Tether
@@ -2175,6 +2180,36 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   Tour (seed 4246): the lane took the glide 2 s after the wings opened and carried it 667 blocks in 21 s, out at 0.34
   b/t 7 over the next deck. From a deck in daylight the lane reads faintly (inside it, plainly).
 - Not yet: windways round spires and other heights, weather that turns them, a ride counted toward Wings mastery.
+
+### 17.13 The feel pass, part 1: the action camera
+Approved 25 Oct 2026 (Euan: the movement should feel "really, really, really good"; first person reads flat and
+vanilla's third person sits right behind you). The over-the-shoulder view follows what the body is doing.
+- **The view**: Shoulder Surfing Reloaded (pack feel profile, client only; `shouldersurfing_plugin.json` names
+  `body.client.feel.ShoulderSurfingPlugin`, the only class that names it). With it installed, a world starts in the
+  shoulder view the first moment after you join (after the opening's shots), once a session, if you're in first person
+  (`shoulderView`, feel settings, default on); first person stays one key away. The View key (the opening's, §16 decision
+  10) asks `core.api.CameraHooks` first, so with Shoulder Surfing it flips first person and the shoulder view and never
+  lands on vanilla's camera right behind you (before, it took every perspective press before Shoulder Surfing saw it).
+- **The arm** (`body.ActionRig`, pure; `body.client.ActionCamera` reads the body once a tick): a pose from the Ascent's
+  state, then the Runner's (a wall-run, a hang or climb), a slide, using an item (aim: nothing added), else the ground.
+  Each pose shapes the shoulder offset (x left, y up, z back), in blocks over the shoulder view's own:
+  ground: back 0.6 of the trail; slide: up -0.55, back half the trail less 0.2; wall-run: over to the open side (away
+  from the wall, 1.2 times the shoulder's width), up 0.2, back 0.6 + 0.6 of the trail; hang and climb: up 0.45, back 0.5;
+  rope: back 2.2 + trail, up 0.8, 0.6 of the way in behind you; zip: back 1.2 + half the trail, up 0.3, 0.3 in; the
+  carry: back 1.5 + trail, up 0.4, 0.4 in; wings: back 2.6 + trail, up 0.6, 0.7 in; flight: back 3.0 + trail, up 0.5,
+  0.8 in. The trail: 2 blocks per block a tick over 0.22 b/t, at most 3; never more than 5.5 back in all. A critically
+  damped spring (0.22 out, 0.32 back) carries it there: it trails out, never overshoots, and is home in under 1.5 s.
+  Reduced motion halves it. After Shoulder Surfing's own offset handlers (sprint, aim, flying), so its aim view holds.
+- **Without Shoulder Surfing**: vanilla's third person (behind) takes the arm's pull-back as distance
+  (`CalculateDetachedCameraDistanceEvent`); first person is never touched.
+- **Stands aside** (the arm comes home): through the opening's shots (`OpeningCamera.active()`), as a Veil spirit or
+  possessing, riding, spectating, or with `actionCamera` off (feel settings). Camera Overhaul still pauses in Ascent
+  states (Feel Director); the Feel Director's roll and FOV and BodyCamera's first-person moves are unchanged.
+- Test: `body_action_camera` (each pose's shape in order, the open side, the trail's cap, the spring trailing out
+  without overshoot and coming home). Tour: `tools/autopilot/ascent-camera.txt` (PACK=feel).
+- Next in the feel pass: one-button free-run (hold sprint, the body reads the geometry ahead; it reads Carillon's
+  `#awaken:runner_ledges/climbs/lines/soft/swings` tags), then weight (landing dip, grab sounds and dust, wind with
+  speed, footstep bob in the shoulder view, a slow beat at a big leap's apex).
 
 ---------------------------------------------------------------------------------------------------------------------
 

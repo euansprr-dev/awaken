@@ -329,12 +329,17 @@ public final class OpeningClient {
         releaseToasts(mc);
     }
 
-    /** The View key: vanilla's Toggle Perspective flips first and third person and skips the front view. */
+    /**
+     * The View key: vanilla's Toggle Perspective flips first and third person and skips the front view. With Shoulder
+     * Surfing installed it flips first person and the shoulder view instead (CameraHooks).
+     */
     private static void viewKey() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || !OpeningConfig.skipFront() || OpeningCamera.active()) return;
         boolean flipped = false;
         while (mc.options.keyTogglePerspective.consumeClick()) {
+            // with Shoulder Surfing the key flips first person and the shoulder view (core.api.CameraHooks, SPEC §17.13)
+            if (dev.awaken.core.api.CameraHooks.toggleView()) continue;
             CameraType now = mc.options.getCameraType();
             mc.options.setCameraType(now.isFirstPerson() ? CameraType.THIRD_PERSON_BACK : CameraType.FIRST_PERSON);
             flipped = true;
