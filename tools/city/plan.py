@@ -498,6 +498,8 @@ class Plan:
     def quay_lanes(self):
         """Lanes from the river inland on both banks, every ~26 blocks (the porters' lanes)."""
         for z in range(-210, 110, 26):
+            if any(abs(z - bz) <= 4 for bz in (-160, 125)):
+                continue  # (a bridge's street runs here already)
             rx = river_x(z)
             for side in (-1, 1):
                 a = (rx + side * (RIVER_HALF + QUAY_W - 1), z)
@@ -738,10 +740,34 @@ class Plan:
                     prof[d] = int(base[j, i])
                     strong[d] = True
             owned = [False] * n
+            opens = [False] * n
             for d in range(n):
                 p = a + u * min(d, L)
                 i, j = int(math.floor(p[0])) + O, int(math.floor(p[1])) + O
                 owned[d] = own[j, i] == idx
+                opens[d] = bool(walk[j, i])
+            # (ground the street never reaches, beyond yards or houses at its end, doesn't hold it)
+            d = 0
+            while d < n:
+                if not strong[d]:
+                    d += 1
+                    continue
+                e = d
+                while e + 1 < n and strong[e + 1]:
+                    e += 1
+                reach = False
+                for lo, hi, step in ((d - 1, -1, -1), (e + 1, n, 1)):
+                    k = lo
+                    while (k >= 0 if step < 0 else k < n) and opens[k]:
+                        if owned[k]:
+                            reach = True
+                            break
+                        k += step
+                if not reach:
+                    for k in range(d, e + 1):
+                        prof[k] = None
+                        strong[k] = False
+                d = e + 1
             for t, root in cuts[idx]:
                 if level[root] is None:
                     continue
