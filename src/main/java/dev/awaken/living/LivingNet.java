@@ -140,8 +140,48 @@ public final class LivingNet {
         }
     }
 
+    /**
+     * One happening's tell (SPEC §21.6): which kind of tell, where it is now, how big, how far along (0..1), and its line's
+     * direction (dx, dz; zero for one that stays put).
+     */
+    public record HappeningTell(int id, String tell, float x, float y, float z, int radius, float progress, int dx, int dz) {
+        public static final StreamCodec<ByteBuf, HappeningTell> STREAM_CODEC = new StreamCodec<>() {
+            @Override
+            public HappeningTell decode(ByteBuf b) {
+                return new HappeningTell(ByteBufCodecs.VAR_INT.decode(b), ByteBufCodecs.STRING_UTF8.decode(b), b.readFloat(), b.readFloat(),
+                        b.readFloat(), ByteBufCodecs.VAR_INT.decode(b), b.readFloat(), b.readInt(), b.readInt());
+            }
+
+            @Override
+            public void encode(ByteBuf b, HappeningTell t) {
+                ByteBufCodecs.VAR_INT.encode(b, t.id());
+                ByteBufCodecs.STRING_UTF8.encode(b, t.tell());
+                b.writeFloat(t.x());
+                b.writeFloat(t.y());
+                b.writeFloat(t.z());
+                ByteBufCodecs.VAR_INT.encode(b, t.radius());
+                b.writeFloat(t.progress());
+                b.writeInt(t.dx());
+                b.writeInt(t.dz());
+            }
+        };
+    }
+
+    /** The happenings within 512 blocks of the player, every 2 s (an empty list once when the last goes). */
+    public record Happenings(java.util.List<HappeningTell> tells) implements CustomPacketPayload {
+        public static final Type<Happenings> TYPE = new Type<>(Awaken.id("living_happenings"));
+        public static final StreamCodec<ByteBuf, Happenings> STREAM_CODEC =
+                HappeningTell.STREAM_CODEC.apply(ByteBufCodecs.list(16)).map(Happenings::new, Happenings::tells);
+
+        @Override
+        public Type<Happenings> type() {
+            return TYPE;
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
+        r.playToClient(Happenings.TYPE, Happenings.STREAM_CODEC);
         r.playToClient(Journal.TYPE, Journal.STREAM_CODEC);
         r.playToClient(Tells.TYPE, Tells.STREAM_CODEC);
         r.playToClient(RegionMsg.TYPE, RegionMsg.STREAM_CODEC);

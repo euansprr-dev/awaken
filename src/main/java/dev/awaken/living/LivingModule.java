@@ -49,6 +49,8 @@ public final class LivingModule {
         dev.awaken.living.wayfarer.Scenes.init();
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
+        XpBudget.register("pulse", 0.15);
+        Progression.addPerkSource(dev.awaken.living.pulse.Pulse::lucidity);
         LivingHooks.install(new LivingHooks.Bridge() {
             @Override
             public boolean paysKills() {
@@ -72,6 +74,8 @@ public final class LivingModule {
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.quest.QuestEngine::onDeath);
         bus.addListener(dev.awaken.living.quest.QuestBook::addReload);
         bus.addListener(dev.awaken.living.bounty.Bounties::addReload);
+        bus.addListener(dev.awaken.living.pulse.HappeningBook::addReload);
+        bus.addListener(LivingDropsEvent.class, dev.awaken.living.pulse.Pulse::onDrops);
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.bounty.Bounties::onDeath);
         bus.addListener(EventPriority.HIGH, LivingDropsEvent.class, dev.awaken.living.quest.Relics::onDrops);
         bus.addListener(PlayerEvent.PlayerRespawnEvent.class, dev.awaken.living.quest.Relics::onRespawn);
@@ -84,7 +88,10 @@ public final class LivingModule {
             if (e.getServer().getTickCount() % 20 == 0) for (ServerPlayer p : e.getServer().getPlayerList().getPlayers()) dev.awaken.living.quest.QuestEngine.poll(p);
             XpStream.tick(e.getServer());
             shownTick(e.getServer());
-            if (shown(e.getServer())) dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
+            if (shown(e.getServer())) {
+                dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
+                dev.awaken.living.pulse.Pulse.tick(e.getServer());
+            }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {

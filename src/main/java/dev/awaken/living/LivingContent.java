@@ -52,6 +52,13 @@ public final class LivingContent {
                     .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.bounty.BountyState.CODEC))
                     .build());
 
+    /** What a player has heard of happenings (SPEC §21.6): "?" marks on their map, synced to them, kept through death. */
+    public static final Supplier<AttachmentType<dev.awaken.living.pulse.Rumours.State>> RUMOURS = ATTACHMENTS.register("rumours",
+            () -> AttachmentType.builder(() -> dev.awaken.living.pulse.Rumours.State.EMPTY).serialize(dev.awaken.living.pulse.Rumours.State.CODEC.fieldOf("rumours"))
+                    .copyOnDeath()
+                    .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.pulse.Rumours.State.CODEC))
+                    .build());
+
     static final net.neoforged.neoforge.registries.DeferredRegister.Entities ENTITIES = net.neoforged.neoforge.registries.DeferredRegister.createEntities(Awaken.MODID);
     /** A person out in the wilds (Phase C). Saved with its chunk; never despawns. */
     public static final DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<dev.awaken.living.wayfarer.Wayfarer>> WAYFARER =

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "title": "The Wild Hunt",
+  "family": "creature",
+  "behaviour": "wild_hunt",
+  "when": {
+    "time": [
+      "night"
+    ],
+    "moon": [
+      0
+    ],
+    "moon_weight": 6.0,
+    "moon_only": true
+  },
+  "bands": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "duration_s": 240,
+  "weight": 1.0,
+  "witness_radius": 48,
+  "tell": "ghost",
+  "tell_radius": 14,
+  "rumours": [
+    "Full moon. If you hear horns {dir} tonight, don't follow them. Or do. Bring a lot of arrows.",
+    "The Hunt ran {dir} last full moon. Pale hounds, and something leading them that wasn't a hound."
+  ]
+}

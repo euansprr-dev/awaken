@@ -48,6 +48,11 @@ public final class Wayfarers {
     static void talk(ServerPlayer p, Wayfarer w) {
         if (talkAs(p, w.who(), w.scene())) return;
         Person person = get(w.who());
+        String rumour = person == null ? null : dev.awaken.living.pulse.Rumours.tell(p, person.name(), w);
+        if (rumour != null) {
+            QuestEngine.sayLine(p, rumour);
+            return;
+        }
         if (person != null && !person.idle().isEmpty()) {
             QuestEngine.sayLine(p, person.idle().get(p.getRandom().nextInt(person.idle().size())));
         }

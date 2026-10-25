@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "title": "Beast Duel",
+  "family": "creature",
+  "behaviour": "beast_duel",
+  "when": {
+    "time": [
+      "day",
+      "dusk"
+    ]
+  },
+  "groups": [
+    "greenwild",
+    "frostwild",
+    "sunscorch",
+    "crag",
+    "canopy",
+    "duskwood",
+    "mire"
+  ],
+  "bands": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "duration_s": 180,
+  "weight": 1.0,
+  "witness_radius": 48,
+  "tell": "roar",
+  "tell_radius": 12,
+  "rumours": [
+    "Two of the big ones are fighting {dir}. Trees coming down. Whoever wins won't have much left.",
+    "Roaring {dir} since noon. Two beasts and one patch of ground. Go and see who wants it more."
+  ]
+}

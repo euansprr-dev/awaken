@@ -2718,6 +2718,49 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   `talk` (the nearest Wayfarer), `scene <chain>` (its scene now, close by), `view <distance>` (stand back from your
   newest scene, facing it), `camp`, `quests`. Tour `tools/autopilot/living-c.txt`.
 
+### 21.6 The World Pulse and happenings (Phase D, as built 2026-10-25)
+- **The Pulse** (`living.pulse.Pulse`, saved data `awaken:living_pulse`, schema 1): per player outdoors (overworld,
+  awakened, not in a gate, a Hearth's radius or the city), checked every 10 s: none near (256 blocks) and 90 s since
+  their last → one starts; one or two near → another after 10 minutes; never more than three near (the anomalies near
+  count too). The first comes about two minutes outdoors. Kinds by weight × the moon (`moon_weight` on favoured phases)
+  × 2 for a kind the player hasn't witnessed, never the same kind twice running; up to three kinds are tried for a
+  place. Happenings are world state, shared, and end on their own; their creatures are tagged `awaken_happening`,
+  persistent, and leave with them (any no player is within 24-48 of go; the rest stay as ordinary creatures).
+- **The calendar**: moon phase = (clock / 24000) mod 8 (0 full, 4 new); time of day dawn 23000-1500, day, dusk
+  11500-13500, night; weather clear/rain/thunder.
+- **Data** `data/<ns>/awaken/happening/<id>.json`, schema 1: `title`, `family`, `behaviour` (code), `when` {`time`,
+  `moon`, `moon_weight`, `moon_only`, `weather`}, `groups` (fauna biome groups), `bands`, `duration_s`, `weight`,
+  `witness_radius`, `tell` (haze, dustline, flock, circle, storm, ghost, fog, lanterns, roar), `tell_radius`,
+  `rumours` (with `{dir}`). No em dashes.
+- **The launch set** (behaviours in `Herds`, `Skies`, `Hunts`, `Tides`, `People`):
+  - The Great Migration (dawn/day, grazing lands): a herd of 10-14 of the land's grazer crosses 140 blocks in 5 min;
+    hunters come at the stragglers at a third and two thirds of the way. Stampede (day): 8-10 at a full run, 90 blocks
+    in 40 s; 4 damage and a shove to anyone in the way (once per 1.5 s).
+  - Murmuration (dusk, over water): client-drawn only; witnessing it gives `awaken:lucidity_start` +10 for that
+    play-day (a perk source). Carrion Circle: kites over a barrel of remains (bones, leather, arrows, 40% a creature
+    part, 25% a worn iron sword) and scattered bone blocks; the remains stay.
+  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning near its centre about every
+    3 s; 3 damage within 4 blocks of a strike; struck sand turns to glass.
+  - The Wild Hunt (full moon only, night, bands 1+): five wisp hounds and the Huntmaster (an elite four levels up,
+    titled "Huntmaster of the Pale Moon") run 220 blocks; they go for anyone within 18; each hound drops 2 essence, the
+    Huntmaster 6. Beast Duel (bands 1+): two named beasts fight; the winner is left at 45% health.
+  - The Deep Tide (new moon only, dusk/night, 10 min): fog out of a broken gate within 300 (else open ground); while it's
+    up the night's hunters, elites and camps are two levels harder everywhere (`Regions.creatureLevel`).
+  - Caravan (day, ×3 on the half moons): a wandering trader ("Caravan Master") and 2-3 trader llamas walk 140 blocks in
+    6 min; trade as usual. 40% are ambushed halfway by 3-4 pillagers; if the master lives, everyone within 40 gets
+    0.15 of a level (budget "pulse", 0.15 per 10 min) and 4 emeralds.
+- **Tells** (payload `living_happenings`: id, tell, centre, radius, progress, line direction; to players within 512
+  every 2 s, an empty list once when the last goes). `living.client.PulseFx` draws them in an alpha pass (unfogged,
+  reads by day) and an additive pass, the centre eased over the 2 s; past 70% of the render distance a tell is pulled
+  in along its sight line and shrunk to match (as the gate pillars).
+- **The Almanac**: within a kind's `witness_radius` a player witnesses it once: counter `awaken:happenings_witnessed`;
+  the first time a discovery `happening/<id>` (0.1 of a level), a new thing for the Director, and "Witnessed · <title>".
+  The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
+- **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
+  time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
+  a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
+- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`. Test `living_pulse`.
+
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
 Lens's Cinematic and Ultra tiers become a light model of their own: shadows, contact darkness and warm/cool light

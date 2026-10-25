@@ -24,5 +24,14 @@
   "item.awaken.orens_mark": "Oren's Mark",
   "item.awaken.orens_mark.desc": "A fresh blade you temper starts one level up (weapons only, within the Forge's cap).",
   "item.awaken.pells_letter": "Pell's Letter",
-  "item.awaken.pells_letter.desc": "Sealed. For Quartermaster Hale at the High Gate."
+  "item.awaken.pells_letter.desc": "Sealed. For Quartermaster Hale at the High Gate.",
+  "happening.awaken.beast_duel": "Beast Duel",
+  "happening.awaken.caravan": "Caravan",
+  "happening.awaken.carrion_circle": "Carrion Circle",
+  "happening.awaken.deep_tide": "The Deep Tide",
+  "happening.awaken.great_migration": "The Great Migration",
+  "happening.awaken.murmuration": "Murmuration",
+  "happening.awaken.rolling_storm": "The Rolling Storm",
+  "happening.awaken.stampede": "Stampede",
+  "happening.awaken.wild_hunt": "The Wild Hunt"
 }

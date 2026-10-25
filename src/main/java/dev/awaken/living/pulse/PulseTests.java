@@ -1,0 +1,71 @@
+package dev.awaken.living.pulse;
+
+import dev.awaken.core.test.AwakenTests;
+import dev.awaken.living.api.Regions;
+import dev.awaken.progression.Progression;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
+
+/** The World Pulse's GameTest (SPEC §21.6): its calendar, a happening's life, the Almanac, the Deep Tide. */
+public final class PulseTests {
+    private PulseTests() {}
+
+    public static void register() {
+        AwakenTests.registerIsolated("living_pulse", 400, h -> {
+            ServerLevel level = h.getLevel();
+            // the calendar: the Hunt only under a full moon at night, the Tide only on the new moon, caravans by day
+            HappeningDef hunt = HappeningBook.get("wild_hunt"), tide = HappeningBook.get("deep_tide"), caravan = HappeningBook.get("caravan");
+            h.assertTrue(hunt != null && tide != null && caravan != null, "the launch kinds load");
+            h.assertTrue(Pulse.fits(hunt, "night", "clear", 0, 1) && !Pulse.fits(hunt, "night", "clear", 3, 1) && !Pulse.fits(hunt, "day", "clear", 0, 1),
+                    "the Wild Hunt runs on full-moon nights only");
+            h.assertTrue(!Pulse.fits(hunt, "night", "clear", 0, 0), "and not in the Commons' band");
+            h.assertTrue(Pulse.fits(tide, "dusk", "rain", 4, 0) && !Pulse.fits(tide, "dusk", "rain", 0, 0), "the Deep Tide rises on the new moon");
+            h.assertTrue(Pulse.fits(caravan, "day", "clear", 5, 2) && !Pulse.fits(caravan, "night", "clear", 2, 2), "caravans travel by day");
+            h.assertTrue(Rumours.direction(0, -10).equals("north") && Rumours.direction(10, 0).equals("east"), "rumours give a direction");
+
+            Pulse pulse = Pulse.get(level.getServer());
+            Pulse.endAll(level.getServer());
+            BlockPos a = h.absolutePos(new BlockPos(-8, 1, 0)), b = h.absolutePos(new BlockPos(8, 1, 0));
+            AwakenTests.clearAbove(level, a.offset(8, 0, 0), 12, 0, 6);
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            Happening mig = null;
+            try {
+                Progression.awaken(p);
+                // a migration: its herd arrives, walks, and leaves with it
+                mig = pulse.openAt(level, "great_migration", a, b);
+                h.assertTrue(mig != null && mig.participants.size() >= 10, "a herd of ten or more arrives: " + (mig == null ? 0 : mig.participants.size()));
+                h.assertTrue(Behaviours.alive(level, mig) >= 10, "and stands in the world");
+                // the Almanac: standing near it is witnessing it, once
+                p.setPos(Vec3.atCenterOf(a.offset(8, 0, 2)));
+                pulse.run(level);
+                h.assertTrue(mig.witnessed.contains(p.getUUID()), "witnessed");
+                h.assertTrue(Progression.profile(p).counter("awaken:discovered/happening/great_migration") == 1, "a discovery in the Almanac");
+                long count = Progression.profile(p).counter("awaken:happenings_witnessed");
+                pulse.run(level);
+                h.assertTrue(Progression.profile(p).counter("awaken:happenings_witnessed") == count, "witnessed once, not every second");
+                // it ends on its own, and its creatures go (no player near them)
+                p.setPos(Vec3.atCenterOf(a.offset(400, 0, 0)));
+                List<java.util.UUID> herd = List.copyOf(mig.participants);
+                Pulse.endAll(level.getServer());
+                h.assertTrue(pulse.active().isEmpty(), "ended");
+                h.assertTrue(herd.stream().noneMatch(id -> level.getEntity(id) != null && level.getEntity(id).isAlive()), "the herd moved on");
+                // the Deep Tide: the night's hunters run two levels harder while it's up
+                BlockPos at = h.absolutePos(new BlockPos(0, 1, 0));
+                int before = Regions.creatureLevel(level, at, Regions.Role.HUNTER), calm = Regions.creatureLevel(level, at, Regions.Role.NEUTRAL);
+                Happening t = pulse.openAt(level, "deep_tide", at, at);
+                h.assertTrue(t != null, "the tide rises");
+                h.assertTrue(Regions.creatureLevel(level, at, Regions.Role.HUNTER) == Math.min(before + Tides.EXTRA, dev.awaken.living.region.RegionMap.MAX_LEVEL), "hunters two levels harder");
+                h.assertTrue(Regions.creatureLevel(level, at, Regions.Role.NEUTRAL) == calm, "grazers no different");
+                Pulse.endAll(level.getServer());
+                h.assertTrue(Regions.creatureLevel(level, at, Regions.Role.HUNTER) == before, "and back when it ebbs");
+            } finally {
+                Pulse.endAll(level.getServer());
+            }
+            h.succeed();
+        });
+    }
+}

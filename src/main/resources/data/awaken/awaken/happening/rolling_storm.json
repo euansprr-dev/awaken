@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "title": "The Rolling Storm",
+  "family": "sky",
+  "behaviour": "rolling_storm",
+  "when": {
+    "time": [
+      "day",
+      "dusk"
+    ]
+  },
+  "duration_s": 240,
+  "weight": 1.5,
+  "witness_radius": 60,
+  "tell": "storm",
+  "tell_radius": 26,
+  "rumours": [
+    "A storm walking the plains {dir}. Lightning in one place, sun either side of it.",
+    "Saw a black cloud crossing {dir}, all on its own. Where it struck, the sand came up glass."
+  ]
+}

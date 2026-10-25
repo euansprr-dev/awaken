@@ -103,6 +103,29 @@ final class LivingCommands {
                         c.getSource().sendSuccess(() -> Component.literal(at == null ? "No such chain." : "Scene at " + at.toShortString()), false);
                         return at == null ? 0 : 1;
                     })));
+            // the World Pulse (Phase D): start a kind here now, list what's on, end it all
+            l.then(Commands.literal("happen").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        var h = dev.awaken.living.pulse.Pulse.force(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind"));
+                        c.getSource().sendSuccess(() -> Component.literal(h == null ? "No place for it here (or no such kind)." : "Happening " + h.id + " at " + net.minecraft.core.BlockPos.containing(h.centre).toShortString()), false);
+                        return h == null ? 0 : 1;
+                    })));
+            l.then(Commands.literal("happenings").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var list = dev.awaken.living.pulse.Pulse.get(p.level().getServer()).active();
+                for (var h : list) {
+                    int d = (int) Math.sqrt(h.centre.distanceToSqr(p.position()));
+                    c.getSource().sendSuccess(() -> Component.literal(h.id + " " + h.kind + " · " + d + " m · " + Math.round(h.progress(p.level().getGameTime()) * 100) + "%"), false);
+                }
+                c.getSource().sendSuccess(() -> Component.literal(list.size() + " on · moon " + dev.awaken.living.pulse.Pulse.moon(p.level().getServer().overworld())), false);
+                return 1;
+            }));
+            l.then(Commands.literal("calm").requires(AwakenCommands.admin()).executes(c -> {
+                int n = dev.awaken.living.pulse.Pulse.endAll(c.getSource().getServer());
+                c.getSource().sendSuccess(() -> Component.literal(n + " happenings ended."), false);
+                return n;
+            }));
             l.then(Commands.literal("quests").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var s = dev.awaken.living.quest.QuestEngine.state(p);
