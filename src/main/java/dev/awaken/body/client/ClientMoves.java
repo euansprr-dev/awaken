@@ -214,7 +214,7 @@ public final class ClientMoves {
         trace("tactical sprint ends after " + (ticks - tacStart));
         tac = false;
         tacEnd = ticks;
-        tacReadyAt = ticks + BodyRules.tacRecharge(Body.runnerRank(p));
+        tacReadyAt = ticks + BodyRules.tacRecharge(p);
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(BodyRules.TAC_ID);
         BodyAnims.stop(p.getId(), Move.TACTICAL_SPRINT);

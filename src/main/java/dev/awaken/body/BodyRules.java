@@ -40,7 +40,24 @@ public final class BodyRules {
 
     /** Ranks improve the moves (SPEC §16.3): the tactical sprint recharges 10 ticks sooner a rank, down to 30. */
     public static int tacRecharge(dev.awaken.progression.Rank rank) {
-        return Math.max(30, TAC_RECHARGE - 10 * rank.ordinal());
+        return tacRecharge(rank, 0);
+    }
+
+    /**
+     * With a recharge perk ({@link #SPRINT_RECHARGE_PERK}: a fraction, the Living Wilds' Courier's Knot gives 0.25):
+     * that much less of the rank's recharge, at most half, and never under the S rank's 30. Worth most early.
+     */
+    public static int tacRecharge(dev.awaken.progression.Rank rank, double perk) {
+        int base = Math.max(30, TAC_RECHARGE - 10 * rank.ordinal());
+        return Math.max(30, (int) Math.round(base * (1 - Math.max(0, Math.min(0.5, perk)))));
+    }
+
+    /** A perk that recharges the tactical sprint faster (Progression.perk: a fraction, additive across sources). */
+    public static final String SPRINT_RECHARGE_PERK = "awaken:sprint_recharge";
+
+    /** The recharge for this player now: their rank and their perk (both sides read the same). */
+    public static int tacRecharge(net.minecraft.world.entity.player.Player p) {
+        return tacRecharge(Body.runnerRank(p), dev.awaken.progression.Progression.perk(p, SPRINT_RECHARGE_PERK));
     }
 
     /** The slide's cooldown, 2 ticks shorter a rank, down to 10. */

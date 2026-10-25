@@ -9,6 +9,9 @@
 //   15   heightfield: x its size (0: none), y the highest surface in it, z blocks from the camera it can be trusted
 //   16   x 1 for zero-to-one depth, y 1 when the light is the moon, z rain, w the near plane
 //   17   x seconds, wrapping every hour (ripples, shimmer)
+//   18-19 the clouds (lens_clouds.glsl)
+//   20   x the Holo world plates drawn this frame; 24-41 each plate: camera-relative centre, half-width and
+//        half-height vectors (3 texels a plate)
 
 vec4 F(int i) { return texelFetch(FrameSampler, ivec2(i, 0), 0); }
 
@@ -66,3 +69,17 @@ float unpackHeight(vec2 v) {
 
 // the same distance code in one byte (the light buffer's alpha: about 3.6% steps), 0 for sky
 float packDistance8(float d) { return d <= 0.0 ? 0.0 : max(1.0, floor(distanceCode(d) * 255.0 + 0.5)) / 255.0; }
+
+// whether a camera-relative surface point lies on one of this frame's Holo world plates (glass that writes its depth at
+// a creature's distance): Lens keeps its light, ambient occlusion and haze off them, as for the panels within arm's reach
+bool onPlate(vec3 p) {
+    int n = int(F(20).x + 0.5);
+    for (int k = 0; k < 6; k++) {
+        if (k >= n) break;
+        vec3 c = F(24 + k * 3).xyz, r = F(25 + k * 3).xyz, u = F(26 + k * 3).xyz;
+        vec3 d = p - c;
+        vec3 nrm = normalize(cross(r, u));
+        if (abs(dot(d, nrm)) < 0.15 && abs(dot(d, r)) < dot(r, r) * 1.06 && abs(dot(d, u)) < dot(u, u) * 1.1) return true;
+    }
+    return false;
+}

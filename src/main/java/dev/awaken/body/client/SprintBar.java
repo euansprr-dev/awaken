@@ -33,7 +33,7 @@ final class SprintBar {
             fill = 1 - Math.min(1, (now - ClientMoves.tacStart) / (float) BodyRules.TAC_TICKS);
             busy = true;
         } else if (now < ClientMoves.tacReadyAt) {
-            int total = BodyRules.tacRecharge(Body.runnerRank(mc.player));
+            int total = BodyRules.tacRecharge(mc.player);
             fill = 1 - Math.min(1, (ClientMoves.tacReadyAt - now) / (float) total);
             busy = true;
         } else {

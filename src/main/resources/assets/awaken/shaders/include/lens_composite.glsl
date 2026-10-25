@@ -13,6 +13,7 @@ uniform sampler2D ParamsSampler;
 uniform sampler2D LightSampler;      // Lens 2's light buffer (lens_light.fsh): sun, ambient occlusion, distance
 uniform sampler2D FrameSampler;      // the frame's matrices and light (LensFrame)
 uniform sampler2D HeightSampler;     // the terrain's heights (LensHeightfield)
+uniform sampler2D CloudsSampler;     // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -176,6 +177,7 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     // the light buffer, upsampled by distance: of its 2x2 texels, the ones that saw this surface
     vec3 lr = upsample(LightSampler, packDistance8(dist));
     vec3 m = vec3(1.0);
+    float rich = 0.0;
     float sun = f14.w * l17.r;
     bool needNormal = sun > 0.0 || (m20.r > 0.0 && F(15).x > 0.0);
     // the screen-derivative normal where this pixel's 2x2 quad lies on one surface; the careful four taps across an edge
@@ -196,17 +198,23 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         // golden hour: the key warms and the shade deepens as the sun lowers (by its height, or the sunrise colour's
         // strength, texel 1 a, whichever is more), never by moonlight
         float golden = max(p1.a, 1.0 - smoothstep(0.1, 0.5, f14.y)) * (1.0 - f16.y);
-        vec3 key = mix(vec3(1.04, 1.02, 0.97), vec3(1.24, 1.0, 0.74), golden * l18.a);
+        vec3 key = mix(vec3(1.04, 1.02, 0.97), vec3(1.30, 1.03, 0.72), golden * l18.a);
         key = mix(key, vec3(0.93, 0.98, 1.08), f16.y);
-        vec3 shade = l18.rgb * 2.0 * (1.0 - min(0.85, l17.g * (1.0 + 0.3 * golden)));
+        // the shade: cool, deeper as the sun lowers and with distance (long shadows stay readable across the land, not
+        // only up close), a little warmed at golden hour by light bounced off the sunlit ground
+        float depthOfShade = l17.g * (1.0 + 0.3 * golden) * (1.0 + 0.35 * smoothstep(24.0, 160.0, dist));
+        vec3 shade = l18.rgb * 2.0 * mix(vec3(1.0), vec3(1.08, 0.99, 0.9), golden * 0.6) * (1.0 - min(0.85, depthOfShade));
         // a glow is light, not a lit surface: it keeps its brightness in the shade
-        float k = open * sun * near * fogFade * (1.0 - smoothstep(0.75 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
+        float k = open * sun * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
         m = mix(vec3(1.0), mix(shade, key, direct), k);
+        // golden light is rich light: sunlit colour gains a little saturation as the sun lowers
+        rich = golden * k * direct * 0.16;
         dbg = vec4(n * 0.5 + 0.5, direct);
     }
     // ambient occlusion everywhere, day or night (it only darkens), less of it far away
     m *= mix(1.0, lr.g, l17.b * near * (1.0 - smoothstep(48.0, 96.0, dist)));
     c *= sqrt(m);
+    c = max(mix(vec3(luma(c)), c, 1.0 + rich), 0.0);
     if (m20.r > 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
     return c;
 }
@@ -318,6 +326,8 @@ void main() {
     // this pixel's camera-relative position (none for sky and far terrain, which the game's depth doesn't hold)
     bool open = sky || farTerrain;
     vec3 pRel = open ? vec3(0.0) : unproject(frameMat(0), texCoord, depth, F(16).x > 0.5);
+    // a Holo world plate (glass at a creature's distance): no light, AO or haze on it, as for the panels
+    bool plate = !open && onPlate(pRel);
     // the surface normal from screen derivatives (free, but only where the 2x2 quad lies on one surface: across an edge
     // it's left 0 for the careful version); axis-aligned block faces snap
     vec3 dpx = dFdx(pRel), dpy = dFdy(pRel);
@@ -330,7 +340,21 @@ void main() {
         float qm = max(qa.x, max(qa.y, qa.z));
         if (qm > 0.9) quick = step(vec3(qm), qa) * sign(quick);
     }
-    if (!open && !classic) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
+    if (!open && !classic && !plate) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
+    // Lens 2's clouds (L4), over the sky and over anything farther than where this ray enters their layer
+    vec4 cp = F(18);
+    if (cp.x > 0.0 && !classic) {
+        vec4 cl = texture(CloudsSampler, texCoord);
+        bool behind = sky;
+        if (!sky) {
+            vec3 cv = farTerrain ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
+            float base = cp.x - 6.0, camY = F(12).y, enter = 1.0e9;
+            if (camY >= base && camY <= base + 84.0) enter = 0.0;
+            else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + 84.0 - camY) / cv.y;
+            behind = enter >= 0.0 && (farTerrain ? d : length(pRel)) > enter;
+        }
+        if (behind) c = c * cl.a + cl.rgb;
+    }
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
@@ -341,7 +365,17 @@ void main() {
     if (p0.b > 0.5) haze *= farTrust.g;
     // underwater, in lava or blind, the game's own fog already hides the distance
     haze *= clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0);
+#ifdef LENS_LIGHT
+    if (plate) haze = 0.0;
+#endif
     vec3 hazeColor = mix(fogColor.rgb, hz.rgb, h.b);
+#ifdef LENS_LIGHT
+    // at golden hour the distance hazes warm, not grey: the sunrise colour lends the haze a share as the sun lowers
+    if (!classic) {
+        float goldenHaze = max(p1.a, 1.0 - smoothstep(0.1, 0.5, F(14).y)) * (1.0 - F(16).y) * step(0.0001, F(14).w);
+        hazeColor = mix(hazeColor, hazeColor * 0.6 + sunset.rgb * 0.5, goldenHaze * 0.35);
+    }
+#endif
     float l0 = luma(c);
     c = mix(c, mix(c, vec3(l0), h.a), haze);
     c = mix(c, hazeColor, haze * 0.55);
@@ -355,7 +389,7 @@ void main() {
         if (f14.w > 0.0 && v19.a > 0.0 && (sky || haze > 0.0)) {
             vec3 dir = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
             float mu = max(dot(dir, f14.xyz), 0.0);
-            vec3 sc = lightColour(p1, sunset) * (pow(mu, 5.0) * 0.3 + pow(mu, 40.0) * 0.4) * f14.w * v19.a * (0.45 + 0.55 * p1.a);
+            vec3 sc = lightColour(p1, sunset) * (pow(mu, 8.0) * 0.25 + pow(mu, 48.0) * 0.35) * f14.w * v19.a * (0.45 + 0.55 * p1.a);
             c = screen(c, sc * (sky ? 1.0 : haze));
         }
     }
@@ -368,6 +402,7 @@ void main() {
     if (p1.b > 0.0 && p12.r > 0.0) {
         vec2 sun = vec2((sunPos.r * 255.0 * 256.0 + sunPos.g * 255.0) / 65535.0, (sunPos.b * 255.0 * 256.0 + sunPos.a * 255.0) / 65535.0) * 3.0 - 1.0;
         float open = (texture(SkySampler, sun).a + texture(SkySampler, sun + vec2(0.01, 0.0)).a + texture(SkySampler, sun - vec2(0.01, 0.0)).a) / 3.0;
+        // (on Cinematic and Ultra the sky's alpha carries Lens 2's clouds too, so the halo dims behind them)
         float r = length((texCoord - sun) * vec2(OutSize.x / OutSize.y, 1.0));
         float halo = (exp(-r * 9.0) * 0.45 + exp(-r * 2.6) * 0.16) * p1.b * p12.r * clamp(open * 1.6, 0.0, 1.0);
         vec3 haloColor = mix(vec3(1.0, 0.93, 0.8), sunset.rgb, p1.a);
@@ -380,7 +415,7 @@ void main() {
         // can't hold (clouds crossing the sun)
         if (!classic) {
             float vol = upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
-            c = screen(c, lightColour(p1, sunset) * (vol * 1.6) + texture(ShaftsSampler, texCoord).r * sunColor * 0.7);
+            c = screen(c, lightColour(p1, sunset) * (vol * 1.6) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
         } else
 #endif
         c = screen(c, texture(ShaftsSampler, texCoord).r * sunColor * 1.4);
