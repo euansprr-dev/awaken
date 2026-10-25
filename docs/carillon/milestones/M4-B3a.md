@@ -72,8 +72,40 @@ stall's back row) are 14.09 from the nearest junction; the navigator follows to 
 (`PATH_REACH`) and citizens_stations together.
 
 ## Before/after
-TODO after the tour (B2's shots: /Volumes/MEDIA/Awaken-m4-b2/run-autopilot/screenshots/b2_*.png; the same framings are
-b3a_* in tools/autopilot/carillon-m4b3a.txt).
+One light tour (tools/autopilot/carillon-m4b3a.txt, 53 shots, run by the orchestrator), the same world, settings and
+cameras as B2's. Pairs B2 (left) → B3a (right) in docs/carillon/milestones/m4b3a/: `pair_sky_*` (six), `pair_spawn_roost`,
+`pair_roost_start`, `pair_square`, `pair_market`, the six districts, `pair_facade_*` (seven), `pair_roofs_*` (two),
+`pair_studio_*` (seven) and B2's relief shots (`pair_knoll`, `pair_bowl`, `pair_terrace_wall`, `pair_gate_yard`,
+`pair_cellar`, `pair_quay_ladder`). New at B3a (no B2 framing), as `b3a_*.jpg`: the noon street life (`noon_bowl`,
+`noon_bowl_stalls`, `noon_square`, `noon_market_street`, `noon_market`, `noon_facade_market`, `noon_laundry_lane`,
+`noon_quay`), dusk (`dusk_laundry_lane`, `dusk_bellwatch`, `dusk_canal`) and night (`night_sky`, `night_market_street`,
+`night_laundry_lane`, `night_square`).
+
+The best: `pair_facade_market` (bare fascias → awnings, a hanging trade sign on its bracket, bunting and lantern strings
+across the street), `pair_market` (awnings both sides, signs, bunting overhead, more people in the street),
+`pair_square` (B2's stand-in canopies and stray blocks → the kit's striped stalls round the bowl), `b3a_noon_bowl` (the
+stalls in clusters of three between the winds' aisles, people at them), `b3a_dusk_canal` (lantern strings over the water,
+windows lit house by house) and `b3a_night_sky` (the city's night as scattered lit windows, not a uniform glow).
+
+## Does it feel like a live city?
+In places, yes. The Market's streets read as lived in: something at every storey (awnings, signs on brackets, flower
+boxes, bunting and laundry overhead) and people walking under it. The bowl at noon has its stalls and keepers, and the
+dusk canal, with its lantern strings and windows coming on one house at a time, is the most convincing shot of the tour.
+From the sky at night the lit windows give the city a pattern instead of a glow.
+
+Where it falls short:
+- **The laundry lane shots frame into a wall.** `noon_laundry_lane`, `dusk_laundry_lane` and `night_laundry_lane` have a
+  wall filling the left half, so the lines this step is proudest of aren't really seen. The camera needs to move.
+- **The square's floor.** At noon the stalls are there but the open floor between them is sparse: about a dozen people in
+  the bowl where the bible wants a crowd. The roster puts 169 outdoors in the Market district at noon, but much of that
+  is in its streets and at stall fronts, and the bowl's floor is big. At night the square has few lamps on its floor
+  and reads dark (`night_square`).
+- **The green beam** over the city in `sky_dusk` and `night_sky` is a D-rank gate's light pillar (gates/client/Pillars.java,
+  rank colour 0x5FD08F). The thin white line over the square in `noon_square` and `night_square` is an E-rank pillar.
+  Both were already in B2's shots: gates near the tour world's spawn, not street life.
+- Still missing until B3b: animals and sound. The streets look busy but are silent.
+
+The orchestrator assigned these to B3b; none is fixed here.
 
 ## CI
 GameTests run 40183467058 on 43034a9d (the full suite): success in 4m49s.
