@@ -283,6 +283,233 @@ final class CityTests {
             h.succeed();
         });
 
+        // ---- Milestone 4 (B1): the facade grammar's climbing grid --------------------------------------------------
+
+        // every street face has a climb line (a drainpipe, a trellis, a hoist rope) at most 12 apart, from the street to the eave
+        AwakenTests.register("city_climb_lines", 200, h -> {
+            CityLayout l = layoutAt(0, 0);
+            long seed = 20261024L;
+            CityPainter.Ctx c = new CityPainter.Ctx(l, seed);
+            CityBuffer buf = new CityBuffer(24, 24);
+            int runs = 0, lines = 0;
+            for (CityPlan.Plot p : l.plan.plots) {
+                CityGrammar.Facade f = CityGrammar.facadeOf(c, p);
+                boolean painted = false;
+                for (int sd = 0; sd < 4; sd++) {
+                    int len = f.up.length(sd), a = -1;
+                    for (int t = 0; t <= len; t++) {
+                        boolean street = t < len && f.upClass(sd, t) == CityGrammar.F_STREET;
+                        if (street && a < 0) a = t;
+                        if (street || a < 0) continue;
+                        int b = t - 1;
+                        int run0 = a;
+                        a = -1;
+                        if (b - run0 + 1 < 3) continue;
+                        if (!painted) {
+                            paintAround(l, seed, p.x0() - 5, p.z0() - 5, buf);
+                            painted = true;
+                        }
+                        runs++;
+                        // every cell of the face within 6 of a line: lines at most 12 apart, at most 6 from each end
+                        int first = -1, last = -1, gap = 0;
+                        for (int u = run0; u <= b; u++) {
+                            if (!climbColumn(f, buf, sd, u, p)) continue;
+                            lines++;
+                            if (first < 0) first = u;
+                            else gap = Math.max(gap, u - last);
+                            last = u;
+                        }
+                        String where = "plot " + p.id() + " (" + CityPlan.DISTRICTS[p.district()] + ") side " + sd + " columns " + run0 + "-" + b;
+                        h.assertTrue(first >= 0, "no climb line on the street face of " + where);
+                        h.assertTrue(first - run0 <= 6 && b - last <= 6 && gap <= 12,
+                                "climb lines too sparse on " + where + " (first " + (first - run0) + " in, gap " + gap + ", last " + (b - last) + " from the end)");
+                    }
+                }
+            }
+            h.assertTrue(runs > 500, "street faces found: " + runs);
+            dev.awaken.Awaken.LOG.info("[city] climb lines: {} street faces, {} climb lines", runs, lines);
+            h.succeed();
+        });
+
+        // the grid: in a climbing face's outside plane every hold sits in an odd row (with the row over it clear), the
+        // floor courses are there, and running faces have nothing proud in them
+        AwakenTests.register("city_grid_rows", 200, h -> {
+            CityLayout l = layoutAt(0, 0);
+            long seed = 20261024L;
+            CityPainter.Ctx c = new CityPainter.Ctx(l, seed);
+            CityBuffer buf = new CityBuffer(24, 24);
+            int cells = 0, courses = 0, missing = 0;
+            String firstMissing = "";
+            for (CityPlan.Plot p : l.plan.plots) {
+                if ((p.id() & 1) == 1) continue; // a sample: every other plot
+                CityGrammar.Facade f = CityGrammar.facadeOf(c, p);
+                paintAround(l, seed, p.x0() - 5, p.z0() - 5, buf);
+                int g = p.lift(), eave = p.eave();
+                for (int sd = 0; sd < 4; sd++) {
+                    int len = f.up.length(sd);
+                    for (int t = 0; t < len; t++) {
+                        int fc = f.upClass(sd, t);
+                        if (fc == CityGrammar.F_NONE) continue;
+                        int[] o = f.outsideCell(f.up, sd, t);
+                        // (an inside corner, or a neighbour's jetty: by design neither face puts anything there)
+                        if (CityGrammar.shared(l.plan, p, sd, o[0], o[1]) || CityGrammar.underForeignJetty(l.plan, p, o[0], o[1])) continue;
+                        String at = "plot " + p.id() + " (" + CityPlan.DISTRICTS[p.district()] + ") side " + sd + " column " + t;
+                        for (int r = 2; r < eave; r++) {
+                            BlockState s = buf.get(o[0], g + r, o[1]);
+                            // (trees grown against a wall are the plan's greenery, not the facade)
+                            if (s == null || s.isAir() || s.is(net.minecraft.tags.BlockTags.CLIMBABLE) || s.is(net.minecraft.tags.BlockTags.LEAVES)) continue;
+                            if (g + r <= l.plan.lift(o[0], o[1])) continue;
+                            boolean lip = lip(s) && clearOver(buf.get(o[0], g + r + 1, o[1]));
+                            if (fc < CityGrammar.F_BACK) {
+                                // (a neighbour's face turning the corner into this one may reach in: only this face's own pieces count)
+                                boolean doorHood = r == 3 && sd == p.front();
+                                h.assertTrue(!lip || doorHood || !facesAs(s, sd), "a hold in a running face, row " + r + " at " + at + ": " + s);
+                                continue;
+                            }
+                            cells++;
+                            h.assertTrue(!lip || (r & 1) == 1, "a hold in an even row (" + r + ") at " + at + ": " + s);
+                        }
+                        if (fc < CityGrammar.F_BACK || p.storeys() < 2) continue;
+                        for (int r = 9; r < eave; r += 4) {
+                            if (g + r <= l.plan.lift(o[0], o[1])) continue;
+                            BlockState s = buf.get(o[0], g + r, o[1]);
+                            courses++;
+                            if (s != null && (lip(s) || s.is(net.minecraft.tags.BlockTags.CLIMBABLE) || s.is(dev.awaken.city.kit.CityKit.ROPE.get()))) continue;
+                            if (missing++ == 0) firstMissing = "row " + r + " at " + at + ": " + s;
+                        }
+                    }
+                }
+            }
+            h.assertTrue(cells > 20000 && courses > 5000, "outside-plane cells checked: " + cells + ", course cells: " + courses);
+            h.assertTrue(missing * 100 <= courses, missing + " of " + courses + " floor-course cells have no hold (more than 1%); first " + firstMissing);
+            dev.awaken.Awaken.LOG.info("[city] grid: {} outside cells, {} course cells, {} without a hold (first {})", cells, courses, missing, firstMissing);
+            h.succeed();
+        });
+
+        // the grid holds for the Runner's own hang (body.RunnerRules.findEdge, the code the free-run uses): a body jumping
+        // at any hold of a climbing face's window stack from 1.8 below it catches that hold, and from the street the
+        // row-3 hood is caught at the top of a standing jump
+        AwakenTests.register("city_grid_catchable", 200, h -> {
+            CityLayout l = layoutAt(0, 0);
+            long seed = 20261024L;
+            CityPainter.Ctx c = new CityPainter.Ctx(l, seed);
+            CityBuffer buf = new CityBuffer(24, 24);
+            net.minecraft.world.level.BlockGetter view = new net.minecraft.world.level.BlockGetter() {
+                @Override
+                public net.minecraft.world.level.block.entity.BlockEntity getBlockEntity(BlockPos p) {
+                    return null;
+                }
+
+                @Override
+                public BlockState getBlockState(BlockPos p) {
+                    BlockState s = buf.get(p.getX(), p.getY(), p.getZ());
+                    return s == null ? Blocks.AIR.defaultBlockState() : s;
+                }
+
+                @Override
+                public net.minecraft.world.level.material.FluidState getFluidState(BlockPos p) {
+                    return getBlockState(p).getFluidState();
+                }
+
+                @Override
+                public int getHeight() {
+                    return CityBuffer.H;
+                }
+
+                @Override
+                public int getMinY() {
+                    return CityBuffer.YMIN;
+                }
+            };
+            BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+            var ctx = net.minecraft.world.phys.shapes.CollisionContext.empty();
+            int holds = 0, caught = 0, hoods = 0, hoodsCaught = 0;
+            String first = "";
+            java.util.Map<String, Integer> misses = new java.util.TreeMap<>();
+            for (CityPlan.Plot p : l.plan.plots) {
+                if (p.id() % 3 != 0 || p.storeys() < 2) continue;
+                CityGrammar.Facade f = CityGrammar.facadeOf(c, p);
+                boolean painted = false;
+                int g = p.lift();
+                for (int sd = 0; sd < 4; sd++) {
+                    if (f.jetty[sd]) continue; // a jettied face is climbed at its ends
+                    int len = f.up.length(sd);
+                    int ax = sd == CityPlan.N || sd == CityPlan.S ? 2 : 0, sign = sd == CityPlan.N || sd == CityPlan.W ? 1 : -1;
+                    for (int t = 1; t < len - 1; t++) {
+                        if (f.upClass(sd, t) < CityGrammar.F_BACK || !f.win(sd, t, len, 1)) continue;
+                        int[] o = f.outsideCell(f.up, sd, t);
+                        if (CityGrammar.shared(l.plan, p, sd, o[0], o[1]) || CityGrammar.underForeignJetty(l.plan, p, o[0], o[1])) continue;
+                        if (!painted) {
+                            paintAround(l, seed, p.x0() - 5, p.z0() - 5, buf);
+                            painted = true;
+                        }
+                        // the face of the outside cell toward the street, and a body just in front of it
+                        double face = switch (sd) {
+                            case CityPlan.N -> o[1];
+                            case CityPlan.S -> o[1] + 1;
+                            case CityPlan.W -> o[0];
+                            default -> o[0] + 1;
+                        };
+                        double body = face - sign * 0.33;
+                        double along = (ax == 2 ? o[0] : o[1]) + 0.5;
+                        for (int r = 3; r < p.eave(); r += 2) {
+                            BlockState s = buf.get(o[0], g + r, o[1]);
+                            if (s == null || !lip(s) || !clearOver(buf.get(o[0], g + r + 1, o[1]))) continue;
+                            if (g + r <= l.plan.lift(o[0], o[1])) continue;
+                            double top = g + r + 1;
+                            double py = r == 3 ? g + 1 + 1.25 : top - 1.8;
+                            double px = ax == 0 ? body : along, pz = ax == 0 ? along : body;
+                            var e = dev.awaken.body.RunnerRules.findEdge(view, ctx, m, px, py, pz, ax, sign, dev.awaken.body.RunnerRules.HANG_REACH,
+                                    dev.awaken.body.RunnerRules.HANG_LO, dev.awaken.body.RunnerRules.HANG_HI, 0, 0.2);
+                            boolean ok = e != null && Math.abs(e.top() - top) < 0.01;
+                            if (r == 3) {
+                                hoods++;
+                                if (ok) hoodsCaught++;
+                            } else {
+                                holds++;
+                                if (ok) caught++;
+                            }
+                            if (!ok) {
+                                String why = dev.awaken.body.RunnerRules.whyNot(view, ctx, m, px, py, pz, ax, sign, dev.awaken.body.RunnerRules.HANG_REACH,
+                                        dev.awaken.body.RunnerRules.HANG_LO, dev.awaken.body.RunnerRules.HANG_HI).replaceAll("[-0-9.]+", "#");
+                                misses.merge("row " + (r == 3 ? "3" : r % 4 == 1 ? "course" : "box") + ": " + s.getBlock().getDescriptionId() + ": " + why, 1, Integer::sum);
+                            }
+                            if (!ok && first.isEmpty())
+                                first = "row " + r + " of plot " + p.id() + " (" + CityPlan.DISTRICTS[p.district()] + ") side " + sd + " column " + t + ": " + s
+                                        + " -> " + dev.awaken.body.RunnerRules.whyNot(view, ctx, m, px, py, pz, ax, sign, dev.awaken.body.RunnerRules.HANG_REACH,
+                                        dev.awaken.body.RunnerRules.HANG_LO, dev.awaken.body.RunnerRules.HANG_HI);
+                        }
+                    }
+                }
+            }
+            dev.awaken.Awaken.LOG.info("[city] catchable: {}/{} holds, {}/{} hoods from the street; misses by kind {}", caught, holds, hoodsCaught, hoods, misses);
+            h.assertTrue(holds > 2000 && hoods > 200, "holds checked: " + holds + ", hoods " + hoods);
+            h.assertTrue(caught * 100 >= holds * 98, (holds - caught) + " of " + holds + " holds the Runner can't catch; first " + first);
+            h.assertTrue(hoodsCaught * 100 >= hoods * 95, (hoods - hoodsCaught) + " of " + hoods + " hoods out of reach from the street; first " + first);
+            h.succeed();
+        });
+
+        // the kit's climbables climb, and the movement tags (SPEC §16.9) hold none of the "no" language
+        AwakenTests.register("city_kit_tags", 20, h -> {
+            for (var blk : List.of(dev.awaken.city.kit.CityKit.DRAINPIPE, dev.awaken.city.kit.CityKit.TRELLIS, dev.awaken.city.kit.CityKit.ROPE)) {
+                h.assertTrue(blk.get().defaultBlockState().is(net.minecraft.tags.BlockTags.CLIMBABLE), blk.getId() + " is climbable");
+            }
+            int total = 0;
+            for (String name : new String[]{"runner_ledges", "runner_climbs", "runner_lines", "runner_soft", "runner_swings"}) {
+                var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, dev.awaken.Awaken.id(name));
+                for (var holder : net.minecraft.core.registries.BuiltInRegistries.BLOCK.getTagOrEmpty(tag)) {
+                    BlockState s = holder.value().defaultBlockState();
+                    total++;
+                    h.assertFalse(s.is(net.minecraft.tags.BlockTags.FENCES) || s.is(net.minecraft.tags.BlockTags.WALLS)
+                            || s.is(net.minecraft.tags.BlockTags.FENCE_GATES), name + " holds a \"no\" block: " + holder.getRegisteredName());
+                }
+            }
+            h.assertTrue(dev.awaken.city.kit.CityKit.FLOWER_BOX.get().defaultBlockState().is(net.minecraft.tags.TagKey.create(
+                    net.minecraft.core.registries.Registries.BLOCK, dev.awaken.Awaken.id("runner_ledges"))), "window boxes are ledges");
+            h.assertTrue(total >= 15, "the runner tags are filled: " + total);
+            h.succeed();
+        });
+
         // dev studio: with a request file in the game folder, paint the whole city and dump it for tools/city/render.py
         AwakenTests.register("city_studio_dump", 400, h -> {
             java.nio.file.Path req = h.getLevel().getServer().getServerDirectory().resolve("city-dump.request");
@@ -298,6 +525,61 @@ final class CityTests {
             }
             h.succeed();
         });
+    }
+
+    /** Paints the 24x24 area at plan (x0, z0) exactly as the world would (every piece touching it, in id order). */
+    static void paintAround(CityLayout l, long seed, int x0, int z0, CityBuffer buf) {
+        buf.reset(x0, z0);
+        java.util.TreeSet<Integer> ids = new java.util.TreeSet<>();
+        for (int cx = (l.cx + x0) >> 4; cx <= (l.cx + x0 + buf.w - 1) >> 4; cx++)
+            for (int cz = (l.cz + z0) >> 4; cz <= (l.cz + z0 + buf.d - 1) >> 4; cz++)
+                for (int id : l.pieces(cx, cz)) ids.add(id);
+        CityPainter.paint(l, seed, buf, ids.stream().mapToInt(Integer::intValue).toArray());
+    }
+
+    /** A climb line at column u of a side: climbable from the ground in front of it (or a step up) to under the eave. */
+    static boolean climbColumn(CityGrammar.Facade f, CityBuffer buf, int sd, int u, CityPlan.Plot p) {
+        int[] o = f.outsideCell(f.up, sd, u);
+        int g = p.lift();
+        int low = Math.max(1, f.plan.lift(o[0], o[1]) - g + 1);
+        int r = low;
+        if (!climbable(buf.get(o[0], g + r, o[1]))) r++;
+        if (!climbable(buf.get(o[0], g + r, o[1]))) return false;
+        while (r < p.eave() - 1 && climbable(buf.get(o[0], g + r + 1, o[1]))) r++;
+        return r >= p.eave() - 1;
+    }
+
+    static boolean climbable(BlockState s) {
+        return s != null && s.is(net.minecraft.tags.BlockTags.CLIMBABLE);
+    }
+
+    /** A block whose collision top is its own top (a hold, given room over it); fences and walls (taller) are not. */
+    static boolean lip(BlockState s) {
+        var shape = s.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+        if (shape.isEmpty()) return false;
+        double top = shape.max(net.minecraft.core.Direction.Axis.Y);
+        return top > 0.99 && top < 1.01;
+    }
+
+    /** Whether a proud piece belongs to a face on side sd (a stair faces the wall, a wall piece faces away; no facing: yes). */
+    static boolean facesAs(BlockState s, int sd) {
+        Direction d = s.hasProperty(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING)
+                ? s.getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING) : null;
+        if (d == null && s.hasProperty(net.minecraft.world.level.block.RotatedPillarBlock.AXIS)) {
+            // a beam end points out of the face it belongs to
+            Direction.Axis ax = s.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS);
+            return ax == Direction.Axis.Y || ax == ((sd & 1) == 0 ? Direction.Axis.Z : Direction.Axis.X);
+        }
+        if (d == null) return true;
+        Direction out = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST}[sd];
+        return s.getBlock() instanceof net.minecraft.world.level.block.StairBlock ? d == out.getOpposite() : d == out;
+    }
+
+    /** Room for the hands over a hold: nothing in the outer half of the cell above it (empty, or no collision). */
+    static boolean clearOver(BlockState s) {
+        if (s == null || s.isAir()) return true;
+        var shape = s.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+        return shape.isEmpty();
     }
 
     static int nearest(CityPlan.Graph g, double x, double z) {

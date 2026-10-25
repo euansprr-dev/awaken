@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,pulley=false": {
+      "model": "awaken:block/hoist_beam"
+    },
+    "facing=east,pulley=false": {
+      "model": "awaken:block/hoist_beam",
+      "y": 90
+    },
+    "facing=south,pulley=false": {
+      "model": "awaken:block/hoist_beam",
+      "y": 180
+    },
+    "facing=west,pulley=false": {
+      "model": "awaken:block/hoist_beam",
+      "y": 270
+    },
+    "facing=north,pulley=true": {
+      "model": "awaken:block/hoist_beam_pulley"
+    },
+    "facing=east,pulley=true": {
+      "model": "awaken:block/hoist_beam_pulley",
+      "y": 90
+    },
+    "facing=south,pulley=true": {
+      "model": "awaken:block/hoist_beam_pulley",
+      "y": 180
+    },
+    "facing=west,pulley=true": {
+      "model": "awaken:block/hoist_beam_pulley",
+      "y": 270
+    }
+  }
+}

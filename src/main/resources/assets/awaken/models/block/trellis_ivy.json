@@ -1,0 +1,77 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/trellis_ivy",
+    "lattice": "awaken:block/trellis",
+    "ivy": "awaken:block/trellis_ivy"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        15
+      ],
+      "to": [
+        16,
+        16,
+        15
+      ],
+      "shade_direction_override": "up",
+      "faces": {
+        "north": {
+          "texture": "#lattice",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#lattice",
+          "uv": [
+            16,
+            0,
+            0,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        14
+      ],
+      "to": [
+        16,
+        16,
+        14
+      ],
+      "shade_direction_override": "up",
+      "faces": {
+        "north": {
+          "texture": "#ivy",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#ivy",
+          "uv": [
+            16,
+            0,
+            0,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

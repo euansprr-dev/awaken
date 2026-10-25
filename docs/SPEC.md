@@ -1379,6 +1379,30 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
     tour, Euan's play 3), each step a fresh builder briefed from a file.
 26. Vanilla banners, signs and barrels stay out of the city's fabric (block entities); the kit carries the look. Light at
     night is mostly emissive, within the light-source budget.
+27. Additions to Phase B (Euan, 2026-10-25), all without costly entities where possible (animated textures, particles,
+    emissive layers, weighted model variants):
+    - The kit grows to about 60 blocks: furniture and wares (tables, shelves of goods, sacks, crates, market produce, shop
+      signs with icons) and random texture variants so walls and roofs never tile (variants in B1 for facade and roof
+      blocks; furniture and wares in B3).
+    - Movement for free (B3): waving banners and laundry, flickering lanterns, turning water wheels, chimney smoke, lit
+      windows at night.
+    - Animals (B3): cats on the roofs, pigeon flocks that lift as you run past, dogs following their owners, horses
+      pulling carts down the avenues, boats on the canals.
+    - Interiors you can glimpse (B4): lit rooms behind windows at night, plus full interiors for the tavern, the smithy,
+      the bakery and the Association.
+    - City light (B6/B7): Carillon's Lens looks, warm lamp bloom at night and morning haze over the river
+      (assets/awaken/lens/looks_carillon.json).
+28. The city soundscape (Euan, 2026-10-25), built by B3's builder (no extra builder):
+    - Sources, best first: vanilla sound events referenced and layered (pitch, volume, combinations; never copied);
+      CC0 recordings only for what vanilla lacks (wordless crowd murmur, gulls, water at quays, carts on cobbles,
+      distant hammering, a tavern's hum), each listed with its source and licence and downloaded only after Euan's yes;
+      synthesis (tools/art/specs audio pipeline) only for bells, the Choir's hum, gates and UI.
+    - The mix: a quiet bed per district plus positional one-shots; many variants with random pitch, volume and timing
+      (nothing loops audibly); the crowd bed follows the citizen ledger's count in that district at that hour; dawn,
+      noon, night and rain change it; every sound comes from a place (Sound Physics in the pack); it plugs into
+      core/audio's layer system so it never fights the music.
+    - The gate is Euan's ears: a listening page (each district at morning, noon and night, before/after) published for
+      his approval before B3 merges.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1404,6 +1428,14 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   touch it) → grammar fills plots (seed varies details, never shape). The same pass writes the street graph and the roof
   graph (edges carry the move they need; door and stair links). Plan hash checked by GameTest.
 - Placed only in vanilla blocks + the Carillon kit (~35 blocks of our own); no third-party blocks.
+- Decided in M4 B1 (2026-10-25; details docs/carillon/milestones/M4-B1.md): the climbing grid lives in `CityGrammar` v2
+  (holds only in odd rows of the strip one block in front of a wall; hoods at row 3, the cornice at 5, a box under every
+  upper window and a floor course every storey; courses run across party walls and round corners; climb lines within 5
+  of each end of every street-face run). A face gets the grid only with 3 blocks of open ground in front. Pilasters stay
+  flush (proud ones stop every shimmy). Bellwatch jetties only over lanes 6+ wide, or 4–5 wide on one side. Kit windows
+  replace glass panes on closed houses. Roofs: Bellwatch mostly kit slate, the Market mostly clay. The chimney crown is
+  `chimney_bricks` (the citizens' smoke finder). Avenue tree crowns fill only air. The kit's first 19 blocks carry no
+  block entity and emit no light; walls and roofs use weighted texture variants.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs

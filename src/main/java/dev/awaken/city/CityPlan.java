@@ -39,11 +39,15 @@ public final class CityPlan {
 
     public final int size, origin;
     final byte[] kind, district, lift;
+    /** The plot standing on each cell, or -1. */
+    private final int[] plotId;
     public final List<Plot> plots;
     public final List<Part> parts;
     public final List<Bridge> bridges;
     public final List<Stair> stairs;
     public final List<int[]> trees;   // x, z, kind (0 oak, 1 birch, 2 cherry, 3 avenue), size
+    /** The cells the trees' trunks stand in (a facade keeps its climb lines clear of them). */
+    private final it.unimi.dsi.fastutil.longs.LongOpenHashSet treeCells = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
     public final List<int[]> lamps;   // x, z
     public final List<Landmark> landmarks;
     public final List<District> districts;
@@ -151,6 +155,11 @@ public final class CityPlan {
                     a.get(f.indexOf("use")).getAsString(), a.get(f.indexOf("enter")).getAsBoolean(), a.get(f.indexOf("variant")).getAsInt()));
         }
         plots = List.copyOf(pl);
+        plotId = new int[size * size];
+        java.util.Arrays.fill(plotId, -1);
+        for (Plot q : plots)
+            for (int z = q.z0(); z <= q.z1(); z++)
+                for (int x = q.x0(); x <= q.x1(); x++) if (inRaster(x, z)) plotId[(z - origin) * size + (x - origin)] = q.id();
 
         List<Part> pa = new ArrayList<>();
         List<Landmark> lm = new ArrayList<>();
@@ -208,6 +217,7 @@ public final class CityPlan {
             tr.add(new int[]{a.get(0).getAsInt(), a.get(1).getAsInt(), kk, a.get(3).getAsInt()});
         }
         trees = List.copyOf(tr);
+        for (int[] t : trees) treeCells.add(cellKey(t[0], t[1]));
         List<int[]> la = new ArrayList<>();
         for (JsonElement e : o.getAsJsonArray("lamps")) la.add(new int[]{e.getAsJsonArray().get(0).getAsInt(), e.getAsJsonArray().get(1).getAsInt()});
         lamps = List.copyOf(la);
@@ -355,6 +365,22 @@ public final class CityPlan {
         int i = x - origin, j = z - origin;
         if (i < 0 || j < 0 || i >= size || j >= size) return 0;
         return lift[j * size + i];
+    }
+
+    private static long cellKey(int x, int z) {
+        return ((long) x << 32) ^ (z & 0xffffffffL);
+    }
+
+    /** Whether a tree's trunk stands in this cell. */
+    public boolean treeAt(int x, int z) {
+        return treeCells.contains(cellKey(x, z));
+    }
+
+    /** The id of the plot on this cell, or -1. */
+    public int plotAt(int x, int z) {
+        int i = x - origin, j = z - origin;
+        if (i < 0 || j < 0 || i >= size || j >= size) return -1;
+        return plotId[j * size + i];
     }
 
     public static boolean water(byte k) {

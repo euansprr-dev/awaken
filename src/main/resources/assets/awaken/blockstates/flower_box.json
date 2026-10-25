@@ -1,0 +1,319 @@
+{
+  "variants": {
+    "bloom=none,facing=north,style=wood": {
+      "model": "awaken:block/flower_box_wood_none"
+    },
+    "bloom=none,facing=east,style=wood": {
+      "model": "awaken:block/flower_box_wood_none",
+      "y": 90
+    },
+    "bloom=none,facing=south,style=wood": {
+      "model": "awaken:block/flower_box_wood_none",
+      "y": 180
+    },
+    "bloom=none,facing=west,style=wood": {
+      "model": "awaken:block/flower_box_wood_none",
+      "y": 270
+    },
+    "bloom=red,facing=north,style=wood": {
+      "model": "awaken:block/flower_box_wood_red"
+    },
+    "bloom=red,facing=east,style=wood": {
+      "model": "awaken:block/flower_box_wood_red",
+      "y": 90
+    },
+    "bloom=red,facing=south,style=wood": {
+      "model": "awaken:block/flower_box_wood_red",
+      "y": 180
+    },
+    "bloom=red,facing=west,style=wood": {
+      "model": "awaken:block/flower_box_wood_red",
+      "y": 270
+    },
+    "bloom=yellow,facing=north,style=wood": {
+      "model": "awaken:block/flower_box_wood_yellow"
+    },
+    "bloom=yellow,facing=east,style=wood": {
+      "model": "awaken:block/flower_box_wood_yellow",
+      "y": 90
+    },
+    "bloom=yellow,facing=south,style=wood": {
+      "model": "awaken:block/flower_box_wood_yellow",
+      "y": 180
+    },
+    "bloom=yellow,facing=west,style=wood": {
+      "model": "awaken:block/flower_box_wood_yellow",
+      "y": 270
+    },
+    "bloom=blue,facing=north,style=wood": {
+      "model": "awaken:block/flower_box_wood_blue"
+    },
+    "bloom=blue,facing=east,style=wood": {
+      "model": "awaken:block/flower_box_wood_blue",
+      "y": 90
+    },
+    "bloom=blue,facing=south,style=wood": {
+      "model": "awaken:block/flower_box_wood_blue",
+      "y": 180
+    },
+    "bloom=blue,facing=west,style=wood": {
+      "model": "awaken:block/flower_box_wood_blue",
+      "y": 270
+    },
+    "bloom=pink,facing=north,style=wood": {
+      "model": "awaken:block/flower_box_wood_pink"
+    },
+    "bloom=pink,facing=east,style=wood": {
+      "model": "awaken:block/flower_box_wood_pink",
+      "y": 90
+    },
+    "bloom=pink,facing=south,style=wood": {
+      "model": "awaken:block/flower_box_wood_pink",
+      "y": 180
+    },
+    "bloom=pink,facing=west,style=wood": {
+      "model": "awaken:block/flower_box_wood_pink",
+      "y": 270
+    },
+    "bloom=white,facing=north,style=wood": {
+      "model": "awaken:block/flower_box_wood_white"
+    },
+    "bloom=white,facing=east,style=wood": {
+      "model": "awaken:block/flower_box_wood_white",
+      "y": 90
+    },
+    "bloom=white,facing=south,style=wood": {
+      "model": "awaken:block/flower_box_wood_white",
+      "y": 180
+    },
+    "bloom=white,facing=west,style=wood": {
+      "model": "awaken:block/flower_box_wood_white",
+      "y": 270
+    },
+    "bloom=herbs,facing=north,style=wood": {
+      "model": "awaken:block/flower_box_wood_herbs"
+    },
+    "bloom=herbs,facing=east,style=wood": {
+      "model": "awaken:block/flower_box_wood_herbs",
+      "y": 90
+    },
+    "bloom=herbs,facing=south,style=wood": {
+      "model": "awaken:block/flower_box_wood_herbs",
+      "y": 180
+    },
+    "bloom=herbs,facing=west,style=wood": {
+      "model": "awaken:block/flower_box_wood_herbs",
+      "y": 270
+    },
+    "bloom=none,facing=north,style=iron": {
+      "model": "awaken:block/flower_box_iron_none"
+    },
+    "bloom=none,facing=east,style=iron": {
+      "model": "awaken:block/flower_box_iron_none",
+      "y": 90
+    },
+    "bloom=none,facing=south,style=iron": {
+      "model": "awaken:block/flower_box_iron_none",
+      "y": 180
+    },
+    "bloom=none,facing=west,style=iron": {
+      "model": "awaken:block/flower_box_iron_none",
+      "y": 270
+    },
+    "bloom=red,facing=north,style=iron": {
+      "model": "awaken:block/flower_box_iron_red"
+    },
+    "bloom=red,facing=east,style=iron": {
+      "model": "awaken:block/flower_box_iron_red",
+      "y": 90
+    },
+    "bloom=red,facing=south,style=iron": {
+      "model": "awaken:block/flower_box_iron_red",
+      "y": 180
+    },
+    "bloom=red,facing=west,style=iron": {
+      "model": "awaken:block/flower_box_iron_red",
+      "y": 270
+    },
+    "bloom=yellow,facing=north,style=iron": {
+      "model": "awaken:block/flower_box_iron_yellow"
+    },
+    "bloom=yellow,facing=east,style=iron": {
+      "model": "awaken:block/flower_box_iron_yellow",
+      "y": 90
+    },
+    "bloom=yellow,facing=south,style=iron": {
+      "model": "awaken:block/flower_box_iron_yellow",
+      "y": 180
+    },
+    "bloom=yellow,facing=west,style=iron": {
+      "model": "awaken:block/flower_box_iron_yellow",
+      "y": 270
+    },
+    "bloom=blue,facing=north,style=iron": {
+      "model": "awaken:block/flower_box_iron_blue"
+    },
+    "bloom=blue,facing=east,style=iron": {
+      "model": "awaken:block/flower_box_iron_blue",
+      "y": 90
+    },
+    "bloom=blue,facing=south,style=iron": {
+      "model": "awaken:block/flower_box_iron_blue",
+      "y": 180
+    },
+    "bloom=blue,facing=west,style=iron": {
+      "model": "awaken:block/flower_box_iron_blue",
+      "y": 270
+    },
+    "bloom=pink,facing=north,style=iron": {
+      "model": "awaken:block/flower_box_iron_pink"
+    },
+    "bloom=pink,facing=east,style=iron": {
+      "model": "awaken:block/flower_box_iron_pink",
+      "y": 90
+    },
+    "bloom=pink,facing=south,style=iron": {
+      "model": "awaken:block/flower_box_iron_pink",
+      "y": 180
+    },
+    "bloom=pink,facing=west,style=iron": {
+      "model": "awaken:block/flower_box_iron_pink",
+      "y": 270
+    },
+    "bloom=white,facing=north,style=iron": {
+      "model": "awaken:block/flower_box_iron_white"
+    },
+    "bloom=white,facing=east,style=iron": {
+      "model": "awaken:block/flower_box_iron_white",
+      "y": 90
+    },
+    "bloom=white,facing=south,style=iron": {
+      "model": "awaken:block/flower_box_iron_white",
+      "y": 180
+    },
+    "bloom=white,facing=west,style=iron": {
+      "model": "awaken:block/flower_box_iron_white",
+      "y": 270
+    },
+    "bloom=herbs,facing=north,style=iron": {
+      "model": "awaken:block/flower_box_iron_herbs"
+    },
+    "bloom=herbs,facing=east,style=iron": {
+      "model": "awaken:block/flower_box_iron_herbs",
+      "y": 90
+    },
+    "bloom=herbs,facing=south,style=iron": {
+      "model": "awaken:block/flower_box_iron_herbs",
+      "y": 180
+    },
+    "bloom=herbs,facing=west,style=iron": {
+      "model": "awaken:block/flower_box_iron_herbs",
+      "y": 270
+    },
+    "bloom=none,facing=north,style=stone": {
+      "model": "awaken:block/flower_box_stone_none"
+    },
+    "bloom=none,facing=east,style=stone": {
+      "model": "awaken:block/flower_box_stone_none",
+      "y": 90
+    },
+    "bloom=none,facing=south,style=stone": {
+      "model": "awaken:block/flower_box_stone_none",
+      "y": 180
+    },
+    "bloom=none,facing=west,style=stone": {
+      "model": "awaken:block/flower_box_stone_none",
+      "y": 270
+    },
+    "bloom=red,facing=north,style=stone": {
+      "model": "awaken:block/flower_box_stone_red"
+    },
+    "bloom=red,facing=east,style=stone": {
+      "model": "awaken:block/flower_box_stone_red",
+      "y": 90
+    },
+    "bloom=red,facing=south,style=stone": {
+      "model": "awaken:block/flower_box_stone_red",
+      "y": 180
+    },
+    "bloom=red,facing=west,style=stone": {
+      "model": "awaken:block/flower_box_stone_red",
+      "y": 270
+    },
+    "bloom=yellow,facing=north,style=stone": {
+      "model": "awaken:block/flower_box_stone_yellow"
+    },
+    "bloom=yellow,facing=east,style=stone": {
+      "model": "awaken:block/flower_box_stone_yellow",
+      "y": 90
+    },
+    "bloom=yellow,facing=south,style=stone": {
+      "model": "awaken:block/flower_box_stone_yellow",
+      "y": 180
+    },
+    "bloom=yellow,facing=west,style=stone": {
+      "model": "awaken:block/flower_box_stone_yellow",
+      "y": 270
+    },
+    "bloom=blue,facing=north,style=stone": {
+      "model": "awaken:block/flower_box_stone_blue"
+    },
+    "bloom=blue,facing=east,style=stone": {
+      "model": "awaken:block/flower_box_stone_blue",
+      "y": 90
+    },
+    "bloom=blue,facing=south,style=stone": {
+      "model": "awaken:block/flower_box_stone_blue",
+      "y": 180
+    },
+    "bloom=blue,facing=west,style=stone": {
+      "model": "awaken:block/flower_box_stone_blue",
+      "y": 270
+    },
+    "bloom=pink,facing=north,style=stone": {
+      "model": "awaken:block/flower_box_stone_pink"
+    },
+    "bloom=pink,facing=east,style=stone": {
+      "model": "awaken:block/flower_box_stone_pink",
+      "y": 90
+    },
+    "bloom=pink,facing=south,style=stone": {
+      "model": "awaken:block/flower_box_stone_pink",
+      "y": 180
+    },
+    "bloom=pink,facing=west,style=stone": {
+      "model": "awaken:block/flower_box_stone_pink",
+      "y": 270
+    },
+    "bloom=white,facing=north,style=stone": {
+      "model": "awaken:block/flower_box_stone_white"
+    },
+    "bloom=white,facing=east,style=stone": {
+      "model": "awaken:block/flower_box_stone_white",
+      "y": 90
+    },
+    "bloom=white,facing=south,style=stone": {
+      "model": "awaken:block/flower_box_stone_white",
+      "y": 180
+    },
+    "bloom=white,facing=west,style=stone": {
+      "model": "awaken:block/flower_box_stone_white",
+      "y": 270
+    },
+    "bloom=herbs,facing=north,style=stone": {
+      "model": "awaken:block/flower_box_stone_herbs"
+    },
+    "bloom=herbs,facing=east,style=stone": {
+      "model": "awaken:block/flower_box_stone_herbs",
+      "y": 90
+    },
+    "bloom=herbs,facing=south,style=stone": {
+      "model": "awaken:block/flower_box_stone_herbs",
+      "y": 180
+    },
+    "bloom=herbs,facing=west,style=stone": {
+      "model": "awaken:block/flower_box_stone_herbs",
+      "y": 270
+    }
+  }
+}
