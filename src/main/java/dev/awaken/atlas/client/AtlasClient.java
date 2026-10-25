@@ -93,12 +93,18 @@ public final class AtlasClient {
                     return 1;
                 })))
                 .then(Commands.literal("reveal").executes(c -> reveal()))
+                .then(Commands.literal("prof").then(Commands.argument("bits", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 127)).executes(c -> {
+                    AtlasScreen.prof = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "bits");
+                    AtlasState.stats.reset();
+                    return 1;
+                })))
                 .then(Commands.literal("drift").then(Commands.argument("hz", FloatArgumentType.floatArg(1f, 240f)).executes(c -> {
                     AtlasRenderer.DRIFT_NANOS = (long) (1e9 / f(c, "hz"));
                     return 1;
                 })))
                 .then(Commands.literal("stats").executes(c -> {
                     for (String line : AtlasState.describe()) Awaken.LOG.info("[atlas] stats: {}", line);
+                    AtlasState.stats.reset();
                     Awaken.LOG.info("[atlas] stats: glance paint {} ms", String.format(java.util.Locale.ROOT, "%.2f", AtlasGlance.paintNanos / 1e6));
                     return 1;
                 })));

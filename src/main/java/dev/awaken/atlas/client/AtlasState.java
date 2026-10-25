@@ -372,8 +372,17 @@ final class AtlasState {
         long openStart;
         double lastOpenMs;
 
+        final long[] extract = new long[8192];
+        int extracts;
+
         void reset() {
-            frames = redraws = 0;
+            frames = redraws = extracts = 0;
+        }
+
+        /** The screen's own CPU time a frame (layout, labels, legend), outside the picture's pass. */
+        void extract(long nanos) {
+            extract[extracts & 8191] = nanos;
+            extracts++;
         }
 
         void frame(long nanos, boolean redraw) {
@@ -389,8 +398,10 @@ final class AtlasState {
 
         String summary() {
             int n = Math.min(frames, cpu.length);
-            return String.format(Locale.ROOT, "frames=%d redraws=%d prepare_cpu p50=%.3fms p99=%.3fms | slices drawn=%d puffs=%d | open %.1f ms",
-                    frames, redraws, pct(cpu, n, 0.5) / 1e6, pct(cpu, n, 0.99) / 1e6, slicesDrawn, puffs, lastOpenMs);
+            int x = Math.min(extracts, extract.length);
+            return String.format(Locale.ROOT, "frames=%d redraws=%d prepare_cpu p50=%.3fms p99=%.3fms | screen_cpu p50=%.3fms p99=%.3fms | slices drawn=%d puffs=%d | open %.1f ms",
+                    frames, redraws, pct(cpu, n, 0.5) / 1e6, pct(cpu, n, 0.99) / 1e6, pct(extract, x, 0.5) / 1e6, pct(extract, x, 0.99) / 1e6,
+                    slicesDrawn, puffs, lastOpenMs);
         }
     }
 
