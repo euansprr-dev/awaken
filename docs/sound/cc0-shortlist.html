@@ -1,0 +1,697 @@
+<title>Sound Shortlist</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Silkscreen&display=swap">
+<style>
+/* Layout: one column of night glass; one row per recording with its two choices on the right (stacked on phones). */
+:root {
+  --bg: #0a1019; --glass: #0f1724; --glass-2: #142033; --line: #22344d;
+  --fg: #e4f1ff; --muted: #8ea5bf; --accent: #7fc3ff; --yes: #8fdc9a; --no: #ff8a7a; --chip-ink: #0a1019;
+  --display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --pixel: "Silkscreen", "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+    --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --yes: #23884f; --no: #b8402f; --chip-ink: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+  --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --yes: #23884f; --no: #b8402f; --chip-ink: #ffffff;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 400 15px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 96px; }
+.wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 36px; }
+h1, h2 { font-family: var(--display); margin: 0; line-height: 1.15; text-wrap: balance; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); }
+h2 { font-size: 1.4rem; }
+p { margin: 0; }
+a { color: var(--accent); }
+.eyebrow { font-family: var(--pixel); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+header.top { padding-top: 48px; display: grid; gap: 12px; max-width: 68ch; }
+section { display: grid; gap: 12px; }
+section > header { display: grid; gap: 4px; }
+.list { border-top: 1px solid var(--line); }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.item .name { font-weight: 600; overflow-wrap: anywhere; }
+.item .meta { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+.item .why { font-size: 0.92rem; }
+.item .note { font-size: 0.85rem; color: var(--muted); font-style: italic; }
+.item textarea { grid-column: 1 / -1; width: 100%; min-height: 2.2em; resize: vertical; font: inherit; font-size: 0.85rem;
+  background: var(--glass); color: var(--fg); border: 1px solid var(--line); padding: 6px 8px; }
+.marks { display: flex; gap: 6px; align-items: start; }
+.marks button { font-family: var(--pixel); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 8px 12px; border: 1px solid var(--line); background: var(--glass); color: var(--fg); cursor: pointer; min-width: 64px; }
+.marks button[aria-pressed="true"].yes { background: var(--yes); color: var(--chip-ink); border-color: var(--yes); }
+.marks button[aria-pressed="true"].no { background: var(--no); color: var(--chip-ink); border-color: var(--no); }
+button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-block: 10px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar .count { font-family: var(--mono); font-size: 0.85rem; }
+.bar button { font: 600 0.85rem var(--body); padding: 7px 12px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
+#out { width: 100%; min-height: 10em; font: 0.8rem var(--mono); background: var(--glass); color: var(--fg); border: 1px solid var(--line); padding: 8px; }
+@media (max-width: 560px) { .item { grid-template-columns: 1fr; } }
+</style>
+<div class="wrap">
+<header class="top">
+  <p class="eyebrow">AWAKEN · world sound · CC0 shortlist · checked 2026-10-25</p>
+  <h1>Sound Shortlist</h1>
+  <p>Recordings for what vanilla Minecraft has none of: birds, insects, water, rain on different surfaces. Every one is
+    <b>CC0</b> (public domain), checked on its own Freesound page. Nothing is downloaded until you say yes.</p>
+  <p class="muted">Open a link to listen on Freesound, then mark it. Unmarked means no. Your marks stay in this browser;
+    press Export and hand the text back to the session.</p>
+</header>
+<div class="bar"><span class="count" id="count"></span><button type="button" id="export">Export</button><button type="button" id="copy">Copy</button><button type="button" id="allyes">Mark all unmarked yes</button></div>
+<section><header><p class="eyebrow">15 candidates</p><h2>Greenwood</h2>
+<p class="muted">Dawn-chorus bed loops plus songbird, woodpecker, wood pigeon and tawny owl one-shots for Greenwood events; a fox scream as a rare night event.</p></header><div class="list">
+<div class="item" data-id="fs_466242">
+  <div><p class="name"><a href="https://freesound.org/people/richwise/sounds/466242/" target="_blank" rel="noopener">Dawn chorus - Hampshire countryside Springtime</a></p>
+    <p class="meta">richwise · 593 s · wav 48 kHz 32-bit stereo · CC0 1.0 · Hampshire countryside, UK, away from main roads (Sound Devices MixPre-3, Rode SVMX)</p><p class="why">Cut 60-90 s dawn-chorus bed loops for the dawn curve.</p><p class="note">Uploader notes a couple of distant aircraft; cut around them.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Dawn chorus - Hampshire countryside Springtime" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_611453">
+  <div><p class="name"><a href="https://freesound.org/people/Synge101/sounds/611453/" target="_blank" rel="noopener">Dawn chorus.wav</a></p>
+    <p class="meta">Synge101 · 96 s · wav 48 kHz 16-bit stereo · CC0 1.0 · Wicklow, Ireland</p><p class="why">Second dawn-chorus bed, for variety.</p><p class="note">Recorder not stated; tagged autumn and countryside.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Dawn chorus.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_188371">
+  <div><p class="name"><a href="https://freesound.org/people/calodas/sounds/188371/" target="_blank" rel="noopener">Blackbird_Sweden_long.wav</a></p>
+    <p class="meta">calodas · 246 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Sweden, spring</p><p class="why">Four minutes of blackbird phrases to cut many one-shot variants.</p><p class="note">Sung at night; recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Blackbird_Sweden_long.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_725332">
+  <div><p class="name"><a href="https://freesound.org/people/Sacha.Julien/sounds/725332/" target="_blank" rel="noopener">Blackbird song, solo, Good quality, Forest South of France</a></p>
+    <p class="meta">Sacha.Julien · 83 s · wav 44.1 kHz 24-bit stereo · CC0 1.0 · Forest near Argelliers, Hérault, France, 06:26 (Sennheiser ME66, Fostex FR2-LE)</p><p class="why">Clean solo blackbird phrases for dawn and day one-shots.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Blackbird song, solo, Good quality, Forest South of France" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_725331">
+  <div><p class="name"><a href="https://freesound.org/people/Sacha.Julien/sounds/725331/" target="_blank" rel="noopener">Robin song, good Quality, Forest south of France</a></p>
+    <p class="meta">Sacha.Julien · 98 s · wav 44.1 kHz 24-bit stereo · CC0 1.0 · Forest, Montarnaud, Hérault, France, 07:10 (Sennheiser ME66, Fostex FR2-LE)</p><p class="why">Robin song phrases as one-shots.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Robin song, good Quality, Forest south of France" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_734533">
+  <div><p class="name"><a href="https://freesound.org/people/Sacha.Julien/sounds/734533/" target="_blank" rel="noopener">Wren song close</a></p>
+    <p class="meta">Sacha.Julien · 166 s · wav 44.1 kHz 24-bit stereo · CC0 1.0 · Natural area of Peuil, Claix, Isère, France (XY stereo, bird 6 m away)</p><p class="why">Loud wren trills as undergrowth one-shots.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Wren song close" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_795708">
+  <div><p class="name"><a href="https://freesound.org/people/richwise/sounds/795708/" target="_blank" rel="noopener">Song Thrush</a></p>
+    <p class="meta">richwise · 89 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Song thrush repeated phrases as one-shots.</p><p class="note">Location not stated (Zoom H1 internal mics); other birds in the background.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Song Thrush" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_423701">
+  <div><p class="name"><a href="https://freesound.org/people/straget/sounds/423701/" target="_blank" rel="noopener">Chaffinch.wav</a></p>
+    <p class="meta">straget · 188 s · wav 44.1 kHz 16-bit stereo · CC0 1.0</p><p class="why">Chaffinch song bursts as one-shots.</p><p class="note">Location not stated (Zoom H4n Pro).</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Chaffinch.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_418102">
+  <div><p class="name"><a href="https://freesound.org/people/straget/sounds/418102/" target="_blank" rel="noopener">Great Tit.wav</a></p>
+    <p class="meta">straget · 39 s · wav 44.1 kHz 24-bit stereo · CC0 1.0 · Oskarshamn, Kalmar, Sweden (2x Line Audio OM1, Zoom F4)</p><p class="why">Great tit &#x27;teacher&#x27; song as one-shots.</p><p class="note">Recorded at a winter bird feeder.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Great Tit.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_428146">
+  <div><p class="name"><a href="https://freesound.org/people/naturenotesuk/sounds/428146/" target="_blank" rel="noopener">Great Spotted Woodpecker</a></p>
+    <p class="meta">naturenotesuk · 36 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Country park, Essex, UK (Zoom H5, Sennheiser K6/ME66)</p><p class="why">European great spotted woodpecker drumming rolls.</p><p class="note">Site is next to a road and housing estate; listen for road hum.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Great Spotted Woodpecker" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_847353">
+  <div><p class="name"><a href="https://freesound.org/people/kvgarlic/sounds/847353/" target="_blank" rel="noopener">Woodpecker drumming in morning March 6 2026</a></p>
+    <p class="meta">kvgarlic · 343 s · wav 48 kHz 24-bit mono · CC0 1.0 · Shawnee National Forest, southern Illinois, USA (MixPre-3 II, Sennheiser MKH 416)</p><p class="why">Several drumming rolls to cut as distant woodpecker events.</p><p class="note">North American woodpecker, species not named; other birds behind.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Woodpecker drumming in morning March 6 2026" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_319512">
+  <div><p class="name"><a href="https://freesound.org/people/squashy555/sounds/319512/" target="_blank" rel="noopener">pigeon.wav</a></p>
+    <p class="meta">squashy555 · 13 s · wav 44.1 kHz 24-bit stereo · CC0 1.0 · England (Tascam DR-03 Mk2)</p><p class="why">Wood pigeon coo phrase as a one-shot.</p><p class="note">Short; the only clean wild wood pigeon found (others were decoy whistles or town recordings).</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on pigeon.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_688869">
+  <div><p class="name"><a href="https://freesound.org/people/Elanor1995/sounds/688869/" target="_blank" rel="noopener">Tawny owl.wav</a></p>
+    <p class="meta">Elanor1995 · 23 s · wav 44.1 kHz 24-bit stereo · CC0 1.0</p><p class="why">Tawny owl hoots for night events.</p><p class="note">Location and recorder not stated; tagged winter.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Tawny owl.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_735744">
+  <div><p class="name"><a href="https://freesound.org/people/Vrymaa/sounds/735744/" target="_blank" rel="noopener">Bird - Tawny owl, female</a></p>
+    <p class="meta">Vrymaa · 13 s · wav 48 kHz 16-bit mono · CC0 1.0 · Calm courtyard, owl perched close on a roof (iPhone 8 or t.bone SC 420)</p><p class="why">Close, dry female tawny call; we add distance in game.</p><p class="note">Phone or budget mic; uploader says no background noise.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Bird - Tawny owl, female" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_832436">
+  <div><p class="name"><a href="https://freesound.org/people/felix.blume/sounds/832436/" target="_blank" rel="noopener">Fox screaming during the night</a></p>
+    <p class="meta">felix.blume · 71 s · wav 96 kHz 24-bit stereo · CC0 1.0 · Azillanet, Hérault, France, March (Schoeps CCM4 ORTF, MixPre-6)</p><p class="why">Red fox screams for a rare night event.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Fox screaming during the night" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">9 candidates</p><h2>Blossom and Open grass</h2>
+<p class="muted">A cuckoo far off, skylarks high up, a buzzard or hawk cry, bees near flowers, and a warm summer-meadow bed.</p></header><div class="list">
+<div class="item" data-id="fs_776138">
+  <div><p class="name"><a href="https://freesound.org/people/soundandmelodies/sounds/776138/" target="_blank" rel="noopener">AMB-Afternoon,Calm,Cuckoo,Birds,DistantSea-ValklaRand,Estonia-21Jun2024</a></p>
+    <p class="meta">soundandmelodies · 54 s · wav 44.1 kHz 24-bit mono · CC0 1.0 · Valkla, Harju, Estonia</p><p class="why">Cuckoo calling over a calm afternoon; far-off cuckoo events.</p><p class="note">No description; tags mention wind and a distant sea.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on AMB-Afternoon,Calm,Cuckoo,Birds,DistantSea-ValklaRand,Estonia-21Jun2024" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_735747">
+  <div><p class="name"><a href="https://freesound.org/people/bruno.auzet/sounds/735747/" target="_blank" rel="noopener">cuckoo and other birds</a></p>
+    <p class="meta">bruno.auzet · 139 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Nivillac, Brittany, France, May 2024 (2x LOM Uzi AB, Zoom F2)</p><p class="why">A steady cuckoo with finch, robin, tits and thrush; cut the cuckoo calls.</p><p class="note">Uploader notes sheep and sporadic faraway voices; cut around them.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on cuckoo and other birds" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_387426">
+  <div><p class="name"><a href="https://freesound.org/people/Kinoton/sounds/387426/" target="_blank" rel="noopener">Single Skylark</a></p>
+    <p class="meta">Kinoton · 75 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Dunes, west Denmark (Zoom H4n Pro, 2x Rode M5)</p><p class="why">Continuous skylark song to loop high over Open grass.</p><p class="note">Uploader applied a high-pass filter and noise reduction.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Single Skylark" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_194343">
+  <div><p class="name"><a href="https://freesound.org/people/no_use/sounds/194343/" target="_blank" rel="noopener">Zernikow Skylarks / Lerchen</a></p>
+    <p class="meta">no_use · 67 s · aiff 44.1 kHz 32-bit stereo · CC0 1.0 · Zernikow, Oberhavel, Brandenburg, Germany (Zoom H4n)</p><p class="why">Several skylarks: a wider lark layer.</p><p class="note">Tagged &#x27;village&#x27;; listen for village sounds.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Zernikow Skylarks / Lerchen" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_244357">
+  <div><p class="name"><a href="https://freesound.org/people/squashy555/sounds/244357/" target="_blank" rel="noopener">skylark.wav</a></p>
+    <p class="meta">squashy555 · 22 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Over a cornfield, UK (Tascam DR-07)</p><p class="why">Short clean skylark phrases, alternate to the two above.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on skylark.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_648430">
+  <div><p class="name"><a href="https://freesound.org/people/bruno.auzet/sounds/648430/" target="_blank" rel="noopener">Two buzzards in a windy forest.wav</a></p>
+    <p class="meta">bruno.auzet · 136 s · wav 48 kHz 24-bit stereo · CC0 1.0 · France, July 2022 (Schoeps ORTF, Sound Devices 633)</p><p class="why">A young buzzard calling and another answering: the open-sky raptor cry.</p><p class="note">Wind in the trees is part of the scene (not mic noise); other birds and insects.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Two buzzards in a windy forest.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_683743">
+  <div><p class="name"><a href="https://freesound.org/people/kvgarlic/sounds/683743/" target="_blank" rel="noopener">Red Shouldered Hawk cry D100 APRIL 10 2023.WAV</a></p>
+    <p class="meta">kvgarlic · 36 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Outskirts of a small town, Illinois, USA (Sony PCM-D100)</p><p class="why">Repeated hawk cries, alternative raptor cry.</p><p class="note">North American species. No CC0 kestrel recording found.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Red Shouldered Hawk cry D100 APRIL 10 2023.WAV" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_566112">
+  <div><p class="name"><a href="https://freesound.org/people/Cinetony/sounds/566112/" target="_blank" rel="noopener">Bees buzzing around tree</a></p>
+    <p class="meta">Cinetony · 54 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Many bees in a blossoming tree, layered under vanilla bees near flowers.</p><p class="note">Location and recorder not stated; optional (vanilla has bees).</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Bees buzzing around tree" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_414907">
+  <div><p class="name"><a href="https://freesound.org/people/DanGasior/sounds/414907/" target="_blank" rel="noopener">Summer afternoon Meadow ATM birds and crickets.wav</a></p>
+    <p class="meta">DanGasior · 121 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Lutowiska, Bieszczady, Poland (SoundField ST450)</p><p class="why">Summer meadow bed with crickets and birds for Open grass by day.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Summer afternoon Meadow ATM birds and crickets.wav" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">9 candidates</p><h2>Conifer and Heights</h2>
+<p class="muted">Conifer dawn bed, coal tit and siskin calls, a pine-forest woodpecker and raven croaks; for Heights, high-mountain corvids, a hawk scream and small rockfalls.</p></header><div class="list">
+<div class="item" data-id="fs_745273">
+  <div><p class="name"><a href="https://freesound.org/people/SamsterBirdies/sounds/745273/" target="_blank" rel="noopener">Bird ambience. Coniferous forest dawn chorus.</a></p>
+    <p class="meta">SamsterBirdies · 589 s · flac 44.1 kHz 24-bit stereo · CC0 1.0 · Conifer forest by a lake, Kettle Falls, Washington, USA (Primo EM272, Tascam DR-100MKIII)</p><p class="why">Conifer dawn-chorus bed loops.</p><p class="note">North American species.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Bird ambience. Coniferous forest dawn chorus." placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_819352">
+  <div><p class="name"><a href="https://freesound.org/people/JW_Audio/sounds/819352/" target="_blank" rel="noopener">BIRDSong_Macclesfield Forest, Morning, Wren, Siskan, Chiffchaff, Blackcap, Robin, Coal Tit, Great Tit, Recording 7_JW Audio</a></p>
+    <p class="meta">JW_Audio · 216 s · wav 48 kHz 32-bit stereo · CC0 1.0 · Macclesfield Forest, Cheshire, UK</p><p class="why">Coal tit and siskin calls (plus wren) to cut for Conifer day events.</p><p class="note">Cleaned in iZotope RX 11; uploader says some moments are &#x27;bizarrely weird&#x27;, so listen. Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on BIRDSong_Macclesfield Forest, Morning, Wren, Siskan, Chiffchaff, Blackcap, Robin, Coal Tit, Great Tit, Recording 7_JW Audio" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_828443">
+  <div><p class="name"><a href="https://freesound.org/people/farandjoun/sounds/828443/" target="_blank" rel="noopener">Birds encounter</a></p>
+    <p class="meta">farandjoun · 66 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Forest, Izeste, Pyrénées-Atlantiques, France (Zoom H2n)</p><p class="why">Coal tits and blackbirds close up; a buzzard and a crow at the end.</p><p class="note">A cow moos in the middle; a tawny owl at the start. No CC0 crossbill found.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Birds encounter" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_867542">
+  <div><p class="name"><a href="https://freesound.org/people/zachrau/sounds/867542/" target="_blank" rel="noopener">Woodpecker drumming in a pine forest</a></p>
+    <p class="meta">zachrau · 21 s · wav 48 kHz 32-bit stereo · CC0 1.0 · Pine forest, Beelitz, Brandenburg, Germany (iPhone 16 Pro)</p><p class="why">Woodpecker drumming with the natural echo of a pine forest.</p><p class="note">Phone recording; light breeze and other birds.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Woodpecker drumming in a pine forest" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_651186">
+  <div><p class="name"><a href="https://freesound.org/people/Borgory/sounds/651186/" target="_blank" rel="noopener">Raven, Crow, Ravens, Cry, Scream, Rabe, Kolkrabe, Kraehe</a></p>
+    <p class="meta">Borgory · 54 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Raven croaks and calls as one-shots.</p><p class="note">Location not stated (Zoom H5); tags mix raven and crow, so confirm the species by ear.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Raven, Crow, Ravens, Cry, Scream, Rabe, Kolkrabe, Kraehe" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_457634">
+  <div><p class="name"><a href="https://freesound.org/people/sagamusix/sounds/457634/" target="_blank" rel="noopener">Raven Army</a></p>
+    <p class="meta">sagamusix · 206 s · flac 96 kHz 16-bit stereo · CC0 1.0</p><p class="why">A big group of ravens for several minutes; cut single croaks and a far flock.</p><p class="note">Uploader warns of occasional sirens in the background; location not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Raven Army" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_787332">
+  <div><p class="name"><a href="https://freesound.org/people/Gribiche/sounds/787332/" target="_blank" rel="noopener">ambiance high mountain and jackdaws</a></p>
+    <p class="meta">Gribiche · 55 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Refuge Adèle Planchard, Villar-d&#x27;Arêne, Hautes-Alpes, France, very high altitude (Schoeps MS, Nagra)</p><p class="why">Thin high-mountain air with corvid calls for Heights.</p><p class="note">Labelled jackdaws; at that altitude they may be alpine choughs, check by ear. No CC0 recording tagged alpine chough exists.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on ambiance high mountain and jackdaws" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_575524">
+  <div><p class="name"><a href="https://freesound.org/people/1888software/sounds/575524/" target="_blank" rel="noopener">red-tailed-hawk.wav</a></p>
+    <p class="meta">1888software · 25 s · wav 96 kHz 16-bit stereo · CC0 1.0 · Douglas fir nest, Nanaimo, British Columbia, Canada (Zoom H1n)</p><p class="why">Four classic hawk screams for the Heights &#x27;peak kite&#x27; cry.</p><p class="note">The recordists were near the nest; voices not mentioned, but listen.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on red-tailed-hawk.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_389303">
+  <div><p class="name"><a href="https://freesound.org/people/AlanCat/sounds/389303/" target="_blank" rel="noopener">rockfall2a.wav</a></p>
+    <p class="meta">AlanCat · 17 s · wav 44.1 kHz 16-bit stereo · CC0 1.0</p><p class="why">Rocks falling down a cliff and a cascade of pebbles; cut into small rockfalls and pebble trickles.</p><p class="note">Location not stated (Olympus LS-14); background noise reduced. The only real field rockfall found; other hits were staged foley or composites.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on rockfall2a.wav" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">7 candidates</p><h2>Night insects and heat</h2>
+<p class="muted">Night cricket and katydid beds (scaled by temperature), single cricket chirps for the cricket ring, day cicadas for heat, and the nightjar churr.</p></header><div class="list">
+<div class="item" data-id="fs_751466">
+  <div><p class="name"><a href="https://freesound.org/people/Borgory/sounds/751466/" target="_blank" rel="noopener">Crickets chirping in the Night at the Forest 002</a></p>
+    <p class="meta">Borgory · 176 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Night crickets at a forest edge: a cricket bed loop.</p><p class="note">Location not stated (Zoom H5, Sennheiser ME66, described as 2-channel mono).</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Crickets chirping in the Night at the Forest 002" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_203598">
+  <div><p class="name"><a href="https://freesound.org/people/raoul_slayer/sounds/203598/" target="_blank" rel="noopener">CricketsandTawnyOwl.wav</a></p>
+    <p class="meta">raoul_slayer · 140 s · wav 96 kHz 16-bit stereo · CC0 1.0 · Meadow, Saint-Front-sur-Nizonne, Dordogne, France, summer night</p><p class="why">Meadow crickets with a tawny owl: second cricket bed and spare owl hoots.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on CricketsandTawnyOwl.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_547893">
+  <div><p class="name"><a href="https://freesound.org/people/nicotep/sounds/547893/" target="_blank" rel="noopener">crickets.wav</a></p>
+    <p class="meta">nicotep · 314 s · wav 44.1 kHz 16-bit mono · CC0 1.0 · Vivarium, Natural History Museum, Lille, France (Oktava hypercardioid)</p><p class="why">Close field cricket (Gryllus campestris) chirps for single-cricket events and the cricket ring.</p><p class="note">Captive crickets, indoors: dry and close, needs our outdoor reverb.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on crickets.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_198369">
+  <div><p class="name"><a href="https://freesound.org/people/kvgarlic/sounds/198369/" target="_blank" rel="noopener">EarlyAMCricketsandKatydidsAugust2013.wav</a></p>
+    <p class="meta">kvgarlic · 84 s · wav 96 kHz 16-bit stereo · CC0 1.0 · Small-town backyard, US Midwest, 5 am (Zoom H4n)</p><p class="why">Late-summer crickets and katydids chorus for warm nights.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on EarlyAMCricketsandKatydidsAugust2013.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_852877">
+  <div><p class="name"><a href="https://freesound.org/people/simous00/sounds/852877/" target="_blank" rel="noopener">Day Crickets &amp; Cicadas 4</a></p>
+    <p class="meta">simous00 · 286 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Crete, Greece, June, daytime</p><p class="why">Day cicadas with crickets: the heat layer for Dry warmth and summer days.</p><p class="note">Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Day Crickets &amp; Cicadas 4" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_161980">
+  <div><p class="name"><a href="https://freesound.org/people/kvgarlic/sounds/161980/" target="_blank" rel="noopener">DeepSummerInsectsJune.wav</a></p>
+    <p class="meta">kvgarlic · 171 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Deep woods, Herod, Illinois, USA</p><p class="why">Droning summer cicadas in woodland: second heat bed.</p><p class="note">Occasional bird calls; a goldfinch near the end.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on DeepSummerInsectsJune.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_548490">
+  <div><p class="name"><a href="https://freesound.org/people/joakgust/sounds/548490/" target="_blank" rel="noopener">European Nightjar Nattskärra (Caprimulgus europaeus).wav</a></p>
+    <p class="meta">joakgust · 258 s · wav 48 kHz 16-bit stereo · CC0 1.0</p><p class="why">Four minutes of European nightjar churring for Dry warmth and heath nights.</p><p class="note">Sweden per tags only; uploader says the fade-up at the start was not theirs. Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on European Nightjar Nattskärra (Caprimulgus europaeus).wav" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">6 candidates</p><h2>Canopy (jungle)</h2>
+<p class="muted">Jungle beds: tropical dawn birds by day, frog and insect walls by night, a rain-at-night variant, and drips after rain.</p></header><div class="list">
+<div class="item" data-id="fs_328308">
+  <div><p class="name"><a href="https://freesound.org/people/felix.blume/sounds/328308/" target="_blank" rel="noopener">Chachalacas birds screaming at dawn in the forest, in the Sian Ka&#x27;an Biosphere Reserve</a></p>
+    <p class="meta">felix.blume · 180 s · wav 96 kHz 24-bit stereo · CC0 1.0 · Sian Ka&#x27;an Biosphere Reserve, Quintana Roo, Mexico (B&amp;K 4006 AB, Sound Devices 788T)</p><p class="why">Loud tropical dawn chorus with drops falling after rain: dawn bed and after-rain drips.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Chachalacas birds screaming at dawn in the forest, in the Sian Ka&#x27;an Biosphere Reserve" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_676675">
+  <div><p class="name"><a href="https://freesound.org/people/felix.blume/sounds/676675/" target="_blank" rel="noopener">Forest atmosphere in the morning with bird, insect, cicada, subtle dew drops on foliage and road far away at the end, recorded in Amazon rainforest</a></p>
+    <p class="meta">felix.blume · 159 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Amazon rainforest, Venezuela (Sennheiser MKH50+MKH30 MS, Sound Devices 744T)</p><p class="why">Morning forest of birds, insects, a cicada and dew drops: day bed.</p><p class="note">A road far away at the end (it is in the title); cut it.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Forest atmosphere in the morning with bird, insect, cicada, subtle dew drops on foliage and road far away at the end, recorded in Amazon rainforest" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_653743">
+  <div><p class="name"><a href="https://freesound.org/people/nonamethefish/sounds/653743/" target="_blank" rel="noopener">Peruvian Amazon birds frogs daytime</a></p>
+    <p class="meta">nonamethefish · 58 s · wav 48 kHz 16-bit stereo · CC0 1.0 · Upland forest, Peruvian Amazon, afternoon</p><p class="why">Afternoon birds, rain frogs and a tinamou: a day variant.</p><p class="note">Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Peruvian Amazon birds frogs daytime" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_645706">
+  <div><p class="name"><a href="https://freesound.org/people/MeliaRoger/sounds/645706/" target="_blank" rel="noopener">AMBRurl_BR Serrinha do alambari night frogs chorus with close crickets_Melia Roger_ORTF Schoeps.WAV</a></p>
+    <p class="meta">MeliaRoger · 529 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Serrinha do Alambari, Resende, Rio de Janeiro, Brazil (Schoeps ORTF)</p><p class="why">Nearly nine minutes of calm night frog chorus with close crickets: night bed.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on AMBRurl_BR Serrinha do alambari night frogs chorus with close crickets_Melia Roger_ORTF Schoeps.WAV" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_871624">
+  <div><p class="name"><a href="https://freesound.org/people/Cl%C3%A9ment_Baudet/sounds/871624/" target="_blank" rel="noopener">Night at Nouragues science campsite (Amazon rainforest)</a></p>
+    <p class="meta">Clément_Baudet · 513 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Nouragues science campsite, French Guiana, 2023 (ORTF)</p><p class="why">Deep-rainforest night insects: second night bed.</p><p class="note">Recorded at a research campsite; listen for camp sounds. Uploaded Sept 2026, few downloads so far. The same uploader&#x27;s &#x27;Howler monkeys and frogs&#x27; was left out because the plan says no monkeys.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Night at Nouragues science campsite (Amazon rainforest)" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_868995">
+  <div><p class="name"><a href="https://freesound.org/people/felix.blume/sounds/868995/" target="_blank" rel="noopener">Light Rain, Frogs and Toads at Night - Rémire-Montjoly, French Guiana</a></p>
+    <p class="meta">felix.blume · 517 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Garden in front of a house, Rémire-Montjoly, French Guiana, January 2026 (2x Schoeps CCM4 ORTF, MixPre-6 II)</p><p class="why">Frogs and toads under light rain: the jungle rain-at-night variant.</p><p class="note">Residential garden; listen for house sounds.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Light Rain, Frogs and Toads at Night - Rémire-Montjoly, French Guiana" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">6 candidates</p><h2>Mire</h2>
+<p class="muted">Night frog choruses (in place of vanilla&#x27;s cute frog at night), heron calls and a dragonfly fly-by for swamps and mangroves.</p></header><div class="list">
+<div class="item" data-id="fs_149493">
+  <div><p class="name"><a href="https://freesound.org/people/kvgarlic/sounds/149493/" target="_blank" rel="noopener">SpringPeepersMarch2012.wav</a></p>
+    <p class="meta">kvgarlic · 63 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Small seasonal pond in deep woods at sundown (Rode NTG-2, Zoom H4n)</p><p class="why">Spring peeper chorus for spring-night swamp beds.</p><p class="note">North American species; 826 downloads.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on SpringPeepersMarch2012.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_348160">
+  <div><p class="name"><a href="https://freesound.org/people/gtjuks/sounds/348160/" target="_blank" rel="noopener">Frogs.wav</a></p>
+    <p class="meta">gtjuks · 246 s · wav 48 kHz 32-bit stereo · CC0 1.0 · Countryside pond at night (Rode Stereo VideoMic Pro)</p><p class="why">Four minutes of frog chorus: night bed.</p><p class="note">Some mosquitoes; country not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Frogs.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_393644">
+  <div><p class="name"><a href="https://freesound.org/people/jacekksiazek/sounds/393644/" target="_blank" rel="noopener">bagno-frogs-birds-forest.wav</a></p>
+    <p class="meta">jacekksiazek · 216 s · wav 96 kHz 24-bit stereo · CC0 1.0 · Bagno Przecławskie nature reserve, Podkarpackie, Poland (Zoom H2n)</p><p class="why">European marsh frogs with birds: dusk and day mire bed.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on bagno-frogs-birds-forest.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_328310">
+  <div><p class="name"><a href="https://freesound.org/people/felix.blume/sounds/328310/" target="_blank" rel="noopener">Wetland at night, bird (heron type), frogs and crickets in the Sian Ka&#x27;an Biosphere Reserve</a></p>
+    <p class="meta">felix.blume · 300 s · wav 96 kHz 24-bit stereo · CC0 1.0 · Sian Ka&#x27;an Biosphere Reserve, Quintana Roo, Mexico (B&amp;K 4006 AB, Sound Devices 788T)</p><p class="why">Night wetland with heron-type calls, frogs and crickets: mangrove night bed.</p><p class="note">Tropical species; suits mangrove swamp better than temperate swamp.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Wetland at night, bird (heron type), frogs and crickets in the Sian Ka&#x27;an Biosphere Reserve" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_834209">
+  <div><p class="name"><a href="https://freesound.org/people/Aenimamusica/sounds/834209/" target="_blank" rel="noopener">Heron</a></p>
+    <p class="meta">Aenimamusica · 77 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Foix River Park, Baix Penedès, Catalonia, Spain (Zoom H2n)</p><p class="why">Heron calls to cut as swamp events.</p><p class="note">Heron species not named.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Heron" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_447319">
+  <div><p class="name"><a href="https://freesound.org/people/antoineopeng/sounds/447319/" target="_blank" rel="noopener">Dragonfly.wav</a></p>
+    <p class="meta">antoineopeng · 24 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Austin, Texas, USA (Zoom H5)</p><p class="why">Dragonfly wing buzz passes; optional.</p><p class="note">Dragonfly flying around a lamp, possibly indoors.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Dragonfly.wav" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">4 candidates</p><h2>Snowfield</h2>
+<p class="muted">Ice cracks and booms on frozen lakes (also frozen rivers) and snow dropping from branches.</p></header><div class="list">
+<div class="item" data-id="fs_737896">
+  <div><p class="name"><a href="https://freesound.org/people/Vrymaa/sounds/737896/" target="_blank" rel="noopener">Ice - Lake fractures</a></p>
+    <p class="meta">Vrymaa · 58 s · wav 44.1 kHz 16-bit mono · CC0 1.0</p><p class="why">Frozen-lake cracks and booms bouncing under 15 cm of ice, cut as one-shots.</p><p class="note">Location not stated (iPhone 8 or t.bone SC 420); uploader says no background noise.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Ice - Lake fractures" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_818918">
+  <div><p class="name"><a href="https://freesound.org/people/mentos987/sounds/818918/" target="_blank" rel="noopener">frozen lake</a></p>
+    <p class="meta">mentos987 · 57 s · wav 48 kHz 16-bit stereo · CC0 1.0</p><p class="why">Ice slowly cracking all over a lake in sun, heard from the shore.</p><p class="note">Uploader says wind is present and was left in; location not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on frozen lake" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_720057">
+  <div><p class="name"><a href="https://freesound.org/people/mikolay/sounds/720057/" target="_blank" rel="noopener">It thaws: the snow falls from the trees</a></p>
+    <p class="meta">mikolay · 92 s · wav 192 kHz 32-bit stereo · CC0 1.0</p><p class="why">Snow falling from trees in a thaw; cut single branch drops.</p><p class="note">Location not stated (Tascam Portacapture X8, Audio-Technica BP4025).</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on It thaws: the snow falls from the trees" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_673266">
+  <div><p class="name"><a href="https://freesound.org/people/xkeril/sounds/673266/" target="_blank" rel="noopener">Forest snow falling and birds</a></p>
+    <p class="meta">xkeril · 59 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Mountain forest, Blonay, Vaud, Switzerland, sunny winter morning (Zoom H5)</p><p class="why">Snow falling from treetops with cracks and a few birds.</p><p class="note">Lightly processed to reduce wind.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Forest snow falling and birds" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">10 candidates</p><h2>Coast</h2>
+<p class="muted">Surf at the real shoreline (sand and stony shore), backwash over pebbles, gulls and terns.</p></header><div class="list">
+<div class="item" data-id="fs_426076">
+  <div><p class="name"><a href="https://freesound.org/people/chris_dagorne/sounds/426076/" target="_blank" rel="noopener">Storm waves breaking on sandy beach in Bournemouth - clean recording</a></p>
+    <p class="meta">chris_dagorne · 84 s · wav 48 kHz 16-bit stereo · CC0 1.0 · Bournemouth, England, at night, a few metres from the waves (Tascam DR-22WL, Rycote)</p><p class="why">Big waves breaking on sand: storm surf loop.</p><p class="note">Uploader says no wind noise, practically windless night; 1.7K downloads.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Storm waves breaking on sandy beach in Bournemouth - clean recording" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_542121">
+  <div><p class="name"><a href="https://freesound.org/people/bruno.auzet/sounds/542121/" target="_blank" rel="noopener">small waves on the sand general.wav</a></p>
+    <p class="meta">bruno.auzet · 245 s · wav 96 kHz 24-bit stereo · CC0 1.0 · Haute-Corse, Corsica, France, at night, 10 m from the sea (Clippy EM127 AB, Sound Devices 633)</p><p class="why">Small waves on sand: calm surf loop.</p><p class="note">Uploader: no disturbing noise.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on small waves on the sand general.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_334145">
+  <div><p class="name"><a href="https://freesound.org/people/Panamatom/sounds/334145/" target="_blank" rel="noopener">Atlantic waves at sandy beach , ondas do mar na praia, Wellen am Strand</a></p>
+    <p class="meta">Panamatom · 230 s · wav 48 kHz 16-bit stereo · CC0 1.0 · Rio de Janeiro, Brazil, at night (Zoom H1)</p><p class="why">Steady Atlantic surf on sand: second sand loop.</p><p class="note">Low-frequency wind noise removed; uploader says no birds, people or cars.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Atlantic waves at sandy beach , ondas do mar na praia, Wellen am Strand" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_197792">
+  <div><p class="name"><a href="https://freesound.org/people/DrNI/sounds/197792/" target="_blank" rel="noopener">Fehmarn-Sea-Waves-404-1.flac</a></p>
+    <p class="meta">DrNI · 724 s · flac 48 kHz 24-bit stereo · CC0 1.0 · North beach, Fehmarn, Germany (2x Rode NT5 XY)</p><p class="why">Twelve minutes of windy-day surf with spume and moving sand.</p><p class="note">EQ&#x27;d and normalised by uploader; windy beach.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Fehmarn-Sea-Waves-404-1.flac" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_712274">
+  <div><p class="name"><a href="https://freesound.org/people/trpete/sounds/712274/" target="_blank" rel="noopener">Waves on a beach with large pebbles</a></p>
+    <p class="meta">trpete · 102 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · The Knap, Barry, Vale of Glamorgan, Wales</p><p class="why">Waves rolling in and drawing back over large pebbles: stony shore.</p><p class="note">Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Waves on a beach with large pebbles" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_842774">
+  <div><p class="name"><a href="https://freesound.org/people/eccoci/sounds/842774/" target="_blank" rel="noopener">waves move pebbles - montana de oro- 01.02.24</a></p>
+    <p class="meta">eccoci · 161 s · wav 48 kHz 16-bit stereo · CC0 1.0 · Montaña de Oro, California, USA (Zoom H6)</p><p class="why">Waves breaking and dragging shale pebbles, roar behind: stony-shore backwash.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on waves move pebbles - montana de oro- 01.02.24" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_569644">
+  <div><p class="name"><a href="https://freesound.org/people/nicotep/sounds/569644/" target="_blank" rel="noopener">Vagues, galets, Qeparo, Albanie.wav</a></p>
+    <p class="meta">nicotep · 114 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Qeparo, Himarë, Albania</p><p class="why">Short waves on pebbles and sand: calm stony-shore variant.</p><p class="note">Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Vagues, galets, Qeparo, Albanie.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_372213">
+  <div><p class="name"><a href="https://freesound.org/people/achats57/sounds/372213/" target="_blank" rel="noopener">Gulls at Moelfre.wav</a></p>
+    <p class="meta">achats57 · 27 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · Off Ynys Moelfre, Anglesey, Wales</p><p class="why">Herring gull calls by the sea: gull events.</p><p class="note">Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Gulls at Moelfre.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_538016">
+  <div><p class="name"><a href="https://freesound.org/people/Canardo55/sounds/538016/" target="_blank" rel="noopener">Herring Gull 1.wav</a></p>
+    <p class="meta">Canardo55 · 33 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Rooftop nest site, Scheveningen, Netherlands</p><p class="why">Close herring gull long-calls as one-shots.</p><p class="note">Urban rooftop; listen for town background.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Herring Gull 1.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_717857">
+  <div><p class="name"><a href="https://freesound.org/people/TRP/sounds/717857/" target="_blank" rel="noopener">230621 Ocean Waves, distant muffled at sand level, common terns, distant fishing boat engines, Brackley Beach, R-07 EM272stereo, PEI 8am</a></p>
+    <p class="meta">TRP · 138 s · mp3 320 kbps 48 kHz stereo · CC0 1.0 · Brackley Beach, Prince Edward Island, Canada (Roland R-07, EM272)</p><p class="why">Common tern calls over muffled surf: tern events.</p><p class="note">The only usable CC0 tern recording found. mp3 only, and distant fishing-boat engines; a weak candidate.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on 230621 Ocean Waves, distant muffled at sand level, common terns, distant fishing boat engines, Brackley Beach, R-07 EM272stereo, PEI 8am" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">8 candidates</p><h2>River and waterfalls</h2>
+<p class="muted">Water emitters at the real current: brooks, a medium stream, a fast torrent, a wider river, and small and large waterfalls.</p></header><div class="list">
+<div class="item" data-id="fs_454155">
+  <div><p class="name"><a href="https://freesound.org/people/kyles/sounds/454155/" target="_blank" rel="noopener">river small brook stream with rolling splashy good detail.flac</a></p>
+    <p class="meta">kyles · 66 s · flac 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Small splashy brook with good detail: brook emitter loop.</p><p class="note">No description, location or recorder.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on river small brook stream with rolling splashy good detail.flac" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_615250">
+  <div><p class="name"><a href="https://freesound.org/people/Fenodyrie/sounds/615250/" target="_blank" rel="noopener">brook in cleft.wav</a></p>
+    <p class="meta">Fenodyrie · 126 s · wav 44.1 kHz 16-bit stereo · CC0 1.0 · South of Sweden (Zoom H2)</p><p class="why">Brook running noisily through a rock cleft: second brook loop.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on brook in cleft.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_442478">
+  <div><p class="name"><a href="https://freesound.org/people/BonnyOrbit/sounds/442478/" target="_blank" rel="noopener">Forest river flows over rocks.wav</a></p>
+    <p class="meta">BonnyOrbit · 116 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Brione sopra Minusio, Ticino, Switzerland (Zoom H1)</p><p class="why">Forest river over big rocks: medium stream loop.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Forest river flows over rocks.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_869104">
+  <div><p class="name"><a href="https://freesound.org/people/bassimat/sounds/869104/" target="_blank" rel="noopener">Mountain Stream Flowing Past from the Riverbank, Boscoverde, Dolomites - Torrente Pettorina</a></p>
+    <p class="meta">bassimat · 419 s · wav 48 kHz 32-bit stereo · CC0 1.0 · Torrente Pettorina, Boscoverde, Rocca Pietore, Belluno Dolomites, Italy (Zoom H1essential)</p><p class="why">Mountain torrent flowing past the bank: fast-current loop.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Mountain Stream Flowing Past from the Riverbank, Boscoverde, Dolomites - Torrente Pettorina" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_420445">
+  <div><p class="name"><a href="https://freesound.org/people/Nice_Audio/sounds/420445/" target="_blank" rel="noopener">River Ambience</a></p>
+    <p class="meta">Nice_Audio · 102 s · wav 44.1 kHz 24-bit, 4 channels · CC0 1.0 · Bank of the River Eden, Cumbria, UK (Sound Devices MixPre-3, Sony ECM-680S)</p><p class="why">Wider lowland river flow with birds: river bed.</p><p class="note">File is listed as 4 channels though the description says stereo; we would fold it down. No CC0 kingfisher found.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on River Ambience" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_660250">
+  <div><p class="name"><a href="https://freesound.org/people/Tom_Kaszuba/sounds/660250/" target="_blank" rel="noopener">Small waterfall and flowing river.</a></p>
+    <p class="meta">Tom_Kaszuba · 61 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Small waterfall into a river: weir and small-fall emitter.</p><p class="note">Location not stated (Sony PCM-D100).</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Small waterfall and flowing river." placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_656632">
+  <div><p class="name"><a href="https://freesound.org/people/Tom_Kaszuba/sounds/656632/" target="_blank" rel="noopener">Waterfall</a></p>
+    <p class="meta">Tom_Kaszuba · 126 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Close roar of a large waterfall: big-fall emitter.</p><p class="note">Location not stated (Sony PCM-D100 on a stone piling above the fall).</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Waterfall" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_547707">
+  <div><p class="name"><a href="https://freesound.org/people/rainostr/sounds/547707/" target="_blank" rel="noopener">Waterfall in a Forest Ambience</a></p>
+    <p class="meta">rainostr · 1816 s · wav 48 kHz 16-bit stereo · CC0 1.0 · Goldstream Park, Vancouver Island, Canada (Tascam DR-05)</p><p class="why">Large waterfall with its river, from mid distance: distant-fall layer.</p><p class="note">Uploader says the audio is looped after minute 3; use only the first 3 minutes.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Waterfall in a Forest Ambience" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">14 candidates</p><h2>Weather: rain by surface</h2>
+<p class="muted">Rain re-voiced by what it falls on (leaves, roof from inside, metal, water, stone, glass) and the drips from leaves and eaves after rain.</p></header><div class="list">
+<div class="item" data-id="fs_584272">
+  <div><p class="name"><a href="https://freesound.org/people/SamsterBirdies/sounds/584272/" target="_blank" rel="noopener">Rain on leaves</a></p>
+    <p class="meta">SamsterBirdies · 50 s · flac 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Rain on leaves and bushes: leaves surface loop.</p><p class="note">Location not stated (Tascam DR-100MKIII).</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Rain on leaves" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_870824">
+  <div><p class="name"><a href="https://freesound.org/people/CHallSmith/sounds/870824/" target="_blank" rel="noopener">Rain, Heavy, Falling on Leaves</a></p>
+    <p class="meta">CHallSmith · 171 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Woods, Center Harbor, New Hampshire, USA</p><p class="why">Medium-heavy rain on leaves and wet ground: heavy leaves loop.</p><p class="note">Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Rain, Heavy, Falling on Leaves" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_610543">
+  <div><p class="name"><a href="https://freesound.org/people/xkeril/sounds/610543/" target="_blank" rel="noopener">Rain on roof (interior perspective)</a></p>
+    <p class="meta">xkeril · 178 s · wav 48 kHz 24-bit stereo · CC0 1.0 · Apartment, Lausanne, Switzerland</p><p class="why">Rain on a roof heard from inside with changing strength: interior roof loop.</p><p class="note">Roof material not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Rain on roof (interior perspective)" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_466241">
+  <div><p class="name"><a href="https://freesound.org/people/richwise/sounds/466241/" target="_blank" rel="noopener">Soft rain on a tile roof</a></p>
+    <p class="meta">richwise · 526 s · wav 48 kHz 32-bit stereo · CC0 1.0 · Loft under a tile roof, UK (Sound Devices MixPre-3, Rode SVMX)</p><p class="why">Soft rain on tiles heard from the attic: tile roof loop.</p><p class="note">Uploader notes occasional traffic, wind gusts and an aeroplane; long enough to cut clean parts. 2.5K downloads.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Soft rain on a tile roof" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_475468">
+  <div><p class="name"><a href="https://freesound.org/people/o_ciz/sounds/475468/" target="_blank" rel="noopener">Rain in the attic_1.wav</a></p>
+    <p class="meta">o_ciz · 190 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Rain on a roof heard in an attic: third roof option.</p><p class="note">Location, recorder and roof material not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Rain in the attic_1.wav" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_239939">
+  <div><p class="name"><a href="https://freesound.org/people/GregorQuendel/sounds/239939/" target="_blank" rel="noopener">Rain falling on a metal roof - 96 kHz / 24 Bit</a></p>
+    <p class="meta">GregorQuendel · 73 s · wav 96 kHz 24-bit stereo · CC0 1.0</p><p class="why">Rain drumming on a metal roof: shed and metal surface.</p><p class="note">Location and recorder not stated; 1.1K downloads.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Rain falling on a metal roof - 96 kHz / 24 Bit" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_399281">
+  <div><p class="name"><a href="https://freesound.org/people/Mjeno/sounds/399281/" target="_blank" rel="noopener">Rain on pond</a></p>
+    <p class="meta">Mjeno · 38 s · wav 44.1 kHz 24-bit stereo · CC0 1.0</p><p class="why">Rain drops hitting a pond in a rainstorm: water surface loop.</p><p class="note">Location and recorder not stated; short-ish.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Rain on pond" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_454143">
+  <div><p class="name"><a href="https://freesound.org/people/kyles/sounds/454143/" target="_blank" rel="noopener">rain medium on street pavement.flac</a></p>
+    <p class="meta">kyles · 36 s · flac 48 kHz 16-bit stereo · CC0 1.0</p><p class="why">Medium rain on pavement: stone surface loop.</p><p class="note">No description; tagged &#x27;street&#x27;, so listen for cars.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on rain medium on street pavement.flac" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_833924">
+  <div><p class="name"><a href="https://freesound.org/people/bassimat/sounds/833924/" target="_blank" rel="noopener">Rain on the House Roof Window #001</a></p>
+    <p class="meta">bassimat · 830 s · wav 48 kHz 32-bit stereo · CC0 1.0 · Roof window of a house, Rocca Pietore, Belluno, Italy</p><p class="why">Rain on roof glass heard from inside: glass surface loop.</p><p class="note">Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Rain on the House Roof Window #001" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_81819">
+  <div><p class="name"><a href="https://freesound.org/people/silencyo/sounds/81819/" target="_blank" rel="noopener">Silencyo_CC_Rain on Window_Reverberant room_Medium Perspective .aif</a></p>
+    <p class="meta">silencyo · 49 s · aiff 48 kHz 16-bit stereo · CC0 1.0 · Aubagne, Bouches-du-Rhône, France (2x Neumann KM84 AB, Fostex PD4)</p><p class="why">Rain on a window from inside a reverberant room: glass variant.</p><p class="note">The rain is a film-shoot rain machine (&#x27;false rain&#x27;), with some real drips outside.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Silencyo_CC_Rain on Window_Reverberant room_Medium Perspective .aif" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_452297">
+  <div><p class="name"><a href="https://freesound.org/people/kyles/sounds/452297/" target="_blank" rel="noopener">rain drips on wet leaves.flac</a></p>
+    <p class="meta">kyles · 92 s · flac 48 kHz 16-bit stereo · CC0 1.0</p><p class="why">Drips on wet leaves: after-rain drips for 60-90 s.</p><p class="note">No description, location or recorder.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on rain drips on wet leaves.flac" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_760857">
+  <div><p class="name"><a href="https://freesound.org/people/Whats_The_Frequency_Kennett/sounds/760857/" target="_blank" rel="noopener">Rain dripping through trees in a forest with birds calling</a></p>
+    <p class="meta">Whats_The_Frequency_Kennett · 99 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Rain dripping through woodland as birds call: the after-the-rain moment.</p><p class="note">Location and recorder not stated; tagged wind.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Rain dripping through trees in a forest with birds calling" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_81729">
+  <div><p class="name"><a href="https://freesound.org/people/silencyo/sounds/81729/" target="_blank" rel="noopener">Silencyo_RAIN_NIGHT_Village_CloseUp_Drips_Gutter_MSd.aif</a></p>
+    <p class="meta">silencyo · 95 s · aiff 48 kHz 16-bit stereo · CC0 1.0 · Quiet village, Miradoux, Gers, France, rainy night (Schoeps MS, Fostex PD4)</p><p class="why">Close drips into a metal gutter: eaves and gutter drips.</p><p class="note">Uploader: no traffic at all.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Silencyo_RAIN_NIGHT_Village_CloseUp_Drips_Gutter_MSd.aif" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_628404">
+  <div><p class="name"><a href="https://freesound.org/people/xkeril/sounds/628404/" target="_blank" rel="noopener">Water dripping after the rain</a></p>
+    <p class="meta">xkeril · 148 s · wav 48 kHz 24-bit stereo · CC0 1.0</p><p class="why">Water dripping after rain in a quiet courtyard with natural reverb: eaves drips (also cave-like).</p><p class="note">Location not stated; 1.3K downloads.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on Water dripping after the rain" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><p class="eyebrow">2 candidates</p><h2>Caves</h2>
+<p class="muted">Optional: sparse natural cave drips with real reverb, layered with vanilla dripstone.</p></header><div class="list">
+<div class="item" data-id="fs_343742">
+  <div><p class="name"><a href="https://freesound.org/people/rucisko/sounds/343742/" target="_blank" rel="noopener">cave 01</a></p>
+    <p class="meta">rucisko · 76 s · wav 44.1 kHz 24-bit stereo · CC0 1.0 · Deep inside Arnarker lava cave, Ölfus, Iceland</p><p class="why">Sparse drips forming ice stalactites in a lava cave, with the cave&#x27;s own reverb.</p><p class="note">Recorder not stated.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on cave 01" placeholder="Note (optional)"></textarea>
+</div>
+<div class="item" data-id="fs_818888">
+  <div><p class="name"><a href="https://freesound.org/people/mentos987/sounds/818888/" target="_blank" rel="noopener">cave dripping water</a></p>
+    <p class="meta">mentos987 · 29 s · wav 48 kHz 16-bit stereo · CC0 1.0</p><p class="why">Drips from a cave ceiling into water at a small cave entrance.</p><p class="note">Location not stated; wind reduced in editing.</p></div>
+  <div class="marks"><button type="button" class="yes" data-mark="yes" aria-pressed="false">Yes</button><button type="button" class="no" data-mark="no" aria-pressed="false">No</button></div>
+  <textarea aria-label="Note on cave dripping water" placeholder="Note (optional)"></textarea>
+</div>
+</div></section>
+<section><header><h2>Export</h2><p class="muted">Paste this back into the session.</p></header><textarea id="out" readonly></textarea></section>
+</div>
+<script>
+const KEY = "awaken-cc0-shortlist-2026-10-25";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function render() {
+  let y = 0, n = 0, total = 0;
+  document.querySelectorAll(".item").forEach(it => {
+    total++;
+    const s = state[it.dataset.id] || {};
+    it.querySelectorAll(".marks button").forEach(b => b.setAttribute("aria-pressed", String(s.mark === b.dataset.mark)));
+    const ta = it.querySelector("textarea");
+    if (document.activeElement !== ta) ta.value = s.note || "";
+    if (s.mark === "yes") y++; else if (s.mark === "no") n++;
+  });
+  document.getElementById("count").textContent = y + " yes · " + n + " no · " + (total - y - n) + " unmarked of " + total;
+}
+document.querySelectorAll(".item").forEach(it => {
+  it.querySelectorAll(".marks button").forEach(b => b.addEventListener("click", () => {
+    const s = state[it.dataset.id] || (state[it.dataset.id] = {});
+    s.mark = s.mark === b.dataset.mark ? undefined : b.dataset.mark;
+    save(); render();
+  }));
+  it.querySelector("textarea").addEventListener("input", e => {
+    (state[it.dataset.id] || (state[it.dataset.id] = {})).note = e.target.value; save(); render();
+  });
+});
+function exported() {
+  const out = { shortlist: "2026-10-25", yes: [], no: [], notes: {} };
+  document.querySelectorAll(".item").forEach(it => {
+    const s = state[it.dataset.id] || {};
+    (s.mark === "yes" ? out.yes : out.no).push(it.dataset.id);
+    if (s.note) out.notes[it.dataset.id] = s.note;
+  });
+  return JSON.stringify(out, null, 1);
+}
+document.getElementById("export").addEventListener("click", () => { document.getElementById("out").value = exported(); });
+document.getElementById("copy").addEventListener("click", () => {
+  const t = document.getElementById("out"); t.value = exported();
+  navigator.clipboard.writeText(t.value).catch(() => { t.focus(); t.select(); });
+});
+document.getElementById("allyes").addEventListener("click", () => {
+  document.querySelectorAll(".item").forEach(it => { const s = state[it.dataset.id] || (state[it.dataset.id] = {}); if (!s.mark) s.mark = "yes"; });
+  save(); render();
+});
+render();
+</script>
