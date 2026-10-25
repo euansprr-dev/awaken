@@ -213,13 +213,17 @@ final class AtlasPainter {
                 base.transformPosition((float) (ox + lights[i] + 0.5), (float) (lights[i + 1] + 1.4 - s.cy()), (float) (oz + lights[i + 2] + 0.5), a);
                 // flicker a little, each light on its own phase
                 float f = 0.85f + 0.15f * (float) Math.sin(s.time() * 3.1f + (lights[i] * 7 + lights[i + 2] * 13));
-                int alpha = Math.min(255, (int) (night * 230 * f));
-                float hw = size, z = a.z + 3f;
-                p = gvtx(p, a.x - hw, a.y - hw, z, 0, 0, alpha);
-                p = gvtx(p, a.x + hw, a.y - hw, z, 1, 0, alpha);
-                p = gvtx(p, a.x + hw, a.y + hw, z, 1, 1, alpha);
-                p = gvtx(p, a.x - hw, a.y + hw, z, 0, 1, alpha);
-                n++;
+                float z = a.z + 3f;
+                // a wide warm halo that pools on the roofs round it, then the bright lamp itself
+                for (int layer = 0; layer < 2 && n < LIGHTS; layer++) {
+                    float hw = layer == 0 ? size * 3.2f : size * 1.1f;
+                    int alpha = Math.min(255, (int) (night * (layer == 0 ? 110 : 255) * f));
+                    p = gvtx(p, a.x - hw, a.y - hw, z, 0, 0, alpha);
+                    p = gvtx(p, a.x + hw, a.y - hw, z, 1, 0, alpha);
+                    p = gvtx(p, a.x + hw, a.y + hw, z, 1, 1, alpha);
+                    p = gvtx(p, a.x - hw, a.y + hw, z, 0, 1, alpha);
+                    n++;
+                }
             }
         }
         return n;
@@ -270,9 +274,9 @@ final class AtlasPainter {
         float glow = atlas.trailGlow();
         int n = 0;
         for (int pass = 0; pass < 2; pass++) {
-            float half = (pass == 0 ? 5.5f : 1.8f) * guiScale;
-            int alpha = (int) ((pass == 0 ? 90 : 245) * glow);
-            int rr = pass == 0 ? 224 : 255, gg = pass == 0 ? 168 : 222, bb = pass == 0 ? 106 : 160;
+            float half = (pass == 0 ? 7f : 2.2f) * guiScale;
+            int alpha = (int) ((pass == 0 ? 130 : 255) * glow);
+            int rr = 255, gg = pass == 0 ? 160 : 214, bb = pass == 0 ? 60 : 120;
             for (int i = 0; i < upto && i < TRAIL_QUADS; i++) {
                 int j = i * 3, k = (i + 1) * 3;
                 base.transformPosition((float) (t[j] - s.cx()), (float) (t[j + 1] + 0.6 - s.cy()), (float) (t[j + 2] - s.cz()), a);
