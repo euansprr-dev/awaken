@@ -1,7 +1,27 @@
 {
   "variants": {
-    "": {
-      "model": "awaken:block/slate_tiles"
-    }
+    "": [
+      {
+        "model": "awaken:block/slate_tiles",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/slate_tiles",
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/slate_tiles_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/slate_tiles_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/slate_tiles_3",
+        "weight": 1
+      }
+    ]
   }
 }

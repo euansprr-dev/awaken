@@ -85,6 +85,15 @@
             16
           ]
         },
+        "south": {
+          "texture": "#pipe",
+          "uv": [
+            6,
+            12,
+            10,
+            16
+          ]
+        },
         "east": {
           "texture": "#pipe",
           "uv": [

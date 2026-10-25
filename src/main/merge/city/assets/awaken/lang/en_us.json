@@ -15,5 +15,9 @@
   "block.awaken.loading_door": "Loading Door",
   "block.awaken.hoist_beam": "Hoist Beam",
   "block.awaken.rope": "Rope",
-  "block.awaken.chimney_bricks": "Chimney Crown"
+  "block.awaken.chimney_bricks": "Chimney Crown",
+  "block.awaken.plaster": "Plaster",
+  "block.awaken.timber": "Timber",
+  "block.awaken.city_bricks": "City Bricks",
+  "block.awaken.ashlar": "Ashlar"
 }

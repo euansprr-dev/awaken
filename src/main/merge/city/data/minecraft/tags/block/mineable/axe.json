@@ -6,6 +6,7 @@
     "awaken:lit_window",
     "awaken:loading_door",
     "awaken:hoist_beam",
-    "awaken:rope"
+    "awaken:rope",
+    "awaken:timber"
   ]
 }

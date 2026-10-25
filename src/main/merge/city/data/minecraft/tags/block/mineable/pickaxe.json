@@ -7,6 +7,9 @@
     "awaken:clay_tile_stairs",
     "awaken:clay_tile_slab",
     "awaken:chimney_bricks",
-    "awaken:drainpipe"
+    "awaken:drainpipe",
+    "awaken:plaster",
+    "awaken:city_bricks",
+    "awaken:ashlar"
   ]
 }
