@@ -664,9 +664,9 @@ def drainpipe():
             kk = k
             if rng.random() < 0.12:
                 kk += rng.choice([-1, 1])
-            if y in (7, 15):   # the seam ring: a dark joint ...
+            if y == 15:        # the seam ring, one per length (two read as a chain from the street): a dark joint ...
                 kk = max(0, k - 2)
-            elif y in (0, 8):  # ... and the lip of the next length just below it
+            elif y == 0:       # ... and the lip of the next length just below it
                 kk = min(4, k + 1)
             c.set(x, y, step(LEAD, kk))
     for y in range(0, 6):      # the bracket strap's top: dark iron

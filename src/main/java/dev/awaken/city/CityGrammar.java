@@ -60,8 +60,10 @@ final class CityGrammar {
                 boolean crow = p.storeys() >= 4 && p.roof() == CityPlan.Roof.GABLE && (k % 3 == 0);
                 BlockState wall = w < 45 ? PLASTER[P_WHITE] : w < 75 ? PLASTER[P_CREAM] : w < 87 ? PALE_PLANKS : w < 94 ? PLASTER[P_OCHRE] : PLASTER[P_OXBLOOD];
                 Roof roof = r < 40 ? SLATE_KIT : r < 65 ? SLATE : r < 80 ? SLATE_LIGHT : r < 90 ? TUFF_ROOF : r < 95 ? BLACKSTONE : SLATE_SMOOTH;
-                yield new Style(BELLWATCH, pick(v, ASHLAR, COBBLE, TUFF_BRICKS, ASHLAR, ASHLAR), wall, true, k % 4 == 3 ? 1 : 0, roof, CAP_SMOOTH,
-                        C_DARK, C_DARK, C_STONE, POLISHED_ANDESITE, CHISELED_STONE_BRICKS, null,
+                int tone = k % 4 == 3 ? 1 : 0;
+                Course beams = tone == 1 ? C_SPRUCE : C_DARK;
+                yield new Style(BELLWATCH, pick(v, ASHLAR, COBBLE, TUFF_BRICKS, ASHLAR, ASHLAR), wall, true, tone, roof, CAP_SMOOTH,
+                        beams, beams, C_STONE, POLISHED_ANDESITE, CHISELED_STONE_BRICKS, null,
                         W_LEADED, W_DORMER, true, R_TIMBER, 0, 35, new int[]{1, 1, 1, 2, 3, 4, 5},
                         new int[]{SH_BLUE, SH_SAGE, SH_OXBLOOD}, 70, true, false, SMOOTH_SLAB, k % 10 < 7 ? 0 : 1,
                         crow, true, wall, 30, false, false);
@@ -82,29 +84,32 @@ final class CityGrammar {
                         : w < 85 ? PLASTER[P_MAUVE] : PLASTER[P_CLAY];
                 Roof roof = r < 40 ? CLAY : r < 60 ? COPPER : r < 75 ? RESIN : r < 90 ? BRONZE_ROOF : GRANITE;
                 boolean iron = k % 10 < 7;
+                // the floor courses differ house by house (the rows never do): bronze, sandstone or quartz
+                int cv = Ctx.shape(p.id(), 13, 97);
+                Course course = cv < 55 ? C_BRONZE : cv < 85 ? C_SANDSTONE : C_QUARTZ;
                 yield new Style(MARKET, pick(v, CUT_SANDSTONE, ASHLAR, CUT_SANDSTONE), wall, false, 0, roof, CAP_SMOOTH,
-                        C_SANDSTONE, C_BRONZE, C_BRONZE, CALCITE, CHISELED_SANDSTONE, p.storeys() >= 5 ? CALCITE : null,
+                        C_SANDSTONE, course, C_BRONZE, CALCITE, CHISELED_SANDSTONE, p.storeys() >= 5 ? CALCITE : null,
                         W_SASH, W_SHOP, false, k % 3 == 1 ? R_PAIRS : R_SINGLE, iron ? 1 : 0, 50, new int[]{1, 1, 4, 5, 2, 3},
                         new int[]{SH_CREAM, SH_GREEN}, 30, false, false, SMOOTH_SLAB, 0,
                         false, true, VERDIGRIS, 0, true, false);
             }
             case TERRACE -> new Style(TERRACE, pick(v, POLISHED_DIORITE, QUARTZ_BRICKS, ASHLAR), pick(v / 3, CALCITE, QUARTZ_BRICKS, POLISHED_DIORITE, SMOOTH_QUARTZ),
                     false, 0, r < 50 ? PALE : r < 75 ? QUARTZ : STONE_ROOF, CAP_QUARTZ,
-                    C_QUARTZ, C_QUARTZ, C_DIORITE, POLISHED_DIORITE, CHISELED_QUARTZ, QUARTZ_PILLAR,
+                    C_QUARTZ, Ctx.shape(p.id(), 13, 97) < 70 ? C_QUARTZ : C_DIORITE, C_DIORITE, POLISHED_DIORITE, CHISELED_QUARTZ, QUARTZ_PILLAR,
                     W_ARCHED, W_ARCHED, false, R_SYM, 2, 25, new int[]{5, 3, 1},
                     NO_SHUTTERS, 0, false, false, SMOOTH_SLAB, 2,
                     false, false, CALCITE, 0, false, false);
             case WORKS -> new Style(WORKS, pick(v, ASHLAR, CITY_BRICKS), w < 50 ? CITY_BRICKS : w < 70 ? MUD_BRICKS : CINNABAR_BRICKS,
                     false, 0, r < 30 ? BRICK : r < 60 ? CINNABAR : r < 80 ? BLACKSTONE : SLATE_SMOOTH, CAP_STONE,
                     C_STONE, C_BLACKSTONE, C_BRICK, ASHLAR, CHISELED_STONE_BRICKS, null,
-                    W_WORKS, W_BARRED, false, R_PAIRS, 2, 0, new int[]{0},
+                    W_WORKS, W_BARRED, false, R_PAIRS, 1, 0, new int[]{0},
                     NO_SHUTTERS, 0, false, true, SMOOTH_SLAB, 0,
                     false, false, CITY_BRICKS, 0, false, false);
             case GARDEN_D -> {
                 BlockState wall = w < 40 ? PLASTER[P_WHITE] : w < 70 ? PLASTER[P_CREAM] : w < 85 ? BIRCH_PLANKS : PALE_PLANKS;
                 yield new Style(GARDEN_D, ASHLAR, wall, k % 10 < 3, 1,
                         r < 45 ? GREEN : r < 80 ? WEATHERED : DARK_PRISMARINE, CAP_SMOOTH,
-                        C_SANDSTONE, C_SANDSTONE, C_VERDIGRIS, CALCITE, CHISELED_STONE_BRICKS, null,
+                        C_SANDSTONE, Ctx.shape(p.id(), 13, 97) < 70 ? C_SANDSTONE : C_QUARTZ, C_VERDIGRIS, CALCITE, CHISELED_STONE_BRICKS, null,
                         W_COTTAGE, W_COTTAGE, false, k % 10 < 3 ? R_TIMBER : R_SYM, 0, 70, new int[]{1, 2, 3, 4, 5, 6},
                         new int[]{SH_GREEN, SH_CREAM, SH_SAGE}, 80, false, false, SMOOTH_SLAB, 0,
                         false, false, PLASTER[P_WHITE], 70, false, false);
@@ -726,10 +731,10 @@ final class CityGrammar {
         int in = inward(sd);
         int eave = p.eave();
         if (fc >= F_BACK && p.storeys() >= 2) {
-            // a jetty's beam ends, two out from the ground wall, in the row of the corbels
+            // a jetty's beam ends, two out from the ground wall, in the row of the corbels (moulded, as the courses)
             if (f.jetty[sd]) {
                 int bt = t - f.baseOffset(sd);
-                if (bt >= 0 && bt < f.base.length(sd) && (bt & 1) == 0) put(f, b, x, g + 5, z, beam(st, sd == N || sd == S ? 1 : 0));
+                if (bt >= 0 && bt < f.base.length(sd) && (bt & 1) == 0) put(f, b, x, g + 5, z, st.course().straight()[in]);
             }
             boolean street = fc == F_STREET;
             int middle = len / 2;
