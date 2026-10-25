@@ -14,15 +14,18 @@ float cloudDensity(vec3 rel, vec4 cp, float camY, bool coarse) {
     if (h <= 0.0 || h >= 1.0) return 0.0;
     vec2 xz = rel.xz + cp.zw;
     float cov = texture(CloudNoiseSampler, fract(xz / 3072.0)).r * 0.7 + texture(CloudNoiseSampler, fract(xz / 960.0 + 0.37)).g * 0.3;
-    // cover 0.45 leaves most of the sky open between distinct clouds; toward 0.95 it closes into an overcast deck
-    float c = clamp((cov - (1.0 - cp.y * 0.72)) / 0.1, 0.0, 1.0);
-    // flat-ish bases, rounded tops that rise where the cloud is thick
-    float shape = smoothstep(0.0, 0.1, h) * (1.0 - smoothstep(0.25 + 0.7 * c, 0.3 + 0.7 * c + 0.05, h));
+    // cover 0.45 leaves most of the sky open between distinct clouds; toward 0.95 it closes into an overcast deck. A
+    // cloud needs denser cover the higher it climbs, so each narrows upward into a dome (not a wall) and only the
+    // thickest rise tall
+    float dome = h * h;
+    float c = clamp((cov - (1.0 - cp.y * 0.72) - 0.16 * dome) / 0.1, 0.0, 1.0);
+    float shape = smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(0.85, 1.0, h));
     float d = c * shape;
     if (coarse || d <= 0.0) return d;
     // billows and wisps eat into the edges (shifted with height: a little depth from flat noise)
-    float b = texture(CloudNoiseSampler, fract(xz / 256.0 + rel.y / 512.0)).b;
-    float w = texture(CloudNoiseSampler, fract(xz / 120.0 - rel.y / 300.0)).a;
+    float y = rel.y + camY;
+    float b = texture(CloudNoiseSampler, fract(xz / 256.0 + y / 512.0)).b;
+    float w = texture(CloudNoiseSampler, fract(xz / 120.0 - y / 300.0)).a;
     return clamp(d - (1.0 - b) * 0.45 * (1.0 - h * 0.4) - (1.0 - w) * 0.12, 0.0, 1.0);
 }
 

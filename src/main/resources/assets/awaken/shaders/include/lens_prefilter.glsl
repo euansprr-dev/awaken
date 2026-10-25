@@ -51,7 +51,8 @@ void main() {
     w *= 1.0 + 1.5 * P(20).a * smoothstep(0.6, 0.9, hi) * smoothstep(0.45, 0.8, sat) * cool;
     float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
 #ifdef LENS_LIGHT
-    sky *= cl.a;
+    // (only partly: soft clouds cutting the rays fully streak the whole sky like rain curtains)
+    sky *= mix(1.0, cl.a, 0.6);
 #endif
     fragColor = vec4(c * w, sky * smoothstep(0.35, 0.95, luma));
 }

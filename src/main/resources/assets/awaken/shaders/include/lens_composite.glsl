@@ -410,7 +410,7 @@ void main() {
         // can't hold (clouds crossing the sun)
         if (!classic) {
             float vol = upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
-            c = screen(c, lightColour(p1, sunset) * (vol * 1.6) + texture(ShaftsSampler, texCoord).r * sunColor * 0.7);
+            c = screen(c, lightColour(p1, sunset) * (vol * 1.6) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
         } else
 #endif
         c = screen(c, texture(ShaftsSampler, texCoord).r * sunColor * 1.4);

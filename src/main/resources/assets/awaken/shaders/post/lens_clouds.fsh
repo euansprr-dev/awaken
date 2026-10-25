@@ -67,13 +67,14 @@ void main() {
     float mu = dot(v, l);
     // a strong even part (light scattered many times inside a cloud keeps it white from every side) and a forward lobe
     // for the silver lining toward the sun
-    float phase = 0.8 + 3.0 * hg(mu, 0.7);
+    float phase = 0.8 + 1.8 * hg(mu, 0.75);
     // the sun's (or moon's) light on them and the sky's: the game's cloud colour is the sky's light by hour and weather
     vec4 p1 = P(1), cc = F(19);
     vec3 sunCol = f16.y > 0.5 ? vec3(0.55, 0.65, 0.9) * 0.6 : mix(vec3(1.0, 0.96, 0.9), P(9).rgb * 1.15, p1.a * 0.9);
     sunCol *= f14.w * 1.25;
     // the sky's light on them: a cool blue from above, a little of the horizon's colour, by the game's cloud colour
-    vec3 ambient = cc.rgb * mix(vec3(0.62, 0.72, 0.92), P(10).rgb, 0.35) * 0.85;
+    // (overcast keeps it: a grey sky is bright grey, not night)
+    vec3 ambient = max(cc.rgb, vec3(0.5)) * mix(vec3(0.62, 0.72, 0.92), P(10).rgb, 0.35) * 0.95;
     float T = 1.0;
     vec3 L = vec3(0.0);
     const float sigma = 0.03;
@@ -95,7 +96,7 @@ void main() {
         float beer = max(exp(-od * sigma * 1.4), 0.55 * exp(-od * sigma * 0.3));
         // powder: the thin edges facing the sun glow, dense cores darken (a cheap stand-in for multiple scattering)
         float powder = 1.0 - exp(-d * 6.0);
-        vec3 S = sunCol * beer * phase * mix(1.0, powder, 0.5) + ambient * (0.35 + 0.65 * h);
+        vec3 S = sunCol * beer * phase * mix(1.0, powder, 0.5) + ambient * (0.55 + 0.45 * h);
         float a = 1.0 - exp(-d * sigma * dt);
         L += T * S * a;
         T *= 1.0 - a;
