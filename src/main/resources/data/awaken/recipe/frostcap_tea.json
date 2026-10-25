@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "awaken_meals",
+  "ingredients": [
+    "minecraft:bowl",
+    "awaken:frostcap",
+    "minecraft:sugar"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:frostcap_tea"
+  }
+}

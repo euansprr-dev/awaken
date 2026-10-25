@@ -169,6 +169,18 @@ final class LivingCommands {
                                 c.getSource().sendSuccess(() -> Component.literal(camp == null ? "No ground for a camp here." : camp.name() + " at " + camp.pos().toShortString()), false);
                                 return camp == null ? 0 : 1;
                             }))));
+            // crafts (Phase E): a craft's level outright, for tours and tests
+            l.then(Commands.literal("craft").requires(AwakenCommands.admin())
+                    .then(Commands.argument("craft", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .then(Commands.argument("level", IntegerArgumentType.integer(1, 50)).executes(c -> {
+                                var craft = dev.awaken.living.craft.Craft.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "craft"));
+                                if (craft == null) {
+                                    c.getSource().sendFailure(Component.literal("Crafts: hunting, foraging, mining, fishing, smithing, cooking."));
+                                    return 0;
+                                }
+                                dev.awaken.living.craft.Crafts.setLevel(c.getSource().getPlayerOrException(), craft, IntegerArgumentType.getInteger(c, "level"));
+                                return 1;
+                            }))));
             l.then(Commands.literal("quests").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var s = dev.awaken.living.quest.QuestEngine.state(p);

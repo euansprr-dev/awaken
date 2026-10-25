@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "awaken_meals",
+  "ingredients": [
+    "minecraft:bowl",
+    "awaken:spiritgrass",
+    "minecraft:honey_bottle"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:spirit_tea"
+  }
+}

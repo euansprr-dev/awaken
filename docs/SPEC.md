@@ -295,7 +295,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   every one under it, saved, synced; true when new), `onGranted(BiConsumer<ServerPlayer, Tier>)` (each new tier once,
   lowest first), `state(ServerPlayer)` (`AscentState`), `arrivedByMovement(ServerPlayer, int seconds ≤ 20)` (a third
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
-  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
+  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves, `stairSliding(Player)` a
+  slide down stairs (§17.22; `sliding` is true too). `core.api.AirHooks`
   (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
   `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
   Shoulder Surfing it flips first person and the shoulder view, §17.13).
@@ -856,7 +857,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Modrinth's Maven, never bundled or required.
 - The pack is `pack/mods.json` (profiles: perf, horizon, feel, sound, comfort, together, ultra, tools), pinned by
   `tools/pack.py lock` into `pack/lock.json` (exact files and SHA-512, required dependencies, a dependency's own
-  version pin). `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
+  version pin). Distant Horizons (the horizon profile) is off by default since 2026-10-25: `tools/play.sh --pack` leaves
+  it out unless `--horizon` is given (its far generation in a new world was the lead CPU and garbage cost behind
+  Carillon's hitches, docs/perf/CITY-FPS.md); our own far-terrain renderer is the plan. `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
   what it installed, and refuses while a client runs there. GameTests never load the pack: they test Awaken alone.
 - Instanced dimensions (`compat.Instanced`): every `awaken:` dimension but `awaken:stillpoint` (gate and dream cells,
   trials, the Halo, the Descent's strata, the Endless). Companions that draw or remember a place stay out of them.
@@ -2507,6 +2510,39 @@ free, and the way up in front of the face from the hold to standing height. The 
 slab slope, Carillon's overhanging eave stair on a gentle and a steep gable (`CityGrammar.roof`), and a step with a
 block over it (no climb).
 
+### 17.22 Stair slide (Euan's playtest, 2026-10-25: "if I use the slide whilst I'm on a stair, it actually slides down")
+A slide started on a run of stairs or stepped slabs, or one that reaches the top of a run, slides down it. No new key;
+the slide's own controls (jump out, a power's motion, a push, water) end it as before.
+- **A run** (`BodyRules.stairStart`): along the slide's way, at least two half-block steps down (0.25-0.6 each; a full
+  block or more is an edge, a single step is just a step) ahead within 1.6 of the body's centre, nothing rising and no
+  gap before them, and the run's fall line (the grid side the ground drops most to over 1.25 blocks) within 35° of the
+  way. Read each tick on the line through the body's centre every 1/16 block, from 1.2 behind its rear to 1.6 ahead;
+  each nose that matters is then found exactly (bisection, 1/512). Running down stairs the feet leave each step: a
+  run under them counts as ground for starting a slide (client and server).
+- **The glide**: the body moves along the way, then down onto the straight line through the step noses (its rear edge
+  on the line: never inside a step, never a bump or a hop per step; up to 0.25 a tick back up onto it after a step
+  dropped off), and vanilla's move does the vertical part (its collisions, its landing). On a stair run the drop per
+  tick is exactly speed × slope. The way bends onto the fall line at up to 3° a tick. Speed tends to 0.42 b/t (a
+  tactical sprint is ~0.35, a slide enters at 0.38 / 0.46) at up to 0.012 a tick: a faded slide builds, a tactical one
+  eases down. No 14-tick limit while the run goes on; at most 120 ticks (6 s) of run. The ride is never a fall (fall
+  distance reset on both sides each tick).
+- **The bottom** (`StairProfile.last`): down the last step at the run's own slope onto the floor, then the run-out: the
+  slide's last 8 ticks, its own decay from the speed it has (0.42 → ~0.27, ~2.8 blocks). A landing mid-flight is a
+  bottom; the run-out slides on and, at the next flight's top, the stair slide takes over again. A turn in the run or a
+  wall at its end ends it the same way (the run-out, then the wall's thud). Something in the way of the crawl box mid-
+  run hands it to the run-out at once.
+- **Jump out** keeps the run's speed + 0.15; on the noses (feet just off the steps) the slide jumps itself.
+- **Server**: authoritative as for the slide. It reads the run itself from where it has the body (the same functions,
+  the same bend): while it sees one, the slide's end moves to 16 ticks ahead (run-out 8 + grace 6 + 2), else the slide
+  ends as before and the client is told. Vanilla's move check ignores the vertical difference of the client's line, so
+  the glide is never corrected.
+- **Look**: the third-person slide pose (or its clip) tipped forward to the slope it is going down (from the body's own
+  motion, eased, up to 40°), ours and others' alike. First person: `MovementHooks.stairSliding(Player)` (both sides,
+  `Body.isStairSliding`) for the animation plan to hook into.
+- Test: `body_stair_slide` (six stone-brick stairs, a slide from the top: the bottom in 23 ticks at 0.38 b/t against a
+  walk's 0.22, a 15-tick glide whose drop never changes by more than 0.014 a tick, the server sliding past 20 ticks
+  and no fall; a way across the stairs is no run).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
@@ -2799,9 +2835,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Catch-up (when a population takes bodies after days away): herds +1 a day (+2 while their pack is wiped out), packs
   +1 per 2 days (+1 per 4 once wiped), roosts +1 a day; each night a pack lived its herd lost one (never under 2).
 - Natural spawning leaves the herd species to the ledger (`LivingHooks.ledgered`, read by `FaunaRules.verdict`:
-  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before. Game rule
-  `awaken:living_herds` (default on): off, herds spawn naturally again and the ledger keeps only packs and roosts; the
-  GameTest server starts with it off, so the fauna tests see natural herds as before (`living_ledger` checks the rule).
+  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before.
 - Dev: `/awaken living ledger`. Test `living_ledger`.
 
 ### 21.8 Camps and nests (Phase D, as built 2026-10-25)
@@ -2827,6 +2861,52 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   tomorrow night"), and the next night (14000-14400) 4 + tier of its creatures come 24 blocks short of the target,
   toward it.
 - Dev: `/awaken living camps`, `nest <kind> <tier>`. Test `living_camp`.
+
+### 21.9 Crafts (Phase E, as built 2026-10-25)
+- Six crafts (`living.craft.Craft`), levels 1-50, craft XP to the next level 40·c^1.3 + 40; attachment `awaken:crafts`
+  (schema 1, kept through death, synced to its owner: craft XP per craft, kinds hunted). A craft level is a toast; a
+  perk opening is a toast that names it (counter `awaken:craft_perks`).
+- Each paying action also pays the Hunter level 0.008 of a level (pacing_sim CRAFT_ACTION) through its craft's budget
+  (forage 0.012, mine 0.012, fish 0.012, cook 0.007, smith 0.007 per 10 min, × the rank's wild share), and the craft
+  XP shrinks by the same share the budget kept back, so a farm levels off on both. Hunting rides the kill's "hunt"
+  budget (its craft XP divided by how worn that is).
+- Sources: Hunting, a kill: 4 + 0.3 × level (+20 an elite, +60 a beast, +30 the first of a kind). Foraging: a ripe
+  plant 12 (and its herb), a flower or fern 2, a mushroom 4, berries picked 5. Mining: an ore 10 (deepslate 15).
+  Fishing: a catch 15. Smithing: a temper at the Forge 40 (hearth's `awaken:use/temper`, through `Quests.advance`),
+  an anvil job 12, a tool, weapon or armour crafted 8, a Field Forge mend 8. Cooking: food crafted 8, smelted 6 each.
+- Herbs are no new blocks: a natural plant (short and tall grass, ferns, small flowers) is ripe on a day by a pure hash
+  of its column and the clock's day: 3% (6% with Root Sense). Harvested, it gives the land's herb: sunleaf (most
+  lands), frostcap (frostwild), emberroot (sunscorch), moonmoss (mire), duskbloom (duskwood, canopy), spiritgrass (10%
+  anywhere). Nine meals from them (shapeless recipes, a bowl back where there was one): herb broth (Regeneration 20 s),
+  frostcap tea (Resistance 60 s), ember skewer (Strength 60 s), moonmoss soup (Night Vision 120 s), hunter's stew
+  (Strength and Speed 120 s), forager's salad (Regeneration 30 s), miner's pasty (Haste 180 s), angler's chowder (Water
+  Breathing 120 s, Dolphin's Grace 60 s), spirit tea (Luck 120 s).
+- Perks (5 · 10 · 20 · 30 · 40 · 50), all live:
+  - Hunting: Field Dressing (animals: a hide or more meat 33%), Tracks (client: glowing pawprints of creatures the band
+    read, 30 s), Weak Spot (crits ×1.15 on kinds killed 20+), Stalker (sneak attacks on a creature not targeting you
+    ×1.5), Trophy (beast parts twice), Apex (×1.1 to elites and beasts).
+  - Foraging: Herb Glint (client: a sea-green shimmer on ripe plants within 16), Wild Larder (+1 berries, glow berries,
+    mushrooms), Root Sense (6% ripe), Seed Keeper (grass 4%: pumpkin, melon, beetroot or torchflower seeds), Bloom (by
+    day among 3+ flowers, a Bloom Sprite comes, 30% each 10 s, none within 16), Wildheart (Regeneration in forests).
+  - Mining: Clean Strike (ores +1 15%), Ore Sense (client: every 4 s with a pick in hand, ores within 6 pulse through
+    stone as glass outlines, 3 s), Vein Sight (Ore Sense 10), Deep Ear (stone and deepslate ×1.1 break speed), Deep Vein
+    (deepslate ores +1 25%), Heart of Stone (below y 0, damage ×0.85).
+  - Fishing: Calm Water (+1 fish 20%), Shimmer (a treasure 10%: name tag, saddle, nautilus shell, book, bottle o'
+    enchanting), Deep Lungs (air lasts twice as long), Storm Caller (+1 in the rain), Pearl Diver (prismarine shard 8%,
+    ender pearl 2%), Leviathan Line (catches pay the Hunter level twice).
+  - Smithing: Patch (anvil jobs a level cheaper), Fine Edge (crafted gear +10% max durability), Field Forge (an iron
+    ingot on a lit campfire mends the off-hand item by a quarter), Masterwork (Unbreaking I 10%), Keen (weapons
+    Sharpness I 20%), Signature ("Made by <name>" lore).
+  - Cooking: Hearty (+1 saturation from cooked food and meals), Campfire Feast (eating by a lit campfire feeds players
+    within 6), Hunter's Stew (meals' strengths ×1.5 long), Long Meals (+2 saturation), Spirit Tea (`awaken:energy_regen`
+    +0.25 for 2 min after a cooked meal), Banquet (+the food's saturation again).
+  The plan's Tidewater bait, sigil slot, temper discount and an apex phase read moved out: they need other modules'
+  systems; the replacements above are this module's own.
+- UI: CRAFTS in the K menu's Status tab (level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
+  <level>`. Test `living_crafts`.
+- Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
+  by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
+  colour count, distinct colours and herb silhouettes.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 

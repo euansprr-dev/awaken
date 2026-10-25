@@ -12,6 +12,9 @@ final class BodyMotion {
     long slideUntil, slideReadyAt, slideStart;
     double slideDirX, slideDirZ, slideV0;
     boolean slideFromTac;
+    /** On a run of stairs or slabs (SPEC §17.22): the slide goes on while the server sees the run under the body. */
+    boolean stairSliding;
+    double stairFallX, stairFallZ;
     final int[] tripped = new int[8];
     int trippedCount;
     // mantle

@@ -51,6 +51,14 @@ public final class LivingModule {
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
         XpBudget.register("camp", 0.10);
+        // the crafts' budgets, as pacing_sim (SPEC §21.9)
+        XpBudget.register("forage", 0.012);
+        XpBudget.register("mine", 0.012);
+        XpBudget.register("fish", 0.012);
+        XpBudget.register("cook", 0.007);
+        XpBudget.register("smith", 0.007);
+        dev.awaken.living.craft.CraftItems.register(modBus);
+        Progression.addPerkSource(dev.awaken.living.craft.CraftEvents::perk);
         dev.awaken.core.PlayDays.onNewPlayDay(dev.awaken.living.camp.Camps::onNewDay);
         Progression.addPerkSource(dev.awaken.living.pulse.Pulse::lucidity);
         LivingHooks.install(new LivingHooks.Bridge() {
@@ -85,6 +93,21 @@ public final class LivingModule {
         bus.addListener(LivingDropsEvent.class, dev.awaken.living.pulse.Pulse::onDrops);
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.population.Ledger.onDeath(e.getEntity()));
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.camp.Camps.onDeath(e.getEntity()));
+        // crafts
+        bus.addListener(LivingDeathEvent.class, dev.awaken.living.craft.CraftEvents::onDeath);
+        bus.addListener(LivingDropsEvent.class, dev.awaken.living.craft.CraftEvents::onDrops);
+        bus.addListener(EventPriority.LOW, CriticalHitEvent.class, dev.awaken.living.craft.CraftEvents::onCrit);
+        bus.addListener(LivingIncomingDamageEvent.class, dev.awaken.living.craft.CraftEvents::onIncoming);
+        bus.addListener(net.neoforged.neoforge.event.level.block.BreakBlockEvent.class, dev.awaken.living.craft.CraftEvents::onBreak);
+        bus.addListener(net.neoforged.neoforge.event.level.BlockDropsEvent.class, dev.awaken.living.craft.CraftEvents::onBlockDrops);
+        bus.addListener(PlayerEvent.BreakSpeed.class, dev.awaken.living.craft.CraftEvents::onBreakSpeed);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock.class, dev.awaken.living.craft.CraftEvents::onUseBlock);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.ItemFishedEvent.class, dev.awaken.living.craft.CraftEvents::onFished);
+        bus.addListener(net.neoforged.neoforge.event.AnvilUpdateEvent.class, dev.awaken.living.craft.CraftEvents::onAnvil);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.AnvilCraftEvent.Post.class, dev.awaken.living.craft.CraftEvents::onAnvilDone);
+        bus.addListener(PlayerEvent.ItemCraftedEvent.class, dev.awaken.living.craft.CraftEvents::onCrafted);
+        bus.addListener(PlayerEvent.ItemSmeltedEvent.class, dev.awaken.living.craft.CraftEvents::onSmelted);
+        bus.addListener(net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent.Finish.class, dev.awaken.living.craft.CraftEvents::onEat);
         bus.addListener(EntityJoinLevelEvent.class, e -> {
             if (!e.getLevel().isClientSide() && e.getLevel() instanceof net.minecraft.server.level.ServerLevel sl && sl.dimension() == net.minecraft.world.level.Level.OVERWORLD)
                 dev.awaken.living.population.Ledger.onJoin(e.getEntity(), sl.getServer());
@@ -108,6 +131,7 @@ public final class LivingModule {
                 dev.awaken.living.camp.Camps.tick(e.getServer());
             }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
+            if (shown(e.getServer())) dev.awaken.living.craft.CraftEvents.tick(e.getServer());
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
             if (e.getEntity() instanceof ServerPlayer sp) {

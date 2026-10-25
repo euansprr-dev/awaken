@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "awaken_meals",
+  "ingredients": [
+    "minecraft:bowl",
+    "awaken:moonmoss",
+    "minecraft:brown_mushroom",
+    "minecraft:red_mushroom"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:moonmoss_soup"
+  }
+}
