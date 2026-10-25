@@ -10,17 +10,24 @@ Alpine". Page: https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN.
   µs and 8-block steps), continuous ring meshes with morphing, sub-cell erosion per pixel, alpine materials, far forests
   (instanced voxel trees, multi-draw indirect), ridge shadows, real-scale aerial perspective, valley cloud, Lens
   hand-off, the chunk mask (no holes after a jump), on by default (`farSight` FULL/NEAR/OFF).
-- **Measured** (`farsight2-perf.txt`, Ultra, sunset, 2880×1800): Far Sight 2 costs 2.0 ms (12.95 → 14.98 p50, 66.8 fps).
+- **Measured** (`farsight2-perf.txt`, Ultra, sunset, 2880×1800, 2026-10-26 on `008cbc57`): 12.88 → 15.60 ms p50 (+2.7,
+  64 fps; ring 0 still filling). Cinematic on the A/B scenes: 11.4-12.8 ms p50, flight 77 fps.
+- **Proof for review (2026-10-26):** `fs2-vs-refs.jpg` (the five reference scenes; the side-by-side with Euan's
+  references is kept out of this public repo), `fs2-ab.jpg` (the old A/B scenes, compare `contact-sheet.jpg`).
+- **Since the build:** block-column far ground and Lens-matched light (Euan's playtest), mountain forests and patchy snow
+  edges, the chunk mask counts only meshed chunks, new chunks appear without vanilla's fog-colour fade while Far Sight
+  draws, far forests read as canopy from 600 blocks.
 - **Not built, by the plan's rules:** Turbo compute culling (no measured win to have: what it could cull costs ~0.2 ms);
   taller worlds (needs Tectonic's noise settings copied or a mixin; summits round off under the ceiling instead).
 - **Open / follow-ups:**
-  1. Lens: straight dark bands across far terrain at sunset (already in the untouched baseline): Lens's volumetric
-     shadow from its 1024-block heightfield window. For the Lens owner.
+  1. Lens's sunset dark bands: not seen in the 2026-10-26 golden-hour shots (refshots r1), so not chased further.
+  5. Water walls at the loaded edge: vanilla draws water side faces where the neighbouring chunk isn't loaded yet;
+     after a jump or in fast flight they show as pale slabs over the far sea (vanilla RD 32 and DH show them too, over
+     fog). Hiding them needs a mixin on `FluidRenderer` (unloaded neighbour counts as the same fluid): coordinate first.
   2. While a brand-new world generates (teleports, fast flight), the server's chunk generation and the workers load the
      CPU; frames dip until the land fills. Two workers on an M4; a frame-aware throttle is the next step if it bites.
   3. Multiplayer guests: no far view until server tiles (P7, decision 6).
-  4. Mountain forests (more trees on mountain slopes in the chunks themselves) were left out: far forests follow each
-     biome's own density.
+  4. Mountain forests: built (spruce below the treeline on windswept hills and meadows, far forests to match).
 
 ---
 
