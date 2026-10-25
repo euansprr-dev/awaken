@@ -85,6 +85,8 @@ public final class CityCritters {
     private static final Map<String, Integer>[] CLIPS = clipTables();
     private static double px, py, pz, pSpeed;
     private static long now;
+    /** Where a cart's horse and its axle are (cartAt's out: x, z, heading dx, dz, distance along), reused every tick. */
+    private static final double[] AT = new double[5], AXLE_AT = new double[5];
 
     @SuppressWarnings("unchecked")
     private static Map<String, Integer>[] clipTables() {
@@ -236,9 +238,9 @@ public final class CityCritters {
             };
             double hx = h.x, hz = h.z;
             if (h.kind == CityCritter.HORSE) {
-                double[] at = cartAt(h, level, 0);
-                hx = at[0];
-                hz = at[1];
+                cartAt(h, level, 0, AT);
+                hx = AT[0];
+                hz = AT[1];
             }
             double d = Math.hypot(hx - px, hz - pz);
             boolean wanted = d < reach && awake(h, night, tod);
@@ -319,10 +321,10 @@ public final class CityCritters {
                     c.state = SIT;
                 }
                 default -> {
-                    double[] at = cartAt(h, level, 0);
-                    x = at[0];
-                    y = ground(level, x, at[1], null);
-                    z = at[1];
+                    cartAt(h, level, 0, AT);
+                    x = AT[0];
+                    y = ground(level, x, AT[1], null);
+                    z = AT[1];
                     c.state = DRIVE;
                 }
             }
@@ -859,8 +861,8 @@ public final class CityCritters {
 
     // ---- horses and carts ---------------------------------------------------------------------------------------
 
-    /** Where a cart's horse is on its road now (x, z, heading dx, dz, distance along) by the world clock. */
-    private static double[] cartAt(Home h, ClientLevel level, double back) {
+    /** Where a cart's horse is on its road now by the world clock, {@code back} blocks behind it: into {@code out}. */
+    private static void cartAt(Home h, ClientLevel level, double back, double[] out) {
         double t = level.getOverworldClockTime() - h.delay;
         double period = h.length * 2;
         double raw = Math.floorMod((long) (t * CART_SPEED * 1000 + (h.seed & 0xFFFFF) * 1000L), (long) (period * 1000)) / 1000.0;
@@ -880,12 +882,20 @@ public final class CityCritters {
                     dz = -dz;
                 }
                 // keep to the right of the road (the citizens' lanes keep right too)
-                double x = sx + (ex - sx) * f - dz * 1.6, z = sz + (ez - sz) * f + dx * 1.6;
-                return new double[]{x, z, dx, dz, s};
+                out[0] = sx + (ex - sx) * f - dz * 1.6;
+                out[1] = sz + (ez - sz) * f + dx * 1.6;
+                out[2] = dx;
+                out[3] = dz;
+                out[4] = s;
+                return;
             }
             acc += len;
         }
-        return new double[]{road[0], road[1], 1, 0, 0};
+        out[0] = road[0];
+        out[1] = road[1];
+        out[2] = 1;
+        out[3] = 0;
+        out[4] = 0;
     }
 
     private static void horse(CityCritter c, ClientLevel level, Home h) {
@@ -894,14 +904,15 @@ public final class CityCritters {
             return;
         }
         RandomSource r = c.getRandom();
-        double[] at = cartAt(h, level, 0);
+        double[] at = AT;
+        cartAt(h, level, 0, at);
         // someone in the road ahead: the horse stands until they move (this client's cart falls behind the clock)
         double ax = px - at[0], az = pz - at[1];
         double ahead = ax * at[2] + az * at[3], across = Math.abs(ax * at[3] - az * at[2]);
         boolean blocked = ahead > 0 && ahead < 3.2 && across < 1.6 && Math.abs(py - c.getY()) < 2.5;
         if (blocked) {
             h.delay++;
-            at = cartAt(h, level, 0);
+            cartAt(h, level, 0, at);
         }
         double ox = c.getX(), oz = c.getZ();
         double y = ground(level, at[0], at[1], null);
@@ -909,7 +920,8 @@ public final class CityCritters {
         double moved = Math.hypot(c.getX() - ox, c.getZ() - oz);
         c.speed = moved > 2 ? 0F : (float) moved;
         face(c, at[2], at[3], 8F);
-        double[] axle = cartAt(h, level, AXLE);
+        double[] axle = AXLE_AT;
+        cartAt(h, level, AXLE, axle);
         c.cartDx = axle[0] - c.getX();
         c.cartDz = axle[1] - c.getZ();
         c.cartY = (float) (ground(level, axle[0], axle[1], null) - c.getY());

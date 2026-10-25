@@ -171,18 +171,22 @@ public final class CityGlow {
         RIGHT.set(1, 0, 0).rotate(CAM);
         UP.set(0, 1, 0).rotate(CAM);
         float t = (level.getGameTime() % 24000L + pt) / 20F;
-        e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), light(), (pose, vc) -> {
-            try {
-                OUT.begin(vc, cam.x, cam.y, cam.z, t);
-                for (CitizenBody b : BODIES) if (carries(b)) lantern(b, pt);
-                lamps(level);
-                for (Source s : SOURCES) s.glows(OUT, pt, cam.x, cam.y, cam.z);
-            } catch (RuntimeException ex) {
-                Awaken.LOG.error("[citizens] city glow failed", ex);
-                SOURCES.clear();
-            }
-        });
+        OUT.frame(level, cam.x, cam.y, cam.z, pt, t);
+        e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), light(), DRAW);
     }
+
+    /** The pass's body: one static callback reading this frame's state from {@link #OUT} (nothing captured per frame). */
+    private static final net.minecraft.client.renderer.SubmitNodeCollector.CustomGeometryRenderer DRAW = (pose, vc) -> {
+        try {
+            OUT.begin(vc);
+            for (CitizenBody b : BODIES) if (carries(b)) lantern(b, OUT.pt);
+            lamps(OUT.level);
+            for (Source s : SOURCES) s.glows(OUT, OUT.pt, OUT.cx, OUT.cy, OUT.cz);
+        } catch (RuntimeException ex) {
+            Awaken.LOG.error("[citizens] city glow failed", ex);
+            SOURCES.clear();
+        }
+    };
 
     /** The lantern hangs from the bearer's off hand (left): swung by the walk, low at the hip. */
     private static void lantern(CitizenBody b, float pt) {
@@ -226,8 +230,9 @@ public final class CityGlow {
     /** Where lights are written: camera-relative quads, in this frame's camera basis. */
     public static final class Out {
         private VertexConsumer vc;
+        private ClientLevel level;
         private double cx, cy, cz;
-        private float t;
+        private float pt, t;
         private static final int RING = 20;
         private static final float[] COS = new float[RING + 1], SIN = new float[RING + 1];
 
@@ -238,12 +243,17 @@ public final class CityGlow {
             }
         }
 
-        void begin(VertexConsumer vc, double cx, double cy, double cz, float t) {
-            this.vc = vc;
+        void frame(ClientLevel level, double cx, double cy, double cz, float pt, float t) {
+            this.level = level;
             this.cx = cx;
             this.cy = cy;
             this.cz = cz;
+            this.pt = pt;
             this.t = t;
+        }
+
+        void begin(VertexConsumer vc) {
+            this.vc = vc;
         }
 
         public boolean far(double x, double y, double z) {

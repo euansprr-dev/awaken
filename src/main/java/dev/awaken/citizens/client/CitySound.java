@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.awaken.Awaken;
 import dev.awaken.citizens.CitizenBody;
+import dev.awaken.citizens.CitizensContent;
 import dev.awaken.city.CityPlan;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -39,14 +40,11 @@ import java.util.List;
 public final class CitySound {
     private CitySound() {}
 
-    private static final SoundEvent FOUNTAIN = ev("city.fountain"), LAP = ev("city.lap"), MILL = ev("city.mill"), TAVERN = ev("city.tavern"),
-            ANVIL = ev("city.anvil"), BELLOWS = ev("city.bellows"), STALL = ev("city.stall"), BOAT = ev("city.boat"),
-            SONGBIRD = ev("city.songbird"), HANDBELL = ev("city.handbell"), DAWN = ev("city.carillon.dawn"),
-            NOON = ev("city.carillon.noon"), DUSK = ev("city.carillon.dusk");
-
-    private static SoundEvent ev(String path) {
-        return SoundEvent.createVariableRangeEvent(Awaken.id(path));
-    }
+    private static final SoundEvent FOUNTAIN = CitizensContent.FOUNTAIN.get(), LAP = CitizensContent.LAP.get(), MILL = CitizensContent.MILL.get(),
+            TAVERN = CitizensContent.TAVERN.get(), ANVIL = CitizensContent.ANVIL.get(), BELLOWS = CitizensContent.BELLOWS.get(),
+            STALL = CitizensContent.STALL.get(), BOAT = CitizensContent.BOAT.get(), SONGBIRD = CitizensContent.SONGBIRD.get(),
+            HANDBELL = CitizensContent.HANDBELL.get(), DAWN = CitizensContent.CARILLON_DAWN.get(), NOON = CitizensContent.CARILLON_NOON.get(),
+            DUSK = CitizensContent.CARILLON_DUSK.get();
 
     /** One kind of place: its points (world x, y, z), how near it starts, how many may play. */
     static final class Places {

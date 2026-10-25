@@ -79,6 +79,13 @@ public final class CitizensContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_DISTRICT = sound("city.bell.district");
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_ALARM = sound("city.bell.alarm");
     public static final DeferredHolder<SoundEvent, SoundEvent> HANDBELL = sound("city.handbell");
+    // (M4 B3b) the animals and the places that sound; the client plays them (citizens.client.CitySound, CitySounds)
+    public static final DeferredHolder<SoundEvent, SoundEvent> PIGEON_FLUTTER = sound("city.pigeon.flutter"), PIGEON_COO = sound("city.pigeon.coo"),
+            GULL_CALL = sound("city.gull.call"), CART_ROLL = sound("city.cart.roll"), CART_BELLS = sound("city.cart.bells"),
+            ANVIL = sound("city.anvil"), BELLOWS = sound("city.bellows"), STALL = sound("city.stall"), BOAT = sound("city.boat"),
+            SONGBIRD = sound("city.songbird"), FOUNTAIN = sound("city.fountain"), LAP = sound("city.lap"), MILL = sound("city.mill"),
+            TAVERN = sound("city.tavern"), CARILLON_DAWN = sound("city.carillon.dawn"), CARILLON_NOON = sound("city.carillon.noon"),
+            CARILLON_DUSK = sound("city.carillon.dusk");
 
     private static DeferredItem<Item> prop(String name) {
         return ITEMS.registerSimpleItem(name, p -> p.stacksTo(1));
