@@ -50,6 +50,8 @@ public final class AudioSounds {
     // the layered music (one event per slot; the client streams a context's stems itself, the event only resolves)
     public static final DeferredHolder<SoundEvent, SoundEvent> MUSIC_LAYERS = reg("music.layers");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_LAYERS = reg("amb.layers");
+    /** The world sound Conductor's one stream (the air bed; core.audio.client.AirMixer supplies the audio). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> AMB_WORLD = reg("amb.world");
 
     private static final List<DeferredHolder<SoundEvent, SoundEvent>> CUES = new ArrayList<>();
 

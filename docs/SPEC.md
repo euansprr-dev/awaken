@@ -316,9 +316,10 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
 - `dev.awaken.core.audio.client.Soundscape` (client, world sound): `hush(Object owner, Vec3 at, float radius, float
-  depth, int ticks)`, `register(Source)` (another module's positional emitters, counted in the Conductor's voice
-  budget), `yieldWeight(ToDoubleFunction<Vec3>)` (how much of the world bed to give way at a point; the city),
-  `level()` (the Conductor's state for debug and tests).
+  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
+  (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
+  (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city). `/awaken audio world [off|on]` (client).
+  Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
@@ -1239,7 +1240,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 - Soundscape (world sound): the biome table's `soundscape` column puts every biome in one family tag
   `awaken:soundscape/<family>`; the Conductor plays the Awakened biomes' beds, so their `minecraft:audio/ambient_sounds`
   keeps only `mood`.
-- Leaf rustle (`terrain.client.LeafRustle`): `amb.lands_rustle` under canopy and `amb.lands_wind_high` high and in the
+- Leaf rustle (played by the world sound Conductor since 2026-10-25, soundscape `awaken:world`): `amb.lands_rustle` under canopy and `amb.lands_wind_high` high and in the
   open, volumes from the wind and a 16-column canopy ring; client setting `leaf_rustle` (default on).
 - Waving leaves (spike done 2026-10-24, docs/spikes/waving-leaves.md: safe, cost within noise, at most ~0.05 ms p50 in
   a dense dark forest): `dev.awaken.terrain.client`. A built-in client pack (`resourcepacks/awaken_waving_leaves`)

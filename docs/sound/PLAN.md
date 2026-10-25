@@ -14,7 +14,7 @@ the game."*
 - **Is it already done?** Partly. AWAKEN already has: room acoustics (Sound Physics Remastered), adaptive gate music,
   the System's UI voice, creature voices, beds for four of the six Awakened biomes, leaf rustle and high wind, a few
   magic beds (rifts, groves, stars, the Well, ruins at night), vanilla-layered one-shots in the gate and Descent biomes,
-  and the city soundscape now being built (Carillon B3b). What is missing is the **world itself**: 57 vanilla overworld
+  and the city soundscape now being built (Carillon B3b). What is missing is the **world itself**: 56 vanilla overworld
   biomes, and two of the six Awakened ones, still sound like vanilla Minecraft, which has no birds, no insects
   (apart from bees), no wind, no surf, no river and one rain sound for every surface. Nothing reacts to you, to danger
   or to the magic.
@@ -199,7 +199,7 @@ or Awakened, is in no family or in two. A biome from another mod with no tag fal
 downfall, height) to the nearest family, so nothing is ever silent by accident. Awakened biomes are their family plus
 a **variant** (its own bed layer and its magic, §7).
 
-| Family | Biomes (57 vanilla + 6 Awakened) | Air (bed) | Textures | Events by day / by night | Weather and other |
+| Family | Biomes (56 vanilla + 6 Awakened) | Air (bed) | Textures | Events by day / by night | Weather and other |
 |---|---|---|---|---|---|
 | **Greenwood** | forest, birch forest, old growth birch, dappled forest; **Elderwood** | soft broadleaf hush, far wood | canopy rustle (existing), stream if near | songbirds (dawn chorus), woodpecker, wood pigeon, squirrel chatter / owls (our Hollow Owl), crickets at edges, a fox screech | rain on leaves; drips for 60-90 s after; poplar leaves' own ambience where they grow |
 | **Blossom** | cherry grove, flower forest | warm light air | petals and leaves, bees (vanilla loop) near flowers | finches, bees, a cuckoo far off / crickets, fireflies' faint ticks (vanilla firefly bush) | soft rain |
@@ -350,10 +350,9 @@ ticks yes or no before anything is downloaded.
 
 ## 10. Budgets
 
-Engine numbers below are from vanilla's 1.21 sound engine and are **to verify against `.ref/src` for 26.3** in
-Phase 0 (`com.mojang.blaze3d.audio.Library`, `SoundBufferLibrary`): the static and streaming pools are sized from
-OpenAL's source count (about 248 static and 8 streaming on a 256-source device; the static pool is capped at 255), and decoded static sounds are cached
-until the next resource reload.
+Engine numbers below are **verified in 26.3's decompiled source** (2026-10-25, `com.mojang.blaze3d.audio.Library`:
+streaming = clamp(√sources, 2, 8), static = clamp(sources − streaming, 8, 255), so 248 static and 8 streaming on
+OpenAL Soft's 256; `SoundBufferLibrary` caches every decoded static sound until `clear()` on a resource reload).
 
 | Budget | Limit | Why |
 |---|---|---|

@@ -9,8 +9,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * The living land's sound events (sounds.json and subtitles in {@code src/main/merge/terrain}, files rendered from
- * {@code tools/art/specs/audio_lands.py} by {@code tools/art/audio_build.py}). Played by the client
- * ({@code terrain.client.LeafRustle}); registered here because every sound event is.
+ * {@code tools/art/specs/audio_lands.py} by {@code tools/art/audio_build.py}). The leaves and the high wind are played
+ * by the world sound Conductor ({@code core.audio}, soundscape {@code awaken:world}); registered here because every
+ * sound event is.
  */
 public final class TerrainSounds {
     private TerrainSounds() {}

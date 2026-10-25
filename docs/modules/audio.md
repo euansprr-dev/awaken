@@ -178,6 +178,39 @@ takes `signal.open`'s place while the projected look draws. Details in docs/modu
 Entities are tracked from join/leave events; the Well, ruins and cooling meteors come from the server as `audio_emitters`
 (within 96 blocks, sent only when the set changes, every 5 s). The gate hum is the gates module's own (`GateHum`).
 
+## World sound: the Conductor (approved 2026-10-25; plan docs/sound/PLAN.md, SPEC §13 "Plan v2 · world sound")
+
+The world's own sound around the listener, everywhere: biomes, places, reactions and magic. Client code in
+`core.audio.client.world`, data in `assets/<ns>/soundscape/**.json` (`core.audio.world.SoundscapeDef`), public hooks in
+`core.audio.client.Soundscape`.
+
+- **Soundscapes**: `awaken:world` plays everywhere (today: leaves overhead and wind toward the open side, the textures
+  terrain's leaf rustle used to play); each overworld biome is in one family tag `#awaken:soundscape/<family>` (16
+  families, written by `tools/terrain/biomes.py`'s SOUNDSCAPE column) whose soundscape is `awaken:family/<family>`.
+  A family without a file is silent until it gets one. Built so far: **greenwood** (three synthesised air layers
+  `amb_world_greenwood_a/b/c`, 37/41/53 s, `tools/art/specs/audio_world.py`; owls at night answering each other; a far
+  fox late at night; lulls). Birds and insects wait for the CC0 shortlist (`docs/sound/cc0-shortlist.html`).
+- **Listener**: 24 ring columns (5, 11, 20 blocks) refreshed three a tick: top block kind (leaves, ground, water) and
+  height, biome family; canopy share, open sky, underwater, wind (`terrain.client.ClientWind`), height, rain, time.
+  Family weights ease over ~10 s; the camera's biome counts four columns.
+- **Air** (`AirBed`, `AirMixer`): one streamed sound (`amb.world`) whose audio our mixer makes: up to 8 natural loops
+  (`OggLoop`, shared with `StemMixer`), 6 s fades, a one-pole low-pass (20 kHz open, ~1.4 kHz indoors, ~520 Hz
+  underwater). Slots swap files only in silence. Stops after 10 silent seconds.
+- **Textures** (`Textures`): ≤ 6 positional loops (attenuation off, the Conductor sets the level; the position pans and
+  Sound Physics occludes), re-anchored with a crossfade when their spot moves 6+ blocks (after 3 s) or every 12 s.
+- **Events**: one `EventClock` per playing soundscape (Poisson thinning, call and answer, lulls); spots from the ring
+  (`Spots`); level = volume × 12 / (12 + distance); ≤ 10 at once, ≤ 4 new a second, 16 voices in all with textures and
+  registered sources (`Ambience` registers its beds). Hushable events are off while AmbientSounds is loaded.
+- **Mix**: beds −4 dB under layered combat/Lord music, −3 dB under a stage cue; events halved in combat; the city's
+  `Soundscape.yieldWeight` takes the world bed away inside its walls; `Soundscape.hush` quiets hushable events.
+- **Commands**: `/awaken audio world` (client): soundscapes and weights, the listener, the air's layers and filter,
+  textures, voices, the last event. `/awaken audio world off|on` for frame-time A/B. Tour: `tools/autopilot/world-sound.txt`.
+- **Tests**: `audio_world_census` (every overworld biome in one family; soundscape files parse; air layers 44.1 kHz
+  Vorbis whose lengths repeat no sooner than 30 min together; every sound real; none named `ambient.*`),
+  `audio_world_clock` (rates, thinning, answers, lulls, determinism, the day curve).
+- **Compat**: `assets/ambientsounds/basic/dimensions/awaken_dimensions.json` mutes AmbientSounds in `awaken:`
+  dimensions if a player adds it.
+
 ## Mix
 
 `python3 tools/art/audio_mix.py` measures every mod `.ogg` (gated RMS, BS.1770 LUFS, true peak) against its category,

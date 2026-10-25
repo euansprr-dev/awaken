@@ -18,7 +18,7 @@ No production code, no SPEC change, no new mods in `pack/mods.json`. Nothing dow
 
 Approach **C, the hybrid**: a world ambience layer of our own in `core/audio` (the **Conductor**: one streamed air
 bed mixed and filtered in Java, ≤ 6 positional textures, ≤ 10 positional events, reactions and re-voicing through
-`PlaySoundEvent`), fed by soundscape data per family (16 families cover all 57 vanilla overworld biomes and the six
+`PlaySoundEvent`), fed by soundscape data per family (16 families cover all 56 vanilla overworld biomes and the six
 Awakened ones through biome tags from `tools/terrain/biomes.py`) and per place (gates, strata, the Veil, the
 Stillpoint, Lucidium, Above and the Halo, interiors). Mods for what they do best: Sound Physics Remastered (kept),
 Tread Lightly for footsteps (after a one-hour spike on the Mac). AmbientSounds (26.3 NeoForge build exists, LGPL,

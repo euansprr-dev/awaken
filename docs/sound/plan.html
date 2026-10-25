@@ -181,7 +181,7 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--li
     <div class="frame"><h3>Already there</h3><p>Room acoustics (Sound Physics Remastered), adaptive gate music, the System's
       voice, 47 creature voices, leaf rustle and high wind, beds for 4 of the 6 Awakened biomes, a few magic beds, and the
       city soundscape being built now.</p></div>
-    <div class="frame"><h3>Missing</h3><p>57 vanilla biomes still sound like vanilla, which has no songbirds, insects (bar bees),
+    <div class="frame"><h3>Missing</h3><p>56 vanilla biomes still sound like vanilla, which has no songbirds, insects (bar bees),
       wind, surf, river or rain-by-surface. Elderwood and Lumen Forest have no bed. Nothing reacts to you or to the magic.</p></div>
     <div class="frame"><h3>Use existing mods?</h3><p>Yes, for the jobs mods do best: <b>Sound Physics</b> (space, kept) and
       <b>Tread Lightly</b> (footsteps, after a one-hour spike). <b>AmbientSounds</b> is the bar we measure against; it plays
@@ -329,7 +329,7 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--li
 </section>
 
 <section aria-labelledby="s-biomes">
-  <header><p class="eyebrow">Every biome</p><h2 id="s-biomes">16 families cover all 63 overworld biomes</h2>
+  <header><p class="eyebrow">Every biome</p><h2 id="s-biomes">16 families cover all 62 overworld biomes</h2>
     <p class="muted prose">A new column in the biome table puts every biome in exactly one family (a test fails otherwise). Awakened biomes are their family plus a variant with its own bed and magic. Another mod's biome falls back by climate, so nothing is silent by accident.</p></header>
   <div class="frame scroll">
   <table class="wide">
@@ -431,7 +431,7 @@ footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--li
 
 <section aria-labelledby="s-budget">
   <header><p class="eyebrow">Budgets</p><h2 id="s-budget">Cheap enough to forget about</h2>
-    <p class="muted prose">The engine holds about 248 ordinary sounds (capped at 255, confirmed by another mod's 26.3 patch) and 8 streams on a 256-source device; the exact split is to confirm against 26.3's source on your Mac in Phase 0.</p></header>
+    <p class="muted prose">The engine holds 248 ordinary sounds and 8 streams on a 256-source device (checked in 26.3's own source), and keeps every decoded short sound in memory until a resource reload.</p></header>
   <div class="frame budgets">
     <div class="bud"><div class="name">Streaming channels<small>1 of ~8 · the AirBed mixes in Java</small></div><div class="bar"><i style="width:12.5%"></i><span>1 / 8</span></div></div>
     <div class="bud"><div class="name">Ambient voices<small>≤ 16 of ~248 static · quietest stolen first</small></div><div class="bar"><i class="leaf" style="width:6.5%"></i><span>16 / 248</span></div></div>

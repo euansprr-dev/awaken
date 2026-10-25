@@ -526,5 +526,14 @@
         "stream": true
       }
     ]
+  },
+  "amb.world": {
+    "subtitle": "subtitles.awaken.amb.world",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_greenwood_a",
+        "stream": true
+      }
+    ]
   }
 }

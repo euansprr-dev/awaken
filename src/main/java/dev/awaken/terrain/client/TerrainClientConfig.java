@@ -68,7 +68,8 @@ public final class TerrainClientConfig {
         FALLING_LEAVES.save();
     }
 
-    static boolean leafRustle() {
+    /** The setting {@code leaf_rustle}: the world sound Conductor (core.audio) plays leaves and high wind only while on. */
+    public static boolean leafRustle() {
         try {
             return !SPEC.isLoaded() || LEAF_RUSTLE.get();
         } catch (RuntimeException e) {
