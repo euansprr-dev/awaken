@@ -6,15 +6,20 @@
 // toward the sun (ridges shade valleys, low suns stretch them, hills off screen still cast; leaves let light through
 // in flecks); small ones march the depth buffer (contact shadows: grass, mobs, block edges); ambient occlusion samples a
 // hemisphere in the depth buffer. Each frame traces with fresh noise and blends into last frame's result, reprojected
-// by the frame's own matrices, so the look is many frames' work at one frame's cost.
-// Out: r sun visibility, g ambient occlusion, b/a the surface's distance (16-bit log) for depth-aware upsampling.
+// by the frame's own matrices, so the look is many frames' work at one frame's cost. The same pass gathers volumetric
+// light along each view ray (beams through gaps in a canopy, down canyons, past ridges, in any direction) from the sun
+// map, so the whole of Lens 2's light is one pass and one history.
+// Out: r sun visibility, g ambient occlusion, b volumetric light, a the surface's distance (one byte, 0 for sky).
 uniform sampler2D DepthSampler;     // the world's depth, full size (first input: InSize is the full frame)
 uniform sampler2D HeightSampler;
+uniform sampler2D SunmapSampler;    // lens_sunmap.fsh: the height above which the sun reaches each column
 uniform sampler2D HistorySampler;   // last frame's light buffer (persistent)
 uniform sampler2D FrameSampler;
 uniform sampler2D ParamsSampler;
 
 #include <awaken:lens_frame.glsl>
+#include <awaken:lens_height.glsl>
+#include <awaken:lens_normal.glsl>
 
 layout(location = 0) in vec2 texCoord;
 
@@ -106,66 +111,88 @@ float ambient(vec3 p, vec3 n, float noise, float noise2, mat4 vp, bool z01, floa
     return 1.0 - occ / float(samples);
 }
 
+// whether a point in the air (camera-relative) is in sunlight: 1 lit, 0 in a terrain shadow, dimmer under leaves
+float litAt(vec3 w, vec4 f12, float cell) {
+    vec4 s = texelFetch(SunmapSampler, ivec2(mod(w.xz + f12.xz, 1024.0) / cell), 0);
+    float y = w.y + f12.y, solid = unpackHeight(s.rg), all = unpackHeight(s.ba);
+    return smoothstep(solid - 0.5, solid + 0.5, y) * (y < all ? 0.35 : 1.0);
+}
+
+// sunlight scattered toward the eye by a thin mist along the view ray v (to distance d), wherever the air is lit: the
+// mist thickens toward sea level (the look's mist and mistHeight); forward-peaked toward the sun (Henyey-Greenstein)
+float volume(vec3 v, float d, vec3 l, float strength, float jitter, bool ultra) {
+    vec4 f12 = F(12), v19 = P(19);
+    float cell = 1024.0 / float(textureSize(SunmapSampler, 0).x);
+    int steps = ultra ? 16 : 10;
+    float dt = d / float(steps), scaleH = max(v19.g * 256.0, 4.0), acc = 0.0;
+    for (int i = 0; i < steps; i++) {
+        vec3 w = v * ((float(i) + jitter) * dt);
+        acc += litAt(w, f12, cell) * exp(-max(w.y + f12.y - 63.0, 0.0) / scaleH);
+    }
+    const float g = 0.6;
+    float phase = 0.06 + 4.0 * (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * dot(v, l), 1.5));
+    return 1.0 - exp(-acc * dt * 0.0016 * strength * phase);
+}
+
 void main() {
     bool z01 = F(16).x > 0.5, ultra = Quality > 1.5;
     ivec2 last = ivec2(InSize) - 1;
     ivec2 px = clamp(ivec2(texCoord * InSize), ivec2(0), last);
     float depth = texelFetch(DepthSampler, px, 0).r;
-    // sky, or the frame's values not written yet (the near plane is never 0 once they are)
-    if (depth < 1.0e-7 || F(16).w <= 0.0) {
+    // the frame's values not written yet (the near plane is never 0 once they are)
+    if (F(16).w <= 0.0) {
         fragColor = vec4(1.0, 1.0, 0.0, 0.0);
         return;
     }
+    bool sky = depth < 1.0e-7;
     vec2 uv = (vec2(px) + 0.5) / InSize;
     mat4 inv = frameMat(0);
-    vec3 p = unproject(inv, uv, depth, z01);
-    float dist = length(p);
-    vec2 code = packDistance(dist);
-    // the hand and the holo glass (within arm's reach): never shadowed
-    if (dist < 1.25) {
-        fragColor = vec4(1.0, 1.0, code);
-        return;
-    }
-    vec4 p1 = P(1);
+    vec3 p = unproject(inv, uv, sky ? 1.0e-5 : depth, z01);
+    float dist = sky ? 0.0 : length(p);
+    vec4 p1 = P(1), f14 = F(14), f12 = F(12);
     float zFar = max(p1.r * 255.0 * 256.0 + p1.g * 255.0, 16.0);
-    float frame = F(12).w;
-    float noise = ign(gl_FragCoord.xy, frame), noise2 = ign(gl_FragCoord.yx + 17.0, frame + 31.0);
-    vec3 n = normalAt(px, p, depth, inv, z01, InSize);
-    mat4 vp = frameMat(4);
-
-    vec4 f14 = F(14);
-    float vis = 1.0;
-    if (f14.w > 0.0 && P(17).r > 0.0 && dot(n, f14.xyz) > -0.1) {
-        vis = sunVisibility(p, n, f14.xyz, noise, ultra);
-        if (vis > 0.0 && dist < 96.0) vis *= contactShadow(p, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
+    float noise = ign(gl_FragCoord.xy, f12.w), noise2 = ign(gl_FragCoord.yx + 17.0, f12.w + 31.0);
+    float vis = 1.0, ao = 1.0, vol = 0.0;
+    // the hand and the holo glass (within arm's reach) are never shadowed
+    if (!sky && dist >= 1.25) {
+        vec3 n = normalAt(px, p, depth, inv, z01, InSize);
+        mat4 vp = frameMat(4);
+        if (f14.w > 0.0 && P(17).r > 0.0 && dot(n, f14.xyz) > -0.1) {
+            vis = sunVisibility(p, n, f14.xyz, noise, ultra);
+            if (vis > 0.0 && dist < 96.0) vis *= contactShadow(p, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
+        }
+        if (dist < 96.0) ao = ambient(p, n, noise, noise2, vp, z01, zFar, ultra);
     }
-    float ao = dist < 96.0 ? ambient(p, n, noise, noise2, vp, z01, zFar, ultra) : 1.0;
+    float strength = f14.w * P(6).a * P(19).r;
+    if (strength > 0.0 && F(15).x > 0.0) vol = volume(normalize(p), sky ? (ultra ? 320.0 : 192.0) : min(dist, ultra ? 320.0 : 192.0), f14.xyz, strength, noise2, ultra);
 
-    vec2 res = vec2(vis, ao);
-    // last frame's answer for this surface: reprojected, its 2x2 texels kept only where they saw the same distance
+    vec3 res = vec3(vis, ao, vol);
+    float code = packDistance8(dist);
+    // last frame's answer for this surface (or this sky direction): reprojected, its 2x2 texels kept only where they saw
+    // the same distance
     vec4 f13 = F(13);
     if (f13.w > 0.5) {
-        vec3 pp = p + f13.xyz;
+        vec3 pp = (sky ? normalize(p) * 4096.0 : p) + f13.xyz;
         vec3 s = project(frameMat(8), pp, z01);
         if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0) {
-            float want = distanceCode(length(pp));
+            float want = sky ? 0.0 : packDistance8(length(pp));
             vec2 hp = s.xy * OutSize - 0.5;
             ivec2 b = ivec2(floor(hp));
             vec2 fr = hp - vec2(b);
             ivec2 hl = ivec2(OutSize) - 1;
-            vec2 acc = vec2(0.0);
+            vec3 acc = vec3(0.0);
             float wsum = 0.0;
             for (int k = 0; k < 4; k++) {
                 ivec2 o = ivec2(k & 1, k >> 1);
                 vec4 h = texelFetch(HistorySampler, clamp(b + o, ivec2(0), hl), 0);
                 float w = (o.x == 1 ? fr.x : 1.0 - fr.x) * (o.y == 1 ? fr.y : 1.0 - fr.y)
-                        * (1.0 - smoothstep(0.002, 0.006, abs(unpackDistanceCode(h.ba) - want)));
-                acc += h.rg * w;
+                        * (1.0 - smoothstep(1.5 / 255.0, 2.5 / 255.0, abs(h.a - want)));
+                acc += h.rgb * w;
                 wsum += w;
             }
             if (wsum > 0.02) {
-                float alpha = mix(1.0, ultra ? 0.1 : 0.14, smoothstep(0.02, 0.4, wsum));
-                res = mix(acc / wsum, res, alpha);
+                float k = smoothstep(0.02, 0.4, wsum);
+                res = mix(acc / wsum, res, mix(vec3(1.0), ultra ? vec3(0.1, 0.1, 0.15) : vec3(0.14, 0.14, 0.2), k));
             }
         }
     }

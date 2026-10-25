@@ -42,6 +42,10 @@
       "width": 1600,
       "height": 900,
       "persistent": true
+    },
+    "awaken:lens_sunmap": {
+      "width": 1024,
+      "height": 1024
     }
   },
   "passes": [
@@ -95,6 +99,25 @@
     },
     {
       "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_sunmap",
+      "inputs": [
+        {
+          "sampler_name": "Height",
+          "location": "awaken:lens_height",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 24,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_sunmap"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
       "fragment_shader": "awaken:post/lens_light",
       "inputs": [
         {
@@ -107,6 +130,10 @@
           "location": "awaken:lens_height",
           "width": 1024,
           "height": 1024
+        },
+        {
+          "sampler_name": "Sunmap",
+          "target": "awaken:lens_sunmap"
         },
         {
           "sampler_name": "History",

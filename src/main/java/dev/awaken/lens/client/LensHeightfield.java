@@ -45,7 +45,7 @@ final class LensHeightfield {
     // slot offsets from the centre, nearest first (Chebyshev rings)
     private static final int[] ORDER = ringOrder();
     private final float[] all = new float[256], solid = new float[256];
-    private int centreX = Integer.MIN_VALUE, centreZ, rescan, clock, maxTop = -64;
+    private int centreX = Integer.MIN_VALUE, centreZ, rescan, clock, maxTop = -64, nextRow;
     private boolean maxDirty;
     private ClientLevel level;
 
@@ -72,6 +72,24 @@ final class LensHeightfield {
             maxDirty = false;
         }
         return maxTop;
+    }
+
+    /**
+     * Whether a point near the camera is in sunlight by the CPU mirror (Lens 2's dust only shows in sunlit air): a short
+     * march toward the light over level 0, leaves counting as shade.
+     */
+    boolean sunlit(double x, double y, double z, org.joml.Vector3fc l) {
+        if (l.y() <= 0.02f) return false;
+        int top = maxTop();
+        double t = 0.4;
+        for (int i = 0; i < 20; i++) {
+            double qy = y + l.y() * t;
+            if (qy > top) return true;
+            int ix = net.minecraft.util.Mth.floor(x + l.x() * t) & (SIZE - 1), iz = net.minecraft.util.Mth.floor(z + l.z() * t) & (SIZE - 1);
+            if (qy < Float.float16ToFloat(mirror[0].getShort((iz * SIZE + ix) * 4))) return false;
+            t += 0.5 + t * 0.25;
+        }
+        return true;
     }
 
     /** Once a client tick while Lens 2 draws in a place with a sun: follow the camera, read chunks, upload changes. */
@@ -220,8 +238,11 @@ final class LensHeightfield {
     private void upload() {
         var encoder = RenderSystem.getDevice().createCommandEncoder();
         int done = 0;
-        for (int r = 0; r < CHUNKS && done < UPLOAD_ROWS_PER_TICK; r++) {
+        // round the ring from where the last tick stopped, so a busy row can't keep the others waiting
+        for (int i = 0; i < CHUNKS && done < UPLOAD_ROWS_PER_TICK; i++) {
+            int r = (nextRow + i) & (CHUNKS - 1);
             if (!dirtyRow[r]) continue;
+            nextRow = r + 1;
             dirtyRow[r] = false;
             done++;
             for (int k = 0; k < LEVELS; k++) {

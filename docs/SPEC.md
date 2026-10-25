@@ -2253,11 +2253,13 @@ magic.
   60+. The Look switch's Ultra tier is now Lens Ultra (no Iris: Iris is OpenGL-only and its Sodium pin crashes on
   NeoForge 26.3.0.95), selectable on every backend; its budgets are Cinematic p50 ≤ 11.1 ms / p99 ≤ 20 ms and Ultra
   ≤ 16.7 / ≤ 25 ms. With an Iris shaderpack on, no tier is current and Lens steps aside as before.
-- **Chain** (Cinematic, Ultra): far-depth probe and trust (two 1-px passes) → **light** (`lens_light.fsh`, 1280×720 on
-  Cinematic, 1600×900 on Ultra; uniform `LensConfig.Quality` 1 or 2) → blit into the persistent `awaken:lens_hist` →
-  Lens's bloom and shafts passes → **composite** (`lens_composite_lit.fsh` = the Swift composite's body,
-  `include/lens_composite.glsl`, with `LENS_LIGHT` defined) → blit. Full-size passes stay two (composite and its blit),
-  as before. 26.3 post targets are RGBA8 only and fixed-size (or screen-size), so values that need precision travel in
+- **Chain** (Cinematic, Ultra): far-depth probe and trust (two 1-px passes) → **sun map** (`lens_sunmap.fsh`, L2) →
+  **light** (`lens_light.fsh`, 1280×720 on Cinematic, 1600×900 on Ultra; uniform `LensConfig.Quality` 1 or 2) → blit
+  into the persistent `awaken:lens_hist` → Lens's bloom and shafts passes → **composite** (`lens_composite_lit.fsh` =
+  the Swift composite's body, `include/lens_composite.glsl`, with `LENS_LIGHT` defined) → blit. 13 passes against
+  Swift's 9; full-size passes stay two (composite and its blit), as before. Measured at L1 (no sun map yet), the extra
+  cost barely changed between Cinematic's and Ultra's light buffer, so it's per-pass and full-size work, not tracing:
+  L2 folds volumetric light into the light pass and the fog glow into the composite instead of adding passes. 26.3 post targets are RGBA8 only and fixed-size (or screen-size), so values that need precision travel in
   float textures (below) and the light buffer packs its distance into two bytes.
 - **Frame texture** `awaken:lens_frame` (`LensFrame`, 24×1 RGBA32F, written in `RenderLevelStageEvent.AfterLevel`,
   just before the post effects, nothing allocated): 0-3 inverse view-projection, 4-7 view-projection, 8-11 last
@@ -2291,7 +2293,8 @@ magic.
   - **Temporal accumulation**: each frame uses fresh noise (interleaved gradient noise stepped per frame) and blends
     into last frame's result reprojected by the frame matrices (0.14 new on Cinematic, 0.1 on Ultra); of the 2×2
     history texels only those that saw the same distance count (disocclusion), dithered into 8 bits so slow changes
-    still move. Out: r sun, g ambient occlusion, b/a the distance (16-bit log2(d+1)/13).
+    still move. Out: r sun, g ambient occlusion, b volumetric light (L2), a the distance in one byte (log2(d+1)/13,
+    about 3.6% steps; 0 for sky); texels of the history and of the upsample count when within 1.5 steps.
   - Never within 1.25 blocks (the first-person hand, whose depth 26.3 merges into the main depth while post effects
     run, and the holo glass at 0.62 m): not shadowed, never an occluder.
 - **Composite light** (before the haze; the frame is display-encoded, so a multiplier m on linear light is applied as
@@ -2303,13 +2306,17 @@ magic.
   model fades out under solid cover (1 to 7 blocks of it: a ledge is shade, a roofed room is left as the game lit it,
   torches and all), toward the end of the render distance (75-100%), in the game's thick fog (as the haze does) and
   within 1.45 blocks. Strength: the sun's height (none at the horizon crossing), a faint moon (0.4) by night, rain
-  (−85%) and thunder (−50%); 0 where there's no overworld sky. Ambient occlusion applies everywhere, by day and night,
+  (−85%) and thunder (−50%); 0 where there's no overworld sky. Golden hour is the more of the sunrise colour's strength
+  and the sun's height (full below sin 0.1, none above 0.5; the sunrise colour alone only peaks as the sun touches the
+  horizon). Ambient occlusion applies everywhere, by day and night,
   fading out from 48 to 96 blocks. It only darkens, so the never-lift rule holds.
 - **Filmic curve** (`filmic`, in place of the plain contrast clamp): past white, colour runs toward white instead of
   clipping its hue; the top tenth rolls off with tanh (white itself within 3% of white); contrast is an S around
-  mid-grey with the look's slope there and fixed ends.
-- **Look fields** (looks*.json, inherited from `default`; texels 17-18): `light` 1.0, `shade` 0.38, `shadeTint`
-  [0.86, 0.93, 1.14], `keyWarmth` 0.8, `ao` 0.65, `filmic` 1.0.
+  mid-grey with the look's slope there, then a black point of 0.45 × (contrast − 1), as deep as the plain contrast's,
+  so night and shade keep their depth.
+- **Look fields** (looks*.json, inherited from `default`; texels 17-19): `light` 1.0, `shade` 0.32, `shadeTint`
+  [0.86, 0.93, 1.14], `keyWarmth` 0.8, `ao` 0.65, `filmic` 1.0; L2: `mist` 0.5, `mistHeight` 48 (blocks), `fogGlow`
+  0.15, `skyGlow` 0.6. Texel 19: r mist, g mistHeight/256, b fogGlow/2, a skyGlow.
 - **Debug views** (`lensdebug`, Cinematic/Ultra): 5 the light buffer (r sun, g AO), 6 normals with direct sun, 7 the
   light alone (grey 0.5 = unchanged), 8 the classic Cinematic (no Lens 2 light, plain contrast) on the same frame, for
   before/after shots.
@@ -2318,4 +2325,43 @@ magic.
   sun) is out of scope: the heightfield covers terrain, trees and buildings; contact shadows cover mobs.
 - Tour: `tools/autopilot/lens2-l1.txt` (a lab plot with trees, pillars, a gazebo, slabs, carpets, mobs and a torch-lit
   room; Carillon at golden hour into and away from the sun; noon; night; the holo menu; debug views; a frame-time bench
-  of off / Swift / Cinematic / Ultra at 2560×1440, RD 32).
+  of off / Swift / Cinematic / Ultra at 2560×1440, RD 32). L1 measured (busy Carillon vista at golden hour, p50/p99
+  ms): off 10.59/15.30, Swift 11.20/17.18, Cinematic 13.01/17.95, Ultra 13.16/18.36: Cinematic +2.4 ms over off,
+  Ultra +2.6 ms, inside both budgets. A four-way diagnostic (`lens2-diag.txt`, one pillar, the light buffer facing N, E,
+  S, W) proved the shadow direction from every side.
+- The heightfield uploads dirty strips round the ring from where the last tick stopped (8 a tick), so a row that keeps
+  changing near the camera can't starve the rest.
+
+**L2, atmosphere**
+- **Sun map** (`lens_sunmap.fsh`, `awaken:lens_sunmap`, 512×512 cells of 2 blocks on Cinematic, 1024×1024 of 1 block
+  on Ultra, rebuilt every frame): for each column of the heightfield ring, the height above which the sun reaches it
+  (the highest ridge, roof or canopy toward the sun less the light's drop over the distance), solid in r/g and with
+  leaves in b/a (two bytes each, -256..768 blocks in 1/64 steps). Its march (24 / 32 steps, max mips by stride) stops
+  as soon as nothing further toward the sun could rise above what it has, so most stop in a few steps.
+- **Volumetric light** (in the light pass, its blue channel; it replaces adding a pass): along each view ray to the
+  surface (or 192 / 320 blocks into the sky), 10 / 16 jittered samples of the sun map (lit, in a shadow, or under
+  leaves at 35%) in a mist that thickens toward sea level (exp(-(y - 63) / mistHeight)); optical depth 0.0016 per
+  block × `mist` × the look's `shafts` × the light's strength, sent toward the eye by a Henyey-Greenstein phase (g 0.6,
+  plus a 0.06 floor), so beams show strongest toward the sun and the air away from it stays clear. Accumulated over
+  frames (0.2 new on Cinematic, 0.15 on Ultra). The composite adds it (screen) in the light's colour × 1.6, and keeps
+  the screen-space shafts at half (0.7) for what the sun map can't hold: clouds crossing the sun. Classic (view 8)
+  shows the old shafts alone.
+- **Fog glow** (lights glowing in haze, the gates' light pools; composite only): the wide bloom layer sampled again on a
+  ring a tenth of the screen out (eight taps and the centre), tinted toward the haze colour, × `fogGlow` × 2.
+- **Sky scattering**: the sky, and the haze over terrain, brighten around the light's direction (pow(μ, 5) × 0.3 +
+  pow(μ, 40) × 0.4 in the light's colour, × `skyGlow`, wider and warmer at golden hour). Clouds are in the depth
+  buffer, so they take the key and shade like terrain (their sunlit tops warm, their undersides cool).
+- **Gate looks**: each theme's biome (`awaken:gate_<theme>`) has a look of its own, `biome:awaken:gate_<theme>` in
+  `assets/awaken/lens/looks_gates.json` (all 15 themes; the camera's biome picks it as for any biome, so no new sync).
+  Every field is written out (a biome look inherits from `default`, the overworld). No sun in gates (`light` 0, `mist`
+  0); their magic is the grade, haze toward the theme's colour, `ao` 0.5-0.85 and `fogGlow` 0.3 (Sky Archipelago) to 1.3
+  (Lantern Night Market). Swift uses the same looks for its grade and haze (fogGlow and ao need Cinematic).
+- **Ambient particles** (`LensParticles`, types `awaken:lens_mote|ember|frost|spore|wisp|breath` registered by
+  `LensModule` on both sides, sprites from `tools/art/specs/lens_fx.py`: smooth white light sprites, tinted per place,
+  never vanilla's): spawned on the client within about 12 blocks of the camera (more ahead), only on Cinematic (half)
+  and Ultra, scaled by the Particles setting (Minimal: none), never during a story scene. Each gate theme has its mix
+  (Ember Mines embers and ash, Fungal Hollow teal and violet spores, Hive honey spores, Frost Monastery falling frost,
+  Spirit themes wisps, Drowned Archive rising motes, ...); the Nether has embers; the overworld by day has dust that
+  spawns only in sunlit air (a CPU march of the heightfield mirror toward the sun) and glints when it's between you and
+  the sun. Your breath shows every 3-4 s in first person in the Frost Monastery and wherever it snows. Embers, spores,
+  wisps and dust are full bright (Lens's bloom picks them up); frost and breath take the world's light.

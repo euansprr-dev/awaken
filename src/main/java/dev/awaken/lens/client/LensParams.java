@@ -54,9 +54,11 @@ final class LensParams {
         // bottom left)
         packed[16] = pack(motion, motionX, motionY, 0f);
         // 17-18: Lens 2's light (SPEC §22): r light, g shade, b ambient occlusion, a filmic; then the shade's tint (/2, so
-        // a cool tint can lift blue a little) and the key light's warmth; 19-31 free
+        // a cool tint can lift blue a little) and the key light's warmth
         packed[17] = pack(look[Look.LIGHT], look[Look.SHADE], look[Look.AO], look[Look.FILMIC]);
         packed[18] = pack(look[Look.SHADE_TINT] / 2f, look[Look.SHADE_TINT + 1] / 2f, look[Look.SHADE_TINT + 2] / 2f, look[Look.KEY_WARMTH]);
+        // 19: Lens 2's atmosphere: r mist, g its scale height (/256 blocks), b fog glow (/2), a sky glow; 20-31 free
+        packed[19] = pack(look[Look.MIST], look[Look.MIST_HEIGHT] / 256f, look[Look.FOG_GLOW] / 2f, look[Look.SKY_GLOW]);
         for (int i = 0; i < WIDTH; i++) {
             if (packed[i] != uploaded[i]) {
                 dirty = true;

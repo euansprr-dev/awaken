@@ -15,7 +15,9 @@ final class Look {
             SPLIT_TONE = 10, VIGNETTE = 11, BLOOM = 12, BLOOM_THRESHOLD = 13, SKY_BLOOM = 14, SHAFTS = 15, HAZE = 16,
             HAZE_START = 17, HAZE_TINT = 18, HAZE_TINT_MIX = 21, HAZE_DESATURATE = 22, SUNSET_WARMTH = 23, SUN_GLOW = 24,
             // Lens 2 (Cinematic and Ultra, SPEC §22): the sun's light and shade, ambient occlusion, the filmic shoulder
-            LIGHT = 25, SHADE = 26, SHADE_TINT = 27, KEY_WARMTH = 30, AO = 31, FILMIC = 32, SIZE = 33;
+            LIGHT = 25, SHADE = 26, SHADE_TINT = 27, KEY_WARMTH = 30, AO = 31, FILMIC = 32,
+            // and its atmosphere: the sunlit mist and how high it reaches, lights glowing in fog, the sky's scattering
+            MIST = 33, MIST_HEIGHT = 34, FOG_GLOW = 35, SKY_GLOW = 36, SIZE = 37;
 
     /** The neutral look: the frame exactly as the game drew it, apart from the dither. */
     static float[] neutral() {
@@ -56,6 +58,10 @@ final class Look {
         num(o, "keyWarmth", v, KEY_WARMTH);
         num(o, "ao", v, AO);
         num(o, "filmic", v, FILMIC);
+        num(o, "mist", v, MIST);
+        num(o, "mistHeight", v, MIST_HEIGHT);
+        num(o, "fogGlow", v, FOG_GLOW);
+        num(o, "skyGlow", v, SKY_GLOW);
         return v;
     }
 
