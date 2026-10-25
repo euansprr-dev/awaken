@@ -18,8 +18,9 @@ import org.jspecify.annotations.Nullable;
  * seeded per house and window, so the city's night has a pattern that changes through the evening and never twinkles.
  *
  * <p>Cheap by design: a house's window positions are found once (painting the plot alone into a scratch buffer, the
- * painter's own rules), and a few houses a tick are brought to their wanted state, only in loaded chunks, only where the
- * block is still a lit window. One sweep of the city takes about ten seconds; a clock jump settles in one sweep.
+ * painter's own rules; the nearest unknown house to a player every other tick), and a few houses a tick are brought to
+ * their wanted state, only in loaded chunks, only where the block is still a lit window. One sweep of the city takes
+ * about ten seconds; a clock jump settles in one sweep.
  */
 public final class CityLights {
     private CityLights() {}
@@ -28,11 +29,14 @@ public final class CityLights {
     private static final CityBuffer SCRATCH = new CityBuffer(20, 20);
     private static long[][] windows = new long[0][];
     private static byte[][] storeys = new byte[0][];
-    private static int buildCursor, sweepCursor;
-    static long switched;
+    private static int sweepCursor, unbuilt;
+    static long switched, buildNanos, builds;
 
-    /** Houses a tick brought to their wanted state, and window lists found a tick (one plot painted alone). */
-    static final int SWEEP = 3, BUILD = 1;
+    /**
+     * Houses a tick brought to their wanted state; one house's window list found every BUILD_EVERY ticks (painting the
+     * plot alone costs about half a millisecond, so this keeps it near 0.25 ms a tick until every list is known).
+     */
+    static final int SWEEP = 3, BUILD_EVERY = 2;
 
     static void tick(MinecraftServer server) {
         CityLayout l = City.layout();
@@ -42,20 +46,42 @@ public final class CityLights {
             cachedFor = l;
             windows = new long[l.plan.plots.size()][];
             storeys = new byte[l.plan.plots.size()][];
-            buildCursor = sweepCursor = 0;
+            sweepCursor = 0;
+            unbuilt = windows.length;
         }
-        if (level.players().isEmpty()) return;
+        var players = level.players();
+        if (players.isEmpty()) return;
         int tod = (int) Math.floorMod(level.getOverworldClockTime(), 24000L);
         int n = windows.length;
-        // find a few houses' windows (near players first: a house is only visited while it is loaded)
-        for (int k = 0, built = 0; k < 8 && built < BUILD && n > 0; k++) {
-            int i = buildCursor;
-            buildCursor = (buildCursor + 1) % n;
-            if (windows[i] != null) continue;
-            CityPlan.Plot p = l.plan.plots.get(i);
-            if (p.enter() || !level.isLoaded(new BlockPos(l.cx + p.x0(), l.streetY, l.cz + p.z0()))) continue;
-            build(l, level.getSeed(), i);
-            built++;
+        // the nearest house to a player whose windows aren't known yet (a scan of the plots' corners: microseconds)
+        if (unbuilt > 0 && server.getTickCount() % BUILD_EVERY == 0) {
+            int best = -1;
+            double bestD = Double.MAX_VALUE;
+            for (int i = 0; i < n; i++) {
+                if (windows[i] != null) continue;
+                CityPlan.Plot p = l.plan.plots.get(i);
+                if (p.enter()) {
+                    windows[i] = new long[0];
+                    storeys[i] = new byte[0];
+                    unbuilt--;
+                    continue;
+                }
+                double x = l.cx + p.x0() + 0.5 * (p.x1() - p.x0()), z = l.cz + p.z0() + 0.5 * (p.z1() - p.z0());
+                for (var pl : players) {
+                    double dx = pl.getX() - x, dz = pl.getZ() - z, d = dx * dx + dz * dz;
+                    if (d < bestD && level.isLoaded(BlockPos.containing(x, l.streetY, z))) {
+                        bestD = d;
+                        best = i;
+                    }
+                }
+            }
+            if (best >= 0) {
+                long t0 = System.nanoTime();
+                build(l, level.getSeed(), best);
+                buildNanos += System.nanoTime() - t0;
+                builds++;
+                unbuilt--;
+            }
         }
         for (int k = 0, done = 0; k < 32 && done < SWEEP && n > 0; k++) {
             int i = sweepCursor;
@@ -141,6 +167,7 @@ public final class CityLights {
             known++;
             total += w.length;
         }
-        return known + " houses' windows known (" + total + " windows), " + switched + " switched";
+        return known + " houses' windows known (" + total + " windows), " + switched + " switched; " + builds + " lists built, "
+                + String.format(java.util.Locale.ROOT, "%.3f", builds == 0 ? 0.0 : buildNanos / 1e6 / builds) + " ms each";
     }
 }

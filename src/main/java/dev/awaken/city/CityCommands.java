@@ -66,10 +66,10 @@ final class CityCommands {
         BlockPos at = BlockPos.containing(src.getPosition());
         String where = l.inCity(at.getX(), at.getZ()) ? CityPlan.DISTRICTS[l.district(at.getX(), at.getZ())] : "outside the wall";
         String msg = String.format(Locale.ROOT,
-                "Carillon at %d %d (street y %d, basin %s), plan %s, %d plots, %d chunks. Graphs: %s. Pregen %.1f s. You: %s. Paint: %s",
+                "Carillon at %d %d (street y %d, basin %s), plan %s, %d plots, %d chunks. Graphs: %s. Pregen %.1f s. You: %s. Paint: %s. Lights: %s",
                 l.cx, l.cz, l.streetY, l.carved ? "carved" : "flattened by the city", l.plan.sha256.substring(0, 12), l.plan.plots.size(),
                 l.chunks.length, d == null || !d.built() ? "not baked" : d.street.nodes() + "/" + d.street.edges() + " street, "
-                        + d.roof.nodes() + "/" + d.roof.edges() + " roof", d == null ? 0 : d.pregenSeconds, where, City.STATS.summary());
+                        + d.roof.nodes() + "/" + d.roof.edges() + " roof", d == null ? 0 : d.pregenSeconds, where, City.STATS.summary(), CityLights.info());
         src.sendSuccess(() -> Component.literal(msg), false);
         dev.awaken.Awaken.LOG.info("[city] info: {}", msg);
         return 1;
