@@ -1,5 +1,7 @@
 {
   "values": [
-    "awaken:hoist_beam"
+    "awaken:hoist_beam",
+    "awaken:sign_bracket",
+    "awaken:flagpole"
   ]
 }
