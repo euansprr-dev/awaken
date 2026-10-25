@@ -38,6 +38,13 @@ public final class LivingContent {
     public static final Supplier<AttachmentType<Integer>> LOOT_PILLAR = ATTACHMENTS.register("loot_pillar",
             () -> AttachmentType.builder(() -> 0).sync(ByteBufCodecs.VAR_INT).build());
 
+    /** The Wayfarer chains a player took (SPEC §21, Phase C): saved, kept through death, synced to its owner. */
+    public static final Supplier<AttachmentType<dev.awaken.living.quest.QuestState>> QUESTS = ATTACHMENTS.register("quests",
+            () -> AttachmentType.builder(dev.awaken.living.quest.QuestState::new).serialize(dev.awaken.living.quest.QuestState.CODEC.fieldOf("quests"))
+                    .copyOnDeath()
+                    .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.quest.QuestState.CODEC))
+                    .build());
+
     public static final DeferredHolder<SoundEvent, SoundEvent> SCAN = sound("living.scan");
     public static final DeferredHolder<SoundEvent, SoundEvent> CRIT = sound("living.crit");
     public static final DeferredHolder<SoundEvent, SoundEvent> XP_TICK = sound("living.xp_tick");

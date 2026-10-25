@@ -67,8 +67,11 @@ public final class LivingModule {
         bus.addListener(EventPriority.LOWEST, CriticalHitEvent.class, Hits::onCrit);
         bus.addListener(LivingDamageEvent.Post.class, Hits::onDamage);
         bus.addListener(LivingDropsEvent.class, LootPillars::onDrops);
+        bus.addListener(LivingDeathEvent.class, dev.awaken.living.quest.QuestEngine::onDeath);
+        bus.addListener(dev.awaken.living.quest.QuestBook::addReload);
         bus.addListener(ServerTickEvent.Post.class, e -> {
             RegionTracker.tick(e.getServer());
+            if (e.getServer().getTickCount() % 20 == 0) for (ServerPlayer p : e.getServer().getPlayerList().getPlayers()) dev.awaken.living.quest.QuestEngine.poll(p);
             XpStream.tick(e.getServer());
             shownTick(e.getServer());
         });

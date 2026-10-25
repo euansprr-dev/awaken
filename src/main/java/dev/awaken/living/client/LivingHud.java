@@ -57,7 +57,7 @@ final class LivingHud {
     static final int POPS = 4;
     private static final int[] popXp = new int[POPS], popKind = new int[POPS];
     private static final float[] popFrom = {-1000, -1000, -1000, -1000};
-    static final float POP_TICKS = 26;
+    static final float POP_TICKS = 40;
 
     static void pop(int xp, int kind) {
         float t = LivingClient.ticks;

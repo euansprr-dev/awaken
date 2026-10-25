@@ -122,6 +122,8 @@ public class FaunaMob extends AwakenMob {
 
     @Override
     protected dev.awaken.core.api.CreatureTag.Kind tagKind(MobRole.Role role) {
+        // named beasts are Warden-sized, but the band names them beasts (they pay by their own first-kill rules)
+        if (faunaRole() == FaunaRole.BEAST) return dev.awaken.core.api.CreatureTag.Kind.BEAST;
         if (role == MobRole.Role.WARDEN || role == MobRole.Role.BOSS) return super.tagKind(role);
         return switch (faunaRole()) {
             case AMBIENT -> dev.awaken.core.api.CreatureTag.Kind.AMBIENT;

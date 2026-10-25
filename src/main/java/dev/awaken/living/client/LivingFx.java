@@ -53,7 +53,8 @@ final class LivingFx {
 
     static final int GLYPHS = 24;
     private static final double[] gx = new double[GLYPHS], gy = new double[GLYPHS], gz = new double[GLYPHS];
-    private static final float[] gValue = new float[GLYPHS], gBorn = new float[GLYPHS], gSide = new float[GLYPHS];
+    private static final float[] gValue = new float[GLYPHS], gBorn = new float[GLYPHS], gSide = new float[GLYPHS], gWidth = new float[GLYPHS];
+    private static float lastSide = 1;
     private static final int[] gEntity = new int[GLYPHS], gColour = new int[GLYPHS];
     private static final boolean[] gCrit = new boolean[GLYPHS];
     static final float GLYPH_LIFE = 14; // ticks (700 ms)
@@ -77,14 +78,16 @@ final class LivingFx {
             if (gBorn[i] < gBorn[slot]) slot = i;
         }
         var r = target.getRandom();
-        gx[slot] = target.getX() + (r.nextDouble() - 0.5) * target.getBbWidth() * 0.8;
-        gy[slot] = target.getY() + target.getBbHeight() * (0.55 + r.nextDouble() * 0.3);
-        gz[slot] = target.getZ() + (r.nextDouble() - 0.5) * target.getBbWidth() * 0.8;
+        gx[slot] = target.getX();
+        gy[slot] = target.getY() + target.getBbHeight() * (0.45 + r.nextDouble() * 0.25);
+        gz[slot] = target.getZ();
+        gWidth[slot] = target.getBbWidth();
         gValue[slot] = amount;
         gBorn[slot] = t;
         gEntity[slot] = target.getId();
         gCrit[slot] = crit;
-        gSide[slot] = (r.nextFloat() - 0.5F) * 0.6F;
+        // beside the creature, alternating sides, never over its plate
+        gSide[slot] = (lastSide = -lastSide) * (0.85F + r.nextFloat() * 0.4F);
         gColour[slot] = crit ? CRIT : force >= 0 && force < FORCE.length ? FORCE[force] : KINETIC;
     }
 
@@ -165,7 +168,7 @@ final class LivingFx {
         PoseStack ps = e.getPoseStack();
         SubmitNodeCollector out = e.getSubmitNodeCollector();
         boolean plates = LivingClient.shown && LivingClientConfig.plates && !LivingClient.PICKED.isEmpty();
-        if (plates) out.submitCustomGeometry(ps, glass, (pose, vc) -> guard(() -> platesGlass(vc, mc)));
+        out.submitCustomGeometry(ps, glass, (pose, vc) -> guard(() -> solid(vc, mc, plates)));
         out.submitCustomGeometry(ps, add, (pose, vc) -> guard(() -> light(vc, mc, plates)));
         if (plates) platesText(ps, out, mc);
     }
@@ -178,9 +181,15 @@ final class LivingFx {
         }
     }
 
+    /** The solid pass: unfogged and alpha-blended, so plates and numbers read against a bright sky and through fog. */
+    private static void solid(VertexConsumer vc, Minecraft mc, boolean plates) {
+        if (plates) platesGlass(vc, mc);
+        for (int i = 0; i < GLYPHS; i++) drawGlyph(vc, i, true);
+    }
+
     private static void light(VertexConsumer vc, Minecraft mc, boolean plates) {
         if (plates) platesLight(vc, mc);
-        for (int i = 0; i < GLYPHS; i++) drawGlyph(vc, i);
+        for (int i = 0; i < GLYPHS; i++) drawGlyph(vc, i, false);
         for (int i = 0; i < STREAMS; i++) drawStream(vc, mc, i);
         for (int i = 0; i < MOMENTS; i++) drawMoment(vc, mc, i);
         for (ItemEntity item : LivingClient.PILLARS) drawPillar(vc, item);
@@ -191,11 +200,20 @@ final class LivingFx {
     /** A plate's frame: centre, half width, half height (blocks), visibility, the entity. */
     private static final double[] PC = new double[3];
 
+    /** Blocks per text pixel on a plate. */
+    static final float TEXT = 0.0125F;
+
     private static boolean plateFrame(LivingEntity e, PlateRules.Candidate c, double[] centre, float[] size) {
         double x = Mth.lerp(pt, e.xo, e.getX()), y = Mth.lerp(pt, e.yo, e.getY()), z = Mth.lerp(pt, e.zo, e.getZ());
         CreatureTag tag = CreatureTag.of(e);
-        float halfW = (float) Mth.clamp(e.getBbWidth() * 0.65, 0.5, 1.2);
-        float halfH = tag.title().isEmpty() ? 0.17F : 0.23F;
+        Minecraft mc = Minecraft.getInstance();
+        Font font = mc.font;
+        // wide enough for its words: [ELITE] name ... Lv nn, and the title under them
+        int words = font.width(name(e, tag, Progression.profile(mc.player))) + font.width("Lv " + tag.level()) + 22
+                + (tag.elite() ? font.width("ELITE ") + 2 : 0);
+        int titleW = tag.title().isEmpty() ? 0 : (int) (font.width(tag.title()) * 0.78F) + 10;
+        float halfW = (float) Math.max(Mth.clamp(e.getBbWidth() * 0.65, 0.5, 1.4), Math.max(words, titleW) * TEXT * 0.5F + 0.06F);
+        float halfH = tag.title().isEmpty() ? 0.19F : 0.255F;
         centre[0] = x;
         centre[1] = y + e.getBbHeight() + 0.45 + halfH;
         centre[2] = z;
@@ -222,7 +240,56 @@ final class LivingFx {
             float seg = (bx1 - bx0) / 10F, gap = 0.018F;
             int well = argb(0.5F * vis, 0x05080E);
             for (int k = 0; k < 10; k++) planeQuad(vc, bx, by, bz, bx0 + k * seg + gap / 2, by0, bx0 + (k + 1) * seg - gap / 2, by1, well, well);
+            // the rim, solid so it reads on a bright sky; the light pass adds its glow
+            CreatureTag tag = CreatureTag.of(e);
+            int rim = tag.elite() ? AMBER : tag.kind().hostile() ? WARM : tag.kind() == CreatureTag.Kind.PASSIVE || tag.kind() == CreatureTag.Kind.AMBIENT ? 0x5A7088 : SIGNAL;
+            int rimA = argb(0.75F * vis, rim);
+            solidLine(vc, -hw, hh, hw, hh, 0.014F, rimA);
+            solidLine(vc, -hw, -hh, hw, -hh, 0.014F, rimA);
+            solidLine(vc, -hw, -hh, -hw, hh, 0.014F, rimA);
+            solidLine(vc, hw, -hh, hw, hh, 0.014F, rimA);
+            float b = Math.min(0.13F, hw * 0.3F);
+            int brk = argb(vis, rim == 0x5A7088 ? SIGNAL : rim);
+            solidLine(vc, -hw, hh, -hw + b, hh, 0.032F, brk);
+            solidLine(vc, -hw, hh, -hw, hh - b, 0.032F, brk);
+            solidLine(vc, hw, -hh, hw - b, -hh, 0.032F, brk);
+            solidLine(vc, hw, -hh, hw, -hh + b, 0.032F, brk);
+            // the segments: light for what's left, amber draining for what was just lost
+            float frac = Mth.clamp(e.getHealth() / Math.max(1F, e.getMaxHealth()), 0, 1);
+            float drain = Math.max(frac, LivingClient.drained(e.getId(), frac));
+            float flash = 0.7F + 0.3F * Mth.sin(now * 1.3F);
+            for (int k = 0; k < 10; k++) {
+                float s0 = k / 10F, s1 = (k + 1) / 10F;
+                float x0 = bx0 + k * seg + gap / 2, x1 = bx0 + (k + 1) * seg - gap / 2;
+                float lit = Mth.clamp((frac - s0) / (s1 - s0), 0, 1);
+                if (lit > 0) planeQuad(vc, PC[0] - LOOK.x * 0.004, PC[1] - LOOK.y * 0.004, PC[2] - LOOK.z * 0.004, x0, by0, x0 + (x1 - x0) * lit, by1,
+                        argb(0.95F * vis, frac < 0.25F ? 0xFF9A8A : 0xCDEBFF), argb(0.95F * vis, frac < 0.25F ? 0xFF7A6A : 0x9FD4FF));
+                float lost = Mth.clamp((drain - s0) / (s1 - s0), 0, 1);
+                if (lost > lit) planeQuad(vc, PC[0] - LOOK.x * 0.004, PC[1] - LOOK.y * 0.004, PC[2] - LOOK.z * 0.004, x0 + (x1 - x0) * lit, by0,
+                        x0 + (x1 - x0) * lost, by1, argb(0.95F * vis * flash, AMBER), argb(0.95F * vis * flash, 0xF2A541));
+            }
         }
+    }
+
+    /** A flat, solid line on the plate's plane, a hair in front of the glass. */
+    private static void solidLine(VertexConsumer vc, float u0, float v0, float u1, float v1, float width, int argb) {
+        flatStroke(vc, PC[0] - LOOK.x * 0.006, PC[1] - LOOK.y * 0.006, PC[2] - LOOK.z * 0.006, u0, v0, u1, v1, width, argb);
+    }
+
+    /** One solid stroke on the camera's plane about (x, y, z), ends extended so joints close. */
+    private static void flatStroke(VertexConsumer vc, double x, double y, double z, float u0, float v0, float u1, float v1, float width, int argb) {
+        float du = u1 - u0, dv = v1 - v0;
+        float len = Mth.sqrt(du * du + dv * dv);
+        if (len < 1e-5F) {
+            du = 0.001F;
+            len = 0.001F;
+        }
+        float nu = -dv / len * width * 0.5F, nv = du / len * width * 0.5F;
+        float eu = du / len * width * 0.5F, ev = dv / len * width * 0.5F;
+        p(vc, x, y, z, u0 - eu - nu, v0 - ev - nv, argb);
+        p(vc, x, y, z, u1 + eu - nu, v1 + ev - nv, argb);
+        p(vc, x, y, z, u1 + eu + nu, v1 + ev + nv, argb);
+        p(vc, x, y, z, u0 - eu + nu, v0 - ev + nv, argb);
     }
 
     private static void platesLight(VertexConsumer vc, Minecraft mc) {
@@ -236,32 +303,16 @@ final class LivingFx {
             CreatureTag tag = CreatureTag.of(e);
             int rim = tag.kind().hostile() ? WARM : tag.kind() == CreatureTag.Kind.PASSIVE || tag.kind() == CreatureTag.Kind.AMBIENT ? 0 : SIGNAL;
             if (tag.elite()) rim = AMBER;
-            int rimA = argb(0.55F * vis, rim == 0 ? 0x5A7088 : rim);
-            // hairline rim and brighter corner brackets
-            float b = Math.min(0.12F, hw * 0.3F);
-            planeLine(vc, -hw, hh, hw, hh, 0.012F, rimA);
-            planeLine(vc, -hw, -hh, hw, -hh, 0.012F, rimA);
-            planeLine(vc, -hw, -hh, -hw, hh, 0.012F, rimA);
-            planeLine(vc, hw, -hh, hw, hh, 0.012F, rimA);
-            int brk = argb(0.95F * vis, rim == 0 ? SIGNAL : rim);
-            planeLine(vc, -hw, hh, -hw + b, hh, 0.03F, brk);
-            planeLine(vc, -hw, hh, -hw, hh - b, 0.03F, brk);
-            planeLine(vc, hw, -hh, hw - b, -hh, 0.03F, brk);
-            planeLine(vc, hw, -hh, hw, -hh + b, 0.03F, brk);
-            // the health segments: light for what's left, amber draining for what was just lost
+            // the brackets glow and the lit segments shine (their solid shapes are in the solid pass)
+            float b = Math.min(0.13F, hw * 0.3F);
+            int glow = argb(0.6F * vis, rim == 0 ? SIGNAL : rim);
+            planeLine(vc, -hw, hh, -hw + b, hh, 0.09F, glow);
+            planeLine(vc, -hw, hh, -hw, hh - b, 0.09F, glow);
+            planeLine(vc, hw, -hh, hw - b, -hh, 0.09F, glow);
+            planeLine(vc, hw, -hh, hw, -hh + b, 0.09F, glow);
             float frac = Mth.clamp(e.getHealth() / Math.max(1F, e.getMaxHealth()), 0, 1);
-            float drain = Math.max(frac, LivingClient.drained(e.getId(), frac));
-            float bx0 = -hw + 0.06F, bx1 = hw - 0.06F, by0 = -hh + 0.05F, by1 = by0 + 0.065F;
-            float seg = (bx1 - bx0) / 10F, gap = 0.018F;
-            float flash = 0.65F + 0.35F * Mth.sin(now * 1.3F);
-            for (int k = 0; k < 10; k++) {
-                float s0 = k / 10F, s1 = (k + 1) / 10F;
-                float x0 = bx0 + k * seg + gap / 2, x1 = bx0 + (k + 1) * seg - gap / 2;
-                float lit = Mth.clamp((frac - s0) / (s1 - s0), 0, 1);
-                if (lit > 0) planeQuadLight(vc, x0, by0, x0 + (x1 - x0) * lit, by1, argb(0.9F * vis, frac < 0.25F ? 0xFF9A8A : 0xBFE7FF));
-                float lost = Mth.clamp((drain - s0) / (s1 - s0), 0, 1);
-                if (lost > lit) planeQuadLight(vc, x0 + (x1 - x0) * lit, by0, x0 + (x1 - x0) * lost, by1, argb(0.85F * vis * flash, AMBER));
-            }
+            float bx0 = -hw + 0.06F, bx1 = hw - 0.06F, by0 = -hh + 0.05F;
+            if (frac > 0) planeLine(vc, bx0, by0 + 0.0325F, bx0 + (bx1 - bx0) * frac, by0 + 0.0325F, 0.16F, argb(0.28F * vis, frac < 0.25F ? 0xFF9A8A : 0xBFE7FF));
             // a scan band sweeping down over the creature when the band first reads it
             float scan = LivingClient.scanAge(e.getId()) + pt;
             if (scan >= 0 && scan < 5) {
@@ -292,7 +343,7 @@ final class LivingFx {
             plateFrame(e, c, PC, SIZE);
             float hw = SIZE[0], hh = SIZE[1];
             CreatureTag tag = CreatureTag.of(e);
-            float s = 0.0105F;
+            float s = TEXT;
             ps.pushPose();
             ps.translate(PC[0] - cx, PC[1] - cy, PC[2] - cz);
             ps.rotate(CAM);
@@ -346,34 +397,63 @@ final class LivingFx {
 
     // ---- glyphs -----------------------------------------------------------------------------------------------------
 
-    private static void drawGlyph(VertexConsumer vc, int i) {
+    private static void drawGlyph(VertexConsumer vc, int i, boolean solidPass) {
         float age = now - gBorn[i];
         if (age < 0 || age > GLYPH_LIFE) return;
         float k = age / GLYPH_LIFE;
         float rise = 1 - (1 - k) * (1 - k);
-        float pop = age < 1.6F ? 1.25F - 0.25F * (age / 1.6F) : 1;
+        float pop = age < 1.6F ? 1.3F - 0.3F * (age / 1.6F) : 1;
         float alpha = k < 0.65F ? 1 : 1 - (k - 0.65F) / 0.35F;
         boolean crit = gCrit[i];
-        float unit = (crit ? 0.06F : 0.038F) * pop;
-        double x = gx[i] + RIGHT.x * gSide[i] * rise, y = gy[i] + 0.9 * rise, z = gz[i] + RIGHT.z * gSide[i] * rise;
+        float unit = (crit ? 0.07F : 0.046F) * pop;
+        // out to the side and a little toward the camera, so the number sits in front of the creature and its plate
+        float out = gSide[i] * (gWidth[i] * 0.5F + 0.3F + 0.25F * rise);
+        double x = gx[i] + RIGHT.x * out - LOOK.x * 0.45, y = gy[i] + 0.6 * rise - LOOK.y * 0.45, z = gz[i] + RIGHT.z * out - LOOK.z * 0.45;
         String text = gValue[i] >= 10 || gValue[i] == Math.floor(gValue[i]) ? Integer.toString(Math.max(1, Math.round(gValue[i])))
                 : String.format(java.util.Locale.ROOT, "%.1f", gValue[i]);
         int col = gColour[i];
-        strokes(vc, text, x, y, z, unit, crit ? 0.16F : 0.11F, argb(alpha, col), argb(0.22F * alpha, col));
+        // centred on its point
+        float w = StrokeFont.width(text) * unit;
+        x -= RIGHT.x * w * 0.5;
+        y -= RIGHT.y * w * 0.5;
+        z -= RIGHT.z * w * 0.5;
+        if (solidPass) {
+            // a dark halo for contrast, then the stroke itself, solid (it must read on a white sky as on a black night)
+            solidStrokes(vc, text, x + LOOK.x * 0.01, y + LOOK.y * 0.01, z + LOOK.z * 0.01, unit, 2.0F, argb(0.5F * alpha, 0x060A12));
+            solidStrokes(vc, text, x, y, z, unit, 0.95F, argb(alpha, col));
+            return;
+        }
+        strokes(vc, text, x, y, z, unit, 0.16F, argb(0.5F * alpha, col), argb(0.18F * alpha, col));
         if (crit && age < 5) {
             // the fracture: short rays out of the number, gone in a quarter of a second
             float f = age / 5F;
-            float w = StrokeFont.width(text) * unit;
             double mx = x + RIGHT.x * w * 0.5, my = y + StrokeFont.HEIGHT * unit * 0.5, mz = z + RIGHT.z * w * 0.5;
             for (int r = 0; r < 7; r++) {
                 double a = r * Math.PI * 2 / 7 + gSide[i] * 3;
-                float r0 = w * (0.55F + f * 0.4F), r1 = w * (0.75F + f * 0.9F);
+                float r0 = w * (0.55F + f * 0.4F) + 0.1F, r1 = w * (0.75F + f * 0.9F) + 0.2F;
                 double ax = Math.cos(a), ay = Math.sin(a);
                 Vec3 p0 = new Vec3(mx + (RIGHT.x * ax + UP.x * ay) * r0, my + (RIGHT.y * ax + UP.y * ay) * r0, mz + (RIGHT.z * ax + UP.z * ay) * r0);
                 Vec3 p1 = new Vec3(mx + (RIGHT.x * ax + UP.x * ay) * r1, my + (RIGHT.y * ax + UP.y * ay) * r1, mz + (RIGHT.z * ax + UP.z * ay) * r1);
-                beam(vc, p0, p1, 0.03F, argb(0.9F * (1 - f), CRIT));
+                beam(vc, p0, p1, 0.05F, argb(0.95F * (1 - f), CRIT));
             }
-            flare(vc, mx, my, mz, w * (0.6F + f), argb(0.35F * (1 - f), CRIT));
+            flare(vc, mx, my, mz, w * (0.7F + f) + 0.15F, argb(0.4F * (1 - f), CRIT));
+        }
+    }
+
+    /** A string in solid strokes (width in grid units) on the camera's plane. */
+    private static void solidStrokes(VertexConsumer vc, String s, double x, double y, double z, float unit, float width, int argb) {
+        float pen = 0;
+        for (int c = 0; c < s.length(); c++) {
+            char ch = s.charAt(c);
+            if (ch == ' ') {
+                pen += StrokeFont.ADVANCE * 0.6F;
+                continue;
+            }
+            for (float[] seg : StrokeFont.glyph(ch)) {
+                float x0 = pen + seg[0] + seg[1] * StrokeFont.SLANT, x1 = pen + seg[2] + seg[3] * StrokeFont.SLANT;
+                flatStroke(vc, x, y, z, x0 * unit, seg[1] * unit, x1 * unit, seg[3] * unit, width * unit, argb);
+            }
+            pen += StrokeFont.ADVANCE;
         }
     }
 
