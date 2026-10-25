@@ -35,7 +35,7 @@ public record CityFeature() implements Feature {
         CityPainter.paintChunk(layout, cx, cz, level.getSeed(), buf);
         long t1 = System.nanoTime();
         int n = CityWriter.toProto(chunk, buf, layout.streetY);
-        int swept = CityWriter.sweepNeighbours(level, layout, cx, cz);
+        int swept = CityWriter.sweepNeighbours(level, layout, cx, cz) + CityWriter.collectOrphans(level, layout, cx, cz);
         long t2 = System.nanoTime();
         City.STATS.add(t1 - t0, t2 - t1, n + swept);
         return true;

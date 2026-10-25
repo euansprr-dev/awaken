@@ -62,6 +62,11 @@ public enum Landmark implements StringRepresentable {
         return id;
     }
 
+    /** How far from its centre any block of the landmark can lie (a circle; the city reserve is kept clear of it). */
+    public int reach() {
+        return reach;
+    }
+
     abstract BlockState[] palette();
 
     /** The block for a voxel code. */
