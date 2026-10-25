@@ -393,8 +393,9 @@ final class CityWall {
     static final Dress PALE = new Dress(of("minecraft:polished_diorite"), of("minecraft:calcite"),
             of("minecraft:polished_diorite_slab[type=bottom]"), Stairs.of("minecraft:polished_diorite_stairs", "top"),
             Stairs.of("minecraft:polished_diorite_stairs", "bottom"));
-    static final Dress BRICK = new Dress(of("minecraft:bricks"), of("minecraft:bricks"), of("minecraft:brick_slab[type=bottom]"),
-            Stairs.of("minecraft:brick_stairs", "top"), Stairs.of("minecraft:brick_stairs", "bottom"));
+    /** The Works' dressing: muted mud brick, tile courses rather than red lines (red traced the raster's steps). */
+    static final Dress BRICK = new Dress(of("minecraft:mud_bricks"), of("minecraft:mud_bricks"), of("minecraft:mud_brick_slab[type=bottom]"),
+            Stairs.of("minecraft:mud_brick_stairs", "top"), Stairs.of("minecraft:mud_brick_stairs", "bottom"));
 
     static Dress dress(int district) {
         return switch (district) {
@@ -651,7 +652,7 @@ final class CityWall {
         if (m == 5) b.set(x, 31, z, COURSE.straight()[along]);
         for (int ry = 10; ry <= 29; ry++) {
             int dens = ivyAt(g, ry, true, c.pct(x, z, 730 + ry));
-            if (dens >= 0) b.set(x, ry, z, ivy(in, dens, g));
+            if (dens >= 0) b.set(x, ry, z, ivy(in, dens, g, ry));
         }
     }
 
@@ -691,7 +692,7 @@ final class CityWall {
      */
     static int ivyAt(Geo g, int ry, boolean inner, int h) {
         int salt = inner ? 160 : 170;
-        int chance = inner ? 55 : g.out() == N ? 50 : BEHIND[g.k] == GARDEN_D || BEHIND[g.k] == QUAY_D ? 40 : 16;
+        int chance = inner ? 60 : g.out() == N ? 62 : BEHIND[g.k] == GARDEN_D || BEHIND[g.k] == QUAY_D ? 45 : 16;
         int r0 = inner ? 1 : 6, best = -1;
         double u = g.u + 0.5;
         for (int q = Math.floorDiv(g.u + 4, 9) - 1; q <= Math.floorDiv(g.u + 4, 9) + 1; q++) {
@@ -702,10 +703,11 @@ final class CityWall {
             double dy = (ry - r0 + 0.5) / hgt;
             double topEdge = 1 - 0.3 * vnoise(salt + 4, u, q);
             if (dy < 0 || dy > topEdge) continue;
-            double w = w0 * (1 - 0.55 * dy * dy) * (0.7 + 0.6 * vnoise(salt + 5, ry, q * 7));
+            // widest at its root (a thick mat at the foot), narrowing and breaking up as it climbs
+            double w = w0 * (1.35 - 0.9 * dy) * (0.7 + 0.6 * vnoise(salt + 5, ry, q * 7));
             double val = 1 - Math.abs(u - cu) / Math.max(0.6, w);
             if (val <= 0) continue;
-            int d = dy > topEdge - 0.12 ? (h < 55 ? 0 : -1) : val > 0.45 ? (h < 85 ? 2 : 1) : val > 0.18 ? 1 : (h < 60 ? 0 : -1);
+            int d = dy > topEdge - 0.12 ? (h < 55 ? 0 : -1) : val > 0.45 || dy < 0.25 && val > 0.2 ? (h < 88 ? 2 : 1) : val > 0.18 ? 1 : (h < 60 ? 0 : -1);
             if (h >= 96) d = -1;
             best = Math.max(best, d);
         }
@@ -736,8 +738,13 @@ final class CityWall {
         return solidAt(c, nx, ry, nz);
     }
 
-    static BlockState ivy(int facing, int density, Geo g) {
-        String tone = BEHIND[g.k] == BELLWATCH ? "dark" : g.k % 7 == 3 ? "autumn" : "green";
+    /**
+     * Ivy's tone at a cell: mostly deep green, darker old growth in drifts (Bellwatch's walls most), and here and there a
+     * small patch turning to autumn.
+     */
+    static BlockState ivy(int facing, int density, Geo g, int ry) {
+        double n = vnoise(181, g.u * 1.0, ry * 1.0), a = vnoise(182, g.u * 0.7, ry * 0.7);
+        String tone = a > 0.86 ? "autumn" : n > (BEHIND[g.k] == BELLWATCH ? 0.45 : 0.68) ? "dark" : "green";
         return st("awaken:wall_ivy[facing=" + DIR[facing] + ",density=" + density + ",tone=" + tone + "]");
     }
 
@@ -809,7 +816,7 @@ final class CityWall {
                 int dens = ivyAt(g, ry, false, c.pct(x, z, 830 + ry));
                 if (dens < 0) continue;
                 int face = ivyFace(c, g, x, ry, z);
-                if (face >= 0) b.set(x, ry, z, ivy(face, dens, g));
+                if (face >= 0) b.set(x, ry, z, ivy(face, dens, g, ry));
             }
         }
         // long banners of the district down the face in every third bay, beside its loop and between the courses (the
@@ -1016,7 +1023,7 @@ final class CityWall {
                     BlockState here = b.get(x, ry, z);
                     if (here != null && !here.isAir()) continue;
                     int dens = ivyAt(g, ry, true, c.pct(x, z, 840 + ry));
-                    if (dens >= 0) b.set(x, ry, z, ivy(in, dens, g));
+                    if (dens >= 0) b.set(x, ry, z, ivy(in, dens, g, ry));
                 }
             }
             // long banners on every third pilaster, a flagpole with a banner on every fourth
@@ -1190,21 +1197,26 @@ final class CityWall {
      * The High Gate's barbican arch at the yard's outer edge: two piers with slate caps, a pointed arch over the road
      * (open to row 7), a battlemented top, the city's arms over the arch and a lantern hung under it.
      */
+    static BlockState barbicanStone(Ctx c, int x, int ry, int z) {
+        int h = c.pct(x, z, 990 + ry);
+        return ry <= 2 && h < 40 ? MOSSY_STONE_BRICKS : h < 50 ? STONE_BRICKS : h < 85 ? ASHLAR : CRACKED_STONE_BRICKS;
+    }
+
     static void barbican(Ctx c, CityBuffer b, int x, int z) {
         if (z < -258 || z > -256 || x < -8 || x > 7) return;
         boolean pier = x <= -6 || x >= 5;
         int edge = Math.min(x + 5, 4 - x); // 0 at the arch's sides
         if (pier) {
-            for (int ry = 1; ry <= 12; ry++) b.set(x, ry, z, ry % 4 == 0 ? SAND.full() : stone(c, geo(c.plan, x, z), x, ry, z, false));
+            // a dressed plinth and one string course; the rest rough stone (cream kept for the structure)
+            for (int ry = 1; ry <= 12; ry++) b.set(x, ry, z, ry == 1 || ry == 9 ? SAND.full() : barbicanStone(c, x, ry, z));
             Box cap = new Box(x <= -6 ? -8 : 5, -258, x <= -6 ? -6 : 7, -256);
             CityLandmarks.pyramid(b, cap, x, z, 13, SLATE_KIT, 2);
             return;
         }
         int open = edge == 0 ? 6 : edge == 1 ? 7 : 8;
         b.column(x, 1, open, z, AIR);
-        b.set(x, open + 1, z, SAND.full()); // the arch's dressed rim
-        for (int ry = open + 2; ry <= 11; ry++) b.set(x, ry, z, stone(c, geo(c.plan, x, z), x, ry, z, false));
-        b.set(x, 12, z, SAND.full());
+        b.set(x, open + 1, z, SAND.full()); // the arch's voussoirs
+        for (int ry = open + 2; ry <= 12; ry++) b.set(x, ry, z, ry == 9 && open < 8 ? SAND.full() : barbicanStone(c, x, ry, z));
         if (((x + z) & 1) == 0) b.set(x, 13, z, STONE_BRICKS);
         if (z == -258 && x == -1) b.set(x, 10, z - 1, st("awaken:wall_shield[facing=north,arms=carillon]"));
         if (z == -257 && x == -1) b.set(x, open, z, LANTERN_HANGING);
