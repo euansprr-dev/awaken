@@ -34,7 +34,8 @@ public final class CityLights {
 
     /**
      * Houses a tick brought to their wanted state; one house's window list found every BUILD_EVERY ticks (painting the
-     * plot alone costs about half a millisecond, so this keeps it near 0.25 ms a tick until every list is known).
+     * plot alone costs about 0.09 ms, 0.14 at worst, measured by city_lit_windows: about 0.05 ms a tick until every
+     * list is known, too little to be worth baking the windows into the plan).
      */
     static final int SWEEP = 3, BUILD_EVERY = 2;
 
@@ -94,14 +95,25 @@ public final class CityLights {
 
     /** The windows of plot i as the painter makes them (world positions) and the storey each sits in. */
     static void build(CityLayout l, long seed, int i) {
-        CityPlan.Plot p = l.plan.plots.get(i);
+        scan(l, seed, l.plan.plots.get(i));
+        windows[i] = FOUND.toLongArray();
+        storeys[i] = STOREY.toByteArray();
+    }
+
+    private static final LongArrayList FOUND = new LongArrayList();
+    private static final it.unimi.dsi.fastutil.bytes.ByteArrayList STOREY = new it.unimi.dsi.fastutil.bytes.ByteArrayList();
+
+    /** Paints plot p alone into the scratch buffer and lists its lit windows into FOUND and STOREY. */
+    static void scan(CityLayout l, long seed, CityPlan.Plot p) {
         int m = CityLayout.PLOT_MARGIN;
         CityBuffer buf = SCRATCH;   // (plots are at most 14 across: 14 + 2 * 3 fits; one buffer, never a fresh one)
         buf.reset(p.x0() - m, p.z0() - m);
         CityGrammar.plot(new CityPainter.Ctx(l, seed), buf, p);
         Block window = CityKit.LIT_WINDOW.get();
-        LongArrayList found = new LongArrayList();
-        it.unimi.dsi.fastutil.bytes.ByteArrayList st = new it.unimi.dsi.fastutil.bytes.ByteArrayList();
+        LongArrayList found = FOUND;
+        it.unimi.dsi.fastutil.bytes.ByteArrayList st = STOREY;
+        found.clear();
+        st.clear();
         for (int ry = CityBuffer.YMIN; ry <= CityBuffer.YMAX; ry++) {
             for (int lz = 0; lz < buf.d; lz++) {
                 for (int lx = 0; lx < buf.w; lx++) {
@@ -112,8 +124,31 @@ public final class CityLights {
                 }
             }
         }
-        windows[i] = found.toLongArray();
-        storeys[i] = st.toByteArray();
+    }
+
+    /**
+     * For the tests: the mean and worst milliseconds to find one house's windows, over up to `count` houses (a warm-up
+     * pass first, so the number is the JIT-compiled cost a running server pays), and the windows found.
+     */
+    static double[] measure(CityLayout l, long seed, int count) {
+        double sum = 0, worst = 0;
+        int n = 0, found = 0;
+        for (int pass = 0; pass < 2; pass++) {
+            sum = worst = 0;
+            n = found = 0;
+            for (CityPlan.Plot p : l.plan.plots) {
+                if (p.enter()) continue;
+                if (n == count) break;
+                long t0 = System.nanoTime();
+                scan(l, seed, p);
+                double ms = (System.nanoTime() - t0) / 1e6;
+                sum += ms;
+                worst = Math.max(worst, ms);
+                found += FOUND.size();
+                n++;
+            }
+        }
+        return new double[]{n == 0 ? 0 : sum / n, worst, n, found};
     }
 
     static void sweep(ServerLevel level, int i, int tod) {
