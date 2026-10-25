@@ -69,10 +69,10 @@ Everything below is merged and green on CI, apart from the Living Wilds location
 **The pack:** Shoulder Surfing, Fresh Animations, an 8 GB heap.
 
 ## In flight (each one pushed to its branch, not yet merged)
-**pack/living-wilds-d at 8ffbffd3: Living Wilds Phase D**
+**MERGED (see the commit after f91675c9): pack/living-wilds-d at 8ffbffd3, Living Wilds Phase D**
 - The World Pulse with happenings, the ledger of herds, packs and roosts, camps and nests, and the game rule
   `awaken:living_herds`.
-- CI run 40178150413 was running. If green, merge 8ffbffd3 into build.
+- CI run 40178150413 passed; merged into build.
 
 **pack/living-wilds at 14832a98: Phase E (crafts), WORK IN PROGRESS**
 - Herb and meal textures and the tour are missing.
