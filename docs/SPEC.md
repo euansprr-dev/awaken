@@ -2332,6 +2332,11 @@ server checks every move exactly as before (a free-run move is the same claim a 
 - **The slow beat**: a carry flying 0.7 b/t or faster, 6 or more over the ground, hangs at the top of its arc: 8 ticks
   at 0.45 of time (the same arc, slower; no steering for the beat), the wind holding its breath, once per 3 s. Big
   rope launches and the Leaper's air moves get it; never under reduced motion. Test: `ascent_slow_beat`.
+- **The tactical sprint's line** (Euan, 25 Oct: "no way of knowing when your tactical sprint is recharged"):
+  `body.client.SprintBar`, a 2-pixel Holo-blue (#7FC3FF) line in the free gap just above the hotbar (Aether's gold line
+  sits over the XP bar, so the two never meet), filled from the middle like Aether's: it drains while the sprint
+  runs, fills as it recharges (80 ticks less 10 a rank, at least 30), flashes once with a tick of light when it's
+  ready (not under reduced motion), then fades; at rest, ready, nothing is drawn.
 - Not yet: Euan's feel check of the whole pass (camera, free-run, weight).
 
 ### 17.16 The Wilds: the hero trees' crowns

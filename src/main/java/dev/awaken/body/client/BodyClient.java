@@ -36,6 +36,9 @@ public final class BodyClient {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(BodyClient::onPayloads);
+        // the tactical sprint's line, just above the hotbar
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("body_sprint"), SprintBar::render));
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(BodyContent.DUST.get(), BodyDustParticle.Provider::new));
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, BodyAnims::modify));
