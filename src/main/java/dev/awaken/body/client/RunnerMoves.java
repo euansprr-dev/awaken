@@ -157,10 +157,14 @@ public final class RunnerMoves {
                 return true;
             }
             case HANG -> {
+                // Shift belongs to the hang (a drop): no vanilla crouch, whose edge back-off would fight the hold
+                in.keyPresses = ClientMoves.with(k, k.jump(), false);
                 hangTick(p, in, k, jumpPressed, shiftPressed, level, ctx, now);
                 return true;
             }
             case PATH -> {
+                // nor on a path (a lower, a drop): held Shift would back the body off the edge it's moving past
+                in.keyPresses = ClientMoves.with(k, false, false);
                 pathTick(p, in, now);
                 return true;
             }

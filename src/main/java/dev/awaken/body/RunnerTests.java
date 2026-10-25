@@ -726,6 +726,9 @@ final class RunnerTests {
             RunnerRules.Edge below = RunnerRules.edgeBelow(level, ctx, m0, top.hx(), top.hy(), top.hz(), top, 0);
             h.assertTrue(below != null && Math.abs(below.top() - (o.getY() + 4)) < 1e-6, "Shift drops to the sill below: " + below);
             h.assertTrue(below.hz() < top.hz() - 0.9, "hung from the sill's own face, out from the wall: " + below);
+            // standing on the wall's top facing out, Shift + forward lowers into that hang: the sill below is worth it
+            RunnerRules.Edge lowered = RunnerRules.lowerEdge(level, ctx, m0, x, o.getY() + 6, o.getZ() + 1.0, 180F); // at the very edge, as sneaking leaves you
+            h.assertTrue(lowered != null && Math.abs(lowered.top() - top.top()) < 1e-6, "a lower onto the top over the sill: " + lowered);
 
             long now = level.getServer().overworld().getGameTime();
             ServerPlayer a = BodyTests.player(h, null);

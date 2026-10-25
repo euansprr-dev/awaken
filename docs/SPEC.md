@@ -2722,7 +2722,9 @@ face direction, its top 0.9-3.2 under the held one (the nearest), its face up to
 or a balcony sticking out) or a little in, and the way to it free. The body goes out first when the lower face sticks
 out, else down first then in, falling slow off the lip and fast into the catch (4-8 ticks by the drop), the grab's
 clip and sound at the catch (first person: the hands slam onto the lower lip). **Shift + Back**, or Shift with no
-ledge below, lets go as before. The server takes it as a ledge jump (`JUMP_DOWN`): the target edge found again near
+ledge below, lets go as before. Lowering into a hang over an edge (Shift + forward) is also allowed when the ground
+under it is near but there's a ledge below for the drop to catch (`RunnerRules.lowerWorth`), so a facade's ledges can be
+worked down one by one. The server takes the drop as a ledge jump (`JUMP_DOWN`): the target edge found again near
 the claimed hold, its top within the drop's band of the held one. Test: `runner_ledge_drop` (a wall's top over a sill
 one out: the drop catches the sill from its own face and the server takes it; no sill, nothing to catch and the server
 refuses).

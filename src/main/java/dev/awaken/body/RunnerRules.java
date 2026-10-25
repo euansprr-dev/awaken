@@ -456,8 +456,16 @@ public final class RunnerRules {
         double hc = face + sign * (W + HANG_GAP);
         double hx = axis == 0 ? hc : px, hz = axis == 0 ? pz : hc;
         Edge e = edgeNear(level, ctx, m, hx, py - HANG_DROP, hz, axis, -sign, py, 0.3, 0.1);
-        if (e == null || groundWithin(level, ctx, m, e.hx(), e.top(), e.hz(), LOWER_DROP)) return null;
+        if (e == null || !lowerWorth(level, ctx, m, e)) return null;
         return e;
+    }
+
+    /**
+     * Whether lowering into a hang on this edge is worth it: a real drop under it, or a ledge below for a drop to catch
+     * (a facade's ledges are about three apart: SPEC §17.24). Ground near under an edge with no ledge is a step down.
+     */
+    public static boolean lowerWorth(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, Edge e) {
+        return !groundWithin(level, ctx, m, e.hx(), e.top(), e.hz(), LOWER_DROP) || edgeBelow(level, ctx, m, e.hx(), e.hy(), e.hz(), e, 0) != null;
     }
 
     /** Scratch for surface tops, per thread (the integrated server and the client probe at the same time). */
