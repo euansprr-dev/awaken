@@ -1464,7 +1464,8 @@ EMBLEMS = {
     "bell": ["...oo...", "..oooo..", ".oooooo.", ".oooooo.", ".oooooo.", "oooooooo", "oooooooo", "........", "...oo..."],
     "lantern": ["...ooo.", "..ooooo", ".ooooooo"[:7], ".okkkko", ".okaako", ".okaako", ".okkkko", ".ooooo.", "..ooo.."][:0] or
                ["..ooo..", ".ooooo.", "ooooooo", "okkkkko", "okaaako", "okaaako", "okkkkko", "ooooooo", "..ooo.."],
-    "scales": ["...oo...", "oooooooo", "o.o..o.o", ".o....o.", "ooo..ooo", "........", "...oo...", "...oo...", "..oooo.."],
+    # a balance: the beam, two pans on their strings, the post and its foot (it read as a crab before)
+    "scales": ["...oo...", "oooooooo", "o..oo..o", "o..oo..o", "oo.oo.oo", ".o.oo.o.", "...oo...", "..oooo..", "........"],
     "laurel": ["..oooo..", ".oo..oo.", "oo....oo", "o......o", "oo....oo", ".oo..oo.", "..o..o..", "...oo...", "........"],
     "hammer": [".oooooo.", "oooooooo", ".oooooo.", "...hh...", "...hh...", "...hh...", "...hh...", "...hh...", "...hh..."],
     "blossom": ["..oooo..", ".oooooo.", "oooaaooo", "oooaaooo", ".oooooo.", "..oooo..", "...gg...", "..gggg..", "...gg..."],
