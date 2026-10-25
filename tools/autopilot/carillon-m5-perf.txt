@@ -1,0 +1,48 @@
+# Carillon M5: the open table's frame cost after the moving-picture change (60% resolution while the view moves, full
+
+# dimming, 16 clouds, 32 land, 64 the whole picture), 8 s each between closed baselines, uncapped (OpenGL).
+# Run: BACKEND=opengl PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m5-perf.txt 900
+world carillonM5profile creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 4000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd awaken city view square
+wait 200
+cmd awaken atlas ring city
+wait 60
+perf m5q_closed_a 8
+cmd atlas open 20 52 1
+wait 80
+perf m5q_still_a 8
+cmd atlas spin 30
+perf m5q_orbit_a 8
+cmd atlas spin 0
+wait 10
+shot m5_after_orbit
+screen close
+perf m5q_closed_b 8
+cmd atlas open 20 52 1
+wait 80
+cmd atlas spin 30
+perf m5q_orbit_b 8
+cmd atlas spin 0
+wait 10
+perf m5q_still_b 8
+cmd atlas stats
+screen close
+perf m5q_closed_c 8
+quit

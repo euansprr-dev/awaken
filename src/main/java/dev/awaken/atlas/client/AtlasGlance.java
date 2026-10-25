@@ -93,7 +93,7 @@ final class AtlasGlance {
                 AtlasState.night(mc.level), true, AtlasMesh.lodFor(zoom), 10f, 0, null);
         RenderSystem.backupProjectionMatrix();
         try {
-            painter.paint(RenderSystem.getDevice(), s, target.getTexture(), target.getTextureView(), target.depth, target.depthView, W, H, 1, true);
+            painter.paint(RenderSystem.getDevice(), s, target.getTexture(), target.getTextureView(), target.depth, target.depthView, W, H, 1f, true, false);
         } finally {
             RenderSystem.restoreProjectionMatrix();
         }

@@ -27,7 +27,13 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
     private GpuTextureView colorView, depthView;
     private final AtlasPainter painter = new AtlasPainter();
     private AtlasRenderState last;
-    private long lastDraw;
+    private long lastDraw, lastMove;
+    // the picture while the view moves: a smaller target, blitted up
+    private GpuTexture low, lowDepth;
+    private GpuTextureView lowView, lowDepthView;
+    private boolean lowShown;
+    static final float LIVE_SCALE = 0.6f;
+    static final long SETTLE_NANOS = 110_000_000L;
     /** How often drifting clouds redraw the picture (dev: {@code /atlas drift <hz>}). */
     static long DRIFT_NANOS = 33_000_000L;
 
@@ -65,20 +71,35 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
         GpuDevice device = RenderSystem.getDevice();
         boolean resized = color == null || color.getWidth(0) != w || color.getHeight(0) != h;
         if (resized) textures(device, w, h);
-        // the view changed: draw now. Only the clouds drifting: about 30 times a second is plenty (half the cost at
-        // 100+ fps). Nothing moving: the last picture is still right
         long now = System.nanoTime();
         boolean moved = last == null || !sameView(s, last);
-        // the view moved (an orbit, a drag, a zoom) or the land is printing in: draw this frame, or the table lags the
-        // mouse. Only the clouds drifting: about 30 times a second (they move well under a pixel a step)
-        boolean redraw = resized || moved || s.age() < 1.5f || s.animate() && now - lastDraw >= DRIFT_NANOS;
+        if (moved && last != null) lastMove = now;
+        // the view is moving (an orbit, a drag, a zoom): draw every frame, or the table lags the mouse, but at 60% of
+        // the resolution (the picture is in motion; the full-size one at Retina scale cost +2.2 ms orbiting). A tenth
+        // of a second after it stops, one full-resolution picture. Still: only the clouds drift, redrawn about 30 times
+        // a second (well under a pixel a step); nothing moving, the last picture is still right
+        boolean live = now - lastMove < SETTLE_NANOS;
+        GpuTextureView shown;
+        boolean redraw;
+        if (live) {
+            int lw = Math.max(1, Math.round(w * LIVE_SCALE)), lh = Math.max(1, Math.round(h * LIVE_SCALE));
+            if (low == null || low.getWidth(0) != lw || low.getHeight(0) != lh) lowTextures(device, lw, lh);
+            redraw = moved || !lowShown || s.animate() && now - lastDraw >= DRIFT_NANOS;
+            if (redraw) painter.paint(device, s, low, lowView, lowDepth, lowDepthView, lw, lh, guiScale * LIVE_SCALE, true, true);
+            lowShown = true;
+            shown = lowView;
+        } else {
+            redraw = resized || moved || lowShown || s.age() < 1.5f || s.animate() && now - lastDraw >= DRIFT_NANOS;
+            if (redraw) painter.paint(device, s, color, colorView, depth, depthView, w, h, guiScale, true, false);
+            lowShown = false;
+            shown = colorView;
+        }
         if (redraw) {
             lastDraw = now;
-            painter.paint(device, s, color, colorView, depth, depthView, w, h, guiScale, true);
             last = s;
         }
         gui.addBlitToCurrentLayer(new BlitRenderState(RenderPipelines.GUI_TEXTURED_PREMULTIPLIED_ALPHA,
-                TextureSetup.singleTexture(colorView, RenderSystem.getSamplerCache().getRepeat(FilterMode.NEAREST)),
+                TextureSetup.singleTexture(shown, RenderSystem.getSamplerCache().getRepeat(live ? FilterMode.LINEAR : FilterMode.NEAREST)),
                 s.pose(), s.x0(), s.y0(), s.x1(), s.y1(), 0.0F, 1.0F, 1.0F, 0.0F, -1, s.scissorArea(), null));
         AtlasState.stats.frame(System.nanoTime() - t0, redraw);
     }
@@ -96,6 +117,27 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
         Awaken.LOG.debug("[atlas] panel textures {}x{}", w, h);
     }
 
+    private void lowTextures(GpuDevice device, int w, int h) {
+        closeLow();
+        low = device.createTexture(() -> "UI atlas texture (moving)", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING
+                | GpuTexture.USAGE_RENDER_ATTACHMENT, GpuFormat.RGBA8_UNORM, w, h, 1, 1);
+        lowView = device.createTextureView(low);
+        GpuFormat depthFormat = Minecraft.getInstance().gameRenderer.mainRenderTarget().getDepthTexture().getFormat();
+        lowDepth = device.createTexture(() -> "UI atlas depth (moving)", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_RENDER_ATTACHMENT,
+                depthFormat, w, h, 1, 1);
+        lowDepthView = device.createTextureView(lowDepth);
+        lowShown = false;
+    }
+
+    private void closeLow() {
+        if (lowView != null) lowView.close();
+        if (low != null) low.close();
+        if (lowDepthView != null) lowDepthView.close();
+        if (lowDepth != null) lowDepth.close();
+        low = lowDepth = null;
+        lowView = lowDepthView = null;
+    }
+
     private void closeTextures() {
         if (colorView != null) colorView.close();
         if (color != null) color.close();
@@ -108,6 +150,7 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
     @Override
     public void close() {
         closeTextures();
+        closeLow();
         painter.close();
         super.close();
     }

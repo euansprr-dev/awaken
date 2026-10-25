@@ -308,6 +308,7 @@ final class AtlasMesh {
         private final boolean[] gd = new boolean[GW * GH];
         private final int[] gz = new int[GW * GH];
         private final int[] top = new int[S * S];
+        private final boolean[] used = new boolean[S * S];
         private long vb = MemoryUtil.nmemAlloc(1 << 20);
         private long vbCap = 1 << 20, vbPos;
         private int step;
@@ -402,21 +403,27 @@ final class AtlasMesh {
                     level -= drop;
                 }
             }
-            // 3. top faces, merged along x where height and colour repeat
+            // 3. top faces, merged greedily into rectangles where the height matches and the colour is within a hair
+            // (the grain, a touch of AO): one quad per column made the land the open table's biggest cost
+            java.util.Arrays.fill(used, false);
             for (int z = 0; z < S; z++) {
-                int x = 0;
-                while (x < S) {
-                    int gg = g(x, z);
-                    if (!gd[gg]) {
-                        x++;
-                        continue;
+                for (int x = 0; x < S; x++) {
+                    int gg = g(x, z), k = z * S + x;
+                    if (!gd[gg] || used[k]) continue;
+                    int h = gh[gg], c = top[k], run = 1;
+                    while (x + run < S && !used[k + run] && gd[gg + run] && gh[gg + run] == h && near(top[k + run], c)) run++;
+                    int rows = 1;
+                    grow:
+                    while (z + rows < S) {
+                        int rk = (z + rows) * S + x, rg = g(x, z + rows);
+                        for (int i = 0; i < run; i++)
+                            if (used[rk + i] || !gd[rg + i] || gh[rg + i] != h || !near(top[rk + i], c)) break grow;
+                        rows++;
                     }
-                    int h = gh[gg], c = top[z * S + x], run = 1;
-                    while (x + run < S && gd[gg + run] && gh[gg + run] == h && top[z * S + x + run] == c) run++;
+                    for (int r = 0; r < rows; r++) java.util.Arrays.fill(used, (z + r) * S + x, (z + r) * S + x + run, true);
                     float y = h + 1 - Y_REF;
-                    quad(x, y, z, x + run, y, z, x + run, y, z + 1, x, y, z + 1, c, c);
+                    quad(x, y, z, x + run, y, z, x + run, y, z + rows, x, y, z + rows, c, c);
                     quads++;
-                    x += run;
                 }
             }
             // 4. side faces down to the lower neighbour, or to the base at the explored edge (the diorama cut)
@@ -509,6 +516,12 @@ final class AtlasMesh {
             MemoryUtil.memPutByte(p + 14, (byte) argb);
             MemoryUtil.memPutByte(p + 15, (byte) (argb >>> 24));
         }
+    }
+
+    /** Two colours a hair apart (each channel within 5 of 255), so they may share a quad. */
+    static boolean near(int a, int b) {
+        return Math.abs(((a >> 16) & 255) - ((b >> 16) & 255)) <= 5 && Math.abs(((a >> 8) & 255) - ((b >> 8) & 255)) <= 5
+                && Math.abs((a & 255) - (b & 255)) <= 5;
     }
 
     static int mix(int a, int b, float t) {

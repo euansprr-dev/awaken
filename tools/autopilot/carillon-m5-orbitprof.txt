@@ -1,0 +1,66 @@
+# Carillon M5: what the open table costs WHILE ORBITING (each redraw): spinning all the way, each part switched off
+# (/atlas prof: 32 land, 16 clouds, 4 names and legend, 64 the whole picture) between "all on" windows, uncapped (OpenGL).
+# Run: BACKEND=opengl PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m5-orbitprof.txt 900
+world carillonM5profile creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 4000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd awaken city view square
+wait 200
+cmd awaken atlas ring city
+wait 60
+perf m5r_closed_a 6
+cmd atlas open 20 52 1
+wait 80
+cmd atlas spin 30
+cmd atlas prof 0
+wait 6
+perf m5r_orbit_0 6
+cmd atlas prof 32
+wait 6
+perf m5r_orbit_32 6
+cmd atlas prof 0
+wait 6
+perf m5r_orbit_0 6
+cmd atlas prof 16
+wait 6
+perf m5r_orbit_16 6
+cmd atlas prof 0
+wait 6
+perf m5r_orbit_0 6
+cmd atlas prof 64
+wait 6
+perf m5r_orbit_64 6
+cmd atlas prof 0
+wait 6
+perf m5r_orbit_0 6
+cmd atlas prof 4
+wait 6
+perf m5r_orbit_4 6
+cmd atlas prof 0
+wait 6
+perf m5r_orbit_0 6
+cmd atlas prof 48
+wait 6
+perf m5r_orbit_48 6
+cmd atlas prof 0
+wait 6
+perf m5r_orbit_0 6
+cmd atlas spin 0
+screen close
+perf m5r_closed_b 6
+quit
