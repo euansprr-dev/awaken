@@ -2,6 +2,7 @@ package dev.awaken.gates.run;
 
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.DirectorLog;
+import dev.awaken.core.api.TrialHooks;
 import dev.awaken.gates.GatesRegistry;
 import dev.awaken.gates.RigState;
 import dev.awaken.gates.net.RigPayloads;
@@ -33,7 +34,7 @@ final class RigGauntletLive {
 
     /** One player's run. {@code armed}: stood on the start landing since the last run (a run starts from there). */
     static final class Racer {
-        boolean armed, running;
+        boolean armed, running, edged;
         long start;
         int ring = -1;
     }
@@ -146,6 +147,11 @@ final class RigGauntletLive {
                 }
                 if (row >= c.last()) finish(level, l, p, r, now);
             }
+            // a trial's edge: the movement module gives what crosses the chasm (once a player, the first time with its moment)
+            if (c.trial() && row == c.edge() && !r.edged) {
+                r.edged = true;
+                TrialHooks.atEdge(p, TrialHooks.LEAPER);
+            }
             // the pit: a few ticks in it and it throws you back to your last ring
             boolean in = q[1] < -1.4 && q[0] >= c.x0() && q[0] < c.x0() + c.w() && q[2] >= c.z0() && q[2] < c.z0() + c.d();
             if (!in) {
@@ -201,6 +207,24 @@ final class RigGauntletLive {
         Progression.worldXp(p, "awaken:gauntlet", medal == RigPayloads.Run.GOLD ? 0.06 : medal == RigPayloads.Run.SILVER ? 0.035 : 0.02);
         DirectorLog.log(p, "gate", String.format("ran a Gauntlet in %.1f s (par %.1f s): %s", ticks / 20.0, c.par() / 20.0,
                 medal == RigPayloads.Run.GOLD ? "gold" : medal == RigPayloads.Run.SILVER ? "silver" : "bronze"));
+        if (c.trial()) trialRun(level, l, p, ticks, medal);
+    }
+
+    /**
+     * The trial run to its far landing: the movement module gives the leap's scene, and the gate is done: the way out
+     * opens in the room past the course (the gate's exit, as after a Lord), and it comes down once everyone is out.
+     */
+    private static void trialRun(ServerLevel level, RigDirector.Live l, ServerPlayer p, int ticks, int medal) {
+        TrialHooks.done(p, TrialHooks.LEAPER, ticks, medal);
+        var g = l.g;
+        if (g.bossDead) return;
+        g.bossDead = true;
+        g.clearedAt = dev.awaken.gates.GateService.now(level.getServer());
+        dev.awaken.gates.GateService.setState(level.getServer(), g, dev.awaken.gates.GateState.CLEARED);
+        dev.awaken.gates.world.Room past = l.f.room(l.f.end);
+        Twists.placePortal(level, g, l.f, past, past.feature(dev.awaken.gates.world.Room.FeatureKind.EXIT_ANCHOR),
+                GatesRegistry.EXIT.get().defaultBlockState());
+        dev.awaken.gates.GateRegistry.get(level.getServer()).setDirty();
     }
 
     /** Back to your last ring (the start landing before the first), facing the way on, with the pit's roar. */

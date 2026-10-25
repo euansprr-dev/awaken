@@ -51,7 +51,7 @@ public final class Interiors {
                 .then(Commands.literal("solve").executes(c -> rig(c, true)))
                 .then(Commands.literal("at").then(Commands.argument("part", StringArgumentType.word())
                         .suggests((c, b) -> {
-                            for (String s : List.of("start", "first", "gap", "ledge", "press", "wall", "ring", "last")) b.suggest(s);
+                            for (String s : List.of("start", "first", "gap", "ledge", "press", "wall", "ring", "edge", "runup", "last")) b.suggest(s);
                             return b.buildFuture();
                         })
                         .executes(c -> at(c, StringArgumentType.getString(c, "part"))))))));
@@ -100,6 +100,9 @@ public final class Interiors {
         int k = switch (part) {
             case "start" -> 0;
             case "first" -> co.first();
+            // the trial's edge, and four rows back from it (the run-up to the leap)
+            case "edge" -> co.edge();
+            case "runup" -> co.edge() < 0 ? -1 : co.edge() - 3;
             case "last" -> co.last();
             case "ring" -> co.rings().length > 0 ? co.rings()[0] : -1;
             default -> {

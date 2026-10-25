@@ -309,6 +309,7 @@ public final class AscentServer {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         AscentMotion m = motion(p);
         TetherVow.tick(p, now(p));
+        AscentTrials.tick(p, now(p));
         aether(p, m);
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
         boolean moving = Ascent.moving(p, m);

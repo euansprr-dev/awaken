@@ -36,6 +36,12 @@ final class AscentCommands {
             }));
             // the Tether Vow at the world's spawn vault: there, wait for its chunks, then stand in its forecourt (tours)
             ascent.then(Commands.literal("vow").then(Commands.literal("goto").executes(c -> vowGoto(c.getSource()))));
+            // the Leaper's Gauntlet, opened in front of you now whatever you hold (tours)
+            ascent.then(Commands.literal("trial").then(Commands.literal("leaper").executes(c -> {
+                int id = AscentTrials.openLeaper(c.getSource().getPlayerOrException());
+                if (id < 0) c.getSource().sendFailure(Component.literal("No trial gate could form here"));
+                return Math.max(0, id);
+            })));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
             ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource()))));
             ascent.then(Commands.literal("pilot").then(Commands.argument("line", StringArgumentType.greedyString())

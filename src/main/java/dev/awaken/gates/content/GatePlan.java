@@ -34,6 +34,12 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
      */
     public static final String RITUAL_BOSS = "awaken:the_seated_one";
 
+    /**
+     * The boss id that marks the Leaper's Gauntlet, an Ascension trial (SPEC §17.10): one Clockwork Foundry floor whose
+     * hall is a Gauntlet ending in a chasm only the leap crosses. Nothing rolls it: the Ascent opens it for a player.
+     */
+    public static final String LEAPER_TRIAL = "awaken:leapers_gauntlet";
+
     public static final Codec<GatePlan> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.LONG.fieldOf("seed").forGetter(GatePlan::seed),
             Codec.INT.fieldOf("content_version").forGetter(GatePlan::contentVersion),
@@ -56,6 +62,11 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
     /** The prologue's ritual gate: one floor, the antechamber and the hall of the Seated One. */
     public boolean ritual() {
         return contentVersion >= 3 && theme == Theme.BELL_CRYPT && RITUAL_BOSS.equals(boss);
+    }
+
+    /** The Leaper's Gauntlet: one floor, an antechamber, the course's hall and the room past it. */
+    public boolean leaperTrial() {
+        return contentVersion >= 5 && theme == Theme.CLOCKWORK_FOUNDRY && LEAPER_TRIAL.equals(boss);
     }
 
     public boolean has(Modifier m) {

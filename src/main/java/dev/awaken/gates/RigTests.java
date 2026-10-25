@@ -53,6 +53,7 @@ final class RigTests {
 
     static void register() {
         registerGauntlet();
+        registerTrial();
         AwakenTests.register("gates_rig_collapse_run", 1200, h -> {
             int rooms = sweep(h, RigRoom.Kind.COLLAPSE_RUN, (rig) -> {
                 RigCollapse.Run run = rig.run;
@@ -286,6 +287,64 @@ final class RigTests {
                 h.assertFalse(RigDirector.racing(g, f, r, p), "the far landing stops the clock");
                 h.assertTrue(dev.awaken.progression.Progression.profile(p).counter("awaken:gauntlet_runs") == 1, "a run counted");
             });
+            h.succeed();
+        });
+    }
+
+    /**
+     * The Leaper's Gauntlet (SPEC §17.10): its plan builds one floor whose hall is a straight course ending in a chasm no
+     * sprint jump crosses (only the leap), the same every time and passed by the check's runner with the leap; run for
+     * real, its edge gives the leap and its far landing opens the way out (the gate is done).
+     */
+    static void registerTrial() {
+        AwakenTests.register("gates_leaper_trial", 600, h -> {
+            GatePlan plan = Gates.leaperTrialPlan(0x1EAFL);
+            h.assertTrue(plan.leaperTrial() && !plan.ritual() && plan.floors() == 1, "the trial is one floor of its own");
+            FloorLayout f = GateLayout.of(plan).floor(0, 1);
+            Room hall = null;
+            for (Room r : f.rooms) if (r.rig != null) hall = r;
+            h.assertTrue(f.rooms.size() == 3 && hall != null && hall.rig.kind == RigRoom.Kind.GAUNTLET && hall.rig.course.trial(),
+                    "the antechamber, the course and the room past it");
+            RigGauntlet.Course c = hall.rig.course;
+            h.assertTrue(c.chasm() == RigGauntlet.LEAP && RigGauntlet.LEAP > 3 && c.presses() > 0 && c.ledges() > 0 && c.runs() > 0
+                    && c.rings().length >= 2, "every obstacle, two rings, and a chasm wider than any sprint jump (" + c.chasm() + ")");
+            h.assertTrue(RigGauntlet.solve(c)[0] >= 3, "the check's runner makes it with the leap");
+            h.assertTrue(GateTestAccess.build(plan).main.getFirst().room(hall.id).rig.signature() == hall.rig.signature(), "the same every time");
+            ServerLevel level = h.getLevel();
+            GateService.testLevel = level;
+            GateRecord g = null;
+            ServerPlayer p = null;
+            try {
+                g = GateLiveTests.standUp(h, plan, 0, 1);
+                // as walking in would
+                g.transition(GateState.ACTIVE);
+                p = GateLiveTests.player(h);
+                Room r = hall;
+                ServerPlayer pl = p;
+                GateRecord gr = g;
+                BlockPos o = GateService.world(g, f, 0, r.dy, 0);
+                Consumer<Integer> at = k -> {
+                    double[] q = c.rowCentre(k);
+                    pl.teleportTo(level, o.getX() + q[0], o.getY() + 0.05, o.getZ() + q[1], Set.of(), 0, 0, true);
+                    RigDirector.tickNow(level.getServer());
+                };
+                at.accept(0);
+                at.accept(c.first());
+                h.assertFalse(dev.awaken.body.ascent.Ascent.has(p, dev.awaken.body.ascent.Ascent.Tier.LEAPER), "no leap yet");
+                at.accept(c.edge());
+                h.assertTrue(dev.awaken.body.ascent.Ascent.has(p, dev.awaken.body.ascent.Ascent.Tier.LEAPER), "at the chasm's edge the legs remember the air");
+                at.accept(c.last());
+                h.assertTrue(gr.bossDead && gr.state == GateState.CLEARED, "across, the trial is done");
+                Room past = f.room(f.end);
+                boolean portal = false;
+                for (int x = past.x0(); x <= past.x1() && !portal; x++) for (int z = past.z0(); z <= past.z1() && !portal; z++) {
+                    if (level.getBlockState(GateService.world(g, f, x, past.dy, z)).is(GatesRegistry.EXIT.get())) portal = true;
+                }
+                h.assertTrue(portal, "and the way out opens past the course");
+            } finally {
+                GateLiveTests.teardown(level, p, g);
+                RigDirector.resetAll();
+            }
             h.succeed();
         });
     }

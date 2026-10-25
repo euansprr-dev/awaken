@@ -54,7 +54,19 @@ public final class RigGauntlet {
      */
     public record Course(int x0, int z0, int w, int d, byte[] kind, short[] row, BlockState[] tile, int rows, byte[] rowKind,
                          int[] rings, int period, int down, BlockState pit, BlockState ram, BlockState wall, int ledges,
-                         int presses, int runs, int gaps, int par, int slack) {
+                         int presses, int runs, int gaps, int par, int slack, int edge) {
+
+        /** A trial's course: its chasm (after row {@link #edge}) is the leap, crossed only by a second jump or a dash. */
+        public boolean trial() {
+            return edge >= 0;
+        }
+
+        /** The trial's chasm: how many rows of open pit follow the edge (0 for any other course). */
+        public int chasm() {
+            int n = 0;
+            for (int k = edge + 1; edge >= 0 && k < rows && rowKind[k] == GAP; k++) n++;
+            return n;
+        }
 
         int at(int x, int z) {
             int ix = x - x0, iz = z - z0;
@@ -173,19 +185,22 @@ public final class RigGauntlet {
             int[] res = solve(c);
             if (res[0] >= MARGIN) {
                 Course done = new Course(c.x0, c.z0, c.w, c.d, c.kind, c.row, c.tile, c.rows, c.rowKind, c.rings, c.period, c.down,
-                        c.pit, c.ram, c.wall, c.ledges, c.presses, c.runs, c.gaps, res[1], res[0]);
+                        c.pit, c.ram, c.wall, c.ledges, c.presses, c.runs, c.gaps, res[1], res[0], -1);
                 return room(r, done);
             }
         }
         return null;
     }
 
-    private static Course layout(Room r, Theme theme, Palette p, Kit k, int rank, int variant) {
+    /** The course's lanes: its cells (FLOOR, else 0), their rows from the entry, the rows to the far landing, how each lies. */
+    private record Lanes(int x0, int z0, int w, int d, byte[] kind, short[] row, int rows, int[] across) {}
+
+    /** The two door axes, 4 wide, rows breadth-first from the entry to the exit's doorway (as the Collapse Run's). */
+    private static Lanes lanes(Room r) {
         int x0 = r.x0(), z0 = r.z0(), w = r.x1() - x0 + 1, d = r.z1() - z0 + 1;
         byte[] kind = new byte[w * d];
         short[] row = new short[w * d];
         Arrays.fill(row, (short) -1);
-        // the course: both door axes, the doorways' 4 blocks wide (as the Collapse Run's causeway)
         for (int iz = 0; iz < d; iz++) {
             for (int ix = 0; ix < w; ix++) {
                 int x = x0 + ix, z = z0 + iz;
@@ -224,11 +239,18 @@ public final class RigGauntlet {
             if (RoomGeometry.depth(r.pathOut, x, z) == RoomGeometry.INSET && inDoorSlot(r.pathOut, x, z)) exitRow = Math.min(exitRow, row[i]);
         }
         rows = exitRow + 1;
-        // a course worth a clock: at least 14 rows between the landings (a single slot's room is too short)
-        if (rows - 2 * LANDING_ROWS < MIN_COURSE) return null;
         // which way each row runs: all its cells on one line across (a straight stretch), or a corner
         int[] across = new int[rows];
         for (int kk = 0; kk < rows; kk++) across[kk] = straight(kind, row, w, kk);
+        return new Lanes(x0, z0, w, d, kind, row, rows, across);
+    }
+
+    private static Course layout(Room r, Theme theme, Palette p, Kit k, int rank, int variant) {
+        Lanes ln = lanes(r);
+        if (ln == null) return null;
+        int rows = ln.rows;
+        // a course worth a clock: at least 14 rows between the landings (a single slot's room is too short)
+        if (rows - 2 * LANDING_ROWS < MIN_COURSE) return null;
         long seed = r.seed;
         boolean tall = r.height >= PRESS_H + 3;
         // what this rank asks, gentler with each variant
@@ -238,12 +260,6 @@ public final class RigGauntlet {
         int runLen = rank >= 3 && variant == 0 ? 6 : 5;
         boolean runs = variant < 2;
         int period = variant == 0 ? (rank >= 3 ? 40 : 48) : 56, down = rank >= 3 && variant == 0 ? 18 : 16;
-        byte[] rowKind = new byte[rows];
-        Arrays.fill(rowKind, FLOOR);
-        for (int i = 0; i < LANDING_ROWS; i++) {
-            rowKind[i] = LANDING;
-            rowKind[rows - 1 - i] = LANDING;
-        }
         // the obstacles in an order of the room's own, round again in a long room; a floor row before the first and after
         // each (two in a long room), a ring in place of it after every second one (not just before the end)
         byte[] menu = {GAP, LEDGE, PRESS, RUN};
@@ -259,16 +275,32 @@ public final class RigGauntlet {
         int bestPlaced = -1;
         for (int turn = 0; turn < menu.length; turn++) {
             byte[] trial = new byte[rows];
-            int n = plan(r, kind, row, w, d, x0, z0, across, seed, rotate(menu, turn), pad, trial, rows, gap, ledgesEach, pressesEach,
-                    runs ? runLen : 0, tall);
+            int n = plan(r, ln.kind, ln.row, ln.w, ln.d, ln.x0, ln.z0, ln.across, seed, rotate(menu, turn), pad, trial, rows, gap, ledgesEach,
+                    pressesEach, runs ? runLen : 0, tall);
             if (n > bestPlaced) {
                 bestPlaced = n;
                 best = trial;
             }
             if (n >= 3) break;
         }
-        int placed = bestPlaced;
-        byte[] chosen = best;
+        if (bestPlaced < 2) return null;
+        return course(ln, best, seed, theme, p, k, period, down, -1);
+    }
+
+    /**
+     * The course from its rows' obstacles ({@code chosen}, 0 for floor; the landings added here): every cell takes its
+     * row's kind, the wall stands beside each wall-run's rows (and one either side), the tiles are chosen.
+     */
+    private static Course course(Lanes ln, byte[] chosen, long seed, Theme theme, Palette p, Kit k, int period, int down, int edge) {
+        int rows = ln.rows, x0 = ln.x0, z0 = ln.z0, w = ln.w, d = ln.d;
+        byte[] kind = ln.kind;
+        short[] row = ln.row;
+        byte[] rowKind = new byte[rows];
+        Arrays.fill(rowKind, FLOOR);
+        for (int i = 0; i < LANDING_ROWS; i++) {
+            rowKind[i] = LANDING;
+            rowKind[rows - 1 - i] = LANDING;
+        }
         List<Integer> rings = new ArrayList<>();
         int ledgeCount = 0, pressCount = 0, runCount = 0, gapCount = 0;
         for (int i = 0; i < rows; i++) {
@@ -288,8 +320,6 @@ public final class RigGauntlet {
                 default -> {}
             }
         }
-        if (placed < 2) return null;
-        // cells take their row's kind; the run's wall stands beside its rows (and one either side)
         BlockState[] tile = new BlockState[w * d];
         for (int i = 0; i < kind.length; i++) {
             if (kind[i] == 0) continue;
@@ -317,7 +347,45 @@ public final class RigGauntlet {
         }
         int[] ringRows = rings.stream().mapToInt(Integer::intValue).toArray();
         return new Course(x0, z0, w, d, kind, row, tile, rows, rowKind, ringRows, period, down, pitFloor(theme, p), ram(theme),
-                GatesRegistry.RUN_WALL.get().defaultBlockState(), ledgeCount, pressCount, runCount, gapCount, 0, 0);
+                GatesRegistry.RUN_WALL.get().defaultBlockState(), ledgeCount, pressCount, runCount, gapCount, 0, 0, edge);
+    }
+
+    // ---- the Leaper's Gauntlet --------------------------------------------------------------------------------------
+
+    /** The trial's chasm (rows of open pit after the edge): wider than any sprint jump, inside a leap's reach. */
+    public static final int LEAP = 5;
+    /** The check's leap: up to this wide, crossed at an air dash's pace. */
+    static final int MAX_LEAP = 7;
+    static final double LEAP_SPEED = 0.6;
+
+    /**
+     * The Leaper's Gauntlet's course (SPEC §17.10), laid by hand in its straight hall: a gap, two ledges, a ring, two
+     * presses, a wall-run, a ring, a run-up of four rows to the edge and the chasm ({@link #LEAP} rows) only a second
+     * jump or a dash crosses, then on to the far landing. Gentle beats (it teaches): a 56-tick loop, presses down 16.
+     */
+    static RigRoom trial(Room r, Theme theme, Palette p, Kit k) {
+        Lanes ln = lanes(r);
+        if (ln == null) return null;
+        boolean tall = r.height >= PRESS_H + 3;
+        byte[] seq = {0, 0, GAP, GAP, 0, GAP, LEDGE, LEDGE, GAP, LEDGE, LEDGE, RING, 0,
+                tall ? PRESS : 0, tall ? PRESS : 0, 0, 0, tall ? PRESS : 0, tall ? PRESS : 0, 0, 0,
+                RUN, RUN, RUN, RUN, RUN, RING, 0, 0, 0, 0};
+        int first = LANDING_ROWS, edgeRow = first + seq.length - 1, after = edgeRow + 1 + LEAP;
+        if (after + 1 + LANDING_ROWS > ln.rows) return null;
+        byte[] chosen = new byte[ln.rows];
+        System.arraycopy(seq, 0, chosen, first, seq.length);
+        for (int i = 0; i < LEAP; i++) chosen[edgeRow + 1 + i] = GAP;
+        // the wall-run's wall on whichever side it fits
+        int runAt = first + 21;
+        long seed = r.seed;
+        if (!wallFits(r, ln.kind, ln.row, ln.w, ln.d, ln.x0, ln.z0, runAt - 1, runAt + 5, side(seed, runAt))) {
+            for (int i = 0; i < 5; i++) chosen[runAt + i] = i < 2 ? GAP : 0;
+        }
+        Course c = course(ln, chosen, seed, theme, p, k, 56, 16, edgeRow);
+        int[] res = solve(c);
+        Course done = new Course(c.x0, c.z0, c.w, c.d, c.kind, c.row, c.tile, c.rows, c.rowKind, c.rings, c.period, c.down,
+                c.pit, c.ram, c.wall, c.ledges, c.presses, c.runs, c.gaps, res[1], res[0], edgeRow);
+        return res[0] < 0 ? null : room(r, done);
     }
 
     private static byte[] rotate(byte[] menu, int turn) {
@@ -563,8 +631,14 @@ public final class RigGauntlet {
             if (len == 0) len = 1;
             switch (kind) {
                 case GAP -> {
-                    if (len > MAX_GAP) return new int[]{-1, 0};
-                    t += len * per;
+                    if (c.trial() && k == c.edge() + 1) {
+                        // the trial's chasm: the leap, at a dash's pace
+                        if (len > MAX_LEAP) return new int[]{-1, 0};
+                        t += len / LEAP_SPEED;
+                    } else {
+                        if (len > MAX_GAP) return new int[]{-1, 0};
+                        t += len * per;
+                    }
                 }
                 case RUN -> {
                     if (len > MAX_RUN) return new int[]{-1, 0};

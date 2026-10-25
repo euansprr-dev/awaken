@@ -83,6 +83,18 @@ public final class RigRooms {
         }
     }
 
+    /** The Leaper's Gauntlet (SPEC §17.10): its hall is the trial's course, laid by hand, not by the room's hash. */
+    static void trial(FloorBuilder.Builder b) {
+        List<Integer> path = b.path();
+        if (path.size() < 3) return;
+        Room r = b.rooms.get(path.get(1));
+        r.pathIn = r.doorTo(path.get(0));
+        r.pathOut = r.doorTo(path.get(2));
+        r.shape = Room.Shape.RECT;
+        r.piece = null;
+        r.rig = RigGauntlet.trial(r, b.theme, b.theme.palette(), Kit.of(b.theme));
+    }
+
     private static boolean eligible(Room r) {
         if (r.type != Room.Type.NORMAL && r.type != Room.Type.ELITE) return false;
         if (r.gw > 2 || r.gh > 2 || r.shape == Room.Shape.SHAFT || r.shape == Room.Shape.CAVE || r.shape == Room.Shape.HALL) return false;
