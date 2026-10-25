@@ -2478,12 +2478,13 @@ needing full Aether, with a 10-minute cooldown.
   mark is light, not broken blocks).
 
 ### 17.20 The Ascent's moments for quests
-The Living Wilds' quests (`living.api.Quests.advance`, SPEC §21; a no-op unless a step waits on the id) hear six of
+The Living Wilds' quests (`living.api.Quests.advance`, SPEC §21; a no-op unless a step waits on the id) hear seven of
 the Ascent's moments (`body.ascent.AscentQuests`): `awaken:use/ascent_zip` (a zip that ended within 3.5 of its anchor:
 a hang under it or the ledge vault, not a let-go), `awaken:discover/spire` and `awaken:discover/hero_crown` (a crown
 reached by movement), `awaken:use/windway` (one glide holding a lane from its first 60 blocks to its last 30),
 `awaken:use/gauntlet` (the Leaper's Gauntlet run to its far landing, every time) and `awaken:use/sky_trial` (the Sky
-Leviathan fallen in its trial). Not yet: `awaken:use/ascent_glide` with its length (waits for the API's amount).
+Leviathan fallen in its trial), and `awaken:use/ascent_glide` with its length (blocks across the ground from where the
+wings opened to where the glide ended, glides of 8 or more; `Quests.advance(player, id, amount)`).
 
 ---------------------------------------------------------------------------------------------------------------------
 
