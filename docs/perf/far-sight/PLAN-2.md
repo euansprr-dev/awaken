@@ -1,4 +1,8 @@
-# Far Sight 2: plan (for Euan's approval, 2026-10-25)
+# Far Sight 2: plan (approved in full 2026-10-25; built the same evening)
+
+**As built:** SPEC §20 (rewritten) and §15 "Awakened Alpine"; STATUS.md has the numbers and what was left out (Turbo
+compute culling: no measured win to have; taller worlds: needs Tectonic's noise settings copied or a mixin, so summits
+round off under the ceiling instead). The plan below is as Euan approved it.
 
 Euan: "Right now it just looks super blocky and flat instead of like actual detail far away. Make it do a plan for
 this that really is cutting edge for Vulkan and overall performance." The bar is his five reference shots in
