@@ -44,7 +44,8 @@ final class CitizensCommands {
     static final List<String> SHOW = List.of("crowd_market", "crowd_bellwatch", "crowd_quay", "crowd_terrace", "crowd_works",
             "crowd_garden", "crowd_wallring", "lamplighter", "bellringer", "porter", "stallkeeper", "baker", "smith", "watch",
             "crier", "boatman", "washer", "mason", "runner", "shopkeeper", "tavernkeeper", "child", "resident", "stall", "event",
-            "oren", "mira", "teodor", "sun", "lamps", "laundry", "watch_front", "watch_side", "watch_far");
+            "oren", "mira", "teodor", "sun", "lamps", "laundry", "watch_front", "watch_side", "watch_far", "wall_watch",
+            "wall_watch_front", "wall_watch_side");
 
     static void register() {
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("citizens").requires(AwakenCommands.admin())
@@ -188,6 +189,9 @@ final class CitizensCommands {
         ServerPlayer p = src.getPlayerOrException();
         Ledger l = c.ledger;
         Roster r = c.roster;
+        // (M4 Walls) wall_watch[_front|_side]: a night watchman on his round of the wall walk
+        boolean onWall = what.startsWith("wall_");
+        if (onWall) what = what.substring(5);
         // (B3b) watch_front / watch_side / watch_far: a watchman framed by his own heading (his lantern up close)
         String frame = null;
         if (what.startsWith("watch_")) {
@@ -244,8 +248,27 @@ final class CitizensCommands {
                 }
             }
             default -> {
-                int pick = what.startsWith("crowd_") ? crowdIn(c, java.util.Arrays.asList(CityPlan.DISTRICTS).indexOf(what.substring(6)))
+                int pick = onWall ? pickWallWatch(c) : what.startsWith("crowd_") ? crowdIn(c, java.util.Arrays.asList(CityPlan.DISTRICTS).indexOf(what.substring(6)))
                         : pickCitizen(c, what);
+                if (onWall && pick >= 0 && l.body[pick] == null) {
+                    // not embodied yet: stand on the walk two nodes along from him, looking at him (he walks into view)
+                    int a = c.data.at[pick], v = a;
+                    for (int hop = 0; hop < 2; hop++) {
+                        int nv = -1;
+                        for (int k = c.net.adjStart[v]; k < c.net.adjStart[v + 1]; k++) {
+                            int w = c.net.adj[k];
+                            if (c.net.wall[w] && c.net.y[w] == c.net.y[a] && w != a) nv = w;
+                        }
+                        if (nv >= 0) v = nv;
+                    }
+                    if (l.position(pick, at)) {
+                        float yaw = (float) Math.toDegrees(Math.atan2(-(at[0] - c.net.x[v]), at[2] - c.net.z[v]));
+                        p.teleportTo(c.level, c.net.x[v], c.net.y[v] + 1.0, c.net.z[v], Set.of(), yaw, 8f, true);
+                        Awaken.LOG.info("[citizens] show wall_watch: {} on the walk at {} {} {}", describe(c, pick),
+                                String.format(Locale.ROOT, "%.1f", at[0]), String.format(Locale.ROOT, "%.1f", at[1]), String.format(Locale.ROOT, "%.1f", at[2]));
+                        return say(src, "Showing " + describe(c, pick) + " on the wall walk");
+                    }
+                }
                 if (what.startsWith("crowd_")) want = 10;
                 if (pick >= 0) {
                     label = describe(c, pick);
@@ -320,6 +343,27 @@ final class CitizensCommands {
             a[1] = y;
             a[2] = z;
         }
+    }
+
+    /** A night watchman on the wall walk now (the next of them on each call), or -1. */
+    static int pickWallWatch(Citizens c) {
+        Roster r = c.roster;
+        CitizensData d = c.data;
+        int job = java.util.Arrays.asList(Roster.JOBS).indexOf("watch"), best = -1, bestScore = -1;
+        for (int i = 0; i < r.citizens; i++) {
+            if (r.job[i] != job || d.role[i] != 0 || d.state[i] == CitizensData.INSIDE || d.state[i] == CitizensData.ABSENT) continue;
+            int a = d.at[i];
+            if (a < 0 || !c.net.wall[a] || c.net.y[a] < c.ledger.streetY + 30) continue;
+            // (one already embodied first: the framing call after the approach finds the same man)
+            int score = (int) Math.floorMod(CitizenWork.mixHash(i + 7919L * showTurn), 997L) + (c.ledger.body[i] != null ? 5000 : 0);
+            if (score > bestScore) {
+                bestScore = score;
+                best = i;
+            }
+        }
+        showTurn++;
+        lastShown = best;
+        return best;
     }
 
     /** A citizen of that job (or that name) at work now: at the job's own station beats any stand beats walking beats inside. */

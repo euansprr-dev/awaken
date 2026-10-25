@@ -1,6 +1,8 @@
 package dev.awaken.city;
 
+import dev.awaken.city.CityGrammar.Box;
 import dev.awaken.city.CityPainter.Ctx;
+import dev.awaken.city.CityPlan.Prop;
 import net.minecraft.world.level.block.state.BlockState;
 
 import static dev.awaken.city.CityBlocks.*;
@@ -147,9 +149,17 @@ final class CityWall {
 
     // ---- the rhythm along a side ----------------------------------------------------------------------------------
 
-    /** Buttresses: three wide, centred every 8 along (on 0, ±8, ±16). */
+    /**
+     * The buttresses' pitch on a side: every 8 on the axis sides, 10 on the diagonals, 12 on the rest, where the raster's
+     * steps already break the face (a calmer rhythm on a slanted wall).
+     */
+    static int pitch(int k) {
+        return SCALE[k] > 0.99 ? 8 : SCALE[k] < 0.72 ? 10 : 12;
+    }
+
+    /** Buttresses: three wide, centred every pitch along (on 0, ±pitch, ...). */
     static boolean buttress(CityPlan p, Geo g) {
-        int m = Math.floorMod(g.u + 1, 8);
+        int m = Math.floorMod(g.u + 1, pitch(g.k));
         if (m > 2) return false;
         int centre = g.u + 1 - m;
         return clearSpan(p, g.k, (centre - 2.5) / SCALE[g.k], (centre + 2.5) / SCALE[g.k], -5.5);
@@ -161,7 +171,7 @@ final class CityWall {
      */
     static int scaffold(CityPlan p, Geo g) {
         if (g.k != 2 && g.k != 9 && g.k != 18) return -1;
-        int m = Math.floorMod(g.u + 1, 8);
+        int m = Math.floorMod(g.u + 1, pitch(g.k));
         if (g.u + 1 - m != 0 || m < 3) return -1;
         return clearSpan(p, g.k, 1.5 / SCALE[g.k], 7.5 / SCALE[g.k], -5.5) ? m : -1;
     }
@@ -219,7 +229,8 @@ final class CityWall {
         if (l < 1 || l > 4 || ry < 0) return ry <= 0;
         if (ry <= 0) return true;
         if (l == 1 && ry <= 5 || l == 2 && ry <= 3 || l == 3 && ry <= 1) return true;
-        if (buttress(p, g)) return l <= 2 && ry <= 13 || l == 1 && ry <= 33;
+        // three deep to row 9, two to 21, one to 33: set-offs in odd rows, shadow bands down the face
+        if (buttress(p, g)) return l <= 3 && ry <= 9 || l <= 2 && ry <= 21 || l == 1 && ry <= 33;
         return false;
     }
 
@@ -370,6 +381,33 @@ final class CityWall {
         return null;
     }
 
+    /**
+     * The dressed stone of a stretch (courses, quoins, caps, corbels and bands): a warm sandstone against the grey, the
+     * Terrace's pale diorite, the Works' brick.
+     */
+    record Dress(BlockState full, BlockState quoin, BlockState slab, Stairs course, Stairs cap) {}
+
+    static final Dress SAND = new Dress(of("minecraft:smooth_sandstone"), of("minecraft:cut_sandstone"),
+            of("minecraft:smooth_sandstone_slab[type=bottom]"), Stairs.of("minecraft:smooth_sandstone_stairs", "top"),
+            Stairs.of("minecraft:smooth_sandstone_stairs", "bottom"));
+    static final Dress PALE = new Dress(of("minecraft:polished_diorite"), of("minecraft:calcite"),
+            of("minecraft:polished_diorite_slab[type=bottom]"), Stairs.of("minecraft:polished_diorite_stairs", "top"),
+            Stairs.of("minecraft:polished_diorite_stairs", "bottom"));
+    static final Dress BRICK = new Dress(of("minecraft:bricks"), of("minecraft:bricks"), of("minecraft:brick_slab[type=bottom]"),
+            Stairs.of("minecraft:brick_stairs", "top"), Stairs.of("minecraft:brick_stairs", "bottom"));
+
+    static Dress dress(int district) {
+        return switch (district) {
+            case TERRACE -> PALE;
+            case WORKS -> BRICK;
+            default -> SAND;
+        };
+    }
+
+    static Dress dress(Geo g) {
+        return dress(BEHIND[g.k]);
+    }
+
     /** How mossy the stone is: wet at the foot, on the north faces and on the sheltered inner face. */
     static int moss(Geo g, int ry, boolean inner) {
         int m = ry < 3 ? 40 : ry < 8 ? 22 : ry < 16 ? 9 : ry < 30 ? 4 : 3;
@@ -396,9 +434,14 @@ final class CityWall {
         return Ctx.shape(g.k * 64 + pu, pr, salt + 5) % 3;
     }
 
-    /** The curtain's stone at a cell. */
+    /**
+     * The curtain's stone at a cell, by height: a dark foot, rubble infill up to the first course, dressed ashlar above
+     * it, and the dressed bands (the plinth over the talus, behind each course's lip, under the corbels); repair patches,
+     * moss by height and aspect, soot high on the Works' stretch, a tone per band so the long faces aren't one grey.
+     */
     static BlockState stone(Ctx c, Geo g, int x, int ry, int z, boolean inner) {
-        if (ry == 6 || ry == 32) return POLISHED_ANDESITE; // the plinth course over the talus and the band under the corbels
+        Dress dr = dress(g);
+        if (ry == 6 || ry == 32 || !inner && (ry == 15 || ry == 27) || inner && ry == 9) return dr.full();
         int h = c.pct(x, z, 400 + ry);
         int pt = patch(g, ry, inner);
         int dist = BEHIND[g.k];
@@ -406,10 +449,13 @@ final class CityWall {
         if (pt == 1) return h < 60 ? COBBLE : MOSSY_COBBLE;
         if (pt == 2) return dist == WORKS ? (h < 70 ? DEEPSLATE_BRICKS : COBBLED_DEEPSLATE) : ASHLAR;
         if (h < moss(g, ry, inner)) return MOSSY_STONE_BRICKS;
-        if (ry <= 2 && !inner) return h < 50 ? COBBLE : STONE_BRICKS;
         int h2 = c.pct(x, z, 500 + ry);
+        if (ry <= 5) return h2 < 30 ? COBBLED_DEEPSLATE : h2 < 55 ? MOSSY_COBBLE : h2 < 75 ? COBBLE : DEEPSLATE_BRICKS;
         if (dist == WORKS && ry > 24 && h2 < 18) return TUFF_BRICKS; // soot from the stacks
-        return h2 < 44 ? STONE_BRICKS : h2 < 86 ? ASHLAR : h2 < 95 ? CRACKED_STONE_BRICKS : ANDESITE;
+        if (ry < 15) return h2 < 40 ? STONE_BRICKS : h2 < 62 ? COBBLE : h2 < 77 ? ANDESITE : h2 < 88 ? CRACKED_STONE_BRICKS : TUFF;
+        int tone = Ctx.shape(g.k, ry < 27 ? 1 : 2, 155) % 3;
+        if (tone == 1 && h2 < 30) return TUFF_BRICKS;
+        return h2 < (tone == 2 ? 25 : 42) ? STONE_BRICKS : h2 < 88 ? ASHLAR : h2 < 95 ? CRACKED_STONE_BRICKS : ANDESITE;
     }
 
     // ---- the curtain's columns ------------------------------------------------------------------------------------
@@ -443,21 +489,30 @@ final class CityWall {
             if (wo <= 1 && ry >= 6 && ry <= 30 && scaffold(p, g) >= 0 && ry != 15 && ry != 27)
                 s = c.pct(x, z, 620 + ry) < 60 ? ASHLAR : c.pct(x, z, 640 + ry) < 50 ? STONE_BRICKS : POLISHED_ANDESITE;
             if (wo <= 1) {
-                int of = (ry == 12 || ry == 24 || (ry >= 18 && ry <= 19) || (ry >= 28 && ry <= 29) || ry >= 20 && ry <= 31) ? outerFace(c, x, ry, z) : -1;
+                int of = (ry == 12 || ry == 24 || ry >= 18 && ry <= 31) ? outerFace(c, x, ry, z) : -1;
                 if (of >= 0) {
-                    int mu = Math.floorMod(g.u, 8);
-                    if ((ry == 12 || ry == 24) && Math.floorMod(g.u, 4) == 2 && mu != 4) {
-                        b.set(x, ry, z, AIR); // a putlog hole (its floor a hold in the odd row below)
+                    int pt = pitch(g.k), mu = Math.floorMod(g.u, pt);
+                    if ((ry == 12 || ry == 24) && scaffold(p, g) >= 0 && Math.floorMod(g.u, 2) == 1) {
+                        b.set(x, ry, z, AIR); // a putlog hole under repair (its floor a hold in the odd row below)
                         continue;
                     }
-                    if (mu == 4 && (ry == 18 || ry == 19 || ry == 28 || ry == 29)) {
-                        s = loop(g, ry == 18 || ry == 28 ? 1 : 2, of, Math.floorMod(g.u, 16) == 4 ? 1 : 0);
-                    } else if (spoutCol && ry >= 20 && c.pct(x, z, 610 + ry) < 70 + ry) s = MOSSY_STONE_BRICKS; // the spout's streak
+                    // one tall loop in the middle of each bay between the buttresses; a cross in every other
+                    if (mu == pt / 2 && (ry == 19 || ry == 20)) {
+                        s = loop(g, ry == 19 ? 1 : 2, of, Math.floorMod(Math.floorDiv(g.u, pt), 2) == 0 ? 1 : 0);
+                    } else if (spoutCol && ry >= 18 && ry < 32 && c.pct(x, z, 610 + ry) < 50 + 2 * ry) {
+                        s = c.pct(x, z, 630 + ry) < 50 ? COBBLED_DEEPSLATE : ry > 26 ? MOSSY_STONE_BRICKS : TUFF; // the spout's dark streak
+                    }
                 }
             }
             b.set(x, ry, z, s);
         }
-        // panel backs: putlog holes in the recess at rows 14 and 22 (holds at 13 and 21)
+        // panel backs: plastered in places, putlog holes in the recess at rows 14 and 22 (holds at 13 and 21)
+        if (wo == 8 && clear && u7(g) >= 2) {
+            for (int ry = 11; ry <= 28; ry++) {
+                BlockState pl = plaster(c, g, x, ry, z);
+                if (pl != null) b.set(x, ry, z, pl);
+            }
+        }
         if (wo == 8 && clear && u7(g) >= 2 && Math.floorMod(g.u, 4) == 2) {
             b.set(x, 14, z, AIR);
             b.set(x, 22, z, AIR);
@@ -594,49 +649,91 @@ final class CityWall {
         if (m == 6) b.set(x, 30, z, COURSE.straight()[along]);
         if (m == 3) b.set(x, 31, z, COURSE.straight()[(along + 2) & 3]);
         if (m == 5) b.set(x, 31, z, COURSE.straight()[along]);
-        int ivyTop = ivyTop(g, true);
-        for (int ry = 10; ry <= Math.min(29, ivyTop); ry++) {
-            int dens = ivyDensity(g, ry, ivyTop, c.pct(x, z, 730 + ry));
+        for (int ry = 10; ry <= 29; ry++) {
+            int dens = ivyAt(g, ry, true, c.pct(x, z, 730 + ry));
             if (dens >= 0) b.set(x, ry, z, ivy(in, dens, g));
         }
     }
 
     /**
-     * How high a patch of ivy reaches at this column (0 for none): patches every ~9 along, seeded by the plan, domed but
-     * ragged (each column's top wanders by a few), never shorter than three.
+     * The panels' backs plastered in the district's colour, as the lean-tos that stood against the wall left them: the
+     * render fallen away at the foot, the edges and in patches, the stone showing through.
      */
-    static int ivyTop(Geo g, boolean inner) {
-        double off = ivyOff(g, inner);
-        if (off > 1.25) return 0;
-        int salt = inner ? 120 : 130, pu = Math.floorDiv(g.u + 3, 9);
-        int full = 12 + Ctx.shape(pu, g.k, salt + 3) % 18;
-        int top = (int) (full * (1 - 0.55 * off * off)) - Ctx.shape(g.u, g.k, salt + 4) % 4 - (off > 0.9 ? 3 : 0);
-        return top < 3 ? 0 : top;
+    static BlockState plaster(Ctx c, Geo g, int x, int ry, int z) {
+        if (ry < 11 || ry > 28 || u7(g) < 3 || u7(g) > 5 && ry > 26) return null;
+        int pc = switch (BEHIND[g.k]) {
+            case WORKS -> P_OCHRE;
+            case GARDEN_D -> P_CREAM;
+            case QUAY_D -> P_CLAY;
+            case BELLWATCH -> Ctx.shape(bay(g), g.k, 171) % 2 == 0 ? P_WHITE : P_OCHRE;
+            default -> P_WHITE;
+        };
+        if (Ctx.shape(bay(g), g.k, 172) % 3 == 0) return null; // not every panel was plastered
+        double fall = vnoise(173, g.u * 3, ry) + (ry < 14 ? 0.25 : 0) + (ry > 25 ? 0.15 : 0);
+        return fall > 0.7 ? null : PLASTER[pc];
     }
 
-    /** How far a column stands from its patch's middle, in half-widths (99 outside any patch). */
-    static double ivyOff(Geo g, boolean inner) {
-        int pu = Math.floorDiv(g.u + 3, 9);
-        int salt = inner ? 120 : 130;
-        int chance = inner ? 55 : g.out() == N ? 45 : BEHIND[g.k] == GARDEN_D ? 40 : 12;
-        if (Ctx.shape(g.k * 64 + pu, 0, salt) >= chance) return 99;
-        double centre = pu * 9 - 3 + 4.5 + (Ctx.shape(pu, g.k, salt + 1) % 5 - 2);
-        double half = 1.8 + Ctx.shape(pu, g.k, salt + 2) % 4 * 0.7;
-        return Math.abs(g.u + 0.5 - centre) / half;
+    /** Smooth value noise (0..1) on a 3-cell lattice, from the plan's seed. */
+    static double vnoise(int salt, double a, double b) {
+        double fa = a / 3.0, fb = b / 3.0;
+        int ia = (int) Math.floor(fa), ib = (int) Math.floor(fb);
+        double ta = fa - ia, tb = fb - ib;
+        ta = ta * ta * (3 - 2 * ta);
+        tb = tb * tb * (3 - 2 * tb);
+        double v00 = Ctx.shape(ia, ib, salt), v10 = Ctx.shape(ia + 1, ib, salt), v01 = Ctx.shape(ia, ib + 1, salt), v11 = Ctx.shape(ia + 1, ib + 1, salt);
+        return ((v00 + (v10 - v00) * ta) * (1 - tb) + (v01 + (v11 - v01) * ta) * tb) / 99.0;
     }
 
     /**
-     * Ivy density in a patch (2 dense, 1 patchy, 0 tendrils, -1 none): tendrils at the top and the edges, a mix of
-     * dense and patchy through the body, the odd gap where stone shows.
+     * Ivy at a place on a side's face (2 dense, 1 patchy, 0 tendrils, -1 none): patches rooted at the foot (the talus
+     * outside, the street inside), a crown that narrows as it climbs, edges and tops broken by noise, the odd gap.
+     * Patches belong to a 9-cell lattice along the side and can reach into the next cell.
      */
-    static int ivyDensity(Geo g, int ry, int topRow, int h) {
-        int fromTop = topRow - ry;
-        if (fromTop < 0) return -1;
-        if (fromTop == 0) return h < 45 ? 0 : -1;
-        if (fromTop <= 2) return h < 40 ? 0 : 1;
-        if (h >= 94) return -1;
-        boolean edge = ivyOff(g, g.wo() >= 6 || g.d >= 5) > 0.85;
-        return edge ? (h < 30 ? 0 : 1) : h < 55 ? 2 : 1;
+    static int ivyAt(Geo g, int ry, boolean inner, int h) {
+        int salt = inner ? 160 : 170;
+        int chance = inner ? 55 : g.out() == N ? 50 : BEHIND[g.k] == GARDEN_D || BEHIND[g.k] == QUAY_D ? 40 : 16;
+        int r0 = inner ? 1 : 6, best = -1;
+        double u = g.u + 0.5;
+        for (int q = Math.floorDiv(g.u + 4, 9) - 1; q <= Math.floorDiv(g.u + 4, 9) + 1; q++) {
+            if (Ctx.shape(g.k * 64 + q, 0, salt) >= chance) continue;
+            double cu = q * 9 + 0.5 + (Ctx.shape(q, g.k, salt + 1) % 5 - 2);
+            double hgt = (inner ? 14 : 10) + Ctx.shape(q, g.k, salt + 2) % (inner ? 16 : 20);
+            double w0 = 2.2 + Ctx.shape(q, g.k, salt + 3) % 5 * 0.7;
+            double dy = (ry - r0 + 0.5) / hgt;
+            double topEdge = 1 - 0.3 * vnoise(salt + 4, u, q);
+            if (dy < 0 || dy > topEdge) continue;
+            double w = w0 * (1 - 0.55 * dy * dy) * (0.7 + 0.6 * vnoise(salt + 5, ry, q * 7));
+            double val = 1 - Math.abs(u - cu) / Math.max(0.6, w);
+            if (val <= 0) continue;
+            int d = dy > topEdge - 0.12 ? (h < 55 ? 0 : -1) : val > 0.45 ? (h < 85 ? 2 : 1) : val > 0.18 ? 1 : (h < 60 ? 0 : -1);
+            if (h >= 96) d = -1;
+            best = Math.max(best, d);
+        }
+        return best;
+    }
+
+    /**
+     * The side an ivy cell clings to (it faces away from it), or -1: the wall inward first, then a buttress or a course's
+     * lip beside it, so a patch wraps round the buttresses and spills over the courses.
+     */
+    static int ivyFace(Ctx c, Geo g, int x, int ry, int z) {
+        int in = g.in(), along = ALONG[g.k];
+        int[] order = {in, along, (along + 2) & 3};
+        for (int d : order) {
+            int nx = x + CityPainter.NB[d][0], nz = z + CityPainter.NB[d][1];
+            if (solidAt(c, nx, ry, nz) || courseAt(c, nx, ry, nz)) return (d + 2) & 3;
+        }
+        return -1;
+    }
+
+    /** A course's lip at a cell (rows 15 and 27, just outside something solid). */
+    static boolean courseAt(Ctx c, int x, int ry, int z) {
+        if (ry != 15 && ry != 27 || c.plan.kind(x, z) != VOID) return false;
+        CityPlan p = c.plan;
+        Geo g = geo(p, x, z);
+        if (outerSolid(p, g, ry)) return false;
+        int nx = x + CityPainter.NB[g.in()][0], nz = z + CityPainter.NB[g.in()][1];
+        return solidAt(c, nx, ry, nz);
     }
 
     static BlockState ivy(int facing, int density, Geo g) {
@@ -684,30 +781,43 @@ final class CityWall {
                 b.set(x, ry, z, cap != null ? cap : st.straight()[in]);
             } else b.set(x, ry, z, fill);
         }
+        Dress dr = dress(g);
         if (butt) {
-            int to = l <= 2 ? (l == 2 ? 13 : 33) : -1;
+            // dressed quoins long and short up both edges, the set-offs capped in the dressed stone
+            int m = Math.floorMod(g.u + 1, pitch(g.k));
+            int to = l == 3 ? 9 : l == 2 ? 21 : l == 1 ? 33 : -1;
             for (int ry = 6; ry <= to; ry++) {
-                boolean capRow = ry == to;
-                if (capRow) {
-                    BlockState cap = shaped(c, CAP, STONE_BRICKS, x, ry, z);
-                    b.set(x, ry, z, cap != null ? cap : CAP.straight()[in]);
-                } else b.set(x, ry, z, (ry - 6) % 4 == 3 ? ASHLAR : stone(c, g, x, ry, z, false));
+                if (ry == to) {
+                    BlockState cap = shaped(c, dr.cap(), dr.full(), x, ry, z);
+                    b.set(x, ry, z, cap != null ? cap : dr.cap().straight()[in]);
+                } else if (m == 0 && ry % 2 == 0 || m == 2 && ry % 2 == 1) b.set(x, ry, z, dr.quoin());
+                else b.set(x, ry, z, stone(c, g, x, ry, z, false));
             }
         }
-        // string courses at 15 and 27, wrapping round the buttresses
+        // string courses at 15 and 27 in the dressed stone, wrapping round the buttresses
         for (int ry : COURSE_ROWS) {
             if (outerSolid(p, g, ry)) continue;
-            BlockState lip = shaped(c, ry < 20 ? COURSE_MOSSY : COURSE, STONE_BRICKS, x, ry, z);
+            BlockState lip = shaped(c, dr.course(), dr.full(), x, ry, z);
             if (lip != null) b.set(x, ry, z, lip);
         }
-        // ivy on the sheltered faces, from the talus up
-        if (l == 1 && !butt && scaffold(p, g) < 0) {
-            int it = ivyTop(g, false);
-            for (int ry = 6; ry <= it + 4; ry++) {
-                if (ry == 15 || ry == 27) continue;
-                int dens = ivyDensity(g, ry, it + 4, c.pct(x, z, 830 + ry));
-                if (dens >= 0 && b.get(x, ry, z) == AIR) b.set(x, ry, z, ivy(g.out(), dens, g));
+        // ivy where a patch grows: over the face, round the buttresses, spilling across the courses
+        if (l <= 3 && scaffold(p, g) < 0) {
+            for (int ry = 6; ry <= 32; ry++) {
+                BlockState here = b.get(x, ry, z);
+                if (here != null && !here.isAir()) continue;
+                int dens = ivyAt(g, ry, false, c.pct(x, z, 830 + ry));
+                if (dens < 0) continue;
+                int face = ivyFace(c, g, x, ry, z);
+                if (face >= 0) b.set(x, ry, z, ivy(face, dens, g));
             }
+        }
+        // long banners of the district down the face in every third bay, beside its loop and between the courses (the
+        // shimmy rails stay whole)
+        if (l == 1 && !butt && scaffold(p, g) < 0 && Math.floorMod(g.u, pitch(g.k)) == pitch(g.k) / 2 - 2
+                && Math.floorMod(Math.floorDiv(g.u, pitch(g.k)), 3) == 1 && clearSpan(p, g.k, g.a - 2, g.a + 2, -5.5)) {
+            int design = designOf(BEHIND[g.k]);
+            for (int s = 0; s < 3; s++)
+                for (int i = 0; i < 3; i++) b.set(x, 24 - s * 3 - i, z, CityFacadeLife.BANNER[g.out()][design][i][0]);
         }
         if (scaffold(p, g) >= 0) scaffolding(c, b, g, x, z);
         if (roofed(g.k)) hoarding(c, b, g, x, z);
@@ -743,31 +853,41 @@ final class CityWall {
 
     static final int[] COURSE_ROWS = {15, 27};
 
-    /** Machicolations: corbels in two tiers carrying a parapet two deep, slots between the corbels, merlons and loops. */
+    /**
+     * Machicolations three deep: corbels in three tiers (rows 33, 34, 35, each leaning on the one behind) carrying the
+     * parapet's front at the third layer, the slots between the corbels open the full depth of the first two (deep
+     * shadow under the parapet), the walk's floor carried out over them; a dressed band under a breastwork one high (you
+     * see out over it), merlons three high and two deep with loops in the outer row and dressed caps; the crenels' sills
+     * are walls (a "no": the walk's outer edge can't be jumped).
+     */
     static void parapet(Ctx c, CityBuffer b, Geo g, int x, int z, boolean butt) {
         int l = g.lout(), in = g.in(), top = top(c.plan);
-        if (l > 2) return;
+        if (l > 3) return;
+        Dress dr = dress(g);
         int m3 = Math.floorMod(g.u, 3);
         boolean corb = m3 != 2, merlon = m3 != 2;
-        if (l == 1) {
-            if (corb || butt) b.set(x, 34, z, butt ? stone(c, g, x, 34, z, false) : CORBEL_ANDESITE.straight()[in]);
-            for (int ry = 35; ry <= 38; ry++) b.set(x, ry, z, corb || butt ? stone(c, g, x, ry, z, false) : AIR);
-            if (!corb && !butt && Math.floorMod(g.u, 9) == 5) b.set(x, 33, z, st("awaken:wall_spout[facing=" + DIR[g.out()] + "]"));
+        int tier = 32 + l;
+        if (l == 1 && butt) {
+            for (int ry = 34; ry <= 38; ry++) b.set(x, ry, z, stone(c, g, x, ry, z, false)); // the buttress runs up into it
         } else {
-            if (corb) b.set(x, 35, z, CORBEL_ANDESITE.straight()[in]);
-            for (int ry = 36; ry <= 38; ry++) b.set(x, ry, z, ry == 36 ? POLISHED_ANDESITE : ASHLAR);
+            if (corb) b.set(x, tier, z, dr.course().straight()[in]);
+            for (int ry = tier + 1; ry <= 38; ry++) {
+                boolean solid = corb || l == 3 && ry >= 36;
+                b.set(x, ry, z, !solid ? AIR : l == 3 && ry == 36 ? dr.full() : stone(c, g, x, ry, z, false));
+            }
         }
-        // a breastwork one high (you see out over it), merlons three high and two deep, loops in the outer row; the
-        // crenels' sills are walls (a "no": the walk's outer edge can't be jumped)
-        b.set(x, top, z, l == 1 ? POLISHED_ANDESITE : ASHLAR);
-        b.set(x, top + 1, z, stone(c, g, x, top + 1, z, false));
+        if (l == 1 && !corb && !butt && Math.floorMod(g.u, 9) == 5) b.set(x, 32, z, st("awaken:wall_spout[facing=" + DIR[g.out()] + "]"));
+        b.set(x, top, z, l == 3 ? stone(c, g, x, top, z, false) : POLISHED_ANDESITE);
+        if (l == 1) return;
+        if (l == 3) b.set(x, top + 1, z, stone(c, g, x, top + 1, z, false));
         if (merlon) {
-            boolean loopCell = l == 2 && Math.floorMod(g.u, 6) == 0;
+            boolean loopCell = l == 3 && Math.floorMod(g.u, 6) == 0;
+            if (l == 2) b.set(x, top + 1, z, stone(c, g, x, top + 1, z, false));
             b.set(x, top + 2, z, stone(c, g, x, top + 2, z, false));
             b.set(x, top + 3, z, loopCell ? loop(g, 1, g.out(), 0) : stone(c, g, x, top + 3, z, false));
             b.set(x, top + 4, z, loopCell ? loop(g, 2, g.out(), 0) : stone(c, g, x, top + 4, z, false));
-            b.set(x, top + 5, z, ANDESITE_SLAB);
-        } else if (l == 2) b.set(x, top + 2, z, STONE_WALLS[(ALONG[g.k] == N || ALONG[g.k] == S) ? 5 : 10]);
+            b.set(x, top + 5, z, dr.slab());
+        } else if (l == 3) b.set(x, top + 2, z, STONE_WALLS[(ALONG[g.k] == N || ALONG[g.k] == S) ? 5 : 10]);
     }
 
     /**
@@ -890,9 +1010,11 @@ final class CityWall {
             if (m == 1 && !pipe && (here4 == null || here4.isAir())) b.set(x, 4, z, WALL_LANTERN[in]);
             // ivy up the pilasters, where a patch reaches them
             if (m < 2 && !pipe) {
-                int it = ivyTop(g, true);
-                for (int ry = 10; ry <= Math.min(30, it); ry++) {
-                    int dens = ivyDensity(g, ry, it, c.pct(x, z, 840 + ry));
+                for (int ry = 1; ry <= 30; ry++) {
+                    if (ry == 9) continue; // (the course)
+                    BlockState here = b.get(x, ry, z);
+                    if (here != null && !here.isAir()) continue;
+                    int dens = ivyAt(g, ry, true, c.pct(x, z, 840 + ry));
                     if (dens >= 0) b.set(x, ry, z, ivy(in, dens, g));
                 }
             }
@@ -983,5 +1105,107 @@ final class CityWall {
             b.set(x, top + 1, z, lamp ? WALL_POST : STONE_WALLS[(ALONG[g.k] == N || ALONG[g.k] == S) ? 5 : 10]);
             if (lamp) b.set(x, top + 2, z, LANTERN);
         }
+    }
+
+    // ---- the High Gate's yard and the roads in ------------------------------------------------------------------------
+
+    /**
+     * The yard outside the High Gate (plan GATE_YARD; the Living Wilds' quartermaster and bounty post stand at its named
+     * spots, kept clear): two stalls facing the road, a well, a hay cart and a cart of crates, flag masts at the corners.
+     */
+    static final java.util.List<Prop> YARD = java.util.List.of(
+            new Prop("stall", -14, -255, -13, -252, 0, "E", 1, "bread"),
+            new Prop("stall", 12, -255, 13, -252, 0, "W", 3, "produce"),
+            new Prop("well", -9, -255, -7, -253, 0, "", 1, ""),
+            new Prop("hay_cart", 6, -255, 7, -255, 0, "W", 0, ""),
+            new Prop("cart", -15, -247, -14, -247, 0, "W", 0, "crates"));
+
+    /** Cells the yard keeps clear: the named spots and two round each (the Living Wilds put people and boards there). */
+    static boolean yardSpot(int x, int z) {
+        return Math.abs(x) <= 2 && Math.abs(z + 250) <= 2 || Math.abs(x - 10) <= 2 && Math.abs(z + 249) <= 2
+                || Math.abs(x + 10) <= 2 && Math.abs(z + 249) <= 2;
+    }
+
+    /** The gate's dressing outside the wall, after the ground: the yard's props, the barbican, the roads' lamps and masts. */
+    static void approaches(Ctx c, CityBuffer b) {
+        for (Prop p : YARD) {
+            if (p.x1() < b.px0 || p.x0() > b.x1() || p.z1() < b.pz0 || p.z0() > b.z1()) continue;
+            switch (p.kind()) {
+                case "stall" -> CityProps.stall(b, p);
+                case "well" -> CityProps.well(c, b, p);
+                case "hay_cart" -> CityProps.cart(b, p, true);
+                default -> CityProps.cart(b, p, false);
+            }
+        }
+        for (int lz = 0; lz < b.d; lz++)
+            for (int lx = 0; lx < b.w; lx++) approach(c, b, b.px0 + lx, b.pz0 + lz);
+    }
+
+    static final BlockState SPRUCE_FENCE_ = of("minecraft:spruce_fence");
+
+    static void approach(Ctx c, CityBuffer b, int x, int z) {
+        CityPlan p = c.plan;
+        // the yard's flag masts at its four corners, their banners toward the road; lamps either side of the road out
+        if ((x == -16 || x == 15) && (z == -255 || z == -245)) mast(b, x, z, x < 0 ? E : W, 9);
+        if ((x == -15 || x == 14) && (z == -255 || z == -245)) {
+            for (int i = 0; i < 3; i++) b.set(x, 8 - i, z, CityFacadeLife.BANNER[N][3][i][1]);
+            b.set(x, 9, z, CityFacadeLife.FLAGPOLE[x < 0 ? E : W]);
+        }
+        barbican(c, b, x, z);
+        // the roads in: lamps on posts and flag masts by turns either side, every 14 from the yard (the barbican) out
+        if (p.kind(x, z) != VOID) return;
+        double half = p.roadWidth / 2.0;
+        for (int[] r : p.roads) {
+            double dx = r[2] - r[0], dz = r[3] - r[1], len = Math.hypot(dx, dz);
+            double t = ((x + 0.5 - r[0]) * dx + (z + 0.5 - r[1]) * dz) / (len * len);
+            if (t < 0 || t > 1) continue;
+            double along = t * len, off = CityPainter.segDist(x + 0.5, z + 0.5, r[0], r[1], r[2], r[3]);
+            if (off <= half + 0.5 || off > half + 3.5 || along < 24) continue;
+            int step = (int) Math.floor(along);
+            if (Math.floorMod(step - 24, 14) != 0) continue;
+            boolean lamp = Math.floorMod((step - 24) / 14, 2) == 0;
+            int away = CityWall.dominant((x + 0.5) - (r[0] + dx * t), (z + 0.5) - (r[1] + dz * t));
+            if (off <= half + 1.5) {
+                if (lamp) {
+                    b.set(x, 1, z, WALL_POST);
+                    b.column(x, 2, 3, z, FENCE);
+                    b.set(x, 4, z, LANTERN);
+                } else mast(b, x, z, away, 8);
+            } else if (!lamp && off <= half + 2.5) b.set(x, 8, z, CityFacadeLife.FLAGPOLE[away]);
+            else if (!lamp) {
+                int design = designOf(dominant(x, z) == N ? TERRACE : dominant(x, z) == E ? GARDEN_D : WORKS);
+                for (int i = 0; i < 3; i++) b.set(x, 7 - i, z, CityFacadeLife.BANNER[(away + 1) & 3][design][i][1]);
+            }
+        }
+    }
+
+    /** A flag mast: a pole with a flagpole at its head pointing one way (its banner hangs in the next cell, painted there). */
+    static void mast(CityBuffer b, int x, int z, int toward, int head) {
+        for (int ry = 1; ry < head + 1; ry++) b.set(x, ry, z, CityProps.POLE);
+        b.set(x, head + 1, z, CityProps.POLE_TOP);
+    }
+
+    /**
+     * The High Gate's barbican arch at the yard's outer edge: two piers with slate caps, a pointed arch over the road
+     * (open to row 7), a battlemented top, the city's arms over the arch and a lantern hung under it.
+     */
+    static void barbican(Ctx c, CityBuffer b, int x, int z) {
+        if (z < -258 || z > -256 || x < -8 || x > 7) return;
+        boolean pier = x <= -6 || x >= 5;
+        int edge = Math.min(x + 5, 4 - x); // 0 at the arch's sides
+        if (pier) {
+            for (int ry = 1; ry <= 12; ry++) b.set(x, ry, z, ry % 4 == 0 ? SAND.full() : stone(c, geo(c.plan, x, z), x, ry, z, false));
+            Box cap = new Box(x <= -6 ? -8 : 5, -258, x <= -6 ? -6 : 7, -256);
+            CityLandmarks.pyramid(b, cap, x, z, 13, SLATE_KIT, 2);
+            return;
+        }
+        int open = edge == 0 ? 6 : edge == 1 ? 7 : 8;
+        b.column(x, 1, open, z, AIR);
+        b.set(x, open + 1, z, SAND.full()); // the arch's dressed rim
+        for (int ry = open + 2; ry <= 11; ry++) b.set(x, ry, z, stone(c, geo(c.plan, x, z), x, ry, z, false));
+        b.set(x, 12, z, SAND.full());
+        if (((x + z) & 1) == 0) b.set(x, 13, z, STONE_BRICKS);
+        if (z == -258 && x == -1) b.set(x, 10, z - 1, st("awaken:wall_shield[facing=north,arms=carillon]"));
+        if (z == -257 && x == -1) b.set(x, open, z, LANTERN_HANGING);
     }
 }
