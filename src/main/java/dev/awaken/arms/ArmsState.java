@@ -29,6 +29,8 @@ final class ArmsState {
     int edgeHits;
     int step = -1, cadence, moveSeq, recovery;
     boolean perfectHeavy;
+    /** A Lord-forged Art's move has let go this move (it fires once, at the end of the wind-up). */
+    boolean unleashed;
     /** A buffered tap waiting for its window. */
     ArmsRules.@Nullable Decision buffered;
     int bufferedSeq;
@@ -81,5 +83,6 @@ final class ArmsState {
         step = -1;
         hitCount = 0;
         perfectHeavy = false;
+        unleashed = false;
     }
 }

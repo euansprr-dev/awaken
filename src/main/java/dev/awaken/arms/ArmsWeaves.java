@@ -214,17 +214,25 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
         else p.sendOverlayMessage(text);
     }
 
-    /** What a fighter has woven (saved, kept through death; the Codex's Weaves page counts it, never naming the rest). */
-    public record ArmsMemory(int schemaVersion, Set<String> weaves) {
-        public static final int SCHEMA = 1;
+    /**
+     * What Arms remembers of a fighter (saved, kept through death): the Weaves woven (the Codex's Weaves page counts
+     * them, never naming the rest), and how many Lords have fallen since the last Lord-forged weapon.
+     */
+    public record ArmsMemory(int schemaVersion, Set<String> weaves, int lordsWithout) {
+        public static final int SCHEMA = 2; // 2: lordsWithout (the Lord-forged pity)
         static final MapCodec<ArmsMemory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(ArmsMemory::schemaVersion),
                 Codec.STRING.listOf().xmap(l -> (Set<String>) new HashSet<>(l), st -> List.copyOf(st)).optionalFieldOf("weaves", Set.of())
-                        .forGetter(ArmsMemory::weaves)
-        ).apply(i, (v, w) -> new ArmsMemory(SCHEMA, new HashSet<>(w))));
+                        .forGetter(ArmsMemory::weaves),
+                Codec.INT.optionalFieldOf("lordsWithout", 0).forGetter(ArmsMemory::lordsWithout)
+        ).apply(i, (v, w, l) -> new ArmsMemory(SCHEMA, new HashSet<>(w), l)));
 
         static ArmsMemory fresh() {
-            return new ArmsMemory(SCHEMA, new HashSet<>());
+            return new ArmsMemory(SCHEMA, new HashSet<>(), 0);
+        }
+
+        ArmsMemory withLordsWithout(int n) {
+            return new ArmsMemory(SCHEMA, weaves, n);
         }
     }
 

@@ -116,6 +116,21 @@ public final class ArmsData {
             new Weapon("gatewrought_precursor", "precursor", "C", 7.5F, -2.5F, 1400, Rarity.RARE, 12, "hunter_bind_c", 0x7FC3FF),
             new Weapon("veilwoven_precursor", "precursor", "B", 8.5F, -2.5F, 1900, Rarity.EPIC, 15, "hunter_bind_b", 0xC3CBFF),
             new Weapon("lordscale_precursor", "precursor", "A", 9.5F, -2.5F, 2300, Rarity.EPIC, 15, "hunter_bind_a", 0xF3C443),
-            new Weapon("sovereign_precursor", "precursor", "S", 10.5F, -2.5F, 2800, Rarity.EPIC, 18, "hunter_bind_s", 0xFF9080)
+            new Weapon("sovereign_precursor", "precursor", "S", 10.5F, -2.5F, 2800, Rarity.EPIC, 18, "hunter_bind_s", 0xFF9080),
+            new Weapon("bell_warden_maul", "maul", "E", 8.5F, -3.3F, 220, Rarity.EPIC, 15, "hunter_core_e", 0xF2C25A),
+            new Weapon("mother_of_spores_scythe", "scythe", "E", 7.0F, -3.0F, 220, Rarity.EPIC, 15, "hunter_core_e", 0x5FE0B0),
+            new Weapon("ember_tyrant_axe", "axe", "E", 7.0F, -3.0F, 220, Rarity.EPIC, 15, "hunter_core_e", 0xFF7A1E),
+            new Weapon("hive_regent_daggers", "daggers", "E", 4.0F, -1.8F, 220, Rarity.EPIC, 15, "hunter_core_e", 0xFFB830),
+            new Weapon("root_saint_warstaff", "warstaff", "E", 5.5F, -2.8F, 220, Rarity.EPIC, 15, "hunter_core_e", 0xB8E070),
+            new Weapon("drowned_archivist_spear", "spear", "D", 7.0F, -2.9F, 500, Rarity.EPIC, 12, "hunter_bind_d", 0x5FD0B8),
+            new Weapon("gearwright_colossus_gauntlets", "gauntlets", "D", 6.0F, -1.6F, 500, Rarity.EPIC, 12, "hunter_bind_d", 0xFF9A30),
+            new Weapon("glass_serpent_rapier", "rapier", "D", 6.5F, -2.2F, 500, Rarity.EPIC, 12, "hunter_bind_d", 0x8AE8E8),
+            new Weapon("lantern_broker_chainblade", "chainblade", "D", 6.5F, -2.7F, 500, Rarity.EPIC, 12, "hunter_bind_d", 0xFFD070),
+            new Weapon("abbot_of_frost_glaive", "glaive", "C", 8.5F, -2.9F, 1400, Rarity.EPIC, 12, "hunter_bind_c", 0x9AD8FF),
+            new Weapon("mirror_knight_shieldblade", "shieldblade", "C", 8.0F, -2.6F, 1400, Rarity.EPIC, 12, "hunter_bind_c", 0xE0F4FF),
+            new Weapon("unit_zero_precursor", "precursor", "C", 8.5F, -2.5F, 1400, Rarity.EPIC, 12, "hunter_bind_c", 0xFF4A4A),
+            new Weapon("the_sleeper_katana", "katana", "C", 8.5F, -2.5F, 1400, Rarity.EPIC, 12, "hunter_bind_c", 0xFF7AB8),
+            new Weapon("sky_leviathan_twinblades", "twinblades", "B", 9.0F, -2.0F, 1900, Rarity.EPIC, 15, "hunter_bind_b", 0x7AB0FF),
+            new Weapon("hollow_herald_greatblade", "greatblade", "A", 11.5F, -3.0F, 2300, Rarity.EPIC, 15, "hunter_bind_a", 0xFFB070)
     );
 }

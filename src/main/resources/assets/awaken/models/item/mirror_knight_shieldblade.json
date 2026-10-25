@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "layer0": "awaken:item/arms/mirror_knight_shieldblade_icon"
+ }
+}
