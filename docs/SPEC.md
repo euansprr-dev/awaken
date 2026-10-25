@@ -2429,8 +2429,10 @@ needing full Aether, with a 10-minute cooldown.
   away), the ground answers with rings of light and a low boom for everyone near. 4 Sovereign mastery.
 - Test: `ascent_sovereign` (refused without the tier or the Aether; hits struck 1.5 times; the Judgement strikes; it
   ends on its clock; the cooldown holds). Tour: `tools/autopilot/ascent-sovereign.txt` (PACK=feel). Pilot `ascend`.
+- The wings turn radiant gold while their bearer holds the form (your own and others' as seen: `WingLayer`, by
+  `SovereignClient.radiant`).
 - Not yet: slowed time for everything (only the field's hostiles are slowed), the ground shattering (the Judgement's
-  mark is light, not broken blocks), radiant (gold) wings of their own.
+  mark is light, not broken blocks).
 
 ### 17.20 The Ascent's moments for quests
 The Living Wilds' quests (`living.api.Quests.advance`, SPEC §21; a no-op unless a step waits on the id) hear six of
