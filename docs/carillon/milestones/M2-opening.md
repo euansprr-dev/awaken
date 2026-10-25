@@ -60,16 +60,19 @@ Locally: `-Ptests=opening_` 4/4. FINAL_CI
 
 ## Tour
 
-`tools/autopilot/carillon-m2.txt` (one `slot.sh light` tour, about 7 minutes of game after world creation): a new world, the opening played through
+`tools/autopilot/carillon-m2.txt` (`slot.sh light`, about 7 minutes of game after world creation; run twice, the
+second after fixing what the first showed: the arrival's crane framed the gate from behind a stall's roof, and after
+the real Void the infirmary and the Registry stayed black under the ritual's end-black): a new world, the opening played through
 from the card, the rooftop acts played from their golden runs inside the opening, then the street and canal golden
 runs. Full-size shots (gitignored): /Volumes/MEDIA/Awaken-opening/run-autopilot/screenshots/m2_*.png. Curated copies
 (800 px) in docs/carillon/milestones/m2/:
 
 - sky: m2_sky_a_top, _b_river, _c_market, _d_choir, _e_handoff (the four flight frames and the hand-off), _g_question,
   _f_eyes; the bell: m2_bell_a, _b, m2_light_roost
-- the run: m2_act1_a, _b; m2_act2_a, m2_act2_bridge, m2_act2_crane; m2_act3_rush, m2_act3_square
+- the run: m2_act1_a, _b; m2_act2_a, _b, m2_act2_crane (hanging from the arm); m2_act3_rush, m2_act3_square
 - arrival: m2_arrival_a.._d, m2_hall; the Void: m2_void
 - infirmary: m2_wake_a.._d, m2_infirmary; Registry: m2_registry_lens, _licence, _wristband, _status, _power, _yours
+- the Bell Bridge's own short tour (`tools/autopilot/carillon-m2-bridge.txt`): m2_bridge_a, _c, _f
 
 ## Golden runs (played back blind, "off by d")
 
@@ -98,11 +101,47 @@ the bodies passing through the runner (or none on the route), or compare against
 
 ## Is it thrilling? Honestly
 
-THRILL
+Seen in the tour shots, not played by a person:
+
+- **The sky shot is the best of it.** It reads as a film's opening: dawn over the walled city, down the river, over
+  the market's roofs, round the Choir's spire, and into your eyes on the Roost with no cut; the card, the bells and
+  the letterbox sell it. The question card after it looks right. This is the beat most likely to land.
+- **The bell and the light** read from the Roost: a column of light standing in the square against the dawn. Whether
+  the bell sounds *wrong* needs ears.
+- **The run is a real course, not yet a thrill.** Every route can be run with the player's own keys (the driver
+  did), with set pieces: the Roost's slide, plank bridges over Bellwatch's lanes, a leap, a hang up a cornice, the
+  crane arm over the river with its trolley (drop to the lip, shimmy past, climb out at the bronze mark), the swims
+  past the fallen bridge. But first person on Bellwatch's tight roofs is mostly walls and tiles at arm's length in
+  stills, and the pressure is ambient (tremors, the light, the bridge, the rush); nothing chases you and you can't
+  die, so the stakes are time. Speed, sound and the Ascent's feel are what would make it thrilling, and none of that
+  shows in stills.
+- **The two big moments**: the market running at you is visible from the last roofs over the square. The Bell Bridge
+  is heard more than seen from the roofs: in its own tour (from the ridge of Act 2's last gable, where it now falls)
+  the burst shows over the gable's end but the bridge sits below the roof line; earlier triggers had it fall behind
+  the next roof. The canal route, on the south quay at water level, is where it should be seen whole (not toured).
+- **The arrival** now frames the square, the gate and the light, swings to your shoulder and pulls you in, a proper
+  cinematic. The hall beyond and the Void are the story's.
+- **The infirmary and the Registry** work end to end after the real Void (eyelids, blur to focus, Sun's lines, the
+  Lens, the licence, the wristband, the Status, the first power, "THE CITY IS YOURS."), but in blockout they are a
+  sequence of cards in grey rooms: clear, not exciting.
+
+So: thrilling at the start, a solid course in the middle that needs feel and a threat to be thrilling, a strong
+arrival, a functional ending.
 
 ## What Euan should try
 
-TRY
+- A new Carillon world: watch the card and the sky shot once to the end; in a second world, hold jump to skip it.
+- Answer the view question both ways; press F5 in the run (it flips first and third person, no front view).
+- Run the opening three times, a different route each time: the roofs (the slide off the Roost, the crane's hang:
+  drop at the first bronze mark, shimmy right past the trolley, climb out at the second), the canal (the ladder down to
+  the lower quay, the swims, the ladders up), the street. Note where you hesitate: the Runner's eye pulses after 6 s;
+  say if that's too eager or too late.
+- Watch the Bell Bridge go from the last gable (roofs) or the south quay (canal); watch the market run at you.
+- With a second player: arrive apart; check the waiting count, the 3 s after the last, and a straggler's pull.
+- Try to die (a long fall in the run): you shouldn't.
+- `/awaken opening restart` replays from the card; `/awaken opening beat <run|act2|act3|arrival|wake|registry>`
+  jumps.
+- For each beat, one word: thrilling, fine or dull.
 
 ## Decisions taken (SPEC §16.4 proposals for the Carillon session)
 
@@ -130,4 +169,15 @@ the Void's answer, `RitualClient.handOff`), powers (`Starter` waits), world/faun
 
 ## Gaps
 
-GAPS
+- **Feel and threat in the run** (see above): a chaser or a closing hazard, sound design for the acts, the opening's
+  own score (it borrows the Bell Crypt's layers).
+- **Golden runs on streets and canals** aren't stable across tours (table above); only the rooftop acts are a
+  dependable check today.
+- **The Registry is a stub**: no clerk walking you through, no Lens animation beyond the shard and the scan.
+- **The Bell Bridge isn't a seen moment on the roof route** (above). Proposal: let the roof line pass where it looks
+  down on the bridge (the crane's arm faces it across the river), or move the fall to when the runner is on the arm.
+  A street runner only hears it.
+- **Route data is pinned to M1's plan** (sha256): a plan change means `python3 -I tools/opening/routes.py
+  run/city-dump.bin` and re-recording the golden runs (`/awaken opening drive <route> rec` in a tour, files to
+  tools/opening/golden).
+- **Not in M2**: rooftop runners and the thief chase, the kit and final art (M4), the Atlas reveal (M5).
