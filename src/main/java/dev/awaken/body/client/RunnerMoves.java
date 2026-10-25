@@ -227,7 +227,7 @@ public final class RunnerMoves {
     }
 
     /** Air control vanilla adds this tick (moveRelative in the air), so a move can take it back out. */
-    private static void inputAccel(LocalPlayer p, ClientInput in, double[] out) {
+    static void inputAccel(LocalPlayer p, ClientInput in, double[] out) {
         Vec2 mv = in.getMoveVector();
         float x = mv.x, y = mv.y;
         out[0] = out[1] = 0;

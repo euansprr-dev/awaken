@@ -32,6 +32,8 @@ public final class MovementHooks {
         default boolean wallRunning(Player p) { return false; }
         /** Hanging from a ledge (shimmying, or on the way into or between holds). */
         default boolean hanging(Player p) { return false; }
+        /** Sliding down a run of stairs or slabs (a slide, so {@link #sliding} is true too; SPEC §17.22). */
+        default boolean stairSliding(Player p) { return false; }
     }
 
     /** Client side: the local player's power key sent a cast. */
@@ -93,6 +95,11 @@ public final class MovementHooks {
     /** Hanging from a ledge (server side, and the client for its own player). */
     public static boolean hanging(Player p) {
         return access.hanging(p);
+    }
+
+    /** Sliding down stairs or slabs (server side, and the client for its own player): first-person animation hooks here. */
+    public static boolean stairSliding(Player p) {
+        return access.stairSliding(p);
     }
 
     public static void castStarting(ServerPlayer p) {

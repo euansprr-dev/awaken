@@ -77,6 +77,7 @@ public final class BodyClient {
             @Override public @Nullable Vec3 slideDirection() { return ClientMoves.slideDirection(); }
             @Override public boolean wallRunning() { return RunnerMoves.state == RunnerMoves.State.RUN; }
             @Override public boolean hanging() { return RunnerMoves.hanging(); }
+            @Override public boolean stairSliding() { return ClientMoves.sliding && ClientMoves.stairSliding; }
         }, ClientMoves::fell);
         MovementHooks.installClient(new MovementHooks.ClientAccess() {
             @Override public void castStarting(net.minecraft.world.entity.player.Player p, String powerId, String family, boolean motionPredicted) {
