@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Prowlers in the Green",
+  "band": 1,
+  "objective": {
+    "type": "kill",
+    "target": "awaken:canopy_prowler",
+    "count": 5
+  },
+  "levels": 0.3,
+  "essence": 4,
+  "requires": [],
+  "text": "Black cats with glowing spots, hunting the jungle trails at night. The couriers have stopped using that route."
+}

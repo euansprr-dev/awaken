@@ -50,6 +50,8 @@ public final class LivingClient {
     static final List<PlateRules.Candidate> PICKED = new ArrayList<>();
     private static final List<PlateRules.Candidate> CANDIDATES = new ArrayList<>();
     static final List<ItemEntity> PILLARS = new ArrayList<>();
+    /** This player's open scenes, each sending up a flare now and then (from the server every 5 s). */
+    static volatile List<net.minecraft.core.BlockPos> TELLS = List.of();
     private static final Map<Integer, Long> FIGHT = new HashMap<>(), LOOK = new HashMap<>(), SCAN = new HashMap<>(), FIRST_PICK = new HashMap<>();
     private static final Map<Integer, float[]> DRAIN = new HashMap<>();
     private static final java.util.Set<Integer> SEEN = new java.util.HashSet<>();
@@ -60,17 +62,23 @@ public final class LivingClient {
 
     public static void init(IEventBus modBus) {
         LivingClientConfig.register();
+        JournalSection.register();
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
+        modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,
+                e -> e.registerEntityRenderer(dev.awaken.living.LivingContent.WAYFARER.get(), WayfarerRenderer::new));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(LivingNet.RegionMsg.TYPE, (m, ctx) -> onRegion(m));
             e.register(LivingNet.HitFx.TYPE, (m, ctx) -> onHit(m));
             e.register(LivingNet.XpFx.TYPE, (m, ctx) -> onXp(m));
             e.register(LivingNet.LevelUp.TYPE, (m, ctx) -> onLevelUp(m));
             e.register(LivingNet.Shown.TYPE, (m, ctx) -> shown = m.shown());
+            e.register(LivingNet.Journal.TYPE, (m, ctx) -> JournalSection.entries = List.copyOf(m.entries()));
+            e.register(LivingNet.Tells.TYPE, (m, ctx) -> TELLS = List.copyOf(m.at()));
         });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(SubmitCustomGeometryEvent.class, LivingFx::submit);
+        bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LivingPlates::extract);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
     }
 
@@ -78,6 +86,8 @@ public final class LivingClient {
         PICKED.clear();
         CANDIDATES.clear();
         PILLARS.clear();
+        TELLS = List.of();
+        JournalSection.entries = List.of();
         FIGHT.clear();
         LOOK.clear();
         SCAN.clear();
@@ -92,7 +102,7 @@ public final class LivingClient {
 
     /** Whether plates show creatures' levels now (Jade leaves its level line out then: one source of truth). */
     public static boolean platesOn() {
-        return shown && LivingClientConfig.plates;
+        return shown && LivingClientConfig.plates && dev.awaken.holo.client.HoloWorld.allowed();
     }
 
     // ---- events -----------------------------------------------------------------------------------------------------

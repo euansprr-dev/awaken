@@ -45,6 +45,19 @@ public final class LivingContent {
                     .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.quest.QuestState.CODEC))
                     .build());
 
+    /** A player's Association notices (SPEC §21.0.9): saved, kept through death, synced to its owner. */
+    public static final Supplier<AttachmentType<dev.awaken.living.bounty.BountyState>> BOUNTIES = ATTACHMENTS.register("bounties",
+            () -> AttachmentType.builder(dev.awaken.living.bounty.BountyState::new).serialize(dev.awaken.living.bounty.BountyState.CODEC.fieldOf("bounties"))
+                    .copyOnDeath()
+                    .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.bounty.BountyState.CODEC))
+                    .build());
+
+    static final net.neoforged.neoforge.registries.DeferredRegister.Entities ENTITIES = net.neoforged.neoforge.registries.DeferredRegister.createEntities(Awaken.MODID);
+    /** A person out in the wilds (Phase C). Saved with its chunk; never despawns. */
+    public static final DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<dev.awaken.living.wayfarer.Wayfarer>> WAYFARER =
+            ENTITIES.registerEntityType("wayfarer", dev.awaken.living.wayfarer.Wayfarer::new, net.minecraft.world.entity.MobCategory.MISC,
+                    b -> b.sized(0.6f, 1.95f).eyeHeight(1.62f).clientTrackingRange(8));
+
     public static final DeferredHolder<SoundEvent, SoundEvent> SCAN = sound("living.scan");
     public static final DeferredHolder<SoundEvent, SoundEvent> CRIT = sound("living.crit");
     public static final DeferredHolder<SoundEvent, SoundEvent> XP_TICK = sound("living.xp_tick");
@@ -59,5 +72,6 @@ public final class LivingContent {
         RULES.register(modBus);
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
+        ENTITIES.register(modBus);
     }
 }

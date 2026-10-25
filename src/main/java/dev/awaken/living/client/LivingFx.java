@@ -167,7 +167,8 @@ final class LivingFx {
         if (glass == null) glass = RenderTypes.debugQuads();
         PoseStack ps = e.getPoseStack();
         SubmitNodeCollector out = e.getSubmitNodeCollector();
-        boolean plates = LivingClient.shown && LivingClientConfig.plates && !LivingClient.PICKED.isEmpty();
+        // the Holo's glass draws plates (LivingPlates); this is the fallback when its shaders didn't load
+        boolean plates = LivingClient.platesOn() && !LivingPlates.holo() && !LivingClient.PICKED.isEmpty();
         out.submitCustomGeometry(ps, glass, (pose, vc) -> guard(() -> solid(vc, mc, plates)));
         out.submitCustomGeometry(ps, add, (pose, vc) -> guard(() -> light(vc, mc, plates)));
         if (plates) platesText(ps, out, mc);
@@ -185,6 +186,7 @@ final class LivingFx {
     private static void solid(VertexConsumer vc, Minecraft mc, boolean plates) {
         if (plates) platesGlass(vc, mc);
         for (int i = 0; i < GLYPHS; i++) drawGlyph(vc, i, true);
+        drawTells(vc, true);
     }
 
     private static void light(VertexConsumer vc, Minecraft mc, boolean plates) {
@@ -193,6 +195,7 @@ final class LivingFx {
         for (int i = 0; i < STREAMS; i++) drawStream(vc, mc, i);
         for (int i = 0; i < MOMENTS; i++) drawMoment(vc, mc, i);
         for (ItemEntity item : LivingClient.PILLARS) drawPillar(vc, item);
+        drawTells(vc, false);
     }
 
     // ---- plates -----------------------------------------------------------------------------------------------------
@@ -632,6 +635,39 @@ final class LivingFx {
         beam(vc, new Vec3(x, y, z), new Vec3(x, y + 4, z), 0.5F, argb(0.16F * pulse, col));
         float ring = (now + item.getId() * 7) % 32 / 32F;
         flatRing(vc, x, y - 0.05, z, 0.3F + ring * 1.3F, 0.05F, argb(0.7F * (1 - ring), col));
+    }
+
+    // ---- scene tells ------------------------------------------------------------------------------------------------
+
+    /** A distress flare over an open scene (SPEC §21.5): 20 s in every 90, rising fast, then drifting down as it burns. */
+    static final float TELL_EVERY = 1800, TELL_FOR = 400, TELL_RISE = 40;
+
+    private static void drawTells(VertexConsumer vc, boolean solid) {
+        for (var at : LivingClient.TELLS) {
+            float phase = (now + (at.hashCode() & 1023)) % TELL_EVERY;
+            if (phase > TELL_FOR) continue;
+            float rise = Mth.clamp(phase / TELL_RISE, 0, 1);
+            rise = 1 - (1 - rise) * (1 - rise);
+            double x = at.getX() + 0.5, y0 = at.getY() + 1, z = at.getZ() + 0.5;
+            double top = y0 + 6 + 42 * rise - 12 * Math.max(0, (phase - TELL_RISE) / (TELL_FOR - TELL_RISE));
+            float fade = phase < TELL_FOR - 60 ? 1 : (TELL_FOR - phase) / 60F;
+            float flick = 0.8F + 0.2F * Mth.sin(now * 1.7F + at.getX());
+            // a point that stays a few pixels wide at any distance: the Hilltop Test
+            double dist = Math.sqrt((x - cx) * (x - cx) + (top - cy) * (top - cy) + (z - cz) * (z - cz));
+            float scale = (float) Math.max(1.2, dist / 40); // grows with distance: a red point a hilltop away still reads
+            if (solid) {
+                // alpha-blended, so it stays red against a white noon sky (additive light washes out there): a red
+                // burning ball with a hot core, and the smoke trail it left
+                beam(vc, new Vec3(x, y0, z), new Vec3(x, top - 0.6 * scale, z), 0.22F * scale, argb(0.42F * fade * rise, 0x8A3A2E));
+                flare(vc, x, top, z, 1.5F * scale, argb(0.55F * fade * flick, 0xE8341C));
+                flare(vc, x, top, z, 0.85F * scale, argb(0.95F * fade, 0xFF5A2E));
+                flare(vc, x, top, z, 0.38F * scale * flick, argb(fade, 0xFFE8C8));
+            } else {
+                // its light, which carries at dusk and night
+                flare(vc, x, top, z, 4.5F * scale * flick, argb(0.45F * fade, 0xFF4A22));
+                flare(vc, x, top, z, 11F * scale, argb(0.14F * fade, 0xFF3A1C));
+            }
+        }
     }
 
     // ---- primitives -------------------------------------------------------------------------------------------------

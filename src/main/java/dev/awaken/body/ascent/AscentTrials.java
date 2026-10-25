@@ -82,6 +82,7 @@ final class AscentTrials {
 
     /** The Leviathan fallen: the sky is theirs (once: the scene, mastery, a fifth of a level). */
     private static void skybornDone(ServerPlayer p) {
+        AscentQuests.advance(p, AscentQuests.SKY_TRIAL);
         AscentMemory mem = p.getData(AscentContent.MEMORY);
         if ((mem.flags() & AscentMemory.SKYBORN_TRIAL_DONE) != 0) return;
         Ascent.grant(p, Ascent.Tier.SKYBORN, "sky leviathan's trial");
@@ -127,6 +128,7 @@ final class AscentTrials {
 
     /** Across and on the far landing: the leap is yours (once: the scene, mastery, a fifth of a level). */
     private static void leaperDone(ServerPlayer p, int ticks, int medal) {
+        AscentQuests.advance(p, AscentQuests.GAUNTLET);
         AscentMemory mem = p.getData(AscentContent.MEMORY);
         if ((mem.flags() & AscentMemory.LEAPER_TRIAL_DONE) != 0) return;
         Ascent.grant(p, Ascent.Tier.LEAPER, "leaper's gauntlet");

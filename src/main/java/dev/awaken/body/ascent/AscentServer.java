@@ -218,7 +218,10 @@ public final class AscentServer {
         if (s == AscentState.NONE && m.state != AscentState.NONE) m.endedAt = now(p);
         // a rope that bit is a link (counted here, once the server has checked its anchor)
         boolean newRope = s.rope && !m.state.rope;
-        if (s != m.state) AscentTips.used(p, s);
+        if (s != m.state) {
+            AscentTips.used(p, s);
+            AscentQuests.state(p, m.state, s, m.ax, m.ay, m.az);
+        }
         m.state = s;
         if (newRope) link(p, AscentMemory.Track.TETHER, 2);
         m.ax = msg.x();
@@ -237,7 +240,7 @@ public final class AscentServer {
      * where the server has the body, and the point sits on a block's collision (it is placed a hair off the face it bit).
      */
     static boolean anchorReal(ServerPlayer p, double ax, double ay, double az) {
-        double reach = AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * 10 + 6;
+        double reach = AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * 10 + 6 + dev.awaken.progression.Progression.perk(p, AscentRules.ROPE_REACH_PERK);
         if (p.distanceToSqr(ax, ay, az) > reach * reach) return false;
         net.minecraft.world.phys.AABB probe = new net.minecraft.world.phys.AABB(ax - 0.12, ay - 0.12, az - 0.12, ax + 0.12, ay + 0.12, az + 0.12);
         for (var shape : p.level().getBlockCollisions(null, probe)) {
@@ -333,6 +336,7 @@ public final class AscentServer {
         TetherVow.tick(p, now(p));
         AscentTrials.tick(p, now(p));
         WindwaysServer.tick(p, now(p));
+        AscentQuests.ride(p, m.state);
         Sovereign.tick(p, now(p));
         aether(p, m);
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move

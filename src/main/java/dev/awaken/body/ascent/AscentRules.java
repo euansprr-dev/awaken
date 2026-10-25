@@ -19,6 +19,8 @@ public final class AscentRules {
     // ---- tether: the rope swing ----------------------------------------------------------------------------------
     /** How far a rope reaches, and the shortest rope (shorter ones pull you in instead of swinging). */
     public static final double TETHER_RANGE = 44, TETHER_MIN = 3.0;
+    /** A perk that lengthens the rope (blocks, added; Living Wilds' relics: Wren's Hook gives 6; SPEC §17.6). */
+    public static final String ROPE_REACH_PERK = "awaken:rope_reach";
     /** Where the rope pulls on the body: the raised hand, above the feet. */
     public static final double HAND_HEIGHT = 1.55;
     /** Air drag per tick while swinging (far less than vanilla's: a swing keeps its speed). */

@@ -254,10 +254,14 @@ public final class Upgrades {
             Signal.send(sp, w.ttl(20 * 8).build());
             return;
         }
-        Def def = temper(current + 1, oren);
+        // Oren's Mark (a Living Wilds relic, perk awaken:temper_start): a fresh blade starts that many levels up
+        int next = current + 1;
+        if (current == 0 && armourSlot(stack) == null) next = Math.min(cap, 1 + (int) Progression.perk(sp, "awaken:temper_start"));
+        final int target = next;
+        Def def = temper(target, oren);
         Rank rank = Progression.rank(sp);
         List<Costs.Part> price = Costs.price(def.base(), rank, def.tier());
-        w.row(Component.literal("Next"), Component.literal(roman(current + 1) + " · " + (armourSlot(stack) != null ? "+0.5 armour, +0.25 toughness" : "+1 damage") + " per level"));
+        w.row(Component.literal("Next"), Component.literal(roman(target) + " · " + (armourSlot(stack) != null ? "+0.5 armour, +0.25 toughness" : "+1 damage") + " per level"));
         for (Costs.Part p : price) w.row(p.name(), Costs.have(sp, p));
         if (oren) w.body(Component.literal("I'll bring the essence. You bring the iron."));
         Item item = stack.getItem();
@@ -268,12 +272,13 @@ public final class Upgrades {
                 List<Costs.Part> again = Costs.price(def.base(), Progression.rank(p), def.tier());
                 if (!Costs.canAfford(p, again)) return;
                 Costs.pay(p, again);
-                applyTemper(now, current + 1);
+                applyTemper(now, target);
                 p.level().playSound(null, p.blockPosition(), HearthContent.SND_FORGE.get(), SoundSource.PLAYERS, 1f, 1.1f);
                 ((ServerLevel) p.level()).sendParticles(ParticleTypes.CRIT, p.getX(), p.getY() + 1, p.getZ(), 16, 0.4, 0.4, 0.4, 0.2);
-                Signal.toast(p, Component.literal(now.getHoverName().getString() + " tempered to " + roman(current + 1)));
+                Signal.toast(p, Component.literal(now.getHoverName().getString() + " tempered to " + roman(target)));
                 Progression.count(p, "awaken:gear_tempered");
-            }), "Temper it to " + roman(current + 1), "Not now");
+                dev.awaken.living.api.Quests.advance(p, Identifier.parse("awaken:use/temper"));
+            }), "Temper it to " + roman(target), "Not now");
         }
         Signal.send(sp, w.ttl(20 * 12).build());
     }

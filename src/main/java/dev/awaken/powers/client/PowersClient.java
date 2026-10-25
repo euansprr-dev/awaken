@@ -14,8 +14,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
@@ -30,8 +30,8 @@ public final class PowersClient {
         modBus.addListener(RegisterGuiLayersEvent.class, PowerHud::register);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, PowersClient::payloads);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, PowersClient::renderers);
-        modBus.addListener(RegisterColorHandlersEvent.ItemTintSources.class,
-                e -> e.register(Awaken.id("power_family"), PowerCoreTint.MAP_CODEC));
+        modBus.addListener(RegisterSelectItemModelPropertyEvent.class,
+                e -> e.register(Awaken.id("core_power"), CorePowerSelect.TYPE));
         modBus.addListener(RegisterRenderStateModifiersEvent.class, PowersClient::stateModifiers);
 
         var bus = NeoForge.EVENT_BUS;

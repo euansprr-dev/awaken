@@ -336,7 +336,12 @@ final class FaunaTests {
                         h.assertTrue(d.theme == Theme.GREENWILD, d.id + " belongs to the plains' family");
                         h.assertTrue(d.fauna != FaunaRole.HUNTER && !d.id.equals("lumen_moth"), d.id + " is a day creature");
                         h.assertTrue(d.fauna != FaunaRole.BEAST, "no beast this close or this low a level");
-                        h.assertTrue(m.role().contentLevel() <= 1, d.id + " spawned at the player's level, was " + m.role().contentLevel());
+                        // the Living Wilds: a creature takes its place's level (SPEC §21.0.1), an elite two above it;
+                        // within one of the spot's (it may have stepped over a region's edge since it spawned)
+                        int want = FaunaRules.contentLevel(level, m.blockPosition(), d.fauna)
+                                + (dev.awaken.core.api.CreatureTag.of(m).elite() ? 2 : 0);
+                        int got = m.role().contentLevel();
+                        h.assertTrue(Math.abs(got - want) <= 1, d.id + " spawned at its place's level " + want + ", was " + got);
                     }
                     for (FaunaRole r : FaunaRole.values()) {
                         h.assertTrue(FaunaCensus.countNear(level, r, p.getX(), p.getZ(), 128) <= r.capPerPlayer, r + " stays under its cap");
@@ -443,6 +448,9 @@ final class FaunaTests {
             ServerLevel level = h.getLevel();
             BlockPos at = h.absolutePos(new BlockPos(0, UP, 0));
             for (int dx = -14; dx <= 14; dx++) for (int dz = -14; dz <= 14; dz++) ground(level, at.offset(dx, 0, dz));
+            // plots are reused: an old floor overhead lifts the heightmap past the reveal's 10-block reach and every spot
+            // is skipped (the intermittent "stepped out" failure), so clear the sky over the patch
+            AwakenTests.clearAbove(level, at, 14, 7, 48);
             ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 0));
             clearFauna(level, p);
             List<FaunaMob> before = new ArrayList<>(FaunaCensus.in(level));

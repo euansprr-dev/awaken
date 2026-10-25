@@ -1,0 +1,133 @@
+# The Living Wilds, Phase C (SPEC §21.5) and plates on the Holo's glass (§12 HoloWorld). Plates at 6, 12 and 20 blocks
+# and beside the open K panel; the Wayfarer camp up the High Gate road (Ilse and Hettie), a chain offered, taken and in
+# the Journal; Wren stranded on a cliff with her flare and the step that needs the Tether; the Caravan Road's raiders;
+# Hale's bounty board; the relics in hand.
+# Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh tools/autopilot/living-c.txt 900
+world autopilot_living_c2 creative 20261025
+waitworld
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule advance_time false
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin levels 9
+wait 20
+# ---- plates on a platform outside the walls ----
+cmd tp @s ~ 140 ~-520 0 10
+wait 120
+cmd fill ~-12 138 ~-24 ~12 138 ~4 minecraft:grass_block
+wait 10
+cmd tp @s ~ 139 ~ 180 8
+wait 40
+cmd summon minecraft:husk ~ 139 ~-6 {NoAI:1b,PersistenceRequired:1b}
+wait 30
+look 180 12
+wait 20
+shot living_c00a_plate_6
+cmd awaken living strike
+wait 4
+shot living_c00b_plate_hit
+cmd tp @s ~ 139 ~6 180 6
+wait 30
+shot living_c00c_plate_12
+cmd tp @s ~ 139 ~8 180 4
+wait 30
+shot living_c00d_plate_20
+cmd tp @s ~ 139 ~-12 180 10
+wait 30
+key status
+wait 40
+shot living_c00e_plate_beside_k
+screen close
+wait 10
+cmd kill @e[type=minecraft:husk]
+# ---- the camp ----
+cmd awaken living camp
+wait 160
+cmd awaken living camp
+wait 120
+shot living_c01_camp
+cmd awaken living talk
+wait 30
+shot living_c02_ask
+wait 30
+shot living_c03_card
+key accept
+wait 20
+shot living_c04_taken
+key status
+wait 40
+shot living_c05_journal
+screen close
+wait 10
+# ---- Wren ----
+cmd awaken living scene wrens_rope
+wait 120
+# the flare: 20 s in every 90, so six looks 18 s apart catch it from 70 blocks off
+cmd awaken living view 70
+wait 60
+shot living_c06a_flare
+wait 360
+shot living_c06b_flare
+wait 360
+shot living_c06c_flare
+wait 360
+shot living_c06d_flare
+wait 360
+shot living_c06e_flare
+wait 360
+shot living_c06f_flare
+cmd awaken living view 5
+wait 60
+shot living_c06_wren_scene
+cmd awaken living talk
+wait 40
+shot living_c07_wren_card
+key accept
+wait 20
+cmd awaken living talk
+wait 20
+shot living_c08_needs_tether
+# ---- the Caravan Road ----
+cmd awaken living camp
+wait 40
+cmd awaken living scene caravan_road
+wait 60
+cmd awaken living view 8
+wait 40
+cmd awaken living talk
+wait 40
+key accept
+wait 40
+shot living_c09_raiders
+cmd kill @e[type=minecraft:pillager]
+# ---- Hale ----
+cmd awaken living wayfarer hale
+wait 30
+look 180 30
+cmd awaken living talk
+wait 40
+shot living_c10_bounty
+key accept
+wait 20
+shot living_c11_bounty_taken
+cmd give @s awaken:shepherds_lantern
+cmd give @s awaken:herdcaller_horn
+cmd give @s awaken:wrens_hook
+cmd give @s awaken:lumen_tonic
+cmd give @s awaken:caravan_writ
+cmd give @s awaken:pells_spurs
+wait 20
+shot living_c12_relics
+key status
+wait 40
+shot living_c13_journal_full
+screen close
+quit

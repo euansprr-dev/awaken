@@ -40,8 +40,11 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         /** Drawn for your own eyes (first person): only the outer feathers, faded in, never the root at the camera. */
         boolean dFirst;
         // light, not cloth: a see-through body tinted toward the Signal's cyan, and a soft halo of glow over it
-        final SubmitNodeCollector.CustomGeometryRenderer body = (pose, vc) -> wings(pose, vc, this, 0x94A8DCFF, 1F);
-        final SubmitNodeCollector.CustomGeometryRenderer glow = (pose, vc) -> wings(pose, vc, this, 0x3C7FC0FF, 1.07F);
+        // (radiant gold while their bearer holds the Sovereign form: SPEC §17.19)
+        final SubmitNodeCollector.CustomGeometryRenderer body = (pose, vc) -> wings(pose, vc, this,
+                SovereignClient.radiant(entity) ? 0x9CFFE6A8 : 0x94A8DCFF, 1F);
+        final SubmitNodeCollector.CustomGeometryRenderer glow = (pose, vc) -> wings(pose, vc, this,
+                SovereignClient.radiant(entity) ? 0x48FFC05A : 0x3C7FC0FF, 1.07F);
     }
 
     private static final Wings[] WINGS = new Wings[32];

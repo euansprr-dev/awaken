@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:item/power_core/spire",
+    "layer1": {
+      "sprite": "awaken:item/power_core/spire_glow",
+      "neoforge_data": {
+        "light_emission": 15
+      }
+    }
+  }
+}

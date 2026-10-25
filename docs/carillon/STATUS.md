@@ -194,3 +194,7 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   of +8 against houses 9–25 tall; two more rings is a plan change, for B4 to consider with the Knoll's tower). Known: a
   tree grew in the gate yard (B3a clears it). B5 inherits changed stage routes (act1_roof 30/35 points etc.). B3 split
   into B3a (street life) and B3b (animals + soundscape + Euan's listening page).
+- 2026-10-25: for the Living Wilds' first chains: the opening counts `awaken:carillon_registered` when it ends or is
+  skipped (db8bd104); B3a adds Kestrel (the Roost) and Bram (the Association) as named citizens; B3b wires
+  `living.api.Quests.talk(player, id)` first for every named citizen (once talk() is on build). The hearth Forge
+  (Oren's temper step) is the pack session's. Oren's move to a Hearth waits on renown tiers past Known (MMO-lite).
