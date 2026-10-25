@@ -169,3 +169,6 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   sweep cleared their trunks (33 floating groups on one seed, 7 inside the wall). Also closed: the 4-point crown probe
   (CityBasin.reservedWithin). Scan after: 0 floaters in 1970 chunks. Existing worlds need `/awaken city tidy`. CI red only
   on unrelated flakes (fauna_p2_families_spawn, fauna_natural_spawning_end_to_end, gates_hooks_view_stabilise_calm).
+- 2026-10-25: Euan added five extras to Phase B (SPEC §16.0 decision 27): the kit to ~60 (furniture, wares, shop signs,
+  random texture variants: variants in B1, the rest in B3), movement for free (B3), animals (B3), interiors you can
+  glimpse plus four full interiors (B4), city light (B6/B7). Not added: the soundscape, citizens who interact, weather.
