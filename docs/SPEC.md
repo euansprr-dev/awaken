@@ -1388,6 +1388,14 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       the bakery and the Association.
     - City light (B6/B7): Carillon's Lens looks, warm lamp bloom at night and morning haze over the river
       (assets/awaken/lens/looks_carillon.json).
+29. The Living Wilds (SPEC §21, approved by Euan) meets Carillon at the High Gate (agreed 2026-10-25): the city lays out
+    the gatehouse yard outside the High Gate with named spots (`CityHooks.spot`); the living module spawns Quartermaster
+    Hale and the bounty post there. Its bounties (`living.bounty`) are the first slice of the deferred contracts board
+    under decision 5's rules (three notices, known places only, no expiry offline, claim ids), shown at Hale's post and
+    on the Association board's spot; coin through `EconomyHooks.pay` once an economy exists, renown through
+    `RenownHooks.witness` at turn-in. Its chains "The Last Delivery" (the Roost's word, Kestrel) and "Bell Metal" (the
+    C-rank spine) are drafted by the Living Wilds session and reviewed by the Carillon session against
+    docs/carillon/m4/story.md. Its tips use TipHooks with tip files in the onboarding.md format.
 28. The city soundscape (Euan, 2026-10-25), built by B3's builder (no extra builder):
     - Sources, best first: vanilla sound events referenced and layered (pitch, volume, combinations; never copied);
       CC0 recordings only for what vanilla lacks (wordless crowd murmur, gulls, water at quays, carts on cobbles,
@@ -1566,7 +1574,9 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
-  `startPoint(ServerPlayer)`, `square(Level)`. Graph types are added at G1.
+  `startPoint(ServerPlayer)`, `square(Level)`, `spot(Level, String id)` (named spots the city lays out for other modules:
+  `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`; null until placed).
+  Graph types are added at G1.
 - `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
 - `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
   Identifier faction)`.
