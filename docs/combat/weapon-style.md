@@ -24,7 +24,17 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    texels, and two thirds of that is blade.** Blades are 3 to 5 texels wide. The thin edge is 1 texel deep and the
    core 3. Grips are 3 by 3 and 4 or 5 long. Guards and pommels get bolder with the tier: the low tiers use bone,
    antler and a plain collar, the high tiers wings, crowns and big framed stones. The silhouette must say what the
-   weapon is from its outline alone, and no two weapons may share one.
+   weapon is from its outline alone, and no two weapons may share one. The other lines:
+   - **Axe:** a 3×3 haft about 23 long, the bit flaring from the eye to its edge in 2-column steps (`bit`), a spike,
+     poll or wing on the back, and metal langets down the haft.
+   - **Maul** (the reference's own): a 26-long haft and a block head made of a core, flared caps with a painted
+     trim field (`panel`) and a raised 45° frame with its stone.
+   - **Spear:** a slender 2×2 shaft about 31 long, so it reads as reach, and a head about 10 long (leaf, lugs,
+     fork, wave, wings or spire).
+   - **Greatblade:** about 36 long, 7 wide, a two-hand grip, and a narrow banded ricasso ending in parrying lugs.
+
+   Each style has its own first-person hold (`HOLDS`). `check()` keeps the outer half of every weapon's reach on
+   screen, inside the tuned Longsword's margins.
 
 4. **Painted bevels, big and clean.** Each face has a flat base step from its material's ramp. Every outer edge gets
    a band one texel wide. The band is lit (+2 steps) where the edge faces the painted light (up the blade and toward

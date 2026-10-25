@@ -3771,6 +3771,25 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   sword never rises (a sword another mod made to block keeps its own).
 - Off while riding, sleeping, projecting, meditating, flying or gliding; Arms never runs a spectator's melee.
 
+**Styles** (S5 batch 1, the timing table's rows beside the Longsword's; PLAN §4.5): every style has the full set of
+moves (a three-strike chain and a mastery strike, the heavy and its glint, riposte, slipcut, execution, the Art,
+undercut, plunge), its own guard and dodge numbers and its base speed (recovery scales with the item's attack speed
+against it, so a vanilla item plays its designed tempo).
+- **Axe** (0.9; vanilla's axes): chops on a 3-tick wind-up, a finisher cleave from overhead (motion 2.0, posture 18),
+  a hooking mastery strike; the heavy is a guard-breaking hew (posture 24, 34 on the glint); its Art a whirl all round.
+- **Maul** (0.7; the mace): slow heavy swings (wind-up 4), the finisher a slam all round (arc 360, posture 26), the
+  heavy an overhead crash all round (posture 30, 44 on the glint), a plunge that hits harder (motion 1.3); its Art the
+  Earthbreaker's wave. Its blows land blunt (`arms.hit_blunt`) on every body but a spirit.
+- **Spear** (1.1; our forged spears; vanilla's spears and the trident keep their own right mouse, the charge and the
+  throw, until the style can share it): thrusts at 4.2 blocks on a 25° arc, the finisher a wide sweep, the heavy a
+  lunge to 5 blocks; its Art a thrust whose wave runs 12 blocks.
+- **Greatblade** (1.0): wide heavy cleaves (arc 130, reach 3.4), a spinning finisher all round, an overhead mastery
+  strike; its Art a great sweep.
+- Third person: `arms_<style>_<move>` clips on each style's own ticks, generated from the authored poses by the move's
+  kind (a side cut, an overhead, a thrust, a sweep round), heavier styles leaning and sinking further; the slide's,
+  the fall's and the dodge's strikes are every style's. Strike 1's follow-through passes out in front (a waypoint) so
+  the arm never crosses the chest, and finishes out past the off side so the blow reads from behind.
+
 **Sounds** (`ArmsSounds`, 26 events `arms.*`, 76 files; tools/art/specs/audio_arms.py).
 - Hybrid by design: CC0 recordings (Kenney's Impact Sounds and RPG Audio, `tools/art/sources/kenney`, CC0 1.0, licence
   files kept) for the physical transients and bodies synthesis renders thin; the audio kit for the air, the steel's ring
