@@ -39,6 +39,7 @@ final class RunnerTests {
         AwakenTests.register("runner_roof_climb", 20, RunnerTests::roofClimb);
         AwakenTests.registerIsolated("runner_pipe_grip", 120, RunnerTests::pipeGrip);
         AwakenTests.registerIsolated("runner_pipe_cornice", 120, RunnerTests::pipeCornice);
+        AwakenTests.registerIsolated("runner_ledge_drop", 120, RunnerTests::ledgeDrop);
         // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
         // teleport accepted, so every move after it is ignored (see docs/carillon/spikes/S3-runner.md, Open issue)
     }
@@ -694,6 +695,60 @@ final class RunnerTests {
             h.assertTrue(GripRules.topLip(level, ctx, m0, s.x, s.y + 0.6, s.z, axis, sign, 0) == null, "no lip over open air");
             for (int x = -1; x <= 2; x++) for (int y = -1; y <= 4; y++) for (int z = -4; z <= 4; z++)
                 level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
+            BodyTests.done(h, a, b);
+        });
+    }
+
+    /**
+     * Shift in a hang drops to the ledge below (Euan, 2026-10-25; SPEC §17.24): hanging from a wall's top with a sill
+     * sticking out a block lower down, the drop catches the sill (out from the wall first, then down), and the server
+     * takes it; with no sill, there's nothing to catch (Shift lets go).
+     */
+    static void ledgeDrop(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        for (int x = -1; x <= 2; x++) for (int z = -3; z <= 3; z++) level.setBlockAndUpdate(o.offset(x, -1, z), stone);
+        for (int x = -1; x <= 2; x++) {
+            for (int y = 0; y <= 5; y++) level.setBlockAndUpdate(o.offset(x, y, 1), stone);
+            level.setBlockAndUpdate(o.offset(x, 3, 0), Blocks.STONE_BRICKS.defaultBlockState()); // the sill, one out
+        }
+        RunnerServer.fromHistory = true;
+        RunnerServer.latencyTicks = 0;
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var m0 = new BlockPos.MutableBlockPos();
+            CollisionContext ctx = CollisionContext.empty();
+            int axis = 2, sign = 1;
+            double x = o.getX() + 0.5, hold = o.getZ() + 1 - BodyRules.HALF_WIDTH - RunnerRules.HANG_GAP;
+            RunnerRules.Edge top = RunnerRules.findEdge(level, ctx, m0, x, o.getY() + 6 - RunnerRules.HANG_DROP, hold, axis, sign,
+                    RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+            h.assertTrue(top != null && Math.abs(top.top() - (o.getY() + 6)) < 1e-6, "a hang on the wall's top: " + top);
+            RunnerRules.Edge below = RunnerRules.edgeBelow(level, ctx, m0, top.hx(), top.hy(), top.hz(), top, 0);
+            h.assertTrue(below != null && Math.abs(below.top() - (o.getY() + 4)) < 1e-6, "Shift drops to the sill below: " + below);
+            h.assertTrue(below.hz() < top.hz() - 0.9, "hung from the sill's own face, out from the wall: " + below);
+
+            long now = level.getServer().overworld().getGameTime();
+            ServerPlayer a = BodyTests.player(h, null);
+            Vec3 s = new Vec3(top.hx(), top.hy(), top.hz());
+            a.snapTo(s.x, s.y, s.z, 0F, 0F);
+            a.setOnGround(false);
+            BodyMotion m = BodyServer.motion(a);
+            h.assertTrue(RunnerServer.startHang(a, m, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, top.hx(), top.hy(), top.hz(), axis, sign), now)
+                    && m.hanging, "the server holds the hang on the top");
+            h.assertTrue(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_DOWN, 0F, s, below.hx(), below.hy(), below.hz(), axis, sign), now + 10)
+                    && m.hanging && Math.abs(m.hangTop - below.top()) < 1e-6, "and takes the drop to the sill");
+
+            // no sill: nothing below to catch, and the server won't hang you on thin air
+            for (int xx = -1; xx <= 2; xx++) level.setBlockAndUpdate(o.offset(xx, 3, 0), Blocks.AIR.defaultBlockState());
+            h.assertTrue(RunnerRules.edgeBelow(level, ctx, m0, top.hx(), top.hy(), top.hz(), top, 0) == null, "no sill, no drop to catch");
+            ServerPlayer b = BodyTests.player(h, null);
+            b.snapTo(s.x, s.y, s.z, 0F, 0F);
+            BodyMotion mb = BodyServer.motion(b);
+            RunnerServer.startHang(b, mb, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, top.hx(), top.hy(), top.hz(), axis, sign), now + 20);
+            h.assertFalse(RunnerServer.ledgeJump(b, mb, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_DOWN, 0F, s, below.hx(), below.hy(), below.hz(), axis, sign), now + 30),
+                    "the server refuses a drop to no ledge");
+            for (int xx = -1; xx <= 2; xx++) for (int y = -1; y <= 5; y++) for (int z = -3; z <= 3; z++)
+                level.setBlockAndUpdate(o.offset(xx, y, z), Blocks.AIR.defaultBlockState());
             BodyTests.done(h, a, b);
         });
     }

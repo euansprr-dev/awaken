@@ -2716,6 +2716,17 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   the way on, hung from its outer face, taken by the server only from the grip, climbed out onto the roof; a deep
   ceiling and open air give no lip). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
 
+### 17.24 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
+In a hang, **Shift** lets go and catches the next ledge below when there is one (`RunnerRules.edgeBelow`): the same
+face direction, its top 0.9-3.2 under the held one (the nearest), its face up to 1.4 out from the hanging body (a sill
+or a balcony sticking out) or a little in, and the way to it free. The body goes out first when the lower face sticks
+out, else down first then in, falling slow off the lip and fast into the catch (4-8 ticks by the drop), the grab's
+clip and sound at the catch (first person: the hands slam onto the lower lip). **Shift + Back**, or Shift with no
+ledge below, lets go as before. The server takes it as a ledge jump (`JUMP_DOWN`): the target edge found again near
+the claimed hold, its top within the drop's band of the held one. Test: `runner_ledge_drop` (a wall's top over a sill
+one out: the drop catches the sill from its own face and the server takes it; no sill, nothing to catch and the server
+refuses).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
