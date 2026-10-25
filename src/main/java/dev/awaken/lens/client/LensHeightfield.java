@@ -2,6 +2,7 @@ package dev.awaken.lens.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.GpuFormat;
+import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuTexture;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -23,8 +24,11 @@ import java.util.Arrays;
  * far steps of the march test a whole cell at once. Where the top is water, g sits at the block's base + 0.75 instead of
  * its top (exactly representable in half floats to y 512): the shaders read that fraction as "water here" (Lens 2's
  * reflections, L3) and lose nothing as an occluder. Built from a 64×64-chunk window centred on the camera's chunk,
- * nearest chunks first and a few each tick; block changes show within a few seconds (a rolling rescan). Uploads go up
- * as whole-width strips of the window, straight from an off-heap mirror, so nothing is allocated per tick.
+ * nearest chunks first and a few each tick; block changes show within a few seconds (a rolling rescan). Only changed
+ * chunks go up: the bounding box of a tick's changes when it's small (a recentre's new column or row is one copy per
+ * level), else up to eight rows a tick, each as the span of its changed chunks. Whole-width strips cost 5.6 MB and
+ * 320 copies, each behind a full barrier on Vulkan, for one step east or west (docs/perf/CITY-FPS.md). Tiles go
+ * through one off-heap staging buffer, so nothing is allocated per tick.
  */
 final class LensHeightfield {
     static final int SIZE = 1024, CHUNKS = SIZE / 16, LEVELS = 5;
@@ -34,17 +38,22 @@ final class LensHeightfield {
     static final float TRUSTED = (CHUNKS / 2 - 1) * 16f;
     // the rolling rescan and the near re-read are the steady CPU cost (block changes still show within ten seconds)
     private static final int READS_PER_TICK = 40, RESCANS_PER_TICK = 12, NEAR_EVERY = 10, NEAR_RADIUS = 2, UPLOAD_ROWS_PER_TICK = 8;
+    /** A tick's changes go up as one box per level when it covers at most this many chunks (a whole column or row). */
+    private static final int BOX_CHUNKS = CHUNKS;
 
     final Texture texture;
-    // per level, the whole window as the texture holds it (row-major RG16F) and one view per chunk row for its upload
+    // per level, the whole window as the texture holds it (row-major RG16F); uploads are packed into stage first
     private final ByteBuffer[] mirror = new ByteBuffer[LEVELS];
-    private final ByteBuffer[][] rowSlices = new ByteBuffer[LEVELS][CHUNKS];
+    private final ByteBuffer stage = MemoryUtil.memAlloc(BOX_CHUNKS * 16 * 16 * 4);
     // per slot (chunk x & 63, z & 63): which chunk it holds, whether it waits for a read, its content's hash and top
     private final long[] owner = new long[CHUNKS * CHUNKS];
     private final boolean[] pending = new boolean[CHUNKS * CHUNKS];
     private final long[] hash = new long[CHUNKS * CHUNKS];
     private final short[] top = new short[CHUNKS * CHUNKS];
-    private final boolean[] dirtyRow = new boolean[CHUNKS];
+    // slots whose heights changed since their last upload, and how many per chunk row
+    private final boolean[] dirty = new boolean[CHUNKS * CHUNKS];
+    private final int[] dirtyInRow = new int[CHUNKS];
+    private int dirtyCount;
     // slot offsets from the centre, nearest first (Chebyshev rings)
     private static final int[] ORDER = ringOrder();
     private final float[] all = new float[256], solid = new float[256];
@@ -54,9 +63,8 @@ final class LensHeightfield {
 
     LensHeightfield() {
         for (int k = 0; k < LEVELS; k++) {
-            int w = SIZE >> k, rows = 16 >> k;
+            int w = SIZE >> k;
             mirror[k] = MemoryUtil.memAlloc(w * w * 4);
-            for (int r = 0; r < CHUNKS; r++) rowSlices[k][r] = MemoryUtil.memSlice(mirror[k], r * rows * w * 4, rows * w * 4);
         }
         texture = new Texture();
         clearAll();
@@ -101,7 +109,9 @@ final class LensHeightfield {
             level = lvl;
             centreX = Integer.MIN_VALUE;
             clearAll();
-            Arrays.fill(dirtyRow, true);
+            Arrays.fill(dirty, true);
+            Arrays.fill(dirtyInRow, CHUNKS);
+            dirtyCount = dirty.length;
         }
         if (camChunkX != centreX || camChunkZ != centreZ) recentre(camChunkX, camChunkZ);
         int reads = 0;
@@ -135,6 +145,7 @@ final class LensHeightfield {
     void close() {
         texture.close();
         for (int k = 0; k < LEVELS; k++) MemoryUtil.memFree(mirror[k]);
+        MemoryUtil.memFree(stage);
     }
 
     private int slotAt(int packedOffset) {
@@ -237,22 +248,67 @@ final class LensHeightfield {
                 }
             }
         }
-        dirtyRow[sz] = true;
+        if (!dirty[slot]) {
+            dirty[slot] = true;
+            dirtyInRow[sz]++;
+            dirtyCount++;
+        }
     }
 
     private void upload() {
+        if (dirtyCount == 0) return;
         var encoder = RenderSystem.getDevice().createCommandEncoder();
+        int x0 = CHUNKS, x1 = -1, z0 = CHUNKS, z1 = -1;
+        for (int z = 0; z < CHUNKS; z++) {
+            if (dirtyInRow[z] == 0) continue;
+            z0 = Math.min(z0, z);
+            z1 = z;
+            for (int x = 0; x < CHUNKS; x++) {
+                if (!dirty[x + z * CHUNKS]) continue;
+                x0 = Math.min(x0, x);
+                x1 = Math.max(x1, x);
+            }
+        }
+        if ((x1 - x0 + 1) * (z1 - z0 + 1) <= BOX_CHUNKS) {
+            send(encoder, x0, z0, x1, z1);
+            return;
+        }
+        // scattered changes: a few rows a tick, each as the span of its changed chunks, round the ring from where the
+        // last tick stopped so a busy row can't keep the others waiting
         int done = 0;
-        // round the ring from where the last tick stopped, so a busy row can't keep the others waiting
         for (int i = 0; i < CHUNKS && done < UPLOAD_ROWS_PER_TICK; i++) {
             int r = (nextRow + i) & (CHUNKS - 1);
-            if (!dirtyRow[r]) continue;
+            if (dirtyInRow[r] == 0) continue;
             nextRow = r + 1;
-            dirtyRow[r] = false;
+            int lo = CHUNKS, hi = -1;
+            for (int x = 0; x < CHUNKS; x++) {
+                if (!dirty[x + r * CHUNKS]) continue;
+                lo = Math.min(lo, x);
+                hi = x;
+            }
+            send(encoder, lo, r, hi, r);
             done++;
-            for (int k = 0; k < LEVELS; k++) {
-                int w = SIZE >> k, rows = 16 >> k;
-                encoder.writeToTexture(texture.getTexture(), rowSlices[k][r], k, 0, 0, r * rows, w, rows);
+        }
+    }
+
+    /** Uploads slots x0..x1 by z0..z1 at every level (at most BOX_CHUNKS of them) and marks them clean. */
+    private void send(CommandEncoder encoder, int x0, int z0, int x1, int z1) {
+        long to = MemoryUtil.memAddress(stage);
+        for (int k = 0; k < LEVELS; k++) {
+            int n = 16 >> k, w = SIZE >> k;
+            int tx = x0 * n, ty = z0 * n, tw = (x1 - x0 + 1) * n, th = (z1 - z0 + 1) * n;
+            long from = MemoryUtil.memAddress(mirror[k]);
+            for (int y = 0; y < th; y++) MemoryUtil.memCopy(from + ((long) (ty + y) * w + tx) * 4, to + (long) y * tw * 4, tw * 4L);
+            stage.clear().limit(tw * th * 4);
+            encoder.writeToTexture(texture.getTexture(), stage, k, 0, tx, ty, tw, th);
+        }
+        for (int z = z0; z <= z1; z++) {
+            for (int x = x0; x <= x1; x++) {
+                int slot = x + z * CHUNKS;
+                if (!dirty[slot]) continue;
+                dirty[slot] = false;
+                dirtyInRow[z]--;
+                dirtyCount--;
             }
         }
     }

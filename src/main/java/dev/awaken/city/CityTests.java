@@ -254,6 +254,10 @@ final class CityTests {
             long[] order = keys.stream().mapToLong(Long::longValue).toArray();
             CityPregen.Result r = CityPregen.run(h.getLevel(), order, new net.minecraft.world.level.ChunkPos(cx, cz));
             h.assertTrue(r.chunks() == 49 && r.ok() == 49 && r.failed() == 0, "49 chunks generated to FULL: " + r);
+            // each finished chunk is held by the timed city_hold ticket, so the city isn't unloaded before the player joins
+            var tickets = h.getLevel().getDataStorage().computeIfAbsent(net.minecraft.world.level.TicketStorage.TYPE);
+            String held = tickets.getTicketDebugString(keys.get(24), false);
+            h.assertTrue(held.contains("awaken:city_hold"), "the centre chunk is held by city_hold: " + held);
             h.succeed();
         });
 
