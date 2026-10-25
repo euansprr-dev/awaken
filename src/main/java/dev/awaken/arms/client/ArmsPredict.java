@@ -150,6 +150,7 @@ public final class ArmsPredict {
         ticks++;
         ArmsFeel.tick();
         ArmsFx.tick();
+        ArmsStances.tick();
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
@@ -319,6 +320,7 @@ public final class ArmsPredict {
                 fightAt = ticks;
                 ArmsAudio.impact(p, r.entity(), style, r.aux2());
                 hitFx(p, r.entity(), style, r.aux2());
+                ArmsStances.struck(r.entity());
                 if (r.aux() > 0) {
                     CombatFeedback.hitstop(r.entity(), r.aux());
                     CombatFeedback.hold(r.aux());
@@ -411,6 +413,7 @@ public final class ArmsPredict {
                 CombatFeedback.hitstop(s.entity(), s.aux());
             }
             case ArmsPayloads.BREAK -> BROKEN.put(s.entity(), ticks + s.aux());
+            case ArmsPayloads.POSTURE -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other());
             default -> { }
         }
     }
@@ -426,5 +429,6 @@ public final class ArmsPredict {
         BROKEN.clear();
         ArmsFeel.reset();
         ArmsFx.reset();
+        ArmsStances.reset();
     }
 }

@@ -14,8 +14,10 @@ screen close
 hud on
 camera first
 cmd gamemode creative
-cmd tp @s ~ 300 ~ 0 8
-wait 20
+wait 300
+screen close
+cmd tp @s ~2000 300 ~ 0 8
+wait 80
 cmd fill ~-8 ~-1 ~-8 ~8 ~-1 ~12 minecraft:smooth_stone
 cmd fill ~-8 ~ ~-8 ~8 ~10 ~12 minecraft:air
 cmd fill ~-8 ~ ~9 ~8 ~7 ~9 minecraft:deepslate_tiles

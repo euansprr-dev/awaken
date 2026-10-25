@@ -39,6 +39,27 @@ final class ArmsTests {
         AwakenTests.register("arms_posture_break", 60, ArmsTests::postureBreak);
         AwakenTests.register("arms_kill_switch", 40, ArmsTests::killSwitch);
         AwakenTests.register("arms_sounds", 20, ArmsTests::sounds);
+        AwakenTests.register("arms_stance_rules", 20, ArmsTests::stanceRules);
+    }
+
+    /** A stance drains by one rule on both sides; a focus holds while looked at. */
+    static void stanceRules(GameTestHelper h) {
+        h.assertTrue(ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS, false) == 20, "untouched for its idle time: nothing drains yet");
+        h.assertTrue(Math.abs(ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false) - (20 - 20 * ArmsRules.POSTURE_REGEN)) < 1e-4,
+                "then it drains at its rate");
+        h.assertTrue(ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, true) < ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false),
+                "a Lord's stance comes back faster");
+        h.assertTrue(ArmsRules.drained(5, 10_000, false) == 0, "never below empty");
+        Posture p = new Posture();
+        p.value = 20;
+        p.max = 40;
+        p.lastHitAt = 100;
+        p.settle(100 + ArmsRules.POSTURE_IDLE_TICKS + 20, false);
+        h.assertTrue(Math.abs(p.value - ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false)) < 1e-4, "the server's settle is the same rule");
+        p.settle(100 + ArmsRules.POSTURE_IDLE_TICKS + 20, false);
+        h.assertTrue(Math.abs(p.value - ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false)) < 1e-4, "and never drains the same time twice");
+        h.assertTrue(ArmsRules.lookedAt(170, -170) && !ArmsRules.lookedAt(90, 0), "the focus is looked at within 60 degrees, across the wrap");
+        h.succeed();
     }
 
     /** A blow sounds like what it meets and how hard it lands; every class of tell has its one voice. */

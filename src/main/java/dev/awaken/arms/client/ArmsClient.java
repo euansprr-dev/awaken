@@ -6,6 +6,7 @@ import dev.awaken.Awaken;
 import dev.awaken.arms.Arms;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.core.api.CombatFeedback;
+import dev.awaken.core.api.Stances;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.PlayerRenderState;
@@ -47,6 +48,7 @@ public final class ArmsClient {
 
     public static void init(IEventBus modBus) {
         CombatFeedback.install(ArmsFeel.INSTANCE);
+        Stances.install(ArmsStances.INSTANCE);
         modBus.addListener(ArmsClient::onPayloads);
         modBus.addListener((RegisterGuiLayersEvent e) -> e.registerAbove(VanillaGuiLayers.CROSSHAIR, Awaken.id("arms_hud"), ArmsHud::render));
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->

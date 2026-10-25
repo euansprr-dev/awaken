@@ -388,6 +388,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `slash(wielder, offset, axis0, axis90, startDeg, sweepDeg, radius, band, sweepTicks, argb)` (a blade's crescent that
   moves with the wielder), `thrust(wielder, offset, dir, from, to, width, sweepTicks, argb)`, `bladeHit(at, dir, size,
   BodyMaterial)`. Same budget and settings as the powers' own effects.
+- `dev.awaken.core.api.Stances` (client, §24) — a creature's stance as this client knows it: `share(Entity)` 0..1,
+  `broken(Entity)`, `focused(Entity)` (the local fighter's focus). Installed by Arms' client; zero until then.
 - `dev.awaken.arms.Arms` (§24) — `styleOf(ItemStack|Item)` (the fighting style, or null for tools and bare hands),
   `guards(ItemStack)`, `fights(LivingEntity)`, `posture(LivingEntity)` (0..1, server), `broken(LivingEntity)` (server),
   `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell).
@@ -3242,7 +3244,13 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   ticks (Lords 40), then cannot break again for 6 s. On the struck creature only (the patent rule holds). Not saved.
 - **Resonance** (per player, 0–100, not saved): deflect 20, perfect dodge 15, break 25, a finisher 6, a rhythm-3
   finisher 12 more; drains 2/s after 5 s out of a fight. Full: the Art (S2).
-- **Soft focus**: the creature you last struck turns your strikes toward it by at most 15°.
+- **Soft focus**: the creature you last struck turns your strikes toward it by at most 15°; looking more than 60°
+  away from it for a second lets it go (server and client by one rule, `ArmsRules.lookedAt`).
+- **Stances on the plates** (`core.api.Stances`, §12, read by the living module's plates): every stance change sends
+  its snapshot (value, hold, broken ticks) to players within 48 blocks, the fighter included; their clients drain it by
+  the server's own rule (`ArmsRules.drained`), so nothing is sent while it only recovers. Under the health bar, once
+  strained: a thin amber strip filling from both ends to the middle (white-hot past three quarters), pulsing gold
+  while broken. The fighter's focus wears the plate's bright rim.
 - **Feel** (`core.api.CombatFeedback`, §12; one freeze for every blow, Powers' hits included): the struck body freezes
   and trembles for the move's hit-stop, the striker's hands and view hold for the same beat (the move's clock skips
   it), and the view kicks along the swing (≤ 2.4°) and settles; at most one freeze per 4 ticks in a sweep. A deflect
@@ -3304,5 +3312,5 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   voice), with the shard and a small view jolt from where it came (vanilla's own tilt stays).
 
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
-kill switch, sounds; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
+kill switch, sounds, stance rules; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles.

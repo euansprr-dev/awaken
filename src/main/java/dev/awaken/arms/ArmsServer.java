@@ -210,6 +210,7 @@ final class ArmsServer {
             long rel = now - s.moveStart;
             if (def != null && rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) sweep(p, s, def, now);
         }
+        if (s.focus >= 0 && (now & 3) == 0) holdFocus(p, s, now);
         if (s.guardBreak) {
             s.guardBreak = false;
             breakGuard(p, s);
@@ -241,6 +242,18 @@ final class ArmsServer {
             s.markHit(t.getId());
             hit(p, s, def, t, now);
         }
+    }
+
+    /** The focus lets go when it's gone or the fighter has looked well away from it for a second. */
+    private static void holdFocus(ServerPlayer p, ArmsState s, long now) {
+        LivingEntity f = target(p, s.focus);
+        if (f == null) {
+            s.focus = -1;
+            return;
+        }
+        float toward = (float) (Mth.atan2(f.getZ() - p.getZ(), f.getX() - p.getX()) * Mth.RAD_TO_DEG) - 90F;
+        if (ArmsRules.lookedAt(toward, p.getYRot())) s.focusSeenAt = now;
+        else if (now - s.focusSeenAt >= ArmsRules.FOCUS_DROP_TICKS) s.focus = -1;
     }
 
     private static float focusTurn(ServerPlayer p, ArmsState s) {
@@ -566,17 +579,28 @@ final class ArmsServer {
         if (p.broken(now)) return;
         p.value = Math.min(p.max, p.value + amount);
         p.lastHitAt = now;
-        if (p.value >= p.max && now >= p.nextBreakAt) {
+        boolean breaks = p.value >= p.max && now >= p.nextBreakAt;
+        if (!breaks) stance(target, p, now);
+        if (breaks) {
             int ticks = lord ? ArmsRules.BROKEN_TICKS_LORD : ArmsRules.BROKEN_TICKS;
             p.brokenUntil = now + ticks;
             p.nextBreakAt = now + ArmsRules.BREAK_COOLDOWN;
             p.value = 0;
+            stance(target, p, now);
             Strikes.stagger(target, ticks);
             sound(target, ArmsSounds.BREAK.get(), 1.0F, 1.0F);
             resonance(by, state(by), ArmsRules.RESONANCE_BREAK);
             AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
             seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));
         }
+    }
+
+    /** Everyone near the creature (the fighter too) gets its stance on every change; their clients drain it themselves. */
+    private static void stance(LivingEntity target, Posture p, long now) {
+        int broken = (int) Math.max(0, p.brokenUntil - now);
+        ArmsPayloads.Seen msg = new ArmsPayloads.Seen(target.getId(), ArmsPayloads.POSTURE, broken, Math.round(p.value * 10), p.max);
+        if (!(target.level() instanceof ServerLevel level)) return;
+        for (ServerPlayer o : level.players()) if (o.distanceToSqr(target) < 48 * 48) AwakenNet.send(o, msg);
     }
 
     // ---- resonance ----------------------------------------------------------------------------------------------------
