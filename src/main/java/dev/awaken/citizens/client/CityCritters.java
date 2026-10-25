@@ -189,6 +189,17 @@ public final class CityCritters {
         double moor = CityLife.RIVER_HALF - 1.8;
         List<Double> water = new ArrayList<>();
         double along = 0;
+        // (M4 B3b) the roster's berths: each boatman works over his own boat (citizens.json "moorings"); a roster
+        // without them falls back to a boat every MOOR_EVERY blocks
+        Roster ro = Roster.get();
+        boolean berths = ro != null && !ro.moorings.isEmpty();
+        if (berths) {
+            for (Roster.Mooring m : ro.moorings) {
+                Home h = new Home(CityCritter.BOAT, cx + m.boatX(), cz + m.boatZ(), 0, 1, r.nextInt(), false);
+                h.facing = m.yaw() + (r.nextBoolean() ? 180F : 0F);
+                HOMES.add(h);
+            }
+        }
         for (int i = 0; i + 1 < river.size(); i++) {
             float[] a = river.get(i), b = river.get(i + 1);
             double len = Math.hypot(b[0] - a[0], b[1] - a[1]), dx = (b[0] - a[0]) / len, dz = (b[1] - a[1]) / len;
@@ -197,7 +208,7 @@ public final class CityCritters {
                 if (Math.hypot(x, z) > inner) continue;
                 water.add(cx + x);
                 water.add(cz + z);
-                if (along % MOOR_EVERY >= 4) continue;
+                if (along % MOOR_EVERY >= 4 || berths) continue;
                 for (int side = -1; side <= 1; side += 2) {
                     if (r.nextFloat() < 0.25F) continue;
                     double mx = x - dz * moor * side, mz = z + dx * moor * side;

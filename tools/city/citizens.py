@@ -78,7 +78,7 @@ J = {n: i for i, n in enumerate(JOBS)}
 ACTS = ['home', 'inside', 'stand', 'round', 'carry', 'wander']
 A = {n: i for i, n in enumerate(ACTS)}
 PLACE_KINDS = ['door', 'stand', 'lamp', 'stall_keeper', 'stall_front', 'bell', 'anvil', 'wash', 'line', 'pickup', 'post',
-               'crier', 'sit', 'play', 'mill', 'landmark', 'tavern_out', 'shop_door']
+               'crier', 'sit', 'play', 'mill', 'landmark', 'tavern_out', 'shop_door', 'mooring', 'net']
 PK = {n: i for i, n in enumerate(PLACE_KINDS)}
 PLACE_FIELDS = ['kind', 'node', 'x', 'ry', 'z', 'yaw', 'cap', 'ref', 'district', 'approach', 'spots']
 CITIZEN_FIELDS = ['id', 'given', 'family', 'job', 'household', 'home', 'work', 'group', 'tavern', 'build', 'age', 'scale',
@@ -1111,8 +1111,9 @@ class Builder:
             groups = []
             for _, x, z in cells:
                 # (a 2x2 block, else four in a row: the quay is a strip a few cells wide)
-                for shape, bias in (([(0, 0), (1, 0), (0, 1), (1, 1)], 0.0), ([(0, 0), (1, 0), (2, 0), (3, 0)], 2.0),
-                                    ([(0, 0), (0, 1), (0, 2), (0, 3)], 2.0)):
+                # (M4 B3b: spots two apart, so a crew at a crane stands to its work, not in a knot)
+                for shape, bias in (([(0, 0), (2, 0), (0, 2), (2, 2)], 0.0), ([(0, 0), (2, 0), (4, 0), (6, 0)], 2.0),
+                                    ([(0, 0), (0, 2), (0, 4), (0, 6)], 2.0), ([(0, 0), (1, 0), (0, 1), (1, 1)], 6.0)):
                     grp = [(x + dx, z + dz) for dx, dz in shape]
                     if all(self.spot_ok(a, b) and c.kind_at(a, b) == QUAY for a, b in grp):
                         groups.append((sum(boxdist(a, b) for a, b in grp) + bias, x, z, grp))
@@ -1158,6 +1159,81 @@ class Builder:
         for x, z in crates:
             self.used.add(c.cell(x, z))
         self.crates = [[int(math.floor(x)), c.lift_at(x, z), int(math.floor(z))] for x, z in crates]
+
+    def build_moorings(self):
+        """M4 B3b: a berth every ~22 blocks along both quays of the river inside the wall (none by a bridge): a boatman's
+        place on the quay's edge, looking down at his boat, and where the boat lies (on the river, near the lower quay,
+        along the stream). The client moors its boats at exactly these (citizens.json "moorings"). Then a place by each of
+        the nets (the boatmen mend them in the slack of the day)."""
+        c = self.c
+        river = c.P['river']
+        half = float(c.P.get('riverHalfWidth', 9))
+        inner = c.P['wall']['radius'] - 14
+        segs, acc = [], 0.0
+        for k in range(len(river) - 1):
+            ax, az = river[k]
+            bx, bz = river[k + 1]
+            ln = math.hypot(bx - ax, bz - az)
+            segs.append((ax, az, bx, bz, ln, acc))
+            acc += ln
+
+        def project(x, z):
+            best = None
+            for ax, az, bx, bz, ln, a0 in segs:
+                t = max(0.0, min(1.0, ((x - ax) * (bx - ax) + (z - az) * (bz - az)) / (ln * ln)))
+                px, pz = ax + (bx - ax) * t, az + (bz - az) * t
+                d = math.hypot(x - px, z - pz)
+                if best is None or d < best[0]:
+                    side = 1 if (bx - ax) * (z - az) - (bz - az) * (x - ax) > 0 else -1
+                    best = (d, a0 + ln * t, side, (bx - ax) / ln, (bz - az) / ln, px, pz)
+            return best
+        cand = []
+        for j in range(N):
+            for i in range(N):
+                if int(c.kind[j, i]) != QUAY:
+                    continue
+                x, z = i - O + 0.5, j - O + 0.5
+                if math.hypot(x, z) > inner or not self.spot_ok(x, z):
+                    continue
+                # on the quay's edge: the lower quay or the water right beside it
+                drop = None
+                for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    ii, jj = i + dx, j + dz
+                    if 0 <= ii < N and 0 <= jj < N and (int(c.kind[jj, ii]) == LOWQUAY or (c.water[jj, ii] and int(c.kind[jj, ii]) == RIVER)):
+                        drop = (dx, dz)
+                        break
+                if drop is None or c.bridge_mask[max(0, j - 5):j + 6, max(0, i - 5):i + 6].any():
+                    continue
+                pr = project(x, z)
+                if pr is None or pr[0] > half + 6:
+                    continue
+                cand.append((pr[1], pr[2], x, z, drop, pr))
+        cand.sort()
+        self.moorings = []
+        last = {1: -1e9, -1: -1e9}
+        for along, side, x, z, drop, pr in cand:
+            if along - last[side] < 22:
+                continue
+            last[side] = along
+            _, _, sd, tx, tz, px, pz = pr
+            nx, nz = -tz * sd, tx * sd          # toward this bank
+            moor = half - 1.8
+            boat = [round(px + nx * moor, 2), round(pz + nz * moor, 2)]
+            heading = yaw_of(tx, tz)
+            pid = self.add('mooring', [(x, z, yaw_of(*drop))], ref=len(self.moorings))
+            self.moorings.append({'place': pid, 'boat': boat, 'yaw': heading, 'side': side})
+        assert len(self.moorings) >= 10, f'{len(self.moorings)} moorings'
+        self.net_places = []
+        self.nets_taken = set()
+        for pr in c.props:
+            if pr['kind'] != 'net':
+                continue
+            mx, mz = (pr['x0'] + pr['x1'] + 1) / 2, (pr['z0'] + pr['z1'] + 1) / 2
+            near = self.cells_around(mx, mz, 3.5)
+            if not near:
+                continue
+            _, x, z = near[0]
+            self.net_places.append(self.add('net', [(x, z, yaw_of(mx - x, mz - z))], ref=len(self.net_places)))
 
     # -- generic finders ------------------------------------------------------------------------------------------------
     def near_door_cell(self, x, z, r=2.5):
@@ -1829,8 +1905,9 @@ class Population:
                 new('watch', mode='night', slot=i - 16)
         for i in range(7):
             new('crier', route=i % 5)
+        nm = len(B.moorings)
         for i in range(10):
-            new('boatman', pickup=i % npick)
+            new('boatman', mooring=(i * nm) // 10)
         # washers: 7 at each washplace; six hold a wash place (the ones nearest a line hang the laundry), the 7th tends
         for wp in range(2):
             lines = [ln for ln in B.lines if ln['washplace'] == wp]
@@ -1956,9 +2033,22 @@ class Population:
             sg = [S(0, 'home', H), S(1200, 'round', K, 0, 1200, 1), S(6000, 'wander', E, -1, ERRAND_DWELL, 0, 'err'),
                   S(7000, 'round', K, 0, 1200, 1), S(11000, 'stand', T, tag='tav'), S(13500, 'home', H)]
         elif job == 'boatman':
-            P = B.quay_pickups[cit['pickup']]
-            sg = [S(0, 'home', H), S(800, 'stand', P), S(5600, 'wander', E, -1, ERRAND_DWELL, 0, 'err'), S(6400, 'stand', P),
-                  S(10800, 'stand', T, tag='tav'), S(13500, 'home', H)]
+            # (M4 B3b) his own berth: lines, bailing, loading and fending off there (the client cycles the work), the nets
+            # mended in the slack of the morning and the afternoon when one is near
+            M = B.moorings[cit['mooring']]['place']
+            mp = B.places[M]
+            nets = sorted((q for q in B.net_places if q not in B.nets_taken),
+                          key=lambda q: (math.hypot(B.places[q]['x'] - mp['x'], B.places[q]['z'] - mp['z']), q))
+            N_ = nets[0] if nets and math.hypot(B.places[nets[0]]['x'] - mp['x'], B.places[nets[0]]['z'] - mp['z']) < 70 else None
+            if N_ is not None:
+                B.nets_taken.add(N_)  # a net each: one mender at a time
+            if N_ is not None:
+                sg = [S(0, 'home', H), S(800, 'stand', M), S(3000, 'stand', N_), S(4400, 'stand', M),
+                      S(5600, 'wander', E, -1, ERRAND_DWELL, 0, 'err'), S(6400, 'stand', M), S(8600, 'stand', N_), S(9800, 'stand', M),
+                      S(10800, 'stand', T, tag='tav'), S(13500, 'home', H)]
+            else:
+                sg = [S(0, 'home', H), S(800, 'stand', M), S(5600, 'wander', E, -1, ERRAND_DWELL, 0, 'err'), S(6400, 'stand', M),
+                      S(10800, 'stand', T, tag='tav'), S(13500, 'home', H)]
         elif job == 'washer':
             wp = B.washplaces[cit['washplace']]
             role = cit['role']
@@ -2037,7 +2127,7 @@ class Population:
             elif cit['kind'] == 'neighbour':
                 # a well or bench near home mornings and at dusk, the market at midday (when it is near enough), some evenings a tavern
                 L = cit['loc']
-                trip = min(B.wd(p, L) for p in B.routes[cit['mkr']]['places']) <= 150
+                trip = min(B.wd(p, L) for p in B.routes[cit['mkr']]['places']) <= 150 and not cit.get('walks')
                 mid = S(4600 + (k % 3) * 200, 'wander', cit['mkr'], -1, 350, 0, 'mk') if trip else \
                     S(4600, 'wander', cit['stroll'], -1, 600, 0, 'stroll')
                 sg = [S(0, 'home', H), S(2200 + (k % 3) * 200, 'stand', L, tag='loc'), mid, S(7900, 'home', H),
@@ -2271,6 +2361,7 @@ class Population:
         r.shuffle(slots)
         si = 0
         msit_i = 0
+        walked = set()
         for q in (x for x in self.cits if x['job'] == 'resident'):
             k = q['rk']
             if q['kind'] == 'market':
@@ -2287,6 +2378,9 @@ class Population:
                 q['loc'] = slots[si]
                 q['stroll'] = in_route[q['loc']]
                 si += 1
+                # the first on each stroll route walks it every day (a market trip would leave its benches unwalked)
+                q['walks'] = q['stroll'] not in walked
+                walked.add(q['stroll'])
             if q['kind'] == 'neighbour':
                 q['mkr'] = mk[k % len(mk)]
         self.stroll_users = si
@@ -2299,8 +2393,10 @@ class Population:
             return B.routes[B.lamp_clusters[cit['cluster']]['route']]['places']
         if job == 'bellringer':
             return [B.bells[cit['bell']]['place']]
-        if job in ('porter', 'boatman'):
+        if job == 'porter':
             return [B.quay_pickups[cit['pickup']]]
+        if job == 'boatman':
+            return [B.moorings[cit['mooring']]['place']]
         if job == 'stallkeeper':
             return [B.stalls[cit['stall']]['keeper']]
         if job == 'baker':
@@ -2774,7 +2870,7 @@ class Population:
         if job == 'crier':
             return B.crier_routes[cit['route']]
         if job == 'boatman':
-            return B.quay_pickups[cit['pickup']]
+            return B.moorings[cit['mooring']]['place']
         if job == 'washer':
             return B.washplaces[cit['washplace']]['places'][cit['slot']]
         if job == 'mason':
@@ -3196,6 +3292,7 @@ def assemble(C, B, P):
     lines = [{'a': [int(l['a'][0]), int(l['a'][1])], 'b': [int(l['b'][0]), int(l['b'][1])], 'ry': l['ry'], 'place': l['place'],
               'cells': l['cells']} for l in B.lines]
     quay = {'pickup': B.quay_pickups, 'crates': B.crates}
+    moorings = [{'place': m['place'], 'boat': m['boat'], 'yaw': m['yaw']} for m in B.moorings]
     taverns = [dict(t) for t in B.taverns]
     households = [{'id': h['id'], 'home': h['home'], 'plot': h['plot'], 'family': h['family'], 'members': h['members']} for h in P.hh]
     groups = [{'id': g['id'], 'kind': g['kind'], 'members': g['members']} for g in P.groups]
@@ -3221,7 +3318,7 @@ def assemble(C, B, P):
     out = {'schemaVersion': 1, 'generator': 'tools/city/citizens.py', 'planSha256': C.plan_sha, 'jobs': JOBS, 'acts': ACTS,
            'placeKinds': PLACE_KINDS, 'places': {'fields': PLACE_FIELDS, 'rows': places_rows}, 'routes': routes, 'edgeLane': lanes,
            'lamps': lamps, 'stalls': stalls, 'bells': B.bells, 'bakeries': bakeries, 'smithies': smithies,
-           'washplaces': washplaces, 'lines': lines, 'quay': quay, 'taverns': taverns, 'households': households,
+           'washplaces': washplaces, 'lines': lines, 'quay': quay, 'moorings': moorings, 'taverns': taverns, 'households': households,
            'groups': groups, 'citizens': {'fields': CITIZEN_FIELDS, 'rows': rows}, 'schedules': schedules, 'extras': extras}
     return out
 
@@ -3241,6 +3338,7 @@ def generate(verbose=False):
     B.build_washplaces()
     B.build_lines()
     B.build_quay()
+    B.build_moorings()
     B.build_misc()
     B.build_named()
     B.sit_places = B.bench_places + B.fountain_places + B.step_places + B.wall_sits
@@ -3765,6 +3863,13 @@ class Checker:
         for x, ry, z in q['crates']:
             if not C.ground[z + O, x + O]:
                 errs.append('crate cell not walkable')
+        # (M4 B3b) every boatman has a berth of his own on a quay's edge
+        mo = o['moorings']
+        if len(mo) < 10 or any(PLACE_KINDS[self.pl[m['place']]['kind']] != 'mooring' or self.pl[m['place']]['cap'] != 1 for m in mo):
+            errs.append('moorings')
+        mine = [P_.work_of(q_) for q_ in P_.cits if q_['job'] == 'boatman'] if (P_ := getattr(self, 'P', None)) else []
+        if mine and len(set(mine)) != len(mine):
+            errs.append('two boatmen share a berth')
         n_stalls = sum(1 for pr in C.props if pr['kind'] == 'stall')
         if len(o['taverns']) != 14 or len(o['bells']) != 6 or len(o['stalls']) != n_stalls or len(o['lamps']) != len(C.P['lamps']):
             errs.append('taverns/bells/stalls/lamps counts')

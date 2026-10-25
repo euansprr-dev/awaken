@@ -34,7 +34,7 @@ JAVA_OUT = os.path.join(ROOT, "src/main/java/dev/awaken/citizens/client/CityFaun
 
 # render scale per animal (the body is designed this much larger than it stands in the world)
 SCALE = {"city_pigeon": 0.6, "city_gull": 0.75, "city_cat": 0.7, "city_dog": 0.8, "city_horse": 1.0, "city_cart": 1.0,
-         "city_boat": 1.0}
+         "city_boat": 1.0, "city_hand_lantern": 0.9}
 
 
 def build_hook():
@@ -1059,14 +1059,80 @@ def paint_boat(r, P, v):
     return P.skin, P.glow
 
 
+
+# =====================================================================================================================
+# The Watch's hand lantern (M4 B3b, Euan: "make them 3D in their hands"): drawn by CitizenRenderer's lantern layer in
+# the bearer's off hand, hanging from its bail under the fist. Iron frame and cap with a bronze ring (the city's
+# "hold me" trim), leaded amber glass, a flame inside; the glass and the flame are the glow layer (full bright, the
+# flame's flicker in step with the light CityGlow throws). The bone's pivot is the grip: the fist closes on the bail.
+# =====================================================================================================================
+
+def hand_lantern():
+    r = Rig("city_hand_lantern", (32, 32))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 1.0, 2.0, (0.1, 0.2), 0.0
+    root = r.bone("lantern", (0, 0, 0))
+    root.cube("bail_top", -1.5, 0, -0.5, 3, 1, 1, inflate=-0.3)
+    root.cube("bail_l", 1, 0.5, -0.5, 1, 2, 1, inflate=-0.3)
+    root.cube("bail_r", -2, 0.5, -0.5, 1, 2, 1, inflate=-0.3, share="bail_l")
+    root.cube("ring", -0.5, 1.8, -0.5, 1, 1, 1, inflate=-0.1)
+    root.cube("cap", -2, 2.6, -2, 4, 1, 4)
+    root.cube("roof", -1.5, 2.1, -1.5, 3, 1, 3, inflate=-0.1)
+    for k, (x, z) in enumerate(((1, 1), (-2, 1), (1, -2), (-2, -2))):
+        root.cube(f"post{k}", x, 3.6, z, 1, 5, 1, inflate=-0.28, share=None if k == 0 else "post0")
+    root.cube("glass", -1.5, 3.6, -1.5, 3, 5, 3, inflate=-0.04)
+    fl = root.bone("flame", (0, 7.4, 0))
+    fl.cube("oflame", -0.5, -1.8, -0.5, 1, 2, 1, inflate=-0.12)
+    root.cube("base", -2, 8.6, -2, 4, 1, 4)
+    r.pack()
+    idle = r.clip("idle", 1.3, loop=True)
+    # the flame never sits still: it stretches and leans in the draught
+    idle.scale("flame", [(0, 1, 1, 1), (0.17, 0.9, 1.18, 0.9), (0.33, 1.05, 0.92, 1.05), (0.55, 0.95, 1.12, 0.95), (0.8, 1.08, 0.86, 1.08),
+                         (1.05, 0.92, 1.1, 0.92), (1.3, 1, 1, 1)])
+    idle.rot("flame", [(0, 0, 0, 0), (0.4, 0, 0, 5), (0.7, 0, 0, -4), (1.0, 3, 0, 2), (1.3, 0, 0, 0)])
+    for nm in ("hurt", "death"):
+        cl = r.clip(nm, 0.3)
+        cl.rot("lantern", [(0, 0, 0, 0), (0.3, 0, 0, 0)])
+    return r
+
+
+def paint_lantern(r, P, v):
+    iron = Ramp("#15151a", "#22232a", "#33343d", "#474955", "#5e6170")
+    bronze = Ramp("#4a2e12", "#7a5222", "#a8762e", "#d09c44", "#ecc46a")
+    for nm in ("bail_top", "bail_l", "cap", "roof", "post0", "base"):
+        P.paint(nm, iron, 2.3, lambda f, i, j: 0.7 if f.name == "top" else 0)
+    P.paint("ring", bronze, 2.8)
+    # the cap and the base carry a bronze band round their edge
+    for nm in ("cap", "base"):
+        for fname in SIDES:
+            f = P.face(nm, fname)
+            for i, j in f.each():
+                f.set(i, j, bronze.at(2.6 + 0.6 * (i % 2)))
+    amber = Ramp("#5a2a08", "#8a4610", "#c06a1c", "#e4963a", "#f6c470")
+    for fname in SIDES + ("top", "bottom"):
+        f = P.face("glass", fname)
+        g = P.face("glass", fname, glow=True)
+        for i, j in f.each():
+            lead = fname in SIDES and j == f.h // 2  # a lead bar across each pane
+            hot = fname in SIDES and abs(i - (f.w - 1) / 2) <= 0.6 and f.h // 2 - 1 <= j <= f.h // 2 + 1
+            f.set(i, j, iron.at(1.4) if lead else amber.at(2.4 + (1 if hot else 0)))
+            if not lead:
+                g.set(i, j, hexc("#ffcf80" if hot else "#f0a048", 235 if hot else 190))
+    for fname in SIDES + ("top", "bottom"):
+        f = P.face("oflame", fname)
+        g = P.face("oflame", fname, glow=True)
+        for i, j in f.each():
+            f.set(i, j, hexc("#fff0c0"))
+            g.set(i, j, hexc("#fff6d8", 255))
+    return P.skin, P.glow
+
 # =====================================================================================================================
 
 VARIANTS = {"city_pigeon": ["slate", "slate", "white", "brown"], "city_gull": ["gull"], "city_cat": list(CAT),
             "city_dog": list(DOG), "city_horse": list(HORSE), "city_cart": ["cart"],
-            "city_boat": list(BOAT)}
+            "city_boat": list(BOAT), "city_hand_lantern": ["lantern"]}
 DESIGNS = {"city_pigeon": (pigeon, paint_bird), "city_gull": (gull, paint_bird), "city_cat": (cat, paint_cat),
            "city_dog": (dog, paint_dog), "city_horse": (horse, paint_horse), "city_cart": (cart, paint_cart),
-           "city_boat": (boat, paint_boat)}
+           "city_boat": (boat, paint_boat), "city_hand_lantern": (hand_lantern, paint_lantern)}
 
 
 def rigs(only=None):

@@ -177,6 +177,27 @@ HL_IN = pose(HL_OUT, lean=-20, ra=(-34, -16, 0), la=(-34, 16, 0))
 clip("haul", [(0, HL_OUT, "linear"), (16, HL_IN, "easeinoutsine"), (36, HL_OUT, "easeinoutsine")], 36,
      note="hauling a rope in, leaning back, braced")
 
+# Boatmen at their berths (M4 B3b, Euan: "what are these people supposed to be doing?"): a line coiled over the forearm,
+# the boat bailed with a bucket, the nets mended, the boat fended off the quay with a pole.
+CO = pose(lean=6, la=(-74, 22, 0), ra=(-82, -18, 0), head_z=3)
+clip("coil", [(0, CO, "linear"), (6, pose(CO, ra=(-118, 8, -22)), "easeinoutsine"), (12, pose(CO, ra=(-70, 28, 6)), "easeinoutsine"),
+              (18, pose(CO, ra=(-96, -24, 10), rise=0.1), "easeinoutsine"), (24, CO, "easeinoutsine")], 24,
+     note="a line coiled loop by loop over the forearm")
+BA_DN = pose(lean=52, ra=(-44, -10, 0), la=(-40, 12, 0), rl=(-12, 0, 6), ll=(-12, 0, -6))
+BA_UP = pose(lean=24, twist=-30, ra=(-124, -22, -18), la=(-104, 8, -10), rl=(-8, 0, 6), ll=(-8, 0, -6))
+clip("bail", [(0, BA_DN, "linear"), (8, nudge(BA_DN, lean=4, ra=(6, 0, 0)), "easeinoutsine"), (16, BA_UP, "easeoutsine"),
+              (20, nudge(BA_UP, ra=(-6, 0, 0)), "easeoutsine"), (30, BA_DN, "easeinoutsine")], 30,
+     note="bent over the boat, a bucket scooped and flung over the side")
+MD = pose(lean=24, ra=(-60, -14, 0), la=(-60, 14, 0), rl=(-4, 0, 4), ll=(4, 0, -4), head_z=2)
+clip("mend", [(0, MD, "linear"), (7, pose(MD, ra=(-74, 6, 0), la=(-54, 20, 0)), "easeinoutsine"), (14, MD, "easeinoutsine"),
+              (21, pose(MD, ra=(-54, -20, 0), la=(-72, -4, 0), head_z=-2), "easeinoutsine"), (28, MD, "easeinoutsine"),
+              (60, nudge(MD, lean=-6, rise=0.1), "easeinoutsine"), (70, MD, "easeinoutsine")], 70,
+     note="a net held at the waist, the needle worked through, a stretch now and then")
+PO_A = pose(lean=18, twist=-22, ra=(-62, -12, 0), la=(-94, 22, 0), rl=(-22, 0, 4), ll=(16, 0, -4))
+PO_B = pose(PO_A, lean=34, rise=-0.3, ra=(-42, -8, 0), la=(-72, 26, 0))
+clip("pole", [(0, PO_A, "linear"), (14, PO_B, "easeinoutsine"), (20, nudge(PO_B, lean=2), "easeinoutsine"), (36, PO_A, "easeinoutsine")],
+     36, note="leaning on a pole to fend the boat off the quay, or push it out")
+
 # Children at play: hopping, arms flung up.
 PL_A = pose(rise=0, ra=(-30, 0, 14), la=(-30, 0, -14))
 PL_B = pose(rise=2.6, ra=(-160, 0, -34), la=(-150, 0, 34), rl=(-24, 0, 6), ll=(12, 0, -6))
