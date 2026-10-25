@@ -1739,7 +1739,11 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     to stay clear of you, pins, marks, the legend and each other; districts close in, regions at every zoom; the old
     spaced lettering and the bell-position district labels are gone. The legend ("KNOWN LANDS", top left, L hides it)
     lists the zone you're in first and the nearest others (districts close in, regions zoomed out) with the danger key;
-    clicking a row glides the table there. Hovering the table names the zone under the cursor.
+    clicking a row glides the table there. Hovering the table names the zone under the cursor (unless its chip is
+    right there). A region takes one of three shades of its band's colour (by its id), so two neighbours in one band
+    still read as two lands; borders are the zone's colour half-way to white.
+  - Cost after these changes (OpenGL, uncapped, east of the city, load quiet): closed 5.8 ms p50, open and still
+    +2.0, orbiting +2.6 (every frame redraws while the view moves: the price of a table that keeps up with the mouse).
   - Clouds (same day): a puff's tone comes from its cell's hash (from its drifting position it changed every redraw and
     the blanket flickered); the view redraws every frame while it moves (the 60 Hz cap made the table lag the mouse);
     zooming across a level keeps drawing the built level until the new one is ready round the view (it blinked out).

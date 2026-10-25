@@ -31,6 +31,16 @@ final class ZoneMap {
     static final String[] DISTRICT_NAME = {"", "Choir Square and the Market", "Bellwatch", "Lantern Quay", "High Terrace", "The Works",
             "Garden Ward", "The Wallring"};
 
+    /**
+     * A region's colour: its danger band's, in one of three shades picked by the region (lighter, as is, deeper), so
+     * two neighbours in the same band still read as two lands, not one.
+     */
+    static int regionColour(AtlasData.Region r) {
+        int c = BAND_COLOUR[band(r.low())];
+        int shade = (int) Math.floorMod(r.id() * 0x9E3779B97F4A7C15L >>> 40, 3L);
+        return shade == 0 ? AtlasMesh.mix(c, 0xFFFFFFFF, 0.30f) : shade == 1 ? c : AtlasMesh.mix(c, 0xFF000000, 0.28f);
+    }
+
     static int band(int low) {
         return low < 8 ? 0 : low < 20 ? 1 : low < 45 ? 2 : low < 80 ? 3 : 4;
     }
@@ -98,7 +108,7 @@ final class ZoneMap {
         if (viewVersion != version) {
             viewVersion = version;
             int[] colours = new int[regions.size() + 1];
-            for (int i = 0; i < regions.size(); i++) colours[i + 1] = BAND_COLOUR[band(regions.get(i).low())];
+            for (int i = 0; i < regions.size(); i++) colours[i + 1] = regionColour(regions.get(i));
             Long2ObjectOpenHashMap<byte[]> copy = new Long2ObjectOpenHashMap<>(cells.size());
             for (var e : cells.long2ObjectEntrySet()) copy.put(e.getLongKey(), e.getValue());
             view = new View(copy, cityPresent ? cityRaster : null, cityX0, cityZ0, colours);

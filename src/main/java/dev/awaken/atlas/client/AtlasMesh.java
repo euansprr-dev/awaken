@@ -445,7 +445,7 @@ final class AtlasMesh {
             int zc = zones.colour(zn);
             if (zc == 0) return c;
             boolean edge = differs(g + 1, zn) || differs(g - 1, zn) || differs(g + GW, zn) || differs(g - GW, zn);
-            if (edge) return mix(c, lighten(zc), 0.78f);
+            if (edge) return mix(c, lighten(zc), 0.90f);
             return mix(c, zc, 0.30f);
         }
 
@@ -519,7 +519,7 @@ final class AtlasMesh {
     }
 
     static int lighten(int argb) {
-        return mix(argb, 0xFFFFFFFF, 0.28f);
+        return mix(argb, 0xFFFFFFFF, 0.50f);
     }
 
     static int scale(int argb, float f) {

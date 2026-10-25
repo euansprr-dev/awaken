@@ -57,6 +57,9 @@ public final class AtlasScreen extends Screen {
     static final int LEGEND_W = 146, ROW = 12, LEGEND_ROWS = 6;
     /** L shows or hides the legend; kept for the session. */
     private static boolean showLegend = true;
+    // the zone chips drawn this frame and their centres, so the hover doesn't repeat one that's right there
+    private final int[] placedZones = new int[64], placedAt = new int[128];
+    private int placedCount;
     private static final int BOXES = 96;
     private final int[] regionBoxes = new int[BOXES * 4];
 
@@ -264,6 +267,7 @@ public final class AtlasScreen extends Screen {
         g.enableScissor(x0, y0, x1, y1);
         // first what stands on the table (you, pins, marks): names keep clear of them
         int placed = 0;
+        placedCount = 0;
         if (mc.player != null && project(mc.player.getX(), atlas.store.groundY(mc.player.getX(), mc.player.getZ(), mc.player.getY()), mc.player.getZ(), x0, y0))
             placed = box(placed, Math.round(v.x) - 12, Math.round(v.y) - 30, Math.round(v.x) + 12, Math.round(v.y) + 12);
         for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins)
@@ -296,6 +300,10 @@ public final class AtlasScreen extends Screen {
             if (sy == Integer.MIN_VALUE || placed >= BOXES) continue;
             placed = box(placed, sx - 2, sy - 2, sx + cw + 2, sy + ch + 2);
             chip(g, name, z.sub(), z.colour(), sx, sy, cw, ch, 0.92f);
+            placedZones[placedCount] = z.zone();
+            placedAt[placedCount * 2] = sx + cw / 2;
+            placedAt[placedCount * 2 + 1] = sy + ch / 2;
+            if (placedCount < placedZones.length - 1) placedCount++;
         }
         if (mc.player != null) {
             for (MapMarks.Mark m : MapMarks.collect(mc.player)) {
@@ -440,6 +448,10 @@ public final class AtlasScreen extends Screen {
         if (!Discovery.CLIENT.explored(bx >> 4, bz >> 4)) return;
         int zone = atlas.zoneView().zone(bx, bz);
         if (zone == 0) return;
+        for (int i = 0; i < placedCount; i++) {
+            int dx = placedAt[i * 2] - mouseX, dy = placedAt[i * 2 + 1] - mouseY;
+            if (placedZones[i] == zone && dx * dx + dy * dy < 110 * 110) return; // its name is right there already
+        }
         for (AtlasState.ZoneLabel z : atlas.zoneLabels()) {
             if (z.zone() != zone) continue;
             String name = z.name().toUpperCase(Locale.ROOT);
