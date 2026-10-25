@@ -1971,6 +1971,14 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     still read as two lands; borders are the zone's colour half-way to white.
   - Cost after these changes (OpenGL, uncapped, east of the city, load quiet): closed 5.8 ms p50, open and still
     +2.0, orbiting +2.6 (every frame redraws while the view moves: the price of a table that keeps up with the mouse).
+  - Back under budget (2026-10-26, profiled in Carillon with `/atlas prof <bits>`, each part switched off while
+    orbiting between "all on" windows): the land cost ~1.3 ms a redraw, the names, legend and hover ~0.7, the clouds
+    ~0.5; a lower-resolution picture alone barely helped (vertex-bound, not fill). Fixes: top faces merge greedily
+    into rectangles where the height matches and the colour is within 5 of 255 a channel (395k → 246k quads in the
+    city, no visible change); chips and the legend draw plain text on their dark plates (the title keeps the Holo
+    glow); the hover waits until the table stops moving; while the view moves the picture is drawn at 60% resolution
+    without cloud shadows, then once at full resolution 0.11 s after it stops. Result (load 5–7, closed 7.35–7.45 ms):
+    open and still +0.9–1.0 ms, orbiting +1.5–1.8.
   - Clouds (same day): a puff's tone comes from its cell's hash (from its drifting position it changed every redraw and
     the blanket flickered); the view redraws every frame while it moves (the 60 Hz cap made the table lag the mouse);
     zooming across a level keeps drawing the built level until the new one is ready round the view (it blinked out).
