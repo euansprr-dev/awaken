@@ -52,6 +52,15 @@ lens ultra
 wait 60
 shot l4_02_golden_ultra
 lens cinematic
+# ---- golden hour over Carillon, away from the sun: warmer and richer than the classic look, long shadows
+look -90 18
+wait 60
+lensdebug 8
+wait 20
+shot l4_02b_city_golden_classic
+lensdebug 0
+wait 40
+shot l4_02b_city_golden_cinematic
 # ---- the cloud shadows over Carillon
 cmd time set 7000
 look -60 30
