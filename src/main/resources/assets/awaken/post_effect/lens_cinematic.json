@@ -33,6 +33,15 @@
     "awaken:lens_shafts": {
       "width": 480,
       "height": 300
+    },
+    "awaken:lens_light": {
+      "width": 1280,
+      "height": 720
+    },
+    "awaken:lens_hist": {
+      "width": 1280,
+      "height": 720,
+      "persistent": true
     }
   },
   "passes": [
@@ -69,6 +78,74 @@
         }
       ],
       "output": "awaken:lens_far_trust",
+      "uniforms": {
+        "BlitConfig": [
+          {
+            "name": "ColorModulate",
+            "type": "vec4",
+            "value": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_light",
+      "inputs": [
+        {
+          "sampler_name": "Depth",
+          "target": "minecraft:main",
+          "use_depth_buffer": true
+        },
+        {
+          "sampler_name": "Height",
+          "location": "awaken:lens_height",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "sampler_name": "History",
+          "target": "awaken:lens_hist"
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 24,
+          "height": 1
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_light",
+      "uniforms": {
+        "LensConfig": [
+          {
+            "name": "Quality",
+            "type": "float",
+            "value": 1.0
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/blit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_light"
+        }
+      ],
+      "output": "awaken:lens_hist",
       "uniforms": {
         "BlitConfig": [
           {
@@ -185,7 +262,7 @@
     },
     {
       "vertex_shader": "minecraft:core/screenquad",
-      "fragment_shader": "awaken:post/lens_composite",
+      "fragment_shader": "awaken:post/lens_composite_lit",
       "inputs": [
         {
           "sampler_name": "In",
@@ -231,6 +308,22 @@
           "location": "awaken:lens_params",
           "width": 16,
           "height": 1
+        },
+        {
+          "sampler_name": "Light",
+          "target": "awaken:lens_light"
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 24,
+          "height": 1
+        },
+        {
+          "sampler_name": "Height",
+          "location": "awaken:lens_height",
+          "width": 1024,
+          "height": 1024
         }
       ],
       "output": "swap",
