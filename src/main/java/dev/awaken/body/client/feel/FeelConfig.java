@@ -38,6 +38,10 @@ public final class FeelConfig {
             .comment("Start in Shoulder Surfing's over-the-shoulder view when you join a world in first person (Shoulder Surfing installed).",
                     "Your own choice with the perspective key holds until you leave.")
             .define("shoulderView", true);
+    public static final ModConfigSpec.BooleanValue FREE_RUN = B
+            .comment("The one-button free-run: hold sprint with forward and the body vaults, mantles, climbs, runs walls and leaps from",
+                    "edges as the ground asks, and jumps bend a little toward the ledge ahead (SPEC §17.14). The keys still work by hand.")
+            .define("freeRun", true);
     public static final ModConfigSpec SPEC = B.build();
 
     public static void register() {
@@ -86,6 +90,14 @@ public final class FeelConfig {
     public static boolean actionCamera() {
         try {
             return !SPEC.isLoaded() || ACTION_CAMERA.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    public static boolean freeRun() {
+        try {
+            return !SPEC.isLoaded() || FREE_RUN.get();
         } catch (RuntimeException e) {
             return true;
         }

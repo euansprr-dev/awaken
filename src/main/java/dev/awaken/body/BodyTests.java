@@ -106,6 +106,7 @@ final class BodyTests {
     static void register() {
         AwakenTests.register("body_clips", 20, BodyTests::clips);
         AwakenTests.register("body_action_camera", 20, BodyTests::actionCamera);
+        AwakenTests.register("body_free_run", 20, BodyTests::freeRun);
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
@@ -749,6 +750,42 @@ final class BodyTests {
             if (Math.abs(arm.at[ActionRig.BACK]) < 0.05 && arm.at[ActionRig.BACK] >= -1e-6) home = t;
         }
         h.assertTrue(home > 0 && home < 30, "and comes home in " + home + " ticks");
+        h.succeed();
+    }
+    /**
+     * The one-button free-run (SPEC §17.14): the ground ahead read right (a block to vault, a wall to jump at, a fence
+     * left alone, an edge to leap from, a one-block step down not), and jump magnetism's bend capped and only toward
+     * what's nearly ahead.
+     */
+    private static void freeRun(GameTestHelper h) {
+        // five lanes on a floor raised off the ground (an edge needs two blocks of air under it), all run toward +z
+        for (int x = 0; x <= 8; x += 2) {
+            for (int y = 0; y <= 7; y++) for (int z = 0; z <= 2; z++) h.setBlock(new BlockPos(x, y, z), Blocks.AIR);
+            h.setBlock(new BlockPos(x, 3, 0), Blocks.STONE);
+        }
+        h.setBlock(new BlockPos(0, 3, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(0, 4, 1), Blocks.STONE);                         // 1.0: vault
+        for (int y = 3; y <= 6; y++) h.setBlock(new BlockPos(2, y, 1), Blocks.STONE); // 3.0: a wall
+        h.setBlock(new BlockPos(4, 3, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(4, 4, 1), Blocks.OAK_FENCE);                     // 1.5, a fence: nothing
+        h.setBlock(new BlockPos(8, 2, 1), Blocks.STONE);                         // a step down of one: no leap
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        double[] out = new double[1];
+        Vec3 a = h.absoluteVec(new Vec3(0.5, 4, 0.5)), b = h.absoluteVec(new Vec3(0.5, 4, 1.5));
+        double fx = b.x - a.x, fz = b.z - a.z;
+        int[] got = new int[5];
+        for (int i = 0; i < 5; i++) {
+            Vec3 f = h.absoluteVec(new Vec3(i * 2 + 0.5, 4, 0.5));
+            got[i] = RunnerRules.ahead(h.getLevel(), CollisionContext.empty(), m, f.x, f.y, f.z, fx, fz, 0.28, out);
+        }
+        h.assertTrue(got[0] == RunnerRules.AHEAD_VAULT && got[1] == RunnerRules.AHEAD_WALL && got[2] == RunnerRules.AHEAD_NONE
+                        && got[3] == RunnerRules.AHEAD_LEAP && got[4] == RunnerRules.AHEAD_NONE,
+                "vault, wall, fence, edge, step down read as " + java.util.Arrays.toString(got));
+        double[] v = new double[2];
+        double turned = RunnerRules.bend(0, 0, 0, 0.3, 1, 4, RunnerRules.PULL_STEP, v);
+        h.assertTrue(Math.abs(turned - RunnerRules.PULL_STEP) < 1e-9 && Math.abs(Math.hypot(v[0], v[1]) - 0.3) < 1e-9 && v[0] > 0,
+                "a ledge 14° off bends the jump " + turned + "° its way, speed kept");
+        h.assertTrue(RunnerRules.bend(0, 0, 0, 0.3, 4, 4, RunnerRules.PULL_STEP, v) == 0, "one 45° off doesn't pull");
         h.succeed();
     }
 }

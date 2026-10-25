@@ -2212,9 +2212,36 @@ vanilla's third person sits right behind you). The over-the-shoulder view follow
   states (Feel Director); the Feel Director's roll and FOV and BodyCamera's first-person moves are unchanged.
 - Test: `body_action_camera` (each pose's shape in order, the open side, the trail's cap, the spring trailing out
   without overshoot and coming home). Tour: `tools/autopilot/ascent-camera.txt` (PACK=feel).
-- Next in the feel pass: one-button free-run (hold sprint, the body reads the geometry ahead; it reads Carillon's
-  `#awaken:runner_ledges/climbs/lines/soft/swings` tags), then weight (landing dip, grab sounds and dust, wind with
+- Next in the feel pass: one-button free-run (§17.14), then weight (landing dip, grab sounds and dust, wind with
   speed, footstep bob in the shoulder view, a slow beat at a big leap's apex).
+
+### 17.14 The feel pass, part 2: the one-button free-run
+Hold sprint with forward and the body reads the ground ahead and picks the move (`body.client.FreeRun`; the reading
+and the pull are `RunnerRules.ahead` and `RunnerRules.bend`, both sides). The keys still do every move by hand, and the
+server checks every move exactly as before (a free-run move is the same claim a key would make).
+- **On the ground, sprinting** (moving within 37° of the look, over 0.12 b/t; once per 6 ticks), the column 0.45 past
+  the body's front: a top 0.6-1.2 over the feet with two blocks of room over it and over the head is **vaulted** (the
+  jump); a ledge 1.1-1.6 up is **mantled** (when the mantle is yours: sprint held counts as the jump); a wall taller than
+  1.6 is **jumped at** when Wall Stride climbs it or its lip is a hang from the jump's height; with no floor 2 blocks
+  down two ticks ahead (not water) the edge is **leapt from** (the sprint jump). A fence or wall (1.5) is left alone, a
+  step down of one is run down.
+- **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
+  the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
+- **Hanging**, sprint and forward held for 6 ticks climb (the ledge jump's own climb out, or up when looking up).
+- **Jump magnetism**: as any jump leaves the ground (yours or the free-run's), the first lip within 4.5 ahead (a lower
+  roof up to a hang over the jump's top) becomes its target; for 8 ticks the motion turns toward it at most 2.5° a tick,
+  14° in all, never faster, and only while it's within 30° of the way you're going.
+- Setting: `freeRun` (feel settings, default on). Dev: `/awaken body try freerun` (forward and sprint held 15 s).
+  Test: `body_free_run` (a block vaulted, a wall jumped at, a fence left, an edge leapt, a step down not; the pull
+  capped and only toward what's nearly ahead). Tour: `tools/autopilot/ascent-freerun.txt` (PACK=feel): with forward
+  and sprint held, nothing else, the body vaulted a low wall, leapt a 3-block gap, jumped at a 2-high wall, caught its
+  lip and climbed out (6 ticks after the grab), and leapt from the roof's far edge; then the rope zipped ring to ring
+  in the shoulder view.
+- Carillon's handhold roles (`#awaken:runner_ledges`, `runner_climbs`, `runner_lines`, `runner_soft`,
+  `runner_swings`, SPEC §16.9 on carillon/main): ledges and swing points already work by their collision shapes (a
+  sill, a cornice, a beam end is a lip; the rope bites anything solid). Climbs (drainpipes, ivy), lines without
+  collision and soft landings wait for the tags' contents.
+- Not yet: tuning against Euan's notes from his feel session; tips for the free-run (Carillon's TipHooks).
 
 ---------------------------------------------------------------------------------------------------------------------
 

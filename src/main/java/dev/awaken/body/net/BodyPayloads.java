@@ -103,5 +103,7 @@ public final class BodyPayloads {
             // spike S3: the Runner's Kit (the bench and the S3 tour drive these)
             "wallrun", "walljump", "chain", "hang", "shimmy", "ledgeup", "climb", "ledgeside", "ledgeback", "lower", "crane", "alley",
             // the wall-run's trigger for the comparison: jump held (§16.3 as written) or a fresh press in the air; spam taps
-            "runheld", "runpress", "alleyspam"};
+            "runheld", "runpress", "alleyspam",
+            // the one-button free-run (SPEC §17.14): forward and sprint held, nothing else
+            "freerun"};
 }
