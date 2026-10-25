@@ -21,7 +21,7 @@ public final class LookClient {
     private LookClient() {}
 
     public static final KeyMapping LOOK = new KeyMapping("key.awaken.look", KeyConflictContext.IN_GAME, InputConstants.Type.KEYBOARD,
-            InputConstants.KEY_U, AwakenKeys.CATEGORY);
+            InputConstants.KEY_O, AwakenKeys.CATEGORY);
 
     /** Frame-to-frame times: 32768 frames is a full minute up to ~540 fps. */
     static final FrameStats FRAMES = new FrameStats(32768);

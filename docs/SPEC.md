@@ -1027,7 +1027,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   texels: 13 the ritual, 14 Holo.
 - The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers, and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
-  for the rest. Opened with U (`key.awaken.look`, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
+  for the rest. Opened with O (`key.awaken.look`; U went to Sovereign on 2026-10-25, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
   Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
   default stays SWIFT (client config `lens`). The current tier is read back from the settings (Lens, Iris's shaders
   switch), not stored twice. Drawn like the System's cards (`HudLook`: projected glass that scans in while the holo
