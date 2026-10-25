@@ -88,6 +88,7 @@ final class CityCommands {
         // street views stand on open ground: the nearest street, square or quay cell to the named spot
         CityViews.View at = v;
         if (CityViews.ALONG.contains(name)) at = along(l.plan, v);
+        else if (CityViews.EXACT.contains(name)) at = v;
         else if (name.startsWith("studio_") && v.ry() < 25 && !CityPlan.walkable(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z())))
                 && !CityPlan.water(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z()))) && l.plan.inside((int) Math.floor(v.x()), (int) Math.floor(v.z()))) {
             // a framing from above the streets: over open ground, at its height above it

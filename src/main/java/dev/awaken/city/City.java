@@ -78,8 +78,15 @@ public final class City {
         return new BlockPos(l.cx + p.startX, l.streetY + p.startRy, l.cz + p.startZ);
     }
 
-    /** The middle of Choir Square, one above the paving. */
+    /** The middle of Choir Square, one above the paving (the floor of its bowl, by the Bell Stone). */
     public static BlockPos square(CityLayout l) {
-        return new BlockPos(l.cx + l.plan.squareX, l.streetY + 1, l.cz + l.plan.squareZ);
+        CityPlan p = l.plan;
+        return new BlockPos(l.cx + p.squareX, l.streetY + p.lift(p.squareX, p.squareZ) + 1, l.cz + p.squareZ);
+    }
+
+    /** A named spot the plan lays out for other modules (SPEC §16.9, decision 29), or null if the plan has none. */
+    public static @Nullable BlockPos spot(CityLayout l, String id) {
+        int[] s = l.plan.spots.get(id);
+        return s == null ? null : new BlockPos(l.cx + s[0], l.streetY + s[1], l.cz + s[2]);
     }
 }

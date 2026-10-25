@@ -1415,6 +1415,17 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       core/audio's layer system so it never fights the music.
     - The gate is Euan's ears: a listening page (each district at morning, noon and night, before/after) published for
       his approval before B3 merges.
+29. The Living Wilds (SPEC §21, approved by Euan) meets Carillon at the High Gate (agreed 2026-10-25): the city lays out
+    the gatehouse yard outside the High Gate with named spots (`CityHooks.spot`); the living module spawns Quartermaster
+    Hale and the bounty post there. Its bounties (`living.bounty`) are the first slice of the deferred contracts board
+    under decision 5's rules (three notices, known places only, no expiry offline, claim ids), shown at Hale's post and
+    on the Association board's spot; coin through `EconomyHooks.pay` once an economy exists, renown through
+    `RenownHooks.witness` at turn-in. Its chains "The Last Delivery" (the Roost's word, Kestrel) and "Bell Metal" (the
+    C-rank spine) are drafted by the Living Wilds session and reviewed by the Carillon session against
+    docs/carillon/m4/story.md. Its tips use TipHooks with tip files in the onboarding.md format.
+    The city also gives "Bell Metal" a rooftop chase: B5 (the opening from affordances, which brings citizens' rooftop
+    running) publishes named roof routes and a chase hook the Living Wilds calls for its fleeing buyer; until then that
+    step waits.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1448,6 +1459,17 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   replace glass panes on closed houses. Roofs: Bellwatch mostly kit slate, the Market mostly clay. The chimney crown is
   `chimney_bricks` (the citizens' smoke finder). Avenue tree crowns fill only air. The kit's first 19 blocks carry no
   block entity and emit no light; walls and roofs use weighted texture variants.
+- Decided in M4 B2 (2026-10-25; details docs/carillon/milestones/M4-B2.md): plan.json schemaVersion 2 carries a signed
+  lift raster (every plot lift even; hash re-pinned). Streets follow the ground in single-step flights (no drop of 2+ on
+  the street graph); every plot stands at its street's level and two cells clear of landmarks. The Knoll rings +2..+8
+  to radius 46 round the bell square (the tower 54 tall); Choir Square's bowl is a level rim (the arcade's ground,
+  radius 31–36) with three rings down to −3, and CityHooks.square stands on its floor; the High Terrace at 12 with
+  its houses set back 3 (a parapet walk); Garden terraces +2/+4; the lower quay at −4 (raster lift 0). Parapets only
+  over drops of 6+, coping below that. Crossings over every avenue stretch and the Ring at least every 48: 7 enclosed
+  walkways built, 13 line sites in plan.json "crossings" for B3. Named spots placed (decision 29): high_gate_yard,
+  quartermaster, bounty_post, association_board (Terrace +12), bellwatch_cellar (a 9×9×5 room under the bell tower).
+  Ladders: a model override draws every minecraft:ladder as two rails and four round rungs inside vanilla's shape
+  (collision unchanged); `awaken:hanging_ladder` extends a ladder down or up with no wall behind.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs
@@ -1582,7 +1604,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
-  `startPoint(ServerPlayer)`, `square(Level)`. Graph types are added at G1.
+  `startPoint(ServerPlayer)`, `square(Level)`, `spot(Level, String id)` (named spots the city lays out for other modules:
+  `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`, `bellwatch_cellar` (the
+  melting room under the Knoll's bell tower, for the Living Wilds' "Bell Metal"); null until placed).
+  Graph types are added at G1.
 - `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
 - `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
   Identifier faction)`.
