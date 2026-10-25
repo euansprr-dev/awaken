@@ -58,7 +58,10 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         // a blow in the air: the blade's own ribbon, from its middle to its point
         if (state != null && state.wielder() >= 0 && BladeTrail.open(state.wielder())) {
             float[] line = blade(mesh);
-            BladeTrail.sample(state.wielder(), poseStack.last().pose(), line[0], line[1], line[2], line[3], line[4], line[5], state.hand());
+            // first person from mid-blade (the tip's path mostly leaves the view), from 78% along seen from outside
+            float k = state.hand() ? (0.5F - 0.78F) / (1F - 0.78F) : 0F;
+            BladeTrail.sample(state.wielder(), poseStack.last().pose(), line[0] + (line[0] - line[3]) * -k, line[1] + (line[1] - line[4]) * -k,
+                    line[2] + (line[2] - line[5]) * -k, line[3], line[4], line[5], state.hand());
         }
         if (ours && !mesh.anchors().isEmpty()) {
             float energy = state == null ? 0 : state.energy() / 255F, flash = state == null ? 0 : state.flash() / 255F;

@@ -3847,7 +3847,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   Nothing while a screen is open or the game is paused.
 - **It carries the fight**: the fighter's own blade fills with its accent's light as a heavy charges, flares on the
   glint and on a perfect heavy, and hums while the Resonance is full (the Art ready); its halos swell with it.
-- **First person**: a hold of its own (`<id>_in_hand.json`, which draws nothing itself; scale 0.52 for the voxel
+- **First person**: a hold of its own (`<id>_in_hand.json`, which draws nothing itself; scale 0.5 for the voxel
   blades, whose points ran off the top at the lofted ones' 0.6): the whole blade standing at the right with its point
   in view, its flat turned a little to the eye (vanilla's sword sits so close a longsword
   shows a fragment); the swings move the hand as for any sword. Third person: vanilla's handheld hold. Size: a fifth
@@ -3871,6 +3871,12 @@ stance starts no ability until it stands. Tuning for the whole game's pacing (Lo
 fliers in reach, vanilla's flat burn and fang, per-Lord health) is recommended there and waits for Euan's three-Lord
 session (PLAN §6.4 S3 gate): it moves powers players' fights too.
 
+**Item level** (PLAN §7.7, decided by the sim): a weapon's level is its tier. The forged Longswords' damage climbs by
+tier (4.5 to 9.5) and melee already rises with the player's strength, so on-level melee keeps pace with a Lord's
+health; scaling weapons by level as powers scale (sim `--item-level on`) broke the ordinary fight (normal creatures fell
+in 1–2 hits from D up) and let a Tank win at C and A. No extra level is carried.
+
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
-`audio_events_resolve` covers the kit's files and subtitles.
+`audio_events_resolve` covers the kit's files and subtitles. S2/S3: `arms_hand_pose` (the swing on Hands' view layer),
+`arms_assets` (the streams), `mobs_bolt_class`, `mobs_answered_no_burn`, `mobs_broken_idle`.

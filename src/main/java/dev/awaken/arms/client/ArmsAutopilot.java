@@ -50,6 +50,10 @@ public final class ArmsAutopilot {
                 ArmsPredict.press(p, mc);
                 return "strike: " + ArmsPredict.move;
             }
+            case "ribbonmode" -> {
+                BladeTrail.mode = a.length > 1 ? Integer.parseInt(a[1]) : 0;
+                return "ribbon mode " + BladeTrail.mode;
+            }
             case "ribbonstate" -> {
                 return BladeTrail.state();
             }

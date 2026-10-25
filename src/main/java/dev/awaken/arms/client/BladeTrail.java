@@ -72,6 +72,8 @@ final class BladeTrail {
         if (now >= UNTIL[r]) return;
         int last = (HEAD[r] - 1 + N) % N;
         if (COUNT[r] > 0 && now - AT[r * N + last] < MIN_GAP) return;
+        // a blow after a pause is a new ribbon: joined to the last one's end it drew a stray wedge across the view
+        if (COUNT[r] > 0 && now - AT[r * N + last] > LIFE) COUNT[r] = 0;
         Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
         pose.transformPosition(rx, ry, rz, A);
         pose.transformPosition(tx, ty, tz, B);
@@ -90,7 +92,7 @@ final class BladeTrail {
         AT[i] = now;
         lastSampleAt = now;
         if (debug > 0) {
-            if (--debug == 0) debug = -1; // logged them all: now draw loud
+            debug--;
             dev.awaken.Awaken.LOG.info("[arms ribbon] e={} hand={} root=({}, {}, {}) tip=({}, {}, {}) from the eye; pose t=({}, {}, {})", entity, hand,
                     fmt(A.x), fmt(A.y), fmt(A.z), fmt(B.x), fmt(B.y), fmt(B.z), fmt(pose.m30()), fmt(pose.m31()), fmt(pose.m32()));
         }
@@ -112,6 +114,9 @@ final class BladeTrail {
         }
         return b.toString();
     }
+
+    /** Autopilot only: 0 as built, 1 without the fades of age, 2 loud (solid red geometry). */
+    static int mode;
 
     /** Autopilot only: log this many samples. */
     static int debug;
@@ -249,7 +254,11 @@ final class BladeTrail {
      */
     private static void band(VertexConsumer buffer, int a, int b, int cr, int cg, int cb, float alpha) {
         float fa = fade(AGE[a]) * alpha, fb = fade(AGE[b]) * alpha;
-        if (fa <= 0.002F && fb <= 0.002F && debug >= 0) return;
+        if (mode == 1) {
+            fa = alpha;
+            fb = alpha;
+        }
+        if (fa <= 0.002F && fb <= 0.002F && mode == 0) return;
         for (int s = 0; s + 1 < ACROSS.length; s++) {
             float v0 = ACROSS[s], v1 = ACROSS[s + 1];
             float w0 = across(v0), w1 = across(v1);
@@ -278,7 +287,7 @@ final class BladeTrail {
 
     private static void corner(VertexConsumer buffer, int m, float v, int cr, int cg, int cb, float a, float whiten) {
         int r, g, b;
-        if (debug < 0) {
+        if (mode == 2) {
             // autopilot's loud mode: the geometry alone, solid red
             buffer.addVertex(RX[m] + (TX[m] - RX[m]) * v, RY[m] + (TY[m] - RY[m]) * v, RZ[m] + (TZ[m] - RZ[m]) * v).setColor(255, 0, 0, 255);
             return;

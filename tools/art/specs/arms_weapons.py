@@ -862,10 +862,10 @@ def write_all(only=None):
 # smaller than vanilla's hold, further in. Chosen with mesh_render.render_fp over the game's own frame (it matches
 # vanilla's projection exactly).
 FIRST_PERSON = {
-    # 0.52 for the voxel blades (about 28 texels, longer than the lofted ones): at 0.6 their points ran off the top of
+    # 0.5 (raised 1.3) for the voxel blades (about 28 texels, longer than the lofted ones): at 0.6 their points ran off the top of
     # the view (tour, 2026-10-26)
-    "firstperson_righthand": {"rotation": [0, -72, 30], "translation": [0.3, 1.7, -0.6], "scale": [0.52, 0.52, 0.52]},
-    "firstperson_lefthand": {"rotation": [0, 72, -30], "translation": [0.3, 1.7, -0.6], "scale": [0.52, 0.52, 0.52]},
+    "firstperson_righthand": {"rotation": [0, -72, 30], "translation": [0.3, 1.3, -0.6], "scale": [0.5, 0.5, 0.5]},
+    "firstperson_lefthand": {"rotation": [0, 72, -30], "translation": [0.3, 1.3, -0.6], "scale": [0.5, 0.5, 0.5]},
 }
 
 JAVA_HEAD = """package dev.awaken.arms;
