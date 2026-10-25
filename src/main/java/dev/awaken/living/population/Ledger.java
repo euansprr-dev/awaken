@@ -226,6 +226,7 @@ public final class Ledger extends SavedData {
         for (Pop p : cell.pops()) byId.put(p.id, p);
         cells.put(cell.key(), cell);
         setDirty();
+        dev.awaken.living.camp.Camps.seedCell(level, baseX, baseZ, seed); // its camps and dens, placed when someone comes near
         return cell;
     }
 

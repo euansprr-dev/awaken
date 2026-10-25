@@ -50,6 +50,8 @@ public final class LivingModule {
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
+        XpBudget.register("camp", 0.5);
+        dev.awaken.core.PlayDays.onNewPlayDay(dev.awaken.living.camp.Camps::onNewDay);
         Progression.addPerkSource(dev.awaken.living.pulse.Pulse::lucidity);
         LivingHooks.install(new LivingHooks.Bridge() {
             @Override
@@ -82,6 +84,7 @@ public final class LivingModule {
         bus.addListener(dev.awaken.living.pulse.HappeningBook::addReload);
         bus.addListener(LivingDropsEvent.class, dev.awaken.living.pulse.Pulse::onDrops);
         bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.population.Ledger.onDeath(e.getEntity()));
+        bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.camp.Camps.onDeath(e.getEntity()));
         bus.addListener(EntityJoinLevelEvent.class, e -> {
             if (!e.getLevel().isClientSide() && e.getLevel() instanceof net.minecraft.server.level.ServerLevel sl && sl.dimension() == net.minecraft.world.level.Level.OVERWORLD)
                 dev.awaken.living.population.Ledger.onJoin(e.getEntity(), sl.getServer());
@@ -102,6 +105,7 @@ public final class LivingModule {
                 dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
                 dev.awaken.living.pulse.Pulse.tick(e.getServer());
                 dev.awaken.living.population.Ledger.tick(e.getServer());
+                dev.awaken.living.camp.Camps.tick(e.getServer());
             }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
         });

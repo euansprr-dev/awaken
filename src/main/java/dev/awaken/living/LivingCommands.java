@@ -132,6 +132,20 @@ final class LivingCommands {
                 if (lines.isEmpty()) c.getSource().sendSuccess(() -> Component.literal("No populations near (yet)."), false);
                 return lines.size();
             }));
+            l.then(Commands.literal("camps").requires(AwakenCommands.admin()).executes(c -> {
+                var lines = dev.awaken.living.camp.Camps.describe(c.getSource().getPlayerOrException());
+                for (String line : lines) c.getSource().sendSuccess(() -> Component.literal(line), false);
+                if (lines.isEmpty()) c.getSource().sendSuccess(() -> Component.literal("No camps near."), false);
+                return lines.size();
+            }));
+            l.then(Commands.literal("nest").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .then(Commands.argument("tier", IntegerArgumentType.integer(1, 5)).executes(c -> {
+                                var camp = dev.awaken.living.camp.Camps.place(c.getSource().getPlayerOrException(),
+                                        com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind"), IntegerArgumentType.getInteger(c, "tier"));
+                                c.getSource().sendSuccess(() -> Component.literal(camp == null ? "No ground for a camp here." : camp.name() + " at " + camp.pos().toShortString()), false);
+                                return camp == null ? 0 : 1;
+                            }))));
             l.then(Commands.literal("quests").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var s = dev.awaken.living.quest.QuestEngine.state(p);

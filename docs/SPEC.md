@@ -2782,6 +2782,29 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before.
 - Dev: `/awaken living ledger`. Test `living_ledger`.
 
+### 21.8 Camps and nests (Phase D, as built 2026-10-25)
+- `living.camp.Camps` (saved data `awaken:living_camps`, schema 1): a riftborn camp (45%; gate creatures that got out,
+  an E-rank theme: Ember Mines, Bell Crypt, Fungal Hollow, Overgrown Temple or Hive) and a hollow den (30%; the
+  Hollows) seeded with each ledger cell whose centre is level 8+, and a blight nest at a broken gate nobody cleared for
+  two play-days (its theme). A seeded camp finds its ground (dry, level within 2 over 5 blocks, 120+ from a Hearth, 48
+  from a gate, never the city) within 48 of its seed spot the first time a player is within 160, else it never was.
+- Built (`CampPainter`, natural ground and air only, every block recorded) when a player is within 96: a riftborn camp
+  (coarse dirt and paths, a crying-obsidian rift scar, a palisade of fence posts and dripstone points with gaps, 1-3
+  wool tents, a lit campfire, two soul lanterns), a blight nest (blackstone, sculk and crying obsidian over the scar,
+  a heart pillar), a hollow den (mossy stone, bone blocks, webs); radius 3 + tier; three lights at most.
+- Awake within 40: the heart (an elite of the theme, "Heart of the <camp>", +2 levels) and a wave of 2 + tier
+  (max 9) at `Regions.creatureLevel(CAMP)` + 2 per tier above 1, through `Mobs.spawn` (stats at that level), tagged
+  `awaken_camp`, creature kind CAMP (kill XP by role); when a wave is down and the heart stands, another, tier - 1
+  more in all. Everyone gone past 104: it sleeps (its creatures go; whole again next time).
+- The heart killed: cleared. Its ground turns to coarse dirt (ash), what it stood up goes, for 5 play-days; then it
+  can return at tier 1. Players within 56 get 0.25 × tier of a level (budget "camp", 0.5 per 10 min), counter
+  `awaken:camps_cleared`, "Cleared · <camp>".
+- Each new play-day: with a player within 1500, a camp grows a tier every two days (max 5; rebuilt bigger next time).
+  At tier 4+ it picks the nearest Hearth or the Wayfarer camp within 800, warns players within 800 of it ("it raids
+  tomorrow night"), and the next night (14000-14400) 4 + tier of its creatures come 24 blocks short of the target,
+  toward it.
+- Dev: `/awaken living camps`, `nest <kind> <tier>`. Test `living_camp`.
+
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
 Lens's Cinematic and Ultra tiers become a light model of their own: shadows, contact darkness and warm/cool light

@@ -52,7 +52,9 @@ public final class PulseTests {
                 List<java.util.UUID> herd = List.copyOf(mig.participants);
                 Pulse.endAll(level.getServer());
                 h.assertTrue(pulse.active().isEmpty(), "ended");
-                h.assertTrue(herd.stream().noneMatch(id -> level.getEntity(id) != null && level.getEntity(id).isAlive()), "the herd moved on");
+                // gone, or (with someone near) left behind as ordinary creatures, never still the happening's
+                h.assertTrue(herd.stream().noneMatch(id -> level.getEntity(id) != null && level.getEntity(id).isAlive() && Pulse.participant(level.getEntity(id))),
+                        "the herd moved on");
                 // the Deep Tide: the night's hunters run two levels harder while it's up
                 BlockPos at = h.absolutePos(new BlockPos(0, 1, 0));
                 int before = Regions.creatureLevel(level, at, Regions.Role.HUNTER), calm = Regions.creatureLevel(level, at, Regions.Role.NEUTRAL);

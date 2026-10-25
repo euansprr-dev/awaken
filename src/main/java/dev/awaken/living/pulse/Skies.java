@@ -69,7 +69,8 @@ final class Skies {
         @Override
         public @Nullable Plan plan(ServerLevel level, ServerPlayer p, HappeningDef def, RandomSource r) {
             BlockPos c = Behaviours.spot(level, p, def, 70, 160, r, at -> Behaviours.dry(level, at) && Behaviours.rough(level, at) <= 3
-                    && (level.getBlockState(at.below()).is(BlockTags.DIRT) || level.getBlockState(at.below()).is(BlockTags.SAND)));
+                    && (level.getBlockState(at.below()).is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)
+                    || level.getBlockState(at.below()).is(BlockTags.DIRT) || level.getBlockState(at.below()).is(BlockTags.SAND)));
             return c == null ? null : new Plan(c, c);
         }
 
