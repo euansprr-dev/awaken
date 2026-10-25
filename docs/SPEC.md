@@ -40,6 +40,7 @@ Hard rules:
 | `body` | the Awakened Body: soft landing, tactical sprint, slide, mantle; momentum hits and trips; `core.api.MovementHooks` |
 | `terrain` | Awakened Lands (§15): the biome table, Awakened biomes and their placement, trees, ground cover, wind and falling leaves, biome looks and sound, the terrain studio commands |
 | `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
+| `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -317,6 +318,10 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
 - `dev.awaken.progression.Progression.xpLedger(player)` — XP by `XpSource` and by world-XP source key (§17 telemetry).
+  `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
+  afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
+- `dev.awaken.living.api.Regions` — the region map (§21.2): `levelAt`, `regionAt`, `creatureLevel`, `bandOf`.
+  `dev.awaken.core.api.LivingHooks` — install-once bridge: whether the living module pays kill XP, the level moment.
 - `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
   glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
   installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
@@ -1294,7 +1299,8 @@ The Veil, the Lucidium and the rest:
   while the world's `pvp` game rule is on. A Body felled by a player who may not hurt it never takes its owner along.
 - Only its owner possesses a bonded mount (as with tamed pets; `MobHooks.bondedTo`).
 - Overworld creatures' content level follows the group: the lowest level among awakened players within 48 blocks of
-  the spawn decides (then the nearest player within 128, as before).
+  the spawn decides (then the nearest player within 128, as before). Since the Living Wilds (§21.0.1) this holds only
+  where the region map is off; in the overworld the place decides and a Hearth calms its land (§21.0.2).
 - The cast-fail sound plays to the caster only.
 - Rate limits: Journal actions 4 a second, reality checks one per 10 ticks, the playtest "unfair death" flag one per
   2 s; background dream builds at most 3 per player per 1000 ticks, whatever asks for them.
@@ -2448,6 +2454,121 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   `pixels gpu on|reset|<label>` (measurement only) writes GPU timestamps before the world, after the post effects and
   after the upscale, and logs the world pass's and the upscale's GPU time per label (`PixelsTiming`): on a busy Mac
   the frame time is the CPU's, so the GPU time is what shows what Pixels saves.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 21. The Living Wilds (plan docs/living-wilds/PLAN.md, page https://claude.ai/artifact/C97MPmz9gBFJMMjL7Eu8hT; approved 2026-10-25)
+
+Ordinary survival in a world that's always up to something. Euan approved page v3 on 2026-10-25 with "Go with your
+recommendations" (all nineteen decisions below). PLAN.md is the long form; this section is what builders must hold to.
+Module `living` (package `dev.awaken.living`, same rules as §1): `region`, `combat` (+`client`), `wayfarer`, `quest`,
+`bounty`, `pulse`, `population`, `camp`, `craft`, `wonder`, `village`. Phases in order, one builder at a time:
+**B** combat layer, regions, XP · **C** Wayfarers, quests, bounties, rumours · **D** the World Pulse, happenings, living
+creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** settlers, your village, roads.
+
+### 21.0 Decisions (approved)
+1. Regions replace follow-you scaling for every overworld creature (fauna and vanilla monsters); distance only tilts
+   the odds (21.2).
+2. A Hearth calms its land: within its radius + 96 blocks the level is min(region, the household's highest level).
+3. XP: every creature pays by its own level and role (a sheep too); crafts, quests, bounties and camps pay; gate floor
+   rewards ×0.80 (`Curve.WILDS_TRIM`); the balanced player's length holds (sim, 21.3).
+4. Plates, damage numbers and the XP stream are on by default (client settings to reduce or turn off).
+5. Level-up is a System moment, compact in a fight, seen by players nearby (never their pane).
+6. Elites in the wild: 5% of neutral and hunter spawns.
+7. The hard rule "Never a quest list" is amended: the Journal lists only chains the player found and took (≤ 5 active,
+   1 tracked); undiscovered things are still never listed; nothing floats over anyone's head.
+8. Twenty hand-written chains in two drops (levels 1-20 first); a relic per chain, bound to its player, kept on death.
+9. Association bounties are the first slice of Carillon's deferred contracts board (3 notices; agreed with Carillon).
+10. Creatures live in a ledger (herds, packs, roosts, camps); ignored nests raid with a play-day's warning.
+11. Six crafts (Hunting, Foraging, Mining, Fishing, Smithing, Cooking), levels 1-50, perks, a Crafts tab.
+12. Jade hides its creature lines while plates show them.
+13. Game rule `awaken:pure_survival` (off): no plates, numbers, XP stream, quests or bounties; regions and crafts stay.
+14. First hour (Carillon worlds): the Director's first gate opens at level 4 or after 45 minutes outside; Quartermaster
+    Hale at the High Gate and a Wayfarer camp in the Commons (city parts agreed with Carillon).
+15. The Nether and the End keep vanilla danger for now.
+16. The World Pulse schedules every open-world happening (about 28 kinds on the moon calendar, missable, today's
+    anomalies folded in); the Hilltop Test (PLAN "The feeling") is the bar.
+17. Wonders (one per region, ~40 kinds), three secrets per region, eight legendary beasts (fall for good), treasure maps.
+18. Settlers at your Hearth, a named village on the Atlas, road markers that caravans travel (agreed with hearth and
+    Carillon owners).
+19. Rumours mark a region "?" on the Atlas; the first witnessing of each happening kind is a discovery (the Almanac).
+
+### 21.1 The Holo combat layer (Phase B)
+- Plates: the creature under the crosshair (24 blocks; 32 at PER 20, 40 at PER 40) and every creature in a fight with
+  the player (hurt either way in the last 6 s), plus elites and named beasts once seen; ≤ 4 at once, nearest threats
+  first; fade 3 s after the fight, 0.6 s after looking away from a calm one. Content: name (or "Unknown" before the
+  Codex has it), level chip in its band's rank colour (E 1-9, D 10-24, C 25-44, B 45-69, A 70-99, S 100+; grey 10+
+  below the player, ember with a skull 5+ above), 10 glass segments (lost ones flash amber and drain over 300 ms),
+  ELITE / beast title / CAMP tags, a rim warm for hostile, cyan for neutral, none for passive. No plates on players,
+  Echoes, citizens or Wayfarers. Same in gates. Rules are pure (`living.combat.PlateRules`).
+- Damage glyphs: numbers in strokes of light at the hit point, 700 ms, coloured by Force; crits ×1.6 in gold with a
+  fracture flare; hits within 6 ticks on one target merge; damage taken is not printed.
+- XP stream: on a kill, motes rise from the body and stream to the band (first person: the HUD's level line; third
+  person: the left wrist) with "+N XP"; other XP streams from its source, smaller; grants within 1.5 s merge. Shown XP
+  is the XP actually added. "Worn": once per source per 10 minutes past its budget, a toast says that source pays less.
+- Level moment: band flare, a brief Lens look (`living:level` in `assets/awaken/lens/looks_living.json`), two ground
+  rings and a light column (own particles), a pane typed in light ("LEVEL n · +3 STAT POINTS" and the rank line),
+  sound `living.level_up`, ~2.4 s. In combat (hurt or hitting in the last 5 s) the server sends the old toast instead
+  and the moment waits for the fight to end. Others within 48 blocks see rings and column.
+- Loot pillars: drops of rarity RARE or EPIC (or `#awaken:loot_pillar`) from a creature's death stand in a pillar of
+  their colour (rare blue, epic violet; Power Cores white-gold) visible 48 blocks until picked up.
+- Client settings `awaken-living-client.toml`: `plates` (on), `damageNumbers` FULL|CRITS|OFF, `xpStream` (on),
+  `levelMoment` FULL|COMPACT; `reducedMotion` from the Holo settings applies.
+- Plates draw through the Holo's world-space glass (`HoloWorld`, pack session) once it exists; until then a plain
+  fallback in the same layout.
+
+### 21.2 Regions (Phase B)
+- A patchwork of named regions 600-1,400 blocks across: hearts on a jittered grid (pitch 900, jitter ±35%), borders
+  from the nearest heart after a domain warp (amplitude 220, wavelength 700), seeded from the world seed.
+- The Commons: the region round Carillon's site (`CityBasin.site`) or, in classic worlds, world spawn; everything
+  within 700 of that centre belongs to it; levels 1-8. Its neighbours (regions whose heart is within 1,600 of the
+  centre) draw only bands 1-8 (40%) and 8-20 (60%).
+- Odds by heart distance from the centre (bands 1-8 / 8-20 / 20-45 / 45-80 / 80+): under 2,000: 25/45/25/5/0;
+  2,000-5,000: 15/30/30/20/5; beyond: 10/20/25/25/20. Bands are dealt from a seeded shuffle per 3×3 block of grid
+  cells so each block holds the spread. Biome tilt at the heart: harsh (pale garden, badlands, jagged and frozen peaks,
+  dark forest) one band up, gentle (plains, sunflower plains, meadow, flower forest, cherry grove, mushroom fields)
+  one band down, each 40%. A region's span is 6 levels inside its band (80+: up to 150), rising edge to heart.
+  The deep dark adds 10.
+- Creature level = region level + role offset (ambient −2, neutral 0, hunter +1, elite +2, camp heart +3, beast at
+  its lair +3), clamped 1-150. Fauna use it (FaunaRules); vanilla monsters get it at spawn with the same scaling
+  (MobScaling); passive vanilla animals get a level for their plate and XP but no scaling.
+- Names from biome grammars (`living.region.Names`); the Commons is fixed. Entering a region: a place caption once per
+  region per play-day; ≥ 5 above the player, an ember caption and an amber toast at most once per 10 minutes.
+- API `dev.awaken.living.api.Regions`: `levelAt(ServerLevel, x, z)`, `regionAt(ServerLevel, x, z)` (`Region`: id, name,
+  band low/high, heart), `creatureLevel(ServerLevel, BlockPos, Role)`, `bandOf(level)`. Pure apart from a per-server
+  cache of region records; thread-safe.
+
+### 21.3 XP (Phase B)
+- Kills (overworld, any living non-player creature with a level): fraction of a level = 0.03 × role (hunter 1.0,
+  neutral 0.5, ambient or passive 0.15, elite 4.0, warden 6, beast 0 here: beasts pay by their own first-kill rules)
+  through the budget `hunt` (0.10 per 10 minutes), then × (1 + 0.08 × min(5, levels above)) or × 1 / (1 + levels
+  below / 8). Paid via `Progression.worldXp(player, "hunt", raw, after)`; the old home kill XP is off while the
+  living module pays (`LivingHooks`). Party sharing as before.
+- Budgets registered by modules: `XpBudget.register(source, perTenMinutes)`.
+- Gate floor rewards × `Curve.WILDS_TRIM` (0.80; everything priced from a floor reward follows: anomalies, camps).
+  Hunting, crafts and camps pay × `LivingModule.wildsRank(rank)` after the budget: 1.0, except C 0.55 (C is the long
+  climb in gates too). tools/sim/pacing_sim.py carries the same model; balanced player: level 5 0.98 h, 10 3.9 h,
+  25 16.8 h, 50 51.2 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.8 h;
+  main power level 5 at player level 48; gate checks unchanged.
+- `Progression.onXpGranted(listener)`: every grant after scaling (player, XP, source, world key), for the stream.
+
+### 21.4 Phase B as built (2026-10-25)
+- Server: `living.region` (RegionMap, Names, RegionService saved data `awaken:living_regions`, RegionTracker),
+  `living.combat` (Creatures, KillXp, Hits, XpStream, LevelMoments, LootPillars, PlateRules), payloads
+  `living_region`, `living_hit_fx` (also a hit the player took, which marks that creature as fighting),
+  `living_xp_fx`, `living_level_up`, `living_shown`; attachments `awaken:creature_tag` (core.api, synced),
+  `awaken:loot_pillar` (synced, not saved); game rule `awaken:pure_survival`.
+- Client (`living.client`): LivingClient (plate picking by PlateRules each tick, a 24-block ray with a wall check,
+  four line-of-sight checks a tick for notables, pillars every 5 ticks, the level moment waiting for a fight to end:
+  a hit either way in the last 5 s, at most 30 s), LivingFx (one additive mesh pass and one glass pass per frame,
+  plates' words as text with a four-copy halo), LivingHud (region caption, level pane through HudLook, XP pops by the
+  level line), StrokeFont (digits and "+XP LV" as light). Jade drops its creature level row while plates show.
+- Plates draw through LivingFx's own glass until the Holo's world-space API exists (pack session), then switch.
+- Sounds `living.scan|crit|xp_tick|level_up|region_enter` (tools/art/specs/audio_living.py, UI loudness); Lens look
+  `awaken:living_level` (assets/awaken/lens/looks_living.json); tips `awaken:living/first_plate`, `first_region`
+  (assets/awaken/tips/living/, read once Carillon's tip system is installed).
+- Dev: `/awaken living region` (anyone), admin `regions [radius]`, `tag`, `strike [crit|kill]`, `pillar`, `moment`.
+  Tour `tools/autopilot/living-b.txt`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 

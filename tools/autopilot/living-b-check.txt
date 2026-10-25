@@ -1,0 +1,51 @@
+# Living Wilds Phase B: a short check of the glyphs, plate sizing and the XP pop (a cut of living-b.txt).
+# Living Wilds Phase B: a short check of the glyphs, plate sizing and the XP pop (a cut of living-b.txt).
+# Living Wilds Phase B: a short check of the glyphs, plate sizing and the XP pop (a cut of living-b.txt).
+# Living Wilds Phase B: a short check of the glyphs, plate sizing and the XP pop (a cut of living-b.txt).
+# Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh tools/autopilot/living-b.txt
+world autopilot_living creative 20261025
+waitworld
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule advance_time false
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd tp @s ~ 140 ~-520 0 10
+wait 120
+cmd fill ~-7 138 ~-7 ~7 138 ~7 minecraft:grass_block
+wait 10
+cmd tp @s ~ 139 ~ 0 10
+wait 60
+shot living_c01_platform_caption
+look 0 14
+cmd summon minecraft:husk ^ ^ ^5 {NoAI:1b,PersistenceRequired:1b}
+wait 30
+shot living_c02_plate_day
+cmd awaken living strike crit
+wait 2
+shot living_c04_crit
+wait 6
+shot living_c05_drain
+cmd awaken living strike kill
+wait 10
+shot living_c06_stream
+wait 9
+shot living_c07_pop_after_kill
+cmd awaken admin xp 60
+wait 4
+shot living_c08_pop_command
+cmd time set 18000
+cmd awaken fauna summon gloomstalker
+wait 30
+shot living_c09_night_plate
+cmd awaken living strike crit
+wait 2
+shot living_c10_night_crit
+quit
