@@ -23,6 +23,7 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_tether_vow", 200, AscentTests::tetherVow);
         AwakenTests.register("ascent_aether", 40, AscentTests::aether);
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
+        AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -539,6 +540,109 @@ final class AscentTests {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);
             for (BlockPos q : BlockPos.betweenClosed(cx - 1, placed.chainBottom() - 1, cz - 1, cx + 20, deckY + 2, cz + 20)) {
+                if (!level.getBlockState(q).isAir()) level.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
+                        net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+            }
+        }
+        h.succeed();
+    }
+
+    /**
+     * A Tether Spire (SPEC §17.11), built from its blueprint high over the test: every step of its ladder (the plaza to
+     * the first platform, each platform to the next, the last to the crown's deck) is a zip straight up from the near
+     * rim of the lower floor to the upper one's underside edge, and that edge can be vaulted over (a full block with room
+     * on it, open beyond); the crown times a climb from the plaza, keeps the record, and answers no tower.
+     */
+    private static void tetherSpire(GameTestHelper h) {
+        net.minecraft.server.level.ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(BlockPos.ZERO).atY(level.getMaxY() - 80);
+        int size = dev.awaken.above.ruin.RuinBuilder.size(dev.awaken.above.ruin.RuinKind.SPIRE).y();
+        try {
+            dev.awaken.above.ruin.RuinBuilder.build(dev.awaken.above.ruin.RuinKind.SPIRE, 7L, 1, new dev.awaken.above.ruin.RuinBuilder.Sink() {
+                @Override
+                public void set(int x, int y, int z, net.minecraft.world.level.block.state.BlockState state) {
+                    level.setBlock(o.offset(x, y, z), state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                }
+
+                @Override
+                public void fillDown(int x, int y, int z, net.minecraft.world.level.block.state.BlockState state, int depth) {
+                    level.setBlock(o.offset(x, y, z), state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                }
+
+                @Override
+                public void chest(int x, int y, int z, net.minecraft.core.Direction facing,
+                                  net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable> table) {
+                    level.setBlock(o.offset(x, y, z), net.minecraft.world.level.block.Blocks.CHEST.defaultBlockState(),
+                            net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                }
+            });
+            int C = dev.awaken.above.ruin.RuinBuilder.SPIRE_C, P = dev.awaken.above.ruin.RuinBuilder.SPIRE_PLAZA,
+                    TOP = dev.awaken.above.ruin.RuinBuilder.SPIRE_CROWN;
+            // the floors in climbing order: the plaza (any cell), each platform (its 3x3), the deck (5x5)
+            java.util.List<int[]> floors = new java.util.ArrayList<>();
+            floors.add(new int[]{C + 6, P, C, 0});
+            for (int k = 0; k < dev.awaken.above.ruin.RuinBuilder.SPIRE_PETALS; k++) {
+                int[] c = dev.awaken.above.ruin.RuinBuilder.spirePetal(k);
+                floors.add(new int[]{c[0], c[1], c[2], 1});
+            }
+            floors.add(new int[]{C, TOP, C, 2});
+            for (int i = 1; i < floors.size(); i++) {
+                int[] lo = floors.get(i - 1), hi = floors.get(i);
+                // the upper floor's rim cells; the lower floor's cell nearest each (where you'd stand to throw)
+                double bestSide = Double.MAX_VALUE, rise = 0;
+                for (int dx = -hi[3]; dx <= hi[3]; dx++) for (int dz = -hi[3]; dz <= hi[3]; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != hi[3] && hi[3] > 0) continue;
+                    int tx = hi[0] + dx, tz = hi[2] + dz;
+                    BlockPos t = o.offset(tx, hi[1], tz);
+                    if (!level.getBlockState(t).isCollisionShapeFullBlock(level, t) || !level.getBlockState(t.above()).isAir()
+                            || !level.getBlockState(t.above(2)).isAir()) continue;
+                    for (int sx = -Math.max(1, lo[3]); sx <= Math.max(1, lo[3]); sx++) for (int sz = -Math.max(1, lo[3]); sz <= Math.max(1, lo[3]); sz++) {
+                        double fx = lo[0] + sx + 0.5, fz = lo[2] + sz + 0.5;
+                        // the edge of the target cell facing the stander, 0.15 in
+                        double ex = Math.max(tx + 0.15, Math.min(tx + 0.85, fx)), ez = Math.max(tz + 0.15, Math.min(tz + 0.85, fz));
+                        double side = Math.hypot(ex - fx, ez - fz);
+                        if (side < bestSide) {
+                            bestSide = side;
+                            rise = hi[1] - (lo[1] + 1 + AscentRules.HAND_HEIGHT);
+                        }
+                    }
+                }
+                h.assertTrue(rise > AscentRules.ZIP_UP_MIN_RISE && bestSide < rise * AscentRules.ZIP_UP_SLOPE,
+                        "step " + i + ": a zip straight up from the near rim (rise " + rise + ", side " + bestSide + ")");
+            }
+            // the crown: a climb from the plaza is timed and kept; a tower gets nothing
+            BlockPos crown = o.offset(C, TOP + 1, C);
+            h.assertTrue(level.getBlockEntity(crown) instanceof SpireCrownBlockEntity, "the crown is placed");
+            SpireCrownBlockEntity be = (SpireCrownBlockEntity) level.getBlockEntity(crown);
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            var real = dev.awaken.core.api.ArrivalHooks.installed();
+            try {
+                boolean[] moved = {false};
+                dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {
+                    @Override
+                    public boolean byMovement(net.minecraft.server.level.ServerPlayer pl) {
+                        return moved[0];
+                    }
+                });
+                AscentMotion m = AscentServer.motion(p);
+                for (int i = 0; i < 400; i++) m.mark(true);
+                long now = level.getGameTime();
+                be.startedAgo(p, 600);
+                be.reached(p, now);
+                h.assertTrue(be.records().isEmpty(), "a tower gets nothing");
+                moved[0] = true;
+                int before = p.getData(AscentContent.MEMORY).points(AscentMemory.Track.TETHER);
+                be.startedAgo(p, 600);
+                be.reached(p, now + 200);
+                // left the plaza 600 ticks before now, on the deck 200 after: 800
+                h.assertTrue(be.records().size() == 1 && be.records().getFirst().ticks() == 800, "a climb from the plaza is timed and kept: " + be.records());
+                h.assertTrue(p.getData(AscentContent.MEMORY).points(AscentMemory.Track.TETHER) >= before + 10, "the first climb is 10 Tether mastery");
+            } finally {
+                dev.awaken.core.api.ArrivalHooks.install(real);
+                level.getServer().getPlayerList().remove(p);
+            }
+        } finally {
+            for (BlockPos q : BlockPos.betweenClosed(o, o.offset(24, size, 24))) {
                 if (!level.getBlockState(q).isAir()) level.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
                         net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
             }

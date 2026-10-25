@@ -39,6 +39,8 @@ public final class AscentModule {
         // the Horizon's sky sites ("needs Wings"): Wings, or a rope and the Leaper's air moves, get you up there
         dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS)
                 && (Ascent.has(p, Ascent.Tier.WINGS) || Ascent.has(p, Ascent.Tier.TETHER) && Ascent.has(p, Ascent.Tier.LEAPER)));
+        // a Tether Spire's climb needs the rope
+        dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.TETHER) && Ascent.has(p, Ascent.Tier.TETHER));
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

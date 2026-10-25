@@ -61,6 +61,7 @@ public final class RuinBuilder {
             case SKY -> new Size(49, 26, 49);
             case OCEAN -> new Size(31, 22, 31);
             case MONOLITH -> new Size(17, 46, 17);
+            case SPIRE -> new Size(25, SPIRE_CROWN + 6, 25);
         };
     }
 
@@ -201,6 +202,7 @@ public final class RuinBuilder {
             case SKY -> sky(r, b);
             case OCEAN -> ocean(r, b);
             case MONOLITH -> monolith(r, b);
+            case SPIRE -> spire(r, b);
         }
     }
 
@@ -230,6 +232,102 @@ public final class RuinBuilder {
      */
     private static void outerCache(Brush b, int x, int y, int z, Direction facing) {
         b.out.chest(x, y, z, facing, loot("landmark_outer"));
+    }
+
+    // ---- the Tether Spire ----------------------------------------------------------------------------------------------
+
+    /** The spire's plaza level, centre, its platforms' first height and spacing, their distance out, the crown's level. */
+    public static final int SPIRE_PLAZA = 2, SPIRE_C = 12, SPIRE_FIRST = 9, SPIRE_STEP = 10, SPIRE_OUT = 5, SPIRE_PETALS = 5;
+    public static final int SPIRE_CROWN = SPIRE_PLAZA + SPIRE_FIRST + SPIRE_STEP * SPIRE_PETALS;
+
+    /** Platform k's centre (local x, z) and its top's level: a sixth of a turn round the column each time, 10 higher. */
+    public static int[] spirePetal(int k) {
+        double a = Math.toRadians(60.0 * k);
+        return new int[]{SPIRE_C + (int) Math.round(Math.cos(a) * SPIRE_OUT), SPIRE_PLAZA + SPIRE_FIRST + SPIRE_STEP * k,
+                SPIRE_C + (int) Math.round(Math.sin(a) * SPIRE_OUT)};
+    }
+
+    /**
+     * A Precursor pylon among the trees (SPEC §17.11): a ringed plaza, a column of plating with lit seams, and five
+     * platforms spiralling up it a sixth of a turn and ten blocks apart, each nearly over the last's edge (a zip up to
+     * its underside vaults you over its lip: the rope's ladder), an anchor ring under each one's outer edge for swings,
+     * and the crown on top: a deck round the column's head where the crown block keeps the climb's records and the cache
+     * waits. Moss and vines low down, clean plating high up.
+     */
+    private static void spire(RandomSource r, Brush b) {
+        final int P = SPIRE_PLAZA, C = SPIRE_C, TOP = SPIRE_CROWN;
+        boolean terminal = hasTerminal(RuinKind.SPIRE, r);
+        // the plaza: a disc of panel round the column's foot, the start ring alight, brass lines out to its rim
+        for (int x = 0; x <= 24; x++) {
+            for (int z = 0; z <= 24; z++) {
+                double d = Math.sqrt((x - C) * (x - C) + (z - C) * (z - C));
+                // wide enough that trees rooted past it can't lean their leaves into the platforms
+                if (d > 11.4) continue;
+                b.out.fillDown(x, P - 1, z, of(Blocks.STONE_BRICKS), 12);
+                BlockState s;
+                if (Math.abs(d - 7.0) < 0.5) s = glow();
+                else if ((x == C || z == C) && d > 2) s = trim();
+                else s = b.plate(x, P, z, 0.6 * Math.min(1, d / 11));
+                b.set(x, P, z, d > 10.5 ? b.plate(x, P, z, 0.9) : s);
+                for (int y = P + 1; y <= P + 5; y++) b.set(x, y, z, air());
+            }
+        }
+        // the column: 3x3, a wider foot, lit seams every five blocks, pillars at its corners
+        for (int y = P + 1; y < TOP; y++) {
+            for (int x = C - 1; x <= C + 1; x++) {
+                for (int z = C - 1; z <= C + 1; z++) {
+                    boolean corner = x != C && z != C;
+                    double wear = Math.max(0, 0.7 - (y - P) / 30.0);
+                    b.set(x, y, z, corner ? pillar() : (y - P) % 5 == 0 ? glow() : b.plate(x, y, z, wear));
+                }
+            }
+        }
+        for (int x = C - 2; x <= C + 2; x++) {
+            for (int z = C - 2; z <= C + 2; z++) {
+                if (Math.abs(x - C) <= 1 && Math.abs(z - C) <= 1) continue;
+                for (int y = P + 1; y <= P + 3; y++) b.set(x, y, z, y == P + 3 ? trim() : b.plate(x, y, z, 0.6));
+            }
+        }
+        // the platforms: 3x3, trim round a plated middle with a light at its heart, a beam back to the column, a ring
+        // under the outer edge
+        for (int k = 0; k < SPIRE_PETALS; k++) {
+            int[] c = spirePetal(k);
+            int y = c[1];
+            double wear = Math.max(0, 0.5 - k * 0.12);
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    b.set(c[0] + dx, y, c[2] + dz, dx == 0 && dz == 0 ? glow() : (dx != 0 && dz != 0) ? trim() : b.plate(c[0] + dx, y, c[2] + dz, wear));
+                }
+            }
+            // the beam: from the column's face to the platform, along the line between them
+            double bx = c[0] - C, bz = c[2] - C, len = Math.sqrt(bx * bx + bz * bz);
+            for (double t = 1.5; t < len - 1.2; t += 0.5) {
+                int x = C + (int) Math.round(bx / len * t), z = C + (int) Math.round(bz / len * t);
+                if (Math.abs(x - C) <= 1 && Math.abs(z - C) <= 1) continue;
+                b.set(x, y, z, trim());
+            }
+            int ox = c[0] + (int) Math.round(bx / len), oz = c[2] + (int) Math.round(bz / len);
+            b.set(ox, y - 1, oz, dev.awaken.body.ascent.AscentContent.ANCHOR_RING.get().defaultBlockState());
+            if (k < 2 && b.n(c[0], y, c[2]) < 0.6) b.curtain(c[0] + 1, y - 1, c[2], Direction.WEST, 4);
+        }
+        // the crown: a deck round the column's head, a rim of trim with lights flush in its corners (nothing standing on
+        // the rim: every edge of it can be vaulted onto), the crown block and the cache
+        for (int x = C - 2; x <= C + 2; x++) {
+            for (int z = C - 2; z <= C + 2; z++) {
+                boolean rim = Math.abs(x - C) == 2 || Math.abs(z - C) == 2, corner = Math.abs(x - C) == 2 && Math.abs(z - C) == 2;
+                b.set(x, TOP, z, corner ? warn() : rim ? trim() : panel());
+                for (int y = TOP + 1; y <= TOP + 4; y++) b.set(x, y, z, air());
+            }
+        }
+        b.set(C, TOP + 1, C, dev.awaken.body.ascent.AscentContent.SPIRE_CROWN.get().defaultBlockState());
+        b.out.chest(C + 1, TOP + 1, C - 1, Direction.WEST, loot("precursor_spire"));
+        if (terminal) b.set(C - 1, TOP + 1, C + 1, terminal(RuinKind.SPIRE.logs, Direction.EAST));
+        // what an E-rank finder takes home: the plaza's cache by the column's foot; broken machines round it for the Scanner
+        outerCache(b, C, P + 1, C + 4, Direction.NORTH);
+        List<MachineType> machines = machinesFor(RuinKind.SPIRE, r);
+        int[][] spots = {{C - 4, C, 0}, {C, C - 4, 1}, {C - 3, C + 3, 2}};
+        Direction[] faces = {Direction.EAST, Direction.SOUTH, Direction.NORTH};
+        for (int i = 0; i < machines.size() && i < spots.length; i++) b.set(spots[i][0], P + 1, spots[i][1], broken(machines.get(i), faces[i]));
     }
 
     // ---- the Sealed Vault ----------------------------------------------------------------------------------------------

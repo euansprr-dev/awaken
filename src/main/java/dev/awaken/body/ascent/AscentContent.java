@@ -65,6 +65,16 @@ public final class AscentContent {
             BLOCK_ENTITIES.register("wing_core", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(WingCoreBlockEntity::new,
                     WING_CORE.get()));
 
+    /** A Tether Spire's crown: it times the climb and keeps the spire's records (SPEC §17.11); unbreakable, alight. */
+    public static final net.neoforged.neoforge.registries.DeferredBlock<SpireCrownBlock> SPIRE_CROWN = BLOCKS.registerBlock("spire_crown",
+            SpireCrownBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_CYAN).strength(-1F, 3600000F)
+                    .sound(net.minecraft.world.level.block.SoundType.AMETHYST).lightLevel(s -> 14).noLootTable());
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem> SPIRE_CROWN_ITEM =
+            ITEMS.registerSimpleBlockItem(SPIRE_CROWN);
+    public static final Supplier<net.minecraft.world.level.block.entity.BlockEntityType<SpireCrownBlockEntity>> SPIRE_CROWN_BE =
+            BLOCK_ENTITIES.register("spire_crown", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(SpireCrownBlockEntity::new,
+                    SPIRE_CROWN.get()));
+
     /** A Precursor grate that breathes a column of rising air (the Wilds' pylons stand on them; SPEC §17.6). */
     public static final net.neoforged.neoforge.registries.DeferredBlock<UpdraftVentBlock> UPDRAFT_VENT = BLOCKS.registerBlock("updraft_vent",
             UpdraftVentBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_CYAN).strength(3.5F, 9F)

@@ -42,6 +42,8 @@ final class AscentCommands {
                 if (id < 0) c.getSource().sendFailure(Component.literal("No trial gate could form here"));
                 return Math.max(0, id);
             })));
+            // the nearest Tether Spire: you on its plaza beside the column (tours)
+            ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
             ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource()))));
             ascent.then(Commands.literal("pilot").then(Commands.argument("line", StringArgumentType.greedyString())
@@ -100,6 +102,52 @@ final class AscentCommands {
             }
         }
         src.sendFailure(Component.literal("Found a platform near " + at.toShortString() + " but no start in its chunks"));
+        return 0;
+    }
+
+    private static int spireGoto(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
+        var spire = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.STRUCTURE)
+                .get(dev.awaken.above.ruin.RuinKind.SPIRE.structure);
+        if (spire.isEmpty()) {
+            src.sendFailure(Component.literal("No Tether Spire structure"));
+            return 0;
+        }
+        var near = level.getChunkSource().getGenerator().findNearestMapStructure(level, net.minecraft.core.HolderSet.direct(spire.get()),
+                p.blockPosition(), 100, false);
+        if (near == null) {
+            src.sendFailure(Component.literal("No Tether Spire within 1600 blocks"));
+            return 0;
+        }
+        var at = near.getFirst();
+        int chx = at.getX() >> 4, chz = at.getZ() >> 4;
+        for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++) level.getChunk(chx + x, chz + z);
+        for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++) {
+            for (var start : level.getChunk(chx + x, chz + z).getAllStarts().entrySet()) {
+                if (!(start.getKey() instanceof dev.awaken.above.ruin.PrecursorRuinStructure prs) || prs.kind() != dev.awaken.above.ruin.RuinKind.SPIRE) continue;
+                var box = start.getValue().getPieces().getFirst().getBoundingBox();
+                int cx = box.minX() + dev.awaken.above.ruin.RuinBuilder.SPIRE_C, cz = box.minZ() + dev.awaken.above.ruin.RuinBuilder.SPIRE_C;
+                int feet = box.minY() + dev.awaken.above.ruin.RuinBuilder.SPIRE_PLAZA + 1;
+                // under the first platform (the piece may be turned: find its lit heart, 5 out from the column)
+                int py = box.minY() + dev.awaken.above.ruin.RuinBuilder.spirePetal(0)[1];
+                double ux = cx + 4.5, uz = cz + 0.5;
+                for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
+                    if (Math.abs(dx) + Math.abs(dz) < 4) continue;
+                    if (level.getBlockState(new net.minecraft.core.BlockPos(cx + dx, py, cz + dz)).is(dev.awaken.above.AboveBlocks.GLOW_PANEL.get())) {
+                        ux = cx + dx + 0.5;
+                        uz = cz + dz + 0.5;
+                    }
+                }
+                p.teleportTo(level, ux, feet, uz, java.util.Set.of(), 90F, -30F, true);
+                dev.awaken.Awaken.LOG.info("[ascent] spire goto: the spire at {}, {} (plaza {}, crown {}), box {}, column {} / {}, crown block {}", cx, cz, feet - 1,
+                        box.minY() + dev.awaken.above.ruin.RuinBuilder.SPIRE_CROWN, box, level.getBlockState(new net.minecraft.core.BlockPos(cx, feet + 3, cz)),
+                        level.getBlockState(new net.minecraft.core.BlockPos(cx, feet + 30, cz)),
+                        level.getBlockState(new net.minecraft.core.BlockPos(cx, box.minY() + dev.awaken.above.ruin.RuinBuilder.SPIRE_CROWN + 1, cz)));
+                return 1;
+            }
+        }
+        src.sendFailure(Component.literal("Found a spire near " + at.toShortString() + " but no start in its chunks"));
         return 0;
     }
 

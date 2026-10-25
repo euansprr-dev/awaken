@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:precursor_tether_spire",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 24,
+    "separation": 8,
+    "salt": 1430987234
+  }
+}

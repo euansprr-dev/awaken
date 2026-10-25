@@ -115,6 +115,7 @@ public final class AscentPilot {
                 case "soar" -> soar(p);
                 case "climb" -> climb(p);
                 case "leap" -> leap(p);
+                case "spire" -> spire(p);
                 default -> script = "";
             }
         }
@@ -421,6 +422,105 @@ public final class AscentPilot {
             }
         }
         if (age > 300) script = "";
+    }
+
+    /**
+     * Up a Tether Spire (SPEC §17.11): the next platform above (its lit heart 6 to 13 up; at the last, the crown's deck),
+     * its rim cell nearest the body; aim at that cell's underside just in from its edge toward the body and throw (the
+     * zip vaults over the lip); once on it, the next. Ends at the crown or after 2 min.
+     */
+    private static final net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> SPIRE_BLOCKS =
+            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, Awaken.id("ward_sealed"));
+
+    private static void spire(LocalPlayer p) {
+        AscentState st = AscentMoves.state();
+        if (AscentMoves.pullTicks > 0) return;
+        // on the way up: hold on whatever the search sees from here
+        if (st == AscentState.ZIP) {
+            press(TETHER, 2);
+            return;
+        }
+        net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
+        int px = p.getBlockX(), py = p.getBlockY(), pz = p.getBlockZ();
+        // at the crown: done
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) for (int dy = -1; dy <= 1; dy++) {
+            if (p.level().getBlockState(m.set(px + dx, py + dy, pz + dz)).is(dev.awaken.body.ascent.AscentContent.SPIRE_CROWN.get())
+                    && p.onGround()) {
+                Awaken.LOG.info("[ascent] pilot: at the spire's crown");
+                script = "";
+                return;
+            }
+        }
+        // the next platform: its lit heart 6 to 13 up (a glow panel with air over it), else the crown's deck
+        net.minecraft.core.BlockPos heart = null;
+        for (int dy = 6; dy <= 13 && heart == null; dy++) {
+            for (int dx = -7; dx <= 7; dx++) for (int dz = -7; dz <= 7; dz++) {
+                m.set(px + dx, py + dy, pz + dz);
+                if (p.level().getBlockState(m).is(dev.awaken.above.AboveBlocks.GLOW_PANEL.get()) && p.level().getBlockState(m.above()).isAir()) {
+                    heart = m.immutable();
+                }
+            }
+        }
+        int reach = 1;
+        if (heart == null) {
+            for (int dy = 6; dy <= 14 && heart == null; dy++) {
+                for (int dx = -7; dx <= 7; dx++) for (int dz = -7; dz <= 7; dz++) {
+                    m.set(px + dx, py + dy, pz + dz);
+                    if (p.level().getBlockState(m).is(dev.awaken.body.ascent.AscentContent.SPIRE_CROWN.get())) heart = m.below().immutable();
+                }
+            }
+            reach = 2;
+        }
+        net.minecraft.core.BlockPos target = null;
+        double best = Double.MAX_VALUE;
+        if (heart != null) {
+            // its rim cell nearest the body
+            for (int dx = -reach; dx <= reach; dx++) for (int dz = -reach; dz <= reach; dz++) {
+                if (Math.max(Math.abs(dx), Math.abs(dz)) != reach) continue;
+                m.set(heart.getX() + dx, heart.getY(), heart.getZ() + dz);
+                if (p.level().getBlockState(m).getCollisionShape(p.level(), m).isEmpty()) continue;
+                double d = (m.getX() + 0.5 - p.getX()) * (m.getX() + 0.5 - p.getX()) + (m.getZ() + 0.5 - p.getZ()) * (m.getZ() + 0.5 - p.getZ());
+                if (d < best) {
+                    best = d;
+                    target = m.immutable();
+                }
+            }
+        }
+        if (target == null) {
+            if (age > 40) script = "";
+            return;
+        }
+        double ox = p.getX() - (target.getX() + 0.5), oz = p.getZ() - (target.getZ() + 0.5);
+        boolean alongX = Math.abs(ox) >= Math.abs(oz);
+        double tx = target.getX() + 0.5 + (alongX ? Math.signum(ox) * 0.35 : 0);
+        double tz = target.getZ() + 0.5 + (alongX ? 0 : Math.signum(oz) * 0.35);
+        double ty = target.getY() - 0.02;
+        net.minecraft.world.phys.Vec3 eye = p.getEyePosition();
+        double dx = tx - eye.x, dy = ty - eye.y, dz = tz - eye.z;
+        p.setYRot((float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG));
+        p.setYHeadRot(p.getYRot());
+        p.setXRot((float) -(Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG));
+        switch (st) {
+            case NONE, CARRY -> {
+                if (age - mark > 8) {
+                    press(TETHER, 3);
+                    mark = age;
+                }
+            }
+            case TETHER -> {
+                // a hang (a ring): let go and throw again
+                if (AscentMoves.stateAge > 8) {
+                    HOLD[TETHER] = 0;
+                    mark = age - 4;
+                } else {
+                    press(TETHER, 2);
+                }
+            }
+            case ZIP -> press(TETHER, 2);
+            default -> {
+            }
+        }
+        if (age > 2400) script = "";
     }
 
     /** The sky platform's core, if one is in sight (on the deck's level or just under it). */

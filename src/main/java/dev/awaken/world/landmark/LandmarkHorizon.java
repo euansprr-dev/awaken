@@ -60,10 +60,19 @@ final class LandmarkHorizon {
         for (Landmarks.Landmark l : c.sites()) {
             if (Landmarks.reached(p, l.id())) continue; // reached since the cache was built
             boolean whispered = l.id().equals(c.whispered());
-            String need = l.kind() == LandmarkKind.SKY_PLATFORM ? HorizonHooks.WINGS : "";
+            String need = need(l.kind());
             out.add(new HorizonHooks.Site("landmark:" + l.id(), (whispered ? "Whispered: " : "") + l.kind().display, l.pos(), need, whispered));
         }
         return out;
+    }
+
+    /** What a kind of site asks: a sky platform a way up, a Tether Spire the rope, the rest nothing. */
+    static String need(LandmarkKind k) {
+        return switch (k) {
+            case SKY_PLATFORM -> HorizonHooks.WINGS;
+            case TETHER_SPIRE -> HorizonHooks.TETHER;
+            default -> "";
+        };
     }
 
     private static Cached build(ServerPlayer p, long now) {
@@ -74,11 +83,12 @@ final class LandmarkHorizon {
         List<Landmarks.Landmark> sites = new ArrayList<>();
         for (Landmarks.Landmark l : Landmarks.around(p, Landmarks.NEAR, 6)) {
             if (m.reached(l.id()) || !Landmarks.inRange(me, l)) continue;
-            boolean sky = l.kind() == LandmarkKind.SKY_PLATFORM;
-            if (sky || level >= l.reasonLevel() || l.id().equals(whispered)) sites.add(l);
+            // a site that asks a way of moving is teased until you have it, whatever your level
+            boolean needs = !need(l.kind()).isEmpty();
+            if (needs || level >= l.reasonLevel() || l.id().equals(whispered)) sites.add(l);
         }
         // the nearest one you can go to now is one you've heard of: it goes on the Gate Map
-        Landmarks.pick(sites, me, m::reached, level, true).filter(l -> l.kind() != LandmarkKind.SKY_PLATFORM || HorizonHooks.can(p, HorizonHooks.WINGS))
+        Landmarks.pick(sites, me, m::reached, level, true).filter(l -> HorizonHooks.can(p, need(l.kind())))
                 .ifPresent(l -> {
                     if (m.place(l.id(), l.kind(), l.pos())) Landmarks.sync(p);
                 });
