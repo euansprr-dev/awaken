@@ -2,6 +2,8 @@ package dev.awaken.arms.client;
 
 import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
+import dev.awaken.arms.ArmsData;
+import dev.awaken.arms.ArmsItems;
 import dev.awaken.core.api.BodyMaterial;
 import dev.awaken.powers.client.fx.FxClient;
 import dev.awaken.powers.fx.FxStyle;
@@ -90,12 +92,17 @@ final class ArmsFx {
         FxClient.slash(e, centre, right, up, start, Mth.wrapDegrees(end - start), (hand + 0.28F) * k, 0.4F * k, def.active(), argb);
     }
 
-    /** The blade's light: the weapon's material, brighter each rhythm step; gold on a perfect heavy or an Execution. */
+    /**
+     * The blade's light: our weapons' own (their row's trail), anything else by its material; brighter each rhythm
+     * step; gold on a perfect heavy or an Execution.
+     */
     static int colour(ItemStack stack, int cadence, boolean perfect, Archetype.Move move) {
         if (perfect || move == Archetype.Move.EXECUTION || move == Archetype.Move.ART) return 0xE0FFD060;
+        ArmsData.Weapon own = stack.isEmpty() ? null : ArmsItems.of(stack.getItem());
         String path = stack.isEmpty() ? "" : BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
         int rgb;
-        if (path.contains("diamond")) rgb = 0xA0F0FF;
+        if (own != null) rgb = own.trail();
+        else if (path.contains("diamond")) rgb = 0xA0F0FF;
         else if (path.contains("netherite")) rgb = 0xD0B4FF;
         else if (path.contains("gold")) rgb = 0xFFD98A;
         else if (path.contains("copper")) rgb = 0xFFC09A;

@@ -1,13 +1,18 @@
 package dev.awaken.arms;
 
+import dev.awaken.Awaken;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.core.api.CreatureTag;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.Strikes;
 import dev.awaken.core.test.AwakenTests;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -17,6 +22,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
@@ -43,6 +49,69 @@ final class ArmsTests {
         AwakenTests.register("arms_clips", 20, ArmsTests::clips);
         AwakenTests.register("arms_art", 60, ArmsTests::art);
         AwakenTests.register("arms_plunge", 60, ArmsTests::plungeTest);
+        AwakenTests.register("arms_assets", 20, ArmsTests::assets);
+    }
+
+    /**
+     * Every generated weapon: registered with its row's numbers, fighting and guarding with its style, its recipe
+     * loaded, and its files on the classpath; the 3D model inside the game's bounds, at most 400 quads, one texel per
+     * unit on every face of its 64x64 atlas (tools/art/specs/arms_weapons.py checks the rest before writing).
+     */
+    static void assets(GameTestHelper h) {
+        h.assertTrue(ArmsItems.ALL.size() == ArmsData.WEAPONS.size(), "an item per row");
+        for (ArmsData.Weapon w : ArmsData.WEAPONS) {
+            ItemStack stack = new ItemStack(ArmsItems.ALL.get(ArmsData.WEAPONS.indexOf(w)).get());
+            h.assertTrue(ArmsItems.of(stack.getItem()) == w, w.id() + " knows its row");
+            h.assertTrue(Arms.styleOf(stack) == Archetypes.get(w.style()) && Arms.guards(stack), w.id() + " fights and guards as a " + w.style());
+            double damage = stack.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY).modifiers().stream()
+                    .filter(m -> m.attribute().is(Attributes.ATTACK_DAMAGE)).mapToDouble(m -> m.modifier().amount()).sum();
+            h.assertTrue(Math.abs(damage - w.damage()) < 1e-4 && stack.getMaxDamage() == w.durability() && stack.getRarity() == w.rarity(),
+                    w.id() + " carries its row's damage, uses and rarity");
+            h.assertTrue(stack.is(ItemTags.SWORDS), w.id() + " is a sword to vanilla (its enchantments)");
+            var recipe = ResourceKey.create(Registries.RECIPE, Awaken.id(w.id()));
+            h.assertTrue(h.getLevel().getServer().getRecipeManager().byKey(recipe).isPresent(), w.id() + " has its recipe");
+            for (String file : new String[]{"items/" + w.id() + ".json", "models/item/" + w.id() + ".json", "models/item/" + w.id() + "_in_hand.json",
+                    "textures/item/arms/" + w.id() + ".png", "textures/item/arms/" + w.id() + "_icon.png", "textures/item/arms/" + w.id() + "_icon_glow.png"}) {
+                h.assertTrue(ArmsTests.class.getResource("/assets/awaken/" + file) != null, w.id() + ": " + file + " is on the classpath");
+            }
+            com.google.gson.JsonArray elements;
+            try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/models/item/" + w.id() + "_in_hand.json")) {
+                elements = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8))
+                        .getAsJsonObject().getAsJsonArray("elements");
+            } catch (java.io.IOException ex) {
+                throw new IllegalStateException(ex);
+            }
+            int quads = 0;
+            for (var el : elements) {
+                var o = el.getAsJsonObject();
+                float[] from = floats(o.getAsJsonArray("from")), to = floats(o.getAsJsonArray("to"));
+                for (int i = 0; i < 3; i++) {
+                    h.assertTrue(from[i] >= -16 && to[i] <= 32 && from[i] < to[i], w.id() + ": an element outside the model's bounds");
+                }
+                h.assertTrue(!o.getAsJsonObject("faces").isEmpty(), w.id() + ": an element without faces (the game refuses the model)");
+                for (var face : o.getAsJsonObject("faces").entrySet()) {
+                    quads++;
+                    float[] uv = floats(face.getValue().getAsJsonObject().getAsJsonArray("uv"));
+                    int[] axes = switch (face.getKey()) {
+                        case "north", "south" -> new int[]{0, 1};
+                        case "east", "west" -> new int[]{2, 1};
+                        default -> new int[]{0, 2};
+                    };
+                    // a 64-texel atlas over 16 uv units: a model unit is a quarter of a uv unit at one texel per unit
+                    boolean density = Math.abs((uv[2] - uv[0]) * 4 - (to[axes[0]] - from[axes[0]])) < 0.01
+                            && Math.abs((uv[3] - uv[1]) * 4 - (to[axes[1]] - from[axes[1]])) < 0.01;
+                    h.assertTrue(density, w.id() + ": a " + face.getKey() + " face off one texel per unit");
+                }
+            }
+            h.assertTrue(quads > 0 && quads <= 400, w.id() + ": " + quads + " quads (at most 400)");
+        }
+        h.succeed();
+    }
+
+    private static float[] floats(com.google.gson.JsonArray a) {
+        float[] out = new float[a.size()];
+        for (int i = 0; i < out.length; i++) out[i] = a.get(i).getAsFloat();
+        return out;
     }
 
     /** A heavy held through to full charge with the meter full is the Art: the meter spent, its wave reaching past any heavy. */
