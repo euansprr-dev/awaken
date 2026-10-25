@@ -57,6 +57,7 @@ public final class Awaken {
         dev.awaken.living.LivingModule.init(modBus);
         dev.awaken.lens.LensModule.init(modBus);
         dev.awaken.anims.AnimsModule.init(modBus);
+        dev.awaken.atlas.AtlasModule.init(modBus);
     }
 
     public static Identifier id(String path) {

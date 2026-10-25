@@ -930,9 +930,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
-- Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling, Dynamic FPS and Xaero's
-  World Map. Xaero's World Map stays only until Carillon's own Atlas ships; no minimap, ever (direction comes from the
-  world). AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
+- Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling and Dynamic FPS. Xaero's
+  World Map left it when Carillon's own Atlas shipped (M5, §16.8; M opens the table); no minimap, ever (direction
+  comes from the world). `compat.WorldMaps` stays for a player who adds Xaero's themselves, and is silent without it. AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
   log errors). Tours turn Dynamic FPS off in `run-autopilot/config/dynamic_fps.json` (it drops a background window to
   1 fps or none). JEI and Jade are compiled against as `compileOnly` from Modrinth's Maven by version id (the builds
   `pack/lock.json` pins); their plugins (`compat.client.jei`, `compat.jade`, `compat.client.jade`) are found by their
@@ -989,7 +989,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   "The map is disabled with a potion effect". Xaero still records those chunks into that dimension's own cache (the
   overworld map is never touched). The effect lives in the server's registry: single player always has it, a dedicated
   server needs Xaero's World Map installed (it is server-optional). Without Xaero nothing registers. Autopilot
-  `compat map` reports it. Test: `compat_world_map_rule`. Until Carillon's Atlas replaces Xaero.
+  `compat map` reports it. Test: `compat_world_map_rule`. Kept for a player who adds Xaero's (it left the pack at M5).
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens samples DH's own depth texture
   through `compat.client.FarTerrain` (texture `awaken:lens_far_depth`), with no copy: DH 3.3.4's Blaze renderer (the
   default engine on 26.3) clears that texture only at the start of its own pass (right after
@@ -1632,6 +1632,67 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   first; "Clear Atlas cache" button).
 - Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); wrist glance cached on the Holo.
   ≤ 2 ms/frame open, ≤ 150 ms to open, glance ≤ 0.3 ms. Markers only for what the player knows.
+- Decided in M5 (2026-10-25; concept https://claude.ai/artifact/3QCvup43wuVW6t1wDfVroP, docs/carillon/m5/):
+  - Discovery (`atlas.Discovery`, attachment `awaken:atlas`, `AtlasData` schemaVersion 1, copyOnDeath): per dimension,
+    tiles of 32×32 cells (16 longs). A player's path is checked every 5 ticks once they've moved 4 blocks; every cell the
+    64-block circle touches clears. Spectators explore nothing. Awaken's instanced dimensions (`compat.Instanced`:
+    gates, dreams, trials) are never recorded and the table doesn't open there ("The Atlas can't see inside a gate").
+    Changed tiles go to their owner in one `atlas_sync` batch every 10 ticks; login, respawn and a new dimension send
+    the dimension whole. `AtlasHooks.reveal` clears at once and ripples out from its centre on the client.
+  - Bells: a bell rung by a player (by hand or by their projectile) or a player standing in its belfry (within its
+    tower's box ±1, at or above the belfry floor − 2) clears its district: every cell whose centre
+    `CityHooks.district` gives that district, within 360 of the square. The Choir spire's bell (belfry 61) clears every
+    cell in the city. Towers, belfry heights and district names come from `data/awaken/city/plan.json`. The clouds over
+    a district part in a ring from the tower (160 blocks a second).
+  - The opening run's path is kept (a point every 10 ticks of the run and arrival, ≥ 3 blocks apart, ≤ 400) and sent
+    when the opening ends; the next time the table opens it plays the Registry reveal (the land prints in, then the
+    run draws itself as a bronze thread over 2.4 s and settles to a faint line). An automatic open inside the Registry
+    scene is the opening module's call (proposed to the orchestrator).
+  - Party sharing on request ("Share with party" on the table, `/awaken atlas share`): the current dimension's cells are
+    merged into each online member's record.
+  - Cache: one deflated file per 512×512 tile, `t.<x>.<z>.bin` ("AWAT", version 1: heights, ARGB colours, an info byte
+    per column with water depth, material class and a lit bit for night), under `sp-<save folder>` or `mp-<address>`.
+    Saved every 30 s and on leaving; the whole cache is kept ≤ 64 MB by deleting the oldest tiles down to 56 MB.
+    "Clear Atlas cache" deletes every world's tiles and the sampled columns; what you explored is the server's and
+    stays. Roofed dimensions (the Nether) draw no terrain yet.
+  - Mesh: three levels (a column is 1, 4 or 16 blocks; the level follows zoom: ≥ 0.9, ≥ 0.22, below), slices of 64×64
+    columns, a 15×15-slice window per level, ≤ 96 MB of GPU buffers (farthest dropped first); a level not drawn for 20 s
+    lets its slices go. Slices build on one worker thread from snapshots; the main thread only uploads, before the
+    pass opens. The finest level is kept built round the player while the table is shut.
+  - The table opens on M (Xaero's key), in the Holo's projected glass (`HudLook` FRAME | DRIFT, text as light), sets
+    `UiHooks` focus while open, and plays the Holo's open and close sounds. C centres on you. Dev: `/awaken atlas
+    stats|share|reveal <r>|ring <city|district>|clear` and the client's `/atlas open|view|spin|freeze|reveal|stats`.
+  - The look (phase 2): night lights from the lit bit (a light-emitting block in the top 6 of a column) as warm soft
+    sprites, flickering a little, at the two finer levels; cloud shadows on explored ground beside the blanket's edge
+    (east and south of each puff: the sun is low in the west); ambient occlusion on the top faces (darker for each
+    taller neighbour); three cloud sprites with sunlit rims and a tone per puff; zoomed out, a coarse cell that is
+    mostly known carries no cloud. Rumours (`MapMarks` labelled "? …") hang in the clouds as an amber "?" with their
+    name; every other mark shows only in an explored cell. You are a pin of light with a ring and a facing tick.
+  - Cost: slices outside the picture aren't drawn, and while only the clouds drift the picture is redrawn about 30
+    times a second (every frame while the view moves or the land prints in).
+  - The wrist glance: a section on the K menu's Status page right under NOW, the land round you (240 blocks across,
+    where you look is up) painted into the texture `awaken:atlas/glance` (480×280) at most once a second while the menu
+    shows it, or sooner once you've moved 4 blocks or turned 12°; the Holo draws it as one textured quad, with a button
+    to the table.
+  - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
+    ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
+    spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
+    take back your own under the cursor); twelve per player, the oldest goes; each party member online sees the
+    party's pins in their dimension, in the owner's own colour (a hue from their id), with the owner's name. Dev:
+    `/awaken atlas pin`. Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
+    the first air, then to the floor, so the table shows the highest floor of each column; those chunks are sampled
+    from a queue about 1 ms a tick, the diorama's base drops to 24 and there is no night. Carillon's lit windows
+    (`awaken:lit_window`, within 12 of a column's top) count as night lights.
+  - A bell's ripple adds each cell to the client's record only when the ripple reaches it (so no land shows under
+    clouds that haven't parted), a whole re-send drops every built slice, and the clouds draw over the land (no depth
+    test: spike S5's poke-through left roofs and spires floating in the blanket at the known edge). While the view
+    moves the picture redraws at most 60 times a second.
+  - Measured on OpenGL, uncapped, interleaved pairs at the same spot (tour 2026-10-25, load 5–9): the table open and
+    still +1.5–1.6 ms p50 (+1.4–1.5 of it is the open screen itself, re-blitting the frozen picture: the blit, the glass
+    card, Lens dimming), clouds at 60 Hz +1.9–2.0, orbiting +1.9–2.0 after the 60 Hz cap (+2.6 before); open 12–20 ms
+    cold, 2–8 ms warm; the glance 0.23 ms a paint; sampler 10–18 µs a chunk (120 µs under the Nether's roof).
+  - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
+    a capped tour can't show it.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,

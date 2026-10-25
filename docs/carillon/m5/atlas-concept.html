@@ -1,0 +1,427 @@
+<title>The Atlas of Carillon</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral+SC:wght@400;600&family=Spectral:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column on holo glass; the living table sketch is the hero, then moments, comparison, phases, choices. */
+:root {
+  --ink: #0a1120;        /* the Holo's deep glass */
+  --glass: #101b2e;
+  --glass-hi: #16243c;
+  --edge: #7fc3ff;       /* signal blue */
+  --text: #d9e4f2;
+  --label: #8fa7c4;
+  --amber: #ffcf7a;      /* "not true yet", rumours */
+  --bronze: #e0a86a;     /* Carillon's bells */
+  --good: #8ff0c0;
+  --violet: #b48cff;     /* gates */
+  --display: "Spectral SC", "Iowan Old Style", Georgia, serif;
+  --body: "Spectral", "Iowan Old Style", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: radial-gradient(120% 60% at 50% 0%, #13213a 0%, var(--ink) 60%) fixed, var(--ink);
+  color: var(--text);
+  font: 17px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+main { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+header { padding-top: 40px; display: grid; gap: 10px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--edge); }
+h1 { font: 600 clamp(38px, 7vw, 66px)/1.02 var(--display); letter-spacing: .06em; margin: 0; text-wrap: balance; color: #f3f6fb; }
+h2 { font: 600 26px/1.15 var(--display); letter-spacing: .08em; margin: 0 0 14px; text-wrap: balance; color: #f3f6fb; }
+h3 { font: 600 18px/1.2 var(--display); letter-spacing: .1em; margin: 0 0 6px; color: var(--bronze); }
+p { margin: 0 0 12px; max-width: 66ch; }
+.lede { font-size: 20px; color: var(--text); max-width: 60ch; }
+.muted { color: var(--label); }
+code, .mono { font: 14px/1.5 var(--mono); }
+a { color: var(--edge); }
+
+/* the table */
+.table { position: relative; border: 1px solid color-mix(in srgb, var(--edge) 40%, transparent); background: linear-gradient(var(--glass-hi), var(--glass)); }
+.table::before, .table::after { content: ""; position: absolute; width: 14px; height: 14px; border: 1px solid var(--edge); pointer-events: none; }
+.table::before { left: -3px; top: -3px; border-right: 0; border-bottom: 0; }
+.table::after { right: -3px; bottom: -3px; border-left: 0; border-top: 0; }
+canvas#atlas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; max-width: 100%; cursor: grab; touch-action: none; }
+canvas#atlas:active { cursor: grabbing; }
+.hud { position: absolute; left: 12px; top: 10px; font: 500 11px/1 var(--mono); letter-spacing: .14em; color: var(--label); pointer-events: none; text-transform: uppercase; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-top: 1px solid color-mix(in srgb, var(--edge) 22%, transparent); }
+button { font: 500 13px/1 var(--mono); letter-spacing: .06em; color: var(--text); background: color-mix(in srgb, var(--glass-hi) 80%, #000); border: 1px solid color-mix(in srgb, var(--edge) 45%, transparent); padding: 10px 12px; cursor: pointer; }
+button:hover { border-color: var(--edge); color: #fff; }
+button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+button.bell { border-color: color-mix(in srgb, var(--bronze) 60%, transparent); color: var(--bronze); }
+.caption { font: 13px/1.5 var(--mono); color: var(--label); padding: 0 12px 12px; margin: 0; }
+
+/* moments */
+.moments { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px 32px; }
+.moment { min-width: 0; border-left: 1px solid color-mix(in srgb, var(--bronze) 50%, transparent); padding-left: 16px; }
+.moment p { font-size: 16px; }
+.moment .how { font: 12.5px/1.5 var(--mono); color: var(--label); }
+
+/* comparison */
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 15.5px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid color-mix(in srgb, var(--edge) 16%, transparent); }
+th { font: 500 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--label); }
+td:first-child { color: var(--label); font: 13px/1.5 var(--mono); white-space: nowrap; }
+td.ours { color: #f3f6fb; }
+
+/* phases */
+.phases { display: grid; gap: 18px; }
+.phase { display: grid; grid-template-columns: 120px 1fr; gap: 6px 22px; padding: 16px 0; border-top: 1px solid color-mix(in srgb, var(--edge) 18%, transparent); }
+.phase .when { font: 500 12px/1.4 var(--mono); letter-spacing: .1em; color: var(--edge); text-transform: uppercase; }
+.phase .state { font: 12px/1.4 var(--mono); color: var(--good); }
+.phase ul { margin: 0; padding-left: 18px; }
+.phase li { margin: 2px 0; max-width: 70ch; }
+@media (max-width: 560px) { .phase { grid-template-columns: 1fr; } }
+
+/* choices */
+.choices { display: grid; gap: 14px; }
+.choice { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 14px 16px; background: color-mix(in srgb, var(--glass) 70%, transparent); border: 1px solid color-mix(in srgb, var(--amber) 22%, transparent); }
+.choice .q { font: 600 16px/1.3 var(--display); letter-spacing: .06em; color: var(--amber); }
+.choice .rec { font-size: 15.5px; }
+.choice .rec b { color: #f3f6fb; font-weight: 500; }
+.budget { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.budget div { padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--edge) 20%, transparent); }
+.budget .n { font: 500 22px/1.1 var(--mono); color: #f3f6fb; font-variant-numeric: tabular-nums; }
+.budget .l { font: 12px/1.4 var(--mono); color: var(--label); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">Carillon · Milestone 5 · concept for Euan</div>
+    <h1>The Atlas</h1>
+    <p class="lede">The world as a model on a table. Lift your wrist and the Holo lays out everything you've walked: real voxel terrain with depth and shadow, under clouds that hide only what you haven't seen yet. Carillon sits in the middle like a bronze-and-slate miniature, and every bell you climb blows the clouds off a district.</p>
+  </header>
+
+  <section aria-label="Living sketch of the table view">
+    <div class="table">
+      <canvas id="atlas" width="1600" height="1000" aria-label="An interactive sketch of the Atlas: a voxel diorama of Carillon and the land around it, with clouds over unexplored cells"></canvas>
+      <div class="hud" id="hud">ATLAS · yaw 30° · tilt 52°</div>
+      <div class="controls">
+        <button id="b-open">Open the table</button>
+        <button id="b-walk">Walk east</button>
+        <button id="b-bell" class="bell">Ring Bellwatch's bell</button>
+        <button id="b-spire" class="bell">Ring the Choir spire</button>
+        <button id="b-run">The Registry reveal</button>
+        <button id="b-night">Night</button>
+        <button id="b-reset">Reset</button>
+      </div>
+      <p class="caption">A browser sketch of the look and the moments, not the game's renderer. Drag to orbit and tilt, scroll to zoom. The game draws the same idea from real sampled columns, with real block colours, at a 2 ms budget.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Six moments</h2>
+    <div class="moments">
+      <div class="moment">
+        <h3>The table prints</h3>
+        <p>Press M. The Holo's light spills off the wristband and the land rises out of the glass in a ring that starts under your feet and runs outward, column by column, like a hologram printing. Clouds roll in from the rim last. About 0.6 s, and it never waits on loading: the mesh is kept warm while the Atlas is shut.</p>
+        <p class="how">Per-slice rise in the model matrix, delayed by distance. Costs nothing extra.</p>
+      </div>
+      <div class="moment">
+        <h3>A living model</h3>
+        <p>The table follows the real sky. By day there's a low west sun with cast shadows. At night the land goes blue and Carillon's windows and lamps light up as tiny warm points. Cloud shadows slide over the ground at the explored edge, and water shimmers.</p>
+        <p class="how">A lit bit per column, from emissive top blocks. Glow points drawn in the same pass.</p>
+      </div>
+      <div class="moment">
+        <h3>Clouds part as you walk</h3>
+        <p>Everything within about 64 blocks of your path is known. Leave the Atlas open while you walk and you watch the blanket thin and lift over the ground you've just seen. Everything else stays under soft, sunlit cumulus, never a black fog of war.</p>
+        <p class="how">Server bits, 1 per 16×16 cell. New cells fade their puffs out over a second.</p>
+      </div>
+      <div class="moment">
+        <h3>Bells clear districts</h3>
+        <p>Climb a district's bell tower and ring its bell (or just stand in the belfry), and the clouds blow off the whole district in a ring that spreads from the tower. The Choir spire's great bell clears all of Carillon. The city's towers become the reason to climb.</p>
+        <p class="how">Bell positions from the city plan. District shapes from <code>CityHooks.district</code>.</p>
+      </div>
+      <div class="moment">
+        <h3>The Registry reveal</h3>
+        <p>At the Registry, Bram tells you the Association keeps a map of every runner. The Atlas opens on its own, high over the city, and your opening run draws itself across the rooftops as a glowing bronze thread, from the Roost to Choir Square, with the clouds already gone where you ran.</p>
+        <p class="how">The server records the run's path (≤ 400 points). Plays once, then lives on as a faint thread.</p>
+      </div>
+      <div class="moment">
+        <h3>The wrist glance</h3>
+        <p>In the K menu, the Atlas is a small live puck: the land around you, tilted, turning with your facing, with your pin at the centre. It's cached as one texture and redrawn at most once a second, so it costs almost nothing. Click it and the full table opens.</p>
+        <p class="how"><code>UiCanvas.texture</code> on the Holo panel, ≤ 0.3 ms.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Only what you know</h2>
+    <p>Every marker passes one test: has this player explored that cell, or been told about it? Markers stand on the terrain, hidden when a ridge is in the way, and their labels fan out so they never pile up.</p>
+    <div class="moments">
+      <div class="moment"><h3>Places</h3><p>Carillon's districts and landmarks in spaced small caps when you zoom in. Region names from the Living Wilds lettered across the land when you zoom out, the way old maps label a country.</p></div>
+      <div class="moment"><h3>Rumours</h3><p>A rumour you've heard is an amber "?" hanging <em>in the clouds</em> over the region, because by definition you haven't seen it yet. Go there and the "?" becomes the thing.</p></div>
+      <div class="moment"><h3>Gates, lairs, your Hearth</h3><p>Gate pillars you've seen are violet light columns in their rank's colour. Lairs, landmarks and your Hearth come through the existing <code>MapMarks</code>. Party members show as small lit pins; later, a shared pin you drop on the table.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why it beats Xaero's</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th></th><th>Xaero's World Map</th><th>The Atlas</th></tr></thead>
+        <tbody>
+          <tr><td>Picture</td><td>A flat top-down image, pixel per block</td><td class="ours">A 3D voxel model you orbit, tilt and zoom, with shadows and depth</td></tr>
+          <tr><td>Unexplored</td><td>Black, or simply empty</td><td class="ours">Drifting clouds that part as you learn the land</td></tr>
+          <tr><td>Truth</td><td>Records every chunk the client sees, including a gate's rooms at the door (we have to switch it off with a potion effect)</td><td class="ours">The server decides what you've explored. Gates stay unknown until walked. Nothing leaks.</td></tr>
+          <tr><td>Carillon</td><td>Doesn't know it exists</td><td class="ours">Districts, landmarks and bells. Climbing reveals the map.</td></tr>
+          <tr><td>Story</td><td>None</td><td class="ours">The Registry reveal, rumours in the clouds, a party's shared map</td></tr>
+          <tr><td>Look</td><td>Another mod's UI</td><td class="ours">The Holo: the same glass, edge and glow as the K menu</td></tr>
+          <tr><td>Pack</td><td>A comfort-profile mod plus our workaround code</td><td class="ours">Built in. Xaero leaves the pack and <code>compat.WorldMaps</code> goes quiet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Budgets</h2>
+    <div class="budget">
+      <div><div class="n">≤ 2 ms</div><div class="l">a frame while open (spike: +0.7–1.0 p50 static, +1.4–1.7 orbiting)</div></div>
+      <div><div class="n">≤ 150 ms</div><div class="l">to open (spike: 83 cold, 4–10 warm; we keep it warm)</div></div>
+      <div><div class="n">≤ 0.3 ms</div><div class="l">wrist glance (one cached quad; spike frozen path ≈ 0)</div></div>
+      <div><div class="n">≤ 64 MB</div><div class="l">disk cache per install, oldest tiles evicted first</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Phases</h2>
+    <div class="phases">
+      <div class="phase"><div><div class="when">Phase 1</div><div class="state">building now</div></div>
+        <ul>
+          <li>Server discovery: 1 bit per 16×16 cell per dimension, an attachment with <code>schemaVersion</code>. Clears about 64 blocks round your path. Bells clear districts and the spire clears the city. <code>AtlasHooks.reveal</code> and <code>explored</code>.</li>
+          <li>Sync to the owner in batches. Party sharing on request.</li>
+          <li>Client tile cache in <code>awaken/atlas/&lt;world&gt;/&lt;dim&gt;/</code>: versioned, deflated, ≤ 64 MB, oldest first, with a "Clear Atlas cache" button.</li>
+          <li>The renderer from spike S5, with its memory bounded: a mesh window round the view, coarser levels when zoomed out, and meshing on a worker thread.</li>
+          <li>The table view on M, in Holo glass, with markers from <code>MapMarks</code>.</li>
+        </ul></div>
+      <div class="phase"><div><div class="when">Phase 2</div><div class="state">the look</div></div>
+        <ul>
+          <li>The print-in open, cloud variants with a soft cloud floor, sunlit rims and cloud shadows.</li>
+          <li>Night with lit windows and lamps, corner AO for forests, and water shimmer.</li>
+          <li>District and region lettering, the wrist glance in the K menu, and the Registry reveal.</li>
+          <li>One screenshot tour, judged against this page.</li>
+        </ul></div>
+      <div class="phase"><div><div class="when">Phase 3</div><div class="state">ship</div></div>
+        <ul>
+          <li>Party pins, rumour "?" glyphs in the clouds, and gate light columns.</li>
+          <li>Measured perf on a quiet machine, then Xaero leaves the pack plan.</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Choices for you</h2>
+    <p class="muted">I'm building on the recommendation for each of these. Each is cheap to change, so say if one is wrong.</p>
+    <div class="choices">
+      <div class="choice"><div class="q">Which key opens the table?</div><div class="rec"><b>M</b>, the key Xaero's used. The glance stays in the K menu.</div></div>
+      <div class="choice"><div class="q">How does a bell clear its district?</div><div class="rec"><b>Ringing the bell or standing in the belfry</b> both count. Ringing is the deed. Standing there means nobody misses it.</div></div>
+      <div class="choice"><div class="q">Should the Atlas pop open by itself at the Registry?</div><div class="rec"><b>Yes, once</b>, right after Bram's line about the Association's map, before the first Directive. If the opening is skipped, the reveal plays the first time you press M.</div></div>
+      <div class="choice"><div class="q">What happens inside a gate?</div><div class="rec"><b>The Atlas is shut there</b> ("The Atlas can't see inside a gate"). Gates are learned by walking and by Perception, as now.</div></div>
+      <div class="choice"><div class="q">What does the Nether show?</div><div class="rec"><b>Phase 3</b>: sample the cave floor below your height instead of the bedrock roof. Until then, the Nether is drawn only where you've walked, from the ground you stood on.</div></div>
+      <div class="choice"><div class="q">Should the table follow day and night?</div><div class="rec"><b>Follow the real sky</b>, so the city lights up at night. A setting can keep it always day.</div></div>
+      <div class="choice"><div class="q">What should the Gate Map tab become?</div><div class="rec"><b>Rename it "Atlas"</b>: the glance on top and the gate list under it. This touches the gates module, so it goes through the orchestrator.</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const cv = document.getElementById('atlas'), g = cv.getContext('2d');
+  const hud = document.getElementById('hud');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const N = 72; // columns per side; one column is 8 blocks here
+  const CELL = 3; // columns per discovery cell (24 blocks)
+  const H = new Float32Array(N * N), C = new Array(N * N), KIND = new Uint8Array(N * N), LIT = new Uint8Array(N * N);
+  // seeded noise
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const grid = []; for (let i = 0; i < 17 * 17; i++) grid.push(rnd());
+  const vn = (x, z) => { const xi = Math.floor(x), zi = Math.floor(z), fx = x - xi, fz = z - zi;
+    const at = (a, b) => grid[((a % 16 + 16) % 16) + ((b % 16 + 16) % 16) * 17];
+    const s = t => t * t * (3 - 2 * t), u = s(fx), v = s(fz);
+    return (at(xi, zi) * (1 - u) + at(xi + 1, zi) * u) * (1 - v) + (at(xi, zi + 1) * (1 - u) + at(xi + 1, zi + 1) * u) * v; };
+  const fbm = (x, z) => vn(x, z) * .55 + vn(x * 2.1, z * 2.1) * .3 + vn(x * 4.3, z * 4.3) * .15;
+  const cxm = N / 2, czm = N / 2 + 2;
+  const hex = (r, gg, b) => [r, gg, b];
+  for (let z = 0; z < N; z++) for (let x = 0; x < N; x++) {
+    const i = z * N + x, dx = x - cxm, dz = z - czm, d = Math.hypot(dx, dz);
+    let h = fbm(x / 9, z / 9) * 9 + 3;
+    const sea = (x + z * 0.4) < 14; // a coast to the west
+    const river = Math.abs(dz - (dx * 0.35) - Math.sin(dx / 6) * 2.2) < 1.1 && !sea;
+    let col, kind = 0;
+    if (d < 13) { // Carillon
+      h = 4;
+      const ring = Math.abs(d - 12.3) < 0.8;
+      const sq = d < 2.6;
+      if (ring) { h = 8.5; col = hex(150, 150, 160); kind = 3; }
+      else if (sq) { h = 4.2; col = hex(205, 196, 176); kind = 2; }
+      else if (river) { h = 2.5; col = hex(52, 96, 150); kind = 1; }
+      else {
+        const block = ((x * 7 + z * 13) % 5);
+        const street = (Math.abs(Math.atan2(dz, dx) * 6 / Math.PI % 1) < .1) || Math.abs(d - 7) < .45;
+        if (street) { h = 4.1; col = hex(176, 168, 150); kind = 2; }
+        else {
+          h = 5 + (block % 3) * 1.2 + (d < 6 ? 1 : 0);
+          const roofs = [[150, 72, 52], [118, 82, 66], [70, 78, 96], [168, 92, 60], [92, 96, 108]];
+          col = roofs[(x * 3 + z * 5) % 5].slice(); kind = 4;
+          if (((x * 31 + z * 17) % 4) === 0) LIT[i] = 1;
+        }
+      }
+      if (Math.abs(dx) < .6 && Math.abs(dz + 1.5) < .6) { h = 17; col = hex(196, 198, 190); kind = 5; }
+      for (const [bx, bz] of [[-7, -3], [-5, 4], [4, -6], [6, 2], [2, 7]]) if (Math.abs(dx - bx) < .6 && Math.abs(dz - bz) < .6) { h = 11; col = hex(132, 120, 108); kind = 5; }
+    } else if (sea) { h = 1.6; const dep = Math.min(1, (14 - (x + z * .4)) / 10); col = hex(40 - dep * 16, 82 - dep * 30, 140 - dep * 30); kind = 1; }
+    else if (river) { h = 2.2; col = hex(52, 98, 152); kind = 1; }
+    else if (h > 9.4) { col = hex(232, 236, 242); kind = 6; h += 2.5; }
+    else if (h > 8) { col = hex(124, 124, 128); kind = 3; h += 1.2; }
+    else if (fbm(x / 4 + 9, z / 4) > .56) { col = hex(54 + h * 3, 108 + h * 4, 48); kind = 7; h += 1.6; }
+    else if ((x + z * 0.4) < 16.5) { col = hex(214, 200, 150); kind = 2; }
+    else { col = hex(96 + h * 4, 152 + h * 3, 70); kind = 0; }
+    H[i] = h; C[i] = col; KIND[i] = kind;
+  }
+  // west-sun shadows baked into a shade factor
+  const SH = new Float32Array(N * N);
+  for (let z = 0; z < N; z++) { let lvl = -99; for (let x = 0; x < N; x++) { const i = z * N + x; SH[i] = Math.min(1, Math.max(0, (lvl - H[i]) * .5)); lvl = Math.max(lvl, H[i]) - .55; } }
+
+  // discovery: one bit per cell
+  const NC = N / CELL;
+  const known = new Float32Array(NC * NC); // 0..1, eases toward target
+  const target = new Uint8Array(NC * NC);
+  const revealAt = new Float32Array(NC * NC).fill(-1);
+  let walkX = cxm, walkZ = czm;
+  const clearAround = (x, z, r, t, origin) => {
+    for (let cz = 0; cz < NC; cz++) for (let cx = 0; cx < NC; cx++) {
+      const mx = cx * CELL + CELL / 2, mz = cz * CELL + CELL / 2;
+      if (Math.hypot(mx - x, mz - z) <= r && !target[cz * NC + cx]) { target[cz * NC + cx] = 1; revealAt[cz * NC + cx] = t + (origin ? Math.hypot(mx - origin[0], mz - origin[1]) * 0.022 : 0); }
+    }
+  };
+  const inCity = (x, z) => Math.hypot(x - cxm, z - czm) < 13;
+  const district = (x, z) => { const a = Math.atan2(z - czm, x - cxm); return Math.floor(((a + Math.PI) / (2 * Math.PI)) * 5) % 5; };
+  const resetKnown = () => { target.fill(0); known.fill(0); revealAt.fill(-1); walkX = cxm - 4; walkZ = czm + 7;
+    clearAround(walkX, walkZ, 6, 0); };
+
+  // the run's thread (Roost -> square)
+  const run = []; for (let k = 0; k <= 40; k++) { const t = k / 40; run.push([cxm - 10 + t * 10 + Math.sin(t * 7) * 1.6, czm + 8 - t * 9.5 + Math.cos(t * 5) * 1.2]); }
+  let runStart = -1;
+
+  // view
+  let yaw = 30, tilt = 52, zoom = 1, night = 0, nightTarget = 0;
+  let printStart = -1;
+  const puffs = [];
+  for (let cz = 0; cz < NC; cz++) for (let cx = 0; cx < NC; cx++) for (let k = 0; k < 2; k++) puffs.push({ cx, cz, ox: rnd() - .5, oz: rnd() - .5, s: .8 + rnd() * .7, ph: rnd() * 6.28, v: Math.floor(rnd() * 3) });
+
+  // puff sprites: three variants, sunlit crown, blue-grey belly
+  const sprites = [0, 1, 2].map(v => { const c = document.createElement('canvas'); c.width = 160; c.height = 110; const x = c.getContext('2d');
+    const blobs = [[[80, 66, 40], [50, 72, 30], [112, 72, 32], [74, 46, 28], [100, 52, 22]], [[70, 68, 36], [104, 64, 38], [46, 76, 24], [88, 44, 26]], [[80, 70, 44], [44, 70, 26], [118, 74, 24], [62, 48, 22], [96, 42, 24], [80, 36, 16]]][v];
+    for (const [bx, by, r] of blobs) { const gr = x.createRadialGradient(bx, by - r * .2, r * .1, bx, by, r); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(.6, 'rgba(250,252,255,.8)'); gr.addColorStop(1, 'rgba(240,246,255,0)'); x.fillStyle = gr; x.beginPath(); x.arc(bx, by, r, 0, 7); x.fill(); }
+    x.globalCompositeOperation = 'source-atop'; const sh = x.createLinearGradient(0, 30, 0, 110); sh.addColorStop(0, 'rgba(255,240,215,.35)'); sh.addColorStop(.45, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(70,95,140,.6)'); x.fillStyle = sh; x.fillRect(0, 0, 160, 110); return c; });
+
+  const W = cv.width, HH = cv.height;
+  function project(x, y, z) { // world (columns, height units) -> screen
+    const a = yaw * Math.PI / 180, t = tilt * Math.PI / 180;
+    const rx = (x - cxm) * Math.cos(a) - (z - czm) * Math.sin(a), rz = (x - cxm) * Math.sin(a) + (z - czm) * Math.cos(a);
+    const s = 15.5 * zoom * (W / 1600);
+    return [W / 2 + rx * s, HH * .56 + (rz * Math.sin(t) - y * .55 * Math.cos(t)) * s, rz * Math.cos(t) + y * Math.sin(t) * .55];
+  }
+  const shade = (c, f, n) => { const nr = [26, 40, 78]; return `rgb(${(c[0] * f * (1 - n) + nr[0] * f * n) | 0},${(c[1] * f * (1 - n) + nr[1] * f * n) | 0},${(c[2] * f * (1 - n) + nr[2] * f * n) | 0})`; };
+
+  let last = performance.now(), time = 0;
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000); last = now; time += dt;
+    night += (nightTarget - night) * Math.min(1, dt * 3);
+    for (let i = 0; i < known.length; i++) { const goal = target[i] && time >= revealAt[i] ? 1 : 0; known[i] += (goal - known[i]) * Math.min(1, dt * 2.6); }
+    if (walking) { walkX += dt * 4.2; walkZ -= dt * 1.1; clearAround(walkX, walkZ, 5.5, time); if (walkX > N - 6) walking = false; }
+    draw();
+    requestAnimationFrame(frame);
+  }
+  let walking = false;
+
+  function draw() {
+    g.clearRect(0, 0, W, HH);
+    // glass under the table + grid
+    g.strokeStyle = 'rgba(127,195,255,.07)'; g.lineWidth = 1;
+    for (let k = -4; k <= N + 4; k += 6) { let [x0, y0] = project(k, 0, -4), [x1, y1] = project(k, 0, N + 4); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); [x0, y0] = project(-4, 0, k); [x1, y1] = project(N + 4, 0, k); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
+    // columns far to near
+    const a = yaw * Math.PI / 180, order = [];
+    for (let z = 0; z < N; z++) for (let x = 0; x < N; x++) { const cell = Math.floor(z / CELL) * NC + Math.floor(x / CELL); if (known[cell] < .02) continue; order.push([(x - cxm) * Math.sin(a) + (z - czm) * Math.cos(a), x, z, cell]); }
+    order.sort((p, q) => p[0] - q[0]);
+    const printing = printStart >= 0 ? (time - printStart) : 99;
+    for (const [, x, z, cell] of order) {
+      const i = z * N + x;
+      const rise = printing < 99 ? Math.min(1, Math.max(0, (printing - Math.hypot(x - walkX, z - walkZ) * .018) / .35)) : 1;
+      const k = Math.min(known[cell], 1) * (rise * rise * (3 - 2 * rise));
+      const h = H[i] * k, base = -1.5;
+      const c = C[i], sh = 1 - .32 * SH[i] * (1 - night), n = night * .72;
+      const p00 = project(x, h, z), p10 = project(x + 1, h, z), p11 = project(x + 1, h, z + 1), p01 = project(x, h, z + 1);
+      const b00 = project(x, base, z), b10 = project(x + 1, base, z), b11 = project(x + 1, base, z + 1), b01 = project(x, base, z + 1);
+      const quad = (p, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(p[0][0], p[0][1]); for (let j = 1; j < 4; j++) g.lineTo(p[j][0], p[j][1]); g.closePath(); g.fill(); };
+      // the two faces toward the viewer
+      const faces = [[p10, p11, b11, b10, .66], [p01, p11, b11, b01, .82], [p00, p10, b10, b00, .74], [p00, p01, b01, b00, .9]];
+      const sa = Math.sin(a), ca = Math.cos(a);
+      if (-sa < 0) quad(faces[0], shade(c, faces[0][4] * sh, n)); else quad(faces[3], shade(c, faces[3][4] * sh, n));
+      if (ca > 0) quad(faces[1], shade(c, faces[1][4] * sh, n)); else quad(faces[2], shade(c, faces[2][4] * sh, n));
+      const grain = 1 + (((x * 73 + z * 151) % 7) - 3) * .012;
+      let topf = (1.02 - (KIND[i] === 1 ? Math.sin(time * 1.6 + x * .7 + z * .4) * .03 : 0)) * sh * grain;
+      quad([p00, p10, p11, p01], shade(c, topf, n));
+      if (LIT[i] && night > .15 && k > .9) { const m = project(x + .5, h + .05, z + .5); const gr = g.createRadialGradient(m[0], m[1], 0, m[0], m[1], 9 * zoom); gr.addColorStop(0, `rgba(255,214,140,${.9 * night})`); gr.addColorStop(1, 'rgba(255,170,80,0)'); g.fillStyle = gr; g.fillRect(m[0] - 10 * zoom, m[1] - 10 * zoom, 20 * zoom, 20 * zoom); }
+    }
+    // the run's thread
+    if (runStart >= 0) {
+      const t = Math.min(1, (time - runStart) / 2.4), upto = Math.floor(t * (run.length - 1));
+      g.lineCap = 'round'; g.lineJoin = 'round';
+      for (const [w, col] of [[9 * zoom, 'rgba(224,168,106,.18)'], [3.2 * zoom, 'rgba(255,214,150,.95)']]) {
+        g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+        for (let k = 0; k <= upto; k++) { const [rx, rz] = run[k]; const ii = Math.floor(rz) * N + Math.floor(rx); const p = project(rx, (H[ii] || 4) + .3, rz); k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }
+        g.stroke();
+      }
+      if (upto < run.length - 1 || time - runStart < 4) { const [rx, rz] = run[upto]; const ii = Math.floor(rz) * N + Math.floor(rx); const p = project(rx, (H[ii] || 4) + .3, rz); const gr = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], 16 * zoom); gr.addColorStop(0, 'rgba(255,236,190,.95)'); gr.addColorStop(1, 'rgba(255,200,120,0)'); g.fillStyle = gr; g.fillRect(p[0] - 16 * zoom, p[1] - 16 * zoom, 32 * zoom, 32 * zoom); }
+    }
+    // you
+    { const ii = Math.floor(walkZ) * N + Math.floor(walkX); const p = project(walkX, (H[ii] || 4) + .2, walkZ); g.strokeStyle = 'rgba(233,241,255,.95)'; g.lineWidth = 2; g.beginPath(); g.arc(p[0], p[1], 7 * zoom, 0, 7); g.stroke(); g.fillStyle = '#fff'; g.fillRect(p[0] - 2, p[1] - 2, 4, 4); label('YOU', p[0] + 26 * zoom, p[1] - 4, '#e9f1ff'); }
+    // labels for known places
+    const lab = (x, z, y, text, col) => { const cell = Math.floor(z / CELL) * NC + Math.floor(x / CELL); if (known[cell] < .6) return; const p = project(x, y, z); label(text, p[0], p[1] - 18, col); };
+    lab(cxm, czm - 1.5, 17, 'THE CHOIR', '#e0a86a');
+    lab(cxm - 7, czm - 3, 11, 'BELLWATCH', '#d9e4f2');
+    lab(cxm + 6, czm + 2, 11, 'GARDEN WARD', '#d9e4f2');
+    // clouds, far to near, with a rumour "?" riding them
+    const cl = [];
+    for (const pf of puffs) { const ci = pf.cz * NC + pf.cx; const veil = 1 - known[ci]; if (veil < .05) continue;
+      const wx = pf.cx * CELL + CELL / 2 + pf.ox * 2.2 + Math.sin(time * .22 + pf.ph) * .8, wz = pf.cz * CELL + CELL / 2 + pf.oz * 2.2 + Math.cos(time * .17 + pf.ph) * .4;
+      const edge = 1 - Math.max(0, Math.min(1, (Math.hypot(wx - cxm, wz - czm) - 25) / 6)); if (edge <= 0) continue;
+      const p = project(wx, 14, wz); cl.push([p[2], p[0], p[1], pf.s * zoom, veil * edge, pf.v]); }
+    cl.sort((p, q) => p[0] - q[0]);
+    for (const [, x, y, s, al, v] of cl) { g.globalAlpha = Math.min(.92, al) * (1 - night * .3); g.drawImage(sprites[v], x - 40 * s, y - 28 * s, 80 * s, 55 * s); }
+    g.globalAlpha = 1;
+    if (night > .02) { g.fillStyle = `rgba(14,24,52,${night * .28})`; g.fillRect(0, 0, W, HH); }
+    { const p = project(N - 12, 18, 10); const pulse = .75 + Math.sin(time * 2) * .25; g.font = `600 ${44 * zoom}px "Spectral SC", Georgia, serif`; g.textAlign = 'center'; g.fillStyle = `rgba(255,207,122,${.85 * pulse})`; g.shadowColor = 'rgba(255,190,90,.8)'; g.shadowBlur = 18; g.fillText('?', p[0], p[1]); g.shadowBlur = 0; g.font = `500 ${15 * zoom}px "IBM Plex Mono", monospace`; g.fillText('RUMOUR · THE ASHEN REACH', p[0], p[1] + 24 * zoom); }
+    hud.textContent = `ATLAS · yaw ${((yaw % 360) + 360) % 360 | 0}° · tilt ${tilt | 0}° · ${night > .5 ? 'night' : 'day'}`;
+  }
+  function label(text, x, y, col) { g.font = `600 ${15 * Math.max(.8, zoom)}px "Spectral SC", Georgia, serif`; g.textAlign = 'center'; const w = g.measureText(text).width + 14; g.fillStyle = 'rgba(11,22,38,.72)'; g.fillRect(x - w / 2, y - 13, w, 19); g.fillStyle = col; g.fillText(text, x, y + 1); }
+
+  // input
+  let drag = null;
+  cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => { if (!drag) return; yaw += (e.clientX - drag[0]) * .5; tilt = Math.max(24, Math.min(86, tilt - (e.clientY - drag[1]) * .35)); drag = [e.clientX, e.clientY]; });
+  cv.addEventListener('pointerup', () => drag = null);
+  cv.addEventListener('wheel', e => { e.preventDefault(); zoom = Math.max(.6, Math.min(2.4, zoom * Math.pow(1.1, -Math.sign(e.deltaY)))); }, { passive: false });
+  document.getElementById('b-open').onclick = () => { printStart = time; };
+  document.getElementById('b-walk').onclick = () => { walking = true; };
+  document.getElementById('b-bell').onclick = () => { const bx = cxm - 7, bz = czm - 3, d = district(bx, bz); for (let cz = 0; cz < NC; cz++) for (let cx = 0; cx < NC; cx++) { const mx = cx * CELL + 1.5, mz = cz * CELL + 1.5; if (inCity(mx, mz) && district(mx, mz) === d && !target[cz * NC + cx]) { target[cz * NC + cx] = 1; revealAt[cz * NC + cx] = time + Math.hypot(mx - bx, mz - bz) * .03; } } };
+  document.getElementById('b-spire').onclick = () => { for (let cz = 0; cz < NC; cz++) for (let cx = 0; cx < NC; cx++) { const mx = cx * CELL + 1.5, mz = cz * CELL + 1.5; if (Math.hypot(mx - cxm, mz - czm) < 14 && !target[cz * NC + cx]) { target[cz * NC + cx] = 1; revealAt[cz * NC + cx] = time + Math.hypot(mx - cxm, mz - czm) * .035; } } };
+  document.getElementById('b-run').onclick = () => { for (const [rx, rz] of run) clearAround(rx, rz, 3.2, time); runStart = time; yaw = 18; tilt = 64; };
+  document.getElementById('b-night').onclick = e => { nightTarget = nightTarget ? 0 : 1; e.target.textContent = nightTarget ? 'Day' : 'Night'; };
+  document.getElementById('b-reset').onclick = () => { resetKnown(); runStart = -1; printStart = -1; walking = false; };
+  resetKnown();
+  for (const [rx, rz] of run) clearAround(rx, rz, 3.2, -1); // the page opens on the run already known
+  clearAround(cxm, czm, 14, -1); // and the city, as if the spire's bell had rung
+  for (let k = 0; k < 12; k++) clearAround(cxm + 12 + k * 1.6, czm - 6 - k * 0.9, 5, -1); // a road walked north-east
+  runStart = -10; known.forEach((_, i) => { if (target[i]) known[i] = 1; });
+  if (!reduce) requestAnimationFrame(frame); else { draw(); }
+})();
+</script>

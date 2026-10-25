@@ -692,27 +692,6 @@
    ],
    "dependencyOf": [],
    "why": "Mountain ranges, deep oceans and valleys; keeps vanilla biomes, so every Awaken spawn and ruin still has a home."
-  },
-  {
-   "slug": "xaeros-world-map",
-   "title": "Xaero's World Map",
-   "projectId": "NcUtCpym",
-   "versionId": "wmZLa8s4",
-   "version": "neoforge-26.3-1.47.1",
-   "channel": "release",
-   "published": "2026-10-20",
-   "file": "xaeroworldmap-neoforge-26.3-1.47.1.jar",
-   "url": "https://cdn.modrinth.com/data/NcUtCpym/versions/wmZLa8s4/xaeroworldmap-neoforge-26.3-1.47.1.jar",
-   "size": 1453922,
-   "sha1": "8a86e23fb37b5726a2d0d6ac89fa400cb5eb5df3",
-   "sha512": "cef2c94fcb5fcebcb4a4a8c5132bffb5b0644afaaa1afefc0a8e89b87201b9b5339b24747b9683a955c834ca36c6c1636a93d10df699626f1adbcbe7909655ae",
-   "client": "required",
-   "server": "optional",
-   "profiles": [
-    "comfort"
-   ],
-   "dependencyOf": [],
-   "why": "A world map you open; no minimap."
   }
  ]
 }
