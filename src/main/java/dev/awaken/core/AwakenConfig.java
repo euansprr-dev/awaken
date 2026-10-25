@@ -91,12 +91,16 @@ public final class AwakenConfig {
                 .comment("Story scenes (the awakening's ritual, the black and the tear) turn Lens on for their length even when",
                         "Lens is off, like a cutscene, and hand the frame back after. Never while an Iris shaderpack is on.")
                 .define("lensInScenes", true);
-        /** AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom) or CINEMATIC (adds light shafts). */
-        public enum LensLook { OFF, SWIFT, CINEMATIC }
+        /**
+         * AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom), CINEMATIC (Lens 2: sun
+         * shadows, contact shadows, AO, filmic light, light shafts) or ULTRA (the same at higher quality, SPEC §22).
+         */
+        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA }
 
         public static final ModConfigSpec.EnumValue<LensLook> LENS = C
-                .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps)",
-                        "or CINEMATIC (adds light shafts from the sun). It steps aside while an Iris shaderpack is on.")
+                .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps),",
+                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps) or ULTRA",
+                        "(the same at higher quality; 60+ fps). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
         public static final ModConfigSpec SPEC = C.build();
 

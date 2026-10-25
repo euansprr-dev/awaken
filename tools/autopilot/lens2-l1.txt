@@ -1,0 +1,184 @@
+# Lens 2, step L1 (SPEC §22): light and shadow. One tour: the same cameras before (lensdebug 8, the classic Cinematic
+# on the same frame) and after (Cinematic, Ultra), then a frame-time bench of off / Swift / Cinematic / Ultra on one
+# vista. 1280x720 points = 2560x1440 on Retina; RD 32 (Euan's settings).
+# Run (alone on the machine, it measures):
+#   PACK=perf,world TECTONIC=awakened RD=32 LENS=cinematic SLOT_WHO=lens2 \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/lens2-l1.txt 1500
+world lens2l1 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1280 720
+info
+hud off
+cmd gamemode spectator
+lens cinematic
+# ---- the lab: a grass plot in the air with trees, pillars, a roofed gazebo, slabs, mobs and a torch-lit room
+cmd time set 11900
+cmd tp @s 600 255 560 0 30
+wait 200
+cmd fill 585 240 585 635 240 635 minecraft:grass_block
+cmd place feature minecraft:fancy_oak 596 241 600
+cmd place feature minecraft:oak 588 241 616
+cmd place feature minecraft:spruce 604 241 628
+cmd place feature minecraft:birch 626 241 590
+cmd fill 606 241 606 606 246 606 minecraft:stone_bricks
+cmd fill 609 241 606 609 246 606 minecraft:stone_bricks
+cmd fill 610 241 612 610 244 612 minecraft:stone_bricks
+cmd fill 616 241 612 616 244 612 minecraft:stone_bricks
+cmd fill 610 241 618 610 244 618 minecraft:stone_bricks
+cmd fill 616 241 618 616 244 618 minecraft:stone_bricks
+cmd fill 609 245 611 617 245 619 minecraft:oak_planks
+cmd fill 592 241 590 600 241 590 minecraft:smooth_stone_slab
+cmd fill 592 241 592 600 241 592 minecraft:oak_stairs
+cmd fill 618 241 596 618 241 604 minecraft:white_carpet
+cmd fill 620 241 620 630 246 630 minecraft:stone_bricks hollow
+cmd setblock 625 243 621 minecraft:wall_torch[facing=south]
+cmd setblock 621 243 625 minecraft:wall_torch[facing=east]
+cmd summon minecraft:cow 602 241 596 {NoAI:1b,Rotation:[60f,0f]}
+cmd summon minecraft:villager 612 241 600 {NoAI:1b,Rotation:[120f,0f]}
+cmd summon minecraft:sheep 598 241 608 {NoAI:1b}
+wait 60
+# golden hour, the sun behind the camera: long shadows reaching away
+cmd tp @s 578 249 600 -90 22
+wait 120
+lensdebug 8
+wait 20
+shot l1_01_lab_golden_away_classic
+lensdebug 0
+wait 40
+shot l1_01_lab_golden_away_cinematic
+lens ultra
+wait 60
+shot l1_01_lab_golden_away_ultra
+lensdebug 5
+wait 10
+shot l1_01_lab_golden_away_dbg_buffer
+lensdebug 6
+wait 10
+shot l1_01_lab_golden_away_dbg_normals
+lensdebug 7
+wait 10
+shot l1_01_lab_golden_away_dbg_light
+lensdebug 0
+lens cinematic
+# into the sun: backlit, shadows toward the camera (the reference's framing)
+cmd tp @s 640 247 606 90 14
+wait 60
+lensdebug 8
+wait 20
+shot l1_02_lab_golden_into_classic
+lensdebug 0
+wait 40
+shot l1_02_lab_golden_into_cinematic
+# contact shadows and ambient occlusion up close: the gazebo, the mobs, the slabs
+cmd tp @s 603 244 594 -45 25
+wait 40
+lensdebug 8
+wait 20
+shot l1_03_lab_close_classic
+lensdebug 0
+wait 40
+shot l1_03_lab_close_cinematic
+# noon: the sun straight overhead, shadows under things
+cmd time set 6000
+cmd tp @s 578 249 600 -90 22
+wait 60
+lensdebug 8
+wait 20
+shot l1_04_lab_noon_classic
+lensdebug 0
+wait 40
+shot l1_04_lab_noon_cinematic
+# night: the moon's faint shadows
+cmd time set 16500
+wait 40
+lensdebug 8
+wait 20
+shot l1_05_lab_night_classic
+lensdebug 0
+wait 40
+shot l1_05_lab_night_cinematic
+# inside the torch-lit room by day: left as the game lit it, plus ambient occlusion
+cmd time set 6000
+cmd tp @s 628.5 242 628.5 135 10
+wait 40
+lensdebug 8
+wait 20
+shot l1_06_room_classic
+lensdebug 0
+wait 40
+shot l1_06_room_cinematic
+# the holo menu over the lit world (glass and hand never shadowed)
+cmd time set 11900
+cmd tp @s 578 249 600 -90 22
+wait 40
+screen holo
+wait 60
+shot l1_07_holo_cinematic
+screen close
+wait 20
+# ---- Carillon at golden hour: into the sun, then away from it
+cmd time set 11900
+cmd awaken city view sky_nw_low
+wait 400
+look 90 12
+wait 60
+lensdebug 8
+wait 20
+shot l1_08_city_into_classic
+lensdebug 0
+wait 40
+shot l1_08_city_into_cinematic
+lens ultra
+wait 60
+shot l1_08_city_into_ultra
+lens cinematic
+look -90 18
+wait 60
+lensdebug 8
+wait 20
+shot l1_09_city_away_classic
+lensdebug 0
+wait 40
+shot l1_09_city_away_cinematic
+lens ultra
+wait 60
+shot l1_09_city_away_ultra
+lens cinematic
+# the land beyond the walls: ridges shading valleys
+cmd tp @s ~ 180 ~ -90 20
+wait 300
+lensdebug 8
+wait 20
+shot l1_10_land_away_classic
+lensdebug 0
+wait 40
+shot l1_10_land_away_cinematic
+# ---- frame times on one vista (the city at golden hour, away from the sun)
+cmd awaken city view sky_nw_low
+look -90 18
+wait 200
+lens off
+wait 100
+perf l1_off 20
+lens swift
+wait 100
+perf l1_swift 20
+lens cinematic
+wait 100
+perf l1_cinematic 20
+lens ultra
+wait 100
+perf l1_ultra 20
+lens cinematic
+quit
