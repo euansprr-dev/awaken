@@ -150,13 +150,15 @@ final class CityTowers {
 
     static BlockState masonry(Ctx c, T t, int x, int ry, int z) {
         int h = c.pct(x, z, 900 + ry);
-        if (ry == 6 || ry == 15 || ry == 27 || ry == 32) return CityWall.dress(t.district).full(); // the wall's dressed bands run round
+        CityWall.Dress dr = CityWall.dress(t.district);
+        if (ry == 15 || ry == 27 || (ry == 6 || ry == 32) && !dr.plain()) return dr.full(); // the wall's dressed bands run round
         int moss = (ry < 4 ? 40 : ry < 12 ? 18 : 6) * (t.district == GARDEN_D || t.district == QUAY_D ? 3 : 2) / 2;
         if (h < moss) return MOSSY_STONE_BRICKS;
         int h2 = c.pct(x, z, 960 + ry);
         return switch (t.district) {
             case BELLWATCH -> h2 < 40 ? STONE_BRICKS : h2 < 60 ? COBBLE : h2 < 75 ? TUFF_BRICKS : h2 < 88 ? ASHLAR : CRACKED_STONE_BRICKS;
-            case WORKS -> ry % 6 == 3 ? BRICKS : h2 < 55 ? STONE_BRICKS : h2 < 75 ? ASHLAR : h2 < 88 ? TUFF_BRICKS : CRACKED_STONE_BRICKS;
+            // the Works: whole bands every six rows, the wall's two among them
+            case WORKS -> ry % 6 == 3 ? dr.full() : h2 < 55 ? STONE_BRICKS : h2 < 75 ? ASHLAR : h2 < 88 ? TUFF_BRICKS : CRACKED_STONE_BRICKS;
             case TERRACE -> h2 < 55 ? ASHLAR : h2 < 90 ? STONE_BRICKS : CRACKED_STONE_BRICKS;
             default -> h2 < 50 ? STONE_BRICKS : h2 < 80 ? ASHLAR : h2 < 92 ? CRACKED_STONE_BRICKS : ANDESITE;
         };
@@ -325,7 +327,7 @@ final class CityTowers {
             boolean lower = ry == 12 || ry == 20 || ry == 28 || ry == t.eave - 13;
             return loop(face, lower ? 1 : 2, storey == 3 ? 1 : 0, stone);
         }
-        if (t.form == SQUARE && quoin(t, x, z, ry) && ry > 6) return t.district == TERRACE ? POLISHED_DIORITE : t.district == WORKS ? MUD_BRICKS : ASHLAR;
+        if (t.form == SQUARE && quoin(t, x, z, ry) && ry > 6) return t.district == TERRACE ? POLISHED_DIORITE : ASHLAR;
         return s;
     }
 
@@ -475,7 +477,7 @@ final class CityTowers {
         if (!shell) {
             if (ringCell(t, x, z, 1.0)) {
                 b.set(x, e - 4, z, Math.floorMod(x + z, 2) == 0 ? CityWall.CORBEL_ANDESITE.straight()[towardAxis(t, x, z)] : AIR);
-                for (int ry = e - 3; ry <= e + 1; ry++) b.set(x, ry, z, ry % 6 == 3 ? BRICKS : masonry(c, t, x, ry, z));
+                for (int ry = e - 3; ry <= e + 1; ry++) b.set(x, ry, z, masonry(c, t, x, ry, z));
                 if (Math.floorMod(x + z, 2) == 0) b.set(x, e + 2, z, masonry(c, t, x, e + 2, z));
             }
             return;
