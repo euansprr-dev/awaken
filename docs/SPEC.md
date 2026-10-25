@@ -2489,6 +2489,16 @@ reached by movement), `awaken:use/windway` (one glide holding a lane from its fi
 Leviathan fallen in its trial), and `awaken:use/ascent_glide` with its length (blocks across the ground from where the
 wings opened to where the glide ended, glides of 8 or more; `Quests.advance(player, id, amount)`).
 
+### 17.21 Roofs: climbing out onto a stair or slab eave (Euan's playtest, 2026-10-25)
+Hanging from a roof's eave, the climb out (the ledge jump's, and the free-run's from the hang) lands on whatever is
+walkable just past the face: the lip's own top or a step up to 0.6 over it (`RunnerRules.CLIMB_STEP`, vanilla's step),
+so a stair eave puts you on its high back half and you walk on up the slope. Never onto a fence or wall top, never
+down a drop behind a thin lip. The standing body (from that height to 1.8 over it) and the way over the lip must be
+free, and the way up in front of the face from the hold to standing height. The server re-checks with the same
+`climbOut`. Covered by `runner_roof_climb`: a stair eave on a 3-high wall under a stair slope, a slab eave under a
+slab slope, Carillon's overhanging eave stair on a gentle and a steep gable (`CityGrammar.roof`), and a step with a
+block over it (no climb).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
