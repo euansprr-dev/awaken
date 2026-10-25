@@ -59,6 +59,7 @@ public final class CitizensModule {
         CitizensCommands.register();
         Soundscape.register();
         CitizensTests.register();
+        CityLifeTests.register();
     }
 
     /** A citizen's stable id for other modules (CitizenHooks.witnesses). */
