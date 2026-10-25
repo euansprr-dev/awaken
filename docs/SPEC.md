@@ -1347,19 +1347,22 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
     kernel 1.25 cells), V gullies (low half pulled 0.6 harder, 0.28 carve), each octave following 0.4 of the coarser
     ones' slope (branching), faded in on slopes 0.04-0.45 and on high ground (y 74-140). The slope it follows is the
     offset's own on a 64-block lattice (central differences, blended), cached per thread. Pure float maths with its own
-    cosine and hash, mirrored in `farsight_erosion.glsl`. Summits ease from y 220 toward 286 instead of flattening.
+    cosine and hash, mirrored in `farsight_erosion.glsl`. A range's body eases from y 190 toward 256 instead of
+    flattening (2026-10-26: from 220 toward 286 it filled the room above and left table tops), so the peaks above it
+    are Tectonic's ridgelines.
   - With Tectonic, the pack lifts Tectonic's offset clamp (`tectonic:__constants/max_offset` 3.0; its own cut every high
     range flat near y 303) and `awaken:ridge_room` holds Tectonic's ridge strength (`jaggedness/continents`) to the room
-    under y 312 (the ridge term reaches about 1.6): no summit reaches the ceiling. World height stays -64..320: raising it
+    under y 316 (the ridge term reaches about 1.6): no summit reaches the ceiling. World height stays -64..320: raising it
     per world needs Tectonic's noise settings copied or a mixin (decision 3, PLAN-2).
-  - `awaken:alpine` material condition (`AlpineSurface`, shared with Far Sight): snow above a snow line at y 196 that
-    wanders ±9 (160-block noise), drops 22 on north faces and lifts 14 on south ones, on slopes under 1.0; scree from
-    1.25, bare rock from 1.7 (vanilla's two-block surface gradient, halved). Prepended to `minecraft:overworld/biome_surface`
+  - `awaken:alpine` material condition (`AlpineSurface`, shared with Far Sight): snow above a snow line at y 186 that
+    wanders ±9 (160-block noise), drops 22 on north faces and lifts 14 on south ones, on slopes under 1.25 (51°); scree
+    from 1.45, bare rock from 1.8 (vanilla's two-block surface gradient, halved). Prepended to `minecraft:overworld/biome_surface`
     for `#awaken:alpine` (the peaks, slopes, grove, windswept biomes, Frost Spires, Shattered Highlands).
-  - Mountain forests: spruce (`minecraft:trees_taiga`) 6-7 a chunk on windswept hills and forests, 0-2 on meadows
+  - Mountain forests: spruce (`minecraft:trees_taiga`) 9-11 a chunk on windswept hills and forests, 1-3 on meadows
     (per-world biome modifiers), kept below the treeline (14 under the snow line) and off slopes over 1.1 by the
     `awaken:treeline` placement filter, `AlpineSurface.treeAllowed`, which Far Sight's far trees use too; the far forests
-    add the matching density (`AlpineSurface.mountainForest`).
+    add the matching density (`AlpineSurface.mountainForest`: windswept hills 190, windswept forest 60, meadow 60) and
+    wear spruce's fixed evergreen tint (`FoliageColor.FOLIAGE_EVERGREEN`), as every far conifer does.
   - The snow edge breaks into drifts and bare patches over about 20 blocks (`AlpineSurface.patches`, value noise on 24-
     and 7-block lattices with farsight.glsl's hash), in the chunks and far alike.
   - `tools/sim/ErosionStudio.java` shows the erosion offline. Tests: `terrain_alpine_erosion` (gullies run downhill,
@@ -1407,8 +1410,12 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are,
   dithering in over 32 blocks at the render distance's edge, and drawn where they aren't shown yet (a 64×64 chunk mask:
   a chunk counts once its surface section and the three below are meshed). While Far Sight draws, new chunk sections
-  appear at once instead of fading in from the fog colour, a pale square over far terrain (that frame's options
-  render state only; the player's setting is untouched).
+  appear at once instead of fading in from the fog colour, a pale square over far terrain on every chunk that arrives
+  (after a jump, along a flight): vanilla's fade through that frame's options render state, Sodium's (which reads the
+  option itself) by lending the option 0 between `RenderFrameEvent.Pre` and `Post`, never under an open screen. No
+  options save happens inside a frame, so the player's setting is never written. (2026-10-26: these squares were first
+  read as water walls at the loaded edge; a Turbo fluid-renderer mixin was built for that, removed no wall, and was
+  dropped.)
 - **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
   is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
   plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to

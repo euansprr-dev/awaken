@@ -111,10 +111,6 @@ public final class AwakenConfig {
                         "FULL draws to 16 km, NEAR to 4 km, OFF none. Single-player worlds; it steps aside while Distant Horizons",
                         "is installed.")
                 .defineEnum("farSight", FarSight.FULL);
-        public static final ModConfigSpec.BooleanValue FAR_SIGHT_WATER_EDGES = C
-                .comment("While Far Sight draws, leave out the water walls vanilla draws at the edge of the loaded chunks, which",
-                        "show as pale slabs over the far sea after a teleport or in fast flight. Off: water meshes exactly as vanilla's.")
-                .define("farSightWaterEdges", true);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}

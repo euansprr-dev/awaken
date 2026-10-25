@@ -28,6 +28,7 @@ import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -56,6 +57,8 @@ public final class FarSightClient {
     private static final int UPLOADS_PER_FRAME = 48, CHANGES_PER_FRAME = 1024;
 
     /** Autopilot's override (null: the client setting decides). {@code -Dawaken.farsight=true} forces it on. */
+    /** The player's chunk fade while a frame borrows it (-1: not borrowed). */
+    private static double savedFade = -1.0;
     private static Boolean forced = Boolean.getBoolean("awaken.farsight") ? Boolean.TRUE : null;
     private static FarField field;
     private static FarRenderer renderer;
@@ -86,10 +89,27 @@ public final class FarSightClient {
         NeoForge.EVENT_BUS.addListener(ExtractLevelRenderStateEvent.class, e -> {
             if (drawing()) e.getOptionsRenderState().chunkSectionFadeInTime = 0.0;
         });
+        // Sodium fades its sections the same way but reads the option itself: for the frame's render only (no options
+        // save happens inside it), and not under an open screen, whose sliders would show it
+        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Pre.class, e -> fadeOff());
+        NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Post.class, e -> fadeBack());
         // before Lens (LOWEST), which reads vanilla's render-distance end through FarTerrain
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.RenderFog.class, FarSightClient::fog);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> joinNanos = System.nanoTime());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> unbind());
+    }
+
+    private static void fadeOff() {
+        Minecraft mc = Minecraft.getInstance();
+        if (!drawing() || mc.gui.screen() != null) return;
+        savedFade = mc.options.chunkSectionFadeInTime().get();
+        if (savedFade != 0.0) mc.options.chunkSectionFadeInTime().set(0.0);
+    }
+
+    private static void fadeBack() {
+        if (savedFade < 0.0) return;
+        if (savedFade != 0.0) Minecraft.getInstance().options.chunkSectionFadeInTime().set(savedFade);
+        savedFade = -1.0;
     }
 
     /** Whether Far Sight drew in the last quarter second. */
@@ -312,7 +332,6 @@ public final class FarSightClient {
             debug = a.length() > 5 ? Integer.parseInt(a.substring(5).trim()) : 0;
             return "debug view " + debug;
         }
-        if (a.startsWith("wateredge")) return "water edges " + dev.awaken.turbo.wateredge.WaterEdge.autopilot(a.substring(9));
         if (a.startsWith("part ")) {
             String[] w = a.substring(5).trim().split("\\s+");
             for (int i = 0; i < PARTS.length; i++) {
