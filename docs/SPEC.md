@@ -1509,7 +1509,9 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 - Climbable language: bronze trim, dark beams and drainpipes can be held; plain plaster and glass can't.
 - Pregenerated at world creation (~1,250 chunks, ≤ 30 s on a quiet M4; G0 measured 11–28 s for terrain + city, the
   city 2–5% of it; Distant Horizons holds its LOD building until the pregen ends) behind the opening card; graphs saved
-  with the world; generator changes never touch a built city.
+  with the world; generator changes never touch a built city. A finished chunk keeps a timed `awaken:city_hold` ticket
+  (1,200 game ticks) instead of none, so the city isn't unloaded, saved and read back between the pregen and the
+  player's join (26.3 has no spawn-chunk ticket).
 - Drawing (G0, spike S1: a 480-block city sits inside RD 16 from anywhere in it, so all of it is always drawn): houses
   have solid cores (dark fill behind windows, sealed attics) except the ~60 enterable buildings; geometry density
   varies by district (dense only where the run needs it); the painter writes straight into chunk sections (never
@@ -2548,10 +2550,11 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   fell 0.8–1.8 ms where the GPU was the limit; p99 doesn't move (its spikes are CPU work). The upscale costs bilinear
   0.12 ms, SHARP 0.24 ms, FSR 1.21 ms, so on Apple's GPU FSR eats most of what 0.67 saves (only 16–23% of the world
   pass scales with pixels; the rest is geometry). Fine block textures soften at every scale; GUI text never changes.
-- Defaults (decided 2026-10-24 from those numbers): `renderScale` 1.0 (off), `upscaler` SHARP. Recommended:
-  1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at 120 Hz or on the CPU, doesn't pay
-  for the softer textures); 0.75 with SHARP on a 4K screen (the pixel-bound part grows 1.73×: an estimate until a
-  Dell run, which needs Euan's OK).
+- Defaults (decided 2026-10-24 from those numbers; 4K added 2026-10-25, Euan): `renderScale` 1.0 (off) on screens under
+  4K, `renderScale4k` 0.75 on a game frame of 8 MP or more (the Dell at 3840×2160 is 8.3 MP; a 16" MacBook at
+  3456×2234 is 7.7), `upscaler` SHARP. 1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at
+  120 Hz or on the CPU, doesn't pay for the softer textures); at 4K Lens 2 and the world's pixel-bound part cost the
+  most (estimated 3–6 ms saved on Cinematic/Ultra, docs/perf/CITY-FPS.md). The autopilot's `pixels <scale>` sets both.
 - Holo: panels draw inside the world (the level's always-on-top phase), so at render scale their text would be
   upscaled with it (measured: softer, with RCAS fringes at 0.67). While a panel holds the player's attention
   (`UiHooks.focus() > 0`: the K menu, a reading screen) the world renders native, so panel text, Lens's bloom on the
@@ -2867,7 +2870,9 @@ magic.
   entering the window clears its slot and is read nearest first (40 a tick), a loaded chunk is read when it arrives
   (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 10 ticks and the rest of the
   window 12 a tick in turn (block changes show within about ten seconds; halved for the CPU after L3), and a slot uploads only when its hash changed,
-  as whole-width strips (8 chunk rows a tick, every level). Built only where the dimension has the overworld sky.
+  as the changed chunks only: a tick's changes as one box per level when they fit in 64 chunks (a recentre's new
+  column or row), else up to 8 rows a tick, each the span of its changed chunks (packed through one staging buffer;
+  whole-width strips cost 320 barriered copies per step east or west, docs/perf/CITY-FPS.md). Built only where the dimension has the overworld sky.
 - **Light pass** (per pixel of the reduced buffer, from the full-size depth): position and normal from depth (of the
   two neighbours per axis the one continuing the centre's plane; a normal within 0.9 of an axis snaps to it, since
   block faces are axis-aligned), then:
@@ -2925,8 +2930,8 @@ magic.
   ms): off 10.59/15.30, Swift 11.20/17.18, Cinematic 13.01/17.95, Ultra 13.16/18.36: Cinematic +2.4 ms over off,
   Ultra +2.6 ms, inside both budgets. A four-way diagnostic (`lens2-diag.txt`, one pillar, the light buffer facing N, E,
   S, W) proved the shadow direction from every side.
-- The heightfield uploads dirty strips round the ring from where the last tick stopped (8 a tick), so a row that keeps
-  changing near the camera can't starve the rest.
+- The heightfield's scattered uploads go round the ring from where the last tick stopped (8 rows a tick), so a row
+  that keeps changing near the camera can't starve the rest.
 
 **L2, atmosphere**
 - **Sun map** (`lens_sunmap.fsh`, `awaken:lens_sunmap`, 512×512 cells of 2 blocks on Cinematic, 1024×1024 of 1 block
