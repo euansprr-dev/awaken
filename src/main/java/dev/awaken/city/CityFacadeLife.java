@@ -98,10 +98,14 @@ final class CityFacadeLife {
         int sd = p.front(), len = f.base.length(sd);
         int[] step = CityGrammar.STEP[sd];
         int trade = trade(p);
-        if (!f.jetty[sd]) {
+        // first a column with no window over it, so the arm never stands where a body hangs from the window stack's
+        // row-5 course (the grid stays catchable); then any
+        int ulen = f.up.length(sd);
+        for (int pass = 0; pass < 2 && !f.jetty[sd]; pass++) {
             for (int dt : new int[]{2, -2, 3, -3}) {
                 int t = f.doorT + dt;
                 if (t < 1 || t > len - 2) continue;
+                if (pass == 0 && f.anyWin(sd, t + f.baseOffset(sd), ulen)) continue;
                 int[] o = f.outsideCell(f.base, sd, t);
                 if (CityGrammar.faceClass(f.plan, p, sd, o[0], o[1]) != CityGrammar.F_STREET) continue;
                 if (CityGrammar.openWidth(f.plan, o[0] - step[0], o[1] - step[1], o[0] - step[0], o[1] - step[1], sd) < 5) continue;
@@ -114,10 +118,16 @@ final class CityFacadeLife {
                 return;
             }
         }
-        // flat over the door: on the fascia (row 4) in front of the wall
-        int[] o = f.outsideCell(f.base, sd, f.doorT);
-        if (CityGrammar.faceClass(f.plan, p, sd, o[0], o[1]) < CityGrammar.F_BACK) return;
-        CityGrammar.put(f, b, o[0], g + 4, o[1], SIGN[sd][trade][1]);
+        // flat over the door: on the fascia (row 4) in front of the wall; beside it where a short face's climb line runs
+        // up the door's column (a climb line is never broken)
+        for (int dt : new int[]{0, 1, -1}) {
+            int t = f.doorT + dt, ut = t + f.baseOffset(sd);
+            if (t < 0 || t >= len || ut >= 0 && ut < ulen && f.climb[sd][ut]) continue;
+            int[] o = f.outsideCell(f.base, sd, t);
+            if (CityGrammar.faceClass(f.plan, p, sd, o[0], o[1]) < CityGrammar.F_BACK) continue;
+            CityGrammar.put(f, b, o[0], g + 4, o[1], SIGN[sd][trade][1]);
+            return;
+        }
     }
 
     static boolean lampNear(CityPlan plan, int x, int z) {

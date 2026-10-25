@@ -383,6 +383,12 @@ final class CityProps {
                         if (k == (v & 3)) air(b, x, g + 2, z, RAW_IRON);
                     }
                     default -> {
+                        // a grindstone in the far corner of some timber yards (inside the heap's own box, so a chunk
+                        // painted alone matches its neighbours)
+                        if (k == 3 && (v & 3) == 3) {
+                            air(b, x, g + 1, z, GRINDSTONE);
+                            continue;
+                        }
                         BlockState log = LOGS[(v & 2) + ((v & 1) == 0 ? 0 : 1)];
                         air(b, x, g + 1, z, log);
                         if (k < 2 || (v & 1) == 1 && (k & 1) == 0) air(b, x, g + 2, z, log);
@@ -390,7 +396,6 @@ final class CityProps {
                 }
             }
         }
-        if (p.s().equals("timber") && (v & 3) == 3) air(b, p.x1() + 1, g + 1, p.z0(), GRINDSTONE);
     }
 
     /** A net drying on the quay between two poles, along the water's edge. */

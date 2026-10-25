@@ -28,11 +28,15 @@ import java.util.PriorityQueue;
 final class CityTests {
     private CityTests() {}
 
+    /** The hang lines' movement tag (SPEC §16.9). */
+    static final net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> LINES =
+            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, dev.awaken.Awaken.id("runner_lines"));
+
     /**
      * The plan's SHA-256. A changed plan changes every new world's city and its graphs: regenerate it on purpose
      * ({@code python3 -I tools/city/plan.py}), then update this pin in the same commit.
      */
-    static final String PLAN_SHA256 = "fc9beca06b92b356102dc043b7807b8318befc73c72fdef344cb8fb1db39222e";
+    static final String PLAN_SHA256 = "575dde8a3fb33f52b8615c71187b339d041a107587b72f3022997dba8b999625";
 
     /** A city placed at (x, z) for tests (carved, so no plate fill is asked of a GameTest world). */
     static CityLayout layoutAt(int x, int z) {
@@ -423,7 +427,7 @@ final class CityTests {
             };
             BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
             var ctx = net.minecraft.world.phys.shapes.CollisionContext.empty();
-            int holds = 0, caught = 0, hoods = 0, hoodsCaught = 0;
+            int holds = 0, caught = 0, hoods = 0, hoodsCaught = 0, lineTies = 0;
             String first = "";
             java.util.Map<String, Integer> misses = new java.util.TreeMap<>();
             for (CityPlan.Plot p : l.plan.plots) {
@@ -465,6 +469,13 @@ final class CityTests {
                             // (a hood is caught "from the street" only where the street in front is level with the house:
                             // on a retaining wall's edge or below a flight it is a hold like the others, out of a jump's reach)
                             if (r == 3 && l.plan.lift(o[0], o[1]) != g) continue;
+                            // (M4 B3a: a hang line tied at this course stands where the body would hang; the line is the
+                            // hold there, by design (bible §3.7: "each end meets a box or a course"), counted apart)
+                            BlockState inFront = buf.get(o[0] + CityGrammar.STEP[sd][0], g + r, o[1] + CityGrammar.STEP[sd][1]);
+                            if (!ok && r > 3 && inFront != null && inFront.is(LINES)) {
+                                lineTies++;
+                                continue;
+                            }
                             if (r == 3) {
                                 hoods++;
                                 if (ok) hoodsCaught++;
@@ -485,8 +496,10 @@ final class CityTests {
                     }
                 }
             }
-            dev.awaken.Awaken.LOG.info("[city] catchable: {}/{} holds, {}/{} hoods from the street; misses by kind {}", caught, holds, hoodsCaught, hoods, misses);
+            dev.awaken.Awaken.LOG.info("[city] catchable: {}/{} holds, {}/{} hoods from the street, {} holds where a line ties on; misses by kind {}",
+                    caught, holds, hoodsCaught, hoods, lineTies, misses);
             h.assertTrue(holds > 2000 && hoods > 200, "holds checked: " + holds + ", hoods " + hoods);
+            h.assertTrue(lineTies * 100 <= holds * 2, lineTies + " holds taken by lines' ties (more than 2% of " + holds + ")");
             h.assertTrue(caught * 100 >= holds * 98, (holds - caught) + " of " + holds + " holds the Runner can't catch; first " + first);
             h.assertTrue(hoodsCaught * 100 >= hoods * 95, (hoods - hoodsCaught) + " of " + hoods + " hoods out of reach from the street; first " + first);
             h.succeed();

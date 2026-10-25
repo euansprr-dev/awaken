@@ -195,6 +195,15 @@ class Layer:
                 return False
         return True
 
+    def by_building(self, x, z):
+        """A cell in a facade's outside plane (where its grid and climb line live): touching a plot or a landmark, side or
+        corner, or two out from one square to its side (a jettied upper storey's plane stands one further out)."""
+        G = self.G
+        b = (G['PLOT'], G['LANDMARK'])
+        if any(self.kind(x + dx, z + dz) in b for dx in (-1, 0, 1) for dz in (-1, 0, 1)):
+            return True
+        return any(self.kind(x + 2 * dx, z + 2 * dz) in b for dx, dz in SIDES.values())
+
     def free(self, x, z, kinds=None, ry=None):
         i, j = x + self.O, z + self.O
         if not (0 <= i < self.N and 0 <= j < self.N):
@@ -413,13 +422,16 @@ class Layer:
             if any(math.hypot(lx + 0.5 - nx, lz + 0.5 - nz) < 14 for lx, lz in lamps):
                 continue
             best = None
-            for r in (2, 3, 4):
+            for r in (2, 3, 4, 5):
                 for dx in range(-r, r + 1):
                     for dz in range(-r, r + 1):
                         if max(abs(dx), abs(dz)) != r:
                             continue
                         x, z = int(math.floor(nx)) + dx, int(math.floor(nz)) + dz
                         if not self.free(x, z) or not self.lane_clear(x, z, 0.1):
+                            continue
+                        # never in a facade's own plane (its climb line, hoods and courses are there) nor at its corner
+                        if self.by_building(x, z):
                             continue
                         if per[(x >> 4, z >> 4)] >= 3:
                             continue
