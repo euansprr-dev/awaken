@@ -1,0 +1,94 @@
+# Arms review (SPEC §24): the Longsword in first person held still at each move's key frames (cocked, mid-blow,
+# follow-through), the guard, a held heavy with its charge arc, a live strike on a dummy, the hurt shard, and the
+# third-person view. Shots only: run it whenever a swing row, the hands or the HUD change.
+world armsfeel creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+screen close
+hud on
+camera first
+cmd gamemode creative
+cmd tp @s ~ 200 ~ 0 8
+wait 20
+cmd fill ~-8 ~-1 ~-8 ~8 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-8 ~ ~-8 ~8 ~10 ~12 minecraft:air
+cmd fill ~-8 ~ ~9 ~8 ~7 ~9 minecraft:deepslate_tiles
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~ ~ ~2.7 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+wait 60
+shot arms_rest
+arms pose strike_1 0.2
+shot arms_s1_cocked
+arms pose strike_1 0.3
+shot arms_s1_blow
+arms pose strike_1 0.4
+shot arms_s1_through
+arms pose strike_2 0.2
+shot arms_s2_cocked
+arms pose strike_2 0.4
+shot arms_s2_through
+arms pose strike_3 0.23
+shot arms_s3_cocked
+arms pose strike_3 0.31
+shot arms_s3_blow
+arms pose strike_3 0.38
+shot arms_s3_through
+arms pose strike_4 0.23
+shot arms_s4_cocked
+arms pose strike_4 0.38
+shot arms_s4_through
+arms pose heavy 0
+shot arms_heavy_cocked
+arms pose heavy 0.12
+shot arms_heavy_blow
+arms pose heavy 0.23
+shot arms_heavy_through
+arms pose riposte 0.18
+shot arms_riposte_blow
+arms pose slipcut 0.2
+shot arms_slipcut_blow
+arms pose execution 0.1
+shot arms_exec_cocked
+arms pose execution 0.26
+shot arms_exec_through
+arms pose off
+arms guard on
+wait 10
+shot arms_guard
+arms guard off
+wait 10
+arms heavy 30
+wait 12
+shotnow arms_charge_hud
+wait 30
+arms state
+arms strike
+shotnow arms_live_strike
+wait 3
+shotnow arms_live_strike_3
+wait 30
+cmd gamemode survival
+cmd damage @s 2 minecraft:mob_attack by @e[type=minecraft:husk,limit=1,sort=nearest]
+wait 2
+shotnow arms_hurt_front
+cmd tp @s ~ ~ ~ 90 8
+cmd damage @s 2 minecraft:mob_attack by @e[type=minecraft:husk,limit=1,sort=nearest]
+wait 2
+shotnow arms_hurt_side
+cmd gamemode creative
+cmd tp @s ~ ~ ~ 0 8
+camera back
+arms pose off
+arms strike
+wait 2
+shotnow arms_third_person
+camera first
+quit

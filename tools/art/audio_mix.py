@@ -34,13 +34,16 @@ TARGETS = {
     "ui": (-24.0, 3.0, -3.0, 5),
     "amb": (-28.0, 3.0, -6.0, 4),
     "sfx": (-20.0, 4.0, -1.0, 4),
+    # Arms' blows and steel (tools/art/specs/audio_arms.py): calibrated against vanilla's own combat sounds (its strong
+    # attacks -11..-14 dBFS gated RMS, its shield block near -9.5), so a found blade never sounds weaker than wood
+    "arms": (-14.0, 3.0, -1.0, 4),
     "layer": (-24.0, 12.0, -1.0, 1),  # a stem alone: any sensible level, the music's ceiling; the mixes are checked below
 }
 MANIFESTS = os.path.join(ROOT, "src/main/resources/assets/awaken/music_layers")
 
 
 def category(name):
-    for p in ("music", "ui", "amb", "layer"):
+    for p in ("music", "ui", "amb", "layer", "arms"):
         if name.startswith(p + "_"):
             return p
     return "sfx"

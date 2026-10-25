@@ -10,7 +10,6 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -133,23 +132,9 @@ public final class ClientPowers {
 
     // ---- hit-stop ---------------------------------------------------------------------------------------------------
 
-    static final class Freeze {
-        final long untilNanos;
-        boolean captured;
-        double x, y, z;
-        float age, walkPos, walkSpeed;
-
-        Freeze(long untilNanos) {
-            this.untilNanos = untilNanos;
-        }
-    }
-
-    static final Map<Integer, Freeze> FROZEN = new HashMap<>();
-
+    /** A power's hit lands with the same freeze as any blow (core.api.CombatFeedback), plus the power's own shake. */
     static void onFeel(PowerPayloads.Feel msg) {
-        if (msg.entityId() >= 0 && msg.hitstopMs() > 0) {
-            FROZEN.put(msg.entityId(), new Freeze(System.nanoTime() + msg.hitstopMs() * 1_000_000L));
-        }
+        dev.awaken.core.api.CombatFeedback.hitstop(msg.entityId(), msg.hitstopMs());
         if (msg.shake() > 0) CombatFeel.kick(msg.shake(), 8 + (int) (msg.shake() * 2));
         dev.awaken.powers.client.fx.FxClient.onFeel(msg.entityId(), msg.hitstopMs());
     }
@@ -158,16 +143,11 @@ public final class ClientPowers {
 
     static void tick() {
         clientTicks++;
-        if (clientTicks % 20 == 0) {
-            MARKS.values().removeIf(m -> m.until() < clientTicks);
-            long t = System.nanoTime();
-            for (Iterator<Freeze> it = FROZEN.values().iterator(); it.hasNext(); ) if (it.next().untilNanos < t) it.remove();
-        }
+        if (clientTicks % 20 == 0) MARKS.values().removeIf(m -> m.until() < clientTicks);
     }
 
     static void reset() {
         MARKS.clear();
-        FROZEN.clear();
         predictedSpend = 0;
         java.util.Arrays.fill(predictedCooldownEnd, 0);
         lastSeen = null;

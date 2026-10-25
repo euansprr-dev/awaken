@@ -26,7 +26,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -151,13 +150,13 @@ public class FaunaMob extends AwakenMob {
         switch (role) {
             case HUNTER -> {
                 goalSelector.addGoal(2, new FaunaGoals.Stalk(this));
-                goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.25, false));
+                goalSelector.addGoal(3, new MobGoals.ToldMelee(this, 1.25, false));
                 goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.8));
                 targetSelector.addGoal(1, new HurtByTargetGoal(this));
                 targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, (t, l) -> inDarkness(t)));
             }
             case NEUTRAL, BEAST -> {
-                goalSelector.addGoal(3, flies ? new MobGoals.FlyHunt(this) : new MeleeAttackGoal(this, 1.15, true));
+                goalSelector.addGoal(3, flies ? new MobGoals.FlyHunt(this) : new MobGoals.ToldMelee(this, 1.15, true));
                 targetSelector.addGoal(1, new HurtByTargetGoal(this));
             }
             case AMBIENT -> { }

@@ -27,7 +27,7 @@ Hard rules:
 | `core` | mod entry, config, shared registries helpers, `AwakenNet`, commands root `/awaken`, `Forces` tags, `PlayDays`, `Rng`, debug |
 | `signal` | Signal windows (server API + client HUD), toast queue, Day's End card |
 | `progression` | Level/XP/ranks/stats (`Profile` attachment), counters, Reassessment, Truths, Titles, Latents, Paths, Directives, Daily Regimen, Director (pacing + "new thing" rhythm), Status screen (4 tabs) |
-| `powers` | power framework, all powers, Power Cores, energy, cooldowns, keybind casting, Five Forces interactions, combat feel (hit-stop, shake) |
+| `powers` | power framework, all powers, Power Cores, energy, cooldowns, keybind casting, Five Forces interactions, a power's shake (its hit-stop is every blow's, `core.api.CombatFeedback`) |
 | `mobs` | `AwakenMob` base, gate bestiary, Gate Lords / bosses, Hollow Court, mob scaling by level, renderers |
 | `gates` | gate registry/SavedData, overworld gate block + pillar render, gate card, gate dimension + chunk generator, layouts, themes, modifiers, twists, runs, Satchel, Shrines/Seals/Caches, gate pressure, breaks + blight, claims, cleanup |
 | `descent` | the Well, 10 strata dimensions + generators + rules, drops between strata, Waystones/camps, Strain, Grave Echo, the Endless |
@@ -42,6 +42,7 @@ Hard rules:
 | `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
 | `anims` | Hands (§24): the first-person system (the world body, the view layer, view clips), `core.api.FirstPerson` |
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
+| `arms` | Weapons and combat (§24): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -374,6 +375,21 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   in `extractRenderState`; `apply(LifeRig, Life, LivingEntityRenderState)` at the end of `setupAnim` (safe to run once per
   layer); optional `rootPose(Life, PoseStack, state)` in `setupRotations`; `eyesClosed(Life)` 0..1 for a texture blink.
   Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`).
+- `dev.awaken.core.api.Strikes` (§24) — how a blow can be answered: `enum Kind {LIGHT, HEAVY, PERILOUS, GRAB, NONE}`
+  (`deflectable()`, `blockable()`, `dodgeable()`); `deliver(Entity by, Kind, BooleanSupplier blow)` names the class of
+  the blow it runs (a mob's swing, an ability's hit); `of(DamageSource)` reads it back (defaults: an untold melee or a
+  projectile LIGHT, a blast with an entity PERILOUS, fire, falls, drowning, freezing and the void NONE). Tells:
+  `installTells(TellSource)`, `tell(Entity)` → `Tell(ticks, kind)` or null (both sides). Stagger: `installStaggers`,
+  `stagger(LivingEntity, ticks)` (server). The mobs module installs both for its creatures.
+- `dev.awaken.core.api.BodyMaterial` (§24) — what a blade meets: `FLESH, ARMOR, BONE, WOOD, STONE, SPIRIT, SLIME`;
+  `of(Entity)` (both sides; armour ≥ 10 over flesh or bone answers ARMOR), `install(Source)` (the mobs module answers for
+  its bodies through `MobDef.material()`), vanilla defaults by type.
+- `dev.awaken.core.api.CombatFeedback` (client, §24) — every blow's one feel: `hitstop(entityId, ms)` (the body freezes
+  and trembles), `hold(ms)` (the striker's hands and view), `kick(yaw, pitch, roll, ticks)` (follows camera shake).
+  Installed by Arms; no-op before that and on a dedicated server. Powers' hits use it.
+- `dev.awaken.arms.Arms` (§24) — `styleOf(ItemStack|Item)` (the fighting style, or null for tools and bare hands),
+  `guards(ItemStack)`, `fights(LivingEntity)`, `posture(LivingEntity)` (0..1, server), `broken(LivingEntity)` (server),
+  `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -623,7 +639,8 @@ Awakened Body (module `body`, docs/modules/body.md; approved 2026-10-24, widened
 - Unlocks: awakening → soft landing + tactical sprint; D → slide; C → mantle. Never-awakened players move like vanilla. Each
   unlock is one toast in the same tick as the awakening or rank-up (it joins that burst), remembered in `awaken:body_memory`
   (schema 1, kept through death); old saves hear theirs once after login. Status › THE BODY lists the moves you have.
-- Off while riding, sleeping, projecting, meditating, flying or gliding. No invincibility frames anywhere.
+- Off while riding, sleeping, projecting, meditating, flying or gliding. No invincibility frames anywhere, except Arms'
+  dodge (§24, Euan 2026-10-25: its 5 evade ticks only).
 - Looks with the Player Animation Library (optional): each move plays a full-body clip (tools/art/specs/body_moves.py;
   bent elbows and knees with Bendable Cuboids) through `core.api.PlayerClips`, from the same prediction and `body_seen`
   signals, no new packets; without it the vanilla-model poses stay. First person unchanged.
@@ -3435,3 +3452,116 @@ of the plan). No mixins.
 - P1-P6 built (P5: the crafting table and furnace scenes, the Forge and campfire touches; P6: the rest of the touches, books, the Ritual's hands). Tour P6: `anims-p6.txt`. The casts (powers) still draw their own first-person
   arms (`CastAnims`); folding them into Hands is the powers module's step, coordinated with the combat plan.
 
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 25. Arms (weapons and combat; plan docs/combat/PLAN.md, page docs/combat/plan.html; Euan 2026-10-25)
+
+Euan: "Massively level up the weapons and combat system." Approved: "Go ahead with the full plan", every §7 decision
+as recommended (i-frames on the dodge only; dodge = sprint + back/left/right/none; guard on right mouse; Hands grows to
+weapons; vanilla swords get the verbs only; PAL optional; weapons carry an item level; a Lord-forged weapon goes to the
+hand; S0 and S1 first). Then: "Do anything you can for the highest quality bar without me": the builder decides and
+writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.md. Built so far: S0, S1, the sound kit.
+
+**S0: every blow is told and has a class** (`core.api.Strikes`, §12).
+- Classes: LIGHT (deflect, block or dodge), HEAVY (deflect or dodge; it breaks a guard), PERILOUS (dodge only), GRAB
+  (dodge only), NONE (fire, falls, poison, the void: nothing answers it). An untold melee or projectile is LIGHT, a
+  blast with an entity PERILOUS.
+- Our creatures' melee is told (`MobGoals.ToldMelee` replaces `MeleeAttackGoal` everywhere): the body stops and winds up
+  for 8 ticks (elites 9; bosses, wardens, breaks and nightmares 10), then swings; a target that stepped out of reach is
+  a whiff. Big bodies make every third swing a HEAVY (+6 ticks, ×1.5 damage, transient `mobs_haymaker`). The flier's
+  dive is told the same way (LIGHT). The tell is synced (`AwakenMob.DATA_TELL`) so the client can draw it by class.
+- Abilities have a class (`Ability.strike()`): a heavy-flagged ability is PERILOUS; BOLT, ARROWS and NOVA LIGHT; SLAM,
+  LEAP, CHARGE, BLINK, CONE, FANGS and FANGS_RING HEAVY; areas, beams, clouds, pulls, roots and darkness PERILOUS;
+  summons, heals, guards, decoys and frenzies NONE. Every boss blow is told for at least 8 ticks (test).
+- A mob's held weapon is only a look (`AwakenMob.gearStack` strips its attribute modifiers): a creature's damage is its
+  def's, never its def's plus a diamond sword's.
+- A broken stance staggers (`Strikes.stagger`): ours end the wind-up and stand still; any other mob is slowed to a stop.
+
+**S1: the three verbs** (every `_sword` item and our `*_blade`s fight as the Longsword until their own style lands).
+- One timing table, `data/awaken/arms/archetypes.json` (schemaVersion 1, read from the classpath on both sides at
+  start: the server judges and the client predicts by the same rows, so it is not datapack-reloadable on purpose). Per
+  style: guard, dodge, chain, mastery chain, input buffer (5) and late press (6); per move: wind-up, active, recovery,
+  cadence window, motion (damage ×), posture, arc, reach, hit-stop ms, finisher, window, boss cap, charge, the
+  first-person swing (from/to yaw, pitch, roll and lunge) and `swish` (light by default, heavy, thrust). The Longsword is
+  the PLAN §4.2 table exactly; recovery scales with attack speed (×0.6..1.6 of the row).
+- **Strike** (attack key): tap = the chain (strike 1, 2, 3; strike 4 with mastery); a press inside the cadence window
+  earns a rhythm step (+8% damage and +1 posture each, up to 3); a press just early is buffered to the window and
+  earns none; far ahead it counts for nothing. Held = a heavy (charges from 6 ticks, the glint at 16, auto-release at
+  24; a release within 2 ticks of the glint is perfect: motion 2.4, posture 20, 110 ms hit-stop). A block under the
+  crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
+  once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
+  apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep
+  only takes the aimed creature, hostiles and anything hunting the player: never a player, a villager or a pet.
+- **Guard** (use key, the `blocks_attacks` component Arms gives every sword: no delay, 120° front): the first 4 ticks
+  after the raise deflect a LIGHT or HEAVY (no damage, the attacker's stance takes 18 or 26, Resonance +20, a riposte
+  for 12 ticks); after that LIGHT is blocked (70% less), HEAVY breaks the guard (50% less, the guard drops, 15 ticks
+  before it can rise); PERILOUS and GRAB pass through. A raise within 8 ticks of lowering one that deflected nothing can
+  only block (spamming is not deflecting). **Latency grace**: a guardable blow on an unguarded fighter waits up to
+  latency/2 ticks (0 under 50 ms, at most 3) for a raise already on its way.
+- **Dodge** (sprint pressed with back, left, right or no direction, on the ground; sprint + forward still runs): 6
+  ticks, 2.6 blocks, client-predicted, server-validated (position within 1.5 blocks, charges, not in a wind-up or blow:
+  a recovery can be dodged out of, which drops the rhythm). Ticks 0–4 evade any class (**the SPEC amendment: the only
+  invincibility in AWAKEN**); a blow in ticks 0–2 is a perfect dodge: the attacker alone runs at half speed for 8
+  ticks (every other tick; the plan's 0.45 rounded to the tick clock), Resonance +15, a Slipcut for 6 ticks. Two
+  charges, 24 ticks each. A refused dodge stops the body where it is.
+- **Context moves** (no input of their own): Riposte (strike ≤ 12 ticks after a deflect), Slipcut (strike ≤ 6 ticks
+  after a dodge), Execution (a heavy on a broken creature in reach: motion 4, capped at 8% of a Lord's max health).
+- **Posture** (creatures only; no player stamina): normal 20, elites, wardens and beasts 40, bosses, breaks and
+  nightmares 100 (`CreatureTag`, `MobRole`). It drains at 6/s (Lords 8/s) after 2 s untouched; full, it breaks for 50
+  ticks (Lords 40), then cannot break again for 6 s. On the struck creature only (the patent rule holds). Not saved.
+- **Resonance** (per player, 0–100, not saved): deflect 20, perfect dodge 15, break 25, a finisher 6, a rhythm-3
+  finisher 12 more; drains 2/s after 5 s out of a fight. Full: the Art (S2).
+- **Soft focus**: the creature you last struck turns your strikes toward it by at most 15°.
+- **Feel** (`core.api.CombatFeedback`, §12; one freeze for every blow, Powers' hits included): the struck body freezes
+  and trembles for the move's hit-stop, the striker's hands and view hold for the same beat (the move's clock skips
+  it), and the view kicks along the swing (≤ 2.4°) and settles; at most one freeze per 4 ticks in a sweep. A deflect
+  holds both for 100 ms; a break freezes the body for 160 ms. Visual only: the game's clock never stops. Kicks follow camera shake.
+- **First person** (`ArmsHands`, through `IClientItemExtensions.applyForgeHandTransform`, every styled item): the row's
+  swing from the click frame. A pose is the hand's place on screen (blocks from vanilla's resting hand), the blade's
+  roll in the screen's plane and an optional tilt of the tip forward (a chop, a thrust). The blade stays flat to the
+  eye: a flat item sprite turned about the vertical goes edge-on and vanishes mid-cut (seen in the first tour), so the
+  hand travels across the view instead, on an arc about the shoulder during the blow (eased out hard, with its lunge)
+  and on straight eased lines into the wind-up and home (an arc there lifts the blade back over the top of the view).
+  The Longsword: strike 1 a forehand diagonal (upper right to lower left), strike 2 a backhand sweep, strike 3 an
+  overhead chop, strike 4 and the riposte thrusts, the heavy a rising cut, the Slipcut a low wide sweep, the Execution
+  a raised chop. A held heavy draws back to its start pose and trembles finely as it charges; the guard is vanilla's
+  blocking pose eased in over 2 ticks. Reviewed frame by frame with `tools/autopilot/arms-poses.txt` (the autopilot's
+  `arms pose <move> <0..1>` holds the hands still). Third person keeps vanilla's arm swing until S2's clips.
+- **HUD** (`arms_hud`, above the crosshair layer): a 15-dot arc under the crosshair for Resonance or the heavy's charge
+  (gold when full or at the glint), the dodge's two pips beside the sprint line, and a red shard on a ring round the
+  crosshair pointing to where the last blow on you came from (any held item; 24 ticks). Nothing at rest.
+- **Network**: `arms_press` (strike, charge, release; seq, look, aimed id), `arms_dodge`, `arms_result` (to the
+  fighter: move, hit, deflect, block, guard break, perfect dodge, evade, break, refuse, dodge, resonance, hurt) and
+  `arms_seen` (to players within 48 blocks). The client predicts every move and takes the server's word.
+- **Config**: `awaken-arms.toml` `enabled` (server, synced; default on). Off: vanilla melee, and the guard Arms gave a
+  sword never rises (a sword another mod made to block keeps its own).
+- Off while riding, sleeping, projecting, meditating, flying or gliding; Arms never runs a spectator's melee.
+
+**Sounds** (`ArmsSounds`, 25 events `arms.*`, 74 files; tools/art/specs/audio_arms.py).
+- Hybrid by design: CC0 recordings (Kenney's Impact Sounds and RPG Audio, `tools/art/sources/kenney`, CC0 1.0, licence
+  files kept) for the physical transients and bodies synthesis renders thin; the audio kit for the air, the steel's ring
+  (inharmonic modes), the weight, the shimmer, the rooms and the tells' language. Every event is layered (transient,
+  body, tail, sweetener) and has 2–5 seeded variants.
+- Loudness category `arms` in audio_mix.py: −14 dBFS gated RMS ±3, true peak ≤ −1 (vanilla's own strong attacks sit at
+  −11..−14 and its shield block near −9.5: at AWAKEN's general −20 a blade would sound weaker than a wooden sword).
+  Every render is checked: loudness and true peak after encoding, a blow's transient in its first 6 ms (it meets the
+  hit-stop's frame), no click at either end, no 2–5 kHz harshness past its family's, variants spectrally distinct. The
+  checks catch a broken sound, not a dull one: the listening page (`tools/art/arms_listen.py` →
+  `docs/combat/listening-<date>.html`: eight scenes at the game's own timing, read from the table, and every sound
+  alone, each with keep / remake / cut) and Euan's ear are the last gate.
+- Which sound a blow makes is chosen in one place for both sides: the swish by the move's `swish`, a semitone higher
+  per rhythm step; the impact by what the blade meets (`core.api.BodyMaterial`, §12: flesh, armour, bone, wood, stone,
+  spirit, slime; flesh lands heavy from motion 1.4: the finishers, a heavy, a riposte; a heavy on a hard body plays a
+  little lower); an Execution is a blow of its own. The fighter hears their own client's copy on the frame it happens;
+  everyone else the server's (`playSound` excluding the fighter). Vanilla's attack sounds are silenced while an Arms hit
+  resolves. Deflect, block, guard break, break, perfect dodge, dodge, the heavy's draw and its glint each have theirs.
+- **Tells by ear**: each class has one voice on every creature (`Arms.tellSound`: light a bright rising tick, heavy an
+  amber swell, perilous a two-tone shriek nothing else makes, grab a creak of reaching): the mobs module plays it with
+  every told blow; a NONE ability keeps the mob's own wind-up (`mobs.telegraph`).
+- **Hurt**: a blow of any class landing on a player plays a blunt body thump to that player only (`arms.hurt`, no
+  voice), with the shard and a small view jolt from where it came (vanilla's own tilt stays).
+
+**Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
+kill switch, sounds; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
+`audio_events_resolve` covers the kit's files and subtitles.

@@ -16,7 +16,8 @@ allowed, ranks improve moves, and powers are the impossible versions. Applies wh
 In a fight: **momentum hits** (a full swing while sprinting or sliding: up to +30% damage and more knockback by speed),
 **trips** (a slide knocks small hostile creatures off their feet), **slide-casting** (a cast mid-slide keeps the slide), and
 in powers the **chain refund** and the **family twists** (Kinetic slide-punch, Velocity dash-out, Shadow smoke trail; see
-docs/modules/power-fx.md "Move twists"). No invincibility frames: Dash stays the dodge.
+docs/modules/power-fx.md "Move twists"). No invincibility frames in the body's moves: Dash stays the power's dodge, and
+Arms' dodge (sprint + a direction, SPEC §24) is the only one with evade ticks.
 
 ## How it works
 
