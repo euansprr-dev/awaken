@@ -65,3 +65,49 @@ key for originals). 6. Five short listening batches, unmarked = keep. 7. The six
 3. Phase 1: the Conductor and the Greenwood family, then listening batch 1.
 4. Tell the Carillon session (B3b) about the yield contract before Phase 5: the city owns its walls; the Conductor
    asks `Soundscape.yieldWeight` and offers weather, enclosure and rain re-voicing.
+
+## After Euan's yes (2026-10-25, same session): "Go ahead with all recommendations"
+
+All seven decisions approved. Built on `pack/world-sound-plan`:
+
+- **SPEC** (ad1a7f89): §13 "Plan v2 · world sound", §12 `Soundscape`, §14 the sound profile, §15 the biome table
+  column. PLAN.md marked approved.
+- **Phase 0, cloud part** (4fe90534, e1b7910e):
+  - the pack's `soundspike` profile (Tread Lightly 1.1.0+26.3, Immersive Thunder Reforged 1.3.8+26.3, AmbientSounds
+    6.3.11 + CreativeCore 2.14.24), appended to the lock without re-resolving any other mod; never installed by
+    `tools/play.sh`;
+  - the Mac spike tour `tools/autopilot/sound-spike.txt` (pass criteria in its header);
+  - inert AmbientSounds data `assets/ambientsounds/basic/dimensions/awaken_dimensions.json` muting `awaken:` dimensions;
+  - the CC0 shortlist: 90 Freesound candidates in 11 groups (`docs/sound/cc0-shortlist.json`, licence read on each
+    page; page `docs/sound/cc0-shortlist.html` by `tools/art/sound_shortlist.py`); `docs/sound/SOURCES.md` empty until
+    the downloads. Freesound is blocked for curl in the cloud environment (proxy 403); web fetch reads it, and the
+    downloads need Euan's Freesound API key or his Mac.
+- **Phase 1, the engine** (473f8207): the Conductor as planned (details in `docs/modules/audio.md` "World sound"):
+  data format and day curves, the event clock, the 24-column listener, the air stream with its filter, positional
+  textures re-anchored for Sound Physics, events on real spots, the 16-voice budget, hushes, ducking, the city yield,
+  `/awaken audio world [off|on]`. `terrain/client/LeafRustle` is gone: its two textures play from `awaken:world`.
+  `biomes.py` has the SOUNDSCAPE column (56 vanilla rows + 6 Awakened; Frost Spires moves to snowfield). Greenwood
+  has its three synthesised air layers (37/41/53 s), owls answering at night, a far fox and lulls. 26.3's engine
+  numbers are now checked in its decompiled source (248 static, 8 streaming; decoded sounds cached until reload).
+  GameTests `audio_world_census` and `audio_world_clock` pass locally (with every `audio_*`, `terrain_biome_table*`
+  and `compat_spr*` test).
+
+## Waiting on Euan
+
+1. **Mark the shortlist** (published as an artifact, or open `docs/sound/cc0-shortlist.html`), Export, hand back the
+   JSON. Then: a Freesound API key (or the downloads done on the Mac), so the yeses can be fetched, cut and mastered.
+2. **The Mac runs** (game client, so his go-ahead): `PACK=sound,soundspike tools/autopilot.sh
+   tools/autopilot/sound-spike.txt` (decisions 2-3) and `PACK=sound tools/autopilot.sh tools/autopilot/world-sound.txt`
+   (Phase 1: the Conductor in a forest through a day, rain, a roof, underwater, a gate, and its frame-time A/B).
+
+## Next for a builder
+
+- Greenwood's birds and insects from the yeses, then **listening batch 1** (`tools/art/soundscape_render.py`, the
+  offline renderer with a schedule-parity test, is still to write).
+- Phase 2: the other 15 families, the four Awakened beds moved out of their biomes' `ambient_sounds` (keep `mood`),
+  rain re-voiced by surface, thunder by distance (or Immersive Thunder Reforged if the spike passes), the climate
+  fallback for other mods' biomes.
+- Known: `tools/terrain/biomes.py check` reports one stale file that predates this work and isn't this module's
+  (`datapacks/awakened_lands/.../has_structure/precursor_tether_spire.json`, the Ascent's); left as it was.
+- The vanilla tags `biomes.py` reads come from the decompiled sources in the cloud: point `AWAKEN_REF` at a folder
+  with `assets/data` (the Minecraft sources jar's `data`) and `neo` (NeoForge's sources jar).
