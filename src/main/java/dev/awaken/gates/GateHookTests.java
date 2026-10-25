@@ -29,7 +29,7 @@ final class GateHookTests {
             BlockPos base = h.absolutePos(BlockPos.ZERO).offset(14, 0, 14);
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, base.getX(), base.getZ()) - 1;
             GatePlan plan = GateTests.testPlan(77, Rank.D, Theme.HIVE, Layout.LABYRINTH, Twist.NONE);
-            GateRecord g = GateService.create(server, GateRegistry.get(server).nextId(), plan, new BlockPos(base.getX(), y, base.getZ()), 0,
+            GateRecord g = GateService.create(server, GateRegistry.get(server).nextId(), plan, GateTests.dryGround(level, new BlockPos(base.getX(), y, base.getZ())), 0,
                     Optional.empty(), 2, List.of("test"), false);
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             h.startSequence()
