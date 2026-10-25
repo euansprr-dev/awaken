@@ -1,0 +1,38 @@
+# Far Sight's water edges (SPEC §20, Turbo): the same jump to open sea twice, once with vanilla's water walls at the
+# loaded area's edge and once with WaterEdge leaving them out. Shots 2 and 10 seconds after each jump; between them the
+# player goes home long enough for the far chunks to unload, so the second jump loads them again.
+world fs2we creative 777
+waitworld
+gui 0
+hud off
+farsight on
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+cmd gamemode spectator
+farsight wateredge off
+cmd tp @s 30000.5 200 0.5 -90 8
+wait 40
+shot we_off_2s
+wait 160
+shot we_off_10s
+cmd tp @s 0.5 200 0.5 -90 8
+wait 600
+farsight wateredge on
+cmd tp @s 30000.5 200 0.5 -90 8
+wait 40
+shot we_on_2s
+wait 160
+shot we_on_10s
+farsight status
+info
+quit

@@ -312,6 +312,7 @@ public final class FarSightClient {
             debug = a.length() > 5 ? Integer.parseInt(a.substring(5).trim()) : 0;
             return "debug view " + debug;
         }
+        if (a.startsWith("wateredge")) return "water edges " + dev.awaken.turbo.wateredge.WaterEdge.autopilot(a.substring(9));
         if (a.startsWith("part ")) {
             String[] w = a.substring(5).trim().split("\\s+");
             for (int i = 0; i < PARTS.length; i++) {

@@ -44,6 +44,11 @@ featureFlags="META-INF/feature_flags.json"
 [[mixins]]
 config="awaken.pixels.mixins.json"
 
+# Water edges (Far Sight, SPEC §20): no water walls at the loaded area's edge over far terrain. Client-only mixins under
+# the Turbo contract (dev.awaken.turbo.wateredge.mixin); not required, so a mixin that can't apply leaves vanilla's meshing.
+[[mixins]]
+config="awaken.wateredge.mixins.json"
+
 # A text field displayed in the mod UI
 #credits="" #optional
 

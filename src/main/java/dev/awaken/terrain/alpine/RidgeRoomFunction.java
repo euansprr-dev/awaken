@@ -23,7 +23,7 @@ public record RidgeRoomFunction(DensityFunction input, DensityFunction offset) i
     ).apply(i, RidgeRoomFunction::new));
 
     /** The highest a ridge may reach (y), and the ridge term's largest value. */
-    public static final float CEILING = 312f, RIDGE = 1.6f;
+    public static final float CEILING = 316f, RIDGE = 1.6f;
 
     @Override
     public DensitySampler compileSampler(CompileContext context) {

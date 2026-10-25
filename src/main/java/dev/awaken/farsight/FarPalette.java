@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.FoliageColor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
@@ -119,6 +120,9 @@ public final class FarPalette {
         };
     }
 
+    /** Spruce leaves wear the game's fixed evergreen tint whatever the biome (FoliageColor.FOLIAGE_EVERGREEN), darker than its foliage. */
+    private static final int SPRUCE = scale(FoliageColor.FOLIAGE_EVERGREEN & 0xFFFFFF, 0.56f);
+
     private static Look compute(String a, int grass, int lawn, int leaves) {
         if (a.contains("badlands")) {
             int ground = a.startsWith("eroded") ? TERRACOTTA : RED_SAND;
@@ -131,25 +135,25 @@ public final class FarPalette {
         if (a.contains("ocean") || a.contains("river")) return open(a.startsWith("frozen") ? SNOW : SEABED, a);
         if (a.equals("ice_spikes") || a.equals("snowy_plains") || a.equals("snowy_slopes") || a.equals("frozen_peaks")
                 || a.equals("jagged_peaks")) return open(SNOW, a);
-        if (a.equals("snowy_taiga")) return new Look(mix(SNOW, lawn, 0.6f), 150, 8, CONIFER, mix(leaves, SNOW, 0.75f), 0, a);
-        if (a.equals("grove")) return new Look(SNOW, 140, 9, CONIFER, mix(leaves, SNOW, 0.75f), 0, a);
+        if (a.equals("snowy_taiga")) return new Look(mix(SNOW, lawn, 0.6f), 150, 8, CONIFER, mix(SPRUCE, SNOW, 0.75f), 0, a);
+        if (a.equals("grove")) return new Look(SNOW, 140, 9, CONIFER, mix(SPRUCE, SNOW, 0.75f), 0, a);
         if (a.equals("mushroom_fields")) return open(MYCELIUM, a);
-        if (a.equals("windswept_gravelly_hills")) return new Look(GRAVEL, 20, 7, CONIFER, leaves, STONY, a);
-        if (a.equals("windswept_hills")) return new Look(mix(lawn, STONE, 0.65f), 25, 7, CONIFER, leaves, STONY, a);
-        if (a.equals("windswept_forest")) return new Look(mix(lawn, STONE, 0.65f), 150, 8, CONIFER, leaves, 0, a);
+        if (a.equals("windswept_gravelly_hills")) return new Look(GRAVEL, 20, 7, CONIFER, SPRUCE, STONY, a);
+        if (a.equals("windswept_hills")) return new Look(mix(lawn, STONE, 0.65f), 25, 7, CONIFER, SPRUCE, STONY, a);
+        if (a.equals("windswept_forest")) return new Look(mix(lawn, STONE, 0.65f), 150, 8, CONIFER, SPRUCE, 0, a);
         if (a.equals("windswept_savanna")) return new Look(scale(grass, 0.8f), 30, 6, ACACIA, leaves, 0, a);
         if (a.equals("pale_garden")) return new Look(PALE, 210, 9, BROADLEAF, 0x8F9590, 0, a);
         if (a.equals("cherry_grove")) return new Look(lawn, 150, 6, BROADLEAF, 0xD9A3B8, 0, a);
         if (a.equals("dark_forest")) return new Look(scale(lawn, 0.8f), 235, 8, BROADLEAF, scale(leaves, 0.85f), 0, a);
         if (a.equals("sparse_jungle")) return new Look(lawn, 90, 12, JUNGLE, leaves, 0, a);
         if (a.contains("jungle")) return new Look(lawn, 230, 16, JUNGLE, leaves, 0, a);
-        if (a.equals("old_growth_pine_taiga") || a.equals("old_growth_spruce_taiga")) return new Look(scale(lawn, 0.9f), 220, 16, CONIFER, leaves, 0, a);
-        if (a.contains("taiga")) return new Look(lawn, 190, 8, CONIFER, leaves, 0, a);
+        if (a.equals("old_growth_pine_taiga") || a.equals("old_growth_spruce_taiga")) return new Look(scale(lawn, 0.9f), 220, 16, CONIFER, SPRUCE, 0, a);
+        if (a.contains("taiga")) return new Look(lawn, 190, 8, CONIFER, SPRUCE, 0, a);
         if (a.equals("mangrove_swamp")) return new Look(scale(lawn, 0.85f), 200, 8, BROADLEAF, leaves, 0, a);
         if (a.contains("swamp")) return new Look(scale(lawn, 0.85f), 110, 6, BROADLEAF, leaves, 0, a);
         if (a.contains("forest")) return new Look(lawn, a.equals("flower_forest") ? 140 : 200, 6, BROADLEAF, leaves, 0, a);
         if (a.startsWith("savanna")) return new Look(scale(grass, 0.8f), 30, 6, ACACIA, leaves, 0, a);
-        if (a.equals("meadow")) return new Look(lawn, 8, 8, CONIFER, leaves, 0, a);
+        if (a.equals("meadow")) return new Look(lawn, 8, 8, CONIFER, SPRUCE, 0, a);
         if (a.equals("plains") || a.equals("sunflower_plains")) return new Look(lawn, 6, 6, BROADLEAF, leaves, 0, a);
         return open(lawn, a);
     }

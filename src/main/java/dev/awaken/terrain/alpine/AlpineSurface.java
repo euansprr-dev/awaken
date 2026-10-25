@@ -5,8 +5,8 @@ package dev.awaken.terrain.alpine;
  * ({@link AlpineCondition}) and Far Sight's far shading, so far mountains wear the snow and rock the near ones will:
  * <ul>
  *   <li>snow above a snow line that wanders by a few blocks, drops on north-facing slopes and lifts on south ones, and
- *       never on slopes steeper than about 45°, where it slides off;</li>
- *   <li>bare rock on faces steeper than about 60°, and scree between, where loose stone collects under cliffs;</li>
+ *       never on slopes steeper than about 51°, where it slides off;</li>
+ *   <li>bare rock on faces steeper than about 61°, and scree between, where loose stone collects under cliffs;</li>
  *   <li>erosion only on high ground: the lowlands and valley floors keep their shape.</li>
  * </ul>
  * Pure maths, no game types: callers pass slope as rise per block and aspect as the ground's slope toward +z.
@@ -15,9 +15,9 @@ public final class AlpineSurface {
     private AlpineSurface() {}
 
     /** Mean snow line (y) and how far it wanders, drops on north faces, and lifts on south faces. */
-    public static final float SNOW_LINE = 196f, SNOW_WANDER = 9f, NORTH_DROP = 22f, SOUTH_LIFT = 14f;
+    public static final float SNOW_LINE = 186f, SNOW_WANDER = 9f, NORTH_DROP = 22f, SOUTH_LIFT = 14f;
     /** Slopes (rise per block): snow holds up to the first, scree from the second, bare rock from the third. */
-    public static final float SNOW_SLOPE = 1.0f, SCREE_SLOPE = 1.25f, ROCK_SLOPE = 1.7f;
+    public static final float SNOW_SLOPE = 1.25f, SCREE_SLOPE = 1.45f, ROCK_SLOPE = 1.8f;
     /** Ground heights (y) over which erosion fades in: none on lowland, full on mountains. */
     public static final float ERODE_FROM = 74f, ERODE_FULL = 140f;
 
@@ -30,9 +30,9 @@ public final class AlpineSurface {
      */
     public static int mountainForest(String archetype) {
         return switch (archetype) {
-            case "windswept_hills" -> 120;
+            case "windswept_hills" -> 190;
             case "windswept_forest" -> 60;
-            case "meadow" -> 34;
+            case "meadow" -> 60;
             default -> 0;
         };
     }
