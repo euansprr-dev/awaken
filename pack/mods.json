@@ -8,7 +8,7 @@
     "perf": "Frame rate and memory. Client-side except Lithium and FerriteCore.",
     "horizon": "Far terrain.",
     "feel": "Camera, limbs, the animation library Awaken's full-body casts use, and Fresh Animations for vanilla creature bodies.",
-    "sound": "Room acoustics.",
+    "sound": "Room acoustics and recorded nature ambience.",
     "comfort": "Recipe lookup, block info and inventory help. The world map is Awaken's own Atlas (M); no minimap, by design.",
     "together": "Join links and proximity voice.",
     "ultra": "Experimental: Iris shaders (OpenGL only; Iris lists Apple Silicon as unsupported).",
@@ -150,6 +150,13 @@
         "sound"
       ],
       "why": "Reverb and echo in halls and caves."
+    },
+    {
+      "slug": "ambientsounds",
+      "profiles": [
+        "sound"
+      ],
+      "why": "Nature ambience recorded for real: birds, crickets, owls, gulls, wind and rain by biome and weather; the city's own zones (gulls over the river, owls, doves, garden birds, wind on the roofs) reference its sounds by id (SPEC §16.0 decision 30)."
     },
     {
       "slug": "jei",

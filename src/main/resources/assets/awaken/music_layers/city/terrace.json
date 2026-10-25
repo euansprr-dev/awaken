@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "source": "ambient",
+  "title": "Carillon: the High Terrace",
+  "sampleRate": 44100,
+  "frames": 2116800,
+  "stems": [
+    {
+      "name": "air",
+      "file": "awaken:layers/layer_city_air",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    },
+    {
+      "name": "murmur_far",
+      "file": "awaken:layers/layer_city_murmur_far",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    },
+    {
+      "name": "murmur_near",
+      "file": "awaken:layers/layer_city_murmur_near",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    },
+    {
+      "name": "bustle",
+      "file": "awaken:layers/layer_city_bustle",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    },
+    {
+      "name": "birds",
+      "file": "awaken:layers/layer_city_birds",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        0.9,
+        0.35,
+        0.0,
+        0.15,
+        0.55
+      ]
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.85,
+        0.5,
+        0.1,
+        0.25,
+        0.5
+      ]
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.8,
+        0.6,
+        0.25,
+        0.35,
+        0.45
+      ]
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.75,
+        0.7,
+        0.4,
+        0.45,
+        0.4
+      ]
+    }
+  ]
+}

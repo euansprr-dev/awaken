@@ -717,7 +717,7 @@ Plan v2 · audio (details in docs/modules/audio.md):
   or the Ritual). Reserved: `awaken:descent/stratum_<n>` (music); `awaken:city/<district>` for the city's ambience
   (ambience slot, `source` ambient, priority 100; its levels are the district's crowd, e.g. night / quiet / busy /
   crowd, pinned by the provider from the district's density; it answers only inside the city site, so it never meets a
-  gate's music).
+  gate's music). In use since Carillon M4 B3b, with `awaken:city/night` after dark (§16.0 decision 30).
 
 Plan v2 · overworld structures (details in docs/modules/structures.md):
 - One visual language: three families (gates, Precursor ruins, lairs), each with its own light and palette.
@@ -1476,6 +1476,37 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
     The city also gives "Bell Metal" a rooftop chase: B5 (the opening from affordances, which brings citizens' rooftop
     running) publishes named roof routes and a chase hook the Living Wilds calls for its fleeing buyer; until then that
     step waits.
+30. The city's animals, drawn light and soundscape (M4 B3b, 2026-10-25; the B3b builder's calls, for the orchestrator's
+    review and Euan's listening page, docs/audio/carillon-b3b/):
+    - Animals and boats are client-only entities (`citizens.CityCritter`, discarded on a server, never saved): homes and
+      routes from the plan, made within reach (pigeons 56 blocks, gulls 72, cats 40, dogs 48, carts 96, boats 88) and
+      dropped 12 beyond; at most 40 pigeons, 16 gulls, 10 cats, 8 dogs, 4 carts and 8 boats near a player. Carts and
+      rowed boats run on the world clock, so every client sees them in the same place. Dogs: one keeper in seven among
+      residents, children, the Watch, porters, washers, shopkeepers and millers. Boats: one moored every 24 blocks along
+      each quay inside the wall (a quarter left empty, none within 6 of a bridge); two rowed up and down the river, one
+      round the canal; rowing from 23000 to 18000, bow lanterns lit after dusk (a third of the moored ones too).
+    - Hand lanterns and lit street lamps are drawn light (`citizens.client.CityGlow`: an additive core, halo and pool on
+      the ground), never light blocks; `/awaken citizens lanterns blocks|glow` keeps the old path for measuring only.
+      Choir Square's festoons: paper lanterns strung between the bowl's eight lamp posts, lit 12200-19500.
+    - The beds: `awaken:city/<district>` by day and `awaken:city/night` from 12500 to 23300, on the ambience slot. The
+      level is the district's citizens outdoors (counted every 100 ticks) against its busiest hour: calm under 15%,
+      light under 45%, busy under 80%, else packed; one lower in the rain. The night bed is busy 12500-14500 and light
+      to 16500 (the taverns), then calm. Each level's mix sits at -37 to -26 dBFS gated RMS and under -6 dBTP
+      (quieter than the -28 ± 3 ambience rule: the beds lie under the places that sound), and a crowd stem never falls
+      as the level rises.
+    - Every place's sound is mono (positional), the carillon too: it comes from the spire and fades over 320 blocks.
+      At dawn, noon and dusk the Choir plays its tune first and strikes the hour 300 ticks later.
+    - Sources: synthesised (tools/art/specs/audio_city_life.py) except the animals' voices (vanilla's cat, wolf and
+      horse events, referenced by id). This departs from decision 28's "vanilla first": vanilla has no city sounds
+      beyond water, fire and animals. Nature is AmbientSounds' (Euan, 25 Oct 2026, instead of downloading CC0
+      recordings ourselves; the pack's sound profile, 6.3.11 with CreativeCore, client-only). Its own engine plays real
+      birds, crickets and owls where there's greenery, wind 15 blocks above the ground and rain. The client tells the
+      server at login whether it runs the mod (`CitizensNet.Ears`), and such a player hears `awaken:city/as/<district>`
+      and `awaken:city/as/night`: the same beds without our synthetic birds and crickets (generated beside them). The city
+      adds what its engine never does in a paved city, with its recordings by id (`citizens.client.CityNature`):
+      gulls within 64 blocks of the river by day (ours stand down), a gull chorus within 24 now and then, doves over
+      Bellwatch, the Terrace, the Garden Ward and the Wallring by day, owls within 48 of the wall or a bell tower at
+      night. Its files are stereo, so these play unplaced, at a volume falling with distance. Nothing of it is copied.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |

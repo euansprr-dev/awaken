@@ -89,7 +89,8 @@ final class CityViews {
         // M4 B3a: the street life. A Market street of displays under the awnings, signs on brackets and a lantern line;
         // a Bellwatch lane of laundry looking up its lines; the bowl's stalls from the -1 ring; a quay's lantern strings
         add("market_street", 44, 1.0, -62, 0, 6, 0);
-        add("laundry_lane", -155.5, 1.0, 68.5, -155.5, 11, 44);
+        // (B3b) down the middle of the Bellwatch lane west of the canal that carries twelve lines, looking up them
+        add("laundry_lane", -168.5, 1.0, -10.5, -205, 11, -10.5);
         add("bowl_stalls", -4, 2.0, 27, 8, -1, 12);
         add("canal_lights", -124, 2.0, 23, -84, 6, 25);
     }

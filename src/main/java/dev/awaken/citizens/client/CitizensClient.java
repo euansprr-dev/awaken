@@ -15,7 +15,24 @@ public final class CitizensClient {
     private CitizensClient() {}
 
     public static void init(IEventBus modBus) {
-        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> e.registerEntityRenderer(CitizensContent.CITIZEN.get(), CitizenRenderer::new));
+        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> {
+            e.registerEntityRenderer(CitizensContent.CITIZEN.get(), CitizenRenderer::new);
+            e.registerEntityRenderer(CitizensContent.CRITTER.get(), CritterRenderer::new);
+        });
+        modBus.addListener(CritterRenderer::layers);
+        CityCritters.init();
+        CityGlow.source(CityCritters.LANTERNS);
+        CityGlow.source(CityFestoons.GLOW);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent e) -> CityFestoons.submit(e));
+        NeoForge.EVENT_BUS.addListener(CityCritters::tick);
+        NeoForge.EVENT_BUS.addListener(CityCritters::onJoin);
+        NeoForge.EVENT_BUS.addListener(CityCritters::onLeave);
+        NeoForge.EVENT_BUS.addListener(CityCritters::onSound);
+        NeoForge.EVENT_BUS.addListener(CitySound::tick);
+        NeoForge.EVENT_BUS.addListener(CityNature::tick);
+        // the server picks the beds by what this game hears with (AmbientSounds plays the birds and crickets itself)
+        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn e) ->
+                net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(new CitizensNet.Ears(CityNature.INSTALLED)));
         modBus.addListener((RegisterParticleProvidersEvent e) -> {
             e.registerSpriteSet(CitizensContent.CHIMNEY_SMOKE.get(), CitizenParticles.Smoke.Provider::new);
             e.registerSpriteSet(CitizensContent.FORGE_SPARK.get(), CitizenParticles.Spark.Provider::new);
@@ -25,8 +42,20 @@ public final class CitizensClient {
         modBus.addListener((RegisterClientPayloadHandlersEvent e) -> {
             e.register(CitizensNet.Speech.TYPE, CitizenFx::speech);
             e.register(CitizensNet.Emitters.TYPE, CitizenFx::emitters);
+            e.register(CitizensNet.Site.TYPE, CityLife::site);
         });
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, CityGlow::onRegister);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent e) -> CityGlow.submit(e));
+        NeoForge.EVENT_BUS.addListener(CityGlow::onJoin);
+        NeoForge.EVENT_BUS.addListener(CityGlow::onLeave);
         NeoForge.EVENT_BUS.addListener(CitizenFx::tick);
-        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> CitizenFx.clear());
+        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
+            CitizenFx.clear();
+            CityGlow.clear();
+            CityLife.clear();
+            CityCritters.clear();
+            CitySound.clear();
+            CityFestoons.reset();
+        });
     }
 }
