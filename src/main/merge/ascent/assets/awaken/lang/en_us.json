@@ -53,5 +53,7 @@
   "awaken.ascent.trial.leaper.open": "A gate is beating like a running heart: the Leaper's Gauntlet.",
   "awaken.ascent.spire.climbed": "Tether Spire climbed%s",
   "awaken.ascent.spire.built": "The crown stays dark. It answers only to a climb.",
+  "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
+  "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
   "block.awaken.spire_crown": "Spire Crown"
 }

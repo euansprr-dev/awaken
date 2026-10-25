@@ -127,6 +127,22 @@ public final class AscentPayloads {
         @Override public Type<Record> type() { return TYPE; }
     }
 
+    /** Server → client: the windways near you (SPEC §17.12), each lane its start and end. */
+    public record Lanes(java.util.List<Windways.Way> ways) implements CustomPacketPayload {
+        public static final Type<Lanes> TYPE = new Type<>(Awaken.id("ascent_lanes"));
+        private static final StreamCodec<ByteBuf, Windways.Way> WAY = StreamCodec.of((buf, w) -> {
+            buf.writeFloat((float) w.ax());
+            buf.writeFloat((float) w.ay());
+            buf.writeFloat((float) w.az());
+            buf.writeFloat((float) w.bx());
+            buf.writeFloat((float) w.by());
+            buf.writeFloat((float) w.bz());
+        }, buf -> new Windways.Way(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat()));
+        public static final StreamCodec<ByteBuf, Lanes> STREAM_CODEC = WAY.apply(ByteBufCodecs.list(WindwaysServer.MAX_SENT))
+                .map(Lanes::new, Lanes::ways);
+        @Override public Type<Lanes> type() { return TYPE; }
+    }
+
     /** Server → client (dev, autopilot): run a line of the pilot (scripted input for tours). */
     public record Pilot(String line) implements CustomPacketPayload {
         public static final Type<Pilot> TYPE = new Type<>(Awaken.id("ascent_pilot"));

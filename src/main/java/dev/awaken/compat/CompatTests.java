@@ -300,7 +300,7 @@ final class CompatTests {
         AwakenTests.register("compat_look_tiers", 20, h -> {
             h.assertTrue(Tier.SWIFT.lens == LensLook.SWIFT && !Tier.SWIFT.irisShaders, "Swift: Lens Swift, no shaders");
             h.assertTrue(Tier.CINEMATIC.lens == LensLook.CINEMATIC && !Tier.CINEMATIC.irisShaders, "Cinematic: Lens Cinematic, no shaders");
-            h.assertTrue(Tier.ULTRA.lens == LensLook.CINEMATIC && Tier.ULTRA.irisShaders, "Ultra: shaders, Lens Cinematic behind them");
+            h.assertTrue(Tier.ULTRA.lens == LensLook.ULTRA && !Tier.ULTRA.irisShaders, "Ultra: Lens Ultra, no shaders (SPEC §22)");
             for (Tier t : Tier.values()) {
                 List<DhSetting> dh = Look.dh(t);
                 h.assertTrue(dh.size() == Look.DH_KEYS.size(), t + " sets every owned DH key");
@@ -335,10 +335,12 @@ final class CompatTests {
                 }
             }
             h.assertTrue(Look.current(LensLook.SWIFT, false) == Tier.SWIFT && Look.current(LensLook.CINEMATIC, false) == Tier.CINEMATIC
-                    && Look.current(LensLook.OFF, false) == null && Look.current(LensLook.SWIFT, true) == Tier.ULTRA, "current tier");
+                    && Look.current(LensLook.ULTRA, false) == Tier.ULTRA && Look.current(LensLook.OFF, false) == null
+                    && Look.current(LensLook.SWIFT, true) == null, "current tier"); 
             h.assertTrue(Boolean.TRUE.equals(Look.fits(Tier.SWIFT, 8.0f, 14f)) && Boolean.FALSE.equals(Look.fits(Tier.SWIFT, 10f, 14f))
-                    && Boolean.FALSE.equals(Look.fits(Tier.SWIFT, 8f, 20f)) && Boolean.TRUE.equals(Look.fits(Tier.CINEMATIC, 15f, 24f))
-                    && Look.fits(Tier.ULTRA, 30f, 60f) == null, "frame budgets");
+                    && Boolean.FALSE.equals(Look.fits(Tier.SWIFT, 8f, 20f)) && Boolean.TRUE.equals(Look.fits(Tier.CINEMATIC, 10.5f, 19f))
+                    && Boolean.FALSE.equals(Look.fits(Tier.CINEMATIC, 12f, 19f)) && Boolean.TRUE.equals(Look.fits(Tier.ULTRA, 15f, 24f)),
+                    "frame budgets");
             h.assertTrue(Look.dhMatches(Tier.SWIFT, k -> k == Look.RADIUS ? 128 : null), "DH matches Swift");
             h.assertFalse(Look.dhMatches(Tier.SWIFT, k -> k == Look.RADIUS ? 256 : null), "DH radius changed in its own menu");
             h.assertTrue(Look.dhMatches(Tier.CINEMATIC, k -> k == Look.MAX_RESOLUTION ? "BLOCK" : k == Look.SSAO ? Boolean.TRUE : null),

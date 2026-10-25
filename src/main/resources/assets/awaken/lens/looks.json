@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "_about": "Lens looks per dimension (dev.awaken.lens.client). Missing fields inherit from default. Exposure is capped at 1.05 and shadows are never lifted, so dark places stay dark. Haze goes toward the game's own fog colour, mixed with hazeTint by hazeTintMix; it starts at hazeStart x the render distance. sunGlow scales the halo around the sun (0 where there is no sun).",
+  "_about": "Lens looks per dimension (dev.awaken.lens.client). Missing fields inherit from default. Exposure is capped at 1.05 and shadows are never lifted, so dark places stay dark. Haze goes toward the game's own fog colour, mixed with hazeTint by hazeTintMix; it starts at hazeStart x the render distance. sunGlow scales the halo around the sun (0 where there is no sun). Cinematic and Ultra only (Lens 2, SPEC §22): light scales the sun's warm key and cool shade (0 off), shade how deep shadow goes (0..0.85), shadeTint its colour (x2 max), keyWarmth how warm the key turns at sunrise and sunset, ao the ambient occlusion, filmic the filmic curve in place of the plain contrast.",
   "looks": {
     "default": {
       "_name": "Golden clarity: cool shadows, warm light, a blue aerial haze over the distance, warm at sunrise and sunset",
@@ -34,7 +34,17 @@
       "hazeTintMix": 0.3,
       "hazeDesaturate": 0.12,
       "sunsetWarmth": 0.6,
-      "sunGlow": 0.8
+      "sunGlow": 0.8,
+      "light": 1.0,
+      "shade": 0.38,
+      "shadeTint": [
+        0.86,
+        0.93,
+        1.14
+      ],
+      "keyWarmth": 0.8,
+      "ao": 0.65,
+      "filmic": 1.0
     },
     "minecraft:the_nether": {
       "_name": "Ember: heat haze, lava glow, rust shadows",

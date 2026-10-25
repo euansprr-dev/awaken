@@ -24,6 +24,9 @@ final class AscentTests {
         AwakenTests.register("ascent_aether", 40, AscentTests::aether);
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
+        AwakenTests.register("ascent_windway", 20, AscentTests::windway);
+        AwakenTests.register("ascent_slow_beat", 20, AscentTests::slowBeat);
+        AwakenTests.register("ascent_hero_crowns", 100, AscentTests::heroCrowns);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -670,6 +673,121 @@ final class AscentTests {
         h.assertTrue(Math.abs(k.speed() - 2.25) < 0.15, "boost " + k.speed());
         for (int t = 0; t < 80; t++) AscentRules.soarStep(k, 0, 0, 0, 0, false, false, false, s);
         h.assertTrue(k.speed() < 0.05, "hover left " + k.speed());
+        h.succeed();
+    }
+    /**
+     * Windways (SPEC §17.12): a lane's geometry between two platforms, and a glide off the first deck carried the whole
+     * way and set down slowly over the next deck, looking along it, 15° under it or 15° over it; a look 45° away breaks
+     * out of it.
+     */
+    private static void windway(GameTestHelper h) {
+        net.minecraft.core.BlockPos p = new net.minecraft.core.BlockPos(0, 0, 0), q = new net.minecraft.core.BlockPos(600, 0, 800);
+        java.util.List<Windways.Way> ways = Windways.between(p, 276, q, 279);
+        Windways.Way w = ways.get(0), back = ways.get(1);
+        double startR = Math.hypot(w.ax() - 0.5, w.az() - 0.5), endR = Math.hypot(w.bx() - q.getX() - 0.5, w.bz() - q.getZ() - 0.5);
+        h.assertTrue(Math.abs(startR - Math.hypot(Windways.OUT, Windways.LANE)) < 0.01 && w.ay() == 276 - Windways.BELOW
+                        && w.by() == 279 + 1 + Windways.ABOVE && endR > 7 && endR < 11.6,
+                "a lane starts past the islands under its deck and ends over the next deck's rim (" + startR + ", " + w.ay() + " to " + endR + ", " + w.by() + ")");
+        double mx = (w.ax() + w.bx()) / 2, my = (w.ay() + w.by()) / 2, mz = (w.az() + w.bz()) / 2;
+        h.assertTrue(back.off(mx, my, mz) > 2 * Windways.RADIUS, "the two ways' tubes are apart: " + back.off(mx, my, mz));
+        for (float off : new float[]{0, 15, -15}) {
+            double[] r = ride(w, off, 0);
+            h.assertTrue(r[1] == 0 && r[2] >= 0 && r[0] < 20 * 45 && r[2] < 0.8,
+                    "looking " + off + " under its way, carried " + (int) w.length() + " blocks in " + r[0] / 20 + " s and set down at " + r[2]
+                            + " b/t (left it: " + (r[1] != 0) + ")");
+        }
+        double[] away = ride(w, 0, 45);
+        h.assertTrue(away[1] != 0 && away[0] < 200, "a look 45° away breaks out (" + away[0] / 20 + " s)");
+        // the server's lanes are its air (AirHooks)
+        var old = Windways.serverWays();
+        Windways.setServer(ways);
+        double[] air = new double[3];
+        try {
+            double s = w.length() / 2;
+            double ux = (w.bx() - w.ax()) / w.length(), uz = (w.bz() - w.az()) / w.length();
+            h.assertTrue(dev.awaken.core.api.AirHooks.sample(h.getLevel(), w.ax() + ux * s, w.ay() + (w.by() - w.ay()) / 2, w.az() + uz * s, air)
+                    && air[0] * ux + air[2] * uz > Windways.PUSH * 0.9, "AirHooks hears the lane: " + java.util.Arrays.toString(air));
+        } finally {
+            Windways.setServer(old);
+        }
+        h.succeed();
+    }
+
+    /** A glide dropped off a deck just before a lane's start: {ticks, left the tube early (1), speed out of its end, y}. */
+    private static double[] ride(Windways.Way w, float pitchOff, float yawOff) {
+        double len = w.length(), ux = (w.bx() - w.ax()) / len, uy = (w.by() - w.ay()) / len, uz = (w.bz() - w.az()) / len;
+        float laneYaw = (float) Math.toDegrees(Math.atan2(-ux, uz)), lanePitch = (float) -Math.toDegrees(Math.asin(uy));
+        AscentRules.Kin k = new AscentRules.Kin().set(w.ax() - ux * 2, w.ay() + 5, w.az() - uz * 2, ux * 0.5, -0.3, uz * 0.5);
+        float[] line = new float[2];
+        double[] air = new double[3];
+        int t;
+        for (t = 0; t < 20 * 60; t++) {
+            float yaw = laneYaw + yawOff, pitch = lanePitch + pitchOff;
+            if (Windways.holds(w, k.x, k.y, k.z) && Windways.steer(w, k.x, k.y, k.z, yaw, pitch, line)) {
+                yaw = line[0];
+                pitch = line[1];
+            }
+            AscentRules.glideStep(k, yaw, pitch);
+            air[0] = air[1] = air[2] = 0;
+            Windways.airOf(w, k.x, k.y, k.z, air);
+            AscentRules.air(k, air, AscentRules.AIR_GLIDE);
+            if (w.along(k.x, k.y, k.z) > len) return new double[]{t, 0, k.speed(), k.y};
+            if (t > 40 && !Windways.holds(w, k.x, k.y, k.z)) return new double[]{t, 1, -1, k.y};
+        }
+        return new double[]{t, 0, -1, k.y};
+    }
+    /** The slow beat (SPEC §17.15): at 0.45 of time the carry flies the same arc, slower (within a few percent). */
+    private static void slowBeat(GameTestHelper h) {
+        AscentRules.Kin a = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0), b = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0);
+        double[] scratch = new double[2];
+        for (int t = 0; t < 9; t++) AscentRules.carryStep(a, 0, 0, 0, scratch);
+        for (int t = 0; t < 20; t++) AscentRules.carryStepSlow(b, 0.45);
+        double da = Math.hypot(a.x, a.y), err = Math.hypot(a.x - b.x, a.y - b.y);
+        h.assertTrue(err < da * 0.06 && b.vy < a.vy + 0.05 && b.vy > a.vy - 0.05,
+                "20 slow ticks fly 9 ticks' arc: " + String.format("(%.2f, %.2f) vs (%.2f, %.2f)", b.x, b.y, a.x, a.y));
+        h.succeed();
+    }
+    /**
+     * The hero trees' crowns (SPEC §17.16), from each tree's own blueprint over eight seeds: the crown on the highest
+     * cell over the trunk with room to stand, a route of rings up the trunk (two or more on the Colossus, one or more on
+     * the Lumen Spire), each ring in air with room to hang under it, the first within a throw of the ground, each next
+     * one a zip from the last (6+ up, sideways under 0.45 of the rise).
+     */
+    private static void heroCrowns(GameTestHelper h) {
+        StringBuilder sb = new StringBuilder();
+        for (dev.awaken.terrain.hero.HeroTree tree : new dev.awaken.terrain.hero.HeroTree[]{dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS,
+                dev.awaken.terrain.hero.HeroTree.LUMEN_SPIRE}) {
+            boolean colossus = tree == dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS;
+            for (long seed = 1; seed <= 8; seed++) {
+                dev.awaken.terrain.hero.Blueprint bp = dev.awaken.terrain.hero.HeroWorldgen.blueprint(tree, seed * 7919L);
+                HeroCrowns.Layout l = HeroCrowns.layout(tree, bp, seed);
+                String id = tree.getSerializedName() + " #" + seed;
+                BlockPos c = l.crown();
+                h.assertTrue(bp.get(c.getX(), c.getY(), c.getZ()) == 0 && bp.get(c.getX(), c.getY() + 1, c.getZ()) == 0
+                        && bp.get(c.getX(), c.getY() - 1, c.getZ()) != 0, id + ": the crown stands on the tree's top at " + c.toShortString());
+                for (int x = -HeroCrowns.SUMMIT_REACH; x <= HeroCrowns.SUMMIT_REACH; x++) for (int z = -HeroCrowns.SUMMIT_REACH; z <= HeroCrowns.SUMMIT_REACH; z++) {
+                    if (x * x + z * z <= HeroCrowns.SUMMIT_REACH * HeroCrowns.SUMMIT_REACH) {
+                        h.assertTrue(bp.get(x, c.getY(), z) == 0 || x == c.getX() && z == c.getZ() || bp.get(x, c.getY(), z) == 0,
+                                id + ": nothing over the trunk is higher than the crown's foot");
+                    }
+                }
+                int need = colossus ? 2 : 1;
+                h.assertTrue(l.rings().size() >= need, id + ": " + l.rings().size() + " rings up the trunk (want " + need + "+)");
+                BlockPos last = null;
+                for (BlockPos r : l.rings()) {
+                    for (int dy = -2; dy <= 3; dy++) h.assertTrue(bp.get(r.getX(), r.getY() + dy, r.getZ()) == 0, id + ": room at the ring " + r.toShortString());
+                    if (last == null) {
+                        h.assertTrue(r.getY() >= 6 && r.getY() <= 30, id + ": the first ring is a throw from the ground (" + r.getY() + " up)");
+                    } else {
+                        double rise = r.getY() - last.getY(), side = Math.hypot(r.getX() - last.getX(), r.getZ() - last.getZ());
+                        h.assertTrue(rise >= 6 && side < rise * AscentRules.ZIP_UP_SLOPE, String.format("%s: ring to ring a zip (%.0f up, %.1f across)", id, rise, side));
+                    }
+                    last = r;
+                }
+                sb.append(String.format("%s: crown %d up, %d rings to %d%n", id, c.getY(), l.rings().size(), last == null ? 0 : last.getY()));
+            }
+        }
+        dev.awaken.Awaken.LOG.info("[ascent] hero crowns:\n{}", sb);
         h.succeed();
     }
 }

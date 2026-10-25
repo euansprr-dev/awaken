@@ -125,6 +125,8 @@ public final class AscentPilot {
             p.setYHeadRot(p.getYRot());
             p.setXRot(Mth.clamp(p.getXRot() + aimStepPitch, -90, 90));
         }
+        // in Shoulder Surfing's decoupled view the camera is the look: it follows the pilot's
+        if (!script.isEmpty() || aimTicks > 0) dev.awaken.body.client.feel.ShoulderView.look(p.getYRot(), p.getXRot());
         if (doubleAge >= 0 && doubleKey >= 0) {
             if (doubleAge == 0 || doubleAge == 5) HOLD[doubleKey] = Math.max(HOLD[doubleKey], 2);
             if (++doubleAge > 6) doubleAge = -1;
