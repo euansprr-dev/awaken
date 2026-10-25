@@ -133,7 +133,9 @@ float volume(vec3 v, float d, vec3 l, float strength, float jitter, bool ultra) 
     float dt = d / float(steps), scaleH = max(v19.g * 256.0, 4.0), acc = 0.0;
     for (int i = 0; i < steps; i++) {
         vec3 w = v * ((float(i) + jitter) * dt);
-        acc += litAt(w, f12, cell) * mix(1.0, cloudShadow(w, l, cp, f12.y), 0.5) * exp(-max(w.y + f12.y - floorY, 0.0) / scaleH);
+        // (on Ultra the clouds' shadows cut the beams too)
+        float cs = ultra ? mix(1.0, cloudShadow(w, l, cp, f12.y), 0.5) : 1.0;
+        acc += litAt(w, f12, cell) * cs * exp(-max(w.y + f12.y - floorY, 0.0) / scaleH);
     }
     const float g = 0.6;
     float phase = 0.06 + 4.0 * (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * dot(v, l), 1.5));

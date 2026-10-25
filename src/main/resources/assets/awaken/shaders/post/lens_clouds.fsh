@@ -61,7 +61,7 @@ void main() {
         fragColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
-    int steps = ultra ? 40 : 24, lightSteps = ultra ? 5 : 3;
+    int steps = ultra ? 32 : 20, lightSteps = ultra ? 5 : 3;
     float jitter = ign(gl_FragCoord.xy, f12.w), dt = (t1 - t0) / float(steps);
     vec3 l = f14.xyz;
     float mu = dot(v, l);

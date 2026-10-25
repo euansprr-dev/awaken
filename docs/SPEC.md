@@ -2633,10 +2633,11 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   a repeat (all dividing 30720) for where clouds stand and their outlines; their billows are two octaves of a cheap 3D
   value noise in world space (46 and 17 blocks on Ultra, one octave at 38 on Cinematic; flat noise slid with height
   drew vertical streaks), skipped deep inside a cloud. The cover slides up to 45 blocks with height (two noise channels,
-  opposite ways), so a cloud's sides lean and break up instead of standing as straight walls. Flat-ish bases,
+  opposite ways; only in the main march, not the light-step and shadow look-ups), so a cloud's sides lean and break
+  up instead of standing as straight walls. Flat-ish bases,
   domes that rise where a cloud is thick, billows eating the edges.
-- Pass `lens_clouds.fsh` (640×360 on Cinematic, 960×540 on Ultra; then a blit into the persistent
-  `awaken:lens_clouds_hist`): each ray marched through the layer (24 / 40 steps, up to 800 / 1100 blocks of it, never
+- Pass `lens_clouds.fsh` (560×315 on Cinematic, 800×450 on Ultra; then a blit into the persistent
+  `awaken:lens_clouds_hist`): each ray marched through the layer (20 / 32 steps, up to 800 / 1100 blocks of it, never
   past nearer terrain), lit by 3 / 5 steps toward the light (doubling from 6 blocks): two octaves of Beer's law (the
   second, at 35% and a quarter of the extinction, stands in for light scattered many times inside, so bases stay soft
   grey-white), σ 0.03 per block, a powder term (thin sunward edges glow, dense cores darken), a phase of 0.85 + 0.9 × HG(0.6) (white from every side, a modest silver
@@ -2653,8 +2654,8 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   gaps and the halo dims behind a cloud (all of it streaked the whole sky like rain curtains; the shafts also drop to
   0.35 in the composite). The shafts read the open sky's own brightness, not the clouds' (bright cloud tops seen from
   above streaked into rays). The light pass darkens the sun on the land under them (to 28% under thick cloud, along
-  the light ray through the layer's middle) and, at half strength, in the volumetric beams: moving cloud shadows and
-  beams through gaps.
+  the light ray through the layer's middle) and, on Ultra at half strength, in the volumetric beams: moving cloud
+  shadows and beams through gaps.
 - First tour (bad8a542, 480×270, 20 steps, the first cover curve; p50 ms off 7.74, Swift 7.85, Cinematic 10.73, Ultra
   13.20: the clouds cost no net frame time, since the game's are no longer drawn): too much cover (a stormy deck),
   dark bellies, a hard line toward the horizon, a noise grid; tuned as above.

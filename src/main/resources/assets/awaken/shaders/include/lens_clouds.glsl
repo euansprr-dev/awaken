@@ -30,8 +30,11 @@ float cloudDensity(vec3 rel, vec4 cp, float camY, int detail) {
     vec2 xz = rel.xz + cp.zw;
     // the cover slides a little with height (two noise channels, opposite ways), so a cloud's sides lean and break up
     // instead of standing as straight walls
-    vec2 lean = vec2(texture(CloudNoiseSampler, fract(xz / 700.0 + h * 0.31)).a, texture(CloudNoiseSampler, fract(xz / 700.0 - h * 0.27 + 0.5)).a) - 0.5;
-    xz += lean * 90.0 * h;
+    // (not for the light-step and shadow look-ups, where it changes nothing you can see)
+    if (detail > 0) {
+        vec2 lean = vec2(texture(CloudNoiseSampler, fract(xz / 700.0 + h * 0.31)).a, texture(CloudNoiseSampler, fract(xz / 700.0 - h * 0.27 + 0.5)).a) - 0.5;
+        xz += lean * 90.0 * h;
+    }
     float cov = texture(CloudNoiseSampler, fract(xz / 3072.0)).r * 0.7 + texture(CloudNoiseSampler, fract(xz / 960.0 + 0.37)).g * 0.3;
     // cover 0.45 leaves most of the sky open between distinct clouds; toward 0.95 it closes into an overcast deck. A
     // cloud needs denser cover the higher it climbs, so each narrows upward into a dome (not a wall) and only the
