@@ -1,5 +1,6 @@
 package dev.awaken.mobs.def;
 
+import dev.awaken.core.api.Strikes;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import org.jspecify.annotations.Nullable;
@@ -64,6 +65,20 @@ public record Ability(Kind kind, String name, int windup, int cooldown, float ra
         AURA,
         /** Speeds and strengthens itself. */
         FRENZY
+    }
+
+    /**
+     * How this blow can be answered (SPEC §24): shots are LIGHT (deflect them), body blows HEAVY (deflect or dodge;
+     * they break a guard), areas and every heavy tell PERILOUS (dodge only); the rest are no blow at all.
+     */
+    public Strikes.Kind strike() {
+        if (heavy) return Strikes.Kind.PERILOUS;
+        return switch (kind) {
+            case BOLT, ARROWS, NOVA -> Strikes.Kind.LIGHT;
+            case SLAM, LEAP, CHARGE, BLINK, CONE, FANGS, FANGS_RING -> Strikes.Kind.HEAVY;
+            case BURST, RAIN, BEAM, AURA, CLOUD, GUST, PULL, ROOT, LIFT, DARKNESS -> Strikes.Kind.PERILOUS;
+            default -> Strikes.Kind.NONE;
+        };
     }
 
     public static Builder of(Kind kind, String name) {

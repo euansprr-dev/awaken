@@ -18,7 +18,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
@@ -68,7 +67,7 @@ public class CaveFauna extends FaunaMob implements WildPose {
             goal(0, new FloatGoal(this));
             goal(1, new MobGoals.Hold(this));
             goal(2, new FaunaGoals.Scatter(this));
-            goal(3, new MeleeAttackGoal(this, 1.25, false));
+            goal(3, new MobGoals.ToldMelee(this, 1.25, false));
             goal(4, new MobGoals.SeekSound(this));
             goal(7, new WaterAvoidingRandomStrollGoal(this, 0.8));
             goal(9, new RandomLookAroundGoal(this));

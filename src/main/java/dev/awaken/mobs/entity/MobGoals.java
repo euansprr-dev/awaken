@@ -2,6 +2,7 @@ package dev.awaken.mobs.entity;
 
 import dev.awaken.mobs.MobSounds;
 import dev.awaken.mobs.Mobs;
+import dev.awaken.core.api.Strikes;
 import dev.awaken.mobs.def.Trait;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -44,6 +45,100 @@ final class MobGoals {
             AbilityRunner r = mob.runner();
             LivingEntity t = mob.getTarget();
             if (r != null && r.active() != null && t != null) mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
+        }
+    }
+
+    /**
+     * Melee with a tell (SPEC §24): within reach the creature winds up first, plants its feet and glints (LIGHT), then
+     * strikes if you are still in reach; step out and it whiffs. Lords and wardens throw every third blow as a HEAVY
+     * haymaker (a longer, amber tell, half as hard again). Replaces vanilla's untold swing, which gave nothing to read.
+     */
+    static final class ToldMelee extends net.minecraft.world.entity.ai.goal.MeleeAttackGoal {
+        private static final net.minecraft.resources.Identifier HAYMAKER = dev.awaken.Awaken.id("mobs_haymaker");
+        private final AwakenMob mob;
+        private int tellLeft, swings;
+        private Strikes.Kind telling = Strikes.Kind.NONE;
+
+        ToldMelee(AwakenMob mob) {
+            this(mob, 1.0, false);
+        }
+
+        ToldMelee(AwakenMob mob, double speed, boolean followUnseen) {
+            super(mob, speed, followUnseen);
+            this.mob = mob;
+        }
+
+        /** Ticks a blow of this creature is told for. */
+        static int tellTicks(AwakenMob mob, Strikes.Kind kind) {
+            int base = switch (mob.syncedRole()) {
+                case BOSS, BREAK, WARDEN, NIGHTMARE -> 10;
+                case ELITE -> 9;
+                default -> 8;
+            };
+            return kind == Strikes.Kind.HEAVY ? base + 6 : base;
+        }
+
+        private boolean big() {
+            return switch (mob.syncedRole()) {
+                case BOSS, BREAK, WARDEN, NIGHTMARE -> true;
+                default -> false;
+            };
+        }
+
+        @Override
+        public void stop() {
+            super.stop();
+            if (tellLeft > 0) mob.setTell(0, Strikes.Kind.NONE);
+            tellLeft = 0;
+        }
+
+        @Override
+        public void tick() {
+            if (mob.staggered()) {
+                tellLeft = 0;
+                return;
+            }
+            if (tellLeft > 0) {
+                LivingEntity t = mob.getTarget();
+                if (t != null) mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
+                mob.getNavigation().stop();
+                if (--tellLeft > 0) {
+                    if ((tellLeft & 1) == 0) mob.setTell(tellLeft, telling);
+                    return;
+                }
+                release(t);
+                return;
+            }
+            super.tick();
+        }
+
+        @Override
+        protected void checkAndPerformAttack(LivingEntity target) {
+            AbilityRunner r = mob.runner();
+            if (!canPerformAttack(target) || (r != null && r.active() != null)) return;
+            telling = big() && ++swings % 3 == 0 ? Strikes.Kind.HEAVY : Strikes.Kind.LIGHT;
+            tellLeft = tellTicks(mob, telling);
+            mob.setTell(tellLeft, telling);
+            mob.getNavigation().stop();
+            boolean heavy = telling == Strikes.Kind.HEAVY;
+            mob.playLevelSound(heavy ? MobSounds.TELEGRAPH_HEAVY.get() : MobSounds.TELEGRAPH.get(), heavy ? 1.1F : 0.55F, heavy ? 0.8F : 1.7F);
+        }
+
+        private void release(@Nullable LivingEntity target) {
+            Strikes.Kind kind = telling;
+            mob.setTell(0, Strikes.Kind.NONE);
+            resetAttackCooldown();
+            mob.swingForAttack(net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (target == null || !target.isAlive() || !mob.isWithinMeleeAttackRange(target)) return; // stepped out: a whiff
+            var dmg = mob.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            boolean heavy = kind == Strikes.Kind.HEAVY && dmg != null;
+            if (heavy) dmg.addOrUpdateTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(HAYMAKER, 0.5,
+                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+            try {
+                Strikes.deliver(mob, kind, () -> mob.doHurtTarget(getServerLevel(mob), target));
+            } finally {
+                if (heavy) dmg.removeModifier(HAYMAKER);
+            }
         }
     }
 
@@ -93,7 +188,7 @@ final class MobGoals {
     /** Fliers: hover around the target, dive in to strike, pull back. Straight-line flight, no pathfinding. */
     static final class FlyHunt extends Goal {
         private final AwakenMob mob;
-        private int retarget, attackCooldown;
+        private int retarget, attackCooldown, tellLeft = -1, diveTicks;
         private float angle;
 
         FlyHunt(AwakenMob mob) {
@@ -113,12 +208,29 @@ final class MobGoals {
             if (attackCooldown > 0) attackCooldown--;
             boolean ranged = mob.def().has(Trait.RANGED);
             double reach = (mob.getBbWidth() + t.getBbWidth()) * 0.5 + 1.3;
-            if (!ranged && attackCooldown <= 0) {
+            if (!ranged && attackCooldown <= 0 && !mob.staggered()) {
+                // a told dive (SPEC §24): it rears for its tell, then dives; it gives up a dive that takes too long
+                if (tellLeft < 0) {
+                    tellLeft = ToldMelee.tellTicks(mob, Strikes.Kind.LIGHT);
+                    mob.setTell(tellLeft, Strikes.Kind.LIGHT);
+                    mob.playLevelSound(MobSounds.TELEGRAPH.get(), 0.55F, 1.7F);
+                }
+                if (tellLeft > 0) {
+                    if (--tellLeft > 0 && (tellLeft & 1) == 0) mob.setTell(tellLeft, Strikes.Kind.LIGHT);
+                    else if (tellLeft == 0) {
+                        mob.setTell(0, Strikes.Kind.NONE);
+                        diveTicks = 30;
+                    }
+                    mob.getMoveControl().setWantedPosition(mob.getX(), mob.getY(), mob.getZ(), 0.6);
+                    return;
+                }
                 Vec3 eye = t.getEyePosition().subtract(0, t.getBbHeight() * 0.3, 0);
                 mob.getMoveControl().setWantedPosition(eye.x, eye.y, eye.z, 1.2);
-                if (mob.distanceToSqr(t) < reach * reach) {
-                    mob.doHurtTarget(getServerLevel(mob), t);
+                boolean hit = mob.distanceToSqr(t) < reach * reach;
+                if (hit) Strikes.deliver(mob, Strikes.Kind.LIGHT, () -> mob.doHurtTarget(getServerLevel(mob), t));
+                if (hit || --diveTicks <= 0) {
                     attackCooldown = 30 + mob.getRandom().nextInt(20);
+                    tellLeft = -1;
                     retarget = 0;
                 }
                 return;

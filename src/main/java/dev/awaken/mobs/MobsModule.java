@@ -2,8 +2,14 @@ package dev.awaken.mobs;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.api.MobHooks;
+import dev.awaken.core.api.Strikes;
 import dev.awaken.mobs.def.Bestiary;
+import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.signal.Signal;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.neoforged.bus.api.IEventBus;
 
 /**
@@ -22,8 +28,22 @@ public final class MobsModule {
         MobLoot.init(modBus);
         MobsEvents.init(modBus);
         MobHooks.install(new MobsSpawner());
+        // what Arms reads (SPEC §24): the blow a creature is telling, and how its stance breaks
+        Strikes.installTells(e -> e instanceof AwakenMob m && m.telegraphTicks() > 0 && m.tellKind() != Strikes.Kind.NONE
+                ? new Strikes.Tell(m.telegraphTicks(), m.tellKind()) : null);
+        Strikes.installStaggers(MobsModule::stagger);
         Signal.onAction("mobs", Mobs::onSignalAction);
         MobsCommands.register();
         MobsTests.register();
+    }
+
+    /** Ours stagger through their own stance (the wind-up ends, they stand still); any other mob is slowed to a stop. */
+    private static boolean stagger(LivingEntity e, int ticks) {
+        if (e instanceof AwakenMob m) return m.stagger(ticks);
+        if (!(e instanceof Mob mob) || !mob.isAlive()) return false;
+        mob.getNavigation().stop();
+        mob.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, ticks, 6, false, false));
+        mob.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ticks, 4, false, false));
+        return true;
     }
 }

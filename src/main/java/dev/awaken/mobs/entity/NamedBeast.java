@@ -20,7 +20,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
@@ -70,7 +69,7 @@ public class NamedBeast extends FaunaMob {
             goalSelector.addGoal(3, new MobGoals.FlyHunt(this));
             goalSelector.addGoal(7, new MobGoals.FlyWander(this));
         } else {
-            goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.1, true));
+            goalSelector.addGoal(3, new MobGoals.ToldMelee(this, 1.1, true));
             goalSelector.addGoal(5, new MoveTowardsRestrictionGoal(this, 0.9));
             goalSelector.addGoal(6, new FaunaGoals.Graze(this));
             goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.6));
