@@ -18,7 +18,7 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
 | M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | **done, merged**; report docs/carillon/milestones/M2-opening.md; **Euan's play 1 next** |
 | M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
-| M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
+| M4 detail | Phase A look bible + story (Opus xhigh) → Phase B one builder | carillon/m4-look · /Volumes/MEDIA/Awaken-m4-look | **Phase A running**; Euan approves the look bible + story before any M4 code |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
 ## Stage 0 (spikes): closed at G0
@@ -142,3 +142,13 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   priorities and the run's threat. M4 (Detail) is not started until play 1 is in, per the lean plan.
 - 2026-10-25: carillon/main c3d4f735 (M1 + M3 + M2) is on build/awaken-v1 as d50ab96 (clean, compiles; CI running on
   the combination). Euan's play 1 runs on build with `tools/play.sh --pack` in a NEW world. M4 waits for play 1.
+- 2026-10-25: Euan's play 1 is in (via the pack session; his words in the M4 Phase A brief): the city is flat, boring and
+  not alive; the run looks intentionally placed ("why would a city just have random wooden blocks in the middle of the
+  sky?"); the story doesn't hang together (the Void says you died in a gate, the wake says you walked out of one); floating
+  Elder Wood in the sky. Approved: "All of it, concept art first." M4 north star: the city is the course, climbable because
+  of its architecture (real elements, tuned to the movement envelope); routes derived from affordances (the 414-block
+  stage shrinks to ~0); a height plan; a street-life layer; tokens into the grammar's rules + ~12 hand-made landmarks.
+  Running: Phase A (Opus xhigh, docs only: look bible per district, ~8 concept images with gpt-image-2, story outline and
+  the exact opening lines) on carillon/m4-look; and a Sonnet bug fix for the floating Elder Wood on carillon/m4-elderfix
+  (likely source: HeroStructure.cityNear checks only 4 axis points of the crown, and the painter clears only 40 above
+  plots). Phase B (one builder) waits for Euan's approval of Phase A.
