@@ -1411,6 +1411,9 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
     `RenownHooks.witness` at turn-in. Its chains "The Last Delivery" (the Roost's word, Kestrel) and "Bell Metal" (the
     C-rank spine) are drafted by the Living Wilds session and reviewed by the Carillon session against
     docs/carillon/m4/story.md. Its tips use TipHooks with tip files in the onboarding.md format.
+    The city also gives "Bell Metal" a rooftop chase: B5 (the opening from affordances, which brings citizens' rooftop
+    running) publishes named roof routes and a chase hook the Living Wilds calls for its fleeing buyer; until then that
+    step waits.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1579,7 +1582,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
   `startPoint(ServerPlayer)`, `square(Level)`, `spot(Level, String id)` (named spots the city lays out for other modules:
-  `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`; null until placed).
+  `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`, `bellwatch_cellar` (the
+  melting room under the Knoll's bell tower, for the Living Wilds' "Bell Metal"); null until placed).
   Graph types are added at G1.
 - `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
 - `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
