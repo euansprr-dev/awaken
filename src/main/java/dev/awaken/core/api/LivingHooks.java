@@ -19,8 +19,8 @@ public final class LivingHooks {
          */
         default boolean levelMoment(ServerPlayer player, int level, int gained) { return false; }
 
-        /** Whether this fauna species lives in the living module's ledger (herds), so it never spawns naturally. */
-        default boolean ledgered(String speciesId) { return false; }
+        /** Whether this fauna species lives in the living module's ledger here (herds), so it never spawns naturally. */
+        default boolean ledgered(net.minecraft.server.level.ServerLevel level, String speciesId) { return false; }
     }
 
     private static Bridge bridge = new Bridge() {};
@@ -30,8 +30,8 @@ public final class LivingHooks {
     }
 
     /** Whether a fauna species' herds live in the Living Wilds' ledger instead of spawning naturally (SPEC §21.7). */
-    public static boolean ledgered(String speciesId) {
-        return bridge.ledgered(speciesId);
+    public static boolean ledgered(net.minecraft.server.level.ServerLevel level, String speciesId) {
+        return bridge.ledgered(level, speciesId);
     }
 
     public static boolean paysKills() {

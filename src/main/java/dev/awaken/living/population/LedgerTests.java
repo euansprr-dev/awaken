@@ -51,6 +51,14 @@ public final class LedgerTests {
             h.assertTrue(bodies.stream().noneMatch(id -> level.getEntity(id) != null && level.getEntity(id).isAlive()), "bodies given back");
             h.assertTrue(herd.count == 9, "the count stays what the living were");
             h.assertTrue(Ledger.ledgered("mossback") && !Ledger.ledgered("gloomstalker"), "herds leave natural spawning, hunters don't");
+            // the world's switch: on, a herd species is the ledger's; off (the GameTest server's default), it spawns naturally
+            var rules = level.getServer().overworld().getGameRules();
+            boolean was = rules.get(dev.awaken.living.LivingContent.LIVING_HERDS.get());
+            rules.set(dev.awaken.living.LivingContent.LIVING_HERDS.get(), true, level.getServer());
+            h.assertTrue(dev.awaken.core.api.LivingHooks.ledgered(level, "mossback"), "with living_herds on, mossbacks are the ledger's");
+            rules.set(dev.awaken.living.LivingContent.LIVING_HERDS.get(), false, level.getServer());
+            h.assertTrue(!dev.awaken.core.api.LivingHooks.ledgered(level, "mossback"), "with it off they spawn naturally");
+            rules.set(dev.awaken.living.LivingContent.LIVING_HERDS.get(), was, level.getServer());
             h.succeed();
         });
     }

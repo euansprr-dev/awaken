@@ -32,6 +32,14 @@ public final class LivingContent {
                     Codec.BOOL, b -> b ? 1 : 0, false, FeatureFlagSet.of()));
 
     /**
+     * {@code /gamerule awaken:living_herds false}: herds spawn naturally again and the ledger keeps only packs and roosts
+     * (SPEC §21.7). The GameTest server starts with it off, so the fauna tests see natural herds as they always did.
+     */
+    public static final DeferredHolder<GameRule<?>, GameRule<Boolean>> LIVING_HERDS = RULES.register("living_herds",
+            () -> new GameRule<>(GameRuleCategory.SPAWNING, GameRuleType.BOOL, BoolArgumentType.bool(), (visitor, rule) -> visitor.visitBoolean(rule),
+                    Codec.BOOL, b -> b ? 1 : 0, true, FeatureFlagSet.of()));
+
+    /**
      * A drop worth a light pillar (SPEC §21.1): 0 none, 1 rare (blue), 2 epic (violet), 3 a Power Core (white-gold).
      * Set on the dropped item entity when a creature dies; synced to everyone who sees it, never saved.
      */

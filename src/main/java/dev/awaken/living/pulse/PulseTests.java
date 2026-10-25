@@ -40,7 +40,8 @@ public final class PulseTests {
                 h.assertTrue(mig != null && mig.participants.size() >= 10, "a herd of ten or more arrives: " + (mig == null ? 0 : mig.participants.size()));
                 h.assertTrue(Behaviours.alive(level, mig) >= 10, "and stands in the world");
                 // the Almanac: standing near it is witnessing it, once
-                p.setPos(Vec3.atCenterOf(a.offset(8, 0, 2)));
+                pulse.run(level); // the herd stands where the ground really is (a plot may sit under terrain): find it
+                p.setPos(mig.centre.add(2, 1, 2));
                 pulse.run(level);
                 h.assertTrue(mig.witnessed.contains(p.getUUID()), "witnessed");
                 h.assertTrue(Progression.profile(p).counter("awaken:discovered/happening/great_migration") == 1, "a discovery in the Almanac");

@@ -349,7 +349,7 @@ public final class Camps extends SavedData {
         setDirty();
         for (ServerPlayer p : level.players()) {
             if (p.distanceToSqr(Vec3.atCenterOf(c.pos)) > 56 * 56) continue;
-            Progression.worldXp(p, "camp", 0.25 * c.tier);
+            Progression.worldXp(p, "camp", 0.4 * (1 + 0.25 * (c.tier - 1))); // pacing_sim CAMP_K, more by tier
             Progression.count(p, "awaken:camps_cleared");
             Signal.toast(p, Component.literal("Cleared · " + c.name() + (c.tier > 1 ? " (tier " + c.tier + ")" : "")));
         }

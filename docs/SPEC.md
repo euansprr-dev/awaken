@@ -2789,7 +2789,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Catch-up (when a population takes bodies after days away): herds +1 a day (+2 while their pack is wiped out), packs
   +1 per 2 days (+1 per 4 once wiped), roosts +1 a day; each night a pack lived its herd lost one (never under 2).
 - Natural spawning leaves the herd species to the ledger (`LivingHooks.ledgered`, read by `FaunaRules.verdict`:
-  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before.
+  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before. Game rule
+  `awaken:living_herds` (default on): off, herds spawn naturally again and the ledger keeps only packs and roosts; the
+  GameTest server starts with it off, so the fauna tests see natural herds as before (`living_ledger` checks the rule).
 - Dev: `/awaken living ledger`. Test `living_ledger`.
 
 ### 21.8 Camps and nests (Phase D, as built 2026-10-25)
@@ -2807,7 +2809,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   `awaken_camp`, creature kind CAMP (kill XP by role); when a wave is down and the heart stands, another, tier - 1
   more in all. Everyone gone past 104: it sleeps (its creatures go; whole again next time).
 - The heart killed: cleared. Its ground turns to coarse dirt (ash), what it stood up goes, for 5 play-days; then it
-  can return at tier 1. Players within 56 get 0.25 × tier of a level (budget "camp", 0.5 per 10 min), counter
+  can return at tier 1. Players within 56 get 0.4 × (1 + 0.25 per tier above 1) of a level (budget "camp", 0.10 per 10 min, as
+  pacing_sim's CAMP_K), counter
   `awaken:camps_cleared`, "Cleared · <camp>".
 - Each new play-day: with a player within 1500, a camp grows a tier every two days (max 5; rebuilt bigger next time).
   At tier 4+ it picks the nearest Hearth or the Wayfarer camp within 800, warns players within 800 of it ("it raids

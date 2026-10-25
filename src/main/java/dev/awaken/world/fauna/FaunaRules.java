@@ -87,7 +87,7 @@ public final class FaunaRules {
         }
         ServerLevel level = la.getLevel();
         if (!FaunaModule.spawningOn(level)) return "game rule awaken:fauna_spawning is off";
-        if (dev.awaken.core.api.LivingHooks.ledgered(d.id)) return "its herds live in the Living Wilds' ledger";
+        if (dev.awaken.core.api.LivingHooks.ledgered(level, d.id)) return "its herds live in the Living Wilds' ledger";
         if (level.dimension() != Level.OVERWORLD) return "not the overworld";
         if (water) {
             // P3: the Tidewater spawns in open water (two deep, three for the big ones), never in a puddle

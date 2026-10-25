@@ -54,6 +54,15 @@ public final class Ledger extends SavedData {
     static final Map<String, String> ROOSTS = Map.of("frostwild", "frostfinch", "crag", "peak_kite", "duskwood", "hollow_owl");
     private static final Set<String> HERD_SPECIES = new HashSet<>(HERDS.values());
 
+    /** Whether the ledger keeps herds in this world ({@code awaken:living_herds}). */
+    public static boolean herdsOn(ServerLevel level) {
+        try {
+            return level.getServer().overworld().getGameRules().get(dev.awaken.living.LivingContent.LIVING_HERDS.get());
+        } catch (RuntimeException notReady) {
+            return true;
+        }
+    }
+
     /** Whether natural spawning leaves this species to the ledger (its herds). */
     public static boolean ledgered(String speciesId) {
         return HERD_SPECIES.contains(speciesId);
@@ -316,7 +325,7 @@ public final class Ledger extends SavedData {
         if (!Regions.on(level)) return;
         Ledger l = get(server);
         long day = PlayDays.current(server), tod = level.getOverworldClockTime();
-        boolean generated = false;
+        boolean generated = false, herds = herdsOn(level);
         for (ServerPlayer p : level.players()) {
             if (p.isSpectator()) continue;
             int cx = Math.floorDiv(p.getBlockX(), CELL), cz = Math.floorDiv(p.getBlockZ(), CELL);
@@ -331,7 +340,7 @@ public final class Ledger extends SavedData {
             int near = 0;
             for (List<UUID> b : l.bodies.values()) near += b.size();
             for (Pop pop : l.popsNear(p.getBlockX(), p.getBlockZ(), 1)) {
-                if (l.bodies.containsKey(pop.id)) continue;
+                if (l.bodies.containsKey(pop.id) || !herds && pop.kind.equals("herd")) continue;
                 double[] at = l.where(pop, day, tod);
                 double dx = at[0] - p.getX(), dz = at[1] - p.getZ();
                 if (dx * dx + dz * dz > (double) NEAR * NEAR || near >= PER_PLAYER) continue;

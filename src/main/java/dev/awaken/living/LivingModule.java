@@ -50,7 +50,7 @@ public final class LivingModule {
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
-        XpBudget.register("camp", 0.5);
+        XpBudget.register("camp", 0.10);
         dev.awaken.core.PlayDays.onNewPlayDay(dev.awaken.living.camp.Camps::onNewDay);
         Progression.addPerkSource(dev.awaken.living.pulse.Pulse::lucidity);
         LivingHooks.install(new LivingHooks.Bridge() {
@@ -65,8 +65,8 @@ public final class LivingModule {
             }
 
             @Override
-            public boolean ledgered(String speciesId) {
-                return dev.awaken.living.population.Ledger.ledgered(speciesId);
+            public boolean ledgered(net.minecraft.server.level.ServerLevel level, String speciesId) {
+                return dev.awaken.living.population.Ledger.ledgered(speciesId) && dev.awaken.living.population.Ledger.herdsOn(level);
             }
         });
         Progression.onXpGranted(XpStream::granted);
@@ -120,6 +120,12 @@ public final class LivingModule {
             RegionTracker.forget(id);
             XpStream.forget(id);
             Hits.forget(id);
+        });
+        bus.addListener(net.neoforged.neoforge.event.server.ServerStartedEvent.class, e -> {
+            // the GameTest server keeps the old natural herds for the fauna tests (living_ledger checks the rule itself)
+            if (e.getServer() instanceof net.minecraft.gametest.framework.GameTestServer) {
+                e.getServer().overworld().getGameRules().set(LivingContent.LIVING_HERDS.get(), false, e.getServer());
+            }
         });
         bus.addListener(ServerStoppedEvent.class, e -> {
             RegionService.reset();
