@@ -64,12 +64,15 @@ final class CityViews {
         add("studio_garden_tower", 182, 32, 72, 152, 34, 40);
         add("studio_terrace_tower", 102, 38, -98, 72, 40, -128);
         // M4: one facade close-up per district, from across the street, looking up a row of fronts (B1 onwards)
-        add("facade_bellwatch", -186, 2.5, -29, -200, 10, -33);
-        add("facade_quay", -104, 3, 51, -95, 11, 56);
-        add("facade_market", 81, 2.5, -3, 74, 11, 5);
-        add("facade_terrace", 86.5, 11, -133, 80, 19, -142);
-        add("facade_garden", 147.5, 2.5, -3, 141, 9, 5);
-        add("facade_works", 64, 2.5, 121, 52, 8, 117);
-        add("facade_wallring", 225, 2.5, 2, 219, 7, -6);
+        add("facade_bellwatch", -138.5, 1.0, -59.5, -145, 9, -49);
+        add("facade_quay", -104.5, 1.0, 50, -95, 7, 57.8);
+        add("facade_market", 80.5, 1.0, -2.5, 74, 9, 5);
+        add("facade_terrace", 86, 9.0, -130.5, 79.5, 17, -141);
+        add("facade_garden", 148, 1.0, -2.5, 140.2, 7, 5);
+        add("facade_works", 50, 1.0, 127.5, 55.2, 6, 118);
+        add("facade_wallring", 225.5, 1.0, 2.5, 217.7, 6, -5);
+        // and the roofscape from just over the roofs: ridge caps, dormers, crow steps, chimneys
+        add("roofs_bellwatch", -118, 42, -18, -165, 14, -70);
+        add("roofs_quay", -60, 40, -60, -90, 15, -120);
     }
 }

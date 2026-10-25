@@ -92,6 +92,13 @@ shot b1_facade_works
 cmd awaken city view facade_wallring
 wait 120
 shot b1_facade_wallring
+# the roofscape from just over the roofs
+cmd awaken city view roofs_bellwatch
+wait 160
+shot b1_roofs_bellwatch
+cmd awaken city view roofs_quay
+wait 160
+shot b1_roofs_quay
 # the studio framings M1 recorded (the roofs and the fabric round each landmark)
 cmd awaken city view studio_spire
 wait 120
