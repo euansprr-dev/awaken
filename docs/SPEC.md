@@ -1454,10 +1454,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
 - **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
   towers), drawn after the terrain and trees.
 - **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far
-  Sight off 12.88 ms p50, on 15.60 (64.2 fps; 2026-10-26, block columns, measured while ring 0 still filled at load 7.9;
-  Far Sight's own GPU time 2.3 ms): the mesh and air 2.2 ms, bake 0.33, trees 0.13, valley cloud 0.07, erosion detail
-  within noise. Lens Cinematic on the A/B scenes (`farsight-ab.txt`, new Alpine world): vista 11.4-12.6 ms p50, low 12.2,
-  flight 12.8 (77 fps). GPU memory 49 MB (atlases 15 MB, trees 17 MB, depth at screen size). Render thread 0.2-0.5 ms. Horizon
+  Sight off 12.74 ms p50, on 15.53 (64.4 fps; 2026-10-26 on the head with upland snow, mountain spruce and the 3D mask,
+  measured while ring 0 still filled at load 6; Far Sight's own GPU time 2.9 ms): the mesh and air 2.4 ms, trees 0.16,
+  bake 0.07, valley cloud and erosion detail within noise. Lens Cinematic on the A/B scenes (`farsight-ab.txt`, new
+  Alpine world): vista 11.0-12.1 ms p50, low 12.4, flight 12.9 (77 fps). GPU memory 49 MB (atlases 15 MB, trees 17 MB, depth at screen size). Render thread 0.2-0.5 ms. Horizon
   (ring 6) in 0.2-1 s after a jump, all rings in 7-23 s while the server generates the new land.
 - **Turbo** (raw Vulkan compute culling) was not built: the plan keeps it only on a measured win, and what it could cull
   costs about 0.2 ms; the multi-draw indirect path is in place for a compute culler later.
