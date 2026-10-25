@@ -31,6 +31,16 @@ public final class SovereignClient {
     static final int RISE_TICKS = 24;
 
     private static int until = -1;
+    /** Others in the form (entity id to the client tick it ends), for their radiant wings. */
+    private static final java.util.Map<Integer, Integer> OTHERS = new java.util.HashMap<>();
+
+    /** This entity holds the form now (your own, or another's as seen): its wings are radiant gold. */
+    static boolean radiant(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && entityId == mc.player.getId()) return active();
+        Integer u = OTHERS.get(entityId);
+        return u != null && AscentMoves.ticks < u;
+    }
 
     /** The form holds for this client's player. */
     public static boolean active() {
@@ -87,7 +97,11 @@ public final class SovereignClient {
 
     /** Someone else's form: their wings open and the aura round them. */
     static void seen(Entity e, boolean begun) {
-        if (!begun) return;
+        if (!begun) {
+            OTHERS.remove(e.getId());
+            return;
+        }
+        OTHERS.put(e.getId(), AscentMoves.ticks + Sovereign.FORM);
         WingLayer.flourish(e.getId(), Sovereign.FORM);
         AscentFx.ring(e.getX(), e.getY() + 0.2, e.getZ(), new Vec3(0, 1, 0), 0.9F);
         AscentSounds.local(e, AscentContent.REMEMBER.get(), 0.8F, 0.8F);
@@ -103,5 +117,6 @@ public final class SovereignClient {
     static void reset() {
         if (until >= 0) dev.awaken.lens.client.LensClient.clearOverride(1);
         until = -1;
+        OTHERS.clear();
     }
 }

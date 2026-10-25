@@ -27,6 +27,7 @@ public final class AscentModule {
                 TetherVow.forget(p);
                 WindwaysServer.forget(p.getUUID());
                 Sovereign.forget(p.getUUID());
+                AscentQuests.forget(p.getUUID());
             }
         });
         bus.addListener(AscentServer::onRespawn);

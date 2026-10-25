@@ -299,6 +299,8 @@ public final class Lands3Tests {
         for (String name : List.of("weepwood", "great_weepwood")) {
             Feature feature = features.getOrThrow(ResourceKey.create(Registries.FEATURE, Awaken.id("lands/" + name))).value();
             for (long seed = 1; seed <= 4; seed++) {
+                // whatever stood here (the world's own trees at the box's edge, the last seed's tree) would count as loose
+                clear(level, origin, 16, 30);
                 shallows(level, origin);
                 BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
                 if (!feature.place(level, level.getChunkSource().getGenerator(), RandomSource.create(seed * 104729L), origin.below())) continue;
