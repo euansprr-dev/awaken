@@ -50,9 +50,31 @@ It measures frame times, so it needs the `tour` slot and the machine to itself. 
   after each half of the A/B, the ambience slot's `status: mixing …` lines, and `perf lanterns_glow`,
   `perf lanterns_blocks`, `perf lanterns_glow_2` (p50/p99 frame times).
 
+## The recordings (Euan: "Go ahead with all sounds", 25 Oct 2026)
+All fifteen CC0 recordings on the page are approved, and the import is built and tested
+(`tools/art/specs/audio_city_cc0.py`). **They aren't in yet: the cloud session can't download them.** Freesound
+answers this environment with 403. It serves files only to a signed-in user or through its API with a key, and getting
+round its bot check isn't on. Run it one of two ways:
+- **On the Mac (originals, best quality):** signed in at freesound.org, download the 15 files from the pages in the
+  script's `SOURCES` (or the page's CC0 table) into one folder, keeping Freesound's file names
+  (`<id>__<user>__<title>.<ext>`), then
+  ```
+  python3 tools/art/specs/audio_city_cc0.py build --from <that folder>
+  python3 tools/art/audio_listen_city.py
+  SLOT_WHO=M4-B3b /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh build tools/gradle.sh 1200 runGameTestServer -Ptests=citizens_,audio_
+  ```
+  and commit the changed sounds, sounds.json, en_us.json, CREDITS.md, the lock and the page.
+- **In a cloud session:** add a Freesound API key (https://freesound.org/apiv2/apply/) to the environment as the
+  variable `FREESOUND_TOKEN`, then `python3 tools/art/specs/audio_city_cc0.py fetch` and `build`. The API without
+  OAuth serves only the HQ previews (lossy, about 128 kbps), fine for the distant beds, weaker for the criers.
+The build checks each licence (on fetch), pins each file's sha256, removes variants the recordings replace, and writes
+`assets/awaken/sounds/city/CREDITS.md`. With stand-in inputs it ran end to end (exact 48 s stems, mono places and
+one-shots) and `citizens_soundscape_beds`, `citizens_fauna_rigs`, `audio_events_resolve` and `audio_layers_manifests`
+passed with the criers registered. Segments are picked by measurement (the steadiest stretch, the clearest calls, the
+busiest hammering), so the rebuilt page is the check: listen for words, traffic and bad cuts before merging.
+
 ## What's left
-1. **Euan's listening session** (publish the page; it's the gate for B3 per decision 28). His export decides keep,
-   remake or cut per scene and sound, and whether to bring in the CC0 crowd, criers and tavern.
+1. **Import the recordings** (above), rebuild the page, and Euan listens again. His export decides keep, remake or cut.
 2. **The tour**, and a look-and-feel pass on whatever it shows: animal scale and poses, flock flight, carts on corners,
    boats at the waterline and under the canal's bridges, the glow on stone, the festoons' sag.
 3. If Euan says yes to CC0: download only the files he picks, record the source and licence beside each, run them through

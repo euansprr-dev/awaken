@@ -1475,7 +1475,11 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       At dawn, noon and dusk the Choir plays its tune first and strikes the hour 300 ticks later.
     - Sources: synthesised (tools/art/specs/audio_city_life.py) except the animals' voices (vanilla's cat, wolf and
       horse events, referenced by id). This departs from decision 28's "vanilla first": vanilla has no city sounds
-      beyond water, fire and animals. CC0 recordings (the crowd, criers, the tavern) wait on Euan's yes from the page.
+      beyond water, fire and animals. Euan approved all fifteen CC0 recordings on the page (25 Oct 2026: "Go ahead with
+      all sounds"): they replace the crowd, tavern and forge stems, the fountain, quay and tavern loops, the gulls, carts,
+      anvils and pigeons, and add market criers (`city.crier`, from stalls 1500-10500, every 5-14 s within 30 blocks;
+      registered only once its recordings are in the jar). tools/art/specs/audio_city_cc0.py imports them, pins each
+      file's sha256 and writes the credits beside the sounds; the synthesised versions stay until it has run.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |

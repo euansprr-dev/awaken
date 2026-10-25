@@ -153,6 +153,12 @@ is synthesis doing something synthesis is bad at; the CC0 crowd and criers are w
 real. My guess: the night (lamp pools, festoons, lanterns on the boats, cats' eyes, taverns through walls) lands first;
 the noon Market needs the recordings.
 
+## The recordings
+Euan approved all fifteen CC0 recordings ("Go ahead with all sounds"). The import is built and tested on stand-ins
+(tools/art/specs/audio_city_cc0.py): they replace the crowd, tavern and forge stems, the fountain, quay and tavern
+loops, the gulls, carts, anvils and pigeons, and add market criers. The files themselves still need downloading:
+Freesound refuses this cloud environment, so see the handoff for the two ways in.
+
 ## Decisions (SPEC §16.0 decision 30)
 Client-only animals and boats with their reaches and caps; drawn lantern and lamp light; the beds' contexts, levels and
 loudness window; mono places; the carillon before the hour; synthesis with vanilla animal voices, CC0 after Euan's yes.
