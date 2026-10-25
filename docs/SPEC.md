@@ -1436,6 +1436,15 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   (approved proposal; the gate opens in the square via `GateHooks.openScripted`) → the Void → the infirmary → the
   Registry (licence E-rank, the Holo wristband, the Atlas opens with the run revealed, first Directive) → free play.
 - No death in the opening (falls leave ≥ 1 heart). Relog at any beat resumes it. `/awaken opening skip`.
+- Decided in M2 (2026-10-25; details docs/carillon/milestones/M2-opening.md): the opening's beats SKY, RUN, ARRIVAL,
+  WAKE, REGISTRY are appended to `StoryProgress.Prologue` after DONE (schema 3; the story's GATE_OPEN, RITUAL and
+  ACCEPTING sit in between); in Carillon worlds the opening owns NOT_STARTED/GLITCHED and the prologue's own first beats
+  never run; Accept leads to WAKE (the infirmary) only during the opening. Skipping is a game rule plus hold-jump (after
+  one viewing) plus `/awaken opening skip`; `/awaken opening restart|beat` for testing. F5 skips the front view. Dawn is
+  set once per world. The run's stage (414 blocks, tools/opening/routes.py) is placed once, at version 1. The Bell Bridge
+  falls when a runner comes within 22 blocks across the ground, or on reaching the market. The Starter power offer and
+  the fauna reveal wait until the opening ends. The Ritual's end-black is cleared by `RitualClient.handOff`. Music is
+  borrowed from the Bell Crypt for now; the Atlas reveal at the Registry waits for M5. Proposed: `GateHooks.enter`.
 - Camera (G0, from spike S2): one client-only `OpeningCamera` on the marker entity type, never added to the level,
   carrying the player's eye height, set through `Minecraft.setCameraEntity` and placed every frame from
   `ViewportEvent.ComputeCameraAngles` at LOWEST priority (no mixin). Hands and the player's own name tag are hidden and
@@ -1457,6 +1466,15 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   without one. Route tables are baked per destination on first use. Rescue teleport after 10 s stuck, only out of every
   player's view. Spawn at 56 blocks, remove past 64, ≤ 8 spawns per 10-tick pass. Witness line-of-sight checks run per
   event or in the ledger, never per tick. Rendering uses `core.client.skin.SkinnedMobRenderer` + `SkinRenderState` (never AvatarRenderState).
+- Decided in M3 (2026-10-25; details docs/carillon/milestones/M3-alive.md): the roster is generated data
+  (tools/city/citizens.py → data/awaken/city/citizens.json: 240 citizens, 96 households, 47 workplace groups, 14 taverns,
+  8 thieves; Oren, Mira, Teodor and Sun named). Inside the wall at night a monster can spawn only near a dark lamp (a
+  lamp the lamplighter didn't light, or one broken). Until boats and rooftop routes exist, boatmen work as quay hands
+  and runners run street errands. Recognition tiers Stranger / Familiar / Known have provisional thresholds; a minimal
+  `RenownHooks` lives in citizens until a renown module replaces it. `core.client.skin.SkinnedMobRenderer` has a
+  protected constructor taking the subclass's own wide/slim models (citizens pose their own model). Planned for M4: the
+  roster grows to ~400–480 records (density away from the market), and the 46 house plots M1 left with unusable doors are
+  fixed in the plan. Known bug: a gate tremor's gate id isn't saved with the event.
 - 12 jobs (lamplighter, bellringer, porter, stallkeeper, baker, smith, watch, crier, boatman, washer, mason, runner);
   schedules on the vanilla day clock, seeded per citizen.
 - Events per play-day budget: burglary ~1 (night; thief flees on the roof graph), pickpocket 0–2, fire ~1/5 play-days,

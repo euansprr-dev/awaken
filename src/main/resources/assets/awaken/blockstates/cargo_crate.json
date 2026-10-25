@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "awaken:block/cargo_crate"
+    }
+  }
+}
