@@ -31,6 +31,7 @@ final class LivingTests {
         dev.awaken.living.bounty.BountyTests.register();
         dev.awaken.living.wayfarer.SceneTests.register();
         dev.awaken.living.pulse.PulseTests.register();
+        dev.awaken.living.population.LedgerTests.register();
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
             RegionMap map = new RegionMap(1234L, 0, 0, plain);

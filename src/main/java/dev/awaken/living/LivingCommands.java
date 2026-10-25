@@ -126,6 +126,12 @@ final class LivingCommands {
                 c.getSource().sendSuccess(() -> Component.literal(n + " happenings ended."), false);
                 return n;
             }));
+            l.then(Commands.literal("ledger").requires(AwakenCommands.admin()).executes(c -> {
+                var lines = dev.awaken.living.population.Ledger.describe(c.getSource().getPlayerOrException());
+                for (String line : lines) c.getSource().sendSuccess(() -> Component.literal(line), false);
+                if (lines.isEmpty()) c.getSource().sendSuccess(() -> Component.literal("No populations near (yet)."), false);
+                return lines.size();
+            }));
             l.then(Commands.literal("quests").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var s = dev.awaken.living.quest.QuestEngine.state(p);

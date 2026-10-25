@@ -61,6 +61,11 @@ public final class LivingModule {
             public boolean levelMoment(ServerPlayer player, int level, int gained) {
                 return LevelMoments.offer(player, level, gained);
             }
+
+            @Override
+            public boolean ledgered(String speciesId) {
+                return dev.awaken.living.population.Ledger.ledgered(speciesId);
+            }
         });
         Progression.onXpGranted(XpStream::granted);
         var bus = NeoForge.EVENT_BUS;
@@ -76,6 +81,11 @@ public final class LivingModule {
         bus.addListener(dev.awaken.living.bounty.Bounties::addReload);
         bus.addListener(dev.awaken.living.pulse.HappeningBook::addReload);
         bus.addListener(LivingDropsEvent.class, dev.awaken.living.pulse.Pulse::onDrops);
+        bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.population.Ledger.onDeath(e.getEntity()));
+        bus.addListener(EntityJoinLevelEvent.class, e -> {
+            if (!e.getLevel().isClientSide() && e.getLevel() instanceof net.minecraft.server.level.ServerLevel sl && sl.dimension() == net.minecraft.world.level.Level.OVERWORLD)
+                dev.awaken.living.population.Ledger.onJoin(e.getEntity(), sl.getServer());
+        });
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.bounty.Bounties::onDeath);
         bus.addListener(EventPriority.HIGH, LivingDropsEvent.class, dev.awaken.living.quest.Relics::onDrops);
         bus.addListener(PlayerEvent.PlayerRespawnEvent.class, dev.awaken.living.quest.Relics::onRespawn);
@@ -91,6 +101,7 @@ public final class LivingModule {
             if (shown(e.getServer())) {
                 dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
                 dev.awaken.living.pulse.Pulse.tick(e.getServer());
+                dev.awaken.living.population.Ledger.tick(e.getServer());
             }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
         });

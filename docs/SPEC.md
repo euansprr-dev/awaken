@@ -2761,6 +2761,27 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
 - Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`. Test `living_pulse`.
 
+### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
+- `living.population.Ledger` (saved data `awaken:living_world`, schema 1, only cells players reached): per 512×512 cell,
+  made once from the world seed the first time a player is within a cell of it (one cell a tick at most), from its
+  land at five points (the biome source; never loads a chunk): up to two herds (greenwild mossback, frostwild frost
+  stag, sunscorch dune ray, crag crag ram, blossom honey bear; 6-10 of 12), one pack linked to the first herd
+  (greenwild gloomstalker, frostwild wisp hound, canopy canopy prowler, duskwood thornling; 3-5 of 5), one roost
+  (frostwild frostfinch, crag peak kite, duskwood hollow owl; 4-6 of 6). A record: kind, species, home, three pastures,
+  count, max, last play-day, seed, linked herd.
+- Where (pure, from seed, play-day, time): a herd at pasture (day+seed) mod 3 → the next by 2000 (dawn walk) → the one
+  after from 12000-13500 (dusk walk), wandering ±10; a pack at its den 23000-13000, else 24 blocks off its herd toward
+  the den; a roost at home, out circling at 40 blocks at dawn and dusk.
+- Bodies: every 2 s, a population within 96 blocks of a player (its place loaded and dry) takes min(count, 12/5/6)
+  bodies (tags `awaken_ledger`, `awaken_ledger_<id>`, persistent; at most 24 near a player); they walk toward where
+  their population is (herds 0.9, packs 1.1; grazing within 12). No player within 128 of any body: they're discarded.
+  A death lowers the count; a body loaded from disk that isn't current is discarded (after a restart).
+- Catch-up (when a population takes bodies after days away): herds +1 a day (+2 while their pack is wiped out), packs
+  +1 per 2 days (+1 per 4 once wiped), roosts +1 a day; each night a pack lived its herd lost one (never under 2).
+- Natural spawning leaves the herd species to the ledger (`LivingHooks.ledgered`, read by `FaunaRules.verdict`:
+  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before.
+- Dev: `/awaken living ledger`. Test `living_ledger`.
+
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
 Lens's Cinematic and Ultra tiers become a light model of their own: shadows, contact darkness and warm/cool light
