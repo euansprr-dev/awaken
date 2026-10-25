@@ -53,7 +53,7 @@ final class OpeningDirector {
     /** Stragglers (SPEC §16.0.4): the light reaches for them 5 min after the first arrival, or after 2 min idle. */
     static final int STRAGGLERS = 20 * 60 * 5, IDLE = 20 * 60 * 2;
     /** The Bell Bridge goes when a runner comes this close (or reaches the Quay). */
-    static final double BRIDGE_NEAR = 52;
+    static final double BRIDGE_NEAR = 44;
     /** The market empties toward the runners once they're this close to the square (or in the market). */
     static final double RUSH_NEAR = 75;
     /** The infirmary, when no client says the eyes have opened. */
@@ -318,8 +318,9 @@ final class OpeningDirector {
             st.act = act;
             DirectorLog.log(p, "opening", "act " + act);
         }
-        // Act 2: the Bell Bridge goes into the river as you come to it, not on a timer
-        if (!w.bridgeDown && (st.act >= 2 || pos.distanceTo(at.bellBridge()) < BRIDGE_NEAR)) {
+        // Act 2: the Bell Bridge goes into the river as you come to it, not on a timer (near enough to see it go from
+        // each act-2 route; a runner who never comes that near is past it by the market)
+        if (!w.bridgeDown && (st.act >= 3 || pos.distanceTo(at.bellBridge()) < BRIDGE_NEAR)) {
             // the gate pulses first: its shockwave crosses the Quay and takes the bridge as it arrives
             dev.awaken.core.Later.run(server, 22, () -> OpeningStage.dropBridge(server.overworld(), at));
             w.bridgeDown = true;
@@ -531,9 +532,10 @@ final class OpeningDirector {
         p.removeEffect(MobEffects.BLINDNESS);
         p.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 20 * 20, 4, false, false));
         Story.openingBeat(p, Prologue.WAKE, now(p));
-        sendScene(p);
-        // the Void's scene is over for the ritual's client: our own black (closed eyes) takes the frame from here
+        // the Void's scene is over for the ritual's client (first: its end clears the ritual's look), then our own
+        // black (closed eyes) takes the frame
         AwakenNet.send(p, StoryPayloads.RitualScene.of(StoryPayloads.RitualScene.NONE));
+        sendScene(p);
         OpeningModule.infirmaryCast(server, at, st.bed, true);
         DirectorLog.log(p, "opening", "wakes in the infirmary, bed " + st.bed);
     }

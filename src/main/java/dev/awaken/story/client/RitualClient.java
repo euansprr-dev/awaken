@@ -132,6 +132,15 @@ public final class RitualClient {
         nextToast = ticks + 10;
     }
 
+    /**
+     * Another scene takes the frame straight from the Void (Carillon's opening wakes you in the infirmary, no tear):
+     * everything of the ritual's lets go, the end's black included, which otherwise waits for the tear to lift it.
+     */
+    public static void handOff() {
+        reset();
+        LensClient.ritual(0F, 0F);
+    }
+
     static void reset() {
         beat = StoryPayloads.RitualScene.NONE;
         tearAt = -1;

@@ -5,8 +5,13 @@ import dev.awaken.opening.net.OpeningPayloads;
 import dev.awaken.story.RitualSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import dev.awaken.Awaken;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -44,11 +49,44 @@ final class ArrivalShot implements OpeningCamera.Shot {
         double d = away.length();
         Vec3 dir = d < 1e-3 ? new Vec3(0, 0, 1) : away.scale(1 / d);
         // beyond the group, up high: the gate, the spire behind it, the people between
-        frame = new Vec3(gate.x + dir.x * (d + 9), gate.y + 9, gate.z + dir.z * (d + 9));
         frameLook = gate.add(0, 6, 0);
+        frame = pickFrame(p, dir, d);
         Vec3 toGate = new Vec3(gate.x - eye.x, 0, gate.z - eye.z);
         double tg = Math.max(1e-3, toGate.length());
-        shoulder = eye.add(-toGate.x / tg * 2.6, 0.7, -toGate.z / tg * 2.6).add(-toGate.z / tg * 0.9, 0, toGate.x / tg * 0.9);
+        Vec3 sh = eye.add(-toGate.x / tg * 2.6, 0.7, -toGate.z / tg * 2.6).add(-toGate.z / tg * 0.9, 0, toGate.x / tg * 0.9);
+        // a wall or an awning behind you: the shoulder comes in short of it
+        BlockHitResult h = p.level().clip(new ClipContext(eye, sh, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, p));
+        shoulder = h.getType() == HitResult.Type.MISS ? sh : eye.add(h.getLocation().subtract(eye).scale(0.75));
+    }
+
+    /**
+     * Where the crane goes: behind the group from the gate, up high, with nothing between it and your eyes (the crane's
+     * own path) or between it and the gate. Arrivals land anywhere in the square (beside a stall, under the market's
+     * eaves), so the first clear one of a fan of spots, turning away from straight behind as little as it can.
+     */
+    private Vec3 pickFrame(LocalPlayer p, Vec3 dir, double d) {
+        Level level = p.level();
+        double[] turns = {0, 20, -20, 40, -40, 65, -65, 90, -90, 135, -135, 180};
+        double[][] spots = {{9, 9}, {9, 13}, {6, 13}, {6, 9}, {12, 6}, {4, 17}}; // {out beyond the group, up}
+        for (double a : turns) {
+            double c = Math.cos(Math.toRadians(a)), sn = Math.sin(Math.toRadians(a));
+            double rx = dir.x * c - dir.z * sn, rz = dir.x * sn + dir.z * c;
+            for (double[] sp : spots) {
+                Vec3 cam = new Vec3(gate.x + rx * (d + sp[0]), gate.y + sp[1], gate.z + rz * (d + sp[0]));
+                if (clear(level, p, cam, eye, 0.95) && clear(level, p, cam, frameLook, 0.8)) {
+                    if (a != 0 || sp[0] != 9 || sp[1] != 9) Awaken.LOG.info("[opening] arrival frame turned {} degrees, out {}, up {}", a, sp[0], sp[1]);
+                    return cam;
+                }
+            }
+        }
+        Awaken.LOG.info("[opening] arrival frame: no clear spot, straight behind");
+        return new Vec3(gate.x + dir.x * (d + 9), gate.y + 9, gate.z + dir.z * (d + 9));
+    }
+
+    /** Nothing solid from a to b ({@code part} of the way: the target's own blocks don't count). */
+    private static boolean clear(Level level, Player p, Vec3 a, Vec3 b, double part) {
+        Vec3 to = a.add(b.subtract(a).scale(part));
+        return level.clip(new ClipContext(a, to, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, p)).getType() == HitResult.Type.MISS;
     }
 
     static void start(OpeningPayloads.Scene s) {
@@ -57,6 +95,7 @@ final class ArrivalShot implements OpeningCamera.Shot {
         if (OpeningCamera.shot() instanceof ArrivalShot) return;
         int from = Math.max(0, s.n());
         OpeningHud.barsTarget = 1;
+        Awaken.LOG.info("[opening] arrival cinematic from {}", from);
         OpeningCamera.take(new ArrivalShot(s, p), from);
         if (from > LENGTH - 20) {
             OpeningHud.blackTarget = 1;

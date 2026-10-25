@@ -23,7 +23,7 @@ wait 50
 shot m2_light_roost
 cmd awaken opening status
 # ---- the run: the rooftop golden runs, act by act (each plays 20 ticks after its start, then its recorded length:
-# act1_roof 536, act2_roof 449, act3_roof 277). Act 1 ends on the Quay: the Bell Bridge falls as Act 2 starts.
+# act1_roof 536, act2_roof 449, act3_roof 277). The Bell Bridge falls a few roofs into Act 2, in view ahead.
 cmd awaken ascent pilot route play ../tools/opening/golden/act1_roof
 wait 150
 shot m2_act1_a
@@ -32,20 +32,21 @@ shot m2_act1_b
 wait 236
 cmd awaken opening status
 cmd awaken ascent pilot route play ../tools/opening/golden/act2_roof
-wait 40
-shot m2_act2_bridge
-wait 130
+wait 100
 shot m2_act2_a
-wait 220
+wait 95
+shot m2_act2_bridge
+wait 195
 shot m2_act2_crane
 wait 110
 cmd awaken ascent pilot route play ../tools/opening/golden/act3_roof
 wait 130
 shot m2_act3_rush
-wait 120
+wait 50
 shot m2_act3_square
-# ---- the arrival (alone: the cinematic starts as you land in the square)
-wait 80
+# ---- the arrival (alone: the cinematic starts as you come down into the square, before the golden run's end; the
+# log's "[opening] arrival cinematic from" line says when)
+wait 45
 shot m2_arrival_a
 wait 50
 shot m2_arrival_b
@@ -53,7 +54,7 @@ wait 50
 shot m2_arrival_c
 wait 50
 shot m2_arrival_d
-wait 160
+wait 185
 shot m2_hall
 cmd awaken opening status
 # ---- the Ritual's end and the Void (the Ritual is the story's, already toured: straight to its end)
@@ -95,7 +96,9 @@ shot m2_registry_yours
 wait 100
 cmd awaken opening status
 # ---- the street and canal routes' golden runs, played back (lengths 821, 305, 262, 822, 390, 141)
+# as they were recorded: fed (a hungry body can't sprint, and a blind playback falls behind its own turns)
 cmd effect give @s minecraft:resistance infinite 10 true
+cmd effect give @s minecraft:saturation infinite 10 true
 cmd awaken ascent pilot route play ../tools/opening/golden/act1_street
 wait 880
 cmd awaken ascent pilot route play ../tools/opening/golden/act2_street

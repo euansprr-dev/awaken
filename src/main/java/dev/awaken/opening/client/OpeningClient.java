@@ -158,6 +158,8 @@ public final class OpeningClient {
             case OpeningPayloads.WAKE -> {
                 OpeningFx.columnOn = false;
                 OpeningHud.waiting(-1);
+                // from the Void: the ritual's scene (its black, its look, its loops) hands the frame over to the closed eyes
+                if (fresh) dev.awaken.story.client.RitualClient.handOff();
                 if (fresh || !OpeningCamera.active()) WakeShot.start(s);
             }
             case OpeningPayloads.REGISTRY -> {
