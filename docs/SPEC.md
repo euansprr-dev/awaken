@@ -3947,7 +3947,8 @@ Codex's Weaves page counts it as N / ??, never naming the rest). Test `arms_weav
 the style that fits it, a step above the forged weapon of its home rank (that weapon's damage + 1, its speed, rarity
 EPIC; it only drops, never crafts). A Lord killed by a player (the death event; a decoy's role is NONE, so a reflection
 gives nothing) gives its weapon 35% of the time, and certainly on the third Lord in a row without one (the Power Cores'
-pity; the count, `lordsWithout`, is in `awaken:arms_memory`, schemaVersion 2). The reveal: a pillar, a ring and a nova of
+pity; the count, `lordsWithout`, is in `awaken:arms_memory`, schemaVersion 2). The reveal comes on the next server
+tick, after the kill is tallied (so a kill with an empty hand still counts as unarmed): a pillar, a ring and a nova of
 the Lord's family light round the fighter, the totem and beacon sounds, the System's toast "LORD-FORGED · <name>", and
 the weapon in the main hand if it is empty (else the inventory, else at the feet). Its Art is the style's own and then,
 on the Art's first active tick, the Lord's signature move: a shape on the effects engine in the family's look, the

@@ -304,7 +304,20 @@ final class ArmsTests {
         LordForged.unleash(p, bell);
         h.assertTrue(zombie.getHealth() < before && zombie.hasEffect(net.minecraft.world.effect.MobEffects.SLOWNESS),
                 "the Grand Peal strikes what's near and slows it");
-        h.succeed();
+        // a Lord's death with the pity due: the weapon comes on the next tick, never inside the death (the kill is
+        // tallied first, unarmed while the hand is empty; mobs_boss_kill_counts_and_pity)
+        p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        p.setData(ArmsContent.MEMORY, p.getData(ArmsContent.MEMORY).withLordsWithout(LordForged.PITY - 1));
+        var saint = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(3, 1, 4));
+        saint.setData(dev.awaken.core.api.CoreApi.MOB_ROLE, new dev.awaken.core.api.MobRole(dev.awaken.core.api.MobRole.Role.BOSS, 5, "",
+                java.util.Optional.of("awaken:root_saint"), ""));
+        LordForged.onDeath(new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(saint, p.damageSources().playerAttack(p)));
+        h.assertTrue(p.getMainHandItem().isEmpty(), "the hand is still empty while the death is tallied");
+        h.runAfterDelay(2, () -> {
+            h.assertTrue(LordForged.held(p) == LordForged.byWeapon("root_saint_warstaff"), "the next tick it is in the hand");
+            h.assertTrue(p.getData(ArmsContent.MEMORY).lordsWithout() == 0, "and the pity starts again");
+            h.succeed();
+        });
     }
 
     /** The Daggers' backstab and the Katana's draw cut: their rules and their rows. */

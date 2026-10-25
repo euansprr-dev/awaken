@@ -520,6 +520,7 @@ final class ArmsServer {
 
     /** Waits out each held blow's grace, then lands it (a guard raised in the meantime meets it). */
     static void onServerTick(ServerTickEvent.Post e) {
+        LordForged.revealPending();
         if (!HOLDS.isEmpty()) {
             long now = e.getServer().overworld().getGameTime();
             for (Iterator<Hold> it = HOLDS.iterator(); it.hasNext(); ) {
