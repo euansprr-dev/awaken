@@ -861,6 +861,13 @@ final class CityTests {
             h.assertTrue(CityLights.set(level, at, false) && !level.getBlockState(at).getValue(dev.awaken.city.kit.KitBlocks.LitWindow.LIT), "the window goes dark");
             level.setBlock(at, Blocks.STONE.defaultBlockState(), 3);
             h.assertTrue(!CityLights.set(level, at, true), "a window replaced by anything else is never touched");
+            // what finding a house's windows costs (one every other tick while houses near a player are unknown): logged,
+            // never asserted (timings on shared CI machines are noise)
+            double[] cost = CityLights.measure(layoutAt(0, 0), level.getSeed(), 60);
+            h.assertTrue(cost[3] > 0, "the houses' painters make lit windows");
+            dev.awaken.Awaken.LOG.info("[city] lit windows: {} ms a house on average, {} ms the worst, over {} houses ({} windows)",
+                    String.format(java.util.Locale.ROOT, "%.3f", cost[0]), String.format(java.util.Locale.ROOT, "%.3f", cost[1]),
+                    (int) cost[2], (int) cost[3]);
             h.succeed();
         });
 
