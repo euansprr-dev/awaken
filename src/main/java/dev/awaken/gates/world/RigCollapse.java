@@ -243,7 +243,7 @@ public final class RigCollapse {
         List<RigRoom.Trigger> triggers = List.of(
                 new RigRoom.Trigger(RigRoom.On.ZONE, rowBox(run, LANDING_ROWS), 0, false, 40),
                 new RigRoom.Trigger(RigRoom.On.ZONE, rowBox(run, run.rows - 1 - LANDING_ROWS), 1, false, 40));
-        return new RigRoom(RigRoom.Kind.COLLAPSE_RUN, groups, tracks, triggers, run, null, null);
+        return new RigRoom(RigRoom.Kind.COLLAPSE_RUN, groups, tracks, triggers, run, null, null, null);
     }
 
     /** The first row that falls, as a box a player steps into (rows 0 to 2 above the floor). */

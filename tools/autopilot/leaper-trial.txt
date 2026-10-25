@@ -1,0 +1,62 @@
+# The Leaper's Gauntlet (SPEC §17.10): with only the rope, the trial gate opened in front of you; its antechamber, its
+# course, a run-up to the chasm (at the edge the legs remember the air), the leap across with a second jump in the air,
+# the far landing (the leap is yours) and the way out opening past the course.
+#
+#   /awaken ascent trial leaper        open the trial gate in front of you now
+#   /awaken gate rig at <part>         ... runup (two rows before the edge), edge
+#   /awaken ascent pilot run leap      sprint, jump at the edge, jump again in the air
+world trial3 survival 20261025
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+# away from spawn first: no gate forms in Carillon's basin
+cmd tp @s 3000 120 3000
+wait 200
+cmd awaken gate hop
+wait 120
+cmd awaken ascent grant tether
+cmd awaken ascent trial leaper
+wait 40
+shot trial_00_card
+wait 280
+cmd awaken gate enter 1
+wait 200
+shot trial_01_antechamber
+cmd awaken gate interior goto rig
+wait 100
+hud off
+shot trial_02_course
+hud on
+cmd awaken gate rig at start
+wait 10
+cmd awaken gate rig at first
+wait 10
+cmd awaken gate rig at runup
+wait 20
+camera back
+cmd awaken ascent pilot rec trial_leap 160 2
+cmd awaken ascent pilot run leap
+wait 60
+shot trial_03_across
+# on to the far landing: the clock stops, the leap is yours, the way out opens past the course
+cmd awaken gate rig at last
+wait 70
+shot trial_04_gift
+camera first
+wait 60
+shot trial_05_way_out
+info
+quit

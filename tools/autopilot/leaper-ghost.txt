@@ -1,0 +1,70 @@
+# A Gauntlet's ghost (SPEC §17.5 "Gauntlet"), on the Leaper's Gauntlet's straight hall: a first run (off the landing,
+# the run-up, the leap, the far landing) is kept as your ghost; on the second, set off a second later, the gold ghost
+# of the first runs ahead of you and leaps the chasm first.
+#
+#   /awaken ascent trial leaper        open the trial gate in front of you now
+#   /awaken gate rig at <part>         ... runup (two rows before the edge), edge
+#   /awaken ascent pilot run leap      sprint, jump at the edge, jump again in the air
+world ghost5 survival 20261025
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+# away from spawn first: no gate forms in Carillon's basin
+cmd tp @s 3000 120 3000
+wait 200
+cmd awaken gate hop
+wait 120
+cmd awaken ascent grant tether
+cmd awaken ascent trial leaper
+wait 40
+shot trial_00_card
+wait 280
+cmd awaken gate enter 1
+wait 200
+shot trial_01_antechamber
+cmd awaken gate interior goto rig
+wait 60
+# the first run: kept as the ghost
+cmd awaken gate rig at start
+wait 10
+cmd awaken gate rig at first
+wait 10
+cmd awaken gate rig at ring
+wait 50
+cmd awaken gate rig at runup
+wait 10
+cmd awaken ascent pilot run leap
+wait 60
+cmd awaken gate rig at last
+wait 200
+# the second run, a second slower off the mark: the ghost goes first
+cmd awaken gate rig at start
+wait 10
+cmd awaken gate rig at first
+wait 10
+camera back
+cmd awaken ascent pilot rec ghost_run 90 2
+wait 14
+shot ghost_00_ahead
+wait 16
+cmd awaken gate rig at runup
+wait 10
+cmd awaken ascent pilot run leap
+wait 60
+shot ghost_01_after
+camera first
+info
+quit

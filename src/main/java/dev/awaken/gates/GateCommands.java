@@ -45,10 +45,12 @@ final class GateCommands {
             gate.then(Commands.literal("open").requires(AwakenCommands.admin())
                     .then(Commands.argument("rank", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.stream(Rank.values()).map(Rank::name), b))
-                            .executes(c -> open(c, null))
+                            .executes(c -> open(c, null, false))
                             .then(Commands.argument("theme", StringArgumentType.word())
                                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Arrays.stream(Theme.values()).map(t -> t.id), b))
-                                    .executes(c -> open(c, StringArgumentType.getString(c, "theme"))))));
+                                    .executes(c -> open(c, StringArgumentType.getString(c, "theme"), false))
+                                    // tours: a gate that has a Gate Rig room
+                                    .then(Commands.literal("rig").executes(c -> open(c, StringArgumentType.getString(c, "theme"), true))))));
             gate.then(Commands.literal("hop").requires(AwakenCommands.admin()).executes(GateCommands::hop));
             gate.then(Commands.literal("enter").requires(AwakenCommands.admin())
                     .then(Commands.argument("id", IntegerArgumentType.integer(1)).executes(c -> {
@@ -93,7 +95,7 @@ final class GateCommands {
         });
     }
 
-    private static int open(CommandContext<CommandSourceStack> c, String themeId) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int open(CommandContext<CommandSourceStack> c, String themeId, boolean rig) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
         Rank rank;
         try {
@@ -111,7 +113,7 @@ final class GateCommands {
             c.getSource().sendFailure(Component.literal("The gate dimension isn't loaded in this world."));
             return 0;
         }
-        GateRecord g = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 18, 30);
+        GateRecord g = Director.spawnFor(c.getSource().getServer(), p, rank, theme, 18, 30, rig);
         if (g == null) {
             c.getSource().sendFailure(Component.literal("No dry ground nearby for a gate."));
             return 0;

@@ -280,13 +280,17 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.mobs.Ritual` — the Ritual of the Bell's cast: `spawnSeated`, `spawnStatue` (stages set on the entities).
 - `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
   the hall), `isRitual(server, gateId)`.
+- `dev.awaken.gates.Gates` (trials) — `leaperTrialPlan(seed)`: the Leaper's Gauntlet's plan, opened with
+  `openScripted(player, plan)` (§17.10). `dev.awaken.core.api.TrialHooks` — `atEdge(player, trial)`, `done(player, trial,
+  ticks, medal)`, installed by the Ascent.
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
 - `dev.awaken.body.ascent.Ascent` — the Ascent's ladder (§17): `enum Tier {TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN}`,
   `has(Player, Tier)` (both sides), `highest(Player)`, `grant(ServerPlayer, Tier, String source)` (grants that tier and
   every one under it, saved, synced; true when new), `onGranted(BiConsumer<ServerPlayer, Tier>)` (each new tier once,
   lowest first), `state(ServerPlayer)` (`AscentState`), `arrivedByMovement(ServerPlayer, int seconds ≤ 20)` (a third
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
-  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves.
+  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
+  (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -836,7 +840,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   dither; five passes, three of them at 960×600 or smaller, after two one-pixel passes for the far-depth trust) and
   `awaken:lens_cinematic` (adds light shafts). It runs
   first in the player's post-effect list, so gameplay effects (dreams, blight, the Veil) still draw on top, and
-  re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 16×1
+  re-asserts itself every tick because the server replaces that list when it syncs. Its values travel in a 32×1
   texture (`awaken:lens_params`), written once a frame in `ViewportEvent.RenderFog` at LOWEST priority: the look, the
   depth range (26.3 is reversed-Z; zero-to-one depth differs between OpenGL and Vulkan), the final fog colour and
   distances, the sun's screen position and the sunrise colour. Looks per dimension live in
@@ -851,7 +855,13 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   0 off, 1..255 its progress), crushed blacks and extra bloom (`LensClient.ritual`). Texel 14 carries the Holo UI
   focus (`UiHooks.focus()`, 0..1 while a holo panel is open): the world more than about 2–3 blocks away dims to ~60%
   and cools, while the panel's glass (it writes depth) and its text stay bright; the first-person arm dims with the
-  world, since its depth lives in a separate target post chains can't read. Texel 15 is far terrain's planes. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
+  world, since its depth lives in a separate target post chains can't read. Texel 15 is far terrain's planes. Texel 16
+  is motion (`LensClient.motion(strength, dirX, dirY)`, fed by the Ascent's Feel Director, §17.6): r strength 0..1,
+  g/b the heading on screen (0..1 from the bottom left). The composite pass, only while strength > 0, takes 6 taps
+  along the line to the heading (sharp at the heading, the smear growing toward the frame's edges) and 2 more for a
+  touch of chroma at the rim; strength is eased per frame by real time, scaled by the FOV-effects slider, and 0 while
+  a story override or the tear runs (Lens off: nothing; FxScreen's speed lines stay the fallback). Measured on the M4
+  (Vulkan, 2880×1658): p50 +0.16 ms on Swift, +0.08 ms on Cinematic. Texels 17-31 are free. A story scene plays its look like a cutscene even while Lens is off: the chain runs for
   the scene's length and fades back to the plain frame (the look rests at neutral while Lens is off) before stepping
   aside again (client config `lensInScenes`, default true; never with an Iris shaderpack). Callers carry on without the
   look when Lens can't draw (`LensClient.active()`).
@@ -1766,6 +1776,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   choice is a per-room hash after the version 3 rooms are built, never the builder's random stream: version 3 plans
   build exactly as before, and in a version 4 plan every room without a rig is what version 3 built. READY gates
   nobody entered rebuild on version 4 at start, as for every version bump.
+- **Content version 5:** the Gauntlet on the ordinary floors of the Clockwork Foundry and the Frost Monastery (which had
+  no rig room); `RigRooms.kinds(theme, version)`, so a version 4 plan of those themes builds no Gauntlet and every other
+  theme builds exactly as version 4 (`gates_rig_gauntlet` checks both).
 - **The model:** a *group* is a set of blocks swapped together between their painted (rest) state and an active state
   (a group with no blocks is a flag the archetype reads); a *track* is a timeline of beats (WARN, APPLY, RESTORE) on
   groups, looping or not; a *trigger* starts a track: a player in a box (ZONE, PLATE), the light reaching a block
@@ -1828,6 +1841,50 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   flip (it sets the same modifier the moment you step in), and the camera tips 5 degrees and back over 0.7 s
   (none with camera shake off; the FOV-effects slider scales it and a 7% FOV breath). Solvability: a breadth-first walk
   over the floor and the ceiling reaches the exit's ledge, and without the wells it can't.
+- **Gauntlet** (`RigGauntlet`, `RigGauntletLive`; plan §7 "Gauntlet"): the room is a pit (slag glow in the Foundry,
+  cloud in the Monastery, lit from below by light set in it every few columns) crossed by a course along the two door
+  axes, 4 wide, from the door you came in by (only rooms with exactly those two doors, at their floor). Rows are steps
+  from the entry as in the Collapse Run; 2 rows at each end are landings. A course needs 14 rows between them (a
+  single slot's room is too short to be worth a clock: about one gate in five of these themes has one).
+  - Obstacles, in an order of the room's own (each rotation tried, the one placing most kept), round again in a long
+    room, a floor row before the first and after each (two in a course of 20+ rows); a smaller version where the full
+    one won't fit:
+    - **gap**: 2 rows of open pit (3 from B), a sprint jump;
+    - **ledges**: 2 (3 from B), each 2 rows over the pit after a 1-row gap; one cracks the moment you land on it, falls
+      14 ticks later and knits back 60 after that;
+    - **presses**: 1 at D, 2 at C, 3 from B, each 2 rows with 2 floor rows between, in a straight stretch, in rooms 6+
+      high: a block of iron (`gate_press`, amber hazard bands) or a ram of ice (`gate_frost_ram`) 3 high, parked in the
+      ceiling over its rows. On a loop of 48 ticks (40 from B, 56 in a gentler variant) each comes down for 16 ticks (18
+      from B), alternate presses half a period apart. 12 ticks before, the floor under it glows with chevrons and a
+      ratchet winds (`gate.rig.windup`); it is drawn coming down out of the ceiling for 4 ticks, then its blocks land
+      (`gate.rig.press`), and whoever is under it is hit (4 + 12% of health) and thrown back. It lifts back into the
+      ceiling over 14 ticks (`gate.rig.lift`). The loop starts with the clock (a run started alone starts it fresh, so
+      its beat is the one the par was set to) and stops, putting everything back, when the room empties;
+    - **wall-run**: 5 rows of open pit (6 from B) in a straight stretch, with a wall (`gate_run_wall`, dark panels ruled
+      with lit grooves) beside them on one side, a row past either end, from the pit to 4 over the floor: run along it.
+  - **Rings**: after every second obstacle, over a straight floor row with 8+ rows still to go, a hoop of the theme's
+    light stands over the course (drawn by the client from the scene, its foot under the floor); passing it is your
+    checkpoint (`gate.rig.ring`, a pip on the clock lights, the split shows).
+  - **The clock** (yours only, `gate_rig_run`): stepping from the start landing onto the first row starts it; back on
+    the start landing gives the run up; the far landing stops it. Top centre: the time, a pip a ring, the par; at the
+    end the time in the medal's colour: gold within par × 1.1 + 1 s, silver within par × 1.5 + 2 s, else bronze
+    (`gate.rig.medal`, pitched by medal). A run pays world XP once in a while (`awaken:gauntlet`, 6% / 3.5% / 2% of a
+    level) and counts `awaken:gauntlet_runs` (and `awaken:gauntlet_gold`).
+  - **The pit**: 4 ticks in it and it throws you back to your last ring (the start before the first) facing the way on,
+    for 3 + 8% of health. No monsters on the course; no cache.
+  - **Solvability** (`RigGauntlet.solve`): from the first row (the clock and the presses start together) a runner at 0.26
+    a tick, gaps of up to 3 jumped, a wall-run of up to 7 rows at 0.32, off every ledge before it falls, through every
+    press only while it is up with 3 ticks clear either side (waiting on the row before for its window). Its time is the
+    course's par. The builder tries 4 variants, each gentler (fewer ledges and presses, a slower beat, no wall-run, no
+    presses), and drops the room if none passes.
+  - **Your ghost**: every run is sampled (every 2 ticks: room-local position and yaw); a finished run faster than your
+    best on that course (gate, area, floor, room) becomes your ghost, kept while the server runs. Starting a run there
+    again, the server sends it to you alone (`gate_rig_ghost`: eighths of a block from the room's origin, yaw in 256ths)
+    and the clock shows "best" beside the par; your client runs a translucent you in pale gold (`GauntletGhost`, the
+    Echo's figure in your own skin, lit from within, a soft glow about it and a short ribbon of gold light behind it)
+    along it from the same start, interpolated between samples, its walk animated by its pace. It waits 1.5 s at its end,
+    then goes; giving the run up takes it at once. Client only: never seen by anyone else, never saved.
+  - Not yet: pistons.
 - **Collapse Timer** (the modifier) now drops real blocks: once a floor's time is up, every 2 s for each player still on
   it and not in a safe room, three blocks of ceiling (one where they are heading, two within 5) crack for a second,
   fall, and land as rubble (never on a door axis, a doorway or a feature): 2 + 6% of health to a player under one,
@@ -1836,11 +1893,14 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   `awaken:gate_breakable`): every painted block is protected, the Kit's dressing and the set pieces as much as the
   palette. Nothing is placed in a gate by a player (the placement event, which also covers fire, stripped logs and
   other block changes an item makes), and buckets neither pour nor scoop there. Powers' constructs still form.
-- **Tours:** `/awaken gate interior goto rig` stands in the rig room's doorway; `/awaken gate rig start` starts its first
-  track, `/awaken gate rig solve` turns a Mirror Hall's mirrors to their solution.
-- **Tests:** `gates_rig_collapse_run`, `gates_rig_mirror_hall`, `gates_rig_gravity_wells` (each: the archetype's
-  solvability check on every rig room of 1,000 seeded gates, every rank and layout; the same plan builds the same rig,
-  version 3 builds none; the server running it in the test level), `gates_rig_protection`.
+- **Tours:** `/awaken gate interior goto rig` stands in the rig room's doorway (on whichever floor has one);
+  `/awaken gate rig start` starts its first track, `/awaken gate rig solve` turns a Mirror Hall's mirrors to their
+  solution, `/awaken gate rig at <start|first|gap|ledge|press|wall|ring|last>` stands you on that part of the gate's
+  fullest Gauntlet; `/awaken gate open <rank> <theme> rig` rolls until the gate has a rig room (a Gauntlet with a press
+  and a ring). `tools/autopilot/gauntlet.txt`.
+- **Tests:** `gates_rig_collapse_run`, `gates_rig_mirror_hall`, `gates_rig_gravity_wells`, `gates_rig_gauntlet` (each:
+  the archetype's solvability check on every rig room of 1,000 seeded gates, every rank and layout; the same plan builds
+  the same rig, version 3 builds none; the server running it in the test level), `gates_rig_protection`.
 
 ### 17.6 Phase 1c: Flow, chains and mastery
 - **Flow** (client, 0..1; `AscentFlow`): each move adds to it, less as it fills (+a × (1 − flow/2), ×1.25 once a chain
@@ -1856,12 +1916,18 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   held), the boom, a double jump, an air dash, a dive, a slam's landing (Leaper held), a flap (Skyborn held), and the
   Runner's wall-run, wall jump, ledge jump (2 points each) and ledge grab (1). Links more than 50 ticks apart end the
   chain. A finished chain of 3+ links pays style XP once awake: xpToNext × 0.0012 × min(links, 25), at most 1.5% of a
-  level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`).
+  level a minute (`XpSource.WORLD`; counter `awaken:ascent_chains`). The longest chain is kept (`chainBest`); beating
+  it from 6 links up is told (`AscentPayloads.Record`): "Longest chain yet · 12 moves" over the hotbar and a lift of
+  Flow.
 - **Mastery** per track (RUNNER, TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN): each link adds its points to its track
   (rope fire 2, launch 3, wings 2, boom 6, Leaper moves 2, slam 3, flap 1, Runner 1-2); level = floor(√(points / 25)),
-  max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (client, predicted):
+  max 10 (level 10 at 2,500 points). Synced as six 4-bit levels in `AscentPayloads.Tiers`. Effects (predicted, the
+  server agreeing where it checks; the Runner's wall-run +1 tick a level, below):
   rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
   dash +2% a Leaper level, glide drag −2% a Wings level.
+- **A level gained** shows as one quiet line over the hotbar for 5.5 s ("Tether mastery III · the line reaches
+  further"; `AscentNotes`), never a toast; the first sync of a session only fills the client's copy. Runner mastery:
+  a wall-run lasts a tick longer a level (both sides; ranks and Wall Stride still set the base).
 - **The record**: `AscentMemory` schema 2 = tiers + mastery points (list, Track order) + chainBest + flags (1 = settled);
   schema 1 reads as no mastery yet and not settled. Kept through death.
 - **Old worlds, first load** (`AscentServer.settle`, once per player, on login): an awakened player of rank B or above is
@@ -1873,6 +1939,11 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   wings unfold for 2.3 s with one slow beat, then "Your body remembers." and the tiers given ("The line · The leap ·
   Wings · The sky") in the Holo look, about 6.5 s in all. Others nearby see the light and the wings and hear the swell
   (`EV_REMEMBER`). `/awaken ascent remember` replays it (dev).
+- **A zip to a top** (any zip, the vow's too): when the block the rope bit has two cells of room over it (a ledge, a
+  pylon, a branch), arriving pulls the body up and onto it: the rise needed (+0.5) as upward speed (at most 1.1), the
+  zip's sideways speed dropped, and for 14 ticks a pull toward the block's centre, gentle against the face while the
+  feet are under its top, then over the edge (one push at arrival was stopped by the face below the top). A face with
+  more wall over it still gets the old hop off it.
 - **The rope wraps** (soft failure, not a cut): checked every 2 ticks, something solid (never leaves) across the rope's
   middle becomes the new anchor (the face it meets from the hand, 0.06 off it) and the rope shortens to the hand's
   distance from it; the swing goes on about the new point (a strain, a small spark; the server re-checks the anchor).
@@ -1890,6 +1961,25 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **Latency** (`ascent_latency`, the gate's latency tours as a test): a real swing from a block 20 up, a release and a
   30-block fall to a hard landing, every state message reaching the server 300 ms (6 ticks) after its positions: no
   refusal, no move sent back, no fall damage, the state ends, the arrival still counts as by movement.
+- **The Lens's sense of speed**: from 1.2 blocks a tick in an airborne state, smoothstepped to full at 3, the Feel
+  Director hands the Lens the strength and the heading on screen (projected by the camera's own matrix); none with
+  reduced motion, on the ground, or when heading away from the view (§14, texel 16).
+- **Wings in first person**: your own wings are drawn from the body, only the outer half of the span (the root would
+  sit on the camera; Phase 0 drew it and got white wedges), the cut edge fading in over 0.15 of the span, the body at
+  60% of its alpha and the glow at 45% (this close, full strength read as solid blades). They show at the edges of
+  view: the tips flick into the top corners on a beat, the outer wing rises into view in a banked turn.
+- **Moving air** (`core.api.AirHooks`, for the Wilds' updraft pylons and windways): sources registered on both sides
+  add an acceleration (blocks a tick²) at the feet; the client's free states take it after their own step (the carry
+  ×1, wings ×1.25, flight ×0.6; a rope none). Sources read only what both sides have (blocks, block entities,
+  entities, synced data) and allocate nothing. Scale (applied every tick, so it adds up): an updraft of 0.045 up climbs
+  open wings 2-4 blocks a second (0.13 shot them up 58 in 5 s); a windway of 0.02-0.03 along carries a glide.
+- **The updraft vent** (`awaken:updraft_vent`, a Precursor grate, light 10, pickaxe): a column of rising air, radius
+  3.5, 34 high from its top, lift 0.045 to 24 up then fading to 0 at the top, 35% less at the rim; columns don't stack
+  (the strongest counts). Drawn as 24 soft filaments of pale air rising up the column (6-10 long, 0.3 a tick), turned
+  to face you, over a faint haze its width, both fading where the lift fades (additive: strength in the colour, not
+  alpha; one draw a vent, seen from 160); heard as a soft rising rush every 2.5-4 s near it (`ascent.updraft`).
+  Client side the loaded vents are a list their block entities join, so the air costs a list walk. The sandbox puts
+  one on a 13-high pillar off the tower's side (its column reaches past the deck). The Wilds' pylons stand on them.
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
   hang) reports `ArrivalHooks.Way.ASCENT` for 5 ticks; the Horizon's need "wings" is met by Wings, or by Tether and
   Leaper together (`HorizonHooks.addReach`).
@@ -1899,6 +1989,123 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   it back through the same keys from the same start (a `tp` command, then 20 ticks to settle). Playing logs where the
   run ended against the recording's end ("off by d"), so a tour can tell a route that still works from one a change
   broke. Record from standing still; at most five minutes.
+
+### 17.7 The Tether Vow (the rope, earned at the first vault)
+- Who: awake, in the overworld, without the rope, the `ascent` option on. Where: a Precursor vault's forecourt (local
+  x 4-18, z 0-3, feet 1-5 over the floor: between the pylons, before the sealed door, which no low rank can open; every
+  vault qualifies until one is kept, so the first one reached is where it happens). Checked once a second per player.
+- The vault's turn is read from its pylons' own blocks at the front corners (the amber lights at local y 20, the trim at
+  19, the polished cornice at 11: at least 4 of the 6); terrain can't fake them, and a vault dug into a hill keeps them
+  (open air at the back corners, the first try, failed on the first real spawn vault). The vault's box is its piece's
+  (the structure start's is padded by 12). A layout from before the vault redesign reads as none and is skipped. `TetherVow.Site` maps local to world like
+  `PrecursorRuinPiece`.
+- The call (3 s): the Lens takes the vow's look (`awaken:vow` in `lens/looks_ascent.json`: cold light, deep blue
+  shadows, vignette, bloom), the wind ducks, a low glass note swells (`ascent.vow_call`), the vault's light gathers off
+  the paving and drifts toward the mast; "The vault knows you."
+- The line: the server gives TETHER (`Ascent.grant(..., "tether vow")`) and names the line's end: a plate round the
+  nearer pylon's spire (inner one first; weathering may have taken some). The client throws the rope there for the
+  player (`AscentMoves.zipTo`, a zip held until it arrives, key or no key; the server checks its anchor as always),
+  with `ascent.vow_line` and a launch kick: "The line is yours.", then "Hold <key> to throw the line. Let go to fly."
+  (the key's own name), the look easing back, then "Reach the beacon mast." while a ring of light pulses at the mast.
+  No plate left: the rope is given without the pull.
+- Kept: feet 15+ over the floor within 5 of the mast's line, within 2 minutes and 64 blocks: `ascent.remember`, full
+  Flow, "Vow kept.", 10 Tether mastery, a fifth of a level's XP (DISCOVERY), counter `awaken:ascent_vow_kept`, flag
+  `VOW_KEPT` in the record. Lapsed: "The mast will wait." (the rope stays; nothing is lost).
+- `ascent_tether_vow` builds a vault from its blueprint in each turn and checks the turn, the forecourt, the pylon
+  anchor (real to the server, the line clear) and the mast, then runs the director: call, line, kept.
+
+### 17.8 Phase 4a: Aether (Skyborn's flight meter)
+- Flight (SOAR) runs on Aether, 0..1: cruising drains a full meter in 60 s, boosting in ~19 s, hovering in ~38 s, each
+  wingbeat 1.2%. Out of flight it fills in the sun (sky over the eyes, a bright sky) in 20 s, in shade or at night in
+  90 s; inside an updraft's column it fills in 6 s, even while flying. Flight needs 8% to begin (less: a weak beat that
+  catches nothing). Skyborn mastery trims the drain 3% a level.
+- Empty in flight: the wings stop beating and hold a glide (never a drop). The client predicts its meter; the server
+  keeps its own at the cheapest drain (it can't see boosts), so a fair flight is never refused. It refuses a flight
+  start it can't afford (under 8% by more than 0.15) and folds a flight 0.15 past empty into a glide (`Stop(SOAR)`,
+  which the client takes as its own empty). Time aloft earns Skyborn mastery (a point every 5 s).
+- Shown as a 2-pixel gold line in the gap between the hearts and the XP bar while flying or not full (over the XP
+  bar's own edge it was too faint to read) (fading out once full on the ground),
+  flickering under 20% in flight, dimmed for a moment when a flight is refused for want of it.
+- `ascent_aether` holds those numbers and the server's refusals.
+- **The barrel roll** (Skyborn): in flight, a second tap of left or right within 7 ticks (vanilla's double-tap window)
+  throws the body 0.85 a tick that way and 0.1 up (about 3.5 blocks before the flight's drag takes it), for 3% Aether,
+  once a second. Others see the figure turn once about its line of flight (10 ticks, eased; `EV_ROLL`) and hear it;
+  your own view only tilts into it within the comfort cap (at most 4°) with a small kick and a breath of FOV. A roll
+  is a Flow link and 2 Skyborn mastery. (Pilot `double <key>` taps like a player for tours; the autopilot's own command
+  round trip put taps 11 ticks apart.)
+
+### 17.9 Phase 2: Wings, the sky platform's way up and its core
+- **The rig** (`above.ruin.SkyRig`): placed once on each sky platform the first time its start chunk loads (queued on
+  `ChunkEvent.Load`, built on a later server tick once the core's and the chain's columns are loaded; done when the
+  core is there), so old worlds' platforms get it too and the blueprint never changes. From the deck's centre (cx, deck,
+  cz): a pier of trim three cells wide on the (+x, +z) diagonal from 7 to 12 out (local a, b in 7..12, |a - b| <= 1),
+  the rim's trim studs on it cleared; a chain from under its end (12, 12) down to the lowest ring. The diagonal: the
+  blueprint's four torn-up islands hang 19 out on each side (up to 3 off the line, 3.8 wide) with their tether chains
+  along that line back to the rim, in any turn; the first rig ran out along +x, under the east island and its tether,
+  which cut ropes, blocked zips and left no room to stand on the pier. `ascent_sky_rig` checks every rig cell is 3+
+  clear of any island's edge and under no tether.
+- **Rings** (`awaken:anchor_ring`, unbreakable, light 12): from 9 under the deck down to 26 over the ground under the
+  chain (the lowest of four columns 5 out diagonally), evenly spaced at most 22 apart, each 3 off the chain a quarter
+  turn round from the last (+z, +x, -z, -x), joined to it by a chain stub. Each is nearly overhead from a hang under the
+  one below it (a vertical zip, below). Over water the lowest ring gets a 5x5 buoy at the surface to stand and throw from
+  (the Ascent stands aside while swimming).
+- **The perch**: the top ring stands in a 3x3 of plating (trim corners), its stub on the chain's side. From the hang
+  under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
+  of the pier's end (7 up) pulls the body onto the pier.
+- **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
+  without Wings who came up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
+  last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
+  with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
+  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told, at most once a minute,
+  that the core answers only to the long way (`awaken.ascent.core.dark`). It breathes a ring of light every 3 s. The
+  platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The rope's moves for a ladder** (§17.6 rope, both sides):
+  - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
+    up to it rather than swinging.
+  - *Ceiling hang*: a zip that bites an underside hangs there on a rope 2.6 long, still, ready to throw again; unless
+  - *the ledge vault*: the underside is a floor's (full blocks with two cells of room on them, at least two together)
+    with an open edge within 3 cells, tried first toward the side the zip came up from. Then the body vaults it: out
+    past the edge's face (the head kept under the ledge), up beside the face until the feet clear the top, then in
+    onto it (up to 40 ticks; any other move takes over). A zip to a face with room over it vaults the same way over that
+    face's edge (a ledge, a pylon, the pier). Lone rings and branches still give the hang. The vault ends with the
+    landing (left set, the next carry pulled toward the old ledge).
+  - *Pass-through*: for 20 ticks after letting go of a rope, a throw passes through the block it held (you throw past
+    the ring you hung under to the next one up).
+  - *Zip stall*: a zip pressed against something, moving under 0.05 a tick for 10 ticks, lets go (never pinned).
+- Dev: `/awaken ascent sky goto` (the nearest platform that really generated, by vanilla's own search; rigs it if not
+  yet; puts you on the ground under the lowest ring); pilot `run climb` climbs the rings, the perch and the pier, walks
+  round the cabin to its door and in, and ends when the core gives Wings (`tools/autopilot/ascent-sky.txt`: from a buoy
+  at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
+
+### 17.10 Ascension trials: the Leaper's Gauntlet
+- **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) and have swung enough to know it (Tether
+  mastery level 2: 100 points), awake, in the overworld on the ground, checked every 5 s: a scripted gate opens in front
+  of you (`Gates.openScripted`, `Gates.leaperTrialPlan`), once (`AscentMemory` flag `LEAPER_TRIAL` = 4), with "A gate
+  is beating like a running heart: the Leaper's Gauntlet." It never breaks. Its card: "The Leaper's Gauntlet. A course
+  of the Foundry, and at its end a chasm no running jump will cross." · Trial: run it to the far side.
+- **The gate** (`GatePlan.LEAPER_TRIAL` boss marker, content version 5): a D-rank Clockwork Foundry of one floor, the
+  antechamber, the course's hall (1x3 slots, its doors on one line) and a calm room past it (`ANNEX_EXIT`: no monsters,
+  no pressure). The objective line: "The Leaper's Gauntlet: run the course to the far side", then "The way out is open
+  past the course".
+- **The course** (`RigGauntlet.trial`, laid by hand, a Gauntlet in every other way: the clock, rings, medals, the pit):
+  a floor row and a 2-row gap, two ledges, a ring, two presses (if the hall is tall enough; a gentle 56-tick beat, down
+  16), a 5-row wall-run, a ring, four rows of run-up to the **edge**, then the **chasm**: 5 rows of open pit (no sprint
+  jump crosses more than 3; a double jump or an air dash crosses it with room to spare), and on to the far landing. The
+  check's runner crosses the chasm at a dash's 0.6 a tick (up to 7 rows).
+- **The edge** (`TrialHooks.atEdge`, gates → the Ascent): stepping on the edge row without the leap gives it (LEAPER)
+  with a short moment at once (`Remember` mode `LEAP_EDGE`, about 3 s, no waiting for stillness): the remember swell a
+  little higher, light rising at the feet, "Your legs remember the air." and "Jump. In the air, jump again."
+- **The far landing** (`TrialHooks.done`): the clock stops (its medal as any Gauntlet's), then once a player (flag
+  `LEAPER_TRIAL_DONE` = 8) the gift's scene (`GIFT_LEAP`: "The leap is yours." · "In the air: jump again · sprint to
+  dash · sneak high up to slam."), 10 Leaper mastery, a fifth of a level's XP (DISCOVERY), counter
+  `awaken:ascent_leaper_trial`. The gate is done: cleared (as after a Lord), the exit opens in the room past the course,
+  and it comes down once everyone has left.
+- `core.api.TrialHooks` (installed by the Ascent; the defaults give nothing): `atEdge(player, trial)`,
+  `done(player, trial, ticks, medal)`; `TrialHooks.LEAPER` names this trial.
+- Dev: `/awaken ascent trial leaper` opens it now; `/awaken gate rig at runup|edge`; pilot `run leap` (sprint, jump at the
+  edge, dash, jump again); `tools/autopilot/leaper-trial.txt`. Test: `gates_leaper_trial` (the plan's floor, the course
+  and its chasm, the check with the leap, the same every time; run for real: the edge gives the leap, the far landing
+  clears the gate and opens the way out).
 
 ---------------------------------------------------------------------------------------------------------------------
 

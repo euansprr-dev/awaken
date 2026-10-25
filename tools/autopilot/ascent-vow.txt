@@ -1,0 +1,28 @@
+# The Tether Vow at the world's spawn vault: a fresh, awakened player without the rope is stood in the forecourt and the
+# vow runs by itself (the call, the line up onto the pylon, the words). Recorded in third person with the HUD on.
+world ascent_vow survival 4245
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5500
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken ascent grant none
+camera back
+hud on
+cmd awaken ascent pilot rec vow_tp 330 3
+cmd awaken ascent vow goto
+wait 340
+info
+quit

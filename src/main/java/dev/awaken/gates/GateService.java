@@ -40,10 +40,14 @@ public final class GateService {
     /** Radius (chunks) of the first floor around the entrance generated before the gate is READY. */
     static final int PREGEN_RADIUS = 3;
     static final int BUILD_TIMEOUT = 20 * 90;
+    /** The same budget in real time: chunk workers run on their own threads, so a server ticking faster than 20 a
+     *  second (the GameTest server never waits between ticks) must not time a build out before the workers could. */
+    static final long BUILD_TIMEOUT_NANOS = 90L * 1_000_000_000L;
 
     private static final class Build {
         final int gateId;
         final long started;
+        final long startedNanos = System.nanoTime();
         CompletableFuture<?> surface, interior;
         ChunkPos surfaceChunk, interiorChunk;
         boolean surfaceDone, interiorDone;
@@ -166,7 +170,7 @@ public final class GateService {
                 dev.awaken.core.audio.AudioCues.playNear(server.overworld(), g.pos, 640, dev.awaken.core.audio.Cue.GATE_FORMING);
                 continue;
             }
-            if (t - b.started > BUILD_TIMEOUT) {
+            if (t - b.started > BUILD_TIMEOUT && System.nanoTime() - b.startedNanos > BUILD_TIMEOUT_NANOS) {
                 releaseTickets(server, b);
                 it.remove();
                 fail(server, g, "build timed out");

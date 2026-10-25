@@ -95,7 +95,7 @@ public final class FaunaRules {
         } else {
             if (!Mob.checkMobSpawnRules(type, la, reason, pos, random)) return "the block below can't be spawned on";
             if (!h.ground().accepts(la.getBlockState(pos.below()))) return "wrong ground";
-            boolean surface = pos.getY() >= la.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
+            boolean surface = openAbove(la, pos);
             if (h.ground() == Habitat.Ground.CAVE) {
                 // P3: the Hollows live under a roof, never on the surface
                 if (surface || la.canSeeSky(pos)) return "not in a cave";
@@ -196,5 +196,27 @@ public final class FaunaRules {
             case BEAST -> Math.clamp(prof.level(), 0, cap + 2);
             default -> Math.clamp(prof.level() - 1, 0, cap);
         };
+    }
+
+    /** How far up a roof still counts. A sky platform or floating shard 200 blocks over a meadow isn't a roof. */
+    static final int ROOF_REACH = 24;
+
+    /**
+     * Open to the sky for a surface creature: nothing the MOTION_BLOCKING_NO_LEAVES heightmap counts stands over it
+     * within {@link #ROOF_REACH} (leaves don't count, as under a canopy). The heightmap answers at once for open ground; only a spot with
+     * something somewhere above it is scanned.
+     */
+    static boolean openAbove(net.minecraft.world.level.LevelAccessor la, net.minecraft.core.BlockPos pos) {
+        int top = la.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
+        if (pos.getY() >= top) return true;
+        net.minecraft.core.BlockPos.MutableBlockPos m = pos.mutable();
+        int limit = Math.min(top, pos.getY() + ROOF_REACH);
+        for (int y = pos.getY() + 1; y < limit; y++) {
+            m.setY(y);
+            var st = la.getBlockState(m);
+            // the heightmap's own rule (MOTION_BLOCKING_NO_LEAVES)
+            if (st.is(net.minecraft.tags.BlockTags.BLOCKS_MOTION_IN_HEIGHTMAP_NO_LEAVES) || !st.getFluidState().isEmpty()) return false;
+        }
+        return top > pos.getY() + ROOF_REACH;
     }
 }

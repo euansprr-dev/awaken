@@ -76,6 +76,9 @@ public final class RigClient {
     }
 
     static void clear() {
+        RigRunHud.clear();
+        RigGhost.clear();
+        ringRooms = List.of();
         rooms = List.of();
         surge = new boolean[0];
         beams.clear();
@@ -84,7 +87,40 @@ public final class RigClient {
 
     // ---- payloads ---------------------------------------------------------------------------------------------------
 
+    /** A Gauntlet's rings as drawn: per ring {centre x, y, z, across x, across z, radius}. */
+    record RingRoom(int theme, List<double[]> rings) {}
+
+    private static List<RingRoom> ringRooms = List.of();
+
+    static List<RingRoom> ringRooms() {
+        return ringRooms;
+    }
+
+    static boolean hasRings() {
+        return !ringRooms.isEmpty();
+    }
+
+    /** A ring stands over its row (the two end cells), centred two over the floor, wider than the course by a block each side. */
+    private static List<RingRoom> rings(List<RigPayloads.Room> rooms) {
+        List<RingRoom> out = new ArrayList<>();
+        for (RigPayloads.Room r : rooms) {
+            if (r.kind() != RigRoom.Kind.GAUNTLET.ordinal() || r.wells().size() < 2) continue;
+            List<double[]> rings = new ArrayList<>();
+            for (int i = 0; i + 1 < r.wells().size(); i += 2) {
+                BlockPos a = r.wells().get(i), b = r.wells().get(i + 1);
+                double ax = b.getX() - a.getX(), az = b.getZ() - a.getZ(), len = Math.hypot(ax, az);
+                if (len < 1e-3) continue;
+                double room = r.max().getY() - a.getY() - 2.3;
+                double radius = Math.max(1.5, Math.min(len / 2 + 1.4, room));
+                rings.add(new double[]{(a.getX() + b.getX()) / 2.0 + 0.5, a.getY() + 2.0, (a.getZ() + b.getZ()) / 2.0 + 0.5, ax / len, az / len, radius});
+            }
+            if (!rings.isEmpty()) out.add(new RingRoom(r.theme(), List.copyOf(rings)));
+        }
+        return List.copyOf(out);
+    }
+
     static void scene(RigPayloads.Scene s) {
+        ringRooms = rings(s.rooms());
         rooms = List.copyOf(s.rooms());
         surge = new boolean[rooms.size()];
         for (int i = 0; i < rooms.size(); i++) surge[i] = rooms.get(i).surge();
@@ -132,6 +168,17 @@ public final class RigClient {
                     }
                 }
             }
+            case RigPayloads.Cue.PRESS, RigPayloads.Cue.LIFT -> {
+                // a press coming down (held at the bottom a moment, till its real blocks are there) or going back up
+                boolean down = c.kind() == RigPayloads.Cue.PRESS;
+                for (int i = 0; i < cells.size(); i++) {
+                    BlockState s = Block.stateById(c.states().get(Math.min(i, c.states().size() - 1)));
+                    RigFx.MOVES.add(new RigFx.Move(c.kind(), s, cells.get(i), now, c.ticks() + (down ? 3 : 0), c.a(), c.theme(), c.ticks()));
+                }
+                if (!down) for (BlockPos p : cells) if (r.nextInt(3) == 0)
+                    RigParticles.spawn(level, GatesRegistry.P_GRIT.get(), dust(c.theme()), 1F, p.getX() + r.nextDouble(), p.getY() + 0.1, p.getZ() + r.nextDouble(), 0, 0.03, 0);
+            }
+            case RigPayloads.Cue.HAZARD -> RigFx.GLOWS.add(new RigFx.Glow(RigPayloads.Cue.HAZARD, cells, now, c.ticks(), c.theme()));
             case RigPayloads.Cue.CAVE -> RigFx.GLOWS.add(new RigFx.Glow(RigPayloads.Cue.CAVE, cells, now, c.ticks(), c.theme()));
             case RigPayloads.Cue.SURGE -> {
                 int i = wellsAt(cells);
@@ -175,9 +222,10 @@ public final class RigClient {
         ClientLevel level = mc.level;
         LocalPlayer p = mc.player;
         if (level == null || p == null || level.dimension() != GatesRegistry.GATES) {
-            if (!rooms.isEmpty()) clear();
+            if (!rooms.isEmpty() || RigGhost.current() != null) clear();
             return;
         }
+        RigGhost.tick();
         long now = level.getGameTime();
         RigFx.expire(now);
         beams.clear();

@@ -17,16 +17,19 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
  * First times are scenes, not toasts. "Your body remembers" (SPEC §17.6): an old world's tiers given back on its first
  * load. Once the player is free (no screen open, on the ground, not moving by rope or wings), the air goes still, light
  * rises around them, the swell lands as the wings unfold once and settle (others see it too), and two lines of light
- * name what came back. About six seconds; nothing to press.
+ * name what came back. About six seconds; nothing to press. The same scene gives wings at a sky platform's core and the
+ * leap at the Leaper's Gauntlet's far landing; at that course's chasm a short one (three seconds, at once, no wings)
+ * tells the legs what to do.
  */
 final class AscentScene {
     private AscentScene() {}
 
-    private static final int LENGTH = 130, WINGS_AT = 34;
-    static int pending, playing, age = -1, waited;
+    private static final int LENGTH = 130, WINGS_AT = 34, EDGE_LENGTH = 64;
+    static int pending, playing, age = -1, waited, mode, playingMode;
 
-    static void remember(int bits) {
+    static void remember(int bits, int sceneMode) {
         pending = bits;
+        mode = sceneMode;
         waited = 0;
     }
 
@@ -38,13 +41,15 @@ final class AscentScene {
         Minecraft mc = Minecraft.getInstance();
         if (pending != 0 && age < 0) {
             boolean free = mc.gui.screen() == null && p.onGround() && !AscentMoves.active();
-            // never lost: after 30 s it plays wherever you are
-            if (free || ++waited > 600) {
+            // never lost: after 30 s it plays wherever you are; the chasm's moment plays at once
+            if (free || mode == AscentPayloads.LEAP_EDGE || ++waited > 600) {
                 playing = pending;
+                playingMode = mode;
                 pending = 0;
                 age = 0;
-                AscentSounds.local(p, AscentContent.REMEMBER.get(), 1F, 1F);
-                AscentSounds.duck(LENGTH);
+                boolean edge = playingMode == AscentPayloads.LEAP_EDGE;
+                AscentSounds.local(p, AscentContent.REMEMBER.get(), edge ? 0.7F : 1F, edge ? 1.26F : 1F);
+                AscentSounds.duck(edge ? EDGE_LENGTH : LENGTH);
                 ClientPacketDistributor.sendToServer(new AscentPayloads.Event(AscentPayloads.EV_REMEMBER, 0));
             }
         }
@@ -53,11 +58,12 @@ final class AscentScene {
         // square the body to the view (standing still it lags up to 50 degrees behind the head): the wings frame you
         p.setYBodyRot(p.getYHeadRot());
         risingLight(p, p, age);
-        if (age == WINGS_AT) {
+        boolean edge = playingMode == AscentPayloads.LEAP_EDGE;
+        if (age == (edge ? 10 : WINGS_AT)) {
             FeelDirector.remember();
-            if (AscentPayloads.Tier.WINGS.in(playing)) WingLayer.flourish(p.getId(), 46);
+            if (!edge && playingMode != AscentPayloads.GIFT_LEAP && AscentPayloads.Tier.WINGS.in(playing)) WingLayer.flourish(p.getId(), 46);
         }
-        if (age > LENGTH) age = -1;
+        if (age > (edge ? EDGE_LENGTH : LENGTH)) age = -1;
     }
 
     /** Light rising around a body: thick at first, thinning as the swell settles (others' scenes call it too). */
@@ -86,9 +92,16 @@ final class AscentScene {
         if (age < 0 || mc.player == null || mc.gui.hud.isHidden()) return;
         float t = age + dt.getGameTimeDeltaPartialTick(false);
         int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * 0.30F);
-        float a1 = env(t, 8, 22, 100, 122), a2 = env(t, WINGS_AT + 6, WINGS_AT + 20, 104, 126);
+        boolean edge = playingMode == AscentPayloads.LEAP_EDGE;
+        float a1 = edge ? env(t, 2, 10, 46, 62) : env(t, 8, 22, 100, 122), a2 = edge ? env(t, 12, 20, 50, 64)
+                : env(t, WINGS_AT + 6, WINGS_AT + 20, 104, 126);
         if (a1 > 0.01F) {
-            Component title = Component.translatable("awaken.ascent.remember.title");
+            Component title = Component.translatable(switch (playingMode) {
+                case AscentPayloads.GIFT_WINGS -> "awaken.ascent.gift.wings";
+                case AscentPayloads.GIFT_LEAP -> "awaken.ascent.gift.leap";
+                case AscentPayloads.LEAP_EDGE -> "awaken.ascent.edge.leap";
+                default -> "awaken.ascent.remember.title";
+            });
             HudLook.glow(g, cx - mc.font.width(title) - 8, y - 6, mc.font.width(title) * 2 + 16, 22, Glass.EDGE, 0.5F * a1);
             g.pose().pushMatrix();
             g.pose().translate(cx, y);
@@ -96,7 +109,15 @@ final class AscentScene {
             HudLook.centered(g, mc.font, title.getString(), 0, 0, Glass.a(0xEAF7FF, a1), true);
             g.pose().popMatrix();
         }
-        if (a2 > 0.01F) HudLook.centered(g, mc.font, given(playing), cx, y + 26, Glass.a(Glass.EDGE, a2), true);
+        if (a2 > 0.01F) {
+            String line = switch (playingMode) {
+                case AscentPayloads.GIFT_WINGS -> Component.translatable("awaken.ascent.gift.wings.how").getString();
+                case AscentPayloads.GIFT_LEAP -> Component.translatable("awaken.ascent.gift.leap.how").getString();
+                case AscentPayloads.LEAP_EDGE -> Component.translatable("awaken.ascent.edge.leap.how").getString();
+                default -> given(playing);
+            };
+            HudLook.centered(g, mc.font, line, cx, y + 26, Glass.a(Glass.EDGE, a2), true);
+        }
     }
 
     /** What came back, in the ladder's order: "The line · The leap · Wings". */

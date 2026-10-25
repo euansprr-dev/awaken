@@ -146,6 +146,15 @@ public final class Gates {
                 1, GatePlan.RITUAL_BOSS, Theme.OVERGROWN_TEMPLE, 0);
     }
 
+    /**
+     * The Leaper's Gauntlet (SPEC §17.10): a D-rank Clockwork Foundry of one floor, the antechamber, the course and the
+     * room past it. Marked by its boss ({@link GatePlan#LEAPER_TRIAL}). Opened for a player with {@link #openScripted}.
+     */
+    public static GatePlan leaperTrialPlan(long seed) {
+        return new GatePlan(Hash.mix(seed), GatePlan.CONTENT_VERSION, Rank.D, Theme.CLOCKWORK_FOUNDRY, Layout.LABYRINTH, List.of(), Twist.NONE,
+                1, GatePlan.LEAPER_TRIAL, Theme.OVERGROWN_TEMPLE, 0);
+    }
+
     /** The ritual hall of a ritual gate, in world positions, or empty (no such gate, not a ritual gate, no gate world). */
     public static Optional<RitualHall> ritualHall(MinecraftServer s, int gateId) {
         return RitualHall.of(s, GateRegistry.get(s).gate(gateId));

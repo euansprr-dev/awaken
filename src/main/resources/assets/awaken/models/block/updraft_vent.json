@@ -1,0 +1,86 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/ascent_updraft_vent_side",
+    "top": "awaken:block/ascent_updraft_vent_top",
+    "side": "awaken:block/ascent_updraft_vent_side",
+    "top_glow": "awaken:block/ascent_updraft_vent_top_glow",
+    "side_glow": "awaken:block/ascent_updraft_vent_side_glow"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#side",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#top",
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#side",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#side",
+          "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "light_emission": 15,
+      "shade_direction_override": "up",
+      "faces": {
+        "north": {
+          "texture": "#side_glow",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#side_glow",
+          "cullface": "south"
+        },
+        "west": {
+          "texture": "#side_glow",
+          "cullface": "west"
+        },
+        "east": {
+          "texture": "#side_glow",
+          "cullface": "east"
+        },
+        "up": {
+          "texture": "#top_glow",
+          "cullface": "up"
+        }
+      }
+    }
+  ]
+}

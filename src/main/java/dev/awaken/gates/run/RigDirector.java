@@ -64,6 +64,9 @@ public final class RigDirector {
         /** Gravity Wells: who is falling up right now, and who just came down (soft landing until then). */
         final Set<UUID> flipped = new HashSet<>();
         final Map<UUID, Long> landing = new HashMap<>();
+        /** Gauntlet: each player's run of the course, and the presses on their way down (placed when they land). */
+        final Map<UUID, RigGauntletLive.Racer> racers = new HashMap<>();
+        final List<RigGauntletLive.Press> presses = new ArrayList<>();
         boolean encounter;
 
         Live(GateRecord g, FloorLayout f, Room r) {
@@ -106,7 +109,8 @@ public final class RigDirector {
         }
 
         boolean idle() {
-            return here.isEmpty() && st().started.isEmpty() && pending.isEmpty() && flipped.isEmpty() && inPit.isEmpty() && landing.isEmpty();
+            return here.isEmpty() && st().started.isEmpty() && pending.isEmpty() && flipped.isEmpty() && inPit.isEmpty() && landing.isEmpty()
+                    && racers.isEmpty() && presses.isEmpty();
         }
     }
 
@@ -119,6 +123,7 @@ public final class RigDirector {
         scanned = false;
         RigCaveIn.resetAll();
         RigMirrorsLive.resetAll();
+        RigGauntletLive.resetAll();
     }
 
     // ---- the tick ---------------------------------------------------------------------------------------------------
@@ -189,6 +194,7 @@ public final class RigDirector {
         switch (l.rig.kind) {
             case COLLAPSE_RUN -> RigCollapseLive.tick(level, l, now);
             case GRAVITY_WELLS -> RigWellsLive.tick(level, l, now);
+            case GAUNTLET -> RigGauntletLive.tick(level, l, now);
             case MIRROR_HALL -> {}
         }
         settle(level, l, now);
@@ -262,7 +268,7 @@ public final class RigDirector {
     }
 
     /** Ends a track; {@code reset}: put back every group it changed (a room left mid-run). */
-    private static void stop(ServerLevel level, Live l, int id, long now, boolean reset) {
+    static void stop(ServerLevel level, Live l, int id, long now, boolean reset) {
         RigState.Room st = l.st();
         st.started.remove(id);
         st.age.remove(id);
@@ -290,11 +296,17 @@ public final class RigDirector {
     private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
 
     private static void warn(ServerLevel level, Live l, RigRoom.Group g) {
+        if (g.apply() == RigRoom.Anim.PRESS) {
+            // a press about to come down: the floor under it glows and the ratchet winds
+            RigGauntletLive.warn(level, l, g);
+            return;
+        }
         cue(level, l, RigPayloads.Cue.WARN, g, false, warnTicks(l.rig.kind), 0);
         switch (l.rig.kind) {
             case COLLAPSE_RUN -> sound(level, at(l, g), GatesRegistry.SND_RIG_CRACK.get(), 0.7F, 0.9F + 0.2F * level.getRandom().nextFloat());
             case GRAVITY_WELLS -> sound(level, l.center(), GatesRegistry.SND_RIG_SURGE.get(), 1.2F, 1F);
             case MIRROR_HALL -> sound(level, at(l, g), GatesRegistry.SND_RIG_CRACK.get(), 0.6F, 1.6F);
+            case GAUNTLET -> sound(level, at(l, g), GatesRegistry.SND_RIG_CRACK.get(), 0.8F, 1.1F + 0.2F * level.getRandom().nextFloat());
         }
     }
 
@@ -306,6 +318,11 @@ public final class RigDirector {
         RigState.Room st = l.st();
         if (!st.applied.add(g.id())) return;
         dirty(level);
+        if (g.apply() == RigRoom.Anim.PRESS) {
+            // drawn coming down first; its blocks land (and catch whoever is under them) a few ticks on
+            RigGauntletLive.press(level, l, g, now);
+            return;
+        }
         for (RigRoom.Cell c : g.cells()) {
             BlockPos pos = l.world(c.x(), c.dy(), c.z());
             if (level.getBlockState(pos) != c.active()) level.setBlock(pos, c.active(), FLAGS);
@@ -319,6 +336,7 @@ public final class RigDirector {
                 cue(level, l, RigPayloads.Cue.SURGE, g, false, 0, 1);
                 sound(level, l.center(), GatesRegistry.SND_RIG_FLIP_UP.get(), 1.4F, 0.8F);
             }
+            case GAUNTLET -> sound(level, at(l, g), GatesRegistry.SND_RIG_FALL.get(), 0.8F, 1.0F + 0.2F * level.getRandom().nextFloat());
         }
     }
 
@@ -341,8 +359,11 @@ public final class RigDirector {
             else level.setBlock(pos, c.rest(), FLAGS);
         }
         if (!rise) st.applied.remove(g.id());
-        cue(level, l, anim(g.restore()), g, false, animTicks(g.restore()), 0);
-        if (l.rig.kind == RigRoom.Kind.COLLAPSE_RUN) sound(level, at(l, g), GatesRegistry.SND_RIG_KNIT.get(), 0.6F, 0.9F + 0.2F * level.getRandom().nextFloat());
+        boolean lift = g.restore() == RigRoom.Anim.LIFT;
+        cue(level, l, anim(g.restore()), g, false, animTicks(g.restore()), lift ? RigGauntletLive.travel(l) : 0);
+        if (l.rig.kind == RigRoom.Kind.COLLAPSE_RUN || (l.rig.kind == RigRoom.Kind.GAUNTLET && !lift))
+            sound(level, at(l, g), GatesRegistry.SND_RIG_KNIT.get(), 0.6F, 0.9F + 0.2F * level.getRandom().nextFloat());
+        if (lift) sound(level, at(l, g), GatesRegistry.SND_RIG_LIFT.get(), 0.8F, 1F);
         dirty(level);
     }
 
@@ -375,6 +396,8 @@ public final class RigDirector {
             case SPIN -> RigPayloads.Cue.SPIN;
             case SHATTER -> RigPayloads.Cue.SHATTER;
             case IGNITE, NONE -> RigPayloads.Cue.IGNITE;
+            case PRESS -> RigPayloads.Cue.PRESS;
+            case LIFT -> RigPayloads.Cue.LIFT;
         };
     }
 
@@ -385,13 +408,15 @@ public final class RigDirector {
             case SPIN -> RigRoom.SPIN_TICKS;
             case SHATTER -> 30;
             case IGNITE, NONE -> 20;
+            case PRESS -> dev.awaken.gates.world.RigGauntlet.PRESS_TICKS;
+            case LIFT -> 14;
         };
     }
 
     // ---- what the clients are told ----------------------------------------------------------------------------------
 
     /** Sends a cue for a group: its cells and what is drawn there ({@code rest}: the painted blocks, else the active ones). */
-    private static void cue(ServerLevel level, Live l, int kind, RigRoom.Group g, boolean rest, int ticks, float a) {
+    static void cue(ServerLevel level, Live l, int kind, RigRoom.Group g, boolean rest, int ticks, float a) {
         List<Long> cells = new ArrayList<>(g.cells().size());
         List<Integer> states = new ArrayList<>(g.cells().size());
         // a flag (a surge) has no blocks: its cue names the room by its centre
@@ -417,7 +442,7 @@ public final class RigDirector {
     }
 
     /** The middle of a group's cells (where its sound comes from). */
-    private static Vec3 at(Live l, RigRoom.Group g) {
+    static Vec3 at(Live l, RigRoom.Group g) {
         if (g.cells().isEmpty()) return l.center();
         double x = 0, y = 0, z = 0;
         for (RigRoom.Cell c : g.cells()) {
@@ -470,6 +495,23 @@ public final class RigDirector {
                     RigState.Room st = g.floor(f.area, f.floor).rig.rooms.get(r.id);
                     surge = st != null && st.applied.contains(0);
                 }
+                case GAUNTLET -> {
+                    // each ring as the two ends of the row it stands over
+                    var c = r.rig.course;
+                    for (int ring : c.rings()) {
+                        BlockPos a = null, b = null;
+                        for (int x = r.x0(); x <= r.x1(); x++) for (int z = r.z0(); z <= r.z1(); z++) {
+                            if (c.rowAt(x, z) != ring) continue;
+                            BlockPos q = l.world(x, 0, z);
+                            if (a == null) a = q;
+                            b = q;
+                        }
+                        if (a != null) {
+                            wells.add(a);
+                            wells.add(b);
+                        }
+                    }
+                }
                 case COLLAPSE_RUN -> {}
             }
             rooms.add(new RigPayloads.Room(r.rig.kind.ordinal(), f.theme.ordinal(), min, max, lens, dir, seal, wells, surge));
@@ -486,6 +528,7 @@ public final class RigDirector {
             l.inPit.remove(p.getUUID());
             l.flipped.remove(p.getUUID());
             l.landing.remove(p.getUUID());
+            l.racers.remove(p.getUUID());
         }
         AwakenNet.send(p, RigPayloads.Scene.NONE);
     }
@@ -505,9 +548,10 @@ public final class RigDirector {
         tick(server);
     }
 
-    /** Puts every delayed block in now, due or not (tests can't wait for ticks). */
+    /** Puts every delayed block in now, due or not, presses too (tests can't wait for ticks). */
     public static void settleAll(ServerLevel level) {
         for (Live l : LIVE.values()) {
+            RigGauntletLive.landNow(level, l);
             List<Pending> all = new ArrayList<>(l.pending);
             l.pending.clear();
             for (Pending p : all) l.pending.add(new Pending(Long.MIN_VALUE, p.pos(), p.state(), p.group(), 200));
@@ -522,6 +566,20 @@ public final class RigDirector {
         RigCaveIn.tick(level, Long.MAX_VALUE / 2);
         RigCaveIn.tick(level, Long.MAX_VALUE);
         return n;
+    }
+
+    /** The time of the run kept as this player's ghost on a Gauntlet's course, or -1 (tests). */
+    public static int ghostTicks(GateRecord g, FloorLayout f, Room r, ServerPlayer p) {
+        Live l = LIVE.get(new Key(g.id, f.area, f.floor, r.id));
+        RigGauntletLive.Ghost ghost = l == null ? null : RigGauntletLive.best(l, p.getUUID());
+        return ghost == null ? -1 : ghost.ticks();
+    }
+
+    /** Whether this player's run of a Gauntlet's course is on the clock (tests). */
+    public static boolean racing(GateRecord g, FloorLayout f, Room r, ServerPlayer p) {
+        Live l = LIVE.get(new Key(g.id, f.area, f.floor, r.id));
+        RigGauntletLive.Racer racer = l == null ? null : l.racers.get(p.getUUID());
+        return racer != null && racer.running;
     }
 
     /** The saved state of a rig room (tests). */

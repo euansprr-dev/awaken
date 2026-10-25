@@ -1,0 +1,48 @@
+# The updraft vent: its column from the ground (dusk, so the streaks read) and a glide off the deck through it.
+world ascent_vent survival 4242
+waitworld
+window 1440 900
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 12600
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd tp @s 0.5 152 0.5 0 0
+# new terrain loads slower: let the chunks under the floor load before filling
+wait 100
+cmd fill -30 150 -12 30 150 250 minecraft:grass_block
+cmd fill -30 151 -12 30 160 250 minecraft:air
+cmd tp @s 0.5 151 0.5 0 0
+wait 10
+cmd awaken ascent sandbox
+wait 200
+screen close
+
+# ---- the column from the ground, looking up it ----
+cmd tp @s -13.5 151 -10.5 0 -38
+camera first
+wait 40
+cmd awaken ascent pilot rec vent_ground 90 3
+wait 95
+
+# ---- off the deck, wings open, through the column (third person) ----
+cmd tp @s 0.5 198 0.5 62.6 10
+camera back
+wait 30
+cmd awaken ascent pilot rec vent_glide 200 3
+cmd awaken ascent pilot run glide
+wait 210
+cmd awaken ascent pilot stop
+info
+quit

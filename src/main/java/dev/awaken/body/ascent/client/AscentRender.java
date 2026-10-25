@@ -33,7 +33,7 @@ final class AscentRender {
     static final Identifier GLOW = Awaken.id("textures/ascent/glow.png");
     static final Identifier RING = Awaken.id("textures/ascent/ring.png");
     static final Identifier STAR = Awaken.id("textures/ascent/star.png");
-    private static final boolean FIRST_PERSON_WINGS = false;
+    private static final boolean FIRST_PERSON_WINGS = true;
 
     private static RenderType ropeType, glowType, ringType, starType;
     private static float pt;

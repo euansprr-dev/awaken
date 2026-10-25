@@ -215,7 +215,23 @@ public final class Director {
     }
 
     /** Picks a spot, rolls the gate and starts building it. */
+    /** A rig room on some floor (a Gauntlet with a press and a ring, for the tour to see). */
+    private static boolean hasRig(GatePlan plan) {
+        for (var f : dev.awaken.gates.world.GateLayout.of(plan).main) for (var r : f.rooms) {
+            if (r.rig == null) continue;
+            var c = r.rig.course;
+            if (c == null || (c.presses() > 0 && c.rings().length > 0)) return true;
+        }
+        return false;
+    }
+
     public static GateRecord spawnFor(MinecraftServer server, ServerPlayer p, Rank forceRank, Theme forceTheme, int minDist, int maxDist) {
+        return spawnFor(server, p, forceRank, forceTheme, minDist, maxDist, false);
+    }
+
+    /** As above; {@code wantRig} (tours): rolled again until the gate has a Gate Rig room on one of its floors. */
+    public static GateRecord spawnFor(MinecraftServer server, ServerPlayer p, Rank forceRank, Theme forceTheme, int minDist, int maxDist,
+                                      boolean wantRig) {
         ServerLevel over = server.overworld();
         GateRegistry reg = GateRegistry.get(server);
         BlockPos spot = null;
@@ -249,6 +265,7 @@ public final class Director {
         int id = reg.nextId();
         long seed = Hash.mix(over.getSeed() ^ Hash.of(id, mem.gatesRolled, p.getUUID().hashCode()));
         Roll roll = roll(seed, Progression.rank(p), mem, forceRank, forceTheme);
+        for (int i = 1; wantRig && i < 256 && !hasRig(roll.plan()); i++) roll = roll(Hash.mix(seed + i), Progression.rank(p), mem, forceRank, forceTheme);
         List<String> trace = new ArrayList<>(roll.trace());
         trace.add(0, "seed      " + Long.toHexString(roll.plan().seed()) + " · rolled for " + p.getGameProfile().name());
         trace.add("place     " + dist + " m " + dir + " at " + spot.getX() + " " + spot.getY() + " " + spot.getZ()

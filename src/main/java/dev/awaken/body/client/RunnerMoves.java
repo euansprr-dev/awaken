@@ -268,7 +268,9 @@ public final class RunnerMoves {
         runAge = 0;
         runLink = link;
         runStride = Body.wallStride(p);
-        runLen = RunnerRules.runLength(link, Body.runnerRank(p), runStride);
+        // Runner mastery: a tick longer a level (SPEC §17.6)
+        runLen = RunnerRules.runLength(link, Body.runnerRank(p), runStride)
+                + dev.awaken.body.ascent.client.AscentMoves.level(dev.awaken.body.ascent.AscentMemory.Track.RUNNER);
         runGrip = RunnerRules.runGrip(link, runStride);
         runStart = now;
         runAxis = w.axis();

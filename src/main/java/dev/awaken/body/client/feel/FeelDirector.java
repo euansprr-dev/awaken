@@ -117,6 +117,42 @@ public final class FeelDirector {
         if (!FeelConfig.reduced()) fovPunch += 0.07F;
     }
 
+    private static final double[] VEL = new double[3];
+    private static final org.joml.Matrix4f VIEW_PROJ = new org.joml.Matrix4f();
+    private static final org.joml.Vector4f CLIP = new org.joml.Vector4f();
+
+    /**
+     * The Lens's sense of speed (SPEC §17): from 1.2 blocks a tick in an airborne state, full at 3, toward where you're
+     * heading on screen (the camera's own projection, as the Lens finds the sun). None with reduced motion, on the
+     * ground, or heading away from the view.
+     */
+    /** Dev (pilot {@code lensmotion off}): A/B shots of the same moment. */
+    public static boolean lensMotionOn = true;
+
+    private static void lensMotion(Minecraft mc) {
+        AscentMoves.velocity(VEL);
+        double s = Math.sqrt(VEL[0] * VEL[0] + VEL[1] * VEL[1] + VEL[2] * VEL[2]);
+        float strength = !lensMotionOn || FeelConfig.reduced() || !AscentMoves.state().airborne() ? 0F : (float) Mth.clamp((s - 1.2) / 1.8, 0, 1);
+        float hx = 0.5F, hy = 0.5F;
+        if (strength > 0) {
+            mc.gameRenderer.mainCamera().getViewRotationProjectionMatrix(VIEW_PROJ).transform(CLIP.set((float) VEL[0], (float) VEL[1], (float) VEL[2], 0F));
+            if (CLIP.w > 1.0e-4F) {
+                hx = CLIP.x / CLIP.w * 0.5F + 0.5F;
+                hy = CLIP.y / CLIP.w * 0.5F + 0.5F;
+            } else {
+                strength = 0;
+            }
+        }
+        dev.awaken.lens.client.LensClient.motion(strength * strength * (3 - 2 * strength), hx, hy);
+    }
+
+    /** A barrel roll: the view tilts into the dodge (within the comfort cap) and the frame breathes. */
+    public static void barrelRoll(int dir) {
+        roll1 += dir * Math.min(4F, FeelConfig.roll());
+        kick(-0.8F);
+        if (!FeelConfig.reduced()) fovPunch += 0.05F;
+    }
+
     /** An air dash: a sharp shove forward (the frame widens, the view dips into it). */
     public static void dash() {
         kick(1.6F);
@@ -158,6 +194,7 @@ public final class FeelDirector {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        lensMotion(mc);
         roll0 = roll1;
         pitch0 = pitch1;
         fov0 = fov1;

@@ -28,10 +28,18 @@ public final class AscentClient {
         modBus.addListener(AscentClient::onPayloads);
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(AscentContent.MOTE.get(), MoteParticle.Provider::new));
         modBus.addListener(AscentClient::onAddLayers);
+        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) ->
+                e.registerBlockEntityRenderer(AscentContent.UPDRAFT_VENT_BE.get(), UpdraftRenderer::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_flow"), AscentFlow::render));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, dev.awaken.Awaken.id("ascent_scene"), AscentScene::render));
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, dev.awaken.Awaken.id("ascent_vow"), VowScene::render));
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_notes"), AscentNotes::render));
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
+                net.neoforged.neoforge.client.gui.VanillaGuiLayers.CONTEXTUAL_INFO_BAR, dev.awaken.Awaken.id("ascent_aether"), AscentFlow::renderAether));
         FeelDirector.init(modBus);
         var bus = NeoForge.EVENT_BUS;
         // before the Awakened Body's own moves: an airborne state owns the body and the body's moves stand aside
@@ -47,6 +55,9 @@ public final class AscentClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             AscentMoves.reset();
             AscentScene.reset();
+            VowScene.reset();
+            AscentNotes.reset();
+            dev.awaken.body.ascent.Updrafts.clear();
             AscentRemote.reset();
             AscentPilot.stop();
             AscentRoutes.stop();
@@ -67,12 +78,17 @@ public final class AscentClient {
         event.register(AscentPayloads.SeenEvent.TYPE, (msg, ctx) -> AscentRemote.event(msg));
         event.register(AscentPayloads.Tiers.TYPE, (msg, ctx) -> {
             AscentMoves.tiers = msg.bits();
+            // a level gained (not the first sync of a session, which only fills the copy)
+            if (AscentMoves.masterySynced) AscentNotes.mastery(AscentMoves.mastery, msg.mastery());
             AscentMoves.mastery = msg.mastery();
+            AscentMoves.masterySynced = true;
             dev.awaken.body.ascent.AscentServer.clientTiers(msg.bits());
         });
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
         event.register(AscentPayloads.Stop.TYPE, (msg, ctx) -> AscentMoves.refused(msg.state()));
-        event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits()));
+        event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits(), msg.mode()));
+        event.register(AscentPayloads.Vow.TYPE, (msg, ctx) -> VowScene.on(msg));
+        event.register(AscentPayloads.Record.TYPE, (msg, ctx) -> AscentNotes.record(msg.chain()));
     }
 
     private static void tick() {
@@ -81,6 +97,8 @@ public final class AscentClient {
         AscentMoves.tick();
         AscentFlow.tick(mc.player);
         AscentScene.tick(mc.player);
+        VowScene.tick(mc.player);
+        AscentNotes.tick();
         AscentPilot.tick();
         AscentRoutes.tick();
         AscentRemote.tick();

@@ -11,6 +11,8 @@ import dev.awaken.veil.Veil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Input;
@@ -39,8 +41,13 @@ public final class AscentMoves {
     static int tiers;
     /** The six mastery levels, 4 bits each (AscentMemory.Track order), from the server. */
     static int mastery;
+    /** The server has sent the levels once this session (later changes are levels gained). */
+    static boolean masterySynced;
+    /** Skyborn's Aether (0..1, SPEC §17.8), predicted here; the server keeps its own at the cheapest drain. */
+    static double aether = 1;
+    static int aetherOutAt = -100;
     static final AscentRules.Kin K = new AscentRules.Kin();
-    private static final double[] S = new double[3];
+    private static final double[] S = new double[3], AIR = new double[3];
 
     // the rope
     static double ax, ay, az, len, lenTarget;
@@ -49,9 +56,24 @@ public final class AscentMoves {
     /** Ticks until a fired rope bites (it flies out first: the anticipation); 0 once it holds. */
     static int ropeTravel;
     static boolean ropeTaut;
+    /** The block the last rope held, and when it was let go (the next throw passes through it for a second). */
+    private static @org.jspecify.annotations.Nullable BlockPos leftAnchor;
+    private static int leftAt = -100;
+    /** A line thrown for you (the vow's): held until it arrives, key or no key. */
+    static boolean heldForYou;
+    /**
+     * After a zip to a ledge: ticks left vaulting onto it, the block it ends on (its centre, top and bottom), and the
+     * edge it goes over (a unit step out from that block). Where the zip started (which side it came up from).
+     */
+    static int pullTicks;
+    static double pullX, pullZ, pullTop, pullBottom;
+    static int pullEX, pullEZ;
+    private static double zipFromX, zipFromZ;
     static double tension;
     // input edges
-    private static boolean tetherWas, jumpWas, sneakWas, sprintWas;
+    private static boolean tetherWas, jumpWas, sneakWas, sprintWas, leftWas, rightWas;
+    /** The barrel roll's double tap: the last side tapped and when; when the last roll went. */
+    private static int sideTapAt = -100, sideTapDir, rollAt = -100;
     /** The Leaper's air moves used this airtime (bits: 1 double jump, 2 air dash), back on landing or a rope's bite. */
     static int airMovesUsed;
     /** A dive slam is falling: its landing shakes the ground. */
@@ -129,6 +151,14 @@ public final class AscentMoves {
         return state == AscentState.NONE ? 0 : K.speed();
     }
 
+    /** The velocity the state keeps (blocks a tick), into {@code out}; zero on the ground. */
+    public static void velocity(double[] out) {
+        boolean on = state != AscentState.NONE;
+        out[0] = on ? K.vx : 0;
+        out[1] = on ? K.vy : 0;
+        out[2] = on ? K.vz : 0;
+    }
+
     // ---- input ----------------------------------------------------------------------------------------------------
 
     static void onInput(MovementInputUpdateEvent e) {
@@ -140,6 +170,9 @@ public final class AscentMoves {
         boolean jump = k.jump(), sneak = k.shift(), sprint = k.sprint();
         boolean tetherPressed = tether && !tetherWas, jumpPressed = jump && !jumpWas, sneakPressed = sneak && !sneakWas;
         boolean sprintPressed = sprint && !sprintWas;
+        int sidePressed = k.right() && !rightWas ? 1 : k.left() && !leftWas ? -1 : 0;
+        leftWas = k.left();
+        rightWas = k.right();
         tetherWas = tether;
         jumpWas = jump;
         sneakWas = sneak;
@@ -183,7 +216,7 @@ public final class AscentMoves {
                 }
             }
             case ZIP -> {
-                if (!tether) {
+                if (!tether && !heldForYou) {
                     toCarry(p, "zip let go");
                     carry(yaw, fwd, right);
                 } else {
@@ -204,6 +237,7 @@ public final class AscentMoves {
                 } else if (jumpPressed && has(AscentPayloads.Tier.WINGS) && canDeploy(p)) {
                     startGlide(p);
                 } else {
+                    if (pullTicks > 0) pullOver();
                     carry(yaw, fwd, right);
                 }
             }
@@ -231,12 +265,24 @@ public final class AscentMoves {
                         flapAt = ticks;
                         AscentSounds.local(p, AscentContent.FLAP.get(), 0.45F, 0.85F + p.getRandom().nextFloat() * 0.1F);
                     }
+                    if (sidePressed != 0) sideTap(p, sidePressed);
                     AscentRules.soarStep(K, yaw, pitch, fwd, right, jump, sneak, k.sprint(), S);
                     boomCheck(p);
+                    aetherDrain = k.sprint() ? AscentRules.AETHER_BOOST
+                            : fwd <= 0 && K.hspeed() < 0.45 ? AscentRules.AETHER_HOVER : AscentRules.AETHER_CRUISE;
                 }
             }
         }
         if (jumpPressed) lastJumpPress = ticks;
+        aetherTick(p);
+        // moving air (updrafts, windways): the free states feel it from the next tick
+        double share = switch (state) {
+            case CARRY -> AscentRules.AIR_CARRY;
+            case GLIDE -> AscentRules.AIR_GLIDE;
+            case SOAR -> AscentRules.AIR_SOAR;
+            default -> 0;
+        };
+        if (share > 0 && dev.awaken.core.api.AirHooks.sample(p.level(), K.x, K.y, K.z, AIR)) AscentRules.air(K, AIR, share);
         if (state != AscentState.NONE) apply(p, in);
         else sent = false;
     }
@@ -264,6 +310,7 @@ public final class AscentMoves {
             return true;
         }
         double mx = p.getX() - lastX, my = p.getY() - lastY, mz = p.getZ() - lastZ;
+        lastMoved = Math.abs(mx) + Math.abs(my) + Math.abs(mz);
         double ex = mx - wantDx, ey = my - wantDy, ez = mz - wantDz;
         if (ex * ex + ey * ey + ez * ez > 9) {
             // a teleport (the server put us somewhere): whatever we were doing is over
@@ -357,8 +404,10 @@ public final class AscentMoves {
     /** Fires the rope; true when it found an anchor (the state is then TETHER or ZIP). */
     private static boolean fire(LocalPlayer p) {
         Vec3 eye = p.getEyePosition();
+        // a rope just let go of passes through the ring or branch it held: throw past it to the next one up
         AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, p.getYRot(), p.getXRot(),
-                AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER));
+                AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER),
+                ticks - leftAt <= 20 ? leftAnchor : null);
         fireAt = ticks;
         AscentSounds.local(p, AscentContent.ROPE_FIRE.get(), 0.8F, 0.95F + p.getRandom().nextFloat() * 0.1F);
         event(AscentPayloads.EV_FIRE, 0);
@@ -385,7 +434,9 @@ public final class AscentMoves {
         else K.set(hx, hy, hz, K.vx, K.vy, K.vz);
         ropeTravel = Mth.clamp((int) Math.ceil(dist / 16), 1, 3);
         ropeTaut = false;
-        if (dy > AscentRules.TETHER_SWING_MIN_RISE) {
+        // nearly straight overhead (a ring, a branch, a keel): a zip up to it and a hang under it, not a pendulum
+        boolean overhead = dy > AscentRules.ZIP_UP_MIN_RISE && Math.sqrt(dx * dx + dz * dz) < dy * AscentRules.ZIP_UP_SLOPE;
+        if (dy > AscentRules.TETHER_SWING_MIN_RISE && !overhead) {
             len = dist;
             // the arc's bottom keeps clear of the ground: the floor where you stand, or under the arc's lowest point
             // (just off the anchor, toward you, so the anchor's own trunk or branch isn't taken for the floor)
@@ -402,6 +453,8 @@ public final class AscentMoves {
         } else {
             len = lenTarget = dist;
             setState(p, AscentState.ZIP);
+            zipFromX = hx;
+            zipFromZ = hz;
             if (p.onGround()) K.vy = Math.max(K.vy, 0.3);
             trace(String.format("zip %.1f", dist));
         }
@@ -411,16 +464,84 @@ public final class AscentMoves {
         return true;
     }
 
+    /**
+     * The Tether Vow's line (SPEC §17.7): thrown for you, straight to a point (a zip), the same rope the key throws.
+     * False when the body can't take it (no rope yet, riding, swimming...).
+     */
+    static boolean zipTo(LocalPlayer p, double x, double y, double z) {
+        if (!has(AscentPayloads.Tier.TETHER) || off(p)) return false;
+        fireAt = ticks;
+        AscentSounds.local(p, AscentContent.ROPE_FIRE.get(), 0.9F, 0.9F);
+        event(AscentPayloads.EV_FIRE, 0);
+        double hx = p.getX(), hy = p.getY() + AscentRules.HAND_HEIGHT, hz = p.getZ();
+        if (state == AscentState.NONE) K.set(hx, hy, hz, p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        else K.set(hx, hy, hz, K.vx, K.vy, K.vz);
+        ax = x;
+        ay = y;
+        az = z;
+        anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
+        double dist = Math.sqrt((ax - hx) * (ax - hx) + (ay - hy) * (ay - hy) + (az - hz) * (az - hz));
+        ropeTravel = Mth.clamp((int) Math.ceil(dist / 16), 1, 3);
+        ropeTaut = false;
+        len = lenTarget = dist;
+        setState(p, AscentState.ZIP);
+        zipFromX = hx;
+        zipFromZ = hz;
+        heldForYou = true;
+        if (p.onGround()) K.vy = Math.max(K.vy, 0.3);
+        trace(String.format("the vow's line, zip %.1f", dist));
+        return true;
+    }
+
     private static void zipTick(LocalPlayer p, float yaw) {
         if (ropeTravel > 0) {
             ropeTravel--;
             if (ropeTravel == 0) bite(p, 0.6F);
             carry(yaw, 0, 0);
+        } else if (zipStalled(p)) {
+            // pressed against something on the way: let go and fall (never pinned for good)
+            trace("zip blocked");
+            toCarry(p, "zip blocked");
+            carry(yaw, 0, 0);
         } else if (AscentRules.zipStep(K, ax, ay, az)) {
-            // arrived: a hop up onto whatever the rope bit, then fly on
-            K.vx *= 0.45;
-            K.vz *= 0.45;
-            K.vy = Math.max(K.vy * 0.3, 0.48);
+            BlockPos b = anchorBlock;
+            if (b != null && ay < b.getY() + 0.02) {
+                // the rope bit an underside: near a ledge's edge (a floor with room on it), out, up and over its lip
+                if (ledgeOver(p, b)) {
+                    trace(String.format("zip arrived: over the ledge's lip (%.1f up)", pullTop - (K.y - AscentRules.HAND_HEIGHT)));
+                    toCarry(p, "zip arrived");
+                    carry(yaw, 0, 0);
+                    return;
+                }
+                // under anything else (a ring, a branch, a keel): hang there on a short rope, still, ready to throw on
+                K.vx *= 0.2;
+                K.vz *= 0.2;
+                K.vy = 0;
+                len = lenTarget = AscentRules.CEILING_HANG;
+                setState(p, AscentState.TETHER);
+                ropeTravel = 0;
+                ropeTaut = true;
+                trace("zip arrived: hanging under it");
+                AscentSounds.local(p, AscentContent.ROPE_STRAIN.get(), 0.5F, 1.1F);
+                return;
+            }
+            if (b != null && roomOver(p, b)) {
+                // arrived at a face with room over it (a ledge, a pylon, a branch): up and onto it over that face's edge
+                double ox = ax - (b.getX() + 0.5), oz = az - (b.getZ() + 0.5);
+                if (Math.max(Math.abs(ox), Math.abs(oz)) < 0.45) {
+                    // the top's own face: over the edge on the side the body is
+                    ox = K.x - (b.getX() + 0.5);
+                    oz = K.z - (b.getZ() + 0.5);
+                }
+                boolean alongX = Math.abs(ox) >= Math.abs(oz);
+                vault(b, alongX ? (ox >= 0 ? 1 : -1) : 0, alongX ? 0 : (oz >= 0 ? 1 : -1));
+                trace(String.format("zip arrived: up onto the top (%.1f up)", pullTop - (K.y - AscentRules.HAND_HEIGHT)));
+            } else {
+                // a face with more wall over it: a hop off it, then fly on
+                K.vx *= 0.45;
+                K.vz *= 0.45;
+                K.vy = Math.max(K.vy * 0.3, 0.48);
+            }
             toCarry(p, "zip arrived");
             carry(yaw, 0, 0);
         }
@@ -492,6 +613,115 @@ public final class AscentMoves {
         AscentFx.bite(p, ax, ay, az);
         FeelDirector.ropeCatch(0.3F);
         ClientPacketDistributor.sendToServer(new AscentPayloads.State(state.ordinal(), ax, ay, az, (float) len));
+    }
+
+    /** The body's half width and a little: how far out from a block's face the body clears it. */
+    private static final double VAULT_CLEAR = 0.5 + 0.3 + 0.08;
+
+    /** A vault onto {@code b}'s top over its edge on the side ({@code ex}, {@code ez}): out, up, then in (pullOver). */
+    private static void vault(BlockPos b, int ex, int ez) {
+        K.vx = 0;
+        K.vy = 0;
+        K.vz = 0;
+        pullTicks = 40;
+        pullX = b.getX() + 0.5;
+        pullZ = b.getZ() + 0.5;
+        pullTop = b.getY() + 1;
+        pullBottom = b.getY();
+        pullEX = ex;
+        pullEZ = ez;
+    }
+
+    /**
+     * Under a ledge: a floor (full blocks with room on them, at least two together) whose edge is within three blocks
+     * of the bite, toward the side the zip came up from first. Sets up the vault over that edge; false when there is
+     * none within reach (a lone ring or branch, a ceiling: the hang).
+     */
+    private static boolean ledgeOver(LocalPlayer p, BlockPos b) {
+        double fx = zipFromX - ax, fz = zipFromZ - az;
+        Direction[] order = Direction.Plane.HORIZONTAL.stream()
+                .sorted((d1, d2) -> Double.compare(-(d1.getStepX() * fx + d1.getStepZ() * fz), -(d2.getStepX() * fx + d2.getStepZ() * fz)))
+                .toArray(Direction[]::new);
+        for (Direction e : order) {
+            BlockPos c = b;
+            for (int i = 0; i < 3; i++) {
+                if (!floor(p, c)) break;
+                BlockPos out = c.relative(e);
+                if (open(p, out) && open(p, out.above()) && open(p, out.below())) {
+                    boolean wide = false;
+                    for (Direction n : Direction.Plane.HORIZONTAL) if (n != e && floor(p, c.relative(n))) wide = true;
+                    if (!wide) break;
+                    vault(c, e.getStepX(), e.getStepZ());
+                    return true;
+                }
+                c = out;
+            }
+        }
+        return false;
+    }
+
+    /** A full block with two cells of room on it. */
+    private static boolean floor(LocalPlayer p, BlockPos c) {
+        return p.level().getBlockState(c).isCollisionShapeFullBlock(p.level(), c) && roomOver(p, c);
+    }
+
+    private static boolean open(LocalPlayer p, BlockPos c) {
+        return p.level().getBlockState(c).getCollisionShape(p.level(), c).isEmpty();
+    }
+
+    /**
+     * The vault, a tick of it: clear of the edge first (from under the ledge, out past its face), up beside the face
+     * until the feet are over the top, then in onto it. Velocities are set against gravity (the carry takes it off).
+     */
+    private static void pullOver() {
+        pullTicks--;
+        double out = (K.x - pullX) * pullEX + (K.z - pullZ) * pullEZ;
+        if (K.y >= pullTop + 0.02) {
+            double hx = pullX - K.x, hz = pullZ - K.z, hl = Math.sqrt(hx * hx + hz * hz);
+            if (hl < 0.25) {
+                pullTicks = 0;
+                K.vx *= 0.3;
+                K.vz *= 0.3;
+                return;
+            }
+            double push = Math.min(0.3, hl * 0.5);
+            K.vx = hx / hl * push;
+            K.vz = hz / hl * push;
+            // level until the body is over the top, then down onto it
+            if (out > VAULT_CLEAR - 0.1) K.vy = (pullTop + 0.1 - K.y) * 0.4 + AscentRules.G;
+        } else if (out < VAULT_CLEAR - 0.05) {
+            // under the ledge: out past its face, the head kept under it
+            double go = Math.min(0.25, (VAULT_CLEAR - out) * 0.7 + 0.05);
+            K.vx = pullEX * go;
+            K.vz = pullEZ * go;
+            double feet = Math.min(K.y, pullBottom - 1.85);
+            K.vy = (feet - K.y) * 0.5 + AscentRules.G;
+        } else {
+            // beside the face: up it, held just off it
+            K.vx = pullEX * (VAULT_CLEAR - out) * 0.5;
+            K.vz = pullEZ * (VAULT_CLEAR - out) * 0.5;
+            K.vy = Math.min(0.7, (pullTop + 0.2 - K.y) * 0.45 + 0.1) + AscentRules.G;
+        }
+    }
+
+    /** Ticks a zip has made no headway (the body moving under 0.05 a tick). */
+    private static int zipStall;
+
+    /** How far the body really went last tick (reconcile's measure). */
+    private static double lastMoved = 1;
+
+    private static boolean zipStalled(LocalPlayer p) {
+        zipStall = stateAge > 3 && ropeTravel == 0 && lastMoved < 0.05 ? zipStall + 1 : 0;
+        return zipStall > 10;
+    }
+
+    /** Two cells of room over a block (somewhere to stand on it). */
+    private static boolean roomOver(LocalPlayer p, BlockPos b) {
+        for (int i = 1; i <= 2; i++) {
+            BlockPos q = b.above(i);
+            if (!p.level().getBlockState(q).getCollisionShape(p.level(), q).isEmpty()) return false;
+        }
+        return true;
     }
 
     /** The block the rope bit is gone (broken, or a leaf that decayed): its cell has no collision any more. */
@@ -641,7 +871,58 @@ public final class AscentMoves {
         AscentSounds.local(p, AscentContent.WINGS_FOLD.get(), 0.7F, 1F);
     }
 
+    /** This tick's drain (set by the flight step), and the meter's tick: drained in flight, refilled out of it. */
+    private static double aetherDrain;
+
+    private static void aetherTick(LocalPlayer p) {
+        if (!has(AscentPayloads.Tier.SKYBORN)) return;
+        boolean flying = state == AscentState.SOAR;
+        BlockPos eye = BlockPos.containing(p.getEyePosition());
+        boolean sun = p.level().isBrightOutside() && p.level().canSeeSky(eye);
+        boolean updraft = dev.awaken.body.ascent.Updrafts.liftAt(p.level(), p.getX(), p.getY(), p.getZ()) > 0;
+        aether = Math.max(0, AscentRules.aetherStep(aether, flying, aetherDrain, sun, updraft, lv(dev.awaken.body.ascent.AscentMemory.Track.SKYBORN)));
+        aetherDrain = AscentRules.AETHER_CRUISE;
+        if (flying && aether <= 0) skyLetsGo(p);
+    }
+
+    /** A tap of left or right in flight: the second, soon enough and the same way, is a barrel roll. */
+    private static void sideTap(LocalPlayer p, int dir) {
+        boolean again = dir == sideTapDir && ticks - sideTapAt <= AscentRules.ROLL_TAP;
+        sideTapDir = dir;
+        sideTapAt = ticks;
+        if (!again || ticks - rollAt < AscentRules.ROLL_COOLDOWN || aether < AscentRules.ROLL_AETHER) return;
+        rollAt = ticks;
+        sideTapAt = -100;
+        aether -= AscentRules.ROLL_AETHER;
+        AscentRules.inputDir(p.getYRot(), 0, dir, S);
+        K.vx += S[0] * AscentRules.ROLL_IMPULSE;
+        K.vz += S[1] * AscentRules.ROLL_IMPULSE;
+        K.vy += AscentRules.ROLL_LIFT;
+        AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.7F, 1.45F);
+        AscentSounds.local(p, AscentContent.FLAP.get(), 0.6F, 1.25F);
+        FeelDirector.barrelRoll(dir);
+        AscentAnims.roll(p.getId(), dir);
+        AscentFlow.gain(0.06F);
+        event(AscentPayloads.EV_ROLL, dir);
+        trace(dir > 0 ? "barrel roll right" : "barrel roll left");
+    }
+
+    /** Out of Aether in flight: the wings stop beating and hold a glide (never a drop). */
+    private static void skyLetsGo(LocalPlayer p) {
+        aetherOutAt = ticks;
+        trace("out of aether: the wings hold a glide");
+        AscentSounds.local(p, AscentContent.WINGS_FOLD.get(), 0.7F, 0.75F);
+        AscentRules.glideCatch(K, p.getYRot(), p.getXRot());
+        setState(p, AscentState.GLIDE);
+    }
+
     private static void startSoar(LocalPlayer p) {
+        if (aether < AscentRules.AETHER_START) {
+            // not enough to lift: a weak beat that catches nothing
+            AscentSounds.local(p, AscentContent.FLAP.get(), 0.4F, 0.7F);
+            aetherOutAt = ticks;
+            return;
+        }
         if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
         boolean fromGlide = state == AscentState.GLIDE;
         soarAt = ticks;
@@ -655,6 +936,7 @@ public final class AscentMoves {
     private static void flap(LocalPlayer p) {
         flapAt = ticks;
         AscentFlow.gain(0.02F);
+        aether -= AscentRules.AETHER_FLAP;
         K.vy = Math.max(K.vy, 0) + AscentRules.SOAR_FLAP;
         AscentSounds.local(p, AscentContent.FLAP.get(), 0.9F, 0.9F + p.getRandom().nextFloat() * 0.15F);
         event(AscentPayloads.EV_FLAP, 0);
@@ -720,17 +1002,23 @@ public final class AscentMoves {
         state = AscentState.NONE;
         stateAge = 0;
         sent = false;
+        // a vault ends with the landing (left set, the next carry would pull toward this one's ledge)
+        pullTicks = 0;
         ClientPacketDistributor.sendToServer(new AscentPayloads.State(AscentState.NONE.ordinal(), 0, 0, 0, 0));
     }
 
     private static void setState(LocalPlayer p, AscentState s) {
         if (s == state) return;
+        heldForYou = false;
+        if (s != AscentState.CARRY) pullTicks = 0;
         AscentState was = state;
         state = s;
         stateAge = 0;
         groundTicks = 0;
         // a rope pulls on the raised hand; every other state moves the feet
         if (was.rope && !s.rope) {
+            leftAnchor = anchorBlock;
+            leftAt = ticks;
             K.y -= AscentRules.HAND_HEIGHT;
             AscentFx.loose(p.getId(), ax, ay, az);
         }
@@ -753,6 +1041,10 @@ public final class AscentMoves {
         trace("server refused " + s);
         if (s.rope) {
             setState(p, AscentState.CARRY);
+        } else if (s == AscentState.SOAR) {
+            // the server's Aether ran out first: hold a glide, as at our own empty
+            aether = 0;
+            skyLetsGo(p);
         } else {
             end(p, "refused", false);
         }
@@ -766,10 +1058,12 @@ public final class AscentMoves {
 
     static void forget() {
         slamming = false;
+        heldForYou = false;
         airMovesUsed = 0;
         state = AscentState.NONE;
         stateAge = 0;
         sent = false;
+        pullTicks = 0;
         tetherWas = jumpWas = sneakWas = false;
     }
 
@@ -777,6 +1071,8 @@ public final class AscentMoves {
         forget();
         tiers = 0;
         mastery = 0;
+        masterySynced = false;
+        aether = 1;
         AscentFlow.reset();
         ticks = 0;
         fireAt = biteAt = releaseAt = launchAt = deployAt = foldAt = boomAt = landAt = flapAt = bonkAt = missAt = soarAt = -100;
