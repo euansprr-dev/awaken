@@ -28,6 +28,13 @@ final class FloorBuilder {
             main.add(b.finish());
             return new GateLayout(plan, main, List.of());
         }
+        if (plan.skybornTrial()) {
+            // the Sky Leviathan's trial: the antechamber and the open sky where the Leviathan is fought on the wing
+            Builder b = new Builder(plan, plan.theme(), 0, 1, Hash.of(plan.seed(), 0, 1));
+            b.skyTrialFloor();
+            main.add(b.finish());
+            return new GateLayout(plan, main, List.of());
+        }
         if (plan.leaperTrial()) {
             // the Leaper's Gauntlet: the antechamber, the course's long hall, the room past its chasm
             Builder b = new Builder(plan, plan.theme(), 0, 1, Hash.of(plan.seed(), 0, 1));
@@ -449,6 +456,22 @@ final class FloorBuilder {
             end = past;
         }
 
+        /**
+         * The Sky Leviathan's trial: the start, the antechamber (the edge: the arena's air begins past its door) and
+         * the arena, 4x4 slots of islands over the cloud sea at the floor's full height: room to fly the fight.
+         */
+        void skyTrialFloor() {
+            bossFloor = true;
+            grid(4, 6);
+            int a = add(Room.Type.START, Room.Shape.RECT, 1, 0, 1, 1, 0);
+            int ante = add(Room.Type.ANTE, Room.Shape.RECT, 1, 1, 1, 1, 0);
+            int arena = add(Room.Type.BOSS, Room.Shape.ISLANDS, 0, 2, 4, 4, 0);
+            connect(a, ante);
+            connect(ante, arena);
+            start = a;
+            end = arena;
+        }
+
         /** Boss floor: a short approach and the arena. Annex boss floors get a smaller arena (the inner gate's keeper). */
         void bossFloor(boolean smallArena) {
             bossFloor = true;
@@ -615,7 +638,7 @@ final class FloorBuilder {
         /** Whose arena the boss room is: the Lord (main floor, Double Gate echo) or the inner gate's keeper. */
         private Theme lordTheme() {
             if (area == 1 && plan.twist() == Twist.GATE_WITHIN) return theme;
-            String key = plan.boss();
+            String key = plan.lordId();
             for (Theme t : Theme.values()) if (t.bossId().equals(key)) return t;
             return plan.theme();
         }
@@ -726,7 +749,8 @@ final class FloorBuilder {
                 // version 2 rooms are taller: a single room is 12 wide, so 8 to 10 high gives it the proportions of a hall
                 int v2 = switch (r.type) {
                     case RITUAL -> PiecesRitual.VAULT_H;
-                    case BOSS -> r.gw >= 3 ? 17 : 13;
+                    // the sky trial's arena takes the floor's whole height: the fight is flown
+                    case BOSS -> plan.skybornTrial() ? 27 : r.gw >= 3 ? 17 : 13;
                     case ARENA, HUB -> 12;
                     case CAVERN -> 14;
                     case SHAFT -> 26;

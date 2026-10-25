@@ -12,6 +12,8 @@ public final class TrialHooks {
 
     /** The Leaper's Gauntlet: the course whose last chasm only a second jump crosses. */
     public static final String LEAPER = "awaken:leapers_gauntlet";
+    /** The Sky Leviathan's trial: the Lord of the sky, fought on the wing (its edge: the arena's door). */
+    public static final String SKYBORN = "awaken:sky_leviathans_trial";
 
     public interface Trials {
         /**

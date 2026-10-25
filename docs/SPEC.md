@@ -2364,6 +2364,33 @@ a low wall or an edge without holding sprint offers it (`FreeRun`, only while it
 counts it done. A gift's scene (`AscentScene`) holds every tip back while it plays. Nothing shows until Carillon
 installs the system.
 
+### 17.18 Ascension trials: the Sky Leviathan's trial (Skyborn)
+Skyborn's earn path (the plan: "the Sky Archipelago Lord, rebuilt as a flight fight"); before it, a new world had none.
+- **Offered** (`AscentTrials.skybornDue`, every 5 s like the Leaper's): awake, rank A or above, in the overworld on the
+  ground, holding Wings and not Skyborn, Wings mastery 3+, not offered before (`AscentMemory.SKYBORN_TRIAL`). A gate opens
+  20 ahead: "A gate opens onto open sky: the Sky Leviathan's trial."
+- **The gate** (`Gates.skybornTrialPlan`, `Gates.openTrial`): an A-rank Sky Archipelago, one floor, marked by its boss
+  (`GatePlan.SKYBORN_TRIAL`; `GatePlan.lordId()` names the theme's own Lord for the arena, insight and spawns). A real
+  gate at its rank (not scripted: the story's first gate is fought at content level 0), which never breaks
+  (`GateRecord.neverBreaks`) and, like the story's, always forms: on water or a build it moves to the nearest clear
+  spot instead of failing (a tour's trial gate failed on water, and the offer, once spent, never came back). The floor (`FloorBuilder.skyTrialFloor`): the start, the antechamber, and the arena:
+  4x4 slots of islands over the cloud sea (`SetPiece.ARENA_SKY`) at the floor's whole height (27), room to fly the
+  fight. Its card and Now line say what it asks ("Fight it in the air").
+- **The edge**: stepping into the arena (the boss room's entry, and its re-entry) gives everyone on the floor Skyborn
+  (`TrialHooks.atEdge(p, TrialHooks.SKYBORN)`) with a short moment that plays at once: "The sky remembers you. · Open
+  your wings, then jump again: fly." Then the Leviathan rises as any Lord does.
+- **Done**: its fall (`Runs.lordDefeated`) completes the trial for everyone on the floor (`TrialHooks.done`): once, the
+  gift's scene ("The sky is yours. · Gliding, jump to fly · forward thrusts · sprint boosts · tap left or right twice to
+  roll"), 10 Skyborn mastery, a fifth of a level, `awaken:ascent_skyborn_trial`; the gate is cleared as any Lord's is.
+- Dev: `/awaken ascent trial skyborn` (opens it in front of you, whatever you hold). Test: `gates_sky_trial` (the
+  plan and its floor, never breaking, the edge's Skyborn and the Leviathan rising, the trial done at its fall). Tour:
+  `tools/autopilot/ascent-skytrial.txt` (PACK=feel).
+- **Aerial kills** (the plan's "Mastery: time aloft, aerial kills"): a hostile killed by a Skyborn player while soaring,
+  gliding or carried gives 3 Skyborn mastery and `awaken:ascent_aerial_kills` (`AscentServer.onKill`; test
+  `ascent_aerial_kill`). Powers cast in the air as on the ground; in the shoulder view they aim along the camera.
+- Not yet: the Leviathan's own flight-fight kit (its dives and wingbeats were made for an island fight), aerial combat's
+  own enemies, and casting tuned for the air.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)

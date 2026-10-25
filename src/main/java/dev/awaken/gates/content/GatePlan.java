@@ -40,6 +40,13 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
      */
     public static final String LEAPER_TRIAL = "awaken:leapers_gauntlet";
 
+    /**
+     * The boss id that marks the Sky Leviathan's trial, Skyborn's Ascension trial (SPEC §17.18): one Sky Archipelago
+     * floor whose arena is open sky (4x4 slots, the full height), its Lord the theme's own Sky Leviathan. Nothing rolls
+     * it: the Ascent opens it for a player.
+     */
+    public static final String SKYBORN_TRIAL = "awaken:sky_leviathans_trial";
+
     public static final Codec<GatePlan> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.LONG.fieldOf("seed").forGetter(GatePlan::seed),
             Codec.INT.fieldOf("content_version").forGetter(GatePlan::contentVersion),
@@ -67,6 +74,16 @@ public record GatePlan(long seed, int contentVersion, Rank rank, Theme theme, La
     /** The Leaper's Gauntlet: one floor, an antechamber, the course's hall and the room past it. */
     public boolean leaperTrial() {
         return contentVersion >= 5 && theme == Theme.CLOCKWORK_FOUNDRY && LEAPER_TRIAL.equals(boss);
+    }
+
+    /** The Sky Leviathan's trial: one floor, the antechamber and the open-sky arena of the Leviathan. */
+    public boolean skybornTrial() {
+        return contentVersion >= 5 && theme == Theme.SKY_ARCHIPELAGO && SKYBORN_TRIAL.equals(boss);
+    }
+
+    /** The Lord that holds the boss room (a trial's marker names the theme's own Lord). */
+    public String lordId() {
+        return skybornTrial() ? theme.bossId() : boss;
     }
 
     public boolean has(Modifier m) {
