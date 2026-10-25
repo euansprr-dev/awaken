@@ -33,6 +33,11 @@ final class AscentScene {
         waited = 0;
     }
 
+    /** The short moments that play at once (a trial's edge), not waiting for a free moment on the ground. */
+    private static boolean edge(int m) {
+        return m == AscentPayloads.LEAP_EDGE || m == AscentPayloads.SKY_EDGE;
+    }
+
     static boolean running() {
         return age >= 0;
     }
@@ -44,12 +49,12 @@ final class AscentScene {
         if (pending != 0 && age < 0) {
             boolean free = mc.gui.screen() == null && p.onGround() && !AscentMoves.active();
             // never lost: after 30 s it plays wherever you are; the chasm's moment plays at once
-            if (free || mode == AscentPayloads.LEAP_EDGE || ++waited > 600) {
+            if (free || edge(mode) || ++waited > 600) {
                 playing = pending;
                 playingMode = mode;
                 pending = 0;
                 age = 0;
-                boolean edge = playingMode == AscentPayloads.LEAP_EDGE;
+                boolean edge = edge(playingMode);
                 AscentSounds.local(p, AscentContent.REMEMBER.get(), edge ? 0.7F : 1F, edge ? 1.26F : 1F);
                 AscentSounds.duck(edge ? EDGE_LENGTH : LENGTH);
                 ClientPacketDistributor.sendToServer(new AscentPayloads.Event(AscentPayloads.EV_REMEMBER, 0));
@@ -60,10 +65,12 @@ final class AscentScene {
         // square the body to the view (standing still it lags up to 50 degrees behind the head): the wings frame you
         p.setYBodyRot(p.getYHeadRot());
         risingLight(p, p, age);
-        boolean edge = playingMode == AscentPayloads.LEAP_EDGE;
+        boolean edge = edge(playingMode);
         if (age == (edge ? 10 : WINGS_AT)) {
             FeelDirector.remember();
-            if (!edge && playingMode != AscentPayloads.GIFT_LEAP && AscentPayloads.Tier.WINGS.in(playing)) WingLayer.flourish(p.getId(), 46);
+            if (!edge && playingMode != AscentPayloads.GIFT_LEAP && (AscentPayloads.Tier.WINGS.in(playing) || AscentPayloads.Tier.SKYBORN.in(playing))) {
+                WingLayer.flourish(p.getId(), 46);
+            }
         }
         if (age > (edge ? EDGE_LENGTH : LENGTH)) age = -1;
     }
@@ -94,7 +101,7 @@ final class AscentScene {
         if (age < 0 || mc.player == null || mc.gui.hud.isHidden()) return;
         float t = age + dt.getGameTimeDeltaPartialTick(false);
         int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * 0.30F);
-        boolean edge = playingMode == AscentPayloads.LEAP_EDGE;
+        boolean edge = edge(playingMode);
         float a1 = edge ? env(t, 2, 10, 46, 62) : env(t, 8, 22, 100, 122), a2 = edge ? env(t, 12, 20, 50, 64)
                 : env(t, WINGS_AT + 6, WINGS_AT + 20, 104, 126);
         if (a1 > 0.01F) {
@@ -102,6 +109,8 @@ final class AscentScene {
                 case AscentPayloads.GIFT_WINGS -> "awaken.ascent.gift.wings";
                 case AscentPayloads.GIFT_LEAP -> "awaken.ascent.gift.leap";
                 case AscentPayloads.LEAP_EDGE -> "awaken.ascent.edge.leap";
+                case AscentPayloads.GIFT_SKY -> "awaken.ascent.gift.sky";
+                case AscentPayloads.SKY_EDGE -> "awaken.ascent.edge.sky";
                 default -> "awaken.ascent.remember.title";
             });
             HudLook.glow(g, cx - mc.font.width(title) - 8, y - 6, mc.font.width(title) * 2 + 16, 22, Glass.EDGE, 0.5F * a1);
@@ -116,6 +125,8 @@ final class AscentScene {
                 case AscentPayloads.GIFT_WINGS -> Component.translatable("awaken.ascent.gift.wings.how").getString();
                 case AscentPayloads.GIFT_LEAP -> Component.translatable("awaken.ascent.gift.leap.how").getString();
                 case AscentPayloads.LEAP_EDGE -> Component.translatable("awaken.ascent.edge.leap.how").getString();
+                case AscentPayloads.GIFT_SKY -> Component.translatable("awaken.ascent.gift.sky.how").getString();
+                case AscentPayloads.SKY_EDGE -> Component.translatable("awaken.ascent.edge.sky.how").getString();
                 default -> given(playing);
             };
             HudLook.centered(g, mc.font, line, cx, y + 26, Glass.a(Glass.EDGE, a2), true);

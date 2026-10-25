@@ -86,9 +86,10 @@ public final class AscentPayloads {
 
     /**
      * Remember's modes: an old world's tiers given back, wings given at a sky platform's core, the leap given at the far
-     * landing of the Leaper's Gauntlet, and the short moment at its chasm's edge (no waiting for a free moment).
+     * landing of the Leaper's Gauntlet, and the short moment at its chasm's edge (no waiting for a free moment); the sky
+     * given when the Sky Leviathan falls, and the short moment at that trial's open sky.
      */
-    public static final int REMEMBER = 0, GIFT_WINGS = 1, GIFT_LEAP = 2, LEAP_EDGE = 3;
+    public static final int REMEMBER = 0, GIFT_WINGS = 1, GIFT_LEAP = 2, LEAP_EDGE = 3, GIFT_SKY = 4, SKY_EDGE = 5;
 
     /**
      * Server → client: a scene of tiers given: "your body remembers" (an old world's first load, SPEC §17.6) or "wings

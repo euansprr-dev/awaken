@@ -188,10 +188,12 @@ public final class GateService {
         ServerLevel over = server.overworld();
         int y = Overworld.groundY(over, g.pos.getX(), g.pos.getZ());
         BlockPos ground = new BlockPos(g.pos.getX(), y, g.pos.getZ());
-        // never on someone's build; a scripted gate (the story's) moves to the nearest clear spot instead of failing
+        // never on someone's build; a scripted gate (the story's) or a trial (the Ascent's, SPEC §17.18: offered once, it
+        // must form) moves to the nearest clear spot instead of failing
         int rank = g.plan.rank().ordinal();
-        if (!g.scripted && (!Overworld.goodGround(over, ground) || !Overworld.untouched(over, ground, g.axis, rank))) return false;
-        if (g.scripted && !Overworld.untouched(over, ground, g.axis, rank)) {
+        boolean mustForm = g.scripted || g.plan.skybornTrial();
+        if (!mustForm && (!Overworld.goodGround(over, ground) || !Overworld.untouched(over, ground, g.axis, rank))) return false;
+        if (mustForm && !Overworld.untouched(over, ground, g.axis, rank)) {
             ground = Overworld.clearSpotNear(over, ground, g.axis).orElse(ground);
         }
         g.pos = ground; // the generator's height estimate can be a few blocks off: stand on the real ground

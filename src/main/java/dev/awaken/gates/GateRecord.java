@@ -95,7 +95,7 @@ public final class GateRecord {
      * gates of a player who hasn't reached that ending yet: theirs still break (SPEC "Together").
      */
     public boolean neverBreaks(net.minecraft.server.MinecraftServer server) {
-        return scripted || wandering() || dev.awaken.core.api.StoryHooks.gatesCalm(server, owner);
+        return scripted || wandering() || plan.skybornTrial() || dev.awaken.core.api.StoryHooks.gatesCalm(server, owner);
     }
 
     public long breaksIn(long today) {

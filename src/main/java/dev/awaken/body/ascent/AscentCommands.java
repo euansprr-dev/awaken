@@ -42,6 +42,12 @@ final class AscentCommands {
                 if (id < 0) c.getSource().sendFailure(Component.literal("No trial gate could form here"));
                 return Math.max(0, id);
             })));
+            // the Sky Leviathan's trial, opened in front of you now whatever you hold (tours)
+            ascent.then(Commands.literal("trial").then(Commands.literal("skyborn").executes(c -> {
+                int id = AscentTrials.openSkyborn(c.getSource().getPlayerOrException());
+                if (id < 0) c.getSource().sendFailure(Component.literal("No trial gate could form here"));
+                return Math.max(0, id);
+            })));
             // the nearest Tether Spire: you on its plaza beside the column (tours)
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
