@@ -28,6 +28,11 @@ import java.util.concurrent.locks.LockSupport;
  * driving the chunk system by hand: tickets for a window of chunks (nearest the centre first), each scheduled to FULL,
  * the chunk cache's main-thread queue pumped until they are done. Distant Horizons waits until it ends.
  * Afterwards generator changes can never touch this city: its chunks are on disk.
+ *
+ * <p>A finished chunk swaps its generation ticket for a timed hold ({@link CityModule#HOLD_TICKET}): with no spawn-chunk
+ * ticket in 26.3, dropping the tickets outright unloaded and saved all ~1,700 chunks in the idle ticks before the player
+ * joined, and the player's view then read them all back (docs/perf/CITY-FPS.md). Timeouts count game ticks only, so the
+ * hold outlasts the pregen and runs out about a minute into play, after the player's own tickets have taken over.
  */
 final class CityPregen {
     private CityPregen() {}
@@ -38,6 +43,8 @@ final class CityPregen {
     static final long DEADLINE_NS = 300_000_000_000L;
     /** Beyond the city's reach, this many chunks more. */
     static final int MARGIN_CHUNKS = 2;
+    /** How long a finished chunk stays held, in game ticks (the player joins in seconds). */
+    static final long HOLD_TICKS = 1200L;
 
     record Result(int chunks, int ok, int failed, double seconds, String paint) {}
 
@@ -58,6 +65,7 @@ final class CityPregen {
     static Result run(ServerLevel level, long[] order, ChunkPos focus) {
         ServerChunkCache cache = level.getChunkSource();
         TicketType ticket = NeoForgeMod.GENERATE_FORCED_TICKET.value();
+        TicketType hold = CityModule.HOLD_TICKET.value();
         LevelLoadListener listener = level.getServer().getLevelLoadListener();
         listener.start(LevelLoadListener.Stage.PREPARE_GLOBAL_SPAWN, order.length);
         listener.updateFocus(level.dimension(), focus);
@@ -89,6 +97,7 @@ final class CityPregen {
                     if (p.future == null || !p.future.isDone()) continue;
                     ChunkResult<ChunkAccess> r = p.future.getNow(null);
                     if (r == null || !r.isSuccess()) failed++;
+                    else cache.addTicketWithRadius(hold, ChunkPos.unpack(p.key), 0);
                     cache.removeTicketWithRadius(ticket, ChunkPos.unpack(p.key), 0);
                     it.remove();
                     done++;

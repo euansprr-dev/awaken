@@ -56,8 +56,8 @@ final class PixelsFrame {
         beganThisFrame = true;
         PixelsTiming.stamp(PixelsTiming.BEFORE_WORLD);
         if (!proven) return;
-        float scale = Pixels.scale();
         int w = main.width, h = main.height;
+        float scale = Pixels.scale(w, h);
         int sw = Math.max(1, Math.round(w * scale)), sh = Math.max(1, Math.round(h * scale));
         if (scale >= 1f || sw >= w && sh >= h || !Pixels.usable()) {
             release();

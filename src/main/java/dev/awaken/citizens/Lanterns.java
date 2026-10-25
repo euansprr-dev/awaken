@@ -10,10 +10,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.Arrays;
 
 /**
- * A hand lantern lights the lane it's carried down: the Watch at night, the lamplighter on the way, a late walker.
- * Each lantern near a player keeps one invisible light block at the bearer's head, moved as they walk (at most 12 at
- * once). Every light placed is written to the saved data until it's taken away, so none is ever left behind (a server
- * that stopped mid-walk clears them when it starts).
+ * Hand lanterns (the Watch at night, the lamplighter on the way, a late walker). Since M4 B3b their light is drawn on the
+ * client ({@code citizens.client.CityGlow}: a hot core, a halo and a warm pool on the ground), so the server places no
+ * blocks at all: each move of a real light block relit 8-18 sections and re-meshed 60-100 client sections (docs/perf/
+ * CITY-FPS.md). What is left here clears the light blocks older saves left behind (every one placed was written to the
+ * saved data until taken away), and the old light-block path behind {@code /awaken citizens lanterns blocks} for
+ * measuring the difference ({@link #legacy}, off by default and never saved).
  */
 final class Lanterns {
     static final int MAX = 12, LEVEL = 11;
@@ -36,6 +38,11 @@ final class Lanterns {
 
     private long[] stale;
 
+    /** The pre-B3b light blocks, for a before/after measurement only (off by default, never saved). */
+    static boolean legacy;
+    /** Light-block writes since the last {@code lanterns} report (each one a relight and a client re-mesh). */
+    static long writes;
+
     void tick(long now) {
         if (stale.length > 0 && now % 100 == 0) {
             for (int k = 0; k < stale.length; k++) {
@@ -49,6 +56,10 @@ final class Lanterns {
             if (!any) stale = new long[0];
         }
         if (now % 5 != 2) return;
+        if (!legacy) {
+            if (active > 0) stop();
+            return;
+        }
         Ledger l = c.ledger;
         for (int i = 0; i < l.n; i++) {
             CitizenBody b = l.body[i];
@@ -80,6 +91,7 @@ final class Lanterns {
         at[i] = pos;
         if (pos == Long.MIN_VALUE) return;
         level.setBlock(BlockPos.of(pos), LIGHT, Block.UPDATE_CLIENTS);
+        writes++;
         active++;
         long[] ls = c.data.lights;
         c.data.lights = Arrays.copyOf(ls, ls.length + 1);
@@ -102,7 +114,14 @@ final class Lanterns {
 
     private void clear(long pos) {
         BlockPos p = BlockPos.of(pos);
-        if (level.isLoaded(p) && level.getBlockState(p).is(Blocks.LIGHT)) level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+        if (level.isLoaded(p) && level.getBlockState(p).is(Blocks.LIGHT)) {
+            level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+            writes++;
+        }
+    }
+
+    int active() {
+        return active;
     }
 
     void stop() {

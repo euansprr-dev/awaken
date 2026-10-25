@@ -97,5 +97,23 @@
         "attenuation_distance": 12
       }
     ]
+  },
+  "body.pipe_slide": {
+    "subtitle": "subtitles.awaken.body.pipe_slide",
+    "sounds": [
+      {
+        "name": "awaken:body_pipe_slide",
+        "attenuation_distance": 14
+      }
+    ]
+  },
+  "body.pipe_brake": {
+    "subtitle": "subtitles.awaken.body.pipe_brake",
+    "sounds": [
+      {
+        "name": "awaken:body_pipe_brake",
+        "attenuation_distance": 14
+      }
+    ]
   }
 }

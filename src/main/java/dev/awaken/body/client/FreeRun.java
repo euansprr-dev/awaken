@@ -49,7 +49,7 @@ final class FreeRun {
      * 0.2), a grip sound every few pulls. At the top the eave's lip is caught as a hang and the hold climbs out of it.
      */
     static void climb(LocalPlayer p) {
-        if (!held || !p.onClimbable() || !p.horizontalCollision) {
+        if (!held || !p.onClimbable() || !p.horizontalCollision || RunnerMoves.state == RunnerMoves.State.GRIP) {
             climbTicks = 0;
             return;
         }

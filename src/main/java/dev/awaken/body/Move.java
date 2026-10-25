@@ -20,7 +20,10 @@ public enum Move {
     LEDGE_JUMP(Rank.E, "ledgejump", "Ledge jump", "jump while hanging", "Jump while hanging: up, sideways with left or right, or back off the wall."),
     // ---- Wall Stride (SPEC §17.2) ----
     WALL_CLIMB(Rank.E, "wallclimb", "Wall climb", "jump at a wall, holding forward (Wall Stride)",
-            "With Wall Stride, jump straight at a wall holding forward to run a few steps up it, into a ledge if one is in reach. Jump to kick back off.");
+            "With Wall Stride, jump straight at a wall holding forward to run a few steps up it, into a ledge if one is in reach. Jump to kick back off."),
+    // ---- the grip on a climb line (SPEC §17.23) ----
+    GRIP(Rank.E, "grip", "Pipe grip", "walk or jump into a pipe, rope or ladder",
+            "Grip a pipe, rope or ladder: forward climbs, Shift slides down, Jump with back kicks off the wall, Jump with left or right swings out.");
 
     private static final Move[] VALUES = values();
 

@@ -22,6 +22,7 @@ public final class Body {
         @Nullable Vec3 slideDirection();
         default boolean wallRunning() { return false; }
         default boolean hanging() { return false; }
+        default boolean stairSliding() { return false; }
     }
 
     private static @Nullable ClientQuery client;
@@ -75,6 +76,13 @@ public final class Body {
         if (p.level().isClientSide()) return client != null && client.mantling();
         BodyMotion m = motion(p);
         return m != null && m.mantleUntil != 0;
+    }
+
+    /** Sliding down a run of stairs or slabs (SPEC §17.22). */
+    public static boolean isStairSliding(Player p) {
+        if (p.level().isClientSide()) return client != null && client.stairSliding();
+        BodyMotion m = motion(p);
+        return m != null && m.slideUntil != 0 && m.stairSliding;
     }
 
     /** Running along a wall (the Runner's wall-run). */

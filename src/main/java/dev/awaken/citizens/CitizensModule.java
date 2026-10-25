@@ -57,7 +57,9 @@ public final class CitizensModule {
         CitizenHooks.install(new CitizenAccess());
         RenownHooks.install(new RenownAccess());
         CitizensCommands.register();
+        Soundscape.register();
         CitizensTests.register();
+        CityLifeTests.register();
     }
 
     /** A citizen's stable id for other modules (CitizenHooks.witnesses). */
@@ -100,6 +102,12 @@ public final class CitizensModule {
         Citizens c = Citizens.active;
         if (c == null || !(e.getEntity() instanceof ServerPlayer p) || !(e.getTarget() instanceof CitizenBody b) || b.rec < 0) return;
         if (c.data.role[b.rec] == Roles.TRAPPED && c.events.rescue(p, b.blockPosition())) {
+            e.setCanceled(true);
+            return;
+        }
+        // a named citizen (Kestrel, Bram, Oren, Mira, Teodor, Sun) answers a Wayfarer chain first; then their own words
+        String who = c.roster.named[b.rec];
+        if (!who.isEmpty() && dev.awaken.living.api.Quests.talk(p, who)) {
             e.setCanceled(true);
             return;
         }

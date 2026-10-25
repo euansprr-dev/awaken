@@ -156,7 +156,9 @@ final class BodyServer {
         if (m.slideUntil != 0 || m.mantleUntil != 0 || now < m.slideReadyAt) return false;
         boolean assisted = m.assisted(Move.SLIDE, now);
         if (!assisted && !p.isSprinting() && m.tacUntil == 0) return false;
-        if (!assisted && !p.onGround()) return false;
+        // running down stairs the feet leave each step: a run under them counts as ground
+        if (!assisted && !p.onGround() && !BodyRules.stairStart(p.level(), CollisionContext.of(p), STAIRS, p.getX(), p.getY(), p.getZ(),
+                -Mth.sin(yaw * Mth.DEG_TO_RAD), Mth.cos(yaw * Mth.DEG_TO_RAD), FALL)) return false;
         if (!BodyRules.crawlFits(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ())) return false;
         boolean fromTac = m.tacUntil != 0 || now - m.tacEndedAt <= 3;
         endTactical(p, m, now, false); // the slide takes over from the run
@@ -165,6 +167,7 @@ final class BodyServer {
         m.slideDirX = -Mth.sin(yaw * Mth.DEG_TO_RAD);
         m.slideDirZ = Mth.cos(yaw * Mth.DEG_TO_RAD);
         m.slideFromTac = fromTac && claimTactical;
+        m.stairSliding = false;
         m.trippedCount = 0;
         // the crawl-height box on this side too, so gaps the client slides under are gaps here (and others see it)
         p.setForcedPose(Pose.SWIMMING);
@@ -178,11 +181,43 @@ final class BodyServer {
     static void endSlide(ServerPlayer p, BodyMotion m, long now, boolean tellClient) {
         if (m.slideUntil == 0) return;
         m.slideUntil = 0;
+        m.stairSliding = false;
         m.slideReadyAt = now + BodyRules.slideCooldown(Body.runnerRank(p));
         m.lastMove = now;
         // vanilla picks the pose again next tick: still crawling when the slide ended under a gap
         if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null);
         if (tellClient) AwakenNet.send(p, new BodyPayloads.Refuse(Move.SLIDE.ordinal()));
+    }
+
+    private static final BodyRules.StairProfile STAIRS = new BodyRules.StairProfile();
+    private static final double[] FALL = new double[2], WAY = new double[2];
+
+    /**
+     * A slide on a run of stairs or slabs (SPEC §17.22) goes on while this side sees the run under the body (looked for
+     * the same way the client does), up to {@link BodyRules#STAIR_MAX_TICKS}, then its run-out and the grace; the run's
+     * ride is never a fall. The client's way bends onto the fall line; so does the server's.
+     */
+    private static void stairs(ServerPlayer p, BodyMotion m, long now) {
+        var ctx = CollisionContext.of(p);
+        boolean on = now - m.slideStart <= BodyRules.STAIR_MAX_TICKS + BodyRules.SLIDE_TICKS;
+        if (on && !m.stairSliding) {
+            on = BodyRules.stairStart(p.level(), ctx, STAIRS, p.getX(), p.getY(), p.getZ(), m.slideDirX, m.slideDirZ, FALL);
+            if (on) {
+                m.stairFallX = FALL[0];
+                m.stairFallZ = FALL[1];
+            }
+        } else if (on) {
+            on = BodyRules.stairGoesOn(p.level(), ctx, STAIRS, p.getX(), p.getY(), p.getZ(), m.slideDirX, m.slideDirZ);
+        }
+        m.stairSliding = on;
+        if (!on) return;
+        WAY[0] = m.slideDirX;
+        WAY[1] = m.slideDirZ;
+        BodyRules.stairBend(WAY, m.stairFallX, m.stairFallZ);
+        m.slideDirX = WAY[0];
+        m.slideDirZ = WAY[1];
+        m.slideUntil = Math.max(m.slideUntil, now + BodyRules.STAIR_RUNOUT + BodyRules.SLIDE_GRACE + 2);
+        p.resetFallDistance();
     }
 
     /** Small hostile creatures in the slide's way lose their footing: a stagger, never damage. */
@@ -313,6 +348,7 @@ final class BodyServer {
                 endSlide(p, m, now, true);
             } else {
                 m.lastMove = now;
+                stairs(p, m, now);
                 if (((now - m.slideStart) & 1) == 0) trip(p, m);
             }
         }

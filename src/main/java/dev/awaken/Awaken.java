@@ -56,6 +56,7 @@ public final class Awaken {
         dev.awaken.wilds.WildsModule.init(modBus);
         dev.awaken.living.LivingModule.init(modBus);
         dev.awaken.lens.LensModule.init(modBus);
+        dev.awaken.anims.AnimsModule.init(modBus);
         dev.awaken.atlas.AtlasModule.init(modBus);
     }
 

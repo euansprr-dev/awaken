@@ -21,8 +21,6 @@ import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
-import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
@@ -47,8 +45,9 @@ public final class BodyClient {
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, BodyCamera::onAngles);
         bus.addListener(ComputeFovModifierEvent.class, BodyCamera::onFov);
-        bus.addListener(RenderFrameEvent.Pre.class, BodyCamera::onFrame);
-        bus.addListener(RenderHandEvent.class, BodyCamera::onHand);
+        // first person (core.api.FirstPerson): the moves' hands, and the grip's hands and feet on the line in the world
+        dev.awaken.core.api.FirstPerson.view(BodyCamera::viewPose);
+        dev.awaken.core.api.FirstPerson.world("body_grip", 100, GripView::pose);
         // around the cast animations' own lean (LOWEST / HIGHEST), so the two nest
         bus.addListener(EventPriority.LOW, RenderPlayerEvent.Pre.class, BodyAnims::onPre);
         bus.addListener(EventPriority.HIGH, RenderPlayerEvent.Post.class, BodyAnims::onPost);
@@ -77,6 +76,7 @@ public final class BodyClient {
             @Override public @Nullable Vec3 slideDirection() { return ClientMoves.slideDirection(); }
             @Override public boolean wallRunning() { return RunnerMoves.state == RunnerMoves.State.RUN; }
             @Override public boolean hanging() { return RunnerMoves.hanging(); }
+            @Override public boolean stairSliding() { return ClientMoves.sliding && ClientMoves.stairSliding; }
         }, ClientMoves::fell);
         MovementHooks.installClient(new MovementHooks.ClientAccess() {
             @Override public void castStarting(net.minecraft.world.entity.player.Player p, String powerId, String family, boolean motionPredicted) {
@@ -106,6 +106,8 @@ public final class BodyClient {
         TryDriver.tick();
         ActionCamera.tick(mc);
         dev.awaken.body.client.feel.ShoulderView.tick(mc);
+        GripMoves.forget(mc.player);
+        GripView.tick(mc.player);
     }
 
     /** Someone else's move (ours were predicted), a trip or a momentum hit: animate it and kick up its dust. */

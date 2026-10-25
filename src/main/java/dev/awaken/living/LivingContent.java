@@ -60,6 +60,13 @@ public final class LivingContent {
                     .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.bounty.BountyState.CODEC))
                     .build());
 
+    /** A player's crafts (SPEC §21.9): craft XP and kinds hunted, synced to them, kept through death. */
+    public static final Supplier<AttachmentType<dev.awaken.living.craft.CraftState>> CRAFTS = ATTACHMENTS.register("crafts",
+            () -> AttachmentType.builder(dev.awaken.living.craft.CraftState::new).serialize(dev.awaken.living.craft.CraftState.CODEC.fieldOf("crafts"))
+                    .copyOnDeath()
+                    .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.craft.CraftState.CODEC))
+                    .build());
+
     /** What a player has heard of happenings (SPEC §21.6): "?" marks on their map, synced to them, kept through death. */
     public static final Supplier<AttachmentType<dev.awaken.living.pulse.Rumours.State>> RUMOURS = ATTACHMENTS.register("rumours",
             () -> AttachmentType.builder(() -> dev.awaken.living.pulse.Rumours.State.EMPTY).serialize(dev.awaken.living.pulse.Rumours.State.CODEC.fieldOf("rumours"))

@@ -200,6 +200,29 @@ def drop(seed):
     return finish(x)
 
 
+def pipe_slide(seed):
+    """Sliding down a pipe: palms and cloth hissing over a long run of metal or wood, a faint ring in the pipe under
+    them, a knock where a bracket passes. Played every 8 ticks of a slide, so it overlaps itself into one long hiss."""
+    n = K.ns(0.55)
+    x = at(n, 0.0, swish(0.55, 3400, 2600, 1.6, seed + 1, 0.15, 0.8)) * 0.45                      # the palms' hiss
+    x += at(n, 0.0, K.bandpass(K.noise(n, "pink", seed + 2), 900, 1.4) * K.perc(n, 0.04, 0.5)) * 0.18  # cloth on the line
+    ring = K.sine(K.glide(K.ns(0.5), 1480, 1420), K.ns(0.5)) * K.perc(K.ns(0.5), 0.02, 0.3)
+    x += at(n, 0.02, ring) * 0.05                                                                   # the pipe singing faintly
+    x += at(n, 0.3, K.bandpass(K.noise(K.ns(0.03), "white", seed + 3), 1900, 1.0) * K.perc(K.ns(0.03), 0.0005, 0.015)) * 0.35
+    return finish(x, 0.1)
+
+
+def pipe_brake(seed):
+    """Clamping down at the end of a slide: a short squeal of palms on the line, the body's weight caught, a thump."""
+    n = K.ns(0.45)
+    squeal = K.bandpass(K.noise(K.ns(0.16), "white", seed + 1), 2600, 3.0) * K.perc(K.ns(0.16), 0.004, 0.09)
+    x = at(n, 0.0, squeal) * 0.8
+    x += at(n, 0.0, K.sine(K.glide(K.ns(0.14), 1900, 1500), K.ns(0.14)) * K.perc(K.ns(0.14), 0.003, 0.08)) * 0.12
+    x += at(n, 0.07, thump(90, 60, 0.2, 0.1, 0.55, 240, seed + 2)) * 0.6
+    x += at(n, 0.09, swish(0.25, 1300, 600, 0.9, seed + 3, 0.2)) * 0.12
+    return finish(x)
+
+
 SOUNDS_SPEC = [
     # file, render, rms (dBFS, sfx -20 ± 4), event, subtitle, volume, attenuation
     ("body_roll", roll, -20.0, "body.roll", "Body rolls", 1.0, 16),
@@ -213,6 +236,8 @@ SOUNDS_SPEC = [
     ("body_shimmy", shimmy, -24.0, "body.shimmy", "Hands slide along a ledge", 1.0, 12),
     ("body_climb", climb, -21.0, "body.climb", "Body climbs over a ledge", 1.0, 16),
     ("body_drop", drop, -23.0, "body.drop", "Body lets go of a ledge", 1.0, 12),
+    ("body_pipe_slide", pipe_slide, -23.5, "body.pipe_slide", "Hands slide down a pipe", 1.0, 14),
+    ("body_pipe_brake", pipe_brake, -21.5, "body.pipe_brake", "Hands clamp on a pipe", 1.0, 14),
 ]
 
 
