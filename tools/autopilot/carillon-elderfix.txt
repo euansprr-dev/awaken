@@ -38,6 +38,7 @@ wait 160
 shot elder_after_4
 # /awaken city tidy on a world that has some: hang two elder blocks in the air over the Roost, then tidy
 cmd tp @s 505 118 -1235 0 -25
+wait 200
 cmd setblock 505 125 -1222 awaken:elder_wood
 cmd setblock 506 125 -1222 awaken:elder_log
 wait 100

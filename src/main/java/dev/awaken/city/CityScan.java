@@ -90,7 +90,13 @@ final class CityScan {
             if (!CityWriter.owned(l, x, z)) continue;
             cleared++;
             long dx = x - l.cx, dz = z - l.cz;
-            if (dx * dx + dz * dz < (long) l.plan.fieldsFrom * l.plan.fieldsFrom) inside++;
+            if (dx * dx + dz * dz < (long) l.plan.fieldsFrom * l.plan.fieldsFrom) {
+                // the city clears these columns: say what is still there (a few, with where), so a leftover can be found
+                if (inside++ < 6) {
+                    var st = level.getBlockState(new BlockPos(x, BlockPos.getY(p), z));
+                    Awaken.LOG.info("[city-scan] left in the city's columns: {} at {} {} {}", BuiltInRegistries.BLOCK.getKey(st.getBlock()), x, BlockPos.getY(p), z);
+                }
+            }
         }
         List<Floater> out = new ArrayList<>();
         LongArrayList doomed = new LongArrayList();
