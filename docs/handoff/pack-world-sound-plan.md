@@ -166,3 +166,10 @@ as their biome's own `ambient_sounds` loop (already magic: glass ringing, the fa
 Tread Lightly's block map for our blocks waits on its spike. Tour for the Mac: add `/awaken living happen <kind>` stops to
 `tools/autopilot/world-sound.txt` when it is next run.
 
+
+## Euan's listening (2026-10-25, docs/sound/listening-2026-10-25.html)
+
+First pass: three misses: the dream had static (a noise layer and noise-based reversed swells), the stampede sounded
+laggy (sparse random clicks), the caravan bells sounded fake (single clean notes). Remade (eac0fe37): the dream in
+pure tones, ten animals galloping in three-beat strides, three hammered-metal bells swinging with the walk. Second
+pass: "all much better now". Everything else on the page passed on the first listen.
