@@ -27,4 +27,24 @@ public final class ShoulderView {
     public static void reset() {
         offered = false;
     }
+
+    /**
+     * Where you look, when Shoulder Surfing's camera is decoupled from the body (its default): the camera's (yaw,
+     * pitch) into {@code out}, true. The rope aims along it and, in the air, the body takes it, so you steer with the
+     * view. False (out untouched) in first person, vanilla's views or a coupled camera, where the body's look is yours.
+     */
+    public static boolean aim(float[] out) {
+        return INSTALLED && ShoulderSurfingPlugin.aim(out);
+    }
+
+    /** The autopilot's look, given to the decoupled camera too. */
+    public static void look(float yaw, float pitch) {
+        if (INSTALLED) ShoulderSurfingPlugin.look(yaw, pitch);
+    }
+
+    /** In the air (an Ascent state) or holding the rope key: the body turns to what you look at. */
+    static boolean steering() {
+        return dev.awaken.body.ascent.client.AscentMoves.state() != dev.awaken.body.ascent.AscentState.NONE
+                || dev.awaken.core.client.AwakenKeys.MOVEMENT.isDown();
+    }
 }

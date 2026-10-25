@@ -2200,6 +2200,11 @@ vanilla's third person sits right behind you). The over-the-shoulder view follow
   0.8 in. The trail: 2 blocks per block a tick over 0.22 b/t, at most 3; never more than 5.5 back in all. A critically
   damped spring (0.22 out, 0.32 back) carries it there: it trails out, never overshoots, and is home in under 1.5 s.
   Reduced motion halves it. After Shoulder Surfing's own offset handlers (sprint, aim, flying), so its aim view holds.
+- **Where you look** in Shoulder Surfing's decoupled camera (its default: the mouse turns the camera, the body faces
+  where it walks): the rope aims along the camera (`ShoulderView.aim`), and in an Ascent state, or holding the rope
+  key, the body takes the camera's look each tick and Shoulder Surfing's interaction state turns it to what you look
+  at, so you steer a swing, a glide and flight with the view. (Found 25 Oct: the rope threw where the body faced.)
+  The autopilot's look is given to the camera too.
 - **Without Shoulder Surfing**: vanilla's third person (behind) takes the arm's pull-back as distance
   (`CalculateDetachedCameraDistanceEvent`); first person is never touched.
 - **Stands aside** (the arm comes home): through the opening's shots (`OpeningCamera.active()`), as a Veil spirit or
