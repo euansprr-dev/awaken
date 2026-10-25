@@ -319,7 +319,9 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
   (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
   (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city), `natureLevel()` (0..1, how much nature
-  ambience to let through now; AmbientSounds follows it). `/awaken audio world [off|on]` (client).
+  ambience to let through now; AmbientSounds follows it), `overlay(owner, Identifier soundscape, weight, ticks)` (a
+  soundscape over everything while renewed; at most two), `muffle(owner, cutoffHz, natureLeft, ticks)` (the air's
+  filter closed and nature held back while renewed). `/awaken audio world [off|on]` (client).
   Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
@@ -748,6 +750,19 @@ docs/sound/plan.html):
   none.
 - Quality gate: five listening batches of ten minutes or less (forest; every land; reactions; below and beyond; the
   magic); an unmarked entry counts as keep once Euan has opened the page.
+- AWAKEN's own places and moments (built 2026-10-25; sounds synthesised, `tools/art/specs/audio_world.py`):
+  **place soundscapes** `<ns>:place/<biome path>` play wherever the camera's biome has one, with or without
+  AmbientSounds: the Stillpoint (cloud-sea wind, a temple tone, chimes, a far bell about every 40 s), the Halo (station
+  hum, airlocks, far metal, data chirps, lulls of silence), Lucidium's dream (a shimmering chord, reversed swells),
+  Elderwood (the colossi groaning with the wind, gold glints by day), Lumen Forest (a low hum, specks chiming and
+  answering at night). **The Veil** (while projecting): the overlay `awaken:state/veil` (a far choir on D and A, faint
+  glints) and a muffle (1.1 kHz, nature 0.2). **Dreams**: clarity follows lucidity (the air's filter from 900 Hz at
+  lucidity 0 to open at 80). **Living Wilds happenings** heard from afar (`living.client.PulseSound`, from the tells
+  the server already sends): stampede rumble (260 blocks), murmuration wings (200), the Deep Tide's drone (320; a
+  hush 0.3 over 200+), caravan bells (160), the Wild Hunt's horn (400) and its hounds baying (220; a hush 0.1 over 200),
+  kites over a carrion circle (180), a migrating herd lowing (220), a beast duel's roars (260); level = (1 − d/range)²;
+  a happening near lets nature step back (× (1 − 0.6 × 0.8 × its level)). Each air pair or trio repeats together no
+  sooner than 30 minutes (census test).
 - AmbientSounds data in our jar (read only by AmbientSounds): `assets/ambientsounds/basic/dimensions/awaken_dimensions.json`
   mutes it in every `awaken:` dimension (gates, strata, the Veil's Stillpoint, dreams, the Halo: those are ours), and
   `blockgroups/{rock,grass_block,grass,ice}.json` add our Awakened ground and plants so its region detection hears

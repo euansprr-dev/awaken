@@ -40,7 +40,9 @@ public record SoundscapeDef(Identifier id, String title, List<Air> air, List<Tex
         /** Wind that grows with height and open sky and softens under trees. */
         HIGH_WIND,
         /** Open sky over the listener (outdoor air that a roof takes away). */
-        OPEN
+        OPEN,
+        /** The wind's strength where you stand, swelling in gusts (0.15 + 0.85 strength × (0.6 + 0.4 gust)). */
+        WIND
     }
 
     /** Where a positional sound comes from: real blocks found around the listener. */

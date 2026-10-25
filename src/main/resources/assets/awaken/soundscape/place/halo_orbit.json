@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "title": "The Halo: the station's hum, airlocks, far metal, data; outside, nothing",
+  "air": [
+    {"file": "awaken:amb_world_halo_station", "gain": 0.7},
+    {"file": "awaken:amb_world_halo_deep", "gain": 0.5}
+  ],
+  "events": [
+    {"sound": "awaken:world.halo_hiss", "anchor": "far", "per_minute": 1.0, "hush": false, "volume": [0.4, 0.7], "distance": [8, 20]},
+    {"sound": "awaken:world.halo_clunk", "anchor": "far", "per_minute": 1.5, "hush": false, "volume": [0.4, 0.7], "distance": [12, 30]},
+    {"sound": "awaken:world.halo_chirp", "anchor": "far", "per_minute": 2.5, "hush": false,
+     "answer": 0.25, "answer_delay": [0.4, 1.0], "volume": [0.25, 0.45], "pitch": [1.0, 1.0], "distance": [4, 10]}
+  ],
+  "lull": {"every": [120, 240], "length": [15, 30], "depth": 0.0}
+}

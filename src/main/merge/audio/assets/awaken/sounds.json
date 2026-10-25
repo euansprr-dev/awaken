@@ -535,5 +535,158 @@
         "stream": true
       }
     ]
+  },
+  "world.chime": {
+    "subtitle": "subtitles.awaken.world.chime",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_chime_1"
+      },
+      {
+        "name": "awaken:amb_world_chime_2"
+      },
+      {
+        "name": "awaken:amb_world_chime_3"
+      },
+      {
+        "name": "awaken:amb_world_chime_4"
+      },
+      {
+        "name": "awaken:amb_world_chime_5"
+      },
+      {
+        "name": "awaken:amb_world_chime_6"
+      }
+    ]
+  },
+  "world.bell_far": {
+    "subtitle": "subtitles.awaken.world.bell_far",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_bell_far_1"
+      },
+      {
+        "name": "awaken:amb_world_bell_far_2"
+      }
+    ]
+  },
+  "world.halo_hiss": {
+    "subtitle": "subtitles.awaken.world.halo_hiss",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_halo_hiss_1"
+      },
+      {
+        "name": "awaken:amb_world_halo_hiss_2"
+      },
+      {
+        "name": "awaken:amb_world_halo_hiss_3"
+      }
+    ]
+  },
+  "world.halo_clunk": {
+    "subtitle": "subtitles.awaken.world.halo_clunk",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_halo_clunk_1"
+      },
+      {
+        "name": "awaken:amb_world_halo_clunk_2"
+      },
+      {
+        "name": "awaken:amb_world_halo_clunk_3"
+      }
+    ]
+  },
+  "world.halo_chirp": {
+    "subtitle": "subtitles.awaken.world.halo_chirp",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_halo_chirp_1"
+      },
+      {
+        "name": "awaken:amb_world_halo_chirp_2"
+      },
+      {
+        "name": "awaken:amb_world_halo_chirp_3"
+      },
+      {
+        "name": "awaken:amb_world_halo_chirp_4"
+      }
+    ]
+  },
+  "world.dream_swell": {
+    "subtitle": "subtitles.awaken.world.dream_swell",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_dream_swell_1"
+      },
+      {
+        "name": "awaken:amb_world_dream_swell_2"
+      },
+      {
+        "name": "awaken:amb_world_dream_swell_3"
+      },
+      {
+        "name": "awaken:amb_world_dream_swell_4"
+      }
+    ]
+  },
+  "world.elder_creak": {
+    "subtitle": "subtitles.awaken.world.elder_creak",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_elder_creak_1"
+      },
+      {
+        "name": "awaken:amb_world_elder_creak_2"
+      },
+      {
+        "name": "awaken:amb_world_elder_creak_3"
+      },
+      {
+        "name": "awaken:amb_world_elder_creak_4"
+      }
+    ]
+  },
+  "world.elder_glint": {
+    "subtitle": "subtitles.awaken.world.elder_glint",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_elder_glint_1"
+      },
+      {
+        "name": "awaken:amb_world_elder_glint_2"
+      },
+      {
+        "name": "awaken:amb_world_elder_glint_3"
+      },
+      {
+        "name": "awaken:amb_world_elder_glint_4"
+      }
+    ]
+  },
+  "world.lumen_chime": {
+    "subtitle": "subtitles.awaken.world.lumen_chime",
+    "sounds": [
+      {
+        "name": "awaken:amb_world_lumen_chime_1"
+      },
+      {
+        "name": "awaken:amb_world_lumen_chime_2"
+      },
+      {
+        "name": "awaken:amb_world_lumen_chime_3"
+      },
+      {
+        "name": "awaken:amb_world_lumen_chime_4"
+      },
+      {
+        "name": "awaken:amb_world_lumen_chime_5"
+      },
+      {
+        "name": "awaken:amb_world_lumen_chime_6"
+      }
+    ]
   }
 }

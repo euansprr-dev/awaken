@@ -96,15 +96,21 @@ final class WorldSoundTests {
         JsonObject sounds = AudioTests.json("/assets/awaken/sounds.json");
         h.assertTrue(sounds != null, "merged sounds.json is on the classpath");
         int scapes = 0;
-        List<Identifier> ids = new ArrayList<>(List.of(Families.WORLD));
+        List<Identifier> ids = new ArrayList<>(List.of(Families.WORLD, Awaken.id("state/veil")));
         for (int f = 0; f < Families.COUNT; f++) ids.add(Families.soundscape(f));
+        // every biome may have a place soundscape (<ns>:place/<path>): the ones that do must be sound
+        for (Holder<Biome> b : biomes.listElements().toList()) {
+            b.unwrapKey().ifPresent(k -> ids.add(Identifier.fromNamespaceAndPath(k.identifier().getNamespace(), "place/" + k.identifier().getPath())));
+        }
+        List<String> places = new ArrayList<>();
         for (Identifier id : ids) {
             JsonObject o = AudioTests.json("/assets/" + id.getNamespace() + "/soundscape/" + id.getPath() + ".json");
             if (o == null) {
-                if (id.equals(Families.WORLD)) problems.add("the world soundscape is missing");
-                continue; // a family not written yet stays silent
+                if (id.equals(Families.WORLD) || id.getPath().startsWith("state/")) problems.add("the soundscape " + id + " is missing");
+                continue; // a family or a place without a file is silent
             }
             scapes++;
+            if (id.getPath().startsWith("place/")) places.add(id.getPath());
             SoundscapeDef def;
             try {
                 def = SoundscapeDef.parse(id, o);
@@ -129,6 +135,9 @@ final class WorldSoundTests {
         }
         h.assertTrue(overworld > 50, "the overworld biomes are there (" + overworld + ")");
         h.assertTrue(scapes >= 2, "the world soundscape and at least one family (" + scapes + ")");
+        for (String want : List.of("place/stillpoint", "place/halo_orbit", "place/lucidium_dream", "place/elderwood", "place/lumen_forest")) {
+            if (!places.contains(want)) problems.add("no soundscape for awaken:" + want + " (or its biome is gone)");
+        }
         h.assertTrue(problems.isEmpty(), String.join("; ", problems));
         h.succeed();
     }

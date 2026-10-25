@@ -1,6 +1,7 @@
 package dev.awaken.core.audio.client;
 
 import dev.awaken.core.audio.client.world.Conductor;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -31,6 +32,22 @@ public final class Soundscape {
      */
     public static float natureLevel() {
         return Conductor.natureLevel();
+    }
+
+    /**
+     * Lays the soundscape {@code id} ({@code assets/<ns>/soundscape/<path>.json}) over everything at {@code weight} for
+     * {@code ticks}; renew it while it should hold (the Veil's choir while you project). At most two at once.
+     */
+    public static void overlay(Object owner, Identifier id, float weight, int ticks) {
+        Conductor.overlay(owner, id, weight, ticks);
+    }
+
+    /**
+     * Closes the air's filter to {@code cutoffHz} (20000 open) and lets only {@code natureLeft} (0..1) of the nature
+     * through for {@code ticks}; renew it while it should hold (the Veil, a dream at low lucidity).
+     */
+    public static void muffle(Object owner, float cutoffHz, float natureLeft, int ticks) {
+        Conductor.muffle(owner, cutoffHz, natureLeft, ticks);
     }
 
     /** How much of the world bed to give way at a point (0 none, 1 all): the city reports its walls. */

@@ -129,6 +129,7 @@ final class Textures {
             case RUSTLE -> at.rustle();
             case HIGH_WIND -> at.highWind();
             case OPEN -> Mth.clamp((at.open - 0.15F) / 0.85F, 0F, 1F);
+            case WIND -> 0.15F + 0.85F * at.strength * (0.6F + 0.4F * at.gust);
         };
     }
 }

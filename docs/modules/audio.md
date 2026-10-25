@@ -196,6 +196,14 @@ recordings.
   `awaken:` dimension; `blockgroups/{rock,grass_block,grass,ice}.json` add our Awakened ground and plants. Test
   `audio_world_ambientsounds`.
 
+- **Places, overlays, muffles** (the Conductor's six slots: its own nature 0-2, the place 3, overlays 4-5):
+  `<ns>:place/<biome path>` plays where the camera's biome has one (built: stillpoint, halo_orbit, lucidium_dream,
+  elderwood, lumen_forest); `Soundscape.overlay` (the Veil's `awaken:state/veil`, renewed every tick while projecting);
+  `Soundscape.muffle` (the Veil 1.1 kHz and nature 0.2; a dream 900 Hz at lucidity 0, open at 80). Hooks:
+  `veil.client.VeilClient.postTick`, `lucidium.client.ClientDream.tick`.
+- **Happenings heard from afar**: `living.client.PulseSound` (ranges and sounds in SPEC §13); registered as a Source
+  (its loops count; a happening near lets nature step back).
+
 The world's own sound around the listener, everywhere: biomes, places, reactions and magic. Client code in
 `core.audio.client.world`, data in `assets/<ns>/soundscape/**.json` (`core.audio.world.SoundscapeDef`), public hooks in
 `core.audio.client.Soundscape`.

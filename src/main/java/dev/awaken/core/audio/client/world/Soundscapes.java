@@ -25,6 +25,7 @@ final class Soundscapes {
     private Soundscapes() {}
 
     private static Map<Identifier, SoundscapeDef> defs = Map.of();
+    private static int generation;
     private static final Map<Identifier, byte[]> BYTES = new ConcurrentHashMap<>();
     private static final Map<Identifier, Boolean> LOADING = new ConcurrentHashMap<>();
 
@@ -42,6 +43,7 @@ final class Soundscapes {
             }
         }
         defs = Map.copyOf(found);
+        generation++;
         BYTES.clear();
         LOADING.clear();
         Awaken.LOG.info("[audio] world: {} soundscapes", defs.size());
@@ -49,6 +51,11 @@ final class Soundscapes {
 
     static SoundscapeDef get(Identifier id) {
         return defs.get(id);
+    }
+
+    /** Counts reloads, so caches keyed on soundscapes know to start again. */
+    static int generation() {
+        return generation;
     }
 
     static int count() {

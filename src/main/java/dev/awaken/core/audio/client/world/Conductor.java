@@ -8,9 +8,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.ModList;
 
@@ -22,8 +24,10 @@ import java.util.function.IntSupplier;
 
 /**
  * The world sound Conductor (docs/sound/PLAN.md, SPEC §13 "Plan v2 · world sound"): every tick it reads the
- * {@link Listener}, works out which soundscapes play and how much (the shared {@code awaken:world} under everything,
- * plus the one or two families the ground around you belongs to), and drives the four layers: the air (one stream,
+ * {@link Listener}, works out which soundscapes play and how much, and drives the four layers. Soundscapes in six
+ * slots: the Conductor's own nature (the shared {@code awaken:world} and the one or two families the ground around
+ * you belongs to; only without AmbientSounds), the place you stand in ({@code <ns>:place/<biome path>}: Awaken's
+ * dimensions, the Awakened lands), and up to two overlays another module asks for (the Veil). Layers: the air (one stream,
  * {@link AirBed}), the {@link Textures}, the one-shot events (placed on real blocks, at most {@value #MAX_EVENTS} at
  * once and {@value #MAX_NEW_PER_SECOND} new a second, within a budget of {@value #VOICE_BUDGET} voices shared with
  * other modules' sources), and the reactions (hushes, ducking under combat music, yielding inside the city).
@@ -33,7 +37,8 @@ import java.util.function.IntSupplier;
 public final class Conductor {
     private Conductor() {}
 
-    static final int VOICE_BUDGET = 16, MAX_EVENTS = 10, MAX_NEW_PER_SECOND = 4, MAX_HUSHES = 16, MAX_SCAPES = 3;
+    static final int VOICE_BUDGET = 16, MAX_EVENTS = 10, MAX_NEW_PER_SECOND = 4, MAX_HUSHES = 16, MAX_SCAPES = 6;
+    private static final int PLACE = 3, OVERLAY = 4, MAX_OVERLAYS = 2, MAX_MUFFLES = 4;
     /** Beds under combat or Lord music (−4 dB), under a stage cue (−3 dB). */
     private static final float DUCK_COMBAT = 0.63F, DUCK_STAGE = 0.71F;
 
@@ -49,6 +54,17 @@ public final class Conductor {
     private static final float[] HR = new float[MAX_HUSHES], HD = new float[MAX_HUSHES];
     private static final long[] HUNTIL = new long[MAX_HUSHES];
     private static final Object[] HOWNER = new Object[MAX_HUSHES];
+    // overlays (a module's soundscape over everything) and muffles (the air's filter and nature closed), each with an owner
+    private static final Object[] OOWNER = new Object[MAX_OVERLAYS];
+    private static final Identifier[] OID = new Identifier[MAX_OVERLAYS];
+    private static final float[] OW = new float[MAX_OVERLAYS];
+    private static final long[] OUNTIL = new long[MAX_OVERLAYS];
+    private static final Object[] MOWNER = new Object[MAX_MUFFLES];
+    private static final float[] MHZ = new float[MAX_MUFFLES], MNATURE = new float[MAX_MUFFLES];
+    private static final long[] MUNTIL = new long[MAX_MUFFLES];
+    // the place soundscape of each biome seen (null: none), cleared on a resource reload
+    private static final java.util.Map<Holder<Biome>, java.util.Optional<SoundscapeDef>> PLACES = new java.util.HashMap<>();
+    private static int placesFor = -1;
 
     private static IntSupplier musicLevel = () -> -1;
     private static BooleanSupplier stageCue = () -> false;
@@ -143,6 +159,42 @@ public final class Conductor {
         return left;
     }
 
+    /**
+     * Lays the soundscape {@code id} over everything at {@code weight} for {@code ticks} (renew it while it holds): the
+     * Veil's choir while you project. A newer call from the same owner replaces its older one. At most two at once.
+     */
+    public static void overlay(Object owner, Identifier id, float weight, int ticks) {
+        int slot = slot(OOWNER, OUNTIL, owner);
+        if (slot < 0) return;
+        OOWNER[slot] = owner;
+        OID[slot] = id;
+        OW[slot] = Mth.clamp(weight, 0F, 1F);
+        OUNTIL[slot] = gameTime + Math.max(1, ticks);
+    }
+
+    /**
+     * Closes the air's filter to {@code cutoffHz} and lets only {@code natureLeft} of the nature through for
+     * {@code ticks} (renew it while it holds): the Veil (the world through glass), a dream at low lucidity.
+     */
+    public static void muffle(Object owner, float cutoffHz, float natureLeft, int ticks) {
+        int slot = slot(MOWNER, MUNTIL, owner);
+        if (slot < 0) return;
+        MOWNER[slot] = owner;
+        MHZ[slot] = Mth.clamp(cutoffHz, 200F, 20000F);
+        MNATURE[slot] = Mth.clamp(natureLeft, 0F, 1F);
+        MUNTIL[slot] = gameTime + Math.max(1, ticks);
+    }
+
+    /** The owner's slot, else a free (expired) one, else -1. */
+    private static int slot(Object[] owners, long[] until, Object owner) {
+        int free = -1;
+        for (int i = 0; i < owners.length; i++) {
+            if (owners[i] == owner) return i;
+            if (free < 0 && until[i] <= gameTime) free = i;
+        }
+        return free;
+    }
+
     /** Dev switch ({@code /awaken audio world off|on}): the whole Conductor, for frame-time comparisons. */
     static void enabled(boolean on) {
         enabled = on;
@@ -179,6 +231,7 @@ public final class Conductor {
         }
         float indoor = Mth.clamp((1F - AT.open) / 0.85F, 0F, 1F);
         float cutoff = Mth.lerp(AT.underwater, Mth.lerp(indoor * indoor, 20000F, 1400F), 520F);
+        for (int i = 0; i < MAX_MUFFLES; i++) if (MUNTIL[i] > gameTime) cutoff = Math.min(cutoff, MHZ[i]);
         AIR.cutoff(cutoff);
         AIR.commit(mc);
 
@@ -263,6 +316,7 @@ public final class Conductor {
 
     private static float natureGoal(int music) {
         float goal = hushAt(AT.x, AT.y, AT.z);
+        for (int i = 0; i < MAX_MUFFLES; i++) if (MUNTIL[i] > gameTime) goal = Math.min(goal, MNATURE[i]);
         if (music >= 2) goal = Math.min(goal, 0.55F);
         if (stageCue.getAsBoolean()) goal = Math.min(goal, 0.5F);
         float emphasis = 0F;
@@ -271,12 +325,23 @@ public final class Conductor {
     }
 
     /**
-     * The shared world soundscape at weight 1, and the two strongest families: the Conductor's own nature, played
-     * only when AmbientSounds isn't installed (with it in the pack, it plays the nature; Euan, 2026-10-25).
+     * Slots 0-2: the shared world soundscape at weight 1 and the two strongest families: the Conductor's own nature,
+     * played only when AmbientSounds isn't installed (with it in the pack, it plays the nature; Euan, 2026-10-25).
+     * Slot 3: the place. Slots 4-5: overlays.
      */
     private static void pickScapes() {
+        if (placesFor != Soundscapes.generation()) {
+            PLACES.clear();
+            placesFor = Soundscapes.generation();
+        }
+        SoundscapeDef placeDef = AT.biome == null ? null : PLACES.computeIfAbsent(AT.biome, Conductor::placeOf).orElse(null);
+        place(PLACE, placeDef, 1F);
+        for (int i = 0; i < MAX_OVERLAYS; i++) {
+            boolean on = OUNTIL[i] > gameTime && OID[i] != null;
+            place(OVERLAY + i, on ? Soundscapes.get(OID[i]) : null, on ? OW[i] : 0F);
+        }
         if (ambientSoundsLoaded) {
-            for (int i = 0; i < MAX_SCAPES; i++) place(i, null, 0F);
+            for (int i = 0; i < PLACE; i++) place(i, null, 0F);
             return;
         }
         int first = -1, second = -1;
@@ -318,6 +383,12 @@ public final class Conductor {
         s.weight = weight;
     }
 
+    /** A biome's place soundscape: {@code <ns>:place/<biome path>}, if one exists. */
+    private static java.util.Optional<SoundscapeDef> placeOf(Holder<Biome> biome) {
+        return biome.unwrapKey().map(k -> Soundscapes.get(Identifier.fromNamespaceAndPath(k.identifier().getNamespace(),
+                "place/" + k.identifier().getPath())));
+    }
+
     private static float rain(float inRain, float rainLevel) {
         return 1F + (inRain - 1F) * rainLevel;
     }
@@ -333,6 +404,10 @@ public final class Conductor {
         }
         java.util.Arrays.fill(HUNTIL, 0L);
         java.util.Arrays.fill(HOWNER, null);
+        java.util.Arrays.fill(OUNTIL, 0L);
+        java.util.Arrays.fill(OOWNER, null);
+        java.util.Arrays.fill(MUNTIL, 0L);
+        java.util.Arrays.fill(MOWNER, null);
         nature = 1F;
         AT.reset();
     }

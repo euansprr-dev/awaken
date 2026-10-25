@@ -41,6 +41,8 @@ final class Listener {
     float canopy, open, underwater, rain, thunder, strength, gust, height;
     long dayTime;
     boolean valid;
+    /** The camera's biome (the place soundscape's key). */
+    net.minecraft.core.Holder<net.minecraft.world.level.biome.Biome> biome;
 
     private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
@@ -50,6 +52,7 @@ final class Listener {
         java.util.Arrays.fill(family, (byte) -1);
         java.util.Arrays.fill(kind, KIND_NONE);
         canopy = open = underwater = 0F;
+        biome = null;
         next = 0;
     }
 
@@ -64,7 +67,8 @@ final class Listener {
             sample(level, next);
             next = (next + 1) % COLUMNS;
         }
-        family[COLUMNS] = (byte) Families.of(level.getBiome(pos.set(Mth.floor(x), Mth.floor(y), Mth.floor(z))));
+        biome = level.getBiome(pos.set(Mth.floor(x), Mth.floor(y), Mth.floor(z)));
+        family[COLUMNS] = (byte) Families.of(biome);
 
         int hits = 0;
         for (int i = 0; i < INNER; i++) if (canopyCol[i]) hits++;

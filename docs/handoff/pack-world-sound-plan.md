@@ -142,3 +142,21 @@ Next for a builder (all ours, PLAN.md §6.3 and §7): the hums and places (the V
 clarity, the Halo, gate rooms and the Lord's hush, the Descent's tells), the Awakened lands in the System's key,
 Living Wilds happenings heard from afar, the hunter's ear; each one also lowers the nature through the Conductor.
 
+## "Continue with everything" (same day): AWAKEN's own places and moments
+
+Built (all synthesised; no recordings):
+- The Conductor gains a place slot (`<ns>:place/<biome path>`), two overlay slots and muffles (`Soundscape.overlay`,
+  `Soundscape.muffle`); SoundscapeDef gains the `wind` drive.
+- Places: the Stillpoint, the Halo, Lucidium's dream, Elderwood, Lumen Forest (the two Awakened biomes that had no bed).
+- The Veil: its choir overlay and the world through glass while projecting. Dreams: clarity follows lucidity.
+- Living Wilds happenings heard from afar, with hushes for the Wild Hunt and the Deep Tide.
+- 51 new files (~4.5 MB): 9 air beds, 41 one-shot variants, 4 tell loops; events `world.*` (audio) and
+  `living.tell.*` (living). Census now checks every place file; 38 tests (`audio_*`, `terrain_biome_table*`,
+  `compat_*`, `living_*`) pass locally.
+
+Still ours to build (PLAN.md §6.3, §7): the gate rooms and the Lord's hush (needs the arena's position on the client),
+the Descent's tells (gameplay telegraphs: server events), the hunter's ear (lairs and caches near, by PER), Mirror
+Marsh's answer, the Awakened lands' harmony for the four biomes whose beds are still their biome's vanilla
+`ambient_sounds` loop, the Hearth's rooms. Tour for the Mac: add `/awaken living happen <kind>` stops to
+`tools/autopilot/world-sound.txt` when it is next run.
+
