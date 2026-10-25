@@ -501,8 +501,8 @@ def studs(every=3, phase=1):
 
 def katana(edge, hamon, edge_emit=0.0, hamon_emit=0.0):
     """A curved single-edged blade link, painted in its own turned frame: the spine a step dark, the hardened edge
-    bright in its own material, and between them the hamon, the temper line, a texel of the tier's accent waving
-    (two rows on, two off) along the edge's side. What glows pulses up the blade (its span)."""
+    bright in its own material, and between them the hamon, the temper line: an unbroken line of the tier's accent
+    along the edge's side, its tone rising and falling every two rows (its wave). What glows pulses up the blade."""
     def d(t):
         if not t.flat:
             return
@@ -514,8 +514,8 @@ def katana(edge, hamon, edge_emit=0.0, hamon_emit=0.0):
         e_ = col == w - 1
         t.put(e_, ramp_name=edge[0], tone=np.clip(edge[1] + t.band, 0, len(RAMPS[edge[0]]) - 1), emit=edge_emit, metal=0.7, gloss=0.95)
         if w >= 3:
-            hm = (col == w - 2) & ((row % 4) < 2)
-            t.put(hm, ramp_name=hamon[0], tone=hamon[1], emit=hamon_emit, metal=0.2, gloss=0.8)
+            hm = col == w - 2
+            t.put(hm, ramp_name=hamon[0], tone=np.where((row % 4) < 2, hamon[1], hamon[1] - 1), emit=hamon_emit, metal=0.2, gloss=0.8)
         a, b = t.data.get("span", (0, 30))
         t.flow[:] = np.where(t.emit > 0, np.clip((t.y - a) / (b - a), 0.02, 1.0), 0.0)
     return d
@@ -1614,7 +1614,7 @@ def gatewrought_rapier():
     B.append(ring(-3, -2, "brass", width=3, depth=3, part="neck"))
     B.append(VX.rbox((0, -4.4, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
     anchors = [((0, -4.4, 0), 1.6, RAMPS["signal"][6], 1)]
-    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-2, 2), focus=(0, 4))
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7)
 
 
 def veilwoven_rapier():
@@ -1675,7 +1675,7 @@ def sovereign_rapier():
 
 DESIGNS.update({("rapier", "E"): wildhide_rapier, ("rapier", "D"): beastbound_rapier, ("rapier", "C"): gatewrought_rapier,
                 ("rapier", "B"): veilwoven_rapier, ("rapier", "A"): lordscale_rapier, ("rapier", "S"): sovereign_rapier})
-HOLDS["rapier"] = ([0, -72, 30], [0.3, 1.3, -0.6], 0.5)
+HOLDS["rapier"] = ([0, -72, 30], [-1.5, -1.0, -0.6], 0.48)
 
 
 # ---- Daggers: short and quick, about 15 texels: a wide-backed or curved blade about 9 long, a knuckle guard round
@@ -1694,7 +1694,7 @@ def wildhide_daggers():
     B.append(grip(-2, 2, "bone_grip"))
     B.append(VX.slab(-1.5, 1.5, -4, -2, 3, "amber_gem", "nub"))
     anchors = [((0, -3.0, 0), 1.4, RAMPS["amber"][5], 1)]
-    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-2, 2), focus=(0, 4))
+    return B, anchors, dict(accent=RAMPS["amber"][4], grip=(-2, 2), focus=(0, 4), zoom=1.7)
 
 
 def beastbound_daggers():
@@ -1709,7 +1709,7 @@ def beastbound_daggers():
     B.append(grip(-2, 2, "pelt"))
     B.append(VX.rbox((0, -3.4, 0), (2, 2, 3), 45, "moss_gem", "stone"))
     anchors = [((0, -3.4, 0), 1.4, RAMPS["moss"][6], 1)]
-    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-2, 2), focus=(0, 4))
+    return B, anchors, dict(accent=RAMPS["moss"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7)
 
 
 def gatewrought_daggers():
@@ -1723,7 +1723,7 @@ def gatewrought_daggers():
     B.append(ring(-3, -2, "brass", width=3, depth=3, part="neck"))
     B.append(VX.rbox((0, -4.4, 0), (2, 2, 2), 45, "signal_gem", "crystal"))
     anchors = [((0, -4.4, 0), 1.4, RAMPS["signal"][6], 1)]
-    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-2, 2), focus=(0, 4))
+    return B, anchors, dict(accent=RAMPS["signal"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7)
 
 
 def veilwoven_daggers():
@@ -1738,7 +1738,7 @@ def veilwoven_daggers():
     B += frame((0, -4.0, 0), 4, 2, 2, 0, "mirror", "ring")
     anchors = [((0, 3.0, 0), 1.4, RAMPS["spirit"][6], 1)]
     streams = [(WISP, RAMPS["spirit"][6], 3, 0.15, edge_points(B[:4], 1)), (MOTE, RAMPS["spirit"][7], 1, 0.9, [(0, 3.0, 0)])]
-    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-2, 2), focus=(0, 4), streams=streams)
+    return B, anchors, dict(accent=RAMPS["spirit"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7, streams=streams)
 
 
 def lordscale_daggers():
@@ -1753,7 +1753,7 @@ def lordscale_daggers():
     B.append(VX.slab(-1.5, 1.5, -5, -2, 3, "pearl_gem", "pearl"))
     anchors = [((0, -3.5, 0), 1.6, RAMPS["pearl"][4], 1)]
     streams = [(EMBER, RAMPS["ember"][6], 3, 0.1, [(side * 2.5, y + 0.5, 0.0) for y in (3, 5, 7)]) for side in (-1, 1)]
-    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-2, 2), focus=(0, 4), streams=streams)
+    return B, anchors, dict(accent=RAMPS["ember"][5], grip=(-2, 2), focus=(0, 4), zoom=1.7, streams=streams)
 
 
 def sovereign_daggers():
@@ -1772,12 +1772,12 @@ def sovereign_daggers():
     B.append(VX.rbox((0, -3.0, 0), (2, 2, 4), 45, "gold", "star_turned"))
     anchors = [((0, 2.5, 0), 1.2, RAMPS["crimson"][5], 1)]
     streams = [(MOTE, RAMPS["crimson"][6], 2, 1.0, [(0, 2.5, 0)]), (MOTE, RAMPS["gold"][6], 1, 0.2, [(0, 4.5, 0.0), (0, 9.5, 0.0)])]
-    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-2, 2), focus=(0, 4), streams=streams)
+    return B, anchors, dict(accent=RAMPS["crimson"][4], grip=(-2, 2), focus=(0, 4), zoom=1.7, streams=streams)
 
 
 DESIGNS.update({("daggers", "E"): wildhide_daggers, ("daggers", "D"): beastbound_daggers, ("daggers", "C"): gatewrought_daggers,
                 ("daggers", "B"): veilwoven_daggers, ("daggers", "A"): lordscale_daggers, ("daggers", "S"): sovereign_daggers})
-HOLDS["daggers"] = ([0, -72, 30], [0.3, 1.3, -0.6], 0.6)
+HOLDS["daggers"] = ([0, -72, 30], [-2.5, 3.0, -0.6], 0.76)
 
 
 # ---- Katanas: a gently curved single-edged blade of whole-angle turned links (never a staircase), its hamon painted
@@ -1892,7 +1892,7 @@ def sovereign_katana():
 
 DESIGNS.update({("katana", "E"): wildhide_katana, ("katana", "D"): beastbound_katana, ("katana", "C"): gatewrought_katana,
                 ("katana", "B"): veilwoven_katana, ("katana", "A"): lordscale_katana, ("katana", "S"): sovereign_katana})
-HOLDS["katana"] = ([0, -72, 30], [0.3, 1.3, -0.6], 0.45)
+HOLDS["katana"] = ([0, -72, 30], [-1.0, -1.0, -0.6], 0.46)
 
 
 # ---- Twinblades: two blades from one grip in the middle, the far one turned half round (its edge on the other side),
@@ -1991,7 +1991,7 @@ def sovereign_twinblades():
 DESIGNS.update({("twinblades", "E"): wildhide_twinblades, ("twinblades", "D"): beastbound_twinblades,
                 ("twinblades", "C"): gatewrought_twinblades, ("twinblades", "B"): veilwoven_twinblades,
                 ("twinblades", "A"): lordscale_twinblades, ("twinblades", "S"): sovereign_twinblades})
-HOLDS["twinblades"] = ([0, -72, 30], [0.3, 1.3, -0.6], 0.45)
+HOLDS["twinblades"] = ([0, -72, 30], [-0.5, 2.0, -0.6], 0.6)
 
 
 # ---------------------------------------------------------------------------------------------------------------------

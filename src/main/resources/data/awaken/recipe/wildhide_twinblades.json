@@ -1,0 +1,17 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "group": "awaken_arms_twinblades",
+ "key": {
+  "C": "#awaken:hunter_core_e",
+  "X": "awaken:wildhide_blade",
+  "B": "#awaken:hunter_bind_e"
+ },
+ "pattern": [
+  "XCX",
+  " B "
+ ],
+ "result": {
+  "id": "awaken:wildhide_twinblades"
+ }
+}
