@@ -1,0 +1,1300 @@
+{
+  "variants": {
+    "facing=north,part=single,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_stone_bricks"
+    },
+    "facing=north,part=lower,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_stone_bricks"
+    },
+    "facing=north,part=upper,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_stone_bricks"
+    },
+    "facing=north,part=single,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_mossy"
+    },
+    "facing=north,part=lower,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_mossy"
+    },
+    "facing=north,part=upper,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_mossy"
+    },
+    "facing=north,part=single,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_deepslate"
+    },
+    "facing=north,part=lower,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_deepslate"
+    },
+    "facing=north,part=upper,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_deepslate"
+    },
+    "facing=north,part=single,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_calcite"
+    },
+    "facing=north,part=lower,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_calcite"
+    },
+    "facing=north,part=upper,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_calcite"
+    },
+    "facing=north,part=single,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_bricks"
+    },
+    "facing=north,part=lower,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_bricks"
+    },
+    "facing=north,part=upper,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_bricks"
+    },
+    "facing=north,part=single,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_tuff"
+    },
+    "facing=north,part=lower,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_tuff"
+    },
+    "facing=north,part=upper,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_tuff"
+    },
+    "facing=north,part=single,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_stone_bricks"
+    },
+    "facing=north,part=lower,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_stone_bricks"
+    },
+    "facing=north,part=upper,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_stone_bricks"
+    },
+    "facing=north,part=single,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_mossy"
+    },
+    "facing=north,part=lower,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_mossy"
+    },
+    "facing=north,part=upper,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_mossy"
+    },
+    "facing=north,part=single,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_deepslate"
+    },
+    "facing=north,part=lower,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_deepslate"
+    },
+    "facing=north,part=upper,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_deepslate"
+    },
+    "facing=north,part=single,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_calcite"
+    },
+    "facing=north,part=lower,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_calcite"
+    },
+    "facing=north,part=upper,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_calcite"
+    },
+    "facing=north,part=single,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_bricks"
+    },
+    "facing=north,part=lower,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_bricks"
+    },
+    "facing=north,part=upper,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_bricks"
+    },
+    "facing=north,part=single,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_tuff"
+    },
+    "facing=north,part=lower,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_tuff"
+    },
+    "facing=north,part=upper,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_tuff"
+    },
+    "facing=north,part=single,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_stone_bricks"
+    },
+    "facing=north,part=lower,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_stone_bricks"
+    },
+    "facing=north,part=upper,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_stone_bricks"
+    },
+    "facing=north,part=single,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_mossy"
+    },
+    "facing=north,part=lower,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_mossy"
+    },
+    "facing=north,part=upper,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_mossy"
+    },
+    "facing=north,part=single,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_deepslate"
+    },
+    "facing=north,part=lower,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_deepslate"
+    },
+    "facing=north,part=upper,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_deepslate"
+    },
+    "facing=north,part=single,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_calcite"
+    },
+    "facing=north,part=lower,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_calcite"
+    },
+    "facing=north,part=upper,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_calcite"
+    },
+    "facing=north,part=single,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_bricks"
+    },
+    "facing=north,part=lower,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_bricks"
+    },
+    "facing=north,part=upper,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_bricks"
+    },
+    "facing=north,part=single,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_tuff"
+    },
+    "facing=north,part=lower,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_tuff"
+    },
+    "facing=north,part=upper,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_tuff"
+    },
+    "facing=north,part=single,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_stone_bricks"
+    },
+    "facing=north,part=lower,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_stone_bricks"
+    },
+    "facing=north,part=upper,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_stone_bricks"
+    },
+    "facing=north,part=single,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_mossy"
+    },
+    "facing=north,part=lower,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_mossy"
+    },
+    "facing=north,part=upper,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_mossy"
+    },
+    "facing=north,part=single,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_deepslate"
+    },
+    "facing=north,part=lower,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_deepslate"
+    },
+    "facing=north,part=upper,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_deepslate"
+    },
+    "facing=north,part=single,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_calcite"
+    },
+    "facing=north,part=lower,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_calcite"
+    },
+    "facing=north,part=upper,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_calcite"
+    },
+    "facing=north,part=single,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_bricks"
+    },
+    "facing=north,part=lower,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_bricks"
+    },
+    "facing=north,part=upper,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_bricks"
+    },
+    "facing=north,part=single,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_tuff"
+    },
+    "facing=north,part=lower,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_tuff"
+    },
+    "facing=north,part=upper,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_tuff"
+    },
+    "facing=east,part=single,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_stone_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_mossy",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_deepslate",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_calcite",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_bricks",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=single,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=lower,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,part=upper,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_tuff",
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_stone_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_mossy",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_deepslate",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_calcite",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_bricks",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=single,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=lower,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,part=upper,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_tuff",
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=stone_bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=mossy,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=deepslate,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=calcite,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=bricks,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_single_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_lower_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=tuff,style=slit": {
+      "model": "awaken:block/arrow_loop_slit_upper_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=stone_bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=mossy,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=deepslate,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=calcite,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=bricks,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_single_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_slit_lower_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=tuff,style=cross": {
+      "model": "awaken:block/arrow_loop_cross_upper_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=stone_bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=mossy,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=deepslate,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=calcite,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=bricks,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_single_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_oillet_lower_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=tuff,style=oillet": {
+      "model": "awaken:block/arrow_loop_slit_upper_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=stone_bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_stone_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=mossy,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_mossy",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=deepslate,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_deepslate",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=calcite,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_calcite",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=bricks,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_bricks",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=single,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_single_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=lower,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_lower_tuff",
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,part=upper,stone=tuff,style=window": {
+      "model": "awaken:block/arrow_loop_window_upper_tuff",
+      "y": 270,
+      "uvlock": true
+    }
+  }
+}

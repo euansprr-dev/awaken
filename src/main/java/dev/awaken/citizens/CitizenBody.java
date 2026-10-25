@@ -309,6 +309,11 @@ public class CitizenBody extends PathfinderMob implements Npc {
             }
             d.next[rec] = h;
             d.prog[rec] = 0;
+            if (g.hidden(at, h)) {
+                // a tower's stair to the wall walk (M4 Walls): in at the tower's door, the ledger climbs it
+                c.crowd.entered(this);
+                return;
+            }
         }
         int nx = d.next[rec];
         double tx = g.x[nx], tz = g.z[nx];

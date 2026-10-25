@@ -1755,6 +1755,23 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   quartermaster, bounty_post, association_board (Terrace +12), bellwatch_cellar (a 9×9×5 room under the bell tower).
   Ladders: a model override draws every minecraft:ladder as two rails and four round rungs inside vanilla's shape
   (collision unchanged); `awaken:hanging_ladder` extends a ladder down or up with no wall behind.
+- Decided in M4 Walls (2026-10-26; details docs/carillon/milestones/M4-walls.md): the plan is unchanged (hash
+  575dde8a…); the wall is painted from the wall polygon's own geometry (`CityWall`: each column's side, depth and place
+  along it, the rhythm counted in face cells so diagonal sides keep it), the towers and gatehouses by `CityTowers`
+  (parts paint a margin of 4). Outside: a talus in three steps, buttresses 3 wide every 8 with set-offs at 13 and 33,
+  courses at rows 15 and 27, two-block loops and putlog holes, spouts under a machicolated parapet two deep on corbels
+  (merlons 3 high, a breastwork 1 high, crenel sills are walls: a "no"). Sides 1, 3, 10, 11, 19, 21 roof the walk over a
+  timber hoarding. Inside: an arcade of bays 7 apart (deep 3, open to row 5) holding the wall's life, a course at row 9,
+  recessed panels to row 31 with ivy, a drainpipe on every third pier and near each end of every stretch (the climb lines
+  to the walk), banners, flagpoles at row 13, awnings at row 3 over stalls and workshops, a corbelled parapet band over
+  the ring and a stone-wall parapet (a "no") with lanterns every 16. The west side carries a grand stair up the wall
+  instead of bays. Every hold on the wall's faces sits in an odd row (stacks are one or three high). Towers take the
+  district behind them (Bellwatch round with timber hoardings and slate needles, Terrace square with bartizans, Garden
+  octagonal with verdigris spires, Works battlemented with a beacon and a clay-roofed watch room, the Quay's water gates
+  octagonal under copper with a lantern); every tower has a door on open ground and a newel stair to a hall on the walk.
+  Gate towers rise 4 over their plan height (eave 54) so their gallery clears the walk's hall; the walk passes every
+  gatehouse through the room over the gate. No plan lamp stands in a gate passage or a drainpipe's column. Kit: arrow
+  loop, wall ivy (climbable), portcullis, brazier (the kit's one light source, 14), wall spout, wall shield.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs

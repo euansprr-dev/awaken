@@ -1,0 +1,139 @@
+{
+  "variants": {
+    "arms=carillon,facing=north": {
+      "model": "awaken:block/wall_shield_carillon"
+    },
+    "arms=carillon,facing=east": {
+      "model": "awaken:block/wall_shield_carillon",
+      "y": 90
+    },
+    "arms=carillon,facing=south": {
+      "model": "awaken:block/wall_shield_carillon",
+      "y": 180
+    },
+    "arms=carillon,facing=west": {
+      "model": "awaken:block/wall_shield_carillon",
+      "y": 270
+    },
+    "arms=bellwatch,facing=north": {
+      "model": "awaken:block/wall_shield_bellwatch"
+    },
+    "arms=bellwatch,facing=east": {
+      "model": "awaken:block/wall_shield_bellwatch",
+      "y": 90
+    },
+    "arms=bellwatch,facing=south": {
+      "model": "awaken:block/wall_shield_bellwatch",
+      "y": 180
+    },
+    "arms=bellwatch,facing=west": {
+      "model": "awaken:block/wall_shield_bellwatch",
+      "y": 270
+    },
+    "arms=quay,facing=north": {
+      "model": "awaken:block/wall_shield_quay"
+    },
+    "arms=quay,facing=east": {
+      "model": "awaken:block/wall_shield_quay",
+      "y": 90
+    },
+    "arms=quay,facing=south": {
+      "model": "awaken:block/wall_shield_quay",
+      "y": 180
+    },
+    "arms=quay,facing=west": {
+      "model": "awaken:block/wall_shield_quay",
+      "y": 270
+    },
+    "arms=market,facing=north": {
+      "model": "awaken:block/wall_shield_market"
+    },
+    "arms=market,facing=east": {
+      "model": "awaken:block/wall_shield_market",
+      "y": 90
+    },
+    "arms=market,facing=south": {
+      "model": "awaken:block/wall_shield_market",
+      "y": 180
+    },
+    "arms=market,facing=west": {
+      "model": "awaken:block/wall_shield_market",
+      "y": 270
+    },
+    "arms=terrace,facing=north": {
+      "model": "awaken:block/wall_shield_terrace"
+    },
+    "arms=terrace,facing=east": {
+      "model": "awaken:block/wall_shield_terrace",
+      "y": 90
+    },
+    "arms=terrace,facing=south": {
+      "model": "awaken:block/wall_shield_terrace",
+      "y": 180
+    },
+    "arms=terrace,facing=west": {
+      "model": "awaken:block/wall_shield_terrace",
+      "y": 270
+    },
+    "arms=works,facing=north": {
+      "model": "awaken:block/wall_shield_works"
+    },
+    "arms=works,facing=east": {
+      "model": "awaken:block/wall_shield_works",
+      "y": 90
+    },
+    "arms=works,facing=south": {
+      "model": "awaken:block/wall_shield_works",
+      "y": 180
+    },
+    "arms=works,facing=west": {
+      "model": "awaken:block/wall_shield_works",
+      "y": 270
+    },
+    "arms=garden,facing=north": {
+      "model": "awaken:block/wall_shield_garden"
+    },
+    "arms=garden,facing=east": {
+      "model": "awaken:block/wall_shield_garden",
+      "y": 90
+    },
+    "arms=garden,facing=south": {
+      "model": "awaken:block/wall_shield_garden",
+      "y": 180
+    },
+    "arms=garden,facing=west": {
+      "model": "awaken:block/wall_shield_garden",
+      "y": 270
+    },
+    "arms=wallring,facing=north": {
+      "model": "awaken:block/wall_shield_wallring"
+    },
+    "arms=wallring,facing=east": {
+      "model": "awaken:block/wall_shield_wallring",
+      "y": 90
+    },
+    "arms=wallring,facing=south": {
+      "model": "awaken:block/wall_shield_wallring",
+      "y": 180
+    },
+    "arms=wallring,facing=west": {
+      "model": "awaken:block/wall_shield_wallring",
+      "y": 270
+    },
+    "arms=association,facing=north": {
+      "model": "awaken:block/wall_shield_association"
+    },
+    "arms=association,facing=east": {
+      "model": "awaken:block/wall_shield_association",
+      "y": 90
+    },
+    "arms=association,facing=south": {
+      "model": "awaken:block/wall_shield_association",
+      "y": 180
+    },
+    "arms=association,facing=west": {
+      "model": "awaken:block/wall_shield_association",
+      "y": 270
+    }
+  }
+}

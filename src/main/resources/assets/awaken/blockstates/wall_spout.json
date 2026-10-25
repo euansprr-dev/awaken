@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/wall_spout"
+    },
+    "facing=east": {
+      "model": "awaken:block/wall_spout",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/wall_spout",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/wall_spout",
+      "y": 270
+    }
+  }
+}
