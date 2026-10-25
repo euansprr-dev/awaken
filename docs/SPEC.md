@@ -1027,7 +1027,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   texels: 13 the ritual, 14 Holo.
 - The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers, and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
-  for the rest. Opened with U (`key.awaken.look`, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
+  for the rest. Opened with O (`key.awaken.look`; U went to Sovereign on 2026-10-25, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
   Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
   default stays SWIFT (client config `lens`). The current tier is read back from the settings (Lens, Iris's shaders
   switch), not stored twice. Drawn like the System's cards (`HudLook`: projected glass that scans in while the holo
@@ -2496,6 +2496,16 @@ reached by movement), `awaken:use/windway` (one glide holding a lane from its fi
 `awaken:use/gauntlet` (the Leaper's Gauntlet run to its far landing, every time) and `awaken:use/sky_trial` (the Sky
 Leviathan fallen in its trial), and `awaken:use/ascent_glide` with its length (blocks across the ground from where the
 wings opened to where the glide ended, glides of 8 or more; `Quests.advance(player, id, amount)`).
+
+### 17.21 Roofs: climbing out onto a stair or slab eave (Euan's playtest, 2026-10-25)
+Hanging from a roof's eave, the climb out (the ledge jump's, and the free-run's from the hang) lands on whatever is
+walkable just past the face: the lip's own top or a step up to 0.6 over it (`RunnerRules.CLIMB_STEP`, vanilla's step),
+so a stair eave puts you on its high back half and you walk on up the slope. Never onto a fence or wall top, never
+down a drop behind a thin lip. The standing body (from that height to 1.8 over it) and the way over the lip must be
+free, and the way up in front of the face from the hold to standing height. The server re-checks with the same
+`climbOut`. Covered by `runner_roof_climb`: a stair eave on a 3-high wall under a stair slope, a slab eave under a
+slab slope, Carillon's overhanging eave stair on a gentle and a steep gable (`CityGrammar.roof`), and a step with a
+block over it (no climb).
 
 ---------------------------------------------------------------------------------------------------------------------
 
