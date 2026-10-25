@@ -201,6 +201,9 @@ recordings.
   elderwood, lumen_forest); `Soundscape.overlay` (the Veil's `awaken:state/veil`, renewed every tick while projecting);
   `Soundscape.muffle` (the Veil 1.1 kHz and nature 0.2; a dream 900 Hz at lucidity 0, open at 80). Hooks:
   `veil.client.VeilClient.postTick`, `lucidium.client.ClientDream.tick`.
+- **Answers and the Lord's hush** (`Conductor.onPlaySound`, NeoForge `PlaySoundEvent`): a place soundscape's `echo`
+  (Mirror Marsh) sends a sound you make back from across the water; a gate room's `gate.ambient.*` one-shots fall
+  silent under the Lord's music (half in combat).
 - **Happenings heard from afar**: `living.client.PulseSound` (ranges and sounds in SPEC §13); registered as a Source
   (its loops count; a happening near lets nature step back).
 

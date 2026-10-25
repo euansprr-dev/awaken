@@ -195,6 +195,70 @@ public final class Conductor {
         return free;
     }
 
+    private static final Identifier GATE_ROOM = Identifier.fromNamespaceAndPath("awaken", "gate.ambient.");
+    private static long lastEcho = Long.MIN_VALUE / 2;
+
+    /**
+     * Every sound about to play. Two of AWAKEN's touches live here:
+     * <ul>
+     *   <li><b>the hush before a Lord</b>: a gate room's own one-shots (its biome's {@code gate.ambient.*} additions) fall
+     *   silent while the layered music is at the Lord, and half of them in combat: the room drains for the fight;</li>
+     *   <li><b>a place that answers</b> (a soundscape's {@code echo}, Mirror Marsh): now and then a sound you make (your
+     *   steps, your blows, a block you place or break, within 4 blocks) comes back a moment later, quieter, from across
+     *   the water: at most one every 2.5 seconds; an echo never echoes.</li>
+     * </ul>
+     */
+    static void onPlaySound(net.neoforged.neoforge.client.event.sound.PlaySoundEvent e) {
+        SoundInstance s = e.getSound();
+        if (s == null || !enabled || !AT.valid || s instanceof Echo) return;
+        Identifier id = s.getIdentifier();
+        if (id.getNamespace().equals(GATE_ROOM.getNamespace()) && id.getPath().startsWith(GATE_ROOM.getPath())) {
+            int music = musicLevel.getAsInt();
+            if (music >= 3 || (music == 2 && ECHO_RANDOM.nextBoolean())) e.setSound(null);
+            return;
+        }
+        SoundscapeDef place = SCAPES[PLACE].def;
+        SoundscapeDef.Echo echo = place == null ? SoundscapeDef.Echo.NONE : place.echo();
+        if (echo.chance() <= 0F || s.isRelative() || gameTime - lastEcho < 50) return;
+        SoundSource src = s.getSource();
+        if (src != SoundSource.PLAYERS && src != SoundSource.BLOCKS) return;
+        double dx = s.getX() - AT.x, dy = s.getY() - AT.y, dz = s.getZ() - AT.z;
+        if (dx * dx + dy * dy + dz * dz > 16 || ECHO_RANDOM.nextFloat() >= echo.chance()) return;
+        // from across the water: toward the nearest water column of the ring, else any way
+        double ax = Math.cos(ECHO_RANDOM.nextFloat() * Math.PI * 2), az = Math.sin(ECHO_RANDOM.nextFloat() * Math.PI * 2);
+        double best = Double.MAX_VALUE;
+        for (int i = 0; i < Listener.COLUMNS; i++) {
+            if (AT.kind[i] != Listener.KIND_WATER) continue;
+            double wx = AT.colX[i] + 0.5 - AT.x, wz = AT.colZ[i] + 0.5 - AT.z, d = wx * wx + wz * wz;
+            if (d < best && d > 1) {
+                best = d;
+                double len = Math.sqrt(d);
+                ax = wx / len;
+                az = wz / len;
+            }
+        }
+        float dist = echo.distMin() + (echo.distMax() - echo.distMin()) * ECHO_RANDOM.nextFloat();
+        float delay = echo.delayMin() + (echo.delayMax() - echo.delayMin()) * ECHO_RANDOM.nextFloat();
+        Minecraft.getInstance().getSoundManager().playDelayed(new Echo(id, src, echo.volume(), echo.pitch(),
+                AT.x + ax * dist, s.getY(), AT.z + az * dist), Math.max(1, Math.round(delay * 20F)));
+        lastEcho = gameTime;
+    }
+
+    private static final net.minecraft.util.RandomSource ECHO_RANDOM = net.minecraft.util.RandomSource.create();
+
+    /** A place's answer: the same sound, quieter, from across the water (marked so it is never answered itself). */
+    private static final class Echo extends net.minecraft.client.resources.sounds.AbstractSoundInstance {
+        Echo(Identifier sound, SoundSource source, float volume, float pitch, double x, double y, double z) {
+            super(sound, source, SoundInstance.createUnseededRandom());
+            this.volume = volume;
+            this.pitch = pitch;
+            this.attenuation = SoundInstance.Attenuation.NONE;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+    }
+
     /** Dev switch ({@code /awaken audio world off|on}): the whole Conductor, for frame-time comparisons. */
     static void enabled(boolean on) {
         enabled = on;

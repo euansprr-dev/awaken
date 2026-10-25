@@ -762,7 +762,10 @@ docs/sound/plan.html):
   hush 0.3 over 200+), caravan bells (160), the Wild Hunt's horn (400) and its hounds baying (220; a hush 0.1 over 200),
   kites over a carrion circle (180), a migrating herd lowing (220), a beast duel's roars (260); level = (1 − d/range)²;
   a happening near lets nature step back (× (1 − 0.6 × 0.8 × its level)). Each air pair or trio repeats together no
-  sooner than 30 minutes (census test).
+  sooner than 30 minutes (census test). **The hush before a Lord**: a gate room's own one-shots (`gate.ambient.*`)
+  are dropped while the layered music is at the Lord, half of them in combat. **Mirror Marsh answers** (a soundscape's
+  `echo`: chance 0.35, at most one every 2.5 s): a sound you make within 4 blocks (players and blocks sources) comes
+  back 0.6-1.2 s later at 0.35, pitch 0.97, from 14-22 blocks away toward the nearest water; an echo never echoes.
 - AmbientSounds data in our jar (read only by AmbientSounds): `assets/ambientsounds/basic/dimensions/awaken_dimensions.json`
   mutes it in every `awaken:` dimension (gates, strata, the Veil's Stillpoint, dreams, the Halo: those are ours), and
   `blockgroups/{rock,grass_block,grass,ice}.json` add our Awakened ground and plants so its region detection hears

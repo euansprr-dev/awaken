@@ -135,7 +135,7 @@ final class WorldSoundTests {
         }
         h.assertTrue(overworld > 50, "the overworld biomes are there (" + overworld + ")");
         h.assertTrue(scapes >= 2, "the world soundscape and at least one family (" + scapes + ")");
-        for (String want : List.of("place/stillpoint", "place/halo_orbit", "place/lucidium_dream", "place/elderwood", "place/lumen_forest")) {
+        for (String want : List.of("place/stillpoint", "place/halo_orbit", "place/lucidium_dream", "place/elderwood", "place/lumen_forest", "place/mirror_marsh")) {
             if (!places.contains(want)) problems.add("no soundscape for awaken:" + want + " (or its biome is gone)");
         }
         h.assertTrue(problems.isEmpty(), String.join("; ", problems));

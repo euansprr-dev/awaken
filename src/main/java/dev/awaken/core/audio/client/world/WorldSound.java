@@ -23,6 +23,7 @@ public final class WorldSound {
                 (ResourceManagerReloadListener) Soundscapes::reload));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> Conductor.tick());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> Conductor.clear());
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.sound.PlaySoundEvent.class, Conductor::onPlaySound);
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
                 Commands.literal(Awaken.MODID).then(Commands.literal("audio").then(Commands.literal("world")
                         .executes(c -> say(Conductor.status()))

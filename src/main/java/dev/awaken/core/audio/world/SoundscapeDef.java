@@ -23,12 +23,16 @@ import java.util.Locale;
  *   "events":   [ {"sound": "awaken:fauna.hollow_owl.ambient", "anchor": "leaves", "per_minute": 1.2,
  *                  "when": {"dawn": 0, "day": 0, "night": 1}, "rain": 0.2, "answer": 0.4, "answer_delay": [1, 3],
  *                  "hush": true, "volume": [0.4, 0.8], "pitch": [0.92, 1.08], "distance": [12, 36]} ],
- *   "lull":     {"every": [150, 300], "length": [20, 40], "depth": 0.1} }
+ *   "lull":     {"every": [150, 300], "length": [20, 40], "depth": 0.1},
+ *   "echo":     {"chance": 0.35, "delay": [0.6, 1.2], "volume": 0.35, "distance": [14, 22], "pitch": 0.97} }
  * </pre>
  * {@code rain}: the multiplier in full rain (eased from 1 by the rain level). {@code drive}: what else scales a layer
  * ({@link Drive}). Events per minute are at the curve's full value; a lull scales every event's rate by its depth.
+ * {@code echo}: a place answers the sounds you make (Mirror Marsh): now and then one comes back a moment later from
+ * across the water.
  */
-public record SoundscapeDef(Identifier id, String title, List<Air> air, List<Texture> textures, List<Event> events, Lull lull) {
+public record SoundscapeDef(Identifier id, String title, List<Air> air, List<Texture> textures, List<Event> events, Lull lull,
+                            Echo echo) {
     public static final int SCHEMA = 1, MAX_AIR = 3, MAX_TEXTURES = 4, MAX_EVENTS = 24;
 
     /** What scales a layer besides its day curve and the rain: the listener's own state. */
@@ -68,6 +72,10 @@ public record SoundscapeDef(Identifier id, String title, List<Air> air, List<Tex
     public record Event(Identifier sound, Anchor anchor, float perMinute, DayCurve when, float rain, float answer,
                         float answerMin, float answerMax, boolean hush, float volMin, float volMax, float pitchMin,
                         float pitchMax, float distMin, float distMax) {}
+
+    public record Echo(float chance, float delayMin, float delayMax, float volume, float distMin, float distMax, float pitch) {
+        public static final Echo NONE = new Echo(0, 0, 0, 0, 0, 0, 1);
+    }
 
     public record Lull(float everyMin, float everyMax, float lengthMin, float lengthMax, float depth) {
         public static final Lull NONE = new Lull(0, 0, 0, 0, 1);
@@ -118,8 +126,14 @@ public record SoundscapeDef(Identifier id, String title, List<Air> air, List<Tex
             float[] every = range(l, "every", 0F, 0F), length = range(l, "length", 0F, 0F);
             lull = new Lull(every[0], every[1], length[0], length[1], f(l, "depth", 1F));
         }
+        Echo echo = Echo.NONE;
+        JsonObject ec = obj(o, "echo");
+        if (ec != null) {
+            float[] delay = range(ec, "delay", 0.6F, 1.2F), dist = range(ec, "distance", 14F, 22F);
+            echo = new Echo(Math.min(1F, f(ec, "chance", 0.35F)), delay[0], delay[1], f(ec, "volume", 0.35F), dist[0], dist[1], f(ec, "pitch", 0.97F));
+        }
         String title = o.has("title") ? o.get("title").getAsString() : id.toString();
-        return new SoundscapeDef(id, title, List.copyOf(air), List.copyOf(textures), List.copyOf(events), lull);
+        return new SoundscapeDef(id, title, List.copyOf(air), List.copyOf(textures), List.copyOf(events), lull, echo);
     }
 
     private static JsonArray arr(JsonObject o, String key) {
