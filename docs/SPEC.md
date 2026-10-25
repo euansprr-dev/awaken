@@ -322,7 +322,9 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
 - `dev.awaken.living.api.Regions` — the region map (§21.2): `levelAt`, `regionAt`, `creatureLevel`, `bandOf`.
 - `dev.awaken.living.api.Quests` — the Wayfarer chains (§21.5): `advance(ServerPlayer, Identifier "awaken:<type>/<target>")`
-  (owners report uses and discoveries a step may wait for: `awaken:use/ascent_zip`, `awaken:discover/<key>`), `active`, `tracked`.
+  (owners report uses and discoveries a step may wait for: `awaken:use/ascent_zip`, `awaken:discover/<key>`; an
+  `amount` overload), `talk(ServerPlayer, who)` (another module's person, e.g. "kestrel", "oren": call it first from your
+  own interaction; true means a chain used the talk and you say nothing), `active`, `tracked`.
   `dev.awaken.core.api.LivingHooks` — install-once bridge: whether the living module pays kill XP, the level moment.
 - `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
   glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
@@ -2657,7 +2659,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   it; `tier:<need>` asks the Horizon's reach answers, so the Ascent's tiers and movement powers count), `spawn`
   {`entity`, `count`, `at` marker} (brought when the step starts), `move` (the scene's Wayfarer goes to that marker when
   the step is done). Targets: `reach` names a scene marker (`scene`, `site`, `foot`); `deliver` is `<who>|<item or #tag>`;
-  `*` ends a prefix. Lines have no em dashes (the loader skips a chain with one).
+  `*` ends a prefix; a reach target may also be `spot:<id>` (Carillon's `CityHooks.spot`) or `camp`. Lines have no em dashes (the loader skips a chain with one).
 - State: attachment `awaken:quests` (schema 1, kept through death, synced to its owner): ≤ 5 active (chain, step,
   progress, scene id), one tracked, done, relics given. Every step reward and finish pays once (claim counters
   `awaken:claim/quest/<chain>/<step|finish>`); counters `awaken:quests_done`. `Quests.advance(player, "awaken:<type>/<target>")`

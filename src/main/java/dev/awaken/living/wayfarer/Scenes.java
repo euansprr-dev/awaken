@@ -109,6 +109,12 @@ public final class Scenes extends SavedData {
 
     /** A named place of a scene (its Wayfarer's spot is "scene"), or null. */
     public static @Nullable BlockPos marker(MinecraftServer server, long id, String name) {
+        // places that aren't a scene's own: the city's named spots and the Wayfarer camp
+        if (name.startsWith("spot:")) return dev.awaken.core.api.CityHooks.spot(server.overworld(), name.substring(5));
+        if (name.equals("camp")) {
+            long c = get(server).camp;
+            return c == NONE ? null : BlockPos.of(c);
+        }
         Scene s = scene(server, id);
         if (s == null) return null;
         if (name.isEmpty() || name.equals("scene")) return BlockPos.of(s.pos);
