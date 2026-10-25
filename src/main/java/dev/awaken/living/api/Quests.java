@@ -28,6 +28,7 @@ public final class Quests {
         String path = objective.getPath();
         int slash = path.indexOf('/');
         if (slash <= 0 || amount <= 0) return;
+        if (path.equals("use/temper")) dev.awaken.living.craft.CraftEvents.tempered(player); // the Forge's temper is a smithing action too
         QuestEngine.advance(player, path.substring(0, slash), path.substring(slash + 1), amount);
     }
 

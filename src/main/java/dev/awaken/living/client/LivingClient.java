@@ -64,6 +64,7 @@ public final class LivingClient {
         LivingClientConfig.register();
         JournalSection.register();
         AlmanacSection.register();
+        CraftsSection.register();
         // rumours: a "?" on the map where you heard something is happening
         dev.awaken.core.api.MapMarks.register(p -> {
             var heard = p.getData(dev.awaken.living.LivingContent.RUMOURS.get()).heard();
@@ -89,6 +90,8 @@ public final class LivingClient {
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(SubmitCustomGeometryEvent.class, LivingFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, PulseFx::submit);
+        bus.addListener(SubmitCustomGeometryEvent.class, CraftFx::submit);
+        bus.addListener(ClientTickEvent.Post.class, CraftFx::tick);
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LivingPlates::extract);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
     }
@@ -99,6 +102,7 @@ public final class LivingClient {
         PILLARS.clear();
         TELLS = List.of();
         PulseFx.reset();
+        CraftFx.reset();
         JournalSection.entries = List.of();
         FIGHT.clear();
         LOOK.clear();

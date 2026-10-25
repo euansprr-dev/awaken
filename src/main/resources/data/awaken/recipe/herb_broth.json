@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "awaken_meals",
+  "ingredients": [
+    "minecraft:bowl",
+    "awaken:sunleaf",
+    "awaken:sunleaf",
+    "minecraft:carrot"
+  ],
+  "result": {
+    "count": 1,
+    "id": "awaken:herb_broth"
+  }
+}
