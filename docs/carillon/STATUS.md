@@ -198,3 +198,4 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   skipped (db8bd104); B3a adds Kestrel (the Roost) and Bram (the Association) as named citizens; B3b wires
   `living.api.Quests.talk(player, id)` first for every named citizen (once talk() is on build). The hearth Forge
   (Oren's temper step) is the pack session's. Oren's move to a Hearth waits on renown tiers past Known (MMO-lite).
+- 2026-10-25 STOPPED (Euan's weekly usage at 98%): B3a WIP merged uncompiled (carillon/m4-b3a, continue from docs/carillon/briefs/M4-B3a-continue.md); later: blue glowing crystal trees in Choir Square (an Awakened Lands feature the sweep misses).
