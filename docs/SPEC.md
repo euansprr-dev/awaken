@@ -387,6 +387,12 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.core.api.CombatFeedback` (client, §24) — every blow's one feel: `hitstop(entityId, ms)` (the body freezes
   and trembles), `hold(ms)` (the striker's hands and view), `kick(yaw, pitch, roll, ticks)` (follows camera shake).
   Installed by Arms; no-op before that and on a dedicated server. Powers' hits use it.
+- `dev.awaken.powers.client.fx.FxClient` (client) — the effects engine for other modules' weapons (§24):
+  `slash(wielder, offset, axis0, axis90, startDeg, sweepDeg, radius, band, sweepTicks, argb)` (a blade's crescent that
+  moves with the wielder), `thrust(wielder, offset, dir, from, to, width, sweepTicks, argb)`, `bladeHit(at, dir, size,
+  BodyMaterial)`. Same budget and settings as the powers' own effects.
+- `dev.awaken.core.api.Stances` (client, §24) — a creature's stance as this client knows it: `share(Entity)` 0..1,
+  `broken(Entity)`, `focused(Entity)` (the local fighter's focus). Installed by Arms' client; zero until then.
 - `dev.awaken.arms.Arms` (§24) — `styleOf(ItemStack|Item)` (the fighting style, or null for tools and bare hands),
   `guards(ItemStack)`, `fights(LivingEntity)`, `posture(LivingEntity)` (0..1, server), `broken(LivingEntity)` (server),
   `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell).
@@ -3506,13 +3512,29 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   ticks (every other tick; the plan's 0.45 rounded to the tick clock), Resonance +15, a Slipcut for 6 ticks. Two
   charges, 24 ticks each. A refused dodge stops the body where it is.
 - **Context moves** (no input of their own): Riposte (strike ≤ 12 ticks after a deflect), Slipcut (strike ≤ 6 ticks
-  after a dodge), Execution (a heavy on a broken creature in reach: motion 4, capped at 8% of a Lord's max health).
+  after a dodge), Execution (a heavy on a broken creature in reach: motion 4, capped at 8% of a Lord's max health),
+  **Undercut** (a strike out of a slide, the body module's own state: a low sweep, 160° wide, posture 8; the slide's
+  trip still happens), **Plunge** (a strike in a fall of 2+ blocks arms it: the hands hold the blade high, the client
+  dives, and it strikes all round where the fighter lands, motion × 1 + fall/6, at most × 2.8, the landing taking half
+  its fall damage; it gives up in water or after 5 s).
+- **The Art** (the Longsword's default): a heavy held through to full charge (2 ticks' grace) with Resonance full is
+  the Art, not a heavy, and spends the whole meter (so holding past the glint is a choice). A great level sweep whose
+  reach grows 2 blocks a tick through its 4 active ticks, out to 10, striking each creature once as the wave passes:
+  motion 3, posture 30, 150 ms hit-stop, capped at 12% of a Lord's health. Its arc burns gold, a golden wave rolls on
+  along the ground, and the kit's `arms.art` replaces the swish (the steel's ring swelling through the wind-up, the
+  release, a wave of air rolling out). Lord-forged and legendary weapons bring their own Arts later (S8).
 - **Posture** (creatures only; no player stamina): normal 20, elites, wardens and beasts 40, bosses, breaks and
   nightmares 100 (`CreatureTag`, `MobRole`). It drains at 6/s (Lords 8/s) after 2 s untouched; full, it breaks for 50
   ticks (Lords 40), then cannot break again for 6 s. On the struck creature only (the patent rule holds). Not saved.
 - **Resonance** (per player, 0–100, not saved): deflect 20, perfect dodge 15, break 25, a finisher 6, a rhythm-3
   finisher 12 more; drains 2/s after 5 s out of a fight. Full: the Art (S2).
-- **Soft focus**: the creature you last struck turns your strikes toward it by at most 15°.
+- **Soft focus**: the creature you last struck turns your strikes toward it by at most 15°; looking more than 60°
+  away from it for a second lets it go (server and client by one rule, `ArmsRules.lookedAt`).
+- **Stances on the plates** (`core.api.Stances`, §12, read by the living module's plates): every stance change sends
+  its snapshot (value, hold, broken ticks) to players within 48 blocks, the fighter included; their clients drain it by
+  the server's own rule (`ArmsRules.drained`), so nothing is sent while it only recovers. Under the health bar, once
+  strained: a thin amber strip filling from both ends to the middle (white-hot past three quarters), pulsing gold
+  while broken. The fighter's focus wears the plate's bright rim.
 - **Feel** (`core.api.CombatFeedback`, §12; one freeze for every blow, Powers' hits included): the struck body freezes
   and trembles for the move's hit-stop, the striker's hands and view hold for the same beat (the move's clock skips
   it), and the view kicks along the swing (≤ 2.4°) and settles; at most one freeze per 4 ticks in a sweep. A deflect
@@ -3527,7 +3549,24 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   overhead chop, strike 4 and the riposte thrusts, the heavy a rising cut, the Slipcut a low wide sweep, the Execution
   a raised chop. A held heavy draws back to its start pose and trembles finely as it charges; the guard is vanilla's
   blocking pose eased in over 2 ticks. Reviewed frame by frame with `tools/autopilot/arms-poses.txt` (the autopilot's
-  `arms pose <move> <0..1>` holds the hands still). Third person keeps vanilla's arm swing until S2's clips.
+  `arms pose <move> <0..1>` holds the hands still).
+- **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
+  a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
+  wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
+  it is up, the heavy's draw held while it charges, the dodge back or to a side by its way (mirrored for a left
+  hand). The fighter's own from their prediction, everyone else's from `Seen` MOVE, CHARGE and DODGE. Every clip is
+  checked for an arm through the head or body (under 1.25 px). Without the library: vanilla's arm swing.
+- **Trails and sparks** (`ArmsFx`, on the powers module's effects engine: one budget, one settings page). As a
+  blow starts (the end of its wind-up), its arc: a crescent following the hand's own arc about the shoulder, pushed
+  out 1.5 blocks ahead of the eye so it faces whoever looks (an arc in the plane of the look is seen edge-on, a line:
+  found in the tour), nothing at the hand, a tinted body and a crisp bright rim along the blade's visible middle,
+  its head crossing in the move's active ticks on the hands' curve, its tail chasing it. A thrust is a straight
+  streak. The weapon tints it (diamond cyan, netherite violet, gold, copper, iron, stone, wood; our blades Holo blue),
+  each rhythm step brightens it, a perfect heavy and an Execution burn gold; the fighter's own is softer in first
+  person. Where a blade lands, on the body's near side: a small white flare and sparks by what it met (warm off plate
+  and stone, pale chips off bone, brown off wood, wisps through a spirit, green spatter from slime, dark red from
+  flesh). The fighter's from their prediction and the HIT result; everyone near from `Seen` MOVE and HIT (observers
+  also see the struck body's freeze).
 - **HUD** (`arms_hud`, above the crosshair layer): a 15-dot arc under the crosshair for Resonance or the heavy's charge
   (gold when full or at the glint), the dodge's two pips beside the sprint line, and a red shard on a ring round the
   crosshair pointing to where the last blow on you came from (any held item; 24 ticks). Nothing at rest.
@@ -3538,7 +3577,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   sword never rises (a sword another mod made to block keeps its own).
 - Off while riding, sleeping, projecting, meditating, flying or gliding; Arms never runs a spectator's melee.
 
-**Sounds** (`ArmsSounds`, 25 events `arms.*`, 74 files; tools/art/specs/audio_arms.py).
+**Sounds** (`ArmsSounds`, 26 events `arms.*`, 76 files; tools/art/specs/audio_arms.py).
 - Hybrid by design: CC0 recordings (Kenney's Impact Sounds and RPG Audio, `tools/art/sources/kenney`, CC0 1.0, licence
   files kept) for the physical transients and bodies synthesis renders thin; the audio kit for the air, the steel's ring
   (inharmonic modes), the weight, the shimmer, the rooms and the tells' language. Every event is layered (transient,
@@ -3548,7 +3587,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   Every render is checked: loudness and true peak after encoding, a blow's transient in its first 6 ms (it meets the
   hit-stop's frame), no click at either end, no 2–5 kHz harshness past its family's, variants spectrally distinct. The
   checks catch a broken sound, not a dull one: the listening page (`tools/art/arms_listen.py` →
-  `docs/combat/listening-<date>.html`: eight scenes at the game's own timing, read from the table, and every sound
+  `docs/combat/listening-<date>.html`: nine scenes at the game's own timing, read from the table, and every sound
   alone, each with keep / remake / cut) and Euan's ear are the last gate.
 - Which sound a blow makes is chosen in one place for both sides: the swish by the move's `swish`, a semitone higher
   per rhythm step; the impact by what the blade meets (`core.api.BodyMaterial`, §12: flesh, armour, bone, wood, stone,
@@ -3563,5 +3602,5 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   voice), with the shard and a small view jolt from where it came (vanilla's own tilt stays).
 
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
-kill switch, sounds; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
+kill switch, sounds, stance rules, clips, the Art, the Plunge; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles.

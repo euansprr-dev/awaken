@@ -32,8 +32,9 @@ public final class ArmsRules {
     public static final int DEFLECT_POSTURE_LIGHT = 18, DEFLECT_POSTURE_HEAVY = 26;
     /** The latency hold on a guardable hit is at most this many ticks. */
     public static final int GRACE_MAX = 3;
-    /** Soft focus: how far a strike may turn toward its target. */
-    public static final float FOCUS_TURN = 15F;
+    /** Soft focus: how far a strike may turn toward its target; looking further than this away for so long drops it. */
+    public static final float FOCUS_TURN = 15F, FOCUS_DROP_ANGLE = 60F;
+    public static final int FOCUS_DROP_TICKS = 20;
     /** Hit-stop in a sweep: at most one freeze per this many ticks. */
     public static final int HITSTOP_GAP = 4;
 
@@ -146,6 +147,35 @@ public final class ArmsRules {
 
     public static boolean lordly(int postureMax) {
         return postureMax >= POSTURE_LORD;
+    }
+
+    /** A fall this long (blocks) when the strike key is pressed arms a Plunge. */
+    public static final float PLUNGE_FALL = 2F;
+
+    /** A strike pressed in the air in a real fall (not a hop) arms a Plunge. */
+    public static boolean plunges(boolean onGround, double fallDistance, boolean inLiquid) {
+        return !onGround && !inLiquid && fallDistance >= PLUNGE_FALL;
+    }
+
+    /** A Plunge lands harder the further the fall: ×1.33 from 2 blocks, ×2 from 6, at most ×2.8. */
+    public static float plungePower(double fell) {
+        return (float) Math.min(2.8, 1 + Math.max(0, fell) / 6);
+    }
+
+    /** The Art: a heavy held through to its full charge (2 ticks' grace for the trip) with the meter full. */
+    public static boolean artReady(int held, Archetype.Charge c, float resonance) {
+        return held >= c.max() - 2 && resonance >= RESONANCE_MAX;
+    }
+
+    /** A stance left alone: what is left of {@code value} after {@code sinceHit} ticks untouched (both sides). */
+    public static float drained(float value, long sinceHit, boolean lord) {
+        long idle = sinceHit - POSTURE_IDLE_TICKS;
+        return idle <= 0 ? value : Math.max(0, value - idle * (lord ? POSTURE_REGEN_LORD : POSTURE_REGEN));
+    }
+
+    /** Whether the fighter is still looking toward their focus (else it drops after {@link #FOCUS_DROP_TICKS}). */
+    public static boolean lookedAt(float yawToTarget, float lookYaw) {
+        return Math.abs(Mth.wrapDegrees(yawToTarget - lookYaw)) <= FOCUS_DROP_ANGLE;
     }
 
     /** An Execution's damage on a Lord is capped at this share of its health (the move's bossCap). */

@@ -21,7 +21,8 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
 
     /** The moves every style may have; the JSON keys are their lower-case names. */
     public enum Move {
-        STRIKE_1, STRIKE_2, STRIKE_3, STRIKE_4, STRIKE_5, HEAVY, RIPOSTE, SLIPCUT, EXECUTION, ART;
+        // only append: the ordinals are on the wire
+        STRIKE_1, STRIKE_2, STRIKE_3, STRIKE_4, STRIKE_5, HEAVY, RIPOSTE, SLIPCUT, EXECUTION, ART, UNDERCUT, PLUNGE;
 
         public final String key = name().toLowerCase(Locale.ROOT);
         private static final Move[] VALUES = values();
@@ -40,9 +41,9 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
         }
     }
 
-    /** How a move sounds through the air: a quick cut, a heavy's slow arc, a thrust's straight hiss. */
+    /** How a move sounds through the air: a quick cut, a heavy's slow arc, a thrust's straight hiss, an Art's release. */
     public enum Swish {
-        LIGHT, HEAVY, THRUST;
+        LIGHT, HEAVY, THRUST, ART;
 
         public final String key = name().toLowerCase(Locale.ROOT);
 
@@ -91,6 +92,14 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
         ).apply(i, Swing::new));
     }
 
+    /** An Art's wave: its reach grows this many blocks a tick through the active ticks, out to {@code range}. */
+    public record ArtDef(float wave, float range) {
+        static final Codec<ArtDef> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.FLOAT.fieldOf("wave").forGetter(ArtDef::wave),
+                Codec.FLOAT.fieldOf("range").forGetter(ArtDef::range)
+        ).apply(i, ArtDef::new));
+    }
+
     /** A held heavy: the hold that starts it, the glint (release within 2 ticks: perfect) and the longest hold. */
     public record Charge(int min, int glint, int max, float glintMotion, int glintPosture, int glintHitstop) {
         static final Codec<Charge> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -111,10 +120,11 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
      * One move's row. windup, active and recovery in ticks (the hit lands on the active ticks); cadence = the recovery
      * ticks where the next press earns a rhythm step; motion = damage multiplier; posture = what it does to a stance;
      * arc (degrees) and reach (blocks) = what it hits; window = how long after a deflect or dodge it can be called;
-     * swish = its sound through the air.
+     * swish = its sound through the air; art = an Art's travelling wave.
      */
     public record MoveDef(int windup, int active, int recovery, List<Integer> cadence, float motion, int posture, float arc, float reach,
-                          int hitstop, boolean finisher, int window, float bossCap, Optional<Charge> charge, Swing swing, Swish swish) {
+                          int hitstop, boolean finisher, int window, float bossCap, Optional<Charge> charge, Swing swing, Swish swish,
+                          Optional<ArtDef> art) {
         static final Codec<MoveDef> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("windup").forGetter(MoveDef::windup),
                 Codec.INT.fieldOf("active").forGetter(MoveDef::active),
@@ -130,8 +140,15 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
                 Codec.FLOAT.optionalFieldOf("bossCap", 0F).forGetter(MoveDef::bossCap),
                 Charge.CODEC.optionalFieldOf("charge").forGetter(MoveDef::charge),
                 Swing.CODEC.fieldOf("swing").forGetter(MoveDef::swing),
-                Swish.CODEC.optionalFieldOf("swish", Swish.LIGHT).forGetter(MoveDef::swish)
+                Swish.CODEC.optionalFieldOf("swish", Swish.LIGHT).forGetter(MoveDef::swish),
+                ArtDef.CODEC.optionalFieldOf("art").forGetter(MoveDef::art)
         ).apply(i, MoveDef::new));
+
+        /** How far the move reaches {@code sinceStart} ticks in: its reach, or an Art's wave grown out to its range. */
+        public float reachAt(long sinceStart) {
+            if (art.isEmpty()) return reach;
+            return Math.min(art.get().range(), reach + art.get().wave() * Math.max(0, sinceStart - windup + 1));
+        }
 
         /** Ticks from the press to the end of the active window. */
         public int activeEnd() {

@@ -417,6 +417,29 @@ final class FxRecipes {
         }
     }
 
+    /**
+     * A blade landing (Arms), by what it meets: warm sparks off plate and stone, pale chips off bone, brown chips off
+     * wood, wisps through a spirit, green spatter from slime, a dark red spatter from flesh; a small white flare at the
+     * contact for all. {@code size} 0.5 a quick cut .. 1.5 an Execution. No screen feel: Arms makes its own.
+     */
+    static void bladeHit(double x, double y, double z, double bx, double by, double bz, float size, dev.awaken.core.api.BodyMaterial m) {
+        float s = Math.max(0.3f, size);
+        FxStyle st = switch (m) {
+            case ARMOR, STONE -> FxStyle.HEAT;
+            case BONE -> FxStyle.FLIGHT;
+            case WOOD -> FxStyle.KINETIC;
+            case SPIRIT -> FxStyle.SPIRIT;
+            case SLIME -> FxStyle.TECH;
+            case FLESH -> FxStyle.VELOCITY;
+        };
+        flare(x, y, z, 0.55f * s, FxStyle.NEUTRAL, 4);
+        switch (m) {
+            case ARMOR, STONE -> sparks(x, y, z, n((int) (12 * s)), 0.38f * s, st, 7, 0.03f, bx, by, bz, 0.6f);
+            case SPIRIT -> wisps(x, y, z, n((int) (6 * s)), 0.35f, st, 0.03f);
+            default -> sparks(x, y, z, n((int) (6 * s)), 0.2f * s, st, 6, 0.05f, bx, by, bz, 0.7f);
+        }
+    }
+
     static void sphereBurst(double x, double y, double z, float r0, float r1, int life, FxStyle st) {
         Shape sp = FxWorld.shape(Shape.SPHERE, life);
         if (sp == null) return;

@@ -157,6 +157,19 @@ def break_execution():
     return s.at(press, A_SWISH[ex.get("swish", "light")]).at(press + ex["windup"] * TICK, "execution")
 
 
+def art():
+    """The heavy held through with the meter full: the draw, the glint passing, the Art let go at full charge."""
+    m = moves()
+    c = m["heavy"]["charge"]
+    s = Scene().at(c["min"] * TICK, "charge").at(c["glint"] * TICK, "glint")
+    release = c["max"] * TICK
+    s.at(release, "art")
+    blade = release + m["art"]["windup"] * TICK
+    for i, at in enumerate((0.05, 0.15, 0.25)):
+        s.at(blade + at, "hit_flesh_heavy" if i == 0 else "hit_flesh", 0.85 if i else 1.0)  # the wave reaching three foes in turn
+    return s
+
+
 def materials():
     s, t = Scene(), 0.0
     for event in ("hit_flesh", "hit_armor", "hit_bone", "hit_wood", "hit_stone", "hit_spirit", "hit_slime"):
@@ -180,6 +193,8 @@ SCENES = [
      "An amber heavy tell, blocked instead of deflected: the guard is crushed aside and the blow gets through."),
     ("execution", "Break, then Execution", break_execution, (),
      "Three blows on a golem (stone), its stance gives, the Execution: the biggest blow there is."),
+    ("art", "The Art", art, (),
+     "A heavy held through to full charge with the meter full: the draw, the glint passing, the Art let go, its wave reaching three foes in turn."),
     ("materials", "What the blade meets", materials, (),
      "One cut into each body: flesh, armour, bone, wood, stone, a spirit, slime."),
 ]

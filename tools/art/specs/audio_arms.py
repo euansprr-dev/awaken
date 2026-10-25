@@ -375,6 +375,29 @@ def execution(seed):
     return _blow(layers, 1.8, "stone", 0.3, drive=2.0)
 
 
+def art(seed):
+    """The Art: the blade's gathered light let go. The steel's ring swelling for the wind-up's fifth of a second,
+    then the great swish and the weight of it, and a wave of air rolling out across the ground with a long bright
+    ring over it (the wave travels; the sound goes with it)."""
+    r = K.rng(seed)
+    n = K.ns(1.9)
+    t = K.tvec(n)
+    rel = 0.2  # the move's wind-up (4 ticks): the release lands here
+    f0 = r.uniform(1750, 1950)
+    swell = np.clip(t / rel, 0, 1) ** 2.2 * (t < rel + 0.02)
+    shimmer = (ring(f0, 1.2, 1.9, seed + 1, 0.8) + 0.5 * K.glass(f0 * 1.5, n, 0.8, 0.9, seed + 2, 0.6)) * swell
+    cut = swish(0.7, 0.12, r.uniform(170, 210), r.uniform(900, 1100), 1.0, seed + 3, tone=0.25, tone_f=r.uniform(380, 460), edge=0.2)
+    wave = R.sweep(K.noise(K.ns(1.4), "pink", seed + 4), lambda u: 2400 * np.exp(-u * 2.2) + 220, 1.4)
+    wave = R.unit(wave) * np.exp(-K.tvec(K.ns(1.4)) * 2.4) * np.clip(K.tvec(K.ns(1.4)) / 0.05, 0, 1)
+    b = R.Bus(1.9)
+    b.add(shimmer, 0.0, 0.45, "field", 0.2)
+    b.add(cut, rel - 0.1, 0.9, "field", 0.15)
+    b.add(R.boom(1.2, 62, 28, 0.8, tau=0.07, drive=2.0, attack=0.004), rel, 0.9)
+    b.add(wave, rel + 0.02, 0.55, "field", 0.35)
+    b.add(ring(f0 * 0.5, 1.4, 1.6, seed + 5, 0.5), rel, 0.22, "field", 0.3)
+    return R.fade_out(b.render(), 0.3)
+
+
 def perfect_dodge(seed):
     """A perfect dodge: the world's breath held. A rush past your ear pulled backwards into silence, a low dip, one
     soft high tone; then the room comes back."""
@@ -517,6 +540,7 @@ EVENTS = OrderedDict([
     ("guard_break", (guard_break, 2, -12.0, 24, "Guard broken", True, 12.5, 1.0)),
     ("break", (posture_break, 2, -12.0, 28, "Stance breaks", True, 13.0, 1.0)),
     ("execution", (execution, 2, -11.5, 32, "Execution", True, 13.0, 1.0)),
+    ("art", (art, 2, -12.0, 32, "Blade's Art unleashed", False, 13.0, 1.0)),
     ("perfect_dodge", (perfect_dodge, 2, -15.0, 12, "Perfect dodge", False, 13.0, 0.7)),
     ("dodge", (dodge, 3, -15.0, 12, "Dodges", False, 12.0, 0.6)),
     ("charge", (charge, 2, -15.5, 12, "Blade drawn back", False, 12.0, 0.45)),

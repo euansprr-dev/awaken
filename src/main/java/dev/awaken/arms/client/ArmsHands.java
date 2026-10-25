@@ -74,6 +74,12 @@ final class ArmsHands {
             if (def != null) swing(out, def, previewAt * def.total(), def.recovery());
             return;
         }
+        if (ArmsPredict.plunging) {
+            // armed in the fall: the blade held high in the Plunge's start pose
+            Archetype.MoveDef plunge = style.move(Archetype.Move.PLUNGE);
+            if (plunge != null) lerp(out, null, plunge.swing().from(), 1, false);
+            return;
+        }
         if (ArmsPredict.charging) {
             Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
             if (heavy == null) return;

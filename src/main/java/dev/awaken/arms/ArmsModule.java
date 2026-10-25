@@ -50,6 +50,7 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onSweep);
         bus.addListener(ArmsServer::onSound);
         bus.addListener(ArmsServer::onDamaged);
+        bus.addListener(ArmsServer::onFall);
         bus.addListener(EventPriority.HIGH, ArmsModule::onUseStartOff);
         bus.addListener(ArmsServer::onUseStart);
         bus.addListener(ArmsServer::onUseStop);
