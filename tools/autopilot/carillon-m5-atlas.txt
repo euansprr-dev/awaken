@@ -1,0 +1,113 @@
+# Carillon M5: the Atlas (SPEC §16.8), phase 1's one tour. The Choir's bell clears the city, then a walk north out of
+# the High Gate clears a road into the wilds; the table opens over the city by day, orbits, closes in, zooms out to the
+# coarser levels, goes to night, plays a bell's ripple over a cleared Bellwatch and the Registry reveal. Short perf
+# pairs (closed / open at the same spot) and the '[atlas]' lines carry open time, prepare() cost, mesh and memory.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m5-atlas.txt 900
+world carillonM5atlas creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 4000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken city info
+hud off
+# the city: the Choir's bell clears all of it
+cmd awaken city view square
+wait 160
+cmd awaken atlas ring city
+wait 20
+# a road north: out of the High Gate and on into the wilds, 32-block hops so the 64-block circle leaves no gaps
+cmd awaken city view studio_high_gate
+wait 120
+cmd tp @s ~ ~ ~-32
+wait 10
+cmd tp @s ~ ~ ~-32
+wait 10
+cmd tp @s ~8 ~ ~-32
+wait 10
+cmd tp @s ~16 ~ ~-32
+wait 10
+cmd tp @s ~16 ~ ~-32
+wait 10
+cmd tp @s ~24 ~ ~-32
+wait 10
+cmd tp @s ~24 ~ ~-24
+wait 10
+cmd tp @s ~32 ~ ~-16
+wait 10
+cmd tp @s ~32 ~ ~-8
+wait 10
+cmd tp @s ~32 ~ ~
+wait 10
+cmd tp @s ~32 ~ ~8
+wait 10
+cmd tp @s ~32 ~ ~16
+wait 10
+# back to the square, where the table opens
+cmd awaken city view square
+wait 200
+cmd awaken atlas stats
+perf m5_closed 10
+cmd atlas open 20 52 1
+wait 80
+shot m5_city_day
+perf m5_open_day 10
+cmd atlas view 40 40 1
+wait 30
+shot m5_orbit
+cmd atlas spin 30
+perf m5_open_orbit 8
+cmd atlas spin 0
+cmd atlas view 25 62 3
+wait 40
+shot m5_closeup
+cmd atlas view 20 55 0.5
+wait 60
+shot m5_road
+cmd atlas view 20 58 0.18
+wait 80
+shot m5_far
+screen close
+perf m5_closed_2 10
+# night: the land goes blue
+cmd time set 18000
+cmd atlas open 20 52 1
+wait 80
+shot m5_night
+screen close
+cmd time set 4000
+# a bell's ripple: forget the city, open the table, ring Bellwatch's bell
+cmd awaken atlas clear
+wait 20
+cmd awaken atlas reveal 64
+wait 10
+cmd atlas open 0 58 1.2
+wait 60
+cmd awaken atlas ring bellwatch
+wait 12
+shot m5_ripple_mid
+wait 50
+shot m5_ripple_after
+screen close
+# the Registry reveal: the run's thread over the city
+cmd awaken atlas ring city
+wait 10
+cmd atlas reveal
+wait 50
+shot m5_reveal_mid
+wait 90
+shot m5_reveal_after
+cmd atlas stats
+screen close
+quit
