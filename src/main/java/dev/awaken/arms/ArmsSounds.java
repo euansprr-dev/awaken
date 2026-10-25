@@ -48,6 +48,7 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> TELL_GRAB = sound("tell_grab");
     public static final DeferredHolder<SoundEvent, SoundEvent> HURT = sound("hurt");
     public static final DeferredHolder<SoundEvent, SoundEvent> HEARTBEAT = sound("heartbeat");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HIT_BLUNT = sound("hit_blunt");
 
     /** From this damage multiplier a blow lands as a heavy one (the finishers, a heavy, a riposte). */
     static final float HEAVY_MOTION = 1.4F;
@@ -66,6 +67,12 @@ public final class ArmsSounds {
     /** Each rhythm step plays its swish a semitone higher, so a combo climbs. */
     public static float swishPitch(int cadence) {
         return (float) Math.pow(SEMITONE, cadence);
+    }
+
+    /** A blow by a blunt style (the Maul) lands blunt on every body but a spirit; any other style as its blade meets the body. */
+    public static SoundEvent impact(Entity target, Archetype.@Nullable Move move, Archetype.@Nullable MoveDef def, @Nullable String style) {
+        if (Arms.MAUL.equals(style) && move != Archetype.Move.EXECUTION && BodyMaterial.of(target) != BodyMaterial.SPIRIT) return HIT_BLUNT.get();
+        return impact(target, move, def);
     }
 
     /** The blade landing: an Execution is a blow of its own; any other is what the body is made of. */

@@ -477,5 +477,26 @@
         "attenuation_distance": 8
       }
     ]
+  },
+  "arms.hit_blunt": {
+    "subtitle": "subtitles.awaken.arms.hit_blunt",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_hit_blunt_0",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:arms/arms_hit_blunt_1",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:arms/arms_hit_blunt_2",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:arms/arms_hit_blunt_3",
+        "attenuation_distance": 22
+      }
+    ]
   }
 }

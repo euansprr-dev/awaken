@@ -72,7 +72,13 @@ final class ArmsTests {
                     .filter(m -> m.attribute().is(Attributes.ATTACK_DAMAGE)).mapToDouble(m -> m.modifier().amount()).sum();
             h.assertTrue(Math.abs(damage - w.damage()) < 1e-4 && stack.getMaxDamage() == w.durability() && stack.getRarity() == w.rarity(),
                     w.id() + " carries its row's damage, uses and rarity");
-            h.assertTrue(stack.is(ItemTags.SWORDS), w.id() + " is a sword to vanilla (its enchantments)");
+            var tag = switch (w.style()) {
+                case Arms.AXE -> ItemTags.AXES;
+                case Arms.MAUL -> ItemTags.MACE_ENCHANTABLE;
+                case Arms.SPEAR -> ItemTags.SPEARS;
+                default -> ItemTags.SWORDS;
+            };
+            h.assertTrue(stack.is(tag), w.id() + " is in " + tag.location() + " to vanilla (its enchantments)");
             var recipe = ResourceKey.create(Registries.RECIPE, Awaken.id(w.id()));
             h.assertTrue(h.getLevel().getServer().getRecipeManager().byKey(recipe).isPresent(), w.id() + " has its recipe");
             for (String file : new String[]{"items/" + w.id() + ".json", "models/item/" + w.id() + ".json", "models/item/" + w.id() + "_in_hand.json",
@@ -194,6 +200,13 @@ final class ArmsTests {
             String c = ArmsClips.of(m);
             h.assertTrue(c != null && ArmsClips.ALL.contains(c), m + " has a clip");
         }
+        // every style's every move resolves to a clip in the file, its own on its own row (tools/art/specs/arms_moves.py)
+        for (Archetypes.Loaded st : Archetypes.all()) {
+            for (Archetype.Move m : st.moves().keySet()) {
+                String c = ArmsClips.of(st.def().id(), m);
+                h.assertTrue(c != null && anims.has(c) && anims.has(c + "_bent"), st.def().id() + " " + m + ": its clip " + c + " is in the file");
+            }
+        }
         for (String base : ArmsClips.ALL) {
             for (String name : new String[]{base, base + "_bent"}) {
                 h.assertTrue(anims.has(name), name + " is missing from " + ArmsClips.FILE);
@@ -265,6 +278,8 @@ final class ArmsTests {
         h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_FLESH.get(), "a cut into a zombie is flesh");
         h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.HEAVY, heavy) == ArmsSounds.HIT_FLESH_HEAVY.get(), "a heavy into it lands heavy");
         h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.EXECUTION, exec) == ArmsSounds.EXECUTION.get(), "an Execution is its own blow");
+        h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1, Arms.MAUL) == ArmsSounds.HIT_BLUNT.get(), "a maul lands blunt");
+        h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1, Arms.AXE) == ArmsSounds.HIT_FLESH.get(), "an axe cuts as a blade");
         zombie.getAttribute(Attributes.ARMOR).setBaseValue(15);
         h.assertTrue(ArmsSounds.impact(zombie, Archetype.Move.STRIKE_1, s1) == ArmsSounds.HIT_ARMOR.get(), "plate worn over flesh rings as armour");
         LivingEntity skeleton = put(h, EntityTypes.SKELETON, 2, 1, 20), golem = put(h, EntityTypes.IRON_GOLEM, 3, 1, 20),

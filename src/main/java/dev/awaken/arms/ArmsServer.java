@@ -344,7 +344,7 @@ final class ArmsServer {
             pendingBy = pendingTarget = -1;
         }
         if (!pendingLanded) return;
-        p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def), SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
+        p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()), SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
         s.fightAt = now;
         if (s.focus != t.getId()) s.focus = t.getId();
         s.focusSeenAt = now;
