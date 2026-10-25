@@ -61,7 +61,7 @@ public final class BodyPayloads {
     }
 
     /** Run flags: a hang's kind, a ledge jump's way, a shimmy's corner turn. */
-    public static final int HANG_GRAB = 0, HANG_LOWER = 1, HANG_EAVE = 2, JUMP_UP = 0, JUMP_CLIMB = 1, JUMP_SIDE = 2, JUMP_BACK = 3, SHIMMY_START = 0, SHIMMY_CORNER = 2,
+    public static final int HANG_GRAB = 0, HANG_LOWER = 1, HANG_EAVE = 2, JUMP_UP = 0, JUMP_CLIMB = 1, JUMP_SIDE = 2, JUMP_BACK = 3, JUMP_DOWN = 4, SHIMMY_START = 0, SHIMMY_CORNER = 2,
             /** A shimmy starting to the right (as you face the wall); SHIMMY_START is to the left. */
             SHIMMY_START_RIGHT = 3;
 

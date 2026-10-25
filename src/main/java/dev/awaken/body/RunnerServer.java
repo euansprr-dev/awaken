@@ -248,9 +248,10 @@ final class RunnerServer {
             BodyServer.didClip(p, m, Move.LEDGE_JUMP, msg.yaw(), BodyContent.CLIMB, 0.8F, now, BodyClips.MANTLE);
             return true;
         }
-        // up or sideways: the target edge is there (found again within a block) and within the jump's reach
-        double topLo = way == BodyPayloads.JUMP_UP ? m.hangTop + 0.4 : m.hangTop - 1.25;
-        double topHi = way == BodyPayloads.JUMP_UP ? m.hangTop + RunnerRules.ledgeUp(Body.runnerRank(p)) + 0.25 : m.hangTop + 1.25;
+        // up, sideways or down: the target edge is there (found again within a block) and within the jump's (or the drop's) reach
+        double topLo = way == BodyPayloads.JUMP_UP ? m.hangTop + 0.4 : way == BodyPayloads.JUMP_DOWN ? m.hangTop - RunnerRules.DROP_MAX - 0.25 : m.hangTop - 1.25;
+        double topHi = way == BodyPayloads.JUMP_UP ? m.hangTop + RunnerRules.ledgeUp(Body.runnerRank(p)) + 0.25
+                : way == BodyPayloads.JUMP_DOWN ? m.hangTop - RunnerRules.DROP_MIN + 0.25 : m.hangTop + 1.25;
         double ty = msg.ty() + RunnerRules.HANG_DROP;
         if (ty < topLo || ty > topHi) return false;
         RunnerRules.Edge e = RunnerRules.edgeNear(p.level(), ctx, M, msg.tx(), msg.ty(), msg.tz(), m.hangAxis, m.hangSign, ty, 0.3,
@@ -266,6 +267,8 @@ final class RunnerServer {
             double fx = m.hangAxis == 0 ? m.hangSign : 0, fz = m.hangAxis == 2 ? m.hangSign : 0;
             double dx = msg.tx() - msg.sx(), dz = msg.tz() - msg.sz();
             clip = dx * fz - dz * fx > 0 ? BodyClips.LEDGE_SIDE_L : BodyClips.LEDGE_SIDE_R;
+        } else if (way == BodyPayloads.JUMP_DOWN) {
+            clip = BodyClips.GRAB; // the catch on the ledge below
         }
         BodyServer.didClip(p, m, Move.LEDGE_JUMP, msg.yaw(), BodyContent.GRAB, 0.7F, now, clip);
         settleIntoHang(p, m, 9);

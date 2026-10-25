@@ -66,7 +66,7 @@ public final class RunnerMoves {
     static int shimmyDir;
     private static int regrabAt, settleAt, shimmyAt = -100;
     // path
-    static final int GRAB = 0, LOWER = 1, CLIMB = 2, UP = 3, SIDE = 4, CORNER = 5, EAVE = 6;
+    static final int GRAB = 0, LOWER = 1, CLIMB = 2, UP = 3, SIDE = 4, CORNER = 5, EAVE = 6, DROP = 7;
     static int pathKind, pathAge, pathLen, pathStart = -100;
     private static boolean pathToHang;
     private static double ax, ay, az, bx, by, bz, cx, cz;
@@ -585,6 +585,8 @@ public final class RunnerMoves {
             return;
         }
         if (shiftPressed) {
+            // Shift drops to the ledge below when there is one (Euan, 2026-10-25); with back, or with none, lets go
+            if (!k.backward() && dropDown(p, level, ctx, e, now)) return;
             endHang(p, true, "drop");
             regrabAt = now + 8;
             return;
@@ -646,6 +648,21 @@ public final class RunnerMoves {
         ClientMoves.trace("shimmy round the corner");
         turnTo(yawOf(c.fx(), c.fz()), 8);
         startPath(p, CORNER, c.hx(), c.hy(), c.hz(), 8, c, now);
+        return true;
+    }
+
+    /** Shift in a hang: the hands let go and catch the ledge below (RunnerRules.edgeBelow). False when there's none. */
+    private static boolean dropDown(LocalPlayer p, BlockGetter level, CollisionContext ctx, RunnerRules.Edge e, int now) {
+        RunnerRules.Edge below = RunnerRules.edgeBelow(level, ctx, M, holdX, holdY, holdZ, e, 0);
+        if (below == null) return false;
+        send(Move.LEDGE_JUMP, BodyPayloads.JUMP_DOWN, p, below.hx(), below.hy(), below.hz(), below.axis(), below.sign());
+        ClientMoves.trace(String.format("ledge drop %.2f", e.top() - below.top()));
+        leaveHold(p);
+        double fall = e.top() - below.top();
+        startPath(p, DROP, below.hx(), below.hy(), below.hz(), Mth.clamp((int) Math.round(3 + fall * 1.5), 4, 8), below, now);
+        // the catch at the bottom: the hands slam onto the lower lip (the grab's clip, first person's too)
+        BodyAnims.runner(p.getId(), BodyClips.GRAB);
+        BodyFx.sound(p, BodyContent.SHIMMY.get(), 0.45F, 0.8F);
         return true;
     }
 
@@ -815,6 +832,18 @@ public final class RunnerMoves {
             case LOWER, EAVE -> { // out over the edge first, then down to the hold (from a line's top: out, then up)
                 h = smooth(u / 0.4);
                 v = smooth((u - 0.4) / 0.6);
+            }
+            case DROP -> { // to the ledge below: out first when it sticks out, else down first, then in
+                RunnerRules.Edge to = pathEdge;
+                boolean outward = to != null && ((bx - ax) * to.fx() + (bz - az) * to.fz()) < -1e-3;
+                if (outward) {
+                    h = smooth(u / 0.35);
+                    v = (u - 0.35) / 0.65;
+                    v = v <= 0 ? 0 : v >= 1 ? 1 : v * v; // falling: slow off the lip, fast into the catch
+                } else {
+                    v = u * u;
+                    h = smooth((u - 0.7) / 0.3);
+                }
             }
             case CLIMB -> { // up the face first, then over the lip
                 h = smooth((u - 0.5) / 0.5);
