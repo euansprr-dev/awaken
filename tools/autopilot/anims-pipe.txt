@@ -1,12 +1,12 @@
 # Hands P1 (SPEC §17.23, §24): the grip on a drainpipe, in first person and in the shoulder view (run with PACK=feel).
 # A stone-brick wall with a drainpipe up its face. Walk into it (grip, climb hand over hand), stop and look down (the
 # feet on the pipe), Shift to slide (hands loose, grit), let go (brake), Jump + back (kick off). Then the same in the
-# shoulder view. Log: "grip ...". Shots: anims_p1_*.
+# shoulder view. Log: "grip ...". Shots: anims_p1_*. The HUD stays on: vanilla draws no hands at all with it hidden.
 world anims_pipe survival 4247
 waitworld
 window 1440 900
 gui 0
-hud off
+hud on
 cmd gamerule awaken:fauna_spawning false
 cmd gamerule send_command_feedback false
 cmd gamerule spawn_mobs false
@@ -36,7 +36,7 @@ cmd awaken ascent pilot aim 0 -12 5
 wait 10
 info
 # first person: into the pipe and up it
-cmd awaken ascent pilot hold forward 34
+cmd awaken ascent pilot hold forward 46
 wait 24
 shotnow anims_p1_fp_climb
 wait 12

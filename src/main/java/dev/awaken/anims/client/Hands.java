@@ -143,6 +143,8 @@ final class Hands implements FirstPerson.Player {
     static void first(RenderHandEvent e) {
         if (broken) return;
         if (WorldBody.armsThisFrame) {
+            // the world layer's arms take the hand pass: vanilla's hands (and what they hold) step aside
+            if (e.getHand() == InteractionHand.MAIN_HAND) WorldBody.drawArms(e);
             e.setCanceled(true);
             mainPushed = false;
             return;

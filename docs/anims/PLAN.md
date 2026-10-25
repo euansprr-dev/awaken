@@ -251,9 +251,11 @@ FirstPerson.world("body_grip", 100, (partialTick, rig) -> {
     return true;
 });
 ```
-Priorities: movement 100, interactions 200, combat 300 (higher is asked first; the first that returns true wins). While
-the rig shows arms, vanilla's hands (and held items) are hidden; draw a held weapon yourself if the world arms hold one
-(P5's station kit adds item drawing at a limb's end).
+Priorities: movement 100, interactions 200, combat 300 (higher is asked first; the first that returns true wins). Legs
+are drawn in the world with real depth; arms are drawn as viewmodels in the hand pass (each fist where the world puts
+it on screen, pushed out to 0.85 from the eye, the arm rising from under the frame's corner), because true-scale arms a
+third of a block from the eye fill half the frame (P1 tour). While the rig shows arms, vanilla's hands (and held items)
+are hidden; draw a held weapon yourself if the world arms hold one (P5's station kit adds item drawing at a limb's end).
 
 **View layer: moves on top of vanilla's hands and whatever they hold.**
 ```java

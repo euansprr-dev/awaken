@@ -127,8 +127,8 @@ final class GripView {
         rig.fx = fx;
         rig.fz = fz;
         double eye = Mth.lerp(pt, p.yo, p.getY()) + p.getEyeHeight();
-        // the shoulders: a quarter block under the eyes, out to each side
-        double sy = ey - 0.25;
+        // the shoulders, a little low and back (the arms come up into view from the frame's lower corners)
+        double sy = ey - 0.38;
         float t = now + pt;
         // the line's front, where the fists close on it
         double gx = cx - fx * (radius + 0.05), gz = cz - fz * (radius + 0.05);
@@ -156,7 +156,7 @@ final class GripView {
             y = rest + (y - rest) * w;
             hx = holdX + (hx - holdX) * w;
             hz = holdZ + (hz - holdZ) * w;
-            double sx = ex + rx * side * 0.31, sz = ez + rz * side * 0.31;
+            double sx = ex + rx * side * 0.33 - fx * 0.12, sz = ez + rz * side * 0.33 - fz * 0.12;
             // the arm's front faces up the line (the back of the hand toward you)
             rig.reach(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, sx, sy, sz, hx, y, hz, FirstPerson.Rig.ARM_REACH,
                     0, 1, 0, out);
@@ -174,10 +174,7 @@ final class GripView {
             rig.reach(h == 0 ? FirstPerson.Limb.RIGHT_LEG : FirstPerson.Limb.LEFT_LEG, hx, hipY, hz, footX, fy, footZ, FirstPerson.Rig.LEG_REACH,
                     fx, 0, fz, out);
         }
-        // the torso from the neck, leaning a little into the line; pulled back as you look down, so the feet show past it
-        double back = 0.1 + 0.25 * Math.max(0, Mth.sin(p.getViewXRot(pt) * Mth.DEG_TO_RAD));
-        rig.limb(FirstPerson.Limb.BODY, ex - fx * back, ey - 0.12, ez - fz * back, ex + fx * (0.04 - back), ey - 0.87, ez + fz * (0.04 - back),
-                fx, 0, fz, out);
+        // no torso: from inside the head it would only ever be a slab under the camera
         return true;
     }
 }

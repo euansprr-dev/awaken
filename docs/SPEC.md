@@ -3237,12 +3237,16 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
 Euan: "right now for basically everything there is no first-person animation". One owner for everything drawn in first
 person, as the Feel Director is for the camera (module `anims`; public face `core.api.FirstPerson`; built in phases P1-P6
 of the plan). No mixins.
-- **World layer**: your body drawn in the world in first person with real depth (`anims.client.WorldBody`, in
-  `SubmitCustomGeometryEvent`): a `WorldPose` source fills a `FirstPerson.Rig` (each limb from its root toward its tip,
-  its front, a weight; `Rig.reach` slides a rigid limb's root so its fist or foot lands on a spot); the highest priority
-  source that poses this frame wins (movement 100, interactions 200, combat 300). Limbs are parts of a private copy of
-  the player model (vanilla's own is posed by every player in the frame and drawn after submission), with your skin,
-  sleeves and pants. While it shows arms, vanilla's hands step aside. Never in third person.
+- **World layer**: your body in first person, posed in the world (`anims.client.WorldBody`): a `WorldPose` source fills a
+  `FirstPerson.Rig` (each limb from its root toward its tip, its front, a weight; `Rig.reach` slides a rigid limb's root
+  so its fist or foot lands on a spot); the highest priority source that poses this frame wins (movement 100,
+  interactions 200, combat 300). Limbs are parts of a private copy of the player model (vanilla's own is posed by every
+  player in the frame and drawn after submission), with your skin, sleeves and pants. Legs are drawn in the world with
+  real depth (`SubmitCustomGeometryEvent`). Arms are viewmodels (P1 tour: a fist a third of a block from the eye filled
+  half the frame): drawn in the hand pass, each fist where the world puts it on screen but at 0.85 from the eye, the arm
+  rising to it from under the frame's corner on its side (view (±0.5, -0.85, -0.1)); vanilla's hands step aside. No
+  torso (from inside the head it is only a slab under the camera). Never in third person. Like vanilla's hands, none of
+  it shows with the HUD hidden (F1).
 - **View layer** (`anims.client.Hands`, the one owner of `RenderHandEvent`, first for each hand and last for the off
   hand): every `ViewPose` stance adds moves (view space: x right, y up, z toward you, blocks; then pitch, yaw, roll in
   degrees) for both hands, the main or the off hand; the body's stances (sprint, slide, hang, mantle) and the rope's
