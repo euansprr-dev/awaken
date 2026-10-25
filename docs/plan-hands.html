@@ -1,0 +1,318 @@
+<title>AWAKEN Hands</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the Awaken plan-page system (rail + reading column), with key-pose plates for motion */
+:root{
+  --bg:#f2f5f8; --panel:#ffffff; --ink:#0f1a28; --muted:#566273; --line:#d6dde6;
+  --aether:#127e9c; --aether-soft:#dcf0f6; --gold:#9c6f12; --gold-soft:#f6ecd5; --ember:#b23a26; --ember-soft:#f8e2dd; --leaf:#2f7d4a; --leaf-soft:#e0f1e6;
+  --skin:#c99a73; --skin-dark:#9c7353; --stone:#c9d0d8; --pipe:#7d8a96; --sky:#e6eef5;
+  --display:"Unbounded", "Avenir Next", "Segoe UI", sans-serif;
+  --body:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0a111b; --panel:#111b28; --ink:#e4ecf5; --muted:#93a1b3; --line:#243244;
+  --aether:#4cc3e2; --aether-soft:#10303c; --gold:#e2b450; --gold-soft:#33280f; --ember:#ef7b62; --ember-soft:#3a1a14; --leaf:#6cc98b; --leaf-soft:#12301d;
+  --skin:#d4a47c; --skin-dark:#a87c5a; --stone:#2a3646; --pipe:#8c9aa8; --sky:#16212f; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0a111b; --panel:#111b28; --ink:#e4ecf5; --muted:#93a1b3; --line:#243244;
+  --aether:#4cc3e2; --aether-soft:#10303c; --gold:#e2b450; --gold-soft:#33280f; --ember:#ef7b62; --ember-soft:#3a1a14; --leaf:#6cc98b; --leaf-soft:#12301d;
+  --skin:#d4a47c; --skin-dark:#a87c5a; --stone:#2a3646; --pipe:#8c9aa8; --sky:#16212f; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:190px minmax(0,1fr);gap:40px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)} .rail{display:none}}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:40px}
+.rail nav{border-left:2px solid var(--line);margin-left:8px;padding-left:16px;display:flex;flex-direction:column;gap:14px}
+.rail a{color:var(--muted);text-decoration:none;font-size:13px;display:block}
+.rail a:hover,.rail a:focus-visible{color:var(--aether)}
+.rail .y{font:500 11px/1 var(--mono);color:var(--aether);letter-spacing:.04em;display:block;margin-bottom:3px}
+main{min-width:0;padding-top:40px}
+header.hero{padding:8px 0 28px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--aether)}
+h1{font:700 clamp(32px,6vw,54px)/1.04 var(--display);letter-spacing:-.01em;margin:14px 0;text-wrap:balance}
+h1 span{color:var(--gold)}
+.lede{font-size:18px;max-width:66ch}
+h2{font:700 22px/1.2 var(--display);margin:56px 0 8px;text-wrap:balance}
+h2 .n{font:500 13px var(--mono);color:var(--aether);margin-right:10px;vertical-align:3px}
+h3{font:600 17px/1.3 var(--body);margin:28px 0 8px;text-wrap:balance}
+p{max-width:72ch;margin:8px 0}
+.small{font-size:13px;color:var(--muted)}
+ul{max-width:72ch;padding-left:20px;margin:8px 0}
+li{margin:4px 0}
+code,.mono{font-family:var(--mono);font-size:.86em}
+a{color:var(--aether)}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font:500 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.k{font-weight:600;white-space:nowrap}
+td.num,th.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
+.p-a{background:var(--gold-soft);color:var(--gold)}
+.p-b{background:var(--aether-soft);color:var(--aether)}
+.p-hi{background:var(--leaf-soft);color:var(--leaf)}
+.p-cost{background:var(--ember-soft);color:var(--ember)}
+.gap{color:var(--ember);font-weight:600}
+/* key-pose plates */
+.plates{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 10px 12px;min-width:0}
+figure svg{display:block;width:100%;height:auto}
+figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.45}
+figcaption b{color:var(--ink);font-weight:600;display:block;font-size:13px}
+.t{font:500 10px var(--mono);fill:var(--muted)}
+.wall{fill:var(--stone)} .pipe{fill:var(--pipe)} .near{stroke:var(--ink)} .far{stroke:var(--muted);opacity:.55}
+.head{fill:var(--ink)} .acc{stroke:var(--aether);fill:none} .spark{fill:var(--gold)}
+.skin{fill:var(--skin)} .skin2{fill:var(--skin-dark)} .sky{fill:var(--sky)}
+/* options */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}
+.opt{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.opt.rec{border-color:var(--gold);box-shadow:inset 0 3px 0 var(--gold)}
+.opt h4{font:700 15px/1.3 var(--display);margin:0 0 6px}
+.opt .tag{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.opt p{font-size:13.5px;margin:6px 0}
+.opt .con{color:var(--muted)}
+/* layer stack */
+.stack{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:16px;margin:16px 0}
+@media (max-width:700px){.stack{grid-template-columns:minmax(0,1fr)}}
+.layers{display:flex;flex-direction:column;gap:6px}
+.layer{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font-size:13.5px}
+.layer .i{font:500 12px var(--mono);color:var(--aether);padding-top:1px}
+.layer b{font-weight:600}
+.hooks{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 16px;font-size:13.5px}
+.hooks dt{font:500 12.5px var(--mono);color:var(--aether);margin-top:10px}
+.hooks dt:first-child{margin-top:0}
+.hooks dd{margin:2px 0 0}
+.decide{counter-reset:d;list-style:none;padding:0;max-width:78ch}
+.decide li{counter-increment:d;position:relative;padding:10px 0 10px 40px;border-bottom:1px solid var(--line)}
+.decide li::before{content:counter(d);position:absolute;left:0;top:9px;font:700 15px var(--display);color:var(--gold);width:26px;height:26px;border:1.5px solid var(--gold);border-radius:50%;display:grid;place-items:center;font-size:12px}
+.decide .rec{color:var(--leaf);font-weight:600}
+.note{background:var(--aether-soft);border-radius:6px;padding:12px 16px;font-size:14px;max-width:78ch;margin:14px 0}
+@media (prefers-reduced-motion: no-preference){
+  .anim .hand-a{animation:reach 1.4s ease-in-out infinite alternate}
+  .anim .hand-b{animation:reach 1.4s ease-in-out infinite alternate-reverse}
+}
+@keyframes reach{from{transform:translateY(6px)}to{transform:translateY(-10px)}}
+</style>
+
+<div class="wrap">
+<aside class="rail" aria-label="Sections">
+  <nav>
+    <a href="#audit"><span class="y">01</span>What exists</a>
+    <a href="#pipes"><span class="y">02</span>Pipes</a>
+    <a href="#system"><span class="y">03</span>The system</a>
+    <a href="#moves"><span class="y">04</span>Every move</a>
+    <a href="#interact"><span class="y">05</span>Interactions</a>
+    <a href="#phases"><span class="y">06</span>Phases</a>
+    <a href="#decide"><span class="y">07</span>Your decisions</a>
+  </nav>
+</aside>
+<main>
+<header class="hero">
+  <div class="eyebrow">AWAKEN · animation plan · for approval · 25 Oct 2026</div>
+  <h1>Hands: the body you <span>feel</span> in first person</h1>
+  <p class="lede">A real grip on every pipe, with a slide down it. A first-person animation for every move of The Ascent. Hands that do the work at the crafting table, the forge and the door. Everything is built on the clips, curves and springs we already use, so nothing reads as an add-on.</p>
+  <p class="small">Plan only: no game code until you say yes. Full text: <code>docs/anims/PLAN.md</code> on branch <code>pack/fp-anims</code>.</p>
+</header>
+
+<h2 id="audit"><span class="n">01</span>What exists, and the language it speaks</h2>
+<p>Third person is in good shape. First person is mostly empty: five separate listeners each nudge the whole hand stack, and the pipe has no animation in either view.</p>
+<div class="tbl"><table>
+<thead><tr><th>Piece</th><th>How it's made</th><th>Its language</th></tr></thead>
+<tbody>
+<tr><td class="k">Body moves (3P)</td><td>Keyframed Player Animation Library clips, written in Python (<code>body_moves.py</code>, figure terms: lean, twist, ra/la, elbows); vanilla arm poses without the library</td><td>Held loops with a tiny jitter (4-tick period), 5-tick <code>_end</code> settles, 1-3 tick fade-ins, <code>_l/_r</code> by wall side</td></tr>
+<tr><td class="k">Ascent bodies</td><td>Whole-figure transforms (swing pivots at the shoulder, belly down in flight, banked at 1.5× yaw rate) plus clips</td><td>Physics-led: the pose follows the real velocity</td></tr>
+<tr><td class="k">Casts</td><td>3P poses or clips; <b>first person: the arm redrawn in <code>RenderHandEvent</code></b></td><td>In over 15 %, out over 35 %; a 12 % wind-back before a punch; sine ease-outs; a held wind-up trembles</td></tr>
+<tr><td class="k">Camera beats</td><td><code>BodyCamera</code>, <code>FeelDirector</code></td><td>Roll dip 32°, mantle eyes ±9°, wall-run roll 5°; a damped pitch spring; comfort settings everywhere</td></tr>
+<tr><td class="k">Action camera</td><td><code>ActionRig</code> spring through Shoulder Surfing</td><td>Critically damped: trails out, never overshoots</td></tr>
+<tr><td class="k">Creature life</td><td>Procedural springs by bone name and temperament</td><td>Breath, follow-through, weight</td></tr>
+<tr><td class="k">First person today</td><td>Sprint lowers the hands, slide braces them, hang and mantle lift them, the rope lifts one arm; wings show at the frame's edges</td><td class="gap">Whole-hand shifts only, with no owner, so they stack</td></tr>
+<tr><td class="k">Pipes</td><td>Vanilla ladder physics; the free-run pushes up at 0.3 blocks a tick</td><td class="gap">No animation: the body floats</td></tr>
+</tbody></table></div>
+<p class="small">Every new animation keeps the shared rules: ticked state drawn with partial ticks, nothing allocated per frame, blends of 2-4 ticks in and 4-6 out, a small anticipation before big actions, our own sounds and grit, Signal cyan for magic.</p>
+
+<h2 id="pipes"><span class="n">02</span>Pipes: the grip</h2>
+<p>A new Runner state, <b>Grip</b>, on every climb line: drainpipes, trellises, hoist ropes, hanging ladders and ladders. Walk or jump into one, or fall past it holding forward, and the body snaps to it. Both hands go round the pipe and the knees clamp it.</p>
+
+<div class="plates anim" role="group" aria-label="Pipe key poses, side view, wall on the right">
+  <figure>
+    <svg viewBox="0 0 160 200" aria-label="Hold: both hands on the pipe, knees clamped">
+      <rect class="wall" x="122" y="0" width="38" height="200"/><rect class="pipe" x="112" y="0" width="9" height="200"/>
+      <g stroke-linecap="round" stroke-width="8" fill="none">
+        <path class="far" d="M93 78 L110 96"/><path class="far" d="M94 120 L104 150 L111 174"/>
+        <path class="near" d="M91 70 L93 120"/><path class="near" d="M93 76 L110 62"/><path class="near" d="M93 120 L108 138 L111 158"/>
+      </g><circle class="head" cx="92" cy="56" r="10"/>
+      <text class="t" x="6" y="192">0.0 b/t · breath</text>
+    </svg>
+    <figcaption><b>Hold</b>No keys: still, breathing. Vanilla drifts you down; we don't.</figcaption>
+  </figure>
+  <figure>
+    <svg viewBox="0 0 160 200" aria-label="Climb: one hand reaching high, the other pulling low, a knee drawn up">
+      <rect class="wall" x="122" y="0" width="38" height="200"/><rect class="pipe" x="112" y="0" width="9" height="200"/>
+      <g stroke-linecap="round" stroke-width="8" fill="none">
+        <path class="far" d="M93 72 L110 96"/><path class="far" d="M94 116 L103 148 L111 172"/>
+        <path class="near" d="M91 66 L93 116"/><path class="near" d="M93 70 L104 46 L111 30"/><path class="near" d="M93 116 L112 120 L111 146"/>
+      </g><circle class="head" cx="92" cy="52" r="10"/>
+      <path class="acc" stroke-width="2" d="M140 70 L140 40 M134 46 L140 40 L146 46"/>
+      <text class="t" x="6" y="192">0.2 · free-run 0.3</text>
+    </svg>
+    <figcaption><b>Climb</b>Forward: hand over hand, one pair of pulls per 1.1 blocks, so hands never slip.</figcaption>
+  </figure>
+  <figure>
+    <svg viewBox="0 0 160 200" aria-label="Slide: leaning back, hands loose on the pipe, legs wrapped, sparks at the hands">
+      <rect class="wall" x="122" y="0" width="38" height="200"/><rect class="pipe" x="112" y="0" width="9" height="200"/>
+      <g stroke-linecap="round" stroke-width="8" fill="none">
+        <path class="far" d="M86 80 L110 84"/><path class="far" d="M88 124 L106 140 L112 156"/>
+        <path class="near" d="M84 72 L90 124"/><path class="near" d="M86 78 L110 70"/><path class="near" d="M90 124 L110 126 L108 146"/>
+      </g><circle class="head" cx="82" cy="58" r="10"/>
+      <circle class="spark" cx="122" cy="76" r="1.8"/><circle class="spark" cx="126" cy="82" r="1.4"/><circle class="spark" cx="120" cy="88" r="1.2"/>
+      <path class="acc" stroke-width="2" d="M60 20 L60 50 M66 30 L66 60 M54 34 L54 56"/>
+      <text class="t" x="6" y="192">→ 0.65 b/t</text>
+    </svg>
+    <figcaption><b>Slide</b>Hold Shift: grip loosens, palms hiss, grit or sparks off the pipe. Release to brake (4 ticks).</figcaption>
+  </figure>
+  <figure>
+    <svg viewBox="0 0 160 200" aria-label="Kick off: legs pushed against the wall, body thrown back and out">
+      <rect class="wall" x="122" y="0" width="38" height="200"/><rect class="pipe" x="112" y="0" width="9" height="200"/>
+      <g stroke-linecap="round" stroke-width="8" fill="none">
+        <path class="far" d="M66 84 L44 94"/><path class="far" d="M74 122 L96 132 L114 140"/>
+        <path class="near" d="M62 78 L76 120"/><path class="near" d="M64 82 L46 70"/><path class="near" d="M76 120 L98 118 L114 124"/>
+      </g><circle class="head" cx="58" cy="64" r="10"/>
+      <path class="acc" stroke-width="2" d="M40 140 L14 128 M22 124 L14 128 L20 136"/>
+      <text class="t" x="6" y="192">0.5 out · 0.42 up</text>
+    </svg>
+    <figcaption><b>Kick off</b>Jump + back: the ledge back-jump's own numbers, turning to face out.</figcaption>
+  </figure>
+  <figure>
+    <svg viewBox="0 0 160 200" aria-label="First person on the pipe: two hands gripping it at different heights">
+      <rect class="sky" x="0" y="0" width="160" height="200"/><rect class="wall" x="0" y="0" width="160" height="200" opacity=".7"/>
+      <rect class="pipe" x="70" y="0" width="20" height="200"/>
+      <g class="hand-a"><rect class="skin" x="96" y="70" width="64" height="20" transform="rotate(-38 96 80)"/><rect class="skin2" x="80" y="62" width="22" height="20" rx="3"/></g>
+      <g class="hand-b"><rect class="skin" x="-4" y="140" width="72" height="20" transform="rotate(-24 64 150)"/><rect class="skin2" x="58" y="120" width="22" height="20" rx="3"/></g>
+      <text class="t" x="6" y="192">what you see</text>
+    </svg>
+    <figcaption><b>In first person</b>Both hands on the pipe, reaching past your eye line. Look down to see your knees round it.</figcaption>
+  </figure>
+</div>
+
+<div class="tbl"><table>
+<thead><tr><th>Input on a pipe</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td class="k">Nothing</td><td>Hold still. The head looks round freely and the body stays put.</td></tr>
+<tr><td class="k">Forward / free-run</td><td>Climb at 0.2 blocks a tick, or 0.3 with the free-run. At the top, the eave's lip is caught as a hang, then you climb out (as today).</td></tr>
+<tr><td class="k">Shift held → released</td><td>Slide, speeding up to 0.65; release to brake and hold. At the ground the body stands out of a crouch, with no fall damage.</td></tr>
+<tr><td class="k">Jump + back</td><td>Kick off the wall.</td></tr>
+<tr><td class="k">Jump + left / right</td><td>Swing out sideways and catch a pipe or ledge within 3 blocks, or drop clear.</td></tr>
+<tr><td class="k">Jump alone</td><td>Lunge up about 1.2 blocks, at most once every 10 ticks.</td></tr>
+<tr><td class="k">Rope key</td><td>Fire the rope straight from the pipe.</td></tr>
+</tbody></table></div>
+
+<h3>How do you drop off?</h3>
+<div class="opts">
+  <div class="opt rec"><span class="tag">Recommended</span><h4>A · Shift down, Jump off</h4>
+    <p>Hold Shift to slide. Jump + back kicks you off. Ride the slide to the ground to step off.</p>
+    <p class="con">On a ledge, Jump + back already kicks off and Shift already takes you down. No timing to learn, and you can't drop by accident while you slide and brake in short bursts.</p></div>
+  <div class="opt"><span class="tag">Your idea</span><h4>B · Double-tap Shift</h4>
+    <p>Hold Shift to slide; tap twice within 6 ticks to open your hands and fall.</p>
+    <p class="con">Easy to learn, but braking in short bursts (slide, brake, slide) reads as a double-tap and drops you mid-wall.</p></div>
+  <div class="opt"><h4>C · Hold Back</h4>
+    <p>Hold Back for 4 ticks: you lean out and let go.</p>
+    <p class="con">No clash with the slide, but it's a new gesture, and Back means something different on a ledge.</p></div>
+</div>
+<p class="small">Engineering: vanilla caps ladder descent at 0.15 blocks a tick. Our climb blocks override NeoForge's <code>isLadder(state, level, pos, entity)</code> while the body grips, so the grip owns the motion on client and server with no mixin. Vanilla's own ladder gets the grip and every animation, but its slide stays at 0.15. The server checks the grip like a hang. Third-person clips (<code>body_pipe</code>, <code>_hold</code>, <code>_slide</code>, <code>_kick</code>, <code>_side_l/_r</code>, <code>_hop</code>, <code>_land</code>) run at the climb's speed through the library's <code>SpeedModifier</code>.</p>
+
+<h2 id="system"><span class="n">03</span>The first-person system: Hands</h2>
+<p>One owner for everything drawn in first person, as the Feel Director is the one owner of the camera. The five listeners that exist today become inputs to it, so nothing stacks.</p>
+<div class="stack">
+  <div class="layers" aria-label="Layers, top drawn last">
+    <div class="layer"><span class="i">5</span><div><b>Camera beats</b>: stay with the Feel Director and BodyCamera; Hands asks them for a beat.</div></div>
+    <div class="layer"><span class="i">4</span><div><b>Procedural</b>: the hands trail fast turns of the view on a critically damped spring, with breath, grip tremble, landing impacts and speed sway.</div></div>
+    <div class="layer"><span class="i">3</span><div><b>Action</b>: one-shot clips: mantle, ledge-up, vault, landing, kick-off, every interaction and every cast.</div></div>
+    <div class="layer"><span class="i">2</span><div><b>Stance</b>: the body's ongoing state: grip, hang, wall-run, rope, wings, flight.</div></div>
+    <div class="layer"><span class="i">1</span><div><b>Vanilla</b>: held item, swing, equip. Untouched when nothing plays.</div></div>
+  </div>
+  <dl class="hooks">
+    <dt>RenderHandEvent · arms and items</dt><dd>One listener at the highest priority. It cancels vanilla's hands when a layer is active, then draws your arms (skin and sleeves, as the casts already do) and any held prop or item through the item renderer.</dd>
+    <dt>SubmitCustomGeometryEvent · your legs</dt><dd>Your knees on the pipe, legs out in a slide, feet on the wall in a hang. They are drawn in the world with real depth, and only during moves. It steps aside if a full-body first-person mod is installed.</dd>
+    <dt>ComputeCameraAngles · ComputeFov</dt><dd>As today. The hand pass keeps its own FOV, so arms never stretch with the speed FOV.</dd>
+    <dt>No mixins</dt><dd>Every hook above checked in the 26.3 sources. The library's own first-person mode stays off: the library is optional, and its first-person mode runs on mixins.</dd>
+  </dl>
+</div>
+<ul>
+<li><b>Same pipeline as the third-person clips.</b> First-person poses are written in Python (<code>fp_moves.py</code>, <code>fp_interact.py</code>) in the same figure terms and easings, with a preview strip from the eye. They share one timing table with the third-person clips.</li>
+<li><b>Smooth across views.</b> Both clips start from the same event on the same clock, so flipping between first person and the shoulder view mid-move stays in step.</li>
+<li><b>Input never waits.</b> The action happens on the click and the animation catches up. Any input cuts a touch.</li>
+<li><b>Comfort.</b> One switch each for moves, touches and stations, plus one per station. Reduced motion halves every amplitude.</li>
+</ul>
+
+<h2 id="moves"><span class="n">04</span>Every move in first person</h2>
+<div class="tbl"><table>
+<thead><tr><th>Group</th><th>Moves and what your hands do</th></tr></thead>
+<tbody>
+<tr><td class="k">Ground</td><td><b>Tactical sprint</b> hands pump low, in step · <b>Slide</b> lead hand braced, off hand trailing grit, your legs out ahead · <b>Slide-cancel</b> hands thrown up · <b>Roll</b> forearms cross the frame · <b>Vault</b> a palm plants on the top · <b>Mantle</b> both palms slap the lip and press over · <b>Leap</b> arms swing forward · <b>Landing</b> hands drop and spring back; a hard landing puts one hand to the ground</td></tr>
+<tr><td class="k">Walls</td><td><b>Wall-run</b> fingertips brush the wall, grit every 4 ticks · <b>Wall jump</b> the palm shoves off · <b>Wall climb</b> hands slap up the face · <b>Grab / hang</b> both hands slam the lip, fingers over the edge, feet on the wall below · <b>Shimmy</b> hand over hand · <b>Ledge up / side / back / lower / corner</b></td></tr>
+<tr><td class="k">Climb lines</td><td><b>Grip, climb, slide, brake, kick, side swing, hop, top-out</b> (section 02)</td></tr>
+<tr><td class="k">Rope</td><td><b>Fire</b> the arm throws and the wrist flicks · <b>Swing / pump / reel</b> the rope hand high, the other joins to pump, hand over hand to reel · <b>Zip</b> both hands overhead · <b>Release</b> the hand opens and the rope falls away · <b>Flip</b> arms tuck · <b>Carry</b> arms out for balance</td></tr>
+<tr><td class="k">Leaper</td><td><b>Double jump</b> arms thrown down · <b>Air dash</b> the lead fist punches through · <b>Dive slam</b> both fists down, knuckles to the ground</td></tr>
+<tr><td class="k">Wings</td><td><b>Open</b> hands spread to the edges as the wings unfold · <b>Glide</b> arms flat out, fingers trembling with speed · <b>Beat</b> arms sweep · <b>Dive</b> swept back out of view · <b>Roll</b> tucked · <b>Boom</b> raised against it · <b>Fold</b></td></tr>
+<tr><td class="k">Flight</td><td><b>Boost</b> one fist forward · <b>Hover</b> palms down, breathing · <b>Climb</b> arms sweep up</td></tr>
+<tr><td class="k">Sovereign</td><td><b>Ascend</b> palms rise as gold light gathers · <b>In form</b> faintly gold hands · <b>Judgement Fall</b> both fists overhead, then down to the impact</td></tr>
+<tr><td class="k">Elsewhere</td><td><b>Tether Vow</b> the rope binds round the wrist · <b>Updrafts</b> arms lift · <b>Windways</b> · <b>Casts</b> move into Hands with their look unchanged</td></tr>
+</tbody></table></div>
+
+<h2 id="interact"><span class="n">05</span>Cinematic interactions</h2>
+<div class="note"><b>What Cinematic Interactions is.</b> A Fabric mod for workstations. You click a station, the camera leans into a framed view, arms in your own skin rise in, and the crafting table becomes a real 3×3 surface where your hands lay the ingredients. It has hammer strikes at the anvil and page turns at the lectern. It has no NeoForge build for 26.3, does nothing for doors or chests, and runs on about 26 mixins that clash with Shoulder Surfing. So we build our own version, in two families.</div>
+<div class="opts">
+  <div class="opt"><span class="tag" style="color:var(--gold)">Family A</span><h4>Station scenes</h4><p>The view leans in on the opening's camera-shot system. Our screen replaces the vanilla one on the same menu, so every item moves by normal menu clicks and the server stays in charge. Arms are drawn in the world; you point at the surface and click. Lean-in 0.6 s, a tap 0.2 s. Moving, jumping, E or Esc leaves. Sneak + right-click always gives the plain screen.</p></div>
+  <div class="opt"><span class="tag" style="color:var(--aether)">Family B</span><h4>Touches</h4><p>Quick hand moments in the flow of play, on actions that already happened. They last at most 0.3 s and never hold anything up, and any input cuts them.</p></div>
+</div>
+<div class="tbl"><table>
+<thead><tr><th class="num">#</th><th>Moment</th><th>Family</th><th>The hands</th><th>Adds</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td class="k">Doors, trapdoors, gates</td><td><span class="pill p-b">touch</span></td><td>Palm on the edge pushes it through its swing</td><td><span class="pill p-hi">very high</span></td><td>low</td></tr>
+<tr><td class="num">2</td><td class="k">Crafting table</td><td><span class="pill p-a">scene</span></td><td>The 3×3 is the tabletop. Your hand lays each ingredient on its square, where others can see it. "Lay out" places a whole recipe, and the hand takes the result.</td><td><span class="pill p-hi">very high</span></td><td><span class="pill p-cost">high: builds the scene kit</span></td></tr>
+<tr><td class="num">3</td><td class="k">Levers, buttons</td><td><span class="pill p-b">touch</span></td><td>Grip and throw; a finger press</td><td><span class="pill p-hi">high</span></td><td>low</td></tr>
+<tr><td class="num">4</td><td class="k">Herbs and forage</td><td><span class="pill p-b">touch</span></td><td>Pinch, pluck, carried to the hip</td><td><span class="pill p-hi">high</span></td><td>low</td></tr>
+<tr><td class="num">5</td><td class="k">The Forge, anvils</td><td><span class="pill p-a">scene</span></td><td>Blade on the anvil, a hammer strike each click, sparks, the glow cooling</td><td><span class="pill p-hi">high</span></td><td>medium</td></tr>
+<tr><td class="num">6</td><td class="k">Eating, the nine meals</td><td><span class="pill p-b">touch</span></td><td>Bowl up in both hands, a sip</td><td><span class="pill p-hi">high</span></td><td>low-medium</td></tr>
+<tr><td class="num">7</td><td class="k">Chests, the Satchel, caches</td><td><span class="pill p-b">touch</span></td><td>Lid lifted while the server answers; the screen opens at once. Never a scene: storage trips stay instant.</td><td><span class="pill p-hi">high</span></td><td>low-medium</td></tr>
+<tr><td class="num">8</td><td class="k">Campfire, furnaces</td><td><span class="pill p-a">scene</span></td><td>Skewers turned over the fire; food slid into the furnace mouth</td><td>medium-high</td><td>medium</td></tr>
+<tr><td class="num">9</td><td class="k">Journal, notices, Spire Board</td><td><span class="pill p-a">scene</span> <span class="pill p-b">touch</span></td><td>The book held up in view, pages turned by hand; a notice torn off the board</td><td>medium-high</td><td>medium</td></tr>
+<tr><td class="num">10</td><td class="k">Picking up items</td><td><span class="pill p-b">touch</span></td><td>A quick grab as the item flies in</td><td>medium</td><td>low</td></tr>
+<tr><td class="num">11</td><td class="k">Petting creatures</td><td><span class="pill p-b">touch</span></td><td>A hand strokes the creature; the life layer answers</td><td>medium</td><td>low-medium</td></tr>
+<tr><td class="num">12</td><td class="k">Waystones, gates, Hearth anchor</td><td><span class="pill p-b">touch</span></td><td>Palm on the stone; light spreads from the hand</td><td>medium</td><td>medium</td></tr>
+<tr><td class="num">13</td><td class="k">The Ritual of the Bell</td><td><span class="pill p-b">long touch</span></td><td>Both hands on the bell rope; the pull (rare, so it may take 1-2 s)</td><td><span class="pill p-hi">high, once</span></td><td>medium</td></tr>
+<tr><td class="num">14</td><td class="k">Other vanilla stations</td><td><span class="pill p-a">scene</span></td><td>Stonecutter, grindstone, smithing, loom, brewing, enchanting: each its own gesture</td><td>medium</td><td>medium each</td></tr>
+<tr><td class="num">–</td><td class="k">Mining, attacking, placing</td><td>–</td><td>Stay vanilla: they happen too often, and any delay hurts</td><td>–</td><td>–</td></tr>
+</tbody></table></div>
+<p class="small">What we took from the research: the lean-in and the work surface, the escape hatch to the plain screen, short taps, one switch per station, motion in code with springs. What we left out: its 1.2 s lean-in (ours is 0.6 s), the auto-walk, and the mixins. Players complain about slow storage trips, camera motion they didn't cause, and wind-ups that feel like lag; the rules above answer each one.</p>
+
+<h2 id="phases"><span class="n">06</span>Phases, at our pace</h2>
+<p>Scaled from git history: the Tether Vow to Wings and flight took about 2 hours of building, and the Runner tier about 3. One builder per phase, each phase ending with a clip tour in first person and in the shoulder view.</p>
+<div class="tbl"><table>
+<thead><tr><th>Phase</th><th>Scope</th><th class="num">Builder time</th></tr></thead>
+<tbody>
+<tr><td class="k">P1 Pipes and the rig</td><td>Hands (one owner), the clip format, spec tool and preview, your legs in view; the Grip state with its server check, third- and first-person clips, sounds and grit</td><td class="num">3-4 h</td></tr>
+<tr><td class="k">P2 Runner's Kit</td><td>Every ground and wall move in first person</td><td class="num">2-3 h</td></tr>
+<tr><td class="k">P3 The Ascent</td><td>Rope, Leaper, wings, flight, Sovereign, landings</td><td class="num">2-3 h</td></tr>
+<tr><td class="k">P4 Touches</td><td>Doors, levers, herbs, meals, chests, pick-ups, petting</td><td class="num">2-3 h</td></tr>
+<tr><td class="k">P5 Station scenes</td><td>The scene kit and the crafting table, then the Forge, cooking and the Journal. A test checks that a recipe laid out in the scene crafts on the server exactly as in the vanilla screen.</td><td class="num">4-6 h</td></tr>
+<tr><td class="k">P6 The rest</td><td>Waystones and gates, the Ritual, the other vanilla stations</td><td class="num">2-3 h</td></tr>
+<tr><td class="k">Total</td><td>P4 and P5 can swap if you want the crafting table sooner</td><td class="num">15-22 h</td></tr>
+</tbody></table></div>
+
+<h2 id="decide"><span class="n">07</span>What you decide</h2>
+<ol class="decide">
+<li>Dropping off a pipe: <span class="rec">A, Shift slides and Jump + back kicks off</span>, or B (double-tap Shift), or C (hold Back).</li>
+<li>No keys on a pipe: <span class="rec">hold still</span>, or keep vanilla's slow drift.</li>
+<li>Vanilla ladders get the grip too: <span class="rec">yes</span> (their slide stays at vanilla's slower speed).</li>
+<li>See your own legs in first person during moves: <span class="rec">yes, moves only</span>.</li>
+<li>Station scenes in full, with the crafting table as a real 3×3 surface: <span class="rec">yes, in P5</span>, with sneak + right-click for the plain screen. Chests stay quick touches.</li>
+<li>Settings: <span class="rec">one switch each for moves, touches and stations, plus one per station</span>, all on by default.</li>
+<li>Order: <span class="rec">P1 first</span>. It fixes the pipe and builds the rig everything else stands on.</li>
+</ol>
+</main>
+</div>

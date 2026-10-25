@@ -1,6 +1,6 @@
 # Hands: first-person animation for AWAKEN (plan, awaiting Euan's approval)
 
-Status: plan only, 2026-10-25. No game code until Euan approves. Branch `pack/fp-anims`.
+Status: plan only, 2026-10-25. No game code until Euan approves. Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
 Euan's ask: a real pipe climb and slide; first-person animation for every move of The Ascent; "Cinematic
 Interactions"-level hand moments across the mod; all in the design language we already have.
 
