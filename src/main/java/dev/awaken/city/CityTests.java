@@ -742,6 +742,25 @@ final class CityTests {
             h.succeed();
         });
 
+        // a hanging ladder holds while its column reaches a ladder fixed to a wall, and goes (dropping a ladder) when that does
+        AwakenTests.register("city_hanging_ladder", 40, h -> {
+            BlockPos wall = new BlockPos(1, 3, 2), top = new BlockPos(1, 3, 1);
+            BlockState ladder = Blocks.LADDER.defaultBlockState().setValue(net.minecraft.world.level.block.LadderBlock.FACING, Direction.NORTH);
+            BlockState hung = dev.awaken.city.kit.CityKit.HANGING_LADDER.get().defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.LadderBlock.FACING, Direction.NORTH);
+            h.setBlock(wall, Blocks.STONE);
+            h.setBlock(top, ladder);
+            h.setBlock(top.below(), hung);
+            h.setBlock(top.below(2), hung);
+            h.assertTrue(h.getBlockState(top.below(2)).is(dev.awaken.city.kit.CityKit.HANGING_LADDER.get()), "two ladders hang under a fixed one");
+            h.assertTrue(hung.canSurvive(h.getLevel(), h.absolutePos(top.below(2))), "the lower one holds through the one above it");
+            h.assertTrue(!hung.canSurvive(h.getLevel(), h.absolutePos(new BlockPos(3, 3, 1))), "a ladder alone in the air does not hold");
+            h.assertTrue(hung.is(net.minecraft.tags.BlockTags.CLIMBABLE), "a hanging ladder climbs");
+            h.setBlock(wall, Blocks.AIR);
+            h.succeedWhen(() -> h.assertTrue(h.getBlockState(top).isAir() && h.getBlockState(top.below()).isAir()
+                    && h.getBlockState(top.below(2)).isAir(), "with the wall gone the whole ladder comes down"));
+        });
+
         // dev studio: with a request file in the game folder, paint the whole city and dump it for tools/city/render.py
         AwakenTests.register("city_studio_dump", 400, h -> {
             java.nio.file.Path req = h.getLevel().getServer().getServerDirectory().resolve("city-dump.request");

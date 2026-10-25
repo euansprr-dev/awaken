@@ -33,7 +33,7 @@ final class CityViews {
     static final java.util.Set<String> ALONG = java.util.Set.of("market", "bellwatch", "works", "wallring", "garden");
 
     /** Views taken exactly where they say (indoors, underground): never moved onto open ground. */
-    static final java.util.Set<String> EXACT = java.util.Set.of("cellar");
+    static final java.util.Set<String> EXACT = java.util.Set.of("cellar", "quay_ladder");
 
     static {
         // the sky, at dawn in the tour: over the north-west half, across the spire
@@ -84,5 +84,7 @@ final class CityViews {
         add("terrace_wall", -60, 2.0, -132.5, -44, 10, -134);
         add("gate_yard", 0, 14, -268, 0, 8, -244);
         add("cellar", -148.5, 1.0, -58.5, -155, 3, -66);
+        // the 3D ladder: one up the river's lower quay wall, from the lower quay
+        add("quay_ladder", -60.5, -3.0, 11.5, -57.5, -1.5, 15.5);
     }
 }

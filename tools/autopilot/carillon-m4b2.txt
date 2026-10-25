@@ -117,6 +117,9 @@ shot b2_gate_yard
 cmd awaken city view cellar
 wait 100
 shot b2_cellar
+cmd awaken city view quay_ladder
+wait 100
+shot b2_quay_ladder
 # the studio framings M1 recorded (the roofs and the fabric round each landmark)
 cmd awaken city view studio_spire
 wait 120
