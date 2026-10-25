@@ -94,6 +94,11 @@ final class HoloRender {
         }
     }
 
+    /** A world plate ({@link HoloWorld}), drawn exactly as a panel; its pose is set by the caller. */
+    static void submitPlate(SubmitNodeCollector c, Draw d) {
+        submitPanel(c, d);
+    }
+
     static boolean visible(HoloPanel p) {
         return p.anchor == HoloPanel.Anchor.VIEW || p.timeline.active();
     }

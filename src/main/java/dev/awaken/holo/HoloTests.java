@@ -32,6 +32,23 @@ final class HoloTests {
     }
 
     static void register() {
+        // world plates (HoloWorld): their own size up close, and never under the readable minimum however far
+        AwakenTests.register("holo_plate_scale", 20, h -> {
+            float tanY = (float) Math.tan(Math.toRadians(35)); // 70° vertical
+            for (int fbH : new int[]{720, 1080, 1600, 2160}) {
+                h.assertTrue(dev.awaken.holo.ui.PlateScale.unit(2, tanY, fbH) == dev.awaken.holo.ui.PlateScale.WORLD_UNIT, "world-sized up close at " + fbH);
+                float min = dev.awaken.holo.ui.PlateScale.MIN_PX * fbH / 1080f, last = Float.MAX_VALUE;
+                for (int d = 1; d <= 128; d *= 2) {
+                    float ppu = dev.awaken.holo.ui.PlateScale.pixelsPerUnit(d, tanY, fbH);
+                    h.assertTrue(ppu >= min - 1e-3f, "never tiny: " + ppu + " px per unit at " + d + " blocks, " + fbH + " lines");
+                    h.assertTrue(ppu <= last + 1e-3f, "never grows on screen as it goes away");
+                    last = ppu;
+                }
+                // 9-unit text: at 16 blocks on a 1080-line window, at least 15 pixels tall
+                if (fbH == 1080) h.assertTrue(dev.awaken.holo.ui.PlateScale.pixelsPerUnit(16, tanY, fbH) * 9 >= 15, "readable at 16 blocks");
+            }
+            h.succeed();
+        });
         AwakenTests.register("holo_state_rejects_unknown_kind", 40, h -> {
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             List<ServerPlayer> got = new ArrayList<>();

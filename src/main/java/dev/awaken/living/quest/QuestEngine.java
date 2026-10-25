@@ -1,7 +1,9 @@
 package dev.awaken.living.quest;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.HorizonHooks;
 import dev.awaken.living.LivingContent;
+import dev.awaken.living.wayfarer.Scenes;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Requirements;
 import dev.awaken.progression.RewardHooks;
@@ -32,10 +34,41 @@ public final class QuestEngine {
 
     private static void save(ServerPlayer p, QuestState s) {
         p.setData(LivingContent.QUESTS.get(), s); // re-set to sync to the owner
+        journal(p);
+    }
+
+    /** Sends the player's Journal: the chains they took (tracked first) and the bounties on their slate. */
+    public static void journal(ServerPlayer p) {
+        QuestState s = state(p);
+        List<dev.awaken.living.LivingNet.JournalEntry> out = new java.util.ArrayList<>();
+        for (QuestState.Active a : s.active) {
+            QuestDef d = QuestBook.get(a.chain());
+            String l = line(a);
+            if (d == null || l == null) continue;
+            var e = new dev.awaken.living.LivingNet.JournalEntry(d.title(), l, a.chain().equals(s.tracked), false);
+            if (e.tracked()) out.addFirst(e);
+            else out.add(e);
+        }
+        var b = dev.awaken.living.bounty.Bounties.state(p);
+        for (var t : b.taken()) {
+            var d = dev.awaken.living.bounty.Bounties.all().get(t.id());
+            if (d == null) continue;
+            String count = d.objective().type().equals("collect") ? "" : " (" + Math.min(t.progress(), d.objective().count()) + "/" + d.objective().count() + ")";
+            out.add(new dev.awaken.living.LivingNet.JournalEntry(d.title(), dev.awaken.living.bounty.Bounties.task(d) + count, false, true));
+        }
+        dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.Journal(out));
     }
 
     /** Takes a chain on (from a Wayfarer's choice card). False when it can't be taken now, and says why. */
     public static boolean start(ServerPlayer p, String chain) {
+        return start(p, chain, 0L);
+    }
+
+    /**
+     * Takes a chain on from a Wayfarer at a scene ({@code scene} its id; 0 for a resident, who gets a scene made for the
+     * chain's places around the player).
+     */
+    public static boolean start(ServerPlayer p, String chain, long scene) {
         QuestDef d = QuestBook.get(chain);
         QuestState s = state(p);
         if (d == null || s.has(chain) || s.done.contains(chain)) return false;
@@ -44,17 +77,20 @@ public final class QuestEngine {
             return false;
         }
         if (!Requirements.met(p, d.requires())) return false;
-        s.active.add(new QuestState.Active(chain, 0, 0, java.util.Optional.empty(), p.level().getGameTime()));
+        long id = scene != 0 ? scene : Scenes.sceneFor(p, chain);
+        s.active.add(new QuestState.Active(chain, 0, 0, java.util.Optional.of(id), p.level().getGameTime()));
         if (s.tracked.isEmpty()) s.tracked = chain;
         save(p, s);
         Signal.toast(p, Component.literal("Journal · " + d.title()));
-        say(p, d.steps().getFirst().start());
+        begin(p, id, d.steps().getFirst());
         return true;
     }
 
     /** Drops a chain (the Journal's choice); it can be found again later. */
     public static boolean drop(ServerPlayer p, String chain) {
         QuestState s = state(p);
+        s.active.stream().filter(a -> a.chain().equals(chain)).findFirst()
+                .flatMap(QuestState.Active::scene).ifPresent(id -> Scenes.dropped(p.level().getServer(), id));
         boolean removed = s.active.removeIf(a -> a.chain().equals(chain));
         if (removed && s.tracked.equals(chain)) s.tracked = s.active.isEmpty() ? "" : s.active.getFirst().chain();
         if (removed) save(p, s);
@@ -121,9 +157,21 @@ public final class QuestEngine {
         return false;
     }
 
-    /** A step that needs a tier or flag the player lacks waits (and says so, once a minute at most, from the poll). */
-    static boolean blocked(ServerPlayer p, QuestDef.Step step) {
-        return step.needs().isPresent() && !Requirements.met(p, List.of(step.needs().get()));
+    /**
+     * A step that needs a tier or flag the player lacks waits (and says so from the poll). {@code tier:<need>} asks the
+     * Horizon's reach answers (the Ascent's tiers, movement powers); anything else is a progression requirement.
+     */
+    public static boolean blocked(ServerPlayer p, QuestDef.Step step) {
+        if (step.needs().isEmpty()) return false;
+        String need = step.needs().get();
+        if (need.startsWith("tier:")) return !HorizonHooks.can(p, need.substring(5));
+        return !Requirements.met(p, List.of(need));
+    }
+
+    /** A step starts: its opening lines, and whatever it brings to the scene. */
+    private static void begin(ServerPlayer p, long scene, QuestDef.Step step) {
+        sayLines(p, step.start());
+        step.spawn().ifPresent(sp -> Scenes.bring(p, scene, sp));
     }
 
     private static void complete(ServerPlayer p, QuestState s, int i, QuestDef d, QuestDef.Step step) {
@@ -133,20 +181,22 @@ public final class QuestEngine {
             Progression.setCounter(p, claim, 1);
             RewardHooks.apply(p, step.reward(), Progression.XpSource.WORLD);
         }
-        say(p, step.done());
+        sayLines(p, step.done());
+        step.move().ifPresent(m -> a.scene().ifPresent(id -> Scenes.move(p.level().getServer(), id, m)));
         int next = a.step() + 1;
         if (next >= d.steps().size()) {
             finish(p, s, i, d);
         } else {
             s.active.set(i, a.withStep(next));
             QuestDef.Step n = d.steps().get(next);
-            say(p, n.start());
+            begin(p, a.scene().orElse(0L), n);
             Signal.toast(p, Component.literal(d.title() + " · " + n.text()));
         }
     }
 
     private static void finish(ServerPlayer p, QuestState s, int i, QuestDef d) {
         String chain = s.active.get(i).chain();
+        s.active.get(i).scene().ifPresent(id -> Scenes.done(p.level().getServer(), id));
         s.active.remove(i);
         s.done.add(chain);
         if (s.tracked.equals(chain)) s.tracked = s.active.isEmpty() ? "" : s.active.getFirst().chain();
@@ -174,11 +224,44 @@ public final class QuestEngine {
     }
 
     /** Wayfarer lines: "Name: text" shows as a story line. */
-    static void say(ServerPlayer p, List<String> lines) {
+    public static void sayLines(ServerPlayer p, List<String> lines) {
         for (String l : lines) {
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(l))
                     .presentation(SignalWindow.Presentation.STORY).ttl(20 * 5).build());
         }
+    }
+
+    public static void sayLine(ServerPlayer p, String line) {
+        sayLines(p, List.of(line));
+    }
+
+    /** Hands over what a step asked for (an item and count); true when it was there and the step moved on. */
+    public static boolean deliver(ServerPlayer p, String chain, String item, int count) {
+        if (count(p, item) < count) return false;
+        int left = count;
+        var inv = p.getInventory();
+        boolean tag = item.startsWith("#");
+        var tagKey = tag ? net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, net.minecraft.resources.Identifier.parse(item.substring(1))) : null;
+        for (int i = 0; i < inv.getContainerSize() && left > 0; i++) {
+            ItemStack st = inv.getItem(i);
+            if (st.isEmpty()) continue;
+            if (tag ? st.is(tagKey) : BuiltInRegistries.ITEM.getKey(st.getItem()).toString().equals(item)) {
+                int take = Math.min(left, st.getCount());
+                st.shrink(take);
+                left -= take;
+            }
+        }
+        QuestState s = state(p);
+        for (int i = 0; i < s.active.size(); i++) {
+            QuestState.Active a = s.active.get(i);
+            if (!a.chain().equals(chain)) continue;
+            QuestDef d = QuestBook.get(chain);
+            if (d == null || a.step() >= d.steps().size()) return false;
+            complete(p, s, i, d, d.steps().get(a.step()));
+            save(p, s);
+            return true;
+        }
+        return false;
     }
 
     // ---- events -----------------------------------------------------------------------------------------------------
@@ -200,8 +283,11 @@ public final class QuestEngine {
             QuestDef.Objective o = d.steps().get(a.step()).objective();
             switch (o.type()) {
                 case "reach" -> {
-                    BlockPos at = a.scene().map(BlockPos::of).orElse(null);
-                    if (at != null && p.blockPosition().closerThan(at, o.radius())) hold(p, "reach", o.target(), 1);
+                    BlockPos at = a.scene().map(id -> Scenes.marker(p.level().getServer(), id, o.target())).orElse(null);
+                    if (at == null || !p.blockPosition().closerThan(at, o.radius() + 16)) continue;
+                    QuestDef.Step step = d.steps().get(a.step());
+                    if (blocked(p, step)) waiting(p, step);
+                    else if (p.blockPosition().closerThan(at, o.radius())) hold(p, "reach", o.target(), 1);
                 }
                 case "collect" -> hold(p, "collect", o.target(), count(p, o.target()));
                 case "discover" -> {
@@ -210,6 +296,12 @@ public final class QuestEngine {
                 default -> {}
             }
         }
+    }
+
+    /** A tier-gated step at its place says what it waits for, once a minute at most. */
+    private static void waiting(ServerPlayer p, QuestDef.Step step) {
+        if (!blocked(p, step) || step.needsText().isEmpty() || p.level().getGameTime() % 1200 >= 20) return;
+        Signal.toast(p, Component.literal(step.needsText()));
     }
 
     static int count(ServerPlayer p, String target) {

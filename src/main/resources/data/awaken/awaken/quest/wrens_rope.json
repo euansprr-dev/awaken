@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "title": "Wren's Rope",
+  "band": 1,
+  "requires": ["level:8"],
+  "scene": "cliff",
+  "giver": "wren",
+  "summary": "Someone cut Wren's line and left her on a ledge. Get her down, then find out what happened to her crate.",
+  "ask": [
+    "Wren: Hi! Hello. Up here. Please don't laugh.",
+    "Wren: Somebody cut my line. I had a crate of bell bronze for the city, and now I have a ledge."
+  ],
+  "steps": [
+    {
+      "id": "down",
+      "objective": { "type": "talk", "target": "wren" },
+      "text": "Get Wren down with your rope",
+      "needs": "tier:tether",
+      "needs_text": "Wren's ledge is a rope's reach. You'll need the Tether to bring her down.",
+      "move": "foot",
+      "done": [
+        "Wren: Oh, that's a good rope. Okay. Don't look down. I'm looking down.",
+        "Wren: The crate went over when the line went. It must be down there somewhere."
+      ],
+      "reward": { "levels": 0.15 }
+    },
+    {
+      "id": "crate",
+      "objective": { "type": "reach", "target": "site", "radius": 8 },
+      "text": "Find where Wren's crate fell",
+      "done": ["Splinters and straw. No crate. Three sets of boot prints, heading away from the road."]
+    },
+    {
+      "id": "tell",
+      "objective": { "type": "talk", "target": "wren" },
+      "text": "Tell Wren the crate is gone",
+      "done": [
+        "Wren: Taken? Out here? Nobody walks out here but Runners and idiots.",
+        "Wren: The Association has to hear about this. Here, my spare hook. It throws further than the Guild ones. Don't tell them I said so."
+      ]
+    }
+  ],
+  "relic": "awaken:wrens_hook",
+  "finish": { "levels": 0.6 }
+}

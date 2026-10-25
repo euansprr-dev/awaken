@@ -99,6 +99,7 @@ public final class AscentRemote {
             }
             case AscentPayloads.EV_SOVEREIGN_END -> {
                 if (e == mc.player) SovereignClient.end();
+                else SovereignClient.seen(e, false);
             }
             case AscentPayloads.EV_JUDGEMENT -> SovereignClient.judgement(e, msg.speed(), e == mc.player);
             case AscentPayloads.EV_REMEMBER -> {
