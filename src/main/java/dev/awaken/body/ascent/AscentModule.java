@@ -35,8 +35,12 @@ public final class AscentModule {
         AscentTests.register();
         // sky platforms: the ladder of rings and the Wings core, placed once as each platform loads (SPEC §17.9)
         dev.awaken.above.ruin.SkyRig.register(bus);
+        // the hero trees' crowns and ring routes, placed once as each tree loads (SPEC §17.16)
+        HeroCrowns.register(bus);
         // the Ascension trials staged in gates: the leap given at the Leaper's Gauntlet (SPEC §17.10)
         AscentTrials.register();
+        // each tier's tip as it's given (Carillon's tip system; SPEC §17.17)
+        AscentTips.register();
         // updraft vents are moving air for the free states (the list is filled on the client only)
         dev.awaken.core.api.AirHooks.register(Updrafts::airAt);
         // windways between sky platforms: lanes found round each player, synced to them (SPEC §17.12)

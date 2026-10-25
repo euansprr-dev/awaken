@@ -1,0 +1,35 @@
+# The hero trees' crowns (SPEC §17.16): a Lumen Spire and an Elder Colossus grown and crowned on open ground, seen at
+# night from the ground past its roots (the command stands you there): the Lumen's spiral of glowing rings, its night route.
+world ascent_crown1 survival 4246
+waitworld
+window 1440 900
+gui 0
+hud off
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 18000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd tp @s 0.5 120 0.5 0 0
+wait 100
+cmd awaken ascent crown grow lumen
+wait 80
+shotnow crown_lumen_night
+cmd tp @s 60.5 120 60.5 0 0
+wait 100
+cmd awaken ascent crown grow colossus
+wait 80
+shotnow crown_colossus
+cmd time set 6000
+wait 20
+shotnow crown_colossus_day
+info
+quit

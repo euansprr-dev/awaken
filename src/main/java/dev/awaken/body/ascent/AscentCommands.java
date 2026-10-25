@@ -46,6 +46,15 @@ final class AscentCommands {
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
             ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource()))));
+            ascent.then(Commands.literal("crown").then(Commands.literal("grow")
+                    .then(Commands.literal("colossus").executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS, 7919L))
+                            .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
+                                    .executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS,
+                                            com.mojang.brigadier.arguments.LongArgumentType.getLong(c, "seed")))))
+                    .then(Commands.literal("lumen").executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.LUMEN_SPIRE, 7919L))
+                            .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
+                                    .executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.LUMEN_SPIRE,
+                                            com.mojang.brigadier.arguments.LongArgumentType.getLong(c, "seed")))))));
             ascent.then(Commands.literal("windway").executes(c -> windwayInfo(c.getSource()))
                     .then(Commands.literal("goto").executes(c -> windwayGoto(c.getSource()))));
             ascent.then(Commands.literal("pilot").then(Commands.argument("line", StringArgumentType.greedyString())
@@ -105,6 +114,31 @@ final class AscentCommands {
         }
         src.sendFailure(Component.literal("Found a platform near " + at.toShortString() + " but no start in its chunks"));
         return 0;
+    }
+
+    /**
+     * Grows a hero tree where you stand (as /awaken terrain hero does), crowns it at once with its ring route, and stands
+     * you on the ground past its roots looking up at it.
+     */
+    private static int crownGrow(CommandSourceStack src, dev.awaken.terrain.hero.HeroTree tree, long seed) {
+        net.minecraft.server.level.ServerLevel level = src.getLevel();
+        var at = net.minecraft.core.BlockPos.containing(src.getPosition());
+        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ());
+        var centre = new net.minecraft.core.BlockPos(at.getX(), y, at.getZ());
+        var piece = new dev.awaken.terrain.hero.HeroPiece(tree, centre, seed);
+        piece.build(level, piece.getBoundingBox());
+        HeroCrowns.Layout l = HeroCrowns.layout(tree, dev.awaken.terrain.hero.HeroWorldgen.blueprint(tree, seed), seed);
+        HeroCrowns.rig(level, tree, centre, seed, l);
+        var crown = centre.offset(l.crown());
+        // out of the trunk: on the ground just past the tree's reach to the south, looking up at it
+        if (src.getEntity() instanceof ServerPlayer p) {
+            int z = piece.getBoundingBox().maxZ() + 3;
+            int gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, centre.getX(), z);
+            p.teleportTo(level, centre.getX() + 0.5, gy, z + 0.5, java.util.Set.of(), 180, -35, true);
+        }
+        src.sendSuccess(() -> Component.literal(String.format("Grew and crowned %s (seed %d): crown at %s, %d rings", tree.getSerializedName(), seed,
+                crown.toShortString(), l.rings().size())).withStyle(ChatFormatting.AQUA), false);
+        return l.rings().size();
     }
 
     /** The windways the server knows, and the nearest to you. */

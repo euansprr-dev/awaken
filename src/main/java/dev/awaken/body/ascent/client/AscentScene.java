@@ -39,6 +39,8 @@ final class AscentScene {
 
     static void tick(LocalPlayer p) {
         Minecraft mc = Minecraft.getInstance();
+        // a gift's scene holds every tip back (its own tip comes after)
+        dev.awaken.core.api.TipHooks.client().hold(AscentScene.class, age >= 0);
         if (pending != 0 && age < 0) {
             boolean free = mc.gui.screen() == null && p.onGround() && !AscentMoves.active();
             // never lost: after 30 s it plays wherever you are; the chasm's moment plays at once

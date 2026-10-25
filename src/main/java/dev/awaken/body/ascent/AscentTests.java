@@ -26,6 +26,7 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
         AwakenTests.register("ascent_windway", 20, AscentTests::windway);
         AwakenTests.register("ascent_slow_beat", 20, AscentTests::slowBeat);
+        AwakenTests.register("ascent_hero_crowns", 100, AscentTests::heroCrowns);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -744,6 +745,49 @@ final class AscentTests {
         double da = Math.hypot(a.x, a.y), err = Math.hypot(a.x - b.x, a.y - b.y);
         h.assertTrue(err < da * 0.06 && b.vy < a.vy + 0.05 && b.vy > a.vy - 0.05,
                 "20 slow ticks fly 9 ticks' arc: " + String.format("(%.2f, %.2f) vs (%.2f, %.2f)", b.x, b.y, a.x, a.y));
+        h.succeed();
+    }
+    /**
+     * The hero trees' crowns (SPEC §17.16), from each tree's own blueprint over eight seeds: the crown on the highest
+     * cell over the trunk with room to stand, a route of rings up the trunk (two or more on the Colossus, one or more on
+     * the Lumen Spire), each ring in air with room to hang under it, the first within a throw of the ground, each next
+     * one a zip from the last (6+ up, sideways under 0.45 of the rise).
+     */
+    private static void heroCrowns(GameTestHelper h) {
+        StringBuilder sb = new StringBuilder();
+        for (dev.awaken.terrain.hero.HeroTree tree : new dev.awaken.terrain.hero.HeroTree[]{dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS,
+                dev.awaken.terrain.hero.HeroTree.LUMEN_SPIRE}) {
+            boolean colossus = tree == dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS;
+            for (long seed = 1; seed <= 8; seed++) {
+                dev.awaken.terrain.hero.Blueprint bp = dev.awaken.terrain.hero.HeroWorldgen.blueprint(tree, seed * 7919L);
+                HeroCrowns.Layout l = HeroCrowns.layout(tree, bp, seed);
+                String id = tree.getSerializedName() + " #" + seed;
+                BlockPos c = l.crown();
+                h.assertTrue(bp.get(c.getX(), c.getY(), c.getZ()) == 0 && bp.get(c.getX(), c.getY() + 1, c.getZ()) == 0
+                        && bp.get(c.getX(), c.getY() - 1, c.getZ()) != 0, id + ": the crown stands on the tree's top at " + c.toShortString());
+                for (int x = -HeroCrowns.SUMMIT_REACH; x <= HeroCrowns.SUMMIT_REACH; x++) for (int z = -HeroCrowns.SUMMIT_REACH; z <= HeroCrowns.SUMMIT_REACH; z++) {
+                    if (x * x + z * z <= HeroCrowns.SUMMIT_REACH * HeroCrowns.SUMMIT_REACH) {
+                        h.assertTrue(bp.get(x, c.getY(), z) == 0 || x == c.getX() && z == c.getZ() || bp.get(x, c.getY(), z) == 0,
+                                id + ": nothing over the trunk is higher than the crown's foot");
+                    }
+                }
+                int need = colossus ? 2 : 1;
+                h.assertTrue(l.rings().size() >= need, id + ": " + l.rings().size() + " rings up the trunk (want " + need + "+)");
+                BlockPos last = null;
+                for (BlockPos r : l.rings()) {
+                    for (int dy = -2; dy <= 3; dy++) h.assertTrue(bp.get(r.getX(), r.getY() + dy, r.getZ()) == 0, id + ": room at the ring " + r.toShortString());
+                    if (last == null) {
+                        h.assertTrue(r.getY() >= 6 && r.getY() <= 30, id + ": the first ring is a throw from the ground (" + r.getY() + " up)");
+                    } else {
+                        double rise = r.getY() - last.getY(), side = Math.hypot(r.getX() - last.getX(), r.getZ() - last.getZ());
+                        h.assertTrue(rise >= 6 && side < rise * AscentRules.ZIP_UP_SLOPE, String.format("%s: ring to ring a zip (%.0f up, %.1f across)", id, rise, side));
+                    }
+                    last = r;
+                }
+                sb.append(String.format("%s: crown %d up, %d rings to %d%n", id, c.getY(), l.rings().size(), last == null ? 0 : last.getY()));
+            }
+        }
+        dev.awaken.Awaken.LOG.info("[ascent] hero crowns:\n{}", sb);
         h.succeed();
     }
 }
