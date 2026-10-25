@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Leather for the Ledgers",
+  "band": 0,
+  "objective": {
+    "type": "collect",
+    "target": "minecraft:leather",
+    "count": 8
+  },
+  "levels": 0.15,
+  "essence": 0,
+  "requires": [],
+  "text": "The ledgers are held together by straps and optimism. Bring leather."
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Feed for the Horses",
+  "band": 0,
+  "objective": {
+    "type": "collect",
+    "target": "minecraft:wheat",
+    "count": 24
+  },
+  "levels": 0.15,
+  "essence": 0,
+  "requires": [],
+  "text": "The stable eats more than the Commons grows. Wheat, and plenty."
+}

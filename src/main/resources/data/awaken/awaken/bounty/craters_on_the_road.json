@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Craters on the Road",
+  "band": 0,
+  "objective": {
+    "type": "kill",
+    "target": "minecraft:creeper",
+    "count": 3
+  },
+  "levels": 0.2,
+  "essence": 2,
+  "requires": [],
+  "text": "Third crater this month. Retire the cause, preferably from a distance."
+}

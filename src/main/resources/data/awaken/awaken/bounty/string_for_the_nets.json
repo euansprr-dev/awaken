@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "String for the Nets",
+  "band": 0,
+  "objective": {
+    "type": "collect",
+    "target": "minecraft:string",
+    "count": 16
+  },
+  "levels": 0.18,
+  "essence": 1,
+  "requires": [],
+  "text": "The net-menders are out of string and nearly out of patience."
+}

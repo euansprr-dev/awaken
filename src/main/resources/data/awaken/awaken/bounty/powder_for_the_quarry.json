@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Powder for the Quarry",
+  "band": 1,
+  "objective": {
+    "type": "collect",
+    "target": "minecraft:gunpowder",
+    "count": 12
+  },
+  "levels": 0.22,
+  "essence": 2,
+  "requires": [],
+  "text": "The quarry crew wants to move a mountain. Twelve gunpowder, and a safe distance."
+}

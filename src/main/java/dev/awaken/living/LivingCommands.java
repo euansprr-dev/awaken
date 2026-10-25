@@ -48,6 +48,71 @@ final class LivingCommands {
                 LevelMoments.offer(p, Progression.profile(p).level(), 1);
                 return 1;
             }));
+            // Wayfarers (Phase C): a person here, a talk with the nearest (no use key in the autopilot), a scene now
+            l.then(Commands.literal("wayfarer").requires(AwakenCommands.admin())
+                    .then(Commands.argument("who", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        String who = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "who");
+                        if (dev.awaken.living.wayfarer.Wayfarers.get(who) == null) {
+                            c.getSource().sendFailure(Component.literal("Nobody called " + who + "."));
+                            return 0;
+                        }
+                        Vec3 at = p.position().add(p.getLookAngle().multiply(1, 0, 1).normalize().scale(3));
+                        dev.awaken.living.wayfarer.Scenes.summon(p.level(), who, net.minecraft.core.BlockPos.containing(at));
+                        return 1;
+                    })));
+            l.then(Commands.literal("camp").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var at = dev.awaken.living.wayfarer.Scenes.campStand(p.level().getServer());
+                p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(), 180F, 10F, true);
+                return 1;
+            }));
+            // tours: stand <distance> blocks south of your newest open scene, facing it (to see its flare)
+            l.then(Commands.literal("view").requires(AwakenCommands.admin())
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 400)).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        var scene = dev.awaken.living.wayfarer.Scenes.newest(p);
+                        if (scene == null) return 0;
+                        int d = IntegerArgumentType.getInteger(c, "distance");
+                        ServerLevel level = p.level().getServer().overworld();
+                        int x = scene.getX(), z = scene.getZ() + d;
+                        level.getChunk(x >> 4, z >> 4);
+                        // above the canopy round the spot, on a small glass stand (a tour's camera, never inside leaves)
+                        int y = 0;
+                        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
+                            y = Math.max(y, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x + dx, z + dz));
+                        y += d > 20 ? 6 : 1;
+                        if (d > 20) for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++)
+                            level.setBlock(new net.minecraft.core.BlockPos(x + dx, y - 1, z + dz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
+                        float pitch = (float) -Math.toDegrees(Math.atan2(scene.getY() + 20 - (y + 1.6), d));
+                        p.teleportTo(level, x + 0.5, y, z + 0.5, java.util.Set.of(), 180F, pitch, true);
+                        return 1;
+                    })));
+            l.then(Commands.literal("talk").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var near = p.level().getEntitiesOfClass(dev.awaken.living.wayfarer.Wayfarer.class, p.getBoundingBox().inflate(24));
+                near.sort(java.util.Comparator.comparingDouble(w -> w.distanceToSqr(p)));
+                if (near.isEmpty()) return 0;
+                dev.awaken.living.wayfarer.Wayfarers.talkTo(p, near.getFirst());
+                return 1;
+            }));
+            l.then(Commands.literal("scene").requires(AwakenCommands.admin())
+                    .then(Commands.argument("chain", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        var at = dev.awaken.living.wayfarer.Scenes.force(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "chain"));
+                        c.getSource().sendSuccess(() -> Component.literal(at == null ? "No such chain." : "Scene at " + at.toShortString()), false);
+                        return at == null ? 0 : 1;
+                    })));
+            l.then(Commands.literal("quests").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var s = dev.awaken.living.quest.QuestEngine.state(p);
+                for (var a : s.active()) {
+                    String line = dev.awaken.living.quest.QuestEngine.line(a);
+                    c.getSource().sendSuccess(() -> Component.literal(a.chain() + " · step " + a.step() + " · " + line), false);
+                }
+                c.getSource().sendSuccess(() -> Component.literal(s.active().size() + " active, " + s.done().size() + " done"), false);
+                return 1;
+            }));
             root.then(l);
         });
     }

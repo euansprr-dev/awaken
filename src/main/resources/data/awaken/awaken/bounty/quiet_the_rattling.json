@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Quiet the Rattling",
+  "band": 0,
+  "objective": {
+    "type": "kill",
+    "target": "minecraft:skeleton",
+    "count": 4
+  },
+  "levels": 0.18,
+  "essence": 1,
+  "requires": [],
+  "text": "Skeletons on the east road again. The Association's horses have opinions about arrows."
+}
