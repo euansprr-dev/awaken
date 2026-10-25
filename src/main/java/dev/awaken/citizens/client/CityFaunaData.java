@@ -10,27 +10,33 @@ public final class CityFaunaData {
     private CityFaunaData() {}
 
     /** Each animal's variants (texture suffixes, weighted by repetition). */
-    public static final java.util.Map<String, List<String>> VARIANTS = java.util.Map.of(
-            "city_pigeon", List.of("slate", "slate", "white", "brown"),
-            "city_gull", List.of(""),
-            "city_cat", List.of("ginger", "grey", "black", "calico"),
-            "city_dog", List.of("terrier", "collie", "hound"),
-            "city_horse", List.of("bay", "grey", "chestnut", "black"),
-            "city_cart", List.of(""),
-            "city_boat", List.of("tar", "blue", "green", "ochre"),
-            "city_hand_lantern", List.of("")
+    public static final java.util.Map<String, List<String>> VARIANTS = java.util.Map.ofEntries(
+            java.util.Map.entry("city_pigeon", List.of("slate", "slate", "white", "brown")),
+            java.util.Map.entry("city_gull", List.of("")),
+            java.util.Map.entry("city_cat", List.of("ginger", "grey", "black", "calico")),
+            java.util.Map.entry("city_dog", List.of("terrier", "collie", "hound")),
+            java.util.Map.entry("city_horse", List.of("bay", "grey", "chestnut", "black")),
+            java.util.Map.entry("city_cart", List.of("")),
+            java.util.Map.entry("city_boat", List.of("tar", "blue", "green", "ochre")),
+            java.util.Map.entry("city_hand_lantern", List.of("")),
+            java.util.Map.entry("city_prop_rope", List.of("")),
+            java.util.Map.entry("city_prop_net", List.of("")),
+            java.util.Map.entry("city_prop_parcel", List.of(""))
     );
 
     /** Render scale per animal (designed larger than it stands). */
-    static final java.util.Map<String, Float> SCALE = java.util.Map.of(
-            "city_pigeon", 0.6F,
-            "city_gull", 0.75F,
-            "city_cat", 0.7F,
-            "city_dog", 0.8F,
-            "city_horse", 1.0F,
-            "city_cart", 1.0F,
-            "city_boat", 1.0F,
-            "city_hand_lantern", 0.9F
+    static final java.util.Map<String, Float> SCALE = java.util.Map.ofEntries(
+            java.util.Map.entry("city_pigeon", 0.6F),
+            java.util.Map.entry("city_gull", 0.75F),
+            java.util.Map.entry("city_cat", 0.7F),
+            java.util.Map.entry("city_dog", 0.8F),
+            java.util.Map.entry("city_horse", 1.0F),
+            java.util.Map.entry("city_cart", 1.0F),
+            java.util.Map.entry("city_boat", 1.0F),
+            java.util.Map.entry("city_hand_lantern", 0.9F),
+            java.util.Map.entry("city_prop_rope", 0.8F),
+            java.util.Map.entry("city_prop_net", 0.9F),
+            java.util.Map.entry("city_prop_parcel", 0.8F)
     );
 
     /** Every rig's source text, in order. */
@@ -698,6 +704,64 @@ public final class CityFaunaData {
                 track lantern rot 2 0 0 0 0 1 0.3 0 0 0 1
                 clip death 0.3 0
                 track lantern rot 2 0 0 0 0 1 0.3 0 0 0 1
+                """
+            },
+            // city_prop_rope
+            new String[] {
+                """
+                rig city_prop_rope 32 32 0 1 2 0.1 0.2 0
+                bone rope - 0 0 0 0 0 0
+                cube 14 0 -3 -0.5 -1 6 1 2 0 0
+                cube 0 0 2.5 0 -1 1 7 2 0 0
+                cube 0 0 -3.5 0 -1 1 7 2 0 0
+                cube 14 0 -3 6.5 -1 6 1 2 0 0
+                bone loop2 rope 0 0.5 1.2 0 0 0.1571
+                cube 14 3 -2.5 -0.5 -0.5 5 1 1 0 0
+                cube 6 0 2 0 -0.5 1 7 1 0 0
+                cube 6 0 -3 0 -0.5 1 7 1 0 0
+                cube 14 3 -2.5 6.5 -0.5 5 1 1 0 0
+                bone tail rope -3 7 0 0 0 0
+                cube 10 0 -0.5 0 -0.5 1 5 1 0 -0.1
+                clip idle 2 1
+                track tail rot 3 0 0 0 0 1 1 6 0 8 1 2 0 0 0 1
+                clip hurt 0.3 0
+                track rope rot 2 0 0 0 0 1 0.3 0 0 0 1
+                clip death 0.3 0
+                track rope rot 2 0 0 0 0 1 0.3 0 0 0 1
+                """
+            },
+            // city_prop_net
+            new String[] {
+                """
+                rig city_prop_net 64 32 0 1 2 0.1 0.2 0
+                bone net - 0 0 0 0 0 0
+                cube 34 0 -7 -0.5 -0.5 14 1 1 0 0
+                cube 0 0 -7 0.5 0 14 11 0 0 0
+                cube 28 0 -6.5 -1 -1 1 2 2 0 0
+                cube 28 0 -2.5 -1 -1 1 2 2 0 0
+                cube 28 0 1.5 -1 -1 1 2 2 0 0
+                cube 28 0 5.5 -1 -1 1 2 2 0 0
+                clip idle 2.4 1
+                track net rot 3 0 0 0 0 1 1.2 4 0 2 1 2.4 0 0 0 1
+                clip hurt 0.3 0
+                track net rot 2 0 0 0 0 1 0.3 0 0 0 1
+                clip death 0.3 0
+                track net rot 2 0 0 0 0 1 0.3 0 0 0 1
+                """
+            },
+            // city_prop_parcel
+            new String[] {
+                """
+                rig city_prop_parcel 32 32 0 1 2 0.1 0.2 0
+                bone parcel - 0 0 0 0 0 0
+                cube 0 0 -2.5 0 -2 5 4 4 0 0
+                cube 18 0 -0.5 -0.8 -0.5 1 1 1 0 -0.1
+                clip idle 1 1
+                track parcel rot 2 0 0 0 0 1 1 0 0 0 1
+                clip hurt 0.3 0
+                track parcel rot 2 0 0 0 0 1 0.3 0 0 0 1
+                clip death 0.3 0
+                track parcel rot 2 0 0 0 0 1 0.3 0 0 0 1
                 """
             }
     );

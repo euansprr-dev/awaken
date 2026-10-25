@@ -1,6 +1,8 @@
-# Carillon M4 B3b, the Watch's lantern in 3D (Euan): close framings of a watchman at night (walking toward the camera,
-# from his lantern's side, from about eight blocks), then the drawn light's frame time on the Watch's round (the same
-# 20 s window as B3b's A/B, glow p99 about 19 ms then) and the light-block writes (0 expected).
+# Carillon M4 B3b, after Euan's playtest: the boatmen at their berths in the morning (each his own, coiling, bailing,
+# loading, fending off; the crane pickups spread), the quay's crowd for the look-at (at most one or two glance), then
+# the Watch's lantern in 3D at night (walking toward the camera, from his lantern's side, from about eight blocks), the
+# drawn light's frame time on the Watch's round (the same 20 s window as B3b's A/B, glow p99 about 19 ms then) and the
+# light-block writes (0 expected).
 # Run (shots only, a short tour):
 #   PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=b3b \
 #   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m4b3b-lantern.txt 600
@@ -21,6 +23,26 @@ window 1440 900
 info
 hud off
 cmd gamemode spectator
+# ---- morning on the quays: boatmen at their berths (800-3000), porters at the cranes
+cmd time set 1600
+cmd awaken citizens show boatman
+wait 160
+shot b3b_quay_boatman_1
+cmd awaken citizens show boatman
+wait 120
+shot b3b_quay_boatman_2
+cmd awaken citizens show boatman
+wait 120
+shot b3b_quay_boatman_3
+cmd awaken citizens show porter
+wait 120
+shot b3b_quay_porter
+cmd awaken citizens show crowd_quay
+wait 120
+shot b3b_quay_crowd_lookat
+wait 60
+shot b3b_quay_crowd_lookat_2
+# ---- night: the Watch's lantern
 cmd time set 18000
 cmd awaken citizens lanterns glow
 wait 300
