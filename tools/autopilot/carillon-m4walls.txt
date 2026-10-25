@@ -1,0 +1,127 @@
+# Carillon M4, the Walls step (docs/carillon/milestones/M4-walls.md): the ring wall, its towers and gatehouses, one light
+# tour (shots only, no perf). The same world, settings and cameras as B3a's tour (carillon-m4b3a.txt), so the wall's
+# shots pair with b3a_*: the sky, the Wallring street and facade, the gates, the walk; then the new framings (walls_*):
+# the curtain from the fields at noon and dusk, the inner face from the ring and over the roofs, a climb line, a
+# Bellwatch drum, the High Gate's passage, a water gate, and the walk open and roofed by night.
+# Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=walls \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m4walls.txt 900
+world carillonM4walls creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 23700
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken city info
+hud off
+cmd gamemode spectator
+# the sky at dawn: let Distant Horizons read the pregenerated city first
+cmd awaken city view sky_nw
+wait 900
+shot walls_sky_nw
+cmd awaken city view sky_nw_low
+wait 160
+shot walls_sky_nw_low
+cmd awaken city view sky_n
+wait 200
+shot walls_sky_n
+cmd awaken city view sky_w
+wait 200
+shot walls_sky_w
+cmd awaken city view sky_top
+wait 300
+shot walls_sky_top
+# noon: the curtain from the fields, the gates, the inner face
+cmd time set 6000
+cmd awaken city view walls_out_w
+wait 200
+shot walls_out_w
+cmd awaken city view walls_out_nw
+wait 160
+shot walls_out_nw
+cmd awaken city view walls_out_e
+wait 200
+shot walls_out_e
+cmd awaken city view walls_out_s
+wait 200
+shot walls_out_s
+cmd awaken city view walls_tower
+wait 160
+shot walls_tower
+cmd awaken city view studio_high_gate
+wait 160
+shot walls_high_gate
+cmd awaken city view studio_dawn_gate
+wait 160
+shot walls_dawn_gate
+cmd awaken city view walls_passage
+wait 120
+shot walls_passage
+cmd awaken city view walls_watergate
+wait 160
+shot walls_watergate
+cmd awaken city view gate_yard
+wait 120
+shot walls_gate_yard
+cmd awaken city view wallring
+wait 120
+shot walls_wallring
+cmd awaken city view facade_wallring
+wait 120
+shot walls_facade_wallring
+cmd awaken city view walls_inner
+wait 120
+shot walls_inner
+cmd awaken city view walls_inner_high
+wait 120
+shot walls_inner_high
+cmd awaken city view walls_climb
+wait 120
+shot walls_climb
+cmd awaken city view wall_walk
+wait 120
+shot walls_wall_walk
+cmd awaken city view walls_walk
+wait 120
+shot walls_walk
+cmd awaken city view walls_walk_roofed
+wait 120
+shot walls_walk_roofed
+cmd awaken city view roost_start
+wait 120
+shot walls_roost_start
+# dusk: braziers, the guard rooms' windows, the lanterns on the parapet
+cmd time set 12900
+cmd awaken city view walls_out_w
+wait 200
+shot walls_out_w_dusk
+cmd awaken city view studio_high_gate
+wait 160
+shot walls_high_gate_dusk
+cmd awaken city view walls_inner
+wait 160
+shot walls_inner_dusk
+# night: the walk and the ring from the sky
+cmd time set 18000
+cmd awaken city view walls_walk
+wait 160
+shot walls_walk_night
+cmd awaken city view walls_walk_roofed
+wait 160
+shot walls_walk_roofed_night
+cmd awaken city view walls_passage
+wait 120
+shot walls_passage_night
+cmd awaken city view sky_n
+wait 300
+shot walls_sky_n_night
+quit

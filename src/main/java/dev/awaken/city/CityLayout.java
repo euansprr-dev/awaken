@@ -28,6 +28,14 @@ public final class CityLayout {
     /** Every chunk the city writes into (inside the wall plus the fields and roads round it). */
     public final long[] chunks;
     static final int MARGIN = 2;
+    /** How far out a landmark part paints: the wall's towers and gatehouses reach four (galleries, eaves, bartizans). */
+    static int margin(CityPlan.Part p) {
+        return switch (p.kind()) {
+            case "tower", "gate_tower", "gate_passage" -> CityTowers.MARGIN;
+            default -> MARGIN;
+        };
+    }
+
     /** Plots paint up to three out from their walls (B3a: a sign bracket's end over the street). */
     static final int PLOT_MARGIN = 3;
     /** How far out the painter reaches (the fields end at 318; the roads run to the basin's edge). */
@@ -49,7 +57,7 @@ public final class CityLayout {
         Long2ObjectOpenHashMap<List<Integer>> lists = new Long2ObjectOpenHashMap<>();
         int id = 0;
         for (CityPlan.Plot p : plan.plots) index(lists, id++, p.x0() - PLOT_MARGIN, p.z0() - PLOT_MARGIN, p.x1() + PLOT_MARGIN, p.z1() + PLOT_MARGIN);
-        for (CityPlan.Part p : plan.parts) index(lists, id++, p.x0() - MARGIN, p.z0() - MARGIN, p.x1() + MARGIN, p.z1() + MARGIN);
+        for (CityPlan.Part p : plan.parts) index(lists, id++, p.x0() - margin(p), p.z0() - margin(p), p.x1() + margin(p), p.z1() + margin(p));
         for (int[] t : plan.trees) index(lists, id++, t[0] - 4, t[1] - 4, t[0] + 4, t[1] + 4);
         for (int[] l : plan.lamps) index(lists, id++, l[0] - 1, l[1] - 1, l[0] + 1, l[1] + 1);
         for (CityPlan.Prop p : plan.props) index(lists, id++, p.x0() - 1, p.z0() - 1, p.x1() + 1, p.z1() + 1);
