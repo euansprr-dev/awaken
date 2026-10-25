@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:jagged_peaks",
+    "minecraft:frozen_peaks",
+    "minecraft:stony_peaks",
+    "minecraft:snowy_slopes",
+    "minecraft:grove",
+    "minecraft:windswept_hills",
+    "minecraft:windswept_gravelly_hills",
+    "minecraft:windswept_forest",
+    {
+      "id": "awaken:frost_spires",
+      "required": false
+    },
+    {
+      "id": "awaken:shattered_highlands",
+      "required": false
+    }
+  ]
+}

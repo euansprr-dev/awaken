@@ -358,7 +358,8 @@ void main() {
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
-    if (farTerrain) haze = min(1.0, haze + smoothstep(rdEnd, rdEnd * 8.0, d) * 0.45 * step(0.001, h.r));
+    // (unless the far renderer draws its own aerial perspective at real distances, flag 8: Far Sight 2)
+    if (farTerrain && (flags & 8) == 0) haze = min(1.0, haze + smoothstep(rdEnd, rdEnd * 8.0, d) * 0.45 * step(0.001, h.r));
     // While far terrain draws, distance haze needs its depth. With none shared (DH's OpenGL engine, DH on Vulkan) or
     // none proven yet (a depth that reads as one value everywhere) distance is the far renderer's own fog: hazing only
     // the near terrain would draw a ring where it ends. A depth that proves itself eases the haze in (trust g).

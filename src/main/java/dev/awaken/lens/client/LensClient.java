@@ -366,7 +366,8 @@ public final class LensClient {
         motionY += (motionTy - motionY) * k;
         if (motion < 0.003f) motion = 0f;
         params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
-                fog.renderDistanceEnd, fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
+                // a far renderer moves vanilla's chunk fog out; Lens's haze keeps vanilla's render distance
+                FarTerrain.renderDistanceFogEnd(fog.renderDistanceEnd), fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
                 UiHooks.focus(), motion, motionX, motionY,
                 FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far());
         params.uploadIfChanged();

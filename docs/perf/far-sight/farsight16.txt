@@ -1,0 +1,67 @@
+[lens] 2 files: 10 dimension looks, 1 prefixes, 38 biome looks
+[lens] ready (minus-one-to-one depth)
+[autopilot] farsight on: on, not drawn yet
+[autopilot] farsight on
+[farsight] ready: 7 rings of 256x256 cells, GPU work by fragment pass
+[farsight] 3 worker threads
+[farsight] ring 6 (16384 m) ready 535 ms after the first frame, 7894 ms after joining
+[farsight] ring 5 (8192 m) ready 977 ms after the first frame, 8337 ms after joining
+[farsight] ring 4 (4096 m) ready 1588 ms after the first frame, 8948 ms after joining
+[farsight] ring 3 (2048 m) ready 2148 ms after the first frame, 9507 ms after joining
+[farsight] horizon (rings 3-6, to 16 km) ready 2148 ms after the first frame, 9507 ms after joining
+[farsight] ring 2 (1024 m) ready 8285 ms after the first frame, 15645 ms after joining
+[autopilot] info backend=OpenGL driver=4.1 Metal - 90.5 device=Apple M4 fb=2880x1658 window=1440x829 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,lithium,sodium,entityculling,trender,cloth_config,moreculling,immediatelyfast,awaken,ferritecore,neoforge,conditional_mixin,transition
+[autopilot] info
+[farsight] ring 1 (512 m) ready 15778 ms after the first frame, 23137 ms after joining
+[farsight] ring 6 (16384 m) ready 791 ms after the first frame, -1 ms after joining
+[farsight] ring 5 (8192 m) ready 1341 ms after the first frame, -1 ms after joining
+[farsight] ring 4 (4096 m) ready 1912 ms after the first frame, -1 ms after joining
+[farsight] ring 3 (2048 m) ready 2220 ms after the first frame, -1 ms after joining
+[farsight] horizon (rings 3-6, to 16 km) ready 2220 ms after the first frame, -1 ms after joining
+[farsight] ring 2 (1024 m) ready 9169 ms after the first frame, -1 ms after joining
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.280 missing=[168,211,0,0,0,0,0] queued=541 pieces=46 cells=172032 estimate=23.9us/column exact=340.0us/column (520192/202752 columns) vram=23MB
+[autopilot] farsight status
+[farsight] ring 6 (16384 m) ready 1387 ms after the first frame, -1 ms after joining
+[farsight] ring 5 (8192 m) ready 2369 ms after the first frame, -1 ms after joining
+[farsight] ring 4 (4096 m) ready 3180 ms after the first frame, -1 ms after joining
+[farsight] ring 3 (2048 m) ready 3675 ms after the first frame, -1 ms after joining
+[farsight] horizon (rings 3-6, to 16 km) ready 3675 ms after the first frame, -1 ms after joining
+[farsight] ring 2 (1024 m) ready 7568 ms after the first frame, -1 ms after joining
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.282 missing=[168,28,0,0,0,0,0] queued=554 pieces=42 cells=172032 estimate=29.1us/column exact=323.1us/column (778240/324608 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] perf vista_noon_west 10
+[farsight] ring 1 (512 m) ready 16720 ms after the first frame, -1 ms after joining
+[autopilot] perf vista_noon_west frames=795 avg_fps=79.2 p50=10.73ms p95=20.13ms p99=44.48ms max=240.02ms tick_p95=42.08ms heap=1205/4096MB fb=2880x1658 load=10.9 occluded=false minimized=false
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.407 missing=[88,0,0,0,0,0,0] queued=271 pieces=42 cells=172032 estimate=29.1us/column exact=365.5us/column (778240/369920 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.291 missing=[48,0,0,0,0,0,0] queued=165 pieces=42 cells=172032 estimate=29.1us/column exact=376.3us/column (778240/389376 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] perf vista_noon_east 10
+[farsight] ring 0 (256 m) ready 32992 ms after the first frame, -1 ms after joining
+[farsight] all rings ready 32992 ms after the first frame; drawing gpu_ms=0.000 cpu_ms=0.270 missing=[0,0,0,0,0,0,0] queued=0 pieces=42 cells=172032 estimate=29.1us/column exact=380.0us/column (778240/416512 columns) vram=23MB
+[autopilot] perf vista_noon_east frames=1168 avg_fps=116.3 p50=8.30ms p95=10.13ms p99=13.15ms max=53.81ms tick_p95=9.01ms heap=1096/4096MB fb=2880x1658 load=10.1 occluded=false minimized=false
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.243 missing=[0,0,0,0,0,0,0] queued=0 pieces=42 cells=172032 estimate=29.1us/column exact=380.0us/column (778240/417024 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.196 missing=[0,0,0,0,0,0,0] queued=0 pieces=42 cells=172032 estimate=29.1us/column exact=380.0us/column (778240/417024 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] perf vista_sunset_west 10
+[autopilot] perf vista_sunset_west frames=1076 avg_fps=107.2 p50=9.11ms p95=10.87ms p99=12.10ms max=36.07ms tick_p95=5.36ms heap=953/4096MB fb=2880x1658 load=8.7 occluded=false minimized=false
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.213 missing=[0,0,0,0,0,0,0] queued=0 pieces=42 cells=172032 estimate=29.1us/column exact=380.0us/column (778240/417024 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.206 missing=[0,0,0,0,0,0,0] queued=0 pieces=42 cells=172032 estimate=29.1us/column exact=380.0us/column (778240/417024 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] perf low 10
+[autopilot] perf low frames=1080 avg_fps=107.6 p50=9.17ms p95=10.64ms p99=11.34ms max=12.64ms tick_p95=4.91ms heap=1104/4096MB fb=2880x1658 load=7.3 occluded=false minimized=false
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.196 missing=[0,0,0,0,0,0,0] queued=0 pieces=42 cells=172032 estimate=29.1us/column exact=380.0us/column (778240/417024 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.194 missing=[0,0,0,0,0,0,0] queued=0 pieces=42 cells=172032 estimate=29.1us/column exact=380.0us/column (778240/417024 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] perfstart flight
+[autopilot] perf flight frames=2933 avg_fps=88.4 p50=10.93ms p95=14.32ms p99=19.48ms max=65.95ms tick_p95=22.06ms heap=1169/4096MB fb=2880x1658 load=8.8 occluded=false minimized=false
+[autopilot] perfend
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.227 missing=[0,2,0,0,0,0,0] queued=0 pieces=42 cells=169984 estimate=28.9us/column exact=412.0us/column (790528/544000 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] farsight status: drawing gpu_ms=0.000 cpu_ms=0.179 missing=[0,2,0,0,0,0,0] queued=0 pieces=42 cells=169984 estimate=28.9us/column exact=412.0us/column (790528/544000 columns) vram=23MB
+[autopilot] farsight status
+[autopilot] info backend=OpenGL driver=4.1 Metal - 90.5 device=Apple M4 fb=2880x1658 window=1440x829 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,lithium,sodium,entityculling,trender,cloth_config,moreculling,immediatelyfast,awaken,ferritecore,neoforge,conditional_mixin,transition
+[autopilot] info

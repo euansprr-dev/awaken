@@ -27,7 +27,8 @@ final class LensParams {
         // texel 0: b = far terrain drawn, a = its depth (bit 0 reverse-Z, bit 1 zero-to-one, bit 2 shared with Lens; the
         // shaders trust a shared depth once it proves itself, pass lens_far_probe)
         packed[0] = bytes(debug == 0 ? 255 : debug, zeroToOne ? 255 : 0, farActive ? 255 : 0,
-                (farReverseZ ? 1 : 0) | (farZeroToOne ? 2 : 0) | (farReadable ? 4 : 0));
+                (farReverseZ ? 1 : 0) | (farZeroToOne ? 2 : 0) | (farReadable ? 4 : 0)
+                        | (dev.awaken.compat.client.FarTerrain.selfHazed() ? 8 : 0));
         packed[1] = bytes(f >> 8, f & 255, b(sunVisible), b(sunsetStrength));
         packed[2] = bytes(u >> 8, u & 255, v >> 8, v & 255);
         packed[3] = pack(look[Look.EXPOSURE] / 2f, look[Look.CONTRAST] / 2f, look[Look.SATURATION] / 2f, look[Look.WARMTH] * 0.5f + 0.5f);

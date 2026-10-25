@@ -53,6 +53,7 @@ public final class Awaken {
         dev.awaken.citizens.CitizensModule.init(modBus);
         dev.awaken.opening.OpeningModule.init(modBus);
         dev.awaken.holo.HoloModule.init(modBus);
+        dev.awaken.farsight.FarSightModule.init(modBus);
         dev.awaken.wilds.WildsModule.init(modBus);
         dev.awaken.living.LivingModule.init(modBus);
         dev.awaken.lens.LensModule.init(modBus);

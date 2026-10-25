@@ -1,0 +1,13 @@
+{
+  "type": "lithostitched:wrap_density_function",
+  "target_function": "minecraft:overworld/offset",
+  "wrapper_function": {
+    "type": "minecraft:cache",
+    "input": {
+      "type": "awaken:eroded",
+      "input": {
+        "type": "lithostitched:wrapped_marker"
+      }
+    }
+  }
+}

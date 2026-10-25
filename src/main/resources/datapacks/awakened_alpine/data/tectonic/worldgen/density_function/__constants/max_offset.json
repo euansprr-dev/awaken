@@ -1,0 +1,10 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "tectonic"
+    }
+  ],
+  "type": "minecraft:cache",
+  "input": 3.0
+}

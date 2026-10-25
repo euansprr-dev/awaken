@@ -1,6 +1,6 @@
 // AWAKEN Lens: far terrain drawn by a companion with its own depth (compat.client.FarTerrain), shared by the Lens passes.
 // Params texel 0: b = far terrain drawn in the last 0.2 s; a = its depth (bit 0 reverse-Z, bit 1 zero-to-one, bit 2 a
-// depth Lens may read is shared). The trust texel (pass lens_far_probe) says whether that depth has proven itself:
+// depth Lens may read is shared, bit 3 it hazes its own distance). The trust texel (pass lens_far_probe) says whether that depth has proven itself:
 // r 1 once it has, g easing from 0 to 1 after that.
 
 int farFlags(vec4 p0) { return int(p0.a * 255.0 + 0.5); }

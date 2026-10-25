@@ -322,6 +322,7 @@ public final class Autopilot {
                 waitTicks = 2;
             }
             case "holo" -> Awaken.LOG.info("[autopilot] holo {}: {}", arg.trim(), dev.awaken.holo.client.HoloClient.autopilot(arg));
+            case "farsight" -> Awaken.LOG.info("[autopilot] farsight {}: {}", arg.trim(), dev.awaken.farsight.client.FarSightClient.autopilot(arg));
             case "arms" -> Awaken.LOG.info("[autopilot] arms {}: {}", arg.trim(), dev.awaken.arms.client.ArmsAutopilot.run(arg));
             case "compat" -> {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));

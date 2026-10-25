@@ -1,0 +1,57 @@
+# Far Sight 2 parts, measured one by one (docs/perf/far-sight/PLAN-2.md budgets): a still sunset view from the jagged
+# peaks on Lens Ultra, once the rings are full, with every part on, then each part off, then Far Sight off.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=ultra slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-perf.txt 1200
+world fs2b creative 777
+waitworld
+gui 0
+farsight on
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd gamerule advance_time false
+cmd time set 12600
+screen close
+window 1440 900
+hud off
+info
+cmd gamemode spectator
+lens ultra
+cmd tp @s -1489 350 2955 90 6
+wait 900
+farsight status
+perf all_on 10
+farsight status
+farsight part detail off
+perf no_detail 10
+farsight part detail on
+farsight part trees off
+perf no_trees 10
+farsight part trees on
+farsight part mist off
+perf no_mist 10
+farsight part mist on
+farsight part bake off
+perf no_bake 10
+farsight part bake on
+farsight part detail off
+farsight part trees off
+farsight part mist off
+farsight part bake off
+perf mesh_only 10
+farsight part detail on
+farsight part trees on
+farsight part mist on
+farsight part bake on
+farsight off
+wait 40
+perf farsight_off 10
+farsight on
+wait 100
+lens off
+perf lens_off_farsight_on 10
+farsight off
+wait 40
+perf lens_off_farsight_off 10
+farsight status
+info
+quit

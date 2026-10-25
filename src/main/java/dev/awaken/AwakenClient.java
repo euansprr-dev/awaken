@@ -49,6 +49,7 @@ public final class AwakenClient {
         dev.awaken.compat.client.CompatClient.init(modBus);
         dev.awaken.terrain.client.TerrainClient.init(modBus);
         dev.awaken.holo.client.HoloClient.init(modBus);
+        dev.awaken.farsight.client.FarSightClient.init(modBus);
         dev.awaken.turbo.pixels.PixelsClient.init(modBus);
         dev.awaken.wilds.client.WildsClient.init(modBus);
         dev.awaken.citizens.client.CitizensClient.init(modBus);

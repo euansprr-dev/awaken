@@ -1,0 +1,12 @@
+{
+  "features": {
+    "enabled": [
+      "awaken:awakened_alpine"
+    ]
+  },
+  "pack": {
+    "description": "Awakened Alpine: eroded mountains, snow lines and mountain forests (new worlds only)",
+    "max_format": 121,
+    "min_format": 121
+  }
+}
