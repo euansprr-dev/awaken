@@ -1,0 +1,512 @@
+<title>World Sound</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Silkscreen&display=swap">
+<style>
+/* Layout: one reading column of night glass (the house style of AWAKEN's plan pages); figures and tables in projected frames that scroll inside themselves. */
+:root {
+  --bg: #0a1019;          /* the night behind the Holo */
+  --glass: #0f1724;       /* the System's glass */
+  --glass-2: #142033;
+  --line: #22344d;
+  --fg: #e4f1ff;
+  --muted: #8ea5bf;
+  --accent: #7fc3ff;      /* System blue */
+  --leaf: #8fdc9a;        /* the living world: birds, textures */
+  --water: #6fd3e6;
+  --amber: #ffcf7a;       /* magic, "not true yet" */
+  --ember: #ff8a7a;       /* risk */
+  --violet: #c4a8ff;      /* night */
+  --chip-ink: #0a1019;
+  --display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --pixel: "Silkscreen", "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+    --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --leaf: #2f8a45; --water: #13819a;
+    --amber: #9a6100; --ember: #b8402f; --violet: #6a4cc2; --chip-ink: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+  --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --leaf: #2f8a45; --water: #13819a;
+  --amber: #9a6100; --ember: #b8402f; --violet: #6a4cc2; --chip-ink: #ffffff;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 400 16px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 64px; }
+.prose { max-width: 70ch; display: grid; gap: 14px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; letter-spacing: 0.01em; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.4rem); font-weight: 700; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); font-weight: 600; }
+h3 { font-size: 1.15rem; font-weight: 600; color: var(--accent); }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.2em; display: grid; gap: 6px; }
+a { color: var(--accent); }
+strong { font-weight: 600; }
+code { font-family: var(--mono); font-size: 0.88em; color: var(--accent); overflow-wrap: anywhere; }
+.eyebrow { font-family: var(--pixel); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+section { display: grid; gap: 22px; }
+section > header { display: grid; gap: 8px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* header */
+.top { padding-block: 56px 0; display: grid; gap: 18px; }
+.top .lede { font-size: 1.15rem; max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.85rem; color: var(--muted); }
+.meta span b { color: var(--fg); font-weight: 500; }
+blockquote { margin: 0; padding: 14px 18px; border-left: 2px solid var(--accent); background: var(--glass); font-style: italic; color: var(--muted); max-width: 70ch; }
+blockquote b { font-style: normal; color: var(--fg); font-weight: 500; }
+
+/* a projected frame: hairline rim with corner brackets, the Holo's language */
+.frame { position: relative; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); background: var(--glass); padding: 18px; min-width: 0; }
+.frame::before, .frame::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--accent); pointer-events: none; }
+.frame::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.frame::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+figcaption { font-size: 0.85rem; color: var(--muted); max-width: 80ch; }
+figcaption b { color: var(--fg); font-weight: 600; }
+.scroll { overflow-x: auto; }
+svg { display: block; max-width: 100%; height: auto; }
+svg text { font-family: var(--mono); fill: var(--muted); font-size: 11px; }
+svg .lab { fill: var(--fg); font-family: var(--body); font-size: 12px; font-weight: 500; }
+
+/* the answer */
+.answer { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 16px; }
+.answer .frame { display: grid; gap: 8px; align-content: start; }
+.answer h3 { font-size: 1rem; }
+.answer p { font-size: 0.95rem; }
+
+/* behaviour list */
+.checks { list-style: none; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.checks li { display: grid; grid-template-columns: 2.2rem 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.checks .n { font-family: var(--pixel); color: var(--accent); font-size: 0.8rem; padding-top: 3px; }
+.checks b { display: block; font-weight: 600; }
+.checks span { color: var(--muted); font-size: 0.93rem; }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--pixel); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 400; white-space: nowrap; }
+td b { font-weight: 600; }
+.wide { min-width: 820px; }
+.mid { min-width: 640px; }
+tr.pick td { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.chip { display: inline-block; font-family: var(--pixel); font-size: 0.62rem; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 2px; text-transform: uppercase; white-space: nowrap; color: var(--chip-ink); }
+.chip.yes { background: var(--leaf); }
+.chip.no { background: var(--ember); }
+.chip.maybe { background: var(--amber); }
+.chip.have { background: var(--accent); }
+.ok { color: var(--leaf); } .bad { color: var(--ember); } .warn { color: var(--amber); }
+
+/* approaches */
+.ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 16px; }
+.ways .frame { display: grid; gap: 10px; align-content: start; }
+.ways .frame.rec { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.ways ul { font-size: 0.92rem; }
+.ways .tag { justify-self: start; }
+
+/* magic */
+.magic { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.magic .frame { display: grid; gap: 8px; align-content: start; border-color: color-mix(in srgb, var(--amber) 45%, transparent); }
+.magic .frame::before, .magic .frame::after { border-color: var(--amber); }
+.magic h3 { color: var(--amber); }
+.magic p { font-size: 0.93rem; }
+
+/* budgets */
+.budgets { display: grid; gap: 14px; }
+.bud { display: grid; grid-template-columns: minmax(0, 13rem) 1fr; gap: 6px 16px; align-items: center; }
+.bud .name { font-weight: 500; font-size: 0.95rem; }
+.bud .name small { display: block; color: var(--muted); font-weight: 400; font-size: 0.8rem; }
+.bar { position: relative; height: 22px; background: var(--glass-2); border: 1px solid var(--line); }
+.bar i { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+.bar i.leaf { background: var(--leaf); }
+.bar span { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 0.75rem; color: var(--fg); }
+@media (max-width: 560px) { .bud { grid-template-columns: 1fr; } }
+
+/* decisions */
+.decisions { list-style: none; padding: 0; counter-reset: d; display: grid; gap: 14px; }
+.decisions li { counter-increment: d; display: grid; grid-template-columns: 2.6rem 1fr; gap: 14px; }
+.decisions li::before { content: counter(d); font-family: var(--display); font-weight: 700; font-size: 1.6rem; color: var(--accent); line-height: 1.1; }
+.decisions b { font-weight: 600; }
+.decisions .rec { display: block; margin-top: 4px; font-size: 0.9rem; color: var(--leaf); }
+.decisions .alt { display: block; font-size: 0.88rem; color: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.82rem; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; }
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 6px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .pulse { animation: pulse 3.6s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.7; } }
+}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">AWAKEN · plan for your yes · 2026-10-25</p>
+  <h1>World Sound</h1>
+  <p class="lede">Every biome, every place, every hour: a world you hear from the inside. Birds in the trees you can see,
+    the river where the river is, rain that sounds like what it falls on, and a world that goes quiet when something
+    dangerous, or something magical, is near.</p>
+  <div class="meta">
+    <span>Approach <b>C · hybrid</b></span>
+    <span>Effort <b class="num">~28</b> builder-hours</span>
+    <span>Gates <b>5 listening batches ≤ 10 min</b></span>
+    <span>Decisions <b>7</b></span>
+    <span>Branch <b><code>pack/world-sound-plan</code></b></span>
+  </div>
+  <blockquote>“The number one goal here is to make it actually immersive, not just like, oh, mobs here, this there, but
+    actually like truly immersive in terms of how it feels to be inside of the game.” <b>Euan</b></blockquote>
+</header>
+
+<section aria-labelledby="s-answer">
+  <header><p class="eyebrow">The short answer</p><h2 id="s-answer">Partly done. The world itself isn't.</h2></header>
+  <div class="answer">
+    <div class="frame"><h3>Already there</h3><p>Room acoustics (Sound Physics Remastered), adaptive gate music, the System's
+      voice, 47 creature voices, leaf rustle and high wind, beds for 4 of the 6 Awakened biomes, a few magic beds, and the
+      city soundscape being built now.</p></div>
+    <div class="frame"><h3>Missing</h3><p>57 vanilla biomes still sound like vanilla, which has no songbirds, insects (bar bees),
+      wind, surf, river or rain-by-surface. Elderwood and Lumen Forest have no bed. Nothing reacts to you or to the magic.</p></div>
+    <div class="frame"><h3>Use existing mods?</h3><p>Yes, for the jobs mods do best: <b>Sound Physics</b> (space, kept) and
+      <b>Tread Lightly</b> (footsteps, after a one-hour spike). <b>AmbientSounds</b> is the bar we measure against; it plays
+      sound around your head, not from places, so it isn't shipped.</p></div>
+    <div class="frame"><h3>Build the rest</h3><p>Nothing on the market knows AWAKEN's biomes, dimensions, gates or happenings.
+      A world layer of our own in <code>core/audio</code>, the <b>Conductor</b>, plays the places, the reactions and the magic.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="s-imm">
+  <header><p class="eyebrow">The bar</p><h2 id="s-imm">What “immersive” means, as things you can hear</h2>
+    <p class="muted prose">Each one is checked in a listening batch or a test, so "done" isn't a matter of opinion.</p></header>
+  <ol class="checks">
+    <li><span class="n">01</span><div><b>No audible loops.</b><span>Ten minutes in one spot and you never hear the same moment twice: beds are three layers of co-prime length (37, 41, 53 s repeat together after 22 hours); every salient sound is a one-shot from six or more variants.</span></div></li>
+    <li><span class="n">02</span><div><b>Sounds come from places.</b><span>Birds sing from the trees you can see, the river from the river, surf from the shore, wind from the open side of the ridge. Only a place's diffuse air is non-positional.</span></div></li>
+    <li><span class="n">03</span><div><b>Transitions you don't notice.</b><span>Biomes blend from a ring of 16 samples over 8 to 15 seconds; dawn, dusk and weather are curves, never switches.</span></div></li>
+    <li><span class="n">04</span><div><b>Silence on purpose.</b><span>Lulls where the forest goes still for half a minute; deep caves almost silent; the Mirror Marsh deliberately still; nothing at all in the Abyssal Shrine.</span></div></li>
+    <li><span class="n">05</span><div><b>The world reacts.</b><span>Birds fall quiet near a predator; crickets stop around your feet; birds flush when you sprint through brush; rain on leaves, stone, water and a roof all differ; drips go on after the rain; thunder comes later the farther the strike; wind rises with height; footsteps follow surface and armour.</span></div></li>
+    <li><span class="n">06</span><div><b>The world is AWAKEN's.</b><span>Wildlife goes quiet near an open gate; a Break spreads a hush; the Awakened lands hum in the System's key; a perceptive hunter hears a lair breathing first.</span></div></li>
+    <li><span class="n">07</span><div><b>Never fights the music or the city.</b><span>Ambience never touches the music channel, thins under combat music, and yields inside Carillon's walls.</span></div></li>
+  </ol>
+</section>
+
+<section aria-labelledby="s-map">
+  <header><p class="eyebrow">How it works</p><h2 id="s-map">Four layers around the listener</h2></header>
+  <figure class="frame">
+    <div class="scroll">
+    <svg viewBox="0 0 760 360" role="img" aria-labelledby="map-t map-d" style="min-width:560px">
+      <title id="map-t">Top-down sound map</title>
+      <desc id="map-d">A listener stands between a stand of trees, a river and an open ridge. Birds sing from the trees, the river flows from its bank, wind comes from the open ridge side, and a diffuse air bed surrounds everything. A predator to the north-east has hushed the nearest birds.</desc>
+      <rect x="0" y="0" width="760" height="360" fill="var(--glass)"/>
+      <!-- air bed -->
+      <circle cx="330" cy="190" r="150" fill="var(--accent)" fill-opacity="0.06" stroke="var(--accent)" stroke-opacity="0.35" stroke-dasharray="3 5"/>
+      <circle cx="330" cy="190" r="96" fill="none" stroke="var(--accent)" stroke-opacity="0.22" stroke-dasharray="2 6"/>
+      <text x="200" y="338" class="lab" style="fill:var(--accent)" text-anchor="end">AIR · one stream, filtered</text>
+      <!-- river -->
+      <path d="M520 0 C 500 90, 560 150, 530 230 S 500 330, 540 360" fill="none" stroke="var(--water)" stroke-width="18" stroke-opacity="0.35"/>
+      <path d="M520 0 C 500 90, 560 150, 530 230 S 500 330, 540 360" fill="none" stroke="var(--water)" stroke-width="2"/>
+      <circle cx="536" cy="200" r="7" fill="var(--water)"/><circle class="pulse" cx="536" cy="200" r="22" fill="none" stroke="var(--water)" stroke-width="1.5"/>
+      <text x="560" y="204" class="lab" style="fill:var(--water)">TEXTURE · river at its bank</text>
+      <!-- trees -->
+      <g fill="var(--leaf)" fill-opacity="0.22" stroke="var(--leaf)" stroke-opacity="0.6">
+        <circle cx="140" cy="120" r="30"/><circle cx="196" cy="88" r="24"/><circle cx="118" cy="190" r="26"/><circle cx="182" cy="160" r="22"/><circle cx="150" cy="258" r="28"/>
+      </g>
+      <g fill="var(--leaf)"><circle cx="140" cy="120" r="5"/><circle cx="118" cy="190" r="5"/><circle cx="150" cy="258" r="5"/></g>
+      <circle class="pulse" cx="140" cy="120" r="16" fill="none" stroke="var(--leaf)" stroke-width="1.5"/>
+      <path d="M146 126 Q 128 160 122 184" fill="none" stroke="var(--leaf)" stroke-dasharray="3 4"/>
+      <text x="22" y="76" class="lab" style="fill:var(--leaf)">EVENTS · a wren, and its answer</text>
+      <!-- predator hush -->
+      <g transform="translate(250 70)">
+        <path d="M0 0 l10 -6 l10 6 l-4 12 h-12 z" fill="var(--ember)"/>
+      </g>
+      <circle cx="260" cy="72" r="52" fill="var(--ember)" fill-opacity="0.08" stroke="var(--ember)" stroke-opacity="0.6" stroke-dasharray="4 4"/>
+      <g fill="var(--muted)" fill-opacity="0.55"><circle cx="196" cy="88" r="4"/><circle cx="226" cy="40" r="4"/></g>
+      <text x="300" y="30" class="lab" style="fill:var(--ember)">REACTION · a hunter near: these birds hush</text>
+      <!-- ridge and wind -->
+      <path d="M330 360 L 380 300 L 430 330 L 470 290 L 500 360 Z" fill="var(--muted)" fill-opacity="0.18" stroke="var(--muted)" stroke-opacity="0.6"/>
+      <g stroke="var(--accent)" stroke-width="1.6" fill="none" marker-end="url(#arr)">
+        <path d="M430 300 C 400 270, 370 250, 352 214"/>
+        <path d="M470 312 C 440 280, 405 262, 372 224"/>
+      </g>
+      <defs><marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--accent)"/></marker></defs>
+      <text x="372" y="282" class="lab" style="fill:var(--accent)" text-anchor="end">wind from the open side</text>
+      <!-- listener -->
+      <circle cx="330" cy="190" r="9" fill="var(--fg)"/>
+      <path d="M330 190 l0 -20" stroke="var(--fg)" stroke-width="2"/>
+      <text x="344" y="186" class="lab">you</text>
+      <!-- roof legend -->
+      <g transform="translate(600 40)">
+        <rect x="0" y="0" width="130" height="92" fill="var(--glass-2)" stroke="var(--line)"/>
+        <text x="10" y="20">voices at once</text>
+        <text x="10" y="40" style="fill:var(--accent)">air      1 stream</text>
+        <text x="10" y="58" style="fill:var(--water)">textures ≤ 6</text>
+        <text x="10" y="76" style="fill:var(--leaf)">events   ≤ 10</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>Air</b> is the diffuse sound of the place, one stereo stream that our own Java mixer blends and filters (it muffles indoors, underwater, in the Veil, in falling snow).
+      <b>Textures</b> are continuous sounds anchored to real blocks. <b>Events</b> are one-shots from real places, with calls and answers.
+      <b>Reactions</b> change all three. Sound Physics Remastered gives every positional voice its room and its walls, so outdoor sound comes in through your door on its own.</figcaption>
+  </figure>
+
+  <figure class="frame">
+    <div class="scroll">
+    <svg viewBox="0 0 640 230" role="img" aria-labelledby="day-t day-d" style="min-width:520px">
+      <title id="day-t">A Greenwood day</title>
+      <desc id="day-d">Activity of four voices over 24 hours: the dawn chorus peaks just before sunrise and has a smaller dusk peak; day song holds from 8:00 to 16:30; insects hold from 20:00 to 04:00; owls from 21:30 to 03:12.</desc>
+      <g stroke="var(--line)"><line x1="40.0" y1="14" x2="40.0" y2="180"/><line x1="113.5" y1="14" x2="113.5" y2="180"/><line x1="187.0" y1="14" x2="187.0" y2="180"/><line x1="260.5" y1="14" x2="260.5" y2="180"/><line x1="334.0" y1="14" x2="334.0" y2="180"/><line x1="407.5" y1="14" x2="407.5" y2="180"/><line x1="481.0" y1="14" x2="481.0" y2="180"/><line x1="554.5" y1="14" x2="554.5" y2="180"/><line x1="628.0" y1="14" x2="628.0" y2="180"/><line x1="40" y1="180" x2="628" y2="180"/></g>
+      <text x="40.0" y="196" text-anchor="middle">00:00</text><text x="187.0" y="196" text-anchor="middle">06:00</text><text x="334.0" y="196" text-anchor="middle">12:00</text><text x="481.0" y="196" text-anchor="middle">18:00</text><text x="628.0" y="196" text-anchor="end">24:00</text>
+      <text x="4" y="18">loud</text><text x="4" y="182">off</text>
+      <rect x="40" y="14" width="134.8" height="166" fill="var(--violet)" fill-opacity="0.06"/>
+      <rect x="517.8" y="14" width="110.2" height="166" fill="var(--violet)" fill-opacity="0.06"/>
+      <polyline points="40.0,55.5 44.9,55.5 49.8,55.5 54.7,55.5 59.6,55.5 64.5,55.5 69.4,55.5 74.3,55.5 79.2,55.5 84.1,55.5 89.0,55.5 93.9,55.5 98.8,55.5 103.7,55.5 108.6,55.5 113.5,55.5 118.4,55.5 123.3,55.5 128.2,55.5 133.1,55.5 138.0,55.5 142.9,81.6 147.8,104.7 152.7,124.7 157.6,141.6 162.5,155.4 167.4,166.2 172.3,173.9 177.2,178.5 182.1,180.0 187.0,180.0 191.9,180.0 196.8,180.0 201.7,180.0 206.6,180.0 211.5,180.0 216.4,180.0 221.3,180.0 226.2,180.0 231.1,180.0 236.0,180.0 240.9,180.0 245.8,180.0 250.7,180.0 255.6,180.0 260.5,180.0 265.4,180.0 270.3,180.0 275.2,180.0 280.1,180.0 285.0,180.0 289.9,180.0 294.8,180.0 299.7,180.0 304.6,180.0 309.5,180.0 314.4,180.0 319.3,180.0 324.2,180.0 329.1,180.0 334.0,180.0 338.9,180.0 343.8,180.0 348.7,180.0 353.6,180.0 358.5,180.0 363.4,180.0 368.3,180.0 373.2,180.0 378.1,180.0 383.0,180.0 387.9,180.0 392.8,180.0 397.7,180.0 402.6,180.0 407.5,180.0 412.4,180.0 417.3,180.0 422.2,180.0 427.1,180.0 432.0,180.0 436.9,180.0 441.8,180.0 446.7,180.0 451.6,180.0 456.5,180.0 461.4,180.0 466.3,180.0 471.2,180.0 476.1,180.0 481.0,180.0 485.9,180.0 490.8,178.5 495.7,173.9 500.6,166.2 505.5,155.4 510.4,141.6 515.3,124.7 520.2,104.7 525.1,81.6 530.0,55.5 534.9,55.5 539.8,55.5 544.7,55.5 549.6,55.5 554.5,55.5 559.4,55.5 564.3,55.5 569.2,55.5 574.1,55.5 579.0,55.5 583.9,55.5 588.8,55.5 593.7,55.5 598.6,55.5 603.5,55.5 608.4,55.5 613.3,55.5 618.2,55.5 623.1,55.5 628.0,55.5" fill="none" stroke="var(--violet)" stroke-width="2"/>
+      <polyline points="40.0,116.9 44.9,116.9 49.8,116.9 54.7,116.9 59.6,116.9 64.5,116.9 69.4,116.9 74.3,116.9 79.2,116.9 84.1,116.9 89.0,116.9 93.9,116.9 98.8,116.9 103.7,116.9 108.6,116.9 113.5,116.9 118.4,116.9 123.3,136.2 128.2,152.0 133.1,164.2 138.0,173.0 142.9,178.2 147.8,180.0 152.7,180.0 157.6,180.0 162.5,180.0 167.4,180.0 172.3,180.0 177.2,180.0 182.1,180.0 187.0,180.0 191.9,180.0 196.8,180.0 201.7,180.0 206.6,180.0 211.5,180.0 216.4,180.0 221.3,180.0 226.2,180.0 231.1,180.0 236.0,180.0 240.9,180.0 245.8,180.0 250.7,180.0 255.6,180.0 260.5,180.0 265.4,180.0 270.3,180.0 275.2,180.0 280.1,180.0 285.0,180.0 289.9,180.0 294.8,180.0 299.7,180.0 304.6,180.0 309.5,180.0 314.4,180.0 319.3,180.0 324.2,180.0 329.1,180.0 334.0,180.0 338.9,180.0 343.8,180.0 348.7,180.0 353.6,180.0 358.5,180.0 363.4,180.0 368.3,180.0 373.2,180.0 378.1,180.0 383.0,180.0 387.9,180.0 392.8,180.0 397.7,180.0 402.6,180.0 407.5,180.0 412.4,180.0 417.3,180.0 422.2,180.0 427.1,180.0 432.0,180.0 436.9,180.0 441.8,180.0 446.7,180.0 451.6,180.0 456.5,180.0 461.4,180.0 466.3,180.0 471.2,180.0 476.1,180.0 481.0,180.0 485.9,180.0 490.8,180.0 495.7,180.0 500.6,180.0 505.5,180.0 510.4,180.0 515.3,180.0 520.2,180.0 525.1,180.0 530.0,180.0 534.9,180.0 539.8,179.6 544.7,176.1 549.6,169.0 554.5,158.5 559.4,144.5 564.3,127.0 569.2,116.9 574.1,116.9 579.0,116.9 583.9,116.9 588.8,116.9 593.7,116.9 598.6,116.9 603.5,116.9 608.4,116.9 613.3,116.9 618.2,116.9 623.1,116.9 628.0,116.9" fill="none" stroke="var(--violet)" stroke-width="2" stroke-dasharray="5 4"/>
+      <polyline points="40.0,180.0 44.9,180.0 49.8,180.0 54.7,180.0 59.6,180.0 64.5,180.0 69.4,180.0 74.3,180.0 79.2,180.0 84.1,180.0 89.0,180.0 93.9,180.0 98.8,180.0 103.7,180.0 108.6,180.0 113.5,180.0 118.4,180.0 123.3,180.0 128.2,180.0 133.1,180.0 138.0,180.0 142.9,180.0 147.8,180.0 152.7,180.0 157.6,180.0 162.5,180.0 167.4,180.0 172.3,180.0 177.2,180.0 182.1,180.0 187.0,180.0 191.9,180.0 196.8,180.0 201.7,178.9 206.6,175.6 211.5,170.2 216.4,162.6 221.3,152.8 226.2,140.8 231.1,126.6 236.0,110.3 240.9,110.3 245.8,110.3 250.7,110.3 255.6,110.3 260.5,110.3 265.4,110.3 270.3,110.3 275.2,110.3 280.1,110.3 285.0,110.3 289.9,110.3 294.8,110.3 299.7,110.3 304.6,110.3 309.5,110.3 314.4,110.3 319.3,110.3 324.2,110.3 329.1,110.3 334.0,110.3 338.9,110.3 343.8,110.3 348.7,110.3 353.6,110.3 358.5,110.3 363.4,110.3 368.3,110.3 373.2,110.3 378.1,110.3 383.0,110.3 387.9,110.3 392.8,110.3 397.7,110.3 402.6,110.3 407.5,110.3 412.4,110.3 417.3,110.3 422.2,110.3 427.1,110.3 432.0,110.3 436.9,110.3 441.8,110.3 446.7,118.7 451.6,134.0 456.5,147.0 461.4,157.9 466.3,166.7 471.2,173.2 476.1,177.5 481.0,179.7 485.9,180.0 490.8,180.0 495.7,180.0 500.6,180.0 505.5,180.0 510.4,180.0 515.3,180.0 520.2,180.0 525.1,180.0 530.0,180.0 534.9,180.0 539.8,180.0 544.7,180.0 549.6,180.0 554.5,180.0 559.4,180.0 564.3,180.0 569.2,180.0 574.1,180.0 579.0,180.0 583.9,180.0 588.8,180.0 593.7,180.0 598.6,180.0 603.5,180.0 608.4,180.0 613.3,180.0 618.2,180.0 623.1,180.0 628.0,180.0" fill="none" stroke="var(--leaf)" stroke-width="2" stroke-dasharray="5 4"/>
+      <polyline points="40.0,180.0 44.9,180.0 49.8,180.0 54.7,180.0 59.6,180.0 64.5,180.0 69.4,180.0 74.3,180.0 79.2,180.0 84.1,180.0 89.0,180.0 93.9,180.0 98.8,180.0 103.7,180.0 108.6,180.0 113.5,180.0 118.4,179.9 123.3,179.6 128.2,178.8 133.1,177.0 138.0,173.0 142.9,165.2 147.8,151.9 152.7,131.7 157.6,104.7 162.5,73.6 167.4,43.8 172.3,22.0 177.2,14.0 182.1,22.0 187.0,43.8 191.9,73.6 196.8,104.7 201.7,131.7 206.6,151.9 211.5,165.2 216.4,173.0 221.3,177.0 226.2,178.8 231.1,179.6 236.0,179.9 240.9,180.0 245.8,180.0 250.7,180.0 255.6,180.0 260.5,180.0 265.4,180.0 270.3,180.0 275.2,180.0 280.1,180.0 285.0,180.0 289.9,180.0 294.8,180.0 299.7,180.0 304.6,180.0 309.5,180.0 314.4,180.0 319.3,180.0 324.2,180.0 329.1,180.0 334.0,180.0 338.9,180.0 343.8,180.0 348.7,180.0 353.6,180.0 358.5,180.0 363.4,180.0 368.3,180.0 373.2,180.0 378.1,180.0 383.0,180.0 387.9,180.0 392.8,180.0 397.7,180.0 402.6,180.0 407.5,180.0 412.4,180.0 417.3,180.0 422.2,180.0 427.1,180.0 432.0,180.0 436.9,180.0 441.8,180.0 446.7,180.0 451.6,179.9 456.5,179.6 461.4,178.3 466.3,174.3 471.2,164.6 476.1,146.4 481.0,121.5 485.9,98.3 490.8,88.7 495.7,98.3 500.6,121.5 505.5,146.4 510.4,164.6 515.3,174.3 520.2,178.3 525.1,179.6 530.0,179.9 534.9,180.0 539.8,180.0 544.7,180.0 549.6,180.0 554.5,180.0 559.4,180.0 564.3,180.0 569.2,180.0 574.1,180.0 579.0,180.0 583.9,180.0 588.8,180.0 593.7,180.0 598.6,180.0 603.5,180.0 608.4,180.0 613.3,180.0 618.2,180.0 623.1,180.0 628.0,180.0" fill="none" stroke="var(--leaf)" stroke-width="2.4"/>
+      <text x="169.0" y="208" style="fill:var(--amber)">sunrise</text>
+    </svg>
+    </div>
+    <div class="legend"><span><i style="background:var(--leaf)"></i>dawn and dusk chorus</span><span><i style="background:var(--leaf);opacity:.6"></i>day song</span><span><i style="background:var(--violet)"></i>insects</span><span><i style="background:var(--violet);opacity:.6"></i>owls</span></div>
+    <figcaption><b>Curves, not switches.</b> The Greenwood's first-draft density curves (tuned on your ears in batch 1). Minecraft's sunrise is 06:00 (tick 0). The moon bends them too: more night calls under a full moon, sparser under a new one.</figcaption>
+  </figure>
+</section>
+
+<section aria-labelledby="s-mods">
+  <header><p class="eyebrow">Research</p><h2 id="s-mods">The existing mods, checked for 26.3</h2>
+    <p class="muted prose">From the Modrinth API (NeoForge builds for 26.3, licences, dependencies), the mods' repositories and pages, 2026-10-25. The repo is public, so we never copy another mod's code or sounds: using one means adding it to the pack or giving it data.</p></header>
+  <div class="frame scroll">
+  <table class="wide">
+    <thead><tr><th>Mod</th><th>What it does</th><th>NeoForge 26.3</th><th>Licence</th><th>Our data?</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sound Physics Remastered</b></td><td>Reverb, occlusion, air absorption, underwater filter</td><td class="ok">1.5.2 beta · 2026-10-21</td><td>GPL-3.0</td><td>config</td><td><span class="chip have">keep</span> already in the pack; our positional sounds get the room</td></tr>
+      <tr class="pick"><td><b>AmbientSounds</b></td><td>The leading biome-ambience engine: regions by biome, height, light, room size, rain, time, nearby blocks and entities</td><td class="ok">6.3.11 · 2026-10-19</td><td>LGPL-3.0, packs welcome</td><td class="ok">yes, from our jar</td><td><span class="chip maybe">benchmark</span> plays every sound around your head, never from a place (Sound Physics skips it); streams every sound into an 8-channel pool our music uses; blind to gates, happenings and magic; unknown dimensions get its overworld sounds</td></tr>
+      <tr class="pick"><td><b>Tread Lightly</b></td><td>Footsteps per foot by surface, foliage brushing, wet steps in rain, a boots layer, jump and land, mob steps</td><td class="ok">1.1.0 · 2026-09-23</td><td>LGPL-3.0+</td><td class="ok">yes, from our jar</td><td><span class="chip yes">adopt</span> after the spike; young (first commit 2026-09-03, one author)</td></tr>
+      <tr><td><b>Presence Footsteps</b></td><td>The original material footsteps (41.8M downloads)</td><td class="bad">Fabric only</td><td>PolyForm Shield</td><td>–</td><td><span class="chip no">out</span> the author won't port to NeoForge</td></tr>
+      <tr><td><b>Raise Sound Limit Simplified</b></td><td>4,095 sound sources, sound work off the render thread</td><td class="ok">1.4.0 · 2026-09-28</td><td>MIT</td><td>–</td><td><span class="chip no">out</span> asynchronous playback breaks what our music player relies on; open "music missing" bugs; we don't need the headroom</td></tr>
+      <tr><td><b>Sounds</b> (IMB11)</td><td>~170 recorded effects for UI, chat, blocks</td><td class="bad">can't load (its YACL needs 26.2)</td><td>all rights reserved</td><td>–</td><td><span class="chip no">out</span> and it re-voices the UI, which is the System's</td></tr>
+      <tr><td><b>Dynamic Surroundings</b></td><td>The classic: biome loops, footsteps, thunder, wind, aurora</td><td class="bad">1.21.1; 26.2 port in progress</td><td>MIT; some sounds CC-BY-NC</td><td>yes</td><td><span class="chip no">out</span> for now; look again if 26.3 ships</td></tr>
+      <tr><td><b>Immersive Thunder Reforged</b></td><td>Thunder delayed by distance</td><td class="ok">1.3.8</td><td>MIT</td><td>–</td><td><span class="chip maybe">spike</span> if clean, it replaces our thunder</td></tr>
+      <tr><td>MAtmos, Resonance, Charmonium, Euphonium, Tense Ambience, Auditory</td><td>Biome ambience of various kinds</td><td class="bad">none for 26.3 NeoForge</td><td>mixed</td><td>–</td><td><span class="chip no">out</span></td></tr>
+    </tbody>
+  </table>
+</div>
+<ul class="prose">
+  <li><b>Sound Physics' rules shape the design.</b> It skips sounds played around your head, rain, thunder and any <code>ambient.*</code> event, and judges a looping sound once, when it starts. So our air bed is filtered by us, our positional sounds keep other names, and textures re-anchor every ~12 s so walking indoors muffles them.</li>
+  <li><b>The engine holds about 248 ordinary sounds and 8 streams.</b> AmbientSounds alone would want several streams; our whole Conductor wants one.</li>
+  <li><b>If a player adds AmbientSounds anyway,</b> our jar carries a few inert files that mute it in our gates and other instanced places, and the Conductor drops its own nature sounds while it runs.</li>
+</ul>
+
+</section>
+
+<section aria-labelledby="s-ways">
+  <header><p class="eyebrow">Approaches</p><h2 id="s-ways">Adopt, build, or both</h2></header>
+  <div class="ways">
+    <div class="frame"><span class="chip maybe tag">A · adopt</span><h3>AmbientSounds plus our data</h3>
+      <ul><li>Fastest: about 10 builder-hours of data and config.</li><li>Realistic nature, but sound around your head rather than from places.</li><li>Blind to gates, strata, the Veil, happenings and powers.</li><li>Streams every sound, competing with our music; no footsteps.</li></ul></div>
+    <div class="frame"><span class="chip maybe tag">B · our own</span><h3>The Conductor, nothing else</h3>
+      <ul><li>Full control, highest ceiling.</li><li>Rebuilds footsteps that a mod already does well.</li><li>About 34 builder-hours.</li></ul></div>
+    <div class="frame rec"><span class="chip yes tag">C · hybrid · recommended</span><h3>Conductor plus the best mods</h3>
+      <ul><li>The Conductor for biomes, places, reactions and magic.</li><li>Sound Physics for space, Tread Lightly for footsteps.</li><li>One engine decides what plays; mods do physics, not taste.</li><li>About 28 builder-hours.</li></ul></div>
+  </div>
+  <div class="prose">
+    <p><b>What would change my mind.</b> Two of three facts about AmbientSounds are already in: it does take data from our jar, and it doesn't play from places. The third is your ears. If it beats our first forest in batch 1's blind A/B, the gap is content: we raise ours with better recordings, or adopt it for vanilla nature beds only while the Conductor keeps the places, reactions and magic. If Tread Lightly fails its spike, our own surface-and-armour steps come in Phase 3 (+3 h).</p>
+  </div>
+</section>
+
+<section aria-labelledby="s-biomes">
+  <header><p class="eyebrow">Every biome</p><h2 id="s-biomes">16 families cover all 63 overworld biomes</h2>
+    <p class="muted prose">A new column in the biome table puts every biome in exactly one family (a test fails otherwise). Awakened biomes are their family plus a variant with its own bed and magic. Another mod's biome falls back by climate, so nothing is silent by accident.</p></header>
+  <div class="frame scroll">
+  <table class="wide">
+    <thead><tr><th>Family</th><th>Biomes</th><th>By day</th><th>By night</th><th>Weather and texture</th></tr></thead>
+    <tbody>
+      <tr><td><b>Greenwood</b></td><td>forest, birch, old growth birch, dappled forest · <b>Elderwood</b></td><td>dawn chorus, woodpecker, wood pigeon</td><td>owls, crickets at the edges, a fox</td><td>rain on leaves, drips after</td></tr>
+      <tr><td><b>Blossom</b></td><td>cherry grove, flower forest</td><td>finches, bees, a cuckoo far off</td><td>crickets, firefly bushes</td><td>soft rain, petals</td></tr>
+      <tr><td><b>Duskwood</b></td><td>dark forest, pale garden · <b>Lumen Forest</b></td><td>few birds, a raven</td><td>owls, creaks; pale garden near silent</td><td>rain loud on the leaf roof</td></tr>
+      <tr><td><b>Conifer</b></td><td>taiga, snowy taiga, old growth pine and spruce, windswept forest</td><td>crossbills, tits, woodpecker</td><td>owl, a wolf far off</td><td>wind through needles</td></tr>
+      <tr><td><b>Open grass</b></td><td>plains, sunflower plains, meadow</td><td>larks high up, a kestrel, bees</td><td>the cricket field</td><td>grass hiss in gusts</td></tr>
+      <tr><td><b>Dry warmth</b></td><td>savanna, plateau, windswept savanna · <b>Glass Steppe</b></td><td>cicadas by heat, weaver birds</td><td>nightjar, crickets</td><td>dry grass (vanilla)</td></tr>
+      <tr><td><b>Desert</b></td><td>desert, badlands, eroded, wooded badlands</td><td>almost nothing, one bird</td><td>cold wind, a far howl</td><td>sand hiss, dead bush (vanilla)</td></tr>
+      <tr><td><b>Canopy</b></td><td>jungle, sparse, bamboo jungle</td><td>tropical birds, parrots far off</td><td>frogs, katydids, a big cat</td><td>heavy rain on big leaves</td></tr>
+      <tr><td><b>Mire</b></td><td>swamp, mangrove · <b>Mirror Marsh</b></td><td>frogs, herons, dragonflies</td><td>frog chorus, bog bubbles</td><td>rain on still water</td></tr>
+      <tr><td><b>Heights</b></td><td>windswept hills, gravelly hills, stony, jagged, frozen peaks · <b>Shattered Highlands</b></td><td>ravens, a kite, marmot whistles</td><td>wind only</td><td>wind rising with height</td></tr>
+      <tr><td><b>Snowfield</b></td><td>snowy plains, ice spikes, grove, snowy slopes · <b>Frost Spires</b></td><td>snow bunting, a branch shedding snow</td><td>ice settling, an owl</td><td>snow muffles the air</td></tr>
+      <tr><td><b>Coast</b></td><td>beach, snowy beach, stony shore</td><td>gulls, terns</td><td>quieter surf</td><td>surf at the real shoreline</td></tr>
+      <tr><td><b>Open sea</b></td><td>every ocean</td><td>gulls near land only</td><td>wind and swell</td><td>underwater: vanilla's loop</td></tr>
+      <tr><td><b>River</b></td><td>river, frozen river, and lakes anywhere</td><td>kingfisher, dragonflies</td><td>frogs, a fish jump</td><td>flow at the real current</td></tr>
+      <tr><td><b>Sporewild</b></td><td>mushroom fields</td><td>soft spore puffs</td><td>wet pops, our Shroomlets</td><td>rain drums on caps</td></tr>
+      <tr><td><b>Hollows</b></td><td>dripstone, lush caves, deep dark, sulfur caves, any deep ground</td><td colspan="2">air tone by cavern size and depth, drips at real dripstone, far rumbles; deep dark near silent</td><td>vanilla cave mood stays</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted prose">The Nether's five biomes and the End keep vanilla's loops, which are excellent; we add lava from real lava and one far void wind. Every bird and insect named above is a recording or a voice we already have; nothing is invented for an animal that isn't there.</p>
+</section>
+
+<section aria-labelledby="s-places">
+  <header><p class="eyebrow">Everything else</p><h2 id="s-places">Places beyond the biomes</h2></header>
+  <div class="frame scroll">
+  <table class="wide">
+    <thead><tr><th>Place</th><th>What you hear</th><th>AWAKEN's touch</th></tr></thead>
+    <tbody>
+      <tr><td><b>Weather</b></td><td>Rain re-voiced by what it lands on (leaves, stone, water, soil, a roof, glass); drips for a minute after; thunder delayed by distance at 343 blocks a second, far strikes all roll and no crack; wind from the shared wind field.</td><td>Storms make the Shattered Highlands' faults hum louder.</td></tr>
+      <tr><td><b>Water</b></td><td>Rivers flow at the current, lakes lap, waterfalls roar by height; underwater the air closes to a muffle.</td><td>Glimmerfin shoals ticking under the surface.</td></tr>
+      <tr><td><b>Altitude and flight</b></td><td>Wind rises with height and exposure; above the clouds the land below drops away to a thin high air. The Ascent's speed rush stays, and our wind gives way to it.</td><td>The gust you see is the gust you hear.</td></tr>
+      <tr><td><b>Caves</b></td><td>Air tone by cavern size and depth; drips at real dripstone; the deeper, the fewer sounds. Vanilla's cave mood stays.</td><td>Chime Crickets answering across a cavern.</td></tr>
+      <tr><td><b>The Descent</b></td><td>Each stratum's rule is heard before it is felt: the gust telegraphed 1.5 s ahead, the roar before the water rises, bones shifting before the dead rise, near-silence where sound draws Listeners, stone grinding where you aren't looking, your own steps returning a beat late, the Seed's heartbeat.</td><td>Gameplay you can hear.</td></tr>
+      <tr><td><b>Gates</b></td><td>The room under the music: braziers, water, gears, bells, a market's murmur from the set pieces. The Abyssal Shrine stays silent.</td><td>The hush before a Lord: the room drains as you near the arena doors.</td></tr>
+      <tr><td><b>The Veil</b></td><td>The world through glass: muffled, birds gone, a soft choral hum, your Body's heartbeat louder as the cord stretches, spirits whispering where they stand.</td><td>Secrets within Awareness shimmer faintly.</td></tr>
+      <tr><td><b>The Stillpoint</b></td><td>Cloud-sea wind, temple chimes, one far bell every 40 s; long tails, nothing hurried.</td><td>The calmest place in the game.</td></tr>
+      <tr><td><b>Lucidium</b></td><td>The dream sounds like the place it was built from, pitched down, tails reversed.</td><td>Clarity follows lucidity: muffled at 0, open at 50, crisp at 80.</td></tr>
+      <tr><td><b>Above and the Halo</b></td><td>Ruins hum at night and tick by day; sky platforms' cables sing; ocean labs creak and pump; the Halo hums and hisses at its airlocks.</td><td>Outside the Halo's glass: nothing at all.</td></tr>
+      <tr><td><b>The Hearth and interiors</b></td><td>Outdoor sound through the openings, rain drumming on the roof, the fire; Trophy Hall reverberant, Workshop humming, Sanctuary hushed.</td><td>A home sounds like shelter when it rains.</td></tr>
+      <tr><td><b>The Living Wilds</b></td><td>Happenings heard before they're seen, with direction: a migration's lowing, a stampede's rising thunder, a murmuration's wing waves, the Wild Hunt's horn under a full moon, a caravan's bells. Wilder regions: fewer songbirds, more hunters calling.</td><td>Rumours you can follow by ear. When the Wild Hunt runs, everything else falls silent.</td></tr>
+      <tr><td><b>Carillon</b></td><td colspan="2">Not planned here: B3b owns the city. The Conductor yields inside the walls and offers weather, enclosure and rain-by-surface as services.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section aria-labelledby="s-magic">
+  <header><p class="eyebrow">What makes it ours</p><h2 id="s-magic">Six touches no nature pack has</h2></header>
+  <div class="magic">
+    <div class="frame"><h3>The world holds its breath</h3><p>Near an open gate the birds and insects thin out and the wind leans toward it. As a Break's clock runs down the hush spreads, until only the hum is left.</p></div>
+    <div class="frame"><h3>The gust you see is the gust you hear</h3><p>Our wind is deterministic and shared: a gust front rolls downwind at 7 blocks a second. You hear it in the upwind trees first, then over you, in step with the waving leaves. Two players hear the same gust.</p></div>
+    <div class="frame"><h3>The lands sing in the System's key</h3><p>A faint harmony in D major pentatonic: Glass Steppe's glass ringing in the sun, the faults beating, Frost Spires' aurora at night, Lumen specks chiming as you pass, Elderwood's colossi groaning in big gusts.</p></div>
+    <div class="frame"><h3>Mirror Marsh answers</h3><p>A sound you make there returns a moment later from across the water, as if from your reflection.</p></div>
+    <div class="frame"><h3>The hunter's ear</h3><p>Awareness is power: PER widens what you hear. A lair breathing from its direction, a hidden cache's shimmer, a spirit's whisper in the Veil.</p></div>
+    <div class="frame"><h3>Clarity is lucidity</h3><p>In a dream the world's sound sharpens as you become lucid. You hear yourself wake up inside it.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="s-fit">
+  <header><p class="eyebrow">Fit</p><h2 id="s-fit">Never fighting the music, the System or the city</h2></header>
+  <div class="frame scroll">
+  <table class="mid">
+    <thead><tr><th>When</th><th>World beds</th><th>World events</th></tr></thead>
+    <tbody>
+      <tr><td>Vanilla's calm songs, our composed tracks</td><td class="num">0 dB</td><td>as normal (piano over nature is Minecraft)</td></tr>
+      <tr><td>Layered gate music at tension</td><td class="num">0 dB</td><td>as normal</td></tr>
+      <tr><td>Layered music at combat or a Lord</td><td class="num">−4 dB</td><td>thinned to half</td></tr>
+      <tr><td>A stage cue (awakening, rank up, a Break)</td><td class="num">−3 dB</td><td>as normal</td></tr>
+      <tr><td>Inside Carillon</td><td>yield by the city's weight</td><td>the city's own</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul class="prose">
+    <li>The Conductor plays on the Ambient/Environment slider and never touches the music channel.</li>
+    <li>The System's glass stays dry and on top. The land's harmony uses the System's scale, never its timbre, so you never mistake the land for the System.</li>
+    <li>Sound Physics processes our positional voices; the System, UI and music stay dry as they are today.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="s-sources">
+  <header><p class="eyebrow">Sources</p><h2 id="s-sources">Vanilla first, then CC0, then synthesis</h2></header>
+  <div class="frame scroll">
+  <table class="mid">
+    <thead><tr><th>Source</th><th>Used for</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip have">vanilla</span></td><td>cave mood, rain, thunder, nether loops, underwater, sand and dry grass, firefly bush, pale moss, dripstone, frogs, wolves, parrots far off</td><td>Referenced by event id, layered with pitch and volume. Never copied.</td></tr>
+      <tr><td><span class="chip maybe">CC0</span></td><td>songbirds by family, woodpecker, gulls, crickets, cicadas, katydids, night frogs, surf, rivers, waterfalls, rain on leaves, stone, roof, water and glass, drips</td><td>Freesound, CC0 only, long-standing uploaders. About 70 files on a shortlist page you tick; nothing downloaded before your yes; each listed with URL, author, licence, date.</td></tr>
+      <tr><td><span class="chip yes">synthesis</span></td><td>wind, cave and air tones, ice and glass, every magic sound, the Veil, the Stillpoint, Lucidium, the Halo, the strata's tells</td><td><code>tools/art/audiokit.py</code>, proven on our 70 gate stems.</td></tr>
+      <tr><td><span class="chip no">never</span></td><td>other mods' sounds, BBC Sound Effects (non-commercial), Sonniss bundles (no raw redistribution), CC-BY or CC-NC files</td><td>The repo is public.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section aria-labelledby="s-budget">
+  <header><p class="eyebrow">Budgets</p><h2 id="s-budget">Cheap enough to forget about</h2>
+    <p class="muted prose">The engine holds about 248 ordinary sounds (capped at 255, confirmed by another mod's 26.3 patch) and 8 streams on a 256-source device; the exact split is to confirm against 26.3's source on your Mac in Phase 0.</p></header>
+  <div class="frame budgets">
+    <div class="bud"><div class="name">Streaming channels<small>1 of ~8 · the AirBed mixes in Java</small></div><div class="bar"><i style="width:12.5%"></i><span>1 / 8</span></div></div>
+    <div class="bud"><div class="name">Ambient voices<small>≤ 16 of ~248 static · quietest stolen first</small></div><div class="bar"><i class="leaf" style="width:6.5%"></i><span>16 / 248</span></div></div>
+    <div class="bud"><div class="name">Main thread<small>≤ 0.10 ms a tick average, no allocation per tick</small></div><div class="bar"><i style="width:2%"></i><span>0.10 / 5 ms</span></div></div>
+    <div class="bud"><div class="name">Decoded memory<small>≤ 48 MB of one-shots and textures; beds stream</small></div><div class="bar"><i class="leaf" style="width:37.5%"></i><span>48 / 128 MB</span></div></div>
+    <div class="bud"><div class="name">Disk<small>≤ 60 MB of new Ogg (today 52 MB)</small></div><div class="bar"><i style="width:53.6%"></i><span>52 + 60 MB</span></div></div>
+  </div>
+  <p class="muted prose">Also: at most four new one-shots a second (caps Sound Physics' ray tracing), and a frame-time tour per phase gate: p50 within 2% of the Conductor switched off.</p>
+</section>
+
+<section aria-labelledby="s-phases">
+  <header><p class="eyebrow">Plan</p><h2 id="s-phases">Five phases, each gated by your ears</h2>
+    <p class="muted prose">Scaled from the git history: all of AWAKEN took about 30 hours with several builders; the adaptive gate music took one builder four to five hours. Two builders in parallel make this about two days of wall clock; the critical path is listening, not building.</p></header>
+  <figure class="frame">
+    <div class="scroll">
+    <svg viewBox="0 0 700 276" role="img" aria-labelledby="ph-t ph-d" style="min-width:560px">
+      <title id="ph-t">Phases by builder-hours</title>
+      <desc id="ph-d">Phase 0 spikes, 3 hours; Phase 1 engine and first forest, 7; Phase 2 every land, 7; Phase 3 reactions, 4; Phase 4 below and beyond, 5; Phase 5 magic and seams, 2. Each phase after the first ends in a listening batch.</desc>
+      <line x1="250.0" y1="16" x2="250.0" y2="234" stroke="var(--line)"/><text x="250.0" y="248" text-anchor="middle">0</text><line x1="345.0" y1="16" x2="345.0" y2="234" stroke="var(--line)"/><text x="345.0" y="248" text-anchor="middle">2</text><line x1="440.0" y1="16" x2="440.0" y2="234" stroke="var(--line)"/><text x="440.0" y="248" text-anchor="middle">4</text><line x1="535.0" y1="16" x2="535.0" y2="234" stroke="var(--line)"/><text x="535.0" y="248" text-anchor="middle">6</text><line x1="630.0" y1="16" x2="630.0" y2="234" stroke="var(--line)"/><text x="630.0" y="248" text-anchor="middle">8</text><text x="8" y="39" class="lab">P0</text><text x="40" y="39">Spikes and shortlist</text><rect x="250" y="24" width="142.5" height="22" fill="var(--accent)" fill-opacity="0.75"/><text x="400.5" y="39" style="fill:var(--fg)">3 h</text><text x="8" y="75" class="lab">P1</text><text x="40" y="75">Engine and the first forest</text><rect x="250" y="60" width="332.5" height="22" fill="var(--accent)" fill-opacity="0.75"/><text x="590.5" y="75" style="fill:var(--fg)">7 h</text><path d="M630.5 62 l9 9 l-9 9 l-9 -9 z" fill="var(--amber)"/><text x="8" y="111" class="lab">P2</text><text x="40" y="111">Every land</text><rect x="250" y="96" width="332.5" height="22" fill="var(--accent)" fill-opacity="0.75"/><text x="590.5" y="111" style="fill:var(--fg)">7 h</text><path d="M630.5 98 l9 9 l-9 9 l-9 -9 z" fill="var(--amber)"/><text x="8" y="147" class="lab">P3</text><text x="40" y="147">The world reacts</text><rect x="250" y="132" width="190.0" height="22" fill="var(--accent)" fill-opacity="0.75"/><text x="448.0" y="147" style="fill:var(--fg)">4 h</text><path d="M488.0 134 l9 9 l-9 9 l-9 -9 z" fill="var(--amber)"/><text x="8" y="183" class="lab">P4</text><text x="40" y="183">Below and beyond</text><rect x="250" y="168" width="237.5" height="22" fill="var(--accent)" fill-opacity="0.75"/><text x="495.5" y="183" style="fill:var(--fg)">5 h</text><path d="M535.5 170 l9 9 l-9 9 l-9 -9 z" fill="var(--amber)"/><text x="8" y="219" class="lab">P5</text><text x="40" y="219">Magic and seams</text><rect x="250" y="204" width="95.0" height="22" fill="var(--accent)" fill-opacity="0.75"/><text x="353.0" y="219" style="fill:var(--fg)">2 h</text><path d="M393.0 206 l9 9 l-9 9 l-9 -9 z" fill="var(--amber)"/><text x="250" y="264">builder-hours · total 28</text>
+    </svg>
+    </div>
+    <figcaption><b>Bars to scale</b> (builder-hours). Each diamond is a listening batch of ten minutes or less; the shortlist page after Phase 0 is where you tick the CC0 recordings.</figcaption>
+  </figure>
+  <div class="frame scroll">
+  <table class="wide">
+    <thead><tr><th>Phase</th><th>What gets built</th><th>Hours</th><th>Gate</th></tr></thead>
+    <tbody>
+      <tr><td><b>P0</b> Spikes</td><td>One hour on your Mac (with your go-ahead to launch the game): AmbientSounds alone (and a local recording for the A/B), Tread Lightly and Immersive Thunder Reforged beside Sound Physics, 26.3's engine numbers. In the cloud: the CC0 shortlist page.</td><td class="num">3</td><td>your ticks on the shortlist</td></tr>
+      <tr><td><b>P1</b> The first forest</td><td>Listener, Conductor, AirBed, textures, events, the voice cap, soundscape data, biome tags and census, leaf rustle folded in, the debug command; the Greenwood complete; the offline renderer for listening pages.</td><td class="num">7</td><td>batch 1 · perf tour</td></tr>
+      <tr><td><b>P2</b> Every land</td><td>The other 15 families; Elderwood's and Lumen Forest's beds; the four Awakened beds moved in; rain by surface; thunder by distance; wind by height.</td><td class="num">7</td><td>batch 2</td></tr>
+      <tr><td><b>P3</b> The world reacts</td><td>Predator hush, cricket ring, flush, after the rain, powers, combat ducking; footstep data for our blocks and Hunter gear.</td><td class="num">4</td><td>batch 3</td></tr>
+      <tr><td><b>P4</b> Below and beyond</td><td>Caves by depth, the ten strata, gate rooms and the Lord's hush, the Veil, the Stillpoint, Lucidium, Above and the Halo, the Hearth and interiors.</td><td class="num">5</td><td>batch 4 · perf tour</td></tr>
+      <tr><td><b>P5</b> Magic and seams</td><td>The gate hush and Break, the Awakened songs, the hunter's ear, Living Wilds happenings, the city seam, the final mix.</td><td class="num">2</td><td>batch 5 · you play</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section aria-labelledby="s-risks">
+  <header><p class="eyebrow">Risks</p><h2 id="s-risks">What could go wrong, and what we do about it</h2></header>
+  <div class="frame scroll">
+  <table class="mid">
+    <thead><tr><th>Risk</th><th>Odds</th><th>What we do</th></tr></thead>
+    <tbody>
+      <tr><td>Listening time (the gate-music sheet is still unmarked)</td><td class="bad">high</td><td>Batches of ten minutes or less, phone-friendly, unmarked = keep; building carries on into the next phase.</td></tr>
+      <tr><td>Synthesised nature sounds fake</td><td class="warn">medium</td><td>Nature is recorded; synthesis only where it is strong (wind, tones, magic).</td></tr>
+      <tr><td>Too busy, then annoying</td><td class="warn">medium</td><td>Density curves, lulls, silence floors, and a ten-minute "spot the seam" test.</td></tr>
+      <tr><td>Tread Lightly is young (first commit 2026-09-03, one author)</td><td class="warn">medium</td><td>Spike first; our own steps are planned and costed as the fallback.</td></tr>
+      <tr><td>Double ambience (vanilla loops, or a player adding AmbientSounds)</td><td class="warn">medium</td><td>Our biomes' loops move into the Conductor; inert files mute AmbientSounds in our dimensions, and with it loaded the Conductor drops its nature sounds.</td></tr>
+      <tr><td>The city seam while B3b is being built</td><td class="warn">medium</td><td>The city owns its walls; a short contract note to the Carillon session before Phase 5.</td></tr>
+      <tr><td>A mislabelled CC0 file</td><td class="ok">low</td><td>Long-standing uploaders only; licence and date recorded; anything doubtful is cut.</td></tr>
+      <tr><td>Channels, memory, Sound Physics cost</td><td class="ok">low</td><td>One stream, 16-voice cap, 48 MB cap checked by a test, four new sounds a second at most.</td></tr>
+      <tr><td>Sound Physics judges a loop once, at its start</td><td class="ok">low</td><td>Textures re-anchor with a short crossfade when you go indoors and every ~12 s.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section aria-labelledby="s-dec">
+  <header><p class="eyebrow">Your call</p><h2 id="s-dec">Seven decisions</h2></header>
+  <ol class="decisions">
+    <li><div><b>Approach C, the hybrid.</b> Our Conductor for biomes, places, reactions and magic; mods for space and footsteps.<span class="rec">Recommended.</span><span class="alt">A is faster but generic and blind to AWAKEN; B rebuilds footsteps for nothing.</span></div></li>
+    <li><div><b>Footsteps: Tread Lightly</b> in the sound profile, if the spike passes.<span class="rec">Recommended.</span><span class="alt">Otherwise our own steps by surface and armour in Phase 3.</span></div></li>
+    <li><div><b>AmbientSounds as the benchmark, not shipped.</b> We A/B against it in batch 1 and adopt it for vanilla nature beds only if it wins on your ears. Our jar mutes it in our dimensions for players who add it.<span class="rec">Recommended.</span></div></li>
+    <li><div><b>No Raise Sound Limit Simplified.</b> Its asynchronous playback breaks assumptions our music player relies on, and our budget fits the vanilla engine.<span class="rec">Recommended: leave it out.</span></div></li>
+    <li><div><b>CC0 recordings from Freesound</b> for birds, insects, water and rain on surfaces: about 70 files from a shortlist you tick.<span class="rec">Recommended.</span><span class="alt">Downloading originals needs a free Freesound account's API key: yours, or a project account.</span></div></li>
+    <li><div><b>Five listening batches of ten minutes or less</b>, unmarked = keep once you've opened the page.<span class="rec">Recommended.</span></div></li>
+    <li><div><b>The six magic touches</b>: the gate hush, the gust you hear, the lands in the System's key, Mirror Marsh's answer, the hunter's ear, clarity in dreams.<span class="rec">Recommended: all six.</span></div></li>
+  </ol>
+  <p class="muted prose">Not recommended, for the record: <b>Sounds</b> (can't load on 26.3, all rights reserved, and it re-voices the UI, which is the System's), <b>Dynamic Surroundings</b> (nothing past 1.21.1), <b>Presence Footsteps</b> (Fabric only, Polyform Shield licence).</p>
+</section>
+
+<footer>
+  <p>Details for builders: <code>docs/sound/PLAN.md</code> · hand-off: <code>docs/handoff/pack-world-sound-plan.md</code> · branch <code>pack/world-sound-plan</code>.</p>
+  <p>No code yet. Nothing here has been heard; sound descriptions are design intent until the listening batches.</p>
+</footer>
+
+</div>
