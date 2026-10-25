@@ -1,0 +1,199 @@
+# Carillon M4 step B3a (docs/carillon/briefs/M4-B3a-street-life.md): street life, one light tour (shots only, no perf).
+# The same world, settings and cameras as M1's tour (carillon-m1.txt), so every shot pairs with B2's; then the street
+# life at noon (the bowl's stalls, a Market street, the square), a laundry lane and the canal's lantern strings at dusk
+# with the windows lighting up, and the city at night from the sky and the street.
+# Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=M4-B3a \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m4b3a.txt 900
+world carillonM4b3a creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 23700
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken city info
+hud off
+look -45 12
+wait 60
+shot b3a_spawn_roost
+cmd gamemode spectator
+# the sky at dawn: let Distant Horizons read the pregenerated city first
+cmd awaken city view sky_nw
+wait 900
+shot b3a_sky_nw
+cmd awaken city view sky_nw_low
+wait 160
+shot b3a_sky_nw_low
+cmd awaken city view sky_n
+wait 200
+shot b3a_sky_n
+cmd awaken city view sky_w
+wait 200
+shot b3a_sky_w
+cmd awaken city view sky_top
+wait 300
+shot b3a_sky_top
+# morning light for the streets
+cmd time set 1500
+cmd awaken city view roost_start
+wait 160
+shot b3a_roost_start
+cmd awaken city view square
+wait 120
+shot b3a_square
+cmd awaken city view market
+wait 100
+shot b3a_market
+cmd awaken city view bellwatch
+wait 120
+shot b3a_bellwatch
+cmd awaken city view quay
+wait 120
+shot b3a_quay
+cmd awaken city view terrace
+wait 120
+shot b3a_terrace
+cmd awaken city view works
+wait 120
+shot b3a_works
+cmd awaken city view garden
+wait 120
+shot b3a_garden
+cmd awaken city view wallring
+wait 120
+shot b3a_wallring
+# the facades, one per district, from across the street (new at B1; later steps keep these framings)
+cmd awaken city view facade_bellwatch
+wait 120
+shot b3a_facade_bellwatch
+cmd awaken city view facade_quay
+wait 120
+shot b3a_facade_quay
+cmd awaken city view facade_market
+wait 120
+shot b3a_facade_market
+cmd awaken city view facade_terrace
+wait 120
+shot b3a_facade_terrace
+cmd awaken city view facade_garden
+wait 120
+shot b3a_facade_garden
+cmd awaken city view facade_works
+wait 120
+shot b3a_facade_works
+cmd awaken city view facade_wallring
+wait 120
+shot b3a_facade_wallring
+# the roofscape from just over the roofs
+cmd awaken city view roofs_bellwatch
+wait 160
+shot b3a_roofs_bellwatch
+cmd awaken city view roofs_quay
+wait 160
+shot b3a_roofs_quay
+# the relief (new at B2): the Knoll from the canal side, the square's bowl from the rim, the Terrace's wall from the
+# Choir Avenue, the gatehouse yard outside the High Gate, the cellar under the old bell (lit by its own lantern)
+cmd awaken city view knoll
+wait 160
+shot b3a_knoll
+cmd awaken city view bowl
+wait 120
+shot b3a_bowl
+cmd awaken city view terrace_wall
+wait 120
+shot b3a_terrace_wall
+cmd awaken city view gate_yard
+wait 160
+shot b3a_gate_yard
+cmd awaken city view cellar
+wait 100
+shot b3a_cellar
+cmd awaken city view quay_ladder
+wait 100
+shot b3a_quay_ladder
+# the studio framings M1 recorded (the roofs and the fabric round each landmark)
+cmd awaken city view studio_spire
+wait 120
+shot b3a_studio_spire
+cmd awaken city view studio_association
+wait 120
+shot b3a_studio_association
+cmd awaken city view studio_roost
+wait 120
+shot b3a_studio_roost
+cmd awaken city view studio_cranes
+wait 120
+shot b3a_studio_cranes
+cmd awaken city view studio_bellwatch_tower
+wait 120
+shot b3a_studio_bellwatch_tower
+cmd awaken city view studio_garden_tower
+wait 120
+shot b3a_studio_garden_tower
+cmd awaken city view studio_terrace_tower
+wait 120
+shot b3a_studio_terrace_tower
+# noon: the street life (new at B3a)
+cmd time set 6000
+cmd awaken city view bowl
+wait 200
+shot b3a_noon_bowl
+cmd awaken city view bowl_stalls
+wait 120
+shot b3a_noon_bowl_stalls
+cmd awaken city view square
+wait 120
+shot b3a_noon_square
+cmd awaken city view market_street
+wait 160
+shot b3a_noon_market_street
+cmd awaken city view market
+wait 120
+shot b3a_noon_market
+cmd awaken city view facade_market
+wait 120
+shot b3a_noon_facade_market
+cmd awaken city view laundry_lane
+wait 160
+shot b3a_noon_laundry_lane
+cmd awaken city view quay
+wait 120
+shot b3a_noon_quay
+# dusk: the windows come on house by house (a few houses a tick; give the sweep its turn)
+cmd time set 13300
+cmd awaken city view laundry_lane
+wait 400
+shot b3a_dusk_laundry_lane
+cmd awaken city view bellwatch
+wait 160
+shot b3a_dusk_bellwatch
+cmd awaken city view canal_lights
+wait 200
+shot b3a_dusk_canal
+cmd awaken city view sky_nw_low
+wait 200
+shot b3a_sky_dusk
+# night: lit windows and lanterns, from the sky and the street
+cmd time set 16000
+cmd awaken city view sky_nw_low
+wait 400
+shot b3a_night_sky
+cmd awaken city view market_street
+wait 200
+shot b3a_night_market_street
+cmd awaken city view laundry_lane
+wait 160
+shot b3a_night_laundry_lane
+cmd awaken city view square
+wait 160
+shot b3a_night_square
+quit

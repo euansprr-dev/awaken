@@ -589,7 +589,7 @@ class Layer:
                      if abs((x - dx) - doorx) + abs((z - dz) - doorz) >= 2]
             if len(cells) < 2:
                 continue
-            want = 1 + int(self.rnd(q['id'], 9321) * min(3, len(cells) // 2 + 1))
+            want = min(4, len(cells) - (1 if self.rnd(q['id'], 9321) < 0.3 else 0))
             n = 0
             for t, x, z in sorted(cells, key=lambda c: self.rnd(q['id'], c[0], 9322)):
                 if n >= want:
@@ -992,8 +992,8 @@ class Layer:
         """Lines across lanes and streets between facing facades, on the grid (rows 9 and 13, both courses): laundry
         webs in Bellwatch and the Wallring, bunting along the Market's spokes, a few lantern strings."""
         G = self.G
-        style = {'bellwatch': (['laundry'] * 6 + ['rope', 'bunting'], 9, 0.75), 'wallring': (['laundry'] * 5 + ['rope'], 8, 0.6),
-                 'market': (['bunting'] * 4 + ['lanterns', 'laundry'], 9, 0.85), 'quay': (['laundry', 'laundry', 'rope', 'lanterns'], 9, 0.5),
+        style = {'bellwatch': (['laundry'] * 6 + ['rope', 'bunting'], 5, 0.8), 'wallring': (['laundry'] * 5 + ['rope'], 6, 0.7),
+                 'market': (['bunting'] * 4 + ['lanterns', 'laundry'], 8, 0.9), 'quay': (['laundry', 'laundry', 'rope', 'lanterns'], 8, 0.6),
                  'works': (['rope', 'laundry'], 12, 0.3), 'garden': (['bunting', 'lanterns'], 12, 0.35),
                  'terrace': (['lanterns'], 14, 0.3)}
         cands = []
@@ -1045,7 +1045,7 @@ class Layer:
             hangs, spacing, keep = style[dn]
             if key > keep:
                 continue
-            if any(math.hypot(mx - a, mz - b) < spacing and abs(rr - ry) < 6 for a, b, rr in placed[dn]):
+            if any(math.hypot(mx - a, mz - b) < spacing and abs(rr - ry) < 3 for a, b, rr in placed[dn]):
                 continue
             if not self.line_room(run, ry):
                 continue

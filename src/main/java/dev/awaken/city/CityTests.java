@@ -32,7 +32,7 @@ final class CityTests {
      * The plan's SHA-256. A changed plan changes every new world's city and its graphs: regenerate it on purpose
      * ({@code python3 -I tools/city/plan.py}), then update this pin in the same commit.
      */
-    static final String PLAN_SHA256 = "9d0f435151e66d21eab65a5196aa092d0c178826fbe71a6b2b1b833d61099566";
+    static final String PLAN_SHA256 = "fc9beca06b92b356102dc043b7807b8318befc73c72fdef344cb8fb1db39222e";
 
     /** A city placed at (x, z) for tests (carved, so no plate fill is asked of a GameTest world). */
     static CityLayout layoutAt(int x, int z) {
@@ -759,6 +759,96 @@ final class CityTests {
             h.setBlock(wall, Blocks.AIR);
             h.succeedWhen(() -> h.assertTrue(h.getBlockState(top).isAir() && h.getBlockState(top.below()).isAir()
                     && h.getBlockState(top.below(2)).isAir(), "with the wall gone the whole ladder comes down"));
+        });
+
+        // ---- Milestone 4 (B3a): the street-life layer ------------------------------------------------------------------
+
+        // the lines: every avenue crossing site B2 marked is hung (tools/city/props.py) and its rope is painted on the site;
+        // the lanes' lines are painted where the plan puts them; the movement tags (SPEC §16.9) hold the street's pieces:
+        // runner_lines the hang line, runner_soft the awning and the hay cart, and both are in the painted Market
+        AwakenTests.register("city_street_lines", 400, h -> {
+            CityLayout l = layoutAt(0, 0);
+            long seed = 20261024L;
+            CityPlan p = l.plan;
+            var lines = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, dev.awaken.Awaken.id("runner_lines"));
+            var soft = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, dev.awaken.Awaken.id("runner_soft"));
+            var swings = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, dev.awaken.Awaken.id("runner_swings"));
+            h.assertTrue(dev.awaken.city.kit.StreetKit.HANG_LINE.get().defaultBlockState().is(lines), "the hang line is in runner_lines");
+            h.assertTrue(dev.awaken.city.kit.StreetKit.AWNING.get().defaultBlockState().is(soft)
+                    && dev.awaken.city.kit.StreetKit.HAY_CART.get().defaultBlockState().is(soft), "awnings and hay carts are in runner_soft");
+            h.assertTrue(dev.awaken.city.kit.StreetKit.SIGN_BRACKET.get().defaultBlockState().is(swings), "sign brackets are in runner_swings");
+            CityBuffer buf = new CityBuffer(40, 40);
+            int sites = 0, cells = 0, held = 0;
+            String first = "";
+            for (CityPlan.Crossing c : p.crossings) {
+                if (!c.kind().equals("line")) continue;
+                sites++;
+                h.assertTrue(c.hung() != null, "the line site on " + c.street() + " at " + (int) c.ax() + ", " + (int) c.az() + " is hung");
+                int[] hb = c.hung();
+                paintAround(l, seed, Math.min(hb[0], hb[2]) - 10, Math.min(hb[1], hb[3]) - 10, buf);
+                for (int x = Math.min(hb[0], hb[2]); x <= Math.max(hb[0], hb[2]); x++) {
+                    for (int z = Math.min(hb[1], hb[3]); z <= Math.max(hb[1], hb[3]); z++) {
+                        BlockState s = buf.get(x, hb[4], z);
+                        cells++;
+                        if (s != null && (s.is(lines) || s.is(dev.awaken.city.kit.StreetKit.LINE_POLE.get()))) held++;
+                        else if (first.isEmpty()) first = c.street() + " at " + x + ", " + hb[4] + ", " + z + ": " + s;
+                    }
+                }
+            }
+            h.assertTrue(sites >= 13, "the plan's line sites: " + sites);
+            h.assertTrue(held * 100 >= cells * 90, (cells - held) + " of " + cells + " cells of the hung sites carry no line; first " + first);
+            // the lanes' lines: a sample of one in four, at least nine in ten of their cells hold the rope (a jettied
+            // course or a tree's crown takes the odd end cell)
+            int lc = 0, lh = 0, n = 0;
+            for (CityPlan.Prop pr : p.props) {
+                if (!pr.kind().equals("line") || (n++ & 3) != 0) continue;
+                paintAround(l, seed, pr.x0() - 10, pr.z0() - 10, buf);
+                for (int x = pr.x0(); x <= pr.x1(); x++)
+                    for (int z = pr.z0(); z <= pr.z1(); z++) {
+                        BlockState s = buf.get(x, pr.ry(), z);
+                        lc++;
+                        if (s != null && (s.is(lines) || s.is(dev.awaken.city.kit.StreetKit.LINE_POLE.get()))) lh++;
+                    }
+            }
+            h.assertTrue(n > 100, "lines in the plan: " + n);
+            h.assertTrue(lh * 100 >= lc * 85, (lc - lh) + " of " + lc + " sampled lane-line cells carry no line");
+            // soft landings in the Market: awnings over its shopfronts, hay carts at the towers
+            int softs = 0;
+            CityBuffer buf16 = new CityBuffer(16, 16);
+            for (int cx = -3; cx <= 2; cx++)
+                for (int cz = -3; cz <= 2; cz++) {
+                    CityPainter.paintChunk(l, (l.cx >> 4) + cx, (l.cz >> 4) + cz, seed, buf16);
+                    for (BlockState s : buf16.cells) if (s != null && s.is(soft)) softs++;
+                }
+            h.assertTrue(softs > 60, "soft landings in the Market's middle: " + softs);
+            dev.awaken.Awaken.LOG.info("[city] street lines: {} sites, {}/{} cells held; lanes {}/{} sampled; {} soft blocks in the Market",
+                    sites, held, cells, lh, lc, softs);
+            h.succeed();
+        });
+
+        // lit windows switch with the time of day (a state check): dark at noon, about half the rooms lit at 20:00, a few
+        // at 3:00 (night owls), and the switch itself lights and darkens a window in the world
+        AwakenTests.register("city_lit_windows", 40, h -> {
+            int n = 0, noon = 0, eve = 0, night = 0;
+            for (int i = 0; i < 400; i++)
+                for (int k = 0; k < 30; k++) {
+                    n++;
+                    if (CityLights.wanted(i, k, k % 3, 6000)) noon++;
+                    if (CityLights.wanted(i, k, k % 3, 14000)) eve++;
+                    if (CityLights.wanted(i, k, k % 3, 21000)) night++;
+                }
+            h.assertTrue(noon == 0, noon + " windows lit at noon");
+            h.assertTrue(eve * 100 >= n * 35 && eve * 100 <= n * 65, eve + " of " + n + " windows lit at 20:00 (want 35-65%)");
+            h.assertTrue(night > 0 && night * 100 < n * 10, night + " of " + n + " windows lit at 3:00 (want a few)");
+            BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));
+            var level = h.getLevel();
+            level.setBlock(at, dev.awaken.city.kit.CityKit.LIT_WINDOW.get().defaultBlockState(), 3);
+            h.assertTrue(CityLights.set(level, at, true) && level.getBlockState(at).getValue(dev.awaken.city.kit.KitBlocks.LitWindow.LIT), "the window lights");
+            h.assertTrue(!CityLights.set(level, at, true), "a lit window is left alone");
+            h.assertTrue(CityLights.set(level, at, false) && !level.getBlockState(at).getValue(dev.awaken.city.kit.KitBlocks.LitWindow.LIT), "the window goes dark");
+            level.setBlock(at, Blocks.STONE.defaultBlockState(), 3);
+            h.assertTrue(!CityLights.set(level, at, true), "a window replaced by anything else is never touched");
+            h.succeed();
         });
 
         // dev studio: with a request file in the game folder, paint the whole city and dump it for tools/city/render.py

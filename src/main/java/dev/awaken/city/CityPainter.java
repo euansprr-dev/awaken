@@ -114,10 +114,13 @@ public final class CityPainter {
         }
     }
 
+    static final BlockState[] MOORING = dirs("awaken:mooring_ring[facing=%s]");
+
     /** The lower quay along the river (a bas-port): three blocks above the water, four below the street. */
     static final int LOW_QUAY = -4;
 
     static void lowQuay(Ctx c, CityBuffer b, int x, int z) {
+        CityPlan p = c.plan;
         b.plate(x, z);
         boolean face = nextToWater(c.plan, x, z);
         for (int ry = RIVER_FLOOR; ry < LOW_QUAY; ry++) {
@@ -129,6 +132,14 @@ public final class CityPainter {
         // ladders up the quay wall to the street, here and there
         int side = ladderSide(c, x, z, QUAY, 11);
         if (side >= 0) b.column(x, LOW_QUAY + 1, 0, z, LADDER[side]);
+        else {
+            // (M4 B3a) iron mooring rings on the quay wall every nine, waist-high over the lower quay (bible §5.2)
+            for (int d = 0; d < 4; d++) {
+                if (p.kind(x + NB[d][0], z + NB[d][1]) != QUAY) continue;
+                if (Math.floorMod(NB[d][0] == 0 ? x : z, 9) == 4) b.set(x, LOW_QUAY + 2, z, MOORING[(d + 2) & 3]);
+                break;
+            }
+        }
     }
 
     /**

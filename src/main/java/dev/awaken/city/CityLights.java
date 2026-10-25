@@ -91,19 +91,20 @@ public final class CityLights {
 
     static void sweep(ServerLevel level, int i, int tod) {
         long[] ws = windows[i];
-        Block window = CityKit.LIT_WINDOW.get();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int k = 0; k < ws.length; k++) {
             m.set(ws[k]);
             if (!level.isLoaded(m)) return;
-            BlockState s = level.getBlockState(m);
-            if (!s.is(window)) continue;
-            boolean want = wanted(i, k, storeys[i][k], tod);
-            if (s.getValue(KitBlocks.LitWindow.LIT) != want) {
-                level.setBlock(m, s.setValue(KitBlocks.LitWindow.LIT, want), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
-                switched++;
-            }
+            if (set(level, m, wanted(i, k, storeys[i][k], tod))) switched++;
         }
+    }
+
+    /** Lights or darkens the window at pos if it is still one of the kit's (and not already so); true when it changed. */
+    static boolean set(ServerLevel level, BlockPos pos, boolean lit) {
+        BlockState s = level.getBlockState(pos);
+        if (!s.is(CityKit.LIT_WINDOW.get()) || s.getValue(KitBlocks.LitWindow.LIT) == lit) return false;
+        level.setBlock(pos, s.setValue(KitBlocks.LitWindow.LIT, lit), Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        return true;
     }
 
     static long hash(long a, long b) {

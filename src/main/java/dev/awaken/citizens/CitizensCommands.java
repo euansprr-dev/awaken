@@ -178,9 +178,9 @@ final class CitizensCommands {
         switch (what) {
             case "stall" -> {
                 Roster.Stall st = r.stalls.get(0);
-                at[0] = l.cx + (st.x0() + st.x1() + 1) / 2.0;
-                at[1] = l.streetY + 2;
-                at[2] = l.cz + st.z1() + 0.5;
+                at[0] = l.cx + st.counterX(0) + 0.5;
+                at[1] = l.streetY + r.pRy[st.keeper()] + 2;
+                at[2] = l.cz + st.counterZ(0) + 0.5;
                 found = true;
             }
             case "event" -> {

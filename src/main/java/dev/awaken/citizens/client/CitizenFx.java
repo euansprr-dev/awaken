@@ -92,12 +92,23 @@ public final class CitizenFx {
             long pk = pos[i];
             int x = BlockPos.getX(pk), y = BlockPos.getY(pk), z = BlockPos.getZ(pk);
             double dx = x + 0.5 - p.getX(), dz = z + 0.5 - p.getZ(), dist2 = dx * dx + dz * dz;
-            if (dist2 > 128 * 128) continue;
+            if (dist2 > (kind[i] == 4 ? 48 * 48 : 128 * 128)) continue;
             int strength = strength(kind[i], tod, i);
             if (strength == 0) continue;
             // every emitter is visited every pos.length/64 ticks; puff when its turn comes round often enough
             int every = Math.max(1, (int) (Math.sqrt(dist2) / 24)) * (4 - Math.min(3, strength));
             if (Math.floorMod(now / Math.max(1, pos.length / 64) + i, (long) every) != 0) continue;
+            if (kind[i] == 4) {
+                // a fountain: water spilling over the upper bowl's lip into the basin
+                for (int k = 0; k < 3; k++) {
+                    double a = level.random.nextDouble() * Math.PI * 2;
+                    level.addParticle(net.minecraft.core.particles.ParticleTypes.FALLING_WATER, x + 0.5 + Math.cos(a) * 0.55, y - 0.15,
+                            z + 0.5 + Math.sin(a) * 0.55, 0, 0, 0);
+                }
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.SPLASH, x + 0.5 + (level.random.nextDouble() - 0.5) * 2.4, y - 2.0,
+                        z + 0.5 + (level.random.nextDouble() - 0.5) * 2.4, 0, 0.05, 0);
+                continue;
+            }
             double ya = kind[i] == 3 ? 0.03 : 0.0; // forges smoke darker
             level.addParticle(CitizensContent.CHIMNEY_SMOKE.get(), x + 0.5, y + 0.15, z + 0.5,
                     CitizenParticles.windX(level), ya, CitizenParticles.windZ(level));
@@ -108,7 +119,9 @@ public final class CitizenFx {
     private static int strength(byte k, int tod, int i) {
         return switch (k) {
             case 0 -> tod >= 21000 || tod < 2500 ? 3 : tod < 8000 ? 1 : 0;                  // bakery: before dawn, then low
-            case 1 -> (i % 3 != 0) && (tod < 1600 || tod >= 11400 && tod < 14600) ? 1 : 0; // houses at breakfast and supper
+            // houses at breakfast and supper and through the evening; one in four keeps a fire in all day (M4 B3a)
+            case 1 -> (i % 3 != 0) && (tod < 1600 || tod >= 11400 && tod < 16500) || i % 4 == 0 ? 1 : 0;
+            case 4 -> 3;                                                                   // a fountain
             case 2 -> tod >= 9000 && tod < 18500 ? 2 : 0;                                 // taverns all evening
             case 3 -> tod >= 900 && tod < 10800 ? 2 : 0;                                  // forges in working hours
             default -> 2;

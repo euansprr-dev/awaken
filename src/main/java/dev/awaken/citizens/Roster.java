@@ -49,7 +49,30 @@ public final class Roster {
             P_ANVIL = 6, P_WASH = 7, P_LINE = 8, P_PICKUP = 9, P_POST = 10, P_CRIER = 11, P_SIT = 12, P_PLAY = 13, P_MILL = 14,
             P_LANDMARK = 15, P_TAVERN_OUT = 16, P_SHOP_DOOR = 17;
 
-    public record Stall(int part, int x0, int z0, int x1, int z1, int colour, int keeper, int front, String good) {}
+    /**
+     * A market stall (M4 B3a: a street-life prop, plan.json "props"[part]): its box, the side its counter faces (N 0, E 1,
+     * S 2, W 3), the keeper's and the customers' places, its good.
+     */
+    public record Stall(int part, int x0, int z0, int x1, int z1, int colour, int keeper, int front, String good, int facing) {
+        /** The counter's cell k (0 or 1): the middle two of the front row's four. */
+        public int counterX(int k) {
+            return switch (facing) {
+                case 0 -> x0 + 1 + k;
+                case 2 -> x1 - 1 - k;
+                case 1 -> x1;
+                default -> x0;
+            };
+        }
+
+        public int counterZ(int k) {
+            return switch (facing) {
+                case 0 -> z0;
+                case 2 -> z1;
+                case 1 -> z0 + 1 + k;
+                default -> z1 - 1 - k;
+            };
+        }
+    }
 
     public record Bell(String landmark, int place, int x0, int z0, int x1, int z1, int district) {}
 
@@ -241,8 +264,9 @@ public final class Roster {
         for (JsonElement e : o.getAsJsonArray("stalls")) {
             JsonObject s = e.getAsJsonObject();
             int[] b = ints(s.getAsJsonArray("box"));
+            int facing = s.has("facing") ? "NESW".indexOf(s.get("facing").getAsString().charAt(0)) : 2;
             st.add(new Stall(s.get("part").getAsInt(), b[0], b[1], b[2], b[3], s.get("colour").getAsInt(), s.get("keeper").getAsInt(),
-                    s.get("front").getAsInt(), s.has("good") ? s.get("good").getAsString() : "produce"));
+                    s.get("front").getAsInt(), s.has("good") ? s.get("good").getAsString() : "produce", Math.max(0, facing)));
         }
         stalls = List.copyOf(st);
 

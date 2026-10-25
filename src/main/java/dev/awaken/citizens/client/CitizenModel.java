@@ -13,14 +13,21 @@ import static dev.awaken.citizens.client.CitizenClips.*;
  */
 final class CitizenModel extends SkinModel<CitizenRenderState> {
     private static final float R = Mth.DEG_TO_RAD;
+    /** Creature life's rig on the player mesh (temperament "citizen": no step bob, gentle springs, look and settle). */
+    final dev.awaken.mobs.client.life.LifeRig rig;
+    final boolean slim;
 
     CitizenModel(ModelPart root, boolean slim) {
         super(root, slim);
+        this.slim = slim;
+        this.rig = dev.awaken.mobs.client.life.CreatureLife.rig(root, "citizen");
     }
 
     @Override
     public void setupAnim(CitizenRenderState s) {
         super.setupAnim(s);
+        // the life layer adds to vanilla's pose; a job clip then sets the channels it drives (clips win, SPEC §23)
+        if (s.life != null && s.lifeSlim == slim) dev.awaken.mobs.client.life.CreatureLife.apply(rig, s.life, s);
         if (!s.hasPose && !s.hasPrev) return;
         float w = s.hasPose ? s.blend : 0f;
         // the head keeps the look: the clip adds its tilt to it
