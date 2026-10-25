@@ -171,8 +171,8 @@ clip("fp_slide_jump", 13, fists=True,
 
 
 def walljump(wall_left):
-    """The wall-side palm shoves off the wall at the frame's edge; the other arm is thrown forward for the flight."""
-    shove = fist(-0.78, -0.08, -0.8)    # the left hand, out at the wall on the left
+    """The wall-side palm shoves off the wall, open and well in the frame; the other arm is thrown forward for the flight."""
+    shove = fist(-0.5, -0.1, -0.78)     # the left hand, out at the wall on the left
     throw = fist(0.34, -0.06, -1.0)     # the right arm thrown forward
     if wall_left:
         main_keys = [(0, REST_FIST, "linear"), (2, throw, "easeoutcubic"), (12, REST_FIST, "easeinoutsine")]

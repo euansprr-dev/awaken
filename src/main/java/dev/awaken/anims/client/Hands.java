@@ -185,9 +185,12 @@ final class Hands implements FirstPerson.Player {
         if (broken) return;
         if (e.getHand() == InteractionHand.MAIN_HAND) WorldBody.drawNearLegs(e); // before any of the hands' moves
         if (WorldBody.armsThisFrame) {
-            // the world layer's arms take the hand pass: vanilla's hands (and what they hold) step aside
+            // the world layer's arms take the hand pass: vanilla's hand (and what it holds) steps aside on each side the
+            // world body has an arm; the other stays as it is (a touch with one hand leaves the sword in the other)
             if (e.getHand() == InteractionHand.MAIN_HAND) WorldBody.drawArms(e);
-            e.setCanceled(true);
+            AvatarRenderState av = e.getPlayerState().avatarRenderState;
+            boolean rightMain = av == null || av.mainArm != HumanoidArm.LEFT;
+            if (WorldBody.armShown((e.getHand() == InteractionHand.MAIN_HAND) == rightMain)) e.setCanceled(true);
             mainPushed = false;
             return;
         }

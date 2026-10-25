@@ -302,6 +302,9 @@ public final class GripMoves {
         v = 0;
     }
 
+    /** Why the last grip ended ("top": the line ran out under the hands as they climbed). */
+    static String lastEnd = "";
+
     /** Lets go: the line ended, a stop, the server's word. */
     static void end(LocalPlayer p, boolean tellServer, String why) {
         if (!active()) return;
@@ -311,6 +314,7 @@ public final class GripMoves {
             leftBz = l.bz();
         }
         ClientMoves.trace("grip ends (" + why + ") after " + (ClientMoves.ticks - since));
+        lastEnd = why;
         BodyAnims.runnerEnd(p.getId());
         if (tellServer) RunnerMoves.sendEnd(Move.GRIP);
         regrabAt = ClientMoves.ticks + (why.equals("top") ? 0 : 4);

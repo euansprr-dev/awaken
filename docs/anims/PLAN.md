@@ -1,6 +1,6 @@
 # Hands: first-person animation for AWAKEN (approved 2026-10-25; building phase by phase)
 
-Status: approved by Euan 2026-10-25 with every recommendation in §7; P1-P6 built (SPEC §17.23, §24). Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
+Status: approved by Euan 2026-10-25 with every recommendation in §7; P1-P6 built (SPEC §17.23, §24); the quality pass P1.1/P2.1/P4.1 (hands that meet the world) after the orchestrator's review. Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
 Euan's ask: a real pipe climb and slide; first-person animation for every move of The Ascent; "Cinematic
 Interactions"-level hand moments across the mod; all in the design language we already have.
 
@@ -277,6 +277,9 @@ FirstPerson.View.fist(v.fistMain, k, x, y, z);   // a stance's fist (weighted; a
 Clips: `clip(..., fists=True)` with keys `fist(x, y, z)`; vanilla's resting fist is `REST_FIST` (0.744, -0.455,
 -1.072); an off hand comes in from and goes back to `OFF_OUT` under the frame; `to_stance=True` for clips that end where
 a stance holds the hands. A hand holding an item ignores fists (combat: use offsets on the held weapon).
+Clean fists (P1.1, Euan 2026-10-25): vanilla's blocky fist is the hand, never modelled fingers. A world source sets
+`rig.handDistance` (nearer reads bigger), `rig.held[0|1]` (an ItemStack at the fist) and `rig.glow`; its arms rise from
+under their fists. In the hand pass the frame shows y down to about 0.7·|z|: keep keyed fists inside it.
 `v.tint` colours the fists' arms (RGB, 0 none: the Sovereign's gold); `v.glow` (0..1, sources take the most) lights them
 from within (a palm on a waystone; combat: a charging cast).
 

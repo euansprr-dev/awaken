@@ -383,6 +383,7 @@ public final class StationClient {
         Vec3 eye = mc.gameRenderer.mainCamera().position(), c = top();
         rig.fx = fx;
         rig.fz = fz;
+        rig.handDistance = 0.8;
         float t = ticks + pt;
         for (int h = 0; h < 2; h++) {
             double side = h == 0 ? 1 : -1;
@@ -410,7 +411,10 @@ public final class StationClient {
             // in and out of the scene: up from below the table's edge
             y -= (1 - w) * 0.6;
             double sx = eye.x + rx * side * 0.33 - fx * 0.1, sy = eye.y - 0.4, sz = eye.z + rz * side * 0.33 - fz * 0.1;
-            rig.reach(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, sx, sy, sz, x, y, z, FirstPerson.Rig.ARM_REACH, 0, 1, 0, w);
+            boolean tapping = u >= 0 && u < 1;
+            // at a furnace a hand shows only while it works (resting at your sides it would be a corner of arm)
+            float hw = kind == Kind.FURNACE ? (tapping ? Math.min(1F, 2.5F * Mth.sin(u * Mth.PI)) * w : 0) : w;
+            rig.reach(h == 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, sx, sy, sz, x, y, z, FirstPerson.Rig.ARM_REACH, 0, 1, 0, hw);
         }
         return true;
     }

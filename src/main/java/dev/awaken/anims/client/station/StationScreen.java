@@ -55,7 +55,9 @@ final class StationScreen<M extends AbstractContainerMenu> extends AbstractConta
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor g, int xm, int ym) {
-        g.text(font, Component.translatable(kind.hint), 0, 82 - 12 - 2, HINT, true);
+        // centred over the strip (it may run wider than the strip)
+        Component hint = Component.translatable(kind.hint);
+        g.text(font, hint, (imageWidth - font.width(hint)) / 2, 82 - 12 - 2, HINT, true);
     }
 
     @Override

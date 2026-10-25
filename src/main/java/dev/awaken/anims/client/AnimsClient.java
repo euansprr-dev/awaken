@@ -1,6 +1,7 @@
 package dev.awaken.anims.client;
 
 import dev.awaken.core.api.FirstPerson;
+import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -32,6 +33,12 @@ public final class AnimsClient {
         bus.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, Touches::interactionKey);
         bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Opening.class, Touches::screenOpening);
         FirstPerson.view(Touches::viewPose);
+        // the hands meet what they touch (P4.1); the view leans in a touch while one is out
+        FirstPerson.world("anims_touch", 200, Reaches::pose);
+        bus.addListener(net.neoforged.neoforge.client.event.ComputeFovModifierEvent.class, e -> {
+            float lean = Reaches.lean(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+            if (lean > 0 && !FirstPerson.reducedMotion.getAsBoolean()) e.setNewFovModifier(e.getNewFovModifier() * (1 - 0.05F * lean));
+        });
         // station scenes (P5): the crafting table worked by hand
         dev.awaken.anims.client.station.StationClient.init(bus);
         bus.addListener(ClientTickEvent.Post.class, e -> dev.awaken.anims.client.station.StationClient.tick());
@@ -43,6 +50,7 @@ public final class AnimsClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             Hands.reset();
             WorldBody.reset();
+            Touches.reset();
         });
     }
 }

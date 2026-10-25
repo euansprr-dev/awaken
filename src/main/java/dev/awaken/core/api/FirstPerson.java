@@ -42,9 +42,21 @@ public final class FirstPerson {
         public final float[] weight = new float[N];
         /** Where the body faces (horizontal, unit). */
         public double fx, fz = 1;
+        /** What each hand holds, drawn in it (right, left; empty for nothing): a plucked flower, food being laid down. */
+        public final net.minecraft.world.item.ItemStack[] held = {net.minecraft.world.item.ItemStack.EMPTY, net.minecraft.world.item.ItemStack.EMPTY};
+        /**
+         * How far from the eye the arms are drawn (blocks; 0 for a hand's usual 0.85): nearer reads bigger. Each fist
+         * stays where the world has it on screen, wherever this puts it.
+         */
+        public double handDistance;
+        /** How lit the hands are from within (0..1). */
+        public float glow;
 
         public void clear() {
             java.util.Arrays.fill(weight, 0F);
+            held[0] = held[1] = net.minecraft.world.item.ItemStack.EMPTY;
+            handDistance = 0;
+            glow = 0;
         }
 
         public void limb(Limb l, double rx, double ry, double rz, double tx, double ty, double tz, double frx, double fry, double frz, float w) {
