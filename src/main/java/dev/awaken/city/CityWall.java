@@ -790,8 +790,8 @@ final class CityWall {
                 if (ry == to) {
                     BlockState cap = shaped(c, dr.cap(), dr.full(), x, ry, z);
                     b.set(x, ry, z, cap != null ? cap : dr.cap().straight()[in]);
-                } else if ((m == 0 && ry % 2 == 0 || m == 2 && ry % 2 == 1) && l == (ry <= 9 ? 3 : ry <= 21 ? 2 : 1))
-                    b.set(x, ry, z, dr.quoin()); // quoins on the buttress's front corners only
+                } else if ((m == 0 && ry % 2 == 0 || m == 2 && ry % 2 == 1) && ry <= 21 && l == (ry <= 9 ? 3 : 2))
+                    b.set(x, ry, z, dr.quoin()); // quoins on the lower stages' front corners; the upper stage plain
                 else b.set(x, ry, z, stone(c, g, x, ry, z, false));
             }
         }
