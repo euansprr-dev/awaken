@@ -437,6 +437,11 @@ public final class GateLiveTests {
         }
     }
 
+    /** Gate tests in other packages: interiors build into this test level (teardown puts it back). */
+    public static void useTestLevel(ServerLevel level) {
+        GateService.testLevel = level;
+    }
+
     public static ServerPlayer player(GameTestHelper h) {
         ServerPlayer p = h.makeMockServerPlayerInLevel();
         Progression.awaken(p);

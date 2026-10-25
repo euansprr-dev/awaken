@@ -8,7 +8,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 /**
  * Comfort for moving fast (SPEC §17), in its own file ({@code config/awaken-feel-client.toml}, also in the mod's config
  * screen): how far the camera rolls, how much speed widens the view (on top of vanilla's FOV-effects slider), shake,
- * and reduced motion (no streaks, motes, flashes or tremor; half the roll).
+ * reduced motion (no streaks, motes, flashes or tremor; half the roll and half the action camera's swing), the action
+ * camera, and whether a world starts in the shoulder view.
  */
 public final class FeelConfig {
     private FeelConfig() {}
@@ -29,6 +30,18 @@ public final class FeelConfig {
     public static final ModConfigSpec.BooleanValue REDUCED_MOTION = B
             .comment("Reduced motion: no light streaks, air motes, flashes or tremor, and half the camera roll.")
             .define("reducedMotion", false);
+    public static final ModConfigSpec.BooleanValue ACTION_CAMERA = B
+            .comment("The action camera: in the shoulder view (or vanilla's third person) it pulls back with speed, moves to the open side of a",
+                    "wall-run, drops low on a slide and swings wide on the rope, the wings and flight (SPEC §17.13).")
+            .define("actionCamera", true);
+    public static final ModConfigSpec.BooleanValue SHOULDER_VIEW = B
+            .comment("Start in Shoulder Surfing's over-the-shoulder view when you join a world in first person (Shoulder Surfing installed).",
+                    "Your own choice with the perspective key holds until you leave.")
+            .define("shoulderView", true);
+    public static final ModConfigSpec.BooleanValue FREE_RUN = B
+            .comment("The one-button free-run: hold sprint with forward and the body vaults, mantles, climbs, runs walls and leaps from",
+                    "edges as the ground asks, and jumps bend a little toward the ledge ahead (SPEC §17.14). The keys still work by hand.")
+            .define("freeRun", true);
     public static final ModConfigSpec SPEC = B.build();
 
     public static void register() {
@@ -69,6 +82,30 @@ public final class FeelConfig {
     static boolean shake() {
         try {
             return (!SPEC.isLoaded() || MOVEMENT_SHAKE.get()) && !reduced();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    public static boolean actionCamera() {
+        try {
+            return !SPEC.isLoaded() || ACTION_CAMERA.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    public static boolean freeRun() {
+        try {
+            return !SPEC.isLoaded() || FREE_RUN.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    public static boolean shoulderView() {
+        try {
+            return !SPEC.isLoaded() || SHOULDER_VIEW.get();
         } catch (RuntimeException e) {
             return true;
         }

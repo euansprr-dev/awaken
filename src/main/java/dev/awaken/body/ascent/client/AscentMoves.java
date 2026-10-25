@@ -4,6 +4,8 @@ import dev.awaken.body.ascent.AscentAnchors;
 import dev.awaken.body.ascent.AscentContent;
 import dev.awaken.body.ascent.AscentPayloads;
 import dev.awaken.body.ascent.AscentRules;
+import dev.awaken.body.ascent.Windways;
+import dev.awaken.body.client.feel.FeelConfig;
 import dev.awaken.body.ascent.AscentState;
 import dev.awaken.body.client.feel.FeelDirector;
 import dev.awaken.core.client.AwakenKeys;
@@ -48,6 +50,8 @@ public final class AscentMoves {
     static int aetherOutAt = -100;
     static final AscentRules.Kin K = new AscentRules.Kin();
     private static final double[] S = new double[3], AIR = new double[3];
+    private static final float[] LINE = new float[2], VIEW = new float[2];
+    private static boolean windHeld;
 
     // the rope
     static double ax, ay, az, len, lenTarget;
@@ -146,6 +150,13 @@ public final class AscentMoves {
         return fireAt;
     }
 
+    /** How fast the air goes past (blocks a tick): the state's speed, else the body's own motion (a fall, a sprint). */
+    public static double windSpeed() {
+        if (state != AscentState.NONE) return K.speed();
+        LocalPlayer p = Minecraft.getInstance().player;
+        return p == null || p.isPassenger() ? 0 : p.getDeltaMovement().length();
+    }
+
     /** The speed the state keeps (blocks a tick), 0 on the ground. */
     public static double speed() {
         return state == AscentState.NONE ? 0 : K.speed();
@@ -186,6 +197,11 @@ public final class AscentMoves {
         }
         if (state != AscentState.NONE && !reconcile(p)) return;
         stateAge++;
+        // Shoulder Surfing's decoupled view: in the air the body looks where the camera looks (you steer with the view)
+        if (state != AscentState.NONE && dev.awaken.body.client.feel.ShoulderView.aim(VIEW)) {
+            p.setYRot(VIEW[0]);
+            p.setXRot(VIEW[1]);
+        }
         float yaw = p.getYRot(), pitch = p.getXRot();
         switch (state) {
             case NONE -> {
@@ -251,7 +267,13 @@ public final class AscentMoves {
                     toCarry(p, "wings folded");
                     carry(yaw, fwd, right);
                 } else {
-                    AscentRules.glideStep(K, yaw, pitch, glideDrag());
+                    // in a windway, looking roughly along it, the air holds your line (SPEC §17.12)
+                    Windways.Way way = Windways.inside(p.level(), K.x, K.y, K.z);
+                    boolean held = way != null && Windways.steer(way, K.x, K.y, K.z, yaw, pitch, LINE);
+                    AscentRules.glideStep(K, held ? LINE[0] : yaw, held ? LINE[1] : pitch, glideDrag());
+                    if (held != windHeld) trace(held ? "a windway holds the glide" : String.format("out of the windway at %.2f b/t", K.speed()));
+                    windHeld = held;
+                    WindwayRenderer.riding(held ? way : null);
                     boomCheck(p);
                 }
             }
@@ -392,8 +414,26 @@ public final class AscentMoves {
 
     /** A tick of the carry; Flow keeps a little more of the speed. */
     private static void carry(float yaw, double fwd, double right) {
+        if (slowLeft > 0) {
+            slowLeft--;
+            AscentRules.carryStepSlow(K, AscentRules.SLOW);
+            return;
+        }
+        double vy0 = K.vy;
         AscentRules.carryStep(K, yaw, fwd, right, S, AscentRules.CARRY_DRAG_H + AscentRules.FLOW_CARRY * AscentFlow.flow);
+        // the top of a big leap's arc: a beat of slow time, the wind holding its breath (weight, SPEC §17.15)
+        LocalPlayer p = Minecraft.getInstance().player;
+        if (vy0 > 0 && K.vy <= 0 && K.hspeed() >= AscentRules.SLOW_SPEED && ticks - slowAt >= AscentRules.SLOW_EVERY && p != null
+                && !FeelConfig.reduced() && heightAboveGround(p) >= AscentRules.SLOW_HEIGHT) {
+            slowLeft = AscentRules.SLOW_TICKS;
+            slowAt = ticks;
+            AscentSounds.duck(AscentRules.SLOW_TICKS);
+            trace(String.format("slow beat at the apex, %.2f b/t", K.hspeed()));
+        }
     }
+
+    /** The slow beat: ticks left, and when the last one began. */
+    private static int slowLeft, slowAt = -1000;
 
     private static double glideDrag() {
         return 1 - AscentRules.MASTERY_GLIDE_DRAG * lv(dev.awaken.body.ascent.AscentMemory.Track.WINGS);
@@ -404,8 +444,11 @@ public final class AscentMoves {
     /** Fires the rope; true when it found an anchor (the state is then TETHER or ZIP). */
     private static boolean fire(LocalPlayer p) {
         Vec3 eye = p.getEyePosition();
+        // where you look: the camera in Shoulder Surfing's decoupled view, else the body's own look
+        boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
+        float aimYaw = view ? VIEW[0] : p.getYRot(), aimPitch = view ? VIEW[1] : p.getXRot();
         // a rope just let go of passes through the ring or branch it held: throw past it to the next one up
-        AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, p.getYRot(), p.getXRot(),
+        AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, aimYaw, aimPitch,
                 AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER),
                 ticks - leftAt <= 20 ? leftAnchor : null);
         fireAt = ticks;
@@ -1004,13 +1047,17 @@ public final class AscentMoves {
         sent = false;
         // a vault ends with the landing (left set, the next carry would pull toward this one's ledge)
         pullTicks = 0;
+        slowLeft = 0;
         ClientPacketDistributor.sendToServer(new AscentPayloads.State(AscentState.NONE.ordinal(), 0, 0, 0, 0));
     }
 
     private static void setState(LocalPlayer p, AscentState s) {
         if (s == state) return;
         heldForYou = false;
-        if (s != AscentState.CARRY) pullTicks = 0;
+        if (s != AscentState.CARRY) {
+            pullTicks = 0;
+            slowLeft = 0;
+        }
         AscentState was = state;
         state = s;
         stateAge = 0;
@@ -1064,6 +1111,7 @@ public final class AscentMoves {
         stateAge = 0;
         sent = false;
         pullTicks = 0;
+        slowLeft = 0;
         tetherWas = jumpWas = sneakWas = false;
     }
 

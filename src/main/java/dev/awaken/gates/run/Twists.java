@@ -541,7 +541,7 @@ public final class Twists {
             RunState run = Runs.run(o);
             if (run.gateId != g.id || run.area != f.area || run.floor != f.floor) continue;
             var w = SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal(Rooms.capital(name)));
-            int insight = Progression.profile(o).insight(g.plan.boss());
+            int insight = Progression.profile(o).insight(g.plan.lordId());
             if (insight > 0 && !keeper) w.body(Component.literal("You've fallen to it " + insight + " time" + (insight > 1 ? "s" : "") + ". You know its tells now."));
             if (g.plan.is(Twist.INVERTED)) w.footer(Component.literal("The Lord sees straight through you."));
             Signal.send(o, w.priority(7).ttl(20 * 5).build());

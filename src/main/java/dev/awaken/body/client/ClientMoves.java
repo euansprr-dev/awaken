@@ -87,6 +87,8 @@ public final class ClientMoves {
         // the Runner's Kit (SPEC §16.3): every move from the first second; without it, nothing until the awakening
         boolean kit = dev.awaken.body.BodyConfig.runnersKit();
         boolean awakened = kit || Progression.profile(p).awakened();
+        // the one-button free-run (SPEC §17.14): sprint held with forward reads the ground ahead
+        FreeRun.begin(p, k);
         if (!awakened && (tac || sliding || mantling)) stopAll(p);
         if (jumpSuppressed) {
             if (jump) in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift());
@@ -117,7 +119,7 @@ public final class ClientMoves {
                         sprintTapAt = ticks;
                     }
                 }
-                if (jumpPressed && !k.backward() && canMantle(p)) {
+                if ((jumpPressed || FreeRun.held) && !k.backward() && canMantle(p)) {
                     BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
                     if (l != null) {
                         startMantle(p, in, l);
@@ -128,6 +130,7 @@ public final class ClientMoves {
                     startSlide(p, in);
                     return;
                 }
+                if (kit && FreeRun.ground(p, p.level(), CollisionContext.of(p), ticks)) return;
             }
         }
         if (kit) RunnerMoves.onInput(p, in, jumpPressed, shiftPressed);

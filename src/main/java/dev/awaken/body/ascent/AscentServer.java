@@ -59,6 +59,18 @@ public final class AscentServer {
     /** A new longest chain is told to the player from this many links (shorter ones are just the start). */
     static final int RECORD_FROM = 6;
 
+    /** Skyborn mastery for a kill made in flight (SPEC §17.18: "Mastery: time aloft, aerial kills"). */
+    static final int AERIAL_KILL = 3;
+
+    /** A hostile killed by someone flying (soaring, gliding or carried, holding Skyborn): an aerial kill. */
+    static void onKill(net.neoforged.neoforge.event.entity.living.LivingDeathEvent e) {
+        if (!(e.getSource().getEntity() instanceof ServerPlayer p) || !(e.getEntity() instanceof net.minecraft.world.entity.monster.Enemy)) return;
+        AscentState s = motion(p).state;
+        if (!Ascent.has(p, Ascent.Tier.SKYBORN) || !(s == AscentState.SOAR || s == AscentState.GLIDE || s == AscentState.CARRY)) return;
+        link(p, AscentMemory.Track.SKYBORN, AERIAL_KILL);
+        dev.awaken.progression.Progression.count(p, "awaken:ascent_aerial_kills");
+    }
+
     /**
      * A move went off (a rope's bite, a launch, wings, a boom, an air move, a wall-run, a wall jump, a ledge grab, a
      * slide): mastery points on its track, and a link in the chain if it came soon enough after the last one.
@@ -206,6 +218,7 @@ public final class AscentServer {
         if (s == AscentState.NONE && m.state != AscentState.NONE) m.endedAt = now(p);
         // a rope that bit is a link (counted here, once the server has checked its anchor)
         boolean newRope = s.rope && !m.state.rope;
+        if (s != m.state) AscentTips.used(p, s);
         m.state = s;
         if (newRope) link(p, AscentMemory.Track.TETHER, 2);
         m.ax = msg.x();
@@ -249,7 +262,10 @@ public final class AscentServer {
                 if (Ascent.has(p, Ascent.Tier.WINGS) && st.wings) link(p, AscentMemory.Track.WINGS, 6);
             }
             case AscentPayloads.EV_DOUBLE, AscentPayloads.EV_DASH, AscentPayloads.EV_DIVE -> {
-                if (Ascent.has(p, Ascent.Tier.LEAPER)) link(p, AscentMemory.Track.LEAPER, 2);
+                if (Ascent.has(p, Ascent.Tier.LEAPER)) {
+                    link(p, AscentMemory.Track.LEAPER, 2);
+                    dev.awaken.core.api.TipHooks.done(p, AscentTips.LEAPER);
+                }
             }
             case AscentPayloads.EV_SLAM_LAND -> {
                 if (Ascent.has(p, Ascent.Tier.LEAPER)) link(p, AscentMemory.Track.LEAPER, 3);
@@ -310,6 +326,7 @@ public final class AscentServer {
         AscentMotion m = motion(p);
         TetherVow.tick(p, now(p));
         AscentTrials.tick(p, now(p));
+        WindwaysServer.tick(p, now(p));
         aether(p, m);
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
         boolean moving = Ascent.moving(p, m);

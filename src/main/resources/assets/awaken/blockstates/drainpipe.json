@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=north,part=pipe": {
+      "model": "awaken:block/drainpipe_pipe"
+    },
+    "facing=east,part=pipe": {
+      "model": "awaken:block/drainpipe_pipe",
+      "y": 90
+    },
+    "facing=south,part=pipe": {
+      "model": "awaken:block/drainpipe_pipe",
+      "y": 180
+    },
+    "facing=west,part=pipe": {
+      "model": "awaken:block/drainpipe_pipe",
+      "y": 270
+    },
+    "facing=north,part=head": {
+      "model": "awaken:block/drainpipe_head"
+    },
+    "facing=east,part=head": {
+      "model": "awaken:block/drainpipe_head",
+      "y": 90
+    },
+    "facing=south,part=head": {
+      "model": "awaken:block/drainpipe_head",
+      "y": 180
+    },
+    "facing=west,part=head": {
+      "model": "awaken:block/drainpipe_head",
+      "y": 270
+    },
+    "facing=north,part=shoe": {
+      "model": "awaken:block/drainpipe_shoe"
+    },
+    "facing=east,part=shoe": {
+      "model": "awaken:block/drainpipe_shoe",
+      "y": 90
+    },
+    "facing=south,part=shoe": {
+      "model": "awaken:block/drainpipe_shoe",
+      "y": 180
+    },
+    "facing=west,part=shoe": {
+      "model": "awaken:block/drainpipe_shoe",
+      "y": 270
+    }
+  }
+}

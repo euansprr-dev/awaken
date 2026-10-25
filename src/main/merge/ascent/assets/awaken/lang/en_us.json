@@ -51,7 +51,14 @@
   "awaken.ascent.edge.leap": "Your legs remember the air.",
   "awaken.ascent.edge.leap.how": "Jump. In the air, jump again.",
   "awaken.ascent.trial.leaper.open": "A gate is beating like a running heart: the Leaper's Gauntlet.",
+  "awaken.ascent.trial.skyborn.open": "A gate opens onto open sky: the Sky Leviathan's trial.",
+  "awaken.ascent.gift.sky": "The sky is yours.",
+  "awaken.ascent.gift.sky.how": "Gliding, jump to fly \u00b7 forward thrusts \u00b7 sprint boosts \u00b7 tap left or right twice to roll.",
+  "awaken.ascent.edge.sky": "The sky remembers you.",
+  "awaken.ascent.edge.sky.how": "Open your wings, then jump again: fly.",
   "awaken.ascent.spire.climbed": "Tether Spire climbed%s",
   "awaken.ascent.spire.built": "The crown stays dark. It answers only to a climb.",
+  "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
+  "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
   "block.awaken.spire_crown": "Spire Crown"
 }

@@ -88,6 +88,19 @@ public final class AwakenTests {
         };
     }
 
+    /**
+     * Clears the air over a test spot: plots are reused, and an earlier test's floor left high above one roofs it (a
+     * surface creature sees no sky, a lair lays its ring on top of it). From {@code fromDy} to {@code toDy} above
+     * {@code centre}, {@code radius} blocks round it. Call before the test builds anything up there.
+     */
+    public static void clearAbove(ServerLevel level, BlockPos centre, int radius, int fromDy, int toDy) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) for (int dy = fromDy; dy <= toDy; dy++) {
+            m.set(centre.getX() + dx, centre.getY() + dy, centre.getZ() + dz);
+            if (!level.getBlockState(m).isAir()) level.setBlock(m, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+        }
+    }
+
     /** Real time a test waits for the server's background work (chunk promotion, the light engine) before it fails. */
     private static final long SETTLE_DEADLINE_NS = 30_000_000_000L;
 

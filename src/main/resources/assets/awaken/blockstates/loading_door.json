@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,part=lower_left": {
+      "model": "awaken:block/loading_door_lower_left"
+    },
+    "facing=east,part=lower_left": {
+      "model": "awaken:block/loading_door_lower_left",
+      "y": 90
+    },
+    "facing=south,part=lower_left": {
+      "model": "awaken:block/loading_door_lower_left",
+      "y": 180
+    },
+    "facing=west,part=lower_left": {
+      "model": "awaken:block/loading_door_lower_left",
+      "y": 270
+    },
+    "facing=north,part=lower_right": {
+      "model": "awaken:block/loading_door_lower_right"
+    },
+    "facing=east,part=lower_right": {
+      "model": "awaken:block/loading_door_lower_right",
+      "y": 90
+    },
+    "facing=south,part=lower_right": {
+      "model": "awaken:block/loading_door_lower_right",
+      "y": 180
+    },
+    "facing=west,part=lower_right": {
+      "model": "awaken:block/loading_door_lower_right",
+      "y": 270
+    },
+    "facing=north,part=upper_left": {
+      "model": "awaken:block/loading_door_upper_left"
+    },
+    "facing=east,part=upper_left": {
+      "model": "awaken:block/loading_door_upper_left",
+      "y": 90
+    },
+    "facing=south,part=upper_left": {
+      "model": "awaken:block/loading_door_upper_left",
+      "y": 180
+    },
+    "facing=west,part=upper_left": {
+      "model": "awaken:block/loading_door_upper_left",
+      "y": 270
+    },
+    "facing=north,part=upper_right": {
+      "model": "awaken:block/loading_door_upper_right"
+    },
+    "facing=east,part=upper_right": {
+      "model": "awaken:block/loading_door_upper_right",
+      "y": 90
+    },
+    "facing=south,part=upper_right": {
+      "model": "awaken:block/loading_door_upper_right",
+      "y": 180
+    },
+    "facing=west,part=upper_right": {
+      "model": "awaken:block/loading_door_upper_right",
+      "y": 270
+    }
+  }
+}

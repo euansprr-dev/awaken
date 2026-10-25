@@ -162,6 +162,7 @@ public final class WildTalentTests {
                         e -> BuiltInRegistries.ITEM.getKey(e.getItem().getItem()).getPath().equals("crag_feather")).isEmpty(), "a crag feather");
                 // a sporeback snail finds small mushrooms to rest by (out in the open, as on a mushroom island)
                 BlockPos patch = at.south(4).west(4);
+                dev.awaken.core.test.AwakenTests.clearAbove(level, patch, 3, 1, 40);
                 for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
                     level.setBlock(patch.offset(dx, -1, dz), Blocks.PODZOL.defaultBlockState(), 3);
                     level.setBlock(patch.offset(dx, 0, dz), Blocks.BROWN_MUSHROOM.defaultBlockState(), 3);

@@ -1,0 +1,10 @@
+{
+  "text": "Hold {key.sprint} with {key.forward}: the body vaults, climbs, runs along walls and leaps from edges for you.",
+  "short": "hold {key.sprint}",
+  "priority": 55,
+  "show_for": 140,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 900,
+  "awake": "any"
+}

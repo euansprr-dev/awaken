@@ -426,6 +426,87 @@ public final class RunnerRules {
     /** Scratch for surface tops, per thread (the integrated server and the client probe at the same time). */
     private static final ThreadLocal<double[]> SCRATCH = ThreadLocal.withInitial(() -> new double[2]);
 
+    // ---- the one-button free-run (SPEC §17.14) -------------------------------------------------------------------------
+
+    /** What the ground ahead of a free-runner asks for: nothing, a vault, a wall to jump at, an edge to leap from. */
+    public static final int AHEAD_NONE = 0, AHEAD_VAULT = 1, AHEAD_WALL = 2, AHEAD_LEAP = 3;
+    /** A vault clears a top this far over the feet (a plain jump's reach; the mantle takes 1.1-1.6 when it's yours). */
+    public static final double VAULT_LO = 0.6, VAULT_HI = 1.2;
+    /** Taller than this is a wall to jump at; a drop at least this deep ahead is an edge to leap from. */
+    public static final double WALL_MIN = 1.6, LEAP_DROP = 2.0;
+    /** How far ahead of the body's front the ground is read (blocks, plus two ticks of the speed for the edge). */
+    public static final double AHEAD_REACH = 0.45;
+
+    /**
+     * The ground ahead of a body with feet at (px, py, pz) running along (fx, fz) at {@code speed}: a vault (a top
+     * 0.6-1.2 over the feet with room over it and over the head), a wall (taller than 1.6), or an edge (no floor for
+     * 2 blocks down, two ticks ahead). {@code out[0]}: the obstacle's top over the feet (NaN for an edge or nothing).
+     */
+    public static int ahead(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, double px, double py, double pz,
+                            double fx, double fz, double speed, double[] out) {
+        out[0] = Double.NaN;
+        double qx = px + fx * (W + AHEAD_REACH), qz = pz + fz * (W + AHEAD_REACH);
+        int bx = Mth.floor(qx), bz = Mth.floor(qz), by0 = Mth.floor(py + 0.05);
+        double top = Double.NaN;
+        for (int by = by0; by <= by0 + 4; by++) {
+            m.set(bx, by, bz);
+            VoxelShape s = level.getBlockState(m).getCollisionShape(level, m, ctx);
+            if (s.isEmpty()) break;
+            double t = by + s.max(net.minecraft.core.Direction.Axis.Y);
+            if (t <= py + 0.05) continue;
+            top = t;
+            if (s.max(net.minecraft.core.Direction.Axis.Y) < 1) break;
+        }
+        if (!Double.isNaN(top)) {
+            double rise = top - py;
+            out[0] = rise;
+            if (rise > WALL_MIN) return AHEAD_WALL;
+            if (rise <= VAULT_LO || rise > VAULT_HI) return AHEAD_NONE;
+            // room over the top for the body, and over the head for the jump's arc
+            int ty = Mth.floor(top + 1e-3);
+            for (int dy = 0; dy < 2; dy++) {
+                m.set(bx, ty + dy, bz);
+                if (!level.getBlockState(m).getCollisionShape(level, m, ctx).isEmpty()) return AHEAD_NONE;
+            }
+            m.set(Mth.floor(px), by0 + 2, Mth.floor(pz));
+            if (!level.getBlockState(m).getCollisionShape(level, m, ctx).isEmpty()) return AHEAD_NONE;
+            return AHEAD_VAULT;
+        }
+        // an edge: two ticks on, no floor for LEAP_DROP down
+        double ex = px + fx * (W + speed * 2 + 0.1), ez = pz + fz * (W + speed * 2 + 0.1);
+        int ebx = Mth.floor(ex), ebz = Mth.floor(ez);
+        for (int by = Mth.floor(py - 0.01); by >= Mth.floor(py - LEAP_DROP); by--) {
+            m.set(ebx, by, ebz);
+            if (!level.getBlockState(m).getCollisionShape(level, m, ctx).isEmpty()) return AHEAD_NONE;
+            if (!level.getFluidState(m).isEmpty()) return AHEAD_NONE;
+        }
+        return AHEAD_LEAP;
+    }
+
+    /** Jump magnetism: a pull of at most this many degrees a tick, this many in all, for this many ticks, and only toward
+     * a target within this many degrees of the way you're going. */
+    public static final double PULL_STEP = 2.5, PULL_MAX = 14, PULL_CONE = 30;
+    public static final int PULL_TICKS = 8;
+
+    /**
+     * Turns the horizontal motion (vx, vz) toward the point (tx, tz) seen from (px, pz) by at most {@code maxDeg},
+     * keeping its speed, into out[0..2). Returns the degrees turned (signed magnitude, 0 when the target is more than
+     * {@link #PULL_CONE} off the way you're going or the motion is too slow to steer).
+     */
+    public static double bend(double px, double pz, double vx, double vz, double tx, double tz, double maxDeg, double[] out) {
+        out[0] = vx;
+        out[1] = vz;
+        double h = Math.sqrt(vx * vx + vz * vz), dx = tx - px, dz = tz - pz, d = Math.sqrt(dx * dx + dz * dz);
+        if (h < 0.05 || d < 0.3 || maxDeg <= 0) return 0;
+        double off = Math.atan2(vx * dz - vz * dx, vx * dx + vz * dz);
+        if (Math.abs(Math.toDegrees(off)) > PULL_CONE) return 0;
+        double turn = Math.copySign(Math.min(Math.abs(off), Math.toRadians(maxDeg)), off);
+        double c = Math.cos(turn), s = Math.sin(turn);
+        out[0] = vx * c - vz * s;
+        out[1] = vx * s + vz * c;
+        return Math.toDegrees(Math.abs(turn));
+    }
+
     // ---- the floating kick ------------------------------------------------------------------------------------------
 
     /**

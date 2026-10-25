@@ -43,6 +43,8 @@ public final class RunnerMoves {
 
     // ground and jump timing
     private static boolean wasGround;
+    /** The last airborne tick's fall (the landing tick's own is already stopped). */
+    private static double fallVy;
     private static int groundAt = -100, airJumpAt = -100;
     private static boolean jumpedOff;
     // wall-run
@@ -117,10 +119,23 @@ public final class RunnerMoves {
         Input k = in.keyPresses;
         boolean ground = p.onGround();
         if (ground) {
-            if (!wasGround) landed(p, in, k, now);
+            if (!wasGround) {
+                landed(p, in, k, now);
+                // weight (SPEC §17.15): a fall lands in the view (the Ascent's own landings have their own)
+                if (dev.awaken.body.ascent.client.AscentMoves.state() == dev.awaken.body.ascent.AscentState.NONE && fallVy < -ActionCamera.LAND_FROM) {
+                    dev.awaken.body.client.feel.FeelDirector.land((float) (-fallVy * 0.6));
+                    ActionCamera.land(-fallVy);
+                }
+            }
             groundAt = now;
-        } else if (wasGround) {
+            fallVy = 0;
+        } else {
+            fallVy = p.getDeltaMovement().y;
+        }
+        if (!ground && wasGround) {
             jumpedOff = p.getDeltaMovement().y > 0.2;
+            // a jump leaves the ground: the ledge it heads for pulls it a little (SPEC §17.14)
+            if (jumpedOff) FreeRun.jumped(p, p.level(), CollisionContext.of(p));
         }
         wasGround = ground;
         if (turnLeft > 0) {
@@ -153,9 +168,11 @@ public final class RunnerMoves {
         }
         if (!ground) {
             if (jumpPressed) airJumpAt = now;
+            FreeRun.air(p);
             if (now >= regrabAt && tryGrab(p, in, level, ctx, now)) return true;
             boolean chain = now <= chainUntil && links > 0;
-            boolean intent = airPress ? now - airJumpAt <= RunnerRules.BUFFER : k.jump();
+            // free-running, sprint held is the jump held: run along the wall beside you, climb the one ahead
+            boolean intent = (airPress ? now - airJumpAt <= RunnerRules.BUFFER : k.jump()) || FreeRun.held;
             if (intent && !chain && tryClimb(p, in, k, level, ctx, now)) return true;
             if ((chain || intent && p.isSprinting()) && tryRun(p, in, level, ctx, chain ? links : 0, now)) return true;
             if (jumpPressed && now - groundAt <= RunnerRules.COYOTE && !jumpedOff && p.getDeltaMovement().y <= 0) {
@@ -180,6 +197,7 @@ public final class RunnerMoves {
 
     /** The landing tick: the chain is over, and a jump pressed just before landing goes off now (the buffer). */
     private static void landed(LocalPlayer p, ClientInput in, Input k, int now) {
+        FreeRun.landed();
         links = 0;
         climbUsed = false;
         wallCount = 0;
@@ -552,7 +570,7 @@ public final class RunnerMoves {
             regrabAt = now + 8;
             return;
         }
-        if (jumpPressed) {
+        if (jumpPressed || FreeRun.climbFromHang()) {
             if (ledgeJump(p, k, level, ctx, e, now)) return;
         }
         int dir = (k.left() ? 1 : 0) - (k.right() ? 1 : 0);
@@ -848,6 +866,7 @@ public final class RunnerMoves {
 
     /** The dev driver starts a script, or the player was replaced: everything lets go at once. */
     static void reset() {
+        FreeRun.reset();
         state = State.NONE;
         runClimb = climbUsed = false;
         edge = null;

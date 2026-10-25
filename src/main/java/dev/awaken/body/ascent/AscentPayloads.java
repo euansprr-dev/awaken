@@ -86,9 +86,10 @@ public final class AscentPayloads {
 
     /**
      * Remember's modes: an old world's tiers given back, wings given at a sky platform's core, the leap given at the far
-     * landing of the Leaper's Gauntlet, and the short moment at its chasm's edge (no waiting for a free moment).
+     * landing of the Leaper's Gauntlet, and the short moment at its chasm's edge (no waiting for a free moment); the sky
+     * given when the Sky Leviathan falls, and the short moment at that trial's open sky.
      */
-    public static final int REMEMBER = 0, GIFT_WINGS = 1, GIFT_LEAP = 2, LEAP_EDGE = 3;
+    public static final int REMEMBER = 0, GIFT_WINGS = 1, GIFT_LEAP = 2, LEAP_EDGE = 3, GIFT_SKY = 4, SKY_EDGE = 5;
 
     /**
      * Server → client: a scene of tiers given: "your body remembers" (an old world's first load, SPEC §17.6) or "wings
@@ -125,6 +126,22 @@ public final class AscentPayloads {
         public static final Type<Record> TYPE = new Type<>(Awaken.id("ascent_record"));
         public static final StreamCodec<ByteBuf, Record> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Record::chain, Record::new);
         @Override public Type<Record> type() { return TYPE; }
+    }
+
+    /** Server → client: the windways near you (SPEC §17.12), each lane its start and end. */
+    public record Lanes(java.util.List<Windways.Way> ways) implements CustomPacketPayload {
+        public static final Type<Lanes> TYPE = new Type<>(Awaken.id("ascent_lanes"));
+        private static final StreamCodec<ByteBuf, Windways.Way> WAY = StreamCodec.of((buf, w) -> {
+            buf.writeFloat((float) w.ax());
+            buf.writeFloat((float) w.ay());
+            buf.writeFloat((float) w.az());
+            buf.writeFloat((float) w.bx());
+            buf.writeFloat((float) w.by());
+            buf.writeFloat((float) w.bz());
+        }, buf -> new Windways.Way(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat()));
+        public static final StreamCodec<ByteBuf, Lanes> STREAM_CODEC = WAY.apply(ByteBufCodecs.list(WindwaysServer.MAX_SENT))
+                .map(Lanes::new, Lanes::ways);
+        @Override public Type<Lanes> type() { return TYPE; }
     }
 
     /** Server → client (dev, autopilot): run a line of the pilot (scripted input for tours). */

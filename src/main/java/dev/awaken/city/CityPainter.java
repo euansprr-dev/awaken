@@ -526,7 +526,9 @@ public final class CityPainter {
                     for (int dy = 4; dy <= 6; dy++) {
                         if (Math.abs(dx) + Math.abs(dz) + (dy == 6 ? 1 : 0) > 2) continue;
                         if (dx == 0 && dz == 0 && dy < 6) continue;
-                        b.set(x + dx, g + dy, z + dz, leaves);
+                        // (only into air: a crown never cuts a facade's courses or a drainpipe)
+                        BlockState was = b.get(x + dx, g + dy, z + dz);
+                        if (was == null || was.isAir()) b.set(x + dx, g + dy, z + dz, leaves);
                     }
             b.set(x, g + 6, z, leaves);
             return;
