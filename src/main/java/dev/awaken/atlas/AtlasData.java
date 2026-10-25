@@ -25,7 +25,7 @@ public final class AtlasData {
     boolean runShown;
 
     public static final Codec<AtlasData> CODEC = RecordCodecBuilder.create(i -> i.group(
-            Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(d -> d.schema),
+            Codec.INT.optionalFieldOf("schemaVersion", 0).forGetter(d -> d.schema),
             Codec.unboundedMap(Codec.STRING, Explored.CODEC).optionalFieldOf("dims", Map.of()).forGetter(d -> d.dims),
             Codec.INT.listOf().optionalFieldOf("trail", List.of()).forGetter(d -> d.trail),
             Codec.BOOL.optionalFieldOf("runShown", false).forGetter(d -> d.runShown)

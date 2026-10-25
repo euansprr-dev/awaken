@@ -1623,6 +1623,36 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   first; "Clear Atlas cache" button).
 - Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); wrist glance cached on the Holo.
   ≤ 2 ms/frame open, ≤ 150 ms to open, glance ≤ 0.3 ms. Markers only for what the player knows.
+- Decided in M5 (2026-10-25; concept https://claude.ai/artifact/3QCvup43wuVW6t1wDfVroP, docs/carillon/m5/):
+  - Discovery (`atlas.Discovery`, attachment `awaken:atlas`, `AtlasData` schemaVersion 1, copyOnDeath): per dimension,
+    tiles of 32×32 cells (16 longs). A player's path is checked every 5 ticks once they've moved 4 blocks; every cell the
+    64-block circle touches clears. Spectators explore nothing. Awaken's instanced dimensions (`compat.Instanced`:
+    gates, dreams, trials) are never recorded and the table doesn't open there ("The Atlas can't see inside a gate").
+    Changed tiles go to their owner in one `atlas_sync` batch every 10 ticks; login, respawn and a new dimension send
+    the dimension whole. `AtlasHooks.reveal` clears at once and ripples out from its centre on the client.
+  - Bells: a bell rung by a player (by hand or by their projectile) or a player standing in its belfry (within its
+    tower's box ±1, at or above the belfry floor − 2) clears its district: every cell whose centre
+    `CityHooks.district` gives that district, within 360 of the square. The Choir spire's bell (belfry 61) clears every
+    cell in the city. Towers, belfry heights and district names come from `data/awaken/city/plan.json`. The clouds over
+    a district part in a ring from the tower (160 blocks a second).
+  - The opening run's path is kept (a point every 10 ticks of the run and arrival, ≥ 3 blocks apart, ≤ 400) and sent
+    when the opening ends; the next time the table opens it plays the Registry reveal (the land prints in, then the
+    run draws itself as a bronze thread over 2.4 s and settles to a faint line). An automatic open inside the Registry
+    scene is the opening module's call (proposed to the orchestrator).
+  - Party sharing on request ("Share with party" on the table, `/awaken atlas share`): the current dimension's cells are
+    merged into each online member's record.
+  - Cache: one deflated file per 512×512 tile, `t.<x>.<z>.bin` ("AWAT", version 1: heights, ARGB colours, an info byte
+    per column with water depth, material class and a lit bit for night), under `sp-<save folder>` or `mp-<address>`.
+    Saved every 30 s and on leaving; the whole cache is kept ≤ 64 MB by deleting the oldest tiles down to 56 MB.
+    "Clear Atlas cache" deletes every world's tiles and the sampled columns; what you explored is the server's and
+    stays. Roofed dimensions (the Nether) draw no terrain yet.
+  - Mesh: three levels (a column is 1, 4 or 16 blocks; the level follows zoom: ≥ 0.9, ≥ 0.22, below), slices of 64×64
+    columns, a 15×15-slice window per level, ≤ 96 MB of GPU buffers (farthest dropped first); a level not drawn for 20 s
+    lets its slices go. Slices build on one worker thread from snapshots; the main thread only uploads, before the
+    pass opens. The finest level is kept built round the player while the table is shut.
+  - The table opens on M (Xaero's key), in the Holo's projected glass (`HudLook` FRAME | DRIFT, text as light), sets
+    `UiHooks` focus while open, and plays the Holo's open and close sounds. C centres on you. Dev: `/awaken atlas
+    stats|share|reveal <r>|ring <city|district>|clear` and the client's `/atlas open|view|spin|freeze|reveal|stats`.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
