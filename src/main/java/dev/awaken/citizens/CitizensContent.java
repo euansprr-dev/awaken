@@ -86,6 +86,12 @@ public final class CitizensContent {
             SONGBIRD = sound("city.songbird"), FOUNTAIN = sound("city.fountain"), LAP = sound("city.lap"), MILL = sound("city.mill"),
             TAVERN = sound("city.tavern"), CARILLON_DAWN = sound("city.carillon.dawn"), CARILLON_NOON = sound("city.carillon.noon"),
             CARILLON_DUSK = sound("city.carillon.dusk");
+    /**
+     * The market's criers: recorded calls (tools/art/specs/audio_city_cc0.py), so the event exists only once those
+     * recordings are in the jar; null before (sounds.json gets its entry from the same build that writes the files).
+     */
+    public static final @org.jspecify.annotations.Nullable DeferredHolder<SoundEvent, SoundEvent> CRIER =
+            CitizensContent.class.getResource("/assets/awaken/sounds/city/crier1.ogg") != null ? sound("city.crier") : null;
 
     private static DeferredItem<Item> prop(String name) {
         return ITEMS.registerSimpleItem(name, p -> p.stacksTo(1));

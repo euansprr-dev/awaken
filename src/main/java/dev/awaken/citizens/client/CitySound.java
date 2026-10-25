@@ -30,7 +30,7 @@ import java.util.List;
  *   <li>loops at their place, eased in and out as you come and go: the two fountains, water lapping along the quays,
  *   the mill wheels on the race, and from evening till late the taverns, muffled through their walls;</li>
  *   <li>one-shots on their own clocks: hammers at the four smithies through the working day (now and then the
- *   bellows), the stalls by day, boats creaking along the river, songbirds in the gardens (a dawn chorus), gulls over the
+ *   bellows), the stalls by day and their criers calling (once the recordings are in), boats creaking along the river, songbirds in the gardens (a dawn chorus), gulls over the
  *   quay, and at night the Watch's handbell on its rounds;</li>
  *   <li>the Choir's carillon from the spire at dawn, noon and dusk (our own three tunes), heard across the city.</li>
  * </ul>
@@ -45,6 +45,8 @@ public final class CitySound {
             STALL = CitizensContent.STALL.get(), BOAT = CitizensContent.BOAT.get(), SONGBIRD = CitizensContent.SONGBIRD.get(),
             HANDBELL = CitizensContent.HANDBELL.get(), DAWN = CitizensContent.CARILLON_DAWN.get(), NOON = CitizensContent.CARILLON_NOON.get(),
             DUSK = CitizensContent.CARILLON_DUSK.get();
+    /** The criers (recorded; null until their recordings are in). */
+    private static final SoundEvent CRIER = CitizensContent.CRIER == null ? null : CitizensContent.CRIER.get();
 
     /** One kind of place: its points (world x, y, z), how near it starts, how many may play. */
     static final class Places {
@@ -178,6 +180,11 @@ public final class CitySound {
         if (tod >= 1000 && tod < 11500 && due(1, now, 40, 110)) {
             double[] s = random(STALLS, x, z, 22);
             if (s != null) play(level, s, STALL, 0.55F, 0.9F + R.nextFloat() * 0.25F);
+        }
+        // a stallholder calling their wares, through the busy middle of the day (voices are pitched only a little)
+        if (CRIER != null && tod >= 1500 && tod < 10500 && due(6, now, 100, 280)) {
+            double[] s = random(STALLS, x, z, 30);
+            if (s != null) play(level, s, CRIER, 0.5F, 0.95F + R.nextFloat() * 0.1F);
         }
         if (due(2, now, 90, 260)) {
             double[] b = random(RIVER, x, z, 26);

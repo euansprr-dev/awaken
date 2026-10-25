@@ -18,7 +18,9 @@ Three kinds of file:
 The crowd is the hard one: a murmur of formant voices (glottal harmonics shaped by vowel formants, syllables and
 phrases with falling intonation, consonant hiss between), placed at distances round the listener, darkened and
 reverberated by distance. At a distance this reads as people; up close it would be gibberish, so the near layer stays a
-few metres off and the beds never carry words. CC0 recordings could replace the murmur after the owner's yes.
+few metres off and the beds never carry words. Since the owner's yes (25 Oct 2026), CC0 recordings replace the crowd,
+the taverns, the forge, the fountains, the quays, gulls, carts, anvils and pigeons (audio_city_cc0.py); once its lock
+exists this script leaves those files alone.
 """
 import json
 import os
@@ -805,15 +807,21 @@ CARILLON = {"city.carillon.dawn": "dawn", "city.carillon.noon": "noon", "city.ca
 
 
 def write_events():
+    import audio_city_cc0 as C
+    keep = C.RECORDED_EVENTS if C.recorded() else set()
     path = os.path.join(MERGE, "sounds.json")
     ev = json.load(open(path))
     lang_path = os.path.join(MERGE, "lang/en_us.json")
     lang = json.load(open(lang_path))
     for eid, ((name, _, n), sub, att, stream) in SHOTS.items():
+        if eid in keep:
+            continue
         ev[eid] = {"subtitle": "subtitles.awaken." + eid,
                    "sounds": [{"name": f"awaken:city/{name}{k + 1}", "attenuation_distance": att} for k in range(n)]}
         lang["subtitles.awaken." + eid] = sub
     for eid, (name, _, sub, att) in LOOPS.items():
+        if eid in keep:
+            continue
         ev[eid] = {"subtitle": "subtitles.awaken." + eid, "sounds": [{"name": f"awaken:{name}", "attenuation_distance": att}]}
         lang["subtitles.awaken." + eid] = sub
     for eid, tune in CARILLON.items():
@@ -843,7 +851,10 @@ def write_manifests():
 
 
 def render_beds():
+    import audio_city_cc0 as C
     for k, (name, fn, rms) in enumerate(STEMS):
+        if C.recorded() and name in C.RECORDED_STEMS:
+            continue  # made from a recording (audio_city_cc0.py)
         x = fn(9100 + k * 37)
         x = x[: K.ns(STEM_SECONDS)]
         y = K.master(x, rms, -3.0)
@@ -856,7 +867,10 @@ def render_beds():
 
 def render_shots():
     tgt, tol, ceil, q = TARGETS["sfx"]
+    import audio_city_cc0 as C
     for eid, ((name, fn, n), _, _, _) in SHOTS.items():
+        if C.recorded() and eid in C.RECORDED_EVENTS:
+            continue
         for k in range(n):
             x = K.mono(fn(sum(map(ord, name)) * 13 + k * 101))
             y = K.master(x, -22.0, ceil - 0.7)
@@ -864,6 +878,8 @@ def render_shots():
         print(f"  {name:15s} x{n}")
     at, atol, aceil, aq = TARGETS["amb"]
     for eid, (name, fn, _, _) in LOOPS.items():
+        if C.recorded() and name in C.RECORDED_LOOPS:
+            continue
         y = K.master(K.mono(fn(sum(map(ord, name)))), at, aceil)
         K.write_ogg(os.path.join(SOUNDS, name + ".ogg"), y, aq, None)
         print(f"  {name:20s} {len(y) / SR:5.1f} s  RMS {K.gated_rms(y):6.1f}")
