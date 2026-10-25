@@ -25,6 +25,7 @@ public final class CityLights {
     private CityLights() {}
 
     private static @Nullable CityLayout cachedFor;
+    private static final CityBuffer SCRATCH = new CityBuffer(20, 20);
     private static long[][] windows = new long[0][];
     private static byte[][] storeys = new byte[0][];
     private static int buildCursor, sweepCursor;
@@ -69,7 +70,7 @@ public final class CityLights {
     static void build(CityLayout l, long seed, int i) {
         CityPlan.Plot p = l.plan.plots.get(i);
         int m = CityLayout.PLOT_MARGIN;
-        CityBuffer buf = new CityBuffer(p.x1() - p.x0() + 1 + 2 * m, p.z1() - p.z0() + 1 + 2 * m);
+        CityBuffer buf = SCRATCH;   // (plots are at most 14 across: 14 + 2 * 3 fits; one buffer, never a fresh one)
         buf.reset(p.x0() - m, p.z0() - m);
         CityGrammar.plot(new CityPainter.Ctx(l, seed), buf, p);
         Block window = CityKit.LIT_WINDOW.get();
