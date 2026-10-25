@@ -108,6 +108,11 @@ public final class BodyRules {
     public static final int MANTLE_TICKS = 6;
     /** Free space needed over the ledge. */
     public static final double MANTLE_HEADROOM = 2.0;
+    /**
+     * The feet may land up to this over the lip they climb (vanilla's step): a stair-topped wall is climbed by its low
+     * half and stood on by its high one, as a body 0.6 wide can't stand on a half 0.5 deep (SPEC §17.23).
+     */
+    public static final double MANTLE_STEP = 0.6;
     /** How far in front of the body the ledge's face may be: the client, and the server (it may be a tick behind). */
     public static final double MANTLE_REACH = 0.6, MANTLE_REACH_SERVER = 1.1;
     public static final float MANTLE_EXHAUSTION = 0.05F;
@@ -367,9 +372,11 @@ public final class BodyRules {
 
     /**
      * The ledge a player standing with feet at (px, py, pz) and facing {@code yaw} can mantle onto, or null. Checks:
-     * something stands in front within {@code reach}; its top is between {@link #MANTLE_MIN} and {@link #MANTLE_MAX}
-     * above the feet and is not a fence, wall or gate (collision taller than its block); {@link #MANTLE_HEADROOM} is free
-     * over it; nothing is over the player's head on the way up; and the way over the lip is clear.
+     * something stands in front within {@code reach}; the lip (the lowest top along the face's edge, by the real
+     * collision shapes: a stair's low half, a slab) is between {@link #MANTLE_MIN} and {@link #MANTLE_MAX} above the
+     * feet; where the feet land is at most {@link #MANTLE_STEP} over the lip (a stair's high half) and no lower, and is
+     * not a fence, wall or gate (collision taller than its block); {@link #MANTLE_HEADROOM} is free over it; nothing is
+     * over the player's head on the way up; and the way over the lip is clear.
      */
     public static @Nullable Ledge findLedge(BlockGetter level, CollisionContext ctx, double px, double py, double pz, float yaw, double reach) {
         double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
@@ -385,21 +392,34 @@ public final class BodyRules {
             }
         }
         if (face < 0) return null;
-        // 2. the feet's new place: a body width past the face, on whatever top is there
+        double[] top = {Double.NaN, 0};
+        // 2. the lip: the lowest top just past the face (the body's front met it at face + w), across the body's width (nothing on that edge taller than a
+        //    step over it: the high half of a stair facing away or sideways is a step, one facing you is the face)
+        double ex = px + dx * (face + w + 0.04), ez = pz + dz * (face + w + 0.04), ax = dz * (w - 0.03), az = -dx * (w - 0.03);
+        double hi = py + MANTLE_MAX + MANTLE_STEP + 0.01;
+        surface(level, ctx, m, Math.min(ex - ax, ex + ax) - 0.02, Math.min(ez - az, ez + az) - 0.02,
+                Math.max(ex - ax, ex + ax) + 0.02, Math.max(ez - az, ez + az) + 0.02, py + 0.01, hi, top);
+        if (Double.isNaN(top[0]) || top[1] != 0) return null;
+        double lip = top[0];
+        for (int k = -2; k <= 2; k++) {
+            double sx = ex + ax * k / 2, sz = ez + az * k / 2;
+            surface(level, ctx, m, sx - 0.01, sz - 0.01, sx + 0.01, sz + 0.01, py + 0.01, hi, top);
+            if (!Double.isNaN(top[0])) lip = Math.min(lip, top[0]);
+        }
+        if (lip - py < MANTLE_MIN - 1e-6 || lip - py > MANTLE_MAX + 1e-6) return null;
+        // 3. the feet's new place: a body width past the face, on whatever top is there (the lip's, or a step over it)
         double f = face + 2 * w + 0.05;
         double tx = px + dx * f, tz = pz + dz * f;
-        double[] top = {Double.NaN, 0};
-        surface(level, ctx, m, tx - w + 0.02, tz - w + 0.02, tx + w - 0.02, tz + w - 0.02, py + 0.01, py + MANTLE_MAX + 0.01, top);
-        if (Double.isNaN(top[0])) return null;
+        surface(level, ctx, m, tx - w + 0.02, tz - w + 0.02, tx + w - 0.02, tz + w - 0.02, py + 0.01, lip + MANTLE_STEP + 0.01, top);
+        if (Double.isNaN(top[0]) || top[0] < lip - 0.05) return null; // never down a drop behind a thin lip
         double h = top[0] - py;
-        if (h < MANTLE_MIN - 1e-6 || h > MANTLE_MAX + 1e-6) return null;
         if (top[1] != 0) return null; // a fence, wall or gate top: vanilla's "you can't jump this" stays true
         double ty = top[0];
-        // 3. room to stand up there
+        // 4. room to stand up there
         if (blocked(level, ctx, m, tx - w + 0.01, ty + 1e-3, tz - w + 0.01, tx + w - 0.01, ty + MANTLE_HEADROOM, tz + w - 0.01)) return null;
-        // 4. the way up: nothing over the head from here to standing height on the ledge
+        // 5. the way up: nothing over the head from here to standing height on the ledge
         if (blocked(level, ctx, m, px - w + 0.01, py + 0.05, pz - w + 0.01, px + w - 0.01, ty + HEIGHT, pz + w - 0.01)) return null;
-        // 5. the way over the lip at ledge height (a box spanning start and end: conservative on diagonals)
+        // 6. the way over the lip at ledge height (a box spanning start and end: conservative on diagonals)
         double x0 = Math.min(px, tx) - w + 0.01, x1 = Math.max(px, tx) + w - 0.01;
         double z0 = Math.min(pz, tz) - w + 0.01, z1 = Math.max(pz, tz) + w - 0.01;
         if (blocked(level, ctx, m, x0, ty + 1e-3, z0, x1, ty + HEIGHT, z1)) return null;

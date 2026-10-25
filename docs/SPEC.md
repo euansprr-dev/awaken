@@ -2671,6 +2671,17 @@ the slide's own controls (jump out, a power's motion, a push, water) end it as b
   walk's 0.22, a 15-tick glide whose drop never changes by more than 0.014 a tick, the server sliding past 20 ticks
   and no fall; a way across the stairs is no run).
 
+### 17.23 Mantling onto stair tops (Euan's play, 2026-10-25: "I can't mantle up blocks with a stair on it")
+The mantle's lip is the lowest top along the face's edge across the body's width, by the real collision shapes (a
+stair's low half, a slab, any kit block), within 1.1-1.6 over the feet; nothing on that edge more than a step (0.6,
+`BodyRules.MANTLE_STEP`) over it. The feet land a body width past the face on whatever top is there, from the lip's
+height up to a step over it, never lower (no drop behind a thin lip), never a fence or wall top, with 2 blocks of room
+over it. So a 1-block wall topped with a stair facing away or sideways is climbed by its low half (1.5) and stood on by
+its high half (2.0): a body 0.6 wide can't stand on a half 0.5 deep. A stair facing you is a 2-block face and an
+upside-down one a 2-block top: not mantled (the wall-run, the hang and the climb-out take those). Client and server run
+the same `findLedge`. Test: `body_mantle_stair_tops` (all four facings, the upper half, a slab-topped wall, the
+server's check); `body_mantle_ledges` and `body_mantle_gate_walls` unchanged.
+
 ### 17.23 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
 A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
 block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision

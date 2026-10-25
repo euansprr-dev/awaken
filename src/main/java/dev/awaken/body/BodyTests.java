@@ -108,6 +108,7 @@ final class BodyTests {
         AwakenTests.register("body_action_camera", 20, BodyTests::actionCamera);
         AwakenTests.register("body_free_run", 20, BodyTests::freeRun);
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);
+        AwakenTests.registerIsolated("body_mantle_stair_tops", 100, BodyTests::mantleStairTops);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
         AwakenTests.registerIsolated("body_stair_slide", 100, BodyTests::stairSlide);
@@ -212,6 +213,51 @@ final class BodyTests {
             at(h, c2, 2.5, 1, 0.5, 0F);
             h.assertFalse(BodyServer.startMantle(c2, 0F, ok.x() + 2, ok.y() + 0.5, ok.z()), "the server refuses a ledge that isn't there");
             done(h, c, d, c2);
+        });
+    }
+
+    /**
+     * SPEC §17.23 (Euan, Carillon: "I can't mantle up blocks with a stair on it"): a 1-block wall topped with a stair
+     * is climbed by its low half (1.5) and stood on by its high one (2.0), facing away or sideways; a stair facing you
+     * is a 2-block face, and an upside-down one a 2-block top: no. A slab-topped wall is climbed onto the slab, and the
+     * server takes the stair ledge the client claims.
+     */
+    static void mantleStairTops(GameTestHelper h) {
+        floor(h, -1, 15, -1, 6, 6);
+        var stairs = net.minecraft.world.level.block.StairBlock.FACING;
+        var half = net.minecraft.world.level.block.StairBlock.HALF;
+        BlockState stair = Blocks.STONE_BRICK_STAIRS.defaultBlockState();
+        // facing +z from z = 0.5, each lane's wall at z = 1: the stair's high back half is on its FACING side
+        net.minecraft.core.Direction[] facings = {net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.EAST,
+                net.minecraft.core.Direction.WEST, net.minecraft.core.Direction.NORTH};
+        for (int i = 0; i < 4; i++) {
+            h.setBlock(new BlockPos(2 * i, 1, 1), Blocks.STONE);
+            h.setBlock(new BlockPos(2 * i, 2, 1), stair.setValue(stairs, facings[i]));
+        }
+        h.setBlock(new BlockPos(8, 1, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(8, 2, 1), stair.setValue(stairs, net.minecraft.core.Direction.SOUTH).setValue(half, net.minecraft.world.level.block.state.properties.Half.TOP));
+        h.setBlock(new BlockPos(10, 1, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(10, 2, 1), Blocks.SMOOTH_STONE_SLAB.defaultBlockState());
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            String[] names = {"facing away", "sideways (east)", "sideways (west)"};
+            for (int i = 0; i < 3; i++) {
+                BodyRules.Ledge l = ledge(h, 2 * i + 0.5, 0.5, BodyRules.MANTLE_REACH);
+                h.assertTrue(l != null, "a wall topped with a stair " + names[i] + " is a ledge");
+                h.assertTrue(Math.abs(l.height() - 2.0) < 1e-3, "landing on the stair's high half (" + names[i] + "), was " + l.height());
+            }
+            h.assertTrue(ledge(h, 6.5, 0.5, BodyRules.MANTLE_REACH) == null, "a stair facing you is a 2-block face");
+            h.assertTrue(ledge(h, 8.5, 0.5, BodyRules.MANTLE_REACH) == null, "an upside-down stair on a block is a 2-block top");
+            BodyRules.Ledge slab = ledge(h, 10.5, 0.5, BodyRules.MANTLE_REACH);
+            h.assertTrue(slab != null && Math.abs(slab.height() - 1.5) < 1e-3, "a slab-topped wall: onto the slab");
+            BodyRules.Ledge away = ledge(h, 0.5, 0.5, BodyRules.MANTLE_REACH);
+            ServerPlayer p = player(h, Rank.C);
+            at(h, p, 0.5, 1, 0.5, 0F);
+            h.assertTrue(BodyServer.startMantle(p, 0F, away.x(), away.y(), away.z()), "the server takes the stair ledge");
+            double[] path = new double[3];
+            Vec3 s = h.absoluteVec(new Vec3(0.5, 1, 0.5));
+            BodyRules.mantlePath(s.x, s.y, s.z, away, BodyRules.MANTLE_TICKS, path);
+            h.assertTrue(Math.abs(path[1] - away.y()) < 1e-6, "and the climb ends on the high half");
+            done(h, p);
         });
     }
 
