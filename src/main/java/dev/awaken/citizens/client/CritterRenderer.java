@@ -30,12 +30,15 @@ import java.util.Map;
 /**
  * Draws the city's animals (M4 B3b) from their rigs ({@link CityFaunaData}): one model per animal, each coat a texture
  * variant, the life layer per body; a carthorse draws its cart behind it on the cart's own line (the brain keeps the
- * axle on the road the horse has walked). Cats' eyes catch the lamps at night (their glow layer, by darkness).
+ * axle on the road the horse has walked). Cats' eyes catch the lamps at night (their glow layer, by darkness), and so
+ * does a boat's bow lantern when it's lit. Boats float: no shadow, no life layer.
  */
 final class CritterRenderer extends EntityRenderer<CityCritter, CritterRenderState> {
-    static final String[] IDS = {"city_pigeon", "city_gull", "city_cat", "city_dog", "city_horse"};
-    private static final String[] TEMPER = {"cute", "cute", "cute", "cute", "grazer"};
-    private static final float[] SHADOW = {0.12F, 0.2F, 0.3F, 0.35F, 0.95F};
+    static final String[] IDS = {"city_pigeon", "city_gull", "city_cat", "city_dog", "city_horse", "city_boat"};
+    private static final String[] TEMPER = {"cute", "cute", "cute", "cute", "grazer", "citizen"};
+    private static final float[] SHADOW = {0.12F, 0.2F, 0.3F, 0.35F, 0.95F, 0F};
+    /** Loads a boat may carry (CritterModel's load bones): none, crates aft, nets forward. */
+    private static final int[] BOAT_LOADS = {-1, 1, 3};
     /** Ticks a clip takes to crossfade into the next. */
     static final float FADE = 5F;
 
@@ -105,7 +108,7 @@ final class CritterRenderer extends EntityRenderer<CityCritter, CritterRenderSta
 
     @Override
     protected AABB getBoundingBoxForCulling(CityCritter e, float partial) {
-        return e.getInterpolatedBoundingBox(partial).inflate(e.kind == CityCritter.HORSE ? 3.2 : 0.6);
+        return e.getInterpolatedBoundingBox(partial).inflate(e.kind >= CityCritter.HORSE ? 3.2 : 0.6);
     }
 
     @Override
@@ -133,6 +136,16 @@ final class CritterRenderer extends EntityRenderer<CityCritter, CritterRenderSta
             float yaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90F;
             s.yRot = Mth.clamp(Mth.wrapDegrees(yaw - s.bodyRot), -110F, 110F);
             s.xRot = (float) (-Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG);
+        }
+        s.crew = true;
+        s.load = -1;
+        if (e.kind == CityCritter.BOAT) {
+            s.crew = e.crew;
+            s.load = BOAT_LOADS[Math.floorMod(e.seed >> 5, BOAT_LOADS.length)];
+            s.life = null;
+            s.glowAlpha = e.lamp && s.glow != null ? 1F : 0F;
+            s.wheel = 0F;
+            return;
         }
         Life life = CreatureLife.life(e.clientLife, m.life, e.getId() * 31 + e.seed);
         e.clientLife = life;

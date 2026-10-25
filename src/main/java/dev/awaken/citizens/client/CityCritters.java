@@ -7,6 +7,7 @@ import dev.awaken.citizens.Roster;
 import dev.awaken.city.CityPlan;
 import dev.awaken.mobs.client.anim.HeroRig;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -32,20 +33,29 @@ import java.util.Map;
  * bell towers that burst up as you run past and wheel round before settling again (the tower flocks lift when their
  * bell rings); gulls riding the air over the river and squabbling on the nets; cats on roofs and doorsteps, asleep by
  * day, watching you, slipping away when you come too close, their eyes catching the lamps at night; dogs at the heels
- * of their owners; carters' horses drawing carts down the avenues by day, hooves on the stones and bells on the collar.
+ * of their owners; carters' horses drawing carts down the avenues by day, hooves on the stones and bells on the collar;
+ * boats moored along both quays, rocking on the swell, and boatmen rowing round the canal and up and down the river,
+ * lanterns lit on their bows after dusk.
  * <p>All of it on the client ({@link CityCritter}, never on the server): homes come from the plan (the same file the
  * server paints from), animals are made within reach of the player and dropped beyond it, carts run on the world clock
- * (every client sees them in the same place). Caps: 40 pigeons, 16 gulls, 10 cats, 8 dogs, 4 carts near you.
+ * (every client sees them in the same place), and so do the rowed boats. Caps: 40 pigeons, 16 gulls, 10 cats, 8 dogs,
+ * 4 carts, 8 boats near you.
  */
 public final class CityCritters {
     private CityCritters() {}
 
     // states (CityCritter.state): birds below LAND count as airborne from FLY
     static final int GROUND = 0, PERCH = 1, FLY = 2, LAND = 3, SIT = 10, WALK = 11, FLEE = 12, HOP = 13, FOLLOW = 20, VISIT = 21, DRIVE = 30;
-    static final double RANGE_BIRD = 56, RANGE_GULL = 72, RANGE_CAT = 40, RANGE_DOG = 48, RANGE_CART = 96, SLACK = 12;
-    static final int CAP_PIGEON = 40, CAP_GULL = 16, CAP_CAT = 10, CAP_DOG = 8, CAP_CART = 4;
+    static final double RANGE_BIRD = 56, RANGE_GULL = 72, RANGE_CAT = 40, RANGE_DOG = 48, RANGE_CART = 96, RANGE_BOAT = 88, SLACK = 12;
+    static final int CAP_PIGEON = 40, CAP_GULL = 16, CAP_CAT = 10, CAP_DOG = 8, CAP_CART = 4, CAP_BOAT = 8;
     /** A cart horse's pace (blocks a tick: a heavy walk) and the axle's distance behind the horse (blocks). */
     static final double CART_SPEED = 0.085, AXLE = 1.75;
+    /** A rowed boat's pace (blocks a tick: an easy pull), how far right of the line it keeps on the river and the canal. */
+    static final double BOAT_SPEED = 0.06, KEEP_RIVER = 3.5, KEEP_CANAL = 1.0, KEEP_ROAD = 1.6;
+    /** A moored boat every this many blocks along each quay; none this near a bridge. */
+    static final double MOOR_EVERY = 24, MOOR_CLEAR = 6;
+    /** Where a boat's lantern hangs: forward of its middle and above the water (blocks; the rig's stem post). */
+    static final double LANTERN_FWD = 2.03, LANTERN_UP = 1.06;
 
     /** One place animals live: a flock's patch of ground, a cat's house, a cart's route. */
     static final class Home {
@@ -56,9 +66,12 @@ public final class CityCritters {
         boolean spawned;
         /** Ticks a cart stood waiting (it runs on the clock less these). */
         long delay;
-        /** A cart's road (world x, z pairs) and its length. */
+        /** A cart's road or a boat's water (world x, z pairs), its length; a loop is driven round, else back and forth. */
         double[] road;
-        double length;
+        double length, speed = CART_SPEED, keep = KEEP_ROAD;
+        boolean loop;
+        /** A moored boat's heading (degrees, the entity's yaw). */
+        float facing;
         /** Where the flock's ground is (cached once its chunk is in), and a threat's last time. */
         double groundY = Double.NaN;
         long alarmed;
@@ -79,7 +92,7 @@ public final class CityCritters {
     private static final Map<CitizenBody, CityCritter> DOGS = new HashMap<>();
     private static boolean built;
     private static int nextId = -2_000_000, clock;
-    private static final int[] COUNT = new int[5];
+    private static final int[] COUNT = new int[6];
     private static final RandomSource R = RandomSource.create();
     /** Clip indices per animal, by name (the rig's clip order is the model's). */
     private static final Map<String, Integer>[] CLIPS = clipTables();
@@ -161,6 +174,81 @@ public final class CityCritters {
             for (int i = 2; i < road.length; i += 2) h.length += Math.hypot(road[i] - road[i - 2], road[i + 1] - road[i - 1]);
             if (h.length > 60) HOMES.add(h);
         }
+        boats(plan, cx, cz, r);
+    }
+
+    /**
+     * The boats: one moored every {@value #MOOR_EVERY} blocks along each quay inside the wall (none by a bridge), two
+     * boatmen rowing up and down the river and one round the canal (out of the river, round the Quay's island, back).
+     */
+    private static void boats(CityPlan plan, int cx, int cz, RandomSource r) {
+        List<float[]> river = plan.river;
+        double inner = plan.wallRadius - 12;
+        double moor = CityLife.RIVER_HALF - 1.8;
+        List<Double> water = new ArrayList<>();
+        double along = 0;
+        for (int i = 0; i + 1 < river.size(); i++) {
+            float[] a = river.get(i), b = river.get(i + 1);
+            double len = Math.hypot(b[0] - a[0], b[1] - a[1]), dx = (b[0] - a[0]) / len, dz = (b[1] - a[1]) / len;
+            for (double t = 0; t < len; t += 4, along += 4) {
+                double x = a[0] + dx * t, z = a[1] + dz * t;
+                if (Math.hypot(x, z) > inner) continue;
+                water.add(cx + x);
+                water.add(cz + z);
+                if (along % MOOR_EVERY >= 4) continue;
+                for (int side = -1; side <= 1; side += 2) {
+                    if (r.nextFloat() < 0.25F) continue;
+                    double mx = x - dz * moor * side, mz = z + dx * moor * side;
+                    if (nearBridge(plan, mx, mz)) continue;
+                    Home h = new Home(CityCritter.BOAT, cx + mx + 0.5, cz + mz + 0.5, 0, 1, r.nextInt(), false);
+                    h.facing = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90F + (r.nextBoolean() ? 180F : 0F);
+                    HOMES.add(h);
+                }
+            }
+        }
+        if (water.size() >= 4) {
+            for (int k = 0; k < 2; k++) rowed(water, false, KEEP_RIVER, r);
+        }
+        // the canal leaves the river and comes back to it: round it, then down the river to where it began
+        List<float[]> canal = CityLife.path("canal");
+        if (canal.size() >= 2) {
+            List<Double> loop = new ArrayList<>();
+            for (float[] q : canal) {
+                loop.add(cx + q[0] + 0.5);
+                loop.add(cz + q[1] + 0.5);
+            }
+            // the river's points between where the canal rejoins it and where it left, in that order
+            float[] end = canal.getLast(), start = canal.getFirst();
+            List<float[]> back = new ArrayList<>();
+            for (float[] q : river) if (q[1] > Math.min(start[1], end[1]) && q[1] < Math.max(start[1], end[1])) back.add(q);
+            if (end[1] > start[1]) java.util.Collections.reverse(back);
+            for (float[] q : back) {
+                loop.add(cx + q[0] + 0.5);
+                loop.add(cz + q[1] + 0.5);
+            }
+            loop.add(loop.get(0));
+            loop.add(loop.get(1));
+            rowed(loop, true, KEEP_CANAL, r);
+        }
+    }
+
+    private static void rowed(List<Double> pts, boolean loop, double keep, RandomSource r) {
+        Home h = new Home(CityCritter.BOAT, pts.get(0), pts.get(1), 0, 1, r.nextInt(), false);
+        h.road = new double[pts.size()];
+        for (int i = 0; i < pts.size(); i++) h.road[i] = pts.get(i);
+        for (int i = 2; i < h.road.length; i += 2) h.length += Math.hypot(h.road[i] - h.road[i - 2], h.road[i + 1] - h.road[i - 1]);
+        h.loop = loop;
+        h.speed = BOAT_SPEED;
+        h.keep = keep;
+        if (h.length > 40) HOMES.add(h);
+    }
+
+    private static boolean nearBridge(CityPlan plan, double x, double z) {
+        for (CityPlan.Bridge b : plan.bridges) {
+            if (x > Math.min(b.x0(), b.x1()) - MOOR_CLEAR && x < Math.max(b.x0(), b.x1()) + MOOR_CLEAR
+                    && z > Math.min(b.z0(), b.z1()) - MOOR_CLEAR && z < Math.max(b.z0(), b.z1()) + MOOR_CLEAR) return true;
+        }
+        return false;
     }
 
     /** A cart's road: avenue segments chained end to end from a seeded start, never turning back, about 600 long. */
@@ -236,10 +324,11 @@ public final class CityCritters {
                 case CityCritter.PIGEON -> RANGE_BIRD;
                 case CityCritter.GULL -> RANGE_GULL;
                 case CityCritter.CAT -> RANGE_CAT;
+                case CityCritter.BOAT -> RANGE_BOAT;
                 default -> RANGE_CART;
             };
             double hx = h.x, hz = h.z;
-            if (h.kind == CityCritter.HORSE) {
+            if (h.road != null) {
                 cartAt(h, level, 0, AT);
                 hx = AT[0];
                 hz = AT[1];
@@ -255,10 +344,13 @@ public final class CityCritters {
                     case CityCritter.PIGEON -> CAP_PIGEON;
                     case CityCritter.GULL -> CAP_GULL;
                     case CityCritter.CAT -> CAP_CAT;
+                    case CityCritter.BOAT -> CAP_BOAT;
                     default -> CAP_CART;
                 };
-                int n = h.kind == CityCritter.HORSE ? 1 : h.size;
-                if (COUNT[h.kind] + (h.kind == CityCritter.HORSE ? 1 : n) > cap) continue;
+                int n = h.size;
+                if (COUNT[h.kind] + n > cap) continue;
+                // a boat needs its water in view (a chunk not yet in, or a plan that doesn't match the world)
+                if (h.kind == CityCritter.BOAT && Double.isNaN(water(level, hx, hz))) continue;
                 spawn(level, h, n, night);
                 COUNT[h.kind] += n;
                 h.spawned = true;
@@ -267,8 +359,9 @@ public final class CityCritters {
         dogs(level);
         if (AUTOPILOT && clock % 600 == 0) {
             int[] c = counts();
-            dev.awaken.Awaken.LOG.info("[citizens] animals near you: {} pigeons, {} gulls, {} cats, {} dogs, {} carts ({} homes)",
-                    c[CityCritter.PIGEON], c[CityCritter.GULL], c[CityCritter.CAT], c[CityCritter.DOG], c[CityCritter.HORSE], HOMES.size());
+            dev.awaken.Awaken.LOG.info("[citizens] animals near you: {} pigeons, {} gulls, {} cats, {} dogs, {} carts, {} boats ({} homes)",
+                    c[CityCritter.PIGEON], c[CityCritter.GULL], c[CityCritter.CAT], c[CityCritter.DOG], c[CityCritter.HORSE],
+                    c[CityCritter.BOAT], HOMES.size());
         }
     }
 
@@ -278,6 +371,8 @@ public final class CityCritters {
             case CityCritter.PIGEON -> !night || h.tower;
             case CityCritter.GULL -> !night || !h.tower;
             case CityCritter.HORSE -> tod < 12600 || tod > 23600;
+            // boatmen row from first light till the taverns empty; moored boats are always there
+            case CityCritter.BOAT -> h.road == null || tod < 18000 || tod > 23000;
             default -> true;
         };
     }
@@ -327,6 +422,20 @@ public final class CityCritters {
                     z = spot[2];
                     c.state = SIT;
                 }
+                case CityCritter.BOAT -> {
+                    if (h.road != null) {
+                        cartAt(h, level, 0, AT);
+                        x = AT[0];
+                        z = AT[1];
+                        c.state = DRIVE;
+                        c.crew = true;
+                        c.setYRot((float) (Mth.atan2(AT[3], AT[2]) * Mth.RAD_TO_DEG) - 90F);
+                    } else {
+                        c.state = PERCH;
+                        c.setYRot(h.facing);
+                    }
+                    y = water(level, x, z);
+                }
                 default -> {
                     cartAt(h, level, 0, AT);
                     x = AT[0];
@@ -336,7 +445,7 @@ public final class CityCritters {
                 }
             }
             c.setPos(x, y, z);
-            c.setYRot(r.nextFloat() * 360F);
+            if (h.kind != CityCritter.BOAT) c.setYRot(r.nextFloat() * 360F);
             c.yRotO = c.getYRot();
             c.xo = x;
             c.yo = y;
@@ -427,6 +536,7 @@ public final class CityCritters {
                 case CityCritter.CAT -> cat(c, level, h);
                 case CityCritter.DOG -> dog(c, level);
                 case CityCritter.HORSE -> horse(c, level, h);
+                case CityCritter.BOAT -> boat(c, level, h);
                 default -> c.discard();
             }
         } catch (RuntimeException ex) {
@@ -868,14 +978,17 @@ public final class CityCritters {
 
     // ---- horses and carts ---------------------------------------------------------------------------------------
 
-    /** Where a cart's horse is on its road now by the world clock, {@code back} blocks behind it: into {@code out}. */
+    /**
+     * Where a cart's horse (or a rowed boat) is on its road now by the world clock, {@code back} blocks behind it: into
+     * {@code out} (x, z, heading dx, dz, distance along). A road is driven there and back; a loop round and round.
+     */
     private static void cartAt(Home h, ClientLevel level, double back, double[] out) {
         double t = level.getOverworldClockTime() - h.delay;
-        double period = h.length * 2;
-        double raw = Math.floorMod((long) (t * CART_SPEED * 1000 + (h.seed & 0xFFFFF) * 1000L), (long) (period * 1000)) / 1000.0;
-        boolean fwd = raw < h.length;
+        double period = h.loop ? h.length : h.length * 2;
+        double raw = Math.floorMod((long) (t * h.speed * 1000 + (h.seed & 0xFFFFF) * 1000L), (long) (period * 1000)) / 1000.0;
+        boolean fwd = h.loop || raw < h.length;
         double s = (fwd ? raw : period - raw) - (fwd ? back : -back);
-        s = Mth.clamp(s, 0, h.length);
+        s = h.loop ? Math.floorMod((long) (s * 1000), (long) (h.length * 1000)) / 1000.0 : Mth.clamp(s, 0, h.length);
         double[] road = h.road;
         double acc = 0;
         for (int i = 2; i < road.length; i += 2) {
@@ -888,9 +1001,9 @@ public final class CityCritters {
                     dx = -dx;
                     dz = -dz;
                 }
-                // keep to the right of the road (the citizens' lanes keep right too)
-                out[0] = sx + (ex - sx) * f - dz * 1.6;
-                out[1] = sz + (ez - sz) * f + dx * 1.6;
+                // keep to the right of the road (the citizens' lanes keep right too, and so do boats)
+                out[0] = sx + (ex - sx) * f - dz * h.keep;
+                out[1] = sz + (ez - sz) * f + dx * h.keep;
                 out[2] = dx;
                 out[3] = dz;
                 out[4] = s;
@@ -951,7 +1064,52 @@ public final class CityCritters {
         lookAtPlayer(c, blocked ? 8 : 4);
     }
 
-    /** The carter's lantern at dusk (CityGlow), hung at the cart's front. */
+    // ---- boats --------------------------------------------------------------------------------------------------
+
+    /** A moored boat rocks where it's tied; a rowed one follows its water by the clock, the oarlocks creaking each stroke. */
+    private static void boat(CityCritter c, ClientLevel level, Home h) {
+        if (h == null) {
+            c.discard();
+            return;
+        }
+        int tod = (int) Math.floorMod(level.getOverworldClockTime(), 24000L);
+        boolean night = tod >= 12500 || tod < 300;
+        if (h.road == null) {
+            // one moored boat in three keeps its lantern lit through the night (someone sleeps aboard)
+            c.lamp = night && Math.floorMod(c.seed, 3) == 0;
+            if (Double.isNaN(h.groundY)) h.groundY = water(level, h.x, h.z); // its water, found once
+            if (!Double.isNaN(h.groundY)) c.setPos(h.x, h.groundY, h.z);
+            clip(c, "idle");
+            return;
+        }
+        c.lamp = night;
+        double[] at = AT;
+        cartAt(h, level, 0, at);
+        double ox = c.getX(), oz = c.getZ();
+        double y = water(level, at[0], at[1]);
+        c.setPos(at[0], Double.isNaN(y) ? c.getY() : y, at[1]);
+        double moved = Math.hypot(c.getX() - ox, c.getZ() - oz);
+        c.speed = moved > 2 ? 0F : (float) moved;
+        face(c, at[2], at[3], 5F);
+        clip(c, "walk");
+        // the stroke is 2.4 s: the oarlocks at the catch
+        if ((c.tickCount + c.seed) % 48 == 0 && dist2Player(c) < 24 * 24) {
+            sound(level, c, CitySounds.OARLOCK, 0.25F, 1.2F + c.getRandom().nextFloat() * 0.15F);
+        }
+    }
+
+    private static final BlockPos.MutableBlockPos WATER = new BlockPos.MutableBlockPos();
+
+    /** The water's surface at (x, z): the first water found going down from the street (under any bridge); NaN if none. */
+    static double water(ClientLevel level, double x, double z) {
+        int bx = Mth.floor(x), bz = Mth.floor(z);
+        for (int y = CityLife.sy; y > CityLife.sy - 16; y--) {
+            if (level.getFluidState(WATER.set(bx, y, bz)).is(net.minecraft.tags.FluidTags.WATER)) return y + 0.89;
+        }
+        return Double.NaN;
+    }
+
+    /** The carter's lantern at dusk (CityGlow), hung at the cart's front; the boats' lanterns on their bows. */
     static final CityGlow.Source LANTERNS = (out, partial, cx, cy, cz) -> {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
@@ -967,6 +1125,21 @@ public final class CityCritters {
                 float f = out.flicker(c.seed);
                 out.halo(x, y + 2.0, z, CityGlow.LANTERN_HALO, CityGlow.LANTERN_CORE, f);
                 out.pool(x, y + 0.03, z, CityGlow.LANTERN_POOL, CityGlow.LANTERN_POOL_A * f);
+            }
+        }
+        for (Home h : HOMES) {
+            if (h.kind != CityCritter.BOAT || !h.spawned) continue;
+            for (CityCritter c : h.members) {
+                if (!c.lamp) continue;
+                float yaw = Mth.rotLerp(partial, c.yRotO, c.getYRot()) * Mth.DEG_TO_RAD;
+                double x = Mth.lerp(partial, c.xo, c.getX()) - Mth.sin(yaw) * LANTERN_FWD;
+                double z = Mth.lerp(partial, c.zo, c.getZ()) + Mth.cos(yaw) * LANTERN_FWD;
+                double y = Mth.lerp(partial, c.yo, c.getY());
+                if (out.far(x, y, z)) continue;
+                float f = out.flicker(c.seed);
+                out.halo(x, y + LANTERN_UP, z, CityGlow.LANTERN_HALO * 0.8F, CityGlow.LANTERN_CORE, f);
+                // its light on the water round the bow
+                out.pool(x, y + 0.02, z, CityGlow.LANTERN_POOL * 0.6F, CityGlow.LANTERN_POOL_A * 0.6F * f);
             }
         }
     };
@@ -997,7 +1170,7 @@ public final class CityCritters {
 
     /** How many of each kind are about (the autopilot's status line). */
     static int[] counts() {
-        int[] out = new int[5];
+        int[] out = new int[6];
         for (Home h : HOMES) if (h.spawned) out[h.kind] += h.members.size();
         out[CityCritter.DOG] = DOGS.size();
         return out;

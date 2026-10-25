@@ -1,10 +1,20 @@
 package dev.awaken.citizens.client;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import dev.awaken.Awaken;
 import dev.awaken.citizens.CitizensNet;
 import dev.awaken.city.CityPlan;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jspecify.annotations.Nullable;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Where the city stands, on the client (sent at login: {@link CitizensNet.Site}), and its plan (read from the classpath,
@@ -13,6 +23,9 @@ import org.jspecify.annotations.Nullable;
  */
 public final class CityLife {
     private CityLife() {}
+
+    /** The river's half width (terrain's CitySite.riverHalfWidth): its quays stand this far either side of the line. */
+    static final double RIVER_HALF = 9;
 
     private static boolean known;
     static int cx, sy, cz;
@@ -41,5 +54,23 @@ public final class CityLife {
 
     static void clear() {
         known = false;
+    }
+
+    /**
+     * A path in the plan file that CityPlan doesn't keep (plan.json's "canal", "millRace": [[x, z], ...] in plan
+     * coordinates), read once by whoever needs it; empty if it's missing.
+     */
+    static List<float[]> path(String key) {
+        List<float[]> out = new ArrayList<>();
+        try (InputStream in = CityPlan.class.getResourceAsStream(CityPlan.RESOURCE)) {
+            if (in == null) return out;
+            JsonObject o = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+            JsonArray arr = o.getAsJsonArray(key);
+            if (arr == null) return out;
+            for (var e : arr) out.add(new float[]{e.getAsJsonArray().get(0).getAsFloat(), e.getAsJsonArray().get(1).getAsFloat()});
+        } catch (Exception ex) {
+            Awaken.LOG.warn("[citizens] plan path {}: {}", key, ex.toString());
+        }
+        return out;
     }
 }

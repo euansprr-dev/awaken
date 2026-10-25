@@ -1,4 +1,5 @@
-"""Carillon's animals (M4 B3b): pigeons, gulls, cats, dogs and the carters' horses with their carts. Client-only bodies
+"""Carillon's animals (M4 B3b): pigeons, gulls, cats, dogs, the carters' horses with their carts, and the boats on the
+canals and the river (a boat is a body here too: same rig, same renderer). Client-only bodies
 (citizens.client.CityCritters), so the server pays nothing for them.
 
     python3 tools/art/build_all.py city_fauna        textures (textures/entity/city/<id>[_<variant>].png and _blink copies)
@@ -14,7 +15,7 @@ Small animals are drawn finer than the world (designed large and scaled down: pi
 
 Conventions (vanilla ModelPart): model pixels, y down, ground at y = 24, the animal faces -z, rotations in degrees.
 Clip names are the brain's vocabulary (CityCritters): idle, walk, trot, fly, glide, peck, call, sit, loaf, sleep, groom,
-sniff, pant, lie, toss, flare.
+sniff, pant, lie, toss, flare, drift (a boat's walk is the oar stroke).
 """
 import math
 import os
@@ -32,7 +33,8 @@ from fauna_anim import cycle, wave, s, c  # noqa: E402
 JAVA_OUT = os.path.join(ROOT, "src/main/java/dev/awaken/citizens/client/CityFaunaData.java")
 
 # render scale per animal (the body is designed this much larger than it stands in the world)
-SCALE = {"city_pigeon": 0.5, "city_gull": 0.6, "city_cat": 0.6, "city_dog": 0.7, "city_horse": 1.0, "city_cart": 1.0}
+SCALE = {"city_pigeon": 0.5, "city_gull": 0.6, "city_cat": 0.6, "city_dog": 0.7, "city_horse": 1.0, "city_cart": 1.0,
+         "city_boat": 1.0}
 
 
 def build_hook():
@@ -542,6 +544,96 @@ def cart():
     return r
 
 
+def boat():
+    """A clinker-built rowing boat for the canals and the river: tarred strakes stepping out to a painted top strake
+    and rail, a raked stem with a lantern on it (lit at night: its panes are the glow layer), two thwarts, oars on
+    their tholes, the boatman on the forward thwart facing aft (the rower bone, shown only on boats under way), and two
+    loads (crates aft, a heap of nets forward; bones shown one at a time). The waterline is the rig's ground (y 24):
+    the keel sits two pixels under the water. A boat's walk is the oar stroke."""
+    r = Rig("city_boat", (256, 128))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 2.4, 4.0, (0.12, 0.25), 0.0
+    hull = r.bone("hull", (0, 24, 0))
+    hull.cube("keel", -6, -1, -22, 12, 3, 44)
+    hull.cube("strake1_l", 6, -3, -22, 2, 5, 44)
+    hull.cube("strake1_r", -8, -3, -22, 2, 5, 44, mirror=True, share="strake1_l")
+    hull.cube("strake2_l", 7.5, -6, -20, 2, 4, 40)
+    hull.cube("strake2_r", -9.5, -6, -20, 2, 4, 40, mirror=True, share="strake2_l")
+    hull.cube("rail_l", 8.5, -7, -19, 2, 1, 38)
+    hull.cube("rail_r", -10.5, -7, -19, 2, 1, 38, mirror=True, share="rail_l")
+    hull.cube("bow1", -5.5, -5, -27, 11, 7, 5)
+    hull.cube("bow2", -3.5, -6, -31, 7, 7, 4)
+    hull.cube("stem", -1, -11, -34, 2, 11, 3)
+    hull.cube("transom", -8, -6.5, 22, 16, 8, 2)
+    hull.cube("thwart1", -7.5, -4, -10, 15, 1, 3)
+    hull.cube("thwart2", -7.5, -4, 8, 15, 1, 3, share="thwart1")
+
+    def oar(side, nm, mir, sh):
+        o = hull.bone("oar_" + nm, (side * 9.5, -7, -3))
+        if side > 0:
+            o.cube("loom_l", -11, -0.5, -0.5, 47, 1, 1)
+            o.cube("blade_l", 30, -0.5, -2, 9, 1, 4)
+        else:
+            o.cube("loom_r", -36, -0.5, -0.5, 47, 1, 1, mirror=True, share="loom_l")
+            o.cube("blade_r", -39, -0.5, -2, 9, 1, 4, mirror=True, share="blade_l")
+    sym(oar)
+    # the boatman, sitting on the forward thwart facing aft (his bone is turned round)
+    rower = hull.bone("rower", (0, -4, -8.5), (0, 180, 0))
+    rower.cube("rcloak", -4, -10, -2.5, 8, 10, 5)
+    rower.cube("rlap", -3.5, -2, -7.5, 7, 2, 5)
+    rower.cube("rshins", -3.5, 0, -8.5, 7, 3, 2)
+    rh = rower.bone("rhead", (0, -10, -0.5))
+    rh.cube("rhood", -3, -6, -3, 6, 6, 6)
+    rh.cube("rface", -2, -4, -3.2, 4, 3, 1, inflate=-0.1)
+    for nm, sd in (("rarm_l", 1), ("rarm_r", -1)):
+        a = rower.bone(nm, (sd * 3.5, -9, -0.5), (-70, 0, -sd * 10))
+        a.cube("o" + nm, -1.5, 0, -1.5, 3, 8, 3, share=None if sd > 0 else "orarm_l")
+    lamp = hull.bone("lantern", (0, -11, -32.5))
+    lamp.cube("lpole", -0.5, -4, -0.5, 1, 4, 1)
+    lamp.cube("lbox", -1.5, -8, -1.5, 3, 4, 3)
+    lamp.cube("lcap", -1, -9, -1, 2, 1, 2)
+    crates = hull.bone("load_crates", (0, -1, 13))
+    crates.cube("bcrate1", -6.5, -5, 0, 6, 5, 6)
+    crates.cube("bcrate2", 0.5, -4, 1, 5, 4, 5)
+    nets = hull.bone("load_nets", (0, -1, -16))
+    nets.cube("netheap", -5, -3, -3, 10, 3, 7)
+    nets.cube("cork1", -4, -3.8, -2, 2, 1, 2)
+    nets.cube("cork2", 1.5, -3.6, 1, 2, 1, 2, share="cork1")
+    r.look = []
+    r.pack()
+    boat_clips(r)
+    return r
+
+
+def boat_clips(r):
+    shipped = (0, -78, 4)
+    idle = r.clip("idle", 6.0, loop=True)
+    # moored: a slow roll on the swell, a nod at the painter; the oars shipped along the thwarts
+    cycle(idle, "hull", "pos", lambda p: (0, 0.35 * c(p * 2), 0), 8)
+    cycle(idle, "hull", "rot", lambda p: (0.8 * s(p * 2, 0.1), 0, 1.6 * s(p)), 8)
+    idle.rot("oar_l", [(0,) + shipped, (6.0,) + shipped])
+    idle.rot("oar_r", [(0, shipped[0], -shipped[1], -shipped[2]), (6.0, shipped[0], -shipped[1], -shipped[2])])
+    walk = r.clip("walk", 2.4, loop=True)
+    # the stroke: the first half is the recovery (blades just clear of the water, swinging toward the bow), the second
+    # the drive (blades buried, sweeping aft while the boatman leans back)
+    cycle(walk, "oar_l", "rot", lambda p: (0, 32 * c(p), -5 if (p % 1.0) < 0.5 else 7), 8)
+    cycle(walk, "oar_r", "rot", lambda p: (0, -32 * c(p), 5 if (p % 1.0) < 0.5 else -7), 8)
+    cycle(walk, "rower", "rot", lambda p: (-16 * s(p, 0.25), 180, 0), 8)
+    cycle(walk, "rarm_l", "rot", lambda p: (-70 - 18 * s(p, 0.25), 0, -10), 8)
+    cycle(walk, "rarm_r", "rot", lambda p: (-70 - 18 * s(p, 0.25), 0, 10), 8)
+    cycle(walk, "hull", "rot", lambda p: (0.9 * s(p, 0.2), 0, 0), 8)
+    cycle(walk, "hull", "pos", lambda p: (0, 0.2 * c(p * 2), 0), 8)
+    drift = r.clip("drift", 5.0, loop=True)
+    # resting on the oars: blades flat on the water, the boatman looking about
+    drift.rot("oar_l", [(0, 0, 8, -4), (5.0, 0, 8, -4)])
+    drift.rot("oar_r", [(0, 0, -8, 4), (5.0, 0, -8, 4)])
+    drift.rot("rhead", [(0, 0, 0, 0), (1.5, 0, 0, 0), (2.0, 0, 35, 0), (3.2, 0, 35, 0), (3.8, 0, -20, 0), (4.5, 0, 0, 0), (5.0, 0, 0, 0)])
+    cycle(drift, "hull", "pos", lambda p: (0, 0.3 * c(p), 0), 8)
+    cycle(drift, "hull", "rot", lambda p: (0.6 * s(p), 0, 1.2 * s(p, 0.3)), 8)
+    for nm in ("hurt", "death"):
+        cl = r.clip(nm, 0.3)
+        cl.rot("hull", [(0, 0, 0, 0), (0.3, 0, 0, 0)])
+
+
 # =====================================================================================================================
 # Paint
 # =====================================================================================================================
@@ -905,12 +997,76 @@ def paint_cart(r, P, v):
     return P.skin, P.glow
 
 
+BOAT = {
+    "tar": dict(hull=("#0e0b09", "#17120e", "#221a14", "#2e241b", "#3a2e23"), stripe=("#4a1410", "#6e2018", "#8c2c20", "#a83a2a")),
+    "blue": dict(hull=("#0c141c", "#142230", "#1e3246", "#2a445c", "#385672"), stripe=("#8a7a4a", "#ad9a5e", "#cbb874", "#e0d08e")),
+    "green": dict(hull=("#0c1410", "#14221a", "#1e3226", "#2a4434", "#365642"), stripe=("#7a4a12", "#a0621a", "#c27e28", "#d89a40")),
+    "ochre": dict(hull=("#3a240c", "#5a3812", "#7a4e1a", "#9a6626", "#b47e34"), stripe=("#101c2c", "#1a2c44", "#26405e", "#345678")),
+}
+
+
+def paint_boat(r, P, v):
+    d = BOAT[v]
+    hull = Ramp(*d["hull"])
+    stripe = Ramp(*d["stripe"])
+    wood = Ramp("#2a1c12", "#3d2a1a", "#523824", "#6a4930", "#7f5b3c", "#967150")
+    iron = Ramp("#141418", "#24242a", "#36363e", "#4c4c56")
+    # clinker strakes: a dark lap line every few pixels along the side, the grain running stem to stern
+    lap = lambda f, i, j: (-0.9 if f.name in SIDES and j == f.h - 1 else 0) + (0.25 if (i * 5 + j * 3) % 13 == 0 else 0)  # noqa: E731
+    for nm in ("keel", "strake1_l", "bow1", "bow2", "transom"):
+        P.paint(nm, hull, 2.4, lap, noise=0.4)
+    P.paint("strake2_l", stripe, 2.6, lap, noise=0.3)
+    P.paint("rail_l", wood, 3.0)
+    P.paint("stem", wood, 2.4, lambda f, i, j: -0.6 if j % 4 == 3 else 0)
+    # floorboards inside (the keel's top): planks fore and aft
+    f = P.face("keel", "top")
+    for i, j in f.each():
+        f.set(i, j, wood.at(2.6 + (-0.9 if i % 4 == 3 else 0) + (0.3 if (i + j * 7) % 17 == 0 else 0)))
+    P.paint("thwart1", wood, 3.2, lambda f, i, j: -0.5 if j == 1 and f.name == "top" else 0)
+    for nm in ("loom_l", "blade_l"):
+        P.paint(nm, wood, 3.4, lambda f, i, j: 0.3 if i % 9 == 0 else 0)
+    cloak = Ramp("#1c2a22", "#283a30", "#344c3e", "#42604e", "#52745e")
+    for nm in ("rcloak", "rlap", "rshins", "rhood", "orarm_l"):
+        P.paint(nm, cloak, 2.8, p_strokes(cell=3, length=4, dark=0.4, light=0.3, density=0.5, seed=13))
+    skin = Ramp("#5a3a2a", "#7e5440", "#a07058", "#bd8c70")
+    P.paint("rface", skin, 2.4)
+    f = P.face("rface", "north")
+    for i, j in f.each():
+        if j == 0:
+            f.set(i, j, cloak.at(1.2))
+        if j == 1 and i in (0, f.w - 1):
+            f.set(i, j, hexc("#1a120c"))
+    f = P.face("rhood", "north")
+    for i, j in f.each():
+        if 1 <= i <= 4 and 1 <= j <= 4:
+            f.set(i, j, cloak.at(0.6))
+    # the lantern: iron frame, horn panes that glow when it's dark (the glow layer)
+    P.paint("lpole", iron, 2.2)
+    P.paint("lcap", iron, 2.4)
+    P.paint("lbox", iron, 2.0)
+    for fname in SIDES:
+        f = P.face("lbox", fname)
+        for i, j in f.each():
+            if 0 < i < f.w - 1 and 0 < j < f.h - 1 or f.w <= 3 and 0 < j < f.h - 1:
+                f.set(i, j, hexc("#c08a3a"))
+        P.glow_face("lbox", fname, lambda f, i, j: hexc("#ffcf7a") if 0 < j < f.h - 1 else None)
+    crate = Ramp("#4a3220", "#644530", "#7e5a3e", "#97704e", "#b08a62")
+    P.paint("bcrate1", crate, 2.6, lambda f, i, j: -1.0 if i in (0, f.w - 1) or j in (0, f.h - 1) else 0)
+    P.paint("bcrate2", crate, 2.4, lambda f, i, j: -1.0 if i in (0, f.w - 1) or j in (0, f.h - 1) else 0)
+    net = Ramp("#2a2418", "#3e3624", "#565034", "#6e6846", "#8a845c")
+    P.paint("netheap", net, 2.6, lambda f, i, j: -0.9 if (i + j) % 3 == 0 or (i - j) % 3 == 0 else 0.2)
+    P.paint("cork1", Ramp("#6a4a2a", "#8e6a40", "#b08a58", "#ccaa74"), 2.8)
+    return P.skin, P.glow
+
+
 # =====================================================================================================================
 
 VARIANTS = {"city_pigeon": ["slate", "slate", "white", "brown"], "city_gull": ["gull"], "city_cat": list(CAT),
-            "city_dog": list(DOG), "city_horse": list(HORSE), "city_cart": ["cart"]}
+            "city_dog": list(DOG), "city_horse": list(HORSE), "city_cart": ["cart"],
+            "city_boat": list(BOAT)}
 DESIGNS = {"city_pigeon": (pigeon, paint_bird), "city_gull": (gull, paint_bird), "city_cat": (cat, paint_cat),
-           "city_dog": (dog, paint_dog), "city_horse": (horse, paint_horse), "city_cart": (cart, paint_cart)}
+           "city_dog": (dog, paint_dog), "city_horse": (horse, paint_horse), "city_cart": (cart, paint_cart),
+           "city_boat": (boat, paint_boat)}
 
 
 def rigs(only=None):

@@ -1,6 +1,7 @@
 # Carillon M4 step B3b (animals, the soundscape, the city at night): one measuring tour (shots plus the lantern A/B).
 # The same world and settings as B3a's tour (carillon-m4b3a.txt), so the framings pair with b3a_*: the animals at
-# noon (pigeons in the bowl and on the square, gulls on the quay, carts and dogs in the Market), the moved laundry lane
+# noon (pigeons in the bowl and on the square, gulls and boats on the quay and the canal, carts and dogs in the Market),
+# boats' bow lanterns at night, the moved laundry lane
 # at noon, dusk and night, cats on Bellwatch's roofs with their eyes at night, Choir Square's festoons from dusk, the
 # Watch's drawn lanterns, and the lantern A/B: frame times with drawn light (glow) against the old moving light blocks
 # (blocks) on the Watch's round (show watch picks a watchman each time), then the light-block writes each made. The
@@ -99,6 +100,12 @@ shot b3b_night_laundry_lane
 cmd awaken city view roofs_bellwatch
 wait 200
 shot b3b_night_roofs_eyeshine
+cmd awaken city view canal_lights
+wait 240
+shot b3b_night_canal_boats
+cmd awaken city view quay
+wait 200
+shot b3b_night_quay_boats
 cmd awaken city view sky_nw_low
 wait 300
 shot b3b_night_sky

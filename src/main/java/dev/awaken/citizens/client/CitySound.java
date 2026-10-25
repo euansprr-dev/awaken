@@ -88,7 +88,7 @@ public final class CitySound {
             else if (p.kind().equals("stall")) STALLS.add(new double[]{x, y + 1, z});
         }
         // the quays: both banks of the river, a point every 16 blocks, at the water's edge
-        double half = 9 + 1.5;
+        double half = CityLife.RIVER_HALF + 1.5;
         List<float[]> rv = plan.river;
         for (int i = 0; i + 1 < rv.size(); i++) {
             float[] a = rv.get(i), b = rv.get(i + 1);
@@ -115,24 +115,16 @@ public final class CitySound {
         for (double[] a : smithies()) ANVILS.add(new double[]{cx + a[0] + 0.5, sy + 1.5, cz + a[1] + 0.5});
     }
 
-    /** The mill race's points (plan.json "millRace"), read once from the plan file. */
+    /** The mill race's points (plan.json "millRace"), four along each of its segments. */
     private static List<double[]> millRace() {
         List<double[]> out = new ArrayList<>();
-        try (InputStream in = CityPlan.class.getResourceAsStream(CityPlan.RESOURCE)) {
-            if (in == null) return out;
-            JsonObject o = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
-            var arr = o.getAsJsonArray("millRace");
-            for (int i = 0; i + 1 < arr.size(); i++) {
-                var a = arr.get(i).getAsJsonArray();
-                var b = arr.get(i + 1).getAsJsonArray();
-                for (int k = 0; k <= 3; k++) {
-                    double f = k / 3.0;
-                    out.add(new double[]{a.get(0).getAsDouble() + (b.get(0).getAsDouble() - a.get(0).getAsDouble()) * f,
-                            a.get(1).getAsDouble() + (b.get(1).getAsDouble() - a.get(1).getAsDouble()) * f});
-                }
+        List<float[]> race = CityLife.path("millRace");
+        for (int i = 0; i + 1 < race.size(); i++) {
+            float[] a = race.get(i), b = race.get(i + 1);
+            for (int k = 0; k <= 3; k++) {
+                double f = k / 3.0;
+                out.add(new double[]{a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f});
             }
-        } catch (Exception ex) {
-            Awaken.LOG.warn("[citizens] mill race: {}", ex.toString());
         }
         return out;
     }

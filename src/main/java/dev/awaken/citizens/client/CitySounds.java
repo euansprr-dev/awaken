@@ -17,7 +17,8 @@ final class CitySounds {
     }
 
     static final SoundEvent PIGEON_FLUTTER = CitizensContent.PIGEON_FLUTTER.get(), PIGEON_COO = CitizensContent.PIGEON_COO.get(),
-            GULL_CALL = CitizensContent.GULL_CALL.get(), CART_ROLL = CitizensContent.CART_ROLL.get(), HARNESS_BELLS = CitizensContent.CART_BELLS.get();
+            GULL_CALL = CitizensContent.GULL_CALL.get(), CART_ROLL = CitizensContent.CART_ROLL.get(), HARNESS_BELLS = CitizensContent.CART_BELLS.get(),
+            OARLOCK = CitizensContent.BOAT.get();
     static final SoundEvent CAT_MEOW = vanilla("entity.cat.ambient"), CAT_PURR = vanilla("entity.cat.purr"),
             DOG_BARK = vanilla("entity.wolf.ambient"), HOOF = vanilla("entity.horse.step"), HORSE_SNORT = vanilla("entity.horse.breathe");
 }

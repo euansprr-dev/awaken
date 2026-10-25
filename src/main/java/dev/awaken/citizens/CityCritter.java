@@ -12,12 +12,13 @@ import net.minecraft.world.level.storage.ValueOutput;
 import java.util.function.Consumer;
 
 /**
- * One of Carillon's animals (M4 B3b): a pigeon, a gull, a cat, a dog, a carthorse with its cart. Made and moved only on
+ * One of Carillon's animals (M4 B3b): a pigeon, a gull, a cat, a dog, a carthorse with its cart, a boat (moored, or rowed
+ * down the canal and the river by its boatman). Made and moved only on
  * the client ({@code citizens.client.CityCritters}), never on the server, never saved, never pushed or picked: the
  * server pays nothing for the city's animals. This class is plain data plus the hook the client's brain fills.
  */
 public final class CityCritter extends Entity {
-    public static final int PIGEON = 0, GULL = 1, CAT = 2, DOG = 3, HORSE = 4;
+    public static final int PIGEON = 0, GULL = 1, CAT = 2, DOG = 3, HORSE = 4, BOAT = 5;
 
     /** The client's brain (CityCritters.tick): one call a tick. A critter on the server discards itself. */
     public static Consumer<CityCritter> brain = Entity::discard;
@@ -38,6 +39,8 @@ public final class CityCritter extends Entity {
     public float cartYaw, cartYawO, cartY, cartYO;
     /** Where it looks (world), and how much it wants to (0..1); NaN: its own idle glances. */
     public double lookX = Double.NaN, lookY, lookZ;
+    /** A boat's boatman aboard (a moored boat is empty), and its bow lantern lit. */
+    public boolean crew, lamp;
     /** The life layer's state (client), held here so it survives between frames. */
     public Object clientLife;
 

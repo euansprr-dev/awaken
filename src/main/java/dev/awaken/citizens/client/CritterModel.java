@@ -23,7 +23,7 @@ import java.util.Map;
  * One of the city's animals (tools/art/specs/city_fauna.py): a hero rig whose clips the brain picks by name
  * ({@link CityCritters}), crossfaded so nothing pops, the head turned toward what the animal watches, and the life layer
  * (SPEC §23: breath, blinks, springy ears and tails, idle glances) on top. A cart's wheels turn by the distance rolled;
- * its loads are bones shown one at a time.
+ * its loads (and a boat's) are bones shown one at a time; a boat's boatman is shown only while it's under way.
  */
 final class CritterModel extends EntityModel<CritterRenderState> {
     private final HeroRig rig;
@@ -32,7 +32,7 @@ final class CritterModel extends EntityModel<CritterRenderState> {
     private final Map<String, Integer> index = new HashMap<>();
     private final ModelPart[] lookParts;
     private final float[] lookYaw, lookPitch;
-    private final ModelPart wheelL, wheelR;
+    private final ModelPart wheelL, wheelR, rower;
     private final ModelPart[] loads;
     final LifeRig life;
 
@@ -56,7 +56,8 @@ final class CritterModel extends EntityModel<CritterRenderState> {
         }
         wheelL = rig.bone("wheel_l") >= 0 ? lookup.apply("wheel_l") : null;
         wheelR = rig.bone("wheel_r") >= 0 ? lookup.apply("wheel_r") : null;
-        String[] ln = {"load_hay", "load_crates", "load_casks"};
+        rower = rig.bone("rower") >= 0 ? lookup.apply("rower") : null;
+        String[] ln = {"load_hay", "load_crates", "load_casks", "load_nets"};
         loads = new ModelPart[ln.length];
         for (int i = 0; i < ln.length; i++) loads[i] = rig.bone(ln[i]) >= 0 ? lookup.apply(ln[i]) : null;
         life = CreatureLife.rig(root, temperament);
@@ -121,6 +122,7 @@ final class CritterModel extends EntityModel<CritterRenderState> {
         if (wheelL != null) wheelL.xRot += s.wheel;
         if (wheelR != null) wheelR.xRot += s.wheel;
         for (int i = 0; i < loads.length; i++) if (loads[i] != null) loads[i].visible = i == s.load;
+        if (rower != null) rower.visible = s.crew;
         if (s.life != null) CreatureLife.apply(life, s.life, s);
     }
 
