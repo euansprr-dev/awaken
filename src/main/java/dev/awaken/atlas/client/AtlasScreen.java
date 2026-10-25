@@ -47,7 +47,24 @@ public final class AtlasScreen extends Screen {
     private final Matrix4f gui = new Matrix4f();
     private final Vector3f v = new Vector3f();
     private boolean reveal;
-    private final int[] regionBoxes = new int[32 * 4];
+    private static final int BOXES = 96;
+    private final int[] regionBoxes = new int[BOXES * 4];
+
+    /** Keeps a box (x0, y0, x1, y1) that names must stay clear of; returns the new count. */
+    private int box(int n, int x0, int y0, int x1, int y1) {
+        if (n >= BOXES) return n;
+        regionBoxes[n * 4] = x0;
+        regionBoxes[n * 4 + 1] = y0;
+        regionBoxes[n * 4 + 2] = x1;
+        regionBoxes[n * 4 + 3] = y1;
+        return n + 1;
+    }
+
+    private boolean free(int n, int x0, int y0, int x1, int y1) {
+        for (int k = 0; k < n; k++)
+            if (x1 >= regionBoxes[k * 4] && x0 <= regionBoxes[k * 4 + 2] && y1 >= regionBoxes[k * 4 + 1] && y0 <= regionBoxes[k * 4 + 3]) return false;
+        return true;
+    }
     private int wantX = Integer.MIN_VALUE, wantZ;
     private int shareX0, shareX1, clearX0, clearX1, buttonsY;
 
@@ -224,28 +241,43 @@ public final class AtlasScreen extends Screen {
         // the Living Wilds' regions you've been in, lettered across the land once you're zoomed out, as old maps name
         // a country: spaced capitals, quiet, with the region's levels under the name
         if (lod > 0) {
+            // first what stands on the table (you, pins, marks): names keep clear of them
             int placed = 0;
+            if (mc.player != null && project(mc.player.getX(), atlas.store.groundY(mc.player.getX(), mc.player.getZ(), mc.player.getY()), mc.player.getZ(), x0, y0))
+                placed = box(placed, Math.round(v.x) - 12, Math.round(v.y) - 30, Math.round(v.x) + 12, Math.round(v.y) + 12);
+            for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins)
+                if (project(pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, x0, y0))
+                    placed = box(placed, Math.round(v.x) - 7, Math.round(v.y) - 26, Math.round(v.x) + 7, Math.round(v.y) + 4);
+            if (mc.player != null) for (MapMarks.Mark m : MapMarks.collect(mc.player)) {
+                BlockPos p = m.pos();
+                if (!m.label().startsWith("? ") && !Discovery.CLIENT.explored(p.getX() >> 4, p.getZ() >> 4)) continue;
+                if (project(p.getX() + 0.5, atlas.store.groundY(p.getX(), p.getZ(), p.getY()), p.getZ() + 0.5, x0, y0))
+                    placed = box(placed, Math.round(v.x) - 8, Math.round(v.y) - 8, Math.round(v.x) + 8, Math.round(v.y) + 8);
+            }
             for (dev.awaken.atlas.AtlasData.Region r : atlas.regions) {
                 if (!project(r.heartX(), atlas.store.groundY(r.heartX(), r.heartZ(), 64) + 6, r.heartZ(), x0, y0)) continue;
                 String name = spaced(r.name().toUpperCase(Locale.ROOT));
-                int sx = Math.round(v.x), sy = Math.round(v.y), half = Math.round(font.width(name) * 0.75f);
-                // names never sit on one another: a later one that would overlap an earlier one waits for a closer zoom
-                boolean clear = true;
-                for (int k = 0; k < placed && clear; k++)
-                    clear = sx + half < regionBoxes[k * 4] || sx - half > regionBoxes[k * 4 + 2] || sy + 20 < regionBoxes[k * 4 + 1] || sy - 8 > regionBoxes[k * 4 + 3];
-                if (!clear || placed >= 32) continue;
-                regionBoxes[placed * 4] = sx - half;
-                regionBoxes[placed * 4 + 1] = sy - 8;
-                regionBoxes[placed * 4 + 2] = sx + half;
-                regionBoxes[placed * 4 + 3] = sy + 20;
-                placed++;
+                String lv = r.low() == r.high() ? "LV " + r.low() : "LV " + r.low() + "–" + r.high();
+                int half = Math.round(font.width(name) * 0.75f) + 4, sy = Integer.MIN_VALUE;
+                // a name near the panel's edge slides in so it's read whole, never cut by the frame
+                int sx = Math.clamp(Math.round(v.x), x0 + 4 + half, Math.max(x0 + 4 + half, x1 - 4 - half));
+                // the name and its levels as one block (the name 1.5× from -6 to +8, the levels from +14 to +23); moved
+                // up or down to the nearest free place, or left for a closer zoom when there is none
+                for (int dy : new int[]{0, -28, 28, -56, 56}) {
+                    int y = Math.clamp(Math.round(v.y) + dy, y0 + 10, Math.max(y0 + 10, y1 - 27));
+                    if (free(placed, sx - half, y - 8, sx + half, y + 25)) {
+                        sy = y;
+                        break;
+                    }
+                }
+                if (sy == Integer.MIN_VALUE || placed >= BOXES) continue;
+                placed = box(placed, sx - half, sy - 8, sx + half, sy + 25);
                 g.pose().pushMatrix();
                 g.pose().translate(sx, sy);
                 g.pose().scale(1.5f, 1.5f);
                 HudLook.text(g, font, name, -font.width(name) / 2, -4, 0xD8E6EEF8, false);
                 g.pose().popMatrix();
-                String lv = r.low() == r.high() ? "LV " + r.low() : "LV " + r.low() + "–" + r.high();
-                HudLook.text(g, font, lv, sx - font.width(lv) / 2, sy + 10, 0xB08FA7C4, false);
+                HudLook.text(g, font, lv, sx - font.width(lv) / 2, sy + 14, 0xB08FA7C4, false);
             }
         }
         if (mc.player != null) {

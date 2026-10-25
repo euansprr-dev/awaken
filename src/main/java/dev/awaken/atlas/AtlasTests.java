@@ -24,6 +24,8 @@ final class AtlasTests {
             other.mark(3, -5);
             other.mark(64, 64);
             h.assertTrue(e.merge(other) == 1 && e.count() == 3, "merge adds only what was new, was " + e.count());
+            h.assertTrue(e.countIn(0, -16, 16) == 1 && e.countIn(64, 64, 4) == 1 && e.countIn(-48, 96, 16) == 1 && e.countIn(16, 16, 16) == 0,
+                    "a square's count is exact (zoomed out, clouds keep off known land)");
             AtlasData d = new AtlasData();
             d.dim("minecraft:overworld").merge(e);
             d.trail.add(1);
