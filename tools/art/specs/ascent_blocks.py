@@ -122,12 +122,37 @@ def wing_core():
     return base, glow
 
 
+def spire_crown():
+    """A Tether Spire's crown: a ring of light with three points rising from it, in a slate frame (a rope's knot, crowned)."""
+    st, gl = ramp("precursor"), ramp("ventglow")
+    base, glow = Canvas(), Canvas()
+    for y in range(16):
+        for x in range(16):
+            if x in (0, 15) or y in (0, 15):
+                base.set(x, y, st[3])
+                continue
+            dx, dy = x - 7.5, y - 9.0
+            ring = abs(math.hypot(dx, dy) - 3.6) < 0.75
+            # three points above the ring: the middle one tallest
+            spike = (abs(dx) < 0.6 and 1 <= y <= 5) or (abs(abs(dx) - 3.5) < 0.6 and 3 <= y <= 5)
+            heart = math.hypot(dx, dy) < 1.3
+            if ring or spike or heart:
+                k = 5 if heart or (spike and y <= 2) else 4
+                base.set(x, y, gl[k])
+                glow.set(x, y, gl[k])
+            else:
+                base.set(x, y, gl[1] if (x * 3 + y) % 5 == 0 else st[2])
+                glow.set(x, y, gl[0])
+    return base, glow
+
+
 def textures():
     t = {}
     t["ascent_updraft_vent_top"], t["ascent_updraft_vent_top_glow"] = vent_top()
     t["ascent_updraft_vent_side"], t["ascent_updraft_vent_side_glow"] = vent_side()
     t["ascent_anchor_ring"], t["ascent_anchor_ring_glow"] = anchor_ring()
     t["ascent_wing_core"], t["ascent_wing_core_glow"] = wing_core()
+    t["ascent_spire_crown"], t["ascent_spire_crown_glow"] = spire_crown()
     return t
 
 
@@ -184,7 +209,7 @@ def glow_cube(name):
 
 
 def content():
-    for name in ("anchor_ring", "wing_core"):
+    for name in ("anchor_ring", "wing_core", "spire_crown"):
         _write(os.path.join(ASSETS, f"models/block/{name}.json"), glow_cube(name))
         _write(os.path.join(ASSETS, f"blockstates/{name}.json"), {"variants": {"": {"model": f"awaken:block/{name}"}}})
         _write(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": f"awaken:block/{name}"}})

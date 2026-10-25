@@ -2089,6 +2089,41 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   and its chasm, the check with the leap, the same every time; run for real: the edge gives the leap, the far landing
   clears the gate and opens the way out).
 
+### 17.11 The Wilds: Tether Spires
+- **The site** (`RuinKind.SPIRE`, structure `awaken:precursor_tether_spire`, set `precursor_tether_spires`: random spread 24
+  chunks, separation 8): a Precursor pylon in forests, taigas, meadows, cherry groves, windswept forests and hills,
+  stony peaks (`#awaken:has_structure/precursor_tether_spire`; with Awakened Lands also elderwood, lumen forest,
+  shattered highlands, frost spires). Never jungle: its canopy hides the spire and leans into the climb. New chunks
+  only; it is a landmark (`LandmarkKind.TETHER_SPIRE`, the last ordinal), the Scanner's and the Horizon's, and warded
+  (`#awaken:warded`: blocks placed in it crumble).
+- **The blueprint** (`RuinBuilder.spire`, 25 x 66 x 25): a plaza of panel 11 out (wide enough that trees rooted past it
+  can't lean into the platforms) with a ring of light at 7 (the start line), brass lines, the outer cache and 1-3
+  broken machines; a 3x3 column of plating with lit seams every 5 and a wider foot; five 3x3 platforms
+  (`spirePetal(k)`) 5 out from the column, a sixth of a turn round and 10 higher each time (the first 9 over the
+  plaza), each with a lit heart, a beam back to the column at its own level and an anchor ring under its outer edge
+  (a swing, or a hang); and the crown: a 5x5 deck on the column's head at 59 over the plaza, a rim of trim with lights
+  flush in its corners (nothing stands on the rim, so every edge of it can be vaulted onto), the crown block, the cache
+  (`chests/precursor_spire`: essence, alloy, leads, string, pearls, wind charges, feathers; by movement one Power Core
+  Shard always, then a 1000-essence cell or another shard 6 in 12) and, half the time, a terminal (Ascendant logs).
+- **The climb** is the rope's ladder (§17.9): from the near rim of each floor, the next one's underside edge is a zip
+  straight up (a rise of 7.45 from the hand, under 3 across), and arriving under its edge vaults you over the lip. A
+  climber who stands on the far side of a platform first walks to its near rim (or swings from a ring).
+- **The crown** (`awaken:spire_crown`, a block entity, unbreakable, light 14): ten times a second it watches the plaza
+  (within 7 of the column, on the plaza's floor: the climb's start, the last moment you stood there) and its deck
+  (within 2.6). Reaching the deck by movement (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`; else
+  "The crown stays dark. It answers only to a climb.") times the climb (under 2 min, else untimed), shows "Tether Spire
+  climbed · 23.4 s" and a line with your best and the spire's record, gives 10 Tether mastery the first time and 2 each
+  time after, counts `awaken:ascent_spires_climbed`, and keeps a faster time in the spire's records (its best five, one
+  each; saved with the block, schema 1, with who has climbed it). It breathes a ring of light every 4 s.
+- **The Horizon line**: a spire needs the rope (`HorizonHooks.TETHER`, met by the Tether tier); until then it is only
+  ever a tease ("Tether Spire · needs Tether").
+- Dev: `/awaken ascent spire goto` (the nearest spire that generated: you under its first platform); pilot `run spire`
+  (from each floor, the next platform's rim cell nearest you; at the last, the deck); `tools/autopilot/ascent-spire.txt`
+  (seed 20261026: the plaza to the crown in six vaults, about 10 s). Test: `ascent_tether_spire` (every step a straight
+  zip from the near rim onto a vaultable edge; the crown times a climb from the plaza and keeps it, a tower gets
+  nothing, the first climb is 10 mastery).
+- Not yet: a race line's ghost on spires, and spires on cliffs and ravines.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)

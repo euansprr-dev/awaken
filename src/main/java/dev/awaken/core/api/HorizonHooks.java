@@ -21,6 +21,8 @@ public final class HorizonHooks {
 
     /** The need of a site in the sky: some way up (the tease reads "needs Wings"). */
     public static final String WINGS = "wings";
+    /** The need of a climb: the rope (the tease reads "needs the Tether"). */
+    public static final String TETHER = "tether";
     /** A tease shows for {@link #TEASE_FOR} ticks once every {@link #TEASE_EVERY} (15 s in 5 min), staggered per player. */
     public static final int TEASE_EVERY = 6000, TEASE_FOR = 300;
 

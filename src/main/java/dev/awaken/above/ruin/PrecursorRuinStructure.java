@@ -53,6 +53,8 @@ public class PrecursorRuinStructure extends Structure {
         int biomeY = surface;
         switch (kind) {
             case VAULT, SPAWN_VAULT -> y = Structure.getMeanFirstOccupiedHeight(ctx, minX, size.x(), minZ, size.z()) - 1;
+            // the plaza sits in the ground's top layer
+            case SPIRE -> y = Structure.getMeanFirstOccupiedHeight(ctx, minX, size.x(), minZ, size.z()) - 1 - RuinBuilder.SPIRE_PLAZA;
             case SKY -> y = SKY_MIN_Y + random.nextInt(8);
             case OCEAN -> {
                 int floor = ctx.chunkGenerator().getFirstOccupiedHeight(cx, cz, Heightmap.Types.OCEAN_FLOOR_WG, ctx.heightAccessor(), ctx.randomState());
