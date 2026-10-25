@@ -106,8 +106,44 @@ public final class LivingNet {
         }
     }
 
+    /** One Journal line: a chain's title and its current step (or a bounty's), and whether it's the tracked one. */
+    public record JournalEntry(String title, String line, boolean tracked, boolean bounty) {
+        public static final StreamCodec<ByteBuf, JournalEntry> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, JournalEntry::title,
+                ByteBufCodecs.STRING_UTF8, JournalEntry::line,
+                ByteBufCodecs.BOOL, JournalEntry::tracked,
+                ByteBufCodecs.BOOL, JournalEntry::bounty,
+                JournalEntry::new);
+    }
+
+    /** The player's Journal (chains taken, bounties taken), sent whenever it changes and on login (SPEC §21.0.7). */
+    public record Journal(java.util.List<JournalEntry> entries) implements CustomPacketPayload {
+        public static final Type<Journal> TYPE = new Type<>(Awaken.id("living_journal"));
+        public static final StreamCodec<ByteBuf, Journal> STREAM_CODEC =
+                JournalEntry.STREAM_CODEC.apply(ByteBufCodecs.list(16)).map(Journal::new, Journal::entries);
+
+        @Override
+        public Type<Journal> type() {
+            return TYPE;
+        }
+    }
+
+    /** Where this player's open scenes are (SPEC §21.5): each sends up a distress flare now and then. Every 5 s. */
+    public record Tells(java.util.List<net.minecraft.core.BlockPos> at) implements CustomPacketPayload {
+        public static final Type<Tells> TYPE = new Type<>(Awaken.id("living_tells"));
+        public static final StreamCodec<ByteBuf, Tells> STREAM_CODEC =
+                net.minecraft.core.BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(8)).map(Tells::new, Tells::at);
+
+        @Override
+        public Type<Tells> type() {
+            return TYPE;
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
+        r.playToClient(Journal.TYPE, Journal.STREAM_CODEC);
+        r.playToClient(Tells.TYPE, Tells.STREAM_CODEC);
         r.playToClient(RegionMsg.TYPE, RegionMsg.STREAM_CODEC);
         r.playToClient(HitFx.TYPE, HitFx.STREAM_CODEC);
         r.playToClient(XpFx.TYPE, XpFx.STREAM_CODEC);

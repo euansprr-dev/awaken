@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Night Walkers",
+  "band": 0,
+  "objective": {
+    "type": "kill",
+    "target": "minecraft:zombie",
+    "count": 6
+  },
+  "levels": 0.15,
+  "essence": 0,
+  "requires": [],
+  "text": "They keep wandering up to the Commons wall. Nobody invited them."
+}

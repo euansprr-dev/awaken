@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Cull the Gloomstalkers",
+  "band": 0,
+  "objective": {
+    "type": "kill",
+    "target": "awaken:gloomstalker",
+    "count": 4
+  },
+  "levels": 0.2,
+  "essence": 1,
+  "requires": [],
+  "text": "Something's been eating the Commons' chickens. Make it stop."
+}

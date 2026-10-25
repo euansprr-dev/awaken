@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Thin the Thornlings",
+  "band": 0,
+  "objective": {
+    "type": "kill",
+    "target": "awaken:thornling",
+    "count": 4
+  },
+  "levels": 0.2,
+  "essence": 1,
+  "requires": [],
+  "text": "Thornlings knot up in the hedges after dark and have started eyeing the road. Four fewer, please."
+}

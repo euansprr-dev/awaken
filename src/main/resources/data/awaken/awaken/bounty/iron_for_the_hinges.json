@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Iron for the Hinges",
+  "band": 1,
+  "objective": {
+    "type": "collect",
+    "target": "minecraft:iron_ingot",
+    "count": 16
+  },
+  "levels": 0.25,
+  "essence": 3,
+  "requires": [],
+  "text": "The High Gate needs new hinges, and hinges need iron. Sixteen ingots, no questions."
+}

@@ -45,6 +45,8 @@ public final class LivingModule {
 
     public static void init(IEventBus modBus) {
         LivingContent.register(modBus);
+        dev.awaken.living.quest.Relics.register(modBus);
+        dev.awaken.living.wayfarer.Scenes.init();
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
         LivingHooks.install(new LivingHooks.Bridge() {
@@ -69,14 +71,27 @@ public final class LivingModule {
         bus.addListener(LivingDropsEvent.class, LootPillars::onDrops);
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.quest.QuestEngine::onDeath);
         bus.addListener(dev.awaken.living.quest.QuestBook::addReload);
+        bus.addListener(dev.awaken.living.bounty.Bounties::addReload);
+        bus.addListener(LivingDeathEvent.class, dev.awaken.living.bounty.Bounties::onDeath);
+        bus.addListener(EventPriority.HIGH, LivingDropsEvent.class, dev.awaken.living.quest.Relics::onDrops);
+        bus.addListener(PlayerEvent.PlayerRespawnEvent.class, dev.awaken.living.quest.Relics::onRespawn);
+        dev.awaken.signal.Signal.onAction(dev.awaken.living.wayfarer.Wayfarers.ACTION, dev.awaken.living.wayfarer.Wayfarers::answer);
+        dev.awaken.signal.Signal.onAction(dev.awaken.living.bounty.Bounties.ACTION, dev.awaken.living.bounty.Bounties::answer);
+        modBus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent e) ->
+                e.put(LivingContent.WAYFARER.get(), dev.awaken.living.wayfarer.Wayfarer.createAttributes().build()));
         bus.addListener(ServerTickEvent.Post.class, e -> {
             RegionTracker.tick(e.getServer());
             if (e.getServer().getTickCount() % 20 == 0) for (ServerPlayer p : e.getServer().getPlayerList().getPlayers()) dev.awaken.living.quest.QuestEngine.poll(p);
             XpStream.tick(e.getServer());
             shownTick(e.getServer());
+            if (shown(e.getServer())) dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
+            dev.awaken.living.quest.Relics.wardTick(e.getServer());
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
-            if (e.getEntity() instanceof ServerPlayer sp) dev.awaken.core.AwakenNet.send(sp, new LivingNet.Shown(shown(sp.level().getServer())));
+            if (e.getEntity() instanceof ServerPlayer sp) {
+                dev.awaken.core.AwakenNet.send(sp, new LivingNet.Shown(shown(sp.level().getServer())));
+                dev.awaken.living.quest.QuestEngine.journal(sp);
+            }
         });
         bus.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
             var id = e.getEntity().getUUID();

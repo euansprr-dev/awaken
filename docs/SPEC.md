@@ -321,6 +321,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
 - `dev.awaken.living.api.Regions` — the region map (§21.2): `levelAt`, `regionAt`, `creatureLevel`, `bandOf`.
+- `dev.awaken.living.api.Quests` — the Wayfarer chains (§21.5): `advance(ServerPlayer, Identifier "awaken:<type>/<target>")`
+  (owners report uses and discoveries a step may wait for: `awaken:use/ascent_zip`, `awaken:discover/<key>`), `active`, `tracked`.
   `dev.awaken.core.api.LivingHooks` — install-once bridge: whether the living module pays kill XP, the level moment.
 - `dev.awaken.signal.client.HudLook` (client) — how the System's cards draw: `card(g, x, y, w, h, accent, alpha, reveal,
   glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
@@ -2497,8 +2499,10 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   their colour (rare blue, epic violet; Power Cores white-gold) visible 48 blocks until picked up.
 - Client settings `awaken-living-client.toml`: `plates` (on), `damageNumbers` FULL|CRITS|OFF, `xpStream` (on),
   `levelMoment` FULL|COMPACT; `reducedMotion` from the Holo settings applies.
-- Plates draw through the Holo's world-space glass (`HoloWorld`, pack session) once it exists; until then a plain
-  fallback in the same layout.
+- Plates draw on the Holo's own glass through `HoloWorld` (§12; `living.client.LivingPlates`): name, the level on a
+  chip in its rank's colour (grey ten or more below you, ember five or more above, pulsing), a named beast's title, the
+  ten-segment bar with its amber drain, the panels' scan line when the band first reads a creature; readable at any
+  distance. Off with reduced motion and in pure survival; LivingFx's fallback glass only when the holo shaders failed.
 
 ### 21.2 Regions (Phase B)
 - A patchwork of named regions 600-1,400 blocks across: hearts on a jittered grid (pitch 900, jitter ±35%), borders
@@ -2546,12 +2550,64 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   a hit either way in the last 5 s, at most 30 s), LivingFx (one additive mesh pass and one glass pass per frame,
   plates' words as text with a four-copy halo), LivingHud (region caption, level pane through HudLook, XP pops by the
   level line), StrokeFont (digits and "+XP LV" as light). Jade drops its creature level row while plates show.
-- Plates draw through LivingFx's own glass until the Holo's world-space API exists (pack session), then switch.
+- Plates draw through `HoloWorld` since Phase C (§21.1); LivingFx keeps a fallback for failed holo shaders.
 - Sounds `living.scan|crit|xp_tick|level_up|region_enter` (tools/art/specs/audio_living.py, UI loudness); Lens look
   `awaken:living_level` (assets/awaken/lens/looks_living.json); tips `awaken:living/first_plate`, `first_region`
   (assets/awaken/tips/living/, read once Carillon's tip system is installed).
 - Dev: `/awaken living region` (anyone), admin `regions [radius]`, `tag`, `strike [crit|kill]`, `pillar`, `moment`.
   Tour `tools/autopilot/living-b.txt`.
+
+### 21.5 Wayfarers, quests and bounties (Phase C, as built 2026-10-25)
+- **Chains** (`living.quest`): data `data/<ns>/awaken/quest/<chain>.json`, schema 1: `title`, `band` (0..4),
+  `requires` (progression tokens), `scene` (`resident` for a fixed giver, else the scene kind it's found in: `cliff`,
+  `road`, `crag`), `giver`, `ask` (the giver's lines before the choice card), `summary`, `steps[]`, `relic`, `finish`
+  (progression `Reward`). A step: `id`, `objective` {`type` talk|reach|kill|collect|deliver|use|discover, `target`,
+  `count`, `radius`}, `text` (its Journal line), `start`/`done` lines, `reward`, `needs` + `needs_text` (a step waits for
+  it; `tier:<need>` asks the Horizon's reach answers, so the Ascent's tiers and movement powers count), `spawn`
+  {`entity`, `count`, `at` marker} (brought when the step starts), `move` (the scene's Wayfarer goes to that marker when
+  the step is done). Targets: `reach` names a scene marker (`scene`, `site`, `foot`); `deliver` is `<who>|<item or #tag>`;
+  `*` ends a prefix. Lines have no em dashes (the loader skips a chain with one).
+- State: attachment `awaken:quests` (schema 1, kept through death, synced to its owner): ≤ 5 active (chain, step,
+  progress, scene id), one tracked, done, relics given. Every step reward and finish pays once (claim counters
+  `awaken:claim/quest/<chain>/<step|finish>`); counters `awaken:quests_done`. `Quests.advance(player, "awaken:<type>/<target>")`
+  (§12) is how other modules report uses and discoveries.
+- **Scenes** (`living.wayfarer.Scenes`, saved data `awaken:living_scenes`, schema 1). Residents are placed once when a
+  player first comes within 96 blocks: Ilse and Hettie at the Wayfarer camp (Carillon worlds: 450 north of the city's
+  centre, up the High Gate road; classic worlds 300 north of spawn), Hale just outside the High Gate (classic: at the
+  camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
+  city reserve, for the lowest-band chain they can take that isn't a resident's; a spot 64-160 blocks off in loaded
+  chunks only (cliff: a top with a 6+ drop beside it, its foot marked; crag: y 100+; road/camp: flat ground), plus a
+  `site` 40-80 from it (plain ground 56 off if the land offers none). An untaken scene fades after two play-days; a
+  finished chain's scene goes and its Wayfarer leaves once nobody is within 16. The Horizon line names an open scene
+  ("Wren, stranded"; a cliff scene needs the Tether), and it sends up a distress flare (the Hilltop Test): 20 s in every
+  90, rising 48 blocks, then drifting down; drawn by the client from payload `living_tells` (the player's untaken
+  scenes within 400 blocks, every 5 s), its core unfogged and a few pixels wide at any distance.
+- **Wayfarer** entity (`awaken:wayfarer`): a player-shaped person in their own skin
+  (`textures/entity/wayfarer/<who>.png`, tools/art/specs/wayfarers.py), never hurt, never despawns. Use to talk: a step
+  waiting on them moves on (or says what it needs), a delivery changes hands, Hale reads the bounty board, a chain they
+  give is offered on a choice card (Help / Not now), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
+  Pell, Hale, Marta (`Wayfarers.PEOPLE`).
+- **The first drop, six of eight chains**: Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
+  8-20), The Caravan Road (Marta, road, 8-20), The Hermit's Horn (Gus, crag, 8-20), Pell's Message (Pell, road, 8-20).
+  The Last Delivery (with Carillon's Kestrel) and Oren's First Steel (Oren's forge) wait for their hosts' hooks.
+- **Relics** (`living.quest.Relics`): stack of one, rare, kept through death (held back from the drops, returned on
+  respawn), a perk while carried (`Progression.addPerkSource`): Shepherd's Lantern `awaken:night_ward` 8 (living reads
+  it: at night hunters and monsters within 8 give up and back off; gate creatures, wardens and beasts don't), Wren's
+  Hook `awaken:rope_reach` 6, Caravan Writ `awaken:shop_discount` 0.15, Pell's Spurs `awaken:mount_sprint` 0.15 and
+  `awaken:whistle_range` 80 (each read by its owning module when it adopts it). Used: Lumen Tonic (Night Vision 2 min,
+  refills in 5), Herdcaller Horn (once a play-day: whatever targets you within 24 stops and slows; passive and neutral
+  creatures within 32 run 24 blocks the way you face). Pell's Letter is an errand item.
+- **Bounties** (`living.bounty`): data `data/<ns>/awaken/bounty/*.json`, schema 1 (`title`, `band`, `objective` kill or
+  collect, `levels`, `essence`, `requires`, `text`). Attachment `awaken:bounties` (schema 1, kept through death, synced):
+  three notices for the player's band; a taken notice is replaced the next play-day; at most three taken; no expiry.
+  Read and turned in at Hale (choice card Take it / Next notice); a turn-in pays once (claim
+  `awaken:claim/bounty/<id>/<n>`), counter `awaken:bounties_done`.
+- **Journal**: payload `living_journal` (chains taken, tracked first, and bounties taken, each with its current line),
+  sent on every change and on login; drawn as the JOURNAL section of the K menu's Status tab until the holo tab exists.
+  Nothing undiscovered is ever listed (§21.0.7).
+- Tests: `living_quest_engine`, `living_bounty_board`, `living_scene_finder`. Dev (admin): `/awaken living wayfarer <who>`,
+  `talk` (the nearest Wayfarer), `scene <chain>` (its scene now, close by), `view <distance>` (stand back from your
+  newest scene, facing it), `camp`, `quests`. Tour `tools/autopilot/living-c.txt`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Spiders in the Stores",
+  "band": 1,
+  "objective": {
+    "type": "kill",
+    "target": "minecraft:spider",
+    "count": 10
+  },
+  "levels": 0.22,
+  "essence": 2,
+  "requires": [],
+  "text": "Ten spiders in the grain store, and the grain was not theirs. Clear them out."
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Pillagers on the Road",
+  "band": 1,
+  "objective": {
+    "type": "kill",
+    "target": "minecraft:pillager",
+    "count": 8
+  },
+  "levels": 0.3,
+  "essence": 5,
+  "requires": [],
+  "text": "A raiding party is bleeding the caravans dry. Eight should break their nerve."
+}
