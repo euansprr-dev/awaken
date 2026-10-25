@@ -1347,19 +1347,25 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
     kernel 1.25 cells), V gullies (low half pulled 0.6 harder, 0.28 carve), each octave following 0.4 of the coarser
     ones' slope (branching), faded in on slopes 0.04-0.45 and on high ground (y 74-140). The slope it follows is the
     offset's own on a 64-block lattice (central differences, blended), cached per thread. Pure float maths with its own
-    cosine and hash, mirrored in `farsight_erosion.glsl`. Summits ease from y 220 toward 286 instead of flattening.
+    cosine and hash, mirrored in `farsight_erosion.glsl`. A range's body eases from y 190 toward 256 instead of
+    flattening (2026-10-26: from 220 toward 286 it filled the room above and left table tops), so the peaks above it
+    are Tectonic's ridgelines.
   - With Tectonic, the pack lifts Tectonic's offset clamp (`tectonic:__constants/max_offset` 3.0; its own cut every high
     range flat near y 303) and `awaken:ridge_room` holds Tectonic's ridge strength (`jaggedness/continents`) to the room
-    under y 312 (the ridge term reaches about 1.6): no summit reaches the ceiling. World height stays -64..320: raising it
+    under y 316 (the ridge term reaches about 1.6): no summit reaches the ceiling. World height stays -64..320: raising it
     per world needs Tectonic's noise settings copied or a mixin (decision 3, PLAN-2).
-  - `awaken:alpine` material condition (`AlpineSurface`, shared with Far Sight): snow above a snow line at y 196 that
-    wanders ±9 (160-block noise), drops 22 on north faces and lifts 14 on south ones, on slopes under 1.0; scree from
-    1.25, bare rock from 1.7 (vanilla's two-block surface gradient, halved). Prepended to `minecraft:overworld/biome_surface`
-    for `#awaken:alpine` (the peaks, slopes, grove, windswept biomes, Frost Spires, Shattered Highlands).
-  - Mountain forests: spruce (`minecraft:trees_taiga`) 6-7 a chunk on windswept hills and forests, 0-2 on meadows
+  - `awaken:alpine` material condition (`AlpineSurface`, shared with Far Sight): snow above a snow line at y 186 that
+    wanders ±9 (160-block noise), drops 22 on north faces and lifts 14 on south ones, on slopes under 1.25 (51°); scree
+    from 1.45, bare rock from 1.8 (vanilla's two-block surface gradient, halved). Prepended to `minecraft:overworld/biome_surface`
+    for `#awaken:alpine` (the peaks, slopes, grove, windswept biomes, Frost Spires, Shattered Highlands), and above y 150
+    for `#awaken:upland` (grass and forest biomes the terrain lifts into the mountains: meadow, cherry grove, the
+    taigas, forests, plains, Elderwood, Lumen Forest; 2026-10-26, so high grassland wears snow and rock like the peaks
+    beside it, lowlands untouched). Far Sight flags those columns alpine the same way (`FarColumns.UPLAND_FROM`).
+  - Mountain forests: spruce (`minecraft:trees_taiga`) 9-11 a chunk on windswept hills and forests, 1-3 on meadows
     (per-world biome modifiers), kept below the treeline (14 under the snow line) and off slopes over 1.1 by the
     `awaken:treeline` placement filter, `AlpineSurface.treeAllowed`, which Far Sight's far trees use too; the far forests
-    add the matching density (`AlpineSurface.mountainForest`).
+    add the matching density (`AlpineSurface.mountainForest`: windswept hills 190, windswept forest 60, meadow 60) and
+    wear spruce's fixed evergreen tint (`FoliageColor.FOLIAGE_EVERGREEN`), as every far conifer does.
   - The snow edge breaks into drifts and bare patches over about 20 blocks (`AlpineSurface.patches`, value noise on 24-
     and 7-block lattices with farsight.glsl's hash), in the chunks and far alike.
   - `tools/sim/ErosionStudio.java` shows the erosion offline. Tests: `terrain_alpine_erosion` (gullies run downhill,
@@ -1404,11 +1410,16 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes
   the generated layer, else the prediction, and over the window's outer 16 cells eases into the next coarser ring's
   surface (bilinear between its corners), exactly at the edge: no crack, no pop. A corner with no data takes the coarser
-  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are,
-  dithering in over 32 blocks at the render distance's edge, and drawn where they aren't shown yet (a 64×64 chunk mask:
-  a chunk counts once its surface section and the three below are meshed). While Far Sight draws, new chunk sections
-  appear at once instead of fading in from the fog colour, a pale square over far terrain (that frame's options
-  render state only; the player's setting is untouched).
+  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are drawn,
+  dithering in over 32 blocks at the render distance's edge: where they are loaded and meshed (a 64×64 chunk mask: a
+  chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
+  camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
+  horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
+  water surface whose floor is too far to draw. The planner and the windows count as covered only the ground the
+  sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
+  over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
+  paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
+  fluid-renderer mixin and a fade override were built for those, removed nothing, and were dropped.)
 - **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
   is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
   plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to
@@ -1443,10 +1454,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
 - **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
   towers), drawn after the terrain and trees.
 - **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far
-  Sight off 12.88 ms p50, on 15.60 (64.2 fps; 2026-10-26, block columns, measured while ring 0 still filled at load 7.9;
-  Far Sight's own GPU time 2.3 ms): the mesh and air 2.2 ms, bake 0.33, trees 0.13, valley cloud 0.07, erosion detail
-  within noise. Lens Cinematic on the A/B scenes (`farsight-ab.txt`, new Alpine world): vista 11.4-12.6 ms p50, low 12.2,
-  flight 12.8 (77 fps). GPU memory 49 MB (atlases 15 MB, trees 17 MB, depth at screen size). Render thread 0.2-0.5 ms. Horizon
+  Sight off 12.74 ms p50, on 15.53 (64.4 fps; 2026-10-26 on the head with upland snow, mountain spruce and the 3D mask,
+  measured while ring 0 still filled at load 6; Far Sight's own GPU time 2.9 ms): the mesh and air 2.4 ms, trees 0.16,
+  bake 0.07, valley cloud and erosion detail within noise. Lens Cinematic on the A/B scenes (`farsight-ab.txt`, new
+  Alpine world): vista 11.0-12.1 ms p50, low 12.4, flight 12.9 (77 fps). GPU memory 49 MB (atlases 15 MB, trees 17 MB, depth at screen size). Render thread 0.2-0.5 ms. Horizon
   (ring 6) in 0.2-1 s after a jump, all rings in 7-23 s while the server generates the new land.
 - **Turbo** (raw Vulkan compute culling) was not built: the plan keeps it only on a measured win, and what it could cull
   costs about 0.2 ms; the multi-draw indirect path is in place for a compute culler later.

@@ -37,6 +37,6 @@ float farHash(ivec2 p) {
 }
 
 // Awakened Alpine's rule (dev.awaken.terrain.alpine.AlpineSurface): the same numbers
-const float SNOW_LINE = 196.0, SNOW_WANDER = 9.0, NORTH_DROP = 22.0, SOUTH_LIFT = 14.0;
-const float SNOW_SLOPE = 1.0, SCREE_SLOPE = 1.25, ROCK_SLOPE = 1.7;
+const float SNOW_LINE = 186.0, SNOW_WANDER = 9.0, NORTH_DROP = 22.0, SOUTH_LIFT = 14.0;
+const float SNOW_SLOPE = 1.25, SCREE_SLOPE = 1.45, ROCK_SLOPE = 1.8;
 const float ERODE_FROM = 74.0, ERODE_FULL = 140.0;

@@ -21,8 +21,10 @@ import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
  *   <li>The slope the gullies follow is the offset's own at a large scale: central differences on a {@link #LATTICE}
  *       block lattice, blended between its nodes (a local slope makes them swirl). Nodes are cached per thread, so
  *       neighbouring columns and chunks share them: about one offset sample per column, not five.</li>
- *   <li>Summits round off toward {@link #TOP} instead of flattening: the pack lifts Tectonic's own offset clamp (which
- *       cut every high range into a flat plateau near y 303) and the ground eases into this ceiling instead.</li>
+ *   <li>A range's body rounds off toward {@link #TOP} instead of flattening: the pack lifts Tectonic's own offset clamp
+ *       (which cut every high range into a flat plateau near y 303) and the ground eases under this instead. The body
+ *       stays well under the world's ceiling so Tectonic's ridges have room above it ({@link RidgeRoomFunction}): peaks
+ *       are ridgelines, not table tops.</li>
  * </ul>
  * Only the Awakened Alpine data pack uses it (new worlds, feature flag {@code awaken:awakened_alpine}).
  */
@@ -34,7 +36,7 @@ public record ErodedFunction(DensityFunction input) implements DensityFunction {
     /** The slope lattice's spacing in blocks. */
     public static final int LATTICE = 64;
     /** Where summits start to round off, and the height they approach but never reach (y). */
-    public static final float KNEE = 220f, TOP = 286f;
+    public static final float KNEE = 190f, TOP = 256f;
     /**
      * The most erosion can move the ground, in blocks: every octave at the bottom of a gully, carve included
      * ({@code (1 + GULLY + CARVE) · Σ height ≈ 1.88 × 64 = 120}).

@@ -10,8 +10,8 @@ Alpine". Page: https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN.
   µs and 8-block steps), continuous ring meshes with morphing, sub-cell erosion per pixel, alpine materials, far forests
   (instanced voxel trees, multi-draw indirect), ridge shadows, real-scale aerial perspective, valley cloud, Lens
   hand-off, the chunk mask (no holes after a jump), on by default (`farSight` FULL/NEAR/OFF).
-- **Measured** (`farsight2-perf.txt`, Ultra, sunset, 2880×1800, 2026-10-26 on `008cbc57`): 12.88 → 15.60 ms p50 (+2.7,
-  64 fps; ring 0 still filling). Cinematic on the A/B scenes: 11.4-12.8 ms p50, flight 77 fps.
+- **Measured** (`farsight2-perf.txt`, Ultra, sunset, 2880×1800, 2026-10-26 on `4e51dfda`): 12.74 → 15.53 ms p50 (+2.8
+  against the 2.7 budget, ring 0 still filling). Cinematic on the A/B scenes: 11.0-12.9 ms p50, flight 77 fps.
 - **Proof for review (2026-10-26):** `fs2-vs-refs.jpg` (the five reference scenes; the side-by-side with Euan's
   references is kept out of this public repo), `fs2-ab.jpg` (the old A/B scenes, compare `contact-sheet.jpg`).
 - **Since the build:** block-column far ground and Lens-matched light (Euan's playtest), mountain forests and patchy snow
@@ -21,9 +21,12 @@ Alpine". Page: https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN.
   taller worlds (needs Tectonic's noise settings copied or a mixin; summits round off under the ceiling instead).
 - **Open / follow-ups:**
   1. Lens's sunset dark bands: not seen in the 2026-10-26 golden-hour shots (refshots r1), so not chased further.
-  5. Water walls at the loaded edge: vanilla draws water side faces where the neighbouring chunk isn't loaded yet;
-     after a jump or in fast flight they show as pale slabs over the far sea (vanilla RD 32 and DH show them too, over
-     fog). Hiding them needs a mixin on `FluidRenderer` (unloaded neighbour counts as the same fluid): coordinate first.
+  5. Water walls at the loaded edge: thin pale lines outline the loaded square after a jump or in fast flight (water
+     side faces toward chunks not yet received). The big pale squares were holes in the mask, fixed 2026-10-26 (3D
+     mask). Sodium meshes the chunks in the pack, so hiding the lines needs a hook in Sodium's fluid renderer, not
+     vanilla's (a vanilla-side Turbo mixin was built and dropped: it could not reach them).
+  6. Massif scale: the references' peaks fill the frame; ours stand under the world's ceiling (y 320). Taller worlds
+     (Tectonic `max_y`) would be a world-design change across modules: Euan's call.
   2. While a brand-new world generates (teleports, fast flight), the server's chunk generation and the workers load the
      CPU; frames dip until the land fills. Two workers on an M4; a frame-aware throttle is the next step if it bites.
   3. Multiplayer guests: no far view until server tiles (P7, decision 6).
