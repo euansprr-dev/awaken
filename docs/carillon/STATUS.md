@@ -140,3 +140,5 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   M1 + M3 + M2) is not merged into build/awaken-v1 yet; Euan can play it directly with `tools/play.sh carillon/main --pack`
   in a NEW world. Then one word per beat (sky, bell, run, bridge, arrival, Ritual, wake, Registry) decides M4's
   priorities and the run's threat. M4 (Detail) is not started until play 1 is in, per the lean plan.
+- 2026-10-25: carillon/main c3d4f735 (M1 + M3 + M2) is on build/awaken-v1 as d50ab96 (clean, compiles; CI running on
+  the combination). Euan's play 1 runs on build with `tools/play.sh --pack` in a NEW world. M4 waits for play 1.
