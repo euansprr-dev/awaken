@@ -2300,6 +2300,9 @@ server checks every move exactly as before (a free-run move is the same claim a 
 - **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
   the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
 - **Hanging**, sprint and forward held for 6 ticks climb (the ledge jump's own climb out, or up when looking up).
+- **Climb lines** (`#minecraft:climbable`: Carillon's drainpipes, trellises and hoist ropes, every ladder): pressed
+  against one with sprint held, the body goes up hand over hand at 0.3 a tick (a ladder's 0.2), a grip sound every
+  few pulls; at the eave the lip is caught as a hang and the hold climbs out.
 - **Jump magnetism**: as any jump leaves the ground (yours or the free-run's), the first lip within 4.5 ahead (a lower
   roof up to a hang over the jump's top) becomes its target; for 8 ticks the motion turns toward it at most 2.5° a tick,
   14° in all, never faster, and only while it's within 30° of the way you're going.
@@ -2311,8 +2314,9 @@ server checks every move exactly as before (a free-run move is the same claim a 
   in the shoulder view.
 - Carillon's handhold roles (`#awaken:runner_ledges`, `runner_climbs`, `runner_lines`, `runner_soft`,
   `runner_swings`, SPEC §16.9 on carillon/main): ledges and swing points already work by their collision shapes (a
-  sill, a cornice, a beam end is a lip; the rope bites anything solid). Climbs (drainpipes, ivy), lines without
-  collision and soft landings wait for the tags' contents.
+  sill, a cornice, a beam end is a lip; the rope bites anything solid: the hoist beam). Carillon's climbs are also in
+  `#minecraft:climbable`, so the free-run's climb takes them. Lines without collision (runner_lines is empty yet) and
+  soft landings (hay) keep vanilla's behaviour.
 - Not yet: tuning against Euan's notes from his feel session; tips for the free-run (Carillon's TipHooks).
 
 ### 17.15 The feel pass, part 3: weight
