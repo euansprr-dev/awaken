@@ -36,8 +36,9 @@ public final class FarPalette {
 
     /** Tree shapes the far forests draw: round broadleaf crowns, conifers, tall jungle trees, flat acacia tops. */
     public static final int BROADLEAF = 0, CONIFER = 1, JUNGLE = 2, ACACIA = 3;
-    /** Look flags. */
+    /** Look flags. Bits 4-6: the rock its steep faces show (0 stone, 1 hoarfrost, 2 riven shale, 3 fused glass, 4 mirepeat). */
     public static final int BADLANDS = 4, STONY = 8;
+    static final int HOARFROST = 1 << 4, SHALE = 2 << 4, GLASS = 3 << 4, MIREPEAT = 4 << 4;
 
     private static final Map<Holder<Biome>, Look> GROUND = new ConcurrentHashMap<>();
     /** Per biome: its lawn (grass blocks) and leaves colour, packed as lawn << 32 | leaves. */
@@ -105,6 +106,20 @@ public final class FarPalette {
         int grass = grass(b), foliage = foliage(b, grass);
         // the grass and leaf textures are grey tinted by these colours: their average is about this bright
         int lawn = scale(grass, 0.68f), leaves = scale(foliage, 0.56f);
+        // the Awakened biomes cover their ground (cliffs too) in their own blocks: the far ground wears them (the
+        // blocks' textures' average colours) over the archetype's forest
+        String own = holder.unwrapKey().filter(k -> k.identifier().getNamespace().equals("awaken")).map(k -> k.identifier().getPath()).orElse("");
+        Look base = compute(a, grass, lawn, leaves);
+        return switch (own) {
+            case "frost_spires" -> new Look(mix(0xAECCDC, lawn, 0.75f), base.density(), base.canopy(), base.shape(), base.crown(), HOARFROST, a);
+            case "shattered_highlands" -> new Look(mix(0x3B3B47, lawn, 0.55f), base.density(), base.canopy(), base.shape(), base.crown(), SHALE, a);
+            case "glass_steppe" -> new Look(mix(0xC8BDA7, lawn, 0.5f), base.density(), base.canopy(), base.shape(), base.crown(), GLASS, a);
+            case "mirror_marsh" -> new Look(mix(0x3D382F, lawn, 0.5f), base.density(), base.canopy(), base.shape(), base.crown(), MIREPEAT, a);
+            default -> base;
+        };
+    }
+
+    private static Look compute(String a, int grass, int lawn, int leaves) {
         if (a.contains("badlands")) {
             int ground = a.startsWith("eroded") ? TERRACOTTA : RED_SAND;
             return a.startsWith("wooded") ? new Look(ground, 40, 6, BROADLEAF, leaves, BADLANDS, a) : new Look(ground, 0, 0, 0, 0, BADLANDS, a);

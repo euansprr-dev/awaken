@@ -41,6 +41,6 @@ void main() {
         c *= 1.0 + (farHash(ivec2(floor(vFaceUv * 1.0)) + ivec2(floor(rel))) - 0.5) * 0.3 * grain;
     }
     vec3 n = vFace.xyz;
-    c *= farLight(n, max(dot(n, FarSun.xyz), 0.0) * vFace.w) * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
+    c *= farLight(n, vFace.w) * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
     fragColor = vec4(farAir(farMist(c, vRel, vValley), vRel), 1.0);
 }

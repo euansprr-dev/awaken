@@ -67,11 +67,16 @@ vec3 farAir(vec3 c, vec3 rel) {
     return mix(c, FogColor.rgb, fog * FogColor.a);
 }
 
-// light on far things: faces shaded as the game shades block faces, a warm key where the sun reaches, a cool shade
-// where it doesn't (sunlit: 0..1, the ridge shadow already in it)
-vec3 farLight(vec3 n, float sunlit) {
+// light on far things, matched to what Lens 2 does to the real chunks beside them (SPEC §22): faces shaded as the game
+// shades block faces; where the sun reaches, a key warming toward golden hour; where a ridge hides it, Lens's cool shade
+// (its shadeTint, × 0.82: its 0.68 on linear light, in display terms); faces turned from the sun shade only as it lowers
+// (none at noon, when the game's own face shading is all there is). ridgeLit: 1 lit, 0 behind a ridge.
+vec3 farLight(vec3 n, float ridgeLit) {
     const vec3 SHADE_TINT = vec3(0.86, 0.93, 1.14);
     float face = (n.y + abs(n.x) * 0.6 + abs(n.z) * 0.8) / max(n.y + abs(n.x) + abs(n.z), 1e-3);
-    float key = FarSun.w * 0.85;
-    return vec3(face) * mix(vec3(1.0), mix(SHADE_TINT * 0.74, FarSunColor.rgb * 1.16, sunlit), key);
+    float low = FarSunColor.a;
+    float away = (1.0 - smoothstep(-0.05, 0.2, dot(n, FarSun.xyz))) * low;
+    float lit = ridgeLit * (1.0 - away);
+    vec3 key = mix(vec3(1.02), sqrt(max(FarSunColor.rgb, vec3(0.0))), low);
+    return vec3(face) * mix(vec3(1.0), mix(SHADE_TINT * 0.82, key, lit), FarSun.w);
 }

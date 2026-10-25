@@ -31,8 +31,11 @@ layout(location = 7) in float vCold;
 
 layout(location = 0) out vec4 fragColor;
 
-const vec3 STONE = vec3(0.49, 0.48, 0.46), SCREE = vec3(0.55, 0.53, 0.50), SNOW = vec3(0.93, 0.95, 0.98);
-const vec3 DIRT = vec3(0.45, 0.32, 0.22);
+const vec3 SCREE = vec3(0.55, 0.53, 0.50), SNOW = vec3(0.93, 0.95, 0.98);
+// the dirt texture's own average: risers as bright as the real ones beside them
+const vec3 DIRT = vec3(0.53, 0.38, 0.27);
+// what steep faces show, by the biome (colour flags bits 4-6): stone, or an Awakened biome's own block
+const vec3 ROCKS[5] = vec3[](vec3(0.49, 0.48, 0.46), vec3(0.68, 0.80, 0.86), vec3(0.23, 0.23, 0.28), vec3(0.78, 0.74, 0.65), vec3(0.24, 0.22, 0.18));
 
 float bayer4(vec2 p) {
     ivec2 q = ivec2(p) & 3;
@@ -179,9 +182,10 @@ void main() {
         top = mix(shallow, top, smoothstep(1.0, 9.0, depth));
     } else {
         float jag = 0.25 * (grain - 0.5);
+        vec3 STONE = ROCKS[min((flags >> 4) & 7, 4)];
         if (!generated) {
             rock = smoothstep(ROCK_SLOPE - 0.2, ROCK_SLOPE + 0.1, slope + jag);
-            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + jag) * (1.0 - rock);
+            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + jag) * (1.0 - rock) * float(((flags >> 4) & 7) == 0);
             if ((flags & 4) != 0) top = mix(top, band(y), smoothstep(0.5, 1.2, slope) * 0.85);
             else if ((flags & 8) != 0) top = mix(top, STONE, 0.6 + 0.4 * rock);
             else top = mix(mix(top, SCREE, scree * 0.85), STONE, rock * 0.9);
@@ -206,7 +210,7 @@ void main() {
     c *= 0.9 + 0.2 * grain;
 
     // light: the game's face shading, a warm key where the sun reaches past the ridges, a cool shade where it doesn't
-    vec3 light = farLight(face, max(dot(face, FarSun.xyz), 0.0) * vCrown.a);
+    vec3 light = farLight(face, vCrown.a);
     light *= mix(1.0, vInfo.a, 0.8);
     if (water) {
         float facing = abs(normalize(vRel).y);
