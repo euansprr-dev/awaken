@@ -30,6 +30,7 @@ the orchestrator merges. Nothing was force-pushed.
 | 40198394383, 40198528452, 40198834469 | 2860d25c, 77f78ecd, 56248d6a | cancelled by the next push |
 | 40199359967 | 6bb77eeb (boats) | cancelled by the next push |
 | **40199679593** | **ea175081** (boats, docs, the boatman's drift) | **success** |
+| **40202671540** | **09c18b5b** (the CC0 import, criers wired, your yes recorded) | **success** |
 
 Locally, the full suite on ea175081 (JDK 25 in the cloud VM): all 474 required tests passed. The commit after
 ea175081 only fills in this table (docs).
