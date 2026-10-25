@@ -66,6 +66,27 @@ public final class Explored {
         return (t[i >> 6] & (1L << (i & 63))) != 0;
     }
 
+    /**
+     * How many cells are explored in the square of {@code size} cells from (cellX0, cellZ0); {@code size} a power of two
+     * up to 32, the corner aligned to it, so each row is one run of bits in one word (rows are 32 bits, two to a long).
+     */
+    public int countIn(int cellX0, int cellZ0, int size) {
+        long mask = size >= 64 ? -1L : (1L << size) - 1;
+        int n = 0;
+        long[] t = null;
+        int lastTz = Integer.MIN_VALUE;
+        for (int z = cellZ0; z < cellZ0 + size; z++) {
+            if ((z >> TILE_SHIFT) != lastTz) {
+                lastTz = z >> TILE_SHIFT;
+                t = tiles.get(key(cellX0 >> TILE_SHIFT, lastTz));
+            }
+            if (t == null) continue;
+            int bit = ((z & (TILE - 1)) << TILE_SHIFT) | (cellX0 & (TILE - 1));
+            n += Long.bitCount((t[bit >> 6] >>> (bit & 63)) & mask);
+        }
+        return n;
+    }
+
     /** Marks one cell; true when it was new. */
     public boolean mark(int cellX, int cellZ) {
         long[] t = tiles.computeIfAbsent(key(cellX >> TILE_SHIFT, cellZ >> TILE_SHIFT), k -> new long[WORDS]);

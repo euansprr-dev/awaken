@@ -104,16 +104,11 @@ final class AtlasClouds {
         return t * t * (3 - 2 * t);
     }
 
-    /** How much of a cloud cell (16·2^shift blocks) is unexplored: 0..1, from up to 4×4 samples of its cells. */
+    /** How much of a cloud cell (16·2^shift blocks) is unexplored: 0..1. */
     private static float unexploredFraction(Explored e, int cellX, int cellZ, int shift) {
         if (shift == 0) return e.explored(cellX, cellZ) ? 0f : 1f;
-        int span = 1 << shift, stride = Math.max(1, span / 4), n = 0, known = 0;
-        for (int dz = stride / 2; dz < span; dz += stride)
-            for (int dx = stride / 2; dx < span; dx += stride) {
-                n++;
-                if (e.explored((cellX << shift) + dx, (cellZ << shift) + dz)) known++;
-            }
-        return 1f - known / (float) n;
+        int span = 1 << shift; // exact: every cell counted, a word of bits a row (a road a cell wide still shows)
+        return 1f - e.countIn(cellX << shift, cellZ << shift, span) / (float) (span * span);
     }
 
     private void refresh(Explored explored, Long2LongOpenHashMap revealedAt, int ccx, int ccz, int lod) {
@@ -162,27 +157,34 @@ final class AtlasClouds {
                 int own = j * W + i;
                 float ownU = unexplored[own];
                 if (revealNanos[own] != 0L) ownU = Math.max(ownU, 1f - (now - revealNanos[own]) / FADE_NANOS);
-                // an unexplored cell is always fully covered; the blur only spills soft cloud over explored edges. A
-                // coarse cell (zoomed out) that is mostly known stays clear, so the land you know isn't buried
-                if (lod > 0 && ownU < 0.6f) continue;
+                // an unexplored cell is always fully covered; the blur only spills soft cloud over explored edges.
+                // Zoomed out a cloud cell is 64 or 256 blocks, so one with any known land in it carries no cloud, and
+                // one beside known land carries a small one: the land you know stays in view at every zoom
+                boolean beside = false;
+                if (lod > 0) {
+                    if (ownU < 0.999f) continue;
+                    beside = unexplored[own - 1] < 0.999f || unexplored[own + 1] < 0.999f || unexplored[own - W] < 0.999f || unexplored[own + W] < 0.999f;
+                    f = 1f;
+                }
                 if (ownU >= 0.999f) f = Math.max(f, 1f);
                 if (f < 0.12f) continue;
                 int cellX = ccx + i - R - 1, cellZ = ccz + j - R - 1;
                 int hsh = AtlasMesh.hash(cellX * 7 + 3 + lod * 101, cellZ * 13 + 5);
                 float r1 = (hsh & 255) / 255f, r2 = ((hsh >> 8) & 255) / 255f, r3 = ((hsh >> 16) & 255) / 255f, ph = r3 * 6.28f;
-                float wx = (float) ((double) cellX * cell + cell / 2.0 - cx) + (r1 - 0.5f) * 12f * s + (float) Math.sin(time * 0.22f + ph) * 6f * s;
-                float wz = (float) ((double) cellZ * cell + cell / 2.0 - cz) + (r2 - 0.5f) * 12f * s + (float) Math.cos(time * 0.17f + ph * 1.3f) * 3f * s;
+                float sway = beside ? 0.35f : 1f; // a small cloud beside known land keeps to its own cell
+                float wx = (float) ((double) cellX * cell + cell / 2.0 - cx) + ((r1 - 0.5f) * 12f + (float) Math.sin(time * 0.22f + ph) * 6f) * s * sway;
+                float wz = (float) ((double) cellZ * cell + cell / 2.0 - cz) + ((r2 - 0.5f) * 12f + (float) Math.cos(time * 0.17f + ph * 1.3f) * 3f) * s * sway;
                 float dist = (float) Math.sqrt(wx * wx + wz * wz);
                 float edge = 1f - smooth((dist - rim) / rimSoft); // the blanket thins out at the table's rim
                 if (edge <= 0f) continue;
                 float a = smooth((f - 0.12f) / 0.5f) * edge;
                 int variant = (hsh >>> 24) % VARIANTS;
                 boolean flip = (hsh & 0x800000) != 0;
-                float size = (34f + 26f * r1) * (0.6f + 0.4f * a) * s;
+                float size = (34f + 26f * r1) * (0.6f + 0.4f * a) * s * (beside ? 0.5f : 1f);
                 // its shadow, on explored ground only: a little east and south of it
                 float shx = wx + 10f * s, shz = wz + 4f * s;
                 double gx = cx + shx, gz = cz + shz;
-                if (shadowCount < MAX_PUFFS && explored.explored((int) Math.floor(gx) >> 4, (int) Math.floor(gz) >> 4)) {
+                if (lod == 0 && shadowCount < MAX_PUFFS && explored.explored((int) Math.floor(gx) >> 4, (int) Math.floor(gz) >> 4)) {
                     base.transformPosition(shx, (float) (store.groundY(gx, gz, cy) - cy), shz, v);
                     sx[shadowCount] = v.x;
                     sy[shadowCount] = v.y;
