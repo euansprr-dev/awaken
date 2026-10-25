@@ -1,8 +1,8 @@
 # World Sound: the plan (for Euan's yes)
 
-Status: **proposal, no code.** Branch `pack/world-sound-plan`, 2026-10-25. Approval page: `docs/sound/plan.html`.
-Hand-off: `docs/handoff/pack-world-sound-plan.md`. Nothing here changes SPEC until Euan says yes; the SPEC lines
-to add are in §13.
+Status: **approved 2026-10-25** (Euan: "Go ahead with all recommendations": all seven decisions in §12). SPEC
+records them under §13 "Plan v2 · world sound", §12 (`Soundscape`), §14 and §15. Branch `pack/world-sound-plan`.
+Approval page: `docs/sound/plan.html`. Hand-off: `docs/handoff/pack-world-sound-plan.md`.
 
 Euan's brief: *"In every single biome and everything, I want to have like immersive sounds ... maybe we use [existing
 mods] instead of reinventing everything from scratch ... the number one goal here is to make it actually immersive,
