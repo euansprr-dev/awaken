@@ -1,0 +1,143 @@
+# Far Sight 2 baseline (docs/perf/far-sight/PLAN-2.md): today's Far Sight in the places Euan's reference shots show
+# (/Volumes/MEDIA/farsight-ref): alpine peaks, a sunset flight over mountains, a meadow under peaks. Shots for the
+# side-by-side, and frame times of Lens Cinematic and Ultra with Far Sight on and off.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-baseline.txt 1500
+# The Distant Horizons run is the same script with "farsight on" turned off and PACK=perf,world,horizon DH=cinematic.
+world fs2base creative 777
+waitworld
+gui 0
+farsight on
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+info
+cmd gamemode spectator
+lens cinematic
+# A: alpine peaks (jagged peaks), 40 above the biome's heart, noon both ways, then sunset into the sun
+cmd awaken terrain visit minecraft:jagged_peaks
+wait 300
+cmd tp @s ~ ~40 ~ 90 6
+wait 420
+farsight status
+shot fs2_a_peaks_noon_w
+look -90 6
+wait 60
+shot fs2_a_peaks_noon_e
+perf peaks_noon_cinematic 10
+farsight status
+cmd time set 12600
+look 90 4
+wait 60
+shot fs2_a_peaks_sunset_w
+perf peaks_sunset_cinematic 10
+lens ultra
+perf peaks_sunset_ultra 10
+pixels 0.75
+perf peaks_sunset_ultra_s075 10
+pixels 1
+farsight off
+wait 40
+perf peaks_sunset_ultra_farsightoff 10
+shot fs2_a_peaks_sunset_w_off
+farsight on
+wait 200
+lens cinematic
+# B: high over the range at sunset (reference 1), then 15 s of flight at 20 blocks a second
+cmd tp @s ~ 330 ~ 90 14
+wait 300
+farsight status
+shot fs2_b_high_sunset_w
+look 0 14
+wait 40
+shot fs2_b_high_sunset_s
+perfstart flight_high
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+cmd tp @s ~-20 ~ ~
+wait 15
+perfend
+farsight status
+shot fs2_b_flight_end
+cmd time set 6000
+# C: Frost Spires (Awakened Lands), noon both ways
+cmd awaken terrain visit awaken:frost_spires
+wait 300
+cmd tp @s ~ ~30 ~ 90 6
+wait 420
+farsight status
+shot fs2_c_spires_noon_w
+look -90 6
+wait 60
+shot fs2_c_spires_noon_e
+# D: Shattered Highlands, noon
+cmd awaken terrain visit awaken:shattered_highlands
+wait 300
+cmd tp @s ~ ~30 ~ 90 6
+wait 420
+shot fs2_d_highlands_noon_w
+look -90 6
+wait 60
+shot fs2_d_highlands_noon_e
+# E: a meadow under the peaks, at eye height (references 2, 4, 5), and the generated layer's debug tint
+cmd awaken terrain visit minecraft:meadow
+wait 300
+cmd tp @s ~ ~4 ~ 90 0
+wait 420
+shot fs2_e_meadow_w
+look -90 0
+wait 60
+shot fs2_e_meadow_e
+perf meadow_cinematic 10
+farsight debug 1
+wait 20
+shot fs2_e_meadow_e_debug
+farsight debug 0
+farsight status
+info
+quit

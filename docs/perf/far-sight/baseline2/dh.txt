@@ -1,0 +1,46 @@
+[terrain] city site at 1178 828 (street 70, basin carved) chosen in 1252 ms
+[autopilot] farsight off: off
+[autopilot] farsight off
+[autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=Built-in_Retina_Display fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,entityculling,immediatelyfast,awaken,ferritecore,conditional_mixin,distanthorizons,transition,lithostitched,lithium,sodium,moreculling,apollib,trender,cloth_config,neoforge,tectonic
+[autopilot] info
+[terrain] visit minecraft:jagged_peaks at -1489 311 2955 (minecraft:jagged_peaks)
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] perf peaks_noon_cinematic 10
+[autopilot] perf peaks_noon_cinematic frames=745 avg_fps=74.2 p50=12.19ms p95=17.44ms p99=54.91ms max=212.19ms tick_p95=20.80ms heap=1552/4096MB fb=2880x1800 load=15.8 occluded=false minimized=false
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] perf peaks_sunset_cinematic 10
+[autopilot] perf peaks_sunset_cinematic frames=669 avg_fps=66.8 p50=14.46ms p95=17.73ms p99=21.28ms max=180.00ms tick_p95=10.39ms heap=2649/4096MB fb=2880x1800 load=23.6 occluded=false minimized=false
+[autopilot] perf peaks_sunset_ultra 10
+[autopilot] perf peaks_sunset_ultra frames=597 avg_fps=59.6 p50=16.40ms p95=19.05ms p99=26.68ms max=110.83ms tick_p95=5.24ms heap=1581/4096MB fb=2880x1800 load=21.0 occluded=false minimized=false
+[autopilot] perf peaks_sunset_ultra_s075 10
+[autopilot] perf peaks_sunset_ultra_s075 frames=797 avg_fps=79.4 p50=12.44ms p95=14.52ms p99=17.59ms max=76.59ms tick_p95=3.76ms heap=2699/4096MB fb=2880x1800 load=18.6 occluded=false minimized=false
+[autopilot] farsight off: off
+[autopilot] farsight off
+[autopilot] perf peaks_sunset_ultra_farsightoff 10
+[autopilot] perf peaks_sunset_ultra_farsightoff frames=595 avg_fps=59.3 p50=16.58ms p95=18.27ms p99=19.98ms max=141.68ms tick_p95=4.22ms heap=1682/4096MB fb=2880x1800 load=15.9 occluded=false minimized=false
+[autopilot] farsight off: off
+[autopilot] farsight off
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] perfstart flight_high
+[autopilot] perf flight_high frames=1170 avg_fps=53.2 p50=18.44ms p95=22.67ms p99=43.17ms max=128.66ms tick_p95=20.27ms heap=2995/4096MB fb=2880x1800 load=13.5 occluded=false minimized=false
+[autopilot] perfend
+[autopilot] farsight status: off
+[autopilot] farsight status
+[terrain] visit awaken:frost_spires at -1440 203 3134 (awaken:frost_spires)
+[autopilot] farsight status: off
+[autopilot] farsight status
+[terrain] visit awaken:shattered_highlands at -1987 277 4708 (awaken:shattered_highlands)
+[terrain] visit minecraft:meadow at -3056 155 4949 (minecraft:meadow)
+[autopilot] perf meadow_cinematic 10
+[autopilot] perf meadow_cinematic frames=466 avg_fps=46.5 p50=20.99ms p95=23.78ms p99=46.47ms max=137.09ms tick_p95=6.52ms heap=2214/4096MB fb=2880x1800 load=19.9 occluded=false minimized=false
+[autopilot] farsight debug 1: debug view 1
+[autopilot] farsight debug 1
+[autopilot] farsight debug 0: debug view 0
+[autopilot] farsight debug 0
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=Built-in_Retina_Display fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,entityculling,immediatelyfast,awaken,ferritecore,conditional_mixin,distanthorizons,transition,lithostitched,lithium,sodium,moreculling,apollib,trender,cloth_config,neoforge,tectonic
+[autopilot] info

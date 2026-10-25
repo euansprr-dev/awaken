@@ -1,0 +1,73 @@
+[terrain] city site at 1178 828 (street 70, basin carved) chosen in 1175 ms
+[autopilot] farsight on: on, not drawn yet
+[autopilot] farsight on
+[farsight] ready: 7 rings of 256x256 cells, GPU work by fragment pass
+[farsight] 3 worker threads
+[autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=Built-in_Retina_Display fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,entityculling,immediatelyfast,awaken,ferritecore,conditional_mixin,transition,lithostitched,lithium,sodium,moreculling,apollib,trender,cloth_config,neoforge,tectonic
+[autopilot] info
+[farsight] ring 6 (16384 m) ready 15646 ms after the first frame, 23217 ms after joining
+[terrain] visit minecraft:jagged_peaks at -1489 311 2955 (minecraft:jagged_peaks)
+[farsight] ring 6 (16384 m) ready 1615 ms after the first frame, -1 ms after joining
+[farsight] ring 5 (8192 m) ready 14414 ms after the first frame, -1 ms after joining
+[farsight] ring 4 (4096 m) ready 29983 ms after the first frame, -1 ms after joining
+[autopilot] farsight status: drawing gpu_ms=2.570 cpu_ms=0.146 missing=[168,244,256,155,0,0,0] queued=3049 pieces=47 cells=169472 estimate=712.4us/column exact=0.0us/column (226560/0 columns) generated=2056/3037 vram=28MB
+[autopilot] farsight status
+[autopilot] perf peaks_noon_cinematic 10
+[farsight] ring 3 (2048 m) ready 43028 ms after the first frame, -1 ms after joining
+[farsight] horizon (rings 3-6, to 16 km) ready 43028 ms after the first frame, -1 ms after joining
+[autopilot] perf peaks_noon_cinematic frames=781 avg_fps=77.8 p50=12.72ms p95=14.80ms p99=26.76ms max=63.77ms tick_p95=5.25ms heap=2187/4096MB fb=2880x1800 load=10.9 occluded=false minimized=false
+[autopilot] farsight status: drawing gpu_ms=3.834 cpu_ms=0.102 missing=[168,244,112,0,0,0,0] queued=2395 pieces=51 cells=173568 estimate=692.0us/column exact=563.7us/column (266240/36864 columns) generated=2942/3889 vram=28MB
+[autopilot] farsight status
+[autopilot] perf peaks_sunset_cinematic 10
+[farsight] ring 2 (1024 m) ready 56336 ms after the first frame, -1 ms after joining
+[autopilot] perf peaks_sunset_cinematic frames=784 avg_fps=78.1 p50=12.69ms p95=14.54ms p99=20.21ms max=40.15ms tick_p95=3.56ms heap=2689/4096MB fb=2880x1800 load=9.8 occluded=false minimized=false
+[autopilot] perf peaks_sunset_ultra 10
+[farsight] ring 1 (512 m) ready 73862 ms after the first frame, -1 ms after joining
+[autopilot] perf peaks_sunset_ultra frames=677 avg_fps=67.5 p50=14.79ms p95=16.35ms p99=20.29ms max=36.91ms tick_p95=3.39ms heap=1209/4096MB fb=2880x1800 load=9.9 occluded=false minimized=false
+[autopilot] perf peaks_sunset_ultra_s075 10
+[farsight] ring 0 (256 m) ready 85944 ms after the first frame, -1 ms after joining
+[farsight] all rings ready 85944 ms after the first frame; drawing gpu_ms=3.757 cpu_ms=0.104 missing=[0,0,0,0,0,0,0] queued=0 pieces=47 cells=169472 estimate=692.0us/column exact=750.9us/column (266240/171008 columns) generated=4568/5254 vram=19MB
+[autopilot] perf peaks_sunset_ultra_s075 frames=683 avg_fps=67.4 p50=12.29ms p95=14.80ms p99=99.91ms max=606.31ms tick_p95=4.02ms heap=1804/4096MB fb=2880x1800 load=9.8 occluded=true minimized=true
+[autopilot] farsight off: off gpu_ms=4.228 cpu_ms=0.337 missing=[0,0,0,0,0,0,0] queued=0 pieces=47 cells=169472 estimate=692.0us/column exact=750.9us/column (266240/171008 columns) generated=4602/5299 vram=28MB
+[autopilot] farsight off
+[autopilot] perf peaks_sunset_ultra_farsightoff 10
+[autopilot] perf peaks_sunset_ultra_farsightoff frames=856 avg_fps=86.0 p50=11.74ms p95=13.87ms p99=14.66ms max=118.60ms tick_p95=2.74ms heap=2212/4096MB fb=2880x1800 load=8.4 occluded=false minimized=false
+[autopilot] farsight on: on gpu_ms=-1.000 cpu_ms=-1.000 missing=[0,0,0,0,0,0,0] queued=0 pieces=47 cells=169472 estimate=692.0us/column exact=750.9us/column (266240/171008 columns) generated=4602/5299 vram=28MB
+[autopilot] farsight on
+[farsight] ring 6 (16384 m) ready 10525 ms after the first frame, -1 ms after joining
+[farsight] ring 5 (8192 m) ready 21078 ms after the first frame, -1 ms after joining
+[autopilot] farsight status: drawing gpu_ms=3.501 cpu_ms=0.092 missing=[168,244,256,256,120,0,0] queued=1489 pieces=51 cells=179712 estimate=615.8us/column exact=750.9us/column (432384/171008 columns) generated=4834/5983 vram=28MB
+[autopilot] farsight status
+[autopilot] perfstart flight_high
+[farsight] ring 4 (4096 m) ready 32576 ms after the first frame, -1 ms after joining
+[autopilot] perf flight_high frames=1597 avg_fps=72.6 p50=13.45ms p95=17.14ms p99=25.91ms max=80.87ms tick_p95=16.79ms heap=1203/4096MB fb=2880x1800 load=8.4 occluded=false minimized=false
+[autopilot] perfend
+[autopilot] farsight status: drawing gpu_ms=4.149 cpu_ms=0.119 missing=[168,244,256,7,0,0,0] queued=1707 pieces=48 cells=170496 estimate=644.5us/column exact=750.9us/column (530688/171008 columns) generated=6489/7897 vram=28MB
+[autopilot] farsight status
+[farsight] ring 3 (2048 m) ready 53434 ms after the first frame, -1 ms after joining
+[farsight] horizon (rings 3-6, to 16 km) ready 53434 ms after the first frame, -1 ms after joining
+[terrain] visit awaken:frost_spires at -1440 203 3134 (awaken:frost_spires)
+[farsight] ring 2 (1024 m) ready 80910 ms after the first frame, -1 ms after joining
+[autopilot] farsight status: drawing gpu_ms=4.572 cpu_ms=0.212 missing=[168,142,0,0,0,0,0] queued=1616 pieces=50 cells=173056 estimate=646.6us/column exact=848.8us/column (536576/278272 columns) generated=9716/11228 vram=28MB
+[autopilot] farsight status
+[terrain] visit awaken:shattered_highlands at -1987 277 4708 (awaken:shattered_highlands)
+[farsight] ring 6 (16384 m) ready 1594 ms after the first frame, -1 ms after joining
+[farsight] ring 5 (8192 m) ready 3989 ms after the first frame, -1 ms after joining
+[farsight] ring 4 (4096 m) ready 6932 ms after the first frame, -1 ms after joining
+[farsight] ring 3 (2048 m) ready 12657 ms after the first frame, -1 ms after joining
+[farsight] horizon (rings 3-6, to 16 km) ready 12657 ms after the first frame, -1 ms after joining
+[farsight] ring 2 (1024 m) ready 26853 ms after the first frame, -1 ms after joining
+[terrain] visit minecraft:meadow at -3056 155 4949 (minecraft:meadow)
+[farsight] ring 1 (512 m) ready 80109 ms after the first frame, -1 ms after joining
+[autopilot] perf meadow_cinematic 10
+[autopilot] perf meadow_cinematic frames=683 avg_fps=68.1 p50=14.61ms p95=15.93ms p99=16.95ms max=37.86ms tick_p95=3.01ms heap=2603/4096MB fb=2880x1800 load=9.1 occluded=false minimized=false
+[autopilot] farsight debug 1: debug view 1
+[autopilot] farsight debug 1
+[farsight] ring 0 (256 m) ready 91526 ms after the first frame, -1 ms after joining
+[farsight] all rings ready 91526 ms after the first frame; drawing gpu_ms=4.401 cpu_ms=0.152 missing=[0,0,0,0,0,0,0] queued=0 pieces=54 cells=171008 estimate=655.3us/column exact=867.5us/column (625920/534784 columns) generated=21531/23240 vram=28MB
+[autopilot] farsight debug 0: debug view 0
+[autopilot] farsight debug 0
+[autopilot] farsight status: drawing gpu_ms=4.074 cpu_ms=0.104 missing=[0,0,0,0,0,0,0] queued=0 pieces=54 cells=171008 estimate=655.3us/column exact=867.5us/column (625920/534784 columns) generated=21591/23300 vram=28MB
+[autopilot] farsight status
+[autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 display=Built-in_Retina_Display fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,entityculling,immediatelyfast,awaken,ferritecore,conditional_mixin,transition,lithostitched,lithium,sodium,moreculling,apollib,trender,cloth_config,neoforge,tectonic
+[autopilot] info

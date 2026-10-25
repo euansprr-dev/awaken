@@ -1250,6 +1250,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
 
 ## 20. Far Sight (Awaken's own far terrain; plan https://claude.ai/artifact/LvAoTbYB82o6ggcHS73rX1, approved 2026-10-24)
 
+- **Far Sight 2** (2026-10-25): plan `docs/perf/far-sight/PLAN-2.md`, page https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN,
+  awaiting Euan's approval. Nothing below changes until it is approved and built.
+
 - Module `dev.awaken.farsight` (common: `Rings`, `FarColumns`, `FarPalette`, `FarWorkers`; client: `farsight.client`).
   Stage 0 is a proof: off unless turned on (autopilot `farsight on|off|status`, or `-Dawaken.farsight=true`), never
   while Distant Horizons is installed, singleplayer only (it predicts from the integrated server's generator; a remote

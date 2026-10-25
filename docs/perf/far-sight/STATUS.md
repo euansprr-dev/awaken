@@ -1,5 +1,22 @@
 # Far Sight: status
 
+**FAR SIGHT 2: PLAN AWAITING EUAN'S APPROVAL (2026-10-25 ~21:50).** Resumed by the orchestrator as Far Sight 2 (session
+far-sight-2, worktree far-sight-2-0c9ddb). Plan: `PLAN-2.md`; approval page
+https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN. No production code until he says yes.
+- Merged build/awaken-v1 at 8906e3e7 (4e123b57): conflicts in Awaken.java, Autopilot.java, LensClient.java, kept both
+  sides; compileJava passes.
+- Baseline tour `tools/autopilot/farsight2-baseline.txt` (Far Sight run and the same script with DH Cinematic; lines in
+  `baseline2/farsight.txt` and `baseline2/dh.txt`, shots on the page). Findings: far heights are 8-block steps
+  (rings 3-6 read `chunk_surface_level`); Far Sight costs ~3 ms on Ultra at sunset (14.79 vs 11.74 p50); the predictor
+  runs 615-870 µs a column on the Awakened terrain (17-29 at stage 0) so near rings stay missing and sunset shots show
+  sky through the ground; the land around peaks is lowland and sea, not ranges. DH costs more in every scene but one
+  and drew nothing past the chunks within a minute or two of arriving.
+- Next on a yes: P0 (refshots tour, sheet tool, holes and slot fixes, profile the 700 µs), then P1-P6 in PLAN-2 §9.
+- The stage 1 "Open" list below is folded into P0 (the audit found suspect (a) the only real gap, plus a thrown
+  generated job never re-queued and same-key slots never re-asked when they become visible).
+
+---
+
 **PAUSED 2026-10-25 ~00:20** at Euan's request ("Pause far sight … make sure no work from far sight is lost").
 Branch `pack/far-sight`, pushed to origin. Spec: docs/SPEC.md **§20** (renumbered from §16 at the pack session's
 request). Plan: https://claude.ai/artifact/LvAoTbYB82o6ggcHS73rX1.
