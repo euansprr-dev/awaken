@@ -71,7 +71,7 @@ void main() {
     // the sun's (or moon's) light on them and the sky's: the game's cloud colour is the sky's light by hour and weather
     vec4 p1 = P(1), cc = F(19);
     vec3 sunCol = f16.y > 0.5 ? vec3(0.55, 0.65, 0.9) * 0.6 : mix(vec3(1.0, 0.96, 0.9), P(9).rgb * 1.15, p1.a * 0.9);
-    sunCol *= f14.w * 1.25;
+    sunCol *= f14.w * 1.05;
     // the sky's light on them: a cool blue from above, a little of the horizon's colour, by the game's cloud colour
     // (overcast keeps it: a grey sky is bright grey, not night)
     vec3 ambient = max(cc.rgb, vec3(0.5)) * mix(vec3(0.62, 0.72, 0.92), P(10).rgb, 0.35) * (0.95 + 0.9 * smoothstep(0.6, 0.95, cp.y));
@@ -81,22 +81,22 @@ void main() {
     for (int i = 0; i < steps; i++) {
         float t = t0 + (float(i) + jitter) * dt;
         vec3 w = v * t;
-        float d = cloudDensity(w, cp, camY, false);
+        float d = cloudDensity(w, cp, camY, ultra ? 2 : 1);
         if (d <= 0.004) continue;
         // light reaching this point through the cloud above it, toward the sun
         float od = 0.0, s = 6.0, lt = 0.0;
         for (int k = 0; k < lightSteps; k++) {
             lt += s;
-            od += cloudDensity(w + l * lt, cp, camY, true) * s;
+            od += cloudDensity(w + l * lt, cp, camY, 0) * s;
             s *= 2.0;
         }
         float h = clamp((w.y + camY - base) / CLOUD_THICK, 0.0, 1.0);
         // two octaves of Beer's law: the second, weaker and longer, stands in for light scattered many times inside the
         // cloud, so its interior and base stay soft grey-white instead of storm-dark
-        float beer = max(exp(-od * sigma * 1.4), 0.55 * exp(-od * sigma * 0.3));
+        float beer = max(exp(-od * sigma * 1.4), 0.35 * exp(-od * sigma * 0.3));
         // powder: the thin edges facing the sun glow, dense cores darken (a cheap stand-in for multiple scattering)
         float powder = 1.0 - exp(-d * 6.0);
-        vec3 S = sunCol * beer * phase * mix(1.0, powder, 0.5) + ambient * (0.7 + 0.3 * h);
+        vec3 S = sunCol * beer * phase * mix(1.0, powder, 0.5) + ambient * (0.6 + 0.4 * h);
         float a = 1.0 - exp(-d * sigma * dt);
         L += T * S * a;
         T *= 1.0 - a;

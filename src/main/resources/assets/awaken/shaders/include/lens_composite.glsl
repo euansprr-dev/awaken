@@ -384,7 +384,7 @@ void main() {
         if (f14.w > 0.0 && v19.a > 0.0 && (sky || haze > 0.0)) {
             vec3 dir = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
             float mu = max(dot(dir, f14.xyz), 0.0);
-            vec3 sc = lightColour(p1, sunset) * (pow(mu, 5.0) * 0.3 + pow(mu, 40.0) * 0.4) * f14.w * v19.a * (0.45 + 0.55 * p1.a);
+            vec3 sc = lightColour(p1, sunset) * (pow(mu, 8.0) * 0.25 + pow(mu, 48.0) * 0.35) * f14.w * v19.a * (0.45 + 0.55 * p1.a);
             c = screen(c, sc * (sky ? 1.0 : haze));
         }
     }
