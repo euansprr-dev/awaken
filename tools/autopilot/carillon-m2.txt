@@ -22,29 +22,30 @@ shot m2_bell_b
 wait 50
 shot m2_light_roost
 cmd awaken opening status
-# ---- the run: the rooftop golden runs, act by act
+# ---- the run: the rooftop golden runs, act by act (each plays 20 ticks after its start, then its recorded length:
+# act1_roof 536, act2_roof 449, act3_roof 277). Act 1 ends on the Quay: the Bell Bridge falls as Act 2 starts.
 cmd awaken ascent pilot route play ../tools/opening/golden/act1_roof
 wait 150
 shot m2_act1_a
-wait 160
+wait 200
 shot m2_act1_b
-wait 420
+wait 236
 cmd awaken opening status
 cmd awaken ascent pilot route play ../tools/opening/golden/act2_roof
-wait 170
-shot m2_act2_a
-wait 60
+wait 40
 shot m2_act2_bridge
-wait 200
+wait 130
+shot m2_act2_a
+wait 220
 shot m2_act2_crane
-wait 300
+wait 110
 cmd awaken ascent pilot route play ../tools/opening/golden/act3_roof
 wait 130
 shot m2_act3_rush
 wait 120
 shot m2_act3_square
-# ---- the arrival (alone: the cinematic plays at once)
-wait 40
+# ---- the arrival (alone: the cinematic starts as you land in the square)
+wait 80
 shot m2_arrival_a
 wait 50
 shot m2_arrival_b
@@ -93,18 +94,18 @@ wait 120
 shot m2_registry_yours
 wait 100
 cmd awaken opening status
-# ---- the street and canal routes' golden runs, played back
+# ---- the street and canal routes' golden runs, played back (lengths 821, 305, 262, 822, 390, 141)
 cmd effect give @s minecraft:resistance infinite 10 true
 cmd awaken ascent pilot route play ../tools/opening/golden/act1_street
 wait 880
 cmd awaken ascent pilot route play ../tools/opening/golden/act2_street
 wait 360
 cmd awaken ascent pilot route play ../tools/opening/golden/act3_street
-wait 330
+wait 320
 cmd awaken ascent pilot route play ../tools/opening/golden/act1_canal
-wait 700
+wait 880
 cmd awaken ascent pilot route play ../tools/opening/golden/act2_canal
-wait 540
+wait 450
 cmd awaken ascent pilot route play ../tools/opening/golden/act3_canal
-wait 220
+wait 200
 quit
