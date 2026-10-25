@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "package": "dev.awaken.turbo.wateredge.mixin",
+  "client": [
+    "SodiumFluidRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  },
+  "minVersion": "0.8"
+}

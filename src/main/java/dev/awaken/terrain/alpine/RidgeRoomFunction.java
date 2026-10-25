@@ -24,6 +24,8 @@ public record RidgeRoomFunction(DensityFunction input, DensityFunction offset) i
 
     /** The highest a ridge may reach (y), and the ridge term's largest value. */
     public static final float CEILING = 316f, RIDGE = 1.6f;
+    /** How much stronger ridges stand on high ground, and the heights (y) over which that comes in. */
+    public static final float EMPHASIS = 1.6f, EMPHASIS_FROM = 150f, EMPHASIS_FULL = 220f;
 
     @Override
     public DensitySampler compileSampler(CompileContext context) {
@@ -50,11 +52,16 @@ public record RidgeRoomFunction(DensityFunction input, DensityFunction offset) i
         };
     }
 
-    /** A ridge strength held to the room its column has under the ceiling. */
+    /**
+     * A ridge strength held to the room its column has under the ceiling, and lifted on high ground (up to
+     * {@link #EMPHASIS} times from y {@link #EMPHASIS_FROM} to {@link #EMPHASIS_FULL}) so a range's crest stands as
+     * ridgelines and horns into that room rather than a rounded crown.
+     */
     public static float room(float jaggedness, float offset) {
         float ground = 128f * (1f + offset);
         float most = Math.max(0f, CEILING - ground) / (128f * RIDGE);
-        return Math.min(jaggedness, most);
+        float lift = 1f + (EMPHASIS - 1f) * Erosion.smooth(EMPHASIS_FROM, EMPHASIS_FULL, ground);
+        return Math.min(jaggedness * lift, most);
     }
 
     @Override
