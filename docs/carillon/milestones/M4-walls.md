@@ -100,11 +100,28 @@ No block entities, no loot.
 ## Numbers
 - Painting: the studio dump paints all 1,388 chunks in 1.1-1.3 s (1.34 s before). The painted city is 3.87 M blocks,
   +32,000 (+0.8%): the wall's relief mostly replaces solid stone.
-- Light: braziers 49, lanterns 405 (245 before). Wall chunks average 2.0 light sources, at most 5 after the second pass.
+- Light: braziers ~45, lanterns ~390 (245 before). Every chunk at most 5 light sources; the wall's average 1.8.
 - The kit: 2,828 arrow loops, 2,840 ivy, 344 portcullis cells, 86 spouts, 14 shields.
 
 ## Shots
-Before (B3a) | after pairs and a contact sheet in `docs/carillon/milestones/m4walls/`.
+Three light tours of `tools/autopilot/carillon-m4walls.txt` (B3a's world, seed and cameras; the last two on Vulkan). In
+`docs/carillon/milestones/m4walls/`:
+- before (B3a) | after pairs: `pair_sky_nw`, `pair_sky_n`, `pair_sky_w`, `pair_sky_top`, `pair_sky_nw_low`,
+  `pair_gate_yard`, `pair_wallring`, `pair_facade_wallring`, `pair_roost_start`;
+- the new framings: `walls_high_gate` (and `_dusk`), `walls_out_w`, `walls_out_s`, `walls_inner`, `walls_inner_high`,
+  `walls_wall_walk`, `walls_walk_roofed_night`, `walls_scaffold`, `walls_passage`, `walls_tower`, `walls_watergate`;
+- `sheet_walls.jpg`, every shot of the last tour; `kit_sheet.png` and `kit_mock.png`, the wall kit.
+
+## Where it still falls short
+- Ivy on the outer north faces is framed by the buttresses and cut by the courses, so a big patch still reads
+  rectangular from the fields; the inner panels' ivy reads better.
+- Close under the inner face of a slanted side, the panels' heads, the corbel table and the band step with the raster and
+  read heavy.
+- The Watch's round wasn't seen in a shot (the tours fly as spectators at fixed hours); `citizens_day` walks it.
+
+## CI
+GameTests on every push of `carillon/m4-walls`: 40217807842 (first pass) green, 40221579843 (the Watch's round, second
+pass) green, 40223015764 (light budget, merged carillon/main) see the hand-back.
 
 ## Decisions (SPEC §16.2, "Decided in M4 Walls")
 The cross-section and its rows, the rhythm in face cells, the roofed sides, the climb lines, the towers by district, gate
