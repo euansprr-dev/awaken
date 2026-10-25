@@ -18,7 +18,7 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
 | M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | **done, merged**; report docs/carillon/milestones/M2-opening.md; **Euan's play 1 next** |
 | M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
-| M4 detail | Phase B, one builder per step (Opus xhigh) | B1: carillon/m4-b1 · /Volumes/MEDIA/Awaken-m4-b1 | **Phase A approved** (decisions 21–26); **B1 running** (brief: briefs/M4-B1-facades.md); then B2…B7 |
+| M4 detail | Phase B, one builder per step (Opus xhigh) | B2: carillon/m4-b2 · /Volumes/MEDIA/Awaken-m4-b2 | B1 **done, merged**; **B2 running** (brief: briefs/M4-B2-relief.md); then B3…B7 |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
 ## Stage 0 (spikes): closed at G0
@@ -175,3 +175,8 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 - 2026-10-25: Euan added the city soundscape (SPEC §16.0 decision 28) to B3's builder: vanilla layered first, CC0 only for
   what vanilla lacks and only after his yes per file, synthesis for bells and the Choir; a listening page is the gate
   before B3 merges.
+- 2026-10-25: M4 B1 reviewed and merged. Checked: tree clean, CI green (9ef9262c), all Java changes inside city; before/
+  after pairs from M1's cameras (sky, Market street, square, Quay): the Market street goes from blank walls to courses,
+  canopies, window boxes and lanterns; the roofscape breaks up (slate, ridges, colour). Short of the bar: one floor's
+  rhythm repeated up a house, plain ground storeys (B3), dark 4-wide Bellwatch lanes, chunky drainpipes; four post-tour
+  fixes unseen in game. Tags filled (runner_lines/soft partly → B3). B2 (relief and heights) started.
