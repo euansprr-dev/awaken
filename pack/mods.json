@@ -103,6 +103,13 @@
       "why": "Camera roll and sway that give movement weight."
     },
     {
+      "slug": "shoulder-surfing-reloaded",
+      "profiles": [
+        "feel"
+      ],
+      "why": "Over-the-shoulder third person (F5 cycles to it): shows the body's full-body move clips. Client only."
+    },
+    {
       "slug": "not-enough-animations",
       "profiles": [
         "feel"

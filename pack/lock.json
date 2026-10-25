@@ -3,7 +3,7 @@
  "minecraft": "26.3",
  "loader": "neoforge",
  "neoforge": "26.3.0.95",
- "generated": "2026-10-24 12:21",
+ "generated": "2026-10-25 10:00",
  "files": [
   {
    "slug": "3dskinlayers",
@@ -497,6 +497,27 @@
     "controlling"
    ],
    "why": "dependency"
+  },
+  {
+   "slug": "shoulder-surfing-reloaded",
+   "title": "Shoulder Surfing Reloaded",
+   "projectId": "kepjj2sy",
+   "versionId": "NLtlz49E",
+   "version": "26.3-5.2.0+neoforge",
+   "channel": "release",
+   "published": "2026-09-29",
+   "file": "ShoulderSurfing-NeoForge-26.3-5.2.0.jar",
+   "url": "https://cdn.modrinth.com/data/kepjj2sy/versions/NLtlz49E/ShoulderSurfing-NeoForge-26.3-5.2.0.jar",
+   "size": 372972,
+   "sha1": "e0d861ddde408bb5903b256b10616cc94cfce151",
+   "sha512": "9436584234cc485144de36078f67c10abb3959ab17227a593fd7a465f137b47baef524904d3296a31c5e1794cae54fb82fd2312925c9dd106fa3bb802a6d37ed",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Over-the-shoulder third person (F5 cycles to it): shows the body's full-body move clips. Client only."
   },
   {
    "slug": "simple-voice-chat",
