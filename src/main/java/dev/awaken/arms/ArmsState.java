@@ -15,6 +15,18 @@ final class ArmsState {
     long moveStart, moveEnd;
     /** The running strike was drawn from the sheath (the Katana's draw cut). */
     boolean drawn;
+    // a Weave's beat (ArmsWeaves): the opening earned (0 none), when, and on whom (a Break's body)
+    int opening, openingTarget = -1;
+    long openingAt;
+    /** Where the last dodge started (the echo of a perfect dodge strikes there). */
+    double dodgeFromX, dodgeFromY, dodgeFromZ;
+    // the echo waiting to strike, and the edge on the next blows
+    long echoAt, edgeUntil;
+    double echoX, echoY, echoZ;
+    float echoPower;
+    @org.jspecify.annotations.Nullable String echoForce, edgeForce;
+    dev.awaken.powers.PowerType.@org.jspecify.annotations.Nullable Family echoFamily, edgeFamily;
+    int edgeHits;
     int step = -1, cadence, moveSeq, recovery;
     boolean perfectHeavy;
     /** A buffered tap waiting for its window. */

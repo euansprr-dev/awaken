@@ -88,7 +88,8 @@ public final class Casting {
         }
         if (l.cooldownLeft(id, now) > 0) return PowerType.Result.fail("cooldown");
         ensureEnergy(player, l);
-        float cost = costOf(player, type, owned.variant());
+        // a power cast in a Weave's beat (Arms, SPEC §25) fuses with the weapon and costs less
+        float cost = costOf(player, type, owned.variant()) * dev.awaken.core.api.WeaveHooks.costScale(player);
         if (l.energy < cost) return PowerType.Result.fail("energy");
         Cast c = new Cast(player, type, owned.variant(), owned.level(), slot, predicted, yRot, xRot);
         PowerType.Result r;
@@ -118,6 +119,7 @@ public final class Casting {
         if (type.dashLike) onDash(player, st);
         if (carries(type)) dev.awaken.core.api.ArrivalHooks.report(player, dev.awaken.core.api.ArrivalHooks.Way.POWER, MOVE_HOLD);
         MoveTwists.afterCast(c, cost, now); // the Awakened Body's chains and family twists
+        dev.awaken.core.api.WeaveHooks.cast(player, type.family.name(), type.forces.isEmpty() ? null : type.forces.iterator().next().name(), owned.level());
         st.markCombatIfFoesNear(player);
         Powers.markDirty(player);
         return PowerType.Result.OK;

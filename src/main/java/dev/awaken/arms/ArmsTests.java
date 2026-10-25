@@ -52,6 +52,7 @@ final class ArmsTests {
         AwakenTests.register("arms_assets", 20, ArmsTests::assets);
         AwakenTests.register("arms_hand_pose", 20, ArmsTests::handPose);
         AwakenTests.register("arms_style_traits", 20, ArmsTests::styleTraits);
+        AwakenTests.register("arms_weave", 40, ArmsTests::weave);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -246,6 +247,32 @@ final class ArmsTests {
         h.assertTrue(worst < 1e-4F, "the view move reproduces the hand's pose (worst element off by " + worst + ")");
         HandPose.viewMove(0.56F, -0.52F, -0.72F, 0, 0, 0, 0, 0, m);
         for (float v : m) h.assertTrue(Math.abs(v) < 1e-6F, "at rest the view move adds nothing");
+        h.succeed();
+    }
+
+    /**
+     * Weaves: 36 distinct names; in the beat after an opening a cast costs 30% less, weaves, and is remembered once;
+     * the opening is spent; past the beat nothing weaves.
+     */
+    static void weave(GameTestHelper h) {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (int o = ArmsWeaves.DEFLECT; o <= ArmsWeaves.RHYTHM; o++) {
+            for (dev.awaken.powers.PowerType.Family f : dev.awaken.powers.PowerType.Family.values()) ids.add(ArmsWeaves.id(o, f));
+        }
+        h.assertTrue(ids.size() == 36, "36 Weaves, each its own name (" + ids.size() + ")");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ArmsState s = ArmsServer.state(p);
+        long now = ArmsServer.now(p);
+        h.assertTrue(ArmsWeaves.INSTANCE.costScale(p) == 1F, "outside a beat a cast costs what it costs");
+        ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, -1);
+        h.assertTrue(Math.abs(ArmsWeaves.INSTANCE.costScale(p) - ArmsWeaves.COST) < 1e-6, "in the beat after a deflect it costs 30% less");
+        ArmsWeaves.INSTANCE.cast(p, "ENERGY", "HEAT", 1);
+        h.assertTrue(p.getData(ArmsContent.MEMORY).weaves().contains("ember_riposte"), "a deflect and a Heat power: Ember Riposte, remembered");
+        h.assertTrue(ArmsWeaves.INSTANCE.costScale(p) == 1F && s.opening == 0, "the opening is spent");
+        ArmsWeaves.open(p, s, ArmsWeaves.DODGE, now - ArmsWeaves.WINDOW - 1, -1);
+        int found = ArmsWeaves.found(p);
+        ArmsWeaves.INSTANCE.cast(p, "SHADOW", null, 1);
+        h.assertTrue(ArmsWeaves.found(p) == found, "past the beat nothing weaves");
         h.succeed();
     }
 

@@ -206,7 +206,10 @@ final class ArmsServer {
         // a finisher reached with every press in rhythm (the chain starts at 0, each press in the window adds one, so
         // a full rhythm is a cadence equal to the step): the old rule asked for cadence 3, which the 3-strike chain
         // never reaches (combat sim, 2026-10-26)
-        if (def.finisher() && step > 0 && cadence >= Math.min(ArmsRules.CADENCE_MAX, step)) resonance(p, s, ArmsRules.RESONANCE_CADENCE3);
+        if (def.finisher() && step > 0 && cadence >= Math.min(ArmsRules.CADENCE_MAX, step)) {
+            resonance(p, s, ArmsRules.RESONANCE_CADENCE3);
+            ArmsWeaves.open(p, s, ArmsWeaves.RHYTHM, now, -1);
+        }
         AwakenNet.send(p, new ArmsPayloads.Result(seq, ArmsPayloads.MOVE, -1, move.ordinal(), cadence));
         p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true); // the vanilla arm for anyone without the clips
         soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(cadence));
@@ -236,6 +239,7 @@ final class ArmsServer {
             if (def != null && rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) sweep(p, s, def, now);
         }
         if (s.focus >= 0 && (now & 3) == 0) holdFocus(p, s, now);
+        if (s.echoAt != 0) ArmsWeaves.tick(p, s, now);
         if (s.plungeSeq >= 0) plunge(p, s, now);
         if (s.guardBreak) {
             s.guardBreak = false;
@@ -358,6 +362,7 @@ final class ArmsServer {
         }
         if (!pendingLanded) return;
         landedTraits(p, s, t, traits);
+        if (s.edgeHits > 0) ArmsWeaves.edge(p, s, t, now, (float) p.getAttributeValue(Attributes.ATTACK_DAMAGE) * pendingMotion);
         p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()), SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
         s.fightAt = now;
         if (s.focus != t.getId()) s.focus = t.getId();
@@ -368,6 +373,16 @@ final class ArmsServer {
         AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
         seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
         if (def.finisher()) resonance(p, s, ArmsRules.RESONANCE_FINISHER);
+    }
+
+    /** A Break held longer (a Weave through the broken body). */
+    static void extendBreak(LivingEntity target, int ticks) {
+        Posture p = target.getExistingDataOrNull(ArmsContent.POSTURE);
+        long now = now(target);
+        if (p == null || !p.broken(now)) return;
+        p.brokenUntil += ticks;
+        Strikes.stagger(target, (int) (p.brokenUntil - now));
+        stance(target, p, now);
     }
 
     /** What a style's blow does beyond its damage once it lands: a pull, a throw off a riposte, energy back. */
@@ -459,6 +474,7 @@ final class ArmsServer {
                     addPosture(attacker, kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT, p);
                 }
                 soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
+                ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, by == null ? -1 : by.getId());
                 answer(p, s, ArmsPayloads.DEFLECT, by);
             }
             case BLOCK -> {
@@ -604,6 +620,9 @@ final class ArmsServer {
         if (s.dodgeCharges == d.charges()) s.dodgeRechargeAt = now + d.recharge();
         s.dodgeCharges--;
         s.dodgeAt = now;
+        s.dodgeFromX = p.getX();
+        s.dodgeFromY = p.getY();
+        s.dodgeFromZ = p.getZ();
         float len = Mth.sqrt(msg.dx() * msg.dx() + msg.dz() * msg.dz());
         s.dodgeX = len > 1e-4 ? msg.dx() / len : 0;
         s.dodgeZ = len > 1e-4 ? msg.dz() / len : 0;
@@ -628,6 +647,7 @@ final class ArmsServer {
         long now = now(p);
         SLOWED.put(attacker.getId(), now + d.slow());
         resonance(p, s, ArmsRules.RESONANCE_PERFECT_DODGE);
+        ArmsWeaves.open(p, s, ArmsWeaves.DODGE, now, attacker.getId());
         AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.PERFECT_DODGE, attacker.getId(), d.slow(), 0));
     }
 
@@ -676,6 +696,7 @@ final class ArmsServer {
             Strikes.stagger(target, ticks);
             sound(target, ArmsSounds.BREAK.get(), 1.0F, 1.0F);
             resonance(by, state(by), ArmsRules.RESONANCE_BREAK);
+            ArmsWeaves.open(by, state(by), ArmsWeaves.BREAK, now, target.getId());
             AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
             seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));
         }

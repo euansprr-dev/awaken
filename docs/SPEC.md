@@ -3916,6 +3916,23 @@ stance starts no ability until it stands. Tuning for the whole game's pacing (Lo
 fliers in reach, vanilla's flat burn and fang, per-Lord health) is recommended there and waits for Euan's three-Lord
 session (PLAN §6.4 S3 gate): it moves powers players' fights too.
 
+**Weaves** (S8, `ArmsWeaves`; `core.api.WeaveHooks`, §12: the powers module asks it for a cast's energy and tells it
+of each landed cast): for 12 ticks after an opening the blade earned (a deflect, a perfect dodge, a Break, a finisher in
+full rhythm) a power cast fuses with the weapon and costs 30% less. Four openings × nine families = 36 Weaves, each
+named (the deflect's Ripostes: Iron, Gale, Weighted, Ember, Umbral, Mirror, Bulwark, Arc, Soul; the dodge's echoes:
+Quake Step, Slipstream, Falling Star, Flashpoint, Afterimage, Phantom Step, Glass Wake, Ghost Circuit, Wisp Echo; the
+Break's: Sundering, Whirlwind Break, Collapse, Meltdown, Eclipse, Shattered Will, Keystone, Overload, Severance; the
+rhythm's edges: Hammer Rhythm, Tempest Edge, Heavy Hand, Burning Edge, Night Edge, Thought Edge, Mason's Edge, Charged
+Edge, Spirit Edge). The opening is the shape: a deflect bursts a 4-block ring off the meeting of the blades (the
+fighter's attack ×1.2, knocking back); a perfect dodge leaves an echo where the dodge began that strikes 6 ticks later
+(3 blocks); a Break sends the power through the broken body (×1.6, at most 3% of a Lord's health) and holds the Break
+a second longer; a rhythm finisher charges the next three blows within 5 s with 40% more as the power's force. All
+scale a little with the power's level (+8% a level). The family is the element (the power's own Force, else the
+family's: Energy and Tech Charge, Flight and Architect Gravity, Shadow, Mind and Spirit Spirit) and the look (the
+effects engine's style of the family). The first time each is woven the System names it ("WEAVE · Ember Riposte", a
+toast); after that the action bar does. Kept in `awaken:arms_memory` (schemaVersion 1, saved, kept through death; the
+Codex's Weaves page counts it as N / ??, never naming the rest). Test `arms_weave`.
+
 **Item level** (PLAN §7.7, decided by the sim): a weapon's level is its tier. The forged Longswords' damage climbs by
 tier (4.5 to 9.5) and melee already rises with the player's strength, so on-level melee keeps pace with a Lord's
 health; scaling weapons by level as powers scale (sim `--item-level on`) broke the ordinary fight (normal creatures fell

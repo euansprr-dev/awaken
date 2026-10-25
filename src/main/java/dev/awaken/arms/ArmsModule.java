@@ -38,6 +38,7 @@ public final class ArmsModule {
         ArmsSounds.register(modBus);
         ArmsItems.register(modBus);
         Archetypes.all(); // fail fast on a broken timing table
+        dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
         modBus.addListener(ArmsModule::registerPayloads);
         modBus.addListener(EventPriority.LOW, ArmsModule::guardComponents);
         var bus = NeoForge.EVENT_BUS;
