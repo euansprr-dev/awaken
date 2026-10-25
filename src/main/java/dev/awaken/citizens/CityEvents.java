@@ -234,12 +234,12 @@ final class CityEvents {
         double fx = c.net.x[from];
         int count = 0;
         for (int i = 0; i < c.net.n; i++) {
-            if (c.net.kind[i] == StreetNet.JUNCTION && col.dm()[i] >= lo * 10 && col.dm()[i] <= hi * 10 && c.net.x[i] < fx - 30) count++;
+            if (c.net.kind[i] == StreetNet.JUNCTION && !c.net.wall[i] && col.dm()[i] >= lo * 10 && col.dm()[i] <= hi * 10 && c.net.x[i] < fx - 30) count++;
         }
         if (count == 0) return nodeAround(from, lo, hi, seed);
         int pick = (int) Math.floorMod(CitizenWork.mixHash(seed), (long) count);
         for (int i = 0; i < c.net.n; i++) {
-            if (c.net.kind[i] != StreetNet.JUNCTION || col.dm()[i] < lo * 10 || col.dm()[i] > hi * 10 || c.net.x[i] >= fx - 30) continue;
+            if (c.net.kind[i] != StreetNet.JUNCTION || c.net.wall[i] || col.dm()[i] < lo * 10 || col.dm()[i] > hi * 10 || c.net.x[i] >= fx - 30) continue;
             if (pick-- == 0) return i;
         }
         return -1;
@@ -392,11 +392,11 @@ final class CityEvents {
     private int nodeAround(int from, double lo, double hi, long seed) {
         StreetNet.Column col = c.net.columnNow(from);
         int count = 0;
-        for (int i = 0; i < c.net.n; i++) if (c.net.kind[i] == StreetNet.JUNCTION && col.dm()[i] >= lo * 10 && col.dm()[i] <= hi * 10) count++;
+        for (int i = 0; i < c.net.n; i++) if (c.net.kind[i] == StreetNet.JUNCTION && !c.net.wall[i] && col.dm()[i] >= lo * 10 && col.dm()[i] <= hi * 10) count++;
         if (count == 0) return -1;
         int pick = (int) Math.floorMod(CitizenWork.mixHash(seed), (long) count);
         for (int i = 0; i < c.net.n; i++) {
-            if (c.net.kind[i] != StreetNet.JUNCTION || col.dm()[i] < lo * 10 || col.dm()[i] > hi * 10) continue;
+            if (c.net.kind[i] != StreetNet.JUNCTION || c.net.wall[i] || col.dm()[i] < lo * 10 || col.dm()[i] > hi * 10) continue;
             if (pick-- == 0) return i;
         }
         return -1;

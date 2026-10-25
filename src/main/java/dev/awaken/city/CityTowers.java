@@ -30,8 +30,8 @@ final class CityTowers {
     static final int ROUND = 0, OCT = 1, SQUARE = 2, D_SHAPE = 3;
 
     /** One tower worked out from its part: its form, centre, radius, district, rows. */
-    record T(Part part, Box box, double cx, double cz, double r, int form, int out, int toCity, int doff, int district, int eave,
-             boolean gate) {
+    record T(Part part, Box box, double cx, double cz, double r, int form, int out, int toCity, int doff, int nX, int nZ,
+             int district, int eave, boolean gate) {
         /** The cell's distance from the axis in the tower's own metric (circle, octagon or square). */
         double rho(int x, int z) {
             double dx = x + 0.5 - cx, dz = z + 0.5 - cz;
@@ -95,7 +95,25 @@ final class CityTowers {
         int door = doorSide(c.plan, box, toCity, (int) Math.floor(cx), (int) Math.floor(cz));
         toCity = door & 3;
         int doff = (door >> 2) - 8;
-        return new T(p, box, cx, cz, r, form, out, toCity, doff, district, eave, gate);
+        // the newel stands in toward the town (or to one side) so that the wall walk's middle line passes its stairwell by
+        // (the well two and a half clear of the line), with its ring and a shell round it inside the tower and room for
+        // the door's corridor; the first place that does all of it, else the one with the most clearance
+        int in = CityWall.dominant(-cx, -cz), lat = (in + 1) & 3;
+        T best = null;
+        double bestScore = -1e9;
+        for (int shift = 4; shift >= 0; shift--)
+            for (int side : new int[]{0, 2, -2, 3, -3}) {
+                int nX = (int) Math.floor(cx) + shift * NBX[in] + side * NBX[lat], nZ = (int) Math.floor(cz) + shift * NBZ[in] + side * NBZ[lat];
+                T t = new T(p, box, cx, cz, r, form, out, toCity, doff, nX, nZ, district, eave, gate);
+                if (!stairFits(c.plan, t)) continue;
+                double clear = CityWall.geo(c.plan, nX, nZ).d();
+                if (clear >= 2.5) return t;
+                if (clear > bestScore) {
+                    bestScore = clear;
+                    best = t;
+                }
+            }
+        return best != null ? best : new T(p, box, cx, cz, r, form, out, toCity, doff, (int) Math.floor(cx), (int) Math.floor(cz), district, eave, gate);
     }
 
     /**
@@ -161,6 +179,12 @@ final class CityTowers {
     static void tower(Ctx c, CityBuffer b, Part p, Box box, int x, int z) {
         T t = make(c, p, box);
         boolean foot = t.inside(x, z, 0);
+        if (!t.inside(x, z, 4) && box.contains(x, z) && c.plan.kind(x, z) == LANDMARK) {
+            // the box's corners beside a drum: the curtain runs on into the tower's flank (no hole in the walk); the
+            // batter's flare, where it reaches, is painted over it below
+            double d = CityWall.geo(c.plan, x, z).d();
+            if (d >= -5 && d < 5 && !approach(t, x, z)) CityWall.curtain(c, b, x, z);
+        }
         if (foot) shaft(c, b, t, x, z);
         ring(c, b, t, x, z);
         top(c, b, t, x, z);
@@ -172,11 +196,13 @@ final class CityTowers {
         int walkTop = CityWall.top(p);
         b.plate(x, z);
         b.column(x, -4, -1, z, STONE);
-        int ncx = (int) Math.floor(t.cx), ncz = (int) Math.floor(t.cz);
+        int ncx = t.nX, ncz = t.nZ;
         int sx = x - ncx, sz = z - ncz;
-        int stair = Math.abs(sx) <= 1 && Math.abs(sz) <= 1 && !(sx == 0 && sz == 0) ? ringIndex(sx, sz) : -1;
+        // (the water gates' towers straddle the bend of the wall at the river: no stair, the walk reaches them)
+        boolean stairs = t.district != QUAY_D;
+        int stair = stairs && Math.abs(sx) <= 1 && Math.abs(sz) <= 1 && !(sx == 0 && sz == 0) ? ringIndex(sx, sz) : -1;
         int start = ringIndex(NBX[t.toCity], NBZ[t.toCity]);
-        boolean corridor = onCorridor(t, x, z, ncx, ncz);
+        boolean corridor = stairs && onCorridor(t, x, z, ncx, ncz);
         CityWall.Geo g = CityWall.geo(p, x, z);
         boolean walkBand = g.d() >= -4 && g.d() < 4.5 && !t.gate || t.gate && Math.abs(g.d()) <= 1.5;
         for (int ry = 0; ry <= t.eave; ry++) {
@@ -228,15 +254,39 @@ final class CityTowers {
     }
 
     /**
-     * The way in from the door to the stair's foot, one wide: straight in from the door (on the axis or off it by
-     * doff), then across to the axis two short of the newel.
+     * The way in from the door to the stair's foot, one wide: straight in on the door's line (the tower's axis, or off it
+     * by doff), then across, two short of the newel, to the cell before the stair's first tread.
      */
     static boolean onCorridor(T t, int x, int z, int ncx, int ncz) {
         int dx = x - ncx, dz = z - ncz;
         int ax = NBX[t.toCity], az = NBZ[t.toCity];
         int along = ax != 0 ? dx * ax : dz * az, perp = ax != 0 ? dz : dx;
-        if (perp == t.doff && along >= (t.doff == 0 ? 1 : 2)) return true;
-        return along == 2 && (perp - 0) * (perp - t.doff) <= 0;
+        int line = ax != 0 ? (int) Math.floor(t.cz) + t.doff - ncz : (int) Math.floor(t.cx) + t.doff - ncx;
+        if (perp == line && along >= (line == 0 ? 1 : 2)) return true;
+        return along == 2 && perp * (perp - line) <= 0;
+    }
+
+    /**
+     * A newel stair fits: its ring with a shell round it inside the shaft, and the door's corridor reaching the face (the
+     * door at least two out from the newel on its line, three when it is off the newel's line).
+     */
+    static boolean stairFits(CityPlan p, T t) {
+        for (int dx = -2; dx <= 2; dx++)
+            for (int dz = -2; dz <= 2; dz++) if (!t.inside(t.nX + dx, t.nZ + dz, 3) || !t.inside(t.nX + dx, t.nZ + dz, t.eave - 8)) return false;
+        int ax = NBX[t.toCity], az = NBZ[t.toCity];
+        int line = ax != 0 ? (int) Math.floor(t.cz) + t.doff - t.nZ : (int) Math.floor(t.cx) + t.doff - t.nX;
+        int need = line == 0 ? 2 : 3;
+        int x = ax != 0 ? t.nX + need * ax : t.nX + line, z = az != 0 ? t.nZ + need * az : t.nZ + line;
+        return t.inside(x, z, 3);
+    }
+
+    /** The way to the door across the box's open corner: the door's line, outside the shaft, in front of the face. */
+    static boolean approach(T t, int x, int z) {
+        int ax = NBX[t.toCity], az = NBZ[t.toCity];
+        int line = ax != 0 ? (int) Math.floor(t.cz) + t.doff : (int) Math.floor(t.cx) + t.doff;
+        if ((ax != 0 ? z : x) != line) return false;
+        int along = ax != 0 ? (x - t.nX) * ax : (z - t.nZ) * az;
+        return along >= 1;
     }
 
     /** Inside by two from the shell (the hall's room). */

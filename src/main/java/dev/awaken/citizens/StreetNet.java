@@ -15,6 +15,10 @@ import java.util.Arrays;
  */
 final class StreetNet {
     static final byte JUNCTION = 0, DOOR = 1, LANDMARK = 2;
+    /** A tower's stair between its door and the wall walk (M4 Walls): walked by the ledger, never by a body. */
+    static final byte MOVE_HIDDEN = 9;
+    /** What climbing a tower's stair costs on top of its length (blocks; tools/city/citizens.py TOWER_CLIMB). */
+    static final float TOWER_CLIMB = 45f;
     /** At most this many columns are baked per server tick; a record whose column isn't ready waits a second. */
     static final int BAKES_PER_TICK = 3;
 
@@ -33,6 +37,11 @@ final class StreetNet {
     final boolean[] eoff;
     /** Nodes in the graph's main piece (the plan has two tiny islands nobody should be sent to). */
     final boolean[] main;
+    /**
+     * Nodes of the wall walk and the towers' doors (M4 Walls): never a nearest node, and a route changes between them and
+     * the streets at most once (nobody crosses the city over the wall; the Watch climbs to its round and back).
+     */
+    final boolean[] wall;
     private final Int2ObjectOpenHashMap<Column> columns = new Int2ObjectOpenHashMap<>();
     private int bakesThisTick;
     long bakes, bakeNanos;
@@ -41,6 +50,12 @@ final class StreetNet {
     record Column(short[] next, int[] dm) {}
 
     private StreetNet(double[] x, double[] z, int[] y, byte[] kind, int[] ref, int[] ea, int[] eb, byte[] emove, byte @Nullable [] lanes) {
+        this(x, z, y, kind, ref, ea, eb, emove, lanes, new boolean[x.length]);
+    }
+
+    private StreetNet(double[] x, double[] z, int[] y, byte[] kind, int[] ref, int[] ea, int[] eb, byte[] emove, byte @Nullable [] lanes,
+                      boolean[] wall) {
+        this.wall = wall;
         this.n = x.length;
         this.m = ea.length;
         this.x = x;
@@ -56,7 +71,7 @@ final class StreetNet {
         eoff = new boolean[m];
         int[] deg = new int[n];
         for (int e = 0; e < m; e++) {
-            elen[e] = (float) Math.max(0.05, Math.hypot(x[eb[e]] - x[ea[e]], z[eb[e]] - z[ea[e]]));
+            elen[e] = (float) Math.max(0.05, Math.hypot(x[eb[e]] - x[ea[e]], z[eb[e]] - z[ea[e]])) + (emove[e] == MOVE_HIDDEN ? TOWER_CLIMB : 0f);
             elane[e] = lanes != null && e < lanes.length ? lanes[e] / 10f : 0f;
             deg[ea[e]]++;
             deg[eb[e]]++;
@@ -136,6 +151,42 @@ final class StreetNet {
         byte[] mv = new byte[m];
         for (int e = 0; e < m; e++) mv[e] = (byte) g.emove()[e];
         return new StreetNet(x, z, y, kind, ref, g.ea().clone(), g.eb().clone(), mv, lanes);
+    }
+
+    /**
+     * This graph with the roster's wall walk appended (its nodes and edges follow the plan's, as the generator numbered
+     * them): the plan placed at (cx, cz) with the street at streetY.
+     */
+    StreetNet withWall(Roster r, int cx, int cz, int streetY) {
+        int k = r.wallX.length, ke = r.wallA.length;
+        if (k == 0 && ke == 0) return this;
+        int nn = n + k, mm = m + ke;
+        double[] nx = Arrays.copyOf(x, nn), nz = Arrays.copyOf(z, nn);
+        int[] ny = Arrays.copyOf(y, nn), nref = Arrays.copyOf(ref, nn);
+        byte[] nkind = Arrays.copyOf(kind, nn);
+        boolean[] nwall = new boolean[nn];
+        for (int i = 0; i < k; i++) {
+            nx[n + i] = Math.round((r.wallX[i] + cx) * 10) / 10.0;
+            nz[n + i] = Math.round((r.wallZ[i] + cz) * 10) / 10.0;
+            ny[n + i] = streetY + r.wallRy[i];
+            nkind[n + i] = JUNCTION;
+            nref[n + i] = -1;
+            nwall[n + i] = true;
+        }
+        int[] na = Arrays.copyOf(ea, mm), nb = Arrays.copyOf(eb, mm);
+        byte[] nmove = Arrays.copyOf(emove, mm);
+        for (int e = 0; e < ke; e++) {
+            na[m + e] = r.wallA[e];
+            nb[m + e] = r.wallB[e];
+            nmove[m + e] = (byte) r.wallMove[e];
+        }
+        return new StreetNet(nx, nz, ny, nkind, nref, na, nb, nmove, r.edgeLane, nwall);
+    }
+
+    /** Whether the edge from a to b is a tower's stair (a body goes in at the door; the ledger walks it). */
+    boolean hidden(int a, int b) {
+        int e = edge(a, b);
+        return e >= 0 && emove[e] == MOVE_HIDDEN;
     }
 
     void newTick() {
@@ -236,6 +287,8 @@ final class StreetNet {
                 int e = adjEdge[k];
                 if (eoff[e]) continue;
                 int v = adj[k];
+                // one change between the streets and the wall walk at most (tools/city/citizens.py City.row: the same)
+                if (wall[u] != wall[dest] && wall[v] == wall[dest]) continue;
                 double nd = du + elen[e];
                 if (nd < dist[v]) {
                     dist[v] = nd;
@@ -289,7 +342,7 @@ final class StreetNet {
         int best = -1;
         double bd = Double.MAX_VALUE;
         for (int i = 0; i < n; i++) {
-            if (junctionsOnly && kind[i] != JUNCTION || !main[i]) continue;
+            if (junctionsOnly && kind[i] != JUNCTION || !main[i] || wall[i]) continue;
             double d = (x[i] - px) * (x[i] - px) + (z[i] - pz) * (z[i] - pz);
             if (d < bd) {
                 bd = d;

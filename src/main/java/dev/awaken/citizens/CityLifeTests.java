@@ -83,7 +83,7 @@ final class CityLifeTests {
         h.assertTrue(r != null, "the roster is in the jar");
         ServerLevel level = h.getLevel();
         BlockPos origin = h.absolutePos(BlockPos.ZERO);
-        StreetNet g = StreetNet.of(CityPlan.get(), origin.getX(), origin.getZ(), origin.getY(), r.edgeLane);
+        StreetNet g = StreetNet.of(CityPlan.get(), origin.getX(), origin.getZ(), origin.getY(), r.edgeLane).withWall(r, origin.getX(), origin.getZ(), origin.getY());
         Citizens c = new Citizens(level, r, g, new CitizensData(), origin.getX(), origin.getZ(), origin.getY());
         c.crowd.on = false;
         c.work.edits = false;

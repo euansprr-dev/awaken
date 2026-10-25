@@ -208,12 +208,47 @@ final class CityWallTests {
             int towers = 0, climbed = 0;
             StringBuilder failed = new StringBuilder();
             for (Part part : p.parts) {
-                if (!part.kind().equals("tower") && !part.kind().equals("gate_tower")) continue;
+                if (!part.kind().equals("tower") && !part.kind().equals("gate_tower") || "3".equals(part.style())) continue; // (water gates: no stair)
                 towers++;
                 if (climbs(band, p, part, walk)) climbed++;
                 else failed.append(part.landmark()).append('@').append(part.x0()).append(',').append(part.z0()).append(' ');
             }
             h.assertTrue(climbed == towers, "stairs from the ring to the walk in " + climbed + " of " + towers + " towers; not: " + failed);
+            // the Watch's way onto the walk (the citizens' graph, tools/city/citizens.py "wallWalk"): every tower door
+            // node stands before the door this painter made, and every stretch of the round is open walk at the walk's row
+            dev.awaken.citizens.Roster r = dev.awaken.citizens.Roster.get();
+            h.assertTrue(r != null && r.wallX.length > 100, "the roster carries the wall walk");
+            int base = p.streetGraph.nodes(), doors = 0, posts = 0;
+            StringBuilder bad = new StringBuilder();
+            for (int i = 0; i < r.wallX.length; i++) {
+                int x = (int) Math.floor(r.wallX[i]), z = (int) Math.floor(r.wallZ[i]);
+                if (r.wallRy[i] < walk - 1) {
+                    doors++;
+                    boolean door = false;
+                    for (int[] d : CityPainter.NB)
+                        for (int k = 0; k <= 3 && !door; k++) {
+                            BlockState s = band.get(x + d[0] * k, 1, z + d[1] * k);
+                            door = s != null && s.getBlock() instanceof net.minecraft.world.level.block.DoorBlock;
+                        }
+                    if (!door || !band.stand(x, 1, z)) bad.append("door node ").append(base + i).append('@').append(x).append(',').append(z).append(' ');
+                } else if (!band.stand(x, walk, z)) bad.append("walk node ").append(base + i).append('@').append(x).append(',').append(z).append(' ');
+                else posts++;
+            }
+            for (int e = 0; e < r.wallA.length; e++) {
+                int a = r.wallA[e] - base, b = r.wallB[e] - base;
+                if (r.wallMove[e] != 0 || a < 0 || b < 0 || r.wallRy[a] < walk - 1 || r.wallRy[b] < walk - 1) continue;
+                double len = Math.hypot(r.wallX[b] - r.wallX[a], r.wallZ[b] - r.wallZ[a]);
+                for (double t = 0; t <= len; t += 0.5) {
+                    int x = (int) Math.floor(r.wallX[a] + (r.wallX[b] - r.wallX[a]) * t / Math.max(len, 1e-6));
+                    int z = (int) Math.floor(r.wallZ[a] + (r.wallZ[b] - r.wallZ[a]) * t / Math.max(len, 1e-6));
+                    if (!band.stand(x, walk, z)) {
+                        bad.append("round blocked at ").append(x).append(',').append(z).append(' ');
+                        break;
+                    }
+                }
+            }
+            h.assertTrue(bad.isEmpty(), "the Watch's wall walk: " + bad);
+            h.assertTrue(doors == towers, "a door node for every tower: " + doors + " of " + towers);
             dev.awaken.Awaken.LOG.info("[city] wall walk: {} cells, 24 sides, stairs in {} towers", reached, climbed);
             h.succeed();
         });

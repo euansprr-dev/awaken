@@ -67,6 +67,23 @@ VOID, FREE, YARD, GARDEN, PLOT, AVENUE, STREET, LANE, ALLEY, SQUARE, PLAZA, QUAY
     STAIR, WATERGATE, TRAINING, RACE, RING, LOWQUAY = range(22)
 WALKABLE = {AVENUE, STREET, LANE, ALLEY, SQUARE, PLAZA, QUAY, STAIR, RING, TRAINING, LOWQUAY}
 WATER = {RIVER, CANAL, WATERGATE, RACE}
+# (M4 Walls) the wall walk joined to the graph: its middle line, its row, the stair edges' move and climb, the Roost's tower place
+WALL_R = 240
+WALK_LINE_D = -0.5
+WALK_RY = 39
+MOVE_HIDDEN = 9
+TOWER_CLIMB = 45.0
+ROOST_TOWER = 14
+SIDE_N, SIDE_E, SIDE_S, SIDE_W = 0, 1, 2, 3
+
+
+def dominant(dx, dz):
+    """The grid side a direction leans to most (0 N, 1 E, 2 S, 3 W), as CityWall.dominant."""
+    if abs(dx) >= abs(dz):
+        return SIDE_E if dx > 0 else SIDE_W
+    return SIDE_S if dz > 0 else SIDE_N
+
+
 WALK = 4.3            # blocks per second the plan's edge seconds were made with
 STROLL = 0.088        # blocks per tick a citizen strolls at (speed 1.0)
 RUN_PACE = 0.135      # blocks per tick lamplighters (and runners on their courier round) go at (speed 1.0)
@@ -222,8 +239,11 @@ class City:
         self.water = np.isin(self.kind, list(WATER)) & ~self.bridge_walk
         # street graph
         g = P['graphs']['street']
-        self.nodes = g['nodes']
-        self.edges = g['edges']
+        self.nodes = [list(nd) for nd in g['nodes']]
+        self.edges = [list(e) for e in g['edges']]
+        self.n_plan, self.e_plan = len(self.nodes), len(self.edges)
+        self.wall_nodes = set()
+        self.wall_walk()
         n = len(self.nodes)
         self.adj = [[] for _ in range(n)]
         for a, b, m, sec, tag in self.edges:
@@ -248,6 +268,134 @@ class City:
         self._edge_grid = None
         self._run = None
         self._street_grid = None
+        self.wall_link()
+
+    # -- the wall walk (M4 Walls) ------------------------------------------------------------------------------------------
+    def wall_walk(self):
+        """The wall walk joined to the street graph (citizens.json "wallWalk"; Java appends the same nodes and edges): a
+        chain of nodes along the walk's middle line (depth -0.5, row 39) round the ring, broken at the Runners' Roost; for
+        every tower a node at its door (on open ground, the door CityTowers paints) and a hidden edge from it up the tower's
+        stair to the walk (move 9: a body never walks it, it goes in at the door and comes out on the walk). Nodes are kind
+        'wall': no field seeds, no junction pools, never a place's nearest node."""
+        ap = WALL_R * math.cos(math.radians(7.5))
+        r_line = ap - WALK_LINE_D
+
+        def side_of(x, z):
+            best, bk = -1e9, 0
+            for k in range(24):
+                phi = math.radians(15 * (k + 1))
+                v = x * math.cos(phi) + z * math.sin(phi)
+                if v > best:
+                    best, bk = v, k
+            return bk
+
+        def on_line(k, a):
+            phi = math.radians(15 * (k + 1))
+            return (r_line * math.cos(phi) - a * math.sin(phi), r_line * math.sin(phi) + a * math.cos(phi))
+
+        pts = []      # (angle, x, z, tower or None)
+        towers = []
+        for lm in self.P['landmarks']:
+            for part in lm['parts']:
+                if part['kind'] in ('tower', 'gate_tower'):
+                    towers.append(part)
+        stairless = {id(p) for lm in self.P['landmarks'] if lm['id'].startswith('water_gate') for p in lm['parts']}
+        half = WALL_R * math.sin(math.radians(7.5))
+        for k in range(24):
+            for t in range(-3, 4):
+                a = t * half / 3.5
+                x, z = on_line(k, a)
+                pts.append((math.atan2(z, x), x, z, None))
+        for j in range(24):
+            if j == ROOST_TOWER:
+                continue
+            ang = math.radians(7.5 + 15 * j)
+            rv = r_line / math.cos(math.radians(7.5))
+            pts.append((ang, rv * math.cos(ang), rv * math.sin(ang), None))
+        self.tower_doors = []
+        for part in towers:
+            x0, z0, x1, z1 = part['box']
+            cx, cz = (x0 + x1 + 1) / 2.0, (z0 + z1 + 1) / 2.0
+            k = side_of(cx, cz)
+            phi = math.radians(15 * (k + 1))
+            a = -cx * math.sin(phi) + cz * math.cos(phi)
+            x, z = on_line(k, a)
+            pts.append((math.atan2(z, x), x, z, part))
+        roost = math.radians(7.5 + 15 * ROOST_TOWER)
+        # angles measured from just past the Roost, so the chain runs round and stops short of it
+        key = lambda p: (p[0] - roost) % (2 * math.pi)  # noqa: E731
+        pts.sort(key=key)
+        chain = []
+        for p in pts:
+            if key(p) < math.radians(5) or key(p) > 2 * math.pi - math.radians(5):
+                continue      # (the Roost's own stretch: its tower is the guild's, not the Watch's)
+            if chain and math.hypot(p[1] - chain[-1][1], p[2] - chain[-1][2]) < 2.5:
+                if p[3] is not None and chain[-1][3] is None:
+                    chain[-1] = p
+                continue
+            chain.append(p)
+        base = len(self.nodes)
+        for i, p in enumerate(chain):
+            self.nodes.append([round(p[1], 1), WALK_RY, round(p[2], 1), 'wall', ''])
+            self.wall_nodes.add(base + i)
+            if i:
+                a, b = base + i - 1, base + i
+                d = math.hypot(self.nodes[a][0] - self.nodes[b][0], self.nodes[a][2] - self.nodes[b][2])
+                self.edges.append([a, b, 0, round(d / WALK, 2), 'wall_walk'])
+        for i, p in enumerate(chain):
+            if p[3] is None or id(p[3]) in stairless:
+                continue      # (the water gates' towers have no stair: the walk reaches them)
+            part = p[3]
+            door = self.tower_door(part)
+            dn = len(self.nodes)
+            self.nodes.append([door[0], self.lift_at(door[0], door[1]), door[1], 'wall', ''])
+            self.wall_nodes.add(dn)
+            w = base + i
+            d = math.hypot(self.nodes[w][0] - door[0], self.nodes[w][2] - door[1])
+            self.edges.append([dn, w, MOVE_HIDDEN, round((d + TOWER_CLIMB) / WALK, 2), 'tower_stair'])
+            self.tower_doors.append(dn)
+
+    def tower_door(self, part):
+        """The cell just outside a tower's door (CityTowers.doorSide, ported exactly): the town side first, then the flanks,
+        on the axis or up to five off it, where open street-level ground runs three out from the box."""
+        x0, z0, x1, z1 = part['box']
+        cx, cz = (x0 + x1 + 1) / 2.0, (z0 + z1 + 1) / 2.0
+        ncx, ncz = math.floor(cx), math.floor(cz)
+        out = dominant(cx, cz)
+        to_city = (out + 2) & 3
+        for sd in (to_city, (to_city + 1) & 3, (to_city + 3) & 3):
+            for off in (0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5):
+                ok = 0
+                for o in range(1, 4):
+                    x = x1 + o if sd == SIDE_E else x0 - o if sd == SIDE_W else ncx + off
+                    z = z1 + o if sd == SIDE_S else z0 - o if sd == SIDE_N else ncz + off
+                    k = self.kind_at(x + 0.5, z + 0.5)
+                    if k in WALKABLE and k != LOWQUAY and k not in WATER and self.lift_at(x + 0.5, z + 0.5) <= 1:
+                        ok += 1
+                if ok == 3:
+                    x = x1 + 1 if sd == SIDE_E else x0 - 1 if sd == SIDE_W else ncx + off
+                    z = z1 + 1 if sd == SIDE_S else z0 - 1 if sd == SIDE_N else ncz + off
+                    return (x + 0.5, z + 0.5)
+        raise ValueError(f'no door for tower {part["box"]}')
+
+    def wall_link(self):
+        """Each tower's door node walks to its nearest street junction (called once the street field can be read)."""
+        for dn in self.tower_doors:
+            x, z = self.nodes[dn][0], self.nodes[dn][2]
+            j, _ = self.nearest_node(x, z)
+            d = math.hypot(self.nodes[j][0] - x, self.nodes[j][2] - z)
+            self.edges.append([dn, j, 0, round(max(d, 0.1) / WALK, 2), 'tower_door'])
+            sec = self.edges[-1][3] * WALK
+            self.adj[dn].append((j, sec, 0))
+            self.adj[j].append((dn, sec, 0))
+        self.main = self._main_component()
+        self.in_main = np.zeros(len(self.nodes), bool)
+        self.in_main[self.main] = True
+
+    def wall_extra(self):
+        """The nodes and edges past the plan's, for citizens.json (indices absolute)."""
+        return {'nodes': [[nd[0], nd[1], nd[2]] for nd in self.nodes[self.n_plan:]],
+                'edges': [[e[0], e[1], e[2]] for e in self.edges[self.e_plan:]]}
 
     # -- raster helpers --------------------------------------------------------------------------------------------
     @staticmethod
@@ -318,11 +466,17 @@ class City:
             heap = [(0.0, src)]
             adj = self.adj
             leaf = self.leaf
+            wall = self.wall_nodes
+            root = src in wall
             while heap:
                 du, u = heapq.heappop(heap)
                 if du > d[u] or (u != src and leaf[u]):
                     continue    # a door or landmark node is where a walk ends, never a way through
                 for v, w, _ in adj[u]:
+                    # (M4 Walls) a walk changes between the street and the wall walk at most once: nobody crosses the
+                    # city over the wall, the Watch climbs to its round and back (StreetNet.bake keeps the same rule)
+                    if (u in wall) != root and (v in wall) == root:
+                        continue
                     nd = du + w
                     if nd < d[v]:
                         d[v] = nd
@@ -454,7 +608,7 @@ class City:
         if self._edge_grid is None:
             g = defaultdict(list)
             for a, b, m, sec, tag in self.edges:
-                if m == 3 or not (self.in_main[a] and self.in_main[b]):
+                if m == 3 or m == MOVE_HIDDEN or a in self.wall_nodes and b in self.wall_nodes or not (self.in_main[a] and self.in_main[b]):
                     continue
                 ax, az = self.nodes[a][0], self.nodes[a][2]
                 bx, bz = self.nodes[b][0], self.nodes[b][2]
@@ -1292,7 +1446,7 @@ class Builder:
         out = []
         for n in c.main:
             nd = c.nodes[n]
-            if nd[3] != 'junction' or len(c.adj[n]) < 3:
+            if nd[3] != 'junction' or sum(1 for v, _, _ in c.adj[n] if v not in c.wall_nodes) < 3:
                 continue
             i, j = c.cell(nd[0], nd[2])
             if c.ground[j, i] and pred(nd[0], nd[2], int(c.dist[j, i])):
@@ -1736,6 +1890,34 @@ class Builder:
             self.district_errand[dk] = self.add_route('errand', pl)
         self.build_life_routes()
         self._errand_cache = {tuple(sorted(r['places'])): r['id'] for r in self.routes if r['kind'] == 'errand'}
+
+    def build_wall_rounds(self):
+        """(M4 Walls) The Watch's rounds of the wall walk: the chain cut into four stretches, each a round of eight stands
+        on the walk about fifty apart, walked out and back by a night watchman (route kind 'wall')."""
+        c = self.c
+        chain = sorted(n for n in c.wall_nodes if c.nodes[n][1] == WALK_RY)
+        cum = [0.0]
+        for a, b in zip(chain, chain[1:]):
+            cum.append(cum[-1] + math.hypot(c.nodes[a][0] - c.nodes[b][0], c.nodes[a][2] - c.nodes[b][2]))
+        total = cum[-1]
+        self.wall_routes = []
+        for q in range(4):
+            lo, hi = q * total / 4 + 12, (q + 1) * total / 4 - 12
+            stops = []
+            for i in range(8):
+                want = lo + (hi - lo) * i / 7
+                n = chain[min(range(len(chain)), key=lambda k: (abs(cum[k] - want), k))]
+                nd = c.nodes[n]
+                x, z = math.floor(nd[0]) + 0.5, math.floor(nd[2]) + 0.5
+                ix, iz = (1, 0) if dominant(-nd[0], -nd[2]) == SIDE_E else (-1, 0) if dominant(-nd[0], -nd[2]) == SIDE_W \
+                    else (0, 1) if dominant(-nd[0], -nd[2]) == SIDE_S else (0, -1)
+                yaw = yaw_of(ix, iz)
+                pid = len(self.places)
+                self.places.append({'kind': 'stand', 'node': n, 'x': x, 'z': z, 'ry': WALK_RY, 'yaw': yaw, 'cap': 2, 'ref': -1,
+                                    'district': c.district_at(x, z), 'approach': 0,
+                                    'spots': [[x, z, yaw], [x + ix, z + iz, yaw]]})
+                stops.append(pid)
+            self.wall_routes.append(self.add_route('wall', stops))
 
     def build_life_routes(self):
         """M4 B3a: where people gather. Six `market` routes, one per sixth of the square: its four stall fronts and the benches,
@@ -2328,7 +2510,9 @@ class Population:
                 if cit['mode'] == 'patrol':
                     cit['route'] = B.patrol_routes[day_routes[cit['slot'] % len(day_routes)]]
                 elif cit['mode'] == 'night':
-                    cit['route'] = B.patrol_routes[cit['slot'] % len(B.patrol_routes)]
+                    # (M4 Walls) the first four take the rounds of the wall walk, the rest the streets' loops
+                    s = cit['slot']
+                    cit['route'] = B.wall_routes[s] if s < len(B.wall_routes) else B.patrol_routes[(s - len(B.wall_routes)) % len(B.patrol_routes)]
             if cit['job'] == 'healer':
                 cit['shift'] = 0 if cit['named'] == 'sun' else r.randint(-6, 6) * 100
         # residents: market-goers get one of the market routes, neighbours and elders a bench or well on a stroll route
@@ -3222,7 +3406,7 @@ def edge_lanes(c, lamps_xz, trees):
         return 8.0
     out = []
     for a, b, move, sec, tag in c.edges:
-        if move == 3:
+        if move == 3 or move == MOVE_HIDDEN or a in c.wall_nodes and b in c.wall_nodes:
             out.append(0)
             continue
         na, nb = c.nodes[a], c.nodes[b]
@@ -3319,7 +3503,8 @@ def assemble(C, B, P):
            'placeKinds': PLACE_KINDS, 'places': {'fields': PLACE_FIELDS, 'rows': places_rows}, 'routes': routes, 'edgeLane': lanes,
            'lamps': lamps, 'stalls': stalls, 'bells': B.bells, 'bakeries': bakeries, 'smithies': smithies,
            'washplaces': washplaces, 'lines': lines, 'quay': quay, 'moorings': moorings, 'taverns': taverns, 'households': households,
-           'groups': groups, 'citizens': {'fields': CITIZEN_FIELDS, 'rows': rows}, 'schedules': schedules, 'extras': extras}
+           'groups': groups, 'citizens': {'fields': CITIZEN_FIELDS, 'rows': rows}, 'schedules': schedules, 'extras': extras,
+           'wallWalk': C.wall_extra()}
     return out
 
 
@@ -3347,6 +3532,7 @@ def generate(verbose=False):
     B.build_errand_corners()
     B.build_lamp_routes()
     B.build_routes()
+    B.build_wall_rounds()
     for lid in ('roost', 'choir', 'association', 'market_hall'):
         B.landmark(lid)
     P = Population(B)
@@ -3472,6 +3658,14 @@ class Checker:
             kind = PLACE_KINDS[pl['kind']]
             if pl['node'] not in main:
                 errs.append(f'place {pid} node not in the main component')
+            if pl['node'] in C.wall_nodes:
+                # (a stand on the wall walk: its spot on the walk beside its node; the plan's raster says wall there)
+                for (x, z, yaw) in pl['spots']:
+                    n_sp += 1
+                    nd = C.nodes[pl['node']]
+                    if (x - math.floor(x)) != 0.5 or (z - math.floor(z)) != 0.5 or math.hypot(x - nd[0], z - nd[2]) > 2.5:
+                        errs.append(f'wall place {pid} spot ({x},{z}) not a block centre beside its node')
+                continue
             if len(pl['spots']) != pl['cap'] or pl['cap'] < 1:
                 errs.append(f'place {pid} cap/spots')
             for (x, z, yaw) in pl['spots']:
@@ -3757,6 +3951,16 @@ class Checker:
             errs.append(f'{len(by["patrol"])} patrol routes')
         if len(by['errand']) < 7:
             errs.append('fewer than 7 errand routes')
+        if len(by.get('wall', [])) != 4:
+            errs.append(f'{len(by.get("wall", []))} wall rounds')
+        for r in by.get('wall', []):
+            pl = r['places']
+            if not 5 <= len(pl) <= 8:
+                errs.append(f'wall round {r["id"]} has {len(pl)} stops')
+            for a, b in zip(pl, pl[1:]):
+                d = self.C.row(self.pl[a]['node'])[self.pl[b]['node']]
+                if not 20 <= d <= 80:
+                    errs.append(f'wall round {r["id"]} stops {a}->{b} are {d:.0f} apart')
         for r in by['patrol']:
             pl = r['places']
             if not 5 <= len(pl) <= 8:
