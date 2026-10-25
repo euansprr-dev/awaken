@@ -25,6 +25,7 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
         AwakenTests.register("ascent_windway", 20, AscentTests::windway);
+        AwakenTests.register("ascent_slow_beat", 20, AscentTests::slowBeat);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -733,5 +734,16 @@ final class AscentTests {
             if (t > 40 && !Windways.holds(w, k.x, k.y, k.z)) return new double[]{t, 1, -1, k.y};
         }
         return new double[]{t, 0, -1, k.y};
+    }
+    /** The slow beat (SPEC §17.15): at 0.45 of time the carry flies the same arc, slower (within a few percent). */
+    private static void slowBeat(GameTestHelper h) {
+        AscentRules.Kin a = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0), b = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0);
+        double[] scratch = new double[2];
+        for (int t = 0; t < 9; t++) AscentRules.carryStep(a, 0, 0, 0, scratch);
+        for (int t = 0; t < 20; t++) AscentRules.carryStepSlow(b, 0.45);
+        double da = Math.hypot(a.x, a.y), err = Math.hypot(a.x - b.x, a.y - b.y);
+        h.assertTrue(err < da * 0.06 && b.vy < a.vy + 0.05 && b.vy > a.vy - 0.05,
+                "20 slow ticks fly 9 ticks' arc: " + String.format("(%.2f, %.2f) vs (%.2f, %.2f)", b.x, b.y, a.x, a.y));
+        h.succeed();
     }
 }

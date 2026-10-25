@@ -350,6 +350,26 @@ public final class AscentRules {
 
     // ---- carry ------------------------------------------------------------------------------------------------------
 
+    /**
+     * The slow beat at a big leap's apex (weight, SPEC §17.15): a carry flying fast ({@link #SLOW_SPEED}+) and well up
+     * ({@link #SLOW_HEIGHT}+ over the ground) hangs at the top of its arc, {@link #SLOW_TICKS} ticks at {@link #SLOW}
+     * of time (once per {@link #SLOW_EVERY}): the same arc, slower.
+     */
+    public static final double SLOW = 0.45, SLOW_SPEED = 0.7, SLOW_HEIGHT = 6;
+    public static final int SLOW_TICKS = 8, SLOW_EVERY = 60;
+
+    /** One tick of the carry at {@code s} of time: gravity, drag and travel all scaled (no steering for the beat). */
+    public static void carryStepSlow(Kin k, double s) {
+        k.vy -= G * s;
+        double dh = Math.pow(CARRY_DRAG_H, s);
+        k.vx *= dh;
+        k.vz *= dh;
+        k.vy *= Math.pow(CARRY_DRAG_V, s);
+        k.x += k.vx * s;
+        k.y += k.vy * s;
+        k.z += k.vz * s;
+    }
+
     /** One tick of flying free after letting go: gravity, light drag, and input that bends the path without adding speed. */
     public static void carryStep(Kin k, float yaw, double fwd, double right, double[] scratch) {
         carryStep(k, yaw, fwd, right, scratch, CARRY_DRAG_H);
