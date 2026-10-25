@@ -31,7 +31,7 @@ import org.jspecify.annotations.Nullable;
 public final class RunnerMoves {
     private RunnerMoves() {}
 
-    enum State { NONE, RUN, HANG, PATH }
+    enum State { NONE, RUN, HANG, PATH, GRIP }
 
     static State state = State.NONE;
     /** Spike comparison: a fresh run needs jump held (false) or a jump press in the air within the buffer (true). */
@@ -163,12 +163,18 @@ public final class RunnerMoves {
                 pathTick(p, in, now);
                 return true;
             }
+            case GRIP -> {
+                GripMoves.tick(p, in, k, jumpPressed, level, now);
+                return true;
+            }
             default -> {
             }
         }
         if (!ground) {
             if (jumpPressed) airJumpAt = now;
             FreeRun.air(p);
+            // a climb line in reach: the grip takes it (SPEC §17.23)
+            if (GripMoves.tryStart(p, in, k, level, false, now)) return true;
             if (now >= regrabAt && tryGrab(p, in, level, ctx, now)) return true;
             boolean chain = now <= chainUntil && links > 0;
             // free-running, sprint held is the jump held: run along the wall beside you, climb the one ahead
@@ -190,6 +196,7 @@ public final class RunnerMoves {
                 }
             }
         } else {
+            if (GripMoves.tryStart(p, in, k, level, true, now)) return true;
             return tryLower(p, in, k, level, ctx, now);
         }
         return false;
@@ -209,7 +216,7 @@ public final class RunnerMoves {
         }
     }
 
-    private static void send(Move move, int flag, LocalPlayer p, double tx, double ty, double tz, int axis, int sign) {
+    static void send(Move move, int flag, LocalPlayer p, double tx, double ty, double tz, int axis, int sign) {
         // the Runner's moves feed the Ascent's Flow (a shimmy is a pause, not a move)
         switch (move) {
             case WALL_RUN -> dev.awaken.body.ascent.client.AscentFlow.gain(0.07F);
@@ -222,7 +229,7 @@ public final class RunnerMoves {
         ClientPacketDistributor.sendToServer(new BodyPayloads.Run(move.ordinal(), flag, p.getYRot(), p.getX(), p.getY(), p.getZ(), tx, ty, tz, axis, sign));
     }
 
-    private static void sendEnd(Move move) {
+    static void sendEnd(Move move) {
         ClientPacketDistributor.sendToServer(new BodyPayloads.End(move.ordinal()));
     }
 
@@ -254,14 +261,14 @@ public final class RunnerMoves {
         out[1] = (y * cos + x * sin) * speed;
     }
 
-    private static void turnTo(float yaw, int ticks) {
+    static void turnTo(float yaw, int ticks) {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
         turnStep = Mth.wrapDegrees(yaw - p.getYRot()) / ticks;
         turnLeft = ticks;
     }
 
-    private static float yawOf(double dx, double dz) {
+    static float yawOf(double dx, double dz) {
         return (float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
     }
 
@@ -852,6 +859,7 @@ public final class RunnerMoves {
             case LEDGE_JUMP -> {
                 if (state == State.PATH) state = State.NONE;
             }
+            case GRIP -> GripMoves.end(p, false, "refused");
             default -> {
             }
         }
@@ -860,6 +868,7 @@ public final class RunnerMoves {
     static void stop(LocalPlayer p, String why) {
         endRun(p, true, why);
         endHang(p, true, why);
+        GripMoves.end(p, true, why);
         if (state == State.PATH) state = State.NONE;
         state = State.NONE;
     }
@@ -867,6 +876,7 @@ public final class RunnerMoves {
     /** The dev driver starts a script, or the player was replaced: everything lets go at once. */
     static void reset() {
         FreeRun.reset();
+        GripMoves.reset();
         state = State.NONE;
         runClimb = climbUsed = false;
         edge = null;
@@ -881,6 +891,7 @@ public final class RunnerMoves {
     }
 
     static float wallYaw() {
+        if (state == State.GRIP) return GripMoves.yaw();
         RunnerRules.Edge e = state == State.PATH ? pathEdge : edge;
         return e == null ? 0 : yawOf(e.fx(), e.fz());
     }

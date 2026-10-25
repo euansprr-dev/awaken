@@ -37,6 +37,7 @@ final class RunnerTests {
         AwakenTests.registerIsolated("runner_hang_no_float_kick", 400, RunnerTests::hangNoFloatKick);
         AwakenTests.registerIsolated("runner_probe_cost", 200, RunnerTests::probeCost);
         AwakenTests.register("runner_roof_climb", 20, RunnerTests::roofClimb);
+        AwakenTests.registerIsolated("runner_pipe_grip", 120, RunnerTests::pipeGrip);
         // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
         // teleport accepted, so every move after it is ignored (see docs/carillon/spikes/S3-runner.md, Open issue)
     }
@@ -544,5 +545,88 @@ final class RunnerTests {
             if (RunnerRules.findEdge(level, ctx, M, e.hx(), e.hy(), e.hz(), 2, 1, 0.6, RunnerRules.HANG_DROP + 0.4, RunnerRules.HANG_DROP + RunnerRules.LEDGE_UP, 0, 0.2) != null) k++;
         }
         return k;
+    }
+
+    // ---- the grip on a climb line (SPEC §17.23) -----------------------------------------------------------------------
+
+    /**
+     * A drainpipe on a wall and a free hoist rope: where the body holds each and which way it faces; the server takes a
+     * grip only at a real line where it saw the body, holds it still with no fall damage, lets it go when the line is
+     * gone or on a kick; the slide's and the hop's numbers.
+     */
+    static void pipeGrip(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        var reg = net.minecraft.core.registries.BuiltInRegistries.BLOCK;
+        BlockState pipe = reg.getValue(dev.awaken.Awaken.id("drainpipe")).defaultBlockState()
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH);
+        BlockState rope = reg.getValue(dev.awaken.Awaken.id("rope")).defaultBlockState();
+        for (int x = -1; x <= 5; x++) for (int z = -2; z <= 2; z++) level.setBlockAndUpdate(o.offset(x, -1, z), Blocks.STONE.defaultBlockState());
+        for (int y = 0; y <= 6; y++) {
+            level.setBlockAndUpdate(o.offset(0, y, 1), Blocks.STONE.defaultBlockState());
+            level.setBlockAndUpdate(o.offset(0, y, 0), pipe);
+            level.setBlockAndUpdate(o.offset(4, y, 0), rope);
+        }
+        RunnerServer.fromHistory = true;
+        RunnerServer.latencyTicks = 0;
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var m0 = new BlockPos.MutableBlockPos();
+            // the pipe faces north, so its wall is to the south: the body stands in front of it facing south (+z)
+            GripRules.Line l = GripRules.find(level, m0, o.getX() + 0.5, o.getY() + 2, o.getZ() + 0.3, 0F);
+            h.assertTrue(l != null && !l.free() && l.fz() == 1 && l.fx() == 0, "a drainpipe is a line against its wall: " + l);
+            double front = o.getZ() + 10 / 16.0 - BodyRules.HALF_WIDTH - GripRules.GAP;
+            h.assertTrue(Math.abs(l.z() - front) < 1e-6 && Math.abs(l.x() - (o.getX() + 0.5)) < 1e-6, "held just in front of the pipe: " + l);
+            h.assertTrue(GripRules.facing(l, 0F) && !GripRules.facing(l, 180F), "taken facing the wall, not with your back to it");
+            GripRules.Line r = GripRules.find(level, m0, o.getX() + 4.2, o.getY() + 2, o.getZ() + 0.5, 90F);
+            h.assertTrue(r != null && r.free() && r.fx() > 0.99, "a rope is held from the side the body is on: " + r);
+            h.assertTrue(GripRules.find(level, m0, o.getX() + 2.5, o.getY() + 2, o.getZ() + 0.5, 0F) == null, "no line between them");
+
+            long now = h.getLevel().getServer().overworld().getGameTime();
+            ServerPlayer a = BodyTests.player(h, null);
+            Vec3 s = new Vec3(l.x(), o.getY() + 2, l.z());
+            a.snapTo(s.x, s.y, s.z, 0F, 0F);
+            a.setOnGround(false);
+            BodyMotion m = BodyServer.motion(a);
+            int axis = 2, sign = 1;
+            h.assertFalse(RunnerServer.grip(a, m, run(Move.GRIP, BodyPayloads.GRIP_SLIDE, 0F, s, l.x(), s.y, l.z(), axis, sign), now),
+                    "a grip starts holding or climbing, never mid-slide");
+            Vec3 bare = new Vec3(o.getX() + 2.5, o.getY() + 2, o.getZ() + 0.5);
+            ServerPlayer b = BodyTests.player(h, null);
+            b.snapTo(bare.x, bare.y, bare.z, 0F, 0F);
+            h.assertFalse(RunnerServer.grip(b, BodyServer.motion(b), run(Move.GRIP, BodyPayloads.GRIP_HOLD, 0F, bare, bare.x, bare.y, bare.z, axis, sign), now),
+                    "no grip where there's no line");
+            h.assertTrue(RunnerServer.grip(a, m, run(Move.GRIP, BodyPayloads.GRIP_CLIMB, 0F, s, l.x(), s.y, l.z(), axis, sign), now), "a grip on the pipe");
+            h.assertTrue(m.gripping && m.gripBx == o.getX() && m.gripBz == o.getZ(), "the server holds the pipe's column");
+            h.assertTrue(RunnerServer.grip(a, m, run(Move.GRIP, BodyPayloads.GRIP_SLIDE, 0F, s, l.x(), s.y, l.z(), axis, sign), now + 1), "a slide on it");
+            // held still: the server's own physics doesn't sink it, and a long slide takes no fall damage
+            a.setDeltaMovement(0, -1, 0);
+            a.fallDistance = 12;
+            RunnerServer.tick(a, m, now + 2);
+            h.assertTrue(a.getDeltaMovement().lengthSqr() == 0 && a.fallDistance == 0, "held: no motion, no fall built up");
+            // the pipe torn down: the re-checks let go
+            for (int y = 0; y <= 6; y++) level.setBlockAndUpdate(o.offset(0, y, 0), Blocks.AIR.defaultBlockState());
+            for (long t = now + 3; t < now + 3 + GripRules.CHECK * (GripRules.MISS + 1) && m.gripping; t++) RunnerServer.tick(a, m, t);
+            h.assertFalse(m.gripping, "no line, no grip");
+            for (int y = 0; y <= 6; y++) level.setBlockAndUpdate(o.offset(0, y, 0), pipe);
+            long later = now + 40;
+            h.assertTrue(RunnerServer.grip(a, m, run(Move.GRIP, BodyPayloads.GRIP_HOLD, 0F, s, l.x(), s.y, l.z(), axis, sign), later), "gripped again");
+            h.assertTrue(RunnerServer.grip(a, m, run(Move.GRIP, BodyPayloads.GRIP_KICK, 0F, s, l.x(), s.y, l.z(), axis, sign), later + 3) && !m.gripping,
+                    "a kick off the wall leaves the line");
+
+            // the slide speeds up to its top in under a second; the hop rises exactly its height
+            double v = 0;
+            int ticks = 0;
+            while (v < GripRules.SLIDE_MAX && ticks < 40) {
+                v = GripRules.slide(v);
+                ticks++;
+            }
+            h.assertTrue(v == GripRules.SLIDE_MAX && ticks <= 12, "the slide's top speed in " + ticks + " ticks");
+            double rise = 0;
+            for (int t = 1; t <= GripRules.HOP_TICKS; t++) rise += GripRules.hopStep(t);
+            h.assertTrue(Math.abs(rise - GripRules.HOP) < 1e-9, "a hop rises " + rise);
+            for (int x = -1; x <= 5; x++) for (int y = -1; y <= 6; y++) for (int z = -2; z <= 2; z++)
+                level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
+            BodyTests.done(h, a, b);
+        });
     }
 }

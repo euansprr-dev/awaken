@@ -147,7 +147,7 @@ final class BodyAnims {
             case WALL_RUN -> dev.awaken.body.RunnerRules.RUN_TICKS;
             case WALL_CLIMB -> dev.awaken.body.RunnerRules.CLIMB_TICKS + 2;
             case WALL_JUMP, LEDGE_JUMP -> 10;
-            case LEDGE_HANG, SHIMMY -> 60;
+            case LEDGE_HANG, SHIMMY, GRIP -> 60;
             case null -> 0;
         };
     }
@@ -386,6 +386,19 @@ final class BodyAnims {
                 s.walkAnimationSpeed = RunnerMoves.shimmying ? 0.35F : 0F;
                 return true;
             }
+            case GRIP -> {
+                // facing the line; without the clips, the arms take turns up it while climbing, both up holding
+                float wy = RunnerMoves.wallYaw();
+                s.yRot = Mth.clamp(Mth.wrapDegrees(s.yRot + s.bodyRot - wy), -80F, 80F);
+                s.bodyRot = wy;
+                s.isCrouching = false;
+                boolean climbing = GripMoves.mode == GripMoves.CLIMB || GripMoves.mode == GripMoves.HOP;
+                boolean first = ((int) (GripMoves.travelled / 0.8)) % 2 == 0;
+                s.rightArmPose = climbing && !first ? HumanoidModel.ArmPose.BLOCK : HumanoidModel.ArmPose.THROW_TRIDENT;
+                s.leftArmPose = climbing && first ? HumanoidModel.ArmPose.BLOCK : HumanoidModel.ArmPose.THROW_TRIDENT;
+                s.walkAnimationSpeed = climbing ? 0.5F : 0F;
+                return true;
+            }
             default -> {
                 return false;
             }
@@ -417,6 +430,14 @@ final class BodyAnims {
                 ps.pushPose();
                 pushed++;
                 tip(ps, 2.0F, -6F + sway, s.bodyRot * Mth.DEG_TO_RAD);
+            }
+            case GRIP -> {
+                // close in to the line, pivoting at the hands: sliding, the hips sit back a little off it
+                float slide = GripMoves.mode == GripMoves.SLIDE ? 1F : 0F;
+                float sway = 0.8F * Mth.sin(age * 0.15F);
+                ps.pushPose();
+                pushed++;
+                tip(ps, 1.7F, 3F - 9F * slide + sway, s.bodyRot * Mth.DEG_TO_RAD);
             }
             default -> {
             }

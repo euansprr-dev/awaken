@@ -37,6 +37,10 @@ final class BodyMotion {
     double hangX, hangY, hangZ;
     int hangFallbacks;
     boolean hangExplained;
+    // grip on a climb line (SPEC §17.23): the line's column, since when, misses of the re-check
+    boolean gripping;
+    int gripBx, gripBz, gripMiss;
+    long gripSince, gripEndedAt = Long.MIN_VALUE / 2;
     // the server's own recent positions (a claimed start must be one of them)
     final double[] hist = new double[RunnerRules.HISTORY * 3];
     int histAt, histCount;
@@ -45,7 +49,7 @@ final class BodyMotion {
     int tRuns, tGrabs;
 
     boolean runner() {
-        return runUntil != 0 || hanging;
+        return runUntil != 0 || hanging || gripping;
     }
 
     boolean ranWall(long id) {

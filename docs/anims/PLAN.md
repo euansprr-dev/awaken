@@ -1,6 +1,6 @@
-# Hands: first-person animation for AWAKEN (plan, awaiting Euan's approval)
+# Hands: first-person animation for AWAKEN (approved 2026-10-25; building phase by phase)
 
-Status: plan only, 2026-10-25. No game code until Euan approves. Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
+Status: approved by Euan 2026-10-25 with every recommendation in §7; P1 built (SPEC §17.23, §24). Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
 Euan's ask: a real pipe climb and slide; first-person animation for every move of The Ascent; "Cinematic
 Interactions"-level hand moments across the mod; all in the design language we already have.
 
@@ -232,3 +232,55 @@ Total about 15-22 hours of builder time. P4 and P5 can swap if Euan wants the cr
 - Complaints to design around: conflicts with other mods' camera and hand mixins; slow storage trips (no scenes on
   chests); motion sickness from camera motion you didn't cause, roll and FOV (respect the comfort settings, roll only
   on approach); wind-ups that feel like lag (the action happens on the click and the animation catches up).
+
+## 9. The API, for every module (combat included)
+
+Everything first person goes through `dev.awaken.core.api.FirstPerson` (common: holds no client classes, a no-op on a
+server). The `anims` client installs the player and composes three layers each frame. A module never adds its own
+`RenderHandEvent` listener.
+
+**World layer: the body in the world, anchored to what it touches.**
+```java
+FirstPerson.world("body_grip", 100, (partialTick, rig) -> {
+    // fill the limbs you pose this frame (world coordinates); return true to own the body this frame
+    rig.fx = facingX; rig.fz = facingZ;                       // where the body faces
+    rig.reach(Limb.RIGHT_ARM, shoulderX, shoulderY, shoulderZ, // near the joint
+              fistX, fistY, fistZ, Rig.ARM_REACH,              // where the fist must be
+              0, 1, 0, weight);                                // the limb's front; 0..1 how much shows
+    rig.limb(Limb.BODY, neck..., hips..., front..., weight);   // or a limb from root toward tip
+    return true;
+});
+```
+Priorities: movement 100, interactions 200, combat 300 (higher is asked first; the first that returns true wins). While
+the rig shows arms, vanilla's hands (and held items) are hidden; draw a held weapon yourself if the world arms hold one
+(P5's station kit adds item drawing at a limb's end).
+
+**View layer: moves on top of vanilla's hands and whatever they hold.**
+```java
+FirstPerson.view((partialTick, v) -> {
+    // view space: x right, y up, z toward you (blocks); then pitch, yaw, roll (degrees, applied in that order)
+    FirstPerson.View.add(v.both, k, x, y, z, pitch, yaw, roll);   // both hands
+    FirstPerson.View.add(v.main, k, ...);                          // the main hand only
+    v.drawOff = true;                                              // draw the off arm even when it's empty
+    v.hideMain = true;                                             // hide a hand
+});
+```
+Stances add every frame; keep them cheap and allocation-free.
+
+**Clips: one-shots and loops written in Python, with events.**
+```java
+FirstPerson.play("fp_pipe_kick");           // from its start; FirstPerson.play(name, speed)
+FirstPerson.stop("fp_guard_loop");          // fades out over 3 ticks
+FirstPerson.listen((clip, event) -> { if (event.equals("impact")) hitStop(); });
+```
+Author clips in `tools/art/specs/fp_*.py` (add the file to `anims.FpClipSet.FILES`): keys `(tick, hand(x, y, z, pitch,
+yaw, roll), "curve")` per hand (`main`, `off`), `both=True` to draw the empty off arm, `events=[(tick, "name")]`,
+`loop=True` for held stances. Curves are the body clips' names (`dev.awaken.anims.Ease`: linear, easeoutcubic,
+easeinoutsine, easeinquad, easeoutquad, easeoutsine, easeinsine, easeincubic, easeoutback, smooth, step). A one-shot
+ends at rest (all zeros) so it hands back to vanilla cleanly (`anims_fp_clips` checks). Authored right-handed; the game
+mirrors x, yaw and roll for a left main arm. `python3 tools/art/specs/fp_moves.py preview DIR` draws a strip from the eye.
+
+**Timing language** (keep it): blend in 2-4 ticks, out 4-6; one-shots ease out of their start fast (easeoutcubic) and
+settle (easeinoutsine); a small anticipation before a big action; a held pose trembles slightly; hands trail fast turns
+(look-lag, P2); comfort settings respected (reduced motion halves amplitudes).
+

@@ -30,18 +30,40 @@ public final class BodyClips {
             LEDGE_UP = "body_ledge_up", LEDGE_SIDE_L = "body_ledge_side_l", LEDGE_SIDE_R = "body_ledge_side_r",
             LEDGE_BACK = "body_ledge_back", LOWER = "body_lower", WALLCLIMB = "body_wallclimb";
 
+    /**
+     * The grip on a climb line (SPEC §17.23): held still, climbing hand over hand (and its free-run pace), sliding down
+     * (each a loop with an {@code _end}), and the one-shots out of it: the kick off the wall, the swing out to a side,
+     * the hop up the line, the landing at its foot.
+     */
+    public static final String PIPE_HOLD = "body_pipe_hold", PIPE_CLIMB = "body_pipe_climb", PIPE_CLIMB_FAST = "body_pipe_climb_fast",
+            PIPE_SLIDE = "body_pipe_slide", PIPE_KICK = "body_pipe_kick", PIPE_SIDE_L = "body_pipe_side_l", PIPE_SIDE_R = "body_pipe_side_r",
+            PIPE_HOP = "body_pipe_hop", PIPE_LAND = "body_pipe_land";
+
+    /**
+     * First-person clips (core.api.FirstPerson, assets/awaken/fp_clips/fp_moves.json from tools/art/specs/fp_moves.py):
+     * the hands as they leave a line. On the line itself the hands are drawn on it in the world (body.client.GripView).
+     */
+    public static final String FP_PIPE_KICK = "fp_pipe_kick", FP_PIPE_SIDE_L = "fp_pipe_side_l", FP_PIPE_SIDE_R = "fp_pipe_side_r",
+            FP_PIPE_LAND = "fp_pipe_land";
+
+    /** Every first-person clip the body plays (a GameTest holds them to the file). */
+    public static final List<String> FP = List.of(FP_PIPE_KICK, FP_PIPE_SIDE_L, FP_PIPE_SIDE_R, FP_PIPE_LAND);
+
     /** The Runner's clips by network index (a Seen's code minus {@code SEEN_CLIP}); only append. */
     public static final List<String> RUNNER = List.of(WALLRUN_L, WALLRUN_R, WALLJUMP, GRAB, HANG, SHIMMY_L, SHIMMY_R, LEDGE_UP,
-            LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER, MANTLE, WALLCLIMB);
+            LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER, MANTLE, WALLCLIMB,
+            PIPE_HOLD, PIPE_CLIMB, PIPE_CLIMB_FAST, PIPE_SLIDE, PIPE_KICK, PIPE_SIDE_L, PIPE_SIDE_R, PIPE_HOP, PIPE_LAND);
 
     public static final List<String> ALL = List.of(SLIDE, SLIDE_END, SLIDE_JUMP, ROLL, MANTLE, SPRINT, SPRINT_END,
             WALLRUN_L, WALLRUN_R, WALLRUN_L + "_end", WALLRUN_R + "_end", WALLJUMP, GRAB, HANG, HANG + "_end", SHIMMY_L, SHIMMY_R,
-            SHIMMY_L + "_end", SHIMMY_R + "_end", LEDGE_UP, LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER, WALLCLIMB, WALLCLIMB + "_end");
+            SHIMMY_L + "_end", SHIMMY_R + "_end", LEDGE_UP, LEDGE_SIDE_L, LEDGE_SIDE_R, LEDGE_BACK, LOWER, WALLCLIMB, WALLCLIMB + "_end",
+            PIPE_HOLD, PIPE_HOLD + "_end", PIPE_CLIMB, PIPE_CLIMB + "_end", PIPE_CLIMB_FAST, PIPE_CLIMB_FAST + "_end", PIPE_SLIDE, PIPE_SLIDE + "_end",
+            PIPE_KICK, PIPE_SIDE_L, PIPE_SIDE_R, PIPE_HOP, PIPE_LAND);
 
     /** A Runner clip that loops until its move ends (and then plays its {@code _end}). */
     public static boolean loops(String clip) {
         return clip.equals(WALLRUN_L) || clip.equals(WALLRUN_R) || clip.equals(HANG) || clip.equals(SHIMMY_L) || clip.equals(SHIMMY_R)
-                || clip.equals(WALLCLIMB);
+                || clip.equals(WALLCLIMB) || clip.equals(PIPE_HOLD) || clip.equals(PIPE_CLIMB) || clip.equals(PIPE_CLIMB_FAST) || clip.equals(PIPE_SLIDE);
     }
 
     /** Whether the wall a run uses is on the runner's left (facing yaw; the wall's normal axis and side as in RunnerRules.Wall). */
