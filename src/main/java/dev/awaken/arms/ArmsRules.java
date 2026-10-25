@@ -149,6 +149,24 @@ public final class ArmsRules {
         return postureMax >= POSTURE_LORD;
     }
 
+    /** A fall this long (blocks) when the strike key is pressed arms a Plunge. */
+    public static final float PLUNGE_FALL = 2F;
+
+    /** A strike pressed in the air in a real fall (not a hop) arms a Plunge. */
+    public static boolean plunges(boolean onGround, double fallDistance, boolean inLiquid) {
+        return !onGround && !inLiquid && fallDistance >= PLUNGE_FALL;
+    }
+
+    /** A Plunge lands harder the further the fall: ×1.33 from 2 blocks, ×2 from 6, at most ×2.8. */
+    public static float plungePower(double fell) {
+        return (float) Math.min(2.8, 1 + Math.max(0, fell) / 6);
+    }
+
+    /** The Art: a heavy held through to its full charge (2 ticks' grace for the trip) with the meter full. */
+    public static boolean artReady(int held, Archetype.Charge c, float resonance) {
+        return held >= c.max() - 2 && resonance >= RESONANCE_MAX;
+    }
+
     /** A stance left alone: what is left of {@code value} after {@code sinceHit} ticks untouched (both sides). */
     public static float drained(float value, long sinceHit, boolean lord) {
         long idle = sinceHit - POSTURE_IDLE_TICKS;

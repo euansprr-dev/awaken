@@ -107,6 +107,20 @@ public final class ArmsPredict {
             begin(p, st, Archetype.Move.SLIPCUT, -1, 0, s);
             return;
         }
+        if (st.move(Archetype.Move.UNDERCUT) != null && Body.isSliding(p)) {
+            begin(p, st, Archetype.Move.UNDERCUT, -1, 0, s);
+            return;
+        }
+        if (st.move(Archetype.Move.PLUNGE) != null && ArmsRules.plunges(p.onGround(), p.fallDistance, p.isInLiquid())) {
+            // armed: the blade raised, a dive to the ground, the blow where it lands
+            plunging = true;
+            plungeSeq = s;
+            style = st;
+            move = null;
+            Vec3 v = p.getDeltaMovement();
+            p.setDeltaMovement(v.x * 0.6, Math.min(v.y, -1.1), v.z * 0.6);
+            return;
+        }
         ArmsRules.Decision d = ArmsRules.tap(st, style == st ? move : null, moveStart, step, cadence, ticks, 0);
         if (d == null) return;
         if (d.startAt() > ticks) {
@@ -156,6 +170,15 @@ public final class ArmsPredict {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        if (plunging) {
+            Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
+            if (st == null || p.isInLiquid() || p.getAbilities().flying) plunging = false;
+            else if (p.onGround()) {
+                plunging = false;
+                begin(p, st, Archetype.Move.PLUNGE, -1, 0, plungeSeq);
+                CombatFeedback.kick(0F, 3F, 0F, 8);
+            }
+        }
         if (buffered != null && ticks >= buffered.startAt()) {
             ArmsRules.Decision d = buffered;
             Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
@@ -207,13 +230,20 @@ public final class ArmsPredict {
         charging = false;
         int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
+        int held = c.min() + (ticks - chargeStart);
+        if (st.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, c, resonance)) {
+            begin(p, st, Archetype.Move.ART, -1, 0, seq); // held through with the meter full: the Art
+            return;
+        }
         boolean execution = target >= 0 && BROKEN.containsKey(target) && st.move(Archetype.Move.EXECUTION) != null;
-        begin(p, st, execution ? Archetype.Move.EXECUTION : Archetype.Move.HEAVY, -1, 0, seq,
-                !execution && c.perfect(c.min() + (ticks - chargeStart)));
+        begin(p, st, execution ? Archetype.Move.EXECUTION : Archetype.Move.HEAVY, -1, 0, seq, !execution && c.perfect(held));
     }
 
     /** The running heavy was released on its glint (its arc burns gold). */
     static boolean perfectHeavy;
+    /** A Plunge armed in a fall (the blade held high until it lands), and its press. */
+    static boolean plunging;
+    static int plungeSeq;
 
     /** How far a held heavy has charged (0..1, the glint at its mark), or -1 when not charging. */
     static float charge() {
@@ -440,7 +470,7 @@ public final class ArmsPredict {
         style = null;
         step = -1;
         buffered = null;
-        pressHeld = charging = dodging = false;
+        pressHeld = charging = dodging = plunging = false;
         dodgeCharges = -1;
         resonance = 0;
         BROKEN.clear();

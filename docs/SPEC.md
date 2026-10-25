@@ -3238,7 +3238,17 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   ticks (every other tick; the plan's 0.45 rounded to the tick clock), Resonance +15, a Slipcut for 6 ticks. Two
   charges, 24 ticks each. A refused dodge stops the body where it is.
 - **Context moves** (no input of their own): Riposte (strike ≤ 12 ticks after a deflect), Slipcut (strike ≤ 6 ticks
-  after a dodge), Execution (a heavy on a broken creature in reach: motion 4, capped at 8% of a Lord's max health).
+  after a dodge), Execution (a heavy on a broken creature in reach: motion 4, capped at 8% of a Lord's max health),
+  **Undercut** (a strike out of a slide, the body module's own state: a low sweep, 160° wide, posture 8; the slide's
+  trip still happens), **Plunge** (a strike in a fall of 2+ blocks arms it: the hands hold the blade high, the client
+  dives, and it strikes all round where the fighter lands, motion × 1 + fall/6, at most × 2.8, the landing taking half
+  its fall damage; it gives up in water or after 5 s).
+- **The Art** (the Longsword's default): a heavy held through to full charge (2 ticks' grace) with Resonance full is
+  the Art, not a heavy, and spends the whole meter (so holding past the glint is a choice). A great level sweep whose
+  reach grows 2 blocks a tick through its 4 active ticks, out to 10, striking each creature once as the wave passes:
+  motion 3, posture 30, 150 ms hit-stop, capped at 12% of a Lord's health. Its arc burns gold, a golden wave rolls on
+  along the ground, and the kit's `arms.art` replaces the swish (the steel's ring swelling through the wind-up, the
+  release, a wave of air rolling out). Lord-forged and legendary weapons bring their own Arts later (S8).
 - **Posture** (creatures only; no player stamina): normal 20, elites, wardens and beasts 40, bosses, breaks and
   nightmares 100 (`CreatureTag`, `MobRole`). It drains at 6/s (Lords 8/s) after 2 s untouched; full, it breaks for 50
   ticks (Lords 40), then cannot break again for 6 s. On the struck creature only (the patent rule holds). Not saved.
@@ -3293,7 +3303,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   sword never rises (a sword another mod made to block keeps its own).
 - Off while riding, sleeping, projecting, meditating, flying or gliding; Arms never runs a spectator's melee.
 
-**Sounds** (`ArmsSounds`, 25 events `arms.*`, 74 files; tools/art/specs/audio_arms.py).
+**Sounds** (`ArmsSounds`, 26 events `arms.*`, 76 files; tools/art/specs/audio_arms.py).
 - Hybrid by design: CC0 recordings (Kenney's Impact Sounds and RPG Audio, `tools/art/sources/kenney`, CC0 1.0, licence
   files kept) for the physical transients and bodies synthesis renders thin; the audio kit for the air, the steel's ring
   (inharmonic modes), the weight, the shimmer, the rooms and the tells' language. Every event is layered (transient,
@@ -3303,7 +3313,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   Every render is checked: loudness and true peak after encoding, a blow's transient in its first 6 ms (it meets the
   hit-stop's frame), no click at either end, no 2–5 kHz harshness past its family's, variants spectrally distinct. The
   checks catch a broken sound, not a dull one: the listening page (`tools/art/arms_listen.py` →
-  `docs/combat/listening-<date>.html`: eight scenes at the game's own timing, read from the table, and every sound
+  `docs/combat/listening-<date>.html`: nine scenes at the game's own timing, read from the table, and every sound
   alone, each with keep / remake / cut) and Euan's ear are the last gate.
 - Which sound a blow makes is chosen in one place for both sides: the swish by the move's `swish`, a semitone higher
   per rhythm step; the impact by what the blade meets (`core.api.BodyMaterial`, §12: flesh, armour, bone, wood, stone,
@@ -3318,5 +3328,5 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   voice), with the shard and a small view jolt from where it came (vanilla's own tilt stays).
 
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
-kill switch, sounds, stance rules, clips; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
+kill switch, sounds, stance rules, clips, the Art, the Plunge; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles.

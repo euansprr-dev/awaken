@@ -37,6 +37,7 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GUARD_BREAK = sound("guard_break");
     public static final DeferredHolder<SoundEvent, SoundEvent> BREAK = sound("break");
     public static final DeferredHolder<SoundEvent, SoundEvent> EXECUTION = sound("execution");
+    public static final DeferredHolder<SoundEvent, SoundEvent> ART = sound("art");
     public static final DeferredHolder<SoundEvent, SoundEvent> PERFECT_DODGE = sound("perfect_dodge");
     public static final DeferredHolder<SoundEvent, SoundEvent> DODGE = sound("dodge");
     public static final DeferredHolder<SoundEvent, SoundEvent> CHARGE = sound("charge");
@@ -57,6 +58,7 @@ public final class ArmsSounds {
             case LIGHT -> SWISH_LIGHT.get();
             case HEAVY -> SWISH_HEAVY.get();
             case THRUST -> SWISH_THRUST.get();
+            case ART -> ART.get();
         };
     }
 

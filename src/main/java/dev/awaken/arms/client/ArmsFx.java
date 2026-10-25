@@ -4,6 +4,7 @@ import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.core.api.BodyMaterial;
 import dev.awaken.powers.client.fx.FxClient;
+import dev.awaken.powers.fx.FxStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
@@ -19,7 +20,8 @@ import java.util.List;
  * What a blow looks like in the world (SPEC §24), on the shared effects engine (powers' FxClient: its budget, its
  * settings): the blade's arc as the blow lands, a crescent the hand's own arc sweeps, pushed out ahead of the eye so
  * it faces whoever looks (a thrust a straight streak), tinted by the weapon and brighter with each rhythm step (gold
- * on a perfect heavy); and where it lands, sparks or chips by what it met. The fighter's own on their prediction;
+ * on a perfect heavy, an Execution and the Art, whose wave also rolls on along the ground); and where it lands, sparks
+ * or chips by what it met. The fighter's own on their prediction;
  * everyone else's from the server's word.
  */
 final class ArmsFx {
@@ -73,6 +75,11 @@ final class ArmsFx {
             FxClient.thrust(e, from, forward, 0.3F, def.reach() * 0.85F, 0.11F, def.active(), argb);
             return;
         }
+        // the Art's wave rolls on along the ground from the blade, out to its range
+        if (def.art().isPresent()) {
+            Vec3 flat = new Vec3(forward.x, 0, forward.z);
+            if (flat.lengthSqr() > 1e-6) FxClient.groundWave(e, flat.normalize(), def.art().get().range(), def.arc() * 0.5F, def.active() * 3, FxStyle.ARCHITECT);
+        }
         List<Float> a = def.swing().from(), b = def.swing().to();
         float ax = HX + a.get(0) - SX, ay = HY + a.get(1) - SY, bx = HX + b.get(0) - SX, by = HY + b.get(1) - SY;
         float start = (float) Mth.atan2(ay, ax) * Mth.RAD_TO_DEG, end = (float) Mth.atan2(by, bx) * Mth.RAD_TO_DEG;
@@ -85,7 +92,7 @@ final class ArmsFx {
 
     /** The blade's light: the weapon's material, brighter each rhythm step; gold on a perfect heavy or an Execution. */
     static int colour(ItemStack stack, int cadence, boolean perfect, Archetype.Move move) {
-        if (perfect || move == Archetype.Move.EXECUTION) return 0xE0FFD060;
+        if (perfect || move == Archetype.Move.EXECUTION || move == Archetype.Move.ART) return 0xE0FFD060;
         String path = stack.isEmpty() ? "" : BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
         int rgb;
         if (path.contains("diamond")) rgb = 0xA0F0FF;

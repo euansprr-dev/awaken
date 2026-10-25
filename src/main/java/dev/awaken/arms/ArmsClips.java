@@ -21,15 +21,14 @@ public final class ArmsClips {
     public static final String DODGE_BACK = "arms_dodge_back", DODGE_LEFT = "arms_dodge_left", DODGE_RIGHT = "arms_dodge_right";
 
     public static final List<String> ALL = List.of("arms_strike_1", "arms_strike_2", "arms_strike_3", "arms_strike_4", "arms_heavy",
-            "arms_riposte", "arms_slipcut", "arms_execution", GUARD, GUARD + "_end", CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT);
+            "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT);
 
-    /** The clip a move plays, or null for one without its own (the Art until it lands). */
+    /** The clip a move plays (a fifth strike borrows the first's), or null for one without its own. */
     public static @Nullable String of(Archetype.Move move) {
         return switch (move) {
             case STRIKE_1, STRIKE_2, STRIKE_3, STRIKE_4 -> "arms_" + move.key;
             case STRIKE_5 -> "arms_strike_1";
-            case HEAVY, RIPOSTE, SLIPCUT, EXECUTION -> "arms_" + move.key;
-            case ART -> null;
+            case HEAVY, RIPOSTE, SLIPCUT, EXECUTION, ART, UNDERCUT, PLUNGE -> "arms_" + move.key;
         };
     }
 

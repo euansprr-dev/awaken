@@ -6,6 +6,7 @@ import dev.awaken.core.api.CreatureTag;
 import dev.awaken.core.api.MobRole;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.Strikes;
+import dev.awaken.body.Body;
 import dev.awaken.veil.Veil;
 import net.minecraft.core.Holder;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -34,6 +35,7 @@ import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
@@ -126,13 +128,21 @@ final class ArmsServer {
                 if (heavy == null || heavy.charge().isEmpty()) return;
                 int held = heavy.charge().get().min() + (int) (now - s.chargeStart);
                 s.chargeStart = -1;
+                if (style.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, heavy.charge().get(), s.resonance)) {
+                    resonance(p, s, -ArmsRules.RESONANCE_MAX);
+                    begin(p, s, style, Archetype.Move.ART, -1, 0, now, msg.seq());
+                    return;
+                }
                 heavy(p, s, style, heavy, Math.min(held, heavy.charge().get().max()), now, msg.seq());
             }
             default -> { }
         }
     }
 
-    /** A tap: a riposte or a Slipcut when one is open, else the chain's next strike (now, or buffered for its window). */
+    /**
+     * A tap: a riposte or a Slipcut when one is open, an Undercut out of a slide, a Plunge armed in a fall, else the
+     * chain's next strike (now, or buffered for its window).
+     */
     static void strike(ServerPlayer p, ArmsState s, Archetypes.Loaded style, long now, int seq) {
         Archetype.MoveDef riposte = style.move(Archetype.Move.RIPOSTE);
         if (riposte != null && now - s.deflectAt <= riposte.window()) {
@@ -145,6 +155,16 @@ final class ArmsServer {
             s.dodgeAt = Long.MIN_VALUE / 2;
             begin(p, s, style, Archetype.Move.SLIPCUT, -1, 0, now, seq);
             return;
+        }
+        if (style.move(Archetype.Move.UNDERCUT) != null && Body.isSliding(p)) {
+            begin(p, s, style, Archetype.Move.UNDERCUT, -1, 0, now, seq);
+            return;
+        }
+        if (style.move(Archetype.Move.PLUNGE) != null && ArmsRules.plunges(p.onGround(), p.fallDistance, p.isInLiquid())) {
+            s.plungeSeq = seq;
+            s.plungeAt = now;
+            s.plungeFall = p.fallDistance;
+            return; // it strikes where it lands
         }
         ArmsRules.Decision d = ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, 0);
         if (d == null) return; // too early: a mash far ahead of the window counts for nothing
@@ -212,6 +232,7 @@ final class ArmsServer {
             if (def != null && rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) sweep(p, s, def, now);
         }
         if (s.focus >= 0 && (now & 3) == 0) holdFocus(p, s, now);
+        if (s.plungeSeq >= 0) plunge(p, s, now);
         if (s.guardBreak) {
             s.guardBreak = false;
             breakGuard(p, s);
@@ -226,7 +247,7 @@ final class ArmsServer {
     /** The arc's work for one active tick: every creature in reach and in the arc, once. */
     static void sweep(ServerPlayer p, ArmsState s, Archetype.MoveDef def, long now) {
         ServerLevel level = p.level();
-        double reach = def.reach() + 0.3;
+        double reach = def.reachAt(now - s.moveStart) + 0.3;
         Vec3 eye = p.getEyePosition();
         float yaw = p.getYRot() + focusTurn(p, s);
         AABB box = p.getBoundingBox().inflate(reach + 1, 1.5, reach + 1);
@@ -242,6 +263,30 @@ final class ArmsServer {
             if (t.getBoundingBox().maxY < p.getY() - 1.0 || t.getBoundingBox().minY > p.getEyeY() + 1.5) continue;
             s.markHit(t.getId());
             hit(p, s, def, t, now);
+        }
+    }
+
+    /** A Plunge in the air: it lands as the move (all round, harder the further it fell), or gives up in water or after 5 s. */
+    static void plunge(ServerPlayer p, ArmsState s, long now) {
+        Archetypes.Loaded style = Arms.styleOf(p.getMainHandItem());
+        if (style == null || !Arms.fights(p) || off(p) || p.isInLiquid() || now - s.plungeAt > 100) {
+            s.plungeSeq = -1;
+            return;
+        }
+        s.plungeFall = Math.max(s.plungeFall, p.fallDistance);
+        if (!p.onGround()) return;
+        s.plungePower = ArmsRules.plungePower(s.plungeFall);
+        int seq = s.plungeSeq;
+        s.plungeSeq = -1;
+        begin(p, s, style, Archetype.Move.PLUNGE, -1, 0, now, seq);
+    }
+
+    /** A Plunge's landing takes half the fall: the blade went into the ground first. */
+    static void onFall(LivingFallEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        ArmsState s = p.getExistingDataOrNull(ArmsContent.STATE);
+        if (s != null && (s.plungeSeq >= 0 || (s.move == Archetype.Move.PLUNGE && now(p) - s.moveStart <= 1))) {
+            e.setDamageMultiplier(e.getDamageMultiplier() * 0.5F);
         }
     }
 
@@ -282,7 +327,7 @@ final class ArmsServer {
         AttributeInstance speed = p.getAttribute(Attributes.ATTACK_SPEED);
         pendingBy = p.getId();
         pendingTarget = t.getId();
-        pendingMotion = ArmsRules.motion(def, s.cadence, s.perfectHeavy);
+        pendingMotion = ArmsRules.motion(def, s.cadence, s.perfectHeavy) * (s.move == Archetype.Move.PLUNGE ? s.plungePower : 1);
         pendingPosture = ArmsRules.posture(def, s.cadence, s.perfectHeavy);
         pendingCap = def.bossCap();
         pendingLanded = false;

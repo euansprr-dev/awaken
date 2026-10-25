@@ -41,6 +41,61 @@ final class ArmsTests {
         AwakenTests.register("arms_sounds", 20, ArmsTests::sounds);
         AwakenTests.register("arms_stance_rules", 20, ArmsTests::stanceRules);
         AwakenTests.register("arms_clips", 20, ArmsTests::clips);
+        AwakenTests.register("arms_art", 60, ArmsTests::art);
+        AwakenTests.register("arms_plunge", 60, ArmsTests::plungeTest);
+    }
+
+    /** A heavy held through to full charge with the meter full is the Art: the meter spent, its wave reaching past any heavy. */
+    static void art(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        LivingEntity far = put(h, EntityTypes.ZOMBIE, 1.5, 6.0, 200);
+        Archetype.Charge c = longsword().move(Archetype.Move.HEAVY).charge().orElseThrow();
+        ArmsState s = ArmsServer.state(p);
+        long now = ArmsServer.now(p);
+        // not full: a held-through heavy is only a heavy
+        s.resonance = ArmsRules.RESONANCE_MAX - 1;
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1));
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
+        s.chargeStart = now - (c.max() - c.min());
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_RELEASE, 0F, 0F, -1));
+        h.assertTrue(s.move == Archetype.Move.HEAVY, "short of a full meter, it's a heavy (" + s.move + ")");
+        s.clearMove();
+        // full: the Art, and the meter is spent
+        s.resonance = ArmsRules.RESONANCE_MAX;
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1));
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
+        s.chargeStart = now - (c.max() - c.min());
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_RELEASE, 0F, 0F, -1));
+        h.assertTrue(s.move == Archetype.Move.ART && s.resonance == 0, "held through with the meter full: the Art, the meter spent (" + s.move + ", " + s.resonance + ")");
+        Archetype.MoveDef def = longsword().move(Archetype.Move.ART);
+        h.assertTrue(longsword().move(Archetype.Move.HEAVY).reach() + 0.3 < far.distanceTo(p), "a heavy wouldn't reach it");
+        for (int i = 0; i < def.active(); i++) ArmsServer.sweep(p, s, def, s.moveStart + def.windup() + i);
+        h.assertTrue(far.getHealth() < 200, "the Art's wave rolls out and strikes it " + String.format("%.1f", far.distanceTo(p)) + " blocks off");
+        done(h, p);
+    }
+
+    /** A strike in a fall arms a Plunge; it lands all round where the fighter comes down, harder the further the fall. */
+    static void plungeTest(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 1.5, 0F);
+        LivingEntity behind = put(h, EntityTypes.ZOMBIE, 1.5, -0.5, 200);
+        ArmsState s = ArmsServer.state(p);
+        p.setOnGround(false);
+        p.fallDistance = 1;
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1));
+        h.assertTrue(s.plungeSeq < 0, "a hop is no Plunge (it's the chain's strike)");
+        s.clearMove();
+        p.fallDistance = 4;
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, -1));
+        h.assertTrue(s.plungeSeq == 2 && s.move == null, "in a fall the strike arms a Plunge and waits for the ground");
+        p.setOnGround(true);
+        ArmsServer.plunge(p, s, ArmsServer.now(p));
+        h.assertTrue(s.move == Archetype.Move.PLUNGE && Math.abs(s.plungePower - ArmsRules.plungePower(4)) < 1e-4, "it lands as the Plunge, powered by the fall");
+        runActive(p);
+        float dealt = 200 - behind.getHealth();
+        float expect = 7F * longsword().move(Archetype.Move.PLUNGE).motion() * ArmsRules.plungePower(4);
+        h.assertTrue(Math.abs(dealt - expect) < 0.6F, "all round, even behind, by the fall: dealt " + dealt + ", expected " + expect);
+        h.assertTrue(ArmsRules.plungePower(10) > ArmsRules.plungePower(4) && ArmsRules.plungePower(100) <= 2.8F, "further falls land harder, to a cap");
+        done(h, p);
     }
 
     /** Every move has its third-person clip in the generated file, each with a bent twin; held ones loop, the rest end. */

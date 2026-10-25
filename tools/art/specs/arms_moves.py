@@ -123,6 +123,24 @@ EX_THRU = pose(lean=34, rise=-3, rl=(-52, 0, 4), rk=74, ll=(30, 0, -4), lk=56, r
 strike("arms_execution", "execution", EX_COCK, EX_THRU, "both hands high, then the whole weight down into it",
        settle=nudge(EX_THRU, lean=-4, rise=0.5))
 
+# The Art, the Resonance let go: drawn lower and further than a heavy, both hands on the grip, then a great level
+# sweep round the front with a stride into it (the wave goes on from the blade).
+AR_DRAW = pose(lean=16, rise=-2, twist=48, rl=(-30, 0, 8), rk=52, ll=(18, 0, -6), lk=40, ra=(-18, 66, 34), re=30, la=(-30, 40, -6), le=70)
+AR_THRU = pose(lean=12, rise=-0.5, twist=-52, shift=2, rl=(-44, 0, 6), rk=40, ll=(30, 0, -6), lk=12, ra=(-100, -46, 10), re=6,
+               la=(-80, -30, -30), le=20)
+strike("arms_art", "art", AR_DRAW, AR_THRU, "the Art: drawn low with both hands, a great level sweep with a stride")
+
+# The Undercut, out of a slide: still low and reclined like the slide itself, the blade swept flat across the front.
+UC_COCK = pose(ground="all", lean=-40, twist=30, rl=(-80, 0, 5), rk=10, ll=(-36, 0, -8), lk=100, ra=(-70, 70, 20), re=30, la=(80, 0, -24), le=10)
+UC_THRU = pose(ground="all", lean=-34, twist=-30, rl=(-80, 0, 5), rk=10, ll=(-36, 0, -8), lk=100, ra=(-80, -46, 30), re=10, la=(80, 0, -24), le=10)
+strike("arms_undercut", "undercut", UC_COCK, UC_THRU, "out of a slide: reclined, the blade swept flat across the front")
+
+# The Plunge, landing out of a fall: both hands high and the knees up as it comes down, then the blade driven into the
+# ground with the knees taking it.
+PL_COCK = pose(ground=False, rise=1, lean=-6, rl=(-40, 0, 6), rk=60, ll=(-20, 0, -6), lk=50, ra=(-176, 6, 6), re=24, la=(-170, -8, -6), le=26)
+PL_THRU = pose(lean=38, rise=-3, rl=(-60, 0, 6), rk=90, ll=(24, 0, -6), lk=70, ra=(-24, -6, 2), re=2, la=(-26, 6, -2), le=4)
+strike("arms_plunge", "plunge", PL_COCK, PL_THRU, "out of a fall: both hands high, driven into the ground, the knees taking it")
+
 # The guard, held while the use key is: blade across the front, the off hand braced behind it, knees soft.
 GD = pose(lean=8, rl=(-14, 0, 6), rk=22, ll=(12, 0, -6), lk=18, ra=(-78, -46, 6), re=46, la=(-62, 34, -10), le=60)
 held("arms_guard", GD, [nudge(GD, ra=(1, 0, 0), la=(-1, 0, 0)), nudge(GD, ra=(-1, 0, 0), la=(1, 0, 0))], 8,
@@ -185,7 +203,8 @@ def moves_sheet(out_dir, px=5.0):
     """Every move cocked, mid-blow and through, straight (top) and bent (bottom), from the front three-quarter and the side."""
     from PIL import Image, ImageDraw
     beats = {}
-    for n in ("arms_strike_1", "arms_strike_2", "arms_strike_3", "arms_strike_4", "arms_heavy", "arms_riposte", "arms_slipcut", "arms_execution"):
+    for n in ("arms_strike_1", "arms_strike_2", "arms_strike_3", "arms_strike_4", "arms_heavy", "arms_riposte", "arms_slipcut", "arms_execution",
+              "arms_art", "arms_undercut", "arms_plunge"):
         w, a, _ = row(n[5:])
         beats[n] = [w, w + a * 0.5, w + a]
     beats.update({"arms_heavy_charge": [0], "arms_guard": [0], "arms_dodge_back": [2], "arms_dodge_left": [2]})

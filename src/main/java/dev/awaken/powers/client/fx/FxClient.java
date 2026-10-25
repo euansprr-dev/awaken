@@ -199,6 +199,12 @@ public final class FxClient {
         return s;
     }
 
+    /** A wave rolling out along the ground from {@code from}'s feet along {@code dir} to {@code range}, ±{@code halfDeg} wide. */
+    public static void groundWave(Entity from, Vec3 dir, float range, float halfDeg, int ticks, FxStyle style) {
+        onEvent(FxEvent.of(FxKind.CONE, style, from.position()).caster(from).dir(dir).scale(range).aux(halfDeg).ticks(ticks)
+                .seed(from.getId() * 31 + FxWorld.ticks).flag(FxEvent.QUIET, true).build());
+    }
+
     /** A blade landing at {@code at}, travelling along {@code dir}: sparks, chips or wisps by what it meets. */
     public static void bladeHit(Vec3 at, Vec3 dir, float size, dev.awaken.core.api.BodyMaterial material) {
         if (!FxWorld.begin(at.x, at.y, at.z, (int) (at.x * 31 + at.z * 17 + FxWorld.ticks))) return;
