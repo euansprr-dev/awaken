@@ -161,8 +161,8 @@ void main() {
     float zFar = max(p1.r * 255.0 * 256.0 + p1.g * 255.0, 16.0);
     float noise = ign(gl_FragCoord.xy, f12.w), noise2 = ign(gl_FragCoord.yx + 17.0, f12.w + 31.0);
     float vis = 1.0, ao = 1.0, vol = 0.0;
-    // the hand and the holo glass (within arm's reach) are never shadowed
-    if (!sky && dist >= 1.25) {
+    // the hand and the holo glass (within arm's reach, or a world plate over a creature) are never shadowed
+    if (!sky && dist >= 1.25 && !onPlate(p)) {
         vec3 n = normalAt(px, p, depth, inv, z01, InSize);
         mat4 vp = frameMat(4);
         if (f14.w > 0.0 && P(17).r > 0.0 && dot(n, f14.xyz) > -0.1) {

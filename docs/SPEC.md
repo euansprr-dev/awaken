@@ -339,7 +339,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   that frame by HoloRender exactly as a K-menu panel (same HoloPanel/HoloCanvas, glass shader, edge glow, halo, scan
   line, see-through text with its glow), facing the camera; world-sized up close (`PlateScale.WORLD_UNIT` 0.021 m a
   unit) and never under `PlateScale.MIN_PX` 2.1 framebuffer pixels a unit at 1080 lines however far. Writes depth like
-  the panels (Lens leaves fog and AO off it), draws over walls, never counts toward `UiHooks.focus`. `on()` false with
+  the panels (Lens leaves its light, AO and haze off it: `lensPlates(float[])` hands Lens the plates drawn this frame,
+  9 floats each, the camera-relative centre and half-width and half-height vectors; §22), draws over walls, never counts toward `UiHooks.focus`. `on()` false with
   reduced motion or without the holo pipelines; `allowed()` false with reduced motion (fallbacks stay off too). At most
   `MAX` 6 a frame. Frame cost per plate: three custom-geometry submits plus five text submits per line; no allocation
   once a slot has drawn, a line's record rebuilt only when its position, colour or scale changes. Test `holo_plate_scale`.
@@ -2929,7 +2930,15 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   13.20: the clouds cost no net frame time, since the game's are no longer drawn): too much cover (a stormy deck),
   dark bellies, a hard line toward the horizon, a noise grid; tuned as above.
 - Tour: `tools/autopilot/lens2-l4.txt` (Swift's clouds against Lens's: noon, golden hour into the sun, cloud shadows
-  over Carillon, above the deck, rain, night; the bench).
+  over Carillon, above the deck, rain, night; the bench). Final (f53b8bf4, p50 ms): off 6.80, Swift 6.79, Cinematic
+  9.96 (100 fps), Ultra 13.46 (74 fps).
+
+**Holo world plates** (the Living Wilds' creature plates, 2026-10-25): plates write their depth at a creature's
+distance (4-40 blocks), beyond the 1.25-block rule that keeps the panels and the hand out. `HoloWorld.lensPlates`
+hands Lens the plates drawn this frame (up to 6: centre, half-width and half-height vectors, camera-relative); the frame
+texture carries them (texel 20 x the count, texels 24-41, three a plate; it grew to 48×1), and a surface point within
+0.15 block of a plate's plane and inside its rectangle (`onPlate` in lens_frame.glsl) gets no shadow, AO, key or shade
+and no haze. With the K panel open they dim with the rest of the world (the focus dim stays).
 
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 

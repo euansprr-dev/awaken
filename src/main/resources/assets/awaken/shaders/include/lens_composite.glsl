@@ -326,6 +326,8 @@ void main() {
     // this pixel's camera-relative position (none for sky and far terrain, which the game's depth doesn't hold)
     bool open = sky || farTerrain;
     vec3 pRel = open ? vec3(0.0) : unproject(frameMat(0), texCoord, depth, F(16).x > 0.5);
+    // a Holo world plate (glass at a creature's distance): no light, AO or haze on it, as for the panels
+    bool plate = !open && onPlate(pRel);
     // the surface normal from screen derivatives (free, but only where the 2x2 quad lies on one surface: across an edge
     // it's left 0 for the careful version); axis-aligned block faces snap
     vec3 dpx = dFdx(pRel), dpy = dFdy(pRel);
@@ -338,7 +340,7 @@ void main() {
         float qm = max(qa.x, max(qa.y, qa.z));
         if (qm > 0.9) quick = step(vec3(qm), qa) * sign(quick);
     }
-    if (!open && !classic) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
+    if (!open && !classic && !plate) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
     // Lens 2's clouds (L4), over the sky and over anything farther than where this ray enters their layer
     vec4 cp = F(18);
     if (cp.x > 0.0 && !classic) {
@@ -363,6 +365,9 @@ void main() {
     if (p0.b > 0.5) haze *= farTrust.g;
     // underwater, in lava or blind, the game's own fog already hides the distance
     haze *= clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0);
+#ifdef LENS_LIGHT
+    if (plate) haze = 0.0;
+#endif
     vec3 hazeColor = mix(fogColor.rgb, hz.rgb, h.b);
 #ifdef LENS_LIGHT
     // at golden hour the distance hazes warm, not grey: the sunrise colour lends the haze a share as the sun lowers
