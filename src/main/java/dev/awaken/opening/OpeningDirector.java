@@ -560,10 +560,14 @@ final class OpeningDirector {
     /** "The city is yours." The opening is over: free play. */
     static void finish(ServerPlayer p) {
         Story.openingBeat(p, Prologue.DONE, now(p));
+        Progression.count(p, REGISTERED); // the Association has you: chains that wait on registration open (SPEC §16.4)
         AwakenNet.send(p, OpeningPayloads.Scene.none());
         OpeningModule.afterOpening(p);
         DirectorLog.log(p, "opening", "done: the city is yours");
     }
+
+    /** Counted once when the opening ends (or is skipped): the Association has registered this player. */
+    public static final String REGISTERED = "awaken:carillon_registered";
 
     /**
      * Skips the whole opening (the world option, {@code /awaken opening skip}, OpeningHooks.skip): awakened and
@@ -584,6 +588,7 @@ final class OpeningDirector {
             p.teleportTo(p.level().getServer().overworld(), r.getX() + 0.5, r.getY(), r.getZ() + 0.5, Set.<Relative>of(), at.roostYaw(), 0F, true);
         }
         OpeningRegistry.giveLicence(p);
+        Progression.count(p, REGISTERED); // skipping registers you too
         AwakenNet.send(p, OpeningPayloads.Scene.none());
         OpeningModule.afterOpening(p);
         DirectorLog.log(p, "opening", "skipped from " + b);
