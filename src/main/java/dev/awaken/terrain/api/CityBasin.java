@@ -54,6 +54,16 @@ public final class CityBasin {
         return s != null && s.within(x, z, MARGIN);
     }
 
+    /**
+     * Whether any point within {@code reach} blocks of (x, z) lies in the reserve: a structure whose blocks all fall
+     * inside that circle (a hero tree's crown, a landmark's rim) may not stand here. The test is the circle's, so it
+     * holds in every direction; probing a few points on its edge misses the reserve between them.
+     */
+    public static boolean reservedWithin(int x, int z, int reach) {
+        CitySite s = current;
+        return s != null && s.within(x, z, MARGIN + Math.max(0, reach));
+    }
+
     // --- terrain internals ---
 
     /** The current site for terrain's own code (the density function, structures); null when none. */
