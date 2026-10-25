@@ -111,6 +111,29 @@ final class LivingCommands {
                         c.getSource().sendSuccess(() -> Component.literal(h == null ? "No place for it here (or no such kind)." : "Happening " + h.id + " at " + net.minecraft.core.BlockPos.containing(h.centre).toShortString()), false);
                         return h == null ? 0 : 1;
                     })));
+            // tours: stand in a fauna land, face the newest happening, or walk up to it
+            l.then(Commands.literal("goto").requires(AwakenCommands.admin())
+                    .then(Commands.argument("land", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        ServerLevel level = p.level().getServer().overworld();
+                        var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BIOME,
+                                dev.awaken.Awaken.id("fauna/" + com.mojang.brigadier.arguments.StringArgumentType.getString(c, "land")));
+                        var found = level.findClosestBiome3d(b -> b.is(tag), p.blockPosition().atY(64), 6400, 32, 64);
+                        if (found == null) {
+                            c.getSource().sendFailure(Component.literal("No such land within 6400 blocks."));
+                            return 0;
+                        }
+                        var at = found.getFirst();
+                        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
+                        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) + 1;
+                        p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), p.getYRot(), 0F, true);
+                        c.getSource().sendSuccess(() -> Component.literal("At " + at.getX() + " " + y + " " + at.getZ()), false);
+                        return 1;
+                    })));
+            l.then(Commands.literal("face").requires(AwakenCommands.admin()).executes(c -> faceHappening(c.getSource().getPlayerOrException(), 0)));
+            l.then(Commands.literal("near").requires(AwakenCommands.admin())
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 200))
+                            .executes(c -> faceHappening(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "distance")))));
             l.then(Commands.literal("happenings").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var list = dev.awaken.living.pulse.Pulse.get(p.level().getServer()).active();
@@ -158,6 +181,26 @@ final class LivingCommands {
             }));
             root.then(l);
         });
+    }
+
+    /** Turns the player toward the newest happening; with a distance, first walks them up to that far from it. */
+    private static int faceHappening(ServerPlayer p, int distance) {
+        var list = dev.awaken.living.pulse.Pulse.get(p.level().getServer()).active();
+        if (list.isEmpty()) return 0;
+        var h = list.getLast();
+        ServerLevel level = p.level().getServer().overworld();
+        double px = p.getX(), py = p.getY(), pz = p.getZ();
+        if (distance > 0) {
+            double dx = px - h.centre.x, dz = pz - h.centre.z, len = Math.max(1, Math.sqrt(dx * dx + dz * dz));
+            px = h.centre.x + dx / len * distance;
+            pz = h.centre.z + dz / len * distance;
+            level.getChunk((int) px >> 4, (int) pz >> 4);
+            py = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) px, (int) pz) + 1;
+        }
+        double dx = h.centre.x - px, dy = h.centre.y + 6 - (py + 1.6), dz = h.centre.z - pz;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        p.teleportTo(level, px, py, pz, java.util.Set.of(), yaw, pitch, true);
+        return 1;
     }
 
     private static int region(ServerPlayer p) {
