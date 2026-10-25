@@ -644,6 +644,40 @@ public final class StreetBlocks {
         }
     }
 
+    /**
+     * One cell of a mill wheel's middle plane (Milestone 4 B3a, "movement for free"): its animated texture turns the
+     * spokes and paddles (tools/art/specs/city_wheel.py cuts the whole wheel into cells). No collision: it turns.
+     */
+    public static final class WheelFace extends Block {
+        public static final IntegerProperty CELL = IntegerProperty.create("cell", 0, 194);
+        private static final VoxelShape SHAPE = Block.box(0, 0, 7.5, 16, 16, 8.5);
+
+        public WheelFace(BlockBehaviour.Properties p) {
+            super(p);
+            registerDefaultState(stateDefinition.any().setValue(CELL, 0));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+            b.add(CELL);
+        }
+
+        @Override
+        protected VoxelShape getShape(BlockState s, BlockGetter level, BlockPos pos, CollisionContext ctx) {
+            return SHAPE;
+        }
+
+        @Override
+        protected VoxelShape getCollisionShape(BlockState s, BlockGetter level, BlockPos pos, CollisionContext ctx) {
+            return Shapes.empty();
+        }
+
+        @Override
+        protected boolean propagatesSkylightDown(BlockState s) {
+            return true;
+        }
+    }
+
     /** An iron mooring ring on the quay wall: a cue, no collision. */
     public static final class MooringRing extends Facing {
         private static final Map<Direction, VoxelShape> SHAPE = Shapes.rotateHorizontal(Block.box(4, 3, 14, 12, 13, 16));

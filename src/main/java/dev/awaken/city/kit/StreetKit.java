@@ -75,6 +75,9 @@ public final class StreetKit {
     public static final DeferredBlock<StreetBlocks.MooringRing> MOORING_RING = BLOCKS.registerBlock("mooring_ring", StreetBlocks.MooringRing::new,
             p -> iron().apply(p).noCollision());
 
+    public static final DeferredBlock<StreetBlocks.WheelFace> WHEEL_FACE = BLOCKS.registerBlock("wheel_face", StreetBlocks.WheelFace::new,
+            p -> p.mapColor(MapColor.WOOD).strength(2.0f).sound(SoundType.WOOD).noOcclusion().noCollision().noLootTable().forceSolidOff());
+
     /** Loads the class (its blocks join the kit's register before the register goes to the bus). */
     static void init() {}
 }
