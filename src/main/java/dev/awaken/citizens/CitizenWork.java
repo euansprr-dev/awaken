@@ -79,9 +79,11 @@ final class CitizenWork implements Ledger.Work {
         this.cz = l.cz;
         this.sy = l.streetY;
         lampHead = new BlockPos[r.lampPlace.length];
+        dev.awaken.city.CityPlan plan = dev.awaken.city.CityPlan.get();
         for (int k = 0; k < lampHead.length; k++) {
-            int ry = r.pRy[r.lampPlace[k]];
-            lampHead[k] = new BlockPos(cx + (int) Math.floor(r.lampX[k]), sy + ry + 4, cz + (int) Math.floor(r.lampZ[k]));
+            // the head stands four over the post's own ground (the painter's), not the lamplighter's spot beside it
+            int lx = (int) Math.floor(r.lampX[k]), lz = (int) Math.floor(r.lampZ[k]);
+            lampHead[k] = new BlockPos(cx + lx, sy + plan.lift(lx, lz) + 4, cz + lz);
         }
         lineAxis = new Direction.Axis[r.lines.size()];
         for (int k = 0; k < r.lines.size(); k++) {
