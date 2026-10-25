@@ -471,9 +471,10 @@ def awning_top(colour):
             P = rp if _striped(x) else cp
             k = 3
             o = (x + 2) % 4
-            if n[y][x] > 0.60:
+            hi_, lo_ = (0.60, 0.40) if _striped(x) else (0.64, 0.30)
+            if n[y][x] > hi_:
                 k += 1                      # soft patches of sun and shade, never single dark specks
-            elif n[y][x] < 0.40:
+            elif n[y][x] < lo_:
                 k -= 1
             if o == 0:
                 k += 1                      # each panel's left seam catches the light
@@ -511,7 +512,7 @@ def awning_trim(colour):
             if y == 2 and o in (0, 3):
                 k -= 1                       # the curve of the scallop turns away
             elif y == 3:
-                k = 2                        # the scallop's lower hem
+                k = 2 if _striped(x) else 3  # the scallop's lower hem
             elif rng.random() < 0.07:
                 k += rng.choice([-1, 1])
             c.set(x, y, step(P, k))
@@ -526,10 +527,6 @@ def awning_trim(colour):
         c.set(x, 6, step(P, 4 if x % 4 else 3))
         c.set(x, 7, step(P, 1 if x % 4 else 2))
     return c
-
-
-def _awn_box(a, b_, faces, rot=None):
-    return E(a, b_, faces, rot=rot)
 
 
 def awning_model(shape, colour):
@@ -776,8 +773,6 @@ def _icon_tools():
     c.set(0, 6, Wd[1])
     put(c, [(5, 0), (6, 0), (7, 0), (8, 0), (6, 1), (7, 1), (8, 1)], Hd[3])
     put(c, [(5, 1), (4, 0)], Hd[2]); c.set(8, 1, Hd[1]); c.set(7, 0, Hd[4])
-    for i in range(6):                      # tongs the other way, the jaws at the lower right
-        c.set(7 - i, 6 - i + 1 if 7 - i - 0 >= 0 and 6 - i + 1 <= 6 else 6, Hd[2]) if False else None
     for (x, y) in ((1, 0), (2, 1), (3, 2), (5, 4), (6, 5)):
         c.set(x, y, Hd[2])
     put(c, [(0, 0), (1, 1), (7, 6), (8, 6)], Hd[1])
@@ -1578,8 +1573,6 @@ def banner_frames(design, f):
                 kk += 1
             if g == tail_top - 1:
                 kk -= 1
-            if g >= tail_top and (x + shx, g + 1) not in [(xx + (shx if False else 0), gg) for (xx, gg) in ()]:
-                pass
             px = step(rp, kk)
             if (x, g) in emblem_px:
                 e = emblem_px[(x, g)]
@@ -1842,8 +1835,9 @@ def M_straw(c, x, y, w, h, face, rng, dims):
         ln = rng.randrange(3, 7)
         d = rng.choice([(1, 0), (1, 1), (1, -1), (2, 1)])
         for t in range(ln):
-            px, py = sx_ + d[0] * t // (1 if d[0] == 1 else 2) if False else sx_ + t * d[0] // (2 if d[0] == 2 else 1), sy_ + t * d[1] // (2 if d[0] == 2 else 1)
-            c.set(x + px, y + py, step(HAY, 5 if t == 0 else 4 if t % 2 else 1)) if 0 <= px < w and 0 <= py < h else None
+            px, py = sx_ + t * d[0] // (2 if d[0] == 2 else 1), sy_ + t * d[1] // (2 if d[0] == 2 else 1)
+            if 0 <= px < w and 0 <= py < h:
+                c.set(x + px, y + py, step(HAY, 5 if t == 0 else 4 if t % 2 else 1))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1903,8 +1897,8 @@ def crate_top(content):
         M_straw(inner, 0, 0, 14, 14, "U", rng, (14, 0, 14))
     else:
         M_heap({"apples": "apples", "cabbages": "cabbages", "fish": "fish", "bottles": "bottles"}[content])(inner, 0, 0, 14, 14, "U", rng, (14, 0, 14))
-    for y in range(1, 15):                      # the rim casts a little shade on the contents
-        inner.set(0, y - 1, mul(inner.get(0, y - 1), 0.82)) if True else None
+    for y in range(14):                         # the rim casts a little shade on the contents
+        inner.set(0, y, mul(inner.get(0, y), 0.82))
     for x in range(1, 15):
         c.set(x, 1, mul(c.get(x, 1), 0.85))
     return c
@@ -2406,10 +2400,9 @@ def M_skirt(c, x, y, w, h, face, rng, dims):
                 k += rng.choice([-1, 1])
             c.set(x + xx, y + yy, step(SKIRT, k))
     if h >= 6:
-        for xx in range(0, w, 4):                       # a pale braid trim above the hem
-            for t in range(2):
-                if xx + t < w:
-                    c.set(x + xx + t, y + h - 4, step(LINEN, 3))
+        for xx in range(w):                             # a woven braid trim above the hem
+            c.set(x + xx, y + h - 4, step(LINEN, 3 if xx % 2 else 2))
+            c.set(x + xx, y + h - 5, step(SKIRT, 1))
 
 
 def M_board_front(c, x, y, w, h, face, rng, dims):
@@ -2650,7 +2643,6 @@ def M_staves_for(axis):
         if lid:
             _lid(c, x, y, w, h, rng, bung=(face in "UN"))
             return
-        across = w if (axis == "y" or face in "UD") else h          # the direction the staves are counted across
         for yy in range(h):
             for xx in range(w):
                 u = xx if (axis == "y" or face in "UD") else yy
@@ -2661,9 +2653,8 @@ def M_staves_for(axis):
                 c.set(x + xx, y + yy, step(OAK, k))
         length = h if (axis == "y" or face in "UD") else w
         for hp in (1, length - 2):                                    # the hoops
-            for t in range(across if False else (w if (axis == "y" or face in "UD") else h)):
+            for t in range(w if (axis == "y" or face in "UD") else h):
                 for dd in range(2):
-                    px, py = (t, hp + dd) if (axis == "y" or face in "UD") else (hp + dd, t)
                     if axis == "y" or face in "UD":
                         px, py = t, hp + dd
                     else:
@@ -3064,7 +3055,6 @@ def wall_lantern_model(w):
     m.box((7.4, 12.2, 8.5), (8.6, 13.6, 15), iron, faces="NEWUD", key="arm")
     m.box((7.4, 11, 8.5), (8.6, 12.2, 9.7), iron, faces="NEWS", key="drop")
     m.box((7.6, 10.4, 5.5), (8.4, 11.4, 9.5), iron, faces="NEWUD", key="hang")
-    m.box((6.8, 11.2, 4.8), (9.2, 12.4, 11.2), iron, faces="NESWUD", key="ring0") if False else None
     m.box((4.8, 11, 4.8), (11.2, 11.8, 11.2), iron, faces="NESWUD", key="cap1")
     m.box((6, 11.8, 6), (10, 12.6, 10), iron, faces="NESWU", key="cap2")
     m.box((7.2, 12.6, 7.2), (8.8, 13.4, 8.8), iron, faces="NESWU", key="cap3")
@@ -3131,7 +3121,6 @@ def fishing_net():
         c.set(x, 1, step(cork, 3))
     for y in range(2, 16):
         # the net sags: the bottom edge is a shallow curve and the mesh narrows
-        lo = int(round(2.2 * math.sin(math.pi * (y - 2) / 26.0))) if False else 0
         for x in range(16):
             a = (x + y) % 4
             b_ = (x - y) % 4
@@ -3174,9 +3163,9 @@ def windlass_model(w):
     iron = M_iron(FORGE, 3)
     m.box((0, 3, 6.5), (1, 7, 9.5), iron, faces="NESWUD", key="capL")
     m.box((15, 3, 6.5), (16, 7, 9.5), iron, faces="NESWUD", key="capR")
-    m.box((15, 4.4, 5.4), (16, 5.6, 6.6), iron, faces="NESWUD", key="crank1") if False else None
-    m.box((14.4, 4.5, 7.4), (16, 5.5, 8.6), iron, faces="NESWUD", key="crank0")
-    m.box((14.4, 4.5, 11), (16, 11, 12.2), M_planks(DARKOAK, board=2, orient="v"), faces="NESWUD", key="crank2") if False else None
+    m.box((14.6, 4.6, 7.4), (16, 5.6, 8.6), iron, faces="NESWUD", key="crank0")
+    m.box((14.4, 5.6, 7.2), (15.6, 11.2, 8.8), iron, faces="NESWUD", key="crank1")
+    m.box((14.4, 10.2, 6.8), (16, 11.6, 9.2), M_planks(DARKOAK, board=2, orient="h"), faces="NESWUD", key="crank2")
     # the bucket hangs from the drum on a rope
     m.box((7.5, -2.5, 7.5), (8.5, 2.4, 8.5), M_solid(HEMP, 3), faces="NESW", key="rope")
     m.box((6, -6, 6), (10, -2.5, 10), M_planks(SPRUCE, board=2, orient="v", tone=(2, 3)), faces="NESWUD", key="bucket")
@@ -3587,7 +3576,7 @@ def make_sheet(out, prefixes=()):
         placed.append((lab, ims, x, y))
         x += wd + GAP
         rowh = max(rowh, ht)
-    H = y + rowh + GAP + 16
+    H = y + rowh + GAP + 60
     sheet = Image.new("RGBA", (MAXW, H), (36, 38, 48, 255))
     d = ImageDraw.Draw(sheet)
     for lab, ims, px, py in placed:
@@ -3906,12 +3895,17 @@ def scene_signs():
 
 
 def scene_lines(night=1.0, frame=0):
-    items = floor(-1, 6, -1, 5) + wall(-1, 6, 0, 3, z=5)
-    for x in range(0, 5):
-        for k, (hang, st) in enumerate((("rope", 0), ("laundry", x % 4), ("bunting", x % 4), ("lanterns", x % 4))):
-            sag = (0, 1, 2, 1, 0)[x]
-            items.append(("hang_line", {"axis": "x", "hang": hang, "set": st, "sag": sag}, (x, 1, k + (0 if k < 3 else 0))))
-    return items, dict(yaw=24, pitch=20, S=8, night=night, frame=frame)
+    """One run of sixteen cells: rope, laundry, bunting and lanterns in four sets each, sagging in the middle like a real line."""
+    items = floor(-1, 17, -1, 3) + wall(-1, 17, 0, 2, z=3)
+    for i in range(16):
+        sag = min(2, int(round(2.6 * math.sin(math.pi * (i + 0.5) / 16))))
+        hang = ("rope", "laundry", "bunting", "lanterns")[i // 4]
+        items.append(("hang_line", {"axis": "x", "hang": hang, "set": i % 4, "sag": sag}, (i, 1, 1)))
+    items.append(("line_pole", {"top": "true"}, (-1, 1, 1)))
+    items.append(("line_pole", {"top": "true"}, (16, 1, 1)))
+    items.append(("line_pole", {"top": "false"}, (-1, 0, 1)))
+    items.append(("line_pole", {"top": "false"}, (16, 0, 1)))
+    return items, dict(yaw=20, pitch=16, S=5, night=night, frame=frame)
 
 
 def scene_lines_night():
@@ -3975,18 +3969,13 @@ def scene_banners():
 
 def scene_lanes():
     items = floor(-2, 8, -2, 4) + wall(-2, 8, 0, 3, z=4)
-    items += [post(-1, y, 1) for y in range(3)] + [post(7, y, 1) for y in range(3)]
-    items.append(("line_pole", {"top": "false"}, (-1, 0, 1)))
-    items.append(("line_pole", {"top": "false"}, (-1, 1, 1)))
-    items.append(("line_pole", {"top": "true"}, (-1, 2, 1)))
-    items.append(("line_pole", {"top": "false"}, (7, 0, 1)))
-    items.append(("line_pole", {"top": "false"}, (7, 1, 1)))
-    items.append(("line_pole", {"top": "true"}, (7, 2, 1)))
+    for y_, tp in ((0, "false"), (1, "false"), (2, "true")):
+        items.append(("line_pole", {"top": tp}, (-1, y_, 1)))
+        items.append(("line_pole", {"top": tp}, (7, y_, 1)))
     for i in range(0, 7):
         sag = (0, 1, 2, 2, 2, 1, 0)[i]
         items.append(("hang_line", {"axis": "x", "hang": "laundry", "set": i % 4, "sag": sag}, (i, 2, 1)))
         items.append(("hang_line", {"axis": "x", "hang": "bunting" if i % 2 else "lanterns", "set": (i + 1) % 4, "sag": sag}, (i, 2, 2)))
-    items.append(("barrel_stub",)) if False else None
     items.append(("bench", {"facing": "north"}, (1, 0, 3)))
     items.append(("sack", {"count": 2, "fill": "grain"}, (3, 0, 3)))
     items.append(("planter", {"style": "wood", "bloom": "yellow"}, (5, 0, 3)))

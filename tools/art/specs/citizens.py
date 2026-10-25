@@ -3568,6 +3568,9 @@ BLOCKS = {"street_lamp_frame": street_lamp_frame, "street_lamp_glass_lit": stree
           "laundry_line": laundry_line, "laundry_1": laundry_1, "laundry_2": laundry_2, "laundry_3": laundry_3,
           "laundry_4": laundry_4, "laundry_5": laundry_5, "laundry_6": laundry_6, "cargo_crate": cargo_crate,
           "cargo_crate_top": cargo_crate_top}
+# Since M4 B3a, tools/art/specs/city_street.py redraws these as animated textures (with .mcmeta): never overwrite them
+# from here, or the washers' lines and the lamps lose their animation. (The functions above stay as the old look.)
+STREET_OWNED = {"street_lamp_glass_lit", "laundry_1", "laundry_2", "laundry_3", "laundry_4", "laundry_5", "laundry_6"}
 ITEMS = {"lamplighter_pole": lamplighter_pole, "watch_halberd": watch_halberd, "smith_hammer": smith_hammer,
          "mason_trowel": mason_trowel, "crier_scroll": crier_scroll, "hand_lantern": hand_lantern,
          "bread_basket": bread_basket, "laundry_basket": laundry_basket, "ledger_book": ledger_book,
@@ -3583,6 +3586,8 @@ def build(out):
     for c in people:
         out.entity("citizen/" + c.file, compose(c))
     for name, fn in BLOCKS.items():
+        if name in STREET_OWNED:
+            continue
         out.block(name, fn())
     out.block("city_fire", city_fire_frames(), frametime=1)
     # the fire cycles; blending its frames would smear its dark tips, so it does not interpolate
