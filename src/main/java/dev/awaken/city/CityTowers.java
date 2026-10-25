@@ -150,7 +150,7 @@ final class CityTowers {
 
     static BlockState masonry(Ctx c, T t, int x, int ry, int z) {
         int h = c.pct(x, z, 900 + ry);
-        if (ry == 6 || ry == 32) return t.district == TERRACE ? POLISHED_DIORITE : POLISHED_ANDESITE;
+        if (ry == 6 || ry == 15 || ry == 27 || ry == 32) return CityWall.dress(t.district).full(); // the wall's dressed bands run round
         int moss = (ry < 4 ? 40 : ry < 12 ? 18 : 6) * (t.district == GARDEN_D || t.district == QUAY_D ? 3 : 2) / 2;
         if (h < moss) return MOSSY_STONE_BRICKS;
         int h2 = c.pct(x, z, 960 + ry);
@@ -343,14 +343,15 @@ final class CityTowers {
     }
 
     /**
-     * Two long banners of the district, one over the other, on the middle of the tower's field face under its gallery
+     * Three long banners of the district, one over another (nine tall: they read from the fields), on the middle of the
+     * tower's field face under its gallery
      * (painted from the cell in front of the face, so each column still paints alone).
      */
     static void banners(CityBuffer b, T t, int x, int z) {
         int fx = x - NBX[t.out], fz = z - NBZ[t.out], top = t.eave - 7;
         if (t.inside(x, z, top) || !t.inside(fx, fz, top) || !centred(t, fx, fz, t.out)) return;
         int design = CityWall.designOf(t.district);
-        for (int s = 0; s < 2; s++)
+        for (int s = 0; s < 3; s++)
             for (int i = 0; i < 3; i++) b.set(x, top - s * 3 - i, z, CityFacadeLife.BANNER[t.out][design][i][0]);
     }
 
@@ -360,7 +361,8 @@ final class CityTowers {
         byte k = p.kind(x, z);
         for (int ry : CityWall.COURSE_ROWS) {
             if (t.inside(x, z, ry) || k == WALL || k == WATERGATE || water(k)) continue;
-            BlockState lip = CityWall.shaped((xx, yy, zz) -> t.inside(xx, zz, yy), CityWall.COURSE, STONE_BRICKS, x, ry, z);
+            CityWall.Dress dr = CityWall.dress(t.district);
+            BlockState lip = CityWall.shaped((xx, yy, zz) -> t.inside(xx, zz, yy), dr.course(), dr.full(), x, ry, z);
             if (lip != null) b.set(x, ry, z, lip);
         }
     }
