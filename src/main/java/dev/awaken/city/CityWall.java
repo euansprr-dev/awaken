@@ -497,11 +497,23 @@ final class CityWall {
         int top = top(c.plan), wo = g.wo();
         if (roofed(g.k)) return;
         int m = Math.floorMod(g.u + 12, 24);
-        if (wo == 1 && m == 0 && Math.abs(g.a) < CLEAR[g.k] - 2 && !(gateSide(g.k) && Math.abs(g.a) < 19)) b.set(x, top + 1, z, BRAZIER_FLOOR);
+        if (wo == 1 && m == 0 && first(c.plan, g, x, z) && Math.abs(g.a) < CLEAR[g.k] - 2 && !(gateSide(g.k) && Math.abs(g.a) < 19))
+            b.set(x, top + 1, z, BRAZIER_FLOOR);
         else if (wo == 1 && (m == 2 || m == 3) && c.pct(x, z, 710) < 60) b.set(x, top + 1, z, CityProps.CRATES[0]);
     }
 
     static final BlockState BRAZIER_FLOOR = of("awaken:brazier[facing=north,mount=floor]");
+
+    /**
+     * The first cell of its place along the side within its layer (on a diagonal side two cells of one layer can share a
+     * place): one light, not a pair.
+     */
+    static boolean first(CityPlan p, Geo g, int x, int z) {
+        int back = (ALONG[g.k] + 2) & 3;
+        int bx = x + CityPainter.NB[back][0], bz = z + CityPainter.NB[back][1];
+        Geo n = geo(p, bx, bz);
+        return n.k != g.k || n.u != g.u || n.wo() != g.wo();
+    }
 
     // ---- the inner face: the arcade, the panels, the stair --------------------------------------------------------
 
@@ -813,13 +825,13 @@ final class CityWall {
 
     /**
      * Over the walk on a roofed side: the roof, a plank ceiling on tie beams every fourth cell (a covered gallery, not
-     * the roof's underside), lanterns hung from it every sixth.
+     * the roof's underside), lanterns hung from it every eighth.
      */
     static void roof(Ctx c, CityBuffer b, Geo g, int x, int z) {
         int top = top(c.plan);
         roofCell(b, g, x, z, top);
         ceiling(b, g, x, z, top);
-        if (g.wo() == 4 && Math.floorMod(g.u, 6) == 3) b.set(x, CEIL - 1, z, LANTERN_HANGING);
+        if (g.wo() == 4 && Math.floorMod(g.u, 8) == 3 && first(c.plan, g, x, z)) b.set(x, CEIL - 1, z, LANTERN_HANGING);
     }
 
     static final int CEIL = 44;

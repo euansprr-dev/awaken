@@ -574,8 +574,7 @@ final class CityTowers {
         // the room over the gate, on the wall walk's line (the walk runs through the gatehouse)
         CityWall.Geo g = CityWall.geo(c.plan, x, z);
         if (Math.abs(g.d()) <= 1.5) {
-            b.column(x, walkTop + 1, walkTop + 3, z, AIR);
-            if (across == width / 2 && Math.abs(g.d()) < 0.6) b.set(x, walkTop + 3, z, LANTERN_HANGING);
+            b.column(x, walkTop + 1, walkTop + 3, z, AIR); // (lit from the gate towers' halls either side)
         }
         // the top: battlements round a walk, braziers at its corners, and the gate hall's slate hip roof inside them
         // with a gilded finial (the city's sign over every gate)
