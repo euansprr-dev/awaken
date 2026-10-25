@@ -24,6 +24,7 @@ final class AscentTests {
         AwakenTests.register("ascent_aether", 40, AscentTests::aether);
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
+        AwakenTests.register("ascent_windway", 20, AscentTests::windway);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -671,5 +672,66 @@ final class AscentTests {
         for (int t = 0; t < 80; t++) AscentRules.soarStep(k, 0, 0, 0, 0, false, false, false, s);
         h.assertTrue(k.speed() < 0.05, "hover left " + k.speed());
         h.succeed();
+    }
+    /**
+     * Windways (SPEC §17.12): a lane's geometry between two platforms, and a glide off the first deck carried the whole
+     * way and set down slowly over the next deck, looking along it, 15° under it or 15° over it; a look 45° away breaks
+     * out of it.
+     */
+    private static void windway(GameTestHelper h) {
+        net.minecraft.core.BlockPos p = new net.minecraft.core.BlockPos(0, 0, 0), q = new net.minecraft.core.BlockPos(600, 0, 800);
+        java.util.List<Windways.Way> ways = Windways.between(p, 276, q, 279);
+        Windways.Way w = ways.get(0), back = ways.get(1);
+        double startR = Math.hypot(w.ax() - 0.5, w.az() - 0.5), endR = Math.hypot(w.bx() - q.getX() - 0.5, w.bz() - q.getZ() - 0.5);
+        h.assertTrue(Math.abs(startR - Math.hypot(Windways.OUT, Windways.LANE)) < 0.01 && w.ay() == 276 - Windways.BELOW
+                        && w.by() == 279 + 1 + Windways.ABOVE && endR > 7 && endR < 11.6,
+                "a lane starts past the islands under its deck and ends over the next deck's rim (" + startR + ", " + w.ay() + " to " + endR + ", " + w.by() + ")");
+        double mx = (w.ax() + w.bx()) / 2, my = (w.ay() + w.by()) / 2, mz = (w.az() + w.bz()) / 2;
+        h.assertTrue(back.off(mx, my, mz) > 2 * Windways.RADIUS, "the two ways' tubes are apart: " + back.off(mx, my, mz));
+        for (float off : new float[]{0, 15, -15}) {
+            double[] r = ride(w, off, 0);
+            h.assertTrue(r[1] == 0 && r[2] >= 0 && r[0] < 20 * 45 && r[2] < 0.8,
+                    "looking " + off + " under its way, carried " + (int) w.length() + " blocks in " + r[0] / 20 + " s and set down at " + r[2]
+                            + " b/t (left it: " + (r[1] != 0) + ")");
+        }
+        double[] away = ride(w, 0, 45);
+        h.assertTrue(away[1] != 0 && away[0] < 200, "a look 45° away breaks out (" + away[0] / 20 + " s)");
+        // the server's lanes are its air (AirHooks)
+        var old = Windways.serverWays();
+        Windways.setServer(ways);
+        double[] air = new double[3];
+        try {
+            double s = w.length() / 2;
+            double ux = (w.bx() - w.ax()) / w.length(), uz = (w.bz() - w.az()) / w.length();
+            h.assertTrue(dev.awaken.core.api.AirHooks.sample(h.getLevel(), w.ax() + ux * s, w.ay() + (w.by() - w.ay()) / 2, w.az() + uz * s, air)
+                    && air[0] * ux + air[2] * uz > Windways.PUSH * 0.9, "AirHooks hears the lane: " + java.util.Arrays.toString(air));
+        } finally {
+            Windways.setServer(old);
+        }
+        h.succeed();
+    }
+
+    /** A glide dropped off a deck just before a lane's start: {ticks, left the tube early (1), speed out of its end, y}. */
+    private static double[] ride(Windways.Way w, float pitchOff, float yawOff) {
+        double len = w.length(), ux = (w.bx() - w.ax()) / len, uy = (w.by() - w.ay()) / len, uz = (w.bz() - w.az()) / len;
+        float laneYaw = (float) Math.toDegrees(Math.atan2(-ux, uz)), lanePitch = (float) -Math.toDegrees(Math.asin(uy));
+        AscentRules.Kin k = new AscentRules.Kin().set(w.ax() - ux * 2, w.ay() + 5, w.az() - uz * 2, ux * 0.5, -0.3, uz * 0.5);
+        float[] line = new float[2];
+        double[] air = new double[3];
+        int t;
+        for (t = 0; t < 20 * 60; t++) {
+            float yaw = laneYaw + yawOff, pitch = lanePitch + pitchOff;
+            if (Windways.holds(w, k.x, k.y, k.z) && Windways.steer(w, k.x, k.y, k.z, yaw, pitch, line)) {
+                yaw = line[0];
+                pitch = line[1];
+            }
+            AscentRules.glideStep(k, yaw, pitch);
+            air[0] = air[1] = air[2] = 0;
+            Windways.airOf(w, k.x, k.y, k.z, air);
+            AscentRules.air(k, air, AscentRules.AIR_GLIDE);
+            if (w.along(k.x, k.y, k.z) > len) return new double[]{t, 0, k.speed(), k.y};
+            if (t > 40 && !Windways.holds(w, k.x, k.y, k.z)) return new double[]{t, 1, -1, k.y};
+        }
+        return new double[]{t, 0, -1, k.y};
     }
 }

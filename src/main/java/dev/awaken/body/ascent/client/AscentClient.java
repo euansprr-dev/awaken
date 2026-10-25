@@ -47,6 +47,7 @@ public final class AscentClient {
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(ExtractLevelRenderStateEvent.class, AscentRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, AscentRender::onSubmit);
+        bus.addListener(SubmitCustomGeometryEvent.class, WindwayRenderer::onSubmit);
         bus.addListener(RenderFrameEvent.Post.class, e -> ClipRecorder.frame());
         // the whole figure turns with the flight (after the body's own lean, LOW, and the casts' at LOWEST)
         bus.addListener(EventPriority.HIGH, RenderPlayerEvent.Pre.class, AscentAnims::onPre);
@@ -58,6 +59,7 @@ public final class AscentClient {
             VowScene.reset();
             AscentNotes.reset();
             dev.awaken.body.ascent.Updrafts.clear();
+            dev.awaken.body.ascent.Windways.setClient(java.util.List.of());
             AscentRemote.reset();
             AscentPilot.stop();
             AscentRoutes.stop();
@@ -89,6 +91,7 @@ public final class AscentClient {
         event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits(), msg.mode()));
         event.register(AscentPayloads.Vow.TYPE, (msg, ctx) -> VowScene.on(msg));
         event.register(AscentPayloads.Record.TYPE, (msg, ctx) -> AscentNotes.record(msg.chain()));
+        event.register(AscentPayloads.Lanes.TYPE, (msg, ctx) -> dev.awaken.body.ascent.Windways.setClient(msg.ways()));
     }
 
     private static void tick() {

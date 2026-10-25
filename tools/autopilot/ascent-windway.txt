@@ -1,0 +1,45 @@
+# Windways (SPEC §17.12): onto the deck of the platform the nearest windway starts from; run off its rim and open the
+# wings: the lane should take the glide (log: "a windway holds the glide") and set it down on the next deck. Third person.
+world ascent_wind2 survival 4246
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5500
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken ascent grant wings
+cmd awaken ascent windway
+wait 20
+cmd awaken ascent windway goto
+wait 120
+cmd awaken ascent windway goto
+wait 60
+camera back
+hud on
+shotnow wind_deck
+cmd awaken ascent pilot rec windway 1100 10
+cmd awaken ascent pilot run glide
+wait 200
+shotnow wind_early
+wait 300
+shotnow wind_mid
+wait 300
+shotnow wind_late
+wait 300
+shotnow wind_end
+cmd awaken ascent pilot stop
+cmd awaken ascent windway
+wait 20
+info
+quit

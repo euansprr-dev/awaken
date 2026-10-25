@@ -46,6 +46,24 @@ public final class SkyRig {
 
     private static final ConcurrentLinkedQueue<BoundingBox> PENDING = new ConcurrentLinkedQueue<>();
 
+    /** The deck's centre of a platform starting in this chunk (its blueprint is 49 across from the chunk's corner). */
+    public static BlockPos centre(net.minecraft.world.level.ChunkPos chunk) {
+        return new BlockPos(chunk.getMinBlockX() + C, 0, chunk.getMinBlockZ() + C);
+    }
+
+    /**
+     * The deck's height of a platform starting in this chunk, from the world's seed alone (the windways need it for
+     * platforms far beyond loaded chunks): PrecursorRuinStructure draws a seed, a turn, then the height, from the
+     * structure's own random (Structure.GenerationContext.makeRandom).
+     */
+    public static int deckY(long levelSeed, net.minecraft.world.level.ChunkPos chunk) {
+        var r = new net.minecraft.world.level.levelgen.WorldgenRandom(new net.minecraft.world.level.levelgen.LegacyRandomSource(0L));
+        r.setLargeFeatureSeed(levelSeed, chunk.x(), chunk.z());
+        r.nextLong();
+        r.nextInt(4);
+        return PrecursorRuinStructure.SKY_MIN_Y + r.nextInt(8) + DECK;
+    }
+
     /** What to place, as pure geometry from the deck's centre and height and the ground under the chain. */
     /** perch: the plates round the top ring (it stands in their middle). */
     public record Layout(BlockPos core, List<BlockPos> pier, BlockPos chainTop, int chainBottom, List<BlockPos> rings, List<BlockPos> stubs,
@@ -161,8 +179,8 @@ public final class SkyRig {
             }
         }
         level.setBlock(l.core(), AscentContent.WING_CORE.get().defaultBlockState(), flags);
-        dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {}: {} rings down to {} (ground {})", cx, cz, l.rings().size(),
-                l.chainBottom(), ground);
+        dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {} (deck {}): {} rings down to {} (ground {})", cx, cz, deckY,
+                l.rings().size(), l.chainBottom(), ground);
     }
 
     public static void register(net.neoforged.bus.api.IEventBus bus) {

@@ -4,6 +4,7 @@ import dev.awaken.body.ascent.AscentAnchors;
 import dev.awaken.body.ascent.AscentContent;
 import dev.awaken.body.ascent.AscentPayloads;
 import dev.awaken.body.ascent.AscentRules;
+import dev.awaken.body.ascent.Windways;
 import dev.awaken.body.ascent.AscentState;
 import dev.awaken.body.client.feel.FeelDirector;
 import dev.awaken.core.client.AwakenKeys;
@@ -48,6 +49,8 @@ public final class AscentMoves {
     static int aetherOutAt = -100;
     static final AscentRules.Kin K = new AscentRules.Kin();
     private static final double[] S = new double[3], AIR = new double[3];
+    private static final float[] LINE = new float[2];
+    private static boolean windHeld;
 
     // the rope
     static double ax, ay, az, len, lenTarget;
@@ -251,7 +254,13 @@ public final class AscentMoves {
                     toCarry(p, "wings folded");
                     carry(yaw, fwd, right);
                 } else {
-                    AscentRules.glideStep(K, yaw, pitch, glideDrag());
+                    // in a windway, looking roughly along it, the air holds your line (SPEC §17.12)
+                    Windways.Way way = Windways.inside(p.level(), K.x, K.y, K.z);
+                    boolean held = way != null && Windways.steer(way, K.x, K.y, K.z, yaw, pitch, LINE);
+                    AscentRules.glideStep(K, held ? LINE[0] : yaw, held ? LINE[1] : pitch, glideDrag());
+                    if (held != windHeld) trace(held ? "a windway holds the glide" : String.format("out of the windway at %.2f b/t", K.speed()));
+                    windHeld = held;
+                    WindwayRenderer.riding(held ? way : null);
                     boomCheck(p);
                 }
             }

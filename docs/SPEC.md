@@ -2124,6 +2124,40 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   nothing, the first climb is 10 mastery).
 - Not yet: a race line's ghost on spires, and spires on cliffs and ravines.
 
+### 17.12 The Wilds: windways
+- **What**: streams of air between sky platforms (§17.9) that carry a glide from one deck to the next. Each platform
+  is linked to its nearest within 1,100 (`Windways.MAX_LINK`); a pair has two lanes, one each way, each 10 to the
+  right of the line between the centres (the two ways' tubes stay 20 apart). Never in Carillon's basin (no platform forms there).
+- **A lane** (`Windways.between`): from 34 out of the first platform's centre (past its islands, 19 out), 6 under its
+  deck, so a run off the deck's rim with wings open drops into it; to 5 short of the next platform's centre with the
+  side step (11.2 out: over its deck's rim), 6 over its deck (its islands rise 4 over it). Decks' heights come from
+  the seed alone (`SkyRig.deckY`: the structure's own random draws a seed, a turn, then the height), so a lane reaches
+  platforms far beyond loaded chunks.
+- **The air** (an AirHooks source, `Windways.airOf`; the glide takes it ×1.25, the carry ×1, flight ×0.6): a tube of
+  radius 6; along it 0.018 b/t², up 0.022 against a glide's sink, in toward its heart 0.008 at the rim; full in the
+  heart and 0.4 of it at the rim, rising from 0.15 over the first 40 blocks; over the last 64 it brakes (0.012 back),
+  so the glide comes out under 0.8 b/t over the deck and settles onto it.
+- **The hold** (`Windways.steer`, AscentMoves' glide): in a lane, a look within 35° of its way flies the line toward
+  its heart 16 ahead, bent by 0.35 of the look's offset; a look further off breaks out (the air still pushes). So a
+  glide is carried whatever its exact pitch: about 1.7 b/t (34 blocks a second), 1,000 blocks in about 30 s, set down at
+  about 0.5.
+- **Server**: every 5 s per player (staggered, overworld), the sky platforms within 1,400 (`RuinLocator`, 4 new terrain
+  samples a scan; cached, so later scans finish the search) are linked; the lanes of pairs seen in the last 5 min are the
+  server's, and the ones within 900 of a player (at most 64) go to them (`AscentPayloads.Lanes`) when that set changes.
+  Nothing saved; forgotten when the server stops.
+- **The look** (`WindwayRenderer`): along each lane within 280 of the camera, curls of pale mint-white air (5-11 long,
+  one every 3.2 with a fifth missing) flow at 1.25 b/t, each wavering as it goes and turned to face you, fading with
+  distance and at the lane's ends; a faint sheet of light down its heart shows the line from a deck's edge (gone within
+  10 of you). Brighter round you while it holds you; a rush of air as it takes you, its breath every 3.5 s while it carries you.
+- Dev: `/awaken ascent windway` (the lanes known, the nearest), `/awaken ascent windway goto` (onto the deck of the
+  platform the nearest lane starts from, at its rim on the lane's side, facing along it; checks the deck's height
+  against the seed's); `tools/autopilot/ascent-windway.txt` (Wings, the pilot's `glide` off the rim). Test:
+  `ascent_windway` (the lane's ends; carried the whole way and set down slowly looking along it, 15° under or 15° over;
+  a look 45° away breaks out; AirHooks hears the server's lanes).
+  Tour (seed 4246): the lane took the glide 2 s after the wings opened and carried it 667 blocks in 21 s, out at 0.34
+  b/t 7 over the next deck. From a deck in daylight the lane reads faintly (inside it, plainly).
+- Not yet: windways round spires and other heights, weather that turns them, a ride counted toward Wings mastery.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
