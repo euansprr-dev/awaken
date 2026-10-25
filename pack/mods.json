@@ -6,7 +6,7 @@
   "about": "The Awakened Pack (docs/plan-pack.html). Edit this file, then run tools/pack.py lock to pin exact files.",
   "profiles": {
     "perf": "Frame rate and memory. Client-side except Lithium and FerriteCore.",
-    "horizon": "Far terrain.",
+    "horizon": "Distant Horizons, kept one more release for anyone who wants it: AWAKEN's own Far Sight draws far terrain by default since Far Sight 2 (2026-10-25) and steps aside while it is installed.",
     "feel": "Camera, limbs, the animation library Awaken's full-body casts use, and Fresh Animations for vanilla creature bodies.",
     "sound": "Room acoustics.",
     "comfort": "Recipe lookup, block info and inventory help. The world map is Awaken's own Atlas (M); no minimap, by design.",

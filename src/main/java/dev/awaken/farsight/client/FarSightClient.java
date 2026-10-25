@@ -3,6 +3,7 @@ package dev.awaken.farsight.client;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.awaken.Awaken;
+import dev.awaken.core.AwakenConfig;
 import dev.awaken.compat.FarView;
 import dev.awaken.compat.client.FarTerrain;
 import dev.awaken.farsight.FarLandmarks;
@@ -48,15 +49,18 @@ public final class FarSightClient {
 
     /** Where far terrain starts: this far inside the render distance it dithers in, over the same distance. */
     static final int CLIP_BAND = 32;
+    /** Valley cloud: its floor above sea level, its depth (blocks) and density per block (SPEC §20). */
+    static final float MIST_ABOVE_SEA = 40f, MIST_DEPTH = 46f, MIST_DENSITY = 0.014f;
     private static final int UPLOADS_PER_FRAME = 48, CHANGES_PER_FRAME = 1024;
 
-    private static boolean enabled = Boolean.getBoolean("awaken.farsight");
+    /** Autopilot's override (null: the client setting decides). {@code -Dawaken.farsight=true} forces it on. */
+    private static Boolean forced = Boolean.getBoolean("awaken.farsight") ? Boolean.TRUE : null;
     private static FarField field;
     private static FarRenderer renderer;
     private static FarGpu gpu;
     private static final FarWorkers workers = new FarWorkers(FarWorkers.defaultThreads());
     private static ServerLevel bound;
-    private static int boundRd;
+    private static int boundRd, boundRings = Rings.RINGS;
     private static long joinNanos, bindNanos, lastDrawNanos;
     private static int ringsDone;
     private static boolean horizonLogged;
@@ -83,11 +87,22 @@ public final class FarSightClient {
 
     /** Whether Far Sight drew in the last quarter second. */
     public static boolean drawing() {
-        return enabled && lastDrawNanos != 0 && System.nanoTime() - lastDrawNanos < 250_000_000L;
+        return enabled() && lastDrawNanos != 0 && System.nanoTime() - lastDrawNanos < 250_000_000L;
+    }
+
+    private static boolean enabled() {
+        if (forced != null) return forced;
+        return AwakenConfig.Client.SPEC.isLoaded() && AwakenConfig.Client.FAR_SIGHT.get() != AwakenConfig.Client.FarSight.OFF;
+    }
+
+    /** How many rings draw: all seven (to 16 km), or five (to 4 km) on the NEAR setting. */
+    static int rings() {
+        return forced == null && AwakenConfig.Client.SPEC.isLoaded() && AwakenConfig.Client.FAR_SIGHT.get() == AwakenConfig.Client.FarSight.NEAR
+                ? 5 : Rings.RINGS;
     }
 
     private static boolean allowed() {
-        return enabled && !ModList.get().isLoaded("distanthorizons");
+        return enabled() && !ModList.get().isLoaded("distanthorizons");
     }
 
     private static void unbind() {
@@ -119,11 +134,12 @@ public final class FarSightClient {
             gpu = new FragmentFarGpu();
             Awaken.LOG.info("[farsight] ready: {} rings of {}x{} cells, GPU work by {}", Rings.RINGS, Rings.SIZE, Rings.SIZE, gpu.name());
         }
-        int rd = mc.options.getEffectiveRenderDistance();
-        if (level != bound || rd != boundRd) {
+        int rd = mc.options.getEffectiveRenderDistance(), shown = rings();
+        if (level != bound || rd != boundRd || shown != boundRings) {
             unbind();
             bound = level;
             boundRd = rd;
+            boundRings = shown;
             bindNanos = System.nanoTime();
             ringsDone = 0;
             horizonLogged = false;
@@ -134,7 +150,7 @@ public final class FarSightClient {
         Vec3 cam = e.getLevelRenderState().cameraRenderState.pos;
         float clipStart = Math.max(0, rd * 16 - CLIP_BAND);
         // coarsest first: a window's first patches queue ahead of the finer rings'
-        int far = Rings.RINGS - 1;
+        int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
         for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, clipStart, level, store, workers);
         for (int i = 0; i < CHANGES_PER_FRAME; i++) {
@@ -166,7 +182,7 @@ public final class FarSightClient {
         if (moon) sun.negate();
         // the changed rings at once, and one more each frame in turn, so ridge shadows follow the sun
         int bake = field.dirty | 1 << (bakeTurn++ % Rings.RINGS);
-        gpu.bake(field, bake, sun, sun.y > 0.01f);
+        if ((partsOff & 8) == 0) gpu.bake(field, bake, sun, sun.y > 0.01f);
         field.dirty = 0;
         renderer.timeBaked();
         if ((bakeTurn & 1) == 0) renderer.chunks(mc.level.getChunkSource(), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
@@ -176,6 +192,7 @@ public final class FarSightClient {
         renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), clipStart,
                 mc.level.getMinY(), mc.level.getMaxY());
         renderer.planTrees(field, cam.y, clipStart);
+        if ((partsOff & 2) != 0) renderer.treeDraws = 0;
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
         float rain = mc.level.getRainLevel(partialTick), thunder = mc.level.getThunderLevel(partialTick);
         float elevation = Math.max(0f, sun.y);
@@ -185,13 +202,16 @@ public final class FarSightClient {
         else sunColour.set(1.00f + 0.30f * golden, 0.98f - 0.12f * golden, 0.94f - 0.36f * golden);
         // the air: clear alpine air sees about 40 km (density per block at sea level); rain and mist thicken it
         float haze = 1.0e-4f * (1f + 3f * rain);
+        // valley cloud: lying low among the mountains, a sea of it at dawn and dusk and in rain, patches at noon
+        float mistCover = Math.min(1f, 0.32f + 0.4f * golden + 0.35f * rain);
         fogEnd = horizon();
         fogStart = fogEnd * 0.5f;
         if (RenderSystem.getProjectionMatrixBuffer() == null || RenderSystem.getShaderFog() == null) {
             renderer.timeEnd();
             return;
         }
-        renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, strength, sunColour, golden, haze, rain, fogStart, fogEnd,
+        renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, strength, sunColour, golden, haze, rain,
+                level.getSeaLevel() + MIST_ABOVE_SEA, MIST_DEPTH, MIST_DENSITY, mistCover, fogStart, fogEnd,
                 clipStart, CLIP_BAND, level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
                 FarLandmarks.current(level.dimension()));
         renderer.timeEnd();
@@ -210,26 +230,28 @@ public final class FarSightClient {
 
     /** How far Far Sight is fogged out: the coarsest ring's reach, less the most its window can lag the camera. */
     static float horizon() {
-        return Rings.reach(Rings.RINGS - 1) - Rings.patchBlocks(Rings.RINGS - 1) * 0.75f - 256f;
+        int far = boundRings - 1;
+        return Rings.reach(far) - Rings.patchBlocks(far) * 0.75f - 256f;
     }
 
     private static void logProgress() {
-        if (ringsDone == (1 << Rings.RINGS) - 1) return;
+        int all = (1 << boundRings) - 1;
+        if (ringsDone == all) return;
         long now = System.nanoTime();
-        for (int r = 0; r < Rings.RINGS; r++) {
+        for (int r = 0; r < boundRings; r++) {
             if ((ringsDone & 1 << r) != 0 || !field.valid[r] || field.missing[r] > 0) continue;
             ringsDone |= 1 << r;
             Awaken.LOG.info("[farsight] ring {} ({} m) ready {} ms after the first frame, {} ms after joining", r, Rings.reach(r),
                     (now - bindNanos) / 1_000_000, joinNanos == 0 ? -1 : (now - joinNanos) / 1_000_000);
         }
-        int far = (1 << Rings.RINGS) - (1 << 3);
+        int far = all - (1 << 3) + 1;
         if (!horizonLogged && (ringsDone & far) == far) {
             horizonLogged = true;
             Awaken.LOG.info("[farsight] horizon (rings {}-{}, to {} km) ready {} ms after the first frame, {} ms after joining",
-                    3, Rings.RINGS - 1, Rings.reach(Rings.RINGS - 1) / 1000, (now - bindNanos) / 1_000_000,
+                    3, boundRings - 1, Rings.reach(boundRings - 1) / 1000, (now - bindNanos) / 1_000_000,
                     joinNanos == 0 ? -1 : (now - joinNanos) / 1_000_000);
         }
-        if (ringsDone == (1 << Rings.RINGS) - 1) Awaken.LOG.info("[farsight] all rings ready {} ms after the first frame; {}", (now - bindNanos) / 1_000_000, status());
+        if (ringsDone == all) Awaken.LOG.info("[farsight] all rings ready {} ms after the first frame; {}", (now - bindNanos) / 1_000_000, status());
     }
 
     private static void fog(ViewportEvent.RenderFog e) {
@@ -251,6 +273,12 @@ public final class FarSightClient {
 
     /** Development view: 0 normal, 1 generated-layer cells tinted magenta (autopilot {@code farsight debug <n>}). */
     static int debug;
+    /**
+     * Parts switched off for measuring (autopilot {@code farsight part <name> on|off}): 1 the per-pixel erosion detail,
+     * 2 the trees, 4 the valley cloud, 8 the bake.
+     */
+    static int partsOff;
+    private static final String[] PARTS = {"detail", "trees", "mist", "bake"};
 
     /** Autopilot: {@code farsight on|off|status|debug <n>}. */
     public static String autopilot(String arg) {
@@ -259,26 +287,39 @@ public final class FarSightClient {
             debug = a.length() > 5 ? Integer.parseInt(a.substring(5).trim()) : 0;
             return "debug view " + debug;
         }
+        if (a.startsWith("part ")) {
+            String[] w = a.substring(5).trim().split("\\s+");
+            for (int i = 0; i < PARTS.length; i++) {
+                if (!PARTS[i].equals(w[0])) continue;
+                if (w.length > 1 && w[1].equals("off")) partsOff |= 1 << i;
+                else partsOff &= ~(1 << i);
+                return "parts off " + partsOff;
+            }
+            return "unknown part " + w[0] + " (detail|trees|mist|bake)";
+        }
         switch (a) {
             case "on" -> {
-                enabled = true;
+                forced = true;
                 if (ModList.get().isLoaded("distanthorizons")) return "on, but Distant Horizons is installed: Far Sight stays off";
             }
             case "off" -> {
-                enabled = false;
+                forced = false;
                 unbind();
+            }
+            case "setting" -> {
+                forced = null;
             }
             case "status" -> {
             }
             default -> {
-                return "unknown: " + arg.trim() + " (on|off|status|debug <n>)";
+                return "unknown: " + arg.trim() + " (on|off|setting|status|debug <n>|part <name> on|off)";
             }
         }
         return status();
     }
 
     static String status() {
-        if (field == null) return enabled ? "on, not drawn yet" : "off";
+        if (field == null) return enabled() ? "on, not drawn yet" : "off";
         StringBuilder rings = new StringBuilder();
         for (int r = 0; r < Rings.RINGS; r++) rings.append(r == 0 ? "" : ",").append(field.missing[r]);
         long cols = workers.columnCount.get();
@@ -288,7 +329,7 @@ public final class FarSightClient {
         double[] gpu = renderer.gpuMillis();
         return String.format(Locale.ROOT,
                 "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
-                drawing() ? "drawing" : enabled ? "on" : "off", gpu[0], gpu[1], cpu, rings, workers.queued(), renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
+                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, rings, workers.queued(), renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, (field.memoryBytes() + renderer.memoryBytes()) >> 20);
     }

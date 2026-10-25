@@ -50,7 +50,7 @@ final class FarRenderer implements AutoCloseable {
     static final int PIECE = 64, MAX_DRAWS = 256, STRIDE = PIECE + 1, WIDTHS = PIECE / 8;
     private static final int INDICES_PER_CELL = 6;
     static final int FRAME_SIZE = new Std140SizeCalculator().putMat4f().putVec4().putVec4().putVec4().putVec4().get()
-            + Rings.RINGS * 16 * 2 + 3 * 16;
+            + Rings.RINGS * 16 * 2 + 4 * 16;
 
     private final MappableRingBuffer frameUbo = new MappableRingBuffer(() -> "awaken far sight frame", 130, FRAME_SIZE);
     private final int align = Math.max(16, RenderSystem.getDevice().getDeviceInfo().limits().minUniformOffsetAlignment());
@@ -284,7 +284,8 @@ final class FarRenderer implements AutoCloseable {
      * where it dithers in under the real chunks.
      */
     void draw(FarField field, RenderTarget main, Matrix4fc viewRotation, double camX, double camY, double camZ, Vector3f sun,
-            float sunStrength, Vector3f sunColour, float golden, float haze, float rain, float fogStart, float fogEnd, float clipStart,
+            float sunStrength, Vector3f sunColour, float golden, float haze, float rain, float mistFloor, float mistDepth, float mistDensity,
+            float mistCover, float fogStart, float fogEnd, float clipStart,
             float clipBand, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks) {
         depth(main);
         // clip.z = A + B * clip.w: Far Sight's own planes on the game's x, y and w (so view bobbing and FOV still apply)
@@ -303,14 +304,15 @@ final class FarRenderer implements AutoCloseable {
             int cellX = (int) Math.floor(camX / 256.0) * 256, cellZ = (int) Math.floor(camZ / 256.0) * 256;
             u.putMat4f(viewRotation).putVec4(a, b, clipStart, clipBand).putVec4(fogStart, fogEnd, (float) camY, seaLevel)
                     .putVec4(sun.x, sun.y, sun.z, sunStrength)
-                    .putVec4((float) (camX - cellX), 0f, (float) (camZ - cellZ), FarSightClient.debug);
+                    .putVec4((float) (camX - cellX), FarSightClient.partsOff, (float) (camZ - cellZ), FarSightClient.debug);
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putVec4(originX[r], originZ[r], Rings.cellSize(r), field.valid[r] ? 1f : 0f);
             }
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putIVec4((field.winX[r] * Rings.PATCH) & Rings.MASK, (field.winZ[r] * Rings.PATCH) & Rings.MASK, r * Rings.SIZE, 0);
             }
-            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, cellZ, 0, 0);
+            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, cellZ, 0, 0)
+                    .putVec4(mistFloor, mistDepth, mistDensity, mistCover);
         }
         GpuBuffer draws = drawUbo.currentBuffer();
         try (var view = draws.map(false, true)) {

@@ -1,0 +1,191 @@
+# Far Sight 2 reference shots (docs/perf/far-sight/PLAN-2.md gates): five scenes framed like Euan's five references in
+# /Volumes/MEDIA/farsight-ref, each in four directions (the script can't know where the peaks are), on Lens Cinematic.
+# r1: high over a range at golden hour (Terrain Diffusion + Voxy); r2: a meadow under peaks; r3: down a valley from a
+# ridge; r4: forested slopes under cliffs; r5: a snowy peak over pines (Tellus). Plus a flight for seams.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-refshots.txt 1800
+world fs2ref creative 20261025
+waitworld
+gui 0
+farsight on
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+info
+cmd gamemode spectator
+lens cinematic
+# r1_high_golden
+cmd time set 12300
+cmd awaken terrain visit minecraft:jagged_peaks
+wait 300
+cmd tp @s ~ ~140 ~ 0 12
+wait 600
+farsight status
+look 0 12
+wait 40
+shot fs2r_r1_high_golden_s
+look 90 12
+wait 40
+shot fs2r_r1_high_golden_w
+look 180 12
+wait 40
+shot fs2r_r1_high_golden_n
+look -90 12
+wait 40
+shot fs2r_r1_high_golden_e
+# r2_meadow
+cmd time set 6000
+cmd awaken terrain visit minecraft:meadow
+wait 300
+cmd tp @s ~ ~3 ~ 0 -2
+wait 600
+farsight status
+look 0 -2
+wait 40
+shot fs2r_r2_meadow_s
+look 90 -2
+wait 40
+shot fs2r_r2_meadow_w
+look 180 -2
+wait 40
+shot fs2r_r2_meadow_n
+look -90 -2
+wait 40
+shot fs2r_r2_meadow_e
+# r3_valley
+cmd time set 5000
+cmd awaken terrain visit minecraft:frozen_peaks
+wait 300
+cmd tp @s ~ ~30 ~ 0 14
+wait 600
+farsight status
+look 0 14
+wait 40
+shot fs2r_r3_valley_s
+look 90 14
+wait 40
+shot fs2r_r3_valley_w
+look 180 14
+wait 40
+shot fs2r_r3_valley_n
+look -90 14
+wait 40
+shot fs2r_r3_valley_e
+# r4_forest_slopes
+cmd time set 7000
+cmd awaken terrain visit minecraft:grove
+wait 300
+cmd tp @s ~ ~6 ~ 0 2
+wait 600
+farsight status
+look 0 2
+wait 40
+shot fs2r_r4_forest_slopes_s
+look 90 2
+wait 40
+shot fs2r_r4_forest_slopes_w
+look 180 2
+wait 40
+shot fs2r_r4_forest_slopes_n
+look -90 2
+wait 40
+shot fs2r_r4_forest_slopes_e
+# r5_peak_pines
+cmd time set 6500
+cmd awaken terrain visit minecraft:old_growth_pine_taiga
+wait 300
+cmd tp @s ~ ~25 ~ 0 4
+wait 600
+farsight status
+look 0 4
+wait 40
+shot fs2r_r5_peak_pines_s
+look 90 4
+wait 40
+shot fs2r_r5_peak_pines_w
+look 180 4
+wait 40
+shot fs2r_r5_peak_pines_n
+look -90 4
+wait 40
+shot fs2r_r5_peak_pines_e
+# a flight at golden hour, for seams and pops
+cmd time set 12300
+cmd tp @s ~ ~80 ~ 90 10
+wait 200
+perfstart flight
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+shotnow fs2r_flight_10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+shotnow fs2r_flight_20
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+cmd tp @s ~-24 ~ ~
+wait 10
+perfend
+farsight status
+shot fs2r_flight_end
+info
+quit

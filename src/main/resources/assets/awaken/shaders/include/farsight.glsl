@@ -14,12 +14,15 @@ layout(std140) uniform FarFrame {
                         // blocks from the camera), w the dither band over which it fades in
     vec4 FarFog;        // x, y the horizon fade's start and end; z the camera's y; w sea level
     vec4 FarSun;        // xyz toward the light (world space), w the sun's strength (0 night .. 1 noon)
-    vec4 FarCam;        // x, z the camera's position less FarCamInt (0..256), y unused; w the debug view
+    vec4 FarCam;        // x, z the camera's position less FarCamInt (0..256), y parts off (measuring: 1 detail, 4 mist);
+                        // w the debug view
     vec4 FarRing[7];    // per ring: x, z of the window's first corner (blocks from the camera), cell size, 1 if placed
     ivec4 FarTexel[7];  // per ring: the window's first corner as a texel (x, z), the ring's first atlas row
     vec4 FarSunColor;   // rgb the sunlight's colour, a golden hour (0..1)
     vec4 FarAir;        // x haze per block at sea level, y its scale height (blocks), z sun in-scatter, w rain (0..1)
     ivec4 FarCamInt;    // the camera's x and z rounded down to a multiple of 256 (exact world cells for the shaders)
+    vec4 FarMist;       // valley cloud: x its floor (y), y its depth (blocks), z density per block, w how much of the sky
+                        // it covers (0 none .. 1 a cloud sea)
 };
 
 float farHeight(float texel) {

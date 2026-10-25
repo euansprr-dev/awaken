@@ -41,5 +41,5 @@ void main() {
     }
     vec3 n = vFace.xyz;
     c *= farLight(n, max(dot(n, FarSun.xyz), 0.0) * vFace.w) * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
-    fragColor = vec4(farAir(c, vRel), 1.0);
+    fragColor = vec4(farAir(farMist(c, vRel), vRel), 1.0);
 }

@@ -83,7 +83,7 @@ void main() {
     vec2 g = -n.xz / max(n.y, 0.05);
     // relief finer than this ring's mesh: erosion's octaves from two cells down to about four pixels
     float strength = smoothstep(ERODE_FROM, ERODE_FULL, y) * (alpine ? 1.0 : 0.55);
-    if (!water && strength > 0.0 && footprint * 4.0 < vCell * 2.0) {
+    if (!water && strength > 0.0 && footprint * 4.0 < vCell * 2.0 && (int(FarCam.y) & 1) == 0) {
         g += erosionSlope(FarCamInt.xz, rel, g, strength, max(footprint * 4.0, 8.0), vCell * 2.0);
         n = normalize(vec3(-g.x, 1.0, -g.y));
     }
@@ -149,5 +149,5 @@ void main() {
     }
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
 
-    fragColor = vec4(farAir(c, vRel), 1.0);
+    fragColor = vec4(farAir(farMist(c, vRel), vRel), 1.0);
 }

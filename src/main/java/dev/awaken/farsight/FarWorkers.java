@@ -46,9 +46,13 @@ public final class FarWorkers {
         this.threads = threads;
     }
 
-    /** About a third of the cores, at most three: the integrated server and the game keep the rest. */
+    /**
+     * A quarter of the cores, at most three (two on an M4): the integrated server's chunk generation and the game keep
+     * the rest. macOS ignores Java thread priorities, so these compete with the render thread as equals: fewer of them
+     * keep frames steady while a new world fills in (Far Sight 2's tours).
+     */
     public static int defaultThreads() {
-        return Math.clamp(Runtime.getRuntime().availableProcessors() / 3, 1, 3);
+        return Math.clamp(Runtime.getRuntime().availableProcessors() / 4, 1, 3);
     }
 
     /** Asks for patch (px, pz) of ring {@code ring}; lower {@code priority} first. */

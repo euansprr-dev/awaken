@@ -8,8 +8,9 @@
 #           microphone, which drops Bluetooth headphones into call quality (mono, low bitrate) for every game sound.
 #   --horizon  adds Distant Horizons (the horizon profile). Off by default since 2026-10-25 (Euan): in a new world its
 #           far generation kept 4 cores busy and was the lead source of the garbage behind the city's hitches
-#           (docs/perf/CITY-FPS.md); our own far-terrain renderer replaces it later. Without the flag, install takes
-#           out a DH jar an earlier install put there.
+#           (docs/perf/CITY-FPS.md). AWAKEN's own Far Sight (SPEC §20) draws far terrain by default since Far Sight 2
+#           and steps aside while DH is installed; the flag stays one more release. Without it, install takes out a DH
+#           jar an earlier install put there.
 set -e
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 PLAY=/Volumes/MEDIA/Awaken-play

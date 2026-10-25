@@ -102,6 +102,15 @@ public final class AwakenConfig {
                         "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps) or ULTRA",
                         "(the same at higher quality; 60+ fps). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
+
+        /** Far Sight, AWAKEN's own far terrain (dev.awaken.farsight, SPEC §20): how far it draws. */
+        public enum FarSight { OFF, NEAR, FULL }
+
+        public static final ModConfigSpec.EnumValue<FarSight> FAR_SIGHT = C
+                .comment("Far Sight, AWAKEN's own far terrain past your render distance: mountains, forests and air to the horizon.",
+                        "FULL draws to 16 km, NEAR to 4 km, OFF none. Single-player worlds; it steps aside while Distant Horizons",
+                        "is installed.")
+                .defineEnum("farSight", FarSight.FULL);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}

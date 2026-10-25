@@ -46,6 +46,11 @@ final class AlpineTests {
             h.assertTrue(ErodedFunction.summit(ErodedFunction.KNEE) == ErodedFunction.KNEE && ErodedFunction.summit(150f) == 150f, "untouched below the knee");
             float a = ErodedFunction.summit(260f), b = ErodedFunction.summit(320f), c = ErodedFunction.summit(420f);
             h.assertTrue(a < b && b < c && c < ErodedFunction.TOP, "higher ground stays higher, under the top: " + a + " " + b + " " + c);
+            // ridges keep to the room under the ceiling: all of them on low ground, none past the ceiling up high
+            h.assertTrue(RidgeRoomFunction.room(0.5f, 0f) == 0.5f, "low mountains keep their ridges");
+            float top = ErodedFunction.TOP / 128f - 1f;
+            float j = RidgeRoomFunction.room(0.65f, top);
+            h.assertTrue(128f * (1f + top + j * RidgeRoomFunction.RIDGE) <= RidgeRoomFunction.CEILING + 0.01f, "the highest ridge stays under the ceiling");
             h.succeed();
         });
 

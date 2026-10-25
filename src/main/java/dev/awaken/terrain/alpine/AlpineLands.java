@@ -16,8 +16,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /**
  * Awakened Alpine (SPEC §15, Far Sight 2): real mountain form for new worlds. Its data pack asks for the feature flag
  * {@code awaken:awakened_alpine}, so only worlds created with it change; a world made before keeps its land. The pack
- * wraps the terrain's offset in {@link ErodedFunction} (vanilla's, and Tectonic's when it is loaded), prepends
- * {@link AlpineSurface}'s snow, scree and rock to the mountain biomes' surfaces, and thickens mountain forests.
+ * wraps the terrain's offset in {@link ErodedFunction} (vanilla's, and Tectonic's when it is loaded; there it also lifts
+ * Tectonic's offset clamp and holds its ridges under the ceiling, {@link RidgeRoomFunction}), prepends
+ * {@link AlpineSurface}'s snow, scree and rock to the mountain biomes' surfaces.
  */
 public final class AlpineLands {
     private AlpineLands() {}
@@ -31,6 +32,7 @@ public final class AlpineLands {
 
     static {
         DENSITY.register("eroded", () -> ErodedFunction.CODEC);
+        DENSITY.register("ridge_room", () -> RidgeRoomFunction.CODEC);
         CONDITIONS.register("alpine", () -> AlpineCondition.CODEC);
     }
 
