@@ -21,8 +21,9 @@ import static dev.awaken.city.CityPlan.*;
  * row 2 the window's box and its row 4 the floor course; the top course is the eave. Even rows hold only what has no
  * collision (shutters) or is covered. Courses run unbroken across a whole row of houses (every plot on a street shares
  * the rows), so each is a shimmy rail; every window stack is a ladder; and every street face has a drainpipe, a trellis
- * or a hoist rope at most 12 apart. Alleys and the Quay's warehouse flanks are running faces: nothing in their
- * outside plane. Cores stay solid (kit windows in the wall plane) except where the plan marks a plot enterable.
+ * or a hoist rope at most 12 apart. Alleys, slots and the Quay's warehouse flanks are running faces: windows flush in
+ * the wall, nothing in their outside plane. Cores stay solid (kit windows in the wall plane) except where the plan
+ * marks a plot enterable.
  *
  * <p>The plan decides every shape (the same city in every world); the world seed only picks flowers, shutters' paint,
  * ivy and moss.
@@ -32,8 +33,8 @@ final class CityGrammar {
 
     // window rhythms along a face
     static final int R_SINGLE = 0, R_PAIRS = 1, R_SYM = 2, R_TIMBER = 3;
-    // face classes, by the ground in front of a face: nothing shows; a running face without or with windows; a back
-    // face (the grid, no pipes or shutters); a street face (everything)
+    // face classes, by the ground in front of a face: nothing shows; a running face without or with (flush) windows;
+    // a back face (the grid, no pipes or shutters); a street face (everything)
     static final int F_NONE = 0, F_BLIND = 1, F_RUN = 2, F_BACK = 3, F_STREET = 4;
 
     /**
@@ -171,6 +172,8 @@ final class CityGrammar {
         final int doorT;
         final boolean trellis, shutters, balcony;
         final int shutterColour;
+        /** An oriel's middle column on the front (up coordinates), or -1. */
+        final int oriel;
 
         Facade(Ctx c, Plot p, Style st, Box base, Box up, boolean[] jetty) {
             this.c = c;
@@ -191,7 +194,35 @@ final class CityGrammar {
                 int t = doorT + baseOffset(p.front());
                 if (len >= 6) bay[p.front()] = t + 1 <= len - 2 ? t : t - 1;
             }
+            oriel = orielColumn();
             for (int sd = 0; sd < 4; sd++) climb[sd] = climbColumns(sd);
+        }
+
+        /**
+         * A bay window on the first floor of some Market and Garden fronts (bible §4: 3 wide, 1 out on the cornice, its
+         * roof the next course), round the window nearest the middle.
+         */
+        private int orielColumn() {
+            int d = p.district();
+            if (balcony || p.storeys() < 3 || (d != MARKET && d != GARDEN_D)) return -1;
+            if (Ctx.shape(p.id(), 11, 96) >= (d == MARKET ? 30 : 35)) return -1;
+            int sd = p.front(), len = up.length(sd);
+            if (len < 7) return -1;
+            int best = -1;
+            for (int t = 2; t <= len - 3; t++) {
+                if (!win(sd, t, len, 1) || upClass(sd, t - 1) != F_STREET || upClass(sd, t + 1) != F_STREET) continue;
+                boolean clear = true;
+                for (int u = t - 1; u <= t + 1; u++) {
+                    int[] o = outsideCell(up, sd, u);
+                    if (plan.treeAt(o[0], o[1]) || shared(plan, p, sd, o[0], o[1])) clear = false;
+                }
+                if (clear && (best < 0 || Math.abs(t - len / 2) < Math.abs(best - len / 2))) best = t;
+            }
+            return best;
+        }
+
+        boolean inOriel(int sd, int t) {
+            return oriel >= 0 && sd == p.front() && Math.abs(t - oriel) <= 1;
         }
 
         /** Up-box along-coordinate of base column 0 on a side (1 where the side's start is jettied out). */
@@ -307,7 +338,7 @@ final class CityGrammar {
         }
 
         private boolean free(int sd, int t, int len) {
-            if (anyWin(sd, t, len)) return false;
+            if (anyWin(sd, t, len) || inOriel(sd, t)) return false;
             if (bay[sd] >= 0 && (t == bay[sd] - 1 || t == bay[sd] + 2)) return false;
             int bt = t - baseOffset(sd), blen = base.length(sd);
             if (bt >= 0 && bt < blen) {
@@ -337,7 +368,8 @@ final class CityGrammar {
         byte k = plan.kind(x, z);
         if (k == PLOT || k == LANDMARK || k == WALL || k == VOID || water(k) || k == WATERGATE) return F_NONE;
         boolean flank = p.district() == QUAY_D && sd != p.front() && sd != inward(p.front()) && p.storeys() >= 3;
-        if (flank) return F_BLIND;
+        // (kit windows sit flush in the wall, so a run passes them: the flank keeps its windows)
+        if (flank) return F_RUN;
         if (k == ALLEY) return sd == p.front() ? F_BACK : F_RUN;
         // a slot narrower than 3 between two houses can't take both faces' lips: it is a running face
         int depth = 0;
@@ -702,7 +734,13 @@ final class CityGrammar {
             for (int s = 1; s < p.storeys(); s++) {
                 int r0 = 5 + 4 * (s - 1);
                 boolean win = f.win(sd, t, len, s);
-                if (f.inBay(sd, t)) {
+                if (s == 1 && f.inOriel(sd, t)) {
+                    // the oriel: an apron, then glass all round, roofed by the floor course
+                    int axis = sd == N || sd == S ? 0 : 1;
+                    put(f, b, x, g + r0 + 1, z, st.wall());
+                    put(f, b, x, g + r0 + 2, z, window(f, st.win(), 0, axis));
+                    put(f, b, x, g + r0 + 3, z, window(f, st.win(), 1, axis));
+                } else if (f.inBay(sd, t)) {
                     put(f, b, x, g + r0 + 2, z, SILL_BOARD[sd]);
                 } else if (win || f.balcony && s == 1 && street && Math.abs(t - middle) <= 1 && t >= 1 && t <= len - 2) {
                     put(f, b, x, g + r0 + 2, z, box(f, sd, t, s, win ? st.boxStyle() : 1));

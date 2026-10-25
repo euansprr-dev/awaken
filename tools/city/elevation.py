@@ -86,10 +86,14 @@ def model(rid):
 
 
 def resolve(tex, ref, depth=0):
-    while ref and ref.startswith('#') and depth < 10:
+    while depth < 10:
+        if isinstance(ref, dict):
+            ref = ref.get('sprite')
+        if not ref or not ref.startswith('#'):
+            break
         ref = tex.get(ref[1:])
         depth += 1
-    return ref
+    return ref if isinstance(ref, str) else None
 
 
 def parse_state(s):
