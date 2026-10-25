@@ -251,9 +251,9 @@ final class CitizensCommands {
                 int pick = onWall ? pickWallWatch(c) : what.startsWith("crowd_") ? crowdIn(c, java.util.Arrays.asList(CityPlan.DISTRICTS).indexOf(what.substring(6)))
                         : pickCitizen(c, what);
                 if (onWall && pick >= 0 && l.body[pick] == null) {
-                    // not embodied yet: stand on the walk two nodes along from him, looking at him (he walks into view)
+                    // not embodied yet: stand on the walk a node along from him, looking at him (he walks into view)
                     int a = c.data.at[pick], v = a;
-                    for (int hop = 0; hop < 2; hop++) {
+                    for (int hop = 0; hop < 1; hop++) {
                         int nv = -1;
                         for (int k = c.net.adjStart[v]; k < c.net.adjStart[v + 1]; k++) {
                             int w = c.net.adj[k];

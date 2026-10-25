@@ -126,12 +126,13 @@ wait 160
 shot walls_walk_roofed_night
 # the Watch's night round on the wall walk: stand on the walk ahead of a watchman, then frame him with his lantern
 cmd awaken citizens show wall_watch
-wait 240
+wait 160
+shot walls_watch_round_far
 cmd awaken citizens show wall_watch_front
-wait 100
+wait 20
 shot walls_watch_round
 cmd awaken citizens show wall_watch_side
-wait 80
+wait 20
 shot walls_watch_round_side
 cmd awaken city view walls_approach
 wait 200
