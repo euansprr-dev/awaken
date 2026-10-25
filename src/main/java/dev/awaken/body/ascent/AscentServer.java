@@ -237,7 +237,7 @@ public final class AscentServer {
      * where the server has the body, and the point sits on a block's collision (it is placed a hair off the face it bit).
      */
     static boolean anchorReal(ServerPlayer p, double ax, double ay, double az) {
-        double reach = AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * 10 + 6;
+        double reach = AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * 10 + 6 + dev.awaken.progression.Progression.perk(p, AscentRules.ROPE_REACH_PERK);
         if (p.distanceToSqr(ax, ay, az) > reach * reach) return false;
         net.minecraft.world.phys.AABB probe = new net.minecraft.world.phys.AABB(ax - 0.12, ay - 0.12, az - 0.12, ax + 0.12, ay + 0.12, az + 0.12);
         for (var shape : p.level().getBlockCollisions(null, probe)) {
