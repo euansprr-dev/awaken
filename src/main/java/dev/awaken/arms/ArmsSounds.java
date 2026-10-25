@@ -47,6 +47,7 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> TELL_PERILOUS = sound("tell_perilous");
     public static final DeferredHolder<SoundEvent, SoundEvent> TELL_GRAB = sound("tell_grab");
     public static final DeferredHolder<SoundEvent, SoundEvent> HURT = sound("hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HEARTBEAT = sound("heartbeat");
 
     /** From this damage multiplier a blow lands as a heavy one (the finishers, a heavy, a riposte). */
     static final float HEAVY_MOTION = 1.4F;

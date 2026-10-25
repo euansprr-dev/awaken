@@ -462,5 +462,20 @@
         "attenuation_distance": 12
       }
     ]
+  },
+  "arms.heartbeat": {
+    "subtitle": "subtitles.awaken.arms.heartbeat",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_heartbeat_0",
+        "volume": 0.55,
+        "attenuation_distance": 8
+      },
+      {
+        "name": "awaken:arms/arms_heartbeat_1",
+        "volume": 0.55,
+        "attenuation_distance": 8
+      }
+    ]
   }
 }

@@ -16,7 +16,9 @@ import java.util.Map;
  * what is shot is what a player gets. {@code pose} holds the hands still at a point of a move for a review frame.
  *
  * <pre>
- * arms strike                         a tap of the attack key
+ * arms strike                         a tap of the attack key (a real click, held 2 ticks as a finger does)
+ * arms press                          Arms' press alone, without the key (the old line)
+ * arms trace &lt;ticks&gt;                  logs the move, its clock and the hand's pose every tick for that long
  * arms heavy &lt;ticks&gt;                  the attack key held that long, then let go
  * arms guard on|off                   the use key held (the guard up) or let go
  * arms dodge left|right|back|none     the sprint key pressed with that direction for a tick
@@ -38,8 +40,18 @@ public final class ArmsAutopilot {
         switch (a[0]) {
             case "strike" -> {
                 if (!ArmsPredict.fights(p)) return "not fighting (no style in hand, or Arms off)";
+                KeyMapping.click(mc.options.keyAttack.getKey());
+                hold(mc.options.keyAttack, 2);
+                return "strike clicked";
+            }
+            case "press" -> {
+                if (!ArmsPredict.fights(p)) return "not fighting (no style in hand, or Arms off)";
                 ArmsPredict.press(p, mc);
                 return "strike: " + ArmsPredict.move;
+            }
+            case "trace" -> {
+                traceUntil = ArmsPredict.ticks + (a.length > 1 ? Integer.parseInt(a[1]) : 40);
+                return "tracing";
             }
             case "heavy" -> {
                 if (!ArmsPredict.fights(p)) return "not fighting";
@@ -92,8 +104,21 @@ public final class ArmsAutopilot {
         HELD.put(key, ArmsPredict.ticks + ticks);
     }
 
+    private static int traceUntil;
+    private static final float[] POSE = new float[5];
+
     /** Lets go of the keys whose time is up (each client tick). */
     static void tick() {
+        if (ArmsPredict.ticks < traceUntil) {
+            Minecraft mc = Minecraft.getInstance();
+            ArmsHands.pose(POSE);
+            dev.awaken.Awaken.LOG.info("[arms trace] t={} move={} clock={} pose=[{} {} {} {} {}] press={} held={} charging={} key={} presses={} hit={}",
+                    ArmsPredict.ticks, ArmsPredict.move, String.format(Locale.ROOT, "%.2f", ArmsPredict.moveTime()),
+                    String.format(Locale.ROOT, "%.2f", POSE[0]), String.format(Locale.ROOT, "%.2f", POSE[1]),
+                    String.format(Locale.ROOT, "%.0f", POSE[2]), String.format(Locale.ROOT, "%.2f", POSE[3]),
+                    String.format(Locale.ROOT, "%.0f", POSE[4]), ArmsPredict.pressHeld, ArmsPredict.heldTicks, ArmsPredict.charging,
+                    mc.options.keyAttack.isDown(), ArmsPredict.presses, mc.hitResult == null ? "-" : mc.hitResult.getType());
+        }
         if (HELD.isEmpty()) return;
         HELD.entrySet().removeIf(e -> {
             if (ArmsPredict.ticks < e.getValue()) return false;

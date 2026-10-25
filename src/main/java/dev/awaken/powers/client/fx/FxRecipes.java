@@ -466,6 +466,61 @@ final class FxRecipes {
         }
     }
 
+    /** One weapon mote (FxClient.weaponMote): the kind's own life, fade and drift; hot at birth, cooling as it goes. */
+    static void weaponMote(int kind, double x, double y, double z, double vx, double vy, double vz, int argb, float size, int near) {
+        switch (kind) {
+            case FxClient.MOTE_EMBER -> {
+                // white-hot at birth, the weapon's own orange-gold, gone at a dull red; rising, slowing, flickering
+                int hot = FxWorld.mix(argb, 0xFFFFF4D8, 0.55f), cold = FxWorld.alpha(FxWorld.mix(argb, 0xFF6E1404, 0.7f), 0);
+                int s = FxWorld.sprite(EMBER, x, y, z, vx + R.s() * 0.006, vy + R.f(0.004f, 0.016f), vz + R.s() * 0.006, 16 + R.i(18),
+                        size * R.f(0.8f, 1.2f), size * 0.25f, hot, cold, FxPool.ADD | FxPool.ANIM | FxPool.STRETCH | near);
+                FxWorld.grav(s, -0.0022f);
+                FxWorld.drag(s, 0.9f);
+                FxWorld.stretch(s, 1.4f);
+            }
+            case FxClient.MOTE_WISP -> {
+                int s = FxWorld.sprite(WISP, x, y, z, vx + R.s() * 0.004, vy + R.f(0.001f, 0.006f), vz + R.s() * 0.004, 24 + R.i(22),
+                        size * R.f(0.8f, 1.1f), size * 1.9f, FxWorld.alpha(argb, 0.75f), FxWorld.alpha(FxWorld.mix(argb, 0xFF2C3486, 0.4f), 0),
+                        FxPool.ADD | FxPool.ANIM | near);
+                FxWorld.grav(s, -0.0006f);
+                FxWorld.drag(s, 0.93f);
+                FxWorld.spin(s, R.f(0, 6.28f), R.s() * 0.09f);
+            }
+            default -> {
+                int s = FxWorld.sprite(MOTE, x, y, z, vx, vy + R.f(0f, 0.004f), vz, 26 + R.i(24), size * R.f(0.7f, 1.2f), size * 0.15f,
+                        FxWorld.mix(argb, 0xFFFFFFFF, 0.35f), FxWorld.alpha(argb, 0), FxPool.ADD | near);
+                FxWorld.drag(s, 0.88f);
+            }
+        }
+    }
+
+    /** One mark of a tell (FxClient.tellMark). */
+    static void tellMark(int mark, double x, double y, double z, int argb, float size, int life) {
+        int hot = FxWorld.mix(argb, 0xFFFFFFFF, 0.5f);
+        switch (mark) {
+            case FxClient.TELL_GLINT -> {
+                // a star's glint: white at its heart, the class's colour round it, there and gone
+                FxWorld.sprite(FLARE, x, y, z, 0, 0, 0, life, size, size * 0.2f, hot, FxWorld.alpha(argb, 0), FxPool.ADD | FxPool.NEAR);
+                FxWorld.sprite(GLOW, x, y, z, 0, 0, 0, life + 2, size * 0.9f, size * 0.4f, FxWorld.alpha(argb, 0.7f), FxWorld.alpha(argb, 0),
+                        FxPool.ADD | FxPool.NEAR);
+            }
+            case FxClient.TELL_FLARE -> {
+                FxWorld.sprite(FLARE, x, y, z, 0, 0, 0, life, size * 1.2f, size * 0.3f, hot, FxWorld.alpha(argb, 0), FxPool.ADD | FxPool.NEAR);
+                FxWorld.sprite(RING, x, y, z, 0, 0, 0, life + 4, size * 0.4f, size * 2.2f, FxWorld.alpha(argb, 0.9f), FxWorld.alpha(argb, 0),
+                        FxPool.ADD | FxPool.NEAR);
+                FxWorld.sprite(GLOW, x, y, z, 0, 0, 0, life + 6, size * 1.6f, size, FxWorld.alpha(argb, 0.55f), FxWorld.alpha(argb, 0),
+                        FxPool.ADD | FxPool.NEAR);
+            }
+            case FxClient.TELL_SIGN -> {
+                int s = FxWorld.sprite(GLYPH, x, y, z, 0, 0, 0, life, size, size, FxWorld.alpha(hot, 0.95f), FxWorld.alpha(argb, 0.6f),
+                        FxPool.ADD | FxPool.NEAR);
+                FxWorld.spin(s, 0, 0.05f);
+            }
+            default -> FxWorld.sprite(GLOW, x, y, z, 0, 0, 0, life, size, size * 0.8f, FxWorld.alpha(argb, 0.75f), FxWorld.alpha(argb, 0.2f),
+                    FxPool.ADD | FxPool.NEAR);
+        }
+    }
+
     static void motes(double x, double y, double z, int count, float spread, FxStyle st, float speed) {
         for (int i = 0; i < count; i++) {
             int s = FxWorld.sprite(MOTE, x + R.s() * spread, y + R.s() * spread, z + R.s() * spread, R.s() * speed, R.s() * speed, R.s() * speed,

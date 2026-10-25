@@ -1,7 +1,7 @@
 package dev.awaken.core.api;
 
 /**
- * One feel for every blow (SPEC §24), client side: hit-stop (the struck body freezes and trembles; the striker's hands
+ * One feel for every blow (SPEC §25), client side: hit-stop (the struck body freezes and trembles; the striker's hands
  * and view hold too), a camera kick along the blow, and the moment's weight. Arms installs it; any module's client
  * may call it (a power's hit, a slam). Holds no client classes, so common code may name it; every call is a no-op
  * until installed and on a dedicated server.
@@ -21,6 +21,12 @@ public final class CombatFeedback {
     }
 
     private static Sink sink = new Sink() {};
+
+    /**
+     * Whether the local player is in a fight now (client; Arms installs it, honouring its comfort switch): the
+     * action camera's COMBAT pose closes in while it holds.
+     */
+    public static volatile java.util.function.BooleanSupplier engaged = () -> false;
 
     public static void install(Sink s) {
         sink = s;

@@ -5,6 +5,9 @@ import com.mojang.math.Axis;
 import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.Arms;
+import dev.awaken.arms.ArmsItems;
+import dev.awaken.arms.HandPose;
+import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -18,9 +21,10 @@ import java.util.List;
 /**
  * The weapon in first person (SPEC §25): every move's swing from its row (wind-up to the swing's start pose, the
  * blow through to its end pose, the recovery home), the guard across the body, a held heavy drawn back and
- * trembling. Drawn through the item's own hand transform (NeoForge's {@code applyForgeHandTransform}), so vanilla's
- * swing never plays over it. The clock is the hands' own: hit-stop holds it, so a swing freezes on the blow and
- * resumes where it stopped. Stands in for Hands' action layer until that rig exists (docs/anims/PLAN.md).
+ * trembling. The swing is a source on Hands' view layer ({@code FirstPerson.view}, docs/anims/PLAN.md §9), so it
+ * composes with every other first-person move (the look-lag, a stance) through the one system; the item's own hand
+ * transform only puts the blade at vanilla's resting place, with the guard, so vanilla's swing never plays over it.
+ * The clock is the hands' own: hit-stop holds it, so a swing freezes on the blow and resumes where it stopped.
  */
 final class ArmsHands {
     private ArmsHands() {}
@@ -29,20 +33,50 @@ final class ArmsHands {
     private static final float GUARD_RISE = 2F;
     /** Vanilla's resting hand and the shoulder a swing turns about (camera space: x right, y up, -z ahead). */
     private static final float HX = 0.56F, HY = -0.52F, HZ = -0.72F, SX = 0.35F, SY = -0.75F;
-    private static final float[] POSE = new float[5];
+    private static final float[] POSE = new float[5], MOVE = new float[6];
 
+    /** Hands' view source: this frame's swing, as a move about the hand's own place. */
+    static void view(float partial, FirstPerson.View v) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer p = mc.player;
+        if (p == null || !ArmsPredict.fights(p)) return;
+        trace(p);
+        pose(POSE);
+        float x = POSE[0], y = POSE[1], roll = POSE[2], lunge = POSE[3], tilt = POSE[4];
+        if (x == 0 && y == 0 && roll == 0 && lunge == 0 && tilt == 0) return;
+        int inv = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
+        // the hand travels across the view and the blade turns in the screen's plane, its flat to the eye: a flat
+        // sprite turned about the vertical goes edge-on and vanishes mid-cut. At rest this adds nothing.
+        HandPose.viewMove(inv * HX, HY, HZ, inv * x, y, -lunge * 0.55F, inv * roll, tilt, MOVE);
+        FirstPerson.View.add(v.main, 1, MOVE[0], MOVE[1], MOVE[2], MOVE[3], MOVE[4], MOVE[5]);
+    }
+
+    /** The blade lays its ribbon through the blow, on the hands' own clock: from just before it starts to just after. */
+    private static void trace(LocalPlayer p) {
+        Archetypes.Loaded style = ArmsPredict.style;
+        Archetype.Move m = ArmsPredict.move;
+        if (style == null || m == null || ArmsPredict.charging || preview != null) return;
+        Archetype.MoveDef def = style.move(m);
+        if (def == null) return;
+        float t = ArmsPredict.moveTime(), b = blowStart(def);
+        if (t >= b - 0.15F && t <= b + def.active() + 0.6F) {
+            BladeTrail.open(p.getId(), 60, ArmsFx.colour(p.getMainHandItem(), ArmsPredict.cadence, ArmsPredict.perfectHeavy, m));
+        }
+    }
+
+    // vanilla's handheld first-person display (item/handheld.json) and where a sword's blade runs on its sprite:
+    // the guard at pixel (5.5, 10.5), the tip at (15.5, 1.5); the trail runs from a third of the way up to the tip
+    private static final float[] VANILLA_ROOT = {(5.5F + 10F * 0.35F) / 16F, 1 - (10.5F - 9F * 0.35F) / 16F, 0.5F},
+            VANILLA_TIP = {15.5F / 16F, 1 - 1.5F / 16F, 0.5F};
+    private static final org.joml.Matrix4f M = new org.joml.Matrix4f();
+
+    /** The item's hand transform: vanilla's resting place (no swing of its own) and the guard. */
     static boolean transform(PoseStack ps, HumanoidArm arm, ItemStack stack, float partial, float equip) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || stack != p.getMainHandItem() || arm != p.getMainArm() || !ArmsPredict.fights(p)) return false;
         int inv = arm == HumanoidArm.RIGHT ? 1 : -1;
-        pose(POSE);
-        float x = POSE[0], y = POSE[1], roll = POSE[2], lunge = POSE[3], tilt = POSE[4];
-        // the hand travels across the view and the blade turns in the screen's plane, its flat to the eye: a flat
-        // sprite turned about the vertical goes edge-on and vanishes mid-cut. At rest this is vanilla's place.
-        ps.translate(inv * (HX + x), HY + y + equip * -0.6F, HZ - lunge * 0.55F);
-        ps.rotateDegrees(Axis.ZP, inv * roll);
-        ps.rotateDegrees(Axis.XP, -tilt);
+        ps.translate(inv * HX, HY + equip * -0.6F, HZ);
         float g = guard(p, partial);
         if (g > 0) {
             // across the body, edge out (vanilla's own blocking pose, eased in)
@@ -50,6 +84,12 @@ final class ArmsHands {
             ps.rotateDegrees(Axis.XP, -102.25F * g);
             ps.rotateDegrees(Axis.YP, inv * 13.37F * g);
             ps.rotateDegrees(Axis.ZP, inv * 78.05F * g);
+        }
+        if (BladeTrail.open(p.getId()) && ArmsItems.of(stack.getItem()) == null) {
+            // a vanilla blade: where its sprite's edge is drawn (our weapons sample their own mesh as they draw)
+            M.set(ps.last().pose()).translate(1.13F / 16F, 3.2F / 16F, 1.13F / 16F) // both hands: as handheld.json
+                    .rotateXYZ(0, inv * -90F * Mth.DEG_TO_RAD, inv * 25F * Mth.DEG_TO_RAD).scale(0.68F).translate(-0.5F, -0.5F, -0.5F);
+            BladeTrail.sample(p.getId(), M, VANILLA_ROOT[0], VANILLA_ROOT[1], VANILLA_ROOT[2], VANILLA_TIP[0], VANILLA_TIP[1], VANILLA_TIP[2], true);
         }
         return true;
     }
@@ -100,10 +140,15 @@ final class ArmsHands {
         if (def != null) swing(out, def, ArmsPredict.moveTime(), ArmsPredict.recovery);
     }
 
-    /** The row's swing at {@code t} ticks: eased into its start pose, hard through the blow with its lunge, home. */
+    /**
+     * The row's swing at {@code t} ticks: eased into its start pose, hard through the blow with its lunge, home. The
+     * blow is centred on the server's hit (the first active tick): it starts half the active early, so the blade is
+     * crossing the target as the hit lands and the hit-stop holds it there, not still cocked (the first tour on the
+     * Mac); the recovery takes up the difference, so the move ends when the row says.
+     */
     private static void swing(float[] out, Archetype.MoveDef def, float t, int recovery) {
         List<Float> from = def.swing().from(), to = def.swing().to();
-        float w = def.windup(), a = def.active(), r = Math.max(1, recovery);
+        float a = def.active(), w = blowStart(def), r = Math.max(1, recovery) + (def.windup() - w);
         if (t < w) {
             lerp(out, null, from, easeOutSine(t / Math.max(1F, w)), false);
         } else if (t < w + a) {
@@ -141,6 +186,11 @@ final class ArmsHands {
 
     private static float value(List<Float> pose, int i) {
         return pose == null || i >= pose.size() ? 0 : pose.get(i);
+    }
+
+    /** When the blade starts its blow, on the move's clock (ticks): half the active before the first active tick. */
+    static float blowStart(Archetype.MoveDef def) {
+        return def.windup() <= 0 ? 0 : Math.max(0.5F, def.windup() - def.active() * 0.5F);
     }
 
     static float easeOutSine(float x) {

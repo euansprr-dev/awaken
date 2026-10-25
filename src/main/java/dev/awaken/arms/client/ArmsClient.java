@@ -6,6 +6,7 @@ import dev.awaken.Awaken;
 import dev.awaken.arms.Arms;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.core.api.CombatFeedback;
+import dev.awaken.core.api.FirstPerson;
 import dev.awaken.core.api.Stances;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -51,13 +52,23 @@ public final class ArmsClient {
     };
 
     public static void init(IEventBus modBus) {
+        ArmsComfort.register();
         CombatFeedback.install(ArmsFeel.INSTANCE);
+        CombatFeedback.engaged = ArmsPredict::engaged;
+        FirstPerson.view(ArmsHands::view);
         Stances.install(ArmsStances.INSTANCE);
         modBus.addListener(ArmsClient::onPayloads);
         modBus.addListener((RegisterGuiLayersEvent e) -> e.registerAbove(VanillaGuiLayers.CROSSHAIR, Awaken.id("arms_hud"), ArmsHud::render));
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, ArmsFeel::modify));
         modBus.addListener(ArmsClient::onExtensions);
+        // vanilla blades seen from outside lay their ribbon from the posed hand
+        modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.AddLayers e) -> {
+            for (var type : e.getSkins()) {
+                var r = e.getPlayerRenderer(type);
+                if (r != null) BladeTraceLayer.addTo(r);
+            }
+        });
         // the sculpted weapons: their meshes, their shader, the item model type that draws them
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("arms_weapons"),
                 (ResourceManagerReloadListener) WeaponMeshes::reload));
@@ -71,6 +82,8 @@ public final class ArmsClient {
         });
         bus.addListener(EventPriority.LOW, MovementInputUpdateEvent.class, ArmsPredict::onInput);
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, ArmsFeel::onCameraAngles);
+        bus.addListener(ViewportEvent.ComputeFov.class, ArmsFeel::onFov);
+        bus.addListener(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent.class, BladeTrail::onSubmit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ArmsPredict.reset());
         bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> ArmsPredict.reset());
     }

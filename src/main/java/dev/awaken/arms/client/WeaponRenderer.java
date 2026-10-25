@@ -30,8 +30,11 @@ import java.util.function.Consumer;
 final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State> {
     static final Identifier TYPE = Awaken.id("weapon");
 
-    /** The blade's live state (0..255 each): its energy and its flash. */
-    record State(int energy, int flash) {}
+    /**
+     * The blade's live state (0..255 each): its energy and its flash; whether it is the fighter's own in first person;
+     * who holds it (an entity id, -1 for nobody: a stand, a frame).
+     */
+    record State(int energy, int flash, boolean hand, int wielder) {}
 
     private final String weapon;
     private final Identifier texture;
@@ -50,6 +53,13 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         int packed = ours ? (state == null ? 0 : state.energy()) | ((state == null ? 0 : state.flash()) | (foil ? 256 : 0)) << 16 : overlay;
         collector.submitCustomGeometry(poseStack, ours ? WeaponPipelines.weapon(texture) : WeaponPipelines.fallback(texture),
                 (pose, buffer) -> emit(mesh, pose, buffer, light, packed, ours));
+        // its light lifting off it, from where it is drawn (the energy: a charging heavy sheds more)
+        WeaponMotes.emit(mesh, poseStack.last().pose(), state != null && state.hand(), state == null ? 0 : state.energy() / 255F);
+        // a blow in the air: the blade's own ribbon, from its middle to its point
+        if (state != null && state.wielder() >= 0 && BladeTrail.open(state.wielder())) {
+            float[] line = blade(mesh);
+            BladeTrail.sample(state.wielder(), poseStack.last().pose(), line[0], line[1], line[2], line[3], line[4], line[5], state.hand());
+        }
         if (ours && !mesh.anchors().isEmpty()) {
             float energy = state == null ? 0 : state.energy() / 255F, flash = state == null ? 0 : state.flash() / 255F;
             collector.submitCustomGeometry(poseStack, WeaponPipelines.glow(), (pose, buffer) -> halos(mesh, pose, buffer, energy, flash));
@@ -111,18 +121,77 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
                 .setNormal(pose, n[i * 3] / 127F, n[i * 3 + 1] / 127F, n[i * 3 + 2] / 127F);
     }
 
+    private static @Nullable WeaponMesh lineOf;
+    private static final float[] LINE = new float[6];
+
+    /**
+     * Where the blade runs on a mesh (item space): from the middle of its length (the average of the corners half way
+     * along) to its point (the corner furthest along). Worked out once per mesh.
+     */
+    private static float[] blade(WeaponMesh mesh) {
+        if (lineOf == mesh) return LINE;
+        float[] p = mesh.pos();
+        byte[] al = mesh.along();
+        int tip = 0, n = 0;
+        float mx = 0, my = 0, mz = 0;
+        for (int i = 0; i < mesh.vertices(); i++) {
+            int a = al[i] & 255;
+            if (a > (al[tip] & 255)) tip = i;
+            if (Math.abs(a - 150) <= 4) {
+                mx += p[i * 3];
+                my += p[i * 3 + 1];
+                mz += p[i * 3 + 2];
+                n++;
+            }
+        }
+        if (n == 0) {
+            mx = my = mz = 0.5F;
+            n = 1;
+        }
+        LINE[0] = mx / n;
+        LINE[1] = my / n;
+        LINE[2] = mz / n;
+        LINE[3] = p[tip * 3];
+        LINE[4] = p[tip * 3 + 1];
+        LINE[5] = p[tip * 3 + 2];
+        lineOf = mesh;
+        return LINE;
+    }
+
     private static @Nullable State last;
+    private static final State[] OTHERS = new State[8];
 
     /** The fighter's own main-hand blade carries the fight; anyone else's (and one in a frame) is at rest. */
     @Override
     public @Nullable State extractArgument(ItemStack stack) {
-        LocalPlayer p = Minecraft.getInstance().player;
-        if (p == null || stack != p.getMainHandItem() || !ArmsPredict.fights(p)) return null;
-        float charge = ArmsPredict.charge();
-        int energy = charge >= 0 ? Math.round(charge * 255) : ArmsPredict.resonance >= ArmsRules.RESONANCE_MAX ? 150 : 0;
-        int flash = ArmsPredict.glinting() || ArmsPredict.perfectHeavy && ArmsPredict.move == Archetype.Move.HEAVY ? 255 : 0;
-        if (last == null || last.energy() != energy || last.flash() != flash) last = new State(energy, flash);
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer p = mc.player;
+        if (p == null) return null;
+        if (stack != p.getMainHandItem()) return other(mc, stack);
+        boolean hand = mc.options.getCameraType().isFirstPerson();
+        int energy = 0, flash = 0;
+        if (ArmsPredict.fights(p)) {
+            float charge = ArmsPredict.charge();
+            energy = charge >= 0 ? Math.round(charge * 255) : ArmsPredict.resonance >= ArmsRules.RESONANCE_MAX ? 150 : 0;
+            flash = ArmsPredict.glinting() || ArmsPredict.perfectHeavy && ArmsPredict.move == Archetype.Move.HEAVY ? 255 : 0;
+        }
+        if (last == null || last.energy() != energy || last.flash() != flash || last.hand() != hand || last.wielder() != p.getId()) {
+            last = new State(energy, flash, hand, p.getId());
+        }
         return last;
+    }
+
+    /** Someone else's blade: at rest, but its holder known, so its blows trace (a few kept, nothing made per frame). */
+    private static @Nullable State other(Minecraft mc, ItemStack stack) {
+        if (mc.level == null) return null;
+        for (var o : mc.level.players()) {
+            if (o.getMainHandItem() != stack) continue;
+            int slot = Math.floorMod(o.getId(), OTHERS.length);
+            State st = OTHERS[slot];
+            if (st == null || st.wielder() != o.getId()) OTHERS[slot] = st = new State(0, 0, false, o.getId());
+            return st;
+        }
+        return null;
     }
 
     @Override

@@ -163,7 +163,7 @@ final class FxRender {
             float x = (float) (Mth.lerp(t, p.px[i], p.x[i]) - cx);
             float y = (float) (Mth.lerp(t, p.py[i], p.y[i]) - cy);
             float z = (float) (Mth.lerp(t, p.pz[i], p.z[i]) - cz);
-            if ((f & FxPool.FLAT) == 0) {
+            if ((f & (FxPool.FLAT | FxPool.NEAR)) == 0) {
                 float dist = Mth.sqrt(x * x + y * y + z * z);
                 float nf = near(dist);
                 if (nf <= 0.01f) continue;

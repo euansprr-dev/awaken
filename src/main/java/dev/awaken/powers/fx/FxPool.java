@@ -18,6 +18,8 @@ public final class FxPool {
     public static final int ANIM = 16;
     /** Lies flat on the ground instead of facing the camera. */
     public static final int FLAT = 32;
+    /** Stays drawn close to the eye (others fade inside 1.5 blocks): light off the fighter's own blade in first person. */
+    public static final int NEAR = 64;
 
     public final int capacity;
     private int cap;

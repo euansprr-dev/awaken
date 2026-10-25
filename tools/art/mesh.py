@@ -328,6 +328,8 @@ class Built:
     def __init__(self, pos, nrm, uv, along, albedo, material, anchors):
         self.pos, self.nrm, self.uv, self.along = pos, nrm, uv, along
         self.albedo, self.material, self.anchors = albedo, material, anchors
+        # light lifting off the weapon: (kind, rgb, rate per second, spread radius, polyline points), item space
+        self.streams = []
 
     def texture(self):
         """The game's texture: the albedo and its material map side by side."""
@@ -368,13 +370,17 @@ def build(parts, painter, density=2.0, width=128, to_item=None, anchors=()):
     return Built(P, np.array(N), np.array(UV), np.array(A), albedo, material, list(anchors))
 
 
+STREAMS = 1  # header flag: streams follow the anchors (kind, rgb, rate, radius, then their polyline)
+
+
 def write(path, built, accent):
     """The game's mesh (read by dev.awaken.arms.WeaponMesh): header, corners (item space /16, normal, along, uv), glow
-    anchors."""
+    anchors, then (flag STREAMS) the streams of light that lift off it: embers, wisps, motes."""
     n = len(built.pos)
+    streams = getattr(built, "streams", [])
     with open(path, "wb") as fh:
         fh.write(MAGIC)
-        fh.write(struct.pack("<HHI", VERSION, 0, n))
+        fh.write(struct.pack("<HHI", VERSION, STREAMS if streams else 0, n))
         fh.write(struct.pack("<BBBB", *accent, 0))
         for p, q, uv, al in zip(built.pos / 16.0, built.nrm, built.uv, built.along):
             nq = np.clip(np.round(q * 127), -127, 127).astype(int)
@@ -383,13 +389,19 @@ def write(path, built, accent):
         fh.write(struct.pack("<H", len(built.anchors)))
         for (x, y, z), radius, rgb, kind in built.anchors:
             fh.write(struct.pack("<ffffBBBB", x / 16.0, y / 16.0, z / 16.0, radius / 16.0, *rgb, kind))
+        if streams:
+            fh.write(struct.pack("<H", len(streams)))
+            for kind, rgb, rate, radius, pts in streams:
+                fh.write(struct.pack("<BBBBBBf", kind, *rgb, int(round(rate)), len(pts), radius / 16.0))
+                for x, y, z in pts:
+                    fh.write(struct.pack("<fff", x / 16.0, y / 16.0, z / 16.0))
 
 
 def read(path):
     """Reads a mesh back (for checks and the preview): dict of arrays."""
     data = open(path, "rb").read()
     assert data[:4] == MAGIC
-    version, _, n = struct.unpack_from("<HHI", data, 4)
+    version, flags, n = struct.unpack_from("<HHI", data, 4)
     accent = struct.unpack_from("<BBBB", data, 12)[:3]
     off = 16
     rec = struct.Struct("<fffbbbBHH")
@@ -398,6 +410,17 @@ def read(path):
     (k,) = struct.unpack_from("<H", data, off)
     off += 2
     anchors = [struct.unpack_from("<ffffBBBB", data, off + i * 20) for i in range(k)]
+    off += k * 20
+    streams = []
+    if flags & STREAMS:
+        (m,) = struct.unpack_from("<H", data, off)
+        off += 2
+        for _ in range(m):
+            kind, r, g, b, rate, npts, radius = struct.unpack_from("<BBBBBBf", data, off)
+            off += 10
+            pts = [struct.unpack_from("<fff", data, off + j * 12) for j in range(npts)]
+            off += npts * 12
+            streams.append((kind, (r, g, b), rate, radius, pts))
     a = np.array(rows, dtype=float)
     return dict(version=version, accent=accent, pos=a[:, 0:3], nrm=a[:, 3:6] / 127.0, along=a[:, 6] / 255.0,
-                uv=a[:, 7:9] / 65535.0, anchors=anchors)
+                uv=a[:, 7:9] / 65535.0, anchors=anchors, streams=streams)

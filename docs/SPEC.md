@@ -3644,7 +3644,13 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   the PLAN §4.2 table exactly; recovery scales with attack speed (×0.6..1.6 of the row).
 - **Strike** (attack key): tap = the chain (strike 1, 2, 3; strike 4 with mastery); a press inside the cadence window
   earns a rhythm step (+8% damage and +1 posture each, up to 3); a press just early is buffered to the window and
-  earns none; far ahead it counts for nothing. Held = a heavy (charges from 6 ticks, the glint at 16, auto-release at
+  earns none; far ahead it counts for nothing. **One press is one press** (S2 fix, Euan's first play, 2026-10-25: a
+  diamond sword showed nothing or one frame and a held heavy shook in place): vanilla asks again every tick the key
+  stays down over a block (its mining, `Minecraft.continueAttack` through `onClickInput`), and each of those was taken
+  as a new press, restarting the swing every tick; now only a press the key was not already down for counts, and the
+  repeats are swallowed. Every new press strikes wherever it points; outside a fight (100 ticks) a block the weapon
+  cuts faster than a bare hand (a web, bamboo, leaves; never in creative) is still cut. The old rule (any block under the
+  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, the glint at 16, auto-release at
   24; a release within 2 ticks of the glint is perfect: motion 2.4, posture 20, 110 ms hit-stop). A block under the
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
@@ -3690,7 +3696,26 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   and trembles for the move's hit-stop, the striker's hands and view hold for the same beat (the move's clock skips
   it), and the view kicks along the swing (≤ 2.4°) and settles; at most one freeze per 4 ticks in a sweep. A deflect
   holds both for 100 ms; a break freezes the body for 160 ms. Visual only: the game's clock never stops. Kicks follow camera shake.
-- **First person** (`ArmsHands`, through `IClientItemExtensions.applyForgeHandTransform`, every styled item): the row's
+- **The camera's voice and comfort** (S2, `ArmsFeel`, `ArmsComfort`: `config/awaken-arms-client.toml`). Arms owns the
+  fight's camera: the kicks above, and the big moments as the field of view's push and pull, in fast over the first
+  fifth and home on a long ease, a bigger moment taking the view from a smaller one: a deflect snaps in 3.5% (9
+  ticks), a guard broken widens 2.5%, a break leans in 5% (16), an Execution 7.5% (22), the Art's release opens 6%
+  (16), a perfect dodge breathes out 5% (18) and, with Lens on and no story moment playing, drains the frame for 12
+  ticks (`awaken:arms_breath` in `lens/looks_arms.json`: colour at 0.42, cool, closed in; `LensClient.overriding()`
+  says whose moment is on). Under 30% health (clear again over 36%) the heart beats (`arms.heartbeat`, 28 ticks a beat
+  at 30%, 16 near nothing) and the frame's edges cool and darken (our own texture, `textures/gui/arms/low_health.png`
+  from tools/art/specs/arms_hud.py), tightening on each beat; a Lens look was rejected for it: a look replaces the
+  whole place's look and would flatten minutes of play. In the shoulder view the action camera takes a COMBAT pose
+  while you fight (a blow either way in the last 3 s with a fighting weapon in hand, `CombatFeedback.engaged`): 0.45
+  closer and 0.18 lower, the guard no longer read as an aim. Comfort, one switch per layer: `hitStop`, `viewKick`
+  (0..1), `moments`, `combatCamera`, `lowHealth`; reduced motion is the body's one setting (`FirstPerson.reducedMotion`)
+  and halves every kick and moment (and now the body roll's 32° dip and its twist too); Awaken's camera shake still
+  turns every kick off.
+- **The blow is centred on the hit** (S2): the server's sweep lands on the first active tick, so the blade's blow
+  starts half the active before it (`ArmsHands.blowStart`: never before half a tick) and the recovery takes up the
+  difference; the move ends when its row says. In first person, in third person (`arms_moves.py` keys the cocked pose
+  there too) and in the trails. Before, the hit, its freeze and its red flash came while the blade was still cocked.
+- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item): the row's
   swing from the click frame. A pose is the hand's place on screen (blocks from vanilla's resting hand), the blade's
   roll in the screen's plane and an optional tilt of the tip forward (a chop, a thrust). The blade stays flat to the
   eye: a flat item sprite turned about the vertical goes edge-on and vanishes mid-cut (seen in the first tour), so the
@@ -3707,6 +3732,16 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   it is up, the heavy's draw held while it charges, the dodge back or to a side by its way (mirrored for a left
   hand). The fighter's own from their prediction, everyone else's from `Seen` MOVE, CHARGE and DODGE. Every clip is
   checked for an arm through the head or body (under 1.25 px). Without the library: vanilla's arm swing.
+- **The blade's own ribbon** (S2, `BladeTrail`; PLAN §4.8's SWEEP): while a blow is in the air the blade lays a
+  ribbon from half-way up it to its point, sampled every frame from where it is drawn: the fighter's own in first
+  person (any styled weapon; a vanilla sword through `item/handheld.json`'s display transform and its sprite's blade,
+  pixel (5.5, 10.5) to (15.5, 1.5); ours from the mesh, the corners half way along to the furthest one), and our
+  weapons in anyone's hand in third person. The samples live in the world 150 ms (a turn of the head leaves the ribbon
+  behind), run on a Catmull-Rom curve between frames, and the head is carried on along the blade's last motion to the
+  present frame so it never trails the steel. Drawn additive (the weapons' glow pipeline): nothing at the root, full
+  along the tip's path with the edge itself whitened, out with age. The hand-arc crescent below stands aside wherever a
+  ribbon is laid; it stays for vanilla blades seen from outside. The first tour on the Mac showed the crescent floating
+  off the blade ("laggy", Euan).
 - **Trails and sparks** (`ArmsFx`, on the powers module's effects engine: one budget, one settings page). As a
   blow starts (the end of its wind-up), its arc: a crescent following the hand's own arc about the shoulder, pushed
   out 1.5 blocks ahead of the eye so it faces whoever looks (an arc in the plane of the look is seen edge-on, a line:
@@ -3746,6 +3781,13 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   little lower); an Execution is a blow of its own. The fighter hears their own client's copy on the frame it happens;
   everyone else the server's (`playSound` excluding the fighter). Vanilla's attack sounds are silenced while an Arms hit
   resolves. Deflect, block, guard break, break, perfect dodge, dodge, the heavy's draw and its glint each have theirs.
+- **Tells by eye** (S3, `ArmsTells`, from the synced tell, `Strikes.tell`): LIGHT, a white glint on the striking
+  hand 5 ticks before it lands (the deflect window is 4: a tick to see it, then the press); HEAVY, an amber flare and
+  ring as the wind-up starts, then the hand burning amber, brighter as it nears; PERILOUS, a red flare and a red sign
+  (the glyph ring) over the head for the whole wind-up; GRAB the same in violet. The striking hand is ahead of the body
+  at its reach, toward its main arm. On the effects engine with the new `FxPool.NEAR` (drawn even inside 1.5 blocks of
+  the eye, where every other sprite fades: a blow is told at sword's length; the fighter's own first-person motes use
+  it too), `FxClient.tellMark`.
 - **Tells by ear**: each class has one voice on every creature (`Arms.tellSound`: light a bright rising tick, heavy an
   amber swell, perilous a two-tone shriek nothing else makes, grab a creak of reaching): the mobs module plays it with
   every told blow; a NONE ability keeps the mob's own wind-up (`mobs.telegraph`).
@@ -3765,7 +3807,10 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   cross-sections, an edge each side, a hollow-ground bevel and a fuller sunk into the flat, tapering to a true point;
   guards swept along curves; grips turned and bound in wire or straps; cut gems), 2,600–4,800 triangles, at most
   6,000 (`ArmsTests.MESH_BUDGET`). Written to `arms/weapons/<id>.mesh` (`WeaponMesh`, versioned binary: item-space
-  corners with normal, uv and how far along the weapon each lies; then the points that glow).
+  corners with normal, uv and how far along the weapon each lies; then the points that glow; then, under header flag 1,
+  the streams of light that lift off it: kind (ember, wisp, mote), colour, rate a second, spread and a polyline, each
+  design function naming its own, e.g. a blade's edge from the loft's own width function, `edge_line`). Version 1
+  meshes without the flag read as before.
 - **Painted texel by texel** in each material's own language (polished ivory, gold, knapped flint with flake scars,
   tusk, fur, gate-steel, Veil-steel, black scale...), the light worked out continuously and set onto the material's
   hand-picked hue-shifted ramp with an ordered dither: a smooth form that still reads as pixel art, at 4 texels a
@@ -3779,6 +3824,15 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   violet shimmer. Optional pipelines: if a shader pack or driver can't build them, the same mesh draws with vanilla's
   entity light. The stones carry a soft halo (additive, facing the eye, its falloff in the vertex colours) that
   breathes slowly and feeds the Lens bloom.
+- **Light that lifts off it** (S2, `WeaponMotes`; the mesh's streams, below): Lordscale's molten edges shed embers
+  that rise, slow and cool from white-hot through its gold to a dull red; the Veilwoven's spirit edge lets go of wisps
+  that swell, curl and fade; motes hang round the Sovereign's stones and drift up off its burning rune channel (and
+  round the Veilwoven's heart stone). The lower tiers shed nothing: the light is a reward of the high ones. Each stream
+  lets particles go at its rate, two and a half times more at a full charge, from points along its line through the
+  very transform the weapon is drawn with, into the shared effects engine (`FxClient.weaponMote`: its pool, budget and
+  particle setting; our own EMBER, WISP and MOTE sprites), so a swing leaves them hanging behind the blade. In first
+  person a point on screen is carried out to where the world's own field of view puts it (the hands draw at 70°).
+  Nothing while a screen is open or the game is paused.
 - **It carries the fight**: the fighter's own blade fills with its accent's light as a heavy charges, flares on the
   glint and on a perfect heavy, and hums while the Resonance is full (the Art ready); its halos swell with it.
 - **First person**: a hold of its own (`<id>_in_hand.json`, which draws nothing itself): the whole blade standing at

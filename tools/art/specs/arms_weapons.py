@@ -546,7 +546,10 @@ def sovereign():
     parts += extrude("pommel", star(8, 1.75, 0.85, phase=math.pi / 8), -0.6, 0.6, "gold", centre=(0, -4.2))
     parts.append(gem("pommel_gem", (0, -4.2, 0), 0.62, 1.7, "crimson_gem"))
     anchors = [((0, 3.9, 0), 2.4, RAMPS["crimson"][5], 1), ((0, -4.2, 0), 1.9, RAMPS["crimson"][5], 1)]
-    return parts, anchors, dict(accent=RAMPS["crimson"][4], density=4.0, ramps=("ivory", "gold", "crimson", "weave"))
+    # motes hang round the Court's stones and drift up off the burning runes of the channel
+    streams = [(MOTE, RAMPS["crimson"][6], 4, 2.0, [(0, 3.9, 0)]), (MOTE, RAMPS["crimson"][6], 2, 1.6, [(0, -4.2, 0)]),
+               (MOTE, RAMPS["gold"][6], 3, 0.25, [(0, 5.2, 0.0), (0, 16.5, 0.0)])]
+    return parts, anchors, dict(accent=RAMPS["crimson"][4], density=4.0, ramps=("ivory", "gold", "crimson", "weave"), streams=streams)
 
 
 def smooth(a, b, x):
@@ -799,7 +802,11 @@ def veilwoven():
     parts.append(MS.lathe("drop", drop, 12, "mirror", crease=40.0))
     parts.append(gem("drop_gem", (0, -3.9, 0), 0.6, 2.4, "spirit_gem"))
     anchors = [((0, 3.2, 0), 1.6, RAMPS["spirit"][6], 1), ((0, -3.9, 0), 1.7, RAMPS["spirit"][6], 1)]
-    return parts, anchors, dict(accent=RAMPS["spirit"][5], density=4.0, ramps=("veil", "mirror", "spirit", "obsidian"))
+    # the spirit edge (the -x side, as painted) lets go of wisps that drift and curl away; the stones breathe motes
+    width = lambda f: (2.5 - 0.2 * f) * (1 - smooth(0.8, 1.0, f)) ** 0.85 + 0.001
+    streams = [(WISP, RAMPS["spirit"][6], 5, 0.18, edge_line(3.6, 21.2, 44, width, -1, shift=wave)),
+               (MOTE, RAMPS["spirit"][7], 2, 1.2, [(0, 3.2, 0)])]
+    return parts, anchors, dict(accent=RAMPS["spirit"][5], density=4.0, ramps=("veil", "mirror", "spirit", "obsidian"), streams=streams)
 
 
 # ---- A: Lordscale -------------------------------------------------------------------------------------------------
@@ -845,7 +852,22 @@ def lordscale():
         path = curve((0.4 * ca, -2.6, 0.4 * sa), (1.2 * ca, -2.8, 1.2 * sa), (1.1 * ca, -3.9, 1.1 * sa), (0.35 * ca, -4.5, 0.35 * sa), 12)
         parts.append(MS.tube(f"claw_{k}", path, np.linspace(0.28, 0.04, len(path)), 6, "gold"))
     anchors = [((0, 3.25, 0), 1.7, RAMPS["pearl"][4], 1), ((0, -3.6, 0), 1.7, RAMPS["pearl"][4], 1)]
-    return parts, anchors, dict(accent=RAMPS["ember"][5], density=4.0, ramps=("lord", "gold", "ember", "pearl"))
+    # the molten edges shed embers that rise and cool, more as the blade fills with light
+    width = lambda f: (3.3 - 0.55 * f) * (1 - smooth(0.78, 1.0, f)) ** 0.8 + 0.001
+    streams = [(EMBER, RAMPS["ember"][6], 7, 0.12, edge_line(3.8, 21.4, 30, width, side)) for side in (-1, 1)]
+    return parts, anchors, dict(accent=RAMPS["ember"][5], density=4.0, ramps=("lord", "gold", "ember", "pearl"), streams=streams)
+
+
+# ---- what lifts off a weapon (SPEC §25 "Weapons"): embers, wisps, motes, drawn by the effects engine ----------------
+EMBER, WISP, MOTE = 1, 2, 3
+
+
+def edge_line(y0, y1, n, width, side, shift=lambda f: 0.0, f0=0.04, f1=0.97, samples=8):
+    """One edge of a blade() as a polyline in sword space: the same stations the loft uses, at half the width."""
+    pts = []
+    for f in np.linspace(f0, f1, samples):  # width and shift take the height fraction, as in the loft
+        pts.append((side * width(f) / 2 + shift(f), y0 + (y1 - y0) * f, 0.0))
+    return pts
 
 
 DESIGNS = {"E": wildhide, "D": beastbound, "C": gatewrought, "B": veilwoven, "A": lordscale, "S": sovereign}
@@ -880,6 +902,8 @@ def make(row, clean=False):
     along(parts)
     item_anchors = [(tuple(to_item(np.array([c]))[0]), r * SCALE, hex_rgb(rgb), kind) for c, r, rgb, kind in anchors]
     built = MS.build(parts, painter_for(parts, look), density=look["density"], width=128, to_item=to_item, anchors=item_anchors)
+    built.streams = [(kind, hex_rgb(rgb), rate, radius * SCALE, [tuple(q) for q in to_item(np.array(pts))])
+                     for kind, rgb, rate, radius, pts in look.get("streams", [])]
     GRAIN = 1.0
     return built, look
 
