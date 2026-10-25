@@ -1,7 +1,5 @@
 package dev.awaken.body.client.feel;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import dev.awaken.Awaken;
 import dev.awaken.body.ascent.AscentContent;
 import dev.awaken.body.ascent.AscentState;
@@ -18,7 +16,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
@@ -58,7 +55,7 @@ public final class FeelDirector {
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, FeelDirector::onAngles);
         bus.addListener(ComputeFovModifierEvent.class, FeelDirector::onFov);
-        bus.addListener(RenderHandEvent.class, FeelDirector::onHand);
+        dev.awaken.core.api.FirstPerson.view(FeelDirector::viewPose);
     }
 
     private static boolean shakeOn() {
@@ -295,13 +292,11 @@ public final class FeelDirector {
     }
 
     /** First person: the rope hand is raised toward the anchor while a rope is out. */
-    static void onHand(RenderHandEvent e) {
-        if (!AscentMoves.state().rope || e.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;
-        float up = Math.min(1F, (AscentMoves.clock() - AscentMoves.fireTick() + e.getPartialTick()) / 3F);
-        PoseStack ps = e.getPoseStack();
-        ps.translate(0.05F * up, 0.32F * up, -0.12F * up);
-        ps.rotateDegrees(Axis.XP, 58F * up);
-        ps.rotateDegrees(Axis.ZP, -8F * up);
+    /** On the rope, the main arm is up holding it (a first-person stance, core.api.FirstPerson). */
+    static void viewPose(float pt, dev.awaken.core.api.FirstPerson.View v) {
+        if (!AscentMoves.state().rope) return;
+        float up = Math.min(1F, (AscentMoves.clock() - AscentMoves.fireTick() + pt) / 3F);
+        dev.awaken.core.api.FirstPerson.View.add(v.main, up, 0.05F, 0.32F, -0.12F, 58F, 0, -8F);
     }
 
     // ---- the frame ----------------------------------------------------------------------------------------------------

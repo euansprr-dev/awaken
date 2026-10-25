@@ -40,6 +40,7 @@ Hard rules:
 | `body` | the Awakened Body: soft landing, tactical sprint, slide, mantle; momentum hits and trips; `core.api.MovementHooks` |
 | `terrain` | Awakened Lands (§15): the biome table, Awakened biomes and their placement, trees, ground cover, wind and falling leaves, biome looks and sound, the terrain studio commands |
 | `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
+| `anims` | Hands (§24): the first-person system (the world body, the view layer, view clips), `core.api.FirstPerson` |
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
 
 Rules for builders:
@@ -319,7 +320,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
-  Animation Library is installed; a no-op otherwise). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
+  clips and their events; every module's first person goes through it). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
@@ -2545,6 +2547,38 @@ the slide's own controls (jump out, a power's motion, a push, water) end it as b
   walk's 0.22, a 15-tick glide whose drop never changes by more than 0.014 a tick, the server sliding past 20 ticks
   and no fall; a way across the stairs is no run).
 
+### 17.23 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
+A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
+block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision
+A of the Hands plan): "Shift takes you down, Jump takes you off".
+- **Taking a line**: walking into it facing it (within 70° of its wall; a free rope from any side), or in the air with
+  forward or the free-run held (a swing out to the side catches the next line without). The body stands centred in
+  front of the line, 0.02 off its face (a rope: from the side it's on). A fall caught keeps its speed as a short slide
+  that brakes into the hold.
+- **On it**: no keys holds still (vanilla drifts down); forward climbs at 0.2 b/t, 0.3 with the free-run held (the
+  free-run's pace, unchanged); Shift held slides, +0.06 a tick to 0.65 b/t; letting go of Shift brakes to a hold over 4
+  ticks; Jump alone lunges 1.2 up the line (6 ticks, once per 10); Jump + back kicks off the wall (0.5 out, 0.42 up,
+  turning to face out over 5 ticks: the ledge back-jump's numbers); Jump + left/right swings out sideways (0.42 along,
+  0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
+  step off. At the top (no line where the hands would go, 1.75 over the feet) forward hands the body to vanilla's climb,
+  whose eave is caught as a hang as before (§17.14). A screen open holds the grip. The rope key still cuts in.
+- **Motion**: the grip moves the body itself (`move`), its velocity zeroed, so vanilla's ladder cap (0.15 down) doesn't
+  hold back the slide on any line, vanilla's ladder included; sideways it eases onto the line at most 0.15 a tick.
+- **Server** (`RunnerServer.grip`): the first Run takes a line in the claimed column where the server saw the body
+  lately (flags HOLD, CLIMB, CLIMB_FAST); later Runs change what others see (SLIDE, HOP) or leave the line (KICK,
+  SIDE_L, SIDE_R, LAND); while gripping its copy's motion is zeroed after its tick, fall distance reset, hunger at half a
+  hang's; every 4 ticks the column must still hold a line within the body's reach, 3 misses end it (`Refuse`).
+- **Look**: third person, `body_pipe_hold`, `body_pipe_climb` (a pair of pulls every 8 ticks: 1.6 blocks at 0.2),
+  `body_pipe_climb_fast` (6 ticks), `body_pipe_slide` (loops with `_end`), `body_pipe_kick`, `body_pipe_side_l/_r`,
+  `body_pipe_hop`, `body_pipe_land` (tools/art/specs/body_moves.py); the figure faces the line and leans into it (back
+  off it in a slide). First person: the hands and feet on the line in the world (§24, `body.client.GripView`): climbing,
+  a hand stays where it gripped while you rise past it, then reaches up past your eyes for a new hold; held still, look
+  round them; sliding, both run loose down the line with you and tremble; look down to see your feet clamped on it.
+  Leaving: view clips `fp_pipe_kick`, `fp_pipe_side_l/_r`, `fp_pipe_land`. Sound: the grip's grab, `body.pipe_slide`
+  (palms hissing on the line, every 8 ticks of a slide), `body.pipe_brake`; the line's own grit off the hands while
+  sliding, sparks off a metal line at speed; a faint judder in the view.
+- Test: `runner_pipe_grip`. Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
@@ -3199,3 +3233,32 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
 - Test: `creature_life_binds` (every body of ours gets a temperament, every rig and hand-built naming with ears or a tail
   gets springs on them, every creature that blinks has lids, eye bones or a closed-eye skin). Tour:
   `tools/autopilot/creature-life.txt` (PACK=perf,feel; clips in run-autopilot/clips/life_*).
+
+## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
+
+Euan: "right now for basically everything there is no first-person animation". One owner for everything drawn in first
+person, as the Feel Director is for the camera (module `anims`; public face `core.api.FirstPerson`; built in phases P1-P6
+of the plan). No mixins.
+- **World layer**: your body in first person, posed in the world (`anims.client.WorldBody`): a `WorldPose` source fills a
+  `FirstPerson.Rig` (each limb from its root toward its tip, its front, a weight; `Rig.reach` slides a rigid limb's root
+  so its fist or foot lands on a spot); the highest priority source that poses this frame wins (movement 100,
+  interactions 200, combat 300). Limbs are parts of a private copy of the player model (vanilla's own is posed by every
+  player in the frame and drawn after submission), with your skin, sleeves and pants. Legs are drawn in the world with
+  real depth (`SubmitCustomGeometryEvent`). Arms are viewmodels (P1 tour: a fist a third of a block from the eye filled
+  half the frame): drawn in the hand pass, each fist where the world puts it on screen but at 0.85 from the eye, the arm
+  rising to it from under the frame's corner on its side (view (±0.5, -0.85, -0.1)); vanilla's hands step aside. No
+  torso (from inside the head it is only a slab under the camera). Never in third person. Like vanilla's hands, none of
+  it shows with the HUD hidden (F1).
+- **View layer** (`anims.client.Hands`, the one owner of `RenderHandEvent`, first for each hand and last for the off
+  hand): every `ViewPose` stance adds moves (view space: x right, y up, z toward you, blocks; then pitch, yaw, roll in
+  degrees) for both hands, the main or the off hand; the body's stances (sprint, slide, hang, mantle) and the rope's
+  arm moved here from their own hand listeners. The casts (powers) still draw their own arms until P3.
+- **View clips**: `assets/awaken/fp_clips/*.json` (`anims.FpClipSet`, schemaVersion 1) written by
+  `tools/art/specs/fp_moves.py` (edit there; `preview DIR` draws vanilla's arms from the eye); keys in ticks eased by
+  `anims.Ease` (the same curve names as the third-person clips), authored right-handed and mirrored for a left main arm;
+  a one-shot ends at rest; `FirstPerson.play(name[, speed])`, `stop` (a 3-tick fade), `playing`; keyed events reach
+  `FirstPerson.listen` listeners (sounds, hit-stops). Combat's animations use the same three layers.
+- Test: `anims_fp_clips` (the file reads, every clip the body plays is in it, every one-shot ends at rest).
+- P1 (built): the system and the grip (§17.23). Next: P2 the Runner's Kit in first person (the stair slide included),
+  P3 the Ascent, P4 touches, P5 station scenes, P6 the rest.
+

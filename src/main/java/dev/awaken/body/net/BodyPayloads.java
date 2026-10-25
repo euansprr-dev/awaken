@@ -65,6 +65,13 @@ public final class BodyPayloads {
             /** A shimmy starting to the right (as you face the wall); SHIMMY_START is to the left. */
             SHIMMY_START_RIGHT = 3;
 
+    /**
+     * Grip flags (SPEC §17.23): the first Run of a grip starts it (holding or climbing), later ones change what the
+     * hands do; the last four leave the line (a kick off the wall, a swing out left or right, a landing at its foot).
+     */
+    public static final int GRIP_HOLD = 0, GRIP_CLIMB = 1, GRIP_CLIMB_FAST = 2, GRIP_SLIDE = 3, GRIP_HOP = 4,
+            GRIP_KICK = 5, GRIP_SIDE_L = 6, GRIP_SIDE_R = 7, GRIP_LAND = 8;
+
     /** Client → server: a move ended early on the client (a wall, a jump out, a stop, a swing). */
     public record End(int move) implements CustomPacketPayload {
         public static final Type<End> TYPE = new Type<>(Awaken.id("body_end"));
