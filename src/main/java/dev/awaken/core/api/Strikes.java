@@ -60,10 +60,28 @@ public final class Strikes {
         }
     }
 
+    /** The class of the blow being delivered right now (a bolt fired inside it carries it), or null. */
+    public static @Nullable Kind delivering() {
+        return current;
+    }
+
+    /** Classes a blow that lands after its ability ran (a bolt reaching you, fangs rising); null when it doesn't know. */
+    public interface Classifier {
+        @Nullable Kind of(DamageSource source);
+    }
+
+    private static Classifier classifier = s -> null;
+
+    public static void installClassifier(Classifier c) {
+        classifier = c;
+    }
+
     /** The class of the blow behind this damage (server, while it lands). */
     public static Kind of(DamageSource source) {
         Entity by = source.getEntity();
         if (current != null && by != null && by.getId() == currentBy) return current;
+        Kind late = classifier.of(source);
+        if (late != null) return late;
         if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(DamageTypeTags.IS_FALL) || source.is(DamageTypeTags.IS_FIRE)
                 || source.is(DamageTypeTags.IS_DROWNING) || source.is(DamageTypeTags.IS_FREEZING) || source.is(DamageTypeTags.IS_LIGHTNING)) {
             return Kind.NONE;

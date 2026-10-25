@@ -211,6 +211,36 @@ public final class FxClient {
         FxRecipes.bladeHit(at.x, at.y, at.z, dir.x, dir.y, dir.z, size, material);
     }
 
+    /** A weapon's own light (Arms' streams): an ember that rises and cools to red. */
+    public static final int MOTE_EMBER = 1;
+    /** A wisp that drifts, swells and curls away to nothing. */
+    public static final int MOTE_WISP = 2;
+    /** A mote that hangs in the air near where it was let go and twinkles out. */
+    public static final int MOTE_MOTE = 3;
+
+    /**
+     * Light lifting off a weapon at (x, y, z) with its own drift, in the weapon's colour (rgb), {@code size} blocks
+     * across: one particle of the shared pool, under its budget and the particle setting (Arms, SPEC §25 "Weapons").
+     * {@code near}: the fighter's own blade in first person, drawn even this close to the eye.
+     */
+    public static void weaponMote(int kind, double x, double y, double z, double vx, double vy, double vz, int rgb, float size, boolean near) {
+        if (!FxWorld.begin(x, y, z, (int) (x * 131 + y * 37 + z * 71) + FxWorld.ticks * 7919 + kind)) return;
+        if (FxWorld.R.f() > FxWorld.k) return; // the density setting thins them like any effect
+        FxRecipes.weaponMote(kind, x, y, z, vx, vy, vz, 0xFF000000 | rgb, size, near ? dev.awaken.powers.fx.FxPool.NEAR : 0);
+    }
+
+    /** A tell's marks (Arms, SPEC §25 "Tells"): a glint, a flare with its ring, a sign over the head, a held glow. */
+    public static final int TELL_GLINT = 1, TELL_FLARE = 2, TELL_SIGN = 3, TELL_GLOW = 4;
+
+    /**
+     * One mark of an enemy's tell at (x, y, z) in its class's colour (rgb), {@code size} blocks, living {@code life}
+     * ticks; drawn even close to the eye (a blow is told at sword's length). The effects engine's budget and setting.
+     */
+    public static void tellMark(int mark, double x, double y, double z, int rgb, float size, int life) {
+        if (!FxWorld.begin(x, y, z, (int) (x * 53 + z * 29) + FxWorld.ticks * 131 + mark)) return;
+        FxRecipes.tellMark(mark, x, y, z, 0xFF000000 | rgb, size, life);
+    }
+
     /** Cast animations are switched on in the power FX settings. */
     public static boolean animations() {
         return PowerFxConfig.animations();

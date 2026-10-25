@@ -58,15 +58,18 @@ def strike(name, move, cocked, through, note, settle=None, via=None):
     {@code via} halfway when a straight path would cross the body), hard through the blow by the active ticks' end
     (eased out hard, as the hands are), held a beat, then home by the endTick."""
     w, a, r = row(move)
+    # the blow is centred on the server's hit (the first active tick): it starts half the active early, so the blade
+    # is crossing the target as it lands (SPEC §25 "First person"); the recovery takes up the difference
+    c = max(0.5, w - a * 0.5) if w > 0 else 0
     keys = [(0, READY, "linear")]
     if w > 0:
         if via is not None:
-            keys.append((w * 0.5, via, "easeinoutsine"))
-        keys.append((w, cocked, "easeoutsine"))
+            keys.append((c * 0.5, via, "easeinoutsine"))
+        keys.append((c, cocked, "easeoutsine"))
     else:
         keys[0] = (0, cocked, "linear")
-    keys.append((w + a, through, "easeoutcubic"))
-    hold = w + a + max(1, r // 3)
+    keys.append((c + a, through, "easeoutcubic"))
+    hold = c + a + max(1, r // 3)
     keys.append((hold, settle or nudge(through, lean=-2), "easeoutsine"))
     end = w + a + r
     keys.append((end, READY, "easeinoutsine"))
@@ -81,7 +84,9 @@ READY = pose(lean=6, rl=(-10, 0, 4), rk=12, ll=(8, 0, -4), lk=10, ra=(-38, 6, 10
 # behind the shoulder; the blow turns the chest through and the arm sweeps down across the body, the off hand pulling
 # back to drive it.
 S1_COCK = pose(lean=2, twist=16, rl=(-14, 0, 6), rk=14, ll=(14, 0, -4), lk=12, ra=(-140, 65, 40), re=60, la=(-40, 0, -22), le=46)
-S1_THRU = pose(lean=14, twist=-34, rl=(-26, 0, 4), rk=24, ll=(16, 0, -6), lk=10, ra=(-58, -62, 8), re=12, la=(-14, 0, -30), le=30)
+# (the shoulders turn right through and the arm finishes out past the off side, so the blade reads from behind: the
+# shoulder view is behind you, and a finish across the chest hid the whole blow behind the body)
+S1_THRU = pose(lean=14, twist=-48, rl=(-26, 0, 4), rk=24, ll=(16, 0, -6), lk=10, ra=(-60, -96, 14), re=8, la=(-6, 0, -40), le=26)
 # the arm lifts out to the side on its way up (straight up, it would pass in front of the face)
 S1_VIA = pose(lean=4, twist=18, rl=(-12, 0, 5), rk=13, ll=(11, 0, -4), lk=11, ra=(-84, 48, 74), re=44, la=(-34, 0, -18), le=44)
 strike("arms_strike_1", "strike_1", S1_COCK, S1_THRU, "forehand diagonal: drawn up behind the shoulder, swept down across", via=S1_VIA)

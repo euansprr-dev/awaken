@@ -84,7 +84,8 @@ public final class AbilityRunner {
             global--;
             return;
         }
-        if (list.isEmpty() || (mob.tickCount & 3) != 0 || mob.flag(AwakenMob.F_FALLEN) || mob.flag(AwakenMob.F_DORMANT)
+        // a broken stance (Arms) starts nothing until it stands again: the break is the opening it earned
+        if (list.isEmpty() || (mob.tickCount & 3) != 0 || mob.staggered() || mob.flag(AwakenMob.F_FALLEN) || mob.flag(AwakenMob.F_DORMANT)
                 || mob.flag(AwakenMob.F_DECOY) || mob.isWatchedNow() || mob.fleeTicks > 0 || chargeTicks > 0 || leapTicks > 0) return;
         LivingEntity t = mob.getTarget();
         if (t == null || !t.isAlive()) return;

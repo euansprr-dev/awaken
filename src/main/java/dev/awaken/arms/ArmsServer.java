@@ -202,7 +202,10 @@ final class ArmsServer {
         s.perfectHeavy = false;
         s.buffered = null;
         s.fightAt = now;
-        if (cadence == ArmsRules.CADENCE_MAX && def.finisher()) resonance(p, s, ArmsRules.RESONANCE_CADENCE3);
+        // a finisher reached with every press in rhythm (the chain starts at 0, each press in the window adds one, so
+        // a full rhythm is a cadence equal to the step): the old rule asked for cadence 3, which the 3-strike chain
+        // never reaches (combat sim, 2026-10-26)
+        if (def.finisher() && step > 0 && cadence >= Math.min(ArmsRules.CADENCE_MAX, step)) resonance(p, s, ArmsRules.RESONANCE_CADENCE3);
         AwakenNet.send(p, new ArmsPayloads.Result(seq, ArmsPayloads.MOVE, -1, move.ordinal(), cadence));
         p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true); // the vanilla arm for anyone without the clips
         soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(cadence));

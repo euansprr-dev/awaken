@@ -1,0 +1,55 @@
+# Arms: the blade's ribbon checked by numbers and by still frames (first person, third person, a vanilla blade and ours).
+world armsribbon creative 779
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd time set 6000
+cmd weather clear 1000000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 100
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~14 minecraft:smooth_stone
+cmd fill ~-10 ~ ~-10 ~10 ~10 ~14 minecraft:air
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+wait 40
+camera first
+look 0 5
+arms trailfreeze on
+arms strike
+wait 8
+arms ribbonstate
+shot rb_fp_diamond
+arms ribbonstate
+wait 10
+camera back
+wait 10
+arms strike
+wait 8
+shot rb_tp_diamond
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+camera first
+wait 20
+arms strike
+wait 8
+arms ribbonstate
+shot rb_fp_lord
+arms ribbonstate
+camera back
+wait 10
+arms strike
+wait 8
+arms ribbonstate
+shot rb_tp_lord
+arms trailfreeze off
+camera first
+quit

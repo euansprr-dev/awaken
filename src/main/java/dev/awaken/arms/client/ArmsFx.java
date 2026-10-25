@@ -38,7 +38,8 @@ final class ArmsFx {
     static void move(Entity wielder, Archetypes.Loaded style, Archetype.Move move, int cadence, boolean perfect) {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
-        Pending p = new Pending(wielder.getId(), ArmsPredict.ticks + def.windup(), style, move, cadence, perfect);
+        // on the blade's own clock: its blow starts half the active before the first active tick (ArmsHands.blowStart)
+        Pending p = new Pending(wielder.getId(), ArmsPredict.ticks + Math.round(ArmsHands.blowStart(def)), style, move, cadence, perfect);
         for (int i = 0; i < PENDING.length; i++) {
             if (PENDING[i] == null || PENDING[i].entity == wielder.getId()) {
                 PENDING[i] = p;
@@ -71,17 +72,23 @@ final class ArmsFx {
         int inv = e instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT ? -1 : 1;
         Vec3 right = new Vec3(-Mth.cos(yaw), 0, -Mth.sin(yaw)).scale(inv);
         Vec3 up = right.scale(inv).cross(forward);
-        int argb = colour(e instanceof LivingEntity l ? l.getMainHandItem() : ItemStack.EMPTY, p.cadence, p.perfect, p.move);
+        ItemStack held = e instanceof LivingEntity l ? l.getMainHandItem() : ItemStack.EMPTY;
+        int argb = colour(held, p.cadence, p.perfect, p.move);
+        // a blade that lays its own ribbon (ours, or any in first person): the hand's arc stands aside for it
+        if (BladeTrail.ownRibbon(e, !held.isEmpty() && ArmsItems.of(held.getItem()) != null)) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null || e.getId() != mc.player.getId() || !mc.options.getCameraType().isFirstPerson()) {
+                BladeTrail.open(e.getId(), (def.active() + 1) * 50 + 30, argb);
+            }
+            if (def.art().isPresent()) artWave(e, def);
+            return;
+        }
         if (def.swish() == Archetype.Swish.THRUST) {
             Vec3 from = forward.scale(0.5).add(right.scale(0.22)).add(up.scale(-0.3));
             FxClient.thrust(e, from, forward, 0.3F, def.reach() * 0.85F, 0.11F, def.active(), argb);
             return;
         }
-        // the Art's wave rolls on along the ground from the blade, out to its range
-        if (def.art().isPresent()) {
-            Vec3 flat = new Vec3(forward.x, 0, forward.z);
-            if (flat.lengthSqr() > 1e-6) FxClient.groundWave(e, flat.normalize(), def.art().get().range(), def.arc() * 0.5F, def.active() * 3, FxStyle.ARCHITECT);
-        }
+        if (def.art().isPresent()) artWave(e, def);
         List<Float> a = def.swing().from(), b = def.swing().to();
         float ax = HX + a.get(0) - SX, ay = HY + a.get(1) - SY, bx = HX + b.get(0) - SX, by = HY + b.get(1) - SY;
         float start = (float) Mth.atan2(ay, ax) * Mth.RAD_TO_DEG, end = (float) Mth.atan2(by, bx) * Mth.RAD_TO_DEG;
@@ -90,6 +97,13 @@ final class ArmsFx {
         Vec3 centre = forward.scale(DEPTH).add(right.scale(SX * k)).add(up.scale(SY * k));
         // the rim on the blade's visible middle: in first person the tip runs off the top of the view
         FxClient.slash(e, centre, right, up, start, Mth.wrapDegrees(end - start), (hand + 0.28F) * k, 0.4F * k, def.active(), argb);
+    }
+
+    /** The Art's wave rolls on along the ground from the blade, out to its range. */
+    private static void artWave(Entity e, Archetype.MoveDef def) {
+        Vec3 forward = e.getViewVector(1F);
+        Vec3 flat = new Vec3(forward.x, 0, forward.z);
+        if (flat.lengthSqr() > 1e-6) FxClient.groundWave(e, flat.normalize(), def.art().get().range(), def.arc() * 0.5F, def.active() * 3, FxStyle.ARCHITECT);
     }
 
     /**
@@ -115,8 +129,27 @@ final class ArmsFx {
         return alpha << 24 | rgb;
     }
 
+    /**
+     * The blow's way through the struck body and its weight (CombatFeedback.blow): ahead from the wielder, swept
+     * sideways as the swing travels across (a thrust straight in), heavier with the move's damage.
+     */
+    static void blow(Entity target, Entity by, Archetype.MoveDef def) {
+        float yaw = by.getYRot() * Mth.DEG_TO_RAD;
+        float fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -Mth.cos(yaw), rz = -Mth.sin(yaw);
+        float side = 0;
+        if (def.swish() != Archetype.Swish.THRUST) {
+            List<Float> from = def.swing().from(), to = def.swing().to();
+            float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
+            side = Mth.clamp(dx / Math.max(0.05F, Math.abs(dx) + Math.abs(dy)), -1, 1);
+            if (by instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT) side = -side;
+        }
+        dev.awaken.core.api.CombatFeedback.blow(target.getId(), fx * (1 - 0.6F * Math.abs(side)) + rx * side, fz * (1 - 0.6F * Math.abs(side)) + rz * side,
+                Mth.clamp(def.motion() / 1.2F, 0.6F, 3F));
+    }
+
     /** Where a blade landed, along the line from the wielder. */
     static void hit(Entity target, Entity by, Archetype.MoveDef def) {
+        blow(target, by, def);
         Vec3 centre = target.getBoundingBox().getCenter();
         Vec3 dir = centre.subtract(by.getEyePosition());
         dir = dir.lengthSqr() < 1e-6 ? Vec3.ZERO : dir.normalize();

@@ -50,6 +50,7 @@ final class ArmsTests {
         AwakenTests.register("arms_art", 60, ArmsTests::art);
         AwakenTests.register("arms_plunge", 60, ArmsTests::plungeTest);
         AwakenTests.register("arms_assets", 20, ArmsTests::assets);
+        AwakenTests.register("arms_hand_pose", 20, ArmsTests::handPose);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -100,6 +101,20 @@ final class ArmsTests {
                 }
             }
             for (WeaponMesh.Anchor a : mesh.anchors()) h.assertTrue(a.radius() > 0, w.id() + ": a glow with no size");
+            // the light that lifts off it: each stream a kind, a rate, a spread, its line on the weapon
+            float[] bb = mesh.bounds();
+            for (WeaponMesh.Stream st : mesh.streams()) {
+                h.assertTrue(st.kind() >= WeaponMesh.EMBER && st.kind() <= WeaponMesh.MOTE && st.rate() > 0 && st.radius() > 0,
+                        w.id() + ": a stream with no kind, rate or spread");
+                for (int k = 0; k < st.count(); k++) {
+                    for (int c = 0; c < 3; c++) {
+                        float v = st.points()[k * 3 + c];
+                        h.assertTrue(v >= bb[c] - 0.05F && v <= bb[3 + c] + 0.05F, w.id() + ": a stream's point off the weapon");
+                    }
+                }
+            }
+            boolean high = w.tier().equals("B") || w.tier().equals("A") || w.tier().equals("S");
+            h.assertTrue(high == !mesh.streams().isEmpty(), w.id() + ": light lifts off the high blades (B, A, S) and only them");
         }
         h.succeed();
     }
@@ -193,6 +208,33 @@ final class ArmsTests {
     }
 
     /** A stance drains by one rule on both sides; a focus holds while looked at. */
+    /**
+     * The swing on Hands' view layer lands the blade exactly where Arms' own transform put it: for poses across every
+     * move's range (both hands), the view move then the rest place equals the hand moved, rolled and tilted about itself.
+     */
+    static void handPose(GameTestHelper h) {
+        float[] m = new float[6];
+        float worst = 0;
+        for (int side = -1; side <= 1; side += 2) {
+            for (float roll = -150; roll <= 150; roll += 37.5F) {
+                for (float tilt = -40; tilt <= 60; tilt += 25) {
+                    float hx = side * 0.56F, hy = -0.52F, hz = -0.72F, dx = side * 0.31F, dy = 0.22F, dz = -0.18F;
+                    HandPose.viewMove(hx, hy, hz, dx, dy, dz, side * roll, tilt, m);
+                    org.joml.Matrix4f want = new org.joml.Matrix4f().translate(hx + dx, hy + dy, hz + dz)
+                            .rotateZ((float) Math.toRadians(side * roll)).rotateX((float) Math.toRadians(-tilt));
+                    org.joml.Matrix4f got = new org.joml.Matrix4f().translate(m[0], m[1], m[2])
+                            .rotateX((float) Math.toRadians(m[3])).rotateY((float) Math.toRadians(m[4])).rotateZ((float) Math.toRadians(m[5]))
+                            .translate(hx, hy, hz);
+                    for (int c = 0; c < 4; c++) for (int r = 0; r < 4; r++) worst = Math.max(worst, Math.abs(want.get(c, r) - got.get(c, r)));
+                }
+            }
+        }
+        h.assertTrue(worst < 1e-4F, "the view move reproduces the hand's pose (worst element off by " + worst + ")");
+        HandPose.viewMove(0.56F, -0.52F, -0.72F, 0, 0, 0, 0, 0, m);
+        for (float v : m) h.assertTrue(Math.abs(v) < 1e-6F, "at rest the view move adds nothing");
+        h.succeed();
+    }
+
     static void stanceRules(GameTestHelper h) {
         h.assertTrue(ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS, false) == 20, "untouched for its idle time: nothing drains yet");
         h.assertTrue(Math.abs(ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false) - (20 - 20 * ArmsRules.POSTURE_REGEN)) < 1e-4,

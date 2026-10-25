@@ -1,0 +1,61 @@
+# Arms weapon style (for SPEC §25 "Weapons")
+
+The look bar is the owner's reference (`/Volumes/MEDIA/arms-ref/weapon-style-ref.webp`): a Minecraft Dungeons-style
+render of a big two-handed hammer. The owner turned down two earlier passes. Plain JSON cubes were "still very, very
+blocky". The lofted meshes were "too thin and noisy". These rules hold for every archetype (sword, axe, spear, hammer,
+bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/arms_weapons.py`, review sheet
+`python3 tools/art/specs/arms_weapons.py sheet OUT.png` (it puts the reference beside every weapon).
+
+1. **Density: 1 texel = 1 item unit (1/16 block), the size of a skin pixel.** Every box has whole-texel sizes, and every face
+   is its own chart at exactly that density, so texels are square, all the same size and match the player's arm.
+   Boxes may sit at half-texel offsets (to centre odd widths), but their sizes never break the grid. Weapons are
+   designed in texels, with the grip's middle near the origin and the blade up +y. `to_item` turns the blade onto the
+   item's diagonal and does not scale it.
+
+2. **Construction: bold designed parts, not cubes and not staircases.** Build from a few big boxes per part: a blade
+   is a thin full-width edge slab with a thick core over its middle, so the section really steps from edge to spine.
+   It narrows to its point in whole-texel steps. Guards, grips, pommels and caps are boxes. Anything diagonal is a box
+   turned a whole angle (`rbox`, `chain`, `fan`). Never draw a diagonal as a one-texel staircase: that reads as a voxel
+   sprite. Stones sit in 45-degree frames (`frame`) and stand proud of what holds them. Two faces must never share a
+   plane on different texel grids (rotated over axis-aligned, or offset by half a texel): `check()` fails on it,
+   because they z-fight. Give stacked parts different depths, for example chained links 3, 2, 1 deep.
+
+3. **Proportions: a longsword is about 1.2 to 1.3 times vanilla's sword (22.6 units on the diagonal), about 28
+   texels, and two thirds of that is blade.** Blades are 3 to 5 texels wide. The thin edge is 1 texel deep and the
+   core 3. Grips are 3 by 3 and 4 or 5 long. Guards and pommels get bolder with the tier: the low tiers use bone,
+   antler and a plain collar, the high tiers wings, crowns and big framed stones. The silhouette must say what the
+   weapon is from its outline alone, and no two weapons may share one.
+
+4. **Painted bevels, big and clean.** Each face has a flat base step from its material's ramp. Every outer edge gets
+   a band one texel wide. The band is lit (+2 steps) where the edge faces the painted light (up the blade and toward
+   its back, the item's upper left), +1 across the light, and dark (-1 or -2) where it faces away. Faces turned to
+   the light sit a step up, faces turned away a step down. A face one texel across gets no bevel that way, and its
+   tone comes from the way it faces. Top and bottom faces take at most ±1. Where a face runs into another part, a
+   contact shadow (base -3) sits along the join. Within one part, steps take no shadow.
+
+5. **Palette and contrast: hand-picked hue-shifted ramps (`RAMPS`), three or four materials per weapon, one of them
+   dark and one warm.** For example dark flint with cream antler and orange amber, or black scale with gold and
+   molten ember. Metals keep metal 0.3 to 0.55 in the material map so the albedo carries the colour, because the
+   shader's studio reflection turns heavy metal muddy. Lighter metals (gold, brass, bronze) take base step 5.
+
+6. **Detail budget: a few deliberate marks per part, never per-texel noise.** The allowed kinds are: a broken
+   highlight streak on steel's lit edge, wrap bands of a second material on a grip, studs, a groove line, growth
+   bands, scales in offset rows, knapped facets in three-row chevrons, an inlaid circuit or rune channel down a
+   blade's middle column, and gold tips on feathers. Use at most one or two dither patterns, and only where they are
+   the material (fur strands, the Veil sheen's trailing edge). Patterns are painted by design-space position, so they
+   run unbroken across the boxes that make one surface.
+
+7. **Stones and what glows.** A gem's face is concentric rings: the heart a step or two under the ramp's top, the
+   rim darker, and one sparkle texel toward the light. Its sides are darker still. Gem albedo stays two or more steps
+   under the top, because the shader adds the glow (albedo × emissive × 1.6) and a light albedo glows white instead
+   of red, green or blue. Emissive 0.4 to 0.55 suits stones, about 0.6 to 1 suits runes, circuits and edges. Anything
+   that pulses gets a flow (0..1) that rises up the weapon, so the light runs hilt to tip. Each stone carries an
+   anchor (halo). Streams (embers, wisps, motes) stay on the B, A and S tiers only, and their points lie on the
+   weapon.
+
+8. **Check every look on the sheet before writing.** Look at upright three-quarter, other side and back views, the
+   hilt close-up, first person at rest and in vanilla's hold, night (only what glows carries) and the icon at 4x and
+   1x, all beside the reference. Ask of each weapon: is it chunky, are the bevels big and clean, is there material
+   contrast, does it read at a glance, is it more than plain cubes, is it free of noise. Then run `build`. Its checks
+   repeat `ArmsTests.assets`: budget, item box, normals, uvs in the albedo half, glows sized, streams on the weapon and
+   only on B, A and S, plus no plane fights.

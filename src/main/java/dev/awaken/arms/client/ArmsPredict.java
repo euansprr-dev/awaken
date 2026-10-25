@@ -73,16 +73,44 @@ public final class ArmsPredict {
 
     // ---- strike -----------------------------------------------------------------------------------------------------
 
-    /** The attack key: a block under the crosshair outside a fight is still mined; anything else is a strike. */
+    /** In a fight now, as the shoulder camera sees it: a fighting weapon in hand and a blow either way in the last 3 s. */
+    static boolean engaged() {
+        LocalPlayer p = Minecraft.getInstance().player;
+        return p != null && ticks - Math.max(fightAt, hurtAt) < 60 && fights(p) && ArmsComfort.combatCamera();
+    }
+
+    /** Presses taken so far (the autopilot's trace). */
+    static int presses;
+
+    /** The attack key has stayed down since the last press it gave (cleared at a tick's end once it's up), and that press's tick. */
+    private static boolean attackHeld;
+    private static int pressedAt = -1000;
+
+    /**
+     * The attack key: every new press is a strike, wherever it points; outside a fight a block the blade itself cuts
+     * faster than a hand (a web, bamboo, leaves) is still cut. Vanilla asks again every tick the key stays down over a
+     * block (its mining): that is a hold, never another press (each one restarted the swing, and a held heavy shook in
+     * place, seen by Euan 2026-10-25).
+     */
     static void onKey(InputEvent.InteractionKeyMappingTriggered e) {
         if (!e.isAttack()) return;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || !fights(p)) return;
-        if (mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK && ticks - fightAt > 100) return;
+        if (ticks - fightAt > 100 && cuts(mc, p)) return;
         e.setCanceled(true);
         e.setSwingHand(false);
+        if (attackHeld || ticks == pressedAt) return;
+        pressedAt = ticks;
+        attackHeld = true;
         press(p, mc);
+    }
+
+    /** The crosshair is on a block the weapon in hand breaks faster than a bare hand (survival only). */
+    private static boolean cuts(Minecraft mc, LocalPlayer p) {
+        if (!(mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK || mc.level == null) return false;
+        if (p.isCreative()) return false; // a sword breaks nothing in creative
+        return p.getMainHandItem().getDestroySpeed(mc.level.getBlockState(hit.getBlockPos())) > 1.0F;
     }
 
     static void press(LocalPlayer p, Minecraft mc) {
@@ -90,6 +118,7 @@ public final class ArmsPredict {
         if (st == null) return;
         int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
         int s = nextSeq();
+        presses++;
         pressHeld = true;
         heldTicks = 0;
         charging = false;
@@ -153,6 +182,7 @@ public final class ArmsPredict {
         ArmsAudio.swing(p, st, m, cad);
         ArmsFx.move(p, st, m, cad, perfect);
         ArmsBodies.move(p, m);
+        if (m == Archetype.Move.ART) ArmsFeel.art();
     }
 
     /** Ticks into the running move on the hands' clock (hit-stop holds pause it), with the frame's fraction. */
@@ -165,6 +195,7 @@ public final class ArmsPredict {
         ticks++;
         ArmsFeel.tick();
         ArmsFx.tick();
+        ArmsTells.tick();
         ArmsStances.tick();
         ArmsBodies.tick();
         Minecraft mc = Minecraft.getInstance();
@@ -185,7 +216,7 @@ public final class ArmsPredict {
             buffered = null;
             if (st != null) begin(p, st, d.move(), d.step(), d.cadence(), bufferedSeq);
         }
-        if (move != null && style != null) {
+        if (move != null && style != null && !charging) {
             Archetype.MoveDef def = style.move(move);
             if (def == null || moveTime() > def.windup() + def.active() + recovery + style.def().late()) {
                 move = null; // past the late press: the next tap starts the chain again either way
@@ -198,6 +229,7 @@ public final class ArmsPredict {
             dodgeRechargeAt = ticks + style.def().dodge().recharge();
         }
         if (!BROKEN.isEmpty()) BROKEN.values().removeIf(until -> until < ticks);
+        if (!mc.options.keyAttack.isDown()) attackHeld = false;
     }
 
     private static void heldOrReleased(LocalPlayer p, Minecraft mc) {
@@ -368,6 +400,7 @@ public final class ArmsPredict {
                     CombatFeedback.hold(r.aux());
                     Archetype.Move m = Archetype.Move.byId(r.aux2());
                     Archetype.MoveDef def = style == null || m == null ? null : style.move(m);
+                    if (m == Archetype.Move.EXECUTION) ArmsFeel.executed();
                     if (def != null) {
                         java.util.List<Float> from = def.swing().from(), to = def.swing().to();
                         // along the blow's travel on screen (y up there, pitch down here)
@@ -384,6 +417,7 @@ public final class ArmsPredict {
                 CombatFeedback.hitstop(r.entity(), 100);
                 CombatFeedback.hold(100);
                 CombatFeedback.kick(0F, -1.8F, 1.2F, 7);
+                ArmsFeel.deflected();
                 ArmsAudio.deflect(p);
             }
             case ArmsPayloads.BLOCK -> {
@@ -394,11 +428,13 @@ public final class ArmsPredict {
             case ArmsPayloads.GUARD_BREAK -> {
                 fightAt = ticks;
                 CombatFeedback.kick(0F, 3.5F, -2F, 10);
+                ArmsFeel.guardBroken();
                 ArmsAudio.guardBreak(p);
             }
             case ArmsPayloads.PERFECT_DODGE -> {
                 fightAt = ticks;
                 CombatFeedback.hitstop(r.entity(), 60);
+                ArmsFeel.breath();
                 ArmsAudio.perfectDodge(p);
             }
             case ArmsPayloads.BREAK -> {
@@ -406,6 +442,7 @@ public final class ArmsPredict {
                 CombatFeedback.hitstop(r.entity(), 160);
                 CombatFeedback.hold(120);
                 CombatFeedback.kick(0F, 2.5F, 0F, 10);
+                ArmsFeel.broke();
             }
             case ArmsPayloads.RESONANCE -> resonance = r.aux();
             case ArmsPayloads.HURT -> hurt(p, r.aux(), r.aux2() / 10F);
@@ -481,6 +518,9 @@ public final class ArmsPredict {
         dodgeCharges = -1;
         resonance = 0;
         BROKEN.clear();
+        attackHeld = false;
+        BladeTrail.reset();
+        ArmsTells.reset();
         ArmsFeel.reset();
         ArmsFx.reset();
         ArmsStances.reset();

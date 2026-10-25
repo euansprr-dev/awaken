@@ -1,5 +1,6 @@
 package dev.awaken.arms.client;
 
+import dev.awaken.Awaken;
 import dev.awaken.arms.Archetype;
 import dev.awaken.arms.ArmsConfig;
 import dev.awaken.arms.ArmsRules;
@@ -8,13 +9,17 @@ import dev.awaken.signal.client.HudLook;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 
 /**
  * Arms' only HUD (SPEC §25), on surfaces the player already reads: a thin Resonance arc under the crosshair (filling,
  * gold and glowing when the Art is ready), the held heavy's charge on the same arc with the glint's flash, the
  * dodge's charges as two pips beside the sprint line, and a short red shard on a ring round the crosshair pointing
- * to where the last blow on you came from (whatever is in your hand). Nothing is drawn at rest.
+ * to where the last blow on you came from (whatever is in your hand); under 30% health the frame's edges cool and
+ * darken, tightening on each heartbeat (still under reduced motion). Nothing is drawn at rest.
  */
 final class ArmsHud {
     private ArmsHud() {}
@@ -27,6 +32,7 @@ final class ArmsHud {
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden() || mc.player.isSpectator()) return;
+        lowHealth(g, dt.getGameTimeDeltaPartialTick(true));
         hurtShard(g, mc, dt.getGameTimeDeltaPartialTick(true));
         boolean fights = ArmsPredict.fights(mc.player);
         float charge = ArmsPredict.charge();
@@ -60,6 +66,18 @@ final class ArmsHud {
                 g.fill(x, y - 1, x + 3, y + 2, Glass.a(lit ? HOLO : DIM, (lit ? 0.9F : 0.5F) * shown));
             }
         }
+    }
+
+    private static final Identifier EDGE = Awaken.id("textures/gui/arms/low_health.png");
+    private static final int COLD = 0x0B1826;
+
+    /** The cold edge of low health: a dark blue falloff from the corners, a touch deeper on each beat. */
+    private static void lowHealth(GuiGraphicsExtractor g, float partial) {
+        float e = ArmsFeel.edgeWas + (ArmsFeel.edge - ArmsFeel.edgeWas) * partial;
+        if (e < 0.01F) return;
+        float a = Mth.clamp(e * (0.82F + 0.18F * ArmsFeel.pulse), 0, 0.95F);
+        int w = g.guiWidth(), h = g.guiHeight();
+        g.blit(RenderPipelines.GUI_TEXTURED, EDGE, 0, 0, 0F, 0F, w, h, 256, 256, 256, 256, ARGB.color(Math.round(a * 255), COLD));
     }
 
     /** Seven dots across about 30° of a ring, toward the blow (up = ahead), brightest at the middle, fading out. */

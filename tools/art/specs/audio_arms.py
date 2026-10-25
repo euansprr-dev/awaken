@@ -511,6 +511,20 @@ def hurt(seed):
     return _blow(layers, 0.4, drive=1.6)
 
 
+def heartbeat(seed):
+    """Low health: one slow beat, felt more than heard. The lub (a soft deep thump with a body band small speakers
+    carry), the dub a third of a second later, higher and shorter; nothing bright, nothing that sounds like a blow."""
+    r = K.rng(seed)
+    lag = 0.30 + 0.03 * r.random()
+    b = R.Bus(0.75)
+    for t, f0, f1, g, band in ((0.0, 62, 38, 1.0, 1.0), (lag, 78, 48, 0.7, 0.75)):
+        b.add(sub(0.16, f0, f1, 0.07, drive=1.3), t, g)
+        n = K.ns(0.09)
+        body = R.unit(K.lowpass(K.noise(n, "pink", seed + int(t * 100)), 210, 2)) * K.perc(n, 0.004, 0.05)
+        b.add(body, t + 0.002, 0.35 * band)
+    return R.fade_out(b.render(), 0.08)
+
+
 def _has(name):
     try:
         rec(name)
@@ -550,6 +564,7 @@ EVENTS = OrderedDict([
     ("tell_perilous", (tell_perilous, 2, -14.0, 32, "Creature readies a perilous blow", False, 12.0, 1.0)),
     ("tell_grab", (tell_grab, 2, -15.0, 24, "Creature reaches to grab", False, 12.0, 0.85)),
     ("hurt", (hurt, 4, -14.0, 12, "You're hit", True, 12.0, 0.9)),
+    ("heartbeat", (heartbeat, 2, -16.0, 8, "Heartbeat pounds", False, 12.0, 0.55)),
 ])
 
 
