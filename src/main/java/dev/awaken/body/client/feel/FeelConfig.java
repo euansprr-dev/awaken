@@ -42,6 +42,16 @@ public final class FeelConfig {
             .comment("The one-button free-run: hold sprint with forward and the body vaults, mantles, climbs, runs walls and leaps from",
                     "edges as the ground asks, and jumps bend a little toward the ledge ahead (SPEC §17.14). The keys still work by hand.")
             .define("freeRun", true);
+    public static final ModConfigSpec.BooleanValue FP_MOVES = B
+            .comment("First person: your hands and feet through every move (a pipe, a hang, a slide, the rope, wings, flight; SPEC §24).")
+            .define("firstPersonMoves", true);
+    public static final ModConfigSpec.BooleanValue FP_TOUCHES = B
+            .comment("First person: your hands on the things you use (a door pushed, a lever thrown, a chest's lid lifted, a herb plucked).")
+            .define("firstPersonTouches", true);
+    public static final ModConfigSpec.BooleanValue STATIONS = B
+            .comment("Station scenes: at a crafting table the view leans in and your hands lay each ingredient on its square of the table",
+                    "(sneak + use for the plain screen).")
+            .define("stationScenes", true);
     public static final ModConfigSpec SPEC = B.build();
 
     public static void register() {
@@ -98,6 +108,33 @@ public final class FeelConfig {
     public static boolean freeRun() {
         try {
             return !SPEC.isLoaded() || FREE_RUN.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** First person: hands and feet through the moves (Hands P1-P3). */
+    public static boolean fpMoves() {
+        try {
+            return !SPEC.isLoaded() || FP_MOVES.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Station scenes (Hands P5). */
+    public static boolean stations() {
+        try {
+            return !SPEC.isLoaded() || STATIONS.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** First person: hands on the things you use (Hands P4). */
+    public static boolean fpTouches() {
+        try {
+            return !SPEC.isLoaded() || FP_TOUCHES.get();
         } catch (RuntimeException e) {
             return true;
         }

@@ -55,6 +55,11 @@ final class BodyAnims {
     }
 
     static void play(int entityId, Move move, float yaw) {
+        // first person: our own move's counterpart (Hands, BodyFp)
+        if (isLocal(entityId)) {
+            String c = BodyClips.of(move);
+            if (c != null) BodyFp.clip(c);
+        }
         Anim a = find(entityId);
         if (a == null) a = free();
         a.entity = entityId;
@@ -332,8 +337,14 @@ final class BodyAnims {
         java.util.Arrays.fill(RUN_ENTITY, -1);
     }
 
+    private static boolean isLocal(int entityId) {
+        var p = net.minecraft.client.Minecraft.getInstance().player;
+        return p != null && p.getId() == entityId;
+    }
+
     /** A Runner clip on an entity (the local player from its prediction, others from the server's Seen). */
     static void runner(int entityId, String clip) {
+        if (isLocal(entityId)) BodyFp.clip(clip);
         if (!PlayerClips.available()) return;
         int slot = -1, free = -1;
         for (int i = 0; i < RUN_ENTITY.length; i++) {

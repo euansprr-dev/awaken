@@ -1,6 +1,7 @@
 package dev.awaken.anims.client;
 
 import dev.awaken.core.api.FirstPerson;
+import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -21,7 +22,26 @@ public final class AnimsClient {
     public static void init(IEventBus modBus) {
         FirstPerson.install(Hands.INSTANCE);
         var bus = NeoForge.EVENT_BUS;
-        bus.addListener(ClientTickEvent.Post.class, e -> Hands.tick());
+        bus.addListener(ClientTickEvent.Post.class, e -> {
+            Hands.tick();
+            Touches.tick();
+        });
+        // touches (P4): the game's own interaction events, client side
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock.class, Touches::rightClickBlock);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock.class, Touches::leftClickBlock);
+        bus.addListener(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract.class, Touches::entityInteract);
+        bus.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, Touches::interactionKey);
+        bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Opening.class, Touches::screenOpening);
+        FirstPerson.view(Touches::viewPose);
+        // the hands meet what they touch (P4.1); the view leans in a touch while one is out
+        FirstPerson.world("anims_touch", 200, Reaches::pose);
+        bus.addListener(net.neoforged.neoforge.client.event.ComputeFovModifierEvent.class, e -> {
+            float lean = Reaches.lean(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+            if (lean > 0 && !FirstPerson.reducedMotion.getAsBoolean()) e.setNewFovModifier(e.getNewFovModifier() * (1 - 0.05F * lean));
+        });
+        // station scenes (P5): the crafting table worked by hand
+        dev.awaken.anims.client.station.StationClient.init(bus);
+        bus.addListener(ClientTickEvent.Post.class, e -> dev.awaken.anims.client.station.StationClient.tick());
         bus.addListener(RenderFrameEvent.Pre.class, e -> WorldBody.frame());
         bus.addListener(ExtractLevelRenderStateEvent.class, WorldBody::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, WorldBody::onSubmit);
@@ -30,6 +50,7 @@ public final class AnimsClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             Hands.reset();
             WorldBody.reset();
+            Touches.reset();
         });
     }
 }

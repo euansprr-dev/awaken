@@ -1,6 +1,6 @@
 # Hands: first-person animation for AWAKEN (approved 2026-10-25; building phase by phase)
 
-Status: approved by Euan 2026-10-25 with every recommendation in §7; P1 built (SPEC §17.23, §24). Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
+Status: approved by Euan 2026-10-25 with every recommendation in §7; P1-P6 built (SPEC §17.23, §24); the quality pass P1.1/P2.1/P4.1 (hands that meet the world) after the orchestrator's review. Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
 Euan's ask: a real pipe climb and slide; first-person animation for every move of The Ascent; "Cinematic
 Interactions"-level hand moments across the mod; all in the design language we already have.
 
@@ -197,8 +197,8 @@ clip tour in first person and in the shoulder view, run alone, Gradle wrapped in
 | P2 The Runner's Kit in FP | Every ground and wall move of §4, the stair slide included (3P tilt and FP) | 2-3 h |
 | P3 The Ascent in FP | Rope, Leaper, wings, flight, Sovereign, landings | 2-3 h |
 | P4 Touches | #1, 3, 4, 6, 7, 10, 11 of §5 | 2-3 h |
-| P5 Station scenes | The scene kit (lean-in shot, input, cursor ray, arms in the world, vanilla escape hatch) and the crafting table; then the Forge and anvils, cooking, the Journal. Test: `anims_station_menu` (a recipe laid by the scene's clicks crafts on the server exactly as by the vanilla screen) | 4-6 h |
-| P6 The rest | #12-14 | 2-3 h |
+| P5 Station scenes | The scene kit (lean-in shot, input, cursor ray, arms in the world, vanilla escape hatch) and the crafting table; then the Forge and anvils, cooking, the Journal. Built: the crafting table and furnace scenes, the Forge/anvil and campfire touches; the Journal moves to P6. No `anims_station_menu` test: the scene sends the vanilla menu's own clicks, so the server sees nothing new (tours check the scene) | 4-6 h |
+| P6 The rest | #12-14; books and the Spire board's notices (#9). Built: the palm (with its glow), the notice torn off, the stations' touches (grindstone, lectern, enchanting, smithing, stonecutter, loom, cartography, brewing), a page turned as a book opens, the Ritual's hands | 2-3 h |
 
 Total about 15-22 hours of builder time. P4 and P5 can swap if Euan wants the crafting table sooner.
 
@@ -268,6 +268,22 @@ FirstPerson.view((partialTick, v) -> {
 });
 ```
 Stances add every frame; keep them cheap and allocation-free.
+
+**Fists, for any empty hand that must go somewhere (P2).** Moving vanilla's arm up by offsets floats its forearm into
+view. Instead key where the fist is on screen (view space) and the arm is drawn rising to it from under the frame:
+```java
+FirstPerson.View.fist(v.fistMain, k, x, y, z);   // a stance's fist (weighted; a clip's fist replaces a stance's)
+```
+Clips: `clip(..., fists=True)` with keys `fist(x, y, z)`; vanilla's resting fist is `REST_FIST` (0.744, -0.455,
+-1.072); an off hand comes in from and goes back to `OFF_OUT` under the frame; `to_stance=True` for clips that end where
+a stance holds the hands. A hand holding an item ignores fists (combat: use offsets on the held weapon).
+Clean fists (P1.1, Euan 2026-10-25): vanilla's blocky fist is the hand, never modelled fingers. A world source sets
+`rig.handDistance` (nearer reads bigger), `rig.held[0|1]` (an ItemStack at the fist) and `rig.glow`; its arms rise from
+under their fists. In the hand pass the frame shows y down to about 0.7·|z|: keep keyed fists inside it.
+`v.tint` colours the fists' arms (RGB, 0 none: the Sovereign's gold); `v.glow` (0..1, sources take the most) lights them
+from within (a palm on a waystone; combat: a charging cast).
+
+**The procedural layer.** Look-lag (the hands trail fast turns) runs for everyone; `FirstPerson.reducedMotion` halves it.
 
 **Clips: one-shots and loops written in Python, with events.**
 ```java

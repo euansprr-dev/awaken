@@ -237,7 +237,7 @@ public final class GripMoves {
             RunnerMoves.turnTo(RunnerMoves.yawOf(nx, nz), 5);
             ClientMoves.suppressJump();
             BodyFx.sound(p, BodyContent.WALLJUMP.get(), 0.75F, 1.05F);
-            dev.awaken.core.api.FirstPerson.play(BodyClips.FP_PIPE_KICK);
+            BodyFp.play(BodyClips.FP_PIPE_KICK);
             ClientMoves.trace("grip: kick off");
             return true;
         }
@@ -250,7 +250,7 @@ public final class GripMoves {
             swingUntil = now + 14;
             ClientMoves.suppressJump();
             BodyFx.sound(p, BodyContent.SHIMMY.get(), 0.6F, 0.85F);
-            dev.awaken.core.api.FirstPerson.play(dir > 0 ? BodyClips.FP_PIPE_SIDE_L : BodyClips.FP_PIPE_SIDE_R);
+            BodyFp.play(dir > 0 ? BodyClips.FP_PIPE_SIDE_L : BodyClips.FP_PIPE_SIDE_R);
             ClientMoves.trace("grip: swing " + (dir > 0 ? "left" : "right"));
             return true;
         }
@@ -284,7 +284,7 @@ public final class GripMoves {
         RunnerMoves.send(Move.GRIP, BodyPayloads.GRIP_LAND, p, l.x(), p.getY(), l.z(), axis(l), sign(l));
         BodyAnims.runner(p.getId(), BodyClips.PIPE_LAND);
         BodyFx.sound(p, BodyContent.DROP.get(), 0.55F, 0.8F);
-        dev.awaken.core.api.FirstPerson.play(BodyClips.FP_PIPE_LAND);
+        BodyFp.play(BodyClips.FP_PIPE_LAND);
         dev.awaken.body.client.feel.FeelDirector.land((float) (-v * 0.9));
         ClientMoves.trace(String.format("grip: landed from a slide at %.2f", -v));
         leftBx = l.bx();
@@ -302,6 +302,9 @@ public final class GripMoves {
         v = 0;
     }
 
+    /** Why the last grip ended ("top": the line ran out under the hands as they climbed). */
+    static String lastEnd = "";
+
     /** Lets go: the line ended, a stop, the server's word. */
     static void end(LocalPlayer p, boolean tellServer, String why) {
         if (!active()) return;
@@ -311,6 +314,7 @@ public final class GripMoves {
             leftBz = l.bz();
         }
         ClientMoves.trace("grip ends (" + why + ") after " + (ClientMoves.ticks - since));
+        lastEnd = why;
         BodyAnims.runnerEnd(p.getId());
         if (tellServer) RunnerMoves.sendEnd(Move.GRIP);
         regrabAt = ClientMoves.ticks + (why.equals("top") ? 0 : 4);

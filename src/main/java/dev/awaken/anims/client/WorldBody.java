@@ -11,6 +11,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -21,6 +22,8 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
@@ -51,9 +54,27 @@ final class WorldBody {
     private static final org.joml.Vector3f V = new org.joml.Vector3f();
     /** In view space, the point under the frame's corner an arm rises from (x for the right arm; z toward you). */
     static final double SHOULDER_X = 0.5, SHOULDER_Y = -0.85, SHOULDER_Z = -0.1;
+    /** How far a world arm's root follows its fist across (so it rises from under the fist, not the corner). */
+    static final double RISE = 0.45;
     /** Where a fist is drawn from the eye at the least (vanilla's hands sit about this far). */
     static final double HAND_DISTANCE = 0.85;
-    private static final FirstPerson.Limb[] ARMS = {FirstPerson.Limb.RIGHT_ARM, FirstPerson.Limb.LEFT_ARM};
+    private static final FirstPerson.Limb[] ARMS = {FirstPerson.Limb.RIGHT_ARM, FirstPerson.Limb.LEFT_ARM},
+            LEGS = {FirstPerson.Limb.RIGHT_LEG, FirstPerson.Limb.LEFT_LEG};
+    /** The hand pass's field of view (vanilla's: 70°, whatever the player's own). */
+    static final float HAND_FOV = 70F;
+
+    /**
+     * The hand pass draws at its own field of view: a point the world shows at some place on screen must be drawn there
+     * with its view x and y scaled by this (the two fields of view's ratio; 1 at a 70° view with nothing narrowing it).
+     */
+    static float lens(Minecraft mc) {
+        float world = mc.gameRenderer.mainCamera().getFov();
+        if (world <= 1F) return 1F;
+        return (float) (Math.tan(Math.toRadians(HAND_FOV) / 2) / Math.tan(Math.toRadians(world) / 2));
+    }
+
+    /** A foot nearer the eye than this is drawn in the hand pass, pushed out to it. */
+    static final double LEG_DISTANCE = 1.15;
     private static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
     private static final double[] D = new double[3], F = new double[3];
 
@@ -63,7 +84,9 @@ final class WorldBody {
     private static float pt;
     private static boolean broken;
     /** This frame's world body drew arms (vanilla's hands step aside in the hand pass that follows). */
-    static boolean armsThisFrame;
+    static boolean armsThisFrame, nearLegsThisFrame;
+    /** The colour the next limb is drawn in (a fist's tint), white otherwise. */
+    private static int rgb = 0xFFFFFF;
 
     static void onExtract(ExtractLevelRenderStateEvent e) {
         pt = e.getDeltaTracker().getGameTimeDeltaPartialTick(false);
@@ -71,10 +94,12 @@ final class WorldBody {
 
     static void frame() {
         armsThisFrame = false;
+        nearLegsThisFrame = false;
     }
 
     static void onSubmit(SubmitCustomGeometryEvent e) {
         armsThisFrame = false;
+        nearLegsThisFrame = false;
         if (broken) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || !mc.options.getCameraType().isFirstPerson() || mc.getCameraEntity() != mc.player) return;
@@ -112,9 +137,57 @@ final class WorldBody {
             float w = RIG.weight[i];
             if (w <= 0.01F || l == FirstPerson.Limb.RIGHT_ARM || l == FirstPerson.Limb.LEFT_ARM) continue;
             int j = i * 3;
+            // a foot nearer than this (a slide's, out ahead under low eyes) would fill the frame: the hand pass draws it
+            double tx = RIG.tip[j] - cam.x, ty = RIG.tip[j + 1] - cam.y, tz = RIG.tip[j + 2] - cam.z;
+            if (l != FirstPerson.Limb.BODY && tx * tx + ty * ty + tz * tz < LEG_DISTANCE * LEG_DISTANCE) {
+                nearLegsThisFrame = true;
+                continue;
+            }
             limb(ps, out, parts[i], part(model, l), type, light, RIG.root[j] - cam.x, RIG.root[j + 1] - cam.y, RIG.root[j + 2] - cam.z,
                     RIG.tip[j] - cam.x, RIG.tip[j + 1] - cam.y, RIG.tip[j + 2] - cam.z, RIG.front[j], RIG.front[j + 1], RIG.front[j + 2],
                     RIG.fx, RIG.fz, w);
+        }
+    }
+
+    /**
+     * The hand pass: this frame's near legs (a foot under {@link #LEG_DISTANCE} from the eye), each kept where the world
+     * puts it on screen but pushed out along its line of sight to that distance, the way the arms are (drawn in the
+     * world they would sink into the ground they lie on).
+     */
+    static void drawNearLegs(net.neoforged.neoforge.client.event.RenderHandEvent e) {
+        if (!nearLegsThisFrame || broken) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        try {
+            boolean slimSkin = mc.player.getSkin().model() == PlayerModelType.SLIM;
+            Model.Simple[] parts = parts(mc, slimSkin);
+            PlayerModel model = slimSkin ? slim : wide;
+            model.rightPants.visible = mc.player.isModelPartShown(PlayerModelPart.RIGHT_PANTS_LEG);
+            model.leftPants.visible = mc.player.isModelPartShown(PlayerModelPart.LEFT_PANTS_LEG);
+            RenderType type = RenderTypes.entityTranslucent(mc.player.getSkin().body().texturePath());
+            var camera = mc.gameRenderer.mainCamera();
+            Vec3 cam = camera.position();
+            PoseStack ps = e.getPoseStack();
+            ps.pushPose();
+            float lens = lens(mc);
+            ps.scale(lens, lens, 1F); // where the world puts it on screen, at the hand pass's field of view
+            ps.rotate(VIEW.set(camera.rotation()).conjugate()); // world offsets to view space, as the hand pass sees them
+            for (FirstPerson.Limb l : LEGS) {
+                int i = l.ordinal(), j = i * 3;
+                float w = RIG.weight[i];
+                if (w <= 0.01F) continue;
+                double tx = RIG.tip[j] - cam.x, ty = RIG.tip[j + 1] - cam.y, tz = RIG.tip[j + 2] - cam.z;
+                double d = Math.sqrt(tx * tx + ty * ty + tz * tz);
+                if (d >= LEG_DISTANCE || d < 1e-4) continue;
+                double k = LEG_DISTANCE / d;
+                limb(ps, e.getSubmitNodeCollector(), parts[i], part(model, l), type, e.getPackedLight(), (RIG.root[j] - cam.x) * k,
+                        (RIG.root[j + 1] - cam.y) * k, (RIG.root[j + 2] - cam.z) * k, tx * k, ty * k, tz * k, RIG.front[j], RIG.front[j + 1],
+                        RIG.front[j + 2], RIG.fx, RIG.fz, w);
+            }
+            ps.popPose();
+        } catch (RuntimeException ex) {
+            broken = true;
+            Awaken.LOG.error("First-person legs failed and are off for this session", ex);
         }
     }
 
@@ -135,6 +208,7 @@ final class WorldBody {
             VIEW.set(camera.rotation()).conjugate(); // world offsets to view space, as the hand pass sees them
             PoseStack ps = e.getPoseStack();
             ps.pushPose();
+            BASE_INV.set(ps.last().pose()).invert(); // the fingers' place, back in this stack's own space
             for (FirstPerson.Limb l : ARMS) {
                 int i = l.ordinal(), j = i * 3;
                 float w = RIG.weight[i];
@@ -143,22 +217,91 @@ final class WorldBody {
                 V.set((float) (RIG.tip[j] - cam.x), (float) (RIG.tip[j + 1] - cam.y), (float) (RIG.tip[j + 2] - cam.z)).rotate(VIEW);
                 float d = V.length();
                 if (d < 1e-4F) continue;
-                V.mul((float) (HAND_DISTANCE / d));
-                // the arm comes up to it from under the frame's corner on its own side
-                double side = l == FirstPerson.Limb.RIGHT_ARM ? 1 : -1;
-                double sx = side * SHOULDER_X, sy = SHOULDER_Y, sz = SHOULDER_Z;
-                double ax = V.x - sx, ay = V.y - sy, az = V.z - sz, al = Math.sqrt(ax * ax + ay * ay + az * az);
-                double reach = FirstPerson.Rig.ARM_REACH;
-                double rx = V.x - ax / al * reach, ry = V.y - ay / al * reach, rz = V.z - az / al * reach;
-                // view space: the "body" faces into the screen, the arm's front faces up
-                limb(ps, e.getSubmitNodeCollector(), parts[i], part(model, l), type, e.getPackedLight(), rx, ry, rz, V.x, V.y, V.z,
-                        0, 1, 0, 0, -1, w);
+                V.mul((float) ((RIG.handDistance > 0 ? RIG.handDistance : HAND_DISTANCE) / d));
+                float lens = lens(mc);
+                V.x *= lens;
+                V.y *= lens;
+                // the arm comes up to it from under the frame's corner on its own side, its hand held as the source asks
+                boolean right = l == FirstPerson.Limb.RIGHT_ARM;
+                double side = right ? 1 : -1;
+                int h = right ? 0 : 1;
+                int light = e.getPackedLight();
+                if (RIG.glow > 0) light = LightCoordsUtil.withBlock(light, Math.max(LightCoordsUtil.block(light), Math.round(15 * Math.min(1F, RIG.glow))));
+                boolean holds = !RIG.held[h].isEmpty();
+                if (holds) tipAcross = right ? (slimSkin ? -0.5F : -1F) : (slimSkin ? 0.5F : 1F); // the middle of the arm
+                // the arm rises to the fist from below it, on its own side (from the frame's corner, a hand high in the
+                // frame would drag its sleeve across it)
+                viewArm(ps, e.getSubmitNodeCollector(), parts[i], part(model, l), type, light, V.x, V.y, V.z,
+                        side * SHOULDER_X + RISE * V.x, SHOULDER_Y, SHOULDER_Z, FirstPerson.Rig.ARM_REACH, w);
+                tipAcross = Float.NaN;
+                if (holds) heldItem(mc, ps, e.getSubmitNodeCollector(), h, RIG.held[h], light);
             }
             ps.popPose();
         } catch (RuntimeException ex) {
             broken = true;
             armsThisFrame = false;
             Awaken.LOG.error("First-person world arms failed and are off for this session", ex);
+        }
+    }
+
+    /** An arm in view space rising from (sx, sy, sz) toward its fist at (fx, fy, fz), its front up. */
+    private static void viewArm(PoseStack ps, SubmitNodeCollector out, Model.Simple m, ModelPart part, RenderType type, int light,
+                                double fx, double fy, double fz, double sx, double sy, double sz, double reach, float w) {
+        double ax = fx - sx, ay = fy - sy, az = fz - sz, al = Math.sqrt(ax * ax + ay * ay + az * az);
+        if (al < 1e-4) return;
+        // view space: the "body" faces into the screen
+        limb(ps, out, m, part, type, light, fx - ax / al * reach, fy - ay / al * reach, fz - az / al * reach, fx, fy, fz, 0, 1, 0, 0, -1, w);
+    }
+
+    private static final ItemStackRenderState[] HELD = {new ItemStackRenderState(), new ItemStackRenderState()};
+    /** The next limb drawn notes where its fingers are ({@link #TIP}) when this is a number: across the arm, pixels. */
+    private static float tipAcross = Float.NaN;
+    private static final org.joml.Vector3f TIP = new org.joml.Vector3f();
+    private static final org.joml.Matrix4f BASE_INV = new org.joml.Matrix4f();
+
+    /** What a hand holds, at its fingers (where the arm just drawn put them), upright and turned to you. */
+    private static void heldItem(Minecraft mc, PoseStack ps, SubmitNodeCollector out, int h, ItemStack st, int light) {
+        if (st.isEmpty() || mc.level == null) return;
+        ItemStackRenderState r = HELD[h];
+        mc.getItemModelResolver().updateForTopItem(r, st, ItemDisplayContext.GROUND, mc.level, null, h);
+        BASE_INV.transformPosition(TIP);
+        ps.pushPose();
+        ps.translate(TIP.x, TIP.y - 0.02F, TIP.z);
+        ps.scale(0.45F, 0.45F, 0.45F);
+        r.submit(ps, out, light, OverlayTexture.NO_OVERLAY, 0);
+        ps.popPose();
+    }
+
+    /** Where a fist clip's arm rises from: vanilla's own arm starts about here (x for the right arm). */
+    static final double FIST_ANCHOR_X = 0.48, FIST_ANCHOR_Y = -0.84, FIST_ANCHOR_Z = -0.53, FIST_REACH = 0.6;
+
+    /**
+     * A view clip's fist (FirstPerson.View fists): the empty arm on that side drawn rising to (x, y, z) in view space, as
+     * the hand pass sees it. Drawn in the main hand's event (the off hand's may not come when it holds nothing).
+     */
+    static void drawFist(net.neoforged.neoforge.client.event.RenderHandEvent e, boolean right, float x, float y, float z, int tint, float glow) {
+        if (broken) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        try {
+            boolean slimSkin = mc.player.getSkin().model() == PlayerModelType.SLIM;
+            Model.Simple[] parts = parts(mc, slimSkin);
+            PlayerModel model = slimSkin ? slim : wide;
+            model.rightSleeve.visible = mc.player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE);
+            model.leftSleeve.visible = mc.player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE);
+            RenderType type = RenderTypes.entityTranslucent(mc.player.getSkin().body().texturePath());
+            FirstPerson.Limb l = right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM;
+            double side = right ? 1 : -1;
+            rgb = tint == 0 ? 0xFFFFFF : tint;
+            // lit from within: the block light raised toward full by the glow
+            int light = e.getPackedLight();
+            if (glow > 0) light = LightCoordsUtil.withBlock(light, Math.max(LightCoordsUtil.block(light), Math.round(15 * Math.min(1F, glow))));
+            viewArm(e.getPoseStack(), e.getSubmitNodeCollector(), parts[l.ordinal()], part(model, l), type, light, x, y, z,
+                    side * FIST_ANCHOR_X, FIST_ANCHOR_Y, FIST_ANCHOR_Z, FIST_REACH, 1F);
+            rgb = 0xFFFFFF;
+        } catch (RuntimeException ex) {
+            broken = true;
+            Awaken.LOG.error("First-person fists failed and are off for this session", ex);
         }
     }
 
@@ -212,8 +355,13 @@ final class WorldBody {
         ps.rotateDegrees(Axis.YP, 180F - yaw);
         ps.scale(-1F, -1F, 1F);
         ps.translate(-part.x / 16F, -part.y / 16F, -part.z / 16F);
-        int tint = w >= 0.99F ? -1 : (Mth.clamp((int) (w * 255), 0, 255) << 24) | 0xFFFFFF;
+        int tint = (Mth.clamp((int) (w * 255), 0, 255) << 24) | rgb;
         out.submitModel(m, Unit.INSTANCE, ps, type, light, OverlayTexture.NO_OVERLAY, tint, null, 0);
+        if (!Float.isNaN(tipAcross)) {
+            // where the fingers are, in the space this is drawn in (an item held there is drawn at it)
+            ps.last().pose().transformPosition((part.x + tipAcross) / 16F, (part.y + 10.5F) / 16F, (part.z - 1F) / 16F, TIP);
+            tipAcross = Float.NaN;
+        }
         ps.popPose();
     }
 
@@ -244,6 +392,11 @@ final class WorldBody {
         Model.Simple[] out = new Model.Simple[FirstPerson.Rig.N];
         for (FirstPerson.Limb l : FirstPerson.Limb.values()) out[l.ordinal()] = new Model.Simple(part(m, l), RenderTypes::entityTranslucent);
         return out;
+    }
+
+    /** This frame's world body shows that arm (the right, or the left). */
+    static boolean armShown(boolean right) {
+        return armsThisFrame && RIG.weight[(right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM).ordinal()] > 0.01F;
     }
 
     static void reset() {

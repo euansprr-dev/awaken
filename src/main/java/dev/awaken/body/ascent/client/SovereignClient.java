@@ -81,6 +81,7 @@ public final class SovereignClient {
         dev.awaken.lens.client.LensClient.override("awaken:sovereign", 30);
         FeelDirector.remember();
         AscentSounds.local(p, AscentContent.REMEMBER.get(), 1F, 0.8F);
+        AscentFp.ascend();
         AscentSounds.local(p, AscentContent.WINGS_OPEN.get(), 1F, 0.7F);
         WingLayer.flourish(p.getId(), 60);
         AscentFx.ring(p.getX(), p.getY() + 0.2, p.getZ(), new Vec3(0, 1, 0), 0.9F);

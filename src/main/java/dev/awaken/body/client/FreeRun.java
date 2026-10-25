@@ -88,6 +88,8 @@ final class FreeRun {
         }
         p.jumpFromGround();
         groundJumpAt = now;
+        if (what == RunnerRules.AHEAD_VAULT) BodyFp.vault();
+        else if (what == RunnerRules.AHEAD_LEAP) BodyFp.leap();
         ClientMoves.trace("free-run: " + why);
         return true;
     }

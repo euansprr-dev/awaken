@@ -125,6 +125,7 @@ public final class RunnerMoves {
                 if (dev.awaken.body.ascent.client.AscentMoves.state() == dev.awaken.body.ascent.AscentState.NONE && fallVy < -ActionCamera.LAND_FROM) {
                     dev.awaken.body.client.feel.FeelDirector.land((float) (-fallVy * 0.6));
                     ActionCamera.land(-fallVy);
+                    BodyFp.landed(-fallVy);
                 }
             }
             groundAt = now;

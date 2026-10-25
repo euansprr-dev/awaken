@@ -2641,9 +2641,13 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
 - **Look**: third person, `body_pipe_hold`, `body_pipe_climb` (a pair of pulls every 8 ticks: 1.6 blocks at 0.2),
   `body_pipe_climb_fast` (6 ticks), `body_pipe_slide` (loops with `_end`), `body_pipe_kick`, `body_pipe_side_l/_r`,
   `body_pipe_hop`, `body_pipe_land` (tools/art/specs/body_moves.py); the figure faces the line and leans into it (back
-  off it in a slide). First person: the hands and feet on the line in the world (§24, `body.client.GripView`): climbing,
-  a hand stays where it gripped while you rise past it, then reaches up past your eyes for a new hold; held still, look
-  round them; sliding, both run loose down the line with you and tremble; look down to see your feet clamped on it.
+  off it in a slide). First person: both hands closed round the line in the world (§24, `body.client.GripView`; P1.1):
+  each fist closed on its own side of the pipe, drawn at 0.85; the holds at the eyes +0.04 and -0.12 (the eyes are about
+  0.3 from the pipe: both fists in the frame looking ahead, their arms rising from below). Climbing, a hand stays where
+  it gripped while you rise past it (to -0.2), then lets go and reaches up past the other for a new hold (hand over
+  hand); held still, look round them; sliding, both run down the line with you, shaking with the friction (0.018 up and
+  down, 0.006 across at full speed); look down to see your feet clamped on it. The top-out: both hands go up onto the
+  top of the line, stay there 12 ticks while vanilla's climb carries you up past them, and fade.
   Leaving: view clips `fp_pipe_kick`, `fp_pipe_side_l/_r`, `fp_pipe_land`. Sound: the grip's grab, `body.pipe_slide`
   (palms hissing on the line, every 8 ticks of a slide), `body.pipe_brake`; the line's own grit off the hands while
   sliding, sparks off a metal line at speed; a faint judder in the view.
@@ -3331,7 +3335,103 @@ of the plan). No mixins.
   `anims.Ease` (the same curve names as the third-person clips), authored right-handed and mirrored for a left main arm;
   a one-shot ends at rest; `FirstPerson.play(name[, speed])`, `stop` (a 3-tick fade), `playing`; keyed events reach
   `FirstPerson.listen` listeners (sounds, hit-stops). Combat's animations use the same three layers.
-- Test: `anims_fp_clips` (the file reads, every clip the body plays is in it, every one-shot ends at rest).
-- P1 (built): the system and the grip (§17.23). Next: P2 the Runner's Kit in first person (the stair slide included),
-  P3 the Ascent, P4 touches, P5 station scenes, P6 the rest.
+- **Fists** (P2): a view clip (`"fists": true`) or a stance may key where each EMPTY hand is on screen (view space)
+  instead of moving vanilla's arm by offsets: its arm is drawn rising to the fist from under the frame's corner (from
+  view (±0.48, -0.84, -0.53), vanilla's own arm start), so a hand can be lifted anywhere without its forearm floating into
+  view (offsets that lift a vanilla arm show its end: the P2 preview). Vanilla's resting fist is
+  `FirstPerson.View.REST_FIST` (0.744, -0.455, -1.072); a clip's fists replace a stance's for that hand; a hand holding
+  an item ignores fists (vanilla draws it). A fist clip gives the hands back at rest (or the off hand out under the
+  frame), or, marked `toStance`, where its stance holds them (the hang's ledge jumps).
+- **Look-lag** (P2): the hands trail fast turns of the view on a damped spring (up to 0.06 sideways, 0.045 up, 4° of
+  roll), halved with reduced motion (`FirstPerson.reducedMotion`, the body's setting).
+- **Near legs** (P2): a foot nearer the eye than 1.15 is drawn in the hand pass, pushed out along its line of sight to
+  that distance, as the arms are; farther legs stay in the world. (No source puts one there since P2.1 cut the slide's
+  legs: from eyes 0.4 up they could only be a slab across the frame.)
+- **Clean fists** (P1.1; Euan, 2026-10-25): the hands are vanilla's own blocky fists, never modelled fingers (finger
+  boxes read as loose bricks). A world arm rises to its fist from under it on its own side (its root follows the fist
+  across by `WorldBody.RISE` 0.45), not from the frame's corner, so a hand high in the frame never drags its sleeve
+  across it. A world rig sets `handDistance` (nearer reads bigger: touches 0.75, both hands 0.85, stations 0.8, the
+  pipe 0.85, the slide and landing 0.78), `held[]` (an item at the fist: a plucked flower, food being laid) and `glow`.
+  Vanilla's hand steps aside only on the side the world body has an arm (a touch with one hand leaves the sword in the
+  other). In the hand pass the frame shows y down to about 0.7·|z|: keep keyed fists inside it.
+- **The Runner's Kit in first person** (P2, `body.client.BodyFp`): each move's view clip starts from the same event as
+  its third-person clip (BodyAnims hands the clip's name over): `fp_roll`, `fp_mantle` (and every climb out),
+  `fp_grab`, `fp_lower`, `fp_ledge_up`, `fp_ledge_side_l/_r`, `fp_ledge_back`, `fp_walljump_l/_r` (the run's wall side),
+  `fp_vault` and `fp_leap` (the free-run), `fp_slide_jump`, `fp_land_soft` / `fp_land_hard` (a fall over 0.55 b/t,
+  hard over 0.95; never over a roll), `fp_stair_bump` (each half step a stair slide passes). Stances: the tactical
+  sprint's lowered hands pumping in step (empty fists pumping up into the lower frame in turn, P2.1), the slide's brace, a
+  wall-run's wall-side fist at the frame's edge brushing the wall with each footfall, a wall climb's fists slapping up in
+  turn, a hang's fists on the lip (`BodyFp.HANG_*`, swaying; shimmying hand over hand). The wall jump's shove is well
+  in the frame. World (source `body_moves`, 90; P2.1): the slide's trailing hand (the off side) on the
+  ground where the eye's ray through view (±0.42, -0.34) meets it (the step under it on stairs), skimming it with a
+  friction shake; a hard landing's fists slapped onto the ground under view (±0.2, -0.3) (down 3 ticks, held to 7, back
+  by 12) instead of `fp_land_hard`;
+  feet to the wall in a hang. No legs in a slide. The stair slide tips the view 9° down the run (`BodyCamera`).
+- **The Ascent in first person** (P3, `body.ascent.client.AscentFp`): moments, each where the Ascent gives the Feel
+  Director its beat: `fp_rope_fire` (the main arm flings the rope), `fp_rope_release`, `fp_rope_launch`, `fp_wings_open`,
+  `fp_wing_beat` (every beat, the one that takes flight too), `fp_barrel_roll`, `fp_boom` (hands up against it),
+  `fp_double_jump`, `fp_air_dash` (the lead fist punches through), `fp_dive` and `fp_slam_land` (fists up for a dive slam
+  or the Judgement Fall, smashed down on landing), `fp_sovereign_ascend`. Stances: on a rope the main fist holds it at
+  view (0.3, -0.02, -0.72), where AscentRender now starts the rope in first person, the other hand joining to pump
+  (forward) and climbing over it to reel (sneak); a zip, both hands on it; flying free, arms out low for balance (fists
+  up in a dive slam); wings, arms out flat at the frame's edges trembling with speed (swept out of the frame folding into
+  a dive); flight, one fist forward on a boost, palms down in a hover, arms sweeping up to climb, swept back cruising; in
+  the Sovereign's form the arms are tinted gold (`FirstPerson.View.tint`).
+- **Reaches** (P4.1, `anims.client.Reaches`, world source `anims_touch`, 200): a touch's hand goes to the thing and does
+  it there. Each touch is a few keys (tick, s across, u up, n out toward you) about where the hand meets the thing (its
+  anchor, followed as it moves: a creature's flank, a lid's edge), from and back to rest under the frame's foot,
+  smoothstepped; drawn at 0.75 (both hands 0.85). A door's palm meets it where you clicked (vanilla's door is open by
+  then) and pushes on through. The player never moves (Euan, 2026-10-25: walking you to the thing
+  would take control): past 2.5 blocks the hand only gets an arm's length (1.3) toward the thing, and while a hand is out
+  the view narrows ×0.95 (a lean; off with reduced motion). A chest's screen waits 4 ticks for both hands to reach its
+  lid (the menu is already open; the server is never held). The fist clips below stay for books (no world thing).
+- **Touches** (P4, `anims.client.Touches`, `anims.AnimsClips`): quick hand moments from the game's own interaction
+  events (client side), so every module's blocks get them by what they are: a door, trapdoor or gate (`DoorBlock`,
+  `TrapDoorBlock`, `FenceGateBlock`) pushed with a palm (`fp_push`), a lever thrown (`fp_lever`), a button pressed
+  (`fp_button`), a chest, barrel, ender chest or shulker box's lid lifted with both hands (`fp_lid`; the screen opens at
+  once and covers it in single player), berries or a plant that breaks at a touch (no hardness, no collision: flowers,
+  ferns, grass, the Living Wilds' herbs) pinched and plucked (`fp_pluck`), an animal stroked with an empty hand
+  (`fp_pet`), a meal from a bowl held up with the free hand under it (a stance while eating); P5 adds the Forge (block
+  id `awaken:forge`, not its class) or an anvil hammered three times (`fp_hammer`, 18 ticks: holding the blade being
+  tempered, the off hand strikes) and food a campfire takes (`RecipePropertySet.CAMPFIRE_INPUT`) laid on it by the hand
+  holding it (`fp_lay`). P6 adds: a palm pressed to a stone and held while the light answers (`fp_palm`, 18 ticks; the
+  hand lit from within, `View.glow`, and cooled a touch, 5-18) on Awaken's waystone, conduit, ascent stone, Hearth anchor,
+  rest and Stillpoint shrines, gate entrance, seal and rune (by id) and vanilla's lodestone, respawn anchor and beacon; a
+  notice torn off the Spire board (`fp_tear`); a grindstone cranked (`fp_crank`); a page turned at a lectern, an
+  enchanting table, or as a book or the Dream Journal opens (`fp_page`); the smithing table hammered (`fp_hammer`); both
+  hands set to a stonecutter, loom, cartography table or brewing stand (`fp_set`, two-handed like the lid); any
+  `awaken:*_cache` lifted like a chest. The Ritual of the Bell (`story.client.RitualFp`, a view stance): kneeling in the
+  bow both palms go flat to the floor (eased in over 6 ticks), as the eyes open the main hand comes up against the bloom
+  (50-132), at the End both hands rise palms out, shaking harder as the light drains (30-195), and drop at the error. At most 9 ticks each; the
+  action never waits; a swing cuts them; with the main hand full the off hand does it (each has an `_off` twin), with both
+  full nothing. Settings (feel): `firstPersonMoves` (P1-P3) and `firstPersonTouches` (P4), both on.
+- **Station scenes** (P5, `anims.client.station`): at a crafting table (used within 10 ticks of its screen opening, not
+  sneaking: sneak + use is the plain screen) the screen is replaced by `StationScreen` (kind `TABLE`), the vanilla
+  crafting menu with its grid and result drawn on the table in the world instead of on the screen. The view turns to the table's top and
+  narrows (×0.64) over 12 ticks (6 coming back within 12 s), out over 10; the player's own look never moves. Each
+  ingredient lies on its square (the grid square to the block, row 0 the far one; the way in snapped to an axis), the
+  result floats over the middle turning, the square under the cursor is outlined (Holo blue). A click on a square or on
+  the result is the same click on that slot (`slotClicked`, the menu's own path: stacks, splits, shift-clicks, the server
+  checks), and the grid's screen places are never hovered or drawn. Your inventory is a glass strip at the foot of the
+  screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
+  square whose contents change (and to the result as it is taken), over 9 ticks; moving, jumping, E or Esc leave.
+  A hand moves only within 6 ticks of your own click on a slot, so a furnace cooking on its own moves none; taking a
+  result moves the hand to the result only. Furnaces (kind `FURNACE`: furnace, smoker, blast furnace, any
+  `AbstractFurnaceScreen`): worked from the front (the way in against `FACING`), the view turned to the front's middle
+  (a little below its middle) and narrowed ×0.78; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
+  result floats out at the right (0.34 out, 0.36 across, 0.62 up) turning; a slot is picked by the nearest one the ray
+  passes within 0.16 of, outlined flat to the front; the cooking (Holo blue) and the fuel left (fire) run as two thin
+  lines over the strip; the hands wait at your sides under the frame (the fuel is the off hand's, the rest the main's). The
+  recipe book is not in the scenes (sneak + use for it).
+  Setting `stationScenes` (feel), on. Drawn for you only (others see you at the station as before).
+- **The lens** (P5): the hand pass draws at a fixed 70°; anything the world anchors (arms on a pipe, at a table; near
+  legs) has its view x and y scaled by tan(35°) / tan(world FOV / 2), so it lands where the world shows it on screen even
+  with the view narrowed or widened (a station's zoom, the speed FOV).
+- Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
+  hands back). Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
+  `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
+  `anims-station.txt` (P5), PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys;
+  `station <slot> [button]` clicks a slot of the open station scene.
+- P1-P6 built (P5: the crafting table and furnace scenes, the Forge and campfire touches; P6: the rest of the touches, books, the Ritual's hands). Tour P6: `anims-p6.txt`. The casts (powers) still draw their own first-person
+  arms (`CastAnims`); folding them into Hands is the powers module's step, coordinated with the combat plan.
 

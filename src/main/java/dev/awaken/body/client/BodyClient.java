@@ -46,8 +46,15 @@ public final class BodyClient {
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, BodyCamera::onAngles);
         bus.addListener(ComputeFovModifierEvent.class, BodyCamera::onFov);
         // first person (core.api.FirstPerson): the moves' hands, and the grip's hands and feet on the line in the world
-        dev.awaken.core.api.FirstPerson.view(BodyCamera::viewPose);
-        dev.awaken.core.api.FirstPerson.world("body_grip", 100, GripView::pose);
+        // (the feel settings' firstPersonMoves switches them all off)
+        dev.awaken.core.api.FirstPerson.view((pt, v) -> {
+            if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) BodyFp.viewPose(pt, v);
+        });
+        dev.awaken.core.api.FirstPerson.reducedMotion = dev.awaken.body.client.feel.FeelConfig::reduced;
+        dev.awaken.core.api.FirstPerson.touchesOn = dev.awaken.body.client.feel.FeelConfig::fpTouches;
+        dev.awaken.core.api.FirstPerson.stationsOn = dev.awaken.body.client.feel.FeelConfig::stations;
+        dev.awaken.core.api.FirstPerson.world("body_grip", 100, (pt, rig) -> dev.awaken.body.client.feel.FeelConfig.fpMoves() && GripView.pose(pt, rig));
+        dev.awaken.core.api.FirstPerson.world("body_moves", 90, (pt, rig) -> dev.awaken.body.client.feel.FeelConfig.fpMoves() && BodyFp.worldPose(pt, rig));
         // around the cast animations' own lean (LOWEST / HIGHEST), so the two nest
         bus.addListener(EventPriority.LOW, RenderPlayerEvent.Pre.class, BodyAnims::onPre);
         bus.addListener(EventPriority.HIGH, RenderPlayerEvent.Post.class, BodyAnims::onPost);
