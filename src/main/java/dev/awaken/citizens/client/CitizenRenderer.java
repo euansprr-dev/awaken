@@ -326,7 +326,7 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
                 pose.rotate(Axis.ZP.rotation(-arm.zRot));
                 model = h.kind == HeldProp.ROPE ? rope : netModel;
                 tex = h.kind == HeldProp.ROPE ? ROPE : NET;
-                sc = h.kind == HeldProp.ROPE ? 0.8F : 0.9F;
+                sc = h.kind == HeldProp.ROPE ? 1.0F : 0.9F; // (props tour: the coil read small at seven blocks)
                 if (h.kind == HeldProp.NET) pose.translate(left ? 0F : 0.25F, 0F, -0.12F); // between the hands, in front
             }
             pose.scale(sc, sc, sc);
