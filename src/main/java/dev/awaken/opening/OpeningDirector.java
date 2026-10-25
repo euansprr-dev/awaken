@@ -53,9 +53,10 @@ final class OpeningDirector {
     /** Stragglers (SPEC §16.0.4): the light reaches for them 5 min after the first arrival, or after 2 min idle. */
     static final int STRAGGLERS = 20 * 60 * 5, IDLE = 20 * 60 * 2;
     /** The Bell Bridge goes when a runner comes this close (or reaches the Quay). */
-    /** The Bell Bridge falls when a runner comes this near: on Act 2's rooftop route as you top the last gable (the
-     *  river and the bridge ahead to the right as you run its ridge), on the canal route along the south quay toward it. */
-    static final double BRIDGE_NEAR = 20;
+    /** The Bell Bridge falls when a runner comes this near (across the ground): on Act 2's rooftop route as you start
+     *  up the last gable (it goes as you run the ridge, the river ahead, the bridge to the right), on the canal route
+     *  along the south quay toward it. */
+    static final double BRIDGE_NEAR = 22;
     /** The market empties toward the runners once they're this close to the square (or in the market). */
     static final double RUSH_NEAR = 75;
     /** The infirmary, when no client says the eyes have opened. */
@@ -322,7 +323,9 @@ final class OpeningDirector {
         }
         // Act 2: the Bell Bridge goes into the river as you come to it, not on a timer (where the roof and canal routes
         // look at it; the street route never comes near: it goes as you reach the market, heard behind you)
-        if (!w.bridgeDown && (st.act >= 3 || pos.distanceTo(at.bellBridge()) < BRIDGE_NEAR)) {
+        Vec3 bridge = at.bellBridge();
+        double toBridge = Math.hypot(pos.x - bridge.x, pos.z - bridge.z); // across the ground: the roofs are 20 up
+        if (!w.bridgeDown && (st.act >= 3 || toBridge < BRIDGE_NEAR)) {
             // the gate pulses first: its shockwave crosses the Quay and takes the bridge as it arrives
             dev.awaken.core.Later.run(server, 22, () -> OpeningStage.dropBridge(server.overworld(), at));
             w.bridgeDown = true;

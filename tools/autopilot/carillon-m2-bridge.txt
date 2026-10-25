@@ -1,6 +1,6 @@
 # Carillon M2: the Bell Bridge going into the river, seen from Act 2's rooftop route (the milestone tour's runner
 # looks elsewhere when it goes). Same seed as the milestone tour: the opening plays to the bell, then the runner is stood
-# on the ridge of Act 2's last gable (plan -89.5, 22.5, -16.5), looking down the ridge toward the river, within the 20
+# on the ridge of Act 2's last gable (plan -89.5, 22.5, -16.5), looking down the ridge toward the river, within the 22
 # that brings it down.
 # Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=16 SLOT_WHO=M2-opening \
 #      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m2-bridge.txt 600
