@@ -378,14 +378,16 @@ public final class LifeRig {
         }
         float b = life.breath * life.depth;
         // breathing: the chest swells, the head lifts a little on the in-breath
-        if (body != null && !rootMotion) {
+        if (body != null) {
             float a = (idleClip ? 0.35F + 0.65F * Math.min(1.0F, life.exertion) : 1.0F) * b;
             body.xScale += 0.012F * a;
             body.zScale += 0.006F * a;
             body.yScale += 0.008F * a;
-            body.y += life.dip;
-            body.xRot += life.bodyPitch;
-            body.zRot += life.bodyRoll;
+            if (!rootMotion) { // else the renderer puts these on the pose stack (Life.rootPose)
+                body.y += life.dip;
+                body.xRot += life.bodyPitch;
+                body.zRot += life.bodyRoll;
+            }
         }
         for (ModelPart c : chests) {
             c.xScale += 0.04F * b;

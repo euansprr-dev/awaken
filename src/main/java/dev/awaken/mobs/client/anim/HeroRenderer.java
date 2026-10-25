@@ -44,6 +44,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
     private final int[] windup, strike;
     private final float[] windupSeconds;
     private final int roar, warn;
+    private final float deathLength;
 
     public HeroRenderer(EntityRendererProvider.Context ctx, MobDef def, HeroRig rig) {
         super(ctx, new HeroModel(ctx.bakeLayer(HeroModel.layer(rig.id)), rig), rig.shadow);
@@ -56,6 +57,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
         windupSeconds = new float[names.size()];
         roar = m.clip("roar");
         warn = m.clip("warn");
+        deathLength = m.length(m.clip("death"));
         for (int i = 0; i < names.size(); i++) {
             String mv = rig.move(names.get(i));
             Ability a = ability(def, names.get(i));
@@ -189,7 +191,7 @@ public final class HeroRenderer extends MobRenderer<AwakenMob, HeroRenderState, 
         life.roarClip = roar >= 0;
         life.busy = s.cueWeight > 0.05F || s.melee >= 0 || s.hurt >= 0;
         life.dying = s.dying;
-        life.deathLength = m.length(m.clip("death"));
+        life.deathLength = deathLength;
         HeroRig rig = m.rig();
         life.stride = rig.walkStride + (rig.runStride - rig.walkStride) * s.run;
         life.walk = s.airborne ? 0.0F : s.walk;

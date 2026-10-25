@@ -44,7 +44,7 @@ public final class LifeBones {
     private static final Set<String> TAILS = Set.of("tail", "otail", "ttail", "wtail", "mtail", "gtail", "fluke", "fan", "caudal", "streamer", "stinger");
     private static final Set<String> DANGLES = Set.of("mane", "beard", "ruff", "shag", "skirt", "tent", "drip", "silk", "reed", "cattail",
             "bramble", "sprig", "lamp", "cup", "moss", "frill", "wfrill", "forelock", "clapper", "robe", "garden", "plant", "leaf",
-            "cape", "tassel", "sleeve", "chain");
+            "cape", "tassel", "chain"); // never "sleeve": a player mesh's sleeves are the arms' skin layer
     private static final Set<String> WINGS = Set.of("wing", "cwing", "bwing", "wingtip");
     private static final Set<String> FINS = Set.of("fin", "dorsal", "anal", "pec", "mpec", "mdorsal", "manal", "gill");
     private static final Set<String> ARMS = Set.of("arm", "harm", "fore", "hfore", "forearm");
