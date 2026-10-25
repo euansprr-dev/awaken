@@ -152,3 +152,8 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   the exact opening lines) on carillon/m4-look; and a Sonnet bug fix for the floating Elder Wood on carillon/m4-elderfix
   (likely source: HeroStructure.cityNear checks only 4 axis points of the crown, and the painter clears only 40 above
   plots). Phase B (one builder) waits for Euan's approval of Phase A.
+- 2026-10-25: Euan added guided onboarding (via the pack session): just-in-time move tips (reverses SPEC §17.2's "found,
+  not told"; one shared tip system with a public API the Ascent will call; real key bindings; fades once done; option
+  off), the Registry as a guided walk with the officer (Holo band, K menu, map, first Directive, a camera pan to the city
+  gate), and light guidance for the first stretch outside. Folded into Phase A (onboarding.md + story lines); built in
+  Phase B. Carillon owns the tip system.
