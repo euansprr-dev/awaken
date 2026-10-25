@@ -43,6 +43,8 @@ public final class Discovery {
         int ox, oz;
         String stage;
         Bells.Bell lastBell;
+        /** Each explored cell's zone (its region, 1-based), per tile of this dimension, worked out once per cell. */
+        final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<byte[]> zones = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
     }
 
     private static final Map<UUID, Live> LIVE = new HashMap<>();
@@ -83,6 +85,8 @@ public final class Discovery {
             l.dim = dim;
             l.lx = Integer.MIN_VALUE;
             l.dirty.clear();
+            l.zones.clear();
+            sendCity(p);
             sendAll(p);
             sendPins(p);
         }
@@ -190,11 +194,10 @@ public final class Discovery {
     /** The Living Wilds region you stand in joins your Atlas's lettering the first time you're in it. */
     static void region(ServerPlayer p) {
         if (!dev.awaken.living.api.Regions.on(p.level())) return;
-        var r = dev.awaken.living.api.Regions.regionAt(p.level(), p.getBlockX(), p.getBlockZ());
         AtlasData d = data(p);
-        for (AtlasData.Region known : d.regions) if (known.id() == r.id()) return;
-        d.regions.add(new AtlasData.Region(r.id(), r.name(), r.heartX(), r.heartZ(), r.low(), r.high()));
-        AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(d.regions)));
+        int before = d.regions.size();
+        regionIndex(p, p.getBlockX(), p.getBlockZ());
+        if (d.regions.size() != before) AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(d.regions)));
     }
 
     /** Drops a pin (on ground you know), or takes back your own pin nearest the spot; your party sees the change. */
@@ -286,13 +289,16 @@ public final class Discovery {
     static void flush(ServerPlayer p, Live l) {
         if (l.dirty.isEmpty()) return;
         Explored e = data(p).dim(l.dim);
-        List<Explored.TileBits> tiles = new ArrayList<>(l.dirty.size());
+        int regions = data(p).regions.size();
+        List<AtlasNet.WireTile> tiles = new ArrayList<>(l.dirty.size());
         for (LongIterator it = l.dirty.iterator(); it.hasNext(); ) {
             long k = it.nextLong();
             long[] bits = e.tile(Explored.keyX(k), Explored.keyZ(k));
-            if (bits != null) tiles.add(new Explored.TileBits(Explored.keyX(k), Explored.keyZ(k), bits.clone()));
+            if (bits != null) tiles.add(wire(p, l, Explored.keyX(k), Explored.keyZ(k), bits));
         }
         l.dirty.clear();
+        // a region met for the first time goes first, so the client can read the zones that name it
+        if (data(p).regions.size() != regions) AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(data(p).regions)));
         AwakenNet.send(p, new AtlasNet.Sync(l.dim, false, tiles, l.ripple, l.ox, l.oz));
         l.ripple = false;
     }
@@ -301,13 +307,55 @@ public final class Discovery {
     static void sendAll(ServerPlayer p) {
         String dim = dim(p.level());
         Explored e = data(p).peek(dim);
-        AwakenNet.send(p, new AtlasNet.Sync(dim, true, e == null ? List.of() : e.tiles(), false, 0, 0));
+        Live l = live(p);
+        if (!dim.equals(l.dim)) {
+            l.dim = dim;
+            l.zones.clear();
+        }
+        int regions = data(p).regions.size();
+        List<AtlasNet.WireTile> tiles = new ArrayList<>();
+        if (e != null) for (Explored.TileBits t : e.tiles()) tiles.add(wire(p, l, t.tx(), t.tz(), t.bits()));
+        if (data(p).regions.size() != regions) AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(data(p).regions)));
+        AwakenNet.send(p, new AtlasNet.Sync(dim, true, tiles, false, 0, 0));
+    }
+
+    /** A tile for the wire, with the zone of each of its explored cells (worked out now for cells new since last time). */
+    static AtlasNet.WireTile wire(ServerPlayer p, Live l, int tx, int tz, long[] bits) {
+        return new AtlasNet.WireTile(tx, tz, bits.clone(), zones(p, l, tx, tz, bits));
+    }
+
+    static byte[] zones(ServerPlayer p, Live l, int tx, int tz, long[] bits) {
+        if (!dev.awaken.living.api.Regions.on(p.level())) return new byte[0];
+        byte[] z = l.zones.computeIfAbsent(Explored.key(tx, tz), k -> new byte[Explored.TILE * Explored.TILE]);
+        for (int i = 0; i < z.length; i++) {
+            if (z[i] != 0 || (bits[i >> 6] & (1L << (i & 63))) == 0) continue;
+            int cx = (tx << Explored.TILE_SHIFT) + (i & (Explored.TILE - 1)), cz = (tz << Explored.TILE_SHIFT) + (i >> Explored.TILE_SHIFT);
+            z[i] = (byte) regionIndex(p, (cx << 4) + 8, (cz << 4) + 8);
+        }
+        return z.clone();
+    }
+
+    /** The 1-based index of the region at (x, z) in the player's known regions, adding it the first time; at most 254. */
+    static int regionIndex(ServerPlayer p, int x, int z) {
+        var r = dev.awaken.living.api.Regions.regionAt(p.level(), x, z);
+        List<AtlasData.Region> known = data(p).regions;
+        for (int i = 0; i < known.size(); i++) if (known.get(i).id() == r.id()) return Math.min(254, i + 1);
+        if (known.size() >= 254) return 0;
+        known.add(new AtlasData.Region(r.id(), r.name(), r.heartX(), r.heartZ(), r.low(), r.high()));
+        return known.size();
+    }
+
+    /** Carillon's square for the client (its district map is the city plan's), in the overworld of a Carillon world. */
+    static void sendCity(ServerPlayer p) {
+        BlockPos sq = CityHooks.square(p.level());
+        AwakenNet.send(p, sq == null ? new AtlasNet.City(false, 0, 0, 0) : new AtlasNet.City(true, sq.getX(), sq.getY(), sq.getZ()));
     }
 
     static void login(ServerPlayer p) {
         Live l = live(p);
         l.dim = dim(p.level());
         l.stage = OpeningHooks.stage(p);
+        sendCity(p);
         sendAll(p);
         AtlasData d = data(p);
         if (!d.trail.isEmpty()) AwakenNet.send(p, new AtlasNet.Trail(List.copyOf(d.trail), false));
