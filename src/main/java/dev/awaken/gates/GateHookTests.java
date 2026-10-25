@@ -31,6 +31,7 @@ final class GateHookTests {
             GatePlan plan = GateTests.testPlan(77, Rank.D, Theme.HIVE, Layout.LABYRINTH, Twist.NONE);
             GateRecord g = GateService.create(server, GateRegistry.get(server).nextId(), plan, GateTests.dryGround(level, new BlockPos(base.getX(), y, base.getZ())), 0,
                     Optional.empty(), 2, List.of("test"), false);
+            g.anyGround = true;
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             h.startSequence()
                     .thenWaitUntil(() -> h.assertTrue(g.state == GateState.READY, "gate became READY, was " + g.state + " (trace: " + g.trace + ")"))

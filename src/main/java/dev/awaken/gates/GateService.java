@@ -148,7 +148,7 @@ public final class GateService {
                 server.overworld().getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), b.surfaceChunk, 1);
                 if (!placeSurface(server, g)) {
                     it.remove();
-                    fail(server, g, "no dry ground at the chosen spot");
+                    fail(server, g, "no ground for the gate at the chosen spot");
                     continue;
                 }
                 finished++;
@@ -190,7 +190,14 @@ public final class GateService {
         BlockPos ground = new BlockPos(g.pos.getX(), y, g.pos.getZ());
         // never on someone's build; a scripted gate (the story's) moves to the nearest clear spot instead of failing
         int rank = g.plan.rank().ordinal();
-        if (!g.scripted && (!Overworld.goodGround(over, ground) || !Overworld.untouched(over, ground, g.axis, rank))) return false;
+        if (!g.scripted && !Overworld.goodGround(over, ground)) {
+            g.trace.add("wet or open ground at " + ground.toShortString());
+            return false;
+        }
+        if (!g.scripted && !g.anyGround && !Overworld.untouched(over, ground, g.axis, rank)) {
+            g.trace.add("built on, or near a Hearth, at " + ground.toShortString());
+            return false;
+        }
         if (g.scripted && !Overworld.untouched(over, ground, g.axis, rank)) {
             ground = Overworld.clearSpotNear(over, ground, g.axis).orElse(ground);
         }
