@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "orient=upright": {
+      "model": "awaken:block/cask_upright"
+    },
+    "orient=z": {
+      "model": "awaken:block/cask_lying"
+    },
+    "orient=x": {
+      "model": "awaken:block/cask_lying",
+      "y": 90
+    }
+  }
+}

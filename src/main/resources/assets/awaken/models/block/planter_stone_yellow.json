@@ -1,0 +1,205 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "particle": "awaken:block/planter_stone",
+    "t0": "awaken:block/planter_stone",
+    "t1": "awaken:block/planter_stone_1",
+    "t2": "awaken:block/planter_stone_2",
+    "t3": "awaken:block/bloom_yellow"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        2
+      ],
+      "to": [
+        15,
+        10,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            14,
+            10
+          ],
+          "texture": "#t0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            14,
+            10
+          ],
+          "texture": "#t0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "texture": "#t1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "texture": "#t1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            14,
+            12
+          ],
+          "texture": "#t2"
+        }
+      }
+    },
+    {
+      "from": [
+        1.5,
+        10,
+        5.5
+      ],
+      "to": [
+        14.5,
+        22,
+        5.5
+      ],
+      "shade_direction_override": "up",
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            6,
+            16,
+            16
+          ],
+          "texture": "#t3"
+        },
+        "south": {
+          "uv": [
+            16,
+            6,
+            0,
+            16
+          ],
+          "texture": "#t3"
+        }
+      }
+    },
+    {
+      "from": [
+        1.5,
+        10,
+        10.5
+      ],
+      "to": [
+        14.5,
+        22,
+        10.5
+      ],
+      "shade_direction_override": "up",
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            6,
+            16,
+            16
+          ],
+          "texture": "#t3"
+        },
+        "south": {
+          "uv": [
+            16,
+            6,
+            0,
+            16
+          ],
+          "texture": "#t3"
+        }
+      }
+    },
+    {
+      "from": [
+        5.5,
+        10,
+        2.5
+      ],
+      "to": [
+        5.5,
+        22,
+        13.5
+      ],
+      "shade_direction_override": "up",
+      "faces": {
+        "east": {
+          "uv": [
+            2,
+            6,
+            14,
+            16
+          ],
+          "texture": "#t3"
+        },
+        "west": {
+          "uv": [
+            14,
+            6,
+            2,
+            16
+          ],
+          "texture": "#t3"
+        }
+      }
+    },
+    {
+      "from": [
+        10.5,
+        10,
+        2.5
+      ],
+      "to": [
+        10.5,
+        22,
+        13.5
+      ],
+      "shade_direction_override": "up",
+      "faces": {
+        "east": {
+          "uv": [
+            2,
+            6,
+            14,
+            16
+          ],
+          "texture": "#t3"
+        },
+        "west": {
+          "uv": [
+            14,
+            6,
+            2,
+            16
+          ],
+          "texture": "#t3"
+        }
+      }
+    }
+  ],
+  "ambientocclusion": false
+}

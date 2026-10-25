@@ -1,0 +1,154 @@
+{
+  "variants": {
+    "facing=north,load=empty,part=body": {
+      "model": "awaken:block/cart_body_empty"
+    },
+    "facing=north,load=empty,part=shafts": {
+      "model": "awaken:block/cart_shafts"
+    },
+    "facing=north,load=crates,part=body": {
+      "model": "awaken:block/cart_body_crates"
+    },
+    "facing=north,load=crates,part=shafts": {
+      "model": "awaken:block/cart_shafts"
+    },
+    "facing=north,load=sacks,part=body": {
+      "model": "awaken:block/cart_body_sacks"
+    },
+    "facing=north,load=sacks,part=shafts": {
+      "model": "awaken:block/cart_shafts"
+    },
+    "facing=north,load=casks,part=body": {
+      "model": "awaken:block/cart_body_casks"
+    },
+    "facing=north,load=casks,part=shafts": {
+      "model": "awaken:block/cart_shafts"
+    },
+    "facing=north,load=produce,part=body": {
+      "model": "awaken:block/cart_body_produce"
+    },
+    "facing=north,load=produce,part=shafts": {
+      "model": "awaken:block/cart_shafts"
+    },
+    "facing=east,load=empty,part=body": {
+      "model": "awaken:block/cart_body_empty",
+      "y": 90
+    },
+    "facing=east,load=empty,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 90
+    },
+    "facing=east,load=crates,part=body": {
+      "model": "awaken:block/cart_body_crates",
+      "y": 90
+    },
+    "facing=east,load=crates,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 90
+    },
+    "facing=east,load=sacks,part=body": {
+      "model": "awaken:block/cart_body_sacks",
+      "y": 90
+    },
+    "facing=east,load=sacks,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 90
+    },
+    "facing=east,load=casks,part=body": {
+      "model": "awaken:block/cart_body_casks",
+      "y": 90
+    },
+    "facing=east,load=casks,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 90
+    },
+    "facing=east,load=produce,part=body": {
+      "model": "awaken:block/cart_body_produce",
+      "y": 90
+    },
+    "facing=east,load=produce,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 90
+    },
+    "facing=south,load=empty,part=body": {
+      "model": "awaken:block/cart_body_empty",
+      "y": 180
+    },
+    "facing=south,load=empty,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 180
+    },
+    "facing=south,load=crates,part=body": {
+      "model": "awaken:block/cart_body_crates",
+      "y": 180
+    },
+    "facing=south,load=crates,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 180
+    },
+    "facing=south,load=sacks,part=body": {
+      "model": "awaken:block/cart_body_sacks",
+      "y": 180
+    },
+    "facing=south,load=sacks,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 180
+    },
+    "facing=south,load=casks,part=body": {
+      "model": "awaken:block/cart_body_casks",
+      "y": 180
+    },
+    "facing=south,load=casks,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 180
+    },
+    "facing=south,load=produce,part=body": {
+      "model": "awaken:block/cart_body_produce",
+      "y": 180
+    },
+    "facing=south,load=produce,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 180
+    },
+    "facing=west,load=empty,part=body": {
+      "model": "awaken:block/cart_body_empty",
+      "y": 270
+    },
+    "facing=west,load=empty,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 270
+    },
+    "facing=west,load=crates,part=body": {
+      "model": "awaken:block/cart_body_crates",
+      "y": 270
+    },
+    "facing=west,load=crates,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 270
+    },
+    "facing=west,load=sacks,part=body": {
+      "model": "awaken:block/cart_body_sacks",
+      "y": 270
+    },
+    "facing=west,load=sacks,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 270
+    },
+    "facing=west,load=casks,part=body": {
+      "model": "awaken:block/cart_body_casks",
+      "y": 270
+    },
+    "facing=west,load=casks,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 270
+    },
+    "facing=west,load=produce,part=body": {
+      "model": "awaken:block/cart_body_produce",
+      "y": 270
+    },
+    "facing=west,load=produce,part=shafts": {
+      "model": "awaken:block/cart_shafts",
+      "y": 270
+    }
+  }
+}

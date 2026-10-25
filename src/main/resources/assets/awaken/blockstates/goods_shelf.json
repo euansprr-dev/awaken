@@ -1,0 +1,94 @@
+{
+  "variants": {
+    "facing=north,goods=jars": {
+      "model": "awaken:block/goods_shelf_jars"
+    },
+    "facing=east,goods=jars": {
+      "model": "awaken:block/goods_shelf_jars",
+      "y": 90
+    },
+    "facing=south,goods=jars": {
+      "model": "awaken:block/goods_shelf_jars",
+      "y": 180
+    },
+    "facing=west,goods=jars": {
+      "model": "awaken:block/goods_shelf_jars",
+      "y": 270
+    },
+    "facing=north,goods=cloth": {
+      "model": "awaken:block/goods_shelf_cloth"
+    },
+    "facing=east,goods=cloth": {
+      "model": "awaken:block/goods_shelf_cloth",
+      "y": 90
+    },
+    "facing=south,goods=cloth": {
+      "model": "awaken:block/goods_shelf_cloth",
+      "y": 180
+    },
+    "facing=west,goods=cloth": {
+      "model": "awaken:block/goods_shelf_cloth",
+      "y": 270
+    },
+    "facing=north,goods=bread": {
+      "model": "awaken:block/goods_shelf_bread"
+    },
+    "facing=east,goods=bread": {
+      "model": "awaken:block/goods_shelf_bread",
+      "y": 90
+    },
+    "facing=south,goods=bread": {
+      "model": "awaken:block/goods_shelf_bread",
+      "y": 180
+    },
+    "facing=west,goods=bread": {
+      "model": "awaken:block/goods_shelf_bread",
+      "y": 270
+    },
+    "facing=north,goods=pots": {
+      "model": "awaken:block/goods_shelf_pots"
+    },
+    "facing=east,goods=pots": {
+      "model": "awaken:block/goods_shelf_pots",
+      "y": 90
+    },
+    "facing=south,goods=pots": {
+      "model": "awaken:block/goods_shelf_pots",
+      "y": 180
+    },
+    "facing=west,goods=pots": {
+      "model": "awaken:block/goods_shelf_pots",
+      "y": 270
+    },
+    "facing=north,goods=books": {
+      "model": "awaken:block/goods_shelf_books"
+    },
+    "facing=east,goods=books": {
+      "model": "awaken:block/goods_shelf_books",
+      "y": 90
+    },
+    "facing=south,goods=books": {
+      "model": "awaken:block/goods_shelf_books",
+      "y": 180
+    },
+    "facing=west,goods=books": {
+      "model": "awaken:block/goods_shelf_books",
+      "y": 270
+    },
+    "facing=north,goods=tools": {
+      "model": "awaken:block/goods_shelf_tools"
+    },
+    "facing=east,goods=tools": {
+      "model": "awaken:block/goods_shelf_tools",
+      "y": 90
+    },
+    "facing=south,goods=tools": {
+      "model": "awaken:block/goods_shelf_tools",
+      "y": 180
+    },
+    "facing=west,goods=tools": {
+      "model": "awaken:block/goods_shelf_tools",
+      "y": 270
+    }
+  }
+}

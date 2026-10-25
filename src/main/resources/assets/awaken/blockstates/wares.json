@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "good=bread": {
+      "model": "awaken:block/wares_bread"
+    },
+    "good=fish": {
+      "model": "awaken:block/wares_fish"
+    },
+    "good=produce": {
+      "model": "awaken:block/wares_produce"
+    },
+    "good=cloth": {
+      "model": "awaken:block/wares_cloth"
+    },
+    "good=pottery": {
+      "model": "awaken:block/wares_pottery"
+    },
+    "good=candles": {
+      "model": "awaken:block/wares_candles"
+    },
+    "good=flowers": {
+      "model": "awaken:block/wares_flowers"
+    },
+    "good=spice": {
+      "model": "awaken:block/wares_spice"
+    },
+    "good=tools": {
+      "model": "awaken:block/wares_tools"
+    },
+    "good=cheese": {
+      "model": "awaken:block/wares_cheese"
+    }
+  }
+}

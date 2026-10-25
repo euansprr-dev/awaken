@@ -1559,6 +1559,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   (approved proposal; the gate opens in the square via `GateHooks.openScripted`) → the Void → the infirmary → the
   Registry (licence E-rank, the Holo wristband, the Atlas opens with the run revealed, first Directive) → free play.
 - No death in the opening (falls leave ≥ 1 heart). Relog at any beat resumes it. `/awaken opening skip`.
+- Registration (2026-10-25): when the opening ends, or is skipped, the counter `awaken:carillon_registered` is counted
+  once (`OpeningDirector.REGISTERED`). Chains and content that wait on "after the Registry" require it.
 - Decided in M2 (2026-10-25; details docs/carillon/milestones/M2-opening.md): the opening's beats SKY, RUN, ARRIVAL,
   WAKE, REGISTRY are appended to `StoryProgress.Prologue` after DONE (schema 3; the story's GATE_OPEN, RITUAL and
   ACCEPTING sit in between); in Carillon worlds the opening owns NOT_STARTED/GLITCHED and the prologue's own first beats

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Carillon's citizens as data (docs/SPEC.md §16, M3 "Alive"): who the 240 citizens are, where they live and work,
-and what they do at each hour. Everything is derived from the plan (plan.json), deterministically.
+"""Carillon's citizens as data (docs/SPEC.md §16, M3 "Alive", grown to ~460 in M4 B3a): who the citizens are, where they live and
+work, and what they do at each hour. Everything is derived from the plan (plan.json), deterministically.
 
   python3 -I tools/city/citizens.py            writes src/main/resources/data/awaken/city/citizens.json, prints stats
   python3 -I tools/city/citizens.py check      runs every check without writing (exit code 1 on any failure)
@@ -22,6 +22,22 @@ Where the brief's templates could not hold as written (the brief's own checks ar
   * errand routes: the 7 per-district ones, plus local routes of the nearest eligible places where a district's is too far;
   * junction stands for patrols and couriers are the nearest standing cells to the junction that keep clear of the
     streets' centre lines; patrol loops that cannot close are walked out and back (a stop repeats in the list).
+
+M4 B3a (street life): the roster grows to 460 and gathers where the plan's props are.
+  * places come from the props: the 34 stalls (a keeper place of the two back cells, a front place of the four cells before the
+    counter), benches (cap 2, on the bench), wells, fountain rims, the bowl's steps, notice boards, the tavern tables' bench
+    rows (and a second lane place at every tavern); every street-level prop cell is an obstacle for the other places and for
+    the keep-right lanes (edgeLane);
+  * `market` routes (six sixths of the square: four stall fronts and the benches, rims, steps and board beside them) and
+    `stroll` routes (the benches, wells and boards of a neighbourhood) are the walks of the crowd; a `dock` route (the porters'
+    noon break at the crates); the porters' drops are one route of six stall fronts per dock (four docks, two to a crane);
+  * residents: market-goers (home -> the square from ~1500 -> a sit at noon on a bench, rim or step, else lingering at the
+    stalls -> errands -> a tavern 12000-15500), neighbours (a bench or well near home mornings and at dusk, the market at
+    midday when it is within reach, an evening at the tavern on alternate days), elders (long sits, a short walk, home early);
+    homes follow the bench or the market they go to and spread over the districts;
+  * tavern hands stand at the table place 11500-17000; the lamps are cut into ceil(lamps / 10) tours balanced by time;
+  * Kestrel (the Roost's master: a post at its street door by day, the Roost itself her home: household plot -1) and Bram (the
+    Association's officer: inside by day with a spell at the forecourt board, a house near the Terrace) are named runner and clerk.
 """
 import base64
 import hashlib
@@ -67,14 +83,18 @@ PK = {n: i for i, n in enumerate(PLACE_KINDS)}
 PLACE_FIELDS = ['kind', 'node', 'x', 'ry', 'z', 'yaw', 'cap', 'ref', 'district', 'approach', 'spots']
 CITIZEN_FIELDS = ['id', 'given', 'family', 'job', 'household', 'home', 'work', 'group', 'tavern', 'build', 'age', 'scale',
                   'speed', 'look', 'named']
-JOB_COUNTS = {'lamplighter': 8, 'bellringer': 7, 'porter': 18, 'stallkeeper': 20, 'baker': 10, 'smith': 8, 'watch': 24,
-              'crier': 5, 'boatman': 8, 'washer': 14, 'mason': 10, 'runner': 10, 'shopkeeper': 30, 'tavernkeeper': 14,
-              'clerk': 8, 'archivist': 2, 'healer': 4, 'miller': 4, 'child': 16, 'resident': 20}
+# M4 B3a: ~450 records (SPEC §16.5 asks 400-480). The two named records Kestrel (a runner) and Bram (a clerk) are on top of
+# these counts, so the table's runner and clerk counts below include them. Stallkeepers: one opener per stall (34) and 14
+# helpers on the square's stalls; tavernkeepers: 14 keepers and 14 hands.
+JOB_COUNTS = {'lamplighter': 20, 'bellringer': 7, 'porter': 26, 'stallkeeper': 48, 'baker': 10, 'smith': 8, 'watch': 32,
+              'crier': 7, 'boatman': 10, 'washer': 14, 'mason': 12, 'runner': 11, 'shopkeeper': 30, 'tavernkeeper': 28,
+              'clerk': 11, 'archivist': 2, 'healer': 4, 'miller': 4, 'child': 36, 'resident': 140}
+TOTAL = sum(JOB_COUNTS.values())
 GOODS = ['bread', 'fish', 'produce', 'cloth', 'pottery', 'candles', 'flowers', 'spice', 'tools', 'cheese']
 GROUP_KINDS = ['stall', 'smithy', 'bakery', 'watch', 'lamps', 'bells', 'porters', 'washers', 'masons', 'criers',
                'boatmen', 'runners', 'shop', 'tavern', 'association', 'mill', 'play', 'elders']
 
-NAMES_A = ('Abel Alder Ambrose Anselm Aren Arno Bastian Bertil Bram Brannoc Cato Cillian Clem Corin Dorran Edric Emrys '
+NAMES_A = ('Abel Alder Ambrose Anselm Aren Arno Bastian Bertil Brannoc Cato Cillian Clem Corin Dorran Edric Emrys '
            'Fenwick Finch Gideon Hale Hollis Ivo Jago Jory Kasimir Kit Lucan Mattis Nico Olek Orrin Pell Perrin Quill '
            'Rafe Roan Rook Silas Tam Tobin Ulric Wendel Wim Yorick Ansel Benedek Caspar Davin Eben Florian Garrick '
            'Hamish Ignas Joss Konrad Lorcan Marek Nils Osric Piet Radek Stellan Teague Vasco').split()
@@ -85,14 +105,30 @@ NAMES_B = ('Ada Agnes Alis Brisa Cass Dagny Della Edda Elin Elsabet Esme Fenna G
 FAMILIES = ('Ashgrove Bellamy Brassfield Callow Candlewick Chimewright Cobble Corder Dunmore Fairweather Fletcher Greave '
             'Hallam Hearn Holloway Inkwell Jessop Kettle Lantry Larkin Marrow Merriman Noll Oakes Quarry Reedman Rusk '
             'Saltmarsh Tolland Tollman Underbell Vane Wexley Whitlock Wick Brightwater Coldharbour Dimmock Eversley Flint '
-            'Garrow Harrow Ivesley Kestrel Lockwood Mallory Netherby Ormsby Penhallow Ridley Stannard Thorne Upwood '
+            'Garrow Harrow Ivesley Lockwood Mallory Netherby Ormsby Penhallow Ridley Stannard Thorne Upwood '
             'Varley Weatherell Yarrow Ashby Bracken Cresswell Dunstan Elbury Fallow Grisedale Hartwell').split()
 # The brief's list holds 64 surnames but about 91 households each need their own: these 30 extend it in the same vein.
+FAMILIES_MORE = ('Ashworth Bannock Barley Beckett Birchall Blackwood Bowyer Bramley Brindle Broadbent Buckler Burdock Cartwright '
+                 'Chalmers Cheeseman Clover Cobbold Copperfield Cordwell Cranmer Crowhurst Daventry Dobbin Drummond Eastwick '
+                 'Elmore Faulkner Fenner Fernley Fitch Foxley Gantry Garland Gatehouse Glover Goodwin Grindle Hadley Halloran '
+                 'Hargrave Hartnoll Haywood Hazelwood Hobday Hollis Hopcroft Hurlock Ingram Isherwood Jarrow Jennet Kersey '
+                 'Kilbride Knoll Lambourne Latchford Lavender Leadbetter Linnet Lockyer Lowther Lumley Maddox Malthouse '
+                 'Manning Marchbank Mayhew Melrose Milford Moorcroft Mossop Nailor Nesbitt Newsome Northcott Oakley Oldfield '
+                 'Orrell Osgood Overton Packard Palliser Parslow Peverell Pilcher Plumtree Pollard Prowse Quillfeather Radley '
+                 'Ramsden Rawlin Redfern Renshaw Rowntree Rudge Sandford Scarlett Sedgwick Shelley Skerry Slocombe Spindle '
+                 'Stainer Stirling Stockdale Swallow Tanner Thackray Thistlewood Tidewell Tolliver Trevor Turnbull Tunstall '
+                 'Ulverston Vickery Wadsworth Wallace Warbeck Wardle Wetherby Whitcombe Whitmore Willowby Winslow Wolsey '
+                 'Woodcock Wrenfield Yelland Zouch Amberley Brackenbury Candover Dawlish Fenwick Greenhow Haddock Kimberley').split()
 FAMILIES_EXTRA = ('Appleyard Barrow Cheswick Dewhurst Gladwin Hawkridge Ironside Kingsley Langdon Marlow Nettleton '
                   'Pemberton Quennell Selwyn Tenby Underhill Wyndham Yeoman Alcott Burnell Calloway Danvers Edgecombe '
                   'Farrow Galloway Heron Ludlow Mercer Orchard Pickering').split()
 
 ERRAND_DWELL = 300
+# (M3 allowed 14 for a spot the game must path to; two cells of the bowl, a fountain rim and a stall's back row, are 14.09 from
+# the nearest junction, so the limit is 14.2)
+PATH_REACH = 14.2
+SQ_R = 40.0                    # the bowl: places this near the Bell Stone belong to the market routes
+LAMP_MIN, LAMP_MAX = 5, 16      # lamps in a tour (the tours are balanced by the time they take, not their count)
 
 
 def rng(salt):
@@ -111,6 +147,19 @@ def yaw_of(dx, dz):
 def cc(v):
     """The block centre of the cell containing v."""
     return math.floor(v) + 0.5
+
+
+def prop_cells(pr):
+    """The ground cells a plan prop stands on: its whole box, or for a hang line only its pole cells (the end cell at x0/z0
+    when its poles contain 'a', the end at x1/z1 when they contain 'b')."""
+    if pr['kind'] == 'line':
+        out = []
+        if 'a' in pr['facing']:
+            out.append((pr['x0'], pr['z0']))
+        if 'b' in pr['facing']:
+            out.append((pr['x1'], pr['z1']))
+        return out
+    return [(x, z) for x in range(pr['x0'], pr['x1'] + 1) for z in range(pr['z0'], pr['z1'] + 1)]
 
 
 def jdump(obj):
@@ -154,15 +203,22 @@ class City:
                     continue
                 x0, z0, x1, z1 = part['box']
                 self.block[z0 + O:z1 + O + 1, x0 + O:x1 + O + 1] = True
-        # the lower quay is 4 below the street (ladders only): never a place to stand or walk to
+        # M4 B3a: the street-life props (plan.json "props"). Every street-level prop cell is an obstacle: no place's spot
+        # stands in one (except the spots a prop defines itself), and the keep-right lanes keep clear of its centre.
+        # A hang line has only its pole cells on the ground.
+        self.props = [dict(zip(P['propFields'], row)) for row in P.get('props', [])]
+        self.prop_mask = np.zeros((N, N), bool)
         self.stall_mask = np.zeros((N, N), bool)
-        for part in self.lm['stalls']['parts']:
-            x0, z0, x1, z1 = part['box']
-            self.stall_mask[z0 + O:z1 + O + 1, x0 + O:x1 + O + 1] = True
+        for pr in self.props:
+            for (x, z) in prop_cells(pr):
+                self.prop_mask[z + O, x + O] = True
+                if pr['kind'] == 'stall':
+                    self.stall_mask[z + O, x + O] = True
+        # the lower quay is 4 below the street (ladders only): never a place to stand or walk to
         walk = np.isin(self.kind, list(WALKABLE - {LOWQUAY}))
         self.bridge_walk = self.bridge_mask & np.isin(self.kind, list(WATER | {LOWQUAY}))
         self.walk = walk | self.bridge_walk                     # a body can stand or cross here
-        self.ground = walk & ~self.block & (self.plot_at < 0) & (self.kind != STAIR) & ~self.bridge_mask
+        self.ground = walk & ~self.block & (self.plot_at < 0) & (self.kind != STAIR) & ~self.bridge_mask & ~self.prop_mask
         self.water = np.isin(self.kind, list(WATER)) & ~self.bridge_walk
         # street graph
         g = P['graphs']['street']
@@ -322,7 +378,18 @@ class City:
         dist, who = self.field()
         i, j = self.cell(x, z)
         if who[j, i] < 0:
-            raise ValueError(f'no node reaches ({x}, {z})')
+            # (a prop's own cell may be yard or a well's footing, outside the walk field: use the nearest cell inside it)
+            best = None
+            for b in range(-8, 9):
+                for a in range(-8, 9):
+                    ni, nj = i + a, j + b
+                    if 0 <= ni < N and 0 <= nj < N and who[nj, ni] >= 0:
+                        d = math.hypot(a, b)
+                        if best is None or d < best[0]:
+                            best = (d, nj, ni)
+            if best is None:
+                raise ValueError(f'no node reaches ({x}, {z})')
+            _, j, i = best
         return int(who[j, i]), float(dist[j, i])
 
     # -- geometry queries ------------------------------------------------------------------------------------------
@@ -427,6 +494,7 @@ class City:
         sx, sz = spot[0], spot[1]
         L = math.hypot(sx - nx, sz - nz)
         steps = max(2, int(L * 4))
+        last = self.cell(sx, sz)
         prev = None
         for k in range(steps + 1):
             x = nx + (sx - nx) * k / steps
@@ -438,6 +506,8 @@ class City:
                 continue
             if not self.walk[c[1], c[0]] and not (k == 0):
                 return 1
+            if self.prop_mask[c[1], c[0]] and not (k == 0) and c != last:
+                return 1     # a prop stands in the way (the spot's own cell excepted): the game must path round it
             if prev is not None and abs(int(self.lift[c[1], c[0]]) - int(self.lift[prev[1], prev[0]])) > 1:
                 return 1
             prev = c
@@ -487,16 +557,33 @@ class Builder:
         return pid
 
     def reach_ok(self, node, spots):
-        """A straight way from the node to every spot may be up to 36 blocks long; one the game must path, 14."""
+        """A straight way from the node to every spot may be up to 36 blocks long; one the game must path, PATH_REACH."""
         nd = self.c.nodes[node]
         far = max(math.hypot(s[0] - nd[0], s[1] - nd[2]) for s in spots)
-        return far <= (36.0 if all(self.c.approach(node, s) == 0 for s in spots) else 14.0)
+        return far <= (36.0 if all(self.c.approach(node, s) == 0 for s in spots) else PATH_REACH)
 
     def free(self, x, z):
         return self.c.cell(x, z) not in self.used
 
     def spot_ok(self, x, z):
         return self.c.is_ground(x, z) and self.free(x, z) and self.c.lane_ok(x, z)
+
+    def prop_cell_ok(self, x, z):
+        """A cell of a prop itself (a bench's, a table's bench row) that a body may stand on: walkable, outside plots, water,
+        doors and landmark footprints, clear of a narrow street's walking lane. (Props on yard ground are not standing
+        places: the walk raster excludes yards, like everywhere else in this file.)"""
+        c = self.c
+        i, j = c.cell(x, z)
+        return bool(c.walk[j, i]) and c.plot_at[j, i] < 0 and not c.water[j, i] and not c.block[j, i] \
+            and int(c.kind[j, i]) != LOWQUAY and (i - O, j - O) not in c.door_cells and (i - O, j - O) not in c.landmark_cells \
+            and c.lane_ok(x, z)
+
+    def step_ok(self, x, z):
+        """A free step (stair cell) to stand on, clear of the walking lane."""
+        c = self.c
+        i, j = c.cell(x, z)
+        return int(c.kind[j, i]) == STAIR and bool(c.walk[j, i]) and not c.prop_mask[j, i] and c.plot_at[j, i] < 0 \
+            and (i - O, j - O) not in c.door_cells and self.free(x, z) and c.lane_ok(x, z)
 
     def cells_around(self, cx, cz, rmax, pred=None):
         """Standing cells (centres) within rmax of (cx, cz), nearest first: [(d, x, z)]."""
@@ -581,17 +668,21 @@ class Builder:
             sq = c.kind_at(px, pz) in (SQUARE, PLAZA)
             seg = c.edge_near(px, pz)[1]
             best = None
-            for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)):
-                sx, sz = px + dx, pz + dz
-                if (math.floor(sx), math.floor(sz)) in posts or not self.spot_ok(sx, sz):
-                    continue
-                if sq or seg is None:
-                    score = math.hypot(sx, sz)
-                else:
-                    score = c.seg_dist(seg, sx, sz)
-                key = (abs(dx) + abs(dz) > 1, round(score, 3), -dx, -dz)
-                if best is None or key < best[0]:
-                    best = (key, sx, sz, dx, dz)
+            for step in (False, True):
+                # (a lamp hard by a flight of steps, on a lane too narrow to stand beside: the lamplighter takes the step)
+                for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)):
+                    sx, sz = px + dx, pz + dz
+                    if (math.floor(sx), math.floor(sz)) in posts or not (self.step_ok(sx, sz) if step else self.spot_ok(sx, sz)):
+                        continue
+                    if sq or seg is None:
+                        score = math.hypot(sx, sz)
+                    else:
+                        score = c.seg_dist(seg, sx, sz)
+                    key = (abs(dx) + abs(dz) > 1, round(score, 3), -dx, -dz)
+                    if best is None or key < best[0]:
+                        best = (key, sx, sz, dx, dz)
+                if best:
+                    break
             assert best, f'no spot for lamp {k}'
             _, sx, sz, dx, dz = best
             out.append(self.add('lamp', [(sx, sz, yaw_of(-dx, -dz))], ref=k))
@@ -599,20 +690,33 @@ class Builder:
 
     # -- stalls --------------------------------------------------------------------------------------------------------
     def build_stalls(self):
-        parts = [p for p in self.c.lm['stalls']['parts'] if p['kind'] == 'stall']
+        """The plan's stall props (M4 B3a: 4 along the counter x 2 deep, `facing` its customers; 24 on Choir Square's -2
+        ring, the rest on the district plazas), in plan order. The front row (depth 0, the `facing` side) has posts at 0 and 3
+        and the counter at 1 and 2; the back row has posts at 0 and 3 and the keeper's two cells at 1 and 2. The keeper
+        place is those two cells (yaw toward the counter), the front place the four cells just outside the front row."""
         self.stalls = []
-        rr = rng(0x57A11)
-        last = -1
-        for k, part in enumerate(parts):
-            x0, z0, x1, z1 = part['box']
-            keeper = self.add('stall_keeper', [(x0 + 1.5, z1 - 0.5, 0), (x1 - 0.5, z1 - 0.5, 0)], ref=k)
-            front = self.add('stall_front', [(x + 0.5, z1 + 1.5, 180) for x in range(x0, x1 + 1)], ref=k)
-            col = rr.randrange(8)
-            while col == last or (k == len(parts) - 1 and col == self.stalls[0]['colour']):
-                col = rr.randrange(8)
-            last = col
-            self.stalls.append({'part': k, 'box': [x0, z0, x1, z1], 'colour': col, 'keeper': keeper, 'front': front,
-                                'good': GOODS[k % len(GOODS)]})
+        self.square_stalls = []
+        for part, pr in enumerate(self.c.props):
+            if pr['kind'] != 'stall':
+                continue
+            x0, z0, x1, z1 = pr['x0'], pr['z0'], pr['x1'], pr['z1']
+            fx, fz = FRONT[pr['facing']]
+            if fx:    # counter along z; the front row is the column on the facing side
+                fcol, bcol = (x1, x0) if fx > 0 else (x0, x1)
+                back = [(bcol, z0 + k) for k in range(4)]
+                front = [(fcol, z0 + k) for k in range(4)]
+            else:
+                frow, brow = (z1, z0) if fz > 0 else (z0, z1)
+                back = [(x0 + k, brow) for k in range(4)]
+                front = [(x0 + k, frow) for k in range(4)]
+            k = len(self.stalls)
+            keeper = self.add('stall_keeper', [(x + .5, z + .5, yaw_of(fx, fz)) for x, z in back[1:3]], ref=k)
+            fr = self.add('stall_front', [(x + fx + .5, z + fz + .5, yaw_of(-fx, -fz)) for x, z in front], ref=k)
+            self.stalls.append({'part': part, 'box': [x0, z0, x1, z1], 'facing': pr['facing'], 'colour': pr['v'],
+                                'keeper': keeper, 'front': fr, 'good': pr['s']})
+            if pr['ry'] < 0:
+                self.square_stalls.append(k)     # on the bowl's -2 ring
+        assert len(self.stalls) >= 30 and len(self.square_stalls) >= 20, (len(self.stalls), len(self.square_stalls))
 
     # -- bells ---------------------------------------------------------------------------------------------------------
     def build_bells(self):
@@ -662,10 +766,30 @@ class Builder:
             p = c.plots[pid]
             if p['use'] == 'tavern' and pid in c.door_node:
                 d = self.door(pid)
-                spots = self.beside_door(pid, 5, face_out=False)
-                assert len(spots) == 5, f'tavern {pid} front has {len(spots)} cells'
+                table = next((pr for pr in c.props if pr['kind'] == 'tavern_table' and pr['s'] == str(pid)), None)
+                if table is None:
+                    spots = self.beside_door(pid, 5, face_out=False)
+                    assert len(spots) == 5, f'tavern {pid} front has {len(spots)} cells'
+                else:
+                    # M4 B3a: the table's four bench cells (the rows either side of the table, yaw toward it) and the two
+                    # cells beside the door: the evening spills into the lane
+                    ux, uz = FRONT[table['facing']]
+                    cells = prop_cells(table)
+                    key = lambda q: q[0] * ux + q[1] * uz   # noqa: E731
+                    lo, hi = min(key(q) for q in cells), max(key(q) for q in cells)
+                    spots = self.beside_door(pid, 2, face_out=False)
+                    assert len(spots) == 2, f'tavern {pid} has no cells beside the door'
+                    for q in cells:
+                        if not self.prop_cell_ok(q[0] + .5, q[1] + .5):
+                            continue
+                        if key(q) == lo:
+                            spots.append((q[0] + .5, q[1] + .5, yaw_of(ux, uz)))
+                        elif key(q) == hi:
+                            spots.append((q[0] + .5, q[1] + .5, yaw_of(-ux, -uz)))
+                    assert len(spots) >= 2, f'tavern {pid} table {table}'
                 out = self.add('tavern_out', spots, ref=pid)
-                self.taverns.append({'plot': pid, 'door': d, 'out': out, 'district': c.district_at(p['doorX'] + .5, p['doorZ'] + .5)})
+                self.taverns.append({'plot': pid, 'door': d, 'out': out, 'district': c.district_at(p['doorX'] + .5, p['doorZ'] + .5),
+                                     'table': table is not None})
         for pid in sorted(c.plots):
             p = c.plots[pid]
             if p['use'] == 'shop' and pid in c.door_node:
@@ -675,6 +799,102 @@ class Builder:
                 sd = self.add('shop_door', spots, ref=pid)
                 self.shops.append({'plot': pid, 'door': d, 'stand': sd})
         assert len(self.taverns) == 14 and len(self.shops) == 30, (len(self.taverns), len(self.shops))
+
+    # -- the props' places: benches, wells, fountains, notice boards, the square's steps, the taverns' overflow -----------------
+    def spread(self, cands, n, cx, cz, first=None):
+        """n of the (x, z) candidates spread round (cx, cz): the first nearest `first` (or the first listed), then each next
+        the one farthest from those taken (ties by position, so the choice is stable)."""
+        cands = sorted(set(cands))
+        if len(cands) <= n:
+            return list(cands)
+        if first is None:
+            got = [cands[0]]
+        else:
+            got = [min(cands, key=lambda q: (math.hypot(q[0] - first[0], q[1] - first[1]), q))]
+        while len(got) < n:
+            got.append(max((q for q in cands if q not in got),
+                           key=lambda q: (min(math.hypot(q[0] - g[0], q[1] - g[1]) for g in got), -q[0], -q[1])))
+        return got
+
+    def build_civic(self):
+        c = self.c
+        self.bench_places, self.well_places, self.fountain_places, self.notice_places, self.step_places = [], [], [], [], []
+        for k, pr in enumerate(c.props):
+            kind = pr['kind']
+            x0, z0, x1, z1 = pr['x0'], pr['z0'], pr['x1'], pr['z1']
+            if kind == 'bench':
+                yaw = yaw_of(*FRONT[pr['facing']])
+                cells = [(x + .5, z + .5, yaw) for x, z in prop_cells(pr) if self.prop_cell_ok(x + .5, z + .5)]
+                if cells:     # (a bench on yard ground is scenery only)
+                    self.bench_places.append(self.add('sit', cells))
+            elif kind == 'well':
+                cx, cz = (x0 + x1 + 1) / 2.0, (z0 + z1 + 1) / 2.0
+                ring = [(x + .5, z + .5) for x in range(x0 - 1, x1 + 2) for z in range(z0 - 1, z1 + 2)
+                        if not (x0 <= x <= x1 and z0 <= z <= z1) and self.spot_ok(x + .5, z + .5)]
+                near = [q for q in ring if not (math.floor(q[0]) in (x0 - 1, x1 + 1) and math.floor(q[1]) in (z0 - 1, z1 + 1))] or ring   # not the corners
+                nd = c.nodes[c.nearest_node(cx, cz)[0]]
+                got = self.spread(near, 3, cx, cz, first=(nd[0], nd[2]))
+                if got:       # (a well in a yard has only the lane cells round it; one in the corner of a yard none)
+                    self.well_places.append(self.add('stand', [(x, z, yaw_of(cx - x, cz - z)) for x, z in got]))
+            elif kind == 'fountain':
+                cx, cz = (x0 + x1 + 1) / 2.0, (z0 + z1 + 1) / 2.0
+                ring = [(x + .5, z + .5) for x in range(x0 - 1, x1 + 2) for z in range(z0 - 1, z1 + 2)
+                        if not (x0 <= x <= x1 and z0 <= z <= z1) and self.spot_ok(x + .5, z + .5)]
+                clear = [q for q in ring if c.edge_dist(*q) >= 1.2] or ring        # off the aisles
+                got = self.spread(clear, 4, cx, cz)
+                assert len(got) >= 2, f'fountain {k} has {len(got)} cells round it'
+                self.fountain_places.append(self.add('sit', [(x, z, yaw_of(cx - x, cz - z)) for x, z in got]))
+            elif kind == 'notice':
+                fx, fz = FRONT[pr['facing']]
+                tx, tz = (1, 0) if fz else (0, 1)
+                bx, bz = x0 + .5, z0 + .5
+                fcell = (x0 + fx + .5, z0 + fz + .5)
+                spots = []
+                if self.spot_ok(*fcell):
+                    spots.append(fcell)
+                    for off in (1, -1, 2, -2):
+                        q = (fcell[0] + tx * off, fcell[1] + tz * off)
+                        if self.spot_ok(*q) and c.kind_at(*q) == c.kind_at(*fcell):
+                            spots.append(q)
+                            break
+                else:     # (the front is a landmark's footprint: the nearest free cells instead)
+                    got = self.pick_apart([(x, z) for _, x, z in self.cells_around(bx, bz, 4.0)], 2)
+                    spots = [(x, z) for x, z in got]
+                assert spots, f'notice board {k}: no free cell near it'
+                self.notice_places.append(self.add('stand', [(x, z, yaw_of(bx - x, bz - z)) for x, z in spots]))
+
+    def build_steps(self):
+        """The bowl's ring steps in the south half (the stair cells between the -2 ring and the floor, and between the -1 and -2
+        rings): four sit places of 3 side by side, facing the Bell Stone, so a dozen sit in the bowl at noon."""
+        c = self.c
+        step_cells = {}
+        for lift in (-1, -2):
+            cl_ = []
+            for j in range(O + 6, O + 36):
+                for i in range(O - 34, O + 35):
+                    x, z = i - O + .5, j - O + .5
+                    if int(c.kind[j, i]) == STAIR and int(c.lift[j, i]) == lift and c.walk[j, i] and not c.prop_mask[j, i] \
+                            and self.free(x, z) and c.edge_dist(x, z) >= 1.0 and 12 <= math.hypot(x, z) <= 28:
+                        cl_.append((x, z))
+            step_cells[lift] = cl_
+        sites = [(-1, 35), (-1, -35), (-2, 38), (-2, -38)]     # (the step's lift, bearing off due south)
+        for lift, bearing in sites:
+            tx, tz = math.sin(math.radians(bearing)), math.cos(math.radians(bearing))
+            cl_ = sorted(step_cells[lift], key=lambda q: (math.hypot(q[0] / (math.hypot(*q)) - tx, q[1] / (math.hypot(*q)) - tz), q))
+            run = [cl_[0]]
+            for q in cl_[1:]:
+                if len(run) == 3:
+                    break
+                if all(math.hypot(q[0] - a, q[1] - b) >= 0.9 for a, b in run) and min(math.hypot(q[0] - a, q[1] - b) for a, b in run) <= 1.5:
+                    run.append(q)
+            assert len(run) == 3, f'step site {lift}/{bearing} has {len(run)} cells'
+            self.step_places.append(self.add('sit', [(x, z, yaw_of(-x, -z)) for x, z in run]))
+
+    def build_tavern_overflow(self):
+        """More cells in the lane outside every tavern (the same plot, kind tavern_out): the evening crowd's second place."""
+        for t in self.taverns:
+            got = self.beside_door(t['plot'], 6, face_out=False, rmax=10.0)
+            t['more'] = self.add('tavern_out', got, ref=t['plot']) if len(got) >= 3 else -1
 
     def house_candidates(self):
         c = self.c
@@ -884,25 +1104,26 @@ class Builder:
 
             def boxdist(x, z):
                 return math.hypot(max(x0 - x, 0, x - (x1 + 1)), max(z0 - z, 0, z - (z1 + 1)))
-            cells = [(boxdist(x, z) + 0.01 * d, x, z) for d, x, z in self.cells_around(mx, mz, 10, None)
-                     if c.kind_at(x, z) == QUAY and boxdist(x, z) <= 5]
+            cells = [(boxdist(x, z) + 0.01 * d, x, z) for d, x, z in self.cells_around(mx, mz, 26, None)
+                     if c.kind_at(x, z) == QUAY and boxdist(x, z) <= 18]
             cells.sort()
-            # four spots in a 2x2 cluster nearest the base
-            best = None
-            for _, x, z in cells[:30]:
-                grp = [(x + dx, z + dz) for dx in (0, 1) for dz in (0, 1)]
-                if all(self.spot_ok(a, b) and c.kind_at(a, b) == QUAY for a, b in grp):
-                    sc = sum(boxdist(a, b) for a, b in grp)
-                    if best is None or sc < best[0]:
-                        best = (sc, grp)
-            assert best, 'no pickup cluster'
-            grp = best[1]
-            spots = [(a, b, yaw_of(min(max(a, x0), x1 + 1) - a, min(max(b, z0), z1 + 1) - b)) for a, b in grp]
-            pid = self.add('pickup', spots, ref=len(self.quay_pickups))
-            self.quay_pickups.append(pid)
-            # crates: against the crane base or a plot, off the walking lines
-            node = self.places[pid]['node']
+            # two clusters of four spots (2x2) nearest the base, side by side (M4 B3a: ten boatmen on four docks)
+            groups = []
+            for _, x, z in cells:
+                # (a 2x2 block, else four in a row: the quay is a strip a few cells wide)
+                for shape, bias in (([(0, 0), (1, 0), (0, 1), (1, 1)], 0.0), ([(0, 0), (1, 0), (2, 0), (3, 0)], 2.0),
+                                    ([(0, 0), (0, 1), (0, 2), (0, 3)], 2.0)):
+                    grp = [(x + dx, z + dz) for dx, dz in shape]
+                    if all(self.spot_ok(a, b) and c.kind_at(a, b) == QUAY for a, b in grp):
+                        groups.append((sum(boxdist(a, b) for a, b in grp) + bias, x, z, grp))
+            groups.sort()
+            assert groups, 'no pickup cluster'
+            first = groups[0]
+            spots = [(a, b, yaw_of(min(max(a, x0), x1 + 1) - a, min(max(b, z0), z1 + 1) - b)) for a, b in first[3]]
+            self.quay_pickups.append(self.add('pickup', spots, ref=len(self.quay_pickups)))
+            node = self.places[self.quay_pickups[-1]]['node']
             nx, nz = c.nodes[node][0], c.nodes[node][2]
+            # crates: against the crane base or a plot, off the walking lines
             chosen = []
             for d, x, z in self.cells_around(mx, mz, 12, None):
                 if len(chosen) == 4:
@@ -921,6 +1142,17 @@ class Builder:
                 if any(math.hypot(x - a, z - b) < 1.5 for a, b in chosen + crates):
                     continue
                 chosen.append((x, z))
+            # the second dock of the crane: the next block that keeps clear of the first and of the crates
+            taken = list(first[3]) + chosen + crates
+            def joined(g):
+                # (on the same walk as the first dock: a block whose nearest junction is a long way round would strand its crew)
+                mx_, mz_ = sum(a for a, _ in g[3]) / 4, sum(b for _, b in g[3]) / 4
+                return c.row(node)[c.nearest_node(mx_, mz_)[0]] <= 45
+            second = next((g for g in groups[1:] if all(math.hypot(a - a2, b - b2) >= 0.9 for a, b in g[3] for a2, b2 in taken)
+                           and joined(g)), None)
+            assert second, f'no second pickup cluster ({len(groups)} groups, {len(cells)} cells)'
+            sp2 = [(a, b, yaw_of(min(max(a, x0), x1 + 1) - a, min(max(b, z0), z1 + 1) - b)) for a, b in second[3]]
+            self.quay_pickups.append(self.add('pickup', sp2, ref=len(self.quay_pickups)))
             crates += chosen
         assert 6 <= len(crates) <= 10, f'{len(crates)} crate cells'
         for x, z in crates:
@@ -1019,31 +1251,26 @@ class Builder:
                 col = x0 if ux < 0 else x1
                 spots = [(col + 0.5, z0 + 0.5), (col + 0.5, z1 + 0.5)]
             self.post_places.append(self.add('post', [(x, z, yaw_of(-ux, -uz)) for x, z in spots], ref=gid))
-        # benches for residents: cap 3 in a row against a wall of a plaza or the square
-        self.sit_places = []
-        stall_boxes = [p['box'] for p in c.lm['stalls']['parts']]
-        sites = []
-        for k in (2, 5, 8):
-            x0, z0, x1, z1 = stall_boxes[k]
-            mx, mz = (x0 + x1 + 1) / 2, (z0 + z1 + 1) / 2
-            ang = math.atan2(mz, mx)
-            sites.append(('market', (mx + 4.0 * math.cos(ang), mz + 4.0 * math.sin(ang))))
-        sites += [(dk, None) for dk in ('bellwatch', 'bellwatch', 'quay', 'quay', 'terrace', 'terrace', 'garden', 'garden',
+        # M3's benches for residents: cap 3 in a row against a wall of a plaza. M4 B3a keeps one only where no bench prop stands
+        # within 20 (the benches, the fountains' rims and the square's steps are the sit places now)
+        self.wall_sits = []
+        bench_xy = [((pr['x0'] + pr['x1'] + 1) / 2.0, (pr['z0'] + pr['z1'] + 1) / 2.0) for pr in c.props if pr['kind'] == 'bench']
+        sites = [(dk, None) for dk in ('bellwatch', 'bellwatch', 'quay', 'quay', 'terrace', 'terrace', 'garden', 'garden',
                                         'works', 'works')]
         taken = [(p['x'], p['z']) for b in self.bells for p in [self.places[b['place']]]]
         for k, (dk, at) in enumerate(sites):
-            if at is None:
-                bx, bz = centre[dk]
-                ang = math.radians(35 + 180 * (k % 2) + 20 * (k // 2))
-                at = (bx + 9 * math.cos(ang), bz + 9 * math.sin(ang))
+            bx, bz = centre[dk]
+            ang = math.radians(35 + 180 * (k % 2) + 20 * (k // 2))
+            at = (bx + 9 * math.cos(ang), bz + 9 * math.sin(ang))
             row = None
             for rr in (6, 10, 16, 24):
                 row = self.wall_row(at[0], at[1], 3, rr, (SQUARE, PLAZA), apart_from=taken)
                 if row:
                     break
-            assert row, f'no bench near {at}'
+            if not row or min(math.hypot(row[1][0] - a, row[1][1] - b) for a, b in bench_xy) < 20:
+                continue
             taken.append((row[1][0], row[1][1]))
-            self.sit_places.append(self.add('sit', row, ref=len(self.sit_places)))
+            self.wall_sits.append(self.add('sit', row, ref=-1))
         # mason yards: cap 4 along a wall in the Works
         self.yard_places = []
         for at in ((26, 150), (60, 160), (-20, 125)):
@@ -1087,6 +1314,20 @@ class Builder:
                 x, z = cands[0][2], cands[0][3]
                 ps.append(self.add('crier', [(x, z, yaw_of(bx - x, bz - z))], ref=-1))
             self.crier_plaza[dk] = ps
+
+    def build_named(self):
+        """Kestrel's post (one standing cell beside the Roost's street door) and the notice board in the Association's forecourt
+        that Bram takes his spell at (the nearest board place)."""
+        c = self.c
+        nd = c.nodes[c.landmark_node['roost']]
+        cells = self.cells_around(nd[0], nd[2], 10.0, lambda x, z: not self.near_door_cell(x, z, 1.0) and c.edge_dist(x, z) >= 1.0)
+        assert cells, 'no cell beside the Roost door'
+        _, x, z = cells[0]
+        self.roost_stand = self.add('stand', [(x, z, yaw_of(nd[0] - x, nd[2] - z))], ref=-1)
+        an = c.nodes[c.landmark_node['association']]
+        self.assoc_notice = min(self.notice_places, key=lambda p: (math.hypot(self.places[p]['x'] - an[0], self.places[p]['z'] - an[2]), p))
+        pl = self.places[self.assoc_notice]
+        assert math.hypot(pl['x'] - an[0], pl['z'] - an[2]) <= 30, 'no notice board near the Association'
 
     # -- the watch's junction stands, patrol loops, the scout, the couriers ---------------------------------------------------
     def stand_at_node(self, node):
@@ -1279,9 +1520,10 @@ class Builder:
         return rid
 
     def build_lamp_routes(self):
-        """Cut one short walk through all 78 lamps into 8 tours of ~10 (cuts at the longest jumps between arms)."""
+        """Cut one short walk through all the lamps into ceil(lamps / 10) tours (the cuts balance the time of the longest)."""
         L = self.lamp_places
         n = len(L)
+        K = -(-n // 10)
         D = [[self.wd(a, b) for b in L] for a in L]
 
         def two_opt(path):
@@ -1300,7 +1542,12 @@ class Builder:
                             improved = True
             return path
         best = None
-        for st in range(n):
+        px = [self.places[p]['x'] for p in L]
+        pz = [self.places[p]['z'] for p in L]
+        starts = {min(range(n), key=lambda q: (v(q), q)) for v in (lambda q: px[q], lambda q: pz[q], lambda q: px[q] + pz[q], lambda q: px[q] - pz[q])}
+        starts |= {max(range(n), key=lambda q: (v(q), -q)) for v in (lambda q: px[q], lambda q: pz[q], lambda q: px[q] + pz[q], lambda q: px[q] - pz[q])}
+        starts |= set(range(0, n, max(1, n // 8)))
+        for st in sorted(starts):
             path = [st]
             rest = set(range(n)) - {st}
             while rest:
@@ -1323,7 +1570,7 @@ class Builder:
             if (i, r) in memo:
                 return memo[(i, r)]
             bst = (1e9, ())
-            for sz in range(8, 13):
+            for sz in range(LAMP_MIN, LAMP_MAX + 1):
                 j = i + sz
                 if j > n:
                     break
@@ -1334,7 +1581,8 @@ class Builder:
                     bst = (val, ((i, j),) + sub[1])
             memo[(i, r)] = bst
             return bst
-        _, segs = f(0, 8)
+        _, segs = f(0, K)
+        assert segs, f'{n} lamps cannot be cut into {K} tours of {LAMP_MIN}-{LAMP_MAX}'
         self.lamp_clusters = []
         for (i, j) in segs:
             members = [path[k] for k in range(i, j)]
@@ -1374,32 +1622,86 @@ class Builder:
             a, b = order[k], order[(k + 1) % 5]
             self.crier_routes.append(self.add_route('crier', [self.crier_first[k], self.crier_plaza[a][0], self.crier_plaza[b][1]]))
         self.courier_routes = [self.add_route('courier', stops) for stops in self.courier]
-        # the porters' drops: all ten stall fronts in a walk around the square; one per bakery: its two nearest fronts
-        fronts = [s['front'] for s in self.stalls]
-        fronts.sort(key=lambda p: math.atan2(self.places[p]['z'], self.places[p]['x']))
-        self.drops_route = self.add_route('drops', fronts)
+        # the porters' drops: the square's 24 stall fronts, 6 to each of the four docks (each crane serves the half of the ring
+        # nearer it, its two docks one side of that half each, so a carry never crosses the whole square); one per bakery: its two
+        # nearest fronts (the plazas' stalls)
+        pk = self.quay_pickups
+        fr = [self.stalls[k]['front'] for k in self.square_stalls]
+        per_crane = [[], []]
+        for f in sorted(fr, key=lambda p: (self.wd(pk[0], p) - self.wd(pk[2], p), p)):
+            per_crane[0 if len(per_crane[0]) < len(fr) // 2 else 1].append(f)
+        self.drops_routes = []
+        for cr in range(2):
+            half = sorted(per_crane[cr], key=lambda p: math.atan2(self.places[p]['z'], self.places[p]['x']))
+            self.drops_routes += [self.add_route('drops', half[:len(half) // 2]), self.add_route('drops', half[len(half) // 2:])]
+        fronts = fr
         for b in self.bakeries:
             b['drops_route'] = self.add_route('drops', b['drops'])
-        # benches
+        # benches; the docks (the porters' noon break: they linger where the crates are)
         self.sit_route = self.add_route('sit', self.sit_places)
-        # one errand route per district (stall fronts for the market)
+        self.dock_route = self.add_route('dock', self.quay_pickups)
+        # one errand route per district (stall fronts for the market): the nearest sit places and tavern doors, then corner stands
         self.district_errand = {}
+        tav_outs = {t['out'] for t in self.taverns}
         for dk, did in rcentre.items():
-            pl = [p for p in range(len(self.places)) if self.places[p]['district'] == did and self.places[p]['kind'] in ('tavern_out', 'sit')]
+            bx, bz = next(d['bell'] for d in c.P['districts'] if d['key'] == dk)
+            near = lambda p: (math.hypot(self.places[p]['x'] - bx, self.places[p]['z'] - bz), p)   # noqa: E731
+            pl = sorted((p for p in range(len(self.places)) if self.places[p]['district'] == did
+                         and (self.places[p]['kind'] == 'sit' or p in tav_outs)), key=near)[:6]
             if dk == 'market':
                 fr = sorted(fronts, key=lambda p: (self.places[p]['x'] ** 2 + self.places[p]['z'] ** 2, p))
-                pl = pl + fr[:5]
-            extra = sorted((p for p in self._jstand_ids if self.places[p]['district'] == did),
-                           key=lambda p: (p))
-            bx, bz = next(d['bell'] for d in c.P['districts'] if d['key'] == dk)
-            extra.sort(key=lambda p: (math.hypot(self.places[p]['x'] - bx, self.places[p]['z'] - bz), p))
+                pl = pl[:4] + fr[:5]
+            extra = sorted((p for p in self._jstand_ids if self.places[p]['district'] == did), key=near)
             for p in extra:
                 if len(pl) >= 6:
                     break
                 pl.append(p)
             assert 4 <= len(pl) <= 10, f'errand route of {dk} has {len(pl)} places'
             self.district_errand[dk] = self.add_route('errand', pl)
+        self.build_life_routes()
         self._errand_cache = {tuple(sorted(r['places'])): r['id'] for r in self.routes if r['kind'] == 'errand'}
+
+    def build_life_routes(self):
+        """M4 B3a: where people gather. Six `market` routes, one per sixth of the square: its four stall fronts and the benches,
+        fountain rims, steps and board of the bowl on that side. `stroll` routes everywhere else: the benches, wells and boards of
+        a district in groups of at most six within 70 blocks of each other. Every prop place is on one of them."""
+        c = self.c
+        P = self.places
+        near_sq = lambda p: math.hypot(P[p]['x'], P[p]['z']) < SQ_R and P[p]['district'] == 1   # noqa: E731
+        self.square_places = [p for p in self.bench_places + self.fountain_places + self.step_places + self.well_places + self.notice_places
+                              if near_sq(p)]
+        ang = lambda p: math.atan2(P[p]['z'], P[p]['x'])    # noqa: E731
+        sq = sorted((self.stalls[k]['front'] for k in self.square_stalls), key=ang)
+        sectors = [sq[i * len(sq) // 6:(i + 1) * len(sq) // 6] for i in range(6)]
+        self.market_routes = []
+        for grp in sectors:
+            # the square's other places go to the quarter whose fronts are nearest them
+            self.market_routes.append(grp)
+        for p in self.square_places:
+            best = min(range(6), key=lambda i: (min(math.hypot(P[p]['x'] - P[f]['x'], P[p]['z'] - P[f]['z']) for f in sectors[i]), i))
+            self.market_routes[best] = self.market_routes[best] + [p]
+        for i, pl in enumerate(self.market_routes):
+            cx = sum(P[p]['x'] for p in pl) / len(pl)
+            cz = sum(P[p]['z'] for p in pl) / len(pl)
+            self.market_routes[i] = self.add_route('market', sorted(pl, key=lambda p: math.atan2(P[p]['z'] - cz, P[p]['x'] - cx)))
+        # strolls: everywhere else
+        pool = [p for p in self.bench_places + self.well_places + self.notice_places + self.wall_sits if p not in set(self.square_places)]
+        self.stroll_routes = []
+        left = sorted(pool, key=lambda p: (P[p]['district'], P[p]['x'], P[p]['z']))
+        while left:
+            seed = left.pop(0)
+            grp = [seed]
+            for p in sorted(left, key=lambda p: (math.hypot(P[p]['x'] - P[seed]['x'], P[p]['z'] - P[seed]['z']), p)):
+                if len(grp) == 6 or P[p]['district'] != P[seed]['district']:
+                    continue
+                if math.hypot(P[p]['x'] - P[seed]['x'], P[p]['z'] - P[seed]['z']) > 70:
+                    break
+                grp.append(p)
+            left = [p for p in left if p not in grp]
+            gx = sum(P[p]['x'] for p in grp) / len(grp)
+            gz = sum(P[p]['z'] for p in grp) / len(grp)
+            grp.sort(key=lambda p: math.atan2(P[p]['z'] - gz, P[p]['x'] - gx))
+            self.stroll_routes.append(self.add_route('stroll', grp))
 
     def errand_route(self, all_a, each_a):
         """An errand route (a district's, else a local one of the nearest eligible places) with every place within the
@@ -1441,14 +1743,19 @@ class Builder:
 # ======================================================================================================================
 #  the people
 # ======================================================================================================================
+PENDING_TAGS = ('tav', 'sit', 'loc', 'msit')    # stands whose place is chosen last, among those with room
 AGE_WEIGHTS = {  # [child, young, adult, old]
     'lamplighter': (0, .2, .6, .2), 'bellringer': (0, 0, .5, .5), 'porter': (0, .5, .5, 0), 'stallkeeper': (0, .25, .5, .25),
     'baker': (0, .2, .6, .2), 'smith': (0, .3, .7, 0), 'watch': (0, .5, .5, 0), 'crier': (0, 0, .5, .5),
     'boatman': (0, .4, .6, 0), 'washer': (0, 0, .6, .4), 'mason': (0, .3, .5, .2), 'runner': (0, 1, 0, 0),
     'shopkeeper': (0, .2, .6, .2), 'tavernkeeper': (0, 0, .8, .2), 'clerk': (0, .4, .6, 0), 'archivist': (0, 0, .5, .5),
     'healer': (0, 0, .7, .3), 'miller': (0, 0, .7, .3), 'child': (1, 0, 0, 0), 'resident': (0, 0, .3, .7)}
-NAMED = {('smith', 0): ('oren', 2), ('watch', 0): ('mira', 1), ('archivist', 0): ('teodor', 3), ('healer', 0): ('sun', 2)}
-NAMED_GIVEN = {'oren': 'Oren', 'mira': 'Mira', 'teodor': 'Teodor', 'sun': 'Sun'}
+# (job, index within the job) -> (name, age class). Kestrel is the 11th runner and Bram the 11th clerk (M4 B3a).
+NAMED = {('smith', 0): ('oren', 2), ('watch', 0): ('mira', 1), ('archivist', 0): ('teodor', 3), ('healer', 0): ('sun', 2),
+         ('runner', 10): ('kestrel', 2), ('clerk', 10): ('bram', 2)}
+NAMED_GIVEN = {'oren': 'Oren', 'mira': 'Mira', 'teodor': 'Teodor', 'sun': 'Sun', 'kestrel': 'Kestrel', 'bram': 'Bram'}
+# residents by kind: market-goers, neighbours, elders (age weights child, young, adult, old)
+RESIDENT_AGES = {'market': (0, .3, .5, .2), 'neighbour': (0, .1, .6, .3), 'elder': (0, 0, .1, .9)}
 
 
 def S(start, act, target=-1, alt=-1, dwell=0, flags=0, tag='', fix=False):
@@ -1473,7 +1780,7 @@ class Population:
             idx_in_job = sum(1 for q in cits if q['job'] == job)
             named, age = NAMED.get((job, idx_in_job), ('', None))
             cit = {'id': len(cits), 'job': job, 'named': named, 'k': idx_in_job, **kw}
-            w = AGE_WEIGHTS[job]
+            w = RESIDENT_AGES[kw['kind']] if job == 'resident' else AGE_WEIGHTS[job]
             if age is None:
                 age = r.choices(range(4), weights=w)[0]
             cit['age'] = age
@@ -1491,33 +1798,39 @@ class Population:
                 cit['speed'] = 1.0
             if job == 'lamplighter':
                 cit['speed'] = round(r.uniform(1.05, 1.08), 2)
+            if named:
+                cit['build'] = 0      # (the named wear a wide townsfolk skin)
             cits.append(cit)
             return cit
-        for i in range(8):
+        for i in range(len(B.lamp_clusters)):
             new('lamplighter', cluster=i)
         for i in range(7):
             new('bellringer', bell=min(i, 5))
-        for i in range(18):
-            new('porter', pickup=i % 2)
-        for k in range(20):
-            new('stallkeeper', stall=k % 10, role=k // 10)
+        npick = len(B.quay_pickups)
+        for i in range(26):
+            new('porter', pickup=i % npick)
+        for k in range(len(B.stalls)):      # one opener per stall
+            new('stallkeeper', stall=k, role=0)
+        sq = B.square_stalls
+        for i in range(14):                 # helpers on the square's stalls, spread round it
+            new('stallkeeper', stall=sq[(i * len(sq)) // 14], role=1)
         for i in range(10):
             new('baker', bakery=i % 5, rank=i // 5)
         for i in range(8):
             new('smith', smithy=i // 2, rank=i % 2)
-        for i in range(24):
+        for i in range(32):
             if i == 0:
                 new('watch', mode='scout')
             elif i <= 6:
                 new('watch', mode='gate', post=(i - 1) // 2)
-            elif i <= 13:
+            elif i <= 15:
                 new('watch', mode='patrol', slot=i - 7)
             else:
-                new('watch', mode='night', slot=i - 14)
-        for i in range(5):
-            new('crier', route=i)
-        for i in range(8):
-            new('boatman', pickup=i % 2)
+                new('watch', mode='night', slot=i - 16)
+        for i in range(7):
+            new('crier', route=i % 5)
+        for i in range(10):
+            new('boatman', pickup=i % npick)
         # washers: 7 at each washplace; six hold a wash place (the ones nearest a line hang the laundry), the 7th tends
         for wp in range(2):
             lines = [ln for ln in B.lines if ln['washplace'] == wp]
@@ -1533,30 +1846,40 @@ class Population:
                 else:
                     new('washer', washplace=wp, slot=q, role='plain', line=-1)
             new('washer', washplace=wp, slot=hang_order[0], role='extra', line=0)
-        for i in range(10):
+        for i in range(12):
             new('mason', yard=i % 3)
         for i in range(10):
-            new('runner', route=i % 3, slot=i // 3)
+            new('runner', route=i % 3, slot=i // 3, mode='courier')
+        new('runner', mode='roost')                      # Kestrel
         for i in range(30):
             new('shopkeeper', shop=i)
         for i in range(14):
-            new('tavernkeeper', tavern=i)
-        for i in range(8):
-            new('clerk')
+            new('tavernkeeper', tavern=i, role='keeper')
+        for i in range(14):
+            new('tavernkeeper', tavern=i, role='hand')
+        for i in range(10):
+            new('clerk', mode='clerk')
+        new('clerk', mode='bram')                        # Bram
         for i in range(2):
             new('archivist')
         for i in range(4):
             new('healer', terrace=i // 2)
         for i in range(4):
             new('miller', mill=i // 2)
-        for i in range(16):
+        for i in range(36):
             new('child')
-        for i in range(20):
-            new('resident', swap=(i % 2 == 0))
-        assert len(cits) == 240
-        # a few facts used everywhere
+        # residents are the crowd: about half go to the market, a third are neighbours, the rest elders
+        for i in range(140):
+            kind = 'market' if i < 60 else ('neighbour' if i < 110 else 'elder')
+            new('resident', kind=kind, rk=i if i < 60 else (i - 60 if i < 110 else i - 110))
+        assert len(cits) == TOTAL, (len(cits), TOTAL)
         for cit in cits:
             cit['speed'] = round(cit['speed'], 2)
+        for cit in cits:
+            if cit['named'] == 'bram':
+                cit['scale'] = 1.04           # (tall)
+            elif cit['named'] == 'kestrel':
+                cit['scale'] = 0.97           # (wiry)
 
     # -- places a citizen is tied to ----------------------------------------------------------------------------------------
     def tavern_rank(self, H):
@@ -1593,9 +1916,9 @@ class Population:
                 sg.insert(0, S(7000, 'wander', E, -1, ERRAND_DWELL, 0, 'err'))
         elif job == 'porter':
             P = B.quay_pickups[cit['pickup']]
-            D = B.drops_route
-            sg = [S(0, 'home', H), S(600, 'carry', P, D, 60), S(5500, 'stand', T, tag='tav'), S(6600, 'carry', P, D, 60),
-                  S(10600, 'wander', E, -1, ERRAND_DWELL, 0, 'err'), S(11600, 'stand', T, tag='tav'), S(14000, 'home', H)]
+            D = B.drops_routes[cit['pickup']]
+            sg = [S(0, 'home', H), S(600, 'carry', P, D, 60), S(5000, 'wander', B.dock_route, -1, 700, 0), S(6500, 'carry', P, D, 60),
+                  S(9800, 'wander', E, -1, ERRAND_DWELL, 0, 'err'), S(11800, 'stand', T, tag='tav'), S(14000, 'home', H)]
         elif job == 'stallkeeper':
             S_ = B.stalls[cit['stall']]['keeper']
             if cit['role'] == 0:
@@ -1657,6 +1980,9 @@ class Population:
             Y = B.yard_places[cit['yard']]
             sg = [S(0, 'home', H), S(1000, 'stand', Y), S(5600, 'wander', E, -1, ERRAND_DWELL, 0, 'err'), S(6400, 'stand', Y),
                   S(10600, 'stand', T, tag='tav'), S(13600, 'home', H)]
+        elif job == 'runner' and cit['mode'] == 'roost':
+            # Kestrel lives and works at the Roost: by day at her post by its street door, inside it otherwise
+            sg = [S(600, 'stand', B.roost_stand), S(12500, 'home', H), S(22800, 'inside', H)]
         elif job == 'runner':
             C_ = B.courier_routes[cit['route']]
             sg = [S(0, 'home', H), S(1000, 'round', C_, -2, 60, 1), S(5800, 'stand', T, tag='tav'),
@@ -1665,9 +1991,18 @@ class Population:
             sh = B.shops[cit['shop']]
             sg = [S(0, 'home', H), S(1000, 'stand', sh['stand']), S(2600, 'inside', sh['door']), S(5000, 'stand', sh['stand']),
                   S(7000, 'inside', sh['door']), S(10000, 'stand', sh['stand']), S(12000, 'home', H)]
+        elif job == 'tavernkeeper' and cit['role'] == 'hand':
+            # a hand serves the lane outside: at the tavern's table place from 11500 to 17000
+            t = B.taverns[cit['tavern']]
+            sg = [S(0, 'home', H), S(10600, 'inside', t['door']), S(11500, 'stand', t['out']), S(17000, 'inside', t['door']),
+                  S(18400, 'home', H)]
         elif job == 'tavernkeeper':
             t = B.taverns[cit['tavern']]
             sg = [S(0, 'home', H), S(4000, 'inside', t['door']), S(9500, 'stand', t['out']), S(11500, 'inside', t['door']), S(20000, 'home', H)]
+        elif job == 'clerk' and cit['mode'] == 'bram':
+            # Bram works inside the Association, with a spell at the forecourt notice board
+            A_ = B.landmark('association')
+            sg = [S(0, 'home', H), S(1300, 'inside', A_), S(4200, 'stand', B.assoc_notice), S(5400, 'inside', A_), S(10800, 'home', H)]
         elif job in ('clerk', 'archivist', 'healer'):
             A_ = B.landmark('association')
             terr = B.terrace_places
@@ -1687,15 +2022,35 @@ class Population:
         elif job == 'child':
             PL = cit.get('play')
             sg = [S(0, 'home', H), S(1600, 'wander', PL, -1, 400, 0, 'play'), S(5600, 'home', H), S(6600, 'wander', PL, -1, 400, 0, 'play'),
-                  S(10600, 'home', H)]
+                  S(11300, 'home', H)]
         elif job == 'resident':
-            SIT = cit.get('sit') or self.nearest_sit(H)
-            if cit['swap']:
-                sg = [S(0, 'home', H), S(1500, 'stand', SIT, tag='sit'), S(4800, 'wander', E, -1, ERRAND_DWELL, 0, 'err'),
-                      S(6600, 'home', H), S(7600, 'stand', SIT, tag='sit'), S(10200, 'stand', T, tag='tav'), S(13000, 'home', H)]
+            k = cit['rk']
+            if cit['kind'] == 'market':
+                # home -> the stall fronts, benches and fountains of the square -> a sit at noon -> errands -> a tavern -> home
+                far = min(B.wd(p, H) for p in B.routes[cit['mk']]['places']) > 85      # (a home far from the square: straight home after noon)
+                sg = [S(0, 'home', H), S(1500 + (k % 4) * 300, 'wander', cit['mk'], -1, 350, 0, 'mk'),
+                      S(5000 + (k % 3) * 200, 'stand', cit['msit'], tag='msit'),
+                      S(7600 + (k % 3) * 150, 'home', H) if far else S(7600 + (k % 3) * 150, 'wander', E, -1, ERRAND_DWELL, 0, 'err')]
+                if not far:
+                    sg.append(S(10300, 'home', H))
+                sg += [S(12000 + (k % 3) * 300, 'stand', T, tag='tav'), S(15500 - (k % 2) * 300, 'home', H)]
+            elif cit['kind'] == 'neighbour':
+                # a well or bench near home mornings and at dusk, the market at midday (when it is near enough), some evenings a tavern
+                L = cit['loc']
+                trip = min(B.wd(p, L) for p in B.routes[cit['mkr']]['places']) <= 150
+                mid = S(4600 + (k % 3) * 200, 'wander', cit['mkr'], -1, 350, 0, 'mk') if trip else \
+                    S(4600, 'wander', cit['stroll'], -1, 600, 0, 'stroll')
+                sg = [S(0, 'home', H), S(2200 + (k % 3) * 200, 'stand', L, tag='loc'), mid, S(7900, 'home', H),
+                      S(10500 + (k % 3) * 200, 'stand', L, tag='loc')]
+                if k % 2 == 0:
+                    sg += [S(12700, 'stand', T, tag='tav'), S(15000, 'home', H)]
+                else:
+                    sg += [S(12600, 'home', H)]
             else:
-                sg = [S(0, 'home', H), S(1500, 'wander', E, -1, ERRAND_DWELL, 0, 'err'), S(4800, 'stand', SIT, tag='sit'),
-                      S(6600, 'home', H), S(7600, 'stand', SIT, tag='sit'), S(10200, 'stand', T, tag='tav'), S(13000, 'home', H)]
+                # long sits on a bench near home or in the square, a short walk, home early
+                L = cit['loc']
+                sg = [S(0, 'home', H), S(1800 + (k % 4) * 150, 'stand', L, tag='loc'), S(5300, 'wander', cit['stroll'], -1, 700, 0, 'stroll'),
+                      S(7000, 'home', H), S(9800, 'stand', L, tag='loc'), S(11800, 'home', H)]
         sg.sort(key=lambda q: q['s'])
         # a leading `home` that repeats the day's last segment is the same stay (the day wraps): merge it
         if len(sg) > 1 and sg[0]['a'] == 'home' and sg[0]['s'] == 0 and sg[-1]['a'] == 'home' and sg[-1]['t'] == sg[0]['t']:
@@ -1822,13 +2177,19 @@ class Population:
         segs = [dict(q) for q in segs]
         n = len(segs)
         moved = 0
+        seen = set()
         for _ in range(300):
             mg = [t for t in self.margins(segs, speed, kinds=True) if t[0] < slack]
             if not mg:
                 return segs
             m, i, kind = min(mg, key=lambda t: (t[1], t[2]))
             shift = int(math.ceil((slack - m) / 50.0)) * 50
-            if kind == 'stay':
+            # (an earlier start for one stay can undo the later start another needed: when a state comes round again,
+            # push the next start instead)
+            state = tuple(q['s'] for q in segs)
+            again = state in seen
+            seen.add(state)
+            if kind == 'stay' and not again:
                 # a stay too short for the walks round it: first try setting out for it earlier (the route before it has
                 # time to spare), else the segment after it starts later
                 walk_m = next((t[0] for t in self.margins(segs, speed, kinds=True) if t[1] == (i - 1) % n and t[2] == 'walk'), 0)
@@ -1875,17 +2236,60 @@ class Population:
         for cit in self.cits:
             if cit['job'] == 'watch':
                 if cit['mode'] == 'patrol':
-                    cit['route'] = B.patrol_routes[day_routes[cit['slot']]]
+                    cit['route'] = B.patrol_routes[day_routes[cit['slot'] % len(day_routes)]]
                 elif cit['mode'] == 'night':
-                    cit['route'] = B.patrol_routes[cit['slot']]
+                    cit['route'] = B.patrol_routes[cit['slot'] % len(B.patrol_routes)]
             if cit['job'] == 'healer':
                 cit['shift'] = 0 if cit['named'] == 'sun' else r.randint(-6, 6) * 100
-        # residents: a bench each (at most 3 to a bench, spread over all of them)
-        benches = list(B.sit_places)
-        r.shuffle(benches)
-        res = [q for q in self.cits if q['job'] == 'resident']
-        for i, q in enumerate(res):
-            q['sit'] = benches[i % len(benches)]
+        # residents: market-goers get one of the market routes, neighbours and elders a bench or well on a stroll route
+        P = B.places
+        mk = B.market_routes
+        msits = [p for p in B.square_places if P[p]['kind'] == 'sit']      # (the bowl's benches, fountain rims and steps)
+        self.msits = msits
+        in_route = {p: rid for rid in B.stroll_routes for p in B.routes[rid]['places']}
+        # the neighbours and elders (not those of the square) take their bench or well from slots: every stroll route gets one
+        # first (so that every bench, well and board is on a walk), the rest by district in proportion to the square root of its
+        # houses (a quiet district with few benches still has its people), the places of a district by turns
+        n_stroll = sum(1 for x in self.cits if x['job'] == 'resident' and x['kind'] != 'market' and not (x['kind'] == 'elder' and x['rk'] % 3 == 0))
+        dist_of = lambda p: P[p]['district']      # noqa: E731
+        houses = Counter(self.c.plots[pl]['district'] for pl in self.c.plots if self.c.plots[pl]['use'] == 'house')
+        did = {d['key']: d['id'] for d in self.c.P['districts']}
+        weight = {did[k]: math.sqrt(v) for k, v in houses.items()}
+        by_d = defaultdict(list)
+        for p in sorted(in_route):
+            by_d[dist_of(p)].append(p)
+        slots = [B.routes[rid]['places'][0] for rid in B.stroll_routes]
+        left = n_stroll - len(slots)
+        have = Counter(dist_of(p) for p in slots)
+        tot = sum(weight[d] for d in by_d)
+        want = {d: weight[d] / tot * n_stroll for d in by_d}
+        for _ in range(left):
+            d = max(by_d, key=lambda d: (want[d] - have[d], -d))
+            places = sorted(by_d[d], key=lambda p: (slots.count(p), p))
+            slots.append(places[0])
+            have[d] += 1
+        r.shuffle(slots)
+        si = 0
+        msit_i = 0
+        for q in (x for x in self.cits if x['job'] == 'resident'):
+            k = q['rk']
+            if q['kind'] == 'market':
+                q['mk'] = mk[k % len(mk)]
+                cx = sum(P[p]['x'] for p in B.routes[q['mk']]['places']) / len(B.routes[q['mk']]['places'])
+                cz = sum(P[p]['z'] for p in B.routes[q['mk']]['places']) / len(B.routes[q['mk']]['places'])
+                q['msit'] = min(msits, key=lambda p: (math.hypot(P[p]['x'] - cx, P[p]['z'] - cz), p))
+            elif q['kind'] == 'elder' and k % 3 == 0:
+                # an elder of the square: a bench of the market and its route
+                q['loc'] = msits[(k // 3 * 5) % len(msits)]
+                q['stroll'] = mk[(k // 3) % len(mk)]
+                q['sq'] = True
+            else:
+                q['loc'] = slots[si]
+                q['stroll'] = in_route[q['loc']]
+                si += 1
+            if q['kind'] == 'neighbour':
+                q['mkr'] = mk[k % len(mk)]
+        self.stroll_users = si
 
     def anchors(self, cit):
         """Places the citizen's day starts from or comes back to (the first targets): used to pre-filter homes."""
@@ -1917,7 +2321,7 @@ class Population:
         if job == 'mason':
             return [B.yard_places[cit['yard']]]
         if job == 'runner':
-            return B.routes[B.courier_routes[cit['route']]]['places']
+            return B.routes[B.courier_routes[cit['route']]]['places'] if cit['mode'] == 'courier' else [B.roost_stand]
         if job == 'shopkeeper':
             return [B.shops[cit['shop']]['stand']]
         if job == 'tavernkeeper':
@@ -1927,7 +2331,7 @@ class Population:
         if job == 'miller':
             return [B.mill_places[cit['mill']]]
         if job == 'resident':
-            return [cit['sit']]
+            return B.routes[cit['mk']]['places'] if cit['kind'] == 'market' else [cit['loc']]
         return []
 
     def commute(self, cit, plot):
@@ -1965,15 +2369,16 @@ class Population:
         out.sort()
         return out
 
-    def nearest_sit(self, H):
-        B = self.B
-        return min(B.sit_places, key=lambda q: (B.wd(q, H), q))
-
     # -- households -----------------------------------------------------------------------------------------------------------
-    def household_sizes(self, count, total, r):
-        """`count` household sizes (1-5) summing to `total`: mostly 2s and 3s."""
-        base = [1] * 17 + [2] * 34 + [3] * 28 + [4] * 9 + [3 + 2] * 3
-        assert len(base) == count
+    def household_sizes(self, total, r):
+        """Sizes (1-5) of the adult households, summing to `total` (M3's mix: mostly 2s and 3s, 91 households per 220 adults)."""
+        count = max(1, round(total * 91 / 220))
+        base = []
+        for size, w in ((1, 17), (2, 34), (3, 28), (4, 9), (5, 3)):
+            base += [size] * round(w * count / 91)
+        while len(base) < count:
+            base.append(2)
+        base = base[:count]
         sizes = list(base)
         r.shuffle(sizes)
         while sum(sizes) != total:
@@ -1992,22 +2397,39 @@ class Population:
         pool = [p for p in B.house_candidates() if p not in B.reserved]
         self.pool = pool
         for cit in cits:
-            if cit['job'] != 'child':
+            if cit['job'] == 'child' or cit['named'] == 'kestrel':
+                continue
+            if cit['job'] == 'resident':
+                # (the crowd: home near the bench or the market they go to, not a day's walk)
+                cit['allowed'] = self.allowed_homes(cit, pool, pre=185.0 if cit['kind'] == 'market' else 80.0, commute_cap=999.0)
+            elif cit['named'] == 'bram':
+                # a house near the Terrace, the nearest to the Association
+                terr = [pl for pl in pool if self.c.plots[pl]['district'] == 'terrace']
+                terr.sort(key=lambda pl: (self.commute(cit, pl), pl))
+                cit['allowed'] = [(0, self.commute(cit, pl), pl) for pl in terr[:12]]
+            else:
                 cit['allowed'] = self.allowed_homes(cit, pool)
-                cit['aset'] = {pl for _, _, pl in cit['allowed']}
+            cit['aset'] = {pl for _, _, pl in cit['allowed']}
         used = set()
         hh = []   # {'plot', 'members': [ids], 'size': target}
+
+        dload = Counter()      # people housed per district so far; the crowd's homes are spread by it
+        in_district = Counter(c.plots[p]['district'] for p in pool)
 
         def open_hh(plot, members):
             used.add(plot)
             hh.append({'plot': plot, 'members': list(members)})
-        # the named four: a home each, nearest their work
+            if plot >= 0:
+                dload[c.plots[plot]['district']] += len(members)
+        # the named: a home each, nearest their work (Kestrel's is the Roost itself)
         for cit in cits:
-            if cit['named']:
+            if cit['named'] == 'kestrel':
+                open_hh(-1, [cit['id']])
+            elif cit['named']:
                 al = [t for t in cit['allowed'] if t[2] not in used]
                 open_hh(al[0][2], [cit['id']])
         adults = sorted((q for q in cits if q['job'] != 'child' and not q['named']), key=lambda q: (len(q['allowed']), q['id']))
-        sizes = self.household_sizes(91, 220, r)
+        sizes = self.household_sizes(len(adults), r)
         # sizes are for adults only here; children join afterwards, so the final sizes come out a little larger
         r.shuffle(sizes)
         unplaced = list(adults)
@@ -2020,9 +2442,15 @@ class Population:
             assert homes, f'no home left for citizen {c0["id"]} ({c0["job"]})'
             others = unplaced
             best = None
-            for k, (d, com, plot) in enumerate(homes[:60]):
+            crowd = c0['job'] == 'resident'
+            for k, (d, com, plot) in enumerate(homes[:200 if crowd else 60]):
                 fill = sum(1 for u in others if plot in u['aset'])
-                key = (-min(fill, s_ - 1), d // 150, com + r.random() * 12)
+                if crowd:
+                    # (the crowd spreads over the districts: the fuller a district, the less it is wanted)
+                    dk_ = c.plots[plot]['district']
+                    key = (-min(fill, s_ - 1), d // 150, com * 0.25 + r.random() * 25 + 400.0 * dload[dk_] / (2.0 * in_district[dk_] + 1))
+                else:
+                    key = (-min(fill, s_ - 1), d // 150, com + r.random() * 12)
                 if best is None or key < best[0]:
                     best = (key, plot)
             plot = best[1]
@@ -2049,8 +2477,8 @@ class Population:
                  and not any(by_id[m]['named'] for m in h['members'])]
         # candidate centres: open ground on a coarse grid
         cands = []
-        for j in range(-130, 140, 5):
-            for i in range(-100, 160, 5):
+        for j in range(-215, 215, 5):
+            for i in range(-215, 215, 5):
                 x, z = i + 0.5, j + 0.5
                 if c.kind_at(x, z) not in (SQUARE, PLAZA, TRAINING) or not B.spot_ok(x, z):
                     continue
@@ -2064,7 +2492,7 @@ class Population:
                     cands.append((x, z, near))
         chosen = []
         covered = set()
-        for _ in range(3):
+        for _ in range(5):
             best = None
             for x, z, near in cands:
                 if any(math.hypot(x - a, z - b) < 60 for a, b, _ in chosen):
@@ -2078,9 +2506,13 @@ class Population:
             covered |= best[3]
         self.play_sites = [(x, z) for x, z, _ in chosen]
         self.play_routes = []
+        P_ = B.places
         for (sx, sz, _) in chosen:
             places = self.play_cluster(sx, sz, 5)
-            self.play_routes.append(B.add_route('play', places))
+            # (children play at the fountains and wells too: the nearest of them join the route)
+            extra = sorted((p for p in B.fountain_places + B.well_places + B.step_places if math.hypot(P_[p]['x'] - sx, P_[p]['z'] - sz) <= 30),
+                           key=lambda p: (math.hypot(P_[p]['x'] - sx, P_[p]['z'] - sz), p))[:3]
+            self.play_routes.append(B.add_route('play', places + extra))
         kids = [q for q in cits if q['job'] == 'child']
         kid_count = Counter()
         site_rows = [(c.row(c.nearest_node(sx, sz)[0]), c.nearest_node(sx, sz)[1]) for sx, sz, _ in chosen]
@@ -2119,6 +2551,8 @@ class Population:
                 block = [(x + dx, z + dz) for dx in (0, 1) for dz in (0, 1)]
                 if not all(B.spot_ok(a, b) and c.kind_at(a, b) in (SQUARE, PLAZA, TRAINING) for a, b in block):
                     continue
+                if not B.reach_ok(c.nearest_node(x, z)[0], [(a, b, 0) for a, b in block]):
+                    continue
                 # open: no walls within two cells
                 openish = all(c.walkable(x + dx, z + dz) and c.plot_at[c.cell(x + dx, z + dz)[1], c.cell(x + dx, z + dz)[0]] < 0
                               and not c.block[c.cell(x + dx, z + dz)[1], c.cell(x + dx, z + dz)[0]]
@@ -2147,7 +2581,7 @@ class Population:
         for hid, h in enumerate(hh):
             h['id'] = hid
             h['members'].sort()
-            h['home'] = B.door(h['plot'])
+            h['home'] = B.landmark('roost') if h['plot'] < 0 else B.door(h['plot'])
             for m in h['members']:
                 by_id[m]['household'] = hid
                 by_id[m]['home'] = h['home']
@@ -2155,13 +2589,13 @@ class Population:
         r = rng(0xFA417)
         named_h = {h['id'] for h in hh if any(by_id[m]['named'] for m in h['members'])}
         free = [h for h in hh if h['id'] not in named_h]
-        # five related pairs: households whose homes are close
+        # ten related pairs: households whose homes are close
         pairs = []
         order = list(free)
         r.shuffle(order)
         used_h = set()
         for h in order:
-            if len(pairs) == 5:
+            if len(pairs) == 10:
                 break
             if h['id'] in used_h:
                 continue
@@ -2171,7 +2605,7 @@ class Population:
                 g = r.choice(near)
                 pairs.append((h, g))
                 used_h |= {h['id'], g['id']}
-        fams = list(FAMILIES) + list(FAMILIES_EXTRA)
+        fams = list(dict.fromkeys(list(FAMILIES) + list(FAMILIES_EXTRA) + FAMILIES_MORE))
         r.shuffle(fams)
         fi = 0
         for h in hh:
@@ -2220,22 +2654,40 @@ class Population:
                 taken.add((g, fam))
                 if cit['job'] != 'child':
                     adult_names.add(g)
-        # looks
+        # looks: a household shares a base skin tone and hair colour, but two people of the same job in different households
+        # differ in at least `need` of tone, hair style, hair colour, outfit and accent (the skins are checked pixel by pixel)
+        seen = defaultdict(list)       # job -> [(household, look)]
+        combos = {}                    # job -> the (outfit, accent) pairs not yet worn, so that a job's clothes are used evenly
         for h in hh:
             rr = rng(0x10000 + h['id'])
             base_tone = rr.randrange(6)
             base_hair = rr.randrange(6)
             for m in h['members']:
                 cit = by_id[m]
-                rm = rng(0x20000 + cit['id'])
-                tone = base_tone if rm.random() < 0.7 else rm.randrange(6)
-                if cit['age'] == 3:
-                    hair = rm.choice((6, 7)) if rm.random() < 0.85 else rm.randrange(6)
-                elif cit['age'] == 0:
-                    hair = base_hair if rm.random() < 0.5 else rm.randrange(6)
-                else:
-                    hair = base_hair if rm.random() < 0.5 else rm.randrange(6)
-                cit['look'] = [tone, rm.randrange(12), hair, rm.randrange(4), rm.randrange(4), rm.randrange(8)]
+                need = 2 if cit['job'] == 'resident' else 3
+                pool_ = combos.setdefault(cit['job'], [])
+                if not pool_:
+                    pool_.extend((o_, a_) for o_ in range(4) for a_ in range(4))
+                    rng(0x5EED + J[cit['job']]).shuffle(pool_)
+                outfit, accent = pool_.pop()
+                best = None
+                for attempt in range(60):
+                    rm = rng(0x20000 + cit['id'] + 7919 * attempt)
+                    tone = base_tone if rm.random() < 0.7 else rm.randrange(6)
+                    if cit['age'] == 3:
+                        hair = rm.choice((6, 7)) if rm.random() < 0.85 else rm.randrange(6)
+                    elif cit['age'] == 0:
+                        hair = base_hair if rm.random() < 0.5 else rm.randrange(6)
+                    else:
+                        hair = base_hair if rm.random() < 0.5 else rm.randrange(6)
+                    look = [tone, rm.randrange(12), hair, outfit, accent, rm.randrange(8)]
+                    near = min((sum(a != b for a, b in zip(look[:5], o[:5])) for hid, o in seen[cit['job']] if hid != h['id']), default=9)
+                    if best is None or near > best[0]:
+                        best = (near, look)
+                    if near >= need:
+                        break
+                cit['look'] = best[1]
+                seen[cit['job']].append((h['id'], best[1]))
 
     def make_groups(self):
         B = self.B
@@ -2261,7 +2713,7 @@ class Population:
                 out.append(lst[i:i + k])
                 i += k
             return out
-        for k in range(10):
+        for k in range(len(B.stalls)):
             add('stall', [q for q in by_job['stallkeeper'] if q['stall'] == k])
         for k in range(4):
             add('smithy', [q for q in by_job['smith'] if q['smithy'] == k])
@@ -2271,7 +2723,7 @@ class Population:
         add('watch', [q for q in by_job['watch'] if q['mode'] == 'night'])
         add('lamps', by_job['lamplighter'])
         add('bells', by_job['bellringer'])
-        for k in range(2):
+        for k in range(len(B.quay_pickups)):
             add('porters', [q for q in by_job['porter'] if q['pickup'] == k])
         for k in range(2):
             add('washers', [q for q in by_job['washer'] if q['washplace'] == k])
@@ -2286,7 +2738,7 @@ class Population:
             add('tavern', ch)
         add('association', by_job['clerk'] + by_job['archivist'] + by_job['healer'])
         add('mill', by_job['miller'])
-        for k in range(3):
+        for k in range(len(self.play_routes)):
             add('play', [q for q in by_job['child'] if q.get('site') == k])
         for ch in chunks(by_job['resident'], 5):
             add('elders', ch)
@@ -2294,7 +2746,7 @@ class Population:
             for m in g['members']:
                 cits[m]['group'] = g['id']
         assert all('group' in q for q in cits)
-        assert sum(len(g['members']) for g in groups) == 240
+        assert sum(len(g['members']) for g in groups) == len(cits)
         self.groups = groups
 
     def work_of(self, cit):
@@ -2305,7 +2757,7 @@ class Population:
         if job == 'bellringer':
             return B.bells[cit['bell']]['place']
         if job == 'porter':
-            return B.drops_route
+            return B.drops_routes[cit['pickup']]
         if job == 'stallkeeper':
             return B.stalls[cit['stall']]['keeper']
         if job == 'baker':
@@ -2328,7 +2780,7 @@ class Population:
         if job == 'mason':
             return B.yard_places[cit['yard']]
         if job == 'runner':
-            return B.courier_routes[cit['route']]
+            return B.courier_routes[cit['route']] if cit['mode'] == 'courier' else B.landmark('roost')
         if job == 'shopkeeper':
             return B.shops[cit['shop']]['door']
         if job == 'tavernkeeper':
@@ -2426,6 +2878,8 @@ class Population:
                 st = []
                 for i, q in enumerate(sg):
                     J = 150 if cit['job'] == 'bellringer' else (100 if cit['job'] == 'lamplighter' and q['a'] == 'round' else 300)
+                    if cit['named'] == 'kestrel':
+                        J = 0      # (her hours are the brief's: 600 to 12500 at her post)
                     J = int(J * scale)
                     off = r.randint(-J, J) if J else 0
                     v = base[i] + off
@@ -2461,7 +2915,9 @@ class Population:
             pushed = self.push(sg, cit['speed'])
             if pushed is None:
                 pushed = self.push(sg, cit['speed'], limit=8000)
-            assert pushed is not None, f'citizen {cit["id"]} ({cit["job"]}) cannot make their day'
+            assert pushed is not None, f'citizen {cit["id"]} ({cit["job"]}) cannot make their day: ' + \
+                ', '.join(f'{m:.0f} at {i} ({k})' for m, i, k in self.margins(sg, cit['speed'], kinds=True) if m < 0) + \
+                ' in ' + ' '.join(f"{q['s']}:{q['a']}:{q['t']}" for q in sg)
             cit['pushed'] = max(q2['s'] - q1['s'] for q1, q2 in zip(sg, pushed))
             sg = pushed
             rj = rng(0x3000 + cit['id'])
@@ -2513,7 +2969,7 @@ class Population:
             occ = defaultdict(list)   # place -> [(cit, seg index)]
             for cit in cits:
                 for i, q in enumerate(cit['segs']):
-                    if q['a'] == 'stand' and q['tag'] not in ('tav', 'sit'):
+                    if q['a'] == 'stand' and q['tag'] not in PENDING_TAGS:
                         occ[q['t']].append((cit, i))
             fixed_any = False
             for place in sorted(occ):
@@ -2568,7 +3024,7 @@ class Population:
             for i, q in enumerate(cit['segs']):
                 if q['a'] != 'stand':
                     continue
-                if q['tag'] in ('tav', 'sit'):
+                if q['tag'] in PENDING_TAGS:
                     pending.append((cit, i))
                 else:
                     add(q['t'], cit, i)
@@ -2585,17 +3041,29 @@ class Population:
         def ok_margin(cit):
             mg = self.margins(cit['segs'], cit['speed'])
             return all(m >= 0 for m, _ in mg)
-        for cit, i in pending:
+        P = B.places
+        tav_places = {t: [B.taverns[t]['out']] + ([B.taverns[t]['more']] if B.taverns[t].get('more', -1) >= 0 else []) for t in range(len(B.taverns))}
+        loc_pool = [p for p in B.sit_places + B.well_places + B.notice_places]
+        # the evening first (the taverns), then the noon sits of the square, then the benches and wells near home
+        order = {'tav': 0, 'msit': 1, 'loc': 2, 'sit': 3}
+        for cit, i in sorted(pending, key=lambda t: (order[t[0]['segs'][t[1]]['tag']], t[0]['id'], t[1])):
             q = cit['segs'][i]
             s_, e_ = seg_interval(cit, i)
             H = cit['home']
-            if q['tag'] == 'tav':
-                if cit['job'] == 'tavernkeeper':
-                    cands = [q['t']]
-                else:
-                    rank = self.tavern_rank(H)
-                    d0 = B.wd(B.taverns[rank[0]]['out'], H)
-                    cands = [B.taverns[t]['out'] for t in rank[:3] if B.wd(B.taverns[t]['out'], H) <= d0 + 60]
+            tag = q['tag']
+            if tag == 'tav':
+                rank = self.tavern_rank(H)
+                d0 = B.wd(B.taverns[rank[0]]['out'], H)
+                cands = []
+                for t in rank[:3]:
+                    if B.wd(B.taverns[t]['out'], H) <= d0 + 60:
+                        cands += tav_places[t]
+            elif tag == 'msit':
+                here = q['t']
+                cands = sorted(self.msits, key=lambda p: (B.wd(p, here), p))
+            elif tag == 'loc':
+                here = q['t']
+                cands = [here] + sorted((p for p in loc_pool if p != here and B.wd(p, here) <= 60), key=lambda p: (B.wd(p, here), p))[:10]
             else:
                 cands = sorted(B.sit_places, key=lambda p: (B.wd(p, H), p))
             done = False
@@ -2609,17 +3077,30 @@ class Population:
                     done = True
                     break
                 q['t'] = old
-            if not done:
-                assert q['tag'] == 'tav', f'no bench for citizen {cit["id"]}'
+            if done:
+                continue
+            if tag == 'tav':
                 # taverns hold anyone inside: the usual tavern's door
                 tr = self.tavern_rank(H)[0]
                 q['a'] = 'inside'
                 q['t'] = B.taverns[tr]['door']
-                if not ok_margin(cit):
-                    pushed = self.push(cit['segs'], cit['speed'], limit=3000)
-                    assert pushed is not None, f'citizen {cit["id"]} cannot reach a tavern'
-                    for a_, b_ in zip(cit['segs'], pushed):
-                        a_['s'] = b_['s']
+            elif tag == 'msit':
+                # no bench left in the square: they linger among the stalls instead
+                q['a'] = 'wander'
+                q['t'] = cit['mk']
+                q['d'] = 700
+            elif tag == 'loc':
+                # the bench and everything near it taken: stay at home a little longer
+                q['a'] = 'home'
+                q['t'] = H
+            else:
+                raise AssertionError(f'no bench for citizen {cit["id"]}')
+            q['tag'] = ''
+            if not ok_margin(cit):
+                pushed = self.push(cit['segs'], cit['speed'], limit=3000)
+                assert pushed is not None, f'citizen {cit["id"]} cannot reach their {tag} place'
+                for a_, b_ in zip(cit['segs'], pushed):
+                    a_['s'] = b_['s']
         self.occ = occ
 
 
@@ -2628,7 +3109,9 @@ class Population:
 # ======================================================================================================================
 def edge_lanes(c, lamps_xz, trees):
     """Keep-right lane offset (tenths of a block) for every street-graph edge."""
-    obstacles = [(x + 0.5, z + 0.5) for x, z in lamps_xz] + [(t[0] + 0.5, t[1] + 0.5) for t in trees]
+    # (M4 B3a: every street-level prop cell is an obstacle like a lamp post)
+    obstacles = [(x + 0.5, z + 0.5) for x, z in lamps_xz] + [(t[0] + 0.5, t[1] + 0.5) for t in trees] \
+        + [(x + 0.5, z + 0.5) for pr in c.props for (x, z) in prop_cells(pr)]
     grid = defaultdict(list)
     for ox, oz in obstacles:
         grid[(int(math.floor(ox / 8)), int(math.floor(oz / 8)))].append((ox, oz))
@@ -2732,7 +3215,7 @@ def assemble(C, B, P):
     re_ = rng(0xE87A5)
     extras = []
     for k in range(8):
-        extras.append({'id': 240 + k, 'role': 'thief', 'look': [re_.randrange(6), re_.randrange(12), re_.randrange(8), re_.randrange(4),
+        extras.append({'id': len(cits) + k, 'role': 'thief', 'look': [re_.randrange(6), re_.randrange(12), re_.randrange(8), re_.randrange(4),
                                                                     re_.randrange(4), re_.randrange(8)],
                        'build': re_.randrange(2), 'scale': round(re_.uniform(0.95, 1.05), 2)})
     out = {'schemaVersion': 1, 'generator': 'tools/city/citizens.py', 'planSha256': C.plan_sha, 'jobs': JOBS, 'acts': ACTS,
@@ -2750,12 +3233,17 @@ def generate(verbose=False):
     B.build_stalls()
     B.build_bells()
     B.build_taverns_shops()
+    B.build_civic()
+    B.build_steps()
+    B.build_tavern_overflow()
     B.build_bakeries()
     B.build_smithies()
     B.build_washplaces()
     B.build_lines()
     B.build_quay()
     B.build_misc()
+    B.build_named()
+    B.sit_places = B.bench_places + B.fountain_places + B.step_places + B.wall_sits
     B.build_patrols()
     B.build_scout_courier()
     B.build_errand_corners()
@@ -2805,9 +3293,12 @@ class Checker:
             return 0.0
         return self.C.row(self.pl[a]['node'])[self.pl[b]['node']] + self.cost(a) + self.cost(b)
 
+    quiet = False
+
     def rec(self, name, ok, detail):
         self.results.append((name, ok, detail))
-        print(f"{'ok  ' if ok else 'FAIL'} {name}: {detail}")
+        if not self.quiet:
+            print(f"{'ok  ' if ok else 'FAIL'} {name}: {detail}")
         return ok
 
     # 1 ----------------------------------------------------------------------------------------------------------------
@@ -2818,10 +3309,10 @@ class Checker:
         for j, n in JOB_COUNTS.items():
             if jc[j] != n:
                 errs.append(f'{j} {jc[j]} != {n}')
-        if len(ct) != 240:
+        if len(ct) != TOTAL:
             errs.append(f'{len(ct)} citizens')
         named = Counter(q['named'] for q in ct if q['named'])
-        if sorted(named) != ['mira', 'oren', 'sun', 'teodor'] or any(v != 1 for v in named.values()):
+        if sorted(named) != ['bram', 'kestrel', 'mira', 'oren', 'sun', 'teodor'] or any(v != 1 for v in named.values()):
             errs.append(f'named {dict(named)}')
         hm = Counter()
         for h in o['households']:
@@ -2829,7 +3320,7 @@ class Checker:
                 hm[m] += 1
             if not 1 <= len(h['members']) <= 5:
                 errs.append(f'household {h["id"]} has {len(h["members"])}')
-        if sorted(hm) != list(range(240)) or any(v != 1 for v in hm.values()):
+        if sorted(hm) != list(range(TOTAL)) or any(v != 1 for v in hm.values()):
             errs.append('a citizen is not in exactly one household')
         gm = Counter()
         for g in o['groups']:
@@ -2837,7 +3328,7 @@ class Checker:
                 errs.append(f'group kind {g["kind"]}')
             for m in g['members']:
                 gm[m] += 1
-        if sorted(gm) != list(range(240)) or any(v != 1 for v in gm.values()):
+        if sorted(gm) != list(range(TOTAL)) or any(v != 1 for v in gm.values()):
             errs.append('a citizen is not in exactly one group')
         for q in ct:
             if q['household'] != next(h['id'] for h in o['households'] if q['id'] in h['members']):
@@ -2860,12 +3351,16 @@ class Checker:
             if bool(q['named']) != (q['family'] == '') or (q['named'] and len(h['members']) != 1):
                 errs.append(f'citizen {q["id"]} family name / named household')
         for h in o['households']:
+            if h['plot'] == -1:     # Kestrel lives in the Roost itself
+                if [ct[m]['named'] for m in h['members']] != ['kestrel'] or self.pl[h['home']]['kind'] != PK['landmark'] or self.pl[h['home']]['ref'] != 'roost':
+                    errs.append(f'household {h["id"]} (no plot) is not Kestrel at the Roost')
+                continue
             p = self.C.plots.get(h['plot'])
             if p is None or p['use'] != 'house' or p['enter'] or self.pl[h['home']]['kind'] != PK['door'] or self.pl[h['home']]['ref'] != h['plot']:
                 errs.append(f'household {h["id"]} home is not a house plot door')
         sizes = Counter(len(h['members']) for h in o['households'])
         return self.rec('1 counts', not errs,
-                        f'240 citizens, jobs ok, 4 named, {len(o["households"])} households {dict(sorted(sizes.items()))}, '
+                        f'{TOTAL} citizens, jobs ok, 6 named, {len(o["households"])} households {dict(sorted(sizes.items()))}, '
                         f'{len(o["groups"])} groups' + ('; ' + '; '.join(errs[:6]) if errs else ''))
 
     # 2 ----------------------------------------------------------------------------------------------------------------
@@ -2916,14 +3411,14 @@ class Checker:
             ap = max(C.approach(pl['node'], s_) for s_ in pl['spots'])
             nd = C.nodes[pl['node']]
             far = max(math.hypot(s_[0] - nd[0], s_[1] - nd[2]) for s_ in pl['spots'])
-            if far > (36.0 if ap == 0 else 14.0):
+            if far > (36.0 if ap == 0 else PATH_REACH):
                 errs.append(f'place {pid} ({kind}) spots are {far:.1f} from the node with approach {ap}')
             if kind not in ('door', 'landmark') and C.nearest_node(pl['x'], pl['z'])[0] != pl['node']:
                 nn = C.nearest_node(pl['x'], pl['z'])[0]
                 nnd = C.nodes[nn]
                 nfar = max(math.hypot(s_[0] - nnd[0], s_[1] - nnd[2]) for s_ in pl['spots'])
                 nap = max(C.approach(nn, s_) for s_ in pl['spots'])
-                if nfar <= (36.0 if nap == 0 else 14.0):
+                if nfar <= (36.0 if nap == 0 else PATH_REACH):
                     errs.append(f'place {pid} ({kind}) node is not the nearest by walking')
             if ap != pl['approach']:
                 errs.append(f'place {pid} approach flag')
@@ -3105,12 +3600,14 @@ class Checker:
         errs = []
         seen = Counter()
         lamp_routes = [r for r in self.routes if r['kind'] == 'lamps']
-        if len(lamp_routes) != 8:
+        n_lamps = len(self.C.P['lamps'])
+        n_tours = -(-n_lamps // 10)
+        if len(lamp_routes) != n_tours:
             errs.append(f'{len(lamp_routes)} lamp routes')
         for r in lamp_routes:
             for p in r['places']:
                 seen[p] += 1
-        if len(o['lamps']) != 78 or len(seen) != 78 or any(v != 1 for v in seen.values()) or \
+        if len(o['lamps']) != n_lamps or len(seen) != n_lamps or any(v != 1 for v in seen.values()) or \
                 {lp['place'] for lp in o['lamps']} != set(seen):
             errs.append('lamps are not each in exactly one lamp route')
         lamplighters = [q for q in self.ct if JOBS[q['job']] == 'lamplighter']
@@ -3140,7 +3637,7 @@ class Checker:
             if dd[0] > min(dd) + 0.05:
                 errs.append(f'lamplighter {q["id"]}: first lamp is not the nearest to home')
         longest = max(sum(self.wd(a, b) for a, b in zip(r['places'], r['places'][1:])) for r in lamp_routes)
-        return self.rec('6 lamps', not errs, f'78 lamps in 8 routes (longest tour {longest:.0f} blocks), at the run {RUN_PACE}/tick x slowest speed {slow}: '
+        return self.rec('6 lamps', not errs, f'{n_lamps} lamps in {n_tours} routes (longest tour {longest:.0f} blocks), at the run {RUN_PACE}/tick x slowest speed {slow}: '
                         f'light round ends {worst_l:.0f} ticks before 13600, out round {worst_o:.0f} before 1800' +
                         ('; ' + '; '.join(errs[:5]) if errs else ''))
 
@@ -3152,7 +3649,9 @@ class Checker:
         by = defaultdict(list)
         for r in self.routes:
             by[r['kind']].append(r)
-        want = {'lamps': (8, 8), 'scout': (1, 1), 'crier': (5, 5), 'courier': (3, 3), 'play': (3, 3), 'sit': (1, 1), 'drops': (6, 6)}
+        n_tours = -(-len(C.P['lamps']) // 10)
+        want = {'lamps': (n_tours, n_tours), 'dock': (1, 1), 'scout': (1, 1), 'crier': (5, 5), 'courier': (3, 3), 'play': (4, 6), 'sit': (1, 1), 'drops': (9, 9),
+                'market': (6, 6)}
         for k, (lo, hi) in want.items():
             if not lo <= len(by[k]) <= hi:
                 errs.append(f'{len(by[k])} {k} routes')
@@ -3174,15 +3673,21 @@ class Checker:
             if not 4 <= len(r['places']) <= 10:
                 errs.append(f'errand {r["id"]} has {len(r["places"])} places')
         for r in by['play']:
-            if not 4 <= len(r['places']) <= 6 or any(self.pl[p]['cap'] != 4 for p in r['places']):
+            # (the play places, cap 4, and the fountains and wells beside them)
+            plays = [p for p in r['places'] if PLACE_KINDS[self.pl[p]['kind']] == 'play']
+            if not 5 <= len(r['places']) <= 8 or len(plays) < 4 or any(self.pl[p]['cap'] != 4 for p in plays):
                 errs.append(f'play route {r["id"]}')
+        for r in by['market'] + by['stroll']:
+            if not 1 <= len(r['places']) <= 9 or any(PLACE_KINDS[self.pl[p]['kind']] not in ('sit', 'stand', 'stall_front') for p in r['places']):
+                errs.append(f'{r["kind"]} route {r["id"]}')
         for r in by['crier']:
             if len(r['places']) != 3 or any(PLACE_KINDS[self.pl[p]['kind']] != 'crier' or self.pl[p]['cap'] != 1 for p in r['places']):
                 errs.append(f'crier route {r["id"]}')
         for r in by['courier']:
             if not 5 <= len(r['places']) <= 6 or PLACE_KINDS[self.pl[r['places'][0]]['kind']] != 'landmark':
                 errs.append(f'courier route {r["id"]}')
-        if sorted(len(r['places']) for r in by['drops']) != [2] * 5 + [10]:
+        n_sq = sum(1 for pr in C.props if pr['kind'] == 'stall' and pr['ry'] < 0)
+        if sorted(len(r['places']) for r in by['drops']) != [2] * 5 + [n_sq // 4] * 4:
             errs.append('drops routes')
         # washplaces and lines
         wps = o['washplaces']
@@ -3252,7 +3757,7 @@ class Checker:
             if p['enter'] or p['use'] != 'house' or PLACE_KINDS[self.pl[b['front']]['kind']] != 'stand' or self.pl[b['front']]['cap'] != 1:
                 errs.append('bakery plot or front')
         q = o['quay']
-        if len(q['pickup']) != 2 or not 6 <= len(q['crates']) <= 10:
+        if len(q['pickup']) != 4 or not 6 <= len(q['crates']) <= 10:
             errs.append('quay')
         for p in q['pickup']:
             if any(C.kind_at(s_[0], s_[1]) != QUAY for s_ in self.pl[p]['spots']) or self.pl[p]['cap'] != 4:
@@ -3260,7 +3765,8 @@ class Checker:
         for x, ry, z in q['crates']:
             if not C.ground[z + O, x + O]:
                 errs.append('crate cell not walkable')
-        if len(o['taverns']) != 14 or len(o['bells']) != 6 or len(o['stalls']) != 10 or len(o['lamps']) != 78:
+        n_stalls = sum(1 for pr in C.props if pr['kind'] == 'stall')
+        if len(o['taverns']) != 14 or len(o['bells']) != 6 or len(o['stalls']) != n_stalls or len(o['lamps']) != len(C.P['lamps']):
             errs.append('taverns/bells/stalls/lamps counts')
         if len(o['edgeLane']) != len(C.edges) or any(not 0 <= v <= 15 for v in o['edgeLane']):
             errs.append('edgeLane')
@@ -3268,6 +3774,134 @@ class Checker:
             errs.append('extras')
         return self.rec('9 structure (more of the brief)', not errs, f'routes {dict(Counter(r["kind"] for r in self.routes))}; 2 washplaces, {len(ls)} lines, 4 smithies, 5 bakeries, '
                         f'quay {len(q["crates"])} crates' + ('; ' + '; '.join(errs[:6]) + (f' (+{len(errs) - 6})' if len(errs) > 6 else '') if errs else ''))
+
+
+    # 10 ----------------------------------------------------------------------------------------------------------------
+    def seg_at(self, q, tod):
+        """The citizen's segment at a time of day (the last one started, wrapping)."""
+        sg = self.o['schedules'][q['id']]
+        best = None
+        for g in sg:
+            if g[0] <= tod:
+                best = g
+        return best if best is not None else sg[-1]
+
+    def where(self, q, tod):
+        """(outdoors, [(place, weight)]) for a citizen at a time of day: a stand is at its place, a round, carry or wander
+        spread evenly over the places of its route (the ledger picks them in turn); at home or inside is not outdoors."""
+        g = self.seg_at(q, tod)
+        a = ACTS[g[1]]
+        if a in ('home', 'inside'):
+            return False, [(g[2], 1.0)]
+        if a == 'stand':
+            return True, [(g[2], 1.0)]
+        pl = [g[2]] + self.routes[g[3]]['places'] if a == 'carry' else self.routes[g[2]]['places']
+        return True, [(p, 1.0 / len(pl)) for p in pl]
+
+    def life(self, B=None):
+        """The street-life checks: every stall has its opener, every sit/stand place the props define is used by someone, the
+        market fills at noon and the taverns at 20:00, no standing place in a prop's cell but the ones props define."""
+        o, C = self.o, self.C
+        errs = []
+        # every stall has its opener: a stallkeeper standing at its keeper place from the morning into the afternoon
+        for k, st in enumerate(o['stalls']):
+            ok = any(JOBS[q['job']] == 'stallkeeper' and (g := self.seg_at(q, 1100)) and ACTS[g[1]] == 'stand' and g[2] == st['keeper']
+                     and ACTS[self.seg_at(q, 6000)[1]] == 'stand' and self.seg_at(q, 6000)[2] == st['keeper'] for q in self.ct)
+            if not ok:
+                errs.append(f'stall {k} has no opener')
+        # every sit/stand place from props is used by someone (a stand, or a stop on a route someone walks)
+        used = set()
+        for q in self.ct:
+            for g in self.o['schedules'][q['id']]:
+                a = ACTS[g[1]]
+                if a in ('home', 'inside', 'stand'):
+                    used.add(g[2])
+                elif a == 'carry':
+                    used.add(g[2])
+                    used.update(self.routes[g[3]]['places'])
+                else:
+                    used.update(self.routes[g[2]]['places'])
+        if B is not None:
+            prop_places = set(B.bench_places + B.well_places + B.fountain_places + B.notice_places + B.step_places)
+            prop_places |= {t['out'] for t in B.taverns if t['table']}
+            unused = sorted(p for p in prop_places if p not in used)
+            if unused:
+                errs.append(f'{len(unused)} prop places nobody uses: {unused[:8]}')
+        else:
+            prop_places = set()
+        # noon in the Market district (outdoors), 20:00 at the taverns
+        noon = 0.0
+        noon_in = 0
+        for q in self.ct:
+            out_, pl = self.where(q, 6000)
+            w = sum(wt for p, wt in pl if self.pl[p]['district'] == 1)
+            if out_:
+                noon += w
+            else:
+                noon_in += w
+        tav = sum(1 for q in self.ct if ACTS[self.seg_at(q, 14000)[1]] == 'stand' and PLACE_KINDS[self.pl[self.seg_at(q, 14000)[2]]['kind']] == 'tavern_out')
+        tav_in = sum(1 for q in self.ct if ACTS[self.seg_at(q, 14000)[1]] == 'inside' and PLACE_KINDS[self.pl[self.seg_at(q, 14000)[2]]['kind']] == 'door'
+                     and self.pl[self.seg_at(q, 14000)[2]]['ref'] in {t['plot'] for t in o['taverns']})
+        self.noon_market, self.tavern_2000 = noon, tav
+        if noon < 120:
+            errs.append(f'only {noon:.0f} outdoors in the Market district at noon (120 wanted)')
+        if tav < 70:
+            errs.append(f'only {tav} at tavern places at 20:00 (70 wanted)')
+        return self.rec('10 street life', not errs,
+                        f'{len(o["stalls"])} stalls each opened; {len(prop_places)} prop places each used; noon: {noon:.0f} outdoors in the Market district '
+                        f'(+{noon_in:.0f} indoors there); 20:00: {tav} standing at tavern places ({tav_in} inside the taverns)' +
+                        ('; ' + '; '.join(errs[:6]) if errs else ''))
+
+    # 11 ----------------------------------------------------------------------------------------------------------------
+    def props(self):
+        """No spot stands in a street-level prop's cell except the spots the props define (a bench's cells, a tavern table's bench
+        rows, a stall's back row), and no keep-right lane line passes within 0.8 of a prop cell's centre."""
+        C, o = self.C, self.o
+        errs = []
+        owner = {}
+        for pr in C.props:
+            for cell in prop_cells(pr):
+                owner[cell] = pr['kind']
+        allowed = {'bench': ('sit',), 'tavern_table': ('tavern_out',), 'stall': ('stall_keeper', 'stall_front')}
+        n = 0
+        for pid, pl in enumerate(self.pl):
+            kind = PLACE_KINDS[pl['kind']]
+            if kind in ('door', 'landmark'):
+                continue
+            for (x, z, yaw) in pl['spots']:
+                pk = owner.get((math.floor(x), math.floor(z)))
+                if pk is not None:
+                    n += 1
+                    if kind not in allowed.get(pk, ()):
+                        errs.append(f'place {pid} ({kind}) spot ({x},{z}) is in a {pk}')
+        # keep-right lanes
+        grid = defaultdict(list)
+        for (x, z), pk in owner.items():
+            grid[(x // 8, z // 8)].append((x + 0.5, z + 0.5))
+        bad = 0
+        for e, (a, b, m, sec, tag) in enumerate(C.edges):
+            lane = o['edgeLane'][e]
+            if m == 3:
+                continue
+            na, nb = C.nodes[a], C.nodes[b]
+            ax, az, bx, bz = na[0], na[2], nb[0], nb[2]
+            L = math.hypot(bx - ax, bz - az)
+            if L < 0.01:
+                continue
+            px, pz = -(bz - az) / L, (bx - ax) / L
+            near = []
+            for gx in range(int(math.floor(min(ax, bx) / 8)) - 1, int(math.floor(max(ax, bx) / 8)) + 2):
+                for gz in range(int(math.floor(min(az, bz) / 8)) - 1, int(math.floor(max(az, bz) / 8)) + 2):
+                    near += grid.get((gx, gz), [])
+            off = lane / 10.0
+            for sgn in (1, -1):
+                seg = (ax + px * off * sgn, az + pz * off * sgn, bx + px * off * sgn, bz + pz * off * sgn)
+                if any(City.seg_dist(seg, ox, oz) <= 0.8 - 1e-9 for ox, oz in near):
+                    bad += 1
+                    errs.append(f'edge {e} lane {lane} passes within 0.8 of a prop cell')
+                    break
+        return self.rec('11 props', not errs, f'{len(owner)} prop cells; {n} spots inside the cells props define; lanes clear of every prop cell' +
+                        ('; ' + '; '.join(errs[:6]) + (f' (+{len(errs) - 6})' if len(errs) > 6 else '') if errs else ''))
 
 
 def stats(out, C, P=None):
@@ -3278,6 +3912,10 @@ def stats(out, C, P=None):
     ct = [dict(zip(out['citizens']['fields'], r)) for r in out['citizens']['rows']]
     pl = [dict(zip(out['places']['fields'], r)) for r in out['places']['rows']]
     ck = Checker(out, C)
+    if P is not None:
+        ck.quiet = True
+        ck.life(P.B)
+        ck.quiet = False
     print('-- per job: count, mean / max home -> work walking distance (blocks)')
     by = defaultdict(list)
     for q in ct:
@@ -3307,9 +3945,34 @@ def stats(out, C, P=None):
     print('-- routes by kind:', ', '.join(f'{k} {v}' for k, v in rk.items()), f'(total {len(out["routes"])})')
     segs = Counter(len(s_) for s_ in out['schedules'])
     print('-- schedule segments per citizen:', dict(sorted(segs.items())))
+    # M4 B3a: where the crowd is
+    dn = {d['id']: d['key'] for d in C.P['districts']}
+    order = [dn[i] for i in sorted(dn)]
+    homes = Counter(dn[pl[q['home']]['district']] for q in ct)
+    print('-- homes by district:', ', '.join(f'{k} {homes[k]}' for k in order), f'(households on a plot: {sum(1 for h in out["households"] if h["plot"] >= 0)})')
+    print('-- the three kinds of resident: ' + ', '.join(f'{k} {n}' for k, n in Counter(q.get("kind") for q in P.cits if q["job"] == "resident").items()) if P is not None else '')
+    ck.pl = pl
+    for tod, label in ((0, '06:00'), (6000, '12:00'), (12000, '18:00'), (14000, '20:00'), (16000, '22:00')):
+        outd, ins = Counter(), 0.0
+        for q in ct:
+            o_, wp = ck.where(q, tod)
+            for p_, wt in wp:
+                if o_:
+                    outd[dn[pl[p_]['district']]] += wt
+                else:
+                    ins += wt
+        print(f'-- {label} (tod {tod}) outdoors by district: ' + ', '.join(f'{k} {outd[k]:.0f}' for k in order) + f'; outdoors {sum(outd.values()):.0f}, indoors {ins:.0f}')
+    if P is not None:
+        B = P.B
+        print('-- noon in the Market district (outdoors):', f'{ck.noon_market:.0f}' if hasattr(ck, 'noon_market') else '?',
+              '| 20:00 standing at tavern places:', ck.tavern_2000 if hasattr(ck, 'tavern_2000') else '?')
+        print('-- places from the street life: stalls', len(B.stalls), f'({len(B.square_stalls)} on the square), benches', len(B.bench_places),
+              'wells', len(B.well_places), 'fountain rims', len(B.fountain_places), 'steps', len(B.step_places), 'notice boards', len(B.notice_places),
+              'tavern table places', sum(1 for t in B.taverns if t['table']), 'tavern lane overflow', sum(1 for t in B.taverns if t.get('more', -1) >= 0),
+              'docks', len(B.quay_pickups), '| routes: market', len(B.market_routes), 'stroll', len(B.stroll_routes), 'dock 1')
 
 
-def run_checks(text, out, C):
+def run_checks(text, out, C, B=None):
     ck = Checker(out, C)
     ck.counts()
     ck.places()
@@ -3327,6 +3990,8 @@ def run_checks(text, out, C):
     size = len(text.encode('utf-8'))
     ck.rec('8 size', size < 400 * 1024, f'{size / 1024:.1f} KB (limit 400 KB)')
     ck.structure()
+    ck.life(B)
+    ck.props()
     return all(ok for _, ok, _ in ck.results)
 
 
@@ -3354,9 +4019,10 @@ def preview(out, C):
     def P(x, z):
         return ((x + O) * S, (z + O) * S)
     rcol = {'lamps': (255, 220, 60), 'patrol': (255, 90, 90), 'scout': (255, 140, 40), 'crier': (210, 90, 255), 'courier': (90, 220, 255),
-            'errand': (90, 255, 140), 'play': (255, 150, 220), 'drops': (255, 255, 255), 'sit': (160, 255, 160)}
+            'errand': (90, 255, 140), 'play': (255, 150, 220), 'drops': (255, 255, 255), 'sit': (160, 255, 160),
+            'market': (255, 120, 40), 'stroll': (120, 200, 255), 'dock': (255, 255, 120)}
     for r in out['routes']:
-        if r['kind'] in ('errand', 'sit', 'drops'):
+        if r['kind'] in ('errand', 'sit', 'drops', 'stroll'):
             continue
         pts = [P(pl[p]['x'], pl[p]['z']) for p in r['places']]
         if len(pts) > 1:
@@ -3386,7 +4052,7 @@ def main(argv):
     cmd = argv[1] if len(argv) > 1 else 'write'
     text, out, (C, B, P) = generate()
     if cmd == 'check':
-        ok = run_checks(text, out, C)
+        ok = run_checks(text, out, C, B)
         stats(out, C, P)
         print('all checks pass' if ok else 'CHECKS FAILED')
         return 0 if ok else 1

@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "kind=apples": {
+      "model": "awaken:block/produce_apples"
+    },
+    "kind=cabbages": {
+      "model": "awaken:block/produce_cabbages"
+    },
+    "kind=carrots": {
+      "model": "awaken:block/produce_carrots"
+    },
+    "kind=pumpkins": {
+      "model": "awaken:block/produce_pumpkins"
+    },
+    "kind=potatoes": {
+      "model": "awaken:block/produce_potatoes"
+    },
+    "kind=flowers": {
+      "model": "awaken:block/produce_flowers"
+    }
+  }
+}

@@ -31,14 +31,22 @@ import static dev.awaken.citizens.client.CitizenClips.*;
  * a porter carries one.
  */
 public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, CitizenRenderState> {
-    private static Identifier[] skins;
+    private static Identifier[] skins, blinks;
     private static boolean[] slim;
     private static final Identifier FALLBACK = Awaken.id("textures/entity/townsfolk/oren.png");
     private static final float FADE_IN = 16f;
     private static final float BLEND = 5f;
 
+    private final CitizenModel wideModel, slimModel;
+
     public CitizenRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx, new CitizenModel(ctx.bakeLayer(ModelLayers.PLAYER), false), new CitizenModel(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true), 0.5f);
+        this(ctx, new CitizenModel(ctx.bakeLayer(ModelLayers.PLAYER), false), new CitizenModel(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true));
+    }
+
+    private CitizenRenderer(EntityRendererProvider.Context ctx, CitizenModel wide, CitizenModel slim) {
+        super(ctx, wide, slim, 0.5f);
+        this.wideModel = wide;
+        this.slimModel = slim;
         addLayer(new BackLayer(this));
     }
 
@@ -53,15 +61,19 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         Roster r = Roster.get();
         int n = r == null ? 0 : r.records;
         skins = new Identifier[n];
+        blinks = new Identifier[n];
         slim = new boolean[n];
         var rm = Minecraft.getInstance().getResourceManager();
         for (int i = 0; i < n; i++) {
-            Identifier id;
-            if (!r.named[i].isEmpty()) id = Awaken.id("textures/entity/townsfolk/" + r.named[i] + ".png");
-            else if (i >= r.citizens) id = Awaken.id(String.format(Locale.ROOT, "textures/entity/citizen/t%d.png", i - r.citizens));
-            else id = Awaken.id(String.format(Locale.ROOT, "textures/entity/citizen/c%03d.png", i));
+            String path;
+            if (!r.named[i].isEmpty()) path = "textures/entity/townsfolk/" + r.named[i];
+            else if (i >= r.citizens) path = String.format(Locale.ROOT, "textures/entity/citizen/t%d", i - r.citizens);
+            else path = String.format(Locale.ROOT, "textures/entity/citizen/c%03d", i);
+            Identifier id = Awaken.id(path + ".png"), blink = Awaken.id(path + "_blink.png");
             if (rm.getResource(id).isEmpty()) id = FALLBACK;
             skins[i] = id;
+            // the closed-eyes copy the life layer's blink shows (generated beside every skin; none: no blink)
+            blinks[i] = rm.getResource(blink).isPresent() ? blink : null;
             slim[i] = r.named[i].isEmpty() && r.build[i] == 1;
         }
     }
@@ -101,6 +113,7 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
             s.speechKind = body.speechKind;
         }
         Minecraft mc = Minecraft.getInstance();
+        life(body, s, mc, rec, partial);
         s.label = null;
         if (mc.crosshairPickEntity == body && s.distanceToCameraSq < 9 * 9 && s.speech == null) {
             s.label = CitizenFx.label(body);
@@ -141,6 +154,43 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
                     net.minecraft.util.LightCoordsUtil.FULL_BRIGHT, 0xE0FFFFFF, 0x50201810, 0);
         }
         pose.popPose();
+    }
+
+    /**
+     * Creature life's layer (SPEC §23, M4 B3a): breath, blinks, the slow head with its idle glances and settles. The head
+     * turns to the player only up close (6 blocks, in front of them) or while they speak; otherwise it keeps its own
+     * idle looks. Clips win where they drive a bone (CitizenModel applies them after the layer). Client only; nothing is
+     * allocated per frame once a body has its life.
+     */
+    private void life(CitizenBody body, CitizenRenderState s, Minecraft mc, int rec, float partial) {
+        boolean sl = s.slim;
+        CitizenModel m = sl ? slimModel : wideModel;
+        var life = dev.awaken.mobs.client.life.CreatureLife.life(body.clientLife, m.rig, body.getId());
+        body.clientLife = life;
+        life.walk = Mth.clamp(s.walkAnimationSpeed * 2.5f, 0f, 1f);
+        life.busy = s.hasPose;
+        life.hurt = s.hurt ? 0.6f : 0f;
+        boolean talking = s.speech != null;
+        float look = 0f;
+        var cam = mc.gameRenderer.mainCamera();
+        if (cam != null && s.distanceToCameraSq < 6 * 6) {
+            var eye = cam.position();
+            double dx = eye.x - s.x, dz = eye.z - s.z, dy = eye.y - (s.y + s.height * 0.92);
+            float yaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90f;
+            float rel = Mth.wrapDegrees(yaw - s.bodyRot);
+            if (Math.abs(rel) < 80f) {
+                s.yRot = rel;
+                s.xRot = (float) (-Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG);
+                look = 1f;
+            }
+        }
+        life.lookWeight = look > 0 || talking ? 1f : 0f;
+        dev.awaken.mobs.client.life.CreatureLife.tick(life, s, true);
+        s.life = life;
+        s.lifeSlim = sl;
+        if (rec >= 0 && rec < blinks.length && blinks[rec] != null && dev.awaken.mobs.client.life.CreatureLife.eyesClosed(life) > 0.5f) {
+            s.skin = blinks[rec];
+        }
     }
 
     /** Made on first use: an ItemStack can't be built while the renderer class loads (components aren't bound yet). */

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/notice_board"
+    },
+    "facing=east": {
+      "model": "awaken:block/notice_board",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/notice_board",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/notice_board",
+      "y": 270
+    }
+  }
+}

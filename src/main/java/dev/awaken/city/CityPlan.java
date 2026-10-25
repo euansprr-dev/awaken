@@ -56,6 +56,8 @@ public final class CityPlan {
     /** The cells the trees' trunks stand in (a facade keeps its climb lines clear of them). */
     private final it.unimi.dsi.fastutil.longs.LongOpenHashSet treeCells = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
     public final List<int[]> lamps;   // x, z
+    /** The street-life layer (M4 B3a, look bible §7): stalls, carts, wells, benches, lines... (tools/city/props.py). */
+    public final List<Prop> props;
     public final List<Landmark> landmarks;
     public final List<District> districts;
     public final List<int[]> roads;   // outside the wall: x0, z0, x1, z1
@@ -101,7 +103,23 @@ public final class CityPlan {
      * kerb (anchor "post"). Ends a and b in plan coordinates; plotA / plotB the houses (-1 for a post).
      */
     public record Crossing(String kind, String street, float ax, float ary, float az, float bx, float bry, float bz,
-                           int plotA, int plotB, String anchor) {}
+                           int plotA, int plotB, String anchor, int @org.jspecify.annotations.Nullable [] hung) {}
+
+    /**
+     * One street-life prop (M4 B3a): its kind, the cells it covers (x0..x1, z0..z1), the ground row it stands on (for a
+     * line: the rope's row), a facing ("N".."W", "" or, for a line, the ends that stand on poles: "a", "b", "ab"), a
+     * variant number and a detail string (a stall's good, a cart's load, a line's hang...).
+     */
+    public record Prop(String kind, int x0, int z0, int x1, int z1, int ry, String facing, int v, String s) {
+        public boolean contains(int x, int z) {
+            return x >= x0 && x <= x1 && z >= z0 && z <= z1;
+        }
+
+        /** The facing as a side (N 0, E 1, S 2, W 3), or -1. */
+        public int side() {
+            return facing.isEmpty() ? -1 : "NESW".indexOf(facing.charAt(0));
+        }
+    }
 
     public record District(int id, String key, String name, int bellX, int bellZ) {}
 
@@ -236,10 +254,16 @@ public final class CityPlan {
             for (JsonElement e : o.getAsJsonArray("crossings")) {
                 JsonObject c = e.getAsJsonObject();
                 JsonArray a = c.getAsJsonArray("a"), b = c.getAsJsonArray("b"), pp = c.getAsJsonArray("plots");
+                int[] hung = null;
+                if (c.has("hung") && c.get("hung").isJsonArray()) {
+                    JsonArray h = c.getAsJsonArray("hung");
+                    hung = new int[h.size()];
+                    for (int k = 0; k < hung.length; k++) hung[k] = h.get(k).getAsInt();
+                }
                 cr.add(new Crossing(c.get("kind").getAsString(), c.get("street").getAsString(), a.get(0).getAsFloat(), a.get(1).getAsFloat(),
                         a.get(2).getAsFloat(), b.get(0).getAsFloat(), b.get(1).getAsFloat(), b.get(2).getAsFloat(),
                         pp.get(0).isJsonNull() ? -1 : pp.get(0).getAsInt(), pp.get(1).isJsonNull() ? -1 : pp.get(1).getAsInt(),
-                        c.has("anchor") ? c.get("anchor").getAsString() : ""));
+                        c.has("anchor") ? c.get("anchor").getAsString() : "", hung));
             }
         }
         crossings = List.copyOf(cr);
@@ -269,6 +293,15 @@ public final class CityPlan {
         List<int[]> la = new ArrayList<>();
         for (JsonElement e : o.getAsJsonArray("lamps")) la.add(new int[]{e.getAsJsonArray().get(0).getAsInt(), e.getAsJsonArray().get(1).getAsInt()});
         lamps = List.copyOf(la);
+        List<Prop> pr = new ArrayList<>();
+        if (o.has("props")) {
+            for (JsonElement e : o.getAsJsonArray("props")) {
+                JsonArray a = e.getAsJsonArray();
+                pr.add(new Prop(a.get(0).getAsString(), a.get(1).getAsInt(), a.get(2).getAsInt(), a.get(3).getAsInt(), a.get(4).getAsInt(),
+                        a.get(5).getAsInt(), a.get(6).getAsString(), a.get(7).getAsInt(), a.get(8).getAsString()));
+            }
+        }
+        props = List.copyOf(pr);
 
         List<District> ds = new ArrayList<>();
         for (JsonElement e : o.getAsJsonArray("districts")) {

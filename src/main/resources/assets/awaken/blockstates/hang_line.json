@@ -1,0 +1,340 @@
+{
+  "variants": {
+    "axis=x,hang=rope,sag=0,set=0": {
+      "model": "awaken:block/hang_line_rope_0"
+    },
+    "axis=x,hang=rope,sag=1,set=0": {
+      "model": "awaken:block/hang_line_rope_1"
+    },
+    "axis=x,hang=rope,sag=2,set=0": {
+      "model": "awaken:block/hang_line_rope_2"
+    },
+    "axis=x,hang=rope,sag=0,set=1": {
+      "model": "awaken:block/hang_line_rope_0"
+    },
+    "axis=x,hang=rope,sag=1,set=1": {
+      "model": "awaken:block/hang_line_rope_1"
+    },
+    "axis=x,hang=rope,sag=2,set=1": {
+      "model": "awaken:block/hang_line_rope_2"
+    },
+    "axis=x,hang=rope,sag=0,set=2": {
+      "model": "awaken:block/hang_line_rope_0"
+    },
+    "axis=x,hang=rope,sag=1,set=2": {
+      "model": "awaken:block/hang_line_rope_1"
+    },
+    "axis=x,hang=rope,sag=2,set=2": {
+      "model": "awaken:block/hang_line_rope_2"
+    },
+    "axis=x,hang=rope,sag=0,set=3": {
+      "model": "awaken:block/hang_line_rope_0"
+    },
+    "axis=x,hang=rope,sag=1,set=3": {
+      "model": "awaken:block/hang_line_rope_1"
+    },
+    "axis=x,hang=rope,sag=2,set=3": {
+      "model": "awaken:block/hang_line_rope_2"
+    },
+    "axis=x,hang=laundry,sag=0,set=0": {
+      "model": "awaken:block/hang_line_laundry_0_0"
+    },
+    "axis=x,hang=laundry,sag=1,set=0": {
+      "model": "awaken:block/hang_line_laundry_0_1"
+    },
+    "axis=x,hang=laundry,sag=2,set=0": {
+      "model": "awaken:block/hang_line_laundry_0_2"
+    },
+    "axis=x,hang=laundry,sag=0,set=1": {
+      "model": "awaken:block/hang_line_laundry_1_0"
+    },
+    "axis=x,hang=laundry,sag=1,set=1": {
+      "model": "awaken:block/hang_line_laundry_1_1"
+    },
+    "axis=x,hang=laundry,sag=2,set=1": {
+      "model": "awaken:block/hang_line_laundry_1_2"
+    },
+    "axis=x,hang=laundry,sag=0,set=2": {
+      "model": "awaken:block/hang_line_laundry_2_0"
+    },
+    "axis=x,hang=laundry,sag=1,set=2": {
+      "model": "awaken:block/hang_line_laundry_2_1"
+    },
+    "axis=x,hang=laundry,sag=2,set=2": {
+      "model": "awaken:block/hang_line_laundry_2_2"
+    },
+    "axis=x,hang=laundry,sag=0,set=3": {
+      "model": "awaken:block/hang_line_laundry_3_0"
+    },
+    "axis=x,hang=laundry,sag=1,set=3": {
+      "model": "awaken:block/hang_line_laundry_3_1"
+    },
+    "axis=x,hang=laundry,sag=2,set=3": {
+      "model": "awaken:block/hang_line_laundry_3_2"
+    },
+    "axis=x,hang=bunting,sag=0,set=0": {
+      "model": "awaken:block/hang_line_bunting_0_0"
+    },
+    "axis=x,hang=bunting,sag=1,set=0": {
+      "model": "awaken:block/hang_line_bunting_0_1"
+    },
+    "axis=x,hang=bunting,sag=2,set=0": {
+      "model": "awaken:block/hang_line_bunting_0_2"
+    },
+    "axis=x,hang=bunting,sag=0,set=1": {
+      "model": "awaken:block/hang_line_bunting_1_0"
+    },
+    "axis=x,hang=bunting,sag=1,set=1": {
+      "model": "awaken:block/hang_line_bunting_1_1"
+    },
+    "axis=x,hang=bunting,sag=2,set=1": {
+      "model": "awaken:block/hang_line_bunting_1_2"
+    },
+    "axis=x,hang=bunting,sag=0,set=2": {
+      "model": "awaken:block/hang_line_bunting_2_0"
+    },
+    "axis=x,hang=bunting,sag=1,set=2": {
+      "model": "awaken:block/hang_line_bunting_2_1"
+    },
+    "axis=x,hang=bunting,sag=2,set=2": {
+      "model": "awaken:block/hang_line_bunting_2_2"
+    },
+    "axis=x,hang=bunting,sag=0,set=3": {
+      "model": "awaken:block/hang_line_bunting_3_0"
+    },
+    "axis=x,hang=bunting,sag=1,set=3": {
+      "model": "awaken:block/hang_line_bunting_3_1"
+    },
+    "axis=x,hang=bunting,sag=2,set=3": {
+      "model": "awaken:block/hang_line_bunting_3_2"
+    },
+    "axis=x,hang=lanterns,sag=0,set=0": {
+      "model": "awaken:block/hang_line_lanterns_0_0"
+    },
+    "axis=x,hang=lanterns,sag=1,set=0": {
+      "model": "awaken:block/hang_line_lanterns_0_1"
+    },
+    "axis=x,hang=lanterns,sag=2,set=0": {
+      "model": "awaken:block/hang_line_lanterns_0_2"
+    },
+    "axis=x,hang=lanterns,sag=0,set=1": {
+      "model": "awaken:block/hang_line_lanterns_1_0"
+    },
+    "axis=x,hang=lanterns,sag=1,set=1": {
+      "model": "awaken:block/hang_line_lanterns_1_1"
+    },
+    "axis=x,hang=lanterns,sag=2,set=1": {
+      "model": "awaken:block/hang_line_lanterns_1_2"
+    },
+    "axis=x,hang=lanterns,sag=0,set=2": {
+      "model": "awaken:block/hang_line_lanterns_2_0"
+    },
+    "axis=x,hang=lanterns,sag=1,set=2": {
+      "model": "awaken:block/hang_line_lanterns_2_1"
+    },
+    "axis=x,hang=lanterns,sag=2,set=2": {
+      "model": "awaken:block/hang_line_lanterns_2_2"
+    },
+    "axis=x,hang=lanterns,sag=0,set=3": {
+      "model": "awaken:block/hang_line_lanterns_3_0"
+    },
+    "axis=x,hang=lanterns,sag=1,set=3": {
+      "model": "awaken:block/hang_line_lanterns_3_1"
+    },
+    "axis=x,hang=lanterns,sag=2,set=3": {
+      "model": "awaken:block/hang_line_lanterns_3_2"
+    },
+    "axis=z,hang=rope,sag=0,set=0": {
+      "model": "awaken:block/hang_line_rope_0",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=1,set=0": {
+      "model": "awaken:block/hang_line_rope_1",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=2,set=0": {
+      "model": "awaken:block/hang_line_rope_2",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=0,set=1": {
+      "model": "awaken:block/hang_line_rope_0",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=1,set=1": {
+      "model": "awaken:block/hang_line_rope_1",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=2,set=1": {
+      "model": "awaken:block/hang_line_rope_2",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=0,set=2": {
+      "model": "awaken:block/hang_line_rope_0",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=1,set=2": {
+      "model": "awaken:block/hang_line_rope_1",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=2,set=2": {
+      "model": "awaken:block/hang_line_rope_2",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=0,set=3": {
+      "model": "awaken:block/hang_line_rope_0",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=1,set=3": {
+      "model": "awaken:block/hang_line_rope_1",
+      "y": 90
+    },
+    "axis=z,hang=rope,sag=2,set=3": {
+      "model": "awaken:block/hang_line_rope_2",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=0,set=0": {
+      "model": "awaken:block/hang_line_laundry_0_0",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=1,set=0": {
+      "model": "awaken:block/hang_line_laundry_0_1",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=2,set=0": {
+      "model": "awaken:block/hang_line_laundry_0_2",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=0,set=1": {
+      "model": "awaken:block/hang_line_laundry_1_0",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=1,set=1": {
+      "model": "awaken:block/hang_line_laundry_1_1",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=2,set=1": {
+      "model": "awaken:block/hang_line_laundry_1_2",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=0,set=2": {
+      "model": "awaken:block/hang_line_laundry_2_0",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=1,set=2": {
+      "model": "awaken:block/hang_line_laundry_2_1",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=2,set=2": {
+      "model": "awaken:block/hang_line_laundry_2_2",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=0,set=3": {
+      "model": "awaken:block/hang_line_laundry_3_0",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=1,set=3": {
+      "model": "awaken:block/hang_line_laundry_3_1",
+      "y": 90
+    },
+    "axis=z,hang=laundry,sag=2,set=3": {
+      "model": "awaken:block/hang_line_laundry_3_2",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=0,set=0": {
+      "model": "awaken:block/hang_line_bunting_0_0",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=1,set=0": {
+      "model": "awaken:block/hang_line_bunting_0_1",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=2,set=0": {
+      "model": "awaken:block/hang_line_bunting_0_2",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=0,set=1": {
+      "model": "awaken:block/hang_line_bunting_1_0",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=1,set=1": {
+      "model": "awaken:block/hang_line_bunting_1_1",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=2,set=1": {
+      "model": "awaken:block/hang_line_bunting_1_2",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=0,set=2": {
+      "model": "awaken:block/hang_line_bunting_2_0",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=1,set=2": {
+      "model": "awaken:block/hang_line_bunting_2_1",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=2,set=2": {
+      "model": "awaken:block/hang_line_bunting_2_2",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=0,set=3": {
+      "model": "awaken:block/hang_line_bunting_3_0",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=1,set=3": {
+      "model": "awaken:block/hang_line_bunting_3_1",
+      "y": 90
+    },
+    "axis=z,hang=bunting,sag=2,set=3": {
+      "model": "awaken:block/hang_line_bunting_3_2",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=0,set=0": {
+      "model": "awaken:block/hang_line_lanterns_0_0",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=1,set=0": {
+      "model": "awaken:block/hang_line_lanterns_0_1",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=2,set=0": {
+      "model": "awaken:block/hang_line_lanterns_0_2",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=0,set=1": {
+      "model": "awaken:block/hang_line_lanterns_1_0",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=1,set=1": {
+      "model": "awaken:block/hang_line_lanterns_1_1",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=2,set=1": {
+      "model": "awaken:block/hang_line_lanterns_1_2",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=0,set=2": {
+      "model": "awaken:block/hang_line_lanterns_2_0",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=1,set=2": {
+      "model": "awaken:block/hang_line_lanterns_2_1",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=2,set=2": {
+      "model": "awaken:block/hang_line_lanterns_2_2",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=0,set=3": {
+      "model": "awaken:block/hang_line_lanterns_3_0",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=1,set=3": {
+      "model": "awaken:block/hang_line_lanterns_3_1",
+      "y": 90
+    },
+    "axis=z,hang=lanterns,sag=2,set=3": {
+      "model": "awaken:block/hang_line_lanterns_3_2",
+      "y": 90
+    }
+  }
+}

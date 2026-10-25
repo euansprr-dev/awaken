@@ -1,0 +1,46 @@
+{
+  "variants": {
+    "bloom=red,style=wood": {
+      "model": "awaken:block/planter_wood_red"
+    },
+    "bloom=yellow,style=wood": {
+      "model": "awaken:block/planter_wood_yellow"
+    },
+    "bloom=blue,style=wood": {
+      "model": "awaken:block/planter_wood_blue"
+    },
+    "bloom=pink,style=wood": {
+      "model": "awaken:block/planter_wood_pink"
+    },
+    "bloom=white,style=wood": {
+      "model": "awaken:block/planter_wood_white"
+    },
+    "bloom=herbs,style=wood": {
+      "model": "awaken:block/planter_wood_herbs"
+    },
+    "bloom=shrub,style=wood": {
+      "model": "awaken:block/planter_wood_shrub"
+    },
+    "bloom=red,style=stone": {
+      "model": "awaken:block/planter_stone_red"
+    },
+    "bloom=yellow,style=stone": {
+      "model": "awaken:block/planter_stone_yellow"
+    },
+    "bloom=blue,style=stone": {
+      "model": "awaken:block/planter_stone_blue"
+    },
+    "bloom=pink,style=stone": {
+      "model": "awaken:block/planter_stone_pink"
+    },
+    "bloom=white,style=stone": {
+      "model": "awaken:block/planter_stone_white"
+    },
+    "bloom=herbs,style=stone": {
+      "model": "awaken:block/planter_stone_herbs"
+    },
+    "bloom=shrub,style=stone": {
+      "model": "awaken:block/planter_stone_shrub"
+    }
+  }
+}

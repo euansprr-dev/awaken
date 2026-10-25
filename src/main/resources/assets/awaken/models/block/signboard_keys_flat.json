@@ -1,0 +1,71 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/sign_keys_hang",
+    "h": "awaken:block/sign_keys_hang",
+    "f": "awaken:block/sign_keys_flat",
+    "chain": "awaken:block/street_chain"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        4,
+        15
+      ],
+      "to": [
+        16,
+        12,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            8
+          ],
+          "texture": "#f"
+        },
+        "east": {
+          "uv": [
+            15,
+            0,
+            16,
+            8
+          ],
+          "texture": "#f"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            1,
+            8
+          ],
+          "texture": "#f"
+        },
+        "up": {
+          "uv": [
+            0,
+            8,
+            16,
+            9
+          ],
+          "texture": "#f"
+        },
+        "down": {
+          "uv": [
+            0,
+            9,
+            16,
+            10
+          ],
+          "texture": "#f"
+        }
+      }
+    }
+  ]
+}

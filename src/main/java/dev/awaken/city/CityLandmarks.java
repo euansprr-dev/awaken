@@ -673,6 +673,12 @@ final class CityLandmarks {
     }
 
     /** A water wheel standing in the mill race: rim, spokes and paddles of dark oak, its top just over the quay. */
+    static final BlockState[] WHEEL_FACE = new BlockState[13 * 15];
+
+    static {
+        for (int i = 0; i < WHEEL_FACE.length; i++) WHEEL_FACE[i] = of("awaken:wheel_face[cell=" + i + "]");
+    }
+
     static void wheel(Ctx c, CityBuffer b, Part p, Box box, int x, int z) {
         if (!box.contains(x, z)) return;
         double cx = (box.x0() + box.x1()) / 2.0, cz = (box.z0() + box.z1()) / 2.0;
@@ -684,8 +690,11 @@ final class CityLandmarks {
             double dy = ry - axleY;
             double r = Math.sqrt(dx * dx + dy * dy);
             BlockState s = null;
-            if (r > 5.4 && r <= 6.6) s = mid ? DARK_PLANKS : DARK_WOOD;
-            else if (mid && r <= 5.4 && (Math.abs(dx) < 0.6 || Math.abs(dy) < 0.6 || Math.abs(Math.abs(dx) - Math.abs(dy)) < 0.6)) s = DARK_WOOD;
+            if (mid) {
+                // (M4 B3a) the middle plane turns: animated cells of the whole wheel (tools/art/specs/city_wheel.py)
+                int ix = (int) Math.round(dx) + 6, iy = (int) Math.round(dy) + 7;
+                if (r <= 6.9 && ix >= 0 && ix < 13 && iy >= 0 && iy < 15) s = WHEEL_FACE[ix + iy * 13];
+            } else if (r > 5.4 && r <= 6.6) s = DARK_WOOD;
             if (s != null) b.set(x, ry, z, s);
         }
     }

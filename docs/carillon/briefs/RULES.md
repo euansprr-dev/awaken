@@ -50,6 +50,11 @@ The plan is docs/plan-carillon.html; the source of truth is docs/SPEC.md §16. T
 - Autopilot traps: docs in the repo and memory say every tour must `cmd awaken admin awaken`, then
   `cmd awaken powers starter 1` + `screen close`, or the first-power screen covers the shots. `quit` saves.
 
+## The repo is public (since 2026-10-25)
+- Never commit secrets, tokens, keys or credentials, and never commit copies of Mojang's assets. Vanilla textures,
+  sounds and models are referenced by id, never copied. Kit art comes from our own generators (tools/art/specs) or
+  is drawn new. Third-party audio or art comes in only with a licence that allows it, recorded beside it.
+
 ## Quality bar
 - Euan judges Awaken against the best modpacks. Vanilla-looking particles, poses or buildings read as "an add-on, not a
   mod". Every visible thing needs its own look; say in your report where yours falls short.

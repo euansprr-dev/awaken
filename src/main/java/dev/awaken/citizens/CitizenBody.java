@@ -72,6 +72,8 @@ public class CitizenBody extends PathfinderMob implements Npc {
     public int speechStart, speechUntil, speechKind;
     public net.minecraft.util.@org.jspecify.annotations.Nullable FormattedCharSequence label;
     public float labelWidth;
+    /** The client's life layer for this body (mobs.client.life.Life; an Object so common code never names a client class). */
+    public @org.jspecify.annotations.Nullable Object clientLife;
 
     public CitizenBody(EntityType<? extends CitizenBody> type, Level level) {
         super(type, level);

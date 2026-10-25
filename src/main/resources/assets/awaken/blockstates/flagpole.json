@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/flagpole"
+    },
+    "facing=east": {
+      "model": "awaken:block/flagpole",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/flagpole",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/flagpole",
+      "y": 270
+    }
+  }
+}
