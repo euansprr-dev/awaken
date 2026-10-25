@@ -16,6 +16,7 @@ layout(location = 0) in vec3 vRel;
 layout(location = 1) in vec3 vColor;
 layout(location = 2) flat in vec4 vFace;
 layout(location = 3) in vec2 vFaceUv;
+layout(location = 4) flat in float vValley;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -41,5 +42,5 @@ void main() {
     }
     vec3 n = vFace.xyz;
     c *= farLight(n, max(dot(n, FarSun.xyz), 0.0) * vFace.w) * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
-    fragColor = vec4(farAir(farMist(c, vRel), vRel), 1.0);
+    fragColor = vec4(farAir(farMist(c, vRel, vValley), vRel), 1.0);
 }

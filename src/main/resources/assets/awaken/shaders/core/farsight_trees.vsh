@@ -19,6 +19,7 @@ layout(location = 0) out vec3 vRel;
 layout(location = 1) out vec3 vColor;
 layout(location = 2) flat out vec4 vFace;   // xyz the face's normal, w the ground's sunlight
 layout(location = 3) out vec2 vFaceUv;      // blocks across and up the face (leaf grain)
+layout(location = 4) flat out float vValley; // how deep in a hollow the tree stands (valley cloud)
 
 const int VERTS = 20, MAX_TREES = 512;
 
@@ -28,6 +29,7 @@ void hideTree() {
     vColor = vec3(0.0);
     vFace = vec4(0.0);
     vFaceUv = vec2(0.0);
+    vValley = 0.0;
 }
 
 void main() {
@@ -59,7 +61,9 @@ void main() {
         vec2 a = inner.xy, b = inner.xy + 256.0 * inner.z;
         if (inner.w > 0.5 && p.x > a.x && p.y > a.y && p.x < b.x && p.y < b.y) { hideTree(); return; }
     }
-    float sun = texelFetch(ShadeSampler, texel, 0).a;
+    vec4 shade = texelFetch(ShadeSampler, texel, 0);
+    float sun = shade.a;
+    vValley = smoothstep(0.96, 0.78, shade.b);
 
     // the tree's parts: trunk to crown, by shape (heights from the ground, half widths)
     float trunkTop, crownBase, crownTop, halfW = width * 0.5, tip = halfW, trunkHalf = 0.5;

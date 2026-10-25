@@ -202,8 +202,8 @@ public final class FarSightClient {
         else sunColour.set(1.00f + 0.30f * golden, 0.98f - 0.12f * golden, 0.94f - 0.36f * golden);
         // the air: clear alpine air sees about 40 km (density per block at sea level); rain and mist thicken it
         float haze = 1.0e-4f * (1f + 3f * rain);
-        // valley cloud: lying low among the mountains, a sea of it at dawn and dusk and in rain, patches at noon
-        float mistCover = Math.min(1f, 0.32f + 0.4f * golden + 0.35f * rain);
+        // valley cloud: lying low in the valleys among the mountains, more of it at dawn and dusk and in rain
+        float mistCover = Math.min(1f, 0.34f + 0.26f * golden + 0.35f * rain);
         fogEnd = horizon();
         fogStart = fogEnd * 0.5f;
         if (RenderSystem.getProjectionMatrixBuffer() == null || RenderSystem.getShaderFog() == null) {

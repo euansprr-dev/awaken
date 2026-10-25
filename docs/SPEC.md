@@ -308,6 +308,11 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   rule, once at mod init), `site(server)` (centre, core and blend radii, street Y, the river's centre line, whether the
   basin is carved), `reserved(x, z)` (inside the core plus 48: thread-safe, allocation-free; worldgen and runtime
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
+- `dev.awaken.terrain.alpine.Erosion` / `AlpineSurface` — Awakened Alpine's erosion and snow-and-rock rule as pure,
+  allocation-free maths (§15): `Erosion.erode(x, z, gx, gz, strength, finestCell, out)`, `AlpineSurface.snowLine/snow/
+  stone/erosionStrength`. Far Sight predicts and shades with the same numbers; its shaders mirror them.
+- `dev.awaken.terrain.city.CityBasinFunction.Shape.ground(natural, x, z)` — the basin's ground height over a column
+  whose natural ground stands at `natural` (what the density mode builds), for far terrain.
 - `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
   tier, radius, members, foundedFrom)` with `has(UUID)`, `hearthsOf(MinecraftServer, UUID)` / `hearthsOf(ServerPlayer)`,
   `home(ServerPlayer)`, `isMember(ServerPlayer, BlockPos anchor)`, `isMember(MinecraftServer, UUID player, UUID owner)`,
@@ -1250,87 +1255,104 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
   Tests: `terrain_city_basin_shape`, `terrain_city_site_deterministic`.
+- **Awakened Alpine** (Far Sight 2, 2026-10-25; package `terrain.alpine`, its own data pack and feature flag
+  `awaken:awakened_alpine`, so new worlds only): real mountain form.
+  - `awaken:eroded` wraps the terrain's 2D offset (`minecraft:overworld/offset`, and `tectonic:terrain_spline/offset/final`
+    when Tectonic is loaded, through Lithostitched): ground stands at `128 · (1 + offset)`, so a change of `dh` blocks is
+    `dh / 128` of offset and the chunks, the preliminary surface and Far Sight all follow. `Erosion`: 5 octaves of stripes
+    running downhill (cells 256 to 16 blocks, height 40 shrinking by 0.38 an octave), blended over jittered cells (3×3,
+    kernel 1.25 cells), V gullies (low half pulled 0.6 harder, 0.28 carve), each octave following 0.4 of the coarser
+    ones' slope (branching), faded in on slopes 0.04-0.45 and on high ground (y 74-140). The slope it follows is the
+    offset's own on a 64-block lattice (central differences, blended), cached per thread. Pure float maths with its own
+    cosine and hash, mirrored in `farsight_erosion.glsl`. Summits ease from y 220 toward 286 instead of flattening.
+  - With Tectonic, the pack lifts Tectonic's offset clamp (`tectonic:__constants/max_offset` 3.0; its own cut every high
+    range flat near y 303) and `awaken:ridge_room` holds Tectonic's ridge strength (`jaggedness/continents`) to the room
+    under y 312 (the ridge term reaches about 1.6): no summit reaches the ceiling. World height stays -64..320: raising it
+    per world needs Tectonic's noise settings copied or a mixin (decision 3, PLAN-2).
+  - `awaken:alpine` material condition (`AlpineSurface`, shared with Far Sight): snow above a snow line at y 196 that
+    wanders ±9 (160-block noise), drops 22 on north faces and lifts 14 on south ones, on slopes under 1.0; scree from
+    1.25, bare rock from 1.7 (vanilla's two-block surface gradient, halved). Prepended to `minecraft:overworld/biome_surface`
+    for `#awaken:alpine` (the peaks, slopes, grove, windswept biomes, Frost Spires, Shattered Highlands).
+  - `tools/sim/ErosionStudio.java` shows the erosion offline. Tests: `terrain_alpine_erosion` (gullies run downhill,
+    bounded, smooth, deterministic; summits and ridges under the ceiling), `terrain_alpine_snow_and_rock`.
 
 
 ---------------------------------------------------------------------------------------------------------------------
 
-## 20. Far Sight (Awaken's own far terrain; plan https://claude.ai/artifact/LvAoTbYB82o6ggcHS73rX1, approved 2026-10-24)
+## 20. Far Sight (Awaken's own far terrain; Far Sight 2 plan docs/perf/far-sight/PLAN-2.md, page https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN, approved in full 2026-10-25)
 
-- **Far Sight 2** (2026-10-25): plan `docs/perf/far-sight/PLAN-2.md`, page https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN,
-  awaiting Euan's approval. Nothing below changes until it is approved and built.
-
-- Module `dev.awaken.farsight` (common: `Rings`, `FarColumns`, `FarPalette`, `FarWorkers`; client: `farsight.client`).
-  Stage 0 is a proof: off unless turned on (autopilot `farsight on|off|status`, or `-Dawaken.farsight=true`), never
-  while Distant Horizons is installed, singleplayer only (it predicts from the integrated server's generator; a remote
-  server's client draws nothing until stage 2 streams server-made tiles). No mixins, reflection or access transformers.
-- Rings: geometry clipmaps, 7 square windows of 256×256 cells centred on the camera, ring k's cells `2 << k` blocks
-  (2 to 128; ring 6 reaches about 16 km). Windows snap to whole patches of 16×16 cells and move only once the camera is
-  three quarters of a patch past their centre. Each ring's heights, colours and shade live in three RGBA8 atlases of
-  256 × (256·7) texels, addressed toroidally (a cell's texel is its coordinate masked to 255), so moving uploads only
-  the patches that came into view; a slot whose patch left is zeroed at once and the coarser ring shows through.
-- Heights are predicted on 1–3 low-priority worker threads (a third of the cores), coarsest ring first, then nearest,
-  never on the server tick or the render thread. Rings 3–6 take one sample of the noise router's
-  `chunk_surface_level` per cell (at a 16-block corner, where the interpolated function is a single sample); rings
-  0–2 (about a kilometre) the exact `getBaseHeight(OCEAN_FLOOR_WG)`. A ground below sea level is water at sea level.
-  The biome comes from the biome source (per-worker uncached resolver); colour from `FarPalette` (one colour per
-  biome from its archetype, `BiomeTable.archetype`, and its grass and foliage colours; forests darker, the canopy is
-  what shows, and their tops stand at canopy height: 3 swamp, 5 cherry, 6 forest and taiga, 7 snowy taiga and grove, 8
-  dark forest, 10 jungle, so they meet the real treetops where the chunks end), snow where the biome is cold enough at
-  that height. Patches the real chunks will always hide are never
-  sampled. Instanced dimensions get no far view (`compat.FarView`); only dimensions with the overworld sky draw it.
-- Generated layer (stage 1): real chunks win over the prediction. Each chunk that loads, and each chunk saved after a
-  change (that is how edits come back), is noted by `FarCollector` and summed on the server tick within 1.5 ms per
-  tick into a `FarChunk`: 8×8 cells of 2×2 blocks, each the highest `MOTION_BLOCKING` top (leaves and water count),
-  the water's depth (`MOTION_BLOCKING` − `OCEAN_FLOOR`, water where at least half the columns are) and the average
-  colour of the top blocks (map colours; grass, leaves and water tinted by their biome as the prediction is). Only
-  while something draws far terrain (`FarStore.collecting`: the singleplayer client today). `FarStore` keeps them per
-  level in regions of 32×32 chunks, at most 64 resident, on disk in `<world>/awaken/farsight/<ns>/<dim>/r.<x>.<z>.dat`
-  (compressed NBT through a Codec, `schemaVersion` 1; another version is ignored and re-learned), written on
-  autosave and when the server stops, so a return trip shows what was there before any chunk loads. On the client
-  the generated layer has its own two atlases (height and colour, same layout); a ring cell takes it where seen
-  (cells up to 16 blocks from the 2-block cells inside one chunk; wider cells from the chunks they cover once a
-  quarter are known), else the prediction. A changed chunk re-reads every ring's patch over it.
-- Landmarks: `FarLandmarks.register(Source)` (common, once at init): sources are asked on the server tick (every 40
-  ticks, while far terrain is collected) for what stands within Far Sight's reach of each player, at most 48; the
-  client draws each as a camera-facing column (a core and a faint halo, never thinner than a few pixels), tested
-  against Far Sight's depth so ridges hide it, half-pierced by fog, faded in from the landmark's `from` distance.
-  Gate pillars come from `Gates.near` (public API, §12) from 1500 blocks, where the gates stop drawing their own
-  (beacons reach the client only within 1600), coloured by rank like the gate pillars, red when broken; cleared and
-  released gates are left out. The city registers its towers the same way.
-- Water: a height texel's b byte is the water's depth (0 on land; predicted as sea level − ground, generated from the
-  heightmaps); shallows show a sandy floor through the water, deep water keeps its biome colour.
-- Drawing: in `RenderLevelStageEvent.AfterSky`, into the main colour target, before any chunk, so real chunks draw
-  over it with no depth fight. One pipeline, no vertex buffer: each ring's window minus the next finer window is cut
-  into pieces of at most 64×64 cells, culled on the CPU (frustum, and wholly under the real chunks), each one draw of
-  one shared index buffer (cell i = vertices 12i..12i+11: a flat top and the walls toward the camera, standing where
-  the neighbour is lower). A ring eases into the next coarser one over its window's outer 14 cells and takes the
-  coarser value where its own isn't predicted yet, so rings meet without a seam. Far terrain is hidden within 32
-  blocks of the render distance and dithers in over those 32 blocks.
-- Light and fog: lit by the lightmap's full-sky texel (day, night, storms and the dimension's ambient as vanilla
-  terrain gets them), sun shading from the slope, valley shade and normals baked per ring on the GPU (`FarGpu`; the
-  fragment-pass implementation today, Turbo compute and Mojang compute later, each kept only if it measures better),
-  steep slopes bare rock, water catching the sky at grazing angles. While Far Sight draws, vanilla's render-distance
-  fog moves out to its horizon (start 50%, end at ring 6's reach less its window lag, ≈14.6 km), and clear-weather
-  atmospheric fog (1024 blocks by default) stretches to 1.6× that; rain brings 85% of it back; thick fog (under 200
-  blocks: a boss, a gate's weather) is never thinned. Far terrain takes the same fog colour and the same linear fog.
-- What columns are made of (the A/B showed DH's real cliffs in dirt and stone against Far Sight's all-green walls):
-  walls show what lies under the top (dirt then stone under grass, snow over stone, sandstone under sand, banded
-  terracotta strata in badlands, a band every 2 blocks of y picked by hash) and darken toward their foot; badlands
-  tops take the band at their height too. Tops get a block-by-block colour texture (±8%, by world block, fading out
-  once a block spans more than about a pixel) and terrace lines at the camera-facing edges: a sunlit rim where the
-  ground drops away, a contact shadow up to 28% where it rises. In rings 0–2 a predicted forest grows treetops: per
-  cell a hash keeps two thirds a block or two above the canopy (6% lighter) and drops the rest toward the forest floor
-  (28% darker), the same whichever ring asks, so rings still meet exactly; the generated layer shows real treetops
-  instead. A predicted forest's colour texel carries its canopy height in alpha (16 × height + 15).
-- Lens: Far Sight keeps its own depth (D32, reversed-Z, the device's depth range, planes 1 and 32768) at the main
-  target's size; nothing else writes it, so it lasts until post. It reports through `compat.client.FarTerrain.report`
-  (texture, planes, convention) like Distant Horizons, so Lens's probe trusts it and hazes far terrain by its real
-  distance on both graphics APIs. `FarTerrain.renderDistanceFog` records vanilla's render-distance end before Far
-  Sight moves it; Lens's params texel 11 carries that end while far terrain draws.
-- Tests: `farsight_rings_nest` (windows nest with blend room, on whole cells, hysteresis), `farsight_columns_predict`
-  (every ring's patch filled from the level's generator, water at sea level), `farsight_generated_layer` (a pillar
-  and a pool summed from a real chunk, through the disk cache, read back as a ring 0 patch). The A/B tour is
-  `tools/autopilot/farsight-ab.txt`, run per setup by `tools/farsight-ab.sh`; results in `docs/perf/far-sight/`.
+Far Sight 2 (2026-10-25) replaced stage 0's stepped columns: real far relief to 16 km, far forests, alpine materials
+and air at real scale, at about 2 ms a frame (Lens Ultra, 2880×1800, `tools/autopilot/farsight2-perf.txt`). Its
+terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (/Volumes/MEDIA/farsight-ref).
+- **Setting** (client `farSight`: FULL 16 km, NEAR 4 km, OFF; default FULL). Singleplayer only (it predicts from the
+  integrated server's generator; a guest on someone's server draws nothing until server tiles, decision 6), never
+  while Distant Horizons is installed, only in dimensions with the overworld sky that aren't Instanced (`compat.FarView`).
+  Autopilot `farsight on|off|setting|status|debug <n>|part <detail|trees|mist|bake> on|off`.
+- **Rings**: geometry clipmaps, 7 square windows of 256×256 cells centred on the camera, ring k's cells `2 << k` blocks
+  (2 to 128; ring 6 reaches about 16 km). Windows snap to patches of 16×16 cells and move once the camera is three
+  quarters of a patch past their centre. A texel is a ring **corner** `(i·cell, j·cell)`, so a coarse ring's corners are
+  every other corner of the finer ring. Atlases of 256 × (256·7) texels, toroidal: height R16 (`(top + 1024) × 16`,
+  0 unknown), colour RGBA8 (flags in alpha: 1 alpine, 2 cold, 4 badlands, 8 stony, 128 generated), info RGBA8 (water
+  depth, canopy height × 4, tree density), crown RGBA8 (crown colour, shape), the same four for the generated layer, and
+  shade RGBA8 (baked: normal x and z, valley shade, sunlight). A slot whose patch left is zeroed at once; a patch is
+  asked for when it can first show (one under the real chunks waits), a failed job releases its slot.
+- **Height model** (`FarColumns`, workers only): the terrain density whose zero is the ground (`tectonic:sloped_cheese`,
+  else `minecraft:overworld/sloped_cheese`) sampled with the generator's caches on (its 2D splines once per column),
+  from the last column's ground, stepping 8 blocks to bracket the crossing and placing the ground on the bracket's
+  straight line (the real terrain interpolates its density over 8-block cells in y, so this is closer than halving:
+  median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
+  top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
+  8-block steps). The city basin's `Shape.ground` applies on top. Water fills to sea level. Biome from the biome
+  source; colour, forest (density, canopy height, shape, crown colour) and flags from `FarPalette.look`; `ALPINE` where
+  the world has Awakened Alpine and the biome is `#awaken:alpine`. Generator without a terrain density: its base height.
+  Workers: a quarter of the cores, at most three (two on an M4: macOS ignores thread priorities), coarsest ring first.
+- **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
+  water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
+  MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is
+  seen) into the same four texels, flagged generated; its trees get their biome's shape. It wins over the prediction.
+- **Drawing** (`AfterSky`, before any chunk, its own D32 reversed-Z depth, planes 1 and 32768): each ring's window
+  minus the next finer window is cut into pieces of up to 64×64 cells, culled on the CPU, each one draw of a continuous
+  mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes
+  the generated layer, else the prediction, and over the window's outer 16 cells eases into the next coarser ring's
+  surface (bilinear between its corners), exactly at the edge: no crack, no pop. A corner with no data takes the coarser
+  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are,
+  dithering in over 32 blocks at the render distance's edge, and drawn where they haven't loaded (a 64×64 chunk mask).
+- **Look** (`farsight_terrain.fsh`): Awakened Alpine's erosion octaves finer than two cells and coarser than about four
+  pixels, worked out per pixel from the same formulas (`farsight_erosion.glsl`) and lit; snow by the alpine snow line
+  (height, aspect, slope: `AlpineSurface`'s numbers) or on a cold biome's gentle ground; scree and bare rock by slope;
+  badlands strata; water with shallows; a block-by-block grain and a line at every block of height on slopes while a
+  block spans pixels; forest ground speckled with crowns. Light: the lightmap's sky texel, faces shaded as block faces,
+  a warm key where the sun reaches past the ridges and a cool shade where it doesn't, valleys darker.
+- **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
+  the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more each frame.
+- **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
+  2 by ring) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over
+  1.1, or above the treeline (14 under the alpine snow line); each a little taller or wider than the mean. Up to 512 a
+  patch, 16 bytes each, in a persistent texel buffer (two runs per slot: predicted, real), stood as opaque voxel trees
+  (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.
+  One `drawIndexedIndirect` of a command per visible run on Vulkan (multi-draw indirect, public API); a draw per run on
+  OpenGL 4.1, which has no multi-draw indirect. A predicted tree steps aside where the real chunks' trees are known.
+- **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
+  level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
+  sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the
+  game's weather fog; the horizon melting into the sky at ring 6's reach less its lag (≈14.6 km). While Far Sight draws,
+  vanilla's render-distance fog moves out to its horizon and clear-weather fog stretches to 1.6× that (rain brings 85%
+  back; fog under 200 blocks is never thinned).
+- **Lens**: Far Sight reports its depth through `compat.client.FarTerrain.report` and `FarTerrain.selfHazed`; Lens then
+  hazes far terrain only as much as the end of the real chunks (flag 8 in params texel 0) and leaves the kilometres past
+  them to Far Sight. Lens's light pass doesn't touch far pixels; its clouds composite over far terrain past their layer.
+- **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
+  towers), drawn after the terrain and trees.
+- **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far
+  Sight off 12.95 ms p50, on 14.98 (66.8 fps): the mesh and air 1.5 ms, erosion detail 0.27, trees 0.22, bake 0.23, valley
+  cloud 0.07. GPU memory 49 MB (atlases 15 MB, trees 17 MB, depth at screen size). Render thread 0.2-0.5 ms. Horizon
+  (ring 6) in 0.2-1 s after a jump, all rings in 7-23 s while the server generates the new land.
+- **Turbo** (raw Vulkan compute culling) was not built: the plan keeps it only on a measured win, and what it could cull
+  costs about 0.2 ms; the multi-draw indirect path is in place for a compute culler later.
+- Tests: `farsight_rings_nest` (windows nest with 16 cells of room), `farsight_columns_predict` (every ring's patch from
+  vanilla's overworld, the model within the generator's ground), `farsight_generated_layer` (a pillar and a pool through
+  the disk cache, read back as a ring 0 corner). Tours: `farsight2-baseline.txt`, `farsight2-refshots.txt`,
+  `farsight2-perf.txt`; results in `docs/perf/far-sight/`.
 
 ---------------------------------------------------------------------------------------------------------------------
 

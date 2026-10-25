@@ -1,19 +1,26 @@
 # Far Sight: status
 
-**FAR SIGHT 2: PLAN AWAITING EUAN'S APPROVAL (2026-10-25 ~21:50).** Resumed by the orchestrator as Far Sight 2 (session
-far-sight-2, worktree far-sight-2-0c9ddb). Plan: `PLAN-2.md`; approval page
-https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN. No production code until he says yes.
-- Merged build/awaken-v1 at 8906e3e7 (4e123b57): conflicts in Awaken.java, Autopilot.java, LensClient.java, kept both
-  sides; compileJava passes.
-- Baseline tour `tools/autopilot/farsight2-baseline.txt` (Far Sight run and the same script with DH Cinematic; lines in
-  `baseline2/farsight.txt` and `baseline2/dh.txt`, shots on the page). Findings: far heights are 8-block steps
-  (rings 3-6 read `chunk_surface_level`); Far Sight costs ~3 ms on Ultra at sunset (14.79 vs 11.74 p50); the predictor
-  runs 615-870 µs a column on the Awakened terrain (17-29 at stage 0) so near rings stay missing and sunset shots show
-  sky through the ground; the land around peaks is lowland and sea, not ranges. DH costs more in every scene but one
-  and drew nothing past the chunks within a minute or two of arriving.
-- Next on a yes: P0 (refshots tour, sheet tool, holes and slot fixes, profile the 700 µs), then P1-P6 in PLAN-2 §9.
-- The stage 1 "Open" list below is folded into P0 (the audit found suspect (a) the only real gap, plus a thrown
-  generated job never re-queued and same-key slots never re-asked when they become visible).
+**FAR SIGHT 2: BUILT (2026-10-25, ~23:30).** Euan approved PLAN-2 with every recommendation ("build the single best
+version of this"). Session far-sight-2, branch `pack/far-sight`. SPEC §20 (rewritten as built) and §15 "Awakened
+Alpine". Page: https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN.
+- **Terrain (Awakened Alpine, new worlds only):** `terrain.alpine`: `Erosion` (gullies down every slope, branching),
+  `awaken:eroded` on the terrain offset (vanilla's and Tectonic's), summits eased under the ceiling, Tectonic's clamp
+  lifted and its ridges held under y 312 (`awaken:ridge_room`), the alpine snow line, scree and rock (`awaken:alpine`).
+- **Renderer:** the height model (59 µs a column on the Awakened Tectonic terrain, median 0.3 blocks off; was 650-870
+  µs and 8-block steps), continuous ring meshes with morphing, sub-cell erosion per pixel, alpine materials, far forests
+  (instanced voxel trees, multi-draw indirect), ridge shadows, real-scale aerial perspective, valley cloud, Lens
+  hand-off, the chunk mask (no holes after a jump), on by default (`farSight` FULL/NEAR/OFF).
+- **Measured** (`farsight2-perf.txt`, Ultra, sunset, 2880×1800): Far Sight 2 costs 2.0 ms (12.95 → 14.98 p50, 66.8 fps).
+- **Not built, by the plan's rules:** Turbo compute culling (no measured win to have: what it could cull costs ~0.2 ms);
+  taller worlds (needs Tectonic's noise settings copied or a mixin; summits round off under the ceiling instead).
+- **Open / follow-ups:**
+  1. Lens: straight dark bands across far terrain at sunset (already in the untouched baseline): Lens's volumetric
+     shadow from its 1024-block heightfield window. For the Lens owner.
+  2. While a brand-new world generates (teleports, fast flight), the server's chunk generation and the workers load the
+     CPU; frames dip until the land fills. Two workers on an M4; a frame-aware throttle is the next step if it bites.
+  3. Multiplayer guests: no far view until server tiles (P7, decision 6).
+  4. Mountain forests (more trees on mountain slopes in the chunks themselves) were left out: far forests follow each
+     biome's own density.
 
 ---
 

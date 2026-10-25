@@ -14,16 +14,21 @@ float farLattice(vec2 rel, int cell, int seed) {
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
-// valley cloud: a slab of patchy cloud lying low among the mountains, so ranges rise out of a sea of it and valleys fill;
-// sunlit on top, shadowed beneath, warm at golden hour. Over far ground only, eased in past the real chunks.
-vec3 farMist(vec3 c, vec3 rel) {
-    if (FarMist.w <= 0.0 || (int(FarCam.y) & 4) != 0) return c;
+// valley cloud: patchy cloud lying low in the valleys among the mountains, so ranges rise out of a sea of it; never over
+// open lowland (valley 0..1: how deep in a hollow the ground under this ray lies, from the bake). Billowing tops, white
+// in the sun with a share of its warmth, grey beneath. Over far ground only, eased in past the real chunks.
+vec3 farMist(vec3 c, vec3 rel, float valley) {
+    if (FarMist.w <= 0.0 || valley <= 0.0 || (int(FarCam.y) & 4) != 0) return c;
     float dist = length(rel);
     float camY = FarFog.z;
-    float y0 = FarMist.x, y1 = FarMist.x + FarMist.y;
-    // the stretch of this ray (camera to the ground here) inside the slab
-    float dy = rel.y;
-    float t0, t1;
+    // where the ray meets the ground: patches of cloud a few hundred blocks across, and how high they billow there
+    float cover = farLattice(rel.xz, 256, 11) * 0.65 + farLattice(rel.xz, 64, 23) * 0.35;
+    float threshold = 1.0 - 0.75 * FarMist.w;
+    float puff = smoothstep(threshold, threshold + 0.2, cover);
+    if (puff <= 0.0) return c;
+    float y0 = FarMist.x, y1 = FarMist.x + FarMist.y * (0.45 + 0.55 * puff);
+    // the stretch of this ray (camera to the ground here) inside that cloud
+    float dy = rel.y, t0, t1;
     if (abs(dy) < 1e-3) {
         if (camY < y0 || camY > y1) return c;
         t0 = 0.0; t1 = 1.0;
@@ -34,16 +39,12 @@ vec3 farMist(vec3 c, vec3 rel) {
     }
     float inside = (t1 - t0) * dist;
     if (inside <= 0.0) return c;
-    // where the ray crosses it: patches of cloud a few hundred blocks across, billowed
-    vec2 mid = rel.xz * (t0 + t1) * 0.5;
-    float cover = farLattice(mid, 256, 11) * 0.65 + farLattice(mid, 64, 23) * 0.35;
-    float threshold = 1.0 - 0.75 * FarMist.w;
-    float puff = smoothstep(threshold, threshold + 0.18, cover);
-    float alpha = (1.0 - exp(-inside * FarMist.z * puff)) * smoothstep(FarDepth.z, FarDepth.z + 600.0, length(rel.xz));
-    // lit from above: the deeper into the slab the ray ends, the more shaded
-    float top = clamp((camY + rel.y * t1 - y0) / max(FarMist.y, 1.0), 0.0, 1.0);
-    vec3 lit = mix(FogColor.rgb * 0.85, FarSunColor.rgb * (0.95 + 0.25 * FarSun.w), FarSun.w);
-    vec3 cloud = mix(lit * 0.78, lit * 1.05 + 0.04, top);
+    float alpha = (1.0 - exp(-inside * FarMist.z * puff)) * valley * smoothstep(FarDepth.z, FarDepth.z + 600.0, length(rel.xz));
+    // lit from above: the deeper into the cloud the ray ends, the greyer
+    float top = clamp((camY + rel.y * t1 - y0) / max(y1 - y0, 1.0), 0.0, 1.0);
+    vec3 white = mix(FogColor.rgb, vec3(1.0), 0.55) * (0.5 + 0.5 * FarSun.w);
+    vec3 sunlit = white * mix(vec3(1.0), FarSunColor.rgb, 0.45) * 1.1;
+    vec3 cloud = mix(white * 0.72, sunlit, top);
     return mix(c, cloud, alpha);
 }
 

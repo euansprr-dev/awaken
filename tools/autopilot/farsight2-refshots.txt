@@ -83,7 +83,7 @@ shot fs2r_r3_valley_e
 cmd time set 7000
 cmd awaken terrain visit minecraft:grove
 wait 300
-cmd tp @s ~ ~6 ~ 0 2
+cmd tp @s ~ ~34 ~ 0 6
 wait 600
 farsight status
 look 0 2

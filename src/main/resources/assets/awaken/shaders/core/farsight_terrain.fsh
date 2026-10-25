@@ -149,5 +149,6 @@ void main() {
     }
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
 
-    fragColor = vec4(farAir(farMist(c, vRel), vRel), 1.0);
+    // valley cloud fills hollows: the bake's valley shade (1 open, 0.65 a deep hollow) says how deep this one is
+    fragColor = vec4(farAir(farMist(c, vRel, smoothstep(0.96, 0.78, vInfo.a)), vRel), 1.0);
 }
